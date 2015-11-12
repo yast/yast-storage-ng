@@ -54,7 +54,7 @@ rake install DESTDIR="%{buildroot}"
 %files
 %defattr(-,root,root)
 %{yast_dir}/clients/*.rb
-%{yast_dir}/lib/storage-ng
+%{yast_dir}/lib
 
 %doc COPYING
 
