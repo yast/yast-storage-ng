@@ -97,11 +97,11 @@ module ExpertPartitioner
       end
 
       begin
-        # TODO use UIShortcuts
+        # ui shortcut for icon does not exist due to name collision
         if Storage::disk?(device)
-          tmp << Yast::Term.new(:cell, Yast::Term.new(:icon, Yast::Directory.icondir + "22x22/apps/yast-disk.png"), "")
+          tmp << Cell(Yast::Term.new(:icon, Yast::Directory.icondir + "22x22/apps/yast-disk.png"), "Disk")
         elsif Storage::partition?(device)
-          tmp << Yast::Term.new(:cell, Yast::Term.new(:icon, Yast::Directory.icondir + "22x22/apps/yast-partitioning.png"), "")
+          tmp << Cell(Yast::Term.new(:icon, Yast::Directory.icondir + "22x22/apps/yast-partitioning.png"), "Partition")
         else
           tmp << ""
         end

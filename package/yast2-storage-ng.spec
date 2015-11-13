@@ -24,12 +24,12 @@ BuildRoot:	%{_tmppath}/%{name}-%{version}-build
 Source:		%{name}-%{version}.tar.bz2
 
 Requires:	yast2
-Requires:	yast2-ruby-bindings
-Requires:	libstorage6
+Requires:	yast2-ruby-bindings >= 3.1.41
+Requires:	libstorage-ruby
 
 BuildRequires:	update-desktop-files
-BuildRequires:	libstorage6
-BuildRequires:	yast2-ruby-bindings
+BuildRequires:	libstorage-ruby
+BuildRequires:	yast2-ruby-bindings >= 3.1.41
 BuildRequires:	yast2-devtools
 BuildRequires:	yast2
 BuildRequires:	rubygem(yast-rake)
