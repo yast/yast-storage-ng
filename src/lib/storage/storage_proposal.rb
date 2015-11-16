@@ -23,6 +23,7 @@
 
 require "yast"
 require "storage"
+require "disk_size"
 require "pp"
 
 # This file can be invoked separately for minimal testing.
