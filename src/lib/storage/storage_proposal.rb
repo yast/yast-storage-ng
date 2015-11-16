@@ -23,7 +23,6 @@
 
 require "yast"
 require "storage"
-require "set"
 require "pp"
 
 # This file can be invoked separately for minimal testing.
@@ -31,6 +30,11 @@ require "pp"
 
 module Yast
   module Storage
+    # size constants (base size is kB)
+    KiB=1
+    MiB=(1024*KiB)
+    GiB=(1024*MiB)
+    TiB=(1024*GiB)
     #
     # Storage proposal for installation: Class that can suggest how to create
     # or change partitions for a Linux system installation based on available
@@ -40,9 +44,11 @@ module Yast
       include Yast::Logger
 
       # User-configurable settings for the storage proposal.
-      class Settings
+      # Those are settings the user can change in the UI.
+      #
+      class UserSettings
         attr_accessor :use_lvm, :encrypt_volume_group
-        attr_accessor :root_filesystem_type, :enable_snapshots
+        attr_accessor :root_filesystem_type, :use_snapshots
         attr_accessor :use_separate_home, :home_filesystem_type
         attr_accessor :enlarge_swap_for_suspend
 
@@ -50,20 +56,148 @@ module Yast
           @use_lvm                  = false
           @encrypt_volume_group     = false
           @root_filesystem_type     = :Btrfs
-          @enable_snapshots         = true
+          @use_snapshots            = true
           @use_separate_home        = true
           @home_filesystem_type     = :XFS
           @enlarge_swap_for_suspend = false
         end
       end
 
+      # Per-product settings for the storage proposal.
+      # Those settings are read from /control.xml on the installation media.
+      # The user can directly override the part inherited from UserSettings.
+      #
+      class Settings < UserSettings
+        attr_accessor :root_base_size
+        attr_accessor :root_max_size
+        attr_accessor :root_space_percent
+        attr_accessor :btrfs_root_size_multiplicator
+        attr_accessor :limit_try_home
+        attr_accessor :lvm_keep_unpartitioned_region
+        attr_accessor :lvm_desired_size
+        attr_accessor :lvm_home_max_size
+
+        def initialize
+          @root_base_size                = 10*GiB
+          @root_max_size                 = 40*GiB
+          @root_space_percent            = 50
+          @btrfs_root_size_multiplicator = 3.0
+          @limit_try_home                = 20*GiB
+          @lvm_keep_unpartitioned_region = false
+          @lvm_desired_size              = 60*GiB
+          @lvm_home_max_size             = 100*GiB
+        end
+
+        def read_from_xml_file(xml_file_name)
+          # TO DO
+        end
+      end
+
+      # Class to represent a planned volume (partition or logical volume) and
+      # its constraints
+      #
+      class Volume
+        attr_accessor :mount_point
+        attr_accessor :size, :min_size, :max_size, :desired_size
+        attr_accessor :can_live_on_logical_volume, :logical_volume_name
+
+        def initialize(mount_point)
+          @mount_point  = mount_point
+          @size         = 0
+          @min_size     = 0
+          @max_size     = -1 # -1: unlimited
+          @desired_size = -1 # -1: unlimited (as large as possible)
+          @can_live_on_logical_volume = false
+          @logical_volume_name = nil
+
+          if @mount_point != "/boot"
+            if @mount_point.start_with?("/")
+              @can_live_on_logical_volume = true
+              if @mount_point == "/"
+                @logical_volume_name = "root"
+              else
+                @logical_volume_name = @mount_point.sub(%r{^/}, "")
+              end
+            end
+          end
+        end
+      end
+
+
+      # Class to provide free space for creating new partitions - either by
+      # reusing existing unpartitioned space, by deleting existing partitions
+      # or by resizing an existing Windows partiton.
+      #
+      class SpaceMaker
+        def find_space
+        end
+
+        def make_space
+        end
+
+        def windows_partition?
+          # TO DO
+          false
+        end
+
+        def resize_windows_partition
+          # TO DO
+        end
+      end
+
+      #
+      #----------------------------------------------------------------------
+      #
+
       attr_accessor :settings
 
       def initialize
         @settings = Settings.new
         @proposal = ""
+
+        @root_vol = Volume.new("/")
+        @home_vol = Volume.new("/home")
+        @boot_vol = Volume.new("/boot")
+        @prep_vol = Volume.new("PReP")
+        @efi_boot_vol = Volume.new("EFI")
+        # @bios_grub_vol = Volume.new("BIOS_Grub")
+
+        @volumes = [ @root_vol, @home_vol, @boot_vol ]
       end
 
+      # Check if the current setup requires a /boot partition
+      def boot_partition_needed?
+        # TO DO
+        false
+      end
+
+      def add_boot_partition
+        # TO DO
+      end
+
+      def efi_boot_partition_needed?
+        # TO DO
+        false
+      end
+
+      def add_efi_boot_partition
+        # TO DO
+      end
+
+      def prep_partition_needed?
+        # TO DO
+        false
+      end
+
+      def add_prep_partition
+        # TO DO
+      end
+
+      # Figure out which disk to use
+      def choose_disk
+      end
+
+      # Create a storage proposal.
       def propose
         "No disks found - no storage proposal possible"
       end
