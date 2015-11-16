@@ -37,7 +37,7 @@ module Yast
 
       attr_accessor :size_k
 
-      def initialize(size_k=0)
+      def initialize(size_k = 0)
         textdomain "storage"
         @size_k = size_k.round
       end
@@ -50,69 +50,68 @@ module Yast
       end
 
       def self.MiB(mb_size)
-        DiskSize.new(mb_size*1024)
+        DiskSize.new(mb_size * 1024)
       end
 
       def self.GiB(gb_size)
-        DiskSize.new(gb_size*(1024**2))
+        DiskSize.new(gb_size * (1024**2))
       end
 
       def self.TiB(tb_size)
-        DiskSize.new(tb_size*(1024**3))
+        DiskSize.new(tb_size * (1024**3))
       end
 
       def self.PiB(tb_size)
-        DiskSize.new(tb_size*(1024**5))
+        DiskSize.new(tb_size * (1024**4))
       end
 
       def self.EiB(tb_size)
-        DiskSize.new(tb_size*(1024**6))
+        DiskSize.new(tb_size * (1024**5))
       end
 
       def self.ZiB(tb_size)
-        DiskSize.new(tb_size*(1024**7))
+        DiskSize.new(tb_size * (1024**6))
       end
 
       def self.YiB(tb_size)
-        DiskSize.new(tb_size*(1024**8))
+        DiskSize.new(tb_size * (1024**7))
       end
-
 
       #
       # Operators
       #
 
       def +(other)
-        if (other.is_a?(Numeric))
-          DiskSize.new(@size_k+other)
-        elsif (other.respond_to?(:size_k))
-          DiskSize.new(@size_k+other.size_k)
+        if other.is_a?(Numeric)
+          DiskSize.new(@size_k + other)
+        elsif other.respond_to?(:size_k)
+          DiskSize.new(@size_k + other.size_k)
         else
           raise TypeError, "Numeric value or DiskSize expected"
         end
       end
 
       def -(other)
-        if (other.is_a?(Numeric))
-          DiskSize.new(@size_k-other)
-        elsif (other.respond_to?(:size_k))
-          DiskSize.new(@size_k-other.size_k)
+        if other.is_a?(Numeric)
+          DiskSize.new(@size_k - other)
+        elsif other.respond_to?(:size_k)
+          DiskSize.new(@size_k - other.size_k)
         else
           raise TypeError, "Numeric value or DiskSize expected"
         end
       end
 
       def *(other)
-        if (other.is_a?(Numeric))
-          DiskSize.new(@size_k*other)
+        if other.is_a?(Numeric)
+          DiskSize.new(@size_k * other)
         else
           raise TypeError, "Numeric value expected"
         end
       end
 
       def /(other)
-        if (other.is_a?(Numeric))
-          DiskSize.new(@size_k.to_f/other)
+        if other.is_a?(Numeric)
+          DiskSize.new(@size_k.to_f / other)
         else
           raise TypeError, "Numeric value expected"
         end
@@ -120,7 +119,7 @@ module Yast
 
       # The Comparable mixin will get us operators < > <= >= == != with this
       def <=>(other)
-        if (other.respond_to?(:size_k))
+        if other.respond_to?(:size_k)
           return @size_k <=> other.size_k
         else
           raise TypeError, "DiskSize expected"
@@ -130,26 +129,29 @@ module Yast
       # Return numeric size and unit ("MiB", "GiB", ...) in human-readable form
       # as array: [size, unit]
       def to_human_readable
-        unit = [_("kiB"), _("MiB"), _("GiB"), _("TiB"), _("PiB"), _("EiB"), _("ZiB"), _("YiB")]
+        units = [_("kiB"), _("MiB"), _("GiB"), _("TiB"), _("PiB"), _("EiB"), _("ZiB"), _("YiB")]
+
         unit_index = 0
         size = @size_k.to_f
 
-        while (size > 1024.0 && unit_index < unit.size-1)
+        while size > 1024.0 && unit_index < units.size - 1
           size /= 1024.0
           unit_index += 1
         end
-        [size, unit[unit_index]]
+        [size, units[unit_index]]
       end
 
       def to_s
         size, unit = to_human_readable
-        "#{'%.2f' % size} #{unit}"
+        format("%.2f %s", size, unit)
       end
     end
   end
 end
 
-
+#
+#----------------------------------------------------------------------
+#
 if $PROGRAM_NAME == __FILE__  # Called direcly as standalone command? (not via rspec or require)
   size = Yast::Storage::DiskSize.new(42)
   print "42 kiB: #{size} (#{size.size_k} kiB)\n"
@@ -169,13 +171,13 @@ if $PROGRAM_NAME == __FILE__  # Called direcly as standalone command? (not via r
   size = Yast::Storage::DiskSize.EiB(47)
   print "47 EiB: #{size} (#{size.size_k} kiB)\n"
 
-  size = Yast::Storage::DiskSize.TiB(48*1024**5)
+  size = Yast::Storage::DiskSize.TiB(48 * (1024**5))
   print "Huge: #{size} (#{size.size_k} kiB)\n"
 
-  size = Yast::Storage::DiskSize.MiB(12)*3
+  size = Yast::Storage::DiskSize.MiB(12) * 3
   print "3*12 MiB: #{size} (#{size.size_k} kiB)\n"
 
-  other_size = size+Yast::Storage::DiskSize.MiB(20)
+  other_size = size + Yast::Storage::DiskSize.MiB(20)
   print "3*12+20 MiB: #{other_size} (#{other_size.size_k} kiB)\n"
 
   other_size /= 13
