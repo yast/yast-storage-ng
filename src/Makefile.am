@@ -90,7 +90,9 @@ ynclude_DATA = \
 ylibdir = @ylibdir@/storage
 ylib_DATA = \
   lib/storage/target_map_formatter.rb \
-  lib/storage/used_storage_features.rb
+  lib/storage/used_storage_features.rb \
+  lib/storage/storage_proposal.rb \
+  lib/storage/disk_size.rb
 
 
 scrconf_DATA = \
