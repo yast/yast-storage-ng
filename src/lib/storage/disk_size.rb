@@ -45,36 +45,36 @@ module Yast
       #
       # Factory methods
       #
-      def self.kiB(kb_size)
-        DiskSize.new(kb_size)
+      def self.kiB(size)
+        DiskSize.new(size)
       end
 
-      def self.MiB(mb_size)
-        DiskSize.new(mb_size * 1024)
+      def self.MiB(size)
+        DiskSize.new(size * 1024)
       end
 
-      def self.GiB(gb_size)
-        DiskSize.new(gb_size * (1024**2))
+      def self.GiB(size)
+        DiskSize.new(size * (1024**2))
       end
 
-      def self.TiB(tb_size)
-        DiskSize.new(tb_size * (1024**3))
+      def self.TiB(size)
+        DiskSize.new(size * (1024**3))
       end
 
-      def self.PiB(tb_size)
-        DiskSize.new(tb_size * (1024**4))
+      def self.PiB(size)
+        DiskSize.new(size * (1024**4))
       end
 
-      def self.EiB(tb_size)
-        DiskSize.new(tb_size * (1024**5))
+      def self.EiB(size)
+        DiskSize.new(size * (1024**5))
       end
 
-      def self.ZiB(tb_size)
-        DiskSize.new(tb_size * (1024**6))
+      def self.ZiB(size)
+        DiskSize.new(size * (1024**6))
       end
 
-      def self.YiB(tb_size)
-        DiskSize.new(tb_size * (1024**7))
+      def self.YiB(size)
+        DiskSize.new(size * (1024**7))
       end
 
       #
@@ -145,6 +145,10 @@ module Yast
         size, unit = to_human_readable
         format("%.2f %s", size, unit)
       end
+
+      def pretty_print(dummy)
+        print "<DiskSize #{to_s} (#{size_k} kiB)>"
+      end
     end
   end
 end
@@ -177,12 +181,12 @@ if $PROGRAM_NAME == __FILE__  # Called direcly as standalone command? (not via r
   size = Yast::Storage::DiskSize.MiB(12) * 3
   print "3*12 MiB: #{size} (#{size.size_k} kiB)\n"
 
-  other_size = size + Yast::Storage::DiskSize.MiB(20)
-  print "3*12+20 MiB: #{other_size} (#{other_size.size_k} kiB)\n"
+  size2 = size + Yast::Storage::DiskSize.MiB(20)
+  print "3*12+20 MiB: #{size2} (#{size2.size_k} kiB)\n"
 
-  other_size /= 13
-  print "(3*12+20)/7 MiB: #{other_size} (#{other_size.size_k} kiB)\n"
+  size2 /= 13
+  print "(3*12+20)/7 MiB: #{size2} (#{size2.size_k} kiB)\n"
 
-  print "#{size} < #{other_size} ? -> #{size < other_size}\n"
-  print "#{size} > #{other_size} ? -> #{size > other_size}\n"
+  print "#{size} < #{size2} ? -> #{size < size2}\n"
+  print "#{size} > #{size2} ? -> #{size > size2}\n"
 end

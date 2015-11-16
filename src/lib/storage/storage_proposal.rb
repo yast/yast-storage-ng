@@ -23,7 +23,7 @@
 
 require "yast"
 require "storage"
-require "storage/disk_size"
+require_relative "./disk_size"
 require "pp"
 
 # This file can be invoked separately for minimal testing.
@@ -31,11 +31,6 @@ require "pp"
 
 module Yast
   module Storage
-    # size constants (base size is kB)
-    KiB=1
-    MiB=(1024*KiB)
-    GiB=(1024*MiB)
-    TiB=(1024*GiB)
     #
     # Storage proposal for installation: Class that can suggest how to create
     # or change partitions for a Linux system installation based on available
@@ -79,14 +74,14 @@ module Yast
         attr_accessor :lvm_home_max_size
 
         def initialize
-          @root_base_size                = 10*GiB
-          @root_max_size                 = 40*GiB
+          @root_base_size                = DiskSize.GiB(10)
+          @root_max_size                 = DiskSize.GiB(40)
           @root_space_percent            = 50
           @btrfs_root_size_multiplicator = 3.0
-          @limit_try_home                = 20*GiB
+          @limit_try_home                = DiskSize.GiB(20)
           @lvm_keep_unpartitioned_region = false
-          @lvm_desired_size              = 60*GiB
-          @lvm_home_max_size             = 100*GiB
+          @lvm_desired_size              = DiskSize.GiB(60)
+          @lvm_home_max_size             = DiskSize.GiB(100)
         end
 
         def read_from_xml_file(xml_file_name)

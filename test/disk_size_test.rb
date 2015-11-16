@@ -109,7 +109,7 @@ describe Yast::Storage::DiskSize do
     end
   end
 
-  describe "comparison operations" do
+  describe "comparison" do
     disk_size1 = Yast::Storage::DiskSize.GiB(24)
     disk_size2 = Yast::Storage::DiskSize.GiB(32)
     disk_size3 = Yast::Storage::DiskSize.GiB(32)
