@@ -46,15 +46,15 @@ module ExpertPartitioner
           Heading(_("Format Options")),
           Left(ComboBox(Id(:filesystem),
                         _("Filesystem"), [
-                          Item(Id(:ext4), "ext4"),
-                          Item(Id(:xfs), "xfs"),
-                          Item(Id(:btrfs), "btrfs"),
-                          Item(Id(:swap), "swap")
+                          Item(Id(Storage::EXT4), "ext4"),
+                          Item(Id(Storage::XFS), "xfs"),
+                          Item(Id(Storage::BTRFS), "btrfs"),
+                          Item(Id(Storage::SWAP), "swap")
                         ])),
           Left(ComboBox(Id(:mount_point),
                         Opt(:editable, :hstretch),
                         _("Mount Point"),
-                        [ "", "/test", "swap" ]
+                        [ "", "/test1", "/test2", "swap" ]
                        )),
           ButtonBox(
             PushButton(Id(:cancel), Yast::Label.CancelButton),
@@ -75,7 +75,8 @@ module ExpertPartitioner
       begin
         blk_device = Storage::to_blkdevice(device)
         log.info "doit #{@sid} #{blk_device.name}"
-        filesystem = blk_device.create_filesystem(Storage::EXT4)
+
+        filesystem = blk_device.create_filesystem(Yast::UI.QueryWidget(:filesystem, :Value))
 
         mount_point = Yast::UI.QueryWidget(:mount_point, :Value)
         if !mount_point.empty?
