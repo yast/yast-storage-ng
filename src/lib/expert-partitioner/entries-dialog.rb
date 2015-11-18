@@ -2,6 +2,7 @@
 require "yast"
 require "storage"
 require "haha"
+require "expert-partitioner/format-dialog.rb"
 
 Yast.import "UI"
 Yast.import "Label"
@@ -256,7 +257,6 @@ module ExpertPartitioner
             ret << table_item(partition)
           end
         rescue Storage::WrongNumberOfChildren, Storage::DeviceHasWrongType
-          log.info "not a partition table on #{disk.name}"
         end
 
       end
@@ -279,6 +279,8 @@ module ExpertPartitioner
       rescue Storage::DeviceHasWrongType
         log.error "do_format on non blk device"
       end
+
+      FormatDialog.new(sid).run()
 
     end
 
