@@ -127,7 +127,7 @@ module Yast
       end
 
       # Return numeric size and unit ("MiB", "GiB", ...) in human-readable form
-      # as array: [size, unit]
+      # @return Array [size, unit]
       def to_human_readable
         units = [_("kiB"), _("MiB"), _("GiB"), _("TiB"), _("PiB"), _("EiB"), _("ZiB"), _("YiB")]
 
@@ -146,8 +146,12 @@ module Yast
         format("%.2f %s", size, unit)
       end
 
+      def inspect
+        "<DiskSize #{to_s} (#{size_k} kiB)>"
+      end
+
       def pretty_print(dummy)
-        print "<DiskSize #{to_s} (#{size_k} kiB)>"
+        print "#{inspect}"
       end
     end
   end
