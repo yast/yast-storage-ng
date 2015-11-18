@@ -44,14 +44,18 @@ module ExpertPartitioner
         Opt(:decorated, :defaultsize),
         VBox(
           Heading(_("Disks and Partitions")),
-          table,
           HBox(
-            HWeight(1, PushButton(Id(:action), _("Action"))),
+            HWeight(30, tree),
+            HWeight(70, ReplacePoint(Id(:tree_panel), VBox(VStretch(), HStretch())))
+          ),
+          HBox(
             HStretch(),
+            HWeight(1, PushButton(Id(:format), _("Format"))),
             HWeight(1, PushButton(Id(:cancel), Yast::Label.QuitButton))
           )
         )
       )
+      Yast::UI.ReplaceWidget(:tree_panel, table)
     end
 
 
@@ -63,13 +67,52 @@ module ExpertPartitioner
     def event_loop
       loop do
 
-        case Yast::UI.UserInput
+        case input = Yast::UI.UserInput
 
         when :cancel
           break
 
-        when :action
-          do_action
+        when :format
+          do_format
+
+        when :tree
+
+          case current_item = Yast::UI.QueryWidget(:tree, :CurrentItem)
+
+          when :all
+            Yast::UI.ReplaceWidget(:tree_panel, table)
+
+          when :devicegraph_probed
+
+            filename = "#{Yast::Directory.tmpdir}/devicegraph-probed.gv"
+
+            probed = @haha.storage().probed()
+            probed.write_graphviz(filename)
+
+            Yast::UI.ReplaceWidget(
+              :tree_panel,
+              VBox(
+                Heading(_("Device Graph (probed)")),
+                Yast::Term.new(:Graph, Id(:graph), Opt(:notify, :notifyContextMenu), filename, "dot"),
+              )
+            )
+
+          when :devicegraph_staging
+
+            filename = "#{Yast::Directory.tmpdir}/devicegraph-staging.gv"
+
+            staging = @haha.storage().staging()
+            staging.write_graphviz(filename)
+
+            Yast::UI.ReplaceWidget(
+              :tree_panel,
+              VBox(
+                Heading(_("Device Graph (staging)")),
+                Yast::Term.new(:Graph, Id(:graph), Opt(:notify, :notifyContextMenu), filename, "dot"),
+              )
+            )
+
+          end
 
         else
           log.warn "Unexpected input #{input}"
@@ -79,9 +122,62 @@ module ExpertPartitioner
     end
 
 
+    def tree
+      Tree(Id(:tree), Opt(:notify), _("System View"), tree_items)
+    end
+
+
+    def subtree
+
+      staging = @haha.storage().staging()
+
+      ret = []
+
+      disks = Storage::Disk::all(staging)
+
+      disks.each do |disk|
+
+        s = []
+
+        begin
+          partition_table = disk.partition_table()
+          partition_table.partitions().each do |partition|
+            s << Item(Id(partition.sid()), partition.name())
+          end
+        rescue Storage::WrongNumberOfChildren, Storage::DeviceHasWrongType
+        end
+
+        ret << Item(Id(disk.sid()), disk.name(), s)
+
+      end
+
+      return ret
+
+    end
+
+
+    def tree_items
+      [
+        Item(
+          Id(:all), "hostname", true,
+          [
+            Item(
+              Id(:hd), _("Hard Disks"), false,
+              subtree()
+            )
+          ]
+        ),
+        Item(Id(:devicegraph_probed), _("Device Graph (probed)")),
+        Item(Id(:devicegraph_staging), _("Device Graph (staging)")),
+        Item(Id(:actiongraph), _("Action Graph")),
+        Item(Id(:actionlist), _("Action List"))
+      ]
+    end
+
+
     def table
       Table(
-        Id(:entries_table),
+        Id(:table),
         Header("Storage ID", "Icon", "Name", Right("Size"), "Partition Table", "Filesystem"),
         table_items
       )
@@ -170,18 +266,18 @@ module ExpertPartitioner
     end
 
 
-    def do_action
+    def do_format
 
-      sid = Yast::UI.QueryWidget(Id(:entries_table), :CurrentItem)
+      sid = Yast::UI.QueryWidget(Id(:table), :CurrentItem)
 
       staging = @haha.storage().staging()
       device = staging.find_device(sid)
 
       begin
         blk_device = Storage::to_blkdevice(device)
-        log.info "do_action #{sid} #{blk_device.name}"
+        log.info "do_format #{sid} #{blk_device.name}"
       rescue Storage::DeviceHasWrongType
-        log.error "action on non blk device"
+        log.error "do_format on non blk device"
       end
 
     end
