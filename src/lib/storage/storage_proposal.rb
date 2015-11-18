@@ -24,6 +24,7 @@
 require "yast"
 require "storage"
 require_relative "./disk_size"
+require_relative "./singleton"
 require "pp"
 
 # This file can be invoked separately for minimal testing.
@@ -125,17 +126,47 @@ module Yast
       # or by resizing an existing Windows partiton.
       #
       class SpaceMaker
+        attr_reader :volumes
+
+        # Initialize.
+        # @param volumes [list of Storage::Volume] volumes to find space for.
+        # The volumes might be changed by this class.
+        #
+        # @param settings [Storage::Settings] parameters to use
+        #
+        def initialize(volumes, settings)
+          @volumes  = volumes
+          @settings = settings
+          storage = Storage.instance
+          storage = Storage.instance
+          storage = Storage.instance
+        end
+
+        # Try to detect empty (unpartitioned) space.
         def find_space
         end
 
+        # Use force to create space: Try to resize an existing Windows
+        # partition or delete partitions until there is enough free space.
         def make_space
         end
 
+        # Check if there are any Linux partitions on any of the disks.
+        # This may be a normal Linux partition (type 0x83), a Linux swap
+        # partition (type 0x82), an LVM partition, or a RAID partition.
+        def linux_partitions?
+        end
+
+        # Check if there is a MS Windows partition that could possibly be
+        # resized.
+        #
+        # @return [bool] 'true# if there is a Windows partition, 'false' if not.
         def windows_partition?
           # TO DO
           false
         end
 
+        # Resize an existing MS Windows partition to free up disk space.
         def resize_windows_partition
           # TO DO
         end
@@ -195,6 +226,13 @@ module Yast
 
       # Create a storage proposal.
       def propose
+        # TO DO: Reset staging
+        Storage.start_probing
+        space_maker = SpaceMaker.new(@volumes, @settings)
+      end
+
+      def proposal_text
+        # TO DO
         "No disks found - no storage proposal possible"
       end
     end
@@ -207,5 +245,6 @@ if $PROGRAM_NAME == __FILE__  # Called direcly as standalone command? (not via r
   proposal = Yast::Storage::Proposal.new
   proposal.settings.root_filesystem_type = :XFS
   proposal.settings.use_separate_home = false
+  proposal.propose
   pp proposal
 end
