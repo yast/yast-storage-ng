@@ -4,38 +4,53 @@ require "yastx"
 require "storage"
 
 
-class Haha
+module ExpertPartitioner
+
+  @haha = nil
+
+  def init()
+    @haha = Haha.new()
+  end
+
+  def get_haha()
+    return @haha
+  end
+
+  module_function :init, :get_haha
 
 
-  class MyLogger < ::Storage::Logger
+  class Haha
 
-    def initialize()
-      super()
+    class MyLogger < Storage::Logger
+
+      def initialize()
+        super()
+      end
+
+      def write(level, component, filename, line, function, content)
+        Yast::y2_logger(level, component, filename, line, function, content)
+      end
+
     end
 
-    def write(level, component, filename, line, function, content)
-      Yast::y2_logger(level, component, filename, line, function, content)
+
+    def initialize
+
+      @my_logger = MyLogger.new()
+      Storage::logger = @my_logger
+
+      @environment = Storage::Environment.new(true)
+
+      @storage = Storage::Storage.new(@environment)
+
+    end
+
+
+    def storage
+      return @storage
     end
 
   end
-
-
-  def initialize
-
-    @my_logger = MyLogger.new()
-    Storage::logger = @my_logger
-
-    @environment = Storage::Environment.new(true)
-
-    @storage = Storage::Storage.new(@environment)
-
-  end
-
-
-  def storage
-    return @storage
-  end
-
 
 end
 

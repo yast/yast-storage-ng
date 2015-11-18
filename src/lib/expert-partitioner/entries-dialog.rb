@@ -8,6 +8,7 @@ Yast.import "UI"
 Yast.import "Label"
 Yast.import "Popup"
 Yast.import "Directory"
+Yast.import "HTML"
 
 module ExpertPartitioner
 
@@ -21,7 +22,9 @@ module ExpertPartitioner
     def initialize
       textdomain "storage"
 
-      @haha = Haha.new()
+      ExpertPartitioner.init()
+
+      @haha = ExpertPartitioner.get_haha()
 
     end
 
@@ -113,7 +116,25 @@ module ExpertPartitioner
               )
             )
 
-          end
+          when :actiongraph
+
+
+          when :actionlist
+
+            steps = @haha.storage().commit_steps()
+
+            texts = []
+            steps.each { |step| texts << step }
+
+            Yast::UI.ReplaceWidget(
+              :tree_panel,
+              VBox(
+                Heading(_("Installation Steps")),
+                RichText(Yast::HTML.List(texts)),
+              )
+            )
+
+        end
 
         else
           log.warn "Unexpected input #{input}"
