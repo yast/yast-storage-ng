@@ -24,7 +24,7 @@
 require "yast"
 require "storage"
 require_relative "./disk_size"
-require_relative "./singleton"
+require_relative "./storage_manager"
 require "pp"
 
 # This file can be invoked separately for minimal testing.
@@ -137,9 +137,7 @@ module Yast
         def initialize(volumes, settings)
           @volumes  = volumes
           @settings = settings
-          storage = Storage.instance
-          storage = Storage.instance
-          storage = Storage.instance
+          storage = StorageManager.instance
         end
 
         # Try to detect empty (unpartitioned) space.
@@ -227,7 +225,7 @@ module Yast
       # Create a storage proposal.
       def propose
         # TO DO: Reset staging
-        Storage.start_probing
+        StorageManager.start_probing
         space_maker = SpaceMaker.new(@volumes, @settings)
       end
 
