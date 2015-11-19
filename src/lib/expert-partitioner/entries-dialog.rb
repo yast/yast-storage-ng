@@ -118,10 +118,24 @@ module ExpertPartitioner
 
           when :actiongraph
 
+            filename = "#{Yast::Directory.tmpdir}/actiongraph.gv"
+
+            actiongraph = @haha.storage().calculate_actiongraph()
+            actiongraph.write_graphviz(filename)
+
+            Yast::UI.ReplaceWidget(
+              :tree_panel,
+              VBox(
+                Heading(_("Action Graph")),
+                Yast::Term.new(:Graph, Id(:graph), Opt(:notify, :notifyContextMenu), filename, "dot"),
+              )
+            )
 
           when :actionlist
 
-            steps = @haha.storage().commit_steps()
+            actiongraph = @haha.storage().calculate_actiongraph()
+
+            steps = actiongraph.commit_actions_as_strings()
 
             texts = []
             steps.each { |step| texts << step }
