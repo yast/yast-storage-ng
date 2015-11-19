@@ -77,6 +77,14 @@ module Yast
         DiskSize.new(size * (1024**7))
       end
 
+      def self.unlimited
+        DiskSize.new(-1)
+      end
+
+      def self.zero
+        DiskSize.new(0)
+      end
+
       #
       # Operators
       #
@@ -117,6 +125,18 @@ module Yast
         end
       end
 
+      #
+      # Other methods
+      #
+
+      def unlimited?
+        size_k == -1
+      end
+
+      def zero?
+        size_k == 0
+      end
+
       # The Comparable mixin will get us operators < > <= >= == != with this
       def <=>(other)
         if other.respond_to?(:size_k)
@@ -129,6 +149,7 @@ module Yast
       # Return numeric size and unit ("MiB", "GiB", ...) in human-readable form
       # @return Array [size, unit]
       def to_human_readable
+        return ["unlimited", ""] if size_k == -1
         units = [_("kiB"), _("MiB"), _("GiB"), _("TiB"), _("PiB"), _("EiB"), _("ZiB"), _("YiB")]
 
         unit_index = 0
@@ -142,15 +163,17 @@ module Yast
       end
 
       def to_s
+        return _("unlimited") if unlimited?
         size, unit = to_human_readable
         format("%.2f %s", size, unit)
       end
 
       def inspect
-        "<DiskSize #{to_s} (#{size_k} kiB)>"
+        return "<DiskSize <unlimited> (-1)>" if unlimited?
+        "<DiskSize #{self} (#{size_k} kiB)>"
       end
 
-      def pretty_print(dummy)
+      def pretty_print(*)
         print "#{inspect}"
       end
     end

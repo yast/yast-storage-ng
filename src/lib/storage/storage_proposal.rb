@@ -52,10 +52,10 @@ module Yast
         def initialize
           @use_lvm                  = false
           @encrypt_volume_group     = false
-          @root_filesystem_type     = :Btrfs
+          @root_filesystem_type     = ::Storage::BTRFS
           @use_snapshots            = true
           @use_separate_home        = true
-          @home_filesystem_type     = :XFS
+          @home_filesystem_type     = ::Storage::XFS
           @enlarge_swap_for_suspend = false
         end
       end
@@ -68,22 +68,31 @@ module Yast
         attr_accessor :root_base_size
         attr_accessor :root_max_size
         attr_accessor :root_space_percent
-        attr_accessor :btrfs_root_size_multiplicator
+        attr_accessor :btrfs_increase_percentage
         attr_accessor :limit_try_home
         attr_accessor :lvm_keep_unpartitioned_region
         attr_accessor :lvm_desired_size
         attr_accessor :lvm_home_max_size
+        attr_accessor :btrfs_default_subvolume
+        attr_accessor :home_min_size
+        attr_accessor :home_max_size
 
         def initialize
-          super()
-          @root_base_size                = DiskSize.GiB(10)
-          @root_max_size                 = DiskSize.GiB(40)
-          @root_space_percent            = 50
-          @btrfs_root_size_multiplicator = 3.0
+          super
+          # Default values taken from SLE-12-SP1
+          @root_base_size                = DiskSize.GiB(3)
+          @root_max_size                 = DiskSize.GiB(10)
+          @root_space_percent            = 40
+          @btrfs_increase_percentage     = 300.0
           @limit_try_home                = DiskSize.GiB(20)
           @lvm_keep_unpartitioned_region = false
-          @lvm_desired_size              = DiskSize.GiB(60)
-          @lvm_home_max_size             = DiskSize.GiB(100)
+          @lvm_desired_size              = DiskSize.GiB(15)
+          @lvm_home_max_size             = DiskSize.GiB(25)
+          @btrfs_default_subvolume       = "@"
+
+          # Not yet in control.xml
+          @home_min_size                 = DiskSize.GiB(10)
+          @home_max_size                 = DiskSize.unlimited
         end
 
         def read_from_xml_file(xml_file_name)
@@ -95,28 +104,28 @@ module Yast
       # its constraints
       #
       class Volume
-        attr_accessor :mount_point
+        attr_accessor :mount_point, :filesystem_type
         attr_accessor :size, :min_size, :max_size, :desired_size
         attr_accessor :can_live_on_logical_volume, :logical_volume_name
 
-        def initialize(mount_point)
-          @mount_point  = mount_point
-          @size         = 0
-          @min_size     = 0
-          @max_size     = -1 # -1: unlimited
-          @desired_size = -1 # -1: unlimited (as large as possible)
+        def initialize(mount_point, filesystem_type = nil)
+          @mount_point = mount_point
+          @filesystem_type = filesystem_type
+          @size         = DiskSize.zero
+          @min_size     = DiskSize.zero
+          @max_size     = DiskSize.unlimited
+          @desired_size = DiskSize.unlimited
           @can_live_on_logical_volume = false
           @logical_volume_name = nil
 
-          if @mount_point != "/boot"
-            if @mount_point.start_with?("/")
-              @can_live_on_logical_volume = true
-              if @mount_point == "/"
-                @logical_volume_name = "root"
-              else
-                @logical_volume_name = @mount_point.sub(%r{^/}, "")
-              end
-            end
+          return unless @mount_point.start_with?("/")
+          return if @mount_point.start_with?("/boot")
+
+          @can_live_on_logical_volume = true
+          if @mount_point == "/"
+            @logical_volume_name = "root"
+          else
+            @logical_volume_name = @mount_point.sub(%r{^/}, "")
           end
         end
       end
@@ -170,68 +179,142 @@ module Yast
         end
       end
 
+      # Class that can check requirements for the different kinds of boot
+      # partition: /boot, EFI-boot, PReP.
+      #
+      # TO DO: Check with arch maintainers if the requirements are correct.
+      #
+      class BootRequirementsChecker
+        def initialize(settings)
+          @settings = settings
+        end
+
+        def needed_partitions
+          boot_volumes = []
+          boot_volumes << make_efi_boot_partition if efi_boot_partition_needed?
+          boot_volumes << make_boot_partition     if boot_partition_needed?
+          boot_volumes << make_prep_partition     if prep_partition_needed?
+          boot_volumes
+        end
+
+        def boot_partition_needed?
+          return true if @settings.use_lvm && @settings.encrypt_volume_group
+          false
+        end
+
+        def efi_boot_partition_needed?
+          # TO DO
+          false
+        end
+
+        def prep_partition_needed?
+          # TO DO
+          false
+        end
+
+        private
+
+        def make_boot_partition
+          vol = Volume.new("/boot", ::Storage::EXT4)
+          vol.min_size = DiskSize.MiB(512) # TO DO
+          vol.max_size = DiskSize.MiB(512) # TO DO
+          vol.desired_size = vol.min_size
+          vol.can_live_on_logical_volume = false
+          vol
+        end
+
+        def make_efi_boot_partition
+          vol = Volume.new("/boot/efi", ::Storage::VFAT)
+          vol.can_live_on_logical_volume = false
+          # TO DO
+          vol
+        end
+
+        def make_prep_partition
+          vol = Volume.new("PReP", ::Storage::VFAT)
+          vol.can_live_on_logical_volume = false
+          # TO DO
+          vol
+        end
+      end
+
       #
       #----------------------------------------------------------------------
       #
 
       attr_accessor :settings
 
+      # devicegraph names
+      PROPOSAL = "proposal"
+      PROBED   = "probed"
+
       def initialize
         @settings = Settings.new
-        @proposal = ""
-
-        @root_vol = Volume.new("/")
-        @home_vol = Volume.new("/home")
-        @boot_vol = Volume.new("/boot")
-        @prep_vol = Volume.new("PReP")
-        @efi_boot_vol = Volume.new("EFI")
-        # @bios_grub_vol = Volume.new("BIOS_Grub")
-
-        @volumes = [@root_vol, @home_vol, @boot_vol]
-      end
-
-      # Check if the current setup requires a /boot partition
-      def boot_partition_needed?
-        # TO DO
-        false
-      end
-
-      def add_boot_partition
-        # TO DO
-      end
-
-      def efi_boot_partition_needed?
-        # TO DO
-        false
-      end
-
-      def add_efi_boot_partition
-        # TO DO
-      end
-
-      def prep_partition_needed?
-        # TO DO
-        false
-      end
-
-      def add_prep_partition
-        # TO DO
-      end
-
-      # Figure out which disk to use
-      def choose_disk
+        @proposal = nil # ::Storage::DeviceGraph
+        @disk_blacklist = []
+        @disk_greylist  = []
       end
 
       # Create a storage proposal.
       def propose
-        # TO DO: Reset staging
-        StorageManager.start_probing
+        storage = StorageManager.instance # this will start probing in the first invocation
+        storage.remove_devicegraph(PROPOSAL) if storage.exist_devicegraph(PROPOSAL)
+        @proposal = storage.copy_devicegraph(PROBED, PROPOSAL)
+
+        boot_requirements_checker = BootRequirementsChecker.new(@settings)
+        @volumes = boot_requirements_checker.needed_partitions
+        @volumes += standard_volumes
+        pp @volumes
+
         space_maker = SpaceMaker.new(@volumes, @settings)
       end
 
       def proposal_text
         # TO DO
         "No disks found - no storage proposal possible"
+      end
+
+      private
+
+      # Return an array of the standard volumes for the root and /home file systems
+      #
+      # @return [Array [Volume]]
+      #
+      def standard_volumes
+        volumes = [make_root_vol]
+        volumes << make_home_vol if @settings.use_separate_home
+        volumes
+      end
+
+      # Create the Volume data structure for the root volume according to the
+      # settings.
+      #
+      # This does NOT create the partition yet, only the data structure.
+      #
+      def make_root_vol
+        root_vol = Volume.new("/", @settings.root_filesystem_type)
+        root_vol.min_size = @settings.root_base_size
+        root_vol.max_size = @settings.root_max_size
+        if root_vol.filesystem_type = ::Storage::BTRFS
+          multiplicator = 1.0 + @settings.btrfs_increase_percentage / 100.0
+          root_vol.min_size *= multiplicator
+          root_vol.max_size *= multiplicator
+        end
+        root_vol.desired_size = root_vol.max_size
+        root_vol
+      end
+
+      # Create the Volume data structure for the /home volume according to the
+      # settings.
+      #
+      # This does NOT create the partition yet, only the data structure.
+      #
+      def make_home_vol
+        home_vol = Volume.new("/home", @settings.home_filesystem_type)
+        home_vol.min_size = @settings.home_min_size
+        home_vol.max_size = @settings.home_max_size
+        home_vol.desired_size = home_vol.max_size
+        home_vol
       end
     end
   end
@@ -241,8 +324,8 @@ end
 
 if $PROGRAM_NAME == __FILE__  # Called direcly as standalone command? (not via rspec or require)
   proposal = Yast::Storage::Proposal.new
-  proposal.settings.root_filesystem_type = :XFS
-  proposal.settings.use_separate_home = false
+  proposal.settings.root_filesystem_type = ::Storage::XFS
+  proposal.settings.use_separate_home = true
   proposal.propose
   # pp proposal
 end
