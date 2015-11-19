@@ -5,6 +5,7 @@ require "haha"
 
 Yast.import "UI"
 Yast.import "Label"
+Yast.import "Popup"
 
 module ExpertPartitioner
 
@@ -75,6 +76,19 @@ module ExpertPartitioner
       begin
         blk_device = Storage::to_blkdevice(device)
         log.info "doit #{@sid} #{blk_device.name}"
+
+        if blk_device.num_children > 0
+          log.info "removing all descendants"
+          descendants = blk_device.descendants(false)
+
+          x = []
+          descendants.each { |descendant| x << descendant.to_s }
+          y = x.join("\n")
+
+          Yast::Popup::Warning("will delete #{y}")
+
+          staging.remove_devices(descendants)
+        end
 
         filesystem = blk_device.create_filesystem(Yast::UI.QueryWidget(:filesystem, :Value))
 
