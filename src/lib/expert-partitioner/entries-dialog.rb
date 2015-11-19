@@ -55,7 +55,8 @@ module ExpertPartitioner
           HBox(
             HStretch(),
             HWeight(1, PushButton(Id(:format), _("Format"))),
-            HWeight(1, PushButton(Id(:cancel), Yast::Label.QuitButton))
+            HWeight(1, PushButton(Id(:cancel), Yast::Label.QuitButton)),
+            HWeight(1, PushButton(Id(:commit), _("Commit")))
           )
         )
       )
@@ -78,6 +79,11 @@ module ExpertPartitioner
 
         when :format
           do_format
+
+        when :commit
+          if do_commit
+            break
+          end
 
         when :tree
 
@@ -316,6 +322,26 @@ module ExpertPartitioner
       end
 
       FormatDialog.new(sid).run()
+
+    end
+
+
+    def do_commit
+
+      actiongraph = @haha.storage().calculate_actiongraph()
+
+      if actiongraph.empty?
+        Yast::Popup::Error("Nothing to commit.")
+        return false
+      end
+      if !Yast::Popup::YesNo("Really commit?")
+        return false
+      end
+
+      @haha.storage().calculate_actiongraph()
+      @haha.storage().commit()
+
+      return true
 
     end
 
