@@ -75,6 +75,7 @@ module Yast
         attr_accessor :lvm_home_max_size
 
         def initialize
+          super()
           @root_base_size                = DiskSize.GiB(10)
           @root_max_size                 = DiskSize.GiB(40)
           @root_space_percent            = 50
@@ -244,5 +245,5 @@ if $PROGRAM_NAME == __FILE__  # Called direcly as standalone command? (not via r
   proposal.settings.root_filesystem_type = :XFS
   proposal.settings.use_separate_home = false
   proposal.propose
-  pp proposal
+  # pp proposal
 end

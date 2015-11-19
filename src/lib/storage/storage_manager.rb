@@ -22,10 +22,12 @@
 # find current contact information at www.suse.com.
 
 require "yast"
+require "yastx"
 require "storage"
 
 module Yast
   module Storage
+    #
     # Singleton class for the libstorage object.
     #
     # You can simply use StorageManager.instance to use it and create a
@@ -43,8 +45,12 @@ module Yast
     #
     class StorageManager
       include Yast::Logger
+      #
+      # Class methods
+      #
       class << self
         @instance = nil
+        @logger   = nil
 
         # Return the singleton for the libstorage object. This will create one
         # for the first call, which will also trigger hardware probing.
@@ -65,9 +71,8 @@ module Yast
         # @return [::Storage::Storage] libstorage object
         #
         def create_instance(storage_environment = nil)
-          if storage_environment.nil?
-            storage_environment = create_environment
-          end
+          storage_environment ||= create_environment
+          create_logger
           log.info("Creating Storage object")
           @instance = ::Storage::Storage.new(storage_environment)
         end
@@ -78,9 +83,8 @@ module Yast
         # @return [::Storage::Environment] storage_environment
         #
         def create_environment
-            storage_environment = ::Storage::Environment.new(true)
-            # TO DO: Set up logging in environment
-            storage_environment
+          storage_environment = ::Storage::Environment.new(true)
+          storage_environment
         end
 
         alias_method :start_probing, :create_instance
@@ -92,6 +96,25 @@ module Yast
         #
         def destroy_instance
           @instance = nil
+        end
+
+        private
+
+        def create_logger
+          @logger = StorageLogger.new
+          ::Storage.logger = @logger
+        end
+      end
+
+      # Logger class for libstorage. This is needed to make libstorage log to the
+      # y2log.
+      class StorageLogger < ::Storage::Logger
+        def initialize
+          super
+        end
+
+        def write(level, component, filename, line, function, content)
+          Yast.y2_logger(level, component, filename, line, function, content)
         end
       end
     end
