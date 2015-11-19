@@ -121,7 +121,6 @@ module Yast
         end
       end
 
-
       # Class to provide free space for creating new partitions - either by
       # reusing existing unpartitioned space, by deleting existing partitions
       # or by resizing an existing Windows partiton.
@@ -188,7 +187,7 @@ module Yast
         @efi_boot_vol = Volume.new("EFI")
         # @bios_grub_vol = Volume.new("BIOS_Grub")
 
-        @volumes = [ @root_vol, @home_vol, @boot_vol ]
+        @volumes = [@root_vol, @home_vol, @boot_vol]
       end
 
       # Check if the current setup requires a /boot partition

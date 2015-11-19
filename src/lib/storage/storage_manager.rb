@@ -65,38 +65,18 @@ module Yast
         # Create the singleton for the libstorage object.
         #
         # Create your own Storage::Environment for custom purposes like mocking
-        # the hardware probing etc.; you can use create_environment for the
-        # default environment, modify it and use it as parameter here.
+        # the hardware probing etc.
         #
         # @return [::Storage::Storage] libstorage object
         #
         def create_instance(storage_environment = nil)
-          storage_environment ||= create_environment
+          storage_environment ||= ::Storage::Environment.new(true)
           create_logger
           log.info("Creating Storage object")
           @instance = ::Storage::Storage.new(storage_environment)
         end
 
-        # Create a default storage environment for the libstorage object that
-        # also sets up logging for libstorage.
-        #
-        # @return [::Storage::Environment] storage_environment
-        #
-        def create_environment
-          storage_environment = ::Storage::Environment.new(true)
-          storage_environment
-        end
-
         alias_method :start_probing, :create_instance
-
-        # Destroy the singleton for the libstorage object.
-        #
-        # Notice that it depends on the Ruby garbage collector when the
-        # underlying object is actually deleted.
-        #
-        def destroy_instance
-          @instance = nil
-        end
 
         private
 
