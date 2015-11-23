@@ -39,7 +39,20 @@ module ExpertPartitioner
       @my_logger = MyLogger.new()
       Storage::logger = @my_logger
 
-      @environment = Storage::Environment.new(true)
+      case "A"
+      when "A"                  # probe
+        @environment = Storage::Environment.new(true)
+
+      when "B"                  # probe and write probed data to disk
+        @environment = Storage::Environment.new(true, Storage::ProbeMode_STANDARD_WRITE_DEVICEGRAPH,
+                                                Storage::TargetMode_DIRECT)
+      when "C"                 # instead of probing read probed data from disk
+        @environment = Storage::Environment.new(true, Storage::ProbeMode_READ_DEVICEGRAPH,
+                                                Storage::TargetMode_DIRECT)
+      end
+
+      @environment.devicegraph_filename = "./devicegraph.xml"
+      @environment.arch_filename = "./arch.xml"
 
       @storage = Storage::Storage.new(@environment)
 
