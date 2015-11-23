@@ -66,9 +66,14 @@ module Yast
         boot_requirements_checker = BootRequirementsChecker.new(@settings)
         @volumes = boot_requirements_checker.needed_partitions
         @volumes += standard_volumes
-        pp @volumes
+        # pp @volumes
 
         space_maker = SpaceMaker.new(@volumes, @settings)
+        disks = ::Storage::Disk.all(storage.probed)
+        disks.each do |disk|
+          print("Found disk #{disk}\n")
+          print("#{disk} is current installation medium\n") if space_maker.installation_disk?(disk)
+        end
       end
 
       def proposal_text

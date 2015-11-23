@@ -22,6 +22,7 @@
 # find current contact information at www.suse.com.
 
 require "yast"
+require "fileutils"
 require_relative "./proposal_volume"
 require_relative "./disk_size"
 require "pp"
@@ -77,6 +78,52 @@ module Yast
       # Resize an existing MS Windows partition to free up disk space.
       def resize_windows_partition
         # TO DO
+      end
+
+      # Check if a disk is our installation disk - the medium we just booted
+      # and started the installation from. This will check all filesystems on
+      # that disk.
+      #
+      def installation_disk?(disk)
+        log.info("Checking #{disk}")
+        begin
+          disk.partition_table.partitions.each do |partition|
+            return true if installation_filesystem?(partition)
+          end
+        rescue # No partition table or nofilesystem on this partition (maybe an "Extended" partition)
+        end
+        
+        # Check if there is a filesystem directly on the disk (without partition table).
+        # This is very common for installation media such as USB sticks.
+        begin
+          filesystem = disk.filesystem
+          return installation_filsystem?(filesystem) if filesystem
+        rescue # Not a filesystem
+        end
+        false
+      end
+
+      # Check if a partition is our installation medium - the medium we just
+      # booted and started the installation from.
+      #
+      def installation_filesystem?(partition)
+        # check if we have a filesystem
+        log.info("Checking #{partition.name}")
+        mount_point = "/mnt" # FIXME
+        # FIXME use libstorage function when available
+        cmd = "/usr/bin/mount -r #{partition.name} #{mount_point}"
+        log.info("Trying to mount: #{cmd}")
+        return false unless system(cmd) # mount failed
+
+        log.info("Checking if partition #{partition} is installation partition")
+        return false unless File.exist?(mount_point + "/control.xml")
+        result = FileUtils.identical?("/control.xml", mount_point + "/control.xml")
+        log.info("#{partition} is installation medium") if result
+
+        # FIXME use libstorage function when available
+        system("/usr/bin/umount #{partition.name}")
+
+        result
       end
     end
   end
