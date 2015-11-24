@@ -33,7 +33,7 @@ module Yast
     #
     class ProposalUserSettings
       include Yast::Logger
-      
+
       attr_accessor :use_lvm, :encrypt_volume_group
       attr_accessor :root_filesystem_type, :use_snapshots
       attr_accessor :use_separate_home, :home_filesystem_type

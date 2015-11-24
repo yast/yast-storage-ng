@@ -69,6 +69,7 @@ module Yast
 
         space_maker = SpaceMaker.new(@volumes, @settings)
         space_maker.find_space
+        space_maker.linux_partitions?
       end
 
       def proposal_text

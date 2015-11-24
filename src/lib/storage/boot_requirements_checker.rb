@@ -36,7 +36,7 @@ module Yast
     #
     class BootRequirementsChecker
       include Yast::Logger
-      
+
       def initialize(settings)
         Yast.import "Arch"
         @settings = settings

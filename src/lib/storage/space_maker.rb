@@ -48,18 +48,18 @@ module Yast
       def initialize(volumes, settings)
         @volumes  = volumes
         @settings = settings
-        @disks    = nil
+        @disks    = candidate_disks
       end
 
       # Try to detect empty (unpartitioned) space.
       def find_space
-        @disks ||= candidate_disks
+        # TO DO
       end
 
       # Use force to create space: Try to resize an existing Windows
       # partition or delete partitions until there is enough free space.
       def make_space
-        @disks ||= candidate_disks
+        # TO DO
       end
 
       # Find disks that are suitable for installing Linux.
@@ -113,6 +113,27 @@ module Yast
       # This may be a normal Linux partition (type 0x83), a Linux swap
       # partition (type 0x82), an LVM partition, or a RAID partition.
       def linux_partitions?
+        linux_partition_ids =
+          [
+            ::Storage::ID_LINUX,
+            ::Storage::ID_SWAP,
+            ::Storage::ID_LVM,
+            ::Storage::ID_RAID
+          ]
+
+        @disks.each do |disk|
+          begin
+            disk.partition_table.partitions.each do |partition|
+              if linux_partition_ids.include?(partition.id)
+                log.info("Found Linux partition #{partition} (ID 0x#{partition.id.to_s(16)})")
+                return true
+              end
+            end
+          rescue RuntimeError => ex
+            log.info("CAUGHT exception #{ex}")
+          end
+        end
+        false
       end
 
       # Check if there is a MS Windows partition that could possibly be
@@ -145,13 +166,13 @@ module Yast
             end
           end
           return false # if we get here, there is a partition table.
-        rescue Exception => ex # No partition table on this disk
+        rescue RuntimeError => ex
           log.info("CAUGHT exception: #{ex} for #{disk}")
         end
 
         # Check if there is a filesystem directly on the disk (without partition table).
         # This is very common for installation media such as USB sticks.
-        return installation_volume?(disk)
+        installation_volume?(disk)
       end
 
       # Check if a volume (a partition or a disk without a partition table) is
@@ -180,7 +201,7 @@ module Yast
 
           umount(vol.name)
           found_check_file
-        rescue Exception => ex
+        rescue RuntimeError => ex
           log.error("CAUGHT exception: #{ex} for #{vol}")
           false
         end
@@ -191,10 +212,10 @@ module Yast
       # This is a temporary workaround until the new libstorage can handle that.
       #
       def mount(device, mount_point)
-        # FIXME use libstorage function when available
-        cmd = "/usr/bin/mount -r #{device} #{mount_point} >/dev/null 2>&1"
+        # FIXME: use libstorage function when available
+        cmd = "/usr/bin/mount #{device} #{mount_point} >/dev/null 2>&1"
         log.info("Trying to mount #{device}: #{cmd}")
-        raise RuntimeError, "mount failed for #{device}" unless system(cmd)
+        raise "mount failed for #{device}" unless system(cmd)
       end
 
       # Unmount a device.
@@ -202,10 +223,10 @@ module Yast
       # This is a temporary workaround until the new libstorage can handle that.
       #
       def umount(device)
-        # FIXME use libstorage function when available
+        # FIXME: use libstorage function when available
         cmd = "/usr/bin/umount #{device}"
         log.info("Unmounting: #{cmd}")
-        raise RuntimeError, "umount failed for #{device}" unless system(cmd)
+        raise "umount failed for #{device}" unless system(cmd)
       end
     end
   end
