@@ -50,6 +50,7 @@ module Yast
       def initialize(volumes, settings, disk_analyzer)
         @volumes  = volumes
         @settings = settings
+        @disk_analyzer = disk_analyzer
       end
 
       # Try to detect empty (unpartitioned) space.
@@ -63,10 +64,10 @@ module Yast
         # TO DO
       end
 
-
       # Resize an existing MS Windows partition to free up disk space.
       def resize_windows_partition(partition)
         # TO DO
+        partition
       end
     end
   end

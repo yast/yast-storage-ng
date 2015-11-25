@@ -23,8 +23,6 @@
 
 require "yast"
 require "fileutils"
-require_relative "./proposal_volume"
-require_relative "./disk_size"
 require "pp"
 
 module Yast
@@ -177,7 +175,7 @@ module Yast
         #   disks -= @installation_disks
         # because the list elements (from libstorage) don't provide a .hash method.
         # Comparing device names ("/dev/sda"...) instead.
-        
+
         inst_names = dev_names(@installation_disks)
         disks.delete_if { |disk| inst_names.include?(disk.name) }
       end
@@ -258,7 +256,7 @@ module Yast
       # @return 'true' if it is a Windows partition, 'false' if not.
       #
       def windows_partition_check(mount_point)
-        Dir.exists?(mount_point + "/windows/system32")
+        Dir.exist?(mount_point + "/windows/system32")
       end
 
       # Check if a disk is our installation disk - the medium we just booted
@@ -270,7 +268,7 @@ module Yast
         begin
           disk.partition_table.partitions.each do |partition|
             if [::Storage::ID_SWAP, ::Storage::ID_EXTENDED].include?(partition.id)
-              log.info("Skipping #{partition} with partition type #{partition.id}")
+              log.info("Skipping #{partition} (ID 0x#{partition.id.to_s(16)})")
               next
             else
               return true if installation_volume?(partition)
