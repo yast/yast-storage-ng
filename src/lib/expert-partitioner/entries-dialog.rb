@@ -1,7 +1,7 @@
 
 require "yast"
 require "storage"
-require_relative "../storage/storage-manager"
+require "storage/storage-manager"
 require "storage/extensions"
 require "expert-partitioner/format-dialog"
 
@@ -144,11 +144,13 @@ module ExpertPartitioner
 
             storage = Yast::Storage::StorageManager.instance
 
+            # storage.probed().save("./devicegraph-probed.xml")
+            # storage.staging().save("./devicegraph-staging.xml")
+
             actiongraph = storage.calculate_actiongraph()
             steps = actiongraph.commit_actions_as_strings()
 
-            texts = []
-            steps.each { |step| texts << step }
+            texts = steps.to_a
 
             Yast::UI.ReplaceWidget(
               :tree_panel,
@@ -178,9 +180,9 @@ module ExpertPartitioner
       storage = Yast::Storage::StorageManager.instance
       staging = storage.staging()
 
-      ret = []
-
       disks = Storage::Disk::all(staging)
+
+      ret = []
 
       disks.each do |disk|
 
@@ -260,7 +262,6 @@ module ExpertPartitioner
       return ret
 
     end
-
 
 
     def table_of_filesystems

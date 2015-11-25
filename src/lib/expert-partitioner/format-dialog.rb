@@ -1,6 +1,7 @@
 
 require "yast"
 require "storage"
+require "storage/storage-manager"
 
 Yast.import "UI"
 Yast.import "Label"
@@ -80,11 +81,8 @@ module ExpertPartitioner
           log.info "removing all descendants"
           descendants = blk_device.descendants(false)
 
-          x = []
-          descendants.each { |descendant| x << descendant.to_s }
-          y = x.join("\n")
-
-          Yast::Popup::Warning("will delete #{y}")
+          tmp = descendants.to_a.map { |descendant| descendant.to_s }.join("\n")
+          Yast::Popup::Warning("will delete #{tmp}")
 
           staging.remove_devices(descendants)
         end
