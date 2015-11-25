@@ -109,7 +109,7 @@ module Yast
       # checking if a disk is an installation disk involves mounting and
       # unmounting each partition on that disk.
       #
-      # @return [Array<::Storage::Disk>] disks
+      # @return [Array<::Storage::Disk>] installation disks
       #
       def find_installation_disks
         disks = ::Storage::Disk.all(StorageManager.instance.probed).to_a
@@ -136,7 +136,7 @@ module Yast
       # Find disks that are suitable for installing Linux.
       # Put any USB disks to the end of that array.
       #
-      # @return [Array<::Storage::Disk>] disks
+      # @return [Array<::Storage::Disk>] candidate disks
       #
       def find_candidate_disks
         disks = ::Storage::Disk.all(StorageManager.instance.probed).to_a
@@ -165,7 +165,7 @@ module Yast
       # containing the disks that are not installation media.
       #
       # @param disks [Array<::Storage::Disk>]
-      # @return [Array<::Storage::Disk>] disks
+      # @return [Array<::Storage::Disk>] non-installation disks
       #
       def remove_installation_disks(disks)
         # We can't simply use
