@@ -64,10 +64,6 @@ module Yast
       attr_reader :windows_partitions, :linux_partitions
       attr_accessor :disk_check_limit
 
-      # Initialize.
-      #
-      # @param settings [Storage::Settings] parameters to use
-      #
       def initialize
         Yast.import "Arch"
 
