@@ -21,6 +21,10 @@ module Storage
       return ""
     end
 
+    def table_icon(icon, text)
+      return Yast::Term.new(:cell, Yast::Term.new(:icon, "#{Yast::Directory.icondir}/22x22/apps/#{icon}.png"), text)
+    end
+
     def table_name()
       return ""
     end
@@ -72,7 +76,7 @@ module Storage
   class Disk
 
     def table_icon()
-      return Yast::Term.new(:cell, Yast::Term.new(:icon, Yast::Directory.icondir + "22x22/apps/yast-disk.png"), "Disk")
+      return super("yast-disk", "Disk")
     end
 
     def table_partition_table()
@@ -87,7 +91,7 @@ module Storage
   class Partition
 
     def table_icon()
-      return Yast::Term.new(:cell, Yast::Term.new(:icon, Yast::Directory.icondir + "22x22/apps/yast-partitioning.png"), "Partition")
+      return super("yast-partitioning", "Partition")
     end
 
   end
@@ -96,7 +100,7 @@ module Storage
   class Filesystem
 
     def table_icon()
-      return Yast::Term.new(:cell, Yast::Term.new(:icon, Yast::Directory.icondir + "22x22/apps/yast-nfs.png"), "Filesystem")
+      return super("yast-nfs", "Filesystem")
     end
 
     def table_filesystem()
