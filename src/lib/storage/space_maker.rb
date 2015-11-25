@@ -33,7 +33,7 @@ module Yast
     #
     # Class to provide free space for creating new partitions - either by
     # reusing existing unpartitioned space, by deleting existing partitions
-    # or by resizing an existing Windows partiton.
+    # or by resizing an existing Windows partition.
     #
     class SpaceMaker
       include Yast::Logger
@@ -41,6 +41,7 @@ module Yast
       attr_reader :volumes
 
       # Initialize.
+      #
       # @param volumes [list of ProposalVolume] volumes to find space for.
       # The volumes might be changed by this class.
       #
