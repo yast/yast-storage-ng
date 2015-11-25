@@ -31,11 +31,12 @@ module Yast
     # Class to analyze the disks (the storage setup) of the existing system:
     # Check the existing disks and their partitions what candidates there are
     # to install on, typically eliminate the installation media from that list
-    # (unless there is no other disk), check if there is a Windows partition
-    # that could be resized, check if there already are any partitions that
-    # look like there was a Linux system previously installed on that machine.
+    # (unless there is no other disk), check if there already are any
+    # partitions that look like there was a Linux system previously installed
+    # on that machine, check if there is a Windows partition that could be
+    # resized.
     #
-    # Many of those operations involve trying to mount the underlying
+    # Some of those operations involve trying to mount the underlying
     # filesystem.
     #
     class DiskAnalyzer

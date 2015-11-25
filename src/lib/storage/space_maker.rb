@@ -25,6 +25,7 @@ require "yast"
 require "fileutils"
 require_relative "./proposal_volume"
 require_relative "./disk_size"
+require_relative "./disk_analyzer"
 require "pp"
 
 module Yast
