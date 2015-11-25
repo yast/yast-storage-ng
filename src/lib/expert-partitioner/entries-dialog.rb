@@ -2,13 +2,15 @@
 require "yast"
 require "storage"
 require "haha"
-require "expert-partitioner/format-dialog.rb"
+require "storage/extensions"
+require "expert-partitioner/format-dialog"
 
 Yast.import "UI"
 Yast.import "Label"
 Yast.import "Popup"
 Yast.import "Directory"
 Yast.import "HTML"
+
 
 module ExpertPartitioner
 
@@ -91,6 +93,9 @@ module ExpertPartitioner
 
           when :all
             Yast::UI.ReplaceWidget(:tree_panel, table)
+
+          when :filesystems
+            Yast::UI.ReplaceWidget(:tree_panel, table_of_filesystems)
 
           when :devicegraph_probed
 
@@ -209,6 +214,7 @@ module ExpertPartitioner
             )
           ]
         ),
+        Item(Id(:filesystems), _("Filesystems")),
         Item(Id(:devicegraph_probed), _("Device Graph (probed)")),
         Item(Id(:devicegraph_staging), _("Device Graph (staging)")),
         Item(Id(:actiongraph), _("Action Graph")),
@@ -220,86 +226,63 @@ module ExpertPartitioner
     def table
       Table(
         Id(:table),
-        Header("Storage ID", "Icon", "Name", Right("Size"), "Partition Table", "Filesystem"),
+        Header("Storage ID", "Icon", "Name", Right("Size"), "Partition Table", "Filesystem", "Mount Point"),
         table_items
       )
     end
 
 
-    def table_item(device)
-
-      tmp = []
-
-      begin
-        tmp << device.sid
-      end
-
-      begin
-        # unfortunately ruby ui shortcut for cell and icon are a failure
-        if Storage::disk?(device)
-          tmp << Yast::Term.new(:cell, Yast::Term.new(:icon, Yast::Directory.icondir + "22x22/apps/yast-disk.png"), "Disk")
-        elsif Storage::partition?(device)
-          tmp << Yast::Term.new(:cell, Yast::Term.new(:icon, Yast::Directory.icondir + "22x22/apps/yast-partitioning.png"), "Partition")
-        else
-          tmp << ""
-        end
-      end
-
-      begin
-        blk_device = Storage::to_blkdevice(device)
-        tmp << blk_device.name
-      rescue Storage::DeviceHasWrongType
-        tmp << ""
-      end
-
-      begin
-        blk_device = Storage::to_blkdevice(device)
-        tmp << Storage::byte_to_humanstring(1024 * blk_device.size_k, false, 2, false)
-      rescue Storage::DeviceHasWrongType
-        tmp << ""
-      end
-
-      begin
-        disk = Storage::to_disk(device)
-        partition_table = disk.partition_table
-        tmp << partition_table.to_s
-      rescue Storage::WrongNumberOfChildren, Storage::DeviceHasWrongType
-        tmp << ""
-      end
-
-      begin
-        blk_device = Storage::to_blkdevice(device)
-        filesystem = blk_device.filesystem
-        tmp << filesystem.to_s
-      rescue Storage::WrongNumberOfChildren, Storage::DeviceHasWrongType
-        tmp << ""
-      end
-
-      Item(Id(device.sid), *tmp)
-
-    end
-
-
     def table_items
+
+      fields = [ :sid, :icon, :name, :size, :partition_table, :filesystem, :mountpoint ]
 
       staging = @haha.storage().staging()
 
-      ret = []
-
       disks = Storage::Disk::all(staging)
+
+      ret = []
 
       disks.each do |disk|
 
-        ret << table_item(disk)
+        ret << disk.table_row(fields)
 
         begin
           partition_table = disk.partition_table()
           partition_table.partitions().each do |partition|
-            ret << table_item(partition)
+            ret << partition.table_row(fields)
           end
         rescue Storage::WrongNumberOfChildren, Storage::DeviceHasWrongType
         end
 
+      end
+
+      return ret
+
+    end
+
+
+
+    def table_of_filesystems
+      Table(
+        Id(:table),
+        Header("Storage ID", "Icon", "Filesystem", "Mount Point"),
+        table_of_filesystems_items
+      )
+    end
+
+
+    def table_of_filesystems_items
+
+      fields = [ :sid, :icon, :filesystem, :mountpoint ]
+
+      staging = @haha.storage().staging()
+
+      filesystems = Storage::Filesystem::all(staging)
+
+      ret = []
+
+      filesystems.each do |filesystem|
+        ret << filesystem.table_row(fields)
       end
 
       return ret
