@@ -28,6 +28,7 @@ require_relative "./storage_manager"
 require_relative "./proposal_settings"
 require_relative "./proposal_volume"
 require_relative "./boot_requirements_checker"
+require_relative "./disk_analyzer"
 require_relative "./space_maker"
 require "pp"
 
@@ -67,10 +68,11 @@ module Yast
         @volumes = boot_requirements_checker.needed_partitions
         @volumes += standard_volumes
 
-        space_maker = SpaceMaker.new(@volumes, @settings)
+        disk_analyzer = DiskAnalyzer.new
+        disk_analyzer.analyze
+
+        space_maker = SpaceMaker.new(@volumes, @settings, disk_analyzer)
         space_maker.find_space
-        space_maker.linux_partitions?
-        win_part = space_maker.find_windows_partitions
       end
 
       def proposal_text
