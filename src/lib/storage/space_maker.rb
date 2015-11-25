@@ -136,17 +136,61 @@ module Yast
         false
       end
 
-      # Check if there is a MS Windows partition that could possibly be
+      # Find any MS Windows partitions that could possibly be resized.
+      #
+      # @return [Array <Storage::partition>]
+      #
+      def find_windows_partitions
+        windows_partitions = []
+        windows_partition_ids =
+          [
+            ::Storage::ID_NTFS,
+            ::Storage::ID_DOS32,
+            ::Storage::ID_DOS16,
+            ::Storage::ID_DOS12
+          ]
+
+        @disks.each do |disk|
+          begin
+            disk.partition_table.partitions.each do |partition|
+              if windows_partition_ids.include?(partition.id)
+                windows_partitions << partition if windows_partition?(partition)
+              end
+            end
+          rescue RuntimeError => ex
+            log.info("CAUGHT exception #{ex}")
+          end
+        end
+        win_part_names = windows_partitions.map { |p| p.to_s }
+        log.info("Windows partitions: #{win_part_names}")
+        windows_partitions
+      end
+
+      # Check if 'partition' is a MS Windows partition that could possibly be
       # resized.
       #
-      # @return [bool] 'true# if there is a Windows partition, 'false' if not.
-      def windows_partition?
-        # TO DO
-        false
+      # @return [bool] 'true' if it is a Windows partition, 'false' if not.
+      #
+      def windows_partition?(partition)
+        log.info("Checking if #{partition.name} is a windows partition")
+        is_win = mount_and_check(partition) { |mp| windows_partition_check(mp) }
+        log.info("#{partition} is a windows partition") if is_win
+        is_win
+      end
+
+      # Check if the volume mounted at 'mount_point' is a Windows partition
+      # that could be resized.
+      #
+      # This is a separate method so it can be redefined in unit tests.
+      #
+      # @return 'true' if it is a Windows partition, 'false' if not.
+      #
+      def windows_partition_check(mount_point)
+        Dir.exists?(mount_point + "/windows/system32")
       end
 
       # Resize an existing MS Windows partition to free up disk space.
-      def resize_windows_partition
+      def resize_windows_partition(partition)
         # TO DO
       end
 
@@ -186,24 +230,44 @@ module Yast
       # installation medium).
       #
       def installation_volume?(vol)
-        # check if we have a filesystem
         log.info("Checking if #{vol.name} is an installation volume")
-        mount_point = "/mnt" # FIXME
+        is_inst = mount_and_check(vol) { |mp| installation_volume_check(mp) }
+        log.info("#{vol} is installation medium") if is_inst
+        is_inst
+      end
+
+      # Check if the volume mounted at 'mount_point' is an installation volume.
+      # This is a separate method so it can be redefined in unit tests.
+      #
+      # @return 'true' if it is an installation volume, 'false' if not.
+      #
+      def installation_volume_check(mount_point)
         check_file = "/control.xml"
+        return false unless File.exist?(mount_point + check_file)
+        FileUtils.identical?(check_file, mount_point + check_file)
+      end
+
+
+      # Mount a volume, perform the check given in 'block' while mounted, and
+      # then unmount. The block will get the mount point of the volume as a
+      # parameter.
+      #
+      # @return the return value of 'block' or 'nil' if there was an error.
+      #
+      def mount_and_check(vol, &block)
+        raise ArgumentError, "Code block required" unless block_given?
+        mount_point = "/mnt" # FIXME
         begin
+          # check if we have a filesystem
           return false unless vol.filesystem
           mount(vol.name, mount_point)
-
-          log.info("Checking if vol #{vol} is an installation volume")
-          return false unless File.exist?(mount_point + check_file)
-          found_check_file = FileUtils.identical?(check_file, mount_point + check_file)
-          log.info("#{vol} is installation medium (found identical #{check_file})") if found_check_file
-
+          log.info("Checking vol #{vol}")
+          check_result = block.call(mount_point)
           umount(vol.name)
-          found_check_file
+          check_result
         rescue RuntimeError => ex
           log.error("CAUGHT exception: #{ex} for #{vol}")
-          false
+          nil
         end
       end
 
