@@ -37,6 +37,10 @@ module Storage
       return ""
     end
 
+    def table_label()
+      return ""
+    end
+
   end
 
 
@@ -90,7 +94,7 @@ module Storage
 
 
   class Filesystem
-    
+
     def table_icon()
       return Yast::Term.new(:cell, Yast::Term.new(:icon, Yast::Directory.icondir + "22x22/apps/yast-nfs.png"), "Filesystem")
     end
@@ -105,6 +109,10 @@ module Storage
       else
         return ""
       end
+    end
+
+    def table_label()
+      return label
     end
 
   end

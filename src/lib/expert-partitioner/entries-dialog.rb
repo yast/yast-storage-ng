@@ -265,7 +265,7 @@ module ExpertPartitioner
     def table_of_filesystems
       Table(
         Id(:table),
-        Header("Storage ID", "Icon", "Filesystem", "Mount Point"),
+        Header("Storage ID", "Icon", "Filesystem", "Mount Point", "Label"),
         table_of_filesystems_items
       )
     end
@@ -273,7 +273,7 @@ module ExpertPartitioner
 
     def table_of_filesystems_items
 
-      fields = [ :sid, :icon, :filesystem, :mountpoint ]
+      fields = [ :sid, :icon, :filesystem, :mountpoint, :label ]
 
       staging = @haha.storage().staging()
 
