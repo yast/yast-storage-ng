@@ -1,7 +1,7 @@
 
 require "yast"
 require "storage"
-require "haha"
+require_relative "../storage/storage-manager"
 require "storage/extensions"
 require "expert-partitioner/format-dialog"
 
@@ -23,11 +23,6 @@ module ExpertPartitioner
 
     def initialize
       textdomain "storage"
-
-      ExpertPartitioner.init()
-
-      @haha = ExpertPartitioner.get_haha()
-
     end
 
 
@@ -101,7 +96,8 @@ module ExpertPartitioner
 
             filename = "#{Yast::Directory.tmpdir}/devicegraph-probed.gv"
 
-            probed = @haha.storage().probed()
+            storage = Yast::Storage::StorageManager.instance
+            probed = storage.probed()
             probed.write_graphviz(filename)
 
             Yast::UI.ReplaceWidget(
@@ -116,7 +112,8 @@ module ExpertPartitioner
 
             filename = "#{Yast::Directory.tmpdir}/devicegraph-staging.gv"
 
-            staging = @haha.storage().staging()
+            storage = Yast::Storage::StorageManager.instance
+            staging = storage.staging()
             staging.write_graphviz(filename)
 
             Yast::UI.ReplaceWidget(
@@ -131,7 +128,8 @@ module ExpertPartitioner
 
             filename = "#{Yast::Directory.tmpdir}/actiongraph.gv"
 
-            actiongraph = @haha.storage().calculate_actiongraph()
+            storage = Yast::Storage::StorageManager.instance
+            actiongraph = storage.calculate_actiongraph()
             actiongraph.write_graphviz(filename)
 
             Yast::UI.ReplaceWidget(
@@ -144,8 +142,9 @@ module ExpertPartitioner
 
           when :actionlist
 
-            actiongraph = @haha.storage().calculate_actiongraph()
+            storage = Yast::Storage::StorageManager.instance
 
+            actiongraph = storage.calculate_actiongraph()
             steps = actiongraph.commit_actions_as_strings()
 
             texts = []
@@ -176,7 +175,8 @@ module ExpertPartitioner
 
     def subtree
 
-      staging = @haha.storage().staging()
+      storage = Yast::Storage::StorageManager.instance
+      staging = storage.staging()
 
       ret = []
 
@@ -236,7 +236,8 @@ module ExpertPartitioner
 
       fields = [ :sid, :icon, :name, :size, :partition_table, :filesystem, :mountpoint ]
 
-      staging = @haha.storage().staging()
+      storage = Yast::Storage::StorageManager.instance
+      staging = storage.staging()
 
       disks = Storage::Disk::all(staging)
 
@@ -275,7 +276,8 @@ module ExpertPartitioner
 
       fields = [ :sid, :icon, :filesystem, :mountpoint, :label ]
 
-      staging = @haha.storage().staging()
+      storage = Yast::Storage::StorageManager.instance
+      staging = storage.staging()
 
       filesystems = Storage::Filesystem::all(staging)
 
@@ -294,7 +296,8 @@ module ExpertPartitioner
 
       sid = Yast::UI.QueryWidget(Id(:table), :CurrentItem)
 
-      staging = @haha.storage().staging()
+      storage = Yast::Storage::StorageManager.instance
+      staging = storage.staging()
       device = staging.find_device(sid)
 
       begin
@@ -311,7 +314,8 @@ module ExpertPartitioner
 
     def do_commit
 
-      actiongraph = @haha.storage().calculate_actiongraph()
+      storage = Yast::Storage::StorageManager.instance
+      actiongraph = storage.calculate_actiongraph()
 
       if actiongraph.empty?
         Yast::Popup::Error("Nothing to commit.")
@@ -321,8 +325,8 @@ module ExpertPartitioner
         return false
       end
 
-      @haha.storage().calculate_actiongraph()
-      @haha.storage().commit()
+      storage.calculate_actiongraph()
+      storage.commit()
 
       return true
 

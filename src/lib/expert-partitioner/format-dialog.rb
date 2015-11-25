@@ -1,7 +1,6 @@
 
 require "yast"
 require "storage"
-require "haha"
 
 Yast.import "UI"
 Yast.import "Label"
@@ -68,9 +67,9 @@ module ExpertPartitioner
 
     def doit
 
-      @haha = ExpertPartitioner.get_haha()
+      storage = Yast::Storage::StorageManager.instance
 
-      staging = @haha.storage().staging()
+      staging = storage.staging()
       device = staging.find_device(@sid)
 
       begin
