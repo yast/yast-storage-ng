@@ -195,6 +195,17 @@ describe Yast::Storage::DiskSize do
     it "should accept \"unlimited\" with surrounding whitespace" do
       expect( Yast::Storage::DiskSize.parse("  unlimited ").size_k ).to be == -1
     end
+    it "should accept its own output" do
+      expect( Yast::Storage::DiskSize.parse( Yast::Storage::DiskSize.GiB(42).to_s   ).size_k ).to be == 42 * 1024**2
+      expect( Yast::Storage::DiskSize.parse( Yast::Storage::DiskSize.new(43).to_s   ).size_k ).to be == 43
+      expect( Yast::Storage::DiskSize.parse( Yast::Storage::DiskSize.zero.to_s      ).size_k ).to be ==  0
+      expect( Yast::Storage::DiskSize.parse( Yast::Storage::DiskSize.unlimited.to_s ).size_k ).to be == -1
+    end
+    it "should reject invalid input" do
+      expect { Yast::Storage::DiskSize.parse("wrglbrmpf") }.to raise_error(ArgumentError)
+      expect { Yast::Storage::DiskSize.parse("47 00 GiB") }.to raise_error(ArgumentError)
+      expect { Yast::Storage::DiskSize.parse("0FFF MiB" ) }.to raise_error(ArgumentError)
+    end
   end
 
 end

@@ -97,11 +97,12 @@ module Yast
         # Invalid:
         #   42 GB    (supporting binary units only)
         #
-        def parse(size_str)
-          size_str.strip!
-          return DiskSize.unlimited if size_str == UNLIMITED
-          size, unit = size_str.split(/\s+/)
-          size = size.to_f
+        def parse(str)
+          str.strip!
+          return DiskSize.unlimited if str == UNLIMITED
+          size_str, unit = str.split(/\s+/)
+          raise ArgumentError, "Bad number: #{size_str}" if size_str !~ /^\d+\.?\d*$/
+          size = size_str.to_f
           return DiskSize.new(size) if unit.nil?
           DiskSize.new(size * unit_multiplier(unit))
         end
@@ -203,7 +204,7 @@ module Yast
       end
 
       def to_s
-        return _("unlimited") if unlimited?
+        return "unlimited" if unlimited?
         size, unit = to_human_readable
         format("%.2f %s", size, unit)
       end
