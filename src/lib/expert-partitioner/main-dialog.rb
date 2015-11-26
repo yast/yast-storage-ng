@@ -5,6 +5,8 @@ require "storage/storage-manager"
 require "storage/extensions"
 require "expert-partitioner/format-dialog"
 require "expert-partitioner/views/all"
+require "expert-partitioner/views/disk"
+require "expert-partitioner/views/partition"
 require "expert-partitioner/views/filesystem"
 require "expert-partitioner/views/probed-devicegraph"
 require "expert-partitioner/views/staging-devicegraph"
@@ -99,6 +101,9 @@ module ExpertPartitioner
           when :all
             @view = AllView.new()
 
+          when :hd
+            @view = AllView.new()
+
           when :filesystems
             @view = FilesystemView.new()
 
@@ -113,6 +118,21 @@ module ExpertPartitioner
 
           when :actionlist
             @view = ActionlistView.new()
+
+          else
+
+            sid = current_item
+
+            storage = Yast::Storage::StorageManager.instance
+            staging = storage.staging()
+
+            device = staging.find_device(sid)
+
+            if Storage::disk?(device)
+              @view = DiskView.new(Storage::to_disk(device))
+            elsif Storage::partition?(device)
+              @view = PartitionView.new(Storage::to_partition(device))
+            end
 
           end
 
