@@ -32,57 +32,98 @@ module Yast
     # Class to handle disk sizes in the MB/GB/TB range with readable output.
     #
     class DiskSize
-      include Yast::I18n
       include Comparable
+
+      UNITS = ["kiB", "MiB", "GiB", "TiB", "PiB", "EiB", "ZiB", "YiB"]
+      UNLIMITED = "unlimited"
 
       attr_accessor :size_k
 
       def initialize(size_k = 0)
-        textdomain "storage"
         @size_k = size_k.round
       end
 
       #
       # Factory methods
       #
-      def self.kiB(size)
-        DiskSize.new(size)
-      end
+      class << self
+        def kiB(size)
+          DiskSize.new(size)
+        end
 
-      def self.MiB(size)
-        DiskSize.new(size * 1024)
-      end
+        def MiB(size)
+          DiskSize.new(size * 1024)
+        end
 
-      def self.GiB(size)
-        DiskSize.new(size * (1024**2))
-      end
+        def GiB(size)
+          DiskSize.new(size * (1024**2))
+        end
 
-      def self.TiB(size)
-        DiskSize.new(size * (1024**3))
-      end
+        def TiB(size)
+          DiskSize.new(size * (1024**3))
+        end
 
-      def self.PiB(size)
-        DiskSize.new(size * (1024**4))
-      end
+        def PiB(size)
+          DiskSize.new(size * (1024**4))
+        end
 
-      def self.EiB(size)
-        DiskSize.new(size * (1024**5))
-      end
+        def EiB(size)
+          DiskSize.new(size * (1024**5))
+        end
 
-      def self.ZiB(size)
-        DiskSize.new(size * (1024**6))
-      end
+        def ZiB(size)
+          DiskSize.new(size * (1024**6))
+        end
 
-      def self.YiB(size)
-        DiskSize.new(size * (1024**7))
-      end
+        def YiB(size)
+          DiskSize.new(size * (1024**7))
+        end
 
-      def self.unlimited
-        DiskSize.new(-1)
-      end
+        def unlimited
+          DiskSize.new(-1)
+        end
 
-      def self.zero
-        DiskSize.new(0)
+        def zero
+          DiskSize.new(0)
+        end
+
+        # Create a DiskSize from a parsed string.
+        # Valid formats:
+        #   42 GiB
+        #   42.00  GiB
+        #   42          (=> 42 kiB)
+        #   unlimited   (=> -1 == unlimited)
+        #
+        # Invalid:
+        #   42 GB    (supporting binary units only)
+        #
+        def parse(size_str)
+          size_str.strip!
+          return DiskSize.unlimited if size_str == UNLIMITED
+          size, unit = size_str.split(/\s+/)
+          size = size.to_f
+          return DiskSize.new(size) if unit.nil?
+          DiskSize.new(size * unit_multiplier(unit))
+        end
+
+        alias_method :from_s, :parse
+        alias_method :from_human_readable, :parse
+
+        # Return the unit exponent for any of the known binary units ("kiB",
+        # "MiB", ...). The base of this exponent is 1024. The base unit is kiB.
+        #
+        def unit_exponent(unit)
+          index = UNITS.index(unit)
+          raise ArgumentError, "expected one of #{UNITS}" if index.nil?
+          index
+        end
+
+        # Return the unit multiplier for any of the known binary units ("kiB",
+        # "MiB", ...). The base unit is kiB.
+        #
+        def unit_multiplier(unit)
+          1024 ** unit_exponent(unit)
+        end
       end
 
       #
@@ -149,17 +190,16 @@ module Yast
       # Return numeric size and unit ("MiB", "GiB", ...) in human-readable form
       # @return Array [size, unit]
       def to_human_readable
-        return ["unlimited", ""] if size_k == -1
-        units = [_("kiB"), _("MiB"), _("GiB"), _("TiB"), _("PiB"), _("EiB"), _("ZiB"), _("YiB")]
+        return [UNLIMITED, ""] if size_k == -1
 
         unit_index = 0
         size = @size_k.to_f
 
-        while size > 1024.0 && unit_index < units.size - 1
+        while size > 1024.0 && unit_index < UNITS.size - 1
           size /= 1024.0
           unit_index += 1
         end
-        [size, units[unit_index]]
+        [size, UNITS[unit_index]]
       end
 
       def to_s

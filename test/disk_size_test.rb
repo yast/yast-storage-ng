@@ -13,7 +13,7 @@ describe Yast::Storage::DiskSize do
       expect( disk_size.size_k ).to be == 0
     end
   end
-  
+
   describe "created with 42 kiB" do
     disk_size = Yast::Storage::DiskSize.kiB(42)
     it "should return the correct human readable string" do
@@ -43,7 +43,7 @@ describe Yast::Storage::DiskSize do
       expect( disk_size.size_k ).to be == 44 * 1024**2
     end
   end
-  
+
   describe "created with 45 TiB" do
     disk_size = Yast::Storage::DiskSize.TiB(45)
     it "should return the correct human readable string" do
@@ -73,7 +73,7 @@ describe Yast::Storage::DiskSize do
       expect( disk_size.size_k ).to be == 47 * 1024**5
     end
   end
-  
+
   describe "created with a huge number" do
     disk_size = Yast::Storage::DiskSize.TiB(48 * 1024**5)
     it "should return the correct human readable string" do
@@ -97,7 +97,7 @@ describe Yast::Storage::DiskSize do
       expect( disk_size.size_k ).to be == 20 * 1024 + 512
     end
     it "should accept multiplication with an int" do
-      disk_size = Yast::Storage::DiskSize.MiB(12) * 3 
+      disk_size = Yast::Storage::DiskSize.MiB(12) * 3
       expect( disk_size.size_k ).to be == 12 * 1024 * 3
     end
     it "should accept division by an int" do
@@ -132,6 +132,68 @@ describe Yast::Storage::DiskSize do
     end
     it "operator >= should compare correctly" do
       expect( disk_size2 >= disk_size3 ).to be == true
+    end
+  end
+
+  describe "unit exponent" do
+    it "should be correct for kiB" do
+      expect( Yast::Storage::DiskSize.unit_exponent("kiB") ).to be == 0
+    end
+    it "should be correct for MiB" do
+      expect( Yast::Storage::DiskSize.unit_exponent("MiB") ).to be == 1
+    end
+    it "should be correct for GiB" do
+      expect( Yast::Storage::DiskSize.unit_exponent("GiB") ).to be == 2
+    end
+    it "should be correct for TiB" do
+      expect( Yast::Storage::DiskSize.unit_exponent("TiB") ).to be == 3
+    end
+    it "should be correct for PiB" do
+      expect( Yast::Storage::DiskSize.unit_exponent("PiB") ).to be == 4
+    end
+    it "should be correct for EiB" do
+      expect( Yast::Storage::DiskSize.unit_exponent("EiB") ).to be == 5
+    end
+    it "should be correct for ZiB" do
+      expect( Yast::Storage::DiskSize.unit_exponent("ZiB") ).to be == 6
+    end
+    it "should be correct for YiB" do
+      expect( Yast::Storage::DiskSize.unit_exponent("YiB") ).to be == 7
+    end
+    it "should raise an exception for invalid units" do
+      expect { Yast::Storage::DiskSize.unit_exponent("WTF") }.to raise_error(ArgumentError)
+      expect { Yast::Storage::DiskSize.unit_exponent("MB" ) }.to raise_error(ArgumentError)
+      expect { Yast::Storage::DiskSize.unit_exponent("GB" ) }.to raise_error(ArgumentError)
+      expect { Yast::Storage::DiskSize.unit_exponent("TB" ) }.to raise_error(ArgumentError)
+    end
+  end
+
+  describe "parsing from string" do
+    it "should work with just an integer" do
+      expect( Yast::Storage::DiskSize.parse("0").size_k ).to be == 0
+      expect( Yast::Storage::DiskSize.parse("7").size_k ).to be == 7
+    end
+    it "should work with integer and unit" do
+      expect( Yast::Storage::DiskSize.parse("42 GiB").size_k ).to be == 42 * 1024**2
+    end
+    it "should work with float and unit" do
+      expect( Yast::Storage::DiskSize.parse("43.00 GiB").size_k ).to be == 43 * 1024**2
+    end
+    it "should work with just an integer" do
+      expect( Yast::Storage::DiskSize.parse("0").size_k    ).to be == 0
+    end
+    it "should tolerate more embedded whitespace" do
+      expect( Yast::Storage::DiskSize.parse("44   MiB"     ).size_k ).to be == 44 * 1024
+    end
+    it "should tolerate more surrounding whitespace" do
+      expect( Yast::Storage::DiskSize.parse("   45   TiB  ").size_k ).to be == 45 * 1024**3
+      expect( Yast::Storage::DiskSize.parse("  46   "      ).size_k ).to be == 46
+    end
+    it "should accept \"unlimited\"" do
+      expect( Yast::Storage::DiskSize.parse("unlimited").size_k ).to be == -1
+    end
+    it "should accept \"unlimited\" with surrounding whitespace" do
+      expect( Yast::Storage::DiskSize.parse("  unlimited ").size_k ).to be == -1
     end
   end
 
