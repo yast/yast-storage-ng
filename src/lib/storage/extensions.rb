@@ -9,6 +9,49 @@ module Storage
 
   class Device
 
+    def self.table_header(fields)
+
+      return Header(*fields.map do |field|
+
+        case field
+
+        when :sid
+          _("Storage ID")
+
+        when :icon
+          _("Icon")
+
+        when :name
+          _("Name")
+
+        when :size
+          Right(_("Size"))
+
+        when :partition_table
+          _("Partition Table")
+
+        when :filesystem
+          _("Filesystem")
+
+        when :mountpoint
+          _("Mount Point")
+
+        when :label
+          _("Label")
+
+        when :transport
+          _("Transport")
+
+        when :mount_by
+          _("Mount By")
+
+        end
+
+      end)
+
+    end
+
+
     def table_row(fields)
       Item(Id(sid), *fields.map { |field| send("table_#{field}") })
     end
@@ -42,6 +85,14 @@ module Storage
     end
 
     def table_label()
+      return ""
+    end
+
+    def table_transport()
+      return ""
+    end
+
+    def table_mount_by()
       return ""
     end
 
@@ -85,6 +136,14 @@ module Storage
       return ""
     end
 
+    def table_transport()
+      if transport != TUNKNOWN
+        return ::Storage::transport_name(transport)
+      else
+        return ""
+      end
+    end
+
   end
 
 
@@ -113,6 +172,10 @@ module Storage
       else
         return ""
       end
+    end
+
+    def table_mount_by()
+      return ::Storage::mount_by_name(mount_by)
     end
 
     def table_label()

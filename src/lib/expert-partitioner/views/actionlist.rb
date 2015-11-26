@@ -2,6 +2,7 @@
 require "yast"
 require "storage"
 require "storage/storage-manager"
+require "expert-partitioner/views/view"
 
 Yast.import "UI"
 
@@ -10,7 +11,7 @@ include Yast::I18n
 
 module ExpertPartitioner
 
-  class ActionlistView
+  class ActionlistView < View
 
     def create
 

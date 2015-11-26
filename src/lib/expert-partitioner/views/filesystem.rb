@@ -3,6 +3,7 @@ require "yast"
 require "storage"
 require "storage/storage-manager"
 require "storage/extensions"
+require "expert-partitioner/views/view"
 
 Yast.import "UI"
 
@@ -11,21 +12,17 @@ include Yast::I18n
 
 module ExpertPartitioner
 
-  class FilesystemView
+  class FilesystemView < View
+
+    FIELDS = [ :sid, :icon, :filesystem, :mountpoint, :mount_by, :label ]
 
     def create
-      Table(
-        Id(:table),
-        Header("Storage ID", "Icon", "Filesystem", "Mount Point", "Label"),
-        items
-      )
+      Table(Id(:table), Storage::Device.table_header(FIELDS), items)
     end
 
     def items
 
       storage = Yast::Storage::StorageManager.instance
-
-      fields = [ :sid, :icon, :filesystem, :mountpoint, :label ]
 
       staging = storage.staging()
 
@@ -34,7 +31,7 @@ module ExpertPartitioner
       ret = []
 
       filesystems.each do |filesystem|
-        ret << filesystem.table_row(fields)
+        ret << filesystem.table_row(FIELDS)
       end
 
       return ret

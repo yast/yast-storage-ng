@@ -64,8 +64,10 @@ module ExpertPartitioner
           )
         )
       )
-      view = AllView.new()
-      Yast::UI.ReplaceWidget(:tree_panel, view.create)
+
+      @view = AllView.new()
+      Yast::UI.ReplaceWidget(:tree_panel, @view.create)
+
     end
 
 
@@ -95,30 +97,26 @@ module ExpertPartitioner
           case current_item = Yast::UI.QueryWidget(:tree, :CurrentItem)
 
           when :all
-            view = AllView.new()
-            Yast::UI.ReplaceWidget(:tree_panel, view.create)
+            @view = AllView.new()
 
           when :filesystems
-            view = FilesystemView.new()
-            Yast::UI.ReplaceWidget(:tree_panel, view.create)
+            @view = FilesystemView.new()
 
           when :devicegraph_probed
-            view = ProbedDevicegraphView.new()
-            Yast::UI.ReplaceWidget(:tree_panel, view.create)
+            @view = ProbedDevicegraphView.new()
 
           when :devicegraph_staging
-            view = StagingDevicegraphView.new()
-            Yast::UI.ReplaceWidget(:tree_panel, view.create)
+            @view = StagingDevicegraphView.new()
 
           when :actiongraph
-            view = ActiongraphView.new()
-            Yast::UI.ReplaceWidget(:tree_panel, view.create)
+            @view = ActiongraphView.new()
 
           when :actionlist
-            view = ActionlistView.new()
-            Yast::UI.ReplaceWidget(:tree_panel, view.create)
+            @view = ActionlistView.new()
 
-        end
+          end
+
+          Yast::UI.ReplaceWidget(:tree_panel, @view.create)
 
         else
           log.warn "Unexpected input #{input}"
@@ -168,13 +166,10 @@ module ExpertPartitioner
         Item(
           Id(:all), "hostname", true,
           [
-            Item(
-              Id(:hd), _("Hard Disks"), false,
-              subtree()
-            )
+            Item(Id(:hd), _("Hard Disks"), false, subtree()),
+            Item(Id(:filesystems), _("Filesystems"))
           ]
         ),
-        Item(Id(:filesystems), _("Filesystems")),
         Item(Id(:devicegraph_probed), _("Device Graph (probed)")),
         Item(Id(:devicegraph_staging), _("Device Graph (staging)")),
         Item(Id(:actiongraph), _("Action Graph")),
@@ -199,6 +194,8 @@ module ExpertPartitioner
       end
 
       FormatDialog.new(sid).run()
+
+      Yast::UI.ReplaceWidget(:tree_panel, @view.create)
 
     end
 
