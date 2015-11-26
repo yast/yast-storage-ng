@@ -22,7 +22,7 @@ include Yast::I18n
 
 module ExpertPartitioner
 
-  class EntriesDialog
+  class MainDialog
 
     include Yast::UIShortcuts
     include Yast::Logger

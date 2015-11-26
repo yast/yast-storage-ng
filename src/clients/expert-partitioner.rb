@@ -16,7 +16,7 @@
 #  To contact Novell about this file by physical or electronic mail,
 #  you may find current contact information at www.suse.com
 
-require "expert-partitioner/entries-dialog"
+require "expert-partitioner/main-dialog"
 
-ExpertPartitioner::EntriesDialog.new.run
+ExpertPartitioner::MainDialog.new.run
 
