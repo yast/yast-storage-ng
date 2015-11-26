@@ -4,6 +4,12 @@ require "storage"
 require "storage/storage-manager"
 require "storage/extensions"
 require "expert-partitioner/format-dialog"
+require "expert-partitioner/views/all"
+require "expert-partitioner/views/filesystem"
+require "expert-partitioner/views/probed-devicegraph"
+require "expert-partitioner/views/staging-devicegraph"
+require "expert-partitioner/views/actiongraph"
+require "expert-partitioner/views/actionlist"
 
 Yast.import "UI"
 Yast.import "Label"
@@ -11,13 +17,14 @@ Yast.import "Popup"
 Yast.import "Directory"
 Yast.import "HTML"
 
+include Yast::I18n
+
 
 module ExpertPartitioner
 
   class EntriesDialog
 
     include Yast::UIShortcuts
-    include Yast::I18n
     include Yast::Logger
 
 
@@ -57,7 +64,8 @@ module ExpertPartitioner
           )
         )
       )
-      Yast::UI.ReplaceWidget(:tree_panel, table)
+      view = AllView.new()
+      Yast::UI.ReplaceWidget(:tree_panel, view.create)
     end
 
 
@@ -87,78 +95,28 @@ module ExpertPartitioner
           case current_item = Yast::UI.QueryWidget(:tree, :CurrentItem)
 
           when :all
-            Yast::UI.ReplaceWidget(:tree_panel, table)
+            view = AllView.new()
+            Yast::UI.ReplaceWidget(:tree_panel, view.create)
 
           when :filesystems
-            Yast::UI.ReplaceWidget(:tree_panel, table_of_filesystems)
+            view = FilesystemView.new()
+            Yast::UI.ReplaceWidget(:tree_panel, view.create)
 
           when :devicegraph_probed
-
-            filename = "#{Yast::Directory.tmpdir}/devicegraph-probed.gv"
-
-            storage = Yast::Storage::StorageManager.instance
-            probed = storage.probed()
-            probed.write_graphviz(filename)
-
-            Yast::UI.ReplaceWidget(
-              :tree_panel,
-              VBox(
-                Heading(_("Device Graph (probed)")),
-                Yast::Term.new(:Graph, Id(:graph), Opt(:notify, :notifyContextMenu), filename, "dot"),
-              )
-            )
+            view = ProbedDevicegraphView.new()
+            Yast::UI.ReplaceWidget(:tree_panel, view.create)
 
           when :devicegraph_staging
-
-            filename = "#{Yast::Directory.tmpdir}/devicegraph-staging.gv"
-
-            storage = Yast::Storage::StorageManager.instance
-            staging = storage.staging()
-            staging.write_graphviz(filename)
-
-            Yast::UI.ReplaceWidget(
-              :tree_panel,
-              VBox(
-                Heading(_("Device Graph (staging)")),
-                Yast::Term.new(:Graph, Id(:graph), Opt(:notify, :notifyContextMenu), filename, "dot"),
-              )
-            )
+            view = StagingDevicegraphView.new()
+            Yast::UI.ReplaceWidget(:tree_panel, view.create)
 
           when :actiongraph
-
-            filename = "#{Yast::Directory.tmpdir}/actiongraph.gv"
-
-            storage = Yast::Storage::StorageManager.instance
-            actiongraph = storage.calculate_actiongraph()
-            actiongraph.write_graphviz(filename)
-
-            Yast::UI.ReplaceWidget(
-              :tree_panel,
-              VBox(
-                Heading(_("Action Graph")),
-                Yast::Term.new(:Graph, Id(:graph), Opt(:notify, :notifyContextMenu), filename, "dot"),
-              )
-            )
+            view = ActiongraphView.new()
+            Yast::UI.ReplaceWidget(:tree_panel, view.create)
 
           when :actionlist
-
-            storage = Yast::Storage::StorageManager.instance
-
-            # storage.probed().save("./devicegraph-probed.xml")
-            # storage.staging().save("./devicegraph-staging.xml")
-
-            actiongraph = storage.calculate_actiongraph()
-            steps = actiongraph.commit_actions_as_strings()
-
-            texts = steps.to_a
-
-            Yast::UI.ReplaceWidget(
-              :tree_panel,
-              VBox(
-                Heading(_("Installation Steps")),
-                RichText(Yast::HTML.List(texts)),
-              )
-            )
+            view = ActionlistView.new()
+            Yast::UI.ReplaceWidget(:tree_panel, view.create)
 
         end
 
@@ -222,74 +180,6 @@ module ExpertPartitioner
         Item(Id(:actiongraph), _("Action Graph")),
         Item(Id(:actionlist), _("Action List"))
       ]
-    end
-
-
-    def table
-      Table(
-        Id(:table),
-        Header("Storage ID", "Icon", "Name", Right("Size"), "Partition Table", "Filesystem", "Mount Point"),
-        table_items
-      )
-    end
-
-
-    def table_items
-
-      fields = [ :sid, :icon, :name, :size, :partition_table, :filesystem, :mountpoint ]
-
-      storage = Yast::Storage::StorageManager.instance
-      staging = storage.staging()
-
-      disks = Storage::Disk::all(staging)
-
-      ret = []
-
-      disks.each do |disk|
-
-        ret << disk.table_row(fields)
-
-        begin
-          partition_table = disk.partition_table()
-          partition_table.partitions().each do |partition|
-            ret << partition.table_row(fields)
-          end
-        rescue Storage::WrongNumberOfChildren, Storage::DeviceHasWrongType
-        end
-
-      end
-
-      return ret
-
-    end
-
-
-    def table_of_filesystems
-      Table(
-        Id(:table),
-        Header("Storage ID", "Icon", "Filesystem", "Mount Point", "Label"),
-        table_of_filesystems_items
-      )
-    end
-
-
-    def table_of_filesystems_items
-
-      fields = [ :sid, :icon, :filesystem, :mountpoint, :label ]
-
-      storage = Yast::Storage::StorageManager.instance
-      staging = storage.staging()
-
-      filesystems = Storage::Filesystem::all(staging)
-
-      ret = []
-
-      filesystems.each do |filesystem|
-        ret << filesystem.table_row(fields)
-      end
-
-      return ret
-
     end
 
 
