@@ -112,7 +112,7 @@ module Yast
       # @return [Array<::Storage::Disk>] installation disks
       #
       def find_installation_disks
-        disks = ::Storage::Disk.all(StorageManager.instance.probed).to_a
+        disks = StorageManager.instance.probed.all_disks.to_a
         # FIXME: to_a should not be necessary:
         # libstorage should return something that Ruby can handle.
         # This is very likely a problem of the Swig bindings.
@@ -139,7 +139,7 @@ module Yast
       # @return [Array<::Storage::Disk>] candidate disks
       #
       def find_candidate_disks
-        disks = ::Storage::Disk.all(StorageManager.instance.probed).to_a
+        disks = StorageManager.instance.probed.all_disks.to_a
         # FIXME: to_a should not be necessary
 
         usb_disks, non_usb_disks = disks.partition { |disk| disk.transport == ::Storage::USB }
