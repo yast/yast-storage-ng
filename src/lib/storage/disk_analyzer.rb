@@ -304,7 +304,7 @@ module Yast
       # @return 'true' if it is an installation volume, 'false' if not.
       #
       def installation_volume_check(mount_point)
-        check_file = "control.xml" # FIXME: "/control.xml"
+        check_file = "/control.xml"
         mount_point += "/" unless mount_point.end_with?("/")
         return false unless File.exist?(mount_point + check_file)
         FileUtils.identical?(check_file, mount_point + check_file)
