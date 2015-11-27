@@ -23,18 +23,13 @@ module ExpertPartitioner
     def items
 
       storage = Yast::Storage::StorageManager.instance
-
       staging = storage.staging()
 
       filesystems = Storage::Filesystem::all(staging)
 
-      ret = []
-
-      filesystems.each do |filesystem|
-        ret << filesystem.table_row(FIELDS)
+      return filesystems.to_a.map do |filesystem|
+        filesystem.table_row(FIELDS)
       end
-
-      return ret
 
     end
 

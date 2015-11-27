@@ -147,54 +147,45 @@ module ExpertPartitioner
 
 
     def tree
-      Tree(Id(:tree), Opt(:notify), _("System View"), tree_items)
+      Tree(Id(:tree), Opt(:notify), _("System View"), [
+             Item(
+               Id(:all), "hostname", true,
+               [
+                 Item(Id(:hd), _("Hard Disks"), false, disks_subtree()),
+                 Item(Id(:filesystems), _("Filesystems"))
+               ]
+             ),
+             Item(Id(:devicegraph_probed), _("Device Graph (probed)")),
+             Item(Id(:devicegraph_staging), _("Device Graph (staging)")),
+             Item(Id(:actiongraph), _("Action Graph")),
+             Item(Id(:actionlist), _("Action List"))
+           ])
     end
 
 
-    def subtree
+    def disks_subtree
 
       storage = Yast::Storage::StorageManager.instance
       staging = storage.staging()
 
       disks = Storage::Disk::all(staging)
 
-      ret = []
+      return disks.to_a.map do |disk|
 
-      disks.each do |disk|
-
-        s = []
+        partitions_subtree = []
 
         begin
           partition_table = disk.partition_table()
           partition_table.partitions().each do |partition|
-            s << Item(Id(partition.sid()), partition.name())
+            partitions_subtree << Item(Id(partition.sid()), partition.name())
           end
         rescue Storage::WrongNumberOfChildren, Storage::DeviceHasWrongType
         end
 
-        ret << Item(Id(disk.sid()), disk.name(), s)
+        Item(Id(disk.sid()), disk.name(), partitions_subtree)
 
       end
 
-      return ret
-
-    end
-
-
-    def tree_items
-      [
-        Item(
-          Id(:all), "hostname", true,
-          [
-            Item(Id(:hd), _("Hard Disks"), false, subtree()),
-            Item(Id(:filesystems), _("Filesystems"))
-          ]
-        ),
-        Item(Id(:devicegraph_probed), _("Device Graph (probed)")),
-        Item(Id(:devicegraph_staging), _("Device Graph (staging)")),
-        Item(Id(:actiongraph), _("Action Graph")),
-        Item(Id(:actionlist), _("Action List"))
-      ]
     end
 
 
