@@ -34,6 +34,9 @@ module Yast
     #
     # TO DO: Check with arch maintainers if the requirements are correct.
     #
+    # See also
+    # https://github.com/yast/yast-bootloader/blob/master/SUPPORTED_SCENARIOS.md
+    #
     class BootRequirementsChecker
       include Yast::Logger
 
