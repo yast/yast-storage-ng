@@ -7,6 +7,14 @@ include Yast::UIShortcuts
 module Storage
 
 
+  def self.silence
+    silencer = ::Storage::Silencer.new()
+    yield
+  ensure
+    silencer.turn_off
+  end
+
+
   class Device
 
     def self.table_header(fields)

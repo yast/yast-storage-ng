@@ -30,16 +30,20 @@ module ExpertPartitioner
 
       ret = []
 
-      disks.each do |disk|
+      ::Storage::silence do
 
-        ret << disk.table_row(FIELDS)
+        disks.each do |disk|
 
-        begin
-          partition_table = disk.partition_table()
-          partition_table.partitions().each do |partition|
-            ret << partition.table_row(FIELDS)
+          ret << disk.table_row(FIELDS)
+
+          begin
+            partition_table = disk.partition_table()
+            partition_table.partitions().each do |partition|
+              ret << partition.table_row(FIELDS)
+            end
+          rescue Storage::WrongNumberOfChildren, Storage::DeviceHasWrongType
           end
-        rescue Storage::WrongNumberOfChildren, Storage::DeviceHasWrongType
+
         end
 
       end
