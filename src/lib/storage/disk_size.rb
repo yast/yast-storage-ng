@@ -114,9 +114,7 @@ module Yast
         # "MiB", ...). The base of this exponent is 1024. The base unit is kiB.
         #
         def unit_exponent(unit)
-          index = UNITS.index(unit)
-          raise ArgumentError, "expected one of #{UNITS}" if index.nil?
-          index
+          UNITS.index(unit) or raise ArgumentError, "expected one of #{UNITS}"
         end
 
         # Return the unit multiplier for any of the known binary units ("kiB",
@@ -137,7 +135,7 @@ module Yast
         elsif other.respond_to?(:size_k)
           DiskSize.new(@size_k + other.size_k)
         else
-          raise TypeError, "Numeric value or DiskSize expected"
+          raise TypeError, "Unexpected #{other.class}; expected Numeric value or DiskSize"
         end
       end
 
@@ -147,7 +145,7 @@ module Yast
         elsif other.respond_to?(:size_k)
           DiskSize.new(@size_k - other.size_k)
         else
-          raise TypeError, "Numeric value or DiskSize expected"
+          raise TypeError, "Unexpected #{other.class}; expected Numeric value or DiskSize"
         end
       end
 
@@ -155,7 +153,7 @@ module Yast
         if other.is_a?(Numeric)
           DiskSize.new(@size_k * other)
         else
-          raise TypeError, "Numeric value expected"
+          raise TypeError, "Unexpected #{other.class}; expected Numeric value"
         end
       end
 
@@ -163,7 +161,7 @@ module Yast
         if other.is_a?(Numeric)
           DiskSize.new(@size_k.to_f / other)
         else
-          raise TypeError, "Numeric value expected"
+          raise TypeError, "Unexpected #{other.class}; expected Numeric value"
         end
       end
 
@@ -181,10 +179,17 @@ module Yast
 
       # The Comparable mixin will get us operators < > <= >= == != with this
       def <=>(other)
+        if other.respond_to?(:unlimited?)
+          if other.unlimited?
+            return unlimited? ? 0 : -1
+          else
+            return 1 if unlimited?
+          end
+        end
         if other.respond_to?(:size_k)
           return @size_k <=> other.size_k
         else
-          raise TypeError, "DiskSize expected"
+          raise TypeError, "Unexpected #{other.class}; expected DiskSize"
         end
       end
 
@@ -200,7 +205,7 @@ module Yast
           size /= 1024.0
           unit_index += 1
         end
-        [size, UNITS[unit_index]]
+        [size, UNITS[unit_index]]  # FIXME: Make unit translatable
       end
 
       def to_s

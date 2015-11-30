@@ -2,8 +2,8 @@
 
 require_relative "spec_helper"
 require "storage/disk_size"
-require "pp"
 
+using Yast::Storage
 
 describe Yast::Storage::DiskSize do
 
@@ -132,6 +132,26 @@ describe Yast::Storage::DiskSize do
     end
     it "operator >= should compare correctly" do
       expect( disk_size2 >= disk_size3 ).to be == true
+    end
+  end
+
+  describe "comparison with unlimited" do
+    unlimited = Yast::Storage::DiskSize.unlimited
+    disk_size = Yast::Storage::DiskSize.GiB(42)
+    it "should compare any disk size correctly with unlimited" do
+      expect( disk_size <  unlimited ).to be == true
+      expect( disk_size >  unlimited ).to be == false
+      expect( disk_size == unlimited ).to be == false
+    end
+    it "should compare unlimited correctly with any disk size" do
+      expect( unlimited >  disk_size ).to be == true
+      expect( unlimited <  disk_size ).to be == false
+      expect( unlimited == disk_size ).to be == false
+    end
+    it "should compare unlimited correctly with unlimited" do
+      expect( unlimited >  unlimited ).to be == false
+      expect( unlimited <  unlimited ).to be == false
+      expect( unlimited == unlimited ).to be == true
     end
   end
 

@@ -42,7 +42,7 @@ module Yast
 
       # Initialize.
       #
-      # @param volumes [list of ProposalVolume] volumes to find space for.
+      # @param volumes [Array <ProposalVolume>] volumes to find space for.
       # The volumes might be changed by this class.
       #
       # @param settings [Storage::Settings] parameters to use

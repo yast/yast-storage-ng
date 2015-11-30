@@ -193,7 +193,7 @@ module Yast
                 linux_partitions << partition
               end
             end
-          rescue RuntimeError => ex
+          rescue RuntimeError => ex # FIXME: rescue ::Storage::Exception when SWIG bindings are fixed
             log.info("CAUGHT exception #{ex}")
           end
         end
@@ -225,7 +225,7 @@ module Yast
                 windows_partitions << partition if windows_partition?(partition)
               end
             end
-          rescue RuntimeError => ex
+          rescue RuntimeError => ex  # FIXME: rescue ::Storage::Exception when SWIG bindings are fixed
             log.info("CAUGHT exception #{ex}")
           end
         end
@@ -272,7 +272,7 @@ module Yast
             end
           end
           return false # if we get here, there is a partition table.
-        rescue RuntimeError => ex
+        rescue RuntimeError => ex  # FIXME: rescue ::Storage::Exception when SWIG bindings are fixed
           log.info("CAUGHT exception: #{ex} for #{disk}")
         end
 
@@ -326,7 +326,7 @@ module Yast
           check_result = block.call(mount_point)
           umount(mount_point)
           check_result
-        rescue RuntimeError => ex
+        rescue RuntimeError => ex  # FIXME: rescue ::Storage::Exception when SWIG bindings are fixed
           log.error("CAUGHT exception: #{ex} for #{vol}")
           nil
         end
