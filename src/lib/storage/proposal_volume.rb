@@ -34,6 +34,16 @@ module Yast
       attr_accessor :size, :min_size, :max_size, :desired_size
       attr_accessor :can_live_on_logical_volume, :logical_volume_name
 
+      # Constructor.
+      #
+      # @param mount_point [string] mount point for this volume. This might be
+      #        a real mount point ("/", "/boot", "/home") or a pseudo mount
+      #        point like "swap".
+      #
+      # @param filesystem_type [::Storage::FsType] the type of filesystem this
+      #        volume should get. Typically one of ::Storage::BTRFS,
+      #        ::Storage::EXT4, ::Storage::XFS, ::Storage::SWAP
+      #
       def initialize(mount_point, filesystem_type = nil)
         @mount_point = mount_point
         @filesystem_type = filesystem_type
