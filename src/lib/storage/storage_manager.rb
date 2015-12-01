@@ -22,7 +22,6 @@
 # find current contact information at www.suse.com.
 
 require "yast"
-require "yastx"
 require "storage"
 
 module Yast
