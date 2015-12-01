@@ -335,7 +335,7 @@ module Yast
       # (::Storage::Disk, ::Storage::Partition, ...).
       #
       # @param disks [Array<BlkDev>]
-      # @return [Array<string>] names
+      # @return [Array<string>] names, e.g. ["/dev/sda", "/dev/sdb1", "/dev/sdc3"]
       #
       def dev_names(blk_devices)
         blk_devices.map { |x| x.to_s }
