@@ -119,18 +119,13 @@ module Yast
 
         usb_disks, non_usb_disks = disks.partition { |disk| disk.transport == ::Storage::USB }
         disks = usb_disks + non_usb_disks
-        disk_count = 0
-        installation_disks = []
 
-        disks.each do |disk|
-          installation_disks << disk if installation_disk?(disk)
-          disk_count += 1
-          if disk_count > @disk_check_limit
-            log.info("Disk check limit reached after #{disk}")
-            break
-          end
+        if disks.size > @disk_check_limit
+          disks = disks.first(@disk_check_limit)
+          log.info("Installation disk check limit exceeded - only checking #{dev_names(disks)}")
         end
-        installation_disks
+
+        disks.select { |disk| installation_disk?(disk) }
       end
 
       # Find disks that are suitable for installing Linux.
