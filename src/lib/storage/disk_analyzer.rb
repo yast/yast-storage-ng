@@ -300,6 +300,10 @@ module Yast
       #
       def installation_volume_check(mount_point)
         check_file = "/control.xml"
+        if !File.exist?(check_file)
+          log.error("ERROR: Check file #{check_file} does not exist in inst-sys")
+          return false
+        end
         mount_point += "/" unless mount_point.end_with?("/")
         return false unless File.exist?(mount_point + check_file)
         FileUtils.identical?(check_file, mount_point + check_file)
