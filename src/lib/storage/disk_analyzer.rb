@@ -348,7 +348,7 @@ module Yast
       def mount(device, mount_point)
         # FIXME: use libstorage function when available
         cmd = "/usr/bin/mount #{device} #{mount_point} >/dev/null 2>&1"
-        log.info("Trying to mount #{device}: #{cmd}")
+        log.debug("Trying to mount #{device}: #{cmd}")
         raise "mount failed for #{device}" unless system(cmd)
       end
 
@@ -359,7 +359,7 @@ module Yast
       def umount(mount_point)
         # FIXME: use libstorage function when available
         cmd = "/usr/bin/umount #{mount_point}"
-        log.info("Unmounting: #{cmd}")
+        log.debug("Unmounting: #{cmd}")
         raise "umount failed for #{mount_point}" unless system(cmd)
       end
     end
