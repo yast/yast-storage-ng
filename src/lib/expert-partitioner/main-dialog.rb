@@ -198,7 +198,7 @@ module ExpertPartitioner
       device = staging.find_device(sid)
 
       begin
-        blk_device = Storage::to_blkdevice(device)
+        blk_device = Storage::to_blk_device(device)
         log.info "do_format #{sid} #{blk_device.name}"
       rescue Storage::DeviceHasWrongType
         log.error "do_format on non blk device"
