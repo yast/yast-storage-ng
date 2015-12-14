@@ -53,11 +53,24 @@ module Yast
         @volumes  = volumes
         @settings = settings
         @disk_analyzer = disk_analyzer
+        @free_space = []
       end
 
       # Try to detect empty (unpartitioned) space.
       def find_space
-        # TO DO
+        @free_space = []
+        @disk_analyzer.candidate_disks.each do |disk|
+          begin
+            disk.partition_table.unused_partition_slots.each do |slot|
+              size = DiskSize.new(slot.region.to_kb(slot.region.length))
+              log.info("Found slot: #{slot.region} size #{size} on #{disk}")
+              @free_space << slot
+            end
+          rescue RuntimeError => ex # FIXME: rescue ::Storage::Exception when SWIG bindings are fixed
+            log.info("CAUGHT exception #{ex}")
+            # FIXME: Handle completely empty disks (no partition table) as empty space
+          end
+        end
       end
 
       # Use force to create space: Try to resize an existing Windows
