@@ -141,8 +141,15 @@ module Yast
         log.info("USB Disks:     #{dev_names(usb_disks)}")
         log.info("Non-USB Disks: #{dev_names(non_usb_disks)}")
 
+        # Try with non-USB disks first.
+        candidate_disks = remove_installation_disks(non_usb_disks)
+        if candidate_disks.empty?
+          log.info("No non-USB candidate disks left after eliminating installation disks")
+          log.info("Trying with USB disks")
+          candidate_disks = remove_installation_disks(usb_disks)
+        end
+
         # We don't want to install on our installation disk if there is any other way.
-        candidate_disks = remove_installation_disks(non_usb_disks + usb_disks)
         if candidate_disks.empty?
           log.info("No candidate disks left after eliminating installation disks")
           log.info("Trying with non-USB installation disks")
