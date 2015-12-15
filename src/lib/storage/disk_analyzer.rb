@@ -67,9 +67,9 @@ module Yast
       def initialize
         Yast.import "Arch"
 
-        @installation_disks = []
-        @candidate_disks    = []
-        @linux_partitions   = []
+        @installation_disks = [] # device names of installation media
+        @candidate_disks    = [] # device names of disks to install on
+        @linux_partitions   = [] # device names of existing Linux parititions
         @windows_partitions = [] # only filled if @linux_partitions is empty
 
         # Maximum number of disks to check. This might be important on
@@ -95,10 +95,10 @@ module Yast
           log.info("Linux partitions found - not checking for Windows partitions")
         end
 
-        log.info("Installation disks: #{dev_names(@installation_disks)}")
-        log.info("Candidate    disks: #{dev_names(@candidate_disks)}")
-        log.info("Linux   partitions: #{dev_names(@linux_partitions)}")
-        log.info("Windows partitions: #{dev_names(@windows_partitions)}")
+        log.info("Installation disks: #{@installation_disks}")
+        log.info("Candidate    disks: #{@candidate_disks}")
+        log.info("Linux   partitions: #{@linux_partitions}")
+        log.info("Windows partitions: #{@windows_partitions}")
       end
 
       # Find disks that look like the current installation medium
@@ -109,7 +109,7 @@ module Yast
       # checking if a disk is an installation disk involves mounting and
       # unmounting each partition on that disk.
       #
-      # @return [Array<::Storage::Disk>] installation disks
+      # @return [Array<String>] device names of installation disks
       #
       def find_installation_disks
         disks = StorageManager.instance.probed.all_disks.to_a
@@ -125,13 +125,13 @@ module Yast
           log.info("Installation disk check limit exceeded - only checking #{dev_names(disks)}")
         end
 
-        disks.select { |disk| installation_disk?(disk) }
+        dev_names(disks.select { |disk| installation_disk?(disk.name) })
       end
 
       # Find disks that are suitable for installing Linux.
       # Put any USB disks to the end of that array.
       #
-      # @return [Array<::Storage::Disk>] candidate disks
+      # @return [Array<string>] device names of candidate disks
       #
       def find_candidate_disks
         disks = StorageManager.instance.probed.all_disks.to_a
@@ -160,23 +160,7 @@ module Yast
           log.info("Trying with installation disks out of sheer desperation")
           candidate_disks = @installation_disks
         end
-        candidate_disks
-      end
-
-      # Remove any installation disks from 'disks' and return a disks array
-      # containing the disks that are not installation media.
-      #
-      # @param disks [Array<::Storage::Disk>]
-      # @return [Array<::Storage::Disk>] non-installation disks
-      #
-      def remove_installation_disks(disks)
-        # We can't simply use
-        #   disks -= @installation_disks
-        # because the list elements (from libstorage) don't provide a .hash method.
-        # Comparing device names ("/dev/sda"...) instead.
-
-        inst_names = dev_names(@installation_disks)
-        disks.delete_if { |disk| inst_names.include?(disk.name) }
+        dev_names(candidate_disks)
       end
 
       # Find any Linux partitions on any of the candidate disks.
@@ -187,19 +171,20 @@ module Yast
       #
       def find_linux_partitions
         linux_partitions = []
-        @candidate_disks.each do |disk|
+        @candidate_disks.each do |disk_name|
           begin
+            disk = ::Storage::Disk.find(StorageManager.instance.probed, disk_name)
             disk.partition_table.partitions.each do |partition|
               if LINUX_PARTITION_IDS.include?(partition.id)
                 log.info("Found Linux partition #{partition} (ID 0x#{partition.id.to_s(16)})")
-                linux_partitions << partition
+                linux_partitions << partition.name
               end
             end
           rescue RuntimeError => ex # FIXME: rescue ::Storage::Exception when SWIG bindings are fixed
             log.info("CAUGHT exception #{ex}")
           end
         end
-        log.info("Linux part: #{dev_names(linux_partitions)}")
+        log.info("Linux part: #{linux_partitions}")
         linux_partitions
       end
 
@@ -220,11 +205,12 @@ module Yast
         windows_partitions = []
 
         # No need to limit checking - PC arch only (few disks)
-        @candidate_disks.each do |disk|
+        @candidate_disks.each do |disk_name|
           begin
+            disk = ::Storage::Disk.find(StorageManager.instance.probed, disk_name)
             disk.partition_table.partitions.each do |partition|
               if WINDOWS_PARTITION_IDS.include?(partition.id)
-                windows_partitions << partition if windows_partition?(partition)
+                windows_partitions << partition.name if windows_partition?(partition.name)
               end
             end
           rescue RuntimeError => ex  # FIXME: rescue ::Storage::Exception when SWIG bindings are fixed
@@ -234,8 +220,10 @@ module Yast
         windows_partitions
       end
 
-      # Check if 'partition' is a MS Windows partition that could possibly be
-      # resized.
+      # Check if device name 'partition' is a MS Windows partition that could
+      # possibly be resized.
+      #
+      # @param partition [string| device name of the partition to check
       #
       # @return [bool] 'true' if it is a Windows partition, 'false' if not.
       #
@@ -262,15 +250,20 @@ module Yast
       # and started the installation from. This will check all filesystems on
       # that disk.
       #
-      def installation_disk?(disk)
-        log.info("Checking if #{disk} is an installation disk")
+      # @param disk_name [string] device name of the disk to check
+      #
+      # @return [bool] 'true' if the disk is an installation disk
+      #
+      def installation_disk?(disk_name)
+        log.info("Checking if #{disk_name} is an installation disk")
         begin
+          disk = ::Storage::Disk.find(StorageManager.instance.probed, disk_name)
           disk.partition_table.partitions.each do |partition|
             if [::Storage::ID_SWAP, ::Storage::ID_EXTENDED].include?(partition.id)
               log.info("Skipping #{partition} (ID 0x#{partition.id.to_s(16)})")
               next
             else
-              return true if installation_volume?(partition)
+              return true if installation_volume?(partition.name)
             end
           end
           return false # if we get here, there is a partition table.
@@ -280,7 +273,7 @@ module Yast
 
         # Check if there is a filesystem directly on the disk (without partition table).
         # This is very common for installation media such as USB sticks.
-        installation_volume?(disk)
+        installation_volume?(disk_name)
       end
 
       # Check if a volume (a partition or a disk without a partition table) is
@@ -293,10 +286,14 @@ module Yast
       # minor/major IDs since the inst-sys is in a RAM disk (copied from the
       # installation medium).
       #
-      def installation_volume?(vol)
-        log.info("Checking if #{vol.name} is an installation volume")
-        is_inst = mount_and_check(vol) { |mp| installation_volume_check(mp) }
-        log.info("#{vol} is installation medium") if is_inst
+      # @param vol_name [string] device name of the volume to check
+      #
+      # @return [bool] 'true' if the volume is an installation volume
+      #
+      def installation_volume?(vol_name)
+        log.info("Checking if #{vol_name} is an installation volume")
+        is_inst = mount_and_check(vol_name) { |mp| installation_volume_check(mp) }
+        log.info("#{vol_name} is installation medium") if is_inst
         is_inst
       end
 
@@ -322,18 +319,18 @@ module Yast
       #
       # @return the return value of 'block' or 'nil' if there was an error.
       #
-      def mount_and_check(vol, &block)
+      def mount_and_check(vol_name, &block)
         raise ArgumentError, "Code block required" unless block_given?
         mount_point = "/mnt" # FIXME
         begin
           # check if we have a filesystem
           # return false unless vol.filesystem
-          mount(vol.name, mount_point)
+          mount(vol_name, mount_point)
           check_result = block.call(mount_point)
           umount(mount_point)
           check_result
         rescue RuntimeError => ex  # FIXME: rescue ::Storage::Exception when SWIG bindings are fixed
-          log.error("CAUGHT exception: #{ex} for #{vol}")
+          log.error("CAUGHT exception: #{ex} for #{vol_name}")
           nil
         end
       end
@@ -352,11 +349,11 @@ module Yast
       #
       # This is a temporary workaround until the new libstorage can handle that.
       #
-      def mount(device, mount_point)
+      def mount(device_name, mount_point)
         # FIXME: use libstorage function when available
-        cmd = "/usr/bin/mount #{device} #{mount_point} >/dev/null 2>&1"
-        log.debug("Trying to mount #{device}: #{cmd}")
-        raise "mount failed for #{device}" unless system(cmd)
+        cmd = "/usr/bin/mount #{device_name} #{mount_point} >/dev/null 2>&1"
+        log.debug("Trying to mount #{device_name}: #{cmd}")
+        raise "mount failed for #{device_name}" unless system(cmd)
       end
 
       # Unmount a device.
@@ -368,6 +365,23 @@ module Yast
         cmd = "/usr/bin/umount #{mount_point}"
         log.debug("Unmounting: #{cmd}")
         raise "umount failed for #{mount_point}" unless system(cmd)
+      end
+
+      private
+
+      # Remove any installation disks from 'disks' and return a disks array
+      # containing the disks that are not installation media.
+      #
+      # @param disks [Array<::Storage::Disk>]
+      # @return [Array<::Storage::Disk>] non-installation disks
+      #
+      def remove_installation_disks(disks)
+        # We can't simply use
+        #   disks -= @installation_disks
+        # because the list elements (from libstorage) don't provide a .hash method.
+        # Comparing device names ("/dev/sda"...) instead.
+
+        disks.delete_if { |disk| @installation_disks.include?(disk.name) }
       end
     end
   end
