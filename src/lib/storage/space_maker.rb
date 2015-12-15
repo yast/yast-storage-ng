@@ -57,6 +57,7 @@ module Yast
       end
 
       # Try to detect empty (unpartitioned) space.
+      #
       def find_space
         @free_space = []
         @disk_analyzer.candidate_disks.each do |disk|
@@ -75,14 +76,37 @@ module Yast
 
       # Use force to create space: Try to resize an existing Windows
       # partition or delete partitions until there is enough free space.
+      #
       def make_space
         # TO DO
       end
 
       # Resize an existing MS Windows partition to free up disk space.
+      #
       def resize_windows_partition(partition)
         # TO DO
         partition
+      end
+
+      # Delete all partitions on a disk.
+      #
+      # @param disk [::storage::Disk]
+      #
+      def delete_all_partitions(disk)
+        ptable_type = nil
+        begin
+          ptable_type = disk.partition_table.type
+        rescue RuntimeError => ex  # FIXME: rescue ::Storage::Exception when SWIG bindings are fixed
+          log.info("CAUGHT exception #{ex}")
+        end
+        ptable_type ||= disk.default_partition_table_type
+        disk.create_partition_table(ptable_type) # this implicitly deletes all partitions
+      end
+
+      # Delete one partition.
+      #
+      def delete_partition(partition)
+        # TO DO
       end
     end
   end

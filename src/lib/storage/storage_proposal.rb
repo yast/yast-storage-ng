@@ -48,21 +48,23 @@ module Yast
       attr_accessor :settings
 
       # devicegraph names
-      PROPOSAL = "proposal"
-      PROBED   = "probed"
+      PROPOSAL_BASE = "proposal_base"
+      PROPOSAL      = "proposal"
+      PROBED        = "probed"
+      STAGING       = "staging"
 
       def initialize
+        @storage  = nil
         @settings = ProposalSettings.new
         @proposal = nil # ::Storage::DeviceGraph
         @disk_blacklist = []
         @disk_greylist  = []
+        @actions = nil
       end
 
       # Create a storage proposal.
       def propose
-        storage = StorageManager.instance # this will start probing in the first invocation
-        storage.remove_devicegraph(PROPOSAL) if storage.exist_devicegraph(PROPOSAL)
-        @proposal = storage.copy_devicegraph(PROBED, PROPOSAL)
+        prepare_devicegraphs
 
         boot_requirements_checker = BootRequirementsChecker.new(@settings)
         @volumes = boot_requirements_checker.needed_partitions
@@ -80,7 +82,54 @@ module Yast
         "No disks found - no storage proposal possible"
       end
 
+      # Reset the proposal devicegraph (PROPOSAL) to PROPOSAL_BASE.
+      #
+      def reset_proposal
+        storage = StorageManager.instance
+        storage.remove_devicegraph(PROPOSAL) if storage.exist_devicegraph(PROPOSAL)
+        @proposal = storage.copy_devicegraph(PROPOSAL_BASE, PROPOSAL)
+        @actions  = nil
+      end
+
+      # Copy the PROPOSAL device graph to STAGING so actions can be calculated
+      # or commited
+      #
+      def proposal_to_staging
+        StorageManager.instance.copy_devicegraph(PROPOSAL, STAGING)
+        @actions = nil
+      end
+
+      # Calculate action graph
+      #
+      def calc_actions
+        @actions = StorageManager.instance.calculate_actiongraph unless @actions
+      end
+
+
       private
+
+      # Prepare the devicegraphs we are working on:
+      #
+      # - PROBED. This contains the disks and partitions that were probed.
+      #
+      # - PROPOSAL_BASE. This starts as a copy of PROBED. If the user decides
+      #        in the UI to have some partitions removed or everything on a
+      #        disk deleted to make room for the Linux installation, those
+      #        partitions are already deleted here. This is the base for all
+      #        calculated proposals. If a proposal goes wrong and needs to be
+      #        reset internally, it will be reset to this state.
+      #
+      #  - PROPOSAL. This is the working devicegraph for the proposal
+      #        calculations. If anything goes wrong, this might be reset (with
+      #        reset_proposal) to PROPOSAL_BASE at any time.
+      #
+      # If no PROPOSAL_BASE devicegraph exists yet, it will be copied from PROBED.
+      #
+      def prepare_devicegraphs
+        storage = StorageManager.instance # this will start probing in the first invocation
+        storage.copy_devicegraph(PROBED, PROPOSAL_BASE) unless storage.exist_devicegraph(PROPOSAL_BASE)
+        reset_proposal
+      end
 
       # Return an array of the standard volumes for the root and /home file
       # systems
