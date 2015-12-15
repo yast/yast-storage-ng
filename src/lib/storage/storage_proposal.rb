@@ -73,7 +73,12 @@ module Yast
         disk_analyzer = DiskAnalyzer.new
         disk_analyzer.analyze
 
-        space_maker = SpaceMaker.new(@volumes, @settings, disk_analyzer)
+        space_maker = SpaceMaker.new(settings: @settings,
+                                     volumes:  @volumes,
+                                     candidate_disks:    disk_analyzer.candidate_disks,
+                                     linux_partitions:   disk_analyzer.linux_partitions,
+                                     windows_partitions: disk_analyzer.windows_partitions,
+                                     devicegraph: @proposal)
         space_maker.find_space
       end
 

@@ -25,7 +25,6 @@ require "yast"
 require "fileutils"
 require_relative "./proposal_volume"
 require_relative "./disk_size"
-require_relative "./disk_analyzer"
 require "pp"
 
 module Yast
@@ -38,33 +37,52 @@ module Yast
     class SpaceMaker
       include Yast::Logger
 
-      attr_reader :volumes
+      attr_accessor :volumes, :devicegraph
 
       # Initialize.
       #
-      # @param volumes [Array <ProposalVolume>] volumes to find space for.
-      # The volumes might be changed by this class.
-      #
       # @param settings [Storage::Settings] parameters to use
       #
-      # @param disk_analyzer [DiskAnalyzer]
+      # @param volumes [Array <ProposalVolume>] volumes to find space for.
+      #        The volumes might be changed by this class.
       #
-      def initialize(volumes, settings, disk_analyzer)
-        @volumes  = volumes
-        @settings = settings
-        @disk_analyzer = disk_analyzer
-        @free_space = []
+      # @param candidate_disks [Array<string>] device names of disks to install to
+      #
+      # @param linux_partitions [Array<string>] device names of existing Linux
+      #        partitions
+      #
+      # @param windows_partitions [Array<string>] device names of Windows
+      #        partitions that can possibly be resized
+      #
+      # @param devicegraph [Storage::Devicegraph] device graph to use for any
+      #        changes, typically StorageManager.instance.devicegraph("proposal")
+      #
+      def initialize(settings: ,
+                     volumes:            [],
+                     candidate_disks:    [],
+                     linux_partitions:   [],
+                     windows_partitions: [],
+                     devicegraph:        nil)
+        @settings           = settings
+        @volumes            = volumes
+        @candidate_disks    = candidate_disks
+        @linux_partitions   = linux_partitions
+        @windows_partitions = windows_partitions
+        @devicegraph        = devicegraph || StorageManager.instance.staging
+        @free_space         = []
       end
 
       # Try to detect empty (unpartitioned) space.
       #
       def find_space
         @free_space = []
-        @disk_analyzer.candidate_disks.each do |disk|
+        @candidate_disks.each do |disk_name|
           begin
+            log.info("Trying to find unpartitioned space on #{disk_name}")
+            disk = ::Storage::Disk.find(@devicegraph, disk_name)
             disk.partition_table.unused_partition_slots.each do |slot|
               size = DiskSize.new(slot.region.to_kb(slot.region.length))
-              log.info("Found slot: #{slot.region} size #{size} on #{disk}")
+              log.info("Found slot: #{slot.region} size #{size} on #{disk_name}")
               @free_space << slot
             end
           rescue RuntimeError => ex # FIXME: rescue ::Storage::Exception when SWIG bindings are fixed
@@ -92,9 +110,10 @@ module Yast
       #
       # @param disk [::storage::Disk]
       #
-      def delete_all_partitions(disk)
+      def delete_all_partitions(disk_name)
         ptable_type = nil
         begin
+          disk = ::Storage::Disk.find(@devicegraph, disk_name)
           ptable_type = disk.partition_table.type
         rescue RuntimeError => ex  # FIXME: rescue ::Storage::Exception when SWIG bindings are fixed
           log.info("CAUGHT exception #{ex}")
