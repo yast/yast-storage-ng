@@ -54,7 +54,7 @@ module Yast
       # @param windows_partitions [Array<string>] device names of Windows
       #        partitions that can possibly be resized
       #
-      # @param devicegraph [Storage::Devicegraph] device graph to use for any
+      # @param devicegraph [Storage::Devicegraph] devicegraph to use for any
       #        changes, typically StorageManager.instance.devicegraph("proposal")
       #
       def initialize(settings: ,
@@ -119,8 +119,9 @@ module Yast
         rescue RuntimeError => ex  # FIXME: rescue ::Storage::Exception when SWIG bindings are fixed
           log.info("CAUGHT exception #{ex}")
         end
+        disk.remove_descendants
         ptable_type ||= disk.default_partition_table_type
-        disk.create_partition_table(ptable_type) # this implicitly deletes all partitions
+        disk.create_partition_table(ptable_type)
       end
 
       # Delete one partition.
