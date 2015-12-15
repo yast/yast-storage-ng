@@ -111,10 +111,11 @@ module Yast
       # @param disk [::storage::Disk]
       #
       def delete_all_partitions(disk_name)
+        log.info("Deleting all partitions on #{disk_name}")
         ptable_type = nil
         begin
           disk = ::Storage::Disk.find(@devicegraph, disk_name)
-          ptable_type = disk.partition_table.type
+          ptable_type = disk.partition_table.type # might throw if no partition table
         rescue RuntimeError => ex  # FIXME: rescue ::Storage::Exception when SWIG bindings are fixed
           log.info("CAUGHT exception #{ex}")
         end

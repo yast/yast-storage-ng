@@ -80,16 +80,26 @@ module Yast
                                      windows_partitions: disk_analyzer.windows_partitions,
                                      devicegraph: @proposal)
         space_maker.find_space
+        space_maker.delete_all_partitions("/dev/sda")
+        proposal_to_staging
+        calc_actions
+        action_text = proposal_text
+        log.info("Actions:\n#{action_text}\n")
+        print("\nActions:\n\n#{action_text}\n")
       end
 
+      # Return the textual description of the actions necessary to transform
+      # the probed device graph into the staging device graph.
+      #
       def proposal_text
-        # TO DO
-        "No disks found - no storage proposal possible"
+        return "No storage proposal possible" unless @actions
+        @actions.commit_actions_as_strings.join("\n")
       end
 
       # Reset the proposal devicegraph (PROPOSAL) to PROPOSAL_BASE.
       #
       def reset_proposal
+        log.debug("Resetting proposal device graph")
         storage = StorageManager.instance
         storage.remove_devicegraph(PROPOSAL) if storage.exist_devicegraph(PROPOSAL)
         @proposal = storage.copy_devicegraph(PROPOSAL_BASE, PROPOSAL)
@@ -101,15 +111,8 @@ module Yast
       #
       def proposal_to_staging
         StorageManager.instance.copy_devicegraph(PROPOSAL, STAGING)
-        @actions = nil
+        @actions = StorageManager.instance.calculate_actiongraph
       end
-
-      # Calculate action graph
-      #
-      def calc_actions
-        @actions = StorageManager.instance.calculate_actiongraph unless @actions
-      end
-
 
       private
 
