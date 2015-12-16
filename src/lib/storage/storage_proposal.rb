@@ -146,8 +146,9 @@ module Yast
       # @return [Array [ProposalVolume]]
       #
       def standard_volumes
-        volumes = [make_root_vol]
-        volumes << make_home_vol if @settings.use_separate_home
+        root_vol = make_root_vol
+        volumes = [root_vol]
+        volumes << make_home_vol(root_vol.desired_size) if @settings.use_separate_home
         volumes
       end
 
@@ -166,6 +167,7 @@ module Yast
           root_vol.max_size *= multiplicator
         end
         root_vol.desired_size = root_vol.max_size
+        pp root_vol
         root_vol
       end
 
@@ -174,11 +176,13 @@ module Yast
       #
       # This does NOT create the partition yet, only the data structure.
       #
-      def make_home_vol
+      def make_home_vol(root_vol_size)
         home_vol = ProposalVolume.new("/home", @settings.home_filesystem_type)
         home_vol.min_size = @settings.home_min_size
         home_vol.max_size = @settings.home_max_size
-        home_vol.desired_size = home_vol.max_size
+        home_percent = 100.0 - @settings.root_space_percent
+        home_vol.desired_size = root_vol_size * (home_percent / @settings.root_space_percent)
+        pp home_vol
         home_vol
       end
     end

@@ -75,6 +75,12 @@ module Yast
       # Try to detect empty (unpartitioned) space.
       #
       def find_space
+        total_min_size     = total_vol_sizes(:min_size)
+        total_max_size     = total_vol_sizes(:max_size)
+        total_desired_size = total_desired_sizes
+        log.info("Total min     size:   #{total_min_size}")
+        log.info("Total desired size:   #{total_desired_size}")
+        log.info("Total max     size:   #{total_max_size}")
         @free_space = []
         @candidate_disks.each do |disk_name|
           begin
@@ -128,6 +134,32 @@ module Yast
       #
       def delete_partition(partition)
         # TO DO
+      end
+
+      # Calculate total sum of all 'size_method' fields of @volumes.
+      #
+      # @param size_method [Symbol] Name of the size field
+      #        (typically :min_size or :max_size)
+      #
+      # @return [DiskSize] sum of all 'size_method' in @volumes
+      #
+      def total_vol_sizes(size_method)
+        @volumes.reduce(DiskSize.zero) { |sum, vol| sum += vol.method(size_method).call }
+      end
+
+      # Calculate total sum of all desired sizes of @volumes.
+      #
+      # Unlike total_vol_sizes(:desired_size), this tries to avoid an
+      # 'unlimited' result: If a the desired size of any volume is 'unlimited',
+      # its minimum size is taken instead. This gives a more useful sum in the
+      # very common case that any volume has an 'unlimited' desired size.
+      #
+      # @return [DiskSize] sum of desired sizes in @volumes
+      #
+      def total_desired_sizes
+        @volumes.reduce(DiskSize.zero) do |sum, vol|
+          sum += vol.desired_size.unlimited? ? vol.min_size : vol.desired_size
+        end
       end
     end
   end
