@@ -109,6 +109,29 @@ describe Yast::Storage::DiskSize do
     end
   end
 
+  describe "arithmetic operations with unlimited and DiskSize" do
+    unlimited = Yast::Storage::DiskSize.unlimited
+    disk_size = Yast::Storage::DiskSize.GiB(42)
+    it "should return unlimited" do
+      expect( unlimited + disk_size ).to be == unlimited
+      expect( disk_size + unlimited ).to be == unlimited
+      expect( unlimited - disk_size ).to be == unlimited
+      expect( disk_size - unlimited ).to be == unlimited
+      # DiskSize * DiskSize and DiskSize / DiskSize are undefined
+    end
+  end
+
+  describe "arithmetic operations with unlimited and a number" do
+    unlimited = Yast::Storage::DiskSize.unlimited
+    number    = 7
+    it "should return unlimited" do
+      expect( unlimited + number ).to be == unlimited
+      expect( unlimited - number ).to be == unlimited
+      expect( unlimited * number ).to be == unlimited
+      expect( unlimited / number ).to be == unlimited
+    end
+  end
+
   describe "comparison" do
     disk_size1 = Yast::Storage::DiskSize.GiB(24)
     disk_size2 = Yast::Storage::DiskSize.GiB(32)

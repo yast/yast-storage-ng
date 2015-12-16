@@ -130,6 +130,7 @@ module Yast
       #
 
       def +(other)
+        return DiskSize.unlimited if any_operand_unlimited?(other)
         if other.is_a?(Numeric)
           DiskSize.new(@size_k + other)
         elsif other.respond_to?(:size_k)
@@ -140,6 +141,7 @@ module Yast
       end
 
       def -(other)
+        return DiskSize.unlimited if any_operand_unlimited?(other)
         if other.is_a?(Numeric)
           DiskSize.new(@size_k - other)
         elsif other.respond_to?(:size_k)
@@ -151,6 +153,7 @@ module Yast
 
       def *(other)
         if other.is_a?(Numeric)
+        return DiskSize.unlimited if unlimited?
           DiskSize.new(@size_k * other)
         else
           raise TypeError, "Unexpected #{other.class}; expected Numeric value"
@@ -159,6 +162,7 @@ module Yast
 
       def /(other)
         if other.is_a?(Numeric)
+        return DiskSize.unlimited if unlimited?
           DiskSize.new(@size_k.to_f / other)
         else
           raise TypeError, "Unexpected #{other.class}; expected Numeric value"
@@ -221,6 +225,15 @@ module Yast
 
       def pretty_print(*)
         print "#{inspect}"
+      end
+
+      private
+
+      # Return 'true' if either self or other is unlimited.
+      #
+      def any_operand_unlimited?(other)
+        return true if unlimited?
+        return other.respond_to?(:unlimited?) && other.unlimited?
       end
     end
   end
