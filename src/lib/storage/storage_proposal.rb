@@ -63,6 +63,7 @@ module Yast
 
       # Create a storage proposal.
       def propose
+        StorageManager.start_probing
         prepare_devicegraphs
 
         boot_requirements_checker = BootRequirementsChecker.new(@settings)
@@ -134,7 +135,7 @@ module Yast
       # If no PROPOSAL_BASE devicegraph exists yet, it will be copied from PROBED.
       #
       def prepare_devicegraphs
-        storage = StorageManager.instance # this will start probing in the first invocation
+        storage = StorageManager.instance
         storage.copy_devicegraph(PROBED, PROPOSAL_BASE) unless storage.exist_devicegraph(PROPOSAL_BASE)
         reset_proposal
       end
