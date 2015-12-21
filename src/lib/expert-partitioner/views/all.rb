@@ -17,7 +17,14 @@ module ExpertPartitioner
     FIELDS = [ :sid, :icon, :name, :size, :transport, :partition_table, :filesystem, :mountpoint ]
 
     def create
-      Table(Id(:table), Storage::Device.table_header(FIELDS), items)
+      VBox(
+        Table(Id(:table), Storage::Device.table_header(FIELDS), items),
+        HBox(
+          PushButton(Id(:rescan), _("Rescan Devices")),
+          HStretch(),
+          PushButton(Id(:configure), _("Configure..."))
+        )
+      )
     end
 
     def items

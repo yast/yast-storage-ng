@@ -2,10 +2,12 @@
 require "yast"
 require "storage"
 require "storage/storage-manager"
+require "expert-partitioner/popups"
 
 Yast.import "UI"
 Yast.import "Label"
 Yast.import "Popup"
+
 
 module ExpertPartitioner
 
@@ -16,9 +18,9 @@ module ExpertPartitioner
     include Yast::Logger
 
 
-    def initialize(sid)
+    def initialize(blk_device)
       textdomain "storage"
-      @sid = sid
+      @blk_device = blk_device
     end
 
 
@@ -39,6 +41,7 @@ module ExpertPartitioner
       end
     end
 
+
   private
 
     def create_dialog
@@ -47,15 +50,17 @@ module ExpertPartitioner
           Heading(_("Format Options")),
           Left(ComboBox(Id(:filesystem),
                         _("Filesystem"), [
-                          Item(Id(Storage::EXT4), "ext4"),
-                          Item(Id(Storage::XFS), "xfs"),
-                          Item(Id(Storage::BTRFS), "btrfs"),
-                          Item(Id(Storage::SWAP), "swap")
+                          Item(Id(Storage::EXT4), "Ext4"),
+                          Item(Id(Storage::XFS), "XFS"),
+                          Item(Id(Storage::BTRFS), "Btrfs"),
+                          Item(Id(Storage::SWAP), "Swap"),
+                          Item(Id(Storage::NTFS), "NTFS"),
+                          Item(Id(Storage::VFAT), "VFAT")
                         ])),
           Left(ComboBox(Id(:mount_point),
                         Opt(:editable, :hstretch),
                         _("Mount Point"),
-                        [ "", "/test1", "/test2", "swap" ]
+                        [ "", "/test1", "/test2", "/test3", "/test4", "swap" ]
                        )),
           ButtonBox(
             PushButton(Id(:cancel), Yast::Label.CancelButton),
@@ -71,23 +76,16 @@ module ExpertPartitioner
       storage = Yast::Storage::StorageManager.instance
 
       staging = storage.staging()
-      device = staging.find_device(@sid)
 
       begin
-        blk_device = Storage::to_blk_device(device)
-        log.info "doit #{@sid} #{blk_device.name}"
 
-        if blk_device.num_children > 0
-          log.info "removing all descendants"
-          descendants = blk_device.descendants(false)
+        log.info "doit #{@blk_device.name}"
 
-          tmp = descendants.to_a.map { |descendant| descendant.to_s }.join("\n")
-          Yast::Popup::Warning("will delete #{tmp}")
-
-          staging.remove_devices(descendants)
+        if !RemoveDescendantsPopup.new(@blk_device).run()
+          return
         end
 
-        filesystem = blk_device.create_filesystem(Yast::UI.QueryWidget(:filesystem, :Value))
+        filesystem = @blk_device.create_filesystem(Yast::UI.QueryWidget(:filesystem, :Value))
 
         mount_point = Yast::UI.QueryWidget(:mount_point, :Value)
         if !mount_point.empty?

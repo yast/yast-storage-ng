@@ -139,7 +139,7 @@ module Storage
     end
 
     def table_partition_table()
-      return partition_table.to_s
+      return ::Storage::pt_type_name(partition_table.type)
     rescue ::Storage::WrongNumberOfChildren, ::Storage::DeviceHasWrongType
       return ""
     end
