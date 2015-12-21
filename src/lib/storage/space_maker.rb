@@ -161,7 +161,7 @@ module Yast
       #
       def total_desired_sizes
         @volumes.reduce(DiskSize.zero) do |sum, vol|
-          sum + vol.desired_size.unlimited? ? vol.min_size : vol.desired_size
+          sum + (vol.desired_size.unlimited? ? vol.min_size : vol.desired_size)
         end
       end
     end
