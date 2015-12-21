@@ -57,7 +57,7 @@ module Yast
       # @param devicegraph [Storage::Devicegraph] devicegraph to use for any
       #        changes, typically StorageManager.instance.devicegraph("proposal")
       #
-      def initialize(settings: ,
+      def initialize(settings:,
                      volumes:            [],
                      candidate_disks:    [],
                      linux_partitions:   [],
@@ -134,6 +134,7 @@ module Yast
       #
       def delete_partition(partition)
         # TO DO
+        partition
       end
 
       # Calculate total sum of all 'size_method' fields of @volumes.
@@ -144,7 +145,9 @@ module Yast
       # @return [DiskSize] sum of all 'size_method' in @volumes
       #
       def total_vol_sizes(size_method)
-        @volumes.reduce(DiskSize.zero) { |sum, vol| sum += vol.method(size_method).call }
+        @volumes.reduce(DiskSize.zero) do |sum, vol|
+          sum + vol.method(size_method).call
+        end
       end
 
       # Calculate total sum of all desired sizes of @volumes.
@@ -158,7 +161,7 @@ module Yast
       #
       def total_desired_sizes
         @volumes.reduce(DiskSize.zero) do |sum, vol|
-          sum += vol.desired_size.unlimited? ? vol.min_size : vol.desired_size
+          sum + vol.desired_size.unlimited? ? vol.min_size : vol.desired_size
         end
       end
     end

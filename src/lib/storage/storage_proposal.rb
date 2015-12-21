@@ -167,7 +167,6 @@ module Yast
           root_vol.max_size *= multiplicator
         end
         root_vol.desired_size = root_vol.max_size
-        pp root_vol
         root_vol
       end
 
@@ -182,7 +181,6 @@ module Yast
         home_vol.max_size = @settings.home_max_size
         home_percent = 100.0 - @settings.root_space_percent
         home_vol.desired_size = root_vol_size * (home_percent / @settings.root_space_percent)
-        pp home_vol
         home_vol
       end
     end
