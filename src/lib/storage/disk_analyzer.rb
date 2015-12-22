@@ -293,7 +293,7 @@ module Yast
       def installation_volume?(vol_name)
         log.info("Checking if #{vol_name} is an installation volume")
         is_inst = mount_and_check(vol_name) { |mp| installation_volume_check(mp) }
-        log.info("#{vol_name} is installation medium: #{is_inst}")
+        log.info("#{vol_name} is installation volume") if is_inst
         is_inst
       end
 
