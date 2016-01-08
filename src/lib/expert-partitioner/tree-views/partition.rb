@@ -3,7 +3,8 @@ require "yast"
 require "storage"
 require "storage/storage-manager"
 require "storage/extensions"
-require "expert-partitioner/views/view"
+require "expert-partitioner/tree-views/view"
+require "expert-partitioner/icons"
 
 Yast.import "UI"
 Yast.import "HTML"
@@ -13,7 +14,7 @@ include Yast::I18n
 
 module ExpertPartitioner
 
-  class PartitionView < View
+  class PartitionTreeView < TreeView
 
     def initialize(partition)
       @partition = partition
@@ -32,7 +33,10 @@ module ExpertPartitioner
 
       contents = Yast::HTML.List(tmp)
 
-      return RichText(Id(:text), Opt(:hstretch, :vstretch), contents)
+      VBox(
+        Left(IconAndHeading(_("Partition: %s") % @partition.name, Icons::PARTITION)),
+        RichText(Id(:text), Opt(:hstretch, :vstretch), contents)
+      )
 
     end
 

@@ -5,7 +5,7 @@ require "expert-partitioner/tree"
 
 module ExpertPartitioner
 
-  class View
+  class TabView
 
     def create()
       VBox(VStretch(), HStretch())
@@ -22,7 +22,7 @@ module ExpertPartitioner
         Yast::UI.ChangeWidget(:tree, :Items, Tree.new().tree_items)
       end
 
-      Yast::UI.ReplaceWidget(:tree_panel, create)
+      Yast::UI.ReplaceWidget(:tab_panel, create)
 
     end
 

@@ -4,14 +4,17 @@ require "storage"
 require "storage/storage-manager"
 require "storage/extensions"
 require "expert-partitioner/tree"
-require "expert-partitioner/views/all"
-require "expert-partitioner/views/disk"
-require "expert-partitioner/views/partition"
-require "expert-partitioner/views/filesystem"
-require "expert-partitioner/views/probed-devicegraph"
-require "expert-partitioner/views/staging-devicegraph"
-require "expert-partitioner/views/actiongraph"
-require "expert-partitioner/views/actionlist"
+require "expert-partitioner/tree-views/all"
+require "expert-partitioner/tree-views/disks"
+require "expert-partitioner/tree-views/disk"
+require "expert-partitioner/tree-views/mds"
+require "expert-partitioner/tree-views/md"
+require "expert-partitioner/tree-views/partition"
+require "expert-partitioner/tree-views/filesystem"
+require "expert-partitioner/tree-views/probed-devicegraph"
+require "expert-partitioner/tree-views/staging-devicegraph"
+require "expert-partitioner/tree-views/actiongraph"
+require "expert-partitioner/tree-views/actionlist"
 
 
 Yast.import "UI"
@@ -52,12 +55,12 @@ module ExpertPartitioner
 
     def create_dialog
 
-      @view = AllView.new()
+      @view = AllTreeView.new()
 
       Yast::UI.OpenDialog(
         Opt(:decorated, :defaultsize),
         VBox(
-          Heading(_("Disks and Partitions")),
+          Left(Heading(_("Expert Partitioner"))),
           HBox(
             HWeight(30, Tree(Id(:tree), Opt(:notify), _("System View"), Tree.new().tree_items)),
             HWeight(70, ReplacePoint(Id(:tree_panel), @view.create()))
@@ -100,25 +103,28 @@ module ExpertPartitioner
           case current_item = Yast::UI.QueryWidget(:tree, :CurrentItem)
 
           when :all
-            @view = AllView.new()
+            @view = AllTreeView.new()
 
-          when :hd
-            @view = AllView.new()
+          when :disks
+            @view = DisksTreeView.new()
+
+          when :mds
+            @view = MdsTreeView.new()
 
           when :filesystems
-            @view = FilesystemView.new()
+            @view = FilesystemTreeView.new()
 
           when :devicegraph_probed
-            @view = ProbedDevicegraphView.new()
+            @view = ProbedDevicegraphTreeView.new()
 
           when :devicegraph_staging
-            @view = StagingDevicegraphView.new()
+            @view = StagingDevicegraphTreeView.new()
 
           when :actiongraph
-            @view = ActiongraphView.new()
+            @view = ActiongraphTreeView.new()
 
           when :actionlist
-            @view = ActionlistView.new()
+            @view = ActionlistTreeView.new()
 
           else
 
@@ -130,9 +136,11 @@ module ExpertPartitioner
             device = staging.find_device(sid)
 
             if Storage::disk?(device)
-              @view = DiskView.new(Storage::to_disk(device))
+              @view = DiskTreeView.new(Storage::to_disk(device))
+            elsif Storage::md?(device)
+              @view = MdTreeView.new(Storage::to_md(device))
             elsif Storage::partition?(device)
-              @view = PartitionView.new(Storage::to_partition(device))
+              @view = PartitionTreeView.new(Storage::to_partition(device))
             end
 
           end

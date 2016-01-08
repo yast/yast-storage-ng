@@ -3,7 +3,7 @@ require "yast"
 require "storage"
 require "storage/storage-manager"
 require "storage/extensions"
-require "expert-partitioner/views/view"
+require "expert-partitioner/tree-views/view"
 
 Yast.import "UI"
 
@@ -12,12 +12,15 @@ include Yast::I18n
 
 module ExpertPartitioner
 
-  class FilesystemView < View
+  class FilesystemTreeView < TreeView
 
     FIELDS = [ :sid, :icon, :filesystem, :mountpoint, :mount_by, :label ]
 
     def create
-      Table(Id(:table), Storage::Device.table_header(FIELDS), items)
+      VBox(
+        Left(IconAndHeading(_("Filesystems"), Icons::FILESYSTEM)),
+        Table(Id(:table), Opt(:keepSorting), Storage::Device.table_header(FIELDS), items)
+      )
     end
 
     def items

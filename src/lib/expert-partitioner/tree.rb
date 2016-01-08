@@ -40,7 +40,8 @@ module ExpertPartitioner
         Item(
           Id(:all), "hostname", true,
           [
-            Item(Id(:hd), _("Hard Disks"), true, disks_subtree_items()),
+            Item(Id(:disks), _("Hard Disks"), true, disks_subtree_items()),
+            Item(Id(:mds), _("MD RAIDs"), true, mds_subtree_items()),
             Item(Id(:filesystems), _("Filesystems"))
           ]
         ),
@@ -62,19 +63,53 @@ module ExpertPartitioner
 
       disks = Storage::Disk::all(staging)
 
-      return disks.to_a.map do |disk|
+      ::Storage::silence do
 
-        partitions_subtree = []
+        return disks.to_a.map do |disk|
 
-        begin
-          partition_table = disk.partition_table()
-          partition_table.partitions().each do |partition|
-            partitions_subtree << Item(Id(partition.sid()), partition.name())
+          partitions_subtree = []
+
+          begin
+            partition_table = disk.partition_table()
+            partition_table.partitions().each do |partition|
+              partitions_subtree << Item(Id(partition.sid()), partition.name())
+            end
+          rescue Storage::WrongNumberOfChildren, Storage::DeviceHasWrongType
           end
-        rescue Storage::WrongNumberOfChildren, Storage::DeviceHasWrongType
+
+          Item(Id(disk.sid()), disk.name(), true, partitions_subtree)
+
         end
 
-        Item(Id(disk.sid()), disk.name(), true, partitions_subtree)
+      end
+
+    end
+
+
+    def mds_subtree_items
+
+      storage = Yast::Storage::StorageManager.instance
+      staging = storage.staging()
+
+      mds = Storage::Md::all(staging)
+
+      ::Storage::silence do
+
+        return mds.to_a.map do |md|
+
+          partitions_subtree = []
+
+          begin
+            partition_table = md.partition_table()
+            partition_table.partitions().each do |partition|
+              partitions_subtree << Item(Id(partition.sid()), partition.name())
+            end
+          rescue Storage::WrongNumberOfChildren, Storage::DeviceHasWrongType
+          end
+
+          Item(Id(md.sid()), md.name(), true, partitions_subtree)
+
+        end
 
       end
 

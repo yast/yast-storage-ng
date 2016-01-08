@@ -1,5 +1,6 @@
 
 require "storage"
+require "expert-partitioner/icons"
 
 include Yast::UIShortcuts
 
@@ -53,10 +54,21 @@ module Storage
         when :mount_by
           _("Mount By")
 
+        when :md_level
+          _("RAID Level")
+
+        when :spare
+          _("Spare")
+
         end
 
       end)
 
+    end
+
+
+    def make_icon_cell(icon, text)
+      return Yast::Term.new(:cell, Yast::Term.new(:icon, "#{Yast::Directory.icondir}/22x22/apps/#{icon}"), text)
     end
 
 
@@ -69,11 +81,7 @@ module Storage
     end
 
     def table_icon()
-      return ""
-    end
-
-    def table_icon(icon, text)
-      return Yast::Term.new(:cell, Yast::Term.new(:icon, "#{Yast::Directory.icondir}/22x22/apps/#{icon}.png"), text)
+      return make_icon_cell(Icons::DEVICE, "Device")
     end
 
     def table_name()
@@ -104,6 +112,14 @@ module Storage
       return ""
     end
 
+    def table_md_level()
+      return ""
+    end
+
+    def table_spare()
+      return ""
+    end
+
   end
 
 
@@ -129,19 +145,33 @@ module Storage
       return ""
     end
 
+    def table_spare()
+      spare = out_holders.to_a.any? do |holder|
+        if ::Storage::md_user?(holder)
+          ::Storage::to_md_user(holder).spare?
+        end
+      end
+      spare ? "Spare" : ""
+    end
+
+  end
+
+
+  class Partitionable
+
+    def table_partition_table()
+      return ::Storage::pt_type_name(partition_table.type)
+    rescue ::Storage::WrongNumberOfChildren, ::Storage::DeviceHasWrongType
+      return ""
+    end
+
   end
 
 
   class Disk
 
     def table_icon()
-      return super("yast-disk", "Disk")
-    end
-
-    def table_partition_table()
-      return ::Storage::pt_type_name(partition_table.type)
-    rescue ::Storage::WrongNumberOfChildren, ::Storage::DeviceHasWrongType
-      return ""
+      return make_icon_cell(ExpertPartitioner::Icons::DISK, "Disk")
     end
 
     def table_transport()
@@ -155,10 +185,23 @@ module Storage
   end
 
 
+  class Md
+
+    def table_icon()
+      return make_icon_cell(ExpertPartitioner::Icons::MD, "MD RAID")
+    end
+
+    def table_md_level()
+      return ::Storage::md_level_name(md_level)
+    end
+
+  end
+
+
   class Partition
 
     def table_icon()
-      return super("yast-partitioning", "Partition")
+      return make_icon_cell(ExpertPartitioner::Icons::PARTITION, "Partition")
     end
 
   end
@@ -167,7 +210,7 @@ module Storage
   class Filesystem
 
     def table_icon()
-      return super("yast-nfs", "Filesystem")
+      return make_icon_cell(ExpertPartitioner::Icons::FILESYSTEM, "Filesystem")
     end
 
     def table_filesystem()

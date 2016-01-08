@@ -2,7 +2,7 @@
 require "yast"
 require "storage"
 require "storage/storage-manager"
-require "expert-partitioner/views/view"
+require "expert-partitioner/tree-views/view"
 
 Yast.import "UI"
 
@@ -11,7 +11,7 @@ include Yast::I18n
 
 module ExpertPartitioner
 
-  class ProbedDevicegraphView < View
+  class ProbedDevicegraphTreeView < TreeView
 
     def create
 
@@ -22,10 +22,10 @@ module ExpertPartitioner
       probed = storage.probed()
       probed.write_graphviz(filename)
 
-      return VBox(
-               Heading(_("Device Graph (probed)")),
-               Yast::Term.new(:Graph, Id(:graph), Opt(:notify, :notifyContextMenu), filename, "dot"),
-             )
+      VBox(
+        Left(Heading(_("Device Graph (probed)"))),
+        Yast::Term.new(:Graph, Id(:graph), Opt(:notify, :notifyContextMenu), filename, "dot"),
+      )
 
     end
 

@@ -2,7 +2,7 @@
 require "yast"
 require "storage"
 require "storage/storage-manager"
-require "expert-partitioner/views/view"
+require "expert-partitioner/tree-views/view"
 
 Yast.import "UI"
 
@@ -11,7 +11,7 @@ include Yast::I18n
 
 module ExpertPartitioner
 
-  class ActiongraphView < View
+  class ActiongraphTreeView < TreeView
 
     def create
 
@@ -22,10 +22,10 @@ module ExpertPartitioner
       actiongraph = storage.calculate_actiongraph()
       actiongraph.write_graphviz(filename)
 
-      return VBox(
-               Heading(_("Action Graph")),
-               Yast::Term.new(:Graph, Id(:graph), Opt(:notify, :notifyContextMenu), filename, "dot"),
-             )
+      VBox(
+        Left(Heading(_("Action Graph"))),
+        Yast::Term.new(:Graph, Id(:graph), Opt(:notify, :notifyContextMenu), filename, "dot"),
+      )
 
     end
 

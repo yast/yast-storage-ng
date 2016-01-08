@@ -72,20 +72,25 @@ module Yast
         def create_instance(storage_environment = nil)
 
           if !storage_environment
-            case "A"
-            when "A"                  # probe
+
+            case ENV.fetch("YAST2_STORAGE_PROBE_MODE", "STANDARD")
+
+            when "STANDARD"     # probe
               storage_environment = ::Storage::Environment.new(true)
 
-            when "B"                  # probe and write probed data to disk
+            when "STANDARD_WRITE_DEVICEGRAPH" # probe and write probed data to disk
               storage_environment = ::Storage::Environment.new(true, ::Storage::ProbeMode_STANDARD_WRITE_DEVICEGRAPH,
                                                                ::Storage::TargetMode_DIRECT)
-            when "C"                 # instead of probing read probed data from disk
+
+            when "READ_DEVICEGRAPH" # instead of probing read probed data from disk
               storage_environment = ::Storage::Environment.new(true, ::Storage::ProbeMode_READ_DEVICEGRAPH,
                                                                ::Storage::TargetMode_DIRECT)
+
             end
 
             storage_environment.devicegraph_filename = "./devicegraph.xml"
             storage_environment.arch_filename = "./arch.xml"
+
           end
 
           create_logger

@@ -3,7 +3,7 @@ require "yast"
 require "storage"
 require "storage/storage-manager"
 require "storage/extensions"
-require "expert-partitioner/views/view"
+require "expert-partitioner/tree-views/view"
 require "expert-partitioner/dialogs/format"
 require "expert-partitioner/dialogs/create-partition-table"
 require "expert-partitioner/dialogs/create-partition"
@@ -18,28 +18,27 @@ include Yast::Logger
 
 module ExpertPartitioner
 
-  class DiskView < View
+  class DisksTreeView < TreeView
 
     FIELDS = [ :sid, :icon, :name, :size, :transport, :partition_table, :filesystem, :mountpoint ]
 
 
-    def initialize(disk)
-      @disk = disk
+    def initialize()
+      storage = Yast::Storage::StorageManager.instance
+      staging = storage.staging()
+      @disks = staging.all_disks()
     end
 
 
     def create
       VBox(
-        Table(Id(:table), Storage::Device.table_header(FIELDS), items),
+        Left(IconAndHeading(_("Hard Disks"), Icons::DISK)),
+        Table(Id(:table), Opt(:keepSorting), Storage::Device.table_header(FIELDS), items),
         HBox(
           PushButton(Id(:create), _("Create...")),
           PushButton(Id(:format), _("Format...")),
           PushButton(Id(:delete), _("Delete...")),
-          HStretch(),
-          MenuButton(Id(:expert), _("Expert..."), [
-                       # menu entry text
-                       Item(Id(:create_partition_table), _("Create New Partition Table"))
-                     ])
+          HStretch()
         )
       )
     end
@@ -58,9 +57,6 @@ module ExpertPartitioner
       when :delete
         do_delete_partition
 
-      when :create_partition_table
-        do_create_partition_table
-
       end
 
     end
@@ -71,22 +67,22 @@ module ExpertPartitioner
 
     def items
 
-      storage = Yast::Storage::StorageManager.instance
-
-      staging = storage.staging()
-
       ret = []
 
       ::Storage::silence do
 
-        ret << @disk.table_row(FIELDS)
+        @disks.each do |disk|
 
-        begin
-          partition_table = @disk.partition_table()
-          partition_table.partitions().each do |partition|
-            ret << partition.table_row(FIELDS)
+          ret << disk.table_row(FIELDS)
+
+          begin
+            partition_table = disk.partition_table()
+            partition_table.partitions().each do |partition|
+              ret << partition.table_row(FIELDS)
+            end
+          rescue Storage::WrongNumberOfChildren, Storage::DeviceHasWrongType
           end
-        rescue Storage::WrongNumberOfChildren, Storage::DeviceHasWrongType
+
         end
 
       end
@@ -155,16 +151,6 @@ module ExpertPartitioner
       end
 
     end
-
-
-    def do_create_partition_table
-
-      CreatePartitionTableDialog.new(@disk).run()
-
-      update(true)
-
-    end
-
 
   end
 
