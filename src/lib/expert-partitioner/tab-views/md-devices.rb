@@ -52,6 +52,8 @@ module ExpertPartitioner
           ::Storage::to_partition(blk_device)
         elsif ::Storage::disk?(blk_device)
           ::Storage::to_disk(blk_device)
+        elsif ::Storage::md?(blk_device)
+          ::Storage::to_md(blk_device)
         else
           blk_device
         end
