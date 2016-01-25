@@ -92,6 +92,7 @@ ylib_DATA = \
   lib/storage/boot_requirements_checker.rb \
   lib/storage/disk_analyzer.rb \
   lib/storage/disk_size.rb \
+  lib/storage/partition_creator.rb \
   lib/storage/proposal_settings.rb \
   lib/storage/proposal_volume.rb \
   lib/storage/space_maker.rb \
