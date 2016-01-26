@@ -64,9 +64,7 @@ module Yast
       # device graph which is a clone of "proposal_base".
       #
       def create_partitions(volumes, strategy, free_space)
-
-	# FIXME: TO DO
-	# FIXME: TO DO
+        create(volumes, strategy, free_space)
       end
 
       # Sum up the sizes of all slots in free_space.

@@ -80,7 +80,6 @@ module Yast
 	  create_partitions(space_maker)
 	  proposal_to_staging
 	  action_text = proposal_text
-
 	rescue NotEnoughDiskSpace => ex
 	  action_text = "No proposal possible."
 	  log.warn(action_text)
