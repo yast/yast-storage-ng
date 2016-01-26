@@ -93,8 +93,6 @@ module Yast
 	log.info("Providing space with method \"#{method}\" and strategy \"#{strategy}\" - required: #{required_size}")
 	@strategy = strategy
 	self.send(method, required_size)
-return false if strategy == :desired
-
 	total_free_size >= required_size
       end
 
