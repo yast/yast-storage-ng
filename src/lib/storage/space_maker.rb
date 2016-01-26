@@ -85,13 +85,15 @@ module Yast
       # @return [bool] ok: 'true' if enough space found, 'false' if not
       #
       def provide_space(method, strategy)
-	raise ArgumentError "Bad method name #{method}" unless [:find_space, :resize_windows, :make_space].include?(method)
-	raise ArgumentError "Bad strategy name #{strategy}" unless [:desired, :min].include?(strategy)
+	raise ArgumentError, "Bad method name #{method}" unless [:find_space, :resize_windows, :make_space].include?(method)
+	raise ArgumentError, "Bad strategy name #{strategy}" unless [:desired, :min_size].include?(strategy)
 
-	log.info("Providing space with method #{method} and strategy \"#{strategy}\"")
 	required_size = strategy == :desired ? total_desired_sizes : total_vol_sizes(strategy)
+	# required_size = total_vol_sizes(:min_size)
+	log.info("Providing space with method \"#{method}\" and strategy \"#{strategy}\" - required: #{required_size}")
 	@strategy = strategy
 	self.send(method, required_size)
+return false if strategy == :desired
 
 	total_free_size >= required_size
       end
@@ -99,19 +101,7 @@ module Yast
       # Try to detect empty (unpartitioned) space.
       #
       def find_space(*unused)
-	@free_space = []
-	@candidate_disks.each do |disk_name|
-	  begin
-	    log.info("Collecting unpartitioned space on #{disk_name}")
-	    disk = ::Storage::Disk.find(@devicegraph, disk_name)
-	    disk.partition_table.unused_partition_slots.each do |slot|
-	      @free_space << FreeDiskSpace.new(disk, slot)
-	    end
-	  rescue RuntimeError => ex # FIXME: rescue ::Storage::Exception when SWIG bindings are fixed
-	    log.info("CAUGHT exception #{ex}")
-	    # FIXME: Handle completely empty disks (no partition table) as empty space
-	  end
-	end
+        update_free_space
       end
 
       # Use force to create space (up to 'required_size'): Delete partitions
@@ -120,17 +110,19 @@ module Yast
       # @param required_size [DiskSize]
       #
       def make_space(required_size)
-        log.info("Trying to make space for #{required_size}")
-        prioritized_candidate_partitions.each do |part_name|
-          part = ::Storage::Partition.find(@devicegraph, part_name)
-          next unless part
-          log.info("Deleting partition #{part_name} in device graph")
-          part.partition_table.delete_partition(part_name)
-          find_space
-          free_size = total_free_size
-          log.info("Now #{free_size} free - required: #{required_size}")
-          return if free_size >= required_size
-        end
+	log.info("Trying to make space for #{required_size}")
+	free_size = update_free_space
+
+	prioritized_candidate_partitions.each do |part_name|
+	  log.info("Now #{free_size} free - required: #{required_size}")
+	  return if free_size >= required_size
+	  part = ::Storage::Partition.find(@devicegraph, part_name)
+	  next unless part
+	  log.info("Deleting partition #{part_name} in device graph")
+	  part.partition_table.delete_partition(part_name)
+	  find_space
+	  free_size = update_free_space
+	end
       end
 
       # Try to resize an existing windows partition - unless there already is
@@ -196,8 +188,8 @@ module Yast
       # @return [DiskSize] sum of all 'size_method' in @volumes
       #
       def total_vol_sizes(size_method)
-	raise ArgumentError "Bad method name #{size_method}" unless [:min, :max].include?(size_method)
-	@volumes.reduce(DiskSize.zero) do |sum, vol|
+	raise ArgumentError, "Bad method name #{size_method}" unless [:min_size, :max_size].include?(size_method)
+	total = @volumes.reduce(DiskSize.zero) do |sum, vol|
 	  sum + vol.send(size_method)
 	end
       end
@@ -227,21 +219,45 @@ module Yast
 
       private
 
+      # Update @free_space: Re-read free slots from disk (from libstorage).
+      #
+      # @return [DiskSize] total free size
+      #
+      def update_free_space
+	@free_space = []
+        free_size = DiskSize.zero
+	@candidate_disks.each do |disk_name|
+	  begin
+	    # log.info("Collecting unpartitioned space on #{disk_name}")
+	    disk = ::Storage::Disk.find(@devicegraph, disk_name)
+	    disk.partition_table.unused_partition_slots.each do |slot|
+              free_slot = FreeDiskSpace.new(disk, slot)
+	      @free_space << free_slot
+              free_size += free_slot.size
+	    end
+	  rescue RuntimeError => ex # FIXME: rescue ::Storage::Exception when SWIG bindings are fixed
+	    log.info("CAUGHT exception #{ex}")
+	    # FIXME: Handle completely empty disks (no partition table) as empty space
+	  end
+	end
+        free_size
+      end
+
       # Return all partition names from all candidate disks.
       #
       # @return [Array<String>] partition_names
       #
       def candidate_partitions
-        cand_part = []
+	cand_part = []
 	@candidate_disks.each do |disk_name|
 	  begin
 	    disk = ::Storage::Disk.find(@devicegraph, disk_name)
-            disk.partition_table.partitions.each { |part| cand_part << part.name }
+	    disk.partition_table.partitions.each { |part| cand_part << part.name }
 	  rescue RuntimeError => ex # FIXME: rescue ::Storage::Exception when SWIG bindings are fixed
 	    log.info("CAUGHT exception #{ex}")
 	  end
 	end
-        cand_part
+	cand_part
       end
 
       # Return a prioritized array of candidate partitions (from all candidate
@@ -254,13 +270,13 @@ module Yast
       # @return [Array<String>] partition_names
       #
       def prioritized_candidate_partitions
-        win_part, non_win_part = candidate_partitions.partition do |part|
-          @windows_partitions.include?(part)
-        end
-        linux_part, non_linux_part = non_win_part.partition do |part|
-          @linux_partitions.include?(part)
-        end
-        linux_part + non_linux_part + win_part
+	win_part, non_win_part = candidate_partitions.partition do |part|
+	  @windows_partitions.include?(part)
+	end
+	linux_part, non_linux_part = non_win_part.partition do |part|
+	  @linux_partitions.include?(part)
+	end
+	linux_part + non_linux_part + win_part
       end
     end
   end

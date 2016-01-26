@@ -83,7 +83,7 @@ module Yast
 
 	rescue NotEnoughDiskSpace => ex
 	  action_text = "No proposal possible."
-	  log.warning(action_text)
+	  log.warn(action_text)
 	  reset_proposal
 	end
 
@@ -98,7 +98,7 @@ module Yast
       # - space_maker.find_space     for space_maker.total_desired_sizes
       # - space_maker.resize_windows for space_maker.total_desired_sizes
       # - space_maker.make_space     for space_maker.total_desired_sizes
-      # - space_maker.make_space     for space_maker.total_sizes(:min)
+      # - space_maker.make_space     for space_maker.total_sizes(:min_size)
       #
       # If all that fails, a NotEnoughDiskSpace exception is raised.
       #
@@ -116,13 +116,17 @@ module Yast
 				     linux_partitions:	 disk_analyzer.linux_partitions,
 				     windows_partitions: disk_analyzer.windows_partitions,
 				     devicegraph: @proposal)
+        # Try with desired sizes
+        success = space_maker.provide_space(:find_space,     :desired) ||
+	          space_maker.provide_space(:resize_windows, :desired) ||
+	          space_maker.provide_space(:make_space,     :desired)
 
-	# Try different methods and stragegies until one of them returns OK ('true')
-	space_maker.provide_space(:find_space, :desired)       ||
-	  space_maker.provide_space(:resize_windows, :desired) ||
-	  space_maker.provide_space(:make_space, :desired)     ||
-	  space_maker.provide_space(:make_space, :min)         ||
-	  (raise NotEnoughDiskSpace) # Everything failed -> exception
+        if !success
+          # Not enough space for desired sizes - try again with minimum size
+          log.info("Resetting proposal")
+          reset_proposal # Restore any previously deleted partitions in the proposal graph
+	  raise NotEnoughDiskSpace unless space_maker.provide_space(:make_space, :min_size)
+        end
 
 	log.info("Found #{space_maker.total_free_size} with strategy \"#{space_maker.strategy}\"")
 	space_maker
@@ -137,8 +141,8 @@ module Yast
 	  partition_creator = PartitionCreator.new(settings:	@settings,
 						   devicegraph: @proposal)
 	  partition_creator.create_partitions(@volumes,
-				              space_maker.strategy,
-				              space_maker.free_space)
+					      space_maker.strategy,
+					      space_maker.free_space)
       end
 
       # Return the textual description of the actions necessary to transform
