@@ -141,21 +141,34 @@ module Yast
       # @param free_space [Array<FreeDiskSpace>]
       #
       def create_non_lvm_simple(volumes, strategy, free_space)
+        volumes.each { |vol| log.info("vol #{vol.mount_point}\tmin: #{vol.min_size} max: #{vol.max_size} desired: #{vol.desired_size} weight: #{vol.weight}") }
+
 	# Sort out volumes with unlimited size vs. limited size
-	unlimited_vol, fixed_size_vol = volumes.partition { |vol| vol.send(strategy) == DiskSize.unlimited }
+	flexible_vol, fixed_size_vol = volumes.partition do |vol|
+          size = vol.send(strategy)
+          size = vol.min_size if size.unlimited?
+          size < vol.max_size && vol.weight > 0
+        end
 
 	# Add up the sizes of each type
-	total_fixed_size	 = fixed_size_vol.reduce(DiskSize.zero) { |sum, vol| sum + vol.send(strategy) }
-	total_unlimited_min_size = unlimited_vol.reduce(DiskSize.zero)	{ |sum, vol| sum += vol.min_size }
+	total_fixed_size    = fixed_size_vol.reduce(DiskSize.zero) { |sum, vol| sum + vol.send(strategy) }
+	total_flexible_size = flexible_vol.reduce(DiskSize.zero) do |sum, vol|
+          size = vol.send(strategy)
+          size = vol.min_size if size.unlimited?
+          sum + size
+        end
 	free_size = total_free_size(free_space)
-	remaining_size = free_size - total_fixed_size - total_unlimited_min_size
+	remaining_size = free_size - total_fixed_size - total_flexible_size
 
 	# Set the sizes for all volumes.
 	# The remaining_size will be distributed among the unlimited ones later.
 	fixed_size_vol.each { |vol| vol.size = vol.send(strategy) }
-	unlimited_vol.each  { |vol| vol.size = vol.min_size }
+	flexible_vol.each do |vol|
+          vol.size = vol.send(strategy)
+          vol.size = vol.min_size if vol.size.unlimited?
+        end
 
-	remaining_size = distribute_extra_space(unlimited_vol, remaining_size)
+	remaining_size = distribute_extra_space(flexible_vol, remaining_size)
 
 	volumes.each do |vol|
 	  partition_id = vol.mount_point == "swap" ? ::Storage::ID_SWAP : ::Storage::ID_LINUX
@@ -174,6 +187,7 @@ module Yast
       # @return [DiskSpace] remaining space that could not be distributed
       #
       def distribute_extra_space(volumes, extra_size)
+        log.info("Distributing #{extra_size} extra space among #{volumes.size} volumes")
 	while extra_size > DiskSize.zero
 	  total_weight = volumes.reduce(0.0) do |sum, vol|
 	    vol.size == vol.max_size ? sum : sum + vol.weight
@@ -182,7 +196,10 @@ module Yast
 	  return extra_size if total_weight == 0.0 # all volumes at their maximum size
 
 	  volumes.each do |vol|
-	    next if vol.size == vol.max_size
+            if vol.size == vol.max_size
+              log.info("#{vol.mount_point} is at maximum with #{vol.max_size}")
+	      next
+            end
 	    vol_extra = extra_size * (vol.weight / total_weight)
 	    vol.size += vol_extra
 
@@ -241,7 +258,6 @@ module Yast
 	    partition_type = ::Storage::PRIMARY
 	  end
 	  region = new_region_with_size(free_slot, vol.size)
-	  log.info("region block size: #{region.block_size}")
 	  partition = ptable.create_partition(dev_name, region, partition_type)
 	  partition.id = partition_id
 	  partition
@@ -271,7 +287,7 @@ module Yast
       # @return [String] device_name ("/dev/sdx5", "/dev/sdx6", ...)
       #
       def next_free_logical_partition_name(disk_name, ptable)
-	part_names = ptable.partitions.map { |part| part.name }
+	part_names = ptable.partitions.to_a.map { |part| part.name }
 	FIRST_LOGICAL_PARTITION_NUMBER.upto(ptable.max_logical) do |i|
 	  dev_name = "#{disk_name}#{i}"
 	  return dev_name unless part_names.include?(dev_name)
@@ -279,7 +295,8 @@ module Yast
 	raise NoMorePartitionSlotError
       end
 
-      # Create a new region from the one in free_slot, but with new size disk_size.
+      # Create a new region from the one in free_slot, but with new size
+      # disk_size.
       #
       # @param free_slot [FreeDiskSpace]
       # @param disk_size [DiskSize] new size of the region
@@ -288,9 +305,7 @@ module Yast
       #
       def new_region_with_size(free_slot, disk_size)
         region = free_slot.slot.region
-	log.info("blocks size: #{region.block_size}")
 	blocks = (1024 * disk_size.size_k) / region.block_size
-	log.info("blocks: #{blocks}")
         # region.dup doesn't seem to work (SWIG bindings problem?)
 	::Storage::Region.new(region.start, blocks, region.block_size)
       end

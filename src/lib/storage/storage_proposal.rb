@@ -46,7 +46,7 @@ module Yast
     class Proposal
       include Yast::Logger
 
-      attr_accessor :settings
+      attr_accessor :settings, :volumes, :standard_volumes, :verbose
 
       DEFAULT_SWAP_SIZE = DiskSize.GiB(2)
 
@@ -63,6 +63,9 @@ module Yast
 	@settings = ProposalSettings.new
 	@proposal = nil	   # ::Storage::DeviceGraph
 	@actions  = nil	   # ::Storage::ActionGraph
+        @volumes  = nil         # Array<ProposalVolumes>
+        @standard_volumes = nil # Array<ProposalVolumes>
+        @verbose  = false
       end
 
       # Create a storage proposal.
@@ -72,7 +75,8 @@ module Yast
 
 	boot_requirements_checker = BootRequirementsChecker.new(@settings)
 	@volumes = boot_requirements_checker.needed_partitions
-	@volumes += standard_volumes
+        make_standard_volumes
+	@volumes += @standard_volumes
 
 	disk_analyzer = DiskAnalyzer.new
 	disk_analyzer.analyze
@@ -88,6 +92,7 @@ module Yast
 	  reset_proposal
 	end
 
+        print_volumes if @verbose
 	log.info("Actions:\n#{action_text}\n")
 	print("\nActions:\n\n#{action_text}\n")
       end
@@ -173,6 +178,35 @@ module Yast
 	@actions = storage.calculate_actiongraph
       end
 
+      # Create the standard volumes for the root, swap and /home
+      # and add them to @standard_volumes.
+      #
+      # @return [Array<ProposalVolume>]
+      #
+      def make_standard_volumes
+        return @standard_volumes if @standard_volumes
+        @standard_volumes = []
+        @standard_volumes << make_swap_vol
+	root_vol = make_root_vol
+	@standard_volumes << root_vol
+	@standard_volumes << make_home_vol(root_vol.desired_size) if @settings.use_separate_home
+	@standard_volumes
+      end
+
+      # Print the volums to stdout.
+      #
+      def print_volumes
+        @volumes.each do |vol|
+          print("\nVolume \"#{vol.mount_point}\":\n")
+          print("  min: #{vol.min_size};")
+          print("  max: #{vol.max_size};")
+          print("  desired: #{vol.desired_size};")
+          print("  size: #{vol.size};")
+          print("  weight: #{vol.weight};\n")
+        end
+        print("\n")
+      end
+
       private
 
       # Prepare the devicegraphs we are working on:
@@ -198,20 +232,6 @@ module Yast
 	reset_proposal
       end
 
-      # Return an array of the standard volumes for the root and /home file
-      # systems
-      #
-      # @return [Array [ProposalVolume]]
-      #
-      def standard_volumes
-        volumes = []
-        volumes << make_swap_vol
-	root_vol = make_root_vol
-	volumes << root_vol
-	volumes << make_home_vol(root_vol.desired_size) if @settings.use_separate_home
-	volumes
-      end
-
       # Create the ProposalVolume data structure for the swap volume according
       # to the settings.
       def make_swap_vol
@@ -235,8 +255,9 @@ module Yast
 	root_vol = ProposalVolume.new("/", @settings.root_filesystem_type)
 	root_vol.min_size = @settings.root_base_size
 	root_vol.max_size = @settings.root_max_size
-        weight = @settings.root_space_percent
-	if root_vol.filesystem_type = ::Storage::BTRFS
+        root_vol.weight   = @settings.root_space_percent
+	if root_vol.filesystem_type == ::Storage::BTRFS
+          puts("Increasing root filesystem size for Btrfs")
 	  multiplicator = 1.0 + @settings.btrfs_increase_percentage / 100.0
 	  root_vol.min_size *= multiplicator
 	  root_vol.max_size *= multiplicator
@@ -254,8 +275,7 @@ module Yast
 	home_vol = ProposalVolume.new("/home", @settings.home_filesystem_type)
 	home_vol.min_size = @settings.home_min_size
 	home_vol.max_size = @settings.home_max_size
-	weight = 100.0 - @settings.root_space_percent
-	home_vol.desired_size = root_vol_size * (weight / @settings.root_space_percent)
+	home_vol.weight   = 100.0 - @settings.root_space_percent
 	home_vol
       end
 
@@ -278,9 +298,11 @@ end
 
 if $PROGRAM_NAME == __FILE__  # Called direcly as standalone command? (not via rspec or require)
   proposal = Yast::Storage::Proposal.new
-  proposal.settings.root_filesystem_type = ::Storage::XFS
+  # proposal.settings.root_max_size = Yast::Storage::DiskSize.unlimited
+  # proposal.settings.root_filesystem_type = ::Storage::XFS
+  # proposal.settings.btrfs_increase_percentage = 150.0
   proposal.settings.use_separate_home = true
-  proposal.settings.btrfs_increase_percentage = 150.0
+  proposal.verbose = true
   proposal.propose
   # pp proposal
 end
