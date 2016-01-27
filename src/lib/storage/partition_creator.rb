@@ -106,7 +106,7 @@ module Yast
       def create_lvm(volumes, strategy)
 	lvm_vol, non_lvm_vol = @volumes.partition { |vol| vol.can_live_on_logical_volume }
 	# Create any partitions first that cannot be created on LVM
-	# to avoid LVM taking away all the available free space
+	# to avoid LVM consuming all the available free space
 	create_non_lvm(non_lvm_vol, strategy)
 
 	if !lvm_vol.empty?
@@ -159,7 +159,8 @@ module Yast
 
 	volumes.each do |vol|
 	  partition_id = vol.mount_point == "swap" ? ::Storage::ID_SWAP : ::Storage::ID_LINUX
-	  create_partition(vol, partition_id , free_space.first)
+	  partition = create_partition(vol, partition_id , free_space.first)
+          partition.create_filesystem(vol.filesystem_type) if partition && vol.filesystem_type
 	  free_space = @space_maker.find_space
 	end
       end
@@ -231,7 +232,7 @@ module Yast
 	    if !ptable.has_extended
 	      # Create an extended partition first
 	      dev_name = next_free_primary_partition_name(disk_name, partition_table)
-	      ptable.create_partition(dev_name, slot.region, ::Storage::EXTENDED)
+	      ptable.create_partition(dev_name, free_slot.region, ::Storage::EXTENDED)
 	    end
 	    dev_name = next_free_logical_partition_name(disk.name, ptable)
 	    partition_type = ::Storage::LOGICAL
@@ -239,13 +240,12 @@ module Yast
 	    dev_name = next_free_primary_partition_name(disk.name, ptable)
 	    partition_type = ::Storage::PRIMARY
 	  end
-          region = new_region_with_size(free_slot, vol.size)
-          log.info("region block size: #{region.block_size}")
+	  region = new_region_with_size(free_slot, vol.size)
+	  log.info("region block size: #{region.block_size}")
 	  partition = ptable.create_partition(dev_name, region, partition_type)
-          partition.methods.sort.each { |m| log.info("method: #{m}") }
 	  partition.id = partition_id
 	  partition
-	rescue RuntimeError => ex # FIXME: rescue ::Storage::Exception when SWIG bindings are fixed
+        rescue RuntimeError => ex # FIXME: rescue ::Storage::Exception when SWIG bindings are fixed
 	  log.info("CAUGHT exception #{ex}")
 	  nil
 	end
@@ -279,18 +279,20 @@ module Yast
 	raise NoMorePartitionSlotError
       end
 
-      # Set the size of a region in DiskSize units (kiB).
+      # Create a new region from the one in free_slot, but with new size disk_size.
       #
       # @param free_slot [FreeDiskSpace]
       # @param disk_size [DiskSize] new size of the region
       #
+      # @return [::Storage::Region] Newly created region
+      #
       def new_region_with_size(free_slot, disk_size)
-        log.info("blocks size: #{free_slot.slot.region.block_size}")
-	blocks = (1024 * disk_size.size_k) / free_slot.slot.region.block_size
-        log.info("blocks: #{blocks}")
-        ::Storage::Region.new(free_slot.slot.region.start,
-                              blocks,
-                              free_slot.slot.region.block_size)
+        region = free_slot.slot.region
+	log.info("blocks size: #{region.block_size}")
+	blocks = (1024 * disk_size.size_k) / region.block_size
+	log.info("blocks: #{blocks}")
+        # region.dup doesn't seem to work (SWIG bindings problem?)
+	::Storage::Region.new(region.start, blocks, region.block_size)
       end
 
       # Create an LVM volume group.
