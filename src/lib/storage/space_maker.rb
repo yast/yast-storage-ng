@@ -40,6 +40,8 @@ module Yast
 
       attr_accessor :volumes, :devicegraph, :free_space, :strategy
 
+      # Free disk space below this size will be disregarded
+      TINY_FREE_CHUNK = DiskSize.MiB(30) 
 
       # Initialize.
       #
@@ -99,6 +101,7 @@ module Yast
       #
       def find_space(*unused)
 	update_free_space
+        @free_space
       end
 
       # Use force to create space (up to 'required_size'): Delete partitions
@@ -230,8 +233,10 @@ module Yast
 	    disk = ::Storage::Disk.find(@devicegraph, disk_name)
 	    disk.partition_table.unused_partition_slots.each do |slot|
 	      free_slot = FreeDiskSpace.new(disk, slot)
-	      @free_space << free_slot
-	      free_size += free_slot.size
+              if free_slot.size >= TINY_FREE_CHUNK
+	        @free_space << free_slot
+	        free_size += free_slot.size
+              end
 	    end
 	  rescue RuntimeError => ex # FIXME: rescue ::Storage::Exception when SWIG bindings are fixed
 	    log.info("CAUGHT exception #{ex}")

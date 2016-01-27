@@ -31,7 +31,7 @@ module Yast
     #
     class ProposalVolume
       attr_accessor :mount_point, :filesystem_type
-      attr_accessor :size, :min_size, :max_size, :desired_size
+      attr_accessor :size, :min_size, :max_size, :desired_size, :weight
       attr_accessor :can_live_on_logical_volume, :logical_volume_name
 
       # Constructor.
@@ -51,6 +51,7 @@ module Yast
         @min_size     = DiskSize.zero
         @max_size     = DiskSize.unlimited
         @desired_size = DiskSize.unlimited
+        @weight       = 0 # For distributing extra space if desired is unlimited
         @can_live_on_logical_volume = false
         @logical_volume_name = nil
 
@@ -63,6 +64,24 @@ module Yast
         else
           @logical_volume_name = @mount_point.sub(%r{^/}, "")
         end
+      end
+
+      # Alias getter for @desired_size
+      #
+      def desired
+        @desired_size
+      end
+
+      # Alias getter for @min_size
+      #
+      def min
+        @min_size
+      end
+
+      # Alias getter for @max_size
+      #
+      def max
+        @max_size
       end
     end
   end

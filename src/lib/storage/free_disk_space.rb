@@ -37,14 +37,29 @@ module Yast
 
       # Initialize.
       #
-      # @param disk_name [string]
+      # @param disk [::Storage::Disk]
       #
-      # @param region [::Storage::PartitionSlot]
+      # @param slot [::Storage::PartitionSlot]
       #
-      def initialize(disk_name, slot)
-	@disk_name = disk_name
+      def initialize(disk, slot)
+	@disk = disk
 	@slot = slot
-	@size = DiskSize.new(slot.region.to_kb(slot.region.length))
+      end
+
+      # Return the name of the disk this slot is on.
+      #
+      # @return [String] disk_name
+      #
+      def disk_name
+        @disk.name
+      end
+
+      # Return the size of this slot.
+      #
+      # @return [DiskSize]
+      #
+      def size
+	DiskSize.new(@slot.region.to_kb(@slot.region.length))
       end
     end
   end

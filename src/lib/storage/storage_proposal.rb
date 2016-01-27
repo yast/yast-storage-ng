@@ -48,7 +48,9 @@ module Yast
 
       attr_accessor :settings
 
-      # devicegraph names
+      DEFAULT_SWAP_SIZE = DiskSize.GiB(2)
+
+      # Devicegraph names
       PROPOSAL_BASE = "proposal_base"
       PROPOSAL	    = "proposal"
       PROBED	    = "probed"
@@ -138,10 +140,9 @@ module Yast
       #
       def create_partitions(space_maker)
 	  partition_creator = PartitionCreator.new(settings:	@settings,
-						   devicegraph: @proposal)
-	  partition_creator.create_partitions(@volumes,
-					      space_maker.strategy,
-					      space_maker.free_space)
+						   devicegraph: @proposal,
+                                                   space_maker: space_maker)
+	  partition_creator.create_partitions(@volumes, space_maker.strategy)
       end
 
       # Return the textual description of the actions necessary to transform
@@ -203,10 +204,26 @@ module Yast
       # @return [Array [ProposalVolume]]
       #
       def standard_volumes
+        volumes = []
+        volumes << make_swap_vol
 	root_vol = make_root_vol
-	volumes = [root_vol]
+	volumes << root_vol
 	volumes << make_home_vol(root_vol.desired_size) if @settings.use_separate_home
 	volumes
+      end
+
+      # Create the ProposalVolume data structure for the swap volume according
+      # to the settings.
+      def make_swap_vol
+        swap_vol = ProposalVolume.new("swap", ::Storage::SWAP)
+        swap_size = DEFAULT_SWAP_SIZE
+        if @settings.enlarge_swap_for_suspend
+          swap_size = ram_size
+        end
+        swap_vol.min_size     = swap_size
+        swap_vol.max_size     = swap_size
+        swap_vol.desired_size = swap_size
+        swap_vol
       end
 
       # Create the ProposalVolume data structure for the root volume according
@@ -218,6 +235,7 @@ module Yast
 	root_vol = ProposalVolume.new("/", @settings.root_filesystem_type)
 	root_vol.min_size = @settings.root_base_size
 	root_vol.max_size = @settings.root_max_size
+        weight = @settings.root_space_percent
 	if root_vol.filesystem_type = ::Storage::BTRFS
 	  multiplicator = 1.0 + @settings.btrfs_increase_percentage / 100.0
 	  root_vol.min_size *= multiplicator
@@ -236,9 +254,21 @@ module Yast
 	home_vol = ProposalVolume.new("/home", @settings.home_filesystem_type)
 	home_vol.min_size = @settings.home_min_size
 	home_vol.max_size = @settings.home_max_size
-	home_percent = 100.0 - @settings.root_space_percent
-	home_vol.desired_size = root_vol_size * (home_percent / @settings.root_space_percent)
+	weight = 100.0 - @settings.root_space_percent
+	home_vol.desired_size = root_vol_size * (weight / @settings.root_space_percent)
 	home_vol
+      end
+
+      # Return the total amount of RAM as DiskSize
+      #
+      # @return [DiskSize] current RAM size
+      #
+      def ram_size
+        # FIXME use the .proc.meminfo agent and its MemTotal field
+        #   mem_info_map = Convert.to_map(SCR.Read(path(".proc.meminfo")))
+        # See old Partitions.rb: SwapSizeMb()
+
+        DiskSize.GiB(8)
       end
     end
   end
