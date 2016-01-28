@@ -297,6 +297,11 @@ end
 # if used standalone, do a minimalistic test case
 
 if $PROGRAM_NAME == __FILE__  # Called direcly as standalone command? (not via rspec or require)
+  if Process::UID.eid != 0
+    STDERR.puts("This requires root permissions, otherwise hardware probing will fail.")
+    STDERR.puts("Start this with\n\n  sudo #{__FILE__}\n\n")
+  end
+
   proposal = Yast::Storage::Proposal.new
   # proposal.settings.root_max_size = Yast::Storage::DiskSize.unlimited
   # proposal.settings.root_filesystem_type = ::Storage::XFS

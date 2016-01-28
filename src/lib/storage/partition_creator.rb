@@ -173,7 +173,7 @@ module Yast
 	volumes.each do |vol|
 	  partition_id = vol.mount_point == "swap" ? ::Storage::ID_SWAP : ::Storage::ID_LINUX
 	  partition = create_partition(vol, partition_id , free_space.first)
-          partition.create_filesystem(vol.filesystem_type) if partition && vol.filesystem_type
+          make_filesystem(partition, vol)
 	  free_space = @space_maker.find_space
 	end
       end
@@ -308,6 +308,22 @@ module Yast
 	blocks = (1024 * disk_size.size_k) / region.block_size
         # region.dup doesn't seem to work (SWIG bindings problem?)
 	::Storage::Region.new(region.start, blocks, region.block_size)
+      end
+
+      # Create a filesystem for the specified volume on the specified partition
+      # and set its mount point. Do nothing if there is no filesystem
+      # configured for 'vol'.
+      #
+      # @param partition [::Storage::Partition]
+      # @param vol       [ProposalVolume]
+      #
+      # @return [::Storage::Filesystem] filesystem
+      #
+      def make_filesystem(partition, vol)
+        return nil unless vol.filesystem_type
+        filesystem = partition.create_filesystem(vol.filesystem_type)
+        filesystem.add_mountpoint(vol.mount_point) if vol.mount_point && !vol.mount_point.empty?
+        filesystem
       end
 
       # Create an LVM volume group.
