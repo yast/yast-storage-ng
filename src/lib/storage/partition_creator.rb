@@ -143,7 +143,7 @@ module Yast
       def create_non_lvm_simple(volumes, strategy, free_space)
         volumes.each { |vol| log.info("vol #{vol.mount_point}\tmin: #{vol.min_size} max: #{vol.max_size} desired: #{vol.desired_size} weight: #{vol.weight}") }
 
-	# Sort out volumes with unlimited size vs. limited size
+	# Sort out volumes with flexible size vs. fixed size
 	flexible_vol, fixed_size_vol = volumes.partition do |vol|
           size = vol.send(strategy)
           size = vol.min_size if size.unlimited?
@@ -248,7 +248,7 @@ module Yast
 	  if ptable.extended_possible && ptable.num_primary == ptable.max_primary - 1
 	    if !ptable.has_extended
 	      # Create an extended partition first
-	      dev_name = next_free_primary_partition_name(disk_name, partition_table)
+	      dev_name = next_free_primary_partition_name(disk.name, ptable)
 	      ptable.create_partition(dev_name, free_slot.region, ::Storage::EXTENDED)
 	    end
 	    dev_name = next_free_logical_partition_name(disk.name, ptable)
@@ -273,6 +273,8 @@ module Yast
       # @return [String] device_name ("/dev/sdx1", "/dev/sdx2", ...)
       #
       def next_free_primary_partition_name(disk_name, ptable)
+        # FIXME: This is broken by design. create_partition needs to return
+        # this information, not get it as an input parameter.
 	part_names = ptable.partitions.to_a.map { |part| part.name }
 	1.upto(ptable.max_primary) do |i|
 	  dev_name = "#{disk_name}#{i}"
@@ -287,6 +289,8 @@ module Yast
       # @return [String] device_name ("/dev/sdx5", "/dev/sdx6", ...)
       #
       def next_free_logical_partition_name(disk_name, ptable)
+        # FIXME: This is broken by design. create_partition needs to return
+        # this information, not get it as an input parameter.
 	part_names = ptable.partitions.to_a.map { |part| part.name }
 	FIRST_LOGICAL_PARTITION_NUMBER.upto(ptable.max_logical) do |i|
 	  dev_name = "#{disk_name}#{i}"
