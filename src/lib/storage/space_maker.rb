@@ -23,9 +23,9 @@
 
 require "yast"
 require "fileutils"
-require_relative "./proposal_volume"
-require_relative "./disk_size"
-require_relative "./free_disk_space"
+require_relative "proposal_volume"
+require_relative "disk_size"
+require_relative "free_disk_space"
 require "pp"
 
 module Yast

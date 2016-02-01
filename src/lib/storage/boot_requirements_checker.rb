@@ -22,8 +22,8 @@
 # find current contact information at www.suse.com.
 
 require "yast"
-require_relative "./proposal_volume"
-require_relative "./disk_size"
+require_relative "proposal_volume"
+require_relative "disk_size"
 require "pp"
 
 module Yast

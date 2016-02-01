@@ -22,8 +22,6 @@
 # find current contact information at www.suse.com.
 
 require "yast"
-require_relative "./disk_size"
-require "pp"
 
 module Yast
   module Storage

@@ -23,12 +23,12 @@
 
 require "yast"
 require "fileutils"
-require_relative "./storage_manager"
-require_relative "./proposal_settings"
-require_relative "./proposal_volume"
-require_relative "./disk_size"
-require_relative "./space_maker"
-require_relative "./free_disk_space"
+require_relative "storage_manager"
+require_relative "proposal_settings"
+require_relative "proposal_volume"
+require_relative "disk_size"
+require_relative "space_maker"
+require_relative "free_disk_space"
 require "pp"
 
 module Yast

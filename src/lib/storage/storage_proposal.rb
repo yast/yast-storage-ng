@@ -23,14 +23,14 @@
 
 require "yast"
 require "storage"
-require_relative "./disk_size"
-require_relative "./storage_manager"
-require_relative "./proposal_settings"
-require_relative "./proposal_volume"
-require_relative "./boot_requirements_checker"
-require_relative "./disk_analyzer"
-require_relative "./space_maker"
-require_relative "./partition_creator"
+require_relative "disk_size"
+require_relative "storage_manager"
+require_relative "proposal_settings"
+require_relative "proposal_volume"
+require_relative "boot_requirements_checker"
+require_relative "disk_analyzer"
+require_relative "space_maker"
+require_relative "partition_creator"
 require "pp"
 
 # This file can be invoked separately for minimal testing.
