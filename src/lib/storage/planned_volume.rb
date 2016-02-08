@@ -22,17 +22,21 @@
 # find current contact information at www.suse.com.
 
 require "yast"
-require "pp"
+require "storage/disk_size"
 
 module Yast
   module Storage
     # Class to represent a planned volume (partition or logical volume) and
     # its constraints
     #
-    class ProposalVolume
+    class PlannedVolume
       attr_accessor :mount_point, :filesystem_type
       attr_accessor :size, :min_size, :max_size, :desired_size, :weight
       attr_accessor :can_live_on_logical_volume, :logical_volume_name
+
+      alias_method :desired, :desired_size
+      alias_method :min, :min_size
+      alias_method :max, :max_size
 
       # Constructor.
       #
@@ -64,24 +68,6 @@ module Yast
         else
           @logical_volume_name = @mount_point.sub(%r{^/}, "")
         end
-      end
-
-      # Alias getter for @desired_size
-      #
-      def desired
-        @desired_size
-      end
-
-      # Alias getter for @min_size
-      #
-      def min
-        @min_size
-      end
-
-      # Alias getter for @max_size
-      #
-      def max
-        @max_size
       end
     end
   end

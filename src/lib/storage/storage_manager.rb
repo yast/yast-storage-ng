@@ -48,17 +48,13 @@ module Yast
       # Class methods
       #
       class << self
-        @instance = nil
-        @logger   = nil
-
         # Return the singleton for the libstorage object. This will create one
         # for the first call, which will also trigger hardware probing.
         #
         # @return [::Storage::Storage] libstorage object
         #
         def instance
-          create_instance unless @instance
-          @instance
+          @instance ||= create_instance
         end
 
         # Create the singleton for the libstorage object.
@@ -72,7 +68,7 @@ module Yast
           storage_environment ||= ::Storage::Environment.new(true)
           create_logger
           log.info("Creating Storage object")
-          @instance = ::Storage::Storage.new(storage_environment)
+          ::Storage::Storage.new(storage_environment)
         end
 
         alias_method :start_probing, :create_instance
@@ -80,18 +76,13 @@ module Yast
         private
 
         def create_logger
-          @logger = StorageLogger.new
-          ::Storage.logger = @logger
+          ::Storage.logger = StorageLogger.new
         end
       end
 
       # Logger class for libstorage. This is needed to make libstorage log to the
       # y2log.
       class StorageLogger < ::Storage::Logger
-        def initialize
-          super
-        end
-
         def write(level, component, filename, line, function, content)
           Yast.y2_logger(level, component, filename, line, function, content)
         end

@@ -22,9 +22,9 @@
 # find current contact information at www.suse.com.
 
 require "yast"
-require_relative "proposal_volume"
-require_relative "disk_size"
-require "pp"
+require "storage/planned_volume"
+require "storage/planned_volumes_collection"
+require "storage/disk_size"
 
 module Yast
   module Storage
@@ -47,10 +47,10 @@ module Yast
 
       def needed_partitions
         boot_volumes = []
-        boot_volumes << make_efi_boot_partition if efi_boot_partition_needed?
-        boot_volumes << make_boot_partition     if boot_partition_needed?
-        boot_volumes << make_prep_partition     if prep_partition_needed?
-        boot_volumes
+        boot_volumes << efi_boot_partition if efi_boot_partition_needed?
+        boot_volumes << boot_partition     if boot_partition_needed?
+        boot_volumes << prep_partition     if prep_partition_needed?
+        PlannedVolumesCollection.new(boot_volumes)
       end
 
       def boot_partition_needed?
@@ -70,8 +70,8 @@ module Yast
 
       private
 
-      def make_boot_partition
-        vol = ProposalVolume.new("/boot", ::Storage::EXT4)
+      def boot_partition
+        vol = PlannedVolume.new("/boot", ::Storage::EXT4)
         vol.min_size = DiskSize.MiB(512) # TO DO
         vol.max_size = DiskSize.MiB(512) # TO DO
         vol.desired_size = vol.min_size
@@ -79,15 +79,15 @@ module Yast
         vol
       end
 
-      def make_efi_boot_partition
-        vol = ProposalVolume.new("/boot/efi", ::Storage::VFAT)
+      def efi_boot_partition
+        vol = PlannedVolume.new("/boot/efi", ::Storage::VFAT)
         vol.can_live_on_logical_volume = false
         # TO DO
         vol
       end
 
       def make_prep_partition
-        vol = ProposalVolume.new("PReP", ::Storage::VFAT)
+        vol = PlannedVolume.new("PReP", ::Storage::VFAT)
         vol.can_live_on_logical_volume = false
         # TO DO
         vol

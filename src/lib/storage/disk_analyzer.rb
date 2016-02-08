@@ -23,7 +23,7 @@
 
 require "yast"
 require "fileutils"
-require "pp"
+require "storage"
 
 module Yast
   module Storage
@@ -58,10 +58,18 @@ module Yast
           ::Storage::ID_DOS12
         ]
 
+      NO_INSTALLATION_IDS =
+        [
+          ::Storage::ID_SWAP,
+          ::Storage::ID_EXTENDED,
+          ::Storage::ID_LVM
+        ]
+
       DEFAULT_DISK_CHECK_LIMIT = 10
 
       attr_reader :installation_disks, :candidate_disks
       attr_reader :windows_partitions, :linux_partitions
+      attr_reader :devicegraph
       attr_accessor :disk_check_limit
 
       def initialize
@@ -80,7 +88,9 @@ module Yast
       # Analyze disks and partitions. Make sure to call this before querying
       # any member variables.
       #
-      def analyze
+      def analyze(devicegraph)
+        @devicegraph = devicegraph
+
         @installation_disks = find_installation_disks
         @candidate_disks    = find_candidate_disks
         @linux_partitions   = find_linux_partitions
@@ -112,7 +122,7 @@ module Yast
       # @return [Array<String>] device names of installation disks
       #
       def find_installation_disks
-        disks = StorageManager.instance.probed.all_disks.to_a
+        disks = devicegraph.all_disks.to_a
         # FIXME: to_a should not be necessary:
         # libstorage should return something that Ruby can handle.
         # This is very likely a problem of the Swig bindings.
@@ -134,7 +144,7 @@ module Yast
       # @return [Array<string>] device names of candidate disks
       #
       def find_candidate_disks
-        disks = StorageManager.instance.probed.all_disks.to_a
+        disks = devicegraph.all_disks.to_a
         # FIXME: to_a should not be necessary
 
         usb_disks, non_usb_disks = disks.partition { |disk| disk.transport == ::Storage::USB }
@@ -173,7 +183,7 @@ module Yast
         linux_partitions = []
         @candidate_disks.each do |disk_name|
           begin
-            disk = ::Storage::Disk.find(StorageManager.instance.probed, disk_name)
+            disk = ::Storage::Disk.find(devicegraph, disk_name)
             disk.partition_table.partitions.each do |partition|
               if LINUX_PARTITION_IDS.include?(partition.id)
                 log.info("Found Linux partition #{partition} (ID 0x#{partition.id.to_s(16)})")
@@ -207,7 +217,7 @@ module Yast
         # No need to limit checking - PC arch only (few disks)
         @candidate_disks.each do |disk_name|
           begin
-            disk = ::Storage::Disk.find(StorageManager.instance.probed, disk_name)
+            disk = ::Storage::Disk.find(devicegraph, disk_name)
             disk.partition_table.partitions.each do |partition|
               if WINDOWS_PARTITION_IDS.include?(partition.id)
                 windows_partitions << partition.name if windows_partition?(partition.name)
@@ -257,9 +267,9 @@ module Yast
       def installation_disk?(disk_name)
         log.info("Checking if #{disk_name} is an installation disk")
         begin
-          disk = ::Storage::Disk.find(StorageManager.instance.probed, disk_name)
+          disk = ::Storage::Disk.find(devicegraph, disk_name)
           disk.partition_table.partitions.each do |partition|
-            if [::Storage::ID_SWAP, ::Storage::ID_EXTENDED].include?(partition.id)
+            if NO_INSTALLATION_IDS.include?(partition.id)
               log.info("Skipping #{partition} (ID 0x#{partition.id.to_s(16)})")
               next
             else

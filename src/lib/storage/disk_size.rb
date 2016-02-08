@@ -22,7 +22,6 @@
 # find current contact information at www.suse.com.
 
 require "yast"
-require "pp"
 
 # This file can be invoked separately for minimal testing.
 
