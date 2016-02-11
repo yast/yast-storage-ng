@@ -1,3 +1,9 @@
+#!/usr/bin/env ruby
+# Called direcly as standalone command? (not via YaST)
+if $PROGRAM_NAME == __FILE__
+  $LOAD_PATH.unshift(File.expand_path('../../lib', __FILE__))
+end
+
 require "yast"
 require "storage/clients/proposal_demo"
 
