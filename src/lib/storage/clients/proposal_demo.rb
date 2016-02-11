@@ -23,6 +23,7 @@
 
 require "yast"
 require "storage/proposal"
+require "storage/refined_devicegraph"
 
 module Yast
   module Storage
@@ -32,7 +33,7 @@ module Yast
     # system installation based on available storage devices (disks) and
     # certain configuration parameters.
     class ProposalDemoClient
-      using Proposal::RefinedDevicegraph
+      using RefinedDevicegraph
       include Yast::Logger
 
       attr_writer :verbose

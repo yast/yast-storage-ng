@@ -57,10 +57,6 @@ module Yast
             new_graph
           end
 
-          def actiongraph(storage: StorageManager.instance)
-            ::Storage::Actiongraph.new(storage, storage.probed, self)
-          end
-
           def candidate_spaces
             spaces = []
             # #each is prefered over #each_with_object by our C++ developers
