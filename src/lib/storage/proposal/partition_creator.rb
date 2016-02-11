@@ -54,7 +54,7 @@ module Yast
         # @param volumes [PlannedVolumesCollection] volumes to create
         # @param target_size [Symbol] :desired or :min
         # @return [::Storage::Devicegraph]
-        def run(volumes, target_size)
+        def create_partitions(volumes, target_size)
           self.devicegraph = original_graph.copy
 
           use_lvm = settings.use_lvm
@@ -86,7 +86,7 @@ module Yast
         #
         # @return [Array<FreeDiskSpace>]
         #
-        def free_spaces
+        def free_slots
           devicegraph.candidate_spaces
         end
 
@@ -115,7 +115,7 @@ module Yast
         # @param strategy [Symbol] :desired or :min_size
         #
         def create_non_lvm(volumes, strategy)
-          if free_spaces.size == 1
+          if free_slots.size == 1
             create_non_lvm_simple(volumes, strategy)
           else
             create_non_lvm_complex(volumes, strategy)
@@ -162,7 +162,7 @@ module Yast
 
           volumes.each do |vol|
             partition_id = vol.mount_point == "swap" ? ::Storage::ID_SWAP : ::Storage::ID_LINUX
-            partition = create_partition(vol, partition_id , free_spaces.first)
+            partition = create_partition(vol, partition_id , free_slots.first)
             make_filesystem(partition, vol)
           end
         end

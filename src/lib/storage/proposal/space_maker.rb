@@ -51,7 +51,7 @@ module Yast
         #
         # @param required_size [DiskSize] required amount of available space
         # @return [::Storage::Devicegraph]
-        def run(required_size)
+        def provide_space(required_size)
           new_graph = original_graph.copy
 
           resize_windows!(new_graph, required_size) unless success?(new_graph, required_size)

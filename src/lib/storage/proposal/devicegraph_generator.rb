@@ -74,10 +74,10 @@ module Yast
           space_maker = SpaceMaker.new(initial_graph)
           self.got_desired_space = false
           begin
-            result_graph = space_maker.run(volumes.desired_size)
+            result_graph = space_maker.provide_space(volumes.desired_size)
             self.got_desired_space = true
           rescue NoDiskSpaceError
-            result_graph = space_maker.run(volumes.min_size)
+            result_graph = space_maker.provide_space(volumes.min_size)
           end
           log.info("Found #{result_graph.available_size} (#{got_desired_space? ? 'desired' : 'min'})")
           result_graph
@@ -95,7 +95,7 @@ module Yast
         def create_partitions(volumes, initial_graph)
           partition_creator = PartitionCreator.new(initial_graph, settings)
           target = got_desired_space? ? :desired : :min
-          partition_creator.run(volumes, target)
+          partition_creator.create_partitions(volumes, target)
         end
       end
     end
