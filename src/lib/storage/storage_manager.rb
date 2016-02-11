@@ -54,7 +54,8 @@ module Yast
         # @return [::Storage::Storage] libstorage object
         #
         def instance
-          @instance ||= create_instance
+          create_instance unless @instance
+          @instance
         end
 
         # Create the singleton for the libstorage object.
@@ -68,7 +69,7 @@ module Yast
           storage_environment ||= ::Storage::Environment.new(true)
           create_logger
           log.info("Creating Storage object")
-          ::Storage::Storage.new(storage_environment)
+          @instance = ::Storage::Storage.new(storage_environment)
         end
 
         alias_method :start_probing, :create_instance
