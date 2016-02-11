@@ -21,7 +21,6 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "yast"
 require "fileutils"
 require "storage/planned_volume"
 require "storage/planned_volumes_collection"
@@ -30,7 +29,7 @@ require "storage/boot_requirements_checker"
 
 module Yast
   module Storage
-    module Proposal
+    class Proposal
       #
       # Class to generate the list of planned volumes of a proposal
       #

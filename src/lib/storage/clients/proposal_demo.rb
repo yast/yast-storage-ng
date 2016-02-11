@@ -22,22 +22,17 @@
 # find current contact information at www.suse.com.
 
 require "yast"
-require "storage/proposal/exceptions"
-require "storage/proposal/refined_devicegraph"
-require "storage/proposal/settings"
-require "storage/proposal/volumes_generator"
-require "storage/proposal/devicegraph_generator"
+require "storage/proposal"
 
 module Yast
   module Storage
-    using Proposal::RefinedDevicegraph
-
     # Demo of the storage proposal for installation
     #
     # Client that can suggest how to create or change partitions for a Linux
     # system installation based on available storage devices (disks) and
     # certain configuration parameters.
     class ProposalDemoClient
+      using Proposal::RefinedDevicegraph
       include Yast::Logger
 
       attr_writer :verbose
@@ -49,9 +44,9 @@ module Yast
       # Create a storage proposal.
       def run
         begin
-          volumes = volumes_generator.volumes
-          graph = devicegraph_generator.devicegraph(volumes)
-          actions = graph.actiongraph
+          proposal = Proposal.new(settings: settings)
+          proposal.propose
+          actions = proposal.devices.actiongraph
 
           action_text = actions_to_text(actions)
         rescue Proposal::NoDiskSpaceError => ex
@@ -59,7 +54,7 @@ module Yast
           log.warn(action_text)
         end
 
-        print_volumes(volumes) if verbose?
+        print_volumes(proposal.volumes) if verbose?
         log.info("Actions:\n#{action_text}\n")
         print("\nActions:\n\n#{action_text}\n")
       end
@@ -83,14 +78,6 @@ module Yast
           settings.use_separate_home = true
           settings
         end
-      end
-
-      def volumes_generator
-        @volumes_generator ||= Proposal::VolumesGenerator.new(settings)
-      end
-
-      def devicegraph_generator
-        @devicegraph_generator ||= Proposal::DevicegraphGenerator.new(settings)
       end
 
       # Return the textual description of the actions necessary to transform

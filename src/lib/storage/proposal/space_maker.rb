@@ -21,24 +21,20 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "yast"
 require "fileutils"
 require "storage"
 require "storage/planned_volume"
 require "storage/disk_size"
 require "storage/free_disk_space"
-require "storage/proposal/exceptions"
-require "storage/proposal/refined_devicegraph"
 
 module Yast
   module Storage
-    module Proposal
-      using RefinedDevicegraph
-
+    class Proposal
       # Class to provide free space for creating new partitions - either by
       # reusing existing unpartitioned space, by deleting existing partitions
       # or by resizing an existing Windows partition.
       class SpaceMaker
+        using RefinedDevicegraph
         include Yast::Logger
 
         # Initialize.

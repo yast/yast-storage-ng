@@ -21,19 +21,16 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "yast"
-require "storage/proposal/refined_devicegraph"
 require "storage/proposal/space_maker"
 require "storage/proposal/partition_creator"
 
 module Yast
   module Storage
-    module Proposal
-      using RefinedDevicegraph
-
+    class Proposal
       # Class to create devicegraphs that can accommodate a given collection of
       # volumes
       class DevicegraphGenerator
+        using RefinedDevicegraph
         include Yast::Logger
 
         attr_accessor :settings

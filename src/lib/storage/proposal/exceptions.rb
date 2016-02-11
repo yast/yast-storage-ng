@@ -23,12 +23,14 @@
 
 module Yast
   module Storage
-    module Proposal
+    class Proposal
       class Error < RuntimeError
       end
       class NoDiskSpaceError < Error
       end
       class NoMorePartitionSlotError < Error
+      end
+      class UnexpectedCallError < Error
       end
     end
   end

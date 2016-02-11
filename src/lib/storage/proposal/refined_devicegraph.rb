@@ -21,16 +21,15 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "yast"
 require "storage"
-require "storage/disk_analyzer"
 require "storage/storage_manager"
+require "storage/disk_analyzer"
 require "storage/disk_size"
 require "storage/free_disk_space"
 
 module Yast
   module Storage
-    module Proposal
+    class Proposal
       # Refinement for ::Storage::Devicegraph with several proposal-oriented
       # methods
       module RefinedDevicegraph

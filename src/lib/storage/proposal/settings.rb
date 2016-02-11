@@ -21,12 +21,11 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "yast"
 require "storage/disk_size"
 
 module Yast
   module Storage
-    module Proposal
+    class Proposal
       #
       # User-configurable settings for the storage proposal.
       # Those are settings the user can change in the UI.

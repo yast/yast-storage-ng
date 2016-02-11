@@ -21,21 +21,17 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "yast"
 require "fileutils"
 require "storage/planned_volumes_collection"
 require "storage/disk_size"
-require "storage/proposal/refined_devicegraph"
-require "storage/proposal/exceptions"
 
 module Yast
   module Storage
-    module Proposal
-      using RefinedDevicegraph
-
+    class Proposal
       # Class to create partitions in the free space detected or freed by the
       # SpaceMaker.
       class PartitionCreator
+        using RefinedDevicegraph
         include Yast::Logger
 
         attr_accessor :settings
