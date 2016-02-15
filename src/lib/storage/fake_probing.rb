@@ -24,7 +24,6 @@
 require "yast"
 require "storage"
 require_relative "storage_manager"
-require "pp"
 
 # This file can be invoked separately for minimal testing.
 
