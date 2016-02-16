@@ -88,6 +88,8 @@ module Yast
         build_tree_recursive(name, content)
       end
 
+      private
+      
       def build_tree_recursive(name, content)
         # puts("build_tree_recursive #{name}")
         raise HierarchyError, "Don't know how to create a #{name}" unless factory_products.include?(name)
@@ -102,8 +104,7 @@ module Yast
           param    = content.select{ |k,v| !factory_products.include?(k) }
 
           # Create the factory product itself: Call the corresponding create_ method
-          create_method = "create_#{name}".to_sym
-          self.send(create_method, param)
+          call_create_method(name, param)
 
           # Create any sub-objects of the factory product
           sub_prod.each do |product, product_content|
@@ -120,12 +121,13 @@ module Yast
               raise TypeError, "Expected Hash, not #{element}"
             end
           end
-        else
-          create_method = "create_#{name}".to_sym
-          self.send(create_method, content)
+        else # Simple value, no Hash or Array
+          call_create_method(name, content)
         end
       end
 
+      protected
+      
       # Factory method to create a disk.
       #
       def create_disk(args)
@@ -209,6 +211,23 @@ module Yast
       def check_hierarchy(parent, child)
         if !HIERARCHY[parent].include?(child)
           raise HierarchyError, "Unexpected child #{child_name} for #{parent}"
+        end
+      end
+
+      # Call the factory 'create' method for factory product 'name'
+      # with 'args' as argument. This requires a create_xy() method to exist
+      # for each product 'xy'. Introspection is used to find those methods.
+      #
+      # @param product_name [String] name of the factory product
+      # @param arg [Hash or Scalar] argument to pass to the create method
+      #
+      def call_create_method(name, arg)
+        create_method = "create_#{name}".to_sym
+        
+        if respond_to?(create_method, true)
+          self.send(create_method, arg)
+        else
+          log.warn("No method #{create_method} defined")
         end
       end
     end
