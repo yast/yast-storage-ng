@@ -43,6 +43,9 @@ module Yast
     # - valid_toplevel()
     # - valid_param()
     #
+    # Optional:
+    # - fixup_param()
+    #
     # From the outside, use load_yaml_file() or build_tree() to start
     # generating the tree.
     #
@@ -100,7 +103,6 @@ module Yast
       # @param content [Any]   parameters and sub-products of 'name'
       #
       def build_tree_recursive(parent, name, content)
-        # puts("build_tree_recursive #{name}")
         raise HierarchyError, "Don't know how to create a #{name}" unless factory_products.include?(name)
 
         case content
@@ -111,6 +113,10 @@ module Yast
           # Split up pure parameters and sub-product descriptions
           sub_prod = content.select{ |k,v|  factory_products.include?(k) }
           param    = content.select{ |k,v| !factory_products.include?(k) }
+
+          # Call subclass-defined fixup method if available
+          # to convert known value types to a better usable type
+          param = fixup_param(name, param ) if respond_to?(:fixup_param, true)
 
           # Create the factory product itself: Call the corresponding create_ method
           child = call_create_method(parent, name, param)
@@ -130,6 +136,9 @@ module Yast
             end
           end
         else # Simple value, no Hash or Array
+          # Intentionally not calling fixup_param() here since that method would
+          # not get any useful information what about the value to convert
+          # (since there is no hash key to compare to).
           call_create_method(parent, name, content)
         end
       end
@@ -167,7 +176,7 @@ module Yast
       # def valid_param
       #   VALID_PARAM
       # end
-      
+
       # Factory method to create a disk.
       #
       # @return [::Storage::Disk]
@@ -175,6 +184,25 @@ module Yast
       # def create_disk(parent, args)
       #   # Create a disk here
       #   nil
+      # end
+
+      # Fix up parameters to the create_xy() methods. This can be used to
+      # convert common parameter value types to something that is better to
+      # handle, possibly based on the parameter name (e.g., "size"). The name
+      # of the factory product is also passed to possibly narrow down where to
+      # do that kind of conversion.
+      #
+      # This method is optional. The base class checks with respond_to? if it
+      # is implemented before it is called. It is only called if 'param' is a
+      # hash, not if it's just a plain scalar value.
+      #
+      # @param name [String] factory product name
+      # @param param [Hash] create_xy() parameters
+      #
+      # @return [Hash or Scalar] changed parameters
+      #
+      # def fixup_param(name, param)
+      #   param
       # end
 
       private
@@ -196,7 +224,7 @@ module Yast
       def factory_products
         if @factory_products_cache == nil
           @factory_products_cache = factory_methods.map { |m| m.to_s.gsub(/^create_/, "") }
-          
+
           # For some of the products there might not be a create_ method, so
           # let's add the valid hierarchy description
           @factory_products_cache += valid_hierarchy.keys + valid_hierarchy.values.flatten
@@ -210,7 +238,7 @@ module Yast
       #
       # @param obj [Hash]
       # @return [String, Object] hash key and hash content
-      # 
+      #
       def break_up_hash(obj)
         name = obj.keys.first.to_s
         raise HierarchyError, "Expected hash, not #{obj}" unless obj.is_a?(Hash)
@@ -255,11 +283,12 @@ module Yast
       #
       def call_create_method(parent, name, arg)
         create_method = "create_#{name}".to_sym
-        
+
         if respond_to?(create_method, true)
+          log.info("#{create_method}( #{arg} )")
           self.send(create_method, parent, arg)
         else
-          log.warn("No method #{create_method} defined")
+          log.warn("WARNING: No method #{create_method}() defined")
           nil
         end
       end

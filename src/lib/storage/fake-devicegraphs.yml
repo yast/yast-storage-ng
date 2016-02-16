@@ -32,7 +32,7 @@ disk:
       label:        root
 
   - partition:
-      size:         remaining
+      size:         unlimited
       name:         /dev/sda4
       type:         extended
 

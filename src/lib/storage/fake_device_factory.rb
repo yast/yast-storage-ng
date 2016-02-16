@@ -24,6 +24,7 @@
 require "yast"
 require "storage"
 require_relative "abstract_device_factory.rb"
+require_relative "disk_size.rb"
 require "pp"
 
 module Yast
@@ -94,6 +95,23 @@ module Yast
         VALID_PARAM
       end
 
+      # Fix up parameters to the create_xy() methods. In this instance, this is
+      # used to convert any parameter called "size" to a DiskSize that can be
+      # used directly.
+      #
+      # This method is optional. The base class checks with respond_to? if it
+      # is implemented before it is called.
+      #
+      # @param name [String] factory product name
+      # @param param [Hash] create_xy() parameters
+      #
+      # @return [Hash or Scalar] changed parameters
+      #
+      def fixup_param(name, param)
+        # log.info("Fixing up #{param} for #{name}")
+        param.map { |key, value| [key, key == "size" ? DiskSize::parse(value) : value ] }.to_h
+      end
+
       #
       # Factory methods
       #
@@ -101,7 +119,7 @@ module Yast
       # with "create_" via Ruby introspection (methods()) and use them for
       # creating factory products.
       #
-      
+
       # Factory method to create a disk.
       #
       # @return [::Storage::Disk]
