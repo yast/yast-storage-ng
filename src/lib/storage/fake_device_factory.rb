@@ -109,7 +109,8 @@ module Yast
       #
       def fixup_param(name, param)
         # log.info("Fixing up #{param} for #{name}")
-        param.map { |key, value| [key, key == "size" ? DiskSize::parse(value) : value ] }.to_h
+        param["size"] = DiskSize::parse(param["size"]) if param.key?("size")
+        param
       end
 
       #
