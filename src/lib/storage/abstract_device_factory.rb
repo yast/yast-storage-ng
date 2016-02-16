@@ -85,12 +85,33 @@ module Yast
       # @param obj [Hash or Array<Hash>]
       #
       def build_tree(obj)
+        case obj
+        when Hash
+          build_tree_toplevel(obj)
+        when Array
+          obj.each do |element|
+            if element.is_a?(Hash)
+              build_tree_toplevel(element)
+            else
+              raise TypeError, "Expected Hash, not #{element}"
+            end
+          end
+        else
+          raise HierarchyError, "Expected Hash or Array at toplevel"
+        end
+      end
+
+      private
+
+      # Build the toplevel for a device tree starting with 'obj'.
+      #
+      # @param obj [Hash]
+      #
+      def build_tree_toplevel(obj)
         name, content = break_up_hash(obj)
         raise HierarchyError, "Unexpected toplevel object #{name}" unless valid_toplevel.include?(name)
         build_tree_recursive(nil, name, content)
       end
-
-      private
 
       # Internal recursive version of build_tree: Build a device tree as child
       # of 'parent' for a new hierarchy level for a factory product 'name' with
