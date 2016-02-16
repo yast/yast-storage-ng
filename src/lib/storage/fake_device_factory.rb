@@ -38,20 +38,21 @@ module Yast
       class HierarchyError < RuntimeError
       end
 
-      # Allowed toplevel products of this factory
-      TOPLEVEL  = [ "disk" ]
+      # Valid toplevel products of this factory
+      VALID_TOPLEVEL  = [ "disk" ]
 
-      # Hierarchy within the products of this factory
-      HIERARCHY =
+      # Valid hierarchy within the products of this factory.
+      # This indicates the permitted children types for each parent.
+      VALID_HIERARCHY =
         {
           "disk"       => ["partition_table", "partitions", "file_system"],
           "partitions" => ["partition", "free"],
           "partition"  => ["file_system"]
         }
 
-      # Permitted parameters for each product of this factory.
+      # Valid parameters for each product of this factory.
       # Sub-products are not listed here.
-      PARAM =
+      VALID_PARAM =
         {
           "disk"            => ["name", "size"],
           "partition_table" => [],
@@ -82,15 +83,31 @@ module Yast
         end
       end
 
+      # Build a device tree starting with 'obj' which was typically read from
+      # YaML. 'obj' can be a hash with a single key or an array of hashes with
+      # a single key each.
+      #
+      # @param obj [Hash or Array<Hash>]
+      #
       def build_tree(obj)
         name, content = break_up_hash(obj)
-        raise HierarchyError, "Unexpected toplevel object #{name}" unless TOPLEVEL.include?(name)
-        build_tree_recursive(name, content)
+        raise HierarchyError, "Unexpected toplevel object #{name}" unless valid_toplevel.include?(name)
+        build_tree_recursive(nil, name, content)
       end
 
       private
-      
-      def build_tree_recursive(name, content)
+
+      # Internal recursive version of build_tree: Build a device tree as child
+      # of 'parent' for a new hierarchy level for a factory product 'name' with
+      # content (parameters and sub-products) 'content'. 'parent' might be
+      # 'nil' for toplevel objects. This class does not care about 'parent', it
+      # only passes it as a parent parameter to the respective create_xy methods.
+      #
+      # @param parent [Object] parent object to be passed to the create_xy methods
+      # @param name   [String] name of the factory product ("disk", "partition", ...)
+      # @param content [Any]   parameters and sub-products of 'name'
+      #
+      def build_tree_recursive(parent, name, content)
         # puts("build_tree_recursive #{name}")
         raise HierarchyError, "Don't know how to create a #{name}" unless factory_products.include?(name)
 
@@ -104,54 +121,84 @@ module Yast
           param    = content.select{ |k,v| !factory_products.include?(k) }
 
           # Create the factory product itself: Call the corresponding create_ method
-          call_create_method(name, param)
+          child = call_create_method(parent, name, param)
 
           # Create any sub-objects of the factory product
           sub_prod.each do |product, product_content|
-            build_tree_recursive(product, product_content)
+            build_tree_recursive(child, product, product_content)
           end
         when Array
-          parent = name
           content.each do |element|
             if element.is_a?(Hash)
               child_name, child_content = break_up_hash(element)
-              check_hierarchy(parent, child_name)
-              build_tree_recursive(child_name, child_content)
+              check_hierarchy(name, child_name)
+              build_tree_recursive(parent, child_name, child_content)
             else
               raise TypeError, "Expected Hash, not #{element}"
             end
           end
         else # Simple value, no Hash or Array
-          call_create_method(name, content)
+          call_create_method(parent, name, content)
         end
       end
 
       protected
+
+      # Return a hash for the valid hierarchy of the products of this factory:
+      # Each hash key returns an array (that might be empty) for the child
+      # types that are valid below that key.
+      #
+      # @return [Hash<String, Array<String>>]
+      #
+      def valid_hierarchy
+        VALID_HIERARCHY
+      end
+
+      # Return an array for valid toplevel products of this factory.
+      #
+      # @return [Array<String>] valid toplevel products
+      #
+      def valid_toplevel
+        VALID_TOPLEVEL
+      end
+
+      # Return an hash of valid parameters for each product type of this
+      # factory. This does not include sub-products, only the parameters that
+      # are passed directly to each individual product.
+      #
+      # @return [Hash<String, Array<String> >]
+      #
+      def valid_param
+        VALID_PARAM
+      end
       
       # Factory method to create a disk.
       #
-      def create_disk(args)
+      # @return [::Storage::Disk]
+      #
+      def create_disk(parent, args)
         puts("#{__method__.to_s}( #{args} )")
+        nil
       end
 
-      def create_partition_table(args)
+      def create_partition_table(parent, args)
         puts("#{__method__.to_s}( #{args} )")
+        nil
       end
 
-      def create_partitions(args)
+      def create_partition(parent, args)
         puts("#{__method__.to_s}( #{args} )")
+        nil
       end
 
-      def create_partition(args)
+      def create_file_system(parent, args)
         puts("#{__method__.to_s}( #{args} )")
+        nil
       end
 
-      def create_file_system(args)
+      def create_free(parent, args)
         puts("#{__method__.to_s}( #{args} )")
-      end
-
-      def create_free(args)
-        puts("#{__method__.to_s}( #{args} )")
+        nil
       end
 
       private
@@ -171,7 +218,15 @@ module Yast
       # @return [Array<String>] product names
       #
       def factory_products
-        @factory_products_cache ||= factory_methods.map { |m| m.to_s.gsub(/^create_/, "") }
+        if @factory_products_cache == nil
+          @factory_products_cache = factory_methods.map { |m| m.to_s.gsub(/^create_/, "") }
+          
+          # For some of the products there might not be a create_ method, so
+          # let's add the valid hierarchy description
+          @factory_products_cache += valid_hierarchy.keys + valid_hierarchy.values.flatten
+          @factory_products_cache.uniq!
+        end
+        @factory_products_cache
       end
 
       # Make sure 'obj' is a hash with a single key and break it up into that
@@ -195,8 +250,8 @@ module Yast
       # @param param [Array<Symbol> or Array<String>] parameters (hash keys)
       #
       def check_param(name, param)
-        expected = PARAM[name]
-        expected += HIERARCHY[name] if HIERARCHY.include?(name)
+        expected = valid_param[name]
+        expected += valid_hierarchy[name] if valid_hierarchy.include?(name)
         param.each do |key|
           raise "ArgumentError", "Unexpected parameter #{key} in #{name}" unless expected.include?(key.to_s)
         end
@@ -209,7 +264,7 @@ module Yast
       # @param child  [String] name of child  factory product
       #
       def check_hierarchy(parent, child)
-        if !HIERARCHY[parent].include?(child)
+        if !valid_hierarchy[parent].include?(child)
           raise HierarchyError, "Unexpected child #{child_name} for #{parent}"
         end
       end
@@ -218,16 +273,18 @@ module Yast
       # with 'args' as argument. This requires a create_xy() method to exist
       # for each product 'xy'. Introspection is used to find those methods.
       #
+      # @param parent [Object] parent object of 'name' (might be 'nil')
       # @param product_name [String] name of the factory product
       # @param arg [Hash or Scalar] argument to pass to the create method
       #
-      def call_create_method(name, arg)
+      def call_create_method(parent, name, arg)
         create_method = "create_#{name}".to_sym
         
         if respond_to?(create_method, true)
-          self.send(create_method, arg)
+          self.send(create_method, parent, arg)
         else
           log.warn("No method #{create_method} defined")
+          nil
         end
       end
     end
