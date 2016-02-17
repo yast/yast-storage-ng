@@ -24,7 +24,6 @@
 require "yast"
 require "storage"
 require "yaml"
-require "pp"
 
 module Yast
   module Storage
@@ -156,7 +155,7 @@ module Yast
               raise TypeError, "Expected Hash, not #{element}"
             end
           end
-        else # Simple value, no Hash or Array
+        else # Simple value, no hash or array
           # Intentionally not calling fixup_param() here since that method would
           # not get any useful information what about the value to convert
           # (since there is no hash key to compare to).
@@ -306,7 +305,7 @@ module Yast
         create_method = "create_#{name}".to_sym
 
         if respond_to?(create_method, true)
-          log.info("#{create_method}( #{arg} )")
+          log.info("#{create_method}( #{parent}, #{arg} )")
           self.send(create_method, parent, arg)
         else
           log.warn("WARNING: No method #{create_method}() defined")

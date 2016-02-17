@@ -23,7 +23,7 @@
 
 require "yast"
 require "storage"
-require_relative "storage_manager"
+require "storage/storage_manager"
 
 # This file can be invoked separately for minimal testing.
 
@@ -91,18 +91,4 @@ module Yast
       end
     end
   end
-end
-
-
-# if used standalone, do a minimalistic test case
-
-if $PROGRAM_NAME == __FILE__  # Called direcly as standalone command? (not via rspec or require)
-  fake_probing = Yast::Storage::FakeProbing.new
-  devicegraph = fake_probing.devicegraph
-  sdx = ::Storage::Disk.create(devicegraph, "/dev/sdx")
-  sdy = ::Storage::Disk.create(devicegraph, "/dev/sdy")
-  sdz = ::Storage::Disk.create(devicegraph, "/dev/sdz")
-  fake_probing.to_probed
-  puts("Probed disks:")
-  fake_probing.dump_disks(Yast::Storage::StorageManager.instance.probed)
 end

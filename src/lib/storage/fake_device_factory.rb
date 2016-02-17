@@ -23,9 +23,8 @@
 
 require "yast"
 require "storage"
-require_relative "abstract_device_factory.rb"
-require_relative "disk_size.rb"
-require "pp"
+require "storage/abstract_device_factory.rb"
+require "storage/disk_size.rb"
 
 module Yast
   module Storage
@@ -127,33 +126,28 @@ module Yast
       #
       def create_disk(parent, args)
         puts("#{__method__.to_s}( #{args} )")
-        nil
+        "disk"
       end
 
       def create_partition_table(parent, args)
         puts("#{__method__.to_s}( #{args} )")
-        nil
+        "partition_table"
       end
 
       def create_partition(parent, args)
         puts("#{__method__.to_s}( #{args} )")
-        nil
+        "partition"
       end
 
       def create_file_system(parent, args)
         puts("#{__method__.to_s}( #{args} )")
-        nil
+        "file_system"
       end
 
       def create_free(parent, args)
         puts("#{__method__.to_s}( #{args} )")
-        nil
+        "free"
       end
     end
   end
-end
-
-if $PROGRAM_NAME == __FILE__  # Called direcly as standalone command? (not via rspec or require)
-  fac = Yast::Storage::FakeDeviceFactory.new(nil)
-  fac.load_yaml_file("fake-devicegraphs.yml")
 end

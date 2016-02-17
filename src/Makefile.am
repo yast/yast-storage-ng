@@ -89,18 +89,35 @@ ynclude_DATA = \
 
 ylibdir = @ylibdir@/storage
 ylib_DATA = \
-  lib/storage/boot_requirements_checker.rb \
-  lib/storage/disk_analyzer.rb \
-  lib/storage/disk_size.rb \
-  lib/storage/partition_creator.rb \
-  lib/storage/proposal_settings.rb \
-  lib/storage/proposal_volume.rb \
-  lib/storage/space_maker.rb \
-  lib/storage/storage_manager.rb \
-  lib/storage/storage_proposal.rb \
-  lib/storage/target_map_formatter.rb \
+  lib/storage/abstract_device_factory.rb
+  lib/storage/boot_requirements_checker.rb
+  lib/storage/clients/proposal_demo.rb
+  lib/storage/disk_analyzer.rb
+  lib/storage/disk_size.rb
+  lib/storage/fake_device_factory.rb
+  lib/storage/fake_probing.rb
+  lib/storage/free_disk_space.rb
+  lib/storage/planned_volume.rb
+  lib/storage/planned_volumes_collection.rb
+  lib/storage/refined_devicegraph.rb
+  lib/storage/storage_manager.rb
+  lib/storage/target_map_formatter.rb
   lib/storage/used_storage_features.rb
 
+proposaldir = @ylibdir@/storage/proposal
+proposal_DATA = \
+  lib/storage/proposal/devicegraph_generator.rb
+  lib/storage/proposal/exceptions.rb
+  lib/storage/proposal/partition_creator.rb
+  lib/storage/proposal.rb
+  lib/storage/proposal/refined_devicegraph.rb
+  lib/storage/proposal/settings.rb
+  lib/storage/proposal/space_maker.rb
+  lib/storage/proposal/volumes_generator.rb
+
+# examplesdir = ???
+# examples_DATA = \
+#   examples/fake_devices.rb
 
 scrconf_DATA = \
   scrconf/proc_partitions.scr \
@@ -123,6 +140,9 @@ desktop_DATA = \
 fillup_DATA = \
   fillup/sysconfig.storage-yast2-storage
 
-EXTRA_DIST = $(module_DATA) $(client_DATA) $(ynclude_DATA) $(scrconf_DATA) $(ybin_SCRIPTS) $(ydata_DATA) $(desktop_DATA) $(fillup_DATA) $(ylib_DATA)
+EXTRA_DIST = $(module_DATA) $(client_DATA) $(ynclude_DATA) $(scrconf_DATA) $(ybin_SCRIPTS) $(ydata_DATA) $(desktop_DATA) $(fillup_DATA) $(ylib_DATA) $(proposal_DATA)
+
+# Not installing examples for now
+# $(examples_DATA)
 
 include $(top_srcdir)/Makefile.am.common
