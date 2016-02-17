@@ -26,7 +26,7 @@
         size:         60 GiB
         name:         /dev/sda3
         type:         primary
-        id:           0x83
+        id:           Linux
         file_system:  ext4
         mount_point:  /
         label:        root
