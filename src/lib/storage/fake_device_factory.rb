@@ -205,6 +205,7 @@ module Yast
         @disks << name
         disk = ::Storage::Disk.create(@devicegraph, name)
         disk.size_k = size.size_k
+        disk.geometry = fake_geometry(size)
         name
       end
 
@@ -327,6 +328,7 @@ module Yast
       # @param key  [String] key  in the hash to access
       # @param type [String] type (description) of 'key'
       # @param name [String] name of the object that 'hash' belongs to
+      #
       def fetch(hash, key, type, name)
         value = hash[key.downcase]
         raise ArgumentError, "Invalid #{type} #{key} for #{name} - use one of #{hash.keys}" unless value
@@ -353,14 +355,14 @@ module Yast
         disk.partition_table.unused_partition_slots.each do |slot|
           log.info("Free slot on #{disk_name}")
           block_size = slot.region.block_size
-          if size.unlimited
+          if size.unlimited?
             region_start = slot.region.start
-            blocks = region.length
+            blocks = slot.region.length
             break
           else
             requested_blocks = (1024 * size.size_k) / block_size
 
-            if requested_blocks <= region.length
+            if requested_blocks <= slot.region.length
               region_start = slot.region.start
               blocks = requested_blocks
               break
@@ -373,6 +375,21 @@ module Yast
         log.info("Found #{blocks} blocks on #{disk_name}")
         # region.dup doesn't seem to work (SWIG bindings problem?)
         ::Storage::Region.new(region_start, blocks, block_size)
+      end
+
+      # Return a fake disk geometry with a given size.
+      #
+      # @param size [DiskSize]
+      # @return [::Storage::Geometry] Geometry with that size
+      #
+      def fake_geometry(size)
+        sector_size = 512
+        blocks  = (size.size_k * 1024) / sector_size
+        heads   = 16  # 1 MiB cylinders (16 * 128 * 512 Bytes)
+        sectors = 128
+        cyl     = blocks / (heads * sectors)
+        # log.info("Geometry: #{cyl} cyl #{heads} heads #{sectors} sectors = #{size}")
+        ::Storage::Geometry.new(cyl, heads, sectors, sector_size)
       end
     end
   end
