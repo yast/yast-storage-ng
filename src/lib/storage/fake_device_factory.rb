@@ -342,7 +342,10 @@ module Yast
       # Allocate disk space of size 'size' on disk 'disk_name'. If 'size' is
       # 'unlimited', consume all the the remaining free space of the disk.
       #
-      # This uses and sets @disks[name] according to the amount of space allocated.
+      # This uses and sets @first_free_cyl[name] according to the amount of
+      # space allocated. For extended partitions, this may have to be corrected
+      # later to make room for the logical partitions inside the extended
+      # partition.
       #
       # @param disk_name [String] device name of the disk ("/dev/sdc" etc.)
       # @param size [DiskSize] desired size of the region
