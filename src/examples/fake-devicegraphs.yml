@@ -64,10 +64,3 @@
 disk:
   name: /dev/sdc
   size: 500 GiB
----
-- disk:
-    name: /dev/sde
-    size: 750 GiB
-- disk:
-    name: /dev/sdf
-    size: 750 GiB

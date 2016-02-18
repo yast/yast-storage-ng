@@ -126,12 +126,16 @@ module Yast
           "udf"      => ::Storage::UDF
         }
 
+      # Size of a cylinder of our fake geometry disks
+      CYL_SIZE = DiskSize.MiB(1)
+
       def initialize(devicegraph)
         super(devicegraph)
-        @partitions = Hash.new
-        @disks      = Set.new
+        @partitions     = Hash.new
+        @disks          = Set.new
+        @first_free_cyl = Hash.new
+        @cyl_count      = Hash.new
       end
-
 
       protected
 
@@ -206,6 +210,8 @@ module Yast
         disk = ::Storage::Disk.create(@devicegraph, name)
         disk.size_k = size.size_k
         disk.geometry = fake_geometry(size)
+        @first_free_cyl[name] = 0
+        @cyl_count[name] = disk.geometry.cylinders
         name
       end
 
@@ -266,7 +272,8 @@ module Yast
 
         disk = ::Storage::Disk.find(devicegraph, disk_name)
         ptable = disk.partition_table
-        region = unused_region(disk_name, size)
+        region = allocate_disk_space(disk_name, size)
+        @first_free_cyl[disk_name] = region.start if type == ::Storage::EXTENDED
         partition = ptable.create_partition(part_name, region, type)
         partition.id = id
         part_name
@@ -312,11 +319,8 @@ module Yast
         disk_name = parent
         size = args["size"] || DiskSize.zero
         raise ArgumentError, "Invalid size of free space on #{disk_name}" if size.zero?
-
-        # TO DO
-        # TO DO
-        # TO DO
-
+        allocate_disk_space(disk_name, size)
+        log.info("Allocated #{size} free space on #{disk_name}")
         disk_name
       end
 
@@ -335,46 +339,34 @@ module Yast
         value
       end
 
-      # Find a region of unused disk space on disk 'disk_name'. If 'size' is
-      # 'unlimited', the remaining free space of the disk is taken
-      # completely. This is most useful for an extended partition or in general
-      # for the last partition on a disk.
+      # Allocate disk space of size 'size' on disk 'disk_name'. If 'size' is
+      # 'unlimited', consume all the the remaining free space of the disk.
+      #
+      # This uses and sets @disks[name] according to the amount of space allocated.
       #
       # @param disk_name [String] device name of the disk ("/dev/sdc" etc.)
       # @param size [DiskSize] desired size of the region
       #
       # @return [::Storage::Region]
       #
-      def unused_region(disk_name, size)
+      def allocate_disk_space(disk_name, size)
         disk = ::Storage::Disk.find(@devicegraph, disk_name)
-        region_start = -1
-        block_size   = -1
-        blocks       = -1
-
         log.info("#{__method__}: #{disk.partition_table.unused_partition_slots.size} slots on #{disk_name}")
-        disk.partition_table.unused_partition_slots.each do |slot|
-          log.info("Free slot on #{disk_name}")
-          block_size = slot.region.block_size
-          if size.unlimited?
-            region_start = slot.region.start
-            blocks = slot.region.length
-            break
-          else
-            requested_blocks = (1024 * size.size_k) / block_size
 
-            if requested_blocks <= slot.region.length
-              region_start = slot.region.start
-              blocks = requested_blocks
-              break
-            else
-              log.info("Found region with #{slot.region.length} blocks (too small) on #{disk_name}")
-            end
-          end
+        first_free_cyl = @first_free_cyl[disk_name] || 0
+        cyl_count      = @cyl_count[disk_name] || 0
+        free_cyl = cyl_count - first_free_cyl
+        log.info("disk #{disk_name} first free cyl: #{first_free_cyl} free_cyl: #{free_cyl} cyl_count: #{cyl_count}")
+
+        if size.unlimited?
+          requested_cyl = free_cyl
+          raise RuntimeError, "No more disk space on #{disk_name}" if requested_cyl < 1
+        else
+          requested_cyl = size.size_k / CYL_SIZE.size_k
+          raise RuntimeError, "Not enough disk space on #{disk_name} for another #{size}" if requested_cyl > free_cyl
         end
-        raise RuntimeError, "Not enough disk space on #{disk_name} for another #{size}" if region_start < 0
-        log.info("Found #{blocks} blocks on #{disk_name}")
-        # region.dup doesn't seem to work (SWIG bindings problem?)
-        ::Storage::Region.new(region_start, blocks, block_size)
+        @first_free_cyl[disk_name] = first_free_cyl + requested_cyl
+        ::Storage::Region.new(first_free_cyl, requested_cyl, CYL_SIZE.size_k * 1024)
       end
 
       # Return a fake disk geometry with a given size.
@@ -385,7 +377,7 @@ module Yast
       def fake_geometry(size)
         sector_size = 512
         blocks  = (size.size_k * 1024) / sector_size
-        heads   = 16  # 1 MiB cylinders (16 * 128 * 512 Bytes)
+        heads   = 16  # 1 MiB cylinders (16 * 128 * 512 Bytes) - see also CYL_SIZE
         sectors = 128
         cyl     = blocks / (heads * sectors)
         # log.info("Geometry: #{cyl} cyl #{heads} heads #{sectors} sectors = #{size}")
