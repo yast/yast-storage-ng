@@ -42,24 +42,8 @@ module ExpertPartitioner
 
       blk_devices = @md.devices()
 
-      # TODO this kind of runtime polymorphism does not work right away
-      # without the code block below the icon in the table is wrong
-      # http://nickdarnell.com/swig-casting-revisited/
-      # https://github.com/swig/swig/blob/master/Lib/typemaps/factory.swg
-
-      blk_devices = blk_devices.to_a.map do |blk_device|
-        if ::Storage::partition?(blk_device)
-          ::Storage::to_partition(blk_device)
-        elsif ::Storage::disk?(blk_device)
-          ::Storage::to_disk(blk_device)
-        elsif ::Storage::md?(blk_device)
-          ::Storage::to_md(blk_device)
-        else
-          blk_device
-        end
-      end
-
       blk_devices.each do |blk_device|
+        blk_device = Storage::downcast(blk_device)
         ret << blk_device.table_row(FIELDS)
       end
 
