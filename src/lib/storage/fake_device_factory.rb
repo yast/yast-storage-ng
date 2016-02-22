@@ -25,7 +25,6 @@ require "yast"
 require "storage"
 require "storage/abstract_device_factory.rb"
 require "storage/disk_size.rb"
-require "pp"
 
 module Yast
   module Storage
