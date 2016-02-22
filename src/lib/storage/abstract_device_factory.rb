@@ -70,7 +70,7 @@ module Yast
       #
       def load_yaml_file(filename)
         begin
-          File.open(filename) { |file| YAML.load_documents(file) { |doc| build_tree(doc) } }
+          File.open(filename) { |file| YAML.load_stream(file, filename) { |doc| build_tree(doc) } }
         rescue SystemCallError => ex
           log.error("#{ex}")
           raise
