@@ -52,25 +52,25 @@ level.
 
 ## Tree Structure
 
-### Currently implemented
+### Currently Implemented
 
-- disk:
-    partition_table: <type>
-    partitions:
-      - partition:
-          file_system: <type>
-      - partition
-      - free
-      - partition
+    - disk:
+        partition_table: <type>
+        partitions:
+          - partition:
+              file_system: <type>
+          - partition
+          - free
+          - partition
 
 
 ### For Future Use
 
-- lvm_logical_volume
-- lvm_volume_group
-  - lvm_physical_volume
+    - lvm_logical_volume
+    - lvm_volume_group
+      - lvm_physical_volume
 
-- raid
+    - raid
 
 
 ## Parameters
@@ -112,7 +112,7 @@ Example:
   - mac
 
 - partitions: Specifies an array of partitions to create.
-  Omit if no partitions shold be created.
+  Omit if no partitions should be created.
 
 
 ### partition
