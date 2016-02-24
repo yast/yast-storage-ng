@@ -175,7 +175,7 @@ module Storage
     end
 
     def table_transport()
-      if transport != TUNKNOWN
+      if transport != Transport_UNKNOWN
         return ::Storage::transport_name(transport)
       else
         return ""

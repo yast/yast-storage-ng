@@ -50,12 +50,12 @@ module ExpertPartitioner
           Heading(_("Format Options")),
           Left(ComboBox(Id(:filesystem),
                         _("Filesystem"), [
-                          Item(Id(Storage::EXT4), "Ext4"),
-                          Item(Id(Storage::XFS), "XFS"),
-                          Item(Id(Storage::BTRFS), "Btrfs"),
-                          Item(Id(Storage::SWAP), "Swap"),
-                          Item(Id(Storage::NTFS), "NTFS"),
-                          Item(Id(Storage::VFAT), "VFAT")
+                          Item(Id(Storage::FsType_EXT4), "Ext4"),
+                          Item(Id(Storage::FsType_XFS), "XFS"),
+                          Item(Id(Storage::FsType_BTRFS), "Btrfs"),
+                          Item(Id(Storage::FsType_SWAP), "Swap"),
+                          Item(Id(Storage::FsType_NTFS), "NTFS"),
+                          Item(Id(Storage::FsType_VFAT), "VFAT")
                         ])),
           Left(ComboBox(Id(:mount_point),
                         Opt(:editable, :hstretch),
