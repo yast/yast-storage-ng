@@ -277,7 +277,7 @@ module Yast
         expected = valid_param[name]
         expected += valid_hierarchy[name] if valid_hierarchy.include?(name)
         param.each do |key|
-          raise "ArgumentError", "Unexpected parameter #{key} in #{name}" unless expected.include?(key.to_s)
+          raise ArgumentError, "Unexpected parameter #{key} in #{name}" unless expected.include?(key.to_s)
         end
       end
 
@@ -289,7 +289,7 @@ module Yast
       #
       def check_hierarchy(parent, child)
         if !valid_hierarchy[parent].include?(child)
-          raise HierarchyError, "Unexpected child #{child_name} for #{parent}"
+          raise HierarchyError, "Unexpected child #{child} for #{parent}"
         end
       end
 

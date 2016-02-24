@@ -81,14 +81,6 @@ module Yast
         @storage.remove_devicegraph(PROBED) if @storage.exist_devicegraph(PROBED)
         @storage.copy_devicegraph(FAKE, PROBED)
       end
-
-      # Debugging: Dump all disks of 'devicegraph' to stdout.
-      #
-      def dump_disks(devicegraph = nil)
-        devicegraph ||= @devicegraph
-        disks = devicegraph.all_disks.to_a
-        disks.each { |disk| puts("Found disk #{disk.name}") }
-      end
     end
   end
 end

@@ -204,7 +204,7 @@ module Yast
         unit_index = 0
         size = @size_k.to_f
 
-        while size > 1024.0 && unit_index < UNITS.size - 1
+        while size >= 1024.0 && unit_index < UNITS.size - 1
           size /= 1024.0
           unit_index += 1
         end

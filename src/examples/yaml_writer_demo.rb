@@ -4,24 +4,17 @@ $LOAD_PATH.unshift(File.expand_path('../../lib', __FILE__))
 
 require "storage/fake_probing.rb"
 require "storage/fake_device_factory.rb"
+require "storage/yaml_writer.rb"
 
-FILENAME = "fake-devicegraphs"
 input_file  = ARGV[0] || "fake-devicegraphs.yml"
+output_file = ARGV[1] || "/dev/stdout"
 
 fake_probing = Yast::Storage::FakeProbing.new
 devicegraph = fake_probing.devicegraph
 factory = Yast::Storage::FakeDeviceFactory.new(devicegraph)
 factory.load_yaml_file(input_file)
 
-fake_probing.to_probed
-puts("Disks:")
-probed = Yast::Storage::StorageManager.instance.probed
+yaml_writer = Yast::Storage::YamlWriter.new
+yaml_writer.write(devicegraph, output_file)
 
-# Write to graphviz format, convert to .png and display
-probed.write_graphviz("#{FILENAME}.gv")
-system("dot -Tpng <#{FILENAME}.gv >#{FILENAME}.png")
-system("display #{FILENAME}.png")
 
-# Clean up
-File.delete("#{FILENAME}.gv")
-File.delete("#{FILENAME}.png")

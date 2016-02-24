@@ -25,6 +25,7 @@ require "yast"
 require "storage"
 require "storage/abstract_device_factory.rb"
 require "storage/disk_size.rb"
+require "storage/enum_mappings.rb"
 
 module Yast
   module Storage
@@ -34,6 +35,7 @@ module Yast
     # Use the inherited load_yaml_file() to start the process.
     #
     class FakeDeviceFactory < AbstractDeviceFactory
+      include EnumMappings
 
       # Valid toplevel products of this factory
       VALID_TOPLEVEL  = [ "disk" ]
@@ -57,72 +59,6 @@ module Yast
           "partition"       => ["size", "name", "type", "id", "mount_point", "label"],
           "file_system"     => [],
           "free"            => ["size"]
-        }
-
-
-      # Valid values (case insensitive) and mapping for partition_table types.
-      PARTITION_TABLE_TYPES =
-        {
-          "loop"   => ::Storage::PtType_PT_LOOP,
-          "msdos"  => ::Storage::PtType_MSDOS,
-          "ms-dos" => ::Storage::PtType_MSDOS,
-          "gpt"    => ::Storage::PtType_GPT,
-          "dasd"   => ::Storage::PtType_DASD,
-          "mac"    => ::Storage::PtType_MAC
-        }
-
-      # Valid values (case insensitive) and mapping for partition  types.
-      PARTITION_TYPES =
-        {
-          "primary"  => ::Storage::PRIMARY,
-          "extended" => ::Storage::EXTENDED,
-          "logical"  => ::Storage::LOGICAL
-        }
-
-      # Valid values (case insensitive) and mapping for partition IDs.
-      # The corresponding hex numbers can also be used.
-      PARTITION_IDS =
-        {
-          "dos12"       => ::Storage::ID_DOS12,       #  0x01
-          "dos16"       => ::Storage::ID_DOS16,       #  0x06
-          "dos32"       => ::Storage::ID_DOS32,       #  0x0c
-          "ntfs"        => ::Storage::ID_NTFS,        #  0x07
-          "extended"    => ::Storage::ID_EXTENDED,    #  0x0f
-          "ppc_prep"    => ::Storage::ID_PPC_PREP,    #  0x41
-          "linux"       => ::Storage::ID_LINUX,       #  0x83
-          "swap"        => ::Storage::ID_SWAP,        #  0x82
-          "lvm"         => ::Storage::ID_LVM,         #  0x8e
-          "raid"        => ::Storage::ID_RAID,        #  0xfd
-          "apple_other" => ::Storage::ID_APPLE_OTHER, #  0x101
-          "apple_hfs"   => ::Storage::ID_APPLE_HFS,   #  0x102
-          "gpt_boot"    => ::Storage::ID_GPT_BOOT,    #  0x103
-          "gpt_service" => ::Storage::ID_GPT_SERVICE, #  0x104
-          "gpt_msftres" => ::Storage::ID_GPT_MSFTRES, #  0x105
-          "apple_ufs"   => ::Storage::ID_APPLE_UFS,   #  0x106
-          "gpt_bios"    => ::Storage::ID_GPT_BIOS,    #  0x107
-          "gpt_prep"    => ::Storage::ID_GPT_PREP     #  0x108
-        }
-
-      # Valid values (case insensitive) and mapping for file system types.
-      FILE_SYSTEM_TYPES =
-        {
-          "reiserfs" => ::Storage::REISERFS,
-          "ext2"     => ::Storage::EXT2,
-          "ext3"     => ::Storage::EXT3,
-          "ext4"     => ::Storage::EXT4,
-          "btrfs"    => ::Storage::BTRFS,
-          "vfat"     => ::Storage::VFAT,
-          "xfs"      => ::Storage::XFS,
-          "jfs"      => ::Storage::JFS,
-          "hfs"      => ::Storage::HFS,
-          "ntfs"     => ::Storage::NTFS,
-          "swap"     => ::Storage::SWAP,
-          "hfsplus"  => ::Storage::HFSPLUS,
-          "nfs"      => ::Storage::NFS,
-          "nfs4"     => ::Storage::NFS4,
-          "tmpfs"    => ::Storage::TMPFS,
-          "iso9660"  => ::Storage::ISO9660,
-          "udf"      => ::Storage::UDF
         }
 
       # Size of a cylinder of our fake geometry disks
@@ -224,6 +160,7 @@ module Yast
       def create_partition_table(parent, args)
         log.info("#{__method__}( #{parent}, #{args} )")
         disk_name = parent
+        args = "msdos" if args.downcase == "ms-dos" # Allow different spelling
         ptable_type = fetch(PARTITION_TABLE_TYPES, args, "partition table type", "disk_name")
         disk = ::Storage::Disk.find(@devicegraph, disk_name)
         disk.create_partition_table(ptable_type)
@@ -334,7 +271,7 @@ module Yast
       #
       def fetch(hash, key, type, name)
         value = hash[key.downcase]
-        raise ArgumentError, "Invalid #{type} #{key} for #{name} - use one of #{hash.keys}" unless value
+        raise ArgumentError, "Invalid #{type} \"#{key}\" for #{name} - use one of #{hash.keys}" unless value
         value
       end
 

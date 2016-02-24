@@ -10,5 +10,7 @@ sdx = ::Storage::Disk.create(devicegraph, "/dev/sdx")
 sdy = ::Storage::Disk.create(devicegraph, "/dev/sdy")
 sdz = ::Storage::Disk.create(devicegraph, "/dev/sdz")
 fake_probing.to_probed
+
+probed = Yast::Storage::StorageManager.instance.probed
 puts("Probed disks:")
-fake_probing.dump_disks(Yast::Storage::StorageManager.instance.probed)
+probed.all_disks.each { |disk| puts("  Found disk #{disk.name}") }
