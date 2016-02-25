@@ -1,0 +1,5 @@
+-------------------------------------------------------------------
+Thu Feb 25 16:35:57 CET 2016 - aschnell@suse.com
+
+- initial package with yast2-storage-ng, successor of yast2-storage
+
