@@ -87,6 +87,13 @@ describe Yast::Storage::DiskSize do
     end
   end
 
+  describe "created with 1024 GiB" do
+    disk_size = Yast::Storage::DiskSize.GiB(1024)
+    it "should use the next higher unit (TiB) from 1024 on" do
+      expect( disk_size.to_s ).to be == "1.00 TiB"
+    end
+  end
+
   describe "arithmetic operations" do
     it "should accept addition of another DiskSize" do
       disk_size = Yast::Storage::DiskSize.GiB(10) + Yast::Storage::DiskSize.GiB(20)
