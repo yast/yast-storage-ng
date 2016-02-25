@@ -45,8 +45,9 @@ module Yast
       #        point like "swap".
       #
       # @param filesystem_type [::Storage::FsType] the type of filesystem this
-      #        volume should get. Typically one of ::Storage::BTRFS,
-      #        ::Storage::EXT4, ::Storage::XFS, ::Storage::SWAP
+      #        volume should get. Typically one of ::Storage::FsType_BTRFS,
+      #        ::Storage::FsType_EXT4, ::Storage::FsType_XFS,
+      #        ::Storage::FsType_SWAP
       #
       def initialize(mount_point, filesystem_type = nil)
         @mount_point = mount_point

@@ -236,13 +236,13 @@ module Yast
               if !ptable.has_extended
                 # Create an extended partition first
                 dev_name = next_free_primary_partition_name(disk.name, ptable)
-                ptable.create_partition(dev_name, free_slot.region, ::Storage::EXTENDED)
+                ptable.create_partition(dev_name, free_slot.region, ::Storage::PartitionType_EXTENDED)
               end
               dev_name = next_free_logical_partition_name(disk.name, ptable)
-              partition_type = ::Storage::LOGICAL
+              partition_type = ::Storage::PartitionType_LOGICAL
             else
               dev_name = next_free_primary_partition_name(disk.name, ptable)
-              partition_type = ::Storage::PRIMARY
+              partition_type = ::Storage::PartitionType_PRIMARY
             end
             region = new_region_with_size(free_slot, vol.size)
             partition = ptable.create_partition(dev_name, region, partition_type)

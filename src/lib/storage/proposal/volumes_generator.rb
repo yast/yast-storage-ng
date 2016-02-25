@@ -71,7 +71,7 @@ module Yast
         # Volume data structure for the swap volume according
         # to the settings.
         def swap_volume
-          vol = PlannedVolume.new("swap", ::Storage::SWAP)
+          vol = PlannedVolume.new("swap", ::Storage::FsType_SWAP)
           swap_size = DEFAULT_SWAP_SIZE
           if @settings.enlarge_swap_for_suspend
             swap_size = [ram_size, swap_size].max
@@ -92,7 +92,7 @@ module Yast
           root_vol.min_size = @settings.root_base_size
           root_vol.max_size = @settings.root_max_size
           root_vol.weight   = @settings.root_space_percent
-          if root_vol.filesystem_type == ::Storage::BTRFS
+          if root_vol.filesystem_type == ::Storage::FsType_BTRFS
             puts("Increasing root filesystem size for Btrfs")
             multiplicator = 1.0 + @settings.btrfs_increase_percentage / 100.0
             root_vol.min_size *= multiplicator

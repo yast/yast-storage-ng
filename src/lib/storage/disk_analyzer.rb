@@ -127,7 +127,7 @@ module Yast
         # libstorage should return something that Ruby can handle.
         # This is very likely a problem of the Swig bindings.
 
-        usb_disks, non_usb_disks = disks.partition { |disk| disk.transport == ::Storage::USB }
+        usb_disks, non_usb_disks = disks.partition { |disk| disk.transport == ::Storage::Transport_USB }
         disks = usb_disks + non_usb_disks
 
         if disks.size > @disk_check_limit
@@ -147,7 +147,7 @@ module Yast
         disks = devicegraph.all_disks.to_a
         # FIXME: to_a should not be necessary
 
-        usb_disks, non_usb_disks = disks.partition { |disk| disk.transport == ::Storage::USB }
+        usb_disks, non_usb_disks = disks.partition { |disk| disk.transport == ::Storage::Transport_USB }
         log.info("USB Disks:     #{dev_names(usb_disks)}")
         log.info("Non-USB Disks: #{dev_names(non_usb_disks)}")
 
@@ -163,7 +163,7 @@ module Yast
         if candidate_disks.empty?
           log.info("No candidate disks left after eliminating installation disks")
           log.info("Trying with non-USB installation disks")
-          candidate_disks = @installation_disks.select { |disk| disk.transport != ::Storage::USB }
+          candidate_disks = @installation_disks.select { |disk| disk.transport != ::Storage::Transport_USB }
         end
         if candidate_disks.empty?
           log.info("Still no candidate disks left")

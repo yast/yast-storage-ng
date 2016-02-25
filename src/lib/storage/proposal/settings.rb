@@ -41,10 +41,10 @@ module Yast
         def initialize
           @use_lvm                  = false
           @encrypt_volume_group     = false
-          @root_filesystem_type     = ::Storage::BTRFS
+          @root_filesystem_type     = ::Storage::FsType_BTRFS
           @use_snapshots            = true
           @use_separate_home        = true
-          @home_filesystem_type     = ::Storage::XFS
+          @home_filesystem_type     = ::Storage::FsType_XFS
           @enlarge_swap_for_suspend = false
         end
       end

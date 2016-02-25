@@ -227,7 +227,7 @@ module Yast
         disk = ::Storage::Disk.find(devicegraph, disk_name)
         ptable = disk.partition_table
         region = allocate_disk_space(disk_name, size)
-        @first_free_cyl[disk_name] = region.start if type == ::Storage::EXTENDED
+        @first_free_cyl[disk_name] = region.start if type == ::Storage::PartitionType_EXTENDED
         partition = ptable.create_partition(part_name, region, type)
         partition.id = id
         part_name

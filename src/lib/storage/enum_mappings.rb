@@ -43,9 +43,9 @@ module Yast
 
       PARTITION_TYPES =
       {
-        "primary"  => ::Storage::PRIMARY,
-        "extended" => ::Storage::EXTENDED,
-        "logical"  => ::Storage::LOGICAL
+        "primary"  => ::Storage::PartitionType_PRIMARY,
+        "extended" => ::Storage::PartitionType_EXTENDED,
+        "logical"  => ::Storage::PartitionType_LOGICAL
       }
 
       PARTITION_IDS =
@@ -72,23 +72,23 @@ module Yast
 
       FILE_SYSTEM_TYPES =
       {
-        "reiserfs" => ::Storage::REISERFS,
-        "ext2"     => ::Storage::EXT2,
-        "ext3"     => ::Storage::EXT3,
-        "ext4"     => ::Storage::EXT4,
-        "btrfs"    => ::Storage::BTRFS,
-        "vfat"     => ::Storage::VFAT,
-        "xfs"      => ::Storage::XFS,
-        "jfs"      => ::Storage::JFS,
-        "hfs"      => ::Storage::HFS,
-        "ntfs"     => ::Storage::NTFS,
-        "swap"     => ::Storage::SWAP,
-        "hfsplus"  => ::Storage::HFSPLUS,
-        "nfs"      => ::Storage::NFS,
-        "nfs4"     => ::Storage::NFS4,
-        "tmpfs"    => ::Storage::TMPFS,
-        "iso9660"  => ::Storage::ISO9660,
-        "udf"      => ::Storage::UDF
+        "reiserfs" => ::Storage::FsType_REISERFS,
+        "ext2"     => ::Storage::FsType_EXT2,
+        "ext3"     => ::Storage::FsType_EXT3,
+        "ext4"     => ::Storage::FsType_EXT4,
+        "btrfs"    => ::Storage::FsType_BTRFS,
+        "vfat"     => ::Storage::FsType_VFAT,
+        "xfs"      => ::Storage::FsType_XFS,
+        "jfs"      => ::Storage::FsType_JFS,
+        "hfs"      => ::Storage::FsType_HFS,
+        "ntfs"     => ::Storage::FsType_NTFS,
+        "swap"     => ::Storage::FsType_SWAP,
+        "hfsplus"  => ::Storage::FsType_HFSPLUS,
+        "nfs"      => ::Storage::FsType_NFS,
+        "nfs4"     => ::Storage::FsType_NFS4,
+        "tmpfs"    => ::Storage::FsType_TMPFS,
+        "iso9660"  => ::Storage::FsType_ISO9660,
+        "udf"      => ::Storage::FsType_UDF
       }
     end
   end
