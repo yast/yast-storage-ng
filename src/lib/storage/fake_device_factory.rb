@@ -64,6 +64,24 @@ module Yast
       # Size of a cylinder of our fake geometry disks
       CYL_SIZE = DiskSize.MiB(1)
 
+      class << self
+        #
+        # Read a YAML file and build a fake device tree from it.
+        #
+        # This is a singleton method for convenience. It creates a
+        # FakeDeviceFactory internally for one-time usage. If you use this more
+        # often (for example, in a loop), it is recommended to use create a
+        # FakeDeviceFactory and use its load_yaml_file() method repeatedly.
+        #
+        # @param devicegraph [::Storage::Devicegraph] where to build the tree
+        # @param filename [String] name of the YAML file
+        #
+        def load_yaml_file(devicegraph, input_file)
+          factory = FakeDeviceFactory.new(devicegraph)
+          factory.load_yaml_file(input_file)
+        end
+      end
+
       def initialize(devicegraph)
         super(devicegraph)
         @partitions     = Hash.new

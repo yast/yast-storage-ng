@@ -13,7 +13,6 @@ end
 output_file = ARGV.first || "/dev/stdout" 
 
 storage = Yast::Storage::StorageManager.start_probing
-yaml_writer = Yast::Storage::YamlWriter.new
-yaml_writer.write(storage.probed, output_file)
+Yast::Storage::YamlWriter.write(storage.probed, output_file)
 
 

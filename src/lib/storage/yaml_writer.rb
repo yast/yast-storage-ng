@@ -36,6 +36,24 @@ module Yast
       include Yast::Logger
       include EnumMappings
 
+      class << self
+        #
+        # Write all devices from the specified device graph to a YAML file.
+        #
+        # This is a singleton method for convenience. It creates a YamlWriter
+        # internally for one-time usage. If you use this more often (for
+        # example, in a loop), it is recommended to use create a YamlWriter and
+        # use its write() method repeatedly.
+        #
+        # @param devicegraph [::Storage::devicegraph]
+        # @param yaml_file_name [String]
+        #
+        def write(devicegraph, yaml_file_name)
+          writer = YamlWriter.new
+          writer.write(devicegraph, yaml_file_name)
+        end
+      end
+
       def initialize
         # Cache some frequently needed values: We need the inverse mapping from
         # EnumMappings, i.e. from the C++ enum to string.

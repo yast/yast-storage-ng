@@ -10,10 +10,9 @@ input_file  = ARGV[0] || "fake-devicegraphs.yml"
 
 fake_probing = Yast::Storage::FakeProbing.new
 devicegraph = fake_probing.devicegraph
-factory = Yast::Storage::FakeDeviceFactory.new(devicegraph)
-factory.load_yaml_file(input_file)
-
+Yast::Storage::FakeDeviceFactory.load_yaml_file(devicegraph, input_file)
 fake_probing.to_probed
+
 puts("Disks:")
 probed = Yast::Storage::StorageManager.instance.probed
 

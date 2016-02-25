@@ -11,10 +11,5 @@ output_file = ARGV[1] || "/dev/stdout"
 
 fake_probing = Yast::Storage::FakeProbing.new
 devicegraph = fake_probing.devicegraph
-factory = Yast::Storage::FakeDeviceFactory.new(devicegraph)
-factory.load_yaml_file(input_file)
-
-yaml_writer = Yast::Storage::YamlWriter.new
-yaml_writer.write(devicegraph, output_file)
-
-
+Yast::Storage::FakeDeviceFactory.load_yaml_file(devicegraph, input_file)
+Yast::Storage::YamlWriter.write(devicegraph, output_file)

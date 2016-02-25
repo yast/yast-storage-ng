@@ -66,7 +66,7 @@ module Yast
 
       # Read a YAML file and build a fake device tree from it.
       #
-      # @param filename name of the YAML file
+      # @param filename [String] name of the YAML file
       #
       def load_yaml_file(filename)
         begin
