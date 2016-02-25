@@ -30,7 +30,7 @@ require "storage/enum_mappings.rb"
 module Yast
   module Storage
     #
-    # Class to write storage device trees to YaML files.
+    # Class to write storage device trees to YAML files.
     #
     class YamlWriter
       include Yast::Logger
@@ -45,7 +45,7 @@ module Yast
         @file_system_types     = FILE_SYSTEM_TYPES.invert
       end
 
-      # Write all devices from the specified device graph to a YaML file.
+      # Write all devices from the specified device graph to a YAML file.
       #
       # @param devicegraph [::Storage::devicegraph]
       # @param yaml_file_name [String]
@@ -55,7 +55,7 @@ module Yast
         File.open(yaml_file_name, "w") { |file| file.write(device_tree.to_yaml) }
       end
 
-      # Convert all devices from the specified device graph to YaML data
+      # Convert all devices from the specified device graph to YAML data
       # structures, i.e. nested arrays and hashes. The toplevel item will
       # always be an array.
       #
@@ -68,7 +68,7 @@ module Yast
 
       private
 
-      # Return the YaML counterpart of a ::Storage::Disk.
+      # Return the YAML counterpart of a ::Storage::Disk.
       #
       # @param  disk [::Storage::Disk]
       # @return yaml [Hash]
@@ -102,7 +102,7 @@ module Yast
       end
 
       #
-      # Return the YaML counterpart of a ::Storage::Partition.
+      # Return the YAML counterpart of a ::Storage::Partition.
       #
       # @param  partition [::Storage::Partition]
       # @return yaml [Hash]
@@ -127,7 +127,7 @@ module Yast
       end
 
       #
-      # Return the YaML counterpart of a free slot between partitions on a
+      # Return the YAML counterpart of a free slot between partitions on a
       # disk.
       #
       # @param  size [DiskSize] size of the free slot

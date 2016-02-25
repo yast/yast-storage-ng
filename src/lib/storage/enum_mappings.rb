@@ -28,7 +28,7 @@ module Yast
   module Storage
     #
     # Mappings from string to libstorage-ng enums.
-    # This is used for reading and writing YaML files for device trees.
+    # This is used for reading and writing YAML files for device trees.
     #
     module EnumMappings
 

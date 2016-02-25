@@ -31,7 +31,7 @@ module Yast
   module Storage
     #
     # Factory class to generate faked devices in a device graph.
-    # This is typically used with a YaML file.
+    # This is typically used with a YAML file.
     # Use the inherited load_yaml_file() to start the process.
     #
     class FakeDeviceFactory < AbstractDeviceFactory

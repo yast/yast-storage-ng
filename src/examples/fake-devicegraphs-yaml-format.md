@@ -1,4 +1,4 @@
-# YaML File Format For Fake Device Graphs
+# YAML File Format For Fake Device Graphs
 
 This document describes the file format used to set up fake (mockup) device
 trees for testing some of the functionality of YaST storage, in particular the
@@ -11,8 +11,8 @@ disk.
 
 ## File Structure
 
-The device tree is specified in one YaML file. This YaML file might have
-multiple documents, separated with "---" as specified by the YaML standard:
+The device tree is specified in one YAML file. This YAML file might have
+multiple documents, separated with "---" as specified by the YAML standard:
 
     ---
     disk:
@@ -179,7 +179,7 @@ Example:
 
 
 - file_system: This is really a separate tree level, but it would be awkward to
-  write it in the YaML file as such. "mount_point" and "label" really belong to
+  write it in the YAML file as such. "mount_point" and "label" really belong to
   the file system, too. As used here, "file_system" specifies the type of file
   system to create. Omit this parameter if no file system should be created.
 

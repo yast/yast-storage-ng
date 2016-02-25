@@ -29,7 +29,7 @@ module Yast
   module Storage
     #
     # Abstract factory class to generate device trees and similar objects with
-    # a tree structure from YaML. The FakeDeviceFactory is one example subclass.
+    # a tree structure from YAML. The FakeDeviceFactory is one example subclass.
     #
     # This class uses introspection and duck-typing with a number of predefined
     # methods that a subclass is required to implement.
@@ -64,9 +64,9 @@ module Yast
         @factory_products_cache = nil
       end
 
-      # Read a YaML file and build a fake device tree from it.
+      # Read a YAML file and build a fake device tree from it.
       #
-      # @param filename name of the YaML file
+      # @param filename name of the YAML file
       #
       def load_yaml_file(filename)
         begin
@@ -78,7 +78,7 @@ module Yast
       end
 
       # Build a device tree starting with 'obj' which was typically read from
-      # YaML. 'obj' can be a hash with a single key or an array of hashes with
+      # YAML. 'obj' can be a hash with a single key or an array of hashes with
       # a single key each.
       #
       # @param obj [Hash or Array<Hash>]

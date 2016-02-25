@@ -31,7 +31,7 @@ module Yast
   module Storage
     #
     # Class to build faked device graphs in libstorage instead of doing real
-    # hardware probing. This can be used to create device graphs from YaML
+    # hardware probing. This can be used to create device graphs from YAML
     # files or directly with libstorage calls. The objective is to achieve
     # broader test coverage with faked hardware setups that would be difficult
     # to set up with real hardware, much less with virtualized hardware.
