@@ -25,10 +25,10 @@ Source:		%{name}-%{version}.tar.bz2
 
 Requires:	yast2
 Requires:	yast2-ruby-bindings
-Requires:	libstorage-ruby
+Requires:	libstorage-ng-ruby
 
 BuildRequires:	update-desktop-files
-BuildRequires:	libstorage-ruby
+BuildRequires:	libstorage-ng-ruby
 BuildRequires:	yast2-ruby-bindings
 BuildRequires:	yast2-devtools
 BuildRequires:	yast2
@@ -37,10 +37,10 @@ BuildRequires:	rubygem(rspec)
 
 Group:		System/YaST
 License:	GPL-2.0 or GPL-3.0
-Summary:	YaST2 - Example module using libstorage-bgl-eval
+Summary:	YaST2 - Example module using libstorage-ng
 
 %description
-A YaST2 example module using libstorage-bgl-eval.
+A YaST2 example module using libstorage-ng.
 
 %prep
 %setup -n %{name}-%{version}
