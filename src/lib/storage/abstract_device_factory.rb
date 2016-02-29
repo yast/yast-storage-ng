@@ -298,7 +298,7 @@ module Yast
       # for each product 'xy'. Introspection is used to find those methods.
       #
       # @param parent [Object] parent object of 'name' (might be 'nil')
-      # @param product_name [String] name of the factory product
+      # @param name [String] name of the factory product
       # @param arg [Hash or Scalar] argument to pass to the create method
       #
       def call_create_method(parent, name, arg)

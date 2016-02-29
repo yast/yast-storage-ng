@@ -235,7 +235,7 @@ module Yast
       #
       # @param partition [string| device name of the partition to check
       #
-      # @return [bool] 'true' if it is a Windows partition, 'false' if not.
+      # @return [Boolean] 'true' if it is a Windows partition, 'false' if not.
       #
       def windows_partition?(partition)
         return false unless Arch.x86_64 || Arch.i386
@@ -250,7 +250,7 @@ module Yast
       #
       # This is a separate method so it can be redefined in unit tests.
       #
-      # @return 'true' if it is a Windows partition, 'false' if not.
+      # @return [Boolean] 'true' if it is a Windows partition, 'false' if not.
       #
       def windows_partition_check(mount_point)
         Dir.exist?(mount_point + "/windows/system32")
@@ -262,7 +262,7 @@ module Yast
       #
       # @param disk_name [string] device name of the disk to check
       #
-      # @return [bool] 'true' if the disk is an installation disk
+      # @return [Boolean] 'true' if the disk is an installation disk
       #
       def installation_disk?(disk_name)
         log.info("Checking if #{disk_name} is an installation disk")
@@ -298,7 +298,7 @@ module Yast
       #
       # @param vol_name [string] device name of the volume to check
       #
-      # @return [bool] 'true' if the volume is an installation volume
+      # @return [Boolean] 'true' if the volume is an installation volume
       #
       def installation_volume?(vol_name)
         log.info("Checking if #{vol_name} is an installation volume")
@@ -310,7 +310,7 @@ module Yast
       # Check if the volume mounted at 'mount_point' is an installation volume.
       # This is a separate method so it can be redefined in unit tests.
       #
-      # @return 'true' if it is an installation volume, 'false' if not.
+      # @return [Boolean] 'true' if it is an installation volume, 'false' if not.
       #
       def installation_volume_check(mount_point)
         check_file = "/control.xml"
@@ -348,7 +348,7 @@ module Yast
       # Return an array of the device names of the specified block devices
       # (::Storage::Disk, ::Storage::Partition, ...).
       #
-      # @param disks [Array<BlkDev>]
+      # @param blk_devices [Array<BlkDev>]
       # @return [Array<string>] names, e.g. ["/dev/sda", "/dev/sdb1", "/dev/sdc3"]
       #
       def dev_names(blk_devices)
