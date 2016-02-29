@@ -79,11 +79,6 @@ module ExpertPartitioner
 
 
     def doit
-
-      storage = Yast::Storage::StorageManager.instance
-
-      storage.staging()
-
       size = Yast::UI.QueryWidget(Id(:size_input), :Value)
       size_k = Storage::humanstring_to_byte(size, false) / 1024
 

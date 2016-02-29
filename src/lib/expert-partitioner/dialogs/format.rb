@@ -92,11 +92,6 @@ module ExpertPartitioner
 
 
     def doit
-
-      storage = Yast::Storage::StorageManager.instance
-
-      storage.staging()
-
       begin
 
         log.info "doit #{@blk_device.name}"
