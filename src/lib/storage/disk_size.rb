@@ -197,7 +197,7 @@ module Yast
       end
 
       # Return numeric size and unit ("MiB", "GiB", ...) in human-readable form
-      # @return Array [size, unit]
+      # @return [Array] [size, unit]
       def to_human_readable
         return [UNLIMITED, ""] if size_k == -1
 
