@@ -1,6 +1,7 @@
+#!/usr/bin/env ruby
 # encoding: utf-8
 
-# Copyright (c) [2015] SUSE LLC
+# Copyright (c) [2016] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -19,32 +20,16 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "expert-partitioner/tree"
+$LOAD_PATH.unshift(File.expand_path('../../lib', __FILE__))
 
+require "storage/fake_probing.rb"
+require "storage/fake_device_factory.rb"
+require "storage/yaml_writer.rb"
 
-module ExpertPartitioner
+input_file  = ARGV[0] || "fake-devicegraphs.yml"
+output_file = ARGV[1] || "/dev/stdout"
 
-  class TreeView
-
-    def create()
-      VBox(VStretch(), HStretch())
-    end
-
-    def handle(input)
-    end
-
-    def update(also_tree = false)
-
-      # TODO more accurate update options
-
-      if also_tree
-        Yast::UI.ChangeWidget(:tree, :Items, Tree.new().tree_items)
-      end
-
-      Yast::UI.ReplaceWidget(:tree_panel, create)
-
-    end
-
-  end
-
-end
+fake_probing = Yast::Storage::FakeProbing.new
+devicegraph = fake_probing.devicegraph
+Yast::Storage::FakeDeviceFactory.load_yaml_file(devicegraph, input_file)
+Yast::Storage::YamlWriter.write(devicegraph, output_file)

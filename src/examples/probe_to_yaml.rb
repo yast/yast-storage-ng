@@ -1,6 +1,7 @@
+#!/usr/bin/env ruby
 # encoding: utf-8
 
-# Copyright (c) [2015] SUSE LLC
+# Copyright (c) [2016] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -19,32 +20,19 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "expert-partitioner/tree"
+$LOAD_PATH.unshift(File.expand_path('../../lib', __FILE__))
 
+require "storage/storage_manager.rb"
+require "storage/yaml_writer.rb"
 
-module ExpertPartitioner
-
-  class TreeView
-
-    def create()
-      VBox(VStretch(), HStretch())
-    end
-
-    def handle(input)
-    end
-
-    def update(also_tree = false)
-
-      # TODO more accurate update options
-
-      if also_tree
-        Yast::UI.ChangeWidget(:tree, :Items, Tree.new().tree_items)
-      end
-
-      Yast::UI.ReplaceWidget(:tree_panel, create)
-
-    end
-
-  end
-
+if Process::UID.eid != 0
+  STDERR.puts("This requires root permissions, otherwise hardware probing will fail.")
+  STDERR.puts("Start this with sudo")
 end
+
+output_file = ARGV.first || "/dev/stdout" 
+
+storage = Yast::Storage::StorageManager.start_probing
+Yast::Storage::YamlWriter.write(storage.probed, output_file)
+
+

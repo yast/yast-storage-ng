@@ -1,6 +1,8 @@
+#!/usr/bin/env ruby
+#
 # encoding: utf-8
 
-# Copyright (c) [2015] SUSE LLC
+# Copyright (c) [2016] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -19,32 +21,21 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "expert-partitioner/tree"
+require "storage"
 
-
-module ExpertPartitioner
-
-  class TreeView
-
-    def create()
-      VBox(VStretch(), HStretch())
-    end
-
-    def handle(input)
-    end
-
-    def update(also_tree = false)
-
-      # TODO more accurate update options
-
-      if also_tree
-        Yast::UI.ChangeWidget(:tree, :Items, Tree.new().tree_items)
+module Yast
+  module Storage
+    # Refinement for ::Storage::Devicegraph with some commodity methods
+    module RefinedDevicegraph
+      refine ::Storage::Devicegraph do
+        # Set of actions needed to get the devicegraph starting with the current
+        # probed one
+        #
+        # @return [::Storage::Actiongraph]
+        def actiongraph(storage: StorageManager.instance)
+          ::Storage::Actiongraph.new(storage, storage.probed, self)
+        end
       end
-
-      Yast::UI.ReplaceWidget(:tree_panel, create)
-
     end
-
   end
-
 end

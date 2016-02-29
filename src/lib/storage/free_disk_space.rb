@@ -1,3 +1,5 @@
+#!/usr/bin/env ruby
+#
 # encoding: utf-8
 
 # Copyright (c) [2015] SUSE LLC
@@ -19,32 +21,43 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "expert-partitioner/tree"
+require "yast"
+require "storage/disk_size"
 
+module Yast
+  module Storage
+    #
+    # Helper class to keep information about free disk space together.
+    #
+    class FreeDiskSpace
+      attr_accessor :disk_name, :slot, :size
 
-module ExpertPartitioner
-
-  class TreeView
-
-    def create()
-      VBox(VStretch(), HStretch())
-    end
-
-    def handle(input)
-    end
-
-    def update(also_tree = false)
-
-      # TODO more accurate update options
-
-      if also_tree
-        Yast::UI.ChangeWidget(:tree, :Items, Tree.new().tree_items)
+      # Initialize.
+      #
+      # @param disk [::Storage::Disk]
+      #
+      # @param slot [::Storage::PartitionSlot]
+      #
+      def initialize(disk, slot)
+        @disk = disk
+        @slot = slot
       end
 
-      Yast::UI.ReplaceWidget(:tree_panel, create)
+      # Return the name of the disk this slot is on.
+      #
+      # @return [String] disk_name
+      #
+      def disk_name
+        @disk.name
+      end
 
+      # Return the size of this slot.
+      #
+      # @return [DiskSize]
+      #
+      def size
+        DiskSize.new(@slot.region.to_kb(@slot.region.length))
+      end
     end
-
   end
-
 end

@@ -22,7 +22,6 @@
 # find current contact information at www.suse.com.
 
 require "yast"
-require "yastx"
 require "storage"
 
 module Yast
@@ -49,9 +48,6 @@ module Yast
       # Class methods
       #
       class << self
-        @instance = nil
-        @logger   = nil
-
         # Return the singleton for the libstorage object. This will create one
         # for the first call, which will also trigger hardware probing.
         #
@@ -67,32 +63,33 @@ module Yast
         # Create your own Storage::Environment for custom purposes like mocking
         # the hardware probing etc.
         #
+        # If no Storage::Environment is provided, it creates one based on the
+        # value of environment variable YAST2_STORAGE_PROBE_MODE
+        #
         # @return [::Storage::Storage] libstorage object
         #
         def create_instance(storage_environment = nil)
-
           if !storage_environment
-
-            case ENV.fetch("YAST2_STORAGE_PROBE_MODE", "STANDARD")
-
-            when "STANDARD"     # probe
-              storage_environment = ::Storage::Environment.new(true)
-
-            when "STANDARD_WRITE_DEVICEGRAPH" # probe and write probed data to disk
-              storage_environment = ::Storage::Environment.new(true, ::Storage::ProbeMode_STANDARD_WRITE_DEVICEGRAPH,
-                                                               ::Storage::TargetMode_DIRECT)
-
-            when "READ_DEVICEGRAPH" # instead of probing read probed data from disk
-              storage_environment = ::Storage::Environment.new(true, ::Storage::ProbeMode_READ_DEVICEGRAPH,
-                                                               ::Storage::TargetMode_DIRECT)
-
+            storage_environment = case ENV.fetch("YAST2_STORAGE_PROBE_MODE", "STANDARD")
+            # probe and write probed data to disk
+            when "STANDARD_WRITE_DEVICEGRAPH"
+              ::Storage::Environment.new(
+                true,
+                ::Storage::ProbeMode_STANDARD_WRITE_DEVICEGRAPH,
+                ::Storage::TargetMode_DIRECT
+              )
+            # instead of probing read probed data from disk
+            when "READ_DEVICEGRAPH"
+              ::Storage::Environment.new(
+                true,
+                ::Storage::ProbeMode_READ_DEVICEGRAPH,
+                ::Storage::TargetMode_DIRECT
+              )
+            # probe
+            else
+              ::Storage::Environment.new(true)
             end
-
-            storage_environment.devicegraph_filename = "./devicegraph.xml"
-            storage_environment.arch_filename = "./arch.xml"
-
           end
-
           create_logger
           log.info("Creating Storage object")
           @instance = ::Storage::Storage.new(storage_environment)
@@ -103,18 +100,13 @@ module Yast
         private
 
         def create_logger
-          @logger = StorageLogger.new
-          ::Storage.logger = @logger
+          ::Storage.logger = StorageLogger.new
         end
       end
 
       # Logger class for libstorage. This is needed to make libstorage log to the
       # y2log.
       class StorageLogger < ::Storage::Logger
-        def initialize
-          super
-        end
-
         def write(level, component, filename, line, function, content)
           Yast.y2_logger(level, component, filename, line, function, content)
         end

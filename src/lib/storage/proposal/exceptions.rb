@@ -1,6 +1,8 @@
+#!/usr/bin/env ruby
+#
 # encoding: utf-8
 
-# Copyright (c) [2015] SUSE LLC
+# Copyright (c) [2016] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -19,32 +21,17 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "expert-partitioner/tree"
-
-
-module ExpertPartitioner
-
-  class TreeView
-
-    def create()
-      VBox(VStretch(), HStretch())
-    end
-
-    def handle(input)
-    end
-
-    def update(also_tree = false)
-
-      # TODO more accurate update options
-
-      if also_tree
-        Yast::UI.ChangeWidget(:tree, :Items, Tree.new().tree_items)
+module Yast
+  module Storage
+    class Proposal
+      class Error < RuntimeError
       end
-
-      Yast::UI.ReplaceWidget(:tree_panel, create)
-
+      class NoDiskSpaceError < Error
+      end
+      class NoMorePartitionSlotError < Error
+      end
+      class UnexpectedCallError < Error
+      end
     end
-
   end
-
 end
