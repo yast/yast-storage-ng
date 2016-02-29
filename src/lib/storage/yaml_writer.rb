@@ -78,7 +78,7 @@ module Yast
       # always be an array.
       #
       # @param devicegraph [::Storage::devicegraph]
-      # @return yaml [Array<Hash>]
+      # @return [Array<Hash>]
       #
       def yaml_device_tree(devicegraph)
         devicegraph.all_disks.to_a.inject([]) { |yaml, disk| yaml << yaml_disk(disk) }
@@ -89,7 +89,7 @@ module Yast
       # Return the YAML counterpart of a ::Storage::Disk.
       #
       # @param  disk [::Storage::Disk]
-      # @return yaml [Hash]
+      # @return [Hash]
       #
       def yaml_disk(disk)
         content = {}
@@ -123,7 +123,7 @@ module Yast
       # Return the YAML counterpart of a ::Storage::Partition.
       #
       # @param  partition [::Storage::Partition]
-      # @return yaml [Hash]
+      # @return [Hash]
       #
       def yaml_partition(partition)
         content = {}
@@ -149,7 +149,7 @@ module Yast
       # disk.
       #
       # @param  size [DiskSize] size of the free slot
-      # @return yaml [Hash]
+      # @return [Hash]
       #
       def yaml_free_slot(size)
         { "free" => { "size" => size.to_s } }

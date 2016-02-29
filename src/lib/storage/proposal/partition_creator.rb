@@ -223,7 +223,7 @@ module Yast
         # Create a partition for the specified volume within the specified slot
         # of free space.
         #
-        # @param volume       [ProposalVolume]
+        # @param vol          [ProposalVolume]
         # @param partition_id [::Storage::IdNum] ::Storage::ID_Linux etc.
         # @param free_slot    [FreeDiskSpace]
         #
@@ -319,7 +319,7 @@ module Yast
 
         # Create an LVM volume group.
         #
-        # @param volum_group_name [String]
+        # @param volume_group_name [String]
         #
         # @return [::Storage::VolumeGroup] volume_group
         #

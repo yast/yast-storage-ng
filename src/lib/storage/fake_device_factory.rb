@@ -74,7 +74,7 @@ module Yast
         # FakeDeviceFactory and use its load_yaml_file() method repeatedly.
         #
         # @param devicegraph [::Storage::Devicegraph] where to build the tree
-        # @param filename [String] name of the YAML file
+        # @param input_file [String] name of the YAML file
         #
         def load_yaml_file(devicegraph, input_file)
           factory = FakeDeviceFactory.new(devicegraph)
