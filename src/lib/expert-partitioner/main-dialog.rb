@@ -21,7 +21,7 @@
 
 require "yast"
 require "storage"
-require "storage/storage-manager"
+require "storage/storage_manager"
 require "storage/extensions"
 require "expert-partitioner/tree"
 require "expert-partitioner/tree-views/all"

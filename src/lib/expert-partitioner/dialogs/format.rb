@@ -21,7 +21,7 @@
 
 require "yast"
 require "storage"
-require "storage/storage-manager"
+require "storage/storage_manager"
 require "expert-partitioner/popups"
 
 Yast.import "UI"

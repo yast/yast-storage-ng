@@ -63,10 +63,33 @@ module Yast
         # Create your own Storage::Environment for custom purposes like mocking
         # the hardware probing etc.
         #
+        # If no Storage::Environment is provided, it creates one based on the
+        # value of environment variable YAST2_STORAGE_PROBE_MODE
+        #
         # @return [::Storage::Storage] libstorage object
         #
         def create_instance(storage_environment = nil)
-          storage_environment ||= ::Storage::Environment.new(true)
+          if !storage_environment
+            storage_environment = case ENV.fetch("YAST2_STORAGE_PROBE_MODE", "STANDARD")
+            # probe and write probed data to disk
+            when "STANDARD_WRITE_DEVICEGRAPH"
+              ::Storage::Environment.new(
+                true,
+                ::Storage::ProbeMode_STANDARD_WRITE_DEVICEGRAPH,
+                ::Storage::TargetMode_DIRECT
+              )
+            # instead of probing read probed data from disk
+            when "READ_DEVICEGRAPH"
+              ::Storage::Environment.new(
+                true,
+                ::Storage::ProbeMode_READ_DEVICEGRAPH,
+                ::Storage::TargetMode_DIRECT
+              )
+            # probe
+            else
+              ::Storage::Environment.new(true)
+            end
+          end
           create_logger
           log.info("Creating Storage object")
           @instance = ::Storage::Storage.new(storage_environment)
