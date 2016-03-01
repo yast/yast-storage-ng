@@ -68,7 +68,7 @@ module Yast
           devicegraph
         end
 
-      private
+        private
 
         # Working devicegraph
         attr_accessor :devicegraph
@@ -96,7 +96,7 @@ module Yast
         # @param strategy [Symbol] :desired or :min
         #
         def create_lvm(volumes, strategy)
-          lvm_vol, non_lvm_vol = volumes.partition { |vol| vol.can_live_on_logical_volume }
+          lvm_vol, non_lvm_vol = volumes.partition(&:can_live_on_logical_volume)
           # Create any partitions first that cannot be created on LVM
           # to avoid LVM consuming all the available free space
           create_non_lvm(non_lvm_vol, strategy)
@@ -162,7 +162,7 @@ module Yast
 
           volumes.each do |vol|
             partition_id = vol.mount_point == "swap" ? ::Storage::ID_SWAP : ::Storage::ID_LINUX
-            partition = create_partition(vol, partition_id , free_slots.first)
+            partition = create_partition(vol, partition_id, free_slots.first)
             make_filesystem(partition, vol)
           end
         end
@@ -211,9 +211,9 @@ module Yast
         # @param volumes  [Array<ProposalVolume] volumes to create
         # @param strategy [Symbol] :desired or :min_size
         #
-        def create_non_lvm_complex(volumes, strategy)
-          raise RuntimeError, "Not implemented yet"
-          volumes.each do |vol|
+        def create_non_lvm_complex(volumes, _strategy)
+          raise "Not implemented yet"
+          volumes.each do |_vol|
             # TO DO
             # TO DO
             # TO DO
@@ -262,7 +262,7 @@ module Yast
         def next_free_primary_partition_name(disk_name, ptable)
           # FIXME: This is broken by design. create_partition needs to return
           # this information, not get it as an input parameter.
-          part_names = ptable.partitions.to_a.map { |part| part.name }
+          part_names = ptable.partitions.to_a.map(&:name)
           1.upto(ptable.max_primary) do |i|
             dev_name = "#{disk_name}#{i}"
             return dev_name unless part_names.include?(dev_name)
@@ -278,7 +278,7 @@ module Yast
         def next_free_logical_partition_name(disk_name, ptable)
           # FIXME: This is broken by design. create_partition needs to return
           # this information, not get it as an input parameter.
-          part_names = ptable.partitions.to_a.map { |part| part.name }
+          part_names = ptable.partitions.to_a.map(&:name)
           FIRST_LOGICAL_PARTITION_NUMBER.upto(ptable.max_logical) do |i|
             dev_name = "#{disk_name}#{i}"
             return dev_name unless part_names.include?(dev_name)
@@ -326,11 +326,11 @@ module Yast
         def create_volume_group(volume_group_name)
           volume_group = nil
           log.info("Creating LVM volume group #{volume_group_name}")
-          raise RuntimeError, "Not implemented yet"
+          raise NotImplementedError
           # TO DO
           # TO DO
           # TO DO
-          return volume_group
+          volume_group
         end
 
         # Create LVM physical volumes for all the rest of free_space and add them
@@ -339,7 +339,7 @@ module Yast
         # @param volume_group [::Storage::VolumeGroup]
         #
         def create_physical_volumes(volume_group)
-          log.info("Creating LVM physical volumes")
+          log.info("Creating LVM physical volumes for #{volume_group}")
         end
 
         # Create an LVM logical volume in the specified volume group for vol.
@@ -349,7 +349,10 @@ module Yast
         # @param strategy     [Symbol] :desired or :min_size
         #
         def create_logical_volume(volume_group, vol, strategy)
-          log.info("Creating LVM logical volume #{vol.logical_volume_name} with strategy \"#{strategy}\"")
+          log.info(
+            "Creating LVM logical volume #{vol.logical_volume_name} at #{volume_group} "\
+            "with strategy \"#{strategy}\""
+          )
           # TO DO
           # TO DO
           # TO DO

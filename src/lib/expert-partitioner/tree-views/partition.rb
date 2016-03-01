@@ -31,19 +31,15 @@ Yast.import "HTML"
 
 include Yast::I18n
 
-
 module ExpertPartitioner
-
   class PartitionTreeView < TreeView
-
     def initialize(partition)
       @partition = partition
     end
 
     def create
-
-      tmp = [ "Name: #{@partition.name}",
-              "Size: #{::Storage::byte_to_humanstring(1024 * @partition.size_k, false, 2, false)}" ]
+      tmp = ["Name: #{@partition.name}",
+             "Size: #{::Storage.byte_to_humanstring(1024 * @partition.size_k, false, 2, false)}"]
 
       tmp << "Device Path: #{@partition.udev_path}"
 
@@ -57,9 +53,6 @@ module ExpertPartitioner
         Left(IconAndHeading(_("Partition: %s") % @partition.name, Icons::PARTITION)),
         RichText(Id(:text), Opt(:hstretch, :vstretch), contents)
       )
-
     end
-
   end
-
 end

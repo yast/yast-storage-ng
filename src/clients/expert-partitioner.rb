@@ -19,4 +19,3 @@
 require "expert-partitioner/main-dialog"
 
 ExpertPartitioner::MainDialog.new.run
-

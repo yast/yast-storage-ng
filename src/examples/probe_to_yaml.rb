@@ -20,7 +20,7 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-$LOAD_PATH.unshift(File.expand_path('../../lib', __FILE__))
+$LOAD_PATH.unshift(File.expand_path("../../lib", __FILE__))
 
 require "storage/storage_manager.rb"
 require "storage/yaml_writer.rb"
@@ -30,9 +30,7 @@ if Process::UID.eid != 0
   STDERR.puts("Start this with sudo")
 end
 
-output_file = ARGV.first || "/dev/stdout" 
+output_file = ARGV.first || "/dev/stdout"
 
 storage = Yast::Storage::StorageManager.start_probing
 Yast::Storage::YamlWriter.write(storage.probed, output_file)
-
-

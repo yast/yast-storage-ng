@@ -30,12 +30,9 @@ Yast.import "UI"
 
 include Yast::I18n
 
-
 module ExpertPartitioner
-
   class AllTreeView < TreeView
-
-    FIELDS = [ :sid, :icon, :name, :size, :partition_table, :filesystem, :mountpoint ]
+    FIELDS = [:sid, :icon, :name, :size, :partition_table, :filesystem, :mountpoint]
 
     def create
       VBox(
@@ -50,24 +47,23 @@ module ExpertPartitioner
     end
 
     def items
-
       storage = Yast::Storage::StorageManager.instance
 
-      staging = storage.staging()
+      staging = storage.staging
 
       ret = []
 
-      disks = Storage::Disk::all(staging)
+      disks = Storage::Disk.all(staging)
 
-      ::Storage::silence do
+      ::Storage.silence do
 
         disks.each do |disk|
 
           ret << disk.table_row(FIELDS)
 
           begin
-            partition_table = disk.partition_table()
-            partition_table.partitions().each do |partition|
+            partition_table = disk.partition_table
+            partition_table.partitions.each do |partition|
               ret << partition.table_row(FIELDS)
             end
           rescue Storage::WrongNumberOfChildren, Storage::DeviceHasWrongType
@@ -77,17 +73,17 @@ module ExpertPartitioner
 
       end
 
-      mds = Storage::Md::all(staging)
+      mds = Storage::Md.all(staging)
 
-      ::Storage::silence do
+      ::Storage.silence do
 
         mds.each do |md|
 
           ret << md.table_row(FIELDS)
 
           begin
-            partition_table = md.partition_table()
-            partition_table.partitions().each do |partition|
+            partition_table = md.partition_table
+            partition_table.partitions.each do |partition|
               ret << partition.table_row(FIELDS)
             end
           rescue Storage::WrongNumberOfChildren, Storage::DeviceHasWrongType
@@ -97,10 +93,7 @@ module ExpertPartitioner
 
       end
 
-      return ret
-
+      ret
     end
-
   end
-
 end

@@ -56,7 +56,7 @@ module Yast
       # Initialize libstorage with a fake environment.
       #
       def init_storage
-        StorageManager::create_instance(fake_storage_env)
+        StorageManager.create_instance(fake_storage_env)
       end
 
       # Create a Storage::Environment suitable for fake device graphs,

@@ -32,19 +32,13 @@ Yast.import "Popup"
 include Yast::I18n
 include Yast::Logger
 
-
 module ExpertPartitioner
-
-
   class MdDevicesTabView < TabView
-
-    FIELDS = [ :sid, :icon, :name, :size, :spare ]
-
+    FIELDS = [:sid, :icon, :name, :size, :spare]
 
     def initialize(md)
       @md = md
     end
-
 
     def create
       VBox(
@@ -52,26 +46,19 @@ module ExpertPartitioner
       )
     end
 
-
     private
 
-
     def items
-
       ret = []
 
-      blk_devices = @md.devices()
+      blk_devices = @md.devices
 
       blk_devices.each do |blk_device|
-        blk_device = Storage::downcast(blk_device)
+        blk_device = Storage.downcast(blk_device)
         ret << blk_device.table_row(FIELDS)
       end
 
-      return ret
-
+      ret
     end
-
-
   end
-
 end

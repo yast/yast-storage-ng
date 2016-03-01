@@ -120,7 +120,7 @@ module Yast
         # "MiB", ...). The base unit is kiB.
         #
         def unit_multiplier(unit)
-          1024 ** unit_exponent(unit)
+          1024**unit_exponent(unit)
         end
       end
 
@@ -152,7 +152,7 @@ module Yast
 
       def *(other)
         if other.is_a?(Numeric)
-        return DiskSize.unlimited if unlimited?
+          return DiskSize.unlimited if unlimited?
           DiskSize.new(@size_k * other)
         else
           raise TypeError, "Unexpected #{other.class}; expected Numeric value"
@@ -161,7 +161,7 @@ module Yast
 
       def /(other)
         if other.is_a?(Numeric)
-        return DiskSize.unlimited if unlimited?
+          return DiskSize.unlimited if unlimited?
           DiskSize.new(@size_k.to_f / other)
         else
           raise TypeError, "Unexpected #{other.class}; expected Numeric value"
@@ -232,7 +232,7 @@ module Yast
       #
       def any_operand_unlimited?(other)
         return true if unlimited?
-        return other.respond_to?(:unlimited?) && other.unlimited?
+        other.respond_to?(:unlimited?) && other.unlimited?
       end
     end
   end
