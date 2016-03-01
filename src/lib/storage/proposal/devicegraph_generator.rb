@@ -59,7 +59,7 @@ module Yast
         attr_writer :got_desired_space
 
         def got_desired_space?
-          !!@got_desired_space
+          @got_desired_space
         end
 
         # Provides free disk space in the proposal devicegraph to fit the volumes
@@ -80,7 +80,9 @@ module Yast
           rescue NoDiskSpaceError
             result_graph = space_maker.provide_space(volumes.min_size)
           end
-          log.info("Found #{result_graph.available_size} (#{got_desired_space? ? "desired" : "min"})")
+          log.info(
+            "Found #{result_graph.available_size} (#{got_desired_space? ? "desired" : "min"})"
+          )
           result_graph
         end
 

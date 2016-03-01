@@ -5,3 +5,8 @@ inherit_from:
 # Redundant returns add legibility for developers used to other languages
 Style/RedundantReturn:
   Enabled: false
+
+# Don't complain on definitions like this. We like question marks!
+# def some_boolean?; some_boolean; end
+TrivialAccessors:
+  ExactNameMatch: true

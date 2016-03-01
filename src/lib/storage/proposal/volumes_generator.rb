@@ -120,7 +120,7 @@ module Yast
         # @return [DiskSize] current RAM size
         #
         def ram_size
-          # FIXME use the .proc.meminfo agent and its MemTotal field
+          # FIXME: use the .proc.meminfo agent and its MemTotal field
           #   mem_info_map = Convert.to_map(SCR.Read(path(".proc.meminfo")))
           # See old Partitions.rb: SwapSizeMb()
           DiskSize.GiB(8)

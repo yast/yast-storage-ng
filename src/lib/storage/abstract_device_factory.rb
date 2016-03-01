@@ -106,7 +106,9 @@ module Yast
       #
       def build_tree_toplevel(obj)
         name, content = break_up_hash(obj)
-        raise HierarchyError, "Unexpected toplevel object #{name}" unless valid_toplevel.include?(name)
+        if !valid_toplevel.include?(name)
+          raise HierarchyError, "Unexpected toplevel object #{name}"
+        end
         build_tree_recursive(nil, name, content)
       end
 
@@ -121,7 +123,9 @@ module Yast
       # @param content [Any]   parameters and sub-products of 'name'
       #
       def build_tree_recursive(parent, name, content)
-        raise HierarchyError, "Don't know how to create a #{name}" unless factory_products.include?(name)
+        if !factory_products.include?(name)
+          raise HierarchyError, "Don't know how to create a #{name}"
+        end
 
         case content
         when Hash
@@ -161,7 +165,11 @@ module Yast
         end
       end
 
+      # rubocop:disable Lint/UselessAccessModifier
+
       protected
+
+      # rubocop:enable Lint/UselessAccessModifier
 
       #
       # Methods subclasses need to implement:
@@ -265,7 +273,7 @@ module Yast
         [name, content]
       end
 
-      # Check if all the parameters in "param"_are expected for factory product
+      # Check if all the parameters in "param" are expected for factory product
       # "name".
       #
       # @param name  [String] factory product name
@@ -275,7 +283,9 @@ module Yast
         expected = valid_param[name]
         expected += valid_hierarchy[name] if valid_hierarchy.include?(name)
         param.each do |key|
-          raise ArgumentError, "Unexpected parameter #{key} in #{name}" unless expected.include?(key.to_s)
+          if !expected.include?(key.to_s)
+            raise ArgumentError, "Unexpected parameter #{key} in #{name}"
+          end
         end
       end
 
@@ -286,9 +296,11 @@ module Yast
       # @param child  [String] name of child  factory product
       #
       def check_hierarchy(parent, child)
+        # rubocop:disable Style/GuardClause
         if !valid_hierarchy[parent].include?(child)
           raise HierarchyError, "Unexpected child #{child} for #{parent}"
         end
+        # rubocop:enable Style/GuardClause
       end
 
       # Call the factory 'create' method for factory product 'name'
