@@ -132,7 +132,8 @@ describe Yast::Storage::DiskSize do
       expect(disk_size.size_k).to be == 12 / 3 * 1024
     end
     it "should refuse multiplication with another DiskSize" do
-      expect { Yast::Storage::DiskSize.MiB(12) * Yast::Storage::DiskSize.MiB(3) }.to raise_exception TypeError
+      expect { Yast::Storage::DiskSize.MiB(12) * Yast::Storage::DiskSize.MiB(3) }
+        .to raise_exception TypeError
     end
   end
 
@@ -189,19 +190,19 @@ describe Yast::Storage::DiskSize do
     unlimited = Yast::Storage::DiskSize.unlimited
     disk_size = Yast::Storage::DiskSize.GiB(42)
     it "should compare any disk size correctly with unlimited" do
-      expect(disk_size <  unlimited).to be == true
-      expect(disk_size >  unlimited).to be == false
-      expect(disk_size == unlimited).to be == false
+      expect(disk_size).to be < unlimited
+      expect(disk_size).to_not be > unlimited
+      expect(disk_size).to_not eq unlimited
     end
     it "should compare unlimited correctly with any disk size" do
-      expect(unlimited >  disk_size).to be == true
-      expect(unlimited <  disk_size).to be == false
-      expect(unlimited == disk_size).to be == false
+      expect(unlimited).to be > disk_size
+      expect(unlimited).to_not be < disk_size
+      expect(unlimited).to_not eq disk_size
     end
     it "should compare unlimited correctly with unlimited" do
-      expect(unlimited >  unlimited).to be == false
-      expect(unlimited <  unlimited).to be == false
-      expect(unlimited == unlimited).to be == true
+      expect(unlimited).to_not be > unlimited
+      expect(unlimited).to_not be < unlimited
+      expect(unlimited).to eq unlimited
     end
   end
 
@@ -240,41 +241,41 @@ describe Yast::Storage::DiskSize do
 
   describe "parsing from string" do
     it "should work with just an integer" do
-      expect(Yast::Storage::DiskSize.parse("0").size_k).to be == 0
-      expect(Yast::Storage::DiskSize.parse("7").size_k).to be == 7
+      expect(described_class.parse("0").size_k).to be == 0
+      expect(described_class.parse("7").size_k).to be == 7
     end
     it "should work with integer and unit" do
-      expect(Yast::Storage::DiskSize.parse("42 GiB").size_k).to be == 42 * 1024**2
+      expect(described_class.parse("42 GiB").size_k).to be == 42 * 1024**2
     end
     it "should work with float and unit" do
-      expect(Yast::Storage::DiskSize.parse("43.00 GiB").size_k).to be == 43 * 1024**2
+      expect(described_class.parse("43.00 GiB").size_k).to be == 43 * 1024**2
     end
     it "should work with just an integer" do
-      expect(Yast::Storage::DiskSize.parse("0").size_k).to be == 0
+      expect(described_class.parse("0").size_k).to be == 0
     end
     it "should tolerate more embedded whitespace" do
-      expect(Yast::Storage::DiskSize.parse("44   MiB").size_k).to be == 44 * 1024
+      expect(described_class.parse("44   MiB").size_k).to be == 44 * 1024
     end
     it "should tolerate more surrounding whitespace" do
-      expect(Yast::Storage::DiskSize.parse("   45   TiB  ").size_k).to be == 45 * 1024**3
-      expect(Yast::Storage::DiskSize.parse("  46   ").size_k).to be == 46
+      expect(described_class.parse("   45   TiB  ").size_k).to be == 45 * 1024**3
+      expect(described_class.parse("  46   ").size_k).to be == 46
     end
     it "should accept \"unlimited\"" do
-      expect(Yast::Storage::DiskSize.parse("unlimited").size_k).to be == -1
+      expect(described_class.parse("unlimited").size_k).to be == -1
     end
     it "should accept \"unlimited\" with surrounding whitespace" do
-      expect(Yast::Storage::DiskSize.parse("  unlimited ").size_k).to be == -1
+      expect(described_class.parse("  unlimited ").size_k).to be == -1
     end
     it "should accept its own output" do
-      expect(Yast::Storage::DiskSize.parse(Yast::Storage::DiskSize.GiB(42).to_s).size_k).to be == 42 * 1024**2
-      expect(Yast::Storage::DiskSize.parse(Yast::Storage::DiskSize.new(43).to_s).size_k).to be == 43
-      expect(Yast::Storage::DiskSize.parse(Yast::Storage::DiskSize.zero.to_s).size_k).to be ==  0
-      expect(Yast::Storage::DiskSize.parse(Yast::Storage::DiskSize.unlimited.to_s).size_k).to be == -1
+      expect(described_class.parse(described_class.GiB(42).to_s).size_k).to be == 42 * 1024**2
+      expect(described_class.parse(described_class.new(43).to_s).size_k).to be == 43
+      expect(described_class.parse(described_class.zero.to_s).size_k).to be ==  0
+      expect(described_class.parse(described_class.unlimited.to_s).size_k).to be == -1
     end
     it "should reject invalid input" do
-      expect { Yast::Storage::DiskSize.parse("wrglbrmpf") }.to raise_error(ArgumentError)
-      expect { Yast::Storage::DiskSize.parse("47 00 GiB") }.to raise_error(ArgumentError)
-      expect { Yast::Storage::DiskSize.parse("0FFF MiB") }.to raise_error(ArgumentError)
+      expect { described_class.parse("wrglbrmpf") }.to raise_error(ArgumentError)
+      expect { described_class.parse("47 00 GiB") }.to raise_error(ArgumentError)
+      expect { described_class.parse("0FFF MiB") }.to raise_error(ArgumentError)
     end
   end
 

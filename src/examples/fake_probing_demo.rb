@@ -26,9 +26,9 @@ require "storage/fake_probing.rb"
 
 fake_probing = Yast::Storage::FakeProbing.new
 devicegraph = fake_probing.devicegraph
-sdx = ::Storage::Disk.create(devicegraph, "/dev/sdx")
-sdy = ::Storage::Disk.create(devicegraph, "/dev/sdy")
-sdz = ::Storage::Disk.create(devicegraph, "/dev/sdz")
+::Storage::Disk.create(devicegraph, "/dev/sdx")
+::Storage::Disk.create(devicegraph, "/dev/sdy")
+::Storage::Disk.create(devicegraph, "/dev/sdz")
 fake_probing.to_probed
 
 probed = Yast::Storage::StorageManager.instance.probed
