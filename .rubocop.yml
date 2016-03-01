@@ -1,0 +1,7 @@
+# use the shared YaST defaults
+inherit_from:
+  /usr/share/YaST2/data/devtools/data/rubocop_yast_style.yml
+
+# Redundant returns add legibility for developers used to other languages
+Style/RedundantReturn:
+  Enabled: false
