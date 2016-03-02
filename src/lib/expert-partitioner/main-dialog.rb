@@ -36,7 +36,6 @@ require "expert-partitioner/tree-views/staging-devicegraph"
 require "expert-partitioner/tree-views/actiongraph"
 require "expert-partitioner/tree-views/actionlist"
 
-
 Yast.import "UI"
 Yast.import "Label"
 Yast.import "Popup"
@@ -45,19 +44,14 @@ Yast.import "HTML"
 
 include Yast::I18n
 
-
 module ExpertPartitioner
-
   class MainDialog
-
     include Yast::UIShortcuts
     include Yast::Logger
-
 
     def initialize
       textdomain "storage"
     end
-
 
     def run
       return unless create_dialog
@@ -69,21 +63,18 @@ module ExpertPartitioner
       end
     end
 
-
     private
 
-
     def create_dialog
-
-      @view = AllTreeView.new()
+      @view = AllTreeView.new
 
       Yast::UI.OpenDialog(
         Opt(:decorated, :defaultsize),
         VBox(
           Left(Heading(_("Expert Partitioner"))),
           HBox(
-            HWeight(30, Tree(Id(:tree), Opt(:notify), _("System View"), Tree.new().tree_items)),
-            HWeight(70, ReplacePoint(Id(:tree_panel), @view.create()))
+            HWeight(30, Tree(Id(:tree), Opt(:notify), _("System View"), Tree.new.tree_items)),
+            HWeight(70, ReplacePoint(Id(:tree_panel), @view.create))
           ),
           HBox(
             HStretch(),
@@ -92,14 +83,11 @@ module ExpertPartitioner
           )
         )
       )
-
     end
-
 
     def close_dialog
       Yast::UI.CloseDialog
     end
-
 
     def event_loop
       loop do
@@ -123,49 +111,49 @@ module ExpertPartitioner
           case current_item = Yast::UI.QueryWidget(:tree, :CurrentItem)
 
           when :all
-            @view = AllTreeView.new()
+            @view = AllTreeView.new
 
           when :disks
-            @view = DisksTreeView.new()
+            @view = DisksTreeView.new
 
           when :mds
-            @view = MdsTreeView.new()
+            @view = MdsTreeView.new
 
           when :filesystems
-            @view = FilesystemTreeView.new()
+            @view = FilesystemTreeView.new
 
           when :devicegraph_probed
-            @view = ProbedDevicegraphTreeView.new()
+            @view = ProbedDevicegraphTreeView.new
 
           when :devicegraph_staging
-            @view = StagingDevicegraphTreeView.new()
+            @view = StagingDevicegraphTreeView.new
 
           when :actiongraph
-            @view = ActiongraphTreeView.new()
+            @view = ActiongraphTreeView.new
 
           when :actionlist
-            @view = ActionlistTreeView.new()
+            @view = ActionlistTreeView.new
 
           else
 
             sid = current_item
 
             storage = Yast::Storage::StorageManager.instance
-            staging = storage.staging()
+            staging = storage.staging
 
             device = staging.find_device(sid)
 
-            if Storage::disk?(device)
-              @view = DiskTreeView.new(Storage::to_disk(device))
-            elsif Storage::md?(device)
-              @view = MdTreeView.new(Storage::to_md(device))
-            elsif Storage::partition?(device)
-              @view = PartitionTreeView.new(Storage::to_partition(device))
+            if Storage.disk?(device)
+              @view = DiskTreeView.new(Storage.to_disk(device))
+            elsif Storage.md?(device)
+              @view = MdTreeView.new(Storage.to_md(device))
+            elsif Storage.partition?(device)
+              @view = PartitionTreeView.new(Storage.to_partition(device))
             end
 
           end
 
-          @view.update()
+          @view.update
 
         else
           log.warn "Unexpected input #{input}"
@@ -174,11 +162,9 @@ module ExpertPartitioner
       end
     end
 
-
     def do_commit
-
       storage = Yast::Storage::StorageManager.instance
-      actiongraph = storage.calculate_actiongraph()
+      actiongraph = storage.calculate_actiongraph
 
       if actiongraph.empty?
         Yast::Popup::Error("Nothing to commit.")
@@ -188,13 +174,10 @@ module ExpertPartitioner
         return false
       end
 
-      storage.calculate_actiongraph()
-      storage.commit()
+      storage.calculate_actiongraph
+      storage.commit
 
-      return true
-
+      true
     end
-
   end
-
 end

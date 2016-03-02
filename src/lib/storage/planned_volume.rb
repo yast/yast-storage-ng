@@ -70,6 +70,17 @@ module Yast
           @logical_volume_name = @mount_point.sub(%r{^/}, "")
         end
       end
+
+      # Minimum size that should be granted for the partition when applying a
+      # given strategy
+      #
+      # @param strategy [Symbol] :desired or :min_size
+      # @return [DiskSize]
+      def min_valid_size(strategy)
+        size = send(strategy)
+        size = min_size if size.unlimited?
+        size
+      end
     end
   end
 end

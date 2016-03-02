@@ -50,7 +50,7 @@ module Yast
           actions = proposal.devices.actiongraph
 
           action_text = actions_to_text(actions)
-        rescue Proposal::NoDiskSpaceError => ex
+        rescue Proposal::NoDiskSpaceError
           action_text = "No proposal possible."
           log.warn(action_text)
         end
@@ -60,7 +60,7 @@ module Yast
         print("\nActions:\n\n#{action_text}\n")
       end
 
-    protected
+      protected
 
       # Checks if verbose output is desired
       #

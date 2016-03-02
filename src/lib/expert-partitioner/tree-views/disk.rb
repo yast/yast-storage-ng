@@ -32,18 +32,13 @@ Yast.import "Popup"
 include Yast::I18n
 include Yast::Logger
 
-
 module ExpertPartitioner
-
   class DiskTreeView < TreeView
-
     def initialize(disk)
       @disk = disk
     end
 
-
     def create
-
       @tab_view = DiskOverviewTabView.new(@disk)
 
       tabs = [
@@ -55,14 +50,11 @@ module ExpertPartitioner
 
       VBox(
         Left(IconAndHeading(_("Hard Disk: %s") % @disk.name, Icons::DISK)),
-        DumbTab(Id(:tab), tabs, ReplacePoint(Id(:tab_panel), @tab_view.create()))
+        DumbTab(Id(:tab), tabs, ReplacePoint(Id(:tab_panel), @tab_view.create))
       )
-
     end
 
-
     def handle(input)
-
       @tab_view.handle(input)
 
       case input
@@ -75,10 +67,7 @@ module ExpertPartitioner
 
       end
 
-      @tab_view.update()
-
+      @tab_view.update
     end
-
   end
-
 end

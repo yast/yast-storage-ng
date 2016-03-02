@@ -38,7 +38,7 @@ module Yast
       include EnumMappings
 
       # Valid toplevel products of this factory
-      VALID_TOPLEVEL  = [ "disk" ]
+      VALID_TOPLEVEL  = ["disk"]
 
       # Valid hierarchy within the products of this factory.
       # This indicates the permitted children types for each parent.
@@ -84,10 +84,10 @@ module Yast
 
       def initialize(devicegraph)
         super(devicegraph)
-        @partitions     = Hash.new
+        @partitions     = {}
         @disks          = Set.new
-        @first_free_cyl = Hash.new
-        @cyl_count      = Hash.new
+        @first_free_cyl = {}
+        @cyl_count      = {}
       end
 
       protected
@@ -133,8 +133,8 @@ module Yast
       # @return [Hash or Scalar] changed parameters
       #
       def fixup_param(name, param)
-        # log.info("Fixing up #{param} for #{name}")
-        param["size"] = DiskSize::parse(param["size"]) if param.key?("size")
+        log.info("Fixing up #{param} for #{name}")
+        param["size"] = DiskSize.parse(param["size"]) if param.key?("size")
         param
       end
 
@@ -148,12 +148,12 @@ module Yast
 
       # Factory method to create a disk.
       #
-      # @param parent [nil] (disks are toplevel)
+      # @param _parent [nil] (disks are toplevel)
       # @param args [Hash] disk parameters: "name", "size"
       #
       # @return [String] device name of the new disk ("/dev/sda" etc.)
       #
-      def create_disk(parent, args)
+      def create_disk(_parent, args)
         log.info("#{__method__}( #{args} )")
         name = args["name"] || "/dev/sda"
         size = args["size"] || DiskSize.zero
@@ -211,7 +211,7 @@ module Yast
         size      = args["size"] || DiskSize.zero
         part_name = args["name"]
         type      = args["type"] || "primary"
-        id        = args["id"  ] || "linux"
+        id        = args["id"] || "linux"
 
         raise ArgumentError, "\"name\" missing for partition #{args} on #{disk_name}" unless part_name
         raise ArgumentError, "\"size\" missing for partition #{part_name}" if size.zero?
@@ -219,7 +219,7 @@ module Yast
 
         # Keep some parameters that are really file system related in @partitions
         # to be picked up later by create_file_system.
-        @partitions[part_name] = args.select { |k,v| ["mount_point", "label"].include?(k) }
+        @partitions[part_name] = args.select { |k, _v| ["mount_point", "label"].include?(k) }
 
         id   = fetch(PARTITION_IDS,   id,   "partition ID",   part_name) unless id.is_a?(Fixnum)
         type = fetch(PARTITION_TYPES, type, "partition type", part_name)
@@ -317,10 +317,10 @@ module Yast
 
         if size.unlimited?
           requested_cyl = free_cyl
-          raise RuntimeError, "No more disk space on #{disk_name}" if requested_cyl < 1
+          raise "No more disk space on #{disk_name}" if requested_cyl < 1
         else
           requested_cyl = size.size_k / CYL_SIZE.size_k
-          raise RuntimeError, "Not enough disk space on #{disk_name} for another #{size}" if requested_cyl > free_cyl
+          raise "Not enough disk space on #{disk_name} for another #{size}" if requested_cyl > free_cyl
         end
         @first_free_cyl[disk_name] = first_free_cyl + requested_cyl
         ::Storage::Region.new(first_free_cyl, requested_cyl, CYL_SIZE.size_k * 1024)

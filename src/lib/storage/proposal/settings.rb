@@ -84,8 +84,8 @@ module Yast
           @home_max_size                 = DiskSize.unlimited
         end
 
-        def read_from_xml_file(xml_file_name)
-          # TO DO
+        def read_from_xml_file
+          raise NotImplementedError
         end
       end
     end

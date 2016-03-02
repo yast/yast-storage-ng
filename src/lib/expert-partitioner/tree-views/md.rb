@@ -35,18 +35,13 @@ Yast.import "Popup"
 include Yast::I18n
 include Yast::Logger
 
-
 module ExpertPartitioner
-
   class MdTreeView < TreeView
-
     def initialize(md)
       @md = md
     end
 
-
     def create
-
       @tab_view = MdOverviewTabView.new(@md)
 
       tabs = [
@@ -60,14 +55,11 @@ module ExpertPartitioner
 
       VBox(
         Left(IconAndHeading(_("MD RAID: %s") % @md.name, Icons::MD)),
-        DumbTab(Id(:tab), tabs, ReplacePoint(Id(:tab_panel), @tab_view.create()))
+        DumbTab(Id(:tab), tabs, ReplacePoint(Id(:tab_panel), @tab_view.create))
       )
-
     end
 
-
     def handle(input)
-
       @tab_view.handle(input)
 
       case input
@@ -83,10 +75,7 @@ module ExpertPartitioner
 
       end
 
-      @tab_view.update()
-
+      @tab_view.update
     end
-
   end
-
 end

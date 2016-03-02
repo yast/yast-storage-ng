@@ -35,19 +35,13 @@ Yast.import "Popup"
 include Yast::I18n
 include Yast::Logger
 
-
 module ExpertPartitioner
-
-
   class MdPartitionsTabView < TabView
-
-    FIELDS = [ :sid, :icon, :name, :size, :filesystem, :mountpoint ]
-
+    FIELDS = [:sid, :icon, :name, :size, :filesystem, :mountpoint]
 
     def initialize(md)
       @md = md
     end
-
 
     def create
       VBox(
@@ -58,16 +52,14 @@ module ExpertPartitioner
           PushButton(Id(:delete), _("Delete...")),
           HStretch(),
           MenuButton(Id(:expert), _("Expert..."), [
-                       # menu entry text
-                       Item(Id(:create_partition_table), _("Create New Partition Table"))
-                     ])
+            # menu entry text
+            Item(Id(:create_partition_table), _("Create New Partition Table"))
+          ])
         )
       )
     end
 
-
     def handle(input)
-
       case input
 
       when :create
@@ -83,22 +75,18 @@ module ExpertPartitioner
         do_create_partition_table
 
       end
-
     end
-
 
     private
 
-
     def items
-
       ret = []
 
-      ::Storage::silence do
+      ::Storage.silence do
 
         begin
-          partition_table = @md.partition_table()
-          partition_table.partitions().each do |partition|
+          partition_table = @md.partition_table
+          partition_table.partitions.each do |partition|
             ret << partition.table_row(FIELDS)
           end
         rescue Storage::WrongNumberOfChildren, Storage::DeviceHasWrongType
@@ -106,81 +94,65 @@ module ExpertPartitioner
 
       end
 
-      return ret
-
+      ret
     end
 
-
     def do_create_partition
-
       begin
-        partition_table = @md.partition_table()
+        partition_table = @md.partition_table
       rescue Storage::WrongNumberOfChildren, Storage::DeviceHasWrongType
         Yast::Popup::Error("Md has no partition table.")
         return
       end
 
-      CreatePartitionDialog.new(@md).run()
+      CreatePartitionDialog.new(@md).run
 
       update(true)
-
     end
 
-
     def do_format
-
       sid = Yast::UI.QueryWidget(Id(:table), :CurrentItem)
 
       storage = Yast::Storage::StorageManager.instance
-      staging = storage.staging()
+      staging = storage.staging
       device = staging.find_device(sid)
 
       begin
-        blk_device = Storage::to_blk_device(device)
+        blk_device = Storage.to_blk_device(device)
         log.info "do_format #{sid} #{blk_device.name}"
-        FormatDialog.new(blk_device).run()
+        FormatDialog.new(blk_device).run
       rescue Storage::DeviceHasWrongType
         log.error "do_format on non blk device"
       end
 
       update(true)
-
     end
 
-
     def do_delete_partition
-
       sid = Yast::UI.QueryWidget(Id(:table), :CurrentItem)
 
       storage = Yast::Storage::StorageManager.instance
-      staging = storage.staging()
+      staging = storage.staging
 
       device = staging.find_device(sid)
 
       begin
-        partition = Storage::to_partition(device)
+        partition = Storage.to_partition(device)
       rescue Storage::WrongNumberOfChildren, Storage::DeviceHasWrongType
         Yast::Popup::Error("Only partitions can be deleted.")
         return
       end
 
-      if RemoveDescendantsPopup.new(partition).run()
+      if RemoveDescendantsPopup.new(partition).run
         staging.remove_device(partition)
         update(true)
       end
-
     end
-
 
     def do_create_partition_table
-
-      CreatePartitionTableDialog.new(@md).run()
+      CreatePartitionTableDialog.new(@md).run
 
       update(true)
-
     end
-
-
   end
-
 end

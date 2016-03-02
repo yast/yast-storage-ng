@@ -49,18 +49,21 @@ module Yast
       #
       # @return [DiskSize] sum of desired sizes in @volumes
       def desired_size
-        @volumes.reduce(DiskSize.zero) do |sum, vol|
-          sum + (vol.desired_size.unlimited? ? vol.min_size : vol.desired_size)
-        end
+        @volumes.reduce(DiskSize.zero) { |sum, vol| sum + vol.min_valid_size(:desired) }
       end
 
       # Total sum of all min sizes of volumes.
       #
-      # @return [DiskSize] sum of desired sizes in @volumes
+      # @return [DiskSize] sum of minimum sizes in @volumes
       def min_size
-        @volumes.reduce(DiskSize.zero) do |sum, vol|
-          sum + vol.min_size
-        end
+        @volumes.reduce(DiskSize.zero) { |sum, vol| sum + vol.min_valid_size(:min_size) }
+      end
+
+      # Total sum of all current sizes of volumes
+      #
+      # @return [DiskSize] sum of sizes in @volumes
+      def total_size
+        @volumes.reduce(DiskSize.zero) { |sum, vol| sum + vol.size }
       end
     end
   end

@@ -46,6 +46,7 @@ module Yast
       # Factory methods
       #
       class << self
+        # rubocop:disable Style/MethodName
         def kiB(size)
           DiskSize.new(size)
         end
@@ -77,6 +78,7 @@ module Yast
         def YiB(size)
           DiskSize.new(size * (1024**7))
         end
+        # rubocop:enable Style/MethodName
 
         def unlimited
           DiskSize.new(-1)
@@ -113,14 +115,16 @@ module Yast
         # "MiB", ...). The base of this exponent is 1024. The base unit is kiB.
         #
         def unit_exponent(unit)
+          # rubocop:disable Style/AndOr
           UNITS.index(unit) or raise ArgumentError, "expected one of #{UNITS}"
+          # rubocop:enable Style/AndOr
         end
 
         # Return the unit multiplier for any of the known binary units ("kiB",
         # "MiB", ...). The base unit is kiB.
         #
         def unit_multiplier(unit)
-          1024 ** unit_exponent(unit)
+          1024**unit_exponent(unit)
         end
       end
 
@@ -152,7 +156,7 @@ module Yast
 
       def *(other)
         if other.is_a?(Numeric)
-        return DiskSize.unlimited if unlimited?
+          return DiskSize.unlimited if unlimited?
           DiskSize.new(@size_k * other)
         else
           raise TypeError, "Unexpected #{other.class}; expected Numeric value"
@@ -161,7 +165,7 @@ module Yast
 
       def /(other)
         if other.is_a?(Numeric)
-        return DiskSize.unlimited if unlimited?
+          return DiskSize.unlimited if unlimited?
           DiskSize.new(@size_k.to_f / other)
         else
           raise TypeError, "Unexpected #{other.class}; expected Numeric value"
@@ -182,18 +186,12 @@ module Yast
 
       # The Comparable mixin will get us operators < > <= >= == != with this
       def <=>(other)
-        if other.respond_to?(:unlimited?)
-          if other.unlimited?
-            return unlimited? ? 0 : -1
-          else
-            return 1 if unlimited?
-          end
+        if other.respond_to?(:unlimited?) && other.unlimited?
+          return unlimited? ? 0 : -1
         end
-        if other.respond_to?(:size_k)
-          return @size_k <=> other.size_k
-        else
-          raise TypeError, "Unexpected #{other.class}; expected DiskSize"
-        end
+        return 1 if unlimited?
+        return @size_k <=> other.size_k if other.respond_to?(:size_k)
+        raise TypeError, "Unexpected #{other.class}; expected DiskSize"
       end
 
       # Return numeric size and unit ("MiB", "GiB", ...) in human-readable form
@@ -232,7 +230,7 @@ module Yast
       #
       def any_operand_unlimited?(other)
         return true if unlimited?
-        return other.respond_to?(:unlimited?) && other.unlimited?
+        other.respond_to?(:unlimited?) && other.unlimited?
       end
     end
   end

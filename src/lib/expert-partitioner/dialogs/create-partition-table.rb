@@ -27,21 +27,16 @@ require "expert-partitioner/ui-extensions"
 Yast.import "UI"
 Yast.import "Label"
 
-
 module ExpertPartitioner
-
   class CreatePartitionTableDialog
-
     include Yast::UIShortcuts
     include Yast::I18n
     include Yast::Logger
-
 
     def initialize(disk)
       textdomain "storage"
       @disk = disk
     end
-
 
     def run
       return nil unless create_dialog
@@ -60,15 +55,13 @@ module ExpertPartitioner
       end
     end
 
-
     private
 
     def create_dialog
-
       types = @disk.possible_partition_table_types
 
       tmp = types.to_a.map do |type|
-        LeftRadioButton(Id(type), Storage::pt_type_name(type), types[0] == type)
+        LeftRadioButton(Id(type), Storage.pt_type_name(type), types[0] == type)
       end
 
       Yast::UI.OpenDialog(
@@ -81,20 +74,14 @@ module ExpertPartitioner
           )
         )
       )
-
     end
-
 
     def doit
-
       type = Yast::UI.QueryWidget(Id(:types), :Value)
 
-      if RemoveDescendantsPopup.new(@disk).run()
+      if RemoveDescendantsPopup.new(@disk).run
         @disk.create_partition_table(type)
       end
-
     end
-
   end
-
 end
