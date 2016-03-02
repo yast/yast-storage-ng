@@ -57,8 +57,9 @@ module Yast
         def create_partitions(volumes, target_size)
           self.devicegraph = original_graph.copy
 
-          use_lvm = settings.use_lvm
-          use_lvm = false  # Not implemented yet in libstorage-bgl
+          # FIXME: not implemented yet in libstorage-bgl
+          # use_lvm = settings.use_lvm
+          use_lvm = false
 
           if use_lvm
             create_lvm(volumes, target_size)
@@ -101,12 +102,12 @@ module Yast
           # to avoid LVM consuming all the available free space
           create_non_lvm(non_lvm_vol, strategy)
 
-          if !lvm_vol.empty?
-            # Create LVM partitions (using the rest of the available free space)
-            volume_group = create_volume_group(VOLUME_GROUP_SYSTEM)
-            create_physical_volumes(volume_group)
-            lvm_vol.each { |vol| create_logical_volume(volume_group, vol, strategy) }
-          end
+          return if lvm_vol.empty?
+
+          # Create LVM partitions (using the rest of the available free space)
+          volume_group = create_volume_group(VOLUME_GROUP_SYSTEM)
+          create_physical_volumes(volume_group)
+          lvm_vol.each { |vol| create_logical_volume(volume_group, vol, strategy) }
         end
 
         # Create partitions without LVM.
@@ -118,84 +119,50 @@ module Yast
           if free_slots.size == 1
             create_non_lvm_simple(volumes, strategy)
           else
-            create_non_lvm_complex(volumes, strategy)
+            create_non_lvm_complex
           end
         end
 
-        # Create partitions without LVM in the simple case: There is just one
-        # single slot of free disk space, thus we don't need to bother to
-        # optimize fitting volumes into the free slots to avoid wasting disk
-        # space.
+        # Create partitions without LVM in the simple case of having just one
+        # single slot of free disk space. Thus we don't need to bother trying
+        # to optimize how the volumes fit into the free slots to avoid wasting
+        # disk space.
         #
-        # @param volumes   [Array<ProposalVolume] volumes to create
+        # @param volumes   [PlannedVolumesCollection] volumes to create
         # @param strategy  [Symbol] :desired or :min_size
         #
         def create_non_lvm_simple(volumes, strategy)
-          volumes.each { |vol| log.info("vol #{vol.mount_point}\tmin: #{vol.min_size} max: #{vol.max_size} desired: #{vol.desired_size} weight: #{vol.weight}") }
-
-          # Sort out volumes with flexible size vs. fixed size
-          flexible_vol, fixed_size_vol = volumes.partition do |vol|
-            size = vol.send(strategy)
-            size = vol.min_size if size.unlimited?
-            size < vol.max_size && vol.weight > 0
-          end
-
-          # Add up the sizes of each type
-          total_fixed_size    = fixed_size_vol.reduce(DiskSize.zero) { |sum, vol| sum + vol.send(strategy) }
-          total_flexible_size = flexible_vol.reduce(DiskSize.zero) do |sum, vol|
-            size = vol.send(strategy)
-            size = vol.min_size if size.unlimited?
-            sum + size
-          end
-          free_size = total_free_size
-          remaining_size = free_size - total_fixed_size - total_flexible_size
-
-          # Set the sizes for all volumes.
-          # The remaining_size will be distributed among the unlimited ones later.
-          fixed_size_vol.each { |vol| vol.size = vol.send(strategy) }
-          flexible_vol.each do |vol|
-            vol.size = vol.send(strategy)
-            vol.size = vol.min_size if vol.size.unlimited?
-          end
-
-          remaining_size = distribute_extra_space(flexible_vol, remaining_size)
-
           volumes.each do |vol|
-            partition_id = vol.mount_point == "swap" ? ::Storage::ID_SWAP : ::Storage::ID_LINUX
-            partition = create_partition(vol, partition_id, free_slots.first)
-            make_filesystem(partition, vol)
+            log.info(
+              "vol #{vol.mount_point}\tmin: #{vol.min_size} " \
+              "max: #{vol.max_size} desired: #{vol.desired_size} weight: #{vol.weight}"
+            )
           end
+
+          volumes.each { |vol| vol.size = vol.min_valid_size(strategy) }
+          distribute_extra_space(volumes)
+          create_volumes_partitions(volumes)
         end
 
         # Distribute extra disk space among the specified volumes. This updates
         # the size of each volume with the distributed space.
         #
-        # @param volumes     [Array<ProposalVolume>]
-        # @param extra_size [DiskSpace] disk space to distribute
+        # @param volumes     [PlannedVolumesCollection>]
         #
         # @return [DiskSpace] remaining space that could not be distributed
         #
-        def distribute_extra_space(volumes, extra_size)
-          log.info("Distributing #{extra_size} extra space among #{volumes.size} volumes")
+        def distribute_extra_space(volumes)
+          candidates = volumes.to_a
+          extra_size = total_free_size - volumes.total_size
           while extra_size > DiskSize.zero
-            total_weight = volumes.reduce(0.0) do |sum, vol|
-              vol.size == vol.max_size ? sum : sum + vol.weight
-            end
+            candidates.select! { |vol| vol.size < vol.max_size }
+            return extra_size if candidates.empty?
+            log.info("Distributing #{extra_size} extra space among #{candidates.size} volumes")
 
-            return extra_size if total_weight == 0.0 # all volumes at their maximum size
-
-            volumes.each do |vol|
-              if vol.size == vol.max_size
-                log.info("#{vol.mount_point} is at maximum with #{vol.max_size}")
-                next
-              end
-              vol_extra = extra_size * (vol.weight / total_weight)
+            total_weight = candidates.reduce(0.0) { |sum, vol| sum + vol.weight }
+            candidates.each do |vol|
+              vol_extra = volume_extra_size(vol, extra_size, total_weight)
               vol.size += vol_extra
-
-              if vol.size > vol.max_size
-                vol_extra -= vol.size - vol.max_size
-                vol.size = vol.max_size
-              end
               log.info("Distributing #{vol_extra} to #{vol.mount_point}; now #{vol.size}")
               extra_size -= vol_extra
             end
@@ -204,19 +171,35 @@ module Yast
           extra_size
         end
 
+        # Extra space to be assigned to a volume
+        #
+        # @param volume [PlannedVolume] volume to enlarge
+        # @param available_size [DiskSize] free space to be distributed among
+        #    involved volumes
+        # @param total_weight [Float] sum of the weights of all involved volumes
+        #
+        # @return [DiskSize]
+        def volume_extra_size(volume, available_size, total_weight)
+          extra_size = available_size * (volume.weight / total_weight)
+          new_size = extra_size + volume.size
+          new_size > volume.max_size ? volume.max_size : extra_size
+        end
+
         # Create partitions without LVM in the complex case: There are multiple
         # slots of free disk space, so we need to fit the volumes as good as
         # possible.
-        #
-        # @param volumes  [Array<ProposalVolume] volumes to create
-        # @param strategy [Symbol] :desired or :min_size
-        #
-        def create_non_lvm_complex(volumes, _strategy)
+        def create_non_lvm_complex
           raise "Not implemented yet"
-          volumes.each do |_vol|
-            # TO DO
-            # TO DO
-            # TO DO
+        end
+
+        # Creates a partition and the corresponding filesystem for each volume
+        #
+        # @param volumes [Array<PlannedVolume>]
+        def create_volumes_partitions(volumes)
+          volumes.each do |vol|
+            partition_id = vol.mount_point == "swap" ? ::Storage::ID_SWAP : ::Storage::ID_LINUX
+            partition = create_partition(vol, partition_id, free_slots.first)
+            make_filesystem(partition, vol)
           end
         end
 
@@ -232,12 +215,8 @@ module Yast
           begin
             disk = ::Storage::Disk.find(devicegraph, free_slot.disk_name)
             ptable = disk.partition_table
-            if ptable.extended_possible && ptable.num_primary == ptable.max_primary - 1
-              if !ptable.has_extended
-                # Create an extended partition first
-                dev_name = next_free_primary_partition_name(disk.name, ptable)
-                ptable.create_partition(dev_name, free_slot.region, ::Storage::PartitionType_EXTENDED)
-              end
+            if logical_partition_preferred?(ptable)
+              create_extended_partition(disk, free_slot.region) unless ptable.has_extended
               dev_name = next_free_logical_partition_name(disk.name, ptable)
               partition_type = ::Storage::PartitionType_LOGICAL
             else
@@ -248,10 +227,30 @@ module Yast
             partition = ptable.create_partition(dev_name, region, partition_type)
             partition.id = partition_id
             partition
-          rescue RuntimeError => ex # FIXME: rescue ::Storage::Exception when SWIG bindings are fixed
+          # FIXME: rescue ::Storage::Exception when SWIG bindings are fixed
+          rescue RuntimeError => ex
             log.info("CAUGHT exception #{ex}")
             nil
           end
+        end
+
+        # Checks if the next partition to be created should be a logical one
+        #
+        # @param ptable [Storage::PartitionTable]
+        # @return [Boolean] true for logical partition, false if primary is
+        #       preferred
+        def logical_partition_preferred?(ptable)
+          ptable.extended_possible && ptable.num_primary == ptable.max_primary - 1
+        end
+
+        # Creates an extended partition
+        #
+        # @param disk [Storage::Disk]
+        # @param region [Storage::Region]
+        def create_extended_partition(disk, region)
+          ptable = disk.partition_table
+          dev_name = next_free_primary_partition_name(disk.name, ptable)
+          ptable.create_partition(dev_name, region, ::Storage::PartitionType_EXTENDED)
         end
 
         # Return the next device name for a primary partition that is not already
@@ -324,13 +323,9 @@ module Yast
         # @return [::Storage::VolumeGroup] volume_group
         #
         def create_volume_group(volume_group_name)
-          volume_group = nil
           log.info("Creating LVM volume group #{volume_group_name}")
+          # TODO
           raise NotImplementedError
-          # TO DO
-          # TO DO
-          # TO DO
-          volume_group
         end
 
         # Create LVM physical volumes for all the rest of free_space and add them

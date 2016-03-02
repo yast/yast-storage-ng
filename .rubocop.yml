@@ -6,3 +6,7 @@ inherit_from:
 # def some_boolean?; some_boolean; end
 TrivialAccessors:
   ExactNameMatch: true
+
+# Don't enforce any particular name for block params
+SingleLineBlockParams:
+  Enabled: false
