@@ -163,7 +163,9 @@ module Yast
         if candidate_disks.empty?
           log.info("No candidate disks left after eliminating installation disks")
           log.info("Trying with non-USB installation disks")
-          candidate_disks = @installation_disks.select { |disk| disk.transport != ::Storage::Transport_USB }
+          candidate_disks = @installation_disks.select do |disk|
+            disk.transport != ::Storage::Transport_USB
+          end
         end
         if candidate_disks.empty?
           log.info("Still no candidate disks left")

@@ -289,7 +289,9 @@ module Yast
       #
       def fetch(hash, key, type, name)
         value = hash[key.downcase]
-        raise ArgumentError, "Invalid #{type} \"#{key}\" for #{name} - use one of #{hash.keys}" unless value
+        if !value
+          raise ArgumentError, "Invalid #{type} \"#{key}\" for #{name} - use one of #{hash.keys}"
+        end
         value
       end
 
@@ -308,12 +310,17 @@ module Yast
       #
       def allocate_disk_space(disk_name, size)
         disk = ::Storage::Disk.find(@devicegraph, disk_name)
-        log.info("#{__method__}: #{disk.partition_table.unused_partition_slots.size} slots on #{disk_name}")
+        log.info(
+          "#{__method__}: #{disk.partition_table.unused_partition_slots.size} slots on #{disk_name}"
+        )
 
         first_free_cyl = @first_free_cyl[disk_name] || 0
         cyl_count      = @cyl_count[disk_name] || 0
         free_cyl = cyl_count - first_free_cyl
-        log.info("disk #{disk_name} first free cyl: #{first_free_cyl} free_cyl: #{free_cyl} cyl_count: #{cyl_count}")
+        log.info(
+          "disk #{disk_name} first free cyl: #{first_free_cyl} " \
+          "free_cyl: #{free_cyl} cyl_count: #{cyl_count}"
+        )
 
         if size.unlimited?
           requested_cyl = free_cyl

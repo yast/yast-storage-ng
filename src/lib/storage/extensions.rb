@@ -80,7 +80,11 @@ module Storage
     end
 
     def make_icon_cell(icon, text)
-      return Yast::Term.new(:cell, Yast::Term.new(:icon, "#{Yast::Directory.icondir}/22x22/apps/#{icon}"), text)
+      return Yast::Term.new(
+        :cell,
+        Yast::Term.new(:icon, "#{Yast::Directory.icondir}/22x22/apps/#{icon}"),
+        text
+      )
     end
 
     def table_row(fields)

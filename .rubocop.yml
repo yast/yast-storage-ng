@@ -14,3 +14,9 @@ TrivialAccessors:
 # Don't enforce any particular name for block params
 SingleLineBlockParams:
   Enabled: false
+
+# The general YaST agreement is 100 characters, so it fits into standard
+# resolutions and Github's pull request view. But let's open the threshold a
+# little bit
+Metrics/LineLength:
+  Max: 105

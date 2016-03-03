@@ -109,7 +109,9 @@ module Yast
             end
 
             partitions << yaml_partition(partition)
-            first_free_cyl = partition.region.end + 1 unless partition.type == ::Storage::PartitionType_EXTENDED
+            if partition.type != ::Storage::PartitionType_EXTENDED
+              first_free_cyl = partition.region.end + 1
+            end
           end
           content["partitions"] = partitions unless partitions.empty?
         rescue RuntimeError => ex # FIXME: rescue ::Storage::Exception when SWIG bindings are fixed
