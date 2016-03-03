@@ -22,9 +22,7 @@
 require "yast"
 
 module ExpertPartitioner
-
   class Icons
-
     ALL = "yast-disk.png"
 
     DEVICE = "yast-disk.png"
@@ -36,7 +34,5 @@ module ExpertPartitioner
     PARTITION = "yast-partitioning.png"
 
     FILESYSTEM = "yast-nfs.png"
-
   end
-
 end

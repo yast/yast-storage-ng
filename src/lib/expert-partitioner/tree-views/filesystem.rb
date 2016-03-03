@@ -29,12 +29,9 @@ Yast.import "UI"
 
 include Yast::I18n
 
-
 module ExpertPartitioner
-
   class FilesystemTreeView < TreeView
-
-    FIELDS = [ :sid, :icon, :filesystem, :mountpoint, :mount_by, :label ]
+    FIELDS = [:sid, :icon, :filesystem, :mountpoint, :mount_by, :label]
 
     def create
       VBox(
@@ -44,18 +41,14 @@ module ExpertPartitioner
     end
 
     def items
-
       storage = Yast::Storage::StorageManager.instance
-      staging = storage.staging()
+      staging = storage.staging
 
-      filesystems = Storage::Filesystem::all(staging)
+      filesystems = Storage::Filesystem.all(staging)
 
       return filesystems.to_a.map do |filesystem|
         filesystem.table_row(FIELDS)
       end
-
     end
-
   end
-
 end

@@ -27,21 +27,16 @@ Yast.import "UI"
 Yast.import "Label"
 Yast.import "Popup"
 
-
 module ExpertPartitioner
-
   class CreatePartitionDialog
-
     include Yast::UIShortcuts
     include Yast::I18n
     include Yast::Logger
-
 
     def initialize(disk)
       textdomain "storage"
       @disk = disk
     end
-
 
     def run
       return nil unless create_dialog
@@ -60,9 +55,7 @@ module ExpertPartitioner
       end
     end
 
-
     private
-
 
     def create_dialog
       Yast::UI.OpenDialog(
@@ -77,14 +70,13 @@ module ExpertPartitioner
       )
     end
 
-
     def doit
       size = Yast::UI.QueryWidget(Id(:size_input), :Value)
-      size_k = Storage::humanstring_to_byte(size, false) / 1024
+      size_k = Storage.humanstring_to_byte(size, false) / 1024
 
-      partition_table = @disk.partition_table()
+      partition_table = @disk.partition_table
 
-      partition_slots = partition_table.unused_partition_slots().to_a
+      partition_slots = partition_table.unused_partition_slots.to_a
 
       partition_slots.delete_if do |partition_slot|
         !partition_slot.primary_slot || !partition_slot.primary_possible ||
@@ -108,7 +100,5 @@ module ExpertPartitioner
         Storage::PRIMARY
       )
     end
-
   end
-
 end

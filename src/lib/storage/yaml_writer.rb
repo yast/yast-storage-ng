@@ -105,7 +105,7 @@ module Yast
           ptable.partitions.each do |partition|
             gap = partition.region.start - first_free_cyl
             if gap > 0
-              partitions << yaml_free_slot(cyl_size*gap)
+              partitions << yaml_free_slot(cyl_size * gap)
             end
 
             partitions << yaml_partition(partition)
@@ -130,13 +130,13 @@ module Yast
         content["size"] = DiskSize.new(partition.region.to_kb(partition.region.length)).to_s
         content["name"] = partition.name
         content["type"] = @partition_types[partition.type]
-        content["id"  ] = @partition_ids[partition.id]
+        content["id"] = @partition_ids[partition.id]
 
         begin
           file_system = partition.filesystem # This will raise an exception if there is no file system
           content["file_system"] = @file_system_types[file_system.type]
           content["mount_point"] = file_system.mountpoints.first unless file_system.mountpoints.empty?
-          content["label"      ] = file_system.label unless file_system.label.empty?
+          content["label"] = file_system.label unless file_system.label.empty?
         rescue RuntimeError => ex # FIXME: rescue ::Storage::Exception when SWIG bindings are fixed
           log.info("CAUGHT exception #{ex}")
         end

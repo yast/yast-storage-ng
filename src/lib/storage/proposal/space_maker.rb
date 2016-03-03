@@ -79,7 +79,7 @@ module Yast
           return if devicegraph.windows_part_names.empty?
           return unless devicegraph.linux_part_names.empty?
 
-          log.info("Resizing Windows partition")
+          log.info("Resizing Windows partition to free #{required_size}")
           #
           # TO DO: Resize windows partition (not available in libstorage-bgl yet)
           # TO DO: Resize windows partition (not available in libstorage-bgl yet)

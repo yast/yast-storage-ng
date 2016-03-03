@@ -352,7 +352,7 @@ module Yast
       # @return [Array<string>] names, e.g. ["/dev/sda", "/dev/sdb1", "/dev/sdc3"]
       #
       def dev_names(blk_devices)
-        blk_devices.map { |x| x.to_s }
+        blk_devices.map(&:to_s)
       end
 
       # Mount a device.
