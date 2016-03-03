@@ -21,6 +21,8 @@ SingleLineBlockParams:
 Metrics/LineLength:
   Max: 105
 
+# FIXME: Let's consider this temporary code and be permissive with the lack of
+# documentation
 Style/Documentation:
   Exclude:
     - 'src/lib/storage/extensions.rb'
@@ -28,3 +30,11 @@ Style/Documentation:
     - 'src/lib/expert_partitioner/icons.rb'
     - 'src/lib/expert_partitioner/tab_views/*'
     - 'src/lib/expert_partitioner/tree_views/*'
+
+# FIXME: Let's consider this temporary code and be permissive with exceptions
+# suppresion
+Lint/HandleExceptions:
+  Exclude:
+    - 'src/lib/expert_partitioner/tab_views/*'
+    - 'src/lib/expert_partitioner/tree_views/*'
+    - 'src/lib/expert_partitioner/tree.rb'
