@@ -33,6 +33,7 @@ module Storage
   end
 
   class Device
+    # rubocop:disable Metrics/CyclomaticComplexity
     def self.table_header(fields)
       return Header(*fields.map do |field|
 
@@ -78,6 +79,7 @@ module Storage
 
       end)
     end
+    # rubocop:enable Metrics/CyclomaticComplexity
 
     def make_icon_cell(icon, text)
       return Yast::Term.new(
@@ -159,9 +161,7 @@ module Storage
 
     def table_spare
       spare = out_holders.to_a.any? do |holder|
-        if ::Storage.md_user?(holder)
-          ::Storage.to_md_user(holder).spare?
-        end
+        ::Storage.md_user?(holder) && ::Storage.to_md_user(holder).spare?
       end
       spare ? "Spare" : ""
     end

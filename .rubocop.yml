@@ -20,3 +20,7 @@ SingleLineBlockParams:
 # little bit
 Metrics/LineLength:
   Max: 105
+
+Style/Documentation:
+  Exclude:
+    - 'src/lib/storage/extensions.rb'
