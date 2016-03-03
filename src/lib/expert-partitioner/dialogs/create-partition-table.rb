@@ -28,6 +28,7 @@ Yast.import "UI"
 Yast.import "Label"
 
 module ExpertPartitioner
+  # UI Dialog for creating a partition table
   class CreatePartitionTableDialog
     include Yast::UIShortcuts
     include Yast::I18n

@@ -45,6 +45,7 @@ Yast.import "HTML"
 include Yast::I18n
 
 module ExpertPartitioner
+  # Main UI dialog of the expert partitioner prototype
   class MainDialog
     include Yast::UIShortcuts
     include Yast::Logger

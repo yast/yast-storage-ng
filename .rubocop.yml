@@ -24,3 +24,7 @@ Metrics/LineLength:
 Style/Documentation:
   Exclude:
     - 'src/lib/storage/extensions.rb'
+    - 'src/lib/expert-partitioner/ui-extensions.rb'
+    - 'src/lib/expert-partitioner/icons.rb'
+    - 'src/lib/expert-partitioner/tab-views/*'
+    - 'src/lib/expert-partitioner/tree-views/*'

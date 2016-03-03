@@ -33,6 +33,7 @@ Yast.import "HTML"
 include Yast::I18n
 
 module ExpertPartitioner
+  # Class to hold the items to be displayed as a three in the UI
   class Tree
     include Yast::UIShortcuts
     include Yast::Logger

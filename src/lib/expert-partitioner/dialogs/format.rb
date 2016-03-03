@@ -29,6 +29,7 @@ Yast.import "Label"
 Yast.import "Popup"
 
 module ExpertPartitioner
+  # UI dialog to format (create a filesystem) a given block device
   class FormatDialog
     include Yast::UIShortcuts
     include Yast::I18n

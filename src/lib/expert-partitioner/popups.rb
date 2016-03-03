@@ -28,6 +28,7 @@ Yast.import "Label"
 Yast.import "Popup"
 
 module ExpertPartitioner
+  # Popup to ask for confirmation before deleting the descendants of a device
   class RemoveDescendantsPopup
     def initialize(device)
       textdomain "storage"
