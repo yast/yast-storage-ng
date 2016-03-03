@@ -107,9 +107,11 @@ module Yast
       # Logger class for libstorage. This is needed to make libstorage log to the
       # y2log.
       class StorageLogger < ::Storage::Logger
+        # rubocop:disable Metrics/ParameterLists
         def write(level, component, filename, line, function, content)
           Yast.y2_logger(level, component, filename, line, function, content)
         end
+        # rubocop:enable Metrics/ParameterLists
       end
     end
   end

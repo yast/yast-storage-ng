@@ -178,11 +178,20 @@ module Yast
       def create_partition_table(parent, args)
         log.info("#{__method__}( #{parent}, #{args} )")
         disk_name = parent
-        args = "msdos" if args.downcase == "ms-dos" # Allow different spelling
-        ptable_type = fetch(PARTITION_TABLE_TYPES, args, "partition table type", "disk_name")
+        ptable_type = str_to_ptable_type(args)
         disk = ::Storage::Disk.find(@devicegraph, disk_name)
         disk.create_partition_table(ptable_type)
         disk_name
+      end
+
+      # Partition table type represented by a string
+      #
+      # @param string [String] usually from a YAML file
+      # @return [Fixnum]
+      def str_to_ptable_type(string)
+        # Allow different spelling
+        string = "msdos" if string.downcase == "ms-dos"
+        fetch(PARTITION_TABLE_TYPES, string, "partition table type", "disk_name")
       end
 
       # Factory method to create a partition.
@@ -204,10 +213,12 @@ module Yast
       #
       # @return [String] device name of the disk ("/dev/sda" etc.)
       #
+      # FIXME: this method is too complex. It offends three different cops
+      # related to complexity.
+      # rubocop:disable Metrics/PerceivedComplexity, Metrics/AbcSize, Metrics/CyclomaticComplexity
       def create_partition(parent, args)
         log.info("#{__method__}( #{parent}, #{args} )")
         disk_name = parent
-        disk = ::Storage::Disk.find(@devicegraph, disk_name)
         size      = args["size"] || DiskSize.zero
         part_name = args["name"]
         type      = args["type"] || "primary"
@@ -232,6 +243,7 @@ module Yast
         partition.id = id
         part_name
       end
+      # rubocop:enable all
 
       # Factory method to create a file system.
       #

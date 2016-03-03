@@ -1,6 +1,8 @@
+#!/usr/bin/env ruby
+#
 # encoding: utf-8
 
-# Copyright (c) [2015] SUSE LLC
+# Copyright (c) [2016] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -19,34 +21,20 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "yast"
 require "storage"
-require "storage/storage_manager"
 
-Yast.import "UI"
-Yast.import "Label"
-Yast.import "Popup"
-
-module ExpertPartitioner
-  # Popup to ask for confirmation before deleting the descendants of a device
-  class RemoveDescendantsPopup
-    def initialize(device)
-      textdomain "storage"
-      @device = device
-    end
-
-    def run
-      return true if @device.num_children == 0
-
-      log.info "removing all descendants"
-      descendants = @device.descendants(false)
-
-      tmp = descendants.to_a.map(&:to_s).join("\n")
-      return false unless Yast::Popup::YesNo("Will delete:\n#{tmp}")
-
-      @device.remove_descendants
-
-      return true
+module Yast
+  module Storage
+    # Refinement for ::Storage::Disk with some commodity methods
+    module RefinedDisk
+      refine ::Storage::Disk do
+        # Checks if it's an USB disk
+        #
+        # @return [Boolean]
+        def usb?
+          transport == ::Storage::Transport_USB
+        end
+      end
     end
   end
 end

@@ -24,6 +24,7 @@
 require "yast"
 require "fileutils"
 require "storage"
+require "storage/refined_disk"
 
 module Yast
   module Storage
@@ -41,6 +42,7 @@ module Yast
     #
     class DiskAnalyzer
       include Yast::Logger
+      using RefinedDisk
 
       LINUX_PARTITION_IDS =
         [
@@ -127,7 +129,7 @@ module Yast
         # libstorage should return something that Ruby can handle.
         # This is very likely a problem of the Swig bindings.
 
-        usb_disks, non_usb_disks = disks.partition { |disk| disk.transport == ::Storage::Transport_USB }
+        usb_disks, non_usb_disks = disks.partition(&:usb?)
         disks = usb_disks + non_usb_disks
 
         if disks.size > @disk_check_limit
@@ -139,40 +141,44 @@ module Yast
       end
 
       # Find disks that are suitable for installing Linux.
-      # Put any USB disks to the end of that array.
+      # @see #candidate_disks
       #
       # @return [Array<string>] device names of candidate disks
       #
       def find_candidate_disks
-        disks = devicegraph.all_disks.to_a
-        # FIXME: to_a should not be necessary
+        dev_names(candidate_disks)
+      end
 
-        usb_disks, non_usb_disks = disks.partition { |disk| disk.transport == ::Storage::Transport_USB }
+      # Disks that are suitable for installing Linux.
+      # Put any USB disks to the end of that array.
+      #
+      # @return [Array<::Storage::Disk>] device names of candidate disks
+      def candidate_disks
+        # FIXME: to_a should not be necessary
+        disks = devicegraph.all_disks.to_a
+
+        usb_disks, non_usb_disks = disks.partition(&:usb?)
         log.info("USB Disks:     #{dev_names(usb_disks)}")
         log.info("Non-USB Disks: #{dev_names(non_usb_disks)}")
 
         # Try with non-USB disks first.
-        candidate_disks = remove_installation_disks(non_usb_disks)
-        if candidate_disks.empty?
-          log.info("No non-USB candidate disks left after eliminating installation disks")
-          log.info("Trying with USB disks")
-          candidate_disks = remove_installation_disks(usb_disks)
-        end
+        disks = remove_installation_disks(non_usb_disks)
+        return disks unless disks.empty?
+
+        log.info("No non-USB candidate disks left after eliminating installation disks")
+        log.info("Trying with USB disks")
+        disks = remove_installation_disks(usb_disks)
+        return disks unless disks.empty?
 
         # We don't want to install on our installation disk if there is any other way.
-        if candidate_disks.empty?
-          log.info("No candidate disks left after eliminating installation disks")
-          log.info("Trying with non-USB installation disks")
-          candidate_disks = @installation_disks.select do |disk|
-            disk.transport != ::Storage::Transport_USB
-          end
-        end
-        if candidate_disks.empty?
-          log.info("Still no candidate disks left")
-          log.info("Trying with installation disks out of sheer desperation")
-          candidate_disks = @installation_disks
-        end
-        dev_names(candidate_disks)
+        log.info("No candidate disks left after eliminating installation disks")
+        log.info("Trying with non-USB installation disks")
+        disks = @installation_disks.select(&:usb?)
+        return disks unless disks.empty?
+
+        log.info("Still no candidate disks left")
+        log.info("Trying with installation disks out of sheer desperation")
+        @installation_disks
       end
 
       # Find any Linux partitions on any of the candidate disks.
