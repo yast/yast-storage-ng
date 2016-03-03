@@ -26,6 +26,7 @@ require "storage"
 require "storage/planned_volume"
 require "storage/disk_size"
 require "storage/free_disk_space"
+require "storage/proposal/refined_devicegraph"
 
 module Yast
   module Storage

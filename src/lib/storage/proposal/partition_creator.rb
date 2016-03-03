@@ -24,6 +24,7 @@
 require "fileutils"
 require "storage/planned_volumes_collection"
 require "storage/disk_size"
+require "storage/proposal/refined_devicegraph"
 
 module Yast
   module Storage

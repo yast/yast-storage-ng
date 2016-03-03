@@ -1,0 +1,12 @@
+language: ruby
+before_install:
+# disable rvm, use system Ruby
+- rvm reset
+- wget https://raw.githubusercontent.com/yast/yast-devtools/master/travis-tools/travis_setup.sh
+- sh ./travis_setup.sh -p "yast2-devtools yast2 rake libstorage-ng1 libstorage-ng-ruby" -g "rspec:3.3.0 yast-rake gettext simplecov coveralls"
+script:
+- rake check:pot
+#- yardoc
+- COVERAGE=1 rake test:unit
+- sudo rake install
+
