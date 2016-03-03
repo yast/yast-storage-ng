@@ -22,26 +22,25 @@
 require "yast"
 require "storage"
 require "storage/storage_manager"
-require "expert-partitioner/tree-views/view"
+require "expert_partitioner/tree_views/view"
 
 Yast.import "UI"
 
 include Yast::I18n
 
 module ExpertPartitioner
-  class ActionlistTreeView < TreeView
+  class StagingDevicegraphTreeView < TreeView
     def create
       storage = Yast::Storage::StorageManager.instance
 
-      # storage.probed().save("./devicegraph-probed.xml")
-      # storage.staging().save("./devicegraph-staging.xml")
+      filename = "#{Yast::Directory.tmpdir}/devicegraph-staging.gv"
 
-      actiongraph = storage.calculate_actiongraph
-      steps = actiongraph.commit_actions_as_strings
+      staging = storage.staging
+      staging.write_graphviz(filename)
 
       VBox(
-        Left(Heading(_("Installation Steps"))),
-        RichText(Yast::HTML.List(steps.to_a))
+        Left(Heading(_("Device Graph (staging)"))),
+        Yast::Term.new(:Graph, Id(:graph), Opt(:notify, :notifyContextMenu), filename, "dot")
       )
     end
   end

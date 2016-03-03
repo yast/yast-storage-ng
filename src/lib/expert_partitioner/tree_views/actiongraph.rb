@@ -22,33 +22,26 @@
 require "yast"
 require "storage"
 require "storage/storage_manager"
-require "storage/extensions"
-require "expert-partitioner/tree-views/view"
+require "expert_partitioner/tree_views/view"
 
 Yast.import "UI"
 
 include Yast::I18n
 
 module ExpertPartitioner
-  class FilesystemTreeView < TreeView
-    FIELDS = [:sid, :icon, :filesystem, :mountpoint, :mount_by, :label]
-
+  class ActiongraphTreeView < TreeView
     def create
-      VBox(
-        Left(IconAndHeading(_("Filesystems"), Icons::FILESYSTEM)),
-        Table(Id(:table), Opt(:keepSorting), Storage::Device.table_header(FIELDS), items)
-      )
-    end
-
-    def items
       storage = Yast::Storage::StorageManager.instance
-      staging = storage.staging
 
-      filesystems = Storage::Filesystem.all(staging)
+      filename = "#{Yast::Directory.tmpdir}/actiongraph.gv"
 
-      return filesystems.to_a.map do |filesystem|
-        filesystem.table_row(FIELDS)
-      end
+      actiongraph = storage.calculate_actiongraph
+      actiongraph.write_graphviz(filename)
+
+      VBox(
+        Left(Heading(_("Action Graph"))),
+        Yast::Term.new(:Graph, Id(:graph), Opt(:notify, :notifyContextMenu), filename, "dot")
+      )
     end
   end
 end

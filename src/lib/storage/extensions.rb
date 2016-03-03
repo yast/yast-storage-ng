@@ -20,7 +20,7 @@
 # find current contact information at www.suse.com.
 
 require "storage"
-require "expert-partitioner/icons"
+require "expert_partitioner/icons"
 
 include Yast::UIShortcuts
 

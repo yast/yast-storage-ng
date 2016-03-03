@@ -23,11 +23,8 @@ require "yast"
 require "storage"
 require "storage/storage_manager"
 require "storage/extensions"
-require "expert-partitioner/tree-views/view"
-require "expert-partitioner/tab-views/md-overview"
-require "expert-partitioner/tab-views/md-partitions"
-require "expert-partitioner/tab-views/md-devices"
-require "expert-partitioner/ui-extensions"
+require "expert_partitioner/tab_views/view"
+require "expert_partitioner/popups"
 
 Yast.import "UI"
 Yast.import "Popup"
@@ -36,46 +33,32 @@ include Yast::I18n
 include Yast::Logger
 
 module ExpertPartitioner
-  class MdTreeView < TreeView
+  class MdDevicesTabView < TabView
+    FIELDS = [:sid, :icon, :name, :size, :spare]
+
     def initialize(md)
       @md = md
     end
 
     def create
-      @tab_view = MdOverviewTabView.new(@md)
-
-      tabs = [
-        # tab heading
-        Item(Id(:overview), _("&Overview")),
-        # tab heading
-        Item(Id(:partitions), _("&Partitions")),
-        # tab heading
-        Item(Id(:devices), _("&Used Devices"))
-      ]
-
       VBox(
-        Left(IconAndHeading(_("MD RAID: %s") % @md.name, Icons::MD)),
-        DumbTab(Id(:tab), tabs, ReplacePoint(Id(:tab_panel), @tab_view.create))
+        Table(Id(:table), Opt(:keepSorting), Storage::Device.table_header(FIELDS), items)
       )
     end
 
-    def handle(input)
-      @tab_view.handle(input)
+    private
 
-      case input
+    def items
+      ret = []
 
-      when :overview
-        @tab_view = MdOverviewTabView.new(@md)
+      blk_devices = @md.devices
 
-      when :partitions
-        @tab_view = MdPartitionsTabView.new(@md)
-
-      when :devices
-        @tab_view = MdDevicesTabView.new(@md)
-
+      blk_devices.each do |blk_device|
+        blk_device = Storage.downcast(blk_device)
+        ret << blk_device.table_row(FIELDS)
       end
 
-      @tab_view.update
+      return ret
     end
   end
 end

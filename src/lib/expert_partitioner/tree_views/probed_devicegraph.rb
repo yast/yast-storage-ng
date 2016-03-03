@@ -22,24 +22,24 @@
 require "yast"
 require "storage"
 require "storage/storage_manager"
-require "expert-partitioner/tree-views/view"
+require "expert_partitioner/tree_views/view"
 
 Yast.import "UI"
 
 include Yast::I18n
 
 module ExpertPartitioner
-  class ActiongraphTreeView < TreeView
+  class ProbedDevicegraphTreeView < TreeView
     def create
       storage = Yast::Storage::StorageManager.instance
 
-      filename = "#{Yast::Directory.tmpdir}/actiongraph.gv"
+      filename = "#{Yast::Directory.tmpdir}/devicegraph-probed.gv"
 
-      actiongraph = storage.calculate_actiongraph
-      actiongraph.write_graphviz(filename)
+      probed = storage.probed
+      probed.write_graphviz(filename)
 
       VBox(
-        Left(Heading(_("Action Graph"))),
+        Left(Heading(_("Device Graph (probed)"))),
         Yast::Term.new(:Graph, Id(:graph), Opt(:notify, :notifyContextMenu), filename, "dot")
       )
     end

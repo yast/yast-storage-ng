@@ -1,5 +1,5 @@
 # encoding: utf-8
-
+#
 # Copyright (c) [2015] SUSE LLC
 #
 # All Rights Reserved.
@@ -19,29 +19,25 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "yast"
-require "storage"
-require "storage/storage_manager"
-require "expert-partitioner/tree-views/view"
-
-Yast.import "UI"
-
-include Yast::I18n
+require "expert_partitioner/tree"
 
 module ExpertPartitioner
-  class ProbedDevicegraphTreeView < TreeView
+  class TabView
     def create
-      storage = Yast::Storage::StorageManager.instance
+      VBox(VStretch(), HStretch())
+    end
 
-      filename = "#{Yast::Directory.tmpdir}/devicegraph-probed.gv"
+    def handle(_input)
+    end
 
-      probed = storage.probed
-      probed.write_graphviz(filename)
+    def update(also_tree = false)
+      # TODO more accurate update options
 
-      VBox(
-        Left(Heading(_("Device Graph (probed)"))),
-        Yast::Term.new(:Graph, Id(:graph), Opt(:notify, :notifyContextMenu), filename, "dot")
-      )
+      if also_tree
+        Yast::UI.ChangeWidget(:tree, :Items, Tree.new.tree_items)
+      end
+
+      Yast::UI.ReplaceWidget(:tab_panel, create)
     end
   end
 end

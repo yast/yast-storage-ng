@@ -21,53 +21,38 @@
 
 require "yast"
 require "storage"
+require "storage/storage_manager"
 require "storage/extensions"
-require "expert-partitioner/tree-views/view"
-require "expert-partitioner/tab-views/disk-overview"
-require "expert-partitioner/tab-views/disk-partitions"
+require "expert_partitioner/tree_views/view"
+require "expert_partitioner/icons"
 
 Yast.import "UI"
-Yast.import "Popup"
+Yast.import "HTML"
 
 include Yast::I18n
-include Yast::Logger
 
 module ExpertPartitioner
-  class DiskTreeView < TreeView
-    def initialize(disk)
-      @disk = disk
+  class PartitionTreeView < TreeView
+    def initialize(partition)
+      @partition = partition
     end
 
     def create
-      @tab_view = DiskOverviewTabView.new(@disk)
+      tmp = ["Name: #{@partition.name}",
+             "Size: #{::Storage.byte_to_humanstring(1024 * @partition.size_k, false, 2, false)}"]
 
-      tabs = [
-        # tab heading
-        Item(Id(:overview), _("&Overview")),
-        # tab heading
-        Item(Id(:partitions), _("&Partitions"))
-      ]
+      tmp << "Device Path: #{@partition.udev_path}"
 
-      VBox(
-        Left(IconAndHeading(_("Hard Disk: %s") % @disk.name, Icons::DISK)),
-        DumbTab(Id(:tab), tabs, ReplacePoint(Id(:tab_panel), @tab_view.create))
-      )
-    end
-
-    def handle(input)
-      @tab_view.handle(input)
-
-      case input
-
-      when :overview
-        @tab_view = DiskOverviewTabView.new(@disk)
-
-      when :partitions
-        @tab_view = DiskPartitionsTabView.new(@disk)
-
+      @partition.udev_ids.each_with_index do |udev_id, i|
+        tmp << "Device ID #{i + 1}: #{udev_id}"
       end
 
-      @tab_view.update
+      contents = Yast::HTML.List(tmp)
+
+      VBox(
+        Left(IconAndHeading(_("Partition: %s") % @partition.name, Icons::PARTITION)),
+        RichText(Id(:text), Opt(:hstretch, :vstretch), contents)
+      )
     end
   end
 end

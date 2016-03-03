@@ -19,36 +19,25 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "yast"
-require "storage"
-require "expert-partitioner/tab-views/view"
-require "expert-partitioner/popups"
-
-Yast.import "UI"
-Yast.import "Popup"
-
-include Yast::I18n
-include Yast::Logger
+require "expert_partitioner/tree"
 
 module ExpertPartitioner
-  class DiskOverviewTabView < TabView
-    def initialize(disk)
-      @disk = disk
+  class TreeView
+    def create
+      VBox(VStretch(), HStretch())
     end
 
-    def create
-      tmp = ["Name: #{@disk.name}",
-             "Size: #{::Storage.byte_to_humanstring(1024 * @disk.size_k, false, 2, false)}"]
+    def handle(_input)
+    end
 
-      tmp << "Device Path: #{@disk.udev_path}"
+    def update(also_tree = false)
+      # TODO more accurate update options
 
-      @disk.udev_ids.each_with_index do |udev_id, i|
-        tmp << "Device ID #{i + 1}: #{udev_id}"
+      if also_tree
+        Yast::UI.ChangeWidget(:tree, :Items, Tree.new.tree_items)
       end
 
-      contents = Yast::HTML.List(tmp)
-
-      return RichText(Id(:text), Opt(:hstretch, :vstretch), contents)
+      Yast::UI.ReplaceWidget(:tree_panel, create)
     end
   end
 end

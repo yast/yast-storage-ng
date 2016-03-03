@@ -21,38 +21,36 @@
 
 require "yast"
 require "storage"
-require "storage/storage_manager"
-require "storage/extensions"
-require "expert-partitioner/tree-views/view"
-require "expert-partitioner/icons"
+require "expert_partitioner/tab_views/view"
+require "expert_partitioner/popups"
 
 Yast.import "UI"
-Yast.import "HTML"
+Yast.import "Popup"
 
 include Yast::I18n
+include Yast::Logger
 
 module ExpertPartitioner
-  class PartitionTreeView < TreeView
-    def initialize(partition)
-      @partition = partition
+  class MdOverviewTabView < TabView
+    def initialize(md)
+      @md = md
     end
 
     def create
-      tmp = ["Name: #{@partition.name}",
-             "Size: #{::Storage.byte_to_humanstring(1024 * @partition.size_k, false, 2, false)}"]
+      tmp = ["Name: #{@md.name}",
+             "Size: #{::Storage.byte_to_humanstring(1024 * @md.size_k, false, 2, false)}"]
 
-      tmp << "Device Path: #{@partition.udev_path}"
-
-      @partition.udev_ids.each_with_index do |udev_id, i|
+      @md.udev_ids.each_with_index do |udev_id, i|
         tmp << "Device ID #{i + 1}: #{udev_id}"
       end
 
+      tmp << "Level: #{::Storage.md_level_name(@md.md_level)}"
+      tmp << "Parity: #{::Storage.md_parity_name(@md.md_parity)}"
+      tmp << "Chunk Size: #{::Storage.byte_to_humanstring(1024 * @md.chunk_size_k, false, 2, false)}"
+
       contents = Yast::HTML.List(tmp)
 
-      VBox(
-        Left(IconAndHeading(_("Partition: %s") % @partition.name, Icons::PARTITION)),
-        RichText(Id(:text), Opt(:hstretch, :vstretch), contents)
-      )
+      return RichText(Id(:text), Opt(:hstretch, :vstretch), contents)
     end
   end
 end

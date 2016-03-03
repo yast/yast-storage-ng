@@ -21,10 +21,8 @@
 
 require "yast"
 require "storage"
-require "storage/storage_manager"
-require "storage/extensions"
-require "expert-partitioner/tab-views/view"
-require "expert-partitioner/popups"
+require "expert_partitioner/tab_views/view"
+require "expert_partitioner/popups"
 
 Yast.import "UI"
 Yast.import "Popup"
@@ -33,32 +31,24 @@ include Yast::I18n
 include Yast::Logger
 
 module ExpertPartitioner
-  class MdDevicesTabView < TabView
-    FIELDS = [:sid, :icon, :name, :size, :spare]
-
-    def initialize(md)
-      @md = md
+  class DiskOverviewTabView < TabView
+    def initialize(disk)
+      @disk = disk
     end
 
     def create
-      VBox(
-        Table(Id(:table), Opt(:keepSorting), Storage::Device.table_header(FIELDS), items)
-      )
-    end
+      tmp = ["Name: #{@disk.name}",
+             "Size: #{::Storage.byte_to_humanstring(1024 * @disk.size_k, false, 2, false)}"]
 
-    private
+      tmp << "Device Path: #{@disk.udev_path}"
 
-    def items
-      ret = []
-
-      blk_devices = @md.devices
-
-      blk_devices.each do |blk_device|
-        blk_device = Storage.downcast(blk_device)
-        ret << blk_device.table_row(FIELDS)
+      @disk.udev_ids.each_with_index do |udev_id, i|
+        tmp << "Device ID #{i + 1}: #{udev_id}"
       end
 
-      return ret
+      contents = Yast::HTML.List(tmp)
+
+      return RichText(Id(:text), Opt(:hstretch, :vstretch), contents)
     end
   end
 end

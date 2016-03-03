@@ -22,22 +22,21 @@
 require "yast"
 require "storage"
 require "storage/storage_manager"
-require "expert-partitioner/popups"
+require "expert_partitioner/ui_extensions"
 
 Yast.import "UI"
 Yast.import "Label"
-Yast.import "Popup"
 
 module ExpertPartitioner
-  # UI dialog to format (create a filesystem) a given block device
-  class FormatDialog
+  # UI Dialog for creating a partition table
+  class CreatePartitionTableDialog
     include Yast::UIShortcuts
     include Yast::I18n
     include Yast::Logger
 
-    def initialize(blk_device)
+    def initialize(disk)
       textdomain "storage"
-      @blk_device = blk_device
+      @disk = disk
     end
 
     def run
@@ -60,48 +59,30 @@ module ExpertPartitioner
     private
 
     def create_dialog
+      types = @disk.possible_partition_table_types
+
+      tmp = types.to_a.map do |type|
+        LeftRadioButton(Id(type), Storage.pt_type_name(type), types[0] == type)
+      end
+
       Yast::UI.OpenDialog(
         VBox(
-          Heading(_("Format Options")),
-          Left(ComboBox(Id(:filesystem),
-            _("Filesystem"), [
-              Item(Id(Storage::FsType_EXT4), "Ext4"),
-              Item(Id(Storage::FsType_XFS), "XFS"),
-              Item(Id(Storage::FsType_BTRFS), "Btrfs"),
-              Item(Id(Storage::FsType_SWAP), "Swap"),
-              Item(Id(Storage::FsType_NTFS), "NTFS"),
-              Item(Id(Storage::FsType_VFAT), "VFAT")
-            ])),
-          Left(ComboBox(Id(:mount_point),
-            Opt(:editable, :hstretch),
-            _("Mount Point"),
-            ["", "/test1", "/test2", "/test3", "/test4", "swap"]
-                       )),
+          Label(_("Select new partition table type for %s.") % @disk.name),
+          MarginBox(2, 0.4, RadioButtonGroup(Id(:types), VBox(*tmp))),
           ButtonBox(
-            PushButton(Id(:cancel), Yast::Label.CancelButton),
-            PushButton(Id(:ok), Yast::Label.OKButton)
+            PushButton(Id(:ok), Opt(:default), Yast::Label.OKButton),
+            PushButton(Id(:cancel), Yast::Label.CancelButton)
           )
         )
       )
     end
 
     def doit
-      log.info "doit #{@blk_device.name}"
+      type = Yast::UI.QueryWidget(Id(:types), :Value)
 
-      if !RemoveDescendantsPopup.new(@blk_device).run
-        return
+      if RemoveDescendantsPopup.new(@disk).run
+        @disk.create_partition_table(type)
       end
-
-      filesystem = @blk_device.create_filesystem(Yast::UI.QueryWidget(:filesystem, :Value))
-
-      mount_point = Yast::UI.QueryWidget(:mount_point, :Value)
-      if !mount_point.empty?
-        log.info "doit mount-point #{mount_point}"
-        filesystem.add_mountpoint(mount_point)
-      end
-
-    rescue Storage::DeviceHasWrongType
-      log.error "doit on non blk device"
     end
   end
 end

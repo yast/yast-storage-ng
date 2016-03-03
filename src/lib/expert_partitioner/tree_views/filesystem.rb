@@ -19,25 +19,36 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "expert-partitioner/tree"
+require "yast"
+require "storage"
+require "storage/storage_manager"
+require "storage/extensions"
+require "expert_partitioner/tree_views/view"
+
+Yast.import "UI"
+
+include Yast::I18n
 
 module ExpertPartitioner
-  class TreeView
+  class FilesystemTreeView < TreeView
+    FIELDS = [:sid, :icon, :filesystem, :mountpoint, :mount_by, :label]
+
     def create
-      VBox(VStretch(), HStretch())
+      VBox(
+        Left(IconAndHeading(_("Filesystems"), Icons::FILESYSTEM)),
+        Table(Id(:table), Opt(:keepSorting), Storage::Device.table_header(FIELDS), items)
+      )
     end
 
-    def handle(_input)
-    end
+    def items
+      storage = Yast::Storage::StorageManager.instance
+      staging = storage.staging
 
-    def update(also_tree = false)
-      # TODO more accurate update options
+      filesystems = Storage::Filesystem.all(staging)
 
-      if also_tree
-        Yast::UI.ChangeWidget(:tree, :Items, Tree.new.tree_items)
+      return filesystems.to_a.map do |filesystem|
+        filesystem.table_row(FIELDS)
       end
-
-      Yast::UI.ReplaceWidget(:tree_panel, create)
     end
   end
 end

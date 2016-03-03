@@ -1,5 +1,5 @@
 # encoding: utf-8
-#
+
 # Copyright (c) [2015] SUSE LLC
 #
 # All Rights Reserved.
@@ -19,25 +19,30 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "expert-partitioner/tree"
+require "yast"
+require "storage"
+require "storage/storage_manager"
+require "expert_partitioner/tree_views/view"
+
+Yast.import "UI"
+
+include Yast::I18n
 
 module ExpertPartitioner
-  class TabView
+  class ActionlistTreeView < TreeView
     def create
-      VBox(VStretch(), HStretch())
-    end
+      storage = Yast::Storage::StorageManager.instance
 
-    def handle(_input)
-    end
+      # storage.probed().save("./devicegraph-probed.xml")
+      # storage.staging().save("./devicegraph-staging.xml")
 
-    def update(also_tree = false)
-      # TODO more accurate update options
+      actiongraph = storage.calculate_actiongraph
+      steps = actiongraph.commit_actions_as_strings
 
-      if also_tree
-        Yast::UI.ChangeWidget(:tree, :Items, Tree.new.tree_items)
-      end
-
-      Yast::UI.ReplaceWidget(:tab_panel, create)
+      VBox(
+        Left(Heading(_("Installation Steps"))),
+        RichText(Yast::HTML.List(steps.to_a))
+      )
     end
   end
 end

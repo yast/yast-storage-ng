@@ -21,8 +21,10 @@
 
 require "yast"
 require "storage"
-require "expert-partitioner/tab-views/view"
-require "expert-partitioner/popups"
+require "storage/extensions"
+require "expert_partitioner/tree_views/view"
+require "expert_partitioner/tab_views/disk_overview"
+require "expert_partitioner/tab_views/disk_partitions"
 
 Yast.import "UI"
 Yast.import "Popup"
@@ -31,26 +33,41 @@ include Yast::I18n
 include Yast::Logger
 
 module ExpertPartitioner
-  class MdOverviewTabView < TabView
-    def initialize(md)
-      @md = md
+  class DiskTreeView < TreeView
+    def initialize(disk)
+      @disk = disk
     end
 
     def create
-      tmp = ["Name: #{@md.name}",
-             "Size: #{::Storage.byte_to_humanstring(1024 * @md.size_k, false, 2, false)}"]
+      @tab_view = DiskOverviewTabView.new(@disk)
 
-      @md.udev_ids.each_with_index do |udev_id, i|
-        tmp << "Device ID #{i + 1}: #{udev_id}"
+      tabs = [
+        # tab heading
+        Item(Id(:overview), _("&Overview")),
+        # tab heading
+        Item(Id(:partitions), _("&Partitions"))
+      ]
+
+      VBox(
+        Left(IconAndHeading(_("Hard Disk: %s") % @disk.name, Icons::DISK)),
+        DumbTab(Id(:tab), tabs, ReplacePoint(Id(:tab_panel), @tab_view.create))
+      )
+    end
+
+    def handle(input)
+      @tab_view.handle(input)
+
+      case input
+
+      when :overview
+        @tab_view = DiskOverviewTabView.new(@disk)
+
+      when :partitions
+        @tab_view = DiskPartitionsTabView.new(@disk)
+
       end
 
-      tmp << "Level: #{::Storage.md_level_name(@md.md_level)}"
-      tmp << "Parity: #{::Storage.md_parity_name(@md.md_parity)}"
-      tmp << "Chunk Size: #{::Storage.byte_to_humanstring(1024 * @md.chunk_size_k, false, 2, false)}"
-
-      contents = Yast::HTML.List(tmp)
-
-      return RichText(Id(:text), Opt(:hstretch, :vstretch), contents)
+      @tab_view.update
     end
   end
 end

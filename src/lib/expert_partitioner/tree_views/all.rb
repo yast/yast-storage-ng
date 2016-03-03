@@ -23,8 +23,8 @@ require "yast"
 require "storage"
 require "storage/storage_manager"
 require "storage/extensions"
-require "expert-partitioner/tree-views/view"
-require "expert-partitioner/icons"
+require "expert_partitioner/tree_views/view"
+require "expert_partitioner/icons"
 
 Yast.import "UI"
 
