@@ -98,21 +98,7 @@ module Yast
         begin
           ptable = disk.partition_table # this will raise an excepton if no partition table
           content["partition_table"] = @partition_table_types[ptable.type]
-          cyl_size = DiskSize.new(disk.geometry.cylinder_size / 1024)
-          first_free_cyl = 0
-          partitions = []
-
-          ptable.partitions.each do |partition|
-            gap = partition.region.start - first_free_cyl
-            if gap > 0
-              partitions << yaml_free_slot(cyl_size * gap)
-            end
-
-            partitions << yaml_partition(partition)
-            if partition.type != ::Storage::PartitionType_EXTENDED
-              first_free_cyl = partition.region.end + 1
-            end
-          end
+          partitions = yaml_disk_partitions(disk)
           content["partitions"] = partitions unless partitions.empty?
         rescue RuntimeError => ex # FIXME: rescue ::Storage::Exception when SWIG bindings are fixed
           log.info("CAUGHT exception #{ex}")
@@ -121,12 +107,33 @@ module Yast
         { "disk" => content }
       end
 
+      # Returns a YAML representation of the partitions and free slots in a disk
+      #
+      # @param disk [::Storage::Disk]
+      # return [Array<Hash>]
+      def yaml_disk_partitions(disk)
+        cyl_size = DiskSize.new(disk.geometry.cylinder_size / 1024)
+        first_free_cyl = 0
+        partitions = []
+        disk.partition_table.partitions.each do |partition|
+          gap = partition.region.start - first_free_cyl
+          partitions << yaml_free_slot(cyl_size * gap) if gap > 0
+
+          partitions << yaml_partition(partition)
+          if partition.type != ::Storage::PartitionType_EXTENDED
+            first_free_cyl = partition.region.end + 1
+          end
+        end
+        partitions
+      end
+
       #
       # Return the YAML counterpart of a ::Storage::Partition.
       #
       # @param  partition [::Storage::Partition]
       # @return [Hash]
       #
+      # rubocop:disable Metrics/AbcSize
       def yaml_partition(partition)
         content = {}
         content["size"] = DiskSize.new(partition.region.to_kb(partition.region.length)).to_s
@@ -145,6 +152,7 @@ module Yast
 
         { "partition" => content }
       end
+      # rubocop:enable Metrics/AbcSize
 
       #
       # Return the YAML counterpart of a free slot between partitions on a
