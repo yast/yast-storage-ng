@@ -99,7 +99,7 @@ module ExpertPartitioner
 
     def do_create_partition
       begin
-        partition_table = @md.partition_table
+        @md.partition_table
       rescue Storage::WrongNumberOfChildren, Storage::DeviceHasWrongType
         Yast::Popup::Error("Md has no partition table.")
         return
@@ -143,10 +143,9 @@ module ExpertPartitioner
         return
       end
 
-      if RemoveDescendantsPopup.new(partition).run
-        staging.remove_device(partition)
-        update(true)
-      end
+      return unless RemoveDescendantsPopup.new(partition).run
+      staging.remove_device(partition)
+      update(true)
     end
 
     def do_create_partition_table

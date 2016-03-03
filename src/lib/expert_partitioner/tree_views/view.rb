@@ -31,11 +31,9 @@ module ExpertPartitioner
     end
 
     def update(also_tree = false)
-      # TODO more accurate update options
+      # TODO: more accurate update options
 
-      if also_tree
-        Yast::UI.ChangeWidget(:tree, :Items, Tree.new.tree_items)
-      end
+      Yast::UI.ChangeWidget(:tree, :Items, Tree.new.tree_items) if also_tree
 
       Yast::UI.ReplaceWidget(:tree_panel, create)
     end

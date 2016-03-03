@@ -80,9 +80,7 @@ module ExpertPartitioner
     def doit
       type = Yast::UI.QueryWidget(Id(:types), :Value)
 
-      if RemoveDescendantsPopup.new(@disk).run
-        @disk.create_partition_table(type)
-      end
+      @disk.create_partition_table(type) if RemoveDescendantsPopup.new(@disk).run
     end
   end
 end

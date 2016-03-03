@@ -63,20 +63,15 @@ module ExpertPartitioner
       Yast::UI.OpenDialog(
         VBox(
           Heading(_("Format Options")),
-          Left(ComboBox(Id(:filesystem),
-            _("Filesystem"), [
-              Item(Id(Storage::FsType_EXT4), "Ext4"),
-              Item(Id(Storage::FsType_XFS), "XFS"),
-              Item(Id(Storage::FsType_BTRFS), "Btrfs"),
-              Item(Id(Storage::FsType_SWAP), "Swap"),
-              Item(Id(Storage::FsType_NTFS), "NTFS"),
-              Item(Id(Storage::FsType_VFAT), "VFAT")
-            ])),
-          Left(ComboBox(Id(:mount_point),
-            Opt(:editable, :hstretch),
-            _("Mount Point"),
-            ["", "/test1", "/test2", "/test3", "/test4", "swap"]
-                       )),
+          Left(ComboBox(Id(:filesystem), _("Filesystem"), filesystem_items)),
+          Left(
+            ComboBox(
+              Id(:mount_point),
+              Opt(:editable, :hstretch),
+              _("Mount Point"),
+              ["", "/test1", "/test2", "/test3", "/test4", "swap"]
+            )
+          ),
           ButtonBox(
             PushButton(Id(:cancel), Yast::Label.CancelButton),
             PushButton(Id(:ok), Yast::Label.OKButton)
@@ -85,12 +80,21 @@ module ExpertPartitioner
       )
     end
 
+    def filesystem_items
+      [
+        Item(Id(Storage::FsType_EXT4), "Ext4"),
+        Item(Id(Storage::FsType_XFS), "XFS"),
+        Item(Id(Storage::FsType_BTRFS), "Btrfs"),
+        Item(Id(Storage::FsType_SWAP), "Swap"),
+        Item(Id(Storage::FsType_NTFS), "NTFS"),
+        Item(Id(Storage::FsType_VFAT), "VFAT")
+      ]
+    end
+
     def doit
       log.info "doit #{@blk_device.name}"
 
-      if !RemoveDescendantsPopup.new(@blk_device).run
-        return
-      end
+      return if !RemoveDescendantsPopup.new(@blk_device).run
 
       filesystem = @blk_device.create_filesystem(Yast::UI.QueryWidget(:filesystem, :Value))
 

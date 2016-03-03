@@ -89,7 +89,7 @@ module ExpertPartitioner
         return
       end
 
-      # TODO sort so that smallest slot is first
+      # TODO: sort so that smallest slot is first
 
       partition_slot = partition_slots[0]
 

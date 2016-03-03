@@ -143,10 +143,9 @@ module ExpertPartitioner
         return
       end
 
-      if RemoveDescendantsPopup.new(partition).run
-        staging.remove_device(partition)
-        update(true)
-      end
+      return unless RemoveDescendantsPopup.new(partition).run
+      staging.remove_device(partition)
+      update(true)
     end
 
     def do_create_partition_table
