@@ -23,6 +23,7 @@
 
 require "storage/proposal/space_maker"
 require "storage/proposal/partition_creator"
+require "storage/proposal/refined_devicegraph"
 
 module Yast
   module Storage
