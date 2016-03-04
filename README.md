@@ -6,19 +6,19 @@ Status](https://coveralls.io/repos/github/yast/yast-storage-ng/badge.svg?branch=
 [![Code
 Climate](https://codeclimate.com/github/yast/yast-storage-ng/badges/gpa.svg)](https://codeclimate.com/github/yast/yast-storage-ng)
 
-yast2-storage-ng is a reimplementation of the YaST storage library (yast2-storage)
+yast2-storage-ng is a reimplementation of the YaST storage module (yast2-storage)
 based on the also reimplemented library for storage manager (libstorage-ng).
 
 This module includes some working but very limited prototypes capable of actions
 such as partitioning or proposing a filesystem layout for installation.
 
-The module is **entirely unsupported**.
+The module is entirely unsupported.
 
 ## Installation
 
 If you are brave enough to install this module in a (open)SUSE system, despite
-the facts that is not supported and can produce data loss, you can perform the
-following steps (as root):
+the facts that **is not supported and can produce data loss**, you can perform
+the following steps (as root):
 
 ```bash
 # Repository for Tumbleweed/Factory, adjust this line if using other distribution
