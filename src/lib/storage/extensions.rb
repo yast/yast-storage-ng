@@ -33,53 +33,36 @@ module Storage
   end
 
   class Device
-    # rubocop:disable Metrics/CyclomaticComplexity
+    extend Yast::I18n
+    textdomain "storage"
+
+    # This code is only executed once (when the class is loaded), but YaST
+    # allows to change the language in execution time. Thus, we use N_() here
+    # to mark the code as translatable and _() in .table_header to perform the
+    # real translation on execution time.
+    FIELD_NAMES = {
+      sid:             N_("Storage ID"),
+      icon:            N_("Icon"),
+      name:            N_("Name"),
+      size:            N_("Size"),
+      partition_table: N_("Partition Table"),
+      filesystem:      N_("Filesystem"),
+      mountpoint:      N_("Mount Point"),
+      label:           N_("Label"),
+      transport:       N_("Transport"),
+      mount_by:        N_("Mount By"),
+      md_level:        N_("RAID Level"),
+      spare:           N_("Spare")
+    }
+    private_constant :FIELD_NAMES
+
     def self.table_header(fields)
-      return Header(*fields.map do |field|
-
-        case field
-
-        when :sid
-          _("Storage ID")
-
-        when :icon
-          _("Icon")
-
-        when :name
-          _("Name")
-
-        when :size
-          Right(_("Size"))
-
-        when :partition_table
-          _("Partition Table")
-
-        when :filesystem
-          _("Filesystem")
-
-        when :mountpoint
-          _("Mount Point")
-
-        when :label
-          _("Label")
-
-        when :transport
-          _("Transport")
-
-        when :mount_by
-          _("Mount By")
-
-        when :md_level
-          _("RAID Level")
-
-        when :spare
-          _("Spare")
-
-        end
-
-      end)
+      names = fields.map do |field|
+        name = _(FIELD_NAMES[field])
+        field == :size ? Right(name) : name
+      end
+      return Header(*names)
     end
-    # rubocop:enable Metrics/CyclomaticComplexity
 
     def make_icon_cell(icon, text)
       return Yast::Term.new(
