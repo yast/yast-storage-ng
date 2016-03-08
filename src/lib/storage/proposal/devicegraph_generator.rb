@@ -80,7 +80,9 @@ module Yast
           rescue NoDiskSpaceError
             result_graph = space_maker.provide_space(volumes.min_size)
           end
-          log.info("Found #{result_graph.available_size} (#{got_desired_space? ? 'desired' : 'min'})")
+          log.info(
+            "Found #{result_graph.available_size} (#{got_desired_space? ? "desired" : "min"})"
+          )
           result_graph
         end
 

@@ -1,4 +1,5 @@
 #!/usr/bin/env ruby
+#
 # encoding: utf-8
 
 # Copyright (c) [2016] SUSE LLC
@@ -20,17 +21,20 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-$LOAD_PATH.unshift(File.expand_path("../../lib", __FILE__))
+require "storage"
 
-require "storage/fake_probing.rb"
-
-fake_probing = Yast::Storage::FakeProbing.new
-devicegraph = fake_probing.devicegraph
-::Storage::Disk.create(devicegraph, "/dev/sdx")
-::Storage::Disk.create(devicegraph, "/dev/sdy")
-::Storage::Disk.create(devicegraph, "/dev/sdz")
-fake_probing.to_probed
-
-probed = Yast::Storage::StorageManager.instance.probed
-puts("Probed disks:")
-probed.all_disks.each { |disk| puts("  Found disk #{disk.name}") }
+module Yast
+  module Storage
+    # Refinement for ::Storage::Disk with some commodity methods
+    module RefinedDisk
+      refine ::Storage::Disk do
+        # Checks if it's an USB disk
+        #
+        # @return [Boolean]
+        def usb?
+          transport == ::Storage::Transport_USB
+        end
+      end
+    end
+  end
+end

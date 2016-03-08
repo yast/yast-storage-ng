@@ -38,7 +38,7 @@ module Yast
       include EnumMappings
 
       # Valid toplevel products of this factory
-      VALID_TOPLEVEL  = [ "disk" ]
+      VALID_TOPLEVEL  = ["disk"]
 
       # Valid hierarchy within the products of this factory.
       # This indicates the permitted children types for each parent.
@@ -84,13 +84,13 @@ module Yast
 
       def initialize(devicegraph)
         super(devicegraph)
-        @partitions     = Hash.new
+        @partitions     = {}
         @disks          = Set.new
-        @first_free_cyl = Hash.new
-        @cyl_count      = Hash.new
+        @first_free_cyl = {}
+        @cyl_count      = {}
       end
 
-      protected
+    protected
 
       # Return a hash for the valid hierarchy of the products of this factory:
       # Each hash key returns an array (that might be empty) for the child
@@ -133,8 +133,8 @@ module Yast
       # @return [Hash or Scalar] changed parameters
       #
       def fixup_param(name, param)
-        # log.info("Fixing up #{param} for #{name}")
-        param["size"] = DiskSize::parse(param["size"]) if param.key?("size")
+        log.info("Fixing up #{param} for #{name}")
+        param["size"] = DiskSize.parse(param["size"]) if param.key?("size")
         param
       end
 
@@ -148,12 +148,12 @@ module Yast
 
       # Factory method to create a disk.
       #
-      # @param parent [nil] (disks are toplevel)
+      # @param _parent [nil] (disks are toplevel)
       # @param args [Hash] disk parameters: "name", "size"
       #
       # @return [String] device name of the new disk ("/dev/sda" etc.)
       #
-      def create_disk(parent, args)
+      def create_disk(_parent, args)
         log.info("#{__method__}( #{args} )")
         name = args["name"] || "/dev/sda"
         size = args["size"] || DiskSize.zero
@@ -178,11 +178,20 @@ module Yast
       def create_partition_table(parent, args)
         log.info("#{__method__}( #{parent}, #{args} )")
         disk_name = parent
-        args = "msdos" if args.downcase == "ms-dos" # Allow different spelling
-        ptable_type = fetch(PARTITION_TABLE_TYPES, args, "partition table type", "disk_name")
+        ptable_type = str_to_ptable_type(args)
         disk = ::Storage::Disk.find(@devicegraph, disk_name)
         disk.create_partition_table(ptable_type)
         disk_name
+      end
+
+      # Partition table type represented by a string
+      #
+      # @param string [String] usually from a YAML file
+      # @return [Fixnum]
+      def str_to_ptable_type(string)
+        # Allow different spelling
+        string = "msdos" if string.downcase == "ms-dos"
+        fetch(PARTITION_TABLE_TYPES, string, "partition table type", "disk_name")
       end
 
       # Factory method to create a partition.
@@ -204,14 +213,16 @@ module Yast
       #
       # @return [String] device name of the disk ("/dev/sda" etc.)
       #
+      # FIXME: this method is too complex. It offends three different cops
+      # related to complexity.
+      # rubocop:disable Metrics/PerceivedComplexity, Metrics/AbcSize, Metrics/CyclomaticComplexity
       def create_partition(parent, args)
         log.info("#{__method__}( #{parent}, #{args} )")
         disk_name = parent
-        disk = ::Storage::Disk.find(@devicegraph, disk_name)
         size      = args["size"] || DiskSize.zero
         part_name = args["name"]
         type      = args["type"] || "primary"
-        id        = args["id"  ] || "linux"
+        id        = args["id"] || "linux"
 
         raise ArgumentError, "\"name\" missing for partition #{args} on #{disk_name}" unless part_name
         raise ArgumentError, "\"size\" missing for partition #{part_name}" if size.zero?
@@ -219,7 +230,7 @@ module Yast
 
         # Keep some parameters that are really file system related in @partitions
         # to be picked up later by create_file_system.
-        @partitions[part_name] = args.select { |k,v| ["mount_point", "label"].include?(k) }
+        @partitions[part_name] = args.select { |k, _v| ["mount_point", "label"].include?(k) }
 
         id   = fetch(PARTITION_IDS,   id,   "partition ID",   part_name) unless id.is_a?(Fixnum)
         type = fetch(PARTITION_TYPES, type, "partition type", part_name)
@@ -232,6 +243,7 @@ module Yast
         partition.id = id
         part_name
       end
+      # rubocop:enable all
 
       # Factory method to create a file system.
       #
@@ -278,7 +290,7 @@ module Yast
         disk_name
       end
 
-      private
+    private
 
       # Fetch hash[key] and raise an exception if there is no such key.
       #
@@ -289,7 +301,9 @@ module Yast
       #
       def fetch(hash, key, type, name)
         value = hash[key.downcase]
-        raise ArgumentError, "Invalid #{type} \"#{key}\" for #{name} - use one of #{hash.keys}" unless value
+        if !value
+          raise ArgumentError, "Invalid #{type} \"#{key}\" for #{name} - use one of #{hash.keys}"
+        end
         value
       end
 
@@ -308,19 +322,24 @@ module Yast
       #
       def allocate_disk_space(disk_name, size)
         disk = ::Storage::Disk.find(@devicegraph, disk_name)
-        log.info("#{__method__}: #{disk.partition_table.unused_partition_slots.size} slots on #{disk_name}")
+        log.info(
+          "#{__method__}: #{disk.partition_table.unused_partition_slots.size} slots on #{disk_name}"
+        )
 
         first_free_cyl = @first_free_cyl[disk_name] || 0
         cyl_count      = @cyl_count[disk_name] || 0
         free_cyl = cyl_count - first_free_cyl
-        log.info("disk #{disk_name} first free cyl: #{first_free_cyl} free_cyl: #{free_cyl} cyl_count: #{cyl_count}")
+        log.info(
+          "disk #{disk_name} first free cyl: #{first_free_cyl} " \
+          "free_cyl: #{free_cyl} cyl_count: #{cyl_count}"
+        )
 
         if size.unlimited?
           requested_cyl = free_cyl
-          raise RuntimeError, "No more disk space on #{disk_name}" if requested_cyl < 1
+          raise "No more disk space on #{disk_name}" if requested_cyl < 1
         else
           requested_cyl = size.size_k / CYL_SIZE.size_k
-          raise RuntimeError, "Not enough disk space on #{disk_name} for another #{size}" if requested_cyl > free_cyl
+          raise "Not enough disk space on #{disk_name} for another #{size}" if requested_cyl > free_cyl
         end
         @first_free_cyl[disk_name] = first_free_cyl + requested_cyl
         ::Storage::Region.new(first_free_cyl, requested_cyl, CYL_SIZE.size_k * 1024)

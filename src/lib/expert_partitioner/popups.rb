@@ -1,7 +1,6 @@
-#!/usr/bin/env ruby
 # encoding: utf-8
 
-# Copyright (c) [2016] SUSE LLC
+# Copyright (c) [2015] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -20,17 +19,34 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-$LOAD_PATH.unshift(File.expand_path("../../lib", __FILE__))
+require "yast"
+require "storage"
+require "storage/storage_manager"
 
-require "storage/fake_probing.rb"
+Yast.import "UI"
+Yast.import "Label"
+Yast.import "Popup"
 
-fake_probing = Yast::Storage::FakeProbing.new
-devicegraph = fake_probing.devicegraph
-::Storage::Disk.create(devicegraph, "/dev/sdx")
-::Storage::Disk.create(devicegraph, "/dev/sdy")
-::Storage::Disk.create(devicegraph, "/dev/sdz")
-fake_probing.to_probed
+module ExpertPartitioner
+  # Popup to ask for confirmation before deleting the descendants of a device
+  class RemoveDescendantsPopup
+    def initialize(device)
+      textdomain "storage"
+      @device = device
+    end
 
-probed = Yast::Storage::StorageManager.instance.probed
-puts("Probed disks:")
-probed.all_disks.each { |disk| puts("  Found disk #{disk.name}") }
+    def run
+      return true if @device.num_children == 0
+
+      log.info "removing all descendants"
+      descendants = @device.descendants(false)
+
+      tmp = descendants.to_a.map(&:to_s).join("\n")
+      return false unless Yast::Popup::YesNo("Will delete:\n#{tmp}")
+
+      @device.remove_descendants
+
+      return true
+    end
+  end
+end

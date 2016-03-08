@@ -1,7 +1,6 @@
-#!/usr/bin/env ruby
 # encoding: utf-8
 
-# Copyright (c) [2016] SUSE LLC
+# Copyright (c) [2015] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -20,17 +19,20 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-$LOAD_PATH.unshift(File.expand_path("../../lib", __FILE__))
+require "yast"
 
-require "storage/fake_probing.rb"
+module ExpertPartitioner
+  class Icons
+    ALL = "yast-disk.png"
 
-fake_probing = Yast::Storage::FakeProbing.new
-devicegraph = fake_probing.devicegraph
-::Storage::Disk.create(devicegraph, "/dev/sdx")
-::Storage::Disk.create(devicegraph, "/dev/sdy")
-::Storage::Disk.create(devicegraph, "/dev/sdz")
-fake_probing.to_probed
+    DEVICE = "yast-disk.png"
 
-probed = Yast::Storage::StorageManager.instance.probed
-puts("Probed disks:")
-probed.all_disks.each { |disk| puts("  Found disk #{disk.name}") }
+    DISK = "yast-disk.png"
+
+    MD = "yast-raid.png"
+
+    PARTITION = "yast-partitioning.png"
+
+    FILESYSTEM = "yast-nfs.png"
+  end
+end

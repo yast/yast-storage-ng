@@ -83,10 +83,6 @@ module Yast
           @home_min_size                 = DiskSize.GiB(10)
           @home_max_size                 = DiskSize.unlimited
         end
-
-        def read_from_xml_file(xml_file_name)
-          # TO DO
-        end
       end
     end
   end

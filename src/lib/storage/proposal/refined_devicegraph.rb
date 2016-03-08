@@ -52,7 +52,7 @@ module Yast
           alias_method :orig_copy, :copy
           def copy
             new_graph = ::Storage::Devicegraph.new
-            self.orig_copy(new_graph)
+            orig_copy(new_graph)
             new_graph.disk_analyzer = disk_analyzer
             new_graph
           end

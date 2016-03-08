@@ -1,7 +1,6 @@
-#!/usr/bin/env ruby
 # encoding: utf-8
 
-# Copyright (c) [2016] SUSE LLC
+# Copyright (c) [2015] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -20,17 +19,29 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-$LOAD_PATH.unshift(File.expand_path("../../lib", __FILE__))
+require "yast"
+require "storage"
+require "storage/storage_manager"
+require "expert_partitioner/tree_views/view"
 
-require "storage/fake_probing.rb"
+Yast.import "UI"
 
-fake_probing = Yast::Storage::FakeProbing.new
-devicegraph = fake_probing.devicegraph
-::Storage::Disk.create(devicegraph, "/dev/sdx")
-::Storage::Disk.create(devicegraph, "/dev/sdy")
-::Storage::Disk.create(devicegraph, "/dev/sdz")
-fake_probing.to_probed
+include Yast::I18n
 
-probed = Yast::Storage::StorageManager.instance.probed
-puts("Probed disks:")
-probed.all_disks.each { |disk| puts("  Found disk #{disk.name}") }
+module ExpertPartitioner
+  class StagingDevicegraphTreeView < TreeView
+    def create
+      storage = Yast::Storage::StorageManager.instance
+
+      filename = "#{Yast::Directory.tmpdir}/devicegraph-staging.gv"
+
+      staging = storage.staging
+      staging.write_graphviz(filename)
+
+      VBox(
+        Left(Heading(_("Device Graph (staging)"))),
+        Yast::Term.new(:Graph, Id(:graph), Opt(:notify, :notifyContextMenu), filename, "dot")
+      )
+    end
+  end
+end

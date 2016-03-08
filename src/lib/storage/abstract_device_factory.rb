@@ -69,12 +69,10 @@ module Yast
       # @param filename [String] name of the YAML file
       #
       def load_yaml_file(filename)
-        begin
-          File.open(filename) { |file| YAML.load_stream(file, filename) { |doc| build_tree(doc) } }
-        rescue SystemCallError => ex
-          log.error("#{ex}")
-          raise
-        end
+        File.open(filename) { |file| YAML.load_stream(file, filename) { |doc| build_tree(doc) } }
+      rescue SystemCallError => ex
+        log.error("#{ex}")
+        raise
       end
 
       # Build a device tree starting with 'obj' which was typically read from
@@ -100,7 +98,7 @@ module Yast
         end
       end
 
-      private
+    private
 
       # Build the toplevel for a device tree starting with 'obj'.
       #
@@ -108,7 +106,9 @@ module Yast
       #
       def build_tree_toplevel(obj)
         name, content = break_up_hash(obj)
-        raise HierarchyError, "Unexpected toplevel object #{name}" unless valid_toplevel.include?(name)
+        if !valid_toplevel.include?(name)
+          raise HierarchyError, "Unexpected toplevel object #{name}"
+        end
         build_tree_recursive(nil, name, content)
       end
 
@@ -123,7 +123,9 @@ module Yast
       # @param content [Any]   parameters and sub-products of 'name'
       #
       def build_tree_recursive(parent, name, content)
-        raise HierarchyError, "Don't know how to create a #{name}" unless factory_products.include?(name)
+        if !factory_products.include?(name)
+          raise HierarchyError, "Don't know how to create a #{name}"
+        end
 
         case content
         when Hash
@@ -131,12 +133,12 @@ module Yast
           check_param(name, content.keys)
 
           # Split up pure parameters and sub-product descriptions
-          sub_prod = content.select{ |k,v|  factory_products.include?(k) }
-          param    = content.select{ |k,v| !factory_products.include?(k) }
+          sub_prod = content.select { |k, _v|  factory_products.include?(k) }
+          param    = content.select { |k, _v| !factory_products.include?(k) }
 
           # Call subclass-defined fixup method if available
           # to convert known value types to a better usable type
-          param = fixup_param(name, param ) if respond_to?(:fixup_param, true)
+          param = fixup_param(name, param) if respond_to?(:fixup_param, true)
 
           # Create the factory product itself: Call the corresponding create_ method
           child = call_create_method(parent, name, param)
@@ -163,69 +165,73 @@ module Yast
         end
       end
 
-      protected
+    # rubocop:disable Lint/UselessAccessModifier
 
-      #
-      # Methods subclasses need to implement:
-      #
+    protected
 
-      # Return a hash for the valid hierarchy of the products of this factory:
-      # Each hash key returns an array (that might be empty) for the child
-      # types that are valid below that key.
-      #
-      # @return [Hash<String, Array<String>>]
-      #
-      # def valid_hierarchy
-      #   VALID_HIERARCHY
-      # end
+    # rubocop:enable Lint/UselessAccessModifier
 
-      # Return an array for valid toplevel products of this factory.
-      #
-      # @return [Array<String>] valid toplevel products
-      #
-      # def valid_toplevel
-      #   VALID_TOPLEVEL
-      # end
+    #
+    # Methods subclasses need to implement:
+    #
 
-      # Return an hash of valid parameters for each product type of this
-      # factory. This does not include sub-products, only the parameters that
-      # are passed directly to each individual product.
-      #
-      # @return [Hash<String, Array<String> >]
-      #
-      # def valid_param
-      #   VALID_PARAM
-      # end
+    # Return a hash for the valid hierarchy of the products of this factory:
+    # Each hash key returns an array (that might be empty) for the child
+    # types that are valid below that key.
+    #
+    # @return [Hash<String, Array<String>>]
+    #
+    # def valid_hierarchy
+    #   VALID_HIERARCHY
+    # end
 
-      # Factory method to create a disk.
-      #
-      # @return [::Storage::Disk]
-      #
-      # def create_disk(parent, args)
-      #   # Create a disk here
-      #   nil
-      # end
+    # Return an array for valid toplevel products of this factory.
+    #
+    # @return [Array<String>] valid toplevel products
+    #
+    # def valid_toplevel
+    #   VALID_TOPLEVEL
+    # end
 
-      # Fix up parameters to the create_xy() methods. This can be used to
-      # convert common parameter value types to something that is better to
-      # handle, possibly based on the parameter name (e.g., "size"). The name
-      # of the factory product is also passed to possibly narrow down where to
-      # do that kind of conversion.
-      #
-      # This method is optional. The base class checks with respond_to? if it
-      # is implemented before it is called. It is only called if 'param' is a
-      # hash, not if it's just a plain scalar value.
-      #
-      # @param name [String] factory product name
-      # @param param [Hash] create_xy() parameters
-      #
-      # @return [Hash or Scalar] changed parameters
-      #
-      # def fixup_param(name, param)
-      #   param
-      # end
+    # Return an hash of valid parameters for each product type of this
+    # factory. This does not include sub-products, only the parameters that
+    # are passed directly to each individual product.
+    #
+    # @return [Hash<String, Array<String> >]
+    #
+    # def valid_param
+    #   VALID_PARAM
+    # end
 
-      private
+    # Factory method to create a disk.
+    #
+    # @return [::Storage::Disk]
+    #
+    # def create_disk(parent, args)
+    #   # Create a disk here
+    #   nil
+    # end
+
+    # Fix up parameters to the create_xy() methods. This can be used to
+    # convert common parameter value types to something that is better to
+    # handle, possibly based on the parameter name (e.g., "size"). The name
+    # of the factory product is also passed to possibly narrow down where to
+    # do that kind of conversion.
+    #
+    # This method is optional. The base class checks with respond_to? if it
+    # is implemented before it is called. It is only called if 'param' is a
+    # hash, not if it's just a plain scalar value.
+    #
+    # @param name [String] factory product name
+    # @param param [Hash] create_xy() parameters
+    #
+    # @return [Hash or Scalar] changed parameters
+    #
+    # def fixup_param(name, param)
+    #   param
+    # end
+
+    private
 
       # Return the factory methods of this factory: All methods that start with
       # "create_".
@@ -242,7 +248,7 @@ module Yast
       # @return [Array<String>] product names
       #
       def factory_products
-        if @factory_products_cache == nil
+        if @factory_products_cache.nil?
           @factory_products_cache = factory_methods.map { |m| m.to_s.gsub(/^create_/, "") }
 
           # For some of the products there might not be a create_ method, so
@@ -267,7 +273,7 @@ module Yast
         [name, content]
       end
 
-      # Check if all the parameters in "param"_are expected for factory product
+      # Check if all the parameters in "param" are expected for factory product
       # "name".
       #
       # @param name  [String] factory product name
@@ -277,7 +283,9 @@ module Yast
         expected = valid_param[name]
         expected += valid_hierarchy[name] if valid_hierarchy.include?(name)
         param.each do |key|
-          raise ArgumentError, "Unexpected parameter #{key} in #{name}" unless expected.include?(key.to_s)
+          if !expected.include?(key.to_s)
+            raise ArgumentError, "Unexpected parameter #{key} in #{name}"
+          end
         end
       end
 
@@ -288,9 +296,11 @@ module Yast
       # @param child  [String] name of child  factory product
       #
       def check_hierarchy(parent, child)
+        # rubocop:disable Style/GuardClause
         if !valid_hierarchy[parent].include?(child)
           raise HierarchyError, "Unexpected child #{child} for #{parent}"
         end
+        # rubocop:enable Style/GuardClause
       end
 
       # Call the factory 'create' method for factory product 'name'
@@ -306,7 +316,7 @@ module Yast
 
         if respond_to?(create_method, true)
           log.info("#{create_method}( #{parent}, #{arg} )")
-          self.send(create_method, parent, arg)
+          send(create_method, parent, arg)
         else
           log.warn("WARNING: No method #{create_method}() defined")
           nil

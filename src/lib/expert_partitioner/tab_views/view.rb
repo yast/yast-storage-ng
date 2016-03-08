@@ -1,7 +1,6 @@
-#!/usr/bin/env ruby
 # encoding: utf-8
-
-# Copyright (c) [2016] SUSE LLC
+#
+# Copyright (c) [2015] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -20,17 +19,23 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-$LOAD_PATH.unshift(File.expand_path("../../lib", __FILE__))
+require "expert_partitioner/tree"
 
-require "storage/fake_probing.rb"
+module ExpertPartitioner
+  class TabView
+    def create
+      VBox(VStretch(), HStretch())
+    end
 
-fake_probing = Yast::Storage::FakeProbing.new
-devicegraph = fake_probing.devicegraph
-::Storage::Disk.create(devicegraph, "/dev/sdx")
-::Storage::Disk.create(devicegraph, "/dev/sdy")
-::Storage::Disk.create(devicegraph, "/dev/sdz")
-fake_probing.to_probed
+    def handle(_input)
+    end
 
-probed = Yast::Storage::StorageManager.instance.probed
-puts("Probed disks:")
-probed.all_disks.each { |disk| puts("  Found disk #{disk.name}") }
+    def update(also_tree = false)
+      # TODO: more accurate update options
+
+      Yast::UI.ChangeWidget(:tree, :Items, Tree.new.tree_items) if also_tree
+
+      Yast::UI.ReplaceWidget(:tab_panel, create)
+    end
+  end
+end

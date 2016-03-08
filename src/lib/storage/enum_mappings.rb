@@ -31,14 +31,13 @@ module Yast
     # This is used for reading and writing YAML files for device trees.
     #
     module EnumMappings
-
       PARTITION_TABLE_TYPES =
       {
-        "loop"   => ::Storage::PtType_PT_LOOP,
-        "msdos"  => ::Storage::PtType_MSDOS,
-        "gpt"    => ::Storage::PtType_GPT,
-        "dasd"   => ::Storage::PtType_DASD,
-        "mac"    => ::Storage::PtType_MAC
+        "loop"  => ::Storage::PtType_PT_LOOP,
+        "msdos" => ::Storage::PtType_MSDOS,
+        "gpt"   => ::Storage::PtType_GPT,
+        "dasd"  => ::Storage::PtType_DASD,
+        "mac"   => ::Storage::PtType_MAC
       }
 
       PARTITION_TYPES =

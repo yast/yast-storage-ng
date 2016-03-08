@@ -68,7 +68,7 @@ module Yast
         Arch.ppc
       end
 
-      private
+    private
 
       def boot_partition
         vol = PlannedVolume.new("/boot", ::Storage::EXT4)
