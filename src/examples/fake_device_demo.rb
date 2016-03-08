@@ -33,7 +33,6 @@ devicegraph = fake_probing.devicegraph
 Yast::Storage::FakeDeviceFactory.load_yaml_file(devicegraph, input_file)
 fake_probing.to_probed
 
-puts("Disks:")
 probed = Yast::Storage::StorageManager.instance.probed
 
 # Write to graphviz format, convert to .png and display
