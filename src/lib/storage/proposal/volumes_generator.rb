@@ -49,7 +49,7 @@ module Yast
           PlannedVolumesCollection.new(boot_volumes.to_a + standard_volumes)
         end
 
-        protected
+      protected
 
         # Volumes needed by the bootloader
         #

@@ -57,7 +57,7 @@ module ExpertPartitioner
       end
     end
 
-    private
+  private
 
     def create_dialog
       Yast::UI.OpenDialog(
@@ -94,7 +94,7 @@ module ExpertPartitioner
     def doit
       log.info "doit #{@blk_device.name}"
 
-      return if !RemoveDescendantsPopup.new(@blk_device).run
+      return unless RemoveDescendantsPopup.new(@blk_device).run
 
       filesystem = @blk_device.create_filesystem(Yast::UI.QueryWidget(:filesystem, :Value))
 
@@ -105,7 +105,7 @@ module ExpertPartitioner
       end
 
     rescue Storage::DeviceHasWrongType
-      log.error "doit on non blk device"
+      log.error "Skip formatting of a non blk device"
     end
   end
 end

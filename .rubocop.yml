@@ -6,11 +6,6 @@ inherit_from:
 Style/RedundantReturn:
   Enabled: false
 
-# Don't complain on definitions like this. We like question marks!
-# def some_boolean?; some_boolean; end
-TrivialAccessors:
-  ExactNameMatch: true
-
 # Don't enforce any particular name for block params
 SingleLineBlockParams:
   Enabled: false

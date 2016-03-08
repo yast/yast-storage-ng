@@ -60,7 +60,7 @@ module Yast
         print("\nActions:\n\n#{action_text}\n")
       end
 
-      protected
+    protected
 
       # Checks if verbose output is desired
       #

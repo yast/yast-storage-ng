@@ -90,7 +90,7 @@ module Yast
         @cyl_count      = {}
       end
 
-      protected
+    protected
 
       # Return a hash for the valid hierarchy of the products of this factory:
       # Each hash key returns an array (that might be empty) for the child
@@ -290,7 +290,7 @@ module Yast
         disk_name
       end
 
-      private
+    private
 
       # Fetch hash[key] and raise an exception if there is no such key.
       #

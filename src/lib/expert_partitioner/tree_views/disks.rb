@@ -73,7 +73,7 @@ module ExpertPartitioner
       end
     end
 
-    private
+  private
 
     def items
       ret = []
@@ -146,6 +146,7 @@ module ExpertPartitioner
       end
 
       return unless RemoveDescendantsPopup.new(partition).run
+
       staging.remove_device(partition)
       update(true)
     end

@@ -84,7 +84,7 @@ module Yast
         devicegraph.all_disks.to_a.inject([]) { |yaml, disk| yaml << yaml_disk(disk) }
       end
 
-      private
+    private
 
       # Return the YAML counterpart of a ::Storage::Disk.
       #
@@ -135,11 +135,12 @@ module Yast
       #
       # rubocop:disable Metrics/AbcSize
       def yaml_partition(partition)
-        content = {}
-        content["size"] = DiskSize.new(partition.region.to_kb(partition.region.length)).to_s
-        content["name"] = partition.name
-        content["type"] = @partition_types[partition.type]
-        content["id"] = @partition_ids[partition.id]
+        content = {
+          "size" => DiskSize.new(partition.region.to_kb(partition.region.length)).to_s,
+          "name" => partition.name,
+          "type" => @partition_types[partition.type],
+          "id"   => @partition_ids[partition.id]
+        }
 
         begin
           file_system = partition.filesystem # This will raise an exception if there is no file system

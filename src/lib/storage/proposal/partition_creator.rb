@@ -70,7 +70,7 @@ module Yast
           devicegraph
         end
 
-        private
+      private
 
         # Working devicegraph
         attr_accessor :devicegraph
@@ -190,7 +190,7 @@ module Yast
         # slots of free disk space, so we need to fit the volumes as good as
         # possible.
         def create_non_lvm_complex
-          raise "Not implemented yet"
+          raise NotImplementedError
         end
 
         # Creates a partition and the corresponding filesystem for each volume

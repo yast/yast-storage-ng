@@ -56,7 +56,7 @@ module ExpertPartitioner
       end
     end
 
-    private
+  private
 
     def create_dialog
       Yast::UI.OpenDialog(

@@ -59,7 +59,7 @@ module ExpertPartitioner
       ]
     end
 
-    private
+  private
 
     def disks_subtree_items
       storage = Yast::Storage::StorageManager.instance

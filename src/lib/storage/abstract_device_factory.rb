@@ -98,7 +98,7 @@ module Yast
         end
       end
 
-      private
+    private
 
       # Build the toplevel for a device tree starting with 'obj'.
       #
@@ -165,73 +165,73 @@ module Yast
         end
       end
 
-      # rubocop:disable Lint/UselessAccessModifier
+    # rubocop:disable Lint/UselessAccessModifier
 
-      protected
+    protected
 
-      # rubocop:enable Lint/UselessAccessModifier
+    # rubocop:enable Lint/UselessAccessModifier
 
-      #
-      # Methods subclasses need to implement:
-      #
+    #
+    # Methods subclasses need to implement:
+    #
 
-      # Return a hash for the valid hierarchy of the products of this factory:
-      # Each hash key returns an array (that might be empty) for the child
-      # types that are valid below that key.
-      #
-      # @return [Hash<String, Array<String>>]
-      #
-      # def valid_hierarchy
-      #   VALID_HIERARCHY
-      # end
+    # Return a hash for the valid hierarchy of the products of this factory:
+    # Each hash key returns an array (that might be empty) for the child
+    # types that are valid below that key.
+    #
+    # @return [Hash<String, Array<String>>]
+    #
+    # def valid_hierarchy
+    #   VALID_HIERARCHY
+    # end
 
-      # Return an array for valid toplevel products of this factory.
-      #
-      # @return [Array<String>] valid toplevel products
-      #
-      # def valid_toplevel
-      #   VALID_TOPLEVEL
-      # end
+    # Return an array for valid toplevel products of this factory.
+    #
+    # @return [Array<String>] valid toplevel products
+    #
+    # def valid_toplevel
+    #   VALID_TOPLEVEL
+    # end
 
-      # Return an hash of valid parameters for each product type of this
-      # factory. This does not include sub-products, only the parameters that
-      # are passed directly to each individual product.
-      #
-      # @return [Hash<String, Array<String> >]
-      #
-      # def valid_param
-      #   VALID_PARAM
-      # end
+    # Return an hash of valid parameters for each product type of this
+    # factory. This does not include sub-products, only the parameters that
+    # are passed directly to each individual product.
+    #
+    # @return [Hash<String, Array<String> >]
+    #
+    # def valid_param
+    #   VALID_PARAM
+    # end
 
-      # Factory method to create a disk.
-      #
-      # @return [::Storage::Disk]
-      #
-      # def create_disk(parent, args)
-      #   # Create a disk here
-      #   nil
-      # end
+    # Factory method to create a disk.
+    #
+    # @return [::Storage::Disk]
+    #
+    # def create_disk(parent, args)
+    #   # Create a disk here
+    #   nil
+    # end
 
-      # Fix up parameters to the create_xy() methods. This can be used to
-      # convert common parameter value types to something that is better to
-      # handle, possibly based on the parameter name (e.g., "size"). The name
-      # of the factory product is also passed to possibly narrow down where to
-      # do that kind of conversion.
-      #
-      # This method is optional. The base class checks with respond_to? if it
-      # is implemented before it is called. It is only called if 'param' is a
-      # hash, not if it's just a plain scalar value.
-      #
-      # @param name [String] factory product name
-      # @param param [Hash] create_xy() parameters
-      #
-      # @return [Hash or Scalar] changed parameters
-      #
-      # def fixup_param(name, param)
-      #   param
-      # end
+    # Fix up parameters to the create_xy() methods. This can be used to
+    # convert common parameter value types to something that is better to
+    # handle, possibly based on the parameter name (e.g., "size"). The name
+    # of the factory product is also passed to possibly narrow down where to
+    # do that kind of conversion.
+    #
+    # This method is optional. The base class checks with respond_to? if it
+    # is implemented before it is called. It is only called if 'param' is a
+    # hash, not if it's just a plain scalar value.
+    #
+    # @param name [String] factory product name
+    # @param param [Hash] create_xy() parameters
+    #
+    # @return [Hash or Scalar] changed parameters
+    #
+    # def fixup_param(name, param)
+    #   param
+    # end
 
-      private
+    private
 
       # Return the factory methods of this factory: All methods that start with
       # "create_".

@@ -385,7 +385,7 @@ module Yast
         raise "umount failed for #{mount_point}" unless system(cmd)
       end
 
-      private
+    private
 
       # Remove any installation disks from 'disks' and return a disks array
       # containing the disks that are not installation media.

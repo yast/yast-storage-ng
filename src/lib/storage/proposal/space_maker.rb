@@ -62,7 +62,7 @@ module Yast
           new_graph
         end
 
-        protected
+      protected
 
         attr_reader :original_graph
 

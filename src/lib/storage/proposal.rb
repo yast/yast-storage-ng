@@ -80,7 +80,7 @@ module Yast
         @devices = devicegraph_generator.devicegraph(volumes)
       end
 
-      protected
+    protected
 
       def volumes_generator
         @volumes_generator ||= VolumesGenerator.new(settings)

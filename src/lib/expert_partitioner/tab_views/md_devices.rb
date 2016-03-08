@@ -46,7 +46,7 @@ module ExpertPartitioner
       )
     end
 
-    private
+  private
 
     def items
       ret = []

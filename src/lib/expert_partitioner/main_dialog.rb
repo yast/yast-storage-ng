@@ -111,7 +111,7 @@ module ExpertPartitioner
       @view.update
     end
 
-    protected
+  protected
 
     def new_view
       current_item = Yast::UI.QueryWidget(:tree, :CurrentItem)

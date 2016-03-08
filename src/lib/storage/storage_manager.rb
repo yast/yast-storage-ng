@@ -97,7 +97,7 @@ module Yast
 
         alias_method :start_probing, :create_instance
 
-        private
+      private
 
         def create_logger
           ::Storage.logger = StorageLogger.new

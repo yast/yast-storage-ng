@@ -224,7 +224,7 @@ module Yast
         print "#{inspect}"
       end
 
-      private
+    private
 
       # Return 'true' if either self or other is unlimited.
       #

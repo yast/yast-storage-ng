@@ -54,12 +54,12 @@ module Yast
           graph
         end
 
-        protected
+      protected
 
         attr_writer :got_desired_space
 
         def got_desired_space?
-          @got_desired_space
+          !!@got_desired_space
         end
 
         # Provides free disk space in the proposal devicegraph to fit the volumes
