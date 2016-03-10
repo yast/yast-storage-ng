@@ -18,4 +18,26 @@
 
 require "expert_partitioner/main_dialog"
 
+storage_environment =
+  case ENV.fetch("YAST2_STORAGE_PROBE_MODE", "STANDARD")
+  # probe and write probed data to disk
+  when "STANDARD_WRITE_DEVICEGRAPH"
+    ::Storage::Environment.new(
+      true,
+      ::Storage::ProbeMode_STANDARD_WRITE_DEVICEGRAPH,
+      ::Storage::TargetMode_DIRECT
+    )
+  # instead of probing read probed data from disk
+  when "READ_DEVICEGRAPH"
+    ::Storage::Environment.new(
+      true,
+      ::Storage::ProbeMode_READ_DEVICEGRAPH,
+      ::Storage::TargetMode_DIRECT
+    )
+  # probe
+  else
+    ::Storage::Environment.new(true)
+  end
+
+Yast::Storage::StorageManager.create_instance(storage_environment) if storage_environment
 ExpertPartitioner::MainDialog.new.run

@@ -69,27 +69,7 @@ module Yast
         # @return [::Storage::Storage] libstorage object
         #
         def create_instance(storage_environment = nil)
-          if !storage_environment
-            storage_environment = case ENV.fetch("YAST2_STORAGE_PROBE_MODE", "STANDARD")
-            # probe and write probed data to disk
-            when "STANDARD_WRITE_DEVICEGRAPH"
-              ::Storage::Environment.new(
-                true,
-                ::Storage::ProbeMode_STANDARD_WRITE_DEVICEGRAPH,
-                ::Storage::TargetMode_DIRECT
-              )
-            # instead of probing read probed data from disk
-            when "READ_DEVICEGRAPH"
-              ::Storage::Environment.new(
-                true,
-                ::Storage::ProbeMode_READ_DEVICEGRAPH,
-                ::Storage::TargetMode_DIRECT
-              )
-            # probe
-            else
-              ::Storage::Environment.new(true)
-            end
-          end
+          storage_environment ||= ::Storage::Environment.new(true)
           create_logger
           log.info("Creating Storage object")
           @instance = ::Storage::Storage.new(storage_environment)
