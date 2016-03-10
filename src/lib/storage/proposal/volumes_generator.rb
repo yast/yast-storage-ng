@@ -34,6 +34,8 @@ module Yast
       # Class to generate the list of planned volumes of a proposal
       #
       class VolumesGenerator
+        include Yast::Logger
+
         attr_accessor :settings
 
         DEFAULT_SWAP_SIZE = DiskSize.GiB(2)
@@ -93,7 +95,7 @@ module Yast
           root_vol.max_size = @settings.root_max_size
           root_vol.weight   = @settings.root_space_percent
           if root_vol.filesystem_type == ::Storage::FsType_BTRFS
-            puts("Increasing root filesystem size for Btrfs")
+            log.info "Increasing root filesystem size for Btrfs"
             multiplicator = 1.0 + @settings.btrfs_increase_percentage / 100.0
             root_vol.min_size *= multiplicator
             root_vol.max_size *= multiplicator

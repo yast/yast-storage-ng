@@ -217,7 +217,7 @@ module Yast
             disk = ::Storage::Disk.find(devicegraph, free_slot.disk_name)
             ptable = disk.partition_table
             if logical_partition_preferred?(ptable)
-              create_extended_partition(disk, free_slot.region) unless ptable.has_extended
+              create_extended_partition(disk, free_slot.slot.region) unless ptable.has_extended
               dev_name = next_free_logical_partition_name(disk.name, ptable)
               partition_type = ::Storage::PartitionType_LOGICAL
             else
@@ -230,6 +230,8 @@ module Yast
             partition
           # FIXME: rescue ::Storage::Exception when SWIG bindings are fixed
           rescue RuntimeError => ex
+            # Don't hide our own exceptions
+            raise if ex.is_a?(Yast::Storage::Proposal::Error)
             log.info("CAUGHT exception #{ex}")
             nil
           end
@@ -241,7 +243,7 @@ module Yast
         # @return [Boolean] true for logical partition, false if primary is
         #       preferred
         def logical_partition_preferred?(ptable)
-          ptable.extended_possible && ptable.num_primary == ptable.max_primary - 1
+          ptable.extended_possible && ptable.num_primary >= ptable.max_primary - 1
         end
 
         # Creates an extended partition
