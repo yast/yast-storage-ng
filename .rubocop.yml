@@ -38,3 +38,12 @@ Lint/HandleExceptions:
 Style/MethodName:
   Exclude:
     - 'src/lib/expert_partitioner/ui_extensions.rb'
+
+# This two are not equivalent if using refinements (and we use them to add
+# functionality to the classes coming from libstorage)
+#   using RefinementAddingFooToThing
+#   things.map { |s| s.foo } # it works
+#   things.map(&:foo) # it does not work
+# See https://bugs.ruby-lang.org/issues/9786
+Style/SymbolProc:
+  Enabled: false

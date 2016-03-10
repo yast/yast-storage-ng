@@ -124,12 +124,7 @@ module Yast
       # @return [Array<String>] device names of installation disks
       #
       def find_installation_disks
-        disks = devicegraph.all_disks.to_a
-        # FIXME: to_a should not be necessary:
-        # libstorage should return something that Ruby can handle.
-        # This is very likely a problem of the Swig bindings.
-
-        usb_disks, non_usb_disks = disks.partition(&:usb?)
+        usb_disks, non_usb_disks = all_disks.partition { |d| d.usb? }
         disks = usb_disks + non_usb_disks
 
         if disks.size > @disk_check_limit
@@ -146,18 +141,25 @@ module Yast
       # @return [Array<string>] device names of candidate disks
       #
       def find_candidate_disks
-        dev_names(candidate_disks)
+        dev_names(candidate_disk_objects)
+      end
+
+      # Array with all disks in the devicegraph
+      #
+      # @return [Array<::Storage::Disk>]
+      def all_disks
+        # FIXME: to_a should not be necessary:
+        # libstorage should return something that Ruby can handle.
+        # This is very likely a problem of the Swig bindings.
+        devicegraph.all_disks.to_a
       end
 
       # Disks that are suitable for installing Linux.
       # Put any USB disks to the end of that array.
       #
       # @return [Array<::Storage::Disk>] device names of candidate disks
-      def candidate_disks
-        # FIXME: to_a should not be necessary
-        disks = devicegraph.all_disks.to_a
-
-        usb_disks, non_usb_disks = disks.partition(&:usb?)
+      def candidate_disk_objects
+        usb_disks, non_usb_disks = all_disks.partition { |d| d.usb? }
         log.info("USB Disks:     #{dev_names(usb_disks)}")
         log.info("Non-USB Disks: #{dev_names(non_usb_disks)}")
 
@@ -173,7 +175,7 @@ module Yast
         # We don't want to install on our installation disk if there is any other way.
         log.info("No candidate disks left after eliminating installation disks")
         log.info("Trying with non-USB installation disks")
-        disks = @installation_disks.select(&:usb?)
+        disks = @installation_disks.select { |d| !d.usb? }
         return disks unless disks.empty?
 
         log.info("Still no candidate disks left")
@@ -228,7 +230,7 @@ module Yast
             disk = ::Storage::Disk.find(devicegraph, disk_name)
             disk.partition_table.partitions.each do |partition|
               if WINDOWS_PARTITION_IDS.include?(partition.id)
-                windows_partitions << partition.name if windows_partition?(partition.name)
+                windows_partitions << partition.name if windows_partition?(partition)
               end
             end
           rescue RuntimeError => ex  # FIXME: rescue ::Storage::Exception when SWIG bindings are fixed
