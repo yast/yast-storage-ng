@@ -21,7 +21,6 @@ SRC_PATH = File.expand_path("../../src", __FILE__)
 ENV["Y2DIR"] = SRC_PATH
 
 require "yast"
-require "yast/rspec"
 
 if ENV["COVERAGE"]
   require "simplecov"
