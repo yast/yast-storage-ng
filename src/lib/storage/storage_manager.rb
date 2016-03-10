@@ -100,7 +100,10 @@ module Yast
       private
 
         def create_logger
-          ::Storage.logger = StorageLogger.new
+          # Store the reference in a class instance variable to prevent the
+          # garbage collector from cleaning too much
+          @logger = StorageLogger.new
+          ::Storage.logger = @logger
         end
       end
 
