@@ -229,9 +229,7 @@ module Yast
           begin
             disk = ::Storage::Disk.find(devicegraph, disk_name)
             disk.partition_table.partitions.each do |partition|
-              if WINDOWS_PARTITION_IDS.include?(partition.id)
-                windows_partitions << partition.name if windows_partition?(partition)
-              end
+              windows_partitions << partition.name if windows_partition?(partition)
             end
           rescue RuntimeError => ex  # FIXME: rescue ::Storage::Exception when SWIG bindings are fixed
             log.info("CAUGHT exception #{ex}")
@@ -248,6 +246,7 @@ module Yast
       # @return [Boolean] 'true' if it is a Windows partition, 'false' if not.
       #
       def windows_partition?(partition)
+        return false unless WINDOWS_PARTITION_IDS.include?(partition.id)
         return false unless Arch.x86_64 || Arch.i386
         log.info("Checking if #{partition.name} is a windows partition")
         is_win = mount_and_check(partition) { |mp| windows_partition_check(mp) }
