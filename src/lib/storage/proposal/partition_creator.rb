@@ -228,10 +228,11 @@ module Yast
             partition = ptable.create_partition(dev_name, region, partition_type)
             partition.id = partition_id
             partition
+          # Don't hide our own exceptions (see FIXME below)
+          rescue Yast::Storage::Proposal::Error
+            raise
           # FIXME: rescue ::Storage::Exception when SWIG bindings are fixed
           rescue RuntimeError => ex
-            # Don't hide our own exceptions
-            raise if ex.is_a?(Yast::Storage::Proposal::Error)
             log.info("CAUGHT exception #{ex}")
             nil
           end

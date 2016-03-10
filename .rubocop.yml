@@ -44,6 +44,6 @@ Style/MethodName:
 #   using RefinementAddingFooToThing
 #   things.map { |s| s.foo } # it works
 #   things.map(&:foo) # it does not work
-# See https://bugs.ruby-lang.org/issues/9786
+# See https://github.com/bbatsov/rubocop/issues/2720
 Style/SymbolProc:
   Enabled: false
