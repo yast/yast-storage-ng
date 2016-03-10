@@ -110,12 +110,13 @@ module Yast
       # Returns a YAML representation of the partitions and free slots in a disk
       #
       # @param disk [::Storage::Disk]
-      # return [Array<Hash>]
+      # @return [Array<Hash>]
       def yaml_disk_partitions(disk)
         cyl_size = DiskSize.new(disk.geometry.cylinder_size / 1024)
         first_free_cyl = 0
         partitions = []
-        disk.partition_table.partitions.each do |partition|
+        sorted_parts = sorted_partitions(disk)
+        sorted_parts.each do |partition|
           gap = partition.region.start - first_free_cyl
           partitions << yaml_free_slot(cyl_size * gap) if gap > 0
 
@@ -124,7 +125,27 @@ module Yast
             first_free_cyl = partition.region.end + 1
           end
         end
+        gap = final_gap(disk, sorted_parts)
+        partitions << yaml_free_slot(cyl_size * gap) if gap > 0
         partitions
+      end
+
+      # Partitions sorted by position in the disk
+      #
+      # @param disk [::Storage::Disk]
+      # @return [Array<::Storage::Partition>]
+      def sorted_partitions(disk)
+        disk.partition_table.partitions.to_a.sort_by { |part| part.region.start }
+      end
+
+      # Number of cylinders at the end of a hard disk not assigned to any
+      # partition
+      #
+      # @param disk [::Storage::Disk]
+      # @param partitions [Array<::Storage::Partition>] sorted by position
+      # @return [Fixnum]
+      def final_gap(disk, partitions)
+        disk.geometry.cylinders - partitions.last.region.end - 1
       end
 
       #
@@ -139,7 +160,7 @@ module Yast
           "size" => DiskSize.new(partition.region.to_kb(partition.region.length)).to_s,
           "name" => partition.name,
           "type" => @partition_types[partition.type],
-          "id"   => @partition_ids[partition.id]
+          "id"   => @partition_ids[partition.id] || "0x#{partition.id.to_s(16)}"
         }
 
         begin
