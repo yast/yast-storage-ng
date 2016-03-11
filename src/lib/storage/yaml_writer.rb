@@ -110,12 +110,13 @@ module Yast
       # Returns a YAML representation of the partitions and free slots in a disk
       #
       # @param disk [::Storage::Disk]
-      # return [Array<Hash>]
+      # @return [Array<Hash>]
       def yaml_disk_partitions(disk)
         cyl_size = DiskSize.new(disk.geometry.cylinder_size / 1024)
         first_free_cyl = 0
         partitions = []
-        disk.partition_table.partitions.each do |partition|
+        sorted_parts = sorted_partitions(disk)
+        sorted_parts.each do |partition|
           gap = partition.region.start - first_free_cyl
           partitions << yaml_free_slot(cyl_size * gap) if gap > 0
 
@@ -125,6 +126,24 @@ module Yast
           end
         end
         partitions
+      end
+
+      # Partitions sorted by position in the disk and by type
+      #
+      # Start position is the primary criteria. In addition, extended partitions
+      # are listed before any of its corresponding logical partitions
+      #
+      # @param disk [::Storage::Disk]
+      # @return [Array<::Storage::Partition>]
+      def sorted_partitions(disk)
+        disk.partition_table.partitions.to_a.sort do |a, b|
+          by_start = a.region.start <=> b.region.start
+          if by_start.zero?
+            a.type == ::Storage::PartitionType_EXTENDED ? 1 : -1
+          else
+            by_start
+          end
+        end
       end
 
       #
@@ -139,7 +158,7 @@ module Yast
           "size" => DiskSize.new(partition.region.to_kb(partition.region.length)).to_s,
           "name" => partition.name,
           "type" => @partition_types[partition.type],
-          "id"   => @partition_ids[partition.id]
+          "id"   => @partition_ids[partition.id] || "0x#{partition.id.to_s(16)}"
         }
 
         begin

@@ -1,0 +1,39 @@
+---
+- disk:
+    size: 500.00 GiB
+    name: "/dev/sda"
+    partition_table: msdos
+    partitions:
+    - partition:
+        size: 250.00 GiB
+        name: "/dev/sda1"
+        type: primary
+        id: ntfs
+        file_system: ntfs
+        label: windows
+    - partition:
+        size: 2.00 GiB
+        name: "/dev/sda2"
+        type: primary
+        id: swap
+        file_system: swap
+        mount_point: swap
+    - partition:
+        size: 40.00 GiB
+        name: "/dev/sda3"
+        type: primary
+        id: linux
+        file_system: btrfs
+        mount_point: "/"
+    - partition:
+        size: 208.00 GiB
+        name: "/dev/sda4"
+        type: extended
+        id: linux
+    - partition:
+        size: 208.00 GiB
+        name: "/dev/sda5"
+        type: logical
+        id: linux
+        file_system: xfs
+        mount_point: "/home"

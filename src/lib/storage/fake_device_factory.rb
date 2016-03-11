@@ -149,7 +149,7 @@ module Yast
       # Factory method to create a disk.
       #
       # @param _parent [nil] (disks are toplevel)
-      # @param args [Hash] disk parameters: "name", "size"
+      # @param args [Hash] disk parameters: "name", "size", "range"
       #
       # @return [String] device name of the new disk ("/dev/sda" etc.)
       #
@@ -162,6 +162,9 @@ module Yast
         @disks << name
         disk = ::Storage::Disk.create(@devicegraph, name)
         disk.size_k = size.size_k
+        # range (number of partitions that the kernel can handle) used to be
+        # 16 for scsi and 64 for ide. Now it's 256 for most of them.
+        disk.range = args["range"] || 256
         disk.geometry = fake_geometry(size)
         @first_free_cyl[name] = 0
         @cyl_count[name] = disk.geometry.cylinders
@@ -232,6 +235,7 @@ module Yast
         # to be picked up later by create_file_system.
         @partitions[part_name] = args.select { |k, _v| ["mount_point", "label"].include?(k) }
 
+        id = id.to_i(16) if id.is_a?(::String) && id.start_with?("0x")
         id   = fetch(PARTITION_IDS,   id,   "partition ID",   part_name) unless id.is_a?(Fixnum)
         type = fetch(PARTITION_TYPES, type, "partition type", part_name)
 
