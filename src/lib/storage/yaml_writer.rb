@@ -125,27 +125,25 @@ module Yast
             first_free_cyl = partition.region.end + 1
           end
         end
-        gap = final_gap(disk, sorted_parts)
-        partitions << yaml_free_slot(cyl_size * gap) if gap > 0
         partitions
       end
 
-      # Partitions sorted by position in the disk
+      # Partitions sorted by position in the disk and by type
+      #
+      # Start position is the primary criteria. In addition, extended partitions
+      # are listed before any of its corresponding logical partitions
       #
       # @param disk [::Storage::Disk]
       # @return [Array<::Storage::Partition>]
       def sorted_partitions(disk)
-        disk.partition_table.partitions.to_a.sort_by { |part| part.region.start }
-      end
-
-      # Number of cylinders at the end of a hard disk not assigned to any
-      # partition
-      #
-      # @param disk [::Storage::Disk]
-      # @param partitions [Array<::Storage::Partition>] sorted by position
-      # @return [Fixnum]
-      def final_gap(disk, partitions)
-        disk.geometry.cylinders - partitions.last.region.end - 1
+        disk.partition_table.partitions.to_a.sort do |a, b|
+          by_start = a.region.start <=> b.region.start
+          if by_start.zero?
+            a.type == ::Storage::PartitionType_EXTENDED ? 1 : -1
+          else
+            by_start
+          end
+        end
       end
 
       #
