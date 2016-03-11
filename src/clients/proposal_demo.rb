@@ -20,8 +20,6 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-$LOAD_PATH.unshift(File.expand_path("../../lib", __FILE__))
-
 require "yast"
 require "storage/clients/proposal_demo"
 
