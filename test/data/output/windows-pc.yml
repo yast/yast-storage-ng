@@ -12,13 +12,6 @@
         file_system: swap
         mount_point: swap
     - partition:
-        size: 20.00 GiB
-        name: "/dev/sda2"
-        type: primary
-        id: 0xb
-        file_system: vfat
-        label: recovery
-    - partition:
         size: 40.00 GiB
         name: "/dev/sda3"
         type: primary
@@ -26,4 +19,11 @@
         file_system: btrfs
         mount_point: "/"
     - free:
-        size: 738.00 GiB
+        size: 738 GiB
+    - partition:
+        size: 20.00 GiB
+        name: "/dev/sda2"
+        type: primary
+        id: 0xb
+        file_system: vfat
+        label: recovery
