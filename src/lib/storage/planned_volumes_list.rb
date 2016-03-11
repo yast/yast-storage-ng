@@ -29,7 +29,7 @@ module Yast
     # Set of PlannedVolume elements
     #
     # Implements Enumerable and provides some extra methods to query the set
-    class PlannedVolumesCollection
+    class PlannedVolumesList
       include Enumerable
 
       def initialize(volumes = [])

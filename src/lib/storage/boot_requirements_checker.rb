@@ -23,7 +23,7 @@
 
 require "yast"
 require "storage/planned_volume"
-require "storage/planned_volumes_collection"
+require "storage/planned_volumes_list"
 require "storage/disk_size"
 
 module Yast
@@ -50,7 +50,7 @@ module Yast
         boot_volumes << efi_boot_partition if efi_boot_partition_needed?
         boot_volumes << boot_partition     if boot_partition_needed?
         boot_volumes << prep_partition     if prep_partition_needed?
-        PlannedVolumesCollection.new(boot_volumes)
+        PlannedVolumesList.new(boot_volumes)
       end
 
       def boot_partition_needed?

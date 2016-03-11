@@ -23,7 +23,7 @@
 
 require "fileutils"
 require "storage/planned_volume"
-require "storage/planned_volumes_collection"
+require "storage/planned_volumes_list"
 require "storage/disk_size"
 require "storage/boot_requirements_checker"
 
@@ -46,9 +46,9 @@ module Yast
 
         # Volumes that needs to be created to satisfy the settings
         #
-        # @return [PlannedVolumnesCollection]
+        # @return [PlannedVolumnesList]
         def volumes
-          PlannedVolumesCollection.new(boot_volumes.to_a + standard_volumes)
+          PlannedVolumesList.new(boot_volumes.to_a + standard_volumes)
         end
 
       protected

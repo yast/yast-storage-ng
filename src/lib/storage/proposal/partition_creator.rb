@@ -22,7 +22,7 @@
 # find current contact information at www.suse.com.
 
 require "fileutils"
-require "storage/planned_volumes_collection"
+require "storage/planned_volumes_list"
 require "storage/disk_size"
 require "storage/proposal/refined_devicegraph"
 
@@ -52,7 +52,7 @@ module Yast
         # Returns a copy of the original devicegraph in which all the needed
         # partitions have been created.
         #
-        # @param volumes [PlannedVolumesCollection] volumes to create
+        # @param volumes [PlannedVolumesList] volumes to create
         # @param target_size [Symbol] :desired or :min
         # @return [::Storage::Devicegraph]
         def create_partitions(volumes, target_size)
@@ -129,7 +129,7 @@ module Yast
         # to optimize how the volumes fit into the free slots to avoid wasting
         # disk space.
         #
-        # @param volumes   [PlannedVolumesCollection] volumes to create
+        # @param volumes   [PlannedVolumesList] volumes to create
         # @param strategy  [Symbol] :desired or :min_size
         #
         def create_non_lvm_simple(volumes, strategy)
@@ -148,7 +148,7 @@ module Yast
         # Distribute extra disk space among the specified volumes. This updates
         # the size of each volume with the distributed space.
         #
-        # @param volumes     [PlannedVolumesCollection>]
+        # @param volumes     [PlannedVolumesList>]
         #
         # @return [DiskSpace] remaining space that could not be distributed
         #

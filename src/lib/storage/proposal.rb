@@ -49,7 +49,7 @@ module Yast
       attr_reader :settings
       # Planned volumes calculated by the proposal, nil if the proposal has not
       # been calculated yet
-      # @return [PlannedVolumeCollection]
+      # @return [PlannedVolumeList]
       attr_reader :volumes
       # Proposed layout of devices, nil if the proposal has not been
       # calculated yet
