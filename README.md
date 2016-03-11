@@ -1,8 +1,7 @@
 # YaST - rewrite of the storage library
 
 [![Build Status](https://travis-ci.org/yast/yast-storage-ng.svg?branch=master)](https://travis-ci.org/yast/yast-storage-ng)
-[![Coverage
-Status](https://coveralls.io/repos/github/yast/yast-storage-ng/badge.svg?branch=master)](https://coveralls.io/github/yast/yast-storage-ng?branch=master)
+[![Coverage Status](https://img.shields.io/coveralls/yast/yast-storage-ng.svg)](https://coveralls.io/github/yast/yast-storage-ng?branch=master)
 [![Code
 Climate](https://codeclimate.com/github/yast/yast-storage-ng/badges/gpa.svg)](https://codeclimate.com/github/yast/yast-storage-ng)
 
