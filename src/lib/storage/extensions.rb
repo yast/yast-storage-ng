@@ -52,7 +52,8 @@ module Storage
       transport:       N_("Transport"),
       mount_by:        N_("Mount By"),
       md_level:        N_("RAID Level"),
-      spare:           N_("Spare")
+      spare:           N_("Spare"),
+      faulty:          N_("Faulty")
     }
     private_constant :FIELD_NAMES
 
@@ -119,6 +120,10 @@ module Storage
     def table_spare
       return ""
     end
+
+    def table_faulty
+      return ""
+    end
   end
 
   class BlkDevice
@@ -147,6 +152,13 @@ module Storage
         ::Storage.md_user?(holder) && ::Storage.to_md_user(holder).spare?
       end
       spare ? "Spare" : ""
+    end
+
+    def table_faulty
+      faulty = out_holders.to_a.any? do |holder|
+        ::Storage.md_user?(holder) && ::Storage.to_md_user(holder).faulty?
+      end
+      faulty ? "Faulty" : ""
     end
   end
 
