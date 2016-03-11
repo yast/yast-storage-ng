@@ -235,7 +235,7 @@ module Yast
         # to be picked up later by create_file_system.
         @partitions[part_name] = args.select { |k, _v| ["mount_point", "label"].include?(k) }
 
-        id = id.to_i(16) if id.is_a?(String) && id.start_with?("0x")
+        id = id.to_i(16) if id.is_a?(::String) && id.start_with?("0x")
         id   = fetch(PARTITION_IDS,   id,   "partition ID",   part_name) unless id.is_a?(Fixnum)
         type = fetch(PARTITION_TYPES, type, "partition type", part_name)
 
