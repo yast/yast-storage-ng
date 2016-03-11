@@ -24,7 +24,7 @@
 require "yast"
 require "fileutils"
 require "storage"
-require "storage/refined_disk"
+require "storage/refinements/disk"
 
 module Yast
   module Storage
@@ -42,7 +42,7 @@ module Yast
     #
     class DiskAnalyzer
       include Yast::Logger
-      using RefinedDisk
+      using Refinements::Disk
 
       LINUX_PARTITION_IDS =
         [

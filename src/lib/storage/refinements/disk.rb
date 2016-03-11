@@ -25,14 +25,16 @@ require "storage"
 
 module Yast
   module Storage
-    # Refinement for ::Storage::Disk with some commodity methods
-    module RefinedDisk
-      refine ::Storage::Disk do
-        # Checks if it's an USB disk
-        #
-        # @return [Boolean]
-        def usb?
-          transport == ::Storage::Transport_USB
+    module Refinements
+      # Refinement for ::Storage::Disk with some commodity methods
+      module Disk
+        refine ::Storage::Disk do
+          # Checks if it's an USB disk
+          #
+          # @return [Boolean]
+          def usb?
+            transport == ::Storage::Transport_USB
+          end
         end
       end
     end

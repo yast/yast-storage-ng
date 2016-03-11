@@ -29,10 +29,10 @@ require "storage/free_disk_space"
 
 module Yast
   module Storage
-    class Proposal
+    module Refinements
       # Refinement for ::Storage::Devicegraph with several proposal-oriented
       # methods
-      module RefinedDevicegraph
+      module ProposalDevicegraph
         refine ::Storage::Devicegraph do
           # Free disk space below this size will be disregarded
           TINY_FREE_CHUNK = DiskSize.MiB(30)

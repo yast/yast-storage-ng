@@ -24,7 +24,7 @@
 require "fileutils"
 require "storage/planned_volumes_list"
 require "storage/disk_size"
-require "storage/proposal/refined_devicegraph"
+require "storage/refinements/proposal_devicegraph"
 
 module Yast
   module Storage
@@ -32,7 +32,7 @@ module Yast
       # Class to create partitions in the free space detected or freed by the
       # SpaceMaker.
       class PartitionCreator
-        using RefinedDevicegraph
+        using Refinements::ProposalDevicegraph
         include Yast::Logger
 
         attr_accessor :settings

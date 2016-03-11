@@ -25,15 +25,21 @@ require "storage"
 
 module Yast
   module Storage
-    # Refinement for ::Storage::Devicegraph with some commodity methods
-    module RefinedDevicegraph
-      refine ::Storage::Devicegraph do
-        # Set of actions needed to get the devicegraph starting with the current
-        # probed one
-        #
-        # @return [::Storage::Actiongraph]
-        def actiongraph(storage: StorageManager.instance)
-          ::Storage::Actiongraph.new(storage, storage.probed, self)
+    module Refinements
+      # Refinement for ::Storage::Devicegraph with some commodity methods
+      module Devicegraph
+        refine ::Storage::Devicegraph do
+          # Set of actions needed to get this devicegraph
+          #
+          # By default the starting point is the probed devicegraph
+          #
+          # @param from [Devicegraph] starting graph to calculate the actions
+          #       If nil, the probed devicegraph is used.
+          # @return [::Storage::Actiongraph]
+          def actiongraph(from: nil, storage: StorageManager.instance)
+            from ||= storage.probed
+            ::Storage::Actiongraph.new(storage, from, self)
+          end
         end
       end
     end

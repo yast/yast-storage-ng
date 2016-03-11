@@ -23,7 +23,7 @@
 
 require "storage/proposal/space_maker"
 require "storage/proposal/partition_creator"
-require "storage/proposal/refined_devicegraph"
+require "storage/refinements/proposal_devicegraph"
 
 module Yast
   module Storage
@@ -31,7 +31,7 @@ module Yast
       # Class to create devicegraphs that can accommodate a given collection of
       # volumes
       class DevicegraphGenerator
-        using RefinedDevicegraph
+        using Refinements::ProposalDevicegraph
         include Yast::Logger
 
         attr_accessor :settings
