@@ -1,5 +1,4 @@
 #!/usr/bin/env ruby
-#
 # encoding: utf-8
 
 # Copyright (c) [2016] SUSE LLC
@@ -21,20 +20,20 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "storage"
+$LOAD_PATH.unshift(File.expand_path("../../lib", __FILE__))
 
-module Yast
-  module Storage
-    # Refinement for ::Storage::Disk with some commodity methods
-    module RefinedDisk
-      refine ::Storage::Disk do
-        # Checks if it's an USB disk
-        #
-        # @return [Boolean]
-        def usb?
-          transport == ::Storage::Transport_USB
-        end
-      end
-    end
-  end
+require "yast"
+require "storage/proposal"
+require "storage/yaml_writer"
+
+output_file = ARGV[0] || "proposed_devicegraph.yml"
+
+if Process::UID.eid != 0
+  STDERR.puts("This requires root permissions, otherwise hardware probing will fail.")
+  STDERR.puts("Start this with sudo")
 end
+
+settings = Yast::Storage::Proposal::Settings.new
+proposal = Yast::Storage::Proposal.new(settings: settings)
+proposal.propose
+Yast::Storage::YamlWriter.write(proposal.devices, output_file)

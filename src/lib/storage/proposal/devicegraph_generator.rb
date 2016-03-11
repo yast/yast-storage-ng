@@ -23,7 +23,7 @@
 
 require "storage/proposal/space_maker"
 require "storage/proposal/partition_creator"
-require "storage/proposal/refined_devicegraph"
+require "storage/refinements/proposal_devicegraph"
 
 module Yast
   module Storage
@@ -31,7 +31,7 @@ module Yast
       # Class to create devicegraphs that can accommodate a given collection of
       # volumes
       class DevicegraphGenerator
-        using RefinedDevicegraph
+        using Refinements::ProposalDevicegraph
         include Yast::Logger
 
         attr_accessor :settings
@@ -42,7 +42,7 @@ module Yast
 
         # Devicegraph including all the specified volumes
         #
-        # @param volumes [PlannedVolumesCollection] volumes to accommodate
+        # @param volumes [PlannedVolumesList] volumes to accommodate
         # @param initial_graph [::Storage::Devicegraph] initial devicegraph
         #           (typically the representation of the current system)
         # @return [::Storage::Devicegraph]
@@ -67,7 +67,7 @@ module Yast
         #
         # @raise Proposal::NoDiskSpaceError if both attempts fail
         #
-        # @param volumes [PlannedVolumesCollection] set of volumes to make space for
+        # @param volumes [PlannedVolumesList] set of volumes to make space for
         # @param initial_graph [::Storage::Devicegraph] proposal-refined initial
         #           devicegraph (@see RefinedDevicegraph)
         # @return [::Storage::Devicegraph]
@@ -91,7 +91,7 @@ module Yast
         # Uses the desired or minimum size depending on how much space was freed
         # by #provide_space
         #
-        # @param volumes [PlannedVolumesCollection] set of volumes to create
+        # @param volumes [PlannedVolumesList] set of volumes to create
         # @param initial_graph [::Storage::Devicegraph] proposal-refined initial
         #           devicegraph (@see RefinedDevicegraph)
         # @return [::Storage::Devicegraph]

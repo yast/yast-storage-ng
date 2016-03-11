@@ -22,7 +22,6 @@
 require "yast"
 require "storage/proposal/exceptions"
 require "storage/proposal/settings"
-require "storage/proposal/refined_devicegraph"
 require "storage/proposal/volumes_generator"
 require "storage/proposal/devicegraph_generator"
 
@@ -49,7 +48,7 @@ module Yast
       attr_reader :settings
       # Planned volumes calculated by the proposal, nil if the proposal has not
       # been calculated yet
-      # @return [PlannedVolumeCollection]
+      # @return [PlannedVolumeList]
       attr_reader :volumes
       # Proposed layout of devices, nil if the proposal has not been
       # calculated yet

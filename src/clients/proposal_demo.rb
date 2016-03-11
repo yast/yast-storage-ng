@@ -1,5 +1,4 @@
 #!/usr/bin/env ruby
-#
 # encoding: utf-8
 
 # Copyright (c) [2016] SUSE LLC
@@ -21,21 +20,12 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "storage"
+require "yast"
+require "storage/clients/proposal_demo"
 
-module Yast
-  module Storage
-    # Refinement for ::Storage::Devicegraph with some commodity methods
-    module RefinedDevicegraph
-      refine ::Storage::Devicegraph do
-        # Set of actions needed to get the devicegraph starting with the current
-        # probed one
-        #
-        # @return [::Storage::Actiongraph]
-        def actiongraph(storage: StorageManager.instance)
-          ::Storage::Actiongraph.new(storage, storage.probed, self)
-        end
-      end
-    end
-  end
+if Process::UID.eid != 0
+  STDERR.puts("This requires root permissions, otherwise hardware probing will fail.")
+  STDERR.puts("Start this with sudo")
 end
+
+Yast::Storage::ProposalDemoClient.new(true).run

@@ -26,10 +26,11 @@ require "storage/planned_volume"
 
 module Yast
   module Storage
-    # Set of PlannedVolume elements
+    # Collection of PlannedVolume elements
     #
-    # Implements Enumerable and provides some extra methods to query the set
-    class PlannedVolumesCollection
+    # Implements Enumerable and provides some extra methods to query the list of
+    # PlannedVolume elements
+    class PlannedVolumesList
       include Enumerable
 
       def initialize(volumes = [])

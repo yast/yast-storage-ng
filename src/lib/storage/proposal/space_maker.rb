@@ -26,7 +26,7 @@ require "storage"
 require "storage/planned_volume"
 require "storage/disk_size"
 require "storage/free_disk_space"
-require "storage/proposal/refined_devicegraph"
+require "storage/refinements/proposal_devicegraph"
 
 module Yast
   module Storage
@@ -35,7 +35,7 @@ module Yast
       # reusing existing unpartitioned space, by deleting existing partitions
       # or by resizing an existing Windows partition.
       class SpaceMaker
-        using RefinedDevicegraph
+        using Refinements::ProposalDevicegraph
         include Yast::Logger
 
         # Initialize.
