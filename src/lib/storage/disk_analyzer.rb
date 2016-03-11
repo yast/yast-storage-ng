@@ -148,9 +148,6 @@ module Yast
       #
       # @return [Array<::Storage::Disk>]
       def all_disks
-        # FIXME: to_a should not be necessary:
-        # libstorage should return something that Ruby can handle.
-        # This is very likely a problem of the Swig bindings.
         devicegraph.all_disks.to_a
       end
 
