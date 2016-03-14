@@ -17,6 +17,7 @@
  grub2 can boot most of them directly. The problem is that both can't
  provide the pre-boot environment blocks that is writable for grub-once
  for which some function accounts to work reliably.
+ >
  > 1. bootcycle detection
  > 2. resume from hibernation image 
  > 3. kde start menu could "boot once the selected entry directly"
