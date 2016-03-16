@@ -98,7 +98,7 @@ module ExpertPartitioner
       partition_table.create_partition(
         partition_slot.name,
         partition_slot.region,
-        Storage::PRIMARY
+        Storage::PartitionType_PRIMARY
       )
     end
   end

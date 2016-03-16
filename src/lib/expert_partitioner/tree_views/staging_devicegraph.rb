@@ -36,7 +36,9 @@ module ExpertPartitioner
       filename = "#{Yast::Directory.tmpdir}/devicegraph-staging.gv"
 
       staging = storage.staging
-      staging.write_graphviz(filename)
+      staging.write_graphviz(filename, ::Storage::GraphvizFlags_TOOLTIP |
+                                       ::Storage::GraphvizFlags_SID |
+                                       ::Storage::GraphvizFlags_SIZE)
 
       VBox(
         Left(Heading(_("Device Graph (staging)"))),
