@@ -36,7 +36,9 @@ module ExpertPartitioner
       filename = "#{Yast::Directory.tmpdir}/devicegraph-probed.gv"
 
       probed = storage.probed
-      probed.write_graphviz(filename)
+      probed.write_graphviz(filename, ::Storage::GraphvizFlags_TOOLTIP |
+                                      ::Storage::GraphvizFlags_SID |
+                                      ::Storage::GraphvizFlags_SIZE)
 
       VBox(
         Left(Heading(_("Device Graph (probed)"))),

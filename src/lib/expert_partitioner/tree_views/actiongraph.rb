@@ -36,7 +36,8 @@ module ExpertPartitioner
       filename = "#{Yast::Directory.tmpdir}/actiongraph.gv"
 
       actiongraph = storage.calculate_actiongraph
-      actiongraph.write_graphviz(filename)
+      actiongraph.write_graphviz(filename, ::Storage::GraphvizFlags_TOOLTIP |
+                                           ::Storage::GraphvizFlags_SID)
 
       VBox(
         Left(Heading(_("Action Graph"))),
