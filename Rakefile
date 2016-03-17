@@ -18,6 +18,10 @@
 
 require "yast/rake"
 
+# Checking for bug/fate numbers in the changelog does not make sense at this
+# stage of the development
+Rake::Task["package"].prerequisites.delete("check:changelog")
+
 Yast::Tasks.configuration do |conf|
   # The package does not live in the official YaST:Head OBS project
   conf.obs_project = "YaST:storage-ng"
