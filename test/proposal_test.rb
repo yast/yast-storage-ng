@@ -21,15 +21,15 @@
 # find current contact information at www.suse.com.
 
 require_relative "spec_helper"
-require_relative "test_refinements"
 require "storage"
 require "storage/proposal"
 require "storage/fake_probing"
 require "storage/fake_device_factory"
+require "storage/refinements/test_devicegraph"
 
 describe Yast::Storage::Proposal do
   describe "#propose" do
-    using Yast::Storage::TestRefinements
+    using Yast::Storage::Refinements::TestDevicegraph
 
     def input_file_for(name)
       File.join(DATA_PATH, "input", "#{name}.yml")

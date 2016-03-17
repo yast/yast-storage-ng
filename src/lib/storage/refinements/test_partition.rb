@@ -22,38 +22,22 @@
 # find current contact information at www.suse.com.
 
 require "storage"
-require "storage/free_disk_space"
+require "storage/disk_size"
 
 module Yast
   module Storage
     module Refinements
-      # Refinement for ::Storage::Disk with some commodity methods
-      module Disk
-        refine ::Storage::Disk do
-          # Checks if it's an USB disk
-          #
-          # @return [Boolean]
-          def usb?
-            transport == ::Storage::Transport_USB
+      # Refinements for Partition to make the rspec tests more readable
+      module TestPartition
+        refine ::Storage::Partition do
+          # First mounpoint
+          def mountpoint
+            filesystem.mountpoints.first
           end
 
-          # Partitions contained in the disk
-          #
-          # @return [Array<::Storage::Partition>]
-          def all_partitions
-            return [] unless partition_table
-            partition_table.partitions.to_a
-          end
-
-          # Free spaces inside the disk
-          #
-          # @return [Array<FreeDiskSpace>]
-          def free_spaces
-            partition_table.unused_partition_slots.map do |slot|
-              FreeDiskSpace.new(self, slot)
-            end
-          rescue ::Storage::WrongNumberOfChildren
-            # TODO: Handle completely empty disks (no partition table) as empty space
+          # @return [DiskSize]
+          def size
+            DiskSize.kiB(size_k)
           end
         end
       end

@@ -40,6 +40,16 @@ module Yast
             from ||= storage.probed
             ::Storage::Actiongraph.new(storage, from, self)
           end
+
+          alias_method :orig_copy, :copy
+          # Returns a copy of the devicegraph
+          #
+          # @return [::Storage::Devicegraph]
+          def copy
+            new_graph = ::Storage::Devicegraph.new
+            orig_copy(new_graph)
+            new_graph
+          end
         end
       end
     end
