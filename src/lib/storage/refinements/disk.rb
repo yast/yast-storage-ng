@@ -49,11 +49,11 @@ module Yast
           #
           # @return [Array<FreeDiskSpace>]
           def free_spaces
+            # TODO: Handle completely empty disks (no partition table) as empty space
+            return [] unless partition_table
             partition_table.unused_partition_slots.map do |slot|
               FreeDiskSpace.new(self, slot)
             end
-          rescue ::Storage::WrongNumberOfChildren
-            # TODO: Handle completely empty disks (no partition table) as empty space
           end
         end
       end

@@ -46,7 +46,7 @@ describe Yast::Storage::Proposal::PartitionCreator do
       fake_scenario(scenario)
       allow(analyzer).to receive(:candidate_disks).and_return candidate_disks
     end
-    
+
     let(:settings) { Yast::Storage::Proposal::Settings.new }
     let(:analyzer) { instance_double("Yast::Storage::DiskAnalyzer") }
     let(:scenario) { "empty_hard_disk_50GiB" }
@@ -66,7 +66,7 @@ describe Yast::Storage::Proposal::PartitionCreator do
         home_volume.desired = 20.GiB
         swap_volume.desired = 10.GiB
       end
-      
+
       it "creates partitions matching the volume sizes" do
         result = creator.create_partitions(volumes, target_size)
         query = Yast::Storage::DevicegraphQuery.new(result)

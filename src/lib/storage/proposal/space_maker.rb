@@ -101,11 +101,8 @@ module Yast
           return unless disk_analyzer.linux_partitions.empty?
 
           log.info("Resizing Windows partition to free #{required_size}")
-          #
-          # TO DO: Resize windows partition (not available in libstorage-bgl yet)
-          # TO DO: Resize windows partition (not available in libstorage-bgl yet)
-          # TO DO: Resize windows partition (not available in libstorage-bgl yet)
-          #
+          # TODO: Resize windows partition (not available in libstorage-bgl yet)
+          log.error "Cannot resize windows in #{devicegraph} yet"
         end
 
         # Use force to create space (up to 'required_size'): Delete partitions

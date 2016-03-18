@@ -168,18 +168,17 @@ module Yast
         # @return [DiskSpace] remaining space that could not be distributed
         #
         def distribute_extra_space(volumes)
-          candidates = volumes.to_a
+          candidates = volumes.dup
           extra_size = total_free_size - volumes.total_size
           while extra_size > DiskSize.zero
-            candidates.select! { |vol| vol.size < vol.max_size }
+            candidates.delete_if { |vol| vol.size >= vol.max_size }
             return extra_size if candidates.empty?
-            total_weight = candidates.reduce(0.0) { |sum, vol| sum + vol.weight }
-            return extra_size if total_weight.zero?
+            return extra_size if candidates.total_weight.zero?
             log.info("Distributing #{extra_size} extra space among #{candidates.size} volumes")
 
             assigned_size = DiskSize.zero
             candidates.each do |vol|
-              vol_extra = volume_extra_size(vol, extra_size, total_weight)
+              vol_extra = volume_extra_size(vol, extra_size, candidates.total_weight)
               vol.size += vol_extra
               log.info("Distributing #{vol_extra} to #{vol.mount_point}; now #{vol.size}")
               assigned_size += vol_extra
