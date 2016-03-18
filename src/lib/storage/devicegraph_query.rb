@@ -1,5 +1,6 @@
 require "storage"
 require "storage/disk_size"
+require "storage/refinements/disk"
 
 module Yast
   module Storage
