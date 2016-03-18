@@ -91,10 +91,9 @@ describe Yast::Storage::Proposal::PartitionCreator do
       it "distributes the extra space" do
         result = creator.create_partitions(volumes, target_size)
         query = Yast::Storage::DevicegraphQuery.new(result)
-        # FIXME: actually I wouldn't have expected these values, but 23GiB and 26GiB
         expect(query.partitions).to contain_exactly(
-          an_object_with_fields(mountpoint: "/", size_k: 25015296),
-          an_object_with_fields(mountpoint: "/home", size_k: 26363904),
+          an_object_with_fields(mountpoint: "/", size: 23.GiB),
+          an_object_with_fields(mountpoint: "/home", size: 26.GiB),
           an_object_with_fields(mountpoint: "swap", size: 1.GiB)
         )
       end

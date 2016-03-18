@@ -177,12 +177,14 @@ module Yast
             return extra_size if total_weight.zero?
             log.info("Distributing #{extra_size} extra space among #{candidates.size} volumes")
 
+            assigned_size = DiskSize.zero
             candidates.each do |vol|
               vol_extra = volume_extra_size(vol, extra_size, total_weight)
               vol.size += vol_extra
               log.info("Distributing #{vol_extra} to #{vol.mount_point}; now #{vol.size}")
-              extra_size -= vol_extra
+              assigned_size += vol_extra
             end
+            extra_size -= assigned_size
           end
           log.info("Could not distribute #{extra_size}") unless extra_size.zero?
           extra_size
