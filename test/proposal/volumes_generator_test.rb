@@ -48,7 +48,7 @@ describe Yast::Storage::Proposal::VolumesGenerator do
         Yast::Storage::PlannedVolumesList.new(
           [
             Yast::Storage::PlannedVolume.new("/one_boot", xfs),
-            Yast::Storage::PlannedVolume.new("/other_boot", vfat),
+            Yast::Storage::PlannedVolume.new("/other_boot", vfat)
           ]
         )
       )
@@ -102,9 +102,9 @@ describe Yast::Storage::Proposal::VolumesGenerator do
       it "includes a /home volume with the configured settings" do
         expect(subject.volumes).to include(
           an_object_with_fields(
-            mount_point: "/home",
-            min_size: settings.home_min_size,
-            max_size: settings.home_max_size,
+            mount_point:     "/home",
+            min_size:        settings.home_min_size,
+            max_size:        settings.home_max_size,
             filesystem_type: settings.home_filesystem_type
           )
         )
@@ -138,9 +138,9 @@ describe Yast::Storage::Proposal::VolumesGenerator do
         it "uses the normal sizes" do
           expect(subject.volumes).to include(
             an_object_with_fields(
-              mount_point: "/",
-              min_size: 10.GiB,
-              max_size: 20.GiB,
+              mount_point:     "/",
+              min_size:        10.GiB,
+              max_size:        20.GiB,
               filesystem_type: xfs
             )
           )
@@ -155,9 +155,9 @@ describe Yast::Storage::Proposal::VolumesGenerator do
         it "increases all the sizes by btrfs_increase_percentage" do
           expect(subject.volumes).to include(
             an_object_with_fields(
-              mount_point: "/",
-              min_size: 17.5.GiB,
-              max_size: 35.GiB,
+              mount_point:     "/",
+              min_size:        17.5.GiB,
+              max_size:        35.GiB,
               filesystem_type: btrfs
             )
           )
