@@ -23,8 +23,12 @@ ENV["Y2DIR"] = SRC_PATH
 
 require "yast"
 require_relative "storage_matchers"
+require_relative "storage_helpers"
 
-RSpec.configure { |c| c.include Yast::RSpec::StorageMatchers }
+RSpec.configure do |c|
+  c.include Yast::RSpec::StorageMatchers
+  c.include Yast::RSpec::StorageHelpers
+end
 
 if ENV["COVERAGE"]
   require "simplecov"

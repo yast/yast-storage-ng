@@ -23,31 +23,15 @@
 require_relative "spec_helper"
 require "storage"
 require "storage/proposal"
-require "storage/fake_probing"
-require "storage/fake_device_factory"
 require "storage/refinements/test_devicegraph"
 
 describe Yast::Storage::Proposal do
   describe "#propose" do
     using Yast::Storage::Refinements::TestDevicegraph
 
-    def input_file_for(name)
-      File.join(DATA_PATH, "input", "#{name}.yml")
-    end
-
-    def output_file_for(name)
-      File.join(DATA_PATH, "output", "#{name}.yml")
-    end
-
-    def fake_scenario(scenario)
-      fake_probing = Yast::Storage::FakeProbing.new
-      devicegraph = fake_probing.devicegraph
-      Yast::Storage::FakeDeviceFactory.load_yaml_file(devicegraph, input_file_for(scenario))
-      fake_probing.to_probed
-    end
-
     before do
       fake_scenario(scenario)
+      fake_to_probed
     end
 
     subject(:proposal) { described_class.new(settings: settings) }

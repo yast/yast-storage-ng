@@ -23,24 +23,12 @@
 require_relative "../spec_helper"
 require "storage"
 require "storage/proposal"
-require "storage/fake_probing"
-require "storage/fake_device_factory"
 require "storage/devicegraph_query"
 require "storage/refinements/size_casts"
 
 describe Yast::Storage::Proposal::PartitionCreator do
   describe "#create_partitions" do
     using Yast::Storage::Refinements::SizeCasts
-
-    def input_file_for(name)
-      File.join(DATA_PATH, "input", "#{name}.yml")
-    end
-
-    def fake_scenario(scenario)
-      @fake_probing = Yast::Storage::FakeProbing.new
-      devicegraph = @fake_probing.devicegraph
-      Yast::Storage::FakeDeviceFactory.load_yaml_file(devicegraph, input_file_for(scenario))
-    end
 
     before do
       fake_scenario(scenario)
@@ -58,7 +46,7 @@ describe Yast::Storage::Proposal::PartitionCreator do
     let(:swap_volume) { Yast::Storage::PlannedVolume.new("swap", ::Storage::FsType_EXT4) }
     let(:volumes) { Yast::Storage::PlannedVolumesList.new([root_volume, home_volume, swap_volume]) }
 
-    subject(:creator) { described_class.new(@fake_probing.devicegraph, analyzer, settings) }
+    subject(:creator) { described_class.new(fake_devicegraph, analyzer, settings) }
 
     context "when the exact space is available" do
       before do
