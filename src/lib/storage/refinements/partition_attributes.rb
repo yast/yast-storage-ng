@@ -36,6 +36,11 @@ module Yast
             filesystem.mountpoints.first
           end
 
+          # Label of the filesystem
+          def label
+            filesystem.label
+          end
+
           # @return [DiskSize]
           def size
             DiskSize.kiB(size_k)
