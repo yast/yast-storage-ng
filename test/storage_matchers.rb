@@ -21,18 +21,16 @@
 
 require "rspec"
 require "yast"
-require "storage/refinements/test_devicegraph"
-require "storage/refinements/test_partition"
+require "storage/refinements/partition_attributes"
 
 module Yast
   module RSpec
     # RSpec extension to add YaST Storage specific matchers
     module StorageMatchers
-      using Storage::Refinements::TestDevicegraph
-      using Storage::Refinements::TestPartition
+      using Storage::Refinements::PartitionAttributes
 
       # Matches an object by its attributes (similar to RSpec's
-      # #have_attributes) but honoring Storage::Refinements::TestXX
+      # #have_attributes) but honoring Storage::Refinements::XxxAttributes
       def match_fields(field_values)
         FieldsMatcher.new(field_values)
       end

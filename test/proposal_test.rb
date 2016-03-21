@@ -42,7 +42,7 @@ describe Yast::Storage::Proposal do
       settings
     end
 
-    let(:result) do
+    let(:expected) do
       if separate_home
         ::Storage::Devicegraph.new_from_file(output_file_for("#{scenario}-sep-home"))
       else
@@ -58,7 +58,7 @@ describe Yast::Storage::Proposal do
 
         it "proposes the expected layout" do
           proposal.propose
-          expect(proposal.devices.to_str).to eq result.to_str
+          expect(proposal.devices.to_str).to eq expected.to_str
         end
       end
 
@@ -67,7 +67,7 @@ describe Yast::Storage::Proposal do
 
         it "proposes the expected layout" do
           proposal.propose
-          expect(proposal.devices.to_str).to eq result.to_str
+          expect(proposal.devices.to_str).to eq expected.to_str
         end
       end
     end
@@ -80,7 +80,7 @@ describe Yast::Storage::Proposal do
 
         it "proposes the expected layout" do
           proposal.propose
-          expect(proposal.devices.to_str).to eq result.to_str
+          expect(proposal.devices.to_str).to eq expected.to_str
         end
       end
 
@@ -89,7 +89,7 @@ describe Yast::Storage::Proposal do
 
         it "proposes the expected layout" do
           proposal.propose
-          expect(proposal.devices.to_str).to eq result.to_str
+          expect(proposal.devices.to_str).to eq expected.to_str
         end
       end
     end
@@ -102,7 +102,7 @@ describe Yast::Storage::Proposal do
 
         it "proposes the expected layout" do
           proposal.propose
-          expect(proposal.devices.to_str).to eq result.to_str
+          expect(proposal.devices.to_str).to eq expected.to_str
         end
       end
 
@@ -111,7 +111,7 @@ describe Yast::Storage::Proposal do
 
         it "proposes the expected layout" do
           proposal.propose
-          expect(proposal.devices.to_str).to eq result.to_str
+          expect(proposal.devices.to_str).to eq expected.to_str
         end
       end
     end

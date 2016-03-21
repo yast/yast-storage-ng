@@ -27,8 +27,9 @@ require "storage/disk_size"
 module Yast
   module Storage
     module Refinements
-      # Refinements for Partition to make the rspec tests more readable
-      module TestPartition
+      # Refinements for Partition adding some virtual attributes, mainly used
+      # to make the rspec tests more readable
+      module PartitionAttributes
         refine ::Storage::Partition do
           # First mounpoint
           def mountpoint
