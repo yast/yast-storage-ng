@@ -25,7 +25,7 @@ require "fileutils"
 require "storage/planned_volumes_list"
 require "storage/disk_size"
 require "storage/refinements/devicegraph"
-require "storage/devicegraph_query"
+require "storage/refinements/devicegraph_lists"
 
 module Yast
   module Storage
@@ -34,6 +34,7 @@ module Yast
       # SpaceMaker.
       class PartitionCreator
         using Refinements::Devicegraph
+        using Refinements::DevicegraphLists
         include Yast::Logger
 
         attr_accessor :settings
@@ -84,7 +85,7 @@ module Yast
         # @return [DiskSize] sum
         #
         def total_free_size
-          devgraph_query.available_size
+          free_spaces.disk_size
         end
 
         # List of free spaces in the devicegraph
@@ -92,7 +93,7 @@ module Yast
         # @return [Array<FreeDiskSpace>]
         #
         def free_spaces
-          devgraph_query.useful_free_spaces
+          candidate_disks.free_disk_spaces.useful
         end
 
         # @return [Array<String>]
@@ -102,9 +103,9 @@ module Yast
 
         # Query in the target devicegraph restricted to the candidate disks
         #
-        # @return [DevicegraphQuery]
-        def devgraph_query
-          @devgraph_query ||= DevicegraphQuery.new(devicegraph, disk_names: candidate_disk_names)
+        # @return [DisksList]
+        def candidate_disks
+          @candidate_disks ||= devicegraph.disks.with(name: candidate_disk_names)
         end
 
         # Create volumes on LVM.

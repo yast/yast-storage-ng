@@ -27,7 +27,7 @@ require "storage/planned_volume"
 require "storage/disk_size"
 require "storage/free_disk_space"
 require "storage/refinements/devicegraph"
-require "storage/devicegraph_query"
+require "storage/refinements/devicegraph_lists"
 
 module Yast
   module Storage
@@ -37,6 +37,7 @@ module Yast
       # or by resizing an existing Windows partition.
       class SpaceMaker
         using Refinements::Devicegraph
+        using Refinements::DevicegraphLists
         include Yast::Logger
 
         # Initialize.
@@ -75,15 +76,15 @@ module Yast
 
         # @return [DiskSize]
         def available_size(graph)
-          query_for(graph).available_size
+          disks_for(graph).free_disk_spaces.disk_size
         end
 
-        # Query for the given devicegraph restricted to the candidate disks
+        # List of candidate disks in the given devicegraph
         #
         # @param devicegraph [::Storage::Devicegraph]
-        # @return [DevicegraphQuery]
-        def query_for(devicegraph)
-          DevicegraphQuery.new(devicegraph, disk_names: candidate_disk_names)
+        # @return [DisksList]
+        def disks_for(devicegraph)
+          devicegraph.disks.with(name: candidate_disk_names)
         end
 
         # @return [Array<String>]
@@ -131,7 +132,7 @@ module Yast
         #
         # @return [Array<String>] partition_names
         def prioritized_candidate_partitions
-          candidate_parts = query_for(original_graph).partitions
+          candidate_parts = disks_for(original_graph).partitions
 
           win_part, non_win_part = candidate_parts.map(&:name).partition do |part_name|
             disk_analyzer.windows_partitions.include?(part_name)

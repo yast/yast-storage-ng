@@ -23,12 +23,13 @@
 require_relative "../spec_helper"
 require "storage"
 require "storage/proposal"
-require "storage/devicegraph_query"
+require "storage/refinements/devicegraph_lists"
 require "storage/refinements/size_casts"
 
 describe Yast::Storage::Proposal::PartitionCreator do
   describe "#create_partitions" do
     using Yast::Storage::Refinements::SizeCasts
+    using Yast::Storage::Refinements::DevicegraphLists
 
     before do
       fake_scenario(scenario)
@@ -57,8 +58,7 @@ describe Yast::Storage::Proposal::PartitionCreator do
 
       it "creates partitions matching the volume sizes" do
         result = creator.create_partitions(volumes, target_size)
-        query = Yast::Storage::DevicegraphQuery.new(result)
-        expect(query.partitions).to contain_exactly(
+        expect(result.partitions).to contain_exactly(
           an_object_with_fields(mountpoint: "/", size: 20.GiB),
           an_object_with_fields(mountpoint: "/home", size: 20.GiB),
           an_object_with_fields(mountpoint: "swap", size: 10.GiB)
@@ -78,8 +78,7 @@ describe Yast::Storage::Proposal::PartitionCreator do
 
       it "distributes the extra space" do
         result = creator.create_partitions(volumes, target_size)
-        query = Yast::Storage::DevicegraphQuery.new(result)
-        expect(query.partitions).to contain_exactly(
+        expect(result.partitions).to contain_exactly(
           an_object_with_fields(mountpoint: "/", size: 23.GiB),
           an_object_with_fields(mountpoint: "/home", size: 26.GiB),
           an_object_with_fields(mountpoint: "swap", size: 1.GiB)
