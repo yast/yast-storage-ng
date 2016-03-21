@@ -41,6 +41,10 @@ module Yast
         @volumes.each(&block)
       end
 
+      def dup
+        PlannedVolumesList.new(@volumes.dup)
+      end
+
       # Total sum of all desired sizes of volumes.
       #
       # This tries to avoid an 'unlimited' result:
@@ -65,6 +69,38 @@ module Yast
       # @return [DiskSize] sum of sizes in @volumes
       def total_size
         @volumes.reduce(DiskSize.zero) { |sum, vol| sum + vol.size }
+      end
+
+      # Total sum of all weights of volumes
+      #
+      # @return [Float]
+      def total_weight
+        @volumes.reduce(0.0) { |sum, vol| sum + vol.weight }
+      end
+
+      # Returns true if the list contains no elements
+      #
+      # @return [Boolean]
+      def empty?
+        @volumes.empty?
+      end
+
+      # Number of elements in the list
+      #
+      # @return [Fixnum]
+      def length
+        @volumes.length
+      end
+      alias_method :size, :length
+
+      # Deletes every element of the list for which block evaluates to true
+      #
+      # If no block is given, it returns an Enumerator
+      #
+      # @return [PlannedVolumesList] deleted elements
+      def delete_if(&block)
+        delegated = @volumes.delete_if(&block)
+        delegated.is_a?(Array) ? PlannedVolumesList.new(delegated) : delegated
       end
     end
   end

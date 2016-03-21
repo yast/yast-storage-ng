@@ -24,7 +24,8 @@
 require "fileutils"
 require "storage/planned_volumes_list"
 require "storage/disk_size"
-require "storage/refinements/proposal_devicegraph"
+require "storage/refinements/devicegraph"
+require "storage/devicegraph_query"
 
 module Yast
   module Storage
@@ -32,7 +33,7 @@ module Yast
       # Class to create partitions in the free space detected or freed by the
       # SpaceMaker.
       class PartitionCreator
-        using Refinements::ProposalDevicegraph
+        using Refinements::Devicegraph
         include Yast::Logger
 
         attr_accessor :settings
@@ -43,9 +44,11 @@ module Yast
         # Initialize.
         #
         # @param original_graph [::Storage::Devicegraph] initial devicegraph
+        # @param disk_analyzer [DiskAnalyzer] information about original_graph
         # @param settings [Proposal::Settings] proposal settings
-        def initialize(original_graph, settings)
+        def initialize(original_graph, disk_analyzer, settings)
           @original_graph = original_graph
+          @disk_analyzer = disk_analyzer
           @settings = settings
         end
 
@@ -74,22 +77,34 @@ module Yast
 
         # Working devicegraph
         attr_accessor :devicegraph
-        attr_reader :original_graph
+        attr_reader :original_graph, :disk_analyzer
 
         # Sum up the sizes of all slots in the devicegraph
         #
         # @return [DiskSize] sum
         #
         def total_free_size
-          devicegraph.available_size
+          devgraph_query.available_size
         end
 
-        # List of free slots in the devicegraph
+        # List of free spaces in the devicegraph
         #
         # @return [Array<FreeDiskSpace>]
         #
-        def free_slots
-          devicegraph.candidate_spaces
+        def free_spaces
+          devgraph_query.useful_free_spaces
+        end
+
+        # @return [Array<String>]
+        def candidate_disk_names
+          disk_analyzer.candidate_disks
+        end
+
+        # Query in the target devicegraph restricted to the candidate disks
+        #
+        # @return [DevicegraphQuery]
+        def devgraph_query
+          @devgraph_query ||= DevicegraphQuery.new(devicegraph, disk_names: candidate_disk_names)
         end
 
         # Create volumes on LVM.
@@ -117,7 +132,7 @@ module Yast
         # @param strategy [Symbol] :desired or :min_size
         #
         def create_non_lvm(volumes, strategy)
-          if free_slots.size == 1
+          if free_spaces.size == 1
             create_non_lvm_simple(volumes, strategy)
           else
             create_non_lvm_complex
@@ -153,20 +168,22 @@ module Yast
         # @return [DiskSpace] remaining space that could not be distributed
         #
         def distribute_extra_space(volumes)
-          candidates = volumes.to_a
+          candidates = volumes.dup
           extra_size = total_free_size - volumes.total_size
           while extra_size > DiskSize.zero
-            candidates.select! { |vol| vol.size < vol.max_size }
+            candidates.delete_if { |vol| vol.size >= vol.max_size }
             return extra_size if candidates.empty?
+            return extra_size if candidates.total_weight.zero?
             log.info("Distributing #{extra_size} extra space among #{candidates.size} volumes")
 
-            total_weight = candidates.reduce(0.0) { |sum, vol| sum + vol.weight }
+            assigned_size = DiskSize.zero
             candidates.each do |vol|
-              vol_extra = volume_extra_size(vol, extra_size, total_weight)
+              vol_extra = volume_extra_size(vol, extra_size, candidates.total_weight)
               vol.size += vol_extra
               log.info("Distributing #{vol_extra} to #{vol.mount_point}; now #{vol.size}")
-              extra_size -= vol_extra
+              assigned_size += vol_extra
             end
+            extra_size -= assigned_size
           end
           log.info("Could not distribute #{extra_size}") unless extra_size.zero?
           extra_size
@@ -199,7 +216,7 @@ module Yast
         def create_volumes_partitions(volumes)
           volumes.each do |vol|
             partition_id = vol.mount_point == "swap" ? ::Storage::ID_SWAP : ::Storage::ID_LINUX
-            partition = create_partition(vol, partition_id, free_slots.first)
+            partition = create_partition(vol, partition_id, free_spaces.first)
             make_filesystem(partition, vol)
           end
         end

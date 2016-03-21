@@ -21,9 +21,10 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
+require "storage/storage_manager"
+require "storage/disk_analyzer"
 require "storage/proposal/space_maker"
 require "storage/proposal/partition_creator"
-require "storage/refinements/proposal_devicegraph"
 
 module Yast
   module Storage
@@ -31,7 +32,6 @@ module Yast
       # Class to create devicegraphs that can accommodate a given collection of
       # volumes
       class DevicegraphGenerator
-        using Refinements::ProposalDevicegraph
         include Yast::Logger
 
         attr_accessor :settings
@@ -48,7 +48,8 @@ module Yast
         # @return [::Storage::Devicegraph]
         # @raise Proposal::NoDiskSpaceError if it was not possible to propose a
         #           valid devicegraph
-        def devicegraph(volumes, initial_graph: ::Storage::Devicegraph.probed)
+        def devicegraph(volumes, initial_graph: StorageManager.instance.probed)
+          disk_analyzer.analyze(initial_graph)
           graph = provide_space(volumes, initial_graph)
           graph = create_partitions(volumes, graph)
           graph
@@ -62,6 +63,13 @@ module Yast
           !!@got_desired_space
         end
 
+        # Disk analyzer used to analyze the initial devigraph
+        #
+        # @return [DiskAnalyzer]
+        def disk_analyzer
+          @disk_analyzer ||= DiskAnalyzer.new
+        end
+
         # Provides free disk space in the proposal devicegraph to fit the volumes
         # in. First it tries with the desired space and then with the minimum one
         #
@@ -72,7 +80,7 @@ module Yast
         #           devicegraph (@see RefinedDevicegraph)
         # @return [::Storage::Devicegraph]
         def provide_space(volumes, initial_graph)
-          space_maker = SpaceMaker.new(initial_graph)
+          space_maker = SpaceMaker.new(initial_graph, disk_analyzer)
           self.got_desired_space = false
           begin
             result_graph = space_maker.provide_space(volumes.desired_size)
@@ -81,7 +89,7 @@ module Yast
             result_graph = space_maker.provide_space(volumes.min_size)
           end
           log.info(
-            "Found #{result_graph.available_size} (#{got_desired_space? ? "desired" : "min"})"
+            "Found #{got_desired_space? ? "desired" : "min"} space"
           )
           result_graph
         end
@@ -96,7 +104,7 @@ module Yast
         #           devicegraph (@see RefinedDevicegraph)
         # @return [::Storage::Devicegraph]
         def create_partitions(volumes, initial_graph)
-          partition_creator = PartitionCreator.new(initial_graph, settings)
+          partition_creator = PartitionCreator.new(initial_graph, disk_analyzer, settings)
           target = got_desired_space? ? :desired : :min
           partition_creator.create_partitions(volumes, target)
         end

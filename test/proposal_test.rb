@@ -21,33 +21,17 @@
 # find current contact information at www.suse.com.
 
 require_relative "spec_helper"
-require_relative "test_refinements"
 require "storage"
 require "storage/proposal"
-require "storage/fake_probing"
-require "storage/fake_device_factory"
+require "storage/refinements/test_devicegraph"
 
 describe Yast::Storage::Proposal do
   describe "#propose" do
-    using Yast::Storage::TestRefinements
-
-    def input_file_for(name)
-      File.join(DATA_PATH, "input", "#{name}.yml")
-    end
-
-    def output_file_for(name)
-      File.join(DATA_PATH, "output", "#{name}.yml")
-    end
-
-    def fake_scenario(scenario)
-      fake_probing = Yast::Storage::FakeProbing.new
-      devicegraph = fake_probing.devicegraph
-      Yast::Storage::FakeDeviceFactory.load_yaml_file(devicegraph, input_file_for(scenario))
-      fake_probing.to_probed
-    end
+    using Yast::Storage::Refinements::TestDevicegraph
 
     before do
       fake_scenario(scenario)
+      fake_to_probed
     end
 
     subject(:proposal) { described_class.new(settings: settings) }
@@ -58,7 +42,7 @@ describe Yast::Storage::Proposal do
       settings
     end
 
-    let(:result) do
+    let(:expected) do
       if separate_home
         ::Storage::Devicegraph.new_from_file(output_file_for("#{scenario}-sep-home"))
       else
@@ -74,7 +58,7 @@ describe Yast::Storage::Proposal do
 
         it "proposes the expected layout" do
           proposal.propose
-          expect(proposal.devices.to_str).to eq result.to_str
+          expect(proposal.devices.to_str).to eq expected.to_str
         end
       end
 
@@ -83,7 +67,7 @@ describe Yast::Storage::Proposal do
 
         it "proposes the expected layout" do
           proposal.propose
-          expect(proposal.devices.to_str).to eq result.to_str
+          expect(proposal.devices.to_str).to eq expected.to_str
         end
       end
     end
@@ -96,7 +80,7 @@ describe Yast::Storage::Proposal do
 
         it "proposes the expected layout" do
           proposal.propose
-          expect(proposal.devices.to_str).to eq result.to_str
+          expect(proposal.devices.to_str).to eq expected.to_str
         end
       end
 
@@ -105,7 +89,7 @@ describe Yast::Storage::Proposal do
 
         it "proposes the expected layout" do
           proposal.propose
-          expect(proposal.devices.to_str).to eq result.to_str
+          expect(proposal.devices.to_str).to eq expected.to_str
         end
       end
     end
@@ -118,7 +102,7 @@ describe Yast::Storage::Proposal do
 
         it "proposes the expected layout" do
           proposal.propose
-          expect(proposal.devices.to_str).to eq result.to_str
+          expect(proposal.devices.to_str).to eq expected.to_str
         end
       end
 
@@ -127,7 +111,7 @@ describe Yast::Storage::Proposal do
 
         it "proposes the expected layout" do
           proposal.propose
-          expect(proposal.devices.to_str).to eq result.to_str
+          expect(proposal.devices.to_str).to eq expected.to_str
         end
       end
     end

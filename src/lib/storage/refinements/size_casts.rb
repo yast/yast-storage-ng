@@ -22,37 +22,30 @@
 # find current contact information at www.suse.com.
 
 require "storage"
-require "storage/free_disk_space"
+require "storage/disk_size"
 
 module Yast
   module Storage
     module Refinements
-      # Refinement for ::Storage::Disk with some commodity methods
-      module Disk
-        refine ::Storage::Disk do
-          # Checks if it's an USB disk
-          #
-          # @return [Boolean]
-          def usb?
-            transport == ::Storage::Transport_USB
-          end
+      # Refinements to make DiskSize objects more readable in the rspec tests
+      #
+      # It adds methods to perform a direct cast from numerical classes into
+      # DiskSize objects
+      # @example
+      #   using Yast::Storage::Refinements::SizeCasts
+      #
+      #   20.GiB == Yast::Storage::DiskSize.GiB(20)
+      #   12.5.MiB == Yast::Storage::DiskSize.MiB(12.5)
+      module SizeCasts
+        REFINED_CLASSES = [::Fixnum, ::Float]
+        ADDED_METHODS = [:kiB, :MiB, :GiB, :TiB, :PiB, :EiB, :ZiB, :YiB]
 
-          # Partitions contained in the disk
-          #
-          # @return [Array<::Storage::Partition>]
-          def all_partitions
-            return [] unless partition_table
-            partition_table.partitions.to_a
-          end
-
-          # Free spaces inside the disk
-          #
-          # @return [Array<FreeDiskSpace>]
-          def free_spaces
-            # TODO: Handle completely empty disks (no partition table) as empty space
-            return [] unless partition_table
-            partition_table.unused_partition_slots.map do |slot|
-              FreeDiskSpace.new(self, slot)
+        REFINED_CLASSES.each do |klass|
+          refine klass do
+            ADDED_METHODS.each do |method|
+              define_method(method) do
+                DiskSize.send(method, self)
+              end
             end
           end
         end

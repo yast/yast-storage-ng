@@ -26,7 +26,8 @@ require "storage"
 require "storage/planned_volume"
 require "storage/disk_size"
 require "storage/free_disk_space"
-require "storage/refinements/proposal_devicegraph"
+require "storage/refinements/devicegraph"
+require "storage/devicegraph_query"
 
 module Yast
   module Storage
@@ -35,14 +36,16 @@ module Yast
       # reusing existing unpartitioned space, by deleting existing partitions
       # or by resizing an existing Windows partition.
       class SpaceMaker
-        using Refinements::ProposalDevicegraph
+        using Refinements::Devicegraph
         include Yast::Logger
 
         # Initialize.
         #
         # @param original_graph [::Storage::Devicegraph] initial devicegraph
-        def initialize(original_graph)
+        # @param disk_analyzer [DiskAnalyzer] information about original_graph
+        def initialize(original_graph, disk_analyzer)
           @original_graph = original_graph
+          @disk_analyzer = disk_analyzer
         end
 
         # Returns a copy of the original devicegraph in which all needed
@@ -64,10 +67,28 @@ module Yast
 
       protected
 
-        attr_reader :original_graph
+        attr_reader :original_graph, :disk_analyzer
 
         def success?(graph, required_size)
-          graph.available_size >= required_size
+          available_size(graph) >= required_size
+        end
+
+        # @return [DiskSize]
+        def available_size(graph)
+          query_for(graph).available_size
+        end
+
+        # Query for the given devicegraph restricted to the candidate disks
+        #
+        # @param devicegraph [::Storage::Devicegraph]
+        # @return [DevicegraphQuery]
+        def query_for(devicegraph)
+          DevicegraphQuery.new(devicegraph, disk_names: candidate_disk_names)
+        end
+
+        # @return [Array<String>]
+        def candidate_disk_names
+          disk_analyzer.candidate_disks
         end
 
         # Try to resize an existing windows partition - unless there already is
@@ -76,15 +97,12 @@ module Yast
         # @param devicegraph [DeviceGraph] devicegraph to update
         # @param required_size [DiskSize]
         def resize_windows!(devicegraph, required_size)
-          return if devicegraph.windows_part_names.empty?
-          return unless devicegraph.linux_part_names.empty?
+          return if disk_analyzer.windows_partitions.empty?
+          return unless disk_analyzer.linux_partitions.empty?
 
           log.info("Resizing Windows partition to free #{required_size}")
-          #
-          # TO DO: Resize windows partition (not available in libstorage-bgl yet)
-          # TO DO: Resize windows partition (not available in libstorage-bgl yet)
-          # TO DO: Resize windows partition (not available in libstorage-bgl yet)
-          #
+          # TODO: Resize windows partition (not available in libstorage-bgl yet)
+          log.error "Cannot resize windows in #{devicegraph} yet"
         end
 
         # Use force to create space (up to 'required_size'): Delete partitions
@@ -113,14 +131,13 @@ module Yast
         #
         # @return [Array<String>] partition_names
         def prioritized_candidate_partitions
-          windows_partitions = original_graph.windows_part_names
-          linux_partitions = original_graph.linux_part_names
+          candidate_parts = query_for(original_graph).partitions
 
-          win_part, non_win_part = original_graph.candidate_part_names.partition do |part|
-            windows_partitions.include?(part)
+          win_part, non_win_part = candidate_parts.map(&:name).partition do |part_name|
+            disk_analyzer.windows_partitions.include?(part_name)
           end
-          linux_part, non_linux_part = non_win_part.partition do |part|
-            linux_partitions.include?(part)
+          linux_part, non_linux_part = non_win_part.partition do |part_name|
+            disk_analyzer.linux_partitions.include?(part_name)
           end
 
           linux_part + non_linux_part + win_part

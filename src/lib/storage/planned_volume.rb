@@ -37,6 +37,9 @@ module Yast
       alias_method :desired, :desired_size
       alias_method :min, :min_size
       alias_method :max, :max_size
+      alias_method :desired=, :desired_size=
+      alias_method :min=, :min_size=
+      alias_method :max=, :max_size=
 
       # Constructor.
       #
