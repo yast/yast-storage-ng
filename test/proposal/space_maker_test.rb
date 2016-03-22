@@ -39,7 +39,8 @@ describe Yast::Storage::Proposal::SpaceMaker do
       disk_analyzer.analyze(fake_devicegraph)
       disk_analyzer
     end
-    subject(:maker) { described_class.new(fake_devicegraph, analyzer) }
+    let(:settings) { Yast::Storage::Proposal::Settings.new }
+    subject(:maker) { described_class.new(fake_devicegraph, analyzer, settings) }
 
     context "if the disk is not big enough" do
       let(:scenario) { "empty_hard_disk_50GiB" }

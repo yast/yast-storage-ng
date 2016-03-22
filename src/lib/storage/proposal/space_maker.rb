@@ -40,13 +40,17 @@ module Yast
         using Refinements::DevicegraphLists
         include Yast::Logger
 
+        attr_accessor :settings
+
         # Initialize.
         #
         # @param original_graph [::Storage::Devicegraph] initial devicegraph
         # @param disk_analyzer [DiskAnalyzer] information about original_graph
-        def initialize(original_graph, disk_analyzer)
+        # @param settings [Proposal::Settings] proposal settings
+        def initialize(original_graph, disk_analyzer, settings)
           @original_graph = original_graph
           @disk_analyzer = disk_analyzer
+          @settings = settings
         end
 
         # Returns a copy of the original devicegraph in which all needed
@@ -76,7 +80,16 @@ module Yast
 
         # @return [DiskSize]
         def available_size(graph)
-          disks_for(graph).free_disk_spaces.disk_size
+          free_spaces(graph).disk_size
+        end
+
+        # List of free spaces in the given devicegraph
+        #
+        # @return [FreeDiskSpacesList]
+        def free_spaces(graph)
+          disks_for(graph).free_disk_spaces.with do |space|
+            space.size >= settings.useful_free_space_min_size
+          end
         end
 
         # List of candidate disks in the given devicegraph

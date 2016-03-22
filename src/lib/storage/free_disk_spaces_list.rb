@@ -32,14 +32,6 @@ module Yast
 
       using Refinements::Disk
 
-      # Free disk space below this size will be disregarded
-      TINY_FREE_CHUNK = DiskSize.MiB(30)
-
-      def useful
-        new_list = list.select { |space| space.size >= TINY_FREE_CHUNK }
-        self.class.new(devicegraph, list: new_list)
-      end
-
       def disk_size
         list.map(&:size).reduce(DiskSize.zero, :+)
       end

@@ -65,6 +65,8 @@ module Yast
         attr_accessor :btrfs_default_subvolume
         attr_accessor :home_min_size
         attr_accessor :home_max_size
+        # Free disk space below this size will be disregarded
+        attr_accessor :useful_free_space_min_size
 
         def initialize
           super
@@ -82,6 +84,7 @@ module Yast
           # Not yet in control.xml
           @home_min_size                 = DiskSize.GiB(10)
           @home_max_size                 = DiskSize.unlimited
+          @useful_free_space_min_size    = DiskSize.MiB(30)
         end
       end
     end

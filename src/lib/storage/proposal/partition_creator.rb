@@ -83,17 +83,17 @@ module Yast
         # Sum up the sizes of all slots in the devicegraph
         #
         # @return [DiskSize] sum
-        #
         def total_free_size
           free_spaces.disk_size
         end
 
         # List of free spaces in the devicegraph
         #
-        # @return [Array<FreeDiskSpace>]
-        #
+        # @return [FreeDiskSpacesList]
         def free_spaces
-          candidate_disks.free_disk_spaces.useful
+          candidate_disks.free_disk_spaces.with do |space|
+            space.size >= settings.useful_free_space_min_size
+          end
         end
 
         # @return [Array<String>]
