@@ -27,18 +27,24 @@ require "storage/filesystems_list"
 module Yast
   module Storage
     class PartitionsList < DevicesList
-
       list_of ::Storage::Partition
-      by_default_delegate_to :filesystems
 
       def filesystems
-        FilesystemsList.new(devicegraph, list: list.map(&:filesystem).compact)
+        fs_list = list.map do |partition|
+          begin
+            partition.filesystem
+          rescue ::Storage::WrongNumberOfChildren
+            # No filesystem in the partition
+            nil
+          end
+        end
+        FilesystemsList.new(devicegraph, list: fs_list.compact)
       end
 
     protected
 
       def full_list
-        # There is no ::Storage::Partition.all
+        # There is no ::Storage::Partition.all in libstorage API
         devicegraph.all_disks.to_a.reduce([]) do |sum, disk|
           if disk.partition_table
             sum + disk.partition_table.partitions.to_a

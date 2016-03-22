@@ -24,14 +24,13 @@ require "storage"
 require "storage/devices_list"
 require "storage/partitions_list"
 require "storage/filesystems_list"
-#require "storage/free_disk_spaces_list"
+require "storage/free_disk_spaces_list"
 require "storage/refinements/disk"
 
 module Yast
   module Storage
     class DisksList < DevicesList
       list_of ::Storage::Disk
-      by_default_delegate_to :partitions
 
       using Refinements::Disk
 

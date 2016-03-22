@@ -19,25 +19,23 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
+require "storage"
+
 module Yast
   module Storage
     class DevicesList
       include Enumerable
+      extend Forwardable
 
       class << self
-        attr_accessor :device_class
-        attr_accessor :default_delegate
+        attr_reader :device_class
 
         def list_of(klass)
-          self.device_class = klass
-        end
-
-        def by_default_delegate_to(list)
-          self.default_delegate = list
+          @device_class = klass
         end
       end
 
-      attr_reader :devicegraph
+      def_delegators :@list, :each, :empty?, :length, :size
 
       def initialize(devicegraph, list: nil)
         @devicegraph = devicegraph
@@ -54,40 +52,13 @@ module Yast
         self.class.new(devicegraph, list: new_list)
       end
 
-      def each(&block)
-        @list.each(&block)
-      end
-
       def dup
         self.class.new(devicegraph, @list.dup)
       end
 
-      # Returns true if the list contains no elements
-      #
-      # @return [Boolean]
-      def empty?
-        list.empty?
-      end
-
-      # Number of elements in the list
-      #
-      # @return [Fixnum]
-      def length
-        list.length
-      end
-      alias_method :size, :length
-
-      def method_missing(meth, *args, &block)
-        delegate_list = self.class.default_delegate
-        if delegate_list
-          delegate_list.send(meth, *args, &block)
-        else
-          super
-        end
-      end
-
     protected
     
+      attr_reader :devicegraph
       attr_accessor :list
       
       def full_list
@@ -95,9 +66,20 @@ module Yast
       end
 
       def match?(element, attr, value)
-        real_value = element.send(attr)
-        return true if real_value == value
-        value.is_a?(Array) && value.include?(real_value)
+        begin
+          real_value = element.send(attr)
+        rescue ::Storage::WrongNumberOfChildren
+          # Checking for something that is not there
+          return false
+        end
+
+        begin
+          return true if real_value == value
+        rescue TypeError
+          # Collections coming from SWIG perform strict type check for ==
+          raise unless value.is_a?(Enumerable)
+        end
+        value.is_a?(Enumerable) && value.include?(real_value)
       end
     end
   end
