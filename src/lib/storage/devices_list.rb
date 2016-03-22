@@ -23,6 +23,11 @@ require "storage"
 
 module Yast
   module Storage
+    # Base class to implement lists of devices.
+    #
+    # @see DisksList
+    # @see PartitionsList
+    # @see FilesystemsList
     class DevicesList
       include Enumerable
       extend Forwardable
@@ -30,9 +35,12 @@ module Yast
       class << self
         attr_reader :device_class
 
+        # rubocop:disable TrivialAccessors
+        # Macro-style method to specify the class of the elements
         def list_of(klass)
           @device_class = klass
         end
+        # rubocop:enable TrivialAccessors
       end
 
       def_delegators :@list, :each, :empty?, :length, :size
@@ -42,13 +50,26 @@ module Yast
         @list = list || full_list
       end
 
+      # Subset of the list matching some conditions
+      #
+      # Returns a list containing only the elements that meets some conditions.
+      # Those conditions can be expressed as a list of attributes and values or
+      # as a block that will be evaluated for every element in the list.
+      #
+      # It returns a list of the same time to allow chaining several calls
+      # @example
+      #   filtered = a_list.with(type: [type1, type2], name: nil)
+      #   filtered.with { |element| element.id.start_with? "a" }
+      #
+      # @param attrs [Hash] attributes to filter by. The keys of the hash are
+      #     method names, the values of the hash can be the desired value for
+      #     the attribute or an Enumerable with several accepted values.
+      # @return [DevicesList] subtype-preserving
       def with(attrs = {})
         new_list = list.select do |element|
           attrs.all? { |attr, value| match?(element, attr, value) }
         end
-        if block_given?
-          new_list.select!(&Proc.new)
-        end
+        new_list.select!(&Proc.new) if block_given?
         self.class.new(devicegraph, list: new_list)
       end
 
@@ -57,10 +78,17 @@ module Yast
       end
 
     protected
-    
+
       attr_reader :devicegraph
       attr_accessor :list
-      
+
+      # Default collection of devices
+      #
+      # In many cases it can inferred by asking libstorage for the class
+      # specified via .list_of. Sometimes is not possible and this method needs
+      # to be redefined in the child class.
+      #
+      # return [Array]
       def full_list
         self.class.device_class.all(devicegraph).to_a
       end

@@ -26,9 +26,13 @@ require "storage/filesystems_list"
 
 module Yast
   module Storage
+    # List of partitions from a devicegraph
     class PartitionsList < DevicesList
       list_of ::Storage::Partition
 
+      # Filesystems located in the partitions
+      #
+      # @return [FilesystemsList]
       def filesystems
         fs_list = list.map do |partition|
           begin
@@ -48,6 +52,8 @@ module Yast
         devicegraph.all_disks.to_a.reduce([]) do |sum, disk|
           if disk.partition_table
             sum + disk.partition_table.partitions.to_a
+          else
+            sum
           end
         end
       end

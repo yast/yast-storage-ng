@@ -25,6 +25,7 @@ require "storage/devices_list"
 
 module Yast
   module Storage
+    # List of filesystems from a devicegraph
     class FilesystemsList < DevicesList
       list_of ::Storage::Filesystem
     end

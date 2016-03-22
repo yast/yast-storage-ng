@@ -63,7 +63,7 @@ describe "devices lists" do
         expect(result).to contain_exactly(
           an_object_with_fields(label: "root"),
           an_object_with_fields(label: "ubuntu_root"),
-          an_object_with_fields(label: "windows"),
+          an_object_with_fields(label: "windows")
         )
       end
 
@@ -176,8 +176,8 @@ describe "devices lists" do
 
     describe "#filesystems" do
       it "returns a filtered list of filesystems" do
-        parts_sda = partitions.with {|p| p.name.start_with? "/dev/sda" }
-        parts_sdb = partitions.with {|p| p.name.start_with? "/dev/sdb" }
+        parts_sda = partitions.with { |p| p.name.start_with? "/dev/sda" }
+        parts_sdb = partitions.with { |p| p.name.start_with? "/dev/sdb" }
         expect(parts_sda.filesystems).to be_a Yast::Storage::FilesystemsList
         expect(parts_sda.filesystems.size).to eq 2
         expect(parts_sdb.filesystems).to be_a Yast::Storage::FilesystemsList

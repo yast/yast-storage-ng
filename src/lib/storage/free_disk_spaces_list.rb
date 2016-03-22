@@ -27,17 +27,21 @@ require "storage/refinements/disk"
 
 module Yast
   module Storage
+    # List of free spaces from a devicegraph
     class FreeDiskSpacesList < DevicesList
       list_of FreeDiskSpace
 
       using Refinements::Disk
 
+      # Sum of the sizes of all the spaces
+      #
+      # @return [DiskSize]
       def disk_size
         list.map(&:size).reduce(DiskSize.zero, :+)
       end
 
     protected
-    
+
       def full_list
         disks = devicegraph.all_disks.to_a
         disks.reduce([]) { |sum, disk| sum + disk.free_spaces }

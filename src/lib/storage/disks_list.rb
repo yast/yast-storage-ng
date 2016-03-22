@@ -29,16 +29,24 @@ require "storage/refinements/disk"
 
 module Yast
   module Storage
+    # List of disks from a devicegraph
     class DisksList < DevicesList
       list_of ::Storage::Disk
 
       using Refinements::Disk
 
+      # Partitions included in any of the disks
+      #
+      # @return [PartitionsList]
       def partitions
         part_list = list.reduce([]) { |sum, disk| sum + disk.all_partitions }
         PartitionsList.new(devicegraph, list: part_list)
       end
 
+      # Filesystems present in any of the disks, either directly either inside a
+      # partition
+      #
+      # @return [FilesystemsList]
       def filesystems
         fs_list = partitions.filesystems.to_a
         # Add filesystems not included in #partitions (directly on disk)
@@ -48,6 +56,9 @@ module Yast
         FilesystemsList.new(devicegraph, list: fs_list)
       end
 
+      # Free spaces in any of the disks
+      #
+      # @return [FreeDiskSpacesList]
       def free_disk_spaces
         spaces_list = list.reduce([]) { |sum, disk| sum + disk.free_spaces }
         FreeDiskSpacesList.new(devicegraph, list: spaces_list)

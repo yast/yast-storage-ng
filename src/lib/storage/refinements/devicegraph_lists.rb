@@ -35,10 +35,10 @@ module Yast
       module DevicegraphLists
         refine ::Storage::Devicegraph do
           DEVICE_LISTS = {
-            :disks            => DisksList,
-            :partitions       => PartitionsList,
-            :filesystems      => FilesystemsList,
-            :free_disk_spaces => FreeDiskSpacesList
+            disks:            DisksList,
+            partitions:       PartitionsList,
+            filesystems:      FilesystemsList,
+            free_disk_spaces: FreeDiskSpacesList
           }
 
           DEVICE_LISTS.each do |list, klass|
