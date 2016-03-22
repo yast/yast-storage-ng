@@ -27,7 +27,7 @@ require "storage/planned_volume"
 require "storage/disk_size"
 require "storage/free_disk_space"
 require "storage/refinements/devicegraph"
-require "storage/devicegraph_query"
+require "storage/refinements/devicegraph_lists"
 
 module Yast
   module Storage
@@ -37,15 +37,20 @@ module Yast
       # or by resizing an existing Windows partition.
       class SpaceMaker
         using Refinements::Devicegraph
+        using Refinements::DevicegraphLists
         include Yast::Logger
+
+        attr_accessor :settings
 
         # Initialize.
         #
         # @param original_graph [::Storage::Devicegraph] initial devicegraph
         # @param disk_analyzer [DiskAnalyzer] information about original_graph
-        def initialize(original_graph, disk_analyzer)
+        # @param settings [Proposal::Settings] proposal settings
+        def initialize(original_graph, disk_analyzer, settings)
           @original_graph = original_graph
           @disk_analyzer = disk_analyzer
+          @settings = settings
         end
 
         # Returns a copy of the original devicegraph in which all needed
@@ -75,15 +80,24 @@ module Yast
 
         # @return [DiskSize]
         def available_size(graph)
-          query_for(graph).available_size
+          free_spaces(graph).disk_size
         end
 
-        # Query for the given devicegraph restricted to the candidate disks
+        # List of free spaces in the given devicegraph
+        #
+        # @return [FreeDiskSpacesList]
+        def free_spaces(graph)
+          disks_for(graph).free_disk_spaces.with do |space|
+            space.size >= settings.useful_free_space_min_size
+          end
+        end
+
+        # List of candidate disks in the given devicegraph
         #
         # @param devicegraph [::Storage::Devicegraph]
-        # @return [DevicegraphQuery]
-        def query_for(devicegraph)
-          DevicegraphQuery.new(devicegraph, disk_names: candidate_disk_names)
+        # @return [DisksList]
+        def disks_for(devicegraph)
+          devicegraph.disks.with(name: candidate_disk_names)
         end
 
         # @return [Array<String>]
@@ -131,7 +145,7 @@ module Yast
         #
         # @return [Array<String>] partition_names
         def prioritized_candidate_partitions
-          candidate_parts = query_for(original_graph).partitions
+          candidate_parts = disks_for(original_graph).partitions
 
           win_part, non_win_part = candidate_parts.map(&:name).partition do |part_name|
             disk_analyzer.windows_partitions.include?(part_name)

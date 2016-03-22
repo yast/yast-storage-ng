@@ -80,7 +80,7 @@ module Yast
         #           devicegraph (@see RefinedDevicegraph)
         # @return [::Storage::Devicegraph]
         def provide_space(volumes, initial_graph)
-          space_maker = SpaceMaker.new(initial_graph, disk_analyzer)
+          space_maker = SpaceMaker.new(initial_graph, disk_analyzer, settings)
           self.got_desired_space = false
           begin
             result_graph = space_maker.provide_space(volumes.desired_size)

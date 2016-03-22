@@ -22,12 +22,13 @@
 
 require_relative "../spec_helper"
 require "storage/proposal"
-require "storage/devicegraph_query"
+require "storage/refinements/devicegraph_lists"
 require "storage/refinements/size_casts"
 
 describe Yast::Storage::Proposal::SpaceMaker do
   describe "#make_space" do
     using Yast::Storage::Refinements::SizeCasts
+    using Yast::Storage::Refinements::DevicegraphLists
 
     before do
       fake_scenario(scenario)
@@ -38,7 +39,8 @@ describe Yast::Storage::Proposal::SpaceMaker do
       disk_analyzer.analyze(fake_devicegraph)
       disk_analyzer
     end
-    subject(:maker) { described_class.new(fake_devicegraph, analyzer) }
+    let(:settings) { Yast::Storage::Proposal::Settings.new }
+    subject(:maker) { described_class.new(fake_devicegraph, analyzer, settings) }
 
     context "if the disk is not big enough" do
       let(:scenario) { "empty_hard_disk_50GiB" }
@@ -56,10 +58,9 @@ describe Yast::Storage::Proposal::SpaceMaker do
 
       it "deletes some of the linux ones" do
         result = maker.provide_space(required_size)
-        query = Yast::Storage::DevicegraphQuery.new(result)
         # FIXME: the result is actually kind of suboptimal, there were no need
         # to delete the swap partition
-        expect(query.partitions).to contain_exactly(
+        expect(result.partitions).to contain_exactly(
           an_object_with_fields(label: "windows", size: 250.GiB)
         )
       end
