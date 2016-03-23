@@ -32,14 +32,13 @@ module Yast
     # PlannedVolume elements
     class PlannedVolumesList
       include Enumerable
+      extend Forwardable
 
       def initialize(volumes = [])
         @volumes = volumes
       end
 
-      def each(&block)
-        @volumes.each(&block)
-      end
+      def_delegators :@volumes, :each, :empty?, :length, :size
 
       def dup
         PlannedVolumesList.new(@volumes.dup)
@@ -78,21 +77,6 @@ module Yast
         @volumes.reduce(0.0) { |sum, vol| sum + vol.weight }
       end
 
-      # Returns true if the list contains no elements
-      #
-      # @return [Boolean]
-      def empty?
-        @volumes.empty?
-      end
-
-      # Number of elements in the list
-      #
-      # @return [Fixnum]
-      def length
-        @volumes.length
-      end
-      alias_method :size, :length
-
       # Deletes every element of the list for which block evaluates to true
       #
       # If no block is given, it returns an Enumerator
@@ -102,6 +86,17 @@ module Yast
         delegated = @volumes.delete_if(&block)
         delegated.is_a?(Array) ? PlannedVolumesList.new(delegated) : delegated
       end
+
+      # Appends the given volume to the list. It returns the list itself,
+      # so several appends may be chained together
+      #
+      # @param volume [PlannedVolume] element to add
+      # @return [PlannedVolumesList]
+      def push(volume)
+        @volumes.push(volume)
+        self
+      end
+      alias_method :<<, :push
     end
   end
 end
