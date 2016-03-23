@@ -56,6 +56,12 @@ module Yast
       # Those conditions can be expressed as a list of attributes and values or
       # as a block that will be evaluated for every element in the list.
       #
+      # When using a list of attributes, it automatically handles the situation
+      # of libstorage objects raising an exception when the value of an
+      # attribute is not found. Thus, example_partition.filesystem is considered
+      # nil if the partition is not formatted, although default libstorage
+      # behavior is to raise an exception instead of returning nil.
+      #
       # It returns a list of the same time to allow chaining several calls
       # @example
       #   filtered = a_list.with(type: [type1, type2], name: nil)
@@ -97,16 +103,21 @@ module Yast
         begin
           real_value = element.send(attr)
         rescue ::Storage::WrongNumberOfChildren
-          # Checking for something that is not there
-          return false
+          # Checking for something that is not there, which only matches if you
+          # where indeed checking for nil
+          return value.nil?
         end
 
+        # First of all, check for exact match
         begin
           return true if real_value == value
-        rescue TypeError
-          # Collections coming from SWIG perform strict type check for ==
-          raise unless value.is_a?(Enumerable)
+        # Objects coming from SWIG perform strict type check for ==. Thus they
+        # raise exceptions on type mismatch, instead of simply returning false
+        rescue TypeError, ArgumentError
+          return false unless value.is_a?(Enumerable)
         end
+
+        # As a second option, check for collection
         value.is_a?(Enumerable) && value.include?(real_value)
       end
     end
