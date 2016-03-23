@@ -25,6 +25,7 @@ require "yast"
 require "storage/planned_volume"
 require "storage/planned_volumes_list"
 require "storage/disk_size"
+require "storage/boot_requirements_strategies"
 
 module Yast
   module Storage
@@ -46,51 +47,34 @@ module Yast
       end
 
       def needed_partitions
-        boot_volumes = []
-        boot_volumes << efi_boot_partition if efi_boot_partition_needed?
-        boot_volumes << boot_partition     if boot_partition_needed?
-        boot_volumes << prep_partition     if prep_partition_needed?
-        PlannedVolumesList.new(boot_volumes)
+        strategy.needed_partitions
       end
 
-      def boot_partition_needed?
-        return true if @settings.use_lvm && @settings.encrypt_volume_group
-        false
-      end
+    protected
 
-      def efi_boot_partition_needed?
-        # TO DO
-        false
-      end
+      attr_reader :settings
 
-      def prep_partition_needed?
-        # TO DO
-        Arch.ppc
-      end
+      def strategy
+        return @strategy unless @strategy.nil?
 
-    private
+        # TODO: until we implement real strategies, let's always return Default
+        @strategy = BootRequirementsStrategies::Default.new(settings)
+        return @strategy
 
-      def boot_partition
-        vol = PlannedVolume.new("/boot", ::Storage::EXT4)
-        vol.min_size = DiskSize.MiB(512) # TO DO
-        vol.max_size = DiskSize.MiB(512) # TO DO
-        vol.desired_size = vol.min_size
-        vol.can_live_on_logical_volume = false
-        vol
-      end
-
-      def efi_boot_partition
-        vol = PlannedVolume.new("/boot/efi", ::Storage::VFAT)
-        vol.can_live_on_logical_volume = false
-        # TO DO
-        vol
-      end
-
-      def make_prep_partition
-        vol = PlannedVolume.new("PReP", ::Storage::VFAT)
-        vol.can_live_on_logical_volume = false
-        # TO DO
-        vol
+        # TODO: don't use Arch, but libstorage detection
+        if Arch.i386 || Arch.x86_64
+          # if UEFI
+          #   @strategy = SomeStrategy.new(settings)
+          # else
+          #   @strategy = AnotherOne.new(settings)
+          # end
+        elsif Arch.s390
+        elsif Arch.ppc64
+        elsif Arch.aarch64
+        else
+          @strategy = BootRequirementsStrategies::Default.new(settings)
+        end
+        @strategy
       end
     end
   end
