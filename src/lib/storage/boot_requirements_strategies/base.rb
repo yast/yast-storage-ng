@@ -29,8 +29,9 @@ module Yast
       class Base
         include Yast::Logger
 
-        def initialize(settings)
+        def initialize(settings, disk_analyzer)
           @settings = settings
+          @disk_analyzer = disk_analyzer
         end
 
         def needed_partitions
@@ -40,6 +41,7 @@ module Yast
       protected
 
         attr_reader :settings
+        attr_reader :disk_analyzer
       end
     end
   end

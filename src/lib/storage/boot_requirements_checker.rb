@@ -41,9 +41,10 @@ module Yast
     class BootRequirementsChecker
       include Yast::Logger
 
-      def initialize(settings)
+      def initialize(settings, disk_analyzer)
         Yast.import "Arch"
         @settings = settings
+        @disk_analyzer = disk_analyzer
       end
 
       def needed_partitions
@@ -53,12 +54,13 @@ module Yast
     protected
 
       attr_reader :settings
+      attr_reader :disk_analyzer
 
       def strategy
         return @strategy unless @strategy.nil?
 
         # TODO: until we implement real strategies, let's always return Default
-        @strategy = BootRequirementsStrategies::Default.new(settings)
+        @strategy = BootRequirementsStrategies::Default.new(settings, disk_analyzer)
         return @strategy
 
         # TODO: don't use Arch, but libstorage detection
@@ -72,7 +74,7 @@ module Yast
         elsif Arch.ppc64
         elsif Arch.aarch64
         else
-          @strategy = BootRequirementsStrategies::Default.new(settings)
+          @strategy = BootRequirementsStrategies::Default.new(settings, disk_analyzer)
         end
         @strategy
       end
