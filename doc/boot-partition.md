@@ -86,11 +86,43 @@ stage2 beyond 2 TB limit when using gpt table.
 ### s390x
 
 - ??? dos/gpt - something else?
+
+	> [hare] dos/gpt is only used for zfcp and FBA DASD.
+
+- DASD - ??? up to 4 (3?) partitions
+
+	> [hare] ECKD DASD is using either
+	> CDL (Compatible Disk Layout)
+	> which is written by tools like 'fdasd'; supports up to 4 partitions.
+
+	> or
+
+	> LDL (Linux Disk Layout)
+	> which is the assumed disk layout (1 partition,
+	> spanning the entire disk) if nothing can be detected on that disk.
+	> LDL is strongly deprecated and only mentioned here for completeness.
+
+- kvm
+
+	> [hare] KVM does _not_ use DASD emulations, but rather virtio disks.
+	> So for KVM you'll be seeing /dev/vdaX instead of /dev/dasdX
+
 - zipl partition
  * mounted at /boot/zipl
  * ext2
  * ??? size [100MB, ?, Inf] (enough for 2 kernel/initrd copies)
+
+	> [hare] No size limitations, can be any DASD or zfcp partition.
+
  * ??? why has /boot/zipl a copy of kernel+initrd, isn't /boot on same disk enough to get a block map
+
+	> [hare] That's due to the 'peculiar' boot setup.
+There is no native grub2 implementation for zSeries, rather we
+use zipl/zfcp to boot up a kernel & grub2 shell, which then
+loads the 'real' kernel.
+So initially we'll end up with two identical kernels, but this might change during a kernel
+update.
+
 
 ### ppc64
 
