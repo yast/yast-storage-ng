@@ -58,6 +58,14 @@ describe "devices lists" do
         )
       end
 
+      it "filters by nil values" do
+        result = fake_devicegraph.partitions.with(filesystem: nil)
+        expect(result).to contain_exactly(
+          an_object_with_fields(name: "/dev/sdb4"),
+          an_object_with_fields(name: "/dev/sdb7")
+        )
+      end
+
       it "filters by an array of values" do
         result = fake_devicegraph.filesystems.with(type: [ext4, ntfs])
         expect(result).to contain_exactly(

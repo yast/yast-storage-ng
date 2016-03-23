@@ -98,15 +98,19 @@ module Yast
           real_value = element.send(attr)
         rescue ::Storage::WrongNumberOfChildren
           # Checking for something that is not there
-          return false
+          return value.nil?
         end
 
+        # First of all, check for exact match
         begin
           return true if real_value == value
-        rescue TypeError
-          # Collections coming from SWIG perform strict type check for ==
-          raise unless value.is_a?(Enumerable)
+        # Objects coming from SWIG perform strict type check for ==. Thus they
+        # raise exceptions on type mismatch, instead of simply returning false
+        rescue TypeError, ArgumentError
+          return false unless value.is_a?(Enumerable)
         end
+
+        # As a second option, check for collection
         value.is_a?(Enumerable) && value.include?(real_value)
       end
     end
