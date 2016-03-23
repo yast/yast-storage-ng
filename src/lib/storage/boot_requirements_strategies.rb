@@ -21,3 +21,4 @@
 
 # Let's add here all the strategies
 require "storage/boot_requirements_strategies/default"
+require "storage/boot_requirements_strategies/uefi"
