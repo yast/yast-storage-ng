@@ -23,6 +23,7 @@
 require_relative "spec_helper"
 require "storage"
 require "storage/disks_list"
+require "storage/free_disk_space"
 require "storage/partitions_list"
 require "storage/filesystems_list"
 require "storage/free_disk_spaces_list"
@@ -59,6 +60,22 @@ describe "devices lists" do
       end
 
       it "filters by nil values" do
+        # In the moment of writing, there are no attributes that can return nil
+        # and that are easy to mock, let's invent one
+        class Yast::Storage::FreeDiskSpace
+          def partition_name
+            disk_name == "/dev/sdb" ? "/dev/sdb4" : nil
+          end
+        end
+
+        result = fake_devicegraph.free_disk_spaces.with(partition_name: nil)
+        expect(result).to contain_exactly(
+          an_object_with_fields(disk_name: "/dev/sda"),
+          an_object_with_fields(disk_name: "/dev/sdc")
+        )
+      end
+
+      it "considers not found libstorage attributes as nil" do
         result = fake_devicegraph.partitions.with(filesystem: nil)
         expect(result).to contain_exactly(
           an_object_with_fields(name: "/dev/sdb4"),
