@@ -67,7 +67,7 @@ fragile and file system dependent.
  * even if technicaly not needed, exactly one (any) primary partition must be flagged as bootable, else some BIOSes will complain
 - grub boot partition size: [64k, 1MB, Inf]
 - co-existence with other Linux systems problematic if grub boot partition is shared with them
-- ideally grub stage1 + stage2 below 2TB
+- ideally grub stage1 + stage2 + /boot below 2TB
 
      > *[mchang]* To be on safe side, yes. But I think stage1 should be able to reach
 stage2 beyond 2 TB limit when using gpt table.
@@ -95,17 +95,69 @@ stage2 beyond 2 TB limit when using gpt table.
 ### ppc64
 
 - dos/gpt
+
+KVM/LPAR
 - prep partition, if dos partition table, flag as bootable (active)
  * dos type 0x41, gpt type 9e1a2d38-c612-4316-aa26-8b49521e5a8b
  * used to embed grub2 stage1 + basic stage2 (slightly below 256k, atm)
  * size [256k, 1MB, 8MB]
-- ??? **OR** partition with /ppc/bootinfo.txt?
-- prep partition muste be on same disk we install the system ([bsc \#970152](https://bugzilla.suse.com/show_bug.cgi?id=970152))
+- prep partition must be on same disk we install the system ([bsc \#970152](https://bugzilla.suse.com/show_bug.cgi?id=970152))
+
+> dvaleev: 8 MB PReP
+
+OPAL/PowerNV/Bare metal
+> dvaleev:
+> OPAL/PowerNV/Bare metal (PowerNV in /proc/cpuinfo)
+>        no PReP is required. There is no stage1, grub2-mkconfig is sufficient.
+>        Firmware itself just creates a bootmenu based on grub2.cfg parse.
+>        no grub2-install
+
 
 ### aarch64
 
 - gpt
 - efi system partition, cf. **x86-efi**
+
+
+Summary
+=======
+General
+=======
+i.e. valid for all architectures (s390, see below)
+
+- create a /boot partition on raid, encrytpted LVM, LVM
+- size: [100MB, 200MB, 500MB]
+- order: /boot, swap, /
+- ext4
+
+x86-legacy
+----------
+- grub boot.img (stage 1) in MBR
+- install core.img (stage 1.5) in free space between partition table and 1. partition
+- if there isn't enough free space -> create additional partition
+- install all grub parts on same disk
+
+x86-efi
+-------
+if system efi partition is already there -> reuse it
+if not create:
+- /boot/efi
+- fat32
+- size: 33 MB, 200MB
+- limit: below 2TB
+
+ppc
+---
+KVM/LPAR
+- PreP partition dos type 0x41, flag as bootable
+                 gpt type 9e1a2d38-c612-4316-aa26-8b49521e5a8b
+
+OPAL/PowerNV/Bare metal
+- no PreP is required
+
+s390
+----
+- needs clarification
 
 
 ## External References
@@ -116,7 +168,7 @@ stage2 beyond 2 TB limit when using gpt table.
 - [PowerLinux Boot howto](https://www.ibm.com/developerworks/community/wikis/home?lang=en#!/wiki/W51a7ffcf4dfd_4b40_9d82_446ebc23c550/page/PowerLinux%20Boot%20howto)
 - [SLOF - Slimline Open Firmware](https://github.com/aik/SLOF/blob/master/slof/fs/packages/disk-label.fs)
 - [GRUB Documentation](https://www.gnu.org/software/grub/grub-documentation.html)
-
+- [GRUB wikipedia] (https://de.wikipedia.org/wiki/Grand_Unified_Bootloader)
 
 ## Internal Documentation
 
