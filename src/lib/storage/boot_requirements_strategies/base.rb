@@ -35,13 +35,28 @@ module Yast
         end
 
         def needed_partitions
-          raise NotImplementedError
+          volumes = PlannedVolumesList.new
+          volumes << boot_volume if boot_partition_needed?
+          volumes
         end
 
       protected
 
         attr_reader :settings
         attr_reader :disk_analyzer
+
+        def boot_partition_needed?
+          settings.use_lvm # || settings.encrypted
+        end
+
+        def boot_volume
+          vol = PlannedVolume.new("/boot", ::Storage::EXT4)
+          vol.min_size = DiskSize.MiB(100)
+          vol.max_size = DiskSize.MiB(500)
+          vol.desired_size = DiskSize.MiB(200)
+          vol.can_live_on_logical_volume = false
+          vol
+        end
       end
     end
   end
