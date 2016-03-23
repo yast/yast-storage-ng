@@ -60,6 +60,8 @@ describe "devices lists" do
       end
 
       it "filters by nil values" do
+        # rubocop:disable Style/ClassAndModuleChildren
+
         # In the moment of writing, there are no attributes that can return nil
         # and that are easy to mock, let's invent one
         class Yast::Storage::FreeDiskSpace
@@ -67,6 +69,7 @@ describe "devices lists" do
             disk_name == "/dev/sdb" ? "/dev/sdb4" : nil
           end
         end
+        # rubocop:enable Style/ClassAndModuleChildren
 
         result = fake_devicegraph.free_disk_spaces.with(partition_name: nil)
         expect(result).to contain_exactly(
