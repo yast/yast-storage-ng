@@ -123,6 +123,14 @@ loads the 'real' kernel.
 So initially we'll end up with two identical kernels, but this might change during a kernel
 update.
 
+	>> [ihno] No. It is due to the requirement to have btrfs as the root filesystem.
+zipl has a lilo like boot mechanism and btrfs may relocate blocks.
+So we need a filesystem which can be booted by zipl (-> ext2).
+
+	>> The next requirement was to have grub2 as a bootloader.
+
+	>> The kernel in /boot/zipl is only updated if it is needed for the boot process.
+
 
 ### ppc64
 
