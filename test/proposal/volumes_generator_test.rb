@@ -39,8 +39,9 @@ describe Yast::Storage::Proposal::VolumesGenerator do
     let(:btrfs) { ::Storage::FsType_BTRFS }
 
     let(:settings) { Yast::Storage::Proposal::Settings.new }
+    let(:analyzer) { instance_double("Yast::Storage::DiskAnalyzer") }
     let(:boot_checker) { instance_double("Yast::Storage::BootRequirementChecker") }
-    subject(:generator) { described_class.new(settings) }
+    subject(:generator) { described_class.new(settings, analyzer) }
 
     before do
       allow(Yast::Storage::BootRequirementsChecker).to receive(:new).and_return boot_checker
