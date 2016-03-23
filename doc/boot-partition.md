@@ -149,16 +149,22 @@ if not create:
 ppc
 ---
 KVM/LPAR
-- PreP partition dos type 0x41, flag as bootable
+- PReP partition dos type 0x41, flag as bootable
                  gpt type 9e1a2d38-c612-4316-aa26-8b49521e5a8b
 
 OPAL/PowerNV/Bare metal
-- no PreP is required
+- no PReP is required
 
 s390
 ----
 - needs clarification
 
+# Summary of discussion [2016-03-23]
+
+- provide information about /boot, PReP... for yast-bootloader
+  -> stored in/available from BootRequirementsChecker
+- DiskAnalyzer to be run before checking boot requirements to have info about existing partitions
+  -> param for BootRequirementsChecker
 
 ## External References
 
