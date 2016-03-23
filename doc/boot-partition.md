@@ -119,6 +119,47 @@ OPAL/PowerNV/Bare metal
 - efi system partition, cf. **x86-efi**
 
 
+Summary
+=======
+General
+=======
+i.e. valid for all architectures (s390, see below)
+
+- create a /boot partition on raid, encrytpted LVM, LVM
+- size: [100MB, 200MB, 500MB]
+- order: /boot, swap, /
+- ext4
+
+x86-legacy
+----------
+- grub boot.img (stage 1) in MBR
+- install core.img (stage 1.5) in free space between partition table and 1. partition
+- if there isn't enough free space -> create additional partition
+- install all grub parts on same disk
+
+x86-efi
+-------
+if system efi partition is already there -> reuse it
+if not create:
+- /boot/efi
+- fat32
+- size: 33 MB, 200MB
+- limit: below 2TB
+
+ppc
+---
+KVM/LPAR
+- PreP partition dos type 0x41, flag as bootable
+                 gpt type 9e1a2d38-c612-4316-aa26-8b49521e5a8b
+
+OPAL/PowerNV/Bare metal
+- no PreP is required
+
+s390
+----
+- needs clarification
+
+
 ## External References
 
 - [UEFI Spec Version 2.6](http://www.uefi.org/sites/default/files/resources/UEFI%20Spec%202_6.pdf)
@@ -127,7 +168,7 @@ OPAL/PowerNV/Bare metal
 - [PowerLinux Boot howto](https://www.ibm.com/developerworks/community/wikis/home?lang=en#!/wiki/W51a7ffcf4dfd_4b40_9d82_446ebc23c550/page/PowerLinux%20Boot%20howto)
 - [SLOF - Slimline Open Firmware](https://github.com/aik/SLOF/blob/master/slof/fs/packages/disk-label.fs)
 - [GRUB Documentation](https://www.gnu.org/software/grub/grub-documentation.html)
-
+- [GRUB wikipedia] (https://de.wikipedia.org/wiki/Grand_Unified_Bootloader)
 
 ## Internal Documentation
 
