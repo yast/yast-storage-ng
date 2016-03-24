@@ -30,28 +30,28 @@ require "storage/disk_size"
 module Yast
   module Storage
     module BootRequirementsStrategies
-      class UEFI < Base
+      class PReP < Base
         def needed_partitions
           volumes = super
-          volumes << efi_volume if efi_partition_missing?
+          volumes << prep_volume if prep_partition_missing?
           volumes
         end
 
       protected
 
-        def efi_partition_missing?
-          true	# #efi_partitions not implemented yet
-          # disk_analyzer.efi_partitions.empty?
+        def prep_partition_missing?
+          true	# #prep_partitions not implemented yet
+          # disk_analyzer.prep_partitions.empty?
         end
 
-        def efi_volume
-          # TODO: we need to pass partition type somehow (EFI system partition, ID_GPT_BIOS (?))
-          vol = PlannedVolume.new("/boot/efi", ::Storage::FsType_VFAT)
-          vol.min_size = DiskSize.MiB(33)
-          vol.max_size = DiskSize.unlimited
-          vol.desired_size = DiskSize.MiB(500)
+        def prep_volume
+          # TODO: we need to pass partition type somehow (PReP partition, ID_PPC_PREP, ID_GPT_PREP)
+          # TODO: hoe to really pass 'no mount point' and 'no fs'?
+          vol = PlannedVolume.new("", ::Storage::FsType_UNKNOWN)
+          vol.min_size = DiskSize.MiB(1)
+          vol.max_size = DiskSize.MiB(8)
+          vol.desired_size = DiskSize.MiB(1)
           vol.can_live_on_logical_volume = false
-          # TODO: additional requirement - position below 2TB 
           vol
         end
       end

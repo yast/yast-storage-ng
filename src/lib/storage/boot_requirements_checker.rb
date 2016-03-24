@@ -66,13 +66,16 @@ module Yast
         # TODO: don't use Arch, but libstorage detection
         if Arch.i386 || Arch.x86_64
           # if UEFI
-          #   @strategy = SomeStrategy.new(settings)
+          # @strategy = BootRequirementsStrategies::UEFI.new(settings, disk_analyzer)
           # else
-          #   @strategy = AnotherOne.new(settings)
+          # @strategy = BootRequirementsStrategies::Default.new(settings, disk_analyzer)
           # end
         elsif Arch.s390
+          @strategy = BootRequirementsStrategies::ZIPL.new(settings, disk_analyzer)
         elsif Arch.ppc64
+          @strategy = BootRequirementsStrategies::PReP.new(settings, disk_analyzer)
         elsif Arch.aarch64
+          @strategy = BootRequirementsStrategies::UEFI.new(settings, disk_analyzer)
         else
           @strategy = BootRequirementsStrategies::Default.new(settings, disk_analyzer)
         end

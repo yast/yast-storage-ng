@@ -30,28 +30,26 @@ require "storage/disk_size"
 module Yast
   module Storage
     module BootRequirementsStrategies
-      class UEFI < Base
+      class ZIPL < Base
         def needed_partitions
           volumes = super
-          volumes << efi_volume if efi_partition_missing?
+          volumes << zipl_volume if zipl_partition_missing?
           volumes
         end
 
       protected
 
-        def efi_partition_missing?
-          true	# #efi_partitions not implemented yet
-          # disk_analyzer.efi_partitions.empty?
+        def zipl_partition_missing?
+          true	# #zipl_partitions not implemented yet
+          # disk_analyzer.zipl_partitions.empty?
         end
 
-        def efi_volume
-          # TODO: we need to pass partition type somehow (EFI system partition, ID_GPT_BIOS (?))
-          vol = PlannedVolume.new("/boot/efi", ::Storage::FsType_VFAT)
-          vol.min_size = DiskSize.MiB(33)
+        def zipl_volume
+          vol = PlannedVolume.new("/boot/zipl", ::Storage::FsType_EXT4)
+          vol.min_size = DiskSize.MiB(100)
           vol.max_size = DiskSize.unlimited
-          vol.desired_size = DiskSize.MiB(500)
+          vol.desired_size = DiskSize.MiB(200)
           vol.can_live_on_logical_volume = false
-          # TODO: additional requirement - position below 2TB 
           vol
         end
       end

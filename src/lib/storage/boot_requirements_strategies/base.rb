@@ -50,7 +50,7 @@ module Yast
         end
 
         def boot_volume
-          vol = PlannedVolume.new("/boot", ::Storage::EXT4)
+          vol = PlannedVolume.new("/boot", ::Storage::FsType_EXT4)
           vol.min_size = DiskSize.MiB(100)
           vol.max_size = DiskSize.MiB(500)
           vol.desired_size = DiskSize.MiB(200)
