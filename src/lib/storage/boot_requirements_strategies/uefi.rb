@@ -30,6 +30,7 @@ require "storage/disk_size"
 module Yast
   module Storage
     module BootRequirementsStrategies
+      # Strategy to calculate boot requirements in UEFI systems
       class UEFI < Base
         def needed_partitions
           volumes = super
@@ -50,7 +51,7 @@ module Yast
           vol.max_size = DiskSize.unlimited
           vol.desired_size = DiskSize.MiB(500)
           vol.can_live_on_logical_volume = false
-          # TODO: additional requirement - position below 2TB 
+          # TODO: additional requirement - position below 2TB
           vol
         end
       end

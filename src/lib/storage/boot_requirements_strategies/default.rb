@@ -30,6 +30,8 @@ require "storage/disk_size"
 module Yast
   module Storage
     module BootRequirementsStrategies
+      # Strategy to calculate the boot requirements in a legacy system (x86
+      # without EFI)
       class Default < Base
       end
     end

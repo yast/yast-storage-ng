@@ -26,7 +26,7 @@ require "storage/boot_requirements_checker"
 require "storage/refinements/size_casts"
 
 def find_vol(mount_point, volumes)
-  volumes.find {|p| p.mount_point == mount_point }
+  volumes.find { |p| p.mount_point == mount_point }
 end
 
 describe Yast::Storage::BootRequirementsChecker do
@@ -90,7 +90,7 @@ describe Yast::Storage::BootRequirementsChecker do
 
           context "if there is already an EFI partition" do
             let(:efi_partitions) { ["/dev/sda1"] }
-          
+
             it "does not require any particular volume" do
               expect(checker.needed_partitions).to be_empty
             end
@@ -139,7 +139,7 @@ describe Yast::Storage::BootRequirementsChecker do
 
           context "if there is already an EFI partition" do
             let(:efi_partitions) { ["/dev/sda1"] }
-          
+
             it "requires only a /boot partition" do
               expect(checker.needed_partitions).to contain_exactly(
                 an_object_with_fields(mount_point: "/boot")

@@ -26,6 +26,8 @@ require "yast"
 module Yast
   module Storage
     module BootRequirementsStrategies
+      # Base class for the strategies used to calculate the boot partitioning
+      # requirements
       class Base
         include Yast::Logger
 

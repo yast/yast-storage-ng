@@ -52,4 +52,3 @@ puts "\n---  needed  ---"
 checker = Yast::Storage::BootRequirementsChecker.new(settings, disk_analyzer)
 needed = checker.needed_partitions
 pp(needed)
-
