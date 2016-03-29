@@ -19,8 +19,7 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-# Let's add here all the strategies
-require "storage/boot_requirements_strategies/default"
+require "storage/boot_requirements_strategies/legacy"
 require "storage/boot_requirements_strategies/uefi"
 require "storage/boot_requirements_strategies/prep"
 require "storage/boot_requirements_strategies/zipl"

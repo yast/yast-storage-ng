@@ -68,7 +68,8 @@ module Yast
           @strategy = BootRequirementsStrategies::PReP.new(settings, disk_analyzer)
         end
 
-        @strategy ||= BootRequirementsStrategies::Default.new(settings, disk_analyzer)
+        # Fallback to Legacy as default
+        @strategy ||= BootRequirementsStrategies::Legacy.new(settings, disk_analyzer)
       end
     end
   end

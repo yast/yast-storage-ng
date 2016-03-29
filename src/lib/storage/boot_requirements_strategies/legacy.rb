@@ -32,7 +32,7 @@ module Yast
     module BootRequirementsStrategies
       # Strategy to calculate the boot requirements in a legacy system (x86
       # without EFI)
-      class Default < Base
+      class Legacy < Base
       end
     end
   end
