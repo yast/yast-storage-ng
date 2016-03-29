@@ -40,8 +40,7 @@ module Yast
       protected
 
         def efi_partition_missing?
-          true	# #efi_partitions not implemented yet
-          # disk_analyzer.efi_partitions.empty?
+          disk_analyzer.efi_partitions.empty?
         end
 
         def efi_volume
