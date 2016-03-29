@@ -22,10 +22,8 @@
 # find current contact information at www.suse.com.
 
 require "yast"
-require "storage/planned_volume"
-require "storage/planned_volumes_list"
-require "storage/disk_size"
 require "storage/boot_requirements_strategies"
+require "storage/storage_manager"
 
 module Yast
   module Storage
@@ -42,7 +40,6 @@ module Yast
       include Yast::Logger
 
       def initialize(settings, disk_analyzer)
-        Yast.import "Arch"
         @settings = settings
         @disk_analyzer = disk_analyzer
       end
@@ -56,30 +53,22 @@ module Yast
       attr_reader :settings
       attr_reader :disk_analyzer
 
+      def arch
+        @arch ||= StorageManager.instance.arch
+      end
+
       def strategy
         return @strategy unless @strategy.nil?
 
-        # TODO: until we implement real strategies, let's always return Default
-        @strategy = BootRequirementsStrategies::Default.new(settings, disk_analyzer)
-        return @strategy
-
-        # TODO: don't use Arch, but libstorage detection
-        if Arch.i386 || Arch.x86_64
-          # if UEFI
-          # @strategy = BootRequirementsStrategies::UEFI.new(settings, disk_analyzer)
-          # else
-          # @strategy = BootRequirementsStrategies::Default.new(settings, disk_analyzer)
-          # end
-        elsif Arch.s390
-          @strategy = BootRequirementsStrategies::ZIPL.new(settings, disk_analyzer)
-        elsif Arch.ppc64
-          @strategy = BootRequirementsStrategies::PReP.new(settings, disk_analyzer)
-        elsif Arch.aarch64
+        if arch.x86? && arch.efiboot?
           @strategy = BootRequirementsStrategies::UEFI.new(settings, disk_analyzer)
-        else
-          @strategy = BootRequirementsStrategies::Default.new(settings, disk_analyzer)
+        elsif arch.s390?
+          @strategy = BootRequirementsStrategies::ZIPL.new(settings, disk_analyzer)
+        elsif arch.ppc64?
+          @strategy = BootRequirementsStrategies::PReP.new(settings, disk_analyzer)
         end
-        @strategy
+
+        @strategy ||= BootRequirementsStrategies::Default.new(settings, disk_analyzer)
       end
     end
   end
