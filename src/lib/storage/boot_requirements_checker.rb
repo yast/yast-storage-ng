@@ -64,7 +64,7 @@ module Yast
           @strategy = BootRequirementsStrategies::UEFI.new(settings, disk_analyzer)
         elsif arch.s390?
           @strategy = BootRequirementsStrategies::ZIPL.new(settings, disk_analyzer)
-        elsif arch.ppc64?
+        elsif arch.ppc?
           @strategy = BootRequirementsStrategies::PReP.new(settings, disk_analyzer)
         end
 
