@@ -30,6 +30,7 @@ require "storage/disk_size"
 module Yast
   module Storage
     module BootRequirementsStrategies
+      # Strategy to calculate boot requirements in systems using PReP
       class PReP < Base
         def needed_partitions
           volumes = super

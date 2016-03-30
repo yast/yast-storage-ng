@@ -25,6 +25,7 @@ require "yast"
 require "fileutils"
 require "storage"
 require "storage/refinements/disk"
+require "storage/refinements/devicegraph_lists"
 
 module Yast
   module Storage
@@ -43,6 +44,7 @@ module Yast
     class DiskAnalyzer
       include Yast::Logger
       using Refinements::Disk
+      using Refinements::DevicegraphLists
 
       LINUX_PARTITION_IDS =
         [
@@ -70,7 +72,7 @@ module Yast
       DEFAULT_DISK_CHECK_LIMIT = 10
 
       attr_reader :installation_disks, :candidate_disks
-      attr_reader :windows_partitions, :linux_partitions
+      attr_reader :windows_partitions, :linux_partitions, :efi_partitions
       attr_reader :devicegraph
       attr_accessor :disk_check_limit
 
@@ -96,6 +98,7 @@ module Yast
         @installation_disks = find_installation_disks
         @candidate_disks    = find_candidate_disks
         @linux_partitions   = find_linux_partitions
+        @efi_partitions     = find_linux_partitions
 
         if @linux_partitions.empty?
           @windows_partitions = find_windows_partitions
@@ -110,6 +113,7 @@ module Yast
         log.info("Installation disks: #{@installation_disks}")
         log.info("Candidate    disks: #{@candidate_disks}")
         log.info("Linux   partitions: #{@linux_partitions}")
+        log.info("EFI     partitions: #{@efi_partitions}")
         log.info("Windows partitions: #{@windows_partitions}")
       end
 
@@ -142,6 +146,23 @@ module Yast
       #
       def find_candidate_disks
         dev_names(candidate_disk_objects)
+      end
+
+      # Find partitions from any of the candidate disks that can be used as
+      # EFI system partitions.
+      #
+      # Checks for the partition id to return all potential partitions.
+      # Checking for content_info.efi? would only detect partitions that are
+      # going to be effectively used.
+      #
+      # @return [Array<string>] names of efi partitions
+      #
+      def find_efi_partitions
+        disks = devicegraph.disks.with(name: candidate_disks)
+        # TODO: ID_EFI does not exists in libstorage yet
+        # partitions = disks.partitions.with(id: ::Storage::ID_EFI)
+        partitions = disks.partitions.with(id: 0xEF)
+        partitions.map(&:name)
       end
 
       # Array with all disks in the devicegraph

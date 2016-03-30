@@ -24,6 +24,7 @@ require_relative "spec_helper"
 require "storage"
 require "storage/proposal"
 require "storage/refinements/test_devicegraph"
+require "storage/boot_requirements_checker"
 
 describe Yast::Storage::Proposal do
   describe "#propose" do
@@ -32,9 +33,13 @@ describe Yast::Storage::Proposal do
     before do
       fake_scenario(scenario)
       fake_to_probed
+      allow(Yast::Storage::BootRequirementsChecker).to receive(:new).and_return boot_checker
+      allow(boot_checker).to receive(:needed_partitions).and_return []
     end
 
     subject(:proposal) { described_class.new(settings: settings) }
+
+    let(:boot_checker) { instance_double("Yast::Storage::BootRequirementChecker") }
 
     let(:settings) do
       settings = Yast::Storage::Proposal::Settings.new
