@@ -129,6 +129,7 @@ Summary
 
 i.e. valid for all architectures (s390, see below)
 
+- when using gpt, never use gpt-sync-mbr / hybrid mbr; only standard protective mbr.
 - create a /boot partition on raid, encrytpted LVM, LVM
 - size: [100MB, 200MB, 500MB]
 - order: /boot, swap, /
@@ -140,7 +141,7 @@ i.e. valid for all architectures (s390, see below)
 
 - required size for grub embedding (currently): 84 kB; to be safe, check for >= 256 kB
 - if dos partition table
-    - embed in unused space before 1st partition
+    - embed in unused space before 1st partition (mbr gap)
     - fail if not enough space
     - note: grub-install may later fail if it detects the area is used by some other weird software
 - if gpt partition table
@@ -149,9 +150,10 @@ i.e. valid for all architectures (s390, see below)
         - size: [1MB, 2MB, 100MB]
         - no fs
         - no mount point
-  - if existing BIOS boot partition is too small, delete and re-create
-  - grub will use 1st BIOS boot partition it finds, co-op with other grub instances on same disk not possible
+    - if existing BIOS boot partition is too small, ~~delete and re-create~~ cross your fingers
+    - grub will use 1st BIOS boot partition it finds, co-op with other grub instances on same disk not possible
 - note: `yast bootloader` will be responsible for boot flag handling, if necessary
+    - ensure exactly one partition entry (for gpt: in protective mbr) is tagged as `active`
   
 ## x86-efi
 
@@ -161,7 +163,7 @@ i.e. valid for all architectures (s390, see below)
     - size: [33MB, 200MB, 1GB]
     - fat32
     - mount at /boot/efi
-- if existing efi system partition is too small, delete and re-create
+- if existing efi system partition is too small, ~~delete and re-create~~ cross your fingers
 
 ppc
 ---
