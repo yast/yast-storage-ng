@@ -1,6 +1,7 @@
-# Boot Partition Layout / Restrictions For Storage Proposal
+Boot Partition Layout / Restrictions For Storage Proposal
+=========================================================
 
-[Revision 2016-03-14]
+[Revision 2016-03-30]
 
 #### Notes:
 
@@ -96,7 +97,8 @@ stage2 beyond 2 TB limit when using gpt table.
 
 - dos/gpt
 
-KVM/LPAR
+- KVM/LPAR
+
 - prep partition, if dos partition table, flag as bootable (active)
  * dos type 0x41, gpt type 9e1a2d38-c612-4316-aa26-8b49521e5a8b
  * used to embed grub2 stage1 + basic stage2 (slightly below 256k, atm)
@@ -105,7 +107,8 @@ KVM/LPAR
 
 > dvaleev: 8 MB PReP
 
-OPAL/PowerNV/Bare metal
+- OPAL/PowerNV/Bare metal
+
 > dvaleev:
 > OPAL/PowerNV/Bare metal (PowerNV in /proc/cpuinfo)
 >        no PReP is required. There is no stage1, grub2-mkconfig is sufficient.
@@ -121,30 +124,46 @@ OPAL/PowerNV/Bare metal
 
 Summary
 =======
-General
-=======
+
+## General
+
 i.e. valid for all architectures (s390, see below)
 
+- when using gpt, never use gpt-sync-mbr / hybrid mbr; only standard protective mbr.
 - create a /boot partition on raid, encrytpted LVM, LVM
 - size: [100MB, 200MB, 500MB]
 - order: /boot, swap, /
 - ext4
 
-x86-legacy
-----------
-- grub boot.img (stage 1) in MBR
-- install core.img (stage 1.5) in free space between partition table and 1. partition
-- if there isn't enough free space -> create additional partition
-- install all grub parts on same disk
+## x86-legacy
 
-x86-efi
--------
-if system efi partition is already there -> reuse it
-if not create:
-- /boot/efi
-- fat32
-- size: 33 MB, 200MB
-- limit: below 2TB
+*[this assumes grub will be installed into mbr]*
+
+- required size for grub embedding (currently): 84 kB; to be safe, check for >= 256 kB
+- if dos partition table
+    - embed in unused space before 1st partition (mbr gap)
+    - fail if not enough space
+    - note: grub-install may later fail if it detects the area is used by some other weird software
+- if gpt partition table
+    - BIOS boot partition must exist (gpt type 21686148-6449-6e6f-744e-656564454649); parted: set flag `bios_grub` to `on`
+    - if it doesn't exist, create:
+        - size: [1MB, 2MB, 100MB]
+        - no fs
+        - no mount point
+    - if existing BIOS boot partition is too small, ~~delete and re-create~~ cross your fingers
+    - grub will use 1st BIOS boot partition it finds, co-op with other grub instances on same disk not possible
+- note: `yast bootloader` will be responsible for boot flag handling, if necessary
+    - ensure exactly one partition entry (for gpt: in protective mbr) is tagged as `active`
+  
+## x86-efi
+
+- efi system partition required; dos type 0xef, gpt type c12a7328-f81f-11d2-ba4b-00a0c93ec93b
+- reuse existing partition
+- if it doesn't exist, create:
+    - size: [33MB, 200MB, 1GB]
+    - fat32
+    - mount at /boot/efi
+- if existing efi system partition is too small, ~~delete and re-create~~ cross your fingers
 
 ppc
 ---
