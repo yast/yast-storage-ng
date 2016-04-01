@@ -20,6 +20,8 @@
 # find current contact information at www.suse.com.
 
 require "yast"
+require "storage/storage_manager"
+require "storage/disk_analyzer"
 require "storage/proposal/exceptions"
 require "storage/proposal/settings"
 require "storage/proposal/volumes_generator"
@@ -75,18 +77,27 @@ module Yast
         raise UnexceptedCallError if proposed?
         settings.freeze
         @proposed = true
+        initial_graph = StorageManager.instance.probed
+        disk_analyzer.analyze(initial_graph)
         @volumes = volumes_generator.volumes
-        @devices = devicegraph_generator.devicegraph(volumes)
+        @devices = devicegraph_generator.devicegraph(volumes, initial_graph, disk_analyzer)
       end
 
     protected
 
       def volumes_generator
-        @volumes_generator ||= VolumesGenerator.new(settings)
+        @volumes_generator ||= VolumesGenerator.new(settings, disk_analyzer)
       end
 
       def devicegraph_generator
         @devicegraph_generator ||= DevicegraphGenerator.new(settings)
+      end
+
+      # Disk analyzer used to analyze the initial devigraph
+      #
+      # @return [DiskAnalyzer]
+      def disk_analyzer
+        @disk_analyzer ||= DiskAnalyzer.new
       end
     end
   end

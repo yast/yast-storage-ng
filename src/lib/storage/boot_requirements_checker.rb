@@ -22,9 +22,8 @@
 # find current contact information at www.suse.com.
 
 require "yast"
-require "storage/planned_volume"
-require "storage/planned_volumes_list"
-require "storage/disk_size"
+require "storage/boot_requirements_strategies"
+require "storage/storage_manager"
 
 module Yast
   module Storage
@@ -40,57 +39,37 @@ module Yast
     class BootRequirementsChecker
       include Yast::Logger
 
-      def initialize(settings)
-        Yast.import "Arch"
+      def initialize(settings, disk_analyzer)
         @settings = settings
+        @disk_analyzer = disk_analyzer
       end
 
       def needed_partitions
-        boot_volumes = []
-        boot_volumes << efi_boot_partition if efi_boot_partition_needed?
-        boot_volumes << boot_partition     if boot_partition_needed?
-        boot_volumes << prep_partition     if prep_partition_needed?
-        PlannedVolumesList.new(boot_volumes)
+        strategy.needed_partitions
       end
 
-      def boot_partition_needed?
-        return true if @settings.use_lvm && @settings.encrypt_volume_group
-        false
+    protected
+
+      attr_reader :settings
+      attr_reader :disk_analyzer
+
+      def arch
+        @arch ||= StorageManager.instance.arch
       end
 
-      def efi_boot_partition_needed?
-        # TO DO
-        false
-      end
+      def strategy
+        return @strategy unless @strategy.nil?
 
-      def prep_partition_needed?
-        # TO DO
-        Arch.ppc
-      end
+        if arch.x86? && arch.efiboot?
+          @strategy = BootRequirementsStrategies::UEFI.new(settings, disk_analyzer)
+        elsif arch.s390?
+          @strategy = BootRequirementsStrategies::ZIPL.new(settings, disk_analyzer)
+        elsif arch.ppc?
+          @strategy = BootRequirementsStrategies::PReP.new(settings, disk_analyzer)
+        end
 
-    private
-
-      def boot_partition
-        vol = PlannedVolume.new("/boot", ::Storage::EXT4)
-        vol.min_size = DiskSize.MiB(512) # TO DO
-        vol.max_size = DiskSize.MiB(512) # TO DO
-        vol.desired_size = vol.min_size
-        vol.can_live_on_logical_volume = false
-        vol
-      end
-
-      def efi_boot_partition
-        vol = PlannedVolume.new("/boot/efi", ::Storage::VFAT)
-        vol.can_live_on_logical_volume = false
-        # TO DO
-        vol
-      end
-
-      def make_prep_partition
-        vol = PlannedVolume.new("PReP", ::Storage::VFAT)
-        vol.can_live_on_logical_volume = false
-        # TO DO
-        vol
+        # Fallback to Legacy as default
+        @strategy ||= BootRequirementsStrategies::Legacy.new(settings, disk_analyzer)
       end
     end
   end

@@ -21,8 +21,6 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "storage/storage_manager"
-require "storage/disk_analyzer"
 require "storage/proposal/space_maker"
 require "storage/proposal/partition_creator"
 
@@ -45,13 +43,14 @@ module Yast
         # @param volumes [PlannedVolumesList] volumes to accommodate
         # @param initial_graph [::Storage::Devicegraph] initial devicegraph
         #           (typically the representation of the current system)
+        # @param disk_analyzer [DiskAnalyzer] analysis of the initial_graph
+        #
         # @return [::Storage::Devicegraph]
         # @raise Proposal::NoDiskSpaceError if it was not possible to propose a
         #           valid devicegraph
-        def devicegraph(volumes, initial_graph: StorageManager.instance.probed)
-          disk_analyzer.analyze(initial_graph)
-          graph = provide_space(volumes, initial_graph)
-          graph = create_partitions(volumes, graph)
+        def devicegraph(volumes, initial_graph, disk_analyzer)
+          graph = provide_space(volumes, initial_graph, disk_analyzer)
+          graph = create_partitions(volumes, graph, disk_analyzer)
           graph
         end
 
@@ -63,13 +62,6 @@ module Yast
           !!@got_desired_space
         end
 
-        # Disk analyzer used to analyze the initial devigraph
-        #
-        # @return [DiskAnalyzer]
-        def disk_analyzer
-          @disk_analyzer ||= DiskAnalyzer.new
-        end
-
         # Provides free disk space in the proposal devicegraph to fit the volumes
         # in. First it tries with the desired space and then with the minimum one
         #
@@ -78,8 +70,10 @@ module Yast
         # @param volumes [PlannedVolumesList] set of volumes to make space for
         # @param initial_graph [::Storage::Devicegraph] proposal-refined initial
         #           devicegraph (@see RefinedDevicegraph)
+        # @param disk_analyzer [DiskAnalyzer] analysis of the initial_graph
+        #
         # @return [::Storage::Devicegraph]
-        def provide_space(volumes, initial_graph)
+        def provide_space(volumes, initial_graph, disk_analyzer)
           space_maker = SpaceMaker.new(initial_graph, disk_analyzer, settings)
           self.got_desired_space = false
           begin
@@ -102,8 +96,10 @@ module Yast
         # @param volumes [PlannedVolumesList] set of volumes to create
         # @param initial_graph [::Storage::Devicegraph] proposal-refined initial
         #           devicegraph (@see RefinedDevicegraph)
+        # @param disk_analyzer [DiskAnalyzer]
+        #
         # @return [::Storage::Devicegraph]
-        def create_partitions(volumes, initial_graph)
+        def create_partitions(volumes, initial_graph, disk_analyzer)
           partition_creator = PartitionCreator.new(initial_graph, disk_analyzer, settings)
           target = got_desired_space? ? :desired : :min
           partition_creator.create_partitions(volumes, target)

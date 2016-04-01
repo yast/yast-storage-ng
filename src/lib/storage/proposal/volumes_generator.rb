@@ -40,8 +40,9 @@ module Yast
 
         DEFAULT_SWAP_SIZE = DiskSize.GiB(2)
 
-        def initialize(settings)
+        def initialize(settings, disk_analyzer)
           @settings = settings
+          @disk_analyzer = disk_analyzer
         end
 
         # Volumes that needs to be created to satisfy the settings
@@ -53,11 +54,13 @@ module Yast
 
       protected
 
+        attr_reader :disk_analyzer
+
         # Volumes needed by the bootloader
         #
         # @return [Array<PlannedVolumes>]
         def boot_volumes
-          checker = BootRequirementsChecker.new(settings)
+          checker = BootRequirementsChecker.new(settings, disk_analyzer)
           checker.needed_partitions
         end
 
