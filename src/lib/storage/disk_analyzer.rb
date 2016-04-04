@@ -159,9 +159,7 @@ module Yast
       #
       def find_efi_partitions
         disks = devicegraph.disks.with(name: candidate_disks)
-        # TODO: ID_EFI does not exists in libstorage yet
-        # partitions = disks.partitions.with(id: ::Storage::ID_EFI)
-        partitions = disks.partitions.with(id: 0xEF)
+        partitions = disks.partitions.with(id: ::Storage::ID_EFI)
         partitions.map(&:name)
       end
 

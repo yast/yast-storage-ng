@@ -30,9 +30,10 @@ module Yast
     # its constraints
     #
     class PlannedVolume
-      attr_accessor :mount_point, :filesystem_type
+      attr_accessor :mount_point, :filesystem_type, :partition_id
       attr_accessor :size, :min_size, :max_size, :desired_size, :weight
       attr_accessor :can_live_on_logical_volume, :logical_volume_name
+      attr_accessor :max_start_offset
 
       alias_method :desired, :desired_size
       alias_method :min, :min_size
@@ -55,10 +56,12 @@ module Yast
       def initialize(mount_point, filesystem_type = nil)
         @mount_point = mount_point
         @filesystem_type = filesystem_type
+        @partition_id = nil
         @size         = DiskSize.zero
         @min_size     = DiskSize.zero
         @max_size     = DiskSize.unlimited
         @desired_size = DiskSize.unlimited
+        @max_start_offset = nil
         @weight       = 0 # For distributing extra space if desired is unlimited
         @can_live_on_logical_volume = false
         @logical_volume_name = nil

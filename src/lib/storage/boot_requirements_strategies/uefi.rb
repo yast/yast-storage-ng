@@ -45,13 +45,14 @@ module Yast
         end
 
         def efi_volume
-          # TODO: we need to pass partition type somehow (EFI system partition, ID_GPT_BIOS (?))
           vol = PlannedVolume.new("/boot/efi", ::Storage::FsType_VFAT)
+          # So far we are always using msdos partition ids
+          vol.partition_id = ::Storage::ID_EFI
           vol.min_size = DiskSize.MiB(33)
           vol.max_size = DiskSize.unlimited
           vol.desired_size = DiskSize.MiB(500)
           vol.can_live_on_logical_volume = false
-          # TODO: additional requirement - position below 2TB
+          vol.max_start_offset = DiskSize.TiB(2)
           vol
         end
       end
