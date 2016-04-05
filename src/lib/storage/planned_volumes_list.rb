@@ -105,7 +105,7 @@ module Yast
       # @param attr [Symbol] name of the attribute to use for sorting
       # @param nils_first [Boolean] whether to put volumes with a value of nil
       #         at the beginning of the result
-      # @param descending [Boolean] whether to use descending option
+      # @param descending [Boolean] whether to use descending order
       # @return [Array]
       def sort_by_attr(attr, nils_first: false, descending: false)
         @volumes.sort do |one, other|
