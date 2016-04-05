@@ -213,10 +213,16 @@ module Yast
 
         # Creates a partition and the corresponding filesystem for each volume
         #
+        # It tries to honor the value of #max_start_offset for each volume, but
+        # it does not raise an exception if that particular requirement is
+        # impossible to fulfill, since it's usually more a recommendation than a
+        # hard limit.
+        #
         # @param volumes [Array<PlannedVolume>]
         def create_volumes_partitions(volumes)
-          volumes.each do |vol|
-            partition_id = vol.mount_point == "swap" ? ::Storage::ID_SWAP : ::Storage::ID_LINUX
+          volumes.sort_by_attr(:max_start_offset).each do |vol|
+            partition_id = vol.partition_id
+            partition_id ||= vol.mount_point == "swap" ? ::Storage::ID_SWAP : ::Storage::ID_LINUX
             partition = create_partition(vol, partition_id, free_spaces.first)
             make_filesystem(partition, vol)
           end

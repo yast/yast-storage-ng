@@ -86,6 +86,11 @@ describe Yast::Storage::BootRequirementsChecker do
               efi_part = find_vol("/boot/efi", checker.needed_partitions)
               expect(efi_part.desired_size).to eq 500.MiB
             end
+
+            it "requires /boot/efi to be close enough to the beginning of disk" do
+              efi_part = find_vol("/boot/efi", checker.needed_partitions)
+              expect(efi_part.max_start_offset).to eq 2.TiB
+            end
           end
 
           context "if there is already an EFI partition" do
@@ -122,6 +127,11 @@ describe Yast::Storage::BootRequirementsChecker do
             it "recommends /boot/efi to be 500 MiB" do
               efi_part = find_vol("/boot/efi", checker.needed_partitions)
               expect(efi_part.desired_size).to eq 500.MiB
+            end
+
+            it "requires /boot/efi to be close enough to the beginning of disk" do
+              efi_part = find_vol("/boot/efi", checker.needed_partitions)
+              expect(efi_part.max_start_offset).to eq 2.TiB
             end
 
             it "requires /boot to be ext4 out of the LVM with at least 100 MiB" do

@@ -97,6 +97,47 @@ module Yast
         self
       end
       alias_method :<<, :push
+
+      # Volumes sorted by a given attribute
+      #
+      # It handles nicely situations with nil values for the attribute.
+      #
+      # @param attr [Symbol] name of the attribute to use for sorting
+      # @param nils_first [Boolean] whether to put volumes with a value of nil
+      #         at the beginning of the result
+      # @param descending [Boolean] whether to use descending order
+      # @return [Array]
+      def sort_by_attr(attr, nils_first: false, descending: false)
+        @volumes.sort do |one, other|
+          one_value = one.send(attr)
+          other_value = other.send(attr)
+          if one_value.nil? || other_value.nil?
+            compare_with_nil(one_value, other_value, nils_first)
+          else
+            compare_values(one_value, other_value, descending)
+          end
+        end
+      end
+
+    private
+
+      def compare_values(one, other, descending)
+        if descending
+          other <=> one
+        else
+          one <=> other
+        end
+      end
+
+      def compare_with_nil(one, other, nils_first)
+        if one.nil? && other.nil?
+          0
+        elsif nils_first
+          one.nil? ? -1 : 1
+        else
+          one.nil? ? 1 : -1
+        end
+      end
     end
   end
 end
