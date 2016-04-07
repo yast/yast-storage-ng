@@ -32,6 +32,8 @@ module Yast
       end
       class UnexpectedCallError < Error
       end
+      class NoSuitableDeviceError < Error
+      end
     end
   end
 end

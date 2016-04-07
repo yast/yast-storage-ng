@@ -29,7 +29,7 @@ require "storage/refinements/size_casts"
 require "storage/boot_requirements_checker"
 
 describe Yast::Storage::Proposal::VolumesGenerator do
-  describe "#volumes" do
+  describe "#all_volumes" do
     using Yast::Storage::Refinements::SizeCasts
 
     # Just to shorten
@@ -56,11 +56,11 @@ describe Yast::Storage::Proposal::VolumesGenerator do
     end
 
     it "returns a list of volumes" do
-      expect(subject.volumes).to be_a Yast::Storage::PlannedVolumesList
+      expect(subject.all_volumes).to be_a Yast::Storage::PlannedVolumesList
     end
 
     it "includes the volumes needed by BootRequirementChecker" do
-      expect(subject.volumes).to include(
+      expect(subject.all_volumes).to include(
         an_object_with_fields(mount_point: "/one_boot", filesystem_type: xfs),
         an_object_with_fields(mount_point: "/other_boot", filesystem_type: vfat)
       )
@@ -72,7 +72,7 @@ describe Yast::Storage::Proposal::VolumesGenerator do
       end
 
       it "includes a big swap volume" do
-        expect(subject.volumes).to include(
+        expect(subject.all_volumes).to include(
           # This value is currently hard-coded
           an_object_with_fields(mount_point: "swap", min_size: 8.GiB, max_size: 8.GiB)
         )
@@ -85,7 +85,7 @@ describe Yast::Storage::Proposal::VolumesGenerator do
       end
 
       it "includes a small swap volume" do
-        expect(subject.volumes).to include(
+        expect(subject.all_volumes).to include(
           # This value is currently hard-coded
           an_object_with_fields(mount_point: "swap", min_size: 2.GiB, max_size: 2.GiB)
         )
@@ -101,7 +101,7 @@ describe Yast::Storage::Proposal::VolumesGenerator do
       end
 
       it "includes a /home volume with the configured settings" do
-        expect(subject.volumes).to include(
+        expect(subject.all_volumes).to include(
           an_object_with_fields(
             mount_point:     "/home",
             min_size:        settings.home_min_size,
@@ -118,7 +118,7 @@ describe Yast::Storage::Proposal::VolumesGenerator do
       end
 
       it "does not include a /home volume" do
-        expect(subject.volumes).to_not include(
+        expect(subject.all_volumes).to_not include(
           an_object_with_fields(mount_point: "/home")
         )
       end
@@ -137,7 +137,7 @@ describe Yast::Storage::Proposal::VolumesGenerator do
         end
 
         it "uses the normal sizes" do
-          expect(subject.volumes).to include(
+          expect(subject.all_volumes).to include(
             an_object_with_fields(
               mount_point:     "/",
               min_size:        10.GiB,
@@ -154,7 +154,7 @@ describe Yast::Storage::Proposal::VolumesGenerator do
         end
 
         it "increases all the sizes by btrfs_increase_percentage" do
-          expect(subject.volumes).to include(
+          expect(subject.all_volumes).to include(
             an_object_with_fields(
               mount_point:     "/",
               min_size:        17.5.GiB,

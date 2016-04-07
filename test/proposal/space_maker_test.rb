@@ -39,7 +39,12 @@ describe Yast::Storage::Proposal::SpaceMaker do
       disk_analyzer.analyze(fake_devicegraph)
       disk_analyzer
     end
-    let(:settings) { Yast::Storage::Proposal::Settings.new }
+    let(:settings) do
+      settings = Yast::Storage::Proposal::Settings.new
+      settings.candidate_devices = ["/dev/sda"]
+      settings.root_device = "/dev/sda"
+      settings
+    end
     subject(:maker) { described_class.new(fake_devicegraph, analyzer, settings) }
 
     context "if the disk is not big enough" do

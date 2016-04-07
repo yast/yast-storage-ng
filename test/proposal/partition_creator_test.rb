@@ -33,13 +33,15 @@ describe Yast::Storage::Proposal::PartitionCreator do
 
     before do
       fake_scenario(scenario)
-      allow(analyzer).to receive(:candidate_disks).and_return candidate_disks
     end
 
-    let(:settings) { Yast::Storage::Proposal::Settings.new }
-    let(:analyzer) { instance_double("Yast::Storage::DiskAnalyzer") }
+    let(:settings) do
+      settings = Yast::Storage::Proposal::Settings.new
+      settings.candidate_devices = ["/dev/sda"]
+      settings.root_device = "/dev/sda"
+      settings
+    end
     let(:scenario) { "empty_hard_disk_50GiB" }
-    let(:candidate_disks) { ["/dev/sda"] }
     let(:target_size) { :desired }
 
     let(:root_volume) { Yast::Storage::PlannedVolume.new("/", ::Storage::FsType_EXT4) }
@@ -47,7 +49,7 @@ describe Yast::Storage::Proposal::PartitionCreator do
     let(:swap_volume) { Yast::Storage::PlannedVolume.new("swap", ::Storage::FsType_EXT4) }
     let(:volumes) { Yast::Storage::PlannedVolumesList.new([root_volume, home_volume, swap_volume]) }
 
-    subject(:creator) { described_class.new(fake_devicegraph, analyzer, settings) }
+    subject(:creator) { described_class.new(fake_devicegraph, settings) }
 
     context "when the exact space is available" do
       before do

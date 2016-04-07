@@ -47,9 +47,18 @@ module Yast
 
         # Volumes that needs to be created to satisfy the settings
         #
-        # @return [PlannedVolumnesList]
-        def volumes
-          PlannedVolumesList.new(boot_volumes.to_a + standard_volumes)
+        # @return [PlannedVolumesList]
+        def all_volumes
+          PlannedVolumesList.new(base_volumes.to_a + additional_volumes)
+        end
+
+        # Minimal set of volumes that need to fit in the same disk than "/"
+        #
+        # This includes "/" itself and the volumes needed for booting
+        #
+        # @return [PlannedVolumesList]
+        def base_volumes
+          PlannedVolumesList.new(boot_volumes.to_a + [root_volume])
         end
 
       protected
@@ -67,8 +76,8 @@ module Yast
         # Standard volumes for the root, swap and /home
         #
         # @return [Array<PlannedVolumes>]
-        def standard_volumes
-          volumes = [swap_volume, root_volume]
+        def additional_volumes
+          volumes = [swap_volume]
           volumes << home_volume if @settings.use_separate_home
           volumes
         end
