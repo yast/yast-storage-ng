@@ -23,6 +23,7 @@
 
 require "yast"
 require "storage"
+require "storage/fake_device_factory"
 
 module Yast
   module Storage
@@ -55,6 +56,24 @@ module Yast
         #
         def instance
           create_instance unless @instance
+          @instance
+        end
+
+        # Use this as an alternative to the instance method.
+        # Probing is skipped and the device tree is initialized from yaml_file.
+        # Any existing probed device tree is replaced.
+        #
+        # @return [::Storage::Storage] libstorage object
+        #
+        def fake_from_yaml(yaml_file = nil)
+          create_instance(::Storage::Environment.new(true, ::Storage::ProbeMode_NONE, ::Storage::TargetMode_DIRECT)) if !@instance
+          fake_graph = @instance.create_devicegraph("fake")
+          Yast::Storage::FakeDeviceFactory.load_yaml_file(fake_graph, yaml_file) if yaml_file
+          # FIXME: Arvin plans some replace_devicegraph() feature in libstorage;
+          # adjust code when it's done
+          @instance.remove_devicegraph("probed")
+          @instance.copy_devicegraph("fake", "probed")
+          @instance.remove_devicegraph("fake")
           @instance
         end
 
