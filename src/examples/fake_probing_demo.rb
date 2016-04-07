@@ -22,14 +22,12 @@
 
 $LOAD_PATH.unshift(File.expand_path("../../lib", __FILE__))
 
-require "storage/fake_probing.rb"
+require "storage/storage_manager.rb"
 
-fake_probing = Yast::Storage::FakeProbing.new
-devicegraph = fake_probing.devicegraph
+devicegraph = Yast::Storage::StorageManager.fake_from_yaml().probed
 ::Storage::Disk.create(devicegraph, "/dev/sdx")
 ::Storage::Disk.create(devicegraph, "/dev/sdy")
 ::Storage::Disk.create(devicegraph, "/dev/sdz")
-fake_probing.to_probed
 
 probed = Yast::Storage::StorageManager.instance.probed
 puts("Probed disks:")
