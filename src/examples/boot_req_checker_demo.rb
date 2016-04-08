@@ -33,7 +33,6 @@
 #     - probe current config
 #
 
-
 require "yast"	# changes $LOAD_PATH
 
 $LOAD_PATH.unshift(File.expand_path("../../lib", __FILE__))
@@ -42,7 +41,6 @@ require "storage/boot_requirements_checker.rb"
 require "storage/proposal/settings.rb"
 require "storage/disk_analyzer"
 require "pp"
-
 
 if ARGV[0]
   sm = Yast::Storage::StorageManager.fake_from_yaml(ARGV[0])

@@ -24,7 +24,7 @@ $LOAD_PATH.unshift(File.expand_path("../../lib", __FILE__))
 
 require "storage/storage_manager.rb"
 
-devicegraph = Yast::Storage::StorageManager.fake_from_yaml().probed
+devicegraph = Yast::Storage::StorageManager.fake_from_yaml.probed
 ::Storage::Disk.create(devicegraph, "/dev/sdx")
 ::Storage::Disk.create(devicegraph, "/dev/sdy")
 ::Storage::Disk.create(devicegraph, "/dev/sdz")
