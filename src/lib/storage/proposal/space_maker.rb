@@ -74,13 +74,23 @@ module Yast
 
         attr_reader :original_graph, :disk_analyzer
 
+        # Checks whether the goal has already being reached
+        #
+        # @return [Boolean]
         def success?(graph, required_size)
-          available_size(graph) >= required_size
+          missing_required_size(graph, required_size) <= DiskSize.zero
         end
 
         # @return [DiskSize]
         def available_size(graph)
           free_spaces(graph).disk_size
+        end
+
+        # Additional space that needs to be freed in order to reach the goal
+        #
+        # @return [DiskSize]
+        def missing_required_size(graph, required_size)
+          required_size - available_size(graph)
         end
 
         # List of free spaces in the given devicegraph
@@ -105,18 +115,64 @@ module Yast
           settings.candidate_devices
         end
 
-        # Try to resize an existing windows partition - unless there already is
+        # Try to resize the existing windows partitions - unless there already is
         # a Linux partition which means that
         #
         # @param devicegraph [DeviceGraph] devicegraph to update
         # @param required_size [DiskSize]
         def resize_windows!(devicegraph, required_size)
-          return if disk_analyzer.windows_partitions.empty?
+          windows_part_names = disk_analyzer.windows_partitions
+          return if windows_part_names.empty?
           return unless disk_analyzer.linux_partitions.empty?
 
-          log.info("Resizing Windows partition to free #{required_size}")
-          # TODO: Resize windows partition (not available in libstorage-bgl yet)
-          log.error "Cannot resize windows in #{devicegraph} yet"
+          log.info("Resizing Windows partitions to free #{required_size}")
+          sorted_resizables(devicegraph, windows_part_names).each do |res|
+            shrink_size = [
+              res[:recoverable_size],
+              missing_required_size(devicegraph, required_size)
+            ].min
+            shrink_partition(res[:partition], shrink_size)
+            return if success?(devicegraph, required_size)
+          end
+          log.info "Didn't manage to free enough space by resizing Windows"
+        end
+
+        # List of partitions that can be resized, including the size of the
+        # space that can be reclaimed for each partition.
+        #
+        # The list is sorted so the partitions with more recoverable space are
+        # listed first.
+        #
+        # @param graph [::Storage::Devicegraph]
+        # @param part_names [Array<String>] list of partition names to consider
+        # @return [Array<Hash>] each element contains
+        #     :partition (::Storage::Partition) and :recoverable_size (DiskSize)
+        def sorted_resizables(graph, part_names)
+          partitions = graph.partitions.with(name: part_names)
+          resizables = partitions.map do |part|
+            { partition: part, recoverable_size: recoverable_size(part) }
+          end
+          resizables.delete_if { |res| res[:recoverable_size].zero? }
+          resizables.sort_by { |res| res[:recoverable_size] }.reverse
+        end
+
+        # Size of the space that can be reclaimed in a partition
+        #
+        # @param partition [::Storage::Partition]
+        # @return [DiskSize]
+        def recoverable_size(partition)
+          info = partition.filesystem.detect_resize_info
+          return DiskSize.zero unless info.resize_ok
+          DiskSize.kiB(partition.size_k - info.min_size_k)
+        end
+
+        # Reduces the size of a partition
+        #
+        # @param partition [::Storage::Partition]
+        # @param shrink_size [DiskSize] size of the space to substract
+        def shrink_partition(partition, shrink_size)
+          log.info "Shrinking #{partition.name} by #{shrink_size}"
+          partition.size_k = partition.size_k - shrink_size.size_k
         end
 
         # Use force to create space (up to 'required_size'): Delete partitions

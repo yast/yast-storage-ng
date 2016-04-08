@@ -24,22 +24,32 @@ require_relative "spec_helper"
 require "storage"
 require "storage/proposal"
 require "storage/refinements/test_devicegraph"
+require "storage/refinements/size_casts"
 require "storage/boot_requirements_checker"
 
 describe Yast::Storage::Proposal do
   describe "#propose" do
     using Yast::Storage::Refinements::TestDevicegraph
+    using Yast::Storage::Refinements::SizeCasts
 
     before do
       fake_scenario(scenario)
       allow(Yast::Storage::BootRequirementsChecker).to receive(:new).and_return boot_checker
-      allow(boot_checker).to receive(:needed_partitions).and_return []
+      allow(Yast::Storage::DiskAnalyzer).to receive(:new).and_return disk_analyzer
+      allow(disk_analyzer).to receive(:windows_partitions).and_return windows_partitions
+      allow_any_instance_of(::Storage::Filesystem).to receive(:detect_resize_info)
+        .and_return(resize_info)
     end
 
     subject(:proposal) { described_class.new(settings: settings) }
 
-    let(:boot_checker) { instance_double("Yast::Storage::BootRequirementChecker") }
-
+    let(:disk_analyzer) { Yast::Storage::DiskAnalyzer.new }
+    let(:boot_checker) do
+      instance_double("Yast::Storage::BootRequirementChecker", needed_partitions: [])
+    end
+    let(:resize_info) do
+      instance_double("::Storage::ResizeInfo", resize_ok: true, min_size_k: 40.GiB.size_k)
+    end
     let(:settings) do
       settings = Yast::Storage::Proposal::Settings.new
       settings.use_separate_home = separate_home
@@ -56,6 +66,7 @@ describe Yast::Storage::Proposal do
 
     context "in a windows-only PC" do
       let(:scenario) { "windows-pc" }
+      let(:windows_partitions) { ["/dev/sda1"] }
 
       context "with a separate home" do
         let(:separate_home) { true }
@@ -78,6 +89,7 @@ describe Yast::Storage::Proposal do
 
     context "in a windows/linux multiboot PC" do
       let(:scenario) { "windows-linux-multiboot-pc" }
+      let(:windows_partitions) { ["/dev/sda1"] }
 
       context "with a separate home" do
         let(:separate_home) { true }
@@ -100,6 +112,7 @@ describe Yast::Storage::Proposal do
 
     context "in a linux multiboot PC" do
       let(:scenario) { "multi-linux-pc" }
+      let(:windows_partitions) { [] }
 
       context "with a separate home" do
         let(:separate_home) { true }
