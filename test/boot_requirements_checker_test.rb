@@ -40,7 +40,7 @@ describe Yast::Storage::BootRequirementsChecker do
     let(:storage_arch) { instance_double("::Storage::Arch") }
 
     before do
-      Yast::Storage::FakeProbing.new
+      Yast::Storage::StorageManager.fake_from_yaml
       allow(Yast::Storage::StorageManager.instance).to receive(:arch).and_return(storage_arch)
 
       allow(storage_arch).to receive(:x86?).and_return(architecture == :x86)

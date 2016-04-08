@@ -32,7 +32,6 @@ describe Yast::Storage::Proposal do
 
     before do
       fake_scenario(scenario)
-      fake_to_probed
       allow(Yast::Storage::BootRequirementsChecker).to receive(:new).and_return boot_checker
       allow(boot_checker).to receive(:needed_partitions).and_return []
     end

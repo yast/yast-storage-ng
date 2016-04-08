@@ -20,23 +20,35 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
+# usage
+#
+# either
+#
+#   boot_req_checker_demo DEVICEGRAPH_AS_YAML_FILE
+#     - use supplied device graph
+#
+# or
+#
+#   boot_req_checker_demo
+#     - probe current config
+#
+
 require "yast"	# changes $LOAD_PATH
 
 $LOAD_PATH.unshift(File.expand_path("../../lib", __FILE__))
 
-require "storage/fake_probing.rb"
-require "storage/fake_device_factory.rb"
 require "storage/boot_requirements_checker.rb"
 require "storage/proposal/settings.rb"
 require "storage/disk_analyzer"
 require "pp"
 
-FILENAME = "fake-devicegraphs"
-input_file  = ARGV[0] || "fake-devicegraphs.yml"
+if ARGV[0]
+  sm = Yast::Storage::StorageManager.fake_from_yaml(ARGV[0])
+else
+  sm = Yast::Storage::StorageManager.instance
+end
 
-fake_probing = Yast::Storage::FakeProbing.new
-devicegraph = fake_probing.devicegraph
-Yast::Storage::FakeDeviceFactory.load_yaml_file(devicegraph, input_file)
+devicegraph = sm.probed
 
 puts "---  disk_analyzer  ---"
 disk_analyzer = Yast::Storage::DiskAnalyzer.new

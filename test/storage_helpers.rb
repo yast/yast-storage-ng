@@ -21,8 +21,7 @@
 
 require "rspec"
 require "yast"
-require "storage/fake_probing"
-require "storage/fake_device_factory"
+require "storage/storage_manager"
 
 module Yast
   module RSpec
@@ -37,17 +36,11 @@ module Yast
       end
 
       def fake_scenario(scenario)
-        @fake_probing = Yast::Storage::FakeProbing.new
-        devicegraph = @fake_probing.devicegraph
-        Yast::Storage::FakeDeviceFactory.load_yaml_file(devicegraph, input_file_for(scenario))
-      end
-
-      def fake_to_probed
-        @fake_probing.to_probed
+        Yast::Storage::StorageManager.fake_from_yaml(input_file_for(scenario))
       end
 
       def fake_devicegraph
-        @fake_probing.devicegraph
+        Yast::Storage::StorageManager.instance.probed
       end
     end
   end
