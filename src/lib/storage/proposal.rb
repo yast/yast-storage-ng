@@ -26,6 +26,7 @@ require "storage/proposal/exceptions"
 require "storage/proposal/settings"
 require "storage/proposal/volumes_generator"
 require "storage/proposal/devicegraph_generator"
+require "storage/refinements/devicegraph_lists"
 
 module Yast
   module Storage
@@ -44,6 +45,8 @@ module Yast
     #   proposal.settings.use_separate_home = false # raises RuntimeError
     #
     class Proposal
+      using Refinements::DevicegraphLists
+
       # Settings used to calculate the proposal. They cannot be altered after
       # calculating the proposal
       # @return [Proposal::Settings]
@@ -77,27 +80,97 @@ module Yast
         raise UnexceptedCallError if proposed?
         settings.freeze
         @proposed = true
-        initial_graph = StorageManager.instance.probed
-        disk_analyzer.analyze(initial_graph)
-        @volumes = volumes_generator.volumes
-        @devices = devicegraph_generator.devicegraph(volumes, initial_graph, disk_analyzer)
+        @volumes = volumes_list(:all, populated_settings)
+        @devices = devicegraph(@volumes, populated_settings)
       end
 
     protected
 
-      def volumes_generator
-        @volumes_generator ||= VolumesGenerator.new(settings, disk_analyzer)
+      # @param set [#to_s] List of volumes to generate, :all or :base
+      # @param settings [Proposal::Settings]
+      # @return [PlannedVolumesList]
+      def volumes_list(set, settings)
+        generator = VolumesGenerator.new(settings, disk_analyzer)
+        generator.send(:"#{set}_volumes")
       end
 
-      def devicegraph_generator
-        @devicegraph_generator ||= DevicegraphGenerator.new(settings)
+      # Devicegraph resulting of accommodating some volumes in the initial
+      # devicegraph
+      #
+      # @param volumes [PlannedVolumesList] list of volumes to accomodate
+      # @param settings [Proposal::Settings]
+      # @result [::Storage::Devicegraph]
+      def devicegraph(volumes, settings)
+        generator = DevicegraphGenerator.new(settings)
+        generator.devicegraph(volumes, initial_graph, disk_analyzer)
       end
 
       # Disk analyzer used to analyze the initial devigraph
       #
       # @return [DiskAnalyzer]
       def disk_analyzer
-        @disk_analyzer ||= DiskAnalyzer.new
+        @disk_analyzer ||= begin
+          analyzer = DiskAnalyzer.new
+          analyzer.analyze(initial_graph)
+          analyzer
+        end
+      end
+
+      def initial_graph
+        @initial_graph ||= StorageManager.instance.probed
+      end
+
+      # Copy of the original settings including some calculated and necessary
+      # values (like candidate_devices or root_device), in case they were not
+      # present
+      #
+      # @return [Proposal::Settings]
+      def populated_settings
+        return @populated_settings if @populated_settings
+
+        populated = settings.dup
+        populated.candidate_devices ||= disk_analyzer.candidate_disks
+        populated.root_device ||= proposed_root_device(populated)
+
+        @populated_settings = populated
+      end
+
+      # Proposes a value for settings.root_devices if none was provided
+      #
+      # It assumes settings.candidate_devices is already set.
+      # It tries to allocate the base volumes in each candidate device,
+      # returning the first in which that allocation is possible.
+      #
+      # @raise Proposal::NoSuitableDeviceError if the base volumes don't fit in
+      # any of the candidate devices
+      #
+      # @param settings [Proposal::Settings]
+      # @return [String] name of the chosen device
+      def proposed_root_device(settings)
+        names = sorted_candidates(settings.candidate_devices)
+        names.each do |disk_name|
+          new_settings = settings.dup
+          new_settings.root_device = disk_name
+          begin
+            volumes = volumes_list(:base, new_settings)
+            devicegraph(volumes, new_settings)
+            return disk_name
+          rescue Proposal::Error
+            next
+          end
+        end
+
+        raise Proposal::NoSuitableDeviceError, "No room for base volumes in #{names}"
+      end
+
+      # Sorts a list of disk names from bigger to smaller
+      #
+      # @param disk_names [Array<String>] unsorted list of names
+      # @return [Array<String>] sorted list of names
+      def sorted_candidates(disk_names)
+        candidate_disks = initial_graph.disks.with(name: disk_names).to_a
+        candidate_disks = candidate_disks.sort_by(&:size_k).reverse
+        candidate_disks.map(&:name)
       end
     end
   end

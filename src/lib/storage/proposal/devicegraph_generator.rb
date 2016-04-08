@@ -50,7 +50,7 @@ module Yast
         #           valid devicegraph
         def devicegraph(volumes, initial_graph, disk_analyzer)
           graph = provide_space(volumes, initial_graph, disk_analyzer)
-          graph = create_partitions(volumes, graph, disk_analyzer)
+          graph = create_partitions(volumes, graph)
           graph
         end
 
@@ -68,8 +68,7 @@ module Yast
         # @raise Proposal::NoDiskSpaceError if both attempts fail
         #
         # @param volumes [PlannedVolumesList] set of volumes to make space for
-        # @param initial_graph [::Storage::Devicegraph] proposal-refined initial
-        #           devicegraph (@see RefinedDevicegraph)
+        # @param initial_graph [::Storage::Devicegraph] initial devicegraph
         # @param disk_analyzer [DiskAnalyzer] analysis of the initial_graph
         #
         # @return [::Storage::Devicegraph]
@@ -94,13 +93,11 @@ module Yast
         # by #provide_space
         #
         # @param volumes [PlannedVolumesList] set of volumes to create
-        # @param initial_graph [::Storage::Devicegraph] proposal-refined initial
-        #           devicegraph (@see RefinedDevicegraph)
-        # @param disk_analyzer [DiskAnalyzer]
+        # @param initial_graph [::Storage::Devicegraph] initial devicegraph
         #
         # @return [::Storage::Devicegraph]
-        def create_partitions(volumes, initial_graph, disk_analyzer)
-          partition_creator = PartitionCreator.new(initial_graph, disk_analyzer, settings)
+        def create_partitions(volumes, initial_graph)
+          partition_creator = PartitionCreator.new(initial_graph, settings)
           target = got_desired_space? ? :desired : :min
           partition_creator.create_partitions(volumes, target)
         end

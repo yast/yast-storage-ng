@@ -37,6 +37,7 @@ module Yast
         attr_accessor :root_filesystem_type, :use_snapshots
         attr_accessor :use_separate_home, :home_filesystem_type
         attr_accessor :enlarge_swap_for_suspend
+        attr_accessor :root_device, :candidate_devices
 
         def initialize
           @use_lvm                  = false

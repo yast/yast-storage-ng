@@ -45,11 +45,9 @@ module Yast
         # Initialize.
         #
         # @param original_graph [::Storage::Devicegraph] initial devicegraph
-        # @param disk_analyzer [DiskAnalyzer] information about original_graph
         # @param settings [Proposal::Settings] proposal settings
-        def initialize(original_graph, disk_analyzer, settings)
+        def initialize(original_graph, settings)
           @original_graph = original_graph
-          @disk_analyzer = disk_analyzer
           @settings = settings
         end
 
@@ -78,7 +76,7 @@ module Yast
 
         # Working devicegraph
         attr_accessor :devicegraph
-        attr_reader :original_graph, :disk_analyzer
+        attr_reader :original_graph
 
         # Sum up the sizes of all slots in the devicegraph
         #
@@ -98,7 +96,7 @@ module Yast
 
         # @return [Array<String>]
         def candidate_disk_names
-          disk_analyzer.candidate_disks
+          settings.candidate_devices
         end
 
         # Query in the target devicegraph restricted to the candidate disks

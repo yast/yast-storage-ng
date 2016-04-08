@@ -102,7 +102,7 @@ module Yast
 
         # @return [Array<String>]
         def candidate_disk_names
-          disk_analyzer.candidate_disks
+          settings.candidate_devices
         end
 
         # Try to resize an existing windows partition - unless there already is
