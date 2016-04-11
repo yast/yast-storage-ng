@@ -112,28 +112,34 @@ module Yast
       # @param descending [Boolean] whether to use descending order
       # @return [Array]
       def sort_by_attr(*attrs, nils_first: false, descending: false)
-        @volumes.sort do |one, other|
+        @volumes.each_with_index.sort do |one, other|
           compare(one, other, attrs, nils_first, descending)
-        end
+        end.map(&:first)
       end
 
     private
 
+      # @param one [Array] first element: the volume, second: its original index
+      # @param other [Array] same structure than previous one
       def compare(one, other, attrs, nils_first, descending)
-        result = compare_attr(one, other, attrs.first, nils_first, descending)
+        one_vol = one.first
+        other_vol = other.first
+        result = compare_attr(one_vol, other_vol, attrs.first, nils_first, descending)
         if result.zero?
           if attrs.size > 1
             # Try next attribute
             compare(one, other, attrs[1..-1], nils_first, descending)
           else
-            # Keep original order
-            -1
+            # Keep original order by checking the indexes
+            one.last <=> other.last
           end
         else
           result
         end
       end
 
+      # @param one [PlannedVolume]
+      # @param other [PlannedVolume]
       def compare_attr(one, other, attr, nils_first, descending)
         one_value = one.send(attr)
         other_value = other.send(attr)
@@ -144,6 +150,8 @@ module Yast
         end
       end
 
+      # @param one [PlannedVolume]
+      # @param other [PlannedVolume]
       def compare_values(one, other, descending)
         if descending
           other <=> one
@@ -152,6 +160,8 @@ module Yast
         end
       end
 
+      # @param one [PlannedVolume]
+      # @param other [PlannedVolume]
       def compare_with_nil(one, other, nils_first)
         if one.nil? && other.nil?
           0
