@@ -87,5 +87,18 @@ describe Yast::Storage::Proposal::PartitionCreator do
         )
       end
     end
+
+    context "when there is no enough space to allocate start of all partitions" do
+      before do
+        root_volume.desired = 25.GiB
+        home_volume.desired = 25.GiB
+        swap_volume.desired = 10.GiB
+      end
+
+      it "raises an error" do
+        expect { creator.create_partitions(volumes, target_size) }
+          .to raise_error Yast::Storage::Proposal::Error
+      end
+    end
   end
 end

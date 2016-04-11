@@ -98,28 +98,51 @@ module Yast
       end
       alias_method :<<, :push
 
-      # Volumes sorted by a given attribute
+      # Volumes sorted by a given set of attributes.
       #
-      # It handles nicely situations with nil values for the attribute.
+      # It sorts by the first attribute in the list. In case of equality, it
+      # uses the second element and so on. If all the attributes are equal, the
+      # original order is respected.
       #
-      # @param attr [Symbol] name of the attribute to use for sorting
+      # It handles nicely situations with nil values for any of the attributes.
+      #
+      # @param attrs [Array<Symbol>] names of the attributes to use for sorting
       # @param nils_first [Boolean] whether to put volumes with a value of nil
       #         at the beginning of the result
       # @param descending [Boolean] whether to use descending order
       # @return [Array]
-      def sort_by_attr(attr, nils_first: false, descending: false)
+      def sort_by_attr(*attrs, nils_first: false, descending: false)
         @volumes.sort do |one, other|
-          one_value = one.send(attr)
-          other_value = other.send(attr)
-          if one_value.nil? || other_value.nil?
-            compare_with_nil(one_value, other_value, nils_first)
-          else
-            compare_values(one_value, other_value, descending)
-          end
+          compare(one, other, attrs, nils_first, descending)
         end
       end
 
     private
+
+      def compare(one, other, attrs, nils_first, descending)
+        result = compare_attr(one, other, attrs.first, nils_first, descending)
+        if result.zero?
+          if attrs.size > 1
+            # Try next attribute
+            compare(one, other, attrs[1..-1], nils_first, descending)
+          else
+            # Keep original order
+            -1
+          end
+        else
+          result
+        end
+      end
+
+      def compare_attr(one, other, attr, nils_first, descending)
+        one_value = one.send(attr)
+        other_value = other.send(attr)
+        if one_value.nil? || other_value.nil?
+          compare_with_nil(one_value, other_value, nils_first)
+        else
+          compare_values(one_value, other_value, descending)
+        end
+      end
 
       def compare_values(one, other, descending)
         if descending

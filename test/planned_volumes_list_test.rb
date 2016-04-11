@@ -27,17 +27,19 @@ require "storage/refinements/size_casts"
 describe Yast::Storage::PlannedVolumesList do
   using Yast::Storage::Refinements::SizeCasts
 
-  def vol(mount_point, size)
+  def vol(mount_point, size, min_size, max_size)
     vol = Yast::Storage::PlannedVolume.new(mount_point)
     vol.size = size
+    vol.min_size = min_size
+    vol.max_size = max_size
     vol
   end
 
   describe "#sort_by_attr" do
-    let(:vol1) { vol("/vol1", 100.MiB) }
-    let(:vol2) { vol("/vol2", nil) }
-    let(:vol3) { vol("/vol3", 100.GiB) }
-    let(:vol4) { vol("/vol4", nil) }
+    let(:vol1) { vol("/vol1", 100.MiB, 1.GiB, 2.GiB) }
+    let(:vol2) { vol("/vol2", nil,     1.GiB, 2.GiB) }
+    let(:vol3) { vol("/vol3", 100.GiB, 2.GiB, 4.GiB) }
+    let(:vol4) { vol("/vol4", nil,     1.GiB, 3.GiB) }
 
     subject { described_class.new([vol1, vol2, vol3, vol4]) }
 
@@ -62,6 +64,15 @@ describe Yast::Storage::PlannedVolumesList do
     it "can sort nils at start" do
       expect(subject.sort_by_attr(:size, nils_first: true).map(&:size))
         .to eq [nil, nil, 100.MiB, 100.GiB]
+    end
+
+    it "uses the next attribute in the list to break ties" do
+      result = subject.sort_by_attr(:min_size, :max_size, :size, nils_first: true)
+      expect(result).to eq [vol2, vol1, vol4, vol3]
+    end
+
+    it "respects the original order in case of full tie" do
+      expect(subject.sort_by_attr(:min_size)).to eq [vol1, vol2, vol4, vol3]
     end
   end
 end
