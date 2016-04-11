@@ -57,7 +57,7 @@ describe Yast::Storage::Proposal::SpaceMaker do
       end
     end
 
-    context "if there are windows and linux partitions" do
+    context "if there are Windows and Linux partitions" do
       let(:scenario) { "windows-linux-multiboot-pc" }
       let(:required_size) { 100.GiB }
 
@@ -68,6 +68,114 @@ describe Yast::Storage::Proposal::SpaceMaker do
         expect(result.partitions).to contain_exactly(
           an_object_with_fields(label: "windows", size: 250.GiB)
         )
+      end
+    end
+
+    context "if there is a Windows partition and no Linux ones" do
+      let(:scenario) { "windows-pc" }
+      let(:resize_info) do
+        instance_double("::Storage::ResizeInfo", resize_ok: true, min_size_k: 730.GiB.size_k)
+      end
+
+      before do
+        allow(analyzer).to receive(:windows_partitions).and_return ["/dev/sda1"]
+        allow_any_instance_of(::Storage::Filesystem).to receive(:detect_resize_info)
+          .and_return(resize_info)
+      end
+
+      context "with enough free space in the Windows partition" do
+        let(:required_size) { 40.GiB }
+
+        it "shrinks the Windows partition by the required size" do
+          result = maker.provide_space(required_size)
+          win_partition = result.partitions.with(name: "/dev/sda1").first
+          expect(win_partition.size_k.kiB).to eq 740.GiB
+        end
+
+        it "leaves other partitions untouched" do
+          result = maker.provide_space(required_size)
+          expect(result.partitions).to contain_exactly(
+            an_object_with_fields(label: "windows"),
+            an_object_with_fields(label: "recovery", size: 20.GiB)
+          )
+        end
+      end
+
+      context "with no enough free space in the Windows partition" do
+        let(:required_size) { 60.GiB }
+
+        it "shrinks the Windows partition as much as possible" do
+          result = maker.provide_space(required_size)
+          win_partition = result.partitions.with(name: "/dev/sda1").first
+          expect(win_partition.size_k.kiB).to eq 730.GiB
+        end
+
+        it "removes other partitions" do
+          result = maker.provide_space(required_size)
+          expect(result.partitions).to contain_exactly(
+            an_object_with_fields(label: "windows")
+          )
+        end
+      end
+    end
+
+    context "if there are two Windows partitions" do
+      let(:scenario) { "double-windows-pc" }
+      let(:resize_info) do
+        instance_double("::Storage::ResizeInfo", resize_ok: true, min_size_k: 50.GiB.size_k)
+      end
+
+      before do
+        settings.candidate_devices = ["/dev/sda", "/dev/sdb"]
+        allow(analyzer).to receive(:windows_partitions).and_return ["/dev/sda1", "/dev/sdb1"]
+        allow_any_instance_of(::Storage::Filesystem).to receive(:detect_resize_info)
+          .and_return(resize_info)
+      end
+
+      context "with at least one Windows partition having enough free space" do
+        let(:required_size) { 20.GiB }
+
+        it "shrinks the less full Windows partition as needed" do
+          result = maker.provide_space(required_size)
+          win2_partition = result.partitions.with(name: "/dev/sdb1").first
+          expect(win2_partition.size_k.kiB).to eq 160.GiB
+        end
+
+        it "leaves other partitions untouched" do
+          result = maker.provide_space(required_size)
+          expect(result.partitions).to contain_exactly(
+            an_object_with_fields(label: "windows1", size: 80.GiB),
+            an_object_with_fields(label: "recovery1", size: 20.GiB),
+            an_object_with_fields(label: "windows2"),
+            an_object_with_fields(label: "recovery2", size: 20.GiB)
+          )
+        end
+      end
+
+      context "with no partition having enough free space by itself" do
+        let(:required_size) { 140.GiB }
+
+        it "shrinks the less full Windows partition as much as possible" do
+          result = maker.provide_space(required_size)
+          win2_partition = result.partitions.with(name: "/dev/sdb1").first
+          expect(win2_partition.size_k.kiB).to eq 50.GiB
+        end
+
+        it "shrinks the other Windows partition as needed" do
+          result = maker.provide_space(required_size)
+          win1_partition = result.partitions.with(name: "/dev/sda1").first
+          expect(win1_partition.size_k.kiB).to eq 70.GiB
+        end
+
+        it "leaves other partitions untouched" do
+          result = maker.provide_space(required_size)
+          expect(result.partitions).to contain_exactly(
+            an_object_with_fields(label: "windows1"),
+            an_object_with_fields(label: "recovery1", size: 20.GiB),
+            an_object_with_fields(label: "windows2"),
+            an_object_with_fields(label: "recovery2", size: 20.GiB)
+          )
+        end
       end
     end
   end

@@ -4,36 +4,48 @@
     name: "/dev/sda"
     partition_table: msdos
     partitions:
+
+    - partition:
+        size: 728.00 GiB
+        name: /dev/sda1
+        id: 0x7
+        file_system: ntfs
+        label: windows
+
     - partition:
         size: 40.00 GiB
-        name: "/dev/sda1"
+        name: "/dev/sda3"
         type: primary
         id: linux
         file_system: btrfs
         mount_point: "/"
+
     - partition:
-        size: 2.00 GiB
-        name: "/dev/sda3"
-        type: primary
-        id: swap
-        file_system: swap
-        mount_point: swap
-    - partition:
-        size: 738.00 GiB
+        size: 12.00 GiB
         name: "/dev/sda4"
         type: extended
         id: linux
+
     - partition:
-        size: 738.00 GiB
+        size: 2.00 GiB
         name: "/dev/sda5"
+        type: logical
+        id: swap
+        file_system: swap
+        mount_point: swap
+
+    - partition:
+        size: 10.00 GiB
+        name: "/dev/sda6"
         type: logical
         id: linux
         file_system: xfs
         mount_point: "/home"
+
     - partition:
         size: 20.00 GiB
         name: "/dev/sda2"
         type: primary
-        id: '0xb'
+        id: 0xb
         file_system: vfat
         label: recovery
