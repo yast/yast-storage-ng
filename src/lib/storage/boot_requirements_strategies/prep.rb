@@ -47,7 +47,7 @@ module Yast
 
         def prep_partition_required?
           # no need of PReP partition in OPAL/PowerNV/Bare metal
-          !arch.power_nv?
+          !arch.ppc_power_nv?
         end
 
         def prep_volume

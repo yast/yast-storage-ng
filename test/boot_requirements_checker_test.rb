@@ -206,7 +206,7 @@ describe Yast::Storage::BootRequirementsChecker do
       let(:prep_id) { ::Storage::ID_PPC_PREP }
 
       before do
-        allow(storage_arch).to receive(:power_nv?).and_return(power_nv)
+        allow(storage_arch).to receive(:ppc_power_nv?).and_return(power_nv)
         allow(analyzer).to receive(:prep_partitions).and_return prep_partitions
       end
 
