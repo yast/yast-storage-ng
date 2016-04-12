@@ -107,6 +107,8 @@ stage2 beyond 2 TB limit when using gpt table.
 
 > dvaleev: 8 MB PReP
 
+> dvaleev: PReP must be one of the first 4 partitions, ideally the first one [citation needed]
+
 - OPAL/PowerNV/Bare metal
 
 > dvaleev:
@@ -168,8 +170,10 @@ i.e. valid for all architectures (s390, see below)
 ppc
 ---
 KVM/LPAR
-- PReP partition dos type 0x41, flag as bootable
-                 gpt type 9e1a2d38-c612-4316-aa26-8b49521e5a8b
+- PReP partition
+   - dos type 0x41, flag as bootable
+   - gpt type 9e1a2d38-c612-4316-aa26-8b49521e5a8b
+   - must be one of the first 4 partitions (we have no evidence of this)
 
 OPAL/PowerNV/Bare metal
 - no PReP is required
