@@ -190,6 +190,7 @@ s390
 - [UEFI Spec Version 2.6](http://www.uefi.org/sites/default/files/resources/UEFI%20Spec%202_6.pdf)
 - [Microsoft EFI FAT32 Spec](http://download.microsoft.com/download/1/6/1/161ba512-40e2-4cc9-843a-923143f3456c/fatgen103.doc)
 - [CHRP Revision 1.7](https://stuff.mit.edu/afs/sipb/contrib/doc/specs/protocol/chrp/chrp1_7a.pdf)
+- [LoPAPR - Linux on Power Architecture Platform Reference](https://members.openpowerfoundation.org/document/dl/469)
 - [PowerLinux Boot howto](https://www.ibm.com/developerworks/community/wikis/home?lang=en#!/wiki/W51a7ffcf4dfd_4b40_9d82_446ebc23c550/page/PowerLinux%20Boot%20howto)
 - [SLOF - Slimline Open Firmware](https://github.com/aik/SLOF/blob/master/slof/fs/packages/disk-label.fs)
 - [GRUB Documentation](https://www.gnu.org/software/grub/grub-documentation.html)
