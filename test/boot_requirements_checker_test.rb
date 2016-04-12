@@ -217,7 +217,7 @@ describe Yast::Storage::BootRequirementsChecker do
           let(:use_lvm) { false }
 
           context "if there are no PReP partitions" do
-            let(:prep_partitions) { {"/dev/sda" => []} }
+            let(:prep_partitions) { { "/dev/sda" => [] } }
 
             it "requires only a PReP partition" do
               expect(checker.needed_partitions).to contain_exactly(
@@ -227,7 +227,7 @@ describe Yast::Storage::BootRequirementsChecker do
           end
 
           context "if the existent PReP partition is not in the target disk" do
-            let(:prep_partitions) { {"/dev/sdb" => ["/dev/sdb"]} }
+            let(:prep_partitions) { { "/dev/sdb" => ["/dev/sdb"] } }
 
             it "requires only a PReP partition" do
               expect(checker.needed_partitions).to contain_exactly(
@@ -237,7 +237,7 @@ describe Yast::Storage::BootRequirementsChecker do
           end
 
           context "if there is already a PReP partition in the disk" do
-            let(:prep_partitions) { {"/dev/sda" => ["/dev/sda1"]} }
+            let(:prep_partitions) { { "/dev/sda" => ["/dev/sda1"] } }
 
             it "does not require any particular volume" do
               expect(checker.needed_partitions).to be_empty
@@ -249,7 +249,7 @@ describe Yast::Storage::BootRequirementsChecker do
           let(:use_lvm) { true }
 
           context "if there are no PReP partitions" do
-            let(:prep_partitions) { {"/dev/sda" => []} }
+            let(:prep_partitions) { { "/dev/sda" => [] } }
 
             it "requires /boot and PReP partitions" do
               expect(checker.needed_partitions).to contain_exactly(
@@ -260,7 +260,7 @@ describe Yast::Storage::BootRequirementsChecker do
           end
 
           context "if the existent PReP partition is not in the target disk" do
-            let(:prep_partitions) { {"/dev/sdb" => ["/dev/sdb"]} }
+            let(:prep_partitions) { { "/dev/sdb" => ["/dev/sdb"] } }
 
             it "requires /boot and PReP partitions" do
               expect(checker.needed_partitions).to contain_exactly(
@@ -271,7 +271,7 @@ describe Yast::Storage::BootRequirementsChecker do
           end
 
           context "if there is already a PReP partition in the disk" do
-            let(:prep_partitions) { {"/dev/sda" => ["/dev/sda1"]} }
+            let(:prep_partitions) { { "/dev/sda" => ["/dev/sda1"] } }
 
             it "only requires a /boot partition" do
               expect(checker.needed_partitions).to contain_exactly(
