@@ -211,6 +211,11 @@ module Yast
 
         # Creates a partition and the corresponding filesystem for each volume
         #
+        # Important: notice that, so far, this method is only intended to work
+        # in cases in which there is only one chunk of free space in the system.
+        #
+        # @raise an error if a volume cannot be allocated
+        #
         # It tries to honor the value of #max_start_offset for each volume, but
         # it does not raise an exception if that particular requirement is
         # impossible to fulfill, since it's usually more a recommendation than a
@@ -218,12 +223,35 @@ module Yast
         #
         # @param volumes [Array<PlannedVolume>]
         def create_volumes_partitions(volumes)
-          volumes.sort_by_attr(:max_start_offset).each do |vol|
+          volumes.sort_by_attr(:disk, :max_start_offset).each do |vol|
             partition_id = vol.partition_id
             partition_id ||= vol.mount_point == "swap" ? ::Storage::ID_SWAP : ::Storage::ID_LINUX
-            partition = create_partition(vol, partition_id, free_spaces.first)
-            make_filesystem(partition, vol)
+            begin
+              partition = create_partition(vol, partition_id, free_space_for(vol))
+              make_filesystem(partition, vol)
+              devicegraph.check
+            rescue ::Storage::Exception => error
+              raise Error, "Error allocating #{vol}. Details: #{error}"
+            end
           end
+        end
+
+        # Finds a free space to allocate the start of a volume
+        #
+        # Important: notice that, so far, this method is only intended to work
+        # in cases in which there is only one chunk of free space in the system.
+        #
+        # @raise an error if there is not free space suitable for the volume
+        def free_space_for(volume)
+          free_space = free_spaces.first
+          raise NoDiskSpaceError, "No space to allocate #{volume})" if free_space.nil?
+          if volume.disk && volume.disk != free_space.disk_name
+            raise(
+              NoDiskSpaceError,
+              "Not possible to allocate #{vol}. All the free space is in #{free_space.disk_name}"
+            )
+          end
+          free_space
         end
 
         # Create a partition for the specified volume within the specified slot
@@ -235,29 +263,20 @@ module Yast
         #
         def create_partition(vol, partition_id, free_slot)
           log.info("Creating partition for #{vol.mount_point} with #{vol.size}")
-          begin
-            disk = ::Storage::Disk.find(devicegraph, free_slot.disk_name)
-            ptable = disk.partition_table
-            if logical_partition_preferred?(ptable)
-              create_extended_partition(disk, free_slot.slot.region) unless ptable.has_extended
-              dev_name = next_free_logical_partition_name(disk.name, ptable)
-              partition_type = ::Storage::PartitionType_LOGICAL
-            else
-              dev_name = next_free_primary_partition_name(disk.name, ptable)
-              partition_type = ::Storage::PartitionType_PRIMARY
-            end
-            region = new_region_with_size(free_slot, vol.size)
-            partition = ptable.create_partition(dev_name, region, partition_type)
-            partition.id = partition_id
-            partition
-          # Don't hide our own exceptions (see FIXME below)
-          rescue Yast::Storage::Proposal::Error
-            raise
-          # FIXME: rescue ::Storage::Exception when SWIG bindings are fixed
-          rescue RuntimeError => ex
-            log.info("CAUGHT exception #{ex}")
-            nil
+          disk = ::Storage::Disk.find(devicegraph, free_slot.disk_name)
+          ptable = disk.partition_table
+          if logical_partition_preferred?(ptable)
+            create_extended_partition(disk, free_slot.slot.region) unless ptable.has_extended
+            dev_name = next_free_logical_partition_name(disk.name, ptable)
+            partition_type = ::Storage::PartitionType_LOGICAL
+          else
+            dev_name = next_free_primary_partition_name(disk.name, ptable)
+            partition_type = ::Storage::PartitionType_PRIMARY
           end
+          region = new_region_with_size(free_slot, vol.size)
+          partition = ptable.create_partition(dev_name, region, partition_type)
+          partition.id = partition_id
+          partition
         end
 
         # Checks if the next partition to be created should be a logical one

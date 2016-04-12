@@ -35,7 +35,12 @@ describe Yast::Storage::BootRequirementsChecker do
 
     subject(:checker) { described_class.new(settings, analyzer) }
 
-    let(:settings) { Yast::Storage::Proposal::Settings.new }
+    let(:root_device) { "/dev/sda" }
+    let(:settings) do
+      settings = Yast::Storage::Proposal::Settings.new
+      settings.root_device = root_device
+      settings
+    end
     let(:analyzer) { instance_double("Yast::Storage::DiskAnalyzer") }
     let(:storage_arch) { instance_double("::Storage::Arch") }
 
@@ -134,16 +139,21 @@ describe Yast::Storage::BootRequirementsChecker do
               expect(efi_part.max_start_offset).to eq 2.TiB
             end
 
-            it "requires /boot to be ext4 out of the LVM with at least 100 MiB" do
-              efi_part = find_vol("/boot", checker.needed_partitions)
-              expect(efi_part.filesystem_type).to eq ::Storage::FsType_EXT4
-              expect(efi_part.min_size).to eq 100.MiB
-              expect(efi_part.can_live_on_logical_volume).to eq false
+            it "requires /boot to be ext4 with at least 100 MiB" do
+              boot_part = find_vol("/boot", checker.needed_partitions)
+              expect(boot_part.filesystem_type).to eq ::Storage::FsType_EXT4
+              expect(boot_part.min_size).to eq 100.MiB
+            end
+
+            it "requires /boot to be in the system disk out of the LVM" do
+              boot_part = find_vol("/boot", checker.needed_partitions)
+              expect(boot_part.disk).to eq root_device
+              expect(boot_part.can_live_on_logical_volume).to eq false
             end
 
             it "recommends /boot to be 200 MiB" do
-              efi_part = find_vol("/boot", checker.needed_partitions)
-              expect(efi_part.desired_size).to eq 200.MiB
+              boot_part = find_vol("/boot", checker.needed_partitions)
+              expect(boot_part.desired_size).to eq 200.MiB
             end
           end
 
@@ -183,16 +193,21 @@ describe Yast::Storage::BootRequirementsChecker do
             )
           end
 
-          it "requires /boot to be ext4 out of the LVM with at least 100 MiB" do
-            efi_part = find_vol("/boot", checker.needed_partitions)
-            expect(efi_part.filesystem_type).to eq ::Storage::FsType_EXT4
-            expect(efi_part.min_size).to eq 100.MiB
-            expect(efi_part.can_live_on_logical_volume).to eq false
+          it "requires /boot to be ext4 with at least 100 MiB" do
+            boot_part = find_vol("/boot", checker.needed_partitions)
+            expect(boot_part.filesystem_type).to eq ::Storage::FsType_EXT4
+            expect(boot_part.min_size).to eq 100.MiB
+          end
+
+          it "requires /boot to be in the system disk out of the LVM" do
+            boot_part = find_vol("/boot", checker.needed_partitions)
+            expect(boot_part.disk).to eq root_device
+            expect(boot_part.can_live_on_logical_volume).to eq false
           end
 
           it "recommends /boot to be 200 MiB" do
-            efi_part = find_vol("/boot", checker.needed_partitions)
-            expect(efi_part.desired_size).to eq 200.MiB
+            boot_part = find_vol("/boot", checker.needed_partitions)
+            expect(boot_part.desired_size).to eq 200.MiB
           end
         end
       end

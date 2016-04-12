@@ -30,10 +30,13 @@ module Yast
     # its constraints
     #
     class PlannedVolume
-      attr_accessor :mount_point, :filesystem_type, :partition_id
+      attr_accessor :mount_point, :filesystem_type, :partition_id, :disk
       attr_accessor :size, :min_size, :max_size, :desired_size, :weight
       attr_accessor :can_live_on_logical_volume, :logical_volume_name
       attr_accessor :max_start_offset
+
+      TO_STRING_ATTRS = [:mount_point, :min_size, :max_size, :desired_size,
+                         :disk, :max_start_offset]
 
       alias_method :desired, :desired_size
       alias_method :min, :min_size
@@ -57,6 +60,7 @@ module Yast
         @mount_point = mount_point
         @filesystem_type = filesystem_type
         @partition_id = nil
+        @disk         = nil
         @size         = DiskSize.zero
         @min_size     = DiskSize.zero
         @max_size     = DiskSize.unlimited
@@ -86,6 +90,15 @@ module Yast
         size = send(strategy)
         size = min_size if size.unlimited?
         size
+      end
+
+      def to_s
+        attrs = TO_STRING_ATTRS.map do |attr|
+          value = send(attr)
+          value = "nil" if value.nil?
+          "#{attr}=#{value}"
+        end
+        "#<PlannedVolume " + attrs.join(", ") + ">"
       end
     end
   end
