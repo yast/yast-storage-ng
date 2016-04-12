@@ -33,7 +33,7 @@ module Yast
       attr_accessor :mount_point, :filesystem_type, :partition_id, :disk
       attr_accessor :size, :min_size, :max_size, :desired_size, :weight
       attr_accessor :can_live_on_logical_volume, :logical_volume_name
-      attr_accessor :max_start_offset
+      attr_accessor :max_start_offset, :align, :bootable
 
       TO_STRING_ATTRS = [:mount_point, :min_size, :max_size, :desired_size,
                          :disk, :max_start_offset]
@@ -66,12 +66,14 @@ module Yast
         @max_size     = DiskSize.unlimited
         @desired_size = DiskSize.unlimited
         @max_start_offset = nil
+        @align        = nil
+        @bootable     = nil
         @weight       = 0 # For distributing extra space if desired is unlimited
         @can_live_on_logical_volume = false
         @logical_volume_name = nil
 
-        return unless @mount_point.start_with?("/")
-        return if @mount_point.start_with?("/boot")
+        return unless @mount_point && @mount_point.start_with?("/")
+        return if @mount_point && @mount_point.start_with?("/boot")
 
         @can_live_on_logical_volume = true
         if @mount_point == "/"

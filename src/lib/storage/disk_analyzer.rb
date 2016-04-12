@@ -73,6 +73,7 @@ module Yast
 
       attr_reader :installation_disks, :candidate_disks
       attr_reader :windows_partitions, :linux_partitions, :efi_partitions
+      attr_reader :prep_partitions
       attr_reader :devicegraph
       attr_accessor :disk_check_limit
 
@@ -82,6 +83,8 @@ module Yast
         @installation_disks = [] # device names of installation media
         @candidate_disks    = [] # device names of disks to install on
         @linux_partitions   = [] # device names of existing Linux parititions
+        @efi_partitions     = [] # device names of existing EFI partitions
+        @prep_partitions    = {} # device names of PReP partitions, indexed by disk
         @windows_partitions = [] # only filled if @linux_partitions is empty
 
         # Maximum number of disks to check. This might be important on
@@ -98,7 +101,8 @@ module Yast
         @installation_disks = find_installation_disks
         @candidate_disks    = find_candidate_disks
         @linux_partitions   = find_linux_partitions
-        @efi_partitions     = find_linux_partitions
+        @efi_partitions     = find_efi_partitions
+        @prep_partitions    = find_prep_partitions
 
         if @linux_partitions.empty?
           @windows_partitions = find_windows_partitions
@@ -161,6 +165,22 @@ module Yast
         disks = devicegraph.disks.with(name: candidate_disks)
         partitions = disks.partitions.with(id: ::Storage::ID_EFI)
         partitions.map(&:name)
+      end
+
+      # Find partitions from any of the candidate disks that can be used as
+      # PReP partition
+      #
+      # The result is a Hash in which each key is the name of a candidate disk
+      # and the value is an Array with the names of all the PReP partitions
+      # present in that disk.
+      #
+      # @return [Hash]
+      def find_prep_partitions
+        disks = devicegraph.disks
+        pairs = candidate_disks.map do |name|
+          [name, disks.with(name: name).partitions.with(id: ::Storage::ID_PPC_PREP).to_a]
+        end
+        Hash[pairs]
       end
 
       # Array with all disks in the devicegraph

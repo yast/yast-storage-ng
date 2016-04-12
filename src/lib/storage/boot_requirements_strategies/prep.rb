@@ -34,26 +34,41 @@ module Yast
       class PReP < Base
         def needed_partitions
           volumes = super
-          volumes << prep_volume if prep_partition_missing?
+          volumes << prep_volume if prep_partition_required? && prep_partition_missing?
           volumes
         end
 
       protected
 
         def prep_partition_missing?
-          true	# #prep_partitions not implemented yet
-          # disk_analyzer.prep_partitions.empty?
+          partitions = disk_analyzer.prep_partitions[settings.root_device]
+          partitions.nil? || partitions.empty?
+        end
+
+        def prep_partition_required?
+          # no need of PReP partition in OPAL/PowerNV/Bare metal
+          !arch.power_nv?
         end
 
         def prep_volume
-          # TODO: we need to pass partition type somehow (PReP partition, ID_PPC_PREP, ID_GPT_PREP)
-          # TODO: hoe to really pass 'no mount point' and 'no fs'?
-          vol = PlannedVolume.new("", ::Storage::FsType_UNKNOWN)
-          vol.min_size = DiskSize.MiB(1)
+          vol = PlannedVolume.new(nil)
+          # So far we are always using msdos partition ids
+          vol.partition_id = ::Storage::ID_PPC_PREP
+          vol.min_size = DiskSize.kiB(256)
           vol.max_size = DiskSize.MiB(8)
           vol.desired_size = DiskSize.MiB(1)
+          # Make sure that alignment does not result in a too big partition
+          vol.align = :keep_size
+          vol.bootable = true
           vol.can_live_on_logical_volume = false
+          # TODO: We have been told that PReP must be one of the first 4
+          # partitions, ideally the first one. But we have not found any
+          # rational/evidence. Not implementing that for the time being
           vol
+        end
+
+        def arch
+          @arch ||= StorageManager.instance.arch
         end
       end
     end
