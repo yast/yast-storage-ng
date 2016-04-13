@@ -276,6 +276,7 @@ module Yast
           region = new_region_with_size(free_slot, vol.size)
           partition = ptable.create_partition(dev_name, region, partition_type)
           partition.id = partition_id
+          partition.boot = !!vol.bootable
           partition
         end
 
