@@ -74,9 +74,9 @@ describe Yast::Storage::BootRequirementsChecker do
           context "if there are no EFI partitions" do
             let(:efi_partitions) { {} }
 
-            it "requires only a /boot/efi partition" do
+            it "requires only a new /boot/efi partition" do
               expect(checker.needed_partitions).to contain_exactly(
-                an_object_with_fields(mount_point: "/boot/efi")
+                an_object_with_fields(mount_point: "/boot/efi", reuse: nil)
               )
             end
           end
@@ -84,8 +84,10 @@ describe Yast::Storage::BootRequirementsChecker do
           context "if there is already an EFI partition" do
             let(:efi_partitions) { { "/dev/sda" => [analyzer_part("/dev/sda1")] } }
 
-            it "does not require any particular volume" do
-              expect(checker.needed_partitions).to be_empty
+            it "only requires to use the existing EFI partition" do
+              expect(checker.needed_partitions).to contain_exactly(
+                an_object_with_fields(mount_point: "/boot/efi", reuse: "/dev/sda1")
+              )
             end
           end
         end
@@ -96,10 +98,10 @@ describe Yast::Storage::BootRequirementsChecker do
           context "if there are no EFI partitions" do
             let(:efi_partitions) { {} }
 
-            it "requires /boot and /boot/efi partitions" do
+            it "requires /boot and a new /boot/efi partition" do
               expect(checker.needed_partitions).to contain_exactly(
-                an_object_with_fields(mount_point: "/boot"),
-                an_object_with_fields(mount_point: "/boot/efi")
+                an_object_with_fields(mount_point: "/boot", reuse: nil),
+                an_object_with_fields(mount_point: "/boot/efi", reuse: nil)
               )
             end
           end
@@ -107,9 +109,10 @@ describe Yast::Storage::BootRequirementsChecker do
           context "if there is already an EFI partition" do
             let(:efi_partitions) { { "/dev/sda" => [analyzer_part("/dev/sda1")] } }
 
-            it "requires only a /boot partition" do
+            it "requires /boot and a reused /boot/efi partition" do
               expect(checker.needed_partitions).to contain_exactly(
-                an_object_with_fields(mount_point: "/boot")
+                an_object_with_fields(mount_point: "/boot", reuse: nil),
+                an_object_with_fields(mount_point: "/boot/efi", reuse: "/dev/sda1")
               )
             end
           end
@@ -136,7 +139,7 @@ describe Yast::Storage::BootRequirementsChecker do
           end
         end
 
-        context "when proposing an EFI partition" do
+        context "when proposing an new EFI partition" do
           let(:efi_part) { find_vol("/boot/efi", checker.needed_partitions) }
           # Default values to ensure the max num of proposed volumes
           let(:use_lvm) { true }

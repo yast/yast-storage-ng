@@ -40,6 +40,7 @@ describe Yast::Storage::Proposal::VolumesGenerator do
 
     let(:settings) { Yast::Storage::Proposal::Settings.new }
     let(:analyzer) { instance_double("Yast::Storage::DiskAnalyzer") }
+    let(:swap_partitions) { [] }
     let(:boot_checker) { instance_double("Yast::Storage::BootRequirementChecker") }
     subject(:generator) { described_class.new(settings, analyzer) }
 
@@ -53,6 +54,7 @@ describe Yast::Storage::Proposal::VolumesGenerator do
           ]
         )
       )
+      allow(analyzer).to receive(:swap_partitions).and_return("/dev/sda" => swap_partitions)
     end
 
     it "returns a list of volumes" do
@@ -66,29 +68,60 @@ describe Yast::Storage::Proposal::VolumesGenerator do
       )
     end
 
-    context "with enlarge_swap_for_suspend" do
-      before do
-        settings.enlarge_swap_for_suspend = true
-      end
-
-      it "includes a big swap volume" do
-        expect(subject.all_volumes).to include(
-          # This value is currently hard-coded
-          an_object_with_fields(mount_point: "swap", min_size: 8.GiB, max_size: 8.GiB)
-        )
-      end
-    end
-
-    context "without enlarge_swap_for_suspend" do
+    # This swap sizes are currently hard-coded
+    context "swap volumes" do
       before do
         settings.enlarge_swap_for_suspend = false
       end
 
-      it "includes a small swap volume" do
-        expect(subject.all_volumes).to include(
-          # This value is currently hard-coded
-          an_object_with_fields(mount_point: "swap", min_size: 2.GiB, max_size: 2.GiB)
-        )
+      let(:swap_volumes) { subject.all_volumes.select { |v| v.mount_point == "swap" } }
+
+      context "if there is no previous swap partition" do
+        let(:swap_partitions) { [] }
+
+        it "includes a brand new swap volume and no swap reusing" do
+          expect(swap_volumes).to contain_exactly(
+            an_object_with_fields(reuse: nil)
+          )
+        end
+      end
+
+      context "if the existing swap partition is not big enough" do
+        let(:swap_partitions) { [analyzer_part("/dev/sdaX", 1.GiB)] }
+
+        it "includes a brand new swap volume and no swap reusing" do
+          expect(swap_volumes).to contain_exactly(
+            an_object_with_fields(reuse: nil)
+          )
+        end
+      end
+
+      context "if the existing swap partition is big enough" do
+        let(:swap_partitions) { [analyzer_part("/dev/sdaX", 3.GiB)] }
+
+        it "includes a volume to reuse the existing swap and no new swap" do
+          expect(swap_volumes).to contain_exactly(
+            an_object_with_fields(reuse: "/dev/sdaX")
+          )
+        end
+      end
+
+      context "without enlarge_swap_for_suspend" do
+        it "plans a small swap volume" do
+          expect(swap_volumes.first.min_size).to eq 2.GiB
+          expect(swap_volumes.first.max_size).to eq 2.GiB
+        end
+      end
+
+      context "with enlarge_swap_for_suspend" do
+        before do
+          settings.enlarge_swap_for_suspend = true
+        end
+
+        it "plans a bigger swap volume" do
+          expect(swap_volumes.first.min_size).to eq 8.GiB
+          expect(swap_volumes.first.max_size).to eq 8.GiB
+        end
       end
     end
 
