@@ -86,15 +86,28 @@ module Yast
         # Volume data structure for the swap volume according
         # to the settings.
         def swap_volume
-          vol = PlannedVolume.new("swap", ::Storage::FsType_SWAP)
           swap_size = DEFAULT_SWAP_SIZE
           if @settings.enlarge_swap_for_suspend
             swap_size = [ram_size, swap_size].max
           end
-          vol.min_size     = swap_size
-          vol.max_size     = swap_size
-          vol.desired_size = swap_size
+          vol = PlannedVolume.new("swap", ::Storage::FsType_SWAP)
+          reuse = reusable_swap(swap_size)
+          if reuse
+            vol.reuse = reuse.name
+          else
+            vol.min_size     = swap_size
+            vol.max_size     = swap_size
+            vol.desired_size = swap_size
+          end
           vol
+        end
+
+        # TODO: documentation. The smaller one that is big enough (stable
+        # sorting)
+        def reusable_swap(required_size)
+          partitions = disk_analyzer.swap_partitions.values.flatten
+          partitions.select! { |part| part.size >= required_size }
+          partitions.sort_by.with_index { |part, idx| [part.size, idx] }.first
         end
 
         # Volume data structure for the root volume according

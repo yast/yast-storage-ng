@@ -78,7 +78,7 @@ module Yast
       # TODO: document
       attr_reader :installation_disks, :candidate_disks
       attr_reader :windows_partitions, :linux_partitions, :efi_partitions
-      attr_reader :prep_partitions
+      attr_reader :prep_partitions, :swap_partitions
       attr_reader :devicegraph
       attr_accessor :disk_check_limit
 
@@ -108,6 +108,7 @@ module Yast
         @linux_partitions   = find_linux_partitions
         @efi_partitions     = find_efi_partitions
         @prep_partitions    = find_prep_partitions
+        @swap_partitions    = find_swap_partitions
 
         if @linux_partitions.empty?
           @windows_partitions = find_windows_partitions
@@ -208,6 +209,14 @@ module Yast
       # @return [Hash] @see #partitions_by_id
       def find_prep_partitions
         partitions_with_id(::Storage::ID_PPC_PREP)
+      end
+
+      # Find partitions from any of the candidate disks that can be used as
+      # swap space
+      #
+      # @return [Hash] @see #partitions_by_id
+      def find_swap_partitions
+        partitions_with_id(::Storage::ID_SWAP)
       end
 
       # Find any Linux partitions on any of the candidate disks.
