@@ -24,6 +24,7 @@
 require "yast"
 require "fileutils"
 require "storage"
+require "storage/disk_size"
 require "storage/refinements/disk"
 require "storage/refinements/devicegraph_lists"
 
@@ -71,6 +72,10 @@ module Yast
 
       DEFAULT_DISK_CHECK_LIMIT = 10
 
+      # TODO: document
+      Partition = Struct.new(:name, :size)
+
+      # TODO: document
       attr_reader :installation_disks, :candidate_disks
       attr_reader :windows_partitions, :linux_partitions, :efi_partitions
       attr_reader :prep_partitions
@@ -82,10 +87,10 @@ module Yast
 
         @installation_disks = [] # device names of installation media
         @candidate_disks    = [] # device names of disks to install on
-        @linux_partitions   = [] # device names of existing Linux parititions
-        @efi_partitions     = [] # device names of existing EFI partitions
-        @prep_partitions    = {} # device names of PReP partitions, indexed by disk
-        @windows_partitions = [] # only filled if @linux_partitions is empty
+        @linux_partitions   = {} # existing Linux parititions, indexed by disk
+        @efi_partitions     = {} # existing EFI partitions, indexed by disk
+        @prep_partitions    = {} # PReP partitions, indexed by disk
+        @windows_partitions = {} # only filled if @linux_partitions is empty
 
         # Maximum number of disks to check. This might be important on
         # architectures that tend to have very many disks (s390).
@@ -121,6 +126,8 @@ module Yast
         log.info("Windows partitions: #{@windows_partitions}")
       end
 
+    private
+
       # Find disks that look like the current installation medium
       # (the medium we just booted from to start the installation).
       #
@@ -152,42 +159,18 @@ module Yast
         dev_names(candidate_disk_objects)
       end
 
-      # Find partitions from any of the candidate disks that can be used as
-      # EFI system partitions.
-      #
-      # Checks for the partition id to return all potential partitions.
-      # Checking for content_info.efi? would only detect partitions that are
-      # going to be effectively used.
-      #
-      # @return [Array<string>] names of efi partitions
-      #
-      def find_efi_partitions
-        disks = devicegraph.disks.with(name: candidate_disks)
-        partitions = disks.partitions.with(id: ::Storage::ID_EFI)
-        partitions.map(&:name)
-      end
-
-      # Find partitions from any of the candidate disks that can be used as
-      # PReP partition
-      #
-      # The result is a Hash in which each key is the name of a candidate disk
-      # and the value is an Array with the names of all the PReP partitions
-      # present in that disk.
-      #
-      # @return [Hash]
-      def find_prep_partitions
-        disks = devicegraph.disks
-        pairs = candidate_disks.map do |name|
-          [name, disks.with(name: name).partitions.with(id: ::Storage::ID_PPC_PREP).to_a]
-        end
-        Hash[pairs]
-      end
-
       # Array with all disks in the devicegraph
       #
       # @return [Array<::Storage::Disk>]
       def all_disks
         devicegraph.all_disks.to_a
+      end
+
+      # List of disks in the devicegraph
+      #
+      # @return [DisksList]
+      def disks
+        devicegraph.disks
       end
 
       # Disks that are suitable for installing Linux.
@@ -219,29 +202,21 @@ module Yast
         @installation_disks
       end
 
+      # Find partitions from any of the candidate disks that can be used as
+      # PReP partition
+      #
+      # @return [Hash] @see #partitions_by_id
+      def find_prep_partitions
+        partitions_with_id(::Storage::ID_PPC_PREP)
+      end
+
       # Find any Linux partitions on any of the candidate disks.
       # This may be a normal Linux partition (type 0x83), a Linux swap
       # partition (type 0x82), an LVM partition, or a RAID partition.
       #
-      # @return [Array<Partition>] Linux partitions
-      #
+      # @return [Hash] @see #partitions_by_id
       def find_linux_partitions
-        linux_partitions = []
-        @candidate_disks.each do |disk_name|
-          begin
-            disk = ::Storage::Disk.find(devicegraph, disk_name)
-            disk.partition_table.partitions.each do |partition|
-              if LINUX_PARTITION_IDS.include?(partition.id)
-                log.info("Found Linux partition #{partition} (ID 0x#{partition.id.to_s(16)})")
-                linux_partitions << partition.name
-              end
-            end
-          rescue RuntimeError => ex # FIXME: rescue ::Storage::Exception when SWIG bindings are fixed
-            log.info("CAUGHT exception #{ex}")
-          end
-        end
-        log.info("Linux part: #{linux_partitions}")
-        linux_partitions
+        partitions_with_id(LINUX_PARTITION_IDS)
       end
 
       # Find any MS Windows partitions that could possibly be resized.
@@ -258,14 +233,18 @@ module Yast
       #
       def find_windows_partitions
         return [] unless Arch.x86_64 || Arch.i386
-        windows_partitions = []
+        windows_partitions = {}
 
         # No need to limit checking - PC arch only (few disks)
         @candidate_disks.each do |disk_name|
           begin
             disk = ::Storage::Disk.find(devicegraph, disk_name)
             disk.partition_table.partitions.each do |partition|
-              windows_partitions << partition.name if windows_partition?(partition)
+              if windows_partition?(partition)
+                part = Partition.new(partition.name, DiskSize.kiB(partition.size_k))
+                windows_partitions[disk_name] ||= []
+                windows_partitions[disk_name] << part
+              end
             end
           rescue RuntimeError => ex  # FIXME: rescue ::Storage::Exception when SWIG bindings are fixed
             log.info("CAUGHT exception #{ex}")
@@ -422,8 +401,6 @@ module Yast
         raise "umount failed for #{mount_point}" unless system(cmd)
       end
 
-    private
-
       # Remove any installation disks from 'disks' and return a disks array
       # containing the disks that are not installation media.
       #
@@ -437,6 +414,36 @@ module Yast
         # Comparing device names ("/dev/sda"...) instead.
 
         disks.delete_if { |disk| @installation_disks.include?(disk.name) }
+      end
+
+      # Find partitions from any of the candidate disks that have a given (set
+      # of) partition id(s).
+      #
+      # The result is a Hash in which each key is the name of a candidate disk
+      # and the value is an Array of DiskAnalyzer::Partition objects
+      # representing the matching partitions in that disk.
+      #
+      # @param ids [::Storage::ID, Array<::Storage::ID>]
+      # @return [Hash]
+      def partitions_with_id(ids)
+        pairs = candidate_disks.map do |disk_name|
+          partitions = disks.with(name: disk_name).partitions.with(id: ids).to_a
+          partitions.map! { |part| Partition.new(part.name, DiskSize.kiB(part.size_k)) }
+          [disk_name, partitions ]
+        end
+        Hash[pairs]
+      end
+
+      # Find partitions from any of the candidate disks that can be used as
+      # EFI system partitions.
+      #
+      # Checks for the partition id to return all potential partitions.
+      # Checking for content_info.efi? would only detect partitions that are
+      # going to be effectively used.
+      #
+      # @return [Hash] @see #partitions_by_id
+      def find_efi_partitions
+        partitions_with_id(::Storage::ID_EFI)
       end
     end
   end

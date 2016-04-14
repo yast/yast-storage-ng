@@ -123,9 +123,8 @@ module Yast
         # @param devicegraph [DeviceGraph] devicegraph to update
         # @param required_size [DiskSize]
         def resize_windows!(devicegraph, required_size)
-          windows_part_names = disk_analyzer.windows_partitions
           return if windows_part_names.empty?
-          return unless disk_analyzer.linux_partitions.empty?
+          return unless linux_part_names.empty?
 
           log.info("Resizing Windows partitions to free #{required_size}")
           sorted_resizables(devicegraph, windows_part_names).each do |res|
@@ -211,13 +210,27 @@ module Yast
           candidate_parts = disks_for(original_graph).partitions
 
           win_part, non_win_part = candidate_parts.map(&:name).partition do |part_name|
-            disk_analyzer.windows_partitions.include?(part_name)
+            windows_part_names.include?(part_name)
           end
           linux_part, non_linux_part = non_win_part.partition do |part_name|
-            disk_analyzer.linux_partitions.include?(part_name)
+            linux_part_names.include?(part_name)
           end
 
           linux_part + non_linux_part + win_part
+        end
+
+        # Device names of windows partitions detected by disk_analyzer
+        #
+        # @return [array<string>]
+        def windows_part_names
+          disk_analyzer.windows_partitions.values.flatten.map(&:name)
+        end
+
+        # Device names of linux partitions detected by disk_analyzer
+        #
+        # @return [array<string>]
+        def linux_part_names
+          disk_analyzer.linux_partitions.values.flatten.map(&:name)
         end
       end
     end

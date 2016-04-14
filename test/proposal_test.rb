@@ -66,7 +66,7 @@ describe Yast::Storage::Proposal do
 
     context "in a windows-only PC" do
       let(:scenario) { "windows-pc" }
-      let(:windows_partitions) { ["/dev/sda1"] }
+      let(:windows_partitions) { { "/dev/sda" => [analyzer_part("/dev/sda1")] } }
 
       context "with a separate home" do
         let(:separate_home) { true }
@@ -89,7 +89,7 @@ describe Yast::Storage::Proposal do
 
     context "in a windows/linux multiboot PC" do
       let(:scenario) { "windows-linux-multiboot-pc" }
-      let(:windows_partitions) { ["/dev/sda1"] }
+      let(:windows_partitions) { { "/dev/sda" => [analyzer_part("/dev/sda1")] } }
 
       context "with a separate home" do
         let(:separate_home) { true }
@@ -112,7 +112,7 @@ describe Yast::Storage::Proposal do
 
     context "in a linux multiboot PC" do
       let(:scenario) { "multi-linux-pc" }
-      let(:windows_partitions) { [] }
+      let(:windows_partitions) { {} }
 
       context "with a separate home" do
         let(:separate_home) { true }

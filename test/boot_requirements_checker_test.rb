@@ -72,7 +72,7 @@ describe Yast::Storage::BootRequirementsChecker do
           let(:use_lvm) { false }
 
           context "if there are no EFI partitions" do
-            let(:efi_partitions) { [] }
+            let(:efi_partitions) { {} }
 
             it "requires only a /boot/efi partition" do
               expect(checker.needed_partitions).to contain_exactly(
@@ -82,7 +82,7 @@ describe Yast::Storage::BootRequirementsChecker do
           end
 
           context "if there is already an EFI partition" do
-            let(:efi_partitions) { ["/dev/sda1"] }
+            let(:efi_partitions) { { "/dev/sda" => [analyzer_part("/dev/sda1")] } }
 
             it "does not require any particular volume" do
               expect(checker.needed_partitions).to be_empty
@@ -94,7 +94,7 @@ describe Yast::Storage::BootRequirementsChecker do
           let(:use_lvm) { true }
 
           context "if there are no EFI partitions" do
-            let(:efi_partitions) { [] }
+            let(:efi_partitions) { {} }
 
             it "requires /boot and /boot/efi partitions" do
               expect(checker.needed_partitions).to contain_exactly(
@@ -105,7 +105,7 @@ describe Yast::Storage::BootRequirementsChecker do
           end
 
           context "if there is already an EFI partition" do
-            let(:efi_partitions) { ["/dev/sda1"] }
+            let(:efi_partitions) { { "/dev/sda" => [analyzer_part("/dev/sda1")] } }
 
             it "requires only a /boot partition" do
               expect(checker.needed_partitions).to contain_exactly(
@@ -119,7 +119,7 @@ describe Yast::Storage::BootRequirementsChecker do
           let(:boot_part) { find_vol("/boot", checker.needed_partitions) }
           # Default values to ensure the max num of proposed volumes
           let(:use_lvm) { true }
-          let(:efi_partitions) { [] }
+          let(:efi_partitions) { {} }
 
           it "requires /boot to be ext4 with at least 100 MiB" do
             expect(boot_part.filesystem_type).to eq ::Storage::FsType_EXT4
@@ -140,7 +140,7 @@ describe Yast::Storage::BootRequirementsChecker do
           let(:efi_part) { find_vol("/boot/efi", checker.needed_partitions) }
           # Default values to ensure the max num of proposed volumes
           let(:use_lvm) { true }
-          let(:efi_partitions) { [] }
+          let(:efi_partitions) { {} }
 
           it "requires /boot/efi to be vfat with at least 33 MiB" do
             expect(efi_part.filesystem_type).to eq ::Storage::FsType_VFAT
@@ -227,7 +227,7 @@ describe Yast::Storage::BootRequirementsChecker do
           end
 
           context "if the existent PReP partition is not in the target disk" do
-            let(:prep_partitions) { { "/dev/sdb" => ["/dev/sdb"] } }
+            let(:prep_partitions) { { "/dev/sdb" => [analyzer_part("/dev/sdb")] } }
 
             it "requires only a PReP partition" do
               expect(checker.needed_partitions).to contain_exactly(
@@ -237,7 +237,7 @@ describe Yast::Storage::BootRequirementsChecker do
           end
 
           context "if there is already a PReP partition in the disk" do
-            let(:prep_partitions) { { "/dev/sda" => ["/dev/sda1"] } }
+            let(:prep_partitions) { { "/dev/sda" => [analyzer_part("/dev/sda1")] } }
 
             it "does not require any particular volume" do
               expect(checker.needed_partitions).to be_empty
@@ -260,7 +260,7 @@ describe Yast::Storage::BootRequirementsChecker do
           end
 
           context "if the existent PReP partition is not in the target disk" do
-            let(:prep_partitions) { { "/dev/sdb" => ["/dev/sdb"] } }
+            let(:prep_partitions) { { "/dev/sdb" => [analyzer_part("/dev/sdb1")] } }
 
             it "requires /boot and PReP partitions" do
               expect(checker.needed_partitions).to contain_exactly(
@@ -271,7 +271,7 @@ describe Yast::Storage::BootRequirementsChecker do
           end
 
           context "if there is already a PReP partition in the disk" do
-            let(:prep_partitions) { { "/dev/sda" => ["/dev/sda1"] } }
+            let(:prep_partitions) { { "/dev/sda" => [analyzer_part("/dev/sda1")] } }
 
             it "only requires a /boot partition" do
               expect(checker.needed_partitions).to contain_exactly(

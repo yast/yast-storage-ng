@@ -76,9 +76,10 @@ describe Yast::Storage::Proposal::SpaceMaker do
       let(:resize_info) do
         instance_double("::Storage::ResizeInfo", resize_ok: true, min_size_k: 730.GiB.size_k)
       end
+      let(:windows_partitions) { { "/dev/sda" => [analyzer_part("/dev/sda1")] } }
 
       before do
-        allow(analyzer).to receive(:windows_partitions).and_return ["/dev/sda1"]
+        allow(analyzer).to receive(:windows_partitions).and_return windows_partitions
         allow_any_instance_of(::Storage::Filesystem).to receive(:detect_resize_info)
           .and_return(resize_info)
       end
@@ -124,10 +125,16 @@ describe Yast::Storage::Proposal::SpaceMaker do
       let(:resize_info) do
         instance_double("::Storage::ResizeInfo", resize_ok: true, min_size_k: 50.GiB.size_k)
       end
+      let(:windows_partitions) do
+        {
+          "/dev/sda" => [analyzer_part("/dev/sda1")],
+          "/dev/sdb" => [analyzer_part("/dev/sdb1")]
+        }
+      end
 
       before do
         settings.candidate_devices = ["/dev/sda", "/dev/sdb"]
-        allow(analyzer).to receive(:windows_partitions).and_return ["/dev/sda1", "/dev/sdb1"]
+        allow(analyzer).to receive(:windows_partitions).and_return windows_partitions
         allow_any_instance_of(::Storage::Filesystem).to receive(:detect_resize_info)
           .and_return(resize_info)
       end
