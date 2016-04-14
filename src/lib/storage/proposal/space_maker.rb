@@ -59,12 +59,14 @@ module Yast
         # @raise Proposal::NoDiskSpaceError if there is no enough room
         #
         # @param required_size [DiskSize] required amount of available space
+        # @param keep [Array<String>] device names of partitions that should not
+        #       be deleted
         # @return [::Storage::Devicegraph]
-        def provide_space(required_size)
+        def provide_space(required_size, keep: [])
           new_graph = original_graph.copy
 
           resize_windows!(new_graph, required_size) unless success?(new_graph, required_size)
-          delete_partitions!(new_graph, required_size) unless success?(new_graph, required_size)
+          delete_partitions!(new_graph, required_size, keep) unless success?(new_graph, required_size)
           raise NoDiskSpaceError unless success?(new_graph, required_size)
 
           new_graph
@@ -180,11 +182,16 @@ module Yast
         #
         # @param devicegraph [DeviceGraph] devicegraph to update
         # @param required_size [DiskSize]
-        def delete_partitions!(devicegraph, required_size)
+        # @param keep [Array<String>] partitions that should not be deleted
+        def delete_partitions!(devicegraph, required_size, keep)
           log.info("Trying to make space for #{required_size}")
 
           prioritized_candidate_partitions.each do |part_name|
             return if success?(devicegraph, required_size)
+            if keep.include?(part_name)
+              log.info "Skipped deletion of #{part_name}"
+              next
+            end
             part = ::Storage::Partition.find(devicegraph, part_name)
             next unless part
             log.info("Deleting partition #{part_name} in device graph")

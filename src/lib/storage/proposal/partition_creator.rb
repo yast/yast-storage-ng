@@ -171,6 +171,7 @@ module Yast
           extra_size = total_free_size - volumes.total_size
           while extra_size > DiskSize.zero
             candidates.delete_if { |vol| vol.size >= vol.max_size }
+            candidates.delete_if { |vol| vol.reuse }
             return extra_size if candidates.empty?
             return extra_size if candidates.total_weight.zero?
             log.info("Distributing #{extra_size} extra space among #{candidates.size} volumes")
@@ -224,6 +225,10 @@ module Yast
         # @param volumes [Array<PlannedVolume>]
         def create_volumes_partitions(volumes)
           volumes.sort_by_attr(:disk, :max_start_offset).each do |vol|
+            if vol.reuse
+              log.info "Skipping creation of #{vol}"
+              next
+            end
             partition_id = vol.partition_id
             partition_id ||= vol.mount_point == "swap" ? ::Storage::ID_SWAP : ::Storage::ID_LINUX
             begin

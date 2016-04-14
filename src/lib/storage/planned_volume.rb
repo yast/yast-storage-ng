@@ -37,6 +37,11 @@ module Yast
       # get, like ::Storage::FsType_BTRFS or ::Storage::FsType_SWAP. A value of
       # nil means the volume will not be formatted.
       attr_accessor :filesystem_type
+      # @return [String] device name of an existing partition to reuse for this
+      # purpose. That means that no new partition will be created and, thus,
+      # most of the other attributes (with the obvious exception of mount_point)
+      # will be most likely ignored
+      attr_accessor :reuse
       # @return [::Storage::IdNum] id of the partition in a ms-dos style
       # partition table. If nil, the final id is expected to be inferred from
       # the filesystem type.
@@ -73,8 +78,8 @@ module Yast
       # flag but is not needed in our grub2 setup.
       attr_accessor :bootable
 
-      TO_STRING_ATTRS = [:mount_point, :min_size, :max_size, :desired_size,
-                         :disk, :max_start_offset]
+      TO_STRING_ATTRS = [:mount_point, :reuse, :min_size, :max_size,
+                         :desired_size, :disk, :max_start_offset]
 
       alias_method :desired, :desired_size
       alias_method :min, :min_size
@@ -90,6 +95,7 @@ module Yast
       def initialize(mount_point, filesystem_type = nil)
         @mount_point = mount_point
         @filesystem_type = filesystem_type
+        @reuse        = nil
         @partition_id = nil
         @disk         = nil
         @size         = DiskSize.zero
@@ -117,9 +123,13 @@ module Yast
       # Minimum size that should be granted for the partition when applying a
       # given strategy
       #
+      # Returns zero for reused volumes
+      #
       # @param strategy [Symbol] :desired or :min_size
       # @return [DiskSize]
       def min_valid_size(strategy)
+        # No need to provide space for reused volumes
+        return DiskSize.zero if reuse
         size = send(strategy)
         size = min_size if size.unlimited?
         size
