@@ -22,6 +22,13 @@
 # find current contact information at www.suse.com.
 
 require "yast"
+require "storage/refinements"
+require "storage/disk_size"
+require "storage/planned_volume"
+require "storage/planned_volumes_list"
+require "storage/proposal/exceptions"
+require "storage/refinements/disk"
+require "storage/refinements/devicegraph_lists"
 
 module Yast
   module Storage
@@ -31,9 +38,14 @@ module Yast
       class Base
         include Yast::Logger
 
+        using Refinements::Disk
+        using Refinements::DevicegraphLists
+
         def initialize(settings, disk_analyzer)
           @settings = settings
           @disk_analyzer = disk_analyzer
+          @root_disk = @disk_analyzer.devicegraph.disks.with(name: settings.root_device).first
+          puts "root: #{@root_disk.partition_table.partitions.to_a}"
         end
 
         def needed_partitions
