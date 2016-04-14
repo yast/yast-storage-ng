@@ -21,11 +21,7 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "yast"
 require "storage/boot_requirements_strategies/base"
-require "storage/planned_volume"
-require "storage/planned_volumes_list"
-require "storage/disk_size"
 
 module Yast
   module Storage
@@ -33,9 +29,19 @@ module Yast
       # Strategy to calculate the boot requirements in a legacy system (x86
       # without EFI)
       class Legacy < Base
-       def needed_partitions
+
+        using Refinements::Disk
+
+        def needed_partitions
           volumes = super
           volumes << grub_volume if grub_partition_required? && grub_partition_missing?
+          if mbr_gap_required?
+            mbr_gap = disk_analyzer.mbr_gap[settings.root_device]
+            # fail if gap is too small
+            if mbr_gap < DiskSize.kiB(256)
+              raise Proposal::Error
+            end
+          end
           volumes
         end
 
@@ -46,8 +52,27 @@ module Yast
           partitions.nil? || partitions.empty?
         end
 
+        # only needed on GPT partition table
+        # FIXME: currently nobody creates a partition table on an empty disk...
         def grub_partition_required?
-          true
+          if @root_disk &&
+             @root_disk.partition_table? &&
+             @root_disk.partition_table.type == ::Storage::PtType_GPT
+            true
+          else
+            false
+          end
+        end
+
+        # only relevant for DOS partition table
+        def mbr_gap_required?
+          if @root_disk &&
+             @root_disk.partition_table? &&
+             @root_disk.partition_table.type == ::Storage::PtType_MSDOS
+            true
+          else
+            false
+          end
         end
 
         def grub_volume

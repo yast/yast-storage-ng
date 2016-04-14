@@ -37,12 +37,21 @@ module Yast
             transport == ::Storage::Transport_USB
           end
 
+          # FIXME: Arvin promised #partition_table? in libstorage-ng;
+          # until then, fake it
+          def partition_table?
+            begin
+              partition_table ? true : false
+            rescue
+              false
+            end
+          end
+
           # Partitions contained in the disk
           #
           # @return [Array<::Storage::Partition>]
           def all_partitions
-            return [] unless partition_table
-            partition_table.partitions.to_a
+            partition_table? ? partition_table.partitions.to_a : []
           end
 
           # Free spaces inside the disk
@@ -50,7 +59,7 @@ module Yast
           # @return [Array<FreeDiskSpace>]
           def free_spaces
             # TODO: Handle completely empty disks (no partition table) as empty space
-            return [] unless partition_table
+            return [] unless partition_table?
             partition_table.unused_partition_slots.map do |slot|
               FreeDiskSpace.new(self, slot)
             end

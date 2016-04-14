@@ -24,6 +24,7 @@
 require "yast"
 require "fileutils"
 require "storage"
+require "storage/refinements"
 require "storage/refinements/disk"
 require "storage/refinements/devicegraph_lists"
 
@@ -74,6 +75,7 @@ module Yast
       attr_reader :installation_disks, :candidate_disks
       attr_reader :windows_partitions, :linux_partitions, :efi_partitions
       attr_reader :prep_partitions, :grub_partitions
+      attr_reader :mbr_gap
       attr_reader :devicegraph
       attr_accessor :disk_check_limit
 
@@ -105,6 +107,7 @@ module Yast
         @efi_partitions     = find_efi_partitions
         @prep_partitions    = find_prep_partitions
         @grub_partitions    = find_grub_partitions
+        @mbr_gap            = find_mbr_gap
 
         if @linux_partitions.empty?
           @windows_partitions = find_windows_partitions
@@ -119,8 +122,11 @@ module Yast
         log.info("Installation disks: #{@installation_disks}")
         log.info("Candidate    disks: #{@candidate_disks}")
         log.info("Linux   partitions: #{@linux_partitions}")
-        log.info("EFI     partitions: #{@efi_partitions}")
         log.info("Windows partitions: #{@windows_partitions}")
+        log.info("EFI     partitions: #{@efi_partitions}")
+        log.info("PReP    partitions: #{@prep_partitions}")
+        log.info("GRUB    partitions: #{@grub_partitions}")
+        log.info("MBR gap: #{@mbr_gap}")
       end
 
       # Find disks that look like the current installation medium
@@ -185,10 +191,44 @@ module Yast
         Hash[pairs]
       end
 
+      # Find partitions from any of the candidate disks that can be used as
+      # GRUB partition
+      #
+      # The result is a Hash in which each key is the name of a candidate disk
+      # and the value is an Array with the names of all the GRUB partitions
+      # present in that disk.
+      #
+      # @return [Hash]
       def find_grub_partitions
         disks = devicegraph.disks
         pairs = candidate_disks.map do |name|
           [name, disks.with(name: name).partitions.with(id: ::Storage::ID_GPT_BIOS).to_a]
+        end
+        Hash[pairs]
+      end
+
+      # Determine MBR gap (size between MBR and first partition) for all candidate disks.
+      #
+      # The result is a Hash in which each key is the name of a candidate disk
+      # and the value is the DiskSize of the MBR gap.
+      #
+      # @return [Hash]
+      #
+      # FIXME: sizes in Region are more or less useless atm, Arvin will fix this.
+      # If that's done switch from kb to byte units.
+      #
+      def find_mbr_gap
+        disks = devicegraph.disks
+        pairs = candidate_disks.map do |name|
+          disk = disks.with(name: name).first
+          gap = DiskSize.kiB(0)
+          if disk.partition_table? && disk.partition_table.type == ::Storage::PtType_MSDOS
+            region1 = (disk.partition_table.partitions.to_a.min do |x, y|
+              x.region.to_kb(x.region.start) <=> y.region.to_kb(y.region.start)
+            end).region
+            gap = DiskSize.kiB(region1.to_kb(region1.start))
+          end
+          [name, gap]
         end
         Hash[pairs]
       end
