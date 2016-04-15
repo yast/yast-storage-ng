@@ -72,25 +72,58 @@ module Yast
 
       DEFAULT_DISK_CHECK_LIMIT = 10
 
-      # TODO: document
+      # Representation of a partition from DiskAnalyzer point of view,
+      # consisting on 2 attributes: name (device name) and size (DiskSize).
+      # @!parse class Partition; end
       Partition = Struct.new(:name, :size)
 
-      # TODO: document
-      attr_reader :installation_disks, :candidate_disks
-      attr_reader :windows_partitions, :linux_partitions, :efi_partitions
-      attr_reader :prep_partitions, :swap_partitions
-      attr_reader :devicegraph
+      # @return [Array<String>] device names of installation media.
+      #       Filled by #analyze.
+      attr_reader :installation_disks
+
+      # @return [Array<String>] device name of disks to install on.
+      #       Filled by #analyze.
+      attr_reader :candidate_disks
+
+      # @return [Hash] Linux partitions found in each candidate disk.
+      #     Filled by #analyze.
+      #     @see #find_linux_partitions
+      attr_reader :linux_partitions
+
+      # @return [Hash] MS Windows partitions found in each candidate disk.
+      #     Filled by #analyze only if #linux_partitions is empty.
+      #     @see #find_windows_partitions
+      attr_reader :windows_partitions
+
+      # @return [Hash] EFI partitions found in each candidate disk.
+      #     Filled by #analyze.
+      #     @see #find_efi_partitions
+      attr_reader :efi_partitions
+
+      # @return [Hash] PReP partitions found in each candidate disk.
+      #     Filled by #analyze.
+      #     @see #find_prep_partitions
+      attr_reader :prep_partitions
+
+      # @return [Hash] Swap partitions found in each candidate disk.
+      #     Filled by #analyze.
+      #     @see #find_swap_partitions
+      attr_reader :swap_partitions
+
+      # @return [Fixnum] Maximum number of disks to check.
+      #     @see #find_installation_disks
       attr_accessor :disk_check_limit
 
       def initialize
         Yast.import "Arch"
 
-        @installation_disks = [] # device names of installation media
-        @candidate_disks    = [] # device names of disks to install on
-        @linux_partitions   = {} # existing Linux parititions, indexed by disk
-        @efi_partitions     = {} # existing EFI partitions, indexed by disk
-        @prep_partitions    = {} # PReP partitions, indexed by disk
-        @windows_partitions = {} # only filled if @linux_partitions is empty
+        @installation_disks = []
+        @candidate_disks    = []
+        @linux_partitions   = {}
+        @windows_partitions = {}
+        @efi_partitions     = {}
+        @prep_partitions    = {}
+        @swap_partitions    = {}
 
         # Maximum number of disks to check. This might be important on
         # architectures that tend to have very many disks (s390).
@@ -123,11 +156,15 @@ module Yast
         log.info("Installation disks: #{@installation_disks}")
         log.info("Candidate    disks: #{@candidate_disks}")
         log.info("Linux   partitions: #{@linux_partitions}")
-        log.info("EFI     partitions: #{@efi_partitions}")
         log.info("Windows partitions: #{@windows_partitions}")
+        log.info("EFI     partitions: #{@efi_partitions}")
+        log.info("PReP    partitions: #{@prep_partitions}")
+        log.info("Swap    partitions: #{@swap_partitions}")
       end
 
     private
+
+      attr_reader :devicegraph
 
       # Find disks that look like the current installation medium
       # (the medium we just booted from to start the installation).

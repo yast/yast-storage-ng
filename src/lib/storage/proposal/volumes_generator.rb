@@ -74,7 +74,7 @@ module Yast
           checker.needed_partitions
         end
 
-        # Standard volumes for the root, swap and /home
+        # Additional volumes not needed for booting, like swap and /home
         #
         # @return [Array<PlannedVolumes>]
         def additional_volumes
@@ -102,12 +102,17 @@ module Yast
           vol
         end
 
-        # TODO: documentation. The smaller one that is big enough (stable
-        # sorting)
+        # Swap partition that can be reused.
+        #
+        # It returns the smaller partition reported by disk_analyzer that is big
+        # enough for our purposes.
+        #
+        # @return [DiskAnalyzer::Partition]
         def reusable_swap(required_size)
           partitions = disk_analyzer.swap_partitions.values.flatten
           partitions.select! { |part| part.size >= required_size }
-          partitions.sort_by.with_index { |part, idx| [part.size, idx] }.first
+          # Use #name in case of #size tie to provide stable sorting
+          partitions.sort_by { |part| [part.size, part.name] }.first
         end
 
         # Volume data structure for the root volume according
