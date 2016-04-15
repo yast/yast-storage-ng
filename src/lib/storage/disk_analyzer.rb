@@ -286,11 +286,11 @@ module Yast
           begin
             disk = ::Storage::Disk.find(devicegraph, disk_name)
             disk.partition_table.partitions.each do |partition|
-              if windows_partition?(partition)
-                part = Partition.new(partition.name, DiskSize.kiB(partition.size_k))
-                windows_partitions[disk_name] ||= []
-                windows_partitions[disk_name] << part
-              end
+              next unless windows_partition?(partition)
+
+              part = Partition.new(partition.name, DiskSize.kiB(partition.size_k))
+              windows_partitions[disk_name] ||= []
+              windows_partitions[disk_name] << part
             end
           rescue RuntimeError => ex  # FIXME: rescue ::Storage::Exception when SWIG bindings are fixed
             log.info("CAUGHT exception #{ex}")
@@ -475,7 +475,7 @@ module Yast
         pairs = candidate_disks.map do |disk_name|
           partitions = disks.with(name: disk_name).partitions.with(id: ids).to_a
           partitions.map! { |part| Partition.new(part.name, DiskSize.kiB(part.size_k)) }
-          [disk_name, partitions ]
+          [disk_name, partitions]
         end
         Hash[pairs]
       end

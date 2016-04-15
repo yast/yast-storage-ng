@@ -43,7 +43,7 @@ module Yast
       def fake_devicegraph
         Yast::Storage::StorageManager.instance.probed
       end
-      
+
       def analyzer_part(name = "", size = Yast::Storage::DiskSize.MiB(10))
         Yast::Storage::DiskAnalyzer::Partition.new(name, size)
       end
