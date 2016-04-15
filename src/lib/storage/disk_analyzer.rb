@@ -473,7 +473,11 @@ module Yast
       # @return [Hash]
       def partitions_with_id(ids)
         pairs = candidate_disks.map do |disk_name|
-          partitions = disks.with(name: disk_name).partitions.with(id: ids).to_a
+          # Skip extended partitions
+          partitions = disks.with(name: disk_name).partitions.with do |part|
+            part.type != ::Storage::PartitionType_EXTENDED
+          end
+          partitions = partitions.with(id: ids).to_a
           partitions.map! { |part| Partition.new(part.name, DiskSize.kiB(part.size_k)) }
           [disk_name, partitions]
         end
