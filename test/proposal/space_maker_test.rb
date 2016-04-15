@@ -185,5 +185,70 @@ describe Yast::Storage::Proposal::SpaceMaker do
         end
       end
     end
+
+    context "when forced to delete partitions" do
+      let(:scenario) { "multi-linux-pc" }
+
+      it "deletes the first partitions of the disk until reaching the goal" do
+        result = maker.provide_space(100.GiB)
+        expect(result.partitions).to contain_exactly(
+          an_object_with_fields(name: "/dev/sda4", size: 900.GiB),
+          an_object_with_fields(name: "/dev/sda5", size: 300.GiB),
+          an_object_with_fields(name: "/dev/sda6", size: 600.GiB)
+        )
+      end
+
+      it "doesn't delete partitions listed in the 'keep' argument" do
+        result = maker.provide_space(100.GiB, keep: ["/dev/sda2"])
+        expect(result.partitions).to contain_exactly(
+          an_object_with_fields(name: "/dev/sda2", size: 60.GiB),
+          an_object_with_fields(name: "/dev/sda4", size: 900.GiB),
+          an_object_with_fields(name: "/dev/sda6", size: 600.GiB)
+        )
+      end
+
+      it "raises a NoDiskSpaceError exception if deleting is not enough" do
+        expect { maker.provide_space(980.GiB, keep: ["/dev/sda2"]) }
+          .to raise_error Yast::Storage::Proposal::NoDiskSpaceError
+      end
+
+      # FIXME: Bug or feature? Anyways, we are planning to change how libstorage-ng
+      # handles extended and logical partitions. Revisit this then
+      it "doesn't delete empty extended partitions unless required" do
+        result = maker.provide_space(800.GiB, keep: ["/dev/sda1", "/dev/sda2", "/dev/sda3"])
+        expect(result.partitions).to contain_exactly(
+          an_object_with_fields(name: "/dev/sda1", size: 4.GiB),
+          an_object_with_fields(name: "/dev/sda2", size: 60.GiB),
+          an_object_with_fields(name: "/dev/sda3", size: 60.GiB),
+          an_object_with_fields(name: "/dev/sda4", size: 900.GiB)
+        )
+      end
+
+      # FIXME: in fact, extended partitions has no special consideration. This
+      # works only by a matter of luck. See FIXME above.
+      it "deletes empty extended partitions if the space is needed" do
+        result = maker.provide_space(900.GiB, keep: ["/dev/sda1", "/dev/sda2", "/dev/sda3"])
+        expect(result.partitions).to contain_exactly(
+          an_object_with_fields(name: "/dev/sda1", size: 4.GiB),
+          an_object_with_fields(name: "/dev/sda2", size: 60.GiB),
+          an_object_with_fields(name: "/dev/sda3", size: 60.GiB)
+        )
+      end
+
+      # FIXME: We are planning to change how libstorage-ng handles extended and logical
+      # partitions. Then it will be time to fix this bug
+      it "has an UGLY BUG that deletes extended partitions leaving the logical there" do
+        result = maker.provide_space(
+          400.GiB,
+          keep: ["/dev/sda1", "/dev/sda2", "/dev/sda3", "/dev/sda6"]
+        )
+        expect(result.partitions).to contain_exactly(
+          an_object_with_fields(name: "/dev/sda1", size: 4.GiB),
+          an_object_with_fields(name: "/dev/sda2", size: 60.GiB),
+          an_object_with_fields(name: "/dev/sda3", size: 60.GiB),
+          an_object_with_fields(name: "/dev/sda6", size: 600.GiB)
+        )
+      end
+    end
   end
 end

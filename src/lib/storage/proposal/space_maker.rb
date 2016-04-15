@@ -216,6 +216,9 @@ module Yast
             linux_part_names.include?(part_name)
           end
 
+          log.info "Deletion candidates, Linux: #{linux_part}"
+          log.info "Deletion candidates, non Linux: #{non_linux_part}"
+          log.info "Deletion candidates, Windows: #{win_part}"
           linux_part + non_linux_part + win_part
         end
 
