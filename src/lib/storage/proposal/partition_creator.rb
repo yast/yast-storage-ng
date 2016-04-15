@@ -167,11 +167,10 @@ module Yast
         # @return [DiskSpace] remaining space that could not be distributed
         #
         def distribute_extra_space(volumes)
-          candidates = volumes.dup
+          candidates = volumes
           extra_size = total_free_size - volumes.total_size
           while extra_size > DiskSize.zero
-            candidates.delete_if { |vol| vol.size >= vol.max_size }
-            candidates.delete_if { |vol| vol.reuse }
+            candidates = extra_space_candidates(candidates)
             return extra_size if candidates.empty?
             return extra_size if candidates.total_weight.zero?
             log.info("Distributing #{extra_size} extra space among #{candidates.size} volumes")
@@ -187,6 +186,17 @@ module Yast
           end
           log.info("Could not distribute #{extra_size}") unless extra_size.zero?
           extra_size
+        end
+
+        # Volumes that may grow when distributing the extra space
+        #
+        # @param volumes [PlannedVolumesList] initial set of all volumes
+        # @return [PlannedVolumesList]
+        def extra_space_candidates(volumes)
+          candidates = volumes.dup
+          candidates.delete_if { |vol| vol.reuse }
+          candidates.delete_if { |vol| vol.size >= vol.max_size }
+          candidates
         end
 
         # Extra space to be assigned to a volume
