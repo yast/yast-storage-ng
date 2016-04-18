@@ -72,11 +72,6 @@ module Yast
 
       DEFAULT_DISK_CHECK_LIMIT = 10
 
-      # Representation of a partition from DiskAnalyzer point of view,
-      # consisting on 2 attributes: name (device name) and size (DiskSize).
-      # @!parse class Partition; end
-      Partition = Struct.new(:name, :size)
-
       # @return [Array<String>] device names of installation media.
       #       Filled by #analyze.
       attr_reader :installation_disks
@@ -288,9 +283,8 @@ module Yast
             disk.partition_table.partitions.each do |partition|
               next unless windows_partition?(partition)
 
-              part = Partition.new(partition.name, DiskSize.kiB(partition.size_k))
               windows_partitions[disk_name] ||= []
-              windows_partitions[disk_name] << part
+              windows_partitions[disk_name] << partition
             end
           rescue RuntimeError => ex  # FIXME: rescue ::Storage::Exception when SWIG bindings are fixed
             log.info("CAUGHT exception #{ex}")
@@ -466,7 +460,7 @@ module Yast
       # of) partition id(s).
       #
       # The result is a Hash in which each key is the name of a candidate disk
-      # and the value is an Array of DiskAnalyzer::Partition objects
+      # and the value is an Array of ::Storage::Partition objects
       # representing the matching partitions in that disk.
       #
       # @param ids [::Storage::ID, Array<::Storage::ID>]
@@ -478,7 +472,6 @@ module Yast
             part.type != ::Storage::PartitionType_EXTENDED
           end
           partitions = partitions.with(id: ids).to_a
-          partitions.map! { |part| Partition.new(part.name, DiskSize.kiB(part.size_k)) }
           [disk_name, partitions]
         end
         Hash[pairs]

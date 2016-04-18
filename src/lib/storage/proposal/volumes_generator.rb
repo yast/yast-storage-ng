@@ -107,12 +107,12 @@ module Yast
         # It returns the smaller partition reported by disk_analyzer that is big
         # enough for our purposes.
         #
-        # @return [DiskAnalyzer::Partition]
+        # @return [::Storage::Partition]
         def reusable_swap(required_size)
           partitions = disk_analyzer.swap_partitions.values.flatten
-          partitions.select! { |part| part.size >= required_size }
-          # Use #name in case of #size tie to provide stable sorting
-          partitions.sort_by { |part| [part.size, part.name] }.first
+          partitions.select! { |part| DiskSize.kiB(part.size_k) >= required_size }
+          # Use #name in case of #size_k tie to provide stable sorting
+          partitions.sort_by { |part| [part.size_k, part.name] }.first
         end
 
         # Volume data structure for the root volume according

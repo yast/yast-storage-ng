@@ -70,7 +70,7 @@ module Yast
 
         def biggest_partition(partitions)
           return nil if partitions.nil? || partitions.empty?
-          partitions.sort_by.with_index { |part, idx| [part.size, idx] }.last
+          partitions.sort_by.with_index { |part, idx| [part.size_k, idx] }.last
         end
       end
     end
