@@ -59,12 +59,14 @@ module Yast
         # @raise Proposal::NoDiskSpaceError if there is no enough room
         #
         # @param required_size [DiskSize] required amount of available space
+        # @param keep [Array<String>] device names of partitions that should not
+        #       be deleted
         # @return [::Storage::Devicegraph]
-        def provide_space(required_size)
+        def provide_space(required_size, keep: [])
           new_graph = original_graph.copy
 
           resize_windows!(new_graph, required_size) unless success?(new_graph, required_size)
-          delete_partitions!(new_graph, required_size) unless success?(new_graph, required_size)
+          delete_partitions!(new_graph, required_size, keep) unless success?(new_graph, required_size)
           raise NoDiskSpaceError unless success?(new_graph, required_size)
 
           new_graph
@@ -121,9 +123,8 @@ module Yast
         # @param devicegraph [DeviceGraph] devicegraph to update
         # @param required_size [DiskSize]
         def resize_windows!(devicegraph, required_size)
-          windows_part_names = disk_analyzer.windows_partitions
           return if windows_part_names.empty?
-          return unless disk_analyzer.linux_partitions.empty?
+          return unless linux_part_names.empty?
 
           log.info("Resizing Windows partitions to free #{required_size}")
           sorted_resizables(devicegraph, windows_part_names).each do |res|
@@ -180,11 +181,16 @@ module Yast
         #
         # @param devicegraph [DeviceGraph] devicegraph to update
         # @param required_size [DiskSize]
-        def delete_partitions!(devicegraph, required_size)
+        # @param keep [Array<String>] partitions that should not be deleted
+        def delete_partitions!(devicegraph, required_size, keep)
           log.info("Trying to make space for #{required_size}")
 
           prioritized_candidate_partitions.each do |part_name|
             return if success?(devicegraph, required_size)
+            if keep.include?(part_name)
+              log.info "Skipped deletion of #{part_name}"
+              next
+            end
             part = ::Storage::Partition.find(devicegraph, part_name)
             next unless part
             log.info("Deleting partition #{part_name} in device graph")
@@ -204,13 +210,30 @@ module Yast
           candidate_parts = disks_for(original_graph).partitions
 
           win_part, non_win_part = candidate_parts.map(&:name).partition do |part_name|
-            disk_analyzer.windows_partitions.include?(part_name)
+            windows_part_names.include?(part_name)
           end
           linux_part, non_linux_part = non_win_part.partition do |part_name|
-            disk_analyzer.linux_partitions.include?(part_name)
+            linux_part_names.include?(part_name)
           end
 
+          log.info "Deletion candidates, Linux: #{linux_part}"
+          log.info "Deletion candidates, non Linux: #{non_linux_part}"
+          log.info "Deletion candidates, Windows: #{win_part}"
           linux_part + non_linux_part + win_part
+        end
+
+        # Device names of windows partitions detected by disk_analyzer
+        #
+        # @return [array<string>]
+        def windows_part_names
+          disk_analyzer.windows_partitions.values.flatten.map(&:name)
+        end
+
+        # Device names of linux partitions detected by disk_analyzer
+        #
+        # @return [array<string>]
+        def linux_part_names
+          disk_analyzer.linux_partitions.values.flatten.map(&:name)
         end
       end
     end

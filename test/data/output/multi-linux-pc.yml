@@ -5,21 +5,22 @@
     partition_table: msdos
     partitions:
     - partition:
-        size: 40.00 GiB
+        size: 4.00 GiB
         name: "/dev/sda1"
-        type: primary
-        id: linux
-        file_system: btrfs
-        mount_point: "/"
-    - partition:
-        size: 2.00 GiB
-        name: "/dev/sda2"
         type: primary
         id: swap
         file_system: swap
         mount_point: swap
+        label: swap
+    - partition:
+        size: 40.00 GiB
+        name: "/dev/sda2"
+        type: primary
+        id: linux
+        file_system: btrfs
+        mount_point: "/"
     - free:
-        size: 22.00 GiB
+        size: 20.00 GiB
     - partition:
         size: 60.00 GiB
         name: "/dev/sda3"

@@ -23,6 +23,7 @@
 
 require "storage/proposal/space_maker"
 require "storage/proposal/partition_creator"
+require "storage/refinements/devicegraph_lists"
 
 module Yast
   module Storage
@@ -31,6 +32,8 @@ module Yast
       # volumes
       class DevicegraphGenerator
         include Yast::Logger
+
+        using Refinements::DevicegraphLists
 
         attr_accessor :settings
 
@@ -51,6 +54,7 @@ module Yast
         def devicegraph(volumes, initial_graph, disk_analyzer)
           graph = provide_space(volumes, initial_graph, disk_analyzer)
           graph = create_partitions(volumes, graph)
+          reuse_partitions!(volumes, graph)
           graph
         end
 
@@ -74,12 +78,13 @@ module Yast
         # @return [::Storage::Devicegraph]
         def provide_space(volumes, initial_graph, disk_analyzer)
           space_maker = SpaceMaker.new(initial_graph, disk_analyzer, settings)
+          parts_to_keep = volumes.map(&:reuse).compact
           self.got_desired_space = false
           begin
-            result_graph = space_maker.provide_space(volumes.desired_size)
+            result_graph = space_maker.provide_space(volumes.desired_size, keep: parts_to_keep)
             self.got_desired_space = true
           rescue NoDiskSpaceError
-            result_graph = space_maker.provide_space(volumes.min_size)
+            result_graph = space_maker.provide_space(volumes.min_size, keep: parts_to_keep)
           end
           log.info(
             "Found #{got_desired_space? ? "desired" : "min"} space"
@@ -100,6 +105,22 @@ module Yast
           partition_creator = PartitionCreator.new(initial_graph, settings)
           target = got_desired_space? ? :desired : :min
           partition_creator.create_partitions(volumes, target)
+        end
+
+        # Adjusts pre-existing (not created by us) partitions assigning its
+        # mount point and boot flag
+        #
+        # It works directly on the passed devicegraph
+        #
+        # @param volumes [PlannedVolumesList] set of volumes to create
+        # @param graph [::Storage::Devicegraph] devicegraph to modify
+        def reuse_partitions!(volumes, graph)
+          volumes.select { |v| v.reuse }.each do |vol|
+            partition = graph.partitions.with(name: vol.reuse).first
+            filesystem = partition.filesystem
+            filesystem.add_mountpoint(vol.mount_point) if vol.mount_point && !vol.mount_point.empty?
+            partition.boot = true if vol.bootable
+          end
         end
       end
     end

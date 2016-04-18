@@ -74,7 +74,7 @@ module Yast
           checker.needed_partitions
         end
 
-        # Standard volumes for the root, swap and /home
+        # Additional volumes not needed for booting, like swap and /home
         #
         # @return [Array<PlannedVolumes>]
         def additional_volumes
@@ -86,15 +86,33 @@ module Yast
         # Volume data structure for the swap volume according
         # to the settings.
         def swap_volume
-          vol = PlannedVolume.new("swap", ::Storage::FsType_SWAP)
           swap_size = DEFAULT_SWAP_SIZE
           if @settings.enlarge_swap_for_suspend
             swap_size = [ram_size, swap_size].max
           end
-          vol.min_size     = swap_size
-          vol.max_size     = swap_size
-          vol.desired_size = swap_size
+          vol = PlannedVolume.new("swap", ::Storage::FsType_SWAP)
+          reuse = reusable_swap(swap_size)
+          if reuse
+            vol.reuse = reuse.name
+          else
+            vol.min_size     = swap_size
+            vol.max_size     = swap_size
+            vol.desired_size = swap_size
+          end
           vol
+        end
+
+        # Swap partition that can be reused.
+        #
+        # It returns the smaller partition reported by disk_analyzer that is big
+        # enough for our purposes.
+        #
+        # @return [::Storage::Partition]
+        def reusable_swap(required_size)
+          partitions = disk_analyzer.swap_partitions.values.flatten
+          partitions.select! { |part| DiskSize.kiB(part.size_k) >= required_size }
+          # Use #name in case of #size_k tie to provide stable sorting
+          partitions.sort_by { |part| [part.size_k, part.name] }.first
         end
 
         # Volume data structure for the root volume according

@@ -100,5 +100,30 @@ describe Yast::Storage::Proposal::PartitionCreator do
           .to raise_error Yast::Storage::Proposal::Error
       end
     end
+
+    context "when some volume is marked as 'reuse'" do
+      before do
+        root_volume.desired = 20.GiB
+        home_volume.desired = 20.GiB
+        swap_volume.reuse = "/dev/something"
+        home_volume.weight = root_volume.weight = swap_volume.weight = 1
+      end
+
+      it "does not create the reused volumes" do
+        result = creator.create_partitions(volumes, target_size)
+        expect(result.partitions).to contain_exactly(
+          an_object_with_fields(mountpoint: "/"),
+          an_object_with_fields(mountpoint: "/home")
+        )
+      end
+
+      it "distributes extra space between the new (not reused) volumes" do
+        result = creator.create_partitions(volumes, target_size)
+        expect(result.partitions).to contain_exactly(
+          an_object_with_fields(size: 25.GiB),
+          an_object_with_fields(size: 25.GiB)
+        )
+      end
+    end
   end
 end

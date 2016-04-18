@@ -22,6 +22,7 @@
 require "rspec"
 require "yast"
 require "storage/storage_manager"
+require "storage/disk_size"
 
 module Yast
   module RSpec
@@ -41,6 +42,10 @@ module Yast
 
       def fake_devicegraph
         Yast::Storage::StorageManager.instance.probed
+      end
+
+      def analyzer_part(name = "", size = Yast::Storage::DiskSize.MiB(10))
+        instance_double("::Storage::Partition", name: name, size_k: size.size_k)
       end
     end
   end
