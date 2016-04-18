@@ -80,28 +80,29 @@ module Yast
       #       Filled by #analyze.
       attr_reader :candidate_disks
 
-      # @return [Hash] Linux partitions found in each candidate disk.
-      #     Filled by #analyze.
+      # @return [Hash{String => Array<::Storage::Partition>}] Linux
+      #     partitions found in each candidate disk. Filled by #analyze.
       #     @see #find_linux_partitions
       attr_reader :linux_partitions
 
-      # @return [Hash] MS Windows partitions found in each candidate disk.
+      # @return [Hash{String => Array<::Storage::Partition>}] MS Windows
+      #     partitions found in each candidate disk.
       #     Filled by #analyze only if #linux_partitions is empty.
       #     @see #find_windows_partitions
       attr_reader :windows_partitions
 
-      # @return [Hash] EFI partitions found in each candidate disk.
-      #     Filled by #analyze.
+      # @return [Hash{String => Array<::Storage::Partition>}] EFI partitions
+      #     found in each candidate disk. Filled by #analyze.
       #     @see #find_efi_partitions
       attr_reader :efi_partitions
 
-      # @return [Hash] PReP partitions found in each candidate disk.
-      #     Filled by #analyze.
+      # @return [Hash{String => Array<::Storage::Partition>}] PReP partitions
+      #     found in each candidate disk. Filled by #analyze.
       #     @see #find_prep_partitions
       attr_reader :prep_partitions
 
-      # @return [Hash] Swap partitions found in each candidate disk.
-      #     Filled by #analyze.
+      # @return [Hash{String => Array<::Storage::Partition>}] Swap partitions
+      #     found in each candidate disk. Filled by #analyze.
       #     @see #find_swap_partitions
       attr_reader :swap_partitions
 
@@ -238,7 +239,7 @@ module Yast
       # Find partitions from any of the candidate disks that can be used as
       # PReP partition
       #
-      # @return [Hash] @see #partitions_by_id
+      # @return [Hash{String => Array<::Storage::Partition>}] @see #partitions_by_id
       def find_prep_partitions
         partitions_with_id(::Storage::ID_PPC_PREP)
       end
@@ -246,7 +247,7 @@ module Yast
       # Find partitions from any of the candidate disks that can be used as
       # swap space
       #
-      # @return [Hash] @see #partitions_by_id
+      # @return [Hash{String => Array<::Storage::Partition>}] @see #partitions_by_id
       def find_swap_partitions
         partitions_with_id(::Storage::ID_SWAP)
       end
@@ -255,7 +256,7 @@ module Yast
       # This may be a normal Linux partition (type 0x83), a Linux swap
       # partition (type 0x82), an LVM partition, or a RAID partition.
       #
-      # @return [Hash] @see #partitions_by_id
+      # @return [Hash{String => Array<::Storage::Partition>}] @see #partitions_by_id
       def find_linux_partitions
         partitions_with_id(LINUX_PARTITION_IDS)
       end
@@ -270,7 +271,7 @@ module Yast
       # installation medium). This can be called independently from the
       # outside, though.
       #
-      # @return [Array <Storage::partition>]
+      # @return [Array <::Storage::Partition>]
       #
       def find_windows_partitions
         return [] unless Arch.x86_64 || Arch.i386
@@ -464,7 +465,7 @@ module Yast
       # representing the matching partitions in that disk.
       #
       # @param ids [::Storage::ID, Array<::Storage::ID>]
-      # @return [Hash]
+      # @return [Hash{String => Array<::Storage::Partition>}]
       def partitions_with_id(ids)
         pairs = candidate_disks.map do |disk_name|
           # Skip extended partitions
@@ -484,7 +485,7 @@ module Yast
       # Checking for content_info.efi? would only detect partitions that are
       # going to be effectively used.
       #
-      # @return [Hash] @see #partitions_by_id
+      # @return [Hash{String => Array<::Storage::Partition>}] @see #partitions_by_id
       def find_efi_partitions
         partitions_with_id(::Storage::ID_EFI)
       end
