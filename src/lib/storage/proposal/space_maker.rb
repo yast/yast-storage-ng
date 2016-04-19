@@ -51,6 +51,7 @@ module Yast
           @original_graph = original_graph
           @disk_analyzer = disk_analyzer
           @settings = settings
+          @deleted_names = []
         end
 
         # Returns a copy of the original devicegraph in which all needed
@@ -64,12 +65,21 @@ module Yast
         # @return [::Storage::Devicegraph]
         def provide_space(required_size, keep: [])
           new_graph = original_graph.copy
+          @deleted_names = []
 
           resize_windows!(new_graph, required_size) unless success?(new_graph, required_size)
           delete_partitions!(new_graph, required_size, keep) unless success?(new_graph, required_size)
           raise NoDiskSpaceError unless success?(new_graph, required_size)
 
           new_graph
+        end
+
+        # Partitions from the original devicegraph that are not present in the
+        # result of the last call to #provide_space
+        #
+        # @return [Array<::Storage::Partition>]
+        def deleted_partitions
+          original_graph.partitions.with(name: @deleted_names).to_a
         end
 
       protected
@@ -193,9 +203,15 @@ module Yast
             end
             part = ::Storage::Partition.find(devicegraph, part_name)
             next unless part
-            log.info("Deleting partition #{part_name} in device graph")
-            part.partition_table.delete_partition(part_name)
+            delete_partition(part)
           end
+        end
+
+        # Deletes a given partition from its corresponding partition table
+        def delete_partition(partition)
+          log.info("Deleting partition #{partition.name} in device graph")
+          @deleted_names << partition.name
+          partition.partition_table.delete_partition(partition.name)
         end
 
         # Return a prioritized array of candidate partitions (from all candidate

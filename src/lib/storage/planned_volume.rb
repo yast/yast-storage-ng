@@ -77,6 +77,10 @@ module Yast
       # used only with ms-dos style partition tables. GPT has a similar legacy
       # flag but is not needed in our grub2 setup.
       attr_accessor :bootable
+      # @return [String] label to enforce in the filesystem
+      attr_accessor :label
+      # @return [String] UUID to enforce in the filesystem
+      attr_accessor :uuid
 
       TO_STRING_ATTRS = [:mount_point, :reuse, :min_size, :max_size,
                          :desired_size, :disk, :max_start_offset]
@@ -105,6 +109,8 @@ module Yast
         @max_start_offset = nil
         @align        = nil
         @bootable     = nil
+        @label        = nil
+        @uuid         = nil
         @weight       = 0 # For distributing extra space if desired is unlimited
         @can_live_on_logical_volume = false
         @logical_volume_name = nil

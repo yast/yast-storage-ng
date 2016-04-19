@@ -44,6 +44,15 @@ module Yast
         PlannedVolumesList.new(@volumes.dup)
       end
 
+      # Deep copy of the collection
+      #
+      # Duplicates all the contained volumes, not only the container itself.
+      #
+      # @return [PlannedVolumesList]
+      def deep_dup
+        PlannedVolumesList.new(@volumes.map { |vol| vol.dup })
+      end
+
       # Total sum of all desired sizes of volumes.
       #
       # This tries to avoid an 'unlimited' result:
