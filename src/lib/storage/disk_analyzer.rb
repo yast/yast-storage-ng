@@ -111,7 +111,7 @@ module Yast
       #     @see #find_swap_partitions
       attr_reader :swap_partitions
 
-      # @return [Hash{String => Array<Yast::Storage::DiskSize>}] MBR gap sizes
+      # @return [Hash{String => Yast::Storage::DiskSize}] MBR gap sizes
       #     found on each candidate disk. Filled by #analyze.
       #     @see #find_mbr_gap
       attr_reader :mbr_gap
@@ -302,7 +302,7 @@ module Yast
       # FIXME: sizes in Region are more or less useless atm, Arvin will fix this.
       # If that's done switch from kb to byte units.
       #
-      # @return [Hash{String => Array<Yast::Storage::DiskSize>}]
+      # @return [Hash{String => Yast::Storage::DiskSize}]
       def find_mbr_gap
         gaps = {}
         candidate_disks.each do |name|

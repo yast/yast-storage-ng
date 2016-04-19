@@ -51,6 +51,7 @@ module Yast
 
         attr_reader :settings
         attr_reader :disk_analyzer
+        attr_reader :root_disk
 
         def boot_partition_needed?
           settings.use_lvm # || settings.encrypted
