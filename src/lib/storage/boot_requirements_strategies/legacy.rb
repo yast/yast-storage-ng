@@ -36,9 +36,7 @@ module Yast
           if mbr_gap_required?
             mbr_gap = disk_analyzer.mbr_gap[settings.root_device]
             # fail if gap is too small
-            if mbr_gap < DiskSize.kiB(256)
-              raise BootRequirementsChecker::Error
-            end
+            raise BootRequirementsChecker::Error if mbr_gap < DiskSize.kiB(256)
           end
           volumes
         end
@@ -54,8 +52,8 @@ module Yast
         # FIXME: currently nobody creates a partition table on an empty disk...
         def grub_partition_required?
           if @root_disk &&
-             @root_disk.partition_table? &&
-             @root_disk.partition_table.type == ::Storage::PtType_GPT
+              @root_disk.partition_table? &&
+              @root_disk.partition_table.type == ::Storage::PtType_GPT
             true
           else
             false
@@ -65,8 +63,8 @@ module Yast
         # only relevant for DOS partition table
         def mbr_gap_required?
           if @root_disk &&
-             @root_disk.partition_table? &&
-             @root_disk.partition_table.type == ::Storage::PtType_MSDOS
+              @root_disk.partition_table? &&
+              @root_disk.partition_table.type == ::Storage::PtType_MSDOS
             true
           else
             false

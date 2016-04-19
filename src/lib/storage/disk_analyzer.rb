@@ -174,12 +174,12 @@ module Yast
         log.info("MBR gap: #{@mbr_gap}")
       end
 
-    # Look up devicegraph element by device name.
-    #
-    # @return [<::Storage::Device}>]
-    def device_by_name(name)
-      devicegraph.disks.with(name: name).first
-    end
+      # Look up devicegraph element by device name.
+      #
+      # @return [<::Storage::Device}>]
+      def device_by_name(name)
+        devicegraph.disks.with(name: name).first
+      end
 
     private
 
