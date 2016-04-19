@@ -309,10 +309,10 @@ module Yast
           disk = device_by_name(name)
           gap = DiskSize.kiB(0)
           if disk.partition_table? && disk.partition_table.type == ::Storage::PtType_MSDOS
-            region1 = (disk.partition_table.partitions.to_a.min do |x, y|
+            region1 = disk.partition_table.partitions.to_a.min do |x, y|
               x.region.to_kb(x.region.start) <=> y.region.to_kb(y.region.start)
-            end).region
-            gap = DiskSize.kiB(region1.to_kb(region1.start))
+            end
+            gap = DiskSize.kiB(region1.region.to_kb(region1.region.start)) if region1
           end
           gaps[name] = gap
         end

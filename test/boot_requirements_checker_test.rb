@@ -44,6 +44,9 @@ describe Yast::Storage::BootRequirementsChecker do
     end
     let(:analyzer) { instance_double("Yast::Storage::DiskAnalyzer") }
     let(:storage_arch) { instance_double("::Storage::Arch") }
+    let(:dev_sda) { instance_double("::Storage::Disk") }
+    let(:pt_gpt) { instance_double("::Storage::PartitionTable") }
+    let(:pt_msdos) { instance_double("::Storage::PartitionTable") }
 
     before do
       Yast::Storage::StorageManager.fake_from_yaml
@@ -52,6 +55,16 @@ describe Yast::Storage::BootRequirementsChecker do
       allow(storage_arch).to receive(:x86?).and_return(architecture == :x86)
       allow(storage_arch).to receive(:ppc?).and_return(architecture == :ppc)
       allow(storage_arch).to receive(:s390?).and_return(architecture == :s390)
+
+      allow(dev_sda).to receive(:partition_table?).and_return(true)
+      allow(dev_sda).to receive(:partition_table).and_return(pt_msdos)
+
+      allow(pt_gpt).to receive(:type).and_return(::Storage::PtType_GPT)
+      allow(pt_msdos).to receive(:type).and_return(::Storage::PtType_MSDOS)
+
+      allow(analyzer).to receive(:device_by_name).with("/dev/sda").and_return(dev_sda)
+      allow(analyzer).to receive(:grub_partitions).and_return({})
+      allow(analyzer).to receive(:mbr_gap).and_return({ "/dev/sda" => Yast::Storage::DiskSize.kiB(300)})
     end
 
     context "in a x86 system" do
