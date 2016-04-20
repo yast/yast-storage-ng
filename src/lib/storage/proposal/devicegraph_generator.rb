@@ -21,6 +21,7 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
+require "storage"
 require "storage/proposal/space_maker"
 require "storage/proposal/partition_creator"
 require "storage/refinements/devicegraph_lists"
@@ -52,7 +53,10 @@ module Yast
         # @raise Proposal::NoDiskSpaceError if it was not possible to propose a
         #           valid devicegraph
         def devicegraph(volumes, initial_graph, disk_analyzer)
-          graph = provide_space(volumes, initial_graph, disk_analyzer)
+          space_maker = SpaceMaker.new(initial_graph, disk_analyzer, settings)
+          graph = provide_space(volumes, space_maker)
+          volumes = refine_volumes(volumes, space_maker)
+
           graph = create_partitions(volumes, graph)
           reuse_partitions!(volumes, graph)
           graph
@@ -72,12 +76,10 @@ module Yast
         # @raise Proposal::NoDiskSpaceError if both attempts fail
         #
         # @param volumes [PlannedVolumesList] set of volumes to make space for
-        # @param initial_graph [::Storage::Devicegraph] initial devicegraph
-        # @param disk_analyzer [DiskAnalyzer] analysis of the initial_graph
+        # @param space_maker [SpaceMaker]
         #
         # @return [::Storage::Devicegraph]
-        def provide_space(volumes, initial_graph, disk_analyzer)
-          space_maker = SpaceMaker.new(initial_graph, disk_analyzer, settings)
+        def provide_space(volumes, space_maker)
           parts_to_keep = volumes.map(&:reuse).compact
           self.got_desired_space = false
           begin
@@ -90,6 +92,35 @@ module Yast
             "Found #{got_desired_space? ? "desired" : "min"} space"
           )
           result_graph
+        end
+
+        # Copy of the volumes list with some extra information inferred from the
+        # space maker.
+        #
+        # It enforces reuse of UUIDs and labels from the deleted swap
+        # partitions.
+        #
+        # @param volumes [PlannedVolumesList] original list of volumes
+        # @param space_maker [SpaceMaker] an instance in which
+        #       SpaceMaker#provide_space has already been called
+        # @return [PlannedVolumesList]
+        def refine_volumes(volumes, space_maker)
+          refined = volumes.deep_dup
+
+          deleted_swaps = space_maker.deleted_partitions.select do |part|
+            part.id == ::Storage::ID_SWAP
+          end
+          new_swap_volumes = refined.select { |vol| !vol.reuse && vol.mount_point == "swap" }
+
+          new_swap_volumes.each_with_index do |swap_volume, idx|
+            deleted_swap = deleted_swaps[idx]
+            break unless deleted_swap
+
+            swap_volume.uuid = deleted_swap.filesystem.uuid
+            swap_volume.label = deleted_swap.filesystem.label
+          end
+
+          refined
         end
 
         # Creates partitions representing a set of volumes

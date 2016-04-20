@@ -154,6 +154,7 @@ module Yast
             )
           end
 
+          volumes = volumes.deep_dup
           volumes.each { |vol| vol.size = vol.min_valid_size(strategy) }
           distribute_extra_space(volumes)
           create_volumes_partitions(volumes)
@@ -374,6 +375,8 @@ module Yast
           return nil unless vol.filesystem_type
           filesystem = partition.create_filesystem(vol.filesystem_type)
           filesystem.add_mountpoint(vol.mount_point) if vol.mount_point && !vol.mount_point.empty?
+          filesystem.label = vol.label if vol.label
+          filesystem.uuid = vol.uuid if vol.uuid
           filesystem
         end
 

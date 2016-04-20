@@ -56,7 +56,7 @@ module Yast
           "disk"            => ["name", "size"],
           "partition_table" => [],
           "partitions"      => [],
-          "partition"       => ["size", "name", "type", "id", "mount_point", "label"],
+          "partition"       => ["size", "name", "type", "id", "mount_point", "label", "uuid"],
           "file_system"     => [],
           "free"            => ["size"]
         }
@@ -199,7 +199,7 @@ module Yast
 
       # Factory method to create a partition.
       #
-      # Some of the parameters ("mount_point", "label") really belong to the
+      # Some of the parameters ("mount_point", "label"...) really belong to the
       # file system which is a separate factory product, but it is more natural
       # to specify this for the partition, so those data are kept in
       # @partitions to be picked up in create_file_system when needed.
@@ -213,6 +213,7 @@ module Yast
       #   "id"
       #   "mount_point"  mount point for the associated file system
       #   "label"        file system label
+      #   "uuid"         file system UUID
       #
       # @return [String] device name of the disk ("/dev/sda" etc.)
       #
@@ -233,7 +234,9 @@ module Yast
 
         # Keep some parameters that are really file system related in @partitions
         # to be picked up later by create_file_system.
-        @partitions[part_name] = args.select { |k, _v| ["mount_point", "label"].include?(k) }
+        @partitions[part_name] = args.select do |k, _v|
+          ["mount_point", "label", "uuid"].include?(k)
+        end
 
         id = id.to_i(16) if id.is_a?(::String) && id.start_with?("0x")
         id   = fetch(PARTITION_IDS,   id,   "partition ID",   part_name) unless id.is_a?(Fixnum)
@@ -267,11 +270,13 @@ module Yast
         fs_param = @partitions[part_name] || {}
         mount_point = fs_param["mount_point"]
         label       = fs_param["label"]
+        uuid        = fs_param["uuid"]
 
         partition = ::Storage::Partition.find(@devicegraph, part_name)
         file_system = partition.create_filesystem(fs_type)
         file_system.add_mountpoint(mount_point) if mount_point
         file_system.label = label if label
+        file_system.uuid = uuid if uuid
         part_name
       end
 
