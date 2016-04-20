@@ -37,7 +37,7 @@ require "storage/proposal/settings.rb"
 require "storage/disk_analyzer"
 require "pp"
 
-sm = Yast::Storage::StorageManager.fake_from_yaml(ARGV[0]) unless ARGV[0].nil? || ARGV[0].empty?
+Yast::Storage::StorageManager.fake_from_yaml(ARGV[0]) unless ARGV[0].nil? || ARGV[0].empty?
 sm = Yast::Storage::StorageManager.instance
 
 devicegraph = sm.probed

@@ -64,7 +64,7 @@ describe Yast::Storage::BootRequirementsChecker do
 
       allow(analyzer).to receive(:device_by_name).with("/dev/sda").and_return(dev_sda)
       allow(analyzer).to receive(:grub_partitions).and_return({})
-      allow(analyzer).to receive(:mbr_gap).and_return({ "/dev/sda" => Yast::Storage::DiskSize.kiB(300)})
+      allow(analyzer).to receive(:mbr_gap).and_return("/dev/sda" => Yast::Storage::DiskSize.kiB(300))
     end
 
     context "in a x86 system" do

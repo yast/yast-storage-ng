@@ -29,7 +29,6 @@ module Yast
       # Strategy to calculate the boot requirements in a legacy system (x86
       # without EFI)
       class Legacy < Base
-
         def needed_partitions
           volumes = super
           volumes << grub_volume if grub_partition_required? && grub_partition_missing?
@@ -83,7 +82,6 @@ module Yast
           vol.can_live_on_logical_volume = false
           vol
         end
-
       end
     end
   end

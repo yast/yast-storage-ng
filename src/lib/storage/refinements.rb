@@ -28,7 +28,8 @@
 require "storage"
 
 module Storage
- class Disk
+  # patch libstorage-ng class
+  class Disk
     def inspect
       "<Disk \##{sid} #{name} #{Yast::Storage::DiskSize.kiB(size_k)}>"
     end
@@ -39,14 +40,13 @@ module Storage
     # #partition_table? is needed as directly accessing #partition_table
     # may raise an exception
     def partition_table?
-      begin
-        partition_table ? true : false
-      rescue
-        false
-      end
+      partition_table ? true : false
+    rescue
+      false
     end
   end
 
+  # patch libstorage-ng class
   class Partition
     def inspect
       "<Partition \##{sid} #{name} #{Yast::Storage::DiskSize.kiB(size_k)}>"
