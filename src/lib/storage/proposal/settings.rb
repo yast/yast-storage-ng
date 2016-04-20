@@ -85,13 +85,6 @@ module Yast
           # Not yet in control.xml
           @home_min_size                 = DiskSize.GiB(10)
           @home_max_size                 = DiskSize.unlimited
-
-          # FIXME: this setting is placed here as a temporary mechanism to share
-          # it between the different Proposal components. There are NO PLANS to
-          # make it configurable in control.xml. In the not-so-far future this
-          # might become a value calculated from our own partition alignment
-          # logic, then we will have a better home for it.
-          @useful_free_space_min_size    = DiskSize.MiB(30)
         end
       end
     end

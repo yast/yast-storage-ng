@@ -30,7 +30,7 @@ module Yast
     # Helper class to keep information about free disk space together.
     #
     class FreeDiskSpace
-      attr_accessor :disk_name, :slot, :size
+      attr_accessor :disk_name, :slot, :size, :disk
 
       # Initialize.
       #
