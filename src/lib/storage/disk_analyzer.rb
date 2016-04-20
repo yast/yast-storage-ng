@@ -163,15 +163,7 @@ module Yast
           log.info("Linux partitions found - not checking for Windows partitions")
         end
 
-        log.info("Installation disks: #{@installation_disks}")
-        log.info("Candidate    disks: #{@candidate_disks}")
-        log.info("Linux   partitions: #{@linux_partitions}")
-        log.info("Windows partitions: #{@windows_partitions}")
-        log.info("EFI     partitions: #{@efi_partitions}")
-        log.info("PReP    partitions: #{@prep_partitions}")
-        log.info("GRUB    partitions: #{@grub_partitions}")
-        log.info("Swap    partitions: #{@swap_partitions}")
-        log.info("MBR gap: #{@mbr_gap}")
+        log_vars
       end
 
       # Look up devicegraph element by device name.
@@ -184,6 +176,19 @@ module Yast
     private
 
       attr_reader :devicegraph
+
+      # log internal state
+      def log_vars
+        log.info("Installation disks: #{@installation_disks}")
+        log.info("Candidate    disks: #{@candidate_disks}")
+        log.info("Linux   partitions: #{@linux_partitions}")
+        log.info("Windows partitions: #{@windows_partitions}")
+        log.info("EFI     partitions: #{@efi_partitions}")
+        log.info("PReP    partitions: #{@prep_partitions}")
+        log.info("GRUB    partitions: #{@grub_partitions}")
+        log.info("Swap    partitions: #{@swap_partitions}")
+        log.info("MBR gap: #{@mbr_gap}")
+      end
 
       # Find disks that look like the current installation medium
       # (the medium we just booted from to start the installation).
