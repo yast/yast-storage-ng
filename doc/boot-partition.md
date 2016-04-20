@@ -169,13 +169,15 @@ Summary
 
 ## General
 
-i.e. valid for all architectures (s390, see below)
+i.e. valid for all architectures
 
 - when using gpt, never use gpt-sync-mbr / hybrid mbr; only standard protective mbr.
-- create a /boot partition on raid, encrytpted LVM, LVM
-- size: [100MB, 200MB, 500MB]
-- order: /boot, swap, /
-- ext4
+- always create a `/boot partition on raid, encrytpted LVM, LVM
+ * size: [100MB, 200MB, 500MB]
+ * order: /boot, swap, /
+ * ext4
+
+Note: boot loader is grub2 (refered as grub in this document)
 
 ## x86-legacy
 
@@ -218,11 +220,23 @@ KVM/LPAR
 OPAL/PowerNV/Bare metal
 - no PReP is required
 
-s390
-----
-- needs clarification
+s390x
+-----
+- any DASD or zfcp partition, **except** LDL, FBA and DIAG formatted disks
+- from SLES12 on 'zipl' is used:
+  * create /boot/zipl
+  * ext2 (has to be booted by zipl)
+- / and /boot/zipl should be on same disk (other disk is possible)
+- size: [100 MB, 200 MB, 1GB]
 
-# Summary of discussion [2016-03-23]
+AI Ihno:
+- provide a script to detect DASD type (FBA, DIAG...),
+- check whether 3 or 4 partitions on DASD are supported
+
+
+# Summary of discussion
+
+[2016-03-23]
 
 - provide information about /boot, PReP... for yast-bootloader
   -> stored in/available from BootRequirementsChecker
