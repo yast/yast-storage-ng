@@ -24,6 +24,9 @@
 #
 # add some useful methods to libstorage-ng objects
 #
+# Methods added here are expected to be implemented finally in libstorage-ng and
+# this file to be removed.
+#
 
 require "storage"
 

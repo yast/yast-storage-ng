@@ -22,7 +22,7 @@
 # find current contact information at www.suse.com.
 
 require "yast"
-require "storage/refinements"
+require "storage/patches"
 require "storage/disk_size"
 require "storage/planned_volume"
 require "storage/planned_volumes_list"
