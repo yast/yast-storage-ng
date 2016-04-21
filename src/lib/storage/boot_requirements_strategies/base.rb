@@ -30,6 +30,9 @@ require "storage/planned_volumes_list"
 module Yast
   module Storage
     module BootRequirementsStrategies
+      class Error < RuntimeError
+      end
+
       # Base class for the strategies used to calculate the boot partitioning
       # requirements
       class Base

@@ -49,6 +49,8 @@ module Yast
 
       def needed_partitions
         strategy.needed_partitions
+      rescue BootRequirementsStrategies::Error => error
+        raise Error, error.message
       end
 
     protected
