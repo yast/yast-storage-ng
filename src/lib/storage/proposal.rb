@@ -99,7 +99,7 @@ module Yast
       #
       # @param volumes [PlannedVolumesList] list of volumes to accomodate
       # @param settings [Proposal::Settings]
-      # @result [::Storage::Devicegraph]
+      # @return [::Storage::Devicegraph]
       def devicegraph(volumes, settings)
         generator = DevicegraphGenerator.new(settings)
         generator.devicegraph(volumes, initial_graph, disk_analyzer)

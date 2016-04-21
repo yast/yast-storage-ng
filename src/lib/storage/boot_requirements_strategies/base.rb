@@ -22,6 +22,10 @@
 # find current contact information at www.suse.com.
 
 require "yast"
+require "storage/patches"
+require "storage/disk_size"
+require "storage/planned_volume"
+require "storage/planned_volumes_list"
 
 module Yast
   module Storage
@@ -34,6 +38,7 @@ module Yast
         def initialize(settings, disk_analyzer)
           @settings = settings
           @disk_analyzer = disk_analyzer
+          @root_disk = @disk_analyzer.device_by_name(settings.root_device)
         end
 
         def needed_partitions
@@ -46,6 +51,7 @@ module Yast
 
         attr_reader :settings
         attr_reader :disk_analyzer
+        attr_reader :root_disk
 
         def boot_partition_needed?
           settings.use_lvm # || settings.encrypted

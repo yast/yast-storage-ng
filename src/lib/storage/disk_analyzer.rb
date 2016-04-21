@@ -101,10 +101,20 @@ module Yast
       #     @see #find_prep_partitions
       attr_reader :prep_partitions
 
+      # @return [Hash{String => Array<::Storage::Partition>}] GRUB partitions
+      #     found in each candidate disk. Filled by #analyze.
+      #     @see #find_grub_partitions
+      attr_reader :grub_partitions
+
       # @return [Hash{String => Array<::Storage::Partition>}] Swap partitions
       #     found in each candidate disk. Filled by #analyze.
       #     @see #find_swap_partitions
       attr_reader :swap_partitions
+
+      # @return [Hash{String => Yast::Storage::DiskSize}] MBR gap sizes
+      #     found on each candidate disk. Filled by #analyze.
+      #     @see #find_mbr_gap
+      attr_reader :mbr_gap
 
       # @return [Fixnum] Maximum number of disks to check.
       #     @see #find_installation_disks
@@ -119,7 +129,9 @@ module Yast
         @windows_partitions = {}
         @efi_partitions     = {}
         @prep_partitions    = {}
+        @grub_partitions    = {}
         @swap_partitions    = {}
+        @mbr_gap            = {}
 
         # Maximum number of disks to check. This might be important on
         # architectures that tend to have very many disks (s390).
@@ -137,7 +149,9 @@ module Yast
         @linux_partitions   = find_linux_partitions
         @efi_partitions     = find_efi_partitions
         @prep_partitions    = find_prep_partitions
+        @grub_partitions    = find_grub_partitions
         @swap_partitions    = find_swap_partitions
+        @mbr_gap            = find_mbr_gap
 
         if @linux_partitions.empty?
           @windows_partitions = find_windows_partitions
@@ -149,18 +163,32 @@ module Yast
           log.info("Linux partitions found - not checking for Windows partitions")
         end
 
+        log_vars
+      end
+
+      # Look up devicegraph element by device name.
+      #
+      # @return [<::Storage::Device}>]
+      def device_by_name(name)
+        devicegraph.disks.with(name: name).first
+      end
+
+    private
+
+      attr_reader :devicegraph
+
+      # log internal state
+      def log_vars
         log.info("Installation disks: #{@installation_disks}")
         log.info("Candidate    disks: #{@candidate_disks}")
         log.info("Linux   partitions: #{@linux_partitions}")
         log.info("Windows partitions: #{@windows_partitions}")
         log.info("EFI     partitions: #{@efi_partitions}")
         log.info("PReP    partitions: #{@prep_partitions}")
+        log.info("GRUB    partitions: #{@grub_partitions}")
         log.info("Swap    partitions: #{@swap_partitions}")
+        log.info("MBR gap: #{@mbr_gap}")
       end
-
-    private
-
-      attr_reader :devicegraph
 
       # Find disks that look like the current installation medium
       # (the medium we just booted from to start the installation).
@@ -245,6 +273,14 @@ module Yast
       end
 
       # Find partitions from any of the candidate disks that can be used as
+      # GRUB partition
+      #
+      # @return [Hash{String => Array<::Storage::Partition>}] @see #partitions_by_id
+      def find_grub_partitions
+        partitions_with_id(::Storage::ID_GPT_BIOS)
+      end
+
+      # Find partitions from any of the candidate disks that can be used as
       # swap space
       #
       # @return [Hash{String => Array<::Storage::Partition>}] @see #partitions_by_id
@@ -259,6 +295,33 @@ module Yast
       # @return [Hash{String => Array<::Storage::Partition>}] @see #partitions_by_id
       def find_linux_partitions
         partitions_with_id(LINUX_PARTITION_IDS)
+      end
+
+      # Determine MBR gap (size between MBR and first partition) for all candidate disks.
+      #
+      # The result is a Hash in which each key is the name of a candidate disk
+      # and the value is the DiskSize of the MBR gap.
+      #
+      # Note: the gap sizes on non-DOS partition tables are 0 (by definition).
+      #
+      # FIXME: sizes in Region are more or less useless atm, Arvin will fix this.
+      # If that's done switch from kb to byte units.
+      #
+      # @return [Hash{String => Yast::Storage::DiskSize}]
+      def find_mbr_gap
+        gaps = {}
+        candidate_disks.each do |name|
+          disk = device_by_name(name)
+          gap = DiskSize.kiB(0)
+          if disk.partition_table? && disk.partition_table.type == ::Storage::PtType_MSDOS
+            region1 = disk.partition_table.partitions.to_a.min do |x, y|
+              x.region.to_kb(x.region.start) <=> y.region.to_kb(y.region.start)
+            end
+            gap = DiskSize.kiB(region1.region.to_kb(region1.region.start)) if region1
+          end
+          gaps[name] = gap
+        end
+        gaps
       end
 
       # Find any MS Windows partitions that could possibly be resized.

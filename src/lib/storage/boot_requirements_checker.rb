@@ -39,6 +39,9 @@ module Yast
     class BootRequirementsChecker
       include Yast::Logger
 
+      class Error < RuntimeError
+      end
+
       def initialize(settings, disk_analyzer)
         @settings = settings
         @disk_analyzer = disk_analyzer
