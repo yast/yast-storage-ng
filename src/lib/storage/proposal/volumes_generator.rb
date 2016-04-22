@@ -26,6 +26,7 @@ require "storage/planned_volume"
 require "storage/planned_volumes_list"
 require "storage/disk_size"
 require "storage/boot_requirements_checker"
+require "storage/proposal/exceptions"
 
 module Yast
   module Storage
@@ -72,6 +73,8 @@ module Yast
         def boot_volumes
           checker = BootRequirementsChecker.new(settings, disk_analyzer)
           checker.needed_partitions
+        rescue BootRequirementsChecker::Error => error
+          raise NotBootableError, error.message
         end
 
         # Additional volumes not needed for booting, like swap and /home

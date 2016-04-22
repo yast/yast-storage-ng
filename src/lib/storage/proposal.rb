@@ -155,7 +155,8 @@ module Yast
             volumes = volumes_list(:base, new_settings)
             devicegraph(volumes, new_settings)
             return disk_name
-          rescue Proposal::Error
+          rescue Proposal::Error => error
+            log.info "#{disk_name} is not a valid root device: #{error.message}"
             next
           end
         end

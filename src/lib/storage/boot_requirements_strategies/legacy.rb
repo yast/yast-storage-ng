@@ -35,7 +35,7 @@ module Yast
           if mbr_gap_required?
             mbr_gap = disk_analyzer.mbr_gap[settings.root_device]
             # fail if gap is too small
-            raise BootRequirementsChecker::Error if mbr_gap < DiskSize.kiB(256)
+            raise Error if mbr_gap < DiskSize.kiB(256)
           end
           volumes
         end
