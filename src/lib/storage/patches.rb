@@ -47,6 +47,22 @@ module Storage
     rescue
       false
     end
+
+    # FIXME: The libstorage API for DASD is still not defined, let's assume it
+    # will look like this (for mocking purposes)
+    def dasd?
+      false
+    end
+
+    # FIXME: see above
+    def dasd_type
+      ::Storage::DASDTYPE_NONE
+    end
+
+    # FIXME: see above
+    def dasd_format
+      ::Storage::DASDF_NONE
+    end
   end
 
   # patch libstorage-ng class

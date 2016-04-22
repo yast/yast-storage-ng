@@ -21,11 +21,7 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "yast"
 require "storage/boot_requirements_strategies/base"
-require "storage/planned_volume"
-require "storage/planned_volumes_list"
-require "storage/disk_size"
 
 module Yast
   module Storage
@@ -33,22 +29,27 @@ module Yast
       # Strategy to calculate boot requirements in systems using ZIPL
       class ZIPL < Base
         def needed_partitions
-          volumes = super
-          volumes << zipl_volume if zipl_partition_missing?
-          volumes
+          raise Error unless supported_root_disk?
+          PlannedVolumesList.new([zipl_volume])
         end
 
       protected
 
-        def zipl_partition_missing?
-          true	# #zipl_partitions not implemented yet
-          # disk_analyzer.zipl_partitions.empty?
+        def supported_root_disk?
+          return false unless root_disk
+          if root_disk.dasd?
+            return false if root_disk.dasd_type == ::Storage::DASDTYPE_FBA
+            return false if root_disk.dasd_format == ::Storage::DASDF_LDL
+            # TODO: DIAG disks (whatever they are) are not supported either
+          end
+          true
         end
 
         def zipl_volume
-          vol = PlannedVolume.new("/boot/zipl", ::Storage::FsType_EXT4)
+          vol = PlannedVolume.new("/boot/zipl", ::Storage::FsType_EXT2)
+          vol.disk = root_disk.name
           vol.min_size = DiskSize.MiB(100)
-          vol.max_size = DiskSize.unlimited
+          vol.max_size = DiskSize.GiB(1)
           vol.desired_size = DiskSize.MiB(200)
           vol.can_live_on_logical_volume = false
           vol
