@@ -88,7 +88,9 @@ stage2 beyond 2 TB limit when using gpt table.
 
 - ??? dos/gpt - something else?
 
-	> [hare] dos/gpt is only used for zfcp and FBA DASD.
+    > [hare] dos/gpt is only used for zfcp and FBA DASD
+
+    >> [mpost] FBA (and it's cousin DIAG) DASD are "special" because of a design decision IBM made way back in the early days.  The dasd_fba_mod driver fakes a partition table which does not actually exist on the disk.  That fake partition table contains a single partition spanning the whole disk.  It was a really bad choice which has caused more than its share of problems over the years.  (For some reason, people think they should be able to modify the partition table to do what they want.  Who would ever have imagined that?)  This is the reason why the tools that IBM created, dasdfmt and fdasd, refuse to work on FBA, DIAG, or LDL formatted disks.  For me, this means that we should refuse to do much with any of these types of devices other than put file systems/swap signatures on them.  Well, making LVM PVs out of them will also work as long as the partition is used and not the whole device
 
 - DASD - ??? up to 4 (3?) partitions
 
@@ -124,13 +126,17 @@ loads the 'real' kernel.
 So initially we'll end up with two identical kernels, but this might change during a kernel
 update.
 
-	>> [ihno] No. It is due to the requirement to have btrfs as the root filesystem.
+    >> [ihno] No. It is due to the requirement to have btrfs as the root filesystem
 zipl has a lilo like boot mechanism and btrfs may relocate blocks.
 So we need a filesystem which can be booted by zipl (-> ext2).
+   >>> [mpost] Oh, you're both right.
 
-	>> The next requirement was to have grub2 as a bootloader.
+   >> The next requirement was to have grub2 as a bootloader.
+   >> The kernel in /boot/zipl is only updated if it is needed for the boot process.
 
-	>> The kernel in /boot/zipl is only updated if it is needed for the boot process.
+   >>> [mpost] To be clear, what's in /boot/zipl only gets updated when grub2-install, etc. are run.
+   >>> Since it's only task is to get the kernel up and grub2 examining what's in /boot it hopefully doesn't change very often.
+   >>>  The exception to this is /boot/zip/active_devices.txt which gets updated whenever ctc_configure, dasd_configure, qeth_configure, zfcp_host_configure add or remove devices from the system.
 
 
 ### ppc64
@@ -169,12 +175,14 @@ Summary
 
 ## General
 
-i.e. valid for all architectures
+- boot loader, /boot (/boot/zipl) and / should be on same disk
+- order: /boot, swap, /
+
+valid for all architectures, except s390 (see below)
 
 - when using gpt, never use gpt-sync-mbr / hybrid mbr; only standard protective mbr.
-- always create a `/boot partition on raid, encrytpted LVM, LVM
+- always create a `/boot` partition on raid, encrytpted LVM, LVM
  * size: [100MB, 200MB, 500MB]
- * order: /boot, swap, /
  * ext4
 
 Note: boot loader is grub2 (refered as grub in this document)
@@ -198,7 +206,7 @@ Note: boot loader is grub2 (refered as grub in this document)
     - grub will use 1st BIOS boot partition it finds, co-op with other grub instances on same disk not possible
 - note: `yast bootloader` will be responsible for boot flag handling, if necessary
     - ensure exactly one partition entry (for gpt: in protective mbr) is tagged as `active`
-  
+
 ## x86-efi
 
 - efi system partition required; dos type 0xef, gpt type c12a7328-f81f-11d2-ba4b-00a0c93ec93b
@@ -209,8 +217,8 @@ Note: boot loader is grub2 (refered as grub in this document)
     - mount at /boot/efi
 - if existing efi system partition is too small, ~~delete and re-create~~ cross your fingers
 
-ppc
----
+## ppc
+
 KVM/LPAR
 - PReP partition
    - dos type 0x41, flag as bootable
@@ -220,18 +228,19 @@ KVM/LPAR
 OPAL/PowerNV/Bare metal
 - no PReP is required
 
-s390x
------
+## s390x/zSeries (64 bit)
+
 - any DASD or zfcp partition, **except** LDL, FBA and DIAG formatted disks
 - from SLES12 on 'zipl' is used:
-  * create /boot/zipl
-  * ext2 (has to be booted by zipl)
-- / and /boot/zipl should be on same disk (other disk is possible)
-- size: [100 MB, 200 MB, 1GB]
+    - create /boot/zipl (just a regular linux partition)
+    - ext2 (has to be booted by zipl)
+    - size: [100 MB, 200 MB, 1GB]
+- partitioning on DASD: minor number 0 is for complete disk, 1 - 3 are for partitions (only 2 bit available)
 
 AI Ihno:
-- provide a script to detect DASD type (FBA, DIAG...),
-- check whether 3 or 4 partitions on DASD are supported
+
+- provide a script to detect DASD type (FBA, DIAG...), is it allowed to create a partition table?
+
 
 
 # Summary of discussion
