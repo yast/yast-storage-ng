@@ -235,6 +235,7 @@ OPAL/PowerNV/Bare metal
     - create /boot/zipl (just a regular linux partition)
     - ext2 (has to be booted by zipl)
     - size: [100 MB, 200 MB, 1GB]
+- no /boot partition is required
 - partitioning on DASD: minor number 0 is for complete disk, 1 - 3 are for partitions (only 2 bit available)
 
 AI Ihno:
