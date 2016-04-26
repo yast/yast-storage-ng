@@ -35,7 +35,7 @@ module Yast
           if mbr_gap_required?
             mbr_gap = disk_analyzer.mbr_gap[settings.root_device]
             # fail if gap is too small
-            raise Error if mbr_gap < DiskSize.kiB(256)
+            raise Error if mbr_gap < DiskSize.KiB(256)
           end
           volumes
         end
@@ -74,7 +74,7 @@ module Yast
           vol = PlannedVolume.new(nil)
           # only required on GPT
           vol.partition_id = ::Storage::ID_GPT_BIOS
-          vol.min_size = DiskSize.kiB(256)
+          vol.min_size = DiskSize.KiB(256)
           vol.max_size = DiskSize.MiB(8)
           vol.desired_size = DiskSize.MiB(1)
           vol.align = :keep_size

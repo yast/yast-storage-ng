@@ -43,7 +43,7 @@ module Yast
 
           # @return [DiskSize]
           def size
-            DiskSize.kiB(size_k)
+            DiskSize.KiB(size_k)
           end
 
           # UUID of the filesystem

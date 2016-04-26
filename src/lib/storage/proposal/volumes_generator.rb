@@ -113,7 +113,7 @@ module Yast
         # @return [::Storage::Partition]
         def reusable_swap(required_size)
           partitions = disk_analyzer.swap_partitions.values.flatten
-          partitions.select! { |part| DiskSize.kiB(part.size_k) >= required_size }
+          partitions.select! { |part| DiskSize.KiB(part.size_k) >= required_size }
           # Use #name in case of #size_k tie to provide stable sorting
           partitions.sort_by { |part| [part.size_k, part.name] }.first
         end

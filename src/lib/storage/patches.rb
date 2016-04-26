@@ -34,7 +34,7 @@ module Storage
   # patch libstorage-ng class
   class Disk
     def inspect
-      "<Disk \##{sid} #{name} #{Yast::Storage::DiskSize.kiB(size_k)}>"
+      "<Disk \##{sid} #{name} #{Yast::Storage::DiskSize.KiB(size_k)}>"
     end
 
     # FIXME: Arvin promised #partition_table? in libstorage-ng;
@@ -68,7 +68,7 @@ module Storage
   # patch libstorage-ng class
   class Partition
     def inspect
-      "<Partition \##{sid} #{name} #{Yast::Storage::DiskSize.kiB(size_k)}>"
+      "<Partition \##{sid} #{name} #{Yast::Storage::DiskSize.KiB(size_k)}>"
     end
   end
 end

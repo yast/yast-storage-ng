@@ -64,7 +64,7 @@ describe Yast::Storage::BootRequirementsChecker do
 
       allow(analyzer).to receive(:device_by_name).with("/dev/sda").and_return(dev_sda)
       allow(analyzer).to receive(:grub_partitions).and_return({})
-      allow(analyzer).to receive(:mbr_gap).and_return("/dev/sda" => Yast::Storage::DiskSize.kiB(300))
+      allow(analyzer).to receive(:mbr_gap).and_return("/dev/sda" => Yast::Storage::DiskSize.KiB(300))
     end
 
     context "in a x86 system" do
@@ -350,8 +350,8 @@ describe Yast::Storage::BootRequirementsChecker do
         let(:use_lvm) { true }
         let(:power_nv) { false }
 
-        it "requires it to be between 256kiB and 8MiB, despite the alignment" do
-          expect(prep_part.min_size).to eq 256.kiB
+        it "requires it to be between 256KiB and 8MiB, despite the alignment" do
+          expect(prep_part.min_size).to eq 256.KiB
           expect(prep_part.max_size).to eq 8.MiB
           expect(prep_part.align).to eq :keep_size
         end
