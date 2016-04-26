@@ -125,5 +125,45 @@ describe Yast::Storage::Proposal::PartitionCreator do
         )
       end
     end
+
+    context "when a ms-dos type partition is used" do
+      before do
+        root_volume.desired = 10.GiB
+        home_volume.desired = 10.GiB
+        swap_volume.desired = 2.GiB
+      end
+
+      context "when the only available space is in an extended partition" do
+        let(:scenario) { "space_22_extended" }
+
+        it "creates all partitions as logical" do
+          result = creator.create_partitions(volumes, target_size)
+          expect(result.partitions).to contain_exactly(
+            an_object_with_fields(type: ::Storage::PartitionType_PRIMARY, name: "/dev/sda1"),
+            an_object_with_fields(type: ::Storage::PartitionType_PRIMARY, name: "/dev/sda2"),
+            an_object_with_fields(type: ::Storage::PartitionType_EXTENDED, name: "/dev/sda4"),
+            an_object_with_fields(type: ::Storage::PartitionType_LOGICAL, name: "/dev/sda5"),
+            an_object_with_fields(type: ::Storage::PartitionType_LOGICAL, name: "/dev/sda6"),
+            an_object_with_fields(type: ::Storage::PartitionType_LOGICAL, name: "/dev/sda7")
+          )
+        end
+      end
+
+      context "when the only available space is completely unassigned" do
+        let(:scenario) { "space_22" }
+
+        it "creates primary/extended/logical partitions as needed" do
+          result = creator.create_partitions(volumes, target_size)
+          expect(result.partitions).to contain_exactly(
+            an_object_with_fields(type: ::Storage::PartitionType_PRIMARY, name: "/dev/sda1"),
+            an_object_with_fields(type: ::Storage::PartitionType_PRIMARY, name: "/dev/sda2"),
+            an_object_with_fields(type: ::Storage::PartitionType_PRIMARY, name: "/dev/sda3"),
+            an_object_with_fields(type: ::Storage::PartitionType_EXTENDED, name: "/dev/sda4"),
+            an_object_with_fields(type: ::Storage::PartitionType_LOGICAL, name: "/dev/sda5"),
+            an_object_with_fields(type: ::Storage::PartitionType_LOGICAL, name: "/dev/sda6")
+          )
+        end
+      end
+    end
   end
 end

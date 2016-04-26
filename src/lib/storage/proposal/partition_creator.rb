@@ -281,14 +281,27 @@ module Yast
           log.info("Creating partition for #{vol.mount_point} with #{vol.size}")
           disk = ::Storage::Disk.find(devicegraph, free_slot.disk_name)
           ptable = disk.partition_table
-          if logical_partition_preferred?(ptable)
-            create_extended_partition(disk, free_slot.slot.region) unless ptable.has_extended
+
+          logical = false
+          if space_inside_extended?(free_slot)
+            logical = true
+          elsif logical_partition_preferred?(ptable)
+            # It's not possible to have more than one extended partition,
+            # even if logical partitions are preferred
+            if !ptable.has_extended
+              create_extended_partition(disk, free_slot.slot.region)
+              logical = true
+            end
+          end
+
+          if logical
             dev_name = next_free_logical_partition_name(disk.name, ptable)
             partition_type = ::Storage::PartitionType_LOGICAL
           else
             dev_name = next_free_primary_partition_name(disk.name, ptable)
             partition_type = ::Storage::PartitionType_PRIMARY
           end
+
           region = new_region_with_size(free_slot, vol.size)
           partition = ptable.create_partition(dev_name, region, partition_type)
           partition.id = partition_id
@@ -313,6 +326,20 @@ module Yast
           ptable = disk.partition_table
           dev_name = next_free_primary_partition_name(disk.name, ptable)
           ptable.create_partition(dev_name, region, ::Storage::PartitionType_EXTENDED)
+        end
+
+        # Checks whether the given free space is inside an extended partition
+        #
+        # @param free_space [FreeDiskSpace]
+        # @return [Boolean]
+        def space_inside_extended?(free_space)
+          space_start = free_space.slot.region.start
+          disks = devicegraph.disks.with(name: free_space.disk_name)
+          extended = disks.partitions.with(type: ::Storage::PartitionType_EXTENDED)
+          container = extended.with do |part|
+            part.region.start <= space_start && part.region.end > space_start
+          end.first
+          !!container
         end
 
         # Return the next device name for a primary partition that is not already
