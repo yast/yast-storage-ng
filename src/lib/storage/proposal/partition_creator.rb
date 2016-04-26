@@ -211,7 +211,12 @@ module Yast
         def volume_extra_size(volume, available_size, total_weight)
           extra_size = available_size * (volume.weight / total_weight)
           new_size = extra_size + volume.size
-          new_size > volume.max_size ? volume.max_size : extra_size
+          if new_size > volume.max_size
+            # Increase just until reaching the max size
+            volume.max_size - volume.size
+          else
+            extra_size
+          end
         end
 
         # Create partitions without LVM in the complex case: There are multiple
