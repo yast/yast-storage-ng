@@ -90,7 +90,7 @@ describe Yast::Storage::Proposal::SpaceMaker do
         it "shrinks the Windows partition by the required size" do
           result = maker.provide_space(required_size)
           win_partition = result.partitions.with(name: "/dev/sda1").first
-          expect(win_partition.size_k.kiB).to eq 740.GiB
+          expect(win_partition.size_k.KiB).to eq 740.GiB
         end
 
         it "leaves other partitions untouched" do
@@ -108,7 +108,7 @@ describe Yast::Storage::Proposal::SpaceMaker do
         it "shrinks the Windows partition as much as possible" do
           result = maker.provide_space(required_size)
           win_partition = result.partitions.with(name: "/dev/sda1").first
-          expect(win_partition.size_k.kiB).to eq 730.GiB
+          expect(win_partition.size_k.KiB).to eq 730.GiB
         end
 
         it "removes other partitions" do
@@ -145,7 +145,7 @@ describe Yast::Storage::Proposal::SpaceMaker do
         it "shrinks the less full Windows partition as needed" do
           result = maker.provide_space(required_size)
           win2_partition = result.partitions.with(name: "/dev/sdb1").first
-          expect(win2_partition.size_k.kiB).to eq 160.GiB
+          expect(win2_partition.size_k.KiB).to eq 160.GiB
         end
 
         it "leaves other partitions untouched" do
@@ -165,13 +165,13 @@ describe Yast::Storage::Proposal::SpaceMaker do
         it "shrinks the less full Windows partition as much as possible" do
           result = maker.provide_space(required_size)
           win2_partition = result.partitions.with(name: "/dev/sdb1").first
-          expect(win2_partition.size_k.kiB).to eq 50.GiB
+          expect(win2_partition.size_k.KiB).to eq 50.GiB
         end
 
         it "shrinks the other Windows partition as needed" do
           result = maker.provide_space(required_size)
           win1_partition = result.partitions.with(name: "/dev/sda1").first
-          expect(win1_partition.size_k.kiB).to eq 70.GiB
+          expect(win1_partition.size_k.KiB).to eq 70.GiB
         end
 
         it "leaves other partitions untouched" do

@@ -174,7 +174,7 @@ module Yast
         def recoverable_size(partition)
           info = partition.filesystem.detect_resize_info
           return DiskSize.zero unless info.resize_ok
-          DiskSize.kiB(partition.size_k - info.min_size_k)
+          DiskSize.KiB(partition.size_k - info.min_size_k)
         end
 
         # Reduces the size of a partition

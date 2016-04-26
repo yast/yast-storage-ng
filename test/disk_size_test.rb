@@ -34,10 +34,10 @@ describe Yast::Storage::DiskSize do
     end
   end
 
-  describe "created with 42 kiB" do
-    disk_size = Yast::Storage::DiskSize.kiB(42)
+  describe "created with 42 KiB" do
+    disk_size = Yast::Storage::DiskSize.KiB(42)
     it "should return the correct human readable string" do
-      expect(disk_size.to_s).to be == "42.00 kiB"
+      expect(disk_size.to_s).to be == "42.00 KiB"
     end
     it "should have the correct numeric value internally" do
       expect(disk_size.size_k).to be == 42
@@ -207,8 +207,8 @@ describe Yast::Storage::DiskSize do
   end
 
   describe "unit exponent" do
-    it "should be correct for kiB" do
-      expect(Yast::Storage::DiskSize.unit_exponent("kiB")).to be == 0
+    it "should be correct for KiB" do
+      expect(Yast::Storage::DiskSize.unit_exponent("KiB")).to be == 0
     end
     it "should be correct for MiB" do
       expect(Yast::Storage::DiskSize.unit_exponent("MiB")).to be == 1
