@@ -34,26 +34,43 @@ module Yast
       class UEFI < Base
         def needed_partitions
           volumes = super
-          volumes << efi_volume if efi_partition_missing?
+          volumes << efi_volume
           volumes
         end
 
       protected
 
-        def efi_partition_missing?
-          disk_analyzer.efi_partitions.empty?
-        end
-
         def efi_volume
           vol = PlannedVolume.new("/boot/efi", ::Storage::FsType_VFAT)
-          # So far we are always using msdos partition ids
-          vol.partition_id = ::Storage::ID_EFI
-          vol.min_size = DiskSize.MiB(33)
-          vol.max_size = DiskSize.unlimited
-          vol.desired_size = DiskSize.MiB(500)
-          vol.can_live_on_logical_volume = false
-          vol.max_start_offset = DiskSize.TiB(2)
+          if reusable_efi
+            vol.reuse = reusable_efi.name
+          else
+            # So far we are always using msdos partition ids
+            vol.partition_id = ::Storage::ID_EFI
+            vol.min_size = DiskSize.MiB(33)
+            vol.max_size = DiskSize.unlimited
+            vol.desired_size = DiskSize.MiB(500)
+            vol.can_live_on_logical_volume = false
+            vol.max_start_offset = DiskSize.TiB(2)
+          end
           vol
+        end
+
+        def reusable_efi
+          @reusable_efi = biggest_efi_in_root_device || biggest_efi
+        end
+
+        def biggest_efi_in_root_device
+          biggest_partition(disk_analyzer.efi_partitions[settings.root_device])
+        end
+
+        def biggest_efi
+          biggest_partition(disk_analyzer.efi_partitions.values.flatten)
+        end
+
+        def biggest_partition(partitions)
+          return nil if partitions.nil? || partitions.empty?
+          partitions.sort_by.with_index { |part, idx| [part.size_k, idx] }.last
         end
       end
     end

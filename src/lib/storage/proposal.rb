@@ -99,7 +99,7 @@ module Yast
       #
       # @param volumes [PlannedVolumesList] list of volumes to accomodate
       # @param settings [Proposal::Settings]
-      # @result [::Storage::Devicegraph]
+      # @return [::Storage::Devicegraph]
       def devicegraph(volumes, settings)
         generator = DevicegraphGenerator.new(settings)
         generator.devicegraph(volumes, initial_graph, disk_analyzer)
@@ -138,11 +138,11 @@ module Yast
       # Proposes a value for settings.root_devices if none was provided
       #
       # It assumes settings.candidate_devices is already set.
-      # It tries to allocate the base volumes in each candidate device,
-      # returning the first in which that allocation is possible.
+      # It tries to allocate the base volumes using each candidate device
+      # as root, returning the first for which that allocation is possible.
       #
-      # @raise Proposal::NoSuitableDeviceError if the base volumes don't fit in
-      # any of the candidate devices
+      # @raise Proposal::NoSuitableDeviceError if the base volumes don't fit for
+      # any root candidate
       #
       # @param settings [Proposal::Settings]
       # @return [String] name of the chosen device
@@ -155,7 +155,8 @@ module Yast
             volumes = volumes_list(:base, new_settings)
             devicegraph(volumes, new_settings)
             return disk_name
-          rescue Proposal::Error
+          rescue Proposal::Error => error
+            log.info "#{disk_name} is not a valid root device: #{error.message}"
             next
           end
         end
@@ -163,7 +164,7 @@ module Yast
         raise Proposal::NoSuitableDeviceError, "No room for base volumes in #{names}"
       end
 
-      # Sorts a list of disk names from bigger to smaller
+      # Sorts a list of disk names from bigger to smaller disk size
       #
       # @param disk_names [Array<String>] unsorted list of names
       # @return [Array<String>] sorted list of names

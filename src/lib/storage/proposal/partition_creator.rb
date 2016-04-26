@@ -154,6 +154,7 @@ module Yast
             )
           end
 
+          volumes = volumes.deep_dup
           volumes.each { |vol| vol.size = vol.min_valid_size(strategy) }
           distribute_extra_space(volumes)
           create_volumes_partitions(volumes)
@@ -167,10 +168,10 @@ module Yast
         # @return [DiskSpace] remaining space that could not be distributed
         #
         def distribute_extra_space(volumes)
-          candidates = volumes.dup
+          candidates = volumes
           extra_size = total_free_size - volumes.total_size
           while extra_size > DiskSize.zero
-            candidates.delete_if { |vol| vol.size >= vol.max_size }
+            candidates = extra_space_candidates(candidates)
             return extra_size if candidates.empty?
             return extra_size if candidates.total_weight.zero?
             log.info("Distributing #{extra_size} extra space among #{candidates.size} volumes")
@@ -186,6 +187,17 @@ module Yast
           end
           log.info("Could not distribute #{extra_size}") unless extra_size.zero?
           extra_size
+        end
+
+        # Volumes that may grow when distributing the extra space
+        #
+        # @param volumes [PlannedVolumesList] initial set of all volumes
+        # @return [PlannedVolumesList]
+        def extra_space_candidates(volumes)
+          candidates = volumes.dup
+          candidates.delete_if { |vol| vol.reuse }
+          candidates.delete_if { |vol| vol.size >= vol.max_size }
+          candidates
         end
 
         # Extra space to be assigned to a volume
@@ -211,6 +223,11 @@ module Yast
 
         # Creates a partition and the corresponding filesystem for each volume
         #
+        # Important: notice that, so far, this method is only intended to work
+        # in cases in which there is only one chunk of free space in the system.
+        #
+        # @raise an error if a volume cannot be allocated
+        #
         # It tries to honor the value of #max_start_offset for each volume, but
         # it does not raise an exception if that particular requirement is
         # impossible to fulfill, since it's usually more a recommendation than a
@@ -218,12 +235,39 @@ module Yast
         #
         # @param volumes [Array<PlannedVolume>]
         def create_volumes_partitions(volumes)
-          volumes.sort_by_attr(:max_start_offset).each do |vol|
+          volumes.sort_by_attr(:disk, :max_start_offset).each do |vol|
+            if vol.reuse
+              log.info "Skipping creation of #{vol}"
+              next
+            end
             partition_id = vol.partition_id
             partition_id ||= vol.mount_point == "swap" ? ::Storage::ID_SWAP : ::Storage::ID_LINUX
-            partition = create_partition(vol, partition_id, free_spaces.first)
-            make_filesystem(partition, vol)
+            begin
+              partition = create_partition(vol, partition_id, free_space_for(vol))
+              make_filesystem(partition, vol)
+              devicegraph.check
+            rescue ::Storage::Exception => error
+              raise Error, "Error allocating #{vol}. Details: #{error}"
+            end
           end
+        end
+
+        # Finds a free space to allocate the start of a volume
+        #
+        # Important: notice that, so far, this method is only intended to work
+        # in cases in which there is only one chunk of free space in the system.
+        #
+        # @raise an error if there is not free space suitable for the volume
+        def free_space_for(volume)
+          free_space = free_spaces.first
+          raise NoDiskSpaceError, "No space to allocate #{volume})" if free_space.nil?
+          if volume.disk && volume.disk != free_space.disk_name
+            raise(
+              NoDiskSpaceError,
+              "Not possible to allocate #{vol}. All the free space is in #{free_space.disk_name}"
+            )
+          end
+          free_space
         end
 
         # Create a partition for the specified volume within the specified slot
@@ -235,29 +279,21 @@ module Yast
         #
         def create_partition(vol, partition_id, free_slot)
           log.info("Creating partition for #{vol.mount_point} with #{vol.size}")
-          begin
-            disk = ::Storage::Disk.find(devicegraph, free_slot.disk_name)
-            ptable = disk.partition_table
-            if logical_partition_preferred?(ptable)
-              create_extended_partition(disk, free_slot.slot.region) unless ptable.has_extended
-              dev_name = next_free_logical_partition_name(disk.name, ptable)
-              partition_type = ::Storage::PartitionType_LOGICAL
-            else
-              dev_name = next_free_primary_partition_name(disk.name, ptable)
-              partition_type = ::Storage::PartitionType_PRIMARY
-            end
-            region = new_region_with_size(free_slot, vol.size)
-            partition = ptable.create_partition(dev_name, region, partition_type)
-            partition.id = partition_id
-            partition
-          # Don't hide our own exceptions (see FIXME below)
-          rescue Yast::Storage::Proposal::Error
-            raise
-          # FIXME: rescue ::Storage::Exception when SWIG bindings are fixed
-          rescue RuntimeError => ex
-            log.info("CAUGHT exception #{ex}")
-            nil
+          disk = ::Storage::Disk.find(devicegraph, free_slot.disk_name)
+          ptable = disk.partition_table
+          if logical_partition_preferred?(ptable)
+            create_extended_partition(disk, free_slot.slot.region) unless ptable.has_extended
+            dev_name = next_free_logical_partition_name(disk.name, ptable)
+            partition_type = ::Storage::PartitionType_LOGICAL
+          else
+            dev_name = next_free_primary_partition_name(disk.name, ptable)
+            partition_type = ::Storage::PartitionType_PRIMARY
           end
+          region = new_region_with_size(free_slot, vol.size)
+          partition = ptable.create_partition(dev_name, region, partition_type)
+          partition.id = partition_id
+          partition.boot = !!vol.bootable
+          partition
         end
 
         # Checks if the next partition to be created should be a logical one
@@ -339,6 +375,8 @@ module Yast
           return nil unless vol.filesystem_type
           filesystem = partition.create_filesystem(vol.filesystem_type)
           filesystem.add_mountpoint(vol.mount_point) if vol.mount_point && !vol.mount_point.empty?
+          filesystem.label = vol.label if vol.label
+          filesystem.uuid = vol.uuid if vol.uuid
           filesystem
         end
 

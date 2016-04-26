@@ -26,6 +26,7 @@ require "storage/planned_volume"
 require "storage/planned_volumes_list"
 require "storage/disk_size"
 require "storage/boot_requirements_checker"
+require "storage/proposal/exceptions"
 
 module Yast
   module Storage
@@ -52,9 +53,10 @@ module Yast
           PlannedVolumesList.new(base_volumes.to_a + additional_volumes)
         end
 
-        # Minimal set of volumes that need to fit in the same disk than "/"
+        # Minimal set of volumes that is needed to decide if a bootable
+        # system can be installed
         #
-        # This includes "/" itself and the volumes needed for booting
+        # This includes "/" and the volumes needed for booting
         #
         # @return [PlannedVolumesList]
         def base_volumes
@@ -71,9 +73,11 @@ module Yast
         def boot_volumes
           checker = BootRequirementsChecker.new(settings, disk_analyzer)
           checker.needed_partitions
+        rescue BootRequirementsChecker::Error => error
+          raise NotBootableError, error.message
         end
 
-        # Standard volumes for the root, swap and /home
+        # Additional volumes not needed for booting, like swap and /home
         #
         # @return [Array<PlannedVolumes>]
         def additional_volumes
@@ -85,15 +89,33 @@ module Yast
         # Volume data structure for the swap volume according
         # to the settings.
         def swap_volume
-          vol = PlannedVolume.new("swap", ::Storage::FsType_SWAP)
           swap_size = DEFAULT_SWAP_SIZE
           if @settings.enlarge_swap_for_suspend
             swap_size = [ram_size, swap_size].max
           end
-          vol.min_size     = swap_size
-          vol.max_size     = swap_size
-          vol.desired_size = swap_size
+          vol = PlannedVolume.new("swap", ::Storage::FsType_SWAP)
+          reuse = reusable_swap(swap_size)
+          if reuse
+            vol.reuse = reuse.name
+          else
+            vol.min_size     = swap_size
+            vol.max_size     = swap_size
+            vol.desired_size = swap_size
+          end
           vol
+        end
+
+        # Swap partition that can be reused.
+        #
+        # It returns the smaller partition reported by disk_analyzer that is big
+        # enough for our purposes.
+        #
+        # @return [::Storage::Partition]
+        def reusable_swap(required_size)
+          partitions = disk_analyzer.swap_partitions.values.flatten
+          partitions.select! { |part| DiskSize.KiB(part.size_k) >= required_size }
+          # Use #name in case of #size_k tie to provide stable sorting
+          partitions.sort_by { |part| [part.size_k, part.name] }.first
         end
 
         # Volume data structure for the root volume according
@@ -106,6 +128,7 @@ module Yast
           root_vol.min_size = @settings.root_base_size
           root_vol.max_size = @settings.root_max_size
           root_vol.weight   = @settings.root_space_percent
+          root_vol.disk     = @settings.root_device
           if root_vol.filesystem_type == ::Storage::FsType_BTRFS
             log.info "Increasing root filesystem size for Btrfs"
             multiplicator = 1.0 + @settings.btrfs_increase_percentage / 100.0

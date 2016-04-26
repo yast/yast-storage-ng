@@ -45,6 +45,12 @@ module Yast
           def size
             DiskSize.KiB(size_k)
           end
+
+          # UUID of the filesystem
+          def uuid
+            filesystem.uuid
+          end
+
         end
       end
     end

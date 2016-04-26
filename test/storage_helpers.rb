@@ -21,18 +21,21 @@
 
 require "rspec"
 require "yast"
+require "storage"
 require "storage/storage_manager"
+require "storage/disk_size"
+require "storage/planned_volume"
 
 module Yast
   module RSpec
     # RSpec extension to add YaST Storage specific helpers
     module StorageHelpers
       def input_file_for(name)
-        File.join(DATA_PATH, "input", "#{name}.yml")
+        File.join(DATA_PATH, "devicegraphs", "#{name}.yml")
       end
 
       def output_file_for(name)
-        File.join(DATA_PATH, "output", "#{name}.yml")
+        File.join(DATA_PATH, "devicegraphs", "output", "#{name}.yml")
       end
 
       def fake_scenario(scenario)
@@ -41,6 +44,24 @@ module Yast
 
       def fake_devicegraph
         Yast::Storage::StorageManager.instance.probed
+      end
+
+      def analyzer_part(name = "", size = Yast::Storage::DiskSize.MiB(10))
+        instance_double("::Storage::Partition", name: name, size_k: size.size_k)
+      end
+
+      def planned_vol(attrs = {})
+        attrs = attrs.dup
+        mount_point = attrs.delete(:mount_point)
+        type = attrs.delete(:type)
+        if type.is_a?(::String) || type.is_a?(Symbol)
+          type = ::Storage.const_get("FsType_" + type.to_s.upcase)
+        end
+        volume = Yast::Storage::PlannedVolume.new(mount_point, type)
+        attrs.each_pair do |key, value|
+          volume.send(:"#{key}=", value)
+        end
+        volume
       end
     end
   end

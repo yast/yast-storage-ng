@@ -35,9 +35,18 @@ describe Yast::Storage::BootRequirementsChecker do
 
     subject(:checker) { described_class.new(settings, analyzer) }
 
-    let(:settings) { Yast::Storage::Proposal::Settings.new }
+    let(:root_device) { "/dev/sda" }
+    let(:settings) do
+      settings = Yast::Storage::Proposal::Settings.new
+      settings.root_device = root_device
+      settings.use_lvm = use_lvm
+      settings
+    end
     let(:analyzer) { instance_double("Yast::Storage::DiskAnalyzer") }
     let(:storage_arch) { instance_double("::Storage::Arch") }
+    let(:dev_sda) { instance_double("::Storage::Disk", name: "/dev/sda") }
+    let(:pt_gpt) { instance_double("::Storage::PartitionTable") }
+    let(:pt_msdos) { instance_double("::Storage::PartitionTable") }
 
     before do
       Yast::Storage::StorageManager.fake_from_yaml
@@ -46,6 +55,16 @@ describe Yast::Storage::BootRequirementsChecker do
       allow(storage_arch).to receive(:x86?).and_return(architecture == :x86)
       allow(storage_arch).to receive(:ppc?).and_return(architecture == :ppc)
       allow(storage_arch).to receive(:s390?).and_return(architecture == :s390)
+
+      allow(dev_sda).to receive(:partition_table?).and_return(true)
+      allow(dev_sda).to receive(:partition_table).and_return(pt_msdos)
+
+      allow(pt_gpt).to receive(:type).and_return(::Storage::PtType_GPT)
+      allow(pt_msdos).to receive(:type).and_return(::Storage::PtType_MSDOS)
+
+      allow(analyzer).to receive(:device_by_name).with("/dev/sda").and_return(dev_sda)
+      allow(analyzer).to receive(:grub_partitions).and_return({})
+      allow(analyzer).to receive(:mbr_gap).and_return("/dev/sda" => Yast::Storage::DiskSize.KiB(300))
     end
 
     context "in a x86 system" do
@@ -63,98 +82,97 @@ describe Yast::Storage::BootRequirementsChecker do
         end
 
         context "with a partitions-based proposal" do
-          before do
-            settings.use_lvm = false
-          end
+          let(:use_lvm) { false }
 
           context "if there are no EFI partitions" do
-            let(:efi_partitions) { [] }
+            let(:efi_partitions) { {} }
 
-            it "requires only a /boot/efi partition" do
+            it "requires only a new /boot/efi partition" do
               expect(checker.needed_partitions).to contain_exactly(
-                an_object_with_fields(mount_point: "/boot/efi")
+                an_object_with_fields(mount_point: "/boot/efi", reuse: nil)
               )
-            end
-
-            it "requires /boot/efi to be vfat with at least 33 MiB" do
-              efi_part = find_vol("/boot/efi", checker.needed_partitions)
-              expect(efi_part.filesystem_type).to eq ::Storage::FsType_VFAT
-              expect(efi_part.min_size).to eq 33.MiB
-            end
-
-            it "recommends /boot/efi to be 500 MiB" do
-              efi_part = find_vol("/boot/efi", checker.needed_partitions)
-              expect(efi_part.desired_size).to eq 500.MiB
-            end
-
-            it "requires /boot/efi to be close enough to the beginning of disk" do
-              efi_part = find_vol("/boot/efi", checker.needed_partitions)
-              expect(efi_part.max_start_offset).to eq 2.TiB
             end
           end
 
           context "if there is already an EFI partition" do
-            let(:efi_partitions) { ["/dev/sda1"] }
+            let(:efi_partitions) { { "/dev/sda" => [analyzer_part("/dev/sda1")] } }
 
-            it "does not require any particular volume" do
-              expect(checker.needed_partitions).to be_empty
+            it "only requires to use the existing EFI partition" do
+              expect(checker.needed_partitions).to contain_exactly(
+                an_object_with_fields(mount_point: "/boot/efi", reuse: "/dev/sda1")
+              )
             end
           end
         end
 
         context "with a LVM-based proposal" do
-          before do
-            settings.use_lvm = true
-          end
+          let(:use_lvm) { true }
 
           context "if there are no EFI partitions" do
-            let(:efi_partitions) { [] }
+            let(:efi_partitions) { {} }
 
-            it "requires /boot and /boot/efi partitions" do
+            it "requires /boot and a new /boot/efi partition" do
               expect(checker.needed_partitions).to contain_exactly(
-                an_object_with_fields(mount_point: "/boot"),
-                an_object_with_fields(mount_point: "/boot/efi")
+                an_object_with_fields(mount_point: "/boot", reuse: nil),
+                an_object_with_fields(mount_point: "/boot/efi", reuse: nil)
               )
-            end
-
-            it "requires /boot/efi to be vfat out of the LVM with at least 33 MiB" do
-              efi_part = find_vol("/boot/efi", checker.needed_partitions)
-              expect(efi_part.filesystem_type).to eq ::Storage::FsType_VFAT
-              expect(efi_part.min_size).to eq 33.MiB
-              expect(efi_part.can_live_on_logical_volume).to eq false
-            end
-
-            it "recommends /boot/efi to be 500 MiB" do
-              efi_part = find_vol("/boot/efi", checker.needed_partitions)
-              expect(efi_part.desired_size).to eq 500.MiB
-            end
-
-            it "requires /boot/efi to be close enough to the beginning of disk" do
-              efi_part = find_vol("/boot/efi", checker.needed_partitions)
-              expect(efi_part.max_start_offset).to eq 2.TiB
-            end
-
-            it "requires /boot to be ext4 out of the LVM with at least 100 MiB" do
-              efi_part = find_vol("/boot", checker.needed_partitions)
-              expect(efi_part.filesystem_type).to eq ::Storage::FsType_EXT4
-              expect(efi_part.min_size).to eq 100.MiB
-              expect(efi_part.can_live_on_logical_volume).to eq false
-            end
-
-            it "recommends /boot to be 200 MiB" do
-              efi_part = find_vol("/boot", checker.needed_partitions)
-              expect(efi_part.desired_size).to eq 200.MiB
             end
           end
 
           context "if there is already an EFI partition" do
-            let(:efi_partitions) { ["/dev/sda1"] }
+            let(:efi_partitions) { { "/dev/sda" => [analyzer_part("/dev/sda1")] } }
 
-            it "requires only a /boot partition" do
+            it "requires /boot and a reused /boot/efi partition" do
               expect(checker.needed_partitions).to contain_exactly(
-                an_object_with_fields(mount_point: "/boot")
+                an_object_with_fields(mount_point: "/boot", reuse: nil),
+                an_object_with_fields(mount_point: "/boot/efi", reuse: "/dev/sda1")
               )
             end
+          end
+        end
+
+        context "when proposing a boot partition" do
+          let(:boot_part) { find_vol("/boot", checker.needed_partitions) }
+          # Default values to ensure the max num of proposed volumes
+          let(:use_lvm) { true }
+          let(:efi_partitions) { {} }
+
+          it "requires /boot to be ext4 with at least 100 MiB" do
+            expect(boot_part.filesystem_type).to eq ::Storage::FsType_EXT4
+            expect(boot_part.min_size).to eq 100.MiB
+          end
+
+          it "requires /boot to be in the system disk out of LVM" do
+            expect(boot_part.disk).to eq root_device
+            expect(boot_part.can_live_on_logical_volume).to eq false
+          end
+
+          it "recommends /boot to be 200 MiB" do
+            expect(boot_part.desired_size).to eq 200.MiB
+          end
+        end
+
+        context "when proposing an new EFI partition" do
+          let(:efi_part) { find_vol("/boot/efi", checker.needed_partitions) }
+          # Default values to ensure the max num of proposed volumes
+          let(:use_lvm) { true }
+          let(:efi_partitions) { {} }
+
+          it "requires /boot/efi to be vfat with at least 33 MiB" do
+            expect(efi_part.filesystem_type).to eq ::Storage::FsType_VFAT
+            expect(efi_part.min_size).to eq 33.MiB
+          end
+
+          it "requires /boot/efi to be out of LVM" do
+            expect(efi_part.can_live_on_logical_volume).to eq false
+          end
+
+          it "recommends /boot/efi to be 500 MiB" do
+            expect(efi_part.desired_size).to eq 500.MiB
+          end
+
+          it "requires /boot/efi to be close enough to the beginning of disk" do
+            expect(efi_part.max_start_offset).to eq 2.TiB
           end
         end
       end
@@ -163,9 +181,7 @@ describe Yast::Storage::BootRequirementsChecker do
         let(:efiboot) { false }
 
         context "with a partitions-based proposal" do
-          before do
-            settings.use_lvm = false
-          end
+          let(:use_lvm) { false }
 
           it "does not require any particular volume" do
             expect(checker.needed_partitions).to be_empty
@@ -173,9 +189,7 @@ describe Yast::Storage::BootRequirementsChecker do
         end
 
         context "with a LVM-based proposal" do
-          before do
-            settings.use_lvm = true
-          end
+          let(:use_lvm) { true }
 
           it "requires only a /boot partition" do
             expect(checker.needed_partitions).to contain_exactly(
@@ -183,45 +197,288 @@ describe Yast::Storage::BootRequirementsChecker do
             )
           end
 
-          it "requires /boot to be ext4 out of the LVM with at least 100 MiB" do
-            efi_part = find_vol("/boot", checker.needed_partitions)
-            expect(efi_part.filesystem_type).to eq ::Storage::FsType_EXT4
-            expect(efi_part.min_size).to eq 100.MiB
-            expect(efi_part.can_live_on_logical_volume).to eq false
+          it "requires /boot to be ext4 with at least 100 MiB" do
+            boot_part = find_vol("/boot", checker.needed_partitions)
+            expect(boot_part.filesystem_type).to eq ::Storage::FsType_EXT4
+            expect(boot_part.min_size).to eq 100.MiB
+          end
+
+          it "requires /boot to be in the system disk out of the LVM" do
+            boot_part = find_vol("/boot", checker.needed_partitions)
+            expect(boot_part.disk).to eq root_device
+            expect(boot_part.can_live_on_logical_volume).to eq false
           end
 
           it "recommends /boot to be 200 MiB" do
-            efi_part = find_vol("/boot", checker.needed_partitions)
-            expect(efi_part.desired_size).to eq 200.MiB
+            boot_part = find_vol("/boot", checker.needed_partitions)
+            expect(boot_part.desired_size).to eq 200.MiB
           end
         end
       end
     end
 
     context "in a PPC64 system" do
-      let(:arch) { :ppc }
+      let(:architecture) { :ppc }
+      let(:prep_id) { ::Storage::ID_PPC_PREP }
 
-      context "using KVM" do
-        context "with a partitions-based proposal" do
-        end
-
-        context "with a LVM-based proposal" do
-        end
+      before do
+        allow(storage_arch).to receive(:ppc_power_nv?).and_return(power_nv)
+        allow(analyzer).to receive(:prep_partitions).and_return prep_partitions
       end
 
-      context "using LPAR" do
+      context "in a non-PowerNV system (KVM/LPAR)" do
+        let(:power_nv) { false }
+
         context "with a partitions-based proposal" do
+          let(:use_lvm) { false }
+
+          context "if there are no PReP partitions" do
+            let(:prep_partitions) { { "/dev/sda" => [] } }
+
+            it "requires only a PReP partition" do
+              expect(checker.needed_partitions).to contain_exactly(
+                an_object_with_fields(mount_point: nil, partition_id: prep_id)
+              )
+            end
+          end
+
+          context "if the existent PReP partition is not in the target disk" do
+            let(:prep_partitions) { { "/dev/sdb" => [analyzer_part("/dev/sdb")] } }
+
+            it "requires only a PReP partition" do
+              expect(checker.needed_partitions).to contain_exactly(
+                an_object_with_fields(mount_point: nil, partition_id: prep_id)
+              )
+            end
+          end
+
+          context "if there is already a PReP partition in the disk" do
+            let(:prep_partitions) { { "/dev/sda" => [analyzer_part("/dev/sda1")] } }
+
+            it "does not require any particular volume" do
+              expect(checker.needed_partitions).to be_empty
+            end
+          end
         end
 
         context "with a LVM-based proposal" do
+          let(:use_lvm) { true }
+
+          context "if there are no PReP partitions" do
+            let(:prep_partitions) { { "/dev/sda" => [] } }
+
+            it "requires /boot and PReP partitions" do
+              expect(checker.needed_partitions).to contain_exactly(
+                an_object_with_fields(mount_point: "/boot"),
+                an_object_with_fields(mount_point: nil, partition_id: prep_id)
+              )
+            end
+          end
+
+          context "if the existent PReP partition is not in the target disk" do
+            let(:prep_partitions) { { "/dev/sdb" => [analyzer_part("/dev/sdb1")] } }
+
+            it "requires /boot and PReP partitions" do
+              expect(checker.needed_partitions).to contain_exactly(
+                an_object_with_fields(mount_point: "/boot"),
+                an_object_with_fields(mount_point: nil, partition_id: prep_id)
+              )
+            end
+          end
+
+          context "if there is already a PReP partition in the disk" do
+            let(:prep_partitions) { { "/dev/sda" => [analyzer_part("/dev/sda1")] } }
+
+            it "only requires a /boot partition" do
+              expect(checker.needed_partitions).to contain_exactly(
+                an_object_with_fields(mount_point: "/boot")
+              )
+            end
+          end
         end
       end
 
       context "in bare metal (PowerNV)" do
+        let(:power_nv) { true }
+        let(:prep_partitions) { {} }
+
         context "with a partitions-based proposal" do
+          let(:use_lvm) { false }
+
+          it "does not require any particular volume" do
+            expect(checker.needed_partitions).to be_empty
+          end
         end
 
         context "with a LVM-based proposal" do
+          let(:use_lvm) { true }
+
+          it "requires only a /boot partition" do
+            expect(checker.needed_partitions).to contain_exactly(
+              an_object_with_fields(mount_point: "/boot")
+            )
+          end
+        end
+      end
+
+      context "when proposing a boot partition" do
+        let(:boot_part) { find_vol("/boot", checker.needed_partitions) }
+        # Default values to ensure the max num of proposed volumes
+        let(:prep_partitions) { {} }
+        let(:use_lvm) { true }
+        let(:power_nv) { false }
+
+        it "requires /boot to be ext4 with at least 100 MiB" do
+          expect(boot_part.filesystem_type).to eq ::Storage::FsType_EXT4
+          expect(boot_part.min_size).to eq 100.MiB
+        end
+
+        it "requires /boot to be in the system disk out of LVM" do
+          expect(boot_part.disk).to eq root_device
+          expect(boot_part.can_live_on_logical_volume).to eq false
+        end
+
+        it "recommends /boot to be 200 MiB" do
+          expect(boot_part.desired_size).to eq 200.MiB
+        end
+      end
+
+      context "when proposing a PReP partition" do
+        let(:prep_part) { find_vol(nil, checker.needed_partitions) }
+        # Default values to ensure the max num of proposed volumes
+        let(:prep_partitions) { {} }
+        let(:use_lvm) { true }
+        let(:power_nv) { false }
+
+        it "requires it to be between 256KiB and 8MiB, despite the alignment" do
+          expect(prep_part.min_size).to eq 256.KiB
+          expect(prep_part.max_size).to eq 8.MiB
+          expect(prep_part.align).to eq :keep_size
+        end
+
+        it "recommends it to be 1 MiB" do
+          expect(prep_part.desired_size).to eq 1.MiB
+        end
+
+        it "requires it to be out of LVM" do
+          expect(prep_part.can_live_on_logical_volume).to eq false
+        end
+
+        it "requires it to be bootable (ms-dos partition table)" do
+          expect(prep_part.bootable).to eq true
+        end
+      end
+    end
+
+    context "in a S/390 system" do
+      let(:architecture) { :s390 }
+      let(:use_lvm) { false }
+
+      before do
+        allow(dev_sda).to receive(:dasd?).and_return(dasd)
+        allow(dev_sda).to receive(:dasd_type).and_return(dasd_type)
+        allow(dev_sda).to receive(:dasd_format).and_return(dasd_format)
+      end
+
+      context "trying to install in a zfcp disk" do
+        let(:dasd) { false }
+        let(:dasd_type) { ::Storage::DASDTYPE_NONE }
+        let(:dasd_format) { ::Storage::DASDF_NONE }
+
+        context "with a partitions-based proposal" do
+          let(:use_lvm) { false }
+
+          it "requires only a /boot/zipl partition" do
+            expect(checker.needed_partitions).to contain_exactly(
+              an_object_with_fields(mount_point: "/boot/zipl")
+            )
+          end
+        end
+
+        context "with a LVM-based proposal" do
+          let(:use_lvm) { true }
+
+          it "requires only a /boot/zipl partition" do
+            expect(checker.needed_partitions).to contain_exactly(
+              an_object_with_fields(mount_point: "/boot/zipl")
+            )
+          end
+        end
+      end
+
+      context "trying to install in a FBA DASD disk" do
+        let(:dasd) { true }
+        let(:dasd_type) { ::Storage::DASDTYPE_FBA }
+        # Format and LVM are irrelevant
+        let(:dasd_format) { ::Storage::DASDTYPE_NONE }
+        let(:use_lvm) { false }
+
+        it "raises an error" do
+          expect { checker.needed_partitions }
+            .to raise_error Yast::Storage::BootRequirementsChecker::Error
+        end
+      end
+
+      context "trying to install in a (E)CKD DASD disk" do
+        let(:dasd) { true }
+        let(:dasd_type) { ::Storage::DASDTYPE_ECKD }
+
+        context "if the disk is formatted as LDL" do
+          let(:dasd_format) { ::Storage::DASDF_LDL }
+          # LVM is irrelevant
+          let(:use_lvm) { false }
+
+          it "raises an error" do
+            expect { checker.needed_partitions }
+              .to raise_error Yast::Storage::BootRequirementsChecker::Error
+          end
+        end
+
+        context "if the disk is formatted as CDL" do
+          let(:dasd_format) { ::Storage::DASDF_CDL }
+
+          context "with a partitions-based proposal" do
+            let(:use_lvm) { false }
+
+            it "requires only a /boot/zipl partition" do
+              expect(checker.needed_partitions).to contain_exactly(
+                an_object_with_fields(mount_point: "/boot/zipl")
+              )
+            end
+          end
+
+          context "with a LVM-based proposal" do
+            let(:use_lvm) { true }
+
+            it "requires only a /boot/zipl partition" do
+              expect(checker.needed_partitions).to contain_exactly(
+                an_object_with_fields(mount_point: "/boot/zipl")
+              )
+            end
+          end
+        end
+      end
+
+      context "when proposing a /boot/zipl partition" do
+        let(:zipl_part) { find_vol("/boot/zipl", checker.needed_partitions) }
+        # Default values to ensure the partition is proposed
+        let(:dasd) { false }
+        let(:dasd_type) { ::Storage::DASDTYPE_NONE }
+        let(:dasd_format) { ::Storage::DASDF_NONE }
+        let(:use_lvm) { false }
+
+        it "requires /boot/zipl to be ext2 with at least 100 MiB" do
+          expect(zipl_part.filesystem_type).to eq ::Storage::FsType_EXT2
+          expect(zipl_part.min_size).to eq 100.MiB
+        end
+
+        it "requires /boot/zipl to be in the system disk out of LVM" do
+          expect(zipl_part.disk).to eq root_device
+          expect(zipl_part.can_live_on_logical_volume).to eq false
+        end
+
+        it "recommends /boot/zipl to be 200 MiB" do
+          expect(zipl_part.desired_size).to eq 200.MiB
         end
       end
     end
