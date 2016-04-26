@@ -47,6 +47,7 @@ describe Yast::Storage::BootRequirementsChecker do
     let(:dev_sda) { instance_double("::Storage::Disk", name: "/dev/sda") }
     let(:pt_gpt) { instance_double("::Storage::PartitionTable") }
     let(:pt_msdos) { instance_double("::Storage::PartitionTable") }
+    let(:grub_partitions) { {} }
 
     before do
       Yast::Storage::StorageManager.fake_from_yaml
@@ -63,8 +64,8 @@ describe Yast::Storage::BootRequirementsChecker do
       allow(pt_msdos).to receive(:type).and_return(::Storage::PtType_MSDOS)
 
       allow(analyzer).to receive(:device_by_name).with("/dev/sda").and_return(dev_sda)
-      allow(analyzer).to receive(:grub_partitions).and_return({})
       allow(analyzer).to receive(:mbr_gap).and_return("/dev/sda" => Yast::Storage::DiskSize.KiB(300))
+      allow(analyzer).to receive(:grub_partitions).and_return grub_partitions
     end
 
     context "in a x86 system" do
@@ -183,8 +184,73 @@ describe Yast::Storage::BootRequirementsChecker do
         context "with a partitions-based proposal" do
           let(:use_lvm) { false }
 
-          it "does not require any particular volume" do
-            expect(checker.needed_partitions).to be_empty
+          context "and MS-DOS partition table" do
+            let(:grub_partitions) { {} }
+
+            before do
+              allow(dev_sda).to receive(:partition_table).and_return(pt_msdos)
+            end
+
+            context "with sufficently large MBR gap" do
+              it "does not require any particular volume" do
+                expect(checker.needed_partitions).to be_empty
+              end
+            end
+
+            context "with too small MBR gap" do
+              before do
+                allow(analyzer).to receive(:mbr_gap).and_return(
+                  dev_sda.name => Yast::Storage::DiskSize.KiB(16)
+                )
+              end
+
+              it "raises an exception" do
+                expect { checker.needed_partitions }.to raise_error(
+                  Yast::Storage::BootRequirementsChecker::Error
+                )
+              end
+            end
+
+            context "with no MBR gap" do
+              before do
+                allow(analyzer).to receive(:mbr_gap).and_return(
+                  dev_sda.name => Yast::Storage::DiskSize.KiB(0)
+                )
+              end
+
+              it "raises an exception" do
+                expect { checker.needed_partitions }.to raise_error(
+                  Yast::Storage::BootRequirementsChecker::Error
+                )
+              end
+            end
+
+          end
+
+          context "and GPT partition table" do
+            before do
+              allow(dev_sda).to receive(:partition_table).and_return(pt_gpt)
+            end
+
+            context "if there is no GRUB partition" do
+              let(:grub_partitions) { {} }
+
+              it "requires a new GRUB partition" do
+                expect(checker.needed_partitions).to include(
+                  an_object_with_fields(partition_id: ::Storage::ID_GPT_BIOS, reuse: nil)
+                )
+              end
+            end
+
+            context "if there is already a GRUB partition" do
+              let(:grub_partitions) { { dev_sda.name => [analyzer_part(dev_sda.name + "2")] } }
+
+              it "does not propose a new GRUB partition" do
+                expect(checker.needed_partitions).not_to include(
+                  an_object_with_fields(partition_id: ::Storage::ID_GPT_BIOS)
+                )
+              end
+            end
           end
         end
 
