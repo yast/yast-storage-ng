@@ -21,6 +21,7 @@
 
 require "rspec"
 require "yast"
+require "storage"
 require "storage/refinements/partition_attributes"
 
 module Yast
@@ -71,7 +72,7 @@ module Yast
               if actual_value != value
                 @non_matching_fields << format_field(field, actual_value)
               end
-            rescue NameError
+            rescue NameError, ::Storage::WrongNumberOfChildren
               @non_present_fields << field
             end
           end
