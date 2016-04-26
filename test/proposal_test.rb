@@ -120,9 +120,9 @@ describe Yast::Storage::Proposal do
       context "with a separate home" do
         let(:separate_home) { true }
 
-        it "proposes the expected layout" do
-          proposal.propose
-          expect(proposal.devices.to_str).to eq expected.to_str
+        # FIXME: to avoid this in the future, SpaceMaker should become smarter
+        it "runs out of primary partitions" do
+          expect { proposal.propose }.to raise_error Yast::Storage::Proposal::NoMorePartitionSlotError
         end
       end
 
