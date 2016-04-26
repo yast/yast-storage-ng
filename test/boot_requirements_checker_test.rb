@@ -199,21 +199,29 @@ describe Yast::Storage::BootRequirementsChecker do
 
             context "with too small MBR gap" do
               before do
-                allow(analyzer).to receive(:mbr_gap).and_return(dev_sda.name => Yast::Storage::DiskSize.KiB(16))
+                allow(analyzer).to receive(:mbr_gap).and_return(
+                  dev_sda.name => Yast::Storage::DiskSize.KiB(16)
+                )
               end
 
               it "raises an exception" do
-                expect { checker.needed_partitions }.to raise_error Yast::Storage::BootRequirementsChecker::Error
+                expect { checker.needed_partitions }.to raise_error(
+                  Yast::Storage::BootRequirementsChecker::Error
+                )
               end
             end
 
             context "with no MBR gap" do
               before do
-                allow(analyzer).to receive(:mbr_gap).and_return(dev_sda.name => Yast::Storage::DiskSize.KiB(0))
+                allow(analyzer).to receive(:mbr_gap).and_return(
+                  dev_sda.name => Yast::Storage::DiskSize.KiB(0)
+                )
               end
 
               it "raises an exception" do
-                expect { checker.needed_partitions }.to raise_error Yast::Storage::BootRequirementsChecker::Error
+                expect { checker.needed_partitions }.to raise_error(
+                  Yast::Storage::BootRequirementsChecker::Error
+                )
               end
             end
 
