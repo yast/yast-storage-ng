@@ -95,7 +95,7 @@ Example:
 
 - size: Size of the disk specified as something the DiskSize class can parse:
 
-  - nn kiB
+  - nn KiB
   - nn MiB
   - nn GiB
   - nn TiB

@@ -38,7 +38,7 @@ module Yast
       #   12.5.MiB == Yast::Storage::DiskSize.MiB(12.5)
       module SizeCasts
         REFINED_CLASSES = [::Fixnum, ::Float]
-        ADDED_METHODS = [:kiB, :MiB, :GiB, :TiB, :PiB, :EiB, :ZiB, :YiB]
+        ADDED_METHODS = [:KiB, :MiB, :GiB, :TiB, :PiB, :EiB, :ZiB, :YiB]
 
         REFINED_CLASSES.each do |klass|
           refine klass do

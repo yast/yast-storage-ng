@@ -33,7 +33,7 @@ module Yast
     class DiskSize
       include Comparable
 
-      UNITS = ["kiB", "MiB", "GiB", "TiB", "PiB", "EiB", "ZiB", "YiB"]
+      UNITS = ["KiB", "MiB", "GiB", "TiB", "PiB", "EiB", "ZiB", "YiB"]
       UNLIMITED = "unlimited"
 
       attr_accessor :size_k
@@ -47,7 +47,7 @@ module Yast
       #
       class << self
         # rubocop:disable Style/MethodName
-        def kiB(size)
+        def KiB(size)
           DiskSize.new(size)
         end
 
@@ -92,7 +92,7 @@ module Yast
         # Valid formats:
         #   42 GiB
         #   42.00  GiB
-        #   42          (=> 42 kiB)
+        #   42          (=> 42 KiB)
         #   unlimited   (=> -1 == unlimited)
         #
         # Invalid:
@@ -111,8 +111,8 @@ module Yast
         alias_method :from_s, :parse
         alias_method :from_human_readable, :parse
 
-        # Return the unit exponent for any of the known binary units ("kiB",
-        # "MiB", ...). The base of this exponent is 1024. The base unit is kiB.
+        # Return the unit exponent for any of the known binary units ("KiB",
+        # "MiB", ...). The base of this exponent is 1024. The base unit is KiB.
         #
         def unit_exponent(unit)
           # rubocop:disable Style/AndOr
@@ -120,8 +120,8 @@ module Yast
           # rubocop:enable Style/AndOr
         end
 
-        # Return the unit multiplier for any of the known binary units ("kiB",
-        # "MiB", ...). The base unit is kiB.
+        # Return the unit multiplier for any of the known binary units ("KiB",
+        # "MiB", ...). The base unit is KiB.
         #
         def unit_multiplier(unit)
           1024**unit_exponent(unit)
@@ -217,7 +217,7 @@ module Yast
 
       def inspect
         return "<DiskSize <unlimited> (-1)>" if unlimited?
-        "<DiskSize #{self} (#{size_k} kiB)>"
+        "<DiskSize #{self} (#{size_k} KiB)>"
       end
 
       def pretty_print(*)
@@ -241,34 +241,34 @@ end
 #
 if $PROGRAM_NAME == __FILE__  # Called direcly as standalone command? (not via rspec or require)
   size = Yast::Storage::DiskSize.new(42)
-  print "42 kiB: #{size} (#{size.size_k} kiB)\n"
+  print "42 KiB: #{size} (#{size.size_k} KiB)\n"
 
   size = Yast::Storage::DiskSize.MiB(43)
-  print "43 MiB: #{size} (#{size.size_k} kiB)\n"
+  print "43 MiB: #{size} (#{size.size_k} KiB)\n"
 
   size = Yast::Storage::DiskSize.GiB(44)
-  print "44 GiB: #{size} (#{size.size_k} kiB)\n"
+  print "44 GiB: #{size} (#{size.size_k} KiB)\n"
 
   size = Yast::Storage::DiskSize.TiB(45)
-  print "45 TiB: #{size} (#{size.size_k} kiB)\n"
+  print "45 TiB: #{size} (#{size.size_k} KiB)\n"
 
   size = Yast::Storage::DiskSize.PiB(46)
-  print "46 PiB: #{size} (#{size.size_k} kiB)\n"
+  print "46 PiB: #{size} (#{size.size_k} KiB)\n"
 
   size = Yast::Storage::DiskSize.EiB(47)
-  print "47 EiB: #{size} (#{size.size_k} kiB)\n"
+  print "47 EiB: #{size} (#{size.size_k} KiB)\n"
 
   size = Yast::Storage::DiskSize.TiB(48 * (1024**5))
-  print "Huge: #{size} (#{size.size_k} kiB)\n"
+  print "Huge: #{size} (#{size.size_k} KiB)\n"
 
   size = Yast::Storage::DiskSize.MiB(12) * 3
-  print "3*12 MiB: #{size} (#{size.size_k} kiB)\n"
+  print "3*12 MiB: #{size} (#{size.size_k} KiB)\n"
 
   size2 = size + Yast::Storage::DiskSize.MiB(20)
-  print "3*12+20 MiB: #{size2} (#{size2.size_k} kiB)\n"
+  print "3*12+20 MiB: #{size2} (#{size2.size_k} KiB)\n"
 
   size2 /= 13
-  print "(3*12+20)/7 MiB: #{size2} (#{size2.size_k} kiB)\n"
+  print "(3*12+20)/7 MiB: #{size2} (#{size2.size_k} KiB)\n"
 
   print "#{size} < #{size2} ? -> #{size < size2}\n"
   print "#{size} > #{size2} ? -> #{size > size2}\n"
