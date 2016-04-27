@@ -42,11 +42,24 @@ module Yast
         @size_k = size_k.round
       end
 
+      def size=(s)
+        self.size_k = s / 1024
+      end
+
+      def size
+        self.size_k * 1024
+      end
+
       #
       # Factory methods
       #
       class << self
         # rubocop:disable Style/MethodName
+        def B(size)
+          # FIXME: use bytes internally
+          DiskSize.new(size / 1024)
+        end
+
         def KiB(size)
           DiskSize.new(size)
         end

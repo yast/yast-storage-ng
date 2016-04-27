@@ -62,9 +62,6 @@ module Yast
           "free"            => ["size"]
         }
 
-      # Size of a cylinder of our fake geometry disks
-      CYL_SIZE = DiskSize.MiB(1)
-
       class << self
         #
         # Read a YAML file and build a fake device tree from it.
@@ -87,8 +84,8 @@ module Yast
         super(devicegraph)
         @partitions     = {}
         @disks          = Set.new
-        @first_free_cyl = {}
-        @cyl_count      = {}
+        @disk_size      = {}
+        @disk_used      = {}
       end
 
     protected
@@ -163,12 +160,11 @@ module Yast
         @disks << name
         disk = ::Storage::Disk.create(@devicegraph, name)
         disk.size_k = size.size_k
-        puts disk.inspect
         # range (number of partitions that the kernel can handle) used to be
         # 16 for scsi and 64 for ide. Now it's 256 for most of them.
         disk.range = args["range"] || 256
-        @first_free_cyl[name] = 0
-        @cyl_count[name] = disk.size_k / 1024 # XXXXXXXXXX 1MiB cyls
+        @disk_used[name] = 0
+        @disk_size[name] = disk.size
         name
       end
 
@@ -246,7 +242,8 @@ module Yast
         disk = ::Storage::Disk.find(devicegraph, disk_name)
         ptable = disk.partition_table
         region = allocate_disk_space(disk_name, size)
-        @first_free_cyl[disk_name] = region.start / 0x800 if type == ::Storage::PartitionType_EXTENDED # XXXXXXXX
+        # skip one block
+        @disk_used[disk_name] = (region.start + 1) * region.block_size if type == ::Storage::PartitionType_EXTENDED
         partition = ptable.create_partition(part_name, region, type)
         partition.id = id
         part_name
@@ -332,30 +329,34 @@ module Yast
       #
       def allocate_disk_space(disk_name, size)
         disk = ::Storage::Disk.find(@devicegraph, disk_name)
+
         log.info(
           "#{__method__}: #{disk.partition_table.unused_partition_slots.size} slots on #{disk_name}"
         )
 
-        first_free_cyl = @first_free_cyl[disk_name] || 0
-        cyl_count      = @cyl_count[disk_name] || 0
-        free_cyl = cyl_count - first_free_cyl
+        start = @disk_used[disk_name] || 0
+        # size for MBR gap / GPT
+        start = DiskSize.KiB(1024).size if start == 0
+
+        # align start to 1MiB
+        # FIXME: use Topology class
+        start_align = (start + 1024*1024 - 1) / (1024*1024) * 1024*1024
+
+        max = @disk_size[disk_name] || 0
+        free = max - start
         log.info(
-          "disk #{disk_name} first free cyl: #{first_free_cyl} " \
-          "free_cyl: #{free_cyl} cyl_count: #{cyl_count}"
+          "disk #{disk_name} free: #{start} - #{max - 1} (#{free})"
         )
 
         if size.unlimited?
-          requested_cyl = free_cyl
-          raise "No more disk space on #{disk_name}" if requested_cyl < 1
+          requested = free
+          raise "No more disk space on #{disk_name}" if requested < 1
         else
-          requested_cyl = size.size_k / CYL_SIZE.size_k
-          raise "Not enough disk space on #{disk_name} for another #{size}" if requested_cyl > free_cyl
+          requested = size.size
+          raise "Not enough disk space on #{disk_name} for another #{size}" if requested > free
         end
-        @first_free_cyl[disk_name] = first_free_cyl + requested_cyl
-        puts "XXXXXXX"
-        r = ::Storage::Region.new(first_free_cyl * 0x800, requested_cyl * 0x800, 0x200)
-        puts r
-        r
+        @disk_used[disk_name] = start + requested
+        r = ::Storage::Region.new(start / 512, requested / 512, 512)
       end
     end
   end

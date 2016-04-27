@@ -90,6 +90,14 @@ module Storage
 
   end
 
+  class PartitionSlot
+    def inspect
+      "<PartitionSlot >"
+    end
+
+    alias to_s inspect
+  end
+
   class Region
     def inspect
       "<Region #{start} - #{self.end} (#{length}), blk #{block_size}>"
@@ -97,4 +105,24 @@ module Storage
 
     alias to_s inspect
   end
+
+  class PartitionTable
+    def inspect
+      i = "<PartitionTable #{self.to_s}[#{self.num_children}] "
+      self.partitions.each { |x|
+        i += "#{x.inspect}"
+      }
+      self.unused_partition_slots.each { |x|
+        i += "#{x.to_s}"
+      }
+      i += ">"
+    end
+  end
+
+  class  Device
+    def inspect
+      "<Device #{self.to_s}>"
+    end
+  end
+
 end

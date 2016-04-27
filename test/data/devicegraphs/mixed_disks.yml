@@ -16,7 +16,7 @@
         size:         2 GiB
 
     - partition:
-        size:         98 GiB
+        size:         97 GiB
         name:         /dev/sda2
         file_system:  ext4
         mount_point:  /
@@ -49,7 +49,7 @@
         label:        ubuntu_root
 
     - partition:
-        size:         800 GiB
+        size:         820 GiB
         name:         /dev/sdb4
         type:         extended
 
@@ -74,7 +74,7 @@
         type:         logical
 
     - free:
-        size: 90 GiB
+        size: 89 GiB
 
 - disk:
     name: /dev/sdc

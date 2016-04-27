@@ -48,6 +48,7 @@ puts(devicegraph)
 
 rescue => x
   puts "exception: #{x}"
+  pp x.backtrace
 end
 
 
