@@ -1,6 +1,6 @@
 # encoding: utf-8
 
-# Copyright (c) [2015] SUSE LLC
+# Copyright (c) [2015-2016] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -62,7 +62,18 @@ module ExpertPartitioner
       Yast::UI.OpenDialog(
         VBox(
           Heading(_("Create Partition")),
-          MinWidth(15, InputField(Id(:size_input), Opt(:shrinkable), _("Size"), "50 MiB")),
+          RadioButtonGroup(Id(:size), VBox(
+                             LeftRadioButton(Id(:max_size), # Opt(:notify),
+                                             _("Maximum Size (TODO)")),
+                             LeftRadioButtonWithAttachment(Id(:custom_size), # Opt(:notify),
+                                                           _("Custom Size"),
+                                                           VBox(
+                                                             Id(:custom_size_attachment),
+                                                             MinWidth(15, InputField(Id(:custom_size_input), Opt(:shrinkable), _("Size"), "50 MiB")),
+                                                           )
+                                                          )
+                           )
+                          ),
           ButtonBox(
             PushButton(Id(:cancel), Yast::Label.CancelButton),
             PushButton(Id(:ok), Yast::Label.OKButton)
@@ -72,28 +83,39 @@ module ExpertPartitioner
     end
 
     def doit
-      size = Yast::UI.QueryWidget(Id(:size_input), :Value)
-      size_k = Storage.humanstring_to_byte(size, false) / 1024
 
       partition_table = @disk.partition_table
-
       partition_slots = partition_table.unused_partition_slots.to_a
 
-      partition_slots.delete_if do |partition_slot|
-        !partition_slot.primary_slot || !partition_slot.primary_possible ||
-          size_k > partition_slot.region.to_kb(partition_slot.region.length)
+      case Yast::UI.QueryWidget(Id(:size), :Value)
+
+      when :max_size
+
+        partition_slot = partition_slots[0]
+
+        partition_slot.region = partition_table.align(partition_slot.region,
+                                                      Storage::AlignPolicy_KEEP_END)
+
+      when :custom_size
+
+        size = Yast::UI.QueryWidget(Id(:custom_size_input), :Value)
+        size = Storage.humanstring_to_byte(size, false)
+
+        partition_slots.delete_if do |partition_slot|
+          !partition_slot.primary_slot || !partition_slot.primary_possible ||
+            size > partition_slot.region.to_bytes(partition_slot.region.length)
+        end
+
+        if partition_slots.empty?
+          Yast::Popup::Error("No suitable partition slot found.")
+          return
+        end
+
+        partition_slot = partition_slots[0]
+
+        partition_slot.region.length = partition_slot.region.to_blocks(size)
+
       end
-
-      if partition_slots.empty?
-        Yast::Popup::Error("No suitable partition slot found.")
-        return
-      end
-
-      # TODO: sort so that smallest slot is first
-
-      partition_slot = partition_slots[0]
-
-      partition_slot.region.length = partition_slot.region.to_value(size_k)
 
       partition_table.create_partition(
         partition_slot.name,

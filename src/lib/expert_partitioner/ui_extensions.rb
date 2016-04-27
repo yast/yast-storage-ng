@@ -1,6 +1,6 @@
 # encoding: utf-8
 
-# Copyright (c) [2015] SUSE LLC
+# Copyright (c) [2015-2016] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -30,6 +30,15 @@ module Yast
   module UIShortcuts
     def LeftRadioButton(*opts)
       Left(RadioButton(*opts))
+    end
+
+    def LeftRadioButtonWithAttachment(*opts)
+      tmp1 = opts[0..-2]
+      tmp2 = opts[-1]
+      VBox(
+        Left(RadioButton(*tmp1)),
+        HBox(HSpacing(4), tmp2)
+      )
     end
 
     def IconAndHeading(heading, icon)
