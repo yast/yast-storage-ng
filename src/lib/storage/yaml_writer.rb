@@ -112,7 +112,7 @@ module Yast
       # @param disk [::Storage::Disk]
       # @return [Array<Hash>]
       def yaml_disk_partitions(disk)
-        cyl_size = DiskSize.new(disk.geometry.cylinder_size / 1024)
+        cyl_size = 1024; # XXXXXXX 1MiB
         first_free_cyl = 0
         partitions = []
         sorted_parts = sorted_partitions(disk)

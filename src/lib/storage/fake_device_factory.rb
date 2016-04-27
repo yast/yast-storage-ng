@@ -23,6 +23,7 @@
 
 require "yast"
 require "storage"
+require "storage/patches"
 require "storage/abstract_device_factory.rb"
 require "storage/disk_size.rb"
 require "storage/enum_mappings.rb"
@@ -162,12 +163,12 @@ module Yast
         @disks << name
         disk = ::Storage::Disk.create(@devicegraph, name)
         disk.size_k = size.size_k
+        puts disk.inspect
         # range (number of partitions that the kernel can handle) used to be
         # 16 for scsi and 64 for ide. Now it's 256 for most of them.
         disk.range = args["range"] || 256
-        disk.geometry = fake_geometry(size)
         @first_free_cyl[name] = 0
-        @cyl_count[name] = disk.geometry.cylinders
+        @cyl_count[name] = disk.size_k / 1024 # XXXXXXXXXX 1MiB cyls
         name
       end
 
@@ -245,7 +246,7 @@ module Yast
         disk = ::Storage::Disk.find(devicegraph, disk_name)
         ptable = disk.partition_table
         region = allocate_disk_space(disk_name, size)
-        @first_free_cyl[disk_name] = region.start if type == ::Storage::PartitionType_EXTENDED
+        @first_free_cyl[disk_name] = region.start / 0x800 if type == ::Storage::PartitionType_EXTENDED # XXXXXXXX
         partition = ptable.create_partition(part_name, region, type)
         partition.id = id
         part_name
@@ -351,22 +352,10 @@ module Yast
           raise "Not enough disk space on #{disk_name} for another #{size}" if requested_cyl > free_cyl
         end
         @first_free_cyl[disk_name] = first_free_cyl + requested_cyl
-        ::Storage::Region.new(first_free_cyl, requested_cyl, CYL_SIZE.size_k * 1024)
-      end
-
-      # Return a fake disk geometry with a given size.
-      #
-      # @param size [DiskSize]
-      # @return [::Storage::Geometry] Geometry with that size
-      #
-      def fake_geometry(size)
-        sector_size = 512
-        blocks  = (size.size_k * 1024) / sector_size
-        heads   = 16  # 1 MiB cylinders (16 * 128 * 512 Bytes) - see also CYL_SIZE
-        sectors = 128
-        cyl     = blocks / (heads * sectors)
-        # log.info("Geometry: #{cyl} cyl #{heads} heads #{sectors} sectors = #{size}")
-        ::Storage::Geometry.new(cyl, heads, sectors, sector_size)
+        puts "XXXXXXX"
+        r = ::Storage::Region.new(first_free_cyl * 0x800, requested_cyl * 0x800, 0x200)
+        puts r
+        r
       end
     end
   end

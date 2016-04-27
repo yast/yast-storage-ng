@@ -63,6 +63,15 @@ module Storage
     def dasd_format
       ::Storage::DASDF_NONE
     end
+
+    def size_k=(s)
+      self.size = s * 1024
+    end
+
+    def size_k
+      self.size / 1024
+    end
+
   end
 
   # patch libstorage-ng class
@@ -70,5 +79,22 @@ module Storage
     def inspect
       "<Partition \##{sid} #{name} #{Yast::Storage::DiskSize.KiB(size_k)}>"
     end
+
+    def size_k=(s)
+      self.size = s * 1024
+    end
+
+    def size_k
+      self.size / 1024
+    end
+
+  end
+
+  class Region
+    def inspect
+      "<Region #{start} - #{self.end} (#{length}), blk #{block_size}>"
+    end
+
+    alias to_s inspect
   end
 end
