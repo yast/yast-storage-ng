@@ -21,8 +21,8 @@
 # find current contact information at www.suse.com.
 
 require_relative "spec_helper"
-require_relative "proposed_boot_partition_examples"
-require_relative "boot_requirements_context"
+require_relative "support/proposed_boot_partition_examples"
+require_relative "support/boot_requirements_context"
 require "storage/proposal"
 require "storage/boot_requirements_checker"
 require "storage/refinements/size_casts"
