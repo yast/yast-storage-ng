@@ -34,7 +34,7 @@ module Storage
   # patch libstorage-ng class
   class Disk
     def inspect
-      "<Disk \##{sid} #{name} #{Yast::Storage::DiskSize.KiB(size_k)}>"
+      "<Disk #{name} #{Yast::Storage::DiskSize.KiB(size_k)}>"
     end
 
     # FIXME: Arvin promised #partition_table? in libstorage-ng;
@@ -77,7 +77,7 @@ module Storage
   # patch libstorage-ng class
   class Partition
     def inspect
-      "<Partition \##{sid} #{name} #{Yast::Storage::DiskSize.KiB(size_k)}>"
+      "<Partition #{name} #{Yast::Storage::DiskSize.KiB(size_k)}, #{region.show_range}>"
     end
 
     def size_k=(s)
@@ -92,7 +92,15 @@ module Storage
 
   class PartitionSlot
     def inspect
-      "<PartitionSlot >"
+      flags = ""
+      flags += "P" if self.primary_slot
+      flags += "p" if self.primary_possible
+      flags += "E" if self.extended_slot
+      flags += "e" if self.extended_possible
+      flags += "L" if self.logical_slot
+      flags += "l" if self.logical_possible
+      nice_size = Yast::Storage::DiskSize.KiB(region.length * region.block_size)
+      "<PartitionSlot #{self.nr} #{self.name} #{flags} #{nice_size}, #{self.region.show_range}>"
     end
 
     alias to_s inspect
@@ -100,7 +108,11 @@ module Storage
 
   class Region
     def inspect
-      "<Region #{start} - #{self.end} (#{length}), blk #{block_size}>"
+      "<Region #{start} - #{self.end}>"
+    end
+
+    def show_range
+      "#{start} - #{self.end}"
     end
 
     alias to_s inspect
