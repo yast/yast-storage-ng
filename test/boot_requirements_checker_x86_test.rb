@@ -173,7 +173,7 @@ describe Yast::Storage::BootRequirementsChecker do
 
           context "if there is no GRUB partition" do
             let(:grub_partitions) { {} }
-          
+
             context "in a partitions-based proposal" do
               let(:use_lvm) { false }
 
