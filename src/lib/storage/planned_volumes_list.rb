@@ -72,6 +72,10 @@ module Yast
         @volumes.reduce(DiskSize.zero) { |sum, vol| sum + vol.min_valid_size(:min_size) }
       end
 
+      def max_size
+        @volumes.reduce(DiskSize.zero) { |sum, vol| sum + vol.max_size }
+      end
+
       # Total sum of all current sizes of volumes
       #
       # @return [DiskSize] sum of sizes in @volumes
@@ -94,6 +98,10 @@ module Yast
       def delete_if(&block)
         delegated = @volumes.delete_if(&block)
         delegated.is_a?(Array) ? PlannedVolumesList.new(delegated) : delegated
+      end
+
+      def delete(vol)
+        @volumes.delete(vol)
       end
 
       # Appends the given volume to the list. It returns the list itself,

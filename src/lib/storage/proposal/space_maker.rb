@@ -61,12 +61,21 @@ module Yast
         #
         # @param volumes [PlannedVolumesList] volumes to make space for
         # @param target_size [Symbol] :desired or :min
-        # @param keep [Array<String>] device names of partitions that should not
-        #       be deleted
         # @return [::Storage::Devicegraph]
         def provide_space(volumes, target_size)
           new_graph = original_graph.copy
           @deleted_names = []
+          @volumes_distribution = nil
+
+          # Partitions that should not be deleted
+          keep = []
+          # Let's filter out volumes with some value in #reuse
+          volumes = volumes.dup
+          volumes.select(&:reuse).each do |vol|
+            log.info "No need to find a fit for this volume, it will reuse #{vol.reuse}: #{vol}"
+            keep << vol.reuse
+            volumes.delete(vol)
+          end
 
           resize_windows!(new_graph, volumes, target_size) unless success?(new_graph, volumes, target_size)
 
@@ -87,6 +96,8 @@ module Yast
           original_graph.partitions.with(name: @deleted_names).to_a
         end
 
+        attr_reader :distribution
+
       protected
 
         attr_reader :original_graph, :disk_analyzer
@@ -95,9 +106,16 @@ module Yast
         #
         # @return [Boolean]
         def success?(graph, volumes, target_size)
-          volumes_dispatcher.distribution(volumes, free_spaces(graph).to_a, target_size)
-          true
-        rescue NoDiskSpaceError
+          @distribution = VolumesDistribution.best_for(
+            volumes,
+            free_spaces(graph).to_a,
+            graph,
+            target_size
+          )
+          !!@distribution
+        rescue Error => e
+          log.info "Exception while trying to distribute volumes: #{e}"
+          @distribution = nil
           false
         end
 
@@ -105,11 +123,11 @@ module Yast
         #
         # @return [DiskSize]
         def missing_required_size(graph, volumes, target_size)
-          volumes_dispatcher.missing_size(volumes, free_spaces(graph).to_a, target_size)
-        end
-
-        def volumes_dispatcher
-          @volumes_dispatcher ||= VolumesDispatcher.new(settings)
+          VolumesDistribution.missing_size(
+            volumes,
+            free_spaces(graph).to_a,
+            target_size
+          )
         end
 
         # List of free spaces in the given devicegraph
@@ -140,7 +158,7 @@ module Yast
           return if windows_part_names.empty?
           return unless linux_part_names.empty?
 
-          log.info("Resizing Windows partitions to free #{required_size}")
+          log.info("Resizing Windows partitions")
           sorted_resizables(devicegraph, windows_part_names).each do |res|
             shrink_size = [
               res[:recoverable_size],
@@ -194,11 +212,11 @@ module Yast
         # until there is enough free space.
         #
         # @param devicegraph [DeviceGraph] devicegraph to update
-        def delete_partitions!(devicegraph, volumes, target_size)
-          log.info("Trying to make space for #{required_size}")
+        # @param keep [Array<String>] device names of partitions that should not
+        #       be deleted
+        def delete_partitions!(devicegraph, volumes, target_size, keep)
+          log.info("Deleting partitions to make space")
 
-          # Partitions that should not be deleted
-          keep = volumes.map(&:reuse).compact
           prioritized_candidate_partitions.each do |part_name|
             return if success?(devicegraph, volumes, target_size)
             if keep.include?(part_name)

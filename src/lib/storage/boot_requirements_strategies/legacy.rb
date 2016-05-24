@@ -30,6 +30,9 @@ module Yast
       # without EFI)
       class Legacy < Base
         def needed_partitions
+          # FIXME:::  AAAAAAAAAAAAARRR
+          # DO NOT FORGET TO REVERT
+          return []
           volumes = super
           volumes << grub_volume if grub_partition_required? && grub_partition_missing?
           if mbr_gap_required?

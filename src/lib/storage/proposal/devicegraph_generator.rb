@@ -55,9 +55,9 @@ module Yast
         def devicegraph(volumes, initial_graph, disk_analyzer)
           space_maker = SpaceMaker.new(initial_graph, disk_analyzer, settings)
           graph = provide_space(volumes, space_maker)
-          volumes = refine_volumes(volumes, space_maker)
+          refine_volumes!(volumes, space_maker.deleted_partitions)
 
-          graph = create_partitions(volumes, graph)
+          graph = create_partitions(space_maker.distribution, graph)
           reuse_partitions!(volumes, graph)
           graph
         end
@@ -80,13 +80,12 @@ module Yast
         #
         # @return [::Storage::Devicegraph]
         def provide_space(volumes, space_maker)
-          parts_to_keep = volumes.map(&:reuse).compact
           self.got_desired_space = false
           begin
-            result_graph = space_maker.provide_space(volumes.desired_size, keep: parts_to_keep)
+            result_graph = space_maker.provide_space(volumes, :desired)
             self.got_desired_space = true
           rescue NoDiskSpaceError
-            result_graph = space_maker.provide_space(volumes.min_size, keep: parts_to_keep)
+            result_graph = space_maker.provide_space(volumes, :min)
           end
           log.info(
             "Found #{got_desired_space? ? "desired" : "min"} space"
@@ -104,13 +103,11 @@ module Yast
         # @param space_maker [SpaceMaker] an instance in which
         #       SpaceMaker#provide_space has already been called
         # @return [PlannedVolumesList]
-        def refine_volumes(volumes, space_maker)
-          refined = volumes.deep_dup
-
-          deleted_swaps = space_maker.deleted_partitions.select do |part|
+        def refine_volumes!(volumes, deleted_partitions)
+          deleted_swaps = deleted_partitions.select do |part|
             part.id == ::Storage::ID_SWAP
           end
-          new_swap_volumes = refined.select { |vol| !vol.reuse && vol.mount_point == "swap" }
+          new_swap_volumes = volumes.select { |vol| !vol.reuse && vol.mount_point == "swap" }
 
           new_swap_volumes.each_with_index do |swap_volume, idx|
             deleted_swap = deleted_swaps[idx]
@@ -119,8 +116,6 @@ module Yast
             swap_volume.uuid = deleted_swap.filesystem.uuid
             swap_volume.label = deleted_swap.filesystem.label
           end
-
-          refined
         end
 
         # Creates partitions representing a set of volumes
@@ -132,10 +127,10 @@ module Yast
         # @param initial_graph [::Storage::Devicegraph] initial devicegraph
         #
         # @return [::Storage::Devicegraph]
-        def create_partitions(volumes, initial_graph)
+        def create_partitions(distribution, initial_graph)
           partition_creator = PartitionCreator.new(initial_graph, settings)
           target = got_desired_space? ? :desired : :min
-          partition_creator.create_partitions(volumes, target)
+          partition_creator.create_partitions(distribution, target)
         end
 
         # Adjusts pre-existing (not created by us) partitions assigning its

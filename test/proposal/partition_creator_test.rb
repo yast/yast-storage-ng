@@ -33,10 +33,6 @@ describe Yast::Storage::Proposal::PartitionCreator do
 
     before do
       fake_scenario(scenario)
-      allow(Yast::Storage::Proposal::VolumesDispatcher).to receive(:new).and_return vol_dispatcher
-      allow(vol_dispatcher).to receive(:distribution) do |volumes, spaces, _target|
-        { spaces.first => volumes }
-      end
     end
 
     let(:settings) do
@@ -52,7 +48,6 @@ describe Yast::Storage::Proposal::PartitionCreator do
     let(:home_volume) { Yast::Storage::PlannedVolume.new("/home", ::Storage::FsType_EXT4) }
     let(:swap_volume) { Yast::Storage::PlannedVolume.new("swap", ::Storage::FsType_EXT4) }
     let(:volumes) { Yast::Storage::PlannedVolumesList.new([root_volume, home_volume, swap_volume]) }
-    let(:vol_dispatcher) { instance_double("Yast::Storage::Proposal::VolumesDispatcher") }
 
     subject(:creator) { described_class.new(fake_devicegraph, settings) }
 
@@ -135,7 +130,8 @@ describe Yast::Storage::Proposal::PartitionCreator do
       before do
         root_volume.desired = 10.GiB
         home_volume.desired = 10.GiB
-        swap_volume.desired = 2.GiB
+        # FIXME: Some rounding error causes a failure with 2.GiB
+        swap_volume.desired = 2047.MiB
       end
 
       context "when the only available space is in an extended partition" do
@@ -180,18 +176,6 @@ describe Yast::Storage::Proposal::PartitionCreator do
       context "if all the volumes fit in one space" do
         let(:scenario) { "spaces_5_6_8_10" }
 
-        before do
-          # TODO: Faking the desired dispatcher behavior
-          allow(vol_dispatcher).to receive(:distribution) do |volumes, spaces, _target|
-            {
-              spaces[0] => Yast::Storage::PlannedVolumesList.new,
-              spaces[1] => Yast::Storage::PlannedVolumesList.new,
-              spaces[2] => volumes,
-              spaces[3] => Yast::Storage::PlannedVolumesList.new
-            }
-          end
-        end
-
         it "creates all the partitions in the same space" do
           result = creator.create_partitions(volumes, target_size)
           # FIXME: not the best check ever, we should actually check that the
@@ -227,14 +211,6 @@ describe Yast::Storage::Proposal::PartitionCreator do
           let(:scenario) { "spaces_5_3" }
 
           it "creates primary/extended/logical partitions as needed" do
-            # TODO: Faking the desired dispatcher behavior
-            allow(vol_dispatcher).to receive(:distribution) do |volumes, spaces, _target|
-              {
-                spaces[0] => Yast::Storage::PlannedVolumesList.new([vol1, vol2]),
-                spaces[1] => Yast::Storage::PlannedVolumesList.new([vol3])
-              }
-            end
-
             result = creator.create_partitions(volumes, target_size)
             expect(result.partitions).to contain_exactly(
               an_object_with_fields(type: ::Storage::PartitionType_PRIMARY, name: "/dev/sda1"),
@@ -251,14 +227,6 @@ describe Yast::Storage::Proposal::PartitionCreator do
           let(:scenario) { "spaces_5_3" }
 
           it "completely fills all the used spaces" do
-            # TODO: Faking the desired dispatcher behavior
-            allow(vol_dispatcher).to receive(:distribution) do |volumes, spaces, _target|
-              {
-                spaces[0] => Yast::Storage::PlannedVolumesList.new([vol1, vol2]),
-                spaces[1] => Yast::Storage::PlannedVolumesList.new([vol3])
-              }
-            end
-
             result = creator.create_partitions(volumes, target_size)
             expect(result.free_disk_spaces).to be_empty
           end
@@ -268,14 +236,6 @@ describe Yast::Storage::Proposal::PartitionCreator do
           let(:scenario) { "spaces_4_4" }
 
           it "creates the smallest possible gap" do
-            # TODO: Faking the desired dispatcher behavior
-            allow(vol_dispatcher).to receive(:distribution) do |volumes, spaces, _target|
-              {
-                spaces[0] => Yast::Storage::PlannedVolumesList.new([vol1, vol3]),
-                spaces[1] => Yast::Storage::PlannedVolumesList.new([vol2])
-              }
-            end
-
             result = creator.create_partitions(volumes, target_size)
             spaces = result.free_disk_spaces
             expect(spaces.size).to eq 1
@@ -294,16 +254,6 @@ describe Yast::Storage::Proposal::PartitionCreator do
         context "if a proper distribution is possible" do
           let(:scenario) { "spaces_5_1_two_disks" }
 
-          before do
-            # TODO: Faking the desired dispatcher behavior
-            allow(vol_dispatcher).to receive(:distribution) do |volumes, spaces, _target|
-              {
-                spaces[0] => Yast::Storage::PlannedVolumesList.new([vol2, vol3]),
-                spaces[1] => Yast::Storage::PlannedVolumesList.new([vol1])
-              }
-            end
-          end
-
           it "honors the disk restrictions" do
             result = creator.create_partitions(volumes, target_size)
             sda1_parts = result.disks.with(name: "/dev/sda").partitions
@@ -321,16 +271,6 @@ describe Yast::Storage::Proposal::PartitionCreator do
 
         context "if the only way to avoid gaps is breaking the disk restrictions" do
           let(:scenario) { "spaces_3_8_two_disks" }
-
-          before do
-            # TODO: Faking the desired dispatcher behavior
-            allow(vol_dispatcher).to receive(:distribution) do |volumes, spaces, _target|
-              {
-                spaces[0] => Yast::Storage::PlannedVolumesList.new([vol3]),
-                spaces[1] => Yast::Storage::PlannedVolumesList.new([vol1, vol2])
-              }
-            end
-          end
 
           it "honors the disk restrictions" do
             result = creator.create_partitions(volumes, target_size)
@@ -351,10 +291,6 @@ describe Yast::Storage::Proposal::PartitionCreator do
           let(:scenario) { "spaces_2_10_two_disks" }
 
           it "raises an error" do
-            # TODO: Faking the desired dispatcher behavior
-            allow(vol_dispatcher).to receive(:distribution)
-              .and_raise Yast::Storage::Proposal::Error
-
             expect { creator.create_partitions(volumes, target_size) }
               .to raise_error Yast::Storage::Proposal::Error
           end

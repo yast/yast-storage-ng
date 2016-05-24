@@ -26,7 +26,7 @@ require "storage/planned_volumes_list"
 require "storage/disk_size"
 require "storage/refinements/devicegraph"
 require "storage/refinements/devicegraph_lists"
-require "storage/proposal/volumes_dispatcher"
+require "storage/proposal/volumes_distribution"
 
 module Yast
   module Storage
@@ -58,7 +58,7 @@ module Yast
         # @param volumes [PlannedVolumesList] volumes to create
         # @param target_size [Symbol] :desired or :min
         # @return [::Storage::Devicegraph]
-        def create_partitions(volumes, target_size)
+        def create_partitions(distribution, target_size)
           self.devicegraph = original_graph.copy
 
           # FIXME: not implemented yet in libstorage-bgl
@@ -66,9 +66,10 @@ module Yast
           use_lvm = false
 
           if use_lvm
-            create_lvm(volumes, target_size)
+            raise NotImplementedError
+            create_lvm(distribution, target_size)
           else
-            create_non_lvm(volumes, target_size)
+            create_non_lvm(distribution, target_size)
           end
           devicegraph
         end
@@ -122,94 +123,10 @@ module Yast
         # @param volumes  [Array<ProposalVolume] volumes to create
         # @param strategy [Symbol] :desired or :min_size
         #
-        def create_non_lvm(volumes, strategy)
-          distribution = distributed_volumes(volumes, strategy)
-          extended_spaces = extended_spaces_by_disk(distribution)
-
-          distribution.each_pair do |space, vols|
-            if extended_spaces[space.disk_name].include?(space)
-              # Everything here should be logical (or extended)
-              type = :logical
-            elsif extended_spaces[space.disk_name].empty?
-              # Nothing is set in stone yet, let's improvise :-)
-              type = nil
-            else
-              # There is already another space meant to be the extended
-              # partition, thus it's not possible to have logical partitions
-              # here
-              type = :primary
-            end
+        def create_non_lvm(distribution, strategy)
+          distribution.volumes_lists.each do |space, vols|
+            type = distribution.space_types[:space]
             create_non_lvm_simple(vols, space, strategy, type)
-          end
-        end
-
-        # List of FreeDiskSpaces that will only contain logical (and eventually
-        # one extended) partitions, indexed by disk name
-        #
-        # FIXME: this should probably be extracted to a separate class
-        #
-        # @param distribution [Hash] hash of spaces and volumes, as returned by
-        #       VolumesDispatcher#distribution
-        #
-        # @return [Hash{String => Array<FreeDiskSpace>}]
-        def extended_spaces_by_disk(distribution)
-          spaces_by_disk = spaces_by_disk(distribution.keys)
-          hash = {}
-          spaces_by_disk.each do |disk_name, spaces|
-            disk = ::Storage::Disk.find(devicegraph, disk_name)
-            hash[disk.name] ||= []
-            hash[disk.name].concat(extended_spaces(disk, spaces, distribution))
-          end
-          hash
-        end
-
-        # Indexes a list of spaces by disk name
-        #
-        # FIXME: this should probably be extracted to a separate class
-        #   together with extended_spaces_by_disk
-        #
-        # @param spaces [Array<FreeDiskSpace>]
-        # @return [Hash{String => Array<FreeDiskSpace>]
-        def spaces_by_disk(spaces)
-          spaces.each_with_object({}) do |space, hash|
-            hash[space.disk_name] ||= []
-            hash[space.disk_name] << space
-          end
-        end
-
-        # Checks which free spaces inside a disk should mandatorily contain only
-        # logical (and eventually one extended) partitions.
-        #
-        # FIXME: this should probably be extracted to a separate class
-        #   together with extended_spaces_by_disk
-        #
-        # @param disk [::Storage::Disk]
-        # @param spaces [Array<FreeDiskSpace] spaces to take into account
-        # @param distribution [Hash] result of VolumesDispatcher#distribution
-        #
-        # @return [Array<FreeDiskSpace>] spaces that should only contain logical
-        #     partitions
-        def extended_spaces(disk, spaces, distribution)
-          ptable = disk.partition_table
-          if ptable.has_extended
-            return distribution.keys.select {|space| space_inside_extended?(space) }
-          end
-
-          return [] unless ptable.extended_possible
-
-          num_partitions = ptable.num_primary + spaces.size
-          if num_partitions > ptable.max_primary
-            raise NoMorePartitionSlotError
-          elsif num_partitions == ptable.max_primary
-            # In this case, we want the space with more volumes to become an
-            # extended partition
-            spaces_with_vol_count = distribution.map {|space, volumes| [space, volumes.size] }
-            spaces_with_vol_count.delete_if { |i| !spaces.include?(i.first) }
-            # Region's start as secondary criteria to ensure stable sorting
-            spaces_with_vol_count.sort_by! { |i| [i.last, i.first.slot.region.start] }
-            [spaces_with_vol_count.last.first]
-          else
-            []
           end
         end
 
@@ -270,7 +187,6 @@ module Yast
         # @return [PlannedVolumesList]
         def extra_space_candidates(volumes)
           candidates = volumes.dup
-          candidates.delete_if { |vol| vol.reuse }
           candidates.delete_if { |vol| vol.size >= vol.max_size }
           candidates
         end
@@ -294,17 +210,6 @@ module Yast
           end
         end
 
-        # Assigns every volume to one of the existing free spaces
-        #
-        # @return [Hash{FreeDiskSpace => PlannedVolumesList}]
-        def distributed_volumes(volumes, strategy)
-          dispatcher = VolumesDispatcher.new(settings)
-          distribution = dispatcher.distribution(volumes, free_spaces.to_a, strategy)
-          # Just in case we forget to ensure this in VolumesDispatcher 
-          distribution.delete_if { |_space, volumes| volumes.empty? }
-          distribution
-        end
-
         # Creates a partition and the corresponding filesystem for each volume
         #
         # Important: notice that, so far, this method is only intended to work
@@ -322,10 +227,6 @@ module Yast
         # @param partitions_type [Symbol] @see #create_non_lvm_simple
         def create_volumes_partitions(volumes, initial_free_space, partitions_type)
           volumes.sort_by_attr(:disk, :max_start_offset).each do |vol|
-            if vol.reuse
-              log.info "Skipping creation of #{vol}"
-              next
-            end
             partition_id = vol.partition_id
             partition_id ||= vol.mount_point == "swap" ? ::Storage::ID_SWAP : ::Storage::ID_LINUX
             begin
@@ -406,20 +307,6 @@ module Yast
           ptable = disk.partition_table
           dev_name = next_free_primary_partition_name(disk.name, ptable)
           ptable.create_partition(dev_name, region, ::Storage::PartitionType_EXTENDED)
-        end
-
-        # Checks whether the given free space is inside an extended partition
-        #
-        # @param free_space [FreeDiskSpace]
-        # @return [Boolean]
-        def space_inside_extended?(free_space)
-          space_start = free_space.slot.region.start
-          disks = devicegraph.disks.with(name: free_space.disk_name)
-          extended = disks.partitions.with(type: ::Storage::PartitionType_EXTENDED)
-          container = extended.with do |part|
-            part.region.start <= space_start && part.region.end > space_start
-          end.first
-          !!container
         end
 
         # Return the next device name for a primary partition that is not already
