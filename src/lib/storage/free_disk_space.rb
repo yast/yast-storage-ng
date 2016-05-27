@@ -30,7 +30,7 @@ module Yast
     # Helper class to keep information about free disk space together.
     #
     class FreeDiskSpace
-      attr_accessor :disk_name, :slot, :size
+      attr_accessor :disk_name, :slot, :size, :disk
 
       # Initialize.
       #
@@ -57,6 +57,11 @@ module Yast
       #
       def size
         DiskSize.new(@slot.region.to_kb(@slot.region.length))
+      end
+
+      # FIXME: not sure
+      def start_offset
+        DiskSize.new(@slot.region.to_kb(@slot.region.start))
       end
     end
   end

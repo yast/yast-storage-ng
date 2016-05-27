@@ -59,17 +59,31 @@ module Yast
         #
         # @raise Proposal::NoDiskSpaceError if there is no enough room
         #
-        # @param required_size [DiskSize] required amount of available space
-        # @param keep [Array<String>] device names of partitions that should not
-        #       be deleted
+        # @param volumes [PlannedVolumesList] volumes to make space for
+        # @param target_size [Symbol] :desired or :min
         # @return [::Storage::Devicegraph]
-        def provide_space(required_size, keep: [])
+        def provide_space(volumes, target_size)
           new_graph = original_graph.copy
           @deleted_names = []
+          @volumes_distribution = nil
 
-          resize_windows!(new_graph, required_size) unless success?(new_graph, required_size)
-          delete_partitions!(new_graph, required_size, keep) unless success?(new_graph, required_size)
-          raise NoDiskSpaceError unless success?(new_graph, required_size)
+          # Partitions that should not be deleted
+          keep = []
+          # Let's filter out volumes with some value in #reuse
+          volumes = volumes.dup
+          volumes.select(&:reuse).each do |vol|
+            log.info "No need to find a fit for this volume, it will reuse #{vol.reuse}: #{vol}"
+            keep << vol.reuse
+            volumes.delete(vol)
+          end
+
+          resize_windows!(new_graph, volumes, target_size) unless success?(new_graph, volumes, target_size)
+
+          if !success?(new_graph, volumes, target_size)
+            delete_partitions!(new_graph, volumes, target_size, keep)
+          end
+
+          raise NoDiskSpaceError unless success?(new_graph, volumes, target_size)
 
           new_graph
         end
@@ -82,6 +96,8 @@ module Yast
           original_graph.partitions.with(name: @deleted_names).to_a
         end
 
+        attr_reader :distribution
+
       protected
 
         attr_reader :original_graph, :disk_analyzer
@@ -89,29 +105,36 @@ module Yast
         # Checks whether the goal has already being reached
         #
         # @return [Boolean]
-        def success?(graph, required_size)
-          missing_required_size(graph, required_size) <= DiskSize.zero
-        end
-
-        # @return [DiskSize]
-        def available_size(graph)
-          free_spaces(graph).disk_size
+        def success?(graph, volumes, target_size)
+          @distribution = VolumesDistribution.best_for(
+            volumes,
+            free_spaces(graph).to_a,
+            graph,
+            target_size
+          )
+          !!@distribution
+        rescue Error => e
+          log.info "Exception while trying to distribute volumes: #{e}"
+          @distribution = nil
+          false
         end
 
         # Additional space that needs to be freed in order to reach the goal
         #
         # @return [DiskSize]
-        def missing_required_size(graph, required_size)
-          required_size - available_size(graph)
+        def missing_required_size(graph, volumes, target_size)
+          VolumesDistribution.missing_size(
+            volumes,
+            free_spaces(graph).to_a,
+            target_size
+          )
         end
 
         # List of free spaces in the given devicegraph
         #
         # @return [FreeDiskSpacesList]
         def free_spaces(graph)
-          disks_for(graph).free_disk_spaces.with do |space|
-            space.size >= settings.useful_free_space_min_size
-          end
+          disks_for(graph).free_disk_spaces
         end
 
         # List of candidate disks in the given devicegraph
@@ -131,19 +154,18 @@ module Yast
         # a Linux partition which means that
         #
         # @param devicegraph [DeviceGraph] devicegraph to update
-        # @param required_size [DiskSize]
-        def resize_windows!(devicegraph, required_size)
+        def resize_windows!(devicegraph, volumes, target_size)
           return if windows_part_names.empty?
           return unless linux_part_names.empty?
 
-          log.info("Resizing Windows partitions to free #{required_size}")
+          log.info("Resizing Windows partitions")
           sorted_resizables(devicegraph, windows_part_names).each do |res|
             shrink_size = [
               res[:recoverable_size],
-              missing_required_size(devicegraph, required_size)
+              missing_required_size(devicegraph, volumes, target_size)
             ].min
             shrink_partition(res[:partition], shrink_size)
-            return if success?(devicegraph, required_size)
+            return if success?(devicegraph, volumes, target_size)
           end
           log.info "Didn't manage to free enough space by resizing Windows"
         end
@@ -190,13 +212,13 @@ module Yast
         # until there is enough free space.
         #
         # @param devicegraph [DeviceGraph] devicegraph to update
-        # @param required_size [DiskSize]
-        # @param keep [Array<String>] partitions that should not be deleted
-        def delete_partitions!(devicegraph, required_size, keep)
-          log.info("Trying to make space for #{required_size}")
+        # @param keep [Array<String>] device names of partitions that should not
+        #       be deleted
+        def delete_partitions!(devicegraph, volumes, target_size, keep)
+          log.info("Deleting partitions to make space")
 
           prioritized_candidate_partitions.each do |part_name|
-            return if success?(devicegraph, required_size)
+            return if success?(devicegraph, volumes, target_size)
             if keep.include?(part_name)
               log.info "Skipped deletion of #{part_name}"
               next

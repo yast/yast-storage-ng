@@ -4,6 +4,7 @@
     name: "/dev/sda"
     partition_table: msdos
     partitions:
+
     - partition:
         size: 4.00 GiB
         name: "/dev/sda1"
@@ -12,6 +13,7 @@
         file_system: swap
         mount_point: swap
         label: swap
+
     - partition:
         size: 40.00 GiB
         name: "/dev/sda2"
@@ -19,20 +21,21 @@
         id: linux
         file_system: btrfs
         mount_point: "/"
-    - free:
-        size: 20.00 GiB
+
     - partition:
-        size: 60.00 GiB
+        size: 80.00 GiB
         name: "/dev/sda3"
         type: primary
         id: linux
-        file_system: ext4
-        label: ubuntu_root
+        file_system: xfs
+        mount_point: "/home"
+
     - partition:
         size: 900.00 GiB
         name: "/dev/sda4"
         type: extended
         id: linux
+
     - partition:
         size: 300.00 GiB
         name: "/dev/sda5"
@@ -40,6 +43,7 @@
         id: linux
         file_system: xfs
         label: shared_home
+
     - partition:
         size: 600.00 GiB
         name: "/dev/sda6"
