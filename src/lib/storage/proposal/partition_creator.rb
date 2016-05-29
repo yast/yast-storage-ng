@@ -55,9 +55,8 @@ module Yast
         # partitions have been created.
         #
         # @param volumes [PlannedVolumesList] volumes to create
-        # @param target_size [Symbol] :desired or :min
         # @return [::Storage::Devicegraph]
-        def create_partitions(volumes, target_size)
+        def create_partitions(volumes)
           self.devicegraph = original_graph.copy
 
           # FIXME: not implemented yet in libstorage-bgl
@@ -65,9 +64,9 @@ module Yast
           use_lvm = false
 
           if use_lvm
-            create_lvm(volumes, target_size)
+            create_lvm(volumes)
           else
-            create_non_lvm(volumes, target_size)
+            create_non_lvm(volumes)
           end
           devicegraph
         end
@@ -109,30 +108,28 @@ module Yast
         # Create volumes on LVM.
         #
         # @param volumes [Array<ProposalVolume>] volumes to create
-        # @param strategy [Symbol] :desired or :min
         #
-        def create_lvm(volumes, strategy)
+        def create_lvm(volumes)
           lvm_vol, non_lvm_vol = volumes.partition(&:can_live_on_logical_volume)
           # Create any partitions first that cannot be created on LVM
           # to avoid LVM consuming all the available free space
-          create_non_lvm(non_lvm_vol, strategy)
+          create_non_lvm(non_lvm_vol)
 
           return if lvm_vol.empty?
 
           # Create LVM partitions (using the rest of the available free space)
           volume_group = create_volume_group(VOLUME_GROUP_SYSTEM)
           create_physical_volumes(volume_group)
-          lvm_vol.each { |vol| create_logical_volume(volume_group, vol, strategy) }
+          lvm_vol.each { |vol| create_logical_volume(volume_group, vol) }
         end
 
         # Create partitions without LVM.
         #
         # @param volumes  [Array<ProposalVolume] volumes to create
-        # @param strategy [Symbol] :desired or :min_size
         #
-        def create_non_lvm(volumes, strategy)
+        def create_non_lvm(volumes)
           if free_spaces.size == 1
-            create_non_lvm_simple(volumes, strategy)
+            create_non_lvm_simple(volumes)
           else
             create_non_lvm_complex
           end
@@ -144,9 +141,8 @@ module Yast
         # disk space.
         #
         # @param volumes   [PlannedVolumesList] volumes to create
-        # @param strategy  [Symbol] :desired or :min_size
         #
-        def create_non_lvm_simple(volumes, strategy)
+        def create_non_lvm_simple(volumes)
           volumes.each do |vol|
             log.info(
               "vol #{vol.mount_point}\tmin: #{vol.min_size} " \
@@ -155,7 +151,7 @@ module Yast
           end
 
           volumes = volumes.deep_dup
-          volumes.each { |vol| vol.size = vol.min_valid_size(strategy) }
+          volumes.each { |vol| vol.size = vol.min_valid_size(volumes.target) }
           distribute_extra_space(volumes)
           create_volumes_partitions(volumes)
         end
@@ -437,12 +433,10 @@ module Yast
         #
         # @param volume_group [::Storage::VolumeGroup]
         # @param vol          [ProposalVolume]
-        # @param strategy     [Symbol] :desired or :min_size
         #
-        def create_logical_volume(volume_group, vol, strategy)
+        def create_logical_volume(volume_group, vol)
           log.info(
-            "Creating LVM logical volume #{vol.logical_volume_name} at #{volume_group} "\
-            "with strategy \"#{strategy}\""
+            "Creating LVM logical volume #{vol.logical_volume_name} at #{volume_group}"
           )
           # TO DO
           # TO DO

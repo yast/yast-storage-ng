@@ -54,21 +54,23 @@ module Yast
         #           valid devicegraph
         def devicegraph(volumes, initial_graph, disk_analyzer)
           space_maker = SpaceMaker.new(initial_graph, disk_analyzer, settings)
-          graph = provide_space(volumes, space_maker)
-          volumes = refine_volumes(volumes, space_maker)
+          begin
+            graph = provide_space(volumes, space_maker)
+          rescue NoDiskSpaceError
+            raise if volume.target == :min
+            # Try again with the minimum size
+            volumes = volumes.dup
+            volumes.target = :min
+            graph = provide_space(volumes, space_maker)
+          end
 
+          volumes = refine_volumes(volumes, space_maker)
           graph = create_partitions(volumes, graph)
           reuse_partitions!(volumes, graph)
           graph
         end
 
       protected
-
-        attr_writer :got_desired_space
-
-        def got_desired_space?
-          !!@got_desired_space
-        end
 
         # Provides free disk space in the proposal devicegraph to fit the volumes
         # in. First it tries with the desired space and then with the minimum one
@@ -81,15 +83,9 @@ module Yast
         # @return [::Storage::Devicegraph]
         def provide_space(volumes, space_maker)
           parts_to_keep = volumes.map(&:reuse).compact
-          self.got_desired_space = false
-          begin
-            result_graph = space_maker.provide_space(volumes.desired_size, keep: parts_to_keep)
-            self.got_desired_space = true
-          rescue NoDiskSpaceError
-            result_graph = space_maker.provide_space(volumes.min_size, keep: parts_to_keep)
-          end
+          result_graph = space_maker.provide_space(volumes.target_size, keep: parts_to_keep)
           log.info(
-            "Found #{got_desired_space? ? "desired" : "min"} space"
+            "Found #{volumes.target} space"
           )
           result_graph
         end
@@ -134,8 +130,7 @@ module Yast
         # @return [::Storage::Devicegraph]
         def create_partitions(volumes, initial_graph)
           partition_creator = PartitionCreator.new(initial_graph, settings)
-          target = got_desired_space? ? :desired : :min
-          partition_creator.create_partitions(volumes, target)
+          partition_creator.create_partitions(volumes)
         end
 
         # Adjusts pre-existing (not created by us) partitions assigning its

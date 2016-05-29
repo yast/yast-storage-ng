@@ -42,7 +42,6 @@ describe Yast::Storage::Proposal::PartitionCreator do
       settings
     end
     let(:scenario) { "empty_hard_disk_50GiB" }
-    let(:target_size) { :desired }
 
     let(:root_volume) { Yast::Storage::PlannedVolume.new("/", ::Storage::FsType_EXT4) }
     let(:home_volume) { Yast::Storage::PlannedVolume.new("/home", ::Storage::FsType_EXT4) }
@@ -59,7 +58,7 @@ describe Yast::Storage::Proposal::PartitionCreator do
       end
 
       it "creates partitions matching the volume sizes" do
-        result = creator.create_partitions(volumes, target_size)
+        result = creator.create_partitions(volumes)
         expect(result.partitions).to contain_exactly(
           an_object_with_fields(mountpoint: "/", size: 20.GiB),
           an_object_with_fields(mountpoint: "/home", size: 20.GiB),
@@ -79,7 +78,7 @@ describe Yast::Storage::Proposal::PartitionCreator do
       end
 
       it "distributes the extra space" do
-        result = creator.create_partitions(volumes, target_size)
+        result = creator.create_partitions(volumes)
         expect(result.partitions).to contain_exactly(
           an_object_with_fields(mountpoint: "/", size: 23.GiB),
           an_object_with_fields(mountpoint: "/home", size: 26.GiB),
@@ -96,7 +95,7 @@ describe Yast::Storage::Proposal::PartitionCreator do
       end
 
       it "raises an error" do
-        expect { creator.create_partitions(volumes, target_size) }
+        expect { creator.create_partitions(volumes) }
           .to raise_error Yast::Storage::Proposal::Error
       end
     end
@@ -110,7 +109,7 @@ describe Yast::Storage::Proposal::PartitionCreator do
       end
 
       it "does not create the reused volumes" do
-        result = creator.create_partitions(volumes, target_size)
+        result = creator.create_partitions(volumes)
         expect(result.partitions).to contain_exactly(
           an_object_with_fields(mountpoint: "/"),
           an_object_with_fields(mountpoint: "/home")
@@ -118,7 +117,7 @@ describe Yast::Storage::Proposal::PartitionCreator do
       end
 
       it "distributes extra space between the new (not reused) volumes" do
-        result = creator.create_partitions(volumes, target_size)
+        result = creator.create_partitions(volumes)
         expect(result.partitions).to contain_exactly(
           an_object_with_fields(size: 25.GiB),
           an_object_with_fields(size: 25.GiB)
@@ -137,7 +136,7 @@ describe Yast::Storage::Proposal::PartitionCreator do
         let(:scenario) { "space_22_extended" }
 
         it "creates all partitions as logical" do
-          result = creator.create_partitions(volumes, target_size)
+          result = creator.create_partitions(volumes)
           expect(result.partitions).to contain_exactly(
             an_object_with_fields(type: ::Storage::PartitionType_PRIMARY, name: "/dev/sda1"),
             an_object_with_fields(type: ::Storage::PartitionType_PRIMARY, name: "/dev/sda2"),
@@ -153,7 +152,7 @@ describe Yast::Storage::Proposal::PartitionCreator do
         let(:scenario) { "space_22" }
 
         it "creates primary/extended/logical partitions as needed" do
-          result = creator.create_partitions(volumes, target_size)
+          result = creator.create_partitions(volumes)
           expect(result.partitions).to contain_exactly(
             an_object_with_fields(type: ::Storage::PartitionType_PRIMARY, name: "/dev/sda1"),
             an_object_with_fields(type: ::Storage::PartitionType_PRIMARY, name: "/dev/sda2"),
