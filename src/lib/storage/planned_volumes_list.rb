@@ -72,6 +72,13 @@ module Yast
         @volumes.reduce(DiskSize.zero) { |sum, vol| sum + vol.min_valid_size(target) }
       end
 
+      # Total sum of all current max sizes of volumes
+      #
+      # @return [DiskSize]
+      def max_size
+        @volumes.reduce(DiskSize.zero) { |sum, vol| sum + vol.max_size }
+      end
+
       # Total sum of all current sizes of volumes
       #
       # @return [DiskSize] sum of sizes in @volumes
@@ -124,6 +131,10 @@ module Yast
         @volumes.each_with_index.sort do |one, other|
           compare(one, other, attrs, nils_first, descending)
         end.map(&:first)
+      end
+
+      def to_s
+        "#<PlannedVolumesList volumes=#{@volumes.map(&:to_s)}>"
       end
 
     private

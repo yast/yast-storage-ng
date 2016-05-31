@@ -58,6 +58,18 @@ module Yast
       def size
         DiskSize.new(@slot.region.to_kb(@slot.region.length))
       end
+
+      # Offset of the slot relative to the beginning of the disk
+      #
+      # @return [DiskSize]
+      #
+      def start_offset
+        DiskSize.new(@slot.region.to_kb(@slot.region.start))
+      end
+
+      def to_s
+        "#<FreeDiskSpace disk_name=#{disk_name}, size=#{size}, start_offset=#{start_offset}>"
+      end
     end
   end
 end
