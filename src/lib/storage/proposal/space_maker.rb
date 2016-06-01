@@ -201,7 +201,7 @@ module Yast
               log.info "Skipped deletion of #{part_name}"
               next
             end
-            part = ::Storage::Partition.find(devicegraph, part_name)
+            part = ::Storage::Partition.find_by_name(devicegraph, part_name)
             next unless part
             delete_partition(part)
           end

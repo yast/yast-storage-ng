@@ -343,7 +343,7 @@ module Yast
         # No need to limit checking - PC arch only (few disks)
         @candidate_disks.each do |disk_name|
           begin
-            disk = ::Storage::Disk.find(devicegraph, disk_name)
+            disk = ::Storage::Disk.find_by_name(devicegraph, disk_name)
             disk.partition_table.partitions.each do |partition|
               next unless windows_partition?(partition)
 
@@ -395,7 +395,7 @@ module Yast
       def installation_disk?(disk_name)
         log.info("Checking if #{disk_name} is an installation disk")
         begin
-          disk = ::Storage::Disk.find(devicegraph, disk_name)
+          disk = ::Storage::Disk.find_by_name(devicegraph, disk_name)
           disk.partition_table.partitions.each do |partition|
             if NO_INSTALLATION_IDS.include?(partition.id)
               log.info("Skipping #{partition} (ID 0x#{partition.id.to_s(16)})")

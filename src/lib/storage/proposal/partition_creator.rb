@@ -284,7 +284,7 @@ module Yast
         #
         def create_partition(vol, partition_id, free_slot)
           log.info("Creating partition for #{vol.mount_point} with #{vol.size}")
-          disk = ::Storage::Disk.find(devicegraph, free_slot.disk_name)
+          disk = ::Storage::Disk.find_by_name(devicegraph, free_slot.disk_name)
           ptable = disk.partition_table
 
           logical = false

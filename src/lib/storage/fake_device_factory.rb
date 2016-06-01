@@ -179,7 +179,7 @@ module Yast
         log.info("#{__method__}( #{parent}, #{args} )")
         disk_name = parent
         ptable_type = str_to_ptable_type(args)
-        disk = ::Storage::Disk.find(@devicegraph, disk_name)
+        disk = ::Storage::Disk.find_by_name(@devicegraph, disk_name)
         disk.create_partition_table(ptable_type)
         disk_name
       end
@@ -239,7 +239,7 @@ module Yast
         id   = fetch(PARTITION_IDS,   id,   "partition ID",   part_name) unless id.is_a?(Fixnum)
         type = fetch(PARTITION_TYPES, type, "partition type", part_name)
 
-        disk = ::Storage::Disk.find(devicegraph, disk_name)
+        disk = ::Storage::Disk.find_by_name(devicegraph, disk_name)
         ptable = disk.partition_table
         region = allocate_disk_space(disk_name, size)
         # skip one block
@@ -270,7 +270,7 @@ module Yast
         label       = fs_param["label"]
         uuid        = fs_param["uuid"]
 
-        partition = ::Storage::Partition.find(@devicegraph, part_name)
+        partition = ::Storage::Partition.find_by_name(@devicegraph, part_name)
         file_system = partition.create_filesystem(fs_type)
         file_system.add_mountpoint(mount_point) if mount_point
         file_system.label = label if label
@@ -328,7 +328,7 @@ module Yast
       # @return [::Storage::Region]
       #
       def allocate_disk_space(disk_name, size)
-        disk = ::Storage::Disk.find(@devicegraph, disk_name)
+        disk = ::Storage::Disk.find_by_name(@devicegraph, disk_name)
 
         log.info(
           "#{__method__}: #{disk.partition_table.unused_partition_slots.size} slots on #{disk_name}"
