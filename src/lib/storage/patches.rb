@@ -99,7 +99,7 @@ module Storage
       flags += "e" if self.extended_possible
       flags += "L" if self.logical_slot
       flags += "l" if self.logical_possible
-      nice_size = Yast::Storage::DiskSize.KiB(region.length * region.block_size)
+      nice_size = Yast::Storage::DiskSize.B(region.length * region.block_size)
       "<PartitionSlot #{self.nr} #{self.name} #{flags} #{nice_size}, #{self.region.show_range}>"
     end
 
@@ -131,9 +131,15 @@ module Storage
     end
   end
 
-  class  Device
+  class Device
     def inspect
       "<Device #{self.to_s}>"
+    end
+  end
+
+  class Topology
+    def inspect
+      "<Topology ofs #{alignment_offset}, io #{optimal_io_size}, grain #{minimal_grain}/#{calculate_grain}>"
     end
   end
 

@@ -12,10 +12,17 @@ sm = Yast::Storage::StorageManager.fake_from_yaml()
 
 dg = sm.create_devicegraph("xxx")
 
-dd = ::Storage::Disk.create(dg, "/dev/sdX")
-dd.size = 1024*1024*1024;
+r_all = ::Storage::Region.new(0, 2 * ::Storage.GiB / 512, 512)
+dd = ::Storage::Disk.create(dg, "/dev/sdX", r_all)
+
+dd.topology = ::Storage::Topology.new(0, 512)
+dd.topology.minimal_grain = 512
+pp dd.topology
 
 dp = dd.create_partition_table(::Storage::PtType_MSDOS)
+if ::Storage.msdos?(dp)
+  ::Storage.to_msdos(dp).minimal_mbr_gap = 512*5;
+end
 
 puts "--- 1"
 
@@ -24,7 +31,11 @@ pp sl
 
 r1 = sl.first.region
 r1.length = Yast::Storage::DiskSize.MiB(100).size / r1.block_size
+#r1.start = 256
 pp r1
+#r1 = dd.topology.align(r1, ::Storage::AlignPolicy_KEEP_SIZE)
+#puts "aligned"
+#pp r1
 
 dp.create_partition("/dev/sdX1", r1, ::Storage::PartitionType_PRIMARY)
 
@@ -70,8 +81,8 @@ pp r1
 
 dp.create_partition("/dev/sdX4", r1, ::Storage::PartitionType_LOGICAL)
 
-puts dd.inspect
-puts dp.inspect
+pp dd
+pp dp
 
 
 
