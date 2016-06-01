@@ -93,7 +93,7 @@ module Yast
       #
       def yaml_disk(disk)
         content = {}
-        content["size"] = DiskSize.new(disk.size_k).to_s
+        content["size"] = DiskSize.B(disk.size).to_s
         content["name"] = disk.name
         begin
           ptable = disk.partition_table # this will raise an excepton if no partition table
@@ -112,13 +112,11 @@ module Yast
       # @param disk [::Storage::Disk]
       # @return [Array<Hash>]
       def yaml_disk_partitions(disk)
-        cyl_size = 1024; # XXXXXXX 1MiB
-        first_free_cyl = 0
         partitions = []
         sorted_parts = sorted_partitions(disk)
         sorted_parts.each do |partition|
-          gap = partition.region.start - first_free_cyl
-          partitions << yaml_free_slot(cyl_size * gap) if gap > 0
+          gap = partition.region.start * partition.region.block_size;
+          partitions << yaml_free_slot(DiskSize.B(gap)) if gap > 0
 
           partitions << yaml_partition(partition)
           if partition.type != ::Storage::PartitionType_EXTENDED
@@ -155,7 +153,7 @@ module Yast
       # rubocop:disable Metrics/AbcSize
       def yaml_partition(partition)
         content = {
-          "size" => DiskSize.new(partition.region.to_kb(partition.region.length)).to_s,
+          "size" => DiskSize.B(partition.region.length*partition.region.block_size).to_s,
           "name" => partition.name,
           "type" => @partition_types[partition.type],
           "id"   => @partition_ids[partition.id] || "0x#{partition.id.to_s(16)}"

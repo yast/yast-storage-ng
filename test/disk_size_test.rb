@@ -28,9 +28,9 @@ using Yast::Storage
 describe Yast::Storage::DiskSize do
 
   describe "constructed empty" do
-    it "should have a size_k of 0" do
+    it "should have a size_b of 0" do
       disk_size = Yast::Storage::DiskSize.new
-      expect(disk_size.size_k).to be == 0
+      expect(disk_size.size_b).to be == 0
     end
   end
 
@@ -40,7 +40,7 @@ describe Yast::Storage::DiskSize do
       expect(disk_size.to_s).to be == "42.00 KiB"
     end
     it "should have the correct numeric value internally" do
-      expect(disk_size.size_k).to be == 42
+      expect(disk_size.size_b).to be == 42 * 1024
     end
   end
 
@@ -50,7 +50,7 @@ describe Yast::Storage::DiskSize do
       expect(disk_size.to_s).to be == "43.00 MiB"
     end
     it "should have the correct numeric value internally" do
-      expect(disk_size.size_k).to be == 43 * 1024
+      expect(disk_size.size_b).to be == 43 * 1024**2
     end
   end
 
@@ -60,7 +60,7 @@ describe Yast::Storage::DiskSize do
       expect(disk_size.to_s).to be == "44.00 GiB"
     end
     it "should have the correct numeric value internally" do
-      expect(disk_size.size_k).to be == 44 * 1024**2
+      expect(disk_size.size_b).to be == 44 * 1024**3
     end
   end
 
@@ -70,7 +70,7 @@ describe Yast::Storage::DiskSize do
       expect(disk_size.to_s).to be == "45.00 TiB"
     end
     it "should have the correct numeric value internally" do
-      expect(disk_size.size_k).to be == 45 * 1024**3
+      expect(disk_size.size_b).to be == 45 * 1024**4
     end
   end
 
@@ -80,7 +80,7 @@ describe Yast::Storage::DiskSize do
       expect(disk_size.to_s).to be == "46.00 PiB"
     end
     it "should have the correct numeric value internally" do
-      expect(disk_size.size_k).to be == 46 * 1024**4
+      expect(disk_size.size_b).to be == 46 * 1024**5
     end
   end
 
@@ -90,7 +90,7 @@ describe Yast::Storage::DiskSize do
       expect(disk_size.to_s).to be == "47.00 EiB"
     end
     it "should not overflow and have the correct numeric value internally" do
-      expect(disk_size.size_k).to be == 47 * 1024**5
+      expect(disk_size.size_b).to be == 47 * 1024**6
     end
   end
 
@@ -100,10 +100,10 @@ describe Yast::Storage::DiskSize do
       expect(disk_size.to_s).to be == "49152.00 YiB"
     end
     it "should not overflow" do
-      expect(disk_size.size_k).to be > 0
+      expect(disk_size.size_b).to be > 0
     end
     it "should have the correct numeric value internally" do
-      expect(disk_size.size_k).to be == 48 * 1024**8
+      expect(disk_size.size_b).to be == 48 * 1024**9
     end
   end
 
@@ -117,19 +117,19 @@ describe Yast::Storage::DiskSize do
   describe "arithmetic operations" do
     it "should accept addition of another DiskSize" do
       disk_size = Yast::Storage::DiskSize.GiB(10) + Yast::Storage::DiskSize.GiB(20)
-      expect(disk_size.size_k).to be == 30 * 1024**2
+      expect(disk_size.size_b).to be == 30 * 1024**3
     end
     it "should accept addition of an int" do
       disk_size = Yast::Storage::DiskSize.MiB(20) + 512
-      expect(disk_size.size_k).to be == 20 * 1024 + 512
+      expect(disk_size.size_b).to be == 20 * 1024**2 + 512
     end
     it "should accept multiplication with an int" do
       disk_size = Yast::Storage::DiskSize.MiB(12) * 3
-      expect(disk_size.size_k).to be == 12 * 1024 * 3
+      expect(disk_size.size_b).to be == 12 * 1024**2 * 3
     end
     it "should accept division by an int" do
       disk_size = Yast::Storage::DiskSize.MiB(12) / 3
-      expect(disk_size.size_k).to be == 12 / 3 * 1024
+      expect(disk_size.size_b).to be == 12 / 3 * 1024**2
     end
     it "should refuse multiplication with another DiskSize" do
       expect { Yast::Storage::DiskSize.MiB(12) * Yast::Storage::DiskSize.MiB(3) }
@@ -208,28 +208,28 @@ describe Yast::Storage::DiskSize do
 
   describe "unit exponent" do
     it "should be correct for KiB" do
-      expect(Yast::Storage::DiskSize.unit_exponent("KiB")).to be == 0
+      expect(Yast::Storage::DiskSize.unit_exponent("KiB")).to be == 1
     end
     it "should be correct for MiB" do
-      expect(Yast::Storage::DiskSize.unit_exponent("MiB")).to be == 1
+      expect(Yast::Storage::DiskSize.unit_exponent("MiB")).to be == 2
     end
     it "should be correct for GiB" do
-      expect(Yast::Storage::DiskSize.unit_exponent("GiB")).to be == 2
+      expect(Yast::Storage::DiskSize.unit_exponent("GiB")).to be == 3
     end
     it "should be correct for TiB" do
-      expect(Yast::Storage::DiskSize.unit_exponent("TiB")).to be == 3
+      expect(Yast::Storage::DiskSize.unit_exponent("TiB")).to be == 4
     end
     it "should be correct for PiB" do
-      expect(Yast::Storage::DiskSize.unit_exponent("PiB")).to be == 4
+      expect(Yast::Storage::DiskSize.unit_exponent("PiB")).to be == 5
     end
     it "should be correct for EiB" do
-      expect(Yast::Storage::DiskSize.unit_exponent("EiB")).to be == 5
+      expect(Yast::Storage::DiskSize.unit_exponent("EiB")).to be == 6
     end
     it "should be correct for ZiB" do
-      expect(Yast::Storage::DiskSize.unit_exponent("ZiB")).to be == 6
+      expect(Yast::Storage::DiskSize.unit_exponent("ZiB")).to be == 7
     end
     it "should be correct for YiB" do
-      expect(Yast::Storage::DiskSize.unit_exponent("YiB")).to be == 7
+      expect(Yast::Storage::DiskSize.unit_exponent("YiB")).to be == 8
     end
     it "should raise an exception for invalid units" do
       expect { Yast::Storage::DiskSize.unit_exponent("WTF") }.to raise_error(ArgumentError)
@@ -241,36 +241,36 @@ describe Yast::Storage::DiskSize do
 
   describe "parsing from string" do
     it "should work with just an integer" do
-      expect(described_class.parse("0").size_k).to be == 0
-      expect(described_class.parse("7").size_k).to be == 7
+      expect(described_class.parse("0").size_b).to be == 0
+      expect(described_class.parse("7").size_b).to be == 7
     end
     it "should work with integer and unit" do
-      expect(described_class.parse("42 GiB").size_k).to be == 42 * 1024**2
+      expect(described_class.parse("42 GiB").size_b).to be == 42 * 1024**3
     end
     it "should work with float and unit" do
-      expect(described_class.parse("43.00 GiB").size_k).to be == 43 * 1024**2
+      expect(described_class.parse("43.00 GiB").size_b).to be == 43 * 1024**3
     end
     it "should work with just an integer" do
-      expect(described_class.parse("0").size_k).to be == 0
+      expect(described_class.parse("0").size_b).to be == 0
     end
     it "should tolerate more embedded whitespace" do
-      expect(described_class.parse("44   MiB").size_k).to be == 44 * 1024
+      expect(described_class.parse("44   MiB").size_b).to be == 44 * 1024**2
     end
     it "should tolerate more surrounding whitespace" do
-      expect(described_class.parse("   45   TiB  ").size_k).to be == 45 * 1024**3
-      expect(described_class.parse("  46   ").size_k).to be == 46
+      expect(described_class.parse("   45   TiB  ").size_b).to be == 45 * 1024**4
+      expect(described_class.parse("  46   ").size_b).to be == 46
     end
     it "should accept \"unlimited\"" do
-      expect(described_class.parse("unlimited").size_k).to be == -1
+      expect(described_class.parse("unlimited").size_b).to be == -1
     end
     it "should accept \"unlimited\" with surrounding whitespace" do
-      expect(described_class.parse("  unlimited ").size_k).to be == -1
+      expect(described_class.parse("  unlimited ").size_b).to be == -1
     end
     it "should accept its own output" do
-      expect(described_class.parse(described_class.GiB(42).to_s).size_k).to be == 42 * 1024**2
-      expect(described_class.parse(described_class.new(43).to_s).size_k).to be == 43
-      expect(described_class.parse(described_class.zero.to_s).size_k).to be ==  0
-      expect(described_class.parse(described_class.unlimited.to_s).size_k).to be == -1
+      expect(described_class.parse(described_class.GiB(42).to_s).size_b).to be == 42 * 1024**3
+      expect(described_class.parse(described_class.new(43).to_s).size_b).to be == 43
+      expect(described_class.parse(described_class.zero.to_s).size_b).to be ==  0
+      expect(described_class.parse(described_class.unlimited.to_s).size_b).to be == -1
     end
     it "should reject invalid input" do
       expect { described_class.parse("wrglbrmpf") }.to raise_error(ArgumentError)

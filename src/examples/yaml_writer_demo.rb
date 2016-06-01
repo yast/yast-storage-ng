@@ -20,6 +20,8 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
+require "yast"  # changes $LOAD_PATH
+
 $LOAD_PATH.unshift(File.expand_path("../../lib", __FILE__))
 
 require "storage/storage_manager.rb"

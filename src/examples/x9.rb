@@ -6,6 +6,7 @@ $LOAD_PATH.unshift(File.expand_path("../../lib", __FILE__))
 
 require "storage/storage_manager"
 require "storage/patches"
+require "storage/yaml_writer"
 require "pp"
 
 sm = Yast::Storage::StorageManager.fake_from_yaml()
@@ -84,5 +85,5 @@ dp.create_partition("/dev/sdX4", r1, ::Storage::PartitionType_LOGICAL)
 pp dd
 pp dp
 
-
+Yast::Storage::YamlWriter.write(dg, "/dev/stdout");
 
