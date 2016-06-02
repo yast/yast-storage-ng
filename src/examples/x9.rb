@@ -85,5 +85,19 @@ dp.create_partition("/dev/sdX4", r1, ::Storage::PartitionType_LOGICAL)
 pp dd
 pp dp
 
+puts "--- 5"
+
+sl = dp.unused_partition_slots
+pp sl
+
+r1 = (sl.find { |x| x.logical_slot }).region
+r1.length = Yast::Storage::DiskSize.MiB(200).size / r1.block_size
+pp r1
+
+dp.create_partition("/dev/sdX5", r1, ::Storage::PartitionType_LOGICAL)
+
+pp dd
+pp dp
+
 Yast::Storage::YamlWriter.write(dg, "/dev/stdout");
 

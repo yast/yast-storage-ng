@@ -30,6 +30,10 @@ module Yast
     #
     # Class to handle disk sizes in the MB/GB/TB range with readable output.
     #
+    # Disk sizes are stored internally in bytes. Negative values are
+    # allowed in principle but the special value -1 is reserved to mean
+    # 'unlimited'.
+    #
     class DiskSize
       include Comparable
 
@@ -225,13 +229,14 @@ module Yast
         return [UNLIMITED, ""] if @size_b == -1
 
         unit_index = 0
-        size = @size_b
+        # prefer, 0.50 MiB over 512 KiB
+        size2 = @size_b * 2
 
-        while size >= 1024.0 && unit_index < UNITS.size - 1
-          size /= 1024.0
+        while size2.abs >= 1024.0 && unit_index < UNITS.size - 1
+          size2 /= 1024.0
           unit_index += 1
         end
-        [size, UNITS[unit_index]]  # FIXME: Make unit translatable
+        [size2 / 2.0, UNITS[unit_index]]  # FIXME: Make unit translatable
       end
 
       # Return numeric size and unit ("MiB", "GiB", ...) in human-readable form
@@ -244,7 +249,7 @@ module Yast
         # allow half values
         size2 = @size_b * 2
 
-        while size2 && (size2 % 1024) == 0 && unit_index < UNITS.size - 1
+        while size2 != 0 && (size2 % 1024) == 0 && unit_index < UNITS.size - 1
           size2 /= 1024
           unit_index += 1
         end
@@ -264,6 +269,7 @@ module Yast
         size2, unit2 = to_human_readable_ex
         v1 = format("%.2f %s", size1, unit1)
         v2 = "#{size2 % 1 == 0 ? size2.to_i : size2} #{unit2}"
+        # if both units are the same, just use exact value
         unit1 == unit2 ? v2 : "#{v2} (#{v1})"
       end
 
@@ -292,6 +298,12 @@ end
 #----------------------------------------------------------------------
 #
 if $PROGRAM_NAME == __FILE__  # Called direcly as standalone command? (not via rspec or require)
+  size = Yast::Storage::DiskSize.new(0)
+  print "0 B: #{size} (#{size.size})\n"
+
+  size = Yast::Storage::DiskSize.new(511) - Yast::Storage::DiskSize.new(512)
+  print "too bad: 511 B - 512 B: #{size} (#{size.size})\n"
+
   size = Yast::Storage::DiskSize.new(42)
   print "42 B: #{size} (#{size.size})\n"
 
