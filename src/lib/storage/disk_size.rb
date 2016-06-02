@@ -101,16 +101,29 @@ module Yast
         end
 
         # Create a DiskSize from a parsed string.
-        # Valid formats:
+        # Valid format:
+        #
+        #   NUMBER [UNIT] [(COMMENT)] | unlimited
+        #
+        # A non-negative floating point number, optionally followed by a binary unit (e.g. 'GiB'),
+        # optionally followed by a comment in parentheses (which is ignored).
+        # Alternatively, the string 'unlimited' represents an infinite size.
+        #
+        # If UNIT is missing, 'B' (bytes) is assumed.
+        #
+        # Examples:
         #   42 GiB
         #   42.00  GiB
-        #   42          (=> 42 KiB)
-        #   unlimited   (=> -1 == unlimited)
+        #   512
+        #   0.5 YiB (512 ZiB)
+        #   unlimited
         #
         # Invalid:
         #   42 GB    (supporting binary units only)
         #
         def parse(str)
+          # ignore everything added in parentheses, so we can also parse the output of #to_s_ex
+          str.gsub!(/\(.*/, "")
           str.strip!
           return DiskSize.unlimited if str == UNLIMITED
           size_str, unit = str.split(/\s+/)
@@ -221,10 +234,37 @@ module Yast
         [size, UNITS[unit_index]]  # FIXME: Make unit translatable
       end
 
+      # Return numeric size and unit ("MiB", "GiB", ...) in human-readable form
+      # But unlike #to_human_readable, return the exact value.
+      # @return [Array] [size, unit]
+      def to_human_readable_ex
+        return [UNLIMITED, ""] if @size_b == -1
+
+        unit_index = 0
+        # allow half values
+        size2 = @size_b * 2
+
+        while size2 && (size2 % 1024) == 0 && unit_index < UNITS.size - 1
+          size2 /= 1024
+          unit_index += 1
+        end
+        [size2 / 2.0, UNITS[unit_index]]
+      end
+
       def to_s
         return "unlimited" if unlimited?
         size, unit = to_human_readable
         format("%.2f %s", size, unit)
+      end
+
+      # exact value + human readable in parentheses
+      def to_s_ex
+        return "unlimited" if unlimited?
+        size1, unit1 = to_human_readable
+        size2, unit2 = to_human_readable_ex
+        v1 = format("%.2f %s", size1, unit1)
+        v2 = "#{size2 % 1 == 0 ? size2.to_i : size2} #{unit2}"
+        unit1 == unit2 ? v2 : "#{v2} (#{v1})"
       end
 
       def inspect

@@ -159,7 +159,7 @@ module Yast
         raise ArgumentError, "Duplicate disk name #{name}" if @disks.include?(name)
         @disks << name
         disk = ::Storage::Disk.create(@devicegraph, name)
-        disk.size_k = size.size_k
+        disk.size = size.size
         # range (number of partitions that the kernel can handle) used to be
         # 16 for scsi and 64 for ide. Now it's 256 for most of them.
         disk.range = args["range"] || 256
