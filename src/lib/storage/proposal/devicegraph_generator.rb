@@ -74,11 +74,10 @@ module Yast
 
       protected
 
-        # TODO: Update this doc
-        # Provides free disk space in the proposal devicegraph to fit the volumes
-        # in. First it tries with the desired space and then with the minimum one
+        # Provides free disk space in the proposal devicegraph to fit the
+        # volumes in.
         #
-        # @raise Proposal::NoDiskSpaceError if both attempts fail
+        # @raise Proposal::Error if the goal is not reached
         #
         # @param volumes [PlannedVolumesList] set of volumes to make space for
         # @param space_maker [SpaceMaker]
@@ -92,17 +91,17 @@ module Yast
           result
         end
 
-        # TODO: Update this doc
-        # Copy of the volumes list with some extra information inferred from the
-        # space maker.
+        # Adds some extra information to the planned volumes inferred from
+        # the list of partitions deleted by the space maker.
         #
         # It enforces reuse of UUIDs and labels from the deleted swap
         # partitions.
         #
-        # @param volumes [PlannedVolumesList] original list of volumes
-        # @param space_maker [SpaceMaker] an instance in which
-        #       SpaceMaker#provide_space has already been called
-        # @return [PlannedVolumesList]
+        # It modifies the passed volumes.
+        #
+        # @param volumes [PlannedVolumesList] list of volumes to modify
+        # @param deleted_partitions [Array<::Storage::Partition>] partitions
+        #     deleted from the initial devicegraph
         def refine_volumes!(volumes, deleted_partitions)
           deleted_swaps = deleted_partitions.select do |part|
             part.id == ::Storage::ID_SWAP

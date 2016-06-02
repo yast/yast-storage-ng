@@ -54,14 +54,19 @@ module Yast
           @settings = settings
         end
 
-        # Returns a copy of the original devicegraph in which all needed
-        # operations to free the required size have been performed
+        # Performs all the operations needed to free enough space to accomodate
+        # a set of volumes
         #
         # @raise Proposal::Error if is not possible to accomodate the volumes
         #
         # @param volumes [PlannedVolumesList] volumes to make space for
-        # TODO: document this
-        # @return []
+        # @return [Hash] a hash with three elements:
+        #   devicegraph: [::Storage::Devicegraph] resulting devicegraph
+        #   deleted_partitions: [Array<::Storage::Partition>] partitions that
+        #     were in the original devicegraph but are not in the resulting one
+        #   space_distribution: [SpaceDistribution] proposed distribution of
+        #     volumes
+        #
         def provide_space(volumes)
           new_graph = original_graph.copy
           @deleted_names = []
@@ -105,7 +110,9 @@ module Yast
         end
 
         # Checks whether the goal has already being reached
-        # TODO: update doc
+        #
+        # If it returns true, it stores in @distribution the SpaceDistribution
+        # that made it possible.
         #
         # @return [Boolean]
         def success?(graph, volumes)
@@ -147,9 +154,9 @@ module Yast
         # Try to resize the existing windows partitions - unless there already is
         # a Linux partition which means that
         #
-        # TODO: update doc
-        #
         # @param devicegraph [DeviceGraph] devicegraph to update
+        # @param volumes [PlannedVolumesList] list of volumes to allocate, used
+        #   to know how much space is still missing
         def resize_windows!(devicegraph, volumes)
           return if windows_part_names.empty?
           return unless linux_part_names.empty?
