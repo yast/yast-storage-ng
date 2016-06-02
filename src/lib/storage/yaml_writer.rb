@@ -116,7 +116,7 @@ module Yast
 
       # Returns a YAML representation of the partitions and free slots in a disk
       #
-      # Free slots are calculated as best as we can and not a part of the
+      # Free slots are calculated as best as we can and not part of the
       # partition table object.
       #
       # @param disk [::Storage::Disk]
@@ -129,7 +129,7 @@ module Yast
         sorted_parts = sorted_partitions(disk)
         sorted_parts.each do |partition|
 
-          # if we are about the leave an extend parition, show what's left
+          # if we are about to leave an extend partition, show what's left
           if partition_end_ext > 0 && partition.type != ::Storage::PartitionType_LOGICAL
             gap = partition_end_ext - partition_end;
             partitions << yaml_free_slot(DiskSize.B(partition_end_ext), DiskSize.B(gap)) if gap > 0
