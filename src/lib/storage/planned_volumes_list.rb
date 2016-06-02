@@ -103,6 +103,13 @@ module Yast
         delegated.is_a?(Array) ? PlannedVolumesList.new(delegated) : delegated
       end
 
+      # Deletes the given volume
+      #
+      # @return [PlannedVolume] deleted volume
+      def delete(vol)
+        @volumes.delete(vol)
+      end
+
       # Appends the given volume to the list. It returns the list itself,
       # so several appends may be chained together
       #

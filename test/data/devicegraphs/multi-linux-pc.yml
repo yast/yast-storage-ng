@@ -36,8 +36,7 @@
         name:         /dev/sda5
         type:         logical
         file_system:  xfs
-        mount_point:  /home
-        label:        home
+        label:        shared_home
 
     - partition:
         size:         600 GiB

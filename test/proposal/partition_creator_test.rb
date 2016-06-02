@@ -35,133 +35,186 @@ describe Yast::Storage::Proposal::PartitionCreator do
       fake_scenario(scenario)
     end
 
-    let(:settings) do
-      settings = Yast::Storage::Proposal::Settings.new
-      settings.candidate_devices = ["/dev/sda"]
-      settings.root_device = "/dev/sda"
-      settings
-    end
-    let(:scenario) { "empty_hard_disk_50GiB" }
+    let(:root_vol) { planned_vol(mount_point: "/", type: :ext4, desired: 1.GiB) }
+    let(:home_vol) { planned_vol(mount_point: "/home", type: :ext4, desired: 1.GiB) }
+    let(:swap_vol) { planned_vol(mount_point: "swap", type: :swap, desired: 1.GiB) }
+    let(:disk_spaces) { fake_devicegraph.free_disk_spaces.to_a }
 
-    let(:root_volume) { Yast::Storage::PlannedVolume.new("/", ::Storage::FsType_EXT4) }
-    let(:home_volume) { Yast::Storage::PlannedVolume.new("/home", ::Storage::FsType_EXT4) }
-    let(:swap_volume) { Yast::Storage::PlannedVolume.new("swap", ::Storage::FsType_EXT4) }
-    let(:volumes) { Yast::Storage::PlannedVolumesList.new([root_volume, home_volume, swap_volume]) }
+    subject(:creator) { described_class.new(fake_devicegraph) }
 
-    subject(:creator) { described_class.new(fake_devicegraph, settings) }
+    let(:scenario) { "spaces_3_8_two_disks" }
 
-    context "when the exact space is available" do
-      before do
-        root_volume.desired = 20.GiB
-        home_volume.desired = 20.GiB
-        swap_volume.desired = 10.GiB
-      end
+    it "creates the partitions honouring the distribution" do
+      space3 = disk_spaces.detect { |s| s.size == 3.GiB }
+      space8 = disk_spaces.detect { |s| s.size == 8.GiB }
+      distribution = space_dist(
+        space3 => vols_list(root_vol, home_vol),
+        space8 => vols_list(swap_vol)
+      )
 
-      it "creates partitions matching the volume sizes" do
-        result = creator.create_partitions(volumes)
-        expect(result.partitions).to contain_exactly(
-          an_object_with_fields(mountpoint: "/", size: 20.GiB),
-          an_object_with_fields(mountpoint: "/home", size: 20.GiB),
-          an_object_with_fields(mountpoint: "swap", size: 10.GiB)
-        )
-      end
-    end
+      result = creator.create_partitions(distribution)
+      sda = result.disks.with(name: "/dev/sda")
+      sdb = result.disks.with(name: "/dev/sdb")
 
-    context "when some extra space is available" do
-      before do
-        root_volume.desired = 20.GiB
-        root_volume.weight = 1
-        home_volume.desired = 20.GiB
-        home_volume.weight = 2
-        swap_volume.desired = 1.GiB
-        swap_volume.max_size = 1.GiB
-      end
-
-      it "distributes the extra space" do
-        result = creator.create_partitions(volumes)
-        expect(result.partitions).to contain_exactly(
-          an_object_with_fields(mountpoint: "/", size: 23.GiB),
-          an_object_with_fields(mountpoint: "/home", size: 26.GiB),
-          an_object_with_fields(mountpoint: "swap", size: 1.GiB)
-        )
-      end
+      expect(sda.partitions).to contain_exactly(
+        an_object_with_fields(mountpoint: "/"),
+        an_object_with_fields(mountpoint: "/home"),
+        an_object_with_fields(mountpoint: nil)
+      )
+      expect(sdb.partitions).to contain_exactly(
+        an_object_with_fields(mountpoint: "swap"),
+        an_object_with_fields(mountpoint: nil)
+      )
     end
 
-    context "when there is no enough space to allocate start of all partitions" do
-      before do
-        root_volume.desired = 25.GiB
-        home_volume.desired = 25.GiB
-        swap_volume.desired = 10.GiB
+    context "when filling a space with several volumes" do
+      let(:scenario) { "empty_hard_disk_50GiB" }
+      let(:distribution) do
+        space_dist(disk_spaces.first => vols_list(root_vol, home_vol, swap_vol))
       end
 
-      it "raises an error" do
-        expect { creator.create_partitions(volumes) }
-          .to raise_error Yast::Storage::Proposal::Error
-      end
-    end
+      context "if the exact space is available" do
+        before do
+          root_vol.desired = 20.GiB
+          home_vol.desired = 20.GiB
+          swap_vol.desired = 10.GiB
+        end
 
-    context "when some volume is marked as 'reuse'" do
-      before do
-        root_volume.desired = 20.GiB
-        home_volume.desired = 20.GiB
-        swap_volume.reuse = "/dev/something"
-        home_volume.weight = root_volume.weight = swap_volume.weight = 1
-      end
-
-      it "does not create the reused volumes" do
-        result = creator.create_partitions(volumes)
-        expect(result.partitions).to contain_exactly(
-          an_object_with_fields(mountpoint: "/"),
-          an_object_with_fields(mountpoint: "/home")
-        )
-      end
-
-      it "distributes extra space between the new (not reused) volumes" do
-        result = creator.create_partitions(volumes)
-        expect(result.partitions).to contain_exactly(
-          an_object_with_fields(size: 25.GiB),
-          an_object_with_fields(size: 25.GiB)
-        )
-      end
-    end
-
-    context "when a ms-dos type partition is used" do
-      before do
-        root_volume.desired = 10.GiB
-        home_volume.desired = 10.GiB
-        swap_volume.desired = 2.GiB
-      end
-
-      context "when the only available space is in an extended partition" do
-        let(:scenario) { "space_22_extended" }
-
-        it "creates all partitions as logical" do
-          result = creator.create_partitions(volumes)
+        it "creates partitions matching the volume sizes" do
+          result = creator.create_partitions(distribution)
           expect(result.partitions).to contain_exactly(
-            an_object_with_fields(type: ::Storage::PartitionType_PRIMARY, name: "/dev/sda1"),
-            an_object_with_fields(type: ::Storage::PartitionType_PRIMARY, name: "/dev/sda2"),
-            an_object_with_fields(type: ::Storage::PartitionType_EXTENDED, name: "/dev/sda4"),
-            an_object_with_fields(type: ::Storage::PartitionType_LOGICAL, name: "/dev/sda5"),
-            an_object_with_fields(type: ::Storage::PartitionType_LOGICAL, name: "/dev/sda6"),
-            an_object_with_fields(type: ::Storage::PartitionType_LOGICAL, name: "/dev/sda7")
+            an_object_with_fields(mountpoint: "/", size: 20.GiB),
+            an_object_with_fields(mountpoint: "/home", size: 20.GiB),
+            an_object_with_fields(mountpoint: "swap", size: 10.GiB)
           )
         end
       end
 
-      context "when the only available space is completely unassigned" do
-        let(:scenario) { "space_22" }
+      context "if some extra space is available" do
+        before do
+          root_vol.desired = 20.GiB
+          root_vol.weight = 1
+          home_vol.desired = 20.GiB
+          home_vol.weight = 2
+          swap_vol.desired = 1.GiB
+          swap_vol.max_size = 1.GiB
+        end
 
-        it "creates primary/extended/logical partitions as needed" do
-          result = creator.create_partitions(volumes)
+        it "distributes the extra space" do
+          result = creator.create_partitions(distribution)
+          expect(result.partitions).to contain_exactly(
+            an_object_with_fields(mountpoint: "/", size: 23.GiB),
+            an_object_with_fields(mountpoint: "/home", size: 26.GiB),
+            an_object_with_fields(mountpoint: "swap", size: 1.GiB)
+          )
+        end
+      end
+    end
+
+    context "when creating partitions in an empty space" do
+      let(:scenario) { "space_22" }
+      let(:distribution) do
+        space_dist(disk_spaces.first => vols_list(root_vol, home_vol))
+      end
+
+      context "if the space is marked as :primary" do
+        before do
+          allow(distribution.spaces.first).to receive(:partition_type).and_return :primary
+        end
+
+        it "creates all partitions as primary" do
+          result = creator.create_partitions(distribution)
           expect(result.partitions).to contain_exactly(
             an_object_with_fields(type: ::Storage::PartitionType_PRIMARY, name: "/dev/sda1"),
             an_object_with_fields(type: ::Storage::PartitionType_PRIMARY, name: "/dev/sda2"),
-            an_object_with_fields(type: ::Storage::PartitionType_PRIMARY, name: "/dev/sda3"),
-            an_object_with_fields(type: ::Storage::PartitionType_EXTENDED, name: "/dev/sda4"),
-            an_object_with_fields(type: ::Storage::PartitionType_LOGICAL, name: "/dev/sda5"),
-            an_object_with_fields(type: ::Storage::PartitionType_LOGICAL, name: "/dev/sda6")
+            an_object_with_fields(type: ::Storage::PartitionType_PRIMARY, mountpoint: "/"),
+            an_object_with_fields(type: ::Storage::PartitionType_PRIMARY, mountpoint: "/home")
           )
         end
+      end
+
+      context "if the space is marked as :extended" do
+        before do
+          allow(distribution.spaces.first).to receive(:partition_type).and_return :extended
+        end
+
+        it "creates no new primary partitions" do
+          result = creator.create_partitions(distribution)
+          primary = result.partitions.with(type: ::Storage::PartitionType_PRIMARY)
+          expect(primary).to contain_exactly(
+            an_object_with_fields(name: "/dev/sda1", size: 78.GiB),
+            an_object_with_fields(name: "/dev/sda2", size: 100.GiB)
+          )
+        end
+
+        it "creates an extended partition filling the whole space" do
+          result = creator.create_partitions(distribution)
+          extended = result.partitions.with(type: ::Storage::PartitionType_EXTENDED)
+          expect(extended).to contain_exactly an_object_with_fields(name: "/dev/sda3", size: 22.GiB)
+        end
+
+        it "creates all the partitions as logical" do
+          result = creator.create_partitions(distribution)
+          logical = result.partitions.with(type: ::Storage::PartitionType_LOGICAL)
+          expect(logical).to contain_exactly(
+            an_object_with_fields(name: "/dev/sda5", size: 1.GiB),
+            an_object_with_fields(name: "/dev/sda6", size: 1.GiB)
+          )
+        end
+      end
+
+      context "if the space has not predefined partition type" do
+        before do
+          allow(distribution.spaces.first).to receive(:partition_type).and_return nil
+        end
+
+        it "creates as many primary partitions as possible" do
+          result = creator.create_partitions(distribution)
+          primary = result.partitions.with(type: ::Storage::PartitionType_PRIMARY)
+          expect(primary).to contain_exactly(
+            an_object_with_fields(name: "/dev/sda1", size: 78.GiB),
+            an_object_with_fields(name: "/dev/sda2", size: 100.GiB),
+            an_object_with_fields(name: "/dev/sda3", size: 1.GiB)
+          )
+        end
+
+        it "creates an extended partition filling the remaining space" do
+          result = creator.create_partitions(distribution)
+          extended = result.partitions.with(type: ::Storage::PartitionType_EXTENDED)
+          expect(extended).to contain_exactly an_object_with_fields(name: "/dev/sda4", size: 21.GiB)
+        end
+
+        it "creates logical partitions for the remaining volumes" do
+          result = creator.create_partitions(distribution)
+          logical = result.partitions.with(type: ::Storage::PartitionType_LOGICAL)
+          expect(logical).to contain_exactly an_object_with_fields(name: "/dev/sda5", size: 1.GiB)
+        end
+      end
+    end
+
+    context "when creating partitions within an existing extended one" do
+      let(:scenario) { "space_22_extended" }
+      let(:distribution) do
+        space_dist(disk_spaces.first => vols_list(root_vol, home_vol))
+      end
+
+      before do
+        allow(distribution.spaces.first).to receive(:partition_type).and_return :extended
+      end
+
+      it "reuses the extended partition" do
+        result = creator.create_partitions(distribution)
+        extended = result.partitions.with(type: ::Storage::PartitionType_EXTENDED)
+        expect(extended).to contain_exactly an_object_with_fields(name: "/dev/sda4", size: 22.GiB)
+      end
+
+      it "creates all the partitions as logical" do
+        result = creator.create_partitions(distribution)
+        logical = result.partitions.with(type: ::Storage::PartitionType_LOGICAL)
+        expect(logical).to contain_exactly(
+          an_object_with_fields(name: "/dev/sda5", size: 1.GiB),
+          an_object_with_fields(name: "/dev/sda6", size: 1.GiB)
+        )
       end
     end
   end

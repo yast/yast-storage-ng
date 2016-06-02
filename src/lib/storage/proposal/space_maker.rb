@@ -52,28 +52,49 @@ module Yast
           @original_graph = original_graph
           @disk_analyzer = disk_analyzer
           @settings = settings
-          @deleted_names = []
         end
 
         # Returns a copy of the original devicegraph in which all needed
         # operations to free the required size have been performed
         #
-        # @raise Proposal::NoDiskSpaceError if there is no enough room
+        # @raise Proposal::Error if is not possible to accomodate the volumes
         #
-        # @param required_size [DiskSize] required amount of available space
-        # @param keep [Array<String>] device names of partitions that should not
-        #       be deleted
-        # @return [::Storage::Devicegraph]
-        def provide_space(required_size, keep: [])
+        # @param volumes [PlannedVolumesList] volumes to make space for
+        # TODO: document this
+        # @return []
+        def provide_space(volumes)
           new_graph = original_graph.copy
           @deleted_names = []
+          @distribution = nil
 
-          resize_windows!(new_graph, required_size) unless success?(new_graph, required_size)
-          delete_partitions!(new_graph, required_size, keep) unless success?(new_graph, required_size)
-          raise NoDiskSpaceError unless success?(new_graph, required_size)
+          # Partitions that should not be deleted
+          keep = []
+          # Let's filter out volumes with some value in #reuse
+          volumes = volumes.dup
+          volumes.select(&:reuse).each do |vol|
+            log.info "No need to find a fit for this volume, it will reuse #{vol.reuse}: #{vol}"
+            keep << vol.reuse
+            volumes.delete(vol)
+          end
 
-          new_graph
+          resize_windows!(new_graph, volumes) unless success?(new_graph, volumes)
+
+          if !success?(new_graph, volumes)
+            delete_partitions!(new_graph, volumes, keep)
+          end
+
+          raise NoDiskSpaceError unless success?(new_graph, volumes)
+
+          {
+            devicegraph:        new_graph,
+            deleted_partitions: deleted_partitions,
+            space_distribution: @distribution
+          }
         end
+
+      protected
+
+        attr_reader :original_graph, :disk_analyzer
 
         # Partitions from the original devicegraph that are not present in the
         # result of the last call to #provide_space
@@ -83,36 +104,31 @@ module Yast
           original_graph.partitions.with(name: @deleted_names).to_a
         end
 
-      protected
-
-        attr_reader :original_graph, :disk_analyzer
-
         # Checks whether the goal has already being reached
+        # TODO: update doc
         #
         # @return [Boolean]
-        def success?(graph, required_size)
-          missing_required_size(graph, required_size) <= DiskSize.zero
-        end
-
-        # @return [DiskSize]
-        def available_size(graph)
-          free_spaces(graph).disk_size
+        def success?(graph, volumes)
+          @distribution = SpaceDistribution.best_for(volumes, free_spaces(graph).to_a, graph)
+          !!@distribution
+        rescue Error => e
+          log.info "Exception while trying to distribute volumes: #{e}"
+          @distribution = nil
+          false
         end
 
         # Additional space that needs to be freed in order to reach the goal
         #
         # @return [DiskSize]
-        def missing_required_size(graph, required_size)
-          required_size - available_size(graph)
+        def missing_required_size(graph, volumes)
+          SpaceDistribution.missing_size(volumes, free_spaces(graph).to_a)
         end
 
         # List of free spaces in the given devicegraph
         #
         # @return [FreeDiskSpacesList]
         def free_spaces(graph)
-          disks_for(graph).free_disk_spaces.with do |space|
-            space.size >= settings.useful_free_space_min_size
-          end
+          disks_for(graph).free_disk_spaces
         end
 
         # List of candidate disks in the given devicegraph
@@ -131,20 +147,21 @@ module Yast
         # Try to resize the existing windows partitions - unless there already is
         # a Linux partition which means that
         #
+        # TODO: update doc
+        #
         # @param devicegraph [DeviceGraph] devicegraph to update
-        # @param required_size [DiskSize]
-        def resize_windows!(devicegraph, required_size)
+        def resize_windows!(devicegraph, volumes)
           return if windows_part_names.empty?
           return unless linux_part_names.empty?
 
-          log.info("Resizing Windows partitions to free #{required_size}")
+          log.info("Resizing Windows partitions")
           sorted_resizables(devicegraph, windows_part_names).each do |res|
             shrink_size = [
               res[:recoverable_size],
-              missing_required_size(devicegraph, required_size)
+              missing_required_size(devicegraph, volumes)
             ].min
             shrink_partition(res[:partition], shrink_size)
-            return if success?(devicegraph, required_size)
+            return if success?(devicegraph, volumes)
           end
           log.info "Didn't manage to free enough space by resizing Windows"
         end
@@ -187,17 +204,18 @@ module Yast
           partition.size_k = partition.size_k - shrink_size.size_k
         end
 
-        # Use force to create space (up to 'required_size'): Delete partitions
-        # until there is enough free space.
+        # Use force to create space: delete partitions while there is no
+        # suitable space distribution
         #
         # @param devicegraph [DeviceGraph] devicegraph to update
-        # @param required_size [DiskSize]
-        # @param keep [Array<String>] partitions that should not be deleted
-        def delete_partitions!(devicegraph, required_size, keep)
-          log.info("Trying to make space for #{required_size}")
+        # @param volumes [PlannedVolumesList]
+        # @param keep [Array<String>] device names of partitions that should not
+        #       be deleted
+        def delete_partitions!(devicegraph, volumes, keep)
+          log.info("Deleting partitions to make space")
 
           prioritized_candidate_partitions.each do |part_name|
-            return if success?(devicegraph, required_size)
+            return if success?(devicegraph, volumes)
             if keep.include?(part_name)
               log.info "Skipped deletion of #{part_name}"
               next

@@ -50,28 +50,31 @@ module Yast
         # @param disk_analyzer [DiskAnalyzer] analysis of the initial_graph
         #
         # @return [::Storage::Devicegraph]
-        # @raise Proposal::NoDiskSpaceError if it was not possible to propose a
-        #           valid devicegraph
+        # @raise Proposal::Error if it was not possible to propose a devicegraph
         def devicegraph(volumes, initial_graph, disk_analyzer)
+          # We are going to alter the volumes in several ways, so let's be a
+          # good citizen and do it in our own copy
+          volumes = volumes.deep_dup
+
           space_maker = SpaceMaker.new(initial_graph, disk_analyzer, settings)
           begin
-            graph = provide_space(volumes, space_maker)
+            space_result = provide_space(volumes, space_maker)
           rescue NoDiskSpaceError
             raise if volume.target == :min
             # Try again with the minimum size
-            volumes = volumes.dup
             volumes.target = :min
-            graph = provide_space(volumes, space_maker)
+            space_result = provide_space(volumes, space_maker)
           end
 
-          volumes = refine_volumes(volumes, space_maker)
-          graph = create_partitions(volumes, graph)
+          refine_volumes!(volumes, space_result[:deleted_partitions])
+          graph = create_partitions(space_result[:space_distribution], space_result[:devicegraph])
           reuse_partitions!(volumes, graph)
           graph
         end
 
       protected
 
+        # TODO: Update this doc
         # Provides free disk space in the proposal devicegraph to fit the volumes
         # in. First it tries with the desired space and then with the minimum one
         #
@@ -82,14 +85,14 @@ module Yast
         #
         # @return [::Storage::Devicegraph]
         def provide_space(volumes, space_maker)
-          parts_to_keep = volumes.map(&:reuse).compact
-          result_graph = space_maker.provide_space(volumes.target_size, keep: parts_to_keep)
+          result = space_maker.provide_space(volumes)
           log.info(
             "Found #{volumes.target} space"
           )
-          result_graph
+          result
         end
 
+        # TODO: Update this doc
         # Copy of the volumes list with some extra information inferred from the
         # space maker.
         #
@@ -100,13 +103,11 @@ module Yast
         # @param space_maker [SpaceMaker] an instance in which
         #       SpaceMaker#provide_space has already been called
         # @return [PlannedVolumesList]
-        def refine_volumes(volumes, space_maker)
-          refined = volumes.deep_dup
-
-          deleted_swaps = space_maker.deleted_partitions.select do |part|
+        def refine_volumes!(volumes, deleted_partitions)
+          deleted_swaps = deleted_partitions.select do |part|
             part.id == ::Storage::ID_SWAP
           end
-          new_swap_volumes = refined.select { |vol| !vol.reuse && vol.mount_point == "swap" }
+          new_swap_volumes = volumes.select { |vol| !vol.reuse && vol.mount_point == "swap" }
 
           new_swap_volumes.each_with_index do |swap_volume, idx|
             deleted_swap = deleted_swaps[idx]
@@ -115,22 +116,17 @@ module Yast
             swap_volume.uuid = deleted_swap.filesystem.uuid
             swap_volume.label = deleted_swap.filesystem.label
           end
-
-          refined
         end
 
         # Creates partitions representing a set of volumes
-        #
-        # Uses the desired or minimum size depending on how much space was freed
-        # by #provide_space
         #
         # @param volumes [PlannedVolumesList] set of volumes to create
         # @param initial_graph [::Storage::Devicegraph] initial devicegraph
         #
         # @return [::Storage::Devicegraph]
-        def create_partitions(volumes, initial_graph)
-          partition_creator = PartitionCreator.new(initial_graph, settings)
-          partition_creator.create_partitions(volumes)
+        def create_partitions(distribution, initial_graph)
+          partition_creator = PartitionCreator.new(initial_graph)
+          partition_creator.create_partitions(distribution)
         end
 
         # Adjusts pre-existing (not created by us) partitions assigning its
