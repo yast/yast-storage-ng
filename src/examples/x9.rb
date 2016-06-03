@@ -99,5 +99,5 @@ dp.create_partition("/dev/sdX5", r1, ::Storage::PartitionType_LOGICAL)
 pp dd
 pp dp
 
-Yast::Storage::YamlWriter.write(dg, "/dev/stdout");
+Yast::Storage::YamlWriter.write(dg, $stdout);
 

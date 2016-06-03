@@ -42,8 +42,16 @@ module Yast
 
       attr_accessor :size_b
 
+      # Accept Numbers, Strings, or DiskSize objects as initializers.
+      #
       def initialize(size = 0)
-        @size_b = size.round
+        if size.kind_of?(Yast::Storage::DiskSize)
+          @size_b = size.size
+        elsif size.kind_of?(String)
+          @size_b = Yast::Storage::DiskSize.parse(size).size
+        else
+          @size_b = size.round
+        end
       end
 
       def size=(s)

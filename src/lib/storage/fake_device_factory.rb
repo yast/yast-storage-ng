@@ -54,12 +54,12 @@ module Yast
       # Sub-products are not listed here.
       VALID_PARAM =
         {
-          "disk"            => ["name", "size"],
+          "disk"            => ["name", "size", "block_size", "io_size", "min_grain", "align_ofs", "mbr_gap"],
           "partition_table" => [],
           "partitions"      => [],
-          "partition"       => ["size", "name", "type", "id", "mount_point", "label", "uuid"],
+          "partition"       => ["size", "start", "name", "type", "id", "mount_point", "label", "uuid"],
           "file_system"     => [],
-          "free"            => ["size"]
+          "free"            => ["size","start"]
         }
 
       class << self
@@ -86,6 +86,7 @@ module Yast
         @disks          = Set.new
         @disk_size      = {}
         @disk_used      = {}
+        @free_blob      = 0
       end
 
     protected
@@ -118,9 +119,9 @@ module Yast
         VALID_PARAM
       end
 
-      # Fix up parameters to the create_xy() methods. In this instance, this is
-      # used to convert any parameter called "size" to a DiskSize that can be
-      # used directly.
+      # Fix up parameters to the create_xy() methods.  In this instance,
+      # this is used to convert parameters representing a DiskSize to a
+      # DiskSize object that can be used directly.
       #
       # This method is optional. The base class checks with respond_to? if it
       # is implemented before it is called.
@@ -132,7 +133,9 @@ module Yast
       #
       def fixup_param(name, param)
         log.info("Fixing up #{param} for #{name}")
-        param["size"] = DiskSize.parse(param["size"]) if param.key?("size")
+        ["size", "start", "block_size", "io_size", "min_grain", "align_ofs", "mbr_gap"].each do |key|
+          param[key] = DiskSize.new(param[key]) if param.key?(key)
+        end
         param
       end
 
@@ -290,10 +293,14 @@ module Yast
       def create_free(parent, args)
         log.info("#{__method__}( #{parent}, #{args} )")
         disk_name = parent
-        size = args["size"] || DiskSize.zero
-        raise ArgumentError, "Invalid size of free space on #{disk_name}" if size.zero?
-        allocate_disk_space(disk_name, size)
-        log.info("Allocated #{size} free space on #{disk_name}")
+        pp args["size"]
+        @free_blob = args["size"] + @free_blob unless args["start"]
+        if args["start"]
+          #size = args["size"] || DiskSize.unlimited
+          #raise ArgumentError, "Invalid size of free space on #{disk_name}" if size.zero?
+          #allocate_disk_space(disk_name, size)
+          #log.info("Allocated #{size} free space on #{disk_name}")
+        end
         disk_name
       end
 

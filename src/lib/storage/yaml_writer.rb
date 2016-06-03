@@ -46,11 +46,11 @@ module Yast
         # use its write() method repeatedly.
         #
         # @param devicegraph [::Storage::devicegraph]
-        # @param yaml_file_name [String]
+        # @param yaml_file [String | IO]
         #
-        def write(devicegraph, yaml_file_name)
+        def write(devicegraph, yaml_file)
           writer = YamlWriter.new
-          writer.write(devicegraph, yaml_file_name)
+          writer.write(devicegraph, yaml_file)
         end
       end
 
@@ -66,11 +66,15 @@ module Yast
       # Write all devices from the specified device graph to a YAML file.
       #
       # @param devicegraph [::Storage::devicegraph]
-      # @param yaml_file_name [String]
+      # @param yaml_file [String | IO]
       #
-      def write(devicegraph, yaml_file_name)
+      def write(devicegraph, yaml_file)
         device_tree = yaml_device_tree(devicegraph)
-        File.open(yaml_file_name, "w") { |file| file.write(device_tree.to_yaml) }
+        if yaml_file.respond_to?(:write)
+          yaml_file.write(device_tree.to_yaml)
+        else
+          File.open(yaml_file, "w") { |file| file.write(device_tree.to_yaml) }
+        end
       end
 
       # Convert all devices from the specified device graph to YAML data
