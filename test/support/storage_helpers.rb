@@ -63,6 +63,15 @@ module Yast
         end
         volume
       end
+
+      def space_dist(vols_by_space, devicegraph: nil)
+        devicegraph ||= fake_devicegraph
+        Yast::Storage::Proposal::SpaceDistribution.new(vols_by_space, devicegraph)
+      end
+
+      def vols_list(*vols)
+        Yast::Storage::PlannedVolumesList.new([*vols])
+      end
     end
   end
 end

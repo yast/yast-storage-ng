@@ -29,19 +29,26 @@ module Yast
     # Collection of PlannedVolume elements
     #
     # Implements Enumerable and provides some extra methods to query the list of
-    # PlannedVolume elements
+    # PlannedVolume elements.
+    #
+    # In addition, it also stores which of the sizes defined by the volumes
+    # (:min or :desired) should be used when trying to allocate them
     class PlannedVolumesList
       include Enumerable
       extend Forwardable
 
-      def initialize(volumes = [])
+      # @return [Symbol] :min or :desired, size to use for the calculations
+      attr_accessor :target
+
+      def initialize(volumes = [], target: :desired)
         @volumes = volumes
+        @target  = target
       end
 
       def_delegators :@volumes, :each, :empty?, :length, :size
 
       def dup
-        PlannedVolumesList.new(@volumes.dup)
+        PlannedVolumesList.new(@volumes.dup, target: target)
       end
 
       # Deep copy of the collection
@@ -50,26 +57,26 @@ module Yast
       #
       # @return [PlannedVolumesList]
       def deep_dup
-        PlannedVolumesList.new(@volumes.map { |vol| vol.dup })
+        PlannedVolumesList.new(@volumes.map { |vol| vol.dup }, target: target)
       end
 
-      # Total sum of all desired sizes of volumes.
+      # Total sum of all desired or min sizes of volumes (according to #target)
       #
       # This tries to avoid an 'unlimited' result:
       # If a the desired size of any volume is 'unlimited',
       # its minimum size is taken instead. This gives a more useful sum in the
       # very common case that any volume has an 'unlimited' desired size.
       #
-      # @return [DiskSize] sum of desired sizes in @volumes
-      def desired_size
-        @volumes.reduce(DiskSize.zero) { |sum, vol| sum + vol.min_valid_size(:desired) }
+      # @return [DiskSize] sum of desired/min sizes in @volumes
+      def target_size
+        @volumes.reduce(DiskSize.zero) { |sum, vol| sum + vol.min_valid_size(target) }
       end
 
-      # Total sum of all min sizes of volumes.
+      # Total sum of all current max sizes of volumes
       #
-      # @return [DiskSize] sum of minimum sizes in @volumes
-      def min_size
-        @volumes.reduce(DiskSize.zero) { |sum, vol| sum + vol.min_valid_size(:min_size) }
+      # @return [DiskSize]
+      def max_size
+        @volumes.reduce(DiskSize.zero) { |sum, vol| sum + vol.max_size }
       end
 
       # Total sum of all current sizes of volumes
@@ -94,6 +101,13 @@ module Yast
       def delete_if(&block)
         delegated = @volumes.delete_if(&block)
         delegated.is_a?(Array) ? PlannedVolumesList.new(delegated) : delegated
+      end
+
+      # Deletes the given volume
+      #
+      # @return [PlannedVolume] deleted volume
+      def delete(vol)
+        @volumes.delete(vol)
       end
 
       # Appends the given volume to the list. It returns the list itself,
@@ -124,6 +138,10 @@ module Yast
         @volumes.each_with_index.sort do |one, other|
           compare(one, other, attrs, nils_first, descending)
         end.map(&:first)
+      end
+
+      def to_s
+        "#<PlannedVolumesList volumes=#{@volumes.map(&:to_s)}>"
       end
 
     private

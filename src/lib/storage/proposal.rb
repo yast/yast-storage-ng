@@ -47,6 +47,8 @@ module Yast
     class Proposal
       using Refinements::DevicegraphLists
 
+      include Yast::Logger
+
       # Settings used to calculate the proposal. They cannot be altered after
       # calculating the proposal
       # @return [Proposal::Settings]
