@@ -87,6 +87,8 @@ module Yast
         @disk_size      = {}
         @disk_used      = {}
         @free_blob      = 0
+        @block_size     = 512	# FIXME: temp solution
+        @mbr_gap        = DiskSize.zero
       end
 
     protected
@@ -161,8 +163,33 @@ module Yast
         raise ArgumentError, "\"size\" missing for disk #{name}" if size.zero?
         raise ArgumentError, "Duplicate disk name #{name}" if @disks.include?(name)
         @disks << name
-        disk = ::Storage::Disk.create(@devicegraph, name)
-        disk.size = size.size
+        block_size = args["block_size"] if args["block_size"]
+        io_size = args["io_size"] if args["io_size"]
+        min_grain = args["min_grain"] if args["min_grain"]
+        align_ofs = args["align_ofs"] if args["align_ofs"]
+        if args["mbr_gap"]
+          @mbr_gap = args["mbr_gap"]
+        else
+          @mbr_gap = DiskSize.zero
+        end
+        if block_size && block_size.size > 0
+          @block_size = block_size.size
+          r = ::Storage::Region.new(0, size.size / block_size.size, block_size.size)
+          disk = ::Storage::Disk.create(@devicegraph, name, r)
+        else
+          disk = ::Storage::Disk.create(@devicegraph, name)
+          @block_size = disk.region.block_size
+          disk.size = size.size
+        end
+        if io_size && io_size.size > 0
+          disk.topology.optimal_io_size = io_size.size
+        end
+        if align_ofs
+          disk.topology.alignment_offset = align_ofs.size
+        end
+        if min_grain && min_grain.size > 0
+          disk.topology.minimal_grain = min_grain.size
+        end
         # range (number of partitions that the kernel can handle) used to be
         # 16 for scsi and 64 for ide. Now it's 256 for most of them.
         disk.range = args["range"] || 256
@@ -363,7 +390,7 @@ module Yast
           raise "Not enough disk space on #{disk_name} for another #{size}" if requested > free
         end
         @disk_used[disk_name] = start + requested
-        r = ::Storage::Region.new(start / 512, requested / 512, 512)
+        r = ::Storage::Region.new(start / @block_size, requested / @block_size , @block_size )
       end
     end
   end
