@@ -88,7 +88,7 @@ module Yast
         @disk_used      = {}
         @free_blob      = 0
         @block_size     = 512	# FIXME: temp solution
-        @mbr_gap        = DiskSize.zero
+        @mbr_gap        = nil
       end
 
     protected
@@ -170,7 +170,7 @@ module Yast
         if args["mbr_gap"]
           @mbr_gap = args["mbr_gap"]
         else
-          @mbr_gap = DiskSize.zero
+          @mbr_gap = nil
         end
         if block_size && block_size.size > 0
           @block_size = block_size.size
@@ -210,7 +210,10 @@ module Yast
         disk_name = parent
         ptable_type = str_to_ptable_type(args)
         disk = ::Storage::Disk.find_by_name(@devicegraph, disk_name)
-        disk.create_partition_table(ptable_type)
+        ptable = disk.create_partition_table(ptable_type)
+        if ::Storage.msdos?(ptable) && @mbr_gap
+          ::Storage.to_msdos(ptable).minimal_mbr_gap = @mbr_gap.size;
+        end
         disk_name
       end
 
