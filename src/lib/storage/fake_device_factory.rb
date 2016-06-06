@@ -86,8 +86,7 @@ module Yast
         @disks          = Set.new
         @disk_size      = {}
         @disk_used      = {}
-        @free_blob      = 0
-        @block_size     = 512	# FIXME: temp solution
+        @free_blob      = nil
         @mbr_gap        = nil
       end
 
@@ -173,12 +172,10 @@ module Yast
           @mbr_gap = nil
         end
         if block_size && block_size.size > 0
-          @block_size = block_size.size
           r = ::Storage::Region.new(0, size.size / block_size.size, block_size.size)
           disk = ::Storage::Disk.create(@devicegraph, name, r)
         else
           disk = ::Storage::Disk.create(@devicegraph, name)
-          @block_size = disk.region.block_size
           disk.size = size.size
         end
         if io_size && io_size.size > 0
@@ -253,7 +250,8 @@ module Yast
       def create_partition(parent, args)
         log.info("#{__method__}( #{parent}, #{args} )")
         disk_name = parent
-        size      = args["size"] || DiskSize.zero
+        size      = args["size"] || DiskSize.unlimited
+        start     = args["start"]
         part_name = args["name"]
         type      = args["type"] || "primary"
         id        = args["id"] || "linux"
@@ -274,9 +272,31 @@ module Yast
 
         disk = ::Storage::Disk.find_by_name(devicegraph, disk_name)
         ptable = disk.partition_table
-        region = allocate_disk_space(disk_name, size)
-        # skip one block
-        @disk_used[disk_name] = (region.start + 1) * region.block_size if type == ::Storage::PartitionType_EXTENDED
+        slots = ptable.unused_partition_slots
+        # partitions are created in order, so first slot should be fine
+        # FIXME: we need to do better than this!
+        region = slots.first.region
+        # if no start has been specified, take free region into account
+        if !start && @free_blob
+          start_block = region.start + @free_blob.size / region.block_size
+        end
+        @free_blob = nil
+        # if start has been specified, use it
+        if start
+          start_block = start.size / region.block_size
+        end
+        # adjust start block, if necessary
+        if start_block
+          if start_block > region.start && start_block <= region.end
+            region.adjust_length(region.start - start_block)
+          end
+          region.start = start_block
+        end
+        # if no size has been specified, use whole region
+        if !size.unlimited?
+          region.length = size.size / region.block_size
+        end
+        #@disk_used[disk_name] = (region.start + 1) * region.block_size if type == ::Storage::PartitionType_EXTENDED
         partition = ptable.create_partition(part_name, region, type)
         partition.id = id
         part_name
@@ -323,14 +343,7 @@ module Yast
       def create_free(parent, args)
         log.info("#{__method__}( #{parent}, #{args} )")
         disk_name = parent
-        pp args["size"]
-        @free_blob = args["size"] + @free_blob unless args["start"]
-        if args["start"]
-          #size = args["size"] || DiskSize.unlimited
-          #raise ArgumentError, "Invalid size of free space on #{disk_name}" if size.zero?
-          #allocate_disk_space(disk_name, size)
-          #log.info("Allocated #{size} free space on #{disk_name}")
-        end
+        @free_blob = args["size"] if args["size"]
         disk_name
       end
 
@@ -349,51 +362,6 @@ module Yast
           raise ArgumentError, "Invalid #{type} \"#{key}\" for #{name} - use one of #{hash.keys}"
         end
         value
-      end
-
-      # Allocate disk space of size 'size' on disk 'disk_name'. If 'size' is
-      # 'unlimited', consume all the the remaining free space of the disk.
-      #
-      # This uses and sets @first_free_cyl[name] according to the amount of
-      # space allocated. For extended partitions, this may have to be corrected
-      # later to make room for the logical partitions inside the extended
-      # partition.
-      #
-      # @param disk_name [String] device name of the disk ("/dev/sdc" etc.)
-      # @param size [DiskSize] desired size of the region
-      #
-      # @return [::Storage::Region]
-      #
-      def allocate_disk_space(disk_name, size)
-        disk = ::Storage::Disk.find_by_name(@devicegraph, disk_name)
-
-        log.info(
-          "#{__method__}: #{disk.partition_table.unused_partition_slots.size} slots on #{disk_name}"
-        )
-
-        start = @disk_used[disk_name] || 0
-        # size for MBR gap / GPT
-        start = DiskSize.KiB(1024).size if start == 0
-
-        # align start to 1MiB
-        # FIXME: use Topology class
-        start_align = (start + 1024*1024 - 1) / (1024*1024) * 1024*1024
-
-        max = @disk_size[disk_name] || 0
-        free = max - start
-        log.info(
-          "disk #{disk_name} free: #{start} - #{max - 1} (#{free})"
-        )
-
-        if size.unlimited?
-          requested = free
-          raise "No more disk space on #{disk_name}" if requested < 1
-        else
-          requested = size.size
-          raise "Not enough disk space on #{disk_name} for another #{size}" if requested > free
-        end
-        @disk_used[disk_name] = start + requested
-        r = ::Storage::Region.new(start / @block_size, requested / @block_size , @block_size )
       end
     end
   end
