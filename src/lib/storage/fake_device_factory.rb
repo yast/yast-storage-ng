@@ -57,7 +57,7 @@ module Yast
           "disk"            => ["name", "size", "block_size", "io_size", "min_grain", "align_ofs", "mbr_gap"],
           "partition_table" => [],
           "partitions"      => [],
-          "partition"       => ["size", "start", "name", "type", "id", "mount_point", "label", "uuid"],
+          "partition"       => ["size", "start", "align", "name", "type", "id", "mount_point", "label", "uuid"],
           "file_system"     => [],
           "free"            => ["size","start"]
         }
@@ -84,9 +84,8 @@ module Yast
         super(devicegraph)
         @partitions     = {}
         @disks          = Set.new
-        @disk_size      = {}
-        @disk_used      = {}
         @free_blob      = nil
+        @free_regions   = []
         @mbr_gap        = nil
       end
 
@@ -151,7 +150,15 @@ module Yast
       # Factory method to create a disk.
       #
       # @param _parent [nil] (disks are toplevel)
-      # @param args [Hash] disk parameters: "name", "size", "range"
+      # @param args [Hash] disk parameters:
+      #   "name"       device name ("/dev/sda" etc.)
+      #   "size"       disk size
+      #   "range"      max number of partitions
+      #   "block_size" block size
+      #   "io_size"    optimal io size
+      #   "min_grain"  minimal grain
+      #   "align_ofs"  alignment offset
+      #   "mbr_gap"    mbr gap (for msdos partition table)
       #
       # @return [String] device name of the new disk ("/dev/sda" etc.)
       #
@@ -190,8 +197,6 @@ module Yast
         # range (number of partitions that the kernel can handle) used to be
         # 16 for scsi and 64 for ide. Now it's 256 for most of them.
         disk.range = args["range"] || 256
-        @disk_used[name] = 0
-        @disk_size[name] = disk.size
         name
       end
 
@@ -234,7 +239,9 @@ module Yast
       # @param parent [String] disk name ("/dev/sda" etc.)
       #
       # @param args [Hash] partition table parameters:
-      #   "size"  partition size
+      #   "size"  partition size (unlimited if missing)
+      #   "start" partition start (optional)
+      #   "align" partition align policy (optional)
       #   "name"  device name ("/dev/sdb3" etc.)
       #   "type"  "primary", "extended", "logical"
       #   "id"
@@ -255,9 +262,9 @@ module Yast
         part_name = args["name"]
         type      = args["type"] || "primary"
         id        = args["id"] || "linux"
+        align     = args["align"]
 
         raise ArgumentError, "\"name\" missing for partition #{args} on #{disk_name}" unless part_name
-        raise ArgumentError, "\"size\" missing for partition #{part_name}" if size.zero?
         raise ArgumentError, "Duplicate partition #{part_name}" if @partitions.include?(part_name)
 
         # Keep some parameters that are really file system related in @partitions
@@ -269,22 +276,33 @@ module Yast
         id = id.to_i(16) if id.is_a?(::String) && id.start_with?("0x")
         id   = fetch(PARTITION_IDS,   id,   "partition ID",   part_name) unless id.is_a?(Fixnum)
         type = fetch(PARTITION_TYPES, type, "partition type", part_name)
+        align = fetch(ALIGN_POLICIES, align, "align policy", part_name) if align
 
         disk = ::Storage::Disk.find_by_name(devicegraph, disk_name)
         ptable = disk.partition_table
         slots = ptable.unused_partition_slots
-        # partitions are created in order, so first slot should be fine
-        # FIXME: we need to do better than this!
-        region = slots.first.region
+
+        # partitions are created in order, so first suitable slot should be fine
+        # note: skip areas we marked as empty
+        slot = slots.find { |slot|
+          slot.possible?(type) && !@free_regions.member?(slot.region.start)
+        }
+        raise ArgumentError, "No suitable slot for partition #{part_name}" if !slot
+        region = slot.region
+
+        # region = slots.first.region
         # if no start has been specified, take free region into account
         if !start && @free_blob
+          @free_regions.push(region.start)
           start_block = region.start + @free_blob.size / region.block_size
         end
         @free_blob = nil
+
         # if start has been specified, use it
         if start
           start_block = start.size / region.block_size
         end
+
         # adjust start block, if necessary
         if start_block
           if start_block > region.start && start_block <= region.end
@@ -292,13 +310,18 @@ module Yast
           end
           region.start = start_block
         end
+
         # if no size has been specified, use whole region
         if !size.unlimited?
           region.length = size.size / region.block_size
         end
-        #@disk_used[disk_name] = (region.start + 1) * region.block_size if type == ::Storage::PartitionType_EXTENDED
+
+        # align partition if specified
+        region = disk.topology.align(region, align) if align
+
         partition = ptable.create_partition(part_name, region, type)
         partition.id = id
+
         part_name
       end
       # rubocop:enable all
@@ -333,10 +356,13 @@ module Yast
 
       # Factory method to create a slot of free space.
       #
+      # We just remember the value and take it into account when we create the next partition.
+      #
       # @param parent [String] disk name ("/dev/sda" etc.)
       #
       # @param args [Hash] free space parameters:
       #   "size"  free space size
+      #   "start" (ignored)
       #
       # @return [String] device name of the disk ("/dev/sda" etc.)
       #

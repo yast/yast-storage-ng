@@ -104,6 +104,19 @@ module Storage
     end
 
     alias to_s inspect
+
+    def type?(type)
+      (type == ::Storage::PartitionType_PRIMARY && self.primary_slot) ||
+      (type == ::Storage::PartitionType_EXTENDED && self.extended_slot) ||
+      (type == ::Storage::PartitionType_LOGICAL && self.logical_slot)
+    end
+
+    def possible?(type)
+      (type == ::Storage::PartitionType_PRIMARY && self.primary_possible) ||
+      (type == ::Storage::PartitionType_EXTENDED && self.extended_possible) ||
+      (type == ::Storage::PartitionType_LOGICAL && self.logical_possible)
+    end
+
   end
 
   class Region

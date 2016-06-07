@@ -136,7 +136,7 @@ module Yast
           # if we are about to leave an extend partition, show what's left
           if partition_end_ext > 0 && partition.type != ::Storage::PartitionType_LOGICAL
             gap = partition_end_ext - partition_end;
-            partitions << yaml_free_slot(DiskSize.B(partition_end_ext), DiskSize.B(gap)) if gap > 0
+            partitions << yaml_free_slot(DiskSize.B(partition_end_ext - gap), DiskSize.B(gap)) if gap > 0
             partition_end = partition_end_ext
             partition_end_ext = 0
           end
