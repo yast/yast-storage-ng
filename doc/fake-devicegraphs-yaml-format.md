@@ -155,8 +155,9 @@ Example:
 
   size may be missing and defaults to 'unlimited'.
 
-  Note: all size values are exact. So, for example, on a 100 GiB disk you
-  can't create a 100 GiB partition but only one with 1023 MiB.
+  Note: all size values are exact. So, for example, on a 1000 MiB disk you
+  can't create a 1000 MiB partition but only one with 999 MiB as the partition
+  table takes up some space on its own.
 
 - start: The value is optional and, if given, specifies the partition start.
   When missing, the next free space is used taking into account any
