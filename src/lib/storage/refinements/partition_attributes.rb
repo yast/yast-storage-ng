@@ -41,11 +41,6 @@ module Yast
             filesystem.label
           end
 
-          # @return [DiskSize]
-#          def size
-#            DiskSize.KiB(size_k)
-#          end
-
           # UUID of the filesystem
           def uuid
             filesystem.uuid
