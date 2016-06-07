@@ -30,14 +30,12 @@ require "storage/refinements/devicegraph_lists"
 module Yast
   module Storage
     class Proposal
-      # Class to create partitions in the free space detected or freed by the
-      # SpaceMaker.
+      # Class to create partitions following a given distribution represented by
+      # a SpaceDistribution object
       class PartitionCreator
         using Refinements::Devicegraph
         using Refinements::DevicegraphLists
         include Yast::Logger
-
-        attr_accessor :settings
 
         VOLUME_GROUP_SYSTEM = "system"
         FIRST_LOGICAL_PARTITION_NUMBER = 5 # Number of the first logical partition (/dev/sdx5)
@@ -45,29 +43,26 @@ module Yast
         # Initialize.
         #
         # @param original_graph [::Storage::Devicegraph] initial devicegraph
-        # @param settings [Proposal::Settings] proposal settings
-        def initialize(original_graph, settings)
+        def initialize(original_graph)
           @original_graph = original_graph
-          @settings = settings
         end
 
         # Returns a copy of the original devicegraph in which all the needed
         # partitions have been created.
         #
-        # @param volumes [PlannedVolumesList] volumes to create
-        # @param target_size [Symbol] :desired or :min
+        # @param distribution [SpaceDistribution]
         # @return [::Storage::Devicegraph]
-        def create_partitions(volumes, target_size)
+        def create_partitions(distribution)
           self.devicegraph = original_graph.copy
 
           # FIXME: not implemented yet in libstorage-bgl
-          # use_lvm = settings.use_lvm
           use_lvm = false
 
           if use_lvm
-            create_lvm(volumes, target_size)
+            raise NotImplementedError
+            # create_lvm(distribution)
           else
-            create_non_lvm(volumes, target_size)
+            create_non_lvm(distribution)
           end
           devicegraph
         end
@@ -78,75 +73,44 @@ module Yast
         attr_accessor :devicegraph
         attr_reader :original_graph
 
-        # Sum up the sizes of all slots in the devicegraph
-        #
-        # @return [DiskSize] sum
-        def total_free_size
-          free_spaces.disk_size
-        end
-
-        # List of free spaces in the devicegraph
-        #
-        # @return [FreeDiskSpacesList]
-        def free_spaces
-          candidate_disks.free_disk_spaces.with do |space|
-            space.size >= settings.useful_free_space_min_size
-          end
-        end
-
-        # @return [Array<String>]
-        def candidate_disk_names
-          settings.candidate_devices
-        end
-
-        # Query in the target devicegraph restricted to the candidate disks
-        #
-        # @return [DisksList]
-        def candidate_disks
-          @candidate_disks ||= devicegraph.disks.with(name: candidate_disk_names)
-        end
-
         # Create volumes on LVM.
         #
         # @param volumes [Array<ProposalVolume>] volumes to create
-        # @param strategy [Symbol] :desired or :min
         #
-        def create_lvm(volumes, strategy)
+        def create_lvm(volumes)
           lvm_vol, non_lvm_vol = volumes.partition(&:can_live_on_logical_volume)
           # Create any partitions first that cannot be created on LVM
           # to avoid LVM consuming all the available free space
-          create_non_lvm(non_lvm_vol, strategy)
+          create_non_lvm(non_lvm_vol)
 
           return if lvm_vol.empty?
 
           # Create LVM partitions (using the rest of the available free space)
           volume_group = create_volume_group(VOLUME_GROUP_SYSTEM)
           create_physical_volumes(volume_group)
-          lvm_vol.each { |vol| create_logical_volume(volume_group, vol, strategy) }
+          lvm_vol.each { |vol| create_logical_volume(volume_group, vol) }
         end
 
         # Create partitions without LVM.
         #
-        # @param volumes  [Array<ProposalVolume] volumes to create
-        # @param strategy [Symbol] :desired or :min_size
+        # @param distribution [SpaceDistribution]
         #
-        def create_non_lvm(volumes, strategy)
-          if free_spaces.size == 1
-            create_non_lvm_simple(volumes, strategy)
-          else
-            create_non_lvm_complex
+        def create_non_lvm(distribution)
+          distribution.spaces.each do |space|
+            type = space.partition_type
+            vols = space.volumes
+            disk_space = space.disk_space
+            create_non_lvm_simple(vols, disk_space, type)
           end
         end
 
-        # Create partitions without LVM in the simple case of having just one
-        # single slot of free disk space. Thus we don't need to bother trying
-        # to optimize how the volumes fit into the free slots to avoid wasting
-        # disk space.
+        # Create partitions without LVM in a single slot of free disk space.
         #
         # @param volumes   [PlannedVolumesList] volumes to create
-        # @param strategy  [Symbol] :desired or :min_size
-        #
-        def create_non_lvm_simple(volumes, strategy)
+        # @param free_space [FreeDiskSpace]
+        # @param partition_type [Symbol] type to be enforced to all the
+        #       partitions. If nil, each partition can have a different type
+        def create_non_lvm_simple(volumes, free_space, partition_type)
           volumes.each do |vol|
             log.info(
               "vol #{vol.mount_point}\tmin: #{vol.min_size} " \
@@ -155,21 +119,22 @@ module Yast
           end
 
           volumes = volumes.deep_dup
-          volumes.each { |vol| vol.size = vol.min_valid_size(strategy) }
-          distribute_extra_space(volumes)
-          create_volumes_partitions(volumes)
+          volumes.each { |vol| vol.size = vol.min_valid_size(volumes.target) }
+          distribute_extra_space(volumes, free_space)
+          create_volumes_partitions(volumes, free_space, partition_type)
         end
 
         # Distribute extra disk space among the specified volumes. This updates
         # the size of each volume with the distributed space.
         #
-        # @param volumes     [PlannedVolumesList>]
+        # @param volumes [PlannedVolumesList]
+        # @param space   [FreeDiskSpace]
         #
         # @return [DiskSpace] remaining space that could not be distributed
         #
-        def distribute_extra_space(volumes)
+        def distribute_extra_space(volumes, space)
           candidates = volumes
-          extra_size = total_free_size - volumes.total_size
+          extra_size = space.size - volumes.total_size
           while extra_size > DiskSize.zero
             candidates = extra_space_candidates(candidates)
             return extra_size if candidates.empty?
@@ -195,7 +160,6 @@ module Yast
         # @return [PlannedVolumesList]
         def extra_space_candidates(volumes)
           candidates = volumes.dup
-          candidates.delete_if { |vol| vol.reuse }
           candidates.delete_if { |vol| vol.size >= vol.max_size }
           candidates
         end
@@ -219,13 +183,6 @@ module Yast
           end
         end
 
-        # Create partitions without LVM in the complex case: There are multiple
-        # slots of free disk space, so we need to fit the volumes as good as
-        # possible.
-        def create_non_lvm_complex
-          raise NotImplementedError
-        end
-
         # Creates a partition and the corresponding filesystem for each volume
         #
         # Important: notice that, so far, this method is only intended to work
@@ -239,16 +196,16 @@ module Yast
         # hard limit.
         #
         # @param volumes [Array<PlannedVolume>]
-        def create_volumes_partitions(volumes)
+        # @param initial_free_space [FreeDiskSpace]
+        # @param partition_type [Symbol] @see #create_non_lvm_simple
+        def create_volumes_partitions(volumes, initial_free_space, partition_type)
           volumes.sort_by_attr(:disk, :max_start_offset).each do |vol|
-            if vol.reuse
-              log.info "Skipping creation of #{vol}"
-              next
-            end
             partition_id = vol.partition_id
             partition_id ||= vol.mount_point == "swap" ? ::Storage::ID_SWAP : ::Storage::ID_LINUX
             begin
-              partition = create_partition(vol, partition_id, free_space_for(vol))
+              space = free_space_within(initial_free_space)
+              primary = primary?(partition_type, space.disk)
+              partition = create_partition(vol, partition_id, space, primary)
               make_filesystem(partition, vol)
               devicegraph.check
             rescue ::Storage::Exception => error
@@ -257,22 +214,27 @@ module Yast
           end
         end
 
-        # Finds a free space to allocate the start of a volume
-        #
-        # Important: notice that, so far, this method is only intended to work
-        # in cases in which there is only one chunk of free space in the system.
-        #
-        # @raise an error if there is not free space suitable for the volume
-        def free_space_for(volume)
-          free_space = free_spaces.first
-          raise NoDiskSpaceError, "No space to allocate #{volume})" if free_space.nil?
-          if volume.disk && volume.disk != free_space.disk_name
-            raise(
-              NoDiskSpaceError,
-              "Not possible to allocate #{vol}. All the free space is in #{free_space.disk_name}"
-            )
+        def primary?(partition_type, disk)
+          if partition_type.nil?
+            !logical_partition_preferred?(disk.partition_table)
+          else
+            partition_type == :primary
           end
-          free_space
+        end
+
+        # Finds the remaining free space within the scope of the disk chunk
+        # defined by a (probably outdated) FreeDiskSpace object
+        #
+        # @param [FreeDiskSpace] the original disk chunk, the returned free
+        #   space will be within this area
+        def free_space_within(initial_free_space)
+          disks = devicegraph.disks.with(name: initial_free_space.disk_name)
+          spaces = disks.free_disk_spaces.with do |space|
+            space.slot.region.start >= initial_free_space.slot.region.start &&
+              space.slot.region.start < initial_free_space.slot.region.end
+          end
+          raise NoDiskSpaceError, "Exhausted free space" if spaces.empty?
+          spaces.first
         end
 
         # Create a partition for the specified volume within the specified slot
@@ -280,34 +242,25 @@ module Yast
         #
         # @param vol          [ProposalVolume]
         # @param partition_id [::Storage::IdNum] ::Storage::ID_Linux etc.
-        # @param free_slot    [FreeDiskSpace]
+        # @param free_space   [FreeDiskSpace]
+        # @param primary      [Boolean] whether the partition should be primary
+        #                     or logical
         #
-        def create_partition(vol, partition_id, free_slot)
+        def create_partition(vol, partition_id, free_space, primary)
           log.info("Creating partition for #{vol.mount_point} with #{vol.size}")
-          disk = ::Storage::Disk.find_by_name(devicegraph, free_slot.disk_name)
+          disk = free_space.disk
           ptable = disk.partition_table
 
-          logical = false
-          if space_inside_extended?(free_slot)
-            logical = true
-          elsif logical_partition_preferred?(ptable)
-            # It's not possible to have more than one extended partition,
-            # even if logical partitions are preferred
-            if !ptable.has_extended
-              create_extended_partition(disk, free_slot.slot.region)
-              logical = true
-            end
-          end
-
-          if logical
-            dev_name = next_free_logical_partition_name(disk.name, ptable)
-            partition_type = ::Storage::PartitionType_LOGICAL
-          else
+          if primary
             dev_name = next_free_primary_partition_name(disk.name, ptable)
             partition_type = ::Storage::PartitionType_PRIMARY
+          else
+            create_extended_partition(disk, free_space.slot.region) unless ptable.has_extended
+            dev_name = next_free_logical_partition_name(disk.name, ptable)
+            partition_type = ::Storage::PartitionType_LOGICAL
           end
 
-          region = new_region_with_size(free_slot, vol.size)
+          region = new_region_with_size(free_space.slot, vol.size)
           partition = ptable.create_partition(dev_name, region, partition_type)
           partition.id = partition_id
           partition.boot = !!vol.bootable
@@ -331,20 +284,6 @@ module Yast
           ptable = disk.partition_table
           dev_name = next_free_primary_partition_name(disk.name, ptable)
           ptable.create_partition(dev_name, region, ::Storage::PartitionType_EXTENDED)
-        end
-
-        # Checks whether the given free space is inside an extended partition
-        #
-        # @param free_space [FreeDiskSpace]
-        # @return [Boolean]
-        def space_inside_extended?(free_space)
-          space_start = free_space.slot.region.start
-          disks = devicegraph.disks.with(name: free_space.disk_name)
-          extended = disks.partitions.with(type: ::Storage::PartitionType_EXTENDED)
-          container = extended.with do |part|
-            part.region.start <= space_start && part.region.end > space_start
-          end.first
-          !!container
         end
 
         # Return the next device name for a primary partition that is not already
@@ -382,13 +321,13 @@ module Yast
         # Create a new region from the one in free_slot, but with new size
         # disk_size.
         #
-        # @param free_slot [FreeDiskSpace]
+        # @param free_slot [::Storage::PartitionSlot]
         # @param disk_size [DiskSize] new size of the region
         #
         # @return [::Storage::Region] Newly created region
         #
         def new_region_with_size(free_slot, disk_size)
-          region = free_slot.slot.region
+          region = free_slot.region
           blocks = (1024 * disk_size.size_k) / region.block_size
           # region.dup doesn't seem to work (SWIG bindings problem?)
           ::Storage::Region.new(region.start, blocks, region.block_size)
@@ -437,12 +376,10 @@ module Yast
         #
         # @param volume_group [::Storage::VolumeGroup]
         # @param vol          [ProposalVolume]
-        # @param strategy     [Symbol] :desired or :min_size
         #
-        def create_logical_volume(volume_group, vol, strategy)
+        def create_logical_volume(volume_group, vol)
           log.info(
-            "Creating LVM logical volume #{vol.logical_volume_name} at #{volume_group} "\
-            "with strategy \"#{strategy}\""
+            "Creating LVM logical volume #{vol.logical_volume_name} at #{volume_group}"
           )
           # TO DO
           # TO DO

@@ -185,7 +185,7 @@ module Yast
         disk.partition_table.partitions.to_a.sort do |a, b|
           by_start = a.region.start <=> b.region.start
           if by_start.zero?
-            a.type == ::Storage::PartitionType_EXTENDED ? 1 : -1
+            a.type == ::Storage::PartitionType_EXTENDED ? -1 : 1
           else
             by_start
           end

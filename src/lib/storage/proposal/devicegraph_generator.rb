@@ -50,67 +50,63 @@ module Yast
         # @param disk_analyzer [DiskAnalyzer] analysis of the initial_graph
         #
         # @return [::Storage::Devicegraph]
-        # @raise Proposal::NoDiskSpaceError if it was not possible to propose a
-        #           valid devicegraph
+        # @raise Proposal::Error if it was not possible to propose a devicegraph
         def devicegraph(volumes, initial_graph, disk_analyzer)
-          space_maker = SpaceMaker.new(initial_graph, disk_analyzer, settings)
-          graph = provide_space(volumes, space_maker)
-          volumes = refine_volumes(volumes, space_maker)
+          # We are going to alter the volumes in several ways, so let's be a
+          # good citizen and do it in our own copy
+          volumes = volumes.deep_dup
 
-          graph = create_partitions(volumes, graph)
+          space_maker = SpaceMaker.new(initial_graph, disk_analyzer, settings)
+          begin
+            space_result = provide_space(volumes, space_maker)
+          rescue NoDiskSpaceError
+            raise if volume.target == :min
+            # Try again with the minimum size
+            volumes.target = :min
+            space_result = provide_space(volumes, space_maker)
+          end
+
+          refine_volumes!(volumes, space_result[:deleted_partitions])
+          graph = create_partitions(space_result[:space_distribution], space_result[:devicegraph])
           reuse_partitions!(volumes, graph)
           graph
         end
 
       protected
 
-        attr_writer :got_desired_space
-
-        def got_desired_space?
-          !!@got_desired_space
-        end
-
-        # Provides free disk space in the proposal devicegraph to fit the volumes
-        # in. First it tries with the desired space and then with the minimum one
+        # Provides free disk space in the proposal devicegraph to fit the
+        # volumes in.
         #
-        # @raise Proposal::NoDiskSpaceError if both attempts fail
+        # @raise Proposal::Error if the goal is not reached
         #
         # @param volumes [PlannedVolumesList] set of volumes to make space for
         # @param space_maker [SpaceMaker]
         #
         # @return [::Storage::Devicegraph]
         def provide_space(volumes, space_maker)
-          parts_to_keep = volumes.map(&:reuse).compact
-          self.got_desired_space = false
-          begin
-            result_graph = space_maker.provide_space(volumes.desired_size, keep: parts_to_keep)
-            self.got_desired_space = true
-          rescue NoDiskSpaceError
-            result_graph = space_maker.provide_space(volumes.min_size, keep: parts_to_keep)
-          end
+          result = space_maker.provide_space(volumes)
           log.info(
-            "Found #{got_desired_space? ? "desired" : "min"} space"
+            "Found #{volumes.target} space"
           )
-          result_graph
+          result
         end
 
-        # Copy of the volumes list with some extra information inferred from the
-        # space maker.
+        # Adds some extra information to the planned volumes inferred from
+        # the list of partitions deleted by the space maker.
         #
         # It enforces reuse of UUIDs and labels from the deleted swap
         # partitions.
         #
-        # @param volumes [PlannedVolumesList] original list of volumes
-        # @param space_maker [SpaceMaker] an instance in which
-        #       SpaceMaker#provide_space has already been called
-        # @return [PlannedVolumesList]
-        def refine_volumes(volumes, space_maker)
-          refined = volumes.deep_dup
-
-          deleted_swaps = space_maker.deleted_partitions.select do |part|
+        # It modifies the passed volumes.
+        #
+        # @param volumes [PlannedVolumesList] list of volumes to modify
+        # @param deleted_partitions [Array<::Storage::Partition>] partitions
+        #     deleted from the initial devicegraph
+        def refine_volumes!(volumes, deleted_partitions)
+          deleted_swaps = deleted_partitions.select do |part|
             part.id == ::Storage::ID_SWAP
           end
-          new_swap_volumes = refined.select { |vol| !vol.reuse && vol.mount_point == "swap" }
+          new_swap_volumes = volumes.select { |vol| !vol.reuse && vol.mount_point == "swap" }
 
           new_swap_volumes.each_with_index do |swap_volume, idx|
             deleted_swap = deleted_swaps[idx]
@@ -119,23 +115,17 @@ module Yast
             swap_volume.uuid = deleted_swap.filesystem.uuid
             swap_volume.label = deleted_swap.filesystem.label
           end
-
-          refined
         end
 
         # Creates partitions representing a set of volumes
-        #
-        # Uses the desired or minimum size depending on how much space was freed
-        # by #provide_space
         #
         # @param volumes [PlannedVolumesList] set of volumes to create
         # @param initial_graph [::Storage::Devicegraph] initial devicegraph
         #
         # @return [::Storage::Devicegraph]
-        def create_partitions(volumes, initial_graph)
-          partition_creator = PartitionCreator.new(initial_graph, settings)
-          target = got_desired_space? ? :desired : :min
-          partition_creator.create_partitions(volumes, target)
+        def create_partitions(distribution, initial_graph)
+          partition_creator = PartitionCreator.new(initial_graph)
+          partition_creator.create_partitions(distribution)
         end
 
         # Adjusts pre-existing (not created by us) partitions assigning its
