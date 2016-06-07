@@ -82,11 +82,7 @@ module Yast
 
       def initialize(devicegraph)
         super(devicegraph)
-        @partitions     = {}
         @disks          = Set.new
-        @free_blob      = nil
-        @free_regions   = []
-        @mbr_gap        = nil
       end
 
     protected
@@ -163,6 +159,11 @@ module Yast
       # @return [String] device name of the new disk ("/dev/sda" etc.)
       #
       def create_disk(_parent, args)
+        @partitions     = {}
+        @free_blob      = nil
+        @free_regions   = []
+        @mbr_gap        = nil
+
         log.info("#{__method__}( #{args} )")
         name = args["name"] || "/dev/sda"
         size = args["size"] || DiskSize.zero
@@ -173,11 +174,7 @@ module Yast
         io_size = args["io_size"] if args["io_size"]
         min_grain = args["min_grain"] if args["min_grain"]
         align_ofs = args["align_ofs"] if args["align_ofs"]
-        if args["mbr_gap"]
-          @mbr_gap = args["mbr_gap"]
-        else
-          @mbr_gap = nil
-        end
+        @mbr_gap = args["mbr_gap"] if args["mbr_gap"]
         if block_size && block_size.size > 0
           r = ::Storage::Region.new(0, size.size / block_size.size, block_size.size)
           disk = ::Storage::Disk.create(@devicegraph, name, r)
