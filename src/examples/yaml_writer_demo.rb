@@ -26,7 +26,6 @@ $LOAD_PATH.unshift(File.expand_path("../../lib", __FILE__))
 
 require "storage/storage_manager.rb"
 require "storage/yaml_writer.rb"
-require "pp"
 
 input_file  = ARGV[0] || "fake-devicegraphs.yml"
 output_file = ARGV[1] || $stdout
