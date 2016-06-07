@@ -369,7 +369,8 @@ module Yast
       def create_free(parent, args)
         log.info("#{__method__}( #{parent}, #{args} )")
         disk_name = parent
-        @free_blob = args["size"] if args["size"]
+        size = args["size"]
+        @free_blob = size if size && size.size > 0
         disk_name
       end
 

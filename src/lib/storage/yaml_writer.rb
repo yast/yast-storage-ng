@@ -167,9 +167,10 @@ module Yast
           partitions << yaml_free_slot(DiskSize.B(partition_end_ext), DiskSize.B(gap)) if gap > 0
         end
 
-         # see if there's space left at the end of the disk
+        # see if there's space left at the end of the disk
+        # show also negative sizes so we know we've overstepped
         gap = (disk.region.end + 1) * disk.region.block_size - partition_end_max
-        partitions << yaml_free_slot(DiskSize.B(partition_end_max), DiskSize.B(gap)) if gap > 0
+        partitions << yaml_free_slot(DiskSize.B(partition_end_max), DiskSize.B(gap)) if gap != 0
 
         partitions
       end
