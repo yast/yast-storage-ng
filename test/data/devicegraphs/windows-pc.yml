@@ -13,7 +13,7 @@
         label:        windows
 
     - partition:
-        size:         20 GiB
+        size:         unlimited
         name:         /dev/sda2
         id:           0xb
         file_system:  vfat

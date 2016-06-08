@@ -21,7 +21,7 @@
         label:        swap
 
     - partition:
-        size:         248 GiB
+        size:         unlimited
         name:         /dev/sda3
         file_system:  ext4
         mount_point:  /

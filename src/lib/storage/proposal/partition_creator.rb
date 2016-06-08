@@ -255,7 +255,10 @@ module Yast
             dev_name = next_free_primary_partition_name(disk.name, ptable)
             partition_type = ::Storage::PartitionType_PRIMARY
           else
-            create_extended_partition(disk, free_space.slot.region) unless ptable.has_extended
+            if !ptable.has_extended
+              create_extended_partition(disk, free_space.slot.region)
+              free_space = free_space_within(free_space)
+            end
             dev_name = next_free_logical_partition_name(disk.name, ptable)
             partition_type = ::Storage::PartitionType_LOGICAL
           end
@@ -329,6 +332,10 @@ module Yast
         def new_region_with_size(free_slot, disk_size)
           region = free_slot.region
           blocks = disk_size.size / region.block_size
+          # Never exceed the region
+          if region.start + blocks > region.end
+            blocks = region.end - region.start + 1
+          end
           # region.dup doesn't seem to work (SWIG bindings problem?)
           ::Storage::Region.new(region.start, blocks, region.block_size)
         end

@@ -50,7 +50,7 @@ describe Yast::Storage::Proposal do
       instance_double("Yast::Storage::BootRequirementChecker", needed_partitions: [])
     end
     let(:resize_info) do
-      instance_double("::Storage::ResizeInfo", resize_ok: true, min_size_k: 40.GiB.size_k)
+      instance_double("::Storage::ResizeInfo", resize_ok: true, min_size: 40.GiB.size_b)
     end
     let(:separate_home) { false }
     let(:settings) do
