@@ -73,7 +73,7 @@ module ExpertPartitioner
 
     def doit
       size = Yast::UI.QueryWidget(Id(:size_input), :Value)
-      size_k = Storage.humanstring_to_byte(size, false) / 1024
+      size_b = Storage.humanstring_to_byte(size, false)
 
       partition_table = @disk.partition_table
 
@@ -81,7 +81,7 @@ module ExpertPartitioner
 
       partition_slots.delete_if do |partition_slot|
         !partition_slot.primary_slot || !partition_slot.primary_possible ||
-          size_k > partition_slot.region.to_kb(partition_slot.region.length)
+          size_b > partition_slot.region.to_bytes(partition_slot.region.length)
       end
 
       if partition_slots.empty?
@@ -93,7 +93,7 @@ module ExpertPartitioner
 
       partition_slot = partition_slots[0]
 
-      partition_slot.region.length = partition_slot.region.to_value(size_k)
+      partition_slot.region.length = partition_slot.region.to_blocks(size_b)
 
       partition_table.create_partition(
         partition_slot.name,

@@ -199,7 +199,7 @@ module Yast
         def recoverable_size(partition)
           info = partition.filesystem.detect_resize_info
           return DiskSize.zero unless info.resize_ok
-          DiskSize.KiB(partition.size_k - info.min_size_k)
+          DiskSize.B(partition.size - info.min_size)
         end
 
         # Reduces the size of a partition
@@ -208,7 +208,7 @@ module Yast
         # @param shrink_size [DiskSize] size of the space to substract
         def shrink_partition(partition, shrink_size)
           log.info "Shrinking #{partition.name} by #{shrink_size}"
-          partition.size_k = partition.size_k - shrink_size.size_k
+          partition.size = partition.size - shrink_size.size
         end
 
         # Use force to create space: delete partitions while there is no

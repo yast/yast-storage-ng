@@ -328,7 +328,7 @@ module Yast
         #
         def new_region_with_size(free_slot, disk_size)
           region = free_slot.region
-          blocks = (1024 * disk_size.size_k) / region.block_size
+          blocks = disk_size.size / region.block_size
           # region.dup doesn't seem to work (SWIG bindings problem?)
           ::Storage::Region.new(region.start, blocks, region.block_size)
         end

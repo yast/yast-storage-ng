@@ -172,7 +172,7 @@ module Yast
       # @return [Array<String>] sorted list of names
       def sorted_candidates(disk_names)
         candidate_disks = initial_graph.disks.with(name: disk_names).to_a
-        candidate_disks = candidate_disks.sort_by(&:size_k).reverse
+        candidate_disks = candidate_disks.sort_by(&:size).reverse
         candidate_disks.map(&:name)
       end
     end

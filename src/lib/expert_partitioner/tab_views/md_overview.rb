@@ -38,7 +38,7 @@ module ExpertPartitioner
 
     def create
       tmp = ["Name: #{@md.name}",
-             "Size: #{::Storage.byte_to_humanstring(1024 * @md.size_k, false, 2, false)}"]
+             "Size: #{::Storage.byte_to_humanstring(@md.size, false, 2, false)}"]
 
       @md.udev_ids.each_with_index do |udev_id, i|
         tmp << "Device ID #{i + 1}: #{udev_id}"
@@ -46,7 +46,7 @@ module ExpertPartitioner
 
       tmp << "Level: #{::Storage.md_level_name(@md.md_level)}"
       tmp << "Parity: #{::Storage.md_parity_name(@md.md_parity)}"
-      tmp << "Chunk Size: #{::Storage.byte_to_humanstring(1024 * @md.chunk_size_k, false, 2, false)}"
+      tmp << "Chunk Size: #{::Storage.byte_to_humanstring(@md.chunk_size, false, 2, false)}"
 
       contents = Yast::HTML.List(tmp)
 

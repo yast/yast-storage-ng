@@ -34,7 +34,7 @@ module Storage
   # patch libstorage-ng class
   class Disk
     def inspect
-      "<Disk #{name} #{Yast::Storage::DiskSize.KiB(size_k)}>"
+      "<Disk #{name} #{Yast::Storage::DiskSize.B(size)}>"
     end
 
     # FIXME: Arvin promised #partition_table? in libstorage-ng;
@@ -63,31 +63,13 @@ module Storage
     def dasd_format
       ::Storage::DASDF_NONE
     end
-
-    def size_k=(s)
-      self.size = s * 1024
-    end
-
-    def size_k
-      self.size / 1024
-    end
-
   end
 
   # patch libstorage-ng class
   class Partition
     def inspect
-      "<Partition #{name} #{Yast::Storage::DiskSize.KiB(size_k)}, #{region.show_range}>"
+      "<Partition #{name} #{Yast::Storage::DiskSize.B(size)}, #{region.show_range}>"
     end
-
-    def size_k=(s)
-      self.size = s * 1024
-    end
-
-    def size_k
-      self.size / 1024
-    end
-
   end
 
   class PartitionSlot
