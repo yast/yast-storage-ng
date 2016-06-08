@@ -13,7 +13,7 @@
         label:        windows1
 
     - partition:
-        size:         20 GiB
+        size:         unlimited
         name:         /dev/sda2
         id:           0xb
         file_system:  vfat
@@ -33,7 +33,7 @@
         label:        windows2
 
     - partition:
-        size:         20 GiB
+        size:         unlimited
         name:         /dev/sdb2
         id:           0xb
         file_system:  vfat

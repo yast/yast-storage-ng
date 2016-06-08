@@ -16,7 +16,7 @@
         size:         22 GiB
 
     - partition:
-        size:         100 GiB
+        size:         unlimited
         name:         /dev/sda2
         id:           0xb
         file_system:  ntfs
