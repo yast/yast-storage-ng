@@ -167,7 +167,7 @@ describe Yast::Storage::Proposal do
           mountpoint: "swap",
           uuid:       "33333333-3333-3333-3333-33333333",
           label:      "swap3",
-          size:       1.GiB
+          size:       (1.GiB - 1.MiB).size_b
         )
       end
 
@@ -178,14 +178,14 @@ describe Yast::Storage::Proposal do
           mountpoint: "swap",
           uuid:       "11111111-1111-1111-1111-11111111",
           label:      "swap1",
-          size:       500.MiB
+          size:       500.MiB.size_b
         )
         sda5 = proposal.devices.partitions.with(name: "/dev/sda5").first
         expect(sda5).to match_fields(
           mountpoint: "swap",
           uuid:       "22222222-2222-2222-2222-22222222",
           label:      "swap2",
-          size:       500.MiB
+          size:       500.MiB.size_b
         )
       end
 

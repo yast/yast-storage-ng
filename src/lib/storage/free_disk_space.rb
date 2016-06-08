@@ -64,7 +64,7 @@ module Yast
       # @return [DiskSize]
       #
       def start_offset
-        DiskSize.new(@slot.region.to_kb(@slot.region.start))
+        DiskSize.B(@slot.region.start * @slot.region.block_size)
       end
 
       def to_s
