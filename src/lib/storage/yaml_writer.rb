@@ -156,6 +156,7 @@ module Yast
           # if we're inside an extended partition, remember its end for later
           if partition.type == ::Storage::PartitionType_EXTENDED
             partition_end_ext = partition_end
+            partition_end = partition.region.start * partition.region.block_size
           end
         end
 
