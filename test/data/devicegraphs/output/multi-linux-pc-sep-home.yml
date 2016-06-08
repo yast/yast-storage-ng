@@ -31,7 +31,7 @@
         mount_point: "/home"
 
     - partition:
-        size: 900.00 GiB
+        size: unlimited
         name: "/dev/sda4"
         type: extended
         id: linux
@@ -45,7 +45,7 @@
         label: shared_home
 
     - partition:
-        size: 600.00 GiB
+        size: unlimited
         name: "/dev/sda6"
         type: logical
         id: linux
