@@ -47,7 +47,7 @@ module Yast
       end
 
       def analyzer_part(name = "", size = Yast::Storage::DiskSize.MiB(10))
-        instance_double("::Storage::Partition", name: name, size_k: size.size_k)
+        instance_double("::Storage::Partition", name: name, size: size.size_b)
       end
 
       def planned_vol(attrs = {})

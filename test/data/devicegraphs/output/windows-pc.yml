@@ -27,7 +27,7 @@
         id: linux
 
     - partition:
-        size: 2.00 GiB
+        size: unlimited
         name: "/dev/sda5"
         type: logical
         id: swap
@@ -35,7 +35,7 @@
         mount_point: swap
 
     - partition:
-        size: 20.00 GiB
+        size: unlimited
         name: "/dev/sda2"
         type: primary
         id: 0xb

@@ -135,7 +135,7 @@ module Yast
         # @param disk_name [String]
         # @param spaces [Array<AssignedSpace] spaces allocated in the disk
         def set_partition_types_for(disk_name, spaces)
-          disk = ::Storage::Disk.find(devicegraph, disk_name)
+          disk = ::Storage::Disk.find_by_name(devicegraph, disk_name)
           ptable = disk.partition_table
 
           if ptable.has_extended

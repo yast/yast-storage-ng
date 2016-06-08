@@ -89,6 +89,13 @@ module Yast
         "iso9660"  => ::Storage::FsType_ISO9660,
         "udf"      => ::Storage::FsType_UDF
       }
+
+      ALIGN_POLICIES =
+      {
+        "align_end"  => ::Storage::AlignPolicy_ALIGN_END,
+        "keep_end"   => ::Storage::AlignPolicy_KEEP_END,
+        "keep_size"  => ::Storage::AlignPolicy_KEEP_SIZE
+      }
     end
   end
 end

@@ -56,7 +56,7 @@ module Yast
       # @return [DiskSize]
       #
       def size
-        DiskSize.new(@slot.region.to_kb(@slot.region.length))
+        DiskSize.B(@slot.region.length * @slot.region.block_size)
       end
 
       # Offset of the slot relative to the beginning of the disk

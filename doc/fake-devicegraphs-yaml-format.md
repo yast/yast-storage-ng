@@ -8,6 +8,19 @@ Please notice that those fake device trees have limitations. They are meant for
 creating unit tests, not for actually creating partitions etc. on a real hard
 disk.
 
+There are two ways to look at this: (1) what FakeDeviceFactory accepts
+when reading the file and creatng a device tree and (2) what YamlWriter puts
+into the YAML file when dumping a device tree.
+
+FakeDeviceFactory accepts anything YamlWriter has written and tries to
+build exactly the same device tree. But YamlWriter does also include a bit
+more data than strictly necessary for informational purposes like free
+spaces it encounters.
+
+FakeDeviceFactory on the other hand can fill in missing parts like partition
+starts and partition sizes which makes it easier for humans to specify a
+device tree.
+
 
 ## File Structure
 
@@ -95,6 +108,8 @@ Example:
 
 - size: Size of the disk specified as something the DiskSize class can parse:
 
+  - nn
+  - nn B (same as nn)
   - nn KiB
   - nn MiB
   - nn GiB
@@ -121,6 +136,8 @@ Example:
 
     - partition:
         size:         60 GiB
+        start:        100 GiB
+        align:        keep_size
         name:         /dev/sda3
         type:         primary
         id:           Linux
@@ -136,11 +153,28 @@ Example:
   beginning of that extended partition, so the last one of those logical
   partitions might have size "unlimited" again.
 
+  size may be missing and defaults to 'unlimited'.
+
+  Note: all size values are exact. So, for example, on a 1000 MiB disk you
+  can't create a 1000 MiB partition but only one with 999 MiB as the partition
+  table takes up some space on its own.
+
+- start: The value is optional and, if given, specifies the partition start.
+  When missing, the next free space is used taking into account any
+  preceding free space spec and aligned according to the align policy if one
+  is given.
 
 - name: Kernel device name of the partition, typically something like
   /dev/sda1, /dev/sda2, ...; as usual, the first logical partition in an
   extended partition is always /dev/sda5, no matter if /dev/sda4 and /dev/sda3
   actually exist.
+
+- align: Alignment policy. If missing, no specific alignment is done.
+
+  Permitted values:
+  - align_end
+  - keep_end
+  - keep_size
 
 
 - type: Partition type. Default if not specified: "primary".
@@ -219,11 +253,18 @@ Example:
 
     - free:
         size: 300 GiB
+        start: 100 GiB # (optional)
 
 This indicates a slot of free space (space that does not belong to any
 partition) on the disk between partitions.
 
+Note that free slots are not part of the device tree and added by YamlWriter
+for purely informational purposes.
+
+FakeDeviceFactory ignores `start` and uses `size` when creating a partition.
+
 - size: Size of the free slot (DiskSize compatible).
+- start: Start of the free slot (DiskSize compatible).
 
 
 ## Complete Example
@@ -232,6 +273,8 @@ This setup will create 3 disks (/dev/sda, /dev/sdb/, /dev/sdc) with partitions
 on the first one (/dev/sda). On /dev/sda, there will be 4 primary partitions,
 the last one of which is an extended partition with 2 logical partitions in it
 that have a slot of free space between them.
+
+Note the two missing `size` specs denoting 'to the end' in both cases.
 
 (4 spaces indented to conform with markdown formatting standards)
 
@@ -269,7 +312,6 @@ that have a slot of free space between them.
             label:        root
 
         - partition:
-            size:         unlimited
             name:         /dev/sda4
             type:         extended
 
@@ -286,7 +328,6 @@ that have a slot of free space between them.
             size:         300 GiB
 
         - partition:
-            size:         362 GiB
             name:         /dev/sda6
             type:         logical
             id:           0x83

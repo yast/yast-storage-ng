@@ -35,7 +35,7 @@
         mount_point: swap
 
     - partition:
-        size: 10.00 GiB
+        size: unlimited
         name: "/dev/sda6"
         type: logical
         id: linux
@@ -43,7 +43,7 @@
         mount_point: "/home"
 
     - partition:
-        size: 20.00 GiB
+        size: unlimited
         name: "/dev/sda2"
         type: primary
         id: 0xb

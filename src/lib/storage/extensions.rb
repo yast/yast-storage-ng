@@ -132,7 +132,7 @@ module Storage
     end
 
     def table_size
-      return ::Storage.byte_to_humanstring(1024 * size_k, false, 2, false)
+      return ::Storage.byte_to_humanstring(size, false, 2, false)
     end
 
     def table_filesystem

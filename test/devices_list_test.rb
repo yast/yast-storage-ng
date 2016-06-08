@@ -235,7 +235,9 @@ describe "devices lists" do
 
     describe "#disk_size" do
       it "returns to sum of all the spaces sizes" do
-        expect(spaces.disk_size).to eq 602.GiB
+        # Free space in /dev/sdb is 90GiB-1MiB because that 1MiB is filled by
+        # the partition table. Same happens in /dev/sdc (500GiB-1MiB)
+        expect(spaces.disk_size).to eq(592.GiB - 2.MiB)
       end
     end
   end
