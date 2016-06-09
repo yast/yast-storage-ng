@@ -45,8 +45,8 @@ describe Yast::Storage::Proposal::PartitionCreator do
     let(:scenario) { "spaces_3_8_two_disks" }
 
     it "creates the partitions honouring the distribution" do
-      space3 = disk_spaces.detect { |s| s.size == 3.GiB }
-      space8 = disk_spaces.detect { |s| s.size == 8.GiB }
+      space3 = disk_spaces.detect { |s| s.size == (3.GiB - 1.MiB) }
+      space8 = disk_spaces.detect { |s| s.size == (8.GiB - 1.MiB) }
       distribution = space_dist(
         space3 => vols_list(root_vol, home_vol),
         space8 => vols_list(swap_vol)
@@ -77,15 +77,15 @@ describe Yast::Storage::Proposal::PartitionCreator do
         before do
           root_vol.desired = 20.GiB
           home_vol.desired = 20.GiB
-          swap_vol.desired = 10.GiB
+          swap_vol.desired = 10.GiB - 1.MiB
         end
 
         it "creates partitions matching the volume sizes" do
           result = creator.create_partitions(distribution)
           expect(result.partitions).to contain_exactly(
-            an_object_with_fields(mountpoint: "/", size: 20.GiB),
-            an_object_with_fields(mountpoint: "/home", size: 20.GiB),
-            an_object_with_fields(mountpoint: "swap", size: 10.GiB)
+            an_object_with_fields(mountpoint: "/", size: 20.GiB.size_b),
+            an_object_with_fields(mountpoint: "/home", size: 20.GiB.size_b),
+            an_object_with_fields(mountpoint: "swap", size: (10.GiB - 1.MiB).size_b)
           )
         end
       end
@@ -96,16 +96,16 @@ describe Yast::Storage::Proposal::PartitionCreator do
           root_vol.weight = 1
           home_vol.desired = 20.GiB
           home_vol.weight = 2
-          swap_vol.desired = 1.GiB
-          swap_vol.max_size = 1.GiB
+          swap_vol.desired = 1.GiB - 1.MiB
+          swap_vol.max_size = 1.GiB - 1.MiB
         end
 
         it "distributes the extra space" do
           result = creator.create_partitions(distribution)
           expect(result.partitions).to contain_exactly(
-            an_object_with_fields(mountpoint: "/", size: 23.GiB),
-            an_object_with_fields(mountpoint: "/home", size: 26.GiB),
-            an_object_with_fields(mountpoint: "swap", size: 1.GiB)
+            an_object_with_fields(mountpoint: "/", size: 23.GiB.size_b),
+            an_object_with_fields(mountpoint: "/home", size: 26.GiB.size_b),
+            an_object_with_fields(mountpoint: "swap", size: (1.GiB - 1.MiB).size_b)
           )
         end
       end
@@ -142,23 +142,23 @@ describe Yast::Storage::Proposal::PartitionCreator do
           result = creator.create_partitions(distribution)
           primary = result.partitions.with(type: ::Storage::PartitionType_PRIMARY)
           expect(primary).to contain_exactly(
-            an_object_with_fields(name: "/dev/sda1", size: 78.GiB),
-            an_object_with_fields(name: "/dev/sda2", size: 100.GiB)
+            an_object_with_fields(name: "/dev/sda1", size: 78.GiB.size_b),
+            an_object_with_fields(name: "/dev/sda2", size: (100.GiB - 1.MiB).size_b)
           )
         end
 
         it "creates an extended partition filling the whole space" do
           result = creator.create_partitions(distribution)
           extended = result.partitions.with(type: ::Storage::PartitionType_EXTENDED)
-          expect(extended).to contain_exactly an_object_with_fields(name: "/dev/sda3", size: 22.GiB)
+          expect(extended).to contain_exactly an_object_with_fields(name: "/dev/sda3", size: 22.GiB.size_b)
         end
 
         it "creates all the partitions as logical" do
           result = creator.create_partitions(distribution)
           logical = result.partitions.with(type: ::Storage::PartitionType_LOGICAL)
           expect(logical).to contain_exactly(
-            an_object_with_fields(name: "/dev/sda5", size: 1.GiB),
-            an_object_with_fields(name: "/dev/sda6", size: 1.GiB)
+            an_object_with_fields(name: "/dev/sda5", size: 1.GiB.size_b),
+            an_object_with_fields(name: "/dev/sda6", size: 1.GiB.size_b)
           )
         end
       end
@@ -172,22 +172,22 @@ describe Yast::Storage::Proposal::PartitionCreator do
           result = creator.create_partitions(distribution)
           primary = result.partitions.with(type: ::Storage::PartitionType_PRIMARY)
           expect(primary).to contain_exactly(
-            an_object_with_fields(name: "/dev/sda1", size: 78.GiB),
-            an_object_with_fields(name: "/dev/sda2", size: 100.GiB),
-            an_object_with_fields(name: "/dev/sda3", size: 1.GiB)
+            an_object_with_fields(name: "/dev/sda1", size: 78.GiB.size_b),
+            an_object_with_fields(name: "/dev/sda2", size: (100.GiB - 1.MiB).size_b),
+            an_object_with_fields(name: "/dev/sda3", size: 1.GiB.size_b)
           )
         end
 
         it "creates an extended partition filling the remaining space" do
           result = creator.create_partitions(distribution)
           extended = result.partitions.with(type: ::Storage::PartitionType_EXTENDED)
-          expect(extended).to contain_exactly an_object_with_fields(name: "/dev/sda4", size: 21.GiB)
+          expect(extended).to contain_exactly an_object_with_fields(name: "/dev/sda4", size: 21.GiB.size_b)
         end
 
         it "creates logical partitions for the remaining volumes" do
           result = creator.create_partitions(distribution)
           logical = result.partitions.with(type: ::Storage::PartitionType_LOGICAL)
-          expect(logical).to contain_exactly an_object_with_fields(name: "/dev/sda5", size: 1.GiB)
+          expect(logical).to contain_exactly an_object_with_fields(name: "/dev/sda5", size: 1.GiB.size_b)
         end
       end
     end
@@ -205,15 +205,17 @@ describe Yast::Storage::Proposal::PartitionCreator do
       it "reuses the extended partition" do
         result = creator.create_partitions(distribution)
         extended = result.partitions.with(type: ::Storage::PartitionType_EXTENDED)
-        expect(extended).to contain_exactly an_object_with_fields(name: "/dev/sda4", size: 22.GiB)
+        expect(extended).to contain_exactly(
+          an_object_with_fields(name: "/dev/sda4", size: (22.GiB - 1.MiB).size_b)
+        )
       end
 
       it "creates all the partitions as logical" do
         result = creator.create_partitions(distribution)
         logical = result.partitions.with(type: ::Storage::PartitionType_LOGICAL)
         expect(logical).to contain_exactly(
-          an_object_with_fields(name: "/dev/sda5", size: 1.GiB),
-          an_object_with_fields(name: "/dev/sda6", size: 1.GiB)
+          an_object_with_fields(name: "/dev/sda5", size: 1.GiB.size_b),
+          an_object_with_fields(name: "/dev/sda6", size: 1.GiB.size_b)
         )
       end
     end

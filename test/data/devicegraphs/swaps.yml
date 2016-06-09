@@ -22,7 +22,7 @@
         uuid:         "22222222-2222-2222-2222-22222222"
 
     - partition:
-        size:         1 GiB
+        size:         unlimited
         name:         /dev/sda3
         id:           swap
         file_system:  swap
