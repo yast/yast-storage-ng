@@ -22,7 +22,7 @@
 
 # usage
 #
-#   boot_req_checker_demo DEVICES ROOT_DEVICE
+#   boot_req_checker_demo.rb DEVICES ROOT_DEVICE
 #
 #   DEVICES:     either a YAML file or the empty string (indicating probing the running system)
 #   ROOT_DEVICE: device to check; if unset, find a suitable device
@@ -32,26 +32,22 @@ require "yast"	# changes $LOAD_PATH
 
 $LOAD_PATH.unshift(File.expand_path("../../lib", __FILE__))
 
-require "storage/boot_requirements_checker.rb"
-require "storage/proposal/settings.rb"
+require "storage/boot_requirements_checker"
+require "storage/proposal/settings"
 require "storage/disk_analyzer"
 require "storage/patches"
 require "pp"
 
 begin
+  Yast::Storage::StorageManager.fake_from_yaml(ARGV[0]) unless ARGV[0].nil? || ARGV[0].empty?
+  sm = Yast::Storage::StorageManager.instance
 
-Yast::Storage::StorageManager.fake_from_yaml(ARGV[0]) unless ARGV[0].nil? || ARGV[0].empty?
-sm = Yast::Storage::StorageManager.instance
-
-devicegraph = sm.probed
-puts(devicegraph)
-
+  devicegraph = sm.probed
+  puts(devicegraph)
 rescue => x
   puts "exception: #{x}"
   pp x.backtrace
 end
-
-
 
 puts "\n---  disk_analyzer  ---"
 disk_analyzer = Yast::Storage::DiskAnalyzer.new
@@ -66,6 +62,7 @@ pp(settings)
 
 puts "\n---  needed  ---"
 checker = Yast::Storage::BootRequirementsChecker.new(settings, disk_analyzer)
+
 begin
   needed = checker.needed_partitions
   pp(needed)
