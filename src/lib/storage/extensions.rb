@@ -82,7 +82,7 @@ module Storage
     end
 
     def table_icon
-      return make_icon_cell(Icons::DEVICE, "Device")
+      return make_icon_cell(ExpertPartitioner::Icons::DEVICE, "Device")
     end
 
     def table_name
