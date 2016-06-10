@@ -14,7 +14,7 @@
         type:         extended
 
     - partition:
-        size:         392 GiB
+        size:         unlimited
         name:         /dev/sda5
         type:         logical
         id:           0x7
