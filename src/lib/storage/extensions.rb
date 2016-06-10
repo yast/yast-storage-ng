@@ -267,6 +267,18 @@ module Storage
     end
   end
 
+  class Encryption
+    def table_icon
+      return make_icon_cell(ExpertPartitioner::Icons::ENCRYPTION, "Encryption")
+    end
+  end
+
+  class Luks
+    def table_icon
+      return make_icon_cell(ExpertPartitioner::Icons::ENCRYPTION, "LUKS")
+    end
+  end
+
   class Filesystem
     def table_icon
       return make_icon_cell(ExpertPartitioner::Icons::FILESYSTEM, "Filesystem")
