@@ -1,6 +1,6 @@
 # encoding: utf-8
 
-# Copyright (c) [2015] SUSE LLC
+# Copyright (c) [2015-2016] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -31,7 +31,13 @@ module ExpertPartitioner
 
     MD = "yast-raid.png"
 
+    LVM_PV = "yast-disk.png"
+    LVM_VG = "yast-lvm_config.png"
+    LVM_LV = "yast-partitioning.png"
+
     PARTITION = "yast-partitioning.png"
+
+    ENCRYPTION = "yast-encrypted.png"
 
     FILESYSTEM = "yast-nfs.png"
   end

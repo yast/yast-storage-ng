@@ -62,18 +62,17 @@ module ExpertPartitioner
       Yast::UI.OpenDialog(
         VBox(
           Heading(_("Create Partition")),
-          RadioButtonGroup(Id(:size), VBox(
-                             LeftRadioButton(Id(:max_size), # Opt(:notify),
-                                             _("Maximum Size (TODO)")),
-                             LeftRadioButtonWithAttachment(Id(:custom_size), # Opt(:notify),
-                                                           _("Custom Size"),
-                                                           VBox(
-                                                             Id(:custom_size_attachment),
-                                                             MinWidth(15, InputField(Id(:custom_size_input), Opt(:shrinkable), _("Size"), "50 MiB")),
-                                                           )
-                                                          )
-                           )
-                          ),
+          RadioButtonGroup(Id(:size),
+            VBox(
+              LeftRadioButton(Id(:max_size), # Opt(:notify),
+                _("Maximum Size (TODO)")),
+              LeftRadioButtonWithAttachment(Id(:custom_size), # Opt(:notify),
+                _("Custom Size"),
+                VBox(
+                  Id(:custom_size_attachment),
+                  MinWidth(15, InputField(Id(:custom_size_input), Opt(:shrinkable), _("Size"), "50 MiB"))
+                               ))
+            )),
           ButtonBox(
             PushButton(Id(:cancel), Yast::Label.CancelButton),
             PushButton(Id(:ok), Yast::Label.OKButton)
@@ -82,45 +81,57 @@ module ExpertPartitioner
       )
     end
 
-    def doit
+    def doit_max_size(partition_table,  partition_slots)
+      used_partition_slot = partition_slots[0]
 
+      used_partition_slot.region = partition_table.align(used_partition_slot.region,
+        Storage::AlignPolicy_KEEP_END)
+
+      partition_table.create_partition(
+        used_partition_slot.name,
+        used_partition_slot.region,
+        Storage::PartitionType_PRIMARY
+      )
+    end
+
+    def doit_custom_size(partition_table, partition_slots)
+      size = Yast::UI.QueryWidget(Id(:custom_size_input), :Value)
+      size = Storage.humanstring_to_byte(size, false)
+
+      partition_slots.delete_if do |partition_slot|
+        !partition_slot.primary_slot || !partition_slot.primary_possible ||
+          size > partition_slot.region.to_bytes(partition_slot.region.length)
+      end
+
+      if partition_slots.empty?
+        Yast::Popup::Error("No suitable partition slot found.")
+        return
+      end
+
+      used_partition_slot = partition_slots[0]
+
+      used_partition_slot.region.length = used_partition_slot.region.to_blocks(size)
+
+      partition_table.create_partition(
+        used_partition_slot.name,
+        used_partition_slot.region,
+        Storage::PartitionType_PRIMARY
+      )
+    end
+
+    def doit
       partition_table = @disk.partition_table
       partition_slots = partition_table.unused_partition_slots.to_a
 
       case Yast::UI.QueryWidget(Id(:size), :Value)
 
       when :max_size
-
-        partition_slot = partition_slots[0]
-
-        partition_slot.region = partition_table.align(partition_slot.region,
-                                                      Storage::AlignPolicy_KEEP_END)
+        doit_max_size(partition_table, partition_slots)
 
       when :custom_size
-
-        size = Yast::UI.QueryWidget(Id(:custom_size_input), :Value)
-        size = Storage.humanstring_to_byte(size, false)
-
-        partition_slots.delete_if do |partition_slot|
-          !partition_slot.primary_slot || !partition_slot.primary_possible ||
-            size > partition_slot.region.to_bytes(partition_slot.region.length)
-        end
-
-        if partition_slots.empty?
-          Yast::Popup::Error("No suitable partition slot found.")
-          return
-        end
-
-        partition_slot = partition_slots[0]
-        partition_slot.region.length = partition_slot.region.to_blocks(size)
+        doit_custom_size(partition_table, partition_slots)
 
       end
-
-      partition_table.create_partition(
-        partition_slot.name,
-        partition_slot.region,
-        Storage::PartitionType_PRIMARY
-      )
     end
   end
 end

@@ -1,6 +1,6 @@
 # encoding: utf-8
-#
-# Copyright (c) [2015] SUSE LLC
+
+# Copyright (c) [2015-2016] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -19,24 +19,30 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "expert_partitioner/tree"
+require "yast"
+require "storage"
+require "expert_partitioner/tab_views/view"
+require "expert_partitioner/popups"
+
+Yast.import "UI"
+Yast.import "Popup"
+
+include Yast::I18n
+include Yast::Logger
 
 module ExpertPartitioner
-  # class to display and handle a tab
-  class TabView
+  class LvmVgOverviewTabView < TabView
+    def initialize(lvm_vg)
+      @lvm_vg = lvm_vg
+    end
+
     def create
-      VBox(VStretch(), HStretch())
-    end
+      tmp = ["Name: #{@lvm_vg.vg_name}"]
+      #       "Size: #{::Storage.byte_to_humanstring(@lvm_vg.size, false, 2, false)}"]
 
-    def handle(_input)
-    end
+      contents = Yast::HTML.List(tmp)
 
-    def update(also_tree = false)
-      # TODO: more accurate update options
-
-      Yast::UI.ChangeWidget(:tree, :Items, Tree.new.tree_items) if also_tree
-
-      Yast::UI.ReplaceWidget(:tab_panel, create)
+      return RichText(Id(:text), Opt(:hstretch, :vstretch), contents)
     end
   end
 end

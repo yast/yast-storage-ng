@@ -1,6 +1,6 @@
 # encoding: utf-8
 
-# Copyright (c) [2015] SUSE LLC
+# Copyright (c) [2015-2016] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -21,53 +21,33 @@
 
 require "yast"
 require "storage"
+require "storage/storage_manager"
 require "storage/extensions"
 require "expert_partitioner/tree_views/view"
-require "expert_partitioner/tab_views/disk/overview"
-require "expert_partitioner/tab_views/disk/partitions"
+require "expert_partitioner/icons"
 
 Yast.import "UI"
-Yast.import "Popup"
+Yast.import "HTML"
 
 include Yast::I18n
-include Yast::Logger
 
 module ExpertPartitioner
-  class DiskTreeView < TreeView
-    def initialize(disk)
-      @disk = disk
+  class LvmLvTreeView < TreeView
+    def initialize(lvm_lv)
+      @lvm_lv = lvm_lv
     end
 
     def create
-      @tab_view = DiskOverviewTabView.new(@disk)
+      tmp = ["LV Name: #{@lvm_lv.lv_name}",
+             "Name: #{@lvm_lv.name}",
+             "Size: #{::Storage.byte_to_humanstring(@lvm_lv.size, false, 2, false)}"]
 
-      tabs = [
-        # tab heading
-        Item(Id(:overview), _("&Overview")),
-        # tab heading
-        Item(Id(:partitions), _("&Partitions"))
-      ]
+      contents = Yast::HTML.List(tmp)
 
       VBox(
-        Left(IconAndHeading(_("Hard Disk: %s") % @disk.name, Icons::DISK)),
-        DumbTab(Id(:tab), tabs, ReplacePoint(Id(:tab_panel), @tab_view.create))
+        Left(IconAndHeading(_("LVM LV: %s") % @lvm_lv.lv_name, Icons::LVM_LV)),
+        RichText(Id(:text), Opt(:hstretch, :vstretch), contents)
       )
-    end
-
-    def handle(input)
-      @tab_view.handle(input)
-
-      case input
-
-      when :overview
-        @tab_view = DiskOverviewTabView.new(@disk)
-
-      when :partitions
-        @tab_view = DiskPartitionsTabView.new(@disk)
-
-      end
-
-      @tab_view.update
     end
   end
 end

@@ -23,14 +23,14 @@ Style/Documentation:
     - 'src/lib/storage/extensions.rb'
     - 'src/lib/expert_partitioner/ui_extensions.rb'
     - 'src/lib/expert_partitioner/icons.rb'
-    - 'src/lib/expert_partitioner/tab_views/*'
+    - 'src/lib/expert_partitioner/tab_views/*/*'
     - 'src/lib/expert_partitioner/tree_views/*'
 
 # FIXME: Let's consider this temporary code and be permissive with exceptions
 # suppresion
 Lint/HandleExceptions:
   Exclude:
-    - 'src/lib/expert_partitioner/tab_views/*'
+    - 'src/lib/expert_partitioner/tab_views/*/*'
     - 'src/lib/expert_partitioner/tree_views/*'
     - 'src/lib/expert_partitioner/tree.rb'
 
