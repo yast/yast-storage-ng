@@ -20,6 +20,6 @@
         label:        data
 
     - partition:
-        size:         22 GiB
+        size:         unlimited
         name:         /dev/sda4
         type:         extended

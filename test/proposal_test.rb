@@ -50,7 +50,7 @@ describe Yast::Storage::Proposal do
       instance_double("Yast::Storage::BootRequirementChecker", needed_partitions: [])
     end
     let(:resize_info) do
-      instance_double("::Storage::ResizeInfo", resize_ok: true, min_size_k: 40.GiB.size_k)
+      instance_double("::Storage::ResizeInfo", resize_ok: true, min_size: 40.GiB.size_b)
     end
     let(:separate_home) { false }
     let(:settings) do
@@ -120,9 +120,9 @@ describe Yast::Storage::Proposal do
       context "with a separate home" do
         let(:separate_home) { true }
 
-        # FIXME: to avoid this in the future, SpaceMaker should become smarter
-        it "runs out of primary partitions" do
-          expect { proposal.propose }.to raise_error Yast::Storage::Proposal::NoMorePartitionSlotError
+        it "proposes the expected layout" do
+          proposal.propose
+          expect(proposal.devices.to_str).to eq expected.to_str
         end
       end
 
@@ -167,7 +167,7 @@ describe Yast::Storage::Proposal do
           mountpoint: "swap",
           uuid:       "33333333-3333-3333-3333-33333333",
           label:      "swap3",
-          size:       1.GiB
+          size:       (1.GiB - 1.MiB).size_b
         )
       end
 
@@ -178,14 +178,14 @@ describe Yast::Storage::Proposal do
           mountpoint: "swap",
           uuid:       "11111111-1111-1111-1111-11111111",
           label:      "swap1",
-          size:       500.MiB
+          size:       500.MiB.size_b
         )
         sda5 = proposal.devices.partitions.with(name: "/dev/sda5").first
         expect(sda5).to match_fields(
           mountpoint: "swap",
           uuid:       "22222222-2222-2222-2222-22222222",
           label:      "swap2",
-          size:       500.MiB
+          size:       500.MiB.size_b
         )
       end
 

@@ -112,7 +112,6 @@ module ExpertPartitioner
         end
 
         partition_slot = partition_slots[0]
-
         partition_slot.region.length = partition_slot.region.to_blocks(size)
 
       end

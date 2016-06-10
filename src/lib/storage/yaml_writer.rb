@@ -46,11 +46,11 @@ module Yast
         # use its write() method repeatedly.
         #
         # @param devicegraph [::Storage::devicegraph]
-        # @param yaml_file_name [String]
+        # @param yaml_file [String | IO]
         #
-        def write(devicegraph, yaml_file_name)
+        def write(devicegraph, yaml_file)
           writer = YamlWriter.new
-          writer.write(devicegraph, yaml_file_name)
+          writer.write(devicegraph, yaml_file)
         end
       end
 
@@ -66,11 +66,15 @@ module Yast
       # Write all devices from the specified device graph to a YAML file.
       #
       # @param devicegraph [::Storage::devicegraph]
-      # @param yaml_file_name [String]
+      # @param yaml_file [String | IO]
       #
-      def write(devicegraph, yaml_file_name)
+      def write(devicegraph, yaml_file)
         device_tree = yaml_device_tree(devicegraph)
-        File.open(yaml_file_name, "w") { |file| file.write(device_tree.to_yaml) }
+        if yaml_file.respond_to?(:write)
+          yaml_file.write(device_tree.to_yaml)
+        else
+          File.open(yaml_file, "w") { |file| file.write(device_tree.to_yaml) }
+        end
       end
 
       # Convert all devices from the specified device graph to YAML data
@@ -93,11 +97,18 @@ module Yast
       #
       def yaml_disk(disk)
         content = {}
-        content["size"] = DiskSize.new(disk.size_k).to_s
+        content["size"] = DiskSize.B(disk.size).to_s_ex
+        content["block_size"] = DiskSize.B(disk.region.block_size).to_s_ex
+        content["io_size"] = DiskSize.B(disk.topology.optimal_io_size).to_s_ex
+        content["min_grain"] = DiskSize.B(disk.topology.minimal_grain).to_s_ex
+        content["align_ofs"] = DiskSize.B(disk.topology.alignment_offset).to_s_ex
         content["name"] = disk.name
         begin
           ptable = disk.partition_table # this will raise an excepton if no partition table
           content["partition_table"] = @partition_table_types[ptable.type]
+          if ::Storage.msdos?(ptable)
+            content["mbr_gap"] = DiskSize.B(::Storage.to_msdos(ptable).minimal_mbr_gap).to_s_ex
+          end
           partitions = yaml_disk_partitions(disk)
           content["partitions"] = partitions unless partitions.empty?
         rescue RuntimeError => ex # FIXME: rescue ::Storage::Exception when SWIG bindings are fixed
@@ -109,22 +120,59 @@ module Yast
 
       # Returns a YAML representation of the partitions and free slots in a disk
       #
+      # Free slots are calculated as best as we can and not part of the
+      # partition table object.
+      #
       # @param disk [::Storage::Disk]
       # @return [Array<Hash>]
       def yaml_disk_partitions(disk)
-        cyl_size = DiskSize.new(disk.geometry.cylinder_size / 1024)
-        first_free_cyl = 0
+        partition_end = 0
+        partition_end_max = 0
+        partition_end_ext = 0
         partitions = []
         sorted_parts = sorted_partitions(disk)
         sorted_parts.each do |partition|
-          gap = partition.region.start - first_free_cyl
-          partitions << yaml_free_slot(cyl_size * gap) if gap > 0
 
+          # if we are about to leave an extend partition, show what's left
+          if partition_end_ext > 0 && partition.type != ::Storage::PartitionType_LOGICAL
+            gap = partition_end_ext - partition_end;
+            partitions << yaml_free_slot(DiskSize.B(partition_end_ext - gap), DiskSize.B(gap)) if gap > 0
+            partition_end = partition_end_ext
+            partition_end_ext = 0
+          end
+
+          # is there a gap before the partition?
+          # note: gap might actually be negative sometimes!
+          gap = partition.region.start * partition.region.block_size - partition_end;
+          partitions << yaml_free_slot(DiskSize.B(partition_end), DiskSize.B(gap)) if gap > 0
+
+          # show partition itself
           partitions << yaml_partition(partition)
-          if partition.type != ::Storage::PartitionType_EXTENDED
-            first_free_cyl = partition.region.end + 1
+
+          # adjust end pointers
+          partition_end = (partition.region.end + 1) * partition.region.block_size
+          partition_end_max = [ partition_end_max, partition_end].max
+
+          # if we're inside an extended partition, remember its end for later
+          if partition.type == ::Storage::PartitionType_EXTENDED
+            partition_end_ext = partition_end
+            partition_end = partition.region.start * partition.region.block_size
           end
         end
+
+        # finally, show what's left
+
+        # see if there's space left in an extended partition
+        if partition_end_ext > 0
+          gap = partition_end_ext - partition_end;
+          partitions << yaml_free_slot(DiskSize.B(partition_end_ext), DiskSize.B(gap)) if gap > 0
+        end
+
+        # see if there's space left at the end of the disk
+        # show also negative sizes so we know we've overstepped
+        gap = (disk.region.end + 1) * disk.region.block_size - partition_end_max
+        partitions << yaml_free_slot(DiskSize.B(partition_end_max), DiskSize.B(gap)) if gap != 0
+
         partitions
       end
 
@@ -139,7 +187,7 @@ module Yast
         disk.partition_table.partitions.to_a.sort do |a, b|
           by_start = a.region.start <=> b.region.start
           if by_start.zero?
-            a.type == ::Storage::PartitionType_EXTENDED ? 1 : -1
+            a.type == ::Storage::PartitionType_EXTENDED ? -1 : 1
           else
             by_start
           end
@@ -155,7 +203,8 @@ module Yast
       # rubocop:disable Metrics/AbcSize
       def yaml_partition(partition)
         content = {
-          "size" => DiskSize.new(partition.region.to_kb(partition.region.length)).to_s,
+          "size" => DiskSize.B(partition.region.length * partition.region.block_size).to_s_ex,
+          "start" => DiskSize.B(partition.region.start * partition.region.block_size).to_s_ex,
           "name" => partition.name,
           "type" => @partition_types[partition.type],
           "id"   => @partition_ids[partition.id] || "0x#{partition.id.to_s(16)}"
@@ -181,8 +230,8 @@ module Yast
       # @param  size [DiskSize] size of the free slot
       # @return [Hash]
       #
-      def yaml_free_slot(size)
-        { "free" => { "size" => size.to_s } }
+      def yaml_free_slot(start, size)
+        { "free" => { "size" => size.to_s_ex, "start" => start.to_s_ex } }
       end
     end
   end

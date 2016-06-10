@@ -27,6 +27,9 @@ require "storage/refinements/size_casts"
 
 describe Yast::Storage::Proposal::SpaceMaker do
   describe "#make_space" do
+    # TODO: (among other several things):
+    #  test :distribution (eg. make sure it does not include reused volumes)
+    #  test :deleted_partitions
     using Yast::Storage::Refinements::SizeCasts
     using Yast::Storage::Refinements::DevicegraphLists
 
@@ -45,27 +48,29 @@ describe Yast::Storage::Proposal::SpaceMaker do
       settings.root_device = "/dev/sda"
       settings
     end
+    let(:volumes) { vols_list(vol1) }
+
     subject(:maker) { described_class.new(fake_devicegraph, analyzer, settings) }
 
     context "if the disk is not big enough" do
       let(:scenario) { "empty_hard_disk_50GiB" }
-      let(:required_size) { 60.GiB }
+      let(:vol1) { planned_vol(mount_point: "/1", type: :ext4, desired: 60.GiB) }
 
       it "raises a NoDiskSpaceError exception" do
-        expect { maker.provide_space(required_size) }
+        expect { maker.provide_space(volumes) }
           .to raise_error Yast::Storage::Proposal::NoDiskSpaceError
       end
     end
 
     context "if there are Windows and Linux partitions" do
       let(:scenario) { "windows-linux-multiboot-pc" }
-      let(:required_size) { 100.GiB }
+      let(:vol1) { planned_vol(mount_point: "/1", type: :ext4, desired: 100.GiB) }
 
       it "deletes some of the linux ones" do
-        result = maker.provide_space(required_size)
+        result = maker.provide_space(volumes)
         # FIXME: the result is actually kind of suboptimal, there were no need
         # to delete the swap partition
-        expect(result.partitions).to contain_exactly(
+        expect(result[:devicegraph].partitions).to contain_exactly(
           an_object_with_fields(label: "windows", size: 250.GiB)
         )
       end
@@ -85,17 +90,17 @@ describe Yast::Storage::Proposal::SpaceMaker do
       end
 
       context "with enough free space in the Windows partition" do
-        let(:required_size) { 40.GiB }
+        let(:vol1) { planned_vol(mount_point: "/1", type: :ext4, desired: 40.GiB) }
 
         it "shrinks the Windows partition by the required size" do
-          result = maker.provide_space(required_size)
-          win_partition = result.partitions.with(name: "/dev/sda1").first
+          result = maker.provide_space(volumes)
+          win_partition = result[:devicegraph].partitions.with(name: "/dev/sda1").first
           expect(win_partition.size_k.KiB).to eq 740.GiB
         end
 
         it "leaves other partitions untouched" do
-          result = maker.provide_space(required_size)
-          expect(result.partitions).to contain_exactly(
+          result = maker.provide_space(volumes)
+          expect(result[:devicegraph].partitions).to contain_exactly(
             an_object_with_fields(label: "windows"),
             an_object_with_fields(label: "recovery", size: 20.GiB)
           )
@@ -103,17 +108,17 @@ describe Yast::Storage::Proposal::SpaceMaker do
       end
 
       context "with no enough free space in the Windows partition" do
-        let(:required_size) { 60.GiB }
+        let(:vol1) { planned_vol(mount_point: "/1", type: :ext4, desired: 60.GiB) }
 
         it "shrinks the Windows partition as much as possible" do
-          result = maker.provide_space(required_size)
-          win_partition = result.partitions.with(name: "/dev/sda1").first
+          result = maker.provide_space(volumes)
+          win_partition = result[:devicegraph].partitions.with(name: "/dev/sda1").first
           expect(win_partition.size_k.KiB).to eq 730.GiB
         end
 
         it "removes other partitions" do
-          result = maker.provide_space(required_size)
-          expect(result.partitions).to contain_exactly(
+          result = maker.provide_space(volumes)
+          expect(result[:devicegraph].partitions).to contain_exactly(
             an_object_with_fields(label: "windows")
           )
         end
@@ -140,17 +145,17 @@ describe Yast::Storage::Proposal::SpaceMaker do
       end
 
       context "with at least one Windows partition having enough free space" do
-        let(:required_size) { 20.GiB }
+        let(:vol1) { planned_vol(mount_point: "/1", type: :ext4, desired: 20.GiB) }
 
         it "shrinks the less full Windows partition as needed" do
-          result = maker.provide_space(required_size)
-          win2_partition = result.partitions.with(name: "/dev/sdb1").first
+          result = maker.provide_space(volumes)
+          win2_partition = result[:devicegraph].partitions.with(name: "/dev/sdb1").first
           expect(win2_partition.size_k.KiB).to eq 160.GiB
         end
 
         it "leaves other partitions untouched" do
-          result = maker.provide_space(required_size)
-          expect(result.partitions).to contain_exactly(
+          result = maker.provide_space(volumes)
+          expect(result[:devicegraph].partitions).to contain_exactly(
             an_object_with_fields(label: "windows1", size: 80.GiB),
             an_object_with_fields(label: "recovery1", size: 20.GiB),
             an_object_with_fields(label: "windows2"),
@@ -160,23 +165,25 @@ describe Yast::Storage::Proposal::SpaceMaker do
       end
 
       context "with no partition having enough free space by itself" do
-        let(:required_size) { 140.GiB }
+        let(:vol1) { planned_vol(mount_point: "/1", type: :ext4, desired: 130.GiB) }
+        let(:vol2) { planned_vol(mount_point: "/2", type: :ext4, desired: 10.GiB) }
+        let(:volumes) { vols_list(vol1, vol2) }
 
         it "shrinks the less full Windows partition as much as possible" do
-          result = maker.provide_space(required_size)
-          win2_partition = result.partitions.with(name: "/dev/sdb1").first
+          result = maker.provide_space(volumes)
+          win2_partition = result[:devicegraph].partitions.with(name: "/dev/sdb1").first
           expect(win2_partition.size_k.KiB).to eq 50.GiB
         end
 
         it "shrinks the other Windows partition as needed" do
-          result = maker.provide_space(required_size)
-          win1_partition = result.partitions.with(name: "/dev/sda1").first
+          result = maker.provide_space(volumes)
+          win1_partition = result[:devicegraph].partitions.with(name: "/dev/sda1").first
           expect(win1_partition.size_k.KiB).to eq 70.GiB
         end
 
         it "leaves other partitions untouched" do
-          result = maker.provide_space(required_size)
-          expect(result.partitions).to contain_exactly(
+          result = maker.provide_space(volumes)
+          expect(result[:devicegraph].partitions).to contain_exactly(
             an_object_with_fields(label: "windows1"),
             an_object_with_fields(label: "recovery1", size: 20.GiB),
             an_object_with_fields(label: "windows2"),
@@ -190,17 +197,24 @@ describe Yast::Storage::Proposal::SpaceMaker do
       let(:scenario) { "multi-linux-pc" }
 
       it "deletes the first partitions of the disk until reaching the goal" do
-        result = maker.provide_space(100.GiB)
-        expect(result.partitions).to contain_exactly(
+        vol = planned_vol(mount_point: "/1", type: :ext4, desired: 100.GiB)
+        volumes = Yast::Storage::PlannedVolumesList.new([vol])
+
+        result = maker.provide_space(volumes)
+        expect(result[:devicegraph].partitions).to contain_exactly(
           an_object_with_fields(name: "/dev/sda4", size: 900.GiB),
           an_object_with_fields(name: "/dev/sda5", size: 300.GiB),
           an_object_with_fields(name: "/dev/sda6", size: 600.GiB)
         )
       end
 
-      it "doesn't delete partitions listed in the 'keep' argument" do
-        result = maker.provide_space(100.GiB, keep: ["/dev/sda2"])
-        expect(result.partitions).to contain_exactly(
+      it "doesn't delete partitions marked to be reused" do
+        vol1 = planned_vol(mount_point: "/1", type: :ext4, desired: 100.GiB)
+        vol2 = planned_vol(mount_point: "/2", reuse: "/dev/sda2")
+        volumes = Yast::Storage::PlannedVolumesList.new([vol1, vol2])
+
+        result = maker.provide_space(volumes)
+        expect(result[:devicegraph].partitions).to contain_exactly(
           an_object_with_fields(name: "/dev/sda2", size: 60.GiB),
           an_object_with_fields(name: "/dev/sda4", size: 900.GiB),
           an_object_with_fields(name: "/dev/sda6", size: 600.GiB)
@@ -208,15 +222,27 @@ describe Yast::Storage::Proposal::SpaceMaker do
       end
 
       it "raises a NoDiskSpaceError exception if deleting is not enough" do
-        expect { maker.provide_space(980.GiB, keep: ["/dev/sda2"]) }
-          .to raise_error Yast::Storage::Proposal::NoDiskSpaceError
+        vol1 = planned_vol(mount_point: "/1", type: :ext4, desired: 980.GiB)
+        vol2 = planned_vol(mount_point: "/2", reuse: "/dev/sda2")
+        volumes = Yast::Storage::PlannedVolumesList.new([vol1, vol2])
+
+        expect { maker.provide_space(volumes) }.to raise_error Yast::Storage::Proposal::NoDiskSpaceError
       end
 
       # FIXME: Bug or feature? Anyways, we are planning to change how libstorage-ng
       # handles extended and logical partitions. Revisit this then
       it "doesn't delete empty extended partitions unless required" do
-        result = maker.provide_space(800.GiB, keep: ["/dev/sda1", "/dev/sda2", "/dev/sda3"])
-        expect(result.partitions).to contain_exactly(
+        volumes = Yast::Storage::PlannedVolumesList.new(
+          [
+            planned_vol(mount_point: "/1", type: :ext4, desired: 800.GiB),
+            planned_vol(mount_point: "/2", reuse: "/dev/sda1"),
+            planned_vol(mount_point: "/2", reuse: "/dev/sda2"),
+            planned_vol(mount_point: "/2", reuse: "/dev/sda3")
+          ]
+        )
+
+        result = maker.provide_space(volumes)
+        expect(result[:devicegraph].partitions).to contain_exactly(
           an_object_with_fields(name: "/dev/sda1", size: 4.GiB),
           an_object_with_fields(name: "/dev/sda2", size: 60.GiB),
           an_object_with_fields(name: "/dev/sda3", size: 60.GiB),
@@ -227,8 +253,17 @@ describe Yast::Storage::Proposal::SpaceMaker do
       # FIXME: in fact, extended partitions has no special consideration. This
       # works only by a matter of luck. See FIXME above.
       it "deletes empty extended partitions if the space is needed" do
-        result = maker.provide_space(900.GiB, keep: ["/dev/sda1", "/dev/sda2", "/dev/sda3"])
-        expect(result.partitions).to contain_exactly(
+        volumes = Yast::Storage::PlannedVolumesList.new(
+          [
+            planned_vol(mount_point: "/1", type: :ext4, desired: 900.GiB),
+            planned_vol(mount_point: "/2", reuse: "/dev/sda1"),
+            planned_vol(mount_point: "/2", reuse: "/dev/sda2"),
+            planned_vol(mount_point: "/2", reuse: "/dev/sda3")
+          ]
+        )
+
+        result = maker.provide_space(volumes)
+        expect(result[:devicegraph].partitions).to contain_exactly(
           an_object_with_fields(name: "/dev/sda1", size: 4.GiB),
           an_object_with_fields(name: "/dev/sda2", size: 60.GiB),
           an_object_with_fields(name: "/dev/sda3", size: 60.GiB)
@@ -238,11 +273,18 @@ describe Yast::Storage::Proposal::SpaceMaker do
       # FIXME: We are planning to change how libstorage-ng handles extended and logical
       # partitions. Then it will be time to fix this bug
       it "has an UGLY BUG that deletes extended partitions leaving the logical there" do
-        result = maker.provide_space(
-          400.GiB,
-          keep: ["/dev/sda1", "/dev/sda2", "/dev/sda3", "/dev/sda6"]
+        volumes = Yast::Storage::PlannedVolumesList.new(
+          [
+            planned_vol(mount_point: "/1", type: :ext4, desired: 400.GiB),
+            planned_vol(mount_point: "/2", reuse: "/dev/sda1"),
+            planned_vol(mount_point: "/2", reuse: "/dev/sda2"),
+            planned_vol(mount_point: "/2", reuse: "/dev/sda3"),
+            planned_vol(mount_point: "/2", reuse: "/dev/sda6")
+          ]
         )
-        expect(result.partitions).to contain_exactly(
+
+        result = maker.provide_space(volumes)
+        expect(result[:devicegraph].partitions).to contain_exactly(
           an_object_with_fields(name: "/dev/sda1", size: 4.GiB),
           an_object_with_fields(name: "/dev/sda2", size: 60.GiB),
           an_object_with_fields(name: "/dev/sda3", size: 60.GiB),

@@ -35,13 +35,23 @@ $LOAD_PATH.unshift(File.expand_path("../../lib", __FILE__))
 require "storage/boot_requirements_checker.rb"
 require "storage/proposal/settings.rb"
 require "storage/disk_analyzer"
+require "storage/patches"
 require "pp"
+
+begin
 
 Yast::Storage::StorageManager.fake_from_yaml(ARGV[0]) unless ARGV[0].nil? || ARGV[0].empty?
 sm = Yast::Storage::StorageManager.instance
 
 devicegraph = sm.probed
 puts(devicegraph)
+
+rescue => x
+  puts "exception: #{x}"
+  pp x.backtrace
+end
+
+
 
 puts "\n---  disk_analyzer  ---"
 disk_analyzer = Yast::Storage::DiskAnalyzer.new

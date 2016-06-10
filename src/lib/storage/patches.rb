@@ -34,7 +34,7 @@ module Storage
   # patch libstorage-ng class
   class Disk
     def inspect
-      "<Disk \##{sid} #{name} #{Yast::Storage::DiskSize.KiB(size_k)}>"
+      "<Disk #{name} #{Yast::Storage::DiskSize.B(size)}>"
     end
 
     # FIXME: Arvin promised #partition_table? in libstorage-ng;
@@ -68,7 +68,61 @@ module Storage
   # patch libstorage-ng class
   class Partition
     def inspect
-      "<Partition \##{sid} #{name} #{Yast::Storage::DiskSize.KiB(size_k)}>"
+      "<Partition #{name} #{Yast::Storage::DiskSize.B(size)}, #{region.show_range}>"
     end
   end
+
+  class PartitionSlot
+    def inspect
+      flags = ""
+      flags += "P" if self.primary_slot
+      flags += "p" if self.primary_possible
+      flags += "E" if self.extended_slot
+      flags += "e" if self.extended_possible
+      flags += "L" if self.logical_slot
+      flags += "l" if self.logical_possible
+      nice_size = Yast::Storage::DiskSize.B(region.length * region.block_size)
+      "<PartitionSlot #{self.nr} #{self.name} #{flags} #{nice_size}, #{self.region.show_range}>"
+    end
+
+    alias to_s inspect
+  end
+
+  class Region
+    def inspect
+      "<Region #{start} - #{self.end}>"
+    end
+
+    def show_range
+      "#{start} - #{self.end}"
+    end
+
+    alias to_s inspect
+  end
+
+  class PartitionTable
+    def inspect
+      i = "<PartitionTable #{self.to_s}[#{self.num_children}] "
+      self.partitions.each { |x|
+        i += "#{x.inspect}"
+      }
+      self.unused_partition_slots.each { |x|
+        i += "#{x.to_s}"
+      }
+      i += ">"
+    end
+  end
+
+  class Device
+    def inspect
+      "<Device #{self.to_s}>"
+    end
+  end
+
+  class Topology
+    def inspect
+      "<Topology ofs #{alignment_offset}, io #{optimal_io_size}, grain #{minimal_grain}/#{calculate_grain}>"
+    end
+  end
+
 end

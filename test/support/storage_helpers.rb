@@ -47,7 +47,7 @@ module Yast
       end
 
       def analyzer_part(name = "", size = Yast::Storage::DiskSize.MiB(10))
-        instance_double("::Storage::Partition", name: name, size_k: size.size_k)
+        instance_double("::Storage::Partition", name: name, size: size.size_b)
       end
 
       def planned_vol(attrs = {})
@@ -62,6 +62,15 @@ module Yast
           volume.send(:"#{key}=", value)
         end
         volume
+      end
+
+      def space_dist(vols_by_space, devicegraph: nil)
+        devicegraph ||= fake_devicegraph
+        Yast::Storage::Proposal::SpaceDistribution.new(vols_by_space, devicegraph)
+      end
+
+      def vols_list(*vols)
+        Yast::Storage::PlannedVolumesList.new([*vols])
       end
     end
   end

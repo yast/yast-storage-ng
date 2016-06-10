@@ -315,9 +315,9 @@ module Yast
           gap = DiskSize.KiB(0)
           if disk.partition_table? && disk.partition_table.type == ::Storage::PtType_MSDOS
             region1 = disk.partition_table.partitions.to_a.min do |x, y|
-              x.region.to_kb(x.region.start) <=> y.region.to_kb(y.region.start)
+              x.region.start <=> y.region.start
             end
-            gap = DiskSize.KiB(region1.region.to_kb(region1.region.start)) if region1
+            gap = DiskSize.B(region1.region.start * region1.region.block_size) if region1
           end
           gaps[name] = gap
         end
@@ -343,7 +343,7 @@ module Yast
         # No need to limit checking - PC arch only (few disks)
         @candidate_disks.each do |disk_name|
           begin
-            disk = ::Storage::Disk.find(devicegraph, disk_name)
+            disk = ::Storage::Disk.find_by_name(devicegraph, disk_name)
             disk.partition_table.partitions.each do |partition|
               next unless windows_partition?(partition)
 
@@ -395,7 +395,7 @@ module Yast
       def installation_disk?(disk_name)
         log.info("Checking if #{disk_name} is an installation disk")
         begin
-          disk = ::Storage::Disk.find(devicegraph, disk_name)
+          disk = ::Storage::Disk.find_by_name(devicegraph, disk_name)
           disk.partition_table.partitions.each do |partition|
             if NO_INSTALLATION_IDS.include?(partition.id)
               log.info("Skipping #{partition} (ID 0x#{partition.id.to_s(16)})")

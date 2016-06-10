@@ -18,6 +18,12 @@
     - partition:
         size:         unlimited
         name:         /dev/sda2
+        type:         extended
+
+    - partition:
+        size:         unlimited
+        name:         /dev/sda5
         id:           0xb
+        type:         logical
         file_system:  ntfs
         label:        data

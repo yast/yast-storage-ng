@@ -23,6 +23,7 @@
 
 require "yast"
 require "storage"
+require "storage/patches"
 require "storage/abstract_device_factory.rb"
 require "storage/disk_size.rb"
 require "storage/enum_mappings.rb"
@@ -53,16 +54,13 @@ module Yast
       # Sub-products are not listed here.
       VALID_PARAM =
         {
-          "disk"            => ["name", "size"],
+          "disk"            => ["name", "size", "block_size", "io_size", "min_grain", "align_ofs", "mbr_gap"],
           "partition_table" => [],
           "partitions"      => [],
-          "partition"       => ["size", "name", "type", "id", "mount_point", "label", "uuid"],
+          "partition"       => ["size", "start", "align", "name", "type", "id", "mount_point", "label", "uuid"],
           "file_system"     => [],
-          "free"            => ["size"]
+          "free"            => ["size","start"]
         }
-
-      # Size of a cylinder of our fake geometry disks
-      CYL_SIZE = DiskSize.MiB(1)
 
       class << self
         #
@@ -84,10 +82,7 @@ module Yast
 
       def initialize(devicegraph)
         super(devicegraph)
-        @partitions     = {}
         @disks          = Set.new
-        @first_free_cyl = {}
-        @cyl_count      = {}
       end
 
     protected
@@ -120,9 +115,9 @@ module Yast
         VALID_PARAM
       end
 
-      # Fix up parameters to the create_xy() methods. In this instance, this is
-      # used to convert any parameter called "size" to a DiskSize that can be
-      # used directly.
+      # Fix up parameters to the create_xy() methods.  In this instance,
+      # this is used to convert parameters representing a DiskSize to a
+      # DiskSize object that can be used directly.
       #
       # This method is optional. The base class checks with respond_to? if it
       # is implemented before it is called.
@@ -134,7 +129,9 @@ module Yast
       #
       def fixup_param(name, param)
         log.info("Fixing up #{param} for #{name}")
-        param["size"] = DiskSize.parse(param["size"]) if param.key?("size")
+        ["size", "start", "block_size", "io_size", "min_grain", "align_ofs", "mbr_gap"].each do |key|
+          param[key] = DiskSize.new(param[key]) if param.key?(key)
+        end
         param
       end
 
@@ -149,25 +146,54 @@ module Yast
       # Factory method to create a disk.
       #
       # @param _parent [nil] (disks are toplevel)
-      # @param args [Hash] disk parameters: "name", "size", "range"
+      # @param args [Hash] disk parameters:
+      #   "name"       device name ("/dev/sda" etc.)
+      #   "size"       disk size
+      #   "range"      max number of partitions
+      #   "block_size" block size
+      #   "io_size"    optimal io size
+      #   "min_grain"  minimal grain
+      #   "align_ofs"  alignment offset
+      #   "mbr_gap"    mbr gap (for msdos partition table)
       #
       # @return [String] device name of the new disk ("/dev/sda" etc.)
       #
       def create_disk(_parent, args)
+        @partitions     = {}
+        @free_blob      = nil
+        @free_regions   = []
+        @mbr_gap        = nil
+
         log.info("#{__method__}( #{args} )")
         name = args["name"] || "/dev/sda"
         size = args["size"] || DiskSize.zero
         raise ArgumentError, "\"size\" missing for disk #{name}" if size.zero?
         raise ArgumentError, "Duplicate disk name #{name}" if @disks.include?(name)
         @disks << name
-        disk = ::Storage::Disk.create(@devicegraph, name)
-        disk.size_k = size.size_k
+        block_size = args["block_size"] if args["block_size"]
+        io_size = args["io_size"] if args["io_size"]
+        min_grain = args["min_grain"] if args["min_grain"]
+        align_ofs = args["align_ofs"] if args["align_ofs"]
+        @mbr_gap = args["mbr_gap"] if args["mbr_gap"]
+        if block_size && block_size.size > 0
+          r = ::Storage::Region.new(0, size.size / block_size.size, block_size.size)
+          disk = ::Storage::Disk.create(@devicegraph, name, r)
+        else
+          disk = ::Storage::Disk.create(@devicegraph, name)
+          disk.size = size.size
+        end
+        if io_size && io_size.size > 0
+          disk.topology.optimal_io_size = io_size.size
+        end
+        if align_ofs
+          disk.topology.alignment_offset = align_ofs.size
+        end
+        if min_grain && min_grain.size > 0
+          disk.topology.minimal_grain = min_grain.size
+        end
         # range (number of partitions that the kernel can handle) used to be
         # 16 for scsi and 64 for ide. Now it's 256 for most of them.
         disk.range = args["range"] || 256
-        disk.geometry = fake_geometry(size)
-        @first_free_cyl[name] = 0
-        @cyl_count[name] = disk.geometry.cylinders
         name
       end
 
@@ -182,8 +208,11 @@ module Yast
         log.info("#{__method__}( #{parent}, #{args} )")
         disk_name = parent
         ptable_type = str_to_ptable_type(args)
-        disk = ::Storage::Disk.find(@devicegraph, disk_name)
-        disk.create_partition_table(ptable_type)
+        disk = ::Storage::Disk.find_by_name(@devicegraph, disk_name)
+        ptable = disk.create_partition_table(ptable_type)
+        if ::Storage.msdos?(ptable) && @mbr_gap
+          ::Storage.to_msdos(ptable).minimal_mbr_gap = @mbr_gap.size;
+        end
         disk_name
       end
 
@@ -207,7 +236,9 @@ module Yast
       # @param parent [String] disk name ("/dev/sda" etc.)
       #
       # @param args [Hash] partition table parameters:
-      #   "size"  partition size
+      #   "size"  partition size (unlimited if missing)
+      #   "start" partition start (optional)
+      #   "align" partition align policy (optional)
       #   "name"  device name ("/dev/sdb3" etc.)
       #   "type"  "primary", "extended", "logical"
       #   "id"
@@ -223,13 +254,14 @@ module Yast
       def create_partition(parent, args)
         log.info("#{__method__}( #{parent}, #{args} )")
         disk_name = parent
-        size      = args["size"] || DiskSize.zero
+        size      = args["size"] || DiskSize.unlimited
+        start     = args["start"]
         part_name = args["name"]
         type      = args["type"] || "primary"
         id        = args["id"] || "linux"
+        align     = args["align"]
 
         raise ArgumentError, "\"name\" missing for partition #{args} on #{disk_name}" unless part_name
-        raise ArgumentError, "\"size\" missing for partition #{part_name}" if size.zero?
         raise ArgumentError, "Duplicate partition #{part_name}" if @partitions.include?(part_name)
 
         # Keep some parameters that are really file system related in @partitions
@@ -241,13 +273,52 @@ module Yast
         id = id.to_i(16) if id.is_a?(::String) && id.start_with?("0x")
         id   = fetch(PARTITION_IDS,   id,   "partition ID",   part_name) unless id.is_a?(Fixnum)
         type = fetch(PARTITION_TYPES, type, "partition type", part_name)
+        align = fetch(ALIGN_POLICIES, align, "align policy", part_name) if align
 
-        disk = ::Storage::Disk.find(devicegraph, disk_name)
+        disk = ::Storage::Disk.find_by_name(devicegraph, disk_name)
         ptable = disk.partition_table
-        region = allocate_disk_space(disk_name, size)
-        @first_free_cyl[disk_name] = region.start if type == ::Storage::PartitionType_EXTENDED
+        slots = ptable.unused_partition_slots
+
+        # partitions are created in order, so first suitable slot should be fine
+        # note: skip areas we marked as empty
+        slot = slots.find { |slot|
+          slot.possible?(type) && !@free_regions.member?(slot.region.start)
+        }
+        raise ArgumentError, "No suitable slot for partition #{part_name}" if !slot
+        region = slot.region
+
+        # region = slots.first.region
+        # if no start has been specified, take free region into account
+        if !start && @free_blob
+          @free_regions.push(region.start)
+          start_block = region.start + @free_blob.size / region.block_size
+        end
+        @free_blob = nil
+
+        # if start has been specified, use it
+        if start
+          start_block = start.size / region.block_size
+        end
+
+        # adjust start block, if necessary
+        if start_block
+          if start_block > region.start && start_block <= region.end
+            region.adjust_length(region.start - start_block)
+          end
+          region.start = start_block
+        end
+
+        # if no size has been specified, use whole region
+        if !size.unlimited?
+          region.length = size.size / region.block_size
+        end
+
+        # align partition if specified
+        region = disk.topology.align(region, align) if align
+
         partition = ptable.create_partition(part_name, region, type)
         partition.id = id
+
         part_name
       end
       # rubocop:enable all
@@ -272,7 +343,7 @@ module Yast
         label       = fs_param["label"]
         uuid        = fs_param["uuid"]
 
-        partition = ::Storage::Partition.find(@devicegraph, part_name)
+        partition = ::Storage::Partition.find_by_name(@devicegraph, part_name)
         file_system = partition.create_filesystem(fs_type)
         file_system.add_mountpoint(mount_point) if mount_point
         file_system.label = label if label
@@ -282,20 +353,21 @@ module Yast
 
       # Factory method to create a slot of free space.
       #
+      # We just remember the value and take it into account when we create the next partition.
+      #
       # @param parent [String] disk name ("/dev/sda" etc.)
       #
       # @param args [Hash] free space parameters:
       #   "size"  free space size
+      #   "start" (ignored)
       #
       # @return [String] device name of the disk ("/dev/sda" etc.)
       #
       def create_free(parent, args)
         log.info("#{__method__}( #{parent}, #{args} )")
         disk_name = parent
-        size = args["size"] || DiskSize.zero
-        raise ArgumentError, "Invalid size of free space on #{disk_name}" if size.zero?
-        allocate_disk_space(disk_name, size)
-        log.info("Allocated #{size} free space on #{disk_name}")
+        size = args["size"]
+        @free_blob = size if size && size.size > 0
         disk_name
       end
 
@@ -314,59 +386,6 @@ module Yast
           raise ArgumentError, "Invalid #{type} \"#{key}\" for #{name} - use one of #{hash.keys}"
         end
         value
-      end
-
-      # Allocate disk space of size 'size' on disk 'disk_name'. If 'size' is
-      # 'unlimited', consume all the the remaining free space of the disk.
-      #
-      # This uses and sets @first_free_cyl[name] according to the amount of
-      # space allocated. For extended partitions, this may have to be corrected
-      # later to make room for the logical partitions inside the extended
-      # partition.
-      #
-      # @param disk_name [String] device name of the disk ("/dev/sdc" etc.)
-      # @param size [DiskSize] desired size of the region
-      #
-      # @return [::Storage::Region]
-      #
-      def allocate_disk_space(disk_name, size)
-        disk = ::Storage::Disk.find(@devicegraph, disk_name)
-        log.info(
-          "#{__method__}: #{disk.partition_table.unused_partition_slots.size} slots on #{disk_name}"
-        )
-
-        first_free_cyl = @first_free_cyl[disk_name] || 0
-        cyl_count      = @cyl_count[disk_name] || 0
-        free_cyl = cyl_count - first_free_cyl
-        log.info(
-          "disk #{disk_name} first free cyl: #{first_free_cyl} " \
-          "free_cyl: #{free_cyl} cyl_count: #{cyl_count}"
-        )
-
-        if size.unlimited?
-          requested_cyl = free_cyl
-          raise "No more disk space on #{disk_name}" if requested_cyl < 1
-        else
-          requested_cyl = size.size_k / CYL_SIZE.size_k
-          raise "Not enough disk space on #{disk_name} for another #{size}" if requested_cyl > free_cyl
-        end
-        @first_free_cyl[disk_name] = first_free_cyl + requested_cyl
-        ::Storage::Region.new(first_free_cyl, requested_cyl, CYL_SIZE.size_k * 1024)
-      end
-
-      # Return a fake disk geometry with a given size.
-      #
-      # @param size [DiskSize]
-      # @return [::Storage::Geometry] Geometry with that size
-      #
-      def fake_geometry(size)
-        sector_size = 512
-        blocks  = (size.size_k * 1024) / sector_size
-        heads   = 16  # 1 MiB cylinders (16 * 128 * 512 Bytes) - see also CYL_SIZE
-        sectors = 128
-        cyl     = blocks / (heads * sectors)
-        # log.info("Geometry: #{cyl} cyl #{heads} heads #{sectors} sectors = #{size}")
-        ::Storage::Geometry.new(cyl, heads, sectors, sector_size)
       end
     end
   end
