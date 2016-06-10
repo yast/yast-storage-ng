@@ -28,11 +28,11 @@ require "storage/proposal"
 require "storage/yaml_writer"
 
 opts = GetoptLong.new(
-  [ '--help', GetoptLong::NO_ARGUMENT ],
-  [ '--probe', GetoptLong::NO_ARGUMENT ],
-  [ '--propose', GetoptLong::NO_ARGUMENT ],
-  [ '--gfx', GetoptLong::NO_ARGUMENT ],
-  [ '--yaml', GetoptLong::REQUIRED_ARGUMENT ]
+  ["--help", GetoptLong::NO_ARGUMENT],
+  ["--probe", GetoptLong::NO_ARGUMENT],
+  ["--propose", GetoptLong::NO_ARGUMENT],
+  ["--gfx", GetoptLong::NO_ARGUMENT],
+  ["--yaml", GetoptLong::REQUIRED_ARGUMENT]
 )
 
 usage = <<XXX
@@ -59,17 +59,17 @@ opt_gfx = false
 begin
   opts.each do |opt, arg|
     case opt
-      when '--help'
-        puts usage
-        exit 0
-      when '--probe'
-        yaml_input = nil
-      when '--propose'
-        opt_propose = true
-      when '--gfx'
-        opt_gfx = true
-      when '--yaml'
-        yaml_input = arg
+    when "--help"
+      puts usage
+      exit 0
+    when "--probe"
+      yaml_input = nil
+    when "--propose"
+      opt_propose = true
+    when "--gfx"
+      opt_gfx = true
+    when "--yaml"
+      yaml_input = arg
     end
   end
 rescue
