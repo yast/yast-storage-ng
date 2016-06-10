@@ -1,6 +1,6 @@
 # encoding: utf-8
 
-# Copyright (c) [2015] SUSE LLC
+# Copyright (c) [2015-2016] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -31,6 +31,9 @@ require "expert_partitioner/tree_views/disk"
 require "expert_partitioner/tree_views/mds"
 require "expert_partitioner/tree_views/md"
 require "expert_partitioner/tree_views/partition"
+require "expert_partitioner/tree_views/lvm_vgs"
+require "expert_partitioner/tree_views/lvm_vg"
+require "expert_partitioner/tree_views/lvm_lv"
 require "expert_partitioner/tree_views/filesystem"
 require "expert_partitioner/tree_views/probed_devicegraph"
 require "expert_partitioner/tree_views/staging_devicegraph"
@@ -52,6 +55,7 @@ module ExpertPartitioner
       all:                 AllTreeView,
       disks:               DisksTreeView,
       mds:                 MdsTreeView,
+      lvm_vgs:             LvmVgsTreeView,
       filesystems:         FilesystemTreeView,
       devicegraph_probed:  ProbedDevicegraphTreeView,
       devicegraph_staging: StagingDevicegraphTreeView,
@@ -120,17 +124,9 @@ module ExpertPartitioner
 
       storage = Yast::Storage::StorageManager.instance
       staging = storage.staging
-      device = staging.find_device(current_item)
+      device = Storage.downcast(staging.find_device(current_item))
 
-      if Storage.disk?(device)
-        DiskTreeView.new(Storage.to_disk(device))
-      elsif Storage.md?(device)
-        MdTreeView.new(Storage.to_md(device))
-      elsif Storage.partition?(device)
-        PartitionTreeView.new(Storage.to_partition(device))
-      else
-        @view
-      end
+      return device.new_tree_view
     end
 
     def do_commit

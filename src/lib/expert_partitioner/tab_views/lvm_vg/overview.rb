@@ -1,6 +1,6 @@
 # encoding: utf-8
 
-# Copyright (c) [2015] SUSE LLC
+# Copyright (c) [2015-2016] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -20,23 +20,29 @@
 # find current contact information at www.suse.com.
 
 require "yast"
+require "storage"
+require "expert_partitioner/tab_views/view"
+require "expert_partitioner/popups"
+
+Yast.import "UI"
+Yast.import "Popup"
+
+include Yast::I18n
+include Yast::Logger
 
 module ExpertPartitioner
-  class Icons
-    ALL = "yast-disk.png"
+  class LvmVgOverviewTabView < TabView
+    def initialize(lvm_vg)
+      @lvm_vg = lvm_vg
+    end
 
-    DEVICE = "yast-disk.png"
+    def create
+      tmp = ["Name: #{@lvm_vg.vg_name}"]
+      #       "Size: #{::Storage.byte_to_humanstring(@lvm_vg.size, false, 2, false)}"]
 
-    DISK = "yast-disk.png"
+      contents = Yast::HTML.List(tmp)
 
-    MD = "yast-raid.png"
-
-    LVM_PV = "yast-disk.png"
-    LVM_VG = "yast-lvm_config.png"
-    LVM_LV = "yast-partitioning.png"
-
-    PARTITION = "yast-partitioning.png"
-
-    FILESYSTEM = "yast-nfs.png"
+      return RichText(Id(:text), Opt(:hstretch, :vstretch), contents)
+    end
   end
 end

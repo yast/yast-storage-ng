@@ -20,23 +20,44 @@
 # find current contact information at www.suse.com.
 
 require "yast"
+require "storage"
+require "storage/storage_manager"
+require "storage/extensions"
+require "expert_partitioner/tab_views/view"
+require "expert_partitioner/popups"
+
+Yast.import "UI"
+Yast.import "Popup"
+
+include Yast::I18n
+include Yast::Logger
 
 module ExpertPartitioner
-  class Icons
-    ALL = "yast-disk.png"
+  class LvmVgLvmPvsTabView < TabView
+    FIELDS = [:sid, :icon, :blk_device_name]
 
-    DEVICE = "yast-disk.png"
+    def initialize(lvm_vg)
+      @lvm_vg = lvm_vg
+    end
 
-    DISK = "yast-disk.png"
+    def create
+      VBox(
+        Table(Id(:table), Opt(:keepSorting), Storage::Device.table_header(FIELDS), items)
+      )
+    end
 
-    MD = "yast-raid.png"
+  private
 
-    LVM_PV = "yast-disk.png"
-    LVM_VG = "yast-lvm_config.png"
-    LVM_LV = "yast-partitioning.png"
+    def items
+      ret = []
 
-    PARTITION = "yast-partitioning.png"
+      lvm_pvs = @lvm_vg.lvm_pvs
 
-    FILESYSTEM = "yast-nfs.png"
+      lvm_pvs.each do |lvm_pv|
+        ret << lvm_pv.table_row(FIELDS)
+      end
+
+      return ret
+    end
   end
 end

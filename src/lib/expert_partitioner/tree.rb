@@ -49,6 +49,7 @@ module ExpertPartitioner
           [
             Item(Id(:disks), _("Hard Disks"), true, disks_subtree_items),
             Item(Id(:mds), _("MD RAIDs"), true, mds_subtree_items),
+            Item(Id(:lvm_vgs), _("LVM VGs"), true, lvm_vgs_subtree_items),
             Item(Id(:filesystems), _("Filesystems"))
           ]
         ),
@@ -111,6 +112,25 @@ module ExpertPartitioner
           Item(Id(md.sid), md.name, true, partitions_subtree)
 
         end
+
+      end
+    end
+
+    def lvm_vgs_subtree_items
+      storage = Yast::Storage::StorageManager.instance
+      staging = storage.staging
+
+      lvm_vgs = Storage::LvmVg.all(staging)
+
+      return lvm_vgs.to_a.map do |lvm_vg|
+
+        lvm_lvs_subtree = []
+
+        lvm_vg.lvm_lvs.each do |lvm_lv|
+          lvm_lvs_subtree << Item(Id(lvm_lv.sid), lvm_lv.lv_name)
+        end
+
+        Item(Id(lvm_vg.sid), lvm_vg.vg_name, true, lvm_lvs_subtree)
 
       end
     end

@@ -46,11 +46,7 @@ module ExpertPartitioner
       )
     end
 
-    def items
-      storage = Yast::Storage::StorageManager.instance
-
-      staging = storage.staging
-
+    def items_disks(staging)
       ret = []
 
       disks = Storage::Disk.all(staging)
@@ -73,6 +69,12 @@ module ExpertPartitioner
 
       end
 
+      return ret
+    end
+
+    def items_mds(staging)
+      ret = []
+
       mds = Storage::Md.all(staging)
 
       ::Storage.silence do
@@ -94,6 +96,31 @@ module ExpertPartitioner
       end
 
       return ret
+    end
+
+    def items_lvm_vgs(staging)
+      ret = []
+
+      lvm_vgs = Storage::LvmVg.all(staging)
+
+      lvm_vgs.each do |lvm_vg|
+
+        ret << lvm_vg.table_row(FIELDS)
+
+        lvm_vg.lvm_lvs.each do |lvm_lv|
+          ret << lvm_lv.table_row(FIELDS)
+        end
+
+      end
+
+      return ret
+    end
+
+    def items
+      storage = Yast::Storage::StorageManager.instance
+      staging = storage.staging
+
+      return items_disks(staging) + items_mds(staging) + items_lvm_vgs(staging)
     end
   end
 end

@@ -22,6 +22,7 @@
 require "expert_partitioner/tree"
 
 module ExpertPartitioner
+  # class to display and handle a tab
   class TabView
     def create
       VBox(VStretch(), HStretch())

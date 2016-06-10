@@ -1,6 +1,6 @@
 # encoding: utf-8
 
-# Copyright (c) [2015] SUSE LLC
+# Copyright (c) [2015-2016] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -21,10 +21,13 @@
 
 require "yast"
 require "storage"
+require "storage/storage_manager"
 require "storage/extensions"
 require "expert_partitioner/tree_views/view"
-require "expert_partitioner/tab_views/disk/overview"
-require "expert_partitioner/tab_views/disk/partitions"
+require "expert_partitioner/tab_views/lvm_vg/overview"
+require "expert_partitioner/tab_views/lvm_vg/lvm_lvs"
+require "expert_partitioner/tab_views/lvm_vg/lvm_pvs"
+require "expert_partitioner/ui_extensions"
 
 Yast.import "UI"
 Yast.import "Popup"
@@ -33,23 +36,25 @@ include Yast::I18n
 include Yast::Logger
 
 module ExpertPartitioner
-  class DiskTreeView < TreeView
-    def initialize(disk)
-      @disk = disk
+  class LvmVgTreeView < TreeView
+    def initialize(lvm_vg)
+      @lvm_vg = lvm_vg
     end
 
     def create
-      @tab_view = DiskOverviewTabView.new(@disk)
+      @tab_view = LvmVgOverviewTabView.new(@lvm_vg)
 
       tabs = [
         # tab heading
         Item(Id(:overview), _("&Overview")),
         # tab heading
-        Item(Id(:partitions), _("&Partitions"))
+        Item(Id(:lvm_lvs), _("&LVM LVs")),
+        # tab heading
+        Item(Id(:lvm_pvs), _("&LVM PVs"))
       ]
 
       VBox(
-        Left(IconAndHeading(_("Hard Disk: %s") % @disk.name, Icons::DISK)),
+        Left(IconAndHeading(_("LVM VG: %s") % @lvm_vg.vg_name, Icons::LVM_VG)),
         DumbTab(Id(:tab), tabs, ReplacePoint(Id(:tab_panel), @tab_view.create))
       )
     end
@@ -60,10 +65,13 @@ module ExpertPartitioner
       case input
 
       when :overview
-        @tab_view = DiskOverviewTabView.new(@disk)
+        @tab_view = LvmVgOverviewTabView.new(@lvm_vg)
 
-      when :partitions
-        @tab_view = DiskPartitionsTabView.new(@disk)
+      when :lvm_lvs
+        @tab_view = LvmVgLvmLvsTabView.new(@lvm_vg)
+
+      when :lvm_pvs
+        @tab_view = LvmVgLvmPvsTabView.new(@lvm_vg)
 
       end
 

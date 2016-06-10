@@ -21,6 +21,11 @@
 
 require "storage"
 require "expert_partitioner/icons"
+require "expert_partitioner/tree_views/disk"
+require "expert_partitioner/tree_views/md"
+require "expert_partitioner/tree_views/partition"
+require "expert_partitioner/tree_views/lvm_vg"
+require "expert_partitioner/tree_views/lvm_lv"
 
 include Yast::UIShortcuts
 
@@ -44,11 +49,15 @@ module Storage
       sid:             N_("Storage ID"),
       icon:            N_("Icon"),
       name:            N_("Name"),
+      vg_name:         N_("VG Name"),
+      lv_name:         N_("LV Name"),
+      blk_device_name: N_("Block Device Name"),
       size:            N_("Size"),
       partition_table: N_("Partition Table"),
       filesystem:      N_("Filesystem"),
       mountpoint:      N_("Mount Point"),
       label:           N_("Label"),
+      uuid:            N_("UUID"),
       transport:       N_("Transport"),
       mount_by:        N_("Mount By"),
       md_level:        N_("RAID Level"),
@@ -101,7 +110,15 @@ module Storage
       return ""
     end
 
+    def table_mountpoint
+      return ""
+    end
+
     def table_label
+      return ""
+    end
+
+    def table_uuid
       return ""
     end
 
@@ -182,6 +199,10 @@ module Storage
         return ""
       end
     end
+
+    def new_tree_view
+      return ExpertPartitioner::DiskTreeView.new(self)
+    end
   end
 
   class Md
@@ -192,11 +213,57 @@ module Storage
     def table_md_level
       return ::Storage.md_level_name(md_level)
     end
+
+    def new_tree_view
+      return ExpertPartitioner::MdTreeView.new(self)
+    end
   end
 
   class Partition
     def table_icon
       return make_icon_cell(ExpertPartitioner::Icons::PARTITION, "Partition")
+    end
+
+    def new_tree_view
+      return ExpertPartitioner::PartitionTreeView.new(self)
+    end
+  end
+
+  class LvmPv
+    def table_icon
+      return make_icon_cell(ExpertPartitioner::Icons::LVM_PV, "LVM PV")
+    end
+
+    def table_blk_device_name
+      return blk_device.name
+    end
+  end
+
+  class LvmVg
+    def table_icon
+      return make_icon_cell(ExpertPartitioner::Icons::LVM_VG, "LVM VG")
+    end
+
+    def table_vg_name
+      return vg_name
+    end
+
+    def new_tree_view
+      return ExpertPartitioner::LvmVgTreeView.new(self)
+    end
+  end
+
+  class LvmLv
+    def table_icon
+      return make_icon_cell(ExpertPartitioner::Icons::LVM_LV, "LVM LV")
+    end
+
+    def table_lv_name
+      return lv_name
+    end
+
+    def new_tree_view
+      return ExpertPartitioner::LvmLvTreeView.new(self)
     end
   end
 
@@ -223,6 +290,10 @@ module Storage
 
     def table_label
       return label
+    end
+
+    def table_uuid
+      return uuid
     end
   end
 end
