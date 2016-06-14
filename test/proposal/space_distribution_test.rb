@@ -165,8 +165,7 @@ describe Yast::Storage::Proposal::SpaceDistribution do
           let(:scenario) { "spaces_4_4" }
 
           it "creates the smallest possible gap" do
-            # FIXME: I was actually expecting 1.GiB here, but it's not a big deal
-            expect(distribution.gaps_total_size).to eq 1023.MiB
+            expect(distribution.gaps_total_size).to eq 1021.MiB
           end
         end
 
@@ -205,14 +204,14 @@ describe Yast::Storage::Proposal::SpaceDistribution do
             context "and the number of partitions reaches the primary limit" do
               it "chooses one space for an extended partition and the rest as primary" do
                 space5 = distribution.spaces.detect { |s| s.size == 5.GiB }
-                space3 = distribution.spaces.detect { |s| s.size == 3.GiB }
+                space3 = distribution.spaces.detect { |s| s.size == (3.GiB - 1.MiB) }
                 expect(space5.partition_type).to eq :extended
                 expect(space3.partition_type).to eq :primary
               end
             end
 
             context "and the number of partitions is below the primary limit" do
-              let(:vol2) { planned_vol(mount_point: "/2", type: :ext4, desired: 3.GiB, max: 5.GiB) }
+              let(:vol2) { planned_vol(mount_point: "/2", type: :ext4, desired: 3.GiB - 1.MiB, max: 5.GiB) }
               let(:volumes) { Yast::Storage::PlannedVolumesList.new([vol2, vol3]) }
 
               it "does not enforce the partition types" do
@@ -228,10 +227,12 @@ describe Yast::Storage::Proposal::SpaceDistribution do
     context "if disk restrictions apply to some volume" do
       before do
         settings.candidate_devices = ["/dev/sda", "/dev/sdb"]
+        # Avoid rounding problems
+        vol1.desired = 1.GiB - 2.MiB
       end
 
       let(:vol3) do
-        planned_vol(mount_point: "/3", type: :ext4, desired: 3.GiB, max: 3.GiB, disk: "/dev/sda")
+        planned_vol(mount_point: "/3", type: :ext4, desired: 3.GiB - 1.MiB, max: 3.GiB, disk: "/dev/sda")
       end
 
       context "if a proper distribution is possible" do
@@ -256,7 +257,7 @@ describe Yast::Storage::Proposal::SpaceDistribution do
         end
 
         it "creates the smallest possible gap" do
-          expect(distribution.gaps_total_size).to eq 2.GiB
+          expect(distribution.gaps_total_size).to eq(2.GiB - 1.MiB)
         end
       end
 
