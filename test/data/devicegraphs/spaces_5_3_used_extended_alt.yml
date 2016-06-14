@@ -16,12 +16,12 @@
         size:         5 GiB
 
     - partition:
-        size:         297 GiB
+        size:         296 GiB
         name:         /dev/sda2
         type:         extended
 
     - partition:
-        size:         297 GiB
+        size:         unlimited
         name:         /dev/sda5
         type:         logical
         id:           0x7

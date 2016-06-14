@@ -16,7 +16,7 @@
         size:         5 GiB
 
     - partition:
-        size:         300 GiB
+        size:         unlimited
         name:         /dev/sda2
         type:         extended
 
@@ -44,7 +44,7 @@
         size:         10 GiB
 
     - partition:
-        size:         90 GiB
+        size:         unlimited
         name:         /dev/sda7
         type:         logical
         file_system:  ntfs

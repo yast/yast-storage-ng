@@ -72,22 +72,32 @@ module Storage
     end
   end
 
+  # patch libstorage-ng class
   class PartitionSlot
     def inspect
-      flags = ""
-      flags += "P" if self.primary_slot
-      flags += "p" if self.primary_possible
-      flags += "E" if self.extended_slot
-      flags += "e" if self.extended_possible
-      flags += "L" if self.logical_slot
-      flags += "l" if self.logical_possible
       nice_size = Yast::Storage::DiskSize.B(region.length * region.block_size)
-      "<PartitionSlot #{self.nr} #{self.name} #{flags} #{nice_size}, #{self.region.show_range}>"
+      "<PartitionSlot #{nr} #{name} #{flags_string} #{nice_size}, #{region.show_range}>"
     end
 
-    alias to_s inspect
+    alias_method :to_s, :inspect
+
+  private
+
+    # rubocop:disable Metrics/CyclomaticComplexity
+    def flags_string
+      flags = ""
+      flags << "P" if primary_slot
+      flags << "p" if primary_possible
+      flags << "E" if extended_slot
+      flags << "e" if extended_possible
+      flags << "L" if logical_slot
+      flags << "l" if logical_possible
+      flags
+    end
+    # rubocop:enable all
   end
 
+  # patch libstorage-ng class
   class Region
     def inspect
       "<Region #{start} - #{self.end}>"
@@ -97,32 +107,30 @@ module Storage
       "#{start} - #{self.end}"
     end
 
-    alias to_s inspect
+    alias_method :to_s, :inspect
   end
 
+  # patch libstorage-ng class
   class PartitionTable
     def inspect
-      i = "<PartitionTable #{self.to_s}[#{self.num_children}] "
-      self.partitions.each { |x|
-        i += "#{x.inspect}"
-      }
-      self.unused_partition_slots.each { |x|
-        i += "#{x.to_s}"
-      }
-      i += ">"
+      parts = partitions.map(&:inspect)
+      slots = unused_partition_slots.map(&:to_s)
+      "<PartitionTable #{self}[#{num_children}] #{parts}#{slots}>"
     end
   end
 
+  # patch libstorage-ng class
   class Device
     def inspect
-      "<Device #{self.to_s}>"
+      "<Device #{self}>"
     end
   end
 
+  # patch libstorage-ng class
   class Topology
     def inspect
-      "<Topology ofs #{alignment_offset}, io #{optimal_io_size}, grain #{minimal_grain}/#{calculate_grain}>"
+      "<Topology ofs #{alignment_offset}, io #{optimal_io_size}, " \
+        "grain #{minimal_grain}/#{calculate_grain}>"
     end
   end
-
 end

@@ -150,7 +150,9 @@ describe Yast::Storage::Proposal::PartitionCreator do
         it "creates an extended partition filling the whole space" do
           result = creator.create_partitions(distribution)
           extended = result.partitions.with(type: ::Storage::PartitionType_EXTENDED)
-          expect(extended).to contain_exactly an_object_with_fields(name: "/dev/sda3", size: 22.GiB.size_b)
+          expect(extended).to contain_exactly(
+            an_object_with_fields(name: "/dev/sda3", size: 22.GiB.size_b)
+          )
         end
 
         it "creates all the partitions as logical" do
@@ -181,7 +183,9 @@ describe Yast::Storage::Proposal::PartitionCreator do
         it "creates an extended partition filling the remaining space" do
           result = creator.create_partitions(distribution)
           extended = result.partitions.with(type: ::Storage::PartitionType_EXTENDED)
-          expect(extended).to contain_exactly an_object_with_fields(name: "/dev/sda4", size: 21.GiB.size_b)
+          expect(extended).to contain_exactly(
+            an_object_with_fields(name: "/dev/sda4", size: 21.GiB.size_b)
+          )
         end
 
         it "creates logical partitions for the remaining volumes" do

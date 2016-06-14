@@ -92,9 +92,9 @@ module Yast
 
       ALIGN_POLICIES =
       {
-        "align_end"  => ::Storage::AlignPolicy_ALIGN_END,
-        "keep_end"   => ::Storage::AlignPolicy_KEEP_END,
-        "keep_size"  => ::Storage::AlignPolicy_KEEP_SIZE
+        "align_end" => ::Storage::AlignPolicy_ALIGN_END,
+        "keep_end"  => ::Storage::AlignPolicy_KEEP_END,
+        "keep_size" => ::Storage::AlignPolicy_KEEP_SIZE
       }
     end
   end

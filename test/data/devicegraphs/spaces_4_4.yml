@@ -16,7 +16,7 @@
         size:         4 GiB
 
     - partition:
-        size:         300 GiB
+        size:         unlimited
         name:         /dev/sda2
         type:         extended
 

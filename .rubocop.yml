@@ -47,3 +47,7 @@ Style/MethodName:
 # See https://github.com/bbatsov/rubocop/issues/2720
 Style/SymbolProc:
   Enabled: false
+
+# Enforce if/unless at the end only for really short lines
+Style/IfUnlessModifier:
+  MaxLineLength: 60
