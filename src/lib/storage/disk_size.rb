@@ -45,9 +45,9 @@ module Yast
       # Accept Numbers, Strings, or DiskSize objects as initializers.
       #
       def initialize(size = 0)
-        if size.kind_of?(Yast::Storage::DiskSize)
+        if size.is_a?(Yast::Storage::DiskSize)
           @size_b = size.size
-        elsif size.kind_of?(String)
+        elsif size.is_a?(String)
           @size_b = Yast::Storage::DiskSize.parse(size).size
         else
           @size_b = size.round
@@ -59,7 +59,7 @@ module Yast
       end
 
       def size
-        self.size_b
+        @size_b
       end
 
       #

@@ -135,7 +135,7 @@ module Yast
 
           # if we are about to leave an extend partition, show what's left
           if partition_end_ext > 0 && partition.type != ::Storage::PartitionType_LOGICAL
-            gap = partition_end_ext - partition_end;
+            gap = partition_end_ext - partition_end
             partitions << yaml_free_slot(DiskSize.B(partition_end_ext - gap), DiskSize.B(gap)) if gap > 0
             partition_end = partition_end_ext
             partition_end_ext = 0
@@ -143,7 +143,7 @@ module Yast
 
           # is there a gap before the partition?
           # note: gap might actually be negative sometimes!
-          gap = partition.region.start * partition.region.block_size - partition_end;
+          gap = partition.region.start * partition.region.block_size - partition_end
           partitions << yaml_free_slot(DiskSize.B(partition_end), DiskSize.B(gap)) if gap > 0
 
           # show partition itself
@@ -151,7 +151,7 @@ module Yast
 
           # adjust end pointers
           partition_end = (partition.region.end + 1) * partition.region.block_size
-          partition_end_max = [ partition_end_max, partition_end].max
+          partition_end_max = [partition_end_max, partition_end].max
 
           # if we're inside an extended partition, remember its end for later
           if partition.type == ::Storage::PartitionType_EXTENDED
@@ -164,7 +164,7 @@ module Yast
 
         # see if there's space left in an extended partition
         if partition_end_ext > 0
-          gap = partition_end_ext - partition_end;
+          gap = partition_end_ext - partition_end
           partitions << yaml_free_slot(DiskSize.B(partition_end_ext), DiskSize.B(gap)) if gap > 0
         end
 
@@ -203,11 +203,11 @@ module Yast
       # rubocop:disable Metrics/AbcSize
       def yaml_partition(partition)
         content = {
-          "size" => DiskSize.B(partition.region.length * partition.region.block_size).to_s_ex,
+          "size"  => DiskSize.B(partition.region.length * partition.region.block_size).to_s_ex,
           "start" => DiskSize.B(partition.region.start * partition.region.block_size).to_s_ex,
-          "name" => partition.name,
-          "type" => @partition_types[partition.type],
-          "id"   => @partition_ids[partition.id] || "0x#{partition.id.to_s(16)}"
+          "name"  => partition.name,
+          "type"  => @partition_types[partition.type],
+          "id"    => @partition_ids[partition.id] || "0x#{partition.id.to_s(16)}"
         }
 
         begin
