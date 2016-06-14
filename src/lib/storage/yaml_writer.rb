@@ -96,13 +96,7 @@ module Yast
       # @return [Hash]
       #
       def yaml_disk(disk)
-        content = {}
-        content["size"] = DiskSize.B(disk.size).to_s_ex
-        content["block_size"] = DiskSize.B(disk.region.block_size).to_s_ex
-        content["io_size"] = DiskSize.B(disk.topology.optimal_io_size).to_s_ex
-        content["min_grain"] = DiskSize.B(disk.topology.minimal_grain).to_s_ex
-        content["align_ofs"] = DiskSize.B(disk.topology.alignment_offset).to_s_ex
-        content["name"] = disk.name
+        content = basic_disk_attributes(disk)
         begin
           ptable = disk.partition_table # this will raise an excepton if no partition table
           content["partition_table"] = @partition_table_types[ptable.type]
@@ -118,6 +112,22 @@ module Yast
         { "disk" => content }
       end
 
+      # Basic attributes used to represent a disk
+      #
+      # @param  disk [::Storage::Disk]
+      # @return [Hash{String => Object}]
+      #
+      def basic_disk_attributes(disk)
+        {
+          "name"       => disk.name,
+          "size"       => DiskSize.B(disk.size).to_s_ex,
+          "block_size" => DiskSize.B(disk.region.block_size).to_s_ex,
+          "io_size"    => DiskSize.B(disk.topology.optimal_io_size).to_s_ex,
+          "min_grain"  => DiskSize.B(disk.topology.minimal_grain).to_s_ex,
+          "align_ofs"  => DiskSize.B(disk.topology.alignment_offset).to_s_ex
+        }
+      end
+
       # Returns a YAML representation of the partitions and free slots in a disk
       #
       # Free slots are calculated as best as we can and not part of the
@@ -125,6 +135,8 @@ module Yast
       #
       # @param disk [::Storage::Disk]
       # @return [Array<Hash>]
+      # FIXME: this method offends three different complexity cops!
+      # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
       def yaml_disk_partitions(disk)
         partition_end = 0
         partition_end_max = 0
@@ -135,7 +147,7 @@ module Yast
 
           # if we are about to leave an extend partition, show what's left
           if partition_end_ext > 0 && partition.type != ::Storage::PartitionType_LOGICAL
-            gap = partition_end_ext - partition_end;
+            gap = partition_end_ext - partition_end
             partitions << yaml_free_slot(DiskSize.B(partition_end_ext - gap), DiskSize.B(gap)) if gap > 0
             partition_end = partition_end_ext
             partition_end_ext = 0
@@ -143,7 +155,7 @@ module Yast
 
           # is there a gap before the partition?
           # note: gap might actually be negative sometimes!
-          gap = partition.region.start * partition.region.block_size - partition_end;
+          gap = partition.region.start * partition.region.block_size - partition_end
           partitions << yaml_free_slot(DiskSize.B(partition_end), DiskSize.B(gap)) if gap > 0
 
           # show partition itself
@@ -151,7 +163,7 @@ module Yast
 
           # adjust end pointers
           partition_end = (partition.region.end + 1) * partition.region.block_size
-          partition_end_max = [ partition_end_max, partition_end].max
+          partition_end_max = [partition_end_max, partition_end].max
 
           # if we're inside an extended partition, remember its end for later
           if partition.type == ::Storage::PartitionType_EXTENDED
@@ -164,7 +176,7 @@ module Yast
 
         # see if there's space left in an extended partition
         if partition_end_ext > 0
-          gap = partition_end_ext - partition_end;
+          gap = partition_end_ext - partition_end
           partitions << yaml_free_slot(DiskSize.B(partition_end_ext), DiskSize.B(gap)) if gap > 0
         end
 
@@ -175,6 +187,7 @@ module Yast
 
         partitions
       end
+      # rubocop:enable all
 
       # Partitions sorted by position in the disk and by type
       #
@@ -203,11 +216,11 @@ module Yast
       # rubocop:disable Metrics/AbcSize
       def yaml_partition(partition)
         content = {
-          "size" => DiskSize.B(partition.region.length * partition.region.block_size).to_s_ex,
+          "size"  => DiskSize.B(partition.region.length * partition.region.block_size).to_s_ex,
           "start" => DiskSize.B(partition.region.start * partition.region.block_size).to_s_ex,
-          "name" => partition.name,
-          "type" => @partition_types[partition.type],
-          "id"   => @partition_ids[partition.id] || "0x#{partition.id.to_s(16)}"
+          "name"  => partition.name,
+          "type"  => @partition_types[partition.type],
+          "id"    => @partition_ids[partition.id] || "0x#{partition.id.to_s(16)}"
         }
 
         begin
@@ -221,7 +234,7 @@ module Yast
 
         { "partition" => content }
       end
-      # rubocop:enable Metrics/AbcSize
+      # rubocop:enable all
 
       #
       # Return the YAML counterpart of a free slot between partitions on a

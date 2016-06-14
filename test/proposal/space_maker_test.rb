@@ -52,6 +52,7 @@ describe Yast::Storage::Proposal::SpaceMaker do
 
     subject(:maker) { described_class.new(fake_devicegraph, analyzer, settings) }
 
+# rubocop:disable Style/BlockComments
 =begin This testsuite will be rewritten in a following pull request now that we
        sligthly changed the algorithm for better multi-space support.
        Comenting temporarily
@@ -297,5 +298,6 @@ describe Yast::Storage::Proposal::SpaceMaker do
       end
     end
 =end
+    # rubocop:enable all
   end
 end

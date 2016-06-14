@@ -211,7 +211,9 @@ describe Yast::Storage::Proposal::SpaceDistribution do
             end
 
             context "and the number of partitions is below the primary limit" do
-              let(:vol2) { planned_vol(mount_point: "/2", type: :ext4, desired: 3.GiB - 1.MiB, max: 5.GiB) }
+              let(:vol2) do
+                planned_vol(mount_point: "/2", type: :ext4, desired: 3.GiB - 1.MiB, max: 5.GiB)
+              end
               let(:volumes) { Yast::Storage::PlannedVolumesList.new([vol2, vol3]) }
 
               it "does not enforce the partition types" do

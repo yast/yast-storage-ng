@@ -54,12 +54,16 @@ module Yast
       # Sub-products are not listed here.
       VALID_PARAM =
         {
-          "disk"            => ["name", "size", "block_size", "io_size", "min_grain", "align_ofs", "mbr_gap"],
+          "disk"            => [
+            "name", "size", "block_size", "io_size", "min_grain", "align_ofs", "mbr_gap"
+          ],
           "partition_table" => [],
           "partitions"      => [],
-          "partition"       => ["size", "start", "align", "name", "type", "id", "mount_point", "label", "uuid"],
+          "partition"       => [
+            "size", "start", "align", "name", "type", "id", "mount_point", "label", "uuid"
+          ],
           "file_system"     => [],
-          "free"            => ["size","start"]
+          "free"            => ["size", "start"]
         }
 
       class << self
@@ -158,6 +162,9 @@ module Yast
       #
       # @return [String] device name of the new disk ("/dev/sda" etc.)
       #
+      # FIXME: this method is too complex. It offends three different cops
+      # related to complexity.
+      # rubocop:disable Metrics/PerceivedComplexity, Metrics/AbcSize, Metrics/CyclomaticComplexity
       def create_disk(_parent, args)
         @partitions     = {}
         @free_blob      = nil
@@ -171,9 +178,6 @@ module Yast
         raise ArgumentError, "Duplicate disk name #{name}" if @disks.include?(name)
         @disks << name
         block_size = args["block_size"] if args["block_size"]
-        io_size = args["io_size"] if args["io_size"]
-        min_grain = args["min_grain"] if args["min_grain"]
-        align_ofs = args["align_ofs"] if args["align_ofs"]
         @mbr_gap = args["mbr_gap"] if args["mbr_gap"]
         if block_size && block_size.size > 0
           r = ::Storage::Region.new(0, size.size / block_size.size, block_size.size)
@@ -182,19 +186,25 @@ module Yast
           disk = ::Storage::Disk.create(@devicegraph, name)
           disk.size = size.size
         end
-        if io_size && io_size.size > 0
-          disk.topology.optimal_io_size = io_size.size
-        end
-        if align_ofs
-          disk.topology.alignment_offset = align_ofs.size
-        end
-        if min_grain && min_grain.size > 0
-          disk.topology.minimal_grain = min_grain.size
-        end
+        set_topology_attributes!(disk, args)
         # range (number of partitions that the kernel can handle) used to be
         # 16 for scsi and 64 for ide. Now it's 256 for most of them.
         disk.range = args["range"] || 256
         name
+      end
+      # rubocop:enable all
+
+      # Modifies topology settings of the disk according to factory arguments
+      #
+      # @param disk [::Storage::Disk]
+      # @param args [Hash] disk parameters. @see #create_disk
+      def set_topology_attributes!(disk, args)
+        io_size = args["io_size"]
+        min_grain = args["min_grain"]
+        align_ofs = args["align_ofs"]
+        disk.topology.optimal_io_size = io_size.size if io_size && io_size.size > 0
+        disk.topology.alignment_offset = align_ofs.size if align_ofs
+        disk.topology.minimal_grain = min_grain.size if min_grain && min_grain.size > 0
       end
 
       # Factory method to create a partition table.
@@ -211,7 +221,7 @@ module Yast
         disk = ::Storage::Disk.find_by_name(@devicegraph, disk_name)
         ptable = disk.create_partition_table(ptable_type)
         if ::Storage.msdos?(ptable) && @mbr_gap
-          ::Storage.to_msdos(ptable).minimal_mbr_gap = @mbr_gap.size;
+          ::Storage.to_msdos(ptable).minimal_mbr_gap = @mbr_gap.size
         end
         disk_name
       end
@@ -248,9 +258,10 @@ module Yast
       #
       # @return [String] device name of the disk ("/dev/sda" etc.)
       #
-      # FIXME: this method is too complex. It offends three different cops
+      # FIXME: this method is too complex. It offends four different cops
       # related to complexity.
       # rubocop:disable Metrics/PerceivedComplexity, Metrics/AbcSize, Metrics/CyclomaticComplexity
+      # rubocop:disable  Metrics/MethodLength
       def create_partition(parent, args)
         log.info("#{__method__}( #{parent}, #{args} )")
         disk_name = parent
@@ -281,9 +292,7 @@ module Yast
 
         # partitions are created in order, so first suitable slot should be fine
         # note: skip areas we marked as empty
-        slot = slots.find { |slot|
-          slot.possible?(type) && !@free_regions.member?(slot.region.start)
-        }
+        slot = slots.find { |s| s.possible?(type) && !@free_regions.member?(s.region.start) }
         raise ArgumentError, "No suitable slot for partition #{part_name}" if !slot
         region = slot.region
 

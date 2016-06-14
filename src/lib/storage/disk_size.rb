@@ -45,22 +45,17 @@ module Yast
       # Accept Numbers, Strings, or DiskSize objects as initializers.
       #
       def initialize(size = 0)
-        if size.kind_of?(Yast::Storage::DiskSize)
+        if size.is_a?(Yast::Storage::DiskSize)
           @size_b = size.size
-        elsif size.kind_of?(String)
+        elsif size.is_a?(String)
           @size_b = Yast::Storage::DiskSize.parse(size).size
         else
           @size_b = size.round
         end
       end
 
-      def size=(s)
-        self.size_b = s
-      end
-
-      def size
-        self.size_b
-      end
+      alias_method :size, :size_b
+      alias_method :size=, :size_b=
 
       #
       # Factory methods
