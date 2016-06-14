@@ -47,7 +47,7 @@ module Yast
       def initialize(size = 0)
         if size.is_a?(Yast::Storage::DiskSize)
           @size_b = size.size
-        elsif size.is_a?(String)
+        elsif size.is_a?(::String)
           @size_b = Yast::Storage::DiskSize.parse(size).size
         else
           @size_b = size.round
