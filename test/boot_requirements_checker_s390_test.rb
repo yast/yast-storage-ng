@@ -130,7 +130,7 @@ describe Yast::Storage::BootRequirementsChecker do
 
       it "requires /boot/zipl to be ext2 with at least 100 MiB" do
         expect(zipl_part.filesystem_type).to eq ::Storage::FsType_EXT2
-        expect(zipl_part.min_size).to eq 100.MiB
+        expect(zipl_part.min).to eq 100.MiB
       end
 
       it "requires /boot/zipl to be in the system disk out of LVM" do
@@ -139,7 +139,7 @@ describe Yast::Storage::BootRequirementsChecker do
       end
 
       it "recommends /boot/zipl to be 200 MiB" do
-        expect(zipl_part.desired_size).to eq 200.MiB
+        expect(zipl_part.desired).to eq 200.MiB
       end
     end
   end

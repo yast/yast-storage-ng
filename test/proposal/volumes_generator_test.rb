@@ -108,8 +108,8 @@ describe Yast::Storage::Proposal::VolumesGenerator do
 
       context "without enlarge_swap_for_suspend" do
         it "plans a small swap volume" do
-          expect(swap_volumes.first.min_size).to eq 2.GiB
-          expect(swap_volumes.first.max_size).to eq 2.GiB
+          expect(swap_volumes.first.min).to eq 2.GiB
+          expect(swap_volumes.first.max).to eq 2.GiB
         end
       end
 
@@ -119,8 +119,8 @@ describe Yast::Storage::Proposal::VolumesGenerator do
         end
 
         it "plans a bigger swap volume" do
-          expect(swap_volumes.first.min_size).to eq 8.GiB
-          expect(swap_volumes.first.max_size).to eq 8.GiB
+          expect(swap_volumes.first.min).to eq 8.GiB
+          expect(swap_volumes.first.max).to eq 8.GiB
         end
       end
     end
@@ -128,8 +128,8 @@ describe Yast::Storage::Proposal::VolumesGenerator do
     context "with use_separate_home" do
       before do
         settings.use_separate_home = true
-        settings.home_min_size = 4.GiB
-        settings.home_max_size = Yast::Storage::DiskSize.unlimited
+        settings.home_min_disk_size = 4.GiB
+        settings.home_max_disk_size = Yast::Storage::DiskSize.unlimited
         settings.home_filesystem_type = xfs
       end
 
@@ -137,8 +137,8 @@ describe Yast::Storage::Proposal::VolumesGenerator do
         expect(subject.all_volumes).to include(
           an_object_with_fields(
             mount_point:     "/home",
-            min_size:        settings.home_min_size,
-            max_size:        settings.home_max_size,
+            min:             settings.home_min_disk_size,
+            max:             settings.home_max_disk_size,
             filesystem_type: settings.home_filesystem_type
           )
         )
@@ -159,8 +159,8 @@ describe Yast::Storage::Proposal::VolumesGenerator do
 
     describe "setting the size of the root partition" do
       before do
-        settings.root_base_size = 10.GiB
-        settings.root_max_size = 20.GiB
+        settings.root_base_disk_size = 10.GiB
+        settings.root_max_disk_size = 20.GiB
         settings.btrfs_increase_percentage = 75
       end
 
@@ -173,8 +173,8 @@ describe Yast::Storage::Proposal::VolumesGenerator do
           expect(subject.all_volumes).to include(
             an_object_with_fields(
               mount_point:     "/",
-              min_size:        10.GiB,
-              max_size:        20.GiB,
+              min:             10.GiB,
+              max:             20.GiB,
               filesystem_type: xfs
             )
           )
@@ -190,8 +190,8 @@ describe Yast::Storage::Proposal::VolumesGenerator do
           expect(subject.all_volumes).to include(
             an_object_with_fields(
               mount_point:     "/",
-              min_size:        17.5.GiB,
-              max_size:        35.GiB,
+              min:             17.5.GiB,
+              max:             35.GiB,
               filesystem_type: btrfs
             )
           )

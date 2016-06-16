@@ -40,7 +40,7 @@ module Yast
         #   distribution (restrictions imposed by the disk itself still apply)
         attr_accessor :partition_type
 
-        def_delegators :@disk_space, :disk_name, :size, :slot
+        def_delegators :@disk_space, :disk_name, :disk_size, :slot
 
         def initialize(disk_space, volumes)
           @disk_space = disk_space
@@ -54,15 +54,15 @@ module Yast
         #  - the chances of having 2 volumes with max_start_offset in the same
         #    free space are very low
         def valid?
-          size >= volumes.target_size
+          disk_size >= volumes.target_disk_size
         end
 
         # Space that will remain unused (wasted) after creating the partitions
         #
         # @return [DiskSize]
         def unused
-          max = volumes.max_size
-          max >= size ? 0 : size - max
+          max = volumes.max_disk_size
+          max >= disk_size ? 0 : disk_size - max
         end
 
         def to_s

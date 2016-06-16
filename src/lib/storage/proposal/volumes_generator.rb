@@ -98,9 +98,9 @@ module Yast
           if reuse
             vol.reuse = reuse.name
           else
-            vol.min_size     = swap_size
-            vol.max_size     = swap_size
-            vol.desired_size = swap_size
+            vol.min_disk_size     = swap_size
+            vol.max_disk_size     = swap_size
+            vol.desired_disk_size = swap_size
           end
           vol
         end
@@ -113,7 +113,7 @@ module Yast
         # @return [::Storage::Partition]
         def reusable_swap(required_size)
           partitions = disk_analyzer.swap_partitions.values.flatten
-          partitions.select! { |part| DiskSize.B(part.size) >= required_size }
+          partitions.select! { |part| part.size >= required_size.to_i }
           # Use #name in case of #size tie to provide stable sorting
           partitions.sort_by { |part| [part.size, part.name] }.first
         end
@@ -125,17 +125,17 @@ module Yast
         #
         def root_volume
           root_vol = PlannedVolume.new("/", @settings.root_filesystem_type)
-          root_vol.min_size = @settings.root_base_size
-          root_vol.max_size = @settings.root_max_size
+          root_vol.min_disk_size = @settings.root_base_disk_size
+          root_vol.max_disk_size = @settings.root_max_disk_size
           root_vol.weight   = @settings.root_space_percent
           root_vol.disk     = @settings.root_device
           if root_vol.filesystem_type == ::Storage::FsType_BTRFS
             log.info "Increasing root filesystem size for Btrfs"
             multiplicator = 1.0 + @settings.btrfs_increase_percentage / 100.0
-            root_vol.min_size *= multiplicator
-            root_vol.max_size *= multiplicator
+            root_vol.min_disk_size *= multiplicator
+            root_vol.max_disk_size *= multiplicator
           end
-          root_vol.desired_size = root_vol.max_size
+          root_vol.desired_disk_size = root_vol.max_disk_size
           root_vol
         end
 
@@ -146,8 +146,8 @@ module Yast
         #
         def home_volume
           home_vol = PlannedVolume.new("/home", settings.home_filesystem_type)
-          home_vol.min_size = settings.home_min_size
-          home_vol.max_size = settings.home_max_size
+          home_vol.min_disk_size = settings.home_min_disk_size
+          home_vol.max_disk_size = settings.home_max_disk_size
           home_vol.weight   = 100.0 - settings.root_space_percent
           home_vol
         end

@@ -146,7 +146,7 @@ describe Yast::Storage::Proposal::SpaceDistribution do
 
         it "uses the biggest space it can fill completely" do
           space = distribution.spaces.first
-          expect(space.size).to eq 8.GiB
+          expect(space.disk_size).to eq 8.GiB
         end
       end
 
@@ -165,7 +165,7 @@ describe Yast::Storage::Proposal::SpaceDistribution do
           let(:scenario) { "spaces_4_4" }
 
           it "creates the smallest possible gap" do
-            expect(distribution.gaps_total_size).to eq 1021.MiB
+            expect(distribution.gaps_total_disk_size).to eq 1021.MiB
           end
         end
 
@@ -203,8 +203,8 @@ describe Yast::Storage::Proposal::SpaceDistribution do
 
             context "and the number of partitions reaches the primary limit" do
               it "chooses one space for an extended partition and the rest as primary" do
-                space5 = distribution.spaces.detect { |s| s.size == 5.GiB }
-                space3 = distribution.spaces.detect { |s| s.size == (3.GiB - 1.MiB) }
+                space5 = distribution.spaces.detect { |s| s.disk_size == 5.GiB }
+                space3 = distribution.spaces.detect { |s| s.disk_size == (3.GiB - 1.MiB) }
                 expect(space5.partition_type).to eq :extended
                 expect(space3.partition_type).to eq :primary
               end
@@ -259,7 +259,7 @@ describe Yast::Storage::Proposal::SpaceDistribution do
         end
 
         it "creates the smallest possible gap" do
-          expect(distribution.gaps_total_size).to eq(2.GiB - 1.MiB)
+          expect(distribution.gaps_total_disk_size).to eq(2.GiB - 1.MiB)
         end
       end
 

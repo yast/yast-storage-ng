@@ -50,14 +50,14 @@ module Yast
       # located. If nil, the volume can be allocated in any disk.
       attr_accessor :disk
       # @return [DiskSize] definitive size of the volume
-      attr_accessor :size
+      attr_accessor :disk_size
       # @return [DiskSize] minimum acceptable size in case it's not possible to
       # ensure the desired one. @see #desired_size
-      attr_accessor :min_size
+      attr_accessor :min_disk_size
       # @return [DiskSize] maximum acceptable size
-      attr_accessor :max_size
+      attr_accessor :max_disk_size
       # @return [DiskSize] preferred size
-      attr_accessor :desired_size
+      attr_accessor :desired_disk_size
       # @return [Float] factor used to distribute the extra space between
       # volumes
       attr_accessor :weight
@@ -82,15 +82,15 @@ module Yast
       # @return [String] UUID to enforce in the filesystem
       attr_accessor :uuid
 
-      TO_STRING_ATTRS = [:mount_point, :reuse, :min_size, :max_size,
-                         :desired_size, :disk, :max_start_offset]
+      TO_STRING_ATTRS = [:mount_point, :reuse, :min_disk_size, :max_disk_size,
+                         :desired_disk_size, :disk, :max_start_offset]
 
-      alias_method :desired, :desired_size
-      alias_method :min, :min_size
-      alias_method :max, :max_size
-      alias_method :desired=, :desired_size=
-      alias_method :min=, :min_size=
-      alias_method :max=, :max_size=
+      alias_method :desired, :desired_disk_size
+      alias_method :min, :min_disk_size
+      alias_method :max, :max_disk_size
+      alias_method :desired=, :desired_disk_size=
+      alias_method :min=, :min_disk_size=
+      alias_method :max=, :max_disk_size=
 
       # Constructor.
       #
@@ -99,19 +99,19 @@ module Yast
       def initialize(mount_point, filesystem_type = nil)
         @mount_point = mount_point
         @filesystem_type = filesystem_type
-        @reuse        = nil
-        @partition_id = nil
-        @disk         = nil
-        @size         = DiskSize.zero
-        @min_size     = DiskSize.zero
-        @max_size     = DiskSize.unlimited
-        @desired_size = DiskSize.unlimited
+        @reuse         = nil
+        @partition_id  = nil
+        @disk          = nil
+        @disk_size     = DiskSize.zero
+        @min_disk_size = DiskSize.zero
+        @max_disk_size = DiskSize.unlimited
+        @desired_disk_size = DiskSize.unlimited
         @max_start_offset = nil
-        @align        = nil
-        @bootable     = nil
-        @label        = nil
-        @uuid         = nil
-        @weight       = 0 # For distributing extra space if desired is unlimited
+        @align         = nil
+        @bootable      = nil
+        @label         = nil
+        @uuid          = nil
+        @weight        = 0 # For distributing extra space if desired is unlimited
         @can_live_on_logical_volume = false
         @logical_volume_name = nil
 
@@ -131,13 +131,13 @@ module Yast
       #
       # Returns zero for reused volumes
       #
-      # @param strategy [Symbol] :desired or :min_size
+      # @param strategy [Symbol] :desired or :min
       # @return [DiskSize]
-      def min_valid_size(strategy)
+      def min_valid_disk_size(strategy)
         # No need to provide space for reused volumes
         return DiskSize.zero if reuse
         size = send(strategy)
-        size = min_size if size.unlimited?
+        size = min_disk_size if size.unlimited?
         size
       end
 

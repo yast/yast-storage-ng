@@ -29,9 +29,9 @@ describe Yast::Storage::PlannedVolumesList do
 
   def vol(mount_point, size, min_size, max_size)
     vol = Yast::Storage::PlannedVolume.new(mount_point)
-    vol.size = size
-    vol.min_size = min_size
-    vol.max_size = max_size
+    vol.disk_size = size
+    vol.min = min_size
+    vol.max = max_size
     vol
   end
 
@@ -44,7 +44,7 @@ describe Yast::Storage::PlannedVolumesList do
     subject { described_class.new([vol1, vol2, vol3, vol4]) }
 
     it "returns an array" do
-      expect(subject.sort_by_attr(:size)).to be_a Array
+      expect(subject.sort_by_attr(:disk_size)).to be_a Array
     end
 
     it "raises an error if the attribute does not exists" do
@@ -52,27 +52,27 @@ describe Yast::Storage::PlannedVolumesList do
     end
 
     it "sorts ascending with nils at the end by default" do
-      expect(subject.sort_by_attr(:size).map(&:size))
+      expect(subject.sort_by_attr(:disk_size).map(&:disk_size))
         .to eq [100.MiB, 100.GiB, nil, nil]
     end
 
     it "can sort in descending order" do
-      expect(subject.sort_by_attr(:size, descending: true).map(&:size))
+      expect(subject.sort_by_attr(:disk_size, descending: true).map(&:disk_size))
         .to eq [100.GiB, 100.MiB, nil, nil]
     end
 
     it "can sort nils at start" do
-      expect(subject.sort_by_attr(:size, nils_first: true).map(&:size))
+      expect(subject.sort_by_attr(:disk_size, nils_first: true).map(&:disk_size))
         .to eq [nil, nil, 100.MiB, 100.GiB]
     end
 
     it "uses the next attribute in the list to break ties" do
-      result = subject.sort_by_attr(:min_size, :max_size, :size, nils_first: true)
+      result = subject.sort_by_attr(:min, :max, :disk_size, nils_first: true)
       expect(result).to eq [vol2, vol1, vol4, vol3]
     end
 
     it "respects the original order in case of full tie" do
-      expect(subject.sort_by_attr(:min_size)).to eq [vol1, vol2, vol4, vol3]
+      expect(subject.sort_by_attr(:min_disk_size)).to eq [vol1, vol2, vol4, vol3]
     end
   end
 end

@@ -55,36 +55,34 @@ module Yast
       # The user can directly override the part inherited from UserSettings.
       #
       class Settings < UserSettings
-        attr_accessor :root_base_size
-        attr_accessor :root_max_size
+        attr_accessor :root_base_disk_size
+        attr_accessor :root_max_disk_size
         attr_accessor :root_space_percent
         attr_accessor :btrfs_increase_percentage
         attr_accessor :limit_try_home
         attr_accessor :lvm_keep_unpartitioned_region
-        attr_accessor :lvm_desired_size
-        attr_accessor :lvm_home_max_size
+        attr_accessor :lvm_desired_disk_size
+        attr_accessor :lvm_home_max_disk_size
         attr_accessor :btrfs_default_subvolume
-        attr_accessor :home_min_size
-        attr_accessor :home_max_size
-        # Free disk space below this size will be disregarded
-        attr_accessor :useful_free_space_min_size
+        attr_accessor :home_min_disk_size
+        attr_accessor :home_max_disk_size
 
         def initialize
           super
           # Default values taken from SLE-12-SP1
-          @root_base_size                = DiskSize.GiB(3)
-          @root_max_size                 = DiskSize.GiB(10)
+          @root_base_disk_size           = DiskSize.GiB(3)
+          @root_max_disk_size            = DiskSize.GiB(10)
           @root_space_percent            = 40
           @btrfs_increase_percentage     = 300.0
           @limit_try_home                = DiskSize.GiB(20)
           @lvm_keep_unpartitioned_region = false
-          @lvm_desired_size              = DiskSize.GiB(15)
-          @lvm_home_max_size             = DiskSize.GiB(25)
+          @lvm_desired_disk_size         = DiskSize.GiB(15)
+          @lvm_home_max_disk_size        = DiskSize.GiB(25)
           @btrfs_default_subvolume       = "@"
 
           # Not yet in control.xml
-          @home_min_size                 = DiskSize.GiB(10)
-          @home_max_size                 = DiskSize.unlimited
+          @home_min_disk_size            = DiskSize.GiB(10)
+          @home_max_disk_size            = DiskSize.unlimited
         end
       end
     end

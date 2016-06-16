@@ -71,15 +71,15 @@ describe Yast::Storage::Proposal::SpaceMaker do
       it "deletes linux partitions as needed" do
         result = maker.provide_space(volumes)
         expect(result[:devicegraph].partitions).to contain_exactly(
-          an_object_with_fields(label: "windows", size: 250.GiB.size_b),
-          an_object_with_fields(label: "swap", size: 2.GiB.size_b)
+          an_object_with_fields(label: "windows", size: 250.GiB.to_i),
+          an_object_with_fields(label: "swap", size: 2.GiB.to_i)
         )
       end
 
       it "stores the list of deleted partitions" do
         result = maker.provide_space(volumes)
         expect(result[:deleted_partitions]).to contain_exactly(
-          an_object_with_fields(label: "root", size: (248.GiB - 1.MiB).size_b)
+          an_object_with_fields(label: "root", size: (248.GiB - 1.MiB).to_i)
         )
       end
 
@@ -94,7 +94,7 @@ describe Yast::Storage::Proposal::SpaceMaker do
         let(:vol2) { planned_vol(mount_point: "/2", type: :ext4, desired: 200.GiB) }
         let(:volumes) { vols_list(vol1, vol2) }
         let(:resize_info) do
-          instance_double("::Storage::ResizeInfo", resize_ok: true, min_size: 100.GiB.size_b)
+          instance_double("::Storage::ResizeInfo", resize_ok: true, min_size: 100.GiB.to_i)
         end
 
         before do
@@ -105,7 +105,7 @@ describe Yast::Storage::Proposal::SpaceMaker do
         it "resizes Windows partitions to free additional needed space" do
           result = maker.provide_space(volumes)
           expect(result[:devicegraph].partitions).to contain_exactly(
-            an_object_with_fields(label: "windows", size: (200.GiB - 1.MiB).size_b)
+            an_object_with_fields(label: "windows", size: (200.GiB - 1.MiB).to_i)
           )
         end
       end
@@ -114,7 +114,7 @@ describe Yast::Storage::Proposal::SpaceMaker do
     context "with one disk containing a Windows partition and no Linux ones" do
       let(:scenario) { "windows-pc" }
       let(:resize_info) do
-        instance_double("::Storage::ResizeInfo", resize_ok: true, min_size: 730.GiB.size_b)
+        instance_double("::Storage::ResizeInfo", resize_ok: true, min_size: 730.GiB.to_i)
       end
       let(:windows_partitions) { { "/dev/sda" => [analyzer_part("/dev/sda1")] } }
 
@@ -130,14 +130,14 @@ describe Yast::Storage::Proposal::SpaceMaker do
         it "shrinks the Windows partition by the required size" do
           result = maker.provide_space(volumes)
           win_partition = result[:devicegraph].partitions.with(name: "/dev/sda1").first
-          expect(win_partition.size).to eq 740.GiB.size_b
+          expect(win_partition.size).to eq 740.GiB.to_i
         end
 
         it "leaves other partitions untouched" do
           result = maker.provide_space(volumes)
           expect(result[:devicegraph].partitions).to contain_exactly(
             an_object_with_fields(label: "windows"),
-            an_object_with_fields(label: "recovery", size: (20.GiB - 1.MiB).size_b)
+            an_object_with_fields(label: "recovery", size: (20.GiB - 1.MiB).to_i)
           )
         end
 
@@ -160,7 +160,7 @@ describe Yast::Storage::Proposal::SpaceMaker do
         it "shrinks the Windows partition as much as possible" do
           result = maker.provide_space(volumes)
           win_partition = result[:devicegraph].partitions.with(name: "/dev/sda1").first
-          expect(win_partition.size).to eq 730.GiB.size_b
+          expect(win_partition.size).to eq 730.GiB.to_i
         end
 
         it "removes other partitions" do
@@ -173,7 +173,7 @@ describe Yast::Storage::Proposal::SpaceMaker do
         it "stores the list of deleted partitions" do
           result = maker.provide_space(volumes)
           expect(result[:deleted_partitions]).to contain_exactly(
-            an_object_with_fields(label: "recovery", size: (20.GiB - 1.MiB).size_b)
+            an_object_with_fields(label: "recovery", size: (20.GiB - 1.MiB).to_i)
           )
         end
 
@@ -189,7 +189,7 @@ describe Yast::Storage::Proposal::SpaceMaker do
     context "if there are two Windows partitions" do
       let(:scenario) { "double-windows-pc" }
       let(:resize_info) do
-        instance_double("::Storage::ResizeInfo", resize_ok: true, min_size: 50.GiB.size_b)
+        instance_double("::Storage::ResizeInfo", resize_ok: true, min_size: 50.GiB.to_i)
       end
       let(:windows_partitions) do
         {
@@ -209,16 +209,16 @@ describe Yast::Storage::Proposal::SpaceMaker do
       it "shrinks first the less full Windows partition" do
         result = maker.provide_space(volumes)
         win2_partition = result[:devicegraph].partitions.with(name: "/dev/sdb1").first
-        expect(win2_partition.size).to eq 160.GiB.size_b
+        expect(win2_partition.size).to eq 160.GiB.to_i
       end
 
       it "leaves other partitions untouched if possible" do
         result = maker.provide_space(volumes)
         expect(result[:devicegraph].partitions).to contain_exactly(
-          an_object_with_fields(label: "windows1", size: 80.GiB.size_b),
-          an_object_with_fields(label: "recovery1", size: (20.GiB - 1.MiB).size_b),
+          an_object_with_fields(label: "windows1", size: 80.GiB.to_i),
+          an_object_with_fields(label: "recovery1", size: (20.GiB - 1.MiB).to_i),
           an_object_with_fields(label: "windows2"),
-          an_object_with_fields(label: "recovery2", size: (20.GiB - 1.MiB).size_b)
+          an_object_with_fields(label: "recovery2", size: (20.GiB - 1.MiB).to_i)
         )
       end
     end
@@ -232,14 +232,14 @@ describe Yast::Storage::Proposal::SpaceMaker do
 
         result = maker.provide_space(volumes)
         expect(result[:deleted_partitions]).to contain_exactly(
-          an_object_with_fields(name: "/dev/sda5", size: 300.GiB.size_b),
-          an_object_with_fields(name: "/dev/sda6", size: (600.GiB - 3.MiB).size_b)
+          an_object_with_fields(name: "/dev/sda5", size: 300.GiB.to_i),
+          an_object_with_fields(name: "/dev/sda6", size: (600.GiB - 3.MiB).to_i)
         )
         expect(result[:devicegraph].partitions).to contain_exactly(
-          an_object_with_fields(name: "/dev/sda1", size: 4.GiB.size_b),
-          an_object_with_fields(name: "/dev/sda2", size: 60.GiB.size_b),
-          an_object_with_fields(name: "/dev/sda3", size: 60.GiB.size_b),
-          an_object_with_fields(name: "/dev/sda4", size: (900.GiB - 1.MiB).size_b)
+          an_object_with_fields(name: "/dev/sda1", size: 4.GiB.to_i),
+          an_object_with_fields(name: "/dev/sda2", size: 60.GiB.to_i),
+          an_object_with_fields(name: "/dev/sda3", size: 60.GiB.to_i),
+          an_object_with_fields(name: "/dev/sda4", size: (900.GiB - 1.MiB).to_i)
         )
       end
 
@@ -273,10 +273,10 @@ describe Yast::Storage::Proposal::SpaceMaker do
 
         result = maker.provide_space(volumes)
         expect(result[:devicegraph].partitions).to contain_exactly(
-          an_object_with_fields(name: "/dev/sda1", size: 4.GiB.size_b),
-          an_object_with_fields(name: "/dev/sda2", size: 60.GiB.size_b),
-          an_object_with_fields(name: "/dev/sda3", size: 60.GiB.size_b),
-          an_object_with_fields(name: "/dev/sda4", size: (900.GiB - 1.MiB).size_b)
+          an_object_with_fields(name: "/dev/sda1", size: 4.GiB.to_i),
+          an_object_with_fields(name: "/dev/sda2", size: 60.GiB.to_i),
+          an_object_with_fields(name: "/dev/sda3", size: 60.GiB.to_i),
+          an_object_with_fields(name: "/dev/sda4", size: (900.GiB - 1.MiB).to_i)
         )
         expect(result[:deleted_partitions]).to contain_exactly(
           an_object_with_fields(name: "/dev/sda5"),
@@ -296,9 +296,9 @@ describe Yast::Storage::Proposal::SpaceMaker do
 
         result = maker.provide_space(volumes)
         expect(result[:devicegraph].partitions).to contain_exactly(
-          an_object_with_fields(name: "/dev/sda1", size: 4.GiB.size_b),
-          an_object_with_fields(name: "/dev/sda2", size: 60.GiB.size_b),
-          an_object_with_fields(name: "/dev/sda3", size: 60.GiB.size_b)
+          an_object_with_fields(name: "/dev/sda1", size: 4.GiB.to_i),
+          an_object_with_fields(name: "/dev/sda2", size: 60.GiB.to_i),
+          an_object_with_fields(name: "/dev/sda3", size: 60.GiB.to_i)
         )
         expect(result[:deleted_partitions]).to contain_exactly(
           an_object_with_fields(name: "/dev/sda4"),
@@ -320,10 +320,10 @@ describe Yast::Storage::Proposal::SpaceMaker do
 
         result = maker.provide_space(volumes)
         expect(result[:devicegraph].partitions).to contain_exactly(
-          an_object_with_fields(name: "/dev/sda1", size: 4.GiB.size_b),
-          an_object_with_fields(name: "/dev/sda2", size: 60.GiB.size_b),
-          an_object_with_fields(name: "/dev/sda3", size: 60.GiB.size_b),
-          an_object_with_fields(name: "/dev/sda6", size: (600.GiB - 3.MiB).size_b)
+          an_object_with_fields(name: "/dev/sda1", size: 4.GiB.to_i),
+          an_object_with_fields(name: "/dev/sda2", size: 60.GiB.to_i),
+          an_object_with_fields(name: "/dev/sda3", size: 60.GiB.to_i),
+          an_object_with_fields(name: "/dev/sda6", size: (600.GiB - 3.MiB).to_i)
         )
       end
     end
@@ -358,7 +358,7 @@ describe Yast::Storage::Proposal::SpaceMaker do
     context "when some volumes have disk restrictions" do
       let(:scenario) { "mixed_disks" }
       let(:resize_info) do
-        instance_double("::Storage::ResizeInfo", resize_ok: true, min_size: 50.GiB.size_b)
+        instance_double("::Storage::ResizeInfo", resize_ok: true, min_size: 50.GiB.to_i)
       end
       let(:windows_partitions) do
         { "/dev/sda" => [analyzer_part("/dev/sda1")] }

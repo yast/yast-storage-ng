@@ -48,9 +48,9 @@ module Yast
         def zipl_volume
           vol = PlannedVolume.new("/boot/zipl", ::Storage::FsType_EXT2)
           vol.disk = root_disk.name
-          vol.min_size = DiskSize.MiB(100)
-          vol.max_size = DiskSize.GiB(1)
-          vol.desired_size = DiskSize.MiB(200)
+          vol.min_disk_size = DiskSize.MiB(100)
+          vol.max_disk_size = DiskSize.GiB(1)
+          vol.desired_disk_size = DiskSize.MiB(200)
           vol.can_live_on_logical_volume = false
           vol
         end

@@ -47,9 +47,9 @@ module Yast
           else
             # So far we are always using msdos partition ids
             vol.partition_id = ::Storage::ID_EFI
-            vol.min_size = DiskSize.MiB(33)
-            vol.max_size = DiskSize.unlimited
-            vol.desired_size = DiskSize.MiB(500)
+            vol.min_disk_size = DiskSize.MiB(33)
+            vol.max_disk_size = DiskSize.unlimited
+            vol.desired_disk_size = DiskSize.MiB(500)
             vol.can_live_on_logical_volume = false
             vol.max_start_offset = DiskSize.TiB(2)
           end

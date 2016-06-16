@@ -154,13 +154,13 @@ describe Yast::Storage::BootRequirementsChecker do
       let(:power_nv) { false }
 
       it "requires it to be between 256KiB and 8MiB, despite the alignment" do
-        expect(prep_part.min_size).to eq 256.KiB
-        expect(prep_part.max_size).to eq 8.MiB
+        expect(prep_part.min).to eq 256.KiB
+        expect(prep_part.max).to eq 8.MiB
         expect(prep_part.align).to eq :keep_size
       end
 
       it "recommends it to be 1 MiB" do
-        expect(prep_part.desired_size).to eq 1.MiB
+        expect(prep_part.desired).to eq 1.MiB
       end
 
       it "requires it to be out of LVM" do

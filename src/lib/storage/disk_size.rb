@@ -40,22 +40,20 @@ module Yast
       UNITS = ["B", "KiB", "MiB", "GiB", "TiB", "PiB", "EiB", "ZiB", "YiB"]
       UNLIMITED = "unlimited"
 
-      attr_accessor :size_b
+      attr_reader :size
+      alias_method :to_i, :size
 
       # Accept Numbers, Strings, or DiskSize objects as initializers.
       #
       def initialize(size = 0)
         if size.is_a?(Yast::Storage::DiskSize)
-          @size_b = size.size
+          @size = size.to_i
         elsif size.is_a?(::String)
-          @size_b = Yast::Storage::DiskSize.parse(size).size
+          @size = Yast::Storage::DiskSize.parse(size).size
         else
-          @size_b = size.round
+          @size = size.round
         end
       end
-
-      alias_method :size, :size_b
-      alias_method :size=, :size_b=
 
       #
       # Factory methods
@@ -167,9 +165,9 @@ module Yast
       def +(other)
         return DiskSize.unlimited if any_operand_unlimited?(other)
         if other.is_a?(Numeric)
-          DiskSize.new(@size_b + other)
+          DiskSize.new(@size + other)
         elsif other.respond_to?(:size)
-          DiskSize.new(@size_b + other.size)
+          DiskSize.new(@size + other.size)
         else
           raise TypeError, "Unexpected #{other.class}; expected Numeric value or DiskSize"
         end
@@ -178,9 +176,9 @@ module Yast
       def -(other)
         return DiskSize.unlimited if any_operand_unlimited?(other)
         if other.is_a?(Numeric)
-          DiskSize.new(@size_b - other)
+          DiskSize.new(@size - other)
         elsif other.respond_to?(:size)
-          DiskSize.new(@size_b - other.size)
+          DiskSize.new(@size - other.size)
         else
           raise TypeError, "Unexpected #{other.class}; expected Numeric value or DiskSize"
         end
@@ -189,7 +187,7 @@ module Yast
       def *(other)
         if other.is_a?(Numeric)
           return DiskSize.unlimited if unlimited?
-          DiskSize.new(@size_b * other)
+          DiskSize.new(@size * other)
         else
           raise TypeError, "Unexpected #{other.class}; expected Numeric value"
         end
@@ -198,7 +196,7 @@ module Yast
       def /(other)
         if other.is_a?(Numeric)
           return DiskSize.unlimited if unlimited?
-          DiskSize.new(@size_b.to_f / other)
+          DiskSize.new(@size.to_f / other)
         else
           raise TypeError, "Unexpected #{other.class}; expected Numeric value"
         end
@@ -209,11 +207,11 @@ module Yast
       #
 
       def unlimited?
-        @size_b == -1
+        @size == -1
       end
 
       def zero?
-        @size_b == 0
+        @size == 0
       end
 
       # The Comparable mixin will get us operators < > <= >= == != with this
@@ -222,18 +220,18 @@ module Yast
           return unlimited? ? 0 : -1
         end
         return 1 if unlimited?
-        return @size_b <=> other.size if other.respond_to?(:size)
+        return @size <=> other.size if other.respond_to?(:size)
         raise TypeError, "Unexpected #{other.class}; expected DiskSize"
       end
 
       # Return numeric size and unit ("MiB", "GiB", ...) in human-readable form
       # @return [Array] [size, unit]
       def to_human_readable
-        return [UNLIMITED, ""] if @size_b == -1
+        return [UNLIMITED, ""] if @size == -1
 
         unit_index = 0
         # prefer, 0.50 MiB over 512 KiB
-        size2 = @size_b * 2
+        size2 = @size * 2
 
         while size2.abs >= 1024.0 && unit_index < UNITS.size - 1
           size2 /= 1024.0
@@ -246,11 +244,11 @@ module Yast
       # But unlike #to_human_readable, return the exact value.
       # @return [Array] [size, unit]
       def to_human_readable_ex
-        return [UNLIMITED, ""] if @size_b == -1
+        return [UNLIMITED, ""] if @size == -1
 
         unit_index = 0
         # allow half values
-        size2 = @size_b * 2
+        size2 = @size * 2
 
         while size2 != 0 && (size2 % 1024) == 0 && unit_index < UNITS.size - 1
           size2 /= 1024
@@ -278,7 +276,7 @@ module Yast
 
       def inspect
         return "<DiskSize <unlimited> (-1)>" if unlimited?
-        "<DiskSize #{self} (#{size_b})>"
+        "<DiskSize #{self} (#{to_i})>"
       end
 
       def pretty_print(*)

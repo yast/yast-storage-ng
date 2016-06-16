@@ -162,7 +162,7 @@ module Yast
         #
         # @return [DiskSize]
         def missing_required_size(volumes, disk)
-          SpaceDistribution.missing_size(volumes, free_spaces(new_graph, disk).to_a)
+          SpaceDistribution.missing_disk_size(volumes, free_spaces(new_graph, disk).to_a)
         end
 
         # List of free spaces in the given devicegraph
@@ -273,7 +273,7 @@ module Yast
         # @param shrink_size [DiskSize] size of the space to substract
         def shrink_partition(partition, shrink_size)
           log.info "Shrinking #{partition.name} by #{shrink_size}"
-          partition.size = partition.size - shrink_size.size
+          partition.size = partition.size - shrink_size.to_i
         end
 
         # Use force to create space: delete partitions if a given type while
