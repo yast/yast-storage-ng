@@ -70,17 +70,15 @@ describe Yast::Storage::Proposal::SpaceMaker do
 
       it "deletes linux partitions as needed" do
         result = maker.provide_space(volumes)
-        # FIXME: the result is actually kind of suboptimal, there were no need
-        # to delete the swap partition
         expect(result[:devicegraph].partitions).to contain_exactly(
-          an_object_with_fields(label: "windows", size: 250.GiB.size_b)
+          an_object_with_fields(label: "windows", size: 250.GiB.size_b),
+          an_object_with_fields(label: "swap", size: 2.GiB.size_b)
         )
       end
 
       it "stores the list of deleted partitions" do
         result = maker.provide_space(volumes)
         expect(result[:deleted_partitions]).to contain_exactly(
-          an_object_with_fields(label: "swap", size: 2.GiB.size_b),
           an_object_with_fields(label: "root", size: (248.GiB - 1.MiB).size_b)
         )
       end
@@ -228,31 +226,31 @@ describe Yast::Storage::Proposal::SpaceMaker do
     context "when forced to delete partitions" do
       let(:scenario) { "multi-linux-pc" }
 
-      it "deletes the first partitions of the disk until reaching the goal" do
-        vol = planned_vol(mount_point: "/1", type: :ext4, desired: 100.GiB)
+      it "deletes the last partitions of the disk until reaching the goal" do
+        vol = planned_vol(mount_point: "/1", type: :ext4, desired: 700.GiB)
         volumes = vols_list(vol)
 
         result = maker.provide_space(volumes)
-        expect(result[:devicegraph].partitions).to contain_exactly(
-          an_object_with_fields(name: "/dev/sda4", size: (900.GiB - 1.MiB).size_b),
+        expect(result[:deleted_partitions]).to contain_exactly(
           an_object_with_fields(name: "/dev/sda5", size: 300.GiB.size_b),
           an_object_with_fields(name: "/dev/sda6", size: (600.GiB - 3.MiB).size_b)
         )
-        expect(result[:deleted_partitions]).to contain_exactly(
+        expect(result[:devicegraph].partitions).to contain_exactly(
           an_object_with_fields(name: "/dev/sda1", size: 4.GiB.size_b),
           an_object_with_fields(name: "/dev/sda2", size: 60.GiB.size_b),
-          an_object_with_fields(name: "/dev/sda3", size: 60.GiB.size_b)
+          an_object_with_fields(name: "/dev/sda3", size: 60.GiB.size_b),
+          an_object_with_fields(name: "/dev/sda4", size: (900.GiB - 1.MiB).size_b)
         )
       end
 
       it "doesn't delete partitions marked to be reused" do
         vol1 = planned_vol(mount_point: "/1", type: :ext4, desired: 100.GiB)
-        vol2 = planned_vol(mount_point: "/2", reuse: "/dev/sda2")
+        vol2 = planned_vol(mount_point: "/2", reuse: "/dev/sda6")
         volumes = vols_list(vol1, vol2)
 
         result = maker.provide_space(volumes)
-        expect(result[:devicegraph].partitions.map(&:name)).to include "/dev/sda2"
-        expect(result[:deleted_partitions].map(&:name)).to_not include "/dev/sda2"
+        expect(result[:devicegraph].partitions.map(&:name)).to include "/dev/sda6"
+        expect(result[:deleted_partitions].map(&:name)).to_not include "/dev/sda6"
       end
 
       it "raises a NoDiskSpaceError exception if deleting is not enough" do
@@ -336,7 +334,7 @@ describe Yast::Storage::Proposal::SpaceMaker do
         vols_list(
           planned_vol(mount_point: "/1", type: :ext4, desired: 60.GiB),
           planned_vol(mount_point: "/2", type: :ext4, desired: 300.GiB),
-          planned_vol(mount_point: "/3", reuse: "/dev/sda1"),
+          planned_vol(mount_point: "/3", reuse: "/dev/sda6"),
           planned_vol(mount_point: "/4", reuse: "/dev/sda2")
         )
       end

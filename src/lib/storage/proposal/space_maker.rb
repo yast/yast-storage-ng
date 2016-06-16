@@ -167,6 +167,8 @@ module Yast
 
         # List of free spaces in the given devicegraph
         #
+        # @param graph [::Storage::Devicegraph]
+        # @param disk [String] optional disk name to restrict result to
         # @return [FreeDiskSpacesList]
         def free_spaces(graph, disk = nil)
           disks_for(graph, disk).free_disk_spaces
@@ -175,6 +177,7 @@ module Yast
         # List of candidate disks in the given devicegraph
         #
         # @param devicegraph [::Storage::Devicegraph]
+        # @param disk [String] optional disk name to restrict result to
         # @return [DisksList]
         def disks_for(devicegraph, disk = nil)
           filter = disk || candidate_disk_names
@@ -284,10 +287,10 @@ module Yast
         #       be deleted
         # @param disk [String] optional disk name to restrict operations to
         def delete_partitions!(volumes, type, keep, disk)
-          log.info("Deleting partitions to make space")
+          return if success?(volumes)
 
+          log.info("Deleting partitions to make space")
           deletion_candidate_partitions(type, disk).each do |part_name|
-            return if success?(volumes)
             if keep.include?(part_name)
               log.info "Skipped deletion of #{part_name}"
               next
@@ -295,6 +298,7 @@ module Yast
             part = find_partition(part_name)
             next unless part
             delete_partition(part)
+            return if success?(volumes)
           end
         end
 
@@ -319,23 +323,33 @@ module Yast
         #
         # @param type [Symbol]
         # @param disk [String] optional disk name to restrict operations to
-        # @return [Array<String>] partition names
+        # @return [Array<String>] partition names sorted by disk and by position
+        #     inside the disk (partitions at the end are presented first)
         def deletion_candidate_partitions(type, disk = nil)
-          candidate_parts = disks_for(original_graph, disk).partitions
-
-          names = case type
-          when :windows
-            candidate_parts.map(&:name).select { |name| windows_part_names.include?(name) }
-          when :linux
-            candidate_parts.map(&:name).select { |name| linux_part_names.include?(name) }
-          when :other
-            candidate_parts.map(&:name).select do |name|
-              !linux_part_names.include?(name) && !windows_part_names.include?(name)
-            end
+          names = []
+          disks_for(original_graph, disk).each do |dsk|
+            partitions = original_graph.disks.with(name: dsk.name).partitions.to_a
+            filter_partitions_by_type!(partitions, type, dsk.name)
+            partitions = partitions.sort_by { |part| part.region.start }.reverse
+            names += partitions.map(&:name)
           end
 
           log.info "Deletion candidates (#{type}): #{names}"
           names
+        end
+
+        def filter_partitions_by_type!(partitions, type, disk)
+          case type
+          when :windows
+            partitions.select! { |part| windows_part_names(disk).include?(part.name) }
+          when :linux
+            partitions.select! { |part| linux_part_names(disk).include?(part.name) }
+          when :other
+            partitions.select! do |part|
+              !linux_part_names(disk).include?(part.name) &&
+                !windows_part_names(disk).include?(part.name)
+            end
+          end
         end
 
         # Device names of windows partitions detected by disk_analyzer
