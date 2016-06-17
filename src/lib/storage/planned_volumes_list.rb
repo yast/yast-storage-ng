@@ -121,6 +121,10 @@ module Yast
       end
       alias_method :<<, :push
 
+      def ==(other)
+        other.class == self.class && other.target == target && other.to_a == to_a
+      end
+
       # Volumes sorted by a given set of attributes.
       #
       # It sorts by the first attribute in the list. In case of equality, it
@@ -141,7 +145,7 @@ module Yast
       end
 
       def to_s
-        "#<PlannedVolumesList volumes=#{@volumes.map(&:to_s)}>"
+        "#<PlannedVolumesList target=#{@target}, volumes=#{@volumes.map(&:to_s)}>"
       end
 
     private
