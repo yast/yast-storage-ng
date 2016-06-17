@@ -82,8 +82,6 @@ module Yast
         # Comparison method used to sort distributions based on how good are
         # they for installation purposes.
         #
-        # TODO: ensure stable sorting if two distributions are equally good
-        #
         # @return [Fixnum] -1, 0, 1 like <=>
         def better_than(other)
           # The smallest gaps the better
@@ -99,7 +97,32 @@ module Yast
           return res unless res.zero?
 
           # The biggest installation the better
-          other.spaces_total_disk_size <=> spaces_total_disk_size
+          res = other.spaces_total_disk_size <=> spaces_total_disk_size
+          return res unless res.zero?
+
+          # Just to ensure stable sorting between different executions in case
+          # of absolute draw in all previous criteria
+          comparable_string <=> other.comparable_string
+        end
+
+        def to_s
+          spaces_str = spaces.map { |s| s.to_s }.join(", ")
+          "#<SpaceDistribution spaces=[#{spaces_str}]>"
+        end
+
+        # Deterministic string representation of the space distribution
+        #
+        # This string is not intended to be human readable, use #to_s for that
+        # purpose. The goal of this method is to produce always a consistent
+        # string even if the assigned spaces or the lists of volumes that they
+        # contain are sorted in a different way for any reason (like a different
+        # version of Ruby that iterates hashes in other order).
+        #
+        # @see #better_than
+        # @return [String]
+        def comparable_string
+          spaces_strings = spaces.map { |space| space_comparable_string(space) }
+          spaces_strings.sort.join
         end
 
       protected
@@ -230,6 +253,18 @@ module Yast
             part.region.start <= space_start && part.region.end > space_start
           end.first
           !container.nil?
+        end
+
+        # @see #comparable_string
+        def space_comparable_string(space)
+          vol_list_string = volume_list_comparable_string(space.volumes)
+          "<disk_space=#{space.disk_space}, volumes=#{vol_list_string}>"
+        end
+
+        # @see #comparable_string
+        def volume_list_comparable_string(vol_list)
+          volumes_strings = vol_list.to_a.map { |vol| vol.to_s }.sort
+          "<target=#{vol_list.target}, volumes=#{volumes_strings.join}>"
         end
 
         class << self

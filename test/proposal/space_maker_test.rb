@@ -87,7 +87,7 @@ describe Yast::Storage::Proposal::SpaceMaker do
         result = maker.provide_space(volumes)
         distribution = result[:space_distribution]
         expect(distribution.spaces.size).to eq 1
-        expect(distribution.spaces.first.volumes.to_a).to eq volumes.to_a
+        expect(distribution.spaces.first.volumes).to eq volumes
       end
 
       context "if deleting Linux is not enough" do
@@ -150,7 +150,7 @@ describe Yast::Storage::Proposal::SpaceMaker do
           result = maker.provide_space(volumes)
           distribution = result[:space_distribution]
           expect(distribution.spaces.size).to eq 1
-          expect(distribution.spaces.first.volumes.to_a).to eq volumes.to_a
+          expect(distribution.spaces.first.volumes).to eq volumes
         end
       end
 
@@ -181,7 +181,7 @@ describe Yast::Storage::Proposal::SpaceMaker do
           result = maker.provide_space(volumes)
           distribution = result[:space_distribution]
           expect(distribution.spaces.size).to eq 1
-          expect(distribution.spaces.first.volumes.to_a).to eq volumes.to_a
+          expect(distribution.spaces.first.volumes).to eq volumes
         end
       end
     end
