@@ -37,7 +37,7 @@ module Yast
       #
       # @return [DiskSize]
       def disk_size
-        list.map(&:size).reduce(DiskSize.zero, :+)
+        list.map(&:disk_size).reduce(DiskSize.zero, :+)
       end
 
     protected

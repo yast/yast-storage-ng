@@ -54,9 +54,9 @@ module Yast
           vol = PlannedVolume.new(nil)
           # So far we are always using msdos partition ids
           vol.partition_id = ::Storage::ID_PPC_PREP
-          vol.min_size = DiskSize.KiB(256)
-          vol.max_size = DiskSize.MiB(8)
-          vol.desired_size = DiskSize.MiB(1)
+          vol.min_disk_size = DiskSize.KiB(256)
+          vol.max_disk_size = DiskSize.MiB(8)
+          vol.desired_disk_size = DiskSize.MiB(1)
           # Make sure that alignment does not result in a too big partition
           vol.align = :keep_size
           vol.bootable = true

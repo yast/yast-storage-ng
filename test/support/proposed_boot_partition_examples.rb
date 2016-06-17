@@ -27,7 +27,7 @@ RSpec.shared_examples "proposed boot partition" do
 
   it "requires /boot to be ext4 with at least 100 MiB" do
     expect(boot_part.filesystem_type).to eq ::Storage::FsType_EXT4
-    expect(boot_part.min_size).to eq 100.MiB
+    expect(boot_part.min).to eq 100.MiB
   end
 
   it "requires /boot to be in the system disk out of LVM" do
@@ -36,6 +36,6 @@ RSpec.shared_examples "proposed boot partition" do
   end
 
   it "recommends /boot to be 200 MiB" do
-    expect(boot_part.desired_size).to eq 200.MiB
+    expect(boot_part.desired).to eq 200.MiB
   end
 end

@@ -68,22 +68,22 @@ module Yast
       # very common case that any volume has an 'unlimited' desired size.
       #
       # @return [DiskSize] sum of desired/min sizes in @volumes
-      def target_size
-        @volumes.reduce(DiskSize.zero) { |sum, vol| sum + vol.min_valid_size(target) }
+      def target_disk_size
+        @volumes.reduce(DiskSize.zero) { |sum, vol| sum + vol.min_valid_disk_size(target) }
       end
 
       # Total sum of all current max sizes of volumes
       #
       # @return [DiskSize]
-      def max_size
-        @volumes.reduce(DiskSize.zero) { |sum, vol| sum + vol.max_size }
+      def max_disk_size
+        @volumes.reduce(DiskSize.zero) { |sum, vol| sum + vol.max_disk_size }
       end
 
       # Total sum of all current sizes of volumes
       #
       # @return [DiskSize] sum of sizes in @volumes
-      def total_size
-        @volumes.reduce(DiskSize.zero) { |sum, vol| sum + vol.size }
+      def total_disk_size
+        @volumes.reduce(DiskSize.zero) { |sum, vol| sum + vol.disk_size }
       end
 
       # Total sum of all weights of volumes

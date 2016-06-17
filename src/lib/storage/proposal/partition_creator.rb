@@ -113,13 +113,13 @@ module Yast
         def create_non_lvm_simple(volumes, free_space, partition_type)
           volumes.each do |vol|
             log.info(
-              "vol #{vol.mount_point}\tmin: #{vol.min_size} " \
-              "max: #{vol.max_size} desired: #{vol.desired_size} weight: #{vol.weight}"
+              "vol #{vol.mount_point}\tmin: #{vol.min_disk_size}\tmax: #{vol.max_disk_size} " \
+              "desired: #{vol.desired_disk_size}\tweight: #{vol.weight}"
             )
           end
 
           volumes = volumes.deep_dup
-          volumes.each { |vol| vol.size = vol.min_valid_size(volumes.target) }
+          volumes.each { |vol| vol.disk_size = vol.min_valid_disk_size(volumes.target) }
           distribute_extra_space(volumes, free_space)
           create_volumes_partitions(volumes, free_space, partition_type)
         end
@@ -134,7 +134,7 @@ module Yast
         #
         def distribute_extra_space(volumes, space)
           candidates = volumes
-          extra_size = space.size - volumes.total_size
+          extra_size = space.disk_size - volumes.total_disk_size
           while extra_size > DiskSize.zero
             candidates = extra_space_candidates(candidates)
             return extra_size if candidates.empty?
@@ -144,8 +144,8 @@ module Yast
             assigned_size = DiskSize.zero
             candidates.each do |vol|
               vol_extra = volume_extra_size(vol, extra_size, candidates.total_weight)
-              vol.size += vol_extra
-              log.info("Distributing #{vol_extra} to #{vol.mount_point}; now #{vol.size}")
+              vol.disk_size += vol_extra
+              log.info("Distributing #{vol_extra} to #{vol.mount_point}; now #{vol.disk_size}")
               assigned_size += vol_extra
             end
             extra_size -= assigned_size
@@ -160,7 +160,7 @@ module Yast
         # @return [PlannedVolumesList]
         def extra_space_candidates(volumes)
           candidates = volumes.dup
-          candidates.delete_if { |vol| vol.size >= vol.max_size }
+          candidates.delete_if { |vol| vol.disk_size >= vol.max_disk_size }
           candidates
         end
 
@@ -174,10 +174,10 @@ module Yast
         # @return [DiskSize]
         def volume_extra_size(volume, available_size, total_weight)
           extra_size = available_size * (volume.weight / total_weight)
-          new_size = extra_size + volume.size
-          if new_size > volume.max_size
+          new_size = extra_size + volume.disk_size
+          if new_size > volume.max_disk_size
             # Increase just until reaching the max size
-            volume.max_size - volume.size
+            volume.max_disk_size - volume.disk_size
           else
             extra_size
           end
@@ -247,7 +247,7 @@ module Yast
         #                     or logical
         #
         def create_partition(vol, partition_id, free_space, primary)
-          log.info("Creating partition for #{vol.mount_point} with #{vol.size}")
+          log.info("Creating partition for #{vol.mount_point} with #{vol.disk_size}")
           disk = free_space.disk
           ptable = disk.partition_table
 
@@ -263,7 +263,7 @@ module Yast
             partition_type = ::Storage::PartitionType_LOGICAL
           end
 
-          region = new_region_with_size(free_space.slot, vol.size)
+          region = new_region_with_size(free_space.slot, vol.disk_size)
           partition = ptable.create_partition(dev_name, region, partition_type)
           partition.id = partition_id
           partition.boot = !!vol.bootable
@@ -331,7 +331,7 @@ module Yast
         #
         def new_region_with_size(free_slot, disk_size)
           region = free_slot.region
-          blocks = disk_size.size / region.block_size
+          blocks = disk_size.to_i / region.block_size
           # Never exceed the region
           if region.start + blocks > region.end
             blocks = region.end - region.start + 1

@@ -63,7 +63,7 @@ module Yast
 
         # Space wasted by the distribution
         # @return [DiskSize]
-        def gaps_total_size
+        def gaps_total_disk_size
           spaces.map(&:unused).reduce(DiskSize.zero, :+)
         end
 
@@ -75,8 +75,8 @@ module Yast
 
         # Total space available for the planned volumes
         # @return [DiskSize]
-        def spaces_total_size
-          spaces.map(&:size).reduce(DiskSize.zero, :+)
+        def spaces_total_disk_size
+          spaces.map(&:disk_size).reduce(DiskSize.zero, :+)
         end
 
         # Comparison method used to sort distributions based on how good are
@@ -87,7 +87,7 @@ module Yast
         # @return [Fixnum] -1, 0, 1 like <=>
         def better_than(other)
           # The smallest gaps the better
-          res = gaps_total_size <=> other.gaps_total_size
+          res = gaps_total_disk_size <=> other.gaps_total_disk_size
           return res unless res.zero?
 
           # The fewer gaps the better
@@ -99,7 +99,7 @@ module Yast
           return res unless res.zero?
 
           # The biggest installation the better
-          other.spaces_total_size <=> spaces_total_size
+          other.spaces_total_disk_size <=> spaces_total_disk_size
         end
 
       protected
@@ -275,8 +275,8 @@ module Yast
           # @param volumes [PlannedVolumesList]
           # @param disk_spaces [Array<FreeDiskSpace>]
           # @return [DiskSize]
-          def missing_size(volumes, free_spaces)
-            needed_size = volumes.target_size
+          def missing_disk_size(volumes, free_spaces)
+            needed_size = volumes.target_disk_size
             available_space = available_space(free_spaces)
             needed_size - available_space
           end
@@ -285,9 +285,9 @@ module Yast
 
           def available_space(free_spaces)
             spaces = free_spaces.select do |space|
-              space.size >= FREE_SPACE_MIN_SIZE
+              space.disk_size >= FREE_SPACE_MIN_SIZE
             end
-            spaces.reduce(DiskSize.zero) { |sum, space| sum + space.size }
+            spaces.reduce(DiskSize.zero) { |sum, space| sum + space.disk_size }
           end
 
           # For each volume in the list, it returns a list of the disk spaces
@@ -311,7 +311,7 @@ module Yast
 
           def suitable_disk_space?(space, volume, target)
             return false if volume.disk && volume.disk != space.disk_name
-            return false if space.size < volume.min_valid_size(target)
+            return false if space.disk_size < volume.min_valid_disk_size(target)
             max_offset = volume.max_start_offset
             return false if max_offset && space.start_offset > max_offset
             true

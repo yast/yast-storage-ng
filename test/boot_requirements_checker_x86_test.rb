@@ -238,7 +238,7 @@ describe Yast::Storage::BootRequirementsChecker do
 
         it "requires /boot/efi to be vfat with at least 33 MiB" do
           expect(efi_part.filesystem_type).to eq ::Storage::FsType_VFAT
-          expect(efi_part.min_size).to eq 33.MiB
+          expect(efi_part.min).to eq 33.MiB
         end
 
         it "requires /boot/efi to be out of LVM" do
@@ -246,7 +246,7 @@ describe Yast::Storage::BootRequirementsChecker do
         end
 
         it "recommends /boot/efi to be 500 MiB" do
-          expect(efi_part.desired_size).to eq 500.MiB
+          expect(efi_part.desired).to eq 500.MiB
         end
 
         it "requires /boot/efi to be close enough to the beginning of disk" do
@@ -273,13 +273,13 @@ describe Yast::Storage::BootRequirementsChecker do
         end
 
         it "requires it to be between 256KiB and 8MiB, despite the alignment" do
-          expect(grub_part.min_size).to eq 256.KiB
-          expect(grub_part.max_size).to eq 8.MiB
+          expect(grub_part.min).to eq 256.KiB
+          expect(grub_part.max).to eq 8.MiB
           expect(grub_part.align).to eq :keep_size
         end
 
         it "recommends it to be 1 MiB" do
-          expect(grub_part.desired_size).to eq 1.MiB
+          expect(grub_part.desired).to eq 1.MiB
         end
       end
     end

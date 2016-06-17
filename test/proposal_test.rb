@@ -50,7 +50,7 @@ describe Yast::Storage::Proposal do
       instance_double("Yast::Storage::BootRequirementChecker", needed_partitions: [])
     end
     let(:resize_info) do
-      instance_double("::Storage::ResizeInfo", resize_ok: true, min_size: 40.GiB.size_b)
+      instance_double("::Storage::ResizeInfo", resize_ok: true, min_size: 40.GiB.to_i)
     end
     let(:separate_home) { false }
     let(:settings) do
@@ -167,7 +167,7 @@ describe Yast::Storage::Proposal do
           mountpoint: "swap",
           uuid:       "33333333-3333-3333-3333-33333333",
           label:      "swap3",
-          size:       (1.GiB - 1.MiB).size_b
+          size:       (1.GiB - 1.MiB).to_i
         )
       end
 
@@ -178,14 +178,14 @@ describe Yast::Storage::Proposal do
           mountpoint: "swap",
           uuid:       "11111111-1111-1111-1111-11111111",
           label:      "swap1",
-          size:       500.MiB.size_b
+          size:       500.MiB.to_i
         )
         sda5 = proposal.devices.partitions.with(name: "/dev/sda5").first
         expect(sda5).to match_fields(
           mountpoint: "swap",
           uuid:       "22222222-2222-2222-2222-22222222",
           label:      "swap2",
-          size:       500.MiB.size_b
+          size:       500.MiB.to_i
         )
       end
 

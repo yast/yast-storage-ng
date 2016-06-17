@@ -74,9 +74,9 @@ module Yast
           vol = PlannedVolume.new(nil)
           # only required on GPT
           vol.partition_id = ::Storage::ID_GPT_BIOS
-          vol.min_size = DiskSize.KiB(256)
-          vol.max_size = DiskSize.MiB(8)
-          vol.desired_size = DiskSize.MiB(1)
+          vol.min_disk_size = DiskSize.KiB(256)
+          vol.max_disk_size = DiskSize.MiB(8)
+          vol.desired_disk_size = DiskSize.MiB(1)
           vol.align = :keep_size
           vol.bootable = false
           vol.can_live_on_logical_volume = false

@@ -73,7 +73,7 @@ module Yast
       def settings
         @settings ||= begin
           settings = Proposal::Settings.new
-          # settings.root_max_size = DiskSize.unlimited
+          # settings.root_max_disk_size = DiskSize.unlimited
           # settings.root_filesystem_type = ::Storage::XFS
           # settings.btrfs_increase_percentage = 150.0
           settings.use_separate_home = true
@@ -94,10 +94,10 @@ module Yast
       def print_volumes(volumes)
         volumes.each do |vol|
           print("\nVolume \"#{vol.mount_point}\":\n")
-          print("  min: #{vol.min_size};")
-          print("  max: #{vol.max_size};")
-          print("  desired: #{vol.desired_size};")
-          print("  size: #{vol.size};")
+          print("  min: #{vol.min_disk_size};")
+          print("  max: #{vol.max_disk_size};")
+          print("  desired: #{vol.desired_disk_size};")
+          print("  size: #{vol.disk_size};")
           print("  weight: #{vol.weight};\n")
         end
         print("\n")

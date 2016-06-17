@@ -55,7 +55,7 @@ module Yast
       #
       # @return [DiskSize]
       #
-      def size
+      def disk_size
         DiskSize.B(@slot.region.length * @slot.region.block_size)
       end
 
@@ -68,7 +68,7 @@ module Yast
       end
 
       def to_s
-        "#<FreeDiskSpace disk_name=#{disk_name}, size=#{size}, start_offset=#{start_offset}>"
+        "#<FreeDiskSpace disk_name=#{disk_name}, size=#{disk_size}, start_offset=#{start_offset}>"
       end
     end
   end
