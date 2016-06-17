@@ -30,7 +30,7 @@ class MdFormatter
 
   def example_group_started(notification)
     @output.puts if @group_level == 0
-    @output.puts "#{current_indentation}#{notification.group.description.strip.sub(/^#/,'')}"
+    @output.puts "#{current_indentation}#{notification.group.description.strip.sub(/^#/, "")}"
     @group_level += 1
   end
 
