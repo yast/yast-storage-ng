@@ -17,7 +17,6 @@
         size:         60 GiB
         name:         /dev/sda2
         file_system:  btrfs
-        mount_point:  /
         label:        suse_root
 
     - partition:

@@ -68,9 +68,8 @@ module Yast
         #     volumes
         #
         def provide_space(volumes)
-          new_graph = original_graph.copy
+          @new_graph = original_graph.copy
           @deleted_names = []
-          @distribution = nil
 
           # Partitions that should not be deleted
           keep = []
@@ -82,16 +81,19 @@ module Yast
             volumes.delete(vol)
           end
 
-          resize_windows!(new_graph, volumes) unless success?(new_graph, volumes)
-
-          if !success?(new_graph, volumes)
-            delete_partitions!(new_graph, volumes, keep)
+          # To make sure we are not freeing space in a useless place, let's
+          # first restrict the operations to disks with particular requirements
+          volumes_by_disk(volumes).each do |disk, vols|
+            resize_and_delete!(vols, keep, disk: disk)
           end
+          # Doing something similar for #max_start_offset is more difficult and
+          # doesn't pay off (#max_start_offset is used just in one case)
 
-          raise NoDiskSpaceError unless success?(new_graph, volumes)
+          # Now with the full set of volumes and all the candidate disks
+          resize_and_delete!(volumes, keep)
 
           {
-            devicegraph:        new_graph,
+            devicegraph:        @new_graph,
             deleted_partitions: deleted_partitions,
             space_distribution: @distribution
           }
@@ -99,7 +101,7 @@ module Yast
 
       protected
 
-        attr_reader :original_graph, :disk_analyzer
+        attr_reader :original_graph, :new_graph, :disk_analyzer
 
         # Partitions from the original devicegraph that are not present in the
         # result of the last call to #provide_space
@@ -109,14 +111,24 @@ module Yast
           original_graph.partitions.with(name: @deleted_names).to_a
         end
 
+        # @return [Hash{String => PlannedVolumesList}]
+        def volumes_by_disk(volumes)
+          volumes.each_with_object({}) do |volume, hash|
+            if volume.disk
+              hash[volume.disk] ||= PlannedVolumesList.new([], target: volumes.target)
+              hash[volume.disk] << volume
+            end
+          end
+        end
+
         # Checks whether the goal has already being reached
         #
         # If it returns true, it stores in @distribution the SpaceDistribution
         # that made it possible.
         #
         # @return [Boolean]
-        def success?(graph, volumes)
-          @distribution = SpaceDistribution.best_for(volumes, free_spaces(graph).to_a, graph)
+        def success?(volumes)
+          @distribution ||= SpaceDistribution.best_for(volumes, free_spaces(new_graph).to_a, new_graph)
           !!@distribution
         rescue Error => e
           log.info "Exception while trying to distribute volumes: #{e}"
@@ -124,26 +136,52 @@ module Yast
           false
         end
 
+        # Perform all the needed operations to make space for the volumes
+        #
+        # @param volumes [PlannedVolumesList] volumes to make space for
+        # @param keep [Array<String>] device names of partitions that should not
+        #     be deleted
+        # @param disk [String] optional disk name to restrict operations to
+        def resize_and_delete!(volumes, keep, disk: nil)
+          log.info "Resize and delete. disk: #{disk}"
+
+          @distribution = nil
+
+          # Initially, resize only if there are no Linux partitions in the disk
+          resize_windows!(volumes, disk, force: false)
+          delete_partitions!(volumes, :linux, keep, disk)
+          delete_partitions!(volumes, :other, keep, disk)
+          # If everything else failed, try resizing Windows before deleting it
+          resize_windows!(volumes, disk, force: true)
+          delete_partitions!(volumes, :windows, keep, disk)
+
+          raise NoDiskSpaceError unless success?(volumes)
+        end
+
         # Additional space that needs to be freed in order to reach the goal
         #
         # @return [DiskSize]
-        def missing_required_size(graph, volumes)
-          SpaceDistribution.missing_size(volumes, free_spaces(graph).to_a)
+        def missing_required_size(volumes, disk)
+          SpaceDistribution.missing_size(volumes, free_spaces(new_graph, disk).to_a)
         end
 
         # List of free spaces in the given devicegraph
         #
+        # @param graph [::Storage::Devicegraph]
+        # @param disk [String] optional disk name to restrict result to
         # @return [FreeDiskSpacesList]
-        def free_spaces(graph)
-          disks_for(graph).free_disk_spaces
+        def free_spaces(graph, disk = nil)
+          disks_for(graph, disk).free_disk_spaces
         end
 
         # List of candidate disks in the given devicegraph
         #
         # @param devicegraph [::Storage::Devicegraph]
+        # @param disk [String] optional disk name to restrict result to
         # @return [DisksList]
-        def disks_for(devicegraph)
-          devicegraph.disks.with(name: candidate_disk_names)
+        def disks_for(devicegraph, disk = nil)
+          filter = disk || candidate_disk_names
+          devicegraph.disks.with(name: filter)
         end
 
         # @return [Array<String>]
@@ -151,26 +189,54 @@ module Yast
           settings.candidate_devices
         end
 
-        # Try to resize the existing windows partitions - unless there already is
-        # a Linux partition which means that
+        # Try to resize the existing windows partitions
         #
-        # @param devicegraph [DeviceGraph] devicegraph to update
         # @param volumes [PlannedVolumesList] list of volumes to allocate, used
         #   to know how much space is still missing
-        def resize_windows!(devicegraph, volumes)
-          return if windows_part_names.empty?
-          return unless linux_part_names.empty?
+        # @param disk [String] optional disk name to restrict operations to
+        # @param force [Boolean] whether to resize Windows even if there are
+        #   Linux partitions in the same disk
+        def resize_windows!(volumes, disk, force: false)
+          return if success?(volumes)
+          part_names = windows_part_names(disk)
+          return if part_names.empty?
 
-          log.info("Resizing Windows partitions")
-          sorted_resizables(devicegraph, windows_part_names).each do |res|
+          log.info("Resizing Windows partitions (force: #{force}")
+          parts_by_disk = partitions_by_disk(part_names)
+          remove_linux_disks!(parts_by_disk) unless force
+
+          sorted_resizables(parts_by_disk.values.flatten).each do |res|
             shrink_size = [
               res[:recoverable_size],
-              missing_required_size(devicegraph, volumes)
+              missing_required_size(volumes, disk)
             ].min
             shrink_partition(res[:partition], shrink_size)
-            return if success?(devicegraph, volumes)
+            return if success?(volumes)
           end
           log.info "Didn't manage to free enough space by resizing Windows"
+        end
+
+        # @return [Hash{String => ::Storage::Partition}]
+        def partitions_by_disk(part_names)
+          partitions = new_graph.partitions.with(name: part_names)
+          partitions.each_with_object({}) do |partition, hash|
+            disk_name = partition.partitionable.name
+            hash[disk_name] ||= []
+            hash[disk_name] << partition
+          end
+        end
+
+        def remove_linux_disks!(partitions_by_disk)
+          partitions_by_disk.each do |disk, _p|
+            if linux_in_disk?(disk)
+              log.info "Linux partitions in #{disk}, Windows will not be resized"
+              partitions_by_disk.delete(disk)
+            end
+          end
+        end
+
+        def linux_in_disk?(disk_name)
+          linux_part_names(disk_name).any?
         end
 
         # List of partitions that can be resized, including the size of the
@@ -179,15 +245,14 @@ module Yast
         # The list is sorted so the partitions with more recoverable space are
         # listed first.
         #
-        # @param graph [::Storage::Devicegraph]
-        # @param part_names [Array<String>] list of partition names to consider
+        # @param partitions [Array<::Storage::Partition>] list of partitions
         # @return [Array<Hash>] each element contains
         #     :partition (::Storage::Partition) and :recoverable_size (DiskSize)
-        def sorted_resizables(graph, part_names)
-          partitions = graph.partitions.with(name: part_names)
+        def sorted_resizables(partitions)
           resizables = partitions.map do |part|
             { partition: part, recoverable_size: recoverable_size(part) }
           end
+
           resizables.delete_if { |res| res[:recoverable_size].zero? }
           resizables.sort_by { |res| res[:recoverable_size] }.reverse
         end
@@ -211,26 +276,36 @@ module Yast
           partition.size = partition.size - shrink_size.size
         end
 
-        # Use force to create space: delete partitions while there is no
-        # suitable space distribution
+        # Use force to create space: delete partitions if a given type while
+        # there is no suitable space distribution
         #
-        # @param devicegraph [DeviceGraph] devicegraph to update
+        # @see #deletion_candidate_partitions for supported types
+        #
         # @param volumes [PlannedVolumesList]
+        # @param type [Symbol] type of partition to delete
         # @param keep [Array<String>] device names of partitions that should not
         #       be deleted
-        def delete_partitions!(devicegraph, volumes, keep)
-          log.info("Deleting partitions to make space")
+        # @param disk [String] optional disk name to restrict operations to
+        def delete_partitions!(volumes, type, keep, disk)
+          return if success?(volumes)
 
-          prioritized_candidate_partitions.each do |part_name|
-            return if success?(devicegraph, volumes)
+          log.info("Deleting partitions to make space")
+          deletion_candidate_partitions(type, disk).each do |part_name|
             if keep.include?(part_name)
               log.info "Skipped deletion of #{part_name}"
               next
             end
-            part = ::Storage::Partition.find_by_name(devicegraph, part_name)
+            part = find_partition(part_name)
             next unless part
             delete_partition(part)
+            return if success?(volumes)
           end
+        end
+
+        def find_partition(name)
+          ::Storage::Partition.find_by_name(new_graph, name)
+        rescue
+          nil
         end
 
         # Deletes a given partition from its corresponding partition table
@@ -240,42 +315,65 @@ module Yast
           partition.partition_table.delete_partition(partition.name)
         end
 
-        # Return a prioritized array of candidate partitions (from all candidate
-        # disks) in this order:
+        # Partitions of a given type to be deleted. The type can be:
         #
-        # - Linux partitions
-        # - Non-Linux and non-Windows partitions
-        # - Windows partitions
+        #  * :windows Partitions with a Windows installation on it
+        #  * :linux Partitions that are part of a Linux installation
+        #  * :other Any other partition
         #
-        # @return [Array<String>] partition_names
-        def prioritized_candidate_partitions
-          candidate_parts = disks_for(original_graph).partitions
-
-          win_part, non_win_part = candidate_parts.map(&:name).partition do |part_name|
-            windows_part_names.include?(part_name)
+        # @param type [Symbol]
+        # @param disk [String] optional disk name to restrict operations to
+        # @return [Array<String>] partition names sorted by disk and by position
+        #     inside the disk (partitions at the end are presented first)
+        def deletion_candidate_partitions(type, disk = nil)
+          names = []
+          disks_for(original_graph, disk).each do |dsk|
+            partitions = original_graph.disks.with(name: dsk.name).partitions.to_a
+            filter_partitions_by_type!(partitions, type, dsk.name)
+            partitions = partitions.sort_by { |part| part.region.start }.reverse
+            names += partitions.map(&:name)
           end
-          linux_part, non_linux_part = non_win_part.partition do |part_name|
-            linux_part_names.include?(part_name)
-          end
 
-          log.info "Deletion candidates, Linux: #{linux_part}"
-          log.info "Deletion candidates, non Linux: #{non_linux_part}"
-          log.info "Deletion candidates, Windows: #{win_part}"
-          linux_part + non_linux_part + win_part
+          log.info "Deletion candidates (#{type}): #{names}"
+          names
+        end
+
+        def filter_partitions_by_type!(partitions, type, disk)
+          case type
+          when :windows
+            partitions.select! { |part| windows_part_names(disk).include?(part.name) }
+          when :linux
+            partitions.select! { |part| linux_part_names(disk).include?(part.name) }
+          when :other
+            partitions.select! do |part|
+              !linux_part_names(disk).include?(part.name) &&
+                !windows_part_names(disk).include?(part.name)
+            end
+          end
         end
 
         # Device names of windows partitions detected by disk_analyzer
         #
         # @return [array<string>]
-        def windows_part_names
-          disk_analyzer.windows_partitions.values.flatten.map(&:name)
+        def windows_part_names(disk = nil)
+          if disk
+            parts = disk_analyzer.windows_partitions[disk] || []
+          else
+            parts = disk_analyzer.windows_partitions.values.flatten
+          end
+          parts.map(&:name)
         end
 
         # Device names of linux partitions detected by disk_analyzer
         #
         # @return [array<string>]
-        def linux_part_names
-          disk_analyzer.linux_partitions.values.flatten.map(&:name)
+        def linux_part_names(disk = nil)
+          if disk
+            parts = disk_analyzer.linux_partitions[disk] || []
+          else
+            parts = disk_analyzer.linux_partitions.values.flatten
+          end
+          parts.map(&:name)
         end
       end
     end

@@ -13,14 +13,12 @@
         mount_point: swap
         label: swap
     - partition:
-        size: 40.00 GiB
+        size: 60.00 GiB
         name: "/dev/sda2"
         type: primary
         id: linux
         file_system: btrfs
-        mount_point: "/"
-    - free:
-        size: 20.00 GiB
+        label: suse_root
     - partition:
         size: 60.00 GiB
         name: "/dev/sda3"
@@ -41,10 +39,9 @@
         file_system: xfs
         label: shared_home
     - partition:
-        size: unlimited
+        size: 40.00 GiB
         name: "/dev/sda6"
         type: logical
         id: linux
-        file_system: xfs
-        mount_point: "/data"
-        label: data
+        file_system: btrfs
+        mount_point: "/"
