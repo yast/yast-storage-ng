@@ -1,6 +1,8 @@
 
-## Yast::Storage::BootRequirementsChecker
-### needed_partitions in a PPC64 system
+[//]: # (document was automatically created using 'rake doc:bootspecs')
+
+# Yast::Storage::BootRequirementsChecker
+## needed partitions in a PPC64 system
 - in a non-PowerNV system (KVM/LPAR)
 	- with a partitions-based proposal
 		- if there are no PReP partitions
@@ -31,8 +33,7 @@
 	- **requires it to be out of LVM**
 	- **requires it to be bootable (ms-dos partition table)**
 
-## Yast::Storage::BootRequirementsChecker
-### needed_partitions in a S/390 system
+## needed partitions in a S/390 system
 - trying to install in a zfcp disk
 	- with a partitions-based proposal
 		- **requires only a /boot/zipl partition**
@@ -53,8 +54,7 @@
 	- **requires /boot/zipl to be in the system disk out of LVM**
 	- **recommends /boot/zipl to be 200 MiB**
 
-## Yast::Storage::BootRequirementsChecker
-### needed_partitions in a x86 system
+## needed partitions in a x86 system
 - using UEFI
 	- with a partitions-based proposal
 		- if there are no EFI partitions
