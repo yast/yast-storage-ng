@@ -39,7 +39,7 @@ class MdFormatter
       text.gsub!(/_/, " ")
       @output.puts "#{current_indentation}#{text}"
     end
-    @groups += 1
+    @groups += 1 if @group_level == 0
     @group_level += 1
   end
 
