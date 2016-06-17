@@ -26,11 +26,20 @@ class MdFormatter
   def initialize(output)
     @output = output
     @group_level = 0
+    @groups = 0
+    @output.puts "\n[//]: # (document was automatically created using 'rake doc:bootspecs')\n"
   end
 
   def example_group_started(notification)
     @output.puts if @group_level == 0
-    @output.puts "#{current_indentation}#{notification.group.description.strip.sub(/^#/, "")}"
+    # print top-level comment only once (this is our headline)
+    if @group_level != 0 || @groups == 0
+      text = notification.group.description.strip
+      text.sub!(/^#/, "")
+      text.gsub!(/_/, " ")
+      @output.puts "#{current_indentation}#{text}"
+    end
+    @groups += 1
     @group_level += 1
   end
 
@@ -58,9 +67,9 @@ private
 
   def current_indentation
     if @group_level == 0
-      "## "
+      "# "
     elsif @group_level == 1
-      "### "
+      "## "
     else
       "\t" * (@group_level - 2) + "- "
     end
