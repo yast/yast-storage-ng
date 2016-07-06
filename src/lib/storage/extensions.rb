@@ -298,7 +298,7 @@ module Storage
       return make_icon_cell(ExpertPartitioner::Icons::BCACHE, "Bcache")
     end
 
-   def new_tree_view
+    def new_tree_view
       return ExpertPartitioner::BcacheTreeView.new(self)
     end
   end
