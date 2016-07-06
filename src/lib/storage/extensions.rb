@@ -62,7 +62,8 @@ module Storage
       mount_by:        N_("Mount By"),
       md_level:        N_("RAID Level"),
       spare:           N_("Spare"),
-      faulty:          N_("Faulty")
+      faulty:          N_("Faulty"),
+      stripe_info:     N_("Stripes")
     }
     private_constant :FIELD_NAMES
 
@@ -260,6 +261,14 @@ module Storage
 
     def table_lv_name
       return lv_name
+    end
+
+    def table_stripe_info
+      if stripes != 0
+        return "#{stripes} (#{::Storage.byte_to_humanstring(stripe_size, false, 2, false)})"
+      else
+        return ""
+      end
     end
 
     def new_tree_view
