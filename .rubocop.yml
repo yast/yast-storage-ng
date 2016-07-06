@@ -51,3 +51,7 @@ Style/SymbolProc:
 # Enforce if/unless at the end only for really short lines
 Style/IfUnlessModifier:
   MaxLineLength: 60
+
+# UI code can use bigger assignments
+Metrics/AbcSize:
+  Max: 100
