@@ -81,7 +81,7 @@ module ExpertPartitioner
       )
     end
 
-    def doit_max_size(partition_table,  partition_slots)
+    def doit_max_size(partition_table, partition_slots)
       used_partition_slot = partition_slots[0]
 
       used_partition_slot.region = partition_table.align(used_partition_slot.region,
