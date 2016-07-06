@@ -34,6 +34,11 @@ require "expert_partitioner/tree_views/partition"
 require "expert_partitioner/tree_views/lvm_vgs"
 require "expert_partitioner/tree_views/lvm_vg"
 require "expert_partitioner/tree_views/lvm_lv"
+require "expert_partitioner/tree_views/lukses"
+require "expert_partitioner/tree_views/bcaches"
+require "expert_partitioner/tree_views/bcache"
+require "expert_partitioner/tree_views/bcache_csets"
+require "expert_partitioner/tree_views/bcache_cset"
 require "expert_partitioner/tree_views/filesystem"
 require "expert_partitioner/tree_views/probed_devicegraph"
 require "expert_partitioner/tree_views/staging_devicegraph"
@@ -56,6 +61,9 @@ module ExpertPartitioner
       disks:               DisksTreeView,
       mds:                 MdsTreeView,
       lvm_vgs:             LvmVgsTreeView,
+      lukses:              LuksesTreeView,
+      bcaches:             BcachesTreeView,
+      bcache_csets:        BcacheCsetsTreeView,
       filesystems:         FilesystemTreeView,
       devicegraph_probed:  ProbedDevicegraphTreeView,
       devicegraph_staging: StagingDevicegraphTreeView,

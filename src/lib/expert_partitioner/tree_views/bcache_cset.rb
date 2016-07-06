@@ -20,28 +20,32 @@
 # find current contact information at www.suse.com.
 
 require "yast"
+require "storage"
+require "storage/storage_manager"
+require "storage/extensions"
+require "expert_partitioner/tree_views/view"
+require "expert_partitioner/icons"
+
+Yast.import "UI"
+Yast.import "HTML"
+
+include Yast::I18n
 
 module ExpertPartitioner
-  class Icons
-    ALL = "yast-disk.png"
+  class BcacheCsetTreeView < TreeView
+    def initialize(bcache_cset)
+      @bcache_cset = bcache_cset
+    end
 
-    DEVICE = "yast-disk.png"
+    def create
+      tmp = ["UUID: #{@bcache_cset.uuid}"]
 
-    DISK = "yast-disk.png"
+      contents = Yast::HTML.List(tmp)
 
-    MD = "yast-raid.png"
-
-    LVM_PV = "yast-disk.png"
-    LVM_VG = "yast-lvm_config.png"
-    LVM_LV = "yast-partitioning.png"
-
-    PARTITION = "yast-partitioning.png"
-
-    ENCRYPTION = "yast-encrypted.png"
-
-    BCACHE = "yast-disk.png"
-    BCACHE_CSET = "yast-disk.png"
-
-    FILESYSTEM = "yast-nfs.png"
+      VBox(
+        Left(IconAndHeading(_("Bcache Cset: %s") % @bcache_cset.uuid, Icons::BCACHE_CSET)),
+        RichText(Id(:text), Opt(:hstretch, :vstretch), contents)
+      )
+    end
   end
 end

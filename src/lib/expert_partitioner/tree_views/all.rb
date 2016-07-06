@@ -1,6 +1,6 @@
 # encoding: utf-8
 
-# Copyright (c) [2015] SUSE LLC
+# Copyright (c) [2015-2016] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -116,11 +116,33 @@ module ExpertPartitioner
       return ret
     end
 
+    def items_lukses(staging)
+      lukses = Storage::Luks.all(staging)
+      return lukses.to_a.map do |luks|
+        luks.table_row(FIELDS)
+      end
+    end
+
+    def items_bcaches(staging)
+      bcaches = Storage::Bcache.all(staging)
+      return bcaches.to_a.map do |bcache|
+        bcache.table_row(FIELDS)
+      end
+    end
+
+    def items_bcache_csets(staging)
+      bcache_csets = Storage::BcacheCset.all(staging)
+      return bcache_csets.to_a.map do |bcache_cset|
+        bcache_cset.table_row(FIELDS)
+      end
+    end
+
     def items
       storage = Yast::Storage::StorageManager.instance
       staging = storage.staging
 
-      return items_disks(staging) + items_mds(staging) + items_lvm_vgs(staging)
+      return items_disks(staging) + items_mds(staging) + items_lvm_vgs(staging) +
+          items_lukses(staging) + items_bcaches(staging) + items_bcache_csets(staging)
     end
   end
 end
