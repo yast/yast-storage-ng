@@ -1,6 +1,6 @@
 # encoding: utf-8
 
-# Copyright (c) [2015] SUSE LLC
+# Copyright (c) [2015-2016] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -23,10 +23,8 @@ require "yast"
 require "storage"
 require "storage/storage_manager"
 require "storage/extensions"
-require "expert_partitioner/tab_views/view"
+require "expert_partitioner/tree_views/view"
 require "expert_partitioner/dialogs/format"
-require "expert_partitioner/dialogs/create_partition_table"
-require "expert_partitioner/dialogs/create_partition"
 require "expert_partitioner/popups"
 
 Yast.import "UI"
@@ -36,15 +34,18 @@ include Yast::I18n
 include Yast::Logger
 
 module ExpertPartitioner
-  class LvmVgLvmLvsTabView < TabView
-    FIELDS = [:sid, :icon, :name, :lv_name, :size, :stripe_info, :filesystem, :mountpoint]
+  class BcachesTreeView < TreeView
+    FIELDS = [:sid, :icon, :name, :size, :filesystem, :mountpoint]
 
-    def initialize(lvm_vg)
-      @lvm_vg = lvm_vg
+    def initialize
+      storage = Yast::Storage::StorageManager.instance
+      staging = storage.staging
+      @bcaches = ::Storage::Bcache.all(staging)
     end
 
     def create
       VBox(
+        Left(IconAndHeading(_("Bcaches"), Icons::BCACHE)),
         Table(Id(:table), Opt(:keepSorting), Storage::Device.table_header(FIELDS), items),
         HBox(
           PushButton(Id(:format), _("Format...")),
@@ -67,8 +68,10 @@ module ExpertPartitioner
     def items
       ret = []
 
-      @lvm_vg.lvm_lvs.each do |lvm_lv|
-        ret << lvm_lv.table_row(FIELDS)
+      @bcaches.each do |bcache|
+
+        ret << bcache.table_row(FIELDS)
+
       end
 
       return ret

@@ -1,6 +1,6 @@
 # encoding: utf-8
 
-# Copyright (c) [2015] SUSE LLC
+# Copyright (c) [2015-2016] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -50,6 +50,9 @@ module ExpertPartitioner
             Item(Id(:disks), _("Hard Disks"), true, disks_subtree_items),
             Item(Id(:mds), _("MD RAIDs"), true, mds_subtree_items),
             Item(Id(:lvm_vgs), _("LVM VGs"), true, lvm_vgs_subtree_items),
+            Item(Id(:lukses), _("LUKSes"), true, lukses_subtree_items),
+            Item(Id(:bcaches), _("Bcaches"), true, bcaches_subtree_items),
+            Item(Id(:bcache_csets), _("Bcache Csets"), true, bcache_csets_subtree_items),
             Item(Id(:filesystems), _("Filesystems"))
           ]
         ),
@@ -64,9 +67,8 @@ module ExpertPartitioner
 
     def disks_subtree_items
       storage = Yast::Storage::StorageManager.instance
-      staging = storage.staging
 
-      disks = Storage::Disk.all(staging)
+      disks = Storage::Disk.all(storage.staging)
 
       ::Storage.silence do
 
@@ -91,9 +93,8 @@ module ExpertPartitioner
 
     def mds_subtree_items
       storage = Yast::Storage::StorageManager.instance
-      staging = storage.staging
 
-      mds = Storage::Md.all(staging)
+      mds = Storage::Md.all(storage.staging)
 
       ::Storage.silence do
 
@@ -118,9 +119,8 @@ module ExpertPartitioner
 
     def lvm_vgs_subtree_items
       storage = Yast::Storage::StorageManager.instance
-      staging = storage.staging
 
-      lvm_vgs = Storage::LvmVg.all(staging)
+      lvm_vgs = Storage::LvmVg.all(storage.staging)
 
       return lvm_vgs.to_a.map do |lvm_vg|
 
@@ -132,6 +132,36 @@ module ExpertPartitioner
 
         Item(Id(lvm_vg.sid), lvm_vg.vg_name, true, lvm_lvs_subtree)
 
+      end
+    end
+
+    def lukses_subtree_items
+      storage = Yast::Storage::StorageManager.instance
+
+      lukses = Storage::Luks.all(storage.staging)
+
+      return lukses.to_a.map do |luks|
+        Item(Id(luks.sid), luks.dm_table_name, true)
+      end
+    end
+
+    def bcaches_subtree_items
+      storage = Yast::Storage::StorageManager.instance
+
+      bcaches = Storage::Bcache.all(storage.staging)
+
+      return bcaches.to_a.map do |bcache|
+        Item(Id(bcache.sid), bcache.name, true)
+      end
+    end
+
+    def bcache_csets_subtree_items
+      storage = Yast::Storage::StorageManager.instance
+
+      bcache_csets = Storage::BcacheCset.all(storage.staging)
+
+      return bcache_csets.to_a.map do |bcache_cset|
+        Item(Id(bcache_cset.sid), bcache_cset.uuid, true)
       end
     end
   end

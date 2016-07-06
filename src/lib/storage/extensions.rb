@@ -26,6 +26,7 @@ require "expert_partitioner/tree_views/md"
 require "expert_partitioner/tree_views/partition"
 require "expert_partitioner/tree_views/lvm_vg"
 require "expert_partitioner/tree_views/lvm_lv"
+require "expert_partitioner/tree_views/luks"
 
 include Yast::UIShortcuts
 
@@ -62,7 +63,8 @@ module Storage
       mount_by:        N_("Mount By"),
       md_level:        N_("RAID Level"),
       spare:           N_("Spare"),
-      faulty:          N_("Faulty")
+      faulty:          N_("Faulty"),
+      stripe_info:     N_("Stripes")
     }
     private_constant :FIELD_NAMES
 
@@ -262,6 +264,14 @@ module Storage
       return lv_name
     end
 
+    def table_stripe_info
+      if stripes != 0
+        return "#{stripes} (#{::Storage.byte_to_humanstring(stripe_size, false, 2, false)})"
+      else
+        return ""
+      end
+    end
+
     def new_tree_view
       return ExpertPartitioner::LvmLvTreeView.new(self)
     end
@@ -276,6 +286,34 @@ module Storage
   class Luks
     def table_icon
       return make_icon_cell(ExpertPartitioner::Icons::ENCRYPTION, "LUKS")
+    end
+
+    def new_tree_view
+      return ExpertPartitioner::LuksTreeView.new(self)
+    end
+  end
+
+  class Bcache
+    def table_icon
+      return make_icon_cell(ExpertPartitioner::Icons::BCACHE, "Bcache")
+    end
+
+    def new_tree_view
+      return ExpertPartitioner::BcacheTreeView.new(self)
+    end
+  end
+
+  class BcacheCset
+    def table_icon
+      return make_icon_cell(ExpertPartitioner::Icons::BCACHE_CSET, "Bcache Cset")
+    end
+
+    def table_uuid
+      return uuid
+    end
+
+    def new_tree_view
+      return ExpertPartitioner::BcacheCsetTreeView.new(self)
     end
   end
 
