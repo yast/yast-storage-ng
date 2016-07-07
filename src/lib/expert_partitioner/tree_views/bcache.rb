@@ -39,7 +39,14 @@ module ExpertPartitioner
 
     def create
       tmp = ["Name: #{@bcache.name}",
-             "Size: #{::Storage.byte_to_humanstring(@bcache.size, false, 2, false)}"]
+             "Size: #{::Storage.byte_to_humanstring(@bcache.size, false, 2, false)}",
+             "Used Device: #{@bcache.blk_device.name}"]
+
+      if @bcache.has_bcache_cset
+        tmp << "Bcache Cset: #{@bcache.bcache_cset.uuid}"
+      else
+        tmp << "Bcache Cset:"
+      end
 
       contents = Yast::HTML.List(tmp)
 

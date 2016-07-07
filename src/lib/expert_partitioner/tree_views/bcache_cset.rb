@@ -40,6 +40,14 @@ module ExpertPartitioner
     def create
       tmp = ["UUID: #{@bcache_cset.uuid}"]
 
+      @bcache_cset.blk_devices.each do |blk_device|
+        tmp << "Used Devices: #{blk_device.name}"
+      end
+
+      @bcache_cset.bcaches.each do |bcache|
+        tmp << "Bcaches: #{bcache.name}"
+      end
+
       contents = Yast::HTML.List(tmp)
 
       VBox(
