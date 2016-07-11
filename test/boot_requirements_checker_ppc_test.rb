@@ -21,7 +21,7 @@
 # find current contact information at www.suse.com.
 
 require_relative "spec_helper"
-require_relative "support/proposed_boot_partition_examples"
+require_relative "support/proposed_partitions_examples"
 require_relative "support/boot_requirements_context"
 require "storage/proposal"
 require "storage/boot_requirements_checker"
@@ -35,10 +35,13 @@ describe Yast::Storage::BootRequirementsChecker do
 
     let(:prep_id) { ::Storage::ID_PPC_PREP }
     let(:architecture) { :ppc }
+    let(:sda_part_table) { pt_msdos }
+    let(:grub_partitions) { {} }
 
     before do
       allow(storage_arch).to receive(:ppc_power_nv?).and_return(power_nv)
       allow(analyzer).to receive(:prep_partitions).and_return prep_partitions
+      allow(analyzer).to receive(:grub_partitions).and_return grub_partitions
     end
 
     context "in a non-PowerNV system (KVM/LPAR)" do
@@ -91,7 +94,7 @@ describe Yast::Storage::BootRequirementsChecker do
         end
 
         context "if the existent PReP partition is not in the target disk" do
-          let(:prep_partitions) { { "/dev/sdb" => [analyzer_part("/dev/sdb1")] } }
+          let(:prep_partitions) { { "/dev/sdb" => [analyzer_part("/dev/sdb")] } }
 
           it "requires /boot and PReP partitions" do
             expect(checker.needed_partitions).to contain_exactly(
@@ -104,7 +107,7 @@ describe Yast::Storage::BootRequirementsChecker do
         context "if there is already a PReP partition in the disk" do
           let(:prep_partitions) { { "/dev/sda" => [analyzer_part("/dev/sda1")] } }
 
-          it "only requires a /boot partition" do
+          it "requires only a /boot partition" do
             expect(checker.needed_partitions).to contain_exactly(
               an_object_with_fields(mount_point: "/boot")
             )
@@ -138,38 +141,23 @@ describe Yast::Storage::BootRequirementsChecker do
 
     context "when proposing a boot partition" do
       let(:boot_part) { find_vol("/boot", checker.needed_partitions) }
-      # Default values to ensure the max num of proposed volumes
-      let(:prep_partitions) { {} }
+      # Default values to ensure the presence of a /boot partition
       let(:use_lvm) { true }
-      let(:power_nv) { false }
+      let(:sda_part_table) { pt_msdos }
+      let(:prep_partitions) { {} }
+      let(:power_nv) { true }
 
       include_examples "proposed boot partition"
     end
 
     context "when proposing a PReP partition" do
       let(:prep_part) { find_vol(nil, checker.needed_partitions) }
-      # Default values to ensure the max num of proposed volumes
-      let(:prep_partitions) { {} }
-      let(:use_lvm) { true }
+      # Default values to ensure the presence of a PReP partition
+      let(:use_lvm) { false }
       let(:power_nv) { false }
+      let(:prep_partitions) { {} }
 
-      it "requires it to be between 256KiB and 8MiB, despite the alignment" do
-        expect(prep_part.min).to eq 256.KiB
-        expect(prep_part.max).to eq 8.MiB
-        expect(prep_part.align).to eq :keep_size
-      end
-
-      it "recommends it to be 1 MiB" do
-        expect(prep_part.desired).to eq 1.MiB
-      end
-
-      it "requires it to be out of LVM" do
-        expect(prep_part.can_live_on_logical_volume).to eq false
-      end
-
-      it "requires it to be bootable (ms-dos partition table)" do
-        expect(prep_part.bootable).to eq true
-      end
+      include_examples "proposed PReP partition"
     end
   end
 end
