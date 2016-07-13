@@ -2,7 +2,7 @@
 #
 # encoding: utf-8
 
-# Copyright (c) [2015] SUSE LLC
+# Copyright (c) [2015-2016] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -85,7 +85,10 @@ module Yast
       # @return [Array<Hash>]
       #
       def yaml_device_tree(devicegraph)
-        devicegraph.all_disks.to_a.inject([]) { |yaml, disk| yaml << yaml_disk(disk) }
+        yaml = []
+        devicegraph.all_disks.each { |disk| yaml << yaml_disk(disk) }
+        devicegraph.all_lvm_vgs.each { |lvm_vg| yaml << yaml_lvm_vg(lvm_vg) }
+        yaml
       end
 
     private
@@ -236,6 +239,85 @@ module Yast
       #
       def yaml_free_slot(start, size)
         { "free" => { "size" => size.to_s_ex, "start" => start.to_s_ex } }
+      end
+
+      # Return the YAML counterpart of a ::Storage::LvmVg.
+      #
+      # @param lvm_vg [::Storage::LvmVg]
+      # @return [Hash]
+      #
+      def yaml_lvm_vg(lvm_vg)
+        content = basic_lvm_vg_attributes(lvm_vg)
+
+        lvm_lvs = yaml_lvm_vg_lvm_lvs(lvm_vg)
+        content["lvm_lvs"] = lvm_lvs unless lvm_lvs.empty?
+
+        lvm_pvs = yaml_lvm_vg_lvm_pvs(lvm_vg)
+        content["lvm_pvs"] = lvm_pvs
+
+        { "lvm_vg" => content }
+      end
+
+      # Basic attributes used to represent a volume group
+      #
+      # @param lvm_vg [::Storage::LvmVg]
+      # @return [Hash{String => Object}]
+      #
+      def basic_lvm_vg_attributes(lvm_vg)
+        {
+          "vg_name"     => lvm_vg.vg_name,
+          "extent_size" => DiskSize.B(lvm_vg.extent_size).to_s_ex
+        }
+      end
+
+      # Return a YAML representation of the logical volumes in a volume group
+      #
+      # @param disk [::Storage::LvmVg]
+      # @return [Array<Hash>]
+      #
+      def yaml_lvm_vg_lvm_lvs(lvm_vg)
+        lvm_vg.lvm_lvs.to_a.map { |lvm_lv| yaml_lvm_lv(lvm_lv) }
+      end
+
+      # Return the YAML counterpart of a ::Storage::LvmLv.
+      #
+      # @param lvm_lv [::Storage::LvmLv]
+      # @return [Hash]
+      #
+      def yaml_lvm_lv(lvm_lv)
+        content = {
+          "lv_name" => lvm_lv.lv_name,
+          "size"    => DiskSize.B(lvm_lv.size).to_s_ex
+        }
+
+        content["stripes"] = lvm_lv.stripes if lvm_lv.stripes != 0
+        content["stripe_size"] = DiskSize.B(lvm_lv.stripe_size).to_s_ex if lvm_lv.stripe_size != 0
+
+        content.merge!(yaml_filesystem(lvm_lv.filesystem)) if lvm_lv.has_filesystem
+
+        { "lvm_lv" => content }
+      end
+
+      # Return a YAML representation of the physical volumes in a volume group
+      #
+      # @param disk [::Storage::LvmVg]
+      # @return [Array<Hash>]
+      #
+      def yaml_lvm_vg_lvm_pvs(lvm_vg)
+        lvm_vg.lvm_pvs.to_a.map { |lvm_pv| yaml_lvm_pv(lvm_pv) }
+      end
+
+      # Return the YAML counterpart of a ::Storage::LvmPv.
+      #
+      # @param lvm_lv [::Storage::LvmPv]
+      # @return [Hash]
+      #
+      def yaml_lvm_pv(lvm_pv)
+        content = {
+          "blk_device" => lvm_pv.blk_device.name
+        }
+
+        { "lvm_pv" => content }
       end
 
       # Return the YAML counterpart of a ::Storage::Filesystem.
