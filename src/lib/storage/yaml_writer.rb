@@ -98,7 +98,7 @@ module Yast
       def yaml_disk(disk)
         content = basic_disk_attributes(disk)
         begin
-          ptable = disk.partition_table # this will raise an excepton if no partition table
+          ptable = disk.partition_table # this will raise an exception if no partition table
           content["partition_table"] = @partition_table_types[ptable.type]
           if ::Storage.msdos?(ptable)
             content["mbr_gap"] = DiskSize.B(::Storage.to_msdos(ptable).minimal_mbr_gap).to_s_ex
