@@ -213,7 +213,7 @@ module Yast
       # @param  partition [::Storage::Partition]
       # @return [Hash]
       #
-      # rubocop:disable Metrics/AbcSize
+
       def yaml_partition(partition)
         content = {
           "size"  => DiskSize.B(partition.region.length * partition.region.block_size).to_s_ex,
@@ -223,20 +223,11 @@ module Yast
           "id"    => @partition_ids[partition.id] || "0x#{partition.id.to_s(16)}"
         }
 
-        begin
-          file_system = partition.filesystem # This will raise an exception if there is no file system
-          content["file_system"] = @file_system_types[file_system.type]
-          content["mount_point"] = file_system.mountpoints.first unless file_system.mountpoints.empty?
-          content["label"] = file_system.label unless file_system.label.empty?
-        rescue RuntimeError => ex # FIXME: rescue ::Storage::Exception when SWIG bindings are fixed
-          log.info("CAUGHT exception #{ex}")
-        end
+        content.merge!(yaml_filesystem(partition.filesystem)) if partition.has_filesystem
 
         { "partition" => content }
       end
-      # rubocop:enable all
 
-      #
       # Return the YAML counterpart of a free slot between partitions on a
       # disk.
       #
@@ -245,6 +236,22 @@ module Yast
       #
       def yaml_free_slot(start, size)
         { "free" => { "size" => size.to_s_ex, "start" => start.to_s_ex } }
+      end
+
+      # Return the YAML counterpart of a ::Storage::Filesystem.
+      #
+      # @param lvm_lv [::Storage::Filesystem]
+      # @return [Hash{String => Object}]
+      #
+      def yaml_filesystem(file_system)
+        content = {
+          "file_system" => @file_system_types[file_system.type]
+        }
+
+        content["mount_point"] = file_system.mountpoints.first unless file_system.mountpoints.empty?
+        content["label"] = file_system.label unless file_system.label.empty?
+
+        content
       end
     end
   end
