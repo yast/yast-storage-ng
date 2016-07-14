@@ -1,7 +1,7 @@
 Boot Partition Layout / Restrictions For Storage Proposal
 =========================================================
 
-[Revision 2016-03-30]
+[Revision 2016-07-14]
 
 #### Notes:
 
@@ -9,26 +9,30 @@ Boot Partition Layout / Restrictions For Storage Proposal
 - partition sizes are given as triples: [minimal, optimal, maximal]
 
 
-### general
+### Grub2 and disk abstractions
 
-- natively supported by grub: lvm raid 0/1/4/5/6, encryption with or without lvm
-- ??? propose separate /boot only if technically necessary or if we have lvm,raid,etc
-
- > *[mchang]* Well, the problem seems to be not about booting the lvm or raid setups as
- grub2 can boot most of them directly. The problem is that both can't
- provide the pre-boot environment blocks that is writable for grub-once
- for which some function accounts to work reliably.
- >
- > 1. bootcycle detection
- > 2. resume from hibernation image 
- > 3. kde start menu could "boot once the selected entry directly"
- >
- > We actually carried patches to workaround #2 #3, but in some cases it
- may still fail. Sadly no solution has been found yet and that makes
- ditching /boot hader than expected.
-
-- note: encryption password will be queried twice without separate /boot (grub doesn't pass on the password to user space)
-- /boot partition
+- Grub natively suppors lvm raid 0/1/4/5/6, encryption with or without lvm
+- The problem with disk abstractions like lvm or raid is not exactly about
+  booting. The system will boot fine but some features have an additional
+  requirement - having a pre-boot environment block writable by grub-once.
+  Without that, the following functions will not work reliably ("reliably"
+  is the key word here)
+  * 1. bootcycle detection
+  * 2. resume from hibernation image 
+  * 3. kde start menu could "boot once the selected entry directly"
+- We actually carried patches to workaround #2 #3, but in some cases it
+ may still fail.
+- So far the solution has been to use a separate `/boot` partition. With our
+  current approach to Grub2, that's the only way.
+- Michael Chang suggested a different approach, placing `/boot/grub2/grubenv` in
+  a raw system sector that is writable by grub-once. That sector can be in the
+  EFI partition, in a bios_grub partition or in the MBR gap (provided the gap is
+  big enough to host both grub and the pre-boot environment block).
+- Michael Chang said that for yast-storage-ng we can assume the described new
+  approach will be available. It will be for sure ready in time for SLE12-SP3.
+- note: encryption password will be queried twice without separate `/boot` (grub
+  doesn't pass on the password to user space)
+- `/boot` partition (for cases in which is still needed)
  * grub config + stage2 in arch specific subdir
  * kernel, firmware, initrd
  * size: [100MB, 200MB, 500MB]
@@ -181,7 +185,10 @@ Summary
 valid for all architectures, except s390 (see below)
 
 - when using gpt, never use gpt-sync-mbr / hybrid mbr; only standard protective mbr.
-- always create a `/boot` partition on raid, encrytpted LVM, LVM
+- Only create a `/boot` partition when both conditions are met:
+ * Using raid, encrytpted LVM, LVM
+ * There is no EFI, bios_grub or big-enough MBR gap
+- When creating a `/boot` partition:
  * size: [100MB, 200MB, 500MB]
  * ext4
 
