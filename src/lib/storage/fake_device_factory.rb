@@ -275,11 +275,7 @@ module Yast
         raise ArgumentError, "\"name\" missing for partition #{args} on #{disk_name}" unless part_name
         raise ArgumentError, "Duplicate partition #{part_name}" if @partitions.include?(part_name)
 
-        # Keep some parameters that are really file system related in @partitions
-        # to be picked up later by create_file_system.
-        @partitions[part_name] = args.select do |k, _v|
-          ["mount_point", "label", "uuid"].include?(k)
-        end
+        file_system_data_picker(part_name, args)
 
         id = id.to_i(16) if id.is_a?(::String) && id.start_with?("0x")
         id   = fetch(PARTITION_IDS,   id,   "partition ID",   part_name) unless id.is_a?(Fixnum)
@@ -358,6 +354,20 @@ module Yast
         file_system.label = label if label
         file_system.uuid = uuid if uuid
         part_name
+      end
+
+      # Picks some parameters that are really file system related from args
+      # and places them in @partitions to be picked up later by
+      # create_file_system.
+      #
+      # @param [String] name of blk_device file system is on
+      #
+      # @param args [Hash] hash with data from yaml file
+      #
+      def file_system_data_picker(name, args)
+        @partitions[name] = args.select do |k, _v|
+          ["mount_point", "label", "uuid"].include?(k)
+        end
       end
 
       # Factory method to create a slot of free space.
