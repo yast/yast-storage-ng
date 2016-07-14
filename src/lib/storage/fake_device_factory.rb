@@ -2,7 +2,7 @@
 #
 # encoding: utf-8
 
-# Copyright (c) [2015] SUSE LLC
+# Copyright (c) [2015-2016] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -39,7 +39,7 @@ module Yast
       include EnumMappings
 
       # Valid toplevel products of this factory
-      VALID_TOPLEVEL  = ["disk"]
+      VALID_TOPLEVEL  = ["disk", "lvm_vg"]
 
       # Valid hierarchy within the products of this factory.
       # This indicates the permitted children types for each parent.
@@ -47,7 +47,12 @@ module Yast
         {
           "disk"       => ["partition_table", "partitions", "file_system"],
           "partitions" => ["partition", "free"],
-          "partition"  => ["file_system"]
+          "partition"  => ["file_system"],
+          "lvm_vg"     => ["lvm_lvs", "lvm_pvs"],
+          "lvm_lvs"    => ["lvm_lv"],
+          "lvm_lv"     => ["file_system"],
+          "lvm_pvs"    => ["lvm_pv"],
+          "lvm_pv"     => []
         }
 
       # Valid parameters for each product of this factory.
@@ -63,7 +68,11 @@ module Yast
             "size", "start", "align", "name", "type", "id", "mount_point", "label", "uuid"
           ],
           "file_system"     => [],
-          "free"            => ["size", "start"]
+          "free"            => ["size", "start"],
+          "lvm_vg"          => ["vg_name", "extent_size"],
+          "lvm_lv"          => ["lv_name", "size", "stripes", "stripe_size", "mount_point",
+                                "label", "uuid"],
+          "lvm_pv"          => ["blk_device"]
         }
 
       class << self
@@ -133,7 +142,8 @@ module Yast
       #
       def fixup_param(name, param)
         log.info("Fixing up #{param} for #{name}")
-        ["size", "start", "block_size", "io_size", "min_grain", "align_ofs", "mbr_gap"].each do |key|
+        ["size", "start", "block_size", "io_size", "min_grain", "align_ofs",
+         "mbr_gap", "extent_size", "stripe_size"].each do |key|
           param[key] = DiskSize.new(param[key]) if param.key?(key)
         end
         param
@@ -348,8 +358,8 @@ module Yast
         label       = fs_param["label"]
         uuid        = fs_param["uuid"]
 
-        partition = ::Storage::Partition.find_by_name(@devicegraph, part_name)
-        file_system = partition.create_filesystem(fs_type)
+        blk_device = ::Storage::BlkDevice.find_by_name(@devicegraph, part_name)
+        file_system = blk_device.create_filesystem(fs_type)
         file_system.add_mountpoint(mount_point) if mount_point
         file_system.label = label if label
         file_system.uuid = uuid if uuid
@@ -388,6 +398,97 @@ module Yast
         size = args["size"]
         @free_blob = size if size && size.size > 0
         disk_name
+      end
+
+      # Factory method to create a lvm volume group.
+      #
+      # @param _parent [nil] (volume groups are toplevel)
+      # @param args [Hash] volume group parameters:
+      #   "vg_name"     volume group name
+      #   "extent_size" extent size
+      #
+      # @return [Object] new volume group object
+      #
+      def create_lvm_vg(_parent, args)
+        log.info("#{__method__}( #{args} )")
+
+        @partitions = {}
+
+        vg_name = args["vg_name"]
+        lvm_vg = ::Storage::LvmVg.create(@devicegraph, vg_name)
+
+        extent_size = args["extent_size"] || DiskSize.zero
+        lvm_vg.extent_size = extent_size.size if extent_size.size > 0
+
+        lvm_vg
+      end
+
+      # Factory method to create a lvm logical volume.
+      #
+      # Some of the parameters ("mount_point", "label"...) really belong to the
+      # file system which is a separate factory product, but it is more natural
+      # to specify this for the logical volume, so those data are kept in
+      # @partitions to be picked up in create_file_system when needed.
+      #
+      # @param parent [Object] volume group object
+      #
+      # @param args [Hash] lvm logical volume parameters:
+      #   "lv_name"     logical volume name
+      #   "size"        partition size
+      #   "stripes"     number of stripes
+      #   "stripe_size" stripe size
+      #   "mount_point" mount point for the associated file system
+      #   "label"       file system label
+      #   "uuid"        file system UUID
+      #
+      # @return [String] device name of new logical volume
+      #
+      def create_lvm_lv(parent, args)
+        log.info("#{__method__}( #{parent}, #{args} )")
+
+        lv_name = args["lv_name"]
+        raise ArgumentError, "\"lv_name\" missing for lvm_lv #{args} on #{vg_name}" unless lv_name
+        raise ArgumentError, "Duplicate lvm_lv #{lv_name}" if @partitions.include?(lv_name)
+
+        size = args["size"] || DiskSize.zero
+        raise ArgumentError, "\"size\" missing for lvm_lv #{lv_name}" if size.zero?
+
+        lvm_lv = parent.create_lvm_lv(lv_name, size.size)
+
+        create_lvm_lv_stripe_parameters(lvm_lv, args)
+
+        file_system_data_picker(lvm_lv.name, args)
+
+        lvm_lv.name
+      end
+
+      # Helper class for create_lvm_lv handling the stripes related parameters.
+      #
+      def create_lvm_lv_stripe_parameters(lvm_lv, args)
+        stripes = args["stripes"] || 0
+        lvm_lv.stripes = stripes if stripes > 0
+
+        stripe_size = args["stripe_size"] || DiskSize.zero
+        lvm_lv.stripe_size = stripe_size.size if stripe_size.size > 0
+      end
+
+      # Factory method to create a lvm physical volume.
+      #
+      # @param parent [Object] volume group object
+      #
+      # @param args [Hash] lvm physical volume parameters:
+      #   "blk_device" block device used by physical volume
+      #
+      # @return [Object] new physical volume object
+      #
+      def create_lvm_pv(parent, args)
+        log.info("#{__method__}( #{parent}, #{args} )")
+
+        blk_device_name = args["blk_device"]
+
+        blk_device = ::Storage::BlkDevice.find_by_name(devicegraph, blk_device_name)
+
+        parent.add_lvm_pv(blk_device)
       end
 
     private
