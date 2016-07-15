@@ -39,7 +39,7 @@ module Yast
       include EnumMappings
 
       # Valid toplevel products of this factory
-      VALID_TOPLEVEL  = ["disk", "lvm_vg"]
+      VALID_TOPLEVEL  = ["disk", "lvm_vg"].freeze
 
       # Valid hierarchy within the products of this factory.
       # This indicates the permitted children types for each parent.
@@ -53,7 +53,7 @@ module Yast
           "lvm_lv"     => ["file_system"],
           "lvm_pvs"    => ["lvm_pv"],
           "lvm_pv"     => []
-        }
+        }.freeze
 
       # Valid parameters for each product of this factory.
       # Sub-products are not listed here.
@@ -73,7 +73,7 @@ module Yast
           "lvm_lv"          => ["lv_name", "size", "stripes", "stripe_size", "mount_point",
                                 "label", "uuid"],
           "lvm_pv"          => ["blk_device"]
-        }
+        }.freeze
 
       class << self
         #
@@ -95,7 +95,7 @@ module Yast
 
       def initialize(devicegraph)
         super(devicegraph)
-        @disks          = Set.new
+        @disks = Set.new
       end
 
     protected
@@ -174,7 +174,7 @@ module Yast
       #
       # FIXME: this method is too complex. It offends three different cops
       # related to complexity.
-      # rubocop:disable Metrics/PerceivedComplexity, Metrics/AbcSize, Metrics/CyclomaticComplexity
+      # rubocop:disable Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity
       def create_disk(_parent, args)
         @partitions     = {}
         @free_blob      = nil
@@ -189,7 +189,7 @@ module Yast
         @disks << name
         block_size = args["block_size"] if args["block_size"]
         @mbr_gap = args["mbr_gap"] if args["mbr_gap"]
-        if block_size && block_size.size > 0
+        if block_size && !block_size.empty?
           r = ::Storage::Region.new(0, size.size / block_size.size, block_size.size)
           disk = ::Storage::Disk.create(@devicegraph, name, r)
         else
@@ -212,9 +212,9 @@ module Yast
         io_size = args["io_size"]
         min_grain = args["min_grain"]
         align_ofs = args["align_ofs"]
-        disk.topology.optimal_io_size = io_size.size if io_size && io_size.size > 0
+        disk.topology.optimal_io_size = io_size.size if io_size && !io_size.empty?
         disk.topology.alignment_offset = align_ofs.size if align_ofs
-        disk.topology.minimal_grain = min_grain.size if min_grain && min_grain.size > 0
+        disk.topology.minimal_grain = min_grain.size if min_grain && !min_grain.empty?
       end
 
       # Factory method to create a partition table.
@@ -242,7 +242,7 @@ module Yast
       # @return [Fixnum]
       def str_to_ptable_type(string)
         # Allow different spelling
-        string = "msdos" if string.downcase == "ms-dos"
+        string = "msdos" if string.casecmp("ms-dos").zero?
         fetch(PARTITION_TABLE_TYPES, string, "partition table type", "disk_name")
       end
 
@@ -270,7 +270,7 @@ module Yast
       #
       # FIXME: this method is too complex. It offends four different cops
       # related to complexity.
-      # rubocop:disable Metrics/PerceivedComplexity, Metrics/AbcSize, Metrics/CyclomaticComplexity
+      # rubocop:disable Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity
       # rubocop:disable  Metrics/MethodLength
       def create_partition(parent, args)
         log.info("#{__method__}( #{parent}, #{args} )")
@@ -396,7 +396,7 @@ module Yast
         log.info("#{__method__}( #{parent}, #{args} )")
         disk_name = parent
         size = args["size"]
-        @free_blob = size if size && size.size > 0
+        @free_blob = size if size && !size.empty?
         disk_name
       end
 
@@ -418,7 +418,7 @@ module Yast
         lvm_vg = ::Storage::LvmVg.create(@devicegraph, vg_name)
 
         extent_size = args["extent_size"] || DiskSize.zero
-        lvm_vg.extent_size = extent_size.size if extent_size.size > 0
+        lvm_vg.extent_size = extent_size.size if !extent_size.empty?
 
         lvm_vg
       end
@@ -469,7 +469,7 @@ module Yast
         lvm_lv.stripes = stripes if stripes > 0
 
         stripe_size = args["stripe_size"] || DiskSize.zero
-        lvm_lv.stripe_size = stripe_size.size if stripe_size.size > 0
+        lvm_lv.stripe_size = stripe_size.size if !stripe_size.empty?
       end
 
       # Factory method to create a lvm physical volume.

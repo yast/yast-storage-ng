@@ -99,7 +99,7 @@ end
 if opt_gfx
   # write to graphviz format, convert to .png and display
   begin
-    FILENAME = "fake-devicegraphs"
+    FILENAME = "fake-devicegraphs".freeze
     devicegraph.write_graphviz("#{FILENAME}.gv")
     system("dot -Tpng <#{FILENAME}.gv >#{FILENAME}.png")
     system("display #{FILENAME}.png")

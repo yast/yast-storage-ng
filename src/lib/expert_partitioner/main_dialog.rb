@@ -69,7 +69,7 @@ module ExpertPartitioner
       devicegraph_staging: StagingDevicegraphTreeView,
       actiongraph:         ActiongraphTreeView,
       actionlist:          ActionlistTreeView
-    }
+    }.freeze
     private_constant :VIEW_CLASSES
 
     def initialize

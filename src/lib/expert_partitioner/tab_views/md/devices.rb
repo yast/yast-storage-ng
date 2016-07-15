@@ -34,7 +34,7 @@ include Yast::Logger
 
 module ExpertPartitioner
   class MdDevicesTabView < TabView
-    FIELDS = [:sid, :icon, :name, :size, :spare, :faulty]
+    FIELDS = [:sid, :icon, :name, :size, :spare, :faulty].freeze
 
     def initialize(md)
       @md = md

@@ -65,7 +65,7 @@ module Storage
       spare:           N_("Spare"),
       faulty:          N_("Faulty"),
       stripe_info:     N_("Stripes")
-    }
+    }.freeze
     private_constant :FIELD_NAMES
 
     def self.table_header(fields)
@@ -195,11 +195,7 @@ module Storage
     end
 
     def table_transport
-      if transport != Transport_UNKNOWN
-        return ::Storage.transport_name(transport)
-      else
-        return ""
-      end
+      transport == Transport_UNKNOWN ? "" : ::Storage.transport_name(transport)
     end
 
     def new_tree_view
@@ -327,11 +323,7 @@ module Storage
     end
 
     def table_mountpoint
-      if !mountpoints.empty?
-        return mountpoints.to_a[0]
-      else
-        return ""
-      end
+      mountpoints.empty? ? "" : mountpoints.to_a[0]
     end
 
     def table_mount_by

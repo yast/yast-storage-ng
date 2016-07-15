@@ -39,7 +39,7 @@ module Yast
       attr_writer :verbose
 
       def initialize(verbose)
-        @verbose  = verbose
+        @verbose = verbose
       end
 
       # Create a storage proposal.

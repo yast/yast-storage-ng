@@ -34,8 +34,6 @@ module Yast
 
       class << self
         attr_reader :device_class
-
-        # rubocop:disable TrivialAccessors
         # Macro-style method to specify the class of the elements
         def list_of(klass)
           @device_class = klass

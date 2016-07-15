@@ -83,7 +83,7 @@ module Yast
       attr_accessor :uuid
 
       TO_STRING_ATTRS = [:mount_point, :reuse, :min_disk_size, :max_disk_size,
-                         :desired_disk_size, :disk, :max_start_offset]
+                         :desired_disk_size, :disk, :max_start_offset].freeze
 
       alias_method :desired, :desired_disk_size
       alias_method :min, :min_disk_size
@@ -119,10 +119,10 @@ module Yast
         return if @mount_point && @mount_point.start_with?("/boot")
 
         @can_live_on_logical_volume = true
-        if @mount_point == "/"
-          @logical_volume_name = "root"
+        @logical_volume_name = if @mount_point == "/"
+          "root"
         else
-          @logical_volume_name = @mount_point.sub(%r{^/}, "")
+          @mount_point.sub(%r{^/}, "")
         end
       end
 

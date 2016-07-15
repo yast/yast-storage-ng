@@ -37,7 +37,7 @@ module Yast
         using Refinements::DevicegraphLists
         include Yast::Logger
 
-        VOLUME_GROUP_SYSTEM = "system"
+        VOLUME_GROUP_SYSTEM = "system".freeze
         FIRST_LOGICAL_PARTITION_NUMBER = 5 # Number of the first logical partition (/dev/sdx5)
 
         # Initialize.
@@ -58,7 +58,7 @@ module Yast
           # FIXME: not implemented yet in libstorage-bgl
           use_lvm = false
 
-          if use_lvm
+          if use_lvm # rubocop:disable Style/GuardClause raise is just temporary
             raise NotImplementedError
             # create_lvm(distribution)
           else

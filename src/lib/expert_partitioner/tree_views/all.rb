@@ -32,7 +32,7 @@ include Yast::I18n
 
 module ExpertPartitioner
   class AllTreeView < TreeView
-    FIELDS = [:sid, :icon, :name, :size, :partition_table, :filesystem, :mountpoint]
+    FIELDS = [:sid, :icon, :name, :size, :partition_table, :filesystem, :mountpoint].freeze
 
     def create
       VBox(
@@ -142,7 +142,7 @@ module ExpertPartitioner
       staging = storage.staging
 
       return items_disks(staging) + items_mds(staging) + items_lvm_vgs(staging) +
-        items_lukses(staging) + items_bcaches(staging) + items_bcache_csets(staging)
+          items_lukses(staging) + items_bcaches(staging) + items_bcache_csets(staging)
     end
   end
 end

@@ -39,7 +39,7 @@ module Yast
             partitions:       PartitionsList,
             filesystems:      FilesystemsList,
             free_disk_spaces: FreeDiskSpacesList
-          }
+          }.freeze
 
           DEVICE_LISTS.each do |list, klass|
             define_method(list) do

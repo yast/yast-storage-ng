@@ -35,7 +35,7 @@ include Yast::Logger
 
 module ExpertPartitioner
   class LuksesTreeView < TreeView
-    FIELDS = [:sid, :icon, :name, :size, :filesystem, :mountpoint]
+    FIELDS = [:sid, :icon, :name, :size, :filesystem, :mountpoint].freeze
 
     def initialize
       storage = Yast::Storage::StorageManager.instance

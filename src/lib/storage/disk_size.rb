@@ -37,8 +37,8 @@ module Yast
     class DiskSize
       include Comparable
 
-      UNITS = ["B", "KiB", "MiB", "GiB", "TiB", "PiB", "EiB", "ZiB", "YiB"]
-      UNLIMITED = "unlimited"
+      UNITS = ["B", "KiB", "MiB", "GiB", "TiB", "PiB", "EiB", "ZiB", "YiB"].freeze
+      UNLIMITED = "unlimited".freeze
 
       attr_reader :size
       alias_method :to_i, :size
@@ -46,12 +46,12 @@ module Yast
       # Accept Numbers, Strings, or DiskSize objects as initializers.
       #
       def initialize(size = 0)
-        if size.is_a?(Yast::Storage::DiskSize)
-          @size = size.to_i
+        @size = if size.is_a?(Yast::Storage::DiskSize)
+          size.to_i
         elsif size.is_a?(::String)
-          @size = Yast::Storage::DiskSize.parse(size).size
+          Yast::Storage::DiskSize.parse(size).size
         else
-          @size = size.round
+          size.round
         end
       end
 
@@ -145,7 +145,6 @@ module Yast
         # "MiB", ...). The base of this exponent is 1024. The base unit is KiB.
         #
         def unit_exponent(unit)
-          # rubocop:disable Style/AndOr
           UNITS.index(unit) or raise ArgumentError, "expected one of #{UNITS}"
           # rubocop:enable Style/AndOr
         end
@@ -185,21 +184,21 @@ module Yast
       end
 
       def *(other)
-        if other.is_a?(Numeric)
-          return DiskSize.unlimited if unlimited?
-          DiskSize.new(@size * other)
-        else
+        if !other.is_a?(Numeric)
           raise TypeError, "Unexpected #{other.class}; expected Numeric value"
         end
+
+        return DiskSize.unlimited if unlimited?
+        DiskSize.new(@size * other)
       end
 
       def /(other)
-        if other.is_a?(Numeric)
-          return DiskSize.unlimited if unlimited?
-          DiskSize.new(@size.to_f / other)
-        else
+        if !other.is_a?(Numeric)
           raise TypeError, "Unexpected #{other.class}; expected Numeric value"
         end
+
+        return DiskSize.unlimited if unlimited?
+        DiskSize.new(@size.to_f / other)
       end
 
       #
@@ -237,7 +236,7 @@ module Yast
           size2 /= 1024.0
           unit_index += 1
         end
-        [size2 / 2.0, UNITS[unit_index]]  # FIXME: Make unit translatable
+        [size2 / 2.0, UNITS[unit_index]] # FIXME: Make unit translatable
       end
 
       # Return numeric size and unit ("MiB", "GiB", ...) in human-readable form
@@ -280,7 +279,7 @@ module Yast
       end
 
       def pretty_print(*)
-        print "#{inspect}"
+        print inspect.to_s
       end
 
     private
@@ -298,7 +297,7 @@ end
 #
 #----------------------------------------------------------------------
 #
-if $PROGRAM_NAME == __FILE__  # Called direcly as standalone command? (not via rspec or require)
+if $PROGRAM_NAME == __FILE__ # Called direcly as standalone command? (not via rspec or require)
   size = Yast::Storage::DiskSize.new(0)
   print "0 B: #{size} (#{size.size})\n"
 

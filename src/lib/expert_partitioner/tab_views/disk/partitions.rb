@@ -37,7 +37,7 @@ include Yast::Logger
 
 module ExpertPartitioner
   class DiskPartitionsTabView < TabView
-    FIELDS = [:sid, :icon, :name, :size, :filesystem, :mountpoint]
+    FIELDS = [:sid, :icon, :name, :size, :filesystem, :mountpoint].freeze
 
     def initialize(disk)
       @disk = disk
@@ -52,9 +52,9 @@ module ExpertPartitioner
           PushButton(Id(:delete), _("Delete...")),
           HStretch(),
           MenuButton(Id(:expert), _("Expert..."), [
-            # menu entry text
-            Item(Id(:create_partition_table), _("Create New Partition Table"))
-          ])
+                       # menu entry text
+                       Item(Id(:create_partition_table), _("Create New Partition Table"))
+                     ])
         )
       )
     end
