@@ -9,7 +9,7 @@ creating unit tests, not for actually creating partitions etc. on a real hard
 disk.
 
 There are two ways to look at this: (1) what FakeDeviceFactory accepts
-when reading the file and creatng a device tree and (2) what YamlWriter puts
+when reading the file and creating a device tree and (2) what YamlWriter puts
 into the YAML file when dumping a device tree.
 
 FakeDeviceFactory accepts anything YamlWriter has written and tries to
@@ -76,12 +76,14 @@ level.
           - free
           - partition
 
+    - lvm_vg:
+        lvm_lvs:
+	- lvm_lv:
+	lvm_pvs:
+	- lvm_pv:
+
 
 ### For Future Use
-
-    - lvm_logical_volume
-    - lvm_volume_group
-      - lvm_physical_volume
 
     - raid
 
@@ -267,6 +269,51 @@ FakeDeviceFactory ignores `start` and uses `size` when creating a partition.
 - start: Start of the free slot (DiskSize compatible).
 
 
+### lvm_vg
+
+Example:
+
+    - disk:
+        vg_name: system
+        extent_size: 4 MiB
+
+- vg_name: name of volume group.
+
+- extent_size: Similar to disk.size: Size of the physical extent as something
+  the DiskSize class can parse, excluding unlimited.
+
+
+### lvm_lv
+
+    - lvm_lv:
+        lv_name: root
+        size: 16 GiB
+	stripes: 2
+	stripe_size: 8 MiB
+
+- lv_name: name of logical volume, different from kernel device name.
+
+- size: Similar to disk.size: Size of the logical volume as something the
+  DiskSize class can parse, excluding unlimited.
+
+- stripes: Number of stripes.
+
+- stripe_size: Similar to disk.size: Size of the stripes as something the
+  DiskSize class can parse, excluding unlimited.
+
+- in addition the filesystem parameters are allowed
+
+
+### lvm_pv
+
+    - lvm_pv:
+      blk_device: /dev/sda
+
+- blk_device: The block device used by the physical volume. The block device
+  must be defined before the physical volume in the file.
+
+
+
 ## Complete Example
 
 This setup will create 3 disks (/dev/sda, /dev/sdb/, /dev/sdc) with partitions
@@ -342,4 +389,19 @@ Note the two missing `size` specs denoting 'to the end' in both cases.
     disk:
       name: /dev/sdc
       size: 500 GiB
+
+
+
+## Shortcomings
+
+The file format is overly simplistic in several ways:
+
+- It treats the device graph as a tree.  For some objects, e.g. filesystems
+  using several block devices, it is not obvious how to extend the tree.
+
+- The filesystem parameters are intermixed with the block device data
+  (partition, logical volume).  This will fail to work if e.g. the UUID of a
+  logical volume should be specified as it conflicts with the UUID of the
+  filesystem.  It also makes moving or removing a filesystem more difficult
+  since every single line has to be reviewed instead of a big block.
 
