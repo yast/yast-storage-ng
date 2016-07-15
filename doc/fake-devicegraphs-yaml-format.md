@@ -9,7 +9,7 @@ creating unit tests, not for actually creating partitions etc. on a real hard
 disk.
 
 There are two ways to look at this: (1) what FakeDeviceFactory accepts
-when reading the file and creatng a device tree and (2) what YamlWriter puts
+when reading the file and creating a device tree and (2) what YamlWriter puts
 into the YAML file when dumping a device tree.
 
 FakeDeviceFactory accepts anything YamlWriter has written and tries to
