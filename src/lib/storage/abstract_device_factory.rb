@@ -66,10 +66,14 @@ module Yast
 
       # Read a YAML file and build a fake device tree from it.
       #
-      # @param filename [String] name of the YAML file
+      # @param yaml_file [String, IO] YAML file
       #
-      def load_yaml_file(filename)
-        File.open(filename) { |file| YAML.load_stream(file, filename) { |doc| build_tree(doc) } }
+      def load_yaml_file(yaml_file)
+        if yaml_file.respond_to?(:read)
+          YAML.load_stream(yaml_file) { |doc| build_tree(doc) }
+        else
+          File.open(yaml_file) { |file| YAML.load_stream(file, yaml_file) { |doc| build_tree(doc) } }
+        end
       rescue SystemCallError => ex
         log.error("#{ex}")
         raise
