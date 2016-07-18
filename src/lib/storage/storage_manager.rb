@@ -66,9 +66,9 @@ module Yast
         # @return [::Storage::Storage] libstorage object
         #
         def fake_from_yaml(yaml_file = nil)
-          create_instance(
+          @instance ||= create_instance(
             ::Storage::Environment.new(true, ::Storage::ProbeMode_NONE, ::Storage::TargetMode_DIRECT)
-          ) if !@instance
+          )
           fake_graph = @instance.create_devicegraph("fake")
           Yast::Storage::FakeDeviceFactory.load_yaml_file(fake_graph, yaml_file) if yaml_file
           # FIXME: Arvin plans some replace_devicegraph() feature in libstorage;

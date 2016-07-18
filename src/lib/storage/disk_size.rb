@@ -279,7 +279,7 @@ module Yast
       end
 
       def pretty_print(*)
-        print inspect.to_s
+        print inspect
       end
 
     private
