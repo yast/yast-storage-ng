@@ -189,7 +189,7 @@ module Yast
         @disks << name
         block_size = args["block_size"] if args["block_size"]
         @mbr_gap = args["mbr_gap"] if args["mbr_gap"]
-        if block_size && !block_size.empty?
+        if block_size && block_size.size > 0
           r = ::Storage::Region.new(0, size.size / block_size.size, block_size.size)
           disk = ::Storage::Disk.create(@devicegraph, name, r)
         else
@@ -214,7 +214,7 @@ module Yast
         align_ofs = args["align_ofs"]
         disk.topology.optimal_io_size = io_size.size if io_size && io_size.size > 0
         disk.topology.alignment_offset = align_ofs.size if align_ofs
-        disk.topology.minimal_grain = min_grain.size if min_grain && !min_grain.empty?
+        disk.topology.minimal_grain = min_grain.size if min_grain && min_grain.size > 0
       end
 
       # Factory method to create a partition table.
@@ -396,7 +396,7 @@ module Yast
         log.info("#{__method__}( #{parent}, #{args} )")
         disk_name = parent
         size = args["size"]
-        @free_blob = size if size && !size.empty?
+        @free_blob = size if size && size.size > 0
         disk_name
       end
 
@@ -418,7 +418,7 @@ module Yast
         lvm_vg = ::Storage::LvmVg.create(@devicegraph, vg_name)
 
         extent_size = args["extent_size"] || DiskSize.zero
-        lvm_vg.extent_size = extent_size.size if !extent_size.empty?
+        lvm_vg.extent_size = extent_size.size if extent_size.size > 0
 
         lvm_vg
       end
@@ -469,7 +469,7 @@ module Yast
         lvm_lv.stripes = stripes if stripes > 0
 
         stripe_size = args["stripe_size"] || DiskSize.zero
-        lvm_lv.stripe_size = stripe_size.size if !stripe_size.empty?
+        lvm_lv.stripe_size = stripe_size.size if stripe_size.size > 0
       end
 
       # Factory method to create a lvm physical volume.
