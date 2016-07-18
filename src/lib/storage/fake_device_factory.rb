@@ -212,7 +212,7 @@ module Yast
         io_size = args["io_size"]
         min_grain = args["min_grain"]
         align_ofs = args["align_ofs"]
-        disk.topology.optimal_io_size = io_size.size if io_size && !io_size.empty?
+        disk.topology.optimal_io_size = io_size.size if io_size && io_size.size > 0
         disk.topology.alignment_offset = align_ofs.size if align_ofs
         disk.topology.minimal_grain = min_grain.size if min_grain && !min_grain.empty?
       end
