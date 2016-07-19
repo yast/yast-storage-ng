@@ -299,7 +299,6 @@ module Yast
         if !valid_hierarchy[parent].include?(child)
           raise HierarchyError, "Unexpected child #{child} for #{parent}"
         end
-        # rubocop:enable Style/GuardClause
       end
 
       # Call the factory 'create' method for factory product 'name'

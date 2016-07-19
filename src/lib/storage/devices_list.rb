@@ -38,7 +38,6 @@ module Yast
         def list_of(klass)
           @device_class = klass
         end
-        # rubocop:enable TrivialAccessors
       end
 
       def_delegators :@list, :each, :empty?, :length, :size

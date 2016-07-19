@@ -146,7 +146,6 @@ module Yast
         #
         def unit_exponent(unit)
           UNITS.index(unit) or raise ArgumentError, "expected one of #{UNITS}"
-          # rubocop:enable Style/AndOr
         end
 
         # Return the unit multiplier for any of the known binary units ("KiB",
