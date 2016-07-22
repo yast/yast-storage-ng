@@ -35,7 +35,7 @@ include Yast::Logger
 
 module ExpertPartitioner
   class LvmVgsTreeView < TreeView
-    FIELDS = [:sid, :icon, :name, :size].freeze
+    FIELDS = [:sid, :icon, :name, :size]
 
     def initialize
       storage = Yast::Storage::StorageManager.instance

@@ -37,7 +37,7 @@ include Yast::Logger
 
 module ExpertPartitioner
   class LvmVgLvmLvsTabView < TabView
-    FIELDS = [:sid, :icon, :name, :lv_name, :size, :stripe_info, :filesystem, :mountpoint].freeze
+    FIELDS = [:sid, :icon, :name, :lv_name, :size, :stripe_info, :filesystem, :mountpoint]
 
     def initialize(lvm_vg)
       @lvm_vg = lvm_vg

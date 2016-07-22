@@ -23,25 +23,25 @@ require "yast"
 
 module ExpertPartitioner
   class Icons
-    ALL = "yast-disk.png".freeze
+    ALL = "yast-disk.png"
 
-    DEVICE = "yast-disk.png".freeze
+    DEVICE = "yast-disk.png"
 
-    DISK = "yast-disk.png".freeze
+    DISK = "yast-disk.png"
 
-    MD = "yast-raid.png".freeze
+    MD = "yast-raid.png"
 
-    LVM_PV = "yast-disk.png".freeze
-    LVM_VG = "yast-lvm_config.png".freeze
-    LVM_LV = "yast-partitioning.png".freeze
+    LVM_PV = "yast-disk.png"
+    LVM_VG = "yast-lvm_config.png"
+    LVM_LV = "yast-partitioning.png"
 
-    PARTITION = "yast-partitioning.png".freeze
+    PARTITION = "yast-partitioning.png"
 
-    ENCRYPTION = "yast-encrypted.png".freeze
+    ENCRYPTION = "yast-encrypted.png"
 
-    BCACHE = "yast-disk.png".freeze
-    BCACHE_CSET = "yast-disk.png".freeze
+    BCACHE = "yast-disk.png"
+    BCACHE_CSET = "yast-disk.png"
 
-    FILESYSTEM = "yast-nfs.png".freeze
+    FILESYSTEM = "yast-nfs.png"
   end
 end

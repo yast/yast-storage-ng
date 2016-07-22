@@ -38,14 +38,14 @@ module Yast
           "gpt"   => ::Storage::PtType_GPT,
           "dasd"  => ::Storage::PtType_DASD,
           "mac"   => ::Storage::PtType_MAC
-        }.freeze
+        }
 
       PARTITION_TYPES =
         {
           "primary"  => ::Storage::PartitionType_PRIMARY,
           "extended" => ::Storage::PartitionType_EXTENDED,
           "logical"  => ::Storage::PartitionType_LOGICAL
-        }.freeze
+        }
 
       PARTITION_IDS =
         {
@@ -67,7 +67,7 @@ module Yast
           "apple_ufs"   => ::Storage::ID_APPLE_UFS,   #  0x106
           "gpt_bios"    => ::Storage::ID_GPT_BIOS,    #  0x107
           "gpt_prep"    => ::Storage::ID_GPT_PREP     #  0x108
-        }.freeze
+        }
 
       FILE_SYSTEM_TYPES =
         {
@@ -88,14 +88,14 @@ module Yast
           "tmpfs"    => ::Storage::FsType_TMPFS,
           "iso9660"  => ::Storage::FsType_ISO9660,
           "udf"      => ::Storage::FsType_UDF
-        }.freeze
+        }
 
       ALIGN_POLICIES =
         {
           "align_end" => ::Storage::AlignPolicy_ALIGN_END,
           "keep_end"  => ::Storage::AlignPolicy_KEEP_END,
           "keep_size" => ::Storage::AlignPolicy_KEEP_SIZE
-        }.freeze
+        }
     end
   end
 end

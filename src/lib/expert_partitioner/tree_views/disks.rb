@@ -37,7 +37,7 @@ include Yast::Logger
 
 module ExpertPartitioner
   class DisksTreeView < TreeView
-    FIELDS = [:sid, :icon, :name, :size, :transport, :partition_table, :filesystem, :mountpoint].freeze
+    FIELDS = [:sid, :icon, :name, :size, :transport, :partition_table, :filesystem, :mountpoint]
 
     def initialize
       storage = Yast::Storage::StorageManager.instance

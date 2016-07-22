@@ -65,7 +65,7 @@ module Storage
       spare:           N_("Spare"),
       faulty:          N_("Faulty"),
       stripe_info:     N_("Stripes")
-    }.freeze
+    }
     private_constant :FIELD_NAMES
 
     def self.table_header(fields)

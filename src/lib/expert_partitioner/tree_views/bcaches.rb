@@ -35,7 +35,7 @@ include Yast::Logger
 
 module ExpertPartitioner
   class BcachesTreeView < TreeView
-    FIELDS = [:sid, :icon, :name, :size, :filesystem, :mountpoint].freeze
+    FIELDS = [:sid, :icon, :name, :size, :filesystem, :mountpoint]
 
     def initialize
       storage = Yast::Storage::StorageManager.instance

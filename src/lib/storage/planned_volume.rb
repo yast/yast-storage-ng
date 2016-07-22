@@ -83,7 +83,7 @@ module Yast
       attr_accessor :uuid
 
       TO_STRING_ATTRS = [:mount_point, :reuse, :min_disk_size, :max_disk_size,
-                         :desired_disk_size, :disk, :max_start_offset].freeze
+                         :desired_disk_size, :disk, :max_start_offset]
 
       alias_method :desired, :desired_disk_size
       alias_method :min, :min_disk_size

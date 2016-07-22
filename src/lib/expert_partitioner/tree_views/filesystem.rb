@@ -31,7 +31,7 @@ include Yast::I18n
 
 module ExpertPartitioner
   class FilesystemTreeView < TreeView
-    FIELDS = [:sid, :icon, :filesystem, :mountpoint, :mount_by, :label, :uuid].freeze
+    FIELDS = [:sid, :icon, :filesystem, :mountpoint, :mount_by, :label, :uuid]
 
     def create
       VBox(

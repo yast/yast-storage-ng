@@ -37,7 +37,7 @@ module Yast
         using Refinements::DevicegraphLists
         include Yast::Logger
 
-        VOLUME_GROUP_SYSTEM = "system".freeze
+        VOLUME_GROUP_SYSTEM = "system"
         FIRST_LOGICAL_PARTITION_NUMBER = 5 # Number of the first logical partition (/dev/sdx5)
 
         # Initialize.

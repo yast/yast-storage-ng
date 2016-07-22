@@ -37,8 +37,8 @@ module Yast
     class DiskSize
       include Comparable
 
-      UNITS = ["B", "KiB", "MiB", "GiB", "TiB", "PiB", "EiB", "ZiB", "YiB"].freeze
-      UNLIMITED = "unlimited".freeze
+      UNITS = ["B", "KiB", "MiB", "GiB", "TiB", "PiB", "EiB", "ZiB", "YiB"]
+      UNLIMITED = "unlimited"
 
       attr_reader :size
       alias_method :to_i, :size

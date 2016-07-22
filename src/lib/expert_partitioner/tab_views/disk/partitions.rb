@@ -37,7 +37,7 @@ include Yast::Logger
 
 module ExpertPartitioner
   class DiskPartitionsTabView < TabView
-    FIELDS = [:sid, :icon, :name, :size, :filesystem, :mountpoint].freeze
+    FIELDS = [:sid, :icon, :name, :size, :filesystem, :mountpoint]
 
     def initialize(disk)
       @disk = disk

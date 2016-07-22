@@ -39,7 +39,7 @@ module Yast
       include EnumMappings
 
       # Valid toplevel products of this factory
-      VALID_TOPLEVEL  = ["disk", "lvm_vg"].freeze
+      VALID_TOPLEVEL  = ["disk", "lvm_vg"]
 
       # Valid hierarchy within the products of this factory.
       # This indicates the permitted children types for each parent.
@@ -53,7 +53,7 @@ module Yast
           "lvm_lv"     => ["file_system"],
           "lvm_pvs"    => ["lvm_pv"],
           "lvm_pv"     => []
-        }.freeze
+        }
 
       # Valid parameters for each product of this factory.
       # Sub-products are not listed here.
@@ -73,7 +73,7 @@ module Yast
           "lvm_lv"          => ["lv_name", "size", "stripes", "stripe_size", "mount_point",
                                 "label", "uuid"],
           "lvm_pv"          => ["blk_device"]
-        }.freeze
+        }
 
       class << self
         #

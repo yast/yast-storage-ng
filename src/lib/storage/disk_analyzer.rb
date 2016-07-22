@@ -53,7 +53,7 @@ module Yast
           ::Storage::ID_SWAP,
           ::Storage::ID_LVM,
           ::Storage::ID_RAID
-        ].freeze
+        ]
 
       WINDOWS_PARTITION_IDS =
         [
@@ -61,14 +61,14 @@ module Yast
           ::Storage::ID_DOS32,
           ::Storage::ID_DOS16,
           ::Storage::ID_DOS12
-        ].freeze
+        ]
 
       NO_INSTALLATION_IDS =
         [
           ::Storage::ID_SWAP,
           ::Storage::ID_EXTENDED,
           ::Storage::ID_LVM
-        ].freeze
+        ]
 
       DEFAULT_DISK_CHECK_LIMIT = 10
 
