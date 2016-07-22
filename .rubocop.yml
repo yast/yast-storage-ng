@@ -60,3 +60,7 @@ Metrics/AbcSize:
 # for details see https://github.com/yast/yast-storage-ng/pull/83
 Style/ZeroLengthPredicate:
   Enabled: false
+
+# the ".freeze" attribute for the constants is not nice
+Style/MutableConstant:
+  Enabled: false
