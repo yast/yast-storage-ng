@@ -17,7 +17,7 @@
 		- if the existent PReP partition is not in the target disk
 			- **requires /boot and PReP partitions**
 		- if there is already a PReP partition in the disk
-			- **only requires a /boot partition**
+			- **requires only a /boot partition**
 - in bare metal (PowerNV)
 	- with a partitions-based proposal
 		- **does not require any particular volume**
@@ -63,42 +63,49 @@
 			- **only requires to use the existing EFI partition**
 	- with a LVM-based proposal
 		- if there are no EFI partitions
-			- **requires /boot and a new /boot/efi partition**
+			- **requires only a new /boot/efi partition**
 		- if there is already an EFI partition
-			- **requires /boot and a reused /boot/efi partition**
+			- **only requires to use the existing EFI partition**
 - not using UEFI (legacy PC)
-	- with an MS-DOS partition table
-		- with sufficently large MBR gap
+	- with GPT partition table
+		- in a partitions-based proposal
+			- if there is no GRUB partition
+				- **requires a new GRUB partition**
+			- if there is already a GRUB partition
+				- **does not require any particular volume**
+		- in a LVM-based proposal
+			- if there is no GRUB partition
+				- **requires a new GRUB partition**
+			- if there is already a GRUB partition
+				- **does not require any particular volume**
+	- with a MS-DOS partition table
+		- if the MBR gap is big enough to embed Grub
 			- in a partitions-based proposal
 				- **does not require any particular volume**
 			- in a LVM-based proposal
-				- **requires only a /boot partition**
-		- with too small MBR gap
-			- **raises an exception**
-		- with no MBR gap
-			- **raises an exception**
-		- with GPT partition table
-			- if there is no GRUB partition
-				- in a partitions-based proposal
-					- **only requires a new GRUB partition**
-				- in a LVM-based proposal
-					- **requires /boot and a GRUB partitions**
-			- if there is already a GRUB partition
-				- in a partitions-based proposal
+				- if the MBR gap has additional space for grubenv
 					- **does not require any particular volume**
-				- in a LVM-based proposal
-					- **only requires a /boot partition**
+				- if the MBR gap has no additional space
+					- **requires only a /boot partition**
+		- with too small MBR gap
+			- in a partitions-based proposal
+				- if proposing root (/) as Btrfs
+					- **does not require any particular volume**
+				- if proposing root (/) as non-Btrfs
+					- **raises an exception**
+			- in a LVM-based proposal
+				- **raises an exception**
 	- when proposing a boot partition
 		- **requires /boot to be ext4 with at least 100 MiB**
 		- **requires /boot to be in the system disk out of LVM**
 		- **recommends /boot to be 200 MiB**
-	- when proposing an new EFI partition
-		- **requires /boot/efi to be vfat with at least 33 MiB**
-		- **requires /boot/efi to be out of LVM**
-		- **recommends /boot/efi to be 500 MiB**
-		- **requires /boot/efi to be close enough to the beginning of disk**
 	- when proposing an new GRUB partition
 		- **requires it to have the correct id**
 		- **requires it to be out of LVM**
 		- **requires it to be between 256KiB and 8MiB, despite the alignment**
 		- **recommends it to be 1 MiB**
+	- when proposing an new EFI partition
+		- **requires /boot/efi to be vfat with at least 33 MiB**
+		- **requires /boot/efi to be out of LVM**
+		- **recommends /boot/efi to be 500 MiB**
+		- **requires /boot/efi to be close enough to the beginning of disk**

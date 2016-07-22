@@ -34,20 +34,24 @@ module Yast
       class PReP < Base
         def needed_partitions
           volumes = super
-          volumes << prep_volume if prep_partition_required? && prep_partition_missing?
+          volumes << prep_volume if prep_partition_needed? && prep_partition_missing?
           volumes
         end
 
       protected
 
+        def boot_partition_needed?
+          settings.use_lvm # TODO: || settings.encrypted
+        end
+
+        def prep_partition_needed?
+          # no need of PReP partition in OPAL/PowerNV/Bare metal
+          !arch.ppc_power_nv?
+        end
+
         def prep_partition_missing?
           partitions = disk_analyzer.prep_partitions[settings.root_device]
           partitions.nil? || partitions.empty?
-        end
-
-        def prep_partition_required?
-          # no need of PReP partition in OPAL/PowerNV/Bare metal
-          !arch.ppc_power_nv?
         end
 
         def prep_volume

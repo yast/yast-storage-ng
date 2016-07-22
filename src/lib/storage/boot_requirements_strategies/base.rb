@@ -57,7 +57,7 @@ module Yast
         attr_reader :root_disk
 
         def boot_partition_needed?
-          settings.use_lvm # || settings.encrypted
+          false
         end
 
         def boot_volume
@@ -68,6 +68,19 @@ module Yast
           vol.desired_disk_size = DiskSize.MiB(200)
           vol.can_live_on_logical_volume = false
           vol
+        end
+
+        def root_ptable_type
+          return nil unless root_disk
+          return nil unless root_disk.partition_table?
+          root_disk.partition_table.type
+        end
+
+        def root_ptable_type?(type)
+          if !type.is_a?(Fixnum)
+            type = ::Storage.const_get(:"PtType_#{type.to_s.upcase}")
+          end
+          root_ptable_type == type
         end
       end
     end

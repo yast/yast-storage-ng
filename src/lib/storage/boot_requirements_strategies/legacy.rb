@@ -29,45 +29,45 @@ module Yast
       # Strategy to calculate the boot requirements in a legacy system (x86
       # without EFI)
       class Legacy < Base
+        GRUB_SIZE = DiskSize.KiB(256)
+        GRUBENV_SIZE = DiskSize.KiB(1)
+
         def needed_partitions
           volumes = super
-          volumes << grub_volume if grub_partition_required? && grub_partition_missing?
-          if mbr_gap_required?
-            mbr_gap = disk_analyzer.mbr_gap[settings.root_device]
-            # fail if gap is too small
-            raise Error if mbr_gap < DiskSize.KiB(256)
-          end
+          volumes << grub_volume if grub_partition_needed? && grub_partition_missing?
+          raise Error if grub_in_mbr? && mbr_gap < GRUB_SIZE
+
           volumes
         end
 
       protected
+
+        def grub_partition_needed?
+          # FIXME: so far we don't create partition tables, so we just analyze
+          # the existing one.
+          root_ptable_type?(:gpt)
+        end
 
         def grub_partition_missing?
           partitions = disk_analyzer.grub_partitions[settings.root_device]
           partitions.nil? || partitions.empty?
         end
 
-        # only needed on GPT partition table
-        # FIXME: currently nobody creates a partition table on an empty disk...
-        def grub_partition_required?
-          if @root_disk &&
-              @root_disk.partition_table? &&
-              @root_disk.partition_table.type == ::Storage::PtType_GPT
-            true
-          else
-            false
-          end
+        def grub_in_mbr?
+          # FIXME: see note above about existing partition tables
+          root_ptable_type?(:msdos) && !btrfs_without_lvm?
         end
 
-        # only relevant for DOS partition table
-        def mbr_gap_required?
-          if @root_disk &&
-              @root_disk.partition_table? &&
-              @root_disk.partition_table.type == ::Storage::PtType_MSDOS
-            true
-          else
-            false
-          end
+        def btrfs_without_lvm?
+          settings.root_filesystem_type == ::Storage::FsType_BTRFS && !settings.use_lvm
+        end
+
+        def boot_partition_needed?
+          grub_in_mbr? && settings.use_lvm && mbr_gap < GRUB_SIZE + GRUBENV_SIZE
+        end
+
+        def mbr_gap
+          disk_analyzer.mbr_gap[settings.root_device]
         end
 
         def grub_volume

@@ -199,6 +199,7 @@ Note: boot loader is grub2 (refered as grub in this document)
 *[this assumes grub will be installed into mbr]*
 
 - required size for grub embedding (currently): 84 kB; to be safe, check for >= 256 kB
+- required size for grubenv (currently): 1 kB
 - if dos partition table
     - embed in unused space before 1st partition (mbr gap)
     - fail if not enough space
