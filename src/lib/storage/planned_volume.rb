@@ -119,10 +119,10 @@ module Yast
         return if @mount_point && @mount_point.start_with?("/boot")
 
         @can_live_on_logical_volume = true
-        if @mount_point == "/"
-          @logical_volume_name = "root"
+        @logical_volume_name = if @mount_point == "/"
+          "root"
         else
-          @logical_volume_name = @mount_point.sub(%r{^/}, "")
+          @mount_point.sub(%r{^/}, "")
         end
       end
 

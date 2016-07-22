@@ -71,7 +71,7 @@ module ExpertPartitioner
                 VBox(
                   Id(:custom_size_attachment),
                   MinWidth(15, InputField(Id(:custom_size_input), Opt(:shrinkable), _("Size"), "50 MiB"))
-                               ))
+                ))
             )),
           ButtonBox(
             PushButton(Id(:cancel), Yast::Label.CancelButton),

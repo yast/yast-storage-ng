@@ -139,7 +139,7 @@ module Yast
       # @param disk [::Storage::Disk]
       # @return [Array<Hash>]
       # FIXME: this method offends three different complexity cops!
-      # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
+      # rubocop:disable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
       def yaml_disk_partitions(disk)
         partition_end = 0
         partition_end_max = 0

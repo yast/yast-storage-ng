@@ -36,7 +36,7 @@ class MdFormatter
     if @group_level != 0 || @groups == 0
       text = notification.group.description.strip
       text.sub!(/^#/, "")
-      text.gsub!(/_/, " ")
+      text.tr!("_", " ")
       @output.puts "#{current_indentation}#{text}"
     end
     @groups += 1 if @group_level == 0

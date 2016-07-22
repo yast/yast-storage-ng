@@ -148,7 +148,7 @@ module Yast
           home_vol = PlannedVolume.new("/home", settings.home_filesystem_type)
           home_vol.min_disk_size = settings.home_min_disk_size
           home_vol.max_disk_size = settings.home_max_disk_size
-          home_vol.weight   = 100.0 - settings.root_space_percent
+          home_vol.weight = 100.0 - settings.root_space_percent
           home_vol
         end
 

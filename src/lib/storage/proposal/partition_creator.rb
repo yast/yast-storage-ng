@@ -58,7 +58,7 @@ module Yast
           # FIXME: not implemented yet in libstorage-bgl
           use_lvm = false
 
-          if use_lvm
+          if use_lvm # rubocop:disable Style/GuardClause raise is just temporary
             raise NotImplementedError
             # create_lvm(distribution)
           else

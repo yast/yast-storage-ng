@@ -350,7 +350,7 @@ module Yast
               windows_partitions[disk_name] ||= []
               windows_partitions[disk_name] << partition
             end
-          rescue RuntimeError => ex  # FIXME: rescue ::Storage::Exception when SWIG bindings are fixed
+          rescue RuntimeError => ex # FIXME: rescue ::Storage::Exception when SWIG bindings are fixed
             log.info("CAUGHT exception #{ex}")
           end
         end
@@ -400,12 +400,12 @@ module Yast
             if NO_INSTALLATION_IDS.include?(partition.id)
               log.info("Skipping #{partition} (ID 0x#{partition.id.to_s(16)})")
               next
-            else
-              return true if installation_volume?(partition.name)
+            elsif installation_volume?(partition.name)
+              return true
             end
           end
           return false # if we get here, there is a partition table.
-        rescue RuntimeError => ex  # FIXME: rescue ::Storage::Exception when SWIG bindings are fixed
+        rescue RuntimeError => ex # FIXME: rescue ::Storage::Exception when SWIG bindings are fixed
           log.info("CAUGHT exception: #{ex} for #{disk}")
         end
 
@@ -467,7 +467,7 @@ module Yast
           check_result = block.call(mount_point)
           umount(mount_point)
           check_result
-        rescue RuntimeError => ex  # FIXME: rescue ::Storage::Exception when SWIG bindings are fixed
+        rescue RuntimeError => ex # FIXME: rescue ::Storage::Exception when SWIG bindings are fixed
           log.error("CAUGHT exception: #{ex} for #{vol_name}")
           nil
         end

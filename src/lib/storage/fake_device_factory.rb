@@ -95,7 +95,7 @@ module Yast
 
       def initialize(devicegraph)
         super(devicegraph)
-        @disks          = Set.new
+        @disks = Set.new
       end
 
     protected
@@ -174,7 +174,7 @@ module Yast
       #
       # FIXME: this method is too complex. It offends three different cops
       # related to complexity.
-      # rubocop:disable Metrics/PerceivedComplexity, Metrics/AbcSize, Metrics/CyclomaticComplexity
+      # rubocop:disable Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity
       def create_disk(_parent, args)
         @partitions     = {}
         @free_blob      = nil
@@ -242,7 +242,7 @@ module Yast
       # @return [Fixnum]
       def str_to_ptable_type(string)
         # Allow different spelling
-        string = "msdos" if string.downcase == "ms-dos"
+        string = "msdos" if string.casecmp("ms-dos").zero?
         fetch(PARTITION_TABLE_TYPES, string, "partition table type", "disk_name")
       end
 
@@ -270,7 +270,7 @@ module Yast
       #
       # FIXME: this method is too complex. It offends four different cops
       # related to complexity.
-      # rubocop:disable Metrics/PerceivedComplexity, Metrics/AbcSize, Metrics/CyclomaticComplexity
+      # rubocop:disable Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity
       # rubocop:disable  Metrics/MethodLength
       def create_partition(parent, args)
         log.info("#{__method__}( #{parent}, #{args} )")

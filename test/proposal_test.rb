@@ -145,18 +145,20 @@ describe Yast::Storage::Proposal do
       let(:scenario) { "swaps" }
       let(:windows_partitions) { {} }
       let(:volumes_generator) do
+        base_volumes = [
+          planned_vol(mount_point: "/", type: :ext4, desired: 500.MiB, max: 500.MiB)
+        ]
+        all_volumes = [
+          planned_vol(mount_point: "/", type: :ext4, desired: 500.MiB, max: 500.MiB),
+          planned_vol(mount_point: "swap", reuse: "/dev/sda3"),
+          planned_vol(mount_point: "swap", type: :swap, desired: 500.MiB, max: 500.MiB),
+          planned_vol(mount_point: "swap", type: :swap, desired: 500.MiB, max: 500.MiB),
+          planned_vol(mount_point: "swap", type: :swap, desired: 500.MiB, max: 500.MiB)
+        ]
         instance_double(
           "Yast::Storage::Proposal::VolumesGenerator",
-          base_volumes: Yast::Storage::PlannedVolumesList.new([
-            planned_vol(mount_point: "/", type: :ext4, desired: 500.MiB, max: 500.MiB)
-          ]),
-          all_volumes:  Yast::Storage::PlannedVolumesList.new([
-            planned_vol(mount_point: "/", type: :ext4, desired: 500.MiB, max: 500.MiB),
-            planned_vol(mount_point: "swap", reuse: "/dev/sda3"),
-            planned_vol(mount_point: "swap", type: :swap, desired: 500.MiB, max: 500.MiB),
-            planned_vol(mount_point: "swap", type: :swap, desired: 500.MiB, max: 500.MiB),
-            planned_vol(mount_point: "swap", type: :swap, desired: 500.MiB, max: 500.MiB)
-          ])
+          base_volumes: Yast::Storage::PlannedVolumesList.new(base_volumes),
+          all_volumes:  Yast::Storage::PlannedVolumesList.new(all_volumes)
         )
       end
 

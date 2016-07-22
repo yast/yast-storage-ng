@@ -205,15 +205,17 @@ module Yast
           parts_by_disk = partitions_by_disk(part_names)
           remove_linux_disks!(parts_by_disk) unless force
 
-          sorted_resizables(parts_by_disk.values.flatten).each do |res|
+          success = sorted_resizables(parts_by_disk.values.flatten).any? do |res|
             shrink_size = [
               res[:recoverable_size],
               missing_required_size(volumes, disk)
             ].min
             shrink_partition(res[:partition], shrink_size)
-            return if success?(volumes)
+
+            success?(volumes)
           end
-          log.info "Didn't manage to free enough space by resizing Windows"
+
+          log.info "Didn't manage to free enough space by resizing Windows" unless success
         end
 
         # @return [Hash{String => ::Storage::Partition}]
@@ -298,7 +300,7 @@ module Yast
             part = find_partition(part_name)
             next unless part
             delete_partition(part)
-            return if success?(volumes)
+            break if success?(volumes)
           end
         end
 
@@ -356,10 +358,10 @@ module Yast
         #
         # @return [array<string>]
         def windows_part_names(disk = nil)
-          if disk
-            parts = disk_analyzer.windows_partitions[disk] || []
+          parts = if disk
+            disk_analyzer.windows_partitions[disk] || []
           else
-            parts = disk_analyzer.windows_partitions.values.flatten
+            disk_analyzer.windows_partitions.values.flatten
           end
           parts.map(&:name)
         end
@@ -368,10 +370,10 @@ module Yast
         #
         # @return [array<string>]
         def linux_part_names(disk = nil)
-          if disk
-            parts = disk_analyzer.linux_partitions[disk] || []
+          parts = if disk
+            disk_analyzer.linux_partitions[disk] || []
           else
-            parts = disk_analyzer.linux_partitions.values.flatten
+            disk_analyzer.linux_partitions.values.flatten
           end
           parts.map(&:name)
         end

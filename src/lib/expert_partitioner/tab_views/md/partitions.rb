@@ -52,9 +52,9 @@ module ExpertPartitioner
           PushButton(Id(:delete), _("Delete...")),
           HStretch(),
           MenuButton(Id(:expert), _("Expert..."), [
-            # menu entry text
-            Item(Id(:create_partition_table), _("Create New Partition Table"))
-          ])
+                       # menu entry text
+                       Item(Id(:create_partition_table), _("Create New Partition Table"))
+                     ])
         )
       )
     end

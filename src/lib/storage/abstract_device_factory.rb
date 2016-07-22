@@ -75,7 +75,7 @@ module Yast
           File.open(yaml_file) { |file| YAML.load_stream(file, yaml_file) { |doc| build_tree(doc) } }
         end
       rescue SystemCallError => ex
-        log.error("#{ex}")
+        log.error(ex.to_s)
         raise
       end
 
@@ -91,11 +91,9 @@ module Yast
           build_tree_toplevel(obj)
         when Array
           obj.each do |element|
-            if element.is_a?(Hash)
-              build_tree_toplevel(element)
-            else
-              raise TypeError, "Expected Hash, not #{element}"
-            end
+            raise TypeError, "Expected Hash, not #{element}" unless element.is_a?(Hash)
+
+            build_tree_toplevel(element)
           end
         else
           raise HierarchyError, "Expected Hash or Array at toplevel"
@@ -153,13 +151,11 @@ module Yast
           end
         when Array
           content.each do |element|
-            if element.is_a?(Hash)
-              child_name, child_content = break_up_hash(element)
-              check_hierarchy(name, child_name)
-              build_tree_recursive(parent, child_name, child_content)
-            else
-              raise TypeError, "Expected Hash, not #{element}"
-            end
+            raise TypeError, "Expected Hash, not #{element}" unless element.is_a?(Hash)
+
+            child_name, child_content = break_up_hash(element)
+            check_hierarchy(name, child_name)
+            build_tree_recursive(parent, child_name, child_content)
           end
         else # Simple value, no hash or array
           # Intentionally not calling fixup_param() here since that method would
@@ -300,11 +296,9 @@ module Yast
       # @param child  [String] name of child  factory product
       #
       def check_hierarchy(parent, child)
-        # rubocop:disable Style/GuardClause
         if !valid_hierarchy[parent].include?(child)
           raise HierarchyError, "Unexpected child #{child} for #{parent}"
         end
-        # rubocop:enable Style/GuardClause
       end
 
       # Call the factory 'create' method for factory product 'name'

@@ -269,7 +269,7 @@ describe Yast::Storage::DiskSize do
     it "should accept its own output" do
       expect(described_class.parse(described_class.GiB(42).to_s).to_i).to be == 42 * 1024**3
       expect(described_class.parse(described_class.new(43).to_s).to_i).to be == 43
-      expect(described_class.parse(described_class.zero.to_s).to_i).to be ==  0
+      expect(described_class.parse(described_class.zero.to_s).to_i).to be == 0
       expect(described_class.parse(described_class.unlimited.to_s).to_i).to be == -1
     end
     it "should reject invalid input" do
