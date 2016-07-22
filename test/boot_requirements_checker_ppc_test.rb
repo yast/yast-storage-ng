@@ -61,7 +61,7 @@ describe Yast::Storage::BootRequirementsChecker do
         end
 
         context "if the existent PReP partition is not in the target disk" do
-          let(:prep_partitions) { { "/dev/sdb" => [analyzer_part("/dev/sdb")] } }
+          let(:prep_partitions) { { "/dev/sdb" => [analyzer_part("/dev/sdb1")] } }
 
           it "requires only a PReP partition" do
             expect(checker.needed_partitions).to contain_exactly(
@@ -94,7 +94,7 @@ describe Yast::Storage::BootRequirementsChecker do
         end
 
         context "if the existent PReP partition is not in the target disk" do
-          let(:prep_partitions) { { "/dev/sdb" => [analyzer_part("/dev/sdb")] } }
+          let(:prep_partitions) { { "/dev/sdb" => [analyzer_part("/dev/sdb1")] } }
 
           it "requires /boot and PReP partitions" do
             expect(checker.needed_partitions).to contain_exactly(
