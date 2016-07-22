@@ -30,7 +30,7 @@ module Yast
       # without EFI)
       class Legacy < Base
         GRUB_SIZE = DiskSize.KiB(256)
-        GRUBENV_SIZE = DiskSize.KiB(2)
+        GRUBENV_SIZE = DiskSize.KiB(1)
 
         def needed_partitions
           volumes = super
