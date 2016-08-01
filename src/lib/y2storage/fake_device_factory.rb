@@ -310,9 +310,7 @@ module Y2Storage
       @free_blob = nil
 
       # if start has been specified, use it
-      if start
-        start_block = start.size / region.block_size
-      end
+      start_block = start.size / region.block_size if start
 
       # adjust start block, if necessary
       if start_block
