@@ -22,13 +22,6 @@ DATA_PATH = File.expand_path("../data", __FILE__)
 ENV["Y2DIR"] = SRC_PATH
 
 require "yast"
-require_relative "support/storage_matchers"
-require_relative "support/storage_helpers"
-
-RSpec.configure do |c|
-  c.include Yast::RSpec::StorageMatchers
-  c.include Yast::RSpec::StorageHelpers
-end
 
 if ENV["COVERAGE"]
   require "simplecov"
@@ -47,4 +40,12 @@ if ENV["COVERAGE"]
       Coveralls::SimpleCov::Formatter
     ]
   end
+end
+
+require_relative "support/storage_matchers"
+require_relative "support/storage_helpers"
+
+RSpec.configure do |c|
+  c.include Yast::RSpec::StorageMatchers
+  c.include Yast::RSpec::StorageHelpers
 end
