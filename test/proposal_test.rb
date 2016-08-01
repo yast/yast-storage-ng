@@ -22,22 +22,18 @@
 
 require_relative "spec_helper"
 require "storage"
-require "storage/proposal"
-require "storage/refinements/test_devicegraph"
-require "storage/refinements/size_casts"
-require "storage/refinements/devicegraph_lists"
-require "storage/boot_requirements_checker"
+require "y2storage"
 
-describe Yast::Storage::Proposal do
+describe Y2Storage::Proposal do
   describe "#propose" do
-    using Yast::Storage::Refinements::TestDevicegraph
-    using Yast::Storage::Refinements::SizeCasts
-    using Yast::Storage::Refinements::DevicegraphLists
+    using Y2Storage::Refinements::TestDevicegraph
+    using Y2Storage::Refinements::SizeCasts
+    using Y2Storage::Refinements::DevicegraphLists
 
     before do
       fake_scenario(scenario)
-      allow(Yast::Storage::BootRequirementsChecker).to receive(:new).and_return boot_checker
-      allow(Yast::Storage::DiskAnalyzer).to receive(:new).and_return disk_analyzer
+      allow(Y2Storage::BootRequirementsChecker).to receive(:new).and_return boot_checker
+      allow(Y2Storage::DiskAnalyzer).to receive(:new).and_return disk_analyzer
       allow(disk_analyzer).to receive(:windows_partitions).and_return windows_partitions
       allow_any_instance_of(::Storage::Filesystem).to receive(:detect_resize_info)
         .and_return(resize_info)
@@ -45,16 +41,16 @@ describe Yast::Storage::Proposal do
 
     subject(:proposal) { described_class.new(settings: settings) }
 
-    let(:disk_analyzer) { Yast::Storage::DiskAnalyzer.new }
+    let(:disk_analyzer) { Y2Storage::DiskAnalyzer.new }
     let(:boot_checker) do
-      instance_double("Yast::Storage::BootRequirementChecker", needed_partitions: [])
+      instance_double("Y2Storage::BootRequirementChecker", needed_partitions: [])
     end
     let(:resize_info) do
       instance_double("::Storage::ResizeInfo", resize_ok: true, min_size: 40.GiB.to_i)
     end
     let(:separate_home) { false }
     let(:settings) do
-      settings = Yast::Storage::Proposal::Settings.new
+      settings = Y2Storage::ProposalSettings.new
       settings.use_separate_home = separate_home
       settings
     end
@@ -138,7 +134,7 @@ describe Yast::Storage::Proposal do
 
     context "with pre-existing swap partitions" do
       before do
-        allow(Yast::Storage::Proposal::VolumesGenerator).to receive(:new).and_return volumes_generator
+        allow(Y2Storage::Proposal::VolumesGenerator).to receive(:new).and_return volumes_generator
         settings.root_device = "/dev/sda"
       end
 
@@ -156,9 +152,9 @@ describe Yast::Storage::Proposal do
           planned_vol(mount_point: "swap", type: :swap, desired: 500.MiB, max: 500.MiB)
         ]
         instance_double(
-          "Yast::Storage::Proposal::VolumesGenerator",
-          base_volumes: Yast::Storage::PlannedVolumesList.new(base_volumes),
-          all_volumes:  Yast::Storage::PlannedVolumesList.new(all_volumes)
+          "Y2Storage::Proposal::VolumesGenerator",
+          base_volumes: Y2Storage::PlannedVolumesList.new(base_volumes),
+          all_volumes:  Y2Storage::PlannedVolumesList.new(all_volumes)
         )
       end
 

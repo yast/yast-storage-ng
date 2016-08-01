@@ -22,21 +22,19 @@
 
 require_relative "../spec_helper"
 require "storage"
-require "storage/proposal"
-require "storage/refinements/devicegraph_lists"
-require "storage/refinements/size_casts"
+require "y2storage"
 
-describe Yast::Storage::Proposal::SpaceDistribution do
+describe Y2Storage::Proposal::SpaceDistribution do
   describe ".better_for" do
-    using Yast::Storage::Refinements::SizeCasts
-    using Yast::Storage::Refinements::DevicegraphLists
+    using Y2Storage::Refinements::SizeCasts
+    using Y2Storage::Refinements::DevicegraphLists
 
     before do
       fake_scenario(scenario)
     end
 
     let(:settings) do
-      settings = Yast::Storage::Proposal::Settings.new
+      settings = Y2Storage::ProposalSettings.new
       settings.candidate_devices = ["/dev/sda"]
       settings.root_device = "/dev/sda"
       settings
@@ -44,7 +42,7 @@ describe Yast::Storage::Proposal::SpaceDistribution do
 
     let(:vol1) { planned_vol(mount_point: "/1", type: :ext4, desired: 1.GiB, max: 3.GiB, weight: 1) }
     let(:vol2) { planned_vol(mount_point: "/2", type: :ext4, desired: 2.GiB, max: 3.GiB, weight: 1) }
-    let(:volumes) { Yast::Storage::PlannedVolumesList.new([vol1, vol2, vol3]) }
+    let(:volumes) { Y2Storage::PlannedVolumesList.new([vol1, vol2, vol3]) }
     let(:spaces) { fake_devicegraph.free_disk_spaces.to_a }
 
     subject(:distribution) { described_class.best_for(volumes, spaces, fake_devicegraph) }
@@ -113,7 +111,7 @@ describe Yast::Storage::Proposal::SpaceDistribution do
           end
 
           context "and there are not too many primary partitions already" do
-            let(:volumes) { Yast::Storage::PlannedVolumesList.new([vol1, vol2]) }
+            let(:volumes) { Y2Storage::PlannedVolumesList.new([vol1, vol2]) }
 
             it "plans all partitions as primary" do
               spaces = distribution.spaces
@@ -214,7 +212,7 @@ describe Yast::Storage::Proposal::SpaceDistribution do
               let(:vol2) do
                 planned_vol(mount_point: "/2", type: :ext4, desired: 3.GiB - 1.MiB, max: 5.GiB)
               end
-              let(:volumes) { Yast::Storage::PlannedVolumesList.new([vol2, vol3]) }
+              let(:volumes) { Y2Storage::PlannedVolumesList.new([vol2, vol3]) }
 
               it "does not enforce the partition types" do
                 types = distribution.spaces.map { |s| s.partition_type }

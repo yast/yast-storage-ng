@@ -21,21 +21,19 @@
 # find current contact information at www.suse.com.
 
 require_relative "spec_helper"
-require "storage/disk_size"
+require "y2storage/disk_size"
 
-using Yast::Storage
-
-describe Yast::Storage::DiskSize do
+describe Y2Storage::DiskSize do
 
   describe "constructed empty" do
     it "should have a to_i of 0" do
-      disk_size = Yast::Storage::DiskSize.new
+      disk_size = Y2Storage::DiskSize.new
       expect(disk_size.to_i).to be == 0
     end
   end
 
   describe "created with 42 KiB" do
-    disk_size = Yast::Storage::DiskSize.KiB(42)
+    disk_size = Y2Storage::DiskSize.KiB(42)
     it "should return the correct human readable string" do
       expect(disk_size.to_s).to be == "42.00 KiB"
     end
@@ -45,7 +43,7 @@ describe Yast::Storage::DiskSize do
   end
 
   describe "created with 43 MiB" do
-    disk_size = Yast::Storage::DiskSize.MiB(43)
+    disk_size = Y2Storage::DiskSize.MiB(43)
     it "should return the correct human readable string" do
       expect(disk_size.to_s).to be == "43.00 MiB"
     end
@@ -55,7 +53,7 @@ describe Yast::Storage::DiskSize do
   end
 
   describe "created with 44 GiB" do
-    disk_size = Yast::Storage::DiskSize.GiB(44)
+    disk_size = Y2Storage::DiskSize.GiB(44)
     it "should return the correct human readable string" do
       expect(disk_size.to_s).to be == "44.00 GiB"
     end
@@ -65,7 +63,7 @@ describe Yast::Storage::DiskSize do
   end
 
   describe "created with 45 TiB" do
-    disk_size = Yast::Storage::DiskSize.TiB(45)
+    disk_size = Y2Storage::DiskSize.TiB(45)
     it "should return the correct human readable string" do
       expect(disk_size.to_s).to be == "45.00 TiB"
     end
@@ -75,7 +73,7 @@ describe Yast::Storage::DiskSize do
   end
 
   describe "created with 46 PiB" do
-    disk_size = Yast::Storage::DiskSize.PiB(46)
+    disk_size = Y2Storage::DiskSize.PiB(46)
     it "should return the correct human readable string" do
       expect(disk_size.to_s).to be == "46.00 PiB"
     end
@@ -85,7 +83,7 @@ describe Yast::Storage::DiskSize do
   end
 
   describe "created with 47 EiB" do
-    disk_size = Yast::Storage::DiskSize.EiB(47)
+    disk_size = Y2Storage::DiskSize.EiB(47)
     it "should return the correct human readable string" do
       expect(disk_size.to_s).to be == "47.00 EiB"
     end
@@ -95,7 +93,7 @@ describe Yast::Storage::DiskSize do
   end
 
   describe "created with a huge number" do
-    disk_size = Yast::Storage::DiskSize.TiB(48 * 1024**5)
+    disk_size = Y2Storage::DiskSize.TiB(48 * 1024**5)
     it "should return the correct human readable string" do
       expect(disk_size.to_s).to be == "49152.00 YiB"
     end
@@ -108,7 +106,7 @@ describe Yast::Storage::DiskSize do
   end
 
   describe "created with 1024 GiB" do
-    disk_size = Yast::Storage::DiskSize.GiB(1024)
+    disk_size = Y2Storage::DiskSize.GiB(1024)
     it "should use the next higher unit (TiB) from 1024 on" do
       expect(disk_size.to_s).to be == "1.00 TiB"
     end
@@ -116,30 +114,30 @@ describe Yast::Storage::DiskSize do
 
   describe "arithmetic operations" do
     it "should accept addition of another DiskSize" do
-      disk_size = Yast::Storage::DiskSize.GiB(10) + Yast::Storage::DiskSize.GiB(20)
+      disk_size = Y2Storage::DiskSize.GiB(10) + Y2Storage::DiskSize.GiB(20)
       expect(disk_size.to_i).to be == 30 * 1024**3
     end
     it "should accept addition of an int" do
-      disk_size = Yast::Storage::DiskSize.MiB(20) + 512
+      disk_size = Y2Storage::DiskSize.MiB(20) + 512
       expect(disk_size.to_i).to be == 20 * 1024**2 + 512
     end
     it "should accept multiplication with an int" do
-      disk_size = Yast::Storage::DiskSize.MiB(12) * 3
+      disk_size = Y2Storage::DiskSize.MiB(12) * 3
       expect(disk_size.to_i).to be == 12 * 1024**2 * 3
     end
     it "should accept division by an int" do
-      disk_size = Yast::Storage::DiskSize.MiB(12) / 3
+      disk_size = Y2Storage::DiskSize.MiB(12) / 3
       expect(disk_size.to_i).to be == 12 / 3 * 1024**2
     end
     it "should refuse multiplication with another DiskSize" do
-      expect { Yast::Storage::DiskSize.MiB(12) * Yast::Storage::DiskSize.MiB(3) }
+      expect { Y2Storage::DiskSize.MiB(12) * Y2Storage::DiskSize.MiB(3) }
         .to raise_exception TypeError
     end
   end
 
   describe "arithmetic operations with unlimited and DiskSize" do
-    unlimited = Yast::Storage::DiskSize.unlimited
-    disk_size = Yast::Storage::DiskSize.GiB(42)
+    unlimited = Y2Storage::DiskSize.unlimited
+    disk_size = Y2Storage::DiskSize.GiB(42)
     it "should return unlimited" do
       expect(unlimited + disk_size).to be == unlimited
       expect(disk_size + unlimited).to be == unlimited
@@ -150,7 +148,7 @@ describe Yast::Storage::DiskSize do
   end
 
   describe "arithmetic operations with unlimited and a number" do
-    unlimited = Yast::Storage::DiskSize.unlimited
+    unlimited = Y2Storage::DiskSize.unlimited
     number    = 7
     it "should return unlimited" do
       expect(unlimited + number).to be == unlimited
@@ -161,9 +159,9 @@ describe Yast::Storage::DiskSize do
   end
 
   describe "comparison" do
-    disk_size1 = Yast::Storage::DiskSize.GiB(24)
-    disk_size2 = Yast::Storage::DiskSize.GiB(32)
-    disk_size3 = Yast::Storage::DiskSize.GiB(32)
+    disk_size1 = Y2Storage::DiskSize.GiB(24)
+    disk_size2 = Y2Storage::DiskSize.GiB(32)
+    disk_size3 = Y2Storage::DiskSize.GiB(32)
     it "operator < should compare correctly" do
       expect(disk_size1 < disk_size2).to be == true
       expect(disk_size2 < disk_size3).to be == false
@@ -187,8 +185,8 @@ describe Yast::Storage::DiskSize do
   end
 
   describe "comparison with unlimited" do
-    unlimited = Yast::Storage::DiskSize.unlimited
-    disk_size = Yast::Storage::DiskSize.GiB(42)
+    unlimited = Y2Storage::DiskSize.unlimited
+    disk_size = Y2Storage::DiskSize.GiB(42)
     it "should compare any disk size correctly with unlimited" do
       expect(disk_size).to be < unlimited
       expect(disk_size).to_not be > unlimited
@@ -208,34 +206,34 @@ describe Yast::Storage::DiskSize do
 
   describe "unit exponent" do
     it "should be correct for KiB" do
-      expect(Yast::Storage::DiskSize.unit_exponent("KiB")).to be == 1
+      expect(Y2Storage::DiskSize.unit_exponent("KiB")).to be == 1
     end
     it "should be correct for MiB" do
-      expect(Yast::Storage::DiskSize.unit_exponent("MiB")).to be == 2
+      expect(Y2Storage::DiskSize.unit_exponent("MiB")).to be == 2
     end
     it "should be correct for GiB" do
-      expect(Yast::Storage::DiskSize.unit_exponent("GiB")).to be == 3
+      expect(Y2Storage::DiskSize.unit_exponent("GiB")).to be == 3
     end
     it "should be correct for TiB" do
-      expect(Yast::Storage::DiskSize.unit_exponent("TiB")).to be == 4
+      expect(Y2Storage::DiskSize.unit_exponent("TiB")).to be == 4
     end
     it "should be correct for PiB" do
-      expect(Yast::Storage::DiskSize.unit_exponent("PiB")).to be == 5
+      expect(Y2Storage::DiskSize.unit_exponent("PiB")).to be == 5
     end
     it "should be correct for EiB" do
-      expect(Yast::Storage::DiskSize.unit_exponent("EiB")).to be == 6
+      expect(Y2Storage::DiskSize.unit_exponent("EiB")).to be == 6
     end
     it "should be correct for ZiB" do
-      expect(Yast::Storage::DiskSize.unit_exponent("ZiB")).to be == 7
+      expect(Y2Storage::DiskSize.unit_exponent("ZiB")).to be == 7
     end
     it "should be correct for YiB" do
-      expect(Yast::Storage::DiskSize.unit_exponent("YiB")).to be == 8
+      expect(Y2Storage::DiskSize.unit_exponent("YiB")).to be == 8
     end
     it "should raise an exception for invalid units" do
-      expect { Yast::Storage::DiskSize.unit_exponent("WTF") }.to raise_error(ArgumentError)
-      expect { Yast::Storage::DiskSize.unit_exponent("MB") }.to raise_error(ArgumentError)
-      expect { Yast::Storage::DiskSize.unit_exponent("GB") }.to raise_error(ArgumentError)
-      expect { Yast::Storage::DiskSize.unit_exponent("TB") }.to raise_error(ArgumentError)
+      expect { Y2Storage::DiskSize.unit_exponent("WTF") }.to raise_error(ArgumentError)
+      expect { Y2Storage::DiskSize.unit_exponent("MB") }.to raise_error(ArgumentError)
+      expect { Y2Storage::DiskSize.unit_exponent("GB") }.to raise_error(ArgumentError)
+      expect { Y2Storage::DiskSize.unit_exponent("TB") }.to raise_error(ArgumentError)
     end
   end
 

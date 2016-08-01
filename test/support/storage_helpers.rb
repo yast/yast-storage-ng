@@ -22,9 +22,7 @@
 require "rspec"
 require "yast"
 require "storage"
-require "storage/storage_manager"
-require "storage/disk_size"
-require "storage/planned_volume"
+require "y2storage"
 
 module Yast
   module RSpec
@@ -39,14 +37,14 @@ module Yast
       end
 
       def fake_scenario(scenario)
-        Yast::Storage::StorageManager.fake_from_yaml(input_file_for(scenario))
+        Y2Storage::StorageManager.fake_from_yaml(input_file_for(scenario))
       end
 
       def fake_devicegraph
-        Yast::Storage::StorageManager.instance.probed
+        Y2Storage::StorageManager.instance.probed
       end
 
-      def analyzer_part(name = "", disk_size = Yast::Storage::DiskSize.MiB(10))
+      def analyzer_part(name = "", disk_size = Y2Storage::DiskSize.MiB(10))
         instance_double("::Storage::Partition", name: name, size: disk_size.to_i)
       end
 
@@ -57,7 +55,7 @@ module Yast
         if type.is_a?(::String) || type.is_a?(Symbol)
           type = ::Storage.const_get("FsType_" + type.to_s.upcase)
         end
-        volume = Yast::Storage::PlannedVolume.new(mount_point, type)
+        volume = Y2Storage::PlannedVolume.new(mount_point, type)
         attrs.each_pair do |key, value|
           volume.send(:"#{key}=", value)
         end
@@ -66,11 +64,11 @@ module Yast
 
       def space_dist(vols_by_space, devicegraph: nil)
         devicegraph ||= fake_devicegraph
-        Yast::Storage::Proposal::SpaceDistribution.new(vols_by_space, devicegraph)
+        Y2Storage::Proposal::SpaceDistribution.new(vols_by_space, devicegraph)
       end
 
       def vols_list(*vols)
-        Yast::Storage::PlannedVolumesList.new([*vols])
+        Y2Storage::PlannedVolumesList.new([*vols])
       end
     end
   end

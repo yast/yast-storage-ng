@@ -21,7 +21,7 @@
 
 require "yast"
 require "storage"
-require "storage/storage_manager"
+require "y2storage"
 require "storage/extensions"
 require "ui/dialog"
 require "expert_partitioner/tree"
@@ -130,7 +130,6 @@ module ExpertPartitioner
       view_class = VIEW_CLASSES[current_item]
       return view_class.new if view_class
 
-      storage = Yast::Storage::StorageManager.instance
       staging = storage.staging
       device = Storage.downcast(staging.find_device(current_item))
 
@@ -138,7 +137,6 @@ module ExpertPartitioner
     end
 
     def do_commit
-      storage = Yast::Storage::StorageManager.instance
       actiongraph = storage.calculate_actiongraph
 
       if actiongraph.empty?
@@ -151,6 +149,10 @@ module ExpertPartitioner
       storage.commit
 
       return true
+    end
+
+    def storage
+      Y2Storage::StorageManager.instance
     end
   end
 end

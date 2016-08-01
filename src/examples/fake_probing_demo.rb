@@ -22,13 +22,13 @@
 
 $LOAD_PATH.unshift(File.expand_path("../../lib", __FILE__))
 
-require "storage/storage_manager.rb"
+require "y2storage"
 
-devicegraph = Yast::Storage::StorageManager.fake_from_yaml.probed
+devicegraph = Y2Storage::StorageManager.fake_from_yaml.probed
 ::Storage::Disk.create(devicegraph, "/dev/sdx")
 ::Storage::Disk.create(devicegraph, "/dev/sdy")
 ::Storage::Disk.create(devicegraph, "/dev/sdz")
 
-probed = Yast::Storage::StorageManager.instance.probed
+probed = Y2Storage::StorageManager.instance.probed
 puts("Probed disks:")
 probed.all_disks.each { |disk| puts("  Found disk #{disk.name}") }

@@ -21,26 +21,24 @@
 # find current contact information at www.suse.com.
 
 require_relative "../spec_helper"
-require "storage/proposal"
-require "storage/refinements/devicegraph_lists"
-require "storage/refinements/size_casts"
+require "y2storage"
 
-describe Yast::Storage::Proposal::SpaceMaker do
+describe Y2Storage::Proposal::SpaceMaker do
   describe "#make_space" do
-    using Yast::Storage::Refinements::SizeCasts
-    using Yast::Storage::Refinements::DevicegraphLists
+    using Y2Storage::Refinements::SizeCasts
+    using Y2Storage::Refinements::DevicegraphLists
 
     before do
       fake_scenario(scenario)
     end
 
     let(:analyzer) do
-      disk_analyzer = Yast::Storage::DiskAnalyzer.new
+      disk_analyzer = Y2Storage::DiskAnalyzer.new
       disk_analyzer.analyze(fake_devicegraph)
       disk_analyzer
     end
     let(:settings) do
-      settings = Yast::Storage::Proposal::Settings.new
+      settings = Y2Storage::ProposalSettings.new
       settings.candidate_devices = ["/dev/sda"]
       settings.root_device = "/dev/sda"
       settings
@@ -55,7 +53,7 @@ describe Yast::Storage::Proposal::SpaceMaker do
 
       it "raises a NoDiskSpaceError exception" do
         expect { maker.provide_space(volumes) }
-          .to raise_error Yast::Storage::Proposal::NoDiskSpaceError
+          .to raise_error Y2Storage::Proposal::NoDiskSpaceError
       end
     end
 
@@ -258,7 +256,7 @@ describe Yast::Storage::Proposal::SpaceMaker do
         vol2 = planned_vol(mount_point: "/2", reuse: "/dev/sda2")
         volumes = vols_list(vol1, vol2)
 
-        expect { maker.provide_space(volumes) }.to raise_error Yast::Storage::Proposal::NoDiskSpaceError
+        expect { maker.provide_space(volumes) }.to raise_error Y2Storage::Proposal::NoDiskSpaceError
       end
 
       # FIXME: Bug or feature? Anyways, we are planning to change how libstorage-ng
@@ -383,7 +381,7 @@ describe Yast::Storage::Proposal::SpaceMaker do
         end
 
         it "raises an exception even if there is enough space in other disks" do
-          expect { maker.provide_space(volumes) }.to raise_error Yast::Storage::Proposal::Error
+          expect { maker.provide_space(volumes) }.to raise_error Y2Storage::Proposal::Error
         end
       end
 

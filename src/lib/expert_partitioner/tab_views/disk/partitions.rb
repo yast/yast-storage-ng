@@ -21,7 +21,6 @@
 
 require "yast"
 require "storage"
-require "storage/storage_manager"
 require "storage/extensions"
 require "expert_partitioner/tab_views/view"
 require "expert_partitioner/dialogs/format"
@@ -113,7 +112,6 @@ module ExpertPartitioner
     def do_format
       sid = Yast::UI.QueryWidget(Id(:table), :CurrentItem)
 
-      storage = Yast::Storage::StorageManager.instance
       staging = storage.staging
       device = staging.find_device(sid)
 
@@ -131,7 +129,6 @@ module ExpertPartitioner
     def do_delete_partition
       sid = Yast::UI.QueryWidget(Id(:table), :CurrentItem)
 
-      storage = Yast::Storage::StorageManager.instance
       staging = storage.staging
 
       device = staging.find_device(sid)

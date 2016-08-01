@@ -19,9 +19,6 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "yast"
-require "storage"
-require "storage/storage_manager"
 require "storage/extensions"
 require "expert_partitioner/tree_views/view"
 require "expert_partitioner/dialogs/format"
@@ -38,7 +35,6 @@ module ExpertPartitioner
     FIELDS = [:sid, :icon, :name, :size]
 
     def initialize
-      storage = Yast::Storage::StorageManager.instance
       staging = storage.staging
       @lvm_vgs = staging.all_lvm_vgs
     end
@@ -84,7 +80,6 @@ module ExpertPartitioner
     def do_format
       sid = Yast::UI.QueryWidget(Id(:table), :CurrentItem)
 
-      storage = Yast::Storage::StorageManager.instance
       staging = storage.staging
       device = staging.find_device(sid)
 

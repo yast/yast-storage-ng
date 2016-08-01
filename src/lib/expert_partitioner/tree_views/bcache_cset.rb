@@ -19,9 +19,6 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "yast"
-require "storage"
-require "storage/storage_manager"
 require "storage/extensions"
 require "expert_partitioner/tree_views/view"
 require "expert_partitioner/icons"
