@@ -23,13 +23,11 @@
 require_relative "spec_helper"
 require_relative "support/proposed_partitions_examples"
 require_relative "support/boot_requirements_context"
-require "storage/proposal"
-require "storage/boot_requirements_checker"
-require "storage/refinements/size_casts"
+require "y2storage"
 
-describe Yast::Storage::BootRequirementsChecker do
+describe Y2Storage::BootRequirementsChecker do
   describe "#needed_partitions in a x86 system" do
-    using Yast::Storage::Refinements::SizeCasts
+    using Y2Storage::Refinements::SizeCasts
 
     include_context "boot requirements"
 
@@ -42,7 +40,7 @@ describe Yast::Storage::BootRequirementsChecker do
 
     before do
       allow(analyzer).to receive(:mbr_gap)
-        .and_return("/dev/sda" => Yast::Storage::DiskSize.KiB(mbr_gap_size))
+        .and_return("/dev/sda" => Y2Storage::DiskSize.KiB(mbr_gap_size))
       allow(analyzer).to receive(:grub_partitions).and_return grub_partitions
 
       allow(storage_arch).to receive(:efiboot?).and_return(efiboot)
@@ -207,7 +205,7 @@ describe Yast::Storage::BootRequirementsChecker do
 
               it "raises an exception" do
                 expect { checker.needed_partitions }.to raise_error(
-                  Yast::Storage::BootRequirementsChecker::Error
+                  Y2Storage::BootRequirementsChecker::Error
                 )
               end
             end
@@ -218,7 +216,7 @@ describe Yast::Storage::BootRequirementsChecker do
 
             it "raises an exception" do
               expect { checker.needed_partitions }.to raise_error(
-                Yast::Storage::BootRequirementsChecker::Error
+                Y2Storage::BootRequirementsChecker::Error
               )
             end
           end

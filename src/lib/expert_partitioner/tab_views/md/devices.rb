@@ -21,7 +21,7 @@
 
 require "yast"
 require "storage"
-require "storage/storage_manager"
+require "y2storage"
 require "storage/extensions"
 require "expert_partitioner/tab_views/view"
 require "expert_partitioner/popups"

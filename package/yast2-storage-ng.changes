@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Mon Aug  1 13:11:13 UTC 2016 - ancor@suse.com
+
+- Namespaces adapted to avoid conflicts with old yast2-storage
+  and to follow the new YaST convention.
+- 0.1.1
+
+-------------------------------------------------------------------
 Thu Feb 25 16:35:57 CET 2016 - aschnell@suse.com
 
 - initial package with yast2-storage-ng, successor of yast2-storage

@@ -22,9 +22,9 @@
 
 require_relative "spec_helper"
 require "storage"
-require "storage/yaml_writer"
+require "y2storage/yaml_writer"
 
-describe Yast::Storage::YamlWriter do
+describe Y2Storage::YamlWriter do
 
   it "produces yaml of simple disk and partition setup" do
 
@@ -88,7 +88,7 @@ describe Yast::Storage::YamlWriter do
     # rubocop:enable all
 
     io = StringIO.new
-    Yast::Storage::YamlWriter.write(staging, io)
+    Y2Storage::YamlWriter.write(staging, io)
     expect(io.string).to eq result.join("\n") + "\n"
 
   end
@@ -133,7 +133,7 @@ describe Yast::Storage::YamlWriter do
     # rubocop:enable all
 
     io = StringIO.new
-    Yast::Storage::YamlWriter.write(staging, io)
+    Y2Storage::YamlWriter.write(staging, io)
     expect(io.string).to eq result.join("\n") + "\n"
 
   end

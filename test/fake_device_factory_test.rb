@@ -22,9 +22,9 @@
 
 require_relative "spec_helper"
 require "storage"
-require "storage/fake_device_factory"
+require "y2storage/fake_device_factory"
 
-describe Yast::Storage::FakeDeviceFactory do
+describe Y2Storage::FakeDeviceFactory do
 
   it "reads yaml of simple disk and partition setup" do
 
@@ -67,7 +67,7 @@ describe Yast::Storage::FakeDeviceFactory do
     # rubocop:enable all
 
     io = StringIO.new(input.join("\n"))
-    Yast::Storage::FakeDeviceFactory.load_yaml_file(staging, io)
+    Y2Storage::FakeDeviceFactory.load_yaml_file(staging, io)
 
     expect(staging.num_devices).to eq 6
     expect(staging.num_holders).to eq 5
@@ -116,7 +116,7 @@ describe Yast::Storage::FakeDeviceFactory do
     # rubocop:enable all
 
     io = StringIO.new(input.join("\n"))
-    Yast::Storage::FakeDeviceFactory.load_yaml_file(staging, io)
+    Y2Storage::FakeDeviceFactory.load_yaml_file(staging, io)
 
     expect(staging.num_devices).to eq 5
     expect(staging.num_holders).to eq 4

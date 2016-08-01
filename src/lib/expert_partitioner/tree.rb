@@ -21,7 +21,7 @@
 
 require "yast"
 require "storage"
-require "storage/storage_manager"
+require "y2storage"
 require "storage/extensions"
 
 Yast.import "UI"
@@ -66,8 +66,6 @@ module ExpertPartitioner
   private
 
     def disks_subtree_items
-      storage = Yast::Storage::StorageManager.instance
-
       disks = Storage::Disk.all(storage.staging)
 
       ::Storage.silence do
@@ -92,8 +90,6 @@ module ExpertPartitioner
     end
 
     def mds_subtree_items
-      storage = Yast::Storage::StorageManager.instance
-
       mds = Storage::Md.all(storage.staging)
 
       ::Storage.silence do
@@ -118,8 +114,6 @@ module ExpertPartitioner
     end
 
     def lvm_vgs_subtree_items
-      storage = Yast::Storage::StorageManager.instance
-
       lvm_vgs = Storage::LvmVg.all(storage.staging)
 
       return lvm_vgs.to_a.map do |lvm_vg|
@@ -136,8 +130,6 @@ module ExpertPartitioner
     end
 
     def lukses_subtree_items
-      storage = Yast::Storage::StorageManager.instance
-
       lukses = Storage::Luks.all(storage.staging)
 
       return lukses.to_a.map do |luks|
@@ -146,8 +138,6 @@ module ExpertPartitioner
     end
 
     def bcaches_subtree_items
-      storage = Yast::Storage::StorageManager.instance
-
       bcaches = Storage::Bcache.all(storage.staging)
 
       return bcaches.to_a.map do |bcache|
@@ -156,13 +146,15 @@ module ExpertPartitioner
     end
 
     def bcache_csets_subtree_items
-      storage = Yast::Storage::StorageManager.instance
-
       bcache_csets = Storage::BcacheCset.all(storage.staging)
 
       return bcache_csets.to_a.map do |bcache_cset|
         Item(Id(bcache_cset.sid), bcache_cset.uuid, true)
       end
+    end
+
+    def storage
+      Y2Storage::StorageManager.instance
     end
   end
 end

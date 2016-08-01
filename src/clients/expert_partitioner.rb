@@ -42,6 +42,6 @@ storage_environment =
 storage_environment.devicegraph_filename = "./devicegraph.xml"
 storage_environment.arch_filename = "./arch.xml"
 
-Yast::Storage::StorageManager.create_instance(storage_environment)
+Y2Storage::StorageManager.create_instance(storage_environment)
 
 ExpertPartitioner::MainDialog.new.run

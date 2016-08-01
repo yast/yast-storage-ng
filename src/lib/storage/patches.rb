@@ -29,12 +29,13 @@
 #
 
 require "storage"
+require "y2storage/disk_size"
 
 module Storage
   # patch libstorage-ng class
   class Disk
     def inspect
-      "<Disk #{name} #{Yast::Storage::DiskSize.B(size)}>"
+      "<Disk #{name} #{Y2Storage::DiskSize.B(size)}>"
     end
 
     # FIXME: Arvin promised #partition_table? in libstorage-ng;
@@ -68,14 +69,14 @@ module Storage
   # patch libstorage-ng class
   class Partition
     def inspect
-      "<Partition #{name} #{Yast::Storage::DiskSize.B(size)}, #{region.show_range}>"
+      "<Partition #{name} #{Y2Storage::DiskSize.B(size)}, #{region.show_range}>"
     end
   end
 
   # patch libstorage-ng class
   class PartitionSlot
     def inspect
-      nice_size = Yast::Storage::DiskSize.B(region.length * region.block_size)
+      nice_size = Y2Storage::DiskSize.B(region.length * region.block_size)
       "<PartitionSlot #{nr} #{name} #{flags_string} #{nice_size}, #{region.show_range}>"
     end
 

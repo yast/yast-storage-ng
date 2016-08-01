@@ -20,6 +20,8 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
+require "y2storage/proposal_settings"
+
 RSpec.shared_context "boot requirements" do
   def find_vol(mount_point, volumes)
     volumes.find { |p| p.mount_point == mount_point }
@@ -29,13 +31,13 @@ RSpec.shared_context "boot requirements" do
 
   let(:root_device) { "/dev/sda" }
   let(:settings) do
-    settings = Yast::Storage::Proposal::Settings.new
+    settings = Y2Storage::ProposalSettings.new
     settings.root_device = root_device
     settings.use_lvm = use_lvm
     settings.root_filesystem_type = root_filesystem_type
     settings
   end
-  let(:analyzer) { instance_double("Yast::Storage::DiskAnalyzer") }
+  let(:analyzer) { instance_double("Y2Storage::DiskAnalyzer") }
   let(:storage_arch) { instance_double("::Storage::Arch") }
   let(:dev_sda) { instance_double("::Storage::Disk", name: "/dev/sda") }
   let(:pt_gpt) { instance_double("::Storage::PartitionTable") }
@@ -44,8 +46,8 @@ RSpec.shared_context "boot requirements" do
   let(:root_filesystem_type) { ::Storage::FsType_BTRFS }
 
   before do
-    Yast::Storage::StorageManager.fake_from_yaml
-    allow(Yast::Storage::StorageManager.instance).to receive(:arch).and_return(storage_arch)
+    Y2Storage::StorageManager.fake_from_yaml
+    allow(Y2Storage::StorageManager.instance).to receive(:arch).and_return(storage_arch)
 
     allow(storage_arch).to receive(:x86?).and_return(architecture == :x86)
     allow(storage_arch).to receive(:ppc?).and_return(architecture == :ppc)

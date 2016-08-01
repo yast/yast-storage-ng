@@ -23,13 +23,11 @@
 require_relative "spec_helper"
 require_relative "support/proposed_partitions_examples"
 require_relative "support/boot_requirements_context"
-require "storage/proposal"
-require "storage/boot_requirements_checker"
-require "storage/refinements/size_casts"
+require "y2storage"
 
-describe Yast::Storage::BootRequirementsChecker do
+describe Y2Storage::BootRequirementsChecker do
   describe "#needed_partitions in a S/390 system" do
-    using Yast::Storage::Refinements::SizeCasts
+    using Y2Storage::Refinements::SizeCasts
 
     include_context "boot requirements"
 
@@ -77,7 +75,7 @@ describe Yast::Storage::BootRequirementsChecker do
 
       it "raises an error" do
         expect { checker.needed_partitions }
-          .to raise_error Yast::Storage::BootRequirementsChecker::Error
+          .to raise_error Y2Storage::BootRequirementsChecker::Error
       end
     end
 
@@ -92,7 +90,7 @@ describe Yast::Storage::BootRequirementsChecker do
 
         it "raises an error" do
           expect { checker.needed_partitions }
-            .to raise_error Yast::Storage::BootRequirementsChecker::Error
+            .to raise_error Y2Storage::BootRequirementsChecker::Error
         end
       end
 
