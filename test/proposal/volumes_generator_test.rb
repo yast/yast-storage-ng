@@ -22,15 +22,11 @@
 
 require_relative "../spec_helper"
 require "storage"
-require "storage/proposal"
-require "storage/planned_volume"
-require "storage/planned_volumes_list"
-require "storage/refinements/size_casts"
-require "storage/boot_requirements_checker"
+require "y2storage"
 
-describe Yast::Storage::Proposal::VolumesGenerator do
+describe Y2Storage::Proposal::VolumesGenerator do
   describe "#all_volumes" do
-    using Yast::Storage::Refinements::SizeCasts
+    using Y2Storage::Refinements::SizeCasts
 
     # Just to shorten
     let(:xfs) { ::Storage::FsType_XFS }
@@ -38,19 +34,19 @@ describe Yast::Storage::Proposal::VolumesGenerator do
     let(:swap) { ::Storage::FsType_swap }
     let(:btrfs) { ::Storage::FsType_BTRFS }
 
-    let(:settings) { Yast::Storage::Proposal::Settings.new }
-    let(:analyzer) { instance_double("Yast::Storage::DiskAnalyzer") }
+    let(:settings) { Y2Storage::ProposalSettings.new }
+    let(:analyzer) { instance_double("Y2Storage::DiskAnalyzer") }
     let(:swap_partitions) { [] }
-    let(:boot_checker) { instance_double("Yast::Storage::BootRequirementChecker") }
+    let(:boot_checker) { instance_double("Y2Storage::BootRequirementChecker") }
     subject(:generator) { described_class.new(settings, analyzer) }
 
     before do
-      allow(Yast::Storage::BootRequirementsChecker).to receive(:new).and_return boot_checker
+      allow(Y2Storage::BootRequirementsChecker).to receive(:new).and_return boot_checker
       allow(boot_checker).to receive(:needed_partitions).and_return(
-        Yast::Storage::PlannedVolumesList.new(
+        Y2Storage::PlannedVolumesList.new(
           [
-            Yast::Storage::PlannedVolume.new("/one_boot", xfs),
-            Yast::Storage::PlannedVolume.new("/other_boot", vfat)
+            Y2Storage::PlannedVolume.new("/one_boot", xfs),
+            Y2Storage::PlannedVolume.new("/other_boot", vfat)
           ]
         )
       )
@@ -58,7 +54,7 @@ describe Yast::Storage::Proposal::VolumesGenerator do
     end
 
     it "returns a list of volumes" do
-      expect(subject.all_volumes).to be_a Yast::Storage::PlannedVolumesList
+      expect(subject.all_volumes).to be_a Y2Storage::PlannedVolumesList
     end
 
     it "includes the volumes needed by BootRequirementChecker" do
@@ -129,7 +125,7 @@ describe Yast::Storage::Proposal::VolumesGenerator do
       before do
         settings.use_separate_home = true
         settings.home_min_disk_size = 4.GiB
-        settings.home_max_disk_size = Yast::Storage::DiskSize.unlimited
+        settings.home_max_disk_size = Y2Storage::DiskSize.unlimited
         settings.home_filesystem_type = xfs
       end
 

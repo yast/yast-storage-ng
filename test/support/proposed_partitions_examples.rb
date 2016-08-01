@@ -20,10 +20,10 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "storage/refinements/size_casts"
+require "y2storage/refinements"
 
 RSpec.shared_examples "proposed boot partition" do
-  using Yast::Storage::Refinements::SizeCasts
+  using Y2Storage::Refinements::SizeCasts
 
   it "requires /boot to be ext4 with at least 100 MiB" do
     expect(boot_part.filesystem_type).to eq ::Storage::FsType_EXT4
@@ -41,7 +41,7 @@ RSpec.shared_examples "proposed boot partition" do
 end
 
 RSpec.shared_examples "proposed GRUB partition" do
-  using Yast::Storage::Refinements::SizeCasts
+  using Y2Storage::Refinements::SizeCasts
 
   it "requires it to have the correct id" do
     expect(grub_part.partition_id).to eq ::Storage::ID_GPT_BIOS
@@ -63,7 +63,7 @@ RSpec.shared_examples "proposed GRUB partition" do
 end
 
 RSpec.shared_examples "proposed EFI partition" do
-  using Yast::Storage::Refinements::SizeCasts
+  using Y2Storage::Refinements::SizeCasts
 
   it "requires /boot/efi to be vfat with at least 33 MiB" do
     expect(efi_part.filesystem_type).to eq ::Storage::FsType_VFAT
@@ -84,7 +84,7 @@ RSpec.shared_examples "proposed EFI partition" do
 end
 
 RSpec.shared_examples "proposed PReP partition" do
-  using Yast::Storage::Refinements::SizeCasts
+  using Y2Storage::Refinements::SizeCasts
 
   it "requires it to be between 256KiB and 8MiB, despite the alignment" do
     expect(prep_part.min).to eq 256.KiB
@@ -106,7 +106,7 @@ RSpec.shared_examples "proposed PReP partition" do
 end
 
 RSpec.shared_examples "proposed /boot/zipl partition" do
-  using Yast::Storage::Refinements::SizeCasts
+  using Y2Storage::Refinements::SizeCasts
 
   it "requires /boot/zipl to be ext2 with at least 100 MiB" do
     expect(zipl_part.filesystem_type).to eq ::Storage::FsType_EXT2

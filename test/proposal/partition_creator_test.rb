@@ -22,14 +22,12 @@
 
 require_relative "../spec_helper"
 require "storage"
-require "storage/proposal"
-require "storage/refinements/devicegraph_lists"
-require "storage/refinements/size_casts"
+require "y2storage"
 
-describe Yast::Storage::Proposal::PartitionCreator do
+describe Y2Storage::Proposal::PartitionCreator do
   describe "#create_partitions" do
-    using Yast::Storage::Refinements::SizeCasts
-    using Yast::Storage::Refinements::DevicegraphLists
+    using Y2Storage::Refinements::SizeCasts
+    using Y2Storage::Refinements::DevicegraphLists
 
     before do
       fake_scenario(scenario)

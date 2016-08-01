@@ -21,17 +21,10 @@
 # find current contact information at www.suse.com.
 
 require_relative "spec_helper"
-require "storage"
-require "storage/disks_list"
-require "storage/free_disk_space"
-require "storage/partitions_list"
-require "storage/filesystems_list"
-require "storage/free_disk_spaces_list"
-require "storage/refinements/devicegraph_lists"
-require "storage/refinements/size_casts"
+require "y2storage"
 
 describe "devices lists" do
-  using Yast::Storage::Refinements::DevicegraphLists
+  using Y2Storage::Refinements::DevicegraphLists
 
   # Just to shorten
   let(:ext4) { ::Storage::FsType_EXT4 }
@@ -44,11 +37,11 @@ describe "devices lists" do
     fake_scenario("mixed_disks")
   end
 
-  describe "Yast::Storage::DevicesList" do
+  describe "Y2Storage::DevicesLists::Base" do
     describe "#with" do
       it "returns a list of the same class" do
         result = fake_devicegraph.filesystems.with(type: ext4)
-        expect(result).to be_a(Yast::Storage::FilesystemsList)
+        expect(result).to be_a(Y2Storage::DevicesLists::FilesystemsList)
       end
 
       it "filters by a scalar value" do
@@ -64,7 +57,7 @@ describe "devices lists" do
 
         # In the moment of writing, there are no attributes that can return nil
         # and that are easy to mock, let's invent one
-        class Yast::Storage::FreeDiskSpace
+        class Y2Storage::FreeDiskSpace
           def partition_name
             disk_name == "/dev/sdb" ? "/dev/sdb4" : nil
           end
@@ -152,7 +145,7 @@ describe "devices lists" do
     end
   end
 
-  describe Yast::Storage::DisksList do
+  describe Y2Storage::DevicesLists::DisksList do
     let(:disks) { fake_devicegraph.disks }
 
     it "contains all disks by default" do
@@ -164,9 +157,9 @@ describe "devices lists" do
       it "returns a filtered list of partitions" do
         parts_sdb = disks.with(name: "/dev/sdb").partitions
         parts_sdc = disks.with(name: "/dev/sdc").partitions
-        expect(parts_sdb).to be_a Yast::Storage::PartitionsList
+        expect(parts_sdb).to be_a Y2Storage::DevicesLists::PartitionsList
         expect(parts_sdb.size).to eq 7
-        expect(parts_sdc).to be_a Yast::Storage::PartitionsList
+        expect(parts_sdc).to be_a Y2Storage::DevicesLists::PartitionsList
         expect(parts_sdc.size).to eq 0
       end
     end
@@ -175,9 +168,9 @@ describe "devices lists" do
       it "returns a filtered list of filesystems" do
         fs_sdb = disks.with(name: "/dev/sdb").filesystems
         fs_sdc = disks.with(name: "/dev/sdc").filesystems
-        expect(fs_sdb).to be_a Yast::Storage::FilesystemsList
+        expect(fs_sdb).to be_a Y2Storage::DevicesLists::FilesystemsList
         expect(fs_sdb.size).to eq 5
-        expect(fs_sdc).to be_a Yast::Storage::FilesystemsList
+        expect(fs_sdc).to be_a Y2Storage::DevicesLists::FilesystemsList
         expect(fs_sdc.size).to eq 0
       end
     end
@@ -186,15 +179,15 @@ describe "devices lists" do
       it "returns a filtered list of FreeDiskSpace" do
         spaces_all = disks.free_disk_spaces
         spaces_sdc = disks.with(name: "/dev/sdc").free_disk_spaces
-        expect(spaces_all).to be_a Yast::Storage::FreeDiskSpacesList
+        expect(spaces_all).to be_a Y2Storage::DevicesLists::FreeDiskSpacesList
         expect(spaces_all.size).to eq 3
-        expect(spaces_sdc).to be_a Yast::Storage::FreeDiskSpacesList
+        expect(spaces_sdc).to be_a Y2Storage::DevicesLists::FreeDiskSpacesList
         expect(spaces_sdc.size).to eq 1
       end
     end
   end
 
-  describe Yast::Storage::PartitionsList do
+  describe Y2Storage::DevicesLists::PartitionsList do
     let(:partitions) { fake_devicegraph.partitions }
 
     it "contains all partitions by default" do
@@ -206,15 +199,15 @@ describe "devices lists" do
       it "returns a filtered list of filesystems" do
         parts_sda = partitions.with { |p| p.name.start_with? "/dev/sda" }
         parts_sdb = partitions.with { |p| p.name.start_with? "/dev/sdb" }
-        expect(parts_sda.filesystems).to be_a Yast::Storage::FilesystemsList
+        expect(parts_sda.filesystems).to be_a Y2Storage::DevicesLists::FilesystemsList
         expect(parts_sda.filesystems.size).to eq 2
-        expect(parts_sdb.filesystems).to be_a Yast::Storage::FilesystemsList
+        expect(parts_sdb.filesystems).to be_a Y2Storage::DevicesLists::FilesystemsList
         expect(parts_sdb.filesystems.size).to eq 5
       end
     end
   end
 
-  describe Yast::Storage::FilesystemsList do
+  describe Y2Storage::DevicesLists::FilesystemsList do
     let(:filesystems) { fake_devicegraph.filesystems }
 
     it "contains all filesystems by default" do
@@ -223,8 +216,8 @@ describe "devices lists" do
     end
   end
 
-  describe Yast::Storage::FreeDiskSpacesList do
-    using Yast::Storage::Refinements::SizeCasts
+  describe Y2Storage::DevicesLists::FreeDiskSpacesList do
+    using Y2Storage::Refinements::SizeCasts
 
     let(:spaces) { fake_devicegraph.free_disk_spaces }
 

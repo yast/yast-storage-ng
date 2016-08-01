@@ -21,14 +21,13 @@
 # find current contact information at www.suse.com.
 
 require_relative "spec_helper"
-require "storage/planned_volumes_list"
-require "storage/refinements/size_casts"
+require "y2storage"
 
-describe Yast::Storage::PlannedVolumesList do
-  using Yast::Storage::Refinements::SizeCasts
+describe Y2Storage::PlannedVolumesList do
+  using Y2Storage::Refinements::SizeCasts
 
   def vol(mount_point, size, min_size, max_size)
-    vol = Yast::Storage::PlannedVolume.new(mount_point)
+    vol = Y2Storage::PlannedVolume.new(mount_point)
     vol.disk_size = size
     vol.min = min_size
     vol.max = max_size
