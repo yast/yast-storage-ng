@@ -22,13 +22,13 @@
 require "rspec"
 require "yast"
 require "storage"
-require "storage/refinements/partition_attributes"
+require "y2storage"
 
 module Yast
   module RSpec
     # RSpec extension to add YaST Storage specific matchers
     module StorageMatchers
-      using Storage::Refinements::PartitionAttributes
+      using Y2Storage::Refinements::PartitionAttributes
 
       # Matches an object by its attributes (similar to RSpec's
       # #have_attributes) but honoring Storage::Refinements::XxxAttributes

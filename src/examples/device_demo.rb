@@ -23,9 +23,7 @@
 require "getoptlong"
 require "yast"	# Changes $LOAD_PATH!
 $LOAD_PATH.unshift(File.expand_path("../../lib", __FILE__))
-require "storage/storage_manager"
-require "storage/proposal"
-require "storage/yaml_writer"
+require "y2storage"
 
 opts = GetoptLong.new(
   ["--help", GetoptLong::NO_ARGUMENT],
@@ -83,15 +81,15 @@ if yaml_input.nil?
     STDERR.puts("This requires root permissions, otherwise hardware probing might fail.")
     STDERR.puts("Start this with sudo.")
   end
-  devicegraph = Yast::Storage::StorageManager.instance.probed
+  devicegraph = Y2Storage::StorageManager.instance.probed
 else
-  devicegraph = Yast::Storage::StorageManager.fake_from_yaml(yaml_input).probed
+  devicegraph = Y2Storage::StorageManager.fake_from_yaml(yaml_input).probed
 end
 
 if opt_propose
   # propose new device graph
-  settings = Yast::Storage::Proposal::Settings.new
-  proposal = Yast::Storage::Proposal.new(settings: settings)
+  settings = Y2Storage::ProposalSettings.new
+  proposal = Y2Storage::Proposal.new(settings: settings)
   proposal.propose
   devicegraph = proposal.devices
 end
@@ -110,5 +108,5 @@ if opt_gfx
   end
 else
   # write as YAML file
-  Yast::Storage::YamlWriter.write(devicegraph, $stdout)
+  Y2Storage::YamlWriter.write(devicegraph, $stdout)
 end
