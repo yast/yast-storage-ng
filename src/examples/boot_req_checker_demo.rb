@@ -32,15 +32,13 @@ require "yast"	# changes $LOAD_PATH
 
 $LOAD_PATH.unshift(File.expand_path("../../lib", __FILE__))
 
-require "storage/boot_requirements_checker"
-require "storage/proposal/settings"
-require "storage/disk_analyzer"
+require "y2storage"
 require "storage/patches"
 require "pp"
 
 begin
-  Yast::Storage::StorageManager.fake_from_yaml(ARGV[0]) unless ARGV[0].nil? || ARGV[0].empty?
-  sm = Yast::Storage::StorageManager.instance
+  Y2Storage::StorageManager.fake_from_yaml(ARGV[0]) unless ARGV[0].nil? || ARGV[0].empty?
+  sm = Y2Storage::StorageManager.instance
 
   devicegraph = sm.probed
   puts(devicegraph)
@@ -50,22 +48,22 @@ rescue => x
 end
 
 puts "\n---  disk_analyzer  ---"
-disk_analyzer = Yast::Storage::DiskAnalyzer.new
+disk_analyzer = Y2Storage::DiskAnalyzer.new
 disk_analyzer.analyze(devicegraph)
 pp(disk_analyzer)
 
 puts "\n---  settings  ---"
-settings = Yast::Storage::Proposal::UserSettings.new
+settings = Y2Storage::ProposalSettings.new
 settings.use_lvm = true
 settings.root_device = ARGV[1]
 pp(settings)
 
 puts "\n---  needed  ---"
-checker = Yast::Storage::BootRequirementsChecker.new(settings, disk_analyzer)
+checker = Y2Storage::BootRequirementsChecker.new(settings, disk_analyzer)
 
 begin
   needed = checker.needed_partitions
   pp(needed)
-rescue Yast::Storage::BootRequirementsChecker::Error => x
+rescue Y2Storage::BootRequirementsChecker::Error => x
   puts "exception: #{x}"
 end
