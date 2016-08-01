@@ -19,9 +19,6 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "yast"
-require "storage"
-require "storage/storage_manager"
 require "storage/extensions"
 require "expert_partitioner/tree_views/view"
 require "expert_partitioner/icons"
@@ -138,7 +135,6 @@ module ExpertPartitioner
     end
 
     def items
-      storage = Yast::Storage::StorageManager.instance
       staging = storage.staging
 
       return items_disks(staging) + items_mds(staging) + items_lvm_vgs(staging) +

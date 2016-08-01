@@ -19,6 +19,9 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
+require "yast"
+require "storage"
+require "y2storage"
 require "expert_partitioner/tree"
 
 module ExpertPartitioner
@@ -36,6 +39,12 @@ module ExpertPartitioner
       Yast::UI.ChangeWidget(:tree, :Items, Tree.new.tree_items) if also_tree
 
       Yast::UI.ReplaceWidget(:tree_panel, create)
+    end
+
+  protected
+
+    def storage
+      Y2Storage::StorageManager.instance
     end
   end
 end
