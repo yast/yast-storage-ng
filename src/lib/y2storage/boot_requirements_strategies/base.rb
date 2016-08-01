@@ -23,65 +23,63 @@
 
 require "yast"
 require "storage/patches"
-require "storage/disk_size"
-require "storage/planned_volume"
-require "storage/planned_volumes_list"
+require "y2storage/disk_size"
+require "y2storage/planned_volume"
+require "y2storage/planned_volumes_list"
 
-module Yast
-  module Storage
-    module BootRequirementsStrategies
-      class Error < RuntimeError
+module Y2Storage
+  module BootRequirementsStrategies
+    class Error < RuntimeError
+    end
+
+    # Base class for the strategies used to calculate the boot partitioning
+    # requirements
+    class Base
+      include Yast::Logger
+
+      def initialize(settings, disk_analyzer)
+        @settings = settings
+        @disk_analyzer = disk_analyzer
+        @root_disk = @disk_analyzer.device_by_name(settings.root_device)
       end
 
-      # Base class for the strategies used to calculate the boot partitioning
-      # requirements
-      class Base
-        include Yast::Logger
+      def needed_partitions
+        volumes = PlannedVolumesList.new
+        volumes << boot_volume if boot_partition_needed?
+        volumes
+      end
 
-        def initialize(settings, disk_analyzer)
-          @settings = settings
-          @disk_analyzer = disk_analyzer
-          @root_disk = @disk_analyzer.device_by_name(settings.root_device)
+    protected
+
+      attr_reader :settings
+      attr_reader :disk_analyzer
+      attr_reader :root_disk
+
+      def boot_partition_needed?
+        false
+      end
+
+      def boot_volume
+        vol = PlannedVolume.new("/boot", ::Storage::FsType_EXT4)
+        vol.disk = settings.root_device
+        vol.min_disk_size = DiskSize.MiB(100)
+        vol.max_disk_size = DiskSize.MiB(500)
+        vol.desired_disk_size = DiskSize.MiB(200)
+        vol.can_live_on_logical_volume = false
+        vol
+      end
+
+      def root_ptable_type
+        return nil unless root_disk
+        return nil unless root_disk.partition_table?
+        root_disk.partition_table.type
+      end
+
+      def root_ptable_type?(type)
+        if !type.is_a?(Fixnum)
+          type = ::Storage.const_get(:"PtType_#{type.to_s.upcase}")
         end
-
-        def needed_partitions
-          volumes = PlannedVolumesList.new
-          volumes << boot_volume if boot_partition_needed?
-          volumes
-        end
-
-      protected
-
-        attr_reader :settings
-        attr_reader :disk_analyzer
-        attr_reader :root_disk
-
-        def boot_partition_needed?
-          false
-        end
-
-        def boot_volume
-          vol = PlannedVolume.new("/boot", ::Storage::FsType_EXT4)
-          vol.disk = settings.root_device
-          vol.min_disk_size = DiskSize.MiB(100)
-          vol.max_disk_size = DiskSize.MiB(500)
-          vol.desired_disk_size = DiskSize.MiB(200)
-          vol.can_live_on_logical_volume = false
-          vol
-        end
-
-        def root_ptable_type
-          return nil unless root_disk
-          return nil unless root_disk.partition_table?
-          root_disk.partition_table.type
-        end
-
-        def root_ptable_type?(type)
-          if !type.is_a?(Fixnum)
-            type = ::Storage.const_get(:"PtType_#{type.to_s.upcase}")
-          end
-          root_ptable_type == type
-        end
+        root_ptable_type == type
       end
     end
   end

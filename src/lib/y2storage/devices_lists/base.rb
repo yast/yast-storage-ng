@@ -21,14 +21,10 @@
 
 require "storage"
 
-module Yast
-  module Storage
+module Y2Storage
+  module DevicesLists
     # Base class to implement lists of devices.
-    #
-    # @see DisksList
-    # @see PartitionsList
-    # @see FilesystemsList
-    class DevicesList
+    class Base
       include Enumerable
       extend Forwardable
 

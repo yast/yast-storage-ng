@@ -21,16 +21,16 @@
 # find current contact information at www.suse.com.
 
 require "storage"
-require "storage/devices_list"
-require "storage/partitions_list"
-require "storage/filesystems_list"
-require "storage/free_disk_spaces_list"
-require "storage/refinements/disk"
+require "y2storage/devices_lists/base"
+require "y2storage/devices_lists/partitions_list"
+require "y2storage/devices_lists/filesystems_list"
+require "y2storage/devices_lists/free_disk_spaces_list"
+require "y2storage/refinements/disk"
 
-module Yast
-  module Storage
+module Y2Storage
+  module DevicesLists
     # List of disks from a devicegraph
-    class DisksList < DevicesList
+    class DisksList < Base
       list_of ::Storage::Disk
 
       using Refinements::Disk

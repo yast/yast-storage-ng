@@ -23,33 +23,31 @@
 
 require "storage"
 
-module Yast
-  module Storage
-    module Refinements
-      # Refinement for ::Storage::Devicegraph with some commodity methods
-      module Devicegraph
-        refine ::Storage::Devicegraph do
-          # Set of actions needed to get this devicegraph
-          #
-          # By default the starting point is the probed devicegraph
-          #
-          # @param from [Devicegraph] starting graph to calculate the actions
-          #       If nil, the probed devicegraph is used.
-          # @return [::Storage::Actiongraph]
-          def actiongraph(from: nil, storage: StorageManager.instance)
-            from ||= storage.probed
-            ::Storage::Actiongraph.new(storage, from, self)
-          end
+module Y2Storage
+  module Refinements
+    # Refinement for ::Storage::Devicegraph with some commodity methods
+    module Devicegraph
+      refine ::Storage::Devicegraph do
+        # Set of actions needed to get this devicegraph
+        #
+        # By default the starting point is the probed devicegraph
+        #
+        # @param from [Devicegraph] starting graph to calculate the actions
+        #       If nil, the probed devicegraph is used.
+        # @return [::Storage::Actiongraph]
+        def actiongraph(from: nil, storage: StorageManager.instance)
+          from ||= storage.probed
+          ::Storage::Actiongraph.new(storage, from, self)
+        end
 
-          alias_method :orig_copy, :copy
-          # Returns a copy of the devicegraph
-          #
-          # @return [::Storage::Devicegraph]
-          def copy
-            new_graph = ::Storage::Devicegraph.new
-            orig_copy(new_graph)
-            new_graph
-          end
+        alias_method :orig_copy, :copy
+        # Returns a copy of the devicegraph
+        #
+        # @return [::Storage::Devicegraph]
+        def copy
+          new_graph = ::Storage::Devicegraph.new
+          orig_copy(new_graph)
+          new_graph
         end
       end
     end

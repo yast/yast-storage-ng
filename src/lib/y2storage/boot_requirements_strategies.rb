@@ -19,7 +19,7 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "storage/boot_requirements_strategies/legacy"
-require "storage/boot_requirements_strategies/uefi"
-require "storage/boot_requirements_strategies/prep"
-require "storage/boot_requirements_strategies/zipl"
+require "y2storage/boot_requirements_strategies/legacy"
+require "y2storage/boot_requirements_strategies/uefi"
+require "y2storage/boot_requirements_strategies/prep"
+require "y2storage/boot_requirements_strategies/zipl"

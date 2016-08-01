@@ -22,54 +22,52 @@
 # find current contact information at www.suse.com.
 
 require "yast"
-require "storage/disk_size"
+require "y2storage/disk_size"
 
-module Yast
-  module Storage
+module Y2Storage
+  #
+  # Helper class to keep information about free disk space together.
+  #
+  class FreeDiskSpace
+    attr_reader :slot, :disk
+
+    # Initialize.
     #
-    # Helper class to keep information about free disk space together.
+    # @param disk [::Storage::Disk]
     #
-    class FreeDiskSpace
-      attr_reader :slot, :disk
+    # @param slot [::Storage::PartitionSlot]
+    #
+    def initialize(disk, slot)
+      @disk = disk
+      @slot = slot
+    end
 
-      # Initialize.
-      #
-      # @param disk [::Storage::Disk]
-      #
-      # @param slot [::Storage::PartitionSlot]
-      #
-      def initialize(disk, slot)
-        @disk = disk
-        @slot = slot
-      end
+    # Return the name of the disk this slot is on.
+    #
+    # @return [String] disk_name
+    #
+    def disk_name
+      @disk.name
+    end
 
-      # Return the name of the disk this slot is on.
-      #
-      # @return [String] disk_name
-      #
-      def disk_name
-        @disk.name
-      end
+    # Return the size of this slot.
+    #
+    # @return [DiskSize]
+    #
+    def disk_size
+      DiskSize.B(@slot.region.length * @slot.region.block_size)
+    end
 
-      # Return the size of this slot.
-      #
-      # @return [DiskSize]
-      #
-      def disk_size
-        DiskSize.B(@slot.region.length * @slot.region.block_size)
-      end
+    # Offset of the slot relative to the beginning of the disk
+    #
+    # @return [DiskSize]
+    #
+    def start_offset
+      DiskSize.B(@slot.region.start * @slot.region.block_size)
+    end
 
-      # Offset of the slot relative to the beginning of the disk
-      #
-      # @return [DiskSize]
-      #
-      def start_offset
-        DiskSize.B(@slot.region.start * @slot.region.block_size)
-      end
-
-      def to_s
-        "#<FreeDiskSpace disk_name=#{disk_name}, size=#{disk_size}, start_offset=#{start_offset}>"
-      end
+    def to_s
+      "#<FreeDiskSpace disk_name=#{disk_name}, size=#{disk_size}, start_offset=#{start_offset}>"
     end
   end
 end

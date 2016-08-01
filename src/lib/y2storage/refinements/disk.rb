@@ -22,37 +22,35 @@
 # find current contact information at www.suse.com.
 
 require "storage"
-require "storage/free_disk_space"
+require "y2storage/free_disk_space"
 
-module Yast
-  module Storage
-    module Refinements
-      # Refinement for ::Storage::Disk with some commodity methods
-      module Disk
-        refine ::Storage::Disk do
-          # Checks if it's an USB disk
-          #
-          # @return [Boolean]
-          def usb?
-            transport == ::Storage::Transport_USB
-          end
+module Y2Storage
+  module Refinements
+    # Refinement for ::Storage::Disk with some commodity methods
+    module Disk
+      refine ::Storage::Disk do
+        # Checks if it's an USB disk
+        #
+        # @return [Boolean]
+        def usb?
+          transport == ::Storage::Transport_USB
+        end
 
-          # Partitions contained in the disk
-          #
-          # @return [Array<::Storage::Partition>]
-          def all_partitions
-            partition_table? ? partition_table.partitions.to_a : []
-          end
+        # Partitions contained in the disk
+        #
+        # @return [Array<::Storage::Partition>]
+        def all_partitions
+          partition_table? ? partition_table.partitions.to_a : []
+        end
 
-          # Free spaces inside the disk
-          #
-          # @return [Array<FreeDiskSpace>]
-          def free_spaces
-            # TODO: Handle completely empty disks (no partition table) as empty space
-            return [] unless partition_table?
-            partition_table.unused_partition_slots.map do |slot|
-              FreeDiskSpace.new(self, slot)
-            end
+        # Free spaces inside the disk
+        #
+        # @return [Array<FreeDiskSpace>]
+        def free_spaces
+          # TODO: Handle completely empty disks (no partition table) as empty space
+          return [] unless partition_table?
+          partition_table.unused_partition_slots.map do |slot|
+            FreeDiskSpace.new(self, slot)
           end
         end
       end

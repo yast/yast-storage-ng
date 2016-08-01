@@ -21,13 +21,13 @@
 # find current contact information at www.suse.com.
 
 require "storage"
-require "storage/devices_list"
-require "storage/filesystems_list"
+require "y2storage/devices_lists/base"
+require "y2storage/devices_lists/filesystems_list"
 
-module Yast
-  module Storage
+module Y2Storage
+  module DevicesLists
     # List of partitions from a devicegraph
-    class PartitionsList < DevicesList
+    class PartitionsList < Base
       list_of ::Storage::Partition
 
       # Filesystems located in the partitions

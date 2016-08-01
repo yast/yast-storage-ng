@@ -1,4 +1,3 @@
-#!/usr/bin/env ruby
 #
 # encoding: utf-8
 
@@ -21,30 +20,31 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "storage"
+require "y2storage/devices_lists/base"
+require "y2storage/free_disk_space"
 require "y2storage/disk_size"
+require "y2storage/refinements/disk"
 
 module Y2Storage
-  module Refinements
-    # Refinements for Partition adding some virtual attributes, mainly used
-    # to make the rspec tests more readable
-    module PartitionAttributes
-      refine ::Storage::Partition do
-        # First mounpoint
-        def mountpoint
-          filesystem.mountpoints.first
-        end
+  module DevicesLists
+    # List of free spaces from a devicegraph
+    class FreeDiskSpacesList < Base
+      list_of FreeDiskSpace
 
-        # Label of the filesystem
-        def label
-          filesystem.label
-        end
+      using Refinements::Disk
 
-        # UUID of the filesystem
-        def uuid
-          filesystem.uuid
-        end
+      # Sum of the sizes of all the spaces
+      #
+      # @return [DiskSize]
+      def disk_size
+        list.map(&:disk_size).reduce(DiskSize.zero, :+)
+      end
 
+    protected
+
+      def full_list
+        disks = devicegraph.all_disks.to_a
+        disks.reduce([]) { |sum, disk| sum + disk.free_spaces }
       end
     end
   end

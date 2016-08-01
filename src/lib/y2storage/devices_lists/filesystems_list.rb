@@ -21,12 +21,12 @@
 # find current contact information at www.suse.com.
 
 require "storage"
-require "storage/devices_list"
+require "y2storage/devices_lists/base"
 
-module Yast
-  module Storage
+module Y2Storage
+  module DevicesLists
     # List of filesystems from a devicegraph
-    class FilesystemsList < DevicesList
+    class FilesystemsList < Base
       list_of ::Storage::Filesystem
     end
   end

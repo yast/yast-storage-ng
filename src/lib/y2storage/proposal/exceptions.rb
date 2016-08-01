@@ -21,26 +21,24 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-module Yast
-  module Storage
-    class Proposal
-      class Error < RuntimeError
-      end
-      # There is no enough space in the disk
-      class NoDiskSpaceError < Error
-      end
-      # There are not available partition slots in the disk
-      class NoMorePartitionSlotError < Error
-      end
-      # It was not possible to find a suitable root device
-      class NoSuitableDeviceError < Error
-      end
-      # It's not possible to propose a bootable layout for the root device
-      class NotBootableError < Error
-      end
-      # A method was called more times than expected
-      class UnexpectedCallError < Error
-      end
+module Y2Storage
+  class Proposal
+    class Error < RuntimeError
+    end
+    # There is no enough space in the disk
+    class NoDiskSpaceError < Error
+    end
+    # There are not available partition slots in the disk
+    class NoMorePartitionSlotError < Error
+    end
+    # It was not possible to find a suitable root device
+    class NoSuitableDeviceError < Error
+    end
+    # It's not possible to propose a bootable layout for the root device
+    class NotBootableError < Error
+    end
+    # A method was called more times than expected
+    class UnexpectedCallError < Error
     end
   end
 end

@@ -1,4 +1,3 @@
-#
 # encoding: utf-8
 
 # Copyright (c) [2016] SUSE LLC
@@ -20,32 +19,9 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "storage/free_disk_space"
-require "storage/disk_size"
-require "storage/devices_list"
-require "storage/refinements/disk"
-
-module Yast
-  module Storage
-    # List of free spaces from a devicegraph
-    class FreeDiskSpacesList < DevicesList
-      list_of FreeDiskSpace
-
-      using Refinements::Disk
-
-      # Sum of the sizes of all the spaces
-      #
-      # @return [DiskSize]
-      def disk_size
-        list.map(&:disk_size).reduce(DiskSize.zero, :+)
-      end
-
-    protected
-
-      def full_list
-        disks = devicegraph.all_disks.to_a
-        disks.reduce([]) { |sum, disk| sum + disk.free_spaces }
-      end
-    end
-  end
-end
+require "y2storage/refinements/devicegraph_lists"
+require "y2storage/refinements/devicegraph"
+require "y2storage/refinements/disk"
+require "y2storage/refinements/partition_attributes"
+require "y2storage/refinements/size_casts"
+require "y2storage/refinements/test_devicegraph"

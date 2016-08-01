@@ -22,17 +22,16 @@
 # find current contact information at www.suse.com.
 
 require "yast"
-require "storage/proposal"
-require "storage/refinements/devicegraph"
+require "y2storage"
 
-module Yast
-  module Storage
+module Y2Storage
+  module Clients
     # Demo of the storage proposal for installation
     #
     # Client that can suggest how to create or change partitions for a Linux
     # system installation based on available storage devices (disks) and
     # certain configuration parameters.
-    class ProposalDemoClient
+    class ProposalDemo
       using Refinements::Devicegraph
       include Yast::Logger
 
@@ -72,7 +71,7 @@ module Yast
       # TODO: read this from somewhere
       def settings
         @settings ||= begin
-          settings = Proposal::Settings.new
+          settings = ProposalSettings.new
           # settings.root_max_disk_size = DiskSize.unlimited
           # settings.root_filesystem_type = ::Storage::XFS
           # settings.btrfs_increase_percentage = 150.0

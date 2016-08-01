@@ -21,39 +21,37 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "storage/boot_requirements_strategies/base"
+require "y2storage/boot_requirements_strategies/base"
 
-module Yast
-  module Storage
-    module BootRequirementsStrategies
-      # Strategy to calculate boot requirements in systems using ZIPL
-      class ZIPL < Base
-        def needed_partitions
-          raise Error unless supported_root_disk?
-          PlannedVolumesList.new([zipl_volume])
+module Y2Storage
+  module BootRequirementsStrategies
+    # Strategy to calculate boot requirements in systems using ZIPL
+    class ZIPL < Base
+      def needed_partitions
+        raise Error unless supported_root_disk?
+        PlannedVolumesList.new([zipl_volume])
+      end
+
+    protected
+
+      def supported_root_disk?
+        return false unless root_disk
+        if root_disk.dasd?
+          return false if root_disk.dasd_type == ::Storage::DASDTYPE_FBA
+          return false if root_disk.dasd_format == ::Storage::DASDF_LDL
+          # TODO: DIAG disks (whatever they are) are not supported either
         end
+        true
+      end
 
-      protected
-
-        def supported_root_disk?
-          return false unless root_disk
-          if root_disk.dasd?
-            return false if root_disk.dasd_type == ::Storage::DASDTYPE_FBA
-            return false if root_disk.dasd_format == ::Storage::DASDF_LDL
-            # TODO: DIAG disks (whatever they are) are not supported either
-          end
-          true
-        end
-
-        def zipl_volume
-          vol = PlannedVolume.new("/boot/zipl", ::Storage::FsType_EXT2)
-          vol.disk = root_disk.name
-          vol.min_disk_size = DiskSize.MiB(100)
-          vol.max_disk_size = DiskSize.GiB(1)
-          vol.desired_disk_size = DiskSize.MiB(200)
-          vol.can_live_on_logical_volume = false
-          vol
-        end
+      def zipl_volume
+        vol = PlannedVolume.new("/boot/zipl", ::Storage::FsType_EXT2)
+        vol.disk = root_disk.name
+        vol.min_disk_size = DiskSize.MiB(100)
+        vol.max_disk_size = DiskSize.GiB(1)
+        vol.desired_disk_size = DiskSize.MiB(200)
+        vol.can_live_on_logical_volume = false
+        vol
       end
     end
   end

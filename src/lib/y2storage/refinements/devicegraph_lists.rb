@@ -22,29 +22,24 @@
 # find current contact information at www.suse.com.
 
 require "storage"
-require "storage/disks_list"
-require "storage/partitions_list"
-require "storage/filesystems_list"
-require "storage/free_disk_spaces_list"
+require "y2storage/devices_lists"
 
-module Yast
-  module Storage
-    module Refinements
-      # Refinement for ::Storage::Devicegraph adding shortcuts to the devices
-      # lists
-      module DevicegraphLists
-        refine ::Storage::Devicegraph do
-          DEVICE_LISTS = {
-            disks:            DisksList,
-            partitions:       PartitionsList,
-            filesystems:      FilesystemsList,
-            free_disk_spaces: FreeDiskSpacesList
-          }
+module Y2Storage
+  module Refinements
+    # Refinement for ::Storage::Devicegraph adding shortcuts to the devices
+    # lists
+    module DevicegraphLists
+      refine ::Storage::Devicegraph do
+        DEVICE_LISTS = {
+          disks:            DevicesLists::DisksList,
+          partitions:       DevicesLists::PartitionsList,
+          filesystems:      DevicesLists::FilesystemsList,
+          free_disk_spaces: DevicesLists::FreeDiskSpacesList
+        }
 
-          DEVICE_LISTS.each do |list, klass|
-            define_method(list) do
-              klass.new(self)
-            end
+        DEVICE_LISTS.each do |list, klass|
+          define_method(list) do
+            klass.new(self)
           end
         end
       end
