@@ -43,7 +43,8 @@ summary of the changes in those branches, in a human-readable fashion.
 
 * No more usage of StorageController, the module that loads additional drivers
   for technologies like RAID or multipath. As soon as we introduce support for
-  such technologies we will need an object-oriented replacement.
+  such technologies we will need an object-oriented replacement. Or maybe it's
+  not needed anymore if udev does that job now.
 
 * Commented the code that reads files from previous installations right after
   hard drives probing. It affects importing of previous ssh keys and users.
