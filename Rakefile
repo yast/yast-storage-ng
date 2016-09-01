@@ -1,8 +1,5 @@
 # Copyright (c) 2014 SUSE LLC.
 #  All Rights Reserved.
-Yast::Tasks.submit_to :sle12sp2
-
-
 #  This program is free software; you can redistribute it and/or
 #  modify it under the terms of version 2 or 3 of the GNU General
 #  Public License as published by the Free Software Foundation.
@@ -19,6 +16,8 @@ Yast::Tasks.submit_to :sle12sp2
 #  you may find current contact information at www.suse.com
 
 require "yast/rake"
+
+Yast::Tasks.submit_to :sle12sp2
 
 # Checking for bug/fate numbers in the changelog does not make sense at this
 # stage of the development
