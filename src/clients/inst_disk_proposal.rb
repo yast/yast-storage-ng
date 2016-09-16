@@ -26,15 +26,15 @@ Yast.import "UI"
 Yast.import "Wizard"
 Yast.import "HTML"
 
-include Yast::I18n
-include Yast::Logger
-
 module Yast
   #
   # client to calculate the storage proposal during installation and provide
   # the user a summary of the storage proposal
   #
   class InstDiskProposalClient < Client
+    include Yast::I18n
+    include Yast::Logger
+
     using Y2Storage::Refinements::Devicegraph
 
     def main
@@ -46,8 +46,9 @@ module Yast
         actiongraph = proposal.devices.actiongraph
         summary = summary(actiongraph)
       rescue Y2Storage::Proposal::Error
+        log.error("generating proposal failed")
         # error message
-        summary = HTML.Para(HTML.Colorize("No proposal possible.", "red"))
+        summary = HTML.Para(HTML.Colorize(_("No proposal possible."), "red"))
       end
 
       # Title for dialog
