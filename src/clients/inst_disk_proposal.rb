@@ -20,67 +20,6 @@
 # find current contact information at www.novell.com.
 
 require "yast"
-require "y2storage"
+require "y2storage/dialogs/inst_disk_proposal"
 
-Yast.import "UI"
-Yast.import "Wizard"
-Yast.import "HTML"
-
-module Yast
-  #
-  # client to calculate the storage proposal during installation and provide
-  # the user a summary of the storage proposal
-  #
-  class InstDiskProposalClient < Client
-    include Yast::I18n
-    include Yast::Logger
-
-    using Y2Storage::Refinements::Devicegraph
-
-    def main
-      textdomain "storage"
-
-      begin
-        proposal = Y2Storage::Proposal.new(settings: settings)
-        proposal.propose
-        actiongraph = proposal.devices.actiongraph
-        summary = summary(actiongraph)
-      rescue Y2Storage::Proposal::Error
-        log.error("generating proposal failed")
-        # error message
-        summary = HTML.Para(HTML.Colorize(_("No proposal possible."), "red"))
-      end
-
-      # Title for dialog
-      title = _("Suggested Partitioning")
-
-      contents = MarginBox(
-        2, 1,
-        VBox(
-          MinHeight(8, RichText(summary))
-        )
-      )
-
-      Wizard.SetContents(title, contents, "help", true, true)
-
-      Wizard.UserInput
-
-      return :next
-    end
-
-  protected
-
-    def settings
-      settings = Y2Storage::ProposalSettings.new
-      settings.use_separate_home = true
-      return settings
-    end
-
-    def summary(actiongraph)
-      texts = actiongraph.commit_actions_as_strings.to_a
-      return HTML.Para(HTML.List(texts))
-    end
-  end
-end
-
-Yast::InstDiskProposalClient.new.main
+Y2Storage::Dialogs::InstDiskProposal.run

@@ -21,6 +21,10 @@ SRC_PATH = File.expand_path("../../src", __FILE__)
 DATA_PATH = File.expand_path("../data", __FILE__)
 ENV["Y2DIR"] = SRC_PATH
 
+# make sure we run the tests in English locale
+# (some tests check the output which is marked for translation)
+ENV["LC_ALL"] = "en_US.UTF-8"
+
 require "yast"
 
 if ENV["COVERAGE"]
