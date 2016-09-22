@@ -40,12 +40,19 @@ module Y2Storage
 
     protected
 
+      # For the time being, it always returns the same proposal settings.
+      # To be connected to control.xml and the UI in the future
+      #
+      # @return [Y2Storage::ProposalSettings]
       def settings
         settings = Y2Storage::ProposalSettings.new
         settings.use_separate_home = true
-        return settings
+        settings
       end
 
+      # HTML-formatted text to display in the dialog
+      #
+      # @return [String]
       def summary
         formatted_actiongraph
       rescue Y2Storage::Proposal::Error
@@ -54,12 +61,17 @@ module Y2Storage
         Yast::HTML.Para(Yast::HTML.Colorize(_("No proposal possible."), "red"))
       end
 
+      # Calculates the proposal's actiongraph and returns its HTML-formatted
+      # text representation
+      #
+      # @raise Y2Storage::Proposal::Error if the proposal cannot be calculated
+      # @return [String]
       def formatted_actiongraph
         proposal = Y2Storage::Proposal.new(settings: settings)
         proposal.propose
         actiongraph = proposal.devices.actiongraph
         texts = actiongraph.commit_actions_as_strings.to_a
-        return Yast::HTML.Para(Yast::HTML.List(texts))
+        Yast::HTML.Para(Yast::HTML.List(texts))
       end
 
       def dialog_title
