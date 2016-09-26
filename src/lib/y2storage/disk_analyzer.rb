@@ -27,6 +27,8 @@ require "storage"
 require "y2storage/disk_size"
 require "y2storage/refinements"
 
+Yast.import "Arch"
+
 module Y2Storage
   #
   # Class to analyze the disks (the storage setup) of the existing system:
@@ -70,98 +72,28 @@ module Y2Storage
 
     DEFAULT_DISK_CHECK_LIMIT = 10
 
-    # @return [Array<String>] device names of installation media.
-    #       Filled by #analyze.
-    attr_reader :installation_disks
-
-    # @return [Array<String>] device name of disks to install on.
-    #       Filled by #analyze.
-    attr_reader :candidate_disks
-
-    # @return [Hash{String => Array<::Storage::Partition>}] Linux
-    #     partitions found in each candidate disk. Filled by #analyze.
-    #     @see #find_linux_partitions
-    attr_reader :linux_partitions
-
-    # @return [Hash{String => Array<::Storage::Partition>}] MS Windows
-    #     partitions found in each candidate disk.
-    #     Filled by #analyze only if #linux_partitions is empty.
-    #     @see #find_windows_partitions
-    attr_reader :windows_partitions
-
-    # @return [Hash{String => Array<::Storage::Partition>}] EFI partitions
-    #     found in each candidate disk. Filled by #analyze.
-    #     @see #find_efi_partitions
-    attr_reader :efi_partitions
-
-    # @return [Hash{String => Array<::Storage::Partition>}] PReP partitions
-    #     found in each candidate disk. Filled by #analyze.
-    #     @see #find_prep_partitions
-    attr_reader :prep_partitions
-
-    # @return [Hash{String => Array<::Storage::Partition>}] GRUB partitions
-    #     found in each candidate disk. Filled by #analyze.
-    #     @see #find_grub_partitions
-    attr_reader :grub_partitions
-
-    # @return [Hash{String => Array<::Storage::Partition>}] Swap partitions
-    #     found in each candidate disk. Filled by #analyze.
-    #     @see #find_swap_partitions
-    attr_reader :swap_partitions
-
-    # @return [Hash{String => Y2Storage::DiskSize}] MBR gap sizes
-    #     found on each candidate disk. Filled by #analyze.
-    #     @see #find_mbr_gap
-    attr_reader :mbr_gap
-
-    # @return [Fixnum] Maximum number of disks to check.
-    #     @see #find_installation_disks
-    attr_accessor :disk_check_limit
-
-    def initialize
-      Yast.import "Arch"
-
-      @installation_disks = []
-      @candidate_disks    = []
-      @linux_partitions   = {}
-      @windows_partitions = {}
-      @efi_partitions     = {}
-      @prep_partitions    = {}
-      @grub_partitions    = {}
-      @swap_partitions    = {}
-      @mbr_gap            = {}
-
-      # Maximum number of disks to check. This might be important on
-      # architectures that tend to have very many disks (s390).
-      @disk_check_limit = DEFAULT_DISK_CHECK_LIMIT
-    end
-
-    # Analyze disks and partitions. Make sure to call this before querying
-    # any member variables.
+    # @return [Fixnum] Maximum number of disks to check with "expensive"
+    # operations.
     #
-    def analyze(devicegraph)
+    # Prevents, for example, mounting every single disk when looking for the
+    # installation one.
+    # @see #find_installation_disks
+    # This might be important on architectures that tend to have very many
+    # disks (s390).
+    attr_reader :disk_check_limit
+
+    # @return [Symbol, nil] Scope to limit the searches
+    #   :install_candidates - check only in #candidate_disks
+    #   nil - check all disks
+    # @see #candidate_disks
+    #
+    # It affects all search methods like #linux_partitions, #mbr_gap, etc.
+    attr_reader :scope
+
+    def initialize(devicegraph, disk_check_limit: DEFAULT_DISK_CHECK_LIMIT, scope: nil)
       @devicegraph = devicegraph
-
-      @installation_disks = find_installation_disks
-      @candidate_disks    = find_candidate_disks
-      @linux_partitions   = find_linux_partitions
-      @efi_partitions     = find_efi_partitions
-      @prep_partitions    = find_prep_partitions
-      @grub_partitions    = find_grub_partitions
-      @swap_partitions    = find_swap_partitions
-      @mbr_gap            = find_mbr_gap
-
-      if @linux_partitions.empty?
-        @windows_partitions = find_windows_partitions
-      else
-        # We only want to resize any MS Windows partition if there is no
-        # Linux already on that machine, so we don't need to check for
-        # Windows partitions in that case. This saves mounting and unmounting
-        # all Windows-like partitions.
-        log.info("Linux partitions found - not checking for Windows partitions")
-      end
-
-      log_vars
+      @disk_check_limit = disk_check_limit
+      @scope = scope
     end
 
     # Look up devicegraph element by device name.
@@ -171,21 +103,122 @@ module Y2Storage
       devicegraph.disks.with(name: name).first
     end
 
+    # Partitions that can be used as EFI system partitions.
+    #
+    # Checks for the partition id to return all potential partitions.
+    # Checking for content_info.efi? would only detect partitions that are
+    # going to be effectively used.
+    #
+    # @see #scope
+    #
+    # @return [Hash{String => Array<::Storage::Partition>}] @see #partitions_by_id
+    def efi_partitions
+      @efi_partitions ||= partitions_with_id(::Storage::ID_EFI, "EFI")
+    end
+
+    # Partitions that can be used as PReP partition
+    # @see #scope
+    #
+    # @return [Hash{String => Array<::Storage::Partition>}] @see #partitions_by_id
+    def prep_partitions
+      @prep_partitions ||= partitions_with_id(::Storage::ID_PPC_PREP, "PReP")
+    end
+
+    # GRUB (gpt_bios) partitions
+    # @see #scope
+    #
+    # @return [Hash{String => Array<::Storage::Partition>}] @see #partitions_by_id
+    def grub_partitions
+      @grub_partitions ||= partitions_with_id(::Storage::ID_GPT_BIOS, "GRUB")
+    end
+
+    # Partitions that can be used as swap space
+    # @see #scope
+    #
+    # @return [Hash{String => Array<::Storage::Partition>}] @see #partitions_by_id
+    def swap_partitions
+      @swap_partitions ||= partitions_with_id(::Storage::ID_SWAP, "Swap")
+    end
+
+    # Linux partitions. This may be a normal Linux partition (type 0x83), a
+    # Linux swap partition (type 0x82), an LVM partition, or a RAID partition.
+    # @see #scope
+    #
+    # @return [Hash{String => Array<::Storage::Partition>}] @see #partitions_by_id
+    def linux_partitions
+      @linux_partitions ||= partitions_with_id(LINUX_PARTITION_IDS, "Linux")
+    end
+
+    # Disks that are suitable for installing Linux.
+    #
+    # @return [Array<string>] device names of candidate disks
+    def candidate_disks
+      @candidate_disks ||= begin
+        @installation_disks = find_installation_disks
+        result = dev_names(candidate_disk_objects)
+        log.info("Found candidate disks: #{result}")
+        result
+      end
+    end
+
+    # MBR gap (size between MBR and first partition) for every disk.
+    #
+    # Note: the gap sizes on non-DOS partition tables are 0 (by definition).
+    #
+    # FIXME: sizes in Region are more or less useless atm, Arvin will fix this.
+    # If that's done switch from kb to byte units.
+    #
+    # @see #scope
+    #
+    # @return [Hash{String => Y2Storage::DiskSize}] each key is the name of a
+    # disk, the value is the DiskSize of the MBR gap.
+    def mbr_gap
+      @mbr_gap ||= begin
+        result = find_mbr_gap
+        log.info("Found MBR gaps: #{result}")
+        result
+      end
+    end
+
+    # Partitions containing an installation of MS Windows
+    #
+    # This involves mounting any Windows-like partition to check if there are
+    # some typical directories (/windows/system32).
+    #
+    # @see #scope
+    #
+    # @return [Hash{String => Array<::Storage::Partition>}] @see #partitions_by_id
+    def windows_partitions
+      @windows_partitions ||= begin
+        result = find_windows_partitions
+        log.info("Found Windows partitions: #{result}")
+        result
+      end
+    end
+
   private
 
     attr_reader :devicegraph
 
-    # log internal state
-    def log_vars
-      log.info("Installation disks: #{@installation_disks}")
-      log.info("Candidate    disks: #{@candidate_disks}")
-      log.info("Linux   partitions: #{@linux_partitions}")
-      log.info("Windows partitions: #{@windows_partitions}")
-      log.info("EFI     partitions: #{@efi_partitions}")
-      log.info("PReP    partitions: #{@prep_partitions}")
-      log.info("GRUB    partitions: #{@grub_partitions}")
-      log.info("Swap    partitions: #{@swap_partitions}")
-      log.info("MBR gap: #{@mbr_gap}")
+    # Set of disks to be used in most search operations
+    #
+    # @return [Array<String>]
+    def scoped_disks
+      @scoped_disks ||= scope == :install_candidates ? candidate_disks : dev_names(all_disks)
+    end
+
+    # Array with all disks in the devicegraph
+    #
+    # @return [Array<::Storage::Disk>]
+    def all_disks
+      devicegraph.all_disks.to_a
+    end
+
+    # List of disks in the devicegraph
+    #
+    # @return [DisksList]
+    def disks
+      devicegraph.disks
     end
 
     # Find disks that look like the current installation medium
@@ -208,29 +241,6 @@ module Y2Storage
       end
 
       dev_names(disks.select { |disk| installation_disk?(disk.name) })
-    end
-
-    # Find disks that are suitable for installing Linux.
-    # @see #candidate_disks
-    #
-    # @return [Array<string>] device names of candidate disks
-    #
-    def find_candidate_disks
-      dev_names(candidate_disk_objects)
-    end
-
-    # Array with all disks in the devicegraph
-    #
-    # @return [Array<::Storage::Disk>]
-    def all_disks
-      devicegraph.all_disks.to_a
-    end
-
-    # List of disks in the devicegraph
-    #
-    # @return [DisksList]
-    def disks
-      devicegraph.disks
     end
 
     # Disks that are suitable for installing Linux.
@@ -262,53 +272,10 @@ module Y2Storage
       @installation_disks
     end
 
-    # Find partitions from any of the candidate disks that can be used as
-    # PReP partition
-    #
-    # @return [Hash{String => Array<::Storage::Partition>}] @see #partitions_by_id
-    def find_prep_partitions
-      partitions_with_id(::Storage::ID_PPC_PREP)
-    end
-
-    # Find partitions from any of the candidate disks that can be used as
-    # GRUB partition
-    #
-    # @return [Hash{String => Array<::Storage::Partition>}] @see #partitions_by_id
-    def find_grub_partitions
-      partitions_with_id(::Storage::ID_GPT_BIOS)
-    end
-
-    # Find partitions from any of the candidate disks that can be used as
-    # swap space
-    #
-    # @return [Hash{String => Array<::Storage::Partition>}] @see #partitions_by_id
-    def find_swap_partitions
-      partitions_with_id(::Storage::ID_SWAP)
-    end
-
-    # Find any Linux partitions on any of the candidate disks.
-    # This may be a normal Linux partition (type 0x83), a Linux swap
-    # partition (type 0x82), an LVM partition, or a RAID partition.
-    #
-    # @return [Hash{String => Array<::Storage::Partition>}] @see #partitions_by_id
-    def find_linux_partitions
-      partitions_with_id(LINUX_PARTITION_IDS)
-    end
-
-    # Determine MBR gap (size between MBR and first partition) for all candidate disks.
-    #
-    # The result is a Hash in which each key is the name of a candidate disk
-    # and the value is the DiskSize of the MBR gap.
-    #
-    # Note: the gap sizes on non-DOS partition tables are 0 (by definition).
-    #
-    # FIXME: sizes in Region are more or less useless atm, Arvin will fix this.
-    # If that's done switch from kb to byte units.
-    #
-    # @return [Hash{String => Y2Storage::DiskSize}]
+    # @see #mbr_gap
     def find_mbr_gap
       gaps = {}
-      candidate_disks.each do |name|
+      scoped_disks.each do |name|
         disk = device_by_name(name)
         gap = DiskSize.KiB(0)
         if disk.partition_table? && disk.partition_table.type == ::Storage::PtType_MSDOS
@@ -322,24 +289,13 @@ module Y2Storage
       gaps
     end
 
-    # Find any MS Windows partitions that could possibly be resized.
-    #
-    # This involves mounting any Windows-like partition to check if there are
-    # some typical directories (/windows/system32).
-    #
-    # Notice that by default this is not called if any Linux partitions were
-    # found on any of the candidate disks (i.e., on any disk except the
-    # installation medium). This can be called independently from the
-    # outside, though.
-    #
-    # @return [Array <::Storage::Partition>]
-    #
+    # @see #windows_partitions
     def find_windows_partitions
-      return [] unless Arch.x86_64 || Arch.i386
+      return [] unless Yast::Arch.x86_64 || Yast::Arch.i386
       windows_partitions = {}
 
       # No need to limit checking - PC arch only (few disks)
-      @candidate_disks.each do |disk_name|
+      scoped_disks.each do |disk_name|
         begin
           disk = ::Storage::Disk.find_by_name(devicegraph, disk_name)
           disk.partition_table.partitions.each do |partition|
@@ -364,7 +320,7 @@ module Y2Storage
     #
     def windows_partition?(partition)
       return false unless WINDOWS_PARTITION_IDS.include?(partition.id)
-      return false unless Arch.x86_64 || Arch.i386
+      return false unless Yast::Arch.x86_64 || Yast::Arch.i386
       log.info("Checking if #{partition.name} is a windows partition")
       is_win = mount_and_check(partition) { |mp| windows_partition_check(mp) }
       log.info("#{partition} is a windows partition") if is_win
@@ -521,14 +477,14 @@ module Y2Storage
     # Find partitions from any of the candidate disks that have a given (set
     # of) partition id(s).
     #
-    # The result is a Hash in which each key is the name of a candidate disk
+    # The result is a Hash in which each key is the name of a disk
     # and the value is an Array of ::Storage::Partition objects
     # representing the matching partitions in that disk.
     #
     # @param ids [::Storage::ID, Array<::Storage::ID>]
     # @return [Hash{String => Array<::Storage::Partition>}]
-    def partitions_with_id(ids)
-      pairs = candidate_disks.map do |disk_name|
+    def partitions_with_id(ids, log_label)
+      pairs = scoped_disks.map do |disk_name|
         # Skip extended partitions
         partitions = disks.with(name: disk_name).partitions.with do |part|
           part.type != ::Storage::PartitionType_EXTENDED
@@ -536,19 +492,9 @@ module Y2Storage
         partitions = partitions.with(id: ids).to_a
         [disk_name, partitions]
       end
-      Hash[pairs]
-    end
-
-    # Find partitions from any of the candidate disks that can be used as
-    # EFI system partitions.
-    #
-    # Checks for the partition id to return all potential partitions.
-    # Checking for content_info.efi? would only detect partitions that are
-    # going to be effectively used.
-    #
-    # @return [Hash{String => Array<::Storage::Partition>}] @see #partitions_by_id
-    def find_efi_partitions
-      partitions_with_id(::Storage::ID_EFI)
+      result = Hash[pairs]
+      log.info("Found #{log_label} partitions: #{result}")
+      result
     end
   end
 end

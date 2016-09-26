@@ -30,13 +30,9 @@ describe Y2Storage::Proposal::SpaceMaker do
 
     before do
       fake_scenario(scenario)
+      allow(analyzer).to receive(:windows_partitions).and_return windows_partitions
     end
 
-    let(:analyzer) do
-      disk_analyzer = Y2Storage::DiskAnalyzer.new
-      disk_analyzer.analyze(fake_devicegraph)
-      disk_analyzer
-    end
     let(:settings) do
       settings = Y2Storage::ProposalSettings.new
       settings.candidate_devices = ["/dev/sda"]
@@ -44,6 +40,8 @@ describe Y2Storage::Proposal::SpaceMaker do
       settings
     end
     let(:volumes) { vols_list(vol1) }
+    let(:analyzer) { Y2Storage::DiskAnalyzer.new(fake_devicegraph) }
+    let(:windows_partitions) { Hash.new }
 
     subject(:maker) { described_class.new(fake_devicegraph, analyzer, settings) }
 
@@ -61,10 +59,6 @@ describe Y2Storage::Proposal::SpaceMaker do
       let(:scenario) { "windows-linux-multiboot-pc" }
       let(:vol1) { planned_vol(mount_point: "/1", type: :ext4, desired: 100.GiB) }
       let(:windows_partitions) { { "/dev/sda" => [analyzer_part("/dev/sda1")] } }
-
-      before do
-        allow(analyzer).to receive(:windows_partitions).and_return windows_partitions
-      end
 
       it "deletes linux partitions as needed" do
         result = maker.provide_space(volumes)
@@ -117,7 +111,6 @@ describe Y2Storage::Proposal::SpaceMaker do
       let(:windows_partitions) { { "/dev/sda" => [analyzer_part("/dev/sda1")] } }
 
       before do
-        allow(analyzer).to receive(:windows_partitions).and_return windows_partitions
         allow_any_instance_of(::Storage::Filesystem).to receive(:detect_resize_info)
           .and_return(resize_info)
       end
@@ -199,7 +192,6 @@ describe Y2Storage::Proposal::SpaceMaker do
 
       before do
         settings.candidate_devices = ["/dev/sda", "/dev/sdb"]
-        allow(analyzer).to receive(:windows_partitions).and_return windows_partitions
         allow_any_instance_of(::Storage::Filesystem).to receive(:detect_resize_info)
           .and_return(resize_info)
       end
@@ -368,7 +360,6 @@ describe Y2Storage::Proposal::SpaceMaker do
 
       before do
         settings.candidate_devices = ["/dev/sda", "/dev/sdb"]
-        allow(analyzer).to receive(:windows_partitions).and_return windows_partitions
         allow_any_instance_of(::Storage::Filesystem).to receive(:detect_resize_info)
           .and_return(resize_info)
       end

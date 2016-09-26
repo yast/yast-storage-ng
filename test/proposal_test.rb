@@ -41,7 +41,7 @@ describe Y2Storage::Proposal do
 
     subject(:proposal) { described_class.new(settings: settings) }
 
-    let(:disk_analyzer) { Y2Storage::DiskAnalyzer.new }
+    let(:disk_analyzer) { Y2Storage::DiskAnalyzer.new(fake_devicegraph) }
     let(:boot_checker) do
       instance_double("Y2Storage::BootRequirementChecker", needed_partitions: [])
     end
