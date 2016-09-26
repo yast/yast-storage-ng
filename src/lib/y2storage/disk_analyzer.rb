@@ -328,7 +328,7 @@ module Y2Storage
     #
     def windows_partition?(partition)
       log.info("Checking if #{partition.name} is a windows partition")
-      filesystem = partition.filesystem
+      filesystem = filesystem_for(partition)
       is_win = filesystem && filesystem.detect_content_info.windows?
 
       log.info("#{partition.name} is a windows partition") if is_win
@@ -342,6 +342,16 @@ module Y2Storage
     def possible_windows_partitions(disk_name)
       prim_parts = disks.with(name: disk_name).partitions.with(type: Storage::PartitionType_PRIMARY)
       prim_parts.with(id: WINDOWS_PARTITION_IDS)
+    end
+
+    # Filesystem associated to a given block device
+    #
+    # @param blk_device [Storage::BlkDevice] device that could be formatted
+    # @return [Storage::Filesystem] filesystem object or nil of
+    def filesystem_for(blk_device)
+      blk_device.filesystem
+    rescue Storage::Exception
+      nil
     end
 
     # Check if a disk is our installation disk - the medium we just booted
@@ -488,6 +498,7 @@ module Y2Storage
     # representing the matching partitions in that disk.
     #
     # @param ids [::Storage::ID, Array<::Storage::ID>]
+    # @param log_label [String] label to identify the partitions in the logs
     # @return [Hash{String => Array<::Storage::Partition>}]
     def partitions_with_id(ids, log_label)
       pairs = scoped_disks.map do |disk_name|
