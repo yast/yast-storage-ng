@@ -291,14 +291,13 @@ module Y2Storage
 
     # @see #windows_partitions
     def find_windows_partitions
-      return [] unless Yast::Arch.x86_64 || Yast::Arch.i386
+      return {} unless windows_architecture?
       windows_partitions = {}
 
       # No need to limit checking - PC arch only (few disks)
       scoped_disks.each do |disk_name|
         begin
-          disk = ::Storage::Disk.find_by_name(devicegraph, disk_name)
-          disk.partition_table.partitions.each do |partition|
+          possible_windows_partitions(disk_name).each do |partition|
             next unless windows_partition?(partition)
 
             windows_partitions[disk_name] ||= []
@@ -311,31 +310,38 @@ module Y2Storage
       windows_partitions
     end
 
+    # Checks whether the architecture of the system is supported by
+    # MS Windows
+    #
+    # @return [Boolean]
+    def windows_architecture?
+      # Should we include ARM here?
+      Yast::Arch.x86_64 || Yast::Arch.i386
+    end
+
     # Check if device name 'partition' is a MS Windows partition that could
     # possibly be resized.
     #
-    # @param partition [string| device name of the partition to check
+    # @param partition [::Storage::Partition] partition to check
     #
     # @return [Boolean] 'true' if it is a Windows partition, 'false' if not.
     #
     def windows_partition?(partition)
-      return false unless WINDOWS_PARTITION_IDS.include?(partition.id)
-      return false unless Yast::Arch.x86_64 || Yast::Arch.i386
       log.info("Checking if #{partition.name} is a windows partition")
-      is_win = mount_and_check(partition) { |mp| windows_partition_check(mp) }
-      log.info("#{partition} is a windows partition") if is_win
-      is_win
+      filesystem = partition.filesystem
+      is_win = filesystem && filesystem.detect_content_info.windows?
+
+      log.info("#{partition.name} is a windows partition") if is_win
+      !!is_win
     end
 
-    # Check if the volume mounted at 'mount_point' is a Windows partition
-    # that could be resized.
+    # Partitions that could potentially contain a MS Windows installation
     #
-    # This is a separate method so it can be redefined in unit tests.
-    #
-    # @return [Boolean] 'true' if it is a Windows partition, 'false' if not.
-    #
-    def windows_partition_check(mount_point)
-      Dir.exist?(mount_point + "/windows/system32")
+    # @param disk_name [String] name of the disk to check
+    # @return [PartitionsList]
+    def possible_windows_partitions(disk_name)
+      prim_parts = disks.with(name: disk_name).partitions.with(type: Storage::PartitionType_PRIMARY)
+      prim_parts.with(id: WINDOWS_PARTITION_IDS)
     end
 
     # Check if a disk is our installation disk - the medium we just booted
