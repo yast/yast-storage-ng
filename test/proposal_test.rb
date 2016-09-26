@@ -32,16 +32,19 @@ describe Y2Storage::Proposal do
 
     before do
       fake_scenario(scenario)
+      allow(Yast::Arch).to receive(:x86_64).and_return true
       allow(Y2Storage::BootRequirementsChecker).to receive(:new).and_return boot_checker
       allow(Y2Storage::DiskAnalyzer).to receive(:new).and_return disk_analyzer
-      allow(disk_analyzer).to receive(:windows_partitions).and_return windows_partitions
+      allow(disk_analyzer).to receive(:windows_partition?) do |partition|
+        !!(partition.filesystem.label =~ /indows/)
+      end
       allow_any_instance_of(::Storage::Filesystem).to receive(:detect_resize_info)
         .and_return(resize_info)
     end
 
     subject(:proposal) { described_class.new(settings: settings) }
 
-    let(:disk_analyzer) { Y2Storage::DiskAnalyzer.new(fake_devicegraph) }
+    let(:disk_analyzer) { Y2Storage::DiskAnalyzer.new(fake_devicegraph, scope: :install_candidates) }
     let(:boot_checker) do
       instance_double("Y2Storage::BootRequirementChecker", needed_partitions: [])
     end
@@ -65,7 +68,6 @@ describe Y2Storage::Proposal do
 
     context "in a windows-only PC" do
       let(:scenario) { "windows-pc" }
-      let(:windows_partitions) { { "/dev/sda" => [analyzer_part("/dev/sda1")] } }
 
       context "with a separate home" do
         let(:separate_home) { true }
@@ -88,7 +90,6 @@ describe Y2Storage::Proposal do
 
     context "in a windows/linux multiboot PC" do
       let(:scenario) { "windows-linux-multiboot-pc" }
-      let(:windows_partitions) { { "/dev/sda" => [analyzer_part("/dev/sda1")] } }
 
       context "with a separate home" do
         let(:separate_home) { true }
