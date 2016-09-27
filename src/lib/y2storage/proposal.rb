@@ -110,11 +110,7 @@ module Y2Storage
     #
     # @return [DiskAnalyzer]
     def disk_analyzer
-      @disk_analyzer ||= begin
-        analyzer = DiskAnalyzer.new
-        analyzer.analyze(initial_graph)
-        analyzer
-      end
+      @disk_analyzer ||= DiskAnalyzer.new(initial_graph, scope: :install_candidates)
     end
 
     def initial_graph

@@ -47,11 +47,6 @@ rescue => x
   pp x.backtrace
 end
 
-puts "\n---  disk_analyzer  ---"
-disk_analyzer = Y2Storage::DiskAnalyzer.new
-disk_analyzer.analyze(devicegraph)
-pp(disk_analyzer)
-
 puts "\n---  settings  ---"
 settings = Y2Storage::ProposalSettings.new
 settings.use_lvm = true
@@ -59,6 +54,7 @@ settings.root_device = ARGV[1]
 pp(settings)
 
 puts "\n---  needed  ---"
+disk_analyzer = Y2Storage::DiskAnalyzer.new(devicegraph)
 checker = Y2Storage::BootRequirementsChecker.new(settings, disk_analyzer)
 
 begin

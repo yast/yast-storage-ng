@@ -1,4 +1,12 @@
 -------------------------------------------------------------------
+Tue Sep 27 06:00:45 UTC 2016 - ancor@suse.com
+
+- More reusable DiskAnalyzer.
+- Use libstorage mechanisms to check for windows partitions.
+- Added new minimalistic inst_disk_proposal client.
+- 0.1.2
+
+-------------------------------------------------------------------
 Mon Aug  1 13:11:13 UTC 2016 - ancor@suse.com
 
 - Namespaces adapted to avoid conflicts with old yast2-storage
