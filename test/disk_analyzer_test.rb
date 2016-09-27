@@ -61,27 +61,40 @@ describe Y2Storage::DiskAnalyzer do
   end
 
   describe "#windows_partitions" do
-    before do
-      allow(Yast::Arch).to receive(:x86_64).and_return true
-      allow_any_instance_of(::Storage::Filesystem).to receive(:detect_content_info)
-        .and_return(content_info)
-    end
-
     let(:scenario) { "mixed_disks" }
-    let(:content_info) { double("::Storage::ContentInfo", windows?: true) }
 
-    it "includes in the result all existent disks" do
-      expect(analyzer.windows_partitions.keys).to contain_exactly("/dev/sda", "/dev/sdb", "/dev/sdc")
+    context "in a PC" do
+      before do
+        allow(Yast::Arch).to receive(:x86_64).and_return true
+        allow_any_instance_of(::Storage::Filesystem).to receive(:detect_content_info)
+          .and_return(content_info)
+      end
+      let(:content_info) { double("::Storage::ContentInfo", windows?: true) }
+
+      it "includes in the result all existent disks" do
+        expect(analyzer.windows_partitions.keys).to contain_exactly("/dev/sda", "/dev/sdb", "/dev/sdc")
+      end
+
+      it "returns an empty array for disks with no Windows" do
+        expect(analyzer.windows_partitions["/dev/sdb"]).to eq []
+      end
+
+      it "returns an array of partitions for disks with some Windows" do
+        expect(analyzer.windows_partitions["/dev/sda"]).to be_a Array
+        expect(analyzer.windows_partitions["/dev/sda"].size).to eq 1
+        expect(analyzer.windows_partitions["/dev/sda"].first).to be_a ::Storage::Partition
+      end
     end
 
-    it "returns an empty array for disks with no Windows" do
-      expect(analyzer.windows_partitions["/dev/sdb"]).to eq []
-    end
+    context "in a non-PC system" do
+      before do
+        allow(Yast::Arch).to receive(:x86_64).and_return false
+        allow(Yast::Arch).to receive(:i386).and_return false
+      end
 
-    it "returns an array of partitions for disks with some Windows" do
-      expect(analyzer.windows_partitions["/dev/sda"]).to be_a Array
-      expect(analyzer.windows_partitions["/dev/sda"].size).to eq 1
-      expect(analyzer.windows_partitions["/dev/sda"].first).to be_a ::Storage::Partition
+      it "returns an empty hash" do
+        expect(analyzer.windows_partitions).to eq({})
+      end
     end
   end
 
