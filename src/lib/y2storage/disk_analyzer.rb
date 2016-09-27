@@ -73,7 +73,7 @@ module Y2Storage
     DEFAULT_DISK_CHECK_LIMIT = 10
 
     # @return [Fixnum] Maximum number of disks to check with "expensive"
-    # operations.
+    #   operations.
     #
     # Prevents, for example, mounting every single disk when looking for the
     # installation one.
@@ -83,11 +83,11 @@ module Y2Storage
     attr_reader :disk_check_limit
 
     # @return [Symbol, nil] Scope to limit the searches
-    #   :install_candidates - check only in #candidate_disks
-    #   nil - check all disks
+    #   - :install_candidates - check only in #candidate_disks
+    #   - nil - check all disks
     # @see #candidate_disks
     #
-    # It affects all search methods like #linux_partitions, #mbr_gap, etc.
+    # It affects all search methods like {#linux_partitions}, {#mbr_gap}, etc.
     attr_reader :scope
 
     def initialize(devicegraph, disk_check_limit: DEFAULT_DISK_CHECK_LIMIT, scope: nil)
@@ -98,7 +98,7 @@ module Y2Storage
 
     # Look up devicegraph element by device name.
     #
-    # @return [<::Storage::Device}>]
+    # @return [::Storage::Device]
     def device_by_name(name)
       devicegraph.disks.with(name: name).first
     end
@@ -111,7 +111,7 @@ module Y2Storage
     #
     # @see #scope
     #
-    # @return [Hash{String => Array<::Storage::Partition>}] @see #partitions_by_id
+    # @return [Hash{String => Array<::Storage::Partition>}] see {#partitions_with_id}
     def efi_partitions
       @efi_partitions ||= partitions_with_id(::Storage::ID_EFI, "EFI")
     end
@@ -119,7 +119,7 @@ module Y2Storage
     # Partitions that can be used as PReP partition
     # @see #scope
     #
-    # @return [Hash{String => Array<::Storage::Partition>}] @see #partitions_by_id
+    # @return [Hash{String => Array<::Storage::Partition>}] see {#partitions_with_id}
     def prep_partitions
       @prep_partitions ||= partitions_with_id(::Storage::ID_PPC_PREP, "PReP")
     end
@@ -127,7 +127,7 @@ module Y2Storage
     # GRUB (gpt_bios) partitions
     # @see #scope
     #
-    # @return [Hash{String => Array<::Storage::Partition>}] @see #partitions_by_id
+    # @return [Hash{String => Array<::Storage::Partition>}] see {#partitions_with_id}
     def grub_partitions
       @grub_partitions ||= partitions_with_id(::Storage::ID_GPT_BIOS, "GRUB")
     end
@@ -135,7 +135,7 @@ module Y2Storage
     # Partitions that can be used as swap space
     # @see #scope
     #
-    # @return [Hash{String => Array<::Storage::Partition>}] @see #partitions_by_id
+    # @return [Hash{String => Array<::Storage::Partition>}] see {#partitions_with_id}
     def swap_partitions
       @swap_partitions ||= partitions_with_id(::Storage::ID_SWAP, "Swap")
     end
@@ -144,14 +144,14 @@ module Y2Storage
     # Linux swap partition (type 0x82), an LVM partition, or a RAID partition.
     # @see #scope
     #
-    # @return [Hash{String => Array<::Storage::Partition>}] @see #partitions_by_id
+    # @return [Hash{String => Array<::Storage::Partition>}] see {#partitions_with_id}
     def linux_partitions
       @linux_partitions ||= partitions_with_id(LINUX_PARTITION_IDS, "Linux")
     end
 
     # Disks that are suitable for installing Linux.
     #
-    # @return [Array<string>] device names of candidate disks
+    # @return [Array<String>] device names of candidate disks
     def candidate_disks
       @candidate_disks ||= begin
         @installation_disks = find_installation_disks
@@ -187,7 +187,7 @@ module Y2Storage
     #
     # @see #scope
     #
-    # @return [Hash{String => Array<::Storage::Partition>}] @see #partitions_by_id
+    # @return [Hash{String => Array<::Storage::Partition>}] see {#partitions_with_id}
     def windows_partitions
       @windows_partitions ||= begin
         result = find_windows_partitions
@@ -332,7 +332,7 @@ module Y2Storage
     # Partitions that could potentially contain a MS Windows installation
     #
     # @param disk_name [String] name of the disk to check
-    # @return [PartitionsList]
+    # @return [DevicesLists::PartitionsList]
     def possible_windows_partitions(disk_name)
       prim_parts = disks.with(name: disk_name).partitions.with(type: Storage::PartitionType_PRIMARY)
       prim_parts.with(id: WINDOWS_PARTITION_IDS)
@@ -441,7 +441,7 @@ module Y2Storage
     # (::Storage::Disk, ::Storage::Partition, ...).
     #
     # @param blk_devices [Array<BlkDev>]
-    # @return [Array<string>] names, e.g. ["/dev/sda", "/dev/sdb1", "/dev/sdc3"]
+    # @return [Array<String>] names, e.g. ["/dev/sda", "/dev/sdb1", "/dev/sdc3"]
     #
     def dev_names(blk_devices)
       blk_devices.map(&:to_s)
