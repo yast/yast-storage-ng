@@ -7,12 +7,6 @@ For every YaST module that has needed adaptation, a `storage-ng` branch has been
 created in the corresponding repository. This document should always contain a
 summary of the changes in those branches, in a human-readable fashion.
 
-## Changes in yast2-country
-
-* Commented the check for Windows partitions. As a result of that change,
-  `Timezone.windows_partition` is always false, so the installer does not
-  assume the internal clock to be set to local time.
-
 ## Changes in yast2-network
 
 * Commented the code used to check if the root path (/) is in a network device,
