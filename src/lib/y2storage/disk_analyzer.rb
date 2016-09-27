@@ -296,15 +296,9 @@ module Y2Storage
 
       # No need to limit checking - PC arch only (few disks)
       scoped_disks.each do |disk_name|
-        begin
-          possible_windows_partitions(disk_name).each do |partition|
-            next unless windows_partition?(partition)
-
-            windows_partitions[disk_name] ||= []
-            windows_partitions[disk_name] << partition
-          end
-        rescue RuntimeError => ex # FIXME: rescue ::Storage::Exception when SWIG bindings are fixed
-          log.info("CAUGHT exception #{ex}")
+        windows_partitions[disk_name] = []
+        possible_windows_partitions(disk_name).each do |partition|
+          windows_partitions[disk_name] << partition if windows_partition?(partition)
         end
       end
       windows_partitions
