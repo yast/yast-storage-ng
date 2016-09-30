@@ -35,19 +35,27 @@ module Y2Storage
         # @param from [Devicegraph] starting graph to calculate the actions
         #       If nil, the probed devicegraph is used.
         # @return [::Storage::Actiongraph]
-        def actiongraph(from: nil, storage: StorageManager.instance)
+        def actiongraph(from: nil)
           from ||= storage.probed
           ::Storage::Actiongraph.new(storage, from, self)
         end
 
-        alias_method :orig_copy, :copy
         # Returns a copy of the devicegraph
         #
+        # @note In essence, this has the same semantic than Ruby's #dup or
+        # #clone, but redefining well-known methods in a refinement doesn't
+        # look like a good idea.
+        #
         # @return [::Storage::Devicegraph]
-        def copy
-          new_graph = ::Storage::Devicegraph.new
-          orig_copy(new_graph)
+        def duplicate
+          new_graph = ::Storage::Devicegraph.new(storage)
+          copy(new_graph)
           new_graph
+        end
+
+        # Sets this as the staging devicegraph
+        def copy_to_staging
+          copy(storage.staging)
         end
       end
     end

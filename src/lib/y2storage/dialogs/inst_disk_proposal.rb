@@ -36,9 +36,26 @@ module Y2Storage
       def initialize
         super
         textdomain "storage"
+        propose!
+      end
+
+      def next_handler
+        if devicegraph
+          log.info "Setting the devicegraph as staging"
+          devicegraph.copy_to_staging
+          super
+        else
+          confirm = Yast::Popup.ContinueCancel(
+            _("Continue installation without a valid proposal?")
+          )
+          super if confirm
+        end
       end
 
     protected
+
+      # Desired devicegraph
+      attr_accessor :devicegraph
 
       # For the time being, it always returns the same proposal settings.
       # To be connected to control.xml and the UI in the future
@@ -50,28 +67,31 @@ module Y2Storage
         settings
       end
 
+      # Calculates the desired devicegraph using the storage proposal.
+      # Sets the devigraph to nil if something went wrong
+      def propose!
+        proposal = Y2Storage::Proposal.new(settings: settings)
+        proposal.propose
+        self.devicegraph = proposal.devices
+      rescue Y2Storage::Proposal::Error
+        log.error("generating proposal failed")
+        self.devicegraph = nil
+      end
+
       # HTML-formatted text to display in the dialog
+      #
+      # If a proposal could be calculated, it returns a text representation of
+      # the actiongraph. Otherwise it returns an error message.
       #
       # @return [String]
       def summary
-        formatted_actiongraph
-      rescue Y2Storage::Proposal::Error
-        log.error("generating proposal failed")
-        # error message
-        Yast::HTML.Para(Yast::HTML.Colorize(_("No proposal possible."), "red"))
-      end
-
-      # Calculates the proposal's actiongraph and returns its HTML-formatted
-      # text representation
-      #
-      # @raise Y2Storage::Proposal::Error if the proposal cannot be calculated
-      # @return [String]
-      def formatted_actiongraph
-        proposal = Y2Storage::Proposal.new(settings: settings)
-        proposal.propose
-        actiongraph = proposal.devices.actiongraph
-        texts = actiongraph.commit_actions_as_strings.to_a
-        Yast::HTML.Para(Yast::HTML.List(texts))
+        if devicegraph
+          actiongraph = devicegraph.actiongraph
+          texts = actiongraph.commit_actions_as_strings.to_a
+          Yast::HTML.Para(Yast::HTML.List(texts))
+        else
+          Yast::HTML.Para(Yast::HTML.Colorize(_("No proposal possible."), "red"))
+        end
       end
 
       def dialog_title

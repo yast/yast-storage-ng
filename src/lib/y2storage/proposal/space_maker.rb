@@ -66,7 +66,7 @@ module Y2Storage
       #     volumes
       #
       def provide_space(volumes)
-        @new_graph = original_graph.copy
+        @new_graph = original_graph.duplicate
         @deleted_names = []
 
         # Partitions that should not be deleted

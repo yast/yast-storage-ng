@@ -51,7 +51,7 @@ module Y2Storage
       # @param distribution [SpaceDistribution]
       # @return [::Storage::Devicegraph]
       def create_partitions(distribution)
-        self.devicegraph = original_graph.copy
+        self.devicegraph = original_graph.duplicate
 
         # FIXME: not implemented yet in libstorage-bgl
         use_lvm = false
