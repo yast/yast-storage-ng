@@ -52,6 +52,11 @@ module Y2Storage
           copy(new_graph)
           new_graph
         end
+
+        # Sets this as the staging devicegraph
+        def copy_to_staging
+          copy(storage.staging)
+        end
       end
     end
   end
