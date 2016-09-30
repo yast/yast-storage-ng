@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Fri Sep 30 14:05:08 UTC 2016 - ancor@suse.com
+
+- Added new inst_prepdisk client - first version in which the
+  installer commits the changes to the target disk(s).
+- 0.1.3
+
+-------------------------------------------------------------------
 Tue Sep 27 06:00:45 UTC 2016 - ancor@suse.com
 
 - More reusable DiskAnalyzer.
