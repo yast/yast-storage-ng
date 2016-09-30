@@ -36,13 +36,13 @@ module Y2Storage
       def initialize
         super
         textdomain "storage"
-        propose
+        propose!
       end
 
       def next_handler
-        if @devicegraph
+        if devicegraph
           log.info "Setting the devicegraph as staging"
-          @devicegraph.copy_to_staging
+          devicegraph.copy_to_staging
           super
         else
           confirm = Yast::Popup.ContinueCancel(
@@ -54,6 +54,9 @@ module Y2Storage
 
     protected
 
+      # Desired devicegraph
+      attr_accessor :devicegraph
+
       # For the time being, it always returns the same proposal settings.
       # To be connected to control.xml and the UI in the future
       #
@@ -64,15 +67,15 @@ module Y2Storage
         settings
       end
 
-      # Calculates the proposed devicegraph, setting it to nil if something went
-      # wrong
-      def propose
+      # Calculates the desired devicegraph using the storage proposal.
+      # Sets the devigraph to nil if something went wrong
+      def propose!
         proposal = Y2Storage::Proposal.new(settings: settings)
         proposal.propose
-        @devicegraph = proposal.devices
+        self.devicegraph = proposal.devices
       rescue Y2Storage::Proposal::Error
         log.error("generating proposal failed")
-        @devicegraph = nil
+        self.devicegraph = nil
       end
 
       # HTML-formatted text to display in the dialog
@@ -82,8 +85,8 @@ module Y2Storage
       #
       # @return [String]
       def summary
-        if @devicegraph
-          actiongraph = @devicegraph.actiongraph
+        if devicegraph
+          actiongraph = devicegraph.actiongraph
           texts = actiongraph.commit_actions_as_strings.to_a
           Yast::HTML.Para(Yast::HTML.List(texts))
         else
