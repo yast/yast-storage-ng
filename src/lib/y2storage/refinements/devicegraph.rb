@@ -40,13 +40,16 @@ module Y2Storage
           ::Storage::Actiongraph.new(storage, from, self)
         end
 
-        alias_method :orig_copy, :copy
         # Returns a copy of the devicegraph
         #
+        # @note In essence, this has the same semantic than Ruby's #dup or
+        # #clone, but redefining well-known methods in a refinement doesn't
+        # look like a good idea.
+        #
         # @return [::Storage::Devicegraph]
-        def copy
+        def duplicate
           new_graph = ::Storage::Devicegraph.new
-          orig_copy(new_graph)
+          copy(new_graph)
           new_graph
         end
       end
