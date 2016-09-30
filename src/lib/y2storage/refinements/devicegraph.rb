@@ -35,7 +35,7 @@ module Y2Storage
         # @param from [Devicegraph] starting graph to calculate the actions
         #       If nil, the probed devicegraph is used.
         # @return [::Storage::Actiongraph]
-        def actiongraph(from: nil, storage: StorageManager.instance)
+        def actiongraph(from: nil)
           from ||= storage.probed
           ::Storage::Actiongraph.new(storage, from, self)
         end
@@ -48,7 +48,7 @@ module Y2Storage
         #
         # @return [::Storage::Devicegraph]
         def duplicate
-          new_graph = ::Storage::Devicegraph.new
+          new_graph = ::Storage::Devicegraph.new(storage)
           copy(new_graph)
           new_graph
         end
