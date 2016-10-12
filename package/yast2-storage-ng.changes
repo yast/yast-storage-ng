@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Wed Oct 12 13:38:38 UTC 2016 - cwh@suse.com
+
+- Use own textdomain (storage-ng instead of storage) (bsc#1004050)
+- 0.1.4
+
+-------------------------------------------------------------------
 Fri Sep 30 14:05:08 UTC 2016 - ancor@suse.com
 
 - Added new inst_prepdisk client - first version in which the
