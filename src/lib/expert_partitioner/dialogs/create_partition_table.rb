@@ -34,7 +34,7 @@ module ExpertPartitioner
     include Yast::Logger
 
     def initialize(disk)
-      textdomain "storage"
+      textdomain "storage-ng"
       @disk = disk
     end
 

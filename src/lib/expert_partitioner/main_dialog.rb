@@ -74,7 +74,7 @@ module ExpertPartitioner
 
     def initialize
       super
-      textdomain "storage"
+      textdomain "storage-ng"
       @view = AllTreeView.new
     end
 

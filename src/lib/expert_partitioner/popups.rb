@@ -30,7 +30,7 @@ module ExpertPartitioner
   # Popup to ask for confirmation before deleting the descendants of a device
   class RemoveDescendantsPopup
     def initialize(device)
-      textdomain "storage"
+      textdomain "storage-ng"
       @device = device
     end
 

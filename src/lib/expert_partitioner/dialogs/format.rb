@@ -35,7 +35,7 @@ module ExpertPartitioner
     include Yast::Logger
 
     def initialize(blk_device)
-      textdomain "storage"
+      textdomain "storage-ng"
       @blk_device = blk_device
     end
 

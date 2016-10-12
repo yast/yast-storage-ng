@@ -40,7 +40,7 @@ module Storage
 
   class Device
     extend Yast::I18n
-    textdomain "storage"
+    textdomain "storage-ng"
 
     # This code is only executed once (when the class is loaded), but YaST
     # allows to change the language in execution time. Thus, we use N_() here
