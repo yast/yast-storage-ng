@@ -31,6 +31,7 @@ include Yast::I18n
 module ExpertPartitioner
   class BcacheCsetTreeView < TreeView
     def initialize(bcache_cset)
+      textdomain "storage-ng"
       @bcache_cset = bcache_cset
     end
 
@@ -47,6 +48,8 @@ module ExpertPartitioner
 
       contents = Yast::HTML.List(tmp)
 
+      # FIXME: Add some comments to help translators to know about the
+      # context of the used strings.
       VBox(
         Left(IconAndHeading(_("Bcache Cset: %s") % @bcache_cset.uuid, Icons::BCACHE_CSET)),
         RichText(Id(:text), Opt(:hstretch, :vstretch), contents)

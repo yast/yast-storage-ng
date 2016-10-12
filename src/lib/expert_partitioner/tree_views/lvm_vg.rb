@@ -35,6 +35,7 @@ include Yast::Logger
 module ExpertPartitioner
   class LvmVgTreeView < TreeView
     def initialize(lvm_vg)
+      textdomain "storage-ng"
       @lvm_vg = lvm_vg
     end
 

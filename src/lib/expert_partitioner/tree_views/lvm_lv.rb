@@ -31,6 +31,7 @@ include Yast::I18n
 module ExpertPartitioner
   class LvmLvTreeView < TreeView
     def initialize(lvm_lv)
+      textdomain "storage-ng"
       @lvm_lv = lvm_lv
     end
 
@@ -41,6 +42,8 @@ module ExpertPartitioner
 
       contents = Yast::HTML.List(tmp)
 
+      # FIXME: Add some comments to help translators to know about the
+      # context of the used strings.
       VBox(
         Left(IconAndHeading(_("LVM LV: %s") % @lvm_lv.lv_name, Icons::LVM_LV)),
         RichText(Id(:text), Opt(:hstretch, :vstretch), contents)

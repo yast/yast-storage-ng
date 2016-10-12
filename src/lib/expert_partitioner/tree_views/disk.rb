@@ -32,6 +32,7 @@ include Yast::Logger
 module ExpertPartitioner
   class DiskTreeView < TreeView
     def initialize(disk)
+      textdomain "storage-ng"
       @disk = disk
     end
 

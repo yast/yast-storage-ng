@@ -31,6 +31,7 @@ include Yast::I18n
 module ExpertPartitioner
   class PartitionTreeView < TreeView
     def initialize(partition)
+      textdomain "storage-ng"
       @partition = partition
     end
 
@@ -46,6 +47,8 @@ module ExpertPartitioner
 
       contents = Yast::HTML.List(tmp)
 
+      # FIXME: Add a describing comment, that helps translators to learn
+      # about the context of the strings.
       VBox(
         Left(IconAndHeading(_("Partition: %s") % @partition.name, Icons::PARTITION)),
         RichText(Id(:text), Opt(:hstretch, :vstretch), contents)

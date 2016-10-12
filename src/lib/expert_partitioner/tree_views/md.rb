@@ -35,6 +35,7 @@ include Yast::Logger
 module ExpertPartitioner
   class MdTreeView < TreeView
     def initialize(md)
+      textdomain "storage-ng"
       @md = md
     end
 

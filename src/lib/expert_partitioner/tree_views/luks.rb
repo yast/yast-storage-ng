@@ -31,6 +31,7 @@ include Yast::I18n
 module ExpertPartitioner
   class LuksTreeView < TreeView
     def initialize(luks)
+      textdomain "storage-ng"
       @luks = luks
     end
 
@@ -42,6 +43,8 @@ module ExpertPartitioner
 
       contents = Yast::HTML.List(tmp)
 
+      # FIXME: Add some comments to help translators to know about the
+      # context of the used strings.
       VBox(
         Left(IconAndHeading(_("LUKS: %s") % @luks.dm_table_name, Icons::ENCRYPTION)),
         RichText(Id(:text), Opt(:hstretch, :vstretch), contents)
