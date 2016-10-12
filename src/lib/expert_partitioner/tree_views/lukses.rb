@@ -35,11 +35,14 @@ module ExpertPartitioner
     FIELDS = [:sid, :icon, :name, :size, :filesystem, :mountpoint]
 
     def initialize
+      textdomain "storage-ng"
       staging = storage.staging
       @lukses = ::Storage::Luks.all(staging)
     end
 
     def create
+      # FIXME: Add some comments to help translators to know about the
+      # context of the used strings.
       VBox(
         Left(IconAndHeading(_("LUKSes"), Icons::ENCRYPTION)),
         Table(Id(:table), Opt(:keepSorting), Storage::Device.table_header(FIELDS), items),

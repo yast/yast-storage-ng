@@ -39,10 +39,12 @@ module ExpertPartitioner
     include Yast::Logger
 
     def initialize
-      textdomain "storage"
+      textdomain "storage-ng"
     end
 
     def tree_items
+      # FIXME: Add some comments to help translators to know about the
+      # context of the used strings.
       [
         Item(
           Id(:all), "hostname", true,

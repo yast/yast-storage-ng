@@ -28,12 +28,15 @@ include Yast::I18n
 module ExpertPartitioner
   class ActiongraphTreeView < TreeView
     def create
+      textdomain "storage-ng"
       filename = "#{Yast::Directory.tmpdir}/actiongraph.gv"
 
       actiongraph = storage.calculate_actiongraph
       actiongraph.write_graphviz(filename, ::Storage::GraphvizFlags_TOOLTIP |
                                            ::Storage::GraphvizFlags_SID)
 
+      # FIXME: Add some comments to help translators to know about the
+      # context of the used strings.
       VBox(
         Left(Heading(_("Action Graph"))),
         Yast::Term.new(:Graph, Id(:graph), Opt(:notify, :notifyContextMenu), filename, "dot")

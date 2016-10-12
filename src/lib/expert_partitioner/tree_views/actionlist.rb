@@ -28,6 +28,7 @@ include Yast::I18n
 module ExpertPartitioner
   class ActionlistTreeView < TreeView
     def create
+      textdomain "storage-ng"
       # storage.probed().save("./devicegraph-probed.xml")
       # storage.staging().save("./devicegraph-staging.xml")
 

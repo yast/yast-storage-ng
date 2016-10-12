@@ -37,11 +37,14 @@ module ExpertPartitioner
     FIELDS = [:sid, :icon, :name, :size, :md_level, :partition_table, :filesystem, :mountpoint]
 
     def initialize
+      textdomain "storage-ng"
       staging = storage.staging
       @mds = staging.all_mds
     end
 
     def create
+      # FIXME: Add some comments to help translators to know about the
+      # context of the used strings.
       VBox(
         Left(IconAndHeading(_("MD RAIDs"), Icons::MD)),
         Table(Id(:table), Opt(:keepSorting), Storage::Device.table_header(FIELDS), items),

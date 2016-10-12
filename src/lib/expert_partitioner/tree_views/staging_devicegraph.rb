@@ -28,6 +28,7 @@ include Yast::I18n
 module ExpertPartitioner
   class StagingDevicegraphTreeView < TreeView
     def create
+      textdomain "storage-ng"
       filename = "#{Yast::Directory.tmpdir}/devicegraph-staging.gv"
 
       staging = storage.staging
@@ -35,6 +36,8 @@ module ExpertPartitioner
                                        ::Storage::GraphvizFlags_SID |
                                        ::Storage::GraphvizFlags_SIZE)
 
+      # FIXME: Add some comments to help translators to know about the
+      # context of the used strings.
       VBox(
         Left(Heading(_("Device Graph (staging)"))),
         Yast::Term.new(:Graph, Id(:graph), Opt(:notify, :notifyContextMenu), filename, "dot")

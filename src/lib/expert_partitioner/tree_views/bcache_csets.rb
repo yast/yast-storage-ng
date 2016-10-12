@@ -35,11 +35,14 @@ module ExpertPartitioner
     FIELDS = [:sid, :icon, :uuid]
 
     def initialize
+      textdomain "storage-ng"
       staging = storage.staging
       @bcache_csets = ::Storage::BcacheCset.all(staging)
     end
 
     def create
+      # FIXME: Add some comments to help translators to know about the
+      # context of the used strings.
       VBox(
         Left(IconAndHeading(_("Bcache Csets"), Icons::BCACHE_CSET)),
         Table(Id(:table), Opt(:keepSorting), Storage::Device.table_header(FIELDS), items),

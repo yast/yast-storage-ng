@@ -39,10 +39,13 @@ module ExpertPartitioner
     FIELDS = [:sid, :icon, :name, :size, :filesystem, :mountpoint]
 
     def initialize(disk)
+      textdomain "storage-ng"
       @disk = disk
     end
 
     def create
+      # FIXME: Add a describing comment, that helps translators to learn
+      # about the context of the strings.
       VBox(
         Table(Id(:table), Opt(:keepSorting), Storage::Device.table_header(FIELDS), items),
         HBox(

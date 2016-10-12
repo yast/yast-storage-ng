@@ -35,7 +35,7 @@ module Y2Storage
 
       def initialize
         super
-        textdomain "storage"
+        textdomain "storage-ng"
         propose!
       end
 

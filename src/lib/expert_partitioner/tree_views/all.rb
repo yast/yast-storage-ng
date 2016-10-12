@@ -32,6 +32,9 @@ module ExpertPartitioner
     FIELDS = [:sid, :icon, :name, :size, :partition_table, :filesystem, :mountpoint]
 
     def create
+      textdomain "storage-ng"
+      # FIXME: Add some comments to help translators to know about the
+      # context of the used strings.
       VBox(
         Left(IconAndHeading(_("Storage"), Icons::ALL)),
         Table(Id(:table), Opt(:keepSorting), Storage::Device.table_header(FIELDS), items),
