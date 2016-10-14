@@ -23,6 +23,8 @@
 require_relative "../spec_helper"
 require "y2storage/clients/inst_prepdisk"
 
+Yast.import "Installation"
+
 describe Y2Storage::Clients::InstPrepdisk do
   subject(:client) { described_class.new }
 
@@ -31,10 +33,11 @@ describe Y2Storage::Clients::InstPrepdisk do
 
     before do
       allow(Y2Storage::StorageManager).to receive(:instance).and_return storage_manager
+      allow(Yast::Installation).to receive(:destdir).and_return "/dest"
     end
 
-    it "uses /mnt to mount and prepare the result" do
-      expect(storage_manager).to receive(:rootprefix=).with("/mnt")
+    it "uses the destination directory to mount and prepare the result" do
+      expect(storage_manager).to receive(:rootprefix=).with("/dest")
       client.run
     end
 
