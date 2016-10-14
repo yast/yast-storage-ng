@@ -25,6 +25,7 @@ require "yast"
 require "y2storage"
 
 Yast.import "SlideShow"
+Yast.import "Installation"
 
 module Y2Storage
   module Clients
@@ -33,8 +34,6 @@ module Y2Storage
     # target system and any other action handled by libstorage.
     class InstPrepdisk
       include Yast::Logger
-
-      TARGET_MOUNT_POINT = "/mnt"
 
       def run
         log.info("BEGIN of inst_prepdisk")
@@ -49,7 +48,7 @@ module Y2Storage
       # Commits the actions to disk
       def commit
         storage = Y2Storage::StorageManager.instance
-        storage.rootprefix = TARGET_MOUNT_POINT
+        storage.rootprefix = Yast::Installation.destdir
         storage.calculate_actiongraph
         storage.commit
       end
