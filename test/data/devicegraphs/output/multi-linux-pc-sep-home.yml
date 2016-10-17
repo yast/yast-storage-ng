@@ -34,7 +34,6 @@
         size: unlimited
         name: "/dev/sda4"
         type: extended
-        id: linux
 
     - partition:
         size: 300.00 GiB

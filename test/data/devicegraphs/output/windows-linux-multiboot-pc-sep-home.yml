@@ -30,7 +30,7 @@
         size: unlimited
         name: "/dev/sda4"
         type: extended
-        id: linux
+        id: extended
     - partition:
         size: unlimited
         name: "/dev/sda5"
