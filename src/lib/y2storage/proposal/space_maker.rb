@@ -262,7 +262,11 @@ module Y2Storage
       # @param partition [::Storage::Partition]
       # @return [DiskSize]
       def recoverable_size(partition)
-        info = partition.filesystem.detect_resize_info
+        # FIXME: use original_graph because right now #detect_resize_info can
+        # only be called in the probed devicegraph. See
+        # https://github.com/openSUSE/libstorage-ng/tree/master/storage/Filesystems/FilesystemImpl.cc#L212
+        orig_part = find_partition(partition.name, original_graph)
+        info = orig_part.filesystem.detect_resize_info
         return DiskSize.zero unless info.resize_ok
         DiskSize.B(partition.size - info.min_size)
       end
@@ -302,8 +306,8 @@ module Y2Storage
         end
       end
 
-      def find_partition(name)
-        ::Storage::Partition.find_by_name(new_graph, name)
+      def find_partition(name, graph = new_graph)
+        ::Storage::Partition.find_by_name(graph, name)
       rescue
         nil
       end
