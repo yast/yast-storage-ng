@@ -297,9 +297,7 @@ describe Y2Storage::Proposal::SpaceMaker do
         )
       end
 
-      # FIXME: We are planning to change how libstorage-ng handles extended and logical
-      # partitions. Then it will be time to fix this bug
-      it "has an UGLY BUG that deletes extended partitions leaving the logical there" do
+      it "deletes an extended partitions and also the logical partitions" do
         volumes = vols_list(
           planned_vol(mount_point: "/1", type: :ext4, desired: 400.GiB),
           planned_vol(mount_point: "/2", reuse: "/dev/sda1"),
@@ -312,8 +310,7 @@ describe Y2Storage::Proposal::SpaceMaker do
         expect(result[:devicegraph].partitions).to contain_exactly(
           an_object_with_fields(name: "/dev/sda1", size: 4.GiB.to_i),
           an_object_with_fields(name: "/dev/sda2", size: 60.GiB.to_i),
-          an_object_with_fields(name: "/dev/sda3", size: 60.GiB.to_i),
-          an_object_with_fields(name: "/dev/sda6", size: (600.GiB - 3.MiB).to_i)
+          an_object_with_fields(name: "/dev/sda3", size: 60.GiB.to_i)
         )
       end
     end
