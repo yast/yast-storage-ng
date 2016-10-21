@@ -222,14 +222,14 @@ describe Y2Storage::Proposal::SpaceMaker do
 
         result = maker.provide_space(volumes)
         expect(result[:deleted_partitions]).to contain_exactly(
+          an_object_with_fields(name: "/dev/sda4", size: (900.GiB - 1.MiB).to_i),
           an_object_with_fields(name: "/dev/sda5", size: 300.GiB.to_i),
           an_object_with_fields(name: "/dev/sda6", size: (600.GiB - 3.MiB).to_i)
         )
         expect(result[:devicegraph].partitions).to contain_exactly(
           an_object_with_fields(name: "/dev/sda1", size: 4.GiB.to_i),
           an_object_with_fields(name: "/dev/sda2", size: 60.GiB.to_i),
-          an_object_with_fields(name: "/dev/sda3", size: 60.GiB.to_i),
-          an_object_with_fields(name: "/dev/sda4", size: (900.GiB - 1.MiB).to_i)
+          an_object_with_fields(name: "/dev/sda3", size: 60.GiB.to_i)
         )
       end
 
@@ -251,34 +251,9 @@ describe Y2Storage::Proposal::SpaceMaker do
         expect { maker.provide_space(volumes) }.to raise_error Y2Storage::Proposal::NoDiskSpaceError
       end
 
-      # FIXME: Bug or feature? Anyways, we are planning to change how libstorage-ng
-      # handles extended and logical partitions. Revisit this then
-      it "doesn't delete empty extended partitions unless required" do
+      it "deletes extended partitions when deleting all its logical children" do
         volumes = vols_list(
           planned_vol(mount_point: "/1", type: :ext4, desired: 800.GiB),
-          planned_vol(mount_point: "/2", reuse: "/dev/sda1"),
-          planned_vol(mount_point: "/2", reuse: "/dev/sda2"),
-          planned_vol(mount_point: "/2", reuse: "/dev/sda3")
-        )
-
-        result = maker.provide_space(volumes)
-        expect(result[:devicegraph].partitions).to contain_exactly(
-          an_object_with_fields(name: "/dev/sda1", size: 4.GiB.to_i),
-          an_object_with_fields(name: "/dev/sda2", size: 60.GiB.to_i),
-          an_object_with_fields(name: "/dev/sda3", size: 60.GiB.to_i),
-          an_object_with_fields(name: "/dev/sda4", size: (900.GiB - 1.MiB).to_i)
-        )
-        expect(result[:deleted_partitions]).to contain_exactly(
-          an_object_with_fields(name: "/dev/sda5"),
-          an_object_with_fields(name: "/dev/sda6")
-        )
-      end
-
-      # FIXME: in fact, extended partitions has no special consideration. This
-      # works only by a matter of luck. See FIXME above.
-      it "deletes empty extended partitions if the space is needed" do
-        volumes = vols_list(
-          planned_vol(mount_point: "/1", type: :ext4, desired: (900.GiB - 1.MiB)),
           planned_vol(mount_point: "/2", reuse: "/dev/sda1"),
           planned_vol(mount_point: "/2", reuse: "/dev/sda2"),
           planned_vol(mount_point: "/2", reuse: "/dev/sda3")
@@ -297,9 +272,9 @@ describe Y2Storage::Proposal::SpaceMaker do
         )
       end
 
-      # FIXME: We are planning to change how libstorage-ng handles extended and logical
-      # partitions. Then it will be time to fix this bug
-      it "has an UGLY BUG that deletes extended partitions leaving the logical there" do
+      # In the past, SpaceMaker used to delete the extended partition sda4
+      # leaving sda6 alive. This test ensures the bug does not re-appear
+      it "does not delete the extended partition if some logical one is to be reused" do
         volumes = vols_list(
           planned_vol(mount_point: "/1", type: :ext4, desired: 400.GiB),
           planned_vol(mount_point: "/2", reuse: "/dev/sda1"),
@@ -308,13 +283,7 @@ describe Y2Storage::Proposal::SpaceMaker do
           planned_vol(mount_point: "/5", reuse: "/dev/sda6")
         )
 
-        result = maker.provide_space(volumes)
-        expect(result[:devicegraph].partitions).to contain_exactly(
-          an_object_with_fields(name: "/dev/sda1", size: 4.GiB.to_i),
-          an_object_with_fields(name: "/dev/sda2", size: 60.GiB.to_i),
-          an_object_with_fields(name: "/dev/sda3", size: 60.GiB.to_i),
-          an_object_with_fields(name: "/dev/sda6", size: (600.GiB - 3.MiB).to_i)
-        )
+        expect { maker.provide_space(volumes) }.to raise_error Y2Storage::Proposal::NoDiskSpaceError
       end
     end
 

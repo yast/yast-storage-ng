@@ -312,11 +312,40 @@ module Y2Storage
         nil
       end
 
-      # Deletes a given partition from its corresponding partition table
+      # Deletes a given partition from its corresponding partition table.
+      # If the partition was the only remaining logical one, it also deletes the
+      # now empty extended partition
       def delete_partition(partition)
         log.info("Deleting partition #{partition.name} in device graph")
-        @deleted_names << partition.name
-        partition.partition_table.delete_partition(partition.name)
+        if last_logical?(partition)
+          log.info("It's the last logical one, so deleting the extended")
+          delete_extended(partition.partition_table)
+        else
+          @deleted_names << partition.name
+          partition.partition_table.delete_partition(partition.name)
+        end
+      end
+
+      # Checks whether the partition is the only logical one in the
+      # partition_table
+      def last_logical?(partition)
+        return false unless partition.type == ::Storage::PartitionType_LOGICAL
+
+        partitions = partition.partition_table.partitions.to_a
+        logical_parts = partitions.select { |part| part.type == ::Storage::PartitionType_LOGICAL }
+        logical_parts.size == 1
+      end
+
+      # Deletes the extended partition and all the logical ones
+      def delete_extended(partition_table)
+        partitions = partition_table.partitions.to_a
+        extended = partitions.detect { |part| part.type == ::Storage::PartitionType_EXTENDED }
+        logical_parts = partitions.select { |part| part.type == ::Storage::PartitionType_LOGICAL }
+
+        # This will delete the extended and all the logicals
+        @deleted_names << extended.name
+        @deleted_names.concat(logical_parts.map(&:name))
+        partition_table.delete_partition(extended.name)
       end
 
       # Partitions of a given type to be deleted. The type can be:
@@ -324,6 +353,9 @@ module Y2Storage
       #  * :windows Partitions with a Windows installation on it
       #  * :linux Partitions that are part of a Linux installation
       #  * :other Any other partition
+      #
+      # Extended partitions are ignored, they will be deleted by
+      # #delete_partition if needed
       #
       # @param type [Symbol]
       # @param disk [String] optional disk name to restrict operations to
@@ -333,6 +365,7 @@ module Y2Storage
         names = []
         disks_for(original_graph, disk).each do |dsk|
           partitions = original_graph.disks.with(name: dsk.name).partitions.to_a
+          partitions.delete_if { |part| part.type == ::Storage::PartitionType_EXTENDED }
           filter_partitions_by_type!(partitions, type, dsk.name)
           partitions = partitions.sort_by { |part| part.region.start }.reverse
           names += partitions.map(&:name)
