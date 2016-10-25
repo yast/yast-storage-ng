@@ -149,6 +149,32 @@ module Y2Storage
       @linux_partitions ||= partitions_with_id(LINUX_PARTITION_IDS, "Linux")
     end
 
+    # Partitions that are part of a LVM volume group, i.e. partitions that hold
+    # a LVM physical volume.
+    #
+    # The result is a Hash in which each key is the name of a volume group
+    # and the value is an Array of ::Storage::Partition objects
+    #
+    # Take into account that the result is, as always, limited by #scope. Thus,
+    # physical volumes from other disks will not be present, even if they are
+    # part of the same volume group.
+    #
+    # @return [Hash{String => Array<::Storage::Partition>}]
+    def used_lvm_partitions
+      @used_lvm_partitions ||= begin
+        lvm_parts = partitions_with_id(::Storage::ID_LVM, "LVM").values.flatten
+        result = lvm_parts.each_with_object({}) do |part, hash|
+          vg_name = vg_for(part)
+          next unless vg_name
+
+          hash[vg_name] ||= []
+          hash[vg_name] << part
+        end
+        log.info("Found used LVM partitions: #{result}")
+        result
+      end
+    end
+
     # Disks that are suitable for installing Linux.
     #
     # @return [Array<String>] device names of candidate disks
@@ -506,6 +532,18 @@ module Y2Storage
       result = Hash[pairs]
       log.info("Found #{log_label} partitions: #{result}")
       result
+    end
+
+    # Name of the LVM volume group to which the partition belongs
+    #
+    # @param partition [::Storage::Partition]
+    # @return [String] nil if the partition does not hold a physical volume
+    def vg_for(partition)
+      name = partition.name
+      lvm_pv = ::Storage::LvmPv.all(devicegraph).to_a.detect { |pv| pv.blk_device.name == name }
+      return nil unless lvm_pv
+
+      lvm_pv.lvm_vg.vg_name
     end
   end
 end

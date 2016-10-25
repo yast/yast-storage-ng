@@ -147,7 +147,8 @@ module Y2Storage
 
         # Initially, resize only if there are no Linux partitions in the disk
         resize_windows!(volumes, disk, force: false)
-        delete_partitions!(volumes, :linux, keep, disk)
+        delete_partitions!(volumes, :linux_no_lvm, keep, disk)
+        delete_partitions!(volumes, :lvm, keep, disk)
         delete_partitions!(volumes, :other, keep, disk)
         # If everything else failed, try resizing Windows before deleting it
         resize_windows!(volumes, disk, force: true)
@@ -301,8 +302,37 @@ module Y2Storage
           end
           part = find_partition(part_name)
           next unless part
-          delete_partition(part)
+
+          if type == :lvm
+            # Strictly speaking, this could lead to deletion of a partition
+            # included in the keep array. In practice it doesn't matter because
+            # PVs are never marked to be reused as a PlannedVolume.
+            delete_lvm_partitions(part)
+          else
+            delete_partition(part)
+          end
+
           break if success?(volumes)
+        end
+      end
+
+      # Deletes the given partition and all other partitions in the candidate
+      # disks that are part of the same LVM volume group
+      #
+      # Rational: when deleting a partition that holds a PV of a given VG, we
+      # are effectively killing the whole VG. It makes no sense to leave the
+      # other PVs alive. So let's reclaim all the space.
+      #
+      # @param [partition] A partition that is acting as LVM physical volume
+      def delete_lvm_partitions(partition)
+        log.info "Deleting #{partition.name}, which is part of an LVM volume group"
+        vg_parts = disk_analyzer.used_lvm_partitions.values.detect do |parts|
+          parts.map(&:name).include?(partition.name)
+        end
+        target_parts = vg_parts.map { |p| find_partition(p.name) }.compact
+        log.info "These LVM partitions will be deleted: #{target_parts.map(&:name)}"
+        target_parts.each do |part|
+          delete_partition(part)
         end
       end
 
@@ -352,6 +382,9 @@ module Y2Storage
       #
       #  * :windows Partitions with a Windows installation on it
       #  * :linux Partitions that are part of a Linux installation
+      #  * :linux_no_lvm Same than above, but excluding partitions that are part
+      #       of a LVM volume group
+      #  * :lvm Partitions that are part of a LVM volume group
       #  * :other Any other partition
       #
       # Extended partitions are ignored, they will be deleted by
@@ -381,12 +414,26 @@ module Y2Storage
           partitions.select! { |part| windows_part_names(disk).include?(part.name) }
         when :linux
           partitions.select! { |part| linux_part_names(disk).include?(part.name) }
+        when :linux_no_lvm
+          partitions.select! { |part| linux_no_lvm?(part.name, disk) }
+        when :lvm
+          partitions.select! { |part| lvm_part_names.include?(part.name) }
         when :other
-          partitions.select! do |part|
-            !linux_part_names(disk).include?(part.name) &&
-              !windows_part_names(disk).include?(part.name)
-          end
+          partitions.select! { |part| other?(part.name, disk) }
         end
+      end
+
+      # Checks whether the given partition qualifies as :linux_no_lvm
+      # @see #deletion_candidate_partitions
+      def linux_no_lvm?(partition_name, disk)
+        linux_part_names(disk).include?(partition_name) && !lvm_part_names.include?(partition_name)
+      end
+
+      # Checks whether the given partition qualifies as :other
+      # @see #deletion_candidate_partitions
+      def other?(partition_name, disk)
+        !linux_part_names(disk).include?(partition_name) &&
+          !windows_part_names(disk).include?(partition_name)
       end
 
       # Device names of windows partitions detected by disk_analyzer
@@ -411,6 +458,13 @@ module Y2Storage
           disk_analyzer.linux_partitions.values.flatten
         end
         parts.map(&:name)
+      end
+
+      # Device names of used LVM partitions detected by disk_analyzer
+      #
+      # @return [array<string>]
+      def lvm_part_names
+        disk_analyzer.used_lvm_partitions.values.flatten.map(&:name)
       end
     end
   end

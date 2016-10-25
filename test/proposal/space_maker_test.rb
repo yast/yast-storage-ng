@@ -371,5 +371,63 @@ describe Y2Storage::Proposal::SpaceMaker do
         end
       end
     end
+
+    context "with a disk containing LVM volume groups" do
+      let(:scenario) { "lvm-two-vgs" }
+      let(:windows_partitions) { { "/dev/sda" => [analyzer_part("/dev/sda1")] } }
+
+      let(:lvm_id) { ::Storage::ID_LVM }
+
+      it "deletes other linux partitions before touching the LVM ones" do
+        volumes = vols_list(
+          planned_vol(mount_point: "/1", type: :ext4, desired: 3.GiB),
+          planned_vol(mount_point: "/2", type: :ext4, desired: 3.GiB)
+        )
+        result = maker.provide_space(volumes)
+
+        expect(result[:devicegraph].partitions).to contain_exactly(
+          an_object_with_fields(name: "/dev/sda1"),
+          an_object_with_fields(name: "/dev/sda2"),
+          an_object_with_fields(name: "/dev/sda3"),
+          an_object_with_fields(id: lvm_id),
+          an_object_with_fields(id: lvm_id),
+          an_object_with_fields(id: lvm_id)
+        )
+      end
+
+      context "when deleting a partition which belongs to a LVM" do
+        let(:volumes) do
+          vols_list(
+            planned_vol(mount_point: "/1", type: :ext4, desired: 3.GiB),
+            planned_vol(mount_point: "/2", type: :ext4, desired: 3.GiB),
+            planned_vol(mount_point: "/3", type: :ext4, desired: 3.GiB)
+          )
+        end
+
+        it "deletes also other partitions of the same volume group" do
+          result = maker.provide_space(volumes)
+          devicegraph = result[:devicegraph]
+          
+          expect(devicegraph.partitions.map(&:name)).to_not include "/dev/sda9"
+          expect(devicegraph.partitions.map(&:name)).to_not include "/dev/sda5"
+          expect(devicegraph.vgs.map(&:vg_name)).to_not include "vg1"
+        end
+
+        it "deletes the volume group itself" do
+          result = maker.provide_space(volumes)
+          devicegraph = result[:devicegraph]
+          
+          expect(devicegraph.vgs.map(&:vg_name)).to_not include "vg1"
+        end
+
+        it "does not affect partitions from other volume groups" do
+          result = maker.provide_space(volumes)
+          devicegraph = result[:devicegraph]
+          
+          expect(devicegraph.partitions.map(&:name)).to include "/dev/sda7"
+          expect(devicegraph.vgs.map(&:vg_name)).to include "vg0"
+        end
+      end
+    end
   end
 end
