@@ -45,3 +45,5 @@ summary of the changes in those branches, in a human-readable fashion.
 
 * Commented the code used to remember across executions (self-update) that the
   user canceled multipath activation.
+
+* Commented code in umount_finish.rb dealing with loop files.
