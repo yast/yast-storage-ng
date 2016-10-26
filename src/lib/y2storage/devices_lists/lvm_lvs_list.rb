@@ -1,3 +1,4 @@
+#
 # encoding: utf-8
 
 # Copyright (c) [2016] SUSE LLC
@@ -19,10 +20,14 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "y2storage/devices_lists/disks_list"
-require "y2storage/devices_lists/filesystems_list"
-require "y2storage/devices_lists/free_disk_spaces_list"
-require "y2storage/devices_lists/partitions_list"
-require "y2storage/devices_lists/lvm_lvs_list"
-require "y2storage/devices_lists/lvm_pvs_list"
-require "y2storage/devices_lists/lvm_vgs_list"
+require "storage"
+require "y2storage/devices_lists/base"
+
+module Y2Storage
+  module DevicesLists
+    # List of LVM logical volumes from a devicegraph
+    class LvmLvsList < Base
+      list_of ::Storage::LvmLv
+    end
+  end
+end

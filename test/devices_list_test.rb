@@ -34,8 +34,9 @@ describe "devices lists" do
   let(:primary) { ::Storage::PartitionType_PRIMARY }
 
   before do
-    fake_scenario("mixed_disks")
+    fake_scenario(scenario)
   end
+  let(:scenario) { "mixed_disks" }
 
   describe "Y2Storage::DevicesLists::Base" do
     describe "#with" do
@@ -232,6 +233,58 @@ describe "devices lists" do
         # the partition table. Same happens in /dev/sdc (500GiB-1MiB)
         expect(spaces.disk_size).to eq(592.GiB - 2.MiB)
       end
+    end
+  end
+
+  describe Y2Storage::DevicesLists::LvmVgsList do
+    let(:scenario) { "lvm-two-vgs" }
+    let(:vgs) { fake_devicegraph.vgs }
+
+    it "contains all volume groups by default" do
+      expect(vgs.size).to eq 2
+      expect(described_class.new(fake_devicegraph).size).to eq 2
+    end
+
+    describe "#lvm_pvs" do
+      it "returns a filtered list of physical volumes" do
+        pvs_vg0 = vgs.with(vg_name: "vg0").lvm_pvs
+        pvs_vg1 = vgs.with(vg_name: "vg1").lvm_pvs
+        expect(pvs_vg0).to be_a Y2Storage::DevicesLists::LvmPvsList
+        expect(pvs_vg0.size).to eq 1
+        expect(pvs_vg1).to be_a Y2Storage::DevicesLists::LvmPvsList
+        expect(pvs_vg1.size).to eq 2
+      end
+    end
+
+    describe "#lvm_lvs" do
+      it "returns a filtered list of logical volumes" do
+        lvs_vg0 = vgs.with(vg_name: "vg0").lvm_lvs
+        lvs_vg1 = vgs.with(vg_name: "vg1").lvm_lvs
+        expect(lvs_vg0).to be_a Y2Storage::DevicesLists::LvmLvsList
+        expect(lvs_vg0.size).to eq 2
+        expect(lvs_vg1).to be_a Y2Storage::DevicesLists::LvmLvsList
+        expect(lvs_vg1.size).to eq 1
+      end
+    end
+  end
+
+  describe Y2Storage::DevicesLists::LvmPvsList do
+    let(:scenario) { "lvm-two-vgs" }
+    let(:pvs) { fake_devicegraph.pvs }
+
+    it "contains all physical volumes by default" do
+      expect(pvs.size).to eq 3
+      expect(described_class.new(fake_devicegraph).size).to eq 3
+    end
+  end
+
+  describe Y2Storage::DevicesLists::LvmLvsList do
+    let(:scenario) { "lvm-two-vgs" }
+    let(:lvs) { fake_devicegraph.lvs }
+
+    it "contains all logical volumes by default" do
+      expect(lvs.size).to eq 3
+      expect(described_class.new(fake_devicegraph).size).to eq 3
     end
   end
 end
