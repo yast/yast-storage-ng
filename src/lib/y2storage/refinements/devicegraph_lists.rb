@@ -34,7 +34,11 @@ module Y2Storage
           disks:            DevicesLists::DisksList,
           partitions:       DevicesLists::PartitionsList,
           filesystems:      DevicesLists::FilesystemsList,
-          free_disk_spaces: DevicesLists::FreeDiskSpacesList
+          free_disk_spaces: DevicesLists::FreeDiskSpacesList,
+          lvm_vgs:          DevicesLists::LvmVgsList,
+          lvm_pvs:          DevicesLists::LvmPvsList,
+          lvm_lvs:          DevicesLists::LvmLvsList
+
         }
 
         DEVICE_LISTS.each do |list, klass|
@@ -42,6 +46,13 @@ module Y2Storage
             klass.new(self)
           end
         end
+
+        alias_method :vgs, :lvm_vgs
+        alias_method :volume_groups, :lvm_vgs
+        alias_method :pvs, :lvm_pvs
+        alias_method :physical_volumes, :lvm_pvs
+        alias_method :lvs, :lvm_lvs
+        alias_method :logical_volumes, :lvm_lvs
       end
     end
   end
