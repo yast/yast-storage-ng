@@ -2,7 +2,7 @@
 #
 # encoding: utf-8
 
-# Copyright (c) [2015] SUSE LLC
+# Copyright (c) [2015-2016] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -26,6 +26,8 @@ require "y2storage"
 
 Yast.import "SlideShow"
 Yast.import "Installation"
+Yast.import "FileUtils"
+Yast.import "String"
 
 module Y2Storage
   module Clients
@@ -33,6 +35,7 @@ module Y2Storage
     # partitioning, creating volumes and filesystem, writing /etc/fstab in the
     # target system and any other action handled by libstorage.
     class InstPrepdisk
+      include Yast
       include Yast::Logger
 
       def run
@@ -51,6 +54,24 @@ module Y2Storage
         storage.rootprefix = Yast::Installation.destdir
         storage.calculate_actiongraph
         storage.commit
+
+        mount_in_target("/dev", "devtmpfs", "-t devtmpfs")
+        mount_in_target("/proc", "proc", "-t proc")
+        mount_in_target("/sys", "sysfs", "-t sysfs")
+      end
+
+      def mount_in_target(path, device, options)
+        storage = Y2Storage::StorageManager.instance
+        target_path = storage.prepend_rootprefix(path)
+
+        if !Yast::FileUtils.Exists(target_path)
+          if !SCR.Execute(path(".target.mkdir"), target_path)
+            raise ".target.mkdir failed"
+          end
+        end
+        if !SCR.Execute(path(".target.mount"), [device, target_path], options)
+          raise ".target.mount failed"
+        end
       end
     end
   end
