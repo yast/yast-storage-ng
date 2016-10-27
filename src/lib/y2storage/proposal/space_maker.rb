@@ -338,7 +338,7 @@ module Y2Storage
       # Deletes the given partition and all other partitions in the candidate
       # disks that are part of the same LVM volume group
       #
-      # Rational: when deleting a partition that holds a PV of a given VG, we
+      # Rationale: when deleting a partition that holds a PV of a given VG, we
       # are effectively killing the whole VG. It makes no sense to leave the
       # other PVs alive. So let's reclaim all the space.
       #

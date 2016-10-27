@@ -543,7 +543,12 @@ module Y2Storage
       lvm_pv = ::Storage::LvmPv.all(devicegraph).to_a.detect { |pv| pv.blk_device.name == name }
       return nil unless lvm_pv
 
-      lvm_pv.lvm_vg.vg_name
+      begin
+        lvm_pv.lvm_vg.vg_name
+      rescue ::Storage::WrongNumberOfChildren
+        # Unassigned PV
+        nil
+      end
     end
   end
 end
