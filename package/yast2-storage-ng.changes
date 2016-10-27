@@ -1,4 +1,9 @@
 -------------------------------------------------------------------
+Wed Oct 26 12:26:58 UTC 2016 - ancor@suse.com
+
+- LVM classes added to Refinements::DevicegraphLists
+
+-------------------------------------------------------------------
 Wed Oct 12 13:38:38 UTC 2016 - cwh@suse.com
 
 - Use own textdomain (storage-ng instead of storage) (bsc#1004050)

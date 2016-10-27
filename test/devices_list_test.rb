@@ -33,9 +33,12 @@ describe "devices lists" do
   let(:id_swap) { ::Storage::ID_SWAP }
   let(:primary) { ::Storage::PartitionType_PRIMARY }
 
+  subject(:full_list) { described_class.new(fake_devicegraph) }
+
   before do
-    fake_scenario("mixed_disks")
+    fake_scenario(scenario)
   end
+  let(:scenario) { "mixed_disks" }
 
   describe "Y2Storage::DevicesLists::Base" do
     describe "#with" do
@@ -150,7 +153,7 @@ describe "devices lists" do
 
     it "contains all disks by default" do
       expect(disks.size).to eq 3
-      expect(described_class.new(fake_devicegraph).size).to eq 3
+      expect(full_list.size).to eq 3
     end
 
     describe "#partitions" do
@@ -192,7 +195,7 @@ describe "devices lists" do
 
     it "contains all partitions by default" do
       expect(partitions.size).to eq 9
-      expect(described_class.new(fake_devicegraph).size).to eq 9
+      expect(full_list.size).to eq 9
     end
 
     describe "#filesystems" do
@@ -212,7 +215,7 @@ describe "devices lists" do
 
     it "contains all filesystems by default" do
       expect(filesystems.size).to eq 7
-      expect(described_class.new(fake_devicegraph).size).to eq 7
+      expect(full_list.size).to eq 7
     end
   end
 
@@ -223,7 +226,7 @@ describe "devices lists" do
 
     it "contains all spaces by default" do
       expect(spaces.size).to eq 3
-      expect(described_class.new(fake_devicegraph).size).to eq 3
+      expect(full_list.size).to eq 3
     end
 
     describe "#disk_size" do
@@ -232,6 +235,58 @@ describe "devices lists" do
         # the partition table. Same happens in /dev/sdc (500GiB-1MiB)
         expect(spaces.disk_size).to eq(592.GiB - 2.MiB)
       end
+    end
+  end
+
+  describe Y2Storage::DevicesLists::LvmVgsList do
+    let(:scenario) { "lvm-two-vgs" }
+    let(:vgs) { fake_devicegraph.vgs }
+
+    it "contains all volume groups by default" do
+      expect(vgs.size).to eq 2
+      expect(full_list.size).to eq 2
+    end
+
+    describe "#lvm_pvs" do
+      it "returns a filtered list of physical volumes" do
+        pvs_vg0 = vgs.with(vg_name: "vg0").lvm_pvs
+        pvs_vg1 = vgs.with(vg_name: "vg1").lvm_pvs
+        expect(pvs_vg0).to be_a Y2Storage::DevicesLists::LvmPvsList
+        expect(pvs_vg0.size).to eq 1
+        expect(pvs_vg1).to be_a Y2Storage::DevicesLists::LvmPvsList
+        expect(pvs_vg1.size).to eq 2
+      end
+    end
+
+    describe "#lvm_lvs" do
+      it "returns a filtered list of logical volumes" do
+        lvs_vg0 = vgs.with(vg_name: "vg0").lvm_lvs
+        lvs_vg1 = vgs.with(vg_name: "vg1").lvm_lvs
+        expect(lvs_vg0).to be_a Y2Storage::DevicesLists::LvmLvsList
+        expect(lvs_vg0.size).to eq 2
+        expect(lvs_vg1).to be_a Y2Storage::DevicesLists::LvmLvsList
+        expect(lvs_vg1.size).to eq 1
+      end
+    end
+  end
+
+  describe Y2Storage::DevicesLists::LvmPvsList do
+    let(:scenario) { "lvm-two-vgs" }
+    let(:pvs) { fake_devicegraph.pvs }
+
+    it "contains all physical volumes by default" do
+      expect(pvs.size).to eq 3
+      expect(full_list.size).to eq 3
+    end
+  end
+
+  describe Y2Storage::DevicesLists::LvmLvsList do
+    let(:scenario) { "lvm-two-vgs" }
+    let(:lvs) { fake_devicegraph.lvs }
+
+    it "contains all logical volumes by default" do
+      expect(lvs.size).to eq 3
+      expect(full_list.size).to eq 3
     end
   end
 end
