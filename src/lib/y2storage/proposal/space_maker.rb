@@ -301,7 +301,16 @@ module Y2Storage
           end
           part = find_partition(part_name)
           next unless part
-          delete_partition(part)
+
+          if lvm_pv?(part)
+            # Strictly speaking, this could lead to deletion of a partition
+            # included in the keep array. In practice it doesn't matter because
+            # PVs are never marked to be reused as a PlannedVolume.
+            delete_lvm_partitions(part)
+          else
+            delete_partition(part)
+          end
+
           break if success?(volumes)
         end
       end
@@ -323,6 +332,26 @@ module Y2Storage
         else
           @deleted_names << partition.name
           partition.partition_table.delete_partition(partition.name)
+        end
+      end
+
+      # Deletes the given partition and all other partitions in the candidate
+      # disks that are part of the same LVM volume group
+      #
+      # Rational: when deleting a partition that holds a PV of a given VG, we
+      # are effectively killing the whole VG. It makes no sense to leave the
+      # other PVs alive. So let's reclaim all the space.
+      #
+      # @param [partition] A partition that is acting as LVM physical volume
+      def delete_lvm_partitions(partition)
+        log.info "Deleting #{partition.name}, which is part of an LVM volume group"
+        vg_parts = disk_analyzer.used_lvm_partitions.values.detect do |parts|
+          parts.map(&:name).include?(partition.name)
+        end
+        target_parts = vg_parts.map { |p| find_partition(p.name) }.compact
+        log.info "These LVM partitions will be deleted: #{target_parts.map(&:name)}"
+        target_parts.each do |part|
+          delete_partition(part)
         end
       end
 
@@ -411,6 +440,15 @@ module Y2Storage
           disk_analyzer.linux_partitions.values.flatten
         end
         parts.map(&:name)
+      end
+
+      # Checks whether the partition is part of a volume group
+      #
+      # @param partition [::Storage::Partition]
+      # @return [array<string>]
+      def lvm_pv?(partition)
+        lvm_pv_names = disk_analyzer.used_lvm_partitions.values.flatten.map(&:name)
+        lvm_pv_names.include?(partition.name)
       end
     end
   end
