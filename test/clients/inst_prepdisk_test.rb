@@ -34,6 +34,10 @@ describe Y2Storage::Clients::InstPrepdisk do
     before do
       allow(Y2Storage::StorageManager).to receive(:instance).and_return storage_manager
       allow(Yast::Installation).to receive(:destdir).and_return "/dest"
+      allow(storage_manager).to receive(:prepend_rootprefix).with("/dev").and_return "/dest/dev"
+      allow(storage_manager).to receive(:prepend_rootprefix).with("/proc").and_return "/dest/proc"
+      allow(storage_manager).to receive(:prepend_rootprefix).with("/sys").and_return "/dest/sys"
+      allow(Yast::SCR).to receive(:Execute).and_return(true)
     end
 
     it "uses the destination directory to mount and prepare the result" do

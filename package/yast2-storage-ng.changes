@@ -1,4 +1,9 @@
 -------------------------------------------------------------------
+Thu Oct 27 13:46:39 CEST 2016 - aschnell@suse.com
+
+- mount special filesystems in target during installation
+
+-------------------------------------------------------------------
 Wed Oct 26 12:26:58 UTC 2016 - ancor@suse.com
 
 - LVM classes added to Refinements::DevicegraphLists
