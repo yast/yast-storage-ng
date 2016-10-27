@@ -27,7 +27,6 @@ require "y2storage"
 Yast.import "SlideShow"
 Yast.import "Installation"
 Yast.import "FileUtils"
-Yast.import "String"
 
 module Y2Storage
   module Clients
