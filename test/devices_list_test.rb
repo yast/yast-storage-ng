@@ -153,7 +153,7 @@ describe "devices lists" do
 
     it "contains all disks by default" do
       expect(disks.size).to eq 3
-      expect(.size).to eq 3
+      expect(full_list.size).to eq 3
     end
 
     describe "#partitions" do
