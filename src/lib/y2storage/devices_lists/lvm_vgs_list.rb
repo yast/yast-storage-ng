@@ -35,7 +35,7 @@ module Y2Storage
       #
       # @return [LvmPvsList]
       def lvm_pvs
-        pvs_list = list.reduce([]) { |sum, vg| sum + vg.lvm_pvs.to_a }
+        pvs_list = list.reduce([]) { |sum, vg| sum.concat(vg.lvm_pvs.to_a) }
         LvmPvsList.new(devicegraph, list: pvs_list)
       end
 
@@ -46,7 +46,7 @@ module Y2Storage
       #
       # @return [LvmLvList]
       def lvm_lvs
-        lvs_list = list.reduce([]) { |sum, vg| sum + vg.lvm_lvs.to_a }
+        lvs_list = list.reduce([]) { |sum, vg| sum.concat(vg.lvm_lvs.to_a) }
         LvmLvsList.new(devicegraph, list: lvs_list)
       end
 

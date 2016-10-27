@@ -33,6 +33,8 @@ describe "devices lists" do
   let(:id_swap) { ::Storage::ID_SWAP }
   let(:primary) { ::Storage::PartitionType_PRIMARY }
 
+  subject(:full_list) { described_class.new(fake_devicegraph) }
+
   before do
     fake_scenario(scenario)
   end
@@ -151,7 +153,7 @@ describe "devices lists" do
 
     it "contains all disks by default" do
       expect(disks.size).to eq 3
-      expect(described_class.new(fake_devicegraph).size).to eq 3
+      expect(.size).to eq 3
     end
 
     describe "#partitions" do
@@ -193,7 +195,7 @@ describe "devices lists" do
 
     it "contains all partitions by default" do
       expect(partitions.size).to eq 9
-      expect(described_class.new(fake_devicegraph).size).to eq 9
+      expect(full_list.size).to eq 9
     end
 
     describe "#filesystems" do
@@ -213,7 +215,7 @@ describe "devices lists" do
 
     it "contains all filesystems by default" do
       expect(filesystems.size).to eq 7
-      expect(described_class.new(fake_devicegraph).size).to eq 7
+      expect(full_list.size).to eq 7
     end
   end
 
@@ -224,7 +226,7 @@ describe "devices lists" do
 
     it "contains all spaces by default" do
       expect(spaces.size).to eq 3
-      expect(described_class.new(fake_devicegraph).size).to eq 3
+      expect(full_list.size).to eq 3
     end
 
     describe "#disk_size" do
@@ -242,7 +244,7 @@ describe "devices lists" do
 
     it "contains all volume groups by default" do
       expect(vgs.size).to eq 2
-      expect(described_class.new(fake_devicegraph).size).to eq 2
+      expect(full_list.size).to eq 2
     end
 
     describe "#lvm_pvs" do
@@ -274,7 +276,7 @@ describe "devices lists" do
 
     it "contains all physical volumes by default" do
       expect(pvs.size).to eq 3
-      expect(described_class.new(fake_devicegraph).size).to eq 3
+      expect(full_list.size).to eq 3
     end
   end
 
@@ -284,7 +286,7 @@ describe "devices lists" do
 
     it "contains all logical volumes by default" do
       expect(lvs.size).to eq 3
-      expect(described_class.new(fake_devicegraph).size).to eq 3
+      expect(full_list.size).to eq 3
     end
   end
 end
