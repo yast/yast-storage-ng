@@ -22,6 +22,7 @@
 require "y2storage/boot_requirements_checker"
 require "y2storage/devices_lists"
 require "y2storage/disk_analyzer"
+require "y2storage/existing_filesystem"
 require "y2storage/disk_size"
 require "y2storage/fake_device_factory"
 require "y2storage/free_disk_space"
