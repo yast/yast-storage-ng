@@ -35,7 +35,6 @@ module Y2Storage
       using Refinements::DevicegraphLists
       include Yast::Logger
 
-      VOLUME_GROUP_SYSTEM = "system"
       FIRST_LOGICAL_PARTITION_NUMBER = 5 # Number of the first logical partition (/dev/sdx5)
 
       # Initialize.
@@ -53,15 +52,13 @@ module Y2Storage
       def create_partitions(distribution)
         self.devicegraph = original_graph.duplicate
 
-        # FIXME: not implemented yet in libstorage-bgl
-        use_lvm = false
-
-        if use_lvm # rubocop:disable Style/GuardClause raise is just temporary
-          raise NotImplementedError
-          # create_lvm(distribution)
-        else
-          create_non_lvm(distribution)
+        distribution.spaces.each do |space|
+          type = space.partition_type
+          vols = space.volumes
+          disk_space = space.disk_space
+          process_space(vols, disk_space, type)
         end
+
         devicegraph
       end
 
@@ -71,44 +68,13 @@ module Y2Storage
       attr_accessor :devicegraph
       attr_reader :original_graph
 
-      # Create volumes on LVM.
-      #
-      # @param volumes [Array<ProposalVolume>] volumes to create
-      #
-      def create_lvm(volumes)
-        lvm_vol, non_lvm_vol = volumes.partition(&:can_live_on_logical_volume)
-        # Create any partitions first that cannot be created on LVM
-        # to avoid LVM consuming all the available free space
-        create_non_lvm(non_lvm_vol)
-
-        return if lvm_vol.empty?
-
-        # Create LVM partitions (using the rest of the available free space)
-        volume_group = create_volume_group(VOLUME_GROUP_SYSTEM)
-        create_physical_volumes(volume_group)
-        lvm_vol.each { |vol| create_logical_volume(volume_group, vol) }
-      end
-
-      # Create partitions without LVM.
-      #
-      # @param distribution [SpaceDistribution]
-      #
-      def create_non_lvm(distribution)
-        distribution.spaces.each do |space|
-          type = space.partition_type
-          vols = space.volumes
-          disk_space = space.disk_space
-          create_non_lvm_simple(vols, disk_space, type)
-        end
-      end
-
       # Create partitions without LVM in a single slot of free disk space.
       #
       # @param volumes   [PlannedVolumesList] volumes to create
       # @param free_space [FreeDiskSpace]
       # @param partition_type [Symbol] type to be enforced to all the
       #       partitions. If nil, each partition can have a different type
-      def create_non_lvm_simple(volumes, free_space, partition_type)
+      def process_space(volumes, free_space, partition_type)
         volumes.each do |vol|
           log.info(
             "vol #{vol.mount_point}\tmin: #{vol.min_disk_size}\tmax: #{vol.max_disk_size} " \
@@ -354,41 +320,6 @@ module Y2Storage
         filesystem.label = vol.label if vol.label
         filesystem.uuid = vol.uuid if vol.uuid
         filesystem
-      end
-
-      # Create an LVM volume group.
-      #
-      # @param volume_group_name [String]
-      #
-      # @return [::Storage::VolumeGroup] volume_group
-      #
-      def create_volume_group(volume_group_name)
-        log.info("Creating LVM volume group #{volume_group_name}")
-        # TODO
-        raise NotImplementedError
-      end
-
-      # Create LVM physical volumes for all the rest of free_space and add them
-      # to the specified volume group.
-      #
-      # @param volume_group [::Storage::VolumeGroup]
-      #
-      def create_physical_volumes(volume_group)
-        log.info("Creating LVM physical volumes for #{volume_group}")
-      end
-
-      # Create an LVM logical volume in the specified volume group for vol.
-      #
-      # @param volume_group [::Storage::VolumeGroup]
-      # @param vol          [ProposalVolume]
-      #
-      def create_logical_volume(volume_group, vol)
-        log.info(
-          "Creating LVM logical volume #{vol.logical_volume_name} at #{volume_group}"
-        )
-        # TO DO
-        # TO DO
-        # TO DO
       end
     end
   end
