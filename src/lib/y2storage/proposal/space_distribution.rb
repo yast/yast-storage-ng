@@ -276,18 +276,19 @@ module Y2Storage
         # @return [SpaceDistribution]
         def best_for(volumes, disk_spaces, devicegraph)
           begin
+            # First, let's try to find at least one candidate space (hopefully
+            # more) for each volume
             disk_spaces_by_vol = candidate_disk_spaces(volumes, disk_spaces)
           rescue NoDiskSpaceError
             return nil
           end
 
-          candidates = hash_product(disk_spaces_by_vol).map do |combination|
-            lists = inverse_hash(combination)
-            lists = lists.each_with_object({}) do |(space, vols), hash|
-              hash[space] = PlannedVolumesList.new(vols, target: volumes.target)
-            end
+          # Calculate all the possible distributions of volumes into spaces
+          dist_hashes = distribution_hashes(disk_spaces_by_vol, volumes.target)
+
+          candidates = dist_hashes.map do |distribution_hash|
             begin
-              SpaceDistribution.new(lists, devicegraph)
+              SpaceDistribution.new(distribution_hash, devicegraph)
             rescue Error
               next
             end
@@ -340,6 +341,33 @@ module Y2Storage
               raise NoDiskSpaceError, "No suitable free space for the volume"
             end
             hash[volume] = spaces
+          end
+        end
+
+        # All possible combinations of spaces and volumes.
+        #
+        # The result is an array in which each entry represents a potential
+        # distribution of volumes into spaces taking into account the
+        # restrictions set by disk_spaces_by_vol.
+        #
+        # @param disk_spaces_by_vol [Hash{PlannedVolume => Array<FreeDiskSpace>}]
+        #     which spaces are acceptable for each volume
+        # @param target [Symbol] target to initialize all the volume lists
+        # @return [Array<Hash{FreeDiskSpace => PlannedVolumesList}>]
+        def distribution_hashes(disk_spaces_by_vol, target)
+          return [{}] if disk_spaces_by_vol.empty?
+
+          hash_product(disk_spaces_by_vol).map do |combination|
+            # combination looks like this
+            # {vol1 => space1, vol2 => space1, vol3 => space2 ...}
+            group_by_space(combination, target)
+          end
+        end
+
+        def group_by_space(combination, target)
+          combination = inverse_hash(combination)
+          combination.each_with_object({}) do |(space, vols), hash|
+            hash[space] = PlannedVolumesList.new(vols, target: target)
           end
         end
 
