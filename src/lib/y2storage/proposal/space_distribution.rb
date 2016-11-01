@@ -26,6 +26,7 @@ require "storage"
 require "y2storage/disk_size"
 require "y2storage/planned_volumes_list"
 require "y2storage/proposal/assigned_space"
+require "y2storage/proposal/phys_vol_distribution"
 require "y2storage/refinements/devicegraph_lists"
 
 module Y2Storage
@@ -78,6 +79,12 @@ module Y2Storage
         spaces.map(&:disk_size).reduce(DiskSize.zero, :+)
       end
 
+      # Total number of volumes included in the distribution
+      # @return [Fixnum]
+      def volumes_count
+        spaces.map { |sp| sp.volumes.size }.reduce(0, :+)
+      end
+
       # Comparison method used to sort distributions based on how good are
       # they for installation purposes.
       #
@@ -89,6 +96,10 @@ module Y2Storage
 
         # The fewer gaps the better
         res = gaps_count <=> other.gaps_count
+        return res unless res.zero?
+
+        # The fewer physical volumes the better
+        res = volumes_count <=> other.volumes_count
         return res unless res.zero?
 
         # The less fragmentation the better
@@ -269,22 +280,40 @@ module Y2Storage
       class << self
         # Best possible distribution, nil if the volumes don't fit
         #
+        # If the lvm_size argument is present, the result will include one
+        # or several extra planned volumes defining the LVM physical volumes
+        # that need to be created in order to reach that size (using lvm_max
+        # as limit).
+        #
         # @param volumes [PlannedVolumesList]
-        # @param disk_spaces [Array<FreeDiskSpace>]
+        # @param spaces [Array<FreeDiskSpace>]
         # @param devicegraph [::Storage::Devicegraph]
+        # @param lvm_size [DiskSize]
+        # @param lvm_max [DiskSize]
         #
         # @return [SpaceDistribution]
-        def best_for(volumes, disk_spaces, devicegraph)
+        def best_for(volumes, spaces, devicegraph, lvm_size: DiskSize.zero, lvm_max: DiskSize.unlimited)
+          log.info "best_for. lvm_size: #{lvm_size}, lvm_max: #{lvm_max}, volumes: #{volumes}"
+          # First, make sure the whole attempt makes sense
+          return nil if missing_disk_size(volumes, spaces, lvm_size: lvm_size) > DiskSize.zero
+
+          log.info "Selecting the candidate spaces for each volume"
           begin
-            # First, let's try to find at least one candidate space (hopefully
-            # more) for each volume
-            disk_spaces_by_vol = candidate_disk_spaces(volumes, disk_spaces)
+            disk_spaces_by_vol = candidate_disk_spaces(volumes, spaces)
           rescue NoDiskSpaceError
             return nil
           end
 
-          # Calculate all the possible distributions of volumes into spaces
+          log.info "Calculate all the possible distributions of volumes into spaces"
           dist_hashes = distribution_hashes(disk_spaces_by_vol, volumes.target)
+
+          # If LVM is being used, the number of possible distributions increases
+          # a lot. For every space on every distribution we can decide to place
+          # an LVM PV or not. Let's explore all the options.
+          if lvm_size > DiskSize.zero
+            log.info "Calculate LVM posibilities for each candidate distribution"
+            dist_hashes = lvm_distributions(dist_hashes, spaces, lvm_size, lvm_max)
+          end
 
           candidates = dist_hashes.map do |distribution_hash|
             begin
@@ -294,24 +323,26 @@ module Y2Storage
             end
           end
 
-          candidates.compact.sort { |a, b| a.better_than(b) }.first
+          candidates.compact!
+          log.info "Comparing #{candidates.size} distributions"
+          result = candidates.sort { |a, b| a.better_than(b) }.first
+          log.info "best_for result: #{result}"
+          result
         end
 
-        # Additional space that would be needed in order to maximize the
-        # posibilities of creating a good SpaceDistribution.
+        # Additional space that would be needed in order to have a chance of
+        # creating a good SpaceDistribution.
         #
         # Used when resizing windows in order to know how much space to remove
-        # from the partition.
-        #
-        # This is actually an oversimplyfication, because it's not just a matter
-        # of size, so maybe we can rethink this a little bit in the future if
-        # needed
+        # from the partition. In that case it's an oversimplyfication, because
+        # it's not just a matter of size.
         #
         # @param volumes [PlannedVolumesList]
         # @param disk_spaces [Array<FreeDiskSpace>]
+        # @param lvm_size [DiskSize]
         # @return [DiskSize]
-        def missing_disk_size(volumes, free_spaces)
-          needed_size = volumes.target_disk_size
+        def missing_disk_size(volumes, free_spaces, lvm_size: DiskSize.zero)
+          needed_size = volumes.target_disk_size + lvm_size
           available_space = available_space(free_spaces)
           needed_size - available_space
         end
@@ -319,9 +350,7 @@ module Y2Storage
       protected
 
         def available_space(free_spaces)
-          spaces = free_spaces.select do |space|
-            space.disk_size >= FREE_SPACE_MIN_SIZE
-          end
+          spaces = free_spaces.select { |sp| sp.disk_size >= FREE_SPACE_MIN_SIZE }
           spaces.reduce(DiskSize.zero) { |sum, space| sum + space.disk_size }
         end
 
@@ -419,6 +448,67 @@ module Y2Storage
             out[value] ||= []
             out[value] << key
           end
+        end
+
+        # Returns an extended set of distributions that includes, for each entry
+        # of the original array, all the possibilities for adding extra physical
+        # volumes
+        #
+        # NOTE: in partition tables without restrictions (no MS-DOS), we
+        # could limit the options we need to explore. Take that into account if
+        # perfomance becomes a problem.
+        #
+        # @param initial_dists [Array<Hash{FreeDiskSpace => PlannedVolumesList}>]
+        # @param all_spaces [Array<FreeDiskSpace>]
+        # @param lvm_size [DiskSize]
+        # @param max_lvm_size [DiskSize]
+        # @return [Array<Hash{FreeDiskSpace => PlannedVolumesList}>]
+        def lvm_distributions(initial_dists, all_spaces, lvm_size, max_lvm_size)
+          initial_dists.each_with_object([]) do |dist_hash, result|
+            space_sizes = lvm_space_sizes(all_spaces, dist_hash)
+            pv_dists = PhysVolDistribution.all(space_sizes, lvm_size, max_lvm_size)
+
+            pv_dists.each do |pv_dist|
+              dist = dup_distribution(dist_hash)
+              pv_dist.each_pair do |space, volume|
+                dist[space] ||= PlannedVolumesList.new
+                add_physical_volume!(dist[space], volume)
+              end
+              result << dist
+            end
+          end
+        end
+
+        # @see PhysVolDistribution.all
+        def lvm_space_sizes(all_spaces, distribution_hash)
+          hash_elements = all_spaces.map do |space|
+            volumes = distribution_hash[space]
+            used_space = if volumes.nil? || volumes.empty?
+              DiskSize.zero
+            else
+              volumes.target_disk_size
+            end
+            [space, space.disk_size - used_space]
+          end
+          Hash[hash_elements]
+        end
+
+        # Adds a volume representing a PV to a list of volumes, adjusting its
+        # properties according to the content of  the list.
+        #
+        # It modifies both arguments
+        #
+        # @param volumes [PlannedVolumesList]
+        # @param pv_vol [PlannedVolume]
+        def add_physical_volume!(volumes, pv_vol)
+          pv_vol.weight = volumes.map(&:weight).reduce(0, :+)
+          pv_vol.weight = 1 if pv_vol.weight.zero?
+          volumes << pv_vol
+        end
+
+        # Returns a deep copy of a distribution hash
+        def dup_distribution(distribution_hash)
+          Hash[distribution_hash.map { |space, vols| [space, vols.dup] }]
         end
       end
     end

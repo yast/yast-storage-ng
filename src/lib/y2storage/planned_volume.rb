@@ -148,5 +148,15 @@ module Y2Storage
       end
       "#<PlannedVolume " + attrs.join(", ") + ">"
     end
+
+    def ==(other)
+      other.class == self.class && other.internal_state == internal_state
+    end
+
+  protected
+
+    def internal_state
+      instance_variables.sort.map { |v| instance_variable_get(v) }
+    end
   end
 end
