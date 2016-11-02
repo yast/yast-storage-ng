@@ -82,69 +82,8 @@ module Y2Storage
           )
         end
 
-        volumes = volumes.deep_dup
-        volumes.each { |vol| vol.disk_size = vol.min_valid_disk_size(volumes.target) }
-        distribute_extra_space(volumes, free_space)
+        volumes = volumes.distribute_space(free_space.disk_size)
         create_volumes_partitions(volumes, free_space, partition_type)
-      end
-
-      # Distribute extra disk space among the specified volumes. This updates
-      # the size of each volume with the distributed space.
-      #
-      # @param volumes [PlannedVolumesList]
-      # @param space   [FreeDiskSpace]
-      #
-      # @return [DiskSpace] remaining space that could not be distributed
-      #
-      def distribute_extra_space(volumes, space)
-        candidates = volumes
-        extra_size = space.disk_size - volumes.total_disk_size
-        while extra_size > DiskSize.zero
-          candidates = extra_space_candidates(candidates)
-          return extra_size if candidates.empty?
-          return extra_size if candidates.total_weight.zero?
-          log.info("Distributing #{extra_size} extra space among #{candidates.size} volumes")
-
-          assigned_size = DiskSize.zero
-          candidates.each do |vol|
-            vol_extra = volume_extra_size(vol, extra_size, candidates.total_weight)
-            vol.disk_size += vol_extra
-            log.info("Distributing #{vol_extra} to #{vol.mount_point}; now #{vol.disk_size}")
-            assigned_size += vol_extra
-          end
-          extra_size -= assigned_size
-        end
-        log.info("Could not distribute #{extra_size}") unless extra_size.zero?
-        extra_size
-      end
-
-      # Volumes that may grow when distributing the extra space
-      #
-      # @param volumes [PlannedVolumesList] initial set of all volumes
-      # @return [PlannedVolumesList]
-      def extra_space_candidates(volumes)
-        candidates = volumes.dup
-        candidates.delete_if { |vol| vol.disk_size >= vol.max_disk_size }
-        candidates
-      end
-
-      # Extra space to be assigned to a volume
-      #
-      # @param volume [PlannedVolume] volume to enlarge
-      # @param available_size [DiskSize] free space to be distributed among
-      #    involved volumes
-      # @param total_weight [Float] sum of the weights of all involved volumes
-      #
-      # @return [DiskSize]
-      def volume_extra_size(volume, available_size, total_weight)
-        extra_size = available_size * (volume.weight / total_weight)
-        new_size = extra_size + volume.disk_size
-        if new_size > volume.max_disk_size
-          # Increase just until reaching the max size
-          volume.max_disk_size - volume.disk_size
-        else
-          extra_size
-        end
       end
 
       # Creates a partition and the corresponding filesystem for each volume

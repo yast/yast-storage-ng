@@ -35,6 +35,7 @@ module Y2Storage
   class PlannedVolumesList
     include Enumerable
     extend Forwardable
+    include Yast::Logger
 
     # @return [Symbol] :min or :desired, size to use for the calculations
     attr_accessor :target
@@ -143,11 +144,33 @@ module Y2Storage
       end.map(&:first)
     end
 
+    # Returns a copy of the list in which the given space has been distributed
+    # among the volumes, distributing the extra space (beyond the target size)
+    # according to the weight and max size of each volume.
+    #
+    # @raise [RuntimeError] if the given space is not enough to reach the target
+    #     size for all volumes
+    #
+    # @param space_size [DiskSize]
+    # @return [PlannedVolumesList] list containing volumes with an adjusted
+    #     value for PlannedVolume#disk_size
+    def distribute_space(space_size)
+      raise RuntimeError if space_size < target_disk_size
+
+      new_list = deep_dup
+      new_list.each { |vol| vol.disk_size = vol.min_valid_disk_size(target) }
+
+      extra_size = space_size - new_list.total_disk_size
+      new_list.distribute_extra_space!(extra_size)
+
+      new_list
+    end
+
     def to_s
       "#<PlannedVolumesList target=#{@target}, volumes=#{@volumes.map(&:to_s)}>"
     end
 
-  private
+  protected
 
     # @param one [Array] first element: the volume, second: its original index
     # @param other [Array] same structure than previous one
@@ -200,6 +223,55 @@ module Y2Storage
       else
         one.nil? ? 1 : -1
       end
+    end
+
+    # Volumes that may grow when distributing the extra space
+    #
+    # @param volumes [PlannedVolumesList] initial set of all volumes
+    # @return [PlannedVolumesList]
+    def extra_space_candidates
+      candidates = dup
+      candidates.delete_if { |vol| vol.disk_size >= vol.max_disk_size }
+      candidates
+    end
+
+    # Extra space to be assigned to a volume
+    #
+    # @param volume [PlannedVolume] volume to enlarge
+    # @param available_size [DiskSize] free space to be distributed among
+    #    involved volumes
+    # @param total_weight [Float] sum of the weights of all involved volumes
+    #
+    # @return [DiskSize]
+    def volume_extra_size(volume, available_size, total_weight)
+      extra_size = available_size * (volume.weight / total_weight)
+      new_size = extra_size + volume.disk_size
+      if new_size > volume.max_disk_size
+        # Increase just until reaching the max size
+        volume.max_disk_size - volume.disk_size
+      else
+        extra_size
+      end
+    end
+
+    def distribute_extra_space!(extra_size)
+      candidates = self
+      while extra_size > DiskSize.zero
+        candidates = candidates.extra_space_candidates
+        return extra_size if candidates.empty?
+        return extra_size if candidates.total_weight.zero?
+        log.info("Distributing #{extra_size} extra space among #{candidates.size} volumes")
+
+        assigned_size = DiskSize.zero
+        candidates.each do |vol|
+          vol_extra = volume_extra_size(vol, extra_size, candidates.total_weight)
+          vol.disk_size += vol_extra
+          log.info("Distributing #{vol_extra} to #{vol.mount_point}; now #{vol.disk_size}")
+          assigned_size += vol_extra
+        end
+        extra_size -= assigned_size
+      end
+      log.info("Could not distribute #{extra_size}") unless extra_size.zero?
     end
   end
 end
