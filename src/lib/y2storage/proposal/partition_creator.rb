@@ -109,7 +109,7 @@ module Y2Storage
             space = free_space_within(initial_free_space)
             primary = primary?(partition_type, space.disk)
             partition = create_partition(vol, partition_id, space, primary)
-            make_filesystem(partition, vol)
+            vol.create_filesystem(partition)
             devicegraph.check
           rescue ::Storage::Exception => error
             raise Error, "Error allocating #{vol}. Details: #{error}"
@@ -241,24 +241,6 @@ module Y2Storage
         end
         # region.dup doesn't seem to work (SWIG bindings problem?)
         ::Storage::Region.new(region.start, blocks, region.block_size)
-      end
-
-      # Create a filesystem for the specified volume on the specified partition
-      # and set its mount point. Do nothing if there is no filesystem
-      # configured for 'vol'.
-      #
-      # @param partition [::Storage::Partition]
-      # @param vol       [ProposalVolume]
-      #
-      # @return [::Storage::Filesystem] filesystem
-      #
-      def make_filesystem(partition, vol)
-        return nil unless vol.filesystem_type
-        filesystem = partition.create_filesystem(vol.filesystem_type)
-        filesystem.add_mountpoint(vol.mount_point) if vol.mount_point && !vol.mount_point.empty?
-        filesystem.label = vol.label if vol.label
-        filesystem.uuid = vol.uuid if vol.uuid
-        filesystem
       end
     end
   end
