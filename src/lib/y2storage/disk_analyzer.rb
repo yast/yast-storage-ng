@@ -26,6 +26,7 @@ require "fileutils"
 require "storage"
 require "y2storage/disk_size"
 require "y2storage/refinements"
+require "y2storage/existing_filesystem"
 
 Yast.import "Arch"
 
@@ -147,6 +148,32 @@ module Y2Storage
     # @return [Hash{String => Array<::Storage::Partition>}] see {#partitions_with_id}
     def linux_partitions
       @linux_partitions ||= partitions_with_id(LINUX_PARTITION_IDS, "Linux")
+    end
+
+    # Partitions that are part of a LVM volume group, i.e. partitions that hold
+    # a LVM physical volume.
+    #
+    # The result is a Hash in which each key is the name of a volume group
+    # and the value is an Array of ::Storage::Partition objects
+    #
+    # Take into account that the result is, as always, limited by #scope. Thus,
+    # physical volumes from other disks will not be present, even if they are
+    # part of the same volume group.
+    #
+    # @return [Hash{String => Array<::Storage::Partition>}]
+    def used_lvm_partitions
+      @used_lvm_partitions ||= begin
+        lvm_parts = partitions_with_id(::Storage::ID_LVM, "LVM").values.flatten
+        result = lvm_parts.each_with_object({}) do |part, hash|
+          vg_name = vg_for(part)
+          next unless vg_name
+
+          hash[vg_name] ||= []
+          hash[vg_name] << part
+        end
+        log.info("Found used LVM partitions: #{result}")
+        result
+      end
     end
 
     # Disks that are suitable for installing Linux.
@@ -394,7 +421,8 @@ module Y2Storage
     #
     def installation_volume?(vol_name)
       log.info("Checking if #{vol_name} is an installation volume")
-      is_inst = mount_and_check(vol_name) { |mp| installation_volume_check(mp) }
+      fs = ExistingFilesystem.new(vol_name)
+      is_inst = fs.mount_and_check { |mp| installation_volume_check(mp) }
       log.info("#{vol_name} is installation volume") if is_inst
       is_inst
     end
@@ -415,28 +443,6 @@ module Y2Storage
       FileUtils.identical?(check_file, mount_point + check_file)
     end
 
-    # Mount a volume, perform the check given in 'block' while mounted, and
-    # then unmount. The block will get the mount point of the volume as a
-    # parameter.
-    #
-    # @return the return value of 'block' or 'nil' if there was an error.
-    #
-    def mount_and_check(vol_name, &block)
-      raise ArgumentError, "Code block required" unless block_given?
-      mount_point = "/mnt" # FIXME
-      begin
-        # check if we have a filesystem
-        # return false unless vol.filesystem
-        mount(vol_name, mount_point)
-        check_result = block.call(mount_point)
-        umount(mount_point)
-        check_result
-      rescue RuntimeError => ex # FIXME: rescue ::Storage::Exception when SWIG bindings are fixed
-        log.error("CAUGHT exception: #{ex} for #{vol_name}")
-        nil
-      end
-    end
-
     # Return an array of the device names of the specified block devices
     # (::Storage::Disk, ::Storage::Partition, ...).
     #
@@ -445,28 +451,6 @@ module Y2Storage
     #
     def dev_names(blk_devices)
       blk_devices.map(&:to_s)
-    end
-
-    # Mount a device.
-    #
-    # This is a temporary workaround until the new libstorage can handle that.
-    #
-    def mount(device_name, mount_point)
-      # FIXME: use libstorage function when available
-      cmd = "/usr/bin/mount #{device_name} #{mount_point} >/dev/null 2>&1"
-      log.debug("Trying to mount #{device_name}: #{cmd}")
-      raise "mount failed for #{device_name}" unless system(cmd)
-    end
-
-    # Unmount a device.
-    #
-    # This is a temporary workaround until the new libstorage can handle that.
-    #
-    def umount(mount_point)
-      # FIXME: use libstorage function when available
-      cmd = "/usr/bin/umount #{mount_point}"
-      log.debug("Unmounting: #{cmd}")
-      raise "umount failed for #{mount_point}" unless system(cmd)
     end
 
     # Remove any installation disks from 'disks' and return a disks array
@@ -506,6 +490,23 @@ module Y2Storage
       result = Hash[pairs]
       log.info("Found #{log_label} partitions: #{result}")
       result
+    end
+
+    # Name of the LVM volume group to which the partition belongs
+    #
+    # @param partition [::Storage::Partition]
+    # @return [String] nil if the partition does not hold a physical volume
+    def vg_for(partition)
+      name = partition.name
+      lvm_pv = ::Storage::LvmPv.all(devicegraph).to_a.detect { |pv| pv.blk_device.name == name }
+      return nil unless lvm_pv
+
+      begin
+        lvm_pv.lvm_vg.vg_name
+      rescue ::Storage::WrongNumberOfChildren
+        # Unassigned PV
+        nil
+      end
     end
   end
 end

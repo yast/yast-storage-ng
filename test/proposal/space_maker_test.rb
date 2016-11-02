@@ -371,5 +371,33 @@ describe Y2Storage::Proposal::SpaceMaker do
         end
       end
     end
+
+    context "when deleting a partition which belongs to a LVM" do
+      let(:scenario) { "lvm-two-vgs" }
+      let(:windows_partitions) { { "/dev/sda" => [analyzer_part("/dev/sda1")] } }
+      let(:volumes) { vols_list(planned_vol(mount_point: "/1", type: :ext4, desired: 2.GiB)) }
+
+      it "deletes also other partitions of the same volume group" do
+        result = maker.provide_space(volumes)
+        partitions = result[:devicegraph].partitions
+
+        expect(partitions.map(&:name)).to_not include "/dev/sda9"
+        expect(partitions.map(&:name)).to_not include "/dev/sda5"
+      end
+
+      it "deletes the volume group itself" do
+        result = maker.provide_space(volumes)
+
+        expect(result[:devicegraph].vgs.map(&:vg_name)).to_not include "vg1"
+      end
+
+      it "does not affect partitions from other volume groups" do
+        result = maker.provide_space(volumes)
+        devicegraph = result[:devicegraph]
+
+        expect(devicegraph.partitions.map(&:name)).to include "/dev/sda7"
+        expect(devicegraph.vgs.map(&:vg_name)).to include "vg0"
+      end
+    end
   end
 end
