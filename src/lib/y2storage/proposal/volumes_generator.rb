@@ -93,6 +93,10 @@ module Y2Storage
           swap_size = [ram_size, swap_size].max
         end
         vol = PlannedVolume.new("swap", ::Storage::FsType_SWAP)
+        # NOTE: Enforcing the re-use of an existing partition limits the options
+        # to propose a valid distribution of the volumes. For swap we already
+        # have mechanisms to reuse UUIDs and labels, so maybe is smarter to
+        # never reuse partitions as-is.
         reuse = reusable_swap(swap_size)
         if reuse
           vol.reuse = reuse.name
