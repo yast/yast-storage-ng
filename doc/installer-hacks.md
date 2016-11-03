@@ -47,3 +47,10 @@ summary of the changes in those branches, in a human-readable fashion.
   user canceled multipath activation.
 
 * Commented code in umount_finish.rb dealing with loop files.
+
+## Changes in yast2-bootloader
+
+* Testsuite disabled.
+
+* Various code dealing with RAID, alternative device names and crypt devices
+  disabled. All marked with "# storage-ng".
