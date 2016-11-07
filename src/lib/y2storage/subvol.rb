@@ -123,11 +123,7 @@ module Y2Storage
         arch = a.dup
         negate = arch.start_with?("!")
         arch[0] = "" if negate # remove leading "!"
-        if block_given?
-          match = block.call(arch)
-        else
-          match = arch == target_arch
-        end
+        match = block_given? ? block.call(arch) : arch == target_arch
         if match && negate
           log.info("Not using #{self} for explicitly excluded arch #{arch}")
           return false
