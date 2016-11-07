@@ -24,8 +24,13 @@ require_relative "../spec_helper"
 require "storage"
 require "y2storage"
 
-describe Y2Storage::Proposal::SpaceDistribution do
-  describe ".better_for" do
+describe Y2Storage::Proposal::SpaceDistributionCalculator do
+  let(:lvm_size) { Y2Storage::DiskSize.zero }
+  let(:lvm_max) { Y2Storage::DiskSize.zero }
+
+  subject(:calculator) { described_class.new(lvm_size: lvm_size, lvm_max: lvm_max) }
+
+  describe "#best_distribution" do
     using Y2Storage::Refinements::SizeCasts
     using Y2Storage::Refinements::DevicegraphLists
 
@@ -33,19 +38,12 @@ describe Y2Storage::Proposal::SpaceDistribution do
       fake_scenario(scenario)
     end
 
-    let(:settings) do
-      settings = Y2Storage::ProposalSettings.new
-      settings.candidate_devices = ["/dev/sda"]
-      settings.root_device = "/dev/sda"
-      settings
-    end
-
     let(:vol1) { planned_vol(mount_point: "/1", type: :ext4, desired: 1.GiB, max: 3.GiB, weight: 1) }
     let(:vol2) { planned_vol(mount_point: "/2", type: :ext4, desired: 2.GiB, max: 3.GiB, weight: 1) }
     let(:volumes) { Y2Storage::PlannedVolumesList.new([vol1, vol2, vol3]) }
     let(:spaces) { fake_devicegraph.free_disk_spaces.to_a }
 
-    subject(:distribution) { described_class.best_for(volumes, spaces, fake_devicegraph) }
+    subject(:distribution) { calculator.best_distribution(volumes, spaces, fake_devicegraph) }
 
     context "when the only available space is in an extended partition" do
       let(:scenario) { "space_22_extended" }
@@ -226,7 +224,6 @@ describe Y2Storage::Proposal::SpaceDistribution do
 
     context "if disk restrictions apply to some volume" do
       before do
-        settings.candidate_devices = ["/dev/sda", "/dev/sdb"]
         # Avoid rounding problems
         vol1.desired = 1.GiB - 2.MiB
       end
@@ -273,9 +270,6 @@ describe Y2Storage::Proposal::SpaceDistribution do
     context "when asking for extra LVM space" do
       let(:scenario) { "spaces_5_6_8_10" }
 
-      subject(:distribution) do
-        described_class.best_for(volumes, spaces, fake_devicegraph, lvm_size: lvm_size, lvm_max: lvm_max)
-      end
       let(:vol3) { planned_vol(mount_point: "/3", type: :ext4, desired: 1.GiB, max: 30.GiB, weight: 2) }
       let(:lvm_max) { Y2Storage::DiskSize.unlimited }
 

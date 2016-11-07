@@ -26,7 +26,7 @@ require "storage"
 require "y2storage/planned_volume"
 require "y2storage/disk_size"
 require "y2storage/free_disk_space"
-require "y2storage/proposal/space_distribution"
+require "y2storage/proposal/space_distribution_calculator"
 require "y2storage/proposal/partition_killer"
 require "y2storage/refinements"
 
@@ -69,6 +69,7 @@ module Y2Storage
       def provide_space(volumes)
         @new_graph = original_graph.duplicate
         @partition_killer = PartitionKiller.new(@new_graph, disk_analyzer)
+        @dist_calculator = SpaceDistributionCalculator.new
         @deleted_names = []
 
         # Partitions that should not be deleted
@@ -101,7 +102,7 @@ module Y2Storage
 
     protected
 
-      attr_reader :original_graph, :new_graph, :disk_analyzer, :partition_killer
+      attr_reader :original_graph, :new_graph, :disk_analyzer, :partition_killer, :dist_calculator
 
       # Partitions from the original devicegraph that are not present in the
       # result of the last call to #provide_space
@@ -128,7 +129,7 @@ module Y2Storage
       #
       # @return [Boolean]
       def success?(volumes)
-        @distribution ||= SpaceDistribution.best_for(volumes, free_spaces(new_graph).to_a, new_graph)
+        @distribution ||= dist_calculator.best_distribution(volumes, free_spaces(new_graph).to_a, new_graph)
         !!@distribution
       rescue Error => e
         log.info "Exception while trying to distribute volumes: #{e}"
@@ -162,7 +163,7 @@ module Y2Storage
       #
       # @return [DiskSize]
       def missing_required_size(volumes, disk)
-        SpaceDistribution.missing_disk_size(volumes, free_spaces(new_graph, disk).to_a)
+        dist_calculator.missing_disk_size(volumes, free_spaces(new_graph, disk).to_a)
       end
 
       # List of free spaces in the given devicegraph
