@@ -277,4 +277,11 @@ describe Y2Storage::DiskSize do
     end
   end
 
+  describe "#ceil" do
+    pending
+  end
+
+  describe "#floor" do
+    pending
+  end
 end

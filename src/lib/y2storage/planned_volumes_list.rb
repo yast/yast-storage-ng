@@ -67,16 +67,32 @@ module Y2Storage
     # its minimum size is taken instead. This gives a more useful sum in the
     # very common case that any volume has an 'unlimited' desired size.
     #
+    # If the optional argument "rounding" is used, the size of every volume will
+    # be rounded up. # @see DiskSize#ceil
+    #
+    # @param rounding [DiskSize, nil]
     # @return [DiskSize] sum of desired/min sizes in @volumes
-    def target_disk_size
-      @volumes.reduce(DiskSize.zero) { |sum, vol| sum + vol.min_valid_disk_size(target) }
+    def target_disk_size(rounding: nil)
+      @volumes.reduce(DiskSize.zero) do |sum, vol|
+        vol_size = vol.min_valid_disk_size(target)
+        vol_size = vol_size.ceil(rounding) if rounding
+        sum + vol_size
+      end
     end
 
     # Total sum of all current max sizes of volumes
     #
+    # If the optional argument "rounding" is used, the size of every volume will
+    # be rounded up. # @see DiskSize#ceil
+    #
+    # @param rounding [DiskSize, nil]
     # @return [DiskSize]
-    def max_disk_size
-      @volumes.reduce(DiskSize.zero) { |sum, vol| sum + vol.max_disk_size }
+    def max_disk_size(rounding: nil)
+      @volumes.reduce(DiskSize.zero) do |sum, vol|
+        max = vol.max_disk_size
+        max = max.ceil(rounding) if rounding
+        sum + max
+      end
     end
 
     # Total sum of all current sizes of volumes
@@ -151,17 +167,24 @@ module Y2Storage
     # @raise [RuntimeError] if the given space is not enough to reach the target
     #     size for all volumes
     #
+    # If the optional argument rounding is used, space will be distributed
+    # always in blocks of the specified size.
+    #
     # @param space_size [DiskSize]
+    # @param rounding [DiskSize, nil] min block size to distribute
     # @return [PlannedVolumesList] list containing volumes with an adjusted
     #     value for PlannedVolume#disk_size
-    def distribute_space(space_size)
+    def distribute_space(space_size, rounding: nil)
       raise RuntimeError if space_size < target_disk_size
 
       new_list = deep_dup
-      new_list.each { |vol| vol.disk_size = vol.min_valid_disk_size(target) }
+      new_list.each do |vol|
+        vol.disk_size = vol.min_valid_disk_size(target)
+        vol.disk_size.round(rounding) if rounding
+      end
 
       extra_size = space_size - new_list.total_disk_size
-      new_list.distribute_extra_space!(extra_size)
+      new_list.distribute_extra_space!(extra_size, rounding: rounding)
 
       new_list
     end
@@ -241,11 +264,18 @@ module Y2Storage
     # @param available_size [DiskSize] free space to be distributed among
     #    involved volumes
     # @param total_weight [Float] sum of the weights of all involved volumes
+    # @param rounding [DiskSize, nil] size to round up
     #
     # @return [DiskSize]
-    def volume_extra_size(volume, available_size, total_weight)
+    def volume_extra_size(volume, available_size, total_weight, rounding: nil)
       extra_size = available_size * (volume.weight / total_weight)
       new_size = extra_size + volume.disk_size
+
+      if rounding
+        new_size = new_size.ceil(rounding)
+        new_size = new_size.floor(rounding) if new_size > available_size
+      end
+
       if new_size > volume.max_disk_size
         # Increase just until reaching the max size
         volume.max_disk_size - volume.disk_size
@@ -254,9 +284,9 @@ module Y2Storage
       end
     end
 
-    def distribute_extra_space!(extra_size)
+    def distribute_extra_space!(extra_size, rounding: nil)
       candidates = self
-      while extra_size > DiskSize.zero
+      while distributable?(extra_size, rounding)
         candidates = candidates.extra_space_candidates
         return extra_size if candidates.empty?
         return extra_size if candidates.total_weight.zero?
@@ -272,6 +302,14 @@ module Y2Storage
         extra_size -= assigned_size
       end
       log.info("Could not distribute #{extra_size}") unless extra_size.zero?
+    end
+
+    def distributable?(size, rounding = nil)
+      if rounding
+        size >= rounding
+      else
+        size > DiskSize.zero
+      end
     end
   end
 end
