@@ -194,5 +194,9 @@ describe Y2Storage::Proposal::VolumesGenerator do
         end
       end
     end
+
+    context "with LVM" do
+      pending
+    end
   end
 end
