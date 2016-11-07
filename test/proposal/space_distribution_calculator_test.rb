@@ -25,10 +25,10 @@ require "storage"
 require "y2storage"
 
 describe Y2Storage::Proposal::SpaceDistributionCalculator do
-  let(:lvm_size) { Y2Storage::DiskSize.zero }
-  let(:lvm_max) { Y2Storage::DiskSize.zero }
+  let(:lvm_volumes) { Y2Storage::PlannedVolumesList.new }
+  let(:lvm_helper) { Y2Storage::Proposal::LvmHelper.new(lvm_volumes) }
 
-  subject(:calculator) { described_class.new(lvm_size: lvm_size, lvm_max: lvm_max) }
+  subject(:calculator) { described_class.new(lvm_helper) }
 
   describe "#best_distribution" do
     using Y2Storage::Refinements::SizeCasts
@@ -271,6 +271,8 @@ describe Y2Storage::Proposal::SpaceDistributionCalculator do
       let(:scenario) { "spaces_5_6_8_10" }
 
       let(:vol3) { planned_vol(mount_point: "/3", type: :ext4, desired: 1.GiB, max: 30.GiB, weight: 2) }
+      let(:lvm_volumes) { Y2Storage::PlannedVolumesList.new([lvm_vol]) }
+      let(:lvm_vol) { planned_vol(desired: lvm_size, max: lvm_max) }
       let(:lvm_max) { Y2Storage::DiskSize.unlimited }
 
       let(:pv_vols) do
@@ -302,7 +304,7 @@ describe Y2Storage::Proposal::SpaceDistributionCalculator do
       end
 
       context "if only one space can host all the LVM space" do
-        let(:lvm_size) { 10.GiB }
+        let(:lvm_size) { 9.GiB }
 
         it "adds one PV in that space" do
           expect(pv_vols.size).to eq 1
@@ -321,16 +323,19 @@ describe Y2Storage::Proposal::SpaceDistributionCalculator do
         let(:lvm_size) { 11.GiB }
         let(:lvm_max) { 20.GiB }
 
-        it "sets min_disk_size for all PVs to sum lvm_size" do
-          expect(pv_vols.map(&:min_disk_size).reduce(:+)).to eq lvm_size
+        it "sets the correct min_disk_size for all PVs" do
+          useful_min_sizes = pv_vols.map { |v| lvm_helper.useful_pv_space(v.min_disk_size) }
+          expect(useful_min_sizes.reduce(:+)).to eq lvm_size
         end
 
-        it "sets desired_disk_size for all PVs to sum lvm_size" do
-          expect(pv_vols.map(&:desired_disk_size).reduce(:+)).to eq lvm_size
+        it "sets the correct desired_disk_size for all PVs" do
+          useful_desired_sizes = pv_vols.map { |v| lvm_helper.useful_pv_space(v.desired_disk_size) }
+          expect(useful_desired_sizes.reduce(:+)).to eq lvm_size
         end
 
         it "sets max_disk_size for all PVs to sum lvm_size" do
-          expect(pv_vols.map(&:max_disk_size).reduce(:+)).to eq lvm_max
+          useful_max_sizes = pv_vols.map { |v| lvm_helper.useful_pv_space(v.max_disk_size) }
+          expect(useful_max_sizes.reduce(:+)).to eq lvm_max
         end
 
         context "if there are other volumes in the same space" do

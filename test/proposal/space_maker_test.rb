@@ -41,9 +41,10 @@ describe Y2Storage::Proposal::SpaceMaker do
     end
     let(:volumes) { vols_list(vol1) }
     let(:analyzer) { Y2Storage::DiskAnalyzer.new(fake_devicegraph) }
+    let(:lvm_helper) { Y2Storage::Proposal::LvmHelper.new(Y2Storage::PlannedVolumesList.new) }
     let(:windows_partitions) { Hash.new }
 
-    subject(:maker) { described_class.new(fake_devicegraph, analyzer, settings) }
+    subject(:maker) { described_class.new(fake_devicegraph, analyzer, lvm_helper, settings) }
 
     context "if the only disk is not big enough" do
       let(:scenario) { "empty_hard_disk_50GiB" }
@@ -398,6 +399,10 @@ describe Y2Storage::Proposal::SpaceMaker do
         expect(devicegraph.partitions.map(&:name)).to include "/dev/sda7"
         expect(devicegraph.vgs.map(&:vg_name)).to include "vg0"
       end
+    end
+
+    context "with LVM involved" do
+      pending
     end
   end
 end

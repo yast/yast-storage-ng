@@ -41,41 +41,48 @@ module Y2Storage
       include Yast::Logger
 
       attr_accessor :settings
+      attr_reader :lvm_helper, :original_graph
 
       # Initialize.
       #
       # @param original_graph [::Storage::Devicegraph] initial devicegraph
       # @param disk_analyzer [DiskAnalyzer] information about original_graph
+      # @param lvm_helper [Proposal::LvmHelper] contains information about the
+      #     LVM planned volume and how to make space for them
       # @param settings [ProposalSettings] proposal settings
-      def initialize(original_graph, disk_analyzer, settings)
+      def initialize(original_graph, disk_analyzer, lvm_helper, settings)
         @original_graph = original_graph
         @disk_analyzer = disk_analyzer
+        @lvm_helper = lvm_helper
         @settings = settings
       end
 
       # Performs all the operations needed to free enough space to accomodate
-      # a set of volumes
+      # a set of planned volumes (that must live out of LVM) and the new
+      # physical volumes needed to accomodate the LVM planned volumes.
       #
-      # @raise Proposal::Error if is not possible to accomodate the volumes
+      # @raise Proposal::Error if is not possible to accomodate the planned
+      #   volumes and/or the physical volumes
       #
-      # @param volumes [PlannedVolumesList] volumes to make space for
+      # @param no_lvm_volumes [PlannedVolumesList] set of non-LVM volumes to
+      #     make space for. The LVM volumes are already handled by #lvm_helper.
       # @return [Hash] a hash with three elements:
       #   devicegraph: [::Storage::Devicegraph] resulting devicegraph
       #   deleted_partitions: [Array<::Storage::Partition>] partitions that
       #     were in the original devicegraph but are not in the resulting one
       #   space_distribution: [SpaceDistribution] proposed distribution of
-      #     volumes
+      #     volumes, including new PVs if necessary
       #
-      def provide_space(volumes)
+      def provide_space(no_lvm_volumes)
         @new_graph = original_graph.duplicate
         @partition_killer = PartitionKiller.new(@new_graph, disk_analyzer)
-        @dist_calculator = SpaceDistributionCalculator.new
+        @dist_calculator = SpaceDistributionCalculator.new(lvm_helper)
         @deleted_names = []
 
         # Partitions that should not be deleted
-        keep = []
+        keep = lvm_helper.partitions_in_vg
         # Let's filter out volumes with some value in #reuse
-        volumes = volumes.dup
+        volumes = no_lvm_volumes.dup
         volumes.select(&:reuse).each do |vol|
           log.info "No need to find a fit for this volume, it will reuse #{vol.reuse}: #{vol}"
           keep << vol.reuse
@@ -102,7 +109,7 @@ module Y2Storage
 
     protected
 
-      attr_reader :original_graph, :new_graph, :disk_analyzer, :partition_killer, :dist_calculator
+      attr_reader :new_graph, :disk_analyzer, :partition_killer, :dist_calculator
 
       # Partitions from the original devicegraph that are not present in the
       # result of the last call to #provide_space
@@ -129,7 +136,8 @@ module Y2Storage
       #
       # @return [Boolean]
       def success?(volumes)
-        @distribution ||= dist_calculator.best_distribution(volumes, free_spaces(new_graph).to_a, new_graph)
+        spaces = free_spaces(new_graph).to_a
+        @distribution ||= dist_calculator.best_distribution(volumes, spaces, new_graph)
         !!@distribution
       rescue Error => e
         log.info "Exception while trying to distribute volumes: #{e}"
@@ -159,11 +167,13 @@ module Y2Storage
         raise NoDiskSpaceError unless success?(volumes)
       end
 
-      # Additional space that needs to be freed in order to reach the goal
+      # Additional space that needs to be freed while resizing a partition in
+      # order to reach the goal
       #
       # @return [DiskSize]
-      def missing_required_size(volumes, disk)
-        dist_calculator.missing_disk_size(volumes, free_spaces(new_graph, disk).to_a)
+      def resizing_size(volumes, disk)
+        spaces = free_spaces(new_graph, disk).to_a
+        dist_calculator.resizing_size(volumes, spaces)
       end
 
       # List of free spaces in the given devicegraph
@@ -209,7 +219,7 @@ module Y2Storage
         success = sorted_resizables(parts_by_disk.values.flatten).any? do |res|
           shrink_size = [
             res[:recoverable_size],
-            missing_required_size(volumes, disk)
+            resizing_size(volumes, disk)
           ].min
           shrink_partition(res[:partition], shrink_size)
 

@@ -58,15 +58,14 @@ module Y2Storage
         #     spaces that could potentially contain a PV. As values the max size
         #     of such PV, since some space could already be reserved for other
         #     (no LVM) planned volumes.
-        # @param needed_total_size [DiskSize]
-        # @param max_total_size [DiskSize]
+        # @param lvm_helper [Proposal::LvmHelper]
         #
         # @return [Array<PhysVolDistribution>]
-        def all(space_sizes, needed_total_size, max_total_size)
+        def all(space_sizes, lvm_helper)
           all = []
           all_spaces = space_sizes.keys
           all_spaces.permutation.each do |sorted_spaces|
-            distribution = new_for_order(sorted_spaces, space_sizes, needed_total_size, max_total_size)
+            distribution = new_for_order(sorted_spaces, space_sizes, lvm_helper)
             next unless distribution
 
             all << distribution unless all.include?(distribution)
@@ -78,37 +77,39 @@ module Y2Storage
 
         # Returns a new PhysVolDistribution created by assigning a physical volume
         # to each space, following the given order, until the goal is reached.
+        #
         # Returns nil if it's not possible to create a distribution of physical
-        # volumes that warrants needed_total_size.
+        # volumes that guarantees the requirements set by lvm_helper.
         #
         # @param sorted_spaces [Array<FreeDiskSpace>]
         # @param max_sizes [Hash{FreeDiskSpace => DiskSize}] for every space,
         #     the max size usable for creating a physical volume
-        # @param needed_total_size [DiskSize]
-        # @param max_total_size [DiskSize]
+        # @param lvm_helper [Proposal::LvmHelper]
         #
         # @return [PhysVolDistribution, nil]
-        def new_for_order(sorted_spaces, max_sizes, needed_total_size, max_total_size)
+        def new_for_order(sorted_spaces, max_sizes, lvm_helper)
           volumes = {}
-          missing_size = needed_total_size
+          missing_size = lvm_helper.missing_space
 
           sorted_spaces.each do |space|
-            usable_size = max_sizes[space]
-            next unless usable_size > DiskSize.zero
+            available_size = max_sizes[space]
+            next unless available_size > lvm_helper.min_pv_size
 
             pv_vol = new_planned_volume
             volumes[space] = pv_vol
+            useful_space = lvm_helper.useful_pv_space(available_size)
 
-            if usable_size < missing_size
+            if useful_space < missing_size
               # Still not enough, let's use the whole space
-              pv_vol.min_disk_size = pv_vol.desired_disk_size = usable_size
-              pv_vol.max_disk_size = usable_size
-              missing_size -= usable_size
+              pv_vol.min_disk_size = pv_vol.desired_disk_size = available_size
+              pv_vol.max_disk_size = available_size
+              missing_size -= useful_space
             else
               # This space is the last one we need to fill
-              pv_vol.min_disk_size = pv_vol.desired_disk_size = missing_size
-              other_vols_size = needed_total_size - missing_size
-              pv_vol.max_disk_size = max_total_size - other_vols_size
+              pv_size = lvm_helper.real_pv_size(missing_size)
+              pv_vol.min_disk_size = pv_vol.desired_disk_size = pv_size
+              other_vols_size = lvm_helper.missing_space - pv_size
+              pv_vol.max_disk_size = lvm_helper.max_extra_space - other_vols_size
               missing_size = DiskSize.zero
               break
             end

@@ -189,6 +189,21 @@ module Y2Storage
       new_list
     end
 
+    # Returns two lists, the first containing the elements for which the block
+    # evaluates to true, the second containing the rest. Pretty much like
+    # #partition but returning two volume lists instead of two arrays.
+    #
+    # If no block is given, it returns an Enumerator
+    def split_by(&block)
+      delegated = @volumes.partition(&block)
+      if delegated.is_a?(Array)
+        delegated.map { |l| PlannedVolumesList.new(l, target: target) }
+      else
+        # Enumerator
+        delegated
+      end
+    end
+
     def to_s
       "#<PlannedVolumesList target=#{@target}, volumes=#{@volumes.map(&:to_s)}>"
     end
