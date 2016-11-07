@@ -4,7 +4,6 @@ require_relative "spec_helper"
 require "y2storage/subvol"
 Yast.import "Arch"
 
-
 describe Y2Storage::Subvol do
 
   context "#new" do
@@ -79,7 +78,7 @@ describe Y2Storage::Subvol do
     describe "Fully specified subvol" do
       subject do
         xml = { "path" => "var/fake", "copy_on_write" => false, "archs" => "fake, ppc,  !  foo" }
-        Y2Storage::Subvol.create_from_xml( xml )
+        Y2Storage::Subvol.create_from_xml(xml)
       end
 
       it "has the correct path" do
@@ -115,7 +114,7 @@ describe Y2Storage::Subvol do
     describe "Minimalistic subvol" do
       subject do
         xml = { "path" => "var/fake" }
-        Y2Storage::Subvol.create_from_xml( xml )
+        Y2Storage::Subvol.create_from_xml(xml)
       end
 
       it "has the correct path" do
