@@ -303,7 +303,8 @@ module Y2Storage
     # @return [Array<Hash>]
     #
     def yaml_lvm_vg_lvm_pvs(lvm_vg)
-      lvm_vg.lvm_pvs.to_a.map { |lvm_pv| yaml_lvm_pv(lvm_pv) }
+      pvs = lvm_vg.lvm_pvs.to_a.sort_by { |pv| pv.blk_device.name }
+      pvs.map { |lvm_pv| yaml_lvm_pv(lvm_pv) }
     end
 
     # Return the YAML counterpart of a ::Storage::LvmPv.
