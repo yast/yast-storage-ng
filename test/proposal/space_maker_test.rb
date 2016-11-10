@@ -401,8 +401,54 @@ describe Y2Storage::Proposal::SpaceMaker do
       end
     end
 
-    context "with LVM involved" do
-      pending
+    context "when a LVM VG is going to be reused" do
+      let(:scenario) { "lvm-two-vgs" }
+      let(:windows_partitions) { { "/dev/sda" => [analyzer_part("/dev/sda1")] } }
+      let(:resize_info) do
+        instance_double("::Storage::ResizeInfo", resize_ok: true, min_size: 10.GiB.to_i)
+      end
+
+      before do
+        # We are reusing vg1
+        expect(lvm_helper).to receive(:partitions_in_vg).and_return ["/dev/sda5", "/dev/sda9"]
+        # At some point, we can try to resize Windows
+        allow_any_instance_of(::Storage::Filesystem).to receive(:detect_resize_info)
+          .and_return(resize_info)
+      end
+
+      it "does not delete partitions belonging to the reused VG" do
+        volumes = vols_list(planned_vol(mount_point: "/1", type: :ext4, desired: 2.GiB))
+        result = maker.provide_space(volumes)
+        partitions = result[:devicegraph].partitions
+
+        # sda5 and sda9 belong to vg1
+        expect(partitions.map(&:name)).to include "/dev/sda9"
+        expect(partitions.map(&:name)).to include "/dev/sda5"
+        # sda8 is deleted instead of sda9
+        expect(partitions.map(&:name)).to_not include "/dev/sda8"
+      end
+
+      it "does nothing special about partitions from other VGs" do
+        volumes = vols_list(planned_vol(mount_point: "/1", type: :ext4, desired: 6.GiB))
+        result = maker.provide_space(volumes)
+        partitions = result[:devicegraph].partitions
+
+        # sda7 belongs to vg0
+        expect(partitions.map(&:name)).to_not include "/dev/sda7"
+      end
+
+      it "raises NoDiskSpaceError if it cannot find space respecting the VG" do
+        volumes = vols_list(
+          # This exhausts the primary partitions
+          planned_vol(mount_point: "/1", type: :ext4, desired: 30.GiB),
+          # This implies deleting linux partitions out of vg1
+          planned_vol(mount_point: "/2", type: :ext4, desired: 14.GiB),
+          # So this one, as small as it is, would affect vg1
+          planned_vol(mount_point: "/2", type: :ext4, desired: 10.MiB)
+        )
+        expect { maker.provide_space(volumes) }
+          .to raise_error Y2Storage::Proposal::NoDiskSpaceError
+      end
     end
   end
 end
