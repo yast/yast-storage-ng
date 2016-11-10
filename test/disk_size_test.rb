@@ -24,6 +24,10 @@ require_relative "spec_helper"
 require "y2storage/disk_size"
 
 describe Y2Storage::DiskSize do
+  using Y2Storage::Refinements::SizeCasts
+  let(:zero) { Y2Storage::DiskSize.zero }
+  let(:unlimited) { Y2Storage::DiskSize.unlimited }
+  let(:one_byte) { Y2Storage::DiskSize.new(1) }
 
   describe "constructed empty" do
     it "should have a to_i of 0" do
@@ -278,10 +282,66 @@ describe Y2Storage::DiskSize do
   end
 
   describe "#ceil" do
-    pending
+    it "returns the same value if any of the operands is zero" do
+      expect(zero.ceil(4.MiB)).to eq zero
+      expect(4.MiB.ceil(zero)).to eq 4.MiB
+      expect(zero.ceil(zero)).to eq zero
+    end
+
+    it "returns the same value if any of the operands is unlimited" do
+      expect(unlimited.ceil(8.GiB)).to eq unlimited
+      expect(8.GiB.ceil(unlimited)).to eq 8.GiB
+      expect(unlimited.ceil(zero)).to eq unlimited
+      expect(unlimited.ceil(unlimited)).to eq unlimited
+    end
+
+    it "returns the same value when rounding to 1 byte" do
+      expect(4.KiB.ceil(one_byte)).to eq 4.KiB
+    end
+
+    it "returns the same value when it's divisible by the size" do
+      expect(12.MiB.ceil(4.MiB)).to eq 12.MiB
+    end
+
+    it "rounds up to the next divisible size otherwise" do
+      expect(9.MiB.ceil(4.MiB)).to eq 12.MiB
+      expect(10.MiB.ceil(4.MiB)).to eq 12.MiB
+      expect(11.MiB.ceil(4.MiB)).to eq 12.MiB
+      almost_exact = 12.MiB - one_byte
+      expect(almost_exact.ceil(4.MiB)).to_not eq almost_exact
+      expect(almost_exact.ceil(4.MiB)).to eq 12.MiB
+    end
   end
 
   describe "#floor" do
-    pending
+    it "returns the same value if any of the operands is zero" do
+      expect(zero.floor(4.MiB)).to eq zero
+      expect(4.MiB.floor(zero)).to eq 4.MiB
+      expect(zero.floor(zero)).to eq zero
+    end
+
+    it "returns the same value if any of the operands is unlimited" do
+      expect(unlimited.floor(8.GiB)).to eq unlimited
+      expect(8.GiB.floor(unlimited)).to eq 8.GiB
+      expect(unlimited.floor(zero)).to eq unlimited
+      expect(unlimited.floor(unlimited)).to eq unlimited
+    end
+
+    it "returns the same value when rounding to 1 byte" do
+      expect(4.KiB.floor(one_byte)).to eq 4.KiB
+    end
+
+    it "returns the same value when it's divisible by the size" do
+      expect(12.MiB.floor(4.MiB)).to eq 12.MiB
+    end
+
+    it "rounds down to the previous divisible size otherwise" do
+      expect(9.MiB.floor(4.MiB)).to eq 8.MiB
+      expect(10.MiB.floor(4.MiB)).to eq 8.MiB
+      expect(11.MiB.floor(4.MiB)).to eq 8.MiB
+      almost_exact = 8.MiB + one_byte
+      expect(almost_exact.floor(4.MiB)).to_not eq almost_exact
+      expect(almost_exact.floor(4.MiB)).to eq 8.MiB
+    end
   end
 end
