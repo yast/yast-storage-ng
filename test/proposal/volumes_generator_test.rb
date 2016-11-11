@@ -80,6 +80,12 @@ describe Y2Storage::Proposal::VolumesGenerator do
             an_object_with_fields(reuse: nil)
           )
         end
+
+        it "correctly sets the LVM properties for the new swap" do
+          expect(swap_volumes).to contain_exactly(
+            an_object_with_fields(can_live_on_logical_volume: true, logical_volume_name: "swap")
+          )
+        end
       end
 
       context "if the existing swap partition is not big enough" do
@@ -95,10 +101,24 @@ describe Y2Storage::Proposal::VolumesGenerator do
       context "if the existing swap partition is big enough" do
         let(:swap_partitions) { [analyzer_part("/dev/sdaX", 3.GiB)] }
 
-        it "includes a volume to reuse the existing swap and no new swap" do
-          expect(swap_volumes).to contain_exactly(
-            an_object_with_fields(reuse: "/dev/sdaX")
-          )
+        context "if proposing an LVM setup" do
+          before do
+            settings.use_lvm = true
+          end
+
+          it "includes a brand new swap volume and no swap reusing" do
+            expect(swap_volumes).to contain_exactly(
+              an_object_with_fields(reuse: nil)
+            )
+          end
+        end
+
+        context "if proposing an partition-based setup" do
+          it "includes a volume to reuse the existing swap and no new swap" do
+            expect(swap_volumes).to contain_exactly(
+              an_object_with_fields(reuse: "/dev/sdaX")
+            )
+          end
         end
       end
 
@@ -139,6 +159,12 @@ describe Y2Storage::Proposal::VolumesGenerator do
           )
         )
       end
+
+      it "sets the LVM attributes for home" do
+        home = subject.all_volumes.detect { |v| v.mount_point == "/home" }
+        expect(home.logical_volume_name).to eq "home"
+        expect(home.can_live_on_logical_volume).to eq true
+      end
     end
 
     context "without use_separate_home" do
@@ -153,11 +179,17 @@ describe Y2Storage::Proposal::VolumesGenerator do
       end
     end
 
-    describe "setting the size of the root partition" do
+    describe "setting the properties of the root partition" do
       before do
         settings.root_base_disk_size = 10.GiB
         settings.root_max_disk_size = 20.GiB
         settings.btrfs_increase_percentage = 75
+      end
+
+      it "sets the LVM attributes" do
+        root = subject.all_volumes.detect { |v| v.mount_point == "/" }
+        expect(root.logical_volume_name).to eq "root"
+        expect(root.can_live_on_logical_volume).to eq true
       end
 
       context "with a non-Btrfs filesystem" do
@@ -193,10 +225,6 @@ describe Y2Storage::Proposal::VolumesGenerator do
           )
         end
       end
-    end
-
-    context "with LVM" do
-      pending
     end
   end
 end
