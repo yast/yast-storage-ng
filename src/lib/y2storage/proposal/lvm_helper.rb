@@ -39,8 +39,9 @@ module Y2Storage
       DEFAULT_LV_NAME = "lv"
       DEFAULT_EXTENT_SIZE = DiskSize.MiB(4)
       private_constant :DEFAULT_VG_NAME, :DEFAULT_LV_NAME, :DEFAULT_EXTENT_SIZE
-      # This is just an estimation inferred from libstorage behavior
-      USELESS_PV_SPACE = DiskSize.MiB(4)
+      # This is just an estimation chosen to match libstorage hardcoded value
+      # See LvmVg::Impl::calculate_region() in storage-ng
+      USELESS_PV_SPACE = DiskSize.MiB(1)
       private_constant :USELESS_PV_SPACE
 
       # @return [Storage::LvmVg] Volume group that will be reused to allocate
