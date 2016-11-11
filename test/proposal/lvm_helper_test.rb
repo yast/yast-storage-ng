@@ -49,13 +49,13 @@ describe Y2Storage::Proposal::LvmHelper do
     end
 
     context "if some LVM volumes are planned" do
-      let(:volumes) { [planned_vol(mount_point: "/1", type: :ext4, desired: desired )] }
+      let(:volumes) { [planned_vol(mount_point: "/1", type: :ext4, desired: desired)] }
 
       before do
         helper.reused_volume_group = reused_vg
       end
 
-      context "and no volume group is being reused" do 
+      context "and no volume group is being reused" do
         let(:reused_vg) { nil }
         let(:desired) { 10.GiB - 2.MiB }
 
@@ -101,7 +101,7 @@ describe Y2Storage::Proposal::LvmHelper do
     end
 
     context "if some LVM volumes are planned" do
-      let(:volumes) { [planned_vol(mount_point: "/1", type: :ext4, desired: 1.GiB, max: max )] }
+      let(:volumes) { [planned_vol(mount_point: "/1", type: :ext4, desired: 1.GiB, max: max)] }
 
       before do
         helper.reused_volume_group = reused_vg
@@ -117,7 +117,7 @@ describe Y2Storage::Proposal::LvmHelper do
         end
       end
 
-      context "and no volume group is being reused" do 
+      context "and no volume group is being reused" do
         let(:reused_vg) { nil }
         let(:max) { 30.GiB - 1.MiB }
 
