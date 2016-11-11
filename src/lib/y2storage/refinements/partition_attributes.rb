@@ -22,7 +22,6 @@
 # find current contact information at www.suse.com.
 
 require "storage"
-require "y2storage/disk_size"
 
 module Y2Storage
   module Refinements
@@ -45,6 +44,10 @@ module Y2Storage
           filesystem.uuid
         end
 
+        # Type of the filesystem
+        def fs_type
+          filesystem.type
+        end
       end
     end
   end
