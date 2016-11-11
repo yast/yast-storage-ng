@@ -180,7 +180,7 @@ module Y2Storage
       new_list = deep_dup
       new_list.each do |vol|
         vol.disk_size = vol.min_valid_disk_size(target)
-        vol.disk_size.round(rounding) if rounding
+        vol.disk_size.ceil(rounding) if rounding
       end
 
       extra_size = space_size - new_list.total_disk_size
@@ -284,13 +284,13 @@ module Y2Storage
     # @return [DiskSize]
     def volume_extra_size(volume, available_size, total_weight, rounding: nil)
       extra_size = available_size * (volume.weight / total_weight)
-      new_size = extra_size + volume.disk_size
 
       if rounding
-        new_size = new_size.ceil(rounding)
-        new_size = new_size.floor(rounding) if new_size > available_size
+        extra_size = extra_size.ceil(rounding)
+        extra_size = extra_size.floor(rounding) if extra_size > available_size
       end
 
+      new_size = extra_size + volume.disk_size
       if new_size > volume.max_disk_size
         # Increase just until reaching the max size
         volume.max_disk_size - volume.disk_size
@@ -309,7 +309,7 @@ module Y2Storage
 
         assigned_size = DiskSize.zero
         candidates.each do |vol|
-          vol_extra = volume_extra_size(vol, extra_size, candidates.total_weight)
+          vol_extra = volume_extra_size(vol, extra_size, candidates.total_weight, rounding: rounding)
           vol.disk_size += vol_extra
           log.info("Distributing #{vol_extra} to #{vol.mount_point}; now #{vol.disk_size}")
           assigned_size += vol_extra

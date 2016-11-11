@@ -244,7 +244,7 @@ module Y2Storage
       # @param volume_group [Storage::LvmVg] volume group to modify
       def create_logical_volumes!(volume_group)
         vg_size = available_space(volume_group)
-        volumes = planned_volumes.distribute_space(vg_size)
+        volumes = planned_volumes.distribute_space(vg_size, rounding: extent_size)
         volumes.each do |vol|
           create_logical_volume(volume_group, vol)
         end
