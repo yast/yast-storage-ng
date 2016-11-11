@@ -42,22 +42,27 @@ describe Y2Storage::Proposal do
 
     before do
       fake_scenario(scenario)
-      allow(Yast::Arch).to receive(:x86_64).and_return true
-      allow(Y2Storage::BootRequirementsChecker).to receive(:new).and_return boot_checker
+
       allow(Y2Storage::DiskAnalyzer).to receive(:new).and_return disk_analyzer
       allow(disk_analyzer).to receive(:windows_partition?) do |partition|
         !!(partition.filesystem.label =~ /indows/)
       end
+
       allow_any_instance_of(::Storage::Filesystem).to receive(:detect_resize_info)
         .and_return(resize_info)
+
+      allow(Yast::Arch).to receive(:x86_64).and_return true
+      allow(Y2Storage::StorageManager.instance).to receive(:arch).and_return(storage_arch)
+      allow(storage_arch).to receive(:efiboot?).and_return(false)
+      allow(storage_arch).to receive(:x86?).and_return(true)
+      allow(storage_arch).to receive(:ppc?).and_return(false)
+      allow(storage_arch).to receive(:s390?).and_return(false)
     end
 
     subject(:proposal) { described_class.new(settings: settings) }
 
     let(:disk_analyzer) { Y2Storage::DiskAnalyzer.new(fake_devicegraph, scope: :install_candidates) }
-    let(:boot_checker) do
-      instance_double("Y2Storage::BootRequirementChecker", needed_partitions: [])
-    end
+    let(:storage_arch) { instance_double("::Storage::Arch") }
     let(:resize_info) do
       instance_double("::Storage::ResizeInfo", resize_ok: true, min_size: 40.GiB.to_i)
     end
