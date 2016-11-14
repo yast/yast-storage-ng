@@ -36,7 +36,7 @@ module Y2Storage
 
       include Yast::Logger
 
-      # @return [Array<AssignedSpaces>]
+      # @return [Array<AssignedSpace>]
       attr_reader :spaces
 
       # Constructor. Raises an exception when trying to create an invalid

@@ -227,12 +227,9 @@ module Y2Storage
     # @param unit_size [DiskSize]
     # @return [DiskSize]
     def ceil(unit_size)
-      return DiskSize.new(@size) unless can_be_rounded?(unit_size)
-
-      unit_bytes = unit_size.to_i
-      modulo = @size % unit_bytes
-      bytes = modulo.zero? ? @size : @size + unit_bytes - modulo
-      DiskSize.new(bytes)
+      new_size = floor(unit_size)
+      new_size += unit_size if new_size != self
+      new_size
     end
 
     # Result of rounding down the size to the previous value that is divisible

@@ -73,11 +73,8 @@ module Y2Storage
     # @param rounding [DiskSize, nil]
     # @return [DiskSize] sum of desired/min sizes in @volumes
     def target_disk_size(rounding: nil)
-      @volumes.reduce(DiskSize.zero) do |sum, vol|
-        vol_size = vol.min_valid_disk_size(target)
-        vol_size = vol_size.ceil(rounding) if rounding
-        sum + vol_size
-      end
+      rounding ||= DiskSize.new(1)
+      @volumes.reduce(DiskSize.zero) { |sum, vol| sum + vol.min_valid_disk_size(target).ceil(rounding) }
     end
 
     # Total sum of all current max sizes of volumes
@@ -88,11 +85,8 @@ module Y2Storage
     # @param rounding [DiskSize, nil]
     # @return [DiskSize]
     def max_disk_size(rounding: nil)
-      @volumes.reduce(DiskSize.zero) do |sum, vol|
-        max = vol.max_disk_size
-        max = max.ceil(rounding) if rounding
-        sum + max
-      end
+      rounding ||= DiskSize.new(1)
+      @volumes.reduce(DiskSize.zero) { |sum, vol| sum + vol.max_disk_size.ceil(rounding) }
     end
 
     # Total sum of all current sizes of volumes
@@ -177,14 +171,15 @@ module Y2Storage
     def distribute_space(space_size, rounding: nil)
       raise RuntimeError if space_size < target_disk_size
 
+      rounding ||= DiskSize.new(1)
       new_list = deep_dup
       new_list.each do |vol|
         vol.disk_size = vol.min_valid_disk_size(target)
-        vol.disk_size.ceil(rounding) if rounding
+        vol.disk_size.ceil(rounding)
       end
 
       extra_size = space_size - new_list.total_disk_size
-      new_list.distribute_extra_space!(extra_size, rounding: rounding)
+      new_list.distribute_extra_space!(extra_size, rounding)
 
       new_list
     end
@@ -279,16 +274,13 @@ module Y2Storage
     # @param available_size [DiskSize] free space to be distributed among
     #    involved volumes
     # @param total_weight [Float] sum of the weights of all involved volumes
-    # @param rounding [DiskSize, nil] size to round up
+    # @param rounding [DiskSize] size to round up
     #
     # @return [DiskSize]
-    def volume_extra_size(volume, available_size, total_weight, rounding: nil)
+    def volume_extra_size(volume, available_size, total_weight, rounding)
       extra_size = available_size * (volume.weight / total_weight)
-
-      if rounding
-        extra_size = extra_size.ceil(rounding)
-        extra_size = extra_size.floor(rounding) if extra_size > available_size
-      end
+      extra_size = extra_size.ceil(rounding)
+      extra_size = extra_size.floor(rounding) if extra_size > available_size
 
       new_size = extra_size + volume.disk_size
       if new_size > volume.max_disk_size
@@ -299,7 +291,7 @@ module Y2Storage
       end
     end
 
-    def distribute_extra_space!(extra_size, rounding: nil)
+    def distribute_extra_space!(extra_size, rounding)
       candidates = self
       while distributable?(extra_size, rounding)
         candidates = candidates.extra_space_candidates
@@ -309,7 +301,7 @@ module Y2Storage
 
         assigned_size = DiskSize.zero
         candidates.each do |vol|
-          vol_extra = volume_extra_size(vol, extra_size, candidates.total_weight, rounding: rounding)
+          vol_extra = volume_extra_size(vol, extra_size, candidates.total_weight, rounding)
           vol.disk_size += vol_extra
           log.info("Distributing #{vol_extra} to #{vol.mount_point}; now #{vol.disk_size}")
           assigned_size += vol_extra
@@ -319,12 +311,8 @@ module Y2Storage
       log.info("Could not distribute #{extra_size}") unless extra_size.zero?
     end
 
-    def distributable?(size, rounding = nil)
-      if rounding
-        size >= rounding
-      else
-        size > DiskSize.zero
-      end
+    def distributable?(size, rounding)
+      size >= rounding
     end
   end
 end
