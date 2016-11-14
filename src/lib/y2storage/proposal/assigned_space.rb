@@ -64,6 +64,13 @@ module Y2Storage
         max >= disk_size ? 0 : disk_size - max
       end
 
+      # Space available in addition to the target
+      #
+      # @return [DiskSize]
+      def extra_size
+        disk_size - volumes.target_disk_size
+      end
+
       def to_s
         "#<AssignedSpace disk_space=#{disk_space}, volumes=#{volumes}>"
       end

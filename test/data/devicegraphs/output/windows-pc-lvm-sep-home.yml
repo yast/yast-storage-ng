@@ -6,14 +6,14 @@
     partitions:
 
     - partition:
-        size: 745471 MiB
+        size: 745469 MiB
         name: /dev/sda1
         id: ntfs
         file_system: ntfs
         label: windows
 
     - partition:
-        size: 53249 MiB
+        size: 53251 MiB
         name: /dev/sda3
         id: lvm
 

@@ -36,6 +36,12 @@ module Y2Storage
 
       include Yast::Logger
 
+      # Space that will be consumed by the EBR if we create a new extended
+      # partition. Value based on libstorage-ng behavior
+      # See https://en.wikipedia.org/wiki/Extended_boot_record
+      OVERHEAD_OF_NEW_EXTENDED = DiskSize.MiB(2)
+      private_constant :OVERHEAD_OF_NEW_EXTENDED
+
       # @return [Array<AssignedSpace>]
       attr_reader :spaces
 
@@ -131,6 +137,13 @@ module Y2Storage
         spaces_strings.sort.join
       end
 
+      # Space that will be consumed by the EBR of a new extended partition
+      #
+      # @return [DiskSize]
+      def self.overhead_of_new_extended
+        OVERHEAD_OF_NEW_EXTENDED
+      end
+
     protected
 
       attr_reader :devicegraph
@@ -201,20 +214,26 @@ module Y2Storage
           raise NoMorePartitionSlotError, "Too sparce distribution"
         end
 
+        num_partitions = ptable.num_primary + num_partitions(spaces)
+        if num_partitions <= ptable.max_primary
+          log.info "The total number of partitions will be low. No need to impose type restrictions."
+          return [], []
+        end
+
+        # At this point we know an extended will be needed
+        extended_space = extended_space(spaces)
+        if extended_space.nil?
+          raise NoDiskSpaceError, "No suitable space to create the extended partition"
+        end
+
         if spaces.size == 1
           log.info "No need to impose type restrictions."
           return [], []
         end
 
-        num_partitions = ptable.num_primary + num_partitions(spaces)
-        if spaces.size == 1 || num_partitions < ptable.max_primary
-          log.info "The total number of partitions will be low. No need to impose type restrictions."
-          return [], []
-        end
-
-        # At this point, one space will be used to create a new extended
-        # partition. The rest should be primary.
-        extended = [extended_space(spaces)].compact
+        # One space will be used to create a new extended partition.
+        # The rest should be primary.
+        extended = [extended_space]
         primary = spaces - extended
         if too_many_primary?(primary, ptable)
           raise NoMorePartitionSlotError, "Too many primary partitions needed"
@@ -232,10 +251,12 @@ module Y2Storage
       # Best candidate to hold the extended partition
       #
       # @param [Array<AssignedSpace>] list of possible candidates
-      # @return [AssignedSpace]
+      # @return [AssignedSpace, nil] nil if none of the assigned spaces can hold
+      #   its volumes and the extended partition
       def extended_space(spaces)
         # Let's use as extended the space with more volumes (start as
         # secondary criteria just to ensure stable sorting)
+        spaces = spaces.select { |s| room_for_extended?(s) }
         spaces.sort_by { |s| [s.volumes.count, s.slot.region.start] }.last
       end
 
@@ -271,6 +292,14 @@ module Y2Storage
       def volume_list_comparable_string(vol_list)
         volumes_strings = vol_list.to_a.map { |vol| vol.to_s }.sort
         "<target=#{vol_list.target}, volumes=#{volumes_strings.join}>"
+      end
+
+      # Checks whether an assigned space can host an extended partition (with
+      # its corresponding size overhead), in addition to its volumes
+      #
+      # @return [Boolean]
+      def room_for_extended?(assigned_space)
+        assigned_space.extra_size >= SpaceDistribution.overhead_of_new_extended
       end
     end
   end

@@ -102,10 +102,14 @@ module Y2Storage
       # @param free_spaces [Array<FreeDiskSpace>]
       # @return [DiskSize]
       def resizing_size(volumes, free_spaces)
-        # Let's assume the worst case - resizing produces a new space and the
-        # LVM must be spread among all the available spaces
+        # We are going to resize this partition only once, so let's assume the
+        # worst case:
+        #  - resizing produces a new space
+        #  - a new extended partition must be created
+        #  - the LVM must be spread among all the available spaces
         pvs_to_create = free_spaces.size + 1
-        needed = volumes.target_disk_size + lvm_space_to_make(pvs_to_create)
+        overhead = SpaceDistribution.overhead_of_new_extended
+        needed = volumes.target_disk_size + lvm_space_to_make(pvs_to_create) + overhead
         needed - available_space(free_spaces)
       end
 

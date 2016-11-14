@@ -99,6 +99,14 @@ describe Y2Storage::Proposal::SpaceDistributionCalculator do
           end
         end
 
+        context "but the space doesn't have room for the needed new extended partition" do
+          let(:vol3) { planned_vol(mount_point: "/3", type: :ext4, desired: 20.GiB, max: 20.GiB) }
+
+          it "returns no distribution (nil)" do
+            expect(distribution).to be_nil
+          end
+        end
+
         context "and there is already a extended partition" do
           let(:scenario) { "space_22_used_extended" }
 
@@ -197,12 +205,31 @@ describe Y2Storage::Proposal::SpaceDistributionCalculator do
           context "and there is no extended partition" do
             let(:scenario) { "spaces_5_3" }
 
-            context "and the number of partitions reaches the primary limit" do
+            context "and the number of partitions exceeds the primary limit" do
+              let(:vol3) { planned_vol(mount_point: "/3", type: :ext4, desired: 2.GiB) }
+              let(:vol4) { planned_vol(mount_point: "/4", type: :ext4, desired: 2.GiB - 2.MiB) }
+              let(:volumes) { Y2Storage::PlannedVolumesList.new([vol1, vol2, vol3, vol4]) }
+
               it "chooses one space for an extended partition and the rest as primary" do
                 space5 = distribution.spaces.detect { |s| s.disk_size == 5.GiB }
                 space3 = distribution.spaces.detect { |s| s.disk_size == (3.GiB - 1.MiB) }
                 expect(space5.partition_type).to eq :extended
                 expect(space3.partition_type).to eq :primary
+              end
+
+              context "but there is no room for the needed new extended partition" do
+                let(:vol4) { planned_vol(mount_point: "/4", type: :ext4, desired: 2.GiB) }
+
+                it "returns no distribution (nil)" do
+                  expect(distribution).to be_nil
+                end
+              end
+            end
+
+            context "and the number of partitions is equal to the primary limit" do
+              it "does not enforce the partition types" do
+                types = distribution.spaces.map { |s| s.partition_type }
+                expect(types).to eq [nil, nil]
               end
             end
 
