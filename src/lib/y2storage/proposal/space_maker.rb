@@ -26,7 +26,8 @@ require "storage"
 require "y2storage/planned_volume"
 require "y2storage/disk_size"
 require "y2storage/free_disk_space"
-require "y2storage/proposal/space_distribution"
+require "y2storage/proposal/space_distribution_calculator"
+require "y2storage/proposal/partition_killer"
 require "y2storage/refinements"
 
 module Y2Storage
@@ -40,39 +41,48 @@ module Y2Storage
       include Yast::Logger
 
       attr_accessor :settings
+      attr_reader :lvm_helper, :original_graph
 
       # Initialize.
       #
       # @param original_graph [::Storage::Devicegraph] initial devicegraph
       # @param disk_analyzer [DiskAnalyzer] information about original_graph
+      # @param lvm_helper [Proposal::LvmHelper] contains information about the
+      #     LVM planned volume and how to make space for them
       # @param settings [ProposalSettings] proposal settings
-      def initialize(original_graph, disk_analyzer, settings)
+      def initialize(original_graph, disk_analyzer, lvm_helper, settings)
         @original_graph = original_graph
         @disk_analyzer = disk_analyzer
+        @lvm_helper = lvm_helper
         @settings = settings
       end
 
       # Performs all the operations needed to free enough space to accomodate
-      # a set of volumes
+      # a set of planned volumes (that must live out of LVM) and the new
+      # physical volumes needed to accomodate the LVM planned volumes.
       #
-      # @raise Proposal::Error if is not possible to accomodate the volumes
+      # @raise Proposal::Error if is not possible to accomodate the planned
+      #   volumes and/or the physical volumes
       #
-      # @param volumes [PlannedVolumesList] volumes to make space for
+      # @param no_lvm_volumes [PlannedVolumesList] set of non-LVM volumes to
+      #     make space for. The LVM volumes are already handled by #lvm_helper.
       # @return [Hash] a hash with three elements:
       #   devicegraph: [::Storage::Devicegraph] resulting devicegraph
       #   deleted_partitions: [Array<::Storage::Partition>] partitions that
       #     were in the original devicegraph but are not in the resulting one
       #   space_distribution: [SpaceDistribution] proposed distribution of
-      #     volumes
+      #     volumes, including new PVs if necessary
       #
-      def provide_space(volumes)
+      def provide_space(no_lvm_volumes)
         @new_graph = original_graph.duplicate
+        @partition_killer = PartitionKiller.new(@new_graph, disk_analyzer)
+        @dist_calculator = SpaceDistributionCalculator.new(lvm_helper)
         @deleted_names = []
 
         # Partitions that should not be deleted
-        keep = []
+        keep = lvm_helper.partitions_in_vg
         # Let's filter out volumes with some value in #reuse
-        volumes = volumes.dup
+        volumes = no_lvm_volumes.dup
         volumes.select(&:reuse).each do |vol|
           log.info "No need to find a fit for this volume, it will reuse #{vol.reuse}: #{vol}"
           keep << vol.reuse
@@ -99,7 +109,7 @@ module Y2Storage
 
     protected
 
-      attr_reader :original_graph, :new_graph, :disk_analyzer
+      attr_reader :new_graph, :disk_analyzer, :partition_killer, :dist_calculator
 
       # Partitions from the original devicegraph that are not present in the
       # result of the last call to #provide_space
@@ -126,7 +136,8 @@ module Y2Storage
       #
       # @return [Boolean]
       def success?(volumes)
-        @distribution ||= SpaceDistribution.best_for(volumes, free_spaces(new_graph).to_a, new_graph)
+        spaces = free_spaces(new_graph).to_a
+        @distribution ||= dist_calculator.best_distribution(volumes, spaces, new_graph)
         !!@distribution
       rescue Error => e
         log.info "Exception while trying to distribute volumes: #{e}"
@@ -156,11 +167,13 @@ module Y2Storage
         raise NoDiskSpaceError unless success?(volumes)
       end
 
-      # Additional space that needs to be freed in order to reach the goal
+      # Additional space that needs to be freed while resizing a partition in
+      # order to reach the goal
       #
       # @return [DiskSize]
-      def missing_required_size(volumes, disk)
-        SpaceDistribution.missing_disk_size(volumes, free_spaces(new_graph, disk).to_a)
+      def resizing_size(volumes, disk)
+        spaces = free_spaces(new_graph, disk).to_a
+        dist_calculator.resizing_size(volumes, spaces)
       end
 
       # List of free spaces in the given devicegraph
@@ -206,7 +219,7 @@ module Y2Storage
         success = sorted_resizables(parts_by_disk.values.flatten).any? do |res|
           shrink_size = [
             res[:recoverable_size],
-            missing_required_size(volumes, disk)
+            resizing_size(volumes, disk)
           ].min
           shrink_partition(res[:partition], shrink_size)
 
@@ -299,18 +312,15 @@ module Y2Storage
             log.info "Skipped deletion of #{part_name}"
             next
           end
-          part = find_partition(part_name)
-          next unless part
 
-          if lvm_pv?(part)
-            # Strictly speaking, this could lead to deletion of a partition
-            # included in the keep array. In practice it doesn't matter because
-            # PVs are never marked to be reused as a PlannedVolume.
-            delete_lvm_partitions(part)
-          else
-            delete_partition(part)
-          end
+          # Strictly speaking, this could lead to deletion of a partition
+          # included in the keep array. In practice it doesn't matter because
+          # PVs and extended partitions are never marked to be reused as a
+          # PlannedVolume.
+          names = partition_killer.delete(part_name)
+          next if names.empty?
 
+          @deleted_names.concat(names)
           break if success?(volumes)
         end
       end
@@ -319,62 +329,6 @@ module Y2Storage
         ::Storage::Partition.find_by_name(graph, name)
       rescue
         nil
-      end
-
-      # Deletes a given partition from its corresponding partition table.
-      # If the partition was the only remaining logical one, it also deletes the
-      # now empty extended partition
-      def delete_partition(partition)
-        log.info("Deleting partition #{partition.name} in device graph")
-        if last_logical?(partition)
-          log.info("It's the last logical one, so deleting the extended")
-          delete_extended(partition.partition_table)
-        else
-          @deleted_names << partition.name
-          partition.partition_table.delete_partition(partition.name)
-        end
-      end
-
-      # Deletes the given partition and all other partitions in the candidate
-      # disks that are part of the same LVM volume group
-      #
-      # Rationale: when deleting a partition that holds a PV of a given VG, we
-      # are effectively killing the whole VG. It makes no sense to leave the
-      # other PVs alive. So let's reclaim all the space.
-      #
-      # @param [partition] A partition that is acting as LVM physical volume
-      def delete_lvm_partitions(partition)
-        log.info "Deleting #{partition.name}, which is part of an LVM volume group"
-        vg_parts = disk_analyzer.used_lvm_partitions.values.detect do |parts|
-          parts.map(&:name).include?(partition.name)
-        end
-        target_parts = vg_parts.map { |p| find_partition(p.name) }.compact
-        log.info "These LVM partitions will be deleted: #{target_parts.map(&:name)}"
-        target_parts.each do |part|
-          delete_partition(part)
-        end
-      end
-
-      # Checks whether the partition is the only logical one in the
-      # partition_table
-      def last_logical?(partition)
-        return false unless partition.type == ::Storage::PartitionType_LOGICAL
-
-        partitions = partition.partition_table.partitions.to_a
-        logical_parts = partitions.select { |part| part.type == ::Storage::PartitionType_LOGICAL }
-        logical_parts.size == 1
-      end
-
-      # Deletes the extended partition and all the logical ones
-      def delete_extended(partition_table)
-        partitions = partition_table.partitions.to_a
-        extended = partitions.detect { |part| part.type == ::Storage::PartitionType_EXTENDED }
-        logical_parts = partitions.select { |part| part.type == ::Storage::PartitionType_LOGICAL }
-
-        # This will delete the extended and all the logicals
-        @deleted_names << extended.name
-        @deleted_names.concat(logical_parts.map(&:name))
-        partition_table.delete_partition(extended.name)
       end
 
       # Partitions of a given type to be deleted. The type can be:
@@ -440,15 +394,6 @@ module Y2Storage
           disk_analyzer.linux_partitions.values.flatten
         end
         parts.map(&:name)
-      end
-
-      # Checks whether the partition is part of a volume group
-      #
-      # @param partition [::Storage::Partition]
-      # @return [array<string>]
-      def lvm_pv?(partition)
-        lvm_pv_names = disk_analyzer.used_lvm_partitions.values.flatten.map(&:name)
-        lvm_pv_names.include?(partition.name)
       end
     end
   end

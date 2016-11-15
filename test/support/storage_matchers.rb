@@ -29,6 +29,7 @@ module Yast
     # RSpec extension to add YaST Storage specific matchers
     module StorageMatchers
       using Y2Storage::Refinements::PartitionAttributes
+      using Y2Storage::Refinements::LvmLvAttributes
 
       # Matches an object by its attributes (similar to RSpec's
       # #have_attributes) but honoring Storage::Refinements::XxxAttributes

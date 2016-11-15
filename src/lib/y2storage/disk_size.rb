@@ -221,6 +221,29 @@ module Y2Storage
       raise TypeError, "Unexpected #{other.class}; expected DiskSize"
     end
 
+    # Result of rounding up the size to the next value that is divisible by
+    # a given size. Returns the same value if it's already divisible.
+    #
+    # @param unit_size [DiskSize]
+    # @return [DiskSize]
+    def ceil(unit_size)
+      new_size = floor(unit_size)
+      new_size += unit_size if new_size != self
+      new_size
+    end
+
+    # Result of rounding down the size to the previous value that is divisible
+    # by a given size. Returns the same value if it's already divisible.
+    #
+    # @param unit_size [DiskSize]
+    # @return [DiskSize]
+    def floor(unit_size)
+      return DiskSize.new(@size) unless can_be_rounded?(unit_size)
+
+      modulo = @size % unit_size.to_i
+      DiskSize.new(@size - modulo)
+    end
+
     # Return numeric size and unit ("MiB", "GiB", ...) in human-readable form
     # @return [Array] [size, unit]
     def to_human_readable
@@ -287,6 +310,12 @@ module Y2Storage
     def any_operand_unlimited?(other)
       return true if unlimited?
       return other.respond_to?(:unlimited?) && other.unlimited?
+    end
+
+    # Checks whether makes sense to round the value to the given size
+    def can_be_rounded?(unit_size)
+      return false if unit_size.unlimited? || unit_size.zero? || unit_size.to_i == 1
+      !unlimited? && !zero?
     end
   end
 end

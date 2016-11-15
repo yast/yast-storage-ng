@@ -35,6 +35,7 @@ module Y2Storage
   class PlannedVolumesList
     include Enumerable
     extend Forwardable
+    include Yast::Logger
 
     # @return [Symbol] :min or :desired, size to use for the calculations
     attr_accessor :target
@@ -66,16 +67,26 @@ module Y2Storage
     # its minimum size is taken instead. This gives a more useful sum in the
     # very common case that any volume has an 'unlimited' desired size.
     #
+    # If the optional argument "rounding" is used, the size of every volume will
+    # be rounded up. # @see DiskSize#ceil
+    #
+    # @param rounding [DiskSize, nil]
     # @return [DiskSize] sum of desired/min sizes in @volumes
-    def target_disk_size
-      @volumes.reduce(DiskSize.zero) { |sum, vol| sum + vol.min_valid_disk_size(target) }
+    def target_disk_size(rounding: nil)
+      rounding ||= DiskSize.new(1)
+      @volumes.reduce(DiskSize.zero) { |sum, vol| sum + vol.min_valid_disk_size(target).ceil(rounding) }
     end
 
     # Total sum of all current max sizes of volumes
     #
+    # If the optional argument "rounding" is used, the size of every volume will
+    # be rounded up. # @see DiskSize#ceil
+    #
+    # @param rounding [DiskSize, nil]
     # @return [DiskSize]
-    def max_disk_size
-      @volumes.reduce(DiskSize.zero) { |sum, vol| sum + vol.max_disk_size }
+    def max_disk_size(rounding: nil)
+      rounding ||= DiskSize.new(1)
+      @volumes.reduce(DiskSize.zero) { |sum, vol| sum + vol.max_disk_size.ceil(rounding) }
     end
 
     # Total sum of all current sizes of volumes
@@ -143,11 +154,56 @@ module Y2Storage
       end.map(&:first)
     end
 
+    # Returns a copy of the list in which the given space has been distributed
+    # among the volumes, distributing the extra space (beyond the target size)
+    # according to the weight and max size of each volume.
+    #
+    # @raise [RuntimeError] if the given space is not enough to reach the target
+    #     size for all volumes
+    #
+    # If the optional argument rounding is used, space will be distributed
+    # always in blocks of the specified size.
+    #
+    # @param space_size [DiskSize]
+    # @param rounding [DiskSize, nil] min block size to distribute
+    # @return [PlannedVolumesList] list containing volumes with an adjusted
+    #     value for PlannedVolume#disk_size
+    def distribute_space(space_size, rounding: nil)
+      raise RuntimeError if space_size < target_disk_size
+
+      rounding ||= DiskSize.new(1)
+      new_list = deep_dup
+      new_list.each do |vol|
+        vol.disk_size = vol.min_valid_disk_size(target)
+        vol.disk_size.ceil(rounding)
+      end
+
+      extra_size = space_size - new_list.total_disk_size
+      new_list.distribute_extra_space!(extra_size, rounding)
+
+      new_list
+    end
+
+    # Returns two lists, the first containing the elements for which the block
+    # evaluates to true, the second containing the rest. Pretty much like
+    # #partition but returning two volume lists instead of two arrays.
+    #
+    # If no block is given, it returns an Enumerator
+    def split_by(&block)
+      delegated = @volumes.partition(&block)
+      if delegated.is_a?(Array)
+        delegated.map { |l| PlannedVolumesList.new(l, target: target) }
+      else
+        # Enumerator
+        delegated
+      end
+    end
+
     def to_s
       "#<PlannedVolumesList target=#{@target}, volumes=#{@volumes.map(&:to_s)}>"
     end
 
-  private
+  protected
 
     # @param one [Array] first element: the volume, second: its original index
     # @param other [Array] same structure than previous one
@@ -200,6 +256,63 @@ module Y2Storage
       else
         one.nil? ? 1 : -1
       end
+    end
+
+    # Volumes that may grow when distributing the extra space
+    #
+    # @param volumes [PlannedVolumesList] initial set of all volumes
+    # @return [PlannedVolumesList]
+    def extra_space_candidates
+      candidates = dup
+      candidates.delete_if { |vol| vol.disk_size >= vol.max_disk_size }
+      candidates
+    end
+
+    # Extra space to be assigned to a volume
+    #
+    # @param volume [PlannedVolume] volume to enlarge
+    # @param available_size [DiskSize] free space to be distributed among
+    #    involved volumes
+    # @param total_weight [Float] sum of the weights of all involved volumes
+    # @param rounding [DiskSize] size to round up
+    #
+    # @return [DiskSize]
+    def volume_extra_size(volume, available_size, total_weight, rounding)
+      extra_size = available_size * (volume.weight / total_weight)
+      extra_size = extra_size.ceil(rounding)
+      extra_size = extra_size.floor(rounding) if extra_size > available_size
+
+      new_size = extra_size + volume.disk_size
+      if new_size > volume.max_disk_size
+        # Increase just until reaching the max size
+        volume.max_disk_size - volume.disk_size
+      else
+        extra_size
+      end
+    end
+
+    def distribute_extra_space!(extra_size, rounding)
+      candidates = self
+      while distributable?(extra_size, rounding)
+        candidates = candidates.extra_space_candidates
+        return extra_size if candidates.empty?
+        return extra_size if candidates.total_weight.zero?
+        log.info("Distributing #{extra_size} extra space among #{candidates.size} volumes")
+
+        assigned_size = DiskSize.zero
+        candidates.each do |vol|
+          vol_extra = volume_extra_size(vol, extra_size, candidates.total_weight, rounding)
+          vol.disk_size += vol_extra
+          log.info("Distributing #{vol_extra} to #{vol.mount_point}; now #{vol.disk_size}")
+          assigned_size += vol_extra
+        end
+        extra_size -= assigned_size
+      end
+      log.info("Could not distribute #{extra_size}") unless extra_size.zero?
+    end
+
+    def distributable?(size, rounding)
+      size >= rounding
     end
   end
 end

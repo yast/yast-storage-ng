@@ -24,8 +24,13 @@ require_relative "../spec_helper"
 require "storage"
 require "y2storage"
 
-describe Y2Storage::Proposal::SpaceDistribution do
-  describe ".better_for" do
+describe Y2Storage::Proposal::SpaceDistributionCalculator do
+  let(:lvm_volumes) { Y2Storage::PlannedVolumesList.new }
+  let(:lvm_helper) { Y2Storage::Proposal::LvmHelper.new(lvm_volumes) }
+
+  subject(:calculator) { described_class.new(lvm_helper) }
+
+  describe "#best_distribution" do
     using Y2Storage::Refinements::SizeCasts
     using Y2Storage::Refinements::DevicegraphLists
 
@@ -33,19 +38,12 @@ describe Y2Storage::Proposal::SpaceDistribution do
       fake_scenario(scenario)
     end
 
-    let(:settings) do
-      settings = Y2Storage::ProposalSettings.new
-      settings.candidate_devices = ["/dev/sda"]
-      settings.root_device = "/dev/sda"
-      settings
-    end
-
     let(:vol1) { planned_vol(mount_point: "/1", type: :ext4, desired: 1.GiB, max: 3.GiB, weight: 1) }
     let(:vol2) { planned_vol(mount_point: "/2", type: :ext4, desired: 2.GiB, max: 3.GiB, weight: 1) }
     let(:volumes) { Y2Storage::PlannedVolumesList.new([vol1, vol2, vol3]) }
     let(:spaces) { fake_devicegraph.free_disk_spaces.to_a }
 
-    subject(:distribution) { described_class.best_for(volumes, spaces, fake_devicegraph) }
+    subject(:distribution) { calculator.best_distribution(volumes, spaces, fake_devicegraph) }
 
     context "when the only available space is in an extended partition" do
       let(:scenario) { "space_22_extended" }
@@ -226,7 +224,6 @@ describe Y2Storage::Proposal::SpaceDistribution do
 
     context "if disk restrictions apply to some volume" do
       before do
-        settings.candidate_devices = ["/dev/sda", "/dev/sdb"]
         # Avoid rounding problems
         vol1.desired = 1.GiB - 2.MiB
       end
@@ -266,6 +263,98 @@ describe Y2Storage::Proposal::SpaceDistribution do
 
         it "returns no distribution (nil)" do
           expect(distribution).to be_nil
+        end
+      end
+    end
+
+    context "when asking for extra LVM space" do
+      let(:scenario) { "spaces_5_6_8_10" }
+
+      let(:vol3) { planned_vol(mount_point: "/3", type: :ext4, desired: 1.GiB, max: 30.GiB, weight: 2) }
+      let(:lvm_volumes) { Y2Storage::PlannedVolumesList.new([lvm_vol]) }
+      let(:lvm_vol) { planned_vol(desired: lvm_size, max: lvm_max) }
+      let(:lvm_max) { Y2Storage::DiskSize.unlimited }
+
+      let(:pv_vols) do
+        volumes = distribution.spaces.map { |sp| sp.volumes.to_a }
+        volumes.map { |vols| vols.select { |vol| vol.partition_id == ::Storage::ID_LVM } }.flatten
+      end
+
+      context "if the sum of all the spaces is not big enough" do
+        let(:lvm_size) { 30.GiB }
+
+        it "returns no distribution (nil)" do
+          expect(distribution).to be_nil
+        end
+      end
+
+      context "if one space can host the volumes and the LVM space" do
+        let(:lvm_size) { 2.GiB }
+
+        it "allocates everything in the same space" do
+          spaces = distribution.spaces
+          expect(spaces.size).to eq 1
+          expect(spaces.first.volumes).to contain_exactly(
+            vol1,
+            vol2,
+            vol3,
+            an_object_with_fields(partition_id: Storage::ID_LVM)
+          )
+        end
+      end
+
+      context "if only one space can host all the LVM space" do
+        let(:lvm_size) { 9.GiB }
+
+        it "adds one PV in that space" do
+          expect(pv_vols.size).to eq 1
+        end
+      end
+
+      context "if no single space is big enough" do
+        let(:lvm_size) { 11.GiB }
+
+        it "adds several PVs" do
+          expect(pv_vols.size).to eq 2
+        end
+      end
+
+      context "when creating PVs" do
+        let(:lvm_size) { 11.GiB }
+        let(:lvm_max) { 20.GiB }
+
+        it "sets the correct min_disk_size for all PVs" do
+          useful_min_sizes = pv_vols.map { |v| lvm_helper.useful_pv_space(v.min_disk_size) }
+          expect(useful_min_sizes.reduce(:+)).to eq lvm_size
+        end
+
+        it "sets the correct desired_disk_size for all PVs" do
+          useful_desired_sizes = pv_vols.map { |v| lvm_helper.useful_pv_space(v.desired_disk_size) }
+          expect(useful_desired_sizes.reduce(:+)).to eq lvm_size
+        end
+
+        it "sets max_disk_size for all PVs to sum lvm_size" do
+          useful_max_sizes = pv_vols.map { |v| lvm_helper.useful_pv_space(v.max_disk_size) }
+          expect(useful_max_sizes.reduce(:+)).to eq lvm_max
+        end
+
+        context "if there are other volumes in the same space" do
+          let(:space) { distribution.spaces.detect { |s| s.volumes.size > 1 } }
+
+          it "sets the weight of the PV according to the other volumes" do
+            pv_vol = space.volumes.detect { |v| v.partition_id == Storage::ID_LVM }
+            total_weight = space.volumes.map(&:weight).reduce(:+)
+            expect(pv_vol.weight).to eq(total_weight / 2.0)
+          end
+        end
+
+        context "if the PV is alone in the disk space" do
+          let(:space) { distribution.spaces.detect { |s| s.volumes.size == 1 } }
+
+          it "sets the weight of the PV to one" do
+            pv_vol = space.volumes.detect { |v| v.partition_id == Storage::ID_LVM }
+            expect(pv_vol.weight).to eq 1
+          end
         end
       end
     end

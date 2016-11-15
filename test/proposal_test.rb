@@ -24,6 +24,16 @@ require_relative "spec_helper"
 require "storage"
 require "y2storage"
 
+# To avoid repeating this four lines of code all over the file
+RSpec.shared_examples "proposed layout" do
+  using Y2Storage::Refinements::TestDevicegraph
+
+  it "proposes the expected layout" do
+    proposal.propose
+    expect(proposal.devices.to_str).to eq expected.to_str
+  end
+end
+
 describe Y2Storage::Proposal do
   describe "#propose" do
     using Y2Storage::Refinements::TestDevicegraph
@@ -32,58 +42,74 @@ describe Y2Storage::Proposal do
 
     before do
       fake_scenario(scenario)
-      allow(Yast::Arch).to receive(:x86_64).and_return true
-      allow(Y2Storage::BootRequirementsChecker).to receive(:new).and_return boot_checker
+
       allow(Y2Storage::DiskAnalyzer).to receive(:new).and_return disk_analyzer
       allow(disk_analyzer).to receive(:windows_partition?) do |partition|
         !!(partition.filesystem.label =~ /indows/)
       end
+
       allow_any_instance_of(::Storage::Filesystem).to receive(:detect_resize_info)
         .and_return(resize_info)
+
+      allow(Yast::Arch).to receive(:x86_64).and_return true
+      allow(Y2Storage::StorageManager.instance).to receive(:arch).and_return(storage_arch)
+      allow(storage_arch).to receive(:efiboot?).and_return(false)
+      allow(storage_arch).to receive(:x86?).and_return(true)
+      allow(storage_arch).to receive(:ppc?).and_return(false)
+      allow(storage_arch).to receive(:s390?).and_return(false)
     end
 
     subject(:proposal) { described_class.new(settings: settings) }
 
     let(:disk_analyzer) { Y2Storage::DiskAnalyzer.new(fake_devicegraph, scope: :install_candidates) }
-    let(:boot_checker) do
-      instance_double("Y2Storage::BootRequirementChecker", needed_partitions: [])
-    end
+    let(:storage_arch) { instance_double("::Storage::Arch") }
     let(:resize_info) do
       instance_double("::Storage::ResizeInfo", resize_ok: true, min_size: 40.GiB.to_i)
     end
     let(:separate_home) { false }
+    let(:lvm) { false }
     let(:settings) do
       settings = Y2Storage::ProposalSettings.new
       settings.use_separate_home = separate_home
+      settings.use_lvm = lvm
       settings
     end
 
     let(:expected) do
-      if separate_home
-        ::Storage::Devicegraph.new_from_file(output_file_for("#{scenario}-sep-home"))
-      else
-        ::Storage::Devicegraph.new_from_file(output_file_for(scenario))
-      end
+      file_name = scenario
+      file_name.concat("-lvm") if lvm
+      file_name.concat("-sep-home") if separate_home
+      ::Storage::Devicegraph.new_from_file(output_file_for(file_name))
     end
 
     context "in a windows-only PC" do
       let(:scenario) { "windows-pc" }
 
-      context "with a separate home" do
-        let(:separate_home) { true }
+      context "using LVM" do
+        let(:lvm) { true }
 
-        it "proposes the expected layout" do
-          proposal.propose
-          expect(proposal.devices.to_str).to eq expected.to_str
+        context "with a separate home" do
+          let(:separate_home) { true }
+          include_examples "proposed layout"
+        end
+
+        context "without separate home" do
+          let(:separate_home) { false }
+          include_examples "proposed layout"
         end
       end
 
-      context "without separate home" do
-        let(:separate_home) { false }
+      context "not using LVM" do
+        let(:lvm) { false }
 
-        it "proposes the expected layout" do
-          proposal.propose
-          expect(proposal.devices.to_str).to eq expected.to_str
+        context "with a separate home" do
+          let(:separate_home) { true }
+          include_examples "proposed layout"
+        end
+
+        context "without separate home" do
+          let(:separate_home) { false }
+          include_examples "proposed layout"
         end
       end
     end
@@ -91,21 +117,31 @@ describe Y2Storage::Proposal do
     context "in a windows/linux multiboot PC" do
       let(:scenario) { "windows-linux-multiboot-pc" }
 
-      context "with a separate home" do
-        let(:separate_home) { true }
+      context "using LVM" do
+        let(:lvm) { true }
 
-        it "proposes the expected layout" do
-          proposal.propose
-          expect(proposal.devices.to_str).to eq expected.to_str
+        context "with a separate home" do
+          let(:separate_home) { true }
+          include_examples "proposed layout"
+        end
+
+        context "without separate home" do
+          let(:separate_home) { false }
+          include_examples "proposed layout"
         end
       end
 
-      context "without separate home" do
-        let(:separate_home) { false }
+      context "not using LVM" do
+        let(:lvm) { false }
 
-        it "proposes the expected layout" do
-          proposal.propose
-          expect(proposal.devices.to_str).to eq expected.to_str
+        context "with a separate home" do
+          let(:separate_home) { true }
+          include_examples "proposed layout"
+        end
+
+        context "without separate home" do
+          let(:separate_home) { false }
+          include_examples "proposed layout"
         end
       end
     end
@@ -114,21 +150,63 @@ describe Y2Storage::Proposal do
       let(:scenario) { "multi-linux-pc" }
       let(:windows_partitions) { {} }
 
-      context "with a separate home" do
-        let(:separate_home) { true }
+      context "using LVM" do
+        let(:lvm) { true }
 
-        it "proposes the expected layout" do
-          proposal.propose
-          expect(proposal.devices.to_str).to eq expected.to_str
+        context "with a separate home" do
+          let(:separate_home) { true }
+          include_examples "proposed layout"
+        end
+
+        context "without separate home" do
+          let(:separate_home) { false }
+          include_examples "proposed layout"
         end
       end
 
-      context "without separate home" do
-        let(:separate_home) { false }
+      context "not using LVM" do
+        let(:lvm) { false }
 
-        it "proposes the expected layout" do
-          proposal.propose
-          expect(proposal.devices.to_str).to eq expected.to_str
+        context "with a separate home" do
+          let(:separate_home) { true }
+          include_examples "proposed layout"
+        end
+
+        context "without separate home" do
+          let(:separate_home) { false }
+          include_examples "proposed layout"
+        end
+      end
+    end
+
+    context "in a windows/linux multiboot PC with pre-existing LVM" do
+      let(:scenario) { "windows-linux-lvm-pc" }
+
+      context "using LVM" do
+        let(:lvm) { true }
+
+        context "with a separate home" do
+          let(:separate_home) { true }
+          include_examples "proposed layout"
+        end
+
+        context "without separate home" do
+          let(:separate_home) { false }
+          include_examples "proposed layout"
+        end
+      end
+
+      context "not using LVM" do
+        let(:lvm) { false }
+
+        context "with a separate home" do
+          let(:separate_home) { true }
+          include_examples "proposed layout"
+        end
+
+        context "without separate home" do
+          let(:separate_home) { false }
+          include_examples "proposed layout"
         end
       end
     end

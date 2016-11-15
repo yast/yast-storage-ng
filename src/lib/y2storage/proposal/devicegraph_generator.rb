@@ -24,6 +24,7 @@
 require "storage"
 require "y2storage/proposal/space_maker"
 require "y2storage/proposal/partition_creator"
+require "y2storage/proposal/lvm_helper"
 require "y2storage/refinements/devicegraph_lists"
 
 module Y2Storage
@@ -55,19 +56,32 @@ module Y2Storage
         # good citizen and do it in our own copy
         volumes = volumes.deep_dup
 
-        space_maker = SpaceMaker.new(initial_graph, disk_analyzer, settings)
+        if settings.use_lvm
+          lvm_vols, volumes = volumes.split_by(&:can_live_on_logical_volume)
+        else
+          lvm_vols = PlannedVolumesList.new
+        end
+
+        lvm_helper = LvmHelper.new(lvm_vols)
+        space_maker = SpaceMaker.new(initial_graph, disk_analyzer, lvm_helper, settings)
         begin
           space_result = provide_space(volumes, space_maker)
         rescue NoDiskSpaceError
           raise if volumes.target == :min
           # Try again with the minimum size
           volumes.target = :min
+          lvm_vols.target = :min
           space_result = provide_space(volumes, space_maker)
         end
 
         refine_volumes!(volumes, space_result[:deleted_partitions])
         graph = create_partitions(space_result[:space_distribution], space_result[:devicegraph])
         reuse_partitions!(volumes, graph)
+
+        if settings.use_lvm
+          new_pvs = new_physical_volumes(space_result[:devicegraph], graph)
+          graph = lvm_helper.create_volumes(graph, new_pvs)
+        end
         graph
       end
 
@@ -78,16 +92,65 @@ module Y2Storage
       #
       # @raise Proposal::Error if the goal is not reached
       #
-      # @param volumes [PlannedVolumesList] set of volumes to make space for
+      # @param no_lvm_volumes [PlannedVolumesList] set of non-LVM volumes to
+      #     make space for. The LVM volumes are already handled by
+      #     space_make#lvm_helper
       # @param space_maker [SpaceMaker]
       #
       # @return [::Storage::Devicegraph]
-      def provide_space(volumes, space_maker)
+      def provide_space(no_lvm_volumes, space_maker)
+        if settings.use_lvm
+          provide_space_lvm(no_lvm_volumes, space_maker)
+        else
+          provide_space_no_lvm(no_lvm_volumes, space_maker)
+        end
+      end
+
+      # Variant of #provide_space when LVM is not involved
+      # @see #provide_space
+      def provide_space_no_lvm(volumes, space_maker)
         result = space_maker.provide_space(volumes)
-        log.info(
-          "Found #{volumes.target} space"
-        )
+        log.info "Found #{volumes.target} space"
         result
+      end
+
+      # Variant of #provide_space when LVM is involved. It first tries to reuse
+      # the existing volume groups (one at a time). If that fails, it tries to
+      # create a new volume group from scratch.
+      #
+      # @see #provide_space
+      def provide_space_lvm(no_lvm_volumes, space_maker)
+        lvm_helper = space_maker.lvm_helper
+        lvm_helper.reused_volume_group = nil
+
+        lvm_helper.reusable_volume_groups(space_maker.original_graph).each do |vg|
+          begin
+            lvm_helper.reused_volume_group = vg
+            result = space_maker.provide_space(no_lvm_volumes)
+            log.info "Found #{no_lvm_volumes.target} space including LVM, reusing #{vg}"
+            return result
+          rescue NoDiskSpaceError
+            next
+          end
+        end
+
+        lvm_helper.reused_volume_group = nil
+        result = space_maker.provide_space(no_lvm_volumes)
+        log.info "Found #{no_lvm_volumes.target} space including LVM"
+
+        result
+      end
+
+      # List of partitions with LVM id (i.e. potential physical volumes) that
+      # are present in the new devicegraph but were not there in the old one.
+      #
+      # @param old_devicegraph [Storage::Devicegraph]
+      # @param new_devicegraph [Storage::Devicegraph]
+      # @return [Array<String>] device names of the partitions
+      def new_physical_volumes(old_devicegraph, new_devicegraph)
+        all_pvs = new_devicegraph.partitions.with(id: Storage::ID_LVM)
+        old_pv_sids = old_devicegraph.partitions.with(id: Storage::ID_LVM).map(&:sid)
+        all_pvs.reject { |pv| old_pv_sids.include?(pv.sid) }.map(&:name)
       end
 
       # Adds some extra information to the planned volumes inferred from

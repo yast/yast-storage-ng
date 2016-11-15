@@ -1,3 +1,5 @@
+#!/usr/bin/env ruby
+#
 # encoding: utf-8
 
 # Copyright (c) [2016] SUSE LLC
@@ -19,10 +21,34 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "y2storage/refinements/devicegraph_lists"
-require "y2storage/refinements/devicegraph"
-require "y2storage/refinements/disk"
-require "y2storage/refinements/partition_attributes"
-require "y2storage/refinements/lvm_lv_attributes"
-require "y2storage/refinements/size_casts"
-require "y2storage/refinements/test_devicegraph"
+require "storage"
+
+module Y2Storage
+  module Refinements
+    # Refinements for LvmLv adding some virtual attributes, mainly used
+    # to make the rspec tests more readable
+    module LvmLvAttributes
+      refine ::Storage::LvmLv do
+        # First mounpoint
+        def mountpoint
+          filesystem.mountpoints.first
+        end
+
+        # Label of the filesystem
+        def label
+          filesystem.label
+        end
+
+        # UUID of the filesystem
+        def uuid
+          filesystem.uuid
+        end
+
+        # Type of the filesystem
+        def fs_type
+          filesystem.type
+        end
+      end
+    end
+  end
+end

@@ -148,5 +148,30 @@ module Y2Storage
       end
       "#<PlannedVolume " + attrs.join(", ") + ">"
     end
+
+    # Create a filesystem for the volume on the specified partition and set its
+    # mount point. Do nothing if #filesystem_type is not set.
+    #
+    # @param partition [::Storage::Partition]
+    #
+    # @return [::Storage::Filesystem] filesystem
+    def create_filesystem(partition)
+      return nil unless filesystem_type
+      filesystem = partition.create_filesystem(filesystem_type)
+      filesystem.add_mountpoint(mount_point) if mount_point && !mount_point.empty?
+      filesystem.label = label if label
+      filesystem.uuid = uuid if uuid
+      filesystem
+    end
+
+    def ==(other)
+      other.class == self.class && other.internal_state == internal_state
+    end
+
+  protected
+
+    def internal_state
+      instance_variables.sort.map { |v| instance_variable_get(v) }
+    end
   end
 end

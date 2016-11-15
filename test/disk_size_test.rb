@@ -24,6 +24,10 @@ require_relative "spec_helper"
 require "y2storage/disk_size"
 
 describe Y2Storage::DiskSize do
+  using Y2Storage::Refinements::SizeCasts
+  let(:zero) { Y2Storage::DiskSize.zero }
+  let(:unlimited) { Y2Storage::DiskSize.unlimited }
+  let(:one_byte) { Y2Storage::DiskSize.new(1) }
 
   describe "constructed empty" do
     it "should have a to_i of 0" do
@@ -277,4 +281,87 @@ describe Y2Storage::DiskSize do
     end
   end
 
+  describe "#ceil" do
+    # Use 31337 bytes (prime) to ensure we don't success accidentally
+    let(:rounding) { Y2Storage::DiskSize.new(31337) }
+
+    it "returns the same value if any of the operands is zero" do
+      expect(zero.ceil(rounding)).to eq zero
+      expect(4.MiB.ceil(zero)).to eq 4.MiB
+      expect(zero.ceil(zero)).to eq zero
+    end
+
+    it "returns the same value if any of the operands is unlimited" do
+      expect(unlimited.ceil(rounding)).to eq unlimited
+      expect(8.GiB.ceil(unlimited)).to eq 8.GiB
+      expect(unlimited.ceil(zero)).to eq unlimited
+      expect(unlimited.ceil(unlimited)).to eq unlimited
+    end
+
+    it "returns the same value when rounding to 1 byte" do
+      expect(4.KiB.ceil(one_byte)).to eq 4.KiB
+    end
+
+    it "returns the same value when it's divisible by the size" do
+      value = rounding * 4
+      expect(value.ceil(rounding)).to eq value
+    end
+
+    it "rounds up to the next divisible size otherwise" do
+      value = rounding * 4
+      value -= one_byte
+      expect(value.ceil(rounding)).to eq(rounding * 4)
+
+      value -= Y2Storage::DiskSize.new(337)
+      expect(value.ceil(rounding)).to eq(rounding * 4)
+
+      value -= rounding / 2
+      expect(value.ceil(rounding)).to eq(rounding * 4)
+
+      value = (rounding * 3) + one_byte
+      expect(value.ceil(rounding)).to eq(rounding * 4)
+    end
+  end
+
+  describe "#floor" do
+    # Use 31337 bytes (prime) to ensure we don't success accidentally
+    let(:rounding) { Y2Storage::DiskSize.new(31337) }
+
+    it "returns the same value if any of the operands is zero" do
+      expect(zero.floor(4.MiB)).to eq zero
+      expect(4.MiB.floor(zero)).to eq 4.MiB
+      expect(zero.floor(zero)).to eq zero
+    end
+
+    it "returns the same value if any of the operands is unlimited" do
+      expect(unlimited.floor(8.GiB)).to eq unlimited
+      expect(8.GiB.floor(unlimited)).to eq 8.GiB
+      expect(unlimited.floor(zero)).to eq unlimited
+      expect(unlimited.floor(unlimited)).to eq unlimited
+    end
+
+    it "returns the same value when rounding to 1 byte" do
+      expect(4.KiB.floor(one_byte)).to eq 4.KiB
+    end
+
+    it "returns the same value when it's divisible by the size" do
+      value = rounding * 3
+      expect(value.floor(rounding)).to eq value
+    end
+
+    it "rounds down to the previous divisible size otherwise" do
+      value = rounding * 3
+      value += one_byte
+      expect(value.floor(rounding)).to eq(rounding * 3)
+
+      value += rounding / 2
+      expect(value.floor(rounding)).to eq(rounding * 3)
+
+      value += Y2Storage::DiskSize.new(200)
+      expect(value.floor(rounding)).to eq(rounding * 3)
+
+      value = (rounding * 4) - one_byte
+      expect(value.floor(rounding)).to eq(rounding * 3)
+    end
+  end
 end

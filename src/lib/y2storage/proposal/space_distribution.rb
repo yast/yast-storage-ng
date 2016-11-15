@@ -24,7 +24,6 @@
 require "yast"
 require "storage"
 require "y2storage/disk_size"
-require "y2storage/planned_volumes_list"
 require "y2storage/proposal/assigned_space"
 require "y2storage/refinements/devicegraph_lists"
 
@@ -37,9 +36,7 @@ module Y2Storage
 
       include Yast::Logger
 
-      FREE_SPACE_MIN_SIZE = DiskSize.MiB(30)
-
-      # @return [Array<AssignedSpaces>]
+      # @return [Array<AssignedSpace>]
       attr_reader :spaces
 
       # Constructor. Raises an exception when trying to create an invalid
@@ -78,6 +75,12 @@ module Y2Storage
         spaces.map(&:disk_size).reduce(DiskSize.zero, :+)
       end
 
+      # Total number of volumes included in the distribution
+      # @return [Fixnum]
+      def volumes_count
+        spaces.map { |sp| sp.volumes.size }.reduce(0, :+)
+      end
+
       # Comparison method used to sort distributions based on how good are
       # they for installation purposes.
       #
@@ -89,6 +92,10 @@ module Y2Storage
 
         # The fewer gaps the better
         res = gaps_count <=> other.gaps_count
+        return res unless res.zero?
+
+        # The fewer physical volumes the better
+        res = volumes_count <=> other.volumes_count
         return res unless res.zero?
 
         # The less fragmentation the better
@@ -264,134 +271,6 @@ module Y2Storage
       def volume_list_comparable_string(vol_list)
         volumes_strings = vol_list.to_a.map { |vol| vol.to_s }.sort
         "<target=#{vol_list.target}, volumes=#{volumes_strings.join}>"
-      end
-
-      class << self
-        # Best possible distribution, nil if the volumes don't fit
-        #
-        # @param volumes [PlannedVolumesList]
-        # @param disk_spaces [Array<FreeDiskSpace>]
-        # @param devicegraph [::Storage::Devicegraph]
-        #
-        # @return [SpaceDistribution]
-        def best_for(volumes, disk_spaces, devicegraph)
-          begin
-            disk_spaces_by_vol = candidate_disk_spaces(volumes, disk_spaces)
-          rescue NoDiskSpaceError
-            return nil
-          end
-
-          candidates = hash_product(disk_spaces_by_vol).map do |combination|
-            lists = inverse_hash(combination)
-            lists = lists.each_with_object({}) do |(space, vols), hash|
-              hash[space] = PlannedVolumesList.new(vols, target: volumes.target)
-            end
-            begin
-              SpaceDistribution.new(lists, devicegraph)
-            rescue Error
-              next
-            end
-          end
-
-          candidates.compact.sort { |a, b| a.better_than(b) }.first
-        end
-
-        # Additional space that would be needed in order to maximize the
-        # posibilities of creating a good SpaceDistribution.
-        #
-        # Used when resizing windows in order to know how much space to remove
-        # from the partition.
-        #
-        # This is actually an oversimplyfication, because it's not just a matter
-        # of size, so maybe we can rethink this a little bit in the future if
-        # needed
-        #
-        # @param volumes [PlannedVolumesList]
-        # @param disk_spaces [Array<FreeDiskSpace>]
-        # @return [DiskSize]
-        def missing_disk_size(volumes, free_spaces)
-          needed_size = volumes.target_disk_size
-          available_space = available_space(free_spaces)
-          needed_size - available_space
-        end
-
-      protected
-
-        def available_space(free_spaces)
-          spaces = free_spaces.select do |space|
-            space.disk_size >= FREE_SPACE_MIN_SIZE
-          end
-          spaces.reduce(DiskSize.zero) { |sum, space| sum + space.disk_size }
-        end
-
-        # For each volume in the list, it returns a list of the disk spaces
-        # that could potentially host the volume.
-        #
-        # Of course, each disk space can appear on several lists.
-        #
-        # @param volumes [PlannedVolumesList]
-        # @param free_spaces [Array<FreeDiskSpace>]
-        # @return [Hash{PlannedVolume => Array<FreeDiskSpace>}]
-        def candidate_disk_spaces(volumes, free_spaces)
-          volumes.each_with_object({}) do |volume, hash|
-            spaces = free_spaces.select { |space| suitable_disk_space?(space, volume, volumes.target) }
-            if spaces.empty?
-              log.error "No suitable free space for #{volume}"
-              raise NoDiskSpaceError, "No suitable free space for the volume"
-            end
-            hash[volume] = spaces
-          end
-        end
-
-        def suitable_disk_space?(space, volume, target)
-          return false if volume.disk && volume.disk != space.disk_name
-          return false if space.disk_size < volume.min_valid_disk_size(target)
-          max_offset = volume.max_start_offset
-          return false if max_offset && space.start_offset > max_offset
-          true
-        end
-
-        # Cartesian product (that is, all the possible combinations) of hash
-        # whose values are arrays.
-        #
-        # @example
-        #   hash = {
-        #     vol1: [:space1, :space2],
-        #     vol2: [:space1],
-        #     vol3: [:space2, :space3]
-        #   }
-        #   hash_product(hash) #=>
-        #   # [
-        #   #  {vol1: :space1, vol2: :space1, vol3: :space2},
-        #   #  {vol1: :space1, vol2: :space1, vol3: :space3},
-        #   #  {vol1: :space2, vol2: :space1, vol3: :space2},
-        #   #  {vol1: :space2, vol2: :space1, vol3: :space3}
-        #   # ]
-        #
-        # @param hash [Hash{Object => Array}]
-        # @return [Array<Hash>]
-        def hash_product(hash)
-          keys = hash.keys
-          # Ensure same order
-          arrays = keys.map { |key| hash[key] }
-          product = arrays[0].product(*arrays[1..-1])
-          product.map { |p| Hash[keys.zip(p)] }
-        end
-
-        # Inverts keys and values of a hash
-        #
-        # @example
-        #   hash = {vol1: :space1, vol2: :space1, vol3: :space2}
-        #   inverse_hash(hash) #=> {space1: [:vol1, :vol2], space2: [:vol3]}
-        #
-        # @return [Hash] original values as keys and arrays of original
-        #     keys as values
-        def inverse_hash(hash)
-          hash.each_with_object({}) do |(key, value), out|
-            out[value] ||= []
-            out[value] << key
-          end
-        end
       end
     end
   end

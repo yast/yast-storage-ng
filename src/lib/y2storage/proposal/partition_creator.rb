@@ -35,7 +35,6 @@ module Y2Storage
       using Refinements::DevicegraphLists
       include Yast::Logger
 
-      VOLUME_GROUP_SYSTEM = "system"
       FIRST_LOGICAL_PARTITION_NUMBER = 5 # Number of the first logical partition (/dev/sdx5)
 
       # Initialize.
@@ -53,15 +52,13 @@ module Y2Storage
       def create_partitions(distribution)
         self.devicegraph = original_graph.duplicate
 
-        # FIXME: not implemented yet in libstorage-bgl
-        use_lvm = false
-
-        if use_lvm # rubocop:disable Style/GuardClause raise is just temporary
-          raise NotImplementedError
-          # create_lvm(distribution)
-        else
-          create_non_lvm(distribution)
+        distribution.spaces.each do |space|
+          type = space.partition_type
+          vols = space.volumes
+          disk_space = space.disk_space
+          process_space(vols, disk_space, type)
         end
+
         devicegraph
       end
 
@@ -71,44 +68,13 @@ module Y2Storage
       attr_accessor :devicegraph
       attr_reader :original_graph
 
-      # Create volumes on LVM.
-      #
-      # @param volumes [Array<ProposalVolume>] volumes to create
-      #
-      def create_lvm(volumes)
-        lvm_vol, non_lvm_vol = volumes.partition(&:can_live_on_logical_volume)
-        # Create any partitions first that cannot be created on LVM
-        # to avoid LVM consuming all the available free space
-        create_non_lvm(non_lvm_vol)
-
-        return if lvm_vol.empty?
-
-        # Create LVM partitions (using the rest of the available free space)
-        volume_group = create_volume_group(VOLUME_GROUP_SYSTEM)
-        create_physical_volumes(volume_group)
-        lvm_vol.each { |vol| create_logical_volume(volume_group, vol) }
-      end
-
-      # Create partitions without LVM.
-      #
-      # @param distribution [SpaceDistribution]
-      #
-      def create_non_lvm(distribution)
-        distribution.spaces.each do |space|
-          type = space.partition_type
-          vols = space.volumes
-          disk_space = space.disk_space
-          create_non_lvm_simple(vols, disk_space, type)
-        end
-      end
-
       # Create partitions without LVM in a single slot of free disk space.
       #
       # @param volumes   [PlannedVolumesList] volumes to create
       # @param free_space [FreeDiskSpace]
       # @param partition_type [Symbol] type to be enforced to all the
       #       partitions. If nil, each partition can have a different type
-      def create_non_lvm_simple(volumes, free_space, partition_type)
+      def process_space(volumes, free_space, partition_type)
         volumes.each do |vol|
           log.info(
             "vol #{vol.mount_point}\tmin: #{vol.min_disk_size}\tmax: #{vol.max_disk_size} " \
@@ -116,69 +82,8 @@ module Y2Storage
           )
         end
 
-        volumes = volumes.deep_dup
-        volumes.each { |vol| vol.disk_size = vol.min_valid_disk_size(volumes.target) }
-        distribute_extra_space(volumes, free_space)
+        volumes = volumes.distribute_space(free_space.disk_size)
         create_volumes_partitions(volumes, free_space, partition_type)
-      end
-
-      # Distribute extra disk space among the specified volumes. This updates
-      # the size of each volume with the distributed space.
-      #
-      # @param volumes [PlannedVolumesList]
-      # @param space   [FreeDiskSpace]
-      #
-      # @return [DiskSpace] remaining space that could not be distributed
-      #
-      def distribute_extra_space(volumes, space)
-        candidates = volumes
-        extra_size = space.disk_size - volumes.total_disk_size
-        while extra_size > DiskSize.zero
-          candidates = extra_space_candidates(candidates)
-          return extra_size if candidates.empty?
-          return extra_size if candidates.total_weight.zero?
-          log.info("Distributing #{extra_size} extra space among #{candidates.size} volumes")
-
-          assigned_size = DiskSize.zero
-          candidates.each do |vol|
-            vol_extra = volume_extra_size(vol, extra_size, candidates.total_weight)
-            vol.disk_size += vol_extra
-            log.info("Distributing #{vol_extra} to #{vol.mount_point}; now #{vol.disk_size}")
-            assigned_size += vol_extra
-          end
-          extra_size -= assigned_size
-        end
-        log.info("Could not distribute #{extra_size}") unless extra_size.zero?
-        extra_size
-      end
-
-      # Volumes that may grow when distributing the extra space
-      #
-      # @param volumes [PlannedVolumesList] initial set of all volumes
-      # @return [PlannedVolumesList]
-      def extra_space_candidates(volumes)
-        candidates = volumes.dup
-        candidates.delete_if { |vol| vol.disk_size >= vol.max_disk_size }
-        candidates
-      end
-
-      # Extra space to be assigned to a volume
-      #
-      # @param volume [PlannedVolume] volume to enlarge
-      # @param available_size [DiskSize] free space to be distributed among
-      #    involved volumes
-      # @param total_weight [Float] sum of the weights of all involved volumes
-      #
-      # @return [DiskSize]
-      def volume_extra_size(volume, available_size, total_weight)
-        extra_size = available_size * (volume.weight / total_weight)
-        new_size = extra_size + volume.disk_size
-        if new_size > volume.max_disk_size
-          # Increase just until reaching the max size
-          volume.max_disk_size - volume.disk_size
-        else
-          extra_size
-        end
       end
 
       # Creates a partition and the corresponding filesystem for each volume
@@ -204,7 +109,7 @@ module Y2Storage
             space = free_space_within(initial_free_space)
             primary = primary?(partition_type, space.disk)
             partition = create_partition(vol, partition_id, space, primary)
-            make_filesystem(partition, vol)
+            vol.create_filesystem(partition)
             devicegraph.check
           rescue ::Storage::Exception => error
             raise Error, "Error allocating #{vol}. Details: #{error}"
@@ -336,59 +241,6 @@ module Y2Storage
         end
         # region.dup doesn't seem to work (SWIG bindings problem?)
         ::Storage::Region.new(region.start, blocks, region.block_size)
-      end
-
-      # Create a filesystem for the specified volume on the specified partition
-      # and set its mount point. Do nothing if there is no filesystem
-      # configured for 'vol'.
-      #
-      # @param partition [::Storage::Partition]
-      # @param vol       [ProposalVolume]
-      #
-      # @return [::Storage::Filesystem] filesystem
-      #
-      def make_filesystem(partition, vol)
-        return nil unless vol.filesystem_type
-        filesystem = partition.create_filesystem(vol.filesystem_type)
-        filesystem.add_mountpoint(vol.mount_point) if vol.mount_point && !vol.mount_point.empty?
-        filesystem.label = vol.label if vol.label
-        filesystem.uuid = vol.uuid if vol.uuid
-        filesystem
-      end
-
-      # Create an LVM volume group.
-      #
-      # @param volume_group_name [String]
-      #
-      # @return [::Storage::VolumeGroup] volume_group
-      #
-      def create_volume_group(volume_group_name)
-        log.info("Creating LVM volume group #{volume_group_name}")
-        # TODO
-        raise NotImplementedError
-      end
-
-      # Create LVM physical volumes for all the rest of free_space and add them
-      # to the specified volume group.
-      #
-      # @param volume_group [::Storage::VolumeGroup]
-      #
-      def create_physical_volumes(volume_group)
-        log.info("Creating LVM physical volumes for #{volume_group}")
-      end
-
-      # Create an LVM logical volume in the specified volume group for vol.
-      #
-      # @param volume_group [::Storage::VolumeGroup]
-      # @param vol          [ProposalVolume]
-      #
-      def create_logical_volume(volume_group, vol)
-        log.info(
-          "Creating LVM logical volume #{vol.logical_volume_name} at #{volume_group}"
-        )
-        # TO DO
-        # TO DO
-        # TO DO
       end
     end
   end
