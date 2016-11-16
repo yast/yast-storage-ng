@@ -26,6 +26,7 @@ require "storage"
 require "y2storage/disk_size"
 require "y2storage/planned_volumes_list"
 require "y2storage/proposal/space_distribution"
+require "y2storage/proposal/assigned_space"
 require "y2storage/proposal/phys_vol_distribution"
 
 module Y2Storage
@@ -93,19 +94,27 @@ module Y2Storage
 
       # Space that should be freed when resizing an existing partition in
       # order to have a good chance of creating a valid SpaceDistribution
-      # (by means of #best_of).
+      # (by means of #best_distribution).
       #
       # Used when resizing windows in order to know how much space to remove
       # from the partition, although it's an oversimplyfication because being
       # able to generate a valid distribution is not just a matter of size.
       #
-      # @param free_spaces [Array<FreeDiskSpace>]
+      # @param partition [Storage::Partition] partition to resize
+      # @param volumes [PlannedVolumesList] volumes to make space for
+      # @param free_spaces [Array<FreeDiskSpace>] all free spaces in the system
       # @return [DiskSize]
-      def resizing_size(volumes, free_spaces)
-        # Let's assume the worst case - resizing produces a new space and the
-        # LVM must be spread among all the available spaces
+      def resizing_size(partition, volumes, free_spaces)
+        # We are going to resize this partition only once, so let's assume the
+        # worst case:
+        #  - several volumes (and maybe one of the new PVs) will be logical
+        #  - resizing produces a new space
+        #  - the LVM must be spread among all the available spaces
+        disk = partition.partitionable
+        max_logical = max_logical(disk, volumes)
+        overhead = AssignedSpace.overhead_of_logical(disk) * max_logical
         pvs_to_create = free_spaces.size + 1
-        needed = volumes.target_disk_size + lvm_space_to_make(pvs_to_create)
+        needed = volumes.target_disk_size + lvm_space_to_make(pvs_to_create) + overhead
         needed - available_space(free_spaces)
       end
 
@@ -136,6 +145,28 @@ module Y2Storage
       def lvm_space_to_make(new_pvs)
         return DiskSize.zero if lvm_helper.missing_space.zero?
         lvm_helper.missing_space + lvm_helper.useless_pv_space * new_pvs
+      end
+
+      # Max number of logical partitions that can contain a SpaceDistribution
+      # for a given disk and set of volumes
+      #
+      # @param disk [Storage::Partitionable]
+      # @param volumes [PlannedVolumesList]
+      # @return [Integer]
+      def max_logical(disk, volumes)
+        ptable = disk.partition_table
+        return 0 unless ptable.extended_possible
+        # Worst case, all the volumes that can end up in this disk will do so
+        # and will be candidates to be logical
+        max_volumes = volumes.select { |v| v.disk.nil? || v.disk == disk.name }
+        partitions = max_volumes.size
+        # Even worst if we need a logical PV
+        partitions += 1 unless lvm_helper.missing_space.zero?
+        if ptable.has_extended
+          partitions
+        else
+          SpaceDistribution.partitions_in_new_extended(partitions, ptable)
+        end
       end
 
       def available_space(free_spaces)

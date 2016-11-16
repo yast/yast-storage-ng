@@ -115,9 +115,9 @@ describe Y2Storage::Proposal::PartitionCreator do
         space_dist(disk_spaces.first => vols_list(root_vol, home_vol))
       end
 
-      context "if the space is marked as :primary" do
+      context "if the space should have no logical volumes" do
         before do
-          allow(distribution.spaces.first).to receive(:partition_type).and_return :primary
+          allow(distribution.spaces.first).to receive(:num_logical).and_return 0
         end
 
         it "creates all partitions as primary" do
@@ -131,9 +131,10 @@ describe Y2Storage::Proposal::PartitionCreator do
         end
       end
 
-      context "if the space is marked as :extended" do
+      context "if all the volumes in the space must be logical" do
         before do
-          allow(distribution.spaces.first).to receive(:partition_type).and_return :extended
+          space = distribution.spaces.first
+          allow(space).to receive(:num_logical).and_return space.volumes.size
         end
 
         it "creates no new primary partitions" do
@@ -163,12 +164,13 @@ describe Y2Storage::Proposal::PartitionCreator do
         end
       end
 
-      context "if the space has not predefined partition type" do
+      context "if the space must mix logical and primary partitions" do
         before do
-          allow(distribution.spaces.first).to receive(:partition_type).and_return nil
+          space = distribution.spaces.first
+          allow(space).to receive(:num_logical).and_return(space.volumes.size - 1)
         end
 
-        it "creates as many primary partitions as possible" do
+        it "creates as many primary partitions as needed" do
           result = creator.create_partitions(distribution)
           primary = result.partitions.with(type: ::Storage::PartitionType_PRIMARY)
           expect(primary).to contain_exactly(
@@ -201,7 +203,8 @@ describe Y2Storage::Proposal::PartitionCreator do
       end
 
       before do
-        allow(distribution.spaces.first).to receive(:partition_type).and_return :extended
+        space = distribution.spaces.first
+        allow(space).to receive(:num_logical).and_return space.volumes.size
       end
 
       it "reuses the extended partition" do

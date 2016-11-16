@@ -53,10 +53,11 @@ module Y2Storage
         self.devicegraph = original_graph.duplicate
 
         distribution.spaces.each do |space|
-          type = space.partition_type
           vols = space.volumes
           disk_space = space.disk_space
-          process_space(vols, disk_space, type)
+          num_logical = space.num_logical
+          usable_size = space.usable_size
+          process_space(vols, disk_space, usable_size, num_logical)
         end
 
         devicegraph
@@ -68,13 +69,15 @@ module Y2Storage
       attr_accessor :devicegraph
       attr_reader :original_graph
 
-      # Create partitions without LVM in a single slot of free disk space.
+      # Create partitions in a single slot of free disk space.
       #
       # @param volumes   [PlannedVolumesList] volumes to create
-      # @param free_space [FreeDiskSpace]
-      # @param partition_type [Symbol] type to be enforced to all the
-      #       partitions. If nil, each partition can have a different type
-      def process_space(volumes, free_space, partition_type)
+      # @param free_space [FreeDiskSpace] the slot
+      # @params usable_size [DiskSize] real space to distribute among the
+      #       volumes (part of free_space could be used for data structures)
+      # @param num_logical [Integer] how many volumes should be placed in
+      #       logical partitions
+      def process_space(volumes, free_space, usable_size, num_logical)
         volumes.each do |vol|
           log.info(
             "vol #{vol.mount_point}\tmin: #{vol.min_disk_size}\tmax: #{vol.max_disk_size} " \
@@ -82,14 +85,11 @@ module Y2Storage
           )
         end
 
-        volumes = volumes.distribute_space(free_space.disk_size)
-        create_volumes_partitions(volumes, free_space, partition_type)
+        volumes = volumes.distribute_space(usable_size)
+        create_volumes_partitions(volumes, free_space, num_logical)
       end
 
       # Creates a partition and the corresponding filesystem for each volume
-      #
-      # Important: notice that, so far, this method is only intended to work
-      # in cases in which there is only one chunk of free space in the system.
       #
       # @raise an error if a volume cannot be allocated
       #
@@ -100,28 +100,20 @@ module Y2Storage
       #
       # @param volumes [Array<PlannedVolume>]
       # @param initial_free_space [FreeDiskSpace]
-      # @param partition_type [Symbol] @see #create_non_lvm_simple
-      def create_volumes_partitions(volumes, initial_free_space, partition_type)
-        volumes.sort_by_attr(:disk, :max_start_offset).each do |vol|
+      # @param num_logical [Symbol] logical partitions @see #process_space
+      def create_volumes_partitions(volumes, initial_free_space, num_logical)
+        volumes.sort_by_attr(:disk, :max_start_offset).each_with_index do |vol, idx|
           partition_id = vol.partition_id
           partition_id ||= vol.mount_point == "swap" ? ::Storage::ID_SWAP : ::Storage::ID_LINUX
           begin
             space = free_space_within(initial_free_space)
-            primary = primary?(partition_type, space.disk)
+            primary = volumes.size - idx > num_logical
             partition = create_partition(vol, partition_id, space, primary)
             vol.create_filesystem(partition)
             devicegraph.check
           rescue ::Storage::Exception => error
             raise Error, "Error allocating #{vol}. Details: #{error}"
           end
-        end
-      end
-
-      def primary?(partition_type, disk)
-        if partition_type.nil?
-          !logical_partition_preferred?(disk.partition_table)
-        else
-          partition_type == :primary
         end
       end
 
@@ -171,15 +163,6 @@ module Y2Storage
         partition.id = partition_id
         partition.boot = !!vol.bootable
         partition
-      end
-
-      # Checks if the next partition to be created should be a logical one
-      #
-      # @param ptable [Storage::PartitionTable]
-      # @return [Boolean] true for logical partition, false if primary is
-      #       preferred
-      def logical_partition_preferred?(ptable)
-        ptable.extended_possible && ptable.num_primary >= ptable.max_primary - 1
       end
 
       # Creates an extended partition

@@ -171,9 +171,9 @@ module Y2Storage
       # order to reach the goal
       #
       # @return [DiskSize]
-      def resizing_size(volumes, disk)
+      def resizing_size(partition, volumes, disk)
         spaces = free_spaces(new_graph, disk).to_a
-        dist_calculator.resizing_size(volumes, spaces)
+        dist_calculator.resizing_size(partition, volumes, spaces)
       end
 
       # List of free spaces in the given devicegraph
@@ -219,7 +219,7 @@ module Y2Storage
         success = sorted_resizables(parts_by_disk.values.flatten).any? do |res|
           shrink_size = [
             res[:recoverable_size],
-            resizing_size(volumes, disk)
+            resizing_size(res[:partition], volumes, disk)
           ].min
           shrink_partition(res[:partition], shrink_size)
 

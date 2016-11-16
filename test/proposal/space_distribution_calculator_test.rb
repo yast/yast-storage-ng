@@ -65,9 +65,14 @@ describe Y2Storage::Proposal::SpaceDistributionCalculator do
           expect(spaces.first.volumes).to contain_exactly(vol1, vol2, vol3)
         end
 
-        it "plans all partitions as logical" do
-          spaces = distribution.spaces
-          expect(spaces.first.partition_type).to eq :extended
+        it "sets the partition type to :logical" do
+          space = distribution.spaces.first
+          expect(space.partition_type).to eq :logical
+        end
+
+        it "plans all the partitions as logical" do
+          space = distribution.spaces.first
+          expect(space.num_logical).to eq space.volumes.size
         end
       end
     end
@@ -84,7 +89,7 @@ describe Y2Storage::Proposal::SpaceDistributionCalculator do
       end
 
       context "if the space is big enough" do
-        let(:vol3) { planned_vol(mount_point: "/3", type: :ext4, desired: 3.GiB, max: 3.GiB) }
+        let(:vol3) { planned_vol(mount_point: "/3", type: :ext4, desired: 19.GiB - 2.MiB) }
 
         it "allocates all the volumes in the available space" do
           spaces = distribution.spaces
@@ -93,9 +98,22 @@ describe Y2Storage::Proposal::SpaceDistributionCalculator do
         end
 
         context "and there is no extended partition" do
-          it "does not enforce the partition type" do
-            spaces = distribution.spaces
-            expect(spaces.first.partition_type).to be_nil
+          it "does not set the partition type" do
+            space = distribution.spaces.first
+            expect(space.partition_type).to be_nil
+          end
+
+          it "plans the surplus partitions as logical" do
+            space = distribution.spaces.first
+            expect(space.num_logical).to eq 2
+          end
+        end
+
+        context "if the space does not have extra room for the EBRs" do
+          let(:vol3) { planned_vol(mount_point: "/3", type: :ext4, desired: 19.GiB) }
+
+          it "returns no distribution (nil)" do
+            expect(distribution).to be_nil
           end
         end
 
@@ -111,9 +129,14 @@ describe Y2Storage::Proposal::SpaceDistributionCalculator do
           context "and there are not too many primary partitions already" do
             let(:volumes) { Y2Storage::PlannedVolumesList.new([vol1, vol2]) }
 
-            it "plans all partitions as primary" do
+            it "sets partition_type to primary" do
               spaces = distribution.spaces
               expect(spaces.first.partition_type).to eq :primary
+            end
+
+            it "plans no logical partitions" do
+              space = distribution.spaces.first
+              expect(space.num_logical).to eq 0
             end
           end
         end
@@ -170,7 +193,7 @@ describe Y2Storage::Proposal::SpaceDistributionCalculator do
 
           it "plans all partitions as logical" do
             types = distribution.spaces.map { |s| s.partition_type }
-            expect(types).to eq [:extended, :extended]
+            expect(types).to eq [:logical, :logical]
           end
         end
 
@@ -187,22 +210,59 @@ describe Y2Storage::Proposal::SpaceDistributionCalculator do
             context "and there are not too many primary partitions already" do
               let(:scenario) { "spaces_5_3_used_extended" }
 
-              it "plans all partitions as primary" do
+              it "sets the primary partition type for all the spaces" do
                 types = distribution.spaces.map { |s| s.partition_type }
                 expect(types).to eq [:primary, :primary]
+              end
+
+              it "plans all partitions as primary" do
+                logical = distribution.spaces.map { |s| s.num_logical }
+                expect(logical).to eq [0, 0]
               end
             end
           end
 
           context "and there is no extended partition" do
             let(:scenario) { "spaces_5_3" }
+            let(:space5) { distribution.spaces.detect { |s| s.disk_size == 5.GiB } }
+            let(:space3) { distribution.spaces.detect { |s| s.disk_size == (3.GiB - 1.MiB) } }
 
-            context "and the number of partitions reaches the primary limit" do
-              it "chooses one space for an extended partition and the rest as primary" do
-                space5 = distribution.spaces.detect { |s| s.disk_size == 5.GiB }
-                space3 = distribution.spaces.detect { |s| s.disk_size == (3.GiB - 1.MiB) }
-                expect(space5.partition_type).to eq :extended
-                expect(space3.partition_type).to eq :primary
+            context "and the number of partitions equals the primary limit" do
+              it "does not set any enforced partition_type" do
+                expect(space5.partition_type).to be_nil
+                expect(space3.partition_type).to be_nil
+              end
+
+              it "plans all partitions in all spaces as primary" do
+                expect(space5.num_logical).to eq 0
+                expect(space3.num_logical).to eq 0
+              end
+            end
+
+            context "and the number of partitions exceeds the primary limit" do
+              let(:vol3) { planned_vol(mount_point: "/3", type: :ext4, desired: 2.GiB) }
+              let(:vol4) { planned_vol(mount_point: "/4", type: :ext4, desired: 2.GiB - 2.MiB) }
+              let(:volumes) { Y2Storage::PlannedVolumesList.new([vol1, vol2, vol3, vol4]) }
+
+              it "does not set any enforced partition_type" do
+                expect(space5.partition_type).to be_nil
+                expect(space3.partition_type).to be_nil
+              end
+
+              it "chooses one space to contain all the logical partitions" do
+                expect(space5.num_logical).to eq 2
+              end
+
+              it "ensures other spaces only contain primary partitions" do
+                expect(space3.num_logical).to eq 0
+              end
+
+              context "and there is no room for the EBRs" do
+                let(:vol4) { planned_vol(mount_point: "/4", type: :ext4, desired: 2.GiB) }
+
+                it "returns no distribution (nil)" do
+                  expect(distribution).to be_nil
+                end
               end
             end
 
@@ -212,9 +272,14 @@ describe Y2Storage::Proposal::SpaceDistributionCalculator do
               end
               let(:volumes) { Y2Storage::PlannedVolumesList.new([vol2, vol3]) }
 
-              it "does not enforce the partition types" do
-                types = distribution.spaces.map { |s| s.partition_type }
-                expect(types).to eq [nil, nil]
+              it "does not set any enforced partition_type" do
+                expect(space5.partition_type).to be_nil
+                expect(space3.partition_type).to be_nil
+              end
+
+              it "plans all partitions in all spaces as primary" do
+                expect(space5.num_logical).to eq 0
+                expect(space3.num_logical).to eq 0
               end
             end
           end
