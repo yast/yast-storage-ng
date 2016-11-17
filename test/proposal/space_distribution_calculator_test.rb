@@ -422,6 +422,22 @@ describe Y2Storage::Proposal::SpaceDistributionCalculator do
           end
         end
       end
+
+      context "when dealing with both LVM and logical partitions overhead" do
+        let(:scenario) { "logical-lvm-rounding" }
+        let(:lvm_size) { 5.GiB }
+        let(:lvm_max) { 5.GiB }
+        let(:vol1) { planned_vol(mount_point: "/1", type: :ext4, desired: 2.GiB, max: 2.GiB) }
+        let(:vol2) { planned_vol(mount_point: "/2", type: :ext4, desired: 1.GiB, max: 1.GiB) }
+        let(:vol3) { planned_vol(mount_point: "/3", type: :ext4, desired: 1.GiB, max: 1.GiB) }
+
+        # This test was added because we figured out that the original algorithm
+        # to create physical volume was leading to discard some valid solutions
+        it "returns the best possible solution (minimal gap)" do
+          expect(distribution.gaps_total_disk_size).to be <= (4.GiB - 7.MiB)
+          expect(distribution.gaps_count).to eq 1
+        end
+      end
     end
   end
 end
