@@ -187,13 +187,13 @@ module Y2Storage
 
         if ptable.extended_possible
           if ptable.has_extended
-            log.info "There is already a extended partition in the disk"
+            log.info "There is already a extended partition on the disk"
             (extended, primary) = spaces.partition { |s| space_inside_extended?(s) }
             if too_many_primary?(primary, ptable)
               raise NoMorePartitionSlotError, "Too many primary partitions needed"
             end
           else
-            log.info "There is no extended partition in the disk"
+            log.info "There is no extended partition on the disk"
           end
         else
           log.info "An extended partition makes no sense in this disk"

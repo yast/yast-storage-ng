@@ -53,11 +53,7 @@ module Y2Storage
         self.devicegraph = original_graph.duplicate
 
         distribution.spaces.each do |space|
-          vols = space.volumes
-          disk_space = space.disk_space
-          num_logical = space.num_logical
-          usable_size = space.usable_size
-          process_space(vols, disk_space, usable_size, num_logical)
+          process_free_space(space.disk_space, space.volumes, space.usable_size, space.num_logical)
         end
 
         devicegraph
@@ -71,13 +67,13 @@ module Y2Storage
 
       # Create partitions in a single slot of free disk space.
       #
-      # @param volumes   [PlannedVolumesList] volumes to create
       # @param free_space [FreeDiskSpace] the slot
+      # @param volumes   [PlannedVolumesList] volumes to create
       # @params usable_size [DiskSize] real space to distribute among the
       #       volumes (part of free_space could be used for data structures)
       # @param num_logical [Integer] how many volumes should be placed in
       #       logical partitions
-      def process_space(volumes, free_space, usable_size, num_logical)
+      def process_free_space(free_space, volumes, usable_size, num_logical)
         volumes.each do |vol|
           log.info(
             "vol #{vol.mount_point}\tmin: #{vol.min_disk_size}\tmax: #{vol.max_disk_size} " \

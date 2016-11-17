@@ -43,8 +43,9 @@ module Y2Storage
       def_delegators :@disk_space, :disk_name, :disk_size, :slot, :disk
 
       def initialize(disk_space, volumes)
-        @disk_space = disk_space
-        @volumes    = volumes
+        @disk_space  = disk_space
+        @volumes     = volumes
+        @num_logical = 0
       end
 
       # Checks if the volumes really fit into the assigned space
@@ -76,12 +77,15 @@ module Y2Storage
       #
       # Substracts from the total the space that will be used by new data
       # structures, like the EBRs of the planned logical partitions
+      # See https://en.wikipedia.org/wiki/Extended_boot_record
       #
       # @return [DiskSize]
       def usable_size
+        return disk_space.disk_size if num_logical.zero?
+
         logical = num_logical
-        # If the extended partition already exists, the overhead of our first
-        # logical partition is already counted
+        # If this space is inside an already existing extended partition,
+        # libstorage has already substracted the the overhead of the first EBR.
         logical -= 1 if partition_type == :logical
         disk_space.disk_size - overhead_of_logical * logical
       end
