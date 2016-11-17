@@ -6,7 +6,7 @@
     partitions:
 
     - partition:
-        size: 755711 MiB
+        size: 755709 MiB
         name: /dev/sda1
         id: ntfs
         file_system: ntfs
@@ -16,6 +16,11 @@
         size: 43009 MiB
         name: /dev/sda3
         id: lvm
+
+    # FIXME: even if these 2 MiB are useless for LVM,
+    # leaving them there does not look good
+    - free:
+        size: 2 MiB
 
     - partition:
         size: unlimited

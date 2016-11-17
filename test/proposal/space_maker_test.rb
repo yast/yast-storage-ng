@@ -98,7 +98,7 @@ describe Y2Storage::Proposal::SpaceMaker do
         it "resizes Windows partitions to free additional needed space" do
           result = maker.provide_space(volumes)
           expect(result[:devicegraph].partitions).to contain_exactly(
-            an_object_with_fields(label: "windows", size: (200.GiB - 1.MiB).to_i)
+            an_object_with_fields(label: "windows", size: (200.GiB - 3.MiB).to_i)
           )
         end
       end
@@ -122,7 +122,8 @@ describe Y2Storage::Proposal::SpaceMaker do
         it "shrinks the Windows partition by the required size" do
           result = maker.provide_space(volumes)
           win_partition = result[:devicegraph].partitions.with(name: "/dev/sda1").first
-          expect(win_partition.size).to eq 740.GiB.to_i
+          size = 740.GiB - 2.MiB
+          expect(win_partition.size).to eq size.to_i
         end
 
         it "leaves other partitions untouched" do
@@ -200,7 +201,8 @@ describe Y2Storage::Proposal::SpaceMaker do
       it "shrinks first the less full Windows partition" do
         result = maker.provide_space(volumes)
         win2_partition = result[:devicegraph].partitions.with(name: "/dev/sdb1").first
-        expect(win2_partition.size).to eq 160.GiB.to_i
+        size = 160.GiB - 2.MiB
+        expect(win2_partition.size).to eq size.to_i
       end
 
       it "leaves other partitions untouched if possible" do
