@@ -21,7 +21,7 @@ wrapper_storage.rb provides five functions:
   A solution was already discussed on IRC:
   https://w3.suse.de/~shundhammer/storage-timer.txt
 
-  An additional note: Using a wall clock time is error prove when the system
+  An additional note: Using a wall clock time is error prone when the system
   time or timezone can be set (like it can be in YaST). A simple revision
   counter that is increased as explained in the link above is simpler and more
   robust.
