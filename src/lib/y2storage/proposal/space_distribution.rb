@@ -217,8 +217,20 @@ module Y2Storage
         else
           spaces.each do |space|
             prim = space.partition_type == :primary
-            space.num_logical = prim ? 0 : space.volumes.size
+            num_logical = prim ? 0 : space.volumes.size
+            set_num_logical(space, num_logical)
           end
+        end
+      end
+
+      # Sets the value of #num_logical for a given assigned space
+      #
+      # @raise NoDiskSpaceError if the new value causes the volumes to not fit
+      def set_num_logical(assigned_space, num)
+        assigned_space.num_logical = num
+        if !assigned_space.valid?
+          log.error "Invalid assigned space #{assigned_space} after adjusting num_logical"
+          raise NoDiskSpaceError, "Volumes cannot be allocated into the assigned space"
         end
       end
 
@@ -231,7 +243,7 @@ module Y2Storage
         logical = SpaceDistribution.partitions_in_new_extended(num_partitions(spaces), ptable)
         if logical.zero?
           log.info "The total number of partitions will be low. No need of logical ones."
-          spaces.each { |s| s.num_logical = 0 }
+          spaces.each { |s| set_num_logical(s, 0) }
           return
         end
 
@@ -249,7 +261,7 @@ module Y2Storage
           if !room_for_logical?(space, num_logical)
             raise NoDiskSpaceError, "No space for the logical partitions"
           end
-          space.num_logical = num_logical
+          set_num_logical(space, num_logical)
         end
 
         # One space will host all the logical partitions (and maybe some primary)
@@ -262,8 +274,8 @@ module Y2Storage
         if too_many_primary?(primary_spaces, ptable)
           raise NoMorePartitionSlotError, "Too many primary partitions needed"
         end
-        extended_space.num_logical = num_logical
-        primary_spaces.each { |s| s.num_logical = 0 }
+        set_num_logical(extended_space, num_logical)
+        primary_spaces.each { |s| set_num_logical(s, 0) }
       end
 
       def too_many_primary?(primary_spaces, ptable)
