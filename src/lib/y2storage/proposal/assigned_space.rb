@@ -55,7 +55,7 @@ module Y2Storage
       #  - the chances of having 2 volumes with max_start_offset in the same
       #    free space are very low
       def valid?
-        disk_size >= volumes.target_disk_size
+        usable_size >= volumes.target_disk_size
       end
 
       # Space that will remain unused (wasted) after creating the partitions
@@ -81,13 +81,13 @@ module Y2Storage
       #
       # @return [DiskSize]
       def usable_size
-        return disk_space.disk_size if num_logical.zero?
+        return disk_size if num_logical.zero?
 
         logical = num_logical
         # If this space is inside an already existing extended partition,
         # libstorage has already substracted the the overhead of the first EBR.
         logical -= 1 if partition_type == :logical
-        disk_space.disk_size - overhead_of_logical * logical
+        disk_size - overhead_of_logical * logical
       end
 
       # Space consumed by the EBR of one logical partition in a given disk
