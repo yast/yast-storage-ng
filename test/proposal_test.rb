@@ -114,6 +114,76 @@ describe Y2Storage::Proposal do
       end
     end
 
+    context "in a windows-only PC with 256 KiB of MBR gap" do
+      let(:scenario) { "windows-pc-mbr256" }
+
+      context "using LVM" do
+        let(:lvm) { true }
+
+        context "with a separate home" do
+          let(:separate_home) { true }
+          include_examples "proposed layout"
+        end
+
+        context "without separate home" do
+          let(:separate_home) { false }
+          include_examples "proposed layout"
+        end
+      end
+
+      context "not using LVM" do
+        let(:lvm) { false }
+
+        context "with a separate home" do
+          let(:separate_home) { true }
+          include_examples "proposed layout"
+        end
+
+        context "without separate home" do
+          let(:separate_home) { false }
+          include_examples "proposed layout"
+        end
+      end
+    end
+
+    context "in a windows-only PC with 128 KiB of MBR gap" do
+      let(:scenario) { "windows-pc-mbr128" }
+
+      context "using LVM" do
+        let(:lvm) { true }
+
+        context "with a separate home" do
+          let(:separate_home) { true }
+
+          it "fails to make a proposal" do
+            expect { proposal.propose }.to raise_error Y2Storage::Proposal::Error
+          end
+        end
+
+        context "without separate home" do
+          let(:separate_home) { false }
+
+          it "fails to make a proposal" do
+            expect { proposal.propose }.to raise_error Y2Storage::Proposal::Error
+          end
+        end
+      end
+
+      context "not using LVM" do
+        let(:lvm) { false }
+
+        context "with a separate home" do
+          let(:separate_home) { true }
+          include_examples "proposed layout"
+        end
+
+        context "without separate home" do
+          let(:separate_home) { false }
+          include_examples "proposed layout"
+        end
+      end
+    end
+
     context "in a windows/linux multiboot PC" do
       let(:scenario) { "windows-linux-multiboot-pc" }
 
