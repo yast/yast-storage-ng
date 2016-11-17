@@ -53,7 +53,11 @@ module Y2Storage
         end
         @spaces.freeze
         spaces_by_disk.each do |disk_name, spaces|
-          set_partition_types_for(disk_name, spaces)
+          disk = ::Storage::Disk.find_by_name(devicegraph, disk_name)
+          ptable = disk.partition_table
+
+          set_partition_types_for(spaces, ptable)
+          set_num_logical_for(spaces, ptable)
         end
       end
 
@@ -131,6 +135,19 @@ module Y2Storage
         spaces_strings.sort.join
       end
 
+      # Number of logical partitions that will be allocated in a newly created
+      # extended one
+      #
+      # @param partitions [Integer] total number of partitions to create
+      # @param ptable [Storage::PartitionTable]
+      # @return [Integer]
+      def self.partitions_in_new_extended(partitions, ptable)
+        free_primary_slots = ptable.max_primary - ptable.num_primary
+        return 0 if free_primary_slots >= partitions
+        # One slot consumed by the extended partition
+        partitions - free_primary_slots + 1
+      end
+
     protected
 
       attr_reader :devicegraph
@@ -159,68 +176,94 @@ module Y2Storage
         end
       end
 
-      # Sets #partition_type for all the assigned spaces
+      # Sets #partition_type for the assigned spaces that are subject to
+      # restrictions
       #
-      # @param disk_name [String]
       # @param spaces [Array<AssignedSpace] spaces allocated in the disk
-      def set_partition_types_for(disk_name, spaces)
-        disk = ::Storage::Disk.find_by_name(devicegraph, disk_name)
-        ptable = disk.partition_table
+      # @param ptable [Storage::PartitionTable]
+      def set_partition_types_for(spaces, ptable)
+        primary = []
+        extended = []
 
-        if ptable.has_extended
-          log.info "There is already a extended partition in the disk"
-          (primary, extended) = spaces_by_type_with_extended(spaces, ptable)
-        elsif ptable.extended_possible
-          log.info "There is no extended partition in the disk"
-          (primary, extended) = spaces_by_type_without_extended(spaces, ptable)
+        if ptable.extended_possible
+          if ptable.has_extended
+            log.info "There is already a extended partition on the disk"
+            (extended, primary) = spaces.partition { |s| space_inside_extended?(s) }
+            if too_many_primary?(primary, ptable)
+              raise NoMorePartitionSlotError, "Too many primary partitions needed"
+            end
+          else
+            log.info "There is no extended partition on the disk"
+          end
         else
           log.info "An extended partition makes no sense in this disk"
           primary = spaces
-          extended = []
         end
 
         primary.each { |s| s.partition_type = :primary }
-        extended.each { |s| s.partition_type = :extended }
+        extended.each { |s| s.partition_type = :logical }
       end
 
-      # @return [Array<Array<AssignedSpace>>] first element is the list of
-      #       primary spaces, second one the list of extended
-      def spaces_by_type_with_extended(spaces, ptable)
-        (extended, primary) = spaces.partition { |s| space_inside_extended?(s) }
-        if too_many_primary?(primary, ptable)
-          raise NoMorePartitionSlotError, "Too many primary partitions needed"
+      # Sets #num_logical for all the assigned spaces.
+      #
+      # @param spaces [Array<AssignedSpace] spaces allocated in the disk
+      #     and with a correct value for #partition_type
+      # @param ptable [Storage::PartitionTable]
+      def set_num_logical_for(spaces, ptable)
+        # There are only two possible scenarios, either all the spaces got
+        # a restricted #partition_type, either none
+        if spaces.first.partition_type.nil?
+          calculate_num_logical_for(spaces, ptable)
+        else
+          spaces.each do |space|
+            prim = space.partition_type == :primary
+            space.num_logical = prim ? 0 : space.volumes.size
+          end
         end
-        [primary, extended]
       end
 
-      # @return [Array<Array<AssignedSpace>>] first element is the list of
-      #       primary spaces, second one the list of extended
-      def spaces_by_type_without_extended(spaces, ptable)
+      def calculate_num_logical_for(spaces, ptable)
         if ptable.num_primary + spaces.size > ptable.max_primary
           log.error "Too sparce: #{ptable.num_primary} + #{spaces.size} > #{ptable.max_primary}"
           raise NoMorePartitionSlotError, "Too sparce distribution"
         end
 
+        logical = SpaceDistribution.partitions_in_new_extended(num_partitions(spaces), ptable)
+        if logical.zero?
+          log.info "The total number of partitions will be low. No need of logical ones."
+          spaces.each { |s| s.num_logical = 0 }
+          return
+        end
+
+        calculate_num_logical_with_new_extended(spaces, ptable)
+      end
+
+      def calculate_num_logical_with_new_extended(spaces, ptable)
+        # Try to create as few logical partitions as possible, since they
+        # come at a rounding cost
+        partitions = num_partitions(spaces)
+        num_logical = SpaceDistribution.partitions_in_new_extended(partitions, ptable)
+
         if spaces.size == 1
-          log.info "No need to impose type restrictions."
-          return [], []
+          space = spaces.first
+          if !room_for_logical?(space, num_logical)
+            raise NoDiskSpaceError, "No space for the logical partitions"
+          end
+          space.num_logical = num_logical
         end
 
-        num_partitions = ptable.num_primary + num_partitions(spaces)
-        if spaces.size == 1 || num_partitions < ptable.max_primary
-          log.info "The total number of partitions will be low. No need to impose type restrictions."
-          return [], []
+        # One space will host all the logical partitions (and maybe some primary)
+        # The rest should be all primary.
+        extended_space = extended_space(spaces, num_logical)
+        if extended_space.nil?
+          raise NoDiskSpaceError, "No suitable space to create the extended partition"
         end
-
-        # At this point, one space will be used to create a new extended
-        # partition. The rest should be primary.
-        extended = [extended_space(spaces)].compact
-        primary = spaces - extended
-        if too_many_primary?(primary, ptable)
+        primary_spaces = spaces - [extended_space]
+        if too_many_primary?(primary_spaces, ptable)
           raise NoMorePartitionSlotError, "Too many primary partitions needed"
         end
-
-        [primary, extended]
+        extended_space.num_logical = num_logical
+        primary_spaces.each { |s| s.num_logical = 0 }
       end
 
       def too_many_primary?(primary_spaces, ptable)
@@ -229,12 +272,13 @@ module Y2Storage
         num_primary > ptable.max_primary
       end
 
-      # Best candidate to hold the extended partition
+      # Best candidate to hold the logical partition
       #
       # @param [Array<AssignedSpace>] list of possible candidates
-      # @return [AssignedSpace]
-      def extended_space(spaces)
-        # Let's use as extended the space with more volumes (start as
+      # @return [AssignedSpace, nil]
+      def extended_space(spaces, num_logical)
+        spaces = spaces.select { |s| room_for_logical?(s, num_logical) }
+        # Let's place the extended in the space with more volumes (start as
         # secondary criteria just to ensure stable sorting)
         spaces.sort_by { |s| [s.volumes.count, s.slot.region.start] }.last
       end
@@ -271,6 +315,17 @@ module Y2Storage
       def volume_list_comparable_string(vol_list)
         volumes_strings = vol_list.to_a.map { |vol| vol.to_s }.sort
         "<target=#{vol_list.target}, volumes=#{volumes_strings.join}>"
+      end
+
+      # Checks whether an assigned space can host the overhead produced by
+      # logical partitions, in addition to its volumes
+      #
+      # @param assigned_space [AssignedSpace]
+      # @param num [Integer] number of partitions that should be logical
+      # @return [Boolean]
+      def room_for_logical?(assigned_space, num)
+        overhead = assigned_space.overhead_of_logical
+        assigned_space.extra_size >= overhead * num
       end
     end
   end

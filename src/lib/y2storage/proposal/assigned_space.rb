@@ -31,19 +31,21 @@ module Y2Storage
       attr_reader :disk_space
       # @return [PlannedVolumesList]
       attr_reader :volumes
-      # @return [Symbol] :primary, :extended or nil.
-      #   Spaces with a value of :primary should only contain primary partitions.
-      #   Spaces with :extended should only contain logical (and eventually one
-      #   extended) partitions.
-      #   A value of nil means there are no restrictions imposed by the
-      #   distribution (restrictions imposed by the disk itself still apply)
+      # Restriction imposed by the disk and the already existent partitions
+      # @return [Symbol, nil] :primary, :logical
+      #   Spaces with a value of :primary can only contain primary partitions.
+      #   Spaces with :logical can only contain logical partitions.
+      #   A value of nil means there are no restrictions imposed by the disk
       attr_accessor :partition_type
+      # Number of logical partitions that must be created in the space
+      attr_accessor :num_logical
 
-      def_delegators :@disk_space, :disk_name, :disk_size, :slot
+      def_delegators :@disk_space, :disk_name, :disk_size, :slot, :disk
 
       def initialize(disk_space, volumes)
-        @disk_space = disk_space
-        @volumes    = volumes
+        @disk_space  = disk_space
+        @volumes     = volumes
+        @num_logical = 0
       end
 
       # Checks if the volumes really fit into the assigned space
@@ -62,6 +64,46 @@ module Y2Storage
       def unused
         max = volumes.max_disk_size
         max >= disk_size ? 0 : disk_size - max
+      end
+
+      # Space available in addition to the target
+      #
+      # @return [DiskSize]
+      def extra_size
+        disk_size - volumes.target_disk_size
+      end
+
+      # Space that can be distributed among the planned volumes.
+      #
+      # Substracts from the total the space that will be used by new data
+      # structures, like the EBRs of the planned logical partitions
+      # See https://en.wikipedia.org/wiki/Extended_boot_record
+      #
+      # @return [DiskSize]
+      def usable_size
+        return disk_space.disk_size if num_logical.zero?
+
+        logical = num_logical
+        # If this space is inside an already existing extended partition,
+        # libstorage has already substracted the the overhead of the first EBR.
+        logical -= 1 if partition_type == :logical
+        disk_space.disk_size - overhead_of_logical * logical
+      end
+
+      # Space consumed by the EBR of one logical partition in a given disk
+      # See https://en.wikipedia.org/wiki/Extended_boot_record
+      #
+      # @param disk [#topology]
+      # @return [DiskSize]
+      def self.overhead_of_logical(disk)
+        DiskSize.B(disk.topology.minimal_grain)
+      end
+
+      # Space consumed by the EBR of one logical partition within this space
+      #
+      # @return [DiskSize]
+      def overhead_of_logical
+        AssignedSpace.overhead_of_logical(disk)
       end
 
       def to_s

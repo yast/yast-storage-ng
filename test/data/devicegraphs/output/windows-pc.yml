@@ -23,13 +23,6 @@
     - partition:
         size: 2.00 GiB
         name: "/dev/sda4"
-        type: extended
-        id: extended
-
-    - partition:
-        size: unlimited
-        name: "/dev/sda5"
-        type: logical
         id: swap
         file_system: swap
         mount_point: swap
