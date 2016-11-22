@@ -54,3 +54,6 @@ summary of the changes in those branches, in a human-readable fashion.
 
 * Various code dealing with RAID, alternative device names and crypt devices
   disabled. All marked with "# storage-ng".
+
+* Code dealing with BIOS-ID changed to blindly assume common values. Original
+  code commented and marked with "storage-ng".
