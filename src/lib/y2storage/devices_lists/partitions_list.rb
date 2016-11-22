@@ -37,7 +37,7 @@ module Y2Storage
         fs_list = list.map do |partition|
           begin
             partition.filesystem
-          rescue ::Storage::WrongNumberOfChildren
+          rescue Storage::WrongNumberOfChildren
             # No filesystem in the partition
             nil
           end
@@ -49,7 +49,7 @@ module Y2Storage
       #
       # @return [DisksList]
       def disks
-        disks = list.map { |partition| Storage::to_disk(partition.partitionable) }
+        disks = list.map { |partition| Storage.to_disk(partition.partitionable) }
         disks.uniq! { |s| s.sid }
         DisksList.new(devicegraph, list: disks)
       end

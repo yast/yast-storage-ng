@@ -51,9 +51,9 @@ module Y2Storage
       # @return [DisksList]
       def disks
         disks = blk_devices.select do |device|
-          Storage::disk?(device)
+          Storage.disk?(device)
         end
-        disks.map! { |d| Storage::to_disk(d) }
+        disks.map! { |d| Storage.to_disk(d) }
         part_disks = partitions.disks.to_a
         list = disks + part_disks
         DisksList.new(devicegraph, list: list.uniq { |d| d.sid })
@@ -64,9 +64,9 @@ module Y2Storage
       # @return [PartitionsList]
       def partitions
         partitions = blk_devices.select do |device|
-          Storage::partition?(device)
+          Storage.partition?(device)
         end
-        partitions.map! { |p| Storage::to_partition(p) }
+        partitions.map! { |p| Storage.to_partition(p) }
         PartitionsList.new(devicegraph, list: partitions)
       end
 
@@ -75,9 +75,9 @@ module Y2Storage
       # @return [LvmLvsList]
       def lvm_lvs
         lvs = blk_devices.select do |device|
-          Storage::lvm_lv?(device)
+          Storage.lvm_lv?(device)
         end
-        lvs.map! { |p| Storage::to_lvm_lv(p) }
+        lvs.map! { |p| Storage.to_lvm_lv(p) }
         LvmLvsList.new(devicegraph, list: lvs)
       end
 

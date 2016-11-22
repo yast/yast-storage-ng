@@ -187,6 +187,7 @@ describe "devices lists" do
         all_disks = fake_devicegraph.disks
         disks = fake_devicegraph.disks.with(name: "/dev/sda")
         result = all_disks + disks
+        expect(result.size).to eq 4
         expect(all_disks.size).to eq 3
         expect(disks.size).to eq 1
       end
