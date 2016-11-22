@@ -36,6 +36,16 @@ module Y2Storage
           transport == ::Storage::Transport_USB
         end
 
+        # Checks whether it contains a GUID partition table
+        #
+        # @return [Boolean]
+        def gpt?
+          partition_table.type == Storage::PtType_GPT
+        rescue Storage::WrongNumberOfChildren
+          # No partition table in the disk
+          false
+        end
+
         # Partitions contained in the disk
         #
         # @return [Array<::Storage::Partition>]

@@ -76,10 +76,24 @@ module Y2Storage
         self.class.new(devicegraph, @list.dup)
       end
 
+      # Returns a new list concatenating both operands.
+      #
+      # Only lists of the same type can be concatenated. Due to the nature of
+      # the objects coming from Storage and the nature of DevicesLists,
+      # heterogeneous lists make no sense.
+      #
+      # @raises TypeError if the types do not match
+      def +(other)
+        if self.class != other.class
+          raise TypeError, "#{other.class} is not a #{self.class}"
+        end
+        self.class.new(devicegraph, list: list + other.to_a)
+      end
+
     protected
 
       attr_reader :devicegraph
-      attr_accessor :list
+      attr_reader :list
 
       # Default collection of devices
       #

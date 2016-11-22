@@ -146,6 +146,52 @@ describe "devices lists" do
         expect(disks.partitions.empty?).to eq false
       end
     end
+
+    describe "#+" do
+      it "raises an error if the lists are of a different type" do
+        disks = fake_devicegraph.disks
+        partitions = fake_devicegraph.partitions
+        expect { disks + partitions }.to raise_error TypeError
+      end
+
+      it "raises a new list" do
+        disks_a = fake_devicegraph.disks.with(name: "/dev/sda")
+        disks_b = fake_devicegraph.disks.with(name: "/dev/sdb")
+        expect(disks_a + disks_b).to be_a(Y2Storage::DevicesLists::DisksList)
+      end
+
+      it "returns an equivalent object if the other list is empty" do
+        disks = fake_devicegraph.disks
+        no_disks = fake_devicegraph.disks.with(name: "john")
+        result = disks + no_disks
+        expect(result.to_a).to eq disks.to_a
+      end
+
+      it "concatenates elements from both lists in the same order" do
+        partitions_a = fake_devicegraph.disks.with(name: "/dev/sda").partitions
+        partitions_b = fake_devicegraph.disks.with(name: "/dev/sdb").partitions
+        result = partitions_a + partitions_b
+        expect(result.to_a).to eq(partitions_a.to_a + partitions_b.to_a)
+        result = partitions_b + partitions_a
+        expect(result.to_a).to eq(partitions_b.to_a + partitions_a.to_a)
+      end
+
+      it "does not remove duplicates" do
+        all_disks = fake_devicegraph.disks
+        disks = fake_devicegraph.disks.with(name: "/dev/sda")
+        result = all_disks + disks
+        expect(result.size).to eq 4
+      end
+
+      it "does not modify the operands" do
+        all_disks = fake_devicegraph.disks
+        disks = fake_devicegraph.disks.with(name: "/dev/sda")
+        result = all_disks + disks
+        expect(result.size).to eq 4
+        expect(all_disks.size).to eq 3
+        expect(disks.size).to eq 1
+      end
+    end
   end
 
   describe Y2Storage::DevicesLists::DisksList do
@@ -208,6 +254,21 @@ describe "devices lists" do
         expect(parts_sdb.filesystems.size).to eq 5
       end
     end
+
+    describe "#disks" do
+      it "returns a filtered list of disks" do
+        parts_sda = partitions.with { |p| p.name.start_with? "/dev/sda" }
+        expect(parts_sda.disks).to be_a Y2Storage::DevicesLists::DisksList
+        expect(parts_sda.disks.size).to eq 1
+
+        parts_none = partitions.with(name: "bad name")
+        expect(parts_none.disks).to be_a Y2Storage::DevicesLists::DisksList
+        expect(parts_none.disks.size).to eq 0
+
+        expect(partitions.disks).to be_a Y2Storage::DevicesLists::DisksList
+        expect(partitions.disks.size).to eq 2
+      end
+    end
   end
 
   describe Y2Storage::DevicesLists::FilesystemsList do
@@ -216,6 +277,79 @@ describe "devices lists" do
     it "contains all filesystems by default" do
       expect(filesystems.size).to eq 7
       expect(full_list.size).to eq 7
+    end
+
+    describe "#with_mountpoint" do
+      it "returns a list of filesystems" do
+        result = filesystems.with_mountpoint("/home")
+        expect(result).to be_a(Y2Storage::DevicesLists::FilesystemsList)
+      end
+
+      it "filters by a single mount point" do
+        list = filesystems.with_mountpoint("/home")
+        expect(list.size).to eq 1
+        expect(list.first.type).to eq Storage::FsType_XFS
+      end
+
+      it "filters by a set of mount points" do
+        list = filesystems.with_mountpoint(["/home", "/non_existent", "/"])
+        expect(list.size).to eq 2
+        types = list.map(&:type)
+        expect(types).to contain_exactly(Storage::FsType_XFS, Storage::FsType_EXT4)
+      end
+
+      it "returns an empty list if nothing matches" do
+        list = filesystems.with_mountpoint("non_existent")
+        expect(list).to be_empty
+      end
+    end
+
+    describe "#partitions" do
+      it "returns a filtered list of partitions" do
+        parts_ext4 = filesystems.with(type: Storage::FsType_EXT4).partitions
+        parts_none = filesystems.with(label: "invented_label").partitions
+        expect(parts_ext4).to be_a Y2Storage::DevicesLists::PartitionsList
+        expect(parts_ext4.size).to eq 2
+        expect(parts_none).to be_a Y2Storage::DevicesLists::PartitionsList
+        expect(parts_none.size).to eq 0
+      end
+    end
+
+    describe "#disks" do
+      it "returns a filtered list of disks" do
+        disks_ext4 = filesystems.with(type: Storage::FsType_EXT4).disks
+        disks_xfs = filesystems.with(type: Storage::FsType_XFS).disks
+        expect(disks_ext4).to be_a Y2Storage::DevicesLists::DisksList
+        expect(disks_ext4.size).to eq 2
+        expect(disks_xfs).to be_a Y2Storage::DevicesLists::DisksList
+        expect(disks_xfs.size).to eq 1
+      end
+    end
+
+    describe "#lvm_lvs" do
+      let(:scenario) { "lvm-two-vgs" }
+
+      it "returns a filtered list of logical volumes" do
+        lvs_ext4 = filesystems.with(type: Storage::FsType_EXT4).lvm_lvs
+        lvs_none = filesystems.with(label: "invented_label").lvm_lvs
+        expect(lvs_ext4).to be_a Y2Storage::DevicesLists::LvmLvsList
+        expect(lvs_ext4.size).to eq 3
+        expect(lvs_none).to be_a Y2Storage::DevicesLists::LvmLvsList
+        expect(lvs_none.size).to eq 0
+      end
+    end
+
+    describe "#lvm_vgs" do
+      let(:scenario) { "lvm-two-vgs" }
+
+      it "returns a filtered list of volume groups" do
+        vgs_ext4 = filesystems.with(type: Storage::FsType_EXT4).lvm_vgs
+        vgs_xfs = filesystems.with(type: Storage::FsType_XFS).lvm_vgs
+        expect(vgs_ext4).to be_a Y2Storage::DevicesLists::LvmVgsList
+        expect(vgs_ext4.size).to eq 2
+        expect(vgs_xfs).to be_a Y2Storage::DevicesLists::LvmVgsList
+        expect(vgs_xfs.size).to eq 0
+      end
     end
   end
 
@@ -234,6 +368,14 @@ describe "devices lists" do
         # Free space in /dev/sdb is 90GiB-1MiB because that 1MiB is filled by
         # the partition table. Same happens in /dev/sdc (500GiB-1MiB)
         expect(spaces.disk_size).to eq(592.GiB - 2.MiB)
+      end
+    end
+
+    describe "#disks" do
+      it "returns a filtered list of disks" do
+        disks = spaces.disks
+        expect(disks).to be_a Y2Storage::DevicesLists::DisksList
+        expect(disks.size).to eq 3
       end
     end
   end
@@ -268,6 +410,19 @@ describe "devices lists" do
         expect(lvs_vg1.size).to eq 1
       end
     end
+
+    describe "#filesystems" do
+      it "returns a filtered list of filesystems" do
+        fs_vg0 = vgs.with(vg_name: "vg0").filesystems
+        expect(fs_vg0).to be_a Y2Storage::DevicesLists::FilesystemsList
+        expect(fs_vg0.size).to eq 2
+        expect(vgs.filesystems).to be_a Y2Storage::DevicesLists::FilesystemsList
+        expect(vgs.filesystems.size).to eq 3
+        fs_none = vgs.with(vg_name: "wrong_name").filesystems
+        expect(fs_none).to be_a Y2Storage::DevicesLists::FilesystemsList
+        expect(fs_none.size).to eq 0
+      end
+    end
   end
 
   describe Y2Storage::DevicesLists::LvmPvsList do
@@ -278,6 +433,16 @@ describe "devices lists" do
       expect(pvs.size).to eq 3
       expect(full_list.size).to eq 3
     end
+
+    describe "#lvm_vgs" do
+      it "returns a filtered list of volume groups" do
+        pvs_vg0 = pvs.with { |pv| pv.blk_device.name == "/dev/sda7" }
+        expect(pvs.lvm_vgs).to be_a Y2Storage::DevicesLists::LvmVgsList
+        expect(pvs.lvm_vgs.size).to eq 2
+        expect(pvs_vg0.lvm_vgs).to be_a Y2Storage::DevicesLists::LvmVgsList
+        expect(pvs_vg0.lvm_vgs.size).to eq 1
+      end
+    end
   end
 
   describe Y2Storage::DevicesLists::LvmLvsList do
@@ -287,6 +452,27 @@ describe "devices lists" do
     it "contains all logical volumes by default" do
       expect(lvs.size).to eq 3
       expect(full_list.size).to eq 3
+    end
+
+    describe "#lvm_vgs" do
+      it "returns a filtered list of volume groups" do
+        vgs_lv1 = lvs.with(lv_name: "lv1").lvm_vgs
+        vgs_lv2 = lvs.with(lv_name: "lv2").lvm_vgs
+        expect(vgs_lv1).to be_a Y2Storage::DevicesLists::LvmVgsList
+        expect(vgs_lv1.size).to eq 2
+        expect(vgs_lv2).to be_a Y2Storage::DevicesLists::LvmVgsList
+        expect(vgs_lv2.size).to eq 1
+      end
+    end
+
+    describe "#filesystems" do
+      it "returns a filtered list of filesystems" do
+        lvs_lv1 = lvs.with(lv_name: "lv1")
+        expect(lvs.filesystems).to be_a Y2Storage::DevicesLists::FilesystemsList
+        expect(lvs.filesystems.size).to eq 3
+        expect(lvs_lv1.filesystems).to be_a Y2Storage::DevicesLists::FilesystemsList
+        expect(lvs_lv1.filesystems.size).to eq 2
+      end
     end
   end
 end

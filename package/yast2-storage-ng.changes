@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Tue Nov 22 12:28:39 UTC 2016 - ancor@suse.com
+
+- Convenience method to check for GPT
+- Several methods added to most of the DevicesLists classes
+- 0.1.5
+
+-------------------------------------------------------------------
 Thu Oct 27 12:49:59 UTC 2016 - ancor@suse.com
 
 - Better management of LVM partitions in Proposal::SpaceMaker

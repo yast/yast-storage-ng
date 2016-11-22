@@ -52,6 +52,13 @@ module Y2Storage
 
       alias_method :lvs, :lvm_lvs
       alias_method :logical_volumes, :lvm_lvs
+
+      # Filesystems present in any of the volume groups
+      #
+      # @return [FilesystemsList]
+      def filesystems
+        lvm_lvs.filesystems
+      end
     end
   end
 end
