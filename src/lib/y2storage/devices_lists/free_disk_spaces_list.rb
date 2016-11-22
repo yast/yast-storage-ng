@@ -40,6 +40,14 @@ module Y2Storage
         list.map(&:disk_size).reduce(DiskSize.zero, :+)
       end
 
+      # Disks containing the spaces
+      #
+      # @return [DisksList]
+      def disks
+        disks = list.map(&:disk)
+        DisksList.new(devicegraph, list: disks)
+      end
+
     protected
 
       def full_list

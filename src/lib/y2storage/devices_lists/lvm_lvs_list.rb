@@ -28,6 +28,33 @@ module Y2Storage
     # List of LVM logical volumes from a devicegraph
     class LvmLvsList < Base
       list_of ::Storage::LvmLv
+
+      # Filesystems located in the logical volumes
+      #
+      # @return [FilesystemsList]
+      def filesystems
+        fs_list = list.map do |lv|
+          begin
+            lv.filesystem
+          rescue ::Storage::WrongNumberOfChildren
+            # No filesystem in the logical volume
+            nil
+          end
+        end
+        FilesystemsList.new(devicegraph, list: fs_list.compact)
+      end
+
+      # Volume groups containing the logical volumes
+      #
+      # @return [LvmVgsList]
+      def lvm_vgs
+        vgs = list.map(&:lvm_vg)
+        vgs.uniq! { |vg| vg.sid }
+        LvmVgsList.new(devicegraph, list: vgs)
+      end
+
+      alias_method :vgs, :lvm_vgs
+      alias_method :volume_groups, :lvm_vgs
     end
   end
 end

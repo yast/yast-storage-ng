@@ -45,6 +45,15 @@ module Y2Storage
         FilesystemsList.new(devicegraph, list: fs_list.compact)
       end
 
+      # Disks containing the partitions
+      #
+      # @return [DisksList]
+      def disks
+        disks = list.map { |partition| Storage::to_disk(partition.partitionable) }
+        disks.uniq! { |s| s.sid }
+        DisksList.new(devicegraph, list: disks)
+      end
+
     protected
 
       def full_list

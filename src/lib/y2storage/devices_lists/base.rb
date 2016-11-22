@@ -76,10 +76,17 @@ module Y2Storage
         self.class.new(devicegraph, @list.dup)
       end
 
+      def +(other)
+        if self.class != other.class
+          raise TypeError, "#{other.class} is not a #{self.class}"
+        end
+        self.class.new(devicegraph, list: list + other.to_a)
+      end
+
     protected
 
       attr_reader :devicegraph
-      attr_accessor :list
+      attr_reader :list
 
       # Default collection of devices
       #

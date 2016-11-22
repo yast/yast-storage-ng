@@ -28,6 +28,26 @@ module Y2Storage
     # List of LVM physical volumes from a devicegraph
     class LvmPvsList < Base
       list_of ::Storage::LvmPv
+
+      # Volume groups containing the physical volumes
+      #
+      # @return [LvmVgsList]
+      def lvm_vgs
+        vgs_list = list.map do |pv|
+          begin
+            pv.lvm_vg
+          rescue ::Storage::WrongNumberOfChildren
+            # Unassigned physical volume
+            nil
+          end
+        end
+        vgs_list.compact!
+        vgs_list.uniq! { |vg| vg.sid }
+        LvmVgsList.new(devicegraph, list: vgs_list)
+      end
+
+      alias_method :vgs, :lvm_vgs
+      alias_method :volume_groups, :lvm_vgs
     end
   end
 end
