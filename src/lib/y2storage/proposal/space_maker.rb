@@ -137,7 +137,7 @@ module Y2Storage
       # @return [Boolean]
       def success?(volumes)
         spaces = free_spaces(new_graph).to_a
-        @distribution ||= dist_calculator.best_distribution(volumes, spaces, new_graph)
+        @distribution ||= dist_calculator.best_distribution(volumes, spaces)
         !!@distribution
       rescue Error => e
         log.info "Exception while trying to distribute volumes: #{e}"

@@ -22,18 +22,14 @@
 # find current contact information at www.suse.com.
 
 require "yast"
-require "storage"
 require "y2storage/disk_size"
 require "y2storage/proposal/assigned_space"
-require "y2storage/refinements/devicegraph_lists"
 
 module Y2Storage
   class Proposal
     # Class representing the distribution of sets of planned volumes into sets
     # of free disk spaces
     class SpaceDistribution
-      using Refinements::DevicegraphLists
-
       include Yast::Logger
 
       # @return [Array<AssignedSpace>]
@@ -45,19 +41,13 @@ module Y2Storage
       # @raise NoMorePartitionSlotError,
       #
       # @param volumes_by_disk_space [Hash{FreeDiskSpace => PlannedVolumesList}]
-      # @param devicegraph [::Storage::Devicegraph]
-      def initialize(volumes_by_disk_space, devicegraph)
-        @devicegraph = devicegraph
+      def initialize(volumes_by_disk_space)
         @spaces = volumes_by_disk_space.map do |disk_space, volumes|
           assigned_space(disk_space, volumes)
         end
         @spaces.freeze
-        spaces_by_disk.each do |disk_name, spaces|
-          disk = ::Storage::Disk.find_by_name(devicegraph, disk_name)
-          ptable = disk.partition_table
-
-          set_partition_types_for(spaces, ptable)
-          set_num_logical_for(spaces, ptable)
+        spaces_by_disk.each do |disk, spaces|
+          set_num_logical_for(spaces, disk.partition_table)
         end
       end
 
@@ -150,8 +140,6 @@ module Y2Storage
 
     protected
 
-      attr_reader :devicegraph
-
       # Transforms a FreeDiskSpace and a PlannedVolumesList into a
       # AssignedSpace object if the combination is valid.
       # @raise NoDiskSpaceError otherwise
@@ -166,42 +154,14 @@ module Y2Storage
         result
       end
 
-      # Indexes a list of assigned spaces by disk name
+      # Indexes the list of assigned spaces by disk
       #
-      # @return [Hash{String => Array<AssignedSpace>]
+      # @return [Hash{Storage::Disk => Array<AssignedSpace>]
       def spaces_by_disk
         spaces.each_with_object({}) do |space, hash|
-          hash[space.disk_name] ||= []
-          hash[space.disk_name] << space
+          hash[space.disk] ||= []
+          hash[space.disk] << space
         end
-      end
-
-      # Sets #partition_type for the assigned spaces that are subject to
-      # restrictions
-      #
-      # @param spaces [Array<AssignedSpace] spaces allocated in the disk
-      # @param ptable [Storage::PartitionTable]
-      def set_partition_types_for(spaces, ptable)
-        primary = []
-        extended = []
-
-        if ptable.extended_possible
-          if ptable.has_extended
-            log.info "There is already a extended partition on the disk"
-            (extended, primary) = spaces.partition { |s| space_inside_extended?(s) }
-            if too_many_primary?(primary, ptable)
-              raise NoMorePartitionSlotError, "Too many primary partitions needed"
-            end
-          else
-            log.info "There is no extended partition on the disk"
-          end
-        else
-          log.info "An extended partition makes no sense in this disk"
-          primary = spaces
-        end
-
-        primary.each { |s| s.partition_type = :primary }
-        extended.each { |s| s.partition_type = :logical }
       end
 
       # Sets #num_logical for all the assigned spaces.
@@ -215,6 +175,9 @@ module Y2Storage
         if spaces.first.partition_type.nil?
           calculate_num_logical_for(spaces, ptable)
         else
+          if too_many_primary?(spaces, ptable)
+            raise NoMorePartitionSlotError, "Too many primary partitions needed"
+          end
           spaces.each do |space|
             prim = space.partition_type == :primary
             num_logical = prim ? 0 : space.volumes.size
@@ -271,17 +234,28 @@ module Y2Storage
           raise NoDiskSpaceError, "No suitable space to create the extended partition"
         end
         primary_spaces = spaces - [extended_space]
-        if too_many_primary?(primary_spaces, ptable)
+        if too_many_primary_with_extended?(primary_spaces, ptable)
           raise NoMorePartitionSlotError, "Too many primary partitions needed"
         end
         set_num_logical(extended_space, num_logical)
         primary_spaces.each { |s| set_num_logical(s, 0) }
       end
 
-      def too_many_primary?(primary_spaces, ptable)
+      def too_many_primary_with_extended?(primary_spaces, ptable)
         # +1 for the extended partition
         num_primary = num_partitions(primary_spaces) + ptable.num_primary + 1
         num_primary > ptable.max_primary
+      end
+
+      def too_many_primary?(spaces, ptable)
+        return false unless ptable.extended_possible
+        # If there is no extended partition already, we know that all the
+        # assigned spaces of this disk will have a nil partition_type
+        # So nothing to check
+        return false unless ptable.has_extended
+
+        primary = spaces.select { |s| s.partition_type == :primary }
+        too_many_primary_with_extended?(primary, ptable)
       end
 
       # Best candidate to hold the logical partition
@@ -301,20 +275,6 @@ module Y2Storage
       # @return [Fixnum]
       def num_partitions(spaces)
         spaces.map { |s| s.volumes.count }.reduce(0, :+)
-      end
-
-      # Checks whether the given space is inside an extended partition
-      #
-      # @param space [AssignedSpace]
-      # @return [Boolean]
-      def space_inside_extended?(space)
-        space_start = space.slot.region.start
-        disks = devicegraph.disks.with(name: space.disk_name)
-        extended = disks.partitions.with(type: ::Storage::PartitionType_EXTENDED)
-        container = extended.with do |part|
-          part.region.start <= space_start && part.region.end > space_start
-        end.first
-        !container.nil?
       end
 
       # @see #comparable_string

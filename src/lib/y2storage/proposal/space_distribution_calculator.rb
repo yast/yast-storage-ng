@@ -51,10 +51,9 @@ module Y2Storage
       #
       # @param volumes [PlannedVolumesList]
       # @param spaces [Array<FreeDiskSpace>]
-      # @param devicegraph [::Storage::Devicegraph]
       #
       # @return [SpaceDistribution]
-      def best_distribution(volumes, spaces, devicegraph)
+      def best_distribution(volumes, spaces)
         log.info "Calculating best space distribution for #{volumes}"
         # First, make sure the whole attempt makes sense
         return nil if impossible?(volumes, spaces)
@@ -79,7 +78,7 @@ module Y2Storage
 
         candidates = dist_hashes.map do |distribution_hash|
           begin
-            SpaceDistribution.new(distribution_hash, devicegraph)
+            SpaceDistribution.new(distribution_hash)
           rescue Error
             next
           end

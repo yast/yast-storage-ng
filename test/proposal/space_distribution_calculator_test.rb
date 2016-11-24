@@ -43,7 +43,7 @@ describe Y2Storage::Proposal::SpaceDistributionCalculator do
     let(:volumes) { Y2Storage::PlannedVolumesList.new([vol1, vol2, vol3]) }
     let(:spaces) { fake_devicegraph.free_disk_spaces.to_a }
 
-    subject(:distribution) { calculator.best_distribution(volumes, spaces, fake_devicegraph) }
+    subject(:distribution) { calculator.best_distribution(volumes, spaces) }
 
     context "when the only available space is in an extended partition" do
       let(:scenario) { "space_22_extended" }
