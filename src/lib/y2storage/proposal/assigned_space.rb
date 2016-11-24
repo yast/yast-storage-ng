@@ -21,6 +21,8 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
+require "storage"
+
 module Y2Storage
   class Proposal
     # Each one of the spaces contained in a SpaceDistribution
@@ -31,12 +33,6 @@ module Y2Storage
       attr_reader :disk_space
       # @return [PlannedVolumesList]
       attr_reader :volumes
-      # Restriction imposed by the disk and the already existent partitions
-      # @return [Symbol, nil] :primary, :logical
-      #   Spaces with a value of :primary can only contain primary partitions.
-      #   Spaces with :logical can only contain logical partitions.
-      #   A value of nil means there are no restrictions imposed by the disk
-      attr_accessor :partition_type
       # Number of logical partitions that must be created in the space
       attr_accessor :num_logical
 
@@ -46,6 +42,25 @@ module Y2Storage
         @disk_space  = disk_space
         @volumes     = volumes
         @num_logical = 0
+      end
+
+      # Restriction imposed by the disk and the already existent partitions
+      #
+      # @return [Symbol, nil]
+      #   Spaces with a value of :primary can only contain primary partitions.
+      #   Spaces with :logical can only contain logical partitions.
+      #   A value of nil means there are no restrictions imposed by the disk
+      def partition_type
+        @partition_type if @partition_type_calculated
+
+        @partition_type_calculated = true
+        @partition_type = if disk.partition_table.extended_possible
+          if disk.partition_table.has_extended
+            inside_extended? ? :logical : :primary
+          end
+        else
+          :primary
+        end
       end
 
       # Checks if the volumes really fit into the assigned space
@@ -108,6 +123,19 @@ module Y2Storage
 
       def to_s
         "#<AssignedSpace disk_space=#{disk_space}, volumes=#{volumes}>"
+      end
+
+    protected
+
+      # Checks whether the disk space is inside an extended partition
+      #
+      # @return [Boolean]
+      def inside_extended?
+        space_start = disk_space.slot.region.start
+        partitions = disk.partition_table.partitions.to_a
+        extended = partitions.detect { |p| p.type == Storage::PartitionType_EXTENDED }
+        return false unless extended
+        extended.region.start <= space_start && extended.region.end > space_start
       end
     end
   end
