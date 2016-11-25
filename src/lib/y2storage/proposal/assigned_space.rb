@@ -78,7 +78,7 @@ module Y2Storage
       # @return [DiskSize]
       def unused
         max = volumes.max_disk_size
-        max >= disk_size ? 0 : disk_size - max
+        max >= usable_size ? 0 : usable_size - max
       end
 
       # Space available in addition to the target
