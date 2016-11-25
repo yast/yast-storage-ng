@@ -342,7 +342,7 @@ describe Y2Storage::Proposal::SpaceDistributionCalculator do
 
       let(:pv_vols) do
         volumes = distribution.spaces.map { |sp| sp.volumes.to_a }
-        volumes.map { |vols| vols.select { |vol| vol.partition_id == ::Storage::ID_LVM } }.flatten
+        volumes.map { |vols| vols.select(&:lvm_pv?) }.flatten
       end
 
       context "if the sum of all the spaces is not big enough" do
@@ -407,7 +407,7 @@ describe Y2Storage::Proposal::SpaceDistributionCalculator do
           let(:space) { distribution.spaces.detect { |s| s.volumes.size > 1 } }
 
           it "sets the weight of the PV according to the other volumes" do
-            pv_vol = space.volumes.detect { |v| v.partition_id == Storage::ID_LVM }
+            pv_vol = space.volumes.detect(&:lvm_pv?)
             total_weight = space.volumes.map(&:weight).reduce(:+)
             expect(pv_vol.weight).to eq(total_weight / 2.0)
           end
@@ -417,7 +417,7 @@ describe Y2Storage::Proposal::SpaceDistributionCalculator do
           let(:space) { distribution.spaces.detect { |s| s.volumes.size == 1 } }
 
           it "sets the weight of the PV to one" do
-            pv_vol = space.volumes.detect { |v| v.partition_id == Storage::ID_LVM }
+            pv_vol = space.volumes.detect(&:lvm_pv?)
             expect(pv_vol.weight).to eq 1
           end
         end
