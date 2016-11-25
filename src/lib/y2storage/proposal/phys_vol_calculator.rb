@@ -83,7 +83,7 @@ module Y2Storage
 
         sorted_spaces.each do |space|
           available_size = estimated_available_size(space, distribution)
-          next unless available_size > lvm_helper.min_pv_size
+          next if available_size < lvm_helper.min_pv_size
 
           # The key point that can invalidate a solution is the distribution of
           # volumes among free spaces, not so much the size. So let's start
