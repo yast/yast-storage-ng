@@ -56,7 +56,7 @@ module Y2Storage
       # @raise NoDiskSpaceError
       # @raise NoMorePartitionSlotError
       #
-      # @param volumes_by_disk_space [Hash{FreeDiskSpace => PlannedVolumesList}]
+      # @param volumes_by_disk_space [Hash{FreeDiskSpace => PlannedVolume}]
       def add_volumes(volumes_by_disk_space)
         volumes = {}
         spaces.each do |space|
