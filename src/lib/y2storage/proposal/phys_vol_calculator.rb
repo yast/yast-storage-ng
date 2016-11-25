@@ -22,7 +22,6 @@
 # find current contact information at www.suse.com.
 
 require "y2storage/disk_size"
-require "byebug"
 
 module Y2Storage
   class Proposal
