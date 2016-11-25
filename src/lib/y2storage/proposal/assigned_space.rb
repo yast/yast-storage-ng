@@ -88,6 +88,15 @@ module Y2Storage
         disk_size - volumes.target_disk_size
       end
 
+      # Usable space available in addition to the target, taking into account
+      # the overhead introduced by data structures
+      #
+      # @see #usable_size
+      # @return [DiskSize]
+      def usable_extra_size
+        usable_size - volumes.target_disk_size
+      end
+
       # Space that can be distributed among the planned volumes.
       #
       # Substracts from the total the space that will be used by new data
