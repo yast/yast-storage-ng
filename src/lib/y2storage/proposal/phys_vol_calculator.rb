@@ -46,6 +46,13 @@ module Y2Storage
       # For every space in the disk we can decide to place an LVM PV or not.
       # This method explores all the options and finds the best one.
       #
+      # NOTE: exploring all the options is computationally expensive. With a
+      # dozen of free spaces it would be already too much. If performance
+      # becomes a problem, we should limit the options to explore. For example,
+      # in partition tables without restrictions (no MBR) we probably don't need
+      # to evaluate all the options. Another possible idea is to identify spaces
+      # that are equivalent for our purposes and use only one of them.
+      #
       # @param distribution [Proposal::SpaceDistribution] initial distribution
       #     containing only the non-LVM volumes
       #
