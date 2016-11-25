@@ -164,6 +164,13 @@ module Y2Storage
       filesystem
     end
 
+    # Checks whether the volume represents an LVM physical volume
+    #
+    # @return [Boolean]
+    def lvm_pv?
+      partition_id == Storage::ID_LVM
+    end
+
     def ==(other)
       other.class == self.class && other.internal_state == internal_state
     end

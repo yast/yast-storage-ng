@@ -78,7 +78,7 @@ module Y2Storage
     # @raise [Proposal::NoDiskSpaceError] if there is no enough space to
     #           perform the installation
     def propose
-      raise UnexceptedCallError if proposed?
+      raise UnexpectedCallError if proposed?
       settings.freeze
       @proposed = true
       @volumes = volumes_list(:all, populated_settings)

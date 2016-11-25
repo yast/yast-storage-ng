@@ -128,7 +128,7 @@ Additionally, to delete the partitions, an operation that may be more complex
 that it looks like, the space maker relies on another utility class called
 `Proposal::PartitionKiller`.
 
-Last but not least, the class `Proposal::PhysVolDistribution` helps
+Last but not least, the class `Proposal::PhysVolCalculator` helps
 `Proposal::SpaceDistributionCalculator` and `Proposal::LvmHelper` in the task
 of creating a planned volume object for each needed physical volume and adding
 those volumes to all the potential space distributions.

@@ -38,7 +38,7 @@ module Y2Storage
       # Constructor. Raises an exception when trying to create an invalid
       # distribution.
       # @raise NoDiskSpaceError
-      # @raise NoMorePartitionSlotError,
+      # @raise NoMorePartitionSlotError
       #
       # @param volumes_by_disk_space [Hash{FreeDiskSpace => PlannedVolumesList}]
       def initialize(volumes_by_disk_space)
@@ -49,6 +49,32 @@ module Y2Storage
         spaces_by_disk.each do |disk, spaces|
           set_num_logical_for(spaces, disk.partition_table)
         end
+      end
+
+      # Result of adding more volumes to the existent distribution. Raises an
+      # exception when trying to create an invalid distribution.
+      # @raise NoDiskSpaceError
+      # @raise NoMorePartitionSlotError
+      #
+      # @param volumes_by_disk_space [Hash{FreeDiskSpace => PlannedVolume}]
+      def add_volumes(volumes_by_disk_space)
+        volumes = {}
+        spaces.each do |space|
+          volumes[space.disk_space] = space.volumes.dup
+        end
+        volumes_by_disk_space.each do |space, volume|
+          volumes[space] ||= PlannedVolumesList.new
+          volumes[space] << volume
+        end
+        SpaceDistribution.new(volumes)
+      end
+
+      # Assigned space associated to a given free space
+      #
+      # @param [FreeDiskSpace]
+      # @return [Proposal::AssignedSpace, nil]
+      def space_at(disk_space)
+        spaces.detect { |s| s.disk_space == disk_space }
       end
 
       # Space wasted by the distribution

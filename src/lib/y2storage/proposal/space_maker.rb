@@ -48,7 +48,7 @@ module Y2Storage
       # @param original_graph [::Storage::Devicegraph] initial devicegraph
       # @param disk_analyzer [DiskAnalyzer] information about original_graph
       # @param lvm_helper [Proposal::LvmHelper] contains information about the
-      #     LVM planned volume and how to make space for them
+      #     LVM planned volumes and how to make space for them
       # @param settings [ProposalSettings] proposal settings
       def initialize(original_graph, disk_analyzer, lvm_helper, settings)
         @original_graph = original_graph
