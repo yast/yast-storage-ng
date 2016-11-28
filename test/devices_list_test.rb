@@ -423,6 +423,32 @@ describe "devices lists" do
         expect(fs_none.size).to eq 0
       end
     end
+
+    describe "#partitions" do
+      it "returns a filtered list of partitions" do
+        partitions_vg0 = vgs.with(vg_name: "vg0").partitions
+        expect(partitions_vg0).to be_a Y2Storage::DevicesLists::PartitionsList
+        expect(partitions_vg0.map(&:name)).to eq ["/dev/sda7"]
+        expect(vgs.partitions).to be_a Y2Storage::DevicesLists::PartitionsList
+        expect(vgs.partitions.size).to eq 3
+        partitions_none = vgs.with(vg_name: "wrong_name").partitions
+        expect(partitions_none).to be_a Y2Storage::DevicesLists::PartitionsList
+        expect(partitions_none.size).to eq 0
+      end
+    end
+
+    describe "#disks" do
+      it "returns a filtered list of disks" do
+        disks_vg0 = vgs.with(vg_name: "vg0").disks
+        expect(disks_vg0).to be_a Y2Storage::DevicesLists::DisksList
+        expect(disks_vg0.map(&:name)).to eq ["/dev/sda"]
+        expect(vgs.disks).to be_a Y2Storage::DevicesLists::DisksList
+        expect(vgs.disks.map(&:name)).to eq ["/dev/sda"]
+        disks_none = vgs.with(vg_name: "wrong_name").disks
+        expect(disks_none).to be_a Y2Storage::DevicesLists::DisksList
+        expect(disks_none.size).to eq 0
+      end
+    end
   end
 
   describe Y2Storage::DevicesLists::LvmPvsList do
@@ -441,6 +467,26 @@ describe "devices lists" do
         expect(pvs.lvm_vgs.size).to eq 2
         expect(pvs_vg0.lvm_vgs).to be_a Y2Storage::DevicesLists::LvmVgsList
         expect(pvs_vg0.lvm_vgs.size).to eq 1
+      end
+    end
+
+    describe "#partitions" do
+      it "returns a filtered list of partitions" do
+        pvs_vg0 = pvs.with { |pv| pv.lvm_vg.vg_name == "vg0" }
+        expect(pvs_vg0.partitions).to be_a Y2Storage::DevicesLists::PartitionsList
+        expect(pvs_vg0.partitions.map(&:name)).to eq ["/dev/sda7"]
+        expect(pvs.partitions).to be_a Y2Storage::DevicesLists::PartitionsList
+        expect(pvs.partitions.size).to eq 3
+      end
+    end
+
+    describe "#disks" do
+      it "returns a filtered list of disks" do
+        pvs_vg0 = pvs.with { |pv| pv.lvm_vg.vg_name == "vg0" }
+        expect(pvs_vg0.disks).to be_a Y2Storage::DevicesLists::DisksList
+        expect(pvs_vg0.disks.map(&:name)).to eq ["/dev/sda"]
+        expect(pvs.disks).to be_a Y2Storage::DevicesLists::DisksList
+        expect(pvs_vg0.disks.map(&:name)).to eq ["/dev/sda"]
       end
     end
   end
