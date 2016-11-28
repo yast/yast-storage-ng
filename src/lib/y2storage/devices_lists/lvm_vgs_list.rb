@@ -59,6 +59,23 @@ module Y2Storage
       def filesystems
         lvm_lvs.filesystems
       end
+
+      # Partitions that are part of any of the volume groups
+      #
+      # @return [PartitionsList]
+      def partitions
+        lvm_pvs.partitions
+      end
+
+      # Disks that are part of any of the volume groups, either directly or by
+      # means of one of its partitions
+      #
+      # @return [DisksList]
+      def disks
+        disks = lvm_pvs.disks.to_a
+        disks.uniq! { |d| d.sid }
+        DisksList.new(devicegraph, list: disks)
+      end
     end
   end
 end
