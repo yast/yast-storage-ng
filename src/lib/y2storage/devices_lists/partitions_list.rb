@@ -59,9 +59,10 @@ module Y2Storage
       def full_list
         # There is no ::Storage::Partition.all in libstorage API
         devicegraph.all_disks.to_a.reduce([]) do |sum, disk|
-          if disk.partition_table
+          begin
             sum + disk.partition_table.partitions.to_a
-          else
+          rescue Storage::WrongNumberOfChildren
+            # No partition table
             sum
           end
         end
