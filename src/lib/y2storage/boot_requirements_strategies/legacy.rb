@@ -72,7 +72,7 @@ module Y2Storage
       def grub_volume
         vol = PlannedVolume.new(nil)
         # only required on GPT
-        vol.partition_id = ::Storage::ID_GPT_BIOS
+        vol.partition_id = ::Storage::ID_BIOS_BOOT
         vol.min_disk_size = DiskSize.KiB(256)
         vol.max_disk_size = DiskSize.MiB(8)
         vol.desired_disk_size = DiskSize.MiB(1)

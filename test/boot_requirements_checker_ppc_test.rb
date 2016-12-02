@@ -31,7 +31,7 @@ describe Y2Storage::BootRequirementsChecker do
 
     include_context "boot requirements"
 
-    let(:prep_id) { ::Storage::ID_PPC_PREP }
+    let(:prep_id) { ::Storage::ID_PREP }
     let(:architecture) { :ppc }
     let(:sda_part_table) { pt_msdos }
     let(:grub_partitions) { {} }

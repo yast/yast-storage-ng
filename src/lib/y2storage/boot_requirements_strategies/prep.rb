@@ -52,7 +52,7 @@ module Y2Storage
       def prep_volume
         vol = PlannedVolume.new(nil)
         # So far we are always using msdos partition ids
-        vol.partition_id = ::Storage::ID_PPC_PREP
+        vol.partition_id = ::Storage::ID_PREP
         vol.min_disk_size = DiskSize.KiB(256)
         vol.max_disk_size = DiskSize.MiB(8)
         vol.desired_disk_size = DiskSize.MiB(1)
