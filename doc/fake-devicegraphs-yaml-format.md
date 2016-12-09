@@ -199,19 +199,15 @@ Example:
   - extended
   - lvm
   - raid
-  - ppc_prep
+  - prep
   - ntfs
-  - gpt_bios
-  - gpt_boot
-  - gpt_prep
   - dos12
   - dos16
   - dos32
-  - apple_other
-  - apple_hfs
-  - apple_ufs
-  - gpt_service
-  - gpt_msftres
+  - unknown
+  - bios_boot
+  - windows_basic_data
+  - microsoft_reserved
 
 
 - file_system: This is really a separate tree level, but it would be awkward to

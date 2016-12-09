@@ -48,24 +48,20 @@ module Y2Storage
 
     PARTITION_IDS =
       {
-        "dos12"       => ::Storage::ID_DOS12,       #  0x01
-        "dos16"       => ::Storage::ID_DOS16,       #  0x06
-        "dos32"       => ::Storage::ID_DOS32,       #  0x0c
-        "ntfs"        => ::Storage::ID_NTFS,        #  0x07
-        "extended"    => ::Storage::ID_EXTENDED,    #  0x0f
-        "ppc_prep"    => ::Storage::ID_PPC_PREP,    #  0x41
-        "linux"       => ::Storage::ID_LINUX,       #  0x83
-        "swap"        => ::Storage::ID_SWAP,        #  0x82
-        "lvm"         => ::Storage::ID_LVM,         #  0x8e
-        "raid"        => ::Storage::ID_RAID,        #  0xfd
-        "apple_other" => ::Storage::ID_APPLE_OTHER, #  0x101
-        "apple_hfs"   => ::Storage::ID_APPLE_HFS,   #  0x102
-        "gpt_boot"    => ::Storage::ID_GPT_BOOT,    #  0x103
-        "gpt_service" => ::Storage::ID_GPT_SERVICE, #  0x104
-        "gpt_msftres" => ::Storage::ID_GPT_MSFTRES, #  0x105
-        "apple_ufs"   => ::Storage::ID_APPLE_UFS,   #  0x106
-        "gpt_bios"    => ::Storage::ID_GPT_BIOS,    #  0x107
-        "gpt_prep"    => ::Storage::ID_GPT_PREP     #  0x108
+        "dos12"              => ::Storage::ID_DOS12,              #  0x01
+        "dos16"              => ::Storage::ID_DOS16,              #  0x06
+        "dos32"              => ::Storage::ID_DOS32,              #  0x0c
+        "ntfs"               => ::Storage::ID_NTFS,               #  0x07
+        "extended"           => ::Storage::ID_EXTENDED,           #  0x0f
+        "prep"               => ::Storage::ID_PREP,               #  0x41
+        "linux"              => ::Storage::ID_LINUX,              #  0x83
+        "swap"               => ::Storage::ID_SWAP,               #  0x82
+        "lvm"                => ::Storage::ID_LVM,                #  0x8e
+        "raid"               => ::Storage::ID_RAID,               #  0xfd
+        "unknown"            => ::Storage::ID_UNKNOWN,
+        "bios_boot"          => ::Storage::ID_BIOS_BOOT,
+        "windows_basic_data" => ::Storage::ID_WINDOWS_BASIC_DATA,
+        "microsoft_reserved" => ::Storage::ID_MICROSOFT_RESERVED
       }
 
     FILE_SYSTEM_TYPES =

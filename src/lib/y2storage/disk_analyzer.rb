@@ -61,7 +61,9 @@ module Y2Storage
         ::Storage::ID_NTFS,
         ::Storage::ID_DOS32,
         ::Storage::ID_DOS16,
-        ::Storage::ID_DOS12
+        ::Storage::ID_DOS12,
+        ::Storage::ID_WINDOWS_BASIC_DATA,
+        ::Storage::ID_MICROSOFT_RESERVED
       ]
 
     NO_INSTALLATION_IDS =
@@ -114,7 +116,7 @@ module Y2Storage
     #
     # @return [Hash{String => Array<::Storage::Partition>}] see {#partitions_with_id}
     def efi_partitions
-      @efi_partitions ||= partitions_with_id(::Storage::ID_EFI, "EFI")
+      @efi_partitions ||= partitions_with_id(::Storage::ID_ESP, "EFI")
     end
 
     # Partitions that can be used as PReP partition
@@ -122,7 +124,7 @@ module Y2Storage
     #
     # @return [Hash{String => Array<::Storage::Partition>}] see {#partitions_with_id}
     def prep_partitions
-      @prep_partitions ||= partitions_with_id(::Storage::ID_PPC_PREP, "PReP")
+      @prep_partitions ||= partitions_with_id(::Storage::ID_PREP, "PReP")
     end
 
     # GRUB (gpt_bios) partitions
@@ -130,7 +132,7 @@ module Y2Storage
     #
     # @return [Hash{String => Array<::Storage::Partition>}] see {#partitions_with_id}
     def grub_partitions
-      @grub_partitions ||= partitions_with_id(::Storage::ID_GPT_BIOS, "GRUB")
+      @grub_partitions ||= partitions_with_id(::Storage::ID_BIOS_BOOT, "GRUB")
     end
 
     # Partitions that can be used as swap space

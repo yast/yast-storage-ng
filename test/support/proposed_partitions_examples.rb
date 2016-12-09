@@ -44,7 +44,7 @@ RSpec.shared_examples "proposed GRUB partition" do
   using Y2Storage::Refinements::SizeCasts
 
   it "requires it to have the correct id" do
-    expect(grub_part.partition_id).to eq ::Storage::ID_GPT_BIOS
+    expect(grub_part.partition_id).to eq ::Storage::ID_BIOS_BOOT
   end
 
   it "requires it to be out of LVM" do

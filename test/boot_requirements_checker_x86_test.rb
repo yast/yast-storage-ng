@@ -113,7 +113,7 @@ describe Y2Storage::BootRequirementsChecker do
 
             it "requires a new GRUB partition" do
               expect(checker.needed_partitions).to contain_exactly(
-                an_object_with_fields(partition_id: ::Storage::ID_GPT_BIOS, reuse: nil)
+                an_object_with_fields(partition_id: ::Storage::ID_BIOS_BOOT, reuse: nil)
               )
             end
           end
@@ -135,7 +135,7 @@ describe Y2Storage::BootRequirementsChecker do
 
             it "requires a new GRUB partition" do
               expect(checker.needed_partitions).to contain_exactly(
-                an_object_with_fields(partition_id: ::Storage::ID_GPT_BIOS, reuse: nil)
+                an_object_with_fields(partition_id: ::Storage::ID_BIOS_BOOT, reuse: nil)
               )
             end
           end

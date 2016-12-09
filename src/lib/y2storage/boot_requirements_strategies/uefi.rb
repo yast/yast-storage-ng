@@ -41,7 +41,7 @@ module Y2Storage
           vol.reuse = reusable_efi.name
         else
           # So far we are always using msdos partition ids
-          vol.partition_id = ::Storage::ID_EFI
+          vol.partition_id = ::Storage::ID_ESP
           vol.min_disk_size = DiskSize.MiB(33)
           vol.max_disk_size = DiskSize.unlimited
           vol.desired_disk_size = DiskSize.MiB(500)

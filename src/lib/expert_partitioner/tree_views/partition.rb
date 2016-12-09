@@ -39,7 +39,9 @@ module ExpertPartitioner
       tmp = ["Name: #{@partition.name}",
              "Size: #{::Storage.byte_to_humanstring(@partition.size, false, 2, false)}"]
 
-      tmp << "Device Path: #{@partition.udev_path}"
+      @partition.udev_paths.each_with_index do |udev_path, i|
+        tmp << "Device Path #{i + 1}: #{udev_path}"
+      end
 
       @partition.udev_ids.each_with_index do |udev_id, i|
         tmp << "Device ID #{i + 1}: #{udev_id}"
