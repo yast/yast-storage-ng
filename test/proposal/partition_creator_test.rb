@@ -224,5 +224,85 @@ describe Y2Storage::Proposal::PartitionCreator do
         )
       end
     end
+
+    context "when creating a partition" do
+      let(:scenario) { "empty_hard_disk_50GiB" }
+      let(:bootable) { false }
+
+      let(:vol) do
+        planned_vol(
+          type: :vfat, partition_id: Storage::ID_ESP, desired: 1.GiB, bootable: bootable
+        )
+      end
+      let(:distribution) { space_dist(disk_spaces.first => vols_list(vol)) }
+
+      it "correctly sets the libstorage partition id" do
+        partition = creator.create_partitions(distribution).partitions.first
+        expect(partition.id).to eq Storage::ID_ESP
+      end
+
+      it "formats the partition" do
+        partition = creator.create_partitions(distribution).partitions.first
+        expect(partition.filesystem.type).to eq Storage::FsType_VFAT
+      end
+
+      context "with a MBR partition table" do
+        context "if the volume is bootable" do
+          let(:bootable) { true }
+
+          it "sets the boot flag" do
+            partition = creator.create_partitions(distribution).partitions.first
+            expect(partition.boot?).to eq true
+          end
+
+          it "does not set the legacy boot flag" do
+            partition = creator.create_partitions(distribution).partitions.first
+            expect(partition.legacy_boot?).to eq false
+          end
+        end
+
+        context "if the volume is not bootable" do
+          it "does not set the boot flag" do
+            partition = creator.create_partitions(distribution).partitions.first
+            expect(partition.boot?).to eq false
+          end
+
+          it "does not set the legacy boot flag" do
+            partition = creator.create_partitions(distribution).partitions.first
+            expect(partition.legacy_boot?).to eq false
+          end
+        end
+      end
+
+      context "with a GPT partition table" do
+        let(:scenario) { "empty_hard_disk_gpt_50GiB" }
+
+        context "if the volume is bootable" do
+          let(:bootable) { true }
+
+          it "does not set the boot flag" do
+            partition = creator.create_partitions(distribution).partitions.first
+            expect(partition.boot?).to eq false
+          end
+
+          it "does not set the legacy boot flag" do
+            partition = creator.create_partitions(distribution).partitions.first
+            expect(partition.legacy_boot?).to eq false
+          end
+        end
+
+        context "if the volume is not bootable" do
+          it "does not set the boot flag" do
+            partition = creator.create_partitions(distribution).partitions.first
+            expect(partition.boot?).to eq false
+          end
+
+          it "does not set the legacy boot flag" do
+            partition = creator.create_partitions(distribution).partitions.first
+            expect(partition.legacy_boot?).to eq false
+          end
+        end
+      end
+    end
   end
 end
