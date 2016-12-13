@@ -157,7 +157,7 @@ module Y2Storage
         region = new_region_with_size(free_space.slot, vol.disk_size)
         partition = ptable.create_partition(dev_name, region, partition_type)
         partition.id = partition_id
-        partition.boot = !!vol.bootable
+        partition.boot = !!vol.bootable if ptable.partition_boot_flag_supported?
         partition
       end
 
