@@ -23,16 +23,7 @@
 require_relative "spec_helper"
 require "storage"
 require "y2storage"
-
-# To avoid repeating this four lines of code all over the file
-RSpec.shared_examples "proposed layout" do
-  using Y2Storage::Refinements::TestDevicegraph
-
-  it "proposes the expected layout" do
-    proposal.propose
-    expect(proposal.devices.to_str).to eq expected.to_str
-  end
-end
+require_relative "support/proposal_examples"
 
 describe Y2Storage::Proposal do
   describe "#propose" do
@@ -82,68 +73,14 @@ describe Y2Storage::Proposal do
       ::Storage::Devicegraph.new_from_file(output_file_for(file_name))
     end
 
-    context "in a windows-only PC" do
+    context "in a windows-only PC with MBR partition table" do
       let(:scenario) { "windows-pc" }
-
-      context "using LVM" do
-        let(:lvm) { true }
-
-        context "with a separate home" do
-          let(:separate_home) { true }
-          include_examples "proposed layout"
-        end
-
-        context "without separate home" do
-          let(:separate_home) { false }
-          include_examples "proposed layout"
-        end
-      end
-
-      context "not using LVM" do
-        let(:lvm) { false }
-
-        context "with a separate home" do
-          let(:separate_home) { true }
-          include_examples "proposed layout"
-        end
-
-        context "without separate home" do
-          let(:separate_home) { false }
-          include_examples "proposed layout"
-        end
-      end
+      include_examples "all proposed layouts"
     end
 
     context "in a windows-only PC with 256 KiB of MBR gap" do
       let(:scenario) { "windows-pc-mbr256" }
-
-      context "using LVM" do
-        let(:lvm) { true }
-
-        context "with a separate home" do
-          let(:separate_home) { true }
-          include_examples "proposed layout"
-        end
-
-        context "without separate home" do
-          let(:separate_home) { false }
-          include_examples "proposed layout"
-        end
-      end
-
-      context "not using LVM" do
-        let(:lvm) { false }
-
-        context "with a separate home" do
-          let(:separate_home) { true }
-          include_examples "proposed layout"
-        end
-
-        context "without separate home" do
-          let(:separate_home) { false }
-          include_examples "proposed layout"
-        end
-      end
+      include_examples "all proposed layouts"
     end
 
     context "in a windows-only PC with 128 KiB of MBR gap" do
@@ -169,116 +106,48 @@ describe Y2Storage::Proposal do
         end
       end
 
-      context "not using LVM" do
-        let(:lvm) { false }
-
-        context "with a separate home" do
-          let(:separate_home) { true }
-          include_examples "proposed layout"
-        end
-
-        context "without separate home" do
-          let(:separate_home) { false }
-          include_examples "proposed layout"
-        end
-      end
+      include_examples "partition-based proposed layouts"
     end
 
-    context "in a windows/linux multiboot PC" do
+    context "in a windows/linux multiboot PC with MBR partition table" do
       let(:scenario) { "windows-linux-multiboot-pc" }
-
-      context "using LVM" do
-        let(:lvm) { true }
-
-        context "with a separate home" do
-          let(:separate_home) { true }
-          include_examples "proposed layout"
-        end
-
-        context "without separate home" do
-          let(:separate_home) { false }
-          include_examples "proposed layout"
-        end
-      end
-
-      context "not using LVM" do
-        let(:lvm) { false }
-
-        context "with a separate home" do
-          let(:separate_home) { true }
-          include_examples "proposed layout"
-        end
-
-        context "without separate home" do
-          let(:separate_home) { false }
-          include_examples "proposed layout"
-        end
-      end
+      include_examples "all proposed layouts"
     end
 
-    context "in a linux multiboot PC" do
+    context "in a linux multiboot PC with MBR partition table" do
       let(:scenario) { "multi-linux-pc" }
       let(:windows_partitions) { {} }
-
-      context "using LVM" do
-        let(:lvm) { true }
-
-        context "with a separate home" do
-          let(:separate_home) { true }
-          include_examples "proposed layout"
-        end
-
-        context "without separate home" do
-          let(:separate_home) { false }
-          include_examples "proposed layout"
-        end
-      end
-
-      context "not using LVM" do
-        let(:lvm) { false }
-
-        context "with a separate home" do
-          let(:separate_home) { true }
-          include_examples "proposed layout"
-        end
-
-        context "without separate home" do
-          let(:separate_home) { false }
-          include_examples "proposed layout"
-        end
-      end
+      include_examples "all proposed layouts"
     end
 
-    context "in a windows/linux multiboot PC with pre-existing LVM" do
+    context "in a windows/linux multiboot PC with pre-existing LVM and MBR partition table" do
       let(:scenario) { "windows-linux-lvm-pc" }
+      include_examples "all proposed layouts"
+    end
 
-      context "using LVM" do
-        let(:lvm) { true }
+    context "in a windows-only PC with GPT partition table" do
+      let(:scenario) { "windows-pc-gpt" }
 
-        context "with a separate home" do
-          let(:separate_home) { true }
-          include_examples "proposed layout"
-        end
+      include_examples "all proposed layouts"
+    end
 
-        context "without separate home" do
-          let(:separate_home) { false }
-          include_examples "proposed layout"
-        end
-      end
+    context "in a windows/linux multiboot PC with GPT partition table" do
+      let(:scenario) { "windows-linux-multiboot-pc-gpt" }
 
-      context "not using LVM" do
-        let(:lvm) { false }
+      include_examples "all proposed layouts"
+    end
 
-        context "with a separate home" do
-          let(:separate_home) { true }
-          include_examples "proposed layout"
-        end
+    context "in a linux multiboot PC with GPT partition table" do
+      let(:scenario) { "multi-linux-pc-gpt" }
+      let(:windows_partitions) { {} }
 
-        context "without separate home" do
-          let(:separate_home) { false }
-          include_examples "proposed layout"
-        end
-      end
+      include_examples "all proposed layouts"
+    end
+
+    context "in a windows/linux multiboot PC with pre-existing LVM and GPT partition table" do
+      let(:scenario) { "windows-linux-lvm-pc-gpt" }
+
+      include_examples "all proposed layouts"
     end
 
     context "with pre-existing swap partitions" do
