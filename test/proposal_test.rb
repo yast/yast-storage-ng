@@ -73,7 +73,7 @@ describe Y2Storage::Proposal do
       ::Storage::Devicegraph.new_from_file(output_file_for(file_name))
     end
 
-    context "in a windows-only PC" do
+    context "in a windows-only PC with MBR partition table" do
       let(:scenario) { "windows-pc" }
       include_examples "all proposed layouts"
     end
@@ -109,19 +109,44 @@ describe Y2Storage::Proposal do
       include_examples "partition-based proposed layouts"
     end
 
-    context "in a windows/linux multiboot PC" do
+    context "in a windows/linux multiboot PC with MBR partition table" do
       let(:scenario) { "windows-linux-multiboot-pc" }
       include_examples "all proposed layouts"
     end
 
-    context "in a linux multiboot PC" do
+    context "in a linux multiboot PC with MBR partition table" do
       let(:scenario) { "multi-linux-pc" }
       let(:windows_partitions) { {} }
       include_examples "all proposed layouts"
     end
 
-    context "in a windows/linux multiboot PC with pre-existing LVM" do
+    context "in a windows/linux multiboot PC with pre-existing LVM and MBR partition table" do
       let(:scenario) { "windows-linux-lvm-pc" }
+      include_examples "all proposed layouts"
+    end
+
+    context "in a windows-only PC with GPT partition table" do
+      let(:scenario) { "windows-pc-gpt" }
+
+      include_examples "all proposed layouts"
+    end
+
+    context "in a windows/linux multiboot PC with GPT partition table" do
+      let(:scenario) { "windows-linux-multiboot-pc-gpt" }
+
+      include_examples "all proposed layouts"
+    end
+
+    context "in a linux multiboot PC with GPT partition table" do
+      let(:scenario) { "multi-linux-pc-gpt" }
+      let(:windows_partitions) { {} }
+
+      include_examples "all proposed layouts"
+    end
+
+    context "in a windows/linux multiboot PC with pre-existing LVM and GPT partition table" do
+      let(:scenario) { "windows-linux-lvm-pc-gpt" }
+
       include_examples "all proposed layouts"
     end
 
