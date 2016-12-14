@@ -39,7 +39,7 @@ describe Y2Storage::DiskSize do
   describe "created with 42 KiB" do
     disk_size = Y2Storage::DiskSize.KiB(42)
     it "should return the correct human readable string" do
-      expect(disk_size.to_s).to be == "42.00 KiB"
+      expect(disk_size.to_human_string).to be == "42.00 KiB"
     end
     it "should have the correct numeric value internally" do
       expect(disk_size.to_i).to be == 42 * 1024
@@ -49,7 +49,7 @@ describe Y2Storage::DiskSize do
   describe "created with 43 MiB" do
     disk_size = Y2Storage::DiskSize.MiB(43)
     it "should return the correct human readable string" do
-      expect(disk_size.to_s).to be == "43.00 MiB"
+      expect(disk_size.to_human_string).to be == "43.00 MiB"
     end
     it "should have the correct numeric value internally" do
       expect(disk_size.to_i).to be == 43 * 1024**2
@@ -59,7 +59,7 @@ describe Y2Storage::DiskSize do
   describe "created with 44 GiB" do
     disk_size = Y2Storage::DiskSize.GiB(44)
     it "should return the correct human readable string" do
-      expect(disk_size.to_s).to be == "44.00 GiB"
+      expect(disk_size.to_human_string).to be == "44.00 GiB"
     end
     it "should have the correct numeric value internally" do
       expect(disk_size.to_i).to be == 44 * 1024**3
@@ -69,7 +69,7 @@ describe Y2Storage::DiskSize do
   describe "created with 45 TiB" do
     disk_size = Y2Storage::DiskSize.TiB(45)
     it "should return the correct human readable string" do
-      expect(disk_size.to_s).to be == "45.00 TiB"
+      expect(disk_size.to_human_string).to be == "45.00 TiB"
     end
     it "should have the correct numeric value internally" do
       expect(disk_size.to_i).to be == 45 * 1024**4
@@ -79,7 +79,7 @@ describe Y2Storage::DiskSize do
   describe "created with 46 PiB" do
     disk_size = Y2Storage::DiskSize.PiB(46)
     it "should return the correct human readable string" do
-      expect(disk_size.to_s).to be == "46.00 PiB"
+      expect(disk_size.to_human_string).to be == "46.00 PiB"
     end
     it "should have the correct numeric value internally" do
       expect(disk_size.to_i).to be == 46 * 1024**5
@@ -89,7 +89,7 @@ describe Y2Storage::DiskSize do
   describe "created with 47 EiB" do
     disk_size = Y2Storage::DiskSize.EiB(47)
     it "should return the correct human readable string" do
-      expect(disk_size.to_s).to be == "47.00 EiB"
+      expect(disk_size.to_human_string).to be == "47.00 EiB"
     end
     it "should not overflow and have the correct numeric value internally" do
       expect(disk_size.to_i).to be == 47 * 1024**6
@@ -99,7 +99,7 @@ describe Y2Storage::DiskSize do
   describe "created with a huge number" do
     disk_size = Y2Storage::DiskSize.TiB(48 * 1024**5)
     it "should return the correct human readable string" do
-      expect(disk_size.to_s).to be == "49152.00 YiB"
+      expect(disk_size.to_human_string).to be == "49152.00 YiB"
     end
     it "should not overflow" do
       expect(disk_size.to_i).to be > 0
@@ -112,7 +112,7 @@ describe Y2Storage::DiskSize do
   describe "created with 1024 GiB" do
     disk_size = Y2Storage::DiskSize.GiB(1024)
     it "should use the next higher unit (TiB) from 1024 on" do
-      expect(disk_size.to_s).to be == "1.00 TiB"
+      expect(disk_size.to_human_string).to be == "1.00 TiB"
     end
   end
 
@@ -268,11 +268,17 @@ describe Y2Storage::DiskSize do
     it "should accept \"unlimited\" with surrounding whitespace" do
       expect(described_class.parse("  unlimited ").to_i).to be == -1
     end
-    it "should accept its own output" do
+    it "should accept #to_s output" do
       expect(described_class.parse(described_class.GiB(42).to_s).to_i).to be == 42 * 1024**3
       expect(described_class.parse(described_class.new(43).to_s).to_i).to be == 43
       expect(described_class.parse(described_class.zero.to_s).to_i).to be == 0
       expect(described_class.parse(described_class.unlimited.to_s).to_i).to be == -1
+    end
+    it "should accept #to_human_string output" do
+      expect(described_class.parse(described_class.GiB(42).to_human_string).to_i).to be == 42 * 1024**3
+      expect(described_class.parse(described_class.new(43).to_human_string).to_i).to be == 43
+      expect(described_class.parse(described_class.zero.to_human_string).to_i).to be == 0
+      expect(described_class.parse(described_class.unlimited.to_human_string).to_i).to be == -1
     end
     it "should reject invalid input" do
       expect { described_class.parse("wrglbrmpf") }.to raise_error(ArgumentError)

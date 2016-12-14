@@ -103,7 +103,7 @@ module Y2Storage
         ptable = disk.partition_table # this will raise an exception if no partition table
         content["partition_table"] = @partition_table_types[ptable.type]
         if ::Storage.msdos?(ptable)
-          content["mbr_gap"] = DiskSize.B(::Storage.to_msdos(ptable).minimal_mbr_gap).to_s_ex
+          content["mbr_gap"] = DiskSize.B(::Storage.to_msdos(ptable).minimal_mbr_gap).to_s
         end
         partitions = yaml_disk_partitions(disk)
         content["partitions"] = partitions unless partitions.empty?
@@ -122,11 +122,11 @@ module Y2Storage
     def basic_disk_attributes(disk)
       {
         "name"       => disk.name,
-        "size"       => DiskSize.B(disk.size).to_s_ex,
-        "block_size" => DiskSize.B(disk.region.block_size).to_s_ex,
-        "io_size"    => DiskSize.B(disk.topology.optimal_io_size).to_s_ex,
-        "min_grain"  => DiskSize.B(disk.topology.minimal_grain).to_s_ex,
-        "align_ofs"  => DiskSize.B(disk.topology.alignment_offset).to_s_ex
+        "size"       => DiskSize.B(disk.size).to_s,
+        "block_size" => DiskSize.B(disk.region.block_size).to_s,
+        "io_size"    => DiskSize.B(disk.topology.optimal_io_size).to_s,
+        "min_grain"  => DiskSize.B(disk.topology.minimal_grain).to_s,
+        "align_ofs"  => DiskSize.B(disk.topology.alignment_offset).to_s
       }
     end
 
@@ -218,8 +218,8 @@ module Y2Storage
 
     def yaml_partition(partition)
       content = {
-        "size"  => DiskSize.B(partition.region.length * partition.region.block_size).to_s_ex,
-        "start" => DiskSize.B(partition.region.start * partition.region.block_size).to_s_ex,
+        "size"  => DiskSize.B(partition.region.length * partition.region.block_size).to_s,
+        "start" => DiskSize.B(partition.region.start * partition.region.block_size).to_s,
         "name"  => partition.name,
         "type"  => @partition_types[partition.type],
         "id"    => @partition_ids[partition.id] || "0x#{partition.id.to_s(16)}"
@@ -237,7 +237,7 @@ module Y2Storage
     # @return [Hash]
     #
     def yaml_free_slot(start, size)
-      { "free" => { "size" => size.to_s_ex, "start" => start.to_s_ex } }
+      { "free" => { "size" => size.to_s, "start" => start.to_s } }
     end
 
     # Return the YAML counterpart of a ::Storage::LvmVg.
@@ -265,7 +265,7 @@ module Y2Storage
     def basic_lvm_vg_attributes(lvm_vg)
       {
         "vg_name"     => lvm_vg.vg_name,
-        "extent_size" => DiskSize.B(lvm_vg.extent_size).to_s_ex
+        "extent_size" => DiskSize.B(lvm_vg.extent_size).to_s
       }
     end
 
@@ -286,11 +286,11 @@ module Y2Storage
     def yaml_lvm_lv(lvm_lv)
       content = {
         "lv_name" => lvm_lv.lv_name,
-        "size"    => DiskSize.B(lvm_lv.size).to_s_ex
+        "size"    => DiskSize.B(lvm_lv.size).to_s
       }
 
       content["stripes"] = lvm_lv.stripes if lvm_lv.stripes != 0
-      content["stripe_size"] = DiskSize.B(lvm_lv.stripe_size).to_s_ex if lvm_lv.stripe_size != 0
+      content["stripe_size"] = DiskSize.B(lvm_lv.stripe_size).to_s if lvm_lv.stripe_size != 0
 
       content.merge!(yaml_filesystem(lvm_lv.filesystem)) if lvm_lv.has_filesystem
 

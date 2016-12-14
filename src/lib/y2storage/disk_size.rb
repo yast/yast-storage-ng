@@ -126,7 +126,7 @@ module Y2Storage
       #   42 GB    (supporting binary units only)
       #
       def parse(str)
-        # ignore everything added in parentheses, so we can also parse the output of #to_s_ex
+        # ignore everything added in parentheses, so we can also parse the output of #to_s
         str.gsub!(/\(.*/, "")
         str.strip!
         return DiskSize.unlimited if str == UNLIMITED
@@ -138,7 +138,7 @@ module Y2Storage
       end
 
       alias_method :from_s, :parse
-      alias_method :from_human_readable, :parse
+      alias_method :from_human_string, :parse
 
       # Return the unit exponent for any of the known binary units ("KiB",
       # "MiB", ...). The base of this exponent is 1024. The base unit is KiB.
@@ -244,50 +244,21 @@ module Y2Storage
       DiskSize.new(@size - modulo)
     end
 
-    # Return numeric size and unit ("MiB", "GiB", ...) in human-readable form
-    # @return [Array] [size, unit]
-    def to_human_readable
-      return [UNLIMITED, ""] if @size == -1
-
-      unit_index = 0
-      # prefer, 0.50 MiB over 512 KiB
-      size2 = @size * 2
-
-      while size2.abs >= 1024.0 && unit_index < UNITS.size - 1
-        size2 /= 1024.0
-        unit_index += 1
-      end
-      [size2 / 2.0, UNITS[unit_index]] # FIXME: Make unit translatable
-    end
-
-    # Return numeric size and unit ("MiB", "GiB", ...) in human-readable form
-    # But unlike #to_human_readable, return the exact value.
-    # @return [Array] [size, unit]
-    def to_human_readable_ex
-      return [UNLIMITED, ""] if @size == -1
-
-      unit_index = 0
-      # allow half values
-      size2 = @size * 2
-
-      while size2 != 0 && (size2 % 1024) == 0 && unit_index < UNITS.size - 1
-        size2 /= 1024
-        unit_index += 1
-      end
-      [size2 / 2.0, UNITS[unit_index]]
-    end
-
-    def to_s
+    # Human-readable string. That is, represented in the biggest unit ("MiB",
+    # "GiB", ...) that makes sense, even if it means losing some precision.
+    #
+    # @return [String]
+    def to_human_string
       return "unlimited" if unlimited?
-      size, unit = to_human_readable
+      size, unit = human_string_components
       format("%.2f %s", size, unit)
     end
 
-    # exact value + human readable in parentheses
-    def to_s_ex
+    # exact value + human readable in parentheses (if the latter makes sense)
+    def to_s
       return "unlimited" if unlimited?
-      size1, unit1 = to_human_readable
-      size2, unit2 = to_human_readable_ex
+      size1, unit1 = human_string_components
+      size2, unit2 = string_components
       v1 = format("%.2f %s", size1, unit1)
       v2 = "#{size2 % 1 == 0 ? size2.to_i : size2} #{unit2}"
       # if both units are the same, just use exact value
@@ -296,7 +267,7 @@ module Y2Storage
 
     def inspect
       return "<DiskSize <unlimited> (-1)>" if unlimited?
-      "<DiskSize #{self} (#{to_i})>"
+      "<DiskSize #{to_human_string} (#{to_i})>"
     end
 
     def pretty_print(*)
@@ -316,6 +287,41 @@ module Y2Storage
     def can_be_rounded?(unit_size)
       return false if unit_size.unlimited? || unit_size.zero? || unit_size.to_i == 1
       !unlimited? && !zero?
+    end
+
+    # Return numeric size and unit ("MiB", "GiB", ...) in human-readable form
+    #
+    # @return [Array] [size, unit]
+    def human_string_components
+      return [UNLIMITED, ""] if @size == -1
+
+      unit_index = 0
+      # prefer, 0.50 MiB over 512 KiB
+      size2 = @size * 2
+
+      while size2.abs >= 1024.0 && unit_index < UNITS.size - 1
+        size2 /= 1024.0
+        unit_index += 1
+      end
+      [size2 / 2.0, UNITS[unit_index]] # FIXME: Make unit translatable
+    end
+
+    # Return numeric size and unit ("MiB", "GiB", ...).
+    # Unlike #human_string_components, always return the exact value.
+    #
+    # @return [Array] [size, unit]
+    def string_components
+      return [UNLIMITED, ""] if @size == -1
+
+      unit_index = 0
+      # allow half values
+      size2 = @size * 2
+
+      while size2 != 0 && (size2 % 1024) == 0 && unit_index < UNITS.size - 1
+        size2 /= 1024
+        unit_index += 1
+      end
+      [size2 / 2.0, UNITS[unit_index]]
     end
   end
 end
