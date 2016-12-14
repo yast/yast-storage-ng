@@ -1,4 +1,30 @@
 -------------------------------------------------------------------
+Wed Dec 14 16:01:00 UTC 2016 - ancor@suse.com
+
+- Write more precise information in the logs (DiskSize#to_s)
+
+-------------------------------------------------------------------
+Tue Dec 13 11:11:20 UTC 2016 - ancor@suse.com
+
+- Proposal does not try to set the boot flag if not supported
+  (for example, GPT partition tables)
+
+-------------------------------------------------------------------
+Fri Dec  9 10:30:33 UTC 2016 - aschnell@suse.com
+
+- Adapted to several changes in libstorage-ng
+
+-------------------------------------------------------------------
+Fri Nov 25 16:39:13 UTC 2016 - ancor@suse.com
+
+- Improvements in the LVM-based proposal
+
+-------------------------------------------------------------------
+Tue Nov 22 15:32:41 UTC 2016 - ancor@suse.com
+
+- Improvements in Refinements::DevicegraphLists
+
+-------------------------------------------------------------------
 Tue Nov 22 12:28:39 UTC 2016 - ancor@suse.com
 
 - Convenience method to check for GPT
