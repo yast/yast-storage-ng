@@ -74,4 +74,22 @@ describe Y2Storage::PlannedVolumesList do
       expect(subject.sort_by_attr(:min_disk_size)).to eq [vol1, vol2, vol4, vol3]
     end
   end
+
+  describe "#distribute_space" do
+    let(:vol1) { planned_vol(mount_point: "/1", desired: 1.GiB, weight: 1) }
+    let(:vol2) { planned_vol(mount_point: "/2", desired: 1.GiB, weight: 1) }
+
+    subject(:list) { described_class.new([vol1, vol2]) }
+
+    # Regression test. There was a bug and it tried to assign 501 extra bytes
+    # to each volume (one more byte than available)
+    it "does not distribute more space than available" do
+      space = 2.GiB + Y2Storage::DiskSize.new(1001)
+      result = list.distribute_space(space)
+      expect(result).to contain_exactly(
+        an_object_having_attributes(disk_size: 1.GiB + Y2Storage::DiskSize.new(501)),
+        an_object_having_attributes(disk_size: 1.GiB + Y2Storage::DiskSize.new(500))
+      )
+    end
+  end
 end

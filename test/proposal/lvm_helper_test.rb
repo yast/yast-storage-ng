@@ -307,7 +307,7 @@ describe Y2Storage::Proposal::LvmHelper do
 
         expect(lvs).to contain_exactly(
           an_object_with_fields(lv_name: "one", size: (9.GiB - 4.MiB).to_i),
-          an_object_with_fields(lv_name: "two", size: 9.GiB.to_i),
+          an_object_with_fields(lv_name: "two", size: (9.GiB - 4.MiB).to_i),
           an_object_with_fields(lv_name: "three", size: 2.GiB.to_i)
         )
       end

@@ -175,7 +175,7 @@ module Y2Storage
       new_list = deep_dup
       new_list.each do |vol|
         vol.disk_size = vol.min_valid_disk_size(target)
-        vol.disk_size.ceil(rounding)
+        vol.disk_size = vol.disk_size.ceil(rounding)
       end
 
       extra_size = space_size - new_list.total_disk_size
@@ -271,16 +271,19 @@ module Y2Storage
     # Extra space to be assigned to a volume
     #
     # @param volume [PlannedVolume] volume to enlarge
-    # @param available_size [DiskSize] free space to be distributed among
+    # @param total_size [DiskSize] free space to be distributed among
     #    involved volumes
     # @param total_weight [Float] sum of the weights of all involved volumes
+    # @param assigned_size [DiskSize] space already distributed to other volumes
     # @param rounding [DiskSize] size to round up
     #
     # @return [DiskSize]
-    def volume_extra_size(volume, available_size, total_weight, rounding)
-      extra_size = available_size * (volume.weight / total_weight)
+    def volume_extra_size(volume, total_size, total_weight, assigned_size, rounding)
+      available_size = total_size - assigned_size
+
+      extra_size = total_size * (volume.weight / total_weight)
       extra_size = extra_size.ceil(rounding)
-      extra_size = extra_size.floor(rounding) if extra_size > available_size
+      extra_size = available_size.floor(rounding) if extra_size > available_size
 
       new_size = extra_size + volume.disk_size
       if new_size > volume.max_disk_size
@@ -300,8 +303,9 @@ module Y2Storage
         log.info("Distributing #{extra_size} extra space among #{candidates.size} volumes")
 
         assigned_size = DiskSize.zero
+        total_weight = candidates.total_weight
         candidates.each do |vol|
-          vol_extra = volume_extra_size(vol, extra_size, candidates.total_weight, rounding)
+          vol_extra = volume_extra_size(vol, extra_size, total_weight, assigned_size, rounding)
           vol.disk_size += vol_extra
           log.info("Distributing #{vol_extra} to #{vol.mount_point}; now #{vol.disk_size}")
           assigned_size += vol_extra
