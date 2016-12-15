@@ -311,6 +311,15 @@ describe Y2Storage::Proposal::LvmHelper do
           an_object_with_fields(lv_name: "three", size: 2.GiB.to_i)
         )
       end
+
+      it "does not distribute more space than available" do
+        devicegraph = helper.create_volumes(fake_devicegraph, pv_partitions)
+        lvs = devicegraph.volume_groups.with(vg_name: "system").lvm_lvs
+        system_vg = lvs.vgs.first
+        lvs_size = lvs.reduce(0) { |sum, lv| sum + lv.size }
+
+        expect(system_vg.size).to eq lvs_size
+      end
     end
 
     context "when the volume group name is already taken" do
