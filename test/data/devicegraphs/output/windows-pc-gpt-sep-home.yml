@@ -6,7 +6,7 @@
     partitions:
 
     - partition:
-        size: 745471 MiB
+        size: 745470 MiB
         name: /dev/sda1
         id: windows_basic_data
         file_system: ntfs
@@ -20,7 +20,7 @@
         mount_point: "/"
 
     - partition:
-        size: 1.00 MiB
+        size: 2.00 MiB
         name: "/dev/sda4"
         id: bios_boot
 

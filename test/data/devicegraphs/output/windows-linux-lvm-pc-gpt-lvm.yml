@@ -18,7 +18,7 @@
         id: lvm
 
     - partition:
-        size: 1 MiB
+        size: 2 MiB
         name: /dev/sda3
         id: bios_boot
 

@@ -96,6 +96,28 @@ module Y2Storage
       @volumes.reduce(DiskSize.zero) { |sum, vol| sum + vol.disk_size }
     end
 
+    # Total sum of all current reserved sizes of volumes
+    #
+    # Similar to #total_disk_size but taking into account the extra space that
+    # some volumes can need to reserve.
+    # @see #total_disk_size
+    # @see PlannedVolume#needs_reserved?
+    #
+    # @return [DiskSize] sum of reserved sizes in @volumes
+    def reserved_disk_size(min_grain)
+      @volumes.reduce(DiskSize.zero) { |sum, vol| sum + vol.reserved_disk_size(:current, min_grain) }
+    end
+
+    # Similar to #target_disk_size but taking into account the extra space that
+    # some volumes can need to reserve.
+    # @see #target_disk_size
+    # @see PlannedVolume#needs_reserved?
+    #
+    # @return [DiskSize]
+    def target_reserved_disk_size(min_grain)
+      @volumes.reduce(DiskSize.zero) { |sum, vol| sum + vol.reserved_disk_size(target, min_grain) }
+    end
+
     # Total sum of all weights of volumes
     #
     # @return [Float]
@@ -165,10 +187,14 @@ module Y2Storage
     # always in blocks of the specified size.
     #
     # @param space_size [DiskSize]
-    # @param rounding [DiskSize, nil] min block size to distribute
+    # @param rounding [DiskSize, nil] min block size to distribute. Mainly used
+    #     to distribute space among LVs honoring the PE size of the LVM
+    # @param min_grain [DiskSize, nil] minimal grain of the disk where the space
+    #     is located. It only makes sense when distributing space among
+    #     partitions.
     # @return [PlannedVolumesList] list containing volumes with an adjusted
     #     value for PlannedVolume#disk_size
-    def distribute_space(space_size, rounding: nil)
+    def distribute_space(space_size, rounding: nil, min_grain: nil)
       raise RuntimeError if space_size < target_disk_size
 
       rounding ||= DiskSize.new(1)
@@ -178,7 +204,18 @@ module Y2Storage
         vol.disk_size = vol.disk_size.ceil(rounding)
       end
 
-      extra_size = space_size - new_list.total_disk_size
+      if min_grain
+        used_size = new_list.reserved_disk_size(min_grain)
+
+        # We might be reserving some extra space for some volumes, let's make
+        # good use of it where possible
+        new_list.with_reserved(min_grain).each do |vol|
+          vol.disk_size = [vol.reserved_disk_size(target, min_grain), vol.max_disk_size].min
+        end
+      else
+        used_size = new_list.total_disk_size
+      end
+      extra_size = space_size - used_size
       new_list.distribute_extra_space!(extra_size, rounding)
 
       new_list
@@ -317,6 +354,10 @@ module Y2Storage
 
     def distributable?(size, rounding)
       size >= rounding
+    end
+
+    def with_reserved(min_grain)
+      @volumes.select { |vol| vol.needs_reserved?(target, min_grain) }
     end
   end
 end

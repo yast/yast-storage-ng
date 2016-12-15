@@ -39,7 +39,7 @@
         mount_point:  "/"
 
     - partition:
-        size:         1 MiB
+        size:         2 MiB
         name:         /dev/sda6
         id:           bios_boot
 

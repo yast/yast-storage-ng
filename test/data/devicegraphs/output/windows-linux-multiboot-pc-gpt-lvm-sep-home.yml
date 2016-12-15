@@ -18,7 +18,7 @@
         mount_point: swap
         label: swap
     - partition:
-        size: 1 MiB
+        size: 2 MiB
         name: "/dev/sda3"
         id: bios_boot
     - partition:
@@ -44,7 +44,7 @@
 
     - lvm_lv:
         lv_name: home
-        size: 210940 MiB
+        size: 210936 MiB
         file_system: xfs
         mount_point: "/home"
 

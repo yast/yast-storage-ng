@@ -33,6 +33,7 @@ module Y2Storage
     class PartitionCreator
       using Refinements::Devicegraph
       using Refinements::DevicegraphLists
+      using Y2Storage::Refinements::Disk
       include Yast::Logger
 
       FIRST_LOGICAL_PARTITION_NUMBER = 5 # Number of the first logical partition (/dev/sdx5)
@@ -81,7 +82,7 @@ module Y2Storage
           )
         end
 
-        volumes = volumes.distribute_space(usable_size)
+        volumes = volumes.distribute_space(usable_size, min_grain: free_space.disk.min_grain)
         create_volumes_partitions(volumes, free_space, num_logical)
       end
 

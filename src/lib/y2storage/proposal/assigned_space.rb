@@ -22,12 +22,14 @@
 # find current contact information at www.suse.com.
 
 require "storage"
+require "y2storage/refinements"
 
 module Y2Storage
   class Proposal
     # Each one of the spaces contained in a SpaceDistribution
     class AssignedSpace
       extend Forwardable
+      using Y2Storage::Refinements::Disk
 
       # @return [FreeDiskSpace]
       attr_reader :disk_space
@@ -70,7 +72,7 @@ module Y2Storage
       #  - the chances of having 2 volumes with max_start_offset in the same
       #    free space are very low
       def valid?
-        usable_size >= volumes.target_disk_size
+        usable_size >= volumes.target_reserved_disk_size(min_grain)
       end
 
       # Space that will remain unused (wasted) after creating the partitions
@@ -85,7 +87,7 @@ module Y2Storage
       #
       # @return [DiskSize]
       def extra_size
-        disk_size - volumes.target_disk_size
+        disk_size - volumes.target_reserved_disk_size(min_grain)
       end
 
       # Usable space available in addition to the target, taking into account
@@ -145,6 +147,10 @@ module Y2Storage
         extended = partitions.detect { |p| p.type == Storage::PartitionType_EXTENDED }
         return false unless extended
         extended.region.start <= space_start && extended.region.end > space_start
+      end
+
+      def min_grain
+        disk_space.disk.min_grain
       end
     end
   end

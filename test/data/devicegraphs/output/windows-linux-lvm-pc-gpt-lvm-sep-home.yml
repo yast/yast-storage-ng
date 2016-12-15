@@ -18,7 +18,7 @@
         id: lvm
 
     - partition:
-        size: 1 MiB
+        size: 2 MiB
         name: /dev/sda3
         id: bios_boot
 
@@ -45,7 +45,7 @@
 
     - lvm_lv:
         lv_name: home
-        size: 26616 MiB
+        size: 26612 MiB
         file_system: xfs
         mount_point: "/home"
 
