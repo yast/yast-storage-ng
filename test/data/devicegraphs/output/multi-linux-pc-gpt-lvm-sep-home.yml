@@ -37,9 +37,14 @@
         id:           bios_boot
 
     - partition:
-        size:         629142511.5 KiB
+        size:         614396 MiB
         name:         /dev/sda6
         id: lvm
+
+    # FIXME: consequence on the fact that the last 16.5KiB of a GPT disk are not
+    # usable
+    - free:
+        1 MiB
 
 - lvm_vg:
     vg_name: system

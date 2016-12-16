@@ -22,9 +22,14 @@
         name: "/dev/sda3"
         id: bios_boot
     - partition:
-        size: unlimited
+        size: 253948 MiB
         name: "/dev/sda4"
         id: lvm
+
+    # FIXME: consequence on the fact that the last 16.5KiB of a GPT disk are not
+    # usable
+    - free:
+        1 MiB
 
 - lvm_vg:
     vg_name: system

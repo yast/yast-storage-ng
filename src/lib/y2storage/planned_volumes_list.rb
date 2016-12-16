@@ -191,17 +191,20 @@ module Y2Storage
     #     to distribute space among LVs honoring the PE size of the LVM
     # @param min_grain [DiskSize, nil] minimal grain of the disk where the space
     #     is located. It only makes sense when distributing space among
-    #     partitions.
+    #     partitions. If no value is provided for "rounding", the value of
+    #     "min_grain" will be used (to reduce the number of gaps)
     # @return [PlannedVolumesList] list containing volumes with an adjusted
     #     value for PlannedVolume#disk_size
     def distribute_space(space_size, rounding: nil, min_grain: nil)
       raise RuntimeError if space_size < target_disk_size
 
+      rounding ||= min_grain
       rounding ||= DiskSize.new(1)
       new_list = deep_dup
       new_list.each do |vol|
         vol.disk_size = vol.min_valid_disk_size(target)
-        vol.disk_size = vol.disk_size.ceil(rounding)
+        rounded = vol.disk_size.ceil(rounding)
+        vol.disk_size = rounded unless vol.align == :keep_size && rounded > vol.max
       end
 
       if min_grain
