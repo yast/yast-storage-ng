@@ -20,7 +20,7 @@
         mount_point: "/"
 
     - partition:
-        size: 1 MiB
+        size: 2 MiB
         name: /dev/sda3
         id: bios_boot
 
@@ -32,8 +32,13 @@
         mount_point: swap
 
     - partition:
-        size: unlimited
+        size: 28668 MiB
         name: /dev/sda5
         id: linux
         file_system: xfs
         mount_point: "/home"
+
+    # FIXME: consequence on the fact that the last 16.5KiB of a GPT disk are not
+    # usable
+    - free:
+        1 MiB

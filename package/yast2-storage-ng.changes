@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Fri Dec 16 12:53:01 UTC 2016 - ancor@suse.com
+
+- Fixed partitioning proposal to not fail when trying to create
+  very small partitions (like bios_boot).
+
+-------------------------------------------------------------------
 Wed Dec 14 16:01:00 UTC 2016 - ancor@suse.com
 
 - Write more precise information in the logs (DiskSize#to_s)

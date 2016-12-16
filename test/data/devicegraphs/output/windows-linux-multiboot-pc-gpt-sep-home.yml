@@ -26,12 +26,16 @@
         file_system: btrfs
         mount_point: "/"
     - partition:
-        size: 1 MiB
+        size: 2 MiB
         name: "/dev/sda4"
         id: bios_boot
     - partition:
-        size: unlimited
+        size: 212988 MiB
         name: "/dev/sda5"
         id: linux
         file_system: xfs
         mount_point: "/home"
+    # FIXME: consequence on the fact that the last 16.5KiB of a GPT disk are not
+    # usable
+    - free:
+        size: 1 MiB

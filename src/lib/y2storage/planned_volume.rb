@@ -175,10 +175,60 @@ module Y2Storage
       other.class == self.class && other.internal_state == internal_state
     end
 
+    # Checks whether the volume would need to reserve some extra disk space in
+    # order to guarantee the partition can be created
+    #
+    # For more information in that regard, check the partition alignment
+    # documentation at https://github.com/openSUSE/libstorage-ng
+    # In short, when turning planned volumes into partitions, the size can be
+    # reduced by upto approximately two times the disk grain.
+    #
+    # For some volumes, that's unacceptable. In that case, we need to "reserve"
+    # more space than strictly needed (that is, to ensure the space is there
+    # and not dedicated to any other volume).
+    #
+    # @param field [Symbol] :current for checking #disk_size,
+    #   :desired to check #desired_disk_size, :min to check #min_disk_size
+    # @param min_grain [DiskSize] minimal grain of the disk in which the
+    #   partition will be created
+    # @return [Boolean]
+    def needs_reserved?(field, min_grain)
+      size = size_for(field)
+
+      return false if size.zero?
+      align == :keep_size || size < min_reserved_size(min_grain)
+    end
+
+    # Total disk size "reserved" to turn this volume into a partition. For most
+    # volumes, this is just the value of the field, but in some cases it can be
+    # bigger.
+    #
+    # @see #needs_reserved?
+    #
+    # @return [DiskSize]
+    def reserved_disk_size(field, min_grain)
+      size = size_for(field)
+
+      return size unless needs_reserved?(field, min_grain)
+      return min_reserved_size(min_grain) if size < min_reserved_size(min_grain)
+
+      # If we are here, align == :keep_size
+      (size + min_grain).ceil(min_grain)
+    end
+
   protected
 
     def internal_state
       instance_variables.sort.map { |v| instance_variable_get(v) }
+    end
+
+    def size_for(field)
+      return disk_size if field == :current
+      min_valid_disk_size(field)
+    end
+
+    def min_reserved_size(min_grain)
+      min_grain * 2
     end
   end
 end

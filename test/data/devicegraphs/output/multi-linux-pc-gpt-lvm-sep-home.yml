@@ -32,17 +32,19 @@
         label:        shared_home
 
     - partition:
-        size:         1 MiB
+        size:         2 MiB
         name:         /dev/sda5
         id:           bios_boot
 
     - partition:
-        size:         629143535.5 KiB
+        size:         614396 MiB
         name:         /dev/sda6
         id: lvm
 
+    # FIXME: consequence on the fact that the last 16.5KiB of a GPT disk are not
+    # usable
     - free:
-        size:         unlimited
+        1 MiB
 
 - lvm_vg:
     vg_name: system
@@ -62,7 +64,7 @@
 
     - lvm_lv:
         lv_name: home
-        size: 571388 MiB
+        size: 571384 MiB
         file_system: xfs
         mount_point: "/home"
 

@@ -150,6 +150,27 @@ describe Y2Storage::Proposal do
       include_examples "all proposed layouts"
     end
 
+    context "when forced to create a small partition" do
+      let(:scenario) { "empty_hard_disk_gpt_25GiB" }
+      let(:windows_partitions) { {} }
+      let(:separate_home) { true }
+      let(:lvm) { false }
+
+      it "does not fail to make a proposal" do
+        expect { proposal.propose }.to_not raise_error
+      end
+
+      it "creates all the needed partitions" do
+        proposal.propose
+        expect(proposal.devices.partitions).to contain_exactly(
+          an_object_with_fields(id: Storage::ID_BIOS_BOOT),
+          an_object_with_fields(mountpoint: "/"),
+          an_object_with_fields(mountpoint: "/home"),
+          an_object_with_fields(mountpoint: "swap")
+        )
+      end
+    end
+
     context "with pre-existing swap partitions" do
       before do
         allow(Y2Storage::Proposal::VolumesGenerator).to receive(:new).and_return volumes_generator

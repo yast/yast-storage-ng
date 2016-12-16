@@ -20,7 +20,7 @@
         mount_point: "/"
 
     - partition:
-        size: 1 MiB
+        size: 2 MiB
         name: /dev/sda4
         id: bios_boot
 
@@ -32,7 +32,7 @@
         mount_point: swap
 
     - free:
-        size: 8191 MiB
+        size: 8190 MiB
 
     - partition:
         size: unlimited
