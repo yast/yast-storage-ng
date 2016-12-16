@@ -96,6 +96,7 @@ describe Y2Storage::Proposal::PartitionCreator do
           home_vol.weight = 2
           swap_vol.desired = 1.GiB - 1.MiB
           swap_vol.max = 1.GiB - 1.MiB
+          swap_vol.weight = 0
         end
 
         it "distributes the extra space" do
@@ -105,6 +106,30 @@ describe Y2Storage::Proposal::PartitionCreator do
             an_object_with_fields(mountpoint: "/home", size: 26.GiB.to_i),
             an_object_with_fields(mountpoint: "swap", size: (1.GiB - 1.MiB).to_i)
           )
+        end
+
+        context "if one of the volumes is small" do
+          before do
+            swap_vol.desired = 256.KiB
+          end
+
+          # In the past, the adjustments introduced by alignment caused the
+          # other partitions to exhaust all the usable space, so the small
+          # partition couldn't be created
+          it "does not exhaust the space" do
+            result = creator.create_partitions(distribution)
+            expect(result.partitions).to contain_exactly(
+              an_object_with_fields(mountpoint: "/"),
+              an_object_with_fields(mountpoint: "/home"),
+              an_object_with_fields(mountpoint: "swap")
+            )
+          end
+
+          it "grows the small partition until the end of the slot" do
+            result = creator.create_partitions(distribution)
+            partition = result.partitions.with(id: Storage::ID_SWAP).first
+            expect(partition.size).to eq 1.MiB.to_i
+          end
         end
       end
     end
