@@ -41,8 +41,9 @@
         name:         /dev/sda6
         id: lvm
 
+    # The last 16.5 KiB of a GPT disk are not usable
     - free:
-        size:         unlimited
+        size:         16.5 KiB
 
 - lvm_vg:
     vg_name: system

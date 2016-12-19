@@ -23,6 +23,7 @@
 
 require "storage"
 require "y2storage/free_disk_space"
+require "y2storage/disk_size"
 
 module Y2Storage
   module Refinements
@@ -62,6 +63,13 @@ module Y2Storage
           partition_table.unused_partition_slots.map do |slot|
             FreeDiskSpace.new(self, slot)
           end
+        end
+
+        # Minimal grain of the disk
+        #
+        # @return [DiskSize]
+        def min_grain
+          DiskSize.new(topology.minimal_grain)
         end
       end
     end

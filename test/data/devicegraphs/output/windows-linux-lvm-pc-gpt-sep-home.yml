@@ -32,8 +32,12 @@
         mount_point: swap
 
     - partition:
-        size: unlimited
+        size: 29358063.5 KiB
         name: /dev/sda5
         id: linux
         file_system: xfs
         mount_point: "/home"
+
+    - free:
+        size: 16.5 KiB
+        start: 838860783.5 KiB (0.78 TiB)

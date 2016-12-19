@@ -30,8 +30,11 @@
         name: "/dev/sda4"
         id: bios_boot
     - partition:
-        size: unlimited
+        size: 218101743.5 KiB
         name: "/dev/sda5"
         id: linux
         file_system: xfs
         mount_point: "/home"
+    # The last 16.5 KiB of a GPT disk are not usable
+    - free:
+        size:         16.5 KiB
