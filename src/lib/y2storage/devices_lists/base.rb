@@ -36,7 +36,7 @@ module Y2Storage
         end
       end
 
-      def_delegators :@list, :each, :empty?, :length, :size
+      def_delegators :@list, :each, :empty?, :length, :size, :last
 
       def initialize(devicegraph, list: nil)
         @devicegraph = devicegraph
