@@ -134,7 +134,7 @@ describe Y2Storage::Proposal::PartitionCreator do
       end
 
       context "when the space is not divisible by the minimal grain" do
-        # The last 16.5KiB of GPT are not usable, what makes the space not
+        # The last 16.5KiB of GPT are not usable, which makes the space not
         # divisible by 1MiB
         let(:scenario) { "empty_hard_disk_gpt_25GiB" }
         let(:vol1) { planned_vol(mount_point: "/1", type: :vfat, desired: vol1_size, weight: 1) }

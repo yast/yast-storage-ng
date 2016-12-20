@@ -88,7 +88,7 @@ module Y2Storage
 
       # Space available in addition to the target
       #
-      # This method is slightly pesimistic. In a quite specific corner case, one
+      # This method is slightly pessimistic. In a quite specific corner case, one
       # of the volumes could be adjusted down to not be divisible by min_grain
       # and then the extra size would be actually sligthly bigger than reported.
       # But being pessimistic is good here because we don't want to enforce that
