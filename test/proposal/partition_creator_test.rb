@@ -132,6 +132,35 @@ describe Y2Storage::Proposal::PartitionCreator do
           end
         end
       end
+
+      context "when the space is not divisible by the minimal grain" do
+        # The last 16.5KiB of GPT are not usable, what makes the space not
+        # divisible by 1MiB
+        let(:scenario) { "empty_hard_disk_gpt_25GiB" }
+        let(:vol1) { planned_vol(mount_point: "/1", type: :vfat, desired: vol1_size, weight: 1) }
+        let(:vol2) { planned_vol(mount_point: "/2", type: :ext4, desired: 20.GiB, weight: 1) }
+        let(:vol1_size) { 2.GiB }
+        let(:distribution) { space_dist(disk_spaces.first => vols_list(vol1, vol2)) }
+
+        it "fills the whole space if possible" do
+          result = creator.create_partitions(distribution)
+          expect(result.free_disk_spaces).to be_empty
+        end
+
+        context "if it's necessary to enforce a partition order" do
+          let(:vol1_size) { disk_spaces.first.disk_size - 20.GiB - 256.KiB }
+
+          it "fills the whole space if possible" do
+            result = creator.create_partitions(distribution)
+            expect(result.free_disk_spaces).to be_empty
+          end
+
+          it "places the required volume at the end" do
+            result = creator.create_partitions(distribution)
+            expect(result.partitions.last.filesystem.type).to eq Storage::FsType_VFAT
+          end
+        end
+      end
     end
 
     context "when creating partitions in an empty space" do
