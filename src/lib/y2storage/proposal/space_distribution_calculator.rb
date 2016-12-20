@@ -28,6 +28,7 @@ require "y2storage/planned_volumes_list"
 require "y2storage/proposal/space_distribution"
 require "y2storage/proposal/assigned_space"
 require "y2storage/proposal/phys_vol_calculator"
+require "y2storage/refinements"
 
 module Y2Storage
   class Proposal
@@ -35,6 +36,7 @@ module Y2Storage
     # of free disk spaces
     class SpaceDistributionCalculator
       include Yast::Logger
+      using Y2Storage::Refinements::Disk
 
       FREE_SPACE_MIN_SIZE = DiskSize.MiB(30)
 
@@ -108,11 +110,15 @@ module Y2Storage
         #  - several volumes (and maybe one of the new PVs) will be logical
         #  - resizing produces a new space
         #  - the LVM must be spread among all the available spaces
-        disk = partition.partitionable
+        disk = Storage.to_disk(partition.partitionable)
+        needed = volumes.target_disk_size(rounding: disk.min_grain)
+
         max_logical = max_logical(disk, volumes)
-        overhead = AssignedSpace.overhead_of_logical(disk) * max_logical
+        needed += AssignedSpace.overhead_of_logical(disk) * max_logical
+
         pvs_to_create = free_spaces.size + 1
-        needed = volumes.target_disk_size + lvm_space_to_make(pvs_to_create) + overhead
+        needed += lvm_space_to_make(pvs_to_create)
+
         needed - available_space(free_spaces)
       end
 

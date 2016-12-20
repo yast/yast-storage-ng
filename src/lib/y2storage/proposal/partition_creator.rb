@@ -33,6 +33,7 @@ module Y2Storage
     class PartitionCreator
       using Refinements::Devicegraph
       using Refinements::DevicegraphLists
+      using Y2Storage::Refinements::Disk
       include Yast::Logger
 
       FIRST_LOGICAL_PARTITION_NUMBER = 5 # Number of the first logical partition (/dev/sdx5)
@@ -81,8 +82,22 @@ module Y2Storage
           )
         end
 
-        volumes = volumes.distribute_space(usable_size)
+        min_grain = free_space.disk.min_grain
+        sorted = sorted_volumes(volumes, usable_size, min_grain)
+        volumes = sorted.distribute_space(usable_size, min_grain: min_grain)
         create_volumes_partitions(volumes, free_space, num_logical)
+      end
+
+      # Volumes sorted in the most convenient way in order to create partitions
+      # for them.
+      def sorted_volumes(volumes, usable_size, min_grain)
+        sorted = volumes.sort_by_attr(:disk, :max_start_offset)
+        last = volumes.enforced_last(usable_size, min_grain)
+        if last
+          sorted.delete(last)
+          sorted << last
+        end
+        PlannedVolumesList.new(sorted, target: volumes.target)
       end
 
       # Creates a partition and the corresponding filesystem for each volume
@@ -98,7 +113,7 @@ module Y2Storage
       # @param initial_free_space [FreeDiskSpace]
       # @param num_logical [Symbol] logical partitions @see #process_space
       def create_volumes_partitions(volumes, initial_free_space, num_logical)
-        volumes.sort_by_attr(:disk, :max_start_offset).each_with_index do |vol, idx|
+        volumes.each_with_index do |vol, idx|
           partition_id = vol.partition_id
           partition_id ||= vol.mount_point == "swap" ? ::Storage::ID_SWAP : ::Storage::ID_LINUX
           begin

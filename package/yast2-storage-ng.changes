@@ -1,4 +1,12 @@
 -------------------------------------------------------------------
+Tue Dec 20 06:39:28 UTC 2016 - ancor@suse.com
+
+- Fixed partitioning proposal to not fail when trying to create
+  very small partitions (like bios_boot), to work better with uneven
+  spaces (not divisible by the minimal grain) and to reduce the
+  gaps between partitions.
+
+-------------------------------------------------------------------
 Wed Dec 14 16:01:00 UTC 2016 - ancor@suse.com
 
 - Write more precise information in the logs (DiskSize#to_s)

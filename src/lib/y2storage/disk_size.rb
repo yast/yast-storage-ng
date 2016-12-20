@@ -181,6 +181,17 @@ module Y2Storage
       end
     end
 
+    def %(other)
+      return DiskSize.unlimited if any_operand_unlimited?(other)
+      if other.is_a?(Numeric)
+        DiskSize.new(@size % other)
+      elsif other.respond_to?(:size)
+        DiskSize.new(@size % other.size)
+      else
+        raise TypeError, "Unexpected #{other.class}; expected Numeric value or DiskSize"
+      end
+    end
+
     def *(other)
       if !other.is_a?(Numeric)
         raise TypeError, "Unexpected #{other.class}; expected Numeric value"

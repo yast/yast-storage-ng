@@ -45,7 +45,7 @@ module Y2Storage
       @target  = target
     end
 
-    def_delegators :@volumes, :each, :empty?, :length, :size
+    def_delegators :@volumes, :each, :empty?, :length, :size, :last
 
     def dup
       PlannedVolumesList.new(@volumes.dup, target: target)
@@ -75,6 +75,35 @@ module Y2Storage
     def target_disk_size(rounding: nil)
       rounding ||= DiskSize.new(1)
       @volumes.reduce(DiskSize.zero) { |sum, vol| sum + vol.min_valid_disk_size(target).ceil(rounding) }
+    end
+
+    # Returns the volume that must be placed at the end of a given space in
+    # order to make all the volumes in the list fit there.
+    #
+    # This method only returns something meaningful if the only way to make the
+    # volumes fit into the space is ensuring one particular volume will be at
+    # the end. That corner case can only happen if the size of the given spaces
+    # is not divisible by min_grain.
+    #
+    # If the volumes fit in any order or if it's impossible to make them fit,
+    # the method returns nil.
+    #
+    # @param size_to_fill [DiskSize]
+    # @param min_grain [DiskSize]
+    # @return [PlannedVolume, nil]
+    def enforced_last(size_to_fill, min_grain)
+      rounded_up = target_disk_size(rounding: min_grain)
+      # There is enough space to fit with any order
+      return nil if size_to_fill >= rounded_up
+
+      missing = rounded_up - size_to_fill
+      # It's impossible to fit
+      return nil if missing >= min_grain
+
+      @volumes.detect do |vol|
+        target_size = vol.min_valid_disk_size(target)
+        target_size.ceil(min_grain) - missing >= target_size
+      end
     end
 
     # Total sum of all current max sizes of volumes
@@ -165,21 +194,29 @@ module Y2Storage
     # always in blocks of the specified size.
     #
     # @param space_size [DiskSize]
-    # @param rounding [DiskSize, nil] min block size to distribute
+    # @param rounding [DiskSize, nil] min block size to distribute. Mainly used
+    #     to distribute space among LVs honoring the PE size of the LVM
+    # @param min_grain [DiskSize, nil] minimal grain of the disk where the space
+    #     is located. It only makes sense when distributing space among
+    #     partitions.
     # @return [PlannedVolumesList] list containing volumes with an adjusted
     #     value for PlannedVolume#disk_size
-    def distribute_space(space_size, rounding: nil)
+    def distribute_space(space_size, rounding: nil, min_grain: nil)
       raise RuntimeError if space_size < target_disk_size
 
+      rounding ||= min_grain
       rounding ||= DiskSize.new(1)
+
       new_list = deep_dup
       new_list.each do |vol|
         vol.disk_size = vol.min_valid_disk_size(target)
         vol.disk_size = vol.disk_size.ceil(rounding)
       end
+      adjust_size_to_last_slot!(new_list.last, space_size, min_grain) if min_grain
 
       extra_size = space_size - new_list.total_disk_size
-      new_list.distribute_extra_space!(extra_size, rounding)
+      unused = new_list.distribute_extra_space!(extra_size, rounding)
+      new_list.last.disk_size += unused if min_grain && unused < min_grain
 
       new_list
     end
@@ -294,6 +331,7 @@ module Y2Storage
       end
     end
 
+    # @return [DiskSize] Surplus space that could not be distributed
     def distribute_extra_space!(extra_size, rounding)
       candidates = self
       while distributable?(extra_size, rounding)
@@ -313,10 +351,26 @@ module Y2Storage
         extra_size -= assigned_size
       end
       log.info("Could not distribute #{extra_size}") unless extra_size.zero?
+      extra_size
     end
 
     def distributable?(size, rounding)
       size >= rounding
+    end
+
+    def adjust_size_to_last_slot!(volume, space_size, min_grain)
+      adjusted_size = adjusted_size_after_ceil(volume, space_size, min_grain)
+      target_size = volume.min_valid_disk_size(target)
+      volume.disk_size = adjusted_size unless adjusted_size < target_size
+    end
+
+    def adjusted_size_after_ceil(volume, space_size, min_grain)
+      mod = space_size % min_grain
+      last_slot_size = mod.zero? ? min_grain : mod
+      return volume.disk_size if last_slot_size == min_grain
+
+      missing = min_grain - last_slot_size
+      volume.disk_size - missing
     end
   end
 end

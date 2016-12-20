@@ -92,4 +92,36 @@ describe Y2Storage::PlannedVolumesList do
       )
     end
   end
+
+  describe "#enforced_last" do
+    let(:big_vol1) { planned_vol(type: :vfat, desired: 10.MiB) }
+    let(:big_vol2) { planned_vol(type: :vfat, desired: 10.MiB) }
+    let(:small_vol) { planned_vol(type: :vfat, desired: 1.MiB + 512.KiB) }
+
+    subject(:list) { described_class.new([big_vol1, small_vol, big_vol2]) }
+
+    it "returns nil if all the volumes are divisible by min_grain" do
+      size = 21.MiB + 512.KiB
+      min_grain = 512.KiB
+      expect(list.enforced_last(size, min_grain)).to be_nil
+    end
+
+    it "returns nil if the space is big enough for any order" do
+      size = 22.MiB
+      min_grain = 1.MiB
+      expect(list.enforced_last(size, min_grain)).to be_nil
+    end
+
+    it "returns nil if the volumes don't fit into the space" do
+      size = 21.MiB
+      min_grain = 1.MiB
+      expect(list.enforced_last(size, min_grain)).to be_nil
+    end
+
+    it "returns the volume that must be placed at the end" do
+      size = 21.MiB + 512.KiB
+      min_grain = 1.MiB
+      expect(list.enforced_last(size, min_grain)).to eq small_vol
+    end
+  end
 end

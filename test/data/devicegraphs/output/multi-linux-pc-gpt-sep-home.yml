@@ -44,8 +44,12 @@
         id:           bios_boot
 
     - partition:
-        size:         unlimited
+        size:         587200495.5 KiB
         name:         /dev/sda7
         id:           linux
         file_system:  xfs
         mount_point:  "/home"
+
+    # The last 16.5 KiB of a GPT disk are not usable
+    - free:
+        size:         16.5 KiB

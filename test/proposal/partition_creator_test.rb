@@ -96,6 +96,7 @@ describe Y2Storage::Proposal::PartitionCreator do
           home_vol.weight = 2
           swap_vol.desired = 1.GiB - 1.MiB
           swap_vol.max = 1.GiB - 1.MiB
+          swap_vol.weight = 0
         end
 
         it "distributes the extra space" do
@@ -105,6 +106,59 @@ describe Y2Storage::Proposal::PartitionCreator do
             an_object_with_fields(mountpoint: "/home", size: 26.GiB.to_i),
             an_object_with_fields(mountpoint: "swap", size: (1.GiB - 1.MiB).to_i)
           )
+        end
+
+        context "if one of the volumes is small" do
+          before do
+            swap_vol.desired = 256.KiB
+          end
+
+          # In the past, the adjustments introduced by alignment caused the
+          # other partitions to exhaust all the usable space, so the small
+          # partition couldn't be created
+          it "does not exhaust the space" do
+            result = creator.create_partitions(distribution)
+            expect(result.partitions).to contain_exactly(
+              an_object_with_fields(mountpoint: "/"),
+              an_object_with_fields(mountpoint: "/home"),
+              an_object_with_fields(mountpoint: "swap")
+            )
+          end
+
+          it "grows the small partition until the end of the slot" do
+            result = creator.create_partitions(distribution)
+            partition = result.partitions.with(id: Storage::ID_SWAP).first
+            expect(partition.size).to eq 1.MiB.to_i
+          end
+        end
+      end
+
+      context "when the space is not divisible by the minimal grain" do
+        # The last 16.5KiB of GPT are not usable, which makes the space not
+        # divisible by 1MiB
+        let(:scenario) { "empty_hard_disk_gpt_25GiB" }
+        let(:vol1) { planned_vol(mount_point: "/1", type: :vfat, desired: vol1_size, weight: 1) }
+        let(:vol2) { planned_vol(mount_point: "/2", type: :ext4, desired: 20.GiB, weight: 1) }
+        let(:vol1_size) { 2.GiB }
+        let(:distribution) { space_dist(disk_spaces.first => vols_list(vol1, vol2)) }
+
+        it "fills the whole space if possible" do
+          result = creator.create_partitions(distribution)
+          expect(result.free_disk_spaces).to be_empty
+        end
+
+        context "if it's necessary to enforce a partition order" do
+          let(:vol1_size) { disk_spaces.first.disk_size - 20.GiB - 256.KiB }
+
+          it "fills the whole space if possible" do
+            result = creator.create_partitions(distribution)
+            expect(result.free_disk_spaces).to be_empty
+          end
+
+          it "places the required volume at the end" do
+            result = creator.create_partitions(distribution)
+            expect(result.partitions.last.filesystem.type).to eq Storage::FsType_VFAT
+          end
         end
       end
     end
