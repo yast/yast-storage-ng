@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Wed Dec 21 12:01:32 UTC 2016 - ancor@suse.com
+
+- Improvements in the devicegraph query interface
+  (DisksLists#with_name_or_partition)
+- 0.1.6
+
+-------------------------------------------------------------------
 Tue Dec 20 06:39:28 UTC 2016 - ancor@suse.com
 
 - Fixed partitioning proposal to not fail when trying to create
