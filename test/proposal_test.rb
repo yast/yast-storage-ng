@@ -249,18 +249,14 @@ describe Y2Storage::Proposal do
 
       context "if no disk is enforced for '/'" do
         let(:root_device) { nil }
-        let(:yaml_suffix) { "no_root_device" }
+        let(:yaml_suffix) { "sdb_root_device" }
 
         include_examples "proposed layout"
 
-        it "uses the biggest suitable disk" do
+        it "allocates the root device in the biggest suitable disk" do
           proposal.propose
-          parts = proposal.devices.partitions
-          fs = parts.filesystems
+          fs = proposal.devices.filesystems
           expect(fs.with_mountpoint("/").disks.first.name).to eq "/dev/sdb"
-          expect(fs.with_mountpoint("/home").disks.first.name).to eq "/dev/sdb"
-          expect(fs.with_mountpoint("swap").disks.first.name).to eq "/dev/sdb"
-          expect(parts.with(id: Storage::ID_BIOS_BOOT).disks.first.name).to eq "/dev/sdb"
         end
       end
 
@@ -281,6 +277,41 @@ describe Y2Storage::Proposal do
           fs = proposal.devices.filesystems
           expect(fs.with_mountpoint("/home").disks.first.name).to eq "/dev/sdb"
           expect(fs.with_mountpoint("swap").disks.first.name).to eq "/dev/sdb"
+        end
+      end
+
+      context "if a disk with enough free space is chosen for '/'" do
+        let(:root_device) { "/dev/sdb" }
+        let(:yaml_suffix) { "sdb_root_device" }
+
+        include_examples "proposed layout"
+
+        it "allocates all the partitions there" do
+          proposal.propose
+          filesystems = proposal.devices.filesystems.with_mountpoint(["/", "/home", "swap"])
+          expect(filesystems.disks.map(&:name)).to eq ["/dev/sdb"]
+        end
+      end
+
+      context "if '/' is placed in a GPT disk (legacy boot)" do
+        let(:root_device) { "/dev/sdb" }
+
+        it "creates a bios_boot partition if it's not there" do
+          proposal.propose
+          bios_boot = proposal.devices.partitions.with(id: Storage::ID_BIOS_BOOT)
+
+          expect(bios_boot).to_not be_empty
+        end
+      end
+
+      context "if '/' is placed in a MBR disk (legacy boot)" do
+        let(:root_device) { "/dev/sda" }
+
+        it "does not create a bios_boot partition" do
+          proposal.propose
+          bios_boot = proposal.devices.partitions.with(id: Storage::ID_BIOS_BOOT)
+
+          expect(bios_boot).to be_empty
         end
       end
     end
