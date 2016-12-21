@@ -63,6 +63,21 @@ module Y2Storage
         spaces_list = list.reduce([]) { |sum, disk| sum + disk.free_spaces }
         FreeDiskSpacesList.new(devicegraph, list: spaces_list)
       end
+
+      # Subset of the list filtered by both the name of the disks and the name
+      # of any of its partitions.
+      #
+      # Very similar to the old Yast::Storage.GetDisk
+      #
+      # @see #with
+      #
+      # @param [String, Array<String>] device name(s)
+      # @return [DisksList]
+      def with_name_or_partition(value)
+        disks = with(name: value).to_a
+        disks += partitions.with(name: value).disks.to_a
+        DisksList.new(devicegraph, list: disks.uniq { |d| d.sid })
+      end
     end
   end
 end
