@@ -232,5 +232,57 @@ describe Y2Storage::Proposal do
         expect(sda6).to match_fields(mountpoint: "swap", uuid: "", label: "")
       end
     end
+
+    context "when installing on several GPT and MBR disks" do
+      let(:scenario) { "gpt_and_msdos" }
+      let(:separate_home) { true }
+      let(:lvm) { false }
+      let(:expected) do
+        file_name = "#{scenario}-#{yaml_suffix}"
+        ::Storage::Devicegraph.new_from_file(output_file_for(file_name))
+      end
+
+      before do
+        settings.candidate_devices = ["/dev/sda", "/dev/sdb"]
+        settings.root_device = root_device
+      end
+
+      context "if no disk is enforced for '/'" do
+        let(:root_device) { nil }
+        let(:yaml_suffix) { "no_root_device" }
+
+        include_examples "proposed layout"
+
+        it "uses the biggest suitable disk" do
+          proposal.propose
+          parts = proposal.devices.partitions
+          fs = parts.filesystems
+          expect(fs.with_mountpoint("/").disks.first.name).to eq "/dev/sdb"
+          expect(fs.with_mountpoint("/home").disks.first.name).to eq "/dev/sdb"
+          expect(fs.with_mountpoint("swap").disks.first.name).to eq "/dev/sdb"
+          expect(parts.with(id: Storage::ID_BIOS_BOOT).disks.first.name).to eq "/dev/sdb"
+        end
+      end
+
+      context "if a disk without free space is chosen for '/'" do
+        let(:root_device) { "/dev/sda" }
+        let(:yaml_suffix) { "sda_root_device" }
+
+        include_examples "proposed layout"
+
+        it "allocates in the root device the partitions that must be there" do
+          proposal.propose
+          fs = proposal.devices.filesystems
+          expect(fs.with_mountpoint("/").disks.first.name).to eq "/dev/sda"
+        end
+
+        it "allocates other partitions in the already available space" do
+          proposal.propose
+          fs = proposal.devices.filesystems
+          expect(fs.with_mountpoint("/home").disks.first.name).to eq "/dev/sdb"
+          expect(fs.with_mountpoint("swap").disks.first.name).to eq "/dev/sdb"
+        end
+      end
+    end
   end
 end
