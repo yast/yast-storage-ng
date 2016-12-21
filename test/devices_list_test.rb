@@ -234,6 +234,36 @@ describe "devices lists" do
         expect(spaces_sdc.size).to eq 1
       end
     end
+
+    describe "#with_name_or_partition" do
+      it "returns a list of disks" do
+        result = disks.with_name_or_partition("/dev/sda2")
+        expect(result).to be_a(Y2Storage::DevicesLists::DisksList)
+      end
+
+      it "filters by a single disk name" do
+        list = disks.with_name_or_partition("/dev/sda")
+        expect(list.size).to eq 1
+        expect(list.first.name).to eq "/dev/sda"
+      end
+
+      it "filters by a single partition name" do
+        list = disks.with_name_or_partition("/dev/sda2")
+        expect(list.size).to eq 1
+        expect(list.first.name).to eq "/dev/sda"
+      end
+
+      it "filters by a set of names" do
+        list = disks.with_name_or_partition(["/dev/sda1", "/dev/sda2", "/dev/sdb", "/dev/sdb1"])
+        expect(list.size).to eq 2
+        expect(list.map(&:name)).to contain_exactly("/dev/sda", "/dev/sdb")
+      end
+
+      it "returns an empty list if nothing matches" do
+        list = disks.with_name_or_partition("non_existent")
+        expect(list).to be_empty
+      end
+    end
   end
 
   describe Y2Storage::DevicesLists::PartitionsList do
