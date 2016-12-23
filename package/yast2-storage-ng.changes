@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Fri Dec 23 12:44:24 UTC 2016 - ancor@suse.com
+
+- Removed unused ProposalDemo client (kind of obsoleted by
+  Dialogs::InstDiskProposal)
+
+-------------------------------------------------------------------
 Wed Dec 21 12:01:32 UTC 2016 - ancor@suse.com
 
 - Improvements in the devicegraph query interface
