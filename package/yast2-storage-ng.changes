@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Thu Jan  5 15:27:02 UTC 2017 - ancor@suse.com
+
+- Y2Storage::DiskAnalyzer - distinguish disks with no MBR gap
+  (0 bytes gap) from cases where the MBR gap is not applicable.
+  This fixes the proposal for some LVM scenarios with legacy boot.
+
+-------------------------------------------------------------------
 Fri Dec 23 12:44:24 UTC 2016 - ancor@suse.com
 
 - Removed unused ProposalDemo client (kind of obsoleted by
