@@ -150,6 +150,18 @@ describe Y2Storage::Proposal do
       include_examples "all proposed layouts"
     end
 
+    context "in a PC with an empty partition table" do
+      let(:scenario) { "empty_hard_disk_50GiB" }
+
+      include_examples "all proposed layouts"
+    end
+
+    context "in a PC with an empty GPT partition table" do
+      let(:scenario) { "empty_hard_disk_gpt_50GiB" }
+
+      include_examples "all proposed layouts"
+    end
+
     context "when forced to create a small partition" do
       let(:scenario) { "empty_hard_disk_gpt_25GiB" }
       let(:windows_partitions) { {} }

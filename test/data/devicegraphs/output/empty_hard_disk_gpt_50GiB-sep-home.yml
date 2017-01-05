@@ -1,0 +1,28 @@
+---
+- disk:
+    name: /dev/sda
+    size: 50 GiB
+    partition_table: gpt
+    partitions:
+
+    - partition:
+        size:         22937 MiB
+        name:         /dev/sda1
+        file_system:  btrfs
+        mount_point:  "/"
+    - partition:
+        size:         1 MiB
+        name:         /dev/sda2
+        id:           bios_boot
+    - partition:
+        size:         2 GiB
+        name:         /dev/sda3
+        id:           swap
+        file_system:  swap
+        mount_point:  swap
+    - partition:
+        # The final 16.5 KiB are reserved by GPT
+        size:         26842095.5 KiB
+        name:         /dev/sda4
+        file_system:  xfs
+        mount_point:  "/home"
