@@ -192,15 +192,14 @@ module Y2Storage
 
     # MBR gap (size between MBR and first partition) for every disk.
     #
-    # Note: the gap sizes on non-DOS partition tables are 0 (by definition).
-    #
-    # FIXME: sizes in Region are more or less useless atm, Arvin will fix this.
-    # If that's done switch from kb to byte units.
+    # If there are no partitions or if the existing partition table is not
+    # MBR-based the MBR gap is nil, meaning "gap not applicable" which is
+    # different from "no gap" (i.e. a 0 bytes gap).
     #
     # @see #scope
     #
-    # @return [Hash{String => Y2Storage::DiskSize}] each key is the name of a
-    # disk, the value is the DiskSize of the MBR gap.
+    # @return [Hash{String => (Y2Storage::DiskSize, nil)}] each key is the name
+    # of a disk, the value is the DiskSize of the MBR gap (or nil)
     def mbr_gap
       @mbr_gap ||= begin
         result = find_mbr_gap
@@ -306,7 +305,7 @@ module Y2Storage
       gaps = {}
       scoped_disks.each do |name|
         disk = device_by_name(name)
-        gap = DiskSize.KiB(0)
+        gap = nil
         if disk.partition_table? && disk.partition_table.type == ::Storage::PtType_MSDOS
           region1 = disk.partition_table.partitions.to_a.min do |x, y|
             x.region.start <=> y.region.start

@@ -36,27 +36,30 @@ describe Y2Storage::DiskAnalyzer do
     let(:scenario) { "gpt_and_msdos" }
 
     it "returns the gap for every disk" do
-      expect(analyzer.mbr_gap.keys).to eq ["/dev/sda", "/dev/sdb", "/dev/sdc", "/dev/sdd", "/dev/sde"]
+      expect(analyzer.mbr_gap.keys).to eq(
+        ["/dev/sda", "/dev/sdb", "/dev/sdc", "/dev/sdd", "/dev/sde", "/dev/sdf"]
+      )
     end
 
-    it "returns 0 bytes for disks without partition table" do
-      expect(analyzer.mbr_gap["/dev/sde"]).to eq 0.KiB
+    it "returns nil for disks without partition table" do
+      expect(analyzer.mbr_gap["/dev/sde"]).to be_nil
     end
 
-    it "returns 0 bytes for GPT disks without partitions" do
-      expect(analyzer.mbr_gap["/dev/sdd"]).to eq 0.KiB
+    it "returns nil for GPT disks without partitions" do
+      expect(analyzer.mbr_gap["/dev/sdd"]).to be_nil
     end
 
-    it "returns 0 bytes for GPT disks with partitions" do
-      expect(analyzer.mbr_gap["/dev/sdb"]).to eq 0.KiB
+    it "returns nil for GPT disks with partitions" do
+      expect(analyzer.mbr_gap["/dev/sdb"]).to be_nil
     end
 
-    it "returns 0 bytes for MS-DOS disks without partitions" do
-      expect(analyzer.mbr_gap["/dev/sdc"]).to eq 0.KiB
+    it "returns nil for MS-DOS disks without partitions" do
+      expect(analyzer.mbr_gap["/dev/sdc"]).to be_nil
     end
 
     it "returns the gap for MS-DOS disks with partitions" do
       expect(analyzer.mbr_gap["/dev/sda"]).to eq 1.MiB
+      expect(analyzer.mbr_gap["/dev/sdf"]).to eq Y2Storage::DiskSize.zero
     end
   end
 

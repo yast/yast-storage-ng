@@ -60,3 +60,16 @@
 - disk:
     name: /dev/sde
     size: 500 GiB
+
+- disk:
+    name: /dev/sdf
+    size: 100 GiB
+    partition_table:  ms-dos
+    mbr_gap: 0
+    partitions:
+
+    - partition:
+        start:        0
+        size:         unlimited
+        name:         /dev/sdf1
+        file_system:  xfs

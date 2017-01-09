@@ -34,7 +34,7 @@ module Y2Storage
       def needed_partitions
         volumes = super
         volumes << grub_volume if grub_partition_needed? && grub_partition_missing?
-        raise Error if grub_in_mbr? && mbr_gap < GRUB_SIZE
+        raise Error if grub_in_mbr? && mbr_gap && mbr_gap < GRUB_SIZE
 
         volumes
       end
@@ -62,7 +62,7 @@ module Y2Storage
       end
 
       def boot_partition_needed?
-        grub_in_mbr? && settings.use_lvm && mbr_gap < GRUB_SIZE + GRUBENV_SIZE
+        grub_in_mbr? && settings.use_lvm && mbr_gap && mbr_gap < GRUB_SIZE + GRUBENV_SIZE
       end
 
       def mbr_gap
