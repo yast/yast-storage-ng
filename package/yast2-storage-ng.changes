@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Mon Jan 16 12:27:03 UTC 2017 - ancor@suse.com
+
+- Added 'fstab_options' key to the YAML representation of the
+  devicegraphs used for testing.
+- 0.1.7
+
+-------------------------------------------------------------------
 Thu Jan  5 15:27:02 UTC 2017 - ancor@suse.com
 
 - Y2Storage::DiskAnalyzer - distinguish disks with no MBR gap
