@@ -49,6 +49,8 @@ describe Y2Storage::YamlWriter do
 
     ext4 = sda2.create_filesystem(Storage::FsType_EXT4)
     ext4.add_mountpoint("/")
+    ext4.fstab_options << "acl"
+    ext4.fstab_options << "user_xattr"
 
     # rubocop:disable Style/StringLiterals
 
@@ -81,6 +83,9 @@ describe Y2Storage::YamlWriter do
               '        id: linux',
               '        file_system: ext4',
               '        mount_point: "/"',
+              '        fstab_options:',
+              '        - acl',
+              '        - user_xattr',
               '    - free:',
               '        size: 245247 MiB (239.50 GiB)',
               '        start: 16897 MiB (16.50 GiB)']

@@ -64,13 +64,14 @@ module Y2Storage
         "partition_table" => [],
         "partitions"      => [],
         "partition"       => [
-          "size", "start", "align", "name", "type", "id", "mount_point", "label", "uuid"
+          "size", "start", "align", "name", "type", "id", "mount_point", "label", "uuid", "fstab_options"
         ],
         "file_system"     => [],
         "free"            => ["size", "start"],
         "lvm_vg"          => ["vg_name", "extent_size"],
-        "lvm_lv"          => ["lv_name", "size", "stripes", "stripe_size", "mount_point",
-                              "label", "uuid"],
+        "lvm_lv"          => [
+          "lv_name", "size", "stripes", "stripe_size", "mount_point", "label", "uuid", "fstab_options"
+        ],
         "lvm_pv"          => ["blk_device"]
       }
 
@@ -261,9 +262,10 @@ module Y2Storage
     #   "name"  device name ("/dev/sdb3" etc.)
     #   "type"  "primary", "extended", "logical"
     #   "id"
-    #   "mount_point"  mount point for the associated file system
-    #   "label"        file system label
-    #   "uuid"         file system UUID
+    #   "mount_point"   mount point for the associated file system
+    #   "label"         file system label
+    #   "uuid"          file system UUID
+    #   "fstab_options" /etc/fstab options for the file system
     #
     # @return [String] device name of the disk ("/dev/sda" etc.)
     #
@@ -351,15 +353,17 @@ module Y2Storage
 
       # Fetch file system related parameters stored by create_partition()
       fs_param = @partitions[part_name] || {}
-      mount_point = fs_param["mount_point"]
-      label       = fs_param["label"]
-      uuid        = fs_param["uuid"]
+      mount_point   = fs_param["mount_point"]
+      label         = fs_param["label"]
+      uuid          = fs_param["uuid"]
+      fstab_options = fs_param["fstab_options"]
 
       blk_device = ::Storage::BlkDevice.find_by_name(@devicegraph, part_name)
       file_system = blk_device.create_filesystem(fs_type)
       file_system.add_mountpoint(mount_point) if mount_point
       file_system.label = label if label
       file_system.uuid = uuid if uuid
+      set_fstab_options(file_system, fstab_options)
       part_name
     end
 
@@ -373,8 +377,20 @@ module Y2Storage
     #
     def file_system_data_picker(name, args)
       @partitions[name] = args.select do |k, _v|
-        ["mount_point", "label", "uuid"].include?(k)
+        ["mount_point", "label", "uuid", "fstab_options"].include?(k)
       end
+    end
+
+    # Assigns the value of Filesystem#fstab_options. A direct assignation of a
+    # regular Ruby collection (like Array) will not work because
+    # Filesystem#fstab_options= expects an argument with a very specific SWIG
+    # type (std::list)
+    #
+    # @param [Storage::Filesystem] File system being created
+    # @param [#each] Collection of strings to assign
+    def set_fstab_options(file_system, fstab_options)
+      return if fstab_options.nil? || fstab_options.empty?
+      fstab_options.each { |opt| file_system.fstab_options << opt }
     end
 
     # Factory method to create a slot of free space.
@@ -434,9 +450,10 @@ module Y2Storage
     #   "size"        partition size
     #   "stripes"     number of stripes
     #   "stripe_size" stripe size
-    #   "mount_point" mount point for the associated file system
-    #   "label"       file system label
-    #   "uuid"        file system UUID
+    #   "mount_point"   mount point for the associated file system
+    #   "label"         file system label
+    #   "uuid"          file system UUID
+    #   "fstab_options" /etc/fstab options for the file system
     #
     # @return [String] device name of new logical volume
     #

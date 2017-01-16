@@ -332,6 +332,7 @@ module Y2Storage
 
       content["mount_point"] = file_system.mountpoints.first unless file_system.mountpoints.empty?
       content["label"] = file_system.label unless file_system.label.empty?
+      content["fstab_options"] = file_system.fstab_options.to_a unless file_system.fstab_options.empty?
 
       content
     end

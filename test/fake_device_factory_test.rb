@@ -60,6 +60,9 @@ describe Y2Storage::FakeDeviceFactory do
              '        id: linux',
              '        file_system: ext4',
              '        mount_point: "/"',
+             '        fstab_options:',
+             '        - acl',
+             '        - user_xattr',
              '    - free:',
              '        size: 245247 MiB (239.50 GiB)',
              '        start: 16897 MiB (16.50 GiB)']
@@ -81,6 +84,7 @@ describe Y2Storage::FakeDeviceFactory do
 
     sda2 = Storage.to_partition(Storage::BlkDevice.find_by_name(staging, "/dev/sda2"))
     expect(sda2.size).to eq 16 * Storage.GiB
+    expect(sda2.filesystem.fstab_options.to_a).to contain_exactly("acl", "user_xattr")
 
   end
 
