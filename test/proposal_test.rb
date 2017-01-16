@@ -1,4 +1,4 @@
-#!/usr/bin/env rspec
+#r!/usr/bin/env rspec
 # encoding: utf-8
 
 # Copyright (c) [2016] SUSE LLC
@@ -43,7 +43,7 @@ describe Y2Storage::Proposal do
         .and_return(resize_info)
 
       allow(Yast::Arch).to receive(:x86_64).and_return true
-      allow(Y2Storage::StorageManager.instance).to receive(:arch).and_return(storage_arch)
+      allow(Y2Storage::StorageManager.instance.storage).to receive(:arch).and_return(storage_arch)
       allow(storage_arch).to receive(:efiboot?).and_return(false)
       allow(storage_arch).to receive(:x86?).and_return(true)
       allow(storage_arch).to receive(:ppc?).and_return(false)

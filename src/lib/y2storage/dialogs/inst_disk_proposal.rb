@@ -42,7 +42,7 @@ module Y2Storage
       def next_handler
         if devicegraph
           log.info "Setting the devicegraph as staging"
-          devicegraph.copy_to_staging
+          Y2Storage::StorageManager.instance.copy_to_staging(devicegraph)
           super
         else
           confirm = Yast::Popup.ContinueCancel(

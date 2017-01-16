@@ -41,6 +41,7 @@ describe Y2Storage::Dialogs::InstDiskProposal do
     # Always confirm when clicking in abort
     allow(Yast::Popup).to receive(:ConfirmAbort).and_return true
 
+    Y2Storage::StorageManager.create_test_instance
     allow(Y2Storage::Proposal).to receive(:new).and_return proposal
     allow(proposal).to receive(:devices).and_return devicegraph
   end
@@ -81,14 +82,29 @@ describe Y2Storage::Dialogs::InstDiskProposal do
   describe "#next_handler" do
     context "when the proposal succeeds" do
       before do
+        allow(Yast::UI).to receive(:UserInput).and_return :next
         allow(proposal).to receive(:propose)
+        allow(devicegraph).to receive(:copy)
       end
 
-      it "copies the result to the staging devicegraph and goes to next step" do
-        expect(Yast::UI).to receive(:UserInput).once.and_return :next
-        expect(devicegraph).to receive(:copy_to_staging)
+      it "copies the result to the staging devicegraph" do
+        staging = Y2Storage::StorageManager.instance.staging
+        expect(devicegraph).to receive(:copy).with(staging)
 
         dialog.run
+      end
+
+      it "increments the staging revision" do
+        manager = Y2Storage::StorageManager.instance
+        pre_revision = manager.staging_revision
+
+        dialog.run
+        expect(manager.staging_revision).to be > pre_revision
+      end
+
+      it "goes to next step" do
+        expect(Yast::UI).to receive(:UserInput).once
+        expect(dialog.run).to eq :next
       end
     end
 
@@ -104,7 +120,7 @@ describe Y2Storage::Dialogs::InstDiskProposal do
 
         it "leaves the staging devicegraph untouched and goes to next step" do
           expect(Yast::UI).to receive(:UserInput).once.and_return :next
-          expect(devicegraph).to_not receive(:copy_to_staging)
+          expect(devicegraph).to_not receive(:copy)
 
           dialog.run
         end
@@ -117,7 +133,7 @@ describe Y2Storage::Dialogs::InstDiskProposal do
 
         it "leaves the staging devicegraph untouched and stays here" do
           expect(Yast::UI).to receive(:UserInput).twice.and_return(:next, :abort)
-          expect(devicegraph).to_not receive(:copy_to_staging)
+          expect(devicegraph).to_not receive(:copy)
 
           dialog.run
         end
