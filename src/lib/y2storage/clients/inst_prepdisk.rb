@@ -49,7 +49,7 @@ module Y2Storage
 
       # Commits the actions to disk
       def commit
-        storage = Y2Storage::StorageManager.instance
+        storage = Y2Storage::StorageManager.instance.storage
         storage.rootprefix = Yast::Installation.destdir
         storage.calculate_actiongraph
         storage.commit
@@ -60,7 +60,7 @@ module Y2Storage
       end
 
       def mount_in_target(path, device, options)
-        storage = Y2Storage::StorageManager.instance
+        storage = Y2Storage::StorageManager.instance.storage
         target_path = storage.prepend_rootprefix(path)
 
         if !Yast::FileUtils.Exists(target_path)

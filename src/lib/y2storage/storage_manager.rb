@@ -27,75 +27,130 @@ require "y2storage/fake_device_factory"
 
 module Y2Storage
   #
-  # Singleton class for the libstorage object.
-  #
-  # You can simply use StorageManager.instance to use it and create a
-  # libstorage instance if there isn't one yet; this will use common default
-  # parameters for creating it.
-  #
-  # If you need special parameters for creating it, you can use
-  # StorageManager.create_instance with a custom ::Storage::Environment
-  #
-  # By default (unless disabled in the ::Storage::Environment), creating the
-  # instance will also start hardware probing. This is why there is an alias
-  # name StorageManager.start_probing to make this explicit.
+  # Singleton class to provide access to the libstorage object and associated
+  # information.
   #
   class StorageManager
     include Yast::Logger
+    extend Forwardable
+
+    # Libstorage object
+    #
+    # Calls to #probed, #staging, #environment and #arch are forwarded to this
+    # object.
+    #
+    # @return [Storage::Storage]
+    attr_reader :storage
+
+    # Revision of the staging devicegraph.
+    #
+    # Zero means no modification (staging looks like probed). Incremented every
+    # time the staging devicegraph is re-assigned.
+    # @see #copy_to_staging
+    #
+    # @return [Fixnum]
+    attr_reader :staging_revision
+
+    def_delegators :@storage, :probed, :staging, :environment, :arch
+
+    def initialize(storage_environment)
+      @storage = Storage::Storage.new(storage_environment)
+      @staging_revision = 0
+    end
+
+    # Sets the devicegraph as the staging one, updating all the associated
+    # information like #staging_revision
+    #
+    # @param [Storage::Devicegraph] devicegraph to copy
+    def copy_to_staging(devicegraph)
+      devicegraph.copy(storage.staging)
+      update_staging_revision
+    end
+
+    # Increments #staging_revision
+    #
+    # To be called explicitly if the staging devicegraph is modified without
+    # using #copy_to_staging
+    def update_staging_revision
+      @staging_revision += 1
+    end
+
     #
     # Class methods
     #
     class << self
-      # Return the singleton for the libstorage object. This will create one
-      # for the first call, which will also trigger hardware probing.
+      # Returns the singleton instance.
       #
-      # @return [::Storage::Storage] libstorage object
+      # In the first call, it will create a libstorage instance (using common
+      # defaults) if there isn't one yet. That means that, by default, the first
+      # call will also trigger hardware probing.
+      #
+      # @see .create_instance if you need special parameters for creating the
+      #   libstorage instance
+      # @see .create_test_instance if you just need to create an instance
+      #   without hardware probing
+      # @see .fake_from_yaml for easy mocking
+      #
+      # @return [StorageManager]
       #
       def instance
         create_instance unless @instance
         @instance
       end
 
-      # Use this as an alternative to the instance method.
-      # Probing is skipped and the device tree is initialized from yaml_file.
-      # Any existing probed device tree is replaced.
-      #
-      # @return [::Storage::Storage] libstorage object
-      #
-      def fake_from_yaml(yaml_file = nil)
-        @instance ||= create_instance(
-          ::Storage::Environment.new(true, ::Storage::ProbeMode_NONE, ::Storage::TargetMode_DIRECT)
-        )
-        fake_graph = @instance.create_devicegraph("fake")
-        Y2Storage::FakeDeviceFactory.load_yaml_file(fake_graph, yaml_file) if yaml_file
-        # FIXME: Arvin plans some replace_devicegraph() feature in libstorage;
-        # adjust code when it's done
-        @instance.remove_devicegraph("probed")
-        @instance.copy_devicegraph("fake", "probed")
-        @instance.remove_devicegraph("fake")
-        @instance
-      end
-
-      # Create the singleton for the libstorage object.
+      # Creates the singleton instance with a customized libstorage object.
       #
       # Create your own Storage::Environment for custom purposes like mocking
       # the hardware probing etc.
       #
-      # If no Storage::Environment is provided, it creates one based on the
-      # value of environment variable YAST2_STORAGE_PROBE_MODE
+      # If no Storage::Environment is provided, it uses a default one that
+      # implies hardware probing. This is why there is an alias
+      # StorageManager.start_probing to make this explicit.
       #
-      # @return [::Storage::Storage] libstorage object
+      # @return [StorageManager] singleton instance
       #
       def create_instance(storage_environment = nil)
         storage_environment ||= ::Storage::Environment.new(true)
         create_logger
         log.info("Creating Storage object")
-        @instance = ::Storage::Storage.new(storage_environment)
+        @instance = new(storage_environment)
       end
 
       alias_method :start_probing, :create_instance
 
+      # Use this as an alternative to the instance method.
+      # Probing is skipped and the device tree is initialized from yaml_file.
+      # Any existing probed device tree is replaced.
+      #
+      # @return [StorageManager] singleton instance
+      #
+      def fake_from_yaml(yaml_file = nil)
+        @instance ||= create_test_instance
+        fake_graph = @instance.storage.create_devicegraph("fake")
+        Y2Storage::FakeDeviceFactory.load_yaml_file(fake_graph, yaml_file) if yaml_file
+        fake_graph.copy(@instance.storage.probed)
+        fake_graph.copy(@instance.storage.staging)
+        @instance.storage.remove_devicegraph("fake")
+        @instance
+      end
+
+      # Creates the singleton instance skipping hardware probing.
+      #
+      # @return [StorageManager] singleton instance
+      #
+      def create_test_instance
+        create_instance(test_environment)
+      end
+
+      # Make sure only instance can be used to create objects
+      private :new, :allocate
+
     private
+
+      def test_environment
+        read_only = true
+        Storage::Environment.new(read_only, Storage::ProbeMode_NONE, Storage::TargetMode_DIRECT)
+      end
 
       def create_logger
         # Store the reference in a class instance variable to prevent the
