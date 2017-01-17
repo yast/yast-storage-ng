@@ -44,7 +44,7 @@ module ExpertPartitioner
   protected
 
     def storage
-      Y2Storage::StorageManager.instance
+      Y2Storage::StorageManager.instance.storage
     end
   end
 end

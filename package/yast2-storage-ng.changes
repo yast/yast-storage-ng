@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Tue Jan 17 12:07:18 UTC 2017 - ancor@suse.com
+
+- Improved StorageManager that complies to the Singleton pattern
+  and includes a revision counter for the staging devicegraph.
+- 0.1.8
+
+-------------------------------------------------------------------
 Mon Jan 16 12:27:03 UTC 2017 - ancor@suse.com
 
 - Added 'fstab_options' key to the YAML representation of the

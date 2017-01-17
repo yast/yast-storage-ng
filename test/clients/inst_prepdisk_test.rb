@@ -29,25 +29,26 @@ describe Y2Storage::Clients::InstPrepdisk do
   subject(:client) { described_class.new }
 
   describe "#run" do
-    let(:storage_manager) { double("Y2Storage::StorageManager").as_null_object }
+    let(:storage) { double("Storage::Storage").as_null_object }
 
     before do
-      allow(Y2Storage::StorageManager).to receive(:instance).and_return storage_manager
+      Y2Storage::StorageManager.create_test_instance
+      allow(Y2Storage::StorageManager.instance).to receive(:storage).and_return storage
       allow(Yast::Installation).to receive(:destdir).and_return "/dest"
-      allow(storage_manager).to receive(:prepend_rootprefix).with("/dev").and_return "/dest/dev"
-      allow(storage_manager).to receive(:prepend_rootprefix).with("/proc").and_return "/dest/proc"
-      allow(storage_manager).to receive(:prepend_rootprefix).with("/sys").and_return "/dest/sys"
+      allow(storage).to receive(:prepend_rootprefix).with("/dev").and_return "/dest/dev"
+      allow(storage).to receive(:prepend_rootprefix).with("/proc").and_return "/dest/proc"
+      allow(storage).to receive(:prepend_rootprefix).with("/sys").and_return "/dest/sys"
       allow(Yast::SCR).to receive(:Execute).and_return(true)
     end
 
     it "uses the destination directory to mount and prepare the result" do
-      expect(storage_manager).to receive(:rootprefix=).with("/dest")
+      expect(storage).to receive(:rootprefix=).with("/dest")
       client.run
     end
 
     it "commits all libstorage pending changes" do
-      expect(storage_manager).to receive(:calculate_actiongraph)
-      expect(storage_manager).to receive(:commit)
+      expect(storage).to receive(:calculate_actiongraph)
+      expect(storage).to receive(:commit)
       client.run
     end
   end
