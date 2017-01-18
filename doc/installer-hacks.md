@@ -52,9 +52,18 @@ equivalent, the old code is simply deleted, not commented.
 
 ## Changes in yast2-packager
 
-* Commented the unit tests of SpaceCalculation because SpaceCalculation, like
-  many other parts of yast2-packager that rely on StorageWrapper, do not work
-  properly if `Yast::Storage` is not present.
+* Commented some code dealing with NFS and encrypted volumes in
+  `SpaceCalculation`. Corresponding unit tests disabled (marked with `skip`).
+
+* Simplified the code checking the journal size in a JFS filesystem. JFS is not
+  supported anymore, so now the code simply assumes the default JFS journal size
+  is used in all JFS filesystems.
+
+* Commented the code checking the reserved space in a filesystem that is going
+  to be created. Libstorage-ng simply provides `Filesystem#mkfs_options`. It's
+  up to yast2-storage to store something meaningful there while defining the
+  filesystem. So far that is not done, so there is no information about the
+  space that will be reserved.
 
 * Removed the build dependency from (old) yast2-storage
 
