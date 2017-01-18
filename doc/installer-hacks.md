@@ -7,6 +7,40 @@ For every YaST module that has needed adaptation, a `storage-ng` branch has been
 created in the corresponding repository. This document should always contain a
 summary of the changes in those branches, in a human-readable fashion.
 
+## Temporarily commented code
+
+To easily identify the code that has been commented in the adapted repositories
+temporarily (waiting for storage-ng to provide the needed functionality)
+block comments with the following format are used.
+
+```ruby
+  # storage-ng
+  value = 0
+=begin
+  something = Storage.Something()
+  value = Storage.Value(something)
+=end
+```
+
+In the example, `value = 0` is new temporary code needed to avoid other errors
+(usually variable initializations to some sensible default). That code is not
+always necessary, but if it's present it should be between the "storage-ng"
+comment and the beginning of the block comment.
+
+If the temporary code is not needed, the result will look like this.
+
+```ruby
+# storage-ng
+=begin
+  Storage.Something()
+=end
+```
+
+Notice that block comments are used even when one single line is commented.
+
+Needles to say, when a piece of code can be fully replaced by a storage-ng
+equivalent, the old code is simply deleted, not commented.
+
 ## Changes in yast2-network
 
 * Commented the code used to check if the root path (/) is in a network device,
