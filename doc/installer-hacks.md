@@ -93,7 +93,7 @@ equivalent, the old code is simply deleted, not commented.
 
 ## Changes in yast2-bootloader
 
-* Testsuite disabled.
+* Disabled some unit tests dealing with non-supported features (see below).
 
 * Various code dealing with RAID, alternative device names and crypt devices
   disabled. All marked with "# storage-ng".
