@@ -30,7 +30,7 @@ describe Y2Storage::Dialogs::InstDiskProposal do
   subject(:dialog) { Y2Storage::Dialogs::InstDiskProposal.new }
 
   let(:proposal) { double("Y2Storage::Proposal").as_null_object }
-  let(:devicegraph) { double("Storage::Devicegraph", actiongraph: actiongraph) }
+  let(:devicegraph) { double("Storage::Devicegraph", actiongraph: actiongraph, used_features: 0) }
   let(:actiongraph) { double("Storage::Actiongraph", commit_actions_as_strings: actions) }
   let(:actions) { ["Action 1", "Action 2"] }
 

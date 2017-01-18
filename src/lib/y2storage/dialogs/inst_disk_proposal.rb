@@ -37,6 +37,7 @@ module Y2Storage
         super
         textdomain "storage-ng"
         propose!
+        add_storage_packages
       end
 
       def next_handler
@@ -68,7 +69,7 @@ module Y2Storage
       end
 
       # Calculates the desired devicegraph using the storage proposal.
-      # Sets the devigraph to nil if something went wrong
+      # Sets the devicegraph to nil if something went wrong
       def propose!
         proposal = Y2Storage::Proposal.new(settings: settings)
         proposal.propose
@@ -76,6 +77,15 @@ module Y2Storage
       rescue Y2Storage::Proposal::Error
         log.error("generating proposal failed")
         self.devicegraph = nil
+      end
+
+      # Add storage-related software packages (filesystem tools etc.) to the
+      # set of packages to be installed.
+      def add_storage_packages
+        return if devicegraph.nil?
+        pkg_handler = Y2Storage::PackageHandler.new
+        pkg_handler.add_feature_packages(devicegraph)
+        pkg_handler.set_proposal_packages
       end
 
       # HTML-formatted text to display in the dialog
