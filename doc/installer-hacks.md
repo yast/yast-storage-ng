@@ -38,7 +38,7 @@ If the temporary code is not needed, the result will look like this.
 
 Notice that block comments are used even when one single line is commented.
 
-Needles to say, when a piece of code can be fully replaced by a storage-ng
+Needless to say, when a piece of code can be fully replaced by a storage-ng
 equivalent, the old code is simply deleted, not commented.
 
 ## Changes in yast2-network
