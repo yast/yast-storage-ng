@@ -65,6 +65,11 @@ equivalent, the old code is simply deleted, not commented.
   filesystem. So far that is not done, so there is no information about the
   space that will be reserved.
 
+* Assuming `partition.filesystem.mountpoints[0]` is equivalent to the old
+  `partition["mount"]`. That's true at the time of writing this, but we need to
+  revisit the code after implementing subvolumes in libstorage-ng, just in case.
+  `FIXME` added in the relevant part.
+
 * Removed the build dependency from (old) yast2-storage
 
 ## Changes in yast2-installation
