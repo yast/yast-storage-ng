@@ -105,7 +105,37 @@ regarding the installer proposal.
 
 ## Ideas for the UI in storage-ng
 
-TO BE WRITTEN AFTER SOME BRAINSTORMING
+### Wild idea 1 by ancorgs
+
+In my mind, the radio button we currently have at the beginning of "Proposal
+Settings" defines something more important than the other settings. It defines
+the strategy followed to do a proposal, i.e. the scenario.
+
+The rest of the settings (which filesystem type to use, separate home, etc.) can
+be considered minor compared to it and will be 90% shared by all the strategies.
+
+On the other hand, running the expert partitioner, either starting from scratch
+or from an already proposed layout, should be clearly a different beast in the
+UI.
+
+Thus, we could explore something like the UI showed in the image. Initially, the
+strategies would be the same we have now (partition-based, LVM and encrypted
+LVM). As soon as we support encryption in all scenarios (not only LVM), I would
+move the encryption to be a checkbox in the settings dialogs. Future use cases
+(like RAID) would be added to the list of strategies in the main dialog.
+
+![screenshot](proposal_settings_ui/idea1a.png)
+
+In any case, clicking on "expert partitioner" would open a pop-up asking the
+users whether they want to start from scratch (with the real disk layout) or
+with the current proposal.
+
+Another possible variant of the same idea.
+
+![screenshot](proposal_settings_ui/idea1b.png)
+
+
+IDEAS SECTION TO BE COMPLETED AFTER SOME BRAINSTORMING
 
 ## References and follow-ups
 
