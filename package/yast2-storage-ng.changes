@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Thu Jan 19 10:54:22 CET 2017 - shundhammer@suse.de
+
+- Install storage-related software packages as needed: Migrated
+  UsedStorageFeatures to storage-ng and added PackageHandler
+- 0.1.9
+
+-------------------------------------------------------------------
 Tue Jan 17 12:07:18 UTC 2017 - ancor@suse.com
 
 - Improved StorageManager that complies to the Singleton pattern
