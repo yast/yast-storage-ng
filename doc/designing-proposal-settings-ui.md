@@ -168,6 +168,9 @@ Unlike with the 'Create Partition Setup' step in the current ui (which we
 should scratch), simply redirect any non-common uses directly to the expert
 partitioner.
 
+I wouldn't overdo the amount of proposal tweak options in the ui. In the end it's more practical for the user
+to manually create a partitioning than fiddling with proposal settings.
+
 
 IDEAS SECTION TO BE COMPLETED AFTER SOME BRAINSTORMING
 
