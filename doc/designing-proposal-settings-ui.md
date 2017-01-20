@@ -134,6 +134,43 @@ Another possible variant of the same idea.
 
 ![screenshot](proposal_settings_ui/idea1b.png)
 
+### Wild idea 2 by snwint
+
+My main objections to the current proposal ui:
+
+* it's generally not obvious what will happen **before** you click somewhere
+* the expert partitioner can be reached in two ways: either directly
+  'Expert Partitioner' or with one indirection 'Create Partition Setup ->
+  Custom partitioning'; both times differently (with and without proposal
+  done) and the 2nd way does not even mention 'expert partitioner'
+* the proposal is not reachable from the expert partitioner
+
+**Note** I'm not considering how feasable it is to implement the ui with available yast-qt/-ncurses
+widgets here.
+
+I would go with Ancor's first suggestion but scratch 'Calculate Proposal' -
+just recalculate whenever a setting changes and scratch 'Manual Setup'.
+Rename 'Assisted Setup' -> 'Settings', maybe 'Settings' -> 'More Settings'.
+
+Expert partitioner always starts with the current proposal and gets a
+'Propose' and 'Reset' button. 'Propose' starts either from probed or current
+graph (not sure which is more useful), 'Reset' gets back to the probed graph.
+
+The proposal settings are reachable directly from expert partitioner.
+
+I'm not sure listing the actions is the best way. Showing the final
+state would probably be more informative to the user. Maybe we could switch between both.
+
+In general not all proposal settings need be reachable from this ui (just cover the main cases)
+as long as the full settings can be seen in the expert partitioner.
+
+Unlike with the 'Create Partition Setup' step in the current ui (which we
+should scratch), simply redirect any non-common uses directly to the expert
+partitioner.
+
+I wouldn't overdo the amount of proposal tweak options in the ui. In the end it's more practical for the user
+to manually create a partitioning than fiddling with proposal settings.
+
 
 IDEAS SECTION TO BE COMPLETED AFTER SOME BRAINSTORMING
 
