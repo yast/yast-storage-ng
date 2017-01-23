@@ -209,6 +209,6 @@ if $PROGRAM_NAME == __FILE__ # Called direcly as standalone command? (not via rs
   used_features = Y2Storage::UsedStorageFeatures.new(devicegraph)
   features = used_features.collect_features
   print("Used storage features: #{features}\n")
-  pkg_list = used_features.feature_packages(features)
+  pkg_list = used_features.feature_packages
   print("Needed packages: #{pkg_list}\n")
 end
