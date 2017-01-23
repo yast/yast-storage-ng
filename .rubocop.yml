@@ -15,6 +15,9 @@ SingleLineBlockParams:
 # little bit
 Metrics/LineLength:
   Max: 105
+  Exclude:
+    - 'test/used_storage_features_test.rb'
+
 
 # FIXME: Let's consider this temporary code and be permissive with the lack of
 # documentation
