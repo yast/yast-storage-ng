@@ -35,7 +35,7 @@ describe Y2Storage::PackageHandler do
 
   context("using a devicegraph with Btrfs and LVM") do
     let(:dg_features) { ::Storage::UF_BTRFS | ::Storage::UF_LVM }
-    let(:devicegraph) { instance_double("::Storage::devicegraph", used_features: dg_features) }
+    let(:devicegraph) { instance_double("::Storage::Devicegraph", used_features: dg_features) }
     let(:feature_pkg) { ["btrfsprogs", "e2fsprogs", "lvm2"] }
     before do
       allow(Yast::Package).to receive(:Installed).and_return(false)
