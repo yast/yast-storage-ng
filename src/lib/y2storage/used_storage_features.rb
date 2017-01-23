@@ -153,8 +153,7 @@ module Y2Storage
     # @param [Array<Symbol>] feature list or nil
     # @return [Array<Symbol>] package list
     #
-    def feature_packages(features = nil)
-      features ||= collect_features
+    def self.packages_for(features)
       feature_packages = Set.new
 
       features.each do |feature|
@@ -170,6 +169,13 @@ module Y2Storage
 
       log.info("Storage feature packages: #{feature_packages.to_a}")
       feature_packages.to_a
+    end
+
+    # Return a list of software packages required for the storage features
+    # currently in use by the internal devicegraph.
+    #
+    def feature_packages
+      self.class.packages_for(collect_features)
     end
 
     # Return the list of storage features known to libstorage.

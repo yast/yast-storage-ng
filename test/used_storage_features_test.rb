@@ -37,7 +37,7 @@ describe Y2Storage::UsedStorageFeatures do
     end
 
     it "is able to calculate packages for an independent feature set" do
-      expect(subject.feature_packages([:UF_XFS, :UF_NFS])).to contain_exactly("nfs-client", "xfsprogs")
+      expect(described_class.packages_for([:UF_XFS, :UF_NFS])).to contain_exactly("nfs-client", "xfsprogs")
     end
 
     it "knows libstorage features despite having no devicegraph" do
@@ -69,7 +69,7 @@ describe Y2Storage::UsedStorageFeatures do
     end
 
     it "is able to calculate packages for an independent feature set" do
-      expect(subject.feature_packages([:UF_XFS, :UF_NFS])).to contain_exactly("nfs-client", "xfsprogs")
+      expect(described_class.packages_for([:UF_XFS, :UF_NFS])).to contain_exactly("nfs-client", "xfsprogs")
     end
   end
 
