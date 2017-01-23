@@ -63,7 +63,7 @@ module Y2Storage
         UF_SNAPSHOTS:     "snapper",
 
         # RAID technologies and related
-        UF_DM:            ["device-mapper"],
+        UF_DM:            "device-mapper",
         UF_DMMULTIPATH:   ["device-mapper", "multipath-tools"],
         UF_DMRAID:        ["device-mapper", "dmraid"],
         UF_MD:            "mdadm",
