@@ -147,14 +147,7 @@ module Y2Storage
       # not provide any more information.
       #
       # TRANSLATORS: error popup
-      text =
-        _("Installing required packages failed.") + "\n" +
-        _("Continue despite the error?")
-      Yast::Report.ErrorAnyQuestion(Yast::Popup.NoHeadline,
-        text,
-        Yast::Label.ContinueButton,
-        Yast::Label.AbortButton,
-        :focus_no)
+      Yast::Report.Error(_("Installing required packages failed."))
     end
 
     # Post an error popup after SetResolvables failed

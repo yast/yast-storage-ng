@@ -91,9 +91,9 @@ describe Y2Storage::PackageHandler do
     it "pops up an error dialog if package installation failed" do
       allow(Yast::Mode).to receive(:installation).and_return(false)
       allow(Yast::Package).to receive(:DoInstall).and_return(false)
-      allow(Yast::Report).to receive(:ErrorAnyQuestion)
+      allow(Yast::Report).to receive(:Error)
       expect(Yast::Package).to receive(:DoInstall).with(subject.pkg_list)
-      expect(Yast::Report).to receive(:ErrorAnyQuestion)
+      expect(Yast::Report).to receive(:Error)
       subject.commit
     end
 
