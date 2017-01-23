@@ -82,7 +82,6 @@ describe Y2Storage::UsedStorageFeatures do
       expect(subject.collect_features).to contain_exactly(:UF_BTRFS, :UF_EXT4, :UF_NTFS, :UF_XFS)
     end
 
-    # rubocop:disable LineLength
     it "requires exactly the expected storage-related packages" do
       expect(subject.feature_packages).to contain_exactly("btrfsprogs", "e2fsprogs", "ntfs-3g", "ntfsprogs", "xfsprogs")
     end

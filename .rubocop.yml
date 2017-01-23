@@ -14,7 +14,10 @@ SingleLineBlockParams:
 # resolutions and Github's pull request view. But let's open the threshold a
 # little bit
 Metrics/LineLength:
-  Max: 110
+  Max: 105
+  Exclude:
+    - 'test/used_storage_features_test.rb'
+
 
 # FIXME: Let's consider this temporary code and be permissive with the lack of
 # documentation
