@@ -91,7 +91,7 @@ module Y2Storage
       if Yast::Mode.installation
         set_proposal_packages
       else
-        install!
+        install
       end
     end
 
@@ -101,7 +101,7 @@ module Y2Storage
     #
     # @return true on success, false on error
     #
-    def install!
+    def install
       compact
       return if @pkg_list.empty?
       log.info("Installing #{pkg_list}")
