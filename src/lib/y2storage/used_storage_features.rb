@@ -146,9 +146,8 @@ module Y2Storage
       features
     end
 
-    # Return a list of software packages required for the storage features.
-    # Uses 'features' if non-nil, otherwise collects the features with
-    # collect_features.
+    # Return a list of software packages required for the storage features in
+    # 'features'.
     #
     # @param [Array<Symbol>] feature list or nil
     # @return [Array<Symbol>] package list
@@ -173,6 +172,8 @@ module Y2Storage
 
     # Return a list of software packages required for the storage features
     # currently in use by the internal devicegraph.
+    #
+    # @return [Array<Symbol>] package list
     #
     def feature_packages
       self.class.packages_for(collect_features)
