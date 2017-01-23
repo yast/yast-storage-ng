@@ -171,6 +171,38 @@ partitioner.
 I wouldn't overdo the amount of proposal tweak options in the ui. In the end it's more practical for the user
 to manually create a partitioning than fiddling with proposal settings.
 
+### Wild idea 3 by ancorgs
+
+Maybe we should go for a more wizard-style approach. Something like
+
+```
+*******************************************
+* Summary of the changes/result goes here *
+*******************************************
+
+[X] Use this Configuration
+
+[ ] Adjust this Configuration Using the Expert Partitioner
+
+[ ] Propose a New [Partition-based ↓] Configuration
+    [Settings] [Choose disks]
+
+[ ] Configure from Scratch Using the Expert Partitioner
+
+                            [Next]
+```
+
+The only way to re-calculate a proposal or to run the expert partitioner would
+be choosing the corresponding option and pushing "next".
+
+About the workflow, we have (at least) three options:
+
+* All options except the first one return to the same dialog after performing
+  the changes.
+* Only the third option returns to the same dialog.
+* No option returns to the same dialog. The users have to push "back" to change
+  a proposal (I don't like this alternative).
+
 
 IDEAS SECTION TO BE COMPLETED AFTER SOME BRAINSTORMING
 
