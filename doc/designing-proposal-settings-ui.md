@@ -212,8 +212,8 @@ incorporated to the main screen doing something like this.
 Or this (just two checkboxes)
 
 ```
-( ) LVM
-(x) Encryption
+[ ] LVM
+[✔] Encryption
 
 [Guided Setup]                         [Expert Setup]
 ```
