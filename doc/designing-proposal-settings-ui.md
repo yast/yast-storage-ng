@@ -209,6 +209,16 @@ incorporated to the main screen doing something like this.
 
 ![screenshot](proposal_settings_ui/idea_brainstorm2.png)
 
+Or this (just two checkboxes)
+
+```
+( ) LVM
+(x) Encryption
+
+[Guided Setup]                         [Expert Setup]
+```
+
+
 ## Previous ideas
 
 This section summarizes ideas that were used as a base for the discussion that
