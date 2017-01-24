@@ -105,18 +105,122 @@ regarding the installer proposal.
 
 ## Ideas for the UI in storage-ng
 
-### Wild idea 1 by ancorgs
+### Not all settings are equal
 
-In my mind, the radio button we currently have at the beginning of "Proposal
-Settings" defines something more important than the other settings. It defines
-the strategy followed to do a proposal, i.e. the scenario.
+The radio button that is currently displayed at the beginning of "Proposal
+Settings" (Partition-Based, LVM-Based and so on) defines something more
+important than the other settings. It defines the strategy followed to do a
+proposal, i.e. the scenario.
 
 The rest of the settings (which filesystem type to use, separate home, etc.) can
 be considered minor compared to it and will be 90% shared by all the strategies.
 
-On the other hand, running the expert partitioner, either starting from scratch
-or from an already proposed layout, should be clearly a different beast in the
-UI.
+### Improving the summary text
+
+The text describing the operations to be performed (currently a detailed list of
+actions) should be improved in several ways. Things that needs to be done:
+
+* Reduce the number of items in the list.
+  * Listing the Btrfs subvolumes makes no sense in most cases.
+  * There should be only one line per volume (see example below).
+  * Dangerous operations (like deleting partitions) should stay in the list.
+* More meaningful items
+  * Things like "partition /dev/sda1" can be considered redundant, since the
+    device name "/dev/sda1" already implies it's a partition.
+  * Things like "delete partition /dev/sda1" does not give a hint to users about
+    the fact they are deleting their MS Windows installation.
+
+The current UI display lines like this:
+```
+ * Create partition /dev/sda2 (9.99 GiB)
+ * Format partition /dev/sda2 (9.99 GiB) with ext4
+ * Mount /dev/sda1 at /
+```
+With the right wording, that should fit in one line. An example with room for
+improvement:
+```
+ * Create /dev/sda2 (9.99 GiB, ext4) for "/"
+```
+
+A more fine-grained list of actions including the subvolumes and that class of
+gory details should still be available. And maybe even other views like the
+final disk layout (instead of a list of actions) or a graph displaying the
+actions in a more graphical way. But those alternative views should not be
+displayed at first sight but maybe accessible through buttons or as some kind
+of tabs in the operations list.
+
+The summary of operations could be used to modify some simple settings using
+hyperlinks, instead of needing a separate button to make all those settings
+available. In the example above, the word "ext4" could be a link opening a
+selector for the filesystem type of "/". The following settings (currently
+displayed in the "Proposal Settings" pop-up dialog) could be very easily
+incorporated to the summary of operations.
+
+* File system for root partition
+* Enable snapshots if Btrfs is selected
+* File system for home partition
+
+### A note about proposals and the expert partitioner
+
+As already mentioned in the document about storage-ng and the expert
+partitioner, it would make sense to add "proposals" also there. For example,
+configuring a RAID is an advanced setup that should only be offered if the user
+is able to cope with the expert partitioner, but doing it from scratch with the
+current expert partitioner is pretty inconvenient.
+
+Thus, choosing "expert partitioner" should not imply the users are 100% on their
+own. There should be some wizards/assistants/proposals there. On the other hand,
+that means that only the most common and understandable scenarios should be
+offered out of the expert partitioner.
+
+### Proposal as a wizard
+
+When the users decide they want the system to make a proposal for them, it would
+make sense to show the options step by step in a wizard, instead of displaying
+all settings  (inter-dependant or not) in a crowded dialog, like the current
+"Proposal Settings" one.
+
+So the first step would be to select the strategy (Partition-Based, LVM-Based,
+Encrypted LVM...), other settings (maybe adapted based on the first step) would
+be presented after clicking "Next", finally there could be a last step for the
+disk(s) selection.
+
+## Proposed idea for the UI
+
+This section describes a possible UI that takes into account all the aspects
+mentioned in the section above. The main screen could look like this.
+
+![screenshot](proposal_settings_ui/idea_brainstorm1.png)
+
+The summary includes hyperlinks to change the filesystem type of "/" (and to
+enable/disable snapshots if Btrfs is choosen) and to change the settings about
+"/home".
+
+The "Guided Setup" button will lead to the three-steps wizard described in the
+section "proposal as a wizard".
+
+Finally, the "Expert Setup" will take the user to the expert partitioner that,
+as explained above, does not imply all chance to get assistance is lost.
+
+If there is a hard requirement to give more visibility to the supported
+scenarios (so it's clear from the very beginning we support LVM and/or
+encryption in the guided setup). The first step of the proposal wizard can be
+incorporated to the main screen doing something like this.
+
+![screenshot](proposal_settings_ui/idea_brainstorm2.png)
+
+## Previous ideas
+
+This section summarizes ideas that were used as a base for the discussion that
+leaded to the proposal above. Feel free to stop reading here unless you want
+some historic background about the proposed UI.
+
+### Wild idea 1 by ancorgs
+
+The difference between "strategies" and all the other minor settings should be
+very clear. On the other hand, running the expert partitioner, either starting
+from scratch or from an already proposed layout, should be clearly a different
+beast in the UI.
 
 Thus, we could explore something like the UI showed in the image. Initially, the
 strategies would be the same we have now (partition-based, LVM and encrypted
@@ -202,9 +306,6 @@ About the workflow, we have (at least) three options:
 * Only the third option returns to the same dialog.
 * No option returns to the same dialog. The users have to push "back" to change
   a proposal (I don't like this alternative).
-
-
-IDEAS SECTION TO BE COMPLETED AFTER SOME BRAINSTORMING
 
 ## References and follow-ups
 
