@@ -61,7 +61,7 @@ module Y2Storage
           # TODO: Handle completely empty disks (no partition table) as empty space
           return [] unless partition_table?
           partition_table.unused_partition_slots.map do |slot|
-            FreeDiskSpace.new(self, slot)
+            FreeDiskSpace.new(self, slot.region)
           end
         end
 

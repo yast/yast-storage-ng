@@ -22,6 +22,7 @@
 # find current contact information at www.suse.com.
 
 require "yast"
+require "storage"
 require "y2storage/disk_size"
 
 module Y2Storage
@@ -29,17 +30,19 @@ module Y2Storage
   # Helper class to keep information about free disk space together.
   #
   class FreeDiskSpace
-    attr_reader :slot, :disk
+    attr_reader :region, :disk
 
     # Initialize.
     #
     # @param disk [::Storage::Disk]
     #
-    # @param slot [::Storage::PartitionSlot]
+    # @param region [::Storage::Region]
     #
-    def initialize(disk, slot)
+    def initialize(disk, region)
       @disk = disk
-      @slot = slot
+      # Store a duplicate of the original region, which could change or be
+      # deleted (don't trust the garbage collector when SWIG is involved)
+      @region = Storage::Region.new(region)
     end
 
     # Return the name of the disk this slot is on.
@@ -55,7 +58,7 @@ module Y2Storage
     # @return [DiskSize]
     #
     def disk_size
-      DiskSize.B(@slot.region.length * @slot.region.block_size)
+      DiskSize.B(region.length * region.block_size)
     end
 
     # Offset of the slot relative to the beginning of the disk
@@ -63,7 +66,7 @@ module Y2Storage
     # @return [DiskSize]
     #
     def start_offset
-      DiskSize.B(@slot.region.start * @slot.region.block_size)
+      DiskSize.B(region.start * region.block_size)
     end
 
     def to_s

@@ -136,8 +136,8 @@ module Y2Storage
       def free_space_within(initial_free_space)
         disks = devicegraph.disks.with(name: initial_free_space.disk_name)
         spaces = disks.free_disk_spaces.with do |space|
-          space.slot.region.start >= initial_free_space.slot.region.start &&
-            space.slot.region.start < initial_free_space.slot.region.end
+          space.region.start >= initial_free_space.region.start &&
+            space.region.start < initial_free_space.region.end
         end
         raise NoDiskSpaceError, "Exhausted free space" if spaces.empty?
         spaces.first
@@ -162,14 +162,14 @@ module Y2Storage
           partition_type = ::Storage::PartitionType_PRIMARY
         else
           if !ptable.has_extended
-            create_extended_partition(disk, free_space.slot.region)
+            create_extended_partition(disk, free_space.region)
             free_space = free_space_within(free_space)
           end
           dev_name = next_free_logical_partition_name(disk.name, ptable)
           partition_type = ::Storage::PartitionType_LOGICAL
         end
 
-        region = new_region_with_size(free_space.slot, vol.disk_size)
+        region = new_region_with_size(free_space.region, vol.disk_size)
         partition = ptable.create_partition(dev_name, region, partition_type)
         partition.id = partition_id
         partition.boot = !!vol.bootable if ptable.partition_boot_flag_supported?
@@ -218,16 +218,15 @@ module Y2Storage
         raise NoMorePartitionSlotError
       end
 
-      # Create a new region from the one in free_slot, but with new size
+      # Create a new region from the given one, but with new size
       # disk_size.
       #
-      # @param free_slot [::Storage::PartitionSlot]
+      # @param region [::Storage::Region] initial region
       # @param disk_size [DiskSize] new size of the region
       #
       # @return [::Storage::Region] Newly created region
       #
-      def new_region_with_size(free_slot, disk_size)
-        region = free_slot.region
+      def new_region_with_size(region, disk_size)
         blocks = disk_size.to_i / region.block_size
         # Never exceed the region
         if region.start + blocks > region.end
