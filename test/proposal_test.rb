@@ -151,7 +151,7 @@ describe Y2Storage::Proposal do
     end
 
     context "in a PC with an empty partition table" do
-      let(:scenario) { "empty_hard_disk_50GiB" }
+      let(:scenario) { "empty_hard_disk_mbr_50GiB" }
 
       include_examples "all proposed layouts"
     end

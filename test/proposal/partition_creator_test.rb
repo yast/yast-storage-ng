@@ -66,7 +66,7 @@ describe Y2Storage::Proposal::PartitionCreator do
     end
 
     context "when filling a space with several volumes" do
-      let(:scenario) { "empty_hard_disk_50GiB" }
+      let(:scenario) { "empty_hard_disk_mbr_50GiB" }
       let(:distribution) do
         space_dist(disk_spaces.first => vols_list(root_vol, home_vol, swap_vol))
       end
@@ -280,7 +280,7 @@ describe Y2Storage::Proposal::PartitionCreator do
     end
 
     context "when creating a partition" do
-      let(:scenario) { "empty_hard_disk_50GiB" }
+      let(:scenario) { "empty_hard_disk_mbr_50GiB" }
       let(:bootable) { false }
 
       let(:vol) do

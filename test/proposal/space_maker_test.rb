@@ -47,7 +47,7 @@ describe Y2Storage::Proposal::SpaceMaker do
     subject(:maker) { described_class.new(fake_devicegraph, analyzer, lvm_helper, settings) }
 
     context "if the only disk is not big enough" do
-      let(:scenario) { "empty_hard_disk_50GiB" }
+      let(:scenario) { "empty_hard_disk_mbr_50GiB" }
       let(:vol1) { planned_vol(mount_point: "/1", type: :ext4, desired: 60.GiB) }
 
       it "raises a NoDiskSpaceError exception" do
