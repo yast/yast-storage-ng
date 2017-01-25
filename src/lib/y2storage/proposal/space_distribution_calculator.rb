@@ -158,7 +158,7 @@ module Y2Storage
       # @param volumes [PlannedVolumesList]
       # @return [Integer]
       def max_logical(disk, volumes)
-        ptable = disk.partition_table
+        ptable = disk.as_not_empty { disk.partition_table }
         return 0 unless ptable.extended_possible
         # Worst case, all the volumes that can end up in this disk will do so
         # and will be candidates to be logical

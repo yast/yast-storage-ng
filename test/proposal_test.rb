@@ -66,11 +66,18 @@ describe Y2Storage::Proposal do
       settings
     end
 
+    let(:expected_scenario) { scenario }
     let(:expected) do
-      file_name = scenario
+      file_name = expected_scenario
       file_name.concat("-lvm") if lvm
       file_name.concat("-sep-home") if separate_home
       ::Storage::Devicegraph.new_from_file(output_file_for(file_name))
+    end
+
+    context "in a PC with no partition table" do
+      let(:scenario) { "empty_hard_disk_50GiB" }
+      let(:expected_scenario) { "empty_hard_disk_gpt_50GiB" }
+      include_examples "all proposed layouts"
     end
 
     context "in a windows-only PC with MBR partition table" do

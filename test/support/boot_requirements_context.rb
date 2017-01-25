@@ -39,7 +39,7 @@ RSpec.shared_context "boot requirements" do
   end
   let(:analyzer) { instance_double("Y2Storage::DiskAnalyzer") }
   let(:storage_arch) { instance_double("::Storage::Arch") }
-  let(:dev_sda) { instance_double("::Storage::Disk", name: "/dev/sda") }
+  let(:dev_sda) { double("::Storage::Disk", name: "/dev/sda") }
   let(:pt_gpt) { instance_double("::Storage::PartitionTable") }
   let(:pt_msdos) { instance_double("::Storage::PartitionTable") }
   let(:sda_part_table) { pt_msdos }
@@ -57,6 +57,7 @@ RSpec.shared_context "boot requirements" do
 
     allow(dev_sda).to receive(:partition_table?).and_return(true)
     allow(dev_sda).to receive(:partition_table).and_return(sda_part_table)
+    allow(dev_sda).to receive(:as_not_empty).and_yield
     allow(pt_gpt).to receive(:type).and_return(::Storage::PtType_GPT)
     allow(pt_msdos).to receive(:type).and_return(::Storage::PtType_MSDOS)
   end

@@ -56,12 +56,14 @@ module Y2Storage
         @partition_type if @partition_type_calculated
 
         @partition_type_calculated = true
-        @partition_type = if disk.partition_table.extended_possible
-          if disk.partition_table.has_extended
-            inside_extended? ? :logical : :primary
+        disk.as_not_empty do
+          @partition_type = if disk.partition_table.extended_possible
+            if disk.partition_table.has_extended
+              inside_extended? ? :logical : :primary
+            end
+          else
+            :primary
           end
-        else
-          :primary
         end
       end
 
@@ -153,7 +155,7 @@ module Y2Storage
       # @return [Boolean]
       def inside_extended?
         space_start = disk_space.region.start
-        partitions = disk.partition_table.partitions.to_a
+        partitions = disk.all_partitions
         extended = partitions.detect { |p| p.type == Storage::PartitionType_EXTENDED }
         return false unless extended
         extended.region.start <= space_start && extended.region.end > space_start
