@@ -55,9 +55,14 @@ RSpec.shared_context "boot requirements" do
 
     allow(analyzer).to receive(:device_by_name).with("/dev/sda").and_return(dev_sda)
 
-    allow(dev_sda).to receive(:partition_table?).and_return(true)
-    allow(dev_sda).to receive(:partition_table).and_return(sda_part_table)
+    if sda_part_table
+      allow(dev_sda).to receive(:partition_table?).and_return(true)
+      allow(dev_sda).to receive(:partition_table).and_return(sda_part_table)
+    else
+      allow(dev_sda).to receive(:partition_table?).and_return(false)
+    end
     allow(dev_sda).to receive(:as_not_empty).and_yield
+    allow(dev_sda).to receive(:preferred_ptable_type).and_return(Storage::PtType_GPT)
     allow(pt_gpt).to receive(:type).and_return(::Storage::PtType_GPT)
     allow(pt_msdos).to receive(:type).and_return(::Storage::PtType_MSDOS)
   end

@@ -56,6 +56,27 @@ describe Y2Storage::Proposal::SpaceMaker do
       end
     end
 
+    context "if the only disk has no partition table" do
+      let(:scenario) { "empty_hard_disk_50GiB" }
+      let(:vol1) { planned_vol(mount_point: "/1", type: :ext4, desired: 40.GiB) }
+
+      it "does not modify the disk" do
+        result = maker.provide_space(volumes)
+        disk = result[:devicegraph].disks.first
+        expect(disk.has_partition_table).to eq false
+      end
+
+      it "assumes a (future) GPT partition table" do
+        gpt_size = 1.MiB
+        # The final 16.5 KiB are reserved by GPT
+        gpt_final_space = 16.5.KiB
+
+        result = maker.provide_space(volumes)
+        space = result[:space_distribution].spaces.first
+        expect(space.disk_size).to eq(50.GiB - gpt_size - gpt_final_space)
+      end
+    end
+
     context "with one disk containing Windows and Linux partitions" do
       let(:scenario) { "windows-linux-multiboot-pc" }
       let(:vol1) { planned_vol(mount_point: "/1", type: :ext4, desired: 100.GiB) }
