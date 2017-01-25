@@ -150,6 +150,31 @@ describe Y2Storage::BootRequirementsChecker do
         end
       end
 
+      context "with no partition table" do
+        let(:sda_part_table) { nil }
+        let(:grub_partitions) { {} }
+
+        context "in a partitions-based proposal" do
+          let(:use_lvm) { false }
+
+          it "requires a new GRUB partition (GPT partition table is assumed)" do
+            expect(checker.needed_partitions).to contain_exactly(
+              an_object_with_fields(partition_id: ::Storage::ID_BIOS_BOOT, reuse: nil)
+            )
+          end
+        end
+
+        context "in a LVM-based proposal" do
+          let(:use_lvm) { true }
+
+          it "requires a new GRUB partition (GPT partition table is assumed)" do
+            expect(checker.needed_partitions).to contain_exactly(
+              an_object_with_fields(partition_id: ::Storage::ID_BIOS_BOOT, reuse: nil)
+            )
+          end
+        end
+      end
+
       context "with a MS-DOS partition table" do
         let(:grub_partitions) { {} }
         let(:sda_part_table) { pt_msdos }

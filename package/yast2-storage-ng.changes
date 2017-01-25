@@ -1,4 +1,13 @@
 -------------------------------------------------------------------
+Wed Jan 25 14:35:38 UTC 2017 - ancor@suse.com
+
+- Proper management of completely empty disks (no partition table,
+  no file-system and no LVM PV) in the proposal.
+- Improved FreeDiskSpace and Disk#free_spaces to correctly handle
+  disks without partition table.
+- 0.1.10
+
+-------------------------------------------------------------------
 Thu Jan 19 10:54:22 CET 2017 - shundhammer@suse.de
 
 - Install storage-related software packages as needed: Migrated

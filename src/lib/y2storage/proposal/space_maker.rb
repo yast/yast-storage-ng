@@ -38,6 +38,7 @@ module Y2Storage
     class SpaceMaker
       using Refinements::Devicegraph
       using Refinements::DevicegraphLists
+      using Refinements::Disk
       include Yast::Logger
 
       attr_accessor :settings
@@ -136,7 +137,7 @@ module Y2Storage
       #
       # @return [Boolean]
       def success?(volumes)
-        spaces = free_spaces(new_graph).to_a
+        spaces = free_spaces(new_graph)
         @distribution ||= dist_calculator.best_distribution(volumes, spaces)
         !!@distribution
       rescue Error => e
@@ -172,7 +173,7 @@ module Y2Storage
       #
       # @return [DiskSize]
       def resizing_size(partition, volumes, disk)
-        spaces = free_spaces(new_graph, disk).to_a
+        spaces = free_spaces(new_graph, disk)
         dist_calculator.resizing_size(partition, volumes, spaces)
       end
 
@@ -180,9 +181,11 @@ module Y2Storage
       #
       # @param graph [::Storage::Devicegraph]
       # @param disk [String] optional disk name to restrict result to
-      # @return [FreeDiskSpacesList]
+      # @return [Array<FreeDiskSpace>]
       def free_spaces(graph, disk = nil)
-        disks_for(graph, disk).free_disk_spaces
+        disks_for(graph, disk).each_with_object([]) do |d, list|
+          list.concat(d.as_not_empty { d.free_spaces })
+        end
       end
 
       # List of candidate disks in the given devicegraph

@@ -24,6 +24,7 @@
 require "yast"
 require "y2storage/disk_size"
 require "y2storage/proposal/assigned_space"
+require "y2storage/refinements"
 
 module Y2Storage
   class Proposal
@@ -31,6 +32,7 @@ module Y2Storage
     # of free disk spaces
     class SpaceDistribution
       include Yast::Logger
+      using Refinements::Disk
 
       # @return [Array<AssignedSpace>]
       attr_reader :spaces
@@ -47,7 +49,9 @@ module Y2Storage
         end
         @spaces.freeze
         spaces_by_disk.each do |disk, spaces|
-          set_num_logical_for(spaces, disk.partition_table)
+          disk.as_not_empty do
+            set_num_logical_for(spaces, disk.partition_table)
+          end
         end
       end
 

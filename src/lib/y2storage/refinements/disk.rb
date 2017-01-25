@@ -77,6 +77,51 @@ module Y2Storage
         def min_grain
           DiskSize.new(topology.minimal_grain)
         end
+
+        # Executes the given block in a context in which the disk always have a
+        # partition table if possible, creating a temporary one if needed.
+        #
+        # This allows any code to work under the assumption that a given disk
+        # has an empty partition table of the YaST default type, even if that
+        # partition table is not yet created.
+        #
+        # @see preferred_ptable_type
+        #
+        # @example With a disk that already has a partition table
+        #   partitioned_disk.as_not_empty do
+        #     partitioned_disk.partition_table # => returns the real partition table
+        #   end
+        #   partitioned_disk.partition_table # Still the same
+        #
+        # @example With a disk not partitioned but formatted (or a PV)
+        #   lvm_pv_disk.as_not_empty do
+        #     lvm_pv_disk.partition_table # => raises DeviceHasWrongType
+        #   end
+        #   lvm_pv_disk.partition_table # Still the same
+        #
+        # @example With a completely empty disk
+        #   empty_disk.as_not_empty do
+        #     empty_disk.partition_table # => a temporary PartitionTable
+        #   end
+        #   empty_disk.partition_table # Not longer there
+        def as_not_empty
+          fake_ptable = nil
+          fake_ptable = create_partition_table(preferred_ptable_type) unless has_children
+
+          yield
+        ensure
+          remove_descendants if fake_ptable
+        end
+
+        # Default partition type for newly created partitions
+        #
+        # This method is needed because YaST criteria does not necessarily match
+        # the one followed by Storage::Disk#default_partition_table_type (which
+        # defaults to MBR partition tables in many cases)
+        def preferred_ptable_type
+          # TODO: so far, DASD is not supported, so we always suggest GPT
+          Storage::PtType_GPT
+        end
       end
     end
   end

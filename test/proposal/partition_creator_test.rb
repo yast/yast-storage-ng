@@ -66,7 +66,7 @@ describe Y2Storage::Proposal::PartitionCreator do
     end
 
     context "when filling a space with several volumes" do
-      let(:scenario) { "empty_hard_disk_50GiB" }
+      let(:scenario) { "empty_hard_disk_mbr_50GiB" }
       let(:distribution) do
         space_dist(disk_spaces.first => vols_list(root_vol, home_vol, swap_vol))
       end
@@ -280,7 +280,7 @@ describe Y2Storage::Proposal::PartitionCreator do
     end
 
     context "when creating a partition" do
-      let(:scenario) { "empty_hard_disk_50GiB" }
+      let(:scenario) { "empty_hard_disk_mbr_50GiB" }
       let(:bootable) { false }
 
       let(:vol) do
@@ -301,6 +301,15 @@ describe Y2Storage::Proposal::PartitionCreator do
       end
 
       context "with a MBR partition table" do
+        it "keeps the existing partition table" do
+          old_table = fake_devicegraph.disks.first.partition_table
+          result = creator.create_partitions(distribution)
+          new_table = result.disks.first.partition_table
+
+          expect(new_table.type).to eq Storage::PtType_MSDOS
+          expect(new_table).to eq old_table
+        end
+
         context "if the volume is bootable" do
           let(:bootable) { true }
 
@@ -331,6 +340,15 @@ describe Y2Storage::Proposal::PartitionCreator do
       context "with a GPT partition table" do
         let(:scenario) { "empty_hard_disk_gpt_50GiB" }
 
+        it "keeps the existing partition table" do
+          old_table = fake_devicegraph.disks.first.partition_table
+          result = creator.create_partitions(distribution)
+          new_table = result.disks.first.partition_table
+
+          expect(new_table.type).to eq Storage::PtType_GPT
+          expect(new_table).to eq old_table
+        end
+
         context "if the volume is bootable" do
           let(:bootable) { true }
 
@@ -355,6 +373,17 @@ describe Y2Storage::Proposal::PartitionCreator do
             partition = creator.create_partitions(distribution).partitions.first
             expect(partition.legacy_boot?).to eq false
           end
+        end
+      end
+
+      context "if there is no partition table in the disk" do
+        let(:scenario) { "empty_hard_disk_50GiB" }
+
+        it "creates a new partition table of the preferred type" do
+          result = creator.create_partitions(distribution)
+          table = result.disks.first.partition_table
+
+          expect(table.type).to eq Storage::PtType_GPT
         end
       end
     end

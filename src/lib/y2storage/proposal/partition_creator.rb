@@ -134,8 +134,8 @@ module Y2Storage
       # @param [FreeDiskSpace] the original disk chunk, the returned free
       #   space will be within this area
       def free_space_within(initial_free_space)
-        disks = devicegraph.disks.with(name: initial_free_space.disk_name)
-        spaces = disks.free_disk_spaces.with do |space|
+        disk = devicegraph.disks.with(name: initial_free_space.disk_name).first
+        spaces = disk.as_not_empty { disk.free_spaces }.select do |space|
           space.region.start >= initial_free_space.region.start &&
             space.region.start < initial_free_space.region.end
         end
@@ -155,7 +155,7 @@ module Y2Storage
       def create_partition(vol, partition_id, free_space, primary)
         log.info("Creating partition for #{vol.mount_point} with #{vol.disk_size}")
         disk = free_space.disk
-        ptable = disk.partition_table
+        ptable = partition_table(disk)
 
         if primary
           dev_name = next_free_primary_partition_name(disk.name, ptable)
@@ -234,6 +234,16 @@ module Y2Storage
         end
         # region.dup doesn't seem to work (SWIG bindings problem?)
         ::Storage::Region.new(region.start, blocks, region.block_size)
+      end
+
+      # Returns the partition table for disk, creating an empty one if needed
+      #
+      # @param [Storage::Disk]
+      # @return [Storage::PartitionTable]
+      def partition_table(disk)
+        disk.partition_table
+      rescue Storage::WrongNumberOfChildren
+        disk.create_partition_table(disk.preferred_ptable_type)
       end
     end
   end
