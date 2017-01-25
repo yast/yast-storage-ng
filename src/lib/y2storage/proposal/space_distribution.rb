@@ -292,7 +292,7 @@ module Y2Storage
         spaces = spaces.select { |s| room_for_logical?(s, num_logical) }
         # Let's place the extended in the space with more volumes (start as
         # secondary criteria just to ensure stable sorting)
-        spaces.sort_by { |s| [s.volumes.count, s.slot.region.start] }.last
+        spaces.sort_by { |s| [s.volumes.count, s.region.start] }.last
       end
 
       # Total number of partitions planned for a given list of spaces

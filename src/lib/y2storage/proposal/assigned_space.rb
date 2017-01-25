@@ -38,7 +38,7 @@ module Y2Storage
       # Number of logical partitions that must be created in the space
       attr_accessor :num_logical
 
-      def_delegators :@disk_space, :disk_name, :disk_size, :slot, :disk
+      def_delegators :@disk_space, :disk_name, :disk_size, :region, :disk
 
       def initialize(disk_space, volumes)
         @disk_space  = disk_space
@@ -152,7 +152,7 @@ module Y2Storage
       #
       # @return [Boolean]
       def inside_extended?
-        space_start = disk_space.slot.region.start
+        space_start = disk_space.region.start
         partitions = disk.partition_table.partitions.to_a
         extended = partitions.detect { |p| p.type == Storage::PartitionType_EXTENDED }
         return false unless extended

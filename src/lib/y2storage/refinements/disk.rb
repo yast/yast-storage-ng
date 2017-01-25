@@ -58,10 +58,16 @@ module Y2Storage
         #
         # @return [Array<FreeDiskSpace>]
         def free_spaces
-          # TODO: Handle completely empty disks (no partition table) as empty space
-          return [] unless partition_table?
-          partition_table.unused_partition_slots.map do |slot|
-            FreeDiskSpace.new(self, slot)
+          # Unused disk
+          return Array(FreeDiskSpace.new(self, region)) unless has_children
+
+          begin
+            partition_table.unused_partition_slots.map do |slot|
+              FreeDiskSpace.new(self, slot.region)
+            end
+          rescue Storage::DeviceHasWrongType
+            # The disk is in use, but there is no partition table
+            []
           end
         end
 
