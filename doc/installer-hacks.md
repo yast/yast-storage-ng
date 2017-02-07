@@ -105,3 +105,13 @@ equivalent, the old code is simply deleted, not commented.
 
 * Code dealing with BIOS-ID changed to blindly assume common values. Original
   code commented and marked with "storage-ng".
+
+## Changes in autoyast2
+
+* Commented some parts in `AutoInstallRules` to not use old storage lib (commented
+  parts marked with `storage-ng`). This fix problem with install process (see
+  [this PBI](https://trello.com/c/qsxBrzIE/499-2-storageng-get-failing-openqa-test-fixed-by-adjusting-autoinstallrules-to-storage-ng)).
+
+* Several tests have been skipped in order to create the package. Commented tests
+  need `yast2-installation`, but it is not possible to provide it due to conflict between `yast2-storage` and `yast2-storage-ng`. There is a cyclic dependency between `yast2-installation` and `autoyast2-installation` (see [this bug](https://bugzilla.opensuse.org/show_bug.cgi?id=1024082)).
+  
