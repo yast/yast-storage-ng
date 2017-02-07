@@ -32,19 +32,23 @@ Thus, is also out of the scope of this one.
 Right now, the proposal screen offers three options.
 
 ![screenshot](proposal_settings_ui/main.png)
+![screenshot](yast2-screen-shots/yast2-000.png)
 
 The first one ("Edit Proposal Settings") allows to configure the following
 settings
 
 ![screenshot](proposal_settings_ui/first_option.png)
+![screenshot](yast2-screen-shots/yast2-001.png)
 
 The "Create Partition Setup" actually hides two options - re-running the
 storage proposal within a chosen disk (and partitions) and running the expert
 partitioner.
 
 ![screenshot](proposal_settings_ui/second_option_step1.png)
+![screenshot](yast2-screen-shots/yast2-003.png)
 
 ![screenshot](proposal_settings_ui/second_option_step2.png)
+![screenshot](yast2-screen-shots/yast2-004.png)
 
 To be precise, the "Create Partition Setup" only exhibits that behavior if the
 expert partitioner has not been executed. Or, in other words, if the target
