@@ -200,8 +200,69 @@ describe Y2Storage::Clients::InstDiskProposal do
       end
     end
 
-    context "procesing the guided setup dialog" do
-      pending "The guided setup is currently just a prototype"
+    context "processing the guided setup result" do
+      let(:guided_dialog) { double("Y2Storage::Dialogs::GuidedSetup") }
+      let(:devicegraph) { double("Storage::Devicegraph") }
+      let(:settings) { double("Storage::ProposalSettings") }
+      let(:proposal) { double("Y2Storage::Proposal", devices: devicegraph, settings: settings) }
+      let(:second_proposal_dialog) { double("Y2Storage::Dialogs::Proposal").as_null_object }
+
+      before do
+        allow(proposal_dialog).to receive(:run).and_return :guided
+        allow(Y2Storage::Dialogs::GuidedSetup).to receive(:new).and_return(guided_dialog)
+        # Just to quit
+        allow(second_proposal_dialog).to receive(:run).and_return :abort
+      end
+
+      context "if the guided setup returns :abort" do
+        before do
+          allow(Y2Storage::Dialogs::Proposal).to receive(:new).and_return(proposal_dialog)
+          allow(guided_dialog).to receive(:run).and_return :abort
+        end
+
+        it "aborts" do
+          expect(client.run).to eq :abort
+        end
+      end
+
+      context "if the guided setup returns :back" do
+        before do
+          allow(proposal_dialog).to receive(:proposal).and_return(proposal)
+          allow(proposal_dialog).to receive(:devicegraph).and_return(devicegraph)
+          allow(guided_dialog).to receive(:run).and_return :back
+        end
+
+        it "opens a new proposal dialog again with the same values" do
+          expect(Y2Storage::Dialogs::Proposal).to receive(:new).once.ordered
+            .and_return(proposal_dialog)
+          expect(Y2Storage::Dialogs::Proposal).to receive(:new).once.ordered
+            .with(proposal, devicegraph).and_return(second_proposal_dialog)
+          client.run
+        end
+      end
+
+      context "if the guided setup returns :next" do
+        let(:new_settings) { double("Storage::ProposalSettings") }
+
+        before do
+          allow(proposal_dialog).to receive(:devicegraph).and_return(devicegraph)
+          allow(guided_dialog).to receive(:run).and_return :next
+          allow(guided_dialog).to receive(:settings).and_return new_settings
+        end
+
+        it "opens a new proposal dialog now with the new settings" do
+          expect(Y2Storage::Dialogs::Proposal).to receive(:new).once.ordered
+            .and_return(proposal_dialog)
+          expect(Y2Storage::Dialogs::Proposal).to receive(:new).once.ordered do |proposal, graph|
+            expect(proposal).to be_a Y2Storage::Proposal
+            expect(proposal.proposed?).to eq false
+            expect(proposal.settings).to eq new_settings
+            expect(graph).to eq devicegraph
+          end.and_return(second_proposal_dialog)
+
+          client.run
+        end
+      end
     end
   end
 end
