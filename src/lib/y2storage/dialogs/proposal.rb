@@ -29,49 +29,48 @@ module Y2Storage
   module Dialogs
     # Calculates the storage proposal during installation and provides
     # the user a summary of the storage proposal
-    class InstDiskProposal < ::UI::InstallationDialog
+    class Proposal < ::UI::InstallationDialog
       # For Devicegraph#actiongraph
       using Y2Storage::Refinements::Devicegraph
 
-      def initialize
-        super
+      attr_reader :proposal
+      attr_reader :devicegraph
+
+      def initialize(proposal, devicegraph)
+        log.info "Proposal dialog: start with #{proposal.inspect}"
+
+        super()
         textdomain "storage-ng"
-        propose!
-        add_storage_packages
+
+        @proposal = proposal
+        @devicegraph = devicegraph
+        propose! if proposal && !proposal.proposed?
       end
 
       def next_handler
         if devicegraph
-          log.info "Setting the devicegraph as staging"
-          Y2Storage::StorageManager.instance.copy_to_staging(devicegraph)
+          log.info "Proposal dialog: return :next with #{proposal} and #{devicegraph}"
           super
         else
-          confirm = Yast::Popup.ContinueCancel(
-            _("Continue installation without a valid proposal?")
-          )
-          super if confirm
+          Yast::Report.Error(_("Cannot continue"))
         end
+      end
+
+      def guided_handler
+        finish_dialog(:guided)
       end
 
     protected
 
+      attr_writer :proposal
       # Desired devicegraph
-      attr_accessor :devicegraph
-
-      # For the time being, it always returns the same proposal settings.
-      # To be connected to control.xml and the UI in the future
-      #
-      # @return [Y2Storage::ProposalSettings]
-      def settings
-        settings = Y2Storage::ProposalSettings.new
-        settings.use_separate_home = true
-        settings
-      end
+      attr_writer :devicegraph
 
       # Calculates the desired devicegraph using the storage proposal.
       # Sets the devicegraph to nil if something went wrong
       def propose!
-        proposal = Y2Storage::Proposal.new(settings: settings)
+        return if proposal.nil? || proposal.proposed?
+
         proposal.propose
         self.devicegraph = proposal.devices
       rescue Y2Storage::Proposal::Error
@@ -79,22 +78,21 @@ module Y2Storage
         self.devicegraph = nil
       end
 
-      # Add storage-related software packages (filesystem tools etc.) to the
-      # set of packages to be installed.
-      def add_storage_packages
-        return if devicegraph.nil?
-        pkg_handler = Y2Storage::PackageHandler.new
-        pkg_handler.add_feature_packages(devicegraph)
-        pkg_handler.set_proposal_packages
-      end
-
       # HTML-formatted text to display in the dialog
       #
-      # If a proposal could be calculated, it returns a text representation of
-      # the actiongraph. Otherwise it returns an error message.
+      # If there is a successful proposal, it returns a text representation of
+      # the proposal with links to modify the settings.
+      #
+      # If the devicegraph has been set manually, it shows the actions to
+      # perform.
+      #
+      # If there was an error calculating the proposal, it returns an error
+      # message.
       #
       # @return [String]
       def summary
+        # TODO: if there is a proposal, use the meaningful description with
+        # hyperlinks instead of just delegating the summary to libstorage
         if devicegraph
           actiongraph = devicegraph.actiongraph
           texts = actiongraph.commit_actions_as_strings.to_a
@@ -112,7 +110,8 @@ module Y2Storage
         MarginBox(
           2, 1,
           VBox(
-            MinHeight(8, RichText(summary))
+            MinHeight(8, RichText(summary)),
+            PushButton(Id(:guided), _("Guided Setup"))
           )
         )
       end

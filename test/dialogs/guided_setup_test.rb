@@ -1,6 +1,7 @@
+#!/usr/bin/env rspec
 # encoding: utf-8
 
-# Copyright (c) [2016] SUSE LLC
+# Copyright (c) [2017] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -14,12 +15,14 @@
 # more details.
 #
 # You should have received a copy of the GNU General Public License along
-# with this program; if not, contact Novell, Inc.
+# with this program; if not, contact SUSE LLC.
 #
-# To contact Novell about this file by physical or electronic mail, you may
-# find current contact information at www.novell.com.
+# To contact SUSE LLC about this file by physical or electronic mail, you may
+# find current contact information at www.suse.com.
 
-require "yast"
-require "y2storage/clients/inst_disk_proposal"
+require_relative "../spec_helper"
+require "y2storage/dialogs/guided_setup"
 
-Y2Storage::Clients::InstDiskProposal.new.run
+describe Y2Storage::Dialogs::GuidedSetup do
+  pending "The guided setup is currently just a prototype"
+end
