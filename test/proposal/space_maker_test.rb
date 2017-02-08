@@ -28,6 +28,11 @@ describe Y2Storage::Proposal::SpaceMaker do
     using Y2Storage::Refinements::SizeCasts
     using Y2Storage::Refinements::DevicegraphLists
 
+    # Partition from fake_devicegraph, fetched by name
+    def probed_partition(name)
+      fake_devicegraph.partitions.with(name: name).first
+    end
+
     before do
       fake_scenario(scenario)
       allow(analyzer).to receive(:windows_partitions).and_return windows_partitions
@@ -259,10 +264,11 @@ describe Y2Storage::Proposal::SpaceMaker do
         vol1 = planned_vol(mount_point: "/1", type: :ext4, desired: 100.GiB)
         vol2 = planned_vol(mount_point: "/2", reuse: "/dev/sda6")
         volumes = vols_list(vol1, vol2)
+        sda6 = probed_partition("/dev/sda6")
 
         result = maker.provide_space(volumes)
-        expect(result[:devicegraph].partitions.map(&:name)).to include "/dev/sda6"
-        expect(result[:deleted_partitions].map(&:name)).to_not include "/dev/sda6"
+        expect(result[:devicegraph].partitions.map(&:sid)).to include sda6.sid
+        expect(result[:deleted_partitions].map(&:sid)).to_not include sda6.sid
       end
 
       it "raises a NoDiskSpaceError exception if deleting is not enough" do
@@ -403,8 +409,8 @@ describe Y2Storage::Proposal::SpaceMaker do
         result = maker.provide_space(volumes)
         partitions = result[:devicegraph].partitions
 
-        expect(partitions.map(&:name)).to_not include "/dev/sda9"
-        expect(partitions.map(&:name)).to_not include "/dev/sda5"
+        expect(partitions.map(&:sid)).to_not include probed_partition("/dev/sda9").sid
+        expect(partitions.map(&:sid)).to_not include probed_partition("/dev/sda5").sid
       end
 
       it "deletes the volume group itself" do
@@ -443,10 +449,10 @@ describe Y2Storage::Proposal::SpaceMaker do
         partitions = result[:devicegraph].partitions
 
         # sda5 and sda9 belong to vg1
-        expect(partitions.map(&:name)).to include "/dev/sda9"
-        expect(partitions.map(&:name)).to include "/dev/sda5"
+        expect(partitions.map(&:sid)).to include probed_partition("/dev/sda9").sid
+        expect(partitions.map(&:sid)).to include probed_partition("/dev/sda5").sid
         # sda8 is deleted instead of sda9
-        expect(partitions.map(&:name)).to_not include "/dev/sda8"
+        expect(partitions.map(&:sid)).to_not include probed_partition("/dev/sda8").sid
       end
 
       it "does nothing special about partitions from other VGs" do
@@ -455,7 +461,7 @@ describe Y2Storage::Proposal::SpaceMaker do
         partitions = result[:devicegraph].partitions
 
         # sda7 belongs to vg0
-        expect(partitions.map(&:name)).to_not include "/dev/sda7"
+        expect(partitions.map(&:sid)).to_not include probed_partition("/dev/sda7").sid
       end
 
       it "raises NoDiskSpaceError if it cannot find space respecting the VG" do
