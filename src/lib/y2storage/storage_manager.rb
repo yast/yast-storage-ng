@@ -67,7 +67,7 @@ module Y2Storage
     end
 
     # Checks whether the staging devicegraph has been previously set, either
-    # manually either through a proposal.
+    # manually or through a proposal.
     #
     # @return [Boolean] false if the staging devicegraph is just the result of
     #   probing (so a direct copy of #probed), true otherwise.
