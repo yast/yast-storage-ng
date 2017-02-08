@@ -23,6 +23,13 @@
 require_relative "spec_helper"
 require "y2storage"
 
+def devicegraph_from(file_name)
+  graph = Storage::Devicegraph.new
+  yaml_file = input_file_for(file_name)
+  Y2Storage::FakeDeviceFactory.load_yaml_file(graph, yaml_file)
+  graph
+end
+
 describe Y2Storage::StorageManager do
 
   subject(:manager) { described_class.instance }
@@ -80,28 +87,80 @@ describe Y2Storage::StorageManager do
     end
   end
 
-  describe "#copy_to_staging" do
+  describe "#staging=" do
+    let(:old_graph) { devicegraph_from("empty_hard_disk_50GiB") }
+    let(:new_graph) { devicegraph_from("gpt_and_msdos") }
+    let(:proposal) { double("Y2Storage::Proposal", devices: old_graph) }
+
     before do
       described_class.create_test_instance
+      manager.proposal = proposal
     end
 
-    let(:new_graph) do
-      new_graph = Storage::Devicegraph.new
-      yaml_file = input_file_for("gpt_and_msdos")
-      Y2Storage::FakeDeviceFactory.load_yaml_file(new_graph, yaml_file)
-      new_graph
-    end
-
-    it "copies the devicegraph" do
-      expect(manager.staging).to be_empty
-      manager.copy_to_staging(new_graph)
+    it "copies the provided devicegraph to staging" do
+      expect(manager.staging).to eq old_graph
+      manager.staging = new_graph
       expect(Storage::Disk.all(manager.staging).size).to eq 6
     end
 
     it "increments the staging revision" do
       pre = manager.staging_revision
-      manager.copy_to_staging(new_graph)
+      manager.staging = new_graph
       expect(manager.staging_revision).to be > pre
+    end
+
+    it "sets #proposal to nil" do
+      expect(manager.proposal).to_not be_nil
+      manager.staging = new_graph
+      expect(manager.proposal).to be_nil
+    end
+  end
+
+  describe "#proposal=" do
+    let(:new_graph) { devicegraph_from("gpt_and_msdos") }
+    let(:proposal) { double("Y2Storage::Proposal", devices: new_graph) }
+
+    before do
+      described_class.create_test_instance
+    end
+
+    it "copies the proposal result to staging" do
+      manager.proposal = proposal
+      expect(Storage::Disk.all(manager.staging).size).to eq 6
+    end
+
+    it "increments the staging revision" do
+      pre = manager.staging_revision
+      manager.proposal = proposal
+      expect(manager.staging_revision).to be > pre
+    end
+
+    it "stores the proposal" do
+      manager.proposal = proposal
+      expect(manager.proposal).to eq proposal
+    end
+  end
+
+  describe "#staging_changed?" do
+    let(:new_graph) { devicegraph_from("gpt_and_msdos") }
+    let(:proposal) { double("Y2Storage::Proposal", devices: new_graph) }
+
+    before do
+      described_class.create_test_instance
+    end
+
+    it "returns false initially" do
+      expect(manager.staging_changed?).to eq false
+    end
+
+    it "returns true if the staging devicegraph was manually assigned" do
+      manager.staging = new_graph
+      expect(manager.staging_changed?).to eq true
+    end
+
+    it "returns true if a proposal was accepted" do
+      manager.proposal = proposal
+      expect(manager.staging_changed?).to eq true
     end
   end
 end

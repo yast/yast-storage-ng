@@ -27,8 +27,8 @@ require "y2storage/fake_device_factory"
 
 module Y2Storage
   #
-  # Singleton class to provide access to the libstorage object and associated
-  # information.
+  # Singleton class to provide access to the libstorage Storage object and
+  # to store related state information.
   #
   class StorageManager
     include Yast::Logger
@@ -51,12 +51,59 @@ module Y2Storage
     # @return [Fixnum]
     attr_reader :staging_revision
 
+    # Proposal that was used to calculate the current staging devicegraph.
+    #
+    # Nil if the devicegraph was set manually and not by accepting a proposal.
+    #
+    # @return [Proposal, nil]
+    attr_reader :proposal
+
     def_delegators :@storage, :probed, :staging, :environment, :arch
 
     def initialize(storage_environment)
       @storage = Storage::Storage.new(storage_environment)
       @staging_revision = 0
+      @proposal = nil
     end
+
+    # Checks whether the staging devicegraph has been previously set, either
+    # manually or through a proposal.
+    #
+    # @return [Boolean] false if the staging devicegraph is just the result of
+    #   probing (so a direct copy of #probed), true otherwise.
+    def staging_changed?
+      !staging_revision.zero?
+    end
+
+    # Stores the proposal, modifying the staging devicegraph and all the related
+    # information.
+    #
+    # @param [Proposal]
+    def proposal=(proposal)
+      copy_to_staging(proposal.devices)
+      @proposal = proposal
+    end
+
+    # Copies the manually-calculated (no proposal) devicegraph to staging.
+    #
+    # If the devicegraph was calculated by means of a proposal, use #proposal=
+    # instead. @see #proposal=
+    #
+    # @param [Storage::Devicegraph] devicegraph to copy
+    def staging=(devicegraph)
+      @proposal = nil
+      copy_to_staging(devicegraph)
+    end
+
+    # Increments #staging_revision
+    #
+    # To be called explicitly if the staging devicegraph is modified without
+    # using #staging= or #proposal=
+    def update_staging_revision
+      @staging_revision += 1
+    end
+
+  private
 
     # Sets the devicegraph as the staging one, updating all the associated
     # information like #staging_revision
@@ -65,14 +112,6 @@ module Y2Storage
     def copy_to_staging(devicegraph)
       devicegraph.copy(storage.staging)
       update_staging_revision
-    end
-
-    # Increments #staging_revision
-    #
-    # To be called explicitly if the staging devicegraph is modified without
-    # using #copy_to_staging
-    def update_staging_revision
-      @staging_revision += 1
     end
 
     #
@@ -142,7 +181,7 @@ module Y2Storage
         create_instance(test_environment)
       end
 
-      # Make sure only instance can be used to create objects
+      # Make sure only .instance can be used to create objects
       private :new, :allocate
 
     private
