@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Wed Feb  8 13:19:24 UTC 2017 - ancor@suse.com
+
+- Added a prototype of the "Guided Setup" wizard to configure the
+  proposal settings.
+
+-------------------------------------------------------------------
 Wed Jan 25 14:35:38 UTC 2017 - ancor@suse.com
 
 - Proper management of completely empty disks (no partition table,
