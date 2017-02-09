@@ -146,6 +146,10 @@ Example:
         file_system:  ext4
         mount_point:  /
         label:        root
+        encryption:
+            type:     "luks"
+            name:     "cr_root"
+            password: "s3cr3t"
 
 - size: Similar to disk.size: Size of the partition specified as something the
   DiskSize class can parse, including "unlimited". "unlimited" means "Use all
@@ -240,9 +244,33 @@ Example:
   Omit if the file system should not be mounted.
   Permitted values: Any valid Linux path (case sensitive)
 
-
 - label: The label of the file system of this partition.
   Omit if there should be no label.
+
+- encryption: This is a separate tree level.
+  Omit if there should be no encryption.
+
+#### encryption
+
+Example:
+
+    encryption:
+        name:     "cr_root"
+        type:     "luks"
+        password: "s3cr3t"
+
+This is permitted under "partition" or "lvm_lv". For LVM PVs, add this to the
+corresponding partition.
+
+- name: Required parameter. This is the name of the crypto device that appears
+  in /etc/crypttab and below /dev/mapper. Starting this with "cr_" is a
+  convention, but not mandatory.
+
+- type: Right now, only "luks" is supported. This is the default and optional,
+  so it can be omitted.
+
+- password: The encryption password. In the context of fake device graphs, this
+  is not really used (but it is set in libstorage).
 
 
 ### free
