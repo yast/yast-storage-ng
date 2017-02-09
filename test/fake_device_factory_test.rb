@@ -165,26 +165,27 @@ describe Y2Storage::FakeDeviceFactory do
              '        name: "/dev/sda2"',
              '        type: primary',
              '        id: linux',
+             '        encryption:',
+             '            type: "luks"',
+             '            name: "cr_root"',
+             '            password: "s3cr3t"',
              '        file_system: ext4',
              '        mount_point: "/"',
              '        fstab_options:',
              '        - acl',
              '        - user_xattr',
-             '        encryption:',
-             '            type: "luks"',
-             '            name: "cr_root"',
-             '            password: "s3cr3t"']
+             '']
 
     # rubocop:enable all
 
     io = StringIO.new(input.join("\n"))
     Y2Storage::FakeDeviceFactory.load_yaml_file(staging, io)
 
-    expect(staging.num_devices).to eq 3
-    expect(staging.num_holders).to eq 4
-
+    expect(staging.num_devices).to eq 7
+    expect(staging.num_holders).to eq 5
     enc = Storage.to_encryption(Storage::BlkDevice.find_by_name(staging, "/dev/mapper/cr_root"))
-    expect(enc.name).to eq "cr_root"
+    expect(enc.name).to eq "/dev/mapper/cr_root"
+    expect(enc.password).to eq "s3cr3t"
 
   end
 

@@ -359,6 +359,9 @@ module Y2Storage
       label         = fs_param["label"]
       uuid          = fs_param["uuid"]
       fstab_options = fs_param["fstab_options"]
+      encryption    = fs_param["encryption"]
+
+      log.info("file system is on encrypted device: #{encryption}")
 
       blk_device = ::Storage::BlkDevice.find_by_name(@devicegraph, part_name)
       file_system = blk_device.create_filesystem(fs_type)
@@ -379,7 +382,7 @@ module Y2Storage
     #
     def file_system_data_picker(name, args)
       @partitions[name] = args.select do |k, _v|
-        ["mount_point", "label", "uuid", "fstab_options"].include?(k)
+        ["mount_point", "label", "uuid", "fstab_options", "encryption"].include?(k)
       end
     end
 
@@ -434,8 +437,9 @@ module Y2Storage
       type = fetch(ENCRYPTION_TYPES, type_name, "encryption type", name)
       # We only support creating LUKS so far
       raise ArgumentError, "Unsupported encryption type #{type_name}" unless type_name == "luks"
-      encryption = ::Storage::Luks.create(@encryption, name)
-      # encryption.set_password(password) unless password.nil?
+      encryption = ::Storage::Luks.create(@devicegraph, name)
+      log.info("password: #{password}")
+      encryption.password = password unless password.nil?
       encryption
     end
 
