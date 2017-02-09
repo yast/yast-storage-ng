@@ -25,6 +25,7 @@ require "fileutils"
 require "y2storage/planned_volumes_list"
 require "y2storage/disk_size"
 require "y2storage/refinements"
+require "y2storage/proposal/encrypter"
 
 module Y2Storage
   class Proposal
@@ -120,7 +121,8 @@ module Y2Storage
             space = free_space_within(initial_free_space)
             primary = volumes.size - idx > num_logical
             partition = create_partition(vol, partition_id, space, primary)
-            vol.create_filesystem(partition)
+            final_device = encrypter.device_for(vol, partition)
+            vol.create_filesystem(final_device)
             devicegraph.check
           rescue ::Storage::Exception => error
             raise Error, "Error allocating #{vol}. Details: #{error}"
@@ -244,6 +246,10 @@ module Y2Storage
         disk.partition_table
       rescue Storage::WrongNumberOfChildren
         disk.create_partition_table(disk.preferred_ptable_type)
+      end
+
+      def encrypter
+        @encrypter ||= Encrypter.new
       end
     end
   end

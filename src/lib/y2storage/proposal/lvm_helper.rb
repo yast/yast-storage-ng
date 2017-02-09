@@ -25,6 +25,8 @@ require "fileutils"
 require "y2storage/disk_size"
 require "y2storage/refinements"
 require "y2storage/proposal/exceptions"
+require "y2storage/proposal/encrypter"
+require "y2storage/secret_attributes"
 
 module Y2Storage
   class Proposal
@@ -34,6 +36,7 @@ module Y2Storage
       using Refinements::Devicegraph
       using Refinements::DevicegraphLists
       include Yast::Logger
+      include SecretAttributes
 
       DEFAULT_VG_NAME = "system"
       DEFAULT_LV_NAME = "lv"
@@ -48,11 +51,18 @@ module Y2Storage
       # the proposed volumes, deleting the existing logical volumes if necessary
       attr_accessor :reused_volume_group
 
+      # @!attribute encryption_password
+      #   @return [String, nil] password used to encrypt the newly created
+      #   physical volumes. If is nil, the PVs will not be encrypted.
+      secret_attr :encryption_password
+
       # Constructor
       #
       # @param planned_volumes [PlannedVolumesList] volumes to allocate in LVM
-      def initialize(planned_volumes)
+      # @param encryption_password [String, nil] @see #encryption_password
+      def initialize(planned_volumes, encryption_password: nil)
         @planned_volumes = planned_volumes
+        self.encryption_password = encryption_password
       end
 
       # Returns a copy of the original devicegraph in which all the logical
@@ -151,6 +161,11 @@ module Y2Storage
       # @param devicegraph [Storage::Devicegraph]
       # @return [Array<Storage::LvmVg>]
       def reusable_volume_groups(devicegraph)
+        # FIXME: we currently have no mechanism to activate existing LUKS, so
+        # there is no way we can re-use an encrypted LVM. Moreover, is still
+        # undecided if we want to reuse encrypted LVMs at all.
+        return [] if encrypt?
+
         vgs = devicegraph.volume_groups
         big_vgs, small_vgs = vgs.partition { |vg| total_size(vg) >= target_size }
         # Use #vg_name to ensure stable sorting
@@ -161,9 +176,19 @@ module Y2Storage
       end
 
       # Portion of a newly created physical volume that couldn't be used to
-      # allocate logical volumes because it would be reserved for LVM metadata.
+      # allocate logical volumes because it would be reserved for LVM metadata
+      # and other data structures.
       def useless_pv_space
-        USELESS_PV_SPACE
+        encrypt? ? USELESS_PV_SPACE + encrypter.device_overhead : USELESS_PV_SPACE
+      end
+
+      # Checks whether an encrypted LVM was requested.
+      # 
+      # @see #encryption_password
+      #
+      # @return [Boolean]
+      def encrypt?
+        !encryption_password.nil?
       end
 
     protected
@@ -210,7 +235,8 @@ module Y2Storage
       # @param devicegraph [Storage::Devicegraph] to fetch the partitions
       def assign_physical_volumes!(volume_group, part_names, devicegraph)
         devicegraph.partitions.with(name: part_names).each do |partition|
-          volume_group.add_lvm_pv(partition)
+          device = encrypt? ? partition.encryption : partition
+          volume_group.add_lvm_pv(device)
         end
       end
 
@@ -315,6 +341,10 @@ module Y2Storage
         else
           root.lvm_lvs.to_a.any? { |lv| lv.lv_name == name }
         end
+      end
+
+      def encrypter
+        @encrypter ||= Encrypter.new
       end
     end
   end
