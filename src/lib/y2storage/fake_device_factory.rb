@@ -77,6 +77,12 @@ module Y2Storage
         "lvm_pv"          => ["blk_device"]
       }
 
+    # Dependencies between products on the same hierarchy level.
+    DEPENDENCIES =
+      {
+        "file_system" => ["encryption"] # "file_system" depends on "encryption"
+      }
+
     class << self
       #
       # Read a YAML file and build a fake device tree from it.
@@ -150,6 +156,18 @@ module Y2Storage
       end
       param
     end
+
+    # Return a hash describing dependencies from one sub-product (on the same
+    # hierarchy level) to another so they can be produced in the correct order.
+    #
+    # For example, if there is an encryption layer and a file system in a
+    # partition, the encryption layer needs to be created first so the file
+    # system can be created inside that encryption layer.
+    #
+    def dependencies
+      DEPENDENCIES
+    end
+
 
     #
     # Factory methods
@@ -334,6 +352,8 @@ module Y2Storage
 
       partition = ptable.create_partition(part_name, region, type)
       partition.id = id
+
+      log.info("#{__method__} finish")
 
       part_name
     end

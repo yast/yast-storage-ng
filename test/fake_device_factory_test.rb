@@ -165,15 +165,15 @@ describe Y2Storage::FakeDeviceFactory do
              '        name: "/dev/sda2"',
              '        type: primary',
              '        id: linux',
-             '        encryption:',
-             '            type: "luks"',
-             '            name: "cr_root"',
-             '            password: "s3cr3t"',
              '        file_system: ext4',
              '        mount_point: "/"',
              '        fstab_options:',
              '        - acl',
              '        - user_xattr',
+             '        encryption:',
+             '            type: "luks"',
+             '            name: "cr_root"',
+             '            password: "s3cr3t"',
              '']
 
     # rubocop:enable all
