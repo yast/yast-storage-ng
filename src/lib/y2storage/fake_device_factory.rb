@@ -46,12 +46,13 @@ module Y2Storage
       {
         "disk"       => ["partition_table", "partitions", "file_system"],
         "partitions" => ["partition", "free"],
-        "partition"  => ["file_system"],
+        "partition"  => ["file_system", "encryption"],
+        "encryption" => ["file_system"],
         "lvm_vg"     => ["lvm_lvs", "lvm_pvs"],
         "lvm_lvs"    => ["lvm_lv"],
-        "lvm_lv"     => ["file_system"],
+        "lvm_lv"     => ["file_system", "encryption"],
         "lvm_pvs"    => ["lvm_pv"],
-        "lvm_pv"     => []
+        "lvm_pv"     => ["encryption"]
       }
 
     # Valid parameters for each product of this factory.
@@ -67,6 +68,7 @@ module Y2Storage
           "size", "start", "align", "name", "type", "id", "mount_point", "label", "uuid", "fstab_options"
         ],
         "file_system"     => [],
+        "encryption"      => ["name", "type", "password"],
         "free"            => ["size", "start"],
         "lvm_vg"          => ["vg_name", "extent_size"],
         "lvm_lv"          => [
@@ -411,6 +413,30 @@ module Y2Storage
       size = args["size"]
       @free_blob = size if size && size.size > 0
       disk_name
+    end
+
+    # Factory method to create an encryption layer.
+    #
+    # @param parent [String] parent device name ("/dev/sda1" etc.)
+    #
+    # @param args [Hash] encryption layer parameters:
+    #   "name"     name encryption layer ("cr_Something")
+    #   "type"     encryption type; default: "luks"
+    #   "password" encryption password (optional)
+    #
+    # @return [Object] new encryption object
+    #
+    def create_encryption(parent, args)
+      log.info("#{__method__}( #{parent}, #{args} )")
+      name = args["name"]
+      password = args["password"]
+      type_name = args["type"] || "luks"
+      type = fetch(ENCRYPTION_TYPES, type_name, "encryption type", name)
+      # We only support creating LUKS so far
+      raise ArgumentError, "Unsupported encryption type #{type_name}" unless type_name == "luks"
+      encryption = ::Storage::Luks.create(@encryption, name)
+      # encryption.set_password(password) unless password.nil?
+      encryption
     end
 
     # Factory method to create a lvm volume group.

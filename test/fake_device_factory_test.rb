@@ -137,4 +137,55 @@ describe Y2Storage::FakeDeviceFactory do
 
   end
 
+  it "reads yaml for a simple encryption setup" do
+    environment = Storage::Environment.new(true, Storage::ProbeMode_NONE, Storage::TargetMode_DIRECT)
+    storage = Storage::Storage.new(environment)
+    staging = storage.staging
+
+    # rubocop:disable Style/StringLiterals
+
+    input = ['---',
+             '- disk:',
+             '    name: "/dev/sda"',
+             '    size: 256 GiB',
+             '    block_size: 4 KiB',
+             '    partition_table: gpt',
+             '    partitions:',
+             '    - partition:',
+             '        size: 0.5 GiB',
+             '        start: 1 MiB',
+             '        name: "/dev/sda1"',
+             '        type: primary',
+             '        id: swap',
+             '        file_system: swap',
+             '        mount_point: swap',
+             '    - partition:',
+             '        size: 16 GiB',
+             '        start: 513 MiB (0.50 GiB)',
+             '        name: "/dev/sda2"',
+             '        type: primary',
+             '        id: linux',
+             '        file_system: ext4',
+             '        mount_point: "/"',
+             '        fstab_options:',
+             '        - acl',
+             '        - user_xattr',
+             '        encryption:',
+             '            type: "luks"',
+             '            name: "cr_root"',
+             '            password: "s3cr3t"']
+
+    # rubocop:enable all
+
+    io = StringIO.new(input.join("\n"))
+    Y2Storage::FakeDeviceFactory.load_yaml_file(staging, io)
+
+    expect(staging.num_devices).to eq 3
+    expect(staging.num_holders).to eq 4
+
+    enc = Storage.to_encryption(Storage::BlkDevice.find_by_name(staging, "/dev/mapper/cr_root"))
+    expect(enc.name).to eq "cr_root"
+
+  end
+
 end
