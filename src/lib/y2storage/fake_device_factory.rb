@@ -34,6 +34,8 @@ module Y2Storage
   # This is typically used with a YAML file.
   # Use the inherited load_yaml_file() to start the process.
   #
+  # rubocop:disable Metrics/ClassLength
+  #
   class FakeDeviceFactory < AbstractDeviceFactory
     include EnumMappings
 
@@ -456,7 +458,9 @@ module Y2Storage
       type_name = args["type"] || "luks"
       # We only support creating LUKS so far
       raise ArgumentError, "Unsupported encryption type #{type_name}" unless type_name == "luks"
-      encryption = ::Storage::Luks.create(@devicegraph, name)
+
+      blk_parent = Storage::BlkDevice.find_by_name(@devicegraph, parent)
+      encryption = blk_parent.create_encryption(name)
       encryption.password = password unless password.nil?
       if @partitions.key?(parent)
         # Notify create_file_system that this partition is encrypted
@@ -573,4 +577,5 @@ module Y2Storage
       value
     end
   end
+  # rubocop:enable all
 end

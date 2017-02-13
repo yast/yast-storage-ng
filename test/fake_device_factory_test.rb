@@ -23,6 +23,7 @@
 require_relative "spec_helper"
 require "storage"
 require "y2storage/fake_device_factory"
+require "pp"
 
 describe Y2Storage::FakeDeviceFactory do
 
@@ -181,11 +182,9 @@ describe Y2Storage::FakeDeviceFactory do
     io = StringIO.new(input.join("\n"))
     Y2Storage::FakeDeviceFactory.load_yaml_file(staging, io)
 
-    expect(staging.num_devices).to eq 7
-    expect(staging.num_holders).to eq 5
-    enc = Storage.to_encryption(Storage::BlkDevice.find_by_name(staging, "/dev/mapper/cr_root"))
-    expect(enc.name).to eq "/dev/mapper/cr_root"
-    expect(enc.password).to eq "s3cr3t"
+    root_part = Storage.to_partition(Storage::BlkDevice.find_by_name(staging, "/dev/sda2"))
+    expect(root_part.encryption.name).to eq "/dev/mapper/cr_root"
+    expect(root_part.encryption.filesystem.mountpoints.first).to eq "/"
 
   end
 
