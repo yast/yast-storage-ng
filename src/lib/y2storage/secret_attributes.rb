@@ -27,20 +27,20 @@ module Y2Storage
     # Inner class to store the value of the attribute without exposing it
     # directly
     class Attribute
+      attr_reader :value
+
       def initialize(value)
         @value = value
       end
 
-      def value
-        @value
+      def to_s
+        value.nil? ? "" : "<secret>"
       end
 
-      def to_s
+      def inspect
         value.nil? ? "nil" : "<secret>"
       end
 
-      alias_method :inspect, :to_s
-      
       def instance_variables
         # This adds even an extra barrier, just in case some formatter tries to
         # use deep instrospection
@@ -48,6 +48,7 @@ module Y2Storage
       end
     end
 
+    # Class methods for the mixin
     module ClassMethods
       # Similar to .attr_accessor but with additional mechanisms to prevent
       # exposing the internal value of the attribute
