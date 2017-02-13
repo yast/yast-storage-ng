@@ -300,6 +300,32 @@ describe Y2Storage::Proposal::PartitionCreator do
         expect(partition.filesystem.type).to eq Storage::FsType_VFAT
       end
 
+      it "delegates the possible encryption to Encrypter" do
+        encrypter = double("Y2Storage::Proposal::Encrypter")
+        expect(Y2Storage::Proposal::Encrypter).to receive(:new).and_return encrypter
+
+        expect(encrypter).to receive(:device_for) do |volume, plain_device|
+          expect(volume).to have_attributes(
+            partition_id: Storage::ID_ESP, desired: 1.GiB, bootable: bootable
+          )
+          expect(plain_device).to be_a(Storage::Partition)
+          plain_device
+        end
+
+        creator.create_partitions(distribution)
+      end
+
+      context "if the partition must be encrypted" do
+        before do
+          vol.encryption_password = "s3cr3t"
+        end
+
+        it "formats the encrypted device instead of the plain partition" do
+          partition = creator.create_partitions(distribution).partitions.first
+          expect(partition.encryption.filesystem.type).to eq Storage::FsType_VFAT
+        end
+      end
+
       context "with a MBR partition table" do
         it "keeps the existing partition table" do
           old_table = fake_devicegraph.disks.first.partition_table
