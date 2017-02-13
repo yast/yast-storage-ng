@@ -354,7 +354,6 @@ module Y2Storage
       end
     end
 
-
     # Sort products by product dependency.
     #
     # @param products [Array<String>] product names

@@ -168,7 +168,6 @@ module Y2Storage
       DEPENDENCIES
     end
 
-
     #
     # Factory methods
     #
@@ -353,8 +352,6 @@ module Y2Storage
       partition = ptable.create_partition(part_name, region, type)
       partition.id = id
 
-      log.info("#{__method__} finish")
-
       part_name
     end
     # rubocop:enable all
@@ -457,12 +454,11 @@ module Y2Storage
       raise ArgumentError, "\"name\" missing for encryption on #{parent}" if name.nil?
       password = args["password"]
       type_name = args["type"] || "luks"
-      type = fetch(ENCRYPTION_TYPES, type_name, "encryption type", name)
       # We only support creating LUKS so far
       raise ArgumentError, "Unsupported encryption type #{type_name}" unless type_name == "luks"
       encryption = ::Storage::Luks.create(@devicegraph, name)
       encryption.password = password unless password.nil?
-      if @partitions.has_key?(parent)
+      if @partitions.key?(parent)
         # Notify create_file_system that this partition is encrypted
         @partitions[parent]["encryption"] = encryption.name
       end
@@ -555,7 +551,6 @@ module Y2Storage
       log.info("#{__method__}( #{parent}, #{args} )")
 
       blk_device_name = args["blk_device"]
-
       blk_device = ::Storage::BlkDevice.find_by_name(devicegraph, blk_device_name)
 
       parent.add_lvm_pv(blk_device)
