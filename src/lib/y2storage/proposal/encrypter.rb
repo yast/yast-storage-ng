@@ -51,7 +51,7 @@ module Y2Storage
           log.info "No encryption. Returning the plain device. #{plain_device.inspect}"
           return plain_device
         end
-        
+
         result = plain_device.create_encryption(dm_name_for(plain_device))
         result.password = volume.encryption_password
         log.info "Volume encrypted. Returning the new device #{result.inspect}"
@@ -75,10 +75,10 @@ module Y2Storage
       # instead of UUID or something similar), the DeviceMapper for an encrypted
       # /dev/sda5 would be "cr_sda5", which implies a quite high risk of
       # collision with existing DeviceMapper names.
-      # 
+      #
       # Revisit this after improving libstorage-ng capabilities about
       # alternative names and DeviceMapper.
-      # 
+      #
       # @return [String]
       def dm_name_for(device)
         name = device.name.split("/").last

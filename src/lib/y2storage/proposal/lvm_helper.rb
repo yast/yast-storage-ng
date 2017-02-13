@@ -183,7 +183,7 @@ module Y2Storage
       end
 
       # Checks whether an encrypted LVM was requested.
-      # 
+      #
       # @see #encryption_password
       #
       # @return [Boolean]
