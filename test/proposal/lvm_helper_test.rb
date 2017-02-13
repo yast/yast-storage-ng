@@ -88,7 +88,7 @@ describe Y2Storage::Proposal::LvmHelper do
     end
   end
 
-  describe "#missing_space" do
+  describe "#max_extra_space" do
     let(:scenario) { "lvm-big-pe" }
     let(:vg_big_pe) { Storage::LvmVg.find_by_vg_name(fake_devicegraph, "vg0") }
 
