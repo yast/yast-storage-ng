@@ -355,7 +355,7 @@ describe Y2Storage::Proposal::LvmHelper do
         two.weight = 1
       end
 
-      it "distributes the extra space" do
+      it "distributes the extra space according to weights" do
         devicegraph = helper.create_volumes(fake_devicegraph, pv_partitions)
         lvs = devicegraph.volume_groups.with(vg_name: "system").lvm_lvs.to_a
 
