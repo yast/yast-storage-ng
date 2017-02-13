@@ -52,7 +52,7 @@ module Y2Storage
         "lvm_lvs"    => ["lvm_lv"],
         "lvm_lv"     => ["file_system", "encryption"],
         "lvm_pvs"    => ["lvm_pv"],
-        "lvm_pv"     => ["encryption"]
+        "lvm_pv"     => []
       }
 
     # Valid parameters for each product of this factory.
