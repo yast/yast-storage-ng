@@ -24,6 +24,7 @@
 require "yast"
 require "storage"
 require "yaml"
+require "tsort"
 
 module Y2Storage
   #
@@ -43,6 +44,7 @@ module Y2Storage
   #
   # Optional:
   # - fixup_param()
+  # - dependencies()
   #
   # From the outside, use load_yaml_file() or build_tree() to start
   # generating the tree.
@@ -144,9 +146,10 @@ module Y2Storage
         # Create the factory product itself: Call the corresponding create_ method
         child = call_create_method(parent, name, param)
 
+        product_order = sort_by_product_order(sub_prod.keys)
         # Create any sub-objects of the factory product
-        sub_prod.each do |product, product_content|
-          build_tree_recursive(child, product, product_content)
+        product_order.each do |product|
+          build_tree_recursive(child, product, sub_prod[product])
         end
       when Array
         content.each do |element|
@@ -228,6 +231,18 @@ module Y2Storage
   #
   # def fixup_param(name, param)
   #   param
+  # end
+
+  # Return a hash describing dependencies from one sub-product (on the same
+  # hierarchy level) to another so they can be produced in the correct order.
+  #
+  # For example, if there is an encryption layer and a file system in a
+  # partition, the encryption layer needs to be created first so the file
+  # system can be created inside that encryption layer.
+  #
+  #
+  # def dependencies
+  #   dep
   # end
 
   private
@@ -318,6 +333,40 @@ module Y2Storage
         log.warn("WARNING: No method #{create_method}() defined")
         nil
       end
+    end
+
+    # Helper class for a topological sort for dependencies.
+    # Taken from the Ruby TSort reference documentation.
+    #
+    class DependencyHash
+      include TSort
+
+      def initialize(hash)
+        @nodes = hash
+      end
+
+      def tsort_each_node(&block)
+        @nodes.each_key(&block)
+      end
+
+      def tsort_each_child(node, &block)
+        @nodes.fetch(node, []).each(&block)
+      end
+    end
+
+    # Sort products by product dependency.
+    #
+    # @param products [Array<String>] product names
+    # @return [Array<String]
+    #
+    def sort_by_product_order(products)
+      return products if products.size < 2
+      return products unless respond_to?(:dependencies, true)
+      dependency_order = DependencyHash.new(dependencies).tsort
+      ordered = dependency_order.select { |p| products.include?(p) }
+      rest = products.dup
+      rest.delete_if { |p| dependency_order.include?(p) }
+      ordered.concat(rest)
     end
   end
 end

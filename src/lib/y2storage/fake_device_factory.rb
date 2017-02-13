@@ -34,6 +34,8 @@ module Y2Storage
   # This is typically used with a YAML file.
   # Use the inherited load_yaml_file() to start the process.
   #
+  # rubocop:disable Metrics/ClassLength
+  #
   class FakeDeviceFactory < AbstractDeviceFactory
     include EnumMappings
 
@@ -46,10 +48,11 @@ module Y2Storage
       {
         "disk"       => ["partition_table", "partitions", "file_system"],
         "partitions" => ["partition", "free"],
-        "partition"  => ["file_system"],
+        "partition"  => ["file_system", "encryption"],
+        "encryption" => ["file_system"],
         "lvm_vg"     => ["lvm_lvs", "lvm_pvs"],
         "lvm_lvs"    => ["lvm_lv"],
-        "lvm_lv"     => ["file_system"],
+        "lvm_lv"     => ["file_system", "encryption"],
         "lvm_pvs"    => ["lvm_pv"],
         "lvm_pv"     => []
       }
@@ -67,12 +70,19 @@ module Y2Storage
           "size", "start", "align", "name", "type", "id", "mount_point", "label", "uuid", "fstab_options"
         ],
         "file_system"     => [],
+        "encryption"      => ["name", "type", "password"],
         "free"            => ["size", "start"],
         "lvm_vg"          => ["vg_name", "extent_size"],
         "lvm_lv"          => [
           "lv_name", "size", "stripes", "stripe_size", "mount_point", "label", "uuid", "fstab_options"
         ],
         "lvm_pv"          => ["blk_device"]
+      }
+
+    # Dependencies between products on the same hierarchy level.
+    DEPENDENCIES =
+      {
+        "file_system" => ["encryption"] # "file_system" depends on "encryption"
       }
 
     class << self
@@ -147,6 +157,17 @@ module Y2Storage
         param[key] = DiskSize.new(param[key]) if param.key?(key)
       end
       param
+    end
+
+    # Return a hash describing dependencies from one sub-product (on the same
+    # hierarchy level) to another so they can be produced in the correct order.
+    #
+    # For example, if there is an encryption layer and a file system in a
+    # partition, the encryption layer needs to be created first so the file
+    # system can be created inside that encryption layer.
+    #
+    def dependencies
+      DEPENDENCIES
     end
 
     #
@@ -357,14 +378,19 @@ module Y2Storage
       label         = fs_param["label"]
       uuid          = fs_param["uuid"]
       fstab_options = fs_param["fstab_options"]
+      encryption    = fs_param["encryption"]
 
-      blk_device = ::Storage::BlkDevice.find_by_name(@devicegraph, part_name)
+      if !encryption.nil?
+        log.info("file system is on encrypted device #{encryption}")
+        parent = encryption
+      end
+      blk_device = ::Storage::BlkDevice.find_by_name(@devicegraph, parent)
       file_system = blk_device.create_filesystem(fs_type)
       file_system.add_mountpoint(mount_point) if mount_point
       file_system.label = label if label
       file_system.uuid = uuid if uuid
       set_fstab_options(file_system, fstab_options)
-      part_name
+      parent
     end
 
     # Picks some parameters that are really file system related from args
@@ -377,7 +403,7 @@ module Y2Storage
     #
     def file_system_data_picker(name, args)
       @partitions[name] = args.select do |k, _v|
-        ["mount_point", "label", "uuid", "fstab_options"].include?(k)
+        ["mount_point", "label", "uuid", "fstab_options", "encryption"].include?(k)
       end
     end
 
@@ -411,6 +437,36 @@ module Y2Storage
       size = args["size"]
       @free_blob = size if size && size.size > 0
       disk_name
+    end
+
+    # Factory method to create an encryption layer.
+    #
+    # @param parent [String] parent device name ("/dev/sda1" etc.)
+    #
+    # @param args [Hash] encryption layer parameters:
+    #   "name"     name encryption layer ("cr_Something")
+    #   "type"     encryption type; default: "luks"
+    #   "password" encryption password (optional)
+    #
+    # @return [Object] new encryption object
+    #
+    def create_encryption(parent, args)
+      log.info("#{__method__}( #{parent}, #{args} )")
+      name = args["name"]
+      raise ArgumentError, "\"name\" missing for encryption on #{parent}" if name.nil?
+      password = args["password"]
+      type_name = args["type"] || "luks"
+      # We only support creating LUKS so far
+      raise ArgumentError, "Unsupported encryption type #{type_name}" unless type_name == "luks"
+
+      blk_parent = Storage::BlkDevice.find_by_name(@devicegraph, parent)
+      encryption = blk_parent.create_encryption(name)
+      encryption.password = password unless password.nil?
+      if @partitions.key?(parent)
+        # Notify create_file_system that this partition is encrypted
+        @partitions[parent]["encryption"] = encryption.name
+      end
+      encryption
     end
 
     # Factory method to create a lvm volume group.
@@ -499,7 +555,6 @@ module Y2Storage
       log.info("#{__method__}( #{parent}, #{args} )")
 
       blk_device_name = args["blk_device"]
-
       blk_device = ::Storage::BlkDevice.find_by_name(devicegraph, blk_device_name)
 
       parent.add_lvm_pv(blk_device)
@@ -522,4 +577,5 @@ module Y2Storage
       value
     end
   end
+  # rubocop:enable all
 end

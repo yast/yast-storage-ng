@@ -91,5 +91,13 @@ module Y2Storage
         "keep_end"  => ::Storage::AlignPolicy_KEEP_END,
         "keep_size" => ::Storage::AlignPolicy_KEEP_SIZE
       }
+
+    ENCRYPTION_TYPES =
+      {
+        "twofish"        => ::Storage::EncryptionType_TWOFISH,
+        "twofish_old"    => ::Storage::EncryptionType_TWOFISH_OLD,
+        "twofish256_old" => ::Storage::EncryptionType_TWOFISH256_OLD,
+        "luks"           => ::Storage::EncryptionType_LUKS
+      }
   end
 end
