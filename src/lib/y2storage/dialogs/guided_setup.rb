@@ -53,17 +53,37 @@ module Y2Storage
       def dialog_content
         MarginBox(
           2, 1,
-          RadioButtonGroup(
-            Id(:mode),
-            VBox(
-              Left(RadioButton(Id(:mode_partition), _("Partition-based"), partition_selected?)),
-              VSpacing(1),
-              Left(RadioButton(Id(:mode_lvm), _("LVM-based"), lvm_selected?)),
-              VSpacing(1),
-              Left(RadioButton(Id(:mode_encrypted), _("Encrypted LVM-based"), encrypted_selected?))
+          VBox(
+            RadioButtonGroup(
+              Id(:mode),
+              VBox(
+                Left(RadioButton(Id(:mode_partition), _("Partition-based"), partition_selected?)),
+                VSpacing(1),
+                Left(RadioButton(Id(:mode_lvm), _("LVM-based"), lvm_selected?)),
+                VSpacing(1),
+                Left(RadioButton(Id(:mode_encrypted), _("Encrypted LVM-based"), encrypted_selected?))
+              )
+            ),
+            VSpacing(0.2),
+            Left(
+              HBox(
+                HSpacing(8),
+                Password(Id(:encryption_password), _("Enter encryption password"))
+              )
             )
           )
         )
+      end
+
+      def create_dialog
+        super
+        init_widgets
+        true
+      end
+
+      def init_widgets
+        # Remember entered password
+        Yast::UI.ChangeWidget(Id(:encryption_password), :Value, settings.encryption_password)
       end
 
       def partition_selected?
@@ -75,19 +95,20 @@ module Y2Storage
       end
 
       def encrypted_selected?
-        settings.use_lvm && settings.encryption_password
+        settings.use_lvm && !settings.encryption_password.nil?
       end
 
       def adjust_settings_to_mode
         case Yast::UI.QueryWidget(Id(:mode), :CurrentButton)
         when :mode_partition
           settings.use_lvm = false
+          settings.encryption_password = nil
         when :mode_lvm
           settings.use_lvm = true
           settings.encryption_password = nil
         when :mode_encrypted
           settings.use_lvm = true
-          settings.encryption_password = "12345678"
+          settings.encryption_password = Yast::UI.QueryWidget(Id(:encryption_password), :Value)
         end
       end
 
