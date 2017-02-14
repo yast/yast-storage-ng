@@ -26,7 +26,8 @@ require "y2storage"
 
 describe Y2Storage::Proposal::SpaceDistributionCalculator do
   let(:lvm_volumes) { Y2Storage::PlannedVolumesList.new }
-  let(:lvm_helper) { Y2Storage::Proposal::LvmHelper.new(lvm_volumes) }
+  let(:lvm_helper) { Y2Storage::Proposal::LvmHelper.new(lvm_volumes, encryption_password: enc_password) }
+  let(:enc_password) { nil }
 
   subject(:calculator) { described_class.new(lvm_helper) }
 
@@ -401,6 +402,14 @@ describe Y2Storage::Proposal::SpaceDistributionCalculator do
         it "sets max_disk_size for all PVs to sum lvm_max" do
           useful_max_sizes = pv_vols.map { |v| lvm_helper.useful_pv_space(v.max_disk_size) }
           expect(useful_max_sizes.reduce(:+)).to eq lvm_max
+        end
+
+        context "if encryption is being used" do
+          let(:enc_password) { "DontLookAtMe" }
+
+          it "sets #encrypted_password for all the PVs" do
+            expect(pv_vols.map(&:encryption_password)).to all(eq "DontLookAtMe")
+          end
         end
 
         context "if there are other volumes in the same space" do

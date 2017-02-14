@@ -168,6 +168,7 @@ module Y2Storage
       def new_planned_volume
         res = PlannedVolume.new(nil)
         res.partition_id = Storage::ID_LVM
+        res.encryption_password = lvm_helper.encryption_password
         res.min_disk_size = res.desired_disk_size = lvm_helper.min_pv_size
         res
       end

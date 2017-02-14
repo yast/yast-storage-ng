@@ -71,11 +71,11 @@ module Y2Storage
       end
 
       def lvm_selected?
-        settings.use_lvm && !settings.encrypt_volume_group
+        settings.use_lvm && settings.encryption_password.nil?
       end
 
       def encrypted_selected?
-        settings.use_lvm && settings.encrypt_volume_group
+        settings.use_lvm && settings.encryption_password
       end
 
       def adjust_settings_to_mode
@@ -84,10 +84,10 @@ module Y2Storage
           settings.use_lvm = false
         when :mode_lvm
           settings.use_lvm = true
-          settings.encrypt_volume_group = false
+          settings.encryption_password = nil
         when :mode_encrypted
           settings.use_lvm = true
-          settings.encrypt_volume_group = true
+          settings.encryption_password = "12345678"
         end
       end
 

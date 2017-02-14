@@ -23,12 +23,15 @@
 
 require "yast"
 require "y2storage/disk_size"
+require "y2storage/secret_attributes"
 
 module Y2Storage
   # Class to represent a planned volume (partition or logical volume) and
   # its constraints
   #
   class PlannedVolume
+    include SecretAttributes
+
     # @return [String] mount point for this volume. This might be a real mount
     # point ("/", "/boot", "/home") or a pseudo mount point like "swap".
     attr_accessor :mount_point
@@ -80,6 +83,10 @@ module Y2Storage
     attr_accessor :label
     # @return [String] UUID to enforce in the filesystem
     attr_accessor :uuid
+    # @!attribute encryption_password
+    #   @return [String, nil] password used to encrypt the volume. If is nil, it
+    #   means the volume will not be encrypted
+    secret_attr :encryption_password
 
     TO_STRING_ATTRS = [:mount_point, :reuse, :min_disk_size, :max_disk_size,
                        :desired_disk_size, :disk, :max_start_offset]
@@ -173,6 +180,13 @@ module Y2Storage
 
     def ==(other)
       other.class == self.class && other.internal_state == internal_state
+    end
+
+    # Checks whether the volume will be encrypted
+    #
+    # @return [Boolean]
+    def encrypt?
+      !encryption_password.nil?
     end
 
   protected

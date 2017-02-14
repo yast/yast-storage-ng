@@ -62,7 +62,7 @@ module Y2Storage
           lvm_vols = PlannedVolumesList.new
         end
 
-        lvm_helper = LvmHelper.new(lvm_vols)
+        lvm_helper = LvmHelper.new(lvm_vols, encryption_password: settings.encryption_password)
         space_maker = SpaceMaker.new(initial_graph, disk_analyzer, lvm_helper, settings)
         begin
           space_result = provide_space(volumes, space_maker)

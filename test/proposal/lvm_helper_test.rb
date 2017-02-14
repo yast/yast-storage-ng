@@ -32,9 +32,10 @@ describe Y2Storage::Proposal::LvmHelper do
     fake_scenario(scenario)
   end
 
-  subject(:helper) { described_class.new(volumes_list) }
+  subject(:helper) { described_class.new(volumes_list, encryption_password: enc_password) }
   let(:volumes_list) { Y2Storage::PlannedVolumesList.new(volumes, target: :desired) }
   let(:volumes) { [] }
+  let(:enc_password) { nil }
 
   describe "#missing_space" do
     let(:scenario) { "lvm-big-pe" }
@@ -88,7 +89,7 @@ describe Y2Storage::Proposal::LvmHelper do
     end
   end
 
-  describe "#missing_space" do
+  describe "#max_extra_space" do
     let(:scenario) { "lvm-big-pe" }
     let(:vg_big_pe) { Storage::LvmVg.find_by_vg_name(fake_devicegraph, "vg0") }
 
@@ -158,6 +159,14 @@ describe Y2Storage::Proposal::LvmHelper do
         result = helper.reusable_volume_groups(fake_devicegraph)
         expect(result.map(&:vg_name)).to eq ["vg30", "vg10", "vg6", "vg4"]
       end
+
+      context "and encryption is being used" do
+        let(:enc_password) { "12345678" }
+
+        it "returns an empty array" do
+          expect(helper.reusable_volume_groups(fake_devicegraph)).to eq []
+        end
+      end
     end
 
     context "if some volume groups are big enough" do
@@ -179,6 +188,34 @@ describe Y2Storage::Proposal::LvmHelper do
         result = helper.reusable_volume_groups(fake_devicegraph)
         expect(result[2].vg_name).to eq "vg6"
         expect(result[3].vg_name).to eq "vg4"
+      end
+
+      context "and encryption is being used" do
+        let(:enc_password) { "12345678" }
+
+        it "returns an empty array" do
+          expect(helper.reusable_volume_groups(fake_devicegraph)).to eq []
+        end
+      end
+    end
+  end
+
+  describe "#encrypt?" do
+    let(:scenario) { "windows-pc" }
+
+    context "if the encryption password was not initialized" do
+      let(:enc_password) { nil }
+
+      it "returns false" do
+        expect(helper.encrypt?).to eq false
+      end
+    end
+
+    context "if the encryption password was set" do
+      let(:enc_password) { "Sec3t!" }
+
+      it "returns true" do
+        expect(helper.encrypt?).to eq true
       end
     end
   end
@@ -222,6 +259,23 @@ describe Y2Storage::Proposal::LvmHelper do
           an_object_with_fields(mountpoint: "/1", lv_name: "one", fs_type: :ext4),
           an_object_with_fields(mountpoint: "/2", lv_name: "two", fs_type: :ext4)
         )
+      end
+
+      context "and encryption is used" do
+        let(:scenario) { "lvm-new-encrypted-pvs" }
+        let(:enc_password) { "SomePassphrase" }
+
+        it "uses the encrypted devices to create the physical volumes" do
+          devicegraph = helper.create_volumes(fake_devicegraph, pv_partitions)
+          new_vg = devicegraph.volume_groups.with(vg_name: "system").first
+          pv_devices = new_vg.lvm_pvs.to_a.map(&:blk_device)
+
+          pv_devices.each do |device|
+            expect(Storage.encryption?(device)).to eq true
+          end
+          part_names = pv_devices.map { |d| Storage.to_encryption(d).blk_device.name }
+          expect(part_names.sort).to eq pv_partitions.sort
+        end
       end
     end
 
@@ -301,7 +355,7 @@ describe Y2Storage::Proposal::LvmHelper do
         two.weight = 1
       end
 
-      it "distributes the extra space" do
+      it "distributes the extra space according to weights" do
         devicegraph = helper.create_volumes(fake_devicegraph, pv_partitions)
         lvs = devicegraph.volume_groups.with(vg_name: "system").lvm_lvs.to_a
 

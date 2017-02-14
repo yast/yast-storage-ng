@@ -23,6 +23,7 @@
 
 require "yast"
 require "y2storage/disk_size"
+require "y2storage/secret_attributes"
 
 module Y2Storage
   #
@@ -31,16 +32,18 @@ module Y2Storage
   #
   class ProposalUserSettings
     include Yast::Logger
+    include SecretAttributes
 
-    attr_accessor :use_lvm, :encrypt_volume_group
+    attr_accessor :use_lvm
     attr_accessor :root_filesystem_type, :use_snapshots
     attr_accessor :use_separate_home, :home_filesystem_type
     attr_accessor :enlarge_swap_for_suspend
     attr_accessor :root_device, :candidate_devices
+    secret_attr   :encryption_password
 
     def initialize
       @use_lvm                  = false
-      @encrypt_volume_group     = false
+      self.encryption_password  = nil
       @root_filesystem_type     = ::Storage::FsType_BTRFS
       @use_snapshots            = true
       @use_separate_home        = true
