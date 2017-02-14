@@ -452,7 +452,7 @@ module Y2Storage
     #
     def create_encryption(parent, args)
       log.info("#{__method__}( #{parent}, #{args} )")
-      name = args["name"]
+      name = args["name"].split("/").last
       raise ArgumentError, "\"name\" missing for encryption on #{parent}" if name.nil?
       password = args["password"]
       type_name = args["type"] || "luks"
