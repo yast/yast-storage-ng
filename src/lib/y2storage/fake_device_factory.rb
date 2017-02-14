@@ -452,8 +452,7 @@ module Y2Storage
     #
     def create_encryption(parent, args)
       log.info("#{__method__}( #{parent}, #{args} )")
-      name = args["name"].split("/").last
-      raise ArgumentError, "\"name\" missing for encryption on #{parent}" if name.nil?
+      name = encryption_name(args["name"], parent)
       password = args["password"]
       type_name = args["type"] || "luks"
       # We only support creating LUKS so far
@@ -467,6 +466,23 @@ module Y2Storage
         @partitions[parent]["encryption"] = encryption.name
       end
       encryption
+    end
+
+    def encryption_name(name, parent)
+      result = nil
+
+      if name.include?("/")
+        if name.start_with?("/dev/mapper/")
+          result = name.split("/").last
+        else
+          raise ArgumentError, "Unexpected \"name\" value for encryption on #{parent}: #{name}"
+        end
+      else
+        result = name
+      end
+
+      raise ArgumentError, "\"name\" missing for encryption on #{parent}" if result.nil? || result.empty?
+      result
     end
 
     # Factory method to create a lvm volume group.
