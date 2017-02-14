@@ -34,6 +34,7 @@ end
 RSpec.shared_examples "LVM-based proposed layouts" do
   context "using LVM" do
     let(:lvm) { true }
+    let(:encrypt) { false }
 
     context "with a separate home" do
       let(:separate_home) { true }
@@ -63,7 +64,25 @@ RSpec.shared_examples "partition-based proposed layouts" do
   end
 end
 
+RSpec.shared_examples "Encrypted LVM-based proposed layouts" do
+  context "using Encrypted LVM" do
+    let(:lvm) { true }
+    let(:encrypt) { true }
+
+    context "with a separate home" do
+      let(:separate_home) { true }
+      include_examples "proposed layout"
+    end
+
+    context "without separate home" do
+      let(:separate_home) { false }
+      include_examples "proposed layout"
+    end
+  end
+end
+
 RSpec.shared_examples "all proposed layouts" do
   include_examples "LVM-based proposed layouts"
+  include_examples "Encrypted LVM-based proposed layouts"
   include_examples "partition-based proposed layouts"
 end
