@@ -226,6 +226,7 @@ module Y2Storage
       }
 
       content.merge!(yaml_filesystem(partition.filesystem)) if partition.has_filesystem
+      content.merge!(yaml_encryption(partition.encryption)) if partition.has_encryption
 
       { "partition" => content }
     end
@@ -293,6 +294,7 @@ module Y2Storage
       content["stripe_size"] = DiskSize.B(lvm_lv.stripe_size).to_s if lvm_lv.stripe_size != 0
 
       content.merge!(yaml_filesystem(lvm_lv.filesystem)) if lvm_lv.has_filesystem
+      content.merge!(yaml_encryption(lvm_lv.encryption)) if lvm_lv.has_encryption
 
       { "lvm_lv" => content }
     end
@@ -322,7 +324,7 @@ module Y2Storage
 
     # Return the YAML counterpart of a ::Storage::Filesystem.
     #
-    # @param lvm_lv [::Storage::Filesystem]
+    # @param file_system [::Storage::Filesystem]
     # @return [Hash{String => Object}]
     #
     def yaml_filesystem(file_system)
@@ -335,6 +337,23 @@ module Y2Storage
       content["fstab_options"] = file_system.fstab_options.to_a unless file_system.fstab_options.empty?
 
       content
+    end
+
+    # Return the YAML counterpart of a ::Storage::Encryption.
+    #
+    # @param encryption [::Storage::Filesystem]
+    # @return [Hash{String => Object}]
+    #
+    def yaml_encryption(encryption)
+      content = {
+        "type" => "luks"
+        # "type" = @encryption_types[encryption.type] # not implemented yet in lib
+      }
+
+      content["name"] = encryption.name
+      content["password"] = encryption.password unless encryption.password.empty?
+
+      { "encryption" => content }
     end
   end
 end
