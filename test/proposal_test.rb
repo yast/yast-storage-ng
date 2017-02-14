@@ -59,16 +59,19 @@ describe Y2Storage::Proposal do
     end
     let(:separate_home) { false }
     let(:lvm) { false }
+    let(:encrypt) { false }
     let(:settings) do
       settings = Y2Storage::ProposalSettings.new
       settings.use_separate_home = separate_home
       settings.use_lvm = lvm
+      settings.encryption_password = encrypt ? "12345678" : nil
       settings
     end
 
     let(:expected_scenario) { scenario }
     let(:expected) do
       file_name = expected_scenario
+      file_name.concat("-enc") if encrypt
       file_name.concat("-lvm") if lvm
       file_name.concat("-sep-home") if separate_home
       ::Storage::Devicegraph.new_from_file(output_file_for(file_name))
@@ -87,7 +90,8 @@ describe Y2Storage::Proposal do
 
     context "in a windows-only PC with 256 KiB of MBR gap" do
       let(:scenario) { "windows-pc-mbr256" }
-      include_examples "all proposed layouts"
+      include_examples "LVM-based proposed layouts"
+      include_examples "partition-based proposed layouts"
     end
 
     context "in a windows-only PC with 128 KiB of MBR gap" do
@@ -129,7 +133,8 @@ describe Y2Storage::Proposal do
 
     context "in a windows/linux multiboot PC with pre-existing LVM and MBR partition table" do
       let(:scenario) { "windows-linux-lvm-pc" }
-      include_examples "all proposed layouts"
+      include_examples "LVM-based proposed layouts"
+      include_examples "partition-based proposed layouts"
     end
 
     context "in a windows-only PC with GPT partition table" do
@@ -154,7 +159,8 @@ describe Y2Storage::Proposal do
     context "in a windows/linux multiboot PC with pre-existing LVM and GPT partition table" do
       let(:scenario) { "windows-linux-lvm-pc-gpt" }
 
-      include_examples "all proposed layouts"
+      include_examples "LVM-based proposed layouts"
+      include_examples "partition-based proposed layouts"
     end
 
     context "in a PC with an empty partition table" do
