@@ -77,7 +77,7 @@ module Y2Storage
       end
 
       def encrypted_selected?
-        settings.use_lvm && settings.encryption_password
+        settings.use_lvm && !settings.encryption_password.nil?
       end
 
       def adjust_settings_to_mode
