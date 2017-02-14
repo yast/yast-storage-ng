@@ -172,7 +172,7 @@ describe Y2Storage::FakeDeviceFactory do
              '        - user_xattr',
              '        encryption:',
              '            type: "luks"',
-             '            name: "cr_root"',
+             '            name: "/dev/mapper/cr_root"',
              '            password: "s3cr3t"',
              '']
 
@@ -181,11 +181,135 @@ describe Y2Storage::FakeDeviceFactory do
     io = StringIO.new(input.join("\n"))
     Y2Storage::FakeDeviceFactory.load_yaml_file(staging, io)
 
-    root_part = Storage.to_partition(Storage::BlkDevice.find_by_name(staging, "/dev/sda2"))
-    encryption = root_part.encryption
+    sda2 = Storage.to_partition(Storage::BlkDevice.find_by_name(staging, "/dev/sda2"))
+    encryption = sda2.encryption
+
+    expect(sda2.has_encryption).to be true
+    expect(encryption.has_filesystem).to be true
+
     expect(encryption.password).to eq "s3cr3t"
     expect(encryption.name).to eq "/dev/mapper/cr_root"
     expect(encryption.filesystem.mountpoints.first).to eq "/"
+
+  end
+
+  it "reads yaml for LVM encrypted on the PV level" do
+    environment = Storage::Environment.new(true, Storage::ProbeMode_NONE, Storage::TargetMode_DIRECT)
+    storage = Storage::Storage.new(environment)
+    staging = storage.staging
+
+    # rubocop:disable Style/StringLiterals
+
+    input = ['---',
+             '- disk:',
+             '    name: "/dev/sda"',
+             '    size: 512 GiB',
+             '    block_size: 0.5 KiB',
+             '    io_size: 0 B',
+             '    min_grain: 1 MiB',
+             '    align_ofs: 0 B',
+             '    partition_table: msdos',
+             '    partitions:',
+             '    - partition:',
+             '        size: 511 GiB',
+             '        start: 2 MiB',
+             '        name: "/dev/sda1"',
+             '        type: primary',
+             '        id: lvm',
+             '        encryption:',
+             '            type: "luks"',
+             '            name: "/dev/mapper/cr_sda1"',
+             '            password: "s3cr3t"',
+             '- lvm_vg:',
+             '    vg_name: system',
+             '    lvm_lvs:',
+             '    - lvm_lv:',
+             '        lv_name: root',
+             '        size: 100 GiB',
+             '        file_system: xfs',
+             '        mount_point: "/"',
+             '    lvm_pvs:',
+             '    - lvm_pv:',
+             '        blk_device: "/dev/mapper/cr_sda1"']
+
+    # rubocop:enable all
+
+    io = StringIO.new(input.join("\n"))
+    Y2Storage::FakeDeviceFactory.load_yaml_file(staging, io)
+
+    root_lv = Storage.to_lvm_lv(Storage::BlkDevice.find_by_name(staging, "/dev/system/root"))
+    sda1 = Storage.to_partition(Storage::BlkDevice.find_by_name(staging, "/dev/sda1"))
+    root_fs = root_lv.filesystem
+    encryption = sda1.encryption
+
+    expect(sda1.has_encryption).to be true
+    expect(root_lv.has_encryption).to be false
+    expect(root_lv.has_filesystem).to be true
+    expect(encryption.has_filesystem).to be false
+
+    expect(root_fs.mountpoints.first).to eq "/"
+    expect(encryption.password).to eq "s3cr3t"
+    expect(encryption.name).to eq "/dev/mapper/cr_sda1"
+
+  end
+
+  it "reads yaml for LVM encrypted on the LV level" do
+    environment = Storage::Environment.new(true, Storage::ProbeMode_NONE, Storage::TargetMode_DIRECT)
+    storage = Storage::Storage.new(environment)
+    staging = storage.staging
+
+    # rubocop:disable Style/StringLiterals
+
+    input = ['---',
+             '- disk:',
+             '    name: "/dev/sda"',
+             '    size: 512 GiB',
+             '    block_size: 0.5 KiB',
+             '    io_size: 0 B',
+             '    min_grain: 1 MiB',
+             '    align_ofs: 0 B',
+             '    partition_table: msdos',
+             '    partitions:',
+             '    - partition:',
+             '        size: 511 GiB',
+             '        start: 2 MiB',
+             '        name: "/dev/sda1"',
+             '        type: primary',
+             '        id: lvm',
+             '- lvm_vg:',
+             '    vg_name: system',
+             '    lvm_lvs:',
+             '    - lvm_lv:',
+             '        lv_name: root',
+             '        size: 100 GiB',
+             '        file_system: xfs',
+             '        mount_point: "/"',
+             '        encryption:',
+             '            type: "luks"',
+             '            name: "/dev/mapper/cr_root"',
+             '            password: "s3cr3t"',
+             '    lvm_pvs:',
+             '    - lvm_pv:',
+             '        blk_device: "/dev/sda1"']
+
+    # rubocop:enable all
+
+    io = StringIO.new(input.join("\n"))
+    Y2Storage::FakeDeviceFactory.load_yaml_file(staging, io)
+
+    root_lv = Storage.to_lvm_lv(Storage::BlkDevice.find_by_name(staging, "/dev/system/root"))
+    sda1 = Storage.to_partition(Storage::BlkDevice.find_by_name(staging, "/dev/sda1"))
+    encryption = root_lv.encryption
+    root_fs = encryption.filesystem
+
+    expect(sda1.has_encryption).to be false
+    expect(root_lv.has_encryption).to be true
+    expect(root_lv.has_filesystem).to be false
+    expect(encryption.has_filesystem).to be true
+
+    expect(root_fs.mountpoints.first).to eq "/"
+    expect(encryption.password).to eq "s3cr3t"
+    expect(encryption.name).to eq "/dev/mapper/cr_root"
 
   end
 
