@@ -148,7 +148,7 @@ Example:
         label:        root
         encryption:
             type:     "luks"
-            name:     "cr_root"
+            name:     "/dev/mapper/cr_root"
             password: "s3cr3t"
 
 - size: Similar to disk.size: Size of the partition specified as something the
@@ -255,16 +255,16 @@ Example:
 Example:
 
     encryption:
-        name:     "cr_root"
+        name:     "/dev/mapper/cr_root"
         type:     "luks"
         password: "s3cr3t"
 
 This is permitted under "partition" or "lvm_lv". For LVM PVs, add this to the
 corresponding partition.
 
-- name: Required parameter. This is the name of the crypto device that appears
-  in /etc/crypttab and below /dev/mapper. Starting this with "cr_" is a
-  convention, but not mandatory.
+- name: Required parameter. This is the name (with the complete path) of the
+  crypto device that appears in /etc/crypttab and in /dev/mapper. Starting
+  this with "cr_" is a convention, but not mandatory.
 
 - type: Right now, only "luks" is supported. This is the default and optional,
   so it can be omitted.
