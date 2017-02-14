@@ -60,7 +60,9 @@ module Y2Storage
               VSpacing(1),
               Left(RadioButton(Id(:mode_lvm), _("LVM-based"), lvm_selected?)),
               VSpacing(1),
-              Left(RadioButton(Id(:mode_encrypted), _("Encrypted LVM-based"), encrypted_selected?))
+              Left(RadioButton(Id(:mode_encrypted), _("Encrypted LVM-based"), encrypted_selected?)),
+              VSpacing(1),
+              Left(Password(Id(:encryption_password), _("Enter encrytion password")))
             )
           )
         )
@@ -87,7 +89,7 @@ module Y2Storage
           settings.encryption_password = nil
         when :mode_encrypted
           settings.use_lvm = true
-          settings.encryption_password = "12345678"
+          settings.encryption_password = Yast::UI.QueryWidget(Id(:encryption_password), :Value)
         end
       end
 
