@@ -51,7 +51,14 @@ module Y2Storage
         fs_list = partitions.filesystems.to_a
         # Add filesystems not included in #partitions (directly on disk)
         list.each do |disk|
-          fs_list << disk.filesystem if !disk.partition_table && disk.filesystem
+          next if disk.partition_table?
+
+          begin
+            fs_list << disk.filesystem if disk.filesystem
+          rescue Storage::WrongNumberOfChildren, Storage::DeviceHasWrongType
+            # No filesystem
+            nil
+          end
         end
         FilesystemsList.new(devicegraph, list: fs_list)
       end
