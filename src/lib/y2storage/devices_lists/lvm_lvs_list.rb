@@ -36,7 +36,7 @@ module Y2Storage
         fs_list = list.map do |lv|
           begin
             lv.filesystem
-          rescue ::Storage::WrongNumberOfChildren
+          rescue Storage::WrongNumberOfChildren, Storage::DeviceHasWrongType
             # No filesystem in the logical volume
             nil
           end

@@ -109,7 +109,7 @@ module Y2Storage
       def match?(element, attr, value)
         begin
           real_value = element.send(attr)
-        rescue ::Storage::WrongNumberOfChildren
+        rescue Storage::WrongNumberOfChildren, Storage::DeviceHasWrongType
           # Checking for something that is not there, which only matches if you
           # where indeed checking for nil
           return value.nil?

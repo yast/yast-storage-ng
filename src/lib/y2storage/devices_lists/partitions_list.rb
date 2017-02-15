@@ -37,7 +37,7 @@ module Y2Storage
         fs_list = list.map do |partition|
           begin
             partition.filesystem
-          rescue Storage::WrongNumberOfChildren
+          rescue Storage::WrongNumberOfChildren, Storage::DeviceHasWrongType
             # No filesystem in the partition
             nil
           end
@@ -61,7 +61,7 @@ module Y2Storage
         devicegraph.all_disks.to_a.reduce([]) do |sum, disk|
           begin
             sum + disk.partition_table.partitions.to_a
-          rescue Storage::WrongNumberOfChildren
+          rescue Storage::WrongNumberOfChildren, Storage::DeviceHasWrongType
             # No partition table
             sum
           end

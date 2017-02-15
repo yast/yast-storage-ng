@@ -222,6 +222,19 @@ describe "devices lists" do
         expect(fs_sdc).to be_a Y2Storage::DevicesLists::FilesystemsList
         expect(fs_sdc.size).to eq 0
       end
+
+      context "with a complex scenario" do
+        let(:scenario) { "complex-lvm-encrypt" }
+
+        # Test to ensure it can handle encrypted disks and empty disks
+        it "manages partition-less disks correctly" do
+          expect(disks.filesystems).to be_a Y2Storage::DevicesLists::FilesystemsList
+        end
+
+        it "does not include filesystems within LVM" do
+          expect(disks.filesystems.size).to eq 2
+        end
+      end
     end
 
     describe "#free_disk_spaces" do
@@ -282,6 +295,19 @@ describe "devices lists" do
         expect(parts_sda.filesystems.size).to eq 2
         expect(parts_sdb.filesystems).to be_a Y2Storage::DevicesLists::FilesystemsList
         expect(parts_sdb.filesystems.size).to eq 5
+      end
+
+      context "with LVM" do
+        let(:scenario) { "complex-lvm-encrypt" }
+
+        # Ensure that partitions used for encryption or LVM PVs are not a problem
+        it "handles correctly partitions that are neither formatted or empty" do
+          expect(partitions.filesystems).to be_a Y2Storage::DevicesLists::FilesystemsList
+        end
+
+        it "returns the filesystems located directly in a partition" do
+          expect(partitions.filesystems.size).to eq 2
+        end
       end
     end
 
@@ -548,6 +574,18 @@ describe "devices lists" do
         expect(lvs.filesystems.size).to eq 3
         expect(lvs_lv1.filesystems).to be_a Y2Storage::DevicesLists::FilesystemsList
         expect(lvs_lv1.filesystems.size).to eq 2
+      end
+
+      context "with encrypted logical volumes" do
+        let(:scenario) { "complex-lvm-encrypt" }
+
+        it "can deal with encrypted logical volumes" do
+          expect(lvs.filesystems).to be_a Y2Storage::DevicesLists::FilesystemsList
+        end
+
+        it "returns the filesystems located directly in a logical volume" do
+          expect(lvs.filesystems.size).to eq 3
+        end
       end
     end
   end
