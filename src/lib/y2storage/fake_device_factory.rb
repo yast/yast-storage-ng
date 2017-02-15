@@ -46,7 +46,7 @@ module Y2Storage
     # This indicates the permitted children types for each parent.
     VALID_HIERARCHY =
       {
-        "disk"       => ["partition_table", "partitions", "file_system"],
+        "disk"       => ["partition_table", "partitions", "file_system", "encryption"],
         "partitions" => ["partition", "free"],
         "partition"  => ["file_system", "encryption"],
         "encryption" => ["file_system"],
