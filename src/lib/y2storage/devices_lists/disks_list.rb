@@ -25,6 +25,8 @@ require "y2storage/devices_lists/base"
 require "y2storage/devices_lists/partitions_list"
 require "y2storage/devices_lists/filesystems_list"
 require "y2storage/devices_lists/free_disk_spaces_list"
+require "y2storage/devices_lists/encryptions_list"
+require "y2storage/devices_lists/formattable"
 require "y2storage/refinements/disk"
 
 module Y2Storage
@@ -32,6 +34,7 @@ module Y2Storage
     # List of disks from a devicegraph
     class DisksList < Base
       list_of ::Storage::Disk
+      include Formattable
 
       using Refinements::Disk
 
@@ -43,16 +46,24 @@ module Y2Storage
         PartitionsList.new(devicegraph, list: part_list)
       end
 
-      # Filesystems present in any of the disks, either directly either inside a
+      # Encryption devices present in any of the disks, either directly or
+      # inside a partition
+      #
+      # @return [FilesystemsList]
+      def encryptions
+        enc_list, _fs_list = with(partition_table: nil).direct_encryptions_and_filesystems
+        enc_list.concat(partitions.encryptions.to_a)
+        EncryptionsList.new(devicegraph, list: enc_list)
+      end
+
+      # Filesystems present in any of the disks, either directly or inside a
       # partition
       #
       # @return [FilesystemsList]
       def filesystems
-        fs_list = partitions.filesystems.to_a
-        # Add filesystems not included in #partitions (directly on disk)
-        list.each do |disk|
-          fs_list << disk.filesystem if !disk.partition_table && disk.filesystem
-        end
+        enc_list, fs_list = with(partition_table: nil).direct_encryptions_and_filesystems
+        fs_list.concat(EncryptionsList.new(devicegraph, list: enc_list).filesystems.to_a)
+        fs_list.concat(partitions.filesystems.to_a)
         FilesystemsList.new(devicegraph, list: fs_list)
       end
 

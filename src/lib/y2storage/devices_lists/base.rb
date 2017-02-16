@@ -109,7 +109,7 @@ module Y2Storage
       def match?(element, attr, value)
         begin
           real_value = element.send(attr)
-        rescue ::Storage::WrongNumberOfChildren
+        rescue Storage::WrongNumberOfChildren, Storage::DeviceHasWrongType
           # Checking for something that is not there, which only matches if you
           # where indeed checking for nil
           return value.nil?
@@ -126,6 +126,21 @@ module Y2Storage
 
         # As a second option, check for collection
         value.is_a?(Enumerable) && value.include?(real_value)
+      end
+
+      # Utility method used by some subclasses whose corresponding device type
+      # offers a #blk_device method
+      def blk_devices
+        list.map(&:blk_device).flatten.uniq
+      end
+
+      # @see blk_devices
+      def blk_devices_of_type(type)
+        result = blk_devices.select do |device|
+          Storage.send(:"#{type}?", device)
+        end
+        result.map! { |d| Storage.send(:"to_#{type}", d) }
+        result
       end
     end
   end

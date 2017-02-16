@@ -1,4 +1,12 @@
 -------------------------------------------------------------------
+Thu Feb 16 11:37:57 UTC 2017 - ancor@suse.com
+
+- Improvements in the devicegraph query interface: added an
+  EncryptionLists class and adapted all the other classes to take
+  several encryption-related scenarios into account.
+- 0.1.11
+
+-------------------------------------------------------------------
 Wed Feb  8 13:19:24 UTC 2017 - ancor@suse.com
 
 - Added a prototype of the "Guided Setup" wizard to configure the

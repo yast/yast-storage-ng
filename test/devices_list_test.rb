@@ -222,6 +222,34 @@ describe "devices lists" do
         expect(fs_sdc).to be_a Y2Storage::DevicesLists::FilesystemsList
         expect(fs_sdc.size).to eq 0
       end
+
+      context "with a complex scenario" do
+        let(:scenario) { "complex-lvm-encrypt" }
+
+        # Test to ensure it can handle encrypted disks and empty disks
+        it "manages partition-less disks correctly" do
+          expect(disks.filesystems).to be_a Y2Storage::DevicesLists::FilesystemsList
+        end
+
+        it "includes filesystems in encrypted devices but not filesystems within LVM" do
+          expect(disks.filesystems.size).to eq 4
+        end
+      end
+    end
+
+    describe "#encryptions" do
+      let(:scenario) { "complex-lvm-encrypt" }
+
+      it "returns a filtered list of encryption devices" do
+        expect(disks.encryptions).to be_a Y2Storage::DevicesLists::EncryptionsList
+        enc_direct = disks.with(partition_table: nil).encryptions
+        expect(enc_direct).to be_a Y2Storage::DevicesLists::EncryptionsList
+        expect(enc_direct.size).to eq 2
+      end
+
+      it "includes encryptions in partitions but not encryptions in LVs" do
+        expect(disks.encryptions.size).to eq 4
+      end
     end
 
     describe "#free_disk_spaces" do
@@ -283,6 +311,32 @@ describe "devices lists" do
         expect(parts_sdb.filesystems).to be_a Y2Storage::DevicesLists::FilesystemsList
         expect(parts_sdb.filesystems.size).to eq 5
       end
+
+      context "with LVM" do
+        let(:scenario) { "complex-lvm-encrypt" }
+
+        # Ensure that partitions used for encryption or LVM PVs are not a problem
+        it "handles correctly partitions that are neither formatted or empty" do
+          expect(partitions.filesystems).to be_a Y2Storage::DevicesLists::FilesystemsList
+        end
+
+        it "returns filesystems located in a partition or its encrypted device" do
+          expect(partitions.filesystems.size).to eq 4
+          expect(partitions.with(encryption: nil).filesystems.size).to eq 3
+        end
+      end
+    end
+
+    describe "#encryptions" do
+      let(:scenario) { "complex-lvm-encrypt" }
+
+      it "returns a filtered list of encryption devices" do
+        expect(partitions.encryptions).to be_a Y2Storage::DevicesLists::EncryptionsList
+        expect(partitions.encryptions.size).to eq 2
+        parts_sda = partitions.with { |p| p.name.start_with? "/dev/sda" }
+        expect(parts_sda.encryptions).to be_a Y2Storage::DevicesLists::EncryptionsList
+        expect(parts_sda.encryptions.size).to eq 1
+      end
     end
 
     describe "#disks" do
@@ -343,6 +397,14 @@ describe "devices lists" do
         expect(parts_none).to be_a Y2Storage::DevicesLists::PartitionsList
         expect(parts_none.size).to eq 0
       end
+
+      context "with encrypted partitions" do
+        let(:scenario) { "complex-lvm-encrypt" }
+
+        it "returns both encrypted partitions and directly formatted ones" do
+          expect(filesystems.partitions.size).to eq 4
+        end
+      end
     end
 
     describe "#disks" do
@@ -353,6 +415,14 @@ describe "devices lists" do
         expect(disks_ext4.size).to eq 2
         expect(disks_xfs).to be_a Y2Storage::DevicesLists::DisksList
         expect(disks_xfs.size).to eq 1
+      end
+
+      context "with encrypted partitions" do
+        let(:scenario) { "complex-lvm-encrypt" }
+
+        it "includes disks for encrypted partitions" do
+          expect(filesystems.disks.size).to eq 2
+        end
       end
     end
 
@@ -366,6 +436,14 @@ describe "devices lists" do
         expect(lvs_ext4.size).to eq 3
         expect(lvs_none).to be_a Y2Storage::DevicesLists::LvmLvsList
         expect(lvs_none.size).to eq 0
+      end
+
+      context "with encrypted logical volumes" do
+        let(:scenario) { "complex-lvm-encrypt" }
+
+        it "returns both encrypted volumes and directly formatted ones" do
+          expect(filesystems.lvm_lvs.size).to eq 4
+        end
       end
     end
 
@@ -381,6 +459,28 @@ describe "devices lists" do
         expect(vgs_xfs.size).to eq 0
       end
     end
+
+    describe "#encryptions" do
+      let(:scenario) { "complex-lvm-encrypt" }
+
+      it "returns a filtered list of encryption devices" do
+        expect(filesystems.encryptions).to be_a Y2Storage::DevicesLists::EncryptionsList
+        expect(filesystems.encryptions.size).to eq 2
+      end
+
+      it "includes directly formatted encryptions" do
+        expect(filesystems.encryptions.map(&:name)).to contain_exactly(
+          "/dev/mapper/cr_sda4", "/dev/mapper/cr_vg1_lv2"
+        )
+      end
+
+      it "does not include encryptions in an underlying device (e.g. PV)" do
+        expect(filesystems.encryptions.map(&:name)).not_to include(
+          "/dev/mapper/cr_sdd", "/dev/mapper/cr_sde1"
+        )
+      end
+    end
+
   end
 
   describe Y2Storage::DevicesLists::FreeDiskSpacesList do
@@ -452,6 +552,14 @@ describe "devices lists" do
         expect(fs_none).to be_a Y2Storage::DevicesLists::FilesystemsList
         expect(fs_none.size).to eq 0
       end
+
+      context "with encrypted logical volumes" do
+        let(:scenario) { "complex-lvm-encrypt" }
+
+        it "returns filesystem for both encrypted and plain logical volumes" do
+          expect(vgs.filesystems.size).to eq 4
+        end
+      end
     end
 
     describe "#partitions" do
@@ -465,6 +573,14 @@ describe "devices lists" do
         expect(partitions_none).to be_a Y2Storage::DevicesLists::PartitionsList
         expect(partitions_none.size).to eq 0
       end
+
+      context "with encrypted physical volumes" do
+        let(:scenario) { "complex-lvm-encrypt" }
+
+        it "returns partitions for both encrypted and plain physical volumes" do
+          expect(vgs.partitions.size).to eq 2
+        end
+      end
     end
 
     describe "#disks" do
@@ -477,6 +593,22 @@ describe "devices lists" do
         disks_none = vgs.with(vg_name: "wrong_name").disks
         expect(disks_none).to be_a Y2Storage::DevicesLists::DisksList
         expect(disks_none.size).to eq 0
+      end
+
+      context "with encrypted physical volumes" do
+        let(:scenario) { "complex-lvm-encrypt" }
+
+        it "includes disks directly used as physical volumes, both encrypted and plain" do
+          expect(vgs.disks.map(&:name)).to include("/dev/sdd", "/dev/sdg")
+        end
+
+        it "includes disks with partitions used as physical volumes, both encrypted and plain" do
+          expect(vgs.disks.map(&:name)).to include "/dev/sde"
+        end
+
+        it "does not include disks not used for LVM" do
+          expect(vgs.disks.size).to eq 3
+        end
       end
     end
   end
@@ -508,6 +640,14 @@ describe "devices lists" do
         expect(pvs.partitions).to be_a Y2Storage::DevicesLists::PartitionsList
         expect(pvs.partitions.size).to eq 3
       end
+
+      context "with encrypted physical volumes" do
+        let(:scenario) { "complex-lvm-encrypt" }
+
+        it "returns both encrypted partitions and directly used ones" do
+          expect(pvs.partitions.size).to eq 2
+        end
+      end
     end
 
     describe "#disks" do
@@ -517,6 +657,22 @@ describe "devices lists" do
         expect(pvs_vg0.disks.map(&:name)).to eq ["/dev/sda"]
         expect(pvs.disks).to be_a Y2Storage::DevicesLists::DisksList
         expect(pvs_vg0.disks.map(&:name)).to eq ["/dev/sda"]
+      end
+
+      context "with encrypted physical volumes" do
+        let(:scenario) { "complex-lvm-encrypt" }
+
+        it "includes disks directly used as physical volumes, both encrypted and plain" do
+          expect(pvs.disks.map(&:name)).to include("/dev/sdd", "/dev/sdg")
+        end
+
+        it "includes disks with partitions used as physical volumes, both encrypted and plain" do
+          expect(pvs.disks.map(&:name)).to include "/dev/sde"
+        end
+
+        it "does not include disks not used for LVM" do
+          expect(pvs.disks.size).to eq 3
+        end
       end
     end
   end
@@ -549,6 +705,35 @@ describe "devices lists" do
         expect(lvs_lv1.filesystems).to be_a Y2Storage::DevicesLists::FilesystemsList
         expect(lvs_lv1.filesystems.size).to eq 2
       end
+
+      context "with encrypted logical volumes" do
+        let(:scenario) { "complex-lvm-encrypt" }
+
+        it "can deal with encrypted logical volumes" do
+          expect(lvs.filesystems).to be_a Y2Storage::DevicesLists::FilesystemsList
+        end
+
+        it "returns filesystems located in a logical volume or its encrypted device" do
+          expect(lvs.filesystems.size).to eq 4
+          expect(lvs.with(encryption: nil).filesystems.size).to eq 3
+        end
+      end
     end
+
+    describe "#encryptions" do
+      let(:scenario) { "complex-lvm-encrypt" }
+
+      it "returns a filtered list of encryption devices" do
+        expect(lvs.encryptions).to be_a Y2Storage::DevicesLists::EncryptionsList
+        expect(lvs.encryptions.size).to eq 1
+      end
+    end
+  end
+
+  describe Y2Storage::DevicesLists::EncryptionsList do
+    let(:scenario) { "complex-lvm-encrypt" }
+    let(:encryptions) { fake_devicegraph.encryptions }
+
+    pending
   end
 end
