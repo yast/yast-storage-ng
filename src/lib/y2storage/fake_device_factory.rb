@@ -117,7 +117,6 @@ module Y2Storage
     def initialize(devicegraph)
       super(devicegraph)
       @disks = Set.new
-      @volumes = Set.new # contains both partitions and logical volumes
       @file_system_data = {}
     end
 
@@ -210,6 +209,7 @@ module Y2Storage
     # related to complexity.
     # rubocop:disable Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity
     def create_disk(_parent, args)
+      @volumes = Set.new
       @free_blob      = nil
       @free_regions   = []
       @mbr_gap        = nil
@@ -523,6 +523,7 @@ module Y2Storage
     #
     def create_lvm_vg(_parent, args)
       log.info("#{__method__}( #{args} )")
+      @volumes = Set.new # contains both partitions and logical volumes
 
       vg_name = args["vg_name"]
       lvm_vg = ::Storage::LvmVg.create(@devicegraph, vg_name)
