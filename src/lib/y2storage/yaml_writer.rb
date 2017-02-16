@@ -99,16 +99,16 @@ module Y2Storage
     #
     def yaml_disk(disk)
       content = basic_disk_attributes(disk)
-      begin
-        ptable = disk.partition_table # this will raise an exception if no partition table
+      if disk.has_partition_table
+        ptable = disk.partition_table
         content["partition_table"] = @partition_table_types[ptable.type]
         if ::Storage.msdos?(ptable)
           content["mbr_gap"] = DiskSize.B(::Storage.to_msdos(ptable).minimal_mbr_gap).to_s
         end
         partitions = yaml_disk_partitions(disk)
         content["partitions"] = partitions unless partitions.empty?
-      rescue RuntimeError => ex # FIXME: rescue ::Storage::Exception when SWIG bindings are fixed
-        log.info("CAUGHT exception #{ex}")
+      else
+        content.merge!(yaml_filesystem_and_encryption(disk))
       end
 
       { "disk" => content }
@@ -225,8 +225,7 @@ module Y2Storage
         "id"    => @partition_ids[partition.id] || "0x#{partition.id.to_s(16)}"
       }
 
-      content.merge!(yaml_filesystem(partition.filesystem)) if partition.has_filesystem
-      content.merge!(yaml_encryption(partition.encryption)) if partition.has_encryption
+      content.merge!(yaml_filesystem_and_encryption(partition))
 
       { "partition" => content }
     end
@@ -293,8 +292,7 @@ module Y2Storage
       content["stripes"] = lvm_lv.stripes if lvm_lv.stripes != 0
       content["stripe_size"] = DiskSize.B(lvm_lv.stripe_size).to_s if lvm_lv.stripe_size != 0
 
-      content.merge!(yaml_filesystem(lvm_lv.filesystem)) if lvm_lv.has_filesystem
-      content.merge!(yaml_encryption(lvm_lv.encryption)) if lvm_lv.has_encryption
+      content.merge!(yaml_filesystem_and_encryption(lvm_lv))
 
       { "lvm_lv" => content }
     end
@@ -320,6 +318,22 @@ module Y2Storage
       }
 
       { "lvm_pv" => content }
+    end
+
+    # Return the YAML counterpart of a filesystem and encryption.
+    #
+    # @param parent [::Storage::Disk|Partition|LvmLv]
+    # @return [Hash]
+    #
+    def yaml_filesystem_and_encryption(parent)
+      content = {}
+      content.merge!(yaml_filesystem(parent.filesystem)) if parent.has_filesystem
+      if parent.has_encryption
+        encryption = parent.encryption
+        content.merge!(yaml_encryption(encryption))
+        content.merge!(yaml_filesystem(encryption.filesystem)) if encryption.has_filesystem
+      end
+      content
     end
 
     # Return the YAML counterpart of a ::Storage::Filesystem.
