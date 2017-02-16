@@ -313,4 +313,35 @@ describe Y2Storage::FakeDeviceFactory do
 
   end
 
+  xit "reads yaml for a filesystem directly on the disk without a partition table" do
+    environment = Storage::Environment.new(true, Storage::ProbeMode_NONE, Storage::TargetMode_DIRECT)
+    storage = Storage::Storage.new(environment)
+    staging = storage.staging
+
+    # rubocop:disable Style/StringLiterals
+
+    input = ['---',
+             '- disk:',
+             '    name: "/dev/sdb"',
+             '    size: 512 GiB',
+             '    file_system: xfs',
+             '    mount_point: "/data"',
+             '    label: "backup"',
+             '    uuid: 4711-abcd-0815']
+
+    # rubocop:enable all
+
+    io = StringIO.new(input.join("\n"))
+    Y2Storage::FakeDeviceFactory.load_yaml_file(staging, io)
+
+    disk = Storage.to_disk(Storage::BlkDevice.find_by_name(staging, "/dev/sdb"))
+
+    expect(disk.has_filesystem).to be true
+    expect(disk.has_partition_table).to be false
+    fs = disk.filesystem
+    expect(fs.mountpoints.first).to eq "/data"
+    expect(fs.label).to eq "backup"
+    expect(fs.uuid).to eq "4711-abcd-0815"
+  end
+
 end

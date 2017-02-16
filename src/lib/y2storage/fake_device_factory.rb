@@ -57,32 +57,41 @@ module Y2Storage
         "lvm_pv"     => []
       }
 
+    FILE_SYSTEM_PARAM = ["mount_point", "label", "uid", "fstab_options"]
+
     # Valid parameters for each product of this factory.
     # Sub-products are not listed here.
     VALID_PARAM =
       {
         "disk"            => [
           "name", "size", "block_size", "io_size", "min_grain", "align_ofs", "mbr_gap"
-        ],
+        ].concat(FILE_SYSTEM_PARAM),
         "partition_table" => [],
         "partitions"      => [],
         "partition"       => [
-          "size", "start", "align", "name", "type", "id", "mount_point", "label", "uuid", "fstab_options"
-        ],
+          "size", "start", "align", "name", "type", "id"
+        ].concat(FILE_SYSTEM_PARAM),
         "file_system"     => [],
         "encryption"      => ["name", "type", "password"],
         "free"            => ["size", "start"],
         "lvm_vg"          => ["vg_name", "extent_size"],
-        "lvm_lv"          => [
-          "lv_name", "size", "stripes", "stripe_size", "mount_point", "label", "uuid", "fstab_options"
-        ],
+        "lvm_lv"          => ["lv_name", "size", "stripes", "stripe_size"
+        ].concat(FILE_SYSTEM_PARAM),
         "lvm_pv"          => ["blk_device"]
       }
 
     # Dependencies between products on the same hierarchy level.
     DEPENDENCIES =
       {
-        "file_system" => ["encryption"] # "file_system" depends on "encryption"
+        # file_system depends on encryption because any encryption needs to be
+        # created first (and then the file system on the encryption layer).
+        #
+        # file_system depends on partition_table so a partition table is
+        # created before any file_system directly on a disk so an error can be
+        # reported if both are specified: It's either a partiton table or a
+        # file system, not both.
+        #
+        "file_system" => ["encryption", "partition_table"]
       }
 
     class << self
@@ -444,7 +453,7 @@ module Y2Storage
     # @param parent [String] parent device name ("/dev/sda1" etc.)
     #
     # @param args [Hash] encryption layer parameters:
-    #   "name"     name encryption layer ("cr_Something")
+    #   "name"     name encryption layer ("/dev/mapper/cr_Something")
     #   "type"     encryption type; default: "luks"
     #   "password" encryption password (optional)
     #
