@@ -37,8 +37,8 @@ module Y2Storage
           free_disk_spaces: DevicesLists::FreeDiskSpacesList,
           lvm_vgs:          DevicesLists::LvmVgsList,
           lvm_pvs:          DevicesLists::LvmPvsList,
-          lvm_lvs:          DevicesLists::LvmLvsList
-
+          lvm_lvs:          DevicesLists::LvmLvsList,
+          encryptions:      DevicesLists::EncryptionsList
         }
 
         DEVICE_LISTS.each do |list, klass|

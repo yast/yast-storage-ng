@@ -22,26 +22,31 @@
 
 require "storage"
 require "y2storage/devices_lists/base"
+require "y2storage/devices_lists/formattable"
 
 module Y2Storage
   module DevicesLists
     # List of LVM logical volumes from a devicegraph
     class LvmLvsList < Base
       list_of ::Storage::LvmLv
+      include Formattable
 
-      # Filesystems located in the logical volumes
+      # Filesystems located in the logical volumes, either directly or through
+      # an encryption device
       #
       # @return [FilesystemsList]
       def filesystems
-        fs_list = list.map do |lv|
-          begin
-            lv.filesystem
-          rescue Storage::WrongNumberOfChildren, Storage::DeviceHasWrongType
-            # No filesystem in the logical volume
-            nil
-          end
-        end
-        FilesystemsList.new(devicegraph, list: fs_list.compact)
+        enc_list, fs_list = direct_encryptions_and_filesystems
+        fs_list.concat(EncryptionsList.new(devicegraph, list: enc_list).filesystems.to_a)
+        FilesystemsList.new(devicegraph, list: fs_list)
+      end
+
+      # Encryption devices located in the logical volume
+      #
+      # @return [EncryptionsList]
+      def encryptions
+        enc_list, _fs_list = direct_encryptions_and_filesystems
+        EncryptionsList.new(devicegraph, list: enc_list)
       end
 
       # Volume groups containing the logical volumes

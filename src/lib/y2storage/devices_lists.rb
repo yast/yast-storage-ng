@@ -20,6 +20,7 @@
 # find current contact information at www.suse.com.
 
 require "y2storage/devices_lists/disks_list"
+require "y2storage/devices_lists/encryptions_list"
 require "y2storage/devices_lists/filesystems_list"
 require "y2storage/devices_lists/free_disk_spaces_list"
 require "y2storage/devices_lists/partitions_list"

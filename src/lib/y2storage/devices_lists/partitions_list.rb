@@ -22,27 +22,34 @@
 
 require "storage"
 require "y2storage/devices_lists/base"
+require "y2storage/devices_lists/disks_list"
 require "y2storage/devices_lists/filesystems_list"
+require "y2storage/devices_lists/encryptions_list"
+require "y2storage/devices_lists/formattable"
 
 module Y2Storage
   module DevicesLists
     # List of partitions from a devicegraph
     class PartitionsList < Base
       list_of ::Storage::Partition
+      include Formattable
 
-      # Filesystems located in the partitions
+      # Filesystems located in the partitions, either directly or through an
+      # encryption device
       #
       # @return [FilesystemsList]
       def filesystems
-        fs_list = list.map do |partition|
-          begin
-            partition.filesystem
-          rescue Storage::WrongNumberOfChildren, Storage::DeviceHasWrongType
-            # No filesystem in the partition
-            nil
-          end
-        end
-        FilesystemsList.new(devicegraph, list: fs_list.compact)
+        enc_list, fs_list = direct_encryptions_and_filesystems
+        fs_list.concat(EncryptionsList.new(devicegraph, list: enc_list).filesystems.to_a)
+        FilesystemsList.new(devicegraph, list: fs_list)
+      end
+
+      # Encryption devices located in the partitions
+      #
+      # @return [EncryptionsList]
+      def encryptions
+        enc_list, _fs_list = direct_encryptions_and_filesystems
+        EncryptionsList.new(devicegraph, list: enc_list)
       end
 
       # Disks containing the partitions
