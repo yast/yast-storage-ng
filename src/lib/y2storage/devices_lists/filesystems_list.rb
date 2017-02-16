@@ -46,38 +46,42 @@ module Y2Storage
         end
       end
 
-      # Disks hosting the filesystems, either directly or through a partition
+      # Disks hosting the filesystems, either directly, through a partition or
+      # through an encryption device placed in the disk or one partition
       #
       # @return [DisksList]
       def disks
-        disks = blk_devices.select do |device|
-          Storage.disk?(device)
-        end
-        disks.map! { |d| Storage.to_disk(d) }
-        part_disks = partitions.disks.to_a
-        list = disks + part_disks
-        DisksList.new(devicegraph, list: list.uniq { |d| d.sid })
+        disks = blk_devices_of_type(:disk)
+        disks.concat(encryptions.disks.to_a)
+        disks.concat(partitions.disks.to_a)
+        DisksList.new(devicegraph, list: disks.uniq { |d| d.sid })
       end
 
-      # Partitions hosting the filesystems
+      # Encryption devices directly hosting the filesystems
+      #
+      # @return [EncryptionsList]
+      def encryptions
+        encryptions = blk_devices_of_type(:encryption)
+        EncryptionsList.new(devicegraph, list: encryptions)
+      end
+
+      # Partitions hosting the filesystems, either directly or through an
+      # encryption device
       #
       # @return [PartitionsList]
       def partitions
-        partitions = blk_devices.select do |device|
-          Storage.partition?(device)
-        end
-        partitions.map! { |p| Storage.to_partition(p) }
+        partitions = blk_devices_of_type(:partition)
+        partitions.concat(encryptions.partitions.to_a)
         PartitionsList.new(devicegraph, list: partitions)
       end
 
-      # LVM logical volumes hosting the filesystems
+      # LVM logical volumes hosting the filesystems, either directly or through
+      # an encryption device
       #
       # @return [LvmLvsList]
       def lvm_lvs
-        lvs = blk_devices.select do |device|
-          Storage.lvm_lv?(device)
-        end
-        lvs.map! { |p| Storage.to_lvm_lv(p) }
+        lvs = blk_devices_of_type(:lvm_lv)
+        lvs.concat(encryptions.lvm_lvs.to_a)
         LvmLvsList.new(devicegraph, list: lvs)
       end
 

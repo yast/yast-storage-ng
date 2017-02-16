@@ -49,35 +49,34 @@ module Y2Storage
       alias_method :vgs, :lvm_vgs
       alias_method :volume_groups, :lvm_vgs
 
-      # Partitions containing the physical volumes
+      # Partitions containing the physical volumes, either directly or through
+      # an encryption device
       #
       # @return [PartitionsList]
       def partitions
-        partitions = blk_devices.select do |device|
-          Storage.partition?(device)
-        end
-        partitions.map! { |p| Storage.to_partition(p) }
+        partitions = blk_devices_of_type(:partition)
+        partitions.concat(encryptions.partitions.to_a)
         PartitionsList.new(devicegraph, list: partitions)
       end
 
-      # Disks containing the physical volumes, either directly or
-      # through a partition.
+      # Disks containing the physical volumes, either directly, through a
+      # partition or through an encryption device placed in the disk or one of
+      # the partitions
       #
       # @return [DisksList]
       def disks
-        disks = blk_devices.select do |device|
-          Storage.disk?(device)
-        end
-        disks.map! { |d| Storage.to_partition(d) }
-        part_disks = partitions.disks.to_a
-        list = disks + part_disks
-        DisksList.new(devicegraph, list: list.uniq { |d| d.sid })
+        disks = blk_devices_of_type(:disk)
+        disks.concat(encryptions.disks.to_a)
+        disks.concat(partitions.disks.to_a)
+        DisksList.new(devicegraph, list: disks.uniq { |d| d.sid })
       end
 
-    protected
-
-      def blk_devices
-        list.map(&:blk_device).flatten.uniq
+      # Encryption devices directly hosting the physical volumes
+      #
+      # @return [EncryptionsList]
+      def encryptions
+        encryptions = blk_devices_of_type(:encryption)
+        EncryptionsList.new(devicegraph, list: encryptions)
       end
     end
   end
