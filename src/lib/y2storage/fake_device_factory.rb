@@ -46,7 +46,7 @@ module Y2Storage
     # This indicates the permitted children types for each parent.
     VALID_HIERARCHY =
       {
-        "disk"       => ["partition_table", "partitions", "file_system"],
+        "disk"       => ["partition_table", "partitions", "file_system", "encryption"],
         "partitions" => ["partition", "free"],
         "partition"  => ["file_system", "encryption"],
         "encryption" => ["file_system"],
@@ -57,7 +57,8 @@ module Y2Storage
         "lvm_pv"     => []
       }
 
-    FILE_SYSTEM_PARAM = ["mount_point", "label", "uid", "fstab_options"]
+    # Valid parameters for file_system
+    FILE_SYSTEM_PARAM = ["mount_point", "label", "uuid", "fstab_options"]
 
     # Valid parameters for each product of this factory.
     # Sub-products are not listed here.
@@ -75,7 +76,8 @@ module Y2Storage
         "encryption"      => ["name", "type", "password"],
         "free"            => ["size", "start"],
         "lvm_vg"          => ["vg_name", "extent_size"],
-        "lvm_lv"          => ["lv_name", "size", "stripes", "stripe_size"
+        "lvm_lv"          => [
+          "lv_name", "size", "stripes", "stripe_size"
         ].concat(FILE_SYSTEM_PARAM),
         "lvm_pv"          => ["blk_device"]
       }
@@ -231,9 +233,24 @@ module Y2Storage
       # range (number of partitions that the kernel can handle) used to be
       # 16 for scsi and 64 for ide. Now it's 256 for most of them.
       disk.range = args["range"] || 256
+      file_system_directly_on_disk(disk, args) if args.keys.any? { |x| FILE_SYSTEM_PARAM.include?(x) }
       name
     end
     # rubocop:enable all
+
+    # Create a filesystem directly on a disk.
+    #
+    # @param disk [::Storage::Disk]
+    # @param args [Hash] disk and filesystem parameters
+    def file_system_directly_on_disk(disk, args)
+      # No use trying to check for disk.has_partition_table here and throwing
+      # an error in that case: The AbstractDeviceFactory base class will
+      # already have caused a Storage::WrongNumberOfChildren exception and
+      # convert that into a better readable HierarchyError. When we get here,
+      # that error already happened.
+      log.info("Creating filesystem directly on disk #{args}")
+      file_system_data_picker(disk.name, args)
+    end
 
     # Modifies topology settings of the disk according to factory arguments
     #
@@ -413,9 +430,8 @@ module Y2Storage
     # @param args [Hash] hash with data from yaml file
     #
     def file_system_data_picker(name, args)
-      @file_system_data[name] = args.select do |k, _v|
-        ["mount_point", "label", "uuid", "fstab_options", "encryption"].include?(k)
-      end
+      fs_param = FILE_SYSTEM_PARAM << "encryption"
+      @file_system_data[name] = args.select { |k, _v| fs_param.include?(k) }
     end
 
     # Assigns the value of Filesystem#fstab_options. A direct assignation of a
