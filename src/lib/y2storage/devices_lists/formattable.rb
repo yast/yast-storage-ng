@@ -41,8 +41,8 @@ module Y2Storage
           child = element.children[0]
           next if child.nil?
 
-          if Storage.filesystem?(child)
-            fs_array << Storage.to_filesystem(child)
+          if Storage.blk_filesystem?(child)
+            fs_array << Storage.to_blk_filesystem(child)
           elsif Storage.encryption?(child)
             enc_array << Storage.to_encryption(child)
           end

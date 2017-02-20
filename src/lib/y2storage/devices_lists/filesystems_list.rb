@@ -27,7 +27,7 @@ module Y2Storage
   module DevicesLists
     # List of filesystems from a devicegraph
     class FilesystemsList < Base
-      list_of ::Storage::Filesystem
+      list_of ::Storage::BlkFilesystem
 
       # Subset of the list filtered by mount point
       #

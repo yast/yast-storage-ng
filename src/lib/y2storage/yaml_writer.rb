@@ -336,9 +336,9 @@ module Y2Storage
       content
     end
 
-    # Return the YAML counterpart of a ::Storage::Filesystem.
+    # Return the YAML counterpart of a ::Storage::BlkFilesystem.
     #
-    # @param file_system [::Storage::Filesystem]
+    # @param file_system [::Storage::BlkFilesystem]
     # @return [Hash{String => Object}]
     #
     def yaml_filesystem(file_system)
@@ -355,7 +355,7 @@ module Y2Storage
 
     # Return the YAML counterpart of a ::Storage::Encryption.
     #
-    # @param encryption [::Storage::Filesystem]
+    # @param encryption [::Storage::BlkFilesystem]
     # @return [Hash{String => Object}]
     #
     def yaml_encryption(encryption)

@@ -369,7 +369,7 @@ module Y2Storage
     # Filesystem associated to a given block device
     #
     # @param blk_device [Storage::BlkDevice] device that could be formatted
-    # @return [Storage::Filesystem] filesystem object or nil of
+    # @return [Storage::BlkFilesystem] filesystem object or nil of
     def filesystem_for(blk_device)
       blk_device.filesystem
     rescue Storage::Exception

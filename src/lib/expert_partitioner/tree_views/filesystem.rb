@@ -43,7 +43,7 @@ module ExpertPartitioner
     def items
       staging = storage.staging
 
-      filesystems = Storage::Filesystem.all(staging)
+      filesystems = Storage::BlkFilesystem.all(staging)
 
       return filesystems.to_a.map do |filesystem|
         filesystem.table_row(FIELDS)

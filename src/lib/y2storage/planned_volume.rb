@@ -161,7 +161,7 @@ module Y2Storage
     #
     # @param partition [::Storage::Partition]
     #
-    # @return [::Storage::Filesystem] filesystem
+    # @return [::Storage::BlkFilesystem] filesystem
     def create_filesystem(partition)
       return nil unless filesystem_type
       filesystem = partition.create_filesystem(filesystem_type)

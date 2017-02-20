@@ -69,7 +69,7 @@ describe Y2Storage::DiskAnalyzer do
     context "in a PC" do
       before do
         allow(Yast::Arch).to receive(:x86_64).and_return true
-        allow_any_instance_of(::Storage::Filesystem).to receive(:detect_content_info)
+        allow_any_instance_of(::Storage::BlkFilesystem).to receive(:detect_content_info)
           .and_return(content_info)
       end
       let(:content_info) { double("::Storage::ContentInfo", windows?: true) }
