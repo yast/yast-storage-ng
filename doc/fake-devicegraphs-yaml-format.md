@@ -76,6 +76,12 @@ level.
           - free
           - partition
 
+or
+
+    - disk:
+        file_system: <type>
+        encryption
+
     - lvm_vg:
         lvm_lvs:
 	- lvm_lv:
@@ -130,6 +136,10 @@ Example:
 
 - partitions: Specifies an array of partitions to create.
   Omit if no partitions should be created.
+
+- mount_point: mount point for a filesystem directly on the disk.
+  Notice that partition_table and mount_point (filesystem) are mutually
+  exclusive; a disk can only have either of them, never both.
 
 
 ### partition

@@ -57,32 +57,43 @@ module Y2Storage
         "lvm_pv"     => []
       }
 
+    # Valid parameters for file_system
+    FILE_SYSTEM_PARAM = ["mount_point", "label", "uuid", "fstab_options"]
+
     # Valid parameters for each product of this factory.
     # Sub-products are not listed here.
     VALID_PARAM =
       {
         "disk"            => [
           "name", "size", "block_size", "io_size", "min_grain", "align_ofs", "mbr_gap"
-        ],
+        ].concat(FILE_SYSTEM_PARAM),
         "partition_table" => [],
         "partitions"      => [],
         "partition"       => [
-          "size", "start", "align", "name", "type", "id", "mount_point", "label", "uuid", "fstab_options"
-        ],
+          "size", "start", "align", "name", "type", "id"
+        ].concat(FILE_SYSTEM_PARAM),
         "file_system"     => [],
         "encryption"      => ["name", "type", "password"],
         "free"            => ["size", "start"],
         "lvm_vg"          => ["vg_name", "extent_size"],
         "lvm_lv"          => [
-          "lv_name", "size", "stripes", "stripe_size", "mount_point", "label", "uuid", "fstab_options"
-        ],
+          "lv_name", "size", "stripes", "stripe_size"
+        ].concat(FILE_SYSTEM_PARAM),
         "lvm_pv"          => ["blk_device"]
       }
 
     # Dependencies between products on the same hierarchy level.
     DEPENDENCIES =
       {
-        "file_system" => ["encryption"] # "file_system" depends on "encryption"
+        # file_system depends on encryption because any encryption needs to be
+        # created first (and then the file system on the encryption layer).
+        #
+        # file_system depends on partition_table so a partition table is
+        # created before any file_system directly on a disk so an error can be
+        # reported if both are specified: It's either a partiton table or a
+        # file system, not both.
+        #
+        "file_system" => ["encryption", "partition_table"]
       }
 
     class << self
@@ -106,6 +117,7 @@ module Y2Storage
     def initialize(devicegraph)
       super(devicegraph)
       @disks = Set.new
+      @file_system_data = {}
     end
 
   protected
@@ -197,7 +209,7 @@ module Y2Storage
     # related to complexity.
     # rubocop:disable Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity
     def create_disk(_parent, args)
-      @partitions     = {}
+      @volumes = Set.new
       @free_blob      = nil
       @free_regions   = []
       @mbr_gap        = nil
@@ -221,9 +233,24 @@ module Y2Storage
       # range (number of partitions that the kernel can handle) used to be
       # 16 for scsi and 64 for ide. Now it's 256 for most of them.
       disk.range = args["range"] || 256
+      file_system_directly_on_disk(disk, args) if args.keys.any? { |x| FILE_SYSTEM_PARAM.include?(x) }
       name
     end
     # rubocop:enable all
+
+    # Create a filesystem directly on a disk.
+    #
+    # @param disk [::Storage::Disk]
+    # @param args [Hash] disk and filesystem parameters
+    def file_system_directly_on_disk(disk, args)
+      # No use trying to check for disk.has_partition_table here and throwing
+      # an error in that case: The AbstractDeviceFactory base class will
+      # already have caused a Storage::WrongNumberOfChildren exception and
+      # convert that into a better readable HierarchyError. When we get here,
+      # that error already happened.
+      log.info("Creating filesystem directly on disk #{args}")
+      file_system_data_picker(disk.name, args)
+    end
 
     # Modifies topology settings of the disk according to factory arguments
     #
@@ -272,7 +299,7 @@ module Y2Storage
     # Some of the parameters ("mount_point", "label"...) really belong to the
     # file system which is a separate factory product, but it is more natural
     # to specify this for the partition, so those data are kept in
-    # @partitions to be picked up in create_file_system when needed.
+    # @file_system_data to be picked up in create_file_system when needed.
     #
     # @param parent [String] disk name ("/dev/sda" etc.)
     #
@@ -305,8 +332,9 @@ module Y2Storage
       align     = args["align"]
 
       raise ArgumentError, "\"name\" missing for partition #{args} on #{disk_name}" unless part_name
-      raise ArgumentError, "Duplicate partition #{part_name}" if @partitions.include?(part_name)
+      raise ArgumentError, "Duplicate partition #{part_name}" if @volumes.include?(part_name)
 
+      @volumes << part_name
       file_system_data_picker(part_name, args)
 
       id = id.to_i(16) if id.is_a?(::String) && id.start_with?("0x")
@@ -360,20 +388,20 @@ module Y2Storage
 
     # Factory method to create a file system.
     #
-    # This fetches some parameters from @partitions: "mount_point", "label".
+    # This fetches some parameters from @file_system_data:
+    # "mount_point", "label", "uuid", "encryption"
     #
-    # @param parent [String] partition device name ("/dev/sdc2")
+    # @param parent [String] parent (partition or disk) device name ("/dev/sdc2")
     # @param args   [String] file system type ("xfs", "btrfs", ...)
     #
     # @return [String] partition device name ("/dev/sdc2" etc.)
     #
     def create_file_system(parent, args)
       log.info("#{__method__}( #{parent}, #{args} )")
-      part_name = parent
-      fs_type = fetch(FILE_SYSTEM_TYPES, args, "file system type", part_name)
+      fs_type = fetch(FILE_SYSTEM_TYPES, args, "file system type", parent)
 
       # Fetch file system related parameters stored by create_partition()
-      fs_param = @partitions[part_name] || {}
+      fs_param = @file_system_data[parent] || {}
       mount_point   = fs_param["mount_point"]
       label         = fs_param["label"]
       uuid          = fs_param["uuid"]
@@ -394,7 +422,7 @@ module Y2Storage
     end
 
     # Picks some parameters that are really file system related from args
-    # and places them in @partitions to be picked up later by
+    # and places them in @file_system_data to be picked up later by
     # create_file_system.
     #
     # @param [String] name of blk_device file system is on
@@ -402,9 +430,8 @@ module Y2Storage
     # @param args [Hash] hash with data from yaml file
     #
     def file_system_data_picker(name, args)
-      @partitions[name] = args.select do |k, _v|
-        ["mount_point", "label", "uuid", "fstab_options", "encryption"].include?(k)
-      end
+      fs_param = FILE_SYSTEM_PARAM << "encryption"
+      @file_system_data[name] = args.select { |k, _v| fs_param.include?(k) }
     end
 
     # Assigns the value of Filesystem#fstab_options. A direct assignation of a
@@ -444,7 +471,7 @@ module Y2Storage
     # @param parent [String] parent device name ("/dev/sda1" etc.)
     #
     # @param args [Hash] encryption layer parameters:
-    #   "name"     name encryption layer ("cr_Something")
+    #   "name"     name encryption layer ("/dev/mapper/cr_Something")
     #   "type"     encryption type; default: "luks"
     #   "password" encryption password (optional)
     #
@@ -461,9 +488,9 @@ module Y2Storage
       blk_parent = Storage::BlkDevice.find_by_name(@devicegraph, parent)
       encryption = blk_parent.create_encryption(name)
       encryption.password = password unless password.nil?
-      if @partitions.key?(parent)
+      if @file_system_data.key?(parent)
         # Notify create_file_system that this partition is encrypted
-        @partitions[parent]["encryption"] = encryption.name
+        @file_system_data[parent]["encryption"] = encryption.name
       end
       encryption
     end
@@ -496,8 +523,7 @@ module Y2Storage
     #
     def create_lvm_vg(_parent, args)
       log.info("#{__method__}( #{args} )")
-
-      @partitions = {}
+      @volumes = Set.new # contains both partitions and logical volumes
 
       vg_name = args["vg_name"]
       lvm_vg = ::Storage::LvmVg.create(@devicegraph, vg_name)
@@ -513,7 +539,7 @@ module Y2Storage
     # Some of the parameters ("mount_point", "label"...) really belong to the
     # file system which is a separate factory product, but it is more natural
     # to specify this for the logical volume, so those data are kept in
-    # @partitions to be picked up in create_file_system when needed.
+    # @file_system_data to be picked up in create_file_system when needed.
     #
     # @param parent [Object] volume group object
     #
@@ -534,13 +560,13 @@ module Y2Storage
 
       lv_name = args["lv_name"]
       raise ArgumentError, "\"lv_name\" missing for lvm_lv #{args} on #{vg_name}" unless lv_name
-      raise ArgumentError, "Duplicate lvm_lv #{lv_name}" if @partitions.include?(lv_name)
+      raise ArgumentError, "Duplicate lvm_lv #{lv_name}" if @volumes.include?(lv_name)
+      @volumes << lv_name
 
       size = args["size"] || DiskSize.zero
-      raise ArgumentError, "\"size\" missing for lvm_lv #{lv_name}" if size.zero?
+      raise ArgumentError, "\"size\" missing for lvm_lv #{lv_name}" unless args.key?("size")
 
       lvm_lv = parent.create_lvm_lv(lv_name, size.size)
-
       create_lvm_lv_stripe_parameters(lvm_lv, args)
 
       file_system_data_picker(lvm_lv.name, args)

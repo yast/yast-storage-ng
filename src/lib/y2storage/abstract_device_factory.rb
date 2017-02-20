@@ -326,12 +326,16 @@ module Y2Storage
     def call_create_method(parent, name, arg)
       create_method = "create_#{name}".to_sym
 
-      if respond_to?(create_method, true)
-        log.info("#{create_method}( #{parent}, #{arg} )")
-        send(create_method, parent, arg)
-      else
-        log.warn("WARNING: No method #{create_method}() defined")
-        nil
+      begin
+        if respond_to?(create_method, true)
+          log.info("#{create_method}( #{parent}, #{arg} )")
+          send(create_method, parent, arg)
+        else
+          log.warn("WARNING: No method #{create_method}() defined")
+          nil
+        end
+      rescue Storage::WrongNumberOfChildren
+        raise HierarchyError, "Wrong number of children for #{parent} when creating #{name}"
       end
     end
 

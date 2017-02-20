@@ -205,6 +205,11 @@ describe Y2Storage::YamlWriter do
               '          type: luks',
               '          name: "/dev/mapper/cr_system"',
               '          password: vry!s3cret',
+              '        file_system: ext4',
+              '        mount_point: "/"',
+              '        fstab_options:',
+              '        - acl',
+              '        - user_xattr',
               '    - free:',
               '        size: 245247 MiB (239.50 GiB)',
               '        start: 16897 MiB (16.50 GiB)']
@@ -240,7 +245,8 @@ describe Y2Storage::YamlWriter do
     lvm_vg.add_lvm_pv(encryption)
 
     lvm_lv = lvm_vg.create_lvm_lv("root", 16 * Storage.GiB)
-    lvm_lv.create_filesystem(Storage::FsType_EXT4)
+    fs = lvm_lv.create_filesystem(Storage::FsType_EXT4)
+    fs.add_mountpoint("/")
 
     # rubocop:disable Style/StringLiterals
 
@@ -276,6 +282,7 @@ describe Y2Storage::YamlWriter do
               '        lv_name: root',
               '        size: 16 GiB',
               '        file_system: ext4',
+              '        mount_point: "/"',
               '    lvm_pvs:',
               '    - lvm_pv:',
               '        blk_device: "/dev/mapper/cr_sda1"']
@@ -312,7 +319,8 @@ describe Y2Storage::YamlWriter do
     encryption = lvm_lv.create_encryption("cr_sda1")
     encryption.password = "s3cr3t"
 
-    encryption.create_filesystem(Storage::FsType_XFS)
+    fs = encryption.create_filesystem(Storage::FsType_XFS)
+    fs.add_mountpoint("/")
 
     # rubocop:disable Style/StringLiterals
 
@@ -347,6 +355,8 @@ describe Y2Storage::YamlWriter do
               '          type: luks',
               '          name: "/dev/mapper/cr_sda1"',
               '          password: s3cr3t',
+              '        file_system: xfs',
+              '        mount_point: "/"',
               '    lvm_pvs:',
               '    - lvm_pv:',
               '        blk_device: "/dev/sda1"']
@@ -355,6 +365,81 @@ describe Y2Storage::YamlWriter do
 
     io = StringIO.new
     Y2Storage::YamlWriter.write(staging, io)
+    expect(io.string).to eq result.join("\n") + "\n"
+
+  end
+
+  it "produces yaml of a filesystem directly on a disk without a partition table" do
+
+    environment = Storage::Environment.new(true, Storage::ProbeMode_NONE, Storage::TargetMode_DIRECT)
+    storage = Storage::Storage.new(environment)
+    staging = storage.staging
+
+    disk = Storage::Disk.create(staging, "/dev/sda")
+    disk.size = 256 * Storage.GiB
+
+    fs = disk.create_filesystem(Storage::FsType_XFS)
+    fs.add_mountpoint("/data")
+
+    # rubocop:disable Style/StringLiterals
+
+    result = ['---',
+              '- disk:',
+              '    name: "/dev/sda"',
+              '    size: 256 GiB',
+              '    block_size: 0.5 KiB',
+              '    io_size: 0 B',
+              '    min_grain: 1 MiB',
+              '    align_ofs: 0 B',
+              '    file_system: xfs',
+              '    mount_point: "/data"']
+
+    # rubocop:enable all
+
+    io = StringIO.new
+    Y2Storage::YamlWriter.write(staging, io)
+    # print io.string
+    expect(io.string).to eq result.join("\n") + "\n"
+
+  end
+
+  it "produces yaml of an encrypted filesystem directly on a disk" do
+
+    environment = Storage::Environment.new(true, Storage::ProbeMode_NONE, Storage::TargetMode_DIRECT)
+    storage = Storage::Storage.new(environment)
+    staging = storage.staging
+
+    disk = Storage::Disk.create(staging, "/dev/sda")
+    disk.size = 256 * Storage.GiB
+
+    encryption = disk.create_encryption("cr_data")
+    encryption.password = "s3cr3t"
+
+    fs = encryption.create_filesystem(Storage::FsType_XFS)
+    fs.add_mountpoint("/data")
+
+    # rubocop:disable Style/StringLiterals
+
+    result = ['---',
+              '- disk:',
+              '    name: "/dev/sda"',
+              '    size: 256 GiB',
+              '    block_size: 0.5 KiB',
+              '    io_size: 0 B',
+              '    min_grain: 1 MiB',
+              '    align_ofs: 0 B',
+              '    encryption:',
+              '      type: luks',
+              '      name: "/dev/mapper/cr_data"',
+              '      password: s3cr3t',
+              '    file_system: xfs',
+              '    mount_point: "/data"']
+
+    # rubocop:enable all
+
+    io = StringIO.new
+    Y2Storage::YamlWriter.write(staging, io)
+    # print io.string
     expect(io.string).to eq result.join("\n") + "\n"
 
   end
