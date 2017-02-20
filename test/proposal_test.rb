@@ -39,7 +39,7 @@ describe Y2Storage::Proposal do
         !!(partition.filesystem.label =~ /indows/)
       end
 
-      allow_any_instance_of(::Storage::Filesystem).to receive(:detect_resize_info)
+      allow_any_instance_of(::Storage::BlkFilesystem).to receive(:detect_resize_info)
         .and_return(resize_info)
 
       allow(Yast::Arch).to receive(:x86_64).and_return true

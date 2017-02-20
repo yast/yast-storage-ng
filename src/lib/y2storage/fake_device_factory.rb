@@ -439,7 +439,7 @@ module Y2Storage
     # Filesystem#fstab_options= expects an argument with a very specific SWIG
     # type (std::list)
     #
-    # @param [Storage::Filesystem] File system being created
+    # @param [Storage::BlkFilesystem] File system being created
     # @param [#each] Collection of strings to assign
     def set_fstab_options(file_system, fstab_options)
       return if fstab_options.nil? || fstab_options.empty?
