@@ -73,7 +73,7 @@ module Y2Storage
 
       def root_ptable_type
         return nil unless root_disk
-        return root_disk.partition_table.type if root_disk.partition_table?
+        return root_disk.partition_table.type if root_disk.partition_table
 
         # If the disk is used for "/", there will be a partition table on it
         root_disk.preferred_ptable_type

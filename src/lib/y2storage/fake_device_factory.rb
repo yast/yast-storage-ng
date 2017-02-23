@@ -22,11 +22,11 @@
 # find current contact information at www.suse.com.
 
 require "yast"
-require "storage"
-require "storage/patches"
 require "y2storage/abstract_device_factory.rb"
 require "y2storage/disk_size.rb"
 require "y2storage/enum_mappings.rb"
+require "y2storage/disk"
+require "y2storage/region"
 
 module Y2Storage
   #
@@ -223,11 +223,11 @@ module Y2Storage
       block_size = args["block_size"] if args["block_size"]
       @mbr_gap = args["mbr_gap"] if args["mbr_gap"]
       if block_size && block_size.size > 0
-        r = ::Storage::Region.new(0, size.size / block_size.size, block_size.size)
-        disk = ::Storage::Disk.create(@devicegraph, name, r)
+        r = Region.create(0, size.to_i / block_size.to_i, block_size)
+        disk = Disk.create(@devicegraph, name, r)
       else
-        disk = ::Storage::Disk.create(@devicegraph, name)
-        disk.size = size.size
+        disk = Disk.create(@devicegraph, name)
+        disk.size = size
       end
       set_topology_attributes!(disk, args)
       # range (number of partitions that the kernel can handle) used to be
@@ -276,10 +276,10 @@ module Y2Storage
       log.info("#{__method__}( #{parent}, #{args} )")
       disk_name = parent
       ptable_type = str_to_ptable_type(args)
-      disk = ::Storage::Disk.find_by_name(@devicegraph, disk_name)
+      disk = Disk.find_by_name(@devicegraph, disk_name)
       ptable = disk.create_partition_table(ptable_type)
-      if ::Storage.msdos?(ptable) && @mbr_gap
-        ::Storage.to_msdos(ptable).minimal_mbr_gap = @mbr_gap.size
+      if ptable.respond_to?(:minimal_mbr_gap) && @mbr_gap
+        ptable.minimal_mbr_gap = @mbr_gap
       end
       disk_name
     end
@@ -342,7 +342,7 @@ module Y2Storage
       type = fetch(PARTITION_TYPES, type, "partition type", part_name)
       align = fetch(ALIGN_POLICIES, align, "align policy", part_name) if align
 
-      disk = ::Storage::Disk.find_by_name(devicegraph, disk_name)
+      disk = Disk.find_by_name(devicegraph, disk_name)
       ptable = disk.partition_table
       slots = ptable.unused_partition_slots
 
@@ -356,12 +356,12 @@ module Y2Storage
       # if no start has been specified, take free region into account
       if !start && @free_blob
         @free_regions.push(region.start)
-        start_block = region.start + @free_blob.size / region.block_size
+        start_block = region.start + @free_blob.to_i / region.block_size.to_i
       end
       @free_blob = nil
 
       # if start has been specified, use it
-      start_block = start.size / region.block_size if start
+      start_block = start.to_i / region.block_size.to_i if start
 
       # adjust start block, if necessary
       if start_block
@@ -373,7 +373,7 @@ module Y2Storage
 
       # if no size has been specified, use whole region
       if !size.unlimited?
-        region.length = size.size / region.block_size
+        region.length = size.to_i / region.block_size.to_i
       end
 
       # align partition if specified
@@ -412,8 +412,8 @@ module Y2Storage
         log.info("file system is on encrypted device #{encryption}")
         parent = encryption
       end
-      blk_device = ::Storage::BlkDevice.find_by_name(@devicegraph, parent)
-      file_system = blk_device.create_filesystem(fs_type)
+      blk_device = BlkDevice.find_by_name(@devicegraph, parent)
+      file_system = blk_device.create_blk_filesystem(fs_type)
       file_system.add_mountpoint(mount_point) if mount_point
       file_system.label = label if label
       file_system.uuid = uuid if uuid
@@ -462,7 +462,7 @@ module Y2Storage
       log.info("#{__method__}( #{parent}, #{args} )")
       disk_name = parent
       size = args["size"]
-      @free_blob = size if size && size.size > 0
+      @free_blob = size if size && size.to_i > 0
       disk_name
     end
 
@@ -485,7 +485,7 @@ module Y2Storage
       # We only support creating LUKS so far
       raise ArgumentError, "Unsupported encryption type #{type_name}" unless type_name == "luks"
 
-      blk_parent = Storage::BlkDevice.find_by_name(@devicegraph, parent)
+      blk_parent = BlkDevice.find_by_name(@devicegraph, parent)
       encryption = blk_parent.create_encryption(name)
       encryption.password = password unless password.nil?
       if @file_system_data.key?(parent)
@@ -526,10 +526,10 @@ module Y2Storage
       @volumes = Set.new # contains both partitions and logical volumes
 
       vg_name = args["vg_name"]
-      lvm_vg = ::Storage::LvmVg.create(@devicegraph, vg_name)
+      lvm_vg = LvmVg.create(@devicegraph, vg_name)
 
       extent_size = args["extent_size"] || DiskSize.zero
-      lvm_vg.extent_size = extent_size.size if extent_size.size > 0
+      lvm_vg.extent_size = extent_size if extent_size.to_i > 0
 
       lvm_vg
     end
@@ -566,7 +566,7 @@ module Y2Storage
       size = args["size"] || DiskSize.zero
       raise ArgumentError, "\"size\" missing for lvm_lv #{lv_name}" unless args.key?("size")
 
-      lvm_lv = parent.create_lvm_lv(lv_name, size.size)
+      lvm_lv = parent.create_lvm_lv(lv_name, size)
       create_lvm_lv_stripe_parameters(lvm_lv, args)
 
       file_system_data_picker(lvm_lv.name, args)
@@ -581,7 +581,7 @@ module Y2Storage
       lvm_lv.stripes = stripes if stripes > 0
 
       stripe_size = args["stripe_size"] || DiskSize.zero
-      lvm_lv.stripe_size = stripe_size.size if stripe_size.size > 0
+      lvm_lv.stripe_size = stripe_size if stripe_size.to_i > 0
     end
 
     # Factory method to create a lvm physical volume.
@@ -597,7 +597,7 @@ module Y2Storage
       log.info("#{__method__}( #{parent}, #{args} )")
 
       blk_device_name = args["blk_device"]
-      blk_device = ::Storage::BlkDevice.find_by_name(devicegraph, blk_device_name)
+      blk_device = BlkDevice.find_by_name(devicegraph, blk_device_name)
 
       parent.add_lvm_pv(blk_device)
     end
