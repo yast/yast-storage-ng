@@ -23,6 +23,7 @@
 
 require "storage"
 require "y2storage/refinements"
+require "y2storage/proposal/proposed_partition"
 
 module Y2Storage
   class Proposal
@@ -33,16 +34,16 @@ module Y2Storage
 
       # @return [FreeDiskSpace]
       attr_reader :disk_space
-      # @return [PlannedVolumesList]
-      attr_reader :volumes
+      # @return [Array<ProposedPartition>]
+      attr_reader :partitions
       # Number of logical partitions that must be created in the space
       attr_accessor :num_logical
 
       def_delegators :@disk_space, :disk_name, :disk_size, :region, :disk
 
-      def initialize(disk_space, volumes)
+      def initialize(disk_space, proposed_partitions)
         @disk_space  = disk_space
-        @volumes     = volumes
+        @partitions  = proposed_partitions
         @num_logical = 0
       end
 
@@ -74,17 +75,19 @@ module Y2Storage
       #  - the chances of having 2 volumes with max_start_offset in the same
       #    free space are very low
       def valid?
-        return true if usable_size >= volumes.target_disk_size(rounding: min_grain)
+        if usable_size >= ProposedPartition.disk_size(partitions, rounding: min_grain)
+          return true
+        end
         # At first sight, there is no enough space, but maybe enforcing some
         # order...
-        !!volumes.enforced_last(usable_size, min_grain)
+        not ProposedPartition.enforced_last(partitions, usable_size, min_grain).nil?
       end
 
       # Space that will remain unused (wasted) after creating the partitions
       #
       # @return [DiskSize]
       def unused
-        max = volumes.max_disk_size
+        max = ProposedPartition.max_disk_size(partitions)
         max >= usable_size ? 0 : usable_size - max
       end
 
@@ -99,7 +102,7 @@ module Y2Storage
       #
       # @return [DiskSize]
       def extra_size
-        disk_size - volumes.target_disk_size(rounding: min_grain)
+        disk_size - ProposedPartition.disk_size(partitions, rounding: min_grain)
       end
 
       # Usable space available in addition to the target, taking into account
@@ -108,7 +111,7 @@ module Y2Storage
       # @see #usable_size
       # @return [DiskSize]
       def usable_extra_size
-        usable_size - volumes.target_disk_size
+        usable_size - ProposedPartition.disk_size(partitions)
       end
 
       # Space that can be distributed among the planned volumes.
@@ -145,7 +148,7 @@ module Y2Storage
       end
 
       def to_s
-        "#<AssignedSpace disk_space=#{disk_space}, volumes=#{volumes}>"
+        "#<AssignedSpace disk_space=#{disk_space}, partitions=#{partitions}>"
       end
 
     protected

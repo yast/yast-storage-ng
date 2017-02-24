@@ -26,6 +26,7 @@ require "y2storage/disk_size"
 require "y2storage/refinements"
 require "y2storage/proposal/exceptions"
 require "y2storage/proposal/encrypter"
+require "y2storage/proposal/proposed_lv"
 require "y2storage/secret_attributes"
 
 module Y2Storage
@@ -60,8 +61,8 @@ module Y2Storage
       #
       # @param planned_volumes [PlannedVolumesList] volumes to allocate in LVM
       # @param encryption_password [String, nil] @see #encryption_password
-      def initialize(planned_volumes, encryption_password: nil)
-        @planned_volumes = planned_volumes
+      def initialize(proposed_lvs, encryption_password: nil)
+        @proposed_lvs = proposed_lvs
         self.encryption_password = encryption_password
       end
 
@@ -74,7 +75,7 @@ module Y2Storage
       # @return [Storage::Devicegraph]
       def create_volumes(original_graph, pv_partitions = [])
         new_graph = original_graph.duplicate
-        return new_graph if planned_volumes.empty?
+        return new_graph if proposed_lvs.empty?
 
         vg = reused_volume_group ? find_reused_vg(new_graph) : create_volume_group(new_graph)
 
@@ -95,7 +96,7 @@ module Y2Storage
       # the method assumes all the space in that volume group can be reclaimed
       # for our purposes.
       def missing_space
-        return DiskSize.zero if !planned_volumes || planned_volumes.empty?
+        return DiskSize.zero if !proposed_lvs || proposed_lvs.empty?
         return target_size unless reused_volume_group
 
         substract_reused_vg_size(target_size)
@@ -111,9 +112,9 @@ module Y2Storage
       # the method assumes all the space in that volume group can be reclaimed
       # for our purposes.
       def max_extra_space
-        return DiskSize.zero if !planned_volumes || planned_volumes.empty?
+        return DiskSize.zero if !proposed_lvs || proposed_lvs.empty?
 
-        max = planned_volumes.max_disk_size(rounding: extent_size)
+        max = ProposedLv.max_disk_size(proposed_lvs, rounding: extent_size)
         return max if max.unlimited? || !reused_volume_group
 
         substract_reused_vg_size(max)
@@ -193,7 +194,7 @@ module Y2Storage
 
     protected
 
-      attr_reader :planned_volumes
+      attr_reader :proposed_lvs
 
       def extent_size
         if reused_volume_group
@@ -204,7 +205,7 @@ module Y2Storage
       end
 
       def target_size
-        planned_volumes.target_disk_size(rounding: extent_size)
+        ProposedLv.disk_size(proposed_lvs, rounding: extent_size)
       end
 
       def substract_reused_vg_size(size)
@@ -250,7 +251,7 @@ module Y2Storage
       #
       # @param volume_group [Storage::LvmVg] volume group to modify
       def make_space!(volume_group)
-        space_size = planned_volumes.target_disk_size
+        space_size = ProposedLv.disk_size(proposed_lvs)
         missing = missing_vg_space(volume_group, space_size)
         while missing > DiskSize.zero
           lv_to_delete = delete_candidate(volume_group, missing)
@@ -270,17 +271,17 @@ module Y2Storage
       # @param volume_group [Storage::LvmVg] volume group to modify
       def create_logical_volumes!(volume_group)
         vg_size = available_space(volume_group)
-        volumes = planned_volumes.distribute_space(vg_size, rounding: extent_size)
-        volumes.each do |vol|
-          create_logical_volume(volume_group, vol)
+        distribute_space!(vg_size, rounding: extent_size)
+        proposed_lvs.each do |lv|
+          create_logical_volume(volume_group, lv)
         end
       end
 
-      def create_logical_volume(volume_group, volume)
-        name = volume.logical_volume_name || DEFAULT_LV_NAME
+      def create_logical_volume(volume_group, proposed_lv)
+        name = proposed_lv.logical_volume_name || DEFAULT_LV_NAME
         name = available_name(name, volume_group)
-        lv = volume_group.create_lvm_lv(name, volume.disk_size.to_i)
-        volume.create_filesystem(lv)
+        lv = volume_group.create_lvm_lv(name, proposed_lv.disk_size.to_i)
+        proposed_lv.create_filesystem(lv)
       end
 
       # Best logical volume to delete next while trying to make space for the
@@ -346,6 +347,120 @@ module Y2Storage
       def encrypter
         @encrypter ||= Encrypter.new
       end
+
+      # FIXME
+
+      # Returns a copy of the list in which the given space has been distributed
+      # among the volumes, distributing the extra space (beyond the target size)
+      # according to the weight and max size of each volume.
+      #
+      # @raise [RuntimeError] if the given space is not enough to reach the target
+      #     size for all volumes
+      #
+      # If the optional argument rounding is used, space will be distributed
+      # always in blocks of the specified size.
+      #
+      # @param space_size [DiskSize]
+      # @param rounding [DiskSize, nil] min block size to distribute. Mainly used
+      #     to distribute space among LVs honoring the PE size of the LVM
+      # @param min_grain [DiskSize, nil] minimal grain of the disk where the space
+      #     is located. It only makes sense when distributing space among
+      #     partitions.
+      # @return [PlannedVolumesList] list containing volumes with an adjusted
+      #     value for PlannedVolume#disk_size
+      def distribute_space!(space_size, rounding: nil, min_grain: nil)
+        required_size = ProposedLv.disk_size(proposed_lvs) 
+        raise RuntimeError if space_size < required_size
+
+        rounding ||= min_grain
+        rounding ||= DiskSize.new(1)
+
+        proposed_lvs.each { |lv| lv.disk_size = lv.disk_size.ceil(rounding) }
+        adjust_size_to_last_slot!(proposed_lvs.last, space_size, min_grain) if min_grain
+
+        extra_size = space_size - ProposedLv.total_disk_size(proposed_lvs)
+        unused = distribute_extra_space!(extra_size, rounding)
+        proposed_lvs.last.disk_size += unused if min_grain && unused < min_grain
+
+        proposed_lvs
+      end
+
+      def adjust_size_to_last_slot!(lv, space_size, min_grain)
+        adjusted_size = adjusted_size_after_ceil(lv, space_size, min_grain)
+        target_size = lv.disk_size
+        lv.disk_size = adjusted_size unless adjusted_size < target_size
+      end
+
+      def adjusted_size_after_ceil(lv, space_size, min_grain)
+        mod = space_size % min_grain
+        last_slot_size = mod.zero? ? min_grain : mod
+        return lv.disk_size if last_slot_size == min_grain
+
+        missing = min_grain - last_slot_size
+        lv.disk_size - missing
+      end
+
+      # @return [DiskSize] Surplus space that could not be distributed
+      def distribute_extra_space!(extra_size, rounding)
+        candidates = proposed_lvs
+        while distributable?(extra_size, rounding)
+          candidates = extra_space_candidates(candidates)
+          return extra_size if candidates.empty?
+          return extra_size if ProposedLv.total_weight(candidates).zero?
+          log.info("Distributing #{extra_size} extra space among #{candidates.size} volumes")
+
+          assigned_size = DiskSize.zero
+          total_weight = ProposedLv.total_weight(candidates)
+          candidates.each do |lv|
+            lv_extra = lv_extra_size(lv, extra_size, total_weight, assigned_size, rounding)
+            lv.disk_size += lv_extra
+            log.info("Distributing #{lv_extra} to #{lv.mount_point}; now #{lv.disk_size}")
+            assigned_size += lv_extra
+          end
+          extra_size -= assigned_size
+        end
+        log.info("Could not distribute #{extra_size}") unless extra_size.zero?
+        extra_size
+      end
+
+      # Volumes that may grow when distributing the extra space
+      #
+      # @param volumes [PlannedVolumesList] initial set of all volumes
+      # @return [PlannedVolumesList]
+      def extra_space_candidates(lvs)
+        lvs.select { |lv| lv.disk_size < lv.max_disk_size}
+      end
+
+      def distributable?(size, rounding)
+        size >= rounding
+      end
+
+      # Extra space to be assigned to a volume
+      #
+      # @param volume [PlannedVolume] volume to enlarge
+      # @param total_size [DiskSize] free space to be distributed among
+      #    involved volumes
+      # @param total_weight [Float] sum of the weights of all involved volumes
+      # @param assigned_size [DiskSize] space already distributed to other volumes
+      # @param rounding [DiskSize] size to round up
+      #
+      # @return [DiskSize]
+      def lv_extra_size(lv, total_size, total_weight, assigned_size, rounding)
+        available_size = total_size - assigned_size
+
+        extra_size = total_size * (lv.weight / total_weight)
+        extra_size = extra_size.ceil(rounding)
+        extra_size = available_size.floor(rounding) if extra_size > available_size
+
+        new_size = extra_size + lv.disk_size
+        if new_size > lv.max_disk_size
+          # Increase just until reaching the max size
+          lv.max_disk_size - lv.disk_size
+        else
+          extra_size
+        end
+      end
+
     end
   end
 end

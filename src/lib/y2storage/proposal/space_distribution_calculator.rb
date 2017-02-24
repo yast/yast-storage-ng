@@ -28,6 +28,7 @@ require "y2storage/planned_volumes_list"
 require "y2storage/proposal/space_distribution"
 require "y2storage/proposal/assigned_space"
 require "y2storage/proposal/phys_vol_calculator"
+require "y2storage/proposal/proposed_partition"
 require "y2storage/refinements"
 
 module Y2Storage
@@ -55,20 +56,20 @@ module Y2Storage
       # @param spaces [Array<FreeDiskSpace>]
       #
       # @return [SpaceDistribution]
-      def best_distribution(volumes, spaces)
-        log.info "Calculating best space distribution for #{volumes}"
+      def best_distribution(partitions, spaces)
+        log.info "Calculating best space distribution for #{partitions.size} partitions"
         # First, make sure the whole attempt makes sense
-        return nil if impossible?(volumes, spaces)
+        return nil if impossible?(partitions, spaces)
 
-        log.info "Selecting the candidate spaces for each volume"
+        log.info "Selecting the candidate spaces for each partition"
         begin
-          disk_spaces_by_vol = candidate_disk_spaces(volumes, spaces)
+          disk_spaces_by_partition = candidate_disk_spaces(partitions, spaces)
         rescue NoDiskSpaceError
           return nil
         end
 
-        log.info "Calculate all the possible distributions of volumes into spaces"
-        dist_hashes = distribution_hashes(disk_spaces_by_vol, volumes.target)
+        log.info "Calculate all the possible distributions of partitions into spaces"
+        dist_hashes = distribution_hashes(disk_spaces_by_partition)
 
         candidates = dist_hashes.map do |distribution_hash|
           begin
@@ -104,16 +105,16 @@ module Y2Storage
       # @param volumes [PlannedVolumesList] volumes to make space for
       # @param free_spaces [Array<FreeDiskSpace>] all free spaces in the system
       # @return [DiskSize]
-      def resizing_size(partition, volumes, free_spaces)
+      def resizing_size(partition, proposed_partitions, free_spaces)
         # We are going to resize this partition only once, so let's assume the
         # worst case:
         #  - several volumes (and maybe one of the new PVs) will be logical
         #  - resizing produces a new space
         #  - the LVM must be spread among all the available spaces
         disk = Storage.to_disk(partition.partitionable)
-        needed = volumes.target_disk_size(rounding: disk.min_grain)
+        needed = ProposedPartition.disk_size(proposed_partitions, rounding: disk.min_grain)
 
-        max_logical = max_logical(disk, volumes)
+        max_logical = max_logical(disk, proposed_partitions)
         needed += AssignedSpace.overhead_of_logical(disk) * max_logical
 
         pvs_to_create = free_spaces.size + 1
@@ -129,11 +130,11 @@ module Y2Storage
       # Checks whether there is any chance of producing a valid
       # SpaceDistribution to accomodate the volumes and the missing LVM part
       # in the free spaces
-      def impossible?(volumes, free_spaces)
+      def impossible?(partitions, free_spaces)
         # Let's assume the best possible case - if we need to create a PV it
         # will be only one
         pvs_to_create = 1
-        needed = volumes.target_disk_size + lvm_space_to_make(pvs_to_create)
+        needed = ProposedPartition.disk_size(partitions) + lvm_space_to_make(pvs_to_create)
         needed > available_space(free_spaces)
       end
 
@@ -157,19 +158,19 @@ module Y2Storage
       # @param disk [Storage::Partitionable]
       # @param volumes [PlannedVolumesList]
       # @return [Integer]
-      def max_logical(disk, volumes)
+      def max_logical(disk, partitions)
         ptable = disk.as_not_empty { disk.partition_table }
         return 0 unless ptable.extended_possible
         # Worst case, all the volumes that can end up in this disk will do so
         # and will be candidates to be logical
-        max_volumes = volumes.select { |v| v.disk.nil? || v.disk == disk.name }
-        partitions = max_volumes.size
+        max_partitions = partitions.select { |p| p.disk.nil? || p.disk == disk.name }
+        partitions_count = max_partitions.size
         # Even worst if we need a logical PV
-        partitions += 1 unless lvm_helper.missing_space.zero?
+        partitions_count += 1 unless lvm_helper.missing_space.zero?
         if ptable.has_extended
-          partitions
+          partitions_count
         else
-          SpaceDistribution.partitions_in_new_extended(partitions, ptable)
+          SpaceDistribution.partitions_in_new_extended(partitions_count, ptable)
         end
       end
 
@@ -186,14 +187,14 @@ module Y2Storage
       # @param volumes [PlannedVolumesList]
       # @param free_spaces [Array<FreeDiskSpace>]
       # @return [Hash{PlannedVolume => Array<FreeDiskSpace>}]
-      def candidate_disk_spaces(volumes, free_spaces)
-        volumes.each_with_object({}) do |volume, hash|
-          spaces = free_spaces.select { |space| suitable_disk_space?(space, volume, volumes.target) }
+      def candidate_disk_spaces(partitions, free_spaces)
+        partitions.each_with_object({}) do |partition, hash|
+          spaces = free_spaces.select { |space| suitable_disk_space?(space, partition) }
           if spaces.empty?
-            log.error "No suitable free space for #{volume}"
-            raise NoDiskSpaceError, "No suitable free space for the volume"
+            log.error "No suitable free space for #{partition}"
+            raise NoDiskSpaceError, "No suitable free space for the partition"
           end
-          hash[volume] = spaces
+          hash[partition] = spaces
         end
       end
 
@@ -207,27 +208,24 @@ module Y2Storage
       #     which spaces are acceptable for each volume
       # @param target [Symbol] target to initialize all the volume lists
       # @return [Array<Hash{FreeDiskSpace => PlannedVolumesList}>]
-      def distribution_hashes(disk_spaces_by_vol, target)
-        return [{}] if disk_spaces_by_vol.empty?
+      def distribution_hashes(disk_spaces_by_partition)
+        return [{}] if disk_spaces_by_partition.empty?
 
-        hash_product(disk_spaces_by_vol).map do |combination|
+        hash_product(disk_spaces_by_partition).map do |combination|
           # combination looks like this
           # {vol1 => space1, vol2 => space1, vol3 => space2 ...}
-          group_by_space(combination, target)
+          group_by_space(combination)
         end
       end
 
-      def group_by_space(combination, target)
-        combination = inverse_hash(combination)
-        combination.each_with_object({}) do |(space, vols), hash|
-          hash[space] = PlannedVolumesList.new(vols, target: target)
-        end
+      def group_by_space(combination)
+        inverse_hash(combination)
       end
 
-      def suitable_disk_space?(space, volume, target)
-        return false if volume.disk && volume.disk != space.disk_name
-        return false if space.disk_size < volume.min_valid_disk_size(target)
-        max_offset = volume.max_start_offset
+      def suitable_disk_space?(space, partition)
+        return false if partition.disk && partition.disk != space.disk_name
+        return false if space.disk_size < partition.disk_size
+        max_offset = partition.max_start_offset
         return false if max_offset && space.start_offset > max_offset
         true
       end

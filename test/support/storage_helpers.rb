@@ -62,6 +62,36 @@ module Yast
         volume
       end
 
+      # FIXME reimplement ProposedPartition#initialize(:volume, :attrs)
+      def proposed_partition(attrs = {})
+        attrs = attrs.dup
+        type = attrs.delete(:type)
+        if type.is_a?(::String) || type.is_a?(Symbol)
+          type = ::Storage.const_get("FsType_" + type.to_s.upcase)
+        end
+        partition = Y2Storage::ProposedPartition.new
+        partition.filesystem_type = type
+        attrs.each_pair do |key, value|
+          partition.send(:"#{key}=", value)
+        end
+        partition
+      end
+
+      # FIXME reimplement ProposedLv#initialize(:volume, :attrs)
+      def proposed_lv(attrs = {})
+        attrs = attrs.dup
+        type = attrs.delete(:type)
+        if type.is_a?(::String) || type.is_a?(Symbol)
+          type = ::Storage.const_get("FsType_" + type.to_s.upcase)
+        end
+        lv = Y2Storage::ProposedLv.new
+        lv.filesystem_type = type
+        attrs.each_pair do |key, value|
+          lv.send(:"#{key}=", value)
+        end
+        lv
+      end
+
       def space_dist(vols_by_space)
         Y2Storage::Proposal::SpaceDistribution.new(vols_by_space)
       end

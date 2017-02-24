@@ -33,9 +33,9 @@ describe Y2Storage::Proposal::PartitionCreator do
       fake_scenario(scenario)
     end
 
-    let(:root_vol) { planned_vol(mount_point: "/", type: :ext4, desired: 1.GiB) }
-    let(:home_vol) { planned_vol(mount_point: "/home", type: :ext4, desired: 1.GiB) }
-    let(:swap_vol) { planned_vol(mount_point: "swap", type: :swap, desired: 1.GiB) }
+    let(:root_part) { proposed_partition(mount_point: "/", type: :ext4, disk_size: 1.GiB) }
+    let(:home_part) { proposed_partition(mount_point: "/home", type: :ext4, disk_size: 1.GiB) }
+    let(:swap_part) { proposed_partition(mount_point: "swap", type: :swap, disk_size: 1.GiB) }
     let(:disk_spaces) { fake_devicegraph.free_disk_spaces.to_a }
 
     subject(:creator) { described_class.new(fake_devicegraph) }
@@ -46,8 +46,8 @@ describe Y2Storage::Proposal::PartitionCreator do
       space3 = disk_spaces.detect { |s| s.disk_size == (3.GiB - 1.MiB) }
       space8 = disk_spaces.detect { |s| s.disk_size == (8.GiB - 1.MiB) }
       distribution = space_dist(
-        space3 => vols_list(root_vol, home_vol),
-        space8 => vols_list(swap_vol)
+        space3 => [root_part, home_part],
+        space8 => [swap_part]
       )
 
       result = creator.create_partitions(distribution)
@@ -65,20 +65,20 @@ describe Y2Storage::Proposal::PartitionCreator do
       )
     end
 
-    context "when filling a space with several volumes" do
+    context "when filling a space with several partitions" do
       let(:scenario) { "empty_hard_disk_mbr_50GiB" }
       let(:distribution) do
-        space_dist(disk_spaces.first => vols_list(root_vol, home_vol, swap_vol))
+        space_dist(disk_spaces.first => [root_part, home_part, swap_part])
       end
 
       context "if the exact space is available" do
         before do
-          root_vol.desired = 20.GiB
-          home_vol.desired = 20.GiB
-          swap_vol.desired = 10.GiB - 1.MiB
+          root_part.disk_size = 20.GiB
+          home_part.disk_size = 20.GiB
+          swap_part.disk_size = 10.GiB - 1.MiB
         end
 
-        it "creates partitions matching the volume sizes" do
+        it "creates partitions matching the proposed partitions sizes" do
           result = creator.create_partitions(distribution)
           expect(result.partitions).to contain_exactly(
             an_object_with_fields(mountpoint: "/", size: 20.GiB.to_i),
@@ -90,13 +90,13 @@ describe Y2Storage::Proposal::PartitionCreator do
 
       context "if some extra space is available" do
         before do
-          root_vol.desired = 20.GiB
-          root_vol.weight = 1
-          home_vol.desired = 20.GiB
-          home_vol.weight = 2
-          swap_vol.desired = 1.GiB - 1.MiB
-          swap_vol.max = 1.GiB - 1.MiB
-          swap_vol.weight = 0
+          root_part.disk_size = 20.GiB
+          root_part.weight = 1
+          home_part.disk_size = 20.GiB
+          home_part.weight = 2
+          swap_part.disk_size = 1.GiB - 1.MiB
+          swap_part.max = 1.GiB - 1.MiB
+          swap_part.weight = 0
         end
 
         it "distributes the extra space" do
@@ -108,9 +108,9 @@ describe Y2Storage::Proposal::PartitionCreator do
           )
         end
 
-        context "if one of the volumes is small" do
+        context "if one of the proposed partitions is small" do
           before do
-            swap_vol.desired = 256.KiB
+            swap_part.disk_size = 256.KiB
           end
 
           # In the past, the adjustments introduced by alignment caused the
@@ -137,10 +137,10 @@ describe Y2Storage::Proposal::PartitionCreator do
         # The last 16.5KiB of GPT are not usable, which makes the space not
         # divisible by 1MiB
         let(:scenario) { "empty_hard_disk_gpt_25GiB" }
-        let(:vol1) { planned_vol(mount_point: "/1", type: :vfat, desired: vol1_size, weight: 1) }
-        let(:vol2) { planned_vol(mount_point: "/2", type: :ext4, desired: 20.GiB, weight: 1) }
-        let(:vol1_size) { 2.GiB }
-        let(:distribution) { space_dist(disk_spaces.first => vols_list(vol1, vol2)) }
+        let(:partition1) { proposed_partition(mount_point: "/1", type: :vfat, disk_size: partition1_size, weight: 1) }
+        let(:partition2) { proposed_partition(mount_point: "/2", type: :ext4, disk_size: 20.GiB, weight: 1) }
+        let(:partition1_size) { 2.GiB }
+        let(:distribution) { space_dist(disk_spaces.first => vols_list(partition1, partition2)) }
 
         it "fills the whole space if possible" do
           result = creator.create_partitions(distribution)
@@ -148,14 +148,14 @@ describe Y2Storage::Proposal::PartitionCreator do
         end
 
         context "if it's necessary to enforce a partition order" do
-          let(:vol1_size) { disk_spaces.first.disk_size - 20.GiB - 256.KiB }
+          let(:partition1_size) { disk_spaces.first.disk_size - 20.GiB - 256.KiB }
 
           it "fills the whole space if possible" do
             result = creator.create_partitions(distribution)
             expect(result.free_disk_spaces).to be_empty
           end
 
-          it "places the required volume at the end" do
+          it "places the required partition at the end" do
             result = creator.create_partitions(distribution)
             expect(result.partitions.last.filesystem.type).to eq Storage::FsType_VFAT
           end
@@ -166,10 +166,10 @@ describe Y2Storage::Proposal::PartitionCreator do
     context "when creating partitions in an empty space" do
       let(:scenario) { "space_22" }
       let(:distribution) do
-        space_dist(disk_spaces.first => vols_list(root_vol, home_vol))
+        space_dist(disk_spaces.first => [root_part, home_part])
       end
 
-      context "if the space should have no logical volumes" do
+      context "if the space should have no logical partitions" do
         before do
           allow(distribution.spaces.first).to receive(:num_logical).and_return 0
         end
@@ -185,10 +185,10 @@ describe Y2Storage::Proposal::PartitionCreator do
         end
       end
 
-      context "if all the volumes in the space must be logical" do
+      context "if all the partitions in the space must be logical" do
         before do
           space = distribution.spaces.first
-          allow(space).to receive(:num_logical).and_return space.volumes.size
+          allow(space).to receive(:num_logical).and_return space.partitions.size
         end
 
         it "creates no new primary partitions" do
@@ -221,7 +221,7 @@ describe Y2Storage::Proposal::PartitionCreator do
       context "if the space must mix logical and primary partitions" do
         before do
           space = distribution.spaces.first
-          allow(space).to receive(:num_logical).and_return(space.volumes.size - 1)
+          allow(space).to receive(:num_logical).and_return(space.partitions.size - 1)
         end
 
         it "creates as many primary partitions as needed" do
@@ -242,7 +242,7 @@ describe Y2Storage::Proposal::PartitionCreator do
           )
         end
 
-        it "creates logical partitions for the remaining volumes" do
+        it "creates logical partitions for the remaining proposed partitions" do
           result = creator.create_partitions(distribution)
           logical = result.partitions.with(type: ::Storage::PartitionType_LOGICAL)
           expect(logical).to contain_exactly an_object_with_fields(name: "/dev/sda5", size: 1.GiB.to_i)
@@ -253,12 +253,12 @@ describe Y2Storage::Proposal::PartitionCreator do
     context "when creating partitions within an existing extended one" do
       let(:scenario) { "space_22_extended" }
       let(:distribution) do
-        space_dist(disk_spaces.first => vols_list(root_vol, home_vol))
+        space_dist(disk_spaces.first => [root_part, home_part])
       end
 
       before do
         space = distribution.spaces.first
-        allow(space).to receive(:num_logical).and_return space.volumes.size
+        allow(space).to receive(:num_logical).and_return space.partitions.size
       end
 
       it "reuses the extended partition" do
@@ -283,12 +283,12 @@ describe Y2Storage::Proposal::PartitionCreator do
       let(:scenario) { "empty_hard_disk_mbr_50GiB" }
       let(:bootable) { false }
 
-      let(:vol) do
-        planned_vol(
-          type: :vfat, partition_id: Storage::ID_ESP, desired: 1.GiB, bootable: bootable
+      let(:partition) do
+        proposed_partition(
+          type: :vfat, partition_id: Storage::ID_ESP, disk_size: 1.GiB, bootable: bootable
         )
       end
-      let(:distribution) { space_dist(disk_spaces.first => vols_list(vol)) }
+      let(:distribution) { space_dist(disk_spaces.first => [partition]) }
 
       it "correctly sets the libstorage partition id" do
         partition = creator.create_partitions(distribution).partitions.first
@@ -304,9 +304,9 @@ describe Y2Storage::Proposal::PartitionCreator do
         encrypter = double("Y2Storage::Proposal::Encrypter")
         expect(Y2Storage::Proposal::Encrypter).to receive(:new).and_return encrypter
 
-        expect(encrypter).to receive(:device_for) do |volume, plain_device|
-          expect(volume).to have_attributes(
-            partition_id: Storage::ID_ESP, desired: 1.GiB, bootable: bootable
+        expect(encrypter).to receive(:device_for) do |part, plain_device|
+          expect(part).to have_attributes(
+            partition_id: Storage::ID_ESP, disk_size: 1.GiB, bootable: bootable
           )
           expect(plain_device).to be_a(Storage::Partition)
           plain_device
@@ -317,7 +317,7 @@ describe Y2Storage::Proposal::PartitionCreator do
 
       context "if the partition must be encrypted" do
         before do
-          vol.encryption_password = "s3cr3t"
+          partition.encryption_password = "s3cr3t"
         end
 
         it "formats the encrypted device instead of the plain partition" do
@@ -336,7 +336,7 @@ describe Y2Storage::Proposal::PartitionCreator do
           expect(new_table).to eq old_table
         end
 
-        context "if the volume is bootable" do
+        context "if the proposed partition is bootable" do
           let(:bootable) { true }
 
           it "sets the boot flag" do
@@ -350,7 +350,7 @@ describe Y2Storage::Proposal::PartitionCreator do
           end
         end
 
-        context "if the volume is not bootable" do
+        context "if the proposed partition is not bootable" do
           it "does not set the boot flag" do
             partition = creator.create_partitions(distribution).partitions.first
             expect(partition.boot?).to eq false

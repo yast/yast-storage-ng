@@ -52,38 +52,11 @@ module Y2Storage
       # @return [::Storage::Devicegraph]
       # @raise Proposal::Error if it was not possible to propose a devicegraph
       def devicegraph(volumes, initial_graph, disk_analyzer)
-        # We are going to alter the volumes in several ways, so let's be a
-        # good citizen and do it in our own copy
-        volumes = volumes.deep_dup
-        add_encryption_password!(volumes)
-
-        if settings.use_lvm
-          volumes, lvm_vols = volumes.split_by(&:plain_partition?)
-        else
-          lvm_vols = PlannedVolumesList.new
-        end
-
-        lvm_helper = LvmHelper.new(lvm_vols, encryption_password: settings.encryption_password)
-        space_maker = SpaceMaker.new(initial_graph, disk_analyzer, lvm_helper, settings)
         begin
-          space_result = provide_space(volumes, space_maker)
+          provide_space(volumes, initial_graph, disk_analyzer, target: :desired)
         rescue NoDiskSpaceError
-          raise if volumes.target == :min
-          # Try again with the minimum size
-          volumes.target = :min
-          lvm_vols.target = :min
-          space_result = provide_space(volumes, space_maker)
+          provide_space(volumes, initial_graph, disk_analyzer, target: :min)
         end
-
-        refine_volumes!(volumes, space_result[:deleted_partitions])
-        graph = create_partitions(space_result[:space_distribution], space_result[:devicegraph])
-        reuse_partitions!(volumes, graph)
-
-        if settings.use_lvm
-          new_pvs = new_physical_volumes(space_result[:devicegraph], graph)
-          graph = lvm_helper.create_volumes(graph, new_pvs)
-        end
-        graph
       end
 
     protected
@@ -110,19 +83,41 @@ module Y2Storage
       # @param space_maker [SpaceMaker]
       #
       # @return [::Storage::Devicegraph]
-      def provide_space(no_lvm_volumes, space_maker)
+      def provide_space(volumes, initial_graph, disk_analyzer, target: nil)
+        proposed_partitions = volumes.proposed_partitions(lvm: settings.use_lvm, target: target)
+        proposed_lvs = volumes.proposed_lvs(lvm: settings.use_lvm, target: target)
+        reused_partitions = volumes.reused_partitions
+
+        lvm_helper = LvmHelper.new(proposed_lvs, encryption_password: settings.encryption_password)
+        space_maker = SpaceMaker.new(initial_graph, disk_analyzer, lvm_helper, settings)
+
         if settings.use_lvm
-          provide_space_lvm(no_lvm_volumes, space_maker)
+          result = provide_space_lvm(proposed_partitions, reused_partitions, space_maker)
         else
-          provide_space_no_lvm(no_lvm_volumes, space_maker)
+          result = provide_space_no_lvm(proposed_partitions, reused_partitions, space_maker)
         end
+
+        graph = result[:devicegraph]
+        space_distribution = result[:space_distribution]
+        deleted_partitions = result[:deleted_partitions]
+
+        refine_partitions!(space_distribution, deleted_partitions)
+        final_graph = create_partitions(space_distribution, graph)
+        reuse_partitions!(volumes, final_graph)
+
+        if settings.use_lvm
+          new_pvs = new_physical_volumes(graph, final_graph)
+          final_graph = lvm_helper.create_volumes(final_graph, new_pvs)
+        end
+
+        final_graph
       end
 
       # Variant of #provide_space when LVM is not involved
       # @see #provide_space
-      def provide_space_no_lvm(volumes, space_maker)
-        result = space_maker.provide_space(volumes)
-        log.info "Found #{volumes.target} space"
+      def provide_space_no_lvm(proposed_partitions, reused_partitions, space_maker)
+        result = space_maker.provide_space(proposed_partitions, partitions_to_keep: reused_partitions)
+        log.info "Found space"
         result
       end
 
@@ -131,15 +126,16 @@ module Y2Storage
       # create a new volume group from scratch.
       #
       # @see #provide_space
-      def provide_space_lvm(no_lvm_volumes, space_maker)
+      def provide_space_lvm(proposed_partitions, reused_partitions, space_maker)
         lvm_helper = space_maker.lvm_helper
         lvm_helper.reused_volume_group = nil
 
         lvm_helper.reusable_volume_groups(space_maker.original_graph).each do |vg|
           begin
             lvm_helper.reused_volume_group = vg
-            result = space_maker.provide_space(no_lvm_volumes)
-            log.info "Found #{no_lvm_volumes.target} space including LVM, reusing #{vg}"
+            keep = reused_partitions + lvm_helper.partitions_in_vg
+            result = space_maker.provide_space(proposed_partitions, partitions_to_keep: keep)
+            log.info "Found space including LVM, reusing #{vg}"
             return result
           rescue NoDiskSpaceError
             next
@@ -147,8 +143,8 @@ module Y2Storage
         end
 
         lvm_helper.reused_volume_group = nil
-        result = space_maker.provide_space(no_lvm_volumes)
-        log.info "Found #{no_lvm_volumes.target} space including LVM"
+        result = space_maker.provide_space(proposed_partitions, partitions_to_keep: reused_partitions)
+        log.info "Found space including LVM"
 
         result
       end
@@ -176,18 +172,20 @@ module Y2Storage
       # @param volumes [PlannedVolumesList] list of volumes to modify
       # @param deleted_partitions [Array<::Storage::Partition>] partitions
       #     deleted from the initial devicegraph
-      def refine_volumes!(volumes, deleted_partitions)
+      def refine_partitions!(space_distribution, deleted_partitions)
+        partitions = space_distribution.spaces.map { |s| s.partitions }.flatten
+
         deleted_swaps = deleted_partitions.select do |part|
           part.id == ::Storage::ID_SWAP
         end
-        new_swap_volumes = volumes.select { |vol| !vol.reuse && vol.mount_point == "swap" }
+        new_swap_partitions = partitions.select { |part| part.mount_point == "swap" }
 
-        new_swap_volumes.each_with_index do |swap_volume, idx|
+        new_swap_partitions.each_with_index do |swap_partition, idx|
           deleted_swap = deleted_swaps[idx]
           break unless deleted_swap
 
-          swap_volume.uuid = deleted_swap.filesystem.uuid
-          swap_volume.label = deleted_swap.filesystem.label
+          swap_partition.uuid = deleted_swap.filesystem.uuid
+          swap_partition.label = deleted_swap.filesystem.label
         end
       end
 
