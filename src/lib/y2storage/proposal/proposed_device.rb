@@ -26,13 +26,13 @@ require "y2storage/disk_size"
 require "y2storage/secret_attributes"
 
 module Y2Storage
-  # Class to represent a planned volume (partition or logical volume) and
+  # Class to represent a proposed device (partition or logical volume) and
   # its constraints
   #
   class ProposedDevice
     include SecretAttributes
 
-    # @return [String] mount point for this volume. This might be a real mount
+    # @return [String] mount point for this device. This might be a real mount
     # point ("/", "/boot", "/home") or a pseudo mount point like "swap".
     attr_accessor :mount_point
     # @return [::Storage::FsType] the type of filesystem this volume should
@@ -43,16 +43,16 @@ module Y2Storage
     attr_accessor :label
     # @return [String] UUID to enforce in the filesystem
     attr_accessor :uuid
-    # @return [DiskSize] definitive size of the volume
+    # @return [DiskSize] size of the proposed device
     attr_accessor :disk_size
     # @return [DiskSize] maximum acceptable size
     attr_accessor :max_disk_size
     # @return [Float] factor used to distribute the extra space between
-    # volumes
+    # proposed devices
     attr_accessor :weight
     # @!attribute encryption_password
-    #   @return [String, nil] password used to encrypt the volume. If is nil, it
-    #   means the volume will not be encrypted
+    #   @return [String, nil] password used to encrypt the device. If is nil, it
+    #   means the proposed device will not be encrypted
     secret_attr :encryption_password
 
     TO_STRING_ATTRS = [:mount_point, :filesystem_type, :disk_size, :max_disk_size]
@@ -62,8 +62,8 @@ module Y2Storage
 
     # Constructor.
     #
-    # @param mount_point [string] @see #mount_point
-    # @param filesystem_type [::Storage::FsType] @see #filesystem_type
+    # @param volume [PlannedVolume]
+    # @param target [Symbol] size to allocate (:desired, :min)
     def initialize(volume: nil, target: nil)
       @mount_point      = nil
       @filesystem_type  = nil
@@ -97,8 +97,9 @@ module Y2Storage
       "#<#{self.class} " + attrs.join(", ") + ">"
     end
 
-    # Create a filesystem for the volume on the specified partition and set its
-    # mount point. Do nothing if #filesystem_type is not set.
+    # Create a filesystem for the proposed device on the specified 
+    # partition and set its mount point. Do nothing if #filesystem_type 
+    # is not set.
     #
     # @param partition [::Storage::Partition]
     #
@@ -116,16 +117,14 @@ module Y2Storage
       other.class == self.class && other.internal_state == internal_state
     end
 
-    # Checks whether the volume will be encrypted
+    # Checks whether the proposed device will be encrypted
     #
     # @return [Boolean]
     def encrypt?
       !encryption_password.nil?
     end
 
-    # FIXME
-
-    # Total sum of all desired or min sizes of volumes (according to #target)
+    # Total sum of all sizes of proposed partitions
     #
     # This tries to avoid an 'unlimited' result:
     # If a the desired size of any volume is 'unlimited',
