@@ -42,7 +42,7 @@ module Y2Storage
     # @return [PlannedVolumesList] list containing volumes with an adjusted
     #     value for PlannedVolume#disk_size
     def distribute_space(proposed_devices, space_size, rounding: nil, min_grain: nil)
-      required_size = ProposedLv.disk_size(proposed_devices) 
+      required_size = ProposedDevice.disk_size(proposed_devices) 
       raise RuntimeError if space_size < required_size
 
       rounding ||= min_grain
