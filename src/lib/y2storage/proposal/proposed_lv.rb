@@ -151,20 +151,6 @@ module Y2Storage
       lvs.reduce(DiskSize.zero) { |sum, lv| sum + lv.max_disk_size.ceil(rounding) }
     end
 
-    # Total sum of all current sizes of volumes
-    #
-    # @return [DiskSize] sum of sizes in @volumes
-    def self.total_disk_size(lvs)
-      lvs.reduce(DiskSize.zero) { |sum, lv| sum + lv.disk_size }
-    end
-
-    # Total sum of all weights of volumes
-    #
-    # @return [Float]
-    def self.total_weight(lvs)
-      lvs.reduce(0.0) { |sum, lv| sum + lv.weight }
-    end
-
   protected
 
     def internal_state

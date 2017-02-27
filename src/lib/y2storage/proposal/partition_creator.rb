@@ -27,6 +27,7 @@ require "y2storage/disk_size"
 require "y2storage/refinements"
 require "y2storage/proposal/encrypter"
 require "y2storage/proposal/proposed_partition"
+require "y2storage/proposal/extra_space_assigner"
 
 module Y2Storage
   class Proposal
@@ -37,6 +38,7 @@ module Y2Storage
       using Refinements::DevicegraphLists
       using Y2Storage::Refinements::Disk
       include Yast::Logger
+      include ExtraSpaceAssigner
 
       FIRST_LOGICAL_PARTITION_NUMBER = 5 # Number of the first logical partition (/dev/sdx5)
 
@@ -250,103 +252,6 @@ module Y2Storage
 
       def encrypter
         @encrypter ||= Encrypter.new
-      end
-
-
-      # FIXME
-
-      def distribute_space(partitions, space_size, rounding: nil, min_grain: nil)
-        raise RuntimeError if space_size < ProposedPartition.disk_size(partitions)
-
-        rounding ||= min_grain
-        rounding ||= DiskSize.new(1)
-
-        partitions.each do |partition|
-          partition.disk_size = partition.disk_size.ceil(rounding)
-        end
-        adjust_size_to_last_slot!(partitions.last, space_size, min_grain) if min_grain
-        extra_size = space_size - ProposedPartition.total_disk_size(partitions)
-        unused = distribute_extra_space!(partitions, extra_size, rounding)
-        partitions.last.disk_size += unused if min_grain && unused < min_grain
-
-        partitions
-      end
-
-      # @return [DiskSize] Surplus space that could not be distributed
-      def distribute_extra_space!(partitions, extra_size, rounding)
-        candidates = partitions
-
-        while distributable?(extra_size, rounding)
-          candidates = extra_space_candidates(partitions)
-          return extra_size if candidates.empty?
-          return extra_size if ProposedPartition.total_weight(candidates).zero?
-          log.info("Distributing #{extra_size} extra space among #{candidates.size} volumes")
-
-          assigned_size = DiskSize.zero
-          total_weight = ProposedPartition.total_weight(candidates)
-          candidates.each do |part|
-            partition_extra = partition_extra_size(part, extra_size, total_weight, assigned_size, rounding)
-            part.disk_size += partition_extra
-            log.info("Distributing #{partition_extra} to #{part.mount_point}; now #{part.disk_size}")
-            assigned_size += partition_extra
-          end
-          extra_size -= assigned_size
-        end
-        log.info("Could not distribute #{extra_size}") unless extra_size.zero?
-        extra_size
-      end
-
-      def distributable?(size, rounding)
-        size >= rounding
-      end
-
-      # Volumes that may grow when distributing the extra space
-      #
-      # @param volumes [PlannedVolumesList] initial set of all volumes
-      # @return [PlannedVolumesList]
-      def extra_space_candidates(partitions)
-        partitions.select { |partition| partition.disk_size < partition.max_disk_size}
-      end
-
-      def adjust_size_to_last_slot!(partition, space_size, min_grain)
-        adjusted_size = adjusted_size_after_ceil(partition, space_size, min_grain)
-        target_size = partition.disk_size
-        partition.disk_size = adjusted_size unless adjusted_size < target_size
-      end
-
-      def adjusted_size_after_ceil(partition, space_size, min_grain)
-        mod = space_size % min_grain
-        last_slot_size = mod.zero? ? min_grain : mod
-        return partition.disk_size if last_slot_size == min_grain
-
-        missing = min_grain - last_slot_size
-        partition.disk_size - missing
-      end
-
-      # Extra space to be assigned to a volume
-      #
-      # @param volume [PlannedVolume] volume to enlarge
-      # @param total_size [DiskSize] free space to be distributed among
-      #    involved volumes
-      # @param total_weight [Float] sum of the weights of all involved volumes
-      # @param assigned_size [DiskSize] space already distributed to other volumes
-      # @param rounding [DiskSize] size to round up
-      #
-      # @return [DiskSize]
-      def partition_extra_size(partition, total_size, total_weight, assigned_size, rounding)
-        available_size = total_size - assigned_size
-
-        extra_size = total_size * (partition.weight / total_weight)
-        extra_size = extra_size.ceil(rounding)
-        extra_size = available_size.floor(rounding) if extra_size > available_size
-
-        new_size = extra_size + partition.disk_size
-        if new_size > partition.max_disk_size
-          # Increase just until reaching the max size
-          partition.max_disk_size - partition.disk_size
-        else
-          extra_size
-        end
       end
 
       def partitions_sorted_by_attr(partitions, *attrs, nils_first: false, descending: false)
