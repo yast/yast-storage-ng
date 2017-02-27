@@ -86,21 +86,8 @@ module Y2Storage
         end
 
         min_grain = free_space.disk.min_grain
-        sorted = sorted_partitions(partitions, usable_size, min_grain)
-        partitions = distribute_space(sorted, usable_size, min_grain: min_grain)
+        partitions = distribute_space(partitions, usable_size, min_grain: min_grain)
         create_volumes_partitions(partitions, free_space, num_logical)
-      end
-
-      # Volumes sorted in the most convenient way in order to create partitions
-      # for them.
-      def sorted_partitions(partitions, usable_size, min_grain)
-        sorted = partitions_sorted_by_attr(partitions, :disk, :max_start_offset)
-        last = ProposedPartition.enforced_last(partitions, usable_size, min_grain)
-        if last
-          sorted.delete(last)
-          sorted << last
-        end
-        sorted
       end
 
       # Creates a partition and the corresponding filesystem for each volume
@@ -253,70 +240,6 @@ module Y2Storage
       def encrypter
         @encrypter ||= Encrypter.new
       end
-
-      def partitions_sorted_by_attr(partitions, *attrs, nils_first: false, descending: false)
-        partitions.each_with_index.sort do |one, other|
-          compare(one, other, attrs, nils_first, descending)
-        end.map(&:first)
-      end
-
-      # FIXME
-
-    protected
-
-      # @param one [Array] first element: the volume, second: its original index
-      # @param other [Array] same structure than previous one
-      def compare(one, other, attrs, nils_first, descending)
-        one_vol = one.first
-        other_vol = other.first
-        result = compare_attr(one_vol, other_vol, attrs.first, nils_first, descending)
-        if result.zero?
-          if attrs.size > 1
-            # Try next attribute
-            compare(one, other, attrs[1..-1], nils_first, descending)
-          else
-            # Keep original order by checking the indexes
-            one.last <=> other.last
-          end
-        else
-          result
-        end
-      end
-
-      # @param one [PlannedVolume]
-      # @param other [PlannedVolume]
-      def compare_attr(one, other, attr, nils_first, descending)
-        one_value = one.send(attr)
-        other_value = other.send(attr)
-        if one_value.nil? || other_value.nil?
-          compare_with_nil(one_value, other_value, nils_first)
-        else
-          compare_values(one_value, other_value, descending)
-        end
-      end
-
-      # @param one [PlannedVolume]
-      # @param other [PlannedVolume]
-      def compare_values(one, other, descending)
-        if descending
-          other <=> one
-        else
-          one <=> other
-        end
-      end
-
-      # @param one [PlannedVolume]
-      # @param other [PlannedVolume]
-      def compare_with_nil(one, other, nils_first)
-        if one.nil? && other.nil?
-          0
-        elsif nils_first
-          one.nil? ? -1 : 1
-        else
-          one.nil? ? 1 : -1
-        end
-      end
-
     end
   end
 end
