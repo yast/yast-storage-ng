@@ -76,7 +76,6 @@ module Y2Storage
         UF_XFS:           "xfsprogs",
         UF_REISERFS:      "reiserfs",
         UF_NFS:           "nfs-client",
-        UF_NFS4:          "nfs-client",
         UF_NTFS:          ["ntfs-3g", "ntfsprogs"],
         UF_VFAT:          "dosfstools",
 

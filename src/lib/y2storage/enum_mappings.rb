@@ -79,7 +79,6 @@ module Y2Storage
         "swap"     => ::Storage::FsType_SWAP,
         "hfsplus"  => ::Storage::FsType_HFSPLUS,
         "nfs"      => ::Storage::FsType_NFS,
-        "nfs4"     => ::Storage::FsType_NFS4,
         "tmpfs"    => ::Storage::FsType_TMPFS,
         "iso9660"  => ::Storage::FsType_ISO9660,
         "udf"      => ::Storage::FsType_UDF

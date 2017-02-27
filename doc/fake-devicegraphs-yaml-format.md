@@ -243,7 +243,6 @@ Example:
   - swap
   - hfsplus
   - nfs
-  - nfs4
   - tmpfs
   - iso9660
   - reiserfs
