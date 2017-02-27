@@ -72,21 +72,8 @@ module Y2Storage
       @disk_size        = DiskSize.zero
       @max_disk_size    = DiskSize.unlimited
       @weight          = 0
-
       copy_volume_values(volume, target) if volume
     end
-
-    # FIXME it is duplicated in ProposedLv
-    def copy_volume_values(volume, target)
-      instance_variables.each do |inst_variable|
-        volume_method = inst_variable.to_s.sub("@", "")
-        if volume.respond_to?(volume_method)
-          instance_variable_set(inst_variable, volume.send(volume_method))
-        end
-      end
-      @disk_size = volume.min_valid_disk_size(target)
-    end
-
 
     def to_s
       attrs = TO_STRING_ATTRS.map do |attr|
@@ -161,6 +148,16 @@ module Y2Storage
 
     def internal_state
       instance_variables.sort.map { |v| instance_variable_get(v) }
+    end
+
+    def copy_volume_values(volume, target)
+      instance_variables.each do |inst_variable|
+        volume_method = inst_variable.to_s.sub("@", "")
+        if volume.respond_to?(volume_method)
+          instance_variable_set(inst_variable, volume.send(volume_method))
+        end
+      end
+      @disk_size = volume.min_valid_disk_size(target)
     end
   end
 end
