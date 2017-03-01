@@ -24,6 +24,7 @@ require_relative "spec_helper"
 require "storage"
 require "y2storage"
 require_relative "support/proposal_examples"
+require_relative "support/proposal_context"
 
 describe Y2Storage::Proposal do
   describe "#propose" do
@@ -31,51 +32,7 @@ describe Y2Storage::Proposal do
     using Y2Storage::Refinements::SizeCasts
     using Y2Storage::Refinements::DevicegraphLists
 
-    before do
-      fake_scenario(scenario)
-
-      allow(Y2Storage::DiskAnalyzer).to receive(:new).and_return disk_analyzer
-      allow(disk_analyzer).to receive(:windows_partition?) do |partition|
-        !!(partition.filesystem.label =~ /indows/)
-      end
-
-      allow_any_instance_of(::Storage::BlkFilesystem).to receive(:detect_resize_info)
-        .and_return(resize_info)
-
-      allow(Yast::Arch).to receive(:x86_64).and_return true
-      allow(Y2Storage::StorageManager.instance.storage).to receive(:arch).and_return(storage_arch)
-      allow(storage_arch).to receive(:efiboot?).and_return(false)
-      allow(storage_arch).to receive(:x86?).and_return(true)
-      allow(storage_arch).to receive(:ppc?).and_return(false)
-      allow(storage_arch).to receive(:s390?).and_return(false)
-    end
-
-    subject(:proposal) { described_class.new(settings: settings) }
-
-    let(:disk_analyzer) { Y2Storage::DiskAnalyzer.new(fake_devicegraph, scope: :install_candidates) }
-    let(:storage_arch) { instance_double("::Storage::Arch") }
-    let(:resize_info) do
-      instance_double("::Storage::ResizeInfo", resize_ok: true, min_size: 40.GiB.to_i)
-    end
-    let(:separate_home) { false }
-    let(:lvm) { false }
-    let(:encrypt) { false }
-    let(:settings) do
-      settings = Y2Storage::ProposalSettings.new
-      settings.use_separate_home = separate_home
-      settings.use_lvm = lvm
-      settings.encryption_password = encrypt ? "12345678" : nil
-      settings
-    end
-
-    let(:expected_scenario) { scenario }
-    let(:expected) do
-      file_name = expected_scenario
-      file_name.concat("-enc") if encrypt
-      file_name.concat("-lvm") if lvm
-      file_name.concat("-sep-home") if separate_home
-      ::Storage::Devicegraph.new_from_file(output_file_for(file_name))
-    end
+    include_context "proposal"
 
     context "in a PC with no partition table" do
       let(:scenario) { "empty_hard_disk_50GiB" }
