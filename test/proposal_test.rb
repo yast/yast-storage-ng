@@ -34,6 +34,8 @@ describe Y2Storage::Proposal do
 
     include_context "proposal"
 
+    let(:architecture) { :x86 }
+
     context "in a PC with no partition table" do
       let(:scenario) { "empty_hard_disk_50GiB" }
       let(:expected_scenario) { "empty_hard_disk_gpt_50GiB" }

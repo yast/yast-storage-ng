@@ -36,12 +36,12 @@ RSpec.shared_context "proposal" do
 	  allow_any_instance_of(::Storage::BlkFilesystem).to receive(:detect_resize_info)
 	    .and_return(resize_info)
 
-	  allow(Yast::Arch).to receive(:x86_64).and_return true
+	  allow(Yast::Arch).to receive(:x86_64).and_return(architecture == :x86)
 	  allow(Y2Storage::StorageManager.instance.storage).to receive(:arch).and_return(storage_arch)
 	  allow(storage_arch).to receive(:efiboot?).and_return(false)
-	  allow(storage_arch).to receive(:x86?).and_return(true)
-	  allow(storage_arch).to receive(:ppc?).and_return(false)
-	  allow(storage_arch).to receive(:s390?).and_return(false)
+	  allow(storage_arch).to receive(:x86?).and_return(architecture == :x86)
+	  allow(storage_arch).to receive(:ppc?).and_return(architecture == :ppc)
+	  allow(storage_arch).to receive(:s390?).and_return(architecture == :s390)
 	end
 
 	subject(:proposal) { described_class.new(settings: settings) }
