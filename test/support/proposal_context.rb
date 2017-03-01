@@ -47,6 +47,9 @@ RSpec.shared_context "proposal" do
 
   subject(:proposal) { described_class.new(settings: settings) }
 
+  let(:architecture) { :x86 }
+  let(:ppc_power_nv) { false }
+
   let(:disk_analyzer) { Y2Storage::DiskAnalyzer.new(fake_devicegraph, scope: :install_candidates) }
   let(:storage_arch) { instance_double("::Storage::Arch") }
   let(:resize_info) do
