@@ -23,14 +23,11 @@
 require_relative "spec_helper"
 require "storage"
 require "y2storage"
+require_relative "support/proposal_examples"
 require_relative "support/proposal_context"
 
 describe Y2Storage::Proposal do
   describe "#propose" do
-    using Y2Storage::Refinements::TestDevicegraph
-    using Y2Storage::Refinements::SizeCasts
-    using Y2Storage::Refinements::DevicegraphLists
-
     include_context "proposal"
 
     let(:architecture) { :ppc }
@@ -43,10 +40,7 @@ describe Y2Storage::Proposal do
       context "if requires a /boot partition" do
         let(:lvm) { true }
 
-        it "creates a /boot partition" do
-          proposal.propose
-          expect(proposal.devices.to_str).to eq expected.to_str
-        end
+        include_examples "proposed layout"
       end
     end
 
@@ -57,19 +51,13 @@ describe Y2Storage::Proposal do
       context "if requires a PReP partition" do
         let(:lvm) { false }
 
-        it "creates a PReP partition" do
-          proposal.propose
-          expect(proposal.devices.to_str).to eq expected.to_str
-        end
+        include_examples "proposed layout"
       end
 
       context "if requires /boot and PReP partitions" do
         let(:lvm) { true }
 
-        it "creates /boot and PReP partitions" do
-          proposal.propose
-          expect(proposal.devices.to_str).to eq expected.to_str
-        end
+        include_examples "proposed layout"
       end
     end
   end

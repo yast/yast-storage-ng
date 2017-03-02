@@ -28,10 +28,6 @@ require_relative "support/proposal_context"
 
 describe Y2Storage::Proposal do
   describe "#propose" do
-    using Y2Storage::Refinements::TestDevicegraph
-    using Y2Storage::Refinements::SizeCasts
-    using Y2Storage::Refinements::DevicegraphLists
-
     include_context "proposal"
 
     let(:architecture) { :x86 }
