@@ -30,6 +30,7 @@ describe Y2Storage::Proposal do
   describe "#propose" do
     include_context "proposal"
 
+    subject(:proposal) { described_class.new(settings: settings) }
     let(:architecture) { :ppc }
     let(:scenario) { "empty_hard_disk_50GiB" }
 

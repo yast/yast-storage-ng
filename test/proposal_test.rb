@@ -34,6 +34,7 @@ describe Y2Storage::Proposal do
 
     include_context "proposal"
 
+    subject(:proposal) { described_class.new(settings: settings) }
     let(:architecture) { :x86 }
 
     context "when forced to create a small partition" do

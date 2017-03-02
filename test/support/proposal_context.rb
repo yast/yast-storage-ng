@@ -45,8 +45,6 @@ RSpec.shared_context "proposal" do
     allow(storage_arch).to receive(:s390?).and_return(architecture == :s390)
   end
 
-  subject(:proposal) { described_class.new(settings: settings) }
-
   let(:architecture) { :x86 }
   let(:ppc_power_nv) { false }
 
