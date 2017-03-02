@@ -98,5 +98,14 @@ module Y2Storage
         "twofish256_old" => ::Storage::EncryptionType_TWOFISH256_OLD,
         "luks"           => ::Storage::EncryptionType_LUKS
       }
+
+    MOUNT_BY_TYPES =
+      {
+        "device" => Storage::MountByType_DEVICE,
+        "uuid"   => Storage::MountByType_UUID,
+        "label"  => Storage::MountByType_LABEL,
+        "id"     => Storage::MountByType_ID,
+        "path"   => Storage::MountByType_PATH
+      }
   end
 end
