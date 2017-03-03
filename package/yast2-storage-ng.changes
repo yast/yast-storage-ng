@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Fri Mar  3 12:30:12 UTC 2017 - ancor@suse.com
+
+- Improved the EnumMappings module.
+- 0.1.12
+
+-------------------------------------------------------------------
 Thu Feb 16 11:37:57 UTC 2017 - ancor@suse.com
 
 - Improvements in the devicegraph query interface: added an
