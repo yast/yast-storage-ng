@@ -117,7 +117,7 @@ module Y2Storage
       #
       # @return [::Storage::Partition]
       def reusable_swap(required_size)
-        return nil if settings.use_lvm
+        return nil if settings.use_lvm || settings.use_encryption
 
         partitions = disk_analyzer.swap_partitions.values.flatten
         partitions.select! { |part| part.size >= required_size.to_i }

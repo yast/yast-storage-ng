@@ -42,7 +42,7 @@ module Y2Storage
       # it will simply return the plain device.
       #
       # @param volume [PlannedVolume]
-      # @param plan_device [Storage::BlkDevice]
+      # @param plain_device [Storage::BlkDevice]
       # @return [Storage::BlkDevice]
       def device_for(volume, plain_device)
         log.info "Checking if the volume must be encrypted #{volume.inspect}"
