@@ -114,10 +114,24 @@ describe Y2Storage::Proposal::VolumesGenerator do
         end
 
         context "if proposing an partition-based setup" do
-          it "includes a volume to reuse the existing swap and no new swap" do
-            expect(swap_volumes).to contain_exactly(
-              an_object_with_fields(reuse: "/dev/sdaX")
-            )
+          context "without encryption" do
+            it "includes a volume to reuse the existing swap and no new swap" do
+              expect(swap_volumes).to contain_exactly(
+                an_object_with_fields(reuse: "/dev/sdaX")
+              )
+            end
+          end
+
+          context "with encryption" do
+            before do
+              settings.encryption_password = "12345678"
+            end
+
+            it "includes a brand new swap volume and no swap reusing" do
+              expect(swap_volumes).to contain_exactly(
+                an_object_with_fields(reuse: nil)
+              )
+            end
           end
         end
       end
