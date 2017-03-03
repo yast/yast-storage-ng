@@ -1,0 +1,35 @@
+---
+- disk:
+    name: "/dev/sda"
+    size: 50 GiB
+    partition_table: msdos
+    partitions:
+ 
+    - partition:
+        size: 22938 MiB (22.40 GiB)
+        name: "/dev/sda1"
+        file_system: btrfs
+        mount_point: "/"
+        encryption:
+          type: luks
+          name: "/dev/mapper/cr_sda1"
+          password: '12345678'
+    - partition:
+        size: 2 GiB
+        name: "/dev/sda2"
+        id: swap
+        file_system: swap
+        mount_point: swap
+        encryption:
+          type: luks
+          name: "/dev/mapper/cr_sda2"
+          password: '12345678'
+    - partition:
+        size: 26213 MiB (25.60 GiB)
+        name: "/dev/sda3"
+        file_system: xfs
+        mount_point: "/home"
+        encryption:
+          type: luks
+          name: "/dev/mapper/cr_sda3"
+          password: '12345678'
