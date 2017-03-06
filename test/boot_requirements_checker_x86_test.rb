@@ -97,6 +97,31 @@ describe Y2Storage::BootRequirementsChecker do
           end
         end
       end
+
+      context "with an encrypted proposal" do
+        let(:use_lvm) { false }
+        let(:use_encryption) { true }
+
+        context "if there are no EFI partitions" do
+          let(:efi_partitions) { {} }
+
+          it "requires only a new /boot/efi partition" do
+            expect(checker.needed_partitions).to contain_exactly(
+              an_object_with_fields(mount_point: "/boot/efi", reuse: nil)
+            )
+          end
+        end
+
+        context "if there is already an EFI partition" do
+          let(:efi_partitions) { { "/dev/sda" => [analyzer_part("/dev/sda1")] } }
+
+          it "only requires to use the existing EFI partition" do
+            expect(checker.needed_partitions).to contain_exactly(
+              an_object_with_fields(mount_point: "/boot/efi", reuse: "/dev/sda1")
+            )
+          end
+        end
+      end
     end
 
     context "not using UEFI (legacy PC)" do
@@ -148,6 +173,29 @@ describe Y2Storage::BootRequirementsChecker do
             end
           end
         end
+
+        context "in an encrypted proposal" do
+          let(:use_lvm) { false }
+          let(:use_encryption) { true }
+
+          context "if there is no GRUB partition" do
+            let(:grub_partitions) { {} }
+
+            it "requires a new GRUB partition" do
+              expect(checker.needed_partitions).to contain_exactly(
+                an_object_with_fields(partition_id: ::Storage::ID_BIOS_BOOT, reuse: nil)
+              )
+            end
+          end
+
+          context "if there is already a GRUB partition" do
+            let(:grub_partitions) { { dev_sda.name => [analyzer_part(dev_sda.name + "2")] } }
+
+            it "does not require any particular volume" do
+              expect(checker.needed_partitions).to be_empty
+            end
+          end
+        end
       end
 
       context "with no partition table" do
@@ -166,6 +214,17 @@ describe Y2Storage::BootRequirementsChecker do
 
         context "in a LVM-based proposal" do
           let(:use_lvm) { true }
+
+          it "requires a new GRUB partition (GPT partition table is assumed)" do
+            expect(checker.needed_partitions).to contain_exactly(
+              an_object_with_fields(partition_id: ::Storage::ID_BIOS_BOOT, reuse: nil)
+            )
+          end
+        end
+
+        context "in an encrypted proposal" do
+          let(:use_lvm) { false }
+          let(:use_encryption) { true }
 
           it "requires a new GRUB partition (GPT partition table is assumed)" do
             expect(checker.needed_partitions).to contain_exactly(
@@ -192,6 +251,27 @@ describe Y2Storage::BootRequirementsChecker do
 
           context "in a LVM-based proposal" do
             let(:use_lvm) { true }
+
+            context "if the MBR gap has additional space for grubenv" do
+              let(:mbr_gap_size) { 260 }
+
+              it "does not require any particular volume" do
+                expect(checker.needed_partitions).to be_empty
+              end
+            end
+
+            context "if the MBR gap has no additional space" do
+              it "requires only a /boot partition" do
+                expect(checker.needed_partitions).to contain_exactly(
+                  an_object_with_fields(mount_point: "/boot")
+                )
+              end
+            end
+          end
+
+          context "in an encrypted proposal" do
+            let(:use_lvm) { false }
+            let(:use_encryption) { true }
 
             context "if the MBR gap has additional space for grubenv" do
               let(:mbr_gap_size) { 260 }
@@ -238,6 +318,17 @@ describe Y2Storage::BootRequirementsChecker do
 
           context "in a LVM-based proposal" do
             let(:use_lvm) { true }
+
+            it "raises an exception" do
+              expect { checker.needed_partitions }.to raise_error(
+                Y2Storage::BootRequirementsChecker::Error
+              )
+            end
+          end
+
+          context "in an encrypted proposal" do
+            let(:use_lvm) { false }
+            let(:use_encryption) { true }
 
             it "raises an exception" do
               expect { checker.needed_partitions }.to raise_error(

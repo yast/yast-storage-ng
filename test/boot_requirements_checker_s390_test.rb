@@ -64,6 +64,17 @@ describe Y2Storage::BootRequirementsChecker do
           )
         end
       end
+
+      context "with an encrypted proposal" do
+        let(:use_lvm) { false }
+        let(:use_encryption) { true }
+
+        it "requires only a /boot/zipl partition" do
+          expect(checker.needed_partitions).to contain_exactly(
+            an_object_with_fields(mount_point: "/boot/zipl")
+          )
+        end
+      end
     end
 
     context "trying to install in a FBA DASD disk" do
@@ -109,6 +120,17 @@ describe Y2Storage::BootRequirementsChecker do
 
         context "with a LVM-based proposal" do
           let(:use_lvm) { true }
+
+          it "requires only a /boot/zipl partition" do
+            expect(checker.needed_partitions).to contain_exactly(
+              an_object_with_fields(mount_point: "/boot/zipl")
+            )
+          end
+        end
+
+        context "with an encrypted proposal" do
+          let(:use_lvm) { false }
+          let(:use_encryption) { true }
 
           it "requires only a /boot/zipl partition" do
             expect(checker.needed_partitions).to contain_exactly(

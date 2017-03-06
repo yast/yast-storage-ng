@@ -65,7 +65,7 @@ module Y2Storage
     attr_accessor :weight
     # @return [Boolean] whether the volume must be created as a plain
     # partition. If so, that volume cannot live into LVM and cannot be
-    # encrypted. 
+    # encrypted.
     attr_accessor :plain_partition
     # @return [String] name to use if the volume is placed in LVM
     attr_accessor :logical_volume_name
@@ -99,7 +99,7 @@ module Y2Storage
     alias_method :desired=, :desired_disk_size=
     alias_method :min=, :min_disk_size=
     alias_method :max=, :max_disk_size=
-    alias_method :plain_partition?, :plain_partition 
+    alias_method :plain_partition?, :plain_partition
 
     # Constructor.
     #
