@@ -55,10 +55,10 @@ module Y2Storage
         # We are going to alter the volumes in several ways, so let's be a
         # good citizen and do it in our own copy
         volumes = volumes.deep_dup
-        add_encryption_password(volumes)
+        add_encryption_password!(volumes)
 
         if settings.use_lvm
-          lvm_vols, volumes = volumes.split_by(&:can_live_on_logical_volume)
+          volumes, lvm_vols = volumes.split_by(&:plain_partition?)
         else
           lvm_vols = PlannedVolumesList.new
         end
@@ -89,12 +89,12 @@ module Y2Storage
     protected
 
       # Modifies planned volumes adding an encryption password.
-      # Only volumes that can_live_on_logical_volume could have
-      # an encryption password.
+      # Encryption password is not assigned to volumes that must 
+      # be created as plain partitions.
       # @param volumes [PlannedVolumesList]
-      def add_encryption_password(volumes)
-        return volumes unless settings.use_encryption
-        volumes.select(&:can_live_on_logical_volume).map do |volume|
+      def add_encryption_password!(volumes)
+        return unless settings.use_encryption
+        volumes.reject(&:plain_partition?).map do |volume|
           volume.encryption_password = settings.encryption_password
         end
       end

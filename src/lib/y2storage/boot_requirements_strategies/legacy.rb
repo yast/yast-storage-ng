@@ -78,7 +78,7 @@ module Y2Storage
         vol.desired_disk_size = DiskSize.MiB(1)
         vol.align = :keep_size
         vol.bootable = false
-        vol.can_live_on_logical_volume = false
+        vol.plain_partition = true
         vol
       end
     end
