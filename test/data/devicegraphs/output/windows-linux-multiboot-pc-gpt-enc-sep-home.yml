@@ -1,7 +1,7 @@
 ---
 - disk:
-    name: "/dev/sda"
     size: 500 GiB
+    name: "/dev/sda"
     partition_table: gpt
     partitions:
     - partition:
