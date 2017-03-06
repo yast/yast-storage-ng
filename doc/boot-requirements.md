@@ -34,12 +34,12 @@
 		- **requires only a /boot partition**
 - when proposing a boot partition
 	- **requires /boot to be ext4 with at least 100 MiB**
-	- **requires /boot to be in the system disk out of LVM**
+	- **requires /boot to be a non-encrypted partition in the system disk**
 	- **recommends /boot to be 200 MiB**
 - when proposing a PReP partition
 	- **requires it to be between 256KiB and 8MiB, despite the alignment**
 	- **recommends it to be 1 MiB**
-	- **requires it to be out of LVM**
+	- **requires it to be a non-encrypted partition**
 	- **requires it to be bootable (ms-dos partition table)**
 
 ## needed partitions in a S/390 system
@@ -64,7 +64,7 @@
 			- **requires only a /boot/zipl partition**
 - when proposing a /boot/zipl partition
 	- **requires /boot/zipl to be ext2 with at least 100 MiB**
-	- **requires /boot/zipl to be in the system disk out of LVM**
+	- **requires /boot/zipl to be a non-encrypted partition in the system disk**
 	- **recommends /boot/zipl to be 200 MiB**
 
 ## needed partitions in a x86 system
@@ -134,15 +134,15 @@
 				- **raises an exception**
 	- when proposing a boot partition
 		- **requires /boot to be ext4 with at least 100 MiB**
-		- **requires /boot to be in the system disk out of LVM**
+		- **requires /boot to be a non-encrypted partition in the system disk**
 		- **recommends /boot to be 200 MiB**
 	- when proposing an new GRUB partition
 		- **requires it to have the correct id**
-		- **requires it to be out of LVM**
+		- **requires it to be a non-encrypted partition**
 		- **requires it to be between 256KiB and 8MiB, despite the alignment**
 		- **recommends it to be 1 MiB**
 	- when proposing an new EFI partition
 		- **requires /boot/efi to be vfat with at least 33 MiB**
-		- **requires /boot/efi to be out of LVM**
+		- **requires /boot/efi to be a non-encrypted partition**
 		- **recommends /boot/efi to be 500 MiB**
 		- **requires /boot/efi to be close enough to the beginning of disk**
