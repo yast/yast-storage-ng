@@ -30,7 +30,7 @@ RSpec.shared_examples "proposed boot partition" do
     expect(boot_part.min).to eq 100.MiB
   end
 
-  it "requires /boot to be in the system disk out of LVM" do
+  it "requires /boot to be a non-encrypted partition in the system disk" do
     expect(boot_part.disk).to eq root_device
     expect(boot_part.plain_partition?).to eq true
   end
@@ -47,7 +47,7 @@ RSpec.shared_examples "proposed GRUB partition" do
     expect(grub_part.partition_id).to eq ::Storage::ID_BIOS_BOOT
   end
 
-  it "requires it to be out of LVM" do
+  it "requires it to be a non-encrypted partition" do
     expect(grub_part.plain_partition?).to eq true
   end
 
@@ -70,7 +70,7 @@ RSpec.shared_examples "proposed EFI partition" do
     expect(efi_part.min).to eq 33.MiB
   end
 
-  it "requires /boot/efi to be out of LVM" do
+  it "requires /boot/efi to be a non-encrypted partition" do
     expect(efi_part.plain_partition?).to eq true
   end
 
@@ -96,7 +96,7 @@ RSpec.shared_examples "proposed PReP partition" do
     expect(prep_part.desired).to eq 1.MiB
   end
 
-  it "requires it to be out of LVM" do
+  it "requires it to be a non-encrypted partition" do
     expect(prep_part.plain_partition?).to eq true
   end
 
@@ -113,7 +113,7 @@ RSpec.shared_examples "proposed /boot/zipl partition" do
     expect(zipl_part.min).to eq 100.MiB
   end
 
-  it "requires /boot/zipl to be in the system disk out of LVM" do
+  it "requires /boot/zipl to be a non-encrypted partition in the system disk" do
     expect(zipl_part.disk).to eq root_device
     expect(zipl_part.plain_partition?).to eq true
   end
