@@ -83,7 +83,7 @@ describe Y2Storage::Proposal::VolumesGenerator do
 
         it "correctly sets the LVM properties for the new swap" do
           expect(swap_volumes).to contain_exactly(
-            an_object_with_fields(can_live_on_logical_volume: true, logical_volume_name: "swap")
+            an_object_with_fields(plain_partition: false, logical_volume_name: "swap")
           )
         end
       end
@@ -177,7 +177,7 @@ describe Y2Storage::Proposal::VolumesGenerator do
       it "sets the LVM attributes for home" do
         home = subject.all_volumes.detect { |v| v.mount_point == "/home" }
         expect(home.logical_volume_name).to eq "home"
-        expect(home.can_live_on_logical_volume).to eq true
+        expect(home.plain_partition?).to eq false
       end
     end
 
@@ -203,7 +203,7 @@ describe Y2Storage::Proposal::VolumesGenerator do
       it "sets the LVM attributes" do
         root = subject.all_volumes.detect { |v| v.mount_point == "/" }
         expect(root.logical_volume_name).to eq "root"
-        expect(root.can_live_on_logical_volume).to eq true
+        expect(root.plain_partition?).to eq false
       end
 
       context "with a non-Btrfs filesystem" do

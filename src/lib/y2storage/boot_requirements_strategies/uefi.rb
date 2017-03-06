@@ -45,7 +45,7 @@ module Y2Storage
           vol.min_disk_size = DiskSize.MiB(33)
           vol.max_disk_size = DiskSize.unlimited
           vol.desired_disk_size = DiskSize.MiB(500)
-          vol.can_live_on_logical_volume = false
+          vol.plain_partition = true
           vol.max_start_offset = DiskSize.TiB(2)
         end
         vol

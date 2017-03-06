@@ -32,7 +32,7 @@ RSpec.shared_examples "proposed boot partition" do
 
   it "requires /boot to be in the system disk out of LVM" do
     expect(boot_part.disk).to eq root_device
-    expect(boot_part.can_live_on_logical_volume).to eq false
+    expect(boot_part.plain_partition?).to eq true
   end
 
   it "recommends /boot to be 200 MiB" do
@@ -48,7 +48,7 @@ RSpec.shared_examples "proposed GRUB partition" do
   end
 
   it "requires it to be out of LVM" do
-    expect(grub_part.can_live_on_logical_volume).to eq false
+    expect(grub_part.plain_partition?).to eq true
   end
 
   it "requires it to be between 256KiB and 8MiB, despite the alignment" do
@@ -71,7 +71,7 @@ RSpec.shared_examples "proposed EFI partition" do
   end
 
   it "requires /boot/efi to be out of LVM" do
-    expect(efi_part.can_live_on_logical_volume).to eq false
+    expect(efi_part.plain_partition?).to eq true
   end
 
   it "recommends /boot/efi to be 500 MiB" do
@@ -97,7 +97,7 @@ RSpec.shared_examples "proposed PReP partition" do
   end
 
   it "requires it to be out of LVM" do
-    expect(prep_part.can_live_on_logical_volume).to eq false
+    expect(prep_part.plain_partition?).to eq true
   end
 
   it "requires it to be bootable (ms-dos partition table)" do
@@ -115,7 +115,7 @@ RSpec.shared_examples "proposed /boot/zipl partition" do
 
   it "requires /boot/zipl to be in the system disk out of LVM" do
     expect(zipl_part.disk).to eq root_device
-    expect(zipl_part.can_live_on_logical_volume).to eq false
+    expect(zipl_part.plain_partition?).to eq true
   end
 
   it "recommends /boot/zipl to be 200 MiB" do

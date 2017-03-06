@@ -59,7 +59,7 @@ module Y2Storage
         # Make sure that alignment does not result in a too big partition
         vol.align = :keep_size
         vol.bootable = true
-        vol.can_live_on_logical_volume = false
+        vol.plain_partition = true
         # TODO: We have been told that PReP must be one of the first 4
         # partitions, ideally the first one. But we have not found any
         # rational/evidence. Not implementing that for the time being
