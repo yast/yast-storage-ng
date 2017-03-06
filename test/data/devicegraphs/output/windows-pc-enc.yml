@@ -1,18 +1,19 @@
 ---
 - disk:
+    size: 800.00 GiB
     name: "/dev/sda"
-    size: 800 GiB (0.78 TiB)
     partition_table: msdos
     partitions:
+
     - partition:
-        size: 738 GiB (0.72 TiB)
-        name: "/dev/sda1"
-        type: primary
-        id: ntfs
+        size: 738.00 GiB
+        name: /dev/sda1
+        id: 0x7
         file_system: ntfs
         label: windows
+
     - partition:
-        size: 40 GiB
+        size: 40.00 GiB
         name: "/dev/sda3"
         type: primary
         id: linux
@@ -22,10 +23,10 @@
           type: luks
           name: "/dev/mapper/cr_sda3"
           password: '12345678'
+
     - partition:
-        size: 2 GiB
+        size: 2.00 GiB
         name: "/dev/sda4"
-        type: primary
         id: swap
         file_system: swap
         mount_point: swap
@@ -33,10 +34,11 @@
           type: luks
           name: "/dev/mapper/cr_sda4"
           password: '12345678'
+
     - partition:
-        size: 20479 MiB (20.00 GiB)
+        size: unlimited
         name: "/dev/sda2"
         type: primary
-        id: '0xb'
+        id: 0xb
         file_system: vfat
         label: recovery

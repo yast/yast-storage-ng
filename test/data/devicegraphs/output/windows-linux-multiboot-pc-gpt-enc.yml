@@ -1,7 +1,7 @@
 ---
 - disk:
-    name: "/dev/sda"
     size: 500 GiB
+    name: "/dev/sda"
     partition_table: gpt
     partitions:
     - partition:
@@ -20,7 +20,6 @@
     - partition:
         size: 40 GiB
         name: "/dev/sda3"
-        type: primary
         id: linux
         file_system: btrfs
         mount_point: "/"
