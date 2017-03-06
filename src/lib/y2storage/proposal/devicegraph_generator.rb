@@ -89,7 +89,7 @@ module Y2Storage
     protected
 
       # Modifies planned volumes adding an encryption password.
-      # Encryption password is not assigned to volumes that must 
+      # Encryption password is not assigned to volumes that must
       # be created as plain partitions.
       # @param volumes [PlannedVolumesList]
       def add_encryption_password!(volumes)
