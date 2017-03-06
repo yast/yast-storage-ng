@@ -50,6 +50,10 @@ module Y2Storage
       @home_filesystem_type     = ::Storage::FsType_XFS
       @enlarge_swap_for_suspend = false
     end
+
+    def use_encryption
+      !encryption_password.nil?
+    end
   end
 
   # Per-product settings for the storage proposal.

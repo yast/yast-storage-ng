@@ -54,15 +54,23 @@ module Y2Storage
 
       def grub_in_mbr?
         # FIXME: see note above about existing partition tables
-        root_ptable_type?(:msdos) && !btrfs_without_lvm?
+        root_ptable_type?(:msdos) && !plain_btrfs?
+      end
+
+      def plain_btrfs?
+        btrfs_without_lvm? && btrfs_without_encryption?
       end
 
       def btrfs_without_lvm?
         settings.root_filesystem_type == ::Storage::FsType_BTRFS && !settings.use_lvm
       end
 
+      def btrfs_without_encryption?
+        settings.root_filesystem_type == ::Storage::FsType_BTRFS && !settings.use_encryption
+      end
+
       def boot_partition_needed?
-        grub_in_mbr? && settings.use_lvm && mbr_gap && mbr_gap < GRUB_SIZE + GRUBENV_SIZE
+        grub_in_mbr? && mbr_gap && mbr_gap < GRUB_SIZE + GRUBENV_SIZE
       end
 
       def mbr_gap
@@ -78,7 +86,7 @@ module Y2Storage
         vol.desired_disk_size = DiskSize.MiB(1)
         vol.align = :keep_size
         vol.bootable = false
-        vol.can_live_on_logical_volume = false
+        vol.plain_partition = true
         vol
       end
     end

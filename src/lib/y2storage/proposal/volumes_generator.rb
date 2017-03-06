@@ -93,7 +93,7 @@ module Y2Storage
           swap_size = [ram_size, swap_size].max
         end
         vol = PlannedVolume.new("swap", ::Storage::FsType_SWAP)
-        vol.can_live_on_logical_volume = true
+        vol.plain_partition = false
         vol.logical_volume_name = "swap"
         # NOTE: Enforcing the re-use of an existing partition limits the options
         # to propose a valid distribution of the volumes. For swap we already
@@ -117,7 +117,7 @@ module Y2Storage
       #
       # @return [::Storage::Partition]
       def reusable_swap(required_size)
-        return nil if settings.use_lvm
+        return nil if settings.use_lvm || settings.use_encryption
 
         partitions = disk_analyzer.swap_partitions.values.flatten
         partitions.select! { |part| part.size >= required_size.to_i }

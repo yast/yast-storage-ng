@@ -35,6 +35,7 @@ RSpec.shared_context "boot requirements" do
     settings.root_device = root_device
     settings.use_lvm = use_lvm
     settings.root_filesystem_type = root_filesystem_type
+    settings.encryption_password = "12345678" if use_encryption
     settings
   end
   let(:analyzer) { instance_double("Y2Storage::DiskAnalyzer") }
@@ -44,6 +45,7 @@ RSpec.shared_context "boot requirements" do
   let(:pt_msdos) { instance_double("::Storage::PartitionTable") }
   let(:sda_part_table) { pt_msdos }
   let(:root_filesystem_type) { ::Storage::FsType_BTRFS }
+  let(:use_encryption) { false }
 
   before do
     Y2Storage::StorageManager.fake_from_yaml

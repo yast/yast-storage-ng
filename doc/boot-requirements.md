@@ -1,7 +1,7 @@
 
 [//]: # (document was automatically created using 'rake doc:bootspecs')
 
-# Yast::Storage::BootRequirementsChecker
+# Y2Storage::BootRequirementsChecker
 ## needed partitions in a PPC64 system
 - in a non-PowerNV system (KVM/LPAR)
 	- with a partitions-based proposal
@@ -18,19 +18,28 @@
 			- **requires /boot and PReP partitions**
 		- if there is already a PReP partition in the disk
 			- **requires only a /boot partition**
+	- with an encrypted proposal
+		- if there are no PReP partitions
+			- **requires /boot and PReP partitions**
+		- if the existent PReP partition is not in the target disk
+			- **requires /boot and PReP partitions**
+		- if there is already a PReP partition in the disk
+			- **requires only a /boot partition**
 - in bare metal (PowerNV)
 	- with a partitions-based proposal
 		- **does not require any particular volume**
 	- with a LVM-based proposal
 		- **requires only a /boot partition**
+	- with an encrypted proposal
+		- **requires only a /boot partition**
 - when proposing a boot partition
 	- **requires /boot to be ext4 with at least 100 MiB**
-	- **requires /boot to be in the system disk out of LVM**
+	- **requires /boot to be a non-encrypted partition in the system disk**
 	- **recommends /boot to be 200 MiB**
 - when proposing a PReP partition
 	- **requires it to be between 256KiB and 8MiB, despite the alignment**
 	- **recommends it to be 1 MiB**
-	- **requires it to be out of LVM**
+	- **requires it to be a non-encrypted partition**
 	- **requires it to be bootable (ms-dos partition table)**
 
 ## needed partitions in a S/390 system
@@ -38,6 +47,8 @@
 	- with a partitions-based proposal
 		- **requires only a /boot/zipl partition**
 	- with a LVM-based proposal
+		- **requires only a /boot/zipl partition**
+	- with an encrypted proposal
 		- **requires only a /boot/zipl partition**
 - trying to install in a FBA DASD disk
 	- **raises an error**
@@ -49,9 +60,11 @@
 			- **requires only a /boot/zipl partition**
 		- with a LVM-based proposal
 			- **requires only a /boot/zipl partition**
+		- with an encrypted proposal
+			- **requires only a /boot/zipl partition**
 - when proposing a /boot/zipl partition
 	- **requires /boot/zipl to be ext2 with at least 100 MiB**
-	- **requires /boot/zipl to be in the system disk out of LVM**
+	- **requires /boot/zipl to be a non-encrypted partition in the system disk**
 	- **recommends /boot/zipl to be 200 MiB**
 
 ## needed partitions in a x86 system
@@ -62,6 +75,11 @@
 		- if there is already an EFI partition
 			- **only requires to use the existing EFI partition**
 	- with a LVM-based proposal
+		- if there are no EFI partitions
+			- **requires only a new /boot/efi partition**
+		- if there is already an EFI partition
+			- **only requires to use the existing EFI partition**
+	- with an encrypted proposal
 		- if there are no EFI partitions
 			- **requires only a new /boot/efi partition**
 		- if there is already an EFI partition
@@ -78,11 +96,28 @@
 				- **requires a new GRUB partition**
 			- if there is already a GRUB partition
 				- **does not require any particular volume**
+		- in an encrypted proposal
+			- if there is no GRUB partition
+				- **requires a new GRUB partition**
+			- if there is already a GRUB partition
+				- **does not require any particular volume**
+	- with no partition table
+		- in a partitions-based proposal
+			- **requires a new GRUB partition (GPT partition table is assumed)**
+		- in a LVM-based proposal
+			- **requires a new GRUB partition (GPT partition table is assumed)**
+		- in an encrypted proposal
+			- **requires a new GRUB partition (GPT partition table is assumed)**
 	- with a MS-DOS partition table
 		- if the MBR gap is big enough to embed Grub
 			- in a partitions-based proposal
 				- **does not require any particular volume**
 			- in a LVM-based proposal
+				- if the MBR gap has additional space for grubenv
+					- **does not require any particular volume**
+				- if the MBR gap has no additional space
+					- **requires only a /boot partition**
+			- in an encrypted proposal
 				- if the MBR gap has additional space for grubenv
 					- **does not require any particular volume**
 				- if the MBR gap has no additional space
@@ -95,17 +130,19 @@
 					- **raises an exception**
 			- in a LVM-based proposal
 				- **raises an exception**
+			- in an encrypted proposal
+				- **raises an exception**
 	- when proposing a boot partition
 		- **requires /boot to be ext4 with at least 100 MiB**
-		- **requires /boot to be in the system disk out of LVM**
+		- **requires /boot to be a non-encrypted partition in the system disk**
 		- **recommends /boot to be 200 MiB**
 	- when proposing an new GRUB partition
 		- **requires it to have the correct id**
-		- **requires it to be out of LVM**
+		- **requires it to be a non-encrypted partition**
 		- **requires it to be between 256KiB and 8MiB, despite the alignment**
 		- **recommends it to be 1 MiB**
 	- when proposing an new EFI partition
 		- **requires /boot/efi to be vfat with at least 33 MiB**
-		- **requires /boot/efi to be out of LVM**
+		- **requires /boot/efi to be a non-encrypted partition**
 		- **recommends /boot/efi to be 500 MiB**
 		- **requires /boot/efi to be close enough to the beginning of disk**

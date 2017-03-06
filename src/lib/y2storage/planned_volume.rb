@@ -63,8 +63,10 @@ module Y2Storage
     # @return [Float] factor used to distribute the extra space between
     # volumes
     attr_accessor :weight
-    # @return [Boolean] whether the volume can be placed in LVM
-    attr_accessor :can_live_on_logical_volume
+    # @return [Boolean] whether the volume must be created as a plain
+    # partition. If so, that volume cannot live into LVM and cannot be
+    # encrypted.
+    attr_accessor :plain_partition
     # @return [String] name to use if the volume is placed in LVM
     attr_accessor :logical_volume_name
     # @return [DiskSize] maximum distance from the start of the disk in which
@@ -97,6 +99,7 @@ module Y2Storage
     alias_method :desired=, :desired_disk_size=
     alias_method :min=, :min_disk_size=
     alias_method :max=, :max_disk_size=
+    alias_method :plain_partition?, :plain_partition
 
     # Constructor.
     #
@@ -118,13 +121,13 @@ module Y2Storage
       @label         = nil
       @uuid          = nil
       @weight        = 0 # For distributing extra space if desired is unlimited
-      @can_live_on_logical_volume = false
+      @plain_partition = true
       @logical_volume_name = nil
 
       return unless @mount_point && @mount_point.start_with?("/")
       return if @mount_point && @mount_point.start_with?("/boot")
 
-      @can_live_on_logical_volume = true
+      @plain_partition = false
       @logical_volume_name = if @mount_point == "/"
         "root"
       else

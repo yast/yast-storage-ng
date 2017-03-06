@@ -112,6 +112,43 @@ describe Y2Storage::BootRequirementsChecker do
           end
         end
       end
+
+      context "with an encrypted proposal" do
+        let(:use_lvm) { false }
+        let(:use_encryption) { true }
+
+        context "if there are no PReP partitions" do
+          let(:prep_partitions) { { "/dev/sda" => [] } }
+
+          it "requires /boot and PReP partitions" do
+            expect(checker.needed_partitions).to contain_exactly(
+              an_object_with_fields(mount_point: "/boot"),
+              an_object_with_fields(mount_point: nil, partition_id: prep_id)
+            )
+          end
+        end
+
+        context "if the existent PReP partition is not in the target disk" do
+          let(:prep_partitions) { { "/dev/sdb" => [analyzer_part("/dev/sdb1")] } }
+
+          it "requires /boot and PReP partitions" do
+            expect(checker.needed_partitions).to contain_exactly(
+              an_object_with_fields(mount_point: "/boot"),
+              an_object_with_fields(mount_point: nil, partition_id: prep_id)
+            )
+          end
+        end
+
+        context "if there is already a PReP partition in the disk" do
+          let(:prep_partitions) { { "/dev/sda" => [analyzer_part("/dev/sda1")] } }
+
+          it "requires only a /boot partition" do
+            expect(checker.needed_partitions).to contain_exactly(
+              an_object_with_fields(mount_point: "/boot")
+            )
+          end
+        end
+      end
     end
 
     context "in bare metal (PowerNV)" do
@@ -128,6 +165,17 @@ describe Y2Storage::BootRequirementsChecker do
 
       context "with a LVM-based proposal" do
         let(:use_lvm) { true }
+
+        it "requires only a /boot partition" do
+          expect(checker.needed_partitions).to contain_exactly(
+            an_object_with_fields(mount_point: "/boot")
+          )
+        end
+      end
+
+      context "with an encrypted proposal" do
+        let(:use_lvm) { false }
+        let(:use_encryption) { true }
 
         it "requires only a /boot partition" do
           expect(checker.needed_partitions).to contain_exactly(
