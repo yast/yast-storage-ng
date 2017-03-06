@@ -36,7 +36,7 @@ module Y2Storage
     protected
 
       def boot_partition_needed?
-        settings.use_lvm # TODO: || settings.encrypted
+        settings.use_lvm || settings.use_encryption
       end
 
       def prep_partition_needed?
