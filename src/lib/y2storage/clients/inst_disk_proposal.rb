@@ -102,7 +102,9 @@ module Y2Storage
       end
 
       def new_settings
-        ProposalSettings.new
+        res = ProposalSettings.new_for_current_product
+        log.info "Read storage proposal settings from the product: #{res.inspect}"
+        res
       end
 
       def storage_manager
