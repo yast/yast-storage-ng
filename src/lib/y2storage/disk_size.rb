@@ -37,6 +37,7 @@ module Y2Storage
     include Comparable
 
     UNITS = ["B", "KiB", "MiB", "GiB", "TiB", "PiB", "EiB", "ZiB", "YiB"]
+    IS_UNITS = ["KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"]
     UNLIMITED = "unlimited"
 
     attr_reader :size
@@ -58,43 +59,16 @@ module Y2Storage
     # Factory methods
     #
     class << self
-      # rubocop:disable Style/MethodName
-      def B(size)
-        DiskSize.new(size)
+      # Define an initializer method for each unit:
+      # @see DiskSize::UNITS and DiskSize::IS_UNITS.
+      #
+      # Examples:
+      #
+      # DiskSize.MiB(10)  #=> new DiskSize of 10 MiB
+      # DiskSize.MB(10)   #=> new DiskSize of 10 MB
+      (UNITS + IS_UNITS).each do |unit|
+        define_method(unit) { |v| DiskSize.new(calculate_bytes(v, unit)) }
       end
-
-      def KiB(size)
-        DiskSize.new(size * 1024)
-      end
-
-      def MiB(size)
-        DiskSize.new(size * (1024**2))
-      end
-
-      def GiB(size)
-        DiskSize.new(size * (1024**3))
-      end
-
-      def TiB(size)
-        DiskSize.new(size * (1024**4))
-      end
-
-      def PiB(size)
-        DiskSize.new(size * (1024**5))
-      end
-
-      def EiB(size)
-        DiskSize.new(size * (1024**6))
-      end
-
-      def ZiB(size)
-        DiskSize.new(size * (1024**7))
-      end
-
-      def YiB(size)
-        DiskSize.new(size * (1024**8))
-      end
-      # rubocop:enable Style/MethodName
 
       def unlimited
         DiskSize.new(-1)
@@ -118,40 +92,61 @@ module Y2Storage
       # Examples:
       #   42 GiB
       #   42.00  GiB
+      #   42 GB
+      #   42GB
       #   512
       #   0.5 YiB (512 ZiB)
+      #   1024MiB(1 GiB)
       #   unlimited
       #
-      # Invalid:
-      #   42 GB    (supporting binary units only)
-      #
       def parse(str)
-        # ignore everything added in parentheses, so we can also parse the output of #to_s
-        str.gsub!(/\(.*/, "")
-        str.strip!
+        str = sanitize(str)
         return DiskSize.unlimited if str == UNLIMITED
-        size_str, unit = str.split(/\s+/)
-        raise ArgumentError, "Bad number: #{size_str}" if size_str !~ /^\d+\.?\d*$/
-        size = size_str.to_f
-        return DiskSize.new(size) if unit.nil?
-        DiskSize.new(size * unit_multiplier(unit))
+        DiskSize.new str_to_B(str)
       end
 
       alias_method :from_s, :parse
       alias_method :from_human_string, :parse
 
-      # Return the unit exponent for any of the known binary units ("KiB",
-      # "MiB", ...). The base of this exponent is 1024. The base unit is KiB.
-      #
-      def unit_exponent(unit)
-        UNITS.index(unit) or raise ArgumentError, "expected one of #{UNITS}"
+    private
+
+      # Ignore everything added in parentheses, so we can also parse the output of #to_s
+      def sanitize(str)
+        str.gsub(/\(.*/, "").strip
       end
 
-      # Return the unit multiplier for any of the known binary units ("KiB",
-      # "MiB", ...). The base unit is KiB.
-      #
-      def unit_multiplier(unit)
-        1024**unit_exponent(unit)
+      def str_to_B(str)
+        number = number(str).to_f
+        unit = unit(str)
+        return number if unit.empty?
+        to_B(number, unit)
+      end
+
+      def number(str)
+        number = str.scan(/^\d+\.?\d*/).first
+        raise ArgumentError, "Bad number: #{str}" if number.nil?
+        number
+      end
+
+      def unit(str)
+        unit = str.gsub(number(str), "").strip
+        if !unit.empty? && !(UNITS + IS_UNITS).include?(unit)
+          raise ArgumentError, "Bad unit: #{str}" 
+        end
+        unit
+      end
+
+      def to_B(number, unit)
+        if UNITS.include?(unit)
+          base = 1024
+          exp = UNITS.index(unit)
+        elsif IS_UNITS.include?(unit)
+          base = 1000
+          exp = IS_UNITS.index(unit) + 1
+        else
+          raise ArgumentError, "Bad unit: #{str}"
+        end
+        number * base**exp
       end
     end
 
