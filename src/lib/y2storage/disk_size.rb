@@ -79,6 +79,10 @@ module Y2Storage
       end
 
       # Create a DiskSize from a parsed string.
+      # @param str [String]
+      # @param legacy_units [Boolean] if true, IS units are considered
+      # base 2 units, that is MB is the same than MiB.
+      #
       # Valid format:
       #
       #   NUMBER [UNIT] [(COMMENT)] | unlimited
@@ -99,10 +103,10 @@ module Y2Storage
       #   1024MiB(1 GiB)
       #   unlimited
       #
-      def parse(str)
+      def parse(str, legacy_units: false)
         str = sanitize(str)
         return DiskSize.unlimited if str == UNLIMITED
-        DiskSize.new str_to_B(str)
+        DiskSize.new str_to_bytes(str, legacy_units: legacy_units)
       end
 
       alias_method :from_s, :parse
@@ -115,11 +119,11 @@ module Y2Storage
         str.gsub(/\(.*/, "").strip
       end
 
-      def str_to_B(str)
+      def str_to_bytes(str, legacy_units: false)
         number = number(str).to_f
         unit = unit(str)
         return number if unit.empty?
-        to_B(number, unit)
+        calculate_bytes(number, unit, legacy_units: legacy_units)
       end
 
       def number(str)
@@ -131,12 +135,12 @@ module Y2Storage
       def unit(str)
         unit = str.gsub(number(str), "").strip
         if !unit.empty? && !(UNITS + IS_UNITS).include?(unit)
-          raise ArgumentError, "Bad unit: #{str}" 
+          raise ArgumentError, "Bad unit: #{str}"
         end
         unit
       end
 
-      def to_B(number, unit)
+      def calculate_bytes(number, unit, legacy_units: false)
         if UNITS.include?(unit)
           base = 1024
           exp = UNITS.index(unit)
@@ -146,6 +150,7 @@ module Y2Storage
         else
           raise ArgumentError, "Bad unit: #{str}"
         end
+        base = 1024 if legacy_units
         number * base**exp
       end
     end

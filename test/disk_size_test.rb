@@ -251,6 +251,10 @@ describe Y2Storage::DiskSize do
       expect(described_class.parse("10 MB").to_i).to eq(10 * 1000**2)
     end
 
+    it "should work with legacy units" do
+      expect(described_class.parse("10MB", legacy_units: true).to_i).to eq(10 * 1024**2)
+    end
+
     it "should accept #to_s output" do
       expect(described_class.parse(described_class.GiB(42).to_s).to_i).to be == 42 * 1024**3
       expect(described_class.parse(described_class.new(43).to_s).to_i).to be == 43
