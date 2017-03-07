@@ -208,78 +208,63 @@ describe Y2Storage::DiskSize do
     end
   end
 
-  describe "unit exponent" do
-    it "should be correct for KiB" do
-      expect(Y2Storage::DiskSize.unit_exponent("KiB")).to be == 1
-    end
-    it "should be correct for MiB" do
-      expect(Y2Storage::DiskSize.unit_exponent("MiB")).to be == 2
-    end
-    it "should be correct for GiB" do
-      expect(Y2Storage::DiskSize.unit_exponent("GiB")).to be == 3
-    end
-    it "should be correct for TiB" do
-      expect(Y2Storage::DiskSize.unit_exponent("TiB")).to be == 4
-    end
-    it "should be correct for PiB" do
-      expect(Y2Storage::DiskSize.unit_exponent("PiB")).to be == 5
-    end
-    it "should be correct for EiB" do
-      expect(Y2Storage::DiskSize.unit_exponent("EiB")).to be == 6
-    end
-    it "should be correct for ZiB" do
-      expect(Y2Storage::DiskSize.unit_exponent("ZiB")).to be == 7
-    end
-    it "should be correct for YiB" do
-      expect(Y2Storage::DiskSize.unit_exponent("YiB")).to be == 8
-    end
-    it "should raise an exception for invalid units" do
-      expect { Y2Storage::DiskSize.unit_exponent("WTF") }.to raise_error(ArgumentError)
-      expect { Y2Storage::DiskSize.unit_exponent("MB") }.to raise_error(ArgumentError)
-      expect { Y2Storage::DiskSize.unit_exponent("GB") }.to raise_error(ArgumentError)
-      expect { Y2Storage::DiskSize.unit_exponent("TB") }.to raise_error(ArgumentError)
-    end
-  end
-
   describe "parsing from string" do
     it "should work with just an integer" do
       expect(described_class.parse("0").to_i).to be == 0
       expect(described_class.parse("7").to_i).to be == 7
     end
+
     it "should work with integer and unit" do
       expect(described_class.parse("42 GiB").to_i).to be == 42 * 1024**3
     end
+
     it "should work with float and unit" do
       expect(described_class.parse("43.00 GiB").to_i).to be == 43 * 1024**3
     end
+
     it "should work with just an integer" do
       expect(described_class.parse("0").to_i).to be == 0
     end
+
+    it "should work without spaces" do
+      expect(described_class.parse("10MiB").to_i).to eq(10 * 1024**2)
+    end
+
     it "should tolerate more embedded whitespace" do
       expect(described_class.parse("44   MiB").to_i).to be == 44 * 1024**2
     end
+
     it "should tolerate more surrounding whitespace" do
       expect(described_class.parse("   45   TiB  ").to_i).to be == 45 * 1024**4
       expect(described_class.parse("  46   ").to_i).to be == 46
     end
+
     it "should accept \"unlimited\"" do
       expect(described_class.parse("unlimited").to_i).to be == -1
     end
+
     it "should accept \"unlimited\" with surrounding whitespace" do
       expect(described_class.parse("  unlimited ").to_i).to be == -1
     end
+
+    it "should accept IS units" do
+      expect(described_class.parse("10 MB").to_i).to eq(10 * 1000**2)
+    end
+
     it "should accept #to_s output" do
       expect(described_class.parse(described_class.GiB(42).to_s).to_i).to be == 42 * 1024**3
       expect(described_class.parse(described_class.new(43).to_s).to_i).to be == 43
       expect(described_class.parse(described_class.zero.to_s).to_i).to be == 0
       expect(described_class.parse(described_class.unlimited.to_s).to_i).to be == -1
     end
+
     it "should accept #to_human_string output" do
       expect(described_class.parse(described_class.GiB(42).to_human_string).to_i).to be == 42 * 1024**3
       expect(described_class.parse(described_class.new(43).to_human_string).to_i).to be == 43
       expect(described_class.parse(described_class.zero.to_human_string).to_i).to be == 0
       expect(described_class.parse(described_class.unlimited.to_human_string).to_i).to be == -1
     end
+
     it "should reject invalid input" do
       expect { described_class.parse("wrglbrmpf") }.to raise_error(ArgumentError)
       expect { described_class.parse("47 00 GiB") }.to raise_error(ArgumentError)
