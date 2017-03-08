@@ -37,6 +37,7 @@ module Y2Storage
     include Comparable
 
     UNITS = ["B", "KiB", "MiB", "GiB", "TiB", "PiB", "EiB", "ZiB", "YiB"]
+    # International System units
     IS_UNITS = ["KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"]
     UNLIMITED = "unlimited"
 
@@ -80,8 +81,8 @@ module Y2Storage
 
       # Create a DiskSize from a parsed string.
       # @param str [String]
-      # @param legacy_units [Boolean] if true, IS units are considered
-      # base 2 units, that is MB is the same than MiB.
+      # @param legacy_units [Boolean] if true, International System units
+      # are considered as base 2 units, that is, MB is the same than MiB.
       #
       # Valid format:
       #
@@ -106,7 +107,8 @@ module Y2Storage
       def parse(str, legacy_units: false)
         str = sanitize(str)
         return DiskSize.unlimited if str == UNLIMITED
-        DiskSize.new str_to_bytes(str, legacy_units: legacy_units)
+        bytes = str_to_bytes(str, legacy_units: legacy_units)
+        DiskSize.new(bytes)
       end
 
       alias_method :from_s, :parse
