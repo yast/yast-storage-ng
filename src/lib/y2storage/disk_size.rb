@@ -37,8 +37,8 @@ module Y2Storage
     include Comparable
 
     UNITS = ["B", "KiB", "MiB", "GiB", "TiB", "PiB", "EiB", "ZiB", "YiB"]
-    # International System units
-    IS_UNITS = ["KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"]
+    # International System of Units (SI)
+    SI_UNITS = ["KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"]
     UNLIMITED = "unlimited"
 
     attr_reader :size
@@ -61,13 +61,13 @@ module Y2Storage
     #
     class << self
       # Define an initializer method for each unit:
-      # @see DiskSize::UNITS and DiskSize::IS_UNITS.
+      # @see DiskSize::UNITS and DiskSize::SI_UNITS.
       #
       # Examples:
       #
       # DiskSize.MiB(10)  #=> new DiskSize of 10 MiB
       # DiskSize.MB(10)   #=> new DiskSize of 10 MB
-      (UNITS + IS_UNITS).each do |unit|
+      (UNITS + SI_UNITS).each do |unit|
         define_method(unit) { |v| DiskSize.new(calculate_bytes(v, unit)) }
       end
 
@@ -136,7 +136,7 @@ module Y2Storage
 
       def unit(str)
         unit = str.gsub(number(str), "").strip
-        if !unit.empty? && !(UNITS + IS_UNITS).include?(unit)
+        if !unit.empty? && !(UNITS + SI_UNITS).include?(unit)
           raise ArgumentError, "Bad unit: #{str}"
         end
         unit
@@ -146,9 +146,9 @@ module Y2Storage
         if UNITS.include?(unit)
           base = 1024
           exp = UNITS.index(unit)
-        elsif IS_UNITS.include?(unit)
+        elsif SI_UNITS.include?(unit)
           base = 1000
-          exp = IS_UNITS.index(unit) + 1
+          exp = SI_UNITS.index(unit) + 1
         else
           raise ArgumentError, "Bad unit: #{str}"
         end
