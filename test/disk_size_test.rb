@@ -29,90 +29,156 @@ describe Y2Storage::DiskSize do
   let(:unlimited) { Y2Storage::DiskSize.unlimited }
   let(:one_byte) { Y2Storage::DiskSize.new(1) }
 
-  describe "constructed empty" do
-    it "should have a to_i of 0" do
-      disk_size = Y2Storage::DiskSize.new
-      expect(disk_size.to_i).to be == 0
+  describe ".new" do
+    context "when no param is passed" do
+      it "creates a disk size of 0 bytes" do
+        expect(described_class.new.size).to eq(0)
+      end
+    end
+
+    context "when a number is passed" do
+      context "and is a natural number" do
+        it "creates a disk size with this number of bytes" do
+          expect(described_class.new(5).size).to eq(5)
+        end
+      end
+
+      context "and is a floating point number" do
+        it "creates a disk size with a rounded number of bytes" do
+          expect(described_class.new(5.6).size).to eq(6)
+          expect(described_class.new(5.4).size).to eq(5)
+        end
+      end
+    end
+
+    context "when a string is passed" do
+      it "creates a disk size with the number of bytes represented by the string" do
+        expect(described_class.new("5").size).to eq(5)
+        expect(described_class.new("15 KB").size).to eq(15 * 1000)
+        expect(described_class.new("15 MiB").size).to eq(15 * 1024**2)
+        expect(described_class.new("23 TiB").size).to eq(23 * 1024**4)
+        expect(described_class.new("23.2 KiB").size).to eq((23.2 * 1024).round)
+      end
     end
   end
 
-  describe "created with 42 KiB" do
-    disk_size = Y2Storage::DiskSize.KiB(42)
-    it "should return the correct human readable string" do
-      expect(disk_size.to_human_string).to be == "42.00 KiB"
-    end
-    it "should have the correct numeric value internally" do
-      expect(disk_size.to_i).to be == 42 * 1024
+  describe ".B" do
+    it "creates a disk size from a number of bytes" do
+      expect(described_class.B(5).size).to eq(5)
     end
   end
 
-  describe "created with 43 MiB" do
-    disk_size = Y2Storage::DiskSize.MiB(43)
-    it "should return the correct human readable string" do
-      expect(disk_size.to_human_string).to be == "43.00 MiB"
-    end
-    it "should have the correct numeric value internally" do
-      expect(disk_size.to_i).to be == 43 * 1024**2
+  describe ".KiB" do
+    it "creates a disk size from a number of KiB" do
+      expect(described_class.KiB(5).size).to eq(5 * 1024)
     end
   end
 
-  describe "created with 44 GiB" do
-    disk_size = Y2Storage::DiskSize.GiB(44)
-    it "should return the correct human readable string" do
-      expect(disk_size.to_human_string).to be == "44.00 GiB"
-    end
-    it "should have the correct numeric value internally" do
-      expect(disk_size.to_i).to be == 44 * 1024**3
+  describe ".MiB" do
+    it "creates a disk size from a number of MiB" do
+      expect(described_class.MiB(5).size).to eq(5 * 1024**2)
     end
   end
 
-  describe "created with 45 TiB" do
-    disk_size = Y2Storage::DiskSize.TiB(45)
-    it "should return the correct human readable string" do
-      expect(disk_size.to_human_string).to be == "45.00 TiB"
-    end
-    it "should have the correct numeric value internally" do
-      expect(disk_size.to_i).to be == 45 * 1024**4
+  describe ".GiB" do
+    it "creates a disk size from a number of GiB" do
+      expect(described_class.GiB(5).size).to eq(5 * 1024**3)
     end
   end
 
-  describe "created with 46 PiB" do
-    disk_size = Y2Storage::DiskSize.PiB(46)
-    it "should return the correct human readable string" do
-      expect(disk_size.to_human_string).to be == "46.00 PiB"
-    end
-    it "should have the correct numeric value internally" do
-      expect(disk_size.to_i).to be == 46 * 1024**5
+  describe ".TiB" do
+    it "creates a disk size from a number of TiB" do
+      expect(described_class.TiB(5).size).to eq(5 * 1024**4)
     end
   end
 
-  describe "created with 47 EiB" do
-    disk_size = Y2Storage::DiskSize.EiB(47)
-    it "should return the correct human readable string" do
-      expect(disk_size.to_human_string).to be == "47.00 EiB"
-    end
-    it "should not overflow and have the correct numeric value internally" do
-      expect(disk_size.to_i).to be == 47 * 1024**6
+  describe ".PiB" do
+    it "creates a disk size from a number of PiB" do
+      expect(described_class.PiB(5).size).to eq(5 * 1024**5)
     end
   end
 
-  describe "created with a huge number" do
-    disk_size = Y2Storage::DiskSize.TiB(48 * 1024**5)
-    it "should return the correct human readable string" do
-      expect(disk_size.to_human_string).to be == "49152.00 YiB"
-    end
-    it "should not overflow" do
-      expect(disk_size.to_i).to be > 0
-    end
-    it "should have the correct numeric value internally" do
-      expect(disk_size.to_i).to be == 48 * 1024**9
+  describe ".EiB" do
+    it "creates a disk size from a number of EiB" do
+      expect(described_class.EiB(5).size).to eq(5 * 1024**6)
     end
   end
 
-  describe "created with 1024 GiB" do
-    disk_size = Y2Storage::DiskSize.GiB(1024)
-    it "should use the next higher unit (TiB) from 1024 on" do
-      expect(disk_size.to_human_string).to be == "1.00 TiB"
+  describe ".ZiB" do
+    it "creates a disk size from a number of ZiB" do
+      expect(described_class.ZiB(5).size).to eq(5 * 1024**7)
+    end
+  end
+
+  describe ".YiB" do
+    it "creates a disk size from a number of YiB" do
+      expect(described_class.YiB(5).size).to eq(5 * 1024**8)
+    end
+  end
+
+  describe ".KB" do
+    it "creates a disk size from a number of KB" do
+      expect(described_class.KB(5).size).to eq(5 * 1000)
+    end
+  end
+
+  describe ".MB" do
+    it "creates a disk size from a number of MB" do
+      expect(described_class.MB(5).size).to eq(5 * 1000**2)
+    end
+  end
+
+  describe ".GB" do
+    it "creates a disk size from a number of GB" do
+      expect(described_class.GB(5).size).to eq(5 * 1000**3)
+    end
+  end
+
+  describe ".TB" do
+    it "creates a disk size from a number of TB" do
+      expect(described_class.TB(5).size).to eq(5 * 1000**4)
+    end
+  end
+
+  describe ".PB" do
+    it "creates a disk size from a number of PB" do
+      expect(described_class.PB(5).size).to eq(5 * 1000**5)
+    end
+  end
+
+  describe ".EB" do
+    it "creates a disk size from a number of EB" do
+      expect(described_class.EB(5).size).to eq(5 * 1000**6)
+    end
+  end
+
+  describe ".ZB" do
+    it "creates a disk size from a number of ZB" do
+      expect(described_class.ZB(5).size).to eq(5 * 1000**7)
+    end
+  end
+
+  describe ".YB" do
+    it "creates a disk size from a number of YB" do
+      expect(described_class.YB(5).size).to eq(5 * 1000**8)
+    end
+  end
+
+  describe ".to_human_string" do
+    context "when has a specific size" do
+      it("returns human-readable string represented in the biggest possible unit") do
+        expect(described_class.B(5 * 1024**0).to_human_string).to eq("5.00 B")
+        expect(described_class.B(5 * 1024**1).to_human_string).to eq("5.00 KiB")
+        expect(described_class.B(5 * 1024**3).to_human_string).to eq("5.00 GiB")
+        expect(described_class.B(5 * 1024**4).to_human_string).to eq("5.00 TiB")
+        expect(described_class.B(5 * 1024**7).to_human_string).to eq("5.00 ZiB")
+      end
+    end
+
+    context "when has unlimited size" do
+      it "returns 'unlimited'" do
+        expect(described_class.unlimited.to_human_string).to eq("unlimited")
+      end
     end
   end
 
@@ -208,65 +274,75 @@ describe Y2Storage::DiskSize do
     end
   end
 
-  describe "parsing from string" do
-    it "should work with just an integer" do
-      expect(described_class.parse("0").to_i).to be == 0
-      expect(described_class.parse("7").to_i).to be == 7
+  describe ".parse" do
+    it "should work with just a number" do
+      expect(described_class.parse("0").to_i).to eq(0)
+      expect(described_class.parse("7").to_i).to eq(7)
+      expect(described_class.parse("7.00").to_i).to eq(7)
     end
 
     it "should work with integer and unit" do
-      expect(described_class.parse("42 GiB").to_i).to be == 42 * 1024**3
+      expect(described_class.parse("42 GiB").to_i).to eq(42 * 1024**3)
     end
 
     it "should work with float and unit" do
       expect(described_class.parse("43.00 GiB").to_i).to be == 43 * 1024**3
     end
 
-    it "should work with just an integer" do
-      expect(described_class.parse("0").to_i).to be == 0
-    end
-
-    it "should work without spaces" do
+    it "should work with integer and unit without space between them" do
       expect(described_class.parse("10MiB").to_i).to eq(10 * 1024**2)
     end
 
+    it "should work with float and unit without space between them" do
+      expect(described_class.parse("10.00MiB").to_i).to eq(10 * 1024**2)
+    end
+
     it "should tolerate more embedded whitespace" do
-      expect(described_class.parse("44   MiB").to_i).to be == 44 * 1024**2
+      expect(described_class.parse("44   MiB").to_i).to eq(44 * 1024**2)
     end
 
     it "should tolerate more surrounding whitespace" do
-      expect(described_class.parse("   45   TiB  ").to_i).to be == 45 * 1024**4
-      expect(described_class.parse("  46   ").to_i).to be == 46
+      expect(described_class.parse("   45   TiB  ").to_i).to eq(45 * 1024**4)
+      expect(described_class.parse("  46   ").to_i).to eq(46)
     end
 
     it "should accept \"unlimited\"" do
-      expect(described_class.parse("unlimited").to_i).to be == -1
+      expect(described_class.parse("unlimited").to_i).to eq(-1)
     end
 
     it "should accept \"unlimited\" with surrounding whitespace" do
-      expect(described_class.parse("  unlimited ").to_i).to be == -1
+      expect(described_class.parse("  unlimited ").to_i).to eq(-1)
     end
 
-    it "should accept IS units" do
+    it "should accept International System units" do
+      expect(described_class.parse("10 KB").to_i).to eq(10 * 1000)
       expect(described_class.parse("10 MB").to_i).to eq(10 * 1000**2)
     end
 
-    it "should work with legacy units" do
-      expect(described_class.parse("10MB", legacy_units: true).to_i).to eq(10 * 1024**2)
+    context "when using the legacy_unit flag" do
+      let(:legacy) { true }
+
+      it "considers international system units to be power of two" do
+        expect(described_class.parse("10 MB", legacy_units: legacy).size).to eq(10 * 1024**2)
+      end
+
+      it "reads units that are power of two in the usual way" do
+        expect(described_class.parse("10 MiB", legacy_units: legacy).size).to eq(10 * 1024**2)
+      end
     end
 
     it "should accept #to_s output" do
-      expect(described_class.parse(described_class.GiB(42).to_s).to_i).to be == 42 * 1024**3
-      expect(described_class.parse(described_class.new(43).to_s).to_i).to be == 43
-      expect(described_class.parse(described_class.zero.to_s).to_i).to be == 0
-      expect(described_class.parse(described_class.unlimited.to_s).to_i).to be == -1
+      expect(described_class.parse(described_class.GiB(42).to_s).to_i).to eq(42 * 1024**3)
+      expect(described_class.parse(described_class.new(43).to_s).to_i).to eq(43)
+      expect(described_class.parse(described_class.zero.to_s).to_i).to eq(0)
+      expect(described_class.parse(described_class.unlimited.to_s).to_i).to eq(-1)
     end
 
     it "should accept #to_human_string output" do
-      expect(described_class.parse(described_class.GiB(42).to_human_string).to_i).to be == 42 * 1024**3
-      expect(described_class.parse(described_class.new(43).to_human_string).to_i).to be == 43
-      expect(described_class.parse(described_class.zero.to_human_string).to_i).to be == 0
-      expect(described_class.parse(described_class.unlimited.to_human_string).to_i).to be == -1
+      expect(described_class.parse(described_class.GiB(42).to_human_string).to_i).to eq(42 * 1024**3)
+      expect(described_class.parse(described_class.new(43).to_human_string).to_i).to eq(43)
+      expect(described_class.parse(described_class.zero.to_human_string).to_i).to eq(0)
+      expect(described_class.parse(described_class.unlimited.to_human_string).to_i).to eq(-1)
     end
 
     it "should reject invalid input" do
