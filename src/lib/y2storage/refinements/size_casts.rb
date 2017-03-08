@@ -37,7 +37,10 @@ module Y2Storage
     #   12.5.MiB == Y2Storage::DiskSize.MiB(12.5)
     module SizeCasts
       REFINED_CLASSES = [::Fixnum, ::Float]
-      ADDED_METHODS = [:KiB, :MiB, :GiB, :TiB, :PiB, :EiB, :ZiB, :YiB]
+      ADDED_METHODS = [
+        :KiB, :MiB, :GiB, :TiB, :PiB, :EiB, :ZiB, :YiB,
+        :KB, :MB, :GB, :TB, :PB, :EB, :ZB, :YB
+      ]
 
       REFINED_CLASSES.each do |klass|
         refine klass do
