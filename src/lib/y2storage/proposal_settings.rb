@@ -65,11 +65,9 @@ module Y2Storage
     attr_accessor :root_max_disk_size
     attr_accessor :root_space_percent
     attr_accessor :btrfs_increase_percentage
-    attr_accessor :limit_try_home
-    attr_accessor :lvm_keep_unpartitioned_region
-    attr_accessor :lvm_desired_disk_size
-    attr_accessor :lvm_home_max_disk_size
+    attr_accessor :min_size_to_use_separate_home
     attr_accessor :btrfs_default_subvolume
+    attr_accessor :root_subvolume_read_only
     attr_accessor :home_min_disk_size
     attr_accessor :home_max_disk_size
 
@@ -79,12 +77,10 @@ module Y2Storage
       @root_base_disk_size           = DiskSize.GiB(3)
       @root_max_disk_size            = DiskSize.GiB(10)
       @root_space_percent            = 40
+      @min_size_to_use_separate_home = DiskSize.GiB(5)
       @btrfs_increase_percentage     = 300.0
-      @limit_try_home                = DiskSize.GiB(20)
-      @lvm_keep_unpartitioned_region = false
-      @lvm_desired_disk_size         = DiskSize.GiB(15)
-      @lvm_home_max_disk_size        = DiskSize.GiB(25)
       @btrfs_default_subvolume       = "@"
+      @root_subvolume_read_only      = false
 
       # Not yet in control.xml
       @home_min_disk_size            = DiskSize.GiB(10)
