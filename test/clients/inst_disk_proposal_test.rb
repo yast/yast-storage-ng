@@ -42,6 +42,18 @@ describe Y2Storage::Clients::InstDiskProposal do
         allow(storage_manager).to receive(:staging_changed?).and_return false
       end
 
+      let(:proposal_settings) { double("Y2Storage::ProposalSettings") }
+
+      it "creates initial proposal settings based on the product (control.xml)" do
+        expect(Y2Storage::ProposalSettings).to receive(:new_for_current_product)
+          .and_return(proposal_settings)
+        expect(Y2Storage::Proposal).to receive(:new).with(settings: proposal_settings)
+
+        allow(Y2Storage::Dialogs::Proposal).to receive(:new).and_return proposal_dialog
+        allow(proposal_dialog).to receive(:run).and_return :abort
+        client.run
+      end
+
       it "opens the proposal dialog with a pristine proposal" do
         expect(Y2Storage::Dialogs::Proposal).to receive(:new) do |proposal, devicegraph|
           expect(proposal).to be_a Y2Storage::Proposal
