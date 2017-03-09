@@ -25,6 +25,8 @@ require "yast"
 require "y2storage/disk_size"
 require "y2storage/secret_attributes"
 
+Yast.import "ProductFeatures"
+
 module Y2Storage
   #
   # User-configurable settings for the storage proposal.
@@ -65,13 +67,14 @@ module Y2Storage
     attr_accessor :root_max_disk_size
     attr_accessor :root_space_percent
     attr_accessor :btrfs_increase_percentage
-    attr_accessor :limit_try_home
-    attr_accessor :lvm_keep_unpartitioned_region
-    attr_accessor :lvm_desired_disk_size
-    attr_accessor :lvm_home_max_disk_size
+    attr_accessor :min_size_to_use_separate_home
     attr_accessor :btrfs_default_subvolume
+    attr_accessor :root_subvolume_read_only
     attr_accessor :home_min_disk_size
     attr_accessor :home_max_disk_size
+
+    PRODUCT_SECTION = "partitioning"
+    private_constant :PRODUCT_SECTION
 
     def initialize
       super
@@ -79,16 +82,90 @@ module Y2Storage
       @root_base_disk_size           = DiskSize.GiB(3)
       @root_max_disk_size            = DiskSize.GiB(10)
       @root_space_percent            = 40
+      @min_size_to_use_separate_home = DiskSize.GiB(5)
       @btrfs_increase_percentage     = 300.0
-      @limit_try_home                = DiskSize.GiB(20)
-      @lvm_keep_unpartitioned_region = false
-      @lvm_desired_disk_size         = DiskSize.GiB(15)
-      @lvm_home_max_disk_size        = DiskSize.GiB(25)
       @btrfs_default_subvolume       = "@"
+      @root_subvolume_read_only      = false
 
       # Not yet in control.xml
       @home_min_disk_size            = DiskSize.GiB(10)
       @home_max_disk_size            = DiskSize.unlimited
+    end
+
+    # Overrides all the settings with values read from the YaST product features
+    # (i.e. values in /control.xml).
+    #
+    # Settings omitted in the product features are not modified. For backwards
+    # compatibility reasons, features with a value of zero are also ignored.
+    #
+    # Calling this method modifies the object
+    def read_product_features!
+      set_from_boolean_feature(:use_lvm, :proposal_lvm)
+      set_from_boolean_feature(:use_separate_home, :try_separate_home)
+      set_from_boolean_feature(:use_snapshots, :proposal_snapshots)
+      set_from_boolean_feature(:enlarge_swap_for_suspend, :swap_for_suspend)
+      set_from_boolean_feature(:root_subvolume_read_only, :root_subvolume_read_only)
+
+      set_from_size_feature(:root_base_disk_size, :root_base_size)
+      set_from_size_feature(:root_max_disk_size, :root_max_size)
+      set_from_size_feature(:home_max_disk_size, :vm_home_max_size)
+      set_from_size_feature(:min_size_to_use_separate_home, :limit_try_home)
+
+      set_from_integer_feature(:root_space_percent, :root_space_percent)
+      set_from_integer_feature(:btrfs_increase_percentage, :btrfs_increase_percentage)
+
+      set_from_string_feature(:btrfs_default_subvolume, :btrfs_default_subvolume)
+    end
+
+    # New object initialized according to the YaST product features
+    # (i.e. /control.xml)
+    #
+    # @return [ProposalSettings]
+    def self.new_for_current_product
+      settings = new
+      settings.read_product_features!
+      settings
+    end
+
+  protected
+
+    # Value of a product feature in the partitioning section
+    #
+    # @param name [#to_s] name of the feature
+    # @param type [#to_s] type of the feature
+    # @return [Object] value of the feature, nil if no value is specified
+    def product_feature(name, type)
+      # GetBooleanFeature cannot distinguish between missing and false
+      return nil unless Yast::ProductFeatures.GetSection(PRODUCT_SECTION).key?(name.to_s)
+
+      Yast::ProductFeatures.send(:"Get#{type.to_s.capitalize}Feature", PRODUCT_SECTION, name.to_s)
+    end
+
+    def set_from_boolean_feature(attr, feature)
+      value = product_feature(feature, :boolean)
+      send(:"#{attr}=", value) unless value.nil?
+    end
+
+    def set_from_string_feature(attr, feature)
+      value = product_feature(feature, :string)
+      send(:"#{attr}=", value) unless value.nil?
+    end
+
+    def set_from_size_feature(attr, feature)
+      value = product_feature(feature, :string)
+      return unless value
+
+      begin
+        value = DiskSize.parse(value, legacy_units: true)
+      rescue ArgumentError
+        value = nil
+      end
+      send(:"#{attr}=", value) if value && value > DiskSize.zero
+    end
+
+    def set_from_integer_feature(attr, feature)
+      value = product_feature(feature, :integer)
+      send(:"#{attr}=", value) if value && value > 0
     end
   end
 end
