@@ -165,7 +165,7 @@ module Y2Storage
 
     def set_from_integer_feature(attr, feature)
       value = product_feature(feature, :integer)
-      send(:"#{attr}=", value) if value && value > 0
+      send(:"#{attr}=", value) if value && value >= 0
     end
   end
 end

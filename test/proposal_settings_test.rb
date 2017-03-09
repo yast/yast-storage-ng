@@ -217,14 +217,36 @@ describe Y2Storage::ProposalSettings do
     end
 
     context "when reading an integer" do
-      it "ignores values equal to zero" do
-        settings.root_space_percent = 10
-        settings.btrfs_increase_percentage = 100
-        stub_partitioning_features("root_space_percent" => 0, "btrfs_increase_percentage" => "0")
+      let(:initial_root_percent) { 10 }
+      let(:initial_btrfs_percentage) { 100 }
 
+      before do
+        settings.root_space_percent = initial_root_percent
+        settings.btrfs_increase_percentage = initial_btrfs_percentage
+      end
+
+      it "stores values greater than zero" do
+        stub_partitioning_features("root_space_percent" => 1, "btrfs_increase_percentage" => "10000")
         settings.read_product_features!
-        expect(settings.root_space_percent).to eq 10
-        expect(settings.btrfs_increase_percentage).to eq 100
+
+        expect(settings.root_space_percent).to eq 1
+        expect(settings.btrfs_increase_percentage).to eq 10000
+      end
+
+      it "stores values equal to zero" do
+        stub_partitioning_features("root_space_percent" => 0, "btrfs_increase_percentage" => "0")
+        settings.read_product_features!
+
+        expect(settings.root_space_percent).to eq 0
+        expect(settings.btrfs_increase_percentage).to eq 0
+      end
+
+      it "ignores negative values" do
+        stub_partitioning_features("root_space_percent" => -5, "btrfs_increase_percentage" => "-12")
+        settings.read_product_features!
+
+        expect(settings.root_space_percent).to eq initial_root_percent
+        expect(settings.btrfs_increase_percentage).to eq initial_btrfs_percentage
       end
     end
 
