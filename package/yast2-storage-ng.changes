@@ -1,4 +1,9 @@
 -------------------------------------------------------------------
+Thu Mar  9 12:47:11 UTC 2017 - ancor@suse.com
+
+- Partially adjust the proposal settings according to control.xml.
+
+-------------------------------------------------------------------
 Fri Mar  3 12:30:12 UTC 2017 - ancor@suse.com
 
 - Improved the EnumMappings module.
