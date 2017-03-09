@@ -133,7 +133,7 @@ describe Y2Storage::ProposalSettings do
       end
     end
 
-    context "when some features has a value and others don't" do
+    context "when some features have a value and others don't" do
       let(:features) do
         {
           "proposal_snapshots" => false,
@@ -228,7 +228,7 @@ describe Y2Storage::ProposalSettings do
       end
     end
 
-    context "when reading an boolean" do
+    context "when reading a boolean" do
       it "does not consider missing features to be false" do
         settings.use_lvm = true
         stub_partitioning_features("root_base_size" => "10 GiB")
