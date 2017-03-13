@@ -159,8 +159,71 @@ sections above, they don't fit the current status of the new algorithm.
 
 ## Closing the gap
 
-[TO BE WRITTEN, suggestions on how we can change the generation of the planned
-volumes in order to get a proposal more similar to the old one]
+As explained before, the old and new proposals follow different philosophies.
+The new one consistently follows the approach of trying to accommodate a
+group of planned volumes with minimum, desired and maximum sizes. On the other
+hand, the behavior of the old proposal may look sometimes like a set of several
+algorithms designed ad-hoc for different scenarios. As a result, the exact
+meaning of most settings is different based on the value of the other ones.
+
+Fortunately, the new proposal is flexible enough to somehow _emulate_ the
+behavior of the old one to a big extend. This section proposes a way to define
+the planned volumes in a way that tries to honor the legacy behavior and
+settings.
+
+This is not the only possible way to achieve that. There are more options
+including, of course, the option of not trying to emulate the old behavior
+and/or use the old settings at all.
+
+### Emulating the partition-based old proposal
+
+* Root volume
+ * Max size: `root_max_size` if a separate home is proposed, unlimited otherwise.
+ * Desired size: (`root_base_size` + `root_max_size`) / 2
+ * Min size: `root_base_size`
+
+* Home volume
+ * Max size: unlimited
+ * Desired and min sizes: same values than for the root volume.
+
+### Emulating the LVM-based old proposal
+
+The behavior of the old proposal is completely different depending on the value
+of `vm_keep_unpartitioned_region`. If that setting evaluates to true, an
+acceptable way to emulate the behaviour with no modifications in the current
+code would be:
+
+* Root volume
+  * Max size: `root_max_size`
+  * Desired size: (`root_base_size` + `root_max_size`) / 2
+  * Min size: `root_base_size`
+
+* Home volume
+  * Max size: the smallest of these two values
+    * `vm_home_max_size`
+    * `vm_desired_size` - `root_max_size`
+  * Desired and min sizes: the smallest of these two values
+    * The corresponding value for the root size
+    * `vm_desired_size` - X, where X is the corresponding value for the root size
+
+On the other hand, to fully emulate the behavior of the old proposal with
+`vm_keep_unpartitioned_region` set to false two things would be needed. First,
+to set the planned volume sizes like this:
+
+* Root volume
+ * Max size: `root_max_size`
+ * Desired size: (`root_base_size` + `root_max_size`) / 2
+ * Min size: `root_base_size`
+
+* Home volume
+ * Max size: `vm_home_max_size`
+ * Desired and min sizes: same values than for the root volume.
+
+In addition to that, the component generating the LVM physical volumes would
+need a new argument to indicate that we want the new PVs to be as big as
+possible. Right now it just proposes PVs that are big enough to fulfill the
+space requisites of the planned volumes, but implementing an optional _greedy_
+mode would imply changing just a couple of lines of code in the new proposal.
 
 ## References
 
