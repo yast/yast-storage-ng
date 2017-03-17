@@ -49,47 +49,30 @@ module Yast
       end
 
       def planned_vol(attrs = {})
-        attrs = attrs.dup
         mount_point = attrs.delete(:mount_point)
-        type = attrs.delete(:type)
-        if type.is_a?(::String) || type.is_a?(Symbol)
-          type = ::Storage.const_get("FsType_" + type.to_s.upcase)
-        end
-        volume = Y2Storage::PlannedVolume.new(mount_point, type)
-        attrs.each_pair do |key, value|
-          volume.send(:"#{key}=", value)
-        end
-        volume
+        volume = Y2Storage::PlannedVolume.new(mount_point)
+        add_device_attributes!(volume, attrs)
       end
 
-      # FIXME reimplement ProposedPartition#initialize(:volume, :attrs)
       def proposed_partition(attrs = {})
-        attrs = attrs.dup
-        type = attrs.delete(:type)
-        if type.is_a?(::String) || type.is_a?(Symbol)
-          type = ::Storage.const_get("FsType_" + type.to_s.upcase)
-        end
         partition = Y2Storage::ProposedPartition.new
-        partition.filesystem_type = type
-        attrs.each_pair do |key, value|
-          partition.send(:"#{key}=", value)
-        end
-        partition
+        add_device_attributes!(partition, attrs)
       end
 
-      # FIXME reimplement ProposedLv#initialize(:volume, :attrs)
       def proposed_lv(attrs = {})
-        attrs = attrs.dup
+        lv = Y2Storage::ProposedLv.new
+        add_device_attributes!(lv, attrs)
+      end
+
+      def add_device_attributes!(device, attrs)
         type = attrs.delete(:type)
         if type.is_a?(::String) || type.is_a?(Symbol)
-          type = ::Storage.const_get("FsType_" + type.to_s.upcase)
+          attrs[:filesystem_type] = ::Storage.const_get("FsType_" + type.to_s.upcase)
         end
-        lv = Y2Storage::ProposedLv.new
-        lv.filesystem_type = type
         attrs.each_pair do |key, value|
-          lv.send(:"#{key}=", value)
+          device.send(:"#{key}=", value)
         end
-        lv
+        device
       end
 
       def space_dist(vols_by_space)
