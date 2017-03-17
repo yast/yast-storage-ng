@@ -52,11 +52,9 @@ module Y2Storage
       # @return [::Storage::Devicegraph]
       # @raise Proposal::Error if it was not possible to propose a devicegraph
       def devicegraph(volumes, initial_graph, disk_analyzer)
-        begin
-          provide_space(volumes, initial_graph, disk_analyzer, target: :desired)
-        rescue NoDiskSpaceError
-          provide_space(volumes, initial_graph, disk_analyzer, target: :min)
-        end
+        provide_space(volumes, initial_graph, disk_analyzer, target: :desired)
+      rescue NoDiskSpaceError
+        provide_space(volumes, initial_graph, disk_analyzer, target: :min)
       end
 
     protected
@@ -80,10 +78,10 @@ module Y2Storage
         lvm_helper = LvmHelper.new(proposed_lvs, encryption_password: settings.encryption_password)
         space_maker = SpaceMaker.new(initial_graph, disk_analyzer, lvm_helper, settings)
 
-        if settings.use_lvm
-          result = provide_space_lvm(proposed_partitions, reused_partitions, space_maker)
+        result = if settings.use_lvm
+          provide_space_lvm(proposed_partitions, reused_partitions, space_maker)
         else
-          result = provide_space_no_lvm(proposed_partitions, reused_partitions, space_maker)
+          provide_space_no_lvm(proposed_partitions, reused_partitions, space_maker)
         end
 
         graph = result[:devicegraph]
@@ -112,7 +110,7 @@ module Y2Storage
       end
 
       def proposed_plain_partitions(volumes, target: nil)
-        volumes = volumes.select(&:plain_partition?) 
+        volumes = volumes.select(&:plain_partition?)
         volumes.map { |volume| ProposedPartition.new(volume: volume, target: target) }
       end
 
@@ -126,7 +124,7 @@ module Y2Storage
       def proposed_lvs(volumes, target: nil)
         return [] unless settings.use_lvm
         volumes = volumes.reject(&:plain_partition?)
-        lvs = volumes.map { |volume| ProposedLv.new(volume: volume, target: target)}
+        lvs = volumes.map { |volume| ProposedLv.new(volume: volume, target: target) }
         lvs.each { |lv| lv.encryption_password = settings.encryption_password }
         lvs
       end

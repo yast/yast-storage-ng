@@ -80,7 +80,9 @@ module Y2Storage
       def process_free_space(free_space, partitions, usable_size, num_logical)
         partitions.each do |partition|
           log.info(
-            "partition #{partition.mount_point}\tsize: #{partition.disk_size}\tmax: #{partition.max_disk_size} " \
+            "partition #{partition.mount_point} " \
+            "size: #{partition.disk_size} " \
+            "max: #{partition.max_disk_size} " \
             "weight: #{partition.weight}"
           )
         end

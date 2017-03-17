@@ -71,7 +71,7 @@ module Y2Storage
       @uuid             = nil
       @disk_size        = DiskSize.zero
       @max_disk_size    = DiskSize.unlimited
-      @weight          = 0
+      @weight = 0
       copy_volume_values(volume, target) if volume
     end
 
@@ -84,8 +84,8 @@ module Y2Storage
       "#<#{self.class} " + attrs.join(", ") + ">"
     end
 
-    # Create a filesystem for the proposed device on the specified 
-    # partition and set its mount point. Do nothing if #filesystem_type 
+    # Create a filesystem for the proposed device on the specified
+    # partition and set its mount point. Do nothing if #filesystem_type
     # is not set.
     #
     # @param partition [::Storage::Partition]
@@ -125,7 +125,7 @@ module Y2Storage
     # @return [DiskSize] sum of desired/min sizes in @volumes
     def self.disk_size(proposed_devices, rounding: nil)
       rounding ||= DiskSize.new(1)
-      proposed_devices.reduce(DiskSize.zero) do |sum, device| 
+      proposed_devices.reduce(DiskSize.zero) do |sum, device|
         sum + device.disk_size.ceil(rounding)
       end
     end

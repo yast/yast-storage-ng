@@ -26,7 +26,9 @@ require "y2storage"
 
 describe Y2Storage::Proposal::SpaceDistributionCalculator do
   let(:proposed_lvs) { [] }
-  let(:lvm_helper) { Y2Storage::Proposal::LvmHelper.new(proposed_lvs, encryption_password: enc_password) }
+  let(:lvm_helper) do
+    Y2Storage::Proposal::LvmHelper.new(proposed_lvs, encryption_password: enc_password)
+  end
   let(:enc_password) { nil }
 
   subject(:calculator) { described_class.new(lvm_helper) }
@@ -39,8 +41,12 @@ describe Y2Storage::Proposal::SpaceDistributionCalculator do
       fake_scenario(scenario)
     end
 
-    let(:partition1) { proposed_partition(mount_point: "/1", type: :ext4, disk_size: 1.GiB, max: 3.GiB, weight: 1) }
-    let(:partition2) { proposed_partition(mount_point: "/2", type: :ext4, disk_size: 2.GiB, max: 3.GiB, weight: 1) }
+    let(:partition1) do
+      proposed_partition(mount_point: "/1", type: :ext4, disk_size: 1.GiB, max: 3.GiB, weight: 1)
+    end
+    let(:partition2) do
+      proposed_partition(mount_point: "/2", type: :ext4, disk_size: 2.GiB, max: 3.GiB, weight: 1)
+    end
     let(:partitions) { [partition1, partition2, partition3] }
     let(:spaces) { fake_devicegraph.free_disk_spaces.to_a }
 
@@ -50,7 +56,9 @@ describe Y2Storage::Proposal::SpaceDistributionCalculator do
       let(:scenario) { "space_22_extended" }
 
       context "if the space is not big enough" do
-        let(:partition3) { proposed_partition(mount_point: "/3", type: :ext4, disk_size: 30.GiB, max: 30.GiB) }
+        let(:partition3) do
+          proposed_partition(mount_point: "/3", type: :ext4, disk_size: 30.GiB, max: 30.GiB)
+        end
 
         it "returns no distribution (nil)" do
           expect(distribution).to be_nil
@@ -58,7 +66,9 @@ describe Y2Storage::Proposal::SpaceDistributionCalculator do
       end
 
       context "if the space is big enough" do
-        let(:partition3) { proposed_partition(mount_point: "/3", type: :ext4, disk_size: 3.GiB, max: 3.GiB) }
+        let(:partition3) do
+          proposed_partition(mount_point: "/3", type: :ext4, disk_size: 3.GiB, max: 3.GiB)
+        end
 
         it "allocates all proposed partitions in the available space" do
           spaces = distribution.spaces
@@ -82,7 +92,9 @@ describe Y2Storage::Proposal::SpaceDistributionCalculator do
       let(:scenario) { "space_22" }
 
       context "if the space is not big enough" do
-        let(:partition3) { proposed_partition(mount_point: "/3", type: :ext4, disk_size: 30.GiB, max: 30.GiB) }
+        let(:partition3) do
+          proposed_partition(mount_point: "/3", type: :ext4, disk_size: 30.GiB, max: 30.GiB)
+        end
 
         it "returns no distribution (nil)" do
           expect(distribution).to be_nil
@@ -90,7 +102,9 @@ describe Y2Storage::Proposal::SpaceDistributionCalculator do
       end
 
       context "if the space is big enough" do
-        let(:partition3) { proposed_partition(mount_point: "/3", type: :ext4, disk_size: 19.GiB - 2.MiB) }
+        let(:partition3) do
+          proposed_partition(mount_point: "/3", type: :ext4, disk_size: 19.GiB - 2.MiB)
+        end
 
         it "allocates all proposed partitions in the available space" do
           spaces = distribution.spaces
@@ -147,7 +161,9 @@ describe Y2Storage::Proposal::SpaceDistributionCalculator do
     context "when there are several free spaces" do
       context "if the sum of all spaces is not big enough" do
         let(:scenario) { "spaces_5_6_8_10" }
-        let(:partition3) { proposed_partition(mount_point: "/3", type: :ext4, disk_size: 30.GiB, max: 30.GiB) }
+        let(:partition3) do
+          proposed_partition(mount_point: "/3", type: :ext4, disk_size: 30.GiB, max: 30.GiB)
+        end
 
         it "returns no distribution (nil)" do
           expect(distribution).to be_nil
@@ -156,7 +172,9 @@ describe Y2Storage::Proposal::SpaceDistributionCalculator do
 
       context "if all the volumes fit in one space" do
         let(:scenario) { "spaces_5_6_8_10" }
-        let(:partition3) { proposed_partition(mount_point: "/3", type: :ext4, disk_size: 3.GiB, max: 3.GiB) }
+        let(:partition3) do
+          proposed_partition(mount_point: "/3", type: :ext4, disk_size: 3.GiB, max: 3.GiB)
+        end
 
         it "allocates all the partitions in the same space" do
           spaces = distribution.spaces
@@ -171,7 +189,9 @@ describe Y2Storage::Proposal::SpaceDistributionCalculator do
       end
 
       context "if no single space is big enough" do
-        let(:partition3) { proposed_partition(mount_point: "/3", type: :ext4, disk_size: 3.GiB, max: 3.GiB) }
+        let(:partition3) do
+          proposed_partition(mount_point: "/3", type: :ext4, disk_size: 3.GiB, max: 3.GiB)
+        end
 
         context "and it's possible to avoid gaps" do
           let(:scenario) { "spaces_5_3" }
@@ -242,7 +262,9 @@ describe Y2Storage::Proposal::SpaceDistributionCalculator do
 
             context "and the number of partitions exceeds the primary limit" do
               let(:partition3) { proposed_partition(mount_point: "/3", type: :ext4, disk_size: 2.GiB) }
-              let(:partition4) { proposed_partition(mount_point: "/4", type: :ext4, disk_size: 2.GiB - 2.MiB) }
+              let(:partition4) do
+                proposed_partition(mount_point: "/4", type: :ext4, disk_size: 2.GiB - 2.MiB)
+              end
               let(:partitions) { [partition1, partition2, partition3, partition4] }
 
               it "does not set any enforced partition_type" do
@@ -295,7 +317,13 @@ describe Y2Storage::Proposal::SpaceDistributionCalculator do
       end
 
       let(:partition3) do
-        proposed_partition(mount_point: "/3", type: :ext4, disk_size: 3.GiB - 1.MiB, max: 3.GiB, disk: "/dev/sda")
+        proposed_partition(
+          mount_point: "/3",
+          type:        :ext4,
+          disk_size:   3.GiB - 1.MiB,
+          max:         3.GiB,
+          disk:        "/dev/sda"
+        )
       end
 
       context "if a proper distribution is possible" do
@@ -336,7 +364,9 @@ describe Y2Storage::Proposal::SpaceDistributionCalculator do
     context "when asking for extra LVM space" do
       let(:scenario) { "spaces_5_6_8_10" }
 
-      let(:partition3) { proposed_partition(mount_point: "/3", type: :ext4, disk_size: 1.GiB, max: 30.GiB, weight: 2) }
+      let(:partition3) do
+        proposed_partition(mount_point: "/3", type: :ext4, disk_size: 1.GiB, max: 30.GiB, weight: 2)
+      end
       let(:proposed_lvs) { [lvm_lv] }
       let(:lvm_lv) { proposed_lv(mount_point: "/home", type: :ext4, disk_size: lvm_size, max: lvm_max) }
       let(:lvm_max) { Y2Storage::DiskSize.unlimited }
@@ -436,9 +466,15 @@ describe Y2Storage::Proposal::SpaceDistributionCalculator do
         let(:scenario) { "logical-lvm-rounding" }
         let(:lvm_size) { 5.GiB }
         let(:lvm_max) { 5.GiB }
-        let(:partition1) { proposed_partition(mount_point: "/1", type: :ext4, disk_size: 2.GiB, max: 2.GiB) }
-        let(:partition2) { proposed_partition(mount_point: "/2", type: :ext4, disk_size: 1.GiB, max: 1.GiB) }
-        let(:partition3) { proposed_partition(mount_point: "/3", type: :ext4, disk_size: 1.GiB, max: 1.GiB) }
+        let(:partition1) do
+          proposed_partition(mount_point: "/1", type: :ext4, disk_size: 2.GiB, max: 2.GiB)
+        end
+        let(:partition2) do
+          proposed_partition(mount_point: "/2", type: :ext4, disk_size: 1.GiB, max: 1.GiB)
+        end
+        let(:partition3) do
+          proposed_partition(mount_point: "/3", type: :ext4, disk_size: 1.GiB, max: 1.GiB)
+        end
 
         # This test was added because we figured out that the original algorithm
         # to create physical volume was leading to discard some valid solutions

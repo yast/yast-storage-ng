@@ -82,18 +82,18 @@ module Y2Storage
 
         # Let's filter out volumes with some value in #reuse
         # partitions = proposed_partitions.reject(&:reuse)
-        
+
         # partitions_with_reuse = proposed_partitions.select(&:reuse)
         # reused_partitions = partitions_with_reuse.map(&:reuse)
-        
+
         # log.info(
         #   "No need to find a fit for this partitions #{partitions_with_reuse}, " +
         #   "they will reuse #{reused_partitions}"
         # )
-        
+
         # Partitions that should not be deleted
         # keep = reused_partitions + lvm_helper.partitions_in_vg
-        
+
         # To make sure we are not freeing space in a useless place, let's
         # first restrict the operations to disks with particular requirements
         proposed_partitions_by_disk(proposed_partitions).each do |disk, parts|

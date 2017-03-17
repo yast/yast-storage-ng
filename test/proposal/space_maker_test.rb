@@ -321,7 +321,7 @@ describe Y2Storage::Proposal::SpaceMaker do
           proposed_partition(mount_point: "/2", type: :ext4, disk_size: 300.GiB)
         ]
       end
-      let(:keep) { ["/dev/sda6", "/dev/sda2"] } 
+      let(:keep) { ["/dev/sda6", "/dev/sda2"] }
 
       before do
         skip("Do these tests make sense after adding partitions_to_keep parameter? ")
@@ -404,7 +404,9 @@ describe Y2Storage::Proposal::SpaceMaker do
     context "when deleting a partition which belongs to a LVM" do
       let(:scenario) { "lvm-two-vgs" }
       let(:windows_partitions) { { "/dev/sda" => [analyzer_part("/dev/sda1")] } }
-      let(:proposed_partitions) { [proposed_partition(mount_point: "/1", type: :ext4, disk_size: 2.GiB)] }
+      let(:proposed_partitions) do
+        [proposed_partition(mount_point: "/1", type: :ext4, disk_size: 2.GiB)]
+      end
 
       it "deletes also other partitions of the same volume group" do
         result = maker.provide_space(proposed_partitions)

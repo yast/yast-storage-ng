@@ -137,8 +137,12 @@ describe Y2Storage::Proposal::PartitionCreator do
         # The last 16.5KiB of GPT are not usable, which makes the space not
         # divisible by 1MiB
         let(:scenario) { "empty_hard_disk_gpt_25GiB" }
-        let(:partition1) { proposed_partition(mount_point: "/1", type: :vfat, disk_size: partition1_size, weight: 1) }
-        let(:partition2) { proposed_partition(mount_point: "/2", type: :ext4, disk_size: 20.GiB, weight: 1) }
+        let(:partition1) do
+          proposed_partition(mount_point: "/1", type: :vfat, disk_size: partition1_size, weight: 1)
+        end
+        let(:partition2) do
+          proposed_partition(mount_point: "/2", type: :ext4, disk_size: 20.GiB, weight: 1)
+        end
         let(:partition1_size) { 2.GiB }
         let(:distribution) { space_dist(disk_spaces.first => vols_list(partition1, partition2)) }
 

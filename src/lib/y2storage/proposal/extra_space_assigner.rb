@@ -20,9 +20,8 @@
 # find current contact information at www.suse.com.
 
 module Y2Storage
-
+  # Mixing methods to distribute space.
   module ExtraSpaceAssigner
-
     # Returns a copy of the list in which the given space has been distributed
     # among the volumes, distributing the extra space (beyond the target size)
     # according to the weight and max size of each volume.
@@ -42,13 +41,13 @@ module Y2Storage
     # @return [PlannedVolumesList] list containing volumes with an adjusted
     #     value for PlannedVolume#disk_size
     def distribute_space(proposed_devices, space_size, rounding: nil, min_grain: nil)
-      required_size = ProposedDevice.disk_size(proposed_devices) 
+      required_size = ProposedDevice.disk_size(proposed_devices)
       raise RuntimeError if space_size < required_size
 
       rounding ||= min_grain
       rounding ||= DiskSize.new(1)
 
-      proposed_devices.each do |proposed_device| 
+      proposed_devices.each do |proposed_device|
         proposed_device.disk_size = proposed_device.disk_size.ceil(rounding)
       end
 
@@ -62,7 +61,7 @@ module Y2Storage
     end
 
   private
-  
+
     def adjust_size_to_last_slot!(proposed_device, space_size, min_grain)
       adjusted_size = adjusted_size_after_ceil(proposed_device, space_size, min_grain)
       target_size = proposed_device.disk_size
@@ -90,9 +89,18 @@ module Y2Storage
         assigned_size = DiskSize.zero
         total_weight = total_weight(candidates)
         candidates.each do |proposed_device|
-          device_extra = proposed_device_extra_size(proposed_device, extra_size, total_weight, assigned_size, rounding)
+          device_extra = proposed_device_extra_size(
+            proposed_device,
+            extra_size,
+            total_weight,
+            assigned_size,
+            rounding
+          )
           proposed_device.disk_size += device_extra
-          log.info("Distributing #{device_extra} to #{proposed_device.mount_point}; now #{proposed_device.disk_size}")
+          log.info(
+            "Distributing #{device_extra} to #{proposed_device.mount_point}; " \
+            "now #{proposed_device.disk_size}"
+          )
           assigned_size += device_extra
         end
         extra_size -= assigned_size
@@ -154,6 +162,5 @@ module Y2Storage
     def total_weight(proposed_devices)
       proposed_devices.reduce(0.0) { |sum, device| sum + device.weight }
     end
-
   end
 end

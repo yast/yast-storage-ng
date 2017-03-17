@@ -310,7 +310,12 @@ describe Y2Storage::Proposal::LvmHelper do
       end
 
       it "deletes existing LVs as needed to make space" do
-        proposed_lvs << proposed_lv(mount_point: "/3", type: :ext4, logical_volume_name: "three", disk_size: 20.GiB)
+        proposed_lvs << proposed_lv(
+          mount_point:         "/3",
+          type:                :ext4,
+          logical_volume_name: "three",
+          disk_size:           20.GiB
+        )
 
         devicegraph = helper.create_volumes(fake_devicegraph, pv_partitions)
         reused_vg = devicegraph.volume_groups.first
@@ -345,7 +350,13 @@ describe Y2Storage::Proposal::LvmHelper do
       before do
         one = proposed_lvs.first
         two = proposed_lvs.last
-        proposed_lvs << proposed_lv(mount_point: "/3", logical_volume_name: "three", disk_size: 1.GiB, max: 2.GiB, weight: 1)
+        proposed_lvs << proposed_lv(
+          mount_point:         "/3",
+          logical_volume_name: "three",
+          disk_size:           1.GiB,
+          max:                 2.GiB,
+          weight:              1
+        )
 
         one.disk_size = 5.GiB
         one.weight = 2

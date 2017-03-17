@@ -65,7 +65,7 @@ module Y2Storage
       def add_partitions(partitions_by_disk_space)
         partitions = {}
         spaces.each do |space|
-          partitions[space.disk_space] = space.partitions.dup # FIXME es necesario duplicar?
+          partitions[space.disk_space] = space.partitions.dup
         end
         partitions_by_disk_space.each do |disk_space, partition|
           partitions[disk_space] ||= []

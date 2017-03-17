@@ -81,7 +81,7 @@ module Y2Storage
         end
         # At first sight, there is no enough space, but maybe enforcing some
         # order...
-        not enforced_last.nil?
+        !enforced_last.nil?
       end
 
       # Space that will remain unused (wasted) after creating the partitions
@@ -174,10 +174,10 @@ module Y2Storage
       def sort_partitions!
         @partitions = partitions_sorted_by_attr(:disk, :max_start_offset)
         last = enforced_last
-        if last
-          @partitions.delete(last)
-          @partitions << last
-        end
+        return unless last
+
+        @partitions.delete(last)
+        @partitions << last
       end
 
       # Returns the volume that must be placed at the end of a given space in
