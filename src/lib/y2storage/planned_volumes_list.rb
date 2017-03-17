@@ -109,23 +109,6 @@ module Y2Storage
       end
     end
 
-    def proposed_partitions(lvm: false, target: nil)
-      volumes = @volumes.dup
-      volumes.reject!(&:can_live_on_logical_volume) if lvm
-      volumes.reject!(&:reuse)
-      volumes.map { |volume| ProposedPartition.new(volume: volume, target: target)}
-    end
-
-    def proposed_lvs(lvm: false, target: nil)
-      return [] unless lvm
-      volumes = @volumes.select(&:can_live_on_logical_volume)
-      volumes.map { |volume| ProposedLv.new(volume: volume, target: target)}
-    end
-
-    def reused_partitions
-      @volumes.map(&:reuse).compact
-    end
-
     def to_s
       "#<PlannedVolumesList target=#{@target}, volumes=#{@volumes.map(&:to_s)}>"
     end

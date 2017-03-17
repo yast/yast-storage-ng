@@ -61,17 +61,6 @@ module Y2Storage
 
     protected
 
-      # Modifies planned volumes adding an encryption password.
-      # Encryption password is not assigned to volumes that must
-      # be created as plain partitions.
-      # @param volumes [PlannedVolumesList]
-      def add_encryption_password!(volumes)
-        return unless settings.use_encryption
-        volumes.reject(&:plain_partition?).map do |volume|
-          volume.encryption_password = settings.encryption_password
-        end
-      end
-
       # Provides free disk space in the proposal devicegraph to fit the
       # volumes in.
       #
@@ -84,9 +73,9 @@ module Y2Storage
       #
       # @return [::Storage::Devicegraph]
       def provide_space(volumes, initial_graph, disk_analyzer, target: nil)
-        proposed_partitions = volumes.proposed_partitions(lvm: settings.use_lvm, target: target)
-        proposed_lvs = volumes.proposed_lvs(lvm: settings.use_lvm, target: target)
-        reused_partitions = volumes.reused_partitions
+        proposed_partitions = proposed_partitions(volumes, target: target)
+        proposed_lvs = proposed_lvs(volumes, target: target)
+        reused_partitions = reused_partitions(volumes)
 
         lvm_helper = LvmHelper.new(proposed_lvs, encryption_password: settings.encryption_password)
         space_maker = SpaceMaker.new(initial_graph, disk_analyzer, lvm_helper, settings)
@@ -111,6 +100,39 @@ module Y2Storage
         end
 
         final_graph
+      end
+
+      def proposed_partitions(volumes, target: nil)
+        volumes = volumes.reject(&:reuse)
+        partitions = proposed_plain_partitions(volumes, target: target)
+        unless settings.use_lvm
+          partitions += proposed_not_plain_partitions(volumes, target: target)
+        end
+        partitions
+      end
+
+      def proposed_plain_partitions(volumes, target: nil)
+        volumes = volumes.select(&:plain_partition?) 
+        volumes.map { |volume| ProposedPartition.new(volume: volume, target: target) }
+      end
+
+      def proposed_not_plain_partitions(volumes, target: nil)
+        volumes = volumes.reject(&:plain_partition?)
+        partitions = volumes.map { |volume| ProposedPartition.new(volume: volume, target: target) }
+        partitions.each { |partition| partition.encryption_password = settings.encryption_password }
+        partitions
+      end
+
+      def proposed_lvs(volumes, target: nil)
+        return [] unless settings.use_lvm
+        volumes = volumes.reject(&:plain_partition?)
+        lvs = volumes.map { |volume| ProposedLv.new(volume: volume, target: target)}
+        lvs.each { |lv| lv.encryption_password = settings.encryption_password }
+        lvs
+      end
+
+      def reused_partitions(volumes)
+        volumes.map(&:reuse).compact
       end
 
       # Variant of #provide_space when LVM is not involved
