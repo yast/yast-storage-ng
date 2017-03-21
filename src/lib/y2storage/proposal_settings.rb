@@ -128,24 +128,24 @@ module Y2Storage
     end
 
     def to_s
-      text = "Storage ProposalSettings\n"
-      text += "  use_lvm: #{use_lvm}\n"
-      text += "  root_filesystem_type: #{root_filesystem_type}\n"
-      text += "  use_snapshots: #{use_snapshots}\n"
-      text += "  use_separate_home: #{use_separate_home}\n"
-      text += "  home_filesystem_type: #{home_filesystem_type}\n"
-      text += "  enlarge_swap_for_suspend: #{enlarge_swap_for_suspend}\n"
-      text += "  root_device: #{root_device}\n"
-      text += "  candidate_devices: #{candidate_devices}\n"
-      text += "  root_base_disk_size: #{root_base_disk_size}\n"
-      text += "  root_max_disk_size: #{root_max_disk_size}\n"
-      text += "  root_space_percent: #{root_space_percent}\n"
-      text += "  btrfs_increase_percentage: #{btrfs_increase_percentage}\n"
-      text += "  min_size_to_use_separate_home: #{min_size_to_use_separate_home}\n"
-      text += "  btrfs_default_subvolume: #{btrfs_default_subvolume}\n"
-      text += "  root_subvolume_read_only: #{root_subvolume_read_only}\n"
-      text += "  home_min_disk_size: #{home_min_disk_size}\n"
-      text += "  home_max_disk_size: #{home_max_disk_size}"
+      text = "Storage ProposalSettings\n" \
+        "  use_lvm: #{use_lvm}\n" \
+        "  root_filesystem_type: #{root_filesystem_type}\n" \
+        "  use_snapshots: #{use_snapshots}\n" \
+        "  use_separate_home: #{use_separate_home}\n" \
+        "  home_filesystem_type: #{home_filesystem_type}\n" \
+        "  enlarge_swap_for_suspend: #{enlarge_swap_for_suspend}\n" \
+        "  root_device: #{root_device}\n" \
+        "  candidate_devices: #{candidate_devices}\n" \
+        "  root_base_disk_size: #{root_base_disk_size}\n" \
+        "  root_max_disk_size: #{root_max_disk_size}\n" \
+        "  root_space_percent: #{root_space_percent}\n" \
+        "  btrfs_increase_percentage: #{btrfs_increase_percentage}\n" \
+        "  min_size_to_use_separate_home: #{min_size_to_use_separate_home}\n" \
+        "  btrfs_default_subvolume: #{btrfs_default_subvolume}\n" \
+        "  root_subvolume_read_only: #{root_subvolume_read_only}\n" \
+        "  home_min_disk_size: #{home_min_disk_size}\n" \
+        "  home_max_disk_size: #{home_max_disk_size}"
     end
 
   protected
