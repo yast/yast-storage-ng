@@ -37,8 +37,8 @@ module Y2Storage
       def supported_root_disk?
         return false unless root_disk
         if root_disk.dasd?
-          return false if root_disk.dasd_type == ::Storage::DASDTYPE_FBA
-          return false if root_disk.dasd_format == ::Storage::DASDF_LDL
+          return false if root_disk.dasd_type == ::Storage::DasdType_FBA
+          return false if root_disk.dasd_format == ::Storage::DasdFormat_LDL
           # TODO: DIAG disks (whatever they are) are not supported either
         end
         true
