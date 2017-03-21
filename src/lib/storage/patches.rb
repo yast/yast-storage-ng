@@ -57,12 +57,12 @@ module Storage
 
     # FIXME: see above
     def dasd_type
-      ::Storage::DASDTYPE_NONE
+      ::Storage::DasdType_UNKNOWN
     end
 
     # FIXME: see above
     def dasd_format
-      ::Storage::DASDF_NONE
+      ::Storage::DasdFormat_NONE
     end
   end
 
