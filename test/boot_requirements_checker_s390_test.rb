@@ -81,7 +81,7 @@ describe Y2Storage::BootRequirementsChecker do
       let(:dasd) { true }
       let(:dasd_type) { ::Storage::DASDTYPE_FBA }
       # Format and LVM are irrelevant
-      let(:dasd_format) { ::Storage::DASDTYPE_NONE }
+      let(:dasd_format) { ::Storage::DASDF_NONE }
       let(:use_lvm) { false }
 
       it "raises an error" do
