@@ -128,7 +128,7 @@ module Y2Storage
     end
 
     def to_s
-      text = "Storage ProposalSettings\n" \
+      "Storage ProposalSettings\n" \
         "  use_lvm: #{use_lvm}\n" \
         "  root_filesystem_type: #{root_filesystem_type}\n" \
         "  use_snapshots: #{use_snapshots}\n" \
