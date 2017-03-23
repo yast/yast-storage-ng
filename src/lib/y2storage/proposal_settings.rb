@@ -127,6 +127,27 @@ module Y2Storage
       settings
     end
 
+    def to_s
+      "Storage ProposalSettings\n" \
+        "  use_lvm: #{use_lvm}\n" \
+        "  root_filesystem_type: #{root_filesystem_type}\n" \
+        "  use_snapshots: #{use_snapshots}\n" \
+        "  use_separate_home: #{use_separate_home}\n" \
+        "  home_filesystem_type: #{home_filesystem_type}\n" \
+        "  enlarge_swap_for_suspend: #{enlarge_swap_for_suspend}\n" \
+        "  root_device: #{root_device}\n" \
+        "  candidate_devices: #{candidate_devices}\n" \
+        "  root_base_disk_size: #{root_base_disk_size}\n" \
+        "  root_max_disk_size: #{root_max_disk_size}\n" \
+        "  root_space_percent: #{root_space_percent}\n" \
+        "  btrfs_increase_percentage: #{btrfs_increase_percentage}\n" \
+        "  min_size_to_use_separate_home: #{min_size_to_use_separate_home}\n" \
+        "  btrfs_default_subvolume: #{btrfs_default_subvolume}\n" \
+        "  root_subvolume_read_only: #{root_subvolume_read_only}\n" \
+        "  home_min_disk_size: #{home_min_disk_size}\n" \
+        "  home_max_disk_size: #{home_max_disk_size}"
+    end
+
   protected
 
     # Value of a product feature in the partitioning section

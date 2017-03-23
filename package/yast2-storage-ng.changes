@@ -4,6 +4,11 @@ Thu Mar 23 08:18:36 UTC 2017 - jilopez@localhost
 - Adapted prepdisk client to work in update mode.
 
 -------------------------------------------------------------------
+Tue Mar 21 17:11:37 CET 2017 - schubi@suse.de
+
+- Added to_s in ProposalSettings
+
+-------------------------------------------------------------------
 Thu Mar  9 12:47:11 UTC 2017 - ancor@suse.com
 
 - Partially adjust the proposal settings according to control.xml.
