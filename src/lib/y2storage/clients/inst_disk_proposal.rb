@@ -25,6 +25,7 @@ require "yast"
 require "y2storage"
 require "y2storage/dialogs/proposal"
 require "y2storage/dialogs/guided_setup"
+require "expert_partitioner/main_dialog"
 
 module Y2Storage
   module Clients
@@ -52,10 +53,17 @@ module Y2Storage
         log.info("BEGIN of inst_disk_proposal")
 
         until [:back, :next, :abort].include?(@result)
+          # guided_setup = Dialogs::GuidedSetup.new(ProposalSettings.new)
+          # guided_setup.settings_stack << guided_setup.settings.dup
+          # Dialogs::GuidedSetup::SelectFilesystem.new(guided_setup).run
+          # return
+
           dialog = Dialogs::Proposal.new(@proposal, @devicegraph)
           @result = dialog.run
           @proposal = dialog.proposal
           @devicegraph = dialog.devicegraph
+
+          p @result
 
           case @result
           when :next
@@ -63,6 +71,9 @@ module Y2Storage
           when :guided
             settings = dialog.proposal ? dialog.proposal.settings : new_settings
             guided_setup(settings)
+          when :expert
+            # FIXME
+            expert_partitioner
           end
         end
 
@@ -83,15 +94,20 @@ module Y2Storage
         add_storage_packages
       end
 
-      def guided_setup(initial_settings)
-        dialog = Dialogs::GuidedSetup.new(initial_settings)
-
-        case dialog.run
+      def guided_setup(settings)
+        dialog = Dialogs::GuidedSetup.new(settings)
+        res = dialog.run
+        p "guided: #{res}"
+        case res
         when :abort
           @result = :abort
         when :next
           @proposal = Proposal.new(settings: dialog.settings)
         end
+      end
+
+      def expert_partitioner
+        ExpertPartitioner::MainDialog.new.run
       end
 
       # Add storage-related software packages (filesystem tools etc.) to the

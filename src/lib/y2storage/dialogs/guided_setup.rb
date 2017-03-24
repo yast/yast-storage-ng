@@ -20,104 +20,53 @@
 # find current contact information at www.novell.com.
 
 require "yast"
-require "y2storage"
-require "ui/installation_dialog"
+require "y2storage/dialogs/guided_setup/select_disks"
+require "y2storage/dialogs/guided_setup/select_root_disk"
+require "y2storage/dialogs/guided_setup/select_scheme"
+require "y2storage/dialogs/guided_setup/select_filesystem"
 
 module Y2Storage
   module Dialogs
-    # Calculates the proposal settings to be used in the next proposal attempt.
-    class GuidedSetup < ::UI::InstallationDialog
-      # @return [ProposalSettings] settings specified by the user
+    class GuidedSetup
+
+      Yast.import "Sequencer"
+
+      attr_accessor :settings_stack
       attr_reader :settings
 
       def initialize(settings)
-        log.info "GuidedSetup dialog: start with #{settings.inspect}"
-
-        super()
-        textdomain "storage-ng"
+        @settings_stack = []
         @settings = settings.dup
       end
 
-      def next_handler
-        adjust_settings_to_mode
-        log.info "GuidedSetup dialog: return :next with #{settings.inspect}"
-        super
+      def run
+        @settings_stack = [settings.dup]        
+
+        aliases = {
+          "select_disks" => lambda { SelectDisks.new(self).run },
+          "select_root_disk" => lambda { SelectRootDisk.new(self).run },
+          "select_scheme" => lambda { SelectScheme.new(self).run },
+          "select_filesystem" => lambda { SelectFilesystem.new(self).run }
+        }
+
+        sequence = {
+          "ws_start" => "select_disks",
+          "select_disks" => { next: "select_root_disk", back: :back, abort: :abort },
+          "select_root_disk" => { next: "select_scheme", back: :back,  abort: :abort },
+          "select_scheme" => { next: "select_filesystem", back: :back,  abort: :abort },
+          "select_filesystem" => { next: :next, back: :back,  abort: :abort },
+        }
+
+        result = Yast::Sequencer.Run(aliases, sequence)
+        update_settings!
+        require "byebug"; byebug
+        result
       end
 
-    protected
+    private
 
-      def dialog_title
-        _("Guided Partitioning Setup")
-      end
-
-      def dialog_content
-        MarginBox(
-          2, 1,
-          VBox(
-            RadioButtonGroup(
-              Id(:mode),
-              VBox(
-                Left(RadioButton(Id(:mode_partition), _("Partition-based"), partition_selected?)),
-                VSpacing(1),
-                Left(RadioButton(Id(:mode_lvm), _("LVM-based"), lvm_selected?)),
-                VSpacing(1),
-                Left(RadioButton(Id(:mode_encrypted), _("Encrypted LVM-based"), encrypted_selected?))
-              )
-            ),
-            VSpacing(0.2),
-            Left(
-              HBox(
-                HSpacing(8),
-                Password(Id(:encryption_password), _("Enter encryption password"))
-              )
-            )
-          )
-        )
-      end
-
-      def create_dialog
-        super
-        init_widgets
-        true
-      end
-
-      def init_widgets
-        # Remember entered password
-        Yast::UI.ChangeWidget(Id(:encryption_password), :Value, settings.encryption_password)
-      end
-
-      def partition_selected?
-        !settings.use_lvm
-      end
-
-      def lvm_selected?
-        settings.use_lvm && settings.encryption_password.nil?
-      end
-
-      def encrypted_selected?
-        settings.use_lvm && !settings.encryption_password.nil?
-      end
-
-      def adjust_settings_to_mode
-        case Yast::UI.QueryWidget(Id(:mode), :CurrentButton)
-        when :mode_partition
-          settings.use_lvm = false
-          settings.encryption_password = nil
-        when :mode_lvm
-          settings.use_lvm = true
-          settings.encryption_password = nil
-        when :mode_encrypted
-          settings.use_lvm = true
-          settings.encryption_password = Yast::UI.QueryWidget(Id(:encryption_password), :Value)
-        end
-      end
-
-      def help_text
-        _(
-          "<p>\n" \
-          "TODO: this dialog is just temporary. " \
-          "Hopefully it will end up including several steps.</p>"
-        )
+      def update_settings!
+        @settings = settings_stack.last unless settings_stack.empty?
       end
     end
   end
