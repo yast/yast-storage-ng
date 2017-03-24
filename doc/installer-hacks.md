@@ -114,4 +114,7 @@ equivalent, the old code is simply deleted, not commented.
 
 * Several tests have been skipped in order to create the package. Commented tests
   need `yast2-installation`, but it is not possible to provide it due to conflict between `yast2-storage` and `yast2-storage-ng`. There is a cyclic dependency between `yast2-installation` and `autoyast2-installation` (see [this bug](https://bugzilla.opensuse.org/show_bug.cgi?id=1024082)).
-  
+
+* Commented several `Yast.import` for the old storage. The affected code is so
+  far not adapted to use storage-ng because is not used during a regular
+  installation or upgrade.
