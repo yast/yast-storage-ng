@@ -28,37 +28,40 @@ module Y2Storage
     class GuidedSetup
       class Base < ::UI::InstallationDialog
 
-        def initialize(guided_setup)
+        attr_accessor :settings
+
+        def initialize(settings)
           super()
-          textdomain "storage-ng"
-          @guided_setup = guided_setup
           log.info "#{label}: start with #{settings.inspect}"
+          textdomain "storage-ng"
+          @settings = settings
         end
 
         def next_handler
-          push_settings
+          update_settings!
           log.info "#{label}: return :next with #{settings.inspect}"
           super
         end
 
         def back_handler
-          pop_settings
           log.info "#{label}: return :back with #{settings.inspect}"
           super
         end
 
       protected
 
-        def settings
-          @guided_setup.settings_stack.last
+        def create_dialog
+          super
+          initialize_widgets
+          true
         end
 
-        def push_settings
-          @guided_setup.settings_stack << settings.dup
+        def initialize_widgets
+          true
         end
-
-        def pop_settings
-          @guided_setup.settings_stack.pop
+        
+        def update_settings!
+          true
         end
 
         def help_text

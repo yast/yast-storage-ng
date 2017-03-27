@@ -53,10 +53,9 @@ module Y2Storage
         log.info("BEGIN of inst_disk_proposal")
 
         until [:back, :next, :abort].include?(@result)
-          # guided_setup = Dialogs::GuidedSetup.new(ProposalSettings.new)
-          # guided_setup.settings_stack << guided_setup.settings.dup
-          # Dialogs::GuidedSetup::SelectFilesystem.new(guided_setup).run
-          # return
+          guided_setup = Dialogs::GuidedSetup.new(ProposalSettings.new)
+          Dialogs::GuidedSetup::SelectScheme.new(guided_setup.settings.dup).run
+          return
 
           dialog = Dialogs::Proposal.new(@proposal, @devicegraph)
           @result = dialog.run
