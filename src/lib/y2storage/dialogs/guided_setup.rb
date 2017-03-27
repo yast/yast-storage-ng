@@ -31,7 +31,6 @@ module Y2Storage
 
       Yast.import "Sequencer"
 
-      attr_accessor :settings_stack
       attr_reader :settings
 
       def initialize(settings)
@@ -40,13 +39,13 @@ module Y2Storage
       end
 
       def run
-        @settings_stack = [settings.dup]        
+        settings = @settings.dup        
 
         aliases = {
-          "select_disks" => lambda { SelectDisks.new(self).run },
-          "select_root_disk" => lambda { SelectRootDisk.new(self).run },
-          "select_scheme" => lambda { SelectScheme.new(self).run },
-          "select_filesystem" => lambda { SelectFilesystem.new(self).run }
+          "select_disks" => lambda { SelectDisks.new(settings).run },
+          "select_root_disk" => lambda { SelectRootDisk.new(settings).run },
+          "select_scheme" => lambda { SelectScheme.new(settings).run },
+          "select_filesystem" => lambda { SelectFilesystem.new(settings).run }
         }
 
         sequence = {
@@ -58,15 +57,8 @@ module Y2Storage
         }
 
         result = Yast::Sequencer.Run(aliases, sequence)
-        update_settings!
-        require "byebug"; byebug
+        @settings = settings if result == :next
         result
-      end
-
-    private
-
-      def update_settings!
-        @settings = settings_stack.last unless settings_stack.empty?
       end
     end
   end

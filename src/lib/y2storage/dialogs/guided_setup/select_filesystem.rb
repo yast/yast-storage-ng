@@ -32,11 +32,6 @@ module Y2Storage
           "Guided Setup - step 4"
         end
 
-        def next_handler
-          update_settings
-          super
-        end
-
         def root_filesystem_handler
           widget_update(:snapshots, widget_value(:root_filesystem) == :btrfs, attr: :Enabled)
         end
@@ -46,12 +41,6 @@ module Y2Storage
         end
 
       protected
-
-        def create_dialog
-          super
-          initialize_widgets
-          true
-        end
 
         def dialog_title
           _("Filesystem Options")
@@ -107,8 +96,6 @@ module Y2Storage
           )
         end
 
-      private
-
         def initialize_widgets
           initialize_root_filesystem_widget
           initialize_home_filesystem_widget
@@ -132,7 +119,7 @@ module Y2Storage
           widget_update(:separate_home, separate_home)
         end
 
-        def update_settings
+        def update_settings!
           true
         end
       end
