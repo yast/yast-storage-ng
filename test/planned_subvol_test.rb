@@ -20,16 +20,16 @@
 # find current contact information at www.suse.com.
 
 require_relative "spec_helper"
-require "y2storage/subvol"
+require "y2storage/planned_subvol"
 Yast.import "Arch"
 
-describe Y2Storage::Subvol do
+describe Y2Storage::PlannedSubvol do
 
   context "#new" do
     let(:current_arch) { Yast::Arch.arch_short }
 
     describe "Simple subvol with defaults" do
-      subject { Y2Storage::Subvol.new("var/spool") }
+      subject { Y2Storage::PlannedSubvol.new("var/spool") }
 
       it "has the correct path" do
         expect(subject.path).to be == "var/spool"
@@ -49,7 +49,7 @@ describe Y2Storage::Subvol do
     end
 
     describe "NoCOW subvol" do
-      subject { Y2Storage::Subvol.new("var/lib/mysql", copy_on_write: false) }
+      subject { Y2Storage::PlannedSubvol.new("var/lib/mysql", copy_on_write: false) }
 
       it "is NoCOW" do
         expect(subject.no_cow?).to be true
@@ -61,7 +61,7 @@ describe Y2Storage::Subvol do
     end
 
     describe "simple arch-specific subvol" do
-      subject { Y2Storage::Subvol.new("boot/grub2/fake-arch", archs: ["fake-arch"]) }
+      subject { Y2Storage::PlannedSubvol.new("boot/grub2/fake-arch", archs: ["fake-arch"]) }
 
       it "is arch specific" do
         expect(subject.arch_specific?).to be true
@@ -73,7 +73,7 @@ describe Y2Storage::Subvol do
     end
 
     describe "arch-specific subvol for current arch" do
-      subject { Y2Storage::Subvol.new("boot/grub2/fake-arch", archs: ["fake-arch", current_arch]) }
+      subject { Y2Storage::PlannedSubvol.new("boot/grub2/fake-arch", archs: ["fake-arch", current_arch]) }
 
       it "is arch specific" do
         expect(subject.arch_specific?).to be true
@@ -85,7 +85,7 @@ describe Y2Storage::Subvol do
     end
 
     describe "arch-specific subvol for everything except the current arch" do
-      subject { Y2Storage::Subvol.new("boot/grub2/fake-arch", archs: ["!#{current_arch}"]) }
+      subject { Y2Storage::PlannedSubvol.new("boot/grub2/fake-arch", archs: ["!#{current_arch}"]) }
 
       it "does not match the current arch" do
         expect(subject.current_arch?).to be false
@@ -97,7 +97,7 @@ describe Y2Storage::Subvol do
     describe "Fully specified subvol" do
       subject do
         xml = { "path" => "var/fake", "copy_on_write" => false, "archs" => "fake, ppc,  !  foo" }
-        Y2Storage::Subvol.create_from_xml(xml)
+        Y2Storage::PlannedSubvol.create_from_xml(xml)
       end
 
       it "has the correct path" do
@@ -133,7 +133,7 @@ describe Y2Storage::Subvol do
     describe "Minimalistic subvol" do
       subject do
         xml = { "path" => "var/fake" }
-        Y2Storage::Subvol.create_from_xml(xml)
+        Y2Storage::PlannedSubvol.create_from_xml(xml)
       end
 
       it "has the correct path" do
@@ -155,9 +155,9 @@ describe Y2Storage::Subvol do
   end
 
   context "#<=>" do
-    let(:a) { Y2Storage::Subvol.new("aaa") }
-    let(:b) { Y2Storage::Subvol.new("bbb") }
-    let(:c) { Y2Storage::Subvol.new("ccc") }
+    let(:a) { Y2Storage::PlannedSubvol.new("aaa") }
+    let(:b) { Y2Storage::PlannedSubvol.new("bbb") }
+    let(:c) { Y2Storage::PlannedSubvol.new("ccc") }
 
     describe "Sorting subvol arrays" do
       subject { [b, c, a].sort }
@@ -170,7 +170,7 @@ describe Y2Storage::Subvol do
   end
 
   context ".fallback_list" do
-    let(:fallbacks) { Y2Storage::Subvol.fallback_list }
+    let(:fallbacks) { Y2Storage::PlannedSubvol.fallback_list }
 
     describe "var/cache subvolume" do
       subject { fallbacks.find { |subvol| subvol.path == "var/cache" } }

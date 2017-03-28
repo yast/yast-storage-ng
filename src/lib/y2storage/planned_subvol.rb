@@ -30,10 +30,10 @@ module Y2Storage
   # Sample usage:
   #
   #   xml = ProductFeatures.GetSection("partitioning")
-  #   subvols = Subvol.create_from_control_xml(xml["subvolumes"]) || Subvol.fallback_list
-  #   subvols.each { |s| log.info("Initial #{s}") }
+  #   planned_subvols = PlannedSubvol.create_from_control_xml(xml["subvolumes"]) || PlannedSubvol.fallback_list
+  #   planned_subvols.each { |s| log.info("Initial #{s}") }
   #
-  class Subvol
+  class PlannedSubvol
     include Yast::Logger
 
     attr_accessor :path, :copy_on_write, :archs
@@ -71,7 +71,7 @@ module Y2Storage
     end
 
     def to_s
-      text = "Subvol #{@path}"
+      text = "PlannedSubvol #{@path}"
       text += " (NoCOW)" unless @copy_on_write
       text += " (archs: #{@archs})" if arch_specific?
       text
@@ -134,9 +134,9 @@ module Y2Storage
       use_subvol
     end
 
-    # Factory method: Create one Subvol from XML data stored as a map.
+    # Factory method: Create one PlannedSubvol from XML data stored as a map.
     #
-    # @return Subvol or nil if error
+    # @return PlannedSubvol or nil if error
     #
     def self.create_from_xml(xml)
       return nil unless xml.key?("path")
@@ -149,44 +149,44 @@ module Y2Storage
       if xml.key?("archs")
         archs = xml["archs"].gsub(/\s+/, "").split(",")
       end
-      subvol = Subvol.new(path, copy_on_write: cow, archs: archs)
-      log.info("Creating from XML: #{subvol}")
-      subvol
+      planned_subvol = PlannedSubvol.new(path, copy_on_write: cow, archs: archs)
+      log.info("Creating from XML: #{planned_subvol}")
+      planned_subvol
     end
 
-    # Create a list of Subvols from the <subvolumes> part of control.xml.
+    # Create a list of PlannedSubvols from the <subvolumes> part of control.xml.
     # The map may be empty if there is a <subvolumes> section, but it's empty.
     #
     # This function does not do much error handling or reporting; it is assumed
     # that control.xml is validated against its schema.
     #
     # @param subvolumes_xml list of XML <subvolume> entries
-    # @return Subvolumes map or nil
+    # @return PlannedSubvolumes map or nil
     #
     def self.create_from_control_xml(subvolumes_xml)
       return nil if subvolumes_xml.nil?
       return nil unless subvolumes_xml.respond_to?(:map)
 
-      all_subvols = subvolumes_xml.map { |xml| Subvol.create_from_xml(xml) }
+      all_subvols = subvolumes_xml.map { |xml| PlannedSubvol.create_from_xml(xml) }
       all_subvols.compact! # Remove nil subvols due to XML parse errors
       relevant_subvols = all_subvols.select { |s| s.current_arch? }
       relevant_subvols.sort
     end
 
-    # Create a fallback list of Subvols. This is useful if nothing is
+    # Create a fallback list of PlannedSubvols. This is useful if nothing is
     # specified in the control.xml file.
     #
-    # @return List<Subvol>
+    # @return List<PlannedSubvol>
     #
     def self.fallback_list
-      subvols = []
-      COW_SUBVOL_PATHS.each    { |path| subvols << Subvol.new(path) }
-      NO_COW_SUBVOL_PATHS.each { |path| subvols << Subvol.new(path, copy_on_write: false) }
-      subvols << Subvol.new("boot/grub2/i386-pc",          archs: ["i386", "x86_64"])
-      subvols << Subvol.new("boot/grub2/x86_64-efi",       archs: ["x86_64"])
-      subvols << Subvol.new("boot/grub2/powerpc-ieee1275", archs: ["ppc", "!board_powernv"])
-      subvols << Subvol.new("boot/grub2/s390x-emu",        archs: ["s390"])
-      subvols.select { |s| s.current_arch? }.sort
+      planned_subvols = []
+      COW_SUBVOL_PATHS.each    { |path| planned_subvols << PlannedSubvol.new(path) }
+      NO_COW_SUBVOL_PATHS.each { |path| planned_subvols << PlannedSubvol.new(path, copy_on_write: false) }
+      planned_subvols << PlannedSubvol.new("boot/grub2/i386-pc",          archs: ["i386", "x86_64"])
+      planned_subvols << PlannedSubvol.new("boot/grub2/x86_64-efi",       archs: ["x86_64"])
+      planned_subvols << PlannedSubvol.new("boot/grub2/powerpc-ieee1275", archs: ["ppc", "!board_powernv"])
+      planned_subvols << PlannedSubvol.new("boot/grub2/s390x-emu",        archs: ["s390"])
+      planned_subvols.select { |s| s.current_arch? }.sort
     end
   end
 end
