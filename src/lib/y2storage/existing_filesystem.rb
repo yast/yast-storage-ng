@@ -22,6 +22,9 @@
 # find current contact information at www.suse.com.
 
 require "yast"
+require "fileutils"
+
+Yast.import "OSRelease"
 
 module Y2Storage
   #
@@ -31,55 +34,87 @@ module Y2Storage
   class ExistingFilesystem
     include Yast::Logger
 
-    def initialize(device_name)
-      @device_name = device_name
+    attr_reader :filesystem
+
+    def initialize(filesystem, root = "/", mount_point = "/mnt")
+      @filesystem = filesystem
+      @root = root
+      @mount_point = mount_point
+      @installation_medium = nil
+      @release_name = nil
     end
 
-    # Mount the filesystem, perform the check given in 'block' while mounted,
-    # and then unmount. The block will get the mount point as a parameter.
-    #
-    # @return the return value of 'block' or 'nil' if there was an error.
-    #
-    def mount_and_check(&block)
-      raise ArgumentError, "Code block required" unless block_given?
-      mount_point = "/mnt" # FIXME
-      begin
-        # check if we have a filesystem
-        # return false unless vol.filesystem
-        mount(mount_point)
-        check_result = block.call(mount_point)
-        umount(mount_point)
-        check_result
-      rescue RuntimeError => ex # FIXME: rescue ::Storage::Exception when SWIG bindings are fixed
-        log.error("CAUGHT exception: #{ex} for #{device_name}")
-        nil
-      end
+    def device
+      @filesystem.blk_devices.to_a.first
+    end
+
+    def installation_medium?
+      return @installation_medium if @installation_medium
+      set_attributes!
+      @installation_medium
+    end
+
+    def release_name
+      return @release_name if @release_name
+      set_attributes!
+      @release_name
     end
 
   protected
 
-    attr_reader :device_name
+    def set_attributes!
+      mount
+      @installation_medium = check_installation_medium
+      @release_name = read_release_name
+      umount
+    rescue RuntimeError => ex # FIXME: rescue ::Storage::Exception when SWIG bindings are fixed
+      log.error("CAUGHT exception: #{ex} for #{device.name}")
+      nil
+    end
 
     # Mount the device.
     #
     # This is a temporary workaround until the new libstorage can handle that.
     #
-    def mount(mount_point)
+    def mount
       # FIXME: use libstorage function when available
-      cmd = "/usr/bin/mount #{device_name} #{mount_point} >/dev/null 2>&1"
-      log.debug("Trying to mount #{device_name}: #{cmd}")
-      raise "mount failed for #{device_name}" unless system(cmd)
+      cmd = "/usr/bin/mount #{device.name} #{@mount_point} >/dev/null 2>&1"
+      log.debug("Trying to mount #{device.name}: #{cmd}")
+      raise "mount failed for #{device.name}" unless system(cmd)
     end
 
     # Unmount a device.
     #
     # This is a temporary workaround until the new libstorage can handle that.
     #
-    def umount(mount_point)
+    def umount
       # FIXME: use libstorage function when available
-      cmd = "/usr/bin/umount #{mount_point}"
+      cmd = "/usr/bin/umount #{@mount_point}"
       log.debug("Unmounting: #{cmd}")
-      raise "umount failed for #{mount_point}" unless system(cmd)
+      raise "umount failed for #{@mount_point}" unless system(cmd)
+    end
+
+    # Check if the filesystem mounted at 'mount_point' is an installation medium.
+    #
+    # @return [Boolean] 'true' if it is an installation medium, 'false' if not.
+    def check_installation_medium
+      control_file = "control.xml"
+      instsys_control_file = File.join(@root, control_file)
+      current_control_file = File.join(@mount_point, control_file)
+
+      return false unless File.exist?(current_control_file)
+
+      if !File.exist?(instsys_control_file)
+        log.error("ERROR: Check file #{instsys_control_file} does not exist in inst-sys")
+        return false
+      end
+
+      FileUtils.identical?(instsys_control_file, current_control_file)
+    end
+
+    def read_release_name
+      release_name = Yast::OSRelease.ReleaseName(@mount_point)
+      release_name.empty? ? nil : release_name
     end
   end
 end
