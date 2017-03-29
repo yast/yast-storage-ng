@@ -306,7 +306,7 @@ module Y2Storage
       scoped_disks.each do |name|
         disk = device_by_name(name)
         gap = nil
-        if disk.partition_table? && disk.partition_table.type == ::Storage::PtType_MSDOS
+        if disk.has_partition_table && disk.partition_table.type == ::Storage::PtType_MSDOS
           region1 = disk.partition_table.partitions.to_a.min do |x, y|
             x.region.start <=> y.region.start
           end

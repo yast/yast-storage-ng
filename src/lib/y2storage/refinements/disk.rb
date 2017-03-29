@@ -51,7 +51,7 @@ module Y2Storage
         #
         # @return [Array<::Storage::Partition>]
         def all_partitions
-          partition_table? ? partition_table.partitions.to_a : []
+          has_partition_table ? partition_table.partitions.to_a : []
         end
 
         # Free spaces inside the disk
