@@ -16,12 +16,19 @@ module Y2Storage
     include StorageClassWrapper
     wrap_class Storage::Region
 
+    # TODO: document exactly how the comparison is done
     # @raise [Exception] when comparing Regions with different block_sizes
     storage_forward :==
+
+    # TODO: document exactly how the comparison is done
     # @raise [Exception] when comparing Regions with different block_sizes
     storage_forward :!=
+
+    # TODO: document exactly how the comparison is done
     # @raise [Exception] when comparing Regions with different block_sizes
     storage_forward :>
+
+    # TODO: document exactly how the comparison is done
     # @raise [Exception] when comparing Regions with different block_sizes
     storage_forward :<
 
@@ -37,7 +44,7 @@ module Y2Storage
     storage_forward :block_size=
 
     def inspect
-      "<Region #{start} - #{self.end}>"
+      "<Region range: #{show_range}, block_size: #{block_size}>"
     end
 
     def show_range

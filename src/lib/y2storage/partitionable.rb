@@ -21,6 +21,7 @@ module Y2Storage
     storage_class_forward :all, as: "Partitionable"
 
     # Minimal grain of the partitionable
+    # TODO: provide a good definition for "grain"
     #
     # @return [DiskSize]
     def min_grain

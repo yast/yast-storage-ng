@@ -62,12 +62,12 @@ module Y2Storage
       def top_level_btrfs_subvolume
         return nil unless supports_btrfs_subvolumes?
 
-        begin
-          storage_subvol = Storage.to_btrfs(to_storage_value).top_level_btrfs_subvolume
-          return nil unless storage_subvol
-        rescue Storage::Exception
-          return nil
-        end
+        # FIXME: not sure if this will work in all cases. Revisit when the
+        # Storage API for Btrfs is stable.
+        # It is possible for a Btrfs to not have a top level volume? If so,
+        # what it will happen here? An exception? If so, which one?
+        storage_subvol = Storage.to_btrfs(to_storage_value).top_level_btrfs_subvolume
+        return nil unless storage_subvol
 
         BtrfsSubvolume.new(storage_subvol)
       end
