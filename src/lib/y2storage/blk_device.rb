@@ -24,11 +24,9 @@ module Y2Storage
     storage_forward :dm_table_name
     storage_forward :dm_table_name=
 
-    storage_forward :create_blk_filesystem,
-      as:           "Filesystems::BlkFilesystem",
-      raise_errors: ["WrongNumberOfChildren"]
+    storage_forward :create_blk_filesystem, as: "Filesystems::BlkFilesystem", raise_errors: true
 
-    storage_forward :create_encryption, as: "Encryption", raise_errors: ["WrongNumberOfChildren"]
+    storage_forward :create_encryption, as: "Encryption", raise_errors: true
 
     # @!method blk_filesystem
     #   Filesystem directly placed in the device (no encryption or any other

@@ -53,10 +53,10 @@ module Y2Storage
       # existing subclasses for this in the Y2Storage namespace).
       #
       # @param storage_class [Class] class to wrap
-      # @param downcast_to [String, Array<String>] name(s) of the existing
-      #   subclasses in Y2Storage to automatically perform downcasts to. Do not
-      #   include the "Y2Storage" namespace in the class name (i.e. names
-      #   relatively qualified).
+      # @param downcast_to [Array<String>] names of the existing subclasses in
+      #   Y2Storage to automatically perform downcasts to. Do not include the
+      #   "Y2Storage" namespace in the class name (i.e. names relatively
+      #   qualified).
       #
       # @example Basic usage of wrap_class
       #
@@ -81,9 +81,9 @@ module Y2Storage
       #   y2_device = Y2Storage::BlkDevice.downcasted_new(blk_device)
       #   y2_device.class #=> Y2Storage::Partition
       #
-      def wrap_class(storage_class, downcast_to: nil)
+      def wrap_class(storage_class, downcast_to: [])
         @storage_class = storage_class
-        @downcast_class_names = Array(downcast_to).compact
+        @downcast_class_names = downcast_to
       end
 
       # Macro to define a method that will forward all the calls to the wrapped
@@ -106,11 +106,15 @@ module Y2Storage
       # @param method [Symbol] name of the method to define
       # @param as [String] name of the class to convert the result, nil if the
       #   value must be returned as-is (after turning any vector into an array)
-      # @param raise_errors [Array<String>] name of the exceptions that must not
-      #   be turned into a nil result. Can contain "WrongNumberOfChildren" and/or
-      #   "DeviceHasWrongType". Useful for methods in which those exceptions
-      #   don't have the usual meaning (looking for something that is not
-      #   there).
+      # @param raise_errors [Boolean] whether to disable the mechanism that
+      #   turns into a nil result all the exceptions of type
+      #   WrongNumberOfChildren and DeviceHasWrongType. Useful for methods in
+      #   which those exceptions don't have the usual meaning (looking for
+      #   something that is not there).
+      # @param to [Symbol] optional name of the method in the wrapped object.
+      #   If not specified, the method name is considered to be the same in the
+      #   wrapper and in the wrapper object. Using "to" allows to rename the
+      #   method when exposing it.
       #
       # @example Usage of storage_forward
       #
@@ -123,10 +127,11 @@ module Y2Storage
       #       storage_forward :size, as: "DiskSize"
       #       storage_forward :size=
       #       storage_forward :udev_paths
+      #       storage_forward :rotational?, to: :rotational
       #       storage_forward :blk_filesystem, as: "Filesystems::BlkFilesystem"
       #       storage_forward :create_blk_filesystem,
       #         as: "Filesystems::BlkFilesystem",
-      #         raise_errors: ["WrongNumberOfChildren"]
+      #         raise_errors: true
       #     end
       #   end
       #
@@ -134,6 +139,9 @@ module Y2Storage
       #
       #   # This is simply forwarded
       #   device.name
+      #
+      #   # This is forwarded to Storage::BlkDevice#rotational
+      #   device.rotational?
       #
       #   # Returns a Y2Storage::DiskSize object instead of the Fixnum (bytes)
       #   # returned by Storage::BlkDevice#size
@@ -159,10 +167,11 @@ module Y2Storage
       #   # (is not masked like in the example above).
       #   device.create_blk_filesystem(fs_type)
       #
-      def storage_forward(method, as: nil, raise_errors: [])
+      def storage_forward(method, to: nil, as: nil, raise_errors: false)
         modifiers = { as: as, raise_errors: raise_errors }
+        target = to || method
         define_method(method) do |*args|
-          StorageClassWrapper.forward(to_storage_value, method, modifiers, *args)
+          StorageClassWrapper.forward(to_storage_value, target, modifiers, *args)
         end
       end
 
@@ -170,10 +179,11 @@ module Y2Storage
       # instance ones.
       #
       # @see #storage_forward
-      def storage_class_forward(method, as: nil, raise_errors: [])
+      def storage_class_forward(method, to: nil, as: nil, raise_errors: false)
         modifiers = { as: as, raise_errors: raise_errors }
+        target = to || method
         define_singleton_method(method) do |*args|
-          StorageClassWrapper.forward(storage_class, method, modifiers, *args)
+          StorageClassWrapper.forward(storage_class, target, modifiers, *args)
         end
       end
 
@@ -198,7 +208,7 @@ module Y2Storage
           underscored = StorageClassWrapper.underscore(class_name.split("::").last)
           check_method = :"#{underscored}?"
           cast_method = :"to_#{underscored}"
-          next unless Storage.send(check_method, object)
+          next unless Storage.public_send(check_method, object)
 
           klass = StorageClassWrapper.class_for(class_name)
           return klass.downcasted_new(Storage.send(cast_method, object))
@@ -213,27 +223,26 @@ module Y2Storage
       raise_errors = modifiers[:raise_errors] || []
 
       processed_args = processed_storage_args(*args)
-      result = storage_object.send(method, *processed_args)
-      processed_storage_result(result, class_for(wrapper_class_name))
-    rescue Storage::WrongNumberOfChildren
-      raise_errors.include?("WrongNumberOfChildren") ? raise : nil
-    rescue Storage::DeviceHasWrongType
-      raise_errors.include?("DeviceHasWrongType") ? raise : nil
+      result = storage_object.public_send(method, *processed_args)
+      processed_storage_result(result, wrapper_class_name)
+    rescue Storage::WrongNumberOfChildren, Storage::DeviceHasWrongType
+      raise_errors ? raise : nil
     end
 
     def self.class_for(class_name)
-      class_name ? Y2Storage.const_get(class_name) : nil
+      Y2Storage.const_get(class_name)
     end
 
     def self.processed_storage_args(*args)
       args.map { |arg| arg.respond_to?(:to_storage_value) ? arg.to_storage_value : arg }
     end
 
-    def self.processed_storage_result(result, wrapper_class)
+    def self.processed_storage_result(result, class_name)
       result = result.to_a if result.class.name.start_with?("Storage::Vector")
 
-      return result unless wrapper_class
+      return result unless class_name
 
+      wrapper_class = class_for(class_name)
       if result.is_a?(Array)
         result.map { |o| object_for(wrapper_class, o) }
       else

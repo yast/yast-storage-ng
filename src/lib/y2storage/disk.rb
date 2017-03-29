@@ -9,8 +9,7 @@ module Y2Storage
   class Disk < Partitionable
     wrap_class Storage::Disk
 
-    storage_forward :rotational
-    alias_method :rotational?, :rotational
+    storage_forward :rotational?, to: :rotational
     storage_forward :transport, as: "Transport"
 
     storage_class_forward :create, as: "Disk"

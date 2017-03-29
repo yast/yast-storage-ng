@@ -11,14 +11,12 @@ module Y2Storage
 
       storage_class_forward :all, as: "Filesystems::BlkFilesystem"
 
-      storage_forward :supports_label
-      alias_method :supports_label?, :supports_label
+      storage_forward :supports_label?, to: :supports_label
       storage_forward :max_labelsize
       storage_forward :label
       storage_forward :label=
 
-      storage_forward :supports_uuid
-      alias_method :supports_uuid?, :supports_uuid
+      storage_forward :supports_uuid?, to: :supports_uuid
       storage_forward :uuid
       storage_forward :uuid=
 
