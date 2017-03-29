@@ -22,11 +22,15 @@
 # find current contact information at www.suse.com.
 
 require "yast"
-require "storage"
-require "storage/patches"
 require "y2storage/abstract_device_factory.rb"
 require "y2storage/disk_size.rb"
-require "y2storage/enum_mappings.rb"
+require "y2storage/disk"
+require "y2storage/region"
+require "y2storage/align_policy"
+require "y2storage/partition_id"
+require "y2storage/partition_type"
+require "y2storage/partition_tables/type"
+require "y2storage/filesystems/type"
 
 module Y2Storage
   #
@@ -37,8 +41,6 @@ module Y2Storage
   # rubocop:disable Metrics/ClassLength
   #
   class FakeDeviceFactory < AbstractDeviceFactory
-    include EnumMappings
-
     # Valid toplevel products of this factory
     VALID_TOPLEVEL  = ["disk", "lvm_vg"]
 
@@ -223,11 +225,11 @@ module Y2Storage
       block_size = args["block_size"] if args["block_size"]
       @mbr_gap = args["mbr_gap"] if args["mbr_gap"]
       if block_size && block_size.size > 0
-        r = ::Storage::Region.new(0, size.size / block_size.size, block_size.size)
-        disk = ::Storage::Disk.create(@devicegraph, name, r)
+        r = Region.create(0, size.to_i / block_size.to_i, block_size)
+        disk = Disk.create(@devicegraph, name, r)
       else
-        disk = ::Storage::Disk.create(@devicegraph, name)
-        disk.size = size.size
+        disk = Disk.create(@devicegraph, name)
+        disk.size = size
       end
       set_topology_attributes!(disk, args)
       # range (number of partitions that the kernel can handle) used to be
@@ -276,10 +278,10 @@ module Y2Storage
       log.info("#{__method__}( #{parent}, #{args} )")
       disk_name = parent
       ptable_type = str_to_ptable_type(args)
-      disk = ::Storage::Disk.find_by_name(@devicegraph, disk_name)
+      disk = Disk.find_by_name(@devicegraph, disk_name)
       ptable = disk.create_partition_table(ptable_type)
-      if ::Storage.msdos?(ptable) && @mbr_gap
-        ::Storage.to_msdos(ptable).minimal_mbr_gap = @mbr_gap.size
+      if ptable.respond_to?(:minimal_mbr_gap) && @mbr_gap
+        ptable.minimal_mbr_gap = @mbr_gap
       end
       disk_name
     end
@@ -287,11 +289,11 @@ module Y2Storage
     # Partition table type represented by a string
     #
     # @param string [String] usually from a YAML file
-    # @return [Fixnum]
+    # @return [PartitionTables::Type]
     def str_to_ptable_type(string)
       # Allow different spelling
       string = "msdos" if string.casecmp("ms-dos").zero?
-      fetch(PARTITION_TABLE_TYPES, string, "partition table type", "disk_name")
+      fetch(PartitionTables::Type, string, "partition table type", "disk_name")
     end
 
     # Factory method to create a partition.
@@ -338,11 +340,11 @@ module Y2Storage
       file_system_data_picker(part_name, args)
 
       id = id.to_i(16) if id.is_a?(::String) && id.start_with?("0x")
-      id   = fetch(PARTITION_IDS,   id,   "partition ID",   part_name) unless id.is_a?(Fixnum)
-      type = fetch(PARTITION_TYPES, type, "partition type", part_name)
-      align = fetch(ALIGN_POLICIES, align, "align policy", part_name) if align
+      id   = fetch(PartitionId,   id,   "partition ID",   part_name) unless id.is_a?(Fixnum)
+      type = fetch(PartitionType, type, "partition type", part_name)
+      align = fetch(AlignPolicy,  align, "align policy",  part_name) if align
 
-      disk = ::Storage::Disk.find_by_name(devicegraph, disk_name)
+      disk = Disk.find_by_name(devicegraph, disk_name)
       ptable = disk.partition_table
       slots = ptable.unused_partition_slots
 
@@ -356,12 +358,12 @@ module Y2Storage
       # if no start has been specified, take free region into account
       if !start && @free_blob
         @free_regions.push(region.start)
-        start_block = region.start + @free_blob.size / region.block_size
+        start_block = region.start + @free_blob.to_i / region.block_size.to_i
       end
       @free_blob = nil
 
       # if start has been specified, use it
-      start_block = start.size / region.block_size if start
+      start_block = start.to_i / region.block_size.to_i if start
 
       # adjust start block, if necessary
       if start_block
@@ -373,7 +375,7 @@ module Y2Storage
 
       # if no size has been specified, use whole region
       if !size.unlimited?
-        region.length = size.size / region.block_size
+        region.length = size.to_i / region.block_size.to_i
       end
 
       # align partition if specified
@@ -398,27 +400,27 @@ module Y2Storage
     #
     def create_file_system(parent, args)
       log.info("#{__method__}( #{parent}, #{args} )")
-      fs_type = fetch(FILE_SYSTEM_TYPES, args, "file system type", parent)
+      fs_type = fetch(Filesystems::Type, args, "file system type", parent)
 
       # Fetch file system related parameters stored by create_partition()
       fs_param = @file_system_data[parent] || {}
-      mount_point   = fs_param["mount_point"]
-      label         = fs_param["label"]
-      uuid          = fs_param["uuid"]
-      fstab_options = fs_param["fstab_options"]
-      encryption    = fs_param["encryption"]
+      encryption = fs_param["encryption"]
 
       if !encryption.nil?
         log.info("file system is on encrypted device #{encryption}")
         parent = encryption
       end
-      blk_device = ::Storage::BlkDevice.find_by_name(@devicegraph, parent)
-      file_system = blk_device.create_filesystem(fs_type)
-      file_system.add_mountpoint(mount_point) if mount_point
-      file_system.label = label if label
-      file_system.uuid = uuid if uuid
-      set_fstab_options(file_system, fstab_options)
+      blk_device = BlkDevice.find_by_name(@devicegraph, parent)
+      file_system = blk_device.create_blk_filesystem(fs_type)
+      assign_file_system_params(file_system, fs_param)
       parent
+    end
+
+    def assign_file_system_params(file_system, fs_param)
+      ["mount_point", "label", "uuid", "fstab_options"].each do |param|
+        value = fs_param[param]
+        file_system.send(:"#{param}=", value) if value
+      end
     end
 
     # Picks some parameters that are really file system related from args
@@ -432,18 +434,6 @@ module Y2Storage
     def file_system_data_picker(name, args)
       fs_param = FILE_SYSTEM_PARAM << "encryption"
       @file_system_data[name] = args.select { |k, _v| fs_param.include?(k) }
-    end
-
-    # Assigns the value of Filesystem#fstab_options. A direct assignation of a
-    # regular Ruby collection (like Array) will not work because
-    # Filesystem#fstab_options= expects an argument with a very specific SWIG
-    # type (std::list)
-    #
-    # @param [Storage::BlkFilesystem] File system being created
-    # @param [#each] Collection of strings to assign
-    def set_fstab_options(file_system, fstab_options)
-      return if fstab_options.nil? || fstab_options.empty?
-      fstab_options.each { |opt| file_system.fstab_options << opt }
     end
 
     # Factory method to create a slot of free space.
@@ -462,7 +452,7 @@ module Y2Storage
       log.info("#{__method__}( #{parent}, #{args} )")
       disk_name = parent
       size = args["size"]
-      @free_blob = size if size && size.size > 0
+      @free_blob = size if size && size.to_i > 0
       disk_name
     end
 
@@ -485,7 +475,7 @@ module Y2Storage
       # We only support creating LUKS so far
       raise ArgumentError, "Unsupported encryption type #{type_name}" unless type_name == "luks"
 
-      blk_parent = Storage::BlkDevice.find_by_name(@devicegraph, parent)
+      blk_parent = BlkDevice.find_by_name(@devicegraph, parent)
       encryption = blk_parent.create_encryption(name)
       encryption.password = password unless password.nil?
       if @file_system_data.key?(parent)
@@ -526,10 +516,10 @@ module Y2Storage
       @volumes = Set.new # contains both partitions and logical volumes
 
       vg_name = args["vg_name"]
-      lvm_vg = ::Storage::LvmVg.create(@devicegraph, vg_name)
+      lvm_vg = LvmVg.create(@devicegraph, vg_name)
 
       extent_size = args["extent_size"] || DiskSize.zero
-      lvm_vg.extent_size = extent_size.size if extent_size.size > 0
+      lvm_vg.extent_size = extent_size if extent_size.to_i > 0
 
       lvm_vg
     end
@@ -566,7 +556,7 @@ module Y2Storage
       size = args["size"] || DiskSize.zero
       raise ArgumentError, "\"size\" missing for lvm_lv #{lv_name}" unless args.key?("size")
 
-      lvm_lv = parent.create_lvm_lv(lv_name, size.size)
+      lvm_lv = parent.create_lvm_lv(lv_name, size)
       create_lvm_lv_stripe_parameters(lvm_lv, args)
 
       file_system_data_picker(lvm_lv.name, args)
@@ -581,7 +571,7 @@ module Y2Storage
       lvm_lv.stripes = stripes if stripes > 0
 
       stripe_size = args["stripe_size"] || DiskSize.zero
-      lvm_lv.stripe_size = stripe_size.size if stripe_size.size > 0
+      lvm_lv.stripe_size = stripe_size if stripe_size.to_i > 0
     end
 
     # Factory method to create a lvm physical volume.
@@ -597,24 +587,26 @@ module Y2Storage
       log.info("#{__method__}( #{parent}, #{args} )")
 
       blk_device_name = args["blk_device"]
-      blk_device = ::Storage::BlkDevice.find_by_name(devicegraph, blk_device_name)
+      blk_device = BlkDevice.find_by_name(devicegraph, blk_device_name)
 
       parent.add_lvm_pv(blk_device)
     end
 
   private
 
-    # Fetch hash[key] and raise an exception if there is no such key.
+    # Fetch an enum value
+    # @raise [ArgumentError] if such value is not defined
     #
-    # @param hash [Hash]   hash to search in
-    # @param key  [String] key  in the hash to access
-    # @param type [String] type (description) of 'key'
-    # @param name [String] name of the object that 'hash' belongs to
+    # @param klass  [Class] class used to represent the enum
+    # @param name   [String] name of the enum value
+    # @param type   [String] type (description) of 'key'
+    # @param object [String] name of the object that was being processed
     #
-    def fetch(hash, key, type, name)
-      value = hash[key.downcase]
+    def fetch(klass, name, type, object)
+      value = klass.find(name)
       if !value
-        raise ArgumentError, "Invalid #{type} \"#{key}\" for #{name} - use one of #{hash.keys}"
+        available = klass.all.map(&:to_s)
+        raise ArgumentError, "Invalid #{type} \"#{name}\" for #{object} - use one of #{available}"
       end
       value
     end
