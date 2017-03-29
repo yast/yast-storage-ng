@@ -24,6 +24,7 @@
 require "yast"
 require "y2storage/disk_size"
 require "y2storage/secret_attributes"
+require "y2storage/planned_subvol"
 
 Yast.import "ProductFeatures"
 
@@ -70,6 +71,7 @@ module Y2Storage
     attr_accessor :min_size_to_use_separate_home
     attr_accessor :btrfs_default_subvolume
     attr_accessor :root_subvolume_read_only
+    attr_accessor :subvolumes
     attr_accessor :home_min_disk_size
     attr_accessor :home_max_disk_size
 
@@ -86,6 +88,7 @@ module Y2Storage
       @btrfs_increase_percentage     = 300.0
       @btrfs_default_subvolume       = "@"
       @root_subvolume_read_only      = false
+      @subvolumes                    = nil
 
       # Not yet in control.xml
       @home_min_disk_size            = DiskSize.GiB(10)
@@ -115,6 +118,7 @@ module Y2Storage
       set_from_integer_feature(:btrfs_increase_percentage, :btrfs_increase_percentage)
 
       set_from_string_feature(:btrfs_default_subvolume, :btrfs_default_subvolume)
+      @subvolumes = read_subvolumes_section
     end
 
     # New object initialized according to the YaST product features
@@ -145,7 +149,8 @@ module Y2Storage
         "  btrfs_default_subvolume: #{btrfs_default_subvolume}\n" \
         "  root_subvolume_read_only: #{root_subvolume_read_only}\n" \
         "  home_min_disk_size: #{home_min_disk_size}\n" \
-        "  home_max_disk_size: #{home_max_disk_size}"
+        "  home_max_disk_size: #{home_max_disk_size}\n" \
+        "  subvolumes: \n#{subvolumes}\n"
     end
 
   protected
@@ -187,6 +192,16 @@ module Y2Storage
     def set_from_integer_feature(attr, feature)
       value = product_feature(feature, :integer)
       send(:"#{attr}=", value) if value && value >= 0
+    end
+
+    # Read the "subvolumes" section of control.xml
+    #
+    # @return Array[PlannedSubvolume]
+    def read_subvolumes_section
+      xml = Yast::ProductFeatures.GetSection("partitioning")
+      subvols = PlannedSubvol.create_from_xml(xml["subvolumes"]) || PlannedSubvol.fallback_list
+      subvols.each { |s| log.info("Initial #{s}") }
+      subvols
     end
   end
 end

@@ -1,6 +1,7 @@
 # encoding: utf-8
 
 # Copyright (c) [2012-2016] Novell, Inc.
+# Copyright (c) [2017] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -24,14 +25,6 @@ Yast.import "Arch"
 
 module Y2Storage
   # Helper class to represent a subvolume as defined in control.xml
-  #
-  # Backported from the old yast2-storage
-  #
-  # Sample usage:
-  #
-  #   xml = ProductFeatures.GetSection("partitioning")
-  #   planned_subvols = PlannedSubvol.create_from_control_xml(xml["subvolumes"]) || PlannedSubvol.fallback_list
-  #   planned_subvols.each { |s| log.info("Initial #{s}") }
   #
   class PlannedSubvol
     include Yast::Logger
@@ -139,7 +132,7 @@ module Y2Storage
     # @return PlannedSubvol or nil if error
     #
     def self.create_from_xml(xml)
-      return nil unless xml.key?("path")
+      return nil unless xml && xml.key?("path")
       path = xml["path"]
       cow = true
       if xml.key?("copy_on_write")
@@ -154,8 +147,9 @@ module Y2Storage
       planned_subvol
     end
 
-    # Create a list of PlannedSubvols from the <subvolumes> part of control.xml.
-    # The map may be empty if there is a <subvolumes> section, but it's empty.
+    # Create a list of PlannedSubvols from the <subvolumes> part of
+    # control.xml. The map may be empty if there is a <subvolumes> section, but
+    # that section is empty.
     #
     # This function does not do much error handling or reporting; it is assumed
     # that control.xml is validated against its schema.
@@ -178,6 +172,7 @@ module Y2Storage
     #
     # @return List<PlannedSubvol>
     #
+    # rubocop:disable Metrics/LineLength
     def self.fallback_list
       planned_subvols = []
       COW_SUBVOL_PATHS.each    { |path| planned_subvols << PlannedSubvol.new(path) }
@@ -188,5 +183,6 @@ module Y2Storage
       planned_subvols << PlannedSubvol.new("boot/grub2/s390x-emu",        archs: ["s390"])
       planned_subvols.select { |s| s.current_arch? }.sort
     end
+    # rubocop:enable Metrics/LineLength
   end
 end

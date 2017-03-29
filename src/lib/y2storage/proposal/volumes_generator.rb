@@ -136,11 +136,14 @@ module Y2Storage
         root_vol.max_disk_size = @settings.root_max_disk_size
         root_vol.weight   = @settings.root_space_percent
         root_vol.disk     = @settings.root_device
-        if root_vol.filesystem_type == ::Storage::FsType_BTRFS
+        if root_vol.btrfs?
           log.info "Increasing root filesystem size for Btrfs"
           multiplicator = 1.0 + @settings.btrfs_increase_percentage / 100.0
           root_vol.min_disk_size *= multiplicator
           root_vol.max_disk_size *= multiplicator
+          root_vol.default_subvolume = @settings.btrfs_default_subvolume
+          root_vol.subvolumes = @settings.subvolumes
+          log.info "Adding Btrfs subvolumes: \n#{root_vol.subvolumes}"
         end
         root_vol.desired_disk_size = root_vol.max_disk_size
         root_vol
