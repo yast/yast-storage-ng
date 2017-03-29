@@ -22,7 +22,6 @@
 # find current contact information at www.suse.com.
 
 require "yast"
-require "fileutils"
 require "storage"
 require "y2storage/disk_size"
 require "y2storage/disk"
@@ -176,7 +175,6 @@ module Y2Storage
         result = lvm_parts.each_with_object({}) do |part, hash|
           vg_name = vg_for(part)
           next unless vg_name
-
           hash[vg_name] ||= []
           hash[vg_name] << part
         end
@@ -187,14 +185,12 @@ module Y2Storage
 
     # Disks that are suitable for installing Linux.
     #
-    # @return [Array<String>] device names of candidate disks
+    # @return [Array<Storage::Disk>] candidate disks
     def candidate_disks
-      @candidate_disks ||= begin
-        @installation_disks = find_installation_disks
-        result = dev_names(candidate_disk_objects)
-        log.info("Found candidate disks: #{result}")
-        result
-      end
+      return @candidate_disks if @candidate_disks
+      candidates = find_candidate_disks
+      log.info("Found candidate disks: #{candidates}")
+      candidates
     end
 
     # MBR gap (size between MBR and first partition) for every disk.
@@ -231,15 +227,20 @@ module Y2Storage
       end
     end
 
+    def installed_systems
+      @installed_systems ||= find_installed_systems
+    end
+
   private
 
     attr_reader :devicegraph
 
     # Set of disks to be used in most search operations
     #
-    # @return [Array<String>]
+    # @return [Array<Storage::Disk>]
     def scoped_disks
-      @scoped_disks ||= scope == :install_candidates ? candidate_disks : dev_names(all_disks)
+      return @scoped_disks if @scoped_disks
+      @scoped_disks = scope == :install_candidates ? candidate_disks : all_disks
     end
 
     # Array with all disks in the devicegraph
@@ -254,6 +255,10 @@ module Y2Storage
     # @return [DisksList]
     def disks
       devicegraph.disks
+    end
+
+    def filesystems(disk)
+      disks.with(name: disk.name).filesystems
     end
 
     # Find disks that look like the current installation medium
@@ -275,14 +280,16 @@ module Y2Storage
         log.info("Installation disk check limit exceeded - only checking #{dev_names(disks)}")
       end
 
-      dev_names(disks.select { |disk| installation_disk?(disk.name) })
+      dev_names(disks.select { |disk| installation_disk?(disk) })
     end
 
-    # Disks that are suitable for installing Linux.
+    # Find disks that are suitable for installing Linux.
     # Put any USB disks to the end of that array.
     #
-    # @return [Array<Disk>] device names of candidate disks
-    def candidate_disk_objects
+    # @return [Array<Disk>] candidate disks
+    def find_candidate_disks
+      @installation_disks = find_installation_disks
+
       usb_disks, non_usb_disks = all_disks.partition { |d| d.usb? }
       log.info("USB Disks:     #{dev_names(usb_disks)}")
       log.info("Non-USB Disks: #{dev_names(non_usb_disks)}")
@@ -299,6 +306,7 @@ module Y2Storage
       # We don't want to install on our installation disk if there is any other way.
       log.info("No candidate disks left after eliminating installation disks")
       log.info("Trying with non-USB installation disks")
+      # FIXME: @installation_disks is a list of Strings, right?
       disks = @installation_disks.select { |d| !d.usb? }
       return disks unless disks.empty?
 
@@ -310,7 +318,7 @@ module Y2Storage
     # @see #mbr_gap
     def find_mbr_gap
       gaps = {}
-      scoped_disks.each do |name|
+      dev_names(scoped_disks).each do |name|
         disk = device_by_name(name)
         gap = nil
         if disk.partition_table && disk.partition_table.type.is?(:msdos)
@@ -330,7 +338,7 @@ module Y2Storage
       windows_partitions = {}
 
       # No need to limit checking - PC arch only (few disks)
-      scoped_disks.each do |disk_name|
+      dev_names(scoped_disks).each do |disk_name|
         windows_partitions[disk_name] = []
         possible_windows_partitions(disk_name).each do |partition|
           windows_partitions[disk_name] << partition if windows_partition?(partition)
@@ -388,23 +396,23 @@ module Y2Storage
     # and started the installation from. This will check all filesystems on
     # that disk.
     #
-    # @param disk_name [string] device name of the disk to check
+    # @param disk_name [Storage::Disk] device to check
     #
     # @return [Boolean] 'true' if the disk is an installation disk
     #
-    def installation_disk?(disk_name)
-      log.info("Checking if #{disk_name} is an installation disk")
-      disk = device_by_name(disk_name)
+    def installation_disk?(disk)
+      log.info("Checking if #{disk.name} is an installation disk")
+      # disk = device_by_name(disk.name)
 
       # Check if there is a filesystem directly on the disk (without partition table).
       # This is very common for installation media such as USB sticks.
-      return installation_volume?(disk_name) if disk.partition_table.nil?
+      return installation_volume?(disk) if disk.partition_table.nil?
 
       disk.partitions.each do |partition|
         if NO_INSTALLATION_IDS.include?(partition.id)
           log.info "Skipping #{partition} (ID #{partition.id.inspect})"
           next
-        elsif installation_volume?(partition.name)
+        elsif installation_volume?(partition)
           return true
         end
       end
@@ -426,28 +434,15 @@ module Y2Storage
     #
     # @return [Boolean] 'true' if the volume is an installation volume
     #
-    def installation_volume?(vol_name)
-      log.info("Checking if #{vol_name} is an installation volume")
-      fs = ExistingFilesystem.new(vol_name)
-      is_inst = fs.mount_and_check { |mp| installation_volume_check(mp) }
-      log.info("#{vol_name} is installation volume") if is_inst
-      is_inst
-    end
+    def installation_volume?(device)
+      log.info("Checking if #{device.name} is an installation medium")
+      filesystem = filesystem_for(device)
 
-    # Check if the volume mounted at 'mount_point' is an installation volume.
-    # This is a separate method so it can be redefined in unit tests.
-    #
-    # @return [Boolean] 'true' if it is an installation volume, 'false' if not.
-    #
-    def installation_volume_check(mount_point)
-      check_file = "/control.xml"
-      if !File.exist?(check_file)
-        log.error("ERROR: Check file #{check_file} does not exist in inst-sys")
-        return false
-      end
-      mount_point += "/" unless mount_point.end_with?("/")
-      return false unless File.exist?(mount_point + check_file)
-      FileUtils.identical?(check_file, mount_point + check_file)
+      return false unless filesystem
+
+      fs = ExistingFilesystem.new(device.filesystem)
+      log.info("#{device.name} is an installation medium") if fs.installation_medium?
+      fs.installation_medium?
     end
 
     # Return an array of the device names of the specified block devices
@@ -471,7 +466,6 @@ module Y2Storage
       #   disks -= @installation_disks
       # because the list elements (from libstorage) don't provide a .hash method.
       # Comparing device names ("/dev/sda"...) instead.
-
       disks.delete_if { |disk| @installation_disks.include?(disk.name) }
     end
 
@@ -486,7 +480,7 @@ module Y2Storage
     # @param log_label [String] label to identify the partitions in the logs
     # @return [Hash{String => Array<Partition>}]
     def partitions_with_id(ids, log_label)
-      pairs = scoped_disks.map do |disk_name|
+      pairs = dev_names(scoped_disks).map do |disk_name|
         # Skip extended partitions
         partitions = device_by_name(disk_name).partitions.reject do |part|
           part.type.is?(:extended)
@@ -512,6 +506,32 @@ module Y2Storage
       return nil if lvm_pv.lvm_vg.nil?
 
       lvm_pv.lvm_vg.vg_name
+    end
+
+    def find_installed_systems
+      installed_systems = {}
+      disks.each do |disk|
+        systems = windows_systems(disk) + linux_systems(disk)
+        installed_systems[disk.name] = systems
+      end
+      installed_systems
+    end
+
+    def windows_systems(disk)
+      systems = []
+      systems << "Windows" if windows_partitions[disk.name]
+      systems
+    end
+
+    def linux_systems(disk)
+      filesystems = filesystems(disk)
+      return [] if filesystems.empty?
+      filesystems.map { |f| release_name(f) }.compact
+    end
+
+    def release_name(filesystem)
+      fs = ExistingFilesystem.new(filesystem)
+      fs.release_name
     end
   end
 end

@@ -123,7 +123,7 @@ module Y2Storage
       return @populated_settings if @populated_settings
 
       populated = settings.dup
-      populated.candidate_devices ||= disk_analyzer.candidate_disks
+      populated.candidate_devices ||= disk_analyzer.candidate_disks.map(&:name)
       populated.root_device ||= proposed_root_device(populated)
 
       @populated_settings = populated
