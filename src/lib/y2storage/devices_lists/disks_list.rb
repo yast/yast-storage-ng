@@ -32,6 +32,7 @@ require "y2storage/refinements/disk"
 module Y2Storage
   module DevicesLists
     # List of disks from a devicegraph
+    # @deprecated See DevicesList::Base
     class DisksList < Base
       list_of ::Storage::Disk
       include Formattable

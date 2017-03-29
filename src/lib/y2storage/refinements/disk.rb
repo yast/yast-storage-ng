@@ -28,6 +28,10 @@ require "y2storage/disk_size"
 module Y2Storage
   module Refinements
     # Refinement for ::Storage::Disk with some commodity methods
+    #
+    # @deprecated All these methods are directly available in Y2Storage::Disk.
+    #   This refinement should be deleted once Storage::Disk is not longer used
+    #   directly in other modules.
     module Disk
       refine ::Storage::Disk do
         # Checks if it's an USB disk

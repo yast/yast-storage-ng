@@ -27,6 +27,7 @@ require "y2storage/devices_lists/formattable"
 module Y2Storage
   module DevicesLists
     # List of LVM logical volumes from a devicegraph
+    # @deprecated See DevicesList::Base
     class LvmLvsList < Base
       list_of ::Storage::LvmLv
       include Formattable

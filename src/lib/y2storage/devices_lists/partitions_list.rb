@@ -30,6 +30,7 @@ require "y2storage/devices_lists/formattable"
 module Y2Storage
   module DevicesLists
     # List of partitions from a devicegraph
+    # @deprecated See DevicesList::Base
     class PartitionsList < Base
       list_of ::Storage::Partition
       include Formattable
