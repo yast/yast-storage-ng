@@ -7,6 +7,6 @@ module Y2Storage
   class PartitionType
     include StorageEnumWrapper
 
-    wrap_enum "Storage::PartitionType", names: [:primary, :extended, :logical]
+    wrap_enum "PartitionType"
   end
 end

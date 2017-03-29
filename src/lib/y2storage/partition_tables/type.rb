@@ -8,7 +8,7 @@ module Y2Storage
     class Type
       include StorageEnumWrapper
 
-      wrap_enum "Storage::PtType", names: [:pt_unknown, :pt_loop, :msdos, :gpt, :dasd, :mac]
+      wrap_enum "PtType"
     end
   end
 end

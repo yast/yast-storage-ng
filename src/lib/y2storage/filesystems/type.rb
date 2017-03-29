@@ -8,10 +8,7 @@ module Y2Storage
     class Type
       include StorageEnumWrapper
 
-      wrap_enum "Storage::FsType", names: [
-        :reiserfs, :ext2, :ext3, :ext4, :btrfs, :vfat, :xfs, :jfs, :hfs, :ntfs,
-        :swap, :hfsplus, :nfs, :nfs4, :tmpfs, :iso9660, :udf
-      ]
+      wrap_enum "FsType"
     end
   end
 end

@@ -9,7 +9,7 @@ module Y2Storage
     class MountByType
       include StorageEnumWrapper
 
-      wrap_enum "Storage::MountByType", names: [:device, :uuid, :label, :id, :path]
+      wrap_enum "MountByType"
     end
   end
 end

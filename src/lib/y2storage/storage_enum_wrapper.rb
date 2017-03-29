@@ -10,7 +10,8 @@ module Y2Storage
   #
   # A class can include this mixing and then use the wrap_enum macro to point to
   # the name of the enum. That will automatically add methods to fetch all the
-  # possible values, to compare them, etc. The mixin also ensures compatibility
+  # possible values, to compare them, etc. It will also add a constant for every
+  # possible value. Last but not least, the mixin also ensures compatibility
   # with the mechanisms used by StorageClassWrapper, making sure objects are
   # properly translated before being forwarded to the Storage namespace.
   #
@@ -28,7 +29,7 @@ module Y2Storage
       if value.is_a?(::Fixnum)
         @storage_value = value
       else
-        @storage_value = Object.const_get("#{self.class.storage_enum}_#{value.to_s.upcase}")
+        @storage_value = Storage.const_get("#{self.class.storage_enum}_#{value.to_s.upcase}")
       end
     end
 
@@ -75,18 +76,18 @@ module Y2Storage
     module ClassMethods
       # Macro to define the enum in the Storage namespace to be wrapped.
       #
-      # Since there is no way of querying all the possible values of an enum and
-      # their names, this macro is also used to specify all the known labels.
+      # It automatically checks all the possible values defined for that enum in
+      # the Storage namespace and creates corresponding constants in the class.
+      # See example below.
       #
       # @param storage_enum [String] common part of the enum name
-      # @param names [Array<Symbol>] names of the available values
       #
       # @example Basic usage of wrap_enum
       #
       #   module Y2Storage
       #     class PartitionType
       #       include StorageEnumWrapper
-      #       wrap_enum "Storage::PartitionType", names: [:primary, :extended, :logical]
+      #       wrap_enum "PartitionType"
       #     end
       #   end
       #
@@ -95,15 +96,24 @@ module Y2Storage
       #   end
       #
       #   pri1 = Y2Storage::PartitionType.find(:primary)
-      #   pri2 = Y2Storage::PartitionType.find(Storage::PartitionType_PRIMARY)
+      #   pri2 = Y2Storage::PartitionType::PRIMARY
+      #   pri3 = Y2Storage::PartitionType.find(Storage::PartitionType_PRIMARY)
       #   pri1 == pri2 # => true
+      #   pri1 == pri3 # => true
       #   pri1.is?(:primary) # => true
       #   pri2.to_sym # => :primary
-      def wrap_enum(storage_enum, names: [])
+      def wrap_enum(storage_enum)
         @storage_enum = storage_enum
+        @storage_symbols = {}
 
-        mapping = names.map { |s| [Object.const_get("#{storage_enum}_#{s.upcase}"), s.to_sym] }
-        @storage_symbols = Hash[*mapping.flatten]
+        constants = Storage.constants.select { |c| c.to_s.start_with?("#{storage_enum}_") }
+        constants.each do |constant_name|
+          value = Storage.const_get(constant_name)
+          name = constant_name.to_s.sub(/#{storage_enum}_/, "")
+
+          @storage_symbols[value] = name.downcase.to_sym
+          const_set(name, new(value))
+        end
       end
 
       # Returns an object for every one of the possible enum values

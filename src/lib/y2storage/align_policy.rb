@@ -7,6 +7,6 @@ module Y2Storage
   class AlignPolicy
     include StorageEnumWrapper
 
-    wrap_enum "Storage::AlignPolicy", names: [:align_end, :keep_end, :keep_size]
+    wrap_enum "AlignPolicy"
   end
 end
