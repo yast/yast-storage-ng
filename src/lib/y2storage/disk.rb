@@ -42,7 +42,7 @@ module Y2Storage
     end
 
     # Executes the given block in a context in which the disk always have a
-    # partition table if possible, creating a temporary one if needed.
+    # partition table if possible, creating a temporary frozen one if needed.
     #
     # This allows any code to work under the assumption that a given disk
     # has an empty partition table of the YaST default type, even if that
@@ -69,7 +69,10 @@ module Y2Storage
     #   empty_disk.partition_table # Not longer there
     def as_not_empty
       fake_ptable = nil
-      fake_ptable = create_partition_table(preferred_ptable_type) unless has_children
+      if !has_children
+        fake_ptable = create_partition_table(preferred_ptable_type)
+        fake_ptable.freeze
+      end
 
       yield
     ensure
