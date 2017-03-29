@@ -280,7 +280,7 @@ module Y2Storage
       ptable_type = str_to_ptable_type(args)
       disk = Disk.find_by_name(@devicegraph, disk_name)
       ptable = disk.create_partition_table(ptable_type)
-      if ptable.respond_to?(:minimal_mbr_gap) && @mbr_gap
+      if ptable.respond_to?(:minimal_mbr_gap=) && @mbr_gap
         ptable.minimal_mbr_gap = @mbr_gap
       end
       disk_name
@@ -419,7 +419,7 @@ module Y2Storage
     def assign_file_system_params(file_system, fs_param)
       ["mount_point", "label", "uuid", "fstab_options"].each do |param|
         value = fs_param[param]
-        file_system.send(:"#{param}=", value) if value
+        file_system.public_send(:"#{param}=", value) if value
       end
     end
 
