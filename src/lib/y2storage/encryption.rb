@@ -6,7 +6,6 @@ module Y2Storage
   #
   # This is a wrapper for Storage::Encryption
   class Encryption < BlkDevice
-    include StorageClassWrapper
     wrap_class Storage::Encryption
 
     storage_forward :blk_device, as: "BlkDevice"

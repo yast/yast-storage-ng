@@ -6,7 +6,6 @@ module Y2Storage
   #
   # This is a wrapper for Storage::BtrfsSubvolume
   class BtrfsSubvolume < Mountable
-    include StorageClassWrapper
     wrap_class Storage::BtrfsSubvolume
 
     storage_forward :btrfs, as: "Filesystems::BlkDevice"

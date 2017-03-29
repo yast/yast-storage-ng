@@ -7,7 +7,6 @@ module Y2Storage
     #
     # This is a wrapper for Storage::PartitionTable
     class Base < Device
-      include StorageClassWrapper
       wrap_class Storage::PartitionTable,
         downcast_to: ["PartitionTables::Msdos", "PartitionTables::Gpt"]
 

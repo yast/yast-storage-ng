@@ -6,7 +6,6 @@ module Y2Storage
   #
   # This is a wrapper for Storage::BlkDevice
   class BlkDevice < Device
-    include StorageClassWrapper
     wrap_class Storage::BlkDevice, downcast_to: ["Partitionable", "Partition", "Encryption"]
 
     storage_class_forward :all, as: "BlkDevice"

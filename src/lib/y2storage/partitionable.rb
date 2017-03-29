@@ -8,7 +8,6 @@ module Y2Storage
   #
   # This is a wrapper for Storage::Partitionable
   class Partitionable < BlkDevice
-    include StorageClassWrapper
     wrap_class Storage::Partitionable, downcast_to: "Disk"
 
     storage_forward :range

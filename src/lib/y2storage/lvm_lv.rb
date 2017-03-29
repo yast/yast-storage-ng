@@ -6,7 +6,6 @@ module Y2Storage
   #
   # This is a wrapper for Storage::LvmLv
   class LvmLv < BlkDevice
-    include StorageClassWrapper
     wrap_class Storage::LvmLv
 
     storage_forward :lv_name

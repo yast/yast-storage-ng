@@ -8,7 +8,6 @@ module Y2Storage
     #
     # This is a wrapper for Storage::Filesystem
     class Base < Mountable
-      include StorageClassWrapper
       wrap_class Storage::Filesystem,
         downcast_to: ["Filesystems::BlkFilesystem", "Filesystems::Nfs"]
 

@@ -10,7 +10,6 @@ module Y2Storage
     #
     # This a wrapper for Storage::Nfs
     class Nfs < Base
-      include StorageClassWrapper
       wrap_class Storage::Nfs
 
       storage_forward :server

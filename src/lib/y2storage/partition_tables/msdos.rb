@@ -7,7 +7,6 @@ module Y2Storage
     #
     # This is a wrapper for Storage::Msdos
     class Msdos < Base
-      include StorageClassWrapper
       wrap_class Storage::Msdos
 
       storage_forward :minimal_mbr_gap, as: "DiskSize"

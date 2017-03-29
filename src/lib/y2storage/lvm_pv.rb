@@ -6,7 +6,6 @@ module Y2Storage
   #
   # This is a wrapper for Storage::LvmPv
   class LvmPv < Device
-    include StorageClassWrapper
     wrap_class Storage::LvmPv
 
     storage_class_forward :all, as: "LvmPv"

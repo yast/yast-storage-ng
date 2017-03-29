@@ -67,12 +67,10 @@ module Y2Storage
       #     end
       #
       #     class Disk < BlkDevice
-      #       include StorageClassWrapper
       #       wrap_class Storage::Disk
       #     end
       #
       #     class MyPartition < BlkDevice
-      #       include StorageClassWrapper
       #       wrap_class Storage::Partition
       #     end
       #   end

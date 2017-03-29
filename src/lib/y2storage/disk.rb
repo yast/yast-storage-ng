@@ -7,7 +7,6 @@ module Y2Storage
   #
   # This is a wrapper for Storage::Disk
   class Disk < Partitionable
-    include StorageClassWrapper
     wrap_class Storage::Disk
 
     storage_forward :rotational

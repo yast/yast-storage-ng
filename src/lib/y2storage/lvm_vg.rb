@@ -6,7 +6,6 @@ module Y2Storage
   #
   # This is a wrapper for Storage::LvmVg
   class LvmVg < Device
-    include StorageClassWrapper
     wrap_class Storage::LvmVg
 
     # Volume group name. This is different from the device name

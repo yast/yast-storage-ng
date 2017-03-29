@@ -7,7 +7,6 @@ module Y2Storage
   #
   # This is a wrapper for Storage::Mountable
   class Mountable < Device
-    include StorageClassWrapper
     wrap_class Storage::Mountable, downcast_to: ["Filesystems::Base", "BtrfsSubvolume"]
 
     # @!method type

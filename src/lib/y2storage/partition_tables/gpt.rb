@@ -7,7 +7,6 @@ module Y2Storage
     #
     # This is a wrapper for Storage::Gpt
     class Gpt < Base
-      include StorageClassWrapper
       wrap_class Storage::Gpt
 
       storage_forward :enlarge

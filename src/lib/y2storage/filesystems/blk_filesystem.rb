@@ -7,7 +7,6 @@ module Y2Storage
     #
     # This a wrapper for Storage::BlkFilesystem
     class BlkFilesystem < Base
-      include StorageClassWrapper
       wrap_class Storage::BlkFilesystem
 
       storage_class_forward :all, as: "Filesystems::BlkFilesystem"

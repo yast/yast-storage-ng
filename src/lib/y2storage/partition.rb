@@ -7,7 +7,6 @@ module Y2Storage
   #
   # This is a wrapper for Storage::Partition
   class Partition < BlkDevice
-    include StorageClassWrapper
     wrap_class Storage::Partition
 
     storage_forward :number
