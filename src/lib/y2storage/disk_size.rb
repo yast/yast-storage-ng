@@ -43,6 +43,7 @@ module Y2Storage
 
     attr_reader :size
     alias_method :to_i, :size
+    alias_method :to_storage_value, :to_i
 
     # Accept Numbers, Strings, or DiskSize objects as initializers.
     #
