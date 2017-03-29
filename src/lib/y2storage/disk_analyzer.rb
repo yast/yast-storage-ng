@@ -177,6 +177,10 @@ module Y2Storage
       @candidate_disks
     end
 
+    def installed_systems
+      @installed_systems ||= find_installed_systems
+    end
+
     # Checks if a partition belongs to any VG.
     #
     # TODO: find a better place for this (Partition class ?)
@@ -206,6 +210,10 @@ module Y2Storage
       pv = partition_pv(partition)
       return nil unless pv
       pv.lvm_vg
+    end
+
+    def filesystems(disk)
+      disks.with(name: disk.name).filesystems
     end
 
     # Look up devicegraph element by device name.
@@ -418,6 +426,32 @@ module Y2Storage
       # because the list elements (from libstorage) don't provide a .hash method.
       # Comparing device names ("/dev/sda"...) instead.
       disks.delete_if { |disk| @installation_disks.map(&:name).include?(disk.name) }
+    end
+
+    def find_installed_systems
+      installed_systems = {}
+      disks.each do |disk|
+        systems = windows_systems(disk) + linux_systems(disk)
+        installed_systems[disk.name] = systems
+      end
+      installed_systems
+    end
+
+    def windows_systems(disk)
+      systems = []
+      systems << "Windows" if windows_partitions[disk.name]
+      systems
+    end
+
+    def linux_systems(disk)
+      filesystems = filesystems(disk)
+      return [] if filesystems.empty?
+      filesystems.map { |f| release_name(f) }.compact
+    end
+
+    def release_name(filesystem)
+      fs = ExistingFilesystem.new(filesystem)
+      fs.release_name
     end
   end
 end
