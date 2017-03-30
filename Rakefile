@@ -27,4 +27,5 @@ Yast::Tasks.configuration do |conf|
   conf.obs_project = "YaST:storage-ng"
   # Non-existent project to prevent accidental submission to Tumbleweed
   conf.obs_sr_project = "NONE"
+  conf.skip_license_check << /.*/
 end
