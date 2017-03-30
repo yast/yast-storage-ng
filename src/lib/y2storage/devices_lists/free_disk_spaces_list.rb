@@ -28,6 +28,7 @@ require "y2storage/refinements/disk"
 module Y2Storage
   module DevicesLists
     # List of free spaces from a devicegraph
+    # @deprecated See DevicesList::Base
     class FreeDiskSpacesList < Base
       list_of FreeDiskSpace
 

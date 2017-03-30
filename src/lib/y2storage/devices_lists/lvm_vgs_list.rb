@@ -28,6 +28,7 @@ require "y2storage/devices_lists/lvm_lvs_list"
 module Y2Storage
   module DevicesLists
     # List of LVM volume groups from a devicegraph
+    # @deprecated See DevicesList::Base
     class LvmVgsList < Base
       list_of ::Storage::LvmVg
 

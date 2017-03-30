@@ -34,28 +34,12 @@ require "y2storage/disk_size"
 module Storage
   # patch libstorage-ng class
   class Disk
-    def inspect
-      "<Disk #{name} #{Y2Storage::DiskSize.B(size)}>"
-    end
-
-    # FIXME: Arvin promised #partition_table? in libstorage-ng;
-    # until then, fake it
-    #
-    # #partition_table? is needed as directly accessing #partition_table
-    # may raise an exception
-    def partition_table?
-      partition_table ? true : false
-    rescue
+    def dasd?
       false
     end
 
     # FIXME: The libstorage API for DASD is still not defined, let's assume it
     # will look like this (for mocking purposes)
-    def dasd?
-      false
-    end
-
-    # FIXME: see above
     def dasd_type
       ::Storage::DasdType_UNKNOWN
     end
@@ -63,67 +47,6 @@ module Storage
     # FIXME: see above
     def dasd_format
       ::Storage::DasdFormat_NONE
-    end
-  end
-
-  # patch libstorage-ng class
-  class Partition
-    def inspect
-      "<Partition #{name} #{Y2Storage::DiskSize.B(size)}, #{region.show_range}>"
-    end
-  end
-
-  # patch libstorage-ng class
-  class PartitionSlot
-    def inspect
-      nice_size = Y2Storage::DiskSize.B(region.length * region.block_size)
-      "<PartitionSlot #{nr} #{name} #{flags_string} #{nice_size}, #{region.show_range}>"
-    end
-
-    alias_method :to_s, :inspect
-
-  private
-
-    # rubocop:disable Metrics/CyclomaticComplexity
-    def flags_string
-      flags = ""
-      flags << "P" if primary_slot
-      flags << "p" if primary_possible
-      flags << "E" if extended_slot
-      flags << "e" if extended_possible
-      flags << "L" if logical_slot
-      flags << "l" if logical_possible
-      flags
-    end
-    # rubocop:enable all
-  end
-
-  # patch libstorage-ng class
-  class Region
-    def inspect
-      "<Region #{start} - #{self.end}>"
-    end
-
-    def show_range
-      "#{start} - #{self.end}"
-    end
-
-    alias_method :to_s, :inspect
-  end
-
-  # patch libstorage-ng class
-  class PartitionTable
-    def inspect
-      parts = partitions.map(&:inspect)
-      slots = unused_partition_slots.map(&:to_s)
-      "<PartitionTable #{self}[#{num_children}] #{parts}#{slots}>"
-    end
-  end
-
-  # patch libstorage-ng class
-  class Device
-    def inspect
-      "<Device #{self}>"
     end
   end
 

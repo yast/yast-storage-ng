@@ -19,6 +19,22 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
+require "y2storage/devicegraph"
+require "y2storage/actiongraph"
+require "y2storage/region"
+require "y2storage/device"
+require "y2storage/blk_device"
+require "y2storage/disk"
+require "y2storage/partition"
+require "y2storage/partition_id"
+require "y2storage/partition_type"
+require "y2storage/filesystems"
+require "y2storage/encryption"
+require "y2storage/lvm_vg"
+require "y2storage/lvm_pv"
+require "y2storage/lvm_lv"
+require "y2storage/align_policy"
+
 require "y2storage/boot_requirements_checker"
 require "y2storage/devices_lists"
 require "y2storage/disk_analyzer"

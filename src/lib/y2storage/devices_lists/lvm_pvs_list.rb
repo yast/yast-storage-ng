@@ -26,6 +26,7 @@ require "y2storage/devices_lists/base"
 module Y2Storage
   module DevicesLists
     # List of LVM physical volumes from a devicegraph
+    # @deprecated See DevicesList::Base
     class LvmPvsList < Base
       list_of ::Storage::LvmPv
 

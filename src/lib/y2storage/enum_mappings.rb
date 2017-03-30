@@ -29,6 +29,7 @@ module Y2Storage
   # Mappings from string to libstorage-ng enums.
   # This is used for reading and writing YAML files for device trees.
   #
+  # @deprecated This should not be longer needed when using the new Ruby wrapper
   module EnumMappings
     PARTITION_TABLE_TYPES =
       {

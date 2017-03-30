@@ -24,6 +24,8 @@ require "storage"
 module Y2Storage
   module DevicesLists
     # Base class to implement lists of devices.
+    # @deprecated To be deleted once everything is migrated to the new
+    #   Ruby-friendly API.
     class Base
       include Enumerable
       extend Forwardable

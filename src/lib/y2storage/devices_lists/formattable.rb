@@ -26,6 +26,7 @@ module Y2Storage
   module DevicesLists
     # Mixin for lists of elements that can directly hold a filesystem and, thus,
     # an encryption device
+    # @deprecated See DevicesList::Base
     module Formattable
     protected
 

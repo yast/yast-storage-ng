@@ -20,19 +20,19 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require_relative "../spec_helper"
+require_relative "spec_helper"
 require "y2storage"
 
-describe "Refinements::Disk" do
-  using Y2Storage::Refinements::Disk
+describe Y2Storage::Disk do
   using Y2Storage::Refinements::SizeCasts
 
   before do
     fake_scenario("gpt_msdos_and_empty")
   end
+  let(:devicegraph) { Y2Storage::StorageManager.instance.y2storage_probed }
 
   describe "#free_spaces" do
-    subject(:disk) { Storage::Disk.find_by_name(fake_devicegraph, disk_name) }
+    subject(:disk) { Y2Storage::Disk.find_by_name(devicegraph, disk_name) }
 
     context "in a disk with no partition table, no PV and no filesystem" do
       let(:disk_name) { "/dev/sde" }
@@ -44,7 +44,7 @@ describe "Refinements::Disk" do
       it "considers the whole disk to be free space" do
         space = disk.free_spaces.first
         expect(space.region.start).to eq 0
-        expect(space.disk_size.to_i).to eq disk.size
+        expect(space.disk_size).to eq disk.size
       end
     end
 

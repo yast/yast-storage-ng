@@ -26,6 +26,7 @@ require "y2storage/devices_lists/base"
 module Y2Storage
   module DevicesLists
     # List of filesystems from a devicegraph
+    # @deprecated See DevicesList::Base
     class FilesystemsList < Base
       list_of ::Storage::BlkFilesystem
 

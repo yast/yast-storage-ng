@@ -29,6 +29,7 @@ module Y2Storage
     #
     # This list works under the assumption that the encryption device sits on
     # top of a disk, a partition or a logical volume
+    # @deprecated See DevicesList::Base
     class EncryptionsList < Base
       list_of ::Storage::Encryption
 
