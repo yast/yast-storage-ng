@@ -188,11 +188,12 @@ module Y2Storage
     #
     # @param filesystem [::Storage::Filesystem]
     def create_subvolumes(filesystem)
-      return unless filesystem.btrfs?
+      return unless filesystem.type == ::Storage::FsType_BTRFS
       return unless subvolumes?
+      btrfs = ::Storage.to_btrfs(filesystem)
       # The toplevel subvolume is implicitly created by mkfs.btrfs.
       # It does not have a name, and its subvolume ID is always 5.
-      parent = filesystem.get_top_level_btrfs_subvolume
+      parent = btrfs.top_level_btrfs_subvolume
       if @default_subvolume && !@default_subvolume.empty?
         # If the "@" subvolume is specified in control.xml, this must be
         # created first, and it will be the parent of all the other
@@ -205,7 +206,7 @@ module Y2Storage
         # Notice that subvolumes not matching the current architecture are
         # already removed
         subvol = parent.create_btrfs_subvolume(planned_subvol.path)
-        subvol.set_nowcow(true) if planned_subvol.no_cow?
+        subvol.nocow = true if planned_subvol.no_cow?
         subvol.add_mountpoint(mount_point + planned_subvol.path)
       end
     end

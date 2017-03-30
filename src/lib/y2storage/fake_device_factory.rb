@@ -651,7 +651,7 @@ module Y2Storage
       parent_subvol = find_default_subvolume(btrfs) || btrfs.top_level_btrfs_subvolume
 
       subvol = parent_subvol.create_btrfs_subvolume(path)
-      subvol.set_nocow(nocow)
+      subvol.nocow = nocow
       subvol
     end
 
