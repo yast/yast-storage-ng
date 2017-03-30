@@ -220,7 +220,7 @@ module Y2Storage
     # @see ClassMethods#storage_forward
     def self.forward(storage_object, method, modifiers, *args)
       wrapper_class_name = modifiers[:as]
-      raise_errors = modifiers[:raise_errors] || []
+      raise_errors = modifiers[:raise_errors]
 
       processed_args = processed_storage_args(*args)
       result = storage_object.public_send(method, *processed_args)
