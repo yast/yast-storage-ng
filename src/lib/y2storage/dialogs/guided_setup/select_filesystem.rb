@@ -26,12 +26,8 @@ require "y2storage/dialogs/guided_setup/base"
 module Y2Storage
   module Dialogs
     class GuidedSetup
+      # Dialog to select filesystems.
       class SelectFilesystem < Dialogs::GuidedSetup::Base
-
-        def label
-          "Guided Setup - step 4"
-        end
-
         def root_filesystem_handler
           widget_update(:snapshots, widget_value(:root_filesystem) == :btrfs, attr: :Enabled)
         end
@@ -41,6 +37,10 @@ module Y2Storage
         end
 
       protected
+
+        def label
+          "Guided Setup - step 4"
+        end
 
         def dialog_title
           _("Filesystem Options")
@@ -59,11 +59,12 @@ module Y2Storage
         def root_filesystem_widget
           VBox(
             Left(
-              ComboBox(Id(:root_filesystem), Opt(:notify), _("File System for Root Partition"),
+              ComboBox(
+                Id(:root_filesystem), Opt(:notify), _("File System for Root Partition"),
                 [
-                  Item(Id(:btrfs), "BtrFS"),
-                  Item(Id(:ext4), "Ext4"),
-                  Item(Id(:xfs), "XFS")
+                  Item(Id(Storage::FsType_BTRFS), "BtrFS"),
+                  Item(Id(Storage::FsType_EXT4), "Ext4"),
+                  Item(Id(Storage::FsType_XFS), "XFS")
                 ]
               )
             ),
@@ -84,11 +85,12 @@ module Y2Storage
             Left(
               HBox(
                 HSpacing(4),
-                ComboBox(Id(:home_filesystem), _("File System for Home Partition"),
+                ComboBox(
+                  Id(:home_filesystem), _("File System for Home Partition"),
                   [
-                    Item(Id(:btrfs), "BtrFS"),
-                    Item(Id(:ext4), "Ext4"),
-                    Item(Id(:xfs), "XFS")
+                    Item(Id(Storage::FsType_BTRFS), "BtrFS"),
+                    Item(Id(Storage::FsType_EXT4), "Ext4"),
+                    Item(Id(Storage::FsType_XFS), "XFS")
                   ]
                 )
               )
@@ -97,30 +99,17 @@ module Y2Storage
         end
 
         def initialize_widgets
-          initialize_root_filesystem_widget
-          initialize_home_filesystem_widget
-        end
-
-        def initialize_root_filesystem_widget
-          # filesystem = settings.root_filesystem || :btrfs
-          # snapshots = settings.snapshots || true
-          filesystem = :btrfs
-          snapshots = true
-          widget_update(:root_filesystem, filesystem)
-          widget_update(:snapshots, snapshots)
-        end
-
-        def initialize_home_filesystem_widget
-          # filesystem = settings.home_filesystem || :xfs
-          # separate_home = settings.separate_home || true
-          filesystem = :xfs
-          separate_home = true
-          widget_update(:home_filesystem, filesystem)
-          widget_update(:separate_home, separate_home)
+          widget_update(:root_filesystem, settings.root_filesystem_type)
+          widget_update(:snapshots, settings.use_snapshots)
+          widget_update(:home_filesystem, settings.home_filesystem_type)
+          widget_update(:separate_home, settings.use_separate_home)
         end
 
         def update_settings!
-          true
+          settings.root_filesystem_type = widget_value(:root_filesystem)
+          settings.use_snapshots = widget_value(:snapshots)
+          settings.use_separate_home = widget_value(:separate_home)
+          settings.home_filesystem_type = widget_value(:home_filesystem)
         end
       end
     end

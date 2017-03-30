@@ -23,24 +23,26 @@ require "yast"
 require "y2storage"
 require "ui/installation_dialog"
 
+Yast.import "Report"
+
 module Y2Storage
   module Dialogs
     class GuidedSetup
+      # Base class for guided setup dialogs.
       class Base < ::UI::InstallationDialog
-
-        attr_accessor :settings
-
-        def initialize(settings)
+        def initialize(guided_setup, settings)
           super()
           log.info "#{label}: start with #{settings.inspect}"
           textdomain "storage-ng"
+          @guided_setup = guided_setup
           @settings = settings
         end
 
         def next_handler
-          update_settings!
-          log.info "#{label}: return :next with #{settings.inspect}"
-          super
+          if update_settings!
+            log.info "#{label}: return :next with #{settings.inspect}"
+            super
+          end
         end
 
         def back_handler
@@ -49,6 +51,13 @@ module Y2Storage
         end
 
       protected
+
+        attr_reader :guided_setup
+        attr_accessor :settings
+
+        def disks_data
+          guided_setup.disks_data
+        end
 
         def create_dialog
           super
@@ -59,16 +68,20 @@ module Y2Storage
         def initialize_widgets
           true
         end
-        
+
         def update_settings!
           true
+        end
+
+        def label
+          nil
         end
 
         def help_text
           _(
             "<p>\n" \
             "TODO: this dialog is just temporary. " \
-            "Hopefully it will end up including several steps.</p>"
+            "Hopefully it will end up including help of each setup.</p>"
           )
         end
 

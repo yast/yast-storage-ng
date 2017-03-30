@@ -26,31 +26,69 @@ require "y2storage/dialogs/guided_setup/base"
 module Y2Storage
   module Dialogs
     class GuidedSetup
+      # Dialog for disks selection for the proposal.
       class SelectDisks < Dialogs::GuidedSetup::Base
+      protected
+
+        MAX_DISKS = 3
 
         def label
           "Guided Setup - step 1"
         end
 
-      protected
-
         def dialog_title
           _("Select Hard Disk(s)")
         end
 
-        def dialog_content        
+        def dialog_content
           HSquash(
             VBox(
-              Left(Label(_("Select one or more (max 3) hard disks"))),
+              Left(Label(_("Select one or more (max #{MAX_DISKS}) hard disks"))),
               VSpacing(0.3),
-              Left(CheckBox(Id("disk"), "Disk with ubuntu")),
-              Left(CheckBox(Id("disk"), "Disk with ubuntu")),
-              Left(CheckBox(Id("disk"), "Disk with ubuntu")),
-              Left(CheckBox(Id("disk"), "Disk with ubuntu")),
-              Left(CheckBox(Id("disk"), "Disk with ubuntu")),
-              Left(CheckBox(Id("disk"), "Disk with ubuntu"))
+              *disks_data.map { |d| disk_widget(d) }
             )
           )
+        end
+
+        def initialize_widgets
+          selected = settings.candidate_devices || disks
+          selected.first(MAX_DISKS).each { |id| widget_update(id, true) }
+        end
+
+        def update_settings!
+          valid = valid_settings?
+          settings.candidate_devices = selected_disks if valid
+          valid
+        end
+
+      private
+
+        def disk_widget(disk_data)
+          Left(CheckBox(Id(disk_data[:name]), disk_data[:label]))
+        end
+
+        def valid_settings?
+          any_selected_disk? && !many_selected_disks?
+        end
+
+        def any_selected_disk?
+          return true unless selected_disks.empty?
+          Yast::Report.Warning(_("You have to select any disk"))
+          false
+        end
+
+        def many_selected_disks?
+          return false if selected_disks.size <= MAX_DISKS
+          Yast::Report.Warning(_("Select max #{MAX_DISKS} disks"))
+          true
+        end
+
+        def selected_disks
+          disks.select { |d| widget_value(d) }
+        end
+
+        def disks
+          disks_data.map { |d| d[:name] }
         end
       end
     end

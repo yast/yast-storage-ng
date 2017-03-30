@@ -26,13 +26,13 @@ require "y2storage/dialogs/guided_setup/base"
 module Y2Storage
   module Dialogs
     class GuidedSetup
+      # Dialog for root disk selection.
       class SelectRootDisk < Dialogs::GuidedSetup::Base
+      protected
 
         def label
           "Guided Setup - step 2"
         end
-
-      protected
 
         def dialog_title
           _("Select Hard Disk(s)")
@@ -57,8 +57,7 @@ module Y2Storage
             RadioButtonGroup(
               Id(:root_disk),
               VBox(
-                Left(RadioButton(Id(:disk1), "/dev/sda", true)),
-                Left(RadioButton(Id(:disk1), "/dev/sdb", false))
+                *disks_data.map { |d| disk_widget(d) }
               )
             )
           )
@@ -67,13 +66,16 @@ module Y2Storage
         def windows_actions_widget
           VBox(
             Left(Label(_("Choose what to do with existing Windows systems"))),
-            Left(ComboBox(Id(:windows_action), "",
-              [
-                "Do not modify",
-                "Resize if needed",
-                "Remove if needed",
-                "Remove even if not needed"
-              ])
+            Left(
+              ComboBox(
+                Id(:windows_action), "",
+                [
+                  Item(Id(:not_modify), _("Do not modify")),
+                  Item(Id(:resize), _("Resize if needed")),
+                  Item(Id(:remove), _("Remove if needed")),
+                  Item(Id(:always_remove), _("Remove even if not needed"))
+                ]
+              )
             )
           )
         end
@@ -81,19 +83,41 @@ module Y2Storage
         def linux_actions_widget
           VBox(
             Left(Label(_("Choose what to do with existing Linux partitions"))),
-            Left(ComboBox(Id(:linux_action), "",
-              [
-                "Do not modify",
-                "Remove if needed",
-                "Remove even if not needed"
-              ])
+            Left(
+              ComboBox(
+                Id(:linux_action), "",
+                [
+                  Item(Id(:not_modify), _("Do not modify")),
+                  Item(Id(:remove), _("Remove if needed")),
+                  Item(Id(:always_remove), _("Remove even if not needed"))
+                ]
+              )
             )
           )
         end
 
-        def create_dialog
-          super
-          true
+        def initialize_widgets
+          id = disks_data.first[:name]
+          widget_update(id, true)
+        end
+
+        def update_settings!
+          root = disks.first { |d| widget_value(d) }
+          settings.root_device = root
+        end
+
+        def disks
+          settings.candidate_devices
+        end
+
+        def disks_data
+          super.select { |d| disks.include?(d[:name]) }
+        end
+
+      private
+
+        def disk_widget(disk_data)
+          Left(RadioButton(Id(disk_data[:name]), disk_data[:label]))
         end
       end
     end
