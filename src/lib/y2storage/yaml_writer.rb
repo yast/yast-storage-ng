@@ -2,7 +2,7 @@
 #
 # encoding: utf-8
 
-# Copyright (c) [2015-2016] SUSE LLC
+# Copyright (c) [2015-2017] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -41,15 +41,15 @@ module Y2Storage
       #
       # This is a singleton method for convenience. It creates a YamlWriter
       # internally for one-time usage. If you use this more often (for
-      # example, in a loop), it is recommended to use create a YamlWriter and
+      # example, in a loop), it is recommended to create a YamlWriter and
       # use its write() method repeatedly.
       #
       # @param devicegraph [::Storage::devicegraph]
       # @param yaml_file [String | IO]
       #
       def write(devicegraph, yaml_file)
-        writer = YamlWriter.new
-        writer.write(devicegraph, yaml_file)
+	writer = YamlWriter.new
+	writer.write(devicegraph, yaml_file)
       end
     end
 
@@ -57,8 +57,8 @@ module Y2Storage
       # Cache some frequently needed values: We need the inverse mapping from
       # EnumMappings, i.e. from the C++ enum to string.
       @partition_table_types = PARTITION_TABLE_TYPES.invert
-      @partition_types       = PARTITION_TYPES.invert
-      @partition_ids         = PARTITION_IDS.invert
+      @partition_types	     = PARTITION_TYPES.invert
+      @partition_ids	     = PARTITION_IDS.invert
       @file_system_types     = FILE_SYSTEM_TYPES.invert
     end
 
@@ -70,9 +70,9 @@ module Y2Storage
     def write(devicegraph, yaml_file)
       device_tree = yaml_device_tree(devicegraph)
       if yaml_file.respond_to?(:write)
-        yaml_file.write(device_tree.to_yaml)
+	yaml_file.write(device_tree.to_yaml)
       else
-        File.open(yaml_file, "w") { |file| file.write(device_tree.to_yaml) }
+	File.open(yaml_file, "w") { |file| file.write(device_tree.to_yaml) }
       end
     end
 
@@ -100,15 +100,15 @@ module Y2Storage
     def yaml_disk(disk)
       content = basic_disk_attributes(disk)
       if disk.has_partition_table
-        ptable = disk.partition_table
-        content["partition_table"] = @partition_table_types[ptable.type]
-        if ::Storage.msdos?(ptable)
-          content["mbr_gap"] = DiskSize.B(::Storage.to_msdos(ptable).minimal_mbr_gap).to_s
-        end
-        partitions = yaml_disk_partitions(disk)
-        content["partitions"] = partitions unless partitions.empty?
+	ptable = disk.partition_table
+	content["partition_table"] = @partition_table_types[ptable.type]
+	if ::Storage.msdos?(ptable)
+	  content["mbr_gap"] = DiskSize.B(::Storage.to_msdos(ptable).minimal_mbr_gap).to_s
+	end
+	partitions = yaml_disk_partitions(disk)
+	content["partitions"] = partitions unless partitions.empty?
       else
-        content.merge!(yaml_filesystem_and_encryption(disk))
+	content.merge!(yaml_filesystem_and_encryption(disk))
       end
 
       { "disk" => content }
@@ -121,12 +121,12 @@ module Y2Storage
     #
     def basic_disk_attributes(disk)
       {
-        "name"       => disk.name,
-        "size"       => DiskSize.B(disk.size).to_s,
-        "block_size" => DiskSize.B(disk.region.block_size).to_s,
-        "io_size"    => DiskSize.B(disk.topology.optimal_io_size).to_s,
-        "min_grain"  => DiskSize.B(disk.topology.minimal_grain).to_s,
-        "align_ofs"  => DiskSize.B(disk.topology.alignment_offset).to_s
+	"name"	     => disk.name,
+	"size"	     => DiskSize.B(disk.size).to_s,
+	"block_size" => DiskSize.B(disk.region.block_size).to_s,
+	"io_size"    => DiskSize.B(disk.topology.optimal_io_size).to_s,
+	"min_grain"  => DiskSize.B(disk.topology.minimal_grain).to_s,
+	"align_ofs"  => DiskSize.B(disk.topology.alignment_offset).to_s
       }
     end
 
@@ -147,39 +147,39 @@ module Y2Storage
       sorted_parts = sorted_partitions(disk)
       sorted_parts.each do |partition|
 
-        # if we are about to leave an extend partition, show what's left
-        if partition_end_ext > 0 && partition.type != ::Storage::PartitionType_LOGICAL
-          gap = partition_end_ext - partition_end
-          partitions << yaml_free_slot(DiskSize.B(partition_end_ext - gap), DiskSize.B(gap)) if gap > 0
-          partition_end = partition_end_ext
-          partition_end_ext = 0
-        end
+	# if we are about to leave an extend partition, show what's left
+	if partition_end_ext > 0 && partition.type != ::Storage::PartitionType_LOGICAL
+	  gap = partition_end_ext - partition_end
+	  partitions << yaml_free_slot(DiskSize.B(partition_end_ext - gap), DiskSize.B(gap)) if gap > 0
+	  partition_end = partition_end_ext
+	  partition_end_ext = 0
+	end
 
-        # is there a gap before the partition?
-        # note: gap might actually be negative sometimes!
-        gap = partition.region.start * partition.region.block_size - partition_end
-        partitions << yaml_free_slot(DiskSize.B(partition_end), DiskSize.B(gap)) if gap > 0
+	# is there a gap before the partition?
+	# note: gap might actually be negative sometimes!
+	gap = partition.region.start * partition.region.block_size - partition_end
+	partitions << yaml_free_slot(DiskSize.B(partition_end), DiskSize.B(gap)) if gap > 0
 
-        # show partition itself
-        partitions << yaml_partition(partition)
+	# show partition itself
+	partitions << yaml_partition(partition)
 
-        # adjust end pointers
-        partition_end = (partition.region.end + 1) * partition.region.block_size
-        partition_end_max = [partition_end_max, partition_end].max
+	# adjust end pointers
+	partition_end = (partition.region.end + 1) * partition.region.block_size
+	partition_end_max = [partition_end_max, partition_end].max
 
-        # if we're inside an extended partition, remember its end for later
-        if partition.type == ::Storage::PartitionType_EXTENDED
-          partition_end_ext = partition_end
-          partition_end = partition.region.start * partition.region.block_size
-        end
+	# if we're inside an extended partition, remember its end for later
+	if partition.type == ::Storage::PartitionType_EXTENDED
+	  partition_end_ext = partition_end
+	  partition_end = partition.region.start * partition.region.block_size
+	end
       end
 
       # finally, show what's left
 
       # see if there's space left in an extended partition
       if partition_end_ext > 0
-        gap = partition_end_ext - partition_end
-        partitions << yaml_free_slot(DiskSize.B(partition_end_ext), DiskSize.B(gap)) if gap > 0
+	gap = partition_end_ext - partition_end
+	partitions << yaml_free_slot(DiskSize.B(partition_end_ext), DiskSize.B(gap)) if gap > 0
       end
 
       # see if there's space left at the end of the disk
@@ -200,12 +200,12 @@ module Y2Storage
     # @return [Array<::Storage::Partition>]
     def sorted_partitions(disk)
       disk.partition_table.partitions.to_a.sort do |a, b|
-        by_start = a.region.start <=> b.region.start
-        if by_start.zero?
-          a.type == ::Storage::PartitionType_EXTENDED ? -1 : 1
-        else
-          by_start
-        end
+	by_start = a.region.start <=> b.region.start
+	if by_start.zero?
+	  a.type == ::Storage::PartitionType_EXTENDED ? -1 : 1
+	else
+	  by_start
+	end
       end
     end
 
@@ -218,11 +218,11 @@ module Y2Storage
 
     def yaml_partition(partition)
       content = {
-        "size"  => DiskSize.B(partition.region.length * partition.region.block_size).to_s,
-        "start" => DiskSize.B(partition.region.start * partition.region.block_size).to_s,
-        "name"  => partition.name,
-        "type"  => @partition_types[partition.type],
-        "id"    => @partition_ids[partition.id] || "0x#{partition.id.to_s(16)}"
+	"size"	=> DiskSize.B(partition.region.length * partition.region.block_size).to_s,
+	"start" => DiskSize.B(partition.region.start * partition.region.block_size).to_s,
+	"name"	=> partition.name,
+	"type"	=> @partition_types[partition.type],
+	"id"	=> @partition_ids[partition.id] || "0x#{partition.id.to_s(16)}"
       }
 
       content.merge!(yaml_filesystem_and_encryption(partition))
@@ -264,8 +264,8 @@ module Y2Storage
     #
     def basic_lvm_vg_attributes(lvm_vg)
       {
-        "vg_name"     => lvm_vg.vg_name,
-        "extent_size" => DiskSize.B(lvm_vg.extent_size).to_s
+	"vg_name"     => lvm_vg.vg_name,
+	"extent_size" => DiskSize.B(lvm_vg.extent_size).to_s
       }
     end
 
@@ -285,8 +285,8 @@ module Y2Storage
     #
     def yaml_lvm_lv(lvm_lv)
       content = {
-        "lv_name" => lvm_lv.lv_name,
-        "size"    => DiskSize.B(lvm_lv.size).to_s
+	"lv_name" => lvm_lv.lv_name,
+	"size"	  => DiskSize.B(lvm_lv.size).to_s
       }
 
       content["stripes"] = lvm_lv.stripes if lvm_lv.stripes != 0
@@ -314,7 +314,7 @@ module Y2Storage
     #
     def yaml_lvm_pv(lvm_pv)
       content = {
-        "blk_device" => lvm_pv.blk_device.name
+	"blk_device" => lvm_pv.blk_device.name
       }
 
       { "lvm_pv" => content }
@@ -327,11 +327,18 @@ module Y2Storage
     #
     def yaml_filesystem_and_encryption(parent)
       content = {}
-      content.merge!(yaml_filesystem(parent.filesystem)) if parent.has_filesystem
+      if parent.has_filesystem
+	content.merge!(yaml_filesystem(parent.filesystem))
+	content.merge!(yaml_btrfs_subvolumes(parent.filesystem))
+      end
       if parent.has_encryption
-        encryption = parent.encryption
-        content.merge!(yaml_encryption(encryption))
-        content.merge!(yaml_filesystem(encryption.filesystem)) if encryption.has_filesystem
+	encryption = parent.encryption
+	content.merge!(yaml_encryption(encryption))
+	if encryption.has_filesystem
+	  filesystem = encryption.filesystem
+	  content.merge!(yaml_filesystem(filesystem))
+	  content.merge!(yaml_btrfs_subvolumes(filesystem))
+	end
       end
       content
     end
@@ -343,7 +350,7 @@ module Y2Storage
     #
     def yaml_filesystem(file_system)
       content = {
-        "file_system" => @file_system_types[file_system.type]
+	"file_system" => @file_system_types[file_system.type]
       }
 
       content["mount_point"] = file_system.mountpoints.first unless file_system.mountpoints.empty?
@@ -360,14 +367,39 @@ module Y2Storage
     #
     def yaml_encryption(encryption)
       content = {
-        "type" => "luks"
-        # "type" = @encryption_types[encryption.type] # not implemented yet in lib
+	"type" => "luks"
+	# "type" = @encryption_types[encryption.type] # not implemented yet in lib
       }
 
       content["name"] = encryption.name
       content["password"] = encryption.password unless encryption.password.empty?
 
       { "encryption" => content }
+    end
+
+    # Return the YAML counterpart of a Btrfs's subvolumes or an empty hash if
+    # the filesystem is not Btrfs.
+    #
+    # @param filesystem [::Storage::BlkFilesystem]
+    # @return [Hash{String => Object}]
+    #
+    def yaml_btrfs_subvolumes(filesystem)
+      return {} unless filesystem.type == ::Storage::FsType_BTRFS
+      btrfs = ::Storage.to_btrfs(filesystem)
+      subvolumes = btrfs.btrfs_subvolumes.to_a
+      return {} if subvolumes.empty? # the toplevel subvol doesn't have a path
+      default_subvolume = subvolumes.find { |s| s.default_btrfs_subvolume? }
+      btrfs_content = {}
+      btrfs_content["default_subvolume"] = default_subvolume.path if default_subvolume
+
+      btrfs_content["subvolumes"] = subvolumes.map do |subvol|
+        next if subvol.path.empty?
+	subvol_content = { "path" => subvol.path }
+	subvol_content["nocow"] = "true" if subvol.nocow?
+	{ "subvolume" => subvol_content }
+      end.compact
+
+      { "btrfs" => btrfs_content }
     end
   end
 end

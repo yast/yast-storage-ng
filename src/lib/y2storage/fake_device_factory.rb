@@ -2,7 +2,7 @@
 #
 # encoding: utf-8
 
-# Copyright (c) [2015-2016] SUSE LLC
+# Copyright (c) [2015-2017] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -50,17 +50,19 @@ module Y2Storage
       {
         "disk"       => ["partition_table", "partitions", "file_system", "encryption"],
         "partitions" => ["partition", "free"],
-        "partition"  => ["file_system", "encryption"],
+        "partition"  => ["file_system", "encryption", "btrfs"],
         "encryption" => ["file_system"],
         "lvm_vg"     => ["lvm_lvs", "lvm_pvs"],
         "lvm_lvs"    => ["lvm_lv"],
-        "lvm_lv"     => ["file_system", "encryption"],
+        "lvm_lv"     => ["file_system", "encryption", "btrfs"],
         "lvm_pvs"    => ["lvm_pv"],
-        "lvm_pv"     => []
+        "lvm_pv"     => [],
+        "btrfs"      => ["subvolumes"],
+        "subvolumes" => ["subvolume"]
       }
 
     # Valid parameters for file_system
-    FILE_SYSTEM_PARAM = ["mount_point", "label", "uuid", "fstab_options"]
+    FILE_SYSTEM_PARAM = ["mount_point", "label", "uuid", "fstab_options", "btrfs"]
 
     # Valid parameters for each product of this factory.
     # Sub-products are not listed here.
@@ -81,7 +83,10 @@ module Y2Storage
         "lvm_lv"          => [
           "lv_name", "size", "stripes", "stripe_size"
         ].concat(FILE_SYSTEM_PARAM),
-        "lvm_pv"          => ["blk_device"]
+        "lvm_pv"          => ["blk_device"],
+        "btrfs"           => ["default_subvolume"],
+        "subvolumes"      => [],
+        "subvolume"       => ["path", "nocow"]
       }
 
     # Dependencies between products on the same hierarchy level.
@@ -590,6 +595,64 @@ module Y2Storage
       blk_device = BlkDevice.find_by_name(devicegraph, blk_device_name)
 
       parent.add_lvm_pv(blk_device)
+    end
+
+    # Factory method for a btrfs pseudo object to create subvolumes.
+    #
+    # @param parent [String] Name of the partition or LVM LV
+    #
+    # @param args [Hash] btrfs parameters:
+    #   "default_subvolume"
+    #
+    # @return [String] Name of the partition or LVM LV
+    #
+    def create_btrfs(parent, args)
+      log.info("#{__method__}( #{parent}, #{args} )")
+      default_subvolume = args["default_subvolume"]
+      if default_subvolume
+        blk_device = ::Storage::BlkDevice.find_by_name(@devicegraph, parent)
+        filesystem = blk_device.filesystem
+        if !filesystem || filesystem.type != ::Storage::FsType_BTRFS
+          raise HierarchyError, "No btrfs on #{parent}"
+        end
+        filesystem.create_btrfs_subvolume(@default_subvolume)
+      end
+      parent
+    end
+
+    # Helper function to obtain the default subvolume of a Btrfs.
+    #
+    # @param btrfs [Object] btrfs filesystem to search in
+    #
+    # @return [Object] default subvolume or nil if there is none
+    #
+    def find_default_subvolume(btrfs)
+      btrfs.btrfs_subvolumes.find { |s| s.default_btrfs_subvolume? }
+    end
+
+    # Factory method for a btrfs subvolume
+    #
+    # @param parent [String] Name of the partition or LVM LV
+    #
+    # @param args [Hash] subvolume parameters:
+    #   "path"  subvolume path without leading "@" or "/"
+    #   "nocow" "no copy on write" attribute (default: false)
+    #
+    # @return [String] Name of the partition or LVM LV
+    #
+    def create_subvolume(parent, args)
+      log.info("#{__method__}( #{parent}, #{args} )")
+      path  = args["path"]
+      nocow = args["nocow"] || false
+      raise ArgumentError, "No path for subvolume" unless path
+
+      blk_device = ::Storage::BlkDevice.find_by_name(@devicegraph, parent)
+      btrfs = ::Storage.to_btrfs(blk_device.filesystem)
+      parent_subvol = find_default_subvolume(btrfs) || btrfs.top_level_btrfs_subvolume
+
+      subvol = parent_subvol.create_btrfs_subvolume(path)
+      subvol.set_nocow(nocow)
+      subvol
     end
 
   private
