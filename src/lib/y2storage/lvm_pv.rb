@@ -26,7 +26,7 @@ module Y2Storage
     #
     # @return [BlkDevice]
     def plain_blk_device
-      blk_device.encryption? ? blk_device.blk_device : blk_device
+      blk_device.is_a?(Encryption) ? blk_device.blk_device : blk_device
     end
   end
 end

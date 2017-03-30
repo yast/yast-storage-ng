@@ -46,7 +46,7 @@ module Y2Storage
       #
       # @return [Array<BlkDevice>]
       def plain_blk_devices
-        blk_devices.map { |dev| dev.encryption? ? dev.blk_device : dev }
+        blk_devices.map { |dev| dev.is_a?(Encryption) ? dev.blk_device : dev }
       end
 
       # Checks whether the filesystem has the capability of hosting Btrfs
