@@ -610,9 +610,9 @@ module Y2Storage
       log.info("#{__method__}( #{parent}, #{args} )")
       default_subvolume = args["default_subvolume"]
       if default_subvolume
-        blk_device = ::Storage::BlkDevice.find_by_name(@devicegraph, parent)
+        blk_device = Y2Storage::BlkDevice.find_by_name(@devicegraph, parent)
         filesystem = blk_device.filesystem
-        if !filesystem || filesystem.type != ::Storage::FsType_BTRFS
+        if !filesystem || !filesystem.type.is?(:btrfs)
           raise HierarchyError, "No btrfs on #{parent}"
         end
         filesystem.create_btrfs_subvolume(@default_subvolume)
