@@ -16,6 +16,7 @@ module Y2Storage
     storage_forward :!=
     storage_forward :sid
     storage_forward :ancestors, as: "Device"
+    storage_forward :has_children?, to: :has_children
     storage_forward :exists_in_devicegraph?
     storage_forward :exists_in_probed?
     storage_forward :exists_in_staging?

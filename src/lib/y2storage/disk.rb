@@ -21,7 +21,7 @@ module Y2Storage
     # @return [Array<FreeDiskSpace>]
     def free_spaces
       # Unused disk
-      return Array(FreeDiskSpace.new(self, region)) unless has_children
+      return Array(FreeDiskSpace.new(self, region.to_storage_value)) unless has_children?
       # Disk in use, but with no partition table
       return [] if partition_table.nil?
 
@@ -69,7 +69,7 @@ module Y2Storage
     #   empty_disk.partition_table # Not longer there
     def as_not_empty
       fake_ptable = nil
-      if !has_children
+      if !has_children?
         fake_ptable = create_partition_table(preferred_ptable_type)
         fake_ptable.freeze
       end
