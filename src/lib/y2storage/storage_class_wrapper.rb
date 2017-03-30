@@ -217,48 +217,54 @@ module Y2Storage
       end
     end
 
-    # @see ClassMethods#storage_forward
-    def self.forward(storage_object, method, modifiers, *args)
-      wrapper_class_name = modifiers[:as]
-      raise_errors = modifiers[:raise_errors]
+    # Static methods offered by the module, not to extend or to be included in
+    # the class using the mixin
+    class << self
+      # @see ClassMethods#storage_forward
+      def forward(storage_object, method, modifiers, *args)
+        wrapper_class_name = modifiers[:as]
+        raise_errors = modifiers[:raise_errors]
 
-      processed_args = processed_storage_args(*args)
-      result = storage_object.public_send(method, *processed_args)
-      processed_storage_result(result, wrapper_class_name)
-    rescue Storage::WrongNumberOfChildren, Storage::DeviceHasWrongType
-      raise_errors ? raise : nil
-    end
-
-    def self.class_for(class_name)
-      Y2Storage.const_get(class_name)
-    end
-
-    def self.processed_storage_args(*args)
-      args.map { |arg| arg.respond_to?(:to_storage_value) ? arg.to_storage_value : arg }
-    end
-
-    def self.processed_storage_result(result, class_name)
-      result = result.to_a if result.class.name.start_with?("Storage::Vector")
-
-      return result unless class_name
-
-      wrapper_class = class_for(class_name)
-      if result.is_a?(Array)
-        result.map { |o| object_for(wrapper_class, o) }
-      else
-        object_for(wrapper_class, result)
+        processed_args = processed_storage_args(*args)
+        result = storage_object.public_send(method, *processed_args)
+        processed_storage_result(result, wrapper_class_name)
+      rescue Storage::WrongNumberOfChildren, Storage::DeviceHasWrongType
+        raise_errors ? raise : nil
       end
-    end
 
-    def self.underscore(camel_case_name)
-      camel_case_name.gsub(/(.)([A-Z])/, '\1_\2').downcase
-    end
+      def class_for(class_name)
+        Y2Storage.const_get(class_name)
+      end
 
-    def self.object_for(wrapper_class, storage_object)
-      if wrapper_class.respond_to?(:downcasted_new)
-        wrapper_class.downcasted_new(storage_object)
-      else
-        wrapper_class.new(storage_object)
+      def underscore(camel_case_name)
+        camel_case_name.gsub(/(.)([A-Z])/, '\1_\2').downcase
+      end
+
+    private
+
+      def processed_storage_args(*args)
+        args.map { |arg| arg.respond_to?(:to_storage_value) ? arg.to_storage_value : arg }
+      end
+
+      def processed_storage_result(result, class_name)
+        result = result.to_a if result.class.name.start_with?("Storage::Vector")
+
+        return result unless class_name
+
+        wrapper_class = class_for(class_name)
+        if result.is_a?(Array)
+          result.map { |o| object_for(wrapper_class, o) }
+        else
+          object_for(wrapper_class, result)
+        end
+      end
+
+      def object_for(wrapper_class, storage_object)
+        if wrapper_class.respond_to?(:downcasted_new)
+          wrapper_class.downcasted_new(storage_object)
+        else
+          wrapper_class.new(storage_object)
+        end
       end
     end
   end
