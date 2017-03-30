@@ -57,5 +57,15 @@ module Y2Storage
     def plain_blk_filesystem
       encrypted? ? encryption.blk_filesystem : blk_filesystem
     end
+
+    # Non encrypted version of this device
+    #
+    # For most subclasses, this will simply return the device itself. To be
+    # redefined by encryption-related subclasses.
+    #
+    # @return [BlkDevice]
+    def plain_device
+      self
+    end
   end
 end

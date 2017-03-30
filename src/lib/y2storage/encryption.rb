@@ -13,5 +13,10 @@ module Y2Storage
     storage_forward :password=
 
     storage_class_forward :all, as: "Encryption"
+
+    # @see BlkDevice#plain_device
+    def plain_device
+      blk_device
+    end
   end
 end
