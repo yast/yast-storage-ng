@@ -53,16 +53,10 @@ module Y2Storage
         log.info("BEGIN of inst_disk_proposal")
 
         until [:back, :next, :abort].include?(@result)
-          guided_setup = Dialogs::GuidedSetup.new(ProposalSettings.new)
-          Dialogs::GuidedSetup::SelectScheme.new(guided_setup.settings.dup).run
-          return
-
           dialog = Dialogs::Proposal.new(@proposal, @devicegraph)
           @result = dialog.run
           @proposal = dialog.proposal
           @devicegraph = dialog.devicegraph
-
-          p @result
 
           case @result
           when :next
@@ -71,7 +65,7 @@ module Y2Storage
             settings = dialog.proposal ? dialog.proposal.settings : new_settings
             guided_setup(settings)
           when :expert
-            # FIXME
+            # TODO
             expert_partitioner
           end
         end
@@ -94,10 +88,8 @@ module Y2Storage
       end
 
       def guided_setup(settings)
-        dialog = Dialogs::GuidedSetup.new(settings)
-        res = dialog.run
-        p "guided: #{res}"
-        case res
+        dialog = Dialogs::GuidedSetup.new(@devicegraph, settings)
+        case dialog.run
         when :abort
           @result = :abort
         when :next
