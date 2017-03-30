@@ -37,7 +37,6 @@ module Y2Storage
     #   @return [Filesystems::BlkFilesystem] nil if the raw device is not
     #     formatted
     storage_forward :direct_blk_filesystem, to: :blk_filesystem, as: "Filesystems::BlkFilesystem"
-    private :direct_blk_filesystem
 
     # @!method encryption
     #   Encryption device directly placed on top of the device
@@ -52,21 +51,13 @@ module Y2Storage
       !encryption.nil?
     end
 
-    # Filesystem in the device
+    # Filesystem placed in the device, either directly or through an encryption
+    # layer.
     #
-    # By default it returns a filesystem placed either directly on the device
-    # or through an encryption layer.
-    #
-    # It can be forced to return only the direct filesystem (no encryption or any
-    # other layer in between).
-    #
-    # @param [traverse_encryption] if set to false, the method will return nil
-    #   if the device is encrypted, no matter if the encrypted device is
-    #   formatted or not.
-    # @return [Filesystems::BlkFilesystem] nil if the device is not formatted
-    def blk_filesystem(traverse_encryption: true)
-      return encryption.direct_blk_filesystem if encrypted? && traverse_encryption
-      direct_blk_filesystem
+    # @return [Filesystems::BlkFilesystem] nil if neither the raw device or its
+    #   encrypted version are formatted
+    def blk_filesystem
+      encrypted? ? encryption.direct_blk_filesystem : direct_blk_filesystem
     end
 
     # Non encrypted version of this device
