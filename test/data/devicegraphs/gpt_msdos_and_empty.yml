@@ -28,7 +28,7 @@
 
     - partition:
         size:         60 GiB
-        name:         /dev/sdb1
+        name:         /dev/sdc1
         file_system:  xfs
         label:        data
 
