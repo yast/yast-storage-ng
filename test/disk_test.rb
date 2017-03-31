@@ -27,12 +27,13 @@ describe Y2Storage::Disk do
   using Y2Storage::Refinements::SizeCasts
 
   before do
-    fake_scenario("gpt_msdos_and_empty")
+    fake_scenario(scenario)
   end
+  let(:scenario) { "gpt_msdos_and_empty" }
   let(:devicegraph) { Y2Storage::StorageManager.instance.y2storage_probed }
+  subject(:disk) { Y2Storage::Disk.find_by_name(devicegraph, disk_name) }
 
   describe "#free_spaces" do
-    subject(:disk) { Y2Storage::Disk.find_by_name(devicegraph, disk_name) }
 
     context "in a disk with no partition table, no PV and no filesystem" do
       let(:disk_name) { "/dev/sde" }
@@ -131,6 +132,147 @@ describe Y2Storage::Disk do
         last_size = 1.TiB - 500.GiB - 60.GiB - ptable_size - gpt_final_space
         expect(sorted.last.disk_size).to eq(last_size)
       end
+    end
+  end
+
+  describe "#gpt?" do
+    context "for a disk with a MBR partition table" do
+      let(:disk_name) { "/dev/sda" }
+
+      it "returns false" do
+        expect(disk.gpt?).to eq false
+      end
+    end
+
+    context "for a disk with a GPT partition table" do
+      let(:disk_name) { "/dev/sdc" }
+
+      it "returns true" do
+        expect(disk.gpt?).to eq true
+      end
+    end
+
+    context "for a completely empty disk" do
+      let(:disk_name) { "/dev/sde" }
+
+      it "returns false" do
+        expect(disk.gpt?).to eq false
+      end
+    end
+
+    context "for a directly formatted disk (filesystem but not partition table)" do
+      let(:disk_name) { "/dev/sdf" }
+
+      it "returns false" do
+        expect(disk.gpt?).to eq false
+      end
+    end
+  end
+
+  describe "#partition_table" do
+    context "for a disk with a partition table" do
+      let(:disk_name) { "/dev/sda" }
+
+      it "returns the corresponding PartitionTable object" do
+        expect(disk.partition_table).to be_a Y2Storage::PartitionTables::Base
+        expect(disk.partition_table.partitionable).to eq disk
+      end
+    end
+
+    context "for a completely empty disk" do
+      let(:disk_name) { "/dev/sde" }
+
+      it "returns nil" do
+        expect(disk.partition_table).to be_nil
+      end
+    end
+
+    context "for a directly formatted disk (filesystem but not partition table)" do
+      let(:disk_name) { "/dev/sdf" }
+
+      it "returns nil" do
+        expect(disk.partition_table).to be_nil
+      end
+    end
+  end
+
+  describe "#name_or_partition?" do
+    let(:scenario) { "mixed_disks" }
+    let(:disk_name) { "/dev/sdb" }
+
+    it "returns true for the disk device name" do
+      expect(disk.name_or_partition?("/dev/sdb")).to eq true
+    end
+
+    it "returns true for the device name of one of the primary partitions" do
+      expect(disk.name_or_partition?("/dev/sdb1")).to eq true
+    end
+
+    it "returns true for the device name of the extended partition" do
+      expect(disk.name_or_partition?("/dev/sdb4")).to eq true
+    end
+
+    it "returns true for the device name of one of the logical partitions" do
+      expect(disk.name_or_partition?("/dev/sdb6")).to eq true
+    end
+
+    it "returns false for any other device name" do
+      expect(disk.name_or_partition?("/dev/sda")).to eq false
+    end
+
+    it "returns false for an invalid device name" do
+      expect(disk.name_or_partition?("wrong name")).to eq false
+    end
+  end
+
+  describe ".find_by_name_or_partition" do
+    let(:scenario) { "mixed_disks" }
+
+    it "returns the disk object with the searched device name" do
+      disk = described_class.find_by_name_or_partition(devicegraph, "/dev/sdb")
+      expect(disk).to be_a Y2Storage::Disk
+      expect(disk.name).to eq "/dev/sdb"
+    end
+
+    it "returns the disk object containing a partition with the searched device name" do
+      disk = described_class.find_by_name_or_partition(devicegraph, "/dev/sdb1")
+      expect(disk).to be_a Y2Storage::Disk
+      expect(disk.name).to eq "/dev/sdb"
+      expect(disk.partitions.map(&:name)).to include "/dev/sdb1"
+    end
+
+    it "returns nil if there are no disks or partitions with the searched device name" do
+      expect(described_class.find_by_name_or_partition(devicegraph, "/dev/sda10")).to be_nil
+    end
+
+    it "returns nil when searching for an invalid device name" do
+      expect(described_class.find_by_name_or_partition(devicegraph, "where art thou?")).to be_nil
+    end
+  end
+
+  describe "#is?" do
+    let(:disk_name) { "/dev/sda" }
+
+    it "returns true for values whose symbol is :disk" do
+      expect(disk.is?(:disk)).to eq true
+      expect(disk.is?("disk")).to eq true
+    end
+
+    it "returns false for a different string like \"Disk\"" do
+      expect(disk.is?("Disk")).to eq false
+    end
+
+    it "returns false for different device names like :partition or :filesystem" do
+      expect(disk.is?(:partition)).to eq false
+      expect(disk.is?(:filesystem)).to eq false
+    end
+
+    it "returns true for an array of names containing :disk" do
+      expect(disk.is?([:disk, :partition])).to eq true
+    end
+
+    it "returns false for an array of names not containing :disk" do
+      expect(disk.is?([:filesystem, :partition])).to eq false
     end
   end
 end

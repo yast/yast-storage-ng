@@ -33,6 +33,13 @@ module Y2Storage
         downcast_to: ["Filesystems::BlkFilesystem", "Filesystems::Nfs"]
 
       storage_class_forward :all, as: "Filesystems::Base"
+
+      # @see Device#is?
+      #
+      # In this case, true if type is or contains :filesystem
+      def is?(types)
+        super || types_include?(types, :filesystem)
+      end
     end
   end
 end

@@ -38,6 +38,13 @@ module Y2Storage
 
       storage_class_forward :all, as: "Filesystems::Nfs"
       storage_class_forward :find_by_server_and_path, as: "Filesystems::Nfs"
+
+      # @see Device#is?
+      #
+      # In this case, true if type is or contains :nfs
+      def is?(types)
+        super || types_include?(types, :nfs)
+      end
     end
   end
 end

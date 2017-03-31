@@ -50,6 +50,13 @@ module Y2Storage
         slots = unused_partition_slots.map(&:to_s)
         "<PartitionTable #{self}[#{num_children}] #{parts}#{slots}>"
       end
+
+      # @see Device#is?
+      #
+      # In this case, true if type is or contains :partition_table
+      def is?(types)
+        super || types_include?(types, :partition_table)
+      end
     end
   end
 end

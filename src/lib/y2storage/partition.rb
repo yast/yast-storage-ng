@@ -56,5 +56,12 @@ module Y2Storage
     def inspect
       "<Partition #{name} #{size}, #{region.show_range}>"
     end
+
+    # @see Device#is?
+    #
+    # In this case, true if type is or contains :partition
+    def is?(types)
+      super || types_include?(types, :partition)
+    end
   end
 end

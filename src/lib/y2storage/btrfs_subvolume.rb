@@ -42,5 +42,12 @@ module Y2Storage
     storage_forward :default_btrfs_subvolume?
     storage_forward :default_btrfs_subvolume=
     storage_forward :create_btrfs_subvolume, as: "BtrfsSubvolume"
+
+    # @see Device#is?
+    #
+    # In this case, true if type is or contains :btrfs_subvolume
+    def is?(types)
+      super || types_include?(types, :btrfs_subvolume)
+    end
   end
 end

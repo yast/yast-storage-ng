@@ -110,14 +110,11 @@ module Y2Storage
       PartitionTables::Type.find(:gpt)
     end
 
-    def name_or_partition?(name)
-      return true if self.name == name
-
-      partitions.any? { |part| part.name == name }
-    end
-
-    def self.find_by_name_or_partition(devicegraph, name)
-      all(devicegraph).detect { |disk| disk.name_or_partition?(name) }
+    # @see Device#is?
+    #
+    # In this case, true if type is or contains :disk
+    def is?(types)
+      super || types_include?(types, :disk)
     end
   end
 end
