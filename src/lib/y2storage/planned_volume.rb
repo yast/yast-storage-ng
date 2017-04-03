@@ -205,7 +205,9 @@ module Y2Storage
       @subvolumes.each do |planned_subvol|
         # Notice that subvolumes not matching the current architecture are
         # already removed
-        subvol = parent.create_btrfs_subvolume(planned_subvol.path)
+        path = planned_subvol.path
+        path = @default_subvolume + "/" + path unless @default_subvolume.empty?
+        subvol = parent.create_btrfs_subvolume(path)
         subvol.nocow = true if planned_subvol.no_cow?
         subvol.add_mountpoint(mount_point + planned_subvol.path)
       end
