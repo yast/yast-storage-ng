@@ -40,7 +40,7 @@ describe Y2Storage::PlannedVolume do
       expect(Y2Storage::PlannedVolume.shadows?("/booting/xy", other)).to be false
     end
 
-    it "does not report a false positive /var/log with a /var subvolume" do
+    it "does not report a false positive for shadowing /var/log with a /var subvolume" do
       expect(Y2Storage::PlannedVolume.shadows?("/var", other)).to be false
     end
 
