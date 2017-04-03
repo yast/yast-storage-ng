@@ -127,9 +127,26 @@ module Y2Storage
       use_subvol
     end
 
+    # Create the subvolume as child of 'parent_subvol'.
+    #
+    # @param parent_subvol [::Storage::BtrfsSubvol]
+    # @param default_subvol [String] "@" or ""
+    # @param mount_prefix [String]
+    #
+    # @return [::Storage::BtrfsSubvol]
+    #
+    def create_subvol(parent_subvol, default_subvol, mount_prefix)
+      name = @path
+      name = default_subvol + "/" + path unless default_subvol.empty?
+      subvol = parent_subvol.create_btrfs_subvolume(name)
+      subvol.nocow = true if no_cow?
+      subvol.add_mountpoint(mount_prefix + @path)
+      subvol
+    end
+
     # Factory method: Create one PlannedSubvol from XML data stored as a map.
     #
-    # @return PlannedSubvol or nil if error
+    # @return [PlannedSubvol] or nil if error
     #
     def self.create_from_xml(xml)
       return nil unless xml && xml.key?("path")

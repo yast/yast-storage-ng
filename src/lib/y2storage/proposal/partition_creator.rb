@@ -123,7 +123,11 @@ module Y2Storage
             partition = create_partition(vol, partition_id, space, primary)
             final_device = encrypter.device_for(vol, partition)
             filesystem = vol.create_filesystem(final_device)
-            vol.create_subvolumes(filesystem) if vol.subvolumes?
+            if vol.subvolumes?
+              other_mount_points = volumes.map { |v| v.mount_point }
+              other_mount_points.delete_if { |mp| mp == vol.mount_point }
+              vol.create_subvolumes(filesystem, other_mount_points)
+            end
             devicegraph.check
           rescue ::Storage::Exception => error
             raise Error, "Error allocating #{vol}. Details: #{error}"

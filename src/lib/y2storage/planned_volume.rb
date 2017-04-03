@@ -2,7 +2,7 @@
 #
 # encoding: utf-8
 
-# Copyright (c) [2015] SUSE LLC
+# Copyright (c) [2015-2017] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -187,9 +187,35 @@ module Y2Storage
     # if this is a btrfs root filesystem.
     #
     # @param filesystem [::Storage::Filesystem]
-    def create_subvolumes(filesystem)
+    # @param other_mount_points [Array<String>]
+    #
+    # @return nil
+    #
+    def create_subvolumes(filesystem, other_mount_points)
       return unless filesystem.type == ::Storage::FsType_BTRFS
       return unless subvolumes?
+      parent_subvol = get_parent_subvol(filesystem)
+      prefix = filesystem.mountpoints.first
+      prefix += "/" unless prefix == "/"
+      @subvolumes.each do |planned_subvol|
+        # Notice that subvolumes not matching the current architecture are
+        # already removed
+        next if PlannedVolume::shadows?(prefix + planned_subvol.path, other_mount_points)
+        planned_subvol.create_subvol(parent_subvol, @default_subvolume, prefix)
+      end
+      nil
+    end
+
+    # Get the parent subvolume for all others on Btrfs 'filesystem':
+    #
+    # If a default subvolume is configured (in control.xml), create it; if not,
+    # use the toplevel subvolume that is implicitly created by mkfs.btrfs.
+    #
+    # @param filesystem [::Storage::Filesystem]
+    #
+    # @return [::Storage::BtrfsSubvolume]
+    #
+    def get_parent_subvol(filesystem)
       btrfs = ::Storage.to_btrfs(filesystem)
       # The toplevel subvolume is implicitly created by mkfs.btrfs.
       # It does not have a name, and its subvolume ID is always 5.
@@ -202,12 +228,27 @@ module Y2Storage
         # list".
         parent = parent.create_btrfs_subvolume(@default_subvolume)
       end
-      @subvolumes.each do |planned_subvol|
-        # Notice that subvolumes not matching the current architecture are
-        # already removed
-        subvol = parent.create_btrfs_subvolume(planned_subvol.path)
-        subvol.nocow = true if planned_subvol.no_cow?
-        subvol.add_mountpoint(mount_point + planned_subvol.path)
+      parent
+    end
+
+    # Check if 'mount_point' shadows any of the mount points in
+    # 'other_mount_points'.
+    #
+    # @param mount_point [String] mount point to check
+    # @param other_mount_points [Array<String>]
+    #
+    # @return [Boolean]
+    #
+    def self.shadows?(mount_point, other_mount_points)
+      return false if mount_point.nil? || other_mount_points.nil?
+      # Just checking with start_with? is not sufficient:
+      # "/bootinger/schlonz".start_with?("/boot") -> true
+      # So append "/" to make sure only complete subpaths are compared:
+      # "/bootinger/schlonz/".start_with?("/boot/") -> false
+      # "/boot/schlonz/".start_with?("/boot/") -> true
+      mount_point += "/"
+      other_mount_points.any? do |other|
+        mount_point.start_with?(other + "/")
       end
     end
 
