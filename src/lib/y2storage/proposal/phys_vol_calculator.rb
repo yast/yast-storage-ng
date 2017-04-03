@@ -22,6 +22,7 @@
 # find current contact information at www.suse.com.
 
 require "y2storage/disk_size"
+require "y2storage/proposal/proposed_partition"
 
 module Y2Storage
   class Proposal
@@ -84,7 +85,7 @@ module Y2Storage
       #
       # @return [Proposal::SpaceDistribution, nil]
       def processed(distribution, sorted_spaces)
-        volumes = {}
+        pv_partitions = {}
         missing_size = lvm_helper.missing_space
         result = nil
 
@@ -96,8 +97,7 @@ module Y2Storage
           # volumes among free spaces, not so much the size. So let's start
           # with minimal volumes. We will grow them in the end if the
           # distribution is valid.
-          pv_vol = new_planned_volume
-          volumes[space] = pv_vol
+          pv_partitions[space] = new_proposed_partition
           useful_space = lvm_helper.useful_pv_space(available_size)
 
           if useful_space < missing_size
@@ -107,7 +107,7 @@ module Y2Storage
             # This space is, hopefully, the last one we need to fill.
             # Let's consolidate and check if it was indeed enough
             begin
-              result = distribution.add_volumes(volumes)
+              result = distribution.add_partitions(pv_partitions)
             rescue
               # Adding PVs in this order leads to an invalid distribution
               return nil
@@ -153,10 +153,10 @@ module Y2Storage
       def potential_lvm_size(distribution)
         total = DiskSize.zero
         distribution.spaces.each do |space|
-          pv_vol = space.volumes.detect(&:lvm_pv?)
-          next unless pv_vol
+          pv_partition = space.partitions.detect(&:lvm_pv?)
+          next unless pv_partition
 
-          usable_size = space.usable_extra_size + pv_vol.min_disk_size
+          usable_size = space.usable_extra_size + pv_partition.disk_size
           total += lvm_helper.useful_pv_space(usable_size)
         end
         total
@@ -165,11 +165,11 @@ module Y2Storage
       # Volume representing a LVM physical volume with the minimum possible size
       #
       # @return [PlannedVolume]
-      def new_planned_volume
-        res = PlannedVolume.new(nil)
+      def new_proposed_partition
+        res = ProposedPartition.new
         res.partition_id = Storage::ID_LVM
         res.encryption_password = lvm_helper.encryption_password
-        res.min_disk_size = res.desired_disk_size = lvm_helper.min_pv_size
+        res.disk_size = lvm_helper.min_pv_size
         res
       end
 
@@ -184,35 +184,35 @@ module Y2Storage
         missing_size = lvm_helper.missing_space
 
         distribution.spaces.each do |space|
-          pv_vol = space.volumes.detect(&:lvm_pv?)
-          next unless pv_vol
+          pv_partition = space.partitions.detect(&:lvm_pv?)
+          next unless pv_partition
           next if space.disk_space == last_disk_space
 
-          usable_size = space.usable_extra_size + pv_vol.min_disk_size
-          pv_vol.min_disk_size = pv_vol.desired_disk_size = usable_size
-          pv_vol.max_disk_size = usable_size
+          usable_size = space.usable_extra_size + pv_partition.disk_size
+          pv_partition.disk_size = usable_size
+          pv_partition.max_disk_size = usable_size
           missing_size -= lvm_helper.useful_pv_space(usable_size)
         end
 
         space = distribution.space_at(last_disk_space)
-        pv_vol = space.volumes.detect(&:lvm_pv?)
+        pv_partition = space.partitions.detect(&:lvm_pv?)
         pv_size = lvm_helper.real_pv_size(missing_size)
-        pv_vol.min_disk_size = pv_vol.desired_disk_size = pv_size
+        pv_partition.disk_size = pv_size
 
         other_pvs_size = lvm_helper.missing_space - missing_size
-        pv_vol.max_disk_size = lvm_helper.real_pv_size(lvm_helper.max_extra_space - other_pvs_size)
+        pv_partition.max_disk_size = lvm_helper.real_pv_size(lvm_helper.max_extra_space - other_pvs_size)
       end
 
       # Adjust the sizes off all the planned volumes in the distribution that
       # were created to represent a LVM physical volume.
       def adjust_weights!(distribution)
         distribution.spaces.each do |space|
-          pv_vol = space.volumes.detect(&:lvm_pv?)
-          next unless pv_vol
+          pv_partition = space.partitions.detect(&:lvm_pv?)
+          next unless pv_partition
 
-          other_volumes = space.volumes.reject { |v| v == pv_vol }
-          pv_vol.weight = other_volumes.map(&:weight).reduce(0, :+)
-          pv_vol.weight = 1 if pv_vol.weight.zero?
+          other_partitions = space.partitions.reject { |p| p == pv_partition }
+          pv_partition.weight = other_partitions.map(&:weight).reduce(0, :+)
+          pv_partition.weight = 1 if pv_partition.weight.zero?
         end
       end
     end

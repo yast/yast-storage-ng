@@ -32,9 +32,8 @@ describe Y2Storage::Proposal::LvmHelper do
     fake_scenario(scenario)
   end
 
-  subject(:helper) { described_class.new(volumes_list, encryption_password: enc_password) }
-  let(:volumes_list) { Y2Storage::PlannedVolumesList.new(volumes, target: :desired) }
-  let(:volumes) { [] }
+  subject(:helper) { described_class.new(proposed_lvs, encryption_password: enc_password) }
+  let(:proposed_lvs) { [] }
   let(:enc_password) { nil }
 
   describe "#missing_space" do
@@ -42,7 +41,7 @@ describe Y2Storage::Proposal::LvmHelper do
     let(:vg_big_pe) { Storage::LvmVg.find_by_vg_name(fake_devicegraph, "vg0") }
 
     context "if no LVM volumes are planned" do
-      let(:volumes) { [] }
+      let(:proposed_lvs) { [] }
 
       it "returns zero" do
         expect(helper.missing_space).to be_zero
@@ -50,7 +49,7 @@ describe Y2Storage::Proposal::LvmHelper do
     end
 
     context "if some LVM volumes are planned" do
-      let(:volumes) { [planned_vol(mount_point: "/1", type: :ext4, desired: desired)] }
+      let(:proposed_lvs) { [proposed_lv(mount_point: "/1", type: :ext4, disk_size: size)] }
 
       before do
         helper.reused_volume_group = reused_vg
@@ -58,7 +57,7 @@ describe Y2Storage::Proposal::LvmHelper do
 
       context "and no volume group is being reused" do
         let(:reused_vg) { nil }
-        let(:desired) { 10.GiB - 2.MiB }
+        let(:size) { 10.GiB - 2.MiB }
 
         it "returns the target size rounded up to the default extent size" do
           expect(helper.missing_space).to eq 10.GiB
@@ -67,20 +66,19 @@ describe Y2Storage::Proposal::LvmHelper do
 
       context "and a big-enough volume group is being reused" do
         let(:reused_vg) { vg_big_pe }
-        let(:desired) { 10.GiB }
+        let(:size) { 10.GiB }
 
         it "returns zero" do
-          helper.reused_volume_group = vg_big_pe
           expect(helper.missing_space).to be_zero
         end
       end
 
       context "and a volume group that needs to be extended is being reused" do
         let(:reused_vg) { vg_big_pe }
-        let(:desired) { 20.GiB + 2.MiB }
+        let(:size) { 20.GiB + 2.MiB }
 
         it "returns the missing size rounded up to the VG extent size" do
-          missing = Y2Storage::DiskSize.new(desired.to_i - vg_big_pe.size)
+          missing = Y2Storage::DiskSize.new(size.to_i - vg_big_pe.size)
           # Extent size of vg_big_pe is 64 MiB
           rounding = 62.MiB
           expect(helper.missing_space).to eq(missing + rounding)
@@ -94,7 +92,7 @@ describe Y2Storage::Proposal::LvmHelper do
     let(:vg_big_pe) { Storage::LvmVg.find_by_vg_name(fake_devicegraph, "vg0") }
 
     context "if no LVM volumes are planned" do
-      let(:volumes) { [] }
+      let(:proposed_lvs) { [] }
 
       it "returns zero" do
         expect(helper.max_extra_space).to be_zero
@@ -102,7 +100,7 @@ describe Y2Storage::Proposal::LvmHelper do
     end
 
     context "if some LVM volumes are planned" do
-      let(:volumes) { [planned_vol(mount_point: "/1", type: :ext4, desired: 1.GiB, max: max)] }
+      let(:proposed_lvs) { [proposed_lv(mount_point: "/1", type: :ext4, disk_size: 1.GiB, max: max)] }
 
       before do
         helper.reused_volume_group = reused_vg
@@ -144,7 +142,7 @@ describe Y2Storage::Proposal::LvmHelper do
   describe "#reusable_volume_groups" do
     context "if there are no volume groups" do
       let(:scenario) { "windows-pc" }
-      let(:volumes) { [planned_vol(mount_point: "/1", type: :ext4, desired: 10.GiB)] }
+      let(:proposed_lvs) { [proposed_lv(mount_point: "/1", type: :ext4, disk_size: 10.GiB)] }
 
       it "returns an empty array" do
         expect(helper.reusable_volume_groups(fake_devicegraph)).to eq []
@@ -153,7 +151,7 @@ describe Y2Storage::Proposal::LvmHelper do
 
     context "if no volume group is big enough" do
       let(:scenario) { "lvm-four-vgs" }
-      let(:volumes) { [planned_vol(mount_point: "/1", type: :ext4, desired: 40.GiB)] }
+      let(:proposed_lvs) { [proposed_lv(mount_point: "/1", type: :ext4, disk_size: 40.GiB)] }
 
       it "returns all the volume groups sorted by descending size" do
         result = helper.reusable_volume_groups(fake_devicegraph)
@@ -171,7 +169,7 @@ describe Y2Storage::Proposal::LvmHelper do
 
     context "if some volume groups are big enough" do
       let(:scenario) { "lvm-four-vgs" }
-      let(:volumes) { [planned_vol(mount_point: "/1", type: :ext4, desired: 8.GiB)] }
+      let(:proposed_lvs) { [proposed_lv(mount_point: "/1", type: :ext4, disk_size: 8.GiB)] }
 
       it "returns all the volume groups" do
         result = helper.reusable_volume_groups(fake_devicegraph)
@@ -222,10 +220,10 @@ describe Y2Storage::Proposal::LvmHelper do
 
   describe "#create_volumes" do
     let(:scenario) { "lvm-new-pvs" }
-    let(:volumes) do
+    let(:proposed_lvs) do
       [
-        planned_vol(mount_point: "/1", type: :ext4, logical_volume_name: "one", desired: 10.GiB),
-        planned_vol(mount_point: "/2", type: :ext4, logical_volume_name: "two", desired: 5.GiB)
+        proposed_lv(mount_point: "/1", type: :ext4, logical_volume_name: "one", disk_size: 10.GiB),
+        proposed_lv(mount_point: "/2", type: :ext4, logical_volume_name: "two", disk_size: 5.GiB)
       ]
     end
     let(:pv_partitions) { ["/dev/sda1", "/dev/sda3"] }
@@ -312,7 +310,12 @@ describe Y2Storage::Proposal::LvmHelper do
       end
 
       it "deletes existing LVs as needed to make space" do
-        volumes << planned_vol(type: :ext4, logical_volume_name: "three", desired: 20.GiB)
+        proposed_lvs << proposed_lv(
+          mount_point:         "/3",
+          type:                :ext4,
+          logical_volume_name: "three",
+          disk_size:           20.GiB
+        )
 
         devicegraph = helper.create_volumes(fake_devicegraph, pv_partitions)
         reused_vg = devicegraph.volume_groups.first
@@ -326,8 +329,8 @@ describe Y2Storage::Proposal::LvmHelper do
       let(:reused_vg) { nil }
 
       before do
-        volumes.first.desired = 15.GiB - 4.MiB
-        volumes.last.desired = 5.GiB - 4.MiB
+        proposed_lvs.first.disk_size = 15.GiB - 4.MiB
+        proposed_lvs.last.disk_size = 5.GiB - 4.MiB
       end
 
       it "creates partitions matching the volume sizes" do
@@ -345,13 +348,19 @@ describe Y2Storage::Proposal::LvmHelper do
       let(:reused_vg) { nil }
 
       before do
-        one = volumes.first
-        two = volumes.last
-        volumes << planned_vol(logical_volume_name: "three", desired: 1.GiB, max: 2.GiB, weight: 1)
+        one = proposed_lvs.first
+        two = proposed_lvs.last
+        proposed_lvs << proposed_lv(
+          mount_point:         "/3",
+          logical_volume_name: "three",
+          disk_size:           1.GiB,
+          max:                 2.GiB,
+          weight:              1
+        )
 
-        one.desired = 5.GiB
+        one.disk_size = 5.GiB
         one.weight = 2
-        two.desired = 7.GiB
+        two.disk_size = 7.GiB
         two.weight = 1
       end
 

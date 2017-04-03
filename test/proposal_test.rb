@@ -97,14 +97,14 @@ describe Y2Storage::Proposal do
 
       it "reuses UUID and label of deleted swap partitions" do
         proposal.propose
-        sda2 = proposal.devices.partitions.with(name: "/dev/sda2").first
+        sda2 = proposal.devices.partitions.with(name: "/dev/sda1").first
         expect(sda2).to match_fields(
           mountpoint: "swap",
           uuid:       "11111111-1111-1111-1111-11111111",
           label:      "swap1",
           size:       500.MiB.to_i
         )
-        sda5 = proposal.devices.partitions.with(name: "/dev/sda5").first
+        sda5 = proposal.devices.partitions.with(name: "/dev/sda2").first
         expect(sda5).to match_fields(
           mountpoint: "swap",
           uuid:       "22222222-2222-2222-2222-22222222",
@@ -115,8 +115,8 @@ describe Y2Storage::Proposal do
 
       it "does not enforce any particular UUID or label for additional swaps" do
         proposal.propose
-        sda6 = proposal.devices.partitions.with(name: "/dev/sda6").first
-        expect(sda6).to match_fields(mountpoint: "swap", uuid: "", label: "")
+        sda5 = proposal.devices.partitions.with(name: "/dev/sda5").first
+        expect(sda5).to match_fields(mountpoint: "swap", uuid: "", label: "")
       end
     end
 

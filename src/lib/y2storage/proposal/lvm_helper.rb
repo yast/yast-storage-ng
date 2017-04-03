@@ -26,6 +26,8 @@ require "y2storage/disk_size"
 require "y2storage/refinements"
 require "y2storage/proposal/exceptions"
 require "y2storage/proposal/encrypter"
+require "y2storage/proposal/proposed_lv"
+require "y2storage/proposal/extra_space_assigner"
 require "y2storage/secret_attributes"
 
 module Y2Storage
@@ -37,6 +39,7 @@ module Y2Storage
       using Refinements::DevicegraphLists
       include Yast::Logger
       include SecretAttributes
+      include ExtraSpaceAssigner
 
       DEFAULT_VG_NAME = "system"
       DEFAULT_LV_NAME = "lv"
@@ -60,8 +63,8 @@ module Y2Storage
       #
       # @param planned_volumes [PlannedVolumesList] volumes to allocate in LVM
       # @param encryption_password [String, nil] @see #encryption_password
-      def initialize(planned_volumes, encryption_password: nil)
-        @planned_volumes = planned_volumes
+      def initialize(proposed_lvs, encryption_password: nil)
+        @proposed_lvs = proposed_lvs
         self.encryption_password = encryption_password
       end
 
@@ -74,7 +77,7 @@ module Y2Storage
       # @return [Storage::Devicegraph]
       def create_volumes(original_graph, pv_partitions = [])
         new_graph = original_graph.duplicate
-        return new_graph if planned_volumes.empty?
+        return new_graph if proposed_lvs.empty?
 
         vg = reused_volume_group ? find_reused_vg(new_graph) : create_volume_group(new_graph)
 
@@ -95,7 +98,7 @@ module Y2Storage
       # the method assumes all the space in that volume group can be reclaimed
       # for our purposes.
       def missing_space
-        return DiskSize.zero if !planned_volumes || planned_volumes.empty?
+        return DiskSize.zero if !proposed_lvs || proposed_lvs.empty?
         return target_size unless reused_volume_group
 
         substract_reused_vg_size(target_size)
@@ -111,9 +114,9 @@ module Y2Storage
       # the method assumes all the space in that volume group can be reclaimed
       # for our purposes.
       def max_extra_space
-        return DiskSize.zero if !planned_volumes || planned_volumes.empty?
+        return DiskSize.zero if !proposed_lvs || proposed_lvs.empty?
 
-        max = planned_volumes.max_disk_size(rounding: extent_size)
+        max = ProposedLv.max_disk_size(proposed_lvs, rounding: extent_size)
         return max if max.unlimited? || !reused_volume_group
 
         substract_reused_vg_size(max)
@@ -193,7 +196,7 @@ module Y2Storage
 
     protected
 
-      attr_reader :planned_volumes
+      attr_reader :proposed_lvs
 
       def extent_size
         if reused_volume_group
@@ -204,7 +207,7 @@ module Y2Storage
       end
 
       def target_size
-        planned_volumes.target_disk_size(rounding: extent_size)
+        ProposedLv.disk_size(proposed_lvs, rounding: extent_size)
       end
 
       def substract_reused_vg_size(size)
@@ -250,7 +253,7 @@ module Y2Storage
       #
       # @param volume_group [Storage::LvmVg] volume group to modify
       def make_space!(volume_group)
-        space_size = planned_volumes.target_disk_size
+        space_size = ProposedLv.disk_size(proposed_lvs)
         missing = missing_vg_space(volume_group, space_size)
         while missing > DiskSize.zero
           lv_to_delete = delete_candidate(volume_group, missing)
@@ -270,17 +273,17 @@ module Y2Storage
       # @param volume_group [Storage::LvmVg] volume group to modify
       def create_logical_volumes!(volume_group)
         vg_size = available_space(volume_group)
-        volumes = planned_volumes.distribute_space(vg_size, rounding: extent_size)
-        volumes.each do |vol|
-          create_logical_volume(volume_group, vol)
+        @proposed_lvs = distribute_space(proposed_lvs, vg_size, rounding: extent_size)
+        proposed_lvs.each do |lv|
+          create_logical_volume(volume_group, lv)
         end
       end
 
-      def create_logical_volume(volume_group, volume)
-        name = volume.logical_volume_name || DEFAULT_LV_NAME
+      def create_logical_volume(volume_group, proposed_lv)
+        name = proposed_lv.logical_volume_name || DEFAULT_LV_NAME
         name = available_name(name, volume_group)
-        lv = volume_group.create_lvm_lv(name, volume.disk_size.to_i)
-        volume.create_filesystem(lv)
+        lv = volume_group.create_lvm_lv(name, proposed_lv.disk_size.to_i)
+        proposed_lv.create_filesystem(lv)
       end
 
       # Best logical volume to delete next while trying to make space for the

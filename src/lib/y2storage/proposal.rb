@@ -26,6 +26,8 @@ require "y2storage/disk_analyzer"
 require "y2storage/proposal/exceptions"
 require "y2storage/proposal/volumes_generator"
 require "y2storage/proposal/devicegraph_generator"
+require "y2storage/proposal/proposed_partition"
+require "y2storage/proposal/proposed_lv"
 require "y2storage/refinements/devicegraph_lists"
 
 module Y2Storage

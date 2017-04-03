@@ -26,6 +26,8 @@ require "y2storage/planned_volumes_list"
 require "y2storage/disk_size"
 require "y2storage/refinements"
 require "y2storage/proposal/encrypter"
+require "y2storage/proposal/proposed_partition"
+require "y2storage/proposal/extra_space_assigner"
 
 module Y2Storage
   class Proposal
@@ -36,6 +38,7 @@ module Y2Storage
       using Refinements::DevicegraphLists
       using Y2Storage::Refinements::Disk
       include Yast::Logger
+      include ExtraSpaceAssigner
 
       FIRST_LOGICAL_PARTITION_NUMBER = 5 # Number of the first logical partition (/dev/sdx5)
 
@@ -53,9 +56,8 @@ module Y2Storage
       # @return [::Storage::Devicegraph]
       def create_partitions(distribution)
         self.devicegraph = original_graph.duplicate
-
         distribution.spaces.each do |space|
-          process_free_space(space.disk_space, space.volumes, space.usable_size, space.num_logical)
+          process_free_space(space.disk_space, space.partitions, space.usable_size, space.num_logical)
         end
 
         devicegraph
@@ -75,30 +77,19 @@ module Y2Storage
       #       volumes (part of free_space could be used for data structures)
       # @param num_logical [Integer] how many volumes should be placed in
       #       logical partitions
-      def process_free_space(free_space, volumes, usable_size, num_logical)
-        volumes.each do |vol|
+      def process_free_space(free_space, partitions, usable_size, num_logical)
+        partitions.each do |partition|
           log.info(
-            "vol #{vol.mount_point}\tmin: #{vol.min_disk_size}\tmax: #{vol.max_disk_size} " \
-            "desired: #{vol.desired_disk_size}\tweight: #{vol.weight}"
+            "partition #{partition.mount_point} " \
+            "size: #{partition.disk_size} " \
+            "max: #{partition.max_disk_size} " \
+            "weight: #{partition.weight}"
           )
         end
 
         min_grain = free_space.disk.min_grain
-        sorted = sorted_volumes(volumes, usable_size, min_grain)
-        volumes = sorted.distribute_space(usable_size, min_grain: min_grain)
-        create_volumes_partitions(volumes, free_space, num_logical)
-      end
-
-      # Volumes sorted in the most convenient way in order to create partitions
-      # for them.
-      def sorted_volumes(volumes, usable_size, min_grain)
-        sorted = volumes.sort_by_attr(:disk, :max_start_offset)
-        last = volumes.enforced_last(usable_size, min_grain)
-        if last
-          sorted.delete(last)
-          sorted << last
-        end
-        PlannedVolumesList.new(sorted, target: volumes.target)
+        partitions = distribute_space(partitions, usable_size, min_grain: min_grain)
+        create_volumes_partitions(partitions, free_space, num_logical)
       end
 
       # Creates a partition and the corresponding filesystem for each volume
@@ -113,19 +104,19 @@ module Y2Storage
       # @param volumes [Array<PlannedVolume>]
       # @param initial_free_space [FreeDiskSpace]
       # @param num_logical [Symbol] logical partitions @see #process_space
-      def create_volumes_partitions(volumes, initial_free_space, num_logical)
-        volumes.each_with_index do |vol, idx|
-          partition_id = vol.partition_id
-          partition_id ||= vol.mount_point == "swap" ? ::Storage::ID_SWAP : ::Storage::ID_LINUX
+      def create_volumes_partitions(partitions, initial_free_space, num_logical)
+        partitions.each_with_index do |part, idx|
+          partition_id = part.partition_id
+          partition_id ||= part.mount_point == "swap" ? ::Storage::ID_SWAP : ::Storage::ID_LINUX
           begin
             space = free_space_within(initial_free_space)
-            primary = volumes.size - idx > num_logical
-            partition = create_partition(vol, partition_id, space, primary)
-            final_device = encrypter.device_for(vol, partition)
-            vol.create_filesystem(final_device)
+            primary = partitions.size - idx > num_logical
+            partition = create_partition(part, partition_id, space, primary)
+            final_device = encrypter.device_for(part, partition)
+            part.create_filesystem(final_device)
             devicegraph.check
           rescue ::Storage::Exception => error
-            raise Error, "Error allocating #{vol}. Details: #{error}"
+            raise Error, "Error allocating #{part}. Details: #{error}"
           end
         end
       end
@@ -154,8 +145,8 @@ module Y2Storage
       # @param primary      [Boolean] whether the partition should be primary
       #                     or logical
       #
-      def create_partition(vol, partition_id, free_space, primary)
-        log.info("Creating partition for #{vol.mount_point} with #{vol.disk_size}")
+      def create_partition(part, partition_id, free_space, primary)
+        log.info("Creating partition for #{part.mount_point} with #{part.disk_size}")
         disk = free_space.disk
         ptable = partition_table(disk)
 
@@ -171,10 +162,10 @@ module Y2Storage
           partition_type = ::Storage::PartitionType_LOGICAL
         end
 
-        region = new_region_with_size(free_space.region, vol.disk_size)
+        region = new_region_with_size(free_space.region, part.disk_size)
         partition = ptable.create_partition(dev_name, region, partition_type)
         partition.id = partition_id
-        partition.boot = !!vol.bootable if ptable.partition_boot_flag_supported?
+        partition.boot = !!part.bootable if ptable.partition_boot_flag_supported?
         partition
       end
 

@@ -26,6 +26,8 @@ require "y2storage"
 describe Y2Storage::PlannedVolumesList do
   using Y2Storage::Refinements::SizeCasts
 
+  before(:all) { skip }
+
   def vol(mount_point, size, min_size, max_size)
     vol = Y2Storage::PlannedVolume.new(mount_point)
     vol.disk_size = size
