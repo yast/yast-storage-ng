@@ -59,25 +59,19 @@ module Y2Storage
     # @return [Proposal, nil]
     attr_reader :proposal
 
-    def_delegators :@storage, :environment, :arch, :rootprefix
+    def_delegators :@storage, :environment, :arch, :rootprefix, :prepend_rootprefix, :rootprefix=
 
     # @!method rootprefix
     #   @return [String] root prefix used by libstorage
 
-    # Sets the root prefix used by libstorage in subsequent operations
-    #
-    # @param path [String]
-    def rootprefix=(path)
-      storage.rootprefix = path
-    end
+    # @!method rootprefix=(path)
+    #   Sets the root prefix used by libstorage in subsequent operations
+    #   @param path [String]
 
-    # Prepends the current libstorage root prefix to a mountpoint if necessary
-    #
-    # @param path [String] original path (without prefix)
-    # @return [String]
-    def prepend_rootprefix(path)
-      storage.prepend_rootprefix(path)
-    end
+    # @!method prepend_rootprefix
+    #   Prepends the current libstorage root prefix to a path, if necessary
+    #   @param path [String] original path (without prefix)
+    #   @return [String]
 
     def initialize(storage_environment)
       @storage = Storage::Storage.new(storage_environment)
