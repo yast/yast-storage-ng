@@ -33,6 +33,12 @@ module Y2Storage
         downcast_to: ["Filesystems::BlkFilesystem", "Filesystems::Nfs"]
 
       storage_class_forward :all, as: "Filesystems::Base"
+
+    protected
+
+      def types_for_is
+        super << :filesystem
+      end
     end
   end
 end

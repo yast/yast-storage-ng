@@ -49,6 +49,9 @@ module Y2Storage
       DiskSize.new(topology.minimal_grain)
     end
 
+    # Partitions in the device
+    #
+    # @return [Array<Partition>]
     def partitions
       partition_table ? partition_table.partitions : []
     end
@@ -59,6 +62,25 @@ module Y2Storage
     def gpt?
       return false unless partition_table
       partition_table.type.to_sym == :gpt
+    end
+
+    # Checks whether a name matches the device or any of its partitions
+    #
+    # @param name [String] device name
+    # @return [Boolean]
+    def name_or_partition?(name)
+      return true if self.name == name
+
+      partitions.any? { |part| part.name == name }
+    end
+
+    # Partitionable device matching the name or partition name
+    #
+    # @param devicegraph [Devicegraph] where to search
+    # @param name [String] device name
+    # @return [Partitionable] nil if there is no match
+    def self.find_by_name_or_partition(devicegraph, name)
+      all(devicegraph).detect { |dev| dev.name_or_partition?(name) }
     end
   end
 end

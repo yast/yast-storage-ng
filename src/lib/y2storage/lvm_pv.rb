@@ -49,5 +49,11 @@ module Y2Storage
     def plain_blk_device
       blk_device.plain_device
     end
+
+  protected
+
+    def types_for_is
+      super << :lvm_pv
+    end
   end
 end

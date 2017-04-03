@@ -226,12 +226,14 @@ module Y2Storage
       # @param storage object to be wrapped
       def downcasted_new(object)
         @downcast_class_names.each do |class_name|
-          underscored = StorageClassWrapper.underscore(class_name.split("::").last)
+          klass = StorageClassWrapper.class_for(class_name)
+          storage_class = klass.storage_class
+
+          underscored = StorageClassWrapper.underscore(storage_class.name.split("::").last)
           check_method = :"#{underscored}?"
           cast_method = :"to_#{underscored}"
           next unless Storage.public_send(check_method, object)
 
-          klass = StorageClassWrapper.class_for(class_name)
           return klass.downcasted_new(Storage.send(cast_method, object))
         end
         new(object)

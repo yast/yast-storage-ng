@@ -50,6 +50,12 @@ module Y2Storage
         slots = unused_partition_slots.map(&:to_s)
         "<PartitionTable #{self}[#{num_children}] #{parts}#{slots}>"
       end
+
+    protected
+
+      def types_for_is
+        super << :partition_table
+      end
     end
   end
 end

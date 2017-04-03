@@ -33,5 +33,11 @@ module Y2Storage
     storage_forward :lvm_vg, as: "LvmVg"
 
     storage_class_forward :all, as: "LvmLv"
+
+  protected
+
+    def types_for_is
+      super << :lvm_lv
+    end
   end
 end

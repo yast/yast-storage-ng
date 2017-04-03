@@ -38,6 +38,12 @@ module Y2Storage
 
       storage_class_forward :all, as: "Filesystems::Nfs"
       storage_class_forward :find_by_server_and_path, as: "Filesystems::Nfs"
+
+    protected
+
+      def types_for_is
+        super << :nfs
+      end
     end
   end
 end

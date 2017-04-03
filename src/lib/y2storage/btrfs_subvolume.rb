@@ -42,5 +42,11 @@ module Y2Storage
     storage_forward :default_btrfs_subvolume?
     storage_forward :default_btrfs_subvolume=
     storage_forward :create_btrfs_subvolume, as: "BtrfsSubvolume"
+
+  protected
+
+    def types_for_is
+      super << :btrfs_subvolume
+    end
   end
 end

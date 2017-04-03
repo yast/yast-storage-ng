@@ -39,5 +39,11 @@ module Y2Storage
     def plain_device
       blk_device
     end
+
+  protected
+
+    def types_for_is
+      super << :encryption
+    end
   end
 end

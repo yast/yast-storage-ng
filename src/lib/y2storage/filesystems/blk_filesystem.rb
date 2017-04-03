@@ -103,6 +103,12 @@ module Y2Storage
         storage_subvols = Storage.to_btrfs(to_storage_value).btrfs_subvolumes
         storage_subvols.map { |vol| BtrfsSubvolume.new(vol) }
       end
+
+    protected
+
+      def types_for_is
+        super << :blk_filesystem
+      end
     end
   end
 end

@@ -56,5 +56,11 @@ module Y2Storage
     def inspect
       "<Partition #{name} #{size}, #{region.show_range}>"
     end
+
+  protected
+
+    def types_for_is
+      super << :partition
+    end
   end
 end
