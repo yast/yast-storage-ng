@@ -153,13 +153,22 @@ Example:
         name:         /dev/sda3
         type:         primary
         id:           Linux
-        file_system:  ext4
+        file_system:  btrfs
         mount_point:  /
         label:        root
         encryption:
             type:     "luks"
             name:     "/dev/mapper/cr_root"
             password: "s3cr3t"
+        btrfs:
+            default_subvolume: @
+            subvolumes:
+                - subvolume
+                      path: var/log
+                  ...
+                - subvolume
+                      path:  var/lib/mysql
+                      nocow: true
 
 - size: Similar to disk.size: Size of the partition specified as something the
   DiskSize class can parse, including "unlimited". "unlimited" means "Use all
@@ -259,6 +268,10 @@ Example:
 - encryption: This is a separate tree level.
   Omit if there should be no encryption.
 
+- btrfs: Some Btrfs-specific attributes. Omit if the filesystem on this
+  partition is not a Btrfs or if no specific attributes are desired.
+
+
 #### encryption
 
 Example:
@@ -344,6 +357,30 @@ Example:
 
 - blk_device: The block device used by the physical volume. The block device
   must be defined before the physical volume in the file.
+
+
+### btrfs
+
+    btrfs:
+        default_subvolume: @
+        subvolumes:
+            - subvolume
+                path: var/log
+            ...
+            ...
+            - subvolume
+                path:  var/lib/mysql
+                nocow: true
+
+
+- default_subvolume: If present, contains the name for the default subvolume
+  (typically "@").
+
+- subvolumes: A list of subvolumes
+
+- path: The path of the subvolume (without leading "@" and without leading "/")
+
+- nocow: "no copy on write" attribute for this subvolume. Default: false.
 
 
 

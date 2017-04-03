@@ -23,6 +23,7 @@
 
 require "yast"
 require "y2storage/disk_size"
+require "y2storage/planned_subvol"
 require "y2storage/secret_attributes"
 
 module Y2Storage
@@ -85,13 +86,19 @@ module Y2Storage
     attr_accessor :label
     # @return [String] UUID to enforce in the filesystem
     attr_accessor :uuid
+    # @!attribute subvolumes
+    #   @return Array[PlannedSubvolume] Btrfs subvolumes
+    attr_accessor :subvolumes
+    # @!attribute default_subvolume
+    # @return [String] Parent for all Btrfs subvolumes (typically "@")
+    attr_accessor :default_subvolume
     # @!attribute encryption_password
     #   @return [String, nil] password used to encrypt the volume. If is nil, it
     #   means the volume will not be encrypted
     secret_attr :encryption_password
 
     TO_STRING_ATTRS = [:mount_point, :reuse, :min_disk_size, :max_disk_size,
-                       :desired_disk_size, :disk, :max_start_offset]
+                       :desired_disk_size, :disk, :max_start_offset, :subvolumes]
 
     alias_method :desired, :desired_disk_size
     alias_method :min, :min_disk_size
@@ -123,6 +130,8 @@ module Y2Storage
       @weight        = 0 # For distributing extra space if desired is unlimited
       @plain_partition = true
       @logical_volume_name = nil
+      @subvolumes          = nil
+      @default_subvolume   = nil
 
       return unless @mount_point && @mount_point.start_with?("/")
       return if @mount_point && @mount_point.start_with?("/boot")
@@ -174,6 +183,34 @@ module Y2Storage
       filesystem
     end
 
+    # Create subvolumes on this volume after the filesystem is created
+    # if this is a btrfs root filesystem.
+    #
+    # @param filesystem [::Storage::Filesystem]
+    def create_subvolumes(filesystem)
+      return unless filesystem.type == ::Storage::FsType_BTRFS
+      return unless subvolumes?
+      btrfs = ::Storage.to_btrfs(filesystem)
+      # The toplevel subvolume is implicitly created by mkfs.btrfs.
+      # It does not have a name, and its subvolume ID is always 5.
+      parent = btrfs.top_level_btrfs_subvolume
+      if @default_subvolume && !@default_subvolume.empty?
+        # If the "@" subvolume is specified in control.xml, this must be
+        # created first, and it will be the parent of all the other
+        # subvolumes. Otherwise, the toplevel subvolume is their direct parent.
+        # Notice that this "@" subvolume does not show up in "btrfs subvolume
+        # list".
+        parent = parent.create_btrfs_subvolume(@default_subvolume)
+      end
+      @subvolumes.each do |planned_subvol|
+        # Notice that subvolumes not matching the current architecture are
+        # already removed
+        subvol = parent.create_btrfs_subvolume(planned_subvol.path)
+        subvol.nocow = true if planned_subvol.no_cow?
+        subvol.add_mountpoint(mount_point + planned_subvol.path)
+      end
+    end
+
     # Checks whether the volume represents an LVM physical volume
     #
     # @return [Boolean]
@@ -190,6 +227,20 @@ module Y2Storage
     # @return [Boolean]
     def encrypt?
       !encryption_password.nil?
+    end
+
+    # Checks whether the filesystem type is Btrfs
+    #
+    # @return [Boolean]
+    def btrfs?
+      filesystem_type == Storage::FsType_BTRFS
+    end
+
+    # Checks whether the volume has any subvolumes
+    #
+    # @return [Boolean]
+    def subvolumes?
+      btrfs? && !subvolumes.nil?
     end
 
   protected

@@ -2,7 +2,7 @@
 #
 # encoding: utf-8
 
-# Copyright (c) [2015-2016] SUSE LLC
+# Copyright (c) [2015-2017] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -41,7 +41,7 @@ module Y2Storage
       #
       # This is a singleton method for convenience. It creates a YamlWriter
       # internally for one-time usage. If you use this more often (for
-      # example, in a loop), it is recommended to use create a YamlWriter and
+      # example, in a loop), it is recommended to create a YamlWriter and
       # use its write() method repeatedly.
       #
       # @param devicegraph [::Storage::devicegraph]
@@ -327,11 +327,18 @@ module Y2Storage
     #
     def yaml_filesystem_and_encryption(parent)
       content = {}
-      content.merge!(yaml_filesystem(parent.filesystem)) if parent.has_filesystem
+      if parent.has_filesystem
+        content.merge!(yaml_filesystem(parent.filesystem))
+        content.merge!(yaml_btrfs_subvolumes(parent.filesystem))
+      end
       if parent.has_encryption
         encryption = parent.encryption
         content.merge!(yaml_encryption(encryption))
-        content.merge!(yaml_filesystem(encryption.filesystem)) if encryption.has_filesystem
+        if encryption.has_filesystem
+          filesystem = encryption.filesystem
+          content.merge!(yaml_filesystem(filesystem))
+          content.merge!(yaml_btrfs_subvolumes(filesystem))
+        end
       end
       content
     end
@@ -368,6 +375,31 @@ module Y2Storage
       content["password"] = encryption.password unless encryption.password.empty?
 
       { "encryption" => content }
+    end
+
+    # Return the YAML counterpart of a Btrfs's subvolumes or an empty hash if
+    # the filesystem is not Btrfs.
+    #
+    # @param filesystem [::Storage::BlkFilesystem]
+    # @return [Hash{String => Object}]
+    #
+    def yaml_btrfs_subvolumes(filesystem)
+      return {} unless filesystem.type == ::Storage::FsType_BTRFS
+      btrfs = ::Storage.to_btrfs(filesystem)
+      subvolumes = btrfs.btrfs_subvolumes.to_a
+      return {} if subvolumes.empty? # the toplevel subvol doesn't have a path
+      default_subvolume = subvolumes.find { |s| s.default_btrfs_subvolume? }
+      btrfs_content = {}
+      btrfs_content["default_subvolume"] = default_subvolume.path if default_subvolume
+
+      btrfs_content["subvolumes"] = subvolumes.map do |subvol|
+        next if subvol.path.empty?
+        subvol_content = { "path" => subvol.path }
+        subvol_content["nocow"] = "true" if subvol.nocow?
+        { "subvolume" => subvol_content }
+      end.compact
+
+      { "btrfs" => btrfs_content }
     end
   end
 end
