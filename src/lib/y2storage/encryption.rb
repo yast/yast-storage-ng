@@ -40,11 +40,10 @@ module Y2Storage
       blk_device
     end
 
-    # @see Device#is?
-    #
-    # In this case, true if type is or contains :encryption
-    def is?(types)
-      super || types_include?(types, :encryption)
+  protected
+
+    def types_for_is
+      super << :encryption
     end
   end
 end

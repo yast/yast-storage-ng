@@ -34,11 +34,10 @@ module Y2Storage
 
       storage_class_forward :all, as: "Filesystems::Base"
 
-      # @see Device#is?
-      #
-      # In this case, true if type is or contains :filesystem
-      def is?(types)
-        super || types_include?(types, :filesystem)
+    protected
+
+      def types_for_is
+        super << :filesystem
       end
     end
   end

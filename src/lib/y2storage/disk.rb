@@ -110,11 +110,10 @@ module Y2Storage
       PartitionTables::Type.find(:gpt)
     end
 
-    # @see Device#is?
-    #
-    # In this case, true if type is or contains :disk
-    def is?(types)
-      super || types_include?(types, :disk)
+  protected
+
+    def types_for_is
+      super << :disk
     end
   end
 end

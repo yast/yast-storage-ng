@@ -53,11 +53,10 @@ module Y2Storage
     storage_class_forward :all, as: "LvmVg"
     storage_class_forward :find_by_vg_name, as: "LvmVg"
 
-    # @see Device#is?
-    #
-    # In this case, true if type is or contains :lvm_vg
-    def is?(types)
-      super || types_include?(types, :lvm_vg)
+  protected
+
+    def types_for_is
+      super << :lvm_vg
     end
   end
 end

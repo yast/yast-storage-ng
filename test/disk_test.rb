@@ -267,12 +267,12 @@ describe Y2Storage::Disk do
       expect(disk.is?(:filesystem)).to eq false
     end
 
-    it "returns true for an array of names containing :disk" do
-      expect(disk.is?([:disk, :partition])).to eq true
+    it "returns true for a list of names containing :disk" do
+      expect(disk.is?(:disk, :partition)).to eq true
     end
 
-    it "returns false for an array of names not containing :disk" do
-      expect(disk.is?([:filesystem, :partition])).to eq false
+    it "returns false for a list of names not containing :disk" do
+      expect(disk.is?(:filesystem, :partition)).to eq false
     end
   end
 end

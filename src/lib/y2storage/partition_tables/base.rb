@@ -51,11 +51,10 @@ module Y2Storage
         "<PartitionTable #{self}[#{num_children}] #{parts}#{slots}>"
       end
 
-      # @see Device#is?
-      #
-      # In this case, true if type is or contains :partition_table
-      def is?(types)
-        super || types_include?(types, :partition_table)
+    protected
+
+      def types_for_is
+        super << :partition_table
       end
     end
   end

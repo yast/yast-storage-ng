@@ -104,11 +104,10 @@ module Y2Storage
         storage_subvols.map { |vol| BtrfsSubvolume.new(vol) }
       end
 
-      # @see Device#is?
-      #
-      # In this case, true if type is or contains :blk_filesystem
-      def is?(types)
-        super || types_include?(types, :blk_filesystem)
+    protected
+
+      def types_for_is
+        super << :blk_filesystem
       end
     end
   end

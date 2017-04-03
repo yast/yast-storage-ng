@@ -50,11 +50,10 @@ module Y2Storage
       blk_device.plain_device
     end
 
-    # @see Device#is?
-    #
-    # In this case, true if type is or contains :lvm_pv
-    def is?(types)
-      super || types_include?(types, :lvm_pv)
+  protected
+
+    def types_for_is
+      super << :lvm_pv
     end
   end
 end

@@ -79,21 +79,19 @@ module Y2Storage
     #
     # @example Filtering disks and partitions
     #
-    #   something.ancestors.select { |dev| dev.is?([:disk, "partition"]) }
+    #   something.ancestors.select { |dev| dev.is?(:disk, "partition") }
     #
-    # @param types [#to_sym, Array<#to_sym>] name (or names) of the device
-    #   type, as defined in each subclass
+    # @param *types [#to_sym] name (or names) of the device type, as defined in
+    #   each subclass
     # @return [Boolean]
-    def is?(_types)
-      false
+    def is?(*types)
+      (types.map(&:to_sym) & types_for_is).any?
     end
 
   protected
 
-    # Convenience method to easy the implementation of #is? in the subclasses
-    def types_include?(types, name)
-      types = Array(types).map { |t| t.to_sym }
-      types.include?(name)
+    def types_for_is
+      []
     end
   end
 end
