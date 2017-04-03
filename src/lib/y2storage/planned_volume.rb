@@ -200,7 +200,7 @@ module Y2Storage
       @subvolumes.each do |planned_subvol|
         # Notice that subvolumes not matching the current architecture are
         # already removed
-        next if shadows?(prefix + planned_subvol.path, other_mount_points)
+        next if PlannedVolume::shadows?(prefix + planned_subvol.path, other_mount_points)
         planned_subvol.create_subvol(parent_subvol, @default_subvolume, prefix)
       end
       nil
@@ -239,7 +239,8 @@ module Y2Storage
     #
     # @return [Boolean]
     #
-    def shadows?(mount_point, other_mount_points)
+    def self.shadows?(mount_point, other_mount_points)
+      return false if mount_point.nil? || other_mount_points.nil?
       # Just checking with start_with? is not sufficient:
       # "/bootinger/schlonz".start_with?("/boot") -> true
       # So append "/" to make sure only complete subpaths are compared:
