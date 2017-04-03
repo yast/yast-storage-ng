@@ -200,7 +200,7 @@ module Y2Storage
       @subvolumes.each do |planned_subvol|
         # Notice that subvolumes not matching the current architecture are
         # already removed
-        next if PlannedVolume::shadows?(prefix + planned_subvol.path, other_mount_points)
+        next if PlannedVolume.shadows?(prefix + planned_subvol.path, other_mount_points)
         planned_subvol.create_subvol(parent_subvol, @default_subvolume, prefix)
       end
       nil
