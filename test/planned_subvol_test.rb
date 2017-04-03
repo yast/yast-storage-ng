@@ -73,7 +73,9 @@ describe Y2Storage::PlannedSubvol do
     end
 
     describe "arch-specific subvol for current arch" do
+      # rubocop: disable Metrics/LineLength
       subject { Y2Storage::PlannedSubvol.new("boot/grub2/fake-arch", archs: ["fake-arch", current_arch]) }
+      # rubocop: enable Metrics/LineLength
 
       it "is arch specific" do
         expect(subject.arch_specific?).to be true
