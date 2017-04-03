@@ -79,7 +79,7 @@ module Y2Storage
           if valid
             settings.use_lvm = widget_value(:lvm)
             password = widget_value(:password)
-            settings.encryption_password = password unless password.empty?
+            settings.encryption_password = password unless password.to_s.empty?
           end
           valid
         end

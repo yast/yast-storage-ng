@@ -51,8 +51,9 @@ module Y2Storage
         end
 
         def initialize_widgets
-          selected = settings.candidate_devices || disks
-          selected.first(MAX_DISKS).each { |id| widget_update(id, true) }
+          candidates = settings.candidate_devices
+          candidates = disks if candidates.nil? || candidates.empty?
+          candidates.first(MAX_DISKS).each { |id| widget_update(id, true) }
         end
 
         def update_settings!

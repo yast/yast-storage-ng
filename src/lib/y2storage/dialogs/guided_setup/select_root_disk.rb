@@ -102,8 +102,9 @@ module Y2Storage
         end
 
         def update_settings!
-          root = disks.first { |d| widget_value(d) }
+          root = disks.detect { |d| widget_value(d) }
           settings.root_device = root
+          true
         end
 
         def disks_data
