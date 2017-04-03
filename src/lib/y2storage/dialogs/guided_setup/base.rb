@@ -30,6 +30,9 @@ module Y2Storage
     class GuidedSetup
       # Base class for guided setup dialogs.
       class Base < ::UI::InstallationDialog
+        # Current settings with user selections.
+        attr_accessor :settings
+
         def initialize(guided_setup, settings)
           super()
           log.info "#{self.class}: start with #{settings.inspect}"
@@ -56,8 +59,6 @@ module Y2Storage
 
         # Controller object needed to access to pre-calculated data.
         attr_reader :guided_setup
-        # Current settings with user selections.
-        attr_accessor :settings
 
         def create_dialog
           super
