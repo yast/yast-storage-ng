@@ -163,4 +163,64 @@ describe Y2Storage::StorageManager do
       expect(manager.staging_changed?).to eq true
     end
   end
+
+  describe "#rootprefix=" do
+    before do
+      described_class.create_test_instance
+    end
+
+    it "updates the rootprefix value in the instance" do
+      manager.rootprefix = "something"
+      expect(manager.rootprefix).to eq "something"
+    end
+
+    it "updates the rootprefix value in libstorage" do
+      manager.rootprefix = "something"
+      storage = described_class.instance.storage
+      expect(storage.rootprefix).to eq "something"
+    end
+  end
+
+  describe "#prepend_rootprefix" do
+    before do
+      described_class.create_test_instance
+    end
+
+    it "returns the same string if a prefix is not set for libstorage" do
+      expect(manager.prepend_rootprefix("/absolute/path")).to eq "/absolute/path"
+    end
+
+    it "prepends the libstorage prefix to the provided path" do
+      manager.rootprefix = "/prefixed"
+      expect(manager.prepend_rootprefix("/absolute/path")).to eq "/prefixed/absolute/path"
+    end
+
+    it "does not add any missing slash" do
+      manager.rootprefix = "pre"
+      expect(manager.prepend_rootprefix("absolute/path")).to eq "preabsolute/path"
+    end
+
+    it "does not remove any trailing slash" do
+      manager.rootprefix = "/prefixed/"
+      expect(manager.prepend_rootprefix("/absolute///path/")).to eq "/prefixed//absolute///path/"
+    end
+  end
+
+  describe "#commit" do
+    before do
+      described_class.create_test_instance
+      allow(manager.storage).to receive(:calculate_actiongraph)
+      allow(manager.storage).to receive(:commit)
+    end
+
+    it "delegates calculation of the needed actions to libstorage" do
+      expect(manager.storage).to receive(:calculate_actiongraph)
+      manager.commit
+    end
+
+    it "commits the changes to libstorage" do
+      expect(manager.storage).to receive(:commit)
+      manager.commit
+    end
+  end
 end

@@ -59,7 +59,19 @@ module Y2Storage
     # @return [Proposal, nil]
     attr_reader :proposal
 
-    def_delegators :@storage, :environment, :arch
+    def_delegators :@storage, :environment, :arch, :rootprefix, :prepend_rootprefix, :rootprefix=
+
+    # @!method rootprefix
+    #   @return [String] root prefix used by libstorage
+
+    # @!method rootprefix=(path)
+    #   Sets the root prefix used by libstorage in subsequent operations
+    #   @param path [String]
+
+    # @!method prepend_rootprefix
+    #   Prepends the current libstorage root prefix to a path, if necessary
+    #   @param path [String] original path (without prefix)
+    #   @return [String]
 
     def initialize(storage_environment)
       @storage = Storage::Storage.new(storage_environment)
@@ -124,6 +136,15 @@ module Y2Storage
     # using #staging= or #proposal=
     def update_staging_revision
       @staging_revision += 1
+    end
+
+    # Performs in the system all the necessary operations to make it match the
+    # staging devicegraph.
+    #
+    # Beware: this method can cause data loss
+    def commit
+      storage.calculate_actiongraph
+      storage.commit
     end
 
   private

@@ -52,10 +52,8 @@ module Y2Storage
 
       # Commits the actions to disk
       def commit
-        storage = Y2Storage::StorageManager.instance.storage
-        storage.rootprefix = Yast::Installation.destdir
-        storage.calculate_actiongraph
-        storage.commit
+        manager.rootprefix = Yast::Installation.destdir
+        manager.commit
 
         mount_in_target("/dev", "devtmpfs", "-t devtmpfs")
         mount_in_target("/proc", "proc", "-t proc")
@@ -63,8 +61,7 @@ module Y2Storage
       end
 
       def mount_in_target(path, device, options)
-        storage = Y2Storage::StorageManager.instance.storage
-        target_path = storage.prepend_rootprefix(path)
+        target_path = manager.prepend_rootprefix(path)
 
         if !Yast::FileUtils.Exists(target_path)
           if !SCR.Execute(path(".target.mkdir"), target_path)
@@ -74,6 +71,10 @@ module Y2Storage
         if !SCR.Execute(path(".target.mount"), [device, target_path], options)
           raise ".target.mount failed"
         end
+      end
+
+      def manager
+        Y2Storage::StorageManager.instance
       end
     end
   end
