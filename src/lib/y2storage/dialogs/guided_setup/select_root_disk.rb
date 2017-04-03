@@ -30,10 +30,6 @@ module Y2Storage
       class SelectRootDisk < Dialogs::GuidedSetup::Base
       protected
 
-        def label
-          "Guided Setup - step 2"
-        end
-
         def dialog_title
           _("Select Hard Disk(s)")
         end
@@ -96,6 +92,10 @@ module Y2Storage
           )
         end
 
+        def disk_widget(disk_data)
+          Left(RadioButton(Id(disk_data[:name]), disk_data[:label]))
+        end
+
         def initialize_widgets
           id = disks_data.first[:name]
           widget_update(id, true)
@@ -106,18 +106,14 @@ module Y2Storage
           settings.root_device = root
         end
 
-        def disks
-          settings.candidate_devices
-        end
-
         def disks_data
           super.select { |d| disks.include?(d[:name]) }
         end
 
       private
 
-        def disk_widget(disk_data)
-          Left(RadioButton(Id(disk_data[:name]), disk_data[:label]))
+        def disks
+          settings.candidate_devices
         end
       end
     end

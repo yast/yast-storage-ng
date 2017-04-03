@@ -32,32 +32,32 @@ module Y2Storage
       class Base < ::UI::InstallationDialog
         def initialize(guided_setup, settings)
           super()
-          log.info "#{label}: start with #{settings.inspect}"
+          log.info "#{self.class}: start with #{settings.inspect}"
           textdomain "storage-ng"
           @guided_setup = guided_setup
           @settings = settings
         end
 
+        # Only continues if settings are correctly updated. In other case,
+        # an error dialogs is expected.
         def next_handler
           if update_settings!
-            log.info "#{label}: return :next with #{settings.inspect}"
+            log.info "#{self.class}: return :next with #{settings.inspect}"
             super
           end
         end
 
         def back_handler
-          log.info "#{label}: return :back with #{settings.inspect}"
+          log.info "#{self.class}: return :back with #{settings.inspect}"
           super
         end
 
       protected
 
+        # Controller object needed to access to pre-calculated data.
         attr_reader :guided_setup
+        # Current settings with user selections.
         attr_accessor :settings
-
-        def disks_data
-          guided_setup.disks_data
-        end
 
         def create_dialog
           super
@@ -65,16 +65,14 @@ module Y2Storage
           true
         end
 
+        # Should be implemented by derived classes.
         def initialize_widgets
           true
         end
 
+        # Should be implemented by derived classes.
         def update_settings!
           true
-        end
-
-        def label
-          nil
         end
 
         def help_text
@@ -85,10 +83,16 @@ module Y2Storage
           )
         end
 
+        def disks_data
+          guided_setup.disks_data
+        end
+
+        # Helper to get widget value
         def widget_value(id, attr: :Value)
           Yast::UI.QueryWidget(Id(id), attr)
         end
 
+        # Helper to set widget value
         def widget_update(id, value, attr: :Value)
           Yast::UI.ChangeWidget(Id(id), attr, value)
         end

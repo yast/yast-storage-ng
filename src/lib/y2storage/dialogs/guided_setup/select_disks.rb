@@ -32,10 +32,6 @@ module Y2Storage
 
         MAX_DISKS = 3
 
-        def label
-          "Guided Setup - step 1"
-        end
-
         def dialog_title
           _("Select Hard Disk(s)")
         end
@@ -50,6 +46,10 @@ module Y2Storage
           )
         end
 
+        def disk_widget(disk_data)
+          Left(CheckBox(Id(disk_data[:name]), disk_data[:label]))
+        end
+
         def initialize_widgets
           selected = settings.candidate_devices || disks
           selected.first(MAX_DISKS).each { |id| widget_update(id, true) }
@@ -62,10 +62,6 @@ module Y2Storage
         end
 
       private
-
-        def disk_widget(disk_data)
-          Left(CheckBox(Id(disk_data[:name]), disk_data[:label]))
-        end
 
         def valid_settings?
           any_selected_disk? && !many_selected_disks?

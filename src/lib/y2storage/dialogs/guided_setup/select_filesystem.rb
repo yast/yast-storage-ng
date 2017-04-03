@@ -38,10 +38,6 @@ module Y2Storage
 
       protected
 
-        def label
-          "Guided Setup - step 4"
-        end
-
         def dialog_title
           _("Filesystem Options")
         end
