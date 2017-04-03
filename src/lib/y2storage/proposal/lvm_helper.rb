@@ -280,7 +280,12 @@ module Y2Storage
         name = volume.logical_volume_name || DEFAULT_LV_NAME
         name = available_name(name, volume_group)
         lv = volume_group.create_lvm_lv(name, volume.disk_size.to_i)
-        volume.create_filesystem(lv)
+        filesystem = volume.create_filesystem(lv)
+        if volume.subvolumes?
+          other_mount_points = @planned_volumes.map { |v| v.mount_point }
+          other_mount_points.delete_if { |mp| mp == volume.mount_point }
+          volume.create_subvolumes(filesystem, other_mount_points)
+        end
       end
 
       # Best logical volume to delete next while trying to make space for the

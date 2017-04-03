@@ -237,6 +237,8 @@ module Y2Storage
     # @param mount_point [String] mount point to check
     # @param other_mount_points [Array<String>]
     #
+    # @return [Boolean]
+    #
     def shadows?(mount_point, other_mount_points)
       # Just checking with start_with? is not sufficient:
       # "/bootinger/schlonz".start_with?("/boot") -> true
