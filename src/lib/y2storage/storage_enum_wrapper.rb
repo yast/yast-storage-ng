@@ -71,16 +71,16 @@ module Y2Storage
       to_sym.to_s
     end
 
-    # Checks whether the object corresponds to the given enum value. Initially
-    # checking by name, this method is expected to be extended by the particular
-    # classes to add more semantic checks if needed.
+    # Checks whether the object corresponds to any of the given enum values.
+    # Initially checking by name, this method is expected to be extended by the
+    # particular classes to add more semantic checks if needed.
     #
     # By default, this will be the base comparison used in the case statements.
     #
-    # @param name [#to_sym]
+    # @param *names [#to_sym]
     # @return [Boolean]
-    def is?(name)
-      to_sym == name.to_sym
+    def is?(*names)
+      names.any? { |n| n.to_sym == to_sym }
     end
 
     def ==(other)
