@@ -30,6 +30,7 @@ require "y2storage/dialogs/guided_setup/select_filesystem"
 module Y2Storage
   module Dialogs
     # Class to control the guided setup workflow.
+    #
     # Calculates the proposal settings to be used in the next proposal attempt.
     class GuidedSetup
       Yast.import "Sequencer"
@@ -37,7 +38,10 @@ module Y2Storage
       using Y2Storage::Refinements::SizeCasts
       # @return [ProposalSettings] settings specified by the user
       attr_reader :settings
-      attr_reader :devicegraph, :disks_data
+      # Currently probed devicegraph
+      attr_reader :devicegraph
+      # Disks data needed by dialogs, @see read_disks_data
+      attr_reader :disks_data
 
       def initialize(devicegraph, settings)
         @devicegraph = devicegraph
@@ -45,6 +49,9 @@ module Y2Storage
         @disks_data = read_disks_data
       end
 
+      # Executes steps of the wizard. Updates settings with user
+      # selections if the wizard is completed.
+      # @return [Symbol] last step result.
       def run
         settings = @settings.dup
 
@@ -70,6 +77,9 @@ module Y2Storage
 
     protected
 
+      # Inspects each disk and obtains information data for the dialogs,
+      # for example, systems installed into the disk.
+      # @return [Array<Hash>] disks data, see @disk_data.
       def read_disks_data
         analyzer = Y2Storage::DiskAnalyzer.new(devicegraph)
         disks = analyzer.candidate_disks
@@ -77,6 +87,8 @@ module Y2Storage
         disks.map { |d| disk_data(d, installed_systems[d.name]) }
       end
 
+      # Information data of a disk.
+      # @return [Hash] disk data.
       def disk_data(disk, installed_systems)
         label = ([disk.name, DiskSize.new(disk.size)] + installed_systems).join(", ")
         {

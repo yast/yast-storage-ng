@@ -37,10 +37,6 @@ module Y2Storage
 
       protected
 
-        def label
-          "Guided Setup - step 3"
-        end
-
         def dialog_title
           _("Partitioning Scheme")
         end
@@ -112,7 +108,7 @@ module Y2Storage
         end
 
         def password_blank?
-          return false unless widget_value(:password).to_s.empty?
+          return false unless widget_value(:password).empty?
           Yast::Report.Warning(_("A password is needed"))
           true
         end
@@ -154,6 +150,8 @@ module Y2Storage
           password.split(//).all? { |c| PASS_ALLOWED_CHARS.include?(c) }
         end
 
+        # Check password strength using cracklib.
+        # @return[String] crack lib message, empty ("") if successful.
         def crack_password
           Yast::InstExtensionImage.with_extension("cracklib-dict-full") do
             Yast::SCR.Execute(Yast::Path.new(".crack"), password)
