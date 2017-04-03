@@ -34,7 +34,12 @@ describe Y2Storage::Proposal::VolumesGenerator do
     let(:swap) { ::Storage::FsType_swap }
     let(:btrfs) { ::Storage::FsType_BTRFS }
 
-    let(:settings) { Y2Storage::ProposalSettings.new }
+    let(:settings) do
+      # Set arch to s390 for subvolumes tests
+      allow(Yast::Arch).to receive(:x86_64).and_return false
+      allow(Yast::Arch).to receive(:s390).and_return true
+      Y2Storage::ProposalSettings.new
+    end
     let(:analyzer) { instance_double("Y2Storage::DiskAnalyzer") }
     let(:swap_partitions) { [] }
     let(:boot_checker) { instance_double("Y2Storage::BootRequirementChecker") }
@@ -224,6 +229,7 @@ describe Y2Storage::Proposal::VolumesGenerator do
       end
 
       context "if Btrfs is used" do
+        let(:root) { subject.all_volumes.detect { |v| v.mount_point == "/" } }
         before do
           settings.root_filesystem_type = btrfs
         end
@@ -235,6 +241,53 @@ describe Y2Storage::Proposal::VolumesGenerator do
               min:             17.5.GiB,
               max:             35.GiB,
               filesystem_type: btrfs
+            )
+          )
+        end
+
+        it "has subvolumes" do
+          expect(root.subvolumes).not_to be_nil
+          expect(root.subvolumes?).to be true
+        end
+
+        it "has a subvolume var/log" do
+          expect(root.subvolumes).to include(
+            an_object_with_fields(
+              path:          "var/log",
+              copy_on_write: true,
+              archs:         nil
+            )
+          )
+        end
+
+        it "has a NoCOW subvolume var/lib/mariadb" do
+          expect(root.subvolumes).to include(
+            an_object_with_fields(
+              path:          "var/lib/mariadb",
+              copy_on_write: false,
+              archs:         nil
+            )
+          )
+        end
+
+        it "has an arch-specific subvolume boot/grub2/s390x-emu on s390" do
+          # Arch is s390 in these tests - see allow(Yast::Arch) in let(:settings)
+          expect(root.subvolumes).to include(
+            an_object_with_fields(
+              path:          "boot/grub2/s390x-emu",
+              copy_on_write: true,
+              archs:         ["s390"]
+            )
+          )
+        end
+
+        it "does not have an arch-specific subvolume boot/grub2/x86_64-efi on s390" do
+          # Arch is s390 in these tests - see allow(Yast::Arch) in let(:settings)
+          expect(root.subvolumes).not_to include(
+            an_object_with_fields(
+              path:          "boot/grub2/x86_64-efi",
+              copy_on_write: true,
+              archs:         ["x86_64"]
             )
           )
         end

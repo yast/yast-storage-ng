@@ -88,7 +88,7 @@ module Y2Storage
       @btrfs_increase_percentage     = 300.0
       @btrfs_default_subvolume       = "@"
       @root_subvolume_read_only      = false
-      @subvolumes                    = nil
+      @subvolumes                    = PlannedSubvol.fallback_list
 
       # Not yet in control.xml
       @home_min_disk_size            = DiskSize.GiB(10)
