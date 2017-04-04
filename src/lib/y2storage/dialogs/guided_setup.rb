@@ -49,17 +49,14 @@ module Y2Storage
         @disks_data = read_disks_data
       end
 
-      # Executes steps of the wizard. Updates settings with user
-      # selections if the wizard is completed.
+      # Executes steps of the wizard. Updates settings with user selections.
       # @return [Symbol] last step result.
       def run
-        settings = @settings.dup
-
         aliases = {
-          "select_disks"      => -> { SelectDisks.new(self, settings).run },
-          "select_root_disk"  => -> { SelectRootDisk.new(self, settings).run },
-          "select_scheme"     => -> { SelectScheme.new(self, settings).run },
-          "select_filesystem" => -> { SelectFilesystem.new(self, settings).run }
+          "select_disks"      => -> { SelectDisks.new(self).run },
+          "select_root_disk"  => -> { SelectRootDisk.new(self).run },
+          "select_scheme"     => -> { SelectScheme.new(self).run },
+          "select_filesystem" => -> { SelectFilesystem.new(self).run }
         }
 
         sequence = {
@@ -70,9 +67,7 @@ module Y2Storage
           "select_filesystem" => { next: :next, back: :back,  abort: :abort }
         }
 
-        result = Yast::Sequencer.Run(aliases, sequence)
-        @settings = settings if result == :next
-        result
+        Yast::Sequencer.Run(aliases, sequence)
       end
 
     protected
@@ -90,10 +85,11 @@ module Y2Storage
       # Information data of a disk.
       # @return [Hash] disk data.
       def disk_data(disk, installed_systems)
-        label = ([disk.name, DiskSize.new(disk.size)] + installed_systems).join(", ")
+        data = [disk.name, DiskSize.new(disk.size)]
+        data << installed_systems if installed_systems
         {
           name:  disk.name,
-          label: label
+          label: data.join(", ")
         }
       end
     end

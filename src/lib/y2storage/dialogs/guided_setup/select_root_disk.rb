@@ -114,7 +114,7 @@ module Y2Storage
       private
 
         def disks
-          settings.candidate_devices
+          settings.candidate_devices || []
         end
       end
     end
