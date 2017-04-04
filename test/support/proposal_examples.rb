@@ -23,8 +23,6 @@
 require "y2storage/refinements"
 
 RSpec.shared_examples "proposed layout" do
-  using Y2Storage::Refinements::TestDevicegraph
-
   it "proposes the expected layout" do
     proposal.propose
     expect(proposal.devices.to_str).to eq expected.to_str

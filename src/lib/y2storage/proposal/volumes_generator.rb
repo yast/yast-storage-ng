@@ -92,7 +92,7 @@ module Y2Storage
         if @settings.enlarge_swap_for_suspend
           swap_size = [ram_size, swap_size].max
         end
-        vol = PlannedVolume.new("swap", ::Storage::FsType_SWAP)
+        vol = PlannedVolume.new("swap", Filesystems::Type::SWAP)
         vol.plain_partition = false
         vol.logical_volume_name = "swap"
         # NOTE: Enforcing the re-use of an existing partition limits the options
@@ -115,12 +115,12 @@ module Y2Storage
       # It returns the smaller partition reported by disk_analyzer that is big
       # enough for our purposes.
       #
-      # @return [::Storage::Partition]
+      # @return [Partition]
       def reusable_swap(required_size)
         return nil if settings.use_lvm || settings.use_encryption
 
         partitions = disk_analyzer.swap_partitions.values.flatten
-        partitions.select! { |part| part.size >= required_size.to_i }
+        partitions.select! { |part| part.size >= required_size }
         # Use #name in case of #size tie to provide stable sorting
         partitions.sort_by { |part| [part.size, part.name] }.first
       end

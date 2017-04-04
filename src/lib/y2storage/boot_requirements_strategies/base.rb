@@ -24,9 +24,9 @@
 require "yast"
 require "storage/patches"
 require "y2storage/disk_size"
+require "y2storage/filesystems/type"
 require "y2storage/planned_volume"
 require "y2storage/planned_volumes_list"
-require "y2storage/refinements"
 
 module Y2Storage
   module BootRequirementsStrategies
@@ -37,7 +37,6 @@ module Y2Storage
     # requirements
     class Base
       include Yast::Logger
-      using Refinements::Disk
 
       def initialize(settings, disk_analyzer)
         @settings = settings
@@ -62,7 +61,7 @@ module Y2Storage
       end
 
       def boot_volume
-        vol = PlannedVolume.new("/boot", ::Storage::FsType_EXT4)
+        vol = PlannedVolume.new("/boot", Filesystems::Type::EXT4)
         vol.disk = settings.root_device
         vol.min_disk_size = DiskSize.MiB(100)
         vol.max_disk_size = DiskSize.MiB(500)
@@ -73,17 +72,15 @@ module Y2Storage
 
       def root_ptable_type
         return nil unless root_disk
-        return root_disk.partition_table.type if root_disk.has_partition_table
+        return root_disk.partition_table.type unless root_disk.partition_table.nil?
 
         # If the disk is used for "/", there will be a partition table on it
         root_disk.preferred_ptable_type
       end
 
       def root_ptable_type?(type)
-        if !type.is_a?(Fixnum)
-          type = ::Storage.const_get(:"PtType_#{type.to_s.upcase}")
-        end
-        root_ptable_type == type
+        return false if root_ptable_type.nil?
+        root_ptable_type.is?(type)
       end
     end
   end

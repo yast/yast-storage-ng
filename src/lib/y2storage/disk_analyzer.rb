@@ -25,7 +25,9 @@ require "yast"
 require "fileutils"
 require "storage"
 require "y2storage/disk_size"
-require "y2storage/refinements"
+require "y2storage/disk"
+require "y2storage/lvm_pv"
+require "y2storage/partition_id"
 require "y2storage/existing_filesystem"
 
 Yast.import "Arch"
@@ -45,32 +47,30 @@ module Y2Storage
   #
   class DiskAnalyzer
     include Yast::Logger
-    using Refinements::Disk
-    using Refinements::DevicegraphLists
 
     LINUX_PARTITION_IDS =
       [
-        ::Storage::ID_LINUX,
-        ::Storage::ID_SWAP,
-        ::Storage::ID_LVM,
-        ::Storage::ID_RAID
+        PartitionId::LINUX,
+        PartitionId::SWAP,
+        PartitionId::LVM,
+        PartitionId::RAID
       ]
 
     WINDOWS_PARTITION_IDS =
       [
-        ::Storage::ID_NTFS,
-        ::Storage::ID_DOS32,
-        ::Storage::ID_DOS16,
-        ::Storage::ID_DOS12,
-        ::Storage::ID_WINDOWS_BASIC_DATA,
-        ::Storage::ID_MICROSOFT_RESERVED
+        PartitionId::NTFS,
+        PartitionId::DOS32,
+        PartitionId::DOS16,
+        PartitionId::DOS12,
+        PartitionId::WINDOWS_BASIC_DATA,
+        PartitionId::MICROSOFT_RESERVED
       ]
 
     NO_INSTALLATION_IDS =
       [
-        ::Storage::ID_SWAP,
-        ::Storage::ID_EXTENDED,
-        ::Storage::ID_LVM
+        PartitionId::SWAP,
+        PartitionId::EXTENDED,
+        PartitionId::LVM
       ]
 
     DEFAULT_DISK_CHECK_LIMIT = 10
@@ -97,13 +97,20 @@ module Y2Storage
       @devicegraph = devicegraph
       @disk_check_limit = disk_check_limit
       @scope = scope
+      # FIXME: The following line is here just to provide compatibility with
+      # code using libstorage directly.
+      # Remove once we adapt everything to the new API. So far
+      # DiskAnalyzer is only used in the proposal (already adapted) and
+      # yast-country (pending)
+      # @deprecated
+      @devicegraph = Devicegraph.new(devicegraph) if devicegraph.is_a?(Storage::Devicegraph)
     end
 
     # Look up devicegraph element by device name.
     #
-    # @return [::Storage::Device]
+    # @return [Device]
     def device_by_name(name)
-      devicegraph.disks.with(name: name).first
+      Disk.find_by_name(devicegraph, name)
     end
 
     # Partitions that can be used as EFI system partitions.
@@ -114,40 +121,40 @@ module Y2Storage
     #
     # @see #scope
     #
-    # @return [Hash{String => Array<::Storage::Partition>}] see {#partitions_with_id}
+    # @return [Hash{String => Array<Partition>}] see {#partitions_with_id}
     def efi_partitions
-      @efi_partitions ||= partitions_with_id(::Storage::ID_ESP, "EFI")
+      @efi_partitions ||= partitions_with_id(PartitionId::ESP, "EFI")
     end
 
     # Partitions that can be used as PReP partition
     # @see #scope
     #
-    # @return [Hash{String => Array<::Storage::Partition>}] see {#partitions_with_id}
+    # @return [Hash{String => Array<Partition>}] see {#partitions_with_id}
     def prep_partitions
-      @prep_partitions ||= partitions_with_id(::Storage::ID_PREP, "PReP")
+      @prep_partitions ||= partitions_with_id(PartitionId::PREP, "PReP")
     end
 
     # GRUB (gpt_bios) partitions
     # @see #scope
     #
-    # @return [Hash{String => Array<::Storage::Partition>}] see {#partitions_with_id}
+    # @return [Hash{String => Array<Partition>}] see {#partitions_with_id}
     def grub_partitions
-      @grub_partitions ||= partitions_with_id(::Storage::ID_BIOS_BOOT, "GRUB")
+      @grub_partitions ||= partitions_with_id(PartitionId::BIOS_BOOT, "GRUB")
     end
 
     # Partitions that can be used as swap space
     # @see #scope
     #
-    # @return [Hash{String => Array<::Storage::Partition>}] see {#partitions_with_id}
+    # @return [Hash{String => Array<Partition>}] see {#partitions_with_id}
     def swap_partitions
-      @swap_partitions ||= partitions_with_id(::Storage::ID_SWAP, "Swap")
+      @swap_partitions ||= partitions_with_id(PartitionId::SWAP, "Swap")
     end
 
     # Linux partitions. This may be a normal Linux partition (type 0x83), a
     # Linux swap partition (type 0x82), an LVM partition, or a RAID partition.
     # @see #scope
     #
-    # @return [Hash{String => Array<::Storage::Partition>}] see {#partitions_with_id}
+    # @return [Hash{String => Array<Partition>}] see {#partitions_with_id}
     def linux_partitions
       @linux_partitions ||= partitions_with_id(LINUX_PARTITION_IDS, "Linux")
     end
@@ -156,16 +163,16 @@ module Y2Storage
     # a LVM physical volume.
     #
     # The result is a Hash in which each key is the name of a volume group
-    # and the value is an Array of ::Storage::Partition objects
+    # and the value is an Array of Partition objects
     #
     # Take into account that the result is, as always, limited by #scope. Thus,
     # physical volumes from other disks will not be present, even if they are
     # part of the same volume group.
     #
-    # @return [Hash{String => Array<::Storage::Partition>}]
+    # @return [Hash{String => Array<Partition>}]
     def used_lvm_partitions
       @used_lvm_partitions ||= begin
-        lvm_parts = partitions_with_id(::Storage::ID_LVM, "LVM").values.flatten
+        lvm_parts = partitions_with_id(PartitionId::LVM, "LVM").values.flatten
         result = lvm_parts.each_with_object({}) do |part, hash|
           vg_name = vg_for(part)
           next unless vg_name
@@ -215,7 +222,7 @@ module Y2Storage
     #
     # @see #scope
     #
-    # @return [Hash{String => Array<::Storage::Partition>}] see {#partitions_with_id}
+    # @return [Hash{String => Array<Partition>}] see {#partitions_with_id}
     def windows_partitions
       @windows_partitions ||= begin
         result = find_windows_partitions
@@ -237,9 +244,9 @@ module Y2Storage
 
     # Array with all disks in the devicegraph
     #
-    # @return [Array<::Storage::Disk>]
+    # @return [Array<Disk>]
     def all_disks
-      devicegraph.all_disks.to_a
+      devicegraph.disks
     end
 
     # List of disks in the devicegraph
@@ -274,7 +281,7 @@ module Y2Storage
     # Disks that are suitable for installing Linux.
     # Put any USB disks to the end of that array.
     #
-    # @return [Array<::Storage::Disk>] device names of candidate disks
+    # @return [Array<Disk>] device names of candidate disks
     def candidate_disk_objects
       usb_disks, non_usb_disks = all_disks.partition { |d| d.usb? }
       log.info("USB Disks:     #{dev_names(usb_disks)}")
@@ -306,11 +313,11 @@ module Y2Storage
       scoped_disks.each do |name|
         disk = device_by_name(name)
         gap = nil
-        if disk.has_partition_table && disk.partition_table.type == ::Storage::PtType_MSDOS
-          region1 = disk.partition_table.partitions.to_a.min do |x, y|
+        if disk.partition_table && disk.partition_table.type.is?(:msdos)
+          region1 = disk.partitions.min do |x, y|
             x.region.start <=> y.region.start
           end
-          gap = DiskSize.B(region1.region.start * region1.region.block_size) if region1
+          gap = region1.region.block_size * region1.region.start if region1
         end
         gaps[name] = gap
       end
@@ -344,7 +351,7 @@ module Y2Storage
     # Check if device name 'partition' is a MS Windows partition that could
     # possibly be resized.
     #
-    # @param partition [::Storage::Partition] partition to check
+    # @param partition [Partition] partition to check
     #
     # @return [Boolean] 'true' if it is a Windows partition, 'false' if not.
     #
@@ -362,8 +369,9 @@ module Y2Storage
     # @param disk_name [String] name of the disk to check
     # @return [DevicesLists::PartitionsList]
     def possible_windows_partitions(disk_name)
-      prim_parts = disks.with(name: disk_name).partitions.with(type: Storage::PartitionType_PRIMARY)
-      prim_parts.with(id: WINDOWS_PARTITION_IDS)
+      devicegraph.partitions.select do |p|
+        p.disk.name == disk_name && p.type.is?(:primary) && p.id.is?(*WINDOWS_PARTITION_IDS)
+      end
     end
 
     # Filesystem associated to a given block device
@@ -386,24 +394,22 @@ module Y2Storage
     #
     def installation_disk?(disk_name)
       log.info("Checking if #{disk_name} is an installation disk")
-      begin
-        disk = ::Storage::Disk.find_by_name(devicegraph, disk_name)
-        disk.partition_table.partitions.each do |partition|
-          if NO_INSTALLATION_IDS.include?(partition.id)
-            log.info("Skipping #{partition} (ID 0x#{partition.id.to_s(16)})")
-            next
-          elsif installation_volume?(partition.name)
-            return true
-          end
-        end
-        return false # if we get here, there is a partition table.
-      rescue RuntimeError => ex # FIXME: rescue ::Storage::Exception when SWIG bindings are fixed
-        log.info("CAUGHT exception: #{ex} for #{disk}")
-      end
+      disk = device_by_name(disk_name)
 
       # Check if there is a filesystem directly on the disk (without partition table).
       # This is very common for installation media such as USB sticks.
-      installation_volume?(disk_name)
+      return installation_volume?(disk_name) if disk.partition_table.nil?
+
+      disk.partitions.each do |partition|
+        if NO_INSTALLATION_IDS.include?(partition.id)
+          log.info "Skipping #{partition} (ID #{partition.id.inspect})"
+          next
+        elsif installation_volume?(partition.name)
+          return true
+        end
+      end
+
+      false
     end
 
     # Check if a volume (a partition or a disk without a partition table) is
@@ -451,7 +457,7 @@ module Y2Storage
     # @return [Array<String>] names, e.g. ["/dev/sda", "/dev/sdb1", "/dev/sdc3"]
     #
     def dev_names(blk_devices)
-      blk_devices.map(&:to_s)
+      blk_devices.map(&:name)
     end
 
     # Remove any installation disks from 'disks' and return a disks array
@@ -473,19 +479,19 @@ module Y2Storage
     # of) partition id(s).
     #
     # The result is a Hash in which each key is the name of a disk
-    # and the value is an Array of ::Storage::Partition objects
+    # and the value is an Array of Partition objects
     # representing the matching partitions in that disk.
     #
-    # @param ids [::Storage::ID, Array<::Storage::ID>]
+    # @param ids [PartitionId, Array<PartitionId>]
     # @param log_label [String] label to identify the partitions in the logs
-    # @return [Hash{String => Array<::Storage::Partition>}]
+    # @return [Hash{String => Array<Partition>}]
     def partitions_with_id(ids, log_label)
       pairs = scoped_disks.map do |disk_name|
         # Skip extended partitions
-        partitions = disks.with(name: disk_name).partitions.with do |part|
-          part.type != ::Storage::PartitionType_EXTENDED
+        partitions = device_by_name(disk_name).partitions.reject do |part|
+          part.type.is?(:extended)
         end
-        partitions = partitions.with(id: ids).to_a
+        partitions.select! { |p| p.id.is?(*ids) }
         [disk_name, partitions]
       end
       result = Hash[pairs]
@@ -495,19 +501,17 @@ module Y2Storage
 
     # Name of the LVM volume group to which the partition belongs
     #
-    # @param partition [::Storage::Partition]
+    # @param partition [Partition]
     # @return [String] nil if the partition does not hold a physical volume
     def vg_for(partition)
       name = partition.name
-      lvm_pv = ::Storage::LvmPv.all(devicegraph).to_a.detect { |pv| pv.blk_device.name == name }
+      lvm_pv = LvmPv.all(devicegraph).detect { |pv| pv.blk_device.name == name }
       return nil unless lvm_pv
 
-      begin
-        lvm_pv.lvm_vg.vg_name
-      rescue ::Storage::WrongNumberOfChildren
-        # Unassigned PV
-        nil
-      end
+      # Unassigned PV
+      return nil if lvm_pv.lvm_vg.nil?
+
+      lvm_pv.lvm_vg.vg_name
     end
   end
 end

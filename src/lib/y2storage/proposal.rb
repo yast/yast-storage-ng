@@ -26,7 +26,6 @@ require "y2storage/disk_analyzer"
 require "y2storage/proposal/exceptions"
 require "y2storage/proposal/volumes_generator"
 require "y2storage/proposal/devicegraph_generator"
-require "y2storage/refinements/devicegraph_lists"
 
 module Y2Storage
   # Class to calculate a storage proposal to install the system
@@ -44,8 +43,6 @@ module Y2Storage
   #   proposal.settings.use_separate_home = false # raises RuntimeError
   #
   class Proposal
-    using Refinements::DevicegraphLists
-
     include Yast::Logger
 
     # Settings used to calculate the proposal. They cannot be altered after
@@ -58,7 +55,7 @@ module Y2Storage
     attr_reader :volumes
     # Proposed layout of devices, nil if the proposal has not been
     # calculated yet
-    # @return [::Storage::Devicegraph]
+    # @return [Devicegraph]
     attr_reader :devices
 
     def initialize(settings: nil)
@@ -100,7 +97,7 @@ module Y2Storage
     #
     # @param volumes [PlannedVolumesList] list of volumes to accomodate
     # @param settings [ProposalSettings]
-    # @return [::Storage::Devicegraph]
+    # @return [Devicegraph]
     def devicegraph(volumes, settings)
       generator = DevicegraphGenerator.new(settings)
       generator.devicegraph(volumes, initial_graph, disk_analyzer)
@@ -114,7 +111,7 @@ module Y2Storage
     end
 
     def initial_graph
-      @initial_graph ||= StorageManager.instance.probed
+      @initial_graph ||= StorageManager.instance.y2storage_probed
     end
 
     # Copy of the original settings including some calculated and necessary
@@ -166,7 +163,7 @@ module Y2Storage
     # @param disk_names [Array<String>] unsorted list of names
     # @return [Array<String>] sorted list of names
     def sorted_candidates(disk_names)
-      candidate_disks = initial_graph.disks.with(name: disk_names).to_a
+      candidate_disks = initial_graph.disks.select { |d| disk_names.include?(d.name) }
       candidate_disks = candidate_disks.sort_by(&:size).reverse
       candidate_disks.map(&:name)
     end

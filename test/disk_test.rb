@@ -30,8 +30,7 @@ describe Y2Storage::Disk do
     fake_scenario(scenario)
   end
   let(:scenario) { "gpt_msdos_and_empty" }
-  let(:devicegraph) { Y2Storage::StorageManager.instance.y2storage_probed }
-  subject(:disk) { Y2Storage::Disk.find_by_name(devicegraph, disk_name) }
+  subject(:disk) { Y2Storage::Disk.find_by_name(fake_devicegraph, disk_name) }
 
   describe "#free_spaces" do
 
@@ -229,24 +228,24 @@ describe Y2Storage::Disk do
     let(:scenario) { "mixed_disks" }
 
     it "returns the disk object with the searched device name" do
-      disk = described_class.find_by_name_or_partition(devicegraph, "/dev/sdb")
+      disk = described_class.find_by_name_or_partition(fake_devicegraph, "/dev/sdb")
       expect(disk).to be_a Y2Storage::Disk
       expect(disk.name).to eq "/dev/sdb"
     end
 
     it "returns the disk object containing a partition with the searched device name" do
-      disk = described_class.find_by_name_or_partition(devicegraph, "/dev/sdb1")
+      disk = described_class.find_by_name_or_partition(fake_devicegraph, "/dev/sdb1")
       expect(disk).to be_a Y2Storage::Disk
       expect(disk.name).to eq "/dev/sdb"
       expect(disk.partitions.map(&:name)).to include "/dev/sdb1"
     end
 
     it "returns nil if there are no disks or partitions with the searched device name" do
-      expect(described_class.find_by_name_or_partition(devicegraph, "/dev/sda10")).to be_nil
+      expect(described_class.find_by_name_or_partition(fake_devicegraph, "/dev/sda10")).to be_nil
     end
 
     it "returns nil when searching for an invalid device name" do
-      expect(described_class.find_by_name_or_partition(devicegraph, "where art thou?")).to be_nil
+      expect(described_class.find_by_name_or_partition(fake_devicegraph, "where art thou?")).to be_nil
     end
   end
 

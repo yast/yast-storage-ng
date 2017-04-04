@@ -21,8 +21,6 @@
 # find current contact information at www.suse.com.
 
 RSpec.shared_context "proposal" do
-
-  using Y2Storage::Refinements::TestDevicegraph
   using Y2Storage::Refinements::SizeCasts
 
   before do
@@ -33,7 +31,7 @@ RSpec.shared_context "proposal" do
       !!(partition.filesystem.label =~ /indows/)
     end
 
-    allow_any_instance_of(::Storage::BlkFilesystem).to receive(:detect_resize_info)
+    allow_any_instance_of(Y2Storage::Filesystems::BlkFilesystem).to receive(:detect_resize_info)
       .and_return(resize_info)
 
     allow(Yast::Arch).to receive(:x86_64).and_return(architecture == :x86)
@@ -51,7 +49,7 @@ RSpec.shared_context "proposal" do
   let(:disk_analyzer) { Y2Storage::DiskAnalyzer.new(fake_devicegraph, scope: :install_candidates) }
   let(:storage_arch) { instance_double("::Storage::Arch") }
   let(:resize_info) do
-    instance_double("::Storage::ResizeInfo", resize_ok: true, min_size: 40.GiB.to_i)
+    instance_double("Y2Storage::ResizeInfo", resize_ok?: true, min_size: 40.GiB)
   end
   let(:separate_home) { false }
   let(:lvm) { false }
@@ -74,6 +72,6 @@ RSpec.shared_context "proposal" do
     file_name.concat("-enc") if encrypt
     file_name.concat("-lvm") if lvm
     file_name.concat("-sep-home") if separate_home
-    ::Storage::Devicegraph.new_from_file(output_file_for(file_name))
+    Y2Storage::Devicegraph.new_from_file(output_file_for(file_name))
   end
 end

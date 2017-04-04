@@ -41,11 +41,11 @@ module Yast
       end
 
       def fake_devicegraph
-        Y2Storage::StorageManager.instance.probed
+        Y2Storage::StorageManager.instance.y2storage_probed
       end
 
       def analyzer_part(name = "", disk_size = Y2Storage::DiskSize.MiB(10))
-        instance_double("::Storage::Partition", name: name, size: disk_size.to_i)
+        instance_double("::Storage::Partition", name: name, size: disk_size)
       end
 
       def planned_vol(attrs = {})
@@ -53,7 +53,7 @@ module Yast
         mount_point = attrs.delete(:mount_point)
         type = attrs.delete(:type)
         if type.is_a?(::String) || type.is_a?(Symbol)
-          type = ::Storage.const_get("FsType_" + type.to_s.upcase)
+          type = Y2Storage::Filesystems::Type.const_get(type.to_s.upcase)
         end
         volume = Y2Storage::PlannedVolume.new(mount_point, type)
         attrs.each_pair do |key, value|

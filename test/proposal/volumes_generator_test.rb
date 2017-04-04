@@ -29,10 +29,10 @@ describe Y2Storage::Proposal::VolumesGenerator do
     using Y2Storage::Refinements::SizeCasts
 
     # Just to shorten
-    let(:xfs) { ::Storage::FsType_XFS }
-    let(:vfat) { ::Storage::FsType_VFAT }
-    let(:swap) { ::Storage::FsType_swap }
-    let(:btrfs) { ::Storage::FsType_BTRFS }
+    let(:xfs) { Y2Storage::Filesystems::Type::XFS }
+    let(:vfat) { Y2Storage::Filesystems::Type::VFAT }
+    let(:swap) { Y2Storage::Filesystems::Type::SWAP }
+    let(:btrfs) { Y2Storage::Filesystems::Type::BTRFS }
 
     let(:settings) do
       # Set arch to s390 for subvolumes tests
@@ -64,8 +64,8 @@ describe Y2Storage::Proposal::VolumesGenerator do
 
     it "includes the volumes needed by BootRequirementChecker" do
       expect(subject.all_volumes).to include(
-        an_object_with_fields(mount_point: "/one_boot", filesystem_type: xfs),
-        an_object_with_fields(mount_point: "/other_boot", filesystem_type: vfat)
+        an_object_having_attributes(mount_point: "/one_boot", filesystem_type: xfs),
+        an_object_having_attributes(mount_point: "/other_boot", filesystem_type: vfat)
       )
     end
 
@@ -82,13 +82,13 @@ describe Y2Storage::Proposal::VolumesGenerator do
 
         it "includes a brand new swap volume and no swap reusing" do
           expect(swap_volumes).to contain_exactly(
-            an_object_with_fields(reuse: nil)
+            an_object_having_attributes(reuse: nil)
           )
         end
 
         it "correctly sets the LVM properties for the new swap" do
           expect(swap_volumes).to contain_exactly(
-            an_object_with_fields(plain_partition: false, logical_volume_name: "swap")
+            an_object_having_attributes(plain_partition: false, logical_volume_name: "swap")
           )
         end
       end
@@ -98,7 +98,7 @@ describe Y2Storage::Proposal::VolumesGenerator do
 
         it "includes a brand new swap volume and no swap reusing" do
           expect(swap_volumes).to contain_exactly(
-            an_object_with_fields(reuse: nil)
+            an_object_having_attributes(reuse: nil)
           )
         end
       end
@@ -113,7 +113,7 @@ describe Y2Storage::Proposal::VolumesGenerator do
 
           it "includes a brand new swap volume and no swap reusing" do
             expect(swap_volumes).to contain_exactly(
-              an_object_with_fields(reuse: nil)
+              an_object_having_attributes(reuse: nil)
             )
           end
         end
@@ -122,7 +122,7 @@ describe Y2Storage::Proposal::VolumesGenerator do
           context "without encryption" do
             it "includes a volume to reuse the existing swap and no new swap" do
               expect(swap_volumes).to contain_exactly(
-                an_object_with_fields(reuse: "/dev/sdaX")
+                an_object_having_attributes(reuse: "/dev/sdaX")
               )
             end
           end
@@ -134,7 +134,7 @@ describe Y2Storage::Proposal::VolumesGenerator do
 
             it "includes a brand new swap volume and no swap reusing" do
               expect(swap_volumes).to contain_exactly(
-                an_object_with_fields(reuse: nil)
+                an_object_having_attributes(reuse: nil)
               )
             end
           end
@@ -170,7 +170,7 @@ describe Y2Storage::Proposal::VolumesGenerator do
 
       it "includes a /home volume with the configured settings" do
         expect(subject.all_volumes).to include(
-          an_object_with_fields(
+          an_object_having_attributes(
             mount_point:     "/home",
             min:             settings.home_min_disk_size,
             max:             settings.home_max_disk_size,
@@ -193,7 +193,7 @@ describe Y2Storage::Proposal::VolumesGenerator do
 
       it "does not include a /home volume" do
         expect(subject.all_volumes).to_not include(
-          an_object_with_fields(mount_point: "/home")
+          an_object_having_attributes(mount_point: "/home")
         )
       end
     end
@@ -218,7 +218,7 @@ describe Y2Storage::Proposal::VolumesGenerator do
 
         it "uses the normal sizes" do
           expect(subject.all_volumes).to include(
-            an_object_with_fields(
+            an_object_having_attributes(
               mount_point:     "/",
               min:             10.GiB,
               max:             20.GiB,
@@ -236,7 +236,7 @@ describe Y2Storage::Proposal::VolumesGenerator do
 
         it "increases all the sizes by btrfs_increase_percentage" do
           expect(subject.all_volumes).to include(
-            an_object_with_fields(
+            an_object_having_attributes(
               mount_point:     "/",
               min:             17.5.GiB,
               max:             35.GiB,

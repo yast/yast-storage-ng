@@ -26,7 +26,7 @@ RSpec.shared_examples "proposed boot partition" do
   using Y2Storage::Refinements::SizeCasts
 
   it "requires /boot to be ext4 with at least 100 MiB" do
-    expect(boot_part.filesystem_type).to eq ::Storage::FsType_EXT4
+    expect(boot_part.filesystem_type.is?(:ext4)).to eq true
     expect(boot_part.min).to eq 100.MiB
   end
 
@@ -44,7 +44,7 @@ RSpec.shared_examples "proposed GRUB partition" do
   using Y2Storage::Refinements::SizeCasts
 
   it "requires it to have the correct id" do
-    expect(grub_part.partition_id).to eq ::Storage::ID_BIOS_BOOT
+    expect(grub_part.partition_id.is?(:bios_boot)).to eq true
   end
 
   it "requires it to be a non-encrypted partition" do
@@ -66,7 +66,7 @@ RSpec.shared_examples "proposed EFI partition" do
   using Y2Storage::Refinements::SizeCasts
 
   it "requires /boot/efi to be vfat with at least 33 MiB" do
-    expect(efi_part.filesystem_type).to eq ::Storage::FsType_VFAT
+    expect(efi_part.filesystem_type.is?(:vfat)).to eq true
     expect(efi_part.min).to eq 33.MiB
   end
 
@@ -109,7 +109,7 @@ RSpec.shared_examples "proposed /boot/zipl partition" do
   using Y2Storage::Refinements::SizeCasts
 
   it "requires /boot/zipl to be ext2 with at least 100 MiB" do
-    expect(zipl_part.filesystem_type).to eq ::Storage::FsType_EXT2
+    expect(zipl_part.filesystem_type.is?(:ext2)).to eq true
     expect(zipl_part.min).to eq 100.MiB
   end
 

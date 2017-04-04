@@ -22,6 +22,7 @@
 # find current contact information at www.suse.com.
 
 require "y2storage/boot_requirements_strategies/base"
+require "y2storage/partition_id"
 
 module Y2Storage
   module BootRequirementsStrategies
@@ -52,7 +53,7 @@ module Y2Storage
       def prep_volume
         vol = PlannedVolume.new(nil)
         # So far we are always using msdos partition ids
-        vol.partition_id = ::Storage::ID_PREP
+        vol.partition_id = PartitionId::PREP
         vol.min_disk_size = DiskSize.KiB(256)
         vol.max_disk_size = DiskSize.MiB(8)
         vol.desired_disk_size = DiskSize.MiB(1)

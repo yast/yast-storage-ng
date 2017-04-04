@@ -22,6 +22,8 @@
 # find current contact information at www.suse.com.
 
 require "y2storage/boot_requirements_strategies/base"
+require "y2storage/partition_id"
+require "y2storage/filesystems/type"
 
 module Y2Storage
   module BootRequirementsStrategies
@@ -36,12 +38,12 @@ module Y2Storage
     protected
 
       def efi_volume
-        vol = PlannedVolume.new("/boot/efi", ::Storage::FsType_VFAT)
+        vol = PlannedVolume.new("/boot/efi", Filesystems::Type::VFAT)
         if reusable_efi
           vol.reuse = reusable_efi.name
         else
           # So far we are always using msdos partition ids
-          vol.partition_id = ::Storage::ID_ESP
+          vol.partition_id = PartitionId::ESP
           vol.min_disk_size = DiskSize.MiB(33)
           vol.max_disk_size = DiskSize.unlimited
           vol.desired_disk_size = DiskSize.MiB(500)

@@ -24,11 +24,11 @@
 require "fileutils"
 require "storage"
 require "y2storage/planned_volume"
+require "y2storage/partition"
 require "y2storage/disk_size"
 require "y2storage/free_disk_space"
 require "y2storage/proposal/space_distribution_calculator"
 require "y2storage/proposal/partition_killer"
-require "y2storage/refinements"
 
 module Y2Storage
   class Proposal
@@ -36,9 +36,6 @@ module Y2Storage
     # reusing existing unpartitioned space, by deleting existing partitions
     # or by resizing an existing Windows partition.
     class SpaceMaker
-      using Refinements::Devicegraph
-      using Refinements::DevicegraphLists
-      using Refinements::Disk
       include Yast::Logger
 
       attr_accessor :settings
@@ -46,7 +43,7 @@ module Y2Storage
 
       # Initialize.
       #
-      # @param original_graph [::Storage::Devicegraph] initial devicegraph
+      # @param original_graph [Devicegraph] initial devicegraph
       # @param disk_analyzer [DiskAnalyzer] information about original_graph
       # @param lvm_helper [Proposal::LvmHelper] contains information about the
       #     LVM planned volumes and how to make space for them
@@ -68,8 +65,8 @@ module Y2Storage
       # @param no_lvm_volumes [PlannedVolumesList] set of non-LVM volumes to
       #     make space for. The LVM volumes are already handled by #lvm_helper.
       # @return [Hash] a hash with three elements:
-      #   devicegraph: [::Storage::Devicegraph] resulting devicegraph
-      #   deleted_partitions: [Array<::Storage::Partition>] partitions that
+      #   devicegraph: [Devicegraph] resulting devicegraph
+      #   deleted_partitions: [Array<Partition>] partitions that
       #     were in the original devicegraph but are not in the resulting one
       #   space_distribution: [SpaceDistribution] proposed distribution of
       #     volumes, including new PVs if necessary
@@ -115,9 +112,9 @@ module Y2Storage
       # Partitions from the original devicegraph that are not present in the
       # result of the last call to #provide_space
       #
-      # @return [Array<::Storage::Partition>]
+      # @return [Array<Partition>]
       def deleted_partitions
-        original_graph.partitions.with(name: @deleted_names).to_a
+        original_graph.partitions.select { |p| @deleted_names.include?(p.name) }
       end
 
       # @return [Hash{String => PlannedVolumesList}]
@@ -179,7 +176,7 @@ module Y2Storage
 
       # List of free spaces in the given devicegraph
       #
-      # @param graph [::Storage::Devicegraph]
+      # @param graph [Devicegraph]
       # @param disk [String] optional disk name to restrict result to
       # @return [Array<FreeDiskSpace>]
       def free_spaces(graph, disk = nil)
@@ -190,12 +187,12 @@ module Y2Storage
 
       # List of candidate disks in the given devicegraph
       #
-      # @param devicegraph [::Storage::Devicegraph]
+      # @param devicegraph [Devicegraph]
       # @param disk [String] optional disk name to restrict result to
       # @return [DisksList]
       def disks_for(devicegraph, disk = nil)
         filter = disk || candidate_disk_names
-        devicegraph.disks.with(name: filter)
+        devicegraph.disks.select { |d| filter.include?(d.name) }
       end
 
       # @return [Array<String>]
@@ -232,9 +229,9 @@ module Y2Storage
         log.info "Didn't manage to free enough space by resizing Windows" unless success
       end
 
-      # @return [Hash{String => ::Storage::Partition}]
+      # @return [Hash{String => Partition}]
       def partitions_by_disk(part_names)
-        partitions = new_graph.partitions.with(name: part_names)
+        partitions = new_graph.partitions.select { |p| part_names.include?(p.name) }
         partitions.each_with_object({}) do |partition, hash|
           disk_name = partition.partitionable.name
           hash[disk_name] ||= []
@@ -261,9 +258,9 @@ module Y2Storage
       # The list is sorted so the partitions with more recoverable space are
       # listed first.
       #
-      # @param partitions [Array<::Storage::Partition>] list of partitions
+      # @param partitions [Array<Partition>] list of partitions
       # @return [Array<Hash>] each element contains
-      #     :partition (::Storage::Partition) and :recoverable_size (DiskSize)
+      #     :partition (Partition) and :recoverable_size (DiskSize)
       def sorted_resizables(partitions)
         resizables = partitions.map do |part|
           { partition: part, recoverable_size: recoverable_size(part) }
@@ -275,7 +272,7 @@ module Y2Storage
 
       # Size of the space that can be reclaimed in a partition
       #
-      # @param partition [::Storage::Partition]
+      # @param partition [Partition]
       # @return [DiskSize]
       def recoverable_size(partition)
         # FIXME: use original_graph because right now #detect_resize_info can
@@ -283,17 +280,17 @@ module Y2Storage
         # https://github.com/openSUSE/libstorage-ng/tree/master/storage/Filesystems/FilesystemImpl.cc#L212
         orig_part = find_partition(partition.name, original_graph)
         info = orig_part.filesystem.detect_resize_info
-        return DiskSize.zero unless info.resize_ok
-        DiskSize.B(partition.size - info.min_size)
+        return DiskSize.zero unless info.resize_ok?
+        partition.size - info.min_size
       end
 
       # Reduces the size of a partition
       #
-      # @param partition [::Storage::Partition]
+      # @param partition [Partition]
       # @param shrink_size [DiskSize] size of the space to substract
       def shrink_partition(partition, shrink_size)
         log.info "Shrinking #{partition.name} by #{shrink_size}"
-        partition.size = partition.size - shrink_size.to_i
+        partition.size = partition.size - shrink_size
       end
 
       # Use force to create space: delete partitions if a given type while
@@ -329,7 +326,7 @@ module Y2Storage
       end
 
       def find_partition(name, graph = new_graph)
-        ::Storage::Partition.find_by_name(graph, name)
+        Partition.find_by_name(graph, name)
       rescue
         nil
       end
@@ -350,8 +347,8 @@ module Y2Storage
       def deletion_candidate_partitions(type, disk = nil)
         names = []
         disks_for(original_graph, disk).each do |dsk|
-          partitions = original_graph.disks.with(name: dsk.name).partitions.to_a
-          partitions.delete_if { |part| part.type == ::Storage::PartitionType_EXTENDED }
+          partitions = original_graph.partitions.select { |p| p.partitionable.name == dsk.name }
+          partitions.delete_if { |part| part.type.is?(:extended) }
           filter_partitions_by_type!(partitions, type, dsk.name)
           partitions = partitions.sort_by { |part| part.region.start }.reverse
           names += partitions.map(&:name)

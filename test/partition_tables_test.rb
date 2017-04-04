@@ -27,12 +27,11 @@ describe Y2Storage::PartitionTables::Base do
   before do
     fake_scenario("mixed_disks")
   end
-  let(:devgraph) { Y2Storage::StorageManager.instance.y2storage_probed }
 
   # Testing this because it's a nice example of usage of the Ruby wrapper
   # and because it was broken at some point
   describe "#inspect" do
-    subject(:ptable) { Y2Storage::Disk.find_by_name(devgraph, "/dev/sdb").partition_table }
+    subject(:ptable) { Y2Storage::Disk.find_by_name(fake_devicegraph, "/dev/sdb").partition_table }
 
     it "includes the partition table type" do
       expect(ptable.inspect).to include "Msdos"

@@ -22,19 +22,17 @@
 # find current contact information at www.suse.com.
 
 require "storage"
-require "y2storage/refinements"
 
 module Y2Storage
   class Proposal
     # Utility class to delete partitions from a devicegraph
     class PartitionKiller
-      using Refinements::DevicegraphLists
       include Yast::Logger
 
       # Initialize.
       #
-      # @param devicegraph [::Storage::Devicegraph]
-      # @param disk_analyzer [::Storage::DiskAnalyzer]
+      # @param devicegraph [Devicegraph]
+      # @param disk_analyzer [DiskAnalyzer]
       def initialize(devicegraph, disk_analyzer)
         @devicegraph = devicegraph
         @disk_analyzer = disk_analyzer
@@ -61,14 +59,14 @@ module Y2Storage
       attr_reader :devicegraph, :disk_analyzer
 
       def find_partition(name)
-        devicegraph.partitions.with(name: name).first
+        devicegraph.partitions.detect { |part| part.name == name }
       end
 
       # Deletes a given partition from its corresponding partition table.
       # If the partition was the only remaining logical one, it also deletes the
       # now empty extended partition
       #
-      # @param partition [Storage::Partition]
+      # @param partition [Partition]
       # @return [Array<String>] device names of all the deleted partitions
       def delete_partition(partition)
         log.info("Deleting partition #{partition.name} in device graph")
@@ -84,12 +82,12 @@ module Y2Storage
 
       # Deletes the extended partition and all the logical ones
       #
-      # @param partition_table [Storage::PartitionTable]
+      # @param partition_table [PartitionTable]
       # @return [Array<String>] device names of all the deleted partitions
       def delete_extended(partition_table)
-        partitions = partition_table.partitions.to_a
-        extended = partitions.detect { |part| part.type == ::Storage::PartitionType_EXTENDED }
-        logical_parts = partitions.select { |part| part.type == ::Storage::PartitionType_LOGICAL }
+        partitions = partition_table.partitions
+        extended = partitions.detect { |part| part.type.is?(:extended) }
+        logical_parts = partitions.select { |part| part.type.is?(:logical) }
 
         # This will delete the extended and all the logicals
         names = [extended.name] + logical_parts.map(&:name)
@@ -100,13 +98,13 @@ module Y2Storage
       # Checks whether the partition is the only logical one in the
       # partition_table
       #
-      # @param partition [Storage::Partition]
+      # @param partition [Partition]
       # @return [Boolean]
       def last_logical?(partition)
-        return false unless partition.type == ::Storage::PartitionType_LOGICAL
+        return false unless partition.type.is?(:logical)
 
-        partitions = partition.partition_table.partitions.to_a
-        logical_parts = partitions.select { |part| part.type == ::Storage::PartitionType_LOGICAL }
+        partitions = partition.partition_table.partitions
+        logical_parts = partitions.select { |part| part.type.is?(:logical) }
         logical_parts.size == 1
       end
 
@@ -117,7 +115,7 @@ module Y2Storage
       # are effectively killing the whole VG. It makes no sense to leave the
       # other PVs alive. So let's reclaim all the space.
       #
-      # @param partition [Storage::Partition] A partition that is acting as
+      # @param partition [Partition] A partition that is acting as
       #   LVM physical volume
       # @return [Array<String>] device names of all the deleted partitions
       def delete_lvm_partitions(partition)
@@ -132,7 +130,7 @@ module Y2Storage
 
       # Checks whether the partition is part of a volume group
       #
-      # @param partition [::Storage::Partition]
+      # @param partition [Partition]
       # @return [Boolean]
       def lvm_pv?(partition)
         lvm_pv_names = disk_analyzer.used_lvm_partitions.values.flatten.map(&:name)
