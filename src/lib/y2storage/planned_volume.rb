@@ -248,6 +248,7 @@ module Y2Storage
       # "/boot/schlonz/".start_with?("/boot/") -> true
       mount_point += "/"
       other_mount_points.any? do |other|
+        next false if other.nil?
         mount_point.start_with?(other + "/")
       end
     end
