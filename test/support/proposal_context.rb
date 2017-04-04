@@ -61,6 +61,10 @@ RSpec.shared_context "proposal" do
     settings.use_separate_home = separate_home
     settings.use_lvm = lvm
     settings.encryption_password = encrypt ? "12345678" : nil
+    # Disregard subvolumes for proposal tests: The fallback subvolumes list
+    # tends to change every once in a while, and that would break all the
+    # proposal tests.
+    settings.subvolumes = nil
     settings
   end
 
