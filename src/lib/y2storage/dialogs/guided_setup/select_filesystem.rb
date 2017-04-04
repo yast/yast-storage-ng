@@ -29,7 +29,8 @@ module Y2Storage
       # Dialog to select filesystems.
       class SelectFilesystem < Dialogs::GuidedSetup::Base
         def root_filesystem_handler
-          widget_update(:snapshots, widget_value(:root_filesystem) == :btrfs, attr: :Enabled)
+          btrfs = Storage::FsType_BTRFS
+          widget_update(:snapshots, widget_value(:root_filesystem) == btrfs, attr: :Enabled)
         end
 
         def separate_home_handler
@@ -99,6 +100,8 @@ module Y2Storage
           widget_update(:snapshots, settings.use_snapshots)
           widget_update(:home_filesystem, settings.home_filesystem_type)
           widget_update(:separate_home, settings.use_separate_home)
+          root_filesystem_handler
+          separate_home_handler
         end
 
         def update_settings!
