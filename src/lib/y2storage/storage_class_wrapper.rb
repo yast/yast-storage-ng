@@ -31,11 +31,11 @@ module Y2Storage
   # drawbacks. The API is not completely Ruby-like and sometimes it does not
   # completely fit the YaST use-cases.
   #
-  # This mixing makes possible to define new classes in the Y2Storage namespace
+  # This mixin makes possible to define new classes in the Y2Storage namespace
   # that rely on the libstorage classes to do most of the job while offering a
   # more Ruby-oriented API and adding extra methods as needed.
   #
-  # A class in the Y2Storage namespace can include this mixing and then use
+  # A class in the Y2Storage namespace can include this mixin and then use
   # the wrap_class macro to point to the Storage class to wrap. Then it can
   # use the storage_forward and storage_class_forward macros to define methods
   # and class methods. The calls to those methods will be automatically
