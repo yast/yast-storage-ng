@@ -282,7 +282,7 @@ module Y2Storage
     #
     # @return [Boolean]
     def subvolumes?
-      btrfs? && !subvolumes.nil?
+      btrfs? && !subvolumes.nil? && !subvolumes.empty?
     end
 
   protected
