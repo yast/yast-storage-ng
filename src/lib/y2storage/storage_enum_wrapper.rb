@@ -71,6 +71,10 @@ module Y2Storage
       to_sym.to_s
     end
 
+    def inspect
+      "#<#{self.class} #{self}>"
+    end
+
     # Checks whether the object corresponds to any of the given enum values.
     # Initially checking by name, this method is expected to be extended by the
     # particular classes to add more semantic checks if needed.

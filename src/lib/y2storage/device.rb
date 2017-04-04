@@ -47,7 +47,7 @@ module Y2Storage
     storage_forward :exists_in_probed?
     storage_forward :exists_in_staging?
     storage_forward :displayname
-    storage_forward :detect_resize_info
+    storage_forward :detect_resize_info, as: "ResizeInfo"
     storage_forward :remove_descendants
     storage_forward :userdata
     storage_forward :userdata=
