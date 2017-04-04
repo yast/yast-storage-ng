@@ -37,7 +37,7 @@ end
 describe Y2Storage::Dialogs::GuidedSetup::SelectScheme do
   include_context "guided setup requirements"
 
-  subject { described_class.new(guided_setup, settings) }
+  subject { described_class.new(guided_setup) }
 
   describe "#run" do
 

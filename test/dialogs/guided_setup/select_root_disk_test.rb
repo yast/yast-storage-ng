@@ -25,7 +25,7 @@ require_relative "../../support/guided_setup_context"
 describe Y2Storage::Dialogs::GuidedSetup::SelectRootDisk do
   include_context "guided setup requirements"
 
-  subject { described_class.new(guided_setup, settings) }
+  subject { described_class.new(guided_setup) }
 
   let(:disks_data) do
     [
