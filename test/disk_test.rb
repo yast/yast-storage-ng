@@ -275,4 +275,14 @@ describe Y2Storage::Disk do
       expect(disk.is?(:filesystem, :partition)).to eq false
     end
   end
+
+  describe "#usb?" do
+    let(:disk_name) { "/dev/sda" }
+
+    # Minimum test (we cannot simulate USB disks right now) to ensure it does
+    # not crash (as it used to do at a point in time)
+    it "returns a boolean value" do
+      expect(disk.usb?).to eq false
+    end
+  end
 end

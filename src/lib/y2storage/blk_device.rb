@@ -82,6 +82,36 @@ module Y2Storage
       encrypted? ? encryption.direct_blk_filesystem : direct_blk_filesystem
     end
 
+    alias_method :filesystem, :blk_filesystem
+
+    # Label of the filesystem, if any
+    # @return [String, nil]
+    def filesystem_label
+      return nil unless blk_filesystem
+      blk_filesystem.label
+    end
+
+    # UUID of the filesystem, if any
+    # @return [String, nil]
+    def filesystem_uuid
+      return nil unless blk_filesystem
+      blk_filesystem.uuid
+    end
+
+    # Type of the filesystem, if any
+    # @return [Filesystems::Type, nil]
+    def filesystem_type
+      return nil unless blk_filesystem
+      blk_filesystem.type
+    end
+
+    # Mount point of the filesystem, if any
+    # @return [String, nil]
+    def filesystem_mountpoint
+      return nil unless blk_filesystem
+      blk_filesystem.mountpoint
+    end
+
     # Non encrypted version of this device
     #
     # For most subclasses, this will simply return the device itself. To be

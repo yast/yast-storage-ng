@@ -43,11 +43,11 @@ module Y2Storage
 
     storage_forward :lvm_pvs, as: "LvmPv"
     storage_forward :add_lvm_pv, as: "LvmPv"
-    storage_forward :remove_lvm_pv, as: "LvmPv"
+    storage_forward :remove_lvm_pv
 
     storage_forward :lvm_lvs, as: "LvmLv"
     storage_forward :create_lvm_lv, as: "LvmLv"
-    storage_forward :delete_lvm_lv, as: "LvmLv"
+    storage_forward :delete_lvm_lv
 
     storage_class_forward :create, as: "LvmVg"
     storage_class_forward :all, as: "LvmVg"

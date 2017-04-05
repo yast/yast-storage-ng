@@ -33,14 +33,15 @@ module Y2Storage
 
       storage_forward :type, as: "PartitionTables::Type"
       storage_forward :create_partition, as: "Partition"
+      storage_forward :delete_partition
       storage_forward :partitions, as: "Partition"
       storage_forward :partitionable, as: "Disk"
       storage_forward :max_primary
       storage_forward :num_primary
       storage_forward :max_logical
       storage_forward :num_logical
-      storage_forward :extended_possible
-      storage_forward :has_extended
+      storage_forward :extended_possible?, to: :extended_possible
+      storage_forward :has_extended?, to: :has_extended
       storage_forward :unused_partition_slots, as: "PartitionTables::PartitionSlot"
       storage_forward :partition_boot_flag_supported?
       storage_forward :partition_legacy_boot_flag_supported?

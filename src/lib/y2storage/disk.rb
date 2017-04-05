@@ -22,6 +22,7 @@
 require "y2storage/storage_class_wrapper"
 require "y2storage/partitionable"
 require "y2storage/free_disk_space"
+require "y2storage/data_transport"
 
 module Y2Storage
   # A physical disk device
@@ -31,7 +32,7 @@ module Y2Storage
     wrap_class Storage::Disk
 
     storage_forward :rotational?, to: :rotational
-    storage_forward :transport, as: "Transport"
+    storage_forward :transport, as: "DataTransport"
 
     storage_class_forward :create, as: "Disk"
     storage_class_forward :all, as: "Disk"
