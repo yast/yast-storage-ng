@@ -153,7 +153,7 @@ module Y2Storage
         # Check password strength using cracklib.
         # @return[String] crack lib message, empty ("") if successful.
         def crack_password
-          Yast::InstExtensionImage.with_extension("cracklib-dict-full") do
+          Yast::InstExtensionImage.with_extension("cracklib-dict-full.rpm") do
             Yast::SCR.Execute(Yast::Path.new(".crack"), password)
           end
         rescue RuntimeError => e
