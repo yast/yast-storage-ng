@@ -51,11 +51,11 @@ RSpec.shared_context "guided setup requirements" do
     expect(Yast::UI).to receive(:ChangeWidget).once.with(Id(id), :Enabled, false)
   end
 
-  def is_selected(id, value = true)
+  def select_widget(id, value = true)
     allow(Yast::UI).to receive(:QueryWidget).with(Id(id), :Value).and_return(value)
   end
 
-  def is_not_selected(id)
+  def not_select_widget(id)
     allow(Yast::UI).to receive(:QueryWidget).with(Id(id), :Value).and_return(false)
   end
 
@@ -64,10 +64,10 @@ RSpec.shared_context "guided setup requirements" do
   end
 
   def select_disks(disks)
-    disks.each { |d| is_selected(d) }
-    (all_disks - disks).each { |d| is_not_selected(d) }
+    disks.each { |d| select_widget(d) }
+    (all_disks - disks).each { |d| not_select_widget(d) }
   end
-  
+
   before do
     # Mock opening and closing the dialog
     allow(Yast::Wizard).to receive(:CreateDialog).and_return(true)
@@ -87,7 +87,7 @@ RSpec.shared_context "guided setup requirements" do
     instance_double(
       Y2Storage::Dialogs::GuidedSetup,
       disks_data: disks_data,
-      settings: settings
+      settings:   settings
     )
   end
 

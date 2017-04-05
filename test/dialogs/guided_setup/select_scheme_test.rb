@@ -90,7 +90,7 @@ describe Y2Storage::Dialogs::GuidedSetup::SelectScheme do
 
     context "when encryption is not selected" do
       before do
-        is_not_selected(:encryption)
+        not_select_widget(:encryption)
       end
 
       it "disables password fields" do
@@ -102,9 +102,9 @@ describe Y2Storage::Dialogs::GuidedSetup::SelectScheme do
 
     context "when encryption is selected" do
       before do
-        is_selected(:encryption)
-        is_selected(:password, password)
-        is_selected(:repeat_password, repeat_password)
+        select_widget(:encryption)
+        select_widget(:password, password)
+        select_widget(:repeat_password, repeat_password)
         settings.encryption_password = nil
       end
 
@@ -165,10 +165,10 @@ describe Y2Storage::Dialogs::GuidedSetup::SelectScheme do
 
     context "when settings are valid" do
       before do
-        is_selected(:lvm)
-        is_selected(:encryption)
-        is_selected(:password, password)
-        is_selected(:repeat_password, password)
+        select_widget(:lvm)
+        select_widget(:encryption)
+        select_widget(:password, password)
+        select_widget(:repeat_password, password)
       end
 
       let(:password) { "Val1d_pass" }

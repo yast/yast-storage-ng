@@ -47,10 +47,10 @@ describe Y2Storage::Dialogs::GuidedSetup::SelectFilesystem do
     it "saves settings correctly" do
       root_filesystem = Storage::FsType_BTRFS
       home_filesystem = Storage::FsType_EXT4
-      is_selected(:root_filesystem, root_filesystem)
-      is_selected(:home_filesystem, home_filesystem)
-      is_selected(:snapshots)
-      is_selected(:separate_home)
+      select_widget(:root_filesystem, root_filesystem)
+      select_widget(:home_filesystem, home_filesystem)
+      select_widget(:snapshots)
+      select_widget(:separate_home)
 
       subject.run
       expect(subject.settings.root_filesystem_type).to eq(root_filesystem)
@@ -105,7 +105,7 @@ describe Y2Storage::Dialogs::GuidedSetup::SelectFilesystem do
 
     context "when btrfs is selected for root partition" do
       before do
-        is_selected(:root_filesystem, Storage::FsType_BTRFS)
+        select_widget(:root_filesystem, Storage::FsType_BTRFS)
       end
 
       it "enables snapshots option" do
@@ -116,7 +116,7 @@ describe Y2Storage::Dialogs::GuidedSetup::SelectFilesystem do
 
     context "when other filesystem is selected for root partition" do
       before do
-        is_selected(:root_filesystem, Storage::FsType_EXT4)
+        select_widget(:root_filesystem, Storage::FsType_EXT4)
       end
 
       it "disables snapshots option" do
@@ -127,7 +127,7 @@ describe Y2Storage::Dialogs::GuidedSetup::SelectFilesystem do
 
     context "when separate home is selected" do
       before do
-        is_selected(:separate_home)
+        select_widget(:separate_home)
       end
 
       it "enables filesystem selection for home" do
@@ -138,7 +138,7 @@ describe Y2Storage::Dialogs::GuidedSetup::SelectFilesystem do
 
     context "when separate home is not selected" do
       before do
-        is_not_selected(:separate_home)
+        not_select_widget(:separate_home)
       end
 
       it "disables filesystem selection for home" do
