@@ -290,7 +290,6 @@ module Y2Storage
       # planned volumes. It returns the smallest logical volume that would
       # fulfill the goal. If no LV is big enough, it returns the biggest one.
       def delete_candidate(volume_group, target_space)
-        target_space = target_space
         lvs = volume_group.lvm_lvs
         big_lvs = lvs.select { |lv| lv.size >= target_space }
         if big_lvs.empty?

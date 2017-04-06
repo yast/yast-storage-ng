@@ -263,7 +263,7 @@ module Y2Storage
         end
         primary_spaces = spaces - [extended_space]
         if too_many_primary_with_extended?(primary_spaces, ptable)
-          raise NoMorePartitionSlotError, "Too manay primary partitions needed"
+          raise NoMorePartitionSlotError, "Too many primary partitions needed"
         end
         set_num_logical(extended_space, num_logical)
         primary_spaces.each { |s| set_num_logical(s, 0) }
