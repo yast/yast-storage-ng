@@ -46,10 +46,8 @@ if ENV["COVERAGE"]
   end
 end
 
-require_relative "support/storage_matchers"
 require_relative "support/storage_helpers"
 
 RSpec.configure do |c|
-  c.include Yast::RSpec::StorageMatchers
   c.include Yast::RSpec::StorageHelpers
 end

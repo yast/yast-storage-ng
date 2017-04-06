@@ -53,7 +53,7 @@ describe Y2Storage::BootRequirementsChecker do
 
           it "requires only a PReP partition" do
             expect(checker.needed_partitions).to contain_exactly(
-              an_object_with_fields(mount_point: nil, partition_id: prep_id)
+              an_object_having_attributes(mount_point: nil, partition_id: prep_id)
             )
           end
         end
@@ -63,7 +63,7 @@ describe Y2Storage::BootRequirementsChecker do
 
           it "requires only a PReP partition" do
             expect(checker.needed_partitions).to contain_exactly(
-              an_object_with_fields(mount_point: nil, partition_id: prep_id)
+              an_object_having_attributes(mount_point: nil, partition_id: prep_id)
             )
           end
         end
@@ -85,8 +85,8 @@ describe Y2Storage::BootRequirementsChecker do
 
           it "requires /boot and PReP partitions" do
             expect(checker.needed_partitions).to contain_exactly(
-              an_object_with_fields(mount_point: "/boot"),
-              an_object_with_fields(mount_point: nil, partition_id: prep_id)
+              an_object_having_attributes(mount_point: "/boot"),
+              an_object_having_attributes(mount_point: nil, partition_id: prep_id)
             )
           end
         end
@@ -96,8 +96,8 @@ describe Y2Storage::BootRequirementsChecker do
 
           it "requires /boot and PReP partitions" do
             expect(checker.needed_partitions).to contain_exactly(
-              an_object_with_fields(mount_point: "/boot"),
-              an_object_with_fields(mount_point: nil, partition_id: prep_id)
+              an_object_having_attributes(mount_point: "/boot"),
+              an_object_having_attributes(mount_point: nil, partition_id: prep_id)
             )
           end
         end
@@ -107,7 +107,7 @@ describe Y2Storage::BootRequirementsChecker do
 
           it "requires only a /boot partition" do
             expect(checker.needed_partitions).to contain_exactly(
-              an_object_with_fields(mount_point: "/boot")
+              an_object_having_attributes(mount_point: "/boot")
             )
           end
         end
@@ -122,8 +122,8 @@ describe Y2Storage::BootRequirementsChecker do
 
           it "requires /boot and PReP partitions" do
             expect(checker.needed_partitions).to contain_exactly(
-              an_object_with_fields(mount_point: "/boot"),
-              an_object_with_fields(mount_point: nil, partition_id: prep_id)
+              an_object_having_attributes(mount_point: "/boot"),
+              an_object_having_attributes(mount_point: nil, partition_id: prep_id)
             )
           end
         end
@@ -133,8 +133,8 @@ describe Y2Storage::BootRequirementsChecker do
 
           it "requires /boot and PReP partitions" do
             expect(checker.needed_partitions).to contain_exactly(
-              an_object_with_fields(mount_point: "/boot"),
-              an_object_with_fields(mount_point: nil, partition_id: prep_id)
+              an_object_having_attributes(mount_point: "/boot"),
+              an_object_having_attributes(mount_point: nil, partition_id: prep_id)
             )
           end
         end
@@ -144,7 +144,7 @@ describe Y2Storage::BootRequirementsChecker do
 
           it "requires only a /boot partition" do
             expect(checker.needed_partitions).to contain_exactly(
-              an_object_with_fields(mount_point: "/boot")
+              an_object_having_attributes(mount_point: "/boot")
             )
           end
         end
@@ -168,7 +168,7 @@ describe Y2Storage::BootRequirementsChecker do
 
         it "requires only a /boot partition" do
           expect(checker.needed_partitions).to contain_exactly(
-            an_object_with_fields(mount_point: "/boot")
+            an_object_having_attributes(mount_point: "/boot")
           )
         end
       end
@@ -179,7 +179,7 @@ describe Y2Storage::BootRequirementsChecker do
 
         it "requires only a /boot partition" do
           expect(checker.needed_partitions).to contain_exactly(
-            an_object_with_fields(mount_point: "/boot")
+            an_object_having_attributes(mount_point: "/boot")
           )
         end
       end

@@ -50,7 +50,7 @@ describe Y2Storage::BootRequirementsChecker do
 
         it "requires only a /boot/zipl partition" do
           expect(checker.needed_partitions).to contain_exactly(
-            an_object_with_fields(mount_point: "/boot/zipl")
+            an_object_having_attributes(mount_point: "/boot/zipl")
           )
         end
       end
@@ -60,7 +60,7 @@ describe Y2Storage::BootRequirementsChecker do
 
         it "requires only a /boot/zipl partition" do
           expect(checker.needed_partitions).to contain_exactly(
-            an_object_with_fields(mount_point: "/boot/zipl")
+            an_object_having_attributes(mount_point: "/boot/zipl")
           )
         end
       end
@@ -71,7 +71,7 @@ describe Y2Storage::BootRequirementsChecker do
 
         it "requires only a /boot/zipl partition" do
           expect(checker.needed_partitions).to contain_exactly(
-            an_object_with_fields(mount_point: "/boot/zipl")
+            an_object_having_attributes(mount_point: "/boot/zipl")
           )
         end
       end
@@ -113,7 +113,7 @@ describe Y2Storage::BootRequirementsChecker do
 
           it "requires only a /boot/zipl partition" do
             expect(checker.needed_partitions).to contain_exactly(
-              an_object_with_fields(mount_point: "/boot/zipl")
+              an_object_having_attributes(mount_point: "/boot/zipl")
             )
           end
         end
@@ -123,7 +123,7 @@ describe Y2Storage::BootRequirementsChecker do
 
           it "requires only a /boot/zipl partition" do
             expect(checker.needed_partitions).to contain_exactly(
-              an_object_with_fields(mount_point: "/boot/zipl")
+              an_object_having_attributes(mount_point: "/boot/zipl")
             )
           end
         end
@@ -134,7 +134,7 @@ describe Y2Storage::BootRequirementsChecker do
 
           it "requires only a /boot/zipl partition" do
             expect(checker.needed_partitions).to contain_exactly(
-              an_object_with_fields(mount_point: "/boot/zipl")
+              an_object_having_attributes(mount_point: "/boot/zipl")
             )
           end
         end
