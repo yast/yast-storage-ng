@@ -21,6 +21,7 @@
 
 require "y2storage/storage_class_wrapper"
 require "y2storage/filesystems/base"
+require "y2storage/btrfs_subvolume"
 
 module Y2Storage
   module Filesystems
@@ -73,23 +74,22 @@ module Y2Storage
       # Checks whether the filesystem has the capability of hosting Btrfs
       # subvolumes
       def supports_btrfs_subvolumes?
-        Storage.is_btrfs(to_storage_value)
+        Storage.btrfs?(to_storage_value)
       end
 
       # Top level Btrfs subvolume
       #
-      # @return [BtrfsSubvolume] nil if the subvolume is not defined or makes no
-      #   sense for this filesystem
+      # Btrfs filesystems always have a top level subvolume, the mkfs.btrfs
+      # command implicitly creates it, so does libstorage when creating the
+      # data structures.
+      #
+      # The top level Btrfs subvolume always has ID 5.
+      #
+      # @return [BtrfsSubvolume] nil if it makes no sense for this filesystem
       def top_level_btrfs_subvolume
         return nil unless supports_btrfs_subvolumes?
 
-        # FIXME: not sure if this will work in all cases. Revisit when the
-        # Storage API for Btrfs is stable.
-        # It is possible for a Btrfs to not have a top level volume? If so,
-        # what it will happen here? An exception? If so, which one?
         storage_subvol = Storage.to_btrfs(to_storage_value).top_level_btrfs_subvolume
-        return nil unless storage_subvol
-
         BtrfsSubvolume.new(storage_subvol)
       end
 
@@ -101,7 +101,7 @@ module Y2Storage
         return [] unless supports_btrfs_subvolumes?
 
         storage_subvols = Storage.to_btrfs(to_storage_value).btrfs_subvolumes
-        storage_subvols.map { |vol| BtrfsSubvolume.new(vol) }
+        storage_subvols.to_a.map { |vol| BtrfsSubvolume.new(vol) }
       end
 
     protected
