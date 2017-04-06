@@ -38,6 +38,9 @@ describe Y2Storage::BootRequirementsChecker do
     let(:sda_part_table) { pt_msdos }
     let(:mbr_gap_size) { 0 }
 
+    # Just to shorten
+    let(:bios_boot_id) { Y2Storage::PartitionId::BIOS_BOOT }
+
     before do
       allow(analyzer).to receive(:mbr_gap)
         .and_return("/dev/sda" => Y2Storage::DiskSize.KiB(mbr_gap_size))
@@ -138,7 +141,7 @@ describe Y2Storage::BootRequirementsChecker do
 
             it "requires a new GRUB partition" do
               expect(checker.needed_partitions).to contain_exactly(
-                an_object_with_fields(partition_id: ::Storage::ID_BIOS_BOOT, reuse: nil)
+                an_object_having_attributes(partition_id: bios_boot_id, reuse: nil)
               )
             end
           end
@@ -160,7 +163,7 @@ describe Y2Storage::BootRequirementsChecker do
 
             it "requires a new GRUB partition" do
               expect(checker.needed_partitions).to contain_exactly(
-                an_object_with_fields(partition_id: ::Storage::ID_BIOS_BOOT, reuse: nil)
+                an_object_having_attributes(partition_id: bios_boot_id, reuse: nil)
               )
             end
           end
@@ -183,7 +186,7 @@ describe Y2Storage::BootRequirementsChecker do
 
             it "requires a new GRUB partition" do
               expect(checker.needed_partitions).to contain_exactly(
-                an_object_with_fields(partition_id: ::Storage::ID_BIOS_BOOT, reuse: nil)
+                an_object_having_attributes(partition_id: bios_boot_id, reuse: nil)
               )
             end
           end
@@ -207,7 +210,7 @@ describe Y2Storage::BootRequirementsChecker do
 
           it "requires a new GRUB partition (GPT partition table is assumed)" do
             expect(checker.needed_partitions).to contain_exactly(
-              an_object_with_fields(partition_id: ::Storage::ID_BIOS_BOOT, reuse: nil)
+              an_object_having_attributes(partition_id: bios_boot_id, reuse: nil)
             )
           end
         end
@@ -217,7 +220,7 @@ describe Y2Storage::BootRequirementsChecker do
 
           it "requires a new GRUB partition (GPT partition table is assumed)" do
             expect(checker.needed_partitions).to contain_exactly(
-              an_object_with_fields(partition_id: ::Storage::ID_BIOS_BOOT, reuse: nil)
+              an_object_having_attributes(partition_id: bios_boot_id, reuse: nil)
             )
           end
         end
@@ -228,7 +231,7 @@ describe Y2Storage::BootRequirementsChecker do
 
           it "requires a new GRUB partition (GPT partition table is assumed)" do
             expect(checker.needed_partitions).to contain_exactly(
-              an_object_with_fields(partition_id: ::Storage::ID_BIOS_BOOT, reuse: nil)
+              an_object_having_attributes(partition_id: bios_boot_id, reuse: nil)
             )
           end
         end
@@ -298,7 +301,7 @@ describe Y2Storage::BootRequirementsChecker do
             let(:use_lvm) { false }
 
             context "if proposing root (/) as Btrfs" do
-              let(:root_filesystem_type) { ::Storage::FsType_BTRFS }
+              let(:root_filesystem_type) { Y2Storage::Filesystems::Type::BTRFS }
 
               it "does not require any particular volume" do
                 expect(checker.needed_partitions).to be_empty
@@ -306,7 +309,7 @@ describe Y2Storage::BootRequirementsChecker do
             end
 
             context "if proposing root (/) as non-Btrfs" do
-              let(:root_filesystem_type) { ::Storage::FsType_EXT4 }
+              let(:root_filesystem_type) { Y2Storage::Filesystems::Type::EXT4 }
 
               it "raises an exception" do
                 expect { checker.needed_partitions }.to raise_error(

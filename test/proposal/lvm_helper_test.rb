@@ -26,7 +26,6 @@ require "y2storage"
 
 describe Y2Storage::Proposal::LvmHelper do
   using Y2Storage::Refinements::SizeCasts
-  using Y2Storage::Refinements::DevicegraphLists
 
   before do
     fake_scenario(scenario)
@@ -39,7 +38,7 @@ describe Y2Storage::Proposal::LvmHelper do
 
   describe "#missing_space" do
     let(:scenario) { "lvm-big-pe" }
-    let(:vg_big_pe) { Storage::LvmVg.find_by_vg_name(fake_devicegraph, "vg0") }
+    let(:vg_big_pe) { Y2Storage::LvmVg.find_by_vg_name(fake_devicegraph, "vg0") }
 
     context "if no LVM volumes are planned" do
       let(:volumes) { [] }
@@ -80,7 +79,7 @@ describe Y2Storage::Proposal::LvmHelper do
         let(:desired) { 20.GiB + 2.MiB }
 
         it "returns the missing size rounded up to the VG extent size" do
-          missing = Y2Storage::DiskSize.new(desired.to_i - vg_big_pe.size)
+          missing = desired - vg_big_pe.size
           # Extent size of vg_big_pe is 64 MiB
           rounding = 62.MiB
           expect(helper.missing_space).to eq(missing + rounding)
@@ -91,7 +90,7 @@ describe Y2Storage::Proposal::LvmHelper do
 
   describe "#max_extra_space" do
     let(:scenario) { "lvm-big-pe" }
-    let(:vg_big_pe) { Storage::LvmVg.find_by_vg_name(fake_devicegraph, "vg0") }
+    let(:vg_big_pe) { Y2Storage::LvmVg.find_by_vg_name(fake_devicegraph, "vg0") }
 
     context "if no LVM volumes are planned" do
       let(:volumes) { [] }
@@ -132,7 +131,7 @@ describe Y2Storage::Proposal::LvmHelper do
         let(:max) { 30.GiB + 2.MiB }
 
         it "returns the extra size rounded up to the VG extent size" do
-          extra = Y2Storage::DiskSize.new(max.to_i - vg_big_pe.size)
+          extra = max - vg_big_pe.size
           # Extent size of vg_big_pe is 64 MiB
           rounding = 62.MiB
           expect(helper.max_extra_space).to eq(extra + rounding)
@@ -229,7 +228,7 @@ describe Y2Storage::Proposal::LvmHelper do
       ]
     end
     let(:pv_partitions) { ["/dev/sda1", "/dev/sda3"] }
-    let(:ext4) { Storage::FsType_EXT4 }
+    let(:ext4) { Y2Storage::Filesystems::Type::EXT4 }
 
     before do
       helper.reused_volume_group = reused_vg
@@ -240,24 +239,32 @@ describe Y2Storage::Proposal::LvmHelper do
 
       it "creates a new volume group" do
         devicegraph = helper.create_volumes(fake_devicegraph, pv_partitions)
-        vgs = devicegraph.volume_groups
+        vgs = devicegraph.lvm_vgs
         expect(vgs.size).to eq 2
-        expect(vgs.with(vg_name: "system").any?).to eq true
+        expect(vgs.map(&:vg_name)).to include "system"
       end
 
       it "adds the new physical volumes to the new volume group" do
         devicegraph = helper.create_volumes(fake_devicegraph, pv_partitions)
-        new_vg = devicegraph.volume_groups.with(vg_name: "system").first
-        pv_names = new_vg.lvm_pvs.to_a.map { |pv| pv.blk_device.name }
+        new_vg = devicegraph.lvm_vgs.detect { |vg| vg.vg_name == "system" }
+        pv_names = new_vg.lvm_pvs.map { |pv| pv.blk_device.name }
         expect(pv_names.sort).to eq pv_partitions.sort
       end
 
       it "creates a new logical volume for each planned volume" do
         devicegraph = helper.create_volumes(fake_devicegraph, pv_partitions)
-        new_vg = devicegraph.volume_groups.with(vg_name: "system").first
-        expect(new_vg.lvm_lvs.to_a).to_not contain_exactly(
-          an_object_with_fields(mountpoint: "/1", lv_name: "one", fs_type: :ext4),
-          an_object_with_fields(mountpoint: "/2", lv_name: "two", fs_type: :ext4)
+        new_vg = devicegraph.lvm_vgs.detect { |vg| vg.vg_name == "system" }
+        expect(new_vg.lvm_lvs).to contain_exactly(
+          an_object_having_attributes(
+            filesystem_mountpoint: "/1",
+            lv_name:               "one",
+            filesystem_type:       ext4
+          ),
+          an_object_having_attributes(
+            filesystem_mountpoint: "/2",
+            lv_name:               "two",
+            filesystem_type:       ext4
+          )
         )
       end
 
@@ -267,47 +274,47 @@ describe Y2Storage::Proposal::LvmHelper do
 
         it "uses the encrypted devices to create the physical volumes" do
           devicegraph = helper.create_volumes(fake_devicegraph, pv_partitions)
-          new_vg = devicegraph.volume_groups.with(vg_name: "system").first
-          pv_devices = new_vg.lvm_pvs.to_a.map(&:blk_device)
+          new_vg = devicegraph.lvm_vgs.detect { |vg| vg.vg_name == "system" }
+          pv_devices = new_vg.lvm_pvs.map(&:blk_device)
 
           pv_devices.each do |device|
-            expect(Storage.encryption?(device)).to eq true
+            expect(device.is?(:encryption)).to eq true
           end
-          part_names = pv_devices.map { |d| Storage.to_encryption(d).blk_device.name }
+          part_names = pv_devices.map { |d| d.blk_device.plain_device.name }
           expect(part_names.sort).to eq pv_partitions.sort
         end
       end
     end
 
     context "if an existing volume group is reused" do
-      let(:reused_vg) { fake_devicegraph.volume_groups.first }
+      let(:reused_vg) { fake_devicegraph.lvm_vgs.first }
 
       it "creates no additional volume group" do
         devicegraph = helper.create_volumes(fake_devicegraph, pv_partitions)
-        vgs = devicegraph.volume_groups
+        vgs = devicegraph.lvm_vgs
         expect(vgs.size).to eq 1
       end
 
       it "adds the new physical volumes to the existing volume group" do
         devicegraph = helper.create_volumes(fake_devicegraph, pv_partitions)
-        reused_vg = devicegraph.volume_groups.with(vg_name: "vg0").first
-        pv_names = reused_vg.lvm_pvs.to_a.map { |pv| pv.blk_device.name }
+        reused_vg = devicegraph.lvm_vgs.detect { |vg| vg.vg_name == "vg0" }
+        pv_names = reused_vg.lvm_pvs.map { |pv| pv.blk_device.name }
         expect(pv_names.sort).to eq ["/dev/sda1", "/dev/sda2", "/dev/sda3"]
       end
 
       it "creates a new logical volume for each planned volume" do
         devicegraph = helper.create_volumes(fake_devicegraph, pv_partitions)
-        reused_vg = devicegraph.volume_groups.first
-        one = reused_vg.lvm_lvs.to_a.detect { |lv| lv.lv_name == "one" }
-        expect(one).to match_fields(mountpoint: "/1", fs_type: ext4)
-        two = reused_vg.lvm_lvs.to_a.detect { |lv| lv.lv_name == "two" }
-        expect(two).to match_fields(mountpoint: "/2", fs_type: ext4)
+        reused_vg = devicegraph.lvm_vgs.first
+        one = reused_vg.lvm_lvs.detect { |lv| lv.lv_name == "one" }
+        expect(one).to have_attributes(filesystem_mountpoint: "/1", filesystem_type: ext4)
+        two = reused_vg.lvm_lvs.detect { |lv| lv.lv_name == "two" }
+        expect(two).to have_attributes(filesystem_mountpoint: "/2", filesystem_type: ext4)
       end
 
       it "does not delete existing LVs if there is enough free space" do
         devicegraph = helper.create_volumes(fake_devicegraph, pv_partitions)
-        reused_vg = devicegraph.volume_groups.first
-        lv_names = reused_vg.lvm_lvs.to_a.map { |lv| lv.lv_name }
+        reused_vg = devicegraph.lvm_vgs.first
+        lv_names = reused_vg.lvm_lvs.map { |lv| lv.lv_name }
         expect(lv_names).to include("lv1", "lv2")
       end
 
@@ -315,8 +322,8 @@ describe Y2Storage::Proposal::LvmHelper do
         volumes << planned_vol(type: :ext4, logical_volume_name: "three", desired: 20.GiB)
 
         devicegraph = helper.create_volumes(fake_devicegraph, pv_partitions)
-        reused_vg = devicegraph.volume_groups.first
-        lv_names = reused_vg.lvm_lvs.to_a.map { |lv| lv.lv_name }
+        reused_vg = devicegraph.lvm_vgs.first
+        lv_names = reused_vg.lvm_lvs.map(&:lv_name)
         expect(lv_names).to_not include "lv2"
         expect(lv_names).to include "lv1"
       end
@@ -332,11 +339,11 @@ describe Y2Storage::Proposal::LvmHelper do
 
       it "creates partitions matching the volume sizes" do
         devicegraph = helper.create_volumes(fake_devicegraph, pv_partitions)
-        lvs = devicegraph.volume_groups.with(vg_name: "system").lvm_lvs.to_a
+        lvs = devicegraph.lvm_lvs.select { |lv| lv.lvm_vg.vg_name == "system" }
 
         expect(lvs).to contain_exactly(
-          an_object_with_fields(lv_name: "one", size: (15.GiB - 4.MiB).to_i),
-          an_object_with_fields(lv_name: "two", size: (5.GiB - 4.MiB).to_i)
+          an_object_with_fields(lv_name: "one", size: 15.GiB - 4.MiB),
+          an_object_with_fields(lv_name: "two", size: 5.GiB - 4.MiB)
         )
       end
     end
@@ -357,20 +364,20 @@ describe Y2Storage::Proposal::LvmHelper do
 
       it "distributes the extra space according to weights" do
         devicegraph = helper.create_volumes(fake_devicegraph, pv_partitions)
-        lvs = devicegraph.volume_groups.with(vg_name: "system").lvm_lvs.to_a
+        lvs = devicegraph.lvm_lvs.select { |lv| lv.lvm_vg.vg_name == "system" }
 
         expect(lvs).to contain_exactly(
-          an_object_with_fields(lv_name: "one", size: (9.GiB - 4.MiB).to_i),
-          an_object_with_fields(lv_name: "two", size: (9.GiB - 4.MiB).to_i),
-          an_object_with_fields(lv_name: "three", size: 2.GiB.to_i)
+          an_object_with_fields(lv_name: "one", size: 9.GiB - 4.MiB),
+          an_object_with_fields(lv_name: "two", size: 9.GiB - 4.MiB),
+          an_object_with_fields(lv_name: "three", size: 2.GiB)
         )
       end
 
       it "does not distribute more space than available" do
         devicegraph = helper.create_volumes(fake_devicegraph, pv_partitions)
-        lvs = devicegraph.volume_groups.with(vg_name: "system").lvm_lvs
-        system_vg = lvs.vgs.first
-        lvs_size = lvs.reduce(0) { |sum, lv| sum + lv.size }
+        system_vg = devicegraph.lvm_vgs.detect { |vg| vg.vg_name == "system" }
+        lvs = system_vg.lvm_lvs
+        lvs_size = lvs.reduce(Y2Storage::DiskSize.zero) { |sum, lv| sum + lv.size }
 
         expect(system_vg.size).to eq lvs_size
       end
@@ -383,19 +390,19 @@ describe Y2Storage::Proposal::LvmHelper do
 
       it "chooses a new name adding a number" do
         devicegraph = helper.create_volumes(fake_devicegraph, pv_partitions)
-        vg_names = devicegraph.volume_groups.map(&:vg_name)
+        vg_names = devicegraph.lvm_vgs.map(&:vg_name)
         expect(vg_names).to contain_exactly("system", "system0")
       end
     end
 
     context "when a logical volume name is already taken" do
       let(:scenario) { "lvm-name-conflicts" }
-      let(:reused_vg) { fake_devicegraph.volume_groups.first }
+      let(:reused_vg) { fake_devicegraph.lvm_vgs.first }
       let(:pv_partitions) { [] }
 
       it "chooses a new name adding a number" do
         devicegraph = helper.create_volumes(fake_devicegraph, pv_partitions)
-        lv_names = devicegraph.logical_volumes.map(&:lv_name)
+        lv_names = devicegraph.lvm_lvs.map(&:lv_name)
         expect(lv_names).to include("one", "one0", "one1", "one2")
       end
     end

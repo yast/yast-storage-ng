@@ -25,7 +25,6 @@ require "storage"
 require "y2storage/proposal/space_maker"
 require "y2storage/proposal/partition_creator"
 require "y2storage/proposal/lvm_helper"
-require "y2storage/refinements/devicegraph_lists"
 
 module Y2Storage
   class Proposal
@@ -33,8 +32,6 @@ module Y2Storage
     # volumes
     class DevicegraphGenerator
       include Yast::Logger
-
-      using Refinements::DevicegraphLists
 
       attr_accessor :settings
 
@@ -45,11 +42,11 @@ module Y2Storage
       # Devicegraph including all the specified volumes
       #
       # @param volumes [PlannedVolumesList] volumes to accommodate
-      # @param initial_graph [::Storage::Devicegraph] initial devicegraph
+      # @param initial_graph [Devicegraph] initial devicegraph
       #           (typically the representation of the current system)
       # @param disk_analyzer [DiskAnalyzer] analysis of the initial_graph
       #
-      # @return [::Storage::Devicegraph]
+      # @return [Devicegraph]
       # @raise Proposal::Error if it was not possible to propose a devicegraph
       def devicegraph(volumes, initial_graph, disk_analyzer)
         # We are going to alter the volumes in several ways, so let's be a
@@ -109,7 +106,7 @@ module Y2Storage
       #     space_make#lvm_helper
       # @param space_maker [SpaceMaker]
       #
-      # @return [::Storage::Devicegraph]
+      # @return [Devicegraph]
       def provide_space(no_lvm_volumes, space_maker)
         if settings.use_lvm
           provide_space_lvm(no_lvm_volumes, space_maker)
@@ -156,12 +153,12 @@ module Y2Storage
       # List of partitions with LVM id (i.e. potential physical volumes) that
       # are present in the new devicegraph but were not there in the old one.
       #
-      # @param old_devicegraph [Storage::Devicegraph]
-      # @param new_devicegraph [Storage::Devicegraph]
+      # @param old_devicegraph [Devicegraph]
+      # @param new_devicegraph [Devicegraph]
       # @return [Array<String>] device names of the partitions
       def new_physical_volumes(old_devicegraph, new_devicegraph)
-        all_pvs = new_devicegraph.partitions.with(id: Storage::ID_LVM)
-        old_pv_sids = old_devicegraph.partitions.with(id: Storage::ID_LVM).map(&:sid)
+        all_pvs = new_devicegraph.partitions.select { |p| p.id.is?(:lvm) }
+        old_pv_sids = old_devicegraph.partitions.select { |p| p.id.is?(:lvm) }.map(&:sid)
         all_pvs.reject { |pv| old_pv_sids.include?(pv.sid) }.map(&:name)
       end
 
@@ -174,12 +171,10 @@ module Y2Storage
       # It modifies the passed volumes.
       #
       # @param volumes [PlannedVolumesList] list of volumes to modify
-      # @param deleted_partitions [Array<::Storage::Partition>] partitions
+      # @param deleted_partitions [Array<Partition>] partitions
       #     deleted from the initial devicegraph
       def refine_volumes!(volumes, deleted_partitions)
-        deleted_swaps = deleted_partitions.select do |part|
-          part.id == ::Storage::ID_SWAP
-        end
+        deleted_swaps = deleted_partitions.select { |part| part.id.is?(:swap) }
         new_swap_volumes = volumes.select { |vol| !vol.reuse && vol.mount_point == "swap" }
 
         new_swap_volumes.each_with_index do |swap_volume, idx|
@@ -194,9 +189,9 @@ module Y2Storage
       # Creates partitions representing a set of volumes
       #
       # @param volumes [PlannedVolumesList] set of volumes to create
-      # @param initial_graph [::Storage::Devicegraph] initial devicegraph
+      # @param initial_graph [Devicegraph] initial devicegraph
       #
-      # @return [::Storage::Devicegraph]
+      # @return [Devicegraph]
       def create_partitions(distribution, initial_graph)
         partition_creator = PartitionCreator.new(initial_graph)
         partition_creator.create_partitions(distribution)
@@ -208,12 +203,12 @@ module Y2Storage
       # It works directly on the passed devicegraph
       #
       # @param volumes [PlannedVolumesList] set of volumes to create
-      # @param graph [::Storage::Devicegraph] devicegraph to modify
+      # @param graph [Devicegraph] devicegraph to modify
       def reuse_partitions!(volumes, graph)
         volumes.select { |v| v.reuse }.each do |vol|
-          partition = graph.partitions.with(name: vol.reuse).first
+          partition = graph.partitions.detect { |part| part.name == vol.reuse }
           filesystem = partition.filesystem
-          filesystem.add_mountpoint(vol.mount_point) if vol.mount_point && !vol.mount_point.empty?
+          filesystem.mountpoint = vol.mount_point if vol.mount_point && !vol.mount_point.empty?
           partition.boot = true if vol.bootable
         end
       end

@@ -22,14 +22,12 @@
 # find current contact information at www.suse.com.
 
 require "storage"
-require "y2storage/refinements"
 
 module Y2Storage
   class Proposal
     # Each one of the spaces contained in a SpaceDistribution
     class AssignedSpace
       extend Forwardable
-      using Y2Storage::Refinements::Disk
 
       # @return [FreeDiskSpace]
       attr_reader :disk_space
@@ -57,8 +55,8 @@ module Y2Storage
 
         @partition_type_calculated = true
         disk.as_not_empty do
-          @partition_type = if disk.partition_table.extended_possible
-            if disk.partition_table.has_extended
+          @partition_type = if disk.partition_table.extended_possible?
+            if disk.partition_table.has_extended?
               inside_extended? ? :logical : :primary
             end
           else
@@ -134,7 +132,7 @@ module Y2Storage
       # @param disk [#topology]
       # @return [DiskSize]
       def self.overhead_of_logical(disk)
-        DiskSize.B(disk.topology.minimal_grain)
+        disk.min_grain
       end
 
       # Space consumed by the EBR of one logical partition within this space
@@ -155,8 +153,7 @@ module Y2Storage
       # @return [Boolean]
       def inside_extended?
         space_start = disk_space.region.start
-        partitions = disk.all_partitions
-        extended = partitions.detect { |p| p.type == Storage::PartitionType_EXTENDED }
+        extended = disk.partitions.detect { |p| p.type.is?(:extended) }
         return false unless extended
         extended.region.start <= space_start && extended.region.end > space_start
       end

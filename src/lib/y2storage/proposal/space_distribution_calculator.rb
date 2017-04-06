@@ -28,7 +28,6 @@ require "y2storage/planned_volumes_list"
 require "y2storage/proposal/space_distribution"
 require "y2storage/proposal/assigned_space"
 require "y2storage/proposal/phys_vol_calculator"
-require "y2storage/refinements"
 
 module Y2Storage
   class Proposal
@@ -36,7 +35,6 @@ module Y2Storage
     # of free disk spaces
     class SpaceDistributionCalculator
       include Yast::Logger
-      using Y2Storage::Refinements::Disk
 
       FREE_SPACE_MIN_SIZE = DiskSize.MiB(30)
 
@@ -80,7 +78,7 @@ module Y2Storage
         candidates.compact!
 
         if lvm_helper.missing_space > DiskSize.zero
-          log.info "Calculate LVM posibilities for each candidate distribution"
+          log.info "Calculate LVM posibilities for the #{candidates.size} candidate distributions"
           pv_calculator = PhysVolCalculator.new(spaces, lvm_helper)
           candidates.map! { |dist| pv_calculator.add_physical_volumes(dist) }
         end
@@ -100,7 +98,7 @@ module Y2Storage
       # from the partition, although it's an oversimplyfication because being
       # able to generate a valid distribution is not just a matter of size.
       #
-      # @param partition [Storage::Partition] partition to resize
+      # @param partition [Partition] partition to resize
       # @param volumes [PlannedVolumesList] volumes to make space for
       # @param free_spaces [Array<FreeDiskSpace>] all free spaces in the system
       # @return [DiskSize]
@@ -110,7 +108,7 @@ module Y2Storage
         #  - several volumes (and maybe one of the new PVs) will be logical
         #  - resizing produces a new space
         #  - the LVM must be spread among all the available spaces
-        disk = Storage.to_disk(partition.partitionable)
+        disk = partition.partitionable
         needed = volumes.target_disk_size(rounding: disk.min_grain)
 
         max_logical = max_logical(disk, volumes)
@@ -154,19 +152,19 @@ module Y2Storage
       # Max number of logical partitions that can contain a SpaceDistribution
       # for a given disk and set of volumes
       #
-      # @param disk [Storage::Partitionable]
+      # @param disk [Partitionable]
       # @param volumes [PlannedVolumesList]
       # @return [Integer]
       def max_logical(disk, volumes)
         ptable = disk.as_not_empty { disk.partition_table }
-        return 0 unless ptable.extended_possible
+        return 0 unless ptable.extended_possible?
         # Worst case, all the volumes that can end up in this disk will do so
         # and will be candidates to be logical
         max_volumes = volumes.select { |v| v.disk.nil? || v.disk == disk.name }
         partitions = max_volumes.size
         # Even worst if we need a logical PV
         partitions += 1 unless lvm_helper.missing_space.zero?
-        if ptable.has_extended
+        if ptable.has_extended?
           partitions
         else
           SpaceDistribution.partitions_in_new_extended(partitions, ptable)

@@ -28,9 +28,7 @@ require_relative "support/proposal_context"
 
 describe Y2Storage::Proposal do
   describe "#propose" do
-    using Y2Storage::Refinements::TestDevicegraph
     using Y2Storage::Refinements::SizeCasts
-    using Y2Storage::Refinements::DevicegraphLists
 
     include_context "proposal"
 
@@ -50,10 +48,10 @@ describe Y2Storage::Proposal do
       it "creates all the needed partitions" do
         proposal.propose
         expect(proposal.devices.partitions).to contain_exactly(
-          an_object_with_fields(id: Storage::ID_BIOS_BOOT),
-          an_object_with_fields(mountpoint: "/"),
-          an_object_with_fields(mountpoint: "/home"),
-          an_object_with_fields(mountpoint: "swap")
+          an_object_having_attributes(id: Y2Storage::PartitionId::BIOS_BOOT),
+          an_object_having_attributes(filesystem_mountpoint: "/"),
+          an_object_having_attributes(filesystem_mountpoint: "/home"),
+          an_object_having_attributes(filesystem_mountpoint: "swap")
         )
       end
     end
@@ -84,39 +82,41 @@ describe Y2Storage::Proposal do
         )
       end
 
+      def sda(num)
+        proposal.devices.partitions.detect { |p| p.name == "/dev/sda#{num}" }
+      end
+
       it "reuses suitable swap partitions" do
         proposal.propose
-        sda3 = proposal.devices.partitions.with(name: "/dev/sda3").first
-        expect(sda3).to match_fields(
-          mountpoint: "swap",
-          uuid:       "33333333-3333-3333-3333-33333333",
-          label:      "swap3",
-          size:       (1.GiB - 1.MiB).to_i
+        expect(sda(3)).to have_attributes(
+          filesystem_mountpoint: "swap",
+          filesystem_uuid:       "33333333-3333-3333-3333-33333333",
+          filesystem_label:      "swap3",
+          size:                  1.GiB - 1.MiB
         )
       end
 
       it "reuses UUID and label of deleted swap partitions" do
         proposal.propose
-        sda2 = proposal.devices.partitions.with(name: "/dev/sda2").first
-        expect(sda2).to match_fields(
-          mountpoint: "swap",
-          uuid:       "11111111-1111-1111-1111-11111111",
-          label:      "swap1",
-          size:       500.MiB.to_i
+        expect(sda(2)).to have_attributes(
+          filesystem_mountpoint: "swap",
+          filesystem_uuid:       "11111111-1111-1111-1111-11111111",
+          filesystem_label:      "swap1",
+          size:                  500.MiB
         )
-        sda5 = proposal.devices.partitions.with(name: "/dev/sda5").first
-        expect(sda5).to match_fields(
-          mountpoint: "swap",
-          uuid:       "22222222-2222-2222-2222-22222222",
-          label:      "swap2",
-          size:       500.MiB.to_i
+        expect(sda(5)).to have_attributes(
+          filesystem_mountpoint: "swap",
+          filesystem_uuid:       "22222222-2222-2222-2222-22222222",
+          filesystem_label:      "swap2",
+          size:                  500.MiB
         )
       end
 
       it "does not enforce any particular UUID or label for additional swaps" do
         proposal.propose
-        sda6 = proposal.devices.partitions.with(name: "/dev/sda6").first
-        expect(sda6).to match_fields(mountpoint: "swap", uuid: "", label: "")
+        expect(sda(6)).to have_attributes(
+          filesystem_mountpoint: "swap", filesystem_uuid: "", filesystem_label: ""
+        )
       end
     end
 
@@ -126,12 +126,18 @@ describe Y2Storage::Proposal do
       let(:lvm) { false }
       let(:expected) do
         file_name = "#{scenario}-#{yaml_suffix}"
-        ::Storage::Devicegraph.new_from_file(output_file_for(file_name))
+        Y2Storage::Devicegraph.new_from_file(output_file_for(file_name))
       end
 
       before do
         settings.candidate_devices = ["/dev/sda", "/dev/sdb"]
         settings.root_device = root_device
+      end
+
+      def disk_for(mountpoint)
+        proposal.devices.disks.detect do |disk|
+          disk.partitions.any? { |p| p.filesystem_mountpoint == mountpoint }
+        end
       end
 
       context "if no disk is enforced for '/'" do
@@ -142,8 +148,7 @@ describe Y2Storage::Proposal do
 
         it "allocates the root device in the biggest suitable disk" do
           proposal.propose
-          fs = proposal.devices.filesystems
-          expect(fs.with_mountpoint("/").disks.first.name).to eq "/dev/sdb"
+          expect(disk_for("/").name).to eq "/dev/sdb"
         end
       end
 
@@ -155,15 +160,13 @@ describe Y2Storage::Proposal do
 
         it "allocates in the root device the partitions that must be there" do
           proposal.propose
-          fs = proposal.devices.filesystems
-          expect(fs.with_mountpoint("/").disks.first.name).to eq "/dev/sda"
+          expect(disk_for("/").name).to eq "/dev/sda"
         end
 
         it "allocates other partitions in the already available space" do
           proposal.propose
-          fs = proposal.devices.filesystems
-          expect(fs.with_mountpoint("/home").disks.first.name).to eq "/dev/sdb"
-          expect(fs.with_mountpoint("swap").disks.first.name).to eq "/dev/sdb"
+          expect(disk_for("/home").name).to eq "/dev/sdb"
+          expect(disk_for("swap").name).to eq "/dev/sdb"
         end
       end
 
@@ -175,8 +178,9 @@ describe Y2Storage::Proposal do
 
         it "allocates all the partitions there" do
           proposal.propose
-          filesystems = proposal.devices.filesystems.with_mountpoint(["/", "/home", "swap"])
-          expect(filesystems.disks.map(&:name)).to eq ["/dev/sdb"]
+          expect(disk_for("/").name).to eq "/dev/sdb"
+          expect(disk_for("/home").name).to eq "/dev/sdb"
+          expect(disk_for("swap").name).to eq "/dev/sdb"
         end
       end
 
@@ -185,7 +189,7 @@ describe Y2Storage::Proposal do
 
         it "creates a bios_boot partition if it's not there" do
           proposal.propose
-          bios_boot = proposal.devices.partitions.with(id: Storage::ID_BIOS_BOOT)
+          bios_boot = proposal.devices.partitions.select { |p| p.id.is?(:bios_boot) }
 
           expect(bios_boot).to_not be_empty
         end
@@ -196,7 +200,7 @@ describe Y2Storage::Proposal do
 
         it "does not create a bios_boot partition" do
           proposal.propose
-          bios_boot = proposal.devices.partitions.with(id: Storage::ID_BIOS_BOOT)
+          bios_boot = proposal.devices.partitions.select { |p| p.id.is?(:bios_boot) }
 
           expect(bios_boot).to be_empty
         end

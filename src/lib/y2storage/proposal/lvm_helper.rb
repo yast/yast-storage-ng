@@ -23,7 +23,6 @@
 
 require "fileutils"
 require "y2storage/disk_size"
-require "y2storage/refinements"
 require "y2storage/proposal/exceptions"
 require "y2storage/proposal/encrypter"
 require "y2storage/secret_attributes"
@@ -33,8 +32,6 @@ module Y2Storage
     # Class to encapsulate the calculation of all the LVM-related values and
     # to generate the LVM setup needed to allocate a set of planned volumes
     class LvmHelper
-      using Refinements::Devicegraph
-      using Refinements::DevicegraphLists
       include Yast::Logger
       include SecretAttributes
 
@@ -47,7 +44,7 @@ module Y2Storage
       USELESS_PV_SPACE = DiskSize.MiB(1)
       private_constant :USELESS_PV_SPACE
 
-      # @return [Storage::LvmVg] Volume group that will be reused to allocate
+      # @return [LvmVg] Volume group that will be reused to allocate
       # the proposed volumes, deleting the existing logical volumes if necessary
       attr_accessor :reused_volume_group
 
@@ -68,10 +65,10 @@ module Y2Storage
       # Returns a copy of the original devicegraph in which all the logical
       # volumes (and the volume group, if needed) have been created.
       #
-      # @param original_graph [Storage::Devicegraph]
+      # @param original_graph [Devicegraph]
       # @param pv_partitions [Array<String>] names of the newly created
       #     partitions that should be added as PVs to the volume group
-      # @return [Storage::Devicegraph]
+      # @return [Devicegraph]
       def create_volumes(original_graph, pv_partitions = [])
         new_graph = original_graph.duplicate
         return new_graph if planned_volumes.empty?
@@ -125,7 +122,7 @@ module Y2Storage
       # @return [Array<String>]
       def partitions_in_vg
         return [] unless reused_volume_group
-        reused_volume_group.lvm_pvs.to_a.map { |pv| pv.blk_device.name }
+        reused_volume_group.lvm_pvs.map { |pv| pv.blk_device.name }
       end
 
       # Min size that a partition must have to be useful as PV for the proposal
@@ -158,15 +155,15 @@ module Y2Storage
       # Volumes groups that could be reused by the proposal, sorted by
       # preference.
       #
-      # @param devicegraph [Storage::Devicegraph]
-      # @return [Array<Storage::LvmVg>]
+      # @param devicegraph [Devicegraph]
+      # @return [Array<LvmVg>]
       def reusable_volume_groups(devicegraph)
         # FIXME: we currently have no mechanism to activate existing LUKS, so
         # there is no way we can re-use an encrypted LVM. Moreover, is still
         # undecided if we want to reuse encrypted LVMs at all.
         return [] if encrypt?
 
-        vgs = devicegraph.volume_groups
+        vgs = devicegraph.lvm_vgs
         big_vgs, small_vgs = vgs.partition { |vg| total_size(vg) >= target_size }
         # Use #vg_name to ensure stable sorting
         big_vgs.sort_by! { |vg| [total_size(vg), vg.vg_name] }
@@ -217,12 +214,12 @@ module Y2Storage
       end
 
       def find_reused_vg(devicegraph)
-        devicegraph.lvm_vgs.with(sid: reused_volume_group.sid).first
+        devicegraph.lvm_vgs.detect { |vg| vg.sid == reused_volume_group.sid }
       end
 
       def create_volume_group(devicegraph)
         name = available_name(DEFAULT_VG_NAME, devicegraph)
-        Storage::LvmVg.create(devicegraph, name)
+        LvmVg.create(devicegraph, name)
       end
 
       # Extends the given volume group by adding as physical volumes the
@@ -230,12 +227,13 @@ module Y2Storage
       #
       # This method modifies the volume group received as first argument.
       #
-      # @param volume_group [Storage::LvmVg] volume group to extend
+      # @param volume_group [LvmVg] volume group to extend
       # @param part_names [Array<String>] device names of the partitions
-      # @param devicegraph [Storage::Devicegraph] to fetch the partitions
+      # @param devicegraph [Devicegraph] to fetch the partitions
       def assign_physical_volumes!(volume_group, part_names, devicegraph)
-        devicegraph.partitions.with(name: part_names).each do |partition|
-          device = encrypt? ? partition.encryption : partition
+        partitions = devicegraph.partitions.select { |p| part_names.include?(p.name) }
+        partitions.each do |partition|
+          device = partition.encryption || partition
           volume_group.add_lvm_pv(device)
         end
       end
@@ -248,7 +246,7 @@ module Y2Storage
       # FIXME: the current implementation does not guarantee than the freed
       # space is the minimum valid one.
       #
-      # @param volume_group [Storage::LvmVg] volume group to modify
+      # @param volume_group [LvmVg] volume group to modify
       def make_space!(volume_group)
         space_size = planned_volumes.target_disk_size
         missing = missing_vg_space(volume_group, space_size)
@@ -267,7 +265,7 @@ module Y2Storage
       #
       # This method modifies the volume group received as first argument.
       #
-      # @param volume_group [Storage::LvmVg] volume group to modify
+      # @param volume_group [LvmVg] volume group to modify
       def create_logical_volumes!(volume_group)
         vg_size = available_space(volume_group)
         volumes = planned_volumes.distribute_space(vg_size, rounding: extent_size)
@@ -292,8 +290,7 @@ module Y2Storage
       # planned volumes. It returns the smallest logical volume that would
       # fulfill the goal. If no LV is big enough, it returns the biggest one.
       def delete_candidate(volume_group, target_space)
-        target_space = target_space.to_i
-        lvs = volume_group.lvm_lvs.to_a
+        lvs = volume_group.lvm_lvs
         big_lvs = lvs.select { |lv| lv.size >= target_space }
         if big_lvs.empty?
           lvs.max_by { |lv| lv.size }
@@ -312,11 +309,11 @@ module Y2Storage
       end
 
       def available_space(volume_group)
-        DiskSize.new(volume_group.number_of_free_extents * volume_group.extent_size)
+        volume_group.extent_size * volume_group.number_of_free_extents
       end
 
       def total_size(volume_group)
-        DiskSize.new(volume_group.number_of_extents * volume_group.extent_size)
+        volume_group.extent_size * volume_group.number_of_extents
       end
 
       # Returns the name that is available taking original_name as a base. If
@@ -324,9 +321,9 @@ module Y2Storage
       # appended.
       #
       # @param original_name [String]
-      # @param root [Storage::Devicegraph, Storage::LvmVg] if root is a
-      #   devicegraph, the name is considered a VG name. If root is a VG, the
-      #   name is for a logical volume.
+      # @param root [Devicegraph, LvmVg] if root is a devicegraph, the name is
+      #   considered a VG name. If root is a VG, the name is for a logical
+      #   volume.
       # @return [String]
       def available_name(original_name, root)
         return original_name unless name_taken?(original_name, root)
@@ -341,10 +338,10 @@ module Y2Storage
       end
 
       def name_taken?(name, root)
-        if root.is_a? Storage::Devicegraph
-          root.vgs.with(vg_name: name).any?
+        if root.is_a? Devicegraph
+          root.lvm_vgs.any? { |vg| vg.vg_name == name }
         else
-          root.lvm_lvs.to_a.any? { |lv| lv.lv_name == name }
+          root.lvm_lvs.any? { |lv| lv.lv_name == name }
         end
       end
 

@@ -36,16 +36,16 @@ module Y2Storage
 
       def supported_root_disk?
         return false unless root_disk
-        if root_disk.dasd?
-          return false if root_disk.dasd_type == ::Storage::DasdType_FBA
-          return false if root_disk.dasd_format == ::Storage::DasdFormat_LDL
+        if root_disk.is?(:dasd)
+          return false if root_disk.dasd_type.is?(:fba)
+          return false if root_disk.dasd_format.is?(:ldl)
           # TODO: DIAG disks (whatever they are) are not supported either
         end
         true
       end
 
       def zipl_volume
-        vol = PlannedVolume.new("/boot/zipl", ::Storage::FsType_EXT2)
+        vol = PlannedVolume.new("/boot/zipl", Filesystems::Type::EXT2)
         vol.disk = root_disk.name
         vol.min_disk_size = DiskSize.MiB(100)
         vol.max_disk_size = DiskSize.GiB(1)

@@ -27,10 +27,9 @@ describe Y2Storage::PartitionTables::Base do
   before do
     fake_scenario("complex-lvm-encrypt")
   end
-  let(:devgraph) { Y2Storage::StorageManager.instance.y2storage_probed }
 
   describe "#ancestors" do
-    subject(:device) { Y2Storage::LvmLv.find_by_name(devgraph, "/dev/vg0/lv1").blk_filesystem }
+    subject(:device) { Y2Storage::LvmLv.find_by_name(fake_devicegraph, "/dev/vg0/lv1").blk_filesystem }
 
     it "does not include the device itself" do
       expect(device.ancestors.map(&:sid)).to_not include device.sid

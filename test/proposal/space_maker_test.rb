@@ -26,11 +26,10 @@ require "y2storage"
 describe Y2Storage::Proposal::SpaceMaker do
   describe "#make_space" do
     using Y2Storage::Refinements::SizeCasts
-    using Y2Storage::Refinements::DevicegraphLists
 
     # Partition from fake_devicegraph, fetched by name
     def probed_partition(name)
-      fake_devicegraph.partitions.with(name: name).first
+      fake_devicegraph.partitions.detect { |p| p.name == name }
     end
 
     before do
@@ -68,7 +67,7 @@ describe Y2Storage::Proposal::SpaceMaker do
       it "does not modify the disk" do
         result = maker.provide_space(volumes)
         disk = result[:devicegraph].disks.first
-        expect(disk.has_partition_table).to eq false
+        expect(disk.partition_table).to be_nil
       end
 
       it "assumes a (future) GPT partition table" do
@@ -90,15 +89,15 @@ describe Y2Storage::Proposal::SpaceMaker do
       it "deletes linux partitions as needed" do
         result = maker.provide_space(volumes)
         expect(result[:devicegraph].partitions).to contain_exactly(
-          an_object_with_fields(label: "windows", size: 250.GiB.to_i),
-          an_object_with_fields(label: "swap", size: 2.GiB.to_i)
+          an_object_having_attributes(filesystem_label: "windows", size: 250.GiB),
+          an_object_having_attributes(filesystem_label: "swap", size: 2.GiB)
         )
       end
 
       it "stores the list of deleted partitions" do
         result = maker.provide_space(volumes)
         expect(result[:deleted_partitions]).to contain_exactly(
-          an_object_with_fields(label: "root", size: (248.GiB - 1.MiB).to_i)
+          an_object_having_attributes(filesystem_label: "root", size: 248.GiB - 1.MiB)
         )
       end
 
@@ -113,18 +112,18 @@ describe Y2Storage::Proposal::SpaceMaker do
         let(:vol2) { planned_vol(mount_point: "/2", type: :ext4, desired: 200.GiB) }
         let(:volumes) { vols_list(vol1, vol2) }
         let(:resize_info) do
-          instance_double("::Storage::ResizeInfo", resize_ok: true, min_size: 100.GiB.to_i)
+          instance_double("Y2Storage::ResizeInfo", resize_ok?: true, min_size: 100.GiB)
         end
 
         before do
-          allow_any_instance_of(::Storage::BlkFilesystem).to receive(:detect_resize_info)
+          allow_any_instance_of(Y2Storage::Filesystems::BlkFilesystem).to receive(:detect_resize_info)
             .and_return(resize_info)
         end
 
         it "resizes Windows partitions to free additional needed space" do
           result = maker.provide_space(volumes)
           expect(result[:devicegraph].partitions).to contain_exactly(
-            an_object_with_fields(label: "windows", size: (200.GiB - 1.MiB).to_i)
+            an_object_having_attributes(filesystem_label: "windows", size: 200.GiB - 1.MiB)
           )
         end
       end
@@ -133,12 +132,12 @@ describe Y2Storage::Proposal::SpaceMaker do
     context "with one disk containing a Windows partition and no Linux ones" do
       let(:scenario) { "windows-pc" }
       let(:resize_info) do
-        instance_double("::Storage::ResizeInfo", resize_ok: true, min_size: 730.GiB.to_i)
+        instance_double("Y2Storage::ResizeInfo", resize_ok?: true, min_size: 730.GiB)
       end
       let(:windows_partitions) { { "/dev/sda" => [analyzer_part("/dev/sda1")] } }
 
       before do
-        allow_any_instance_of(::Storage::BlkFilesystem).to receive(:detect_resize_info)
+        allow_any_instance_of(Y2Storage::Filesystems::BlkFilesystem).to receive(:detect_resize_info)
           .and_return(resize_info)
       end
 
@@ -147,15 +146,15 @@ describe Y2Storage::Proposal::SpaceMaker do
 
         it "shrinks the Windows partition by the required size" do
           result = maker.provide_space(volumes)
-          win_partition = result[:devicegraph].partitions.with(name: "/dev/sda1").first
-          expect(win_partition.size).to eq 740.GiB.to_i
+          win_partition = Y2Storage::Partition.find_by_name(result[:devicegraph], "/dev/sda1")
+          expect(win_partition.size).to eq 740.GiB
         end
 
         it "leaves other partitions untouched" do
           result = maker.provide_space(volumes)
           expect(result[:devicegraph].partitions).to contain_exactly(
-            an_object_with_fields(label: "windows"),
-            an_object_with_fields(label: "recovery", size: (20.GiB - 1.MiB).to_i)
+            an_object_having_attributes(filesystem_label: "windows"),
+            an_object_having_attributes(filesystem_label: "recovery", size: 20.GiB - 1.MiB)
           )
         end
 
@@ -177,21 +176,21 @@ describe Y2Storage::Proposal::SpaceMaker do
 
         it "shrinks the Windows partition as much as possible" do
           result = maker.provide_space(volumes)
-          win_partition = result[:devicegraph].partitions.with(name: "/dev/sda1").first
-          expect(win_partition.size).to eq 730.GiB.to_i
+          win_partition = Y2Storage::Partition.find_by_name(result[:devicegraph], "/dev/sda1")
+          expect(win_partition.size).to eq 730.GiB
         end
 
         it "removes other partitions" do
           result = maker.provide_space(volumes)
           expect(result[:devicegraph].partitions).to contain_exactly(
-            an_object_with_fields(label: "windows")
+            an_object_having_attributes(filesystem_label: "windows")
           )
         end
 
         it "stores the list of deleted partitions" do
           result = maker.provide_space(volumes)
           expect(result[:deleted_partitions]).to contain_exactly(
-            an_object_with_fields(label: "recovery", size: (20.GiB - 1.MiB).to_i)
+            an_object_having_attributes(filesystem_label: "recovery", size: 20.GiB - 1.MiB)
           )
         end
 
@@ -207,7 +206,7 @@ describe Y2Storage::Proposal::SpaceMaker do
     context "if there are two Windows partitions" do
       let(:scenario) { "double-windows-pc" }
       let(:resize_info) do
-        instance_double("::Storage::ResizeInfo", resize_ok: true, min_size: 50.GiB.to_i)
+        instance_double("Y2Storage::ResizeInfo", resize_ok?: true, min_size: 50.GiB)
       end
       let(:windows_partitions) do
         {
@@ -219,23 +218,23 @@ describe Y2Storage::Proposal::SpaceMaker do
 
       before do
         settings.candidate_devices = ["/dev/sda", "/dev/sdb"]
-        allow_any_instance_of(::Storage::BlkFilesystem).to receive(:detect_resize_info)
+        allow_any_instance_of(Y2Storage::Filesystems::BlkFilesystem).to receive(:detect_resize_info)
           .and_return(resize_info)
       end
 
       it "shrinks first the less full Windows partition" do
         result = maker.provide_space(volumes)
-        win2_partition = result[:devicegraph].partitions.with(name: "/dev/sdb1").first
-        expect(win2_partition.size).to eq 160.GiB.to_i
+        win2_partition = Y2Storage::Partition.find_by_name(result[:devicegraph], "/dev/sdb1")
+        expect(win2_partition.size).to eq 160.GiB
       end
 
       it "leaves other partitions untouched if possible" do
         result = maker.provide_space(volumes)
         expect(result[:devicegraph].partitions).to contain_exactly(
-          an_object_with_fields(label: "windows1", size: 80.GiB.to_i),
-          an_object_with_fields(label: "recovery1", size: (20.GiB - 1.MiB).to_i),
-          an_object_with_fields(label: "windows2"),
-          an_object_with_fields(label: "recovery2", size: (20.GiB - 1.MiB).to_i)
+          an_object_having_attributes(filesystem_label: "windows1", size: 80.GiB),
+          an_object_having_attributes(filesystem_label: "recovery1", size: 20.GiB - 1.MiB),
+          an_object_having_attributes(filesystem_label: "windows2"),
+          an_object_having_attributes(filesystem_label: "recovery2", size: 20.GiB - 1.MiB)
         )
       end
     end
@@ -249,14 +248,14 @@ describe Y2Storage::Proposal::SpaceMaker do
 
         result = maker.provide_space(volumes)
         expect(result[:deleted_partitions]).to contain_exactly(
-          an_object_with_fields(name: "/dev/sda4", size: (900.GiB - 1.MiB).to_i),
-          an_object_with_fields(name: "/dev/sda5", size: 300.GiB.to_i),
-          an_object_with_fields(name: "/dev/sda6", size: (600.GiB - 3.MiB).to_i)
+          an_object_having_attributes(name: "/dev/sda4", size: 900.GiB - 1.MiB),
+          an_object_having_attributes(name: "/dev/sda5", size: 300.GiB),
+          an_object_having_attributes(name: "/dev/sda6", size: 600.GiB - 3.MiB)
         )
         expect(result[:devicegraph].partitions).to contain_exactly(
-          an_object_with_fields(name: "/dev/sda1", size: 4.GiB.to_i),
-          an_object_with_fields(name: "/dev/sda2", size: 60.GiB.to_i),
-          an_object_with_fields(name: "/dev/sda3", size: 60.GiB.to_i)
+          an_object_having_attributes(name: "/dev/sda1", size: 4.GiB),
+          an_object_having_attributes(name: "/dev/sda2", size: 60.GiB),
+          an_object_having_attributes(name: "/dev/sda3", size: 60.GiB)
         )
       end
 
@@ -289,14 +288,14 @@ describe Y2Storage::Proposal::SpaceMaker do
 
         result = maker.provide_space(volumes)
         expect(result[:devicegraph].partitions).to contain_exactly(
-          an_object_with_fields(name: "/dev/sda1", size: 4.GiB.to_i),
-          an_object_with_fields(name: "/dev/sda2", size: 60.GiB.to_i),
-          an_object_with_fields(name: "/dev/sda3", size: 60.GiB.to_i)
+          an_object_having_attributes(name: "/dev/sda1", size: 4.GiB),
+          an_object_having_attributes(name: "/dev/sda2", size: 60.GiB),
+          an_object_having_attributes(name: "/dev/sda3", size: 60.GiB)
         )
         expect(result[:deleted_partitions]).to contain_exactly(
-          an_object_with_fields(name: "/dev/sda4"),
-          an_object_with_fields(name: "/dev/sda5"),
-          an_object_with_fields(name: "/dev/sda6")
+          an_object_having_attributes(name: "/dev/sda4"),
+          an_object_having_attributes(name: "/dev/sda5"),
+          an_object_having_attributes(name: "/dev/sda6")
         )
       end
 
@@ -330,13 +329,14 @@ describe Y2Storage::Proposal::SpaceMaker do
         result = maker.provide_space(volumes)
         distribution = result[:space_distribution]
         dist_volumes = distribution.spaces.map { |s| s.volumes.to_a }.flatten
-        expect(dist_volumes).to_not include an_object_with_fields(mount_point: "/3")
-        expect(dist_volumes).to_not include an_object_with_fields(mount_point: "/4")
+        expect(dist_volumes).to_not include an_object_having_attributes(mount_point: "/3")
+        expect(dist_volumes).to_not include an_object_having_attributes(mount_point: "/4")
       end
 
       it "only makes space for non reused volumes" do
         result = maker.provide_space(volumes)
-        freed_space = result[:devicegraph].free_disk_spaces.disk_size
+        devgraph = result[:devicegraph]
+        freed_space = devgraph.free_disk_spaces.map(&:disk_size).reduce(Y2Storage::DiskSize.zero, :+)
         # Extra MiB for rounding issues
         expect(freed_space).to eq(360.GiB + 1.MiB)
       end
@@ -345,7 +345,7 @@ describe Y2Storage::Proposal::SpaceMaker do
     context "when some volumes have disk restrictions" do
       let(:scenario) { "mixed_disks" }
       let(:resize_info) do
-        instance_double("::Storage::ResizeInfo", resize_ok: true, min_size: 50.GiB.to_i)
+        instance_double("Y2Storage::ResizeInfo", resize_ok?: true, min_size: 50.GiB)
       end
       let(:windows_partitions) do
         { "/dev/sda" => [analyzer_part("/dev/sda1")] }
@@ -357,7 +357,7 @@ describe Y2Storage::Proposal::SpaceMaker do
 
       before do
         settings.candidate_devices = ["/dev/sda", "/dev/sdb"]
-        allow_any_instance_of(::Storage::BlkFilesystem).to receive(:detect_resize_info)
+        allow_any_instance_of(Y2Storage::Filesystems::BlkFilesystem).to receive(:detect_resize_info)
           .and_return(resize_info)
       end
 
@@ -416,7 +416,7 @@ describe Y2Storage::Proposal::SpaceMaker do
       it "deletes the volume group itself" do
         result = maker.provide_space(volumes)
 
-        expect(result[:devicegraph].vgs.map(&:vg_name)).to_not include "vg1"
+        expect(result[:devicegraph].lvm_vgs.map(&:vg_name)).to_not include "vg1"
       end
 
       it "does not affect partitions from other volume groups" do
@@ -424,7 +424,7 @@ describe Y2Storage::Proposal::SpaceMaker do
         devicegraph = result[:devicegraph]
 
         expect(devicegraph.partitions.map(&:name)).to include "/dev/sda7"
-        expect(devicegraph.vgs.map(&:vg_name)).to include "vg0"
+        expect(devicegraph.lvm_vgs.map(&:vg_name)).to include "vg0"
       end
     end
 
@@ -432,14 +432,14 @@ describe Y2Storage::Proposal::SpaceMaker do
       let(:scenario) { "lvm-two-vgs" }
       let(:windows_partitions) { { "/dev/sda" => [analyzer_part("/dev/sda1")] } }
       let(:resize_info) do
-        instance_double("::Storage::ResizeInfo", resize_ok: true, min_size: 10.GiB.to_i)
+        instance_double("Y2Storage::ResizeInfo", resize_ok?: true, min_size: 10.GiB)
       end
 
       before do
         # We are reusing vg1
         expect(lvm_helper).to receive(:partitions_in_vg).and_return ["/dev/sda5", "/dev/sda9"]
         # At some point, we can try to resize Windows
-        allow_any_instance_of(::Storage::BlkFilesystem).to receive(:detect_resize_info)
+        allow_any_instance_of(Y2Storage::Filesystems::BlkFilesystem).to receive(:detect_resize_info)
           .and_return(resize_info)
       end
 

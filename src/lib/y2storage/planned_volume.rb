@@ -36,8 +36,8 @@ module Y2Storage
     # @return [String] mount point for this volume. This might be a real mount
     # point ("/", "/boot", "/home") or a pseudo mount point like "swap".
     attr_accessor :mount_point
-    # @return [::Storage::FsType] the type of filesystem this volume should
-    # get, like ::Storage::FsType_BTRFS or ::Storage::FsType_SWAP. A value of
+    # @return [Filesystems::Type] the type of filesystem this volume should
+    # get, like Filesystems::Type::BTRFS or Filesystems::Type::SWAP. A value of
     # nil means the volume will not be formatted.
     attr_accessor :filesystem_type
     # @return [String] device name of an existing partition to reuse for this
@@ -111,7 +111,7 @@ module Y2Storage
     # Constructor.
     #
     # @param mount_point [string] @see #mount_point
-    # @param filesystem_type [::Storage::FsType] @see #filesystem_type
+    # @param filesystem_type [Filesystems::Type] @see #filesystem_type
     def initialize(mount_point, filesystem_type = nil)
       @mount_point = mount_point
       @filesystem_type = filesystem_type
@@ -171,13 +171,13 @@ module Y2Storage
     # Create a filesystem for the volume on the specified partition and set its
     # mount point. Do nothing if #filesystem_type is not set.
     #
-    # @param partition [::Storage::Partition]
+    # @param partition [Partition]
     #
-    # @return [::Storage::BlkFilesystem] filesystem
+    # @return [Filesystems::BlkFilesystem] filesystem
     def create_filesystem(partition)
       return nil unless filesystem_type
-      filesystem = partition.create_filesystem(filesystem_type)
-      filesystem.add_mountpoint(mount_point) if mount_point && !mount_point.empty?
+      filesystem = partition.create_blk_filesystem(filesystem_type)
+      filesystem.mountpoint = mount_point if mount_point && !mount_point.empty?
       filesystem.label = label if label
       filesystem.uuid = uuid if uuid
       filesystem
@@ -192,10 +192,10 @@ module Y2Storage
     # @return nil
     #
     def create_subvolumes(filesystem, other_mount_points)
-      return unless filesystem.type == ::Storage::FsType_BTRFS
+      return unless filesystem.supports_btrfs_subvolumes?
       return unless subvolumes?
       parent_subvol = get_parent_subvol(filesystem)
-      prefix = filesystem.mountpoints.first
+      prefix = filesystem.mountpoint
       prefix += "/" unless prefix == "/"
       @subvolumes.each do |planned_subvol|
         # Notice that subvolumes not matching the current architecture are
@@ -216,10 +216,9 @@ module Y2Storage
     # @return [::Storage::BtrfsSubvolume]
     #
     def get_parent_subvol(filesystem)
-      btrfs = ::Storage.to_btrfs(filesystem)
       # The toplevel subvolume is implicitly created by mkfs.btrfs.
       # It does not have a name, and its subvolume ID is always 5.
-      parent = btrfs.top_level_btrfs_subvolume
+      parent = filesystem.top_level_btrfs_subvolume
       if @default_subvolume && !@default_subvolume.empty?
         # If the "@" subvolume is specified in control.xml, this must be
         # created first, and it will be the parent of all the other
@@ -257,7 +256,7 @@ module Y2Storage
     #
     # @return [Boolean]
     def lvm_pv?
-      partition_id == Storage::ID_LVM
+      partition_id && partition_id.is?(:lvm)
     end
 
     def ==(other)
@@ -275,7 +274,8 @@ module Y2Storage
     #
     # @return [Boolean]
     def btrfs?
-      filesystem_type == Storage::FsType_BTRFS
+      return false unless filesystem_type
+      filesystem_type.is?(:btrfs)
     end
 
     # Checks whether the volume has any subvolumes

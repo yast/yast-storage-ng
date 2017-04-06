@@ -24,7 +24,6 @@
 require "yast"
 require "y2storage/disk_size"
 require "y2storage/proposal/assigned_space"
-require "y2storage/refinements"
 
 module Y2Storage
   class Proposal
@@ -32,7 +31,6 @@ module Y2Storage
     # of free disk spaces
     class SpaceDistribution
       include Yast::Logger
-      using Refinements::Disk
 
       # @return [Array<AssignedSpace>]
       attr_reader :spaces
@@ -159,7 +157,7 @@ module Y2Storage
       # extended one
       #
       # @param partitions [Integer] total number of partitions to create
-      # @param ptable [Storage::PartitionTable]
+      # @param ptable [PartitionTable]
       # @return [Integer]
       def self.partitions_in_new_extended(partitions, ptable)
         free_primary_slots = ptable.max_primary - ptable.num_primary
@@ -186,7 +184,7 @@ module Y2Storage
 
       # Indexes the list of assigned spaces by disk
       #
-      # @return [Hash{Storage::Disk => Array<AssignedSpace>]
+      # @return [Hash{Disk => Array<AssignedSpace>]
       def spaces_by_disk
         spaces.each_with_object({}) do |space, hash|
           hash[space.disk] ||= []
@@ -198,7 +196,7 @@ module Y2Storage
       #
       # @param spaces [Array<AssignedSpace] spaces allocated in the disk
       #     and with a correct value for #partition_type
-      # @param ptable [Storage::PartitionTable]
+      # @param ptable [PartitionTable]
       def set_num_logical_for(spaces, ptable)
         # There are only two possible scenarios, either all the spaces got
         # a restricted #partition_type, either none
@@ -278,11 +276,11 @@ module Y2Storage
       end
 
       def too_many_primary?(spaces, ptable)
-        return false unless ptable.extended_possible
+        return false unless ptable.extended_possible?
         # If there is no extended partition already, we know that all the
         # assigned spaces of this disk will have a nil partition_type
         # So nothing to check
-        return false unless ptable.has_extended
+        return false unless ptable.has_extended?
 
         primary = spaces.select { |s| s.partition_type == :primary }
         too_many_primary_with_extended?(primary, ptable)

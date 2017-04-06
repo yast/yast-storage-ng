@@ -25,6 +25,7 @@ require "yast"
 require "y2storage/disk_size"
 require "y2storage/secret_attributes"
 require "y2storage/planned_subvol"
+require "y2storage/filesystems/type"
 
 Yast.import "ProductFeatures"
 
@@ -47,10 +48,10 @@ module Y2Storage
     def initialize
       @use_lvm                  = false
       self.encryption_password  = nil
-      @root_filesystem_type     = ::Storage::FsType_BTRFS
+      @root_filesystem_type     = Filesystems::Type::BTRFS
       @use_snapshots            = true
       @use_separate_home        = true
-      @home_filesystem_type     = ::Storage::FsType_XFS
+      @home_filesystem_type     = Filesystems::Type::XFS
       @enlarge_swap_for_suspend = false
     end
 

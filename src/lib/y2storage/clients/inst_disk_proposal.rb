@@ -38,7 +38,8 @@ module Y2Storage
       include Yast::Logger
 
       def initialize
-        @devicegraph = storage_manager.staging
+        # FIXME: use StorageManager#staging when everything is adapted
+        @devicegraph = storage_manager.y2storage_staging
         @proposal = storage_manager.proposal
         # If the staging devicegraph has never been set,
         # start with a fresh proposal

@@ -24,7 +24,6 @@
 require "fileutils"
 require "y2storage/planned_volumes_list"
 require "y2storage/disk_size"
-require "y2storage/refinements"
 require "y2storage/proposal/encrypter"
 
 module Y2Storage
@@ -32,16 +31,13 @@ module Y2Storage
     # Class to create partitions following a given distribution represented by
     # a SpaceDistribution object
     class PartitionCreator
-      using Refinements::Devicegraph
-      using Refinements::DevicegraphLists
-      using Y2Storage::Refinements::Disk
       include Yast::Logger
 
       FIRST_LOGICAL_PARTITION_NUMBER = 5 # Number of the first logical partition (/dev/sdx5)
 
       # Initialize.
       #
-      # @param original_graph [::Storage::Devicegraph] initial devicegraph
+      # @param original_graph [Devicegraph] initial devicegraph
       def initialize(original_graph)
         @original_graph = original_graph
       end
@@ -50,7 +46,7 @@ module Y2Storage
       # partitions have been created.
       #
       # @param distribution [SpaceDistribution]
-      # @return [::Storage::Devicegraph]
+      # @return [Devicegraph]
       def create_partitions(distribution)
         self.devicegraph = original_graph.duplicate
 
@@ -116,7 +112,7 @@ module Y2Storage
       def create_volumes_partitions(volumes, initial_free_space, num_logical)
         volumes.each_with_index do |vol, idx|
           partition_id = vol.partition_id
-          partition_id ||= vol.mount_point == "swap" ? ::Storage::ID_SWAP : ::Storage::ID_LINUX
+          partition_id ||= vol.mount_point == "swap" ? PartitionId::SWAP : PartitionId::LINUX
           begin
             space = free_space_within(initial_free_space)
             primary = volumes.size - idx > num_logical
@@ -141,7 +137,7 @@ module Y2Storage
       # @param [FreeDiskSpace] the original disk chunk, the returned free
       #   space will be within this area
       def free_space_within(initial_free_space)
-        disk = devicegraph.disks.with(name: initial_free_space.disk_name).first
+        disk = devicegraph.disks.detect { |d| d.name == initial_free_space.disk_name }
         spaces = disk.as_not_empty { disk.free_spaces }.select do |space|
           space.region.start >= initial_free_space.region.start &&
             space.region.start < initial_free_space.region.end
@@ -154,7 +150,7 @@ module Y2Storage
       # of free space.
       #
       # @param vol          [ProposalVolume]
-      # @param partition_id [::Storage::IdNum] ::Storage::ID_Linux etc.
+      # @param partition_id [PartitionId]
       # @param free_space   [FreeDiskSpace]
       # @param primary      [Boolean] whether the partition should be primary
       #                     or logical
@@ -166,14 +162,14 @@ module Y2Storage
 
         if primary
           dev_name = next_free_primary_partition_name(disk.name, ptable)
-          partition_type = ::Storage::PartitionType_PRIMARY
+          partition_type = PartitionType::PRIMARY
         else
-          if !ptable.has_extended
+          if !ptable.has_extended?
             create_extended_partition(disk, free_space.region)
             free_space = free_space_within(free_space)
           end
           dev_name = next_free_logical_partition_name(disk.name, ptable)
-          partition_type = ::Storage::PartitionType_LOGICAL
+          partition_type = PartitionType::LOGICAL
         end
 
         region = new_region_with_size(free_space.region, vol.disk_size)
@@ -185,12 +181,12 @@ module Y2Storage
 
       # Creates an extended partition
       #
-      # @param disk [Storage::Disk]
-      # @param region [Storage::Region]
+      # @param disk [Disk]
+      # @param region [Region]
       def create_extended_partition(disk, region)
         ptable = disk.partition_table
         dev_name = next_free_primary_partition_name(disk.name, ptable)
-        ptable.create_partition(dev_name, region, ::Storage::PartitionType_EXTENDED)
+        ptable.create_partition(dev_name, region, PartitionType::EXTENDED)
       end
 
       # Return the next device name for a primary partition that is not already
@@ -201,7 +197,7 @@ module Y2Storage
       def next_free_primary_partition_name(disk_name, ptable)
         # FIXME: This is broken by design. create_partition needs to return
         # this information, not get it as an input parameter.
-        part_names = ptable.partitions.to_a.map(&:name)
+        part_names = ptable.partitions.map(&:name)
         1.upto(ptable.max_primary) do |i|
           dev_name = "#{disk_name}#{i}"
           return dev_name unless part_names.include?(dev_name)
@@ -217,7 +213,7 @@ module Y2Storage
       def next_free_logical_partition_name(disk_name, ptable)
         # FIXME: This is broken by design. create_partition needs to return
         # this information, not get it as an input parameter.
-        part_names = ptable.partitions.to_a.map(&:name)
+        part_names = ptable.partitions.map(&:name)
         FIRST_LOGICAL_PARTITION_NUMBER.upto(ptable.max_logical) do |i|
           dev_name = "#{disk_name}#{i}"
           return dev_name unless part_names.include?(dev_name)
@@ -228,29 +224,26 @@ module Y2Storage
       # Create a new region from the given one, but with new size
       # disk_size.
       #
-      # @param region [::Storage::Region] initial region
+      # @param region [Region] initial region
       # @param disk_size [DiskSize] new size of the region
       #
-      # @return [::Storage::Region] Newly created region
+      # @return [Region] Newly created region
       #
       def new_region_with_size(region, disk_size)
-        blocks = disk_size.to_i / region.block_size
+        blocks = (disk_size / region.block_size).to_i
         # Never exceed the region
         if region.start + blocks > region.end
           blocks = region.end - region.start + 1
         end
-        # region.dup doesn't seem to work (SWIG bindings problem?)
-        ::Storage::Region.new(region.start, blocks, region.block_size)
+        Region.create(region.start, blocks, region.block_size)
       end
 
       # Returns the partition table for disk, creating an empty one if needed
       #
-      # @param [Storage::Disk]
-      # @return [Storage::PartitionTable]
+      # @param [Disk]
+      # @return [PartitionTable]
       def partition_table(disk)
-        disk.partition_table
-      rescue Storage::WrongNumberOfChildren
-        disk.create_partition_table(disk.preferred_ptable_type)
+        disk.partition_table || disk.create_partition_table(disk.preferred_ptable_type)
       end
 
       def encrypter

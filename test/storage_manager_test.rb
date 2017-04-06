@@ -24,7 +24,8 @@ require_relative "spec_helper"
 require "y2storage"
 
 def devicegraph_from(file_name)
-  graph = Storage::Devicegraph.new
+  st_graph = Storage::Devicegraph.new
+  graph = Y2Storage::Devicegraph.new(st_graph)
   yaml_file = input_file_for(file_name)
   Y2Storage::FakeDeviceFactory.load_yaml_file(graph, yaml_file)
   graph
@@ -98,7 +99,7 @@ describe Y2Storage::StorageManager do
     end
 
     it "copies the provided devicegraph to staging" do
-      expect(manager.staging).to eq old_graph
+      expect(manager.y2storage_staging).to eq old_graph
       manager.staging = new_graph
       expect(Storage::Disk.all(manager.staging).size).to eq 6
     end

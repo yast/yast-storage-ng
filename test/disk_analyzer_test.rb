@@ -85,7 +85,7 @@ describe Y2Storage::DiskAnalyzer do
       it "returns an array of partitions for disks with some Windows" do
         expect(analyzer.windows_partitions["/dev/sda"]).to be_a Array
         expect(analyzer.windows_partitions["/dev/sda"].size).to eq 1
-        expect(analyzer.windows_partitions["/dev/sda"].first).to be_a ::Storage::Partition
+        expect(analyzer.windows_partitions["/dev/sda"].first).to be_a Y2Storage::Partition
       end
     end
 
@@ -115,7 +115,7 @@ describe Y2Storage::DiskAnalyzer do
     it "returns an array of partitions for disks with some swap" do
       expect(analyzer.swap_partitions["/dev/sdb"]).to be_a Array
       expect(analyzer.swap_partitions["/dev/sdb"].size).to eq 1
-      expect(analyzer.swap_partitions["/dev/sdb"].first).to be_a ::Storage::Partition
+      expect(analyzer.swap_partitions["/dev/sdb"].first).to be_a Y2Storage::Partition
     end
   end
 end

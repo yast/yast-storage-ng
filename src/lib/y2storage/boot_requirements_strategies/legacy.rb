@@ -22,6 +22,7 @@
 # find current contact information at www.suse.com.
 
 require "y2storage/boot_requirements_strategies/base"
+require "y2storage/partition_id"
 
 module Y2Storage
   module BootRequirementsStrategies
@@ -42,8 +43,6 @@ module Y2Storage
     protected
 
       def grub_partition_needed?
-        # FIXME: so far we don't create partition tables, so we just analyze
-        # the existing one.
         root_ptable_type?(:gpt)
       end
 
@@ -53,7 +52,6 @@ module Y2Storage
       end
 
       def grub_in_mbr?
-        # FIXME: see note above about existing partition tables
         root_ptable_type?(:msdos) && !plain_btrfs?
       end
 
@@ -62,11 +60,11 @@ module Y2Storage
       end
 
       def btrfs_without_lvm?
-        settings.root_filesystem_type == ::Storage::FsType_BTRFS && !settings.use_lvm
+        settings.root_filesystem_type.is?(:btrfs) && !settings.use_lvm
       end
 
       def btrfs_without_encryption?
-        settings.root_filesystem_type == ::Storage::FsType_BTRFS && !settings.use_encryption
+        settings.root_filesystem_type.is?(:btrfs) && !settings.use_encryption
       end
 
       def boot_partition_needed?
@@ -80,7 +78,7 @@ module Y2Storage
       def grub_volume
         vol = PlannedVolume.new(nil)
         # only required on GPT
-        vol.partition_id = ::Storage::ID_BIOS_BOOT
+        vol.partition_id = PartitionId::BIOS_BOOT
         vol.min_disk_size = DiskSize.KiB(256)
         vol.max_disk_size = DiskSize.MiB(8)
         vol.desired_disk_size = DiskSize.MiB(1)

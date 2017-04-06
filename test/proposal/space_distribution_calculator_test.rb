@@ -33,7 +33,6 @@ describe Y2Storage::Proposal::SpaceDistributionCalculator do
 
   describe "#best_distribution" do
     using Y2Storage::Refinements::SizeCasts
-    using Y2Storage::Refinements::DevicegraphLists
 
     before do
       fake_scenario(scenario)
@@ -42,7 +41,7 @@ describe Y2Storage::Proposal::SpaceDistributionCalculator do
     let(:vol1) { planned_vol(mount_point: "/1", type: :ext4, desired: 1.GiB, max: 3.GiB, weight: 1) }
     let(:vol2) { planned_vol(mount_point: "/2", type: :ext4, desired: 2.GiB, max: 3.GiB, weight: 1) }
     let(:volumes) { Y2Storage::PlannedVolumesList.new([vol1, vol2, vol3]) }
-    let(:spaces) { fake_devicegraph.free_disk_spaces.to_a }
+    let(:spaces) { fake_devicegraph.free_disk_spaces }
 
     subject(:distribution) { calculator.best_distribution(volumes, spaces) }
 
@@ -364,7 +363,7 @@ describe Y2Storage::Proposal::SpaceDistributionCalculator do
             vol1,
             vol2,
             vol3,
-            an_object_with_fields(partition_id: Storage::ID_LVM)
+            an_object_having_attributes(partition_id: Y2Storage::PartitionId::LVM)
           )
         end
       end

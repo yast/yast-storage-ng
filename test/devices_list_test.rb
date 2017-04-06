@@ -38,6 +38,9 @@ describe "devices lists" do
   before do
     fake_scenario(scenario)
   end
+  # Redefine the helper here. DevicesList is deprecated code accessing directly
+  # to libstorage.
+  let(:fake_devicegraph) { Y2Storage::StorageManager.instance.probed }
   let(:scenario) { "mixed_disks" }
 
   describe "Y2Storage::DevicesLists::Base" do
