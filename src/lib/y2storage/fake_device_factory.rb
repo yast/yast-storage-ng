@@ -609,13 +609,15 @@ module Y2Storage
     def create_btrfs(parent, args)
       log.info("#{__method__}( #{parent}, #{args} )")
       default_subvolume = args["default_subvolume"]
-      if default_subvolume
-        blk_device = Y2Storage::BlkDevice.find_by_name(@devicegraph, parent)
+      if default_subvolume && !default_subvolume.empty?
+        blk_device = BlkDevice.find_by_name(devicegraph, parent)
         filesystem = blk_device.filesystem
         if !filesystem || !filesystem.type.is?(:btrfs)
           raise HierarchyError, "No btrfs on #{parent}"
         end
-        filesystem.create_btrfs_subvolume(@default_subvolume)
+        btrfs = Storage.to_btrfs(filesystem.to_storage_value)
+        toplevel = btrfs.top_level_btrfs_subvolume
+        toplevel.create_btrfs_subvolume(default_subvolume)
       end
       parent
     end
@@ -627,7 +629,7 @@ module Y2Storage
     # @return [Object] default subvolume or nil if there is none
     #
     def find_default_subvolume(btrfs)
-      btrfs.btrfs_subvolumes.find { |s| s.default_btrfs_subvolume? }
+      btrfs.btrfs_subvolumes.to_a.find { |s| s.default_btrfs_subvolume? }
     end
 
     # Factory method for a btrfs subvolume
@@ -643,7 +645,7 @@ module Y2Storage
     def create_subvolume(parent, args)
       log.info("#{__method__}( #{parent}, #{args} )")
       path  = args["path"]
-      nocow = args["nocow"] || false
+      nocow = args["nocow"] || "false"
       raise ArgumentError, "No path for subvolume" unless path
 
       blk_device = ::Storage::BlkDevice.find_by_name(@devicegraph, parent)
@@ -651,7 +653,7 @@ module Y2Storage
       parent_subvol = find_default_subvolume(btrfs) || btrfs.top_level_btrfs_subvolume
 
       subvol = parent_subvol.create_btrfs_subvolume(path)
-      subvol.nocow = nocow
+      subvol.nocow = nocow == "true"
       subvol
     end
 
