@@ -23,34 +23,38 @@
 require_relative "spec_helper"
 require "storage"
 require "y2storage/yaml_writer"
+require "y2storage/disk"
+require "y2storage/partition_tables"
+require "y2storage/filesystems"
 
 describe Y2Storage::YamlWriter do
 
-  it "produces yaml of a simple disk and partition setup" do
+  let(:test_environment) do
+    Storage::Environment.new(true, Storage::ProbeMode_NONE, Storage::TargetMode_DIRECT)
+  end
+  let(:storage) { Storage::Storage.new(test_environment) }
 
-    environment = Storage::Environment.new(true, Storage::ProbeMode_NONE, Storage::TargetMode_DIRECT)
-    storage = Storage::Storage.new(environment)
+  it "produces yaml of a simple disk and partition setup" do
     staging = storage.staging
 
-    sda = Storage::Disk.create(staging, "/dev/sda")
+    sda = Y2Storage::Disk.create(staging, "/dev/sda")
     sda.size = 256 * Storage.GiB
 
-    gpt = sda.create_partition_table(Storage::PtType_GPT)
+    gpt = sda.create_partition_table(Y2Storage::PartitionTables::Type::GPT)
 
-    sda1 = gpt.create_partition("/dev/sda1", Storage::Region.new(2048, 1048576, 512),
-      Storage::PartitionType_PRIMARY)
-    sda1.id = Storage::ID_SWAP
+    sda1 = gpt.create_partition("/dev/sda1", Y2Storage::Region.create(2048, 1048576, 512),
+      Y2Storage::PartitionType::PRIMARY)
+    sda1.id = Y2Storage::PartitionId::SWAP
 
-    swap = sda1.create_filesystem(Storage::FsType_SWAP)
-    swap.add_mountpoint("swap")
+    swap = sda1.create_filesystem(Y2Storage::Filesystems::Type::SWAP)
+    swap.mount_point = "swap"
 
-    sda2 = gpt.create_partition("/dev/sda2", Storage::Region.new(1050624, 33554432, 512),
-      Storage::PartitionType_PRIMARY)
+    sda2 = gpt.create_partition("/dev/sda2", Y2Storage::Region.create(1050624, 33554432, 512),
+      Y2Storage::PartitionType::PRIMARY)
 
-    ext4 = sda2.create_filesystem(Storage::FsType_EXT4)
-    ext4.add_mountpoint("/")
-    ext4.fstab_options << "acl"
-    ext4.fstab_options << "user_xattr"
+    ext4 = sda2.create_filesystem(Y2Storage::Filesystems::Type::EXT4)
+    ext4.mount_point = "/"
+    ext4.fstab_options = ["acl", "user_xattr"]
 
     # rubocop:disable Style/StringLiterals
 
@@ -100,18 +104,16 @@ describe Y2Storage::YamlWriter do
 
   it "produces yaml of a simple lvm setup" do
 
-    environment = Storage::Environment.new(true, Storage::ProbeMode_NONE, Storage::TargetMode_DIRECT)
-    storage = Storage::Storage.new(environment)
     staging = storage.staging
 
-    sda = Storage::Disk.create(staging, "/dev/sda")
+    sda = Y2Storage::Disk.create(staging, "/dev/sda")
     sda.size = 1 * Storage.TiB
 
-    lvm_vg = Storage::LvmVg.create(staging, "system")
+    lvm_vg = Y2Storage::LvmVg.create(staging, "system")
     lvm_vg.add_lvm_pv(sda)
 
     lvm_lv = lvm_vg.create_lvm_lv("root", 16 * Storage.GiB)
-    lvm_lv.create_filesystem(Storage::FsType_EXT4)
+    lvm_lv.create_filesystem(Y2Storage::Filesystems::Type::EXT4)
 
     # rubocop:disable Style/StringLiterals
 
@@ -145,32 +147,29 @@ describe Y2Storage::YamlWriter do
 
   it "produces yaml of an encrypted partition setup" do
 
-    environment = Storage::Environment.new(true, Storage::ProbeMode_NONE, Storage::TargetMode_DIRECT)
-    storage = Storage::Storage.new(environment)
     staging = storage.staging
 
-    sda = Storage::Disk.create(staging, "/dev/sda")
+    sda = Y2Storage::Disk.create(staging, "/dev/sda")
     sda.size = 256 * Storage.GiB
 
-    gpt = sda.create_partition_table(Storage::PtType_GPT)
+    gpt = sda.create_partition_table(Y2Storage::PartitionTables::Type::GPT)
 
-    sda1 = gpt.create_partition("/dev/sda1", Storage::Region.new(2048, 1048576, 512),
-      Storage::PartitionType_PRIMARY)
-    sda1.id = Storage::ID_SWAP
+    sda1 = gpt.create_partition("/dev/sda1", Y2Storage::Region.create(2048, 1048576, 512),
+      Y2Storage::PartitionType::PRIMARY)
+    sda1.id = Y2Storage::PartitionId::SWAP
 
-    swap = sda1.create_filesystem(Storage::FsType_SWAP)
-    swap.add_mountpoint("swap")
+    swap = sda1.create_filesystem(Y2Storage::Filesystems::Type::SWAP)
+    swap.mount_point = "swap"
 
-    sda2 = gpt.create_partition("/dev/sda2", Storage::Region.new(1050624, 33554432, 512),
-      Storage::PartitionType_PRIMARY)
+    sda2 = gpt.create_partition("/dev/sda2", Y2Storage::Region.create(1050624, 33554432, 512),
+      Y2Storage::PartitionType::PRIMARY)
 
     encryption = sda2.create_encryption("cr_system")
     encryption.password = "vry!s3cret"
 
-    ext4 = encryption.create_filesystem(Storage::FsType_EXT4)
-    ext4.add_mountpoint("/")
-    ext4.fstab_options << "acl"
-    ext4.fstab_options << "user_xattr"
+    ext4 = encryption.create_filesystem(Y2Storage::Filesystems::Type::EXT4)
+    ext4.mount_point = "/"
+    ext4.fstab_options = ["acl", "user_xattr"]
 
     # rubocop:disable Style/StringLiterals
 
@@ -224,29 +223,27 @@ describe Y2Storage::YamlWriter do
 
   it "produces yaml of an lvm setup with encryption on the PV level" do
 
-    environment = Storage::Environment.new(true, Storage::ProbeMode_NONE, Storage::TargetMode_DIRECT)
-    storage = Storage::Storage.new(environment)
     staging = storage.staging
 
-    sda = Storage::Disk.create(staging, "/dev/sda")
+    sda = Y2Storage::Disk.create(staging, "/dev/sda")
     sda.size = 256 * Storage.GiB
 
-    ptable = sda.create_partition_table(Storage::PtType_MSDOS)
-    blocks = sda.size / 512 - 2048
+    ptable = sda.create_partition_table(Y2Storage::PartitionTables::Type::MSDOS)
+    blocks = sda.size.to_i / 512 - 2048
 
-    sda1 = ptable.create_partition("/dev/sda1", Storage::Region.new(2048, blocks, 512),
-      Storage::PartitionType_PRIMARY)
-    sda1.id = Storage::ID_LVM
+    sda1 = ptable.create_partition("/dev/sda1", Y2Storage::Region.create(2048, blocks, 512),
+      Y2Storage::PartitionType::PRIMARY)
+    sda1.id = Y2Storage::PartitionId::LVM
 
     encryption = sda1.create_encryption("cr_sda1")
     encryption.password = "s3cr3t"
 
-    lvm_vg = Storage::LvmVg.create(staging, "system")
+    lvm_vg = Y2Storage::LvmVg.create(staging, "system")
     lvm_vg.add_lvm_pv(encryption)
 
     lvm_lv = lvm_vg.create_lvm_lv("root", 16 * Storage.GiB)
-    fs = lvm_lv.create_filesystem(Storage::FsType_EXT4)
-    fs.add_mountpoint("/")
+    fs = lvm_lv.create_filesystem(Y2Storage::Filesystems::Type::EXT4)
+    fs.mount_point = "/"
 
     # rubocop:disable Style/StringLiterals
 
@@ -297,21 +294,19 @@ describe Y2Storage::YamlWriter do
 
   it "produces yaml of an lvm setup with encryption on the LV level" do
 
-    environment = Storage::Environment.new(true, Storage::ProbeMode_NONE, Storage::TargetMode_DIRECT)
-    storage = Storage::Storage.new(environment)
     staging = storage.staging
 
-    sda = Storage::Disk.create(staging, "/dev/sda")
+    sda = Y2Storage::Disk.create(staging, "/dev/sda")
     sda.size = 256 * Storage.GiB
 
-    ptable = sda.create_partition_table(Storage::PtType_MSDOS)
-    blocks = sda.size / 512 - 2048
+    ptable = sda.create_partition_table(Y2Storage::PartitionTables::Type::MSDOS)
+    blocks = sda.size.to_i / 512 - 2048
 
-    sda1 = ptable.create_partition("/dev/sda1", Storage::Region.new(2048, blocks, 512),
-      Storage::PartitionType_PRIMARY)
-    sda1.id = Storage::ID_LVM
+    sda1 = ptable.create_partition("/dev/sda1", Y2Storage::Region.create(2048, blocks, 512),
+      Y2Storage::PartitionType::PRIMARY)
+    sda1.id = Y2Storage::PartitionId::LVM
 
-    lvm_vg = Storage::LvmVg.create(staging, "system")
+    lvm_vg = Y2Storage::LvmVg.create(staging, "system")
     lvm_vg.add_lvm_pv(sda1)
 
     lvm_lv = lvm_vg.create_lvm_lv("root", 16 * Storage.GiB)
@@ -319,8 +314,8 @@ describe Y2Storage::YamlWriter do
     encryption = lvm_lv.create_encryption("cr_sda1")
     encryption.password = "s3cr3t"
 
-    fs = encryption.create_filesystem(Storage::FsType_XFS)
-    fs.add_mountpoint("/")
+    fs = encryption.create_filesystem(Y2Storage::Filesystems::Type::XFS)
+    fs.mount_point = "/"
 
     # rubocop:disable Style/StringLiterals
 
@@ -371,15 +366,13 @@ describe Y2Storage::YamlWriter do
 
   it "produces yaml of a filesystem directly on a disk without a partition table" do
 
-    environment = Storage::Environment.new(true, Storage::ProbeMode_NONE, Storage::TargetMode_DIRECT)
-    storage = Storage::Storage.new(environment)
     staging = storage.staging
 
-    disk = Storage::Disk.create(staging, "/dev/sda")
+    disk = Y2Storage::Disk.create(staging, "/dev/sda")
     disk.size = 256 * Storage.GiB
 
-    fs = disk.create_filesystem(Storage::FsType_XFS)
-    fs.add_mountpoint("/data")
+    fs = disk.create_filesystem(Y2Storage::Filesystems::Type::XFS)
+    fs.mount_point = "/data"
 
     # rubocop:disable Style/StringLiterals
 
@@ -405,18 +398,16 @@ describe Y2Storage::YamlWriter do
 
   it "produces yaml of an encrypted filesystem directly on a disk" do
 
-    environment = Storage::Environment.new(true, Storage::ProbeMode_NONE, Storage::TargetMode_DIRECT)
-    storage = Storage::Storage.new(environment)
     staging = storage.staging
 
-    disk = Storage::Disk.create(staging, "/dev/sda")
+    disk = Y2Storage::Disk.create(staging, "/dev/sda")
     disk.size = 256 * Storage.GiB
 
     encryption = disk.create_encryption("cr_data")
     encryption.password = "s3cr3t"
 
-    fs = encryption.create_filesystem(Storage::FsType_XFS)
-    fs.add_mountpoint("/data")
+    fs = encryption.create_filesystem(Y2Storage::Filesystems::Type::XFS)
+    fs.mount_point = "/data"
 
     # rubocop:disable Style/StringLiterals
 

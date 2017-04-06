@@ -48,6 +48,12 @@ module Y2Storage
 
     storage_forward :create_blk_filesystem, as: "Filesystems::BlkFilesystem", raise_errors: true
 
+    # @!method create_filesystem
+    #   Alias for create_blk_filesystem
+    #
+    #   @return [Filesystems::BlkFilesystem]
+    alias_method :create_filesystem, :create_blk_filesystem
+
     storage_forward :create_encryption, as: "Encryption", raise_errors: true
 
     # @!method direct_blk_filesystem
