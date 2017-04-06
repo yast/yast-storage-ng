@@ -21,6 +21,7 @@
 
 require_relative "spec_helper"
 require "y2storage/planned_subvol"
+require "pp"
 Yast.import "Arch"
 
 describe Y2Storage::PlannedSubvol do
@@ -207,4 +208,122 @@ describe Y2Storage::PlannedSubvol do
     end
   end
 
+  context ".read_from_xml" do
+    before do
+      allow(Yast::Arch).to receive(:x86_64).and_return false
+      allow(Yast::Arch).to receive(:s390).and_return true
+    end
+
+    let(:xml) do
+      [
+        { "path" => "home" },
+        { "path" => "opt" },
+        { "path" => "srv" },
+        { "path" => "tmp" },
+        { "path" => "usr/local" },
+        { "path" => "var/cache" },
+        { "path" => "var/lib/mariadb", "copy_on_write" => false },
+        { "path" => "var/lib/mysql", "copy_on_write" => false },
+        { "path" => "var/lib/pgsql", "copy_on_write" => false },
+        { "path" => "boot/grub2/i386-pc", "archs" => "i386, x86_64" },
+        { "path" => "boot/grub2/s390x-emu", "archs" => "s390" }
+      ]
+    end
+
+    let(:subvols) { Y2Storage::PlannedSubvol.create_from_control_xml(xml) }
+
+    describe "basic parsing" do
+      it "returns a non-nil array" do
+        expect(subvols).not_to be_nil
+      end
+
+      it "removes architectures other than the current one" do
+        expect(subvols.size).to be == 10
+      end
+    end
+
+    describe "a home subvolume" do
+      subject { subvols.find { |s| s.path == "home" } }
+
+      it "exists" do
+        expect(subject).not_to be_nil
+      end
+
+      it "has the correct path" do
+        expect(subject.path).to be == "home"
+      end
+
+      it "is COW" do
+        expect(subject.cow?).to be true
+      end
+
+      it "is arch-specific" do
+        expect(subject.arch_specific?).to be false
+      end
+    end
+
+    describe "a var/cache subvolume" do
+      subject { subvols.find { |s| s.path == "var/cache" } }
+
+      it "exists" do
+        expect(subject).not_to be_nil
+      end
+
+      it "has the correct path" do
+        expect(subject.path).to be == "var/cache"
+      end
+
+      it "is COW" do
+        expect(subject.cow?).to be true
+      end
+
+      it "is arch-specific" do
+        expect(subject.arch_specific?).to be false
+      end
+    end
+
+    describe "a var/lib/mariadb subvolume" do
+      subject { subvols.find { |s| s.path == "var/lib/mariadb" } }
+
+      it "exists" do
+        expect(subject).not_to be_nil
+      end
+
+      it "has the correct path" do
+        expect(subject.path).to be == "var/lib/mariadb"
+      end
+
+      it "is NoCOW" do
+        expect(subject.no_cow?).to be true
+      end
+
+      it "is arch-specific" do
+        expect(subject.arch_specific?).to be false
+      end
+    end
+
+    describe "an arch-specific boot/grub2/s390x-emu subvolume" do
+      subject { subvols.find { |s| s.path == "boot/grub2/s390x-emu" } }
+
+      it "exists on arch s390" do
+        expect(subject).not_to be_nil
+      end
+
+      it "is COW" do
+        expect(subject.cow?).to be true
+      end
+
+      it "is arch-specific" do
+        expect(subject.arch_specific?).to be true
+      end
+    end
+
+    describe "an arch-specific boot/grub2/i386-pc subvolume" do
+      subject { subvols.find { |s| s.path == "boot/grub2/i386-pc" } }
+
+      it "does not exist on s390" do
+        expect(subject).to be_nil
+      end
+    end
+  end
 end
