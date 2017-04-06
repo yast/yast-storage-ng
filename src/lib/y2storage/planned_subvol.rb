@@ -140,7 +140,7 @@ module Y2Storage
       name = default_subvol + "/" + path unless default_subvol.empty?
       subvol = parent_subvol.create_btrfs_subvolume(name)
       subvol.nocow = true if no_cow?
-      subvol.add_mountpoint(mount_prefix + @path)
+      subvol.mountpoint = mount_prefix + @path
       subvol
     end
 
