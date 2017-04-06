@@ -153,9 +153,9 @@ describe Y2Storage::Dialogs::GuidedSetup::SelectScheme do
         let(:password) { "123456" }
 
         before do
-          expect(Yast::InstExtensionImage).to receive(:with_extension)
-            .with("cracklib-dict-full").and_yield
-          expect(Yast::SCR).to receive(:Execute).with(Yast::Path.new(".crack"), password)
+          allow(Yast::InstExtensionImage).to receive(:LoadExtension)
+            .with(/cracklib/, anything).and_return(true)
+          allow(Yast::SCR).to receive(:Execute).with(Yast::Path.new(".crack"), password)
             .and_return("an error message")
         end
 
