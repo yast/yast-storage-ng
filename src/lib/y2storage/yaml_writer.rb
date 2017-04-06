@@ -388,7 +388,7 @@ module Y2Storage
       btrfs = ::Storage.to_btrfs(filesystem)
       subvolumes = btrfs.btrfs_subvolumes.to_a
       return {} if subvolumes.empty? # the toplevel subvol doesn't have a path
-      default_subvolume = subvolumes.find { |s| s.default_btrfs_subvolume? }
+      default_subvolume = subvolumes.find { |s| s.default_btrfs_subvolume? && !s.path.empty? }
       btrfs_content = {}
       btrfs_content["default_subvolume"] = default_subvolume.path if default_subvolume
 
