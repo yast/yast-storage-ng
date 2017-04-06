@@ -28,6 +28,7 @@ require "y2storage/filesystems/base"
 require "y2storage/filesystems/blk_filesystem"
 require "y2storage/filesystems/nfs"
 require "y2storage/fake_device_factory"
+require "y2storage/storage_manager"
 
 module Y2Storage
   # The master container of libstorage.
@@ -105,8 +106,9 @@ module Y2Storage
     #       If nil, the probed devicegraph is used.
     # @return [Actiongraph]
     def actiongraph(from: nil)
-      origin = from ? from.to_storage_value : to_storage_value.storage.probed
-      graph = ::Storage::Actiongraph.new(to_storage_value.storage, origin, to_storage_value)
+      storage_object = to_storage_value.storage || StorageManager.instance.storage
+      origin = from ? from.to_storage_value : storage_object.probed
+      graph = ::Storage::Actiongraph.new(storage_object, origin, to_storage_value)
       Actiongraph.new(graph)
     end
 
