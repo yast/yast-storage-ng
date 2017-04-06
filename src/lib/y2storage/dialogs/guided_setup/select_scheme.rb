@@ -35,6 +35,17 @@ module Y2Storage
           widget_update(:repeat_password, widget_value(:encryption), attr: :Enabled)
         end
 
+        def back_handler
+          unload_cracklib
+          super
+        end
+
+        def next_handler
+          result = super
+          unload_cracklib if result == :next
+          result
+        end
+
       protected
 
         def dialog_title
@@ -94,6 +105,11 @@ module Y2Storage
           "ABCDEFGHIJKLMNOPQRSTUVWXYZ" \
           "#* ,.;:._-+=!$%&/|?{[()]}@^\\<>"
 
+        CRACKLIB_PACKAGE = "cracklib-dict-full.rpm"
+
+        attr_reader :cracklib_loaded
+        alias_method :cracklib_loaded?, :cracklib_loaded
+
         def valid_settings?
           using_encryption? ? valid_password? : true
         end
@@ -134,9 +150,9 @@ module Y2Storage
           correct
         end
 
+        # Password is considered strong when cracklib returns an empty message.
         def password_strong?
-          message = crack_password
-          return true if message.nil? # cracklib fails
+          message = cracklib_message
           return true if message.empty?
           Yast::Report.Warning(message)
           false
@@ -150,15 +166,29 @@ module Y2Storage
           password.split(//).all? { |c| PASS_ALLOWED_CHARS.include?(c) }
         end
 
-        # Check password strength using cracklib.
-        # @return[String] crack lib message, empty ("") if successful.
-        def crack_password
-          Yast::InstExtensionImage.with_extension("cracklib-dict-full.rpm") do
-            Yast::SCR.Execute(Yast::Path.new(".crack"), password)
-          end
-        rescue RuntimeError => e
-          log.error(e.message)
-          nil
+        # Checks password strength using cracklib.
+        # @return[String] crack lib message, empty ("") if successful or
+        # cracklib cannot be loaded.
+        def cracklib_message
+          load_cracklib
+          return "" unless cracklib_loaded?
+          Yast::SCR.Execute(Yast::Path.new(".crack"), password)
+        end
+
+        def load_cracklib
+          return true if cracklib_loaded?
+          message = "Loading to memory package #{CRACKLIB_PACKAGE}"
+          loaded = Yast::InstExtensionImage.LoadExtension(CRACKLIB_PACKAGE, message)
+          log.warn("WARNING: Failed to load cracklib. Please check logs.") unless loaded
+          @cracklib_loaded = loaded
+        end
+
+        def unload_cracklib
+          return false unless cracklib_loaded?
+          message = "Removing from memory package #{CRACKLIB_PACKAGE}"
+          unloaded = Yast::InstExtensionImage.UnLoadExtension(CRACKLIB_PACKAGE, message)
+          log.warn("Warning: Failed to remove cracklib. Please check logs.") unless unloaded
+          @cracklib_loaded = !unloaded
         end
 
         def password
