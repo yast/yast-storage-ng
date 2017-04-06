@@ -22,6 +22,4 @@
 require "y2storage/refinements/devicegraph_lists"
 require "y2storage/refinements/devicegraph"
 require "y2storage/refinements/disk"
-require "y2storage/refinements/partition_attributes"
-require "y2storage/refinements/lvm_lv_attributes"
 require "y2storage/refinements/size_casts"

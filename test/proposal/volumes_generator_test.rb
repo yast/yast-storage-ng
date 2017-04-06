@@ -252,7 +252,7 @@ describe Y2Storage::Proposal::VolumesGenerator do
 
         it "has a subvolume var/log" do
           expect(root.subvolumes).to include(
-            an_object_with_fields(
+            an_object_having_attributes(
               path:          "var/log",
               copy_on_write: true,
               archs:         nil
@@ -262,7 +262,7 @@ describe Y2Storage::Proposal::VolumesGenerator do
 
         it "has a NoCOW subvolume var/lib/mariadb" do
           expect(root.subvolumes).to include(
-            an_object_with_fields(
+            an_object_having_attributes(
               path:          "var/lib/mariadb",
               copy_on_write: false,
               archs:         nil
@@ -273,7 +273,7 @@ describe Y2Storage::Proposal::VolumesGenerator do
         it "has an arch-specific subvolume boot/grub2/s390x-emu on s390" do
           # Arch is s390 in these tests - see allow(Yast::Arch) in let(:settings)
           expect(root.subvolumes).to include(
-            an_object_with_fields(
+            an_object_having_attributes(
               path:          "boot/grub2/s390x-emu",
               copy_on_write: true,
               archs:         ["s390"]
@@ -284,7 +284,7 @@ describe Y2Storage::Proposal::VolumesGenerator do
         it "does not have an arch-specific subvolume boot/grub2/x86_64-efi on s390" do
           # Arch is s390 in these tests - see allow(Yast::Arch) in let(:settings)
           expect(root.subvolumes).not_to include(
-            an_object_with_fields(
+            an_object_having_attributes(
               path:          "boot/grub2/x86_64-efi",
               copy_on_write: true,
               archs:         ["x86_64"]

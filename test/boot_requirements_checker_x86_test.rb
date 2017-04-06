@@ -61,7 +61,7 @@ describe Y2Storage::BootRequirementsChecker do
 
           it "requires only a new /boot/efi partition" do
             expect(checker.needed_partitions).to contain_exactly(
-              an_object_with_fields(mount_point: "/boot/efi", reuse: nil)
+              an_object_having_attributes(mount_point: "/boot/efi", reuse: nil)
             )
           end
         end
@@ -71,7 +71,7 @@ describe Y2Storage::BootRequirementsChecker do
 
           it "only requires to use the existing EFI partition" do
             expect(checker.needed_partitions).to contain_exactly(
-              an_object_with_fields(mount_point: "/boot/efi", reuse: "/dev/sda1")
+              an_object_having_attributes(mount_point: "/boot/efi", reuse: "/dev/sda1")
             )
           end
         end
@@ -85,7 +85,7 @@ describe Y2Storage::BootRequirementsChecker do
 
           it "requires only a new /boot/efi partition" do
             expect(checker.needed_partitions).to contain_exactly(
-              an_object_with_fields(mount_point: "/boot/efi", reuse: nil)
+              an_object_having_attributes(mount_point: "/boot/efi", reuse: nil)
             )
           end
         end
@@ -95,7 +95,7 @@ describe Y2Storage::BootRequirementsChecker do
 
           it "only requires to use the existing EFI partition" do
             expect(checker.needed_partitions).to contain_exactly(
-              an_object_with_fields(mount_point: "/boot/efi", reuse: "/dev/sda1")
+              an_object_having_attributes(mount_point: "/boot/efi", reuse: "/dev/sda1")
             )
           end
         end
@@ -110,7 +110,7 @@ describe Y2Storage::BootRequirementsChecker do
 
           it "requires only a new /boot/efi partition" do
             expect(checker.needed_partitions).to contain_exactly(
-              an_object_with_fields(mount_point: "/boot/efi", reuse: nil)
+              an_object_having_attributes(mount_point: "/boot/efi", reuse: nil)
             )
           end
         end
@@ -120,7 +120,7 @@ describe Y2Storage::BootRequirementsChecker do
 
           it "only requires to use the existing EFI partition" do
             expect(checker.needed_partitions).to contain_exactly(
-              an_object_with_fields(mount_point: "/boot/efi", reuse: "/dev/sda1")
+              an_object_having_attributes(mount_point: "/boot/efi", reuse: "/dev/sda1")
             )
           end
         end
@@ -266,7 +266,7 @@ describe Y2Storage::BootRequirementsChecker do
             context "if the MBR gap has no additional space" do
               it "requires only a /boot partition" do
                 expect(checker.needed_partitions).to contain_exactly(
-                  an_object_with_fields(mount_point: "/boot")
+                  an_object_having_attributes(mount_point: "/boot")
                 )
               end
             end
@@ -287,7 +287,7 @@ describe Y2Storage::BootRequirementsChecker do
             context "if the MBR gap has no additional space" do
               it "requires only a /boot partition" do
                 expect(checker.needed_partitions).to contain_exactly(
-                  an_object_with_fields(mount_point: "/boot")
+                  an_object_having_attributes(mount_point: "/boot")
                 )
               end
             end

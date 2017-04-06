@@ -53,8 +53,8 @@ describe "devices lists" do
       it "filters by a scalar value" do
         result = fake_devicegraph.filesystems.with(type: ext4)
         expect(result).to contain_exactly(
-          an_object_with_fields(label: "root"),
-          an_object_with_fields(label: "ubuntu_root")
+          an_object_having_attributes(label: "root"),
+          an_object_having_attributes(label: "ubuntu_root")
         )
       end
 
@@ -72,25 +72,25 @@ describe "devices lists" do
 
         result = fake_devicegraph.free_disk_spaces.with(partition_name: nil)
         expect(result).to contain_exactly(
-          an_object_with_fields(disk_name: "/dev/sda"),
-          an_object_with_fields(disk_name: "/dev/sdc")
+          an_object_having_attributes(disk_name: "/dev/sda"),
+          an_object_having_attributes(disk_name: "/dev/sdc")
         )
       end
 
       it "considers not found libstorage attributes as nil" do
         result = fake_devicegraph.partitions.with(filesystem: nil)
         expect(result).to contain_exactly(
-          an_object_with_fields(name: "/dev/sdb4"),
-          an_object_with_fields(name: "/dev/sdb7")
+          an_object_having_attributes(name: "/dev/sdb4"),
+          an_object_having_attributes(name: "/dev/sdb7")
         )
       end
 
       it "filters by an array of values" do
         result = fake_devicegraph.filesystems.with(type: [ext4, ntfs])
         expect(result).to contain_exactly(
-          an_object_with_fields(label: "root"),
-          an_object_with_fields(label: "ubuntu_root"),
-          an_object_with_fields(label: "windows")
+          an_object_having_attributes(label: "root"),
+          an_object_having_attributes(label: "ubuntu_root"),
+          an_object_having_attributes(label: "windows")
         )
       end
 
@@ -98,19 +98,19 @@ describe "devices lists" do
         filesystems = fake_devicegraph.filesystems.with(type: [ext4, ntfs])
         result = fake_devicegraph.partitions.with(filesystem: filesystems)
         expect(result).to contain_exactly(
-          an_object_with_fields(name: "/dev/sda1"),
-          an_object_with_fields(name: "/dev/sdb3"),
-          an_object_with_fields(name: "/dev/sda2")
+          an_object_having_attributes(name: "/dev/sda1"),
+          an_object_having_attributes(name: "/dev/sdb3"),
+          an_object_having_attributes(name: "/dev/sda2")
         )
       end
 
       it "filters by any combination of scalars and lists" do
         result = fake_devicegraph.partitions.with(id: [id_swap, id_linux], type: primary)
         expect(result).to contain_exactly(
-          an_object_with_fields(name: "/dev/sda2"),
-          an_object_with_fields(name: "/dev/sdb1"),
-          an_object_with_fields(name: "/dev/sdb2"),
-          an_object_with_fields(name: "/dev/sdb3")
+          an_object_having_attributes(name: "/dev/sda2"),
+          an_object_having_attributes(name: "/dev/sdb1"),
+          an_object_having_attributes(name: "/dev/sdb2"),
+          an_object_having_attributes(name: "/dev/sdb3")
         )
       end
 
@@ -119,7 +119,7 @@ describe "devices lists" do
           fs.mountpoints.first == "/"
         end
         expect(result).to contain_exactly(
-          an_object_with_fields(label: "root")
+          an_object_having_attributes(label: "root")
         )
       end
     end

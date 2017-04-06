@@ -342,8 +342,8 @@ describe Y2Storage::Proposal::LvmHelper do
         lvs = devicegraph.lvm_lvs.select { |lv| lv.lvm_vg.vg_name == "system" }
 
         expect(lvs).to contain_exactly(
-          an_object_with_fields(lv_name: "one", size: 15.GiB - 4.MiB),
-          an_object_with_fields(lv_name: "two", size: 5.GiB - 4.MiB)
+          an_object_having_attributes(lv_name: "one", size: 15.GiB - 4.MiB),
+          an_object_having_attributes(lv_name: "two", size: 5.GiB - 4.MiB)
         )
       end
     end
@@ -367,9 +367,9 @@ describe Y2Storage::Proposal::LvmHelper do
         lvs = devicegraph.lvm_lvs.select { |lv| lv.lvm_vg.vg_name == "system" }
 
         expect(lvs).to contain_exactly(
-          an_object_with_fields(lv_name: "one", size: 9.GiB - 4.MiB),
-          an_object_with_fields(lv_name: "two", size: 9.GiB - 4.MiB),
-          an_object_with_fields(lv_name: "three", size: 2.GiB)
+          an_object_having_attributes(lv_name: "one", size: 9.GiB - 4.MiB),
+          an_object_having_attributes(lv_name: "two", size: 9.GiB - 4.MiB),
+          an_object_having_attributes(lv_name: "three", size: 2.GiB)
         )
       end
 
