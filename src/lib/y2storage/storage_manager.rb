@@ -154,7 +154,7 @@ module Y2Storage
     #
     # @param [Devicegraph] devicegraph to copy
     def copy_to_staging(devicegraph)
-      devicegraph.copy(storage.staging)
+      devicegraph.copy(y2storage_staging)
       update_staging_revision
     end
 
