@@ -23,7 +23,7 @@
 require_relative "spec_helper"
 require "y2storage"
 
-describe Y2Storage::PartitionTables::Base do
+describe Y2Storage::Device do
   before do
     fake_scenario("complex-lvm-encrypt")
   end
