@@ -25,7 +25,6 @@ require "storage"
 require "y2storage"
 require_relative "support/proposal_examples"
 require_relative "support/proposal_context"
-require "pp"
 
 describe Y2Storage::Proposal do
   describe "#propose subvolumes" do
