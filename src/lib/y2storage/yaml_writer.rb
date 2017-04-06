@@ -383,6 +383,8 @@ module Y2Storage
     # @param filesystem [::Storage::BlkFilesystem]
     # @return [Hash{String => Object}]
     #
+    # rubocop:disable Metrics/CyclomaticComplexity
+    #
     def yaml_btrfs_subvolumes(filesystem)
       return {} unless filesystem.type == ::Storage::FsType_BTRFS
       btrfs = ::Storage.to_btrfs(filesystem)
@@ -401,5 +403,6 @@ module Y2Storage
 
       { "btrfs" => btrfs_content }
     end
+    # rubocop enable all
   end
 end
