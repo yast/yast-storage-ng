@@ -35,7 +35,7 @@ describe Y2Storage::Proposal do
     let(:proposal_devicegraph_yaml) do
       proposal.propose
       yaml_writer = Y2Storage::YamlWriter.new
-      yaml_writer.yaml_device_tree(proposal.devices)
+      yaml_writer.yaml_device_tree(proposal.devices.to_storage_value)
     end
 
     let(:root_yaml) do
