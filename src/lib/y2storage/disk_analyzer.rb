@@ -78,13 +78,6 @@ module Y2Storage
 
     def initialize(devicegraph)
       @devicegraph = devicegraph
-      # FIXME: The following line is here just to provide compatibility with
-      # code using libstorage directly.
-      # Remove once we adapt everything to the new API. So far
-      # DiskAnalyzer is only used in the proposal (already adapted) and
-      # yast-country (pending)
-      # @deprecated
-      @devicegraph = Devicegraph.new(devicegraph) if devicegraph.is_a?(Storage::Devicegraph)
     end
 
     # Partitions that can be used as EFI system partitions.
