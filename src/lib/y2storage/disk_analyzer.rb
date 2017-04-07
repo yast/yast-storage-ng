@@ -186,17 +186,17 @@ module Y2Storage
 
     # Checks if a partition belongs to any VG.
     #
-    # TODO: find a better place for this (Partition class ?) 
+    # TODO: find a better place for this (Partition class ?)
     #
     # @param partition [Partition]
     def partition_in_vg?(partition)
-      not partition_vg(partition).nil?
+      !partition_vg(partition).nil?
     end
 
     # Obtains the PV of a partition.
     #
-    # TODO: find a better place for this (Partition class ?) 
-    # 
+    # TODO: find a better place for this (Partition class ?)
+    #
     # @param partition [Partition]
     # @return [LvmPv, nil]
     def partition_pv(partition)
@@ -205,7 +205,7 @@ module Y2Storage
 
     # Obtains the VG of a partition.
     #
-    # TODO: find a better place for this (Partition class ?) 
+    # TODO: find a better place for this (Partition class ?)
     #
     # @param partition [Partition]
     # @return [LvmVg, nil]
