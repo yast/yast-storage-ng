@@ -120,12 +120,13 @@ module Y2Storage
       # @return [Array<String>] device names of all the deleted partitions
       def delete_lvm_partitions(partition)
         log.info "Deleting #{partition.name}, which is part of an LVM volume group"
-        vg_parts = disk_analyzer.used_lvm_partitions.values.detect do |parts|
-          parts.map(&:name).include?(partition.name)
+        vg = disk_analyzer.partition_vg(partition)
+        partitions_to_delete = disk_analyzer.used_lvm_partitions.select do |part|
+          disk_analyzer.partition_vg(part) == vg
         end
-        target_parts = vg_parts.map { |p| find_partition(p.name) }.compact
-        log.info "These LVM partitions will be deleted: #{target_parts.map(&:name)}"
-        target_parts.map { |part| delete_partition(part) }.flatten
+        target_partitions = partitions_to_delete.map { |p| find_partition(p.name) }.compact
+        log.info "These LVM partitions will be deleted: #{target_partitions.map(&:name)}"
+        target_partitions.map { |p| delete_partition(p) }
       end
 
       # Checks whether the partition is part of a volume group
@@ -133,7 +134,7 @@ module Y2Storage
       # @param partition [Partition]
       # @return [Boolean]
       def lvm_pv?(partition)
-        lvm_pv_names = disk_analyzer.used_lvm_partitions.values.flatten.map(&:name)
+        lvm_pv_names = disk_analyzer.used_lvm_partitions.map(&:name)
         lvm_pv_names.include?(partition.name)
       end
     end

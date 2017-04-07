@@ -377,9 +377,9 @@ module Y2Storage
       # @return [array<string>]
       def windows_part_names(disk = nil)
         parts = if disk
-          disk_analyzer.windows_partitions[disk] || []
+          disk_analyzer.windows_partitions(disk)
         else
-          disk_analyzer.windows_partitions.values.flatten
+          disk_analyzer.windows_partitions
         end
         parts.map(&:name)
       end
@@ -389,9 +389,9 @@ module Y2Storage
       # @return [array<string>]
       def linux_part_names(disk = nil)
         parts = if disk
-          disk_analyzer.linux_partitions[disk] || []
+          disk_analyzer.linux_partitions(disk)
         else
-          disk_analyzer.linux_partitions.values.flatten
+          disk_analyzer.linux_partitions
         end
         parts.map(&:name)
       end

@@ -46,7 +46,7 @@ describe Y2Storage::Proposal::SpaceMaker do
     let(:volumes) { vols_list(vol1) }
     let(:analyzer) { Y2Storage::DiskAnalyzer.new(fake_devicegraph) }
     let(:lvm_helper) { Y2Storage::Proposal::LvmHelper.new(Y2Storage::PlannedVolumesList.new) }
-    let(:windows_partitions) { Hash.new }
+    let(:windows_partitions) { [] }
 
     subject(:maker) { described_class.new(fake_devicegraph, analyzer, lvm_helper, settings) }
 
@@ -84,7 +84,7 @@ describe Y2Storage::Proposal::SpaceMaker do
     context "with one disk containing Windows and Linux partitions" do
       let(:scenario) { "windows-linux-multiboot-pc" }
       let(:vol1) { planned_vol(mount_point: "/1", type: :ext4, desired: 100.GiB) }
-      let(:windows_partitions) { { "/dev/sda" => [analyzer_part("/dev/sda1")] } }
+      let(:windows_partitions) { [analyzer_part("/dev/sda1")] }
 
       it "deletes linux partitions as needed" do
         result = maker.provide_space(volumes)
@@ -134,7 +134,7 @@ describe Y2Storage::Proposal::SpaceMaker do
       let(:resize_info) do
         instance_double("Y2Storage::ResizeInfo", resize_ok?: true, min_size: 730.GiB)
       end
-      let(:windows_partitions) { { "/dev/sda" => [analyzer_part("/dev/sda1")] } }
+      let(:windows_partitions) { [analyzer_part("/dev/sda1")] }
 
       before do
         allow_any_instance_of(Y2Storage::Filesystems::BlkFilesystem).to receive(:detect_resize_info)
@@ -209,10 +209,10 @@ describe Y2Storage::Proposal::SpaceMaker do
         instance_double("Y2Storage::ResizeInfo", resize_ok?: true, min_size: 50.GiB)
       end
       let(:windows_partitions) do
-        {
-          "/dev/sda" => [analyzer_part("/dev/sda1")],
-          "/dev/sdb" => [analyzer_part("/dev/sdb1")]
-        }
+        [
+          analyzer_part("/dev/sda1"),
+          analyzer_part("/dev/sdb1")
+        ]
       end
       let(:vol1) { planned_vol(mount_point: "/1", type: :ext4, desired: 20.GiB) }
 
@@ -347,9 +347,7 @@ describe Y2Storage::Proposal::SpaceMaker do
       let(:resize_info) do
         instance_double("Y2Storage::ResizeInfo", resize_ok?: true, min_size: 50.GiB)
       end
-      let(:windows_partitions) do
-        { "/dev/sda" => [analyzer_part("/dev/sda1")] }
-      end
+      let(:windows_partitions) { [analyzer_part("/dev/sda1")] }
       let(:vol1) { planned_vol(mount_point: "/1", type: :ext4, disk: "/dev/sda") }
       let(:vol2) { planned_vol(mount_point: "/2", type: :ext4, disk: "/dev/sda") }
       let(:vol3) { planned_vol(mount_point: "/3", type: :ext4) }
@@ -402,7 +400,7 @@ describe Y2Storage::Proposal::SpaceMaker do
 
     context "when deleting a partition which belongs to a LVM" do
       let(:scenario) { "lvm-two-vgs" }
-      let(:windows_partitions) { { "/dev/sda" => [analyzer_part("/dev/sda1")] } }
+      let(:windows_partitions) { [analyzer_part("/dev/sda1")] }
       let(:volumes) { vols_list(planned_vol(mount_point: "/1", type: :ext4, desired: 2.GiB)) }
 
       it "deletes also other partitions of the same volume group" do
@@ -430,7 +428,7 @@ describe Y2Storage::Proposal::SpaceMaker do
 
     context "when a LVM VG is going to be reused" do
       let(:scenario) { "lvm-two-vgs" }
-      let(:windows_partitions) { { "/dev/sda" => [analyzer_part("/dev/sda1")] } }
+      let(:windows_partitions) { [analyzer_part("/dev/sda1")] }
       let(:resize_info) do
         instance_double("Y2Storage::ResizeInfo", resize_ok?: true, min_size: 10.GiB)
       end
