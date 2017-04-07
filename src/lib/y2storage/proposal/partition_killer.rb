@@ -122,7 +122,7 @@ module Y2Storage
         log.info "Deleting #{partition.name}, which is part of an LVM volume group"
         vg = disk_analyzer.partition_vg(partition)
         partitions_to_delete = disk_analyzer.used_lvm_partitions.select do |part|
-          disk_analyzer.partition_in_vg?(part, vg)
+          disk_analyzer.partition_vg(part) == vg
         end
         target_partitions = partitions_to_delete.map { |p| find_partition(p.name) }.compact
         log.info "These LVM partitions will be deleted: #{target_partitions.map(&:name)}"

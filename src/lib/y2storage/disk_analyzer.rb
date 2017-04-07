@@ -73,7 +73,7 @@ module Y2Storage
         PartitionId::LVM
       ]
 
-    # Maximum number of disks to check with "expensive" operations.
+    # Maximum number of checks for "expensive" operations.
     DEFAULT_CHECK_LIMIT = 10
 
     def initialize(devicegraph)
@@ -169,39 +169,34 @@ module Y2Storage
     # some typical directories (/windows/system32).
     #
     # @param *disks [Disk, String] disks to analyze. All disks by default.
-    # @param check_limit [Fixnum] maximum number of disks to check.
     # @return [Array<Partition>}] see {#partitions_with_id}
-    def windows_partitions(*disks, check_limit: DEFAULT_CHECK_LIMIT)
-      data_for(*disks, :windows_partitions, limit: check_limit) do |d|
-        find_windows_partitions(d)
-      end
+    def windows_partitions(*disks)
+      data_for(*disks, :windows_partitions) { |d| find_windows_partitions(d) }
     end
 
     # Disks that are suitable for installing Linux.
     #
-    # @param check_limit [Fixnum] maximum number of disks to check
-    # for installation disks.
     # @return [Array<Disk>] candidate disks
-    def candidate_disks(check_limit: DEFAULT_CHECK_LIMIT)
+    def candidate_disks
       return @candidate_disks if @candidate_disks
-      @candidate_disks = find_candidate_disks(check_limit)
+      @candidate_disks = find_candidate_disks
       log.info("Found candidate disks: #{@candidate_disks}")
       @candidate_disks
     end
 
-    # Checks if a partition belongs to any VG or to an specefic one.
+    # Checks if a partition belongs to any VG.
+    #
+    # TODO: find a better place for this (Partition class ?) 
     #
     # @param partition [Partition]
-    # @param vg [LvmVg] volume group
-    def partition_in_vg?(partition, vg = nil)
-      p_vg = partition_vg(partition)
-      return false unless p_vg
-      return true unless vg
-      p_vg == vg
+    def partition_in_vg?(partition)
+      not partition_vg(partition).nil?
     end
 
     # Obtains the PV of a partition.
     #
+    # TODO: find a better place for this (Partition class ?) 
+    # 
     # @param partition [Partition]
     # @return [LvmPv, nil]
     def partition_pv(partition)
@@ -209,6 +204,8 @@ module Y2Storage
     end
 
     # Obtains the VG of a partition.
+    #
+    # TODO: find a better place for this (Partition class ?) 
     #
     # @param partition [Partition]
     # @return [LvmVg, nil]
@@ -233,11 +230,10 @@ module Y2Storage
     #
     # @param *disks [Disk, String] disks to analyze. All disks by default.
     # @param data [Symbol] data name.
-    # @param limit [Fixnum, nil] maximum number of disks to check.
-    def data_for(*disks, data, limit: nil)
+    def data_for(*disks, data)
       @disks_data ||= {}
       @disks_data[data] ||= {}
-      disks = disks_collection(disks, limit)
+      disks = disks_collection(disks)
       disks.each do |disk|
         @disks_data[data][disk.name] ||= yield(disk)
       end
@@ -247,11 +243,9 @@ module Y2Storage
     # Obtains a list of disks.
     #
     # @param *disks [Disk, String] disks to analyze. All disks by default.
-    # @param limit [Fixnum, nil] maximum size of the collection.
     # @return [Array<Disk>]
-    def disks_collection(disks, limit = nil)
+    def disks_collection(disks)
       disks = devicegraph.disks if disks.empty?
-      disks = disks.first(limit) if limit
       disks = disks.map { |d| d.is_a?(String) ? Disk.find_by_name(devicegraph, d) : d }
       disks.compact
     end
@@ -319,10 +313,9 @@ module Y2Storage
     # Find disks that are suitable for installing Linux.
     # Put any USB disks to the end of that array.
     #
-    # @param check_limit [Fixnum] maximum number of disks to check.
     # @return [Array<Disk>] candidate disks
-    def find_candidate_disks(check_limit)
-      @installation_disks = find_installation_disks(check_limit)
+    def find_candidate_disks
+      @installation_disks = find_installation_disks
 
       usb_disks, non_usb_disks = devicegraph.disks.partition { |d| d.usb? }
 
@@ -354,12 +347,11 @@ module Y2Storage
     # installation disk involves mounting and unmounting each partition
     # on that disk.
     #
-    # @param check_limit [Fixnum] maximum number of disks to check.
     # @return [Array<Disk>]
-    def find_installation_disks(check_limit)
+    def find_installation_disks
       usb_disks, non_usb_disks = devicegraph.disks.partition { |d| d.usb? }
       disks = usb_disks + non_usb_disks
-      disks = disks.first(check_limit)
+      disks = disks.first(DEFAULT_CHECK_LIMIT)
       disks.select { |d| installation_disk?(d) }
     end
 
