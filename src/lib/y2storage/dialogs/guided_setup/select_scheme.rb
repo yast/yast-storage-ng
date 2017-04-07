@@ -29,7 +29,7 @@ module Y2Storage
   module Dialogs
     class GuidedSetup
       # Dialog to select partitioning scheme.
-      class SelectScheme < Dialogs::GuidedSetup::Base
+      class SelectScheme < Base
         def encryption_handler
           widget_update(:password, widget_value(:encryption), attr: :Enabled)
           widget_update(:repeat_password, widget_value(:encryption), attr: :Enabled)
@@ -140,7 +140,7 @@ module Y2Storage
 
           if !correct
             messages = [
-              _("The password must have at least #{PASS_MIN_SIZE} characters."),
+              _("The password must have at least %d characters.") % PASS_MIN_SIZE,
               _("The password may only contain the following characters:\n" \
                 "0..9, a..z, A..Z, and any of \"@#* ,.;:._-+=!$%&/|?{[()]}^\\<>\".")
             ]

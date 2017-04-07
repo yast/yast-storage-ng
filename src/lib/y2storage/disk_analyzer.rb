@@ -258,7 +258,8 @@ module Y2Storage
     end
 
     def filesystems(disk)
-      disks.with(name: disk.name).filesystems
+      #disks.with(name: disk.name).filesystems
+      []
     end
 
     # Find disks that look like the current installation medium

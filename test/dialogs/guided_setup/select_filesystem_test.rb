@@ -27,28 +27,35 @@ describe Y2Storage::Dialogs::GuidedSetup::SelectFilesystem do
 
   subject { described_class.new(guided_setup) }
 
+  before do
+    # Set some default values
+    filesystem = Y2Storage::Filesystems::Type::BTRFS
+    select_widget(:root_filesystem, filesystem.to_i)
+    select_widget(:home_filesystem, filesystem.to_i)
+  end
+
   describe "#run" do
     it "selects root filesystem from settings" do
-      filesystem = Storage::FsType_EXT4
+      filesystem = Y2Storage::Filesystems::Type::EXT4
       settings.root_filesystem_type = filesystem
 
-      expect_select(:root_filesystem, filesystem)
+      expect_select(:root_filesystem, filesystem.to_i)
       subject.run
     end
 
     it "selects home filesystem from settings" do
-      filesystem = Storage::FsType_EXT3
+      filesystem = Y2Storage::Filesystems::Type::EXT3
       settings.home_filesystem_type = filesystem
 
-      expect_select(:home_filesystem, filesystem)
+      expect_select(:home_filesystem, filesystem.to_i)
       subject.run
     end
 
     it "saves settings correctly" do
-      root_filesystem = Storage::FsType_BTRFS
-      home_filesystem = Storage::FsType_EXT4
-      select_widget(:root_filesystem, root_filesystem)
-      select_widget(:home_filesystem, home_filesystem)
+      root_filesystem = Y2Storage::Filesystems::Type::BTRFS
+      home_filesystem = Y2Storage::Filesystems::Type::EXT4
+      select_widget(:root_filesystem, root_filesystem.to_i)
+      select_widget(:home_filesystem, home_filesystem.to_i)
       select_widget(:snapshots)
       select_widget(:separate_home)
 
@@ -105,7 +112,7 @@ describe Y2Storage::Dialogs::GuidedSetup::SelectFilesystem do
 
     context "when btrfs is selected for root partition" do
       before do
-        select_widget(:root_filesystem, Storage::FsType_BTRFS)
+        select_widget(:root_filesystem, Y2Storage::Filesystems::Type::BTRFS.to_i)
       end
 
       it "enables snapshots option" do
@@ -116,7 +123,7 @@ describe Y2Storage::Dialogs::GuidedSetup::SelectFilesystem do
 
     context "when other filesystem is selected for root partition" do
       before do
-        select_widget(:root_filesystem, Storage::FsType_EXT4)
+        select_widget(:root_filesystem, Y2Storage::Filesystems::Type::EXT4.to_i)
       end
 
       it "disables snapshots option" do
