@@ -23,31 +23,31 @@
 require_relative "spec_helper"
 require "y2storage"
 
-describe Y2Storage::Device do
+describe Y2Storage::LvmPv do
   before do
     fake_scenario("complex-lvm-encrypt")
   end
 
-  describe "#ancestors" do
-    subject(:device) { Y2Storage::LvmLv.find_by_name(fake_devicegraph, "/dev/vg0/lv1").blk_filesystem }
-
-    it "does not include the device itself" do
-      expect(device.ancestors.map(&:sid)).to_not include device.sid
+  describe "#plain_blk_device" do
+    subject(:pv) do
+      Y2Storage::LvmPv.all(fake_devicegraph).detect { |p| p.blk_device.name == device_name }
     end
 
-    it "includes all the ancestors" do
-      expect(device.ancestors.size).to eq 10
+    context "for a non encrypted PV" do
+      let(:device_name) { "/dev/sde2" }
+
+      it "returns the device directly hosting the PV" do
+        expect(pv.plain_blk_device).to eq pv.blk_device
+      end
     end
 
-    it "returns objects of the right classes" do
-      all = device.ancestors
-      expect(all.select { |i| i.is?(:lvm_lv) }.size).to eq 1
-      expect(all.select { |i| i.is?(:lvm_vg) }.size).to eq 1
-      expect(all.select { |i| i.is?(:lvm_pv) }.size).to eq 2
-      expect(all.select { |i| i.is?(:encryption) }.size).to eq 2
-      expect(all.select { |i| i.is?(:partition) }.size).to eq 1
-      expect(all.select { |i| i.is?(:disk) }.size).to eq 2
-      expect(all.select { |i| i.is?(:partition_table) }.size).to eq 1
+    context "for an encrypted PV" do
+      let(:device_name) { "/dev/mapper/cr_sde1" }
+
+      it "returns the plain version of the encrypted device" do
+        expect(pv.plain_blk_device).to_not eq pv.blk_device
+        expect(pv.plain_blk_device).to eq pv.blk_device.plain_device
+      end
     end
   end
 end
