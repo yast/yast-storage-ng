@@ -119,7 +119,7 @@ module Y2Storage
       def reusable_swap(required_size)
         return nil if settings.use_lvm || settings.use_encryption
 
-        partitions = disk_analyzer.swap_partitions.values.flatten
+        partitions = disk_analyzer.swap_partitions
         partitions.select! { |part| part.size >= required_size }
         # Use #name in case of #size tie to provide stable sorting
         partitions.sort_by { |part| [part.size, part.name] }.first

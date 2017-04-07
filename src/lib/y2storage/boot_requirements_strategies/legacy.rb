@@ -47,7 +47,7 @@ module Y2Storage
       end
 
       def grub_partition_missing?
-        partitions = disk_analyzer.grub_partitions[settings.root_device]
+        partitions = disk_analyzer.grub_partitions(settings.root_device)
         partitions.nil? || partitions.empty?
       end
 
@@ -72,7 +72,7 @@ module Y2Storage
       end
 
       def mbr_gap
-        disk_analyzer.mbr_gap[settings.root_device]
+        disk_analyzer.mbr_gap(settings.root_device)
       end
 
       def grub_volume
