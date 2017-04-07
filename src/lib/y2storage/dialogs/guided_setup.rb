@@ -27,15 +27,14 @@ require "y2storage/dialogs/guided_setup/select_root_disk"
 require "y2storage/dialogs/guided_setup/select_scheme"
 require "y2storage/dialogs/guided_setup/select_filesystem"
 
+Yast.import "Sequencer"
+
 module Y2Storage
   module Dialogs
     # Class to control the guided setup workflow.
     #
     # Calculates the proposal settings to be used in the next proposal attempt.
     class GuidedSetup
-      Yast.import "Sequencer"
-
-      using Y2Storage::Refinements::SizeCasts
       # @return [ProposalSettings] settings specified by the user
       attr_reader :settings
       # Currently probed devicegraph
@@ -74,6 +73,11 @@ module Y2Storage
 
       # Inspects each disk and obtains information data for the dialogs,
       # for example, systems installed into the disk.
+      #
+      # TODO: this solution (based on hashes) is not extensible. If it is
+      # needed to extend that, reconsider a better solution, for example
+      # using decorators.
+      #
       # @return [Array<Hash>] disks data, see @disk_data.
       def read_disks_data
         analyzer = Y2Storage::DiskAnalyzer.new(devicegraph)

@@ -88,7 +88,7 @@ module Y2Storage
       end
 
       def guided_setup(settings)
-        dialog = Dialogs::GuidedSetup.new(@devicegraph, settings)
+        dialog = Dialogs::GuidedSetup.new(storage_manager.probed, settings)
         case dialog.run
         when :abort
           @result = :abort

@@ -22,15 +22,16 @@
 require "yast"
 require "y2storage"
 require "y2storage/dialogs/guided_setup/base"
+require "y2storage/filesystems/type"
 
 module Y2Storage
   module Dialogs
     class GuidedSetup
       # Dialog to select filesystems.
-      class SelectFilesystem < Dialogs::GuidedSetup::Base
+      class SelectFilesystem < Base
         def root_filesystem_handler
-          btrfs = Storage::FsType_BTRFS
-          widget_update(:snapshots, widget_value(:root_filesystem) == btrfs, attr: :Enabled)
+          filesystem = Filesystems::Type.new(widget_value(:root_filesystem))
+          widget_update(:snapshots, filesystem.is?(:btrfs), attr: :Enabled)
         end
 
         def separate_home_handler
@@ -59,9 +60,9 @@ module Y2Storage
               ComboBox(
                 Id(:root_filesystem), Opt(:notify), _("File System for Root Partition"),
                 [
-                  Item(Id(Storage::FsType_BTRFS), "BtrFS"),
-                  Item(Id(Storage::FsType_EXT4), "Ext4"),
-                  Item(Id(Storage::FsType_XFS), "XFS")
+                  Item(Id(Filesystems::Type::BTRFS.to_i), "BtrFS"),
+                  Item(Id(Filesystems::Type::EXT4.to_i), "Ext4"),
+                  Item(Id(Filesystems::Type::XFS.to_i), "XFS")
                 ]
               )
             ),
@@ -85,9 +86,9 @@ module Y2Storage
                 ComboBox(
                   Id(:home_filesystem), _("File System for Home Partition"),
                   [
-                    Item(Id(Storage::FsType_BTRFS), "BtrFS"),
-                    Item(Id(Storage::FsType_EXT4), "Ext4"),
-                    Item(Id(Storage::FsType_XFS), "XFS")
+                    Item(Id(Filesystems::Type::BTRFS.to_i), "BtrFS"),
+                    Item(Id(Filesystems::Type::EXT4.to_i), "Ext4"),
+                    Item(Id(Filesystems::Type::XFS.to_i), "XFS")
                   ]
                 )
               )
@@ -96,19 +97,21 @@ module Y2Storage
         end
 
         def initialize_widgets
-          widget_update(:root_filesystem, settings.root_filesystem_type)
+          widget_update(:root_filesystem, settings.root_filesystem_type.to_i)
           widget_update(:snapshots, settings.use_snapshots)
-          widget_update(:home_filesystem, settings.home_filesystem_type)
+          widget_update(:home_filesystem, settings.home_filesystem_type.to_i)
           widget_update(:separate_home, settings.use_separate_home)
           root_filesystem_handler
           separate_home_handler
         end
 
         def update_settings!
-          settings.root_filesystem_type = widget_value(:root_filesystem)
+          root_filesystem = Filesystems::Type.new(widget_value(:root_filesystem))
+          home_filesystem = Filesystems::Type.new(widget_value(:home_filesystem))
+          settings.root_filesystem_type = root_filesystem
           settings.use_snapshots = widget_value(:snapshots)
           settings.use_separate_home = widget_value(:separate_home)
-          settings.home_filesystem_type = widget_value(:home_filesystem)
+          settings.home_filesystem_type = home_filesystem
         end
       end
     end

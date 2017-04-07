@@ -27,7 +27,7 @@ module Y2Storage
   module Dialogs
     class GuidedSetup
       # Dialog for disks selection for the proposal.
-      class SelectDisks < Dialogs::GuidedSetup::Base
+      class SelectDisks < Base
       protected
 
         MAX_DISKS = 3
@@ -39,7 +39,7 @@ module Y2Storage
         def dialog_content
           HSquash(
             VBox(
-              Left(Label(_("Select one or more (max #{MAX_DISKS}) hard disks"))),
+              Left(Label(_("Select one or more (max %d) hard disks") % MAX_DISKS)),
               VSpacing(0.3),
               *disks_data.map { |d| disk_widget(d) }
             )
@@ -70,13 +70,13 @@ module Y2Storage
 
         def any_selected_disk?
           return true unless selected_disks.empty?
-          Yast::Report.Warning(_("You have to select any disk"))
+          Yast::Report.Warning(_("At least one disk must be selected"))
           false
         end
 
         def many_selected_disks?
           return false if selected_disks.size <= MAX_DISKS
-          Yast::Report.Warning(_("Select max #{MAX_DISKS} disks"))
+          Yast::Report.Warning(_("At most %d disks can be selected") % MAX_DISKS)
           true
         end
 

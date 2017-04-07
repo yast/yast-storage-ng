@@ -27,7 +27,7 @@ module Y2Storage
   module Dialogs
     class GuidedSetup
       # Dialog for root disk selection.
-      class SelectRootDisk < Dialogs::GuidedSetup::Base
+      class SelectRootDisk < Base
       protected
 
         def dialog_title
@@ -102,18 +102,18 @@ module Y2Storage
         end
 
         def update_settings!
-          root = disks.detect { |d| widget_value(d) }
+          root = candidate_disks.detect { |d| widget_value(d) }
           settings.root_device = root
           true
         end
 
         def disks_data
-          super.select { |d| disks.include?(d[:name]) }
+          super.select { |d| candidate_disks.include?(d[:name]) }
         end
 
       private
 
-        def disks
+        def candidate_disks
           settings.candidate_devices || []
         end
       end
