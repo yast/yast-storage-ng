@@ -73,7 +73,8 @@ module Y2Storage
         PartitionId::LVM
       ]
 
-    DEFAULT_DISKS_LIMIT = 10
+    # Maximum number of disks to check with "expensive" operations.
+    DEFAULT_CHECK_LIMIT = 10
 
     def initialize(devicegraph)
       @devicegraph = devicegraph
@@ -92,42 +93,41 @@ module Y2Storage
     # Checking for content_info.efi? would only detect partitions that are
     # going to be effectively used.
     #
-    # @see #scope
-    #
-    # @return [Hash{String => Array<Partition>}] see {#partitions_with_id}
+    # @param *disks [Disk, String] disks to analyze. All disks by default.
+    # @return [Array<Partition>] see {#partitions_with_id}
     def efi_partitions(*disks)
       data_for(*disks, :efi_partitions) { |d| partitions_with_id(d, PartitionId::ESP) }
     end
 
     # Partitions that can be used as PReP partition
-    # @see #scope
     #
-    # @return [Hash{String => Array<Partition>}] see {#partitions_with_id}
+    # @param *disks [Disk, String] disks to analyze. All disks by default.
+    # @return [Array<Partition>] see {#partitions_with_id}
     def prep_partitions(*disks)
       data_for(*disks, :prep_partitions) { |d| partitions_with_id(d, PartitionId::PREP) }
     end
 
     # GRUB (gpt_bios) partitions
-    # @see #scope
     #
-    # @return [Hash{String => Array<Partition>}] see {#partitions_with_id}
+    # @param *disks [Disk, String] disks to analyze. All disks by default.
+    # @return [Array<Partition>] see {#partitions_with_id}
     def grub_partitions(*disks)
       data_for(*disks, :grup_partitions) { |d| partitions_with_id(d, PartitionId::BIOS_BOOT) }
     end
 
     # Partitions that can be used as swap space
-    # @see #scope
     #
-    # @return [Hash{String => Array<Partition>}] see {#partitions_with_id}
+    # @param *disks [Disk, String] disks to analyze. All disks by default.
+    # @return [Array<Partition>] see {#partitions_with_id}
     def swap_partitions(*disks)
       data_for(*disks, :swap_partitions) { |d| partitions_with_id(d, PartitionId::SWAP) }
     end
 
     # Linux partitions. This may be a normal Linux partition (type 0x83), a
     # Linux swap partition (type 0x82), an LVM partition, or a RAID partition.
-    # @see #scope
     #
-    # @return [Hash{String => Array<Partition>}] see {#partitions_with_id}
+    # @param *disks [Disk, String] disks to analyze. All disks by default.
+    # @return [Array<Partition>] see {#partitions_with_id}
     def linux_partitions(*disks)
       data_for(*disks, :linux_partitions) { |d| partitions_with_id(d, LINUX_PARTITION_IDS) }
     end
@@ -135,14 +135,8 @@ module Y2Storage
     # Partitions that are part of a LVM volume group, i.e. partitions that hold
     # a LVM physical volume.
     #
-    # The result is a Hash in which each key is the name of a volume group
-    # and the value is an Array of Partition objects
-    #
-    # Take into account that the result is, as always, limited by #scope. Thus,
-    # physical volumes from other disks will not be present, even if they are
-    # part of the same volume group.
-    #
-    # @return [Hash{String => Array<Partition>}]
+    # @param *disks [Disk, String] disks to analyze. All disks by default.
+    # @return [Array<Partition>]
     def used_lvm_partitions(*disks)
       data_for(*disks, :used_lvm_partitions) { |d| find_used_lvm_partitions(d) }
     end
@@ -153,14 +147,18 @@ module Y2Storage
     # MBR-based the MBR gap is nil, meaning "gap not applicable" which is
     # different from "no gap" (i.e. a 0 bytes gap).
     #
-    # @see #scope
-    #
-    # @return [Hash{String => (Y2Storage::DiskSize, nil)}] each key is the name
-    # of a disk, the value is the DiskSize of the MBR gap (or nil)
+    # @param *disks [Disk, String] disks to analyze. All disks by default.
+    # @return [<Array<(DiskSize, nil)>] the value is the DiskSize of the
+    # MBR gap (or nil)
     def mbr_gaps(*disks)
       data_for(*disks, :mbr_gap) { |d| find_mbr_gap(d) }
     end
 
+    # Variant of #mbr_gaps for an specific disk.
+    # @see #mbr_gaps
+    #
+    # @param disk [Disk]
+    # @return [DiskSize, nil]
     def mbr_gap(disk)
       mbr_gaps(disk).first
     end
@@ -170,23 +168,31 @@ module Y2Storage
     # This involves mounting any Windows-like partition to check if there are
     # some typical directories (/windows/system32).
     #
-    # @see #scope
-    #
-    # @return [Hash{String => Array<Partition>}] see {#partitions_with_id}
-    def windows_partitions(*disks, limit: DEFAULT_DISKS_LIMIT)
-      data_for(*disks, :windows_partitions, limit: limit) { |d| find_windows_partitions(d) }
+    # @param *disks [Disk, String] disks to analyze. All disks by default.
+    # @param check_limit [Fixnum] maximum number of disks to check.
+    # @return [Array<Partition>}] see {#partitions_with_id}
+    def windows_partitions(*disks, check_limit: DEFAULT_CHECK_LIMIT)
+      data_for(*disks, :windows_partitions, limit: check_limit) do |d|
+        find_windows_partitions(d)
+      end
     end
 
     # Disks that are suitable for installing Linux.
     #
-    # @return [Array<Storage::Disk>] candidate disks
-    def candidate_disks(limit: DEFAULT_DISKS_LIMIT)
+    # @param check_limit [Fixnum] maximum number of disks to check
+    # for installation disks.
+    # @return [Array<Disk>] candidate disks
+    def candidate_disks(check_limit: DEFAULT_CHECK_LIMIT)
       return @candidate_disks if @candidate_disks
-      @candidate_disks = find_candidate_disks(limit)
+      @candidate_disks = find_candidate_disks(check_limit)
       log.info("Found candidate disks: #{@candidate_disks}")
       @candidate_disks
     end
 
+    # Checks if a partition belongs to any VG or to an specefic one.
+    #
+    # @param partition [Partition]
+    # @param vg [LvmVg] volume group
     def partition_in_vg?(partition, vg = nil)
       p_vg = partition_vg(partition)
       return false unless p_vg
@@ -194,10 +200,18 @@ module Y2Storage
       p_vg == vg
     end
 
+    # Obtains the PV of a partition.
+    #
+    # @param partition [Partition]
+    # @return [LvmPv, nil]
     def partition_pv(partition)
       devicegraph.lvm_pvs.detect { |pv| pv.plain_blk_device == partition }
     end
 
+    # Obtains the VG of a partition.
+    #
+    # @param partition [Partition]
+    # @return [LvmVg, nil]
     def partition_vg(partition)
       pv = partition_pv(partition)
       return nil unless pv
@@ -215,6 +229,11 @@ module Y2Storage
 
     attr_reader :devicegraph
 
+    # Gets data for a set of disks, stores it and returns that data.
+    #
+    # @param *disks [Disk, String] disks to analyze. All disks by default.
+    # @param data [Symbol] data name.
+    # @param limit [Fixnum, nil] maximum number of disks to check.
     def data_for(*disks, data, limit: nil)
       @disks_data ||= {}
       @disks_data[data] ||= {}
@@ -225,6 +244,11 @@ module Y2Storage
       disks.map { |d| @disks_data[data][d.name] }.flatten.compact
     end
 
+    # Obtains a list of disks.
+    #
+    # @param *disks [Disk, String] disks to analyze. All disks by default.
+    # @param limit [Fixnum, nil] maximum size of the collection.
+    # @return [Array<Disk>]
     def disks_collection(disks, limit = nil)
       disks = devicegraph.disks if disks.empty?
       disks = disks.first(limit) if limit
@@ -232,21 +256,17 @@ module Y2Storage
       disks.compact
     end
 
-    # Find partitions from any of the candidate disks that have a given (set
-    # of) partition id(s).
+    # Find partitions that have a given (set of) partition id(s).
     #
-    # The result is a Hash in which each key is the name of a disk
-    # and the value is an Array of Partition objects
-    # representing the matching partitions in that disk.
-    #
+    # @param *disks [Disk, String] disks to analyze. All disks by default.
     # @param ids [PartitionId, Array<PartitionId>]
-    # @param log_label [String] label to identify the partitions in the logs
-    # @return [Hash{String => Array<Partition>}]
+    # @return [Array<Partition>}]
     def partitions_with_id(disk, ids)
       partitions = disk.partitions.reject { |p| p.type.is?(:extended) }
       partitions.select { |p| p.id.is?(*ids) }
     end
 
+    # see #used_lvm_partitions
     def find_used_lvm_partitions(disk)
       partitions = partitions_with_id(disk, PartitionId::LVM)
       partitions.select { |p| partition_in_vg?(p) }
@@ -277,19 +297,16 @@ module Y2Storage
 
     # Partitions that could potentially contain a MS Windows installation
     #
-    # @param disk_name [String] name of the disk to check
-    # @return [DevicesLists::PartitionsList]
+    # @param disk [Disk] disk to check
+    # @return [Array<Partition>]
     def possible_windows_partitions(disk)
       disk.partitions.select { |p| p.type.is?(:primary) && p.id.is?(*WINDOWS_PARTITION_IDS) }
     end
 
-    # Check if device name 'partition' is a MS Windows partition that could
-    # possibly be resized.
+    # Check if 'partition' is a MS Windows partition that could possibly be resized.
     #
-    # @param partition [Partition] partition to check
-    #
+    # @param partition [Partition] partition to check.
     # @return [Boolean] 'true' if it is a Windows partition, 'false' if not.
-    #
     def windows_partition?(partition)
       log.info("Checking if #{partition.name} is a windows partition")
       filesystem = partition.filesystem
@@ -302,9 +319,10 @@ module Y2Storage
     # Find disks that are suitable for installing Linux.
     # Put any USB disks to the end of that array.
     #
+    # @param check_limit [Fixnum] maximum number of disks to check.
     # @return [Array<Disk>] candidate disks
-    def find_candidate_disks(limit)
-      @installation_disks = find_installation_disks(limit)
+    def find_candidate_disks(check_limit)
+      @installation_disks = find_installation_disks(check_limit)
 
       usb_disks, non_usb_disks = devicegraph.disks.partition { |d| d.usb? }
 
@@ -331,17 +349,17 @@ module Y2Storage
     # Find disks that look like the current installation medium
     # (the medium we just booted from to start the installation).
     #
-    # This is limited with DiskAnalyzer::disk_check_limit because some
-    # architectures (s/390) tend to have a large number of disks, and
-    # checking if a disk is an installation disk involves mounting and
-    # unmounting each partition on that disk.
+    # This should be limited because some architectures (s/390) tend
+    # to have a large number of disks, and checking if a disk is an
+    # installation disk involves mounting and unmounting each partition
+    # on that disk.
     #
-    # @return [Array<String>] device names of installation disks
-    #
-    def find_installation_disks(limit)
+    # @param check_limit [Fixnum] maximum number of disks to check.
+    # @return [Array<Disk>]
+    def find_installation_disks(check_limit)
       usb_disks, non_usb_disks = devicegraph.disks.partition { |d| d.usb? }
       disks = usb_disks + non_usb_disks
-      disks = disks.first(limit)
+      disks = disks.first(check_limit)
       disks.select { |d| installation_disk?(d) }
     end
 
@@ -349,14 +367,10 @@ module Y2Storage
     # and started the installation from. This will check all filesystems on
     # that disk.
     #
-    # @param disk_name [Storage::Disk] device to check
-    #
+    # @param disk [Disk] device to check
     # @return [Boolean] 'true' if the disk is an installation disk
-    #
     def installation_disk?(disk)
       log.info("Checking if #{disk.name} is an installation disk")
-      # disk = device_by_name(disk.name)
-
       # Check if there is a filesystem directly on the disk (without partition table).
       # This is very common for installation media such as USB sticks.
       return installation_volume?(disk) if disk.partition_table.nil?
@@ -383,10 +397,8 @@ module Y2Storage
     # minor/major IDs since the inst-sys is in a RAM disk (copied from the
     # installation medium).
     #
-    # @param vol_name [string] device name of the volume to check
-    #
+    # @param device [#name] device to check
     # @return [Boolean] 'true' if the volume is an installation volume
-    #
     def installation_volume?(device)
       log.info("Checking if #{device.name} is an installation volume")
       fs = ExistingFilesystem.new(device.name)
@@ -399,7 +411,6 @@ module Y2Storage
     # This is a separate method so it can be redefined in unit tests.
     #
     # @return [Boolean] 'true' if it is an installation volume, 'false' if not.
-    #
     def installation_volume_check(mount_point)
       check_file = "/control.xml"
       if !File.exist?(check_file)
@@ -414,9 +425,8 @@ module Y2Storage
     # Remove any installation disks from 'disks' and return a disks array
     # containing the disks that are not installation media.
     #
-    # @param disks [Array<::Storage::Disk>]
-    # @return [Array<::Storage::Disk>] non-installation disks
-    #
+    # @param disks [Array<Disk>]
+    # @return [Array<Disk>] non-installation disks
     def remove_installation_disks(disks)
       # We can't simply use
       #   disks -= @installation_disks
