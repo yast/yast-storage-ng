@@ -46,7 +46,7 @@ RSpec.shared_context "proposal" do
   let(:architecture) { :x86 }
   let(:ppc_power_nv) { false }
 
-  let(:disk_analyzer) { Y2Storage::DiskAnalyzer.new(fake_devicegraph, scope: :install_candidates) }
+  let(:disk_analyzer) { Y2Storage::DiskAnalyzer.new(fake_devicegraph) }
   let(:storage_arch) { instance_double("::Storage::Arch") }
   let(:resize_info) do
     instance_double("Y2Storage::ResizeInfo", resize_ok?: true, min_size: 40.GiB)

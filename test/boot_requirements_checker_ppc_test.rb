@@ -38,8 +38,8 @@ describe Y2Storage::BootRequirementsChecker do
 
     before do
       allow(storage_arch).to receive(:ppc_power_nv?).and_return(power_nv)
-      allow(analyzer).to receive(:prep_partitions).and_return prep_partitions
-      allow(analyzer).to receive(:grub_partitions).and_return grub_partitions
+      allow_analyzer_receive(:grub_partitions, grub_partitions)
+      allow_analyzer_receive(:prep_partitions, prep_partitions)
     end
 
     context "in a non-PowerNV system (KVM/LPAR)" do
@@ -49,7 +49,7 @@ describe Y2Storage::BootRequirementsChecker do
         let(:use_lvm) { false }
 
         context "if there are no PReP partitions" do
-          let(:prep_partitions) { { "/dev/sda" => [] } }
+          let(:prep_partitions) { {} }
 
           it "requires only a PReP partition" do
             expect(checker.needed_partitions).to contain_exactly(

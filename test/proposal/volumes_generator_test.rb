@@ -55,7 +55,7 @@ describe Y2Storage::Proposal::VolumesGenerator do
           ]
         )
       )
-      allow(analyzer).to receive(:swap_partitions).and_return("/dev/sda" => swap_partitions)
+      allow(analyzer).to receive(:swap_partitions).and_return(swap_partitions)
     end
 
     it "returns a list of volumes" do

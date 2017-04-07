@@ -42,12 +42,10 @@ describe Y2Storage::BootRequirementsChecker do
     let(:bios_boot_id) { Y2Storage::PartitionId::BIOS_BOOT }
 
     before do
-      allow(analyzer).to receive(:mbr_gap)
-        .and_return("/dev/sda" => Y2Storage::DiskSize.KiB(mbr_gap_size))
-      allow(analyzer).to receive(:grub_partitions).and_return grub_partitions
-
       allow(storage_arch).to receive(:efiboot?).and_return(efiboot)
-      allow(analyzer).to receive(:efi_partitions).and_return efi_partitions
+      allow_analyzer_receive(:mbr_gap, "/dev/sda" => Y2Storage::DiskSize.KiB(mbr_gap_size))
+      allow_analyzer_receive(:grub_partitions, grub_partitions)
+      allow_analyzer_receive(:efi_partitions, efi_partitions)
     end
 
     context "using UEFI" do

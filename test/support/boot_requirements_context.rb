@@ -29,6 +29,14 @@ RSpec.shared_context "boot requirements" do
     volumes.find { |p| p.mount_point == mount_point }
   end
 
+  def allow_analyzer_receive(method, data)
+    allow(analyzer).to receive(method).and_return data.values.flatten
+    allow(analyzer).to receive(method).with(anything).and_return []
+    data.each do |disk, partitions|
+      allow(analyzer).to receive(method).with(disk).and_return partitions
+    end
+  end
+
   subject(:checker) { described_class.new(settings, analyzer) }
 
   let(:root_device) { "/dev/sda" }
