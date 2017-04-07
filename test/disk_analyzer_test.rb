@@ -118,4 +118,85 @@ describe Y2Storage::DiskAnalyzer do
       expect(analyzer.swap_partitions["/dev/sdb"].first).to be_a Y2Storage::Partition
     end
   end
+
+  describe "#installed_systems" do
+    let(:scenario) { "mixed_disks" } # only to initialize the subject
+
+    before do
+      allow(analyzer).to receive(:windows_partitions).and_return windows_partitions
+
+      allow(analyzer).to receive(:filesystems) do |disk|
+        case disk.name
+        when sda.name then sda_filesystems
+        when sdb.name then sdb_filesystems
+        when sdc.name then sdc_filesystems
+        end
+      end
+
+      allow_any_instance_of(Y2Storage::ExistingFilesystem).to receive(:release_name)
+        .and_return release_name
+    end
+
+    let(:sda) { instance_double(Storage::Disk, name: "/dev/sda") }
+    let(:sdb) { instance_double(Storage::Disk, name: "/dev/sdb") }
+    let(:sdc) { instance_double(Storage::Disk, name: "/dev/sdc") }
+
+    let(:windows_partitions) { {} }
+
+    let(:sda_filesystems) { [] }
+    let(:sdb_filesystems) { [] }
+    let(:sdc_filesystems) { [] }
+
+    let(:release_name) { nil }
+
+    it "returns a hash with all disks" do
+      installed_systems = analyzer.installed_systems
+      expect(installed_systems).to be_a(Hash)
+      expect(installed_systems.keys).to contain_exactly(*[sda, sdb, sdc].map(&:name))
+    end
+
+    context "when there is a Windows" do
+      let(:windows) { instance_double(Storage::Partition) }
+      let(:windows_partitions) { { sda.name => [windows] } }
+
+      it "returns 'Windows' as installed systems in the corresponding disk" do
+        installed_systems = analyzer.installed_systems
+        expect(installed_systems[sda.name]).to include("Windows")
+      end
+
+      it "does not return 'Windows' for other disks" do
+        installed_systems = analyzer.installed_systems
+        expect(installed_systems[sdb.name]).not_to include("Windows")
+        expect(installed_systems[sdc.name]).not_to include("Windows")
+      end
+    end
+
+    context "when there is a Linux" do
+      let(:sdb_filesystems) { [instance_double(Storage::BlkFilesystem)] }
+      let(:release_name) { "openSUSE" }
+
+      it "returns release name for the corresponding disk" do
+        installed_systems = analyzer.installed_systems
+        expect(installed_systems[sdb.name]).to include(release_name)
+      end
+
+      it "does not return release name for other disks" do
+        installed_systems = analyzer.installed_systems
+        expect(installed_systems[sda.name]).not_to include(release_name)
+        expect(installed_systems[sdc.name]).not_to include(release_name)
+      end
+    end
+
+    context "when there are several installed systems in a disk" do
+      let(:windows) { instance_double(Storage::Partition) }
+      let(:windows_partitions) { { sdc.name => [windows] } }
+      let(:sdc_filesystems) { [instance_double(Storage::BlkFilesystem)] }
+      let(:release_name) { "openSUSE" }
+
+      it "returns all installed systems for that disk" do
+        installed_systems = analyzer.installed_systems
+        expect(installed_systems[sdc.name]).to contain_exactly("Windows", release_name)
+      end
+    end
+  end
 end

@@ -25,6 +25,7 @@ require "yast"
 require "y2storage"
 require "y2storage/dialogs/proposal"
 require "y2storage/dialogs/guided_setup"
+require "expert_partitioner/main_dialog"
 
 module Y2Storage
   module Clients
@@ -63,6 +64,9 @@ module Y2Storage
           when :guided
             settings = dialog.proposal ? dialog.proposal.settings : new_settings
             guided_setup(settings)
+          when :expert
+            # TODO
+            expert_partitioner
           end
         end
 
@@ -83,15 +87,18 @@ module Y2Storage
         add_storage_packages
       end
 
-      def guided_setup(initial_settings)
-        dialog = Dialogs::GuidedSetup.new(initial_settings)
-
+      def guided_setup(settings)
+        dialog = Dialogs::GuidedSetup.new(storage_manager.probed, settings)
         case dialog.run
         when :abort
           @result = :abort
         when :next
           @proposal = Proposal.new(settings: dialog.settings)
         end
+      end
+
+      def expert_partitioner
+        ExpertPartitioner::MainDialog.new.run
       end
 
       # Add storage-related software packages (filesystem tools etc.) to the

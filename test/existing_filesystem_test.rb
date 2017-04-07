@@ -1,7 +1,7 @@
 #!/usr/bin/env rspec
 # encoding: utf-8
 
-# Copyright (c) [2016] SUSE LLC
+# Copyright (c) [2016-2017] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -23,47 +23,121 @@
 require_relative "spec_helper"
 require "y2storage"
 
-describe Y2Storage::ExistingFilesystem do
+RSpec.shared_examples "Mount and umount actions" do
 
-  let(:device_name) { "/dev/sdz" }
-  subject(:filesystem) { described_class.new(device_name) }
-
-  before do
-    allow(filesystem).to receive(:system).and_return true
+  it "mounts the device" do
+    expect(subject).to receive(:system).with(mount_cmd).and_return true
+    subject.send(tested_method)
   end
 
-  describe "#mount_and_check" do
-    it "mounts the device" do
-      expect(filesystem).to receive(:system).with(/\/usr\/bin\/mount #{device_name}/).and_return true
-      filesystem.mount_and_check { |_m| true }
+  it "umounts the device" do
+    expect(subject).to receive(:system).with(umount_cmd).and_return true
+    subject.send(tested_method)
+  end
+
+  context "when mount fails" do
+    before { allow(subject).to receive(:system).with(mount_cmd).and_return false }
+
+    it "does not perform the corresponding action" do
+      expect(subject).not_to receive(:check_installation_medium)
+      subject.send(tested_method)
     end
 
-    it "executes the passed block with the mount point as argument" do
-      expect { |b| filesystem.mount_and_check(&b) }.to yield_with_args("/mnt")
+    it "returns nil" do
+      expect(subject.send(tested_method)).to eq(nil)
+    end
+  end
+
+  context "when umount fails" do
+    before do
+      allow(subject).to receive(:system).with(umount_cmd).and_return false
+      allow(subject).to receive(:check_installation_medium).and_return true
     end
 
-    it "umounts the device" do
-      expect(filesystem).to receive(:system).with(/\/usr\/bin\/umount/).and_return true
-      filesystem.mount_and_check { |_m| true }
+    it "sets the value correctly" do
+      expect(subject.send(tested_method)).not_to be_nil
+    end
+  end
+end
+
+describe Y2Storage::ExistingFilesystem do
+  subject { described_class.new(filesystem, root, mount_point) }
+
+  let(:root) { "" }
+  let(:mount_point) { "" }
+  let(:mount_cmd) { Regexp.new("mount #{device.name}") }
+  let(:umount_cmd) { Regexp.new("umount") }
+
+  let(:filesystem) { instance_double(Storage::BlkFilesystem, blk_devices: [device]) }
+  let(:device) { instance_double(Storage::BlkDevice, name: "/dev/sda") }
+
+  before do
+    allow(subject).to receive(:system).and_return true
+  end
+
+  describe "#device" do
+    it "returns the device of the filesystem" do
+      expect(subject.device).to eq(device)
+    end
+  end
+
+  describe "#installation_medium?" do
+    let(:tested_method) { :installation_medium? }
+
+    include_examples "Mount and umount actions"
+
+    context "when it is an installation medium" do
+      let(:root) { File.join(DATA_PATH, "control_files/root") }
+
+      context "with the same control file than inst-sys" do
+        let(:mount_point) { root }
+
+        it "returns true" do
+          expect(subject.installation_medium?).to eq(true)
+        end
+      end
+
+      context "with different control file than inst-sys" do
+        let(:mount_point) { File.join(DATA_PATH, "control_files/root/mnt1") }
+
+        it "returns false" do
+          expect(subject.installation_medium?).to eq(false)
+        end
+      end
     end
 
-    it "returns the result of the passed block" do
-      result = filesystem.mount_and_check { |_m| true }
-      expect(result).to eq true
-      result = filesystem.mount_and_check { |_m| false }
-      expect(result).to eq false
+    context "when it is not an installation medium" do
+      let(:mount_point) { File.join(DATA_PATH, "control_files/root/mnt2") }
+
+      it "returns false" do
+        expect(subject.installation_medium?).to eq(false)
+      end
+    end
+  end
+
+  describe "#release_name" do
+    let(:tested_method) { :release_name }
+
+    before do
+      allow(Yast::OSRelease).to receive(:ReleaseName).and_return release_name
     end
 
-    it "returns nil if mounting fails" do
-      allow(filesystem).to receive(:system).with(/\/mount/).and_return false
-      result = filesystem.mount_and_check { |_m| true }
-      expect(result).to be_nil
+    let(:release_name) { "Open SUSE" }
+
+    include_examples "Mount and umount actions"
+
+    context "when there is an installed system" do
+      it "returns the release name" do
+        expect(subject.release_name).to eq(release_name)
+      end
     end
 
-    it "returns nil if unmounting fails" do
-      allow(filesystem).to receive(:system).with(/\/umount/).and_return false
-      result = filesystem.mount_and_check { |_m| true }
-      expect(result).to be_nil
+    context "when there is not an installed system" do
+      let(:release_name) { "" }
+
+      it "returns nil" do
+        expect(subject.release_name).to be_nil
+      end
     end
   end
 end
