@@ -45,47 +45,31 @@ module Y2Storage
       #   @return [Fixnum] max size of the label
       storage_forward :max_labelsize
 
-      # @!method label
+      # @!attribute label
       #   @return [String] filesystem label
       storage_forward :label
-
-      # @!method label=(value)
-      #   @see #label
-      #   @param value [String]
       storage_forward :label=
 
       # @!method supports_uuid?
       #   @return [Boolean] whether the filesystem supports UUID
       storage_forward :supports_uuid?, to: :supports_uuid
 
-      # @!method uuid
+      # @!attribute uuid
       #   @return [String] filesystem UUID
       storage_forward :uuid
-
-      # @!method uuid=(value)
-      #   @see #uuid
-      #   @param value [String]
       storage_forward :uuid=
 
-      # @!method mkfs_options
+      # @!attribute mkfs_options
       #   Options to use when calling mkfs during devicegraph commit (if the
       #   filesystem needs to be created in the system).
       #
       #   @return [String]
       storage_forward :mkfs_options
-
-      # @!method mkfs_options=(value)
-      #   @see #mkfs_options
-      #   @param value [String]
       storage_forward :mkfs_options=
 
-      # @!method tune_options
+      # @!attribute tune_options
       #   @return [String]
       storage_forward :tune_options
-
-      # @!method tune_options=(value)
-      #   @see #tune_options
-      #   @param value [String]
       storage_forward :tune_options=
 
       # @!method detect_content_info

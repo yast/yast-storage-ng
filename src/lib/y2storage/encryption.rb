@@ -35,12 +35,9 @@ module Y2Storage
     #   @return [BlkDevice] the block device being encrypted
     storage_forward :blk_device, as: "BlkDevice"
 
-    # @!method password
+    # @!attribute password
     #   @return [String] the encryption password
     storage_forward :password
-
-    # @!method password=(value)
-    #   @see #password
     storage_forward :password=
 
     # @!method self.all(devicegraph)

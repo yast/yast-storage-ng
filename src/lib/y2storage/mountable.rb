@@ -34,11 +34,9 @@ module Y2Storage
     #   @return [Filesystems::Type]
     storage_forward :type, as: "Filesystems::Type"
 
-    # @!method mount_by
+    # @!attribute mount_by
     #   @return [Filesystems::MountByType]
     storage_forward :mount_by, as: "Filesystems::MountByType"
-
-    # @!method mount_by=(new_mount_by)
     storage_forward :mount_by=
 
     # @!method fstab_options

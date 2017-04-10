@@ -33,29 +33,20 @@ module Y2Storage
     storage_class_forward :all, as: "BlkDevice"
     storage_class_forward :find_by_name, as: "BlkDevice"
 
-    # @!method name
+    # @!attribute name
     #   @return [String] kernel-style device name
     #     (e.g. "/dev/sda2" or "/dev/vg_name/lv_name")
     storage_forward :name
-
-    # @!method name=
-    #   @see #name
     storage_forward :name=
 
-    # @!method region
+    # @!attribute region
     #   @return [Region]
     storage_forward :region, as: "Region"
-
-    # @!method region=
-    #   @see #region
     storage_forward :region=
 
-    # @!method size
+    # @!attribute size
     #   @return [DiskSize]
     storage_forward :size, as: "DiskSize"
-
-    # @!method size=
-    #   @see #size
     storage_forward :size=
 
     # @!method sysfs_name
@@ -80,13 +71,10 @@ module Y2Storage
     #   @return [Array<String]
     storage_forward :udev_ids
 
-    # @!method dm_table_name
+    # @!attribute dm_table_name
     #   Device-mapper table name. Empty if this is not a device-mapper device.
     #   @return [String]
     storage_forward :dm_table_name
-
-    # @!method dm_table_name=
-    #   @see #dm_table_name
     storage_forward :dm_table_name=
 
     # @!method create_blk_filesystem(fs_type)
