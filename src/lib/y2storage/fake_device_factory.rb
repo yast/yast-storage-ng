@@ -615,7 +615,7 @@ module Y2Storage
         if !filesystem || !filesystem.type.is?(:btrfs)
           raise HierarchyError, "No btrfs on #{parent}"
         end
-        btrfs = Storage.to_btrfs(filesystem.to_storage_value)
+        btrfs = Storage.to_btrfs(filesystem)
         toplevel = btrfs.top_level_btrfs_subvolume
         toplevel.create_btrfs_subvolume(default_subvolume)
       end
