@@ -388,18 +388,27 @@ module Y2Storage
       btrfs = ::Storage.to_btrfs(filesystem)
       subvolumes = btrfs.btrfs_subvolumes.to_a
       return {} if subvolumes.empty? # the toplevel subvol doesn't have a path
-      default_subvolume = subvolumes.find { |s| s.default_btrfs_subvolume? }
-      btrfs_content = {}
-      btrfs_content["default_subvolume"] = default_subvolume.path if default_subvolume
-
-      btrfs_content["subvolumes"] = subvolumes.map do |subvol|
-        next if subvol.path.empty?
-        subvol_content = { "path" => subvol.path }
-        subvol_content["nocow"] = "true" if subvol.nocow?
-        { "subvolume" => subvol_content }
+      default_subvolume = subvolumes.find { |s| s.default_btrfs_subvolume? && !s.path.empty? }
+      content = {}
+      content["default_subvolume"] = default_subvolume.path if default_subvolume
+      content["subvolumes"] = subvolumes.map do |subvol|
+        yaml_btrfs_subvolume(subvol)
       end.compact
 
-      { "btrfs" => btrfs_content }
+      { "btrfs" => content }
+    end
+
+    # Return the YAML counterpart of one Btrfs subvolume or nil if it has an
+    # empty path.
+    #
+    # @param subvol [::Storage::BtrfsSubvolume]
+    # @return [Hash{String=>Object}] YAML
+    #
+    def yaml_btrfs_subvolume(subvol)
+      return nil if subvol.path.empty?
+      content = { "path" => subvol.path }
+      content["nocow"] = "true" if subvol.nocow?
+      { "subvolume" => content }
     end
   end
 end

@@ -21,6 +21,7 @@
 
 require_relative "spec_helper"
 require "y2storage/planned_subvol"
+require "pp"
 Yast.import "Arch"
 
 describe Y2Storage::PlannedSubvol do
@@ -206,5 +207,4 @@ describe Y2Storage::PlannedSubvol do
       end
     end
   end
-
 end

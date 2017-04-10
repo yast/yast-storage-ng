@@ -35,6 +35,7 @@ RSpec.shared_context "proposal" do
       .and_return(resize_info)
 
     allow(Yast::Arch).to receive(:x86_64).and_return(architecture == :x86)
+    allow(Yast::Arch).to receive(:s390).and_return(architecture == :s390)
     allow(storage_arch).to receive(:ppc_power_nv?).and_return(ppc_power_nv)
     allow(Y2Storage::StorageManager.instance.storage).to receive(:arch).and_return(storage_arch)
     allow(storage_arch).to receive(:efiboot?).and_return(false)
@@ -54,15 +55,14 @@ RSpec.shared_context "proposal" do
   let(:separate_home) { false }
   let(:lvm) { false }
   let(:encrypt) { false }
+  let(:subvol) { false }
   let(:settings) do
     settings = Y2Storage::ProposalSettings.new
     settings.use_separate_home = separate_home
     settings.use_lvm = lvm
     settings.encryption_password = encrypt ? "12345678" : nil
-    # Disregard subvolumes for proposal tests: The fallback subvolumes list
-    # tends to change every once in a while, and that would break all the
-    # proposal tests.
-    settings.subvolumes = nil
+    # If subvolumes are not tested, override the subvolume fallbacks list
+    settings.subvolumes = nil unless subvol
     settings
   end
 

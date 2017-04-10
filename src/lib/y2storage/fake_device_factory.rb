@@ -112,7 +112,7 @@ module Y2Storage
       # often (for example, in a loop), it is recommended to use create a
       # FakeDeviceFactory and use its load_yaml_file() method repeatedly.
       #
-      # @param devicegraph [::Storage::Devicegraph] where to build the tree
+      # @param devicegraph [Devicegraph] where to build the tree
       # @param input_file [String] name of the YAML file
       #
       def load_yaml_file(devicegraph, input_file)
@@ -247,7 +247,7 @@ module Y2Storage
 
     # Create a filesystem directly on a disk.
     #
-    # @param disk [::Storage::Disk]
+    # @param disk [Disk]
     # @param args [Hash] disk and filesystem parameters
     def file_system_directly_on_disk(disk, args)
       # No use trying to check for disk.has_partition_table here and throwing
@@ -261,7 +261,7 @@ module Y2Storage
 
     # Modifies topology settings of the disk according to factory arguments
     #
-    # @param disk [::Storage::Disk]
+    # @param disk [Disk]
     # @param args [Hash] disk parameters. @see #create_disk
     def set_topology_attributes!(disk, args)
       io_size = args["io_size"]
@@ -609,13 +609,14 @@ module Y2Storage
     def create_btrfs(parent, args)
       log.info("#{__method__}( #{parent}, #{args} )")
       default_subvolume = args["default_subvolume"]
-      if default_subvolume
-        blk_device = Y2Storage::BlkDevice.find_by_name(@devicegraph, parent)
+      if default_subvolume && !default_subvolume.empty?
+        blk_device = BlkDevice.find_by_name(devicegraph, parent)
         filesystem = blk_device.filesystem
         if !filesystem || !filesystem.type.is?(:btrfs)
           raise HierarchyError, "No btrfs on #{parent}"
         end
-        filesystem.create_btrfs_subvolume(@default_subvolume)
+        toplevel = filesystem.top_level_btrfs_subvolume
+        toplevel.create_btrfs_subvolume(default_subvolume)
       end
       parent
     end
@@ -643,15 +644,15 @@ module Y2Storage
     def create_subvolume(parent, args)
       log.info("#{__method__}( #{parent}, #{args} )")
       path  = args["path"]
-      nocow = args["nocow"] || false
+      nocow = args["nocow"] || "false"
       raise ArgumentError, "No path for subvolume" unless path
 
-      blk_device = ::Storage::BlkDevice.find_by_name(@devicegraph, parent)
-      btrfs = ::Storage.to_btrfs(blk_device.filesystem)
+      blk_device = BlkDevice.find_by_name(@devicegraph, parent)
+      btrfs = blk_device.filesystem
       parent_subvol = find_default_subvolume(btrfs) || btrfs.top_level_btrfs_subvolume
 
       subvol = parent_subvol.create_btrfs_subvolume(path)
-      subvol.nocow = nocow
+      subvol.nocow = nocow == "true"
       subvol
     end
 
