@@ -188,7 +188,7 @@ module Y2Storage
 
     def device_tree
       writer = Y2Storage::YamlWriter.new
-      writer.yaml_device_tree(to_storage_value)
+      writer.yaml_device_tree(self)
     end
   end
 end

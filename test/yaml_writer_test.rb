@@ -29,13 +29,12 @@ require "y2storage/filesystems"
 
 describe Y2Storage::YamlWriter do
 
-  let(:test_environment) do
-    Storage::Environment.new(true, Storage::ProbeMode_NONE, Storage::TargetMode_DIRECT)
+  before do
+    Y2Storage::StorageManager.create_test_instance
   end
-  let(:storage) { Storage::Storage.new(test_environment) }
+  let(:staging) { Y2Storage::StorageManager.instance.y2storage_staging }
 
   it "produces yaml of a simple disk and partition setup" do
-    staging = storage.staging
 
     sda = Y2Storage::Disk.create(staging, "/dev/sda")
     sda.size = 256 * Storage.GiB
@@ -104,8 +103,6 @@ describe Y2Storage::YamlWriter do
 
   it "produces yaml of a simple lvm setup" do
 
-    staging = storage.staging
-
     sda = Y2Storage::Disk.create(staging, "/dev/sda")
     sda.size = 1 * Storage.TiB
 
@@ -146,8 +143,6 @@ describe Y2Storage::YamlWriter do
   end
 
   it "produces yaml of an encrypted partition setup" do
-
-    staging = storage.staging
 
     sda = Y2Storage::Disk.create(staging, "/dev/sda")
     sda.size = 256 * Storage.GiB
@@ -200,15 +195,15 @@ describe Y2Storage::YamlWriter do
               '        name: "/dev/sda2"',
               '        type: primary',
               '        id: linux',
-              '        encryption:',
-              '          type: luks',
-              '          name: "/dev/mapper/cr_system"',
-              '          password: vry!s3cret',
               '        file_system: ext4',
               '        mount_point: "/"',
               '        fstab_options:',
               '        - acl',
               '        - user_xattr',
+              '        encryption:',
+              '          type: luks',
+              '          name: "/dev/mapper/cr_system"',
+              '          password: vry!s3cret',
               '    - free:',
               '        size: 245247 MiB (239.50 GiB)',
               '        start: 16897 MiB (16.50 GiB)']
@@ -222,8 +217,6 @@ describe Y2Storage::YamlWriter do
   end
 
   it "produces yaml of an lvm setup with encryption on the PV level" do
-
-    staging = storage.staging
 
     sda = Y2Storage::Disk.create(staging, "/dev/sda")
     sda.size = 256 * Storage.GiB
@@ -294,7 +287,6 @@ describe Y2Storage::YamlWriter do
 
   it "produces yaml of an lvm setup with encryption on the LV level" do
 
-    staging = storage.staging
 
     sda = Y2Storage::Disk.create(staging, "/dev/sda")
     sda.size = 256 * Storage.GiB
@@ -346,12 +338,12 @@ describe Y2Storage::YamlWriter do
               '    - lvm_lv:',
               '        lv_name: root',
               '        size: 16 GiB',
+              '        file_system: xfs',
+              '        mount_point: "/"',
               '        encryption:',
               '          type: luks',
               '          name: "/dev/mapper/cr_sda1"',
               '          password: s3cr3t',
-              '        file_system: xfs',
-              '        mount_point: "/"',
               '    lvm_pvs:',
               '    - lvm_pv:',
               '        blk_device: "/dev/sda1"']
@@ -365,8 +357,6 @@ describe Y2Storage::YamlWriter do
   end
 
   it "produces yaml of a filesystem directly on a disk without a partition table" do
-
-    staging = storage.staging
 
     disk = Y2Storage::Disk.create(staging, "/dev/sda")
     disk.size = 256 * Storage.GiB
@@ -398,8 +388,6 @@ describe Y2Storage::YamlWriter do
 
   it "produces yaml of an encrypted filesystem directly on a disk" do
 
-    staging = storage.staging
-
     disk = Y2Storage::Disk.create(staging, "/dev/sda")
     disk.size = 256 * Storage.GiB
 
@@ -419,12 +407,12 @@ describe Y2Storage::YamlWriter do
               '    io_size: 0 B',
               '    min_grain: 1 MiB',
               '    align_ofs: 0 B',
+              '    file_system: xfs',
+              '    mount_point: "/data"',
               '    encryption:',
               '      type: luks',
               '      name: "/dev/mapper/cr_data"',
-              '      password: s3cr3t',
-              '    file_system: xfs',
-              '    mount_point: "/data"']
+              '      password: s3cr3t']
 
     # rubocop:enable all
 
