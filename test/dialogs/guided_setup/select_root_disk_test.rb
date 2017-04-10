@@ -27,12 +27,7 @@ describe Y2Storage::Dialogs::GuidedSetup::SelectRootDisk do
 
   subject { described_class.new(guided_setup) }
 
-  let(:disks_data) do
-    [
-      { name: "/dev/sda", label: "" },
-      { name: "/dev/sdb", label: "" }
-    ]
-  end
+  let(:all_disks) { ["/dev/sda", "/dev/sdb"] }
 
   let(:candidate_disks) { all_disks }
 
@@ -41,10 +36,43 @@ describe Y2Storage::Dialogs::GuidedSetup::SelectRootDisk do
   end
 
   describe "#run" do
-    it "selects the first candidate as root disk by default" do
-      expect_select("/dev/sda")
-      expect_not_select("/dev/sdb")
-      subject.run
+    context "when settings has not a root disk" do
+      before { settings.root_device = nil }
+
+      it "selects 'any' option by default" do
+        expect_select(:any)
+        expect_not_select("/dev/sda")
+        expect_not_select("/dev/sdb")
+        subject.run
+      end
+    end
+
+    context "when settings has a root disk" do
+      before { settings.root_device = "/dev/sda" }
+
+      it "selects that disks by default" do
+        expect_select("/dev/sda")
+        expect_not_select("/dev/sdb")
+        subject.run
+      end
+    end
+
+    context "when a disk is selected" do
+      before { select_disks(["/dev/sdb"]) }
+
+      it "updates settings with the selected disk" do
+        subject.run
+        expect(subject.settings.root_device).to eq("/dev/sdb")
+      end
+    end
+
+    context "when 'any' option is selected" do
+      before { select_disks([:any]) }
+
+      it "updates settings with root disk as nil" do
+        subject.run
+        expect(subject.settings.root_device).to be_nil
+      end
     end
 
     context "when settings has action for Windows systems" do
@@ -59,18 +87,16 @@ describe Y2Storage::Dialogs::GuidedSetup::SelectRootDisk do
       end
     end
 
-    it "updates settings with the selected disk" do
-      select_disks(["/dev/sdb"])
-      subject.run
-      expect(subject.settings.root_device).to eq("/dev/sdb")
+    context "when an action is selected for Windows systems" do
+      it "updates settings with the selected action for Windows systems" do
+        skip "no settings exists for that"
+      end
     end
 
-    it "updates settings with the selected action for Windows systems" do
-      skip "no settings exists for that"
-    end
-
-    it "updates settings with the selected action for Linux partitions" do
-      skip "no settings exists for that"
+    context "when an action is selected for Linux partitions" do
+      it "updates settings with the selected action for Linux partitions" do
+        skip "no settings exists for that"
+      end
     end
   end
 end

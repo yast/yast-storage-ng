@@ -59,13 +59,13 @@ RSpec.shared_context "guided setup requirements" do
     allow(Yast::UI).to receive(:QueryWidget).with(Id(id), :Value).and_return(false)
   end
 
-  def all_disks
-    disks_data.map { |d| d[:name] }
-  end
-
   def select_disks(disks)
     disks.each { |d| select_widget(d) }
     (all_disks - disks).each { |d| not_select_widget(d) }
+  end
+
+  def disk(name)
+    instance_double(Y2Storage::Disk, name: name, size: 0)
   end
 
   before do
@@ -81,17 +81,26 @@ RSpec.shared_context "guided setup requirements" do
 
     allow(Yast::UI).to receive(:ChangeWidget).and_call_original
     allow(Yast::UI).to receive(:QueryWidget).and_call_original
+
+    allow(analyzer).to receive(:candidate_disks)
+      .and_return(all_disks.map { |d| disk(d) })
+
+    allow(analyzer).to receive(:device_by_name) { |d| disk(d) }
   end
 
   let(:guided_setup) do
     instance_double(
       Y2Storage::Dialogs::GuidedSetup,
-      disks_data: disks_data,
-      settings:   settings
+      analyzer: analyzer,
+      settings: settings
     )
   end
 
-  let(:disks_data) { {} }
+  let(:analyzer) { instance_double(Y2Storage::DiskAnalyzer, installed_systems: []) }
 
   let(:settings) { Y2Storage::ProposalSettings.new }
+
+  let(:all_disks) { [] }
+  let(:candidate_disks) { [] }
+  let(:selected_disks) { [] }
 end

@@ -27,17 +27,7 @@ describe Y2Storage::Dialogs::GuidedSetup::SelectDisks do
 
   subject { described_class.new(guided_setup) }
 
-  let(:disks_data) do
-    [
-      { name: "/dev/sda", label: "" },
-      { name: "/dev/sdb", label: "" },
-      { name: "/dev/sdc", label: "" },
-      { name: "/dev/sdd", label: "" }
-    ]
-  end
-
-  let(:candidate_disks) { [] }
-  let(:selected_disks) { [] }
+  let(:all_disks) { ["/dev/sda", "/dev/sdb", "/dev/sdc", "/dev/sdd"] }
 
   describe "#run" do
     before do
@@ -46,6 +36,8 @@ describe Y2Storage::Dialogs::GuidedSetup::SelectDisks do
     end
 
     context "when settings has not candidate disks" do
+      let(:candidate_disks) { [] }
+
       it "selects 3 first disks by default" do
         expect_select("/dev/sda")
         expect_select("/dev/sdb")
@@ -68,6 +60,9 @@ describe Y2Storage::Dialogs::GuidedSetup::SelectDisks do
     end
 
     context "when there are not selected disks" do
+      let(:candidate_disks) { all_disks }
+      let(:selected_disks) { [] }
+
       it "shows an error message" do
         expect(Yast::Report).to receive(:Warning)
         subject.run
@@ -80,6 +75,7 @@ describe Y2Storage::Dialogs::GuidedSetup::SelectDisks do
     end
 
     context "when there are more than 3 selected disks" do
+      let(:candidate_disks) { all_disks }
       let(:selected_disks) { ["/dev/sda", "/dev/sdb", "/dev/sdc", "/dev/sdd"] }
 
       it "shows an error message" do
@@ -94,6 +90,7 @@ describe Y2Storage::Dialogs::GuidedSetup::SelectDisks do
     end
 
     context "when there are between 1 and 3 selected disks" do
+      let(:candidate_disks) { all_disks }
       let(:selected_disks) { ["/dev/sda", "/dev/sdc"] }
 
       it "does not show an error message" do
