@@ -178,10 +178,18 @@ module Y2Storage
       return nil if subvolumes_xml.nil?
       return nil unless subvolumes_xml.respond_to?(:map)
 
-      all_subvols = subvolumes_xml.map { |xml| PlannedSubvol.create_from_xml(xml) }
-      all_subvols.compact! # Remove nil subvols due to XML parse errors
-      relevant_subvols = all_subvols.select { |s| s.current_arch? }
-      relevant_subvols.sort
+      subvols = subvolumes_xml.each_with_object([]) do |xml, result|
+        # Remove nil subvols due to XML parse errors
+        next if xml.nil?
+
+        new_subvol = PlannedSubvol.create_from_xml(xml)
+        next if new_subvol.nil? || !new_subvol.current_arch?
+
+        # Overwrite previous definitions for the same path
+        result.delete_if { |s| s.path == new_subvol.path }
+        result << new_subvol
+      end
+      subvols.sort_by(&:path)
     end
 
     # Create a fallback list of PlannedSubvols. This is useful if nothing is
