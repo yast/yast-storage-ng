@@ -65,7 +65,7 @@ RSpec.shared_context "guided setup requirements" do
   end
 
   def disk(name)
-    instance_double(Y2Storage::Disk, name: name, size: 0)
+    instance_double(Y2Storage::Disk, name: name, size: Y2Storage::DiskSize.new(0))
   end
 
   before do
