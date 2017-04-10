@@ -48,7 +48,7 @@ module Y2Storage
 
     # Constructor for the wrapper object
     #
-    # @param the Storage object to wrap
+    # @param object [Object] the Storage object to wrap
     def initialize(object)
       cast_method = :"to_#{self.class.storage_class_underscored_name}"
       @storage_object =

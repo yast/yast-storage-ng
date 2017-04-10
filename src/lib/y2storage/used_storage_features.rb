@@ -193,7 +193,7 @@ module Y2Storage
     # in UsedFeatures.h). If there is no constant with that name (i.e., the
     # feature is unknown to libstorage), this will throw a NameError.
     #
-    # @param  [Symbol] UF_* feature
+    # @param  feature [Symbol] UF_* feature
     # @return [Fixnum] bitmask for that feature
     #
     def bitmask(feature)

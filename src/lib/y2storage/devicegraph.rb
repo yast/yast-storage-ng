@@ -65,16 +65,16 @@ module Y2Storage
     #   Removes all devices
     storage_forward :clear
 
-    # @!check
+    # @!method check
     #   @raise [Exception] if the devicegraph contains logic errors
     #     (like, for example, a duplicated id)
     storage_forward :check
 
-    # @!used_features
+    # @!method used_features
     #   @return [Fixnum] bit-field with the used features of the devicegraph
     storage_forward :used_features
 
-    # @!copy(dest)
+    # @!method copy(dest)
     #   Copies content to another devicegraph
     #
     #   @param dest [Devicegraph] destination devicegraph

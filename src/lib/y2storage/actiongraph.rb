@@ -38,11 +38,11 @@ module Y2Storage
     #   Prints a textual representation of the graph through stdout
     storage_forward :print_graph
 
-    # @!write_graphviz(filename, graphviz_flags)
+    # @!method write_graphviz(filename, graphviz_flags)
     #   Writes the devicegraph to a file in Graphviz format
     storage_forward :write_graphviz
 
-    # @!commit_actions_as_strings
+    # @!method commit_actions_as_strings
     #   @return [Array<String>] Action descriptions sorted according to
     #     dependencies among actions
     storage_forward :commit_actions_as_strings

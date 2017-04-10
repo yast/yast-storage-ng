@@ -197,7 +197,7 @@ module Y2Storage
 
     # Read the "subvolumes" section of control.xml
     #
-    # @return Array[PlannedSubvolume]
+    # @return [Array<PlannedSubvolume>]
     def read_subvolumes_section
       xml = Yast::ProductFeatures.GetSection("partitioning")
       subvols = PlannedSubvol.create_from_control_xml(xml["subvolumes"]) || PlannedSubvol.fallback_list

@@ -87,7 +87,7 @@ module Y2Storage
     # @return [String] UUID to enforce in the filesystem
     attr_accessor :uuid
     # @!attribute subvolumes
-    #   @return Array[PlannedSubvolume] Btrfs subvolumes
+    #   @return [Array<PlannedSubvolume>] Btrfs subvolumes
     attr_accessor :subvolumes
     # @!attribute default_subvolume
     # @return [String] Parent for all Btrfs subvolumes (typically "@")
