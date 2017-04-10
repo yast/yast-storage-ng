@@ -31,7 +31,7 @@ module Y2Storage
 
       wrap_enum "FsType"
 
-      FILESYSTEMS = {
+      PROPERTIES = {
         btrfs:    {
           name: "BtrFS"
         },
@@ -86,6 +86,8 @@ module Y2Storage
 
       HOME_FILESYSTEMS = [:ext2, :ext3, :ext4, :btrfs, :reiserfs, :xfs]
 
+      private_constant :PROPERTIES, :ROOT_FILESYSTEMS, :HOME_FILESYSTEMS
+
       # Allowed filesystems for root
       #
       # @return [Array<Filesystems::Type>]
@@ -104,7 +106,10 @@ module Y2Storage
       #
       # @return [String]
       def to_human
-        FILESYSTEMS[to_sym][:name]
+        default = ""
+        properties = PROPERTIES[to_sym]
+        return default unless properties
+        properties[:name] || default
       end
     end
   end
