@@ -408,7 +408,7 @@ module Y2Storage
       return nil if subvol.path.empty?
       content = { "path" => subvol.path }
       content["nocow"] = "true" if subvol.nocow?
-      { "subvolume" => subvol }
+      { "subvolume" => content }
     end
   end
 end
