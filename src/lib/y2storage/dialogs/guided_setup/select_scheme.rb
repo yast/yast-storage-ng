@@ -35,18 +35,12 @@ module Y2Storage
           widget_update(:repeat_password, widget_value(:encryption), attr: :Enabled)
         end
 
-        def back_handler
+      protected
+
+        def close_dialog
           unload_cracklib
           super
         end
-
-        def next_handler
-          result = super
-          unload_cracklib if result == :next
-          result
-        end
-
-      protected
 
         def dialog_title
           _("Partitioning Scheme")
