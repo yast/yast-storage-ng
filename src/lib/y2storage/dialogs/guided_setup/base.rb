@@ -55,6 +55,20 @@ module Y2Storage
           guided_setup.settings
         end
 
+        def analyzer
+          guided_setup.analyzer
+        end
+
+        # Disk label used by dialogs.
+        # name, size and installed systems, for example:
+        #   "/dev/sda, 10GiB, Windows, OpenSUSE"
+        # @return [String]
+        def disk_label(disk)
+          data = [disk.name, disk.size.to_human_string]
+          data += analyzer.installed_systems(disk)
+          data.join(", ")
+        end
+
       protected
 
         # Controller object needed to access to settints and pre-calculated data.
@@ -82,10 +96,6 @@ module Y2Storage
             "TODO: this dialog is just temporary. " \
             "Hopefully it will end up including help of each setup.</p>"
           )
-        end
-
-        def disks_data
-          guided_setup.disks_data
         end
 
         # Helper to get widget value

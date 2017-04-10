@@ -53,7 +53,7 @@ module Y2Storage
             RadioButtonGroup(
               Id(:root_disk),
               VBox(
-                *disks_data.map { |d| disk_widget(d) }
+                *([any_disk_widget] + candidate_disks.map { |d| disk_widget(d) })
               )
             )
           )
@@ -92,29 +92,31 @@ module Y2Storage
           )
         end
 
-        def disk_widget(disk_data)
-          Left(RadioButton(Id(disk_data[:name]), disk_data[:label]))
+        def any_disk_widget
+          Left(RadioButton(Id(:any), _("Any disk")))
+        end
+
+        def disk_widget(disk)
+          Left(RadioButton(Id(disk.name), disk_label(disk)))
         end
 
         def initialize_widgets
-          id = disks_data.first[:name]
-          widget_update(id, true)
+          widget = settings.root_device || :any
+          widget_update(widget, true)
         end
 
         def update_settings!
-          root = candidate_disks.detect { |d| widget_value(d) }
-          settings.root_device = root
+          root = candidate_disks.detect { |d| widget_value(d.name) }
+          settings.root_device = root ? root.name : nil
           true
-        end
-
-        def disks_data
-          super.select { |d| candidate_disks.include?(d[:name]) }
         end
 
       private
 
         def candidate_disks
-          settings.candidate_devices || []
+          return @candidate_disks if @candidate_disks
+          candidates = settings.candidate_devices || []
+          @candidate_disks = candidates.map { |d| analyzer.device_by_name(d) }
         end
       end
     end

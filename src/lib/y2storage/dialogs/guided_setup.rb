@@ -21,7 +21,6 @@
 
 require "yast"
 require "y2storage/disk_analyzer"
-require "y2storage/refinements/size_casts"
 require "y2storage/dialogs/guided_setup/select_disks"
 require "y2storage/dialogs/guided_setup/select_root_disk"
 require "y2storage/dialogs/guided_setup/select_scheme"
@@ -35,17 +34,17 @@ module Y2Storage
     #
     # Calculates the proposal settings to be used in the next proposal attempt.
     class GuidedSetup
-      # @return [ProposalSettings] settings specified by the user
-      attr_reader :settings
       # Currently probed devicegraph
       attr_reader :devicegraph
-      # Disks data needed by dialogs, @see read_disks_data
-      attr_reader :disks_data
+      # Settings specified by the user
+      attr_reader :settings
+      # Disk analyzer to recover disks info
+      attr_reader :analyzer
 
       def initialize(devicegraph, settings)
         @devicegraph = devicegraph
+        @analyzer = Y2Storage::DiskAnalyzer.new(devicegraph)
         @settings = settings.dup
-        @disks_data = read_disks_data
       end
 
       # Executes steps of the wizard. Updates settings with user selections.
@@ -67,34 +66,6 @@ module Y2Storage
         }
 
         Yast::Sequencer.Run(aliases, sequence)
-      end
-
-    protected
-
-      # Inspects each disk and obtains information data for the dialogs,
-      # for example, systems installed into the disk.
-      #
-      # TODO: this solution (based on hashes) is not extensible. If it is
-      # needed to extend that, reconsider a better solution, for example
-      # using decorators.
-      #
-      # @return [Array<Hash>] disks data, see @disk_data.
-      def read_disks_data
-        analyzer = Y2Storage::DiskAnalyzer.new(devicegraph)
-        disks = analyzer.candidate_disks
-        installed_systems = analyzer.installed_systems
-        disks.map { |d| disk_data(d, installed_systems[d.name]) }
-      end
-
-      # Information data of a disk.
-      # @return [Hash] disk data.
-      def disk_data(disk, installed_systems)
-        data = [disk.name, DiskSize.new(disk.size)]
-        data << installed_systems if installed_systems
-        {
-          name:  disk.name,
-          label: data.join(", ")
-        }
       end
     end
   end
