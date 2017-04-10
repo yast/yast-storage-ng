@@ -112,7 +112,7 @@ module Y2Storage
       # often (for example, in a loop), it is recommended to use create a
       # FakeDeviceFactory and use its load_yaml_file() method repeatedly.
       #
-      # @param devicegraph [::Storage::Devicegraph] where to build the tree
+      # @param devicegraph [Devicegraph] where to build the tree
       # @param input_file [String] name of the YAML file
       #
       def load_yaml_file(devicegraph, input_file)
@@ -247,7 +247,7 @@ module Y2Storage
 
     # Create a filesystem directly on a disk.
     #
-    # @param disk [::Storage::Disk]
+    # @param disk [Disk]
     # @param args [Hash] disk and filesystem parameters
     def file_system_directly_on_disk(disk, args)
       # No use trying to check for disk.has_partition_table here and throwing
@@ -261,7 +261,7 @@ module Y2Storage
 
     # Modifies topology settings of the disk according to factory arguments
     #
-    # @param disk [::Storage::Disk]
+    # @param disk [Disk]
     # @param args [Hash] disk parameters. @see #create_disk
     def set_topology_attributes!(disk, args)
       io_size = args["io_size"]
@@ -615,8 +615,7 @@ module Y2Storage
         if !filesystem || !filesystem.type.is?(:btrfs)
           raise HierarchyError, "No btrfs on #{parent}"
         end
-        btrfs = Storage.to_btrfs(filesystem)
-        toplevel = btrfs.top_level_btrfs_subvolume
+        toplevel = filesystem.top_level_btrfs_subvolume
         toplevel.create_btrfs_subvolume(default_subvolume)
       end
       parent
@@ -629,7 +628,7 @@ module Y2Storage
     # @return [Object] default subvolume or nil if there is none
     #
     def find_default_subvolume(btrfs)
-      btrfs.btrfs_subvolumes.to_a.find { |s| s.default_btrfs_subvolume? }
+      btrfs.btrfs_subvolumes.find { |s| s.default_btrfs_subvolume? }
     end
 
     # Factory method for a btrfs subvolume
@@ -648,8 +647,8 @@ module Y2Storage
       nocow = args["nocow"] || "false"
       raise ArgumentError, "No path for subvolume" unless path
 
-      blk_device = ::Storage::BlkDevice.find_by_name(@devicegraph, parent)
-      btrfs = ::Storage.to_btrfs(blk_device.filesystem)
+      blk_device = BlkDevice.find_by_name(@devicegraph, parent)
+      btrfs = blk_device.filesystem
       parent_subvol = find_default_subvolume(btrfs) || btrfs.top_level_btrfs_subvolume
 
       subvol = parent_subvol.create_btrfs_subvolume(path)
