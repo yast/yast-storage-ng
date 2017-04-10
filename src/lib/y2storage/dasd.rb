@@ -29,12 +29,34 @@ module Y2Storage
   class Dasd < Partitionable
     wrap_class Storage::Dasd
 
+    # @!method rotational?
+    #   @return [Boolean] whether this is a rotational device
     storage_forward :rotational?, to: :rotational
+
+    # @!method dasd_type
+    #   @return [DasdType]
     storage_forward :dasd_type, as: "DasdType"
+
+    # @!method dasd_format
+    #   @return [DasdFormat]
     storage_forward :dasd_format, as: "DasdFormat"
 
+    # @!method self.create(devicegraph, name, region_or_size = nil)
+    #   @param devicegraph [Devicegraph]
+    #   @param name [String]
+    #   @param region [Region, DiskSize]
+    #   @return [Dasd]
     storage_class_forward :create, as: "Dasd"
+
+    # @!method self.all(devicegraph)
+    #   @param devicegraph [Devicegraph]
+    #   @return [Array<Dasd>] all the DASDs in the given devicegraph
     storage_class_forward :all, as: "Dasd"
+
+    # @!method self.find_by_name(devicegraph, name)
+    #   @param devicegraph [Devicegraph]
+    #   @param name [String]
+    #   @return [Dasd] nil if there is no such DASD device
     storage_class_forward :find_by_name, as: "Dasd"
 
     def inspect

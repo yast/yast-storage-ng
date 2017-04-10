@@ -32,6 +32,9 @@ module Y2Storage
       wrap_class Storage::Filesystem,
         downcast_to: ["Filesystems::BlkFilesystem", "Filesystems::Nfs"]
 
+      # @!method self.all(devicegraph)
+      #   @param devicegraph [Devicegraph]
+      #   @return [Array<Filesystems::Base>] all the filesystems in the given devicegraph
       storage_class_forward :all, as: "Filesystems::Base"
 
     protected

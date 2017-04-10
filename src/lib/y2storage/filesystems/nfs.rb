@@ -33,10 +33,24 @@ module Y2Storage
     class Nfs < Base
       wrap_class Storage::Nfs
 
+      # @!method server
+      #   @return [String]
       storage_forward :server
+
+      # @!method path
+      #   @return [String]
       storage_forward :path
 
+      # @!method self.all(devicegraph)
+      #   @param devicegraph [Devicegraph]
+      #   @return [Array<Nfs>] all the NFS mounts in the given devicegraph
       storage_class_forward :all, as: "Filesystems::Nfs"
+
+      # @!method self.find_by_server_and_path(devicegraph, server, path)
+      #   @param devicegraph [Devicegraph]
+      #   @param server [String]
+      #   @param path [String]
+      #   @return [Filesystems::Nfs] nil if there is no such NFS mount
       storage_class_forward :find_by_server_and_path, as: "Filesystems::Nfs"
 
     protected

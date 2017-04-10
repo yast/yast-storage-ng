@@ -31,11 +31,30 @@ module Y2Storage
   class Disk < Partitionable
     wrap_class Storage::Disk
 
+    # @!method rotational?
+    #   @return [Boolean] whether this is a rotational device
     storage_forward :rotational?, to: :rotational
+
+    # @!method transport
+    #   @return [DataTransport]
     storage_forward :transport, as: "DataTransport"
 
+    # @!method self.create(devicegraph, name, region_or_size = nil)
+    #   @param devicegraph [Devicegraph]
+    #   @param name [String]
+    #   @param region [Region, DiskSize]
+    #   @return [Disk]
     storage_class_forward :create, as: "Disk"
+
+    # @!method self.all(devicegraph)
+    #   @param devicegraph [Devicegraph]
+    #   @return [Array<Disk>] all the disks in the given devicegraph
     storage_class_forward :all, as: "Disk"
+
+    # @!method self.find_by_name(devicegraph, name)
+    #   @param devicegraph [Devicegraph]
+    #   @param name [String]
+    #   @return [Disk] nil if there is no such disk
     storage_class_forward :find_by_name, as: "Disk"
 
     # Free spaces inside the disk
