@@ -31,6 +31,10 @@ module Y2Storage
 
     storage_forward :lv_name
     storage_forward :lvm_vg, as: "LvmVg"
+    storage_forward :stripes
+    storage_forward :stripes=
+    storage_forward :stripe_size, as: "DiskSize"
+    storage_forward :stripe_size=, as: "DiskSize"
 
     storage_class_forward :all, as: "LvmLv"
 

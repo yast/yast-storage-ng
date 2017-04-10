@@ -25,7 +25,6 @@ require "yast"
 require "yaml"
 require "storage"
 require "y2storage/disk_size.rb"
-require "y2storage/enum_mappings.rb"
 
 module Y2Storage
   #
@@ -33,7 +32,6 @@ module Y2Storage
   #
   class YamlWriter
     include Yast::Logger
-    include EnumMappings
 
     class << self
       #
@@ -44,7 +42,7 @@ module Y2Storage
       # example, in a loop), it is recommended to create a YamlWriter and
       # use its write() method repeatedly.
       #
-      # @param devicegraph [::Storage::devicegraph]
+      # @param devicegraph [Devicegraph]
       # @param yaml_file [String | IO]
       #
       def write(devicegraph, yaml_file)
@@ -53,18 +51,9 @@ module Y2Storage
       end
     end
 
-    def initialize
-      # Cache some frequently needed values: We need the inverse mapping from
-      # EnumMappings, i.e. from the C++ enum to string.
-      @partition_table_types = PARTITION_TABLE_TYPES.invert
-      @partition_types       = PARTITION_TYPES.invert
-      @partition_ids         = PARTITION_IDS.invert
-      @file_system_types     = FILE_SYSTEM_TYPES.invert
-    end
-
     # Write all devices from the specified device graph to a YAML file.
     #
-    # @param devicegraph [::Storage::devicegraph]
+    # @param devicegraph [Devicegraph]
     # @param yaml_file [String | IO]
     #
     def write(devicegraph, yaml_file)
@@ -80,30 +69,30 @@ module Y2Storage
     # structures, i.e. nested arrays and hashes. The toplevel item will
     # always be an array.
     #
-    # @param devicegraph [::Storage::devicegraph]
+    # @param devicegraph [Devicegraph]
     # @return [Array<Hash>]
     #
     def yaml_device_tree(devicegraph)
       yaml = []
-      devicegraph.all_disks.each { |disk| yaml << yaml_disk(disk) }
-      devicegraph.all_lvm_vgs.each { |lvm_vg| yaml << yaml_lvm_vg(lvm_vg) }
+      devicegraph.disks.each { |disk| yaml << yaml_disk(disk) }
+      devicegraph.lvm_vgs.each { |lvm_vg| yaml << yaml_lvm_vg(lvm_vg) }
       yaml
     end
 
   private
 
-    # Return the YAML counterpart of a ::Storage::Disk.
+    # Return the YAML counterpart of a Y2Storage::Disk.
     #
-    # @param  disk [::Storage::Disk]
+    # @param  disk [Disk]
     # @return [Hash]
     #
     def yaml_disk(disk)
       content = basic_disk_attributes(disk)
-      if disk.has_partition_table
+      if disk.partition_table
         ptable = disk.partition_table
-        content["partition_table"] = @partition_table_types[ptable.type]
-        if ::Storage.msdos?(ptable)
-          content["mbr_gap"] = DiskSize.B(::Storage.to_msdos(ptable).minimal_mbr_gap).to_s
+        content["partition_table"] = ptable.type.to_s
+        if ptable.type.is?(:msdos)
+          content["mbr_gap"] = ptable.minimal_mbr_gap.to_s
         end
         partitions = yaml_disk_partitions(disk)
         content["partitions"] = partitions unless partitions.empty?
@@ -116,16 +105,16 @@ module Y2Storage
 
     # Basic attributes used to represent a disk
     #
-    # @param  disk [::Storage::Disk]
+    # @param  disk [Disk]
     # @return [Hash{String => Object}]
     #
     def basic_disk_attributes(disk)
       {
         "name"       => disk.name,
-        "size"       => DiskSize.B(disk.size).to_s,
-        "block_size" => DiskSize.B(disk.region.block_size).to_s,
+        "size"       => disk.size.to_s,
+        "block_size" => disk.region.block_size.to_s,
         "io_size"    => DiskSize.B(disk.topology.optimal_io_size).to_s,
-        "min_grain"  => DiskSize.B(disk.topology.minimal_grain).to_s,
+        "min_grain"  => disk.min_grain.to_s,
         "align_ofs"  => DiskSize.B(disk.topology.alignment_offset).to_s
       }
     end
@@ -135,7 +124,7 @@ module Y2Storage
     # Free slots are calculated as best as we can and not part of the
     # partition table object.
     #
-    # @param disk [::Storage::Disk]
+    # @param disk [Disk]
     # @return [Array<Hash>]
     # FIXME: this method offends three different complexity cops!
     # rubocop:disable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
@@ -148,7 +137,7 @@ module Y2Storage
       sorted_parts.each do |partition|
 
         # if we are about to leave an extend partition, show what's left
-        if partition_end_ext > 0 && partition.type != ::Storage::PartitionType_LOGICAL
+        if partition_end_ext > 0 && !partition.type.is?(:logical)
           gap = partition_end_ext - partition_end
           partitions << yaml_free_slot(DiskSize.B(partition_end_ext - gap), DiskSize.B(gap)) if gap > 0
           partition_end = partition_end_ext
@@ -157,20 +146,20 @@ module Y2Storage
 
         # is there a gap before the partition?
         # note: gap might actually be negative sometimes!
-        gap = partition.region.start * partition.region.block_size - partition_end
+        gap = partition.region.start * partition.region.block_size.to_i - partition_end
         partitions << yaml_free_slot(DiskSize.B(partition_end), DiskSize.B(gap)) if gap > 0
 
         # show partition itself
         partitions << yaml_partition(partition)
 
         # adjust end pointers
-        partition_end = (partition.region.end + 1) * partition.region.block_size
+        partition_end = (partition.region.end + 1) * partition.region.block_size.to_i
         partition_end_max = [partition_end_max, partition_end].max
 
         # if we're inside an extended partition, remember its end for later
-        if partition.type == ::Storage::PartitionType_EXTENDED
+        if partition.type.is?(:extended)
           partition_end_ext = partition_end
-          partition_end = partition.region.start * partition.region.block_size
+          partition_end = partition.region.start * partition.region.block_size.to_i
         end
       end
 
@@ -184,7 +173,7 @@ module Y2Storage
 
       # see if there's space left at the end of the disk
       # show also negative sizes so we know we've overstepped
-      gap = (disk.region.end + 1) * disk.region.block_size - partition_end_max
+      gap = (disk.region.end + 1) * disk.region.block_size.to_i - partition_end_max
       partitions << yaml_free_slot(DiskSize.B(partition_end_max), DiskSize.B(gap)) if gap != 0
 
       partitions
@@ -196,13 +185,13 @@ module Y2Storage
     # Start position is the primary criteria. In addition, extended partitions
     # are listed before any of its corresponding logical partitions
     #
-    # @param disk [::Storage::Disk]
-    # @return [Array<::Storage::Partition>]
+    # @param disk [Disk]
+    # @return [Array<Partition>]
     def sorted_partitions(disk)
-      disk.partition_table.partitions.to_a.sort do |a, b|
+      disk.partitions.sort do |a, b|
         by_start = a.region.start <=> b.region.start
         if by_start.zero?
-          a.type == ::Storage::PartitionType_EXTENDED ? -1 : 1
+          a.type.is?(:extended) ? -1 : 1
         else
           by_start
         end
@@ -210,19 +199,19 @@ module Y2Storage
     end
 
     #
-    # Return the YAML counterpart of a ::Storage::Partition.
+    # Return the YAML counterpart of a Y2Storage::Partition.
     #
-    # @param  partition [::Storage::Partition]
+    # @param  partition [Partition]
     # @return [Hash]
     #
 
     def yaml_partition(partition)
       content = {
-        "size"  => DiskSize.B(partition.region.length * partition.region.block_size).to_s,
-        "start" => DiskSize.B(partition.region.start * partition.region.block_size).to_s,
+        "size"  => partition.size.to_s,
+        "start" => (partition.region.block_size * partition.region.start).to_s,
         "name"  => partition.name,
-        "type"  => @partition_types[partition.type],
-        "id"    => @partition_ids[partition.id] || "0x#{partition.id.to_s(16)}"
+        "type"  => partition.type.to_s,
+        "id"    => partition.id.to_s
       }
 
       content.merge!(yaml_filesystem_and_encryption(partition))
@@ -240,9 +229,9 @@ module Y2Storage
       { "free" => { "size" => size.to_s, "start" => start.to_s } }
     end
 
-    # Return the YAML counterpart of a ::Storage::LvmVg.
+    # Return the YAML counterpart of a Y2Storage::LvmVg.
     #
-    # @param lvm_vg [::Storage::LvmVg]
+    # @param lvm_vg [LvmVg]
     # @return [Hash]
     #
     def yaml_lvm_vg(lvm_vg)
@@ -259,38 +248,38 @@ module Y2Storage
 
     # Basic attributes used to represent a volume group
     #
-    # @param lvm_vg [::Storage::LvmVg]
+    # @param lvm_vg [LvmVg]
     # @return [Hash{String => Object}]
     #
     def basic_lvm_vg_attributes(lvm_vg)
       {
         "vg_name"     => lvm_vg.vg_name,
-        "extent_size" => DiskSize.B(lvm_vg.extent_size).to_s
+        "extent_size" => lvm_vg.extent_size.to_s
       }
     end
 
     # Return a YAML representation of the logical volumes in a volume group
     #
-    # @param lvm_vg [::Storage::LvmVg]
+    # @param lvm_vg [LvmVg]
     # @return [Array<Hash>]
     #
     def yaml_lvm_vg_lvm_lvs(lvm_vg)
-      lvm_vg.lvm_lvs.to_a.map { |lvm_lv| yaml_lvm_lv(lvm_lv) }
+      lvm_vg.lvm_lvs.map { |lvm_lv| yaml_lvm_lv(lvm_lv) }
     end
 
-    # Return the YAML counterpart of a ::Storage::LvmLv.
+    # Return the YAML counterpart of a Y2Storage::LvmLv.
     #
-    # @param lvm_lv [::Storage::LvmLv]
+    # @param lvm_lv [LvmLv]
     # @return [Hash]
     #
     def yaml_lvm_lv(lvm_lv)
       content = {
         "lv_name" => lvm_lv.lv_name,
-        "size"    => DiskSize.B(lvm_lv.size).to_s
+        "size"    => lvm_lv.size.to_s
       }
 
       content["stripes"] = lvm_lv.stripes if lvm_lv.stripes != 0
-      content["stripe_size"] = DiskSize.B(lvm_lv.stripe_size).to_s if lvm_lv.stripe_size != 0
+      content["stripe_size"] = lvm_lv.stripe_size.to_s if lvm_lv.stripe_size != DiskSize.zero
 
       content.merge!(yaml_filesystem_and_encryption(lvm_lv))
 
@@ -299,17 +288,17 @@ module Y2Storage
 
     # Return a YAML representation of the physical volumes in a volume group
     #
-    # @param lvm_vg [::Storage::LvmVg]
+    # @param lvm_vg [LvmVg]
     # @return [Array<Hash>]
     #
     def yaml_lvm_vg_lvm_pvs(lvm_vg)
-      pvs = lvm_vg.lvm_pvs.to_a.sort_by { |pv| pv.blk_device.name }
+      pvs = lvm_vg.lvm_pvs.sort_by { |pv| pv.blk_device.name }
       pvs.map { |lvm_pv| yaml_lvm_pv(lvm_pv) }
     end
 
-    # Return the YAML counterpart of a ::Storage::LvmPv.
+    # Return the YAML counterpart of a Y2Storage::LvmPv.
     #
-    # @param lvm_pv [::Storage::LvmPv]
+    # @param lvm_pv [LvmPv]
     # @return [Hash]
     #
     def yaml_lvm_pv(lvm_pv)
@@ -322,19 +311,19 @@ module Y2Storage
 
     # Return the YAML counterpart of a filesystem and encryption.
     #
-    # @param parent [::Storage::Disk|Partition|LvmLv]
+    # @param parent [Disk|Partition|LvmLv]
     # @return [Hash]
     #
     def yaml_filesystem_and_encryption(parent)
       content = {}
-      if parent.has_filesystem
+      if parent.filesystem
         content.merge!(yaml_filesystem(parent.filesystem))
         content.merge!(yaml_btrfs_subvolumes(parent.filesystem))
       end
-      if parent.has_encryption
+      if parent.encryption
         encryption = parent.encryption
         content.merge!(yaml_encryption(encryption))
-        if encryption.has_filesystem
+        if encryption.filesystem
           filesystem = encryption.filesystem
           content.merge!(yaml_filesystem(filesystem))
           content.merge!(yaml_btrfs_subvolumes(filesystem))
@@ -343,32 +332,32 @@ module Y2Storage
       content
     end
 
-    # Return the YAML counterpart of a ::Storage::BlkFilesystem.
+    # Return the YAML counterpart of a Y2Storage::BlkFilesystem.
     #
-    # @param file_system [::Storage::BlkFilesystem]
+    # @param file_system [BlkFilesystem]
     # @return [Hash{String => Object}]
     #
     def yaml_filesystem(file_system)
       content = {
-        "file_system" => @file_system_types[file_system.type]
+        "file_system" => file_system.type.to_s
       }
 
-      content["mount_point"] = file_system.mountpoints.first unless file_system.mountpoints.empty?
+      content["mount_point"] = file_system.mountpoint unless file_system.mountpoint.nil?
       content["label"] = file_system.label unless file_system.label.empty?
-      content["fstab_options"] = file_system.fstab_options.to_a unless file_system.fstab_options.empty?
+      content["fstab_options"] = file_system.fstab_options unless file_system.fstab_options.empty?
 
       content
     end
 
-    # Return the YAML counterpart of a ::Storage::Encryption.
+    # Return the YAML counterpart of a Y2Storage::Encryption.
     #
-    # @param encryption [::Storage::BlkFilesystem]
+    # @param encryption [BlkFilesystem]
     # @return [Hash{String => Object}]
     #
     def yaml_encryption(encryption)
       content = {
         "type" => "luks"
-        # "type" = @encryption_types[encryption.type] # not implemented yet in lib
+        # "type" = encryption.type.to_s # not implemented yet in lib
       }
 
       content["name"] = encryption.name
@@ -380,13 +369,12 @@ module Y2Storage
     # Return the YAML counterpart of a Btrfs's subvolumes or an empty hash if
     # the filesystem is not Btrfs.
     #
-    # @param filesystem [::Storage::BlkFilesystem]
+    # @param filesystem [Filesystems::BlkFilesystem]
     # @return [Hash{String => Object}]
     #
     def yaml_btrfs_subvolumes(filesystem)
-      return {} unless filesystem.type == ::Storage::FsType_BTRFS
-      btrfs = ::Storage.to_btrfs(filesystem)
-      subvolumes = btrfs.btrfs_subvolumes.to_a
+      return {} unless filesystem.type.is?(:btrfs)
+      subvolumes = filesystem.btrfs_subvolumes
       return {} if subvolumes.empty? # the toplevel subvol doesn't have a path
       default_subvolume = subvolumes.find { |s| s.default_btrfs_subvolume? && !s.path.empty? }
       content = {}
@@ -401,7 +389,7 @@ module Y2Storage
     # Return the YAML counterpart of one Btrfs subvolume or nil if it has an
     # empty path.
     #
-    # @param subvol [::Storage::BtrfsSubvolume]
+    # @param subvol [BtrfsSubvolume]
     # @return [Hash{String=>Object}] YAML
     #
     def yaml_btrfs_subvolume(subvol)
