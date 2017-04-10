@@ -242,7 +242,7 @@ describe Y2Storage::PlannedSubvol do
       end
     end
 
-    describe "a home subvolume" do
+    describe "a noarch COW home subvolume" do
       subject { subvols.find { |s| s.path == "home" } }
 
       it "exists" do
@@ -253,16 +253,16 @@ describe Y2Storage::PlannedSubvol do
         expect(subject.path).to be == "home"
       end
 
-      it "is COW" do
+      it "is COW as it should be" do
         expect(subject.cow?).to be true
       end
 
-      it "is arch-specific" do
+      it "is not arch-specific" do
         expect(subject.arch_specific?).to be false
       end
     end
 
-    describe "a var/cache subvolume" do
+    describe "a noarch COW var/cache subvolume" do
       subject { subvols.find { |s| s.path == "var/cache" } }
 
       it "exists" do
@@ -273,16 +273,16 @@ describe Y2Storage::PlannedSubvol do
         expect(subject.path).to be == "var/cache"
       end
 
-      it "is COW" do
+      it "is COW as it should be" do
         expect(subject.cow?).to be true
       end
 
-      it "is arch-specific" do
+      it "is not arch-specific" do
         expect(subject.arch_specific?).to be false
       end
     end
 
-    describe "a var/lib/mariadb subvolume" do
+    describe "a noarch NoCOW var/lib/mariadb subvolume" do
       subject { subvols.find { |s| s.path == "var/lib/mariadb" } }
 
       it "exists" do
@@ -293,35 +293,35 @@ describe Y2Storage::PlannedSubvol do
         expect(subject.path).to be == "var/lib/mariadb"
       end
 
-      it "is NoCOW" do
+      it "is NoCOW as it should be" do
         expect(subject.no_cow?).to be true
       end
 
-      it "is arch-specific" do
+      it "is not arch-specific" do
         expect(subject.arch_specific?).to be false
       end
     end
 
-    describe "an arch-specific boot/grub2/s390x-emu subvolume" do
+    describe "an s390 arch-specific COW boot/grub2/s390x-emu subvolume" do
       subject { subvols.find { |s| s.path == "boot/grub2/s390x-emu" } }
 
-      it "exists on arch s390" do
+      it "exists on its arch s390" do
         expect(subject).not_to be_nil
       end
 
-      it "is COW" do
+      it "is COW as it should be" do
         expect(subject.cow?).to be true
       end
 
-      it "is arch-specific" do
+      it "is really arch-specific" do
         expect(subject.arch_specific?).to be true
       end
     end
 
-    describe "an arch-specific boot/grub2/i386-pc subvolume" do
+    describe "an x86_64 and i386 arch-specific boot/grub2/i386-pc subvolume" do
       subject { subvols.find { |s| s.path == "boot/grub2/i386-pc" } }
 
-      it "does not exist on s390" do
+      it "does not exist on different arch s390" do
         expect(subject).to be_nil
       end
     end
