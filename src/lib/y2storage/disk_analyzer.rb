@@ -167,6 +167,14 @@ module Y2Storage
       data_for(*disks, :windows_partitions) { |d| find_windows_partitions(d) }
     end
 
+    # Release names of installed systems for every disk.
+    #
+    # @param *disks [Disk, String] disks to analyze. All disks by default.
+    # @return [Array<String>] release names
+    def installed_systems(*disks)
+      data_for(*disks, :installed_systems) { |d| find_installed_systems(d) }
+    end
+
     # Disks that are suitable for installing Linux.
     #
     # @return [Array<Disk>] candidate disks
@@ -175,10 +183,6 @@ module Y2Storage
       @candidate_disks = find_candidate_disks
       log.info("Found candidate disks: #{@candidate_disks}")
       @candidate_disks
-    end
-
-    def installed_systems
-      @installed_systems ||= find_installed_systems
     end
 
     # Checks if a partition belongs to any VG.
@@ -210,11 +214,6 @@ module Y2Storage
       pv = partition_pv(partition)
       return nil unless pv
       pv.lvm_vg
-    end
-
-    def filesystems(disk)
-      #disks.with(name: disk.name).filesystems
-      []
     end
 
     # Look up devicegraph element by device name.
@@ -312,6 +311,33 @@ module Y2Storage
       is_win
     end
 
+    # Obtains release names of installed systems in a disk.
+    #
+    # @param disk [Disk] disk to check
+    # @return [Array<String>] release names
+    def find_installed_systems(disk)
+      windows_systems(disk) + linux_systems(disk)
+    end
+
+    def windows_systems(disk)
+      systems = []
+      systems << "Windows" unless windows_partitions(disk).empty?
+      systems
+    end
+
+    def linux_systems(disk)
+      filesystems = linux_partitions(disk).map(&:filesystem)
+      filesystems << disk.filesystem
+      filesystems.compact!
+      return [] if filesystems.empty?
+      filesystems.map { |f| release_name(f) }.compact
+    end
+
+    def release_name(filesystem)
+      fs = ExistingFilesystem.new(filesystem)
+      fs.release_name
+    end
+
     # Find disks that are suitable for installing Linux.
     # Put any USB disks to the end of that array.
     #
@@ -394,26 +420,11 @@ module Y2Storage
     # @param device [#name] device to check
     # @return [Boolean] 'true' if the volume is an installation volume
     def installation_volume?(device)
-      log.info("Checking if #{device.name} is an installation volume")
-      fs = ExistingFilesystem.new(device.name)
-      is_inst = fs.mount_and_check { |mp| installation_volume_check(mp) }
-      log.info("#{device.name} is installation volume") if is_inst
-      is_inst
-    end
-
-    # Check if the volume mounted at 'mount_point' is an installation volume.
-    # This is a separate method so it can be redefined in unit tests.
-    #
-    # @return [Boolean] 'true' if it is an installation volume, 'false' if not.
-    def installation_volume_check(mount_point)
-      check_file = "/control.xml"
-      if !File.exist?(check_file)
-        log.error("ERROR: Check file #{check_file} does not exist in inst-sys")
-        return false
-      end
-      mount_point += "/" unless mount_point.end_with?("/")
-      return false unless File.exist?(mount_point + check_file)
-      FileUtils.identical?(check_file, mount_point + check_file)
+      log.info("Checking if #{device.name} is an installation medium")
+      return false unless device.filesystem
+      fs = ExistingFilesystem.new(device.filesystem)
+      log.info("#{device.name} is an installation medium") if fs.installation_medium?
+      fs.installation_medium?
     end
 
     # Remove any installation disks from 'disks' and return a disks array
@@ -427,32 +438,6 @@ module Y2Storage
       # because the list elements (from libstorage) don't provide a .hash method.
       # Comparing device names ("/dev/sda"...) instead.
       disks.delete_if { |disk| @installation_disks.map(&:name).include?(disk.name) }
-    end
-
-    def find_installed_systems
-      installed_systems = {}
-      disks.each do |disk|
-        systems = windows_systems(disk) + linux_systems(disk)
-        installed_systems[disk.name] = systems
-      end
-      installed_systems
-    end
-
-    def windows_systems(disk)
-      systems = []
-      systems << "Windows" if windows_partitions[disk.name]
-      systems
-    end
-
-    def linux_systems(disk)
-      filesystems = filesystems(disk)
-      return [] if filesystems.empty?
-      filesystems.map { |f| release_name(f) }.compact
-    end
-
-    def release_name(filesystem)
-      fs = ExistingFilesystem.new(filesystem)
-      fs.release_name
     end
   end
 end
