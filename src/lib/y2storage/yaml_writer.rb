@@ -271,7 +271,7 @@ module Y2Storage
 
     # Return a YAML representation of the logical volumes in a volume group
     #
-    # @param disk [::Storage::LvmVg]
+    # @param lvm_vg [::Storage::LvmVg]
     # @return [Array<Hash>]
     #
     def yaml_lvm_vg_lvm_lvs(lvm_vg)
@@ -299,7 +299,7 @@ module Y2Storage
 
     # Return a YAML representation of the physical volumes in a volume group
     #
-    # @param disk [::Storage::LvmVg]
+    # @param lvm_vg [::Storage::LvmVg]
     # @return [Array<Hash>]
     #
     def yaml_lvm_vg_lvm_pvs(lvm_vg)
@@ -309,7 +309,7 @@ module Y2Storage
 
     # Return the YAML counterpart of a ::Storage::LvmPv.
     #
-    # @param lvm_lv [::Storage::LvmPv]
+    # @param lvm_pv [::Storage::LvmPv]
     # @return [Hash]
     #
     def yaml_lvm_pv(lvm_pv)

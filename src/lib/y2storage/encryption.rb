@@ -29,10 +29,20 @@ module Y2Storage
   class Encryption < BlkDevice
     wrap_class Storage::Encryption
 
+    # @!method blk_device
+    #   Block device directly hosting the encryption layer.
+    #
+    #   @return [BlkDevice] the block device being encrypted
     storage_forward :blk_device, as: "BlkDevice"
+
+    # @!attribute password
+    #   @return [String] the encryption password
     storage_forward :password
     storage_forward :password=
 
+    # @!method self.all(devicegraph)
+    #   @param devicegraph [Devicegraph]
+    #   @return [Array<Encryption>] all the encryption devices in the given devicegraph
     storage_class_forward :all, as: "Encryption"
 
     # @see BlkDevice#plain_device

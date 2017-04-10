@@ -68,7 +68,7 @@ module Y2Storage
     #   Sets the root prefix used by libstorage in subsequent operations
     #   @param path [String]
 
-    # @!method prepend_rootprefix
+    # @!method prepend_rootprefix(path)
     #   Prepends the current libstorage root prefix to a path, if necessary
     #   @param path [String] original path (without prefix)
     #   @return [String]
@@ -113,7 +113,7 @@ module Y2Storage
     # Stores the proposal, modifying the staging devicegraph and all the related
     # information.
     #
-    # @param [Proposal]
+    # @param proposal [Proposal]
     def proposal=(proposal)
       copy_to_staging(proposal.devices)
       @proposal = proposal

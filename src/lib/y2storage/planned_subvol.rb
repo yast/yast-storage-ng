@@ -195,7 +195,7 @@ module Y2Storage
     # Create a fallback list of PlannedSubvols. This is useful if nothing is
     # specified in the control.xml file.
     #
-    # @return List<PlannedSubvol>
+    # @return [List<PlannedSubvol>]
     #
     # rubocop:disable Metrics/LineLength
     def self.fallback_list

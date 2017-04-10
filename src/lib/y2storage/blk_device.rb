@@ -33,27 +33,63 @@ module Y2Storage
     storage_class_forward :all, as: "BlkDevice"
     storage_class_forward :find_by_name, as: "BlkDevice"
 
+    # @!attribute name
+    #   @return [String] kernel-style device name
+    #     (e.g. "/dev/sda2" or "/dev/vg_name/lv_name")
     storage_forward :name
     storage_forward :name=
+
+    # @!attribute region
+    #   @return [Region]
     storage_forward :region, as: "Region"
     storage_forward :region=
+
+    # @!attribute size
+    #   @return [DiskSize]
     storage_forward :size, as: "DiskSize"
     storage_forward :size=
+
+    # @!method sysfs_name
+    #   @return [String] e.g. "sda2" or "dm-1"
     storage_forward :sysfs_name
+
+    # @!method sysfs_path
+    #   e.g. "/devices/pci00:0/00:0:1f.2/ata1/host0/target0:0:0/0:0:0:0/block/sda/sda2"
+    #   or "/devices/virtual/block/dm-1"
+    #   @return [String]
     storage_forward :sysfs_path
+
+    # @!method udev_paths
+    #   All the udev paths. An empty array for devices not handled by udev
+    #   E.g. ["pci-0000:00:1f.2-ata-1-part2"]
+    #   @return [Array<String>]
     storage_forward :udev_paths
+
+    # @!method udev_ids
+    #   All the possible names to be used as udev ids. An empty array for
+    #   devices not handled by udev.
+    #   @return [Array<String]
     storage_forward :udev_ids
+
+    # @!attribute dm_table_name
+    #   Device-mapper table name. Empty if this is not a device-mapper device.
+    #   @return [String]
     storage_forward :dm_table_name
     storage_forward :dm_table_name=
 
-    storage_forward :create_blk_filesystem, as: "Filesystems::BlkFilesystem", raise_errors: true
-
-    # @!method create_filesystem
-    #   Alias for create_blk_filesystem
+    # @!method create_blk_filesystem(fs_type)
+    #   Creates a new filesystem object on top of the device in order to format it.
     #
+    #   @param fs_type [Filesystems::Type]
     #   @return [Filesystems::BlkFilesystem]
+    storage_forward :create_blk_filesystem, as: "Filesystems::BlkFilesystem", raise_errors: true
     alias_method :create_filesystem, :create_blk_filesystem
 
+    # @!method create_encryption(dm_name)
+    #   Creates a new encryption object on top of the device.
+    #
+    #   @param dm_name [String] see #dm_table_name
+    #   @return [Encryption]
     storage_forward :create_encryption, as: "Encryption", raise_errors: true
 
     # @!method direct_blk_filesystem

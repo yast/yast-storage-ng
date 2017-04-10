@@ -29,19 +29,53 @@ module Y2Storage
   class BtrfsSubvolume < Mountable
     wrap_class Storage::BtrfsSubvolume
 
-    storage_forward :btrfs, as: "Filesystems::BlkDevice"
+    # @!method btrfs
+    #   @return [Filesystems::BlkFilesystem]
+    storage_forward :btrfs, as: "Filesystems::BlkFilesystem"
     alias_method :blk_filesystem, :btrfs
     alias_method :filesystem, :btrfs
 
+    # @!method id
+    #   @return [Fixnum]
     storage_forward :id
+
+    # @!method top_level?
+    #   @return [Boolean] whether this is the top-level subvolume
     storage_forward :top_level?
+
+    # @!method top_level_btrfs_subvolume
+    #   @return [BtrfsSubvolume] top-level subvolume
     storage_forward :top_level_btrfs_subvolume, as: "BtrfsSubvolume"
+
+    # @!method path
+    #   @return [String] path of the subvolume
     storage_forward :path
+
+    # @!method nocow?
+    #   @return [Boolean] whether No-Copy-On-Write is enabled
     storage_forward :nocow?
+
+    # @!method nocow=(value)
+    #   @see #nocow?
+    #   @param value [Boolean]
     storage_forward :nocow=
+
+    # @!method default_btrfs_subvolume?
+    #   @return [Boolean] whether this is the default subvolume
     storage_forward :default_btrfs_subvolume?
-    storage_forward :default_btrfs_subvolume=
+
+    # @!method create_btrfs_subvolume(path)
+    #   @param path [String] path of the new subvolume
+    #   @return [BtrfsSubvolume]
     storage_forward :create_btrfs_subvolume, as: "BtrfsSubvolume"
+
+    # Sets this subvolume as the default one
+    def set_default_btrfs_subvolume
+      # The original libstorage method is wrongly renamed to
+      # :default_btrfs_subvolume= by SWIG, because it's named like a setter
+      # although it is not.
+      to_storage_value.public_send(:default_btrfs_subvolume=)
+    end
 
   protected
 

@@ -31,21 +31,49 @@ module Y2Storage
     class BlkFilesystem < Base
       wrap_class Storage::BlkFilesystem
 
+      # @!method self.all(devicegraph)
+      #   @param devicegraph [Devicegraph]
+      #   @return [Array<Filesystems::BlkFilesystem>] all the block filesystems
+      #     in the given devicegraph
       storage_class_forward :all, as: "Filesystems::BlkFilesystem"
 
+      # @!method supports_label?
+      #   @return [Boolean] whether the filesystem supports having a label
       storage_forward :supports_label?, to: :supports_label
+
+      # @!method max_labelsize
+      #   @return [Fixnum] max size of the label
       storage_forward :max_labelsize
+
+      # @!attribute label
+      #   @return [String] filesystem label
       storage_forward :label
       storage_forward :label=
 
+      # @!method supports_uuid?
+      #   @return [Boolean] whether the filesystem supports UUID
       storage_forward :supports_uuid?, to: :supports_uuid
+
+      # @!attribute uuid
+      #   @return [String] filesystem UUID
       storage_forward :uuid
       storage_forward :uuid=
 
+      # @!attribute mkfs_options
+      #   Options to use when calling mkfs during devicegraph commit (if the
+      #   filesystem needs to be created in the system).
+      #
+      #   @return [String]
       storage_forward :mkfs_options
       storage_forward :mkfs_options=
+
+      # @!attribute tune_options
+      #   @return [String]
       storage_forward :tune_options
       storage_forward :tune_options=
+
+      # @!method detect_content_info
+      #   @return [Storage::ContentInfo]
       storage_forward :detect_content_info
 
       # @!method blk_devices
