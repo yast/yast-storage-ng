@@ -287,7 +287,6 @@ describe Y2Storage::YamlWriter do
 
   it "produces yaml of an lvm setup with encryption on the LV level" do
 
-
     sda = Y2Storage::Disk.create(staging, "/dev/sda")
     sda.size = 256 * Storage.GiB
 
