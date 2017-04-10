@@ -129,9 +129,9 @@ module Y2Storage
       #   value must be returned as-is (after turning any vector into an array)
       # @param raise_errors [Boolean] whether to disable the mechanism that
       #   turns into a nil result all the exceptions of type
-      #   WrongNumberOfChildren and DeviceHasWrongType. Useful for methods in
-      #   which those exceptions don't have the usual meaning (looking for
-      #   something that is not there).
+      #   WrongNumberOfChildren, DeviceHasWrongType and DeviceNotFound.
+      #   Useful for methods in which those exceptions don't have the usual
+      #   meaning (looking for something that is not there).
       # @param to [Symbol] optional name of the method in the wrapped object.
       #   If not specified, the method name is considered to be the same in the
       #   wrapper and in the wrapper object. Using "to" allows to rename the
@@ -251,7 +251,7 @@ module Y2Storage
         processed_args = processed_storage_args(*args)
         result = storage_object.public_send(method, *processed_args)
         processed_storage_result(result, wrapper_class_name)
-      rescue Storage::WrongNumberOfChildren, Storage::DeviceHasWrongType
+      rescue Storage::WrongNumberOfChildren, Storage::DeviceHasWrongType, Storage::DeviceNotFound
         raise_errors ? raise : nil
       end
 
