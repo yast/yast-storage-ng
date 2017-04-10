@@ -24,5 +24,88 @@ require_relative "../spec_helper"
 require "y2storage/dialogs/guided_setup"
 
 describe Y2Storage::Dialogs::GuidedSetup do
-  pending "The guided setup is currently just a prototype"
+
+  def run_dialog(dialog, &block)
+    allow_any_instance_of(dialog).to receive(:run), &block
+  end
+
+  def run_select_disks(&block)
+    run_dialog(Y2Storage::Dialogs::GuidedSetup::SelectDisks, &block)
+  end
+
+  def run_select_root_disk(&block)
+    run_dialog(Y2Storage::Dialogs::GuidedSetup::SelectRootDisk, &block)
+  end
+
+  def run_select_scheme(&block)
+    run_dialog(Y2Storage::Dialogs::GuidedSetup::SelectScheme, &block)
+  end
+
+  def run_select_filesystem(&block)
+    run_dialog(Y2Storage::Dialogs::GuidedSetup::SelectFilesystem, &block)
+  end
+
+  subject { described_class.new(fake_devicegraph, settings) }
+
+  before do
+    fake_scenario(scenario)
+    # Mock reading of installed systems
+    allow_any_instance_of(Y2Storage::DiskAnalyzer).to receive(:installed_systems).and_return({})
+  end
+
+  let(:settings) { Y2Storage::ProposalSettings.new }
+
+  describe "#run" do
+    let(:scenario) { "gpt_and_msdos" }
+
+    context "when all dialogs return :next" do
+      before do
+        run_select_disks { :next }
+        run_select_root_disk { :next }
+        run_select_scheme { :next }
+        run_select_filesystem { :next }
+      end
+
+      it "returns :next" do
+        expect(subject.run).to eq(:next)
+      end
+
+      context "and some options are selected" do
+        before do
+          run_select_scheme do
+            subject.settings.use_lvm = true
+            :next
+          end
+        end
+
+        it "updates settings" do
+          subject.run
+          expect(subject.settings.use_lvm).to eq(true)
+        end
+      end
+    end
+
+    context "when first dialog returns :back" do
+      before do
+        run_select_disks { :back }
+      end
+
+      it "returns :back" do
+        expect(subject.run).to eq(:back)
+      end
+    end
+
+    context "when some dialog aborts" do
+      before do
+        run_select_disks { :next }
+        run_select_root_disk { :next }
+        run_select_scheme { :abort }
+        run_select_filesystem { :next }
+      end
+
+      it "returns :abort" do
+        expect(subject.run).to eq(:abort)
+      end
+    end
+  end
 end

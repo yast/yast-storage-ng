@@ -109,4 +109,54 @@ describe Y2Storage::DiskAnalyzer do
       expect(analyzer.swap_partitions("/dev/sdb").first).to be_a Y2Storage::Partition
     end
   end
+
+  describe "#installed_systems" do
+    let(:scenario) { "mixed_disks" }
+
+    before do
+      allow_any_instance_of(::Storage::BlkFilesystem).to receive(:detect_content_info)
+        .and_return(content_info)
+      allow_any_instance_of(Y2Storage::ExistingFilesystem).to receive(:release_name)
+        .and_return release_name
+    end
+
+    let(:content_info) { double("::Storage::ContentInfo", windows?: true) }
+
+    let(:release_name) { "openSUSE" }
+
+    context "when there is a disk with a Windows" do
+      it "returns 'Windows' as installed system for the corresponding disk" do
+        expect(analyzer.installed_systems("/dev/sda")).to include("Windows")
+      end
+
+      it "does not return 'Windows' for other disks" do
+        expect(analyzer.installed_systems("/dev/sdb")).not_to include("Windows")
+        expect(analyzer.installed_systems("/dev/sdc")).not_to include("Windows")
+      end
+    end
+
+    context "when there is a Linux" do
+      it "returns release name for the corresponding disks" do
+        expect(analyzer.installed_systems("/dev/sda")).to include(release_name)
+        expect(analyzer.installed_systems("/dev/sdb")).to include(release_name)
+      end
+
+      it "does not return release name for other disks" do
+        expect(analyzer.installed_systems("/dev/sdc")).not_to include(release_name)
+      end
+    end
+
+    context "when there are several installed systems in a disk" do
+      it "returns all installed systems for that disk" do
+        expect(analyzer.installed_systems("/dev/sda"))
+          .to contain_exactly("Windows", release_name)
+      end
+    end
+
+    context "when there are not installed systems in a disk" do
+      it "does not return installed systems for that disk" do
+        expect(analyzer.installed_systems("/dev/sdc")).to be_empty
+      end
+    end
+  end
 end

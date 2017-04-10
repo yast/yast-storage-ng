@@ -30,6 +30,87 @@ module Y2Storage
       include StorageEnumWrapper
 
       wrap_enum "FsType"
+
+      PROPERTIES = {
+        btrfs:    {
+          name: "BtrFS"
+        },
+        ext2:     {
+          name: "Ext2"
+        },
+        ext3:     {
+          name: "Ext3"
+        },
+        ext4:     {
+          name: "Ext4"
+        },
+        hfs:      {
+          name: "MacHFS"
+        },
+        hfsplus:  {
+          name: "MacHFS+"
+        },
+        jfs:      {
+          name: "JFS"
+        },
+        msdos:    {
+          name: "FAT"
+        },
+        nilfs2:   {
+          name: "NilFS"
+        },
+        ntfs:     {
+          name: "NTFS"
+        },
+        reiserfs: {
+          name: "Reiser"
+        },
+        swap:     {
+          name: "Swap"
+        },
+        vfat:     {
+          name: "FAT"
+        },
+        xfs:      {
+          name: "XFS"
+        },
+        iso9669:  {
+          name: "ISO9660"
+        },
+        udf:      {
+          name: "UDF"
+        }
+      }
+
+      ROOT_FILESYSTEMS = [:ext2, :ext3, :ext4, :btrfs, :reiserfs, :xfs]
+
+      HOME_FILESYSTEMS = [:ext2, :ext3, :ext4, :btrfs, :reiserfs, :xfs]
+
+      private_constant :PROPERTIES, :ROOT_FILESYSTEMS, :HOME_FILESYSTEMS
+
+      # Allowed filesystems for root
+      #
+      # @return [Array<Filesystems::Type>]
+      def self.root_filesystems
+        ROOT_FILESYSTEMS.map { |f| find(f) }
+      end
+
+      # Allowed filesystems for home
+      #
+      # @return [Array<Filesystems::Type>]
+      def self.home_filesystems
+        HOME_FILESYSTEMS.map { |f| find(f) }
+      end
+
+      # Human readable text for a filesystem
+      #
+      # @return [String]
+      def to_human
+        default = ""
+        properties = PROPERTIES[to_sym]
+        return default unless properties
+        properties[:name] || default
+      end
     end
   end
 end

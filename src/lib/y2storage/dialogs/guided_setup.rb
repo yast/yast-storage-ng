@@ -20,104 +20,52 @@
 # find current contact information at www.novell.com.
 
 require "yast"
-require "y2storage"
-require "ui/installation_dialog"
+require "y2storage/disk_analyzer"
+require "y2storage/dialogs/guided_setup/select_disks"
+require "y2storage/dialogs/guided_setup/select_root_disk"
+require "y2storage/dialogs/guided_setup/select_scheme"
+require "y2storage/dialogs/guided_setup/select_filesystem"
+
+Yast.import "Sequencer"
 
 module Y2Storage
   module Dialogs
+    # Class to control the guided setup workflow.
+    #
     # Calculates the proposal settings to be used in the next proposal attempt.
-    class GuidedSetup < ::UI::InstallationDialog
-      # @return [ProposalSettings] settings specified by the user
+    class GuidedSetup
+      # Currently probed devicegraph
+      attr_reader :devicegraph
+      # Settings specified by the user
       attr_reader :settings
+      # Disk analyzer to recover disks info
+      attr_reader :analyzer
 
-      def initialize(settings)
-        log.info "GuidedSetup dialog: start with #{settings.inspect}"
-
-        super()
-        textdomain "storage-ng"
+      def initialize(devicegraph, settings)
+        @devicegraph = devicegraph
+        @analyzer = Y2Storage::DiskAnalyzer.new(devicegraph)
         @settings = settings.dup
       end
 
-      def next_handler
-        adjust_settings_to_mode
-        log.info "GuidedSetup dialog: return :next with #{settings.inspect}"
-        super
-      end
+      # Executes steps of the wizard. Updates settings with user selections.
+      # @return [Symbol] last step result.
+      def run
+        aliases = {
+          "select_disks"      => -> { SelectDisks.new(self).run },
+          "select_root_disk"  => -> { SelectRootDisk.new(self).run },
+          "select_scheme"     => -> { SelectScheme.new(self).run },
+          "select_filesystem" => -> { SelectFilesystem.new(self).run }
+        }
 
-    protected
+        sequence = {
+          "ws_start"          => "select_disks",
+          "select_disks"      => { next: "select_root_disk", back: :back, abort: :abort },
+          "select_root_disk"  => { next: "select_scheme", back: :back, abort: :abort },
+          "select_scheme"     => { next: "select_filesystem", back: :back,  abort: :abort },
+          "select_filesystem" => { next: :next, back: :back,  abort: :abort }
+        }
 
-      def dialog_title
-        _("Guided Partitioning Setup")
-      end
-
-      def dialog_content
-        MarginBox(
-          2, 1,
-          VBox(
-            RadioButtonGroup(
-              Id(:mode),
-              VBox(
-                Left(RadioButton(Id(:mode_partition), _("Partition-based"), partition_selected?)),
-                VSpacing(1),
-                Left(RadioButton(Id(:mode_lvm), _("LVM-based"), lvm_selected?)),
-                VSpacing(1),
-                Left(RadioButton(Id(:mode_encrypted), _("Encrypted LVM-based"), encrypted_selected?))
-              )
-            ),
-            VSpacing(0.2),
-            Left(
-              HBox(
-                HSpacing(8),
-                Password(Id(:encryption_password), _("Enter encryption password"))
-              )
-            )
-          )
-        )
-      end
-
-      def create_dialog
-        super
-        init_widgets
-        true
-      end
-
-      def init_widgets
-        # Remember entered password
-        Yast::UI.ChangeWidget(Id(:encryption_password), :Value, settings.encryption_password)
-      end
-
-      def partition_selected?
-        !settings.use_lvm
-      end
-
-      def lvm_selected?
-        settings.use_lvm && settings.encryption_password.nil?
-      end
-
-      def encrypted_selected?
-        settings.use_lvm && !settings.encryption_password.nil?
-      end
-
-      def adjust_settings_to_mode
-        case Yast::UI.QueryWidget(Id(:mode), :CurrentButton)
-        when :mode_partition
-          settings.use_lvm = false
-          settings.encryption_password = nil
-        when :mode_lvm
-          settings.use_lvm = true
-          settings.encryption_password = nil
-        when :mode_encrypted
-          settings.use_lvm = true
-          settings.encryption_password = Yast::UI.QueryWidget(Id(:encryption_password), :Value)
-        end
-      end
-
-      def help_text
-        _(
-          "<p>\n" \
-          "TODO: this dialog is just temporary. " \
-          "Hopefully it will end up including several steps.</p>"
-        )
+        Yast::Sequencer.Run(aliases, sequence)
       end
     end
   end

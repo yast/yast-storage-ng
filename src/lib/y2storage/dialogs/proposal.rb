@@ -60,6 +60,10 @@ module Y2Storage
         finish_dialog(:guided)
       end
 
+      def expert_handler
+        finish_dialog(:expert)
+      end
+
     protected
 
       attr_writer :proposal
@@ -111,7 +115,8 @@ module Y2Storage
           2, 1,
           VBox(
             MinHeight(8, RichText(summary)),
-            PushButton(Id(:guided), _("Guided Setup"))
+            PushButton(Id(:guided), _("Guided Setup")),
+            PushButton(Id(:expert), _("Expert partitioner"))
           )
         )
       end
