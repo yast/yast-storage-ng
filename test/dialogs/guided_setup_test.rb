@@ -67,8 +67,6 @@ describe Y2Storage::Dialogs::GuidedSetup do
     allow_any_instance_of(Y2Storage::DiskAnalyzer).to receive(:candidate_disks) do
       candidate_disks.map { |d| disk(d) }
     end
-
-    allow_any_instance_of(Y2Storage::DiskAnalyzer).to receive(:device_by_name) { |d| disk(d) }
   end
 
   let(:devicegraph) { instance_double(Y2Storage::Devicegraph) }
