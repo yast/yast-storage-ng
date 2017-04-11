@@ -65,7 +65,24 @@ module Y2Storage
           "select_filesystem" => { next: :next, back: :back,  abort: :abort }
         }
 
+        # Skip disks selection when there is only one candidate
+        if candidate_disks.size == 1
+          settings.candidate_devices = candidate_disks.map(&:name)
+          sequence["ws_start"] = "select_root_disk"
+        end
+
         Yast::Sequencer.Run(aliases, sequence)
+      end
+
+      # Disks that could be selected for installation.
+      #
+      # @return [Array<Disk>]
+      def candidate_disks
+        return @candidate_disks if @candidate_disks
+        candidates = settings.candidate_devices || []
+        candidates = candidates.map { |d| analyzer.device_by_name(d) }
+        candidates = analyzer.candidate_disks if candidates.empty?
+        @candidate_disks = candidates
       end
     end
   end

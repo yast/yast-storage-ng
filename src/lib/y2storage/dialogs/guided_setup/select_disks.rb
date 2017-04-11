@@ -83,11 +83,7 @@ module Y2Storage
         end
 
         def candidate_disks
-          return @candidate_disks if @candidate_disks
-          candidates = settings.candidate_devices || []
-          candidates = candidates.map { |d| analyzer.device_by_name(d) }
-          candidates = analyzer.candidate_disks if candidates.empty?
-          @candidate_disks = candidates
+          guided_setup.candidate_disks
         end
       end
     end
