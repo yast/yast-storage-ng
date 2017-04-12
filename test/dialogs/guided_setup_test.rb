@@ -25,54 +25,80 @@ require "y2storage/dialogs/guided_setup"
 
 describe Y2Storage::Dialogs::GuidedSetup do
 
-  def run_dialog(dialog, &block)
+  def allow_run_dialog(dialog, &block)
     allow_any_instance_of(dialog).to receive(:run), &block
   end
 
-  def run_select_disks(&block)
-    run_dialog(Y2Storage::Dialogs::GuidedSetup::SelectDisks, &block)
+  def allow_run_select_disks(&block)
+    allow_run_dialog(Y2Storage::Dialogs::GuidedSetup::SelectDisks, &block)
   end
 
-  def run_select_root_disk(&block)
-    run_dialog(Y2Storage::Dialogs::GuidedSetup::SelectRootDisk, &block)
+  def allow_run_select_root_disk(&block)
+    allow_run_dialog(Y2Storage::Dialogs::GuidedSetup::SelectRootDisk, &block)
   end
 
-  def run_select_scheme(&block)
-    run_dialog(Y2Storage::Dialogs::GuidedSetup::SelectScheme, &block)
+  def allow_run_select_scheme(&block)
+    allow_run_dialog(Y2Storage::Dialogs::GuidedSetup::SelectScheme, &block)
   end
 
-  def run_select_filesystem(&block)
-    run_dialog(Y2Storage::Dialogs::GuidedSetup::SelectFilesystem, &block)
+  def allow_run_select_filesystem(&block)
+    allow_run_dialog(Y2Storage::Dialogs::GuidedSetup::SelectFilesystem, &block)
   end
 
-  subject { described_class.new(fake_devicegraph, settings) }
+  def expect_run_dialog(dialog)
+    expect_any_instance_of(dialog).to receive(:run).once
+  end
+
+  def expect_not_run_dialog(dialog)
+    expect_any_instance_of(dialog).not_to receive(:run)
+  end
+
+  def expect_not_run_select_disks
+    expect_not_run_dialog(Y2Storage::Dialogs::GuidedSetup::SelectDisks)
+  end
+
+  def disk(name)
+    instance_double(Y2Storage::Disk, name: name, size: Y2Storage::DiskSize.new(0))
+  end
+
+  subject { described_class.new(devicegraph, settings) }
 
   before do
-    fake_scenario(scenario)
-    # Mock reading of installed systems
-    allow_any_instance_of(Y2Storage::DiskAnalyzer).to receive(:installed_systems).and_return({})
+    allow_any_instance_of(Y2Storage::DiskAnalyzer).to receive(:candidate_disks) do
+      candidate_disks.map { |d| disk(d) }
+    end
   end
+
+  let(:devicegraph) { instance_double(Y2Storage::Devicegraph) }
 
   let(:settings) { Y2Storage::ProposalSettings.new }
 
+  let(:candidate_disks) { [] }
+
   describe "#run" do
-    let(:scenario) { "gpt_and_msdos" }
+    before do
+      allow_run_select_disks { :next }
+      allow_run_select_root_disk { :next }
+      allow_run_select_scheme { :next }
+      allow_run_select_filesystem { :next }
+    end
+
+    context "when there is only one candidate disk" do
+      let(:candidate_disks) { ["/dev/sda"] }
+
+      it "does not show disks selection dialog" do
+        expect_not_run_select_disks
+      end
+    end
 
     context "when all dialogs return :next" do
-      before do
-        run_select_disks { :next }
-        run_select_root_disk { :next }
-        run_select_scheme { :next }
-        run_select_filesystem { :next }
-      end
-
       it "returns :next" do
         expect(subject.run).to eq(:next)
       end
 
       context "and some options are selected" do
         before do
-          run_select_scheme do
+          allow_run_select_scheme do
             subject.settings.use_lvm = true
             :next
           end
@@ -87,7 +113,7 @@ describe Y2Storage::Dialogs::GuidedSetup do
 
     context "when first dialog returns :back" do
       before do
-        run_select_disks { :back }
+        allow_run_select_disks { :back }
       end
 
       it "returns :back" do
@@ -97,10 +123,7 @@ describe Y2Storage::Dialogs::GuidedSetup do
 
     context "when some dialog aborts" do
       before do
-        run_select_disks { :next }
-        run_select_root_disk { :next }
-        run_select_scheme { :abort }
-        run_select_filesystem { :next }
+        allow_run_select_scheme { :abort }
       end
 
       it "returns :abort" do

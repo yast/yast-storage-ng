@@ -64,7 +64,7 @@ module Y2Storage
             ),
             Left(
               HBox(
-                HSpacing(4),
+                HSpacing(3),
                 Left(CheckBox(Id(:snapshots), _("Enable Snapshots"), true))
               )
             )
@@ -78,7 +78,7 @@ module Y2Storage
             ),
             Left(
               HBox(
-                HSpacing(4),
+                HSpacing(2),
                 ComboBox(
                   Id(:home_filesystem), _("File System for Home Partition"),
                   Filesystems::Type.home_filesystems.map { |f| Item(Id(f.to_sym), f.to_human) }

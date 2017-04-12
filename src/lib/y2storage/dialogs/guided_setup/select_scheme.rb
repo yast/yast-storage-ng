@@ -55,13 +55,13 @@ module Y2Storage
               VSpacing(0.2),
               Left(
                 HBox(
-                  HSpacing(4),
+                  HSpacing(2),
                   Password(Id(:password), _("Password"))
                 )
               ),
               Left(
                 HBox(
-                  HSpacing(4),
+                  HSpacing(2),
                   Password(Id(:repeat_password), _("Verify Password"))
                 )
               )

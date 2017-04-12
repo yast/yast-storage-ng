@@ -41,7 +41,7 @@ module Y2Storage
             VBox(
               Left(Label(_("Select one or more (max %d) hard disks") % MAX_DISKS)),
               VSpacing(0.3),
-              *candidate_disks.map { |d| disk_widget(d) }
+              *all_disks.map { |d| disk_widget(d) }
             )
           )
         end
@@ -51,7 +51,10 @@ module Y2Storage
         end
 
         def initialize_widgets
-          candidate_disks.first(MAX_DISKS).each { |d| widget_update(d.name, true) }
+          default_selected = settings.candidate_devices || []
+          default_selected = default_selected.map { |d| analyzer.device_by_name(d) }
+          default_selected = all_disks if default_selected.empty?
+          default_selected.first(MAX_DISKS).each { |d| widget_update(d.name, true) }
         end
 
         def update_settings!
@@ -79,15 +82,11 @@ module Y2Storage
         end
 
         def selected_disks
-          candidate_disks.select { |d| widget_value(d.name) }
+          all_disks.select { |d| widget_value(d.name) }
         end
 
-        def candidate_disks
-          return @candidate_disks if @candidate_disks
-          candidates = settings.candidate_devices || []
-          candidates = candidates.map { |d| analyzer.device_by_name(d) }
-          candidates = analyzer.candidate_disks if candidates.empty?
-          @candidate_disks = candidates
+        def all_disks
+          analyzer.candidate_disks
         end
       end
     end

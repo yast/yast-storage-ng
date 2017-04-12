@@ -82,19 +82,18 @@ RSpec.shared_context "guided setup requirements" do
     allow(Yast::UI).to receive(:ChangeWidget).and_call_original
     allow(Yast::UI).to receive(:QueryWidget).and_call_original
 
+    allow(guided_setup).to receive(:analyzer).and_return(analyzer)
+    allow(guided_setup).to receive(:settings).and_return(settings)
+
     allow(analyzer).to receive(:candidate_disks)
       .and_return(all_disks.map { |d| disk(d) })
 
     allow(analyzer).to receive(:device_by_name) { |d| disk(d) }
   end
 
-  let(:guided_setup) do
-    instance_double(
-      Y2Storage::Dialogs::GuidedSetup,
-      analyzer: analyzer,
-      settings: settings
-    )
-  end
+  let(:guided_setup) { Y2Storage::Dialogs::GuidedSetup.new(devicegraph, settings) }
+
+  let(:devicegraph) { instance_double(Y2Storage::Devicegraph) }
 
   let(:analyzer) { instance_double(Y2Storage::DiskAnalyzer, installed_systems: []) }
 
