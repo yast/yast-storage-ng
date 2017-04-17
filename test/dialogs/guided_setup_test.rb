@@ -53,10 +53,6 @@ describe Y2Storage::Dialogs::GuidedSetup do
     expect_any_instance_of(dialog).not_to receive(:run)
   end
 
-  def expect_not_run_select_disks
-    expect_not_run_dialog(Y2Storage::Dialogs::GuidedSetup::SelectDisks)
-  end
-
   def disk(name)
     instance_double(Y2Storage::Disk, name: name, size: Y2Storage::DiskSize.new(0))
   end
@@ -68,13 +64,14 @@ describe Y2Storage::Dialogs::GuidedSetup do
     allow(analyzer).to receive(:candidate_disks) do
       candidate_disks.map { |d| disk(d) }
     end
+    allow_any_instance_of(Y2Storage::DiskAnalyzer).to receive(:installed_systems)
+      .and_return(installed_systems)
   end
 
   let(:analyzer) { instance_double(Y2Storage::DiskAnalyzer) }
-
   let(:settings) { Y2Storage::ProposalSettings.new }
-
   let(:candidate_disks) { [] }
+  let(:installed_systems) { [] }
 
   describe "#run" do
     before do
@@ -88,7 +85,53 @@ describe Y2Storage::Dialogs::GuidedSetup do
       let(:candidate_disks) { ["/dev/sda"] }
 
       it "does not show disks selection dialog" do
-        expect_not_run_select_disks
+        expect_not_run_dialog(Y2Storage::Dialogs::GuidedSetup::SelectDisks)
+        subject.run
+      end
+
+      context "and there is not installed systems" do
+        let(:installed_systems) { [] }
+
+        it "does not show root disk selection dialog" do
+          expect_not_run_dialog(Y2Storage::Dialogs::GuidedSetup::SelectRootDisk)
+          subject.run
+        end
+      end
+
+      context "and there are installed systems" do
+        let(:installed_systems) { ["Windows", "Linux"] }
+
+        it "shows root disk selection dialog" do
+          expect_run_dialog(Y2Storage::Dialogs::GuidedSetup::SelectRootDisk)
+          subject.run
+        end
+      end
+    end
+
+    context "when there are some candidate disks" do
+      let(:candidate_disks) { ["/dev/sda", "/dev/sdb"] }
+
+      it "shows disks selection dialog" do
+        expect_run_dialog(Y2Storage::Dialogs::GuidedSetup::SelectDisks)
+        subject.run
+      end
+
+      context "and there is not installed systems" do
+        let(:installed_systems) { [] }
+
+        it "shows root disk selection dialog" do
+          expect_run_dialog(Y2Storage::Dialogs::GuidedSetup::SelectRootDisk)
+          subject.run
+        end
+      end
+
+      context "and there are installed systems" do
+        let(:installed_systems) { ["Windows", "Linux"] }
+
+        it "shows root disk selection dialog" do
+          expect_run_dialog(Y2Storage::Dialogs::GuidedSetup::SelectRootDisk)
+          subject.run
+        end
       end
     end
 
