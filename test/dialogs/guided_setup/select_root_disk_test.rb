@@ -57,21 +57,76 @@ describe Y2Storage::Dialogs::GuidedSetup::SelectRootDisk do
       end
     end
 
-    context "when a disk is selected" do
-      before { select_disks(["/dev/sdb"]) }
+    context "when there is only one disk" do
+      let(:all_disks) { ["/dev/sda"] }
 
-      it "updates settings with the selected disk" do
+      it "updates settings with that disk" do
         subject.run
-        expect(subject.settings.root_device).to eq("/dev/sdb")
+        expect(subject.settings.root_device).to eq("/dev/sda")
       end
     end
 
-    context "when 'any' option is selected" do
-      before { select_disks([:any]) }
+    context "when there are several disks" do
+      context "and a disk is selected" do
+        before { select_disks(["/dev/sdb"]) }
 
-      it "updates settings with root disk as nil" do
+        it "updates settings with the selected disk" do
+          subject.run
+          expect(subject.settings.root_device).to eq("/dev/sdb")
+        end
+      end
+
+      context "and 'any' option is selected" do
+        before { select_disks([:any]) }
+
+        it "updates settings with root disk as nil" do
+          subject.run
+          expect(subject.settings.root_device).to be_nil
+        end
+      end
+    end
+
+    context "when the selected disk has not installed Windows" do
+      before { select_disks(["/dev/sda"]) }
+
+      let(:windows_systems) { [] }
+
+      it "disables windows actions" do
+        expect_disable(:windows_action)
         subject.run
-        expect(subject.settings.root_device).to be_nil
+      end
+    end
+
+    context "when the selected disk has installed Windows" do
+      before { select_disks(["/dev/sda"]) }
+
+      let(:windows_systems) { ["Windows"] }
+
+      it "enables windows actions" do
+        expect_enable(:windows_action)
+        subject.run
+      end
+    end
+
+    context "when the selected disk has not installed Linux" do
+      before { select_disks(["/dev/sda"]) }
+
+      let(:linux_systems) { [] }
+
+      it "disables linux actions" do
+        expect_disable(:linux_action)
+        subject.run
+      end
+    end
+
+    context "when the selected disk has installed Linux" do
+      before { select_disks(["/dev/sda"]) }
+
+      let(:linux_systems) { ["openSUSE"] }
+
+      it "enables linux actions" do
+        expect_enable(:linux_action)
+        subject.run
       end
     end
 

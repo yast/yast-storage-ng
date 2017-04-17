@@ -89,6 +89,9 @@ RSpec.shared_context "guided setup requirements" do
       .and_return(all_disks.map { |d| disk(d) })
 
     allow(analyzer).to receive(:device_by_name) { |d| disk(d) }
+
+    allow(analyzer).to receive(:windows_systems).and_return(windows_systems)
+    allow(analyzer).to receive(:linux_systems).and_return(linux_systems)
   end
 
   let(:guided_setup) { Y2Storage::Dialogs::GuidedSetup.new(settings) }
@@ -102,4 +105,7 @@ RSpec.shared_context "guided setup requirements" do
   let(:all_disks) { [] }
   let(:candidate_disks) { [] }
   let(:selected_disks) { [] }
+
+  let(:windows_systems) { [] }
+  let(:linux_systems) { [] }
 end
