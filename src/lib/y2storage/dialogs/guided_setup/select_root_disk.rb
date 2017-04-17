@@ -28,6 +28,11 @@ module Y2Storage
     class GuidedSetup
       # Dialog for root disk selection.
       class SelectRootDisk < Base
+        def root_disk_handler
+          widget_update(:windows_action, activate_windows_actions?, attr: :Enabled)
+          widget_update(:linux_action, activate_linux_actions?, attr: :Enabled)
+        end
+
       protected
 
         def dialog_title
@@ -50,12 +55,16 @@ module Y2Storage
           VBox(
             Left(Label(_("Please select a disk to use as the \"root\" partition (/)"))),
             VSpacing(0.3),
-            RadioButtonGroup(
-              Id(:root_disk),
-              VBox(
-                *([any_disk_widget] + candidate_disks.map { |d| disk_widget(d) })
+            if need_to_select_disk?
+              RadioButtonGroup(
+                Id(:root_disk),
+                VBox(
+                  *([any_disk_widget] + candidate_disks.map { |d| disk_widget(d) })
+                )
               )
-            )
+            else
+              Left(Label(disk_label(candidate_disks.first)))
+            end
           )
         end
 
@@ -101,12 +110,15 @@ module Y2Storage
         end
 
         def initialize_widgets
-          widget = settings.root_device || :any
-          widget_update(widget, true)
+          if need_to_select_disk?
+            widget = settings.root_device || :any
+            widget_update(widget, true)
+          end
+          root_disk_handler
         end
 
         def update_settings!
-          root = candidate_disks.detect { |d| widget_value(d.name) }
+          root = selected_disk
           settings.root_device = root ? root.name : nil
           true
         end
@@ -117,6 +129,26 @@ module Y2Storage
           return @candidate_disks if @candidate_disks
           candidates = settings.candidate_devices || []
           @candidate_disks = candidates.map { |d| analyzer.device_by_name(d) }
+        end
+
+        def need_to_select_disk?
+          candidate_disks.size > 1
+        end
+
+        def selected_disk
+          if need_to_select_disk?
+            candidate_disks.detect { |d| widget_value(d.name) }
+          else
+            candidate_disks.first
+          end
+        end
+
+        def activate_windows_actions?
+          !analyzer.windows_systems(selected_disk).empty?
+        end
+
+        def activate_linux_actions?
+          !analyzer.linux_systems(selected_disk).empty?
         end
       end
     end
