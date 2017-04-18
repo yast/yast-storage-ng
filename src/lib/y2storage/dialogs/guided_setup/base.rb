@@ -37,10 +37,22 @@ module Y2Storage
           @guided_setup = guided_setup
         end
 
-        # Only continues if settings are correctly updated. In other case,
-        # an error dialogs is expected.
+        # Whether the dialog should be skipped.
+        def skip?
+          false
+        end
+
+        # Actions to do before skipping the dialog.
+        # Guided setup controller calls this method when necessary.
+        def before_skip
+          nil
+        end
+
+        # Only continues if selected settings are valid. In other case,
+        # an error dialog is expected.
         def next_handler
-          if update_settings!
+          if valid?
+            update_settings!
             log.info "#{self.class}: return :next with #{settings.inspect}"
             super
           end
@@ -82,12 +94,18 @@ module Y2Storage
 
         # Should be implemented by derived classes.
         def initialize_widgets
+          nil
+        end
+
+        # Can be redefined by derived classes to indicate whether
+        # selected options are valid.
+        def valid?
           true
         end
 
         # Should be implemented by derived classes.
         def update_settings!
-          true
+          nil
         end
 
         def help_text

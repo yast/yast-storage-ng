@@ -80,13 +80,9 @@ module Y2Storage
         end
 
         def update_settings!
-          valid = valid_settings?
-          if valid
-            settings.use_lvm = widget_value(:lvm)
-            password = widget_value(:password)
-            settings.encryption_password = password unless password.to_s.empty?
-          end
-          valid
+          settings.use_lvm = widget_value(:lvm)
+          password = widget_value(:password)
+          settings.encryption_password = password unless password.to_s.empty?
         end
 
       private
@@ -104,7 +100,7 @@ module Y2Storage
         attr_reader :cracklib_loaded
         alias_method :cracklib_loaded?, :cracklib_loaded
 
-        def valid_settings?
+        def valid?
           using_encryption? ? valid_password? : true
         end
 

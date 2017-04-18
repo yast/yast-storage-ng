@@ -28,6 +28,17 @@ module Y2Storage
     class GuidedSetup
       # Dialog for disks selection for the proposal.
       class SelectDisks < Base
+        # This dialog has to be skipped when there is only
+        # one candidate disk for installing.
+        def skip?
+          analyzer.candidate_disks.size == 1
+        end
+
+        # Before skipping, settings should be assigned.
+        def before_skip
+          settings.candidate_devices = analyzer.candidate_disks.map(&:name)
+        end
+
       protected
 
         MAX_DISKS = 3
@@ -58,14 +69,12 @@ module Y2Storage
         end
 
         def update_settings!
-          valid = valid_settings?
-          settings.candidate_devices = selected_disks.map(&:name) if valid
-          valid
+          settings.candidate_devices = selected_disks.map(&:name)
         end
 
       private
 
-        def valid_settings?
+        def valid?
           any_selected_disk? && !many_selected_disks?
         end
 

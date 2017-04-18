@@ -49,53 +49,35 @@ module Y2Storage
       # Executes steps of the wizard.
       # @return [Symbol] last step result.
       def run
-        skip_needless_steps
-        Yast::Sequencer.Run(aliases, sequence)
-      end
+        aliases = {
+          "select_disks"      => -> { run_dialog(SelectDisks) },
+          "select_root_disk"  => -> { run_dialog(SelectRootDisk) },
+          "select_scheme"     => -> { run_dialog(SelectScheme) },
+          "select_filesystem" => -> { run_dialog(SelectFilesystem) }
+        }
 
-    private
-
-      def sequence
-        {
-          "ws_start"          => @ws_start || "select_disks",
+        sequence = {
+          "ws_start"          => "select_disks",
           "select_disks"      => { next: "select_root_disk", back: :back, abort: :abort },
           "select_root_disk"  => { next: "select_scheme", back: :back, abort: :abort },
           "select_scheme"     => { next: "select_filesystem", back: :back,  abort: :abort },
           "select_filesystem" => { next: :next, back: :back,  abort: :abort }
         }
+
+        Yast::Sequencer.Run(aliases, sequence)
       end
 
-      def aliases
-        {
-          "select_disks"      => -> { SelectDisks.new(self).run },
-          "select_root_disk"  => -> { SelectRootDisk.new(self).run },
-          "select_scheme"     => -> { SelectScheme.new(self).run },
-          "select_filesystem" => -> { SelectFilesystem.new(self).run }
-        }
-      end
+    private
 
-      def skip_needless_steps
-        skip_select_disks if skip_select_disks?
-        skip_select_root_disk if skip_select_root_disk?
-      end
-
-      def skip_select_disks?
-        analyzer.candidate_disks.size == 1
-      end
-
-      def skip_select_disks
-        settings.candidate_devices = analyzer.candidate_disks.map(&:name)
-        @ws_start = "select_root_disk"
-      end
-
-      def skip_select_root_disk?
-        skip_select_disks? &&
-          analyzer.installed_systems(analyzer.candidate_disks.first).size == 0
-      end
-
-      def skip_select_root_disk
-        settings.root_device = analyzer.candidate_disks.first
-        @ws_start = "select_scheme"
+      # Run the dialog or skip when necessary.
+      def run_dialog(dialog_class)
+        dialog = dialog_class.new(self)
+        if dialog.skip?
+          dialog.before_skip
+        else
+          @result = dialog.run
+        end
+        @result ||= :next
       end
     end
   end
