@@ -44,7 +44,7 @@ module Y2Storage
     # @!method self.create(devicegraph, name, region_or_size = nil)
     #   @param devicegraph [Devicegraph]
     #   @param name [String]
-    #   @param region [Region, DiskSize]
+    #   @param region_or_size [Region, DiskSize]
     #   @return [Dasd]
     storage_class_forward :create, as: "Dasd"
 

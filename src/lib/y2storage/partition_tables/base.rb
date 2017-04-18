@@ -85,7 +85,7 @@ module Y2Storage
       #   @return [Boolean] whether is possible to have an extended partition
       storage_forward :extended_possible?, to: :extended_possible
 
-      # @!method extended_possible?
+      # @!method has_extended?
       #   @return [Boolean] whether an extended partition exists in the table
       storage_forward :has_extended?, to: :has_extended
 
