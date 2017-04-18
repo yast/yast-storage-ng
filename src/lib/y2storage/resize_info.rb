@@ -29,8 +29,16 @@ module Y2Storage
     include StorageClassWrapper
     wrap_class Storage::ResizeInfo
 
+    # @!method resize_ok?
+    #   @return [Boolean] whether is possible to resize the device
     storage_forward :resize_ok?, to: :resize_ok
+
+    # @!method min_size
+    #   @return [DiskSize] minimal size the device can be resized to
     storage_forward :min_size, as: "DiskSize"
+
+    # @!method max_size
+    #   @return [DiskSize] maximum size the device can be resized to
     storage_forward :max_size, as: "DiskSize"
   end
 end

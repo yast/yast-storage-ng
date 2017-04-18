@@ -42,7 +42,7 @@ module Y2Storage
     # @!method self.create(devicegraph, name, region_or_size = nil)
     #   @param devicegraph [Devicegraph]
     #   @param name [String]
-    #   @param region [Region, DiskSize]
+    #   @param region_or_size [Region, DiskSize]
     #   @return [Disk]
     storage_class_forward :create, as: "Disk"
 
@@ -53,7 +53,7 @@ module Y2Storage
 
     # @!method self.find_by_name(devicegraph, name)
     #   @param devicegraph [Devicegraph]
-    #   @param name [String]
+    #   @param name [String] kernel-style device name (e.g. "/dev/sda")
     #   @return [Disk] nil if there is no such disk
     storage_class_forward :find_by_name, as: "Disk"
 

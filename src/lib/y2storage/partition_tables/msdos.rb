@@ -30,6 +30,15 @@ module Y2Storage
     class Msdos < Base
       wrap_class Storage::Msdos
 
+      # @!attribute minimal_mbr_gap
+      #   Minimal possible size of the so-called MBR gap.
+      #
+      #   The MBR gap is the space between the end of the MBR and the beginning
+      #   of the first partition. Often used by the bootloader. There is no
+      #   equivalent in GPT partition tables (where BIOS boot partitions are
+      #   used to allocate the bootloader).
+      #
+      #   @return [DiskSize]
       storage_forward :minimal_mbr_gap, as: "DiskSize"
       storage_forward :minimal_mbr_gap=
     end
