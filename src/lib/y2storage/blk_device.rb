@@ -30,7 +30,15 @@ module Y2Storage
     wrap_class Storage::BlkDevice,
       downcast_to: ["Partitionable", "Partition", "Encryption", "LvmLv"]
 
+    # @!method self.all(devicegraph)
+    #   @param devicegraph [Devicegraph]
+    #   @return [Array<BlkDevice>] all the block devices in the given devicegraph
     storage_class_forward :all, as: "BlkDevice"
+
+    # @!method self.find_by_name(devicegraph, name)
+    #   @param devicegraph [Devicegraph]
+    #   @param name [String] kernel-style device name (e.g. "/dev/sda1")
+    #   @return [BlkDevice] nil if there is no such block device
     storage_class_forward :find_by_name, as: "BlkDevice"
 
     # @!attribute name

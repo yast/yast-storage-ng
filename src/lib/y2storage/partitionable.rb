@@ -31,14 +31,44 @@ module Y2Storage
   class Partitionable < BlkDevice
     wrap_class Storage::Partitionable, downcast_to: ["Disk", "Dasd"]
 
+    # @!attribute range
+    #   Maximum number of partitions that the kernel can handle for the device.
+    #   It used to be 16 for scsi and 64 for ide. Now it's 256 for most devices.
+    #
+    #   @return [Fixnum]
     storage_forward :range
     storage_forward :range=
-    storage_forward :default_partition_table_type, as: "PartitionTables::Type"
+
+    # @!method possible_partition_table_types
+    #   @return [Array<PartitionTables::Type>]
     storage_forward :possible_partition_table_types, as: "PartitionTables::Type"
+
+    # @!method create_partition_table(pt_type)
+    #   Creates a partition table of the specified type for the device.
+    #
+    #   @raise [Storage::WrongNumberOfChildren] if the device is not empty (e.g.
+    #     already contains a partition table or a filesystem).
+    #   @raise [Storage::UnsupportedException] if the partition table type is
+    #     not valid for the device. @see #possible_partition_table_types
+    #
+    #   @param pt_type [PartitionTables::Type]
+    #   @return [PartitionTables::Base] the concrete subclass will depend
+    #     on pt_type
     storage_forward :create_partition_table, as: "PartitionTables::Base"
+
+    # @!method partition_table
+    #   @return [PartitionTables::Base] the concrete subclass will depend
+    #     on the type
     storage_forward :partition_table, as: "PartitionTables::Base"
+
+    # @!method topology
+    #   @return [Storage::Topology] Low-level object describing the device
+    #     topology
     storage_forward :topology
 
+    # @!method self.all(devicegraph)
+    #   @param devicegraph [Devicegraph]
+    #   @return [Array<Partitionable>] all the partitionable devices in the given devicegraph
     storage_class_forward :all, as: "Partitionable"
 
     # Minimal grain of the partitionable
