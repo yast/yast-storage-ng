@@ -27,22 +27,52 @@ describe Y2Storage::Dialogs::GuidedSetup::SelectRootDisk do
 
   subject { described_class.new(guided_setup) }
 
-  let(:all_disks) { ["/dev/sda", "/dev/sdb"] }
-
-  let(:candidate_disks) { all_disks }
-
   before do
     settings.candidate_devices = candidate_disks
   end
 
+  describe "#skip?" do
+    context "when there is only one disk" do
+      let(:candidate_disks) { ["/dev/sda"] }
+
+      context "and there is not any intalled system" do
+        let(:windows_systems) { [] }
+        let(:linux_systems) { [] }
+
+        it "returns true" do
+          expect(subject.skip?).to be(true)
+        end
+      end
+
+      context "and there is any installed system" do
+        let(:windows_systems) { ["Windows"] }
+
+        it "returns false" do
+          expect(subject.skip?).to be(false)
+        end
+      end
+    end
+
+    context "where there are several disks" do
+      let(:candidate_disks) { ["/dev/sda", "/dev/sdb"] }
+
+      it "returns false" do
+        expect(subject.skip?).to be(false)
+      end
+    end
+  end
+
   describe "#run" do
+    let(:all_disks) { ["/dev/sda", "/dev/sdb"] }
+    let(:candidate_disks) { all_disks }
+
     context "when settings has not a root disk" do
       before { settings.root_device = nil }
 
       it "selects 'any' option by default" do
-        expect_select(:any)
-        expect_not_select("/dev/sda")
-        expect_not_select("/dev/sdb")
+        expect_select(:any_disk)
+        expect_not_select("sda")
+        expect_not_select("sdb")
         subject.run
       end
     end
@@ -50,9 +80,9 @@ describe Y2Storage::Dialogs::GuidedSetup::SelectRootDisk do
     context "when settings has a root disk" do
       before { settings.root_device = "/dev/sda" }
 
-      it "selects that disks by default" do
-        expect_select("/dev/sda")
-        expect_not_select("/dev/sdb")
+      it "selects that disk by default" do
+        expect_select("sda")
+        expect_not_select("sdb")
         subject.run
       end
     end
@@ -68,7 +98,7 @@ describe Y2Storage::Dialogs::GuidedSetup::SelectRootDisk do
 
     context "when there are several disks" do
       context "and a disk is selected" do
-        before { select_disks(["/dev/sdb"]) }
+        before { select_disks(["sdb"]) }
 
         it "updates settings with the selected disk" do
           subject.run
@@ -77,7 +107,7 @@ describe Y2Storage::Dialogs::GuidedSetup::SelectRootDisk do
       end
 
       context "and 'any' option is selected" do
-        before { select_disks([:any]) }
+        before { select_disks([:any_disk]) }
 
         it "updates settings with root disk as nil" do
           subject.run
@@ -87,45 +117,45 @@ describe Y2Storage::Dialogs::GuidedSetup::SelectRootDisk do
     end
 
     context "when the selected disk has not installed Windows" do
-      before { select_disks(["/dev/sda"]) }
+      before { select_disks(["sda"]) }
 
       let(:windows_systems) { [] }
 
       it "disables windows actions" do
-        expect_disable(:windows_action)
+        expect_disable(:windows_actions)
         subject.run
       end
     end
 
     context "when the selected disk has installed Windows" do
-      before { select_disks(["/dev/sda"]) }
+      before { select_disks(["sda"]) }
 
       let(:windows_systems) { ["Windows"] }
 
       it "enables windows actions" do
-        expect_enable(:windows_action)
+        expect_enable(:windows_actions)
         subject.run
       end
     end
 
     context "when the selected disk has not installed Linux" do
-      before { select_disks(["/dev/sda"]) }
+      before { select_disks(["sda"]) }
 
       let(:linux_systems) { [] }
 
       it "disables linux actions" do
-        expect_disable(:linux_action)
+        expect_disable(:linux_actions)
         subject.run
       end
     end
 
     context "when the selected disk has installed Linux" do
-      before { select_disks(["/dev/sda"]) }
+      before { select_disks(["sda"]) }
 
       let(:linux_systems) { ["openSUSE"] }
 
       it "enables linux actions" do
-        expect_enable(:linux_action)
+        expect_enable(:linux_actions)
         subject.run
       end
     end

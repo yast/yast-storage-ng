@@ -27,13 +27,31 @@ describe Y2Storage::Dialogs::GuidedSetup::SelectDisks do
 
   subject { described_class.new(guided_setup) }
 
-  let(:all_disks) { ["/dev/sda", "/dev/sdb", "/dev/sdc", "/dev/sdd"] }
+  describe "#skip?" do
+    context "when there is only one candidate disk" do
+      let(:all_disks) { ["/dev/sda"] }
+
+      it "returns true" do
+        expect(subject.skip?).to be(true)
+      end
+    end
+
+    context "when there are several candidate disks" do
+      let(:all_disks) { ["/dev/sda", "/dev/sdb"] }
+
+      it "returns false" do
+        expect(subject.skip?).to be(false)
+      end
+    end
+  end
 
   describe "#run" do
     before do
       settings.candidate_devices = candidate_disks
       select_disks(selected_disks)
     end
+
+    let(:all_disks) { ["/dev/sda", "/dev/sdb", "/dev/sdc", "/dev/sdd"] }
 
     context "when settings has not candidate disks" do
       let(:candidate_disks) { [] }
