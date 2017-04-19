@@ -91,7 +91,7 @@ RSpec.shared_context "guided setup requirements" do
     allow(analyzer).to receive(:device_by_name) { |d| disk(d) }
   end
 
-  let(:guided_setup) { Y2Storage::Dialogs::GuidedSetup.new(devicegraph, settings) }
+  let(:guided_setup) { Y2Storage::Dialogs::GuidedSetup.new(settings) }
 
   let(:devicegraph) { instance_double(Y2Storage::Devicegraph) }
 

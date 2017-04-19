@@ -61,15 +61,16 @@ describe Y2Storage::Dialogs::GuidedSetup do
     instance_double(Y2Storage::Disk, name: name, size: Y2Storage::DiskSize.new(0))
   end
 
-  subject { described_class.new(devicegraph, settings) }
+  subject { described_class.new(settings) }
 
   before do
-    allow_any_instance_of(Y2Storage::DiskAnalyzer).to receive(:candidate_disks) do
+    allow(subject).to receive(:analyzer).and_return(analyzer)
+    allow(analyzer).to receive(:candidate_disks) do
       candidate_disks.map { |d| disk(d) }
     end
   end
 
-  let(:devicegraph) { instance_double(Y2Storage::Devicegraph) }
+  let(:analyzer) { instance_double(Y2Storage::DiskAnalyzer) }
 
   let(:settings) { Y2Storage::ProposalSettings.new }
 

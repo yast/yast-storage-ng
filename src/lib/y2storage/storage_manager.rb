@@ -25,6 +25,7 @@ require "yast"
 require "storage"
 require "y2storage/fake_device_factory"
 require "y2storage/devicegraph"
+require "y2storage/disk_analyzer"
 
 module Y2Storage
   #
@@ -145,6 +146,13 @@ module Y2Storage
     def commit
       storage.calculate_actiongraph
       storage.commit
+    end
+
+    # Disk analyzer used to analyze the probed devicegraph
+    #
+    # @return [DiskAnalyzer]
+    def probed_disk_analyzer
+      @probed_disk_analyzer ||= DiskAnalyzer.new(y2storage_probed)
     end
 
   private

@@ -34,17 +34,16 @@ module Y2Storage
     #
     # Calculates the proposal settings to be used in the next proposal attempt.
     class GuidedSetup
-      # Currently probed devicegraph
-      attr_reader :devicegraph
       # Settings specified by the user
       attr_reader :settings
-      # Disk analyzer to recover disks info
-      attr_reader :analyzer
 
-      def initialize(devicegraph, settings)
-        @devicegraph = devicegraph
-        @analyzer = Y2Storage::DiskAnalyzer.new(devicegraph)
+      def initialize(settings)
         @settings = settings.dup
+      end
+
+      # Disk analyzer to recover disks info
+      def analyzer
+        StorageManager.instance.probed_disk_analyzer
       end
 
       # Executes steps of the wizard. Updates settings with user selections.
