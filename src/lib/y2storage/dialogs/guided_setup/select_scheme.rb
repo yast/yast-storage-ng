@@ -24,6 +24,7 @@ require "y2storage"
 require "y2storage/dialogs/guided_setup/base"
 
 Yast.import "InstExtensionImage"
+Yast.import "Popup"
 
 module Y2Storage
   module Dialogs
@@ -141,11 +142,25 @@ module Y2Storage
         end
 
         # Password is considered strong when cracklib returns an empty message.
+        # User has the last word to decide whether to use a weak password.
         def password_strong?
           message = cracklib_message
           return true if message.empty?
-          Yast::Report.Warning(message)
-          false
+
+          popup_text = [
+            _("The password is too simple:"),
+            message,
+            "\n",
+            _("Really use this password?")
+          ].join("\n")
+
+          Yast::Popup.AnyQuestion(
+            "",
+            popup_text,
+            Yast::Label.YesButton,
+            Yast::Label.NoButton,
+            :focus_no
+          )
         end
 
         def password_min_size?

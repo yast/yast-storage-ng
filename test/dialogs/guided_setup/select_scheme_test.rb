@@ -149,17 +149,40 @@ describe Y2Storage::Dialogs::GuidedSetup::SelectScheme do
         include_examples("wrong password")
       end
 
-      context "but password is weak" do
-        let(:password) { "123456" }
-
+      context "and password is weak" do
         before do
           allow(Yast::InstExtensionImage).to receive(:LoadExtension)
             .with(/cracklib/, anything).and_return(true)
           allow(Yast::SCR).to receive(:Execute).with(Yast::Path.new(".crack"), password)
             .and_return("an error message")
+          allow(Yast::Popup).to receive(:AnyQuestion).and_return(password_accepted)
         end
 
-        include_examples("wrong password")
+        let(:password) { "123456" }
+        let(:password_accepted) { false }
+
+        it "shows an error message" do
+          expect(Yast::Popup).to receive(:AnyQuestion)
+          subject.run
+        end
+
+        context "and password is accepted" do
+          let(:password_accepted) { true }
+
+          it "saves password in settings" do
+            subject.run
+            expect(subject.settings.encryption_password).to eq(password)
+          end
+        end
+
+        context "and password is not accepted" do
+          let(:password_accepted) { false }
+
+          it "does not save password in settings" do
+            subject.run
+            expect(subject.settings.encryption_password).to eq(nil)
+          end
+        end
       end
     end
 
