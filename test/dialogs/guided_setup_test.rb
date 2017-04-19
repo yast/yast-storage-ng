@@ -82,16 +82,6 @@ describe Y2Storage::Dialogs::GuidedSetup do
 
   subject { described_class.new(settings) }
 
-  before do
-    allow(subject).to receive(:analyzer).and_return(analyzer)
-    allow(analyzer).to receive(:candidate_disks) do
-      candidate_disks.map { |d| disk(d) }
-    end
-    allow_any_instance_of(Y2Storage::DiskAnalyzer).to receive(:installed_systems)
-      .and_return(installed_systems)
-  end
-
-  let(:analyzer) { instance_double(Y2Storage::DiskAnalyzer) }
   let(:settings) { Y2Storage::ProposalSettings.new }
 
   describe "#run" do
