@@ -48,24 +48,6 @@ module Y2Storage
   class DiskAnalyzer
     include Yast::Logger
 
-    LINUX_PARTITION_IDS =
-      [
-        PartitionId::LINUX,
-        PartitionId::SWAP,
-        PartitionId::LVM,
-        PartitionId::RAID
-      ]
-
-    WINDOWS_PARTITION_IDS =
-      [
-        PartitionId::NTFS,
-        PartitionId::DOS32,
-        PartitionId::DOS16,
-        PartitionId::DOS12,
-        PartitionId::WINDOWS_BASIC_DATA,
-        PartitionId::MICROSOFT_RESERVED
-      ]
-
     NO_INSTALLATION_IDS =
       [
         PartitionId::SWAP,
@@ -80,82 +62,6 @@ module Y2Storage
       @devicegraph = devicegraph
     end
 
-    # Partitions that can be used as EFI system partitions.
-    #
-    # Checks for the partition id to return all potential partitions.
-    # Checking for content_info.efi? would only detect partitions that are
-    # going to be effectively used.
-    #
-    # @param *disks [Disk, String] disks to analyze. All disks by default.
-    # @return [Array<Partition>] see {#partitions_with_id}
-    def efi_partitions(*disks)
-      data_for(*disks, :efi_partitions) { |d| partitions_with_id(d, PartitionId::ESP) }
-    end
-
-    # Partitions that can be used as PReP partition
-    #
-    # @param *disks [Disk, String] disks to analyze. All disks by default.
-    # @return [Array<Partition>] see {#partitions_with_id}
-    def prep_partitions(*disks)
-      data_for(*disks, :prep_partitions) { |d| partitions_with_id(d, PartitionId::PREP) }
-    end
-
-    # GRUB (gpt_bios) partitions
-    #
-    # @param *disks [Disk, String] disks to analyze. All disks by default.
-    # @return [Array<Partition>] see {#partitions_with_id}
-    def grub_partitions(*disks)
-      data_for(*disks, :grup_partitions) { |d| partitions_with_id(d, PartitionId::BIOS_BOOT) }
-    end
-
-    # Partitions that can be used as swap space
-    #
-    # @param *disks [Disk, String] disks to analyze. All disks by default.
-    # @return [Array<Partition>] see {#partitions_with_id}
-    def swap_partitions(*disks)
-      data_for(*disks, :swap_partitions) { |d| partitions_with_id(d, PartitionId::SWAP) }
-    end
-
-    # Linux partitions. This may be a normal Linux partition (type 0x83), a
-    # Linux swap partition (type 0x82), an LVM partition, or a RAID partition.
-    #
-    # @param *disks [Disk, String] disks to analyze. All disks by default.
-    # @return [Array<Partition>] see {#partitions_with_id}
-    def linux_partitions(*disks)
-      data_for(*disks, :linux_partitions) { |d| partitions_with_id(d, LINUX_PARTITION_IDS) }
-    end
-
-    # Partitions that are part of a LVM volume group, i.e. partitions that hold
-    # a LVM physical volume.
-    #
-    # @param *disks [Disk, String] disks to analyze. All disks by default.
-    # @return [Array<Partition>]
-    def used_lvm_partitions(*disks)
-      data_for(*disks, :used_lvm_partitions) { |d| find_used_lvm_partitions(d) }
-    end
-
-    # MBR gap (size between MBR and first partition) for every disk.
-    #
-    # If there are no partitions or if the existing partition table is not
-    # MBR-based the MBR gap is nil, meaning "gap not applicable" which is
-    # different from "no gap" (i.e. a 0 bytes gap).
-    #
-    # @param *disks [Disk, String] disks to analyze. All disks by default.
-    # @return [<Array<(DiskSize, nil)>] the value is the DiskSize of the
-    # MBR gap (or nil)
-    def mbr_gaps(*disks)
-      data_for(*disks, :mbr_gap) { |d| find_mbr_gap(d) }
-    end
-
-    # Variant of #mbr_gaps for an specific disk.
-    # @see #mbr_gaps
-    #
-    # @param disk [Disk]
-    # @return [DiskSize, nil]
-    def mbr_gap(disk)
-      mbr_gaps(disk).first
-    end
-
     # Partitions containing an installation of MS Windows
     #
     # This involves mounting any Windows-like partition to check if there are
@@ -165,6 +71,16 @@ module Y2Storage
     # @return [Array<Partition>}] see {#partitions_with_id}
     def windows_partitions(*disks)
       data_for(*disks, :windows_partitions) { |d| find_windows_partitions(d) }
+    end
+
+    # Linux partitions.
+    #
+    # @see PartitionId.linux_system_ids
+    #
+    # @param *disks [Disk, String] disks to analyze. All disks by default.
+    # @return [Array<Partition>] see {#partitions_with_id}
+    def linux_partitions(*disks)
+      data_for(*disks, :linux_partitions) { |d| d.linux_system_partitions }
     end
 
     # Release names of installed systems for every disk.
@@ -199,37 +115,6 @@ module Y2Storage
       @candidate_disks = find_candidate_disks
       log.info("Found candidate disks: #{@candidate_disks}")
       @candidate_disks
-    end
-
-    # Checks if a partition belongs to any VG.
-    #
-    # TODO: find a better place for this (Partition class ?)
-    #
-    # @param partition [Partition]
-    def partition_in_vg?(partition)
-      !partition_vg(partition).nil?
-    end
-
-    # Obtains the PV of a partition.
-    #
-    # TODO: find a better place for this (Partition class ?)
-    #
-    # @param partition [Partition]
-    # @return [LvmPv, nil]
-    def partition_pv(partition)
-      devicegraph.lvm_pvs.detect { |pv| pv.plain_blk_device == partition }
-    end
-
-    # Obtains the VG of a partition.
-    #
-    # TODO: find a better place for this (Partition class ?)
-    #
-    # @param partition [Partition]
-    # @return [LvmVg, nil]
-    def partition_vg(partition)
-      pv = partition_pv(partition)
-      return nil unless pv
-      pv.lvm_vg
     end
 
     # Look up devicegraph element by device name.
@@ -267,34 +152,10 @@ module Y2Storage
       disks.compact
     end
 
-    # Find partitions that have a given (set of) partition id(s).
-    #
-    # @param *disks [Disk, String] disks to analyze. All disks by default.
-    # @param ids [PartitionId, Array<PartitionId>]
-    # @return [Array<Partition>}]
-    def partitions_with_id(disk, ids)
-      partitions = disk.partitions.reject { |p| p.type.is?(:extended) }
-      partitions.select { |p| p.id.is?(*ids) }
-    end
-
-    # see #used_lvm_partitions
-    def find_used_lvm_partitions(disk)
-      partitions = partitions_with_id(disk, PartitionId::LVM)
-      partitions.select { |p| partition_in_vg?(p) }
-    end
-
-    # @see #mbr_gap
-    def find_mbr_gap(disk)
-      return nil unless disk.partition_table
-      return nil unless disk.partition_table.type.is?(:msdos)
-      region1 = disk.partitions.min { |x, y| x.region.start <=> y.region.start }
-      region1 ? region1.region.block_size * region1.region.start : nil
-    end
-
     # @see #windows_partitions
     def find_windows_partitions(disk)
       return nil unless windows_architecture?
-      possible_windows_partitions(disk).select { |p| windows_partition?(p) }
+      disk.possible_windows_partitions.select { |p| windows_partition?(p) }
     end
 
     # Checks whether the architecture of the system is supported by
@@ -304,14 +165,6 @@ module Y2Storage
     def windows_architecture?
       # Should we include ARM here?
       Yast::Arch.x86_64 || Yast::Arch.i386
-    end
-
-    # Partitions that could potentially contain a MS Windows installation
-    #
-    # @param disk [Disk] disk to check
-    # @return [Array<Partition>]
-    def possible_windows_partitions(disk)
-      disk.partitions.select { |p| p.type.is?(:primary) && p.id.is?(*WINDOWS_PARTITION_IDS) }
     end
 
     # Check if 'partition' is a MS Windows partition that could possibly be resized.

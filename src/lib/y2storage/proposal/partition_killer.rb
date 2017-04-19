@@ -31,11 +31,14 @@ module Y2Storage
 
       # Initialize.
       #
+      # The optional parameter "disks" can be used to restrict the scope of the
+      # collateral actions (@see #delete)
+      #
       # @param devicegraph [Devicegraph]
-      # @param disk_analyzer [DiskAnalyzer]
-      def initialize(devicegraph, disk_analyzer)
+      # @param disks [Array<String>] list of kernel-style device names
+      def initialize(devicegraph, disks = nil)
         @devicegraph = devicegraph
-        @disk_analyzer = disk_analyzer
+        @disks = disks
       end
 
       # Deletes a given partition and other partitions that, as a consequence,
@@ -56,7 +59,7 @@ module Y2Storage
 
     protected
 
-      attr_reader :devicegraph, :disk_analyzer
+      attr_reader :devicegraph, :disks
 
       def find_partition(name)
         devicegraph.partitions.detect { |part| part.name == name }
@@ -120,10 +123,9 @@ module Y2Storage
       # @return [Array<String>] device names of all the deleted partitions
       def delete_lvm_partitions(partition)
         log.info "Deleting #{partition.name}, which is part of an LVM volume group"
-        vg = disk_analyzer.partition_vg(partition)
-        partitions_to_delete = disk_analyzer.used_lvm_partitions.select do |part|
-          disk_analyzer.partition_vg(part) == vg
-        end
+        vg = partition.lvm_pv.lvm_vg
+        partitions_to_delete = vg.lvm_pvs.map(&:plain_blk_device).select { |dev| dev.is?(:partition) }
+        partitions_to_delete.select! { |p| disks.include?(p.partitionable.name) } if disks
         target_partitions = partitions_to_delete.map { |p| find_partition(p.name) }.compact
         log.info "These LVM partitions will be deleted: #{target_partitions.map(&:name)}"
         target_partitions.map { |p| delete_partition(p) }
@@ -134,8 +136,7 @@ module Y2Storage
       # @param partition [Partition]
       # @return [Boolean]
       def lvm_pv?(partition)
-        lvm_pv_names = disk_analyzer.used_lvm_partitions.map(&:name)
-        lvm_pv_names.include?(partition.name)
+        !!(partition.lvm_pv && partition.lvm_pv.lvm_vg)
       end
     end
   end

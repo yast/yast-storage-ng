@@ -73,7 +73,7 @@ module Y2Storage
       #
       def provide_space(no_lvm_volumes)
         @new_graph = original_graph.duplicate
-        @partition_killer = PartitionKiller.new(@new_graph, disk_analyzer)
+        @partition_killer = PartitionKiller.new(@new_graph, candidate_disk_names)
         @dist_calculator = SpaceDistributionCalculator.new(lvm_helper)
         @deleted_names = []
 

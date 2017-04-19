@@ -88,7 +88,7 @@ module Y2Storage
     # @param settings [ProposalSettings]
     # @return [PlannedVolumesList]
     def volumes_list(set, settings)
-      generator = VolumesGenerator.new(settings, disk_analyzer)
+      generator = VolumesGenerator.new(settings, initial_graph)
       generator.send(:"#{set}_volumes")
     end
 

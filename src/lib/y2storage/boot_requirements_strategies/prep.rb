@@ -46,7 +46,7 @@ module Y2Storage
       end
 
       def prep_partition_missing?
-        partitions = disk_analyzer.prep_partitions(settings.root_device)
+        partitions = root_disk.prep_partitions
         partitions.nil? || partitions.empty?
       end
 

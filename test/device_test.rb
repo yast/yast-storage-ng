@@ -50,4 +50,40 @@ describe Y2Storage::Device do
       expect(all.select { |i| i.is?(:partition_table) }.size).to eq 1
     end
   end
+
+  describe "#descendants" do
+    subject(:device) { Y2Storage::Disk.find_by_name(fake_devicegraph, "/dev/sda") }
+
+    it "does not include the device itself" do
+      expect(device.descendants.map(&:sid)).to_not include device.sid
+    end
+
+    it "includes all the descendants" do
+      expect(device.descendants.size).to eq 9
+    end
+
+    it "returns objects of the right classes" do
+      all = device.descendants
+      expect(all.select { |i| i.is?(:partition_table) }.size).to eq 1
+      expect(all.select { |i| i.is?(:partition) }.size).to eq 4
+      expect(all.select { |i| i.is?(:filesystem) }.size).to eq 3
+      expect(all.select { |i| i.is?(:encryption) }.size).to eq 1
+    end
+  end
+
+  describe "#siblings" do
+    subject(:device) { Y2Storage::Partition.find_by_name(fake_devicegraph, "/dev/sda1") }
+
+    it "does not include the device itself" do
+      expect(device.siblings.map(&:sid)).to_not include device.sid
+    end
+
+    it "includes all the siblings" do
+      expect(device.siblings.map(&:name)).to contain_exactly("/dev/sda2", "/dev/sda3", "/dev/sda4")
+    end
+
+    it "returns objects of the right classes" do
+      expect(device.siblings).to all(be_a(Y2Storage::Partition))
+    end
+  end
 end

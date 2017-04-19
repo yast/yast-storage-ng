@@ -28,9 +28,9 @@ describe Y2Storage::BlkDevice do
     fake_scenario("complex-lvm-encrypt")
   end
 
-  describe "#plain_device" do
-    subject(:device) { Y2Storage::BlkDevice.find_by_name(fake_devicegraph, device_name) }
+  subject(:device) { Y2Storage::BlkDevice.find_by_name(fake_devicegraph, device_name) }
 
+  describe "#plain_device" do
     context "for a non encrypted device" do
       let(:device_name) { "/dev/sda2" }
 
@@ -53,6 +53,62 @@ describe Y2Storage::BlkDevice do
       it "returns the encrypted device" do
         expect(device.plain_device).to_not eq device
         expect(device.plain_device.name).to eq "/dev/sda4"
+      end
+    end
+  end
+
+  describe "#lvm_pv" do
+    context "for a device directly used as PV" do
+      let(:device_name) { "/dev/sde2" }
+
+      it "returns the LvmPv device" do
+        expect(device.lvm_pv).to be_a Y2Storage::LvmPv
+        expect(device.lvm_pv.blk_device).to eq device
+      end
+    end
+
+    context "for a device used as encrypted PV" do
+      let(:device_name) { "/dev/sde1" }
+
+      it "returns the LvmPv device" do
+        expect(device.lvm_pv).to be_a Y2Storage::LvmPv
+        expect(device.lvm_pv.blk_device.is?(:encryption)).to eq true
+        expect(device.lvm_pv.blk_device.plain_device).to eq device
+      end
+    end
+
+    context "for a device that is not part of LVM" do
+      let(:device_name) { "/dev/sda1" }
+
+      it "returns nil" do
+        expect(device.lvm_pv).to be_nil
+      end
+    end
+  end
+
+  describe "#direct_lvm_pv" do
+    context "for a device directly used as PV" do
+      let(:device_name) { "/dev/sde2" }
+
+      it "returns the LvmPv device" do
+        expect(device.direct_lvm_pv).to be_a Y2Storage::LvmPv
+        expect(device.direct_lvm_pv.blk_device).to eq device
+      end
+    end
+
+    context "for a device used as encrypted PV" do
+      let(:device_name) { "/dev/sde1" }
+
+      it "returns nil" do
+        expect(device.direct_lvm_pv).to be_nil
+      end
+    end
+
+    context "for a device that is not part of LVM" do
+      let(:device_name) { "/dev/sda1" }
+
+      it "returns nil" do
+        expect(device.direct_lvm_pv).to be_nil
       end
     end
   end

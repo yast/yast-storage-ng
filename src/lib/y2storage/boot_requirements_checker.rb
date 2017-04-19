@@ -41,9 +41,9 @@ module Y2Storage
     class Error < RuntimeError
     end
 
-    def initialize(settings, disk_analyzer)
+    def initialize(settings, devicegraph)
       @settings = settings
-      @disk_analyzer = disk_analyzer
+      @devicegraph = devicegraph
     end
 
     def needed_partitions
@@ -55,7 +55,7 @@ module Y2Storage
   protected
 
     attr_reader :settings
-    attr_reader :disk_analyzer
+    attr_reader :devicegraph
 
     def arch
       @arch ||= StorageManager.instance.arch
@@ -65,15 +65,15 @@ module Y2Storage
       return @strategy unless @strategy.nil?
 
       if arch.x86? && arch.efiboot?
-        @strategy = BootRequirementsStrategies::UEFI.new(settings, disk_analyzer)
+        @strategy = BootRequirementsStrategies::UEFI.new(settings, devicegraph)
       elsif arch.s390?
-        @strategy = BootRequirementsStrategies::ZIPL.new(settings, disk_analyzer)
+        @strategy = BootRequirementsStrategies::ZIPL.new(settings, devicegraph)
       elsif arch.ppc?
-        @strategy = BootRequirementsStrategies::PReP.new(settings, disk_analyzer)
+        @strategy = BootRequirementsStrategies::PReP.new(settings, devicegraph)
       end
 
       # Fallback to Legacy as default
-      @strategy ||= BootRequirementsStrategies::Legacy.new(settings, disk_analyzer)
+      @strategy ||= BootRequirementsStrategies::Legacy.new(settings, devicegraph)
     end
   end
 end

@@ -38,10 +38,9 @@ module Y2Storage
     class Base
       include Yast::Logger
 
-      def initialize(settings, disk_analyzer)
+      def initialize(settings, devicegraph)
         @settings = settings
-        @disk_analyzer = disk_analyzer
-        @root_disk = @disk_analyzer.device_by_name(settings.root_device)
+        @devicegraph = devicegraph
       end
 
       def needed_partitions
@@ -53,8 +52,11 @@ module Y2Storage
     protected
 
       attr_reader :settings
-      attr_reader :disk_analyzer
-      attr_reader :root_disk
+      attr_reader :devicegraph
+
+      def root_disk
+        devicegraph.disks.detect { |d| d.name == settings.root_device }
+      end
 
       def boot_partition_needed?
         false

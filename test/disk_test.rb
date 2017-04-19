@@ -284,4 +284,55 @@ describe Y2Storage::Disk do
       expect(disk.usb?).to eq false
     end
   end
+
+  describe "#mbr_gap" do
+    let(:scenario) { "gpt_and_msdos" }
+
+    def disk(disk_name)
+      Y2Storage::Disk.find_by_name(fake_devicegraph, disk_name)
+    end
+
+    it "returns nil for a disk without partition table" do
+      expect(disk("/dev/sde").mbr_gap).to be_nil
+    end
+
+    it "returns nil for a GPT disk without partitions" do
+      expect(disk("/dev/sdd").mbr_gap).to be_nil
+    end
+
+    it "returns nil for a GPT disk with partitions" do
+      expect(disk("/dev/sdb").mbr_gap).to be_nil
+    end
+
+    it "returns nil for a MS-DOS disk without partitions" do
+      expect(disk("/dev/sdc").mbr_gap).to be_nil
+    end
+
+    it "returns the gap for a MS-DOS disk with partitions" do
+      expect(disk("/dev/sda").mbr_gap).to eq 1.MiB
+      expect(disk("/dev/sdf").mbr_gap).to eq 0.MiB
+    end
+  end
+
+  describe "#swap_partitions" do
+    let(:scenario) { "mixed_disks" }
+
+    context "for a disk with no swap partitions" do
+      let(:disk_name) { "/dev/sda" }
+
+      it "returns an empty array" do
+        expect(disk.swap_partitions).to be_empty
+      end
+    end
+
+    context "for a disk with swap partitions" do
+      let(:disk_name) { "/dev/sdb" }
+
+      it "returns an array of partitions" do
+        expect(disk.swap_partitions).to be_a Array
+        expect(disk.swap_partitions.size).to eq 1
+        expect(disk.swap_partitions.first).to be_a Y2Storage::Partition
+      end
+    end
+  end
 end

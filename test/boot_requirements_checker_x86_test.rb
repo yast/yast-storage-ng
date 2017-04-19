@@ -32,20 +32,22 @@ describe Y2Storage::BootRequirementsChecker do
     include_context "boot requirements"
 
     let(:architecture) { :x86 }
-    let(:grub_partitions) { {} }
-    let(:efi_partitions) { {} }
+    let(:grub_partitions) { [] }
+    let(:efi_partitions) { [] }
+    let(:other_efi_partitions) { [] }
     let(:use_lvm) { false }
     let(:sda_part_table) { pt_msdos }
-    let(:mbr_gap_size) { 0 }
+    let(:mbr_gap_size) { Y2Storage::DiskSize.zero }
 
     # Just to shorten
     let(:bios_boot_id) { Y2Storage::PartitionId::BIOS_BOOT }
 
     before do
       allow(storage_arch).to receive(:efiboot?).and_return(efiboot)
-      allow_analyzer_receive(:mbr_gap, "/dev/sda" => Y2Storage::DiskSize.KiB(mbr_gap_size))
-      allow_analyzer_receive(:grub_partitions, grub_partitions)
-      allow_analyzer_receive(:efi_partitions, efi_partitions)
+      allow(dev_sda).to receive(:mbr_gap).and_return mbr_gap_size
+      allow(dev_sda).to receive(:grub_partitions).and_return grub_partitions
+      allow(dev_sda).to receive(:efi_partitions).and_return efi_partitions
+      allow(dev_sdb).to receive(:efi_partitions).and_return other_efi_partitions
     end
 
     context "using UEFI" do
@@ -55,7 +57,7 @@ describe Y2Storage::BootRequirementsChecker do
         let(:use_lvm) { false }
 
         context "if there are no EFI partitions" do
-          let(:efi_partitions) { {} }
+          let(:efi_partitions) { [] }
 
           it "requires only a new /boot/efi partition" do
             expect(checker.needed_partitions).to contain_exactly(
@@ -65,7 +67,7 @@ describe Y2Storage::BootRequirementsChecker do
         end
 
         context "if there is already an EFI partition" do
-          let(:efi_partitions) { { "/dev/sda" => [analyzer_part("/dev/sda1")] } }
+          let(:efi_partitions) { [partition_double("/dev/sda1")] }
 
           it "only requires to use the existing EFI partition" do
             expect(checker.needed_partitions).to contain_exactly(
@@ -79,7 +81,7 @@ describe Y2Storage::BootRequirementsChecker do
         let(:use_lvm) { true }
 
         context "if there are no EFI partitions" do
-          let(:efi_partitions) { {} }
+          let(:efi_partitions) { [] }
 
           it "requires only a new /boot/efi partition" do
             expect(checker.needed_partitions).to contain_exactly(
@@ -89,7 +91,7 @@ describe Y2Storage::BootRequirementsChecker do
         end
 
         context "if there is already an EFI partition" do
-          let(:efi_partitions) { { "/dev/sda" => [analyzer_part("/dev/sda1")] } }
+          let(:efi_partitions) { [partition_double("/dev/sda1")] }
 
           it "only requires to use the existing EFI partition" do
             expect(checker.needed_partitions).to contain_exactly(
@@ -104,7 +106,7 @@ describe Y2Storage::BootRequirementsChecker do
         let(:use_encryption) { true }
 
         context "if there are no EFI partitions" do
-          let(:efi_partitions) { {} }
+          let(:efi_partitions) { [] }
 
           it "requires only a new /boot/efi partition" do
             expect(checker.needed_partitions).to contain_exactly(
@@ -114,7 +116,7 @@ describe Y2Storage::BootRequirementsChecker do
         end
 
         context "if there is already an EFI partition" do
-          let(:efi_partitions) { { "/dev/sda" => [analyzer_part("/dev/sda1")] } }
+          let(:efi_partitions) { [partition_double("/dev/sda1")] }
 
           it "only requires to use the existing EFI partition" do
             expect(checker.needed_partitions).to contain_exactly(
@@ -135,7 +137,7 @@ describe Y2Storage::BootRequirementsChecker do
           let(:use_lvm) { false }
 
           context "if there is no GRUB partition" do
-            let(:grub_partitions) { {} }
+            let(:grub_partitions) { [] }
 
             it "requires a new GRUB partition" do
               expect(checker.needed_partitions).to contain_exactly(
@@ -145,7 +147,7 @@ describe Y2Storage::BootRequirementsChecker do
           end
 
           context "if there is already a GRUB partition" do
-            let(:grub_partitions) { { dev_sda.name => [analyzer_part(dev_sda.name + "2")] } }
+            let(:grub_partitions) { [partition_double("/dev/sda2")] }
 
             it "does not require any particular volume" do
               expect(checker.needed_partitions).to be_empty
@@ -157,7 +159,7 @@ describe Y2Storage::BootRequirementsChecker do
           let(:use_lvm) { true }
 
           context "if there is no GRUB partition" do
-            let(:grub_partitions) { {} }
+            let(:grub_partitions) { [] }
 
             it "requires a new GRUB partition" do
               expect(checker.needed_partitions).to contain_exactly(
@@ -167,7 +169,7 @@ describe Y2Storage::BootRequirementsChecker do
           end
 
           context "if there is already a GRUB partition" do
-            let(:grub_partitions) { { dev_sda.name => [analyzer_part(dev_sda.name + "2")] } }
+            let(:grub_partitions) { [partition_double("/dev/sda2")] }
 
             it "does not require any particular volume" do
               expect(checker.needed_partitions).to be_empty
@@ -180,7 +182,7 @@ describe Y2Storage::BootRequirementsChecker do
           let(:use_encryption) { true }
 
           context "if there is no GRUB partition" do
-            let(:grub_partitions) { {} }
+            let(:grub_partitions) { [] }
 
             it "requires a new GRUB partition" do
               expect(checker.needed_partitions).to contain_exactly(
@@ -190,7 +192,7 @@ describe Y2Storage::BootRequirementsChecker do
           end
 
           context "if there is already a GRUB partition" do
-            let(:grub_partitions) { { dev_sda.name => [analyzer_part(dev_sda.name + "2")] } }
+            let(:grub_partitions) { [partition_double("/dev/sda2")] }
 
             it "does not require any particular volume" do
               expect(checker.needed_partitions).to be_empty
@@ -236,11 +238,11 @@ describe Y2Storage::BootRequirementsChecker do
       end
 
       context "with a MS-DOS partition table" do
-        let(:grub_partitions) { {} }
+        let(:grub_partitions) { [] }
         let(:sda_part_table) { pt_msdos }
 
         context "if the MBR gap is big enough to embed Grub" do
-          let(:mbr_gap_size) { 256 }
+          let(:mbr_gap_size) { 256.KiB }
 
           context "in a partitions-based proposal" do
             let(:use_lvm) { false }
@@ -254,7 +256,7 @@ describe Y2Storage::BootRequirementsChecker do
             let(:use_lvm) { true }
 
             context "if the MBR gap has additional space for grubenv" do
-              let(:mbr_gap_size) { 260 }
+              let(:mbr_gap_size) { 260.KiB }
 
               it "does not require any particular volume" do
                 expect(checker.needed_partitions).to be_empty
@@ -275,7 +277,7 @@ describe Y2Storage::BootRequirementsChecker do
             let(:use_encryption) { true }
 
             context "if the MBR gap has additional space for grubenv" do
-              let(:mbr_gap_size) { 260 }
+              let(:mbr_gap_size) { 260.KiB }
 
               it "does not require any particular volume" do
                 expect(checker.needed_partitions).to be_empty
@@ -293,7 +295,7 @@ describe Y2Storage::BootRequirementsChecker do
         end
 
         context "with too small MBR gap" do
-          let(:mbr_gap_size) { 16 }
+          let(:mbr_gap_size) { 16.KiB }
 
           context "in a partitions-based proposal" do
             let(:use_lvm) { false }
@@ -346,7 +348,7 @@ describe Y2Storage::BootRequirementsChecker do
         let(:efiboot) { false }
         let(:use_lvm) { true }
         let(:sda_part_table) { pt_msdos }
-        let(:mbr_gap_size) { 256 }
+        let(:mbr_gap_size) { 256.KiB }
 
         include_examples "proposed boot partition"
       end
@@ -365,7 +367,7 @@ describe Y2Storage::BootRequirementsChecker do
         let(:efi_part) { find_vol("/boot/efi", checker.needed_partitions) }
         # Default values to ensure proposal of EFI partition
         let(:efiboot) { true }
-        let(:efi_partitions) { {} }
+        let(:efi_partitions) { [] }
 
         include_examples "proposed EFI partition"
       end
