@@ -86,8 +86,8 @@ module Y2Storage
 
         def update_settings!
           settings.use_lvm = widget_value(:lvm)
-          password = widget_value(:password)
-          settings.encryption_password = password unless password.to_s.empty?
+          password = using_encryption? ? widget_value(:password) : nil
+          settings.encryption_password = password
         end
 
       private
