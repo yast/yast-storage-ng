@@ -90,6 +90,7 @@ describe Y2Storage::Dialogs::GuidedSetup::SelectScheme do
 
     context "when encryption is not selected" do
       before do
+        settings.encryption_password = "12345678"
         not_select_widget(:encryption)
       end
 
@@ -97,6 +98,11 @@ describe Y2Storage::Dialogs::GuidedSetup::SelectScheme do
         expect_disable(:password)
         expect_disable(:repeat_password)
         subject.run
+      end
+
+      it "sets password to nil" do
+        subject.run
+        expect(settings.encryption_password).to be_nil
       end
     end
 
