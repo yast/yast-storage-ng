@@ -35,7 +35,7 @@ describe Y2Storage::Dialogs::GuidedSetup::SelectRootDisk do
     context "when there is only one disk" do
       let(:candidate_disks) { ["/dev/sda"] }
 
-      context "and there is not any intalled system" do
+      context "and there is not any installed system" do
         let(:windows_systems) { [] }
         let(:linux_systems) { [] }
 
@@ -71,8 +71,8 @@ describe Y2Storage::Dialogs::GuidedSetup::SelectRootDisk do
 
       it "selects 'any' option by default" do
         expect_select(:any_disk)
-        expect_not_select("sda")
-        expect_not_select("sdb")
+        expect_not_select("/dev/sda")
+        expect_not_select("/dev/sdb")
         subject.run
       end
     end
@@ -81,8 +81,8 @@ describe Y2Storage::Dialogs::GuidedSetup::SelectRootDisk do
       before { settings.root_device = "/dev/sda" }
 
       it "selects that disk by default" do
-        expect_select("sda")
-        expect_not_select("sdb")
+        expect_select("/dev/sda")
+        expect_not_select("/dev/sdb")
         subject.run
       end
     end
@@ -98,7 +98,7 @@ describe Y2Storage::Dialogs::GuidedSetup::SelectRootDisk do
 
     context "when there are several disks" do
       context "and a disk is selected" do
-        before { select_disks(["sdb"]) }
+        before { select_disks(["/dev/sdb"]) }
 
         it "updates settings with the selected disk" do
           subject.run
@@ -116,9 +116,7 @@ describe Y2Storage::Dialogs::GuidedSetup::SelectRootDisk do
       end
     end
 
-    context "when the selected disk has not installed Windows" do
-      before { select_disks(["sda"]) }
-
+    context "when no disk has a Windows system" do
       let(:windows_systems) { [] }
 
       it "disables windows actions" do
@@ -127,9 +125,7 @@ describe Y2Storage::Dialogs::GuidedSetup::SelectRootDisk do
       end
     end
 
-    context "when the selected disk has installed Windows" do
-      before { select_disks(["sda"]) }
-
+    context "when some disk has a Windows system" do
       let(:windows_systems) { ["Windows"] }
 
       it "enables windows actions" do
@@ -138,9 +134,7 @@ describe Y2Storage::Dialogs::GuidedSetup::SelectRootDisk do
       end
     end
 
-    context "when the selected disk has not installed Linux" do
-      before { select_disks(["sda"]) }
-
+    context "when no disk has a Linux system" do
       let(:linux_systems) { [] }
 
       it "disables linux actions" do
@@ -149,9 +143,7 @@ describe Y2Storage::Dialogs::GuidedSetup::SelectRootDisk do
       end
     end
 
-    context "when the selected disk has installed Linux" do
-      before { select_disks(["sda"]) }
-
+    context "when some disk has a Linux system" do
       let(:linux_systems) { ["openSUSE"] }
 
       it "enables linux actions" do
