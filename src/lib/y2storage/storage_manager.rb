@@ -148,11 +148,11 @@ module Y2Storage
       storage.commit
     end
 
-    # Disk analyzer used to analyze the initial devicegraph
+    # Disk analyzer used to analyze the probed devicegraph
     #
     # @return [DiskAnalyzer]
-    def disk_analyzer
-      @disk_analyzer ||= DiskAnalyzer.new(y2storage_probed)
+    def probed_disk_analyzer
+      @probed_disk_analyzer ||= DiskAnalyzer.new(y2storage_probed)
     end
 
   private

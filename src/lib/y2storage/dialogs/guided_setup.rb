@@ -43,7 +43,7 @@ module Y2Storage
 
       # Disk analyzer to recover disks info
       def analyzer
-        StorageManager.instance.disk_analyzer
+        StorageManager.instance.probed_disk_analyzer
       end
 
       # Executes steps of the wizard. Updates settings with user selections.
