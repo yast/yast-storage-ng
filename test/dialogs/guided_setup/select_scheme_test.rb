@@ -180,9 +180,22 @@ describe Y2Storage::Dialogs::GuidedSetup::SelectScheme do
 
           it "does not save password in settings" do
             subject.run
+            expect(subject.settings).not_to receive(:encryption_password=)
             expect(subject.settings.encryption_password).to eq(nil)
           end
         end
+      end
+    end
+
+    context "when encryption is clicked" do
+      before do
+        select_widget(:encryption)
+        allow(Yast::UI).to receive(:UserInput).and_return(:encryption, :abort)
+      end
+
+      it "focuses password field" do
+        expect(Yast::UI).to receive(:SetFocus)
+        subject.run
       end
     end
 
