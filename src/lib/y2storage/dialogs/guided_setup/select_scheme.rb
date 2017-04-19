@@ -31,9 +31,13 @@ module Y2Storage
     class GuidedSetup
       # Dialog to select partitioning scheme.
       class SelectScheme < Base
-        def encryption_handler
-          widget_update(:password, widget_value(:encryption), attr: :Enabled)
-          widget_update(:repeat_password, widget_value(:encryption), attr: :Enabled)
+        # Handler for :encryption check box.
+        # @param allow_focus [Boolean] whether password field can be focused
+        def encryption_handler(allow_focus: true)
+          widget_update(:password, using_encryption?, attr: :Enabled)
+          widget_update(:repeat_password, using_encryption?, attr: :Enabled)
+          return unless allow_focus && using_encryption?
+          Yast::UI.SetFocus(Id(:password))
         end
 
       protected
@@ -73,7 +77,7 @@ module Y2Storage
         def initialize_widgets
           widget_update(:lvm, settings.use_lvm)
           widget_update(:encryption, settings.use_encryption)
-          encryption_handler
+          encryption_handler(allow_focus: false)
           if settings.use_encryption
             widget_update(:password, settings.encryption_password)
             widget_update(:repeat_password, settings.encryption_password)
