@@ -175,6 +175,22 @@ module Y2Storage
       data_for(*disks, :installed_systems) { |d| find_installed_systems(d) }
     end
 
+    # Release names of installed Windows systems for every disk.
+    #
+    # @param *disks [Disk, String] disks to analyze. All disks by default.
+    # @return [Array<String>] release names
+    def windows_systems(*disks)
+      data_for(*disks, :windows_systems) { |d| find_windows_systems(d) }
+    end
+
+    # Release names of installed Linux systems for every disk.
+    #
+    # @param *disks [Disk, String] disks to analyze. All disks by default.
+    # @return [Array<String>] release names
+    def linux_systems(*disks)
+      data_for(*disks, :linux_systems) { |d| find_linux_systems(d) }
+    end
+
     # Disks that are suitable for installing Linux.
     #
     # @return [Array<Disk>] candidate disks
@@ -311,7 +327,7 @@ module Y2Storage
       is_win
     end
 
-    # Obtains release names of installed systems in a disk.
+    # Obtain release names of installed systems in a disk.
     #
     # @param disk [Disk] disk to check
     # @return [Array<String>] release names
@@ -319,13 +335,21 @@ module Y2Storage
       windows_systems(disk) + linux_systems(disk)
     end
 
-    def windows_systems(disk)
+    # Obtain release names of installed Windows systems in a disk.
+    #
+    # @param disk [Disk] disk to check
+    # @return [Array<String>] release names
+    def find_windows_systems(disk)
       systems = []
       systems << "Windows" unless windows_partitions(disk).empty?
       systems
     end
 
-    def linux_systems(disk)
+    # Obtain release names of installed Linux systems in a disk.
+    #
+    # @param disk [Disk] disk to check
+    # @return [Array<String>] release names
+    def find_linux_systems(disk)
       filesystems = linux_partitions(disk).map(&:filesystem)
       filesystems << disk.filesystem
       filesystems.compact!

@@ -25,24 +25,47 @@ require "y2storage/dialogs/guided_setup"
 
 describe Y2Storage::Dialogs::GuidedSetup do
 
-  def allow_run_dialog(dialog, &block)
-    allow_any_instance_of(dialog).to receive(:run), &block
+  def allow_dialog(dialog, action, &block)
+    allow_any_instance_of(dialog).to receive(action), &block
   end
 
   def allow_run_select_disks(&block)
-    allow_run_dialog(Y2Storage::Dialogs::GuidedSetup::SelectDisks, &block)
+    allow_dialog(Y2Storage::Dialogs::GuidedSetup::SelectDisks, :run, &block)
   end
 
   def allow_run_select_root_disk(&block)
-    allow_run_dialog(Y2Storage::Dialogs::GuidedSetup::SelectRootDisk, &block)
+    allow_dialog(Y2Storage::Dialogs::GuidedSetup::SelectRootDisk, :run, &block)
   end
 
   def allow_run_select_scheme(&block)
-    allow_run_dialog(Y2Storage::Dialogs::GuidedSetup::SelectScheme, &block)
+    allow_dialog(Y2Storage::Dialogs::GuidedSetup::SelectScheme, :run, &block)
   end
 
   def allow_run_select_filesystem(&block)
-    allow_run_dialog(Y2Storage::Dialogs::GuidedSetup::SelectFilesystem, &block)
+    allow_dialog(Y2Storage::Dialogs::GuidedSetup::SelectFilesystem, :run, &block)
+  end
+
+  def allow_run_all_dialogs
+    allow_run_select_disks { :next }
+    allow_run_select_root_disk { :next }
+    allow_run_select_scheme { :next }
+    allow_run_select_filesystem { :next }
+  end
+
+  def allow_skip_dialog(dialog)
+    allow_dialog(dialog, :skip?) { true }
+    allow_dialog(dialog, :before_skip) { nil }
+  end
+
+  def allow_not_skip_dialog(dialog)
+    allow_dialog(dialog, :skip?) { false }
+  end
+
+  def allow_not_skip_any_dialog
+    allow_not_skip_dialog(Y2Storage::Dialogs::GuidedSetup::SelectDisks)
+    allow_not_skip_dialog(Y2Storage::Dialogs::GuidedSetup::SelectRootDisk)
+    allow_not_skip_dialog(Y2Storage::Dialogs::GuidedSetup::SelectScheme)
+    allow_not_skip_dialog(Y2Storage::Dialogs::GuidedSetup::SelectFilesystem)
   end
 
   def expect_run_dialog(dialog)
@@ -53,42 +76,34 @@ describe Y2Storage::Dialogs::GuidedSetup do
     expect_any_instance_of(dialog).not_to receive(:run)
   end
 
-  def expect_not_run_select_disks
-    expect_not_run_dialog(Y2Storage::Dialogs::GuidedSetup::SelectDisks)
-  end
-
   def disk(name)
     instance_double(Y2Storage::Disk, name: name, size: Y2Storage::DiskSize.new(0))
   end
 
   subject { described_class.new(settings) }
 
-  before do
-    allow(subject).to receive(:analyzer).and_return(analyzer)
-    allow(analyzer).to receive(:candidate_disks) do
-      candidate_disks.map { |d| disk(d) }
-    end
-  end
-
-  let(:analyzer) { instance_double(Y2Storage::DiskAnalyzer) }
-
   let(:settings) { Y2Storage::ProposalSettings.new }
-
-  let(:candidate_disks) { [] }
 
   describe "#run" do
     before do
-      allow_run_select_disks { :next }
-      allow_run_select_root_disk { :next }
-      allow_run_select_scheme { :next }
-      allow_run_select_filesystem { :next }
+      allow_run_all_dialogs
+      allow_not_skip_any_dialog
     end
 
-    context "when there is only one candidate disk" do
-      let(:candidate_disks) { ["/dev/sda"] }
+    context "when a dialog is skipped" do
+      let(:dialog) { Y2Storage::Dialogs::GuidedSetup::SelectRootDisk }
 
-      it "does not show disks selection dialog" do
-        expect_not_run_select_disks
+      before { allow_skip_dialog(dialog) }
+
+      it "does not run that dialog" do
+        expect_not_run_dialog(dialog)
+        subject.run
+      end
+
+      it "runs next dialog" do
+        next_dialog = Y2Storage::Dialogs::GuidedSetup::SelectScheme
+        expect_run_dialog(next_dialog)
+        subject.run
       end
     end
 

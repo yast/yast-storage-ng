@@ -41,19 +41,19 @@ module Y2Storage
         @settings = settings.dup
       end
 
-      # Disk analyzer to recover disks info
+      # Disk analyzer to recover disks info.
       def analyzer
         StorageManager.instance.probed_disk_analyzer
       end
 
-      # Executes steps of the wizard. Updates settings with user selections.
+      # Executes steps of the wizard.
       # @return [Symbol] last step result.
       def run
         aliases = {
-          "select_disks"      => -> { SelectDisks.new(self).run },
-          "select_root_disk"  => -> { SelectRootDisk.new(self).run },
-          "select_scheme"     => -> { SelectScheme.new(self).run },
-          "select_filesystem" => -> { SelectFilesystem.new(self).run }
+          "select_disks"      => -> { run_dialog(SelectDisks) },
+          "select_root_disk"  => -> { run_dialog(SelectRootDisk) },
+          "select_scheme"     => -> { run_dialog(SelectScheme) },
+          "select_filesystem" => -> { run_dialog(SelectFilesystem) }
         }
 
         sequence = {
@@ -64,13 +64,20 @@ module Y2Storage
           "select_filesystem" => { next: :next, back: :back,  abort: :abort }
         }
 
-        # Skip disks selection when there is only one candidate
-        if analyzer.candidate_disks.size == 1
-          settings.candidate_devices = analyzer.candidate_disks.map(&:name)
-          sequence["ws_start"] = "select_root_disk"
-        end
-
         Yast::Sequencer.Run(aliases, sequence)
+      end
+
+    private
+
+      # Run the dialog or skip when necessary.
+      def run_dialog(dialog_class)
+        dialog = dialog_class.new(self)
+        if dialog.skip?
+          dialog.before_skip
+        else
+          @result = dialog.run
+        end
+        @result ||= :next
       end
     end
   end

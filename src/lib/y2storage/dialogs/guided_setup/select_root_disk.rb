@@ -28,6 +28,23 @@ module Y2Storage
     class GuidedSetup
       # Dialog for root disk selection.
       class SelectRootDisk < Base
+        # This dialog should be skipped when there is only one candidate
+        # disk for installation and there are not installed systems.
+        def skip?
+          candidate_disks.size == 1 &&
+            analyzer.installed_systems(candidate_disks.first).size == 0
+        end
+
+        # Before skipping, settings should be assigned.
+        def before_skip
+          settings.root_device = candidate_disks.first.name
+        end
+
+        def root_disk_handler
+          widget_update(:windows_actions, activate_windows_actions?, attr: :Enabled)
+          widget_update(:linux_actions, activate_linux_actions?, attr: :Enabled)
+        end
+
       protected
 
         def dialog_title
@@ -50,12 +67,16 @@ module Y2Storage
           VBox(
             Left(Label(_("Please select a disk to use as the \"root\" partition (/)"))),
             VSpacing(0.3),
-            RadioButtonGroup(
-              Id(:root_disk),
-              VBox(
-                *([any_disk_widget] + candidate_disks.map { |d| disk_widget(d) })
+            if need_to_select_disk?
+              RadioButtonGroup(
+                Id(:root_disk),
+                VBox(
+                  *([any_disk_widget] + candidate_disks.map { |d| disk_widget(d) })
+                )
               )
-            )
+            else
+              Left(Label(disk_label(candidate_disks.first)))
+            end
           )
         end
 
@@ -64,7 +85,7 @@ module Y2Storage
             Left(Label(_("Choose what to do with existing Windows systems"))),
             Left(
               ComboBox(
-                Id(:windows_action), "",
+                Id(:windows_actions), "",
                 [
                   Item(Id(:not_modify), _("Do not modify")),
                   Item(Id(:resize), _("Resize if needed")),
@@ -81,7 +102,7 @@ module Y2Storage
             Left(Label(_("Choose what to do with existing Linux partitions"))),
             Left(
               ComboBox(
-                Id(:linux_action), "",
+                Id(:linux_actions), "",
                 [
                   Item(Id(:not_modify), _("Do not modify")),
                   Item(Id(:remove), _("Remove if needed")),
@@ -93,7 +114,7 @@ module Y2Storage
         end
 
         def any_disk_widget
-          Left(RadioButton(Id(:any), _("Any disk")))
+          Left(RadioButton(Id(:any_disk), _("Any disk")))
         end
 
         def disk_widget(disk)
@@ -101,14 +122,15 @@ module Y2Storage
         end
 
         def initialize_widgets
-          widget = settings.root_device || :any
+          # Select a root disk or any option
+          widget = settings.root_device || :any_disk
           widget_update(widget, true)
+          root_disk_handler
         end
 
         def update_settings!
-          root = candidate_disks.detect { |d| widget_value(d.name) }
+          root = selected_disk
           settings.root_device = root ? root.name : nil
-          true
         end
 
       private
@@ -117,6 +139,26 @@ module Y2Storage
           return @candidate_disks if @candidate_disks
           candidates = settings.candidate_devices || []
           @candidate_disks = candidates.map { |d| analyzer.device_by_name(d) }
+        end
+
+        def need_to_select_disk?
+          candidate_disks.size > 1
+        end
+
+        def selected_disk
+          if need_to_select_disk?
+            candidate_disks.detect { |d| widget_value(d.name) }
+          else
+            candidate_disks.first
+          end
+        end
+
+        def activate_windows_actions?
+          !analyzer.windows_systems(*candidate_disks).empty?
+        end
+
+        def activate_linux_actions?
+          !analyzer.linux_systems(*candidate_disks).empty?
         end
       end
     end
