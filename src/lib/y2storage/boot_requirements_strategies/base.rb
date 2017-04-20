@@ -41,6 +41,7 @@ module Y2Storage
       def initialize(settings, devicegraph)
         @settings = settings
         @devicegraph = devicegraph
+        @root_disk = devicegraph.disks.detect { |d| d.name == settings.root_device }
       end
 
       def needed_partitions
@@ -53,10 +54,7 @@ module Y2Storage
 
       attr_reader :settings
       attr_reader :devicegraph
-
-      def root_disk
-        devicegraph.disks.detect { |d| d.name == settings.root_device }
-      end
+      attr_reader :root_disk
 
       def boot_partition_needed?
         false
