@@ -50,7 +50,7 @@ module Y2Storage
         partition = find_partition(device_name)
         return [] unless partition
 
-        if lvm_pv?(partition)
+        if lvm_vg?(partition)
           delete_lvm_partitions(partition)
         else
           delete_partition(partition)
@@ -135,7 +135,7 @@ module Y2Storage
       #
       # @param partition [Partition]
       # @return [Boolean]
-      def lvm_pv?(partition)
+      def lvm_vg?(partition)
         !!(partition.lvm_pv && partition.lvm_pv.lvm_vg)
       end
     end
