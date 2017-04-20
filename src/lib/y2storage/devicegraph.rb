@@ -85,7 +85,8 @@ module Y2Storage
     # @param filename [String]
     # @return [Devicegraph]
     def self.new_from_file(filename)
-      devicegraph = ::Storage::Devicegraph.new
+      storage = Y2Storage::StorageManager.instance.storage
+      devicegraph = ::Storage::Devicegraph.new(storage)
       Y2Storage::FakeDeviceFactory.load_yaml_file(devicegraph, filename)
       new(devicegraph)
     end
