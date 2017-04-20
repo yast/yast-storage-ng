@@ -31,9 +31,6 @@ module Y2Storage
     # There are not available partition slots in the disk
     class NoMorePartitionSlotError < Error
     end
-    # It was not possible to find a suitable root device
-    class NoSuitableDeviceError < Error
-    end
     # It's not possible to propose a bootable layout for the root device
     class NotBootableError < Error
     end

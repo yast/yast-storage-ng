@@ -48,9 +48,13 @@ module Y2Storage
       # Volumes that needs to be created to satisfy the settings
       #
       # @return [PlannedVolumesList]
-      def all_volumes
+      def volumes
         PlannedVolumesList.new(base_volumes.to_a + additional_volumes)
       end
+
+    protected
+
+      attr_reader :devicegraph
 
       # Minimal set of volumes that is needed to decide if a bootable
       # system can be installed
@@ -61,10 +65,6 @@ module Y2Storage
       def base_volumes
         PlannedVolumesList.new(boot_volumes.to_a + [root_volume])
       end
-
-    protected
-
-      attr_reader :devicegraph
 
       # Volumes needed by the bootloader
       #
