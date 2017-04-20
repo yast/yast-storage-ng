@@ -59,7 +59,7 @@ describe Y2Storage::Device do
     end
 
     it "includes all the descendants" do
-      expect(device.descendants.size).to eq 9
+      expect(device.descendants.size).to eq 10
     end
 
     it "returns objects of the right classes" do
