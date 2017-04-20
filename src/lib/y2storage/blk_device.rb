@@ -134,6 +134,23 @@ module Y2Storage
 
     alias_method :filesystem, :blk_filesystem
 
+    # LVM physical volume defined on top of the device, either directly or
+    # through an encryption layer.
+    #
+    # @return [LvmPv] nil if neither the raw device or its encrypted version
+    #   are used as physical volume
+    def lvm_pv
+      descendants.detect { |dev| dev.is?(:lvm_pv) && dev.plain_blk_device == plain_device }
+    end
+
+    # LVM physical volume defined directly on top of the device (no encryption
+    # or any other layer in between)
+    #
+    # @return [LvmPv] nil if the raw device is not used as physical volume
+    def direct_lvm_pv
+      descendants.detect { |dev| dev.is?(:lvm_pv) && dev.blk_device == self }
+    end
+
     # Label of the filesystem, if any
     # @return [String, nil]
     def filesystem_label

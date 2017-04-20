@@ -112,5 +112,79 @@ module Y2Storage
     def self.find_by_name_or_partition(devicegraph, name)
       all(devicegraph).detect { |dev| dev.name_or_partition?(name) }
     end
+
+    # Partitions that can be used as EFI system partitions.
+    #
+    # Checks for the partition id to return all potential partitions.
+    # Checking for content_info.efi? would only detect partitions that are
+    # going to be effectively used.
+    #
+    # @return [Array<Partition>]
+    def efi_partitions
+      partitions_with_id(:esp)
+    end
+
+    # Partitions that can be used as PReP partition
+    #
+    # @return [Array<Partition>]
+    def prep_partitions
+      partitions_with_id(:prep)
+    end
+
+    # GRUB (gpt_bios) partitions
+    #
+    # @return [Array<Partition>]
+    def grub_partitions
+      partitions_with_id(:bios_boot)
+    end
+
+    # Partitions that can be used as swap space
+    #
+    # @return [Array<Partition>]
+    def swap_partitions
+      partitions_with_id(:swap)
+    end
+
+    # Partitions that can host part of a Linux system.
+    #
+    # @see PartitionId.linux_system_ids
+    #
+    # @return [Array<Partition>]
+    def linux_system_partitions
+      partitions_with_id(:linux_system)
+    end
+
+    # Partitions that could potentially contain a MS Windows installation
+    #
+    # @see ParitionId.windows_system_ids
+    #
+    # @return [Array<Partition>]
+    def possible_windows_partitions
+      partitions.select { |p| p.type.is?(:primary) && p.id.is?(:windows_system) }
+    end
+
+    # Size between MBR and first partition.
+    #
+    # @see PartitionTables::Msdos#mbr_gap
+    #
+    # This can return nil, meaning "gap not applicable" (e.g. it makes no sense
+    # for the existing partition table) which is different from "no gap"
+    # (i.e. a 0 bytes gap).
+    #
+    # @return [DiskSize, nil]
+    def mbr_gap
+      return nil unless partition_table
+      return nil unless partition_table.respond_to?(:mbr_gap)
+      partition_table.mbr_gap
+    end
+
+  protected
+
+    # Find partitions that have a given (set of) partition id(s).
+    #
+    # @return [Array<Partition>}]
+    def partitions_with_id(*ids)
+      partitions.reject { |p| p.type.is?(:extended) }.select { |p| p.id.is?(*ids) }
+    end
   end
 end

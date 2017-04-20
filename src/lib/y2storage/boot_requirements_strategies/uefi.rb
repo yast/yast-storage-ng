@@ -58,11 +58,12 @@ module Y2Storage
       end
 
       def biggest_efi_in_root_device
-        biggest_partition(disk_analyzer.efi_partitions(settings.root_device))
+        biggest_partition(root_disk.efi_partitions)
       end
 
       def biggest_efi
-        biggest_partition(disk_analyzer.efi_partitions)
+        efi_parts = devicegraph.disks.map(&:efi_partitions).flatten
+        biggest_partition(efi_parts)
       end
 
       def biggest_partition(partitions)

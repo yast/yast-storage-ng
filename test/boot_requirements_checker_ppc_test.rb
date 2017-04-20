@@ -34,12 +34,11 @@ describe Y2Storage::BootRequirementsChecker do
     let(:prep_id) { Y2Storage::PartitionId::PREP }
     let(:architecture) { :ppc }
     let(:sda_part_table) { pt_msdos }
-    let(:grub_partitions) { {} }
 
     before do
       allow(storage_arch).to receive(:ppc_power_nv?).and_return(power_nv)
-      allow_analyzer_receive(:grub_partitions, grub_partitions)
-      allow_analyzer_receive(:prep_partitions, prep_partitions)
+      allow(dev_sda).to receive(:grub_partitions).and_return []
+      allow(dev_sda).to receive(:prep_partitions).and_return prep_partitions
     end
 
     context "in a non-PowerNV system (KVM/LPAR)" do
@@ -48,18 +47,8 @@ describe Y2Storage::BootRequirementsChecker do
       context "with a partitions-based proposal" do
         let(:use_lvm) { false }
 
-        context "if there are no PReP partitions" do
-          let(:prep_partitions) { {} }
-
-          it "requires only a PReP partition" do
-            expect(checker.needed_partitions).to contain_exactly(
-              an_object_having_attributes(mount_point: nil, partition_id: prep_id)
-            )
-          end
-        end
-
-        context "if the existent PReP partition is not in the target disk" do
-          let(:prep_partitions) { { "/dev/sdb" => [analyzer_part("/dev/sdb1")] } }
+        context "if there are no PReP partitions in the target disk" do
+          let(:prep_partitions) { [] }
 
           it "requires only a PReP partition" do
             expect(checker.needed_partitions).to contain_exactly(
@@ -69,7 +58,7 @@ describe Y2Storage::BootRequirementsChecker do
         end
 
         context "if there is already a PReP partition in the disk" do
-          let(:prep_partitions) { { "/dev/sda" => [analyzer_part("/dev/sda1")] } }
+          let(:prep_partitions) { [partition_double("/dev/sda1")] }
 
           it "does not require any particular volume" do
             expect(checker.needed_partitions).to be_empty
@@ -80,19 +69,8 @@ describe Y2Storage::BootRequirementsChecker do
       context "with a LVM-based proposal" do
         let(:use_lvm) { true }
 
-        context "if there are no PReP partitions" do
-          let(:prep_partitions) { { "/dev/sda" => [] } }
-
-          it "requires /boot and PReP partitions" do
-            expect(checker.needed_partitions).to contain_exactly(
-              an_object_having_attributes(mount_point: "/boot"),
-              an_object_having_attributes(mount_point: nil, partition_id: prep_id)
-            )
-          end
-        end
-
-        context "if the existent PReP partition is not in the target disk" do
-          let(:prep_partitions) { { "/dev/sdb" => [analyzer_part("/dev/sdb1")] } }
+        context "if there are no PReP partitions in the target disk" do
+          let(:prep_partitions) { [] }
 
           it "requires /boot and PReP partitions" do
             expect(checker.needed_partitions).to contain_exactly(
@@ -103,7 +81,7 @@ describe Y2Storage::BootRequirementsChecker do
         end
 
         context "if there is already a PReP partition in the disk" do
-          let(:prep_partitions) { { "/dev/sda" => [analyzer_part("/dev/sda1")] } }
+          let(:prep_partitions) { [partition_double("/dev/sda1")] }
 
           it "requires only a /boot partition" do
             expect(checker.needed_partitions).to contain_exactly(
@@ -117,19 +95,8 @@ describe Y2Storage::BootRequirementsChecker do
         let(:use_lvm) { false }
         let(:use_encryption) { true }
 
-        context "if there are no PReP partitions" do
-          let(:prep_partitions) { { "/dev/sda" => [] } }
-
-          it "requires /boot and PReP partitions" do
-            expect(checker.needed_partitions).to contain_exactly(
-              an_object_having_attributes(mount_point: "/boot"),
-              an_object_having_attributes(mount_point: nil, partition_id: prep_id)
-            )
-          end
-        end
-
-        context "if the existent PReP partition is not in the target disk" do
-          let(:prep_partitions) { { "/dev/sdb" => [analyzer_part("/dev/sdb1")] } }
+        context "if there are no PReP partitions in the target disk" do
+          let(:prep_partitions) { [] }
 
           it "requires /boot and PReP partitions" do
             expect(checker.needed_partitions).to contain_exactly(
@@ -140,7 +107,7 @@ describe Y2Storage::BootRequirementsChecker do
         end
 
         context "if there is already a PReP partition in the disk" do
-          let(:prep_partitions) { { "/dev/sda" => [analyzer_part("/dev/sda1")] } }
+          let(:prep_partitions) { [partition_double("/dev/sda1")] }
 
           it "requires only a /boot partition" do
             expect(checker.needed_partitions).to contain_exactly(
@@ -153,7 +120,7 @@ describe Y2Storage::BootRequirementsChecker do
 
     context "in bare metal (PowerNV)" do
       let(:power_nv) { true }
-      let(:prep_partitions) { {} }
+      let(:prep_partitions) { [] }
 
       context "with a partitions-based proposal" do
         let(:use_lvm) { false }
@@ -190,7 +157,7 @@ describe Y2Storage::BootRequirementsChecker do
       # Default values to ensure the presence of a /boot partition
       let(:use_lvm) { true }
       let(:sda_part_table) { pt_msdos }
-      let(:prep_partitions) { {} }
+      let(:prep_partitions) { [] }
       let(:power_nv) { true }
 
       include_examples "proposed boot partition"
@@ -201,7 +168,7 @@ describe Y2Storage::BootRequirementsChecker do
       # Default values to ensure the presence of a PReP partition
       let(:use_lvm) { false }
       let(:power_nv) { false }
-      let(:prep_partitions) { {} }
+      let(:prep_partitions) { [] }
 
       include_examples "proposed PReP partition"
     end

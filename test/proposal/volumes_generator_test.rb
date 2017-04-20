@@ -34,16 +34,16 @@ describe Y2Storage::Proposal::VolumesGenerator do
     let(:swap) { Y2Storage::Filesystems::Type::SWAP }
     let(:btrfs) { Y2Storage::Filesystems::Type::BTRFS }
 
-    let(:settings) do
-      # Set arch to s390 for subvolumes tests
-      allow(Yast::Arch).to receive(:x86_64).and_return false
-      allow(Yast::Arch).to receive(:s390).and_return true
-      Y2Storage::ProposalSettings.new
-    end
-    let(:analyzer) { instance_double("Y2Storage::DiskAnalyzer") }
-    let(:swap_partitions) { [] }
+    let(:devicegraph) { instance_double("Y2Storage::Devicegraph") }
+    let(:disk) { instance_double("Y2Storage::Disk", name: "/dev/sda") }
+    let(:settings) { Y2Storage::ProposalSettings.new }
     let(:boot_checker) { instance_double("Y2Storage::BootRequirementChecker") }
-    subject(:generator) { described_class.new(settings, analyzer) }
+
+    # Some reasonable defaults
+    let(:swap_partitions) { [] }
+    let(:arch) { :x86_64 }
+
+    subject(:generator) { described_class.new(settings, devicegraph) }
 
     before do
       allow(Y2Storage::BootRequirementsChecker).to receive(:new).and_return boot_checker
@@ -55,7 +55,11 @@ describe Y2Storage::Proposal::VolumesGenerator do
           ]
         )
       )
-      allow(analyzer).to receive(:swap_partitions).and_return(swap_partitions)
+      allow(devicegraph).to receive(:disks).and_return [disk]
+      allow(disk).to receive(:swap_partitions).and_return(swap_partitions)
+
+      allow(Yast::Arch).to receive(:x86_64).and_return(arch == :x86_64)
+      allow(Yast::Arch).to receive(:s390).and_return(arch == :s390)
     end
 
     it "returns a list of volumes" do
@@ -94,7 +98,7 @@ describe Y2Storage::Proposal::VolumesGenerator do
       end
 
       context "if the existing swap partition is not big enough" do
-        let(:swap_partitions) { [analyzer_part("/dev/sdaX", 1.GiB)] }
+        let(:swap_partitions) { [partition_double("/dev/sdaX", 1.GiB)] }
 
         it "includes a brand new swap volume and no swap reusing" do
           expect(swap_volumes).to contain_exactly(
@@ -104,7 +108,7 @@ describe Y2Storage::Proposal::VolumesGenerator do
       end
 
       context "if the existing swap partition is big enough" do
-        let(:swap_partitions) { [analyzer_part("/dev/sdaX", 3.GiB)] }
+        let(:swap_partitions) { [partition_double("/dev/sdaX", 3.GiB)] }
 
         context "if proposing an LVM setup" do
           before do
@@ -230,6 +234,9 @@ describe Y2Storage::Proposal::VolumesGenerator do
 
       context "if Btrfs is used" do
         let(:root) { subject.all_volumes.detect { |v| v.mount_point == "/" } }
+        # For subvolumes tests
+        let(:arch) { :s390 }
+
         before do
           settings.root_filesystem_type = btrfs
         end
@@ -271,7 +278,6 @@ describe Y2Storage::Proposal::VolumesGenerator do
         end
 
         it "has an arch-specific subvolume boot/grub2/s390x-emu on s390" do
-          # Arch is s390 in these tests - see allow(Yast::Arch) in let(:settings)
           expect(root.subvolumes).to include(
             an_object_having_attributes(
               path:          "boot/grub2/s390x-emu",
@@ -282,7 +288,6 @@ describe Y2Storage::Proposal::VolumesGenerator do
         end
 
         it "does not have an arch-specific subvolume boot/grub2/x86_64-efi on s390" do
-          # Arch is s390 in these tests - see allow(Yast::Arch) in let(:settings)
           expect(root.subvolumes).not_to include(
             an_object_having_attributes(
               path:          "boot/grub2/x86_64-efi",

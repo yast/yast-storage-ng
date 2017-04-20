@@ -44,8 +44,8 @@ module Yast
         Y2Storage::StorageManager.instance.y2storage_probed
       end
 
-      def analyzer_part(name = "", disk_size = Y2Storage::DiskSize.MiB(10))
-        instance_double("::Storage::Partition", name: name, size: disk_size)
+      def partition_double(name = "", disk_size = Y2Storage::DiskSize.MiB(10))
+        instance_double("Y2Storage::Partition", name: name, size: disk_size)
       end
 
       def planned_vol(attrs = {})

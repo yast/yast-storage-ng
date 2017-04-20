@@ -40,9 +40,9 @@ module Y2Storage
 
       DEFAULT_SWAP_SIZE = DiskSize.GiB(2)
 
-      def initialize(settings, disk_analyzer)
+      def initialize(settings, devicegraph)
         @settings = settings
-        @disk_analyzer = disk_analyzer
+        @devicegraph = devicegraph
       end
 
       # Volumes that needs to be created to satisfy the settings
@@ -64,13 +64,13 @@ module Y2Storage
 
     protected
 
-      attr_reader :disk_analyzer
+      attr_reader :devicegraph
 
       # Volumes needed by the bootloader
       #
       # @return [Array<PlannedVolumes>]
       def boot_volumes
-        checker = BootRequirementsChecker.new(settings, disk_analyzer)
+        checker = BootRequirementsChecker.new(settings, devicegraph)
         checker.needed_partitions
       rescue BootRequirementsChecker::Error => error
         raise NotBootableError, error.message
@@ -112,14 +112,13 @@ module Y2Storage
 
       # Swap partition that can be reused.
       #
-      # It returns the smaller partition reported by disk_analyzer that is big
-      # enough for our purposes.
+      # It returns the smaller partition that is big enough for our purposes.
       #
       # @return [Partition]
       def reusable_swap(required_size)
         return nil if settings.use_lvm || settings.use_encryption
 
-        partitions = disk_analyzer.swap_partitions
+        partitions = devicegraph.disks.map(&:swap_partitions).flatten
         partitions.select! { |part| part.size >= required_size }
         # Use #name in case of #size tie to provide stable sorting
         partitions.sort_by { |part| [part.size, part.name] }.first

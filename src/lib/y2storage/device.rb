@@ -40,6 +40,12 @@ module Y2Storage
     storage_forward :storage_ancestors, to: :ancestors, as: "Device"
     protected :storage_ancestors
 
+    storage_forward :storage_descendants, to: :descendants, as: "Device"
+    protected :storage_descendants
+
+    storage_forward :storage_siblings, to: :siblings, as: "Device"
+    protected :storage_siblings
+
     storage_forward :has_children?, to: :has_children
     storage_forward :num_children
 
@@ -52,7 +58,8 @@ module Y2Storage
     storage_forward :userdata
     storage_forward :userdata=
 
-    # Ancestors in the devicegraph, not including the device itself
+    # Ancestors in the devicegraph in no particular order, not including the
+    # device itself
     #
     # @note: this is slightly different from Storage::Device#ancestors, which
     # requires an argument to decide if the device itself should be included in
@@ -62,6 +69,32 @@ module Y2Storage
     def ancestors
       itself = false
       storage_ancestors(itself)
+    end
+
+    # Descendants in the devicegraph in no particular order, not including the
+    # device itself
+    #
+    # @note: this is slightly different from Storage::Device#descendants, which
+    # requires an argument to decide if the device itself should be included in
+    # the result.
+    #
+    # @return [Array<Device>]
+    def descendants
+      itself = false
+      storage_descendants(itself)
+    end
+
+    # Siblings in the devicegraph in no particular order, not including the
+    # device itself
+    #
+    # @note: this is slightly different from Storage::Device#siblings, which
+    # requires an argument to decide if the device itself should be included in
+    # the result.
+    #
+    # @return [Array<Device>]
+    def siblings
+      itself = false
+      storage_siblings(itself)
     end
 
     # Checks whether the device is a concrete kind(s) of device.

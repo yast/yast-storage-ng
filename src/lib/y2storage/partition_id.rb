@@ -29,5 +29,51 @@ module Y2Storage
     include StorageEnumWrapper
 
     wrap_enum "ID"
+
+    LINUX_SYSTEM_IDS = [LINUX, SWAP, LVM, RAID]
+
+    WINDOWS_SYSTEM_IDS = [NTFS, DOS32, DOS16, DOS12, WINDOWS_BASIC_DATA, MICROSOFT_RESERVED]
+
+    private_constant :LINUX_SYSTEM_IDS, :WINDOWS_SYSTEM_IDS
+
+    # Set of ids for partitions that are typically part of a Linux system.
+    # This may be a normal Linux partition (type 0x83), a Linux swap partition
+    # (type 0x82), an LVM partition, or a RAID partition.
+    #
+    # @return [Array<PartitionId>]
+    def self.linux_system_ids
+      LINUX_SYSTEM_IDS.dup
+    end
+
+    # Set of ids for partitions that could potentially host a MS Windows system.
+    #
+    # Take into account that checking the partition id is not enough to ensure a
+    # partition is suitable to host a MS Windows installation (for example,
+    # Windows can only be installed in primary partitions).
+    #
+    # @return [Array<PartitionId>]
+    def self.windows_system_ids
+      WINDOWS_SYSTEM_IDS.dup
+    end
+
+    # @see StorageEnumWrapper#is?
+    #
+    # In addition to checking by name, it also supports :linux_system and
+    # :windows_system
+    #
+    # @see .linux_system_ids
+    # @see .windows_system_ids
+    def is?(*names)
+      names.any? do |name|
+        case name.to_sym
+        when :linux_system
+          LINUX_SYSTEM_IDS.include?(self)
+        when :windows_system
+          WINDOWS_SYSTEM_IDS.include?(self)
+        else
+          name.to_sym == to_sym
+        end
+      end
+    end
   end
 end

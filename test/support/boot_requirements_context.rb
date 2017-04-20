@@ -29,15 +29,7 @@ RSpec.shared_context "boot requirements" do
     volumes.find { |p| p.mount_point == mount_point }
   end
 
-  def allow_analyzer_receive(method, data)
-    allow(analyzer).to receive(method).and_return data.values.flatten
-    allow(analyzer).to receive(method).with(anything).and_return []
-    data.each do |disk, partitions|
-      allow(analyzer).to receive(method).with(disk).and_return partitions
-    end
-  end
-
-  subject(:checker) { described_class.new(settings, analyzer) }
+  subject(:checker) { described_class.new(settings, devicegraph) }
 
   let(:root_device) { "/dev/sda" }
   let(:settings) do
@@ -48,9 +40,10 @@ RSpec.shared_context "boot requirements" do
     settings.encryption_password = "12345678" if use_encryption
     settings
   end
-  let(:analyzer) { instance_double("Y2Storage::DiskAnalyzer") }
   let(:storage_arch) { instance_double("::Storage::Arch") }
+  let(:devicegraph) { double("Y2Storage::Devicegraph") }
   let(:dev_sda) { double("Y2Storage::Disk", name: "/dev/sda") }
+  let(:dev_sdb) { double("Y2Storage::Disk", name: "/dev/sdb") }
   let(:pt_gpt) { instance_double("Y2Storage::PartitionTable") }
   let(:pt_msdos) { instance_double("Y2Storage::PartitionTable") }
   let(:sda_part_table) { pt_msdos }
@@ -58,14 +51,14 @@ RSpec.shared_context "boot requirements" do
   let(:use_encryption) { false }
 
   before do
-    Y2Storage::StorageManager.fake_from_yaml
+    Y2Storage::StorageManager.create_test_instance
     allow(Y2Storage::StorageManager.instance).to receive(:arch).and_return(storage_arch)
 
     allow(storage_arch).to receive(:x86?).and_return(architecture == :x86)
     allow(storage_arch).to receive(:ppc?).and_return(architecture == :ppc)
     allow(storage_arch).to receive(:s390?).and_return(architecture == :s390)
 
-    allow(analyzer).to receive(:device_by_name).with("/dev/sda").and_return(dev_sda)
+    allow(devicegraph).to receive(:disks).and_return [dev_sda, dev_sdb]
 
     if sda_part_table
       allow(dev_sda).to receive(:partition_table).and_return(sda_part_table)
