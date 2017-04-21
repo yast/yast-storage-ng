@@ -38,11 +38,36 @@ module Y2Storage
     include Yast::Logger
     include SecretAttributes
 
+    # @return [Boolean] whether to use LVM
     attr_accessor :use_lvm
-    attr_accessor :root_filesystem_type, :use_snapshots
-    attr_accessor :use_separate_home, :home_filesystem_type
+
+    # @return [Filesystems::Type] type to use for the root filesystem
+    attr_accessor :root_filesystem_type
+    #
+    # @return [Boolean] whether to enable snapshots (only if Btrfs is used)
+    attr_accessor :use_snapshots
+
+    # @return [Boolean] whether to propose separate partition/volume for /home
+    attr_accessor :use_separate_home
+
+    # @return [Filesystems::Type] type to use for the home filesystem, if a
+    #   separate one is proposed
+    attr_accessor :home_filesystem_type
+
+    # @return [Boolean] whether to enlarge swap based on the RAM size, to ensure
+    #   the classic suspend-to-ram works
     attr_accessor :enlarge_swap_for_suspend
-    attr_accessor :root_device, :candidate_devices
+
+    # @return [String] device name of the disk in which / must be placed. If set
+    #   to nil, the proposal will try to find a good candidate
+    attr_accessor :root_device
+
+    # @return [Array<String>] device names of the disks that can be used for the
+    #   installation. If nil, the proposal will try find suitable devices
+    attr_accessor :candidate_devices
+
+    # @!attribute encrypted_password
+    #   @return [String] password to use when creating new encryption devices
     secret_attr   :encryption_password
 
     def initialize
