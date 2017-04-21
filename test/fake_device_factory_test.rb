@@ -72,8 +72,8 @@ describe Y2Storage::FakeDeviceFactory do
     io = StringIO.new(input.join("\n"))
     Y2Storage::FakeDeviceFactory.load_yaml_file(staging, io)
 
-    expect(staging.num_devices).to eq 6
-    expect(staging.num_holders).to eq 5
+    expect(staging.num_devices).to eq 8
+    expect(staging.num_holders).to eq 7
 
     sda = Storage.to_disk(Storage::BlkDevice.find_by_name(staging, "/dev/sda"))
     expect(sda.size).to eq 256 * Storage.GiB
@@ -122,8 +122,8 @@ describe Y2Storage::FakeDeviceFactory do
     io = StringIO.new(input.join("\n"))
     Y2Storage::FakeDeviceFactory.load_yaml_file(staging, io)
 
-    expect(staging.num_devices).to eq 5
-    expect(staging.num_holders).to eq 4
+    expect(staging.num_devices).to eq 6
+    expect(staging.num_holders).to eq 5
 
     root = Storage.to_lvm_lv(Storage::BlkDevice.find_by_name(staging, "/dev/system/root"))
     expect(root.lv_name).to eq "root"
