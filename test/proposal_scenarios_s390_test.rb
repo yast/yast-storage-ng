@@ -32,6 +32,7 @@ describe Y2Storage::Proposal do
 
   describe "#propose" do
     let(:scenario) { "empty_hard_disk_50GiB" }
+    let(:expected_scenario) { "s390_zipl" }
 
     before do
       allow_any_instance_of(Y2Storage::Disk).to receive(:is?).with(:dasd).and_return(dasd)
@@ -44,8 +45,6 @@ describe Y2Storage::Proposal do
 
     context "with a zfcp disk" do
       let(:dasd) { false }
-      let(:expected_scenario) { "s390_zfcp" }
-
       include_examples "proposed layout"
     end
 
@@ -72,8 +71,6 @@ describe Y2Storage::Proposal do
 
       context "formated as CDL" do
         let(:dasd_format) { Y2Storage::DasdFormat::CDL }
-        let(:expected_scenario) { "s390_dasd_cdl" }
-
         include_examples "proposed layout"
       end
     end
