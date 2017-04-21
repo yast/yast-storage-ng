@@ -209,6 +209,7 @@ module Y2Storage
       #   Linux partitions in the same disk
       def resize_windows!(volumes, disk, force: false)
         return if success?(volumes)
+        return unless settings.resize_windows
         part_names = windows_part_names(disk)
         return if part_names.empty?
 
@@ -305,6 +306,7 @@ module Y2Storage
       # @param disk [String] optional disk name to restrict operations to
       def delete_partitions!(volumes, type, keep, disk)
         return if success?(volumes)
+        return if settings.delete_forbidden?(type)
 
         log.info("Deleting partitions to make space")
         deletion_candidate_partitions(type, disk).each do |part_name|

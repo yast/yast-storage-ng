@@ -41,8 +41,18 @@ describe Y2Storage::Proposal::SpaceMaker do
       settings = Y2Storage::ProposalSettings.new
       settings.candidate_devices = ["/dev/sda"]
       settings.root_device = "/dev/sda"
+      settings.resize_windows = resize_windows
+      settings.windows_delete_mode = delete_windows
+      settings.linux_delete_mode = delete_linux
+      settings.other_delete_mode = delete_other
       settings
     end
+    # Default values for settings
+    let(:resize_windows) { true }
+    let(:delete_windows) { :ondemand }
+    let(:delete_linux) { :ondemand }
+    let(:delete_other) { :ondemand }
+
     let(:volumes) { vols_list(vol1) }
     let(:analyzer) { Y2Storage::DiskAnalyzer.new(fake_devicegraph) }
     let(:lvm_helper) { Y2Storage::Proposal::LvmHelper.new(Y2Storage::PlannedVolumesList.new) }
@@ -86,45 +96,149 @@ describe Y2Storage::Proposal::SpaceMaker do
       let(:vol1) { planned_vol(mount_point: "/1", type: :ext4, desired: 100.GiB) }
       let(:windows_partitions) { [partition_double("/dev/sda1")] }
 
-      it "deletes linux partitions as needed" do
-        result = maker.provide_space(volumes)
-        expect(result[:devicegraph].partitions).to contain_exactly(
-          an_object_having_attributes(filesystem_label: "windows", size: 250.GiB),
-          an_object_having_attributes(filesystem_label: "swap", size: 2.GiB)
-        )
-      end
+      context "if deleting Linux partitions is allowed" do
+        let(:delete_linux) { :ondemand }
 
-      it "stores the list of deleted partitions" do
-        result = maker.provide_space(volumes)
-        expect(result[:deleted_partitions]).to contain_exactly(
-          an_object_having_attributes(filesystem_label: "root", size: 248.GiB - 1.MiB)
-        )
-      end
-
-      it "suggests a distribution using the freed space" do
-        result = maker.provide_space(volumes)
-        distribution = result[:space_distribution]
-        expect(distribution.spaces.size).to eq 1
-        expect(distribution.spaces.first.volumes).to eq volumes
-      end
-
-      context "if deleting Linux is not enough" do
-        let(:vol2) { planned_vol(mount_point: "/2", type: :ext4, desired: 200.GiB) }
-        let(:volumes) { vols_list(vol1, vol2) }
-        let(:resize_info) do
-          instance_double("Y2Storage::ResizeInfo", resize_ok?: true, min_size: 100.GiB)
-        end
-
-        before do
-          allow_any_instance_of(Y2Storage::Filesystems::BlkFilesystem).to receive(:detect_resize_info)
-            .and_return(resize_info)
-        end
-
-        it "resizes Windows partitions to free additional needed space" do
+        it "deletes linux partitions as needed" do
           result = maker.provide_space(volumes)
           expect(result[:devicegraph].partitions).to contain_exactly(
-            an_object_having_attributes(filesystem_label: "windows", size: 200.GiB - 1.MiB)
+            an_object_having_attributes(filesystem_label: "windows", size: 250.GiB),
+            an_object_having_attributes(filesystem_label: "swap", size: 2.GiB)
           )
+        end
+
+        it "stores the list of deleted partitions" do
+          result = maker.provide_space(volumes)
+          expect(result[:deleted_partitions]).to contain_exactly(
+            an_object_having_attributes(filesystem_label: "root", size: 248.GiB - 1.MiB)
+          )
+        end
+
+        it "suggests a distribution using the freed space" do
+          result = maker.provide_space(volumes)
+          distribution = result[:space_distribution]
+          expect(distribution.spaces.size).to eq 1
+          expect(distribution.spaces.first.volumes).to eq volumes
+        end
+
+        context "if deleting Linux is not enough" do
+          let(:vol2) { planned_vol(mount_point: "/2", type: :ext4, desired: 200.GiB) }
+          let(:volumes) { vols_list(vol1, vol2) }
+
+          context "if resizing Windows is allowed" do
+            let(:resize_windows) { true }
+            let(:resize_info) do
+              instance_double("Y2Storage::ResizeInfo", resize_ok?: true, min_size: 100.GiB)
+            end
+
+            before do
+              allow_any_instance_of(Y2Storage::Filesystems::BlkFilesystem).to receive(:detect_resize_info)
+                .and_return(resize_info)
+            end
+
+            it "resizes Windows partitions to free additional needed space" do
+              result = maker.provide_space(volumes)
+              expect(result[:devicegraph].partitions).to contain_exactly(
+                an_object_having_attributes(filesystem_label: "windows", size: 200.GiB - 1.MiB)
+              )
+            end
+          end
+
+          context "if resizing Windows is not allowed but deleting Windows is" do
+            let(:resize_windows) { false }
+            let(:delete_windows) { :ondemand }
+
+            it "deletes Windows partitions as needed" do
+              result = maker.provide_space(volumes)
+              expect(result[:devicegraph].partitions).to be_empty
+            end
+
+            it "stores the list of deleted partitions" do
+              result = maker.provide_space(volumes)
+              expect(result[:deleted_partitions]).to contain_exactly(
+                an_object_having_attributes(name: "/dev/sda1"),
+                an_object_having_attributes(name: "/dev/sda2"),
+                an_object_having_attributes(name: "/dev/sda3"),
+              )
+            end
+
+            it "suggests a distribution using the freed space" do
+              result = maker.provide_space(volumes)
+              distribution = result[:space_distribution]
+              expect(distribution.spaces.size).to eq 1
+              expect(distribution.spaces.first.volumes).to eq volumes
+            end
+          end
+
+          context "if no resizing or deleting of Windows is allowed" do
+            let(:resize_windows) { false }
+            let(:delete_windows) { :none }
+
+            it "raises a NoDiskSpaceError exception" do
+              expect { maker.provide_space(volumes) }
+                .to raise_error Y2Storage::Proposal::NoDiskSpaceError
+            end
+          end
+        end
+      end
+
+      context "if deleting Linux partitions is not allowed" do
+        let(:delete_linux) { :none }
+
+        context "if resizing Windows is allowed" do
+          let(:resize_windows) { true }
+          let(:resize_info) do
+            instance_double("Y2Storage::ResizeInfo", resize_ok?: true, min_size: 100.GiB)
+          end
+
+          before do
+            allow_any_instance_of(Y2Storage::Filesystems::BlkFilesystem).to receive(:detect_resize_info)
+              .and_return(resize_info)
+          end
+
+          it "does not delete the Linux partitions" do
+            result = maker.provide_space(volumes)
+            expect(result[:devicegraph].partitions.map(&:filesystem_label)).to include("root", "swap")
+          end
+
+          it "resizes Windows partitions to free additional needed space" do
+            result = maker.provide_space(volumes)
+            windows = result[:devicegraph].partitions.detect { |p| p.filesystem_label == "windows" }
+            expect(windows.size).to eq 150.GiB
+          end
+        end
+
+        context "if resizing Windows is not allowed but deleting Windows is" do
+          let(:resize_windows) { false }
+          let(:delete_windows) { :ondemand }
+
+          it "does not delete the Linux partitions" do
+            result = maker.provide_space(volumes)
+            expect(result[:devicegraph].partitions.map(&:filesystem_label)).to include("root", "swap")
+          end
+
+          it "deletes Windows partitions as needed" do
+            result = maker.provide_space(volumes)
+            windows = result[:devicegraph].partitions.detect { |p| p.filesystem_label == "windows" }
+            expect(windows).to be_nil
+          end
+
+          it "stores the list of deleted partitions" do
+            result = maker.provide_space(volumes)
+            expect(result[:deleted_partitions]).to contain_exactly(
+              an_object_having_attributes(name: "/dev/sda1")
+            )
+          end
+        end
+
+        context "if no resizing or deleting of Windows is allowed" do
+          let(:resize_windows) { false }
+          let(:delete_windows) { :none }
+
+          it "raises a NoDiskSpaceError exception" do
+            expect { maker.provide_space(volumes) }
+              .to raise_error Y2Storage::Proposal::NoDiskSpaceError
+          end
         end
       end
     end
@@ -141,64 +255,186 @@ describe Y2Storage::Proposal::SpaceMaker do
           .and_return(resize_info)
       end
 
-      context "with enough free space in the Windows partition" do
-        let(:vol1) { planned_vol(mount_point: "/1", type: :ext4, desired: 40.GiB) }
+      context "if resizing Windows is allowed" do
+        let(:resize_windows) { true }
 
-        it "shrinks the Windows partition by the required size" do
-          result = maker.provide_space(volumes)
-          win_partition = Y2Storage::Partition.find_by_name(result[:devicegraph], "/dev/sda1")
-          expect(win_partition.size).to eq 740.GiB
+        context "with enough free space in the Windows partition" do
+          let(:vol1) { planned_vol(mount_point: "/1", type: :ext4, desired: 40.GiB) }
+
+          it "shrinks the Windows partition by the required size" do
+            result = maker.provide_space(volumes)
+            win_partition = Y2Storage::Partition.find_by_name(result[:devicegraph], "/dev/sda1")
+            expect(win_partition.size).to eq 740.GiB
+          end
+
+          it "leaves other partitions untouched" do
+            result = maker.provide_space(volumes)
+            expect(result[:devicegraph].partitions).to contain_exactly(
+              an_object_having_attributes(filesystem_label: "windows"),
+              an_object_having_attributes(filesystem_label: "recovery", size: 20.GiB - 1.MiB)
+            )
+          end
+
+          it "leaves empty the list of deleted partitions" do
+            result = maker.provide_space(volumes)
+            expect(result[:deleted_partitions]).to be_empty
+          end
+
+          it "suggests a distribution using the freed space" do
+            result = maker.provide_space(volumes)
+            distribution = result[:space_distribution]
+            expect(distribution.spaces.size).to eq 1
+            expect(distribution.spaces.first.volumes).to eq volumes
+          end
         end
 
-        it "leaves other partitions untouched" do
-          result = maker.provide_space(volumes)
-          expect(result[:devicegraph].partitions).to contain_exactly(
-            an_object_having_attributes(filesystem_label: "windows"),
-            an_object_having_attributes(filesystem_label: "recovery", size: 20.GiB - 1.MiB)
-          )
-        end
+        context "with no enough free space in the Windows partition" do
+          let(:vol1) { planned_vol(mount_point: "/1", type: :ext4, desired: 60.GiB) }
 
-        it "leaves empty the list of deleted partitions" do
-          result = maker.provide_space(volumes)
-          expect(result[:deleted_partitions]).to be_empty
-        end
+          context "if deleting other (no Windows or Linux) partitions is allowed" do
+            let(:delete_other) { :ondemand }
 
-        it "suggests a distribution using the freed space" do
-          result = maker.provide_space(volumes)
-          distribution = result[:space_distribution]
-          expect(distribution.spaces.size).to eq 1
-          expect(distribution.spaces.first.volumes).to eq volumes
+            it "shrinks the Windows partition as much as possible" do
+              result = maker.provide_space(volumes)
+              win_partition = Y2Storage::Partition.find_by_name(result[:devicegraph], "/dev/sda1")
+              expect(win_partition.size).to eq 730.GiB
+            end
+
+            it "removes other (no Windows or Linux) partitions as needed" do
+              result = maker.provide_space(volumes)
+              expect(result[:devicegraph].partitions).to contain_exactly(
+                an_object_having_attributes(filesystem_label: "windows")
+              )
+            end
+
+            it "stores the list of deleted partitions" do
+              result = maker.provide_space(volumes)
+              expect(result[:deleted_partitions]).to contain_exactly(
+                an_object_having_attributes(filesystem_label: "recovery", size: 20.GiB - 1.MiB)
+              )
+            end
+
+            it "suggests a distribution using the freed space" do
+              result = maker.provide_space(volumes)
+              distribution = result[:space_distribution]
+              expect(distribution.spaces.size).to eq 1
+              expect(distribution.spaces.first.volumes).to eq volumes
+            end
+          end
+
+          context "if deleting other (no Windows or Linux) partitions is not allowed" do
+            let(:delete_other) { :none }
+
+            context "if deleting Windows is allowed" do
+              let(:delete_windows) { :ondemand }
+
+              it "deletes Windows partitions as needed" do
+                result = maker.provide_space(volumes)
+                windows = result[:devicegraph].partitions.detect { |p| p.filesystem_label == "windows" }
+                expect(windows).to be_nil
+              end
+
+              it "does not remove other (no Windows or Linux) partitions" do
+                result = maker.provide_space(volumes)
+                expect(result[:devicegraph].partitions.map(&:filesystem_label)).to include "recovery"
+              end
+
+              it "stores the list of deleted partitions" do
+                result = maker.provide_space(volumes)
+                expect(result[:deleted_partitions]).to contain_exactly(
+                  an_object_having_attributes(filesystem_label: "windows")
+                )
+              end
+
+              it "suggests a distribution using the freed space" do
+                result = maker.provide_space(volumes)
+                distribution = result[:space_distribution]
+                expect(distribution.spaces.size).to eq 1
+                expect(distribution.spaces.first.volumes).to eq volumes
+              end
+            end
+
+            context "if deleting Windows not is allowed" do
+              let(:delete_windows) { :none }
+
+              it "raises a NoDiskSpaceError exception" do
+                expect { maker.provide_space(volumes) }
+                  .to raise_error Y2Storage::Proposal::NoDiskSpaceError
+              end
+            end
+          end
         end
       end
 
-      context "with no enough free space in the Windows partition" do
-        let(:vol1) { planned_vol(mount_point: "/1", type: :ext4, desired: 60.GiB) }
+      context "if resizing Windows is not allowed" do
+        let(:resize_windows) { false }
+        let(:vol1) { planned_vol(mount_point: "/1", type: :ext4, desired: 18.GiB) }
 
-        it "shrinks the Windows partition as much as possible" do
-          result = maker.provide_space(volumes)
-          win_partition = Y2Storage::Partition.find_by_name(result[:devicegraph], "/dev/sda1")
-          expect(win_partition.size).to eq 730.GiB
+        context "if deleting other (no Windows or Linux) partitions is allowed" do
+          let(:delete_other) { :ondemand }
+
+          it "removes other (no Windows or Linux) partitions as needed" do
+            result = maker.provide_space(volumes)
+            expect(result[:devicegraph].partitions).to contain_exactly(
+              an_object_having_attributes(filesystem_label: "windows")
+            )
+          end
+
+          it "stores the list of deleted partitions" do
+            result = maker.provide_space(volumes)
+            expect(result[:deleted_partitions]).to contain_exactly(
+              an_object_having_attributes(filesystem_label: "recovery", size: 20.GiB - 1.MiB)
+            )
+          end
+
+          it "suggests a distribution using the freed space" do
+            result = maker.provide_space(volumes)
+            distribution = result[:space_distribution]
+            expect(distribution.spaces.size).to eq 1
+            expect(distribution.spaces.first.volumes).to eq volumes
+          end
         end
 
-        it "removes other partitions" do
-          result = maker.provide_space(volumes)
-          expect(result[:devicegraph].partitions).to contain_exactly(
-            an_object_having_attributes(filesystem_label: "windows")
-          )
-        end
+        context "if deleting other (no Windows or Linux) partitions is not allowed" do
+          let(:delete_other) { :none }
 
-        it "stores the list of deleted partitions" do
-          result = maker.provide_space(volumes)
-          expect(result[:deleted_partitions]).to contain_exactly(
-            an_object_having_attributes(filesystem_label: "recovery", size: 20.GiB - 1.MiB)
-          )
-        end
+          context "if deleting Windows is allowed" do
+            let(:delete_windows) { :ondemand }
 
-        it "suggests a distribution using the freed space" do
-          result = maker.provide_space(volumes)
-          distribution = result[:space_distribution]
-          expect(distribution.spaces.size).to eq 1
-          expect(distribution.spaces.first.volumes).to eq volumes
+            it "deletes Windows partition as needed" do
+              result = maker.provide_space(volumes)
+              windows = result[:devicegraph].partitions.detect { |p| p.filesystem_label == "windows" }
+              expect(windows).to be_nil
+            end
+
+            it "does not remove other (no Windows or Linux) partitions" do
+              result = maker.provide_space(volumes)
+              expect(result[:devicegraph].partitions.map(&:filesystem_label)).to include "recovery"
+            end
+
+            it "stores the list of deleted partitions" do
+              result = maker.provide_space(volumes)
+              expect(result[:deleted_partitions]).to contain_exactly(
+                an_object_having_attributes(filesystem_label: "windows")
+              )
+            end
+
+            it "suggests a distribution using the freed space" do
+              result = maker.provide_space(volumes)
+              distribution = result[:space_distribution]
+              expect(distribution.spaces.size).to eq 1
+              expect(distribution.spaces.first.volumes).to eq volumes
+            end
+          end
+
+          context "if deleting Windows is not allowed" do
+            let(:delete_windows) { :none }
+
+            it "raises a NoDiskSpaceError exception" do
+              expect { maker.provide_space(volumes) }
+                .to raise_error Y2Storage::Proposal::NoDiskSpaceError
+            end
+          end
         end
       end
     end

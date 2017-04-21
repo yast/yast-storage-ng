@@ -70,6 +70,27 @@ module Y2Storage
     #   @return [String] password to use when creating new encryption devices
     secret_attr   :encryption_password
 
+    # @return [Boolean] whether to resize Windows systems if needed
+    attr_accessor :resize_windows
+
+    # @return [Symbol] what to do regarding removal of existing partitions
+    #   hosting a Windows system.
+    #
+    #   * :none never Delete a Windows partition.
+    #   * :ondemand Delete Windows partitions as needed by the proposal.
+    #   * :all Delete all Windows partitions, even if not needed.
+    attr_accessor :windows_delete_mode
+
+    # @return [Symbol] what to do regarding removal of existing Linux
+    #   partitions. @see DiskAnalyzer for the definition of "Linux partitions".
+    #   @see #windows_delete_mode for the possible values
+    attr_accessor :linux_delete_mode
+
+    # @return [Symbol] what to do regarding removal of existing partitions that
+    #   don't fit in #windows_delete_mode or #linux_delete_mode.
+    #   @see #windows_delete_mode for the possible values
+    attr_accessor :other_delete_mode
+
     def initialize
       @use_lvm                  = false
       self.encryption_password  = nil
@@ -78,11 +99,43 @@ module Y2Storage
       @use_separate_home        = true
       @home_filesystem_type     = Filesystems::Type::XFS
       @enlarge_swap_for_suspend = false
+      @resize_windows           = true
+      @windows_delete_mode      = :ondemand
+      @linux_delete_mode        = :ondemand
+      @other_delete_mode        = :ondemand
     end
 
     def use_encryption
       !encryption_password.nil?
     end
+
+    # Whether the settings disable deletion of a given type of partitions
+    #
+    # @see #windows_delete_mode
+    # @see #linux_delete_mode
+    # @see #other_delete_mode
+    #
+    # @param type [#to_s] :linux, :windows or :other
+    # @return [Boolean]
+    def delete_forbidden(type)
+      send(:"#{type}_delete_mode").to_sym == :none
+    end
+
+    alias_method :delete_forbidden?, :delete_forbidden
+
+    # Whether the settings enforce deletion of a given type of partitions
+    #
+    # @see #windows_delete_mode
+    # @see #linux_delete_mode
+    # @see #other_delete_mode
+    #
+    # @param type [#to_s] :linux, :windows or :other
+    # @return [Boolean]
+    def delete_forced(type)
+      send(:"#{type}_delete_mode").to_sym == :all
+    end
+
+    alias_method :delete_forced?, :delete_forced
   end
 
   # Per-product settings for the storage proposal.
