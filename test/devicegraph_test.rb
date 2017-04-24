@@ -110,7 +110,7 @@ describe Y2Storage::Devicegraph do
     end
 
     it "finds all the filesystems" do
-      expect(list.size).to eq 8
+      expect(list.size).to eq 9
     end
   end
 

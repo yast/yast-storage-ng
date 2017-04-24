@@ -235,7 +235,7 @@ describe "devices lists" do
         end
 
         it "includes filesystems in encrypted devices but not filesystems within LVM" do
-          expect(disks.filesystems.size).to eq 4
+          expect(disks.filesystems.size).to eq 5
         end
       end
     end
@@ -324,8 +324,8 @@ describe "devices lists" do
         end
 
         it "returns filesystems located in a partition or its encrypted device" do
-          expect(partitions.filesystems.size).to eq 4
-          expect(partitions.with(encryption: nil).filesystems.size).to eq 3
+          expect(partitions.filesystems.size).to eq 5
+          expect(partitions.with(encryption: nil).filesystems.size).to eq 4
         end
       end
     end
@@ -405,7 +405,7 @@ describe "devices lists" do
         let(:scenario) { "complex-lvm-encrypt" }
 
         it "returns both encrypted partitions and directly formatted ones" do
-          expect(filesystems.partitions.size).to eq 4
+          expect(filesystems.partitions.size).to eq 5
         end
       end
     end
@@ -424,7 +424,7 @@ describe "devices lists" do
         let(:scenario) { "complex-lvm-encrypt" }
 
         it "includes disks for encrypted partitions" do
-          expect(filesystems.disks.size).to eq 2
+          expect(filesystems.disks.size).to eq 3
         end
       end
     end
