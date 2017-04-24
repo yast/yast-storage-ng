@@ -268,6 +268,7 @@ describe Y2Storage::ProposalSettings do
 
     context "when reading the 'subvolumes' feature" do
       before do
+        allow(Yast::Arch).to receive(:x86_64).and_return true
         stub_partitioning_features("subvolumes" => subvols_feature)
         # Just to avoid the noise from ProposalSettings#initialize
         allow(Y2Storage::PlannedSubvol).to receive(:fallback_list).and_return([])
