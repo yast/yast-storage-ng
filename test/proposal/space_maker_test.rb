@@ -236,8 +236,8 @@ describe Y2Storage::Proposal::SpaceMaker do
             end
 
             before do
-              allow_any_instance_of(Y2Storage::Filesystems::BlkFilesystem).to receive(:detect_resize_info)
-                .and_return(resize_info)
+              allow_any_instance_of(Y2Storage::Filesystems::BlkFilesystem)
+                .to receive(:detect_resize_info).and_return(resize_info)
             end
 
             it "resizes Windows partitions to free additional needed space" do
@@ -262,7 +262,7 @@ describe Y2Storage::Proposal::SpaceMaker do
               expect(result[:deleted_partitions]).to contain_exactly(
                 an_object_having_attributes(name: "/dev/sda1"),
                 an_object_having_attributes(name: "/dev/sda2"),
-                an_object_having_attributes(name: "/dev/sda3"),
+                an_object_having_attributes(name: "/dev/sda3")
               )
             end
 
@@ -615,7 +615,8 @@ describe Y2Storage::Proposal::SpaceMaker do
         vol2 = planned_vol(mount_point: "/2", reuse: "/dev/sda2")
         volumes = vols_list(vol1, vol2)
 
-        expect { maker.provide_space(fake_devicegraph, volumes, lvm_helper) }.to raise_error Y2Storage::Proposal::NoDiskSpaceError
+        expect { maker.provide_space(fake_devicegraph, volumes, lvm_helper) }
+          .to raise_error Y2Storage::Proposal::NoDiskSpaceError
       end
 
       it "deletes extended partitions when deleting all its logical children" do
@@ -650,7 +651,8 @@ describe Y2Storage::Proposal::SpaceMaker do
           planned_vol(mount_point: "/5", reuse: "/dev/sda6")
         )
 
-        expect { maker.provide_space(fake_devicegraph, volumes, lvm_helper) }.to raise_error Y2Storage::Proposal::NoDiskSpaceError
+        expect { maker.provide_space(fake_devicegraph, volumes, lvm_helper) }
+          .to raise_error Y2Storage::Proposal::NoDiskSpaceError
       end
     end
 
@@ -707,7 +709,8 @@ describe Y2Storage::Proposal::SpaceMaker do
         end
 
         it "raises an exception even if there is enough space in other disks" do
-          expect { maker.provide_space(fake_devicegraph, volumes, lvm_helper) }.to raise_error Y2Storage::Proposal::Error
+          expect { maker.provide_space(fake_devicegraph, volumes, lvm_helper) }
+            .to raise_error Y2Storage::Proposal::Error
         end
       end
 
