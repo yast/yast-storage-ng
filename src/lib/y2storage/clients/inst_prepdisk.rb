@@ -41,11 +41,6 @@ module Y2Storage
       def run
         return :auto if Mode.update
 
-        storage = manager.storage
-
-        storage.probed.save(Directory.logdir + "/probed-devicegraph.xml")
-        storage.staging.save(Directory.logdir + "/staging-devicegraph.xml")
-
         log.info("BEGIN of inst_prepdisk")
         Yast::SlideShow.MoveToStage("disk")
         commit
