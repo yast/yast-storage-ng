@@ -105,7 +105,7 @@ module Y2Storage
 
     # @return [PlannedVolumesList]
     def volumes_list
-      generator = VolumesGenerator.new(populated_settings, initial_graph)
+      generator = VolumesGenerator.new(populated_settings, clean_graph)
       generator.volumes
     end
 
@@ -116,14 +116,24 @@ module Y2Storage
     # @return [Devicegraph]
     def devicegraph(volumes)
       generator = DevicegraphGenerator.new(populated_settings)
-      generator.devicegraph(volumes, initial_graph, disk_analyzer)
+      generator.devicegraph(volumes, clean_graph, space_maker)
     end
 
-    # Disk analyzer used to analyze the initial devigraph
+    def space_maker
+      @space_maker ||= SpaceMaker.new(disk_analyzer, populated_settings)
+    end
+
+    # Disk analyzer used to analyze the initial devicegraph
     #
     # @return [DiskAnalyzer]
     def disk_analyzer
       @disk_analyzer ||= DiskAnalyzer.new(initial_graph)
+    end
+
+    # Copy of #initial_graph without all the partitions that must be wiped out
+    # according to the settings
+    def clean_graph
+      @clean_graph ||= space_maker.delete_unwanted_partitions(initial_graph)
     end
 
     def initial_graph

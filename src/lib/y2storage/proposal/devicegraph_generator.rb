@@ -48,7 +48,7 @@ module Y2Storage
       #
       # @return [Devicegraph]
       # @raise Proposal::Error if it was not possible to propose a devicegraph
-      def devicegraph(volumes, initial_graph, disk_analyzer)
+      def devicegraph(volumes, initial_graph, space_maker)
         # We are going to alter the volumes in several ways, so let's be a
         # good citizen and do it in our own copy
         volumes = volumes.deep_dup
@@ -61,15 +61,14 @@ module Y2Storage
         end
 
         lvm_helper = LvmHelper.new(lvm_vols, encryption_password: settings.encryption_password)
-        space_maker = SpaceMaker.new(initial_graph, disk_analyzer, lvm_helper, settings)
         begin
-          space_result = provide_space(volumes, space_maker)
+          space_result = provide_space(volumes, initial_graph, lvm_helper, space_maker)
         rescue NoDiskSpaceError
           raise if volumes.target == :min
           # Try again with the minimum size
           volumes.target = :min
           lvm_vols.target = :min
-          space_result = provide_space(volumes, space_maker)
+          space_result = provide_space(volumes, initial_graph, lvm_helper, space_maker)
         end
 
         refine_volumes!(volumes, space_result[:deleted_partitions])
@@ -107,18 +106,18 @@ module Y2Storage
       # @param space_maker [SpaceMaker]
       #
       # @return [Devicegraph]
-      def provide_space(no_lvm_volumes, space_maker)
+      def provide_space(no_lvm_volumes, devicegraph, lvm_helper, space_maker)
         if settings.use_lvm
-          provide_space_lvm(no_lvm_volumes, space_maker)
+          provide_space_lvm(no_lvm_volumes, devicegraph, lvm_helper, space_maker)
         else
-          provide_space_no_lvm(no_lvm_volumes, space_maker)
+          provide_space_no_lvm(no_lvm_volumes, devicegraph, lvm_helper, space_maker)
         end
       end
 
       # Variant of #provide_space when LVM is not involved
       # @see #provide_space
-      def provide_space_no_lvm(volumes, space_maker)
-        result = space_maker.provide_space(volumes)
+      def provide_space_no_lvm(volumes, devicegraph, lvm_helper, space_maker)
+        result = space_maker.provide_space(devicegraph, volumes, lvm_helper)
         log.info "Found #{volumes.target} space"
         result
       end
@@ -128,14 +127,13 @@ module Y2Storage
       # create a new volume group from scratch.
       #
       # @see #provide_space
-      def provide_space_lvm(no_lvm_volumes, space_maker)
-        lvm_helper = space_maker.lvm_helper
+      def provide_space_lvm(no_lvm_volumes, devicegraph, lvm_helper, space_maker)
         lvm_helper.reused_volume_group = nil
 
-        lvm_helper.reusable_volume_groups(space_maker.original_graph).each do |vg|
+        lvm_helper.reusable_volume_groups(devicegraph).each do |vg|
           begin
             lvm_helper.reused_volume_group = vg
-            result = space_maker.provide_space(no_lvm_volumes)
+            result = space_maker.provide_space(devicegraph, no_lvm_volumes, lvm_helper)
             log.info "Found #{no_lvm_volumes.target} space including LVM, reusing #{vg}"
             return result
           rescue NoDiskSpaceError
@@ -144,7 +142,7 @@ module Y2Storage
         end
 
         lvm_helper.reused_volume_group = nil
-        result = space_maker.provide_space(no_lvm_volumes)
+        result = space_maker.provide_space(devicegraph, no_lvm_volumes, lvm_helper)
         log.info "Found #{no_lvm_volumes.target} space including LVM"
 
         result
