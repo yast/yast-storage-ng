@@ -35,6 +35,7 @@ RSpec.shared_context "proposal" do
       .and_return(resize_info)
 
     allow(Yast::Arch).to receive(:x86_64).and_return(architecture == :x86)
+    allow(Yast::Arch).to receive(:i386).and_return(architecture == :i386)
     allow(Yast::Arch).to receive(:s390).and_return(architecture == :s390)
     allow(storage_arch).to receive(:ppc_power_nv?).and_return(ppc_power_nv)
     allow(Y2Storage::StorageManager.instance.storage).to receive(:arch).and_return(storage_arch)

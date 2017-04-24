@@ -33,8 +33,7 @@ describe Y2Storage::DiskAnalyzer do
   end
 
   describe "#windows_partitions" do
-    # let(:scenario) { "mixed_disks" }
-    let(:scenario) { "complex-lvm-encrypt" }
+    let(:scenario) { "mixed_disks" }
 
     context "in a PC" do
       before do
@@ -71,6 +70,7 @@ describe Y2Storage::DiskAnalyzer do
     let(:scenario) { "mixed_disks" }
 
     before do
+      allow(Yast::Arch).to receive(:x86_64).and_return true
       allow_any_instance_of(::Storage::BlkFilesystem).to receive(:detect_content_info)
         .and_return(content_info)
       allow_any_instance_of(Y2Storage::ExistingFilesystem).to receive(:release_name)
