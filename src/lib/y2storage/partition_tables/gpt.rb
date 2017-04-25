@@ -32,11 +32,11 @@ module Y2Storage
 
       # @!method pmbr_boot?
       #   @return [Boolean] whether protective MBR flag is set
-      storage_forward :pmbr_boot?, to: :is_pmbr_boot
+      storage_forward :pmbr_boot?
 
       # @!method pmbr_boot=(value)
       #   @attr value [Boolean] set/unset flag
-      storage_forward :pmbr_boot=, to: :set_pmbr_boot
+      storage_forward :pmbr_boot=
     end
   end
 end
