@@ -195,6 +195,7 @@ module Y2Storage
       return unless filesystem.supports_btrfs_subvolumes?
       return unless subvolumes?
       parent_subvol = get_parent_subvol(filesystem)
+      parent_subvol.set_default_btrfs_subvolume
       prefix = filesystem.mountpoint
       prefix += "/" unless prefix == "/"
       @subvolumes.each do |planned_subvol|
