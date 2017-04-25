@@ -31,18 +31,12 @@ module Y2Storage
         # This dialog should be skipped when there is only one candidate
         # disk for installation and there are not installed systems.
         def skip?
-          candidate_disks.size == 1 &&
-            analyzer.installed_systems(candidate_disks.first).size == 0
+          candidate_disks.size == 1 && all_partitions.empty?
         end
 
         # Before skipping, settings should be assigned.
         def before_skip
           settings.root_device = candidate_disks.first.name
-        end
-
-        def root_disk_handler
-          widget_update(:windows_actions, activate_windows_actions?, attr: :Enabled)
-          widget_update(:linux_actions, activate_linux_actions?, attr: :Enabled)
         end
 
       protected
@@ -56,9 +50,11 @@ module Y2Storage
             VBox(
               root_selection_widget,
               VSpacing(1),
-              windows_actions_widget,
+              windows_action_widget,
               VSpacing(1),
-              linux_actions_widget
+              linux_delete_mode_widget,
+              VSpacing(1),
+              other_delete_mode_widget
             )
           )
         end
@@ -80,16 +76,16 @@ module Y2Storage
           )
         end
 
-        def windows_actions_widget
+        def windows_action_widget
           VBox(
             Left(Label(_("Choose what to do with existing Windows systems"))),
             Left(
               ComboBox(
-                Id(:windows_actions), "",
+                Id(:windows_action), "",
                 [
                   Item(Id(:not_modify), _("Do not modify")),
                   Item(Id(:resize), _("Resize if needed")),
-                  Item(Id(:remove), _("Remove if needed")),
+                  Item(Id(:remove), _("Resize or remove as needed")),
                   Item(Id(:always_remove), _("Remove even if not needed"))
                 ]
               )
@@ -97,16 +93,32 @@ module Y2Storage
           )
         end
 
-        def linux_actions_widget
+        def linux_delete_mode_widget
           VBox(
             Left(Label(_("Choose what to do with existing Linux partitions"))),
             Left(
               ComboBox(
-                Id(:linux_actions), "",
+                Id(:linux_delete_mode), "",
                 [
-                  Item(Id(:not_modify), _("Do not modify")),
-                  Item(Id(:remove), _("Remove if needed")),
-                  Item(Id(:always_remove), _("Remove even if not needed"))
+                  Item(Id(:none), _("Do not modify")),
+                  Item(Id(:ondemand), _("Remove if needed")),
+                  Item(Id(:all), _("Remove even if not needed"))
+                ]
+              )
+            )
+          )
+        end
+
+        def other_delete_mode_widget
+          VBox(
+            Left(Label(_("Choose what to do with other partitions"))),
+            Left(
+              ComboBox(
+                Id(:other_delete_mode), "",
+                [
+                  Item(Id(:none), _("Do not modify")),
+                  Item(Id(:ondemand), _("Remove if needed")),
+                  Item(Id(:all), _("Remove even if not needed"))
                 ]
               )
             )
@@ -125,12 +137,38 @@ module Y2Storage
           # Select a root disk or any option
           widget = settings.root_device || :any_disk
           widget_update(widget, true)
-          root_disk_handler
+
+          widget_update(:windows_action, windows_action)
+          widget_update(:windows_action, activate_windows_actions?, attr: :Enabled)
+
+          widget_update(:linux_delete_mode, settings.linux_delete_mode)
+          widget_update(:linux_delete_mode, activate_linux_delete_mode?, attr: :Enabled)
+
+          widget_update(:other_delete_mode, settings.other_delete_mode)
+          widget_update(:other_delete_mode, activate_other_delete_mode?, attr: :Enabled)
         end
 
         def update_settings!
           root = selected_disk
           settings.root_device = root ? root.name : nil
+
+          settings.linux_delete_mode = widget_value(:linux_delete_mode)
+          settings.other_delete_mode = widget_value(:other_delete_mode)
+
+          case widget_value(:windows_action)
+          when :not_modify
+            settings.resize_windows = false
+            settings.windows_delete_mode = :none
+          when :resize
+            settings.resize_windows = true
+            settings.windows_delete_mode = :none
+          when :remove
+            settings.resize_windows = true
+            settings.windows_delete_mode = :ondemand
+          when :always_remove
+            settings.resize_windows = false
+            settings.windows_delete_mode = :all
+          end
         end
 
       private
@@ -154,11 +192,39 @@ module Y2Storage
         end
 
         def activate_windows_actions?
-          !analyzer.windows_systems(*candidate_disks).empty?
+          !windows_partitions.empty?
         end
 
-        def activate_linux_actions?
-          !analyzer.linux_systems(*candidate_disks).empty?
+        def activate_linux_delete_mode?
+          !linux_partitions.empty?
+        end
+
+        def activate_other_delete_mode?
+          all_partitions.size > linux_partitions.size + windows_partitions.size
+        end
+
+        def linux_partitions
+          analyzer.linux_partitions(*candidate_disks)
+        end
+
+        def windows_partitions
+          analyzer.windows_partitions(*candidate_disks)
+        end
+
+        def all_partitions
+          @all_partitions ||= candidate_disks.map(&:partitions).flatten
+        end
+
+        def windows_action
+          if settings.windows_delete_mode == :all
+            :always_remove
+          elsif settings.windows_delete_mode == :ondemand
+            :remove
+          elsif settings.resize_windows
+            :resize
+          else
+            :not_modify
+          end
         end
       end
     end
