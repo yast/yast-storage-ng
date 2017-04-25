@@ -52,7 +52,7 @@ module Y2Storage
     #
     #   @return [DiskSize]
     storage_forward :extent_size, as: "DiskSize"
-    storage_forward :extent_size=, as: "DiskSize"
+    storage_forward :extent_size=
 
     # @!method number_of_extents
     #   Total number of extents
