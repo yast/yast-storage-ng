@@ -76,7 +76,7 @@ module Y2Storage
     # @return [Symbol] what to do regarding removal of existing partitions
     #   hosting a Windows system.
     #
-    #   * :none never Delete a Windows partition.
+    #   * :none Never delete a Windows partition.
     #   * :ondemand Delete Windows partitions as needed by the proposal.
     #   * :all Delete all Windows partitions, even if not needed.
     attr_accessor :windows_delete_mode
