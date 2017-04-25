@@ -38,6 +38,9 @@ module Y2Storage
     include Yast::Logger
     include SecretAttributes
 
+    VALID_DELETE_MODES = [:none, :all, :ondemand]
+    private_constant :VALID_DELETE_MODES
+
     # @return [Boolean] whether to use LVM
     attr_accessor :use_lvm
 
@@ -136,6 +139,35 @@ module Y2Storage
     end
 
     alias_method :delete_forced?, :delete_forced
+
+    alias_method :set_windows_delete_mode, :windows_delete_mode=
+    private :set_windows_delete_mode
+    def windows_delete_mode=(mode)
+      set_windows_delete_mode(validated_delete_mode(mode))
+    end
+
+    alias_method :set_linux_delete_mode, :linux_delete_mode=
+    private :set_linux_delete_mode
+    def linux_delete_mode=(mode)
+      set_linux_delete_mode(validated_delete_mode(mode))
+    end
+
+    alias_method :set_other_delete_mode, :other_delete_mode=
+    private :set_other_delete_mode
+    def other_delete_mode=(mode)
+      set_other_delete_mode(validated_delete_mode(mode))
+    end
+
+  private
+
+    def validated_delete_mode(mode)
+      raise(ArgumentError, "Mode cannot be nil") unless mode
+      result = mode.to_sym
+      if !VALID_DELETE_MODES.include?(result)
+        raise ArgumentError, "Invalid mode"
+      end
+      result
+    end
   end
 
   # Per-product settings for the storage proposal.
