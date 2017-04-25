@@ -140,7 +140,7 @@ module Y2Storage
           multiplicator = 1.0 + @settings.btrfs_increase_percentage / 100.0
           root_vol.min_disk_size *= multiplicator
           root_vol.max_disk_size *= multiplicator
-          root_vol.default_subvolume = @settings.btrfs_default_subvolume
+          root_vol.default_subvolume = @settings.btrfs_default_subvolume || ""
           root_vol.subvolumes = @settings.subvolumes
           log.info "Adding Btrfs subvolumes: \n#{root_vol.subvolumes}"
         end

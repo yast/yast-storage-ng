@@ -56,14 +56,14 @@ RSpec.shared_context "proposal" do
   let(:separate_home) { false }
   let(:lvm) { false }
   let(:encrypt) { false }
-  let(:subvol) { false }
+  let(:test_with_subvolumes) { false }
   let(:settings) do
     settings = Y2Storage::ProposalSettings.new
     settings.use_separate_home = separate_home
     settings.use_lvm = lvm
     settings.encryption_password = encrypt ? "12345678" : nil
     # If subvolumes are not tested, override the subvolume fallbacks list
-    settings.subvolumes = nil unless subvol
+    settings.subvolumes = nil unless test_with_subvolumes
     settings
   end
 
