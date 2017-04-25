@@ -118,7 +118,7 @@ module Y2Storage
     # @param type [#to_s] :linux, :windows or :other
     # @return [Boolean]
     def delete_forbidden(type)
-      send(:"#{type}_delete_mode").to_sym == :none
+      send(:"#{type}_delete_mode") == :none
     end
 
     alias_method :delete_forbidden?, :delete_forbidden
@@ -132,7 +132,7 @@ module Y2Storage
     # @param type [#to_s] :linux, :windows or :other
     # @return [Boolean]
     def delete_forced(type)
-      send(:"#{type}_delete_mode").to_sym == :all
+      send(:"#{type}_delete_mode") == :all
     end
 
     alias_method :delete_forced?, :delete_forced
