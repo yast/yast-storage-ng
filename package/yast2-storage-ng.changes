@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Tue Apr 25 08:50:10 UTC 2017 - jreidinger@suse.com
+
+- add Gpt#pmbr_boot(?/=) methods for protective MBR
+- 0.1.13
+
+-------------------------------------------------------------------
 Thu Mar 23 08:18:36 UTC 2017 - jilopez@localhost
 
 - Adapted prepdisk client to work in update mode.
