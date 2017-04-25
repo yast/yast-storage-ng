@@ -78,36 +78,62 @@ module Y2Storage
       raise UnexpectedCallError if proposed?
       settings.freeze
       @proposed = true
-      @volumes = volumes_list(:all, populated_settings)
-      @devices = devicegraph(@volumes, populated_settings)
+
+      # FIXME: The current implementation, tries :desired and then :min for
+      # every root disk. It would probably make more sense to try first :desired
+      # for all possible root disks and then do the same with :min.
+      exception = nil
+      candidate_roots.each do |disk_name|
+        populated_settings.root_device = disk_name
+        exception = nil
+
+        begin
+          @volumes = volumes_list
+          @devices = devicegraph(@volumes)
+        rescue Error => error
+          log.info "Failed to make a proposal using root device #{disk_name}: #{error.message}"
+          exception = error
+        end
+
+        break unless exception
+      end
+
+      raise exception if exception
     end
 
   protected
 
-    # @param set [#to_s] List of volumes to generate, :all or :base
-    # @param settings [ProposalSettings]
     # @return [PlannedVolumesList]
-    def volumes_list(set, settings)
-      generator = VolumesGenerator.new(settings, initial_graph)
-      generator.send(:"#{set}_volumes")
+    def volumes_list
+      generator = VolumesGenerator.new(populated_settings, clean_graph)
+      generator.volumes
     end
 
     # Devicegraph resulting of accommodating some volumes in the initial
     # devicegraph
     #
     # @param volumes [PlannedVolumesList] list of volumes to accomodate
-    # @param settings [ProposalSettings]
     # @return [Devicegraph]
-    def devicegraph(volumes, settings)
-      generator = DevicegraphGenerator.new(settings)
-      generator.devicegraph(volumes, initial_graph, disk_analyzer)
+    def devicegraph(volumes)
+      generator = DevicegraphGenerator.new(populated_settings)
+      generator.devicegraph(volumes, clean_graph, space_maker)
     end
 
-    # Disk analyzer used to analyze the initial devigraph
+    def space_maker
+      @space_maker ||= SpaceMaker.new(disk_analyzer, populated_settings)
+    end
+
+    # Disk analyzer used to analyze the initial devicegraph
     #
     # @return [DiskAnalyzer]
     def disk_analyzer
       @disk_analyzer ||= DiskAnalyzer.new(initial_graph)
+    end
+
+    # Copy of #initial_graph without all the partitions that must be wiped out
+    # according to the settings
+    def clean_graph
+      @clean_graph ||= space_maker.delete_unwanted_partitions(initial_graph)
     end
 
     def initial_graph
@@ -115,8 +141,7 @@ module Y2Storage
     end
 
     # Copy of the original settings including some calculated and necessary
-    # values (like candidate_devices or root_device), in case they were not
-    # present
+    # values (mainly candidate_devices), in case they were not present
     #
     # @return [ProposalSettings]
     def populated_settings
@@ -124,45 +149,23 @@ module Y2Storage
 
       populated = settings.dup
       populated.candidate_devices ||= disk_analyzer.candidate_disks.map(&:name)
-      populated.root_device ||= proposed_root_device(populated)
 
       @populated_settings = populated
     end
 
-    # Proposes a value for settings.root_devices if none was provided
+    # Sorted list of disks to be tried as root_device.
     #
-    # It assumes settings.candidate_devices is already set.
-    # It tries to allocate the base volumes using each candidate device
-    # as root, returning the first for which that allocation is possible.
+    # If the current settings already specify a root_device, the list will
+    # contain only that one.
     #
-    # @raise Proposal::NoSuitableDeviceError if the base volumes don't fit for
-    # any root candidate
+    # Otherwise, it will contain all the candidate devices, sorted from bigger
+    # to smaller disk size.
     #
-    # @param settings [ProposalSettings]
-    # @return [String] name of the chosen device
-    def proposed_root_device(settings)
-      names = sorted_candidates(settings.candidate_devices)
-      names.each do |disk_name|
-        new_settings = settings.dup
-        new_settings.root_device = disk_name
-        begin
-          volumes = volumes_list(:base, new_settings)
-          devicegraph(volumes, new_settings)
-          return disk_name
-        rescue Proposal::Error => error
-          log.info "#{disk_name} is not a valid root device: #{error.message}"
-          next
-        end
-      end
+    # @return [Array<String>] names of the chosen devices
+    def candidate_roots
+      return [populated_settings.root_device] if populated_settings.root_device
 
-      raise Proposal::NoSuitableDeviceError, "No room for base volumes in #{names}"
-    end
-
-    # Sorts a list of disk names from bigger to smaller disk size
-    #
-    # @param disk_names [Array<String>] unsorted list of names
-    # @return [Array<String>] sorted list of names
-    def sorted_candidates(disk_names)
+      disk_names = populated_settings.candidate_devices
       candidate_disks = initial_graph.disks.select { |d| disk_names.include?(d.name) }
       candidate_disks = candidate_disks.sort_by(&:size).reverse
       candidate_disks.map(&:name)

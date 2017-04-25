@@ -56,6 +56,26 @@ describe Y2Storage::Proposal do
       end
     end
 
+    context "when asked to delete all the existing partitions" do
+      let(:scenario) { "windows-linux-lvm-pc" }
+      let(:separate_home) { false }
+      let(:lvm) { false }
+
+      before do
+        settings.windows_delete_mode = :all
+        settings.linux_delete_mode = :all
+        settings.other_delete_mode = :all
+      end
+
+      it "cleanups the disks before creating partitions" do
+        proposal.propose
+        expect(proposal.devices.partitions).to contain_exactly(
+          an_object_having_attributes(filesystem_mountpoint: "/"),
+          an_object_having_attributes(filesystem_mountpoint: "swap")
+        )
+      end
+    end
+
     context "with pre-existing swap partitions" do
       before do
         allow(Y2Storage::Proposal::VolumesGenerator).to receive(:new).and_return volumes_generator
@@ -78,7 +98,7 @@ describe Y2Storage::Proposal do
         instance_double(
           "Y2Storage::Proposal::VolumesGenerator",
           base_volumes: Y2Storage::PlannedVolumesList.new(base_volumes),
-          all_volumes:  Y2Storage::PlannedVolumesList.new(all_volumes)
+          volumes:      Y2Storage::PlannedVolumesList.new(all_volumes)
         )
       end
 
