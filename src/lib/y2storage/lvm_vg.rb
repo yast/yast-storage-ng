@@ -117,7 +117,7 @@ module Y2Storage
     # @!method self.create(devicegraph, vg_name)
     #   @param devicegraph [Devicegraph]
     #   @param vg_name [String] @see #vg_name
-    #   return [LvmVg]
+    #   @return [LvmVg]
     storage_class_forward :create, as: "LvmVg"
 
     # @!method self.all(devicegraph)
