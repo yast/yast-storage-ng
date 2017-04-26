@@ -82,16 +82,18 @@ module Y2Storage
     #   * :none Never delete a Windows partition.
     #   * :ondemand Delete Windows partitions as needed by the proposal.
     #   * :all Delete all Windows partitions, even if not needed.
+    #
+    #   @raise ArgumentError if any other value is assigned
     attr_accessor :windows_delete_mode
 
     # @return [Symbol] what to do regarding removal of existing Linux
     #   partitions. @see DiskAnalyzer for the definition of "Linux partitions".
-    #   @see #windows_delete_mode for the possible values
+    #   @see #windows_delete_mode for the possible values and exceptions
     attr_accessor :linux_delete_mode
 
     # @return [Symbol] what to do regarding removal of existing partitions that
     #   don't fit in #windows_delete_mode or #linux_delete_mode.
-    #   @see #windows_delete_mode for the possible values
+    #   @see #windows_delete_mode for the possible values and exceptions
     attr_accessor :other_delete_mode
 
     def initialize
