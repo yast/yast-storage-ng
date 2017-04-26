@@ -39,20 +39,16 @@ module Y2Storage
       include Yast::Logger
 
       attr_accessor :settings
-      attr_reader :lvm_helper, :original_graph
+      attr_reader :original_graph
 
       # Initialize.
       #
-      # @param original_graph [Devicegraph] initial devicegraph
-      # @param disk_analyzer [DiskAnalyzer] information about original_graph
-      # @param lvm_helper [Proposal::LvmHelper] contains information about the
-      #     LVM planned volumes and how to make space for them
+      # @param disk_analyzer [DiskAnalyzer] information about existing partitions
       # @param settings [ProposalSettings] proposal settings
-      def initialize(original_graph, disk_analyzer, lvm_helper, settings)
-        @original_graph = original_graph
+      def initialize(disk_analyzer, settings)
         @disk_analyzer = disk_analyzer
-        @lvm_helper = lvm_helper
         @settings = settings
+        @deleted_names = []
       end
 
       # Performs all the operations needed to free enough space to accomodate
@@ -62,8 +58,11 @@ module Y2Storage
       # @raise Proposal::Error if is not possible to accomodate the planned
       #   volumes and/or the physical volumes
       #
+      # @param original_graph [Devicegraph] initial devicegraph
       # @param no_lvm_volumes [PlannedVolumesList] set of non-LVM volumes to
       #     make space for. The LVM volumes are already handled by #lvm_helper.
+      # @param lvm_helper [Proposal::LvmHelper] contains information about the
+      #     LVM planned volumes and how to make space for them
       # @return [Hash] a hash with three elements:
       #   devicegraph: [Devicegraph] resulting devicegraph
       #   deleted_partitions: [Array<Partition>] partitions that
@@ -71,11 +70,10 @@ module Y2Storage
       #   space_distribution: [SpaceDistribution] proposed distribution of
       #     volumes, including new PVs if necessary
       #
-      def provide_space(no_lvm_volumes)
+      def provide_space(original_graph, no_lvm_volumes, lvm_helper)
+        @original_graph = original_graph
         @new_graph = original_graph.duplicate
-        @partition_killer = PartitionKiller.new(@new_graph, candidate_disk_names)
         @dist_calculator = SpaceDistributionCalculator.new(lvm_helper)
-        @deleted_names = []
 
         # Partitions that should not be deleted
         keep = lvm_helper.partitions_in_vg
@@ -105,9 +103,33 @@ module Y2Storage
         }
       end
 
+      # Deletes all partitions explicitly marked for removal in the proposal
+      # settings, i.e. all the partitions belonging to one of the types with
+      # delete_mode set to :all.
+      #
+      # @see #windows_delete_mode
+      # @see #linux_delete_mode
+      # @see #other_delete_mode
+      #
+      # @param original_graph [Devicegraph] initial devicegraph
+      # @return [Devicegraph] copy of #original_graph without the unwanted
+      #   partitions
+      def delete_unwanted_partitions(original_graph)
+        result = original_graph.dup
+
+        [:windows, :linux, :other].each do |type|
+          next unless settings.delete_forced?(type)
+
+          log.info("Forcely deleting #{type} partitions")
+          delete_candidates!(result, type)
+        end
+
+        result
+      end
+
     protected
 
-      attr_reader :new_graph, :disk_analyzer, :partition_killer, :dist_calculator
+      attr_reader :new_graph, :disk_analyzer, :dist_calculator
 
       # Partitions from the original devicegraph that are not present in the
       # result of the last call to #provide_space
@@ -209,6 +231,7 @@ module Y2Storage
       #   Linux partitions in the same disk
       def resize_windows!(volumes, disk, force: false)
         return if success?(volumes)
+        return unless settings.resize_windows
         part_names = windows_part_names(disk)
         return if part_names.empty?
 
@@ -305,9 +328,17 @@ module Y2Storage
       # @param disk [String] optional disk name to restrict operations to
       def delete_partitions!(volumes, type, keep, disk)
         return if success?(volumes)
+        return if settings.delete_forbidden?(type)
 
         log.info("Deleting partitions to make space")
-        deletion_candidate_partitions(type, disk).each do |part_name|
+        delete_candidates!(new_graph, type, keep, disk) { success?(volumes) }
+      end
+
+      # @see #delete_partitions! and #delete_unwanted_partitions
+      def delete_candidates!(devicegraph, type, keep = [], disk = nil)
+        partition_killer = PartitionKiller.new(devicegraph, candidate_disk_names)
+
+        deletion_candidate_partitions(devicegraph, type, disk).each do |part_name|
           if keep.include?(part_name)
             log.info "Skipped deletion of #{part_name}"
             next
@@ -321,7 +352,8 @@ module Y2Storage
           next if names.empty?
 
           @deleted_names.concat(names)
-          break if success?(volumes)
+          # Stop deleting if the passed condition is met
+          break if block_given? && yield
         end
       end
 
@@ -340,14 +372,15 @@ module Y2Storage
       # Extended partitions are ignored, they will be deleted by
       # #delete_partition if needed
       #
+      # @param devicegraph [Devicegraph]
       # @param type [Symbol]
       # @param disk [String] optional disk name to restrict operations to
       # @return [Array<String>] partition names sorted by disk and by position
       #     inside the disk (partitions at the end are presented first)
-      def deletion_candidate_partitions(type, disk = nil)
+      def deletion_candidate_partitions(devicegraph, type, disk = nil)
         names = []
-        disks_for(original_graph, disk).each do |dsk|
-          partitions = original_graph.partitions.select { |p| p.partitionable.name == dsk.name }
+        disks_for(devicegraph, disk).each do |dsk|
+          partitions = devicegraph.partitions.select { |p| p.partitionable.name == dsk.name }
           partitions.delete_if { |part| part.type.is?(:extended) }
           filter_partitions_by_type!(partitions, type, dsk.name)
           partitions = partitions.sort_by { |part| part.region.start }.reverse

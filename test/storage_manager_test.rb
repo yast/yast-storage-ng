@@ -24,7 +24,8 @@ require_relative "spec_helper"
 require "y2storage"
 
 def devicegraph_from(file_name)
-  st_graph = Storage::Devicegraph.new
+  storage = Y2Storage::StorageManager.instance.storage
+  st_graph = Storage::Devicegraph.new(storage)
   graph = Y2Storage::Devicegraph.new(st_graph)
   yaml_file = input_file_for(file_name)
   Y2Storage::FakeDeviceFactory.load_yaml_file(graph, yaml_file)

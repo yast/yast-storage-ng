@@ -29,13 +29,30 @@ module Y2Storage
   class LvmLv < BlkDevice
     wrap_class Storage::LvmLv
 
+    # @!method lv_name
+    #   @return [String] logical volume name (e.g. "lv1"), not to be confused
+    #     with BlkDevice#name (e.g. "/dev/mapper/vg0/lv1")
     storage_forward :lv_name
+
+    # @!method lvm_vg
+    #   @return [LvmVg] volume group the LV belongs to
     storage_forward :lvm_vg, as: "LvmVg"
+
+    # @!attribute stripes
+    #   Number of stripes. 0 if the LV is not striped
+    #   @return [Fixnum]
     storage_forward :stripes
     storage_forward :stripes=
+
+    # @!attribute stripe_size
+    #   Size of a stripe. DiskSize.zero if the LV is not striped.
+    #   @return [DiskSize]
     storage_forward :stripe_size, as: "DiskSize"
     storage_forward :stripe_size=, as: "DiskSize"
 
+    # @!method self.all(devicegraph)
+    #   @param devicegraph [Devicegraph]
+    #   @return [Array<Disk>] all the logical volumes in the given devicegraph
     storage_class_forward :all, as: "LvmLv"
 
   protected

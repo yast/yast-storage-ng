@@ -35,17 +35,16 @@ describe Y2Storage::Dialogs::GuidedSetup::SelectRootDisk do
     context "when there is only one disk" do
       let(:candidate_disks) { ["/dev/sda"] }
 
-      context "and there is not any installed system" do
-        let(:windows_systems) { [] }
-        let(:linux_systems) { [] }
+      context "and there are no partitions" do
+        let(:partitions) { { "/dev/sda" => [] } }
 
         it "returns true" do
           expect(subject.skip?).to be(true)
         end
       end
 
-      context "and there is any installed system" do
-        let(:windows_systems) { ["Windows"] }
+      context "and it contains partitions" do
+        let(:partitions) { { "/dev/sda" => ["sda1"] } }
 
         it "returns false" do
           expect(subject.skip?).to be(false)
@@ -65,6 +64,12 @@ describe Y2Storage::Dialogs::GuidedSetup::SelectRootDisk do
   describe "#run" do
     let(:all_disks) { ["/dev/sda", "/dev/sdb"] }
     let(:candidate_disks) { all_disks }
+
+    before do
+      select_widget(:windows_action, :not_modify)
+      select_widget(:linux_delete_mode, :all)
+      select_widget(:other_delete_mode, :all)
+    end
 
     context "when settings has not a root disk" do
       before { settings.root_device = nil }
@@ -117,62 +122,205 @@ describe Y2Storage::Dialogs::GuidedSetup::SelectRootDisk do
     end
 
     context "when no disk has a Windows system" do
-      let(:windows_systems) { [] }
+      let(:windows_partitions) { [] }
 
       it "disables windows actions" do
-        expect_disable(:windows_actions)
+        expect_disable(:windows_action)
         subject.run
       end
     end
 
     context "when some disk has a Windows system" do
-      let(:windows_systems) { ["Windows"] }
+      let(:windows_partitions) { [partition_double("sda1")] }
 
       it "enables windows actions" do
-        expect_enable(:windows_actions)
+        expect_enable(:windows_action)
         subject.run
       end
     end
 
-    context "when no disk has a Linux system" do
-      let(:linux_systems) { [] }
+    context "when no disk has a Linux partition" do
+      let(:linux_partitions) { [] }
 
       it "disables linux actions" do
-        expect_disable(:linux_actions)
+        expect_disable(:linux_delete_mode)
         subject.run
       end
     end
 
-    context "when some disk has a Linux system" do
-      let(:linux_systems) { ["openSUSE"] }
+    context "when some disk has Linux partitions" do
+      let(:linux_partitions) { [partition_double("sda2"), partition_double("sda3")] }
 
       it "enables linux actions" do
-        expect_enable(:linux_actions)
+        expect_enable(:linux_delete_mode)
         subject.run
       end
     end
 
-    context "when settings has action for Windows systems" do
-      it "selects that action by default" do
-        skip "no settings exists for that"
+    context "when all the partitions are Windows systems or Linux" do
+      let(:windows_partitions) { [partition_double("sda1")] }
+      let(:linux_partitions) { [partition_double("sda2"), partition_double("sda3")] }
+      let(:partitions) do
+        { "/dev/sda" => [partition_double("sda1"), partition_double("sda2"), partition_double("sda3")] }
+      end
+
+      it "disables other actions" do
+        expect_disable(:other_delete_mode)
+        subject.run
       end
     end
 
-    context "when settings has action for Linux partitions" do
-      it "selects that action by default" do
-        skip "no settings exists for that"
+    context "when there are other kind of partitions (not Linux or Windows system)" do
+      let(:windows_partitions) { [] }
+      let(:linux_partitions) { [partition_double("sda2"), partition_double("sda3")] }
+      let(:partitions) do
+        { "/dev/sda" => [partition_double("sda1"), partition_double("sda2"), partition_double("sda3")] }
+      end
+
+      it "enables other actions" do
+        expect_enable(:other_delete_mode)
+        subject.run
       end
     end
 
-    context "when an action is selected for Windows systems" do
-      it "updates settings with the selected action for Windows systems" do
-        skip "no settings exists for that"
+    it "selects the right linux action by default" do
+      settings.linux_delete_mode = :ondemand
+      expect_select(:linux_delete_mode, :ondemand)
+      subject.run
+
+      settings.linux_delete_mode = :all
+      expect_select(:linux_delete_mode, :all)
+      subject.run
+    end
+
+    it "selects the right other action by default" do
+      settings.other_delete_mode = :ondemand
+      expect_select(:other_delete_mode, :ondemand)
+      subject.run
+
+      settings.other_delete_mode = :all
+      expect_select(:other_delete_mode, :all)
+      subject.run
+    end
+
+    context "when settings.windows_delete_mode is set to :all" do
+      before { settings.windows_delete_mode = :all }
+
+      it "sets the Windows action to :always_remove" do
+        expect_select(:windows_action, :always_remove)
+        subject.run
       end
     end
 
-    context "when an action is selected for Linux partitions" do
-      it "updates settings with the selected action for Linux partitions" do
-        skip "no settings exists for that"
+    context "when settings.windows_delete_mode is set to :ondemand" do
+      before { settings.windows_delete_mode = :ondemand }
+
+      it "sets the Windows action to :remove" do
+        expect_select(:windows_action, :remove)
+        subject.run
+      end
+    end
+
+    context "when settings.windows_delete_mode is set to :none" do
+      before { settings.windows_delete_mode = :none }
+
+      context "and resizing is allowed" do
+        before { settings.resize_windows = true }
+
+        it "sets the Windows action to :resize" do
+          expect_select(:windows_action, :resize)
+          subject.run
+        end
+      end
+
+      context "and resizing is not allowed" do
+        before { settings.resize_windows = false }
+
+        it "sets the Windows action to :not_modify" do
+          expect_select(:windows_action, :not_modify)
+          subject.run
+        end
+      end
+    end
+
+    context "updating settings regarding Windows" do
+      context "if :not_modify is selected for Windows action" do
+        before { select_widget(:windows_action, :not_modify) }
+
+        it "updates the settings according" do
+          subject.run
+          expect(settings.windows_delete_mode).to eq :none
+          expect(settings.resize_windows).to eq false
+        end
+      end
+
+      context "if :resize is selected for Windows action" do
+        before { select_widget(:windows_action, :resize) }
+
+        it "updates the settings according" do
+          subject.run
+          expect(settings.windows_delete_mode).to eq :none
+          expect(settings.resize_windows).to eq true
+        end
+      end
+
+      context "if :remove is selected for Windows action" do
+        before { select_widget(:windows_action, :remove) }
+
+        it "updates the settings according" do
+          subject.run
+          expect(settings.windows_delete_mode).to eq :ondemand
+          expect(settings.resize_windows).to eq true
+        end
+      end
+
+      context "if :always_remove is selected for Windows action" do
+        before { select_widget(:windows_action, :always_remove) }
+
+        it "updates the settings according" do
+          subject.run
+          expect(settings.windows_delete_mode).to eq :all
+        end
+      end
+    end
+
+    describe "updating settings regarding linux partitions" do
+      context "if :ondemand is selected for linux_delete_mode" do
+        before { select_widget(:linux_delete_mode, :ondemand) }
+
+        it "updates the settings according" do
+          subject.run
+          expect(settings.linux_delete_mode).to eq :ondemand
+        end
+      end
+
+      context "if :all is selected for linux_delete_mode" do
+        before { select_widget(:linux_delete_mode, :all) }
+
+        it "updates the settings according" do
+          subject.run
+          expect(settings.linux_delete_mode).to eq :all
+        end
+      end
+    end
+
+    describe "updating settings regarding other partitions" do
+      context "if :all is selected for other_delete_mode" do
+        before { select_widget(:other_delete_mode, :all) }
+
+        it "updates the settings according" do
+          subject.run
+          expect(settings.other_delete_mode).to eq :all
+        end
+      end
+
+      context "if :none is selected for other_delete_mode" do
+        before { select_widget(:other_delete_mode, :none) }
+
+        it "updates the settings according" do
+          subject.run
+          expect(settings.other_delete_mode).to eq :none
+        end
       end
     end
   end

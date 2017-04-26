@@ -69,9 +69,16 @@
           name: /dev/mapper/cr_sde1
 
     - partition:
-        size:         unlimited
+        size:         28 GiB
         name:         /dev/sde2
         id:           lvm
+
+    - partition:
+        size:         unlimited
+        name:         /dev/sde3
+        id:           swap
+        file_system:  swap
+        label:        swap
 
 # One disk with a single partition
 - disk:
@@ -83,6 +90,7 @@
     - partition:
         size:         unlimited
         name:         /dev/sdf1
+        id:           windows_basic_data
         file_system:  ntfs
         label:        windows
 

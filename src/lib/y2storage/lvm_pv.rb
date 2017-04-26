@@ -29,8 +29,13 @@ module Y2Storage
   class LvmPv < Device
     wrap_class Storage::LvmPv
 
+    # @!method self.all(devicegraph)
+    #   @param devicegraph [Devicegraph]
+    #   @return [Array<Disk>] all the physical volumes in the given devicegraph
     storage_class_forward :all, as: "LvmPv"
 
+    # @!method lvm_vg
+    #   @return [LvmVg] volume group the PV is part of
     storage_forward :lvm_vg, as: "LvmVg"
 
     # @!method blk_device

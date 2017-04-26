@@ -163,7 +163,7 @@ module Y2Storage
             popup_text,
             Yast::Label.YesButton,
             Yast::Label.NoButton,
-            :focus_no
+            :focus_yes
           )
         end
 

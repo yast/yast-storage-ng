@@ -47,7 +47,7 @@ describe Y2Storage::Clients::InstDiskProposal do
       it "creates initial proposal settings based on the product (control.xml)" do
         expect(Y2Storage::ProposalSettings).to receive(:new_for_current_product)
           .and_return(proposal_settings)
-        expect(Y2Storage::Proposal).to receive(:new).with(settings: proposal_settings)
+        expect(Y2Storage::Proposal).to receive(:new).with(hash_including(settings: proposal_settings))
 
         allow(Y2Storage::Dialogs::Proposal).to receive(:new).and_return proposal_dialog
         allow(proposal_dialog).to receive(:run).and_return :abort

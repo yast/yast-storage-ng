@@ -38,12 +38,63 @@ module Y2Storage
     include Yast::Logger
     include SecretAttributes
 
+    VALID_DELETE_MODES = [:none, :all, :ondemand]
+    private_constant :VALID_DELETE_MODES
+
+    # @return [Boolean] whether to use LVM
     attr_accessor :use_lvm
-    attr_accessor :root_filesystem_type, :use_snapshots
-    attr_accessor :use_separate_home, :home_filesystem_type
+
+    # @return [Filesystems::Type] type to use for the root filesystem
+    attr_accessor :root_filesystem_type
+    #
+    # @return [Boolean] whether to enable snapshots (only if Btrfs is used)
+    attr_accessor :use_snapshots
+
+    # @return [Boolean] whether to propose separate partition/volume for /home
+    attr_accessor :use_separate_home
+
+    # @return [Filesystems::Type] type to use for the home filesystem, if a
+    #   separate one is proposed
+    attr_accessor :home_filesystem_type
+
+    # @return [Boolean] whether to enlarge swap based on the RAM size, to ensure
+    #   the classic suspend-to-ram works
     attr_accessor :enlarge_swap_for_suspend
-    attr_accessor :root_device, :candidate_devices
+
+    # @return [String] device name of the disk in which / must be placed. If set
+    #   to nil, the proposal will try to find a good candidate
+    attr_accessor :root_device
+
+    # @return [Array<String>] device names of the disks that can be used for the
+    #   installation. If nil, the proposal will try find suitable devices
+    attr_accessor :candidate_devices
+
+    # @!attribute encrypted_password
+    #   @return [String] password to use when creating new encryption devices
     secret_attr   :encryption_password
+
+    # @return [Boolean] whether to resize Windows systems if needed
+    attr_accessor :resize_windows
+
+    # @return [Symbol] what to do regarding removal of existing partitions
+    #   hosting a Windows system.
+    #
+    #   * :none Never delete a Windows partition.
+    #   * :ondemand Delete Windows partitions as needed by the proposal.
+    #   * :all Delete all Windows partitions, even if not needed.
+    #
+    #   @raise ArgumentError if any other value is assigned
+    attr_accessor :windows_delete_mode
+
+    # @return [Symbol] what to do regarding removal of existing Linux
+    #   partitions. @see DiskAnalyzer for the definition of "Linux partitions".
+    #   @see #windows_delete_mode for the possible values and exceptions
+    attr_accessor :linux_delete_mode
+
+    # @return [Symbol] what to do regarding removal of existing partitions that
+    #   don't fit in #windows_delete_mode or #linux_delete_mode.
+    #   @see #windows_delete_mode for the possible values and exceptions
+    attr_accessor :other_delete_mode
 
     def initialize
       @use_lvm                  = false
@@ -53,10 +104,71 @@ module Y2Storage
       @use_separate_home        = true
       @home_filesystem_type     = Filesystems::Type::XFS
       @enlarge_swap_for_suspend = false
+      @resize_windows           = true
+      @windows_delete_mode      = :ondemand
+      @linux_delete_mode        = :ondemand
+      @other_delete_mode        = :ondemand
     end
 
     def use_encryption
       !encryption_password.nil?
+    end
+
+    # Whether the settings disable deletion of a given type of partitions
+    #
+    # @see #windows_delete_mode
+    # @see #linux_delete_mode
+    # @see #other_delete_mode
+    #
+    # @param type [#to_s] :linux, :windows or :other
+    # @return [Boolean]
+    def delete_forbidden(type)
+      send(:"#{type}_delete_mode") == :none
+    end
+
+    alias_method :delete_forbidden?, :delete_forbidden
+
+    # Whether the settings enforce deletion of a given type of partitions
+    #
+    # @see #windows_delete_mode
+    # @see #linux_delete_mode
+    # @see #other_delete_mode
+    #
+    # @param type [#to_s] :linux, :windows or :other
+    # @return [Boolean]
+    def delete_forced(type)
+      send(:"#{type}_delete_mode") == :all
+    end
+
+    alias_method :delete_forced?, :delete_forced
+
+    alias_method :set_windows_delete_mode, :windows_delete_mode=
+    private :set_windows_delete_mode
+    def windows_delete_mode=(mode)
+      set_windows_delete_mode(validated_delete_mode(mode))
+    end
+
+    alias_method :set_linux_delete_mode, :linux_delete_mode=
+    private :set_linux_delete_mode
+    def linux_delete_mode=(mode)
+      set_linux_delete_mode(validated_delete_mode(mode))
+    end
+
+    alias_method :set_other_delete_mode, :other_delete_mode=
+    private :set_other_delete_mode
+    def other_delete_mode=(mode)
+      set_other_delete_mode(validated_delete_mode(mode))
+    end
+
+  private
+
+    def validated_delete_mode(mode)
+      raise(ArgumentError, "Mode cannot be nil") unless mode
+      result = mode.to_sym
+      if !VALID_DELETE_MODES.include?(result)
+        raise ArgumentError, "Invalid mode"
+      end
+      result
     end
   end
 
