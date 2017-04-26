@@ -22,7 +22,7 @@ This module contains essentially three parts:
 
 The module is entirely unsupported.
 
-## Installation
+## Trying on Running System
 
 If you are brave enough to install this module in a (open)SUSE system, despite
 the facts that **is not supported and can produce data loss**, you can perform
@@ -35,6 +35,19 @@ zypper ref
 rpm -e --nodeps libstorage6 libstorage-ruby libstorage-python libstorage-devel libstorage-testsuite
 zypper in yast2-storage-ng
 ```
+
+## Installation of System with Storage-ng
+
+If you are brave enough to install openSUSE Tumbleweed using this module, despite
+the facts that **is not supported and can produce data loss**, you can download the latest ISO
+image from [build service](http://download.opensuse.org/repositories/YaST:/storage-ng/images/iso/).
+
+Known issues:
+
+- not all functionality implemented ( see Status below )
+- disk have to be at least 25GB big
+- if there are already btrfs with subvolumes, it have to be wiped before installation
+  with `wipefs --all <disk_device>`
 
 ## Status
 
