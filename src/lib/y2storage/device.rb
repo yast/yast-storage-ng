@@ -33,30 +33,68 @@ module Y2Storage
     wrap_class Storage::Device,
       downcast_to: ["BlkDevice", "Mountable", "PartitionTables::Base", "LvmPv", "LvmVg"]
 
+    # @!method ==
+    #   Comparison between two devices. Devices are equal if they have
+    #   the same storage id (@see sid)
+    #
+    #   @param rhs [Device]
+    #   @return [Boolean]
     storage_forward :==
     storage_forward :!=
+
+    # @!method sid
+    #   @return [Fixnum] internal storage id (unique by device)
     storage_forward :sid
 
+    # @see ancestors
     storage_forward :storage_ancestors, to: :ancestors, as: "Device"
     protected :storage_ancestors
 
+    # @see descendants
     storage_forward :storage_descendants, to: :descendants, as: "Device"
     protected :storage_descendants
 
+    # @see siblings
     storage_forward :storage_siblings, to: :siblings, as: "Device"
     protected :storage_siblings
 
+    # @!method has_children?
+    #   @return [Boolean] whether the device has children in the devicegraph
+    #     it belongs to
     storage_forward :has_children?, to: :has_children
+
+    # @!method num_children
+    #   @return [Fixnum] number of children the device has in the devicegraph
+    #     it belogs to
     storage_forward :num_children
 
+    # @!method exists_in_devicegraph?
+    #   Check if a devicegraph contains a device with the same sid
+    #
+    #   @param devicegraph [Devicegraph]
+    #   @return [Boolean]
     storage_forward :exists_in_devicegraph?
+
+    # @!method exists_in_probed?
+    #   @return [Boolean] whether device exists in the probed devicegraph,
+    #     @see exists_in_devicegraph?
     storage_forward :exists_in_probed?
+
+    # @!method exists_in_staging?
+    #   @return [Boolean] whether device exists in the staging devicegraph,
+    #     @see exists_in_devicegraph?
     storage_forward :exists_in_staging?
-    storage_forward :displayname
+
+    # @!method detect_resize_info
+    #   Virtual method, each subclass defines it.
+    #
+    #   @return [ResizeInfo] information about the possibility of resizing a
+    #     given device, @see ResizeInfo
     storage_forward :detect_resize_info, as: "ResizeInfo"
+
+    # @!method remove_descendants
+    #   Remove device descendants in the devicegraph it belongs to
     storage_forward :remove_descendants
-    storage_forward :userdata
-    storage_forward :userdata=
 
     # Ancestors in the devicegraph in no particular order, not including the
     # device itself
