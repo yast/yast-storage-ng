@@ -102,7 +102,7 @@ module Y2Storage
     # @!method create_lvm_lv(lv_name, size)
     #   Creates a logical volume in the volume group.
     #
-    #   @param lv_name [String] name of the new volume. @see LvmLv#lv_name
+    #   @param lv_name [String] name of the new volume. See {LvmLv#lv_name}
     #   @param size [DiskSize] size of the new volume
     #   @return [LvmLv]
     storage_forward :create_lvm_lv, as: "LvmLv"
@@ -116,7 +116,7 @@ module Y2Storage
 
     # @!method self.create(devicegraph, vg_name)
     #   @param devicegraph [Devicegraph]
-    #   @param vg_name [String] @see #vg_name
+    #   @param vg_name [String] See {#vg_name}
     #   @return [LvmVg]
     storage_class_forward :create, as: "LvmVg"
 
@@ -128,7 +128,7 @@ module Y2Storage
 
     # @!method self.find_by_vg_name(devicegraph, vg_name)
     #   @param devicegraph [Devicegraph]
-    #   @param vg_name [String] name of the volume group. @see #vg_name
+    #   @param vg_name [String] name of the volume group. See {#vg_name}
     #   @return [LvmVg] nil if there is no such volume group
     storage_class_forward :find_by_vg_name, as: "LvmVg"
 

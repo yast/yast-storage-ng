@@ -148,7 +148,7 @@ module Y2Storage
     # Return a list of software packages required for the storage features in
     # 'features'.
     #
-    # @param [Array<Symbol>] feature list
+    # @param features [Array<Symbol>] feature list
     # @return [Array<Symbol>] package list
     #
     def self.packages_for(features)

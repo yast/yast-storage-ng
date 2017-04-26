@@ -67,7 +67,7 @@ module Y2Storage
       #
       # @param free_space [FreeDiskSpace] the slot
       # @param volumes   [PlannedVolumesList] volumes to create
-      # @params usable_size [DiskSize] real space to distribute among the
+      # @param usable_size [DiskSize] real space to distribute among the
       #       volumes (part of free_space could be used for data structures)
       # @param num_logical [Integer] how many volumes should be placed in
       #       logical partitions
@@ -108,7 +108,7 @@ module Y2Storage
       #
       # @param volumes [Array<PlannedVolume>]
       # @param initial_free_space [FreeDiskSpace]
-      # @param num_logical [Symbol] logical partitions @see #process_space
+      # @param num_logical [Symbol] logical partitions. See {#process_space}
       def create_volumes_partitions(volumes, initial_free_space, num_logical)
         volumes.each_with_index do |vol, idx|
           partition_id = vol.partition_id
@@ -134,8 +134,8 @@ module Y2Storage
       # Finds the remaining free space within the scope of the disk chunk
       # defined by a (probably outdated) FreeDiskSpace object
       #
-      # @param [FreeDiskSpace] the original disk chunk, the returned free
-      #   space will be within this area
+      # @param initial_free_space [FreeDiskSpace] the original disk chunk, the
+      #   returned free space will be within this area
       def free_space_within(initial_free_space)
         disk = devicegraph.disks.detect { |d| d.name == initial_free_space.disk_name }
         spaces = disk.as_not_empty { disk.free_spaces }.select do |space|
@@ -240,7 +240,7 @@ module Y2Storage
 
       # Returns the partition table for disk, creating an empty one if needed
       #
-      # @param [Disk]
+      # @param disk [Disk]
       # @return [PartitionTable]
       def partition_table(disk)
         disk.partition_table || disk.create_partition_table(disk.preferred_ptable_type)

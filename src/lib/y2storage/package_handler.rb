@@ -59,9 +59,8 @@ module Y2Storage
 
     # Add a number of packages to the list of packages to be installed
     #
-    # @param  [Array<String>] package names
+    # @param  pkg_list [Array<String>] package names
     # @return [Array<String>] new package list (may contain duplicates)
-    #
     def add_packages(pkg_list)
       @pkg_list.concat(pkg_list)
     end

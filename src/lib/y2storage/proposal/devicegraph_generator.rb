@@ -44,7 +44,7 @@ module Y2Storage
       # @param volumes [PlannedVolumesList] volumes to accommodate
       # @param initial_graph [Devicegraph] initial devicegraph
       #           (typically the representation of the current system)
-      # @param disk_analyzer [DiskAnalyzer] analysis of the initial_graph
+      # @param space_maker [Proposal::SpaceMaker]
       #
       # @return [Devicegraph]
       # @raise Proposal::Error if it was not possible to propose a devicegraph
@@ -186,7 +186,7 @@ module Y2Storage
 
       # Creates partitions representing a set of volumes
       #
-      # @param volumes [PlannedVolumesList] set of volumes to create
+      # @param distribution [Proposal::SpaceDistribution]
       # @param initial_graph [Devicegraph] initial devicegraph
       #
       # @return [Devicegraph]

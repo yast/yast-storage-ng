@@ -87,7 +87,7 @@ module Y2Storage
     attr_accessor :windows_delete_mode
 
     # @return [Symbol] what to do regarding removal of existing Linux
-    #   partitions. @see DiskAnalyzer for the definition of "Linux partitions".
+    #   partitions. See {DiskAnalyzer} for the definition of "Linux partitions".
     #   @see #windows_delete_mode for the possible values and exceptions
     attr_accessor :linux_delete_mode
 

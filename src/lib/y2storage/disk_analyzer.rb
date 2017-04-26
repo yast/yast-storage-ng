@@ -68,7 +68,7 @@ module Y2Storage
     # some typical directories (/windows/system32).
     #
     # @param *disks [Disk, String] disks to analyze. All disks by default.
-    # @return [Array<Partition>] see {#partitions_with_id}
+    # @return [Array<Partition>]
     def windows_partitions(*disks)
       data_for(*disks, :windows_partitions) { |d| find_windows_partitions(d) }
     end
@@ -78,7 +78,7 @@ module Y2Storage
     # @see PartitionId.linux_system_ids
     #
     # @param *disks [Disk, String] disks to analyze. All disks by default.
-    # @return [Array<Partition>] see {#partitions_with_id}
+    # @return [Array<Partition>]
     def linux_partitions(*disks)
       data_for(*disks, :linux_partitions) { |d| d.linux_system_partitions }
     end

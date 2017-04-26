@@ -123,7 +123,8 @@ module Y2Storage
     # Copies the manually-calculated (no proposal) devicegraph to staging.
     #
     # If the devicegraph was calculated by means of a proposal, use #proposal=
-    # instead. @see #proposal=
+    # instead.
+    # @see #proposal=
     #
     # @param [Devicegraph] devicegraph to copy
     def staging=(devicegraph)

@@ -61,7 +61,7 @@ module Y2Storage
     #   Checks whether the devicegraph is empty (no devices)
     storage_forward :empty?
 
-    # @!clear
+    # @!method clear
     #   Removes all devices
     storage_forward :clear
 

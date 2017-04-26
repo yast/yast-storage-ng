@@ -34,67 +34,84 @@ module Y2Storage
     include SecretAttributes
 
     # @return [String] mount point for this volume. This might be a real mount
-    # point ("/", "/boot", "/home") or a pseudo mount point like "swap".
+    #   point ("/", "/boot", "/home") or a pseudo mount point like "swap".
     attr_accessor :mount_point
+
     # @return [Filesystems::Type] the type of filesystem this volume should
-    # get, like Filesystems::Type::BTRFS or Filesystems::Type::SWAP. A value of
-    # nil means the volume will not be formatted.
+    #   get, like Filesystems::Type::BTRFS or Filesystems::Type::SWAP. A value of
+    #   nil means the volume will not be formatted.
     attr_accessor :filesystem_type
+
     # @return [String] device name of an existing partition to reuse for this
-    # purpose. That means that no new partition will be created and, thus,
-    # most of the other attributes (with the obvious exception of mount_point)
-    # will be most likely ignored
+    #   purpose. That means that no new partition will be created and, thus,
+    #   most of the other attributes (with the obvious exception of mount_point)
+    #   will be most likely ignored
     attr_accessor :reuse
+
     # @return [::Storage::IdNum] id of the partition in a ms-dos style
-    # partition table. If nil, the final id is expected to be inferred from
-    # the filesystem type.
+    #   partition table. If nil, the final id is expected to be inferred from
+    #   the filesystem type.
     attr_accessor :partition_id
+
     # @return [String] device name of the disk in which the volume has to be
-    # located. If nil, the volume can be allocated in any disk.
+    #   located. If nil, the volume can be allocated in any disk.
     attr_accessor :disk
+
     # @return [DiskSize] definitive size of the volume
     attr_accessor :disk_size
+
     # @return [DiskSize] minimum acceptable size in case it's not possible to
-    # ensure the desired one. @see #desired_size
+    #   ensure the desired one. See {#desired_disk_size}
     attr_accessor :min_disk_size
+
     # @return [DiskSize] maximum acceptable size
     attr_accessor :max_disk_size
+
     # @return [DiskSize] preferred size
     attr_accessor :desired_disk_size
+
     # @return [Float] factor used to distribute the extra space between
-    # volumes
+    #   volumes
     attr_accessor :weight
+
     # @return [Boolean] whether the volume must be created as a plain
-    # partition. If so, that volume cannot live into LVM and cannot be
-    # encrypted.
+    #   partition. If so, that volume cannot live into LVM and cannot be
+    #   encrypted.
     attr_accessor :plain_partition
+
     # @return [String] name to use if the volume is placed in LVM
     attr_accessor :logical_volume_name
+
     # @return [DiskSize] maximum distance from the start of the disk in which
-    # the partition can start
+    #   the partition can start
     attr_accessor :max_start_offset
-    # FIXME: this one is just guessing the final API of alignment
+
     # @return [Symbol] modifier to pass to ::Storage::Region#align when
-    # creating the volume. :keep_size to avoid size changes. nil to use
-    # default alignment.
+    #   creating the volume. :keep_size to avoid size changes. nil to use
+    #   default alignment.
+    #   FIXME: this one is just guessing the final API of alignment
     attr_accessor :align
+
     # @return [Boolean] whether the boot flag should be set. Expected to be
-    # used only with ms-dos style partition tables. GPT has a similar legacy
-    # flag but is not needed in our grub2 setup.
+    #   used only with ms-dos style partition tables. GPT has a similar legacy
+    #   flag but is not needed in our grub2 setup.
     attr_accessor :bootable
+
     # @return [String] label to enforce in the filesystem
     attr_accessor :label
+
     # @return [String] UUID to enforce in the filesystem
     attr_accessor :uuid
-    # @!attribute subvolumes
-    #   @return [Array<PlannedSubvolume>] Btrfs subvolumes
+
+    # @return [Array<PlannedSubvolume>] Btrfs subvolumes
     attr_accessor :subvolumes
-    # @!attribute default_subvolume
+
     # @return [String] Parent for all Btrfs subvolumes (typically "@")
     attr_accessor :default_subvolume
+
     # @!attribute encryption_password
     #   @return [String, nil] password used to encrypt the volume. If is nil, it
-    #   means the volume will not be encrypted
+    #     means the volume will not be encrypted
     secret_attr :encryption_password
 
     TO_STRING_ATTRS = [:mount_point, :reuse, :min_disk_size, :max_disk_size,
@@ -110,8 +127,8 @@ module Y2Storage
 
     # Constructor.
     #
-    # @param mount_point [string] @see #mount_point
-    # @param filesystem_type [Filesystems::Type] @see #filesystem_type
+    # @param mount_point [string] See {#mount_point}
+    # @param filesystem_type [Filesystems::Type] See {#filesystem_type}
     def initialize(mount_point, filesystem_type = nil)
       @mount_point = mount_point
       @filesystem_type = filesystem_type
