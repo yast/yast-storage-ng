@@ -44,7 +44,7 @@ describe Y2Storage::Dialogs::GuidedSetup::SelectRootDisk do
       end
 
       context "and it contains partitions" do
-        let(:partitions) { { "/dev/sda" => ["sda"] } }
+        let(:partitions) { { "/dev/sda" => ["sda1"] } }
 
         it "returns false" do
           expect(subject.skip?).to be(false)
