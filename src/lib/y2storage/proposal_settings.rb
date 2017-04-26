@@ -38,6 +38,9 @@ module Y2Storage
     include Yast::Logger
     include SecretAttributes
 
+    VALID_DELETE_MODES = [:none, :all, :ondemand]
+    private_constant :VALID_DELETE_MODES
+
     # @return [Boolean] whether to use LVM
     attr_accessor :use_lvm
 
@@ -79,16 +82,18 @@ module Y2Storage
     #   * :none Never delete a Windows partition.
     #   * :ondemand Delete Windows partitions as needed by the proposal.
     #   * :all Delete all Windows partitions, even if not needed.
+    #
+    #   @raise ArgumentError if any other value is assigned
     attr_accessor :windows_delete_mode
 
     # @return [Symbol] what to do regarding removal of existing Linux
     #   partitions. @see DiskAnalyzer for the definition of "Linux partitions".
-    #   @see #windows_delete_mode for the possible values
+    #   @see #windows_delete_mode for the possible values and exceptions
     attr_accessor :linux_delete_mode
 
     # @return [Symbol] what to do regarding removal of existing partitions that
     #   don't fit in #windows_delete_mode or #linux_delete_mode.
-    #   @see #windows_delete_mode for the possible values
+    #   @see #windows_delete_mode for the possible values and exceptions
     attr_accessor :other_delete_mode
 
     def initialize
@@ -136,6 +141,35 @@ module Y2Storage
     end
 
     alias_method :delete_forced?, :delete_forced
+
+    alias_method :set_windows_delete_mode, :windows_delete_mode=
+    private :set_windows_delete_mode
+    def windows_delete_mode=(mode)
+      set_windows_delete_mode(validated_delete_mode(mode))
+    end
+
+    alias_method :set_linux_delete_mode, :linux_delete_mode=
+    private :set_linux_delete_mode
+    def linux_delete_mode=(mode)
+      set_linux_delete_mode(validated_delete_mode(mode))
+    end
+
+    alias_method :set_other_delete_mode, :other_delete_mode=
+    private :set_other_delete_mode
+    def other_delete_mode=(mode)
+      set_other_delete_mode(validated_delete_mode(mode))
+    end
+
+  private
+
+    def validated_delete_mode(mode)
+      raise(ArgumentError, "Mode cannot be nil") unless mode
+      result = mode.to_sym
+      if !VALID_DELETE_MODES.include?(result)
+        raise ArgumentError, "Invalid mode"
+      end
+      result
+    end
   end
 
   # Per-product settings for the storage proposal.

@@ -64,8 +64,20 @@ RSpec.shared_context "guided setup requirements" do
     (all_disks - disks).each { |d| not_select_widget(d) }
   end
 
-  def disk(name)
-    instance_double(Y2Storage::Disk, name: name, size: Y2Storage::DiskSize.new(0))
+  def disk(name, partitions = {})
+    disk = instance_double(Y2Storage::Disk, name: name, size: Y2Storage::DiskSize.new(0))
+    parts =
+      if partitions && partitions[name]
+        partitions[name].map { |pname| partition_double(pname) }
+      else
+        []
+      end
+    allow(disk).to receive(:partitions).and_return parts
+    disk
+  end
+
+  def partition_double(name)
+    instance_double(Y2Storage::Partition, name: "/dev/#{name}")
   end
 
   before do
@@ -86,15 +98,18 @@ RSpec.shared_context "guided setup requirements" do
     allow(guided_setup).to receive(:settings).and_return(settings)
 
     allow(analyzer).to receive(:candidate_disks)
-      .and_return(all_disks.map { |d| disk(d) })
+      .and_return(all_disks.map { |d| disk(d, partitions) })
 
-    allow(analyzer).to receive(:device_by_name) { |d| disk(d) }
+    allow(analyzer).to receive(:device_by_name) { |d| disk(d, partitions) }
 
     allow(analyzer).to receive(:installed_systems)
       .and_return(windows_systems + linux_systems)
 
     allow(analyzer).to receive(:windows_systems).and_return(windows_systems)
     allow(analyzer).to receive(:linux_systems).and_return(linux_systems)
+
+    allow(analyzer).to receive(:windows_partitions).and_return(windows_partitions)
+    allow(analyzer).to receive(:linux_partitions).and_return(linux_partitions)
   end
 
   let(:guided_setup) { Y2Storage::Dialogs::GuidedSetup.new(settings) }
@@ -111,4 +126,8 @@ RSpec.shared_context "guided setup requirements" do
 
   let(:windows_systems) { [] }
   let(:linux_systems) { [] }
+  let(:windows_partitions) { [] }
+  let(:linux_partitions) { [] }
+
+  let(:partitions) { {} }
 end
