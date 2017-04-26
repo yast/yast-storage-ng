@@ -144,8 +144,6 @@ module Y2Storage
     #
     # Beware: this method can cause data loss
     def commit
-      storage.probed.save(Yast::Directory.logdir + "/probed-devicegraph.xml")
-      storage.staging.save(Yast::Directory.logdir + "/staging-devicegraph.xml")
       storage.calculate_actiongraph
       storage.commit
     end

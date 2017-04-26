@@ -52,6 +52,9 @@ module Y2Storage
 
       # Commits the actions to disk
       def commit
+        manager.y2storage_probed.save(Yast::Directory.logdir + "/inst-probed_devicegraph.xml")
+        manager.y2storage_staging.save(Yast::Directory.logdir + "/inst-staging_devicegraph.xml")
+
         manager.rootprefix = Yast::Installation.destdir
         manager.commit
 
