@@ -58,9 +58,16 @@ module Y2Storage
     # @return [Devicegraph]
     attr_reader :devices
 
-    def initialize(settings: nil)
+    # @param settings [ProposalSettings] if nil, default settings will be used
+    # @param devicegraph [Devicegraph] starting point. If nil, the probed
+    #   devicegraph will be used
+    # @param disk_analyzer [DiskAnalyzer] if nil, a new one will be created
+    #   based in the initial devicegraph
+    def initialize(settings: nil, devicegraph: nil, disk_analyzer: nil)
       @settings = settings || ProposalSettings.new
       @proposed = false
+      @initial_graph = devicegraph
+      @disk_analyzer = disk_analyzer
     end
 
     # Checks whether the proposal has already being calculated

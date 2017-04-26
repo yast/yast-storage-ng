@@ -45,7 +45,7 @@ module Y2Storage
         # If the staging devicegraph has never been set,
         # start with a fresh proposal
         if @proposal.nil? && !storage_manager.staging_changed?
-          @proposal = Proposal.new(settings: new_settings)
+          @proposal = new_proposal(new_settings)
         end
       end
 
@@ -88,12 +88,12 @@ module Y2Storage
       end
 
       def guided_setup(settings)
-        dialog = Dialogs::GuidedSetup.new(settings)
+        dialog = Dialogs::GuidedSetup.new(settings, probed_analyzer)
         case dialog.run
         when :abort
           @result = :abort
         when :next
-          @proposal = Proposal.new(settings: dialog.settings)
+          @proposal = new_proposal(dialog.settings)
         end
       end
 
@@ -117,6 +117,18 @@ module Y2Storage
 
       def storage_manager
         StorageManager.instance
+      end
+
+      def probed_analyzer
+        storage_manager.probed_disk_analyzer
+      end
+
+      # A new storage proposal using probed and its disk analyzer. Used to
+      # ensure we share the DiskAnalyzer object (and hence we reuse its results)
+      # between the proposal and the dialogs.
+      def new_proposal(settings)
+        probed = storage_manager.y2storage_probed
+        Proposal.new(settings: settings, devicegraph: probed, disk_analyzer: probed_analyzer)
       end
     end
   end

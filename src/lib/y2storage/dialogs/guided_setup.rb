@@ -36,14 +36,12 @@ module Y2Storage
     class GuidedSetup
       # Settings specified by the user
       attr_reader :settings
+      # Disk analyzer to recover disks info
+      attr_reader :analyzer
 
-      def initialize(settings)
+      def initialize(settings, analyzer)
         @settings = settings.dup
-      end
-
-      # Disk analyzer to recover disks info.
-      def analyzer
-        StorageManager.instance.probed_disk_analyzer
+        @analyzer = analyzer
       end
 
       # Executes steps of the wizard.
