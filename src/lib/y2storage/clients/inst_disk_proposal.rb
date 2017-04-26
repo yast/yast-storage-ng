@@ -42,11 +42,10 @@ module Y2Storage
         # FIXME: use StorageManager#staging when everything is adapted
         @devicegraph = storage_manager.y2storage_staging
         @proposal = storage_manager.proposal
+        return if @proposal || storage_manager.staging_changed?
         # If the staging devicegraph has never been set,
         # start with a fresh proposal
-        if @proposal.nil? && !storage_manager.staging_changed?
-          @proposal = new_proposal(new_settings)
-        end
+        @proposal = new_proposal(new_settings)
       end
 
       def run
