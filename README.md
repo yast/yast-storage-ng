@@ -45,7 +45,7 @@ image from [build service](http://download.opensuse.org/repositories/YaST:/stora
 Known issues:
 
 - not all functionality implemented ( see Status below )
-- disk have to be at least 25GB big
+- for default setup disk has to be at least 25GB big. Without btrfs and separated home, less is needed.
 - if there are already btrfs with subvolumes, it have to be wiped before installation
   with `wipefs --all <disk_device>`
 
