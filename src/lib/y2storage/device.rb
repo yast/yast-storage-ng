@@ -153,7 +153,7 @@ module Y2Storage
     #   @see ResizeInfo
     #   @see exists_in_probed?
     #   @note This is slightly different from Storage::detect_resize_info, which
-    #     requires to be called in a device that belogs to the probed devicegraph.
+    #     requires to be called in a device that belongs to the probed devicegraph.
     #
     #   @return [ResizeInfo]
     def detect_resize_info
