@@ -297,7 +297,6 @@ module Y2Storage
 
     # Volumes that may grow when distributing the extra space
     #
-    # @param volumes [PlannedVolumesList] initial set of all volumes
     # @return [PlannedVolumesList]
     def extra_space_candidates
       candidates = dup

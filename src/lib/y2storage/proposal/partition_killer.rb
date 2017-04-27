@@ -32,7 +32,7 @@ module Y2Storage
       # Initialize.
       #
       # The optional parameter "disks" can be used to restrict the scope of the
-      # collateral actions (@see #delete)
+      # collateral actions (see {#delete})
       #
       # @param devicegraph [Devicegraph]
       # @param disks [Array<String>] list of kernel-style device names

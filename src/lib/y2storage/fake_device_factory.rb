@@ -262,7 +262,7 @@ module Y2Storage
     # Modifies topology settings of the disk according to factory arguments
     #
     # @param disk [Disk]
-    # @param args [Hash] disk parameters. @see #create_disk
+    # @param args [Hash] disk parameters. See {#create_disk}
     def set_topology_attributes!(disk, args)
       io_size = args["io_size"]
       min_grain = args["min_grain"]

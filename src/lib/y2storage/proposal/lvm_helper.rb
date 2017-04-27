@@ -56,7 +56,7 @@ module Y2Storage
       # Constructor
       #
       # @param planned_volumes [PlannedVolumesList] volumes to allocate in LVM
-      # @param encryption_password [String, nil] @see #encryption_password
+      # @param encryption_password [String, nil] see {#encryption_password}
       def initialize(planned_volumes, encryption_password: nil)
         @planned_volumes = planned_volumes
         self.encryption_password = encryption_password
@@ -88,7 +88,7 @@ module Y2Storage
       # This method takes into account the size of the extents and all the
       # related roundings.
       #
-      # If there is a volume chosen to be reused (@see #reused_volume_group),
+      # If there is a volume chosen to be reused (see {#reused_volume_group}),
       # the method assumes all the space in that volume group can be reclaimed
       # for our purposes.
       def missing_space
@@ -104,7 +104,7 @@ module Y2Storage
       # This method takes into account the size of the extents and all the
       # related roundings.
       #
-      # If there is a volume chosen to be reused (@see #reused_volume_group),
+      # If there is a volume chosen to be reused (see {#reused_volume_group}),
       # the method assumes all the space in that volume group can be reclaimed
       # for our purposes.
       def max_extra_space

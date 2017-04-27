@@ -223,7 +223,7 @@ module Y2Storage
       # Alternative constructor used internally by this module in order to get
       # fully downcasted objects.
       #
-      # @param storage object to be wrapped
+      # @param object [Object] storage object to be wrapped
       def downcasted_new(object)
         @downcast_class_names.each do |class_name|
           klass = StorageClassWrapper.class_for(class_name)

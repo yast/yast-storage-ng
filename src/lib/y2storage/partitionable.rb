@@ -49,7 +49,7 @@ module Y2Storage
     #   @raise [Storage::WrongNumberOfChildren] if the device is not empty (e.g.
     #     already contains a partition table or a filesystem).
     #   @raise [Storage::UnsupportedException] if the partition table type is
-    #     not valid for the device. @see #possible_partition_table_types
+    #     not valid for the device. See {#possible_partition_table_types}
     #
     #   @param pt_type [PartitionTables::Type]
     #   @return [PartitionTables::Base] the concrete subclass will depend
@@ -72,7 +72,10 @@ module Y2Storage
     storage_class_forward :all, as: "Partitionable"
 
     # Minimal grain of the partitionable
-    # TODO: provide a good definition for "grain"
+    #
+    # The grain of a device is the smallest size unit that can be used to
+    # specify beginning and end of a partition in order to keep everything
+    # aligned.
     #
     # @return [DiskSize]
     def min_grain

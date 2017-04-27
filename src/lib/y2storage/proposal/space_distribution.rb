@@ -73,7 +73,7 @@ module Y2Storage
 
       # Assigned space associated to a given free space
       #
-      # @param [FreeDiskSpace]
+      # @param disk_space [FreeDiskSpace]
       # @return [Proposal::AssignedSpace, nil]
       def space_at(disk_space)
         spaces.detect { |s| s.disk_space == disk_space }
@@ -288,7 +288,8 @@ module Y2Storage
 
       # Best candidate to hold the logical partition
       #
-      # @param [Array<AssignedSpace>] list of possible candidates
+      # @param spaces [Array<AssignedSpace>] list of possible candidates
+      # @param num_logical [Fixnum]
       # @return [AssignedSpace, nil]
       def extended_space(spaces, num_logical)
         spaces = spaces.select { |s| room_for_logical?(s, num_logical) }
@@ -299,7 +300,7 @@ module Y2Storage
 
       # Total number of partitions planned for a given list of spaces
       #
-      # @param [Array<AssignedSpace>] list of assigned spaces
+      # @param spaces [Array<AssignedSpace>] list of assigned spaces
       # @return [Fixnum]
       def num_partitions(spaces)
         spaces.map { |s| s.volumes.count }.reduce(0, :+)

@@ -37,32 +37,84 @@ module Y2Storage
     include StorageClassWrapper
     wrap_class Storage::Region
 
-    # TODO: document exactly how the comparison is done
-    # @raise [Exception] when comparing Regions with different block_sizes
-    storage_forward :==
-
-    # TODO: document exactly how the comparison is done
-    # @raise [Exception] when comparing Regions with different block_sizes
-    storage_forward :!=
-
-    # TODO: document exactly how the comparison is done
-    # @raise [Exception] when comparing Regions with different block_sizes
-    storage_forward :>
-
-    # TODO: document exactly how the comparison is done
-    # @raise [Exception] when comparing Regions with different block_sizes
-    storage_forward :<
-
+    # @!method empty?
+    #   @return [Boolean]
     storage_forward :empty?
+
+    # @!attribute start
+    #   @return [Fixnum] position of the first sector of the region
     storage_forward :start
-    storage_forward :length
-    storage_forward :end
     storage_forward :start=
+
+    # @!attribute length
+    #   @return [Fixnum] number of sectors in the region
+    storage_forward :length
     storage_forward :length=
-    storage_forward :adjust_start
-    storage_forward :adjust_length
+
+    # @!attribute block_size
+    #   return [DiskSize] size of a single sector
     storage_forward :block_size, as: "DiskSize"
     storage_forward :block_size=
+
+    # @!method end
+    #   return [Fixnum] position of the last sector of the region
+    storage_forward :end
+
+    # @!method adjust_start(delta)
+    #   Moves the region by adding "delta" sectors to the start
+    #
+    #   @raise [Storage::Exception] if trying to move the region before the
+    #     start of the device
+    #
+    #   @param delta [Fixnum] can be negative
+    storage_forward :adjust_start
+
+    # @!method adjust_length(delta)
+    #   Resizes the region by adding "delta" sectors to the length
+    #
+    #   @raise [Storage::Exception] if trying to shrink the region to a negative
+    #     size
+    #
+    #   @param delta [Fixnum]
+    storage_forward :adjust_length
+
+    # @!method <(other)
+    #   Checks whether the region starts before the other
+    #
+    #   @raise [Storage::DifferentBlockSizes] when comparing regions with
+    #     different block sizes
+    #
+    #   @note This class does not include Comparable because, according to the
+    #     definitions of the operands, two regions can be different while none
+    #     of them is bigger than the other.
+    storage_forward :<
+
+    # @!method >(other)
+    #   Checks whether the region starts after the other
+    #
+    #   @raise [Storage::DifferentBlockSizes] when comparing regions with
+    #     different block sizes
+    #
+    #   @see #<
+    storage_forward :>
+
+    # @!method ==(other)
+    #   Checks whether the regions are equivalent (same start and length)
+    #
+    #   @raise [Storage::DifferentBlockSizes] when comparing regions with
+    #     different block sizes
+    #
+    #   @note This class does not include Comparable because, according to the
+    #     definitions of the operands, two regions can be different while none
+    #     of them is bigger than the other.
+    storage_forward :==
+
+    # @!method !=(other)
+    #   @see #==
+    #
+    #   @raise [Storage::DifferentBlockSizes] when comparing regions with
+    #     different block sizes
+    storage_forward :!=
 
     def inspect
       "<Region range: #{show_range}, block_size: #{block_size}>"
