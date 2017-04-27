@@ -70,13 +70,14 @@ module Y2Storage
 
     # @!method num_children
     #   Number of children the device has in the devicegraph
-    #   it belogs to.
+    #   it belongs to.
     #
     #   @return [Fixnum]
     storage_forward :num_children
 
     # @!method exists_in_devicegraph?(devicegraph)
-    #   Check whether a devicegraph contains a device with the same sid.
+    #   Check whether a devicegraph contains a device with the same
+    #   {#sid storage id}.
     #   @see sid
     #
     #   @param devicegraph [Devicegraph]
@@ -99,7 +100,7 @@ module Y2Storage
 
     # @!method detect_resize_info
     #   Information about the possibility of resizing a given device.
-    #   @note Each subclass defines it.
+    #   @abstract Each subclass defines it.
     #   @see ResizeInfo
     #
     #   @return [ResizeInfo]
@@ -150,12 +151,12 @@ module Y2Storage
 
     # Checks whether the device is a concrete kind(s) of device.
     #
-    # @note Always false for this base class, which represents an abstract device.
-    #   To be redefined by classes representing more concrete devices.
+    # Always false for this base class, which represents an abstract device.
+    # To be redefined by classes representing more concrete devices.
     #
-    #   The goal of this method is to provide a more convenient alternative to the
-    #   usage of Object#is_a? that doesn't rely on fully qualified class names and
-    #   that can be extended or customized by each device subclass. See examples.
+    # The goal of this method is to provide a more convenient alternative to the
+    # usage of Object#is_a? that doesn't rely on fully qualified class names and
+    # that can be extended or customized by each device subclass. See examples.
     #
     # @example Checking if a device is a disk
     #

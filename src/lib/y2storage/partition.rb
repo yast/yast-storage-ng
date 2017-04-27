@@ -39,7 +39,7 @@ module Y2Storage
     storage_forward :number
 
     # @!method partition_table
-    #   @return [PartitionTables::Base] the concrete subclass will depend.
+    #   @return [PartitionTables::Base] the concrete subclass will depend
     #     on the type
     storage_forward :partition_table, as: "PartitionTables::Base"
 
@@ -48,7 +48,7 @@ module Y2Storage
     storage_forward :partitionable, as: "Partitionable"
 
     # @!attribute type
-    #   Type of the partition.
+    #   {PartitionType Type} of the partition.
     #   @see PartitionType
     #
     #   @return [PartitionType]
@@ -56,7 +56,7 @@ module Y2Storage
     storage_forward :type=
 
     # @!attribute id
-    #   Id of the partition.
+    #   {PartitionId Id} of the partition.
     #   @see PartitionId
     #
     #   @return [PartitionId]
