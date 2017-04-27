@@ -89,7 +89,7 @@ module Y2Storage
     #     of them is bigger than the other.
     storage_forward :<
 
-    # @!method <(other)
+    # @!method >(other)
     #   Checks whether the region starts after the other
     #
     #   @raise [Storage::DifferentBlockSizes] when comparing regions with
