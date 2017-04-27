@@ -26,6 +26,7 @@ require "storage"
 require "y2storage/fake_device_factory"
 require "y2storage/devicegraph"
 require "y2storage/disk_analyzer"
+require "y2storage/callbacks/activate_callbacks.rb"
 
 module Y2Storage
   #
@@ -75,7 +76,8 @@ module Y2Storage
     #   @return [String]
 
     def initialize(storage_environment)
-      @storage = Storage::Storage.new(storage_environment)
+      activate_callbacks = ActivateCallbacks.new
+      @storage = Storage::Storage.new(storage_environment, activate_callbacks)
       @staging_revision = 0
       @proposal = nil
     end
