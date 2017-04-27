@@ -86,4 +86,37 @@ describe Y2Storage::Device do
       expect(device.siblings).to all(be_a(Y2Storage::Partition))
     end
   end
+
+  describe "#detect_resize_info" do
+    let(:probed) { double(Y2Storage::Devicegraph) }
+    let(:probed_partition) { double(Y2Storage::Partition, storage_detect_resize_info: resize_info) }
+    let(:resize_info) { double(Y2Storage::ResizeInfo) }
+    let(:wrapped_partition) { double(Storage::Partition, exists_in_probed?: in_probed, sid: 444) }
+
+    subject(:staging_partition) { Y2Storage::Partition.new(wrapped_partition) }
+
+    before do
+      allow(Storage).to receive(:to_partition) do |object|
+        object
+      end
+      allow(Y2Storage::StorageManager.instance).to receive(:y2storage_probed).and_return probed
+    end
+
+    context "if the device does not exist in probed" do
+      let(:in_probed) { false }
+
+      it "returns nil" do
+        expect(staging_partition.detect_resize_info).to be_nil
+      end
+    end
+
+    context "if the device exists in probed" do
+      let(:in_probed) { true }
+
+      it "returns the resize info from the equivalent partition in probed" do
+        expect(probed).to receive(:find_device).with(444).and_return probed_partition
+        expect(staging_partition.detect_resize_info).to eq resize_info
+      end
+    end
+  end
 end
