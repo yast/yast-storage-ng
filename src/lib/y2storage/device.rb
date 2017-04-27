@@ -27,23 +27,26 @@ module Y2Storage
   # The Device class does not have a device name since some device types do
   # not have a intrinsic device name, e.g. btrfs.
   #
-  # This is a wrapper for Storage::Device
+  # This is a wrapper for Storage::Device.
   class Device
     include StorageClassWrapper
     wrap_class Storage::Device,
       downcast_to: ["BlkDevice", "Mountable", "PartitionTables::Base", "LvmPv", "LvmVg"]
 
-    # @!method ==
-    #   Comparison between two devices. Devices are equal if they have
-    #   the same storage id (@see sid)
+    # @!method ==(device)
+    #   Compare two devices.
+    #   @note Devices are equal if they have the same {#sid storage id}.
+    #   @see sid
     #
-    #   @param rhs [Device]
+    #   @param device [Device]
     #   @return [Boolean]
     storage_forward :==
     storage_forward :!=
 
     # @!method sid
-    #   @return [Fixnum] internal storage id (unique by device)
+    #   @note This value is unique by device.
+    #
+    #   @return [Fixnum] internal storage id.
     storage_forward :sid
 
     # @see ancestors
@@ -59,49 +62,59 @@ module Y2Storage
     protected :storage_siblings
 
     # @!method has_children?
-    #   @return [Boolean] whether the device has children in the devicegraph
-    #     it belongs to
+    #   Check whether the device has children in the devicegraph
+    #   it belongs to.
+    #
+    #   @return [Boolean]
     storage_forward :has_children?, to: :has_children
 
     # @!method num_children
-    #   @return [Fixnum] number of children the device has in the devicegraph
-    #     it belogs to
+    #   Number of children the device has in the devicegraph
+    #   it belogs to.
+    #
+    #   @return [Fixnum]
     storage_forward :num_children
 
-    # @!method exists_in_devicegraph?
-    #   Check if a devicegraph contains a device with the same sid
+    # @!method exists_in_devicegraph?(devicegraph)
+    #   Check whether a devicegraph contains a device with the same sid.
+    #   @see sid
     #
     #   @param devicegraph [Devicegraph]
     #   @return [Boolean]
     storage_forward :exists_in_devicegraph?
 
     # @!method exists_in_probed?
-    #   @return [Boolean] whether device exists in the probed devicegraph,
-    #     @see exists_in_devicegraph?
+    #   Check whether the device exists in the probed devicegraph.
+    #   @see exists_in_devicegraph?
+    #
+    #   @return [Boolean]
     storage_forward :exists_in_probed?
 
     # @!method exists_in_staging?
-    #   @return [Boolean] whether device exists in the staging devicegraph,
-    #     @see exists_in_devicegraph?
+    #   Check whether the device exists in the staging devicegraph.
+    #   @see exists_in_devicegraph?
+    #
+    #   @return [Boolean]
     storage_forward :exists_in_staging?
 
     # @!method detect_resize_info
-    #   Virtual method, each subclass defines it.
+    #   Information about the possibility of resizing a given device.
+    #   @note Each subclass defines it.
+    #   @see ResizeInfo
     #
-    #   @return [ResizeInfo] information about the possibility of resizing a
-    #     given device, @see ResizeInfo
+    #   @return [ResizeInfo]
     storage_forward :detect_resize_info, as: "ResizeInfo"
 
     # @!method remove_descendants
-    #   Remove device descendants in the devicegraph it belongs to
+    #   Remove device descendants in the devicegraph it belongs to.
     storage_forward :remove_descendants
 
     # Ancestors in the devicegraph in no particular order, not including the
-    # device itself
+    # device itself.
     #
-    # @note: this is slightly different from Storage::Device#ancestors, which
-    # requires an argument to decide if the device itself should be included in
-    # the result.
+    # @note This is slightly different from Storage::Device#ancestors, which
+    #   requires an argument to decide if the device itself should be included in
+    #   the result.
     #
     # @return [Array<Device>]
     def ancestors
@@ -110,11 +123,11 @@ module Y2Storage
     end
 
     # Descendants in the devicegraph in no particular order, not including the
-    # device itself
+    # device itself.
     #
-    # @note: this is slightly different from Storage::Device#descendants, which
-    # requires an argument to decide if the device itself should be included in
-    # the result.
+    # @note This is slightly different from Storage::Device#descendants, which
+    #   requires an argument to decide if the device itself should be included in
+    #   the result.
     #
     # @return [Array<Device>]
     def descendants
@@ -123,11 +136,11 @@ module Y2Storage
     end
 
     # Siblings in the devicegraph in no particular order, not including the
-    # device itself
+    # device itself.
     #
-    # @note: this is slightly different from Storage::Device#siblings, which
-    # requires an argument to decide if the device itself should be included in
-    # the result.
+    # @note This is slightly different from Storage::Device#siblings, which
+    #   requires an argument to decide if the device itself should be included in
+    #   the result.
     #
     # @return [Array<Device>]
     def siblings
@@ -137,12 +150,12 @@ module Y2Storage
 
     # Checks whether the device is a concrete kind(s) of device.
     #
-    # Always false for this base class, which represents an abstract device.
-    # To be redefined by classes representing more concrete devices.
+    # @note Always false for this base class, which represents an abstract device.
+    #   To be redefined by classes representing more concrete devices.
     #
-    # The goal of this method is to provide a more convenient alternative to the
-    # usage of Object#is_a? that doesn't rely on fully qualified class names and
-    # that can be extended or customized by each device subclass. See examples.
+    #   The goal of this method is to provide a more convenient alternative to the
+    #   usage of Object#is_a? that doesn't rely on fully qualified class names and
+    #   that can be extended or customized by each device subclass. See examples.
     #
     # @example Checking if a device is a disk
     #
@@ -152,8 +165,8 @@ module Y2Storage
     #
     #   something.ancestors.select { |dev| dev.is?(:disk, "partition") }
     #
-    # @param *types [#to_sym] name (or names) of the device type, as defined in
-    #   each subclass
+    # @param types [#to_sym] name (or names) of the device type, as defined in
+    #   each subclass.
     # @return [Boolean]
     def is?(*types)
       (types.map(&:to_sym) & types_for_is).any?
