@@ -235,7 +235,7 @@ module Y2Storage
         part_names = windows_part_names(disk)
         return if part_names.empty?
 
-        log.info("Resizing Windows partitions (force: #{force}")
+        log.info("Resizing Windows partitions (force: #{force})")
         parts_by_disk = partitions_by_disk(part_names)
         remove_linux_disks!(parts_by_disk) unless force
 
@@ -298,11 +298,7 @@ module Y2Storage
       # @param partition [Partition]
       # @return [DiskSize]
       def recoverable_size(partition)
-        # FIXME: use original_graph because right now #detect_resize_info can
-        # only be called in the probed devicegraph. See
-        # https://github.com/openSUSE/libstorage-ng/tree/master/storage/Filesystems/FilesystemImpl.cc#L212
-        orig_part = find_partition(partition.name, original_graph)
-        info = orig_part.filesystem.detect_resize_info
+        info = partition.filesystem.detect_resize_info
         return DiskSize.zero unless info.resize_ok?
         partition.size - info.min_size
       end
@@ -355,12 +351,6 @@ module Y2Storage
           # Stop deleting if the passed condition is met
           break if block_given? && yield
         end
-      end
-
-      def find_partition(name, graph = new_graph)
-        Partition.find_by_name(graph, name)
-      rescue
-        nil
       end
 
       # Partitions of a given type to be deleted. The type can be:

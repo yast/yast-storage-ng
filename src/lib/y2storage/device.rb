@@ -98,13 +98,11 @@ module Y2Storage
     #   @return [Boolean]
     storage_forward :exists_in_staging?
 
-    # @!method detect_resize_info
-    #   Information about the possibility of resizing a given device.
+    # @!method storage_detect_resize_info
     #   @abstract Each subclass defines it.
-    #   @see ResizeInfo
-    #
-    #   @return [ResizeInfo]
-    storage_forward :detect_resize_info, as: "ResizeInfo"
+    #   @see detect_resize_info
+    storage_forward :storage_detect_resize_info, to: :detect_resize_info, as: "ResizeInfo"
+    protected :storage_detect_resize_info
 
     # @!method remove_descendants
     #   Remove device descendants in the devicegraph it belongs to.
@@ -147,6 +145,21 @@ module Y2Storage
     def siblings
       itself = false
       storage_siblings(itself)
+    end
+
+    # @!method detect_resize_info
+    #   Information about the possibility of resizing a given device. Returns
+    #   nil if the device does not exist in the probed devicegraph.
+    #   @see ResizeInfo
+    #   @see exists_in_probed?
+    #   @note This is slightly different from Storage::detect_resize_info, which
+    #     requires to be called in a device that belongs to the probed devicegraph.
+    #
+    #   @return [ResizeInfo]
+    def detect_resize_info
+      return nil unless exists_in_probed?
+      probed_device = StorageManager.instance.y2storage_probed.find_device(sid)
+      probed_device.storage_detect_resize_info
     end
 
     # Checks whether the device is a concrete kind(s) of device.
