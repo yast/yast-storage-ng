@@ -80,6 +80,12 @@ module Y2Storage
     #   @param dest [Devicegraph] destination devicegraph
     storage_forward :copy
 
+    # @!method find_device(device)
+    #   Find a device by its {Device#sid sid}
+    #
+    #   @return [Device]
+    storage_forward :find_device, as: "Device"
+
     # Creates a new devicegraph with the information read from a file
     #
     # @param filename [String]
