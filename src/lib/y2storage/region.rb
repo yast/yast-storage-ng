@@ -35,7 +35,6 @@ module Y2Storage
   # @see StorageClassWrapper
   class Region
     include StorageClassWrapper
-    include Comparable
     wrap_class Storage::Region
 
     # @!method empty?
@@ -79,30 +78,43 @@ module Y2Storage
     #   @param delta [Fixnum]
     storage_forward :adjust_length
 
-    # Method needed by the Comparable mixin.
+    # @!method <(other)
+    #   Checks whether the region starts before the other
     #
-    # Note that Storage::Region throws Storage::DifferentBlockSizes when trying
-    # to compare regions with different block sizes
-    def <=>(other)
-      other = other.to_storage_value if other.respond_to?(:to_storage_value)
-      return nil unless other.is_a?(Storage::Region)
+    #   @raise [Storage::DifferentBlockSizes] when comparing regions with
+    #     different block sizes
+    #
+    #   @note This class does not include Comparable because, according to the
+    #     definitions of the operands, two regions can be different while none
+    #     of them is bigger than the other.
+    storage_forward :<
 
-      if to_storage_value == other
-        0
-      else
-        (to_storage_value < other) ? -1 : 1
-      end
-    rescue Storage::DifferentBlockSizes
-      # Storage::Region throws this exception when trying to compare regions
-      # with a different block size
-      nil
-    end
+    # @!method <(other)
+    #   Checks whether the region starts after the other
+    #
+    #   @raise [Storage::DifferentBlockSizes] when comparing regions with
+    #     different block sizes
+    #
+    #   @see #<
+    storage_forward :>
 
-    alias_method :eql?, :==
+    # @!method ==(other)
+    #   Checks whether the regions are equivalent (same start and length)
+    #
+    #   @raise [Storage::DifferentBlockSizes] when comparing regions with
+    #     different block sizes
+    #
+    #   @note This class does not include Comparable because, according to the
+    #     definitions of the operands, two regions can be different while none
+    #     of them is bigger than the other.
+    storage_forward :==
 
-    def !=(other)
-      !(self == other)
-    end
+    # @!method !=(other)
+    #   @see #==
+    #
+    #   @raise [Storage::DifferentBlockSizes] when comparing regions with
+    #     different block sizes
+    storage_forward :!=
 
     def inspect
       "<Region range: #{show_range}, block_size: #{block_size}>"
