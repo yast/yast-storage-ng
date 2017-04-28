@@ -131,8 +131,8 @@ module Y2Storage
       #
       def root_volume
         root_vol = PlannedVolume.new("/", @settings.root_filesystem_type)
-        root_vol.min_size = @settings.root_base_disk_size
-        root_vol.max_size = @settings.root_max_disk_size
+        root_vol.min_size = @settings.root_base_size
+        root_vol.max_size = @settings.root_max_size
         root_vol.weight   = @settings.root_space_percent
         root_vol.disk     = @settings.root_device
         if root_vol.btrfs?
@@ -155,8 +155,8 @@ module Y2Storage
       #
       def home_volume
         home_vol = PlannedVolume.new("/home", settings.home_filesystem_type)
-        home_vol.min_size = settings.home_min_disk_size
-        home_vol.max_size = settings.home_max_disk_size
+        home_vol.min_size = settings.home_min_size
+        home_vol.max_size = settings.home_max_size
         home_vol.weight = 100.0 - settings.root_space_percent
         home_vol
       end

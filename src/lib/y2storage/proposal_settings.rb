@@ -177,16 +177,16 @@ module Y2Storage
   # The user can directly override the part inherited from UserSettings.
   #
   class ProposalSettings < ProposalUserSettings
-    attr_accessor :root_base_disk_size
-    attr_accessor :root_max_disk_size
+    attr_accessor :root_base_size
+    attr_accessor :root_max_size
     attr_accessor :root_space_percent
     attr_accessor :btrfs_increase_percentage
     attr_accessor :min_size_to_use_separate_home
     attr_accessor :btrfs_default_subvolume
     attr_accessor :root_subvolume_read_only
     attr_accessor :subvolumes
-    attr_accessor :home_min_disk_size
-    attr_accessor :home_max_disk_size
+    attr_accessor :home_min_size
+    attr_accessor :home_max_size
 
     PRODUCT_SECTION = "partitioning"
     private_constant :PRODUCT_SECTION
@@ -194,8 +194,8 @@ module Y2Storage
     def initialize
       super
       # Default values taken from SLE-12-SP1
-      @root_base_disk_size           = DiskSize.GiB(3)
-      @root_max_disk_size            = DiskSize.GiB(10)
+      @root_base_size           = DiskSize.GiB(3)
+      @root_max_size            = DiskSize.GiB(10)
       @root_space_percent            = 40
       @min_size_to_use_separate_home = DiskSize.GiB(5)
       @btrfs_increase_percentage     = 300.0
@@ -204,8 +204,8 @@ module Y2Storage
       @subvolumes                    = PlannedSubvol.fallback_list
 
       # Not yet in control.xml
-      @home_min_disk_size            = DiskSize.GiB(10)
-      @home_max_disk_size            = DiskSize.unlimited
+      @home_min_size            = DiskSize.GiB(10)
+      @home_max_size            = DiskSize.unlimited
     end
 
     # Overrides all the settings with values read from the YaST product features
@@ -222,9 +222,9 @@ module Y2Storage
       set_from_boolean_feature(:enlarge_swap_for_suspend, :swap_for_suspend)
       set_from_boolean_feature(:root_subvolume_read_only, :root_subvolume_read_only)
 
-      set_from_size_feature(:root_base_disk_size, :root_base_size)
-      set_from_size_feature(:root_max_disk_size, :root_max_size)
-      set_from_size_feature(:home_max_disk_size, :vm_home_max_size)
+      set_from_size_feature(:root_base_size, :root_base_size)
+      set_from_size_feature(:root_max_size, :root_max_size)
+      set_from_size_feature(:home_max_size, :vm_home_max_size)
       set_from_size_feature(:min_size_to_use_separate_home, :limit_try_home)
 
       set_from_integer_feature(:root_space_percent, :root_space_percent)
@@ -254,15 +254,15 @@ module Y2Storage
         "  enlarge_swap_for_suspend: #{enlarge_swap_for_suspend}\n" \
         "  root_device: #{root_device}\n" \
         "  candidate_devices: #{candidate_devices}\n" \
-        "  root_base_disk_size: #{root_base_disk_size}\n" \
-        "  root_max_disk_size: #{root_max_disk_size}\n" \
+        "  root_base_size: #{root_base_size}\n" \
+        "  root_max_size: #{root_max_size}\n" \
         "  root_space_percent: #{root_space_percent}\n" \
         "  btrfs_increase_percentage: #{btrfs_increase_percentage}\n" \
         "  min_size_to_use_separate_home: #{min_size_to_use_separate_home}\n" \
         "  btrfs_default_subvolume: #{btrfs_default_subvolume}\n" \
         "  root_subvolume_read_only: #{root_subvolume_read_only}\n" \
-        "  home_min_disk_size: #{home_min_disk_size}\n" \
-        "  home_max_disk_size: #{home_max_disk_size}\n" \
+        "  home_min_size: #{home_min_size}\n" \
+        "  home_max_size: #{home_max_size}\n" \
         "  subvolumes: \n#{subvolumes}\n"
     end
 
