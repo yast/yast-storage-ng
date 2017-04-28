@@ -67,7 +67,7 @@ module Y2Storage
     # This involves mounting any Windows-like partition to check if there are
     # some typical directories (/windows/system32).
     #
-    # @param *disks [Disk, String] disks to analyze. All disks by default.
+    # @param disks [Disk, String] disks to analyze. All disks by default.
     # @return [Array<Partition>]
     def windows_partitions(*disks)
       data_for(*disks, :windows_partitions) { |d| find_windows_partitions(d) }
@@ -77,7 +77,7 @@ module Y2Storage
     #
     # @see PartitionId.linux_system_ids
     #
-    # @param *disks [Disk, String] disks to analyze. All disks by default.
+    # @param disks [Disk, String] disks to analyze. All disks by default.
     # @return [Array<Partition>]
     def linux_partitions(*disks)
       data_for(*disks, :linux_partitions) { |d| d.linux_system_partitions }
@@ -85,7 +85,7 @@ module Y2Storage
 
     # Release names of installed systems for every disk.
     #
-    # @param *disks [Disk, String] disks to analyze. All disks by default.
+    # @param disks [Disk, String] disks to analyze. All disks by default.
     # @return [Array<String>] release names
     def installed_systems(*disks)
       data_for(*disks, :installed_systems) { |d| find_installed_systems(d) }
@@ -93,7 +93,7 @@ module Y2Storage
 
     # Release names of installed Windows systems for every disk.
     #
-    # @param *disks [Disk, String] disks to analyze. All disks by default.
+    # @param disks [Disk, String] disks to analyze. All disks by default.
     # @return [Array<String>] release names
     def windows_systems(*disks)
       data_for(*disks, :windows_systems) { |d| find_windows_systems(d) }
@@ -101,7 +101,7 @@ module Y2Storage
 
     # Release names of installed Linux systems for every disk.
     #
-    # @param *disks [Disk, String] disks to analyze. All disks by default.
+    # @param disks [Disk, String] disks to analyze. All disks by default.
     # @return [Array<String>] release names
     def linux_systems(*disks)
       data_for(*disks, :linux_systems) { |d| find_linux_systems(d) }
@@ -130,7 +130,7 @@ module Y2Storage
 
     # Gets data for a set of disks, stores it and returns that data.
     #
-    # @param *disks [Disk, String] disks to analyze. All disks by default.
+    # @param disks [Disk, String] disks to analyze. All disks by default.
     # @param data [Symbol] data name.
     def data_for(*disks, data)
       @disks_data ||= {}
@@ -144,7 +144,7 @@ module Y2Storage
 
     # Obtains a list of disks.
     #
-    # @param *disks [Disk, String] disks to analyze. All disks by default.
+    # @param disks [Array<Disk, String>] disks to analyze. All disks by default.
     # @return [Array<Disk>]
     def disks_collection(disks)
       disks = devicegraph.disks if disks.empty?
