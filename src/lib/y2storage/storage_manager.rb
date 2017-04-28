@@ -76,8 +76,10 @@ module Y2Storage
     #   @return [String]
 
     def initialize(storage_environment)
+      @storage = Storage::Storage.new(storage_environment)
       activate_callbacks = ActivateCallbacks.new
-      @storage = Storage::Storage.new(storage_environment, activate_callbacks)
+      @storage.activate(activate_callbacks)
+      @storage.probe
       @staging_revision = 0
       @proposal = nil
     end
