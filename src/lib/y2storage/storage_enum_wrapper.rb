@@ -81,7 +81,7 @@ module Y2Storage
     #
     # By default, this will be the base comparison used in the case statements.
     #
-    # @param *names [#to_sym]
+    # @param names [#to_sym]
     # @return [Boolean]
     def is?(*names)
       names.any? { |n| n.to_sym == to_sym }
