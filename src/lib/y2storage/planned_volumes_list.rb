@@ -74,7 +74,7 @@ module Y2Storage
     # @return [DiskSize] sum of desired/min sizes in @volumes
     def target_disk_size(rounding: nil)
       rounding ||= DiskSize.new(1)
-      @volumes.reduce(DiskSize.zero) { |sum, vol| sum + vol.min_valid_disk_size(target).ceil(rounding) }
+      @volumes.reduce(DiskSize.zero) { |sum, vol| sum + vol.min_valid_size(target).ceil(rounding) }
     end
 
     # Returns the volume that must be placed at the end of a given space in
@@ -101,7 +101,7 @@ module Y2Storage
       return nil if missing >= min_grain
 
       @volumes.detect do |vol|
-        target_size = vol.min_valid_disk_size(target)
+        target_size = vol.min_valid_size(target)
         target_size.ceil(min_grain) - missing >= target_size
       end
     end
@@ -115,14 +115,14 @@ module Y2Storage
     # @return [DiskSize]
     def max_disk_size(rounding: nil)
       rounding ||= DiskSize.new(1)
-      @volumes.reduce(DiskSize.zero) { |sum, vol| sum + vol.max_disk_size.ceil(rounding) }
+      @volumes.reduce(DiskSize.zero) { |sum, vol| sum + vol.max_size.ceil(rounding) }
     end
 
     # Total sum of all current sizes of volumes
     #
     # @return [DiskSize] sum of sizes in @volumes
     def total_disk_size
-      @volumes.reduce(DiskSize.zero) { |sum, vol| sum + vol.disk_size }
+      @volumes.reduce(DiskSize.zero) { |sum, vol| sum + vol.size }
     end
 
     # Total sum of all weights of volumes
@@ -209,14 +209,14 @@ module Y2Storage
 
       new_list = deep_dup
       new_list.each do |vol|
-        vol.disk_size = vol.min_valid_disk_size(target)
-        vol.disk_size = vol.disk_size.ceil(rounding)
+        vol.size = vol.min_valid_size(target)
+        vol.size = vol.size.ceil(rounding)
       end
       adjust_size_to_last_slot!(new_list.last, space_size, min_grain) if min_grain
 
       extra_size = space_size - new_list.total_disk_size
       unused = new_list.distribute_extra_space!(extra_size, rounding)
-      new_list.last.disk_size += unused if min_grain && unused < min_grain
+      new_list.last.size += unused if min_grain && unused < min_grain
 
       new_list
     end
@@ -300,7 +300,7 @@ module Y2Storage
     # @return [PlannedVolumesList]
     def extra_space_candidates
       candidates = dup
-      candidates.delete_if { |vol| vol.disk_size >= vol.max_disk_size }
+      candidates.delete_if { |vol| vol.size >= vol.max_size }
       candidates
     end
 
@@ -321,10 +321,10 @@ module Y2Storage
       extra_size = extra_size.ceil(rounding)
       extra_size = available_size.floor(rounding) if extra_size > available_size
 
-      new_size = extra_size + volume.disk_size
-      if new_size > volume.max_disk_size
+      new_size = extra_size + volume.size
+      if new_size > volume.max_size
         # Increase just until reaching the max size
-        volume.max_disk_size - volume.disk_size
+        volume.max_size - volume.size
       else
         extra_size
       end
@@ -343,8 +343,8 @@ module Y2Storage
         total_weight = candidates.total_weight
         candidates.each do |vol|
           vol_extra = volume_extra_size(vol, extra_size, total_weight, assigned_size, rounding)
-          vol.disk_size += vol_extra
-          log.info("Distributing #{vol_extra} to #{vol.mount_point}; now #{vol.disk_size}")
+          vol.size += vol_extra
+          log.info("Distributing #{vol_extra} to #{vol.mount_point}; now #{vol.size}")
           assigned_size += vol_extra
         end
         extra_size -= assigned_size
@@ -359,17 +359,17 @@ module Y2Storage
 
     def adjust_size_to_last_slot!(volume, space_size, min_grain)
       adjusted_size = adjusted_size_after_ceil(volume, space_size, min_grain)
-      target_size = volume.min_valid_disk_size(target)
-      volume.disk_size = adjusted_size unless adjusted_size < target_size
+      target_size = volume.min_valid_size(target)
+      volume.size = adjusted_size unless adjusted_size < target_size
     end
 
     def adjusted_size_after_ceil(volume, space_size, min_grain)
       mod = space_size % min_grain
       last_slot_size = mod.zero? ? min_grain : mod
-      return volume.disk_size if last_slot_size == min_grain
+      return volume.size if last_slot_size == min_grain
 
       missing = min_grain - last_slot_size
-      volume.disk_size - missing
+      volume.size - missing
     end
   end
 end

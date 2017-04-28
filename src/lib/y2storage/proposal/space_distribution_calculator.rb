@@ -224,7 +224,7 @@ module Y2Storage
 
       def suitable_disk_space?(space, volume, target)
         return false if volume.disk && volume.disk != space.disk_name
-        return false if space.disk_size < volume.min_valid_disk_size(target)
+        return false if space.disk_size < volume.min_valid_size(target)
         max_offset = volume.max_start_offset
         return false if max_offset && space.start_offset > max_offset
         true

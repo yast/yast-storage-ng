@@ -63,9 +63,9 @@ module Y2Storage
       def boot_volume
         vol = PlannedVolume.new("/boot", Filesystems::Type::EXT4)
         vol.disk = settings.root_device
-        vol.min_disk_size = DiskSize.MiB(100)
-        vol.max_disk_size = DiskSize.MiB(500)
-        vol.desired_disk_size = DiskSize.MiB(200)
+        vol.min_size = DiskSize.MiB(100)
+        vol.max_size = DiskSize.MiB(500)
+        vol.desired_size = DiskSize.MiB(200)
         vol.plain_partition = true
         vol
       end

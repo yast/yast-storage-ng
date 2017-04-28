@@ -47,9 +47,9 @@ module Y2Storage
       def zipl_volume
         vol = PlannedVolume.new("/boot/zipl", Filesystems::Type::EXT2)
         vol.disk = root_disk.name
-        vol.min_disk_size = DiskSize.MiB(100)
-        vol.max_disk_size = DiskSize.GiB(1)
-        vol.desired_disk_size = DiskSize.MiB(200)
+        vol.min_size = DiskSize.MiB(100)
+        vol.max_size = DiskSize.GiB(1)
+        vol.desired_size = DiskSize.MiB(200)
         vol.plain_partition = true
         vol
       end
