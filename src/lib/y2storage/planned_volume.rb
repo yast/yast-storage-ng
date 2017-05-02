@@ -58,17 +58,17 @@ module Y2Storage
     attr_accessor :disk
 
     # @return [DiskSize] definitive size of the volume
-    attr_accessor :disk_size
+    attr_accessor :size
 
     # @return [DiskSize] minimum acceptable size in case it's not possible to
     #   ensure the desired one. See {#desired_disk_size}
-    attr_accessor :min_disk_size
+    attr_accessor :min_size
 
     # @return [DiskSize] maximum acceptable size
-    attr_accessor :max_disk_size
+    attr_accessor :max_size
 
     # @return [DiskSize] preferred size
-    attr_accessor :desired_disk_size
+    attr_accessor :desired_size
 
     # @return [Float] factor used to distribute the extra space between
     #   volumes
@@ -114,15 +114,15 @@ module Y2Storage
     #     means the volume will not be encrypted
     secret_attr :encryption_password
 
-    TO_STRING_ATTRS = [:mount_point, :reuse, :min_disk_size, :max_disk_size,
-                       :desired_disk_size, :disk, :max_start_offset, :subvolumes]
+    TO_STRING_ATTRS = [:mount_point, :reuse, :min_size, :max_size,
+                       :desired_size, :disk, :max_start_offset, :subvolumes]
 
-    alias_method :desired, :desired_disk_size
-    alias_method :min, :min_disk_size
-    alias_method :max, :max_disk_size
-    alias_method :desired=, :desired_disk_size=
-    alias_method :min=, :min_disk_size=
-    alias_method :max=, :max_disk_size=
+    alias_method :desired, :desired_size
+    alias_method :min, :min_size
+    alias_method :max, :max_size
+    alias_method :desired=, :desired_size=
+    alias_method :min=, :min_size=
+    alias_method :max=, :max_size=
     alias_method :plain_partition?, :plain_partition
 
     # Constructor.
@@ -135,10 +135,10 @@ module Y2Storage
       @reuse         = nil
       @partition_id  = nil
       @disk          = nil
-      @disk_size     = DiskSize.zero
-      @min_disk_size = DiskSize.zero
-      @max_disk_size = DiskSize.unlimited
-      @desired_disk_size = DiskSize.unlimited
+      @size     = DiskSize.zero
+      @min_size = DiskSize.zero
+      @max_size = DiskSize.unlimited
+      @desired_size = DiskSize.unlimited
       @max_start_offset = nil
       @align         = nil
       @bootable      = nil
@@ -168,11 +168,11 @@ module Y2Storage
     #
     # @param strategy [Symbol] :desired or :min
     # @return [DiskSize]
-    def min_valid_disk_size(strategy)
+    def min_valid_size(strategy)
       # No need to provide space for reused volumes
       return DiskSize.zero if reuse
       size = send(strategy)
-      size = min_disk_size if size.unlimited?
+      size = min_size if size.unlimited?
       size
     end
 

@@ -79,9 +79,9 @@ module Y2Storage
         vol = PlannedVolume.new(nil)
         # only required on GPT
         vol.partition_id = PartitionId::BIOS_BOOT
-        vol.min_disk_size = DiskSize.KiB(256)
-        vol.max_disk_size = DiskSize.MiB(8)
-        vol.desired_disk_size = DiskSize.MiB(1)
+        vol.min_size = DiskSize.KiB(256)
+        vol.max_size = DiskSize.MiB(8)
+        vol.desired_size = DiskSize.MiB(1)
         vol.align = :keep_size
         vol.bootable = false
         vol.plain_partition = true

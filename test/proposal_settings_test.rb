@@ -78,19 +78,19 @@ describe Y2Storage::ProposalSettings do
       expect(settings.root_subvolume_read_only).to eq false
     end
 
-    it "sets 'root_base_disk_size' based on the feature 'root_base_size'" do
+    it "sets 'root_base_size' based on the feature 'root_base_size'" do
       read_feature("root_base_size", "111 GiB")
-      expect(settings.root_base_disk_size).to eq 111.GiB
+      expect(settings.root_base_size).to eq 111.GiB
     end
 
-    it "sets 'root_max_disk_size' based on the feature 'root_max_size'" do
+    it "sets 'root_max_size' based on the feature 'root_max_size'" do
       read_feature("root_max_size", "222 GiB")
-      expect(settings.root_max_disk_size).to eq 222.GiB
+      expect(settings.root_max_size).to eq 222.GiB
     end
 
-    it "sets 'home_max_disk_size' based on the feature 'vm_home_max_size'" do
+    it "sets 'home_max_size' based on the feature 'vm_home_max_size'" do
       read_feature("vm_home_max_size", "333 GiB")
-      expect(settings.home_max_disk_size).to eq 333.GiB
+      expect(settings.home_max_size).to eq 333.GiB
     end
 
     it "sets 'min_size_to_use_separate_home' based on the feature 'limit_try_home'" do
@@ -126,7 +126,7 @@ describe Y2Storage::ProposalSettings do
     context "when the 'partitioning' section is missing from the product features" do
       before do
         settings.use_lvm = true
-        settings.root_base_disk_size = 45.GiB
+        settings.root_base_size = 45.GiB
 
         stub_features("another_section" => { "value" => true })
       end
@@ -135,7 +135,7 @@ describe Y2Storage::ProposalSettings do
         settings.read_product_features!
 
         expect(settings.use_lvm).to eq true
-        expect(settings.root_base_disk_size).to eq 45.GiB
+        expect(settings.root_base_size).to eq 45.GiB
       end
     end
 
@@ -152,8 +152,8 @@ describe Y2Storage::ProposalSettings do
         settings.use_snapshots = true
         settings.use_lvm = true
         settings.use_separate_home = false
-        settings.root_base_disk_size = 45.GiB
-        settings.root_max_disk_size = 100.GiB
+        settings.root_base_size = 45.GiB
+        settings.root_max_size = 100.GiB
 
         stub_partitioning_features(features)
       end
@@ -161,20 +161,20 @@ describe Y2Storage::ProposalSettings do
       it "overrides previous values with the corresponding present features" do
         expect(settings.use_snapshots).to eq true
         expect(settings.use_separate_home).to eq false
-        expect(settings.root_base_disk_size).to eq 45.GiB
+        expect(settings.root_base_size).to eq 45.GiB
 
         settings.read_product_features!
 
         expect(settings.use_snapshots).to eq false
         expect(settings.use_separate_home).to eq true
-        expect(settings.root_base_disk_size).to eq 60.GiB
+        expect(settings.root_base_size).to eq 60.GiB
       end
 
       it "does not modify values corresponding to omitted features" do
         settings.read_product_features!
 
         expect(settings.use_lvm).to eq true
-        expect(settings.root_max_disk_size).to eq 100.GiB
+        expect(settings.root_max_size).to eq 100.GiB
       end
     end
 
@@ -182,43 +182,43 @@ describe Y2Storage::ProposalSettings do
       let(:initial_size) { 14.GiB }
 
       before do
-        settings.root_base_disk_size = initial_size
+        settings.root_base_size = initial_size
       end
 
       it "can parse strings with spaces" do
         stub_partitioning_features("root_base_size" => "121 MiB ")
         settings.read_product_features!
 
-        expect(settings.root_base_disk_size).to eq 121.MiB
+        expect(settings.root_base_size).to eq 121.MiB
       end
 
       it "can parse strings without spaces" do
         stub_partitioning_features("root_base_size" => "121MiB")
         settings.read_product_features!
 
-        expect(settings.root_base_disk_size).to eq 121.MiB
+        expect(settings.root_base_size).to eq 121.MiB
       end
 
       it "parses the string assuming the units are always power of two" do
         stub_partitioning_features("root_base_size" => "121MB")
         settings.read_product_features!
 
-        expect(settings.root_base_disk_size).to_not eq 121.MB
-        expect(settings.root_base_disk_size).to eq 121.MiB
+        expect(settings.root_base_size).to_not eq 121.MB
+        expect(settings.root_base_size).to eq 121.MiB
       end
 
       it "ignores values that are not a parseable size" do
         stub_partitioning_features("root_base_size" => "twelve")
         settings.read_product_features!
 
-        expect(settings.root_base_disk_size).to eq initial_size
+        expect(settings.root_base_size).to eq initial_size
       end
 
       it "ignores values equal to zero" do
         stub_partitioning_features("root_base_size" => "0 MiB")
         settings.read_product_features!
 
-        expect(settings.root_base_disk_size).to eq initial_size
+        expect(settings.root_base_size).to eq initial_size
       end
     end
 
@@ -510,14 +510,14 @@ describe Y2Storage::ProposalSettings do
 
     it "returns an object that uses default values for the omitted features" do
       expect(from_product.use_separate_home).to eq default.use_separate_home
-      expect(from_product.root_base_disk_size).to eq default.root_base_disk_size
+      expect(from_product.root_base_size).to eq default.root_base_size
       expect(from_product.btrfs_increase_percentage).to eq default.btrfs_increase_percentage
     end
 
     it "returns an object that uses the read values for the present features" do
       expect(from_product.use_lvm).to eq true
       expect(from_product.root_space_percent).to eq 50
-      expect(from_product.home_max_disk_size).to eq 500.GiB
+      expect(from_product.home_max_size).to eq 500.GiB
     end
   end
 end

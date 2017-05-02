@@ -74,8 +74,8 @@ module Y2Storage
       def process_free_space(free_space, volumes, usable_size, num_logical)
         volumes.each do |vol|
           log.info(
-            "vol #{vol.mount_point}\tmin: #{vol.min_disk_size}\tmax: #{vol.max_disk_size} " \
-            "desired: #{vol.desired_disk_size}\tweight: #{vol.weight}"
+            "vol #{vol.mount_point}\tmin: #{vol.min_size}\tmax: #{vol.max_size} " \
+            "desired: #{vol.desired_size}\tweight: #{vol.weight}"
           )
         end
 
@@ -156,7 +156,7 @@ module Y2Storage
       #                     or logical
       #
       def create_partition(vol, partition_id, free_space, primary)
-        log.info("Creating partition for #{vol.mount_point} with #{vol.disk_size}")
+        log.info("Creating partition for #{vol.mount_point} with #{vol.size}")
         disk = free_space.disk
         ptable = partition_table(disk)
 
@@ -172,7 +172,7 @@ module Y2Storage
           partition_type = PartitionType::LOGICAL
         end
 
-        region = new_region_with_size(free_space.region, vol.disk_size)
+        region = new_region_with_size(free_space.region, vol.size)
         partition = ptable.create_partition(dev_name, region, partition_type)
         partition.id = partition_id
         partition.boot = !!vol.bootable if ptable.partition_boot_flag_supported?
@@ -221,16 +221,15 @@ module Y2Storage
         raise NoMorePartitionSlotError
       end
 
-      # Create a new region from the given one, but with new size
-      # disk_size.
+      # Create a new region from the given one, but with new size.
       #
       # @param region [Region] initial region
-      # @param disk_size [DiskSize] new size of the region
+      # @param size [DiskSize] new size of the region
       #
       # @return [Region] Newly created region
       #
-      def new_region_with_size(region, disk_size)
-        blocks = (disk_size / region.block_size).to_i
+      def new_region_with_size(region, size)
+        blocks = (size / region.block_size).to_i
         # Never exceed the region
         if region.start + blocks > region.end
           blocks = region.end - region.start + 1

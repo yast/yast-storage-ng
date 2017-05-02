@@ -277,7 +277,7 @@ module Y2Storage
       def create_logical_volume(volume_group, volume)
         name = volume.logical_volume_name || DEFAULT_LV_NAME
         name = available_name(name, volume_group)
-        lv = volume_group.create_lvm_lv(name, volume.disk_size.to_i)
+        lv = volume_group.create_lvm_lv(name, volume.size.to_i)
         filesystem = volume.create_filesystem(lv)
         if volume.subvolumes?
           other_mount_points = @planned_volumes.map { |v| v.mount_point }

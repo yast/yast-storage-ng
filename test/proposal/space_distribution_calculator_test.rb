@@ -389,17 +389,17 @@ describe Y2Storage::Proposal::SpaceDistributionCalculator do
         let(:lvm_max) { 20.GiB }
 
         it "sets min_disk_size for all PVs to sum lvm_size" do
-          useful_min_sizes = pv_vols.map { |v| lvm_helper.useful_pv_space(v.min_disk_size) }
+          useful_min_sizes = pv_vols.map { |v| lvm_helper.useful_pv_space(v.min_size) }
           expect(useful_min_sizes.reduce(:+)).to eq lvm_size
         end
 
         it "sets desired_disk_size for all PVs to sum lvm_size" do
-          useful_desired_sizes = pv_vols.map { |v| lvm_helper.useful_pv_space(v.desired_disk_size) }
+          useful_desired_sizes = pv_vols.map { |v| lvm_helper.useful_pv_space(v.desired_size) }
           expect(useful_desired_sizes.reduce(:+)).to eq lvm_size
         end
 
         it "sets max_disk_size for all PVs to sum lvm_max" do
-          useful_max_sizes = pv_vols.map { |v| lvm_helper.useful_pv_space(v.max_disk_size) }
+          useful_max_sizes = pv_vols.map { |v| lvm_helper.useful_pv_space(v.max_size) }
           expect(useful_max_sizes.reduce(:+)).to eq lvm_max
         end
 

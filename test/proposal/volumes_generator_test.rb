@@ -167,8 +167,8 @@ describe Y2Storage::Proposal::VolumesGenerator do
     context "with use_separate_home" do
       before do
         settings.use_separate_home = true
-        settings.home_min_disk_size = 4.GiB
-        settings.home_max_disk_size = Y2Storage::DiskSize.unlimited
+        settings.home_min_size = 4.GiB
+        settings.home_max_size = Y2Storage::DiskSize.unlimited
         settings.home_filesystem_type = xfs
       end
 
@@ -176,8 +176,8 @@ describe Y2Storage::Proposal::VolumesGenerator do
         expect(subject.volumes).to include(
           an_object_having_attributes(
             mount_point:     "/home",
-            min:             settings.home_min_disk_size,
-            max:             settings.home_max_disk_size,
+            min:             settings.home_min_size,
+            max:             settings.home_max_size,
             filesystem_type: settings.home_filesystem_type
           )
         )
@@ -204,8 +204,8 @@ describe Y2Storage::Proposal::VolumesGenerator do
 
     describe "setting the properties of the root partition" do
       before do
-        settings.root_base_disk_size = 10.GiB
-        settings.root_max_disk_size = 20.GiB
+        settings.root_base_size = 10.GiB
+        settings.root_max_size = 20.GiB
         settings.btrfs_increase_percentage = 75
       end
 
