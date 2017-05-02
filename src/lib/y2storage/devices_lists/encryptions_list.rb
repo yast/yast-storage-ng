@@ -77,6 +77,13 @@ module Y2Storage
 
       alias_method :lvs, :lvm_lvs
       alias_method :logical_volumes, :lvm_lvs
+
+    protected
+
+      def full_list
+        # There is no :Storage::Encryption.all in libstorage API, for now.
+        ::Storage::Luks.all(devicegraph).to_a
+      end
     end
   end
 end

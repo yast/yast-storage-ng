@@ -737,6 +737,112 @@ describe "devices lists" do
     let(:scenario) { "complex-lvm-encrypt" }
     let(:encryptions) { fake_devicegraph.encryptions }
 
-    pending
+    it "contains all encrypted devices by default" do
+      expect(encryptions.size).to eq(5)
+      expect(full_list.size).to eq(5)
+    end
+
+    describe "#filesystems" do
+      it "returns a list of filesystems" do
+        expect(encryptions.filesystems).to be_a Y2Storage::DevicesLists::FilesystemsList
+      end
+
+      it "returns a filtered list of filesystems" do
+        encs = encryptions.with { |e| e.name.include? "sda" }
+        expect(encs.filesystems.size).to eq(1)
+
+        encs = encryptions.with { |e| e.name.include? "bad name" }
+        expect(encs.filesystems.size).to eq(0)
+      end
+
+      it "handles correctly encrypted devices without filesystem" do
+        encs = encryptions.with { |e| e.name.include? "sdc" }
+        expect(encs.filesystems.size).to eq(0)
+      end
+
+      it "returns all filesystems located in encrypted partitions or disks" do
+        filesystems = encryptions.filesystems
+        expect(filesystems.size).to eq 2
+        expect(filesystems.map(&:type).uniq).to contain_exactly(ext4)
+      end
+    end
+
+    describe "#disks" do
+      it "returns a list of disks" do
+        expect(encryptions.disks).to be_a Y2Storage::DevicesLists::DisksList
+      end
+
+      it "returns a filtered list of disks" do
+        encs = encryptions.with { |e| e.name.include? "sda" }
+        expect(encs.disks.size).to eq(1)
+
+        encs = encryptions.with { |e| e.name.include? "bad name" }
+        expect(encs.disks.size).to eq(0)
+      end
+
+      it "includes directly encrypted disks" do
+        expect(encryptions.disks.map(&:name)).to(
+          include("/dev/sdc", "/dev/sdd")
+        )
+      end
+
+      it "includes disks with encrypted partitions" do
+        expect(encryptions.disks.map(&:name)).to(
+          include("/dev/sda", "/dev/sde")
+        )
+      end
+
+      it "does not include a not encrypted disk under an encrypted lv" do
+        expect(encryptions.disks.map(&:name)).not_to include("/dev/sdg")
+      end
+
+      it "does not include not encrypted disks" do
+        disks = encryptions.disks
+        expect(disks.map(&:name)).not_to(
+          include("/dev/sdb", "/dev/sdf", "/dev/sdg")
+        )
+        expect(disks.size).to eq(4)
+      end
+    end
+
+    describe "#partitions" do
+      it "returns a list of partitions" do
+        expect(encryptions.partitions).to be_a(Y2Storage::DevicesLists::PartitionsList)
+        expect(encryptions.partitions.size).to eq(2)
+      end
+
+      it "return a filtered list of partitions" do
+        encs = encryptions.with { |e| e.name.include? "sda" }
+        expect(encs.partitions.size).to eq(1)
+
+        encs = encryptions.with { |e| e.name.include? "bad name" }
+        expect(encs.partitions.size).to eq(0)
+      end
+
+      it "handles correctly encrypted devices without partitions" do
+        encs = encryptions.with(name: "/dev/mapper/cr_sdc")
+        expect(encs.partitions.size).to eq(0)
+      end
+
+      it "does not return partitions for an encrypted lv" do
+        encs = encryptions.with { |e| e.name.end_with? "cr_vg1_lv2" }
+        expect(encs.partitions.size).to eq(0)
+      end
+
+      # TODO: test with encrypted PV
+    end
+
+    describe "#lvm_lvs" do
+      it "returns a list of lvs" do
+        expect(encryptions.lvm_lvs).to be_a(Y2Storage::DevicesLists::LvmLvsList)
+      end
+
+      it "returns only encrypted lvs" do
+        lvs = encryptions.lvm_lvs
+        expect(lvs.size).to eq(1)
+        expect(lvs.map(&:lv_name)).to contain_exactly("lv2")
+        expect(lvs.vgs.map(&:vg_name)).to contain_exactly("vg1")
+      end
+    end
   end
 end
