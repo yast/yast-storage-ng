@@ -1,0 +1,64 @@
+/**
+ * File:
+ *   etc_mtab.scr
+ * Summary:
+ *   SCR Agent for reading /etc/mtab
+ * Access:
+ *   read-only
+ * Authors:
+ *   Unknown <yast2-hacker@suse.de>
+ * See:
+ *   anyagent
+ *   libscr
+ *   man mount
+ * Example:
+ *   Read(.etc.mtab)
+ *   ([$["file":"/", 
+ *       "freq":0, 
+ *       "mntops":"rw", 
+ *       "passno":0, 
+ *       "spec":"/dev/root", 
+ *       "vfstype":"reiserfs"], 
+ *     $["file":"/proc", 
+ *       "freq":0, 
+ *       "mntops":"rw", 
+ *       "passno":0, 
+ *       "spec":"proc", 
+ *       "vfstype":"proc"], 
+ *     ...
+ *    ])
+ * 
+ * $Id: etc_mtab.scr 45868 2008-03-29 21:31:26Z aschnell $
+ *
+ * Returns a <b>list of maps</b>. Each map (list-entry) corresponds to i
+ * one mount.
+ * Keys for the maps are: "spec", "file", "vfstype", "mntops", "freq", "passno"
+ *
+ * FIXME: Remove this SCR agent if there is a proper alternative for it in
+ *        storage-ng.
+ */
+.etc.mtab
+
+`ag_anyagent(
+  `Description (
+	(`File("/etc/mtab")),     // real file name
+	"#\n",                    // Comment
+	false,                    // read-only
+	(`List (
+	    `Tuple (
+		`spec (`String("^\t ")),
+		`Separator ("\t "),
+		`file (`String("^\t ")),
+		`Separator ("\t "),
+		`vfstype (`String("^\t ")),
+		`Separator ("\t "),
+		`mntops (`String("^ \t\n")),
+		`Optional(`Whitespace()),
+		`Optional(`freq (`Number())),
+		`Optional(`Whitespace()),
+		`Optional(`passno (`Number()))
+		),
+	    "\n"
+	    ))
+	)
+)

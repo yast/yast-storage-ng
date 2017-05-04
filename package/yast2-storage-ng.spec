@@ -56,6 +56,9 @@ rake install DESTDIR="%{buildroot}"
 %{yast_dir}/clients/*.rb
 %{yast_dir}/lib
 
+# agents-scr
+%{yast_scrconfdir}/*.scr
+
 %doc COPYING
 %doc README.md
 

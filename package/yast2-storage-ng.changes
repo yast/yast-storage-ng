@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Thu May  4 13:21:28 CEST 2017 - schubi@suse.de
+
+- Added SCR agent .etc.mtab again until we have a proper
+  alternative for it (still needed in yast2-users).
+
+-------------------------------------------------------------------
 Thu May  4 09:07:44 UTC 2017 - ancor@suse.com
 
 - Changelog entry to document stuff that was left behind.
