@@ -1,4 +1,34 @@
 -------------------------------------------------------------------
+Thu May  4 09:07:44 UTC 2017 - ancor@suse.com
+
+- Changelog entry to document stuff that was left behind.
+  See below.
+- Installation proposal now generates Btrfs subvolumes when needed
+  (according to control.xml and a fallback list).
+- Improved and fully functional Guided Setup.
+- Added new fields to ProposalSettings and renamed others (xxx_size
+  instead of xxx_disk_size). Similar changes in PlannedVolume.
+- New smaller and more convenient API for DiskAnalyzer.
+- Many documentation (Yardoc) improvements and fixes.
+- Added dummy activate callbacks (for activating a previous LUKS).
+- The installer now saves a xml representation of the probed and
+  staging devicegraphs before proceeding with the installation.
+- New API for accessing the libstorage objects from Ruby:
+  * New classes in the Y2Storage namespace offering a wrapper around
+    the corresponding libstorage classes and enums: Actiongraph,
+    AlignPolicy, BlkDevice, BtrfsSubvolume, Dasd, DasdFormat,
+    DasdType, DataTransport, Device, Devicegraph, Disk, Encryption,
+    LvmLv, LvmPv, LvmVg, Mountable, Partition, PartitionId,
+    PartitionType, Partitionable, Region and ResizeInfo.
+  * Mixins StorageClassWrapper and StorageEnumWrapper to define more
+    wrappers as needed.
+  * Removed EnumMappings.
+  * Removed most refinements in Y2Storage, functionality moved to
+    the new classes.
+  * Marked DevicesList as deprecated.
+  * Marked some refinements as deprecated.
+
+-------------------------------------------------------------------
 Tue Apr 25 08:50:10 UTC 2017 - jreidinger@suse.com
 
 - add Gpt#pmbr_boot(?/=) methods for protective MBR
