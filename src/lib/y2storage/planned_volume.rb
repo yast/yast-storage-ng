@@ -61,7 +61,7 @@ module Y2Storage
     attr_accessor :size
 
     # @return [DiskSize] minimum acceptable size in case it's not possible to
-    #   ensure the desired one. See {#desired_disk_size}
+    #   ensure the desired one. See {#desired_size}
     attr_accessor :min_size
 
     # @return [DiskSize] maximum acceptable size
