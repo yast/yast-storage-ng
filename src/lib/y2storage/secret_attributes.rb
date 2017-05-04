@@ -21,8 +21,8 @@
 
 module Y2Storage
   # Mixin that enables a class to define attributes that are never exposed via
-  # #inspect, #to_s or similar methods, with the goal of preventing
-  # unintentional leaks of sensitive information in the application logs.
+  #   #inspect, #to_s or similar methods, with the goal of preventing
+  #   unintentional leaks of sensitive information in the application logs.
   module SecretAttributes
     # Inner class to store the value of the attribute without exposing it
     # directly
@@ -52,6 +52,21 @@ module Y2Storage
     module ClassMethods
       # Similar to .attr_accessor but with additional mechanisms to prevent
       # exposing the internal value of the attribute
+      #
+      # @example
+      #   class TheClass
+      #     include Y2Storage::SecretAttributes
+      #
+      #     attr_accessor :name
+      #     secret_attr :password
+      #   end
+      #
+      #   one_object = TheClass.new
+      #   one_object.name = "Aa"
+      #   one_object.password = "42"
+      #
+      #   one_object.password # => "42"
+      #   one_object.inspect # => "#<TheClass:0x0f8 @password=<secret>, @name=\"Aa"\">"
       def secret_attr(name)
         define_method(:"#{name}") do
           attribute = instance_variable_get(:"@#{name}")
