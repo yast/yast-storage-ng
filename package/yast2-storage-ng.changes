@@ -8,7 +8,7 @@ Thu May  4 09:07:44 UTC 2017 - ancor@suse.com
 - Improved and fully functional Guided Setup.
 - Added new fields to ProposalSettings and renamed others (xxx_size
   instead of xxx_disk_size). Similar changes in PlannedVolume.
-- New smaller and more convenient API for DiskAnalyzer
+- New smaller and more convenient API for DiskAnalyzer.
 - Many documentation (Yardoc) improvements and fixes.
 - Added dummy activate callbacks (for activating a previous LUKS).
 - The installer now saves a xml representation of the probed and
