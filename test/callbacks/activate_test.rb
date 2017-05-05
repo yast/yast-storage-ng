@@ -21,17 +21,18 @@
 # find current contact information at www.suse.com.
 
 require_relative "../spec_helper"
-require "y2storage/callbacks/activate_callbacks"
+require "y2storage/callbacks/activate"
 
-describe Y2Storage::ActivateCallbacks do
+describe Y2Storage::Callbacks::Activate do
   subject { described_class.new }
 
   describe "#luks" do
+    let(:dialog) { instance_double(Y2Storage::Dialogs::Callbacks::ActivateLuks) }
+
     before do
-      allow_any_instance_of(Y2Storage::Dialogs::Callbacks::ActivateLuks)
-        .to receive(:run).and_return(action)
-      allow_any_instance_of(Y2Storage::Dialogs::Callbacks::ActivateLuks)
-        .to receive(:encryption_password).and_return(encryption_password)
+      allow(dialog).to receive(:run).and_return(action)
+      allow(dialog).to receive(:encryption_password).and_return(encryption_password)
+      allow(Y2Storage::Dialogs::Callbacks::ActivateLuks).to receive(:new).and_return dialog
     end
 
     let(:uuid) { "11111111-1111-1111-1111-11111111" }
@@ -40,8 +41,7 @@ describe Y2Storage::ActivateCallbacks do
     let(:encryption_password) { "123456" }
 
     it "opens a dialog to request the password" do
-      expect_any_instance_of(Y2Storage::Dialogs::Callbacks::ActivateLuks)
-        .to receive(:run).once
+      expect(dialog).to receive(:run).once
       subject.luks(uuid, attempts)
     end
 
