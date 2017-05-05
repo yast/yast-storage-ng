@@ -21,18 +21,29 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "yast"
 require "storage"
+require "y2storage/dialogs/callbacks/activate_luks"
 
 module Y2Storage
-  # class to implement callbacks used during activate in ruby
-  class ActivateCallbacks < Storage::ActivateCallbacks
-    def multipath
-      return false
-    end
+  module Callbacks
+    # class to implement callbacks used during activate
+    class Activate < Storage::ActivateCallbacks
+      include Yast::Logger
 
-    def luks(_uuid, _attempt)
-      return Storage::PairBoolString.new(false, "")
+      def multipath
+        return false
+      end
+
+      def luks(uuid, attempt)
+        log.info("Trying to open luks UUID: #{uuid} (#{attempt} attempts)")
+        dialog = Dialogs::Callbacks::ActivateLuks.new(uuid, attempt)
+        result = dialog.run
+
+        activate = result == :accept
+        password = activate ? dialog.encryption_password : ""
+
+        Storage::PairBoolString.new(activate, password)
+      end
     end
   end
 end
