@@ -38,7 +38,7 @@ describe Y2Storage::Dialogs::Callbacks::ActivateLuks do
 
   let(:uuid) { "11111111-1111-1111-1111-11111111" }
   let(:attempts) { 1 }
-  let(:action) { :abort }
+  let(:action) { :cancel }
   let(:password) { nil }
 
   describe "#run" do
@@ -53,18 +53,16 @@ describe Y2Storage::Dialogs::Callbacks::ActivateLuks do
       context "and dialog is accepted" do
         let(:action) { :accept }
 
-        it "returns that password as encryption password" do
-          subject.run
-          expect(subject.encryption_password).to eq(password)
+        it "returns :accept" do
+          expect(subject.run).to be(:accept)
         end
       end
 
       context "and dialog is not accepted" do
         let(:action) { :cancel }
 
-        it "returns nil as encryption password" do
-          subject.run
-          expect(subject.encryption_password).to be_nil
+        it "returns :cancel" do
+          expect(subject.run).to be(:cancel)
         end
       end
     end
@@ -80,8 +78,37 @@ describe Y2Storage::Dialogs::Callbacks::ActivateLuks do
       context "and dialog is not accepted" do
         let(:action) { :cancel }
 
-        it "returns nil as encryption password" do
-          subject.run
+        it "returns :cancel" do
+          expect(subject.run).to be(:cancel)
+        end
+      end
+    end
+  end
+
+  describe "#encryption_password" do
+    context "before running the dialog" do
+      it "returns nil" do
+        expect(subject.encryption_password).to be_nil
+      end
+    end
+
+    context "after running the dialog" do
+      before { subject.run }
+
+      context "if dialog was accepted" do
+        let(:action) { :accept }
+        let(:password) { "123456" }
+
+        it "returns the entered password" do
+          expect(subject.encryption_password).to be(password)
+        end
+      end
+
+      context "if dialog was not accepted" do
+        let(:action) { :cancel }
+        let(:password) { "123456" }
+
+        it "returns nil" do
           expect(subject.encryption_password).to be_nil
         end
       end

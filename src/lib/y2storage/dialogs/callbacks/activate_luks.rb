@@ -22,6 +22,8 @@
 # find current contact information at www.suse.com.
 
 require "yast"
+require "ui/dialog"
+require "y2storage/secret_attributes"
 
 Yast.import "UI"
 
@@ -29,44 +31,28 @@ module Y2Storage
   module Dialogs
     module Callbacks
       # Dialog to manage luks activation callbacks
-      class ActivateLuks
-        include Yast::UIShortcuts
-        include Yast::I18n
+      class ActivateLuks < UI::Dialog
+        include SecretAttributes
 
-        attr_reader :encryption_password
+        secret_attr :encryption_password
 
         def initialize(uuid, attempt)
+          textdomain "storage-ng"
           @uuid = uuid
           @attempt = attempt
         end
 
-        def run
-          create_dialog
-
-          result = loop do
-            input = Yast::UI.UserInput
-            case input
-            when :password
-              activate_button
-            when :accept
-              @encryption_password = password
-              break input
-            when :cancel, :abort
-              break input
-            end
-          end
-
-          Yast::UI.CloseDialog
-          result
+        def password_handler
+          activate_button
         end
 
-      protected
+        def accept_handler
+          self.encryption_password = password
+          finish_dialog(:accept)
+        end
 
-        attr_reader :uuid, :attempt
-
-        def create_dialog
-          Yast::UI.OpenDialog(dialog_content)
-          activate_button
+        def cancel_handler
+          finish_dialog(:cancel)
         end
 
         # rubocop:disable  Metrics/MethodLength
@@ -80,7 +66,7 @@ module Y2Storage
                 VSpacing(0.2),
                 Left(
                   Label(
-                    _("The following device contain an encryption signature but the \n" \
+                    _("The following device contains an encryption signature but the \n" \
                         "password is not yet known.")
                   )
                 ),
@@ -89,7 +75,7 @@ module Y2Storage
                 VSpacing(0.2),
                 Left(
                   Label(
-                    _("The password need to be known if the device is needed either \n" \
+                    _("The password needs to be known if the device is needed either \n" \
                         "during an update or if it contains an encrypted volume.")
                   )
                 ),
@@ -104,7 +90,17 @@ module Y2Storage
             )
           )
         end
-        # rubocop:enable all
+      # rubocop:enable all
+
+      protected
+
+        attr_reader :uuid, :attempt
+
+        def create_dialog
+          super
+          activate_button
+          true
+        end
 
         def password
           Yast::UI.QueryWidget(Id(:password), :Value).to_s
