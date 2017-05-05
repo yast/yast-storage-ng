@@ -66,7 +66,7 @@ module Y2Storage
                 VSpacing(0.2),
                 Left(
                   Label(
-                    _("The following device contains an encryption signature but the \n" \
+                    _("The following device contains an encryption signature but the\n" \
                         "password is not yet known.")
                   )
                 ),
@@ -75,8 +75,8 @@ module Y2Storage
                 VSpacing(0.2),
                 Left(
                   Label(
-                    _("The password needs to be known if the device is needed either \n" \
-                        "during an update or if it contains an encrypted volume.")
+                    _("The password is needed if the device contains a system to be\n" \
+                        "updated or belongs to a LVM to be used during installation.")
                   )
                 ),
                 VSpacing(0.2),
