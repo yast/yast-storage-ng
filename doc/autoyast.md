@@ -38,12 +38,12 @@ The current installation proposal consist basically of two phases:
   ProposalSettings.
 * Afterwards, a new devicegraph is generated based on the initial one and on
   the list of planned volumes. During that process, preexisting partitions and
-  logical volumes are deleted and resize on demand and the optimal distribution
+  logical volumes are deleted and resized on demand and the optimal distribution
   of partitions is calculated.
 
 Each `PlannedVolume` contains both a desired size and a minimal size. So, in the
 worst case the whole process is repeated twice (first using the desired sizes
-and then falling-back to the min).
+and then falling back to the min).
 
 There is a [pending pull request](https://github.com/yast/yast-storage-ng/pull/179)
 (Iván's Hackweek) with a refactoring of the current proposal in which, at the
@@ -73,7 +73,7 @@ on examples found in the AutoYaST documentation.
 The process followed by AutoYaST is quite different from the proposal one, but
 the concept of `PlannedPartition`, `PlannedLv` and several auxiliary classes
 that take list of those as input to perform operations can be reused to a big
-extend.
+extent.
 
 
 ## Adapting the existing code
@@ -144,7 +144,7 @@ same disk and two partitions in different drives cannot end up sharing the disk.
 
 The matching between a drive and the real disk can be done explicitly in the
 profile (using the `device` tag) or can be left for AutoYaST to decide. In the
-latter case, the algorithm used by AutoYaST is deadly simple - it just tries to
+latter case, the algorithm used by AutoYaST is dead simple - it just tries to
 use the first available device that is not explicitly skipped (there is also a
 syntax for skipping devices). The documentation states it tries to find a
 device that "looks reasonable", but in reality it just uses whatever is not
@@ -168,7 +168,7 @@ deleting on demand during the process like in the proposal procedure.
 As soon as the matching between AutoYaST devices and real disks is known, the
 corresponding destructive operations can be performed in the target devicegraph.
 
-* Partition tables for devices with the `initialize` flag can be delete right
+* Partition tables for devices with the `initialize` flag can be deleted right
   away from the devicegraph.
 
 * AutoYaST also makes possible to specify the concrete way in which a given
