@@ -37,7 +37,7 @@ module ExpertPartitioner
 
     def create
       tmp = ["Name: #{@partition.name}",
-             "Size: #{::Storage.byte_to_humanstring(@partition.size, false, 2, false)}"]
+             "Size: #{::Storage.byte_to_humanstring(@partition.size.to_i, false, 2, false)}"]
 
       @partition.udev_paths.each_with_index do |udev_path, i|
         tmp << "Device Path #{i + 1}: #{udev_path}"
