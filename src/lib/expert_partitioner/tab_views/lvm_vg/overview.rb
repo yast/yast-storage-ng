@@ -38,8 +38,8 @@ module ExpertPartitioner
 
     def create
       tmp = ["Name: #{@lvm_vg.vg_name}",
-             "Size: #{::Storage.byte_to_humanstring(@lvm_vg.size, false, 2, false)}",
-             "Extent Size: #{::Storage.byte_to_humanstring(@lvm_vg.extent_size, false, 2, false)}"]
+             "Size: #{@lvm_vg.size.to_human_string}",
+             "Extent Size: #{@lvm_vg.extent_size.to_human_string}"]
 
       contents = Yast::HTML.List(tmp)
 

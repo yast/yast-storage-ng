@@ -37,7 +37,7 @@ module ExpertPartitioner
 
     def create
       tmp = ["Name: #{@bcache.name}",
-             "Size: #{::Storage.byte_to_humanstring(@bcache.size, false, 2, false)}",
+             "Size: #{@bcache.size.to_human_string}",
              "Used Device: #{@bcache.blk_device.name}"]
 
       tmp << if @bcache.has_bcache_cset

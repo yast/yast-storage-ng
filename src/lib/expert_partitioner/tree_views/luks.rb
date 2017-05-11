@@ -38,7 +38,7 @@ module ExpertPartitioner
     def create
       tmp = ["Table Name: #{@luks.dm_table_name}",
              "Name: #{@luks.name}",
-             "Size: #{::Storage.byte_to_humanstring(@luks.size, false, 2, false)}",
+             "Size: #{@luks.size.to_human_string}",
              "Used Device: #{@luks.blk_device.name}"]
 
       contents = Yast::HTML.List(tmp)
