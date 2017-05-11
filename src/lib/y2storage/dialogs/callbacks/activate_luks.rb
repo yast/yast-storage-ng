@@ -76,7 +76,7 @@ module Y2Storage
                 Left(
                   Label(
                     _("The password is needed if the device contains a system to be\n" \
-                        "updated or belongs to a LVM to be used during installation.")
+                        "updated or belongs to an LVM to be used during installation.")
                   )
                 ),
                 VSpacing(0.2),
