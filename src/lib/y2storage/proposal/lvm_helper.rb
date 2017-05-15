@@ -201,7 +201,7 @@ module Y2Storage
       end
 
       def target_size
-        planned_volumes.target_disk_size(rounding: extent_size)
+        planned_volumes.min_disk_size(rounding: extent_size)
       end
 
       def substract_reused_vg_size(size)
@@ -248,7 +248,7 @@ module Y2Storage
       #
       # @param volume_group [LvmVg] volume group to modify
       def make_space!(volume_group)
-        space_size = planned_volumes.target_disk_size
+        space_size = planned_volumes.min_disk_size
         missing = missing_vg_space(volume_group, space_size)
         while missing > DiskSize.zero
           lv_to_delete = delete_candidate(volume_group, missing)

@@ -66,7 +66,7 @@ module Y2Storage
         end
 
         log.info "Calculate all the possible distributions of volumes into spaces"
-        dist_hashes = distribution_hashes(disk_spaces_by_vol, volumes.target)
+        dist_hashes = distribution_hashes(disk_spaces_by_vol)
 
         candidates = dist_hashes.map do |distribution_hash|
           begin
@@ -109,7 +109,7 @@ module Y2Storage
         #  - resizing produces a new space
         #  - the LVM must be spread among all the available spaces
         disk = partition.partitionable
-        needed = volumes.target_disk_size(rounding: disk.min_grain)
+        needed = volumes.min_disk_size(rounding: disk.min_grain)
 
         max_logical = max_logical(disk, volumes)
         needed += AssignedSpace.overhead_of_logical(disk) * max_logical
@@ -131,7 +131,7 @@ module Y2Storage
         # Let's assume the best possible case - if we need to create a PV it
         # will be only one
         pvs_to_create = 1
-        needed = volumes.target_disk_size + lvm_space_to_make(pvs_to_create)
+        needed = volumes.min_disk_size + lvm_space_to_make(pvs_to_create)
         needed > available_space(free_spaces)
       end
 
@@ -186,7 +186,7 @@ module Y2Storage
       # @return [Hash{PlannedVolume => Array<FreeDiskSpace>}]
       def candidate_disk_spaces(volumes, free_spaces)
         volumes.each_with_object({}) do |volume, hash|
-          spaces = free_spaces.select { |space| suitable_disk_space?(space, volume, volumes.target) }
+          spaces = free_spaces.select { |space| suitable_disk_space?(space, volume) }
           if spaces.empty?
             log.error "No suitable free space for #{volume}"
             raise NoDiskSpaceError, "No suitable free space for the volume"
@@ -203,28 +203,27 @@ module Y2Storage
       #
       # @param disk_spaces_by_vol [Hash{PlannedVolume => Array<FreeDiskSpace>}]
       #     which spaces are acceptable for each volume
-      # @param target [Symbol] target to initialize all the volume lists
       # @return [Array<Hash{FreeDiskSpace => PlannedVolumesList}>]
-      def distribution_hashes(disk_spaces_by_vol, target)
+      def distribution_hashes(disk_spaces_by_vol)
         return [{}] if disk_spaces_by_vol.empty?
 
         hash_product(disk_spaces_by_vol).map do |combination|
           # combination looks like this
           # {vol1 => space1, vol2 => space1, vol3 => space2 ...}
-          group_by_space(combination, target)
+          group_by_space(combination)
         end
       end
 
-      def group_by_space(combination, target)
+      def group_by_space(combination)
         combination = inverse_hash(combination)
         combination.each_with_object({}) do |(space, vols), hash|
-          hash[space] = PlannedVolumesList.new(vols, target: target)
+          hash[space] = PlannedVolumesList.new(vols)
         end
       end
 
-      def suitable_disk_space?(space, volume, target)
+      def suitable_disk_space?(space, volume)
         return false if volume.disk && volume.disk != space.disk_name
-        return false if space.disk_size < volume.min_valid_size(target)
+        return false if space.disk_size < volume.min_size
         max_offset = volume.max_start_offset
         return false if max_offset && space.start_offset > max_offset
         true

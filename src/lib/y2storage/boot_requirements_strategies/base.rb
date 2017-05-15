@@ -44,9 +44,9 @@ module Y2Storage
         @root_disk = devicegraph.disks.detect { |d| d.name == settings.root_device }
       end
 
-      def needed_partitions
+      def needed_partitions(target)
         volumes = PlannedVolumesList.new
-        volumes << boot_volume if boot_partition_needed?
+        volumes << boot_volume(target) if boot_partition_needed?
         volumes
       end
 
@@ -60,12 +60,11 @@ module Y2Storage
         false
       end
 
-      def boot_volume
+      def boot_volume(target)
         vol = PlannedVolume.new("/boot", Filesystems::Type::EXT4)
         vol.disk = settings.root_device
-        vol.min_size = DiskSize.MiB(100)
+        vol.min_size = target == :min ? DiskSize.MiB(100) : DiskSize.MiB(200)
         vol.max_size = DiskSize.MiB(500)
-        vol.desired_size = DiskSize.MiB(200)
         vol.plain_partition = true
         vol
       end

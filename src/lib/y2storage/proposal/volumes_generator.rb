@@ -48,7 +48,8 @@ module Y2Storage
       # Volumes that needs to be created to satisfy the settings
       #
       # @return [PlannedVolumesList]
-      def volumes
+      def volumes(target)
+        @target = target
         PlannedVolumesList.new(base_volumes.to_a + additional_volumes)
       end
 
@@ -71,7 +72,7 @@ module Y2Storage
       # @return [Array<PlannedVolumes>]
       def boot_volumes
         checker = BootRequirementsChecker.new(settings, devicegraph)
-        checker.needed_partitions
+        checker.needed_partitions(@target)
       rescue BootRequirementsChecker::Error => error
         raise NotBootableError, error.message
       end
@@ -103,9 +104,8 @@ module Y2Storage
         if reuse
           vol.reuse = reuse.name
         else
-          vol.min_size     = swap_size
-          vol.max_size     = swap_size
-          vol.desired_size = swap_size
+          vol.min_size  = swap_size
+          vol.max_size  = swap_size
         end
         vol
       end
@@ -131,20 +131,26 @@ module Y2Storage
       #
       def root_volume
         root_vol = PlannedVolume.new("/", @settings.root_filesystem_type)
-        root_vol.min_size = @settings.root_base_size
         root_vol.max_size = @settings.root_max_size
         root_vol.weight   = @settings.root_space_percent
         root_vol.disk     = @settings.root_device
+        min_size = @settings.root_base_size
         if root_vol.btrfs?
           log.info "Increasing root filesystem size for Btrfs"
           multiplicator = 1.0 + @settings.btrfs_increase_percentage / 100.0
-          root_vol.min_size *= multiplicator
+          min_size *= multiplicator
           root_vol.max_size *= multiplicator
+
           root_vol.default_subvolume = @settings.btrfs_default_subvolume || ""
           root_vol.subvolumes = @settings.subvolumes
           log.info "Adding Btrfs subvolumes: \n#{root_vol.subvolumes}"
         end
-        root_vol.desired_size = root_vol.max_size
+        root_vol.min_size =
+          if @target == :min || root_vol.max_size.unlimited?
+            min_size
+          else
+            root_vol.max_size
+          end
         root_vol
       end
 
@@ -155,8 +161,8 @@ module Y2Storage
       #
       def home_volume
         home_vol = PlannedVolume.new("/home", settings.home_filesystem_type)
-        home_vol.min_size = settings.home_min_size
         home_vol.max_size = settings.home_max_size
+        home_vol.min_size = settings.home_min_size
         home_vol.weight = 100.0 - settings.root_space_percent
         home_vol
       end

@@ -29,26 +29,19 @@ module Y2Storage
   #
   # Implements Enumerable and provides some extra methods to query the list of
   # PlannedVolume elements.
-  #
-  # In addition, it also stores which of the sizes defined by the volumes
-  # (:min or :desired) should be used when trying to allocate them
   class PlannedVolumesList
     include Enumerable
     extend Forwardable
     include Yast::Logger
 
-    # @return [Symbol] :min or :desired, size to use for the calculations
-    attr_accessor :target
-
-    def initialize(volumes = [], target: :desired)
+    def initialize(volumes = [])
       @volumes = volumes
-      @target  = target
     end
 
     def_delegators :@volumes, :each, :empty?, :length, :size, :last
 
     def dup
-      PlannedVolumesList.new(@volumes.dup, target: target)
+      PlannedVolumesList.new(@volumes.dup)
     end
 
     # Deep copy of the collection
@@ -57,24 +50,19 @@ module Y2Storage
     #
     # @return [PlannedVolumesList]
     def deep_dup
-      PlannedVolumesList.new(@volumes.map { |vol| vol.dup }, target: target)
+      PlannedVolumesList.new(@volumes.map { |vol| vol.dup })
     end
 
-    # Total sum of all desired or min sizes of volumes (according to #target)
-    #
-    # This tries to avoid an 'unlimited' result:
-    # If a the desired size of any volume is 'unlimited',
-    # its minimum size is taken instead. This gives a more useful sum in the
-    # very common case that any volume has an 'unlimited' desired size.
+    # Total sum of all min sizes of volumes
     #
     # If the optional argument "rounding" is used, the size of every volume will
     # be rounded up. # @see DiskSize#ceil
     #
     # @param rounding [DiskSize, nil]
-    # @return [DiskSize] sum of desired/min sizes in @volumes
-    def target_disk_size(rounding: nil)
+    # @return [DiskSize] sum of min sizes in @volumes
+    def min_disk_size(rounding: nil)
       rounding ||= DiskSize.new(1)
-      @volumes.reduce(DiskSize.zero) { |sum, vol| sum + vol.min_valid_size(target).ceil(rounding) }
+      @volumes.reduce(DiskSize.zero) { |sum, vol| sum + vol.min_size.ceil(rounding) }
     end
 
     # Returns the volume that must be placed at the end of a given space in
@@ -92,7 +80,7 @@ module Y2Storage
     # @param min_grain [DiskSize]
     # @return [PlannedVolume, nil]
     def enforced_last(size_to_fill, min_grain)
-      rounded_up = target_disk_size(rounding: min_grain)
+      rounded_up = min_disk_size(rounding: min_grain)
       # There is enough space to fit with any order
       return nil if size_to_fill >= rounded_up
 
@@ -101,8 +89,7 @@ module Y2Storage
       return nil if missing >= min_grain
 
       @volumes.detect do |vol|
-        target_size = vol.min_valid_size(target)
-        target_size.ceil(min_grain) - missing >= target_size
+        vol.min_size.ceil(min_grain) - missing >= vol.min_size
       end
     end
 
@@ -161,7 +148,7 @@ module Y2Storage
     alias_method :<<, :push
 
     def ==(other)
-      other.class == self.class && other.target == target && other.to_a == to_a
+      other.class == self.class && other.to_a == to_a
     end
 
     # Volumes sorted by a given set of attributes.
@@ -202,15 +189,14 @@ module Y2Storage
     # @return [PlannedVolumesList] list containing volumes with an adjusted
     #     value for PlannedVolume#disk_size
     def distribute_space(space_size, rounding: nil, min_grain: nil)
-      raise RuntimeError if space_size < target_disk_size
+      raise RuntimeError if space_size < min_disk_size
 
       rounding ||= min_grain
       rounding ||= DiskSize.new(1)
 
       new_list = deep_dup
       new_list.each do |vol|
-        vol.size = vol.min_valid_size(target)
-        vol.size = vol.size.ceil(rounding)
+        vol.size = vol.min_size.ceil(rounding)
       end
       adjust_size_to_last_slot!(new_list.last, space_size, min_grain) if min_grain
 
@@ -229,7 +215,7 @@ module Y2Storage
     def split_by(&block)
       delegated = @volumes.partition(&block)
       if delegated.is_a?(Array)
-        delegated.map { |l| PlannedVolumesList.new(l, target: target) }
+        delegated.map { |l| PlannedVolumesList.new(l) }
       else
         # Enumerator
         delegated
@@ -237,7 +223,7 @@ module Y2Storage
     end
 
     def to_s
-      "#<PlannedVolumesList target=#{@target}, volumes=#{@volumes.map(&:to_s)}>"
+      "#<PlannedVolumesList volumes=#{@volumes.map(&:to_s)}>"
     end
 
   protected
@@ -359,8 +345,7 @@ module Y2Storage
 
     def adjust_size_to_last_slot!(volume, space_size, min_grain)
       adjusted_size = adjusted_size_after_ceil(volume, space_size, min_grain)
-      target_size = volume.min_valid_size(target)
-      volume.size = adjusted_size unless adjusted_size < target_size
+      volume.size = adjusted_size unless adjusted_size < volume.min_size
     end
 
     def adjusted_size_after_ceil(volume, space_size, min_grain)

@@ -72,7 +72,7 @@ module Y2Storage
       #  - the chances of having 2 volumes with max_start_offset in the same
       #    free space are very low
       def valid?
-        return true if usable_size >= volumes.target_disk_size(rounding: min_grain)
+        return true if usable_size >= volumes.min_disk_size(rounding: min_grain)
         # At first sight, there is no enough space, but maybe enforcing some
         # order...
         !!volumes.enforced_last(usable_size, min_grain)
@@ -97,7 +97,7 @@ module Y2Storage
       #
       # @return [DiskSize]
       def extra_size
-        disk_size - volumes.target_disk_size(rounding: min_grain)
+        disk_size - volumes.min_disk_size(rounding: min_grain)
       end
 
       # Usable space available in addition to the target, taking into account
@@ -106,7 +106,7 @@ module Y2Storage
       # @see #usable_size
       # @return [DiskSize]
       def usable_extra_size
-        usable_size - volumes.target_disk_size
+        usable_size - volumes.min_disk_size
       end
 
       # Space that can be distributed among the planned volumes.

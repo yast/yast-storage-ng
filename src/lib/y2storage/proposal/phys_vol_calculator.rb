@@ -169,7 +169,7 @@ module Y2Storage
         res = PlannedVolume.new(nil)
         res.partition_id = PartitionId::LVM
         res.encryption_password = lvm_helper.encryption_password
-        res.min_size = res.desired_size = lvm_helper.min_pv_size
+        res.min_size = lvm_helper.min_pv_size
         res
       end
 
@@ -189,7 +189,7 @@ module Y2Storage
           next if space.disk_space == last_disk_space
 
           usable_size = space.usable_extra_size + pv_vol.min_size
-          pv_vol.min_size = pv_vol.desired_size = usable_size
+          pv_vol.min_size = usable_size
           pv_vol.max_size = usable_size
           missing_size -= lvm_helper.useful_pv_space(usable_size)
         end
@@ -197,7 +197,7 @@ module Y2Storage
         space = distribution.space_at(last_disk_space)
         pv_vol = space.volumes.detect(&:lvm_pv?)
         pv_size = lvm_helper.real_pv_size(missing_size)
-        pv_vol.min_size = pv_vol.desired_size = pv_size
+        pv_vol.min_size = pv_size
 
         other_pvs_size = lvm_helper.missing_space - missing_size
         pv_vol.max_size = lvm_helper.real_pv_size(lvm_helper.max_extra_space - other_pvs_size)

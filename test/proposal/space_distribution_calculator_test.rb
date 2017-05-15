@@ -38,8 +38,8 @@ describe Y2Storage::Proposal::SpaceDistributionCalculator do
       fake_scenario(scenario)
     end
 
-    let(:vol1) { planned_vol(mount_point: "/1", type: :ext4, desired: 1.GiB, max: 3.GiB, weight: 1) }
-    let(:vol2) { planned_vol(mount_point: "/2", type: :ext4, desired: 2.GiB, max: 3.GiB, weight: 1) }
+    let(:vol1) { planned_vol(mount_point: "/1", type: :ext4, min: 1.GiB, max: 3.GiB, weight: 1) }
+    let(:vol2) { planned_vol(mount_point: "/2", type: :ext4, min: 2.GiB, max: 3.GiB, weight: 1) }
     let(:volumes) { Y2Storage::PlannedVolumesList.new([vol1, vol2, vol3]) }
     let(:spaces) { fake_devicegraph.free_disk_spaces }
 
@@ -49,7 +49,7 @@ describe Y2Storage::Proposal::SpaceDistributionCalculator do
       let(:scenario) { "space_22_extended" }
 
       context "if the space is not big enough" do
-        let(:vol3) { planned_vol(mount_point: "/3", type: :ext4, desired: 30.GiB, max: 30.GiB) }
+        let(:vol3) { planned_vol(mount_point: "/3", type: :ext4, min: 30.GiB, max: 30.GiB) }
 
         it "returns no distribution (nil)" do
           expect(distribution).to be_nil
@@ -57,7 +57,7 @@ describe Y2Storage::Proposal::SpaceDistributionCalculator do
       end
 
       context "if the space is big enough" do
-        let(:vol3) { planned_vol(mount_point: "/3", type: :ext4, desired: 3.GiB, max: 3.GiB) }
+        let(:vol3) { planned_vol(mount_point: "/3", type: :ext4, min: 3.GiB, max: 3.GiB) }
 
         it "allocates all the volumes in the available space" do
           spaces = distribution.spaces
@@ -81,7 +81,7 @@ describe Y2Storage::Proposal::SpaceDistributionCalculator do
       let(:scenario) { "space_22" }
 
       context "if the space is not big enough" do
-        let(:vol3) { planned_vol(mount_point: "/3", type: :ext4, desired: 30.GiB, max: 30.GiB) }
+        let(:vol3) { planned_vol(mount_point: "/3", type: :ext4, min: 30.GiB, max: 30.GiB) }
 
         it "returns no distribution (nil)" do
           expect(distribution).to be_nil
@@ -89,7 +89,7 @@ describe Y2Storage::Proposal::SpaceDistributionCalculator do
       end
 
       context "if the space is big enough" do
-        let(:vol3) { planned_vol(mount_point: "/3", type: :ext4, desired: 19.GiB - 2.MiB) }
+        let(:vol3) { planned_vol(mount_point: "/3", type: :ext4, min: 19.GiB - 2.MiB) }
 
         it "allocates all the volumes in the available space" do
           spaces = distribution.spaces
@@ -110,7 +110,7 @@ describe Y2Storage::Proposal::SpaceDistributionCalculator do
         end
 
         context "if the space does not have extra room for the EBRs" do
-          let(:vol3) { planned_vol(mount_point: "/3", type: :ext4, desired: 19.GiB) }
+          let(:vol3) { planned_vol(mount_point: "/3", type: :ext4, min: 19.GiB) }
 
           it "returns no distribution (nil)" do
             expect(distribution).to be_nil
@@ -146,7 +146,7 @@ describe Y2Storage::Proposal::SpaceDistributionCalculator do
     context "when there are several free spaces" do
       context "if the sum of all spaces is not big enough" do
         let(:scenario) { "spaces_5_6_8_10" }
-        let(:vol3) { planned_vol(mount_point: "/3", type: :ext4, desired: 30.GiB, max: 30.GiB) }
+        let(:vol3) { planned_vol(mount_point: "/3", type: :ext4, min: 30.GiB, max: 30.GiB) }
 
         it "returns no distribution (nil)" do
           expect(distribution).to be_nil
@@ -155,7 +155,7 @@ describe Y2Storage::Proposal::SpaceDistributionCalculator do
 
       context "if all the volumes fit in one space" do
         let(:scenario) { "spaces_5_6_8_10" }
-        let(:vol3) { planned_vol(mount_point: "/3", type: :ext4, desired: 3.GiB, max: 3.GiB) }
+        let(:vol3) { planned_vol(mount_point: "/3", type: :ext4, min: 3.GiB, max: 3.GiB) }
 
         it "allocates all the partitions in the same space" do
           spaces = distribution.spaces
@@ -170,7 +170,7 @@ describe Y2Storage::Proposal::SpaceDistributionCalculator do
       end
 
       context "if no single space is big enough" do
-        let(:vol3) { planned_vol(mount_point: "/3", type: :ext4, desired: 3.GiB, max: 3.GiB) }
+        let(:vol3) { planned_vol(mount_point: "/3", type: :ext4, min: 3.GiB, max: 3.GiB) }
 
         context "and it's possible to avoid gaps" do
           let(:scenario) { "spaces_5_3" }
@@ -240,8 +240,8 @@ describe Y2Storage::Proposal::SpaceDistributionCalculator do
             end
 
             context "and the number of partitions exceeds the primary limit" do
-              let(:vol3) { planned_vol(mount_point: "/3", type: :ext4, desired: 2.GiB) }
-              let(:vol4) { planned_vol(mount_point: "/4", type: :ext4, desired: 2.GiB - 2.MiB) }
+              let(:vol3) { planned_vol(mount_point: "/3", type: :ext4, min: 2.GiB) }
+              let(:vol4) { planned_vol(mount_point: "/4", type: :ext4, min: 2.GiB - 2.MiB) }
               let(:volumes) { Y2Storage::PlannedVolumesList.new([vol1, vol2, vol3, vol4]) }
 
               it "does not set any enforced partition_type" do
@@ -258,7 +258,7 @@ describe Y2Storage::Proposal::SpaceDistributionCalculator do
               end
 
               context "and there is no room for the EBRs" do
-                let(:vol4) { planned_vol(mount_point: "/4", type: :ext4, desired: 2.GiB) }
+                let(:vol4) { planned_vol(mount_point: "/4", type: :ext4, min: 2.GiB) }
 
                 it "returns no distribution (nil)" do
                   expect(distribution).to be_nil
@@ -268,7 +268,7 @@ describe Y2Storage::Proposal::SpaceDistributionCalculator do
 
             context "and the number of partitions is below the primary limit" do
               let(:vol2) do
-                planned_vol(mount_point: "/2", type: :ext4, desired: 3.GiB - 1.MiB, max: 5.GiB)
+                planned_vol(mount_point: "/2", type: :ext4, min: 3.GiB - 1.MiB, max: 5.GiB)
               end
               let(:volumes) { Y2Storage::PlannedVolumesList.new([vol2, vol3]) }
 
@@ -290,11 +290,11 @@ describe Y2Storage::Proposal::SpaceDistributionCalculator do
     context "if disk restrictions apply to some volume" do
       before do
         # Avoid rounding problems
-        vol1.desired = 1.GiB - 2.MiB
+        vol1.min_size = 1.GiB - 2.MiB
       end
 
       let(:vol3) do
-        planned_vol(mount_point: "/3", type: :ext4, desired: 3.GiB - 1.MiB, max: 3.GiB, disk: "/dev/sda")
+        planned_vol(mount_point: "/3", type: :ext4, min: 3.GiB - 1.MiB, max: 3.GiB, disk: "/dev/sda")
       end
 
       context "if a proper distribution is possible" do
@@ -335,9 +335,9 @@ describe Y2Storage::Proposal::SpaceDistributionCalculator do
     context "when asking for extra LVM space" do
       let(:scenario) { "spaces_5_6_8_10" }
 
-      let(:vol3) { planned_vol(mount_point: "/3", type: :ext4, desired: 1.GiB, max: 30.GiB, weight: 2) }
+      let(:vol3) { planned_vol(mount_point: "/3", type: :ext4, min: 1.GiB, max: 30.GiB, weight: 2) }
       let(:lvm_volumes) { Y2Storage::PlannedVolumesList.new([lvm_vol]) }
-      let(:lvm_vol) { planned_vol(desired: lvm_size, max: lvm_max) }
+      let(:lvm_vol) { planned_vol(min: lvm_size, max: lvm_max) }
       let(:lvm_max) { Y2Storage::DiskSize.unlimited }
 
       let(:pv_vols) do
@@ -393,9 +393,9 @@ describe Y2Storage::Proposal::SpaceDistributionCalculator do
           expect(useful_min_sizes.reduce(:+)).to eq lvm_size
         end
 
-        it "sets desired_disk_size for all PVs to sum lvm_size" do
-          useful_desired_sizes = pv_vols.map { |v| lvm_helper.useful_pv_space(v.desired_size) }
-          expect(useful_desired_sizes.reduce(:+)).to eq lvm_size
+        it "sets min_disk_size for all PVs to sum lvm_size" do
+          useful_min_sizes = pv_vols.map { |v| lvm_helper.useful_pv_space(v.min_size) }
+          expect(useful_min_sizes.reduce(:+)).to eq lvm_size
         end
 
         it "sets max_disk_size for all PVs to sum lvm_max" do
@@ -435,9 +435,9 @@ describe Y2Storage::Proposal::SpaceDistributionCalculator do
         let(:scenario) { "logical-lvm-rounding" }
         let(:lvm_size) { 5.GiB }
         let(:lvm_max) { 5.GiB }
-        let(:vol1) { planned_vol(mount_point: "/1", type: :ext4, desired: 2.GiB, max: 2.GiB) }
-        let(:vol2) { planned_vol(mount_point: "/2", type: :ext4, desired: 1.GiB, max: 1.GiB) }
-        let(:vol3) { planned_vol(mount_point: "/3", type: :ext4, desired: 1.GiB, max: 1.GiB) }
+        let(:vol1) { planned_vol(mount_point: "/1", type: :ext4, min: 2.GiB, max: 2.GiB) }
+        let(:vol2) { planned_vol(mount_point: "/2", type: :ext4, min: 1.GiB, max: 1.GiB) }
+        let(:vol3) { planned_vol(mount_point: "/3", type: :ext4, min: 1.GiB, max: 1.GiB) }
 
         # This test was added because we figured out that the original algorithm
         # to create physical volume was leading to discard some valid solutions

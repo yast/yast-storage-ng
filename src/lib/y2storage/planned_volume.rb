@@ -60,15 +60,14 @@ module Y2Storage
     # @return [DiskSize] definitive size of the volume
     attr_accessor :size
 
-    # @return [DiskSize] minimum acceptable size in case it's not possible to
-    #   ensure the desired one. See {#desired_size}
-    attr_accessor :min_size
+    # @!attribute min_size
+    #   minimum acceptable size
+    #
+    #   @return [DiskSize] zero for reused volumes
+    attr_writer :min_size
 
     # @return [DiskSize] maximum acceptable size
     attr_accessor :max_size
-
-    # @return [DiskSize] preferred size
-    attr_accessor :desired_size
 
     # @return [Float] factor used to distribute the extra space between
     #   volumes
@@ -115,15 +114,7 @@ module Y2Storage
     secret_attr :encryption_password
 
     TO_STRING_ATTRS = [:mount_point, :reuse, :min_size, :max_size,
-                       :desired_size, :disk, :max_start_offset, :subvolumes]
-
-    alias_method :desired, :desired_size
-    alias_method :min, :min_size
-    alias_method :max, :max_size
-    alias_method :desired=, :desired_size=
-    alias_method :min=, :min_size=
-    alias_method :max=, :max_size=
-    alias_method :plain_partition?, :plain_partition
+                       :disk, :max_start_offset, :subvolumes]
 
     # Constructor.
     #
@@ -138,7 +129,6 @@ module Y2Storage
       @size     = DiskSize.zero
       @min_size = DiskSize.zero
       @max_size = DiskSize.unlimited
-      @desired_size = DiskSize.unlimited
       @max_start_offset = nil
       @align         = nil
       @bootable      = nil
@@ -161,20 +151,16 @@ module Y2Storage
       end
     end
 
-    # Minimum size that should be granted for the partition when applying a
-    # given strategy
-    #
-    # Returns zero for reused volumes
-    #
-    # @param strategy [Symbol] :desired or :min
-    # @return [DiskSize]
-    def min_valid_size(strategy)
+    def min_size
       # No need to provide space for reused volumes
-      return DiskSize.zero if reuse
-      size = send(strategy)
-      size = min_size if size.unlimited?
-      size
+      reuse ? DiskSize.zero : @min_size
     end
+
+    alias_method :min, :min_size
+    alias_method :max, :max_size
+    alias_method :min=, :min_size=
+    alias_method :max=, :max_size=
+    alias_method :plain_partition?, :plain_partition
 
     def to_s
       attrs = TO_STRING_ATTRS.map do |attr|

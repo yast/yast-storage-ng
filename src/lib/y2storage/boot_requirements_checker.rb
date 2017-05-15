@@ -46,8 +46,8 @@ module Y2Storage
       @devicegraph = devicegraph
     end
 
-    def needed_partitions
-      strategy.needed_partitions
+    def needed_partitions(target = :desired)
+      strategy.needed_partitions(target)
     rescue BootRequirementsStrategies::Error => error
       raise Error, error.message
     end

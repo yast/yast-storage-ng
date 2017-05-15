@@ -28,9 +28,9 @@ module Y2Storage
   module BootRequirementsStrategies
     # Strategy to calculate boot requirements in systems using PReP
     class PReP < Base
-      def needed_partitions
+      def needed_partitions(target)
         volumes = super
-        volumes << prep_volume if prep_partition_needed? && prep_partition_missing?
+        volumes << prep_volume(target) if prep_partition_needed? && prep_partition_missing?
         volumes
       end
 
@@ -50,13 +50,12 @@ module Y2Storage
         partitions.nil? || partitions.empty?
       end
 
-      def prep_volume
+      def prep_volume(target)
         vol = PlannedVolume.new(nil)
         # So far we are always using msdos partition ids
         vol.partition_id = PartitionId::PREP
-        vol.min_size = DiskSize.KiB(256)
+        vol.min_size = target == :min ? DiskSize.KiB(256) : DiskSize.MiB(1)
         vol.max_size = DiskSize.MiB(8)
-        vol.desired_size = DiskSize.MiB(1)
         # Make sure that alignment does not result in a too big partition
         vol.align = :keep_size
         vol.bootable = true

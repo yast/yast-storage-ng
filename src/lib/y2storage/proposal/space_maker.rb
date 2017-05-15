@@ -143,7 +143,7 @@ module Y2Storage
       def volumes_by_disk(volumes)
         volumes.each_with_object({}) do |volume, hash|
           if volume.disk
-            hash[volume.disk] ||= PlannedVolumesList.new([], target: volumes.target)
+            hash[volume.disk] ||= PlannedVolumesList.new
             hash[volume.disk] << volume
           end
         end

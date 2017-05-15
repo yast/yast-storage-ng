@@ -86,34 +86,35 @@ module Y2Storage
       settings.freeze
       @proposed = true
 
-      # FIXME: The current implementation, tries :desired and then :min for
-      # every root disk. It would probably make more sense to try first :desired
-      # for all possible root disks and then do the same with :min.
       exception = nil
-      candidate_roots.each do |disk_name|
-        populated_settings.root_device = disk_name
-        exception = nil
+      [:desired, :min].each do |target|
+        candidate_roots.each do |disk_name|
+          log.info "Trying to make a proposal with target #{target} and root #{disk_name}"
 
-        begin
-          @volumes = volumes_list
-          @devices = devicegraph(@volumes)
-        rescue Error => error
-          log.info "Failed to make a proposal using root device #{disk_name}: #{error.message}"
-          exception = error
+          populated_settings.root_device = disk_name
+          exception = nil
+
+          begin
+            @volumes = volumes_list(target)
+            @devices = devicegraph(@volumes)
+          rescue Error => error
+            log.info "Failed to make a proposal using root device #{disk_name}: #{error.message}"
+            exception = error
+          end
+
+          return true unless exception
         end
-
-        break unless exception
       end
 
-      raise exception if exception
+      raise exception
     end
 
   protected
 
     # @return [PlannedVolumesList]
-    def volumes_list
+    def volumes_list(target)
       generator = VolumesGenerator.new(populated_settings, clean_graph)
-      generator.volumes
+      generator.volumes(target)
     end
 
     # Devicegraph resulting of accommodating some volumes in the initial

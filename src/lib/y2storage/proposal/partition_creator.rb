@@ -74,8 +74,7 @@ module Y2Storage
       def process_free_space(free_space, volumes, usable_size, num_logical)
         volumes.each do |vol|
           log.info(
-            "vol #{vol.mount_point}\tmin: #{vol.min_size}\tmax: #{vol.max_size} " \
-            "desired: #{vol.desired_size}\tweight: #{vol.weight}"
+            "vol #{vol.mount_point}\tmin: #{vol.min_size}\tmax: #{vol.max_size}\tweight: #{vol.weight}"
           )
         end
 
@@ -94,7 +93,7 @@ module Y2Storage
           sorted.delete(last)
           sorted << last
         end
-        PlannedVolumesList.new(sorted, target: volumes.target)
+        PlannedVolumesList.new(sorted)
       end
 
       # Creates a partition and the corresponding filesystem for each volume

@@ -315,7 +315,7 @@ module Y2Storage
       # @see #comparable_string
       def volume_list_comparable_string(vol_list)
         volumes_strings = vol_list.to_a.map { |vol| vol.to_s }.sort
-        "<target=#{vol_list.target}, volumes=#{volumes_strings.join}>"
+        "<volumes=#{volumes_strings.join}>"
       end
 
       # Checks whether an assigned space can host the overhead produced by

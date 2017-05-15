@@ -63,11 +63,11 @@ describe Y2Storage::Proposal::VolumesGenerator do
     end
 
     it "returns a list of volumes" do
-      expect(subject.volumes).to be_a Y2Storage::PlannedVolumesList
+      expect(subject.volumes(:desired)).to be_a Y2Storage::PlannedVolumesList
     end
 
     it "includes the volumes needed by BootRequirementChecker" do
-      expect(subject.volumes).to include(
+      expect(subject.volumes(:desired)).to include(
         an_object_having_attributes(mount_point: "/one_boot", filesystem_type: xfs),
         an_object_having_attributes(mount_point: "/other_boot", filesystem_type: vfat)
       )
@@ -79,7 +79,7 @@ describe Y2Storage::Proposal::VolumesGenerator do
         settings.enlarge_swap_for_suspend = false
       end
 
-      let(:swap_volumes) { subject.volumes.select { |v| v.mount_point == "swap" } }
+      let(:swap_volumes) { subject.volumes(:desired).select { |v| v.mount_point == "swap" } }
 
       context "if there is no previous swap partition" do
         let(:swap_partitions) { [] }
@@ -173,7 +173,7 @@ describe Y2Storage::Proposal::VolumesGenerator do
       end
 
       it "includes a /home volume with the configured settings" do
-        expect(subject.volumes).to include(
+        expect(subject.volumes(:desired)).to include(
           an_object_having_attributes(
             mount_point:     "/home",
             min:             settings.home_min_size,
@@ -184,7 +184,7 @@ describe Y2Storage::Proposal::VolumesGenerator do
       end
 
       it "sets the LVM attributes for home" do
-        home = subject.volumes.detect { |v| v.mount_point == "/home" }
+        home = subject.volumes(:desired).detect { |v| v.mount_point == "/home" }
         expect(home.logical_volume_name).to eq "home"
         expect(home.plain_partition?).to eq false
       end
@@ -196,7 +196,7 @@ describe Y2Storage::Proposal::VolumesGenerator do
       end
 
       it "does not include a /home volume" do
-        expect(subject.volumes).to_not include(
+        expect(subject.volumes(:desired)).to_not include(
           an_object_having_attributes(mount_point: "/home")
         )
       end
@@ -210,7 +210,7 @@ describe Y2Storage::Proposal::VolumesGenerator do
       end
 
       it "sets the LVM attributes" do
-        root = subject.volumes.detect { |v| v.mount_point == "/" }
+        root = subject.volumes(:desired).detect { |v| v.mount_point == "/" }
         expect(root.logical_volume_name).to eq "root"
         expect(root.plain_partition?).to eq false
       end
@@ -221,10 +221,19 @@ describe Y2Storage::Proposal::VolumesGenerator do
         end
 
         it "uses the normal sizes" do
-          expect(subject.volumes).to include(
+          expect(subject.volumes(:min)).to include(
             an_object_having_attributes(
               mount_point:     "/",
               min:             10.GiB,
+              max:             20.GiB,
+              filesystem_type: xfs
+            )
+          )
+
+          expect(subject.volumes(:desired)).to include(
+            an_object_having_attributes(
+              mount_point:     "/",
+              min:             20.GiB,
               max:             20.GiB,
               filesystem_type: xfs
             )
@@ -233,7 +242,7 @@ describe Y2Storage::Proposal::VolumesGenerator do
       end
 
       context "if Btrfs is used" do
-        let(:root) { subject.volumes.detect { |v| v.mount_point == "/" } }
+        let(:root) { subject.volumes(:desired).detect { |v| v.mount_point == "/" } }
         # For subvolumes tests
         let(:arch) { :s390 }
 
@@ -242,10 +251,19 @@ describe Y2Storage::Proposal::VolumesGenerator do
         end
 
         it "increases all the sizes by btrfs_increase_percentage" do
-          expect(subject.volumes).to include(
+          expect(subject.volumes(:min)).to include(
             an_object_having_attributes(
               mount_point:     "/",
               min:             17.5.GiB,
+              max:             35.GiB,
+              filesystem_type: btrfs
+            )
+          )
+
+          expect(subject.volumes(:desired)).to include(
+            an_object_having_attributes(
+              mount_point:     "/",
+              min:             35.GiB,
               max:             35.GiB,
               filesystem_type: btrfs
             )

@@ -61,15 +61,7 @@ module Y2Storage
         end
 
         lvm_helper = LvmHelper.new(lvm_vols, encryption_password: settings.encryption_password)
-        begin
-          space_result = provide_space(volumes, initial_graph, lvm_helper, space_maker)
-        rescue NoDiskSpaceError
-          raise if volumes.target == :min
-          # Try again with the minimum size
-          volumes.target = :min
-          lvm_vols.target = :min
-          space_result = provide_space(volumes, initial_graph, lvm_helper, space_maker)
-        end
+        space_result = provide_space(volumes, initial_graph, lvm_helper, space_maker)
 
         refine_volumes!(volumes, space_result[:deleted_partitions])
         graph = create_partitions(space_result[:space_distribution], space_result[:devicegraph])
@@ -118,7 +110,7 @@ module Y2Storage
       # @see #provide_space
       def provide_space_no_lvm(volumes, devicegraph, lvm_helper, space_maker)
         result = space_maker.provide_space(devicegraph, volumes, lvm_helper)
-        log.info "Found #{volumes.target} space"
+        log.info "Found enough space"
         result
       end
 
@@ -134,7 +126,7 @@ module Y2Storage
           begin
             lvm_helper.reused_volume_group = vg
             result = space_maker.provide_space(devicegraph, no_lvm_volumes, lvm_helper)
-            log.info "Found #{no_lvm_volumes.target} space including LVM, reusing #{vg}"
+            log.info "Found enough space including LVM, reusing #{vg}"
             return result
           rescue NoDiskSpaceError
             next
@@ -143,7 +135,7 @@ module Y2Storage
 
         lvm_helper.reused_volume_group = nil
         result = space_maker.provide_space(devicegraph, no_lvm_volumes, lvm_helper)
-        log.info "Found #{no_lvm_volumes.target} space including LVM"
+        log.info "Found enough space including LVM"
 
         result
       end

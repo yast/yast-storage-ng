@@ -32,9 +32,9 @@ module Y2Storage
       GRUB_SIZE = DiskSize.KiB(256)
       GRUBENV_SIZE = DiskSize.KiB(1)
 
-      def needed_partitions
+      def needed_partitions(target)
         volumes = super
-        volumes << grub_volume if grub_partition_needed? && grub_partition_missing?
+        volumes << grub_volume(target) if grub_partition_needed? && grub_partition_missing?
         raise Error if grub_in_mbr? && mbr_gap && mbr_gap < GRUB_SIZE
 
         volumes
@@ -75,13 +75,12 @@ module Y2Storage
         root_disk.mbr_gap
       end
 
-      def grub_volume
+      def grub_volume(target)
         vol = PlannedVolume.new(nil)
         # only required on GPT
         vol.partition_id = PartitionId::BIOS_BOOT
-        vol.min_size = DiskSize.KiB(256)
+        vol.min_size = target == :min ? DiskSize.KiB(256) : DiskSize.MiB(1)
         vol.max_size = DiskSize.MiB(8)
-        vol.desired_size = DiskSize.MiB(1)
         vol.align = :keep_size
         vol.bootable = false
         vol.plain_partition = true

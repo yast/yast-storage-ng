@@ -27,9 +27,9 @@ module Y2Storage
   module BootRequirementsStrategies
     # Strategy to calculate boot requirements in systems using ZIPL
     class ZIPL < Base
-      def needed_partitions
+      def needed_partitions(target)
         raise Error unless supported_root_disk?
-        PlannedVolumesList.new([zipl_volume])
+        PlannedVolumesList.new([zipl_volume(target)])
       end
 
     protected
@@ -44,12 +44,11 @@ module Y2Storage
         true
       end
 
-      def zipl_volume
+      def zipl_volume(target)
         vol = PlannedVolume.new("/boot/zipl", Filesystems::Type::EXT2)
         vol.disk = root_disk.name
-        vol.min_size = DiskSize.MiB(100)
+        vol.min_size = target == :min ? DiskSize.MiB(100) : DiskSize.MiB(200)
         vol.max_size = DiskSize.GiB(1)
-        vol.desired_size = DiskSize.MiB(200)
         vol.plain_partition = true
         vol
       end

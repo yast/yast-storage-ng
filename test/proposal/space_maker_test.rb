@@ -166,7 +166,7 @@ describe Y2Storage::Proposal::SpaceMaker do
 
     context "if the only disk is not big enough" do
       let(:scenario) { "empty_hard_disk_mbr_50GiB" }
-      let(:vol1) { planned_vol(mount_point: "/1", type: :ext4, desired: 60.GiB) }
+      let(:vol1) { planned_vol(mount_point: "/1", type: :ext4, min: 60.GiB) }
 
       it "raises a NoDiskSpaceError exception" do
         expect { maker.provide_space(fake_devicegraph, volumes, lvm_helper) }
@@ -176,7 +176,7 @@ describe Y2Storage::Proposal::SpaceMaker do
 
     context "if the only disk has no partition table" do
       let(:scenario) { "empty_hard_disk_50GiB" }
-      let(:vol1) { planned_vol(mount_point: "/1", type: :ext4, desired: 40.GiB) }
+      let(:vol1) { planned_vol(mount_point: "/1", type: :ext4, min: 40.GiB) }
 
       it "does not modify the disk" do
         result = maker.provide_space(fake_devicegraph, volumes, lvm_helper)
@@ -197,7 +197,7 @@ describe Y2Storage::Proposal::SpaceMaker do
 
     context "with one disk containing Windows and Linux partitions" do
       let(:scenario) { "windows-linux-multiboot-pc" }
-      let(:vol1) { planned_vol(mount_point: "/1", type: :ext4, desired: 100.GiB) }
+      let(:vol1) { planned_vol(mount_point: "/1", type: :ext4, min: 100.GiB) }
       let(:windows_partitions) { [partition_double("/dev/sda1")] }
 
       context "if deleting Linux partitions is allowed" do
@@ -226,7 +226,7 @@ describe Y2Storage::Proposal::SpaceMaker do
         end
 
         context "if deleting Linux is not enough" do
-          let(:vol2) { planned_vol(mount_point: "/2", type: :ext4, desired: 200.GiB) }
+          let(:vol2) { planned_vol(mount_point: "/2", type: :ext4, min: 200.GiB) }
           let(:volumes) { vols_list(vol1, vol2) }
 
           context "if resizing Windows is allowed" do
@@ -363,7 +363,7 @@ describe Y2Storage::Proposal::SpaceMaker do
         let(:resize_windows) { true }
 
         context "with enough free space in the Windows partition" do
-          let(:vol1) { planned_vol(mount_point: "/1", type: :ext4, desired: 40.GiB) }
+          let(:vol1) { planned_vol(mount_point: "/1", type: :ext4, min: 40.GiB) }
 
           it "shrinks the Windows partition by the required size" do
             result = maker.provide_space(fake_devicegraph, volumes, lvm_helper)
@@ -393,7 +393,7 @@ describe Y2Storage::Proposal::SpaceMaker do
         end
 
         context "with no enough free space in the Windows partition" do
-          let(:vol1) { planned_vol(mount_point: "/1", type: :ext4, desired: 60.GiB) }
+          let(:vol1) { planned_vol(mount_point: "/1", type: :ext4, min: 60.GiB) }
 
           context "if deleting other (no Windows or Linux) partitions is allowed" do
             let(:delete_other) { :ondemand }
@@ -472,7 +472,7 @@ describe Y2Storage::Proposal::SpaceMaker do
 
       context "if resizing Windows is not allowed" do
         let(:resize_windows) { false }
-        let(:vol1) { planned_vol(mount_point: "/1", type: :ext4, desired: 18.GiB) }
+        let(:vol1) { planned_vol(mount_point: "/1", type: :ext4, min: 18.GiB) }
 
         context "if deleting other (no Windows or Linux) partitions is allowed" do
           let(:delete_other) { :ondemand }
@@ -554,7 +554,7 @@ describe Y2Storage::Proposal::SpaceMaker do
           partition_double("/dev/sdb1")
         ]
       end
-      let(:vol1) { planned_vol(mount_point: "/1", type: :ext4, desired: 20.GiB) }
+      let(:vol1) { planned_vol(mount_point: "/1", type: :ext4, min: 20.GiB) }
 
       before do
         settings.candidate_devices = ["/dev/sda", "/dev/sdb"]
@@ -583,7 +583,7 @@ describe Y2Storage::Proposal::SpaceMaker do
       let(:scenario) { "multi-linux-pc" }
 
       it "deletes the last partitions of the disk until reaching the goal" do
-        vol = planned_vol(mount_point: "/1", type: :ext4, desired: 700.GiB)
+        vol = planned_vol(mount_point: "/1", type: :ext4, min: 700.GiB)
         volumes = vols_list(vol)
 
         result = maker.provide_space(fake_devicegraph, volumes, lvm_helper)
@@ -600,7 +600,7 @@ describe Y2Storage::Proposal::SpaceMaker do
       end
 
       it "doesn't delete partitions marked to be reused" do
-        vol1 = planned_vol(mount_point: "/1", type: :ext4, desired: 100.GiB)
+        vol1 = planned_vol(mount_point: "/1", type: :ext4, min: 100.GiB)
         vol2 = planned_vol(mount_point: "/2", reuse: "/dev/sda6")
         volumes = vols_list(vol1, vol2)
         sda6 = probed_partition("/dev/sda6")
@@ -611,7 +611,7 @@ describe Y2Storage::Proposal::SpaceMaker do
       end
 
       it "raises a NoDiskSpaceError exception if deleting is not enough" do
-        vol1 = planned_vol(mount_point: "/1", type: :ext4, desired: 980.GiB)
+        vol1 = planned_vol(mount_point: "/1", type: :ext4, min: 980.GiB)
         vol2 = planned_vol(mount_point: "/2", reuse: "/dev/sda2")
         volumes = vols_list(vol1, vol2)
 
@@ -621,7 +621,7 @@ describe Y2Storage::Proposal::SpaceMaker do
 
       it "deletes extended partitions when deleting all its logical children" do
         volumes = vols_list(
-          planned_vol(mount_point: "/1", type: :ext4, desired: 800.GiB),
+          planned_vol(mount_point: "/1", type: :ext4, min: 800.GiB),
           planned_vol(mount_point: "/2", reuse: "/dev/sda1"),
           planned_vol(mount_point: "/2", reuse: "/dev/sda2"),
           planned_vol(mount_point: "/2", reuse: "/dev/sda3")
@@ -644,7 +644,7 @@ describe Y2Storage::Proposal::SpaceMaker do
       # leaving sda6 alive. This test ensures the bug does not re-appear
       it "does not delete the extended partition if some logical one is to be reused" do
         volumes = vols_list(
-          planned_vol(mount_point: "/1", type: :ext4, desired: 400.GiB),
+          planned_vol(mount_point: "/1", type: :ext4, min: 400.GiB),
           planned_vol(mount_point: "/2", reuse: "/dev/sda1"),
           planned_vol(mount_point: "/3", reuse: "/dev/sda2"),
           planned_vol(mount_point: "/4", reuse: "/dev/sda3"),
@@ -660,8 +660,8 @@ describe Y2Storage::Proposal::SpaceMaker do
       let(:scenario) { "multi-linux-pc" }
       let(:volumes) do
         vols_list(
-          planned_vol(mount_point: "/1", type: :ext4, desired: 60.GiB),
-          planned_vol(mount_point: "/2", type: :ext4, desired: 300.GiB),
+          planned_vol(mount_point: "/1", type: :ext4, min: 60.GiB),
+          planned_vol(mount_point: "/2", type: :ext4, min: 300.GiB),
           planned_vol(mount_point: "/3", reuse: "/dev/sda6"),
           planned_vol(mount_point: "/4", reuse: "/dev/sda2")
         )
@@ -703,9 +703,9 @@ describe Y2Storage::Proposal::SpaceMaker do
 
       context "if the choosen disk has no enough space" do
         before do
-          vol1.desired = 101.GiB
-          vol2.desired = 100.GiB
-          vol3.desired = 1.GiB
+          vol1.min_size = 101.GiB
+          vol2.min_size = 100.GiB
+          vol3.min_size = 1.GiB
         end
 
         it "raises an exception even if there is enough space in other disks" do
@@ -716,9 +716,9 @@ describe Y2Storage::Proposal::SpaceMaker do
 
       context "if several disks can allocate the volumes" do
         before do
-          vol1.desired = 60.GiB
-          vol2.desired = 60.GiB
-          vol3.desired = 1.GiB
+          vol1.min_size = 60.GiB
+          vol2.min_size = 60.GiB
+          vol3.min_size = 1.GiB
         end
 
         it "ensures disk restrictions are honored" do
@@ -744,7 +744,7 @@ describe Y2Storage::Proposal::SpaceMaker do
     context "when deleting a partition which belongs to a LVM" do
       let(:scenario) { "lvm-two-vgs" }
       let(:windows_partitions) { [partition_double("/dev/sda1")] }
-      let(:volumes) { vols_list(planned_vol(mount_point: "/1", type: :ext4, desired: 2.GiB)) }
+      let(:volumes) { vols_list(planned_vol(mount_point: "/1", type: :ext4, min: 2.GiB)) }
 
       it "deletes also other partitions of the same volume group" do
         result = maker.provide_space(fake_devicegraph, volumes, lvm_helper)
@@ -785,7 +785,7 @@ describe Y2Storage::Proposal::SpaceMaker do
       end
 
       it "does not delete partitions belonging to the reused VG" do
-        volumes = vols_list(planned_vol(mount_point: "/1", type: :ext4, desired: 2.GiB))
+        volumes = vols_list(planned_vol(mount_point: "/1", type: :ext4, min: 2.GiB))
         result = maker.provide_space(fake_devicegraph, volumes, lvm_helper)
         partitions = result[:devicegraph].partitions
 
@@ -797,7 +797,7 @@ describe Y2Storage::Proposal::SpaceMaker do
       end
 
       it "does nothing special about partitions from other VGs" do
-        volumes = vols_list(planned_vol(mount_point: "/1", type: :ext4, desired: 6.GiB))
+        volumes = vols_list(planned_vol(mount_point: "/1", type: :ext4, min: 6.GiB))
         result = maker.provide_space(fake_devicegraph, volumes, lvm_helper)
         partitions = result[:devicegraph].partitions
 
@@ -808,11 +808,11 @@ describe Y2Storage::Proposal::SpaceMaker do
       it "raises NoDiskSpaceError if it cannot find space respecting the VG" do
         volumes = vols_list(
           # This exhausts the primary partitions
-          planned_vol(mount_point: "/1", type: :ext4, desired: 30.GiB),
+          planned_vol(mount_point: "/1", type: :ext4, min: 30.GiB),
           # This implies deleting linux partitions out of vg1
-          planned_vol(mount_point: "/2", type: :ext4, desired: 14.GiB),
+          planned_vol(mount_point: "/2", type: :ext4, min: 14.GiB),
           # So this one, as small as it is, would affect vg1
-          planned_vol(mount_point: "/2", type: :ext4, desired: 10.MiB)
+          planned_vol(mount_point: "/2", type: :ext4, min: 10.MiB)
         )
         expect { maker.provide_space(fake_devicegraph, volumes, lvm_helper) }
           .to raise_error Y2Storage::Proposal::NoDiskSpaceError

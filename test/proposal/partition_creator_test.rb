@@ -37,9 +37,9 @@ describe Y2Storage::Proposal::PartitionCreator do
       fake_scenario(scenario)
     end
 
-    let(:root_vol) { planned_vol(mount_point: "/", type: :ext4, desired: 1.GiB) }
-    let(:home_vol) { planned_vol(mount_point: "/home", type: :ext4, desired: 1.GiB) }
-    let(:swap_vol) { planned_vol(mount_point: "swap", type: :swap, desired: 1.GiB) }
+    let(:root_vol) { planned_vol(mount_point: "/", type: :ext4, min: 1.GiB) }
+    let(:home_vol) { planned_vol(mount_point: "/home", type: :ext4, min: 1.GiB) }
+    let(:swap_vol) { planned_vol(mount_point: "swap", type: :swap, min: 1.GiB) }
     let(:disk_spaces) { fake_devicegraph.free_disk_spaces }
 
     subject(:creator) { described_class.new(fake_devicegraph) }
@@ -77,9 +77,9 @@ describe Y2Storage::Proposal::PartitionCreator do
 
       context "if the exact space is available" do
         before do
-          root_vol.desired = 20.GiB
-          home_vol.desired = 20.GiB
-          swap_vol.desired = 10.GiB - 1.MiB
+          root_vol.min = 20.GiB
+          home_vol.min = 20.GiB
+          swap_vol.min = 10.GiB - 1.MiB
         end
 
         it "creates partitions matching the volume sizes" do
@@ -94,11 +94,11 @@ describe Y2Storage::Proposal::PartitionCreator do
 
       context "if some extra space is available" do
         before do
-          root_vol.desired = 20.GiB
+          root_vol.min = 20.GiB
           root_vol.weight = 1
-          home_vol.desired = 20.GiB
+          home_vol.min = 20.GiB
           home_vol.weight = 2
-          swap_vol.desired = 1.GiB - 1.MiB
+          swap_vol.min = 1.GiB - 1.MiB
           swap_vol.max = 1.GiB - 1.MiB
           swap_vol.weight = 0
         end
@@ -114,7 +114,7 @@ describe Y2Storage::Proposal::PartitionCreator do
 
         context "if one of the volumes is small" do
           before do
-            swap_vol.desired = 256.KiB
+            swap_vol.min = 256.KiB
           end
 
           # In the past, the adjustments introduced by alignment caused the
@@ -141,8 +141,8 @@ describe Y2Storage::Proposal::PartitionCreator do
         # The last 16.5KiB of GPT are not usable, which makes the space not
         # divisible by 1MiB
         let(:scenario) { "empty_hard_disk_gpt_25GiB" }
-        let(:vol1) { planned_vol(mount_point: "/1", type: :vfat, desired: vol1_size, weight: 1) }
-        let(:vol2) { planned_vol(mount_point: "/2", type: :ext4, desired: 20.GiB, weight: 1) }
+        let(:vol1) { planned_vol(mount_point: "/1", type: :vfat, min: vol1_size, weight: 1) }
+        let(:vol2) { planned_vol(mount_point: "/2", type: :ext4, min: 20.GiB, weight: 1) }
         let(:vol1_size) { 2.GiB }
         let(:distribution) { space_dist(disk_spaces.first => vols_list(vol1, vol2)) }
 
@@ -290,7 +290,7 @@ describe Y2Storage::Proposal::PartitionCreator do
 
       let(:vol) do
         planned_vol(
-          type: :vfat, partition_id: Y2Storage::PartitionId::ESP, desired: 1.GiB, bootable: bootable
+          type: :vfat, partition_id: Y2Storage::PartitionId::ESP, min: 1.GiB, bootable: bootable
         )
       end
       let(:distribution) { space_dist(disk_spaces.first => vols_list(vol)) }
@@ -311,7 +311,7 @@ describe Y2Storage::Proposal::PartitionCreator do
 
         expect(encrypter).to receive(:device_for) do |volume, plain_device|
           expect(volume).to have_attributes(
-            partition_id: Y2Storage::PartitionId::ESP, desired: 1.GiB, bootable: bootable
+            partition_id: Y2Storage::PartitionId::ESP, min: 1.GiB, bootable: bootable
           )
           expect(plain_device.is?(:partition)).to eq true
           plain_device

@@ -86,14 +86,14 @@ describe Y2Storage::Proposal do
       let(:windows_partitions) { {} }
       let(:volumes_generator) do
         base_volumes = [
-          planned_vol(mount_point: "/", type: :ext4, desired: 500.MiB, max: 500.MiB)
+          planned_vol(mount_point: "/", type: :ext4, min: 500.MiB, max: 500.MiB)
         ]
         all_volumes = [
-          planned_vol(mount_point: "/", type: :ext4, desired: 500.MiB, max: 500.MiB),
+          planned_vol(mount_point: "/", type: :ext4, min: 500.MiB, max: 500.MiB),
           planned_vol(mount_point: "swap", reuse: "/dev/sda3"),
-          planned_vol(mount_point: "swap", type: :swap, desired: 500.MiB, max: 500.MiB),
-          planned_vol(mount_point: "swap", type: :swap, desired: 500.MiB, max: 500.MiB),
-          planned_vol(mount_point: "swap", type: :swap, desired: 500.MiB, max: 500.MiB)
+          planned_vol(mount_point: "swap", type: :swap, min: 500.MiB, max: 500.MiB),
+          planned_vol(mount_point: "swap", type: :swap, min: 500.MiB, max: 500.MiB),
+          planned_vol(mount_point: "swap", type: :swap, min: 500.MiB, max: 500.MiB)
         ]
         instance_double(
           "Y2Storage::Proposal::VolumesGenerator",

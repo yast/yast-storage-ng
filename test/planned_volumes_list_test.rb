@@ -76,8 +76,8 @@ describe Y2Storage::PlannedVolumesList do
   end
 
   describe "#distribute_space" do
-    let(:vol1) { planned_vol(mount_point: "/1", desired: 1.GiB, weight: 1) }
-    let(:vol2) { planned_vol(mount_point: "/2", desired: 1.GiB, weight: 1) }
+    let(:vol1) { planned_vol(mount_point: "/1", min: 1.GiB, weight: 1) }
+    let(:vol2) { planned_vol(mount_point: "/2", min: 1.GiB, weight: 1) }
 
     subject(:list) { described_class.new([vol1, vol2]) }
 
@@ -94,9 +94,9 @@ describe Y2Storage::PlannedVolumesList do
   end
 
   describe "#enforced_last" do
-    let(:big_vol1) { planned_vol(type: :vfat, desired: 10.MiB) }
-    let(:big_vol2) { planned_vol(type: :vfat, desired: 10.MiB) }
-    let(:small_vol) { planned_vol(type: :vfat, desired: 1.MiB + 512.KiB) }
+    let(:big_vol1) { planned_vol(type: :vfat, min: 10.MiB) }
+    let(:big_vol2) { planned_vol(type: :vfat, min: 10.MiB) }
+    let(:small_vol) { planned_vol(type: :vfat, min: 1.MiB + 512.KiB) }
 
     subject(:list) { described_class.new([big_vol1, small_vol, big_vol2]) }
 
