@@ -45,6 +45,8 @@ the following steps (as root):
 zypper ar http://download.opensuse.org/repositories/YaST:/storage-ng/openSUSE_Tumbleweed/ libstorage-ng
 zypper ref
 rpm -e --nodeps libstorage7 libstorage-ruby libstorage-python libstorage-devel libstorage-testsuite
+# There might be reported file conflicts between yast2-storage-ng and yast2-storage,
+# it should be OK to ignore them.
 zypper in yast2-storage-ng
 ```
 
