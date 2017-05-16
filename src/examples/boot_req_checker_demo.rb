@@ -33,15 +33,14 @@ require "yast"	# changes $LOAD_PATH
 $LOAD_PATH.unshift(File.expand_path("../../lib", __FILE__))
 
 require "y2storage"
-require "storage/patches"
 require "pp"
 
 begin
   Y2Storage::StorageManager.fake_from_yaml(ARGV[0]) unless ARGV[0].nil? || ARGV[0].empty?
   sm = Y2Storage::StorageManager.instance
 
-  devicegraph = sm.probed
-  puts(devicegraph)
+  devicegraph = sm.y2storage_probed
+  Y2Storage::YamlWriter.write(devicegraph, $stdout)
 rescue => x
   puts "exception: #{x}"
   pp x.backtrace
@@ -54,8 +53,7 @@ settings.root_device = ARGV[1]
 pp(settings)
 
 puts "\n---  needed  ---"
-disk_analyzer = Y2Storage::DiskAnalyzer.new(devicegraph)
-checker = Y2Storage::BootRequirementsChecker.new(settings, disk_analyzer)
+checker = Y2Storage::BootRequirementsChecker.new(settings, devicegraph)
 
 begin
   needed = checker.needed_partitions

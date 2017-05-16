@@ -81,9 +81,9 @@ if yaml_input.nil?
     STDERR.puts("This requires root permissions, otherwise hardware probing might fail.")
     STDERR.puts("Start this with sudo.")
   end
-  devicegraph = Y2Storage::StorageManager.instance.probed
+  devicegraph = Y2Storage::StorageManager.instance.y2storage_probed
 else
-  devicegraph = Y2Storage::StorageManager.fake_from_yaml(yaml_input).probed
+  devicegraph = Y2Storage::StorageManager.fake_from_yaml(yaml_input).y2storage_probed
 end
 
 if opt_propose
