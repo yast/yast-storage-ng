@@ -42,7 +42,7 @@ the following steps (as root):
 
 ```bash
 # Repository for Tumbleweed/Factory, adjust this line if using other distribution
-zypper ar http://download.opensuse.org/repositories/YaST:/storage-ng/openSUSE_Tumbleweed/ libstorage-ng
+zypper ar -f http://download.opensuse.org/repositories/YaST:/storage-ng/openSUSE_Tumbleweed/ libstorage-ng
 zypper ref
 rpm -e --nodeps libstorage7 libstorage-ruby libstorage-python libstorage-devel libstorage-testsuite
 # There might be reported file conflicts between yast2-storage-ng and yast2-storage,
