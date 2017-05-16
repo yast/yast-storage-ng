@@ -48,18 +48,34 @@ module Yast
         instance_double("Y2Storage::Partition", name: name, size: disk_size)
       end
 
-      def planned_vol(attrs = {})
+      def planned_partition(attrs = {})
+        part = Y2Storage::PlannedDevices::Partition.new(nil)
+        add_planned_attributes!(part, attrs)
+      end
+
+      # Backwards compatibility
+      alias_method :planned_vol, :planned_partition
+
+      def planned_lv(attrs = {})
+        lv = Y2Storage::PlannedDevices::LvmLv.new(nil)
+        add_planned_attributes!(lv, attrs)
+      end
+
+      def add_planned_attributes!(device, attrs)
         attrs = attrs.dup
-        mount_point = attrs.delete(:mount_point)
+
         type = attrs.delete(:type)
-        if type.is_a?(::String) || type.is_a?(Symbol)
-          type = Y2Storage::Filesystems::Type.const_get(type.to_s.upcase)
-        end
-        volume = Y2Storage::PlannedVolume.new(mount_point, type)
+        device.filesystem_type =
+          if type.is_a?(::String) || type.is_a?(Symbol)
+            Y2Storage::Filesystems::Type.const_get(type.to_s.upcase)
+          else
+            type
+          end
+
         attrs.each_pair do |key, value|
-          volume.send(:"#{key}=", value)
+          device.send(:"#{key}=", value)
         end
-        volume
+        device
       end
 
       def space_dist(vols_by_space)

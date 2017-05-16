@@ -343,7 +343,7 @@ module Y2Storage
           # Strictly speaking, this could lead to deletion of a partition
           # included in the keep array. In practice it doesn't matter because
           # PVs and extended partitions are never marked to be reused as a
-          # PlannedVolume.
+          # planned partition.
           names = partition_killer.delete(part_name)
           next if names.empty?
 

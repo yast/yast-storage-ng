@@ -25,10 +25,10 @@ require "yast"
 require "y2storage/planned_volume"
 
 module Y2Storage
-  # Collection of PlannedVolume elements
+  # Collection of PlannedDevices::Base elements
   #
   # Implements Enumerable and provides some extra methods to query the list of
-  # PlannedVolume elements.
+  # planned devices
   class PlannedVolumesList
     include Enumerable
     extend Forwardable
@@ -78,7 +78,7 @@ module Y2Storage
     #
     # @param size_to_fill [DiskSize]
     # @param min_grain [DiskSize]
-    # @return [PlannedVolume, nil]
+    # @return [PlannedDevices::Base, nil]
     def enforced_last(size_to_fill, min_grain)
       rounded_up = min_disk_size(rounding: min_grain)
       # There is enough space to fit with any order
@@ -129,17 +129,17 @@ module Y2Storage
       delegated.is_a?(Array) ? PlannedVolumesList.new(delegated) : delegated
     end
 
-    # Deletes the given volume
+    # Deletes the given device
     #
-    # @return [PlannedVolume] deleted volume
+    # @return [PlannedDevices::Base] deleted device
     def delete(vol)
       @volumes.delete(vol)
     end
 
-    # Appends the given volume to the list. It returns the list itself,
+    # Appends the given device to the list. It returns the list itself,
     # so several appends may be chained together
     #
-    # @param volume [PlannedVolume] element to add
+    # @param volume [PlannedDevices::Base] element to add
     # @return [PlannedVolumesList]
     def push(volume)
       @volumes.push(volume)
@@ -187,7 +187,7 @@ module Y2Storage
     #     is located. It only makes sense when distributing space among
     #     partitions.
     # @return [PlannedVolumesList] list containing volumes with an adjusted
-    #     value for PlannedVolume#disk_size
+    #     value for PlannedDevices::HasSize#size
     def distribute_space(space_size, rounding: nil, min_grain: nil)
       raise RuntimeError if space_size < min_disk_size
 
@@ -247,8 +247,8 @@ module Y2Storage
       end
     end
 
-    # @param one [PlannedVolume]
-    # @param other [PlannedVolume]
+    # @param one [PlannedDevices::Base]
+    # @param other [PlannedDevices::Base]
     def compare_attr(one, other, attr, nils_first, descending)
       one_value = one.send(attr)
       other_value = other.send(attr)
@@ -259,8 +259,8 @@ module Y2Storage
       end
     end
 
-    # @param one [PlannedVolume]
-    # @param other [PlannedVolume]
+    # @param one [PlannedDevices::Base]
+    # @param other [PlannedDevices::Base]
     def compare_values(one, other, descending)
       if descending
         other <=> one
@@ -269,8 +269,8 @@ module Y2Storage
       end
     end
 
-    # @param one [PlannedVolume]
-    # @param other [PlannedVolume]
+    # @param one [PlannedDevices::Base]
+    # @param other [PlannedDevices::Base]
     def compare_with_nil(one, other, nils_first)
       if one.nil? && other.nil?
         0
@@ -290,9 +290,9 @@ module Y2Storage
       candidates
     end
 
-    # Extra space to be assigned to a volume
+    # Extra space to be assigned to a device
     #
-    # @param volume [PlannedVolume] volume to enlarge
+    # @param volume [PlannedDevices::Base] device to enlarge
     # @param total_size [DiskSize] free space to be distributed among
     #    involved volumes
     # @param total_weight [Float] sum of the weights of all involved volumes

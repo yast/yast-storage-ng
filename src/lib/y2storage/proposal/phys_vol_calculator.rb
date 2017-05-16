@@ -96,7 +96,7 @@ module Y2Storage
           # volumes among free spaces, not so much the size. So let's start
           # with minimal volumes. We will grow them in the end if the
           # distribution is valid.
-          pv_vol = new_planned_volume
+          pv_vol = new_planned_partition
           volumes[space] = pv_vol
           useful_space = lvm_helper.useful_pv_space(available_size)
 
@@ -162,11 +162,12 @@ module Y2Storage
         total
       end
 
-      # Volume representing a LVM physical volume with the minimum possible size
+      # Planned partition representing a LVM physical volume with the minimum
+      # possible size
       #
-      # @return [PlannedVolume]
-      def new_planned_volume
-        res = PlannedVolume.new(nil)
+      # @return [PlannedDevices::Partition]
+      def new_planned_partition
+        res = PlannedDevices::Partition.new(nil)
         res.partition_id = PartitionId::LVM
         res.encryption_password = lvm_helper.encryption_password
         res.min_size = lvm_helper.min_pv_size

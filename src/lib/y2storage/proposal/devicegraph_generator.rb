@@ -25,6 +25,7 @@ require "storage"
 require "y2storage/proposal/space_maker"
 require "y2storage/proposal/partition_creator"
 require "y2storage/proposal/lvm_helper"
+require "y2storage/planned_devices"
 
 module Y2Storage
   class Proposal
@@ -52,18 +53,13 @@ module Y2Storage
         # We are going to alter the volumes in several ways, so let's be a
         # good citizen and do it in our own copy
         volumes = volumes.deep_dup
-        add_encryption_password!(volumes)
 
-        if settings.use_lvm
-          volumes, lvm_vols = volumes.split_by(&:plain_partition?)
-        else
-          lvm_vols = PlannedVolumesList.new
-        end
+        partitions, lvm_lvs = volumes.split_by { |v| v.is_a?(PlannedDevices::Partition) }
 
-        lvm_helper = LvmHelper.new(lvm_vols, encryption_password: settings.encryption_password)
-        space_result = provide_space(volumes, initial_graph, lvm_helper, space_maker)
+        lvm_helper = LvmHelper.new(lvm_lvs, encryption_password: settings.encryption_password)
+        space_result = provide_space(partitions, initial_graph, lvm_helper, space_maker)
 
-        refine_volumes!(volumes, space_result[:deleted_partitions])
+        refine_volumes!(partitions, space_result[:deleted_partitions])
         graph = create_partitions(space_result[:space_distribution], space_result[:devicegraph])
         reuse_partitions!(volumes, graph)
 
@@ -75,17 +71,6 @@ module Y2Storage
       end
 
     protected
-
-      # Modifies planned volumes adding an encryption password.
-      # Encryption password is not assigned to volumes that must
-      # be created as plain partitions.
-      # @param volumes [PlannedVolumesList]
-      def add_encryption_password!(volumes)
-        return unless settings.use_encryption
-        volumes.reject(&:plain_partition?).map do |volume|
-          volume.encryption_password = settings.encryption_password
-        end
-      end
 
       # Provides free disk space in the proposal devicegraph to fit the
       # volumes in.
@@ -163,9 +148,9 @@ module Y2Storage
       # @param volumes [PlannedVolumesList] list of volumes to modify
       # @param deleted_partitions [Array<Partition>] partitions
       #     deleted from the initial devicegraph
-      def refine_volumes!(volumes, deleted_partitions)
+      def refine_volumes!(planned_partitions, deleted_partitions)
         deleted_swaps = deleted_partitions.select { |part| part.id.is?(:swap) }
-        new_swap_volumes = volumes.select { |vol| !vol.reuse && vol.mount_point == "swap" }
+        new_swap_volumes = planned_partitions.select { |vol| !vol.reuse && vol.mount_point == "swap" }
 
         new_swap_volumes.each_with_index do |swap_volume, idx|
           deleted_swap = deleted_swaps[idx]
@@ -194,8 +179,8 @@ module Y2Storage
       #
       # @param volumes [PlannedVolumesList] set of volumes to create
       # @param graph [Devicegraph] devicegraph to modify
-      def reuse_partitions!(volumes, graph)
-        volumes.select { |v| v.reuse }.each do |vol|
+      def reuse_partitions!(planned_partitions, graph)
+        planned_partitions.select { |v| v.reuse }.each do |vol|
           partition = graph.partitions.detect { |part| part.name == vol.reuse }
           filesystem = partition.filesystem
           filesystem.mountpoint = vol.mount_point if vol.mount_point && !vol.mount_point.empty?

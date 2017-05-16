@@ -81,7 +81,7 @@ module Y2Storage
         min_grain = free_space.disk.min_grain
         sorted = sorted_volumes(volumes, usable_size, min_grain)
         volumes = sorted.distribute_space(usable_size, min_grain: min_grain)
-        create_volumes_partitions(volumes, free_space, num_logical)
+        create_planned_partitions(volumes, free_space, num_logical)
       end
 
       # Volumes sorted in the most convenient way in order to create partitions
@@ -96,7 +96,8 @@ module Y2Storage
         PlannedVolumesList.new(sorted)
       end
 
-      # Creates a partition and the corresponding filesystem for each volume
+      # Creates a partition and the corresponding filesystem for each planned
+      # partition
       #
       # @raise an error if a volume cannot be allocated
       #
@@ -105,21 +106,21 @@ module Y2Storage
       # impossible to fulfill, since it's usually more a recommendation than a
       # hard limit.
       #
-      # @param volumes [Array<PlannedVolume>]
+      # @param planned_partitions [Array<PlannedDevices::Partition>]
       # @param initial_free_space [FreeDiskSpace]
       # @param num_logical [Symbol] logical partitions. See {#process_space}
-      def create_volumes_partitions(volumes, initial_free_space, num_logical)
-        volumes.each_with_index do |vol, idx|
+      def create_planned_partitions(planned_partitions, initial_free_space, num_logical)
+        planned_partitions.each_with_index do |vol, idx|
           partition_id = vol.partition_id
           partition_id ||= vol.mount_point == "swap" ? PartitionId::SWAP : PartitionId::LINUX
           begin
             space = free_space_within(initial_free_space)
-            primary = volumes.size - idx > num_logical
+            primary = planned_partitions.size - idx > num_logical
             partition = create_partition(vol, partition_id, space, primary)
             final_device = encrypter.device_for(vol, partition)
             filesystem = vol.create_filesystem(final_device)
             if vol.subvolumes?
-              other_mount_points = volumes.map { |v| v.mount_point }
+              other_mount_points = planned_partitions.map { |v| v.mount_point }
               other_mount_points.delete_if { |mp| mp == vol.mount_point }
               vol.create_subvolumes(filesystem, other_mount_points)
             end

@@ -49,7 +49,7 @@ describe Y2Storage::Proposal::LvmHelper do
     end
 
     context "if some LVM volumes are planned" do
-      let(:volumes) { [planned_vol(mount_point: "/1", type: :ext4, min: desired)] }
+      let(:volumes) { [planned_lv(mount_point: "/1", type: :ext4, min: desired)] }
 
       before do
         helper.reused_volume_group = reused_vg
@@ -101,7 +101,7 @@ describe Y2Storage::Proposal::LvmHelper do
     end
 
     context "if some LVM volumes are planned" do
-      let(:volumes) { [planned_vol(mount_point: "/1", type: :ext4, min: 1.GiB, max: max)] }
+      let(:volumes) { [planned_lv(mount_point: "/1", type: :ext4, min: 1.GiB, max: max)] }
 
       before do
         helper.reused_volume_group = reused_vg
@@ -143,7 +143,7 @@ describe Y2Storage::Proposal::LvmHelper do
   describe "#reusable_volume_groups" do
     context "if there are no volume groups" do
       let(:scenario) { "windows-pc" }
-      let(:volumes) { [planned_vol(mount_point: "/1", type: :ext4, min: 10.GiB)] }
+      let(:volumes) { [planned_lv(mount_point: "/1", type: :ext4, min: 10.GiB)] }
 
       it "returns an empty array" do
         expect(helper.reusable_volume_groups(fake_devicegraph)).to eq []
@@ -152,7 +152,7 @@ describe Y2Storage::Proposal::LvmHelper do
 
     context "if no volume group is big enough" do
       let(:scenario) { "lvm-four-vgs" }
-      let(:volumes) { [planned_vol(mount_point: "/1", type: :ext4, min: 40.GiB)] }
+      let(:volumes) { [planned_lv(mount_point: "/1", type: :ext4, min: 40.GiB)] }
 
       it "returns all the volume groups sorted by descending size" do
         result = helper.reusable_volume_groups(fake_devicegraph)
@@ -170,7 +170,7 @@ describe Y2Storage::Proposal::LvmHelper do
 
     context "if some volume groups are big enough" do
       let(:scenario) { "lvm-four-vgs" }
-      let(:volumes) { [planned_vol(mount_point: "/1", type: :ext4, min: 8.GiB)] }
+      let(:volumes) { [planned_lv(mount_point: "/1", type: :ext4, min: 8.GiB)] }
 
       it "returns all the volume groups" do
         result = helper.reusable_volume_groups(fake_devicegraph)
@@ -223,8 +223,8 @@ describe Y2Storage::Proposal::LvmHelper do
     let(:scenario) { "lvm-new-pvs" }
     let(:volumes) do
       [
-        planned_vol(mount_point: "/1", type: :ext4, logical_volume_name: "one", min: 10.GiB),
-        planned_vol(mount_point: "/2", type: :ext4, logical_volume_name: "two", min: 5.GiB)
+        planned_lv(mount_point: "/1", type: :ext4, logical_volume_name: "one", min: 10.GiB),
+        planned_lv(mount_point: "/2", type: :ext4, logical_volume_name: "two", min: 5.GiB)
       ]
     end
     let(:pv_partitions) { ["/dev/sda1", "/dev/sda3"] }
@@ -319,7 +319,7 @@ describe Y2Storage::Proposal::LvmHelper do
       end
 
       it "deletes existing LVs as needed to make space" do
-        volumes << planned_vol(type: :ext4, logical_volume_name: "three", min: 20.GiB)
+        volumes << planned_lv(type: :ext4, logical_volume_name: "three", min: 20.GiB)
 
         devicegraph = helper.create_volumes(fake_devicegraph, pv_partitions)
         reused_vg = devicegraph.lvm_vgs.first
@@ -354,7 +354,7 @@ describe Y2Storage::Proposal::LvmHelper do
       before do
         one = volumes.first
         two = volumes.last
-        volumes << planned_vol(logical_volume_name: "three", min: 1.GiB, max: 2.GiB, weight: 1)
+        volumes << planned_lv(logical_volume_name: "three", min: 1.GiB, max: 2.GiB, weight: 1)
 
         one.min_size = 5.GiB
         one.weight = 2

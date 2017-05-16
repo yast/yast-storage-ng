@@ -51,7 +51,7 @@ module Y2Storage
     attr_reader :settings
     # Planned volumes calculated by the proposal, nil if the proposal has not
     # been calculated yet
-    # @return [PlannedVolumeList]
+    # @return [PlannedVolumesList]
     attr_reader :volumes
     # Proposed layout of devices, nil if the proposal has not been
     # calculated yet

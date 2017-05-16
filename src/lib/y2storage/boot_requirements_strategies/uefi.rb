@@ -31,21 +31,20 @@ module Y2Storage
     class UEFI < Base
       def needed_partitions(target)
         volumes = super
-        volumes << efi_volume(target)
+        volumes << efi_partition(target)
         volumes
       end
 
     protected
 
-      def efi_volume(target)
-        vol = PlannedVolume.new("/boot/efi", Filesystems::Type::VFAT)
+      def efi_partition(target)
+        vol = PlannedDevices::Partition.new("/boot/efi", Filesystems::Type::VFAT)
         if reusable_efi
           vol.reuse = reusable_efi.name
         else
           vol.partition_id = PartitionId::ESP
           vol.min_size = target == :min ? DiskSize.MiB(33) : DiskSize.MiB(500)
           vol.max_size = DiskSize.unlimited
-          vol.plain_partition = true
           vol.max_start_offset = DiskSize.TiB(2)
         end
         vol

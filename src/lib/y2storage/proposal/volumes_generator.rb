@@ -22,7 +22,7 @@
 # find current contact information at www.suse.com.
 
 require "fileutils"
-require "y2storage/planned_volume"
+require "y2storage/planned_devices"
 require "y2storage/planned_volumes_list"
 require "y2storage/disk_size"
 require "y2storage/boot_requirements_checker"
@@ -69,7 +69,7 @@ module Y2Storage
 
       # Volumes needed by the bootloader
       #
-      # @return [Array<PlannedVolumes>]
+      # @return [Array<PlannedDevices::Partition>]
       def boot_volumes
         checker = BootRequirementsChecker.new(settings, devicegraph)
         checker.needed_partitions(@target)
@@ -79,7 +79,7 @@ module Y2Storage
 
       # Additional volumes not needed for booting, like swap and /home
       #
-      # @return [Array<PlannedVolumes>]
+      # @return [Array<PlannedDevices::Base>]
       def additional_volumes
         volumes = [swap_volume]
         volumes << home_volume if @settings.use_separate_home
@@ -90,24 +90,39 @@ module Y2Storage
       # to the settings.
       def swap_volume
         swap_size = DEFAULT_SWAP_SIZE
-        if @settings.enlarge_swap_for_suspend
+        if settings.enlarge_swap_for_suspend
           swap_size = [ram_size, swap_size].max
         end
-        vol = PlannedVolume.new("swap", Filesystems::Type::SWAP)
-        vol.plain_partition = false
-        vol.logical_volume_name = "swap"
+        if settings.use_lvm
+          swap_lv(swap_size)
+        else
+          swap_partition(swap_size)
+        end
+      end
+
+      def swap_lv(size)
+        lv = PlannedDevices::LvmLv.new("swap", Filesystems::Type::SWAP)
+        lv.logical_volume_name = "swap"
+        lv.min_size = size
+        lv.max_size = size
+        lv
+      end
+
+      def swap_partition(size)
+        part = PlannedDevices::Partition.new("swap", Filesystems::Type::SWAP)
+        part.encryption_password = settings.encryption_password
         # NOTE: Enforcing the re-use of an existing partition limits the options
         # to propose a valid distribution of the volumes. For swap we already
         # have mechanisms to reuse UUIDs and labels, so maybe is smarter to
         # never reuse partitions as-is.
-        reuse = reusable_swap(swap_size)
+        reuse = reusable_swap(size)
         if reuse
-          vol.reuse = reuse.name
+          part.reuse = reuse.name
         else
-          vol.min_size  = swap_size
-          vol.max_size  = swap_size
+          part.min_size  = size
+          part.max_size  = size
         end
-        vol
+        part
       end
 
       # Swap partition that can be reused.
@@ -130,28 +145,36 @@ module Y2Storage
       # This does NOT create the partition yet, only the data structure.
       #
       def root_volume
-        root_vol = PlannedVolume.new("/", @settings.root_filesystem_type)
-        root_vol.max_size = @settings.root_max_size
-        root_vol.weight   = @settings.root_space_percent
-        root_vol.disk     = @settings.root_device
-        min_size = @settings.root_base_size
-        if root_vol.btrfs?
-          log.info "Increasing root filesystem size for Btrfs"
-          multiplicator = 1.0 + @settings.btrfs_increase_percentage / 100.0
-          min_size *= multiplicator
-          root_vol.max_size *= multiplicator
-
-          root_vol.default_subvolume = @settings.btrfs_default_subvolume || ""
-          root_vol.subvolumes = @settings.subvolumes
-          log.info "Adding Btrfs subvolumes: \n#{root_vol.subvolumes}"
+        if settings.use_lvm
+          root_vol = PlannedDevices::LvmLv.new("/", @settings.root_filesystem_type)
+        else
+          root_vol = PlannedDevices::Partition.new("/", @settings.root_filesystem_type)
+          root_vol.disk = @settings.root_device
+          root_vol.encryption_password = @settings.encryption_password
         end
+        root_vol.weight   = @settings.root_space_percent
+        root_vol.max_size = @settings.root_max_size
         root_vol.min_size =
           if @target == :min || root_vol.max_size.unlimited?
-            min_size
+            @settings.root_base_size
           else
             root_vol.max_size
           end
+        adjust_btrfs_sizes!(root_vol)
         root_vol
+      end
+
+      def adjust_btrfs_sizes!(planned_device)
+        return unless planned_device.btrfs?
+
+        log.info "Increasing root filesystem size for Btrfs"
+        multiplicator = 1.0 + settings.btrfs_increase_percentage / 100.0
+        planned_device.min_size *= multiplicator
+        planned_device.max_size *= multiplicator
+
+        planned_device.default_subvolume = settings.btrfs_default_subvolume || ""
+        planned_device.subvolumes = settings.subvolumes
+        log.info "Adding Btrfs subvolumes: \n#{planned_device.subvolumes}"
       end
 
       # Volume data structure for the /home volume according
@@ -160,7 +183,12 @@ module Y2Storage
       # This does NOT create the partition yet, only the data structure.
       #
       def home_volume
-        home_vol = PlannedVolume.new("/home", settings.home_filesystem_type)
+        if settings.use_lvm
+          home_vol = PlannedDevices::LvmLv.new("/home", settings.home_filesystem_type)
+        else
+          home_vol = PlannedDevices::Partition.new("/home", settings.home_filesystem_type)
+          home_vol.encryption_password = settings.encryption_password
+        end
         home_vol.max_size = settings.home_max_size
         home_vol.min_size = settings.home_min_size
         home_vol.weight = 100.0 - settings.root_space_percent

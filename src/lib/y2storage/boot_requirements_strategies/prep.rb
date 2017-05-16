@@ -30,7 +30,7 @@ module Y2Storage
     class PReP < Base
       def needed_partitions(target)
         volumes = super
-        volumes << prep_volume(target) if prep_partition_needed? && prep_partition_missing?
+        volumes << prep_partition(target) if prep_partition_needed? && prep_partition_missing?
         volumes
       end
 
@@ -50,8 +50,8 @@ module Y2Storage
         partitions.nil? || partitions.empty?
       end
 
-      def prep_volume(target)
-        vol = PlannedVolume.new(nil)
+      def prep_partition(target)
+        vol = PlannedDevices::Partition.new(nil)
         # So far we are always using msdos partition ids
         vol.partition_id = PartitionId::PREP
         vol.min_size = target == :min ? DiskSize.KiB(256) : DiskSize.MiB(1)
@@ -59,7 +59,6 @@ module Y2Storage
         # Make sure that alignment does not result in a too big partition
         vol.align = :keep_size
         vol.bootable = true
-        vol.plain_partition = true
         # TODO: We have been told that PReP must be one of the first 4
         # partitions, ideally the first one. But we have not found any
         # rational/evidence. Not implementing that for the time being

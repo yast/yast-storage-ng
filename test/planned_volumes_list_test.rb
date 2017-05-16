@@ -27,7 +27,7 @@ describe Y2Storage::PlannedVolumesList do
   using Y2Storage::Refinements::SizeCasts
 
   def vol(mount_point, size, min_size, max_size)
-    vol = Y2Storage::PlannedVolume.new(mount_point)
+    vol = Y2Storage::PlannedDevices::Partition.new(mount_point)
     vol.size = size
     vol.min = min_size
     vol.max = max_size

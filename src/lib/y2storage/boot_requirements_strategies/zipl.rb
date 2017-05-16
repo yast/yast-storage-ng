@@ -29,7 +29,7 @@ module Y2Storage
     class ZIPL < Base
       def needed_partitions(target)
         raise Error unless supported_root_disk?
-        PlannedVolumesList.new([zipl_volume(target)])
+        PlannedVolumesList.new([zipl_partition(target)])
       end
 
     protected
@@ -44,12 +44,11 @@ module Y2Storage
         true
       end
 
-      def zipl_volume(target)
-        vol = PlannedVolume.new("/boot/zipl", Filesystems::Type::EXT2)
+      def zipl_partition(target)
+        vol = PlannedDevices::Partition.new("/boot/zipl", Filesystems::Type::EXT2)
         vol.disk = root_disk.name
         vol.min_size = target == :min ? DiskSize.MiB(100) : DiskSize.MiB(200)
         vol.max_size = DiskSize.GiB(1)
-        vol.plain_partition = true
         vol
       end
     end

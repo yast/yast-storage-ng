@@ -75,9 +75,7 @@ describe Y2Storage::Proposal::VolumesGenerator do
 
     # This swap sizes are currently hard-coded
     context "swap volumes" do
-      before do
-        settings.enlarge_swap_for_suspend = false
-      end
+      before { settings.enlarge_swap_for_suspend = false }
 
       let(:swap_volumes) { subject.volumes(:desired).select { |v| v.mount_point == "swap" } }
 
@@ -85,15 +83,7 @@ describe Y2Storage::Proposal::VolumesGenerator do
         let(:swap_partitions) { [] }
 
         it "includes a brand new swap volume and no swap reusing" do
-          expect(swap_volumes).to contain_exactly(
-            an_object_having_attributes(reuse: nil)
-          )
-        end
-
-        it "correctly sets the LVM properties for the new swap" do
-          expect(swap_volumes).to contain_exactly(
-            an_object_having_attributes(plain_partition: false, logical_volume_name: "swap")
-          )
+          expect(swap_volumes).to contain_exactly(an_object_having_attributes(reuse: nil))
         end
       end
 
@@ -101,9 +91,7 @@ describe Y2Storage::Proposal::VolumesGenerator do
         let(:swap_partitions) { [partition_double("/dev/sdaX", 1.GiB)] }
 
         it "includes a brand new swap volume and no swap reusing" do
-          expect(swap_volumes).to contain_exactly(
-            an_object_having_attributes(reuse: nil)
-          )
+          expect(swap_volumes).to contain_exactly(an_object_having_attributes(reuse: nil))
         end
       end
 
@@ -111,18 +99,14 @@ describe Y2Storage::Proposal::VolumesGenerator do
         let(:swap_partitions) { [partition_double("/dev/sdaX", 3.GiB)] }
 
         context "if proposing an LVM setup" do
-          before do
-            settings.use_lvm = true
-          end
+          before { settings.use_lvm = true }
 
           it "includes a brand new swap volume and no swap reusing" do
-            expect(swap_volumes).to contain_exactly(
-              an_object_having_attributes(reuse: nil)
-            )
+            expect(swap_volumes).to contain_exactly(an_object_having_attributes(reuse: nil))
           end
         end
 
-        context "if proposing an partition-based setup" do
+        context "if proposing a partition-based setup" do
           context "without encryption" do
             it "includes a volume to reuse the existing swap and no new swap" do
               expect(swap_volumes).to contain_exactly(
@@ -132,15 +116,68 @@ describe Y2Storage::Proposal::VolumesGenerator do
           end
 
           context "with encryption" do
-            before do
-              settings.encryption_password = "12345678"
-            end
+            before { settings.encryption_password = "12345678" }
 
             it "includes a brand new swap volume and no swap reusing" do
               expect(swap_volumes).to contain_exactly(
                 an_object_having_attributes(reuse: nil)
               )
             end
+          end
+        end
+      end
+
+      context "if proposing a partition-based setup" do
+        context "without encryption" do
+          it "proposes a plain partition" do
+            expect(swap_volumes).to contain_exactly(
+              an_object_having_attributes(
+                class: Y2Storage::PlannedDevices::Partition, encryption_password: nil
+              )
+            )
+          end
+        end
+
+        context "with encryption" do
+          before { settings.encryption_password = "12345678" }
+
+          it "proposes an encrypted partition" do
+            expect(swap_volumes).to contain_exactly(
+              an_object_having_attributes(
+                class: Y2Storage::PlannedDevices::Partition, encryption_password: "12345678"
+              )
+            )
+          end
+        end
+      end
+
+      context "if proposing an LVM-based setup" do
+        before { settings.use_lvm = true }
+
+        context "without encryption" do
+          it "proposes a plain logical volume with the right name" do
+            expect(swap_volumes).to contain_exactly(
+              an_object_having_attributes(
+                class:               Y2Storage::PlannedDevices::LvmLv,
+                encryption_password: nil,
+                logical_volume_name: "swap"
+              )
+            )
+          end
+        end
+
+        context "with encryption" do
+          before { settings.encryption_password = "12345678" }
+
+          # Encryption is performed at PV level, not at LV one
+          it "proposes a plain logical volume with the right name" do
+            expect(swap_volumes).to contain_exactly(
+              an_object_having_attributes(
+                class:               Y2Storage::PlannedDevices::LvmLv,
+                encryption_password: nil,
+                logical_volume_name: "swap"
+              )
+            )
           end
         end
       end
@@ -172,21 +209,57 @@ describe Y2Storage::Proposal::VolumesGenerator do
         settings.home_filesystem_type = xfs
       end
 
-      it "includes a /home volume with the configured settings" do
-        expect(subject.volumes(:desired)).to include(
-          an_object_having_attributes(
-            mount_point:     "/home",
-            min:             settings.home_min_size,
-            max:             settings.home_max_size,
-            filesystem_type: settings.home_filesystem_type
-          )
+      let(:home) { subject.volumes(:desired).detect { |v| v.mount_point == "/home" } }
+
+      it "includes a /home planned device with the configured settings" do
+        expect(home).to have_attributes(
+          mount_point:     "/home",
+          min:             settings.home_min_size,
+          max:             settings.home_max_size,
+          filesystem_type: settings.home_filesystem_type
         )
       end
 
-      it "sets the LVM attributes for home" do
-        home = subject.volumes(:desired).detect { |v| v.mount_point == "/home" }
-        expect(home.logical_volume_name).to eq "home"
-        expect(home.plain_partition?).to eq false
+      context "if proposing a partition-based setup" do
+        context "without encryption" do
+          it "proposes /home to be a plain partition" do
+            expect(home).to be_a Y2Storage::PlannedDevices::Partition
+            expect(home.encrypt?).to eq false
+          end
+        end
+
+        context "with encryption" do
+          before { settings.encryption_password = "12345678" }
+
+          it "proposes /home to be an encrypted partition" do
+            expect(home).to be_a Y2Storage::PlannedDevices::Partition
+            expect(home.encrypt?).to eq true
+            expect(home.encryption_password).to eq "12345678"
+          end
+        end
+      end
+
+      context "if proposing an LVM-based setup" do
+        before { settings.use_lvm = true }
+
+        context "without encryption" do
+          it "proposes /home to be a plain logical volume with the right name" do
+            expect(home).to be_a Y2Storage::PlannedDevices::LvmLv
+            expect(home.encrypt?).to eq false
+            expect(home.logical_volume_name).to eq "home"
+          end
+        end
+
+        context "with encryption" do
+          before { settings.encryption_password = "12345678" }
+
+          # Encryption is performed at PV level, not at LV one
+          it "proposes /home to be a plain logical volume with the right name" do
+            expect(home).to be_a Y2Storage::PlannedDevices::LvmLv
+            expect(home.encrypt?).to eq false
+            expect(home.logical_volume_name).to eq "home"
+          end
+        end
       end
     end
 
@@ -209,10 +282,48 @@ describe Y2Storage::Proposal::VolumesGenerator do
         settings.btrfs_increase_percentage = 75
       end
 
-      it "sets the LVM attributes" do
-        root = subject.volumes(:desired).detect { |v| v.mount_point == "/" }
-        expect(root.logical_volume_name).to eq "root"
-        expect(root.plain_partition?).to eq false
+      let(:root) { subject.volumes(:desired).detect { |v| v.mount_point == "/" } }
+
+      context "if proposing a partition-based setup" do
+        context "without encryption" do
+          it "proposes / to be a plain partition" do
+            expect(root).to be_a Y2Storage::PlannedDevices::Partition
+            expect(root.encrypt?).to eq false
+          end
+        end
+
+        context "with encryption" do
+          before { settings.encryption_password = "12345678" }
+
+          it "proposes / to be an encrypted partition" do
+            expect(root).to be_a Y2Storage::PlannedDevices::Partition
+            expect(root.encrypt?).to eq true
+            expect(root.encryption_password).to eq "12345678"
+          end
+        end
+      end
+
+      context "if proposing an LVM-based setup" do
+        before { settings.use_lvm = true }
+
+        context "without encryption" do
+          it "proposes / to be a plain logical volume with the right name" do
+            expect(root).to be_a Y2Storage::PlannedDevices::LvmLv
+            expect(root.encrypt?).to eq false
+            expect(root.logical_volume_name).to eq "root"
+          end
+        end
+
+        context "with encryption" do
+          before { settings.encryption_password = "12345678" }
+
+          # Encryption is performed at PV level, not at LV one
+          it "proposes / to be a plain logical volume with the right name" do
+            expect(root).to be_a Y2Storage::PlannedDevices::LvmLv
+            expect(root.encrypt?).to eq false
+            expect(root.logical_volume_name).to eq "root"
+          end
+        end
       end
 
       context "with a non-Btrfs filesystem" do

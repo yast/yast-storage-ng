@@ -30,7 +30,8 @@ RSpec.shared_examples "proposed boot partition" do
   it "requires /boot to be a non-encrypted ext4 partition in the system disk" do
     expect(boot_part.filesystem_type.is?(:ext4)).to eq true
     expect(boot_part.disk).to eq root_device
-    expect(boot_part.plain_partition?).to eq true
+    expect(boot_part).to be_a Y2Storage::PlannedDevices::Partition
+    expect(boot_part.encrypt?).to eq false
   end
 
   context "when aiming for the recommended size" do
@@ -58,7 +59,8 @@ RSpec.shared_examples "proposed GRUB partition" do
   end
 
   it "requires it to be a non-encrypted partition" do
-    expect(grub_part.plain_partition?).to eq true
+    expect(grub_part).to be_a Y2Storage::PlannedDevices::Partition
+    expect(grub_part.encrypt?).to eq false
   end
 
   context "when aiming for the recommended size" do
@@ -88,7 +90,8 @@ RSpec.shared_examples "proposed EFI partition" do
   let(:target) { nil }
 
   it "requires /boot/efi to be a non-encrypted vfat partition" do
-    expect(efi_part.plain_partition?).to eq true
+    expect(efi_part).to be_a Y2Storage::PlannedDevices::Partition
+    expect(efi_part.encrypt?).to eq false
     expect(efi_part.filesystem_type.is?(:vfat)).to eq true
   end
 
@@ -119,7 +122,8 @@ RSpec.shared_examples "proposed PReP partition" do
   let(:target) { nil }
 
   it "requires it to be a non-encrypted partition" do
-    expect(prep_part.plain_partition?).to eq true
+    expect(prep_part).to be_a Y2Storage::PlannedDevices::Partition
+    expect(prep_part.encrypt?).to eq false
   end
 
   it "requires it to be bootable (ms-dos partition table)" do
@@ -158,7 +162,8 @@ RSpec.shared_examples "proposed /boot/zipl partition" do
 
   it "requires /boot/zipl to be a non-encrypted partition in the system disk" do
     expect(zipl_part.disk).to eq root_device
-    expect(zipl_part.plain_partition?).to eq true
+    expect(zipl_part).to be_a Y2Storage::PlannedDevices::Partition
+    expect(zipl_part.encrypt?).to eq false
   end
 
   context "when aiming for the recommended size" do
