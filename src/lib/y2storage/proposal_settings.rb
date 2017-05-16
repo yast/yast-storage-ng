@@ -69,7 +69,7 @@ module Y2Storage
     #   installation. If nil, the proposal will try find suitable devices
     attr_accessor :candidate_devices
 
-    # @!attribute encrypted_password
+    # @!attribute encryption_password
     #   @return [String] password to use when creating new encryption devices
     secret_attr   :encryption_password
 

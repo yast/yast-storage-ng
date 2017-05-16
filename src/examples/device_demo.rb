@@ -29,6 +29,8 @@ opts = GetoptLong.new(
   ["--help", GetoptLong::NO_ARGUMENT],
   ["--probe", GetoptLong::NO_ARGUMENT],
   ["--propose", GetoptLong::NO_ARGUMENT],
+  ["--lvm", GetoptLong::NO_ARGUMENT],
+  ["--encryption", GetoptLong::NO_ARGUMENT],
   ["--gfx", GetoptLong::NO_ARGUMENT],
   ["--yaml", GetoptLong::REQUIRED_ARGUMENT]
 )
@@ -46,6 +48,8 @@ Options:
   --yaml YAML_FILE      Read device tree from YAML_FILE
   --probe               Probe device tree.
   --propose             Propose new device tree.
+  --lvm                 Create LVM-based proposal.
+  --encryption          Encrypt file systems.
   --gfx                 Show device tree as graphics.
   --help                Write this text.
 XXX
@@ -53,6 +57,8 @@ XXX
 yaml_input = "fake-devicegraphs.yml"
 opt_propose = false
 opt_gfx = false
+opt_lvm = false
+opt_encryption = nil
 
 begin
   opts.each do |opt, arg|
@@ -64,6 +70,10 @@ begin
       yaml_input = nil
     when "--propose"
       opt_propose = true
+    when "--lvm"
+      opt_lvm = true
+    when "--encryption"
+      opt_encryption = "*****"
     when "--gfx"
       opt_gfx = true
     when "--yaml"
@@ -81,14 +91,16 @@ if yaml_input.nil?
     STDERR.puts("This requires root permissions, otherwise hardware probing might fail.")
     STDERR.puts("Start this with sudo.")
   end
-  devicegraph = Y2Storage::StorageManager.instance.probed
+  devicegraph = Y2Storage::StorageManager.instance.y2storage_probed
 else
-  devicegraph = Y2Storage::StorageManager.fake_from_yaml(yaml_input).probed
+  devicegraph = Y2Storage::StorageManager.fake_from_yaml(yaml_input).y2storage_probed
 end
 
 if opt_propose
   # propose new device graph
   settings = Y2Storage::ProposalSettings.new
+  settings.use_lvm = opt_lvm
+  settings.encryption_password = opt_encryption
   proposal = Y2Storage::Proposal.new(settings: settings)
   proposal.propose
   devicegraph = proposal.devices
