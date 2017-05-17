@@ -105,12 +105,17 @@ module Y2Storage
       # Human readable text for a filesystem
       #
       # @return [String]
-      def to_human
+      def to_human_string
         default = ""
         properties = PROPERTIES[to_sym]
         return default unless properties
         properties[:name] || default
       end
+
+      # for backward compatibility
+      # @method to_human
+      #   @deprecated use to_human_string instead
+      alias_method :to_human, :to_human_string
     end
   end
 end
