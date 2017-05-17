@@ -20,6 +20,7 @@
 # find current contact information at www.suse.com.
 
 require "y2storage/storage_enum_wrapper"
+require "storage"
 
 module Y2Storage
   module PartitionTables
@@ -30,6 +31,11 @@ module Y2Storage
       include StorageEnumWrapper
 
       wrap_enum "PtType"
+
+      # Human name usable by target users
+      def to_human_string
+        ::Storage.pt_type_name(to_i)
+      end
     end
   end
 end

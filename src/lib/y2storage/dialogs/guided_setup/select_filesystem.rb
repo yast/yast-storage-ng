@@ -59,7 +59,7 @@ module Y2Storage
             Left(
               ComboBox(
                 Id(:root_filesystem), Opt(:notify), _("File System for Root Partition"),
-                Filesystems::Type.root_filesystems.map { |f| Item(Id(f.to_sym), f.to_human) }
+                Filesystems::Type.root_filesystems.map { |f| Item(Id(f.to_sym), f.to_human_string) }
               )
             ),
             Left(
@@ -81,7 +81,9 @@ module Y2Storage
                 HSpacing(2),
                 ComboBox(
                   Id(:home_filesystem), _("File System for Home Partition"),
-                  Filesystems::Type.home_filesystems.map { |f| Item(Id(f.to_sym), f.to_human) }
+                  Filesystems::Type.home_filesystems.map do |filesystem|
+                    Item(Id(filesystem.to_sym), filesystem.to_human_string)
+                  end
                 )
               )
             )
