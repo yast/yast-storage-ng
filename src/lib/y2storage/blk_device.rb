@@ -68,14 +68,16 @@ module Y2Storage
     storage_forward :sysfs_path
 
     # @!method udev_paths
-    #   All the udev paths. An empty array for devices not handled by udev
-    #   E.g. ["pci-0000:00:1f.2-ata-1-part2"]
+    #   All the udev by-path links. An empty array for devices not handled by udev
+    #   Format is only link name so e.g. ["pci-0000:00:1f.2-ata-1-part2"] for
+    #   /dev/disk/by-path/pci-0000:00:1f.2-ata-1-part2
     #   @return [Array<String>]
     storage_forward :udev_paths
 
     # @!method udev_ids
-    #   All the possible names to be used as udev ids. An empty array for
-    #   devices not handled by udev.
+    #   All the udev by-id links. An empty array for devices not handled by udev
+    #   Format is only link name so e.g. ["scsi-350014ee658db9ee6"] for
+    #   /dev/disk/by-id/scsi-350014ee658db9ee6
     #   @return [Array<String]
     storage_forward :udev_ids
 
