@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Wed May 17 11:53:56 UTC 2017 - jreidinger@suse.com
+
+- Add to Y2Storage::PartitionTables::Type#to_human_string
+- 0.1.15
+
+-------------------------------------------------------------------
 Thu May  4 13:21:28 CEST 2017 - schubi@suse.de
 
 - Added SCR agent .etc.mtab again until we have a proper
