@@ -30,7 +30,7 @@ module Y2Storage
     # Specification for a Y2Storage::Partition object to be created during the
     # storage or AutoYaST proposals
     #
-    # @see Base
+    # @see Device
     class Partition < Device
       include Planned::HasSize
       include Planned::CanBeFormatted
