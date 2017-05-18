@@ -25,10 +25,10 @@ require "yast"
 require "y2storage/disk_size"
 
 module Y2Storage
-  module PlannedDevices
+  module Planned
     # Mixing enabling some classes of planned devices to specify the size of the
     # final device in a flexible way.
-    # @see PlannedDevices::Base
+    # @see Planned::Device
     module HasSize
       # @return [DiskSize] definitive size of the device
       attr_accessor :size
@@ -87,7 +87,7 @@ module Y2Storage
         #     is located. It only makes sense when distributing space among
         #     partitions.
         # @return [Array] list containing devices with an adjusted value
-        #     for PlannedDevices::HasSize#size
+        #     for Planned::HasSize#size
         def distribute_space(devices, space_size, rounding: nil, min_grain: nil)
           raise RuntimeError if space_size < DiskSize.sum(devices.map(&:min))
 

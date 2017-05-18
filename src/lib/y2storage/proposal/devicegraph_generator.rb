@@ -25,7 +25,7 @@ require "storage"
 require "y2storage/proposal/space_maker"
 require "y2storage/proposal/partition_creator"
 require "y2storage/proposal/lvm_helper"
-require "y2storage/planned_devices"
+require "y2storage/planned"
 
 module Y2Storage
   class Proposal
@@ -54,7 +54,7 @@ module Y2Storage
         # good citizen and do it in our own copy
         volumes = volumes.map(&:dup)
 
-        partitions, lvm_lvs = volumes.partition { |v| v.is_a?(PlannedDevices::Partition) }
+        partitions, lvm_lvs = volumes.partition { |v| v.is_a?(Planned::Partition) }
 
         lvm_helper = LvmHelper.new(lvm_lvs, encryption_password: settings.encryption_password)
         space_result = provide_space(partitions, initial_graph, lvm_helper, space_maker)
@@ -145,7 +145,7 @@ module Y2Storage
       #
       # It modifies the passed volumes.
       #
-      # @param planned_partitions [Array<PlannedDevices::Partition>] planned
+      # @param planned_partitions [Array<Planned::Partition>] planned
       #     partitions to modify
       # @param deleted_partitions [Array<Partition>] partitions
       #     deleted from the initial devicegraph
@@ -164,7 +164,7 @@ module Y2Storage
 
       # Creates partitions representing a set of volumes
       #
-      # @param distribution [PlannedDevices::PartitionsDistribution]
+      # @param distribution [Planned::PartitionsDistribution]
       # @param initial_graph [Devicegraph] initial devicegraph
       #
       # @return [Devicegraph]

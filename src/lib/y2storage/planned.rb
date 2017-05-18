@@ -19,7 +19,7 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "y2storage/planned_devices/partition"
-require "y2storage/planned_devices/lvm_lv"
-require "y2storage/planned_devices/assigned_space"
-require "y2storage/planned_devices/partitions_distribution"
+require "y2storage/planned/partition"
+require "y2storage/planned/lvm_lv"
+require "y2storage/planned/assigned_space"
+require "y2storage/planned/partitions_distribution"

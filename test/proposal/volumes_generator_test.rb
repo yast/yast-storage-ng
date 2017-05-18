@@ -132,7 +132,7 @@ describe Y2Storage::Proposal::VolumesGenerator do
           it "proposes a plain partition" do
             expect(swap_volumes).to contain_exactly(
               an_object_having_attributes(
-                class: Y2Storage::PlannedDevices::Partition, encryption_password: nil
+                class: Y2Storage::Planned::Partition, encryption_password: nil
               )
             )
           end
@@ -144,7 +144,7 @@ describe Y2Storage::Proposal::VolumesGenerator do
           it "proposes an encrypted partition" do
             expect(swap_volumes).to contain_exactly(
               an_object_having_attributes(
-                class: Y2Storage::PlannedDevices::Partition, encryption_password: "12345678"
+                class: Y2Storage::Planned::Partition, encryption_password: "12345678"
               )
             )
           end
@@ -158,7 +158,7 @@ describe Y2Storage::Proposal::VolumesGenerator do
           it "proposes a plain logical volume with the right name" do
             expect(swap_volumes).to contain_exactly(
               an_object_having_attributes(
-                class:               Y2Storage::PlannedDevices::LvmLv,
+                class:               Y2Storage::Planned::LvmLv,
                 encryption_password: nil,
                 logical_volume_name: "swap"
               )
@@ -173,7 +173,7 @@ describe Y2Storage::Proposal::VolumesGenerator do
           it "proposes a plain logical volume with the right name" do
             expect(swap_volumes).to contain_exactly(
               an_object_having_attributes(
-                class:               Y2Storage::PlannedDevices::LvmLv,
+                class:               Y2Storage::Planned::LvmLv,
                 encryption_password: nil,
                 logical_volume_name: "swap"
               )
@@ -223,7 +223,7 @@ describe Y2Storage::Proposal::VolumesGenerator do
       context "if proposing a partition-based setup" do
         context "without encryption" do
           it "proposes /home to be a plain partition" do
-            expect(home).to be_a Y2Storage::PlannedDevices::Partition
+            expect(home).to be_a Y2Storage::Planned::Partition
             expect(home.encrypt?).to eq false
           end
         end
@@ -232,7 +232,7 @@ describe Y2Storage::Proposal::VolumesGenerator do
           before { settings.encryption_password = "12345678" }
 
           it "proposes /home to be an encrypted partition" do
-            expect(home).to be_a Y2Storage::PlannedDevices::Partition
+            expect(home).to be_a Y2Storage::Planned::Partition
             expect(home.encrypt?).to eq true
             expect(home.encryption_password).to eq "12345678"
           end
@@ -244,7 +244,7 @@ describe Y2Storage::Proposal::VolumesGenerator do
 
         context "without encryption" do
           it "proposes /home to be a plain logical volume with the right name" do
-            expect(home).to be_a Y2Storage::PlannedDevices::LvmLv
+            expect(home).to be_a Y2Storage::Planned::LvmLv
             expect(home.encrypt?).to eq false
             expect(home.logical_volume_name).to eq "home"
           end
@@ -255,7 +255,7 @@ describe Y2Storage::Proposal::VolumesGenerator do
 
           # Encryption is performed at PV level, not at LV one
           it "proposes /home to be a plain logical volume with the right name" do
-            expect(home).to be_a Y2Storage::PlannedDevices::LvmLv
+            expect(home).to be_a Y2Storage::Planned::LvmLv
             expect(home.encrypt?).to eq false
             expect(home.logical_volume_name).to eq "home"
           end
@@ -287,7 +287,7 @@ describe Y2Storage::Proposal::VolumesGenerator do
       context "if proposing a partition-based setup" do
         context "without encryption" do
           it "proposes / to be a plain partition" do
-            expect(root).to be_a Y2Storage::PlannedDevices::Partition
+            expect(root).to be_a Y2Storage::Planned::Partition
             expect(root.encrypt?).to eq false
           end
         end
@@ -296,7 +296,7 @@ describe Y2Storage::Proposal::VolumesGenerator do
           before { settings.encryption_password = "12345678" }
 
           it "proposes / to be an encrypted partition" do
-            expect(root).to be_a Y2Storage::PlannedDevices::Partition
+            expect(root).to be_a Y2Storage::Planned::Partition
             expect(root.encrypt?).to eq true
             expect(root.encryption_password).to eq "12345678"
           end
@@ -308,7 +308,7 @@ describe Y2Storage::Proposal::VolumesGenerator do
 
         context "without encryption" do
           it "proposes / to be a plain logical volume with the right name" do
-            expect(root).to be_a Y2Storage::PlannedDevices::LvmLv
+            expect(root).to be_a Y2Storage::Planned::LvmLv
             expect(root.encrypt?).to eq false
             expect(root.logical_volume_name).to eq "root"
           end
@@ -319,7 +319,7 @@ describe Y2Storage::Proposal::VolumesGenerator do
 
           # Encryption is performed at PV level, not at LV one
           it "proposes / to be a plain logical volume with the right name" do
-            expect(root).to be_a Y2Storage::PlannedDevices::LvmLv
+            expect(root).to be_a Y2Storage::Planned::LvmLv
             expect(root.encrypt?).to eq false
             expect(root.logical_volume_name).to eq "root"
           end

@@ -23,13 +23,13 @@
 
 require "yast"
 require "y2storage/disk_size"
-require "y2storage/planned_devices/assigned_space"
+require "y2storage/planned/assigned_space"
 # FIXME: generating proposal exceptions out of the Proposal namespace
 #        looks wrong.
 require "y2storage/proposal/exceptions"
 
 module Y2Storage
-  module PlannedDevices
+  module Planned
     # Class representing the distribution of sets of planned partitions into
     # sets of free disk spaces
     class PartitionsDistribution
@@ -43,7 +43,7 @@ module Y2Storage
       # @raise Proposal::NoDiskSpaceError
       # @raise Proposal::NoMorePartitionSlotError
       #
-      # @param partitions_by_disk_space [Hash{FreeDiskSpace => Array<PlannedDevices::Partition>}]
+      # @param partitions_by_disk_space [Hash{FreeDiskSpace => Array<Planned::Partition>}]
       def initialize(partitions_by_disk_space)
         @spaces = partitions_by_disk_space.map do |disk_space, partitions|
           assigned_space(disk_space, partitions)
@@ -61,7 +61,7 @@ module Y2Storage
       # @raise Proposal::NoDiskSpaceError
       # @raise Proposal::NoMorePartitionSlotError
       #
-      # @param partitions_by_disk_space [Hash{FreeDiskSpace => PlannedDevices::Partition}]
+      # @param partitions_by_disk_space [Hash{FreeDiskSpace => Planned::Partition}]
       def add_partitions(partitions_by_disk_space)
         partitions = {}
         spaces.each do |space|

@@ -22,20 +22,20 @@
 # find current contact information at www.suse.com.
 
 require "yast"
-require "y2storage/planned_devices/base"
-require "y2storage/planned_devices/mixins"
+require "y2storage/planned/device"
+require "y2storage/planned/mixins"
 
 module Y2Storage
-  module PlannedDevices
+  module Planned
     # Specification for a Y2Storage::LvmLv object to be created during the
     # storage or AutoYaST proposals
     #
-    # @see Base
-    class LvmLv < Base
-      include PlannedDevices::HasSize
-      include PlannedDevices::CanBeFormatted
-      include PlannedDevices::CanBeMounted
-      include PlannedDevices::CanBeEncrypted
+    # @see Device
+    class LvmLv < Device
+      include Planned::HasSize
+      include Planned::CanBeFormatted
+      include Planned::CanBeMounted
+      include Planned::CanBeEncrypted
 
       # @return [String] name to use for Y2Storage::LvmLv#lv_name
       attr_accessor :logical_volume_name

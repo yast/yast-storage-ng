@@ -76,7 +76,7 @@ module Y2Storage
       end
 
       def grub_partition(target)
-        vol = PlannedDevices::Partition.new(nil)
+        vol = Planned::Partition.new(nil)
         # only required on GPT
         vol.partition_id = PartitionId::BIOS_BOOT
         vol.min_size = target == :min ? DiskSize.KiB(256) : DiskSize.MiB(1)

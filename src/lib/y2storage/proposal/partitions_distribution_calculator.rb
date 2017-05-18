@@ -24,7 +24,7 @@
 require "yast"
 require "storage"
 require "y2storage/disk_size"
-require "y2storage/planned_devices"
+require "y2storage/planned"
 require "y2storage/proposal/phys_vol_calculator"
 
 module Y2Storage
@@ -47,10 +47,10 @@ module Y2Storage
       # the LVM physical volumes that need to be created in order to reach
       # that size (within the max limites provided by lvm_helper).
       #
-      # @param partitions [Array<PlannedDevices::Partition>]
+      # @param partitions [Array<Planned::Partition>]
       # @param spaces [Array<FreeDiskSpace>]
       #
-      # @return [PlannedDevices::PartitionsDistribution]
+      # @return [Planned::PartitionsDistribution]
       def best_distribution(partitions, spaces)
         log.info "Calculating best space distribution for #{partitions.inspect}"
         # First, make sure the whole attempt makes sense
@@ -68,7 +68,7 @@ module Y2Storage
 
         candidates = dist_hashes.map do |distribution_hash|
           begin
-            PlannedDevices::PartitionsDistribution.new(distribution_hash)
+            Planned::PartitionsDistribution.new(distribution_hash)
           rescue Error
             next
           end
@@ -97,7 +97,7 @@ module Y2Storage
       # able to generate a valid distribution is not just a matter of size.
       #
       # @param partition [Partition] partition to resize
-      # @param planned_partitions [Array<PlannedDevices::Partition>] planned
+      # @param planned_partitions [Array<Planned::Partition>] planned
       #     partitions to make space for
       # @param free_spaces [Array<FreeDiskSpace>] all free spaces in the system
       # @return [DiskSize]
@@ -112,7 +112,7 @@ module Y2Storage
         needed = DiskSize.sum(planned_partitions.map(&:min), rounding: disk.min_grain)
 
         max_logical = max_logical(disk, planned_partitions)
-        needed += PlannedDevices::AssignedSpace.overhead_of_logical(disk) * max_logical
+        needed += Planned::AssignedSpace.overhead_of_logical(disk) * max_logical
 
         pvs_to_create = free_spaces.size + 1
         needed += lvm_space_to_make(pvs_to_create)
@@ -153,7 +153,7 @@ module Y2Storage
       # PartitionsDistribution for a given disk and set of partitions
       #
       # @param disk [Partitionable]
-      # @param planned_partitions [Array<PlannedDevices::Partition>]
+      # @param planned_partitions [Array<Planned::Partition>]
       # @return [Integer]
       def max_logical(disk, planned_partitions)
         ptable = disk.as_not_empty { disk.partition_table }
@@ -167,7 +167,7 @@ module Y2Storage
         if ptable.has_extended?
           partitions_count
         else
-          PlannedDevices::PartitionsDistribution.partitions_in_new_extended(partitions_count, ptable)
+          Planned::PartitionsDistribution.partitions_in_new_extended(partitions_count, ptable)
         end
       end
 
@@ -181,9 +181,9 @@ module Y2Storage
       #
       # Of course, each disk space can appear on several lists.
       #
-      # @param planned_partitions [PlannedDevices::Partition]
+      # @param planned_partitions [Planned::Partition]
       # @param free_spaces [Array<FreeDiskSpace>]
-      # @return [Hash{PlannedDevices::Partition => Array<FreeDiskSpace>}]
+      # @return [Hash{Planned::Partition => Array<FreeDiskSpace>}]
       def candidate_disk_spaces(planned_partitions, free_spaces)
         planned_partitions.each_with_object({}) do |partition, hash|
           spaces = free_spaces.select { |space| suitable_disk_space?(space, partition) }
@@ -201,9 +201,9 @@ module Y2Storage
       # distribution of partitions into spaces taking into account the
       # restrictions set by disk_spaces_by_partition.
       #
-      # @param disk_spaces_by_partition [Hash{PlannedDevices::Partition => Array<FreeDiskSpace>}]
+      # @param disk_spaces_by_partition [Hash{Planned::Partition => Array<FreeDiskSpace>}]
       #     which spaces are acceptable for each planned partition
-      # @return [Array<Hash{FreeDiskSpace => <PlannedDevices::Partition>}>]
+      # @return [Array<Hash{FreeDiskSpace => <Planned::Partition>}>]
       def distribution_hashes(disk_spaces_by_partition)
         return [{}] if disk_spaces_by_partition.empty?
 

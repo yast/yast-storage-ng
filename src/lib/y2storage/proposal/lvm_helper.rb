@@ -55,7 +55,7 @@ module Y2Storage
 
       # Constructor
       #
-      # @param planned_lvs [Array<PlannedDevices::LvmLv>] volumes to allocate in LVM
+      # @param planned_lvs [Array<Planned::LvmLv>] volumes to allocate in LVM
       # @param encryption_password [String, nil] see {#encryption_password}
       def initialize(planned_lvs, encryption_password: nil)
         @planned_lvs = planned_lvs
@@ -268,7 +268,7 @@ module Y2Storage
       # @param volume_group [LvmVg] volume group to modify
       def create_logical_volumes!(volume_group)
         vg_size = available_space(volume_group)
-        lvs = PlannedDevices::LvmLv.distribute_space(planned_lvs, vg_size, rounding: extent_size)
+        lvs = Planned::LvmLv.distribute_space(planned_lvs, vg_size, rounding: extent_size)
         lvs.each do |lv|
           create_logical_volume(volume_group, lv)
         end

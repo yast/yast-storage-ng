@@ -51,7 +51,7 @@ module Y2Storage
       end
 
       def prep_partition(target)
-        vol = PlannedDevices::Partition.new(nil)
+        vol = Planned::Partition.new(nil)
         # So far we are always using msdos partition ids
         vol.partition_id = PartitionId::PREP
         vol.min_size = target == :min ? DiskSize.KiB(256) : DiskSize.MiB(1)

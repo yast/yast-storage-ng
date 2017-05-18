@@ -19,7 +19,7 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "y2storage/planned_devices/can_be_encrypted"
-require "y2storage/planned_devices/can_be_formatted"
-require "y2storage/planned_devices/can_be_mounted"
-require "y2storage/planned_devices/has_size"
+require "y2storage/planned/can_be_encrypted"
+require "y2storage/planned/can_be_formatted"
+require "y2storage/planned/can_be_mounted"
+require "y2storage/planned/has_size"

@@ -23,11 +23,11 @@
 require_relative "../spec_helper"
 require "y2storage"
 
-describe Y2Storage::PlannedDevices::AssignedSpace do
+describe Y2Storage::Planned::AssignedSpace do
   using Y2Storage::Refinements::SizeCasts
 
   def partition(mount_point, size, min_size, max_size)
-    res = Y2Storage::PlannedDevices::Partition.new(mount_point)
+    res = Y2Storage::Planned::Partition.new(mount_point)
     res.size = size
     res.min = min_size
     res.max = max_size

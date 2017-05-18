@@ -24,9 +24,9 @@
 require "yast"
 
 module Y2Storage
-  module PlannedDevices
+  module Planned
     # Mixing for planned devices that can have an associated block filesystem.
-    # @see PlannedDevices::Base
+    # @see Planned::Device
     module CanBeFormatted
       # @return [Filesystems::Type] the type of filesystem this device should
       #   get, like Filesystems::Type::BTRFS or Filesystems::Type::SWAP. A value of

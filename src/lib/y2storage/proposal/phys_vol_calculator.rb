@@ -22,7 +22,7 @@
 # find current contact information at www.suse.com.
 
 require "y2storage/disk_size"
-require "y2storage/planned_devices"
+require "y2storage/planned"
 
 module Y2Storage
   class Proposal
@@ -54,10 +54,10 @@ module Y2Storage
       # to evaluate all the options. Another possible idea is to identify spaces
       # that are equivalent for our purposes and use only one of them.
       #
-      # @param distribution [PlannedDevices::PartitionsDistribution] initial
+      # @param distribution [Planned::PartitionsDistribution] initial
       #     distribution
       #
-      # @return [PlannedDevices::PartitionsDistribution, nil] nil if it's
+      # @return [Planned::PartitionsDistribution, nil] nil if it's
       #     impossible to allocate all the needed physical volumes
       def add_physical_volumes(distribution)
         best = nil
@@ -80,11 +80,11 @@ module Y2Storage
       # Returns nil if it's not possible to create a distribution of physical
       # volumes that guarantees the requirements set by lvm_helper.
       #
-      # @param distribution [PlannedDevices::PartitionsDistribution] initial
+      # @param distribution [Planned::PartitionsDistribution] initial
       #     distribution
       # @param sorted_spaces [Array<FreeDiskSpace>]
       #
-      # @return [PlannedDevices::PartitionsDistribution, nil]
+      # @return [Planned::PartitionsDistribution, nil]
       def processed(distribution, sorted_spaces)
         pv_partitions = {}
         missing_size = lvm_helper.missing_space
@@ -139,7 +139,7 @@ module Y2Storage
       # returns an optimistic estimation.
       #
       # @param space [FreeDiskSpace]
-      # @param distribution [PlannedDevices::PartitionsDistribution]
+      # @param distribution [Planned::PartitionsDistribution]
       def estimated_available_size(space, distribution)
         assigned_space = distribution.space_at(space)
         return space.disk_size unless assigned_space
@@ -166,9 +166,9 @@ module Y2Storage
       # Planned partition representing a LVM physical volume with the minimum
       # possible size
       #
-      # @return [PlannedDevices::Partition]
+      # @return [Planned::Partition]
       def new_planned_partition
-        res = PlannedDevices::Partition.new(nil)
+        res = Planned::Partition.new(nil)
         res.partition_id = PartitionId::LVM
         res.encryption_password = lvm_helper.encryption_password
         res.min_size = lvm_helper.min_pv_size
@@ -178,7 +178,7 @@ module Y2Storage
       # Adjust the sizes off all the partitions in the distribution that
       # were created to represent a LVM physical volume.
       #
-      # @param distribution [PlannedDevices::PartitionsDistribution]
+      # @param distribution [Planned::PartitionsDistribution]
       # @param last_disk_space [FreeDiskSpace] the last space that was added by
       #     #processed is not adjusted to fill as much space as possible, but to
       #     match the total LVM requirements (size and max)

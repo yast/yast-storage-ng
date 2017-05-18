@@ -49,7 +49,7 @@ module Yast
       end
 
       def planned_partition(attrs = {})
-        part = Y2Storage::PlannedDevices::Partition.new(nil)
+        part = Y2Storage::Planned::Partition.new(nil)
         add_planned_attributes!(part, attrs)
       end
 
@@ -57,7 +57,7 @@ module Yast
       alias_method :planned_vol, :planned_partition
 
       def planned_lv(attrs = {})
-        lv = Y2Storage::PlannedDevices::LvmLv.new(nil)
+        lv = Y2Storage::Planned::LvmLv.new(nil)
         add_planned_attributes!(lv, attrs)
       end
 
@@ -79,7 +79,7 @@ module Yast
       end
 
       def space_dist(vols_by_space)
-        Y2Storage::PlannedDevices::PartitionsDistribution.new(vols_by_space)
+        Y2Storage::Planned::PartitionsDistribution.new(vols_by_space)
       end
 
       def vols_list(*vols)

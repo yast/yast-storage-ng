@@ -22,7 +22,7 @@
 # find current contact information at www.suse.com.
 
 require "fileutils"
-require "y2storage/planned_devices"
+require "y2storage/planned"
 require "y2storage/planned_volumes_list"
 require "y2storage/disk_size"
 require "y2storage/boot_requirements_checker"
@@ -69,7 +69,7 @@ module Y2Storage
 
       # Volumes needed by the bootloader
       #
-      # @return [Array<PlannedDevices::Partition>]
+      # @return [Array<Planned::Partition>]
       def boot_volumes
         checker = BootRequirementsChecker.new(settings, devicegraph)
         checker.needed_partitions(@target)
@@ -79,7 +79,7 @@ module Y2Storage
 
       # Additional volumes not needed for booting, like swap and /home
       #
-      # @return [Array<PlannedDevices::Base>]
+      # @return [Array<Planned::Base>]
       def additional_volumes
         volumes = [swap_volume]
         volumes << home_volume if @settings.use_separate_home
@@ -101,7 +101,7 @@ module Y2Storage
       end
 
       def swap_lv(size)
-        lv = PlannedDevices::LvmLv.new("swap", Filesystems::Type::SWAP)
+        lv = Planned::LvmLv.new("swap", Filesystems::Type::SWAP)
         lv.logical_volume_name = "swap"
         lv.min_size = size
         lv.max_size = size
@@ -109,7 +109,7 @@ module Y2Storage
       end
 
       def swap_partition(size)
-        part = PlannedDevices::Partition.new("swap", Filesystems::Type::SWAP)
+        part = Planned::Partition.new("swap", Filesystems::Type::SWAP)
         part.encryption_password = settings.encryption_password
         # NOTE: Enforcing the re-use of an existing partition limits the options
         # to propose a valid distribution of the volumes. For swap we already
@@ -146,9 +146,9 @@ module Y2Storage
       #
       def root_volume
         if settings.use_lvm
-          root_vol = PlannedDevices::LvmLv.new("/", @settings.root_filesystem_type)
+          root_vol = Planned::LvmLv.new("/", @settings.root_filesystem_type)
         else
-          root_vol = PlannedDevices::Partition.new("/", @settings.root_filesystem_type)
+          root_vol = Planned::Partition.new("/", @settings.root_filesystem_type)
           root_vol.disk = @settings.root_device
           root_vol.encryption_password = @settings.encryption_password
         end
@@ -184,9 +184,9 @@ module Y2Storage
       #
       def home_volume
         if settings.use_lvm
-          home_vol = PlannedDevices::LvmLv.new("/home", settings.home_filesystem_type)
+          home_vol = Planned::LvmLv.new("/home", settings.home_filesystem_type)
         else
-          home_vol = PlannedDevices::Partition.new("/home", settings.home_filesystem_type)
+          home_vol = Planned::Partition.new("/home", settings.home_filesystem_type)
           home_vol.encryption_password = settings.encryption_password
         end
         home_vol.max_size = settings.home_max_size

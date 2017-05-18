@@ -23,12 +23,12 @@
 require_relative "../spec_helper"
 require "y2storage"
 
-describe Y2Storage::PlannedDevices::HasSize do
+describe Y2Storage::Planned::HasSize do
   using Y2Storage::Refinements::SizeCasts
 
   # Dummy class to test the mixin
   class DeviceWithSize
-    include Y2Storage::PlannedDevices::HasSize
+    include Y2Storage::Planned::HasSize
 
     def initialize(min, weight)
       initialize_has_size

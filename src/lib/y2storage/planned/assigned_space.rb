@@ -25,14 +25,14 @@ require "yast"
 require "y2storage/disk_size"
 
 module Y2Storage
-  module PlannedDevices
+  module Planned
     # Each one of the spaces contained in a PartitionsDistribution
     class AssignedSpace
       extend Forwardable
 
       # @return [FreeDiskSpace]
       attr_reader :disk_space
-      # @return [Array<PlannedDevices::Partition>]
+      # @return [Array<Planned::Partition>]
       attr_reader :partitions
       # Number of logical partitions that must be created in the space
       attr_accessor :num_logical
@@ -188,7 +188,7 @@ module Y2Storage
       #
       # @param size_to_fill [DiskSize]
       # @param min_grain [DiskSize]
-      # @return [PlannedDevices::Partition, nil]
+      # @return [Planned::Partition, nil]
       def enforced_last
         rounded_up = DiskSize.sum(partitions.map(&:min), rounding: min_grain)
         # There is enough space to fit with any order
@@ -228,8 +228,8 @@ module Y2Storage
         end
       end
 
-      # @param one [PlannedDevices::Partition]
-      # @param other [PlannedDevices::Partition]
+      # @param one [Planned::Partition]
+      # @param other [Planned::Partition]
       def compare_attr(one, other, attr, nils_first, descending)
         one_value = one.send(attr)
         other_value = other.send(attr)
@@ -240,8 +240,8 @@ module Y2Storage
         end
       end
 
-      # @param one [PlannedDevices::Partition]
-      # @param other [PlannedDevices::Partition]
+      # @param one [Planned::Partition]
+      # @param other [Planned::Partition]
       def compare_values(one, other, descending)
         if descending
           other <=> one
@@ -250,8 +250,8 @@ module Y2Storage
         end
       end
 
-      # @param one [PlannedDevices::Partition]
-      # @param other [PlannedDevices::Partition]
+      # @param one [Planned::Partition]
+      # @param other [Planned::Partition]
       def compare_with_nil(one, other, nils_first)
         if one.nil? && other.nil?
           0

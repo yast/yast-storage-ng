@@ -23,7 +23,7 @@
 
 require "fileutils"
 require "storage"
-require "y2storage/planned_devices"
+require "y2storage/planned"
 require "y2storage/partition"
 require "y2storage/disk_size"
 require "y2storage/free_disk_space"
@@ -59,7 +59,7 @@ module Y2Storage
       #   partitions and/or the physical volumes
       #
       # @param original_graph [Devicegraph] initial devicegraph
-      # @param planned_partitions [Array<PlannedDevices::Partition>] set of partitions
+      # @param planned_partitions [Array<Planned::Partition>] set of partitions
       #     to make space for.
       # @param lvm_helper [Proposal::LvmHelper] contains information about the
       #     planned LVM logical volumes and how to make space for them
@@ -67,7 +67,7 @@ module Y2Storage
       #   devicegraph: [Devicegraph] resulting devicegraph
       #   deleted_partitions: [Array<Partition>] partitions that
       #     were in the original devicegraph but are not in the resulting one
-      #   partitions_distribution: [PlannedDevices::PartitionsDistribution] proposed
+      #   partitions_distribution: [Planned::PartitionsDistribution] proposed
       #     distribution of partitions, including new PVs if necessary
       #
       def provide_space(original_graph, planned_partitions, lvm_helper)
@@ -139,7 +139,7 @@ module Y2Storage
         original_graph.partitions.select { |p| @deleted_names.include?(p.name) }
       end
 
-      # @return [Hash{String => Array<PlannedDevices::Partition>}]
+      # @return [Hash{String => Array<Planned::Partition>}]
       def planned_partitions_by_disk(planned_partitions)
         planned_partitions.each_with_object({}) do |partition, hash|
           if partition.disk
@@ -167,7 +167,7 @@ module Y2Storage
 
       # Perform all the needed operations to make space for the partitions
       #
-      # @param planned_partitions [Array<PlannedDevices::Partition>] partitions
+      # @param planned_partitions [Array<Planned::Partition>] partitions
       #     to make space for
       # @param keep [Array<String>] device names of partitions that should not
       #     be deleted
@@ -225,7 +225,7 @@ module Y2Storage
 
       # Try to resize the existing windows partitions
       #
-      # @param planned_partitions [Array<PlannedDevices::Partition>] list of
+      # @param planned_partitions [Array<Planned::Partition>] list of
       #   partitions to allocate, used to know how much space is still missing
       # @param disk [String] optional disk name to restrict operations to
       # @param force [Boolean] whether to resize Windows even if there are
@@ -318,7 +318,7 @@ module Y2Storage
       #
       # @see #deletion_candidate_partitions for supported types
       #
-      # @param planned_partitions [Array<PlannedDevices::Partition>]
+      # @param planned_partitions [Array<Planned::Partition>]
       # @param type [Symbol] type of partition to delete
       # @param keep [Array<String>] device names of partitions that should not
       #       be deleted

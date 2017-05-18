@@ -22,14 +22,14 @@
 # find current contact information at www.suse.com.
 
 require "fileutils"
-require "y2storage/planned_devices"
+require "y2storage/planned"
 require "y2storage/disk_size"
 require "y2storage/proposal/encrypter"
 
 module Y2Storage
   class Proposal
     # Class to create partitions following a given distribution represented by
-    # a PlannedDevices::PartitionsDistribution object
+    # a Planned::PartitionsDistribution object
     class PartitionCreator
       include Yast::Logger
 
@@ -45,7 +45,7 @@ module Y2Storage
       # Returns a copy of the original devicegraph in which all the needed
       # partitions have been created.
       #
-      # @param distribution [PlannedDevices::PartitionsDistribution]
+      # @param distribution [Planned::PartitionsDistribution]
       # @return [Devicegraph]
       def create_partitions(distribution)
         self.devicegraph = original_graph.duplicate
@@ -66,7 +66,7 @@ module Y2Storage
       # Create partitions in a single slot of free disk space.
       #
       # @param free_space [FreeDiskSpace] the slot
-      # @param partitions [PlannedDevices::Partition] partitions to create
+      # @param partitions [Planned::Partition] partitions to create
       # @param usable_size [DiskSize] real space to distribute among the planned
       #       partitions (part of free_space could be used for data structures)
       # @param num_logical [Integer] how many partitions should be logical
@@ -76,7 +76,7 @@ module Y2Storage
         end
 
         min_grain = free_space.disk.min_grain
-        partitions = PlannedDevices::Partition.distribute_space(partitions, usable_size, min_grain: min_grain)
+        partitions = Planned::Partition.distribute_space(partitions, usable_size, min_grain: min_grain)
         create_planned_partitions(partitions, free_space, num_logical)
       end
 
@@ -90,7 +90,7 @@ module Y2Storage
       # impossible to fulfill, since it's usually more a recommendation than a
       # hard limit.
       #
-      # @param planned_partitions [Array<PlannedDevices::Partition>]
+      # @param planned_partitions [Array<Planned::Partition>]
       # @param initial_free_space [FreeDiskSpace]
       # @param num_logical [Symbol] logical partitions. See {#process_space}
       def create_planned_partitions(planned_partitions, initial_free_space, num_logical)
@@ -133,7 +133,7 @@ module Y2Storage
       # Create a real partition for the specified planned partition within the
       # specified slot of free space.
       #
-      # @param planned_partition [PlannedDevices::Partition]
+      # @param planned_partition [Planned::Partition]
       # @param partition_id [PartitionId]
       # @param free_space   [FreeDiskSpace]
       # @param primary      [Boolean] whether the partition should be primary

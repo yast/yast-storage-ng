@@ -24,19 +24,19 @@
 require "yast"
 
 module Y2Storage
-  module PlannedDevices
+  module Planned
     # Abstract base class for the different devices templates in the
-    # PlannedDevices namespace.
+    # Planned namespace.
     #
-    # Most classes in the {PlannedDevices} namespace represent an specification
+    # Most classes in the {Planned} namespace represent an specification
     # of a given device that must be created in a devicegraph (thus, finally in
     # the system) by the storage proposal or by AutoYaST. That specification is,
     # of course, less concrete than the real device object.
     #
     # Those templates clases inherit from this and implement most of the
     # functionality and properties by composition, including several of the
-    # mixins defined in the {PlannedDevices} namespace.
-    class Base
+    # mixins defined in the {Planned} namespace.
+    class Device
       # @return [String] device name of an existing device to reuse for this
       #   purpose. That means that no new device will be created and, thus, most
       #   of the other attributes (with the obvious exception of #mount_point)

@@ -25,7 +25,7 @@ require "yast"
 require "storage/patches"
 require "y2storage/disk_size"
 require "y2storage/filesystems/type"
-require "y2storage/planned_devices"
+require "y2storage/planned"
 require "y2storage/planned_volumes_list"
 
 module Y2Storage
@@ -61,7 +61,7 @@ module Y2Storage
       end
 
       def boot_partition(target)
-        vol = PlannedDevices::Partition.new("/boot", Filesystems::Type::EXT4)
+        vol = Planned::Partition.new("/boot", Filesystems::Type::EXT4)
         vol.disk = settings.root_device
         vol.min_size = target == :min ? DiskSize.MiB(100) : DiskSize.MiB(200)
         vol.max_size = DiskSize.MiB(500)

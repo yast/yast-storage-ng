@@ -38,7 +38,7 @@ module Y2Storage
     protected
 
       def efi_partition(target)
-        vol = PlannedDevices::Partition.new("/boot/efi", Filesystems::Type::VFAT)
+        vol = Planned::Partition.new("/boot/efi", Filesystems::Type::VFAT)
         if reusable_efi
           vol.reuse = reusable_efi.name
         else
