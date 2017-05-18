@@ -42,7 +42,7 @@ module Y2Storage
       # encrypt the plain device and will return the corresponding encrypted
       # one. Otherwise, it will simply return the plain device.
       #
-      # @param planned [Planned::Base]
+      # @param planned [Planned::Device]
       # @param plain_device [BlkDevice]
       # @return [BlkDevice]
       def device_for(planned, plain_device)

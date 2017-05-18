@@ -25,7 +25,7 @@ require "storage"
 require "y2storage"
 
 describe Y2Storage::Proposal::VolumesGenerator do
-  describe "#volumes" do
+  describe "#planned_devices" do
     using Y2Storage::Refinements::SizeCasts
 
     # Just to shorten
@@ -48,12 +48,10 @@ describe Y2Storage::Proposal::VolumesGenerator do
     before do
       allow(Y2Storage::BootRequirementsChecker).to receive(:new).and_return boot_checker
       allow(boot_checker).to receive(:needed_partitions).and_return(
-        Y2Storage::PlannedVolumesList.new(
-          [
-            Y2Storage::PlannedVolume.new("/one_boot", xfs),
-            Y2Storage::PlannedVolume.new("/other_boot", vfat)
-          ]
-        )
+        [
+            Y2Storage::Planned::Partition.new("/one_boot", xfs),
+            Y2Storage::Planned::Partition.new("/other_boot", vfat)
+        ]
       )
       allow(devicegraph).to receive(:disks).and_return [disk]
       allow(disk).to receive(:swap_partitions).and_return(swap_partitions)
@@ -62,12 +60,13 @@ describe Y2Storage::Proposal::VolumesGenerator do
       allow(Yast::Arch).to receive(:s390).and_return(arch == :s390)
     end
 
-    it "returns a list of volumes" do
-      expect(subject.volumes(:desired)).to be_a Y2Storage::PlannedVolumesList
+    it "returns an array of planned devices" do
+      expect(subject.planned_devices(:desired)).to be_a Array
+      expect(subject.planned_devices(:desired)).to all(be_a(Y2Storage::Planned::Device))
     end
 
-    it "includes the volumes needed by BootRequirementChecker" do
-      expect(subject.volumes(:desired)).to include(
+    it "includes the partitions needed by BootRequirementChecker" do
+      expect(subject.planned_devices(:desired)).to include(
         an_object_having_attributes(mount_point: "/one_boot", filesystem_type: xfs),
         an_object_having_attributes(mount_point: "/other_boot", filesystem_type: vfat)
       )
@@ -77,7 +76,7 @@ describe Y2Storage::Proposal::VolumesGenerator do
     context "swap volumes" do
       before { settings.enlarge_swap_for_suspend = false }
 
-      let(:swap_volumes) { subject.volumes(:desired).select { |v| v.mount_point == "swap" } }
+      let(:swap_volumes) { subject.planned_devices(:desired).select { |v| v.mount_point == "swap" } }
 
       context "if there is no previous swap partition" do
         let(:swap_partitions) { [] }
@@ -209,7 +208,7 @@ describe Y2Storage::Proposal::VolumesGenerator do
         settings.home_filesystem_type = xfs
       end
 
-      let(:home) { subject.volumes(:desired).detect { |v| v.mount_point == "/home" } }
+      let(:home) { subject.planned_devices(:desired).detect { |v| v.mount_point == "/home" } }
 
       it "includes a /home planned device with the configured settings" do
         expect(home).to have_attributes(
@@ -269,7 +268,7 @@ describe Y2Storage::Proposal::VolumesGenerator do
       end
 
       it "does not include a /home volume" do
-        expect(subject.volumes(:desired)).to_not include(
+        expect(subject.planned_devices(:desired)).to_not include(
           an_object_having_attributes(mount_point: "/home")
         )
       end
@@ -282,7 +281,7 @@ describe Y2Storage::Proposal::VolumesGenerator do
         settings.btrfs_increase_percentage = 75
       end
 
-      let(:root) { subject.volumes(:desired).detect { |v| v.mount_point == "/" } }
+      let(:root) { subject.planned_devices(:desired).detect { |v| v.mount_point == "/" } }
 
       context "if proposing a partition-based setup" do
         context "without encryption" do
@@ -332,7 +331,7 @@ describe Y2Storage::Proposal::VolumesGenerator do
         end
 
         it "uses the normal sizes" do
-          expect(subject.volumes(:min)).to include(
+          expect(subject.planned_devices(:min)).to include(
             an_object_having_attributes(
               mount_point:     "/",
               min:             10.GiB,
@@ -341,7 +340,7 @@ describe Y2Storage::Proposal::VolumesGenerator do
             )
           )
 
-          expect(subject.volumes(:desired)).to include(
+          expect(subject.planned_devices(:desired)).to include(
             an_object_having_attributes(
               mount_point:     "/",
               min:             20.GiB,
@@ -353,7 +352,7 @@ describe Y2Storage::Proposal::VolumesGenerator do
       end
 
       context "if Btrfs is used" do
-        let(:root) { subject.volumes(:desired).detect { |v| v.mount_point == "/" } }
+        let(:root) { subject.planned_devices(:desired).detect { |v| v.mount_point == "/" } }
         # For subvolumes tests
         let(:arch) { :s390 }
 
@@ -362,7 +361,7 @@ describe Y2Storage::Proposal::VolumesGenerator do
         end
 
         it "increases all the sizes by btrfs_increase_percentage" do
-          expect(subject.volumes(:min)).to include(
+          expect(subject.planned_devices(:min)).to include(
             an_object_having_attributes(
               mount_point:     "/",
               min:             17.5.GiB,
@@ -371,7 +370,7 @@ describe Y2Storage::Proposal::VolumesGenerator do
             )
           )
 
-          expect(subject.volumes(:desired)).to include(
+          expect(subject.planned_devices(:desired)).to include(
             an_object_having_attributes(
               mount_point:     "/",
               min:             35.GiB,

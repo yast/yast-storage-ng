@@ -23,7 +23,6 @@
 
 require "fileutils"
 require "y2storage/planned"
-require "y2storage/planned_volumes_list"
 require "y2storage/disk_size"
 require "y2storage/boot_requirements_checker"
 require "y2storage/proposal/exceptions"
@@ -31,7 +30,7 @@ require "y2storage/proposal/exceptions"
 module Y2Storage
   class Proposal
     #
-    # Class to generate the list of planned volumes of a proposal
+    # Class to generate the list of planned devices of a proposal
     #
     class VolumesGenerator
       include Yast::Logger
@@ -45,12 +44,12 @@ module Y2Storage
         @devicegraph = devicegraph
       end
 
-      # Volumes that needs to be created to satisfy the settings
+      # Devices that needs to be created to satisfy the settings
       #
-      # @return [PlannedVolumesList]
-      def volumes(target)
+      # @return [Array<Planned::Device>]
+      def planned_devices(target)
         @target = target
-        PlannedVolumesList.new(base_volumes.to_a + additional_volumes)
+        base_volumes + additional_volumes
       end
 
     protected
@@ -62,14 +61,14 @@ module Y2Storage
       #
       # This includes "/" and the volumes needed for booting
       #
-      # @return [PlannedVolumesList]
+      # @return [Array<Planned::Device>]
       def base_volumes
-        PlannedVolumesList.new(boot_volumes.to_a + [root_volume])
+        boot_volumes + [root_volume]
       end
 
       # Volumes needed by the bootloader
       #
-      # @return [Array<Planned::Partition>]
+      # @return [Array<Planned::Device>]
       def boot_volumes
         checker = BootRequirementsChecker.new(settings, devicegraph)
         checker.needed_partitions(@target)
@@ -79,7 +78,7 @@ module Y2Storage
 
       # Additional volumes not needed for booting, like swap and /home
       #
-      # @return [Array<Planned::Base>]
+      # @return [Array<Planned::Device>]
       def additional_volumes
         volumes = [swap_volume]
         volumes << home_volume if @settings.use_separate_home

@@ -127,7 +127,7 @@ describe Y2Storage::Proposal::PartitionsDistributionCalculator do
           end
 
           context "and there are not too many primary partitions already" do
-            let(:volumes) { Y2Storage::PlannedVolumesList.new([vol1, vol2]) }
+            let(:volumes) { [vol1, vol2] }
 
             it "sets partition_type to primary" do
               spaces = distribution.spaces
@@ -242,7 +242,7 @@ describe Y2Storage::Proposal::PartitionsDistributionCalculator do
             context "and the number of partitions exceeds the primary limit" do
               let(:vol3) { planned_vol(mount_point: "/3", type: :ext4, min: 2.GiB) }
               let(:vol4) { planned_vol(mount_point: "/4", type: :ext4, min: 2.GiB - 2.MiB) }
-              let(:volumes) { Y2Storage::PlannedVolumesList.new([vol1, vol2, vol3, vol4]) }
+              let(:volumes) { [vol1, vol2, vol3, vol4] }
 
               it "does not set any enforced partition_type" do
                 expect(space5.partition_type).to be_nil
@@ -270,7 +270,7 @@ describe Y2Storage::Proposal::PartitionsDistributionCalculator do
               let(:vol2) do
                 planned_vol(mount_point: "/2", type: :ext4, min: 3.GiB - 1.MiB, max: 5.GiB)
               end
-              let(:volumes) { Y2Storage::PlannedVolumesList.new([vol2, vol3]) }
+              let(:volumes) { [vol2, vol3] }
 
               it "does not set any enforced partition_type" do
                 expect(space5.partition_type).to be_nil

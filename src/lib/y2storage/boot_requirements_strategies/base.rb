@@ -26,7 +26,6 @@ require "storage/patches"
 require "y2storage/disk_size"
 require "y2storage/filesystems/type"
 require "y2storage/planned"
-require "y2storage/planned_volumes_list"
 
 module Y2Storage
   module BootRequirementsStrategies
@@ -45,9 +44,7 @@ module Y2Storage
       end
 
       def needed_partitions(target)
-        volumes = PlannedVolumesList.new
-        volumes << boot_partition(target) if boot_partition_needed?
-        volumes
+        boot_partition_needed? ? [boot_partition(target)] : []
       end
 
     protected

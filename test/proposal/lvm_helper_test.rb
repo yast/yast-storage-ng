@@ -32,7 +32,7 @@ describe Y2Storage::Proposal::LvmHelper do
   end
 
   subject(:helper) { described_class.new(volumes_list, encryption_password: enc_password) }
-  let(:volumes_list) { Y2Storage::PlannedVolumesList.new(volumes) }
+  let(:volumes_list) { volumes }
   let(:volumes) { [] }
   let(:enc_password) { nil }
 

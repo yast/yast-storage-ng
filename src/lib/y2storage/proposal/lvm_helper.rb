@@ -98,8 +98,8 @@ module Y2Storage
         substract_reused_vg_size(target_size)
       end
 
-      # Space that must be added to the volume group to fulfill
-      # PlannedVolumesList#max_disk_size for all the LVM planned volumes.
+      # Space that must be added to the volume group to fulfill the max size
+      # requirements for all the LVM planned volumes.
       #
       # This method takes into account the size of the extents and all the
       # related roundings.

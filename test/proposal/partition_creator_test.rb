@@ -50,8 +50,8 @@ describe Y2Storage::Proposal::PartitionCreator do
       space3 = disk_spaces.detect { |s| s.disk_size == (3.GiB - 1.MiB) }
       space8 = disk_spaces.detect { |s| s.disk_size == (8.GiB - 1.MiB) }
       distribution = space_dist(
-        space3 => vols_list(root_vol, home_vol),
-        space8 => vols_list(swap_vol)
+        space3 => [root_vol, home_vol],
+        space8 => [swap_vol]
       )
 
       result = creator.create_partitions(distribution)
@@ -72,7 +72,7 @@ describe Y2Storage::Proposal::PartitionCreator do
     context "when filling a space with several partitions" do
       let(:scenario) { "empty_hard_disk_mbr_50GiB" }
       let(:distribution) do
-        space_dist(disk_spaces.first => vols_list(root_vol, home_vol, swap_vol))
+        space_dist(disk_spaces.first => [root_vol, home_vol, swap_vol])
       end
 
       context "if the exact space is available" do
@@ -144,7 +144,7 @@ describe Y2Storage::Proposal::PartitionCreator do
         let(:vol1) { planned_vol(mount_point: "/1", type: :vfat, min: vol1_size, weight: 1) }
         let(:vol2) { planned_vol(mount_point: "/2", type: :ext4, min: 20.GiB, weight: 1) }
         let(:vol1_size) { 2.GiB }
-        let(:distribution) { space_dist(disk_spaces.first => vols_list(vol1, vol2)) }
+        let(:distribution) { space_dist(disk_spaces.first => [vol1, vol2]) }
 
         it "fills the whole space if possible" do
           result = creator.create_partitions(distribution)
@@ -170,7 +170,7 @@ describe Y2Storage::Proposal::PartitionCreator do
     context "when creating partitions in an empty space" do
       let(:scenario) { "space_22" }
       let(:distribution) do
-        space_dist(disk_spaces.first => vols_list(root_vol, home_vol))
+        space_dist(disk_spaces.first => [root_vol, home_vol])
       end
       let(:primary) { Y2Storage::PartitionType::PRIMARY }
 
@@ -258,7 +258,7 @@ describe Y2Storage::Proposal::PartitionCreator do
     context "when creating partitions within an existing extended one" do
       let(:scenario) { "space_22_extended" }
       let(:distribution) do
-        space_dist(disk_spaces.first => vols_list(root_vol, home_vol))
+        space_dist(disk_spaces.first => [root_vol, home_vol])
       end
 
       before do
@@ -293,7 +293,7 @@ describe Y2Storage::Proposal::PartitionCreator do
           type: :vfat, partition_id: Y2Storage::PartitionId::ESP, min: 1.GiB, bootable: bootable
         )
       end
-      let(:distribution) { space_dist(disk_spaces.first => vols_list(vol)) }
+      let(:distribution) { space_dist(disk_spaces.first => [vol]) }
 
       it "correctly sets the libstorage partition id" do
         partition = creator.create_partitions(distribution).partitions.first

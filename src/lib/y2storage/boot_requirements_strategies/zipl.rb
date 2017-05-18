@@ -29,7 +29,7 @@ module Y2Storage
     class ZIPL < Base
       def needed_partitions(target)
         raise Error unless supported_root_disk?
-        PlannedVolumesList.new([zipl_partition(target)])
+        [zipl_partition(target)]
       end
 
     protected

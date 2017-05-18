@@ -49,10 +49,10 @@ module Y2Storage
     # calculating the proposal
     # @return [ProposalSettings]
     attr_reader :settings
-    # Planned volumes calculated by the proposal, nil if the proposal has not
+    # Planned devices calculated by the proposal, nil if the proposal has not
     # been calculated yet
-    # @return [PlannedVolumesList]
-    attr_reader :volumes
+    # @return [Array<Planned::Device>]
+    attr_reader :planned_devices
     # Proposed layout of devices, nil if the proposal has not been
     # calculated yet
     # @return [Devicegraph]
@@ -95,8 +95,8 @@ module Y2Storage
           exception = nil
 
           begin
-            @volumes = volumes_list(target)
-            @devices = devicegraph(@volumes)
+            @planned_devices = planned_devices_list(target)
+            @devices = devicegraph(@planned_devices)
           rescue Error => error
             log.info "Failed to make a proposal using root device #{disk_name}: #{error.message}"
             exception = error
@@ -111,20 +111,20 @@ module Y2Storage
 
   protected
 
-    # @return [PlannedVolumesList]
-    def volumes_list(target)
+    # @return [Array<Planned::Device>]
+    def planned_devices_list(target)
       generator = VolumesGenerator.new(populated_settings, clean_graph)
-      generator.volumes(target)
+      generator.planned_devices(target)
     end
 
-    # Devicegraph resulting of accommodating some volumes in the initial
-    # devicegraph
+    # Devicegraph resulting of accommodating some planned devices in the
+    # initial devicegraph
     #
-    # @param volumes [PlannedVolumesList] list of volumes to accomodate
+    # @param planned_devices [Array<Planned::Device>] devices to accomodate
     # @return [Devicegraph]
-    def devicegraph(volumes)
+    def devicegraph(planned_devices)
       generator = DevicegraphGenerator.new(populated_settings)
-      generator.devicegraph(volumes, clean_graph, space_maker)
+      generator.devicegraph(planned_devices, clean_graph, space_maker)
     end
 
     def space_maker

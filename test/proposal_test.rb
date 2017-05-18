@@ -97,8 +97,7 @@ describe Y2Storage::Proposal do
         ]
         instance_double(
           "Y2Storage::Proposal::VolumesGenerator",
-          base_volumes: Y2Storage::PlannedVolumesList.new(base_volumes),
-          volumes:      Y2Storage::PlannedVolumesList.new(all_volumes)
+          planned_devices: all_volumes
         )
       end
 
