@@ -79,7 +79,7 @@ module Yast
       end
 
       def space_dist(vols_by_space)
-        Y2Storage::Proposal::SpaceDistribution.new(vols_by_space)
+        Y2Storage::PlannedDevices::PartitionsDistribution.new(vols_by_space)
       end
 
       def vols_list(*vols)

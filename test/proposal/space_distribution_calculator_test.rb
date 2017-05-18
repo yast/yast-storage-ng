@@ -24,8 +24,8 @@ require_relative "../spec_helper"
 require "storage"
 require "y2storage"
 
-describe Y2Storage::Proposal::SpaceDistributionCalculator do
-  let(:lvm_volumes) { Y2Storage::PlannedVolumesList.new }
+describe Y2Storage::Proposal::PartitionsDistributionCalculator do
+  let(:lvm_volumes) { [] }
   let(:lvm_helper) { Y2Storage::Proposal::LvmHelper.new(lvm_volumes, encryption_password: enc_password) }
   let(:enc_password) { nil }
 
@@ -40,7 +40,7 @@ describe Y2Storage::Proposal::SpaceDistributionCalculator do
 
     let(:vol1) { planned_vol(mount_point: "/1", type: :ext4, min: 1.GiB, max: 3.GiB, weight: 1) }
     let(:vol2) { planned_vol(mount_point: "/2", type: :ext4, min: 2.GiB, max: 3.GiB, weight: 1) }
-    let(:volumes) { Y2Storage::PlannedVolumesList.new([vol1, vol2, vol3]) }
+    let(:volumes) { [vol1, vol2, vol3] }
     let(:spaces) { fake_devicegraph.free_disk_spaces }
 
     subject(:distribution) { calculator.best_distribution(volumes, spaces) }
@@ -62,7 +62,7 @@ describe Y2Storage::Proposal::SpaceDistributionCalculator do
         it "allocates all the volumes in the available space" do
           spaces = distribution.spaces
           expect(spaces.size).to eq 1
-          expect(spaces.first.volumes).to contain_exactly(vol1, vol2, vol3)
+          expect(spaces.first.partitions).to contain_exactly(vol1, vol2, vol3)
         end
 
         it "sets the partition type to :logical" do
@@ -72,7 +72,7 @@ describe Y2Storage::Proposal::SpaceDistributionCalculator do
 
         it "plans all the partitions as logical" do
           space = distribution.spaces.first
-          expect(space.num_logical).to eq space.volumes.size
+          expect(space.num_logical).to eq space.partitions.size
         end
       end
     end
@@ -94,7 +94,7 @@ describe Y2Storage::Proposal::SpaceDistributionCalculator do
         it "allocates all the volumes in the available space" do
           spaces = distribution.spaces
           expect(spaces.size).to eq 1
-          expect(spaces.first.volumes).to contain_exactly(vol1, vol2, vol3)
+          expect(spaces.first.partitions).to contain_exactly(vol1, vol2, vol3)
         end
 
         context "and there is no extended partition" do
@@ -160,7 +160,7 @@ describe Y2Storage::Proposal::SpaceDistributionCalculator do
         it "allocates all the partitions in the same space" do
           spaces = distribution.spaces
           expect(spaces.size).to eq 1
-          expect(spaces.first.volumes).to contain_exactly(vol1, vol2, vol3)
+          expect(spaces.first.partitions).to contain_exactly(vol1, vol2, vol3)
         end
 
         it "uses the biggest space it can fill completely" do
@@ -302,7 +302,7 @@ describe Y2Storage::Proposal::SpaceDistributionCalculator do
 
         it "honors the disk restrictions" do
           sda = distribution.spaces.detect { |s| s.disk_name == "/dev/sda" }
-          expect(sda.volumes).to include vol3
+          expect(sda.partitions).to include vol3
         end
 
         it "completely fills all the used spaces" do
@@ -315,7 +315,7 @@ describe Y2Storage::Proposal::SpaceDistributionCalculator do
 
         it "honors the disk restrictions" do
           sda = distribution.spaces.detect { |s| s.disk_name == "/dev/sda" }
-          expect(sda.volumes).to include vol3
+          expect(sda.partitions).to include vol3
         end
 
         it "creates the smallest possible gap" do
@@ -336,12 +336,12 @@ describe Y2Storage::Proposal::SpaceDistributionCalculator do
       let(:scenario) { "spaces_5_6_8_10" }
 
       let(:vol3) { planned_vol(mount_point: "/3", type: :ext4, min: 1.GiB, max: 30.GiB, weight: 2) }
-      let(:lvm_volumes) { Y2Storage::PlannedVolumesList.new([lvm_vol]) }
-      let(:lvm_vol) { planned_vol(min: lvm_size, max: lvm_max) }
+      let(:lvm_volumes) { [lvm_vol] }
+      let(:lvm_vol) { planned_lv(min: lvm_size, max: lvm_max) }
       let(:lvm_max) { Y2Storage::DiskSize.unlimited }
 
       let(:pv_vols) do
-        volumes = distribution.spaces.map { |sp| sp.volumes.to_a }
+        volumes = distribution.spaces.map { |sp| sp.partitions }
         volumes.map { |vols| vols.select(&:lvm_pv?) }.flatten
       end
 
@@ -359,7 +359,7 @@ describe Y2Storage::Proposal::SpaceDistributionCalculator do
         it "allocates everything in the same space" do
           spaces = distribution.spaces
           expect(spaces.size).to eq 1
-          expect(spaces.first.volumes).to contain_exactly(
+          expect(spaces.first.partitions).to contain_exactly(
             vol1,
             vol2,
             vol3,
@@ -412,20 +412,20 @@ describe Y2Storage::Proposal::SpaceDistributionCalculator do
         end
 
         context "if there are other volumes in the same space" do
-          let(:space) { distribution.spaces.detect { |s| s.volumes.size > 1 } }
+          let(:space) { distribution.spaces.detect { |s| s.partitions.size > 1 } }
 
           it "sets the weight of the PV according to the other volumes" do
-            pv_vol = space.volumes.detect(&:lvm_pv?)
-            total_weight = space.volumes.map(&:weight).reduce(:+)
+            pv_vol = space.partitions.detect(&:lvm_pv?)
+            total_weight = space.partitions.map(&:weight).reduce(:+)
             expect(pv_vol.weight).to eq(total_weight / 2.0)
           end
         end
 
         context "if the PV is alone in the disk space" do
-          let(:space) { distribution.spaces.detect { |s| s.volumes.size == 1 } }
+          let(:space) { distribution.spaces.detect { |s| s.partitions.size == 1 } }
 
           it "sets the weight of the PV to one" do
-            pv_vol = space.volumes.detect(&:lvm_pv?)
+            pv_vol = space.partitions.detect(&:lvm_pv?)
             expect(pv_vol.weight).to eq 1
           end
         end

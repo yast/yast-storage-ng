@@ -23,13 +23,16 @@
 
 require "yast"
 require "y2storage/disk_size"
-require "y2storage/proposal/assigned_space"
+require "y2storage/planned_devices/assigned_space"
+# FIXME: generating proposal exceptions out of the Proposal namespace
+#        looks wrong.
+require "y2storage/proposal/exceptions"
 
 module Y2Storage
-  class Proposal
-    # Class representing the distribution of sets of planned volumes into sets
-    # of free disk spaces
-    class SpaceDistribution
+  module PlannedDevices
+    # Class representing the distribution of sets of planned partitions into
+    # sets of free disk spaces
+    class PartitionsDistribution
       include Yast::Logger
 
       # @return [Array<AssignedSpace>]
@@ -37,13 +40,13 @@ module Y2Storage
 
       # Constructor. Raises an exception when trying to create an invalid
       # distribution.
-      # @raise NoDiskSpaceError
-      # @raise NoMorePartitionSlotError
+      # @raise Proposal::NoDiskSpaceError
+      # @raise Proposal::NoMorePartitionSlotError
       #
-      # @param volumes_by_disk_space [Hash{FreeDiskSpace => PlannedVolumesList}]
-      def initialize(volumes_by_disk_space)
-        @spaces = volumes_by_disk_space.map do |disk_space, volumes|
-          assigned_space(disk_space, volumes)
+      # @param partitions_by_disk_space [Hash{FreeDiskSpace => Array<PlannedDevices::Partition>}]
+      def initialize(partitions_by_disk_space)
+        @spaces = partitions_by_disk_space.map do |disk_space, partitions|
+          assigned_space(disk_space, partitions)
         end
         @spaces.freeze
         spaces_by_disk.each do |disk, spaces|
@@ -53,22 +56,22 @@ module Y2Storage
         end
       end
 
-      # Result of adding more volumes to the existent distribution. Raises an
+      # Result of adding more partitions to the existent distribution. Raises an
       # exception when trying to create an invalid distribution.
-      # @raise NoDiskSpaceError
-      # @raise NoMorePartitionSlotError
+      # @raise Proposal::NoDiskSpaceError
+      # @raise Proposal::NoMorePartitionSlotError
       #
-      # @param volumes_by_disk_space [Hash{FreeDiskSpace => PlannedVolume}]
-      def add_volumes(volumes_by_disk_space)
-        volumes = {}
+      # @param partitions_by_disk_space [Hash{FreeDiskSpace => PlannedDevices::Partition}]
+      def add_partitions(partitions_by_disk_space)
+        partitions = {}
         spaces.each do |space|
-          volumes[space.disk_space] = space.volumes.dup
+          partitions[space.disk_space] = space.partitions.dup
         end
-        volumes_by_disk_space.each do |space, volume|
-          volumes[space] ||= PlannedVolumesList.new
-          volumes[space] << volume
+        partitions_by_disk_space.each do |space, partition|
+          partitions[space] ||= []
+          partitions[space] << partition
         end
-        SpaceDistribution.new(volumes)
+        PartitionsDistribution.new(partitions)
       end
 
       # Assigned space associated to a given free space
@@ -82,7 +85,7 @@ module Y2Storage
       # Space wasted by the distribution
       # @return [DiskSize]
       def gaps_total_disk_size
-        spaces.map(&:unused).reduce(DiskSize.zero, :+)
+        DiskSize.sum(spaces.map(&:unused))
       end
 
       # Number of gaps (unused disk portions) introduced by the distribution
@@ -91,16 +94,16 @@ module Y2Storage
         spaces.reject { |s| s.unused.zero? }.size
       end
 
-      # Total space available for the planned volumes
+      # Total space available for the planned partitions
       # @return [DiskSize]
       def spaces_total_disk_size
-        spaces.map(&:disk_size).reduce(DiskSize.zero, :+)
+        DiskSize.sum(spaces.map(&:disk_size))
       end
 
-      # Total number of volumes included in the distribution
+      # Total number of planned partitions included in the distribution
       # @return [Fixnum]
-      def volumes_count
-        spaces.map { |sp| sp.volumes.size }.reduce(0, :+)
+      def partitions_count
+        spaces.map { |sp| sp.partitions.size }.reduce(0, :+)
       end
 
       # Comparison method used to sort distributions based on how good are
@@ -117,7 +120,7 @@ module Y2Storage
         return res unless res.zero?
 
         # The fewer physical volumes the better
-        res = volumes_count <=> other.volumes_count
+        res = partitions_count <=> other.partitions_count
         return res unless res.zero?
 
         # The less fragmentation the better
@@ -135,7 +138,7 @@ module Y2Storage
 
       def to_s
         spaces_str = spaces.map { |s| s.to_s }.join(", ")
-        "#<SpaceDistribution spaces=[#{spaces_str}]>"
+        "#<PartitionsDistribution spaces=[#{spaces_str}]>"
       end
 
       # Deterministic string representation of the space distribution
@@ -168,16 +171,16 @@ module Y2Storage
 
     protected
 
-      # Transforms a FreeDiskSpace and a PlannedVolumesList into a
+      # Transforms a FreeDiskSpace and a list of planned partitions into a
       # AssignedSpace object if the combination is valid.
-      # @raise NoDiskSpaceError otherwise
+      # @raise Proposal::NoDiskSpaceError otherwise
       #
       # @return [AssignedSpace]
-      def assigned_space(disk_space, volumes)
-        result = AssignedSpace.new(disk_space, volumes)
+      def assigned_space(disk_space, partitions)
+        result = AssignedSpace.new(disk_space, partitions)
         if !result.valid?
           log.error "Invalid assigned space #{result}"
-          raise NoDiskSpaceError, "Volumes cannot be allocated into the assigned space"
+          raise Proposal::NoDiskSpaceError, "Volumes cannot be allocated into the assigned space"
         end
         result
       end
@@ -204,11 +207,11 @@ module Y2Storage
           calculate_num_logical_for(spaces, ptable)
         else
           if too_many_primary?(spaces, ptable)
-            raise NoMorePartitionSlotError, "Too many primary partitions needed"
+            raise Proposal::NoMorePartitionSlotError, "Too many primary partitions needed"
           end
           spaces.each do |space|
             prim = space.partition_type == :primary
-            num_logical = prim ? 0 : space.volumes.size
+            num_logical = prim ? 0 : space.partitions.size
             set_num_logical(space, num_logical)
           end
         end
@@ -216,22 +219,22 @@ module Y2Storage
 
       # Sets the value of #num_logical for a given assigned space
       #
-      # @raise NoDiskSpaceError if the new value causes the volumes to not fit
+      # @raise Proposal::NoDiskSpaceError if the new value causes the partitions to not fit
       def set_num_logical(assigned_space, num)
         assigned_space.num_logical = num
         if !assigned_space.valid?
           log.error "Invalid assigned space #{assigned_space} after adjusting num_logical"
-          raise NoDiskSpaceError, "Volumes cannot be allocated into the assigned space"
+          raise Proposal::NoDiskSpaceError, "Partitions cannot be allocated into the assigned space"
         end
       end
 
       def calculate_num_logical_for(spaces, ptable)
         if ptable.num_primary + spaces.size > ptable.max_primary
           log.error "Too sparce: #{ptable.num_primary} + #{spaces.size} > #{ptable.max_primary}"
-          raise NoMorePartitionSlotError, "Too sparce distribution"
+          raise Proposal::NoMorePartitionSlotError, "Too sparce distribution"
         end
 
-        logical = SpaceDistribution.partitions_in_new_extended(num_partitions(spaces), ptable)
+        logical = PartitionsDistribution.partitions_in_new_extended(num_partitions(spaces), ptable)
         if logical.zero?
           log.info "The total number of partitions will be low. No need of logical ones."
           spaces.each { |s| set_num_logical(s, 0) }
@@ -245,12 +248,12 @@ module Y2Storage
         # Try to create as few logical partitions as possible, since they
         # come at a rounding cost
         partitions = num_partitions(spaces)
-        num_logical = SpaceDistribution.partitions_in_new_extended(partitions, ptable)
+        num_logical = PartitionsDistribution.partitions_in_new_extended(partitions, ptable)
 
         if spaces.size == 1
           space = spaces.first
           if !room_for_logical?(space, num_logical)
-            raise NoDiskSpaceError, "No space for the logical partitions"
+            raise Proposal::NoDiskSpaceError, "No space for the logical partitions"
           end
           set_num_logical(space, num_logical)
         end
@@ -259,11 +262,11 @@ module Y2Storage
         # The rest should be all primary.
         extended_space = extended_space(spaces, num_logical)
         if extended_space.nil?
-          raise NoDiskSpaceError, "No suitable space to create the extended partition"
+          raise Proposal::NoDiskSpaceError, "No suitable space to create the extended partition"
         end
         primary_spaces = spaces - [extended_space]
         if too_many_primary_with_extended?(primary_spaces, ptable)
-          raise NoMorePartitionSlotError, "Too many primary partitions needed"
+          raise Proposal::NoMorePartitionSlotError, "Too many primary partitions needed"
         end
         set_num_logical(extended_space, num_logical)
         primary_spaces.each { |s| set_num_logical(s, 0) }
@@ -293,9 +296,9 @@ module Y2Storage
       # @return [AssignedSpace, nil]
       def extended_space(spaces, num_logical)
         spaces = spaces.select { |s| room_for_logical?(s, num_logical) }
-        # Let's place the extended in the space with more volumes (start as
-        # secondary criteria just to ensure stable sorting)
-        spaces.sort_by { |s| [s.volumes.count, s.region.start] }.last
+        # Let's place the extended in the space with more planned partitions
+        # (start as secondary criteria just to ensure stable sorting)
+        spaces.sort_by { |s| [s.partitions.count, s.region.start] }.last
       end
 
       # Total number of partitions planned for a given list of spaces
@@ -303,19 +306,19 @@ module Y2Storage
       # @param spaces [Array<AssignedSpace>] list of assigned spaces
       # @return [Fixnum]
       def num_partitions(spaces)
-        spaces.map { |s| s.volumes.count }.reduce(0, :+)
+        spaces.map { |s| s.partitions.count }.reduce(0, :+)
       end
 
       # @see #comparable_string
       def space_comparable_string(space)
-        vol_list_string = volume_list_comparable_string(space.volumes)
-        "<disk_space=#{space.disk_space}, volumes=#{vol_list_string}>"
+        partitions_string = partitions_comparable_string(space.partitions)
+        "<disk_space=#{space.disk_space}, partitions=#{partitions_string}>"
       end
 
       # @see #comparable_string
-      def volume_list_comparable_string(vol_list)
-        volumes_strings = vol_list.to_a.map { |vol| vol.to_s }.sort
-        "<volumes=#{volumes_strings.join}>"
+      def partitions_comparable_string(partitions)
+        partitions_strings = partitions.map { |part| part.to_s }.sort
+        "<partitions=#{partitions_strings.join}>"
       end
 
       # Checks whether an assigned space can host the overhead produced by

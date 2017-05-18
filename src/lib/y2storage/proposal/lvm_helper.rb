@@ -55,10 +55,10 @@ module Y2Storage
 
       # Constructor
       #
-      # @param planned_volumes [PlannedVolumesList] volumes to allocate in LVM
+      # @param planned_lvs [Array<PlannedDevices::LvmLv>] volumes to allocate in LVM
       # @param encryption_password [String, nil] see {#encryption_password}
-      def initialize(planned_volumes, encryption_password: nil)
-        @planned_volumes = planned_volumes
+      def initialize(planned_lvs, encryption_password: nil)
+        @planned_lvs = planned_lvs
         self.encryption_password = encryption_password
       end
 
@@ -71,7 +71,7 @@ module Y2Storage
       # @return [Devicegraph]
       def create_volumes(original_graph, pv_partitions = [])
         new_graph = original_graph.duplicate
-        return new_graph if planned_volumes.empty?
+        return new_graph if planned_lvs.empty?
 
         vg = reused_volume_group ? find_reused_vg(new_graph) : create_volume_group(new_graph)
 
@@ -92,7 +92,7 @@ module Y2Storage
       # the method assumes all the space in that volume group can be reclaimed
       # for our purposes.
       def missing_space
-        return DiskSize.zero if !planned_volumes || planned_volumes.empty?
+        return DiskSize.zero if !planned_lvs || planned_lvs.empty?
         return target_size unless reused_volume_group
 
         substract_reused_vg_size(target_size)
@@ -108,9 +108,9 @@ module Y2Storage
       # the method assumes all the space in that volume group can be reclaimed
       # for our purposes.
       def max_extra_space
-        return DiskSize.zero if !planned_volumes || planned_volumes.empty?
+        return DiskSize.zero if !planned_lvs || planned_lvs.empty?
 
-        max = planned_volumes.max_disk_size(rounding: extent_size)
+        max = DiskSize.sum(planned_lvs.map(&:max_size), rounding: extent_size)
         return max if max.unlimited? || !reused_volume_group
 
         substract_reused_vg_size(max)
@@ -190,7 +190,7 @@ module Y2Storage
 
     protected
 
-      attr_reader :planned_volumes
+      attr_reader :planned_lvs
 
       def extent_size
         if reused_volume_group
@@ -201,7 +201,7 @@ module Y2Storage
       end
 
       def target_size
-        planned_volumes.min_disk_size(rounding: extent_size)
+        DiskSize.sum(planned_lvs.map(&:min_size), rounding: extent_size)
       end
 
       def substract_reused_vg_size(size)
@@ -248,7 +248,7 @@ module Y2Storage
       #
       # @param volume_group [LvmVg] volume group to modify
       def make_space!(volume_group)
-        space_size = planned_volumes.min_disk_size
+        space_size = DiskSize.sum(planned_lvs.map(&:min_size))
         missing = missing_vg_space(volume_group, space_size)
         while missing > DiskSize.zero
           lv_to_delete = delete_candidate(volume_group, missing)
@@ -268,21 +268,21 @@ module Y2Storage
       # @param volume_group [LvmVg] volume group to modify
       def create_logical_volumes!(volume_group)
         vg_size = available_space(volume_group)
-        volumes = planned_volumes.distribute_space(vg_size, rounding: extent_size)
-        volumes.each do |vol|
-          create_logical_volume(volume_group, vol)
+        lvs = PlannedDevices::LvmLv.distribute_space(planned_lvs, vg_size, rounding: extent_size)
+        lvs.each do |lv|
+          create_logical_volume(volume_group, lv)
         end
       end
 
-      def create_logical_volume(volume_group, volume)
-        name = volume.logical_volume_name || DEFAULT_LV_NAME
+      def create_logical_volume(volume_group, planned_lv)
+        name = planned_lv.logical_volume_name || DEFAULT_LV_NAME
         name = available_name(name, volume_group)
-        lv = volume_group.create_lvm_lv(name, volume.size.to_i)
-        filesystem = volume.create_filesystem(lv)
-        if volume.subvolumes?
-          other_mount_points = @planned_volumes.map { |v| v.mount_point }
-          other_mount_points.delete_if { |mp| mp == volume.mount_point }
-          volume.create_subvolumes(filesystem, other_mount_points)
+        lv = volume_group.create_lvm_lv(name, planned_lv.size.to_i)
+        filesystem = planned_lv.create_filesystem(lv)
+        if planned_lv.subvolumes?
+          other_mount_points = planned_lvs.map { |v| v.mount_point }
+          other_mount_points.delete_if { |mp| mp == planned_lv.mount_point }
+          planned_lv.create_subvolumes(filesystem, other_mount_points)
         end
       end
 

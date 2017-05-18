@@ -52,15 +52,15 @@ module Y2Storage
       def devicegraph(volumes, initial_graph, space_maker)
         # We are going to alter the volumes in several ways, so let's be a
         # good citizen and do it in our own copy
-        volumes = volumes.deep_dup
+        volumes = volumes.map(&:dup)
 
-        partitions, lvm_lvs = volumes.split_by { |v| v.is_a?(PlannedDevices::Partition) }
+        partitions, lvm_lvs = volumes.partition { |v| v.is_a?(PlannedDevices::Partition) }
 
         lvm_helper = LvmHelper.new(lvm_lvs, encryption_password: settings.encryption_password)
         space_result = provide_space(partitions, initial_graph, lvm_helper, space_maker)
 
-        refine_volumes!(partitions, space_result[:deleted_partitions])
-        graph = create_partitions(space_result[:space_distribution], space_result[:devicegraph])
+        refine_planned_partitions!(partitions, space_result[:deleted_partitions])
+        graph = create_partitions(space_result[:partitions_distribution], space_result[:devicegraph])
         reuse_partitions!(volumes, graph)
 
         if settings.use_lvm
@@ -137,7 +137,7 @@ module Y2Storage
         all_pvs.reject { |pv| old_pv_sids.include?(pv.sid) }.map(&:name)
       end
 
-      # Adds some extra information to the planned volumes inferred from
+      # Adds some extra information to the planned partitions inferred from
       # the list of partitions deleted by the space maker.
       #
       # It enforces reuse of UUIDs and labels from the deleted swap
@@ -145,10 +145,11 @@ module Y2Storage
       #
       # It modifies the passed volumes.
       #
-      # @param volumes [PlannedVolumesList] list of volumes to modify
+      # @param planned_partitions [Array<PlannedDevices::Partition>] planned
+      #     partitions to modify
       # @param deleted_partitions [Array<Partition>] partitions
       #     deleted from the initial devicegraph
-      def refine_volumes!(planned_partitions, deleted_partitions)
+      def refine_planned_partitions!(planned_partitions, deleted_partitions)
         deleted_swaps = deleted_partitions.select { |part| part.id.is?(:swap) }
         new_swap_volumes = planned_partitions.select { |vol| !vol.reuse && vol.mount_point == "swap" }
 
@@ -163,7 +164,7 @@ module Y2Storage
 
       # Creates partitions representing a set of volumes
       #
-      # @param distribution [Proposal::SpaceDistribution]
+      # @param distribution [PlannedDevices::PartitionsDistribution]
       # @param initial_graph [Devicegraph] initial devicegraph
       #
       # @return [Devicegraph]

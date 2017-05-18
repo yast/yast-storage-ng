@@ -21,3 +21,5 @@
 
 require "y2storage/planned_devices/partition"
 require "y2storage/planned_devices/lvm_lv"
+require "y2storage/planned_devices/assigned_space"
+require "y2storage/planned_devices/partitions_distribution"

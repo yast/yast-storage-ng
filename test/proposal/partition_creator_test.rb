@@ -69,7 +69,7 @@ describe Y2Storage::Proposal::PartitionCreator do
       )
     end
 
-    context "when filling a space with several volumes" do
+    context "when filling a space with several partitions" do
       let(:scenario) { "empty_hard_disk_mbr_50GiB" }
       let(:distribution) do
         space_dist(disk_spaces.first => vols_list(root_vol, home_vol, swap_vol))
@@ -112,7 +112,7 @@ describe Y2Storage::Proposal::PartitionCreator do
           )
         end
 
-        context "if one of the volumes is small" do
+        context "if one of the partitions is small" do
           before do
             swap_vol.min = 256.KiB
           end
@@ -174,7 +174,7 @@ describe Y2Storage::Proposal::PartitionCreator do
       end
       let(:primary) { Y2Storage::PartitionType::PRIMARY }
 
-      context "if the space should have no logical volumes" do
+      context "if the space should have no logical partitions" do
         before do
           allow(distribution.spaces.first).to receive(:num_logical).and_return 0
         end
@@ -190,10 +190,10 @@ describe Y2Storage::Proposal::PartitionCreator do
         end
       end
 
-      context "if all the volumes in the space must be logical" do
+      context "if all the partitions in the space must be logical" do
         before do
           space = distribution.spaces.first
-          allow(space).to receive(:num_logical).and_return space.volumes.size
+          allow(space).to receive(:num_logical).and_return space.partitions.size
         end
 
         it "creates no new primary partitions" do
@@ -226,7 +226,7 @@ describe Y2Storage::Proposal::PartitionCreator do
       context "if the space must mix logical and primary partitions" do
         before do
           space = distribution.spaces.first
-          allow(space).to receive(:num_logical).and_return(space.volumes.size - 1)
+          allow(space).to receive(:num_logical).and_return(space.partitions.size - 1)
         end
 
         it "creates as many primary partitions as needed" do
@@ -247,7 +247,7 @@ describe Y2Storage::Proposal::PartitionCreator do
           )
         end
 
-        it "creates logical partitions for the remaining volumes" do
+        it "creates logical partitions for the remaining partitions" do
           result = creator.create_partitions(distribution)
           logical = partitions(result, :logical)
           expect(logical).to contain_exactly an_object_having_attributes(name: "/dev/sda5", size: 1.GiB)
@@ -263,7 +263,7 @@ describe Y2Storage::Proposal::PartitionCreator do
 
       before do
         space = distribution.spaces.first
-        allow(space).to receive(:num_logical).and_return space.volumes.size
+        allow(space).to receive(:num_logical).and_return space.partitions.size
       end
 
       it "reuses the extended partition" do
@@ -341,7 +341,7 @@ describe Y2Storage::Proposal::PartitionCreator do
           expect(new_table).to eq old_table
         end
 
-        context "if the volume is bootable" do
+        context "if the partition is bootable" do
           let(:bootable) { true }
 
           it "sets the boot flag" do
@@ -355,7 +355,7 @@ describe Y2Storage::Proposal::PartitionCreator do
           end
         end
 
-        context "if the volume is not bootable" do
+        context "if the partition is not bootable" do
           it "does not set the boot flag" do
             partition = creator.create_partitions(distribution).partitions.first
             expect(partition.boot?).to eq false
@@ -380,7 +380,7 @@ describe Y2Storage::Proposal::PartitionCreator do
           expect(new_table).to eq old_table
         end
 
-        context "if the volume is bootable" do
+        context "if the partition is bootable" do
           let(:bootable) { true }
 
           it "does not set the boot flag" do
@@ -394,7 +394,7 @@ describe Y2Storage::Proposal::PartitionCreator do
           end
         end
 
-        context "if the volume is not bootable" do
+        context "if the partition is not bootable" do
           it "does not set the boot flag" do
             partition = creator.create_partitions(distribution).partitions.first
             expect(partition.boot?).to eq false

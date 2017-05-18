@@ -161,8 +161,8 @@ describe Y2Storage::Proposal::SpaceMaker do
   describe "#make_space" do
     using Y2Storage::Refinements::SizeCasts
 
-    let(:volumes) { vols_list(vol1) }
-    let(:lvm_helper) { Y2Storage::Proposal::LvmHelper.new(Y2Storage::PlannedVolumesList.new) }
+    let(:volumes) { [vol1] }
+    let(:lvm_helper) { Y2Storage::Proposal::LvmHelper.new([]) }
 
     context "if the only disk is not big enough" do
       let(:scenario) { "empty_hard_disk_mbr_50GiB" }
@@ -190,7 +190,7 @@ describe Y2Storage::Proposal::SpaceMaker do
         gpt_final_space = 16.5.KiB
 
         result = maker.provide_space(fake_devicegraph, volumes, lvm_helper)
-        space = result[:space_distribution].spaces.first
+        space = result[:partitions_distribution].spaces.first
         expect(space.disk_size).to eq(50.GiB - gpt_size - gpt_final_space)
       end
     end
@@ -220,14 +220,14 @@ describe Y2Storage::Proposal::SpaceMaker do
 
         it "suggests a distribution using the freed space" do
           result = maker.provide_space(fake_devicegraph, volumes, lvm_helper)
-          distribution = result[:space_distribution]
+          distribution = result[:partitions_distribution]
           expect(distribution.spaces.size).to eq 1
-          expect(distribution.spaces.first.volumes).to eq volumes
+          expect(distribution.spaces.first.partitions).to eq volumes
         end
 
         context "if deleting Linux is not enough" do
           let(:vol2) { planned_vol(mount_point: "/2", type: :ext4, min: 200.GiB) }
-          let(:volumes) { vols_list(vol1, vol2) }
+          let(:volumes) { [vol1, vol2] }
 
           context "if resizing Windows is allowed" do
             let(:resize_windows) { true }
@@ -268,9 +268,9 @@ describe Y2Storage::Proposal::SpaceMaker do
 
             it "suggests a distribution using the freed space" do
               result = maker.provide_space(fake_devicegraph, volumes, lvm_helper)
-              distribution = result[:space_distribution]
+              distribution = result[:partitions_distribution]
               expect(distribution.spaces.size).to eq 1
-              expect(distribution.spaces.first.volumes).to eq volumes
+              expect(distribution.spaces.first.partitions).to eq volumes
             end
           end
 
@@ -386,9 +386,9 @@ describe Y2Storage::Proposal::SpaceMaker do
 
           it "suggests a distribution using the freed space" do
             result = maker.provide_space(fake_devicegraph, volumes, lvm_helper)
-            distribution = result[:space_distribution]
+            distribution = result[:partitions_distribution]
             expect(distribution.spaces.size).to eq 1
-            expect(distribution.spaces.first.volumes).to eq volumes
+            expect(distribution.spaces.first.partitions).to eq volumes
           end
         end
 
@@ -420,9 +420,9 @@ describe Y2Storage::Proposal::SpaceMaker do
 
             it "suggests a distribution using the freed space" do
               result = maker.provide_space(fake_devicegraph, volumes, lvm_helper)
-              distribution = result[:space_distribution]
+              distribution = result[:partitions_distribution]
               expect(distribution.spaces.size).to eq 1
-              expect(distribution.spaces.first.volumes).to eq volumes
+              expect(distribution.spaces.first.partitions).to eq volumes
             end
           end
 
@@ -452,9 +452,9 @@ describe Y2Storage::Proposal::SpaceMaker do
 
               it "suggests a distribution using the freed space" do
                 result = maker.provide_space(fake_devicegraph, volumes, lvm_helper)
-                distribution = result[:space_distribution]
+                distribution = result[:partitions_distribution]
                 expect(distribution.spaces.size).to eq 1
-                expect(distribution.spaces.first.volumes).to eq volumes
+                expect(distribution.spaces.first.partitions).to eq volumes
               end
             end
 
@@ -493,9 +493,9 @@ describe Y2Storage::Proposal::SpaceMaker do
 
           it "suggests a distribution using the freed space" do
             result = maker.provide_space(fake_devicegraph, volumes, lvm_helper)
-            distribution = result[:space_distribution]
+            distribution = result[:partitions_distribution]
             expect(distribution.spaces.size).to eq 1
-            expect(distribution.spaces.first.volumes).to eq volumes
+            expect(distribution.spaces.first.partitions).to eq volumes
           end
         end
 
@@ -525,9 +525,9 @@ describe Y2Storage::Proposal::SpaceMaker do
 
             it "suggests a distribution using the freed space" do
               result = maker.provide_space(fake_devicegraph, volumes, lvm_helper)
-              distribution = result[:space_distribution]
+              distribution = result[:partitions_distribution]
               expect(distribution.spaces.size).to eq 1
-              expect(distribution.spaces.first.volumes).to eq volumes
+              expect(distribution.spaces.first.partitions).to eq volumes
             end
           end
 
@@ -584,7 +584,7 @@ describe Y2Storage::Proposal::SpaceMaker do
 
       it "deletes the last partitions of the disk until reaching the goal" do
         vol = planned_vol(mount_point: "/1", type: :ext4, min: 700.GiB)
-        volumes = vols_list(vol)
+        volumes = [vol]
 
         result = maker.provide_space(fake_devicegraph, volumes, lvm_helper)
         expect(result[:deleted_partitions]).to contain_exactly(
@@ -602,7 +602,7 @@ describe Y2Storage::Proposal::SpaceMaker do
       it "doesn't delete partitions marked to be reused" do
         vol1 = planned_vol(mount_point: "/1", type: :ext4, min: 100.GiB)
         vol2 = planned_vol(mount_point: "/2", reuse: "/dev/sda6")
-        volumes = vols_list(vol1, vol2)
+        volumes = [vol1, vol2]
         sda6 = probed_partition("/dev/sda6")
 
         result = maker.provide_space(fake_devicegraph, volumes, lvm_helper)
@@ -613,19 +613,19 @@ describe Y2Storage::Proposal::SpaceMaker do
       it "raises a NoDiskSpaceError exception if deleting is not enough" do
         vol1 = planned_vol(mount_point: "/1", type: :ext4, min: 980.GiB)
         vol2 = planned_vol(mount_point: "/2", reuse: "/dev/sda2")
-        volumes = vols_list(vol1, vol2)
+        volumes = [vol1, vol2]
 
         expect { maker.provide_space(fake_devicegraph, volumes, lvm_helper) }
           .to raise_error Y2Storage::Proposal::NoDiskSpaceError
       end
 
       it "deletes extended partitions when deleting all its logical children" do
-        volumes = vols_list(
+        volumes = [
           planned_vol(mount_point: "/1", type: :ext4, min: 800.GiB),
           planned_vol(mount_point: "/2", reuse: "/dev/sda1"),
           planned_vol(mount_point: "/2", reuse: "/dev/sda2"),
           planned_vol(mount_point: "/2", reuse: "/dev/sda3")
-        )
+        ]
 
         result = maker.provide_space(fake_devicegraph, volumes, lvm_helper)
         expect(result[:devicegraph].partitions).to contain_exactly(
@@ -643,13 +643,13 @@ describe Y2Storage::Proposal::SpaceMaker do
       # In the past, SpaceMaker used to delete the extended partition sda4
       # leaving sda6 alive. This test ensures the bug does not re-appear
       it "does not delete the extended partition if some logical one is to be reused" do
-        volumes = vols_list(
+        volumes = [
           planned_vol(mount_point: "/1", type: :ext4, min: 400.GiB),
           planned_vol(mount_point: "/2", reuse: "/dev/sda1"),
           planned_vol(mount_point: "/3", reuse: "/dev/sda2"),
           planned_vol(mount_point: "/4", reuse: "/dev/sda3"),
           planned_vol(mount_point: "/5", reuse: "/dev/sda6")
-        )
+        ]
 
         expect { maker.provide_space(fake_devicegraph, volumes, lvm_helper) }
           .to raise_error Y2Storage::Proposal::NoDiskSpaceError
@@ -659,18 +659,18 @@ describe Y2Storage::Proposal::SpaceMaker do
     context "when some volumes must be reused" do
       let(:scenario) { "multi-linux-pc" }
       let(:volumes) do
-        vols_list(
+        [
           planned_vol(mount_point: "/1", type: :ext4, min: 60.GiB),
           planned_vol(mount_point: "/2", type: :ext4, min: 300.GiB),
           planned_vol(mount_point: "/3", reuse: "/dev/sda6"),
           planned_vol(mount_point: "/4", reuse: "/dev/sda2")
-        )
+        ]
       end
 
       it "ignores reused partitions in the suggested distribution" do
         result = maker.provide_space(fake_devicegraph, volumes, lvm_helper)
-        distribution = result[:space_distribution]
-        dist_volumes = distribution.spaces.map { |s| s.volumes.to_a }.flatten
+        distribution = result[:partitions_distribution]
+        dist_volumes = distribution.spaces.map { |s| s.partitions.to_a }.flatten
         expect(dist_volumes).to_not include an_object_having_attributes(mount_point: "/3")
         expect(dist_volumes).to_not include an_object_having_attributes(mount_point: "/4")
       end
@@ -693,7 +693,7 @@ describe Y2Storage::Proposal::SpaceMaker do
       let(:vol1) { planned_vol(mount_point: "/1", type: :ext4, disk: "/dev/sda") }
       let(:vol2) { planned_vol(mount_point: "/2", type: :ext4, disk: "/dev/sda") }
       let(:vol3) { planned_vol(mount_point: "/3", type: :ext4) }
-      let(:volumes) { vols_list(vol1, vol2, vol3) }
+      let(:volumes) { [vol1, vol2, vol3] }
 
       before do
         settings.candidate_devices = ["/dev/sda", "/dev/sdb"]
@@ -723,20 +723,20 @@ describe Y2Storage::Proposal::SpaceMaker do
 
         it "ensures disk restrictions are honored" do
           result = maker.provide_space(fake_devicegraph, volumes, lvm_helper)
-          distribution = result[:space_distribution]
+          distribution = result[:partitions_distribution]
           sda_space = distribution.spaces.detect { |i| i.disk_name == "/dev/sda" }
           # Without disk restrictions, it would have deleted linux partitions at /dev/sdb and
           # allocated the volumes there
-          expect(sda_space.volumes).to include vol1
-          expect(sda_space.volumes).to include vol2
+          expect(sda_space.partitions).to include vol1
+          expect(sda_space.partitions).to include vol2
         end
 
         it "applies the usual criteria to allocate non-restricted volumes" do
           result = maker.provide_space(fake_devicegraph, volumes, lvm_helper)
-          distribution = result[:space_distribution]
+          distribution = result[:partitions_distribution]
           sdb_space = distribution.spaces.detect { |i| i.disk_name == "/dev/sdb" }
           # Default action: delete linux partitions at /dev/sdb and allocate volumes there
-          expect(sdb_space.volumes).to include vol3
+          expect(sdb_space.partitions).to include vol3
         end
       end
     end
@@ -744,7 +744,7 @@ describe Y2Storage::Proposal::SpaceMaker do
     context "when deleting a partition which belongs to a LVM" do
       let(:scenario) { "lvm-two-vgs" }
       let(:windows_partitions) { [partition_double("/dev/sda1")] }
-      let(:volumes) { vols_list(planned_vol(mount_point: "/1", type: :ext4, min: 2.GiB)) }
+      let(:volumes) { [planned_vol(mount_point: "/1", type: :ext4, min: 2.GiB)] }
 
       it "deletes also other partitions of the same volume group" do
         result = maker.provide_space(fake_devicegraph, volumes, lvm_helper)
@@ -785,7 +785,7 @@ describe Y2Storage::Proposal::SpaceMaker do
       end
 
       it "does not delete partitions belonging to the reused VG" do
-        volumes = vols_list(planned_vol(mount_point: "/1", type: :ext4, min: 2.GiB))
+        volumes = [planned_vol(mount_point: "/1", type: :ext4, min: 2.GiB)]
         result = maker.provide_space(fake_devicegraph, volumes, lvm_helper)
         partitions = result[:devicegraph].partitions
 
@@ -797,7 +797,7 @@ describe Y2Storage::Proposal::SpaceMaker do
       end
 
       it "does nothing special about partitions from other VGs" do
-        volumes = vols_list(planned_vol(mount_point: "/1", type: :ext4, min: 6.GiB))
+        volumes = [planned_vol(mount_point: "/1", type: :ext4, min: 6.GiB)]
         result = maker.provide_space(fake_devicegraph, volumes, lvm_helper)
         partitions = result[:devicegraph].partitions
 
@@ -806,14 +806,14 @@ describe Y2Storage::Proposal::SpaceMaker do
       end
 
       it "raises NoDiskSpaceError if it cannot find space respecting the VG" do
-        volumes = vols_list(
+        volumes = [
           # This exhausts the primary partitions
           planned_vol(mount_point: "/1", type: :ext4, min: 30.GiB),
           # This implies deleting linux partitions out of vg1
           planned_vol(mount_point: "/2", type: :ext4, min: 14.GiB),
           # So this one, as small as it is, would affect vg1
           planned_vol(mount_point: "/2", type: :ext4, min: 10.MiB)
-        )
+        ]
         expect { maker.provide_space(fake_devicegraph, volumes, lvm_helper) }
           .to raise_error Y2Storage::Proposal::NoDiskSpaceError
       end
