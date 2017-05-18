@@ -78,13 +78,13 @@ describe Y2Storage::Proposal do
 
     context "with pre-existing swap partitions" do
       before do
-        allow(Y2Storage::Proposal::VolumesGenerator).to receive(:new).and_return volumes_generator
+        allow(Y2Storage::Proposal::PlannedDevicesGenerator).to receive(:new).and_return dev_generator
         settings.root_device = "/dev/sda"
       end
 
       let(:scenario) { "swaps" }
       let(:windows_partitions) { {} }
-      let(:volumes_generator) do
+      let(:dev_generator) do
         base_volumes = [
           planned_vol(mount_point: "/", type: :ext4, min: 500.MiB, max: 500.MiB)
         ]
@@ -96,7 +96,7 @@ describe Y2Storage::Proposal do
           planned_vol(mount_point: "swap", type: :swap, min: 500.MiB, max: 500.MiB)
         ]
         instance_double(
-          "Y2Storage::Proposal::VolumesGenerator",
+          "Y2Storage::Proposal::PlannedDevicesGenerator",
           planned_devices: all_volumes
         )
       end

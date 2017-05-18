@@ -32,7 +32,7 @@ module Y2Storage
     #
     # Class to generate the list of planned devices of a proposal
     #
-    class VolumesGenerator
+    class PlannedDevicesGenerator
       include Yast::Logger
 
       attr_accessor :settings
@@ -49,45 +49,44 @@ module Y2Storage
       # @return [Array<Planned::Device>]
       def planned_devices(target)
         @target = target
-        base_volumes + additional_volumes
+        base_devices + additional_devices
       end
 
     protected
 
       attr_reader :devicegraph
 
-      # Minimal set of volumes that is needed to decide if a bootable
+      # Minimal set of devices that is needed to decide if a bootable
       # system can be installed
       #
-      # This includes "/" and the volumes needed for booting
+      # This includes "/" and the devices needed for booting
       #
       # @return [Array<Planned::Device>]
-      def base_volumes
-        boot_volumes + [root_volume]
+      def base_devices
+        boot_devices + [root_device]
       end
 
-      # Volumes needed by the bootloader
+      # Planned devices needed by the bootloader
       #
       # @return [Array<Planned::Device>]
-      def boot_volumes
+      def boot_devices
         checker = BootRequirementsChecker.new(settings, devicegraph)
         checker.needed_partitions(@target)
       rescue BootRequirementsChecker::Error => error
         raise NotBootableError, error.message
       end
 
-      # Additional volumes not needed for booting, like swap and /home
+      # Additional devices not needed for booting, like swap and /home
       #
       # @return [Array<Planned::Device>]
-      def additional_volumes
-        volumes = [swap_volume]
-        volumes << home_volume if @settings.use_separate_home
-        volumes
+      def additional_devices
+        devices = [swap_device]
+        devices << home_device if @settings.use_separate_home
+        devices
       end
 
-      # Volume data structure for the swap volume according
-      # to the settings.
-      def swap_volume
+      # Device to host the swap space according to the settings.
+      def swap_device
         swap_size = DEFAULT_SWAP_SIZE
         if settings.enlarge_swap_for_suspend
           swap_size = [ram_size, swap_size].max
@@ -111,9 +110,9 @@ module Y2Storage
         part = Planned::Partition.new("swap", Filesystems::Type::SWAP)
         part.encryption_password = settings.encryption_password
         # NOTE: Enforcing the re-use of an existing partition limits the options
-        # to propose a valid distribution of the volumes. For swap we already
-        # have mechanisms to reuse UUIDs and labels, so maybe is smarter to
-        # never reuse partitions as-is.
+        # to propose a valid distribution of the planned partitions. For swap we
+        # already have mechanisms to reuse UUIDs and labels, so maybe is smarter
+        # to never reuse partitions as-is.
         reuse = reusable_swap(size)
         if reuse
           part.reuse = reuse.name
@@ -138,12 +137,8 @@ module Y2Storage
         partitions.sort_by { |part| [part.size, part.name] }.first
       end
 
-      # Volume data structure for the root volume according
-      # to the settings.
-      #
-      # This does NOT create the partition yet, only the data structure.
-      #
-      def root_volume
+      # Planned device to hold "/" according to the settings.
+      def root_device
         if settings.use_lvm
           root_vol = Planned::LvmLv.new("/", @settings.root_filesystem_type)
         else
@@ -176,12 +171,8 @@ module Y2Storage
         log.info "Adding Btrfs subvolumes: \n#{planned_device.subvolumes}"
       end
 
-      # Volume data structure for the /home volume according
-      # to the settings.
-      #
-      # This does NOT create the partition yet, only the data structure.
-      #
-      def home_volume
+      # Planned device to hold "/home" according to the settings.
+      def home_device
         if settings.use_lvm
           home_vol = Planned::LvmLv.new("/home", settings.home_filesystem_type)
         else

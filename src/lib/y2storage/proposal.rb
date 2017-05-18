@@ -24,7 +24,7 @@ require "y2storage/proposal_settings"
 require "y2storage/storage_manager"
 require "y2storage/disk_analyzer"
 require "y2storage/proposal/exceptions"
-require "y2storage/proposal/volumes_generator"
+require "y2storage/proposal/planned_devices_generator"
 require "y2storage/proposal/devicegraph_generator"
 
 module Y2Storage
@@ -113,7 +113,7 @@ module Y2Storage
 
     # @return [Array<Planned::Device>]
     def planned_devices_list(target)
-      generator = VolumesGenerator.new(populated_settings, clean_graph)
+      generator = PlannedDevicesGenerator.new(populated_settings, clean_graph)
       generator.planned_devices(target)
     end
 

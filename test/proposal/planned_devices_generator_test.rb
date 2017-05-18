@@ -24,7 +24,7 @@ require_relative "../spec_helper"
 require "storage"
 require "y2storage"
 
-describe Y2Storage::Proposal::VolumesGenerator do
+describe Y2Storage::Proposal::PlannedDevicesGenerator do
   describe "#planned_devices" do
     using Y2Storage::Refinements::SizeCasts
 
