@@ -84,21 +84,17 @@ describe Y2Storage::Proposal do
 
       let(:scenario) { "swaps" }
       let(:windows_partitions) { {} }
-      let(:dev_generator) do
-        base_volumes = [
-          planned_vol(mount_point: "/", type: :ext4, min: 500.MiB, max: 500.MiB)
-        ]
-        all_volumes = [
+      let(:all_volumes) do
+        [
           planned_vol(mount_point: "/", type: :ext4, min: 500.MiB, max: 500.MiB),
           planned_vol(mount_point: "swap", reuse: "/dev/sda3"),
           planned_vol(mount_point: "swap", type: :swap, min: 500.MiB, max: 500.MiB),
           planned_vol(mount_point: "swap", type: :swap, min: 500.MiB, max: 500.MiB),
           planned_vol(mount_point: "swap", type: :swap, min: 500.MiB, max: 500.MiB)
         ]
-        instance_double(
-          "Y2Storage::Proposal::PlannedDevicesGenerator",
-          planned_devices: all_volumes
-        )
+      end
+      let(:dev_generator) do
+        instance_double("Y2Storage::Proposal::PlannedDevicesGenerator", planned_devices: all_volumes)
       end
 
       def sda(num)

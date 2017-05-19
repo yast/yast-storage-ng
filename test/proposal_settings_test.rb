@@ -270,8 +270,6 @@ describe Y2Storage::ProposalSettings do
       before do
         allow(Yast::Arch).to receive(:x86_64).and_return true
         stub_partitioning_features("subvolumes" => subvols_feature)
-        # Just to avoid the noise from ProposalSettings#initialize
-        allow(Y2Storage::PlannedSubvol).to receive(:fallback_list).and_return([])
       end
 
       let(:subvols_feature) do
@@ -287,9 +285,9 @@ describe Y2Storage::ProposalSettings do
         subvols.detect { |s| s.path == name }
       end
 
-      it "creates a PlannedSubvol for each subvolume in the list" do
+      it "creates a SubvolSpecification for each subvolume in the list" do
         settings.read_product_features!
-        expect(subvols.map(&:class)).to eq([Y2Storage::PlannedSubvol] * 3)
+        expect(subvols.map(&:class)).to eq([Y2Storage::SubvolSpecification] * 3)
       end
 
       it "reads each 'path' value" do
@@ -331,7 +329,7 @@ describe Y2Storage::ProposalSettings do
         let(:subvols_feature) { nil }
 
         it "sets #subvolumes to a fallback list" do
-          allow(Y2Storage::PlannedSubvol).to receive(:fallback_list).and_return(["a", "list"])
+          allow(Y2Storage::SubvolSpecification).to receive(:fallback_list).and_return(["a", "list"])
           settings.read_product_features!
 
           expect(subvols).to eq ["a", "list"]
@@ -369,124 +367,29 @@ describe Y2Storage::ProposalSettings do
         end
       end
 
-      context "when 'archs' contains just one name" do
-        let(:subvols_feature) { [{ "path" => "var", "archs" => "x86_64" }] }
-
-        it "creates the planned subvolume if the architecture matches the name" do
-          expect(Yast::Arch).to receive(:x86_64).and_return(true)
-
-          settings.read_product_features!
-          expect(subvols.map(&:path)).to contain_exactly("var")
-        end
-
-        it "discards the subvolume if the architecture doesn't match" do
-          expect(Yast::Arch).to receive(:x86_64).and_return(false)
-
-          settings.read_product_features!
-          expect(subvols).to be_empty
-        end
-      end
-
-      context "when 'archs' contains just one name preceded by '!'" do
-        let(:subvols_feature) { [{ "path" => "var", "archs" => "!x86_64" }] }
-
-        it "discards the subvolume if the architecture matches the name" do
-          expect(Yast::Arch).to receive(:x86_64).and_return(true)
-
-          settings.read_product_features!
-          expect(subvols).to be_empty
-        end
-
-        it "also discards the subvolume if the architecture doesn't match" do
-          expect(Yast::Arch).to receive(:x86_64).and_return(false)
-
-          settings.read_product_features!
-          expect(subvols).to be_empty
-        end
-      end
-
-      context "when 'archs' contains a list of names" do
-        let(:subvols_feature) { [{ "path" => "var", "archs" => "ppc,x86_64" }] }
-
-        it "creates the planned subvolume if the architecture matches any name" do
-          expect(Yast::Arch).to receive(:ppc).and_return(false)
-          expect(Yast::Arch).to receive(:x86_64).and_return(true)
-
-          settings.read_product_features!
-          expect(subvols.map(&:path)).to contain_exactly("var")
-        end
-
-        it "discards the subvolume if none of the names matches the architecture" do
-          expect(Yast::Arch).to receive(:ppc).and_return(false)
-          expect(Yast::Arch).to receive(:x86_64).and_return(false)
-
-          settings.read_product_features!
-          expect(subvols).to be_empty
-        end
-      end
-
-      context "when 'archs' contains names with and without '!'" do
-        let(:subvols_feature) { [{ "path" => "var", "archs" => "ppc,!board_powernv" }] }
-
-        it "creates the subvolume if the positive names match and the negated don't" do
-          expect(Yast::Arch).to receive(:ppc).and_return(true)
-          expect(Yast::Arch).to receive(:board_powernv).and_return(false)
-
-          settings.read_product_features!
-          expect(subvols.map(&:path)).to contain_exactly("var")
-        end
-
-        it "discards the subvolume if both positive and negated names match" do
-          expect(Yast::Arch).to receive(:ppc).and_return(true)
-          expect(Yast::Arch).to receive(:board_powernv).and_return(true)
-
-          settings.read_product_features!
-          expect(subvols).to be_empty
-        end
-
-        it "discards the subvolume if none of the positive names match" do
-          expect(Yast::Arch).to receive(:ppc).and_return(false)
-          expect(Yast::Arch).to receive(:board_powernv).and_return(false)
-
-          settings.read_product_features!
-          expect(subvols).to be_empty
-        end
-      end
-
       context "if there are several subvolumes with the same path" do
-        context "if only one of them apply to the current architecture" do
-          let(:subvols_feature) do
-            [
-              { "path" => "var", "copy_on_write" => false, "archs" => "i386" },
-              { "path" => "var" }
-            ]
-          end
-
-          before { expect(Yast::Arch).to receive(:i386).and_return(false) }
-
-          it "just creates the relevant planned subvolume" do
-            settings.read_product_features!
-            expect(subvols.size).to eq 1
-            expect(subvols.first).to have_attributes(path: "var", copy_on_write: true, archs: nil)
-          end
+        let(:subvols_feature) do
+          [
+            { "path" => "var", "copy_on_write" => false, "archs" => "i386" },
+            { "path" => "var" },
+            { "path" => "var", "copy_on_write" => false }
+          ]
         end
 
-        context "if several of them apply to the current architecture" do
-          let(:subvols_feature) do
-            [
-              { "path" => "var", "copy_on_write" => false, "archs" => "i386" },
-              { "path" => "var" },
-              { "path" => "var", "copy_on_write" => false }
-            ]
-          end
+        # Filtering by architecture is done while calculating the proposal, not
+        # when reading the specification
+        it "does not verify the architecture at this point" do
+          expect(Yast::Arch).to_not receive(:i386)
+          settings.read_product_features!
+        end
 
-          before { expect(Yast::Arch).to receive(:i386).and_return(true) }
-
-          it "just creates the last one to appear in the list" do
-            settings.read_product_features!
-            expect(subvols.size).to eq 1
-            expect(subvols.first).to have_attributes(path: "var", copy_on_write: false, archs: nil)
-          end
+        it "creates a SubvolSpecification object for each one of the subvolumes" do
+          settings.read_product_features!
+          expect(subvols).to include(
+            an_object_having_attributes(path: "var", copy_on_write: false, archs: ["i386"]),
+            an_object_having_attributes(path: "var", copy_on_write: false, archs: nil),
+            an_object_having_attributes(path: "var", copy_on_write: true,  archs: nil)
+          )
         end
       end
     end
@@ -518,6 +421,179 @@ describe Y2Storage::ProposalSettings do
       expect(from_product.use_lvm).to eq true
       expect(from_product.root_space_percent).to eq 50
       expect(from_product.home_max_size).to eq 500.GiB
+    end
+  end
+
+  describe "the default (fallback) subvolumes list" do
+    let(:default_settings) { described_class.new }
+
+    it "includes a subvolume var/log" do
+      expect(default_settings.subvolumes).to include(
+        an_object_having_attributes(path: "var/log", copy_on_write: true, archs: nil)
+      )
+    end
+
+    it "includes a NoCOW subvolume var/lib/mariadb" do
+      expect(default_settings.subvolumes).to include(
+        an_object_having_attributes(path: "var/lib/mariadb", copy_on_write: false, archs: nil)
+      )
+    end
+
+    it "includes some arch-specific subvolumes for boot/*" do
+      expect(default_settings.subvolumes).to include(
+        an_object_having_attributes(
+          path:          "boot/grub2/s390x-emu",
+          copy_on_write: true,
+          archs:         ["s390"]
+        ),
+        an_object_having_attributes(
+          path:          "boot/grub2/x86_64-efi",
+          copy_on_write: true,
+          archs:         ["x86_64"]
+        ),
+        an_object_having_attributes(
+          path:          "boot/grub2/powerpc-ieee1275",
+          copy_on_write: true,
+          archs:         ["ppc", "!board_powernv"]
+        )
+      )
+    end
+  end
+
+  describe "#planned_subvolumes" do
+    def subvol_spec(*args)
+      Y2Storage::SubvolSpecification.new(*args)
+    end
+
+    subject(:settings) { described_class.new }
+
+    before do
+      allow(settings).to receive(:subvolumes).and_return subvol_specifications
+    end
+
+    let(:subvol_specifications) { [subvol_spec("var")] }
+
+    it "returns an collection of Planned::BtrfsSubvolume objects" do
+      expect(settings.planned_subvolumes).to all(be_a(Y2Storage::Planned::BtrfsSubvolume))
+    end
+
+    context "when 'archs' is an empty array" do
+      let(:subvol_specifications) { [subvol_spec("var", archs: [])] }
+
+      it "does not create the planned subvolume" do
+        expect(settings.planned_subvolumes).to be_empty
+      end
+    end
+
+    context "when 'archs' is nil" do
+      let(:subvol_specifications) { [subvol_spec("var", archs: nil)] }
+
+      it "creates the planned subvolume" do
+        expect(settings.planned_subvolumes.map(&:path)).to contain_exactly("var")
+      end
+    end
+
+    context "when 'archs' contains just one name" do
+      let(:subvol_specifications) { [subvol_spec("var", archs: ["x86_64"])] }
+
+      it "creates the planned subvolume if the architecture matches the name" do
+        expect(Yast::Arch).to receive(:x86_64).and_return(true)
+        expect(settings.planned_subvolumes.map(&:path)).to contain_exactly("var")
+      end
+
+      it "discards the subvolume if the architecture doesn't match" do
+        expect(Yast::Arch).to receive(:x86_64).and_return(false)
+        expect(settings.planned_subvolumes).to be_empty
+      end
+    end
+
+    context "when 'archs' contains just one name preceded by '!'" do
+      let(:subvol_specifications) { [subvol_spec("var", archs: ["!x86_64"])] }
+
+      it "discards the subvolume if the architecture matches the name" do
+        expect(Yast::Arch).to receive(:x86_64).and_return(true)
+        expect(settings.planned_subvolumes).to be_empty
+      end
+
+      it "also discards the subvolume if the architecture doesn't match" do
+        expect(Yast::Arch).to receive(:x86_64).and_return(false)
+        expect(settings.planned_subvolumes).to be_empty
+      end
+    end
+
+    context "when 'archs' contains a list of names" do
+      let(:subvol_specifications) { [subvol_spec("var", archs: ["ppc", "x86_64"])] }
+
+      it "creates the planned subvolume if the architecture matches any name" do
+        expect(Yast::Arch).to receive(:ppc).and_return(false)
+        expect(Yast::Arch).to receive(:x86_64).and_return(true)
+        expect(settings.planned_subvolumes.map(&:path)).to contain_exactly("var")
+      end
+
+      it "discards the subvolume if none of the names matches the architecture" do
+        expect(Yast::Arch).to receive(:ppc).and_return(false)
+        expect(Yast::Arch).to receive(:x86_64).and_return(false)
+        expect(settings.planned_subvolumes).to be_empty
+      end
+    end
+
+    context "when 'archs' contains names with and without '!'" do
+      let(:subvol_specifications) { [subvol_spec("var", archs: ["ppc", "!board_powernv"])] }
+
+      it "creates the subvolume if the positive names match and the negated don't" do
+        expect(Yast::Arch).to receive(:ppc).and_return(true)
+        expect(Yast::Arch).to receive(:board_powernv).and_return(false)
+        expect(settings.planned_subvolumes.map(&:path)).to contain_exactly("var")
+      end
+
+      it "discards the subvolume if both positive and negated names match" do
+        expect(Yast::Arch).to receive(:ppc).and_return(true)
+        expect(Yast::Arch).to receive(:board_powernv).and_return(true)
+        expect(settings.planned_subvolumes).to be_empty
+      end
+
+      it "discards the subvolume if none of the positive names match" do
+        expect(Yast::Arch).to receive(:ppc).and_return(false)
+        expect(Yast::Arch).to receive(:board_powernv).and_return(false)
+        expect(settings.planned_subvolumes).to be_empty
+      end
+    end
+
+    context "if there are several subvolumes with the same path" do
+      context "if only one of them apply to the current architecture" do
+        let(:subvol_specifications) do
+          [
+            subvol_spec("var", copy_on_write: false, archs: ["i386"]),
+            subvol_spec("var", copy_on_write: true)
+          ]
+        end
+
+        before { expect(Yast::Arch).to receive(:i386).and_return(false) }
+
+        it "just creates the relevant planned subvolume" do
+          result = settings.planned_subvolumes
+          expect(result.size).to eq 1
+          expect(result.first).to have_attributes(path: "var", copy_on_write: true)
+        end
+      end
+
+      context "if several of them apply to the current architecture" do
+        let(:subvol_specifications) do
+          [
+            subvol_spec("var", copy_on_write: true, archs: ["i386"]),
+            subvol_spec("var", copy_on_write: true),
+            subvol_spec("var", copy_on_write: false)
+          ]
+        end
+
+        before { expect(Yast::Arch).to receive(:i386).and_return(true) }
+
+        it "just creates the last one to appear in the list" do
+          result = settings.planned_subvolumes
+          expect(result.size).to eq 1
+          expect(result.first).to have_attributes(path: "var", copy_on_write: false)
+        end
+      end
     end
   end
 end

@@ -49,7 +49,9 @@ module Y2Storage
       # @return [Array<Planned::Device>]
       def planned_devices(target)
         @target = target
-        base_devices + additional_devices
+        devices = base_devices + additional_devices
+        remove_shadowed_subvols!(devices)
+        devices
       end
 
     protected
@@ -155,6 +157,7 @@ module Y2Storage
             root_vol.max_size
           end
         adjust_btrfs_sizes!(root_vol)
+        init_btrfs_subvolumes!(root_vol)
         root_vol
       end
 
@@ -165,9 +168,13 @@ module Y2Storage
         multiplicator = 1.0 + settings.btrfs_increase_percentage / 100.0
         planned_device.min_size *= multiplicator
         planned_device.max_size *= multiplicator
+      end
+
+      def init_btrfs_subvolumes!(planned_device)
+        return unless planned_device.btrfs? && settings.subvolumes
 
         planned_device.default_subvolume = settings.btrfs_default_subvolume || ""
-        planned_device.subvolumes = settings.subvolumes
+        planned_device.subvolumes = settings.planned_subvolumes
         log.info "Adding Btrfs subvolumes: \n#{planned_device.subvolumes}"
       end
 
@@ -183,6 +190,22 @@ module Y2Storage
         home_vol.min_size = settings.home_min_size
         home_vol.weight = 100.0 - settings.root_space_percent
         home_vol
+      end
+
+      def remove_shadowed_subvols!(planned_devices)
+        planned_devices.each do |device|
+          next unless device.respond_to?(:remove_shadowed_subvolumes!)
+
+          other_devices = planned_devices.reject { |dev| dev == device }
+          mount_points = other_devices.map { |dev| mount_point_for(dev) }.compact
+          device.remove_shadowed_subvolumes!(mount_points)
+        end
+      end
+
+      def mount_point_for(device)
+        return nil unless device.respond_to?(:mount_point)
+        return nil if device.mount_point.nil? || device.mount_point.empty?
+        device.mount_point
       end
 
       # Return the total amount of RAM as DiskSize

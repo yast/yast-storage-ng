@@ -39,7 +39,7 @@ module Y2Storage
       # @return [String] UUID to enforce in the filesystem
       attr_accessor :uuid
 
-      # @return [Array<PlannedSubvolume>] Btrfs subvolumes
+      # @return [Array<Planned::BtrfsSubvolume>] Btrfs subvolumes
       attr_accessor :subvolumes
 
       # @return [String] Parent for all Btrfs subvolumes (typically "@")
@@ -50,46 +50,71 @@ module Y2Storage
       end
 
       # Creates a filesystem for the planned device on the specified real
-      # BlkDevice object and set its mount point. Do nothing if #filesystem_type
-      # is not set.
+      # BlkDevice object.
+      #
+      # This also sets all the filesystem attributes, like the mount point, and
+      # creates the corresponding Btrfs subvolumes if needed.
+      #
+      # Do nothing if #filesystem_type is not set.
       #
       # @param blk_dev [BlkDevice]
       #
       # @return [Filesystems::BlkFilesystem] filesystem
       def create_filesystem(blk_dev)
         return nil unless filesystem_type
+
         filesystem = blk_dev.create_blk_filesystem(filesystem_type)
         filesystem.mountpoint = mount_point if mount_point && !mount_point.empty?
         filesystem.label = label if label
         filesystem.uuid = uuid if uuid
+
+        btrfs_setup(filesystem)
+
         filesystem
       end
 
-      # Creates subvolumes on this device after the filesystem is created
-      # if this is a btrfs root filesystem.
+      # Checks whether the filesystem type is Btrfs
+      #
+      # @return [Boolean]
+      def btrfs?
+        return false unless filesystem_type
+        filesystem_type.is?(:btrfs)
+      end
+
+      # Checks whether the planned device has any subvolumes
+      #
+      # @return [Boolean]
+      def subvolumes?
+        btrfs? && !subvolumes.nil? && !subvolumes.empty?
+      end
+
+      # Removes from #subvolumes all the plannes subvolumes that would be
+      # shadowed by another device mounted in any of the given mount points
+      #
+      # @param other_mount_points [Array<String>] mount points of the other
+      #   devices in the filesystem
+      def remove_shadowed_subvolumes!(other_mount_points)
+        return if subvolumes.nil? || subvolumes.empty?
+        self.subvolumes = subvolumes.reject { |subvol| subvol.shadowed?(other_mount_points) }
+      end
+
+    protected
+
+      # Creates subvolumes in the previously created filesystem that is placed
+      # in the final device.
+      #
+      # This also sets other Btrfs attributes, like the default subvolume.
       #
       # @param filesystem [Filesystems::BlkFilesystem]
-      # @param other_mount_points [Array<String>]
-      #
-      # @return nil
-      #
-      def create_subvolumes(filesystem, other_mount_points)
+      def btrfs_setup(filesystem)
         return unless filesystem.supports_btrfs_subvolumes?
-        return unless subvolumes?
         parent_subvol = get_parent_subvol(filesystem)
         parent_subvol.set_default_btrfs_subvolume
-        prefix = filesystem.mountpoint
-        prefix += "/" unless prefix == "/"
-        subvolumes.each do |planned_subvol|
-          # Notice that subvolumes not matching the current architecture are
-          # already removed
-          # TODO: this call to #shadows is probably missplaced here, but this
-          # code is not covered by unit tests, so I will fix it in an upcoming
-          # commit
-          next if shadows?(prefix + planned_subvol.path, other_mount_points)
-          planned_subvol.create_subvol(parent_subvol, @default_subvolume, prefix)
+
+        return unless subvolumes?
+        subvolumes.each do |planned_subvolume|
+          planned_subvolume.create_subvol(parent_subvol, @default_subvolume)
         end
-        nil
       end
 
       # Get the parent subvolume for all others on Btrfs 'filesystem':
@@ -114,21 +139,6 @@ module Y2Storage
           parent = parent.create_btrfs_subvolume(@default_subvolume)
         end
         parent
-      end
-
-      # Checks whether the filesystem type is Btrfs
-      #
-      # @return [Boolean]
-      def btrfs?
-        return false unless filesystem_type
-        filesystem_type.is?(:btrfs)
-      end
-
-      # Checks whether the planned device has any subvolumes
-      #
-      # @return [Boolean]
-      def subvolumes?
-        btrfs? && !subvolumes.nil? && !subvolumes.empty?
       end
     end
   end

@@ -37,27 +37,22 @@ module Y2Storage
       def initialize_can_be_mounted
       end
 
-      # Check if 'mount_point' shadows any of the mount points in
-      # 'other_mount_points'.
+      # Checks whether this device is shadowed by any of the given mount points
       #
-      # @param mount_point [String] mount point to check
       # @param other_mount_points [Array<String>]
       #
       # @return [Boolean]
-      #
-      # TODO: this is probably misplaced here, but is not called in the unit
-      # test suite, so I will fix it in an upcoming commit
-      def shadows?(mount_point, other_mount_points)
+      def shadowed?(other_mount_points)
         return false if mount_point.nil? || other_mount_points.nil?
         # Just checking with start_with? is not sufficient:
         # "/bootinger/schlonz".start_with?("/boot") -> true
         # So append "/" to make sure only complete subpaths are compared:
         # "/bootinger/schlonz/".start_with?("/boot/") -> false
         # "/boot/schlonz/".start_with?("/boot/") -> true
-        mount_point += "/"
+        check_path = "#{mount_point}/"
         other_mount_points.any? do |other|
           next false if other.nil?
-          mount_point.start_with?(other + "/")
+          check_path.start_with?("#{other}/")
         end
       end
     end

@@ -61,16 +61,23 @@ module Yast
         add_planned_attributes!(lv, attrs)
       end
 
+      def planned_subvol(attrs = {})
+        subvol = Y2Storage::Planned::BtrfsSubvolume.new
+        add_planned_attributes!(subvol, attrs)
+      end
+
       def add_planned_attributes!(device, attrs)
         attrs = attrs.dup
 
-        type = attrs.delete(:type)
-        device.filesystem_type =
-          if type.is_a?(::String) || type.is_a?(Symbol)
-            Y2Storage::Filesystems::Type.const_get(type.to_s.upcase)
-          else
-            type
-          end
+        if device.respond_to?(:filesystem_type)
+          type = attrs.delete(:type)
+          device.filesystem_type =
+            if type.is_a?(::String) || type.is_a?(Symbol)
+              Y2Storage::Filesystems::Type.const_get(type.to_s.upcase)
+            else
+              type
+            end
+        end
 
         attrs.each_pair do |key, value|
           device.send(:"#{key}=", value)
