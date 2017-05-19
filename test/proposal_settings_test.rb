@@ -275,8 +275,9 @@ describe Y2Storage::ProposalSettings do
       let(:subvols_feature) do
         [
           { "path" => "home" },
+          { "path" => "var", "copy_on_write" => false, "archs" => "i386,x86_64" },
           { "path" => "opt", "copy_on_write" => true },
-          { "path" => "var", "copy_on_write" => false, "archs" => "i386,x86_64" }
+          { "path" => "boot/efi", "archs" => "fake, ppc,  !  foo" }
         ]
       end
       let(:subvols) { settings.subvolumes }
@@ -287,12 +288,17 @@ describe Y2Storage::ProposalSettings do
 
       it "creates a SubvolSpecification for each subvolume in the list" do
         settings.read_product_features!
-        expect(subvols.map(&:class)).to eq([Y2Storage::SubvolSpecification] * 3)
+        expect(subvols.map(&:class)).to eq([Y2Storage::SubvolSpecification] * 4)
       end
 
       it "reads each 'path' value" do
         settings.read_product_features!
-        expect(subvols.map(&:path)).to contain_exactly("home", "opt", "var")
+        expect(subvols.map(&:path)).to contain_exactly("boot/efi", "home", "opt", "var")
+      end
+
+      it "returns a list sorted by path" do
+        settings.read_product_features!
+        expect(subvols.map(&:path)).to eq ["boot/efi", "home", "opt", "var"]
       end
 
       it "reads each 'copy_on_write' value" do
@@ -309,6 +315,11 @@ describe Y2Storage::ProposalSettings do
       it "reads each 'archs' value as an array of strings" do
         settings.read_product_features!
         expect(subvol("var").archs).to contain_exactly("i386", "x86_64")
+      end
+
+      it "deals correctly with spaces in the 'archs' list" do
+        settings.read_product_features!
+        expect(subvol("boot/efi").archs).to contain_exactly("fake", "ppc", "!foo")
       end
 
       it "uses nil if 'archs' is omitted" do
