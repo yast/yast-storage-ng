@@ -1,4 +1,14 @@
 -------------------------------------------------------------------
+Mon May 22 10:58:24 UTC 2017 - ancor@suse.com
+
+- Refactored the proposal code in preparation for the AutoYaST
+  implementation. Removed PlannedVolume and PlannedVolumesList
+  classes in favor of new more specific classes in the Planned
+  namespace.
+- Fixed the proposal to never propose subvolumes that would be
+  shadowed by another proposed device.
+
+-------------------------------------------------------------------
 Wed May 17 11:53:56 UTC 2017 - jreidinger@suse.com
 
 - Add to Y2Storage::PartitionTables::Type#to_human_string
