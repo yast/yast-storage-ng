@@ -80,6 +80,19 @@ module Y2Storage
         DiskSize.new(0)
       end
 
+      # Total sum of all the sizes
+      #
+      # If the optional argument "rounding" is used, every size will be
+      # rounded up. See {DiskSize#ceil}
+      #
+      # @param sizes [Array<DiskSize>]
+      # @param rounding [DiskSize, nil]
+      # @return [DiskSize] sum of all the sizes
+      def sum(sizes, rounding: nil)
+        rounding ||= DiskSize.new(1)
+        sizes.reduce(DiskSize.zero) { |sum, size| sum + size.ceil(rounding) }
+      end
+
       # Create a DiskSize from a parsed string.
       # @param str [String]
       # @param legacy_units [Boolean] if true, International System units

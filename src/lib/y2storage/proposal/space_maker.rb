@@ -23,11 +23,11 @@
 
 require "fileutils"
 require "storage"
-require "y2storage/planned_volume"
+require "y2storage/planned"
 require "y2storage/partition"
 require "y2storage/disk_size"
 require "y2storage/free_disk_space"
-require "y2storage/proposal/space_distribution_calculator"
+require "y2storage/proposal/partitions_distribution_calculator"
 require "y2storage/proposal/partition_killer"
 
 module Y2Storage
@@ -52,54 +52,54 @@ module Y2Storage
       end
 
       # Performs all the operations needed to free enough space to accomodate
-      # a set of planned volumes (that must live out of LVM) and the new
-      # physical volumes needed to accomodate the LVM planned volumes.
+      # a set of planned partitions and the new physical volumes needed to
+      # accomodate the planned LVM logical volumes.
       #
       # @raise Proposal::Error if is not possible to accomodate the planned
-      #   volumes and/or the physical volumes
+      #   partitions and/or the physical volumes
       #
       # @param original_graph [Devicegraph] initial devicegraph
-      # @param no_lvm_volumes [PlannedVolumesList] set of non-LVM volumes to
-      #     make space for. The LVM volumes are already handled by #lvm_helper.
+      # @param planned_partitions [Array<Planned::Partition>] set of partitions
+      #     to make space for.
       # @param lvm_helper [Proposal::LvmHelper] contains information about the
-      #     LVM planned volumes and how to make space for them
+      #     planned LVM logical volumes and how to make space for them
       # @return [Hash] a hash with three elements:
       #   devicegraph: [Devicegraph] resulting devicegraph
       #   deleted_partitions: [Array<Partition>] partitions that
       #     were in the original devicegraph but are not in the resulting one
-      #   space_distribution: [SpaceDistribution] proposed distribution of
-      #     volumes, including new PVs if necessary
+      #   partitions_distribution: [Planned::PartitionsDistribution] proposed
+      #     distribution of partitions, including new PVs if necessary
       #
-      def provide_space(original_graph, no_lvm_volumes, lvm_helper)
+      def provide_space(original_graph, planned_partitions, lvm_helper)
         @original_graph = original_graph
         @new_graph = original_graph.duplicate
-        @dist_calculator = SpaceDistributionCalculator.new(lvm_helper)
+        @dist_calculator = PartitionsDistributionCalculator.new(lvm_helper)
 
         # Partitions that should not be deleted
         keep = lvm_helper.partitions_in_vg
-        # Let's filter out volumes with some value in #reuse
-        volumes = no_lvm_volumes.dup
-        volumes.select(&:reuse).each do |vol|
-          log.info "No need to find a fit for this volume, it will reuse #{vol.reuse}: #{vol}"
-          keep << vol.reuse
-          volumes.delete(vol)
+        # Let's filter out partitions with some value in #reuse
+        partitions = planned_partitions.dup
+        partitions.select(&:reuse).each do |part|
+          log.info "No need to find a fit for this partition, it will reuse #{part.reuse}: #{part}"
+          keep << part.reuse
+          partitions.delete(part)
         end
 
         # To make sure we are not freeing space in a useless place, let's
         # first restrict the operations to disks with particular requirements
-        volumes_by_disk(volumes).each do |disk, vols|
-          resize_and_delete!(vols, keep, disk: disk)
+        planned_partitions_by_disk(partitions).each do |disk, parts|
+          resize_and_delete!(parts, keep, disk: disk)
         end
         # Doing something similar for #max_start_offset is more difficult and
         # doesn't pay off (#max_start_offset is used just in one case)
 
-        # Now with the full set of volumes and all the candidate disks
-        resize_and_delete!(volumes, keep)
+        # Now with the full set of planned partitions and all the candidate disks
+        resize_and_delete!(partitions, keep)
 
         {
-          devicegraph:        @new_graph,
-          deleted_partitions: deleted_partitions,
-          space_distribution: @distribution
+          devicegraph:             @new_graph,
+          deleted_partitions:      deleted_partitions,
+          partitions_distribution: @distribution
         }
       end
 
@@ -139,61 +139,62 @@ module Y2Storage
         original_graph.partitions.select { |p| @deleted_names.include?(p.name) }
       end
 
-      # @return [Hash{String => PlannedVolumesList}]
-      def volumes_by_disk(volumes)
-        volumes.each_with_object({}) do |volume, hash|
-          if volume.disk
-            hash[volume.disk] ||= PlannedVolumesList.new([], target: volumes.target)
-            hash[volume.disk] << volume
+      # @return [Hash{String => Array<Planned::Partition>}]
+      def planned_partitions_by_disk(planned_partitions)
+        planned_partitions.each_with_object({}) do |partition, hash|
+          if partition.disk
+            hash[partition.disk] ||= []
+            hash[partition.disk] << partition
           end
         end
       end
 
       # Checks whether the goal has already being reached
       #
-      # If it returns true, it stores in @distribution the SpaceDistribution
+      # If it returns true, it stores in @distribution the PartitionsDistribution
       # that made it possible.
       #
       # @return [Boolean]
-      def success?(volumes)
+      def success?(planned_partitions)
         spaces = free_spaces(new_graph)
-        @distribution ||= dist_calculator.best_distribution(volumes, spaces)
+        @distribution ||= dist_calculator.best_distribution(planned_partitions, spaces)
         !!@distribution
       rescue Error => e
-        log.info "Exception while trying to distribute volumes: #{e}"
+        log.info "Exception while trying to distribute partitions: #{e}"
         @distribution = nil
         false
       end
 
-      # Perform all the needed operations to make space for the volumes
+      # Perform all the needed operations to make space for the partitions
       #
-      # @param volumes [PlannedVolumesList] volumes to make space for
+      # @param planned_partitions [Array<Planned::Partition>] partitions
+      #     to make space for
       # @param keep [Array<String>] device names of partitions that should not
       #     be deleted
       # @param disk [String] optional disk name to restrict operations to
-      def resize_and_delete!(volumes, keep, disk: nil)
+      def resize_and_delete!(planned_partitions, keep, disk: nil)
         log.info "Resize and delete. disk: #{disk}"
 
         @distribution = nil
 
         # Initially, resize only if there are no Linux partitions in the disk
-        resize_windows!(volumes, disk, force: false)
-        delete_partitions!(volumes, :linux, keep, disk)
-        delete_partitions!(volumes, :other, keep, disk)
+        resize_windows!(planned_partitions, disk, force: false)
+        delete_partitions!(planned_partitions, :linux, keep, disk)
+        delete_partitions!(planned_partitions, :other, keep, disk)
         # If everything else failed, try resizing Windows before deleting it
-        resize_windows!(volumes, disk, force: true)
-        delete_partitions!(volumes, :windows, keep, disk)
+        resize_windows!(planned_partitions, disk, force: true)
+        delete_partitions!(planned_partitions, :windows, keep, disk)
 
-        raise NoDiskSpaceError unless success?(volumes)
+        raise NoDiskSpaceError unless success?(planned_partitions)
       end
 
       # Additional space that needs to be freed while resizing a partition in
       # order to reach the goal
       #
       # @return [DiskSize]
-      def resizing_size(partition, volumes, disk)
+      def resizing_size(partition, planned_partitions, disk)
         spaces = free_spaces(new_graph, disk)
-        dist_calculator.resizing_size(partition, volumes, spaces)
+        dist_calculator.resizing_size(partition, planned_partitions, spaces)
       end
 
       # List of free spaces in the given devicegraph
@@ -224,13 +225,13 @@ module Y2Storage
 
       # Try to resize the existing windows partitions
       #
-      # @param volumes [PlannedVolumesList] list of volumes to allocate, used
-      #   to know how much space is still missing
+      # @param planned_partitions [Array<Planned::Partition>] list of
+      #   partitions to allocate, used to know how much space is still missing
       # @param disk [String] optional disk name to restrict operations to
       # @param force [Boolean] whether to resize Windows even if there are
       #   Linux partitions in the same disk
-      def resize_windows!(volumes, disk, force: false)
-        return if success?(volumes)
+      def resize_windows!(planned_partitions, disk, force: false)
+        return if success?(planned_partitions)
         return unless settings.resize_windows
         part_names = windows_part_names(disk)
         return if part_names.empty?
@@ -242,11 +243,11 @@ module Y2Storage
         success = sorted_resizables(parts_by_disk.values.flatten).any? do |res|
           shrink_size = [
             res[:recoverable_size],
-            resizing_size(res[:partition], volumes, disk)
+            resizing_size(res[:partition], planned_partitions, disk)
           ].min
           shrink_partition(res[:partition], shrink_size)
 
-          success?(volumes)
+          success?(planned_partitions)
         end
 
         log.info "Didn't manage to free enough space by resizing Windows" unless success
@@ -262,11 +263,11 @@ module Y2Storage
         end
       end
 
-      def remove_linux_disks!(partitions_by_disk)
-        partitions_by_disk.each do |disk, _p|
+      def remove_linux_disks!(parts_by_disk)
+        parts_by_disk.each do |disk, _p|
           if linux_in_disk?(disk)
             log.info "Linux partitions in #{disk}, Windows will not be resized"
-            partitions_by_disk.delete(disk)
+            parts_by_disk.delete(disk)
           end
         end
       end
@@ -317,17 +318,17 @@ module Y2Storage
       #
       # @see #deletion_candidate_partitions for supported types
       #
-      # @param volumes [PlannedVolumesList]
+      # @param planned_partitions [Array<Planned::Partition>]
       # @param type [Symbol] type of partition to delete
       # @param keep [Array<String>] device names of partitions that should not
       #       be deleted
       # @param disk [String] optional disk name to restrict operations to
-      def delete_partitions!(volumes, type, keep, disk)
-        return if success?(volumes)
+      def delete_partitions!(planned_partitions, type, keep, disk)
+        return if success?(planned_partitions)
         return if settings.delete_forbidden?(type)
 
         log.info("Deleting partitions to make space")
-        delete_candidates!(new_graph, type, keep, disk) { success?(volumes) }
+        delete_candidates!(new_graph, type, keep, disk) { success?(planned_partitions) }
       end
 
       # @see #delete_partitions! and #delete_unwanted_partitions
@@ -343,7 +344,7 @@ module Y2Storage
           # Strictly speaking, this could lead to deletion of a partition
           # included in the keep array. In practice it doesn't matter because
           # PVs and extended partitions are never marked to be reused as a
-          # PlannedVolume.
+          # planned partition.
           names = partition_killer.delete(part_name)
           next if names.empty?
 

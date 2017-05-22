@@ -25,8 +25,7 @@ require "yast"
 require "storage/patches"
 require "y2storage/disk_size"
 require "y2storage/filesystems/type"
-require "y2storage/planned_volume"
-require "y2storage/planned_volumes_list"
+require "y2storage/planned"
 
 module Y2Storage
   module BootRequirementsStrategies
@@ -44,10 +43,8 @@ module Y2Storage
         @root_disk = devicegraph.disks.detect { |d| d.name == settings.root_device }
       end
 
-      def needed_partitions
-        volumes = PlannedVolumesList.new
-        volumes << boot_volume if boot_partition_needed?
-        volumes
+      def needed_partitions(target)
+        boot_partition_needed? ? [boot_partition(target)] : []
       end
 
     protected
@@ -60,13 +57,11 @@ module Y2Storage
         false
       end
 
-      def boot_volume
-        vol = PlannedVolume.new("/boot", Filesystems::Type::EXT4)
+      def boot_partition(target)
+        vol = Planned::Partition.new("/boot", Filesystems::Type::EXT4)
         vol.disk = settings.root_device
-        vol.min_size = DiskSize.MiB(100)
+        vol.min_size = target == :min ? DiskSize.MiB(100) : DiskSize.MiB(200)
         vol.max_size = DiskSize.MiB(500)
-        vol.desired_size = DiskSize.MiB(200)
-        vol.plain_partition = true
         vol
       end
 

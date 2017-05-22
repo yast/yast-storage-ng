@@ -153,7 +153,7 @@ describe Y2Storage::BootRequirementsChecker do
     end
 
     context "when proposing a boot partition" do
-      let(:boot_part) { find_vol("/boot", checker.needed_partitions) }
+      let(:boot_part) { find_vol("/boot", checker.needed_partitions(target)) }
       # Default values to ensure the presence of a /boot partition
       let(:use_lvm) { true }
       let(:sda_part_table) { pt_msdos }
@@ -164,7 +164,7 @@ describe Y2Storage::BootRequirementsChecker do
     end
 
     context "when proposing a PReP partition" do
-      let(:prep_part) { find_vol(nil, checker.needed_partitions) }
+      let(:prep_part) { find_vol(nil, checker.needed_partitions(target)) }
       # Default values to ensure the presence of a PReP partition
       let(:use_lvm) { false }
       let(:power_nv) { false }

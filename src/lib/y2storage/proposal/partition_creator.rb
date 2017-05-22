@@ -22,14 +22,14 @@
 # find current contact information at www.suse.com.
 
 require "fileutils"
-require "y2storage/planned_volumes_list"
+require "y2storage/planned"
 require "y2storage/disk_size"
 require "y2storage/proposal/encrypter"
 
 module Y2Storage
   class Proposal
     # Class to create partitions following a given distribution represented by
-    # a SpaceDistribution object
+    # a Planned::PartitionsDistribution object
     class PartitionCreator
       include Yast::Logger
 
@@ -45,13 +45,13 @@ module Y2Storage
       # Returns a copy of the original devicegraph in which all the needed
       # partitions have been created.
       #
-      # @param distribution [SpaceDistribution]
+      # @param distribution [Planned::PartitionsDistribution]
       # @return [Devicegraph]
       def create_partitions(distribution)
         self.devicegraph = original_graph.duplicate
 
         distribution.spaces.each do |space|
-          process_free_space(space.disk_space, space.volumes, space.usable_size, space.num_logical)
+          process_free_space(space.disk_space, space.partitions, space.usable_size, space.num_logical)
         end
 
         devicegraph
@@ -66,67 +66,46 @@ module Y2Storage
       # Create partitions in a single slot of free disk space.
       #
       # @param free_space [FreeDiskSpace] the slot
-      # @param volumes   [PlannedVolumesList] volumes to create
-      # @param usable_size [DiskSize] real space to distribute among the
-      #       volumes (part of free_space could be used for data structures)
-      # @param num_logical [Integer] how many volumes should be placed in
-      #       logical partitions
-      def process_free_space(free_space, volumes, usable_size, num_logical)
-        volumes.each do |vol|
-          log.info(
-            "vol #{vol.mount_point}\tmin: #{vol.min_size}\tmax: #{vol.max_size} " \
-            "desired: #{vol.desired_size}\tweight: #{vol.weight}"
-          )
+      # @param partitions [Array<Planned::Partition>] partitions to create
+      # @param usable_size [DiskSize] real space to distribute among the planned
+      #       partitions (part of free_space could be used for data structures)
+      # @param num_logical [Integer] how many partitions should be logical
+      def process_free_space(free_space, partitions, usable_size, num_logical)
+        partitions.each do |p|
+          log.info "partition #{p.mount_point}\tmin: #{p.min}\tmax: #{p.max}\tweight: #{p.weight}"
         end
 
         min_grain = free_space.disk.min_grain
-        sorted = sorted_volumes(volumes, usable_size, min_grain)
-        volumes = sorted.distribute_space(usable_size, min_grain: min_grain)
-        create_volumes_partitions(volumes, free_space, num_logical)
+        partitions = Planned::Partition.distribute_space(partitions, usable_size, min_grain: min_grain)
+        create_planned_partitions(partitions, free_space, num_logical)
       end
 
-      # Volumes sorted in the most convenient way in order to create partitions
-      # for them.
-      def sorted_volumes(volumes, usable_size, min_grain)
-        sorted = volumes.sort_by_attr(:disk, :max_start_offset)
-        last = volumes.enforced_last(usable_size, min_grain)
-        if last
-          sorted.delete(last)
-          sorted << last
-        end
-        PlannedVolumesList.new(sorted, target: volumes.target)
-      end
-
-      # Creates a partition and the corresponding filesystem for each volume
+      # Creates a partition and the corresponding filesystem for each planned
+      # partition
       #
-      # @raise an error if a volume cannot be allocated
+      # @raise an error if a partition cannot be allocated
       #
-      # It tries to honor the value of #max_start_offset for each volume, but
+      # It tries to honor the value of #max_start_offset for each partition, but
       # it does not raise an exception if that particular requirement is
       # impossible to fulfill, since it's usually more a recommendation than a
       # hard limit.
       #
-      # @param volumes [Array<PlannedVolume>]
+      # @param planned_partitions [Array<Planned::Partition>]
       # @param initial_free_space [FreeDiskSpace]
       # @param num_logical [Symbol] logical partitions. See {#process_space}
-      def create_volumes_partitions(volumes, initial_free_space, num_logical)
-        volumes.each_with_index do |vol, idx|
-          partition_id = vol.partition_id
-          partition_id ||= vol.mount_point == "swap" ? PartitionId::SWAP : PartitionId::LINUX
+      def create_planned_partitions(planned_partitions, initial_free_space, num_logical)
+        planned_partitions.each_with_index do |part, idx|
+          partition_id = part.partition_id
+          partition_id ||= part.mount_point == "swap" ? PartitionId::SWAP : PartitionId::LINUX
           begin
             space = free_space_within(initial_free_space)
-            primary = volumes.size - idx > num_logical
-            partition = create_partition(vol, partition_id, space, primary)
-            final_device = encrypter.device_for(vol, partition)
-            filesystem = vol.create_filesystem(final_device)
-            if vol.subvolumes?
-              other_mount_points = volumes.map { |v| v.mount_point }
-              other_mount_points.delete_if { |mp| mp == vol.mount_point }
-              vol.create_subvolumes(filesystem, other_mount_points)
-            end
+            primary = planned_partitions.size - idx > num_logical
+            partition = create_partition(part, partition_id, space, primary)
+            final_device = encrypter.device_for(part, partition)
+            part.create_filesystem(final_device)
             devicegraph.check
           rescue ::Storage::Exception => error
-            raise Error, "Error allocating #{vol}. Details: #{error}"
+            raise Error, "Error allocating #{part}. Details: #{error}"
           end
         end
       end
@@ -146,17 +125,17 @@ module Y2Storage
         spaces.first
       end
 
-      # Create a partition for the specified volume within the specified slot
-      # of free space.
+      # Create a real partition for the specified planned partition within the
+      # specified slot of free space.
       #
-      # @param vol          [ProposalVolume]
+      # @param planned_partition [Planned::Partition]
       # @param partition_id [PartitionId]
       # @param free_space   [FreeDiskSpace]
       # @param primary      [Boolean] whether the partition should be primary
       #                     or logical
       #
-      def create_partition(vol, partition_id, free_space, primary)
-        log.info("Creating partition for #{vol.mount_point} with #{vol.size}")
+      def create_partition(planned_partition, partition_id, free_space, primary)
+        log.info "Creating partition for #{planned_partition.mount_point} with #{planned_partition.size}"
         disk = free_space.disk
         ptable = partition_table(disk)
 
@@ -172,10 +151,10 @@ module Y2Storage
           partition_type = PartitionType::LOGICAL
         end
 
-        region = new_region_with_size(free_space.region, vol.size)
+        region = new_region_with_size(free_space.region, planned_partition.size)
         partition = ptable.create_partition(dev_name, region, partition_type)
         partition.id = partition_id
-        partition.boot = !!vol.bootable if ptable.partition_boot_flag_supported?
+        partition.boot = !!planned_partition.bootable if ptable.partition_boot_flag_supported?
         partition
       end
 

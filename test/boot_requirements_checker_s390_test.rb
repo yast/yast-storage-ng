@@ -142,7 +142,7 @@ describe Y2Storage::BootRequirementsChecker do
     end
 
     context "when proposing a /boot/zipl partition" do
-      let(:zipl_part) { find_vol("/boot/zipl", checker.needed_partitions) }
+      let(:zipl_part) { find_vol("/boot/zipl", checker.needed_partitions(target)) }
       # Default values to ensure the partition is proposed
       let(:dasd) { false }
       let(:dasd_type) { Y2Storage::DasdType::UNKNOWN }

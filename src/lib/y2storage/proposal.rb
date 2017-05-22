@@ -24,7 +24,7 @@ require "y2storage/proposal_settings"
 require "y2storage/storage_manager"
 require "y2storage/disk_analyzer"
 require "y2storage/proposal/exceptions"
-require "y2storage/proposal/volumes_generator"
+require "y2storage/proposal/planned_devices_generator"
 require "y2storage/proposal/devicegraph_generator"
 
 module Y2Storage
@@ -49,10 +49,10 @@ module Y2Storage
     # calculating the proposal
     # @return [ProposalSettings]
     attr_reader :settings
-    # Planned volumes calculated by the proposal, nil if the proposal has not
+    # Planned devices calculated by the proposal, nil if the proposal has not
     # been calculated yet
-    # @return [PlannedVolumeList]
-    attr_reader :volumes
+    # @return [Array<Planned::Device>]
+    attr_reader :planned_devices
     # Proposed layout of devices, nil if the proposal has not been
     # calculated yet
     # @return [Devicegraph]
@@ -86,44 +86,45 @@ module Y2Storage
       settings.freeze
       @proposed = true
 
-      # FIXME: The current implementation, tries :desired and then :min for
-      # every root disk. It would probably make more sense to try first :desired
-      # for all possible root disks and then do the same with :min.
       exception = nil
-      candidate_roots.each do |disk_name|
-        populated_settings.root_device = disk_name
-        exception = nil
+      [:desired, :min].each do |target|
+        candidate_roots.each do |disk_name|
+          log.info "Trying to make a proposal with target #{target} and root #{disk_name}"
 
-        begin
-          @volumes = volumes_list
-          @devices = devicegraph(@volumes)
-        rescue Error => error
-          log.info "Failed to make a proposal using root device #{disk_name}: #{error.message}"
-          exception = error
+          populated_settings.root_device = disk_name
+          exception = nil
+
+          begin
+            @planned_devices = planned_devices_list(target)
+            @devices = devicegraph(@planned_devices)
+          rescue Error => error
+            log.info "Failed to make a proposal using root device #{disk_name}: #{error.message}"
+            exception = error
+          end
+
+          return true unless exception
         end
-
-        break unless exception
       end
 
-      raise exception if exception
+      raise exception
     end
 
   protected
 
-    # @return [PlannedVolumesList]
-    def volumes_list
-      generator = VolumesGenerator.new(populated_settings, clean_graph)
-      generator.volumes
+    # @return [Array<Planned::Device>]
+    def planned_devices_list(target)
+      generator = PlannedDevicesGenerator.new(populated_settings, clean_graph)
+      generator.planned_devices(target)
     end
 
-    # Devicegraph resulting of accommodating some volumes in the initial
-    # devicegraph
+    # Devicegraph resulting of accommodating some planned devices in the
+    # initial devicegraph
     #
-    # @param volumes [PlannedVolumesList] list of volumes to accomodate
+    # @param planned_devices [Array<Planned::Device>] devices to accomodate
     # @return [Devicegraph]
-    def devicegraph(volumes)
+    def devicegraph(planned_devices)
       generator = DevicegraphGenerator.new(populated_settings)
-      generator.devicegraph(volumes, clean_graph, space_maker)
+      generator.devicegraph(planned_devices, clean_graph, space_maker)
     end
 
     def space_maker

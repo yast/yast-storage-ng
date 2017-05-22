@@ -24,7 +24,7 @@
 require "yast"
 require "y2storage/disk_size"
 require "y2storage/secret_attributes"
-require "y2storage/planned_subvol"
+require "y2storage/subvol_specification"
 require "y2storage/filesystems/type"
 
 Yast.import "ProductFeatures"
@@ -184,9 +184,14 @@ module Y2Storage
     attr_accessor :min_size_to_use_separate_home
     attr_accessor :btrfs_default_subvolume
     attr_accessor :root_subvolume_read_only
-    attr_accessor :subvolumes
     attr_accessor :home_min_size
     attr_accessor :home_max_size
+
+    # @return [Array<SubvolSpecification>] list of specifications (usually read
+    #   from the control file) that will be used to plan the Btrfs subvolumes of
+    #   the root filesystem
+    #   @see #planned_subvolumes
+    attr_accessor :subvolumes
 
     PRODUCT_SECTION = "partitioning"
     private_constant :PRODUCT_SECTION
@@ -201,7 +206,7 @@ module Y2Storage
       @btrfs_increase_percentage     = 300.0
       @btrfs_default_subvolume       = "@"
       @root_subvolume_read_only      = false
-      @subvolumes                    = PlannedSubvol.fallback_list
+      @subvolumes                    = SubvolSpecification.fallback_list
 
       # Not yet in control.xml
       @home_min_size            = DiskSize.GiB(10)
@@ -231,7 +236,7 @@ module Y2Storage
       set_from_integer_feature(:btrfs_increase_percentage, :btrfs_increase_percentage)
 
       set_from_string_feature(:btrfs_default_subvolume, :btrfs_default_subvolume)
-      @subvolumes = read_subvolumes_section
+      read_subvolumes_section!
     end
 
     # New object initialized according to the YaST product features
@@ -264,6 +269,28 @@ module Y2Storage
         "  home_min_size: #{home_min_size}\n" \
         "  home_max_size: #{home_max_size}\n" \
         "  subvolumes: \n#{subvolumes}\n"
+    end
+
+    # List of Planned::BtrfsSubvolume objects based on the specifications stored
+    # at #subvolumes (i.e. read from the product features).
+    #
+    # It includes only subvolumes that make sense for the current architecture
+    # and avoids duplicated paths.
+    #
+    # @return [Array<Planned::BtrfsSubvolume>]
+    def planned_subvolumes
+      # Should not happen, #subvolumes is initialized in the constructor
+      return [] if subvolumes.nil?
+
+      subvolumes.each_with_object([]) do |subvol, result|
+        new_planned = subvol.planned_subvolume
+        next if new_planned.nil?
+
+        # Overwrite previous definitions for the same path
+        result.delete_if { |s| s.path == new_planned.path }
+
+        result << new_planned
+      end
     end
 
   protected
@@ -307,14 +334,17 @@ module Y2Storage
       send(:"#{attr}=", value) if value && value >= 0
     end
 
-    # Read the "subvolumes" section of control.xml
-    #
-    # @return [Array<PlannedSubvolume>]
-    def read_subvolumes_section
+    # Reads the "subvolumes" section of control.xml
+    # @see SubvolSpecification.list_from_control_xml
+    def read_subvolumes_section!
       xml = Yast::ProductFeatures.GetSection("partitioning")
-      subvols = PlannedSubvol.create_from_control_xml(xml["subvolumes"]) || PlannedSubvol.fallback_list
-      subvols.each { |s| log.info("Initial #{s}") }
-      subvols
+      subvols = SubvolSpecification.list_from_control_xml(xml["subvolumes"])
+      if subvols
+        self.subvolumes = subvols
+      else
+        log.info "Unable to read subvolumes from the product features. Using fallback list."
+      end
+      subvolumes.each { |s| log.info("Initial #{s}") }
     end
   end
 end

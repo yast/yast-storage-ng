@@ -35,26 +35,27 @@ module Y2Storage
       DEVICE_OVERHEAD = DiskSize.MiB(2)
       private_constant :DEVICE_OVERHEAD
 
-      # Returns the (possibly encrypted) device to be used for the volume.
+      # Returns the (possibly encrypted) device to be used for the planned
+      # device.
       #
-      # If encryption is requested by the volume, the method will encrypt the
-      # plain device and will return the corresponding encrypted one. Otherwise,
-      # it will simply return the plain device.
+      # If encryption is requested by the planned device, the method will
+      # encrypt the plain device and will return the corresponding encrypted
+      # one. Otherwise, it will simply return the plain device.
       #
-      # @param volume [PlannedVolume]
+      # @param planned [Planned::Device]
       # @param plain_device [BlkDevice]
       # @return [BlkDevice]
-      def device_for(volume, plain_device)
-        log.info "Checking if the volume must be encrypted #{volume.inspect}"
+      def device_for(planned, plain_device)
+        log.info "Checking if the device must be encrypted #{planned.inspect}"
 
-        if !volume.encrypt?
+        if !planned.respond_to?(:encrypt?) || !planned.encrypt?
           log.info "No encryption. Returning the plain device. #{plain_device.inspect}"
           return plain_device
         end
 
         result = plain_device.create_encryption(dm_name_for(plain_device))
-        result.password = volume.encryption_password
-        log.info "Volume encrypted. Returning the new device #{result.inspect}"
+        result.password = planned.encryption_password
+        log.info "Device encrypted. Returning the new device #{result.inspect}"
         result
       end
 

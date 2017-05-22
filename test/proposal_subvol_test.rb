@@ -80,8 +80,8 @@ describe Y2Storage::Proposal do
       context "and there are planned subvolumes" do
         before do
           settings.subvolumes = [
-            Y2Storage::PlannedSubvol.new("myhome", copy_on_write: true),
-            Y2Storage::PlannedSubvol.new("myopt", copy_on_write: false)
+            Y2Storage::SubvolSpecification.new("myhome", copy_on_write: true),
+            Y2Storage::SubvolSpecification.new("myopt", copy_on_write: false)
           ]
         end
 

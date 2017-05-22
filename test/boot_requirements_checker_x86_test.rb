@@ -343,7 +343,7 @@ describe Y2Storage::BootRequirementsChecker do
       end
 
       context "when proposing a boot partition" do
-        let(:boot_part) { find_vol("/boot", checker.needed_partitions) }
+        let(:boot_part) { find_vol("/boot", checker.needed_partitions(target)) }
         # Default values to ensure proposal of boot
         let(:efiboot) { false }
         let(:use_lvm) { true }
@@ -354,7 +354,7 @@ describe Y2Storage::BootRequirementsChecker do
       end
 
       context "when proposing an new GRUB partition" do
-        let(:grub_part) { find_vol(nil, checker.needed_partitions) }
+        let(:grub_part) { find_vol(nil, checker.needed_partitions(target)) }
         # Default values to ensure a GRUB partition
         let(:sda_part_table) { pt_gpt }
         let(:efiboot) { false }
@@ -364,7 +364,7 @@ describe Y2Storage::BootRequirementsChecker do
       end
 
       context "when proposing an new EFI partition" do
-        let(:efi_part) { find_vol("/boot/efi", checker.needed_partitions) }
+        let(:efi_part) { find_vol("/boot/efi", checker.needed_partitions(target)) }
         # Default values to ensure proposal of EFI partition
         let(:efiboot) { true }
         let(:efi_partitions) { [] }

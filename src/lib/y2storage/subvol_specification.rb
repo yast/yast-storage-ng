@@ -21,12 +21,15 @@
 # find current contact information at www.novell.com.
 
 require "yast"
+require "y2storage/planned/btrfs_subvolume"
+
 Yast.import "Arch"
 
 module Y2Storage
-  # Helper class to represent a subvolume as defined in control.xml
+  # Helper class to represent a subvolume specification as defined
+  # in control.xml
   #
-  class PlannedSubvol
+  class SubvolSpecification
     include Yast::Logger
 
     attr_accessor :path, :copy_on_write, :archs
@@ -45,7 +48,11 @@ module Y2Storage
       "var/log",
       "var/opt",
       "var/spool",
-      "var/tmp"
+      "var/tmp",
+      "boot/grub2/i386-pc",
+      "boot/grub2/x86_64-efi",
+      "boot/grub2/powerpc-ieee1275",
+      "boot/grub2/s390x-emu"
     ]
 
     # No Copy On Write for SQL databases and libvirt virtual disks to
@@ -57,6 +64,14 @@ module Y2Storage
       "var/lib/pgsql"
     ]
 
+    # Subvolumes, from the lists above, that contain architecture modifiers
+    SUBVOL_ARCHS = {
+      "boot/grub2/i386-pc"          => ["i386", "x86_64"],
+      "boot/grub2/x86_64-efi"       => ["x86_64"],
+      "boot/grub2/powerpc-ieee1275" => ["ppc", "!board_powernv"],
+      "boot/grub2/s390x-emu"        => ["s390"]
+    }
+
     def initialize(path, copy_on_write: true, archs: nil)
       @path = path
       @copy_on_write = copy_on_write
@@ -64,7 +79,7 @@ module Y2Storage
     end
 
     def to_s
-      text = "PlannedSubvol #{@path}"
+      text = "SubvolSpecification #{@path}"
       text += " (NoCOW)" unless @copy_on_write
       text += " (archs: #{@archs})" if arch_specific?
       text
@@ -72,14 +87,6 @@ module Y2Storage
 
     def arch_specific?
       !archs.nil?
-    end
-
-    def cow?
-      @copy_on_write
-    end
-
-    def no_cow?
-      !@copy_on_write
     end
 
     # Comparison operator for sorting
@@ -127,26 +134,27 @@ module Y2Storage
       use_subvol
     end
 
-    # Create the subvolume as child of 'parent_subvol'.
+    # Generates a Planned::BtrfsSubvolume based on the specification.
     #
-    # @param parent_subvol [::Storage::BtrfsSubvol]
-    # @param default_subvol [String] "@" or ""
-    # @param mount_prefix [String]
+    # Returns nil if the subvolume makes no sense in the current system (e.g.
+    # incorrect architecture).
     #
-    # @return [::Storage::BtrfsSubvol]
-    #
-    def create_subvol(parent_subvol, default_subvol, mount_prefix)
-      name = @path
-      name = default_subvol + "/" + path unless default_subvol.empty?
-      subvol = parent_subvol.create_btrfs_subvolume(name)
-      subvol.nocow = true if no_cow?
-      subvol.mountpoint = mount_prefix + @path
-      subvol
+    # @param mount_prefix [String] mount point of the device containing the
+    #     subvolume
+    # @return [Planned::BtrfsSubvolume, nil]
+    def planned_subvolume(mount_prefix: "/")
+      return nil unless current_arch?
+
+      res = Planned::BtrfsSubvolume.new
+      res.path = path
+      res.copy_on_write = copy_on_write
+      res.mount_point = mount_prefix + path
+      res
     end
 
-    # Factory method: Create one PlannedSubvol from XML data stored as a map.
+    # Factory method: Create one SubvolSpecification from XML data stored as a map.
     #
-    # @return [PlannedSubvol] or nil if error
+    # @return [SubvolSpecification] or nil if error
     #
     def self.create_from_xml(xml)
       return nil unless xml && xml.key?("path")
@@ -159,22 +167,24 @@ module Y2Storage
       if xml.key?("archs")
         archs = xml["archs"].gsub(/\s+/, "").split(",")
       end
-      planned_subvol = PlannedSubvol.new(path, copy_on_write: cow, archs: archs)
+      planned_subvol = SubvolSpecification.new(path, copy_on_write: cow, archs: archs)
       log.info("Creating from XML: #{planned_subvol}")
       planned_subvol
     end
 
-    # Create a list of PlannedSubvols from the <subvolumes> part of
+    # Create a list of SubvolSpecification objects from the <subvolumes> part of
     # control.xml. The map may be empty if there is a <subvolumes> section, but
     # that section is empty.
+    #
+    # Returns nil if the section is nil or impossible to process.
     #
     # This function does not do much error handling or reporting; it is assumed
     # that control.xml is validated against its schema.
     #
     # @param subvolumes_xml list of XML <subvolume> entries
-    # @return PlannedSubvolumes map or nil
+    # @return [Array<SubvolSpecification>, nil]
     #
-    def self.create_from_control_xml(subvolumes_xml)
+    def self.list_from_control_xml(subvolumes_xml)
       return nil if subvolumes_xml.nil?
       return nil unless subvolumes_xml.respond_to?(:map)
 
@@ -182,32 +192,25 @@ module Y2Storage
         # Remove nil subvols due to XML parse errors
         next if xml.nil?
 
-        new_subvol = PlannedSubvol.create_from_xml(xml)
-        next if new_subvol.nil? || !new_subvol.current_arch?
+        new_subvol = SubvolSpecification.create_from_xml(xml)
+        next if new_subvol.nil?
 
-        # Overwrite previous definitions for the same path
-        result.delete_if { |s| s.path == new_subvol.path }
         result << new_subvol
       end
-      subvols.sort_by(&:path)
+      subvols.sort!
     end
 
-    # Create a fallback list of PlannedSubvols. This is useful if nothing is
-    # specified in the control.xml file.
+    # Create a fallback list of subvol specifications. This is useful if
+    # nothing is specified in the control.xml file.
     #
-    # @return [List<PlannedSubvol>]
-    #
-    # rubocop:disable Metrics/LineLength
+    # @return [Array<SubvolSpecification>]
     def self.fallback_list
-      planned_subvols = []
-      COW_SUBVOL_PATHS.each    { |path| planned_subvols << PlannedSubvol.new(path) }
-      NO_COW_SUBVOL_PATHS.each { |path| planned_subvols << PlannedSubvol.new(path, copy_on_write: false) }
-      planned_subvols << PlannedSubvol.new("boot/grub2/i386-pc",          archs: ["i386", "x86_64"])
-      planned_subvols << PlannedSubvol.new("boot/grub2/x86_64-efi",       archs: ["x86_64"])
-      planned_subvols << PlannedSubvol.new("boot/grub2/powerpc-ieee1275", archs: ["ppc", "!board_powernv"])
-      planned_subvols << PlannedSubvol.new("boot/grub2/s390x-emu",        archs: ["s390"])
-      planned_subvols.select { |s| s.current_arch? }.sort
+      subvols = COW_SUBVOL_PATHS.map { |path| SubvolSpecification.new(path) }
+      subvols.concat(
+        NO_COW_SUBVOL_PATHS.map { |path| SubvolSpecification.new(path, copy_on_write: false) }
+      )
+      subvols.each { |subvol| subvol.archs = SUBVOL_ARCHS[subvol.path] }
+      subvols.sort!
     end
-    # rubocop:enable Metrics/LineLength
   end
 end

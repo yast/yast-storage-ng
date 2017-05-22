@@ -30,7 +30,7 @@ describe Y2Storage::Proposal::Encrypter do
 
   describe "#device_for" do
     let(:volume) do
-      planned_vol(mount_point: "/home", type: :ext4, desired: 10.GiB, encryption_password: password)
+      planned_vol(mount_point: "/home", type: :ext4, min: 10.GiB, encryption_password: password)
     end
     let(:plain_device) { instance_double("Storage::BlkDevice", name: "/dev/sda1") }
     let(:luks) { instance_double("Storage::Encryption") }

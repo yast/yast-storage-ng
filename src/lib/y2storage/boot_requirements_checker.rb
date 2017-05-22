@@ -30,8 +30,6 @@ module Y2Storage
   # Class that can check requirements for the different kinds of boot
   # partition: /boot, EFI-boot, PReP.
   #
-  # TO DO: Check with arch maintainers if the requirements are correct.
-  #
   # See also
   # https://github.com/yast/yast-bootloader/blob/master/SUPPORTED_SCENARIOS.md
   #
@@ -46,8 +44,17 @@ module Y2Storage
       @devicegraph = devicegraph
     end
 
-    def needed_partitions
-      strategy.needed_partitions
+    # Partitions needed in order to be able to boot the system
+    #
+    # @raise [BootRequirementsStrategies::Error] if adding partitions is not
+    #     enough to make the system bootable
+    #
+    # @param target [Symbol] :desired means the sizes of the partitions should
+    #   be the ideal ones, :min for generating the smallest functional
+    #   partitions
+    # @return [Array<Planned::Partition>]
+    def needed_partitions(target = :desired)
+      strategy.needed_partitions(target)
     rescue BootRequirementsStrategies::Error => error
       raise Error, error.message
     end

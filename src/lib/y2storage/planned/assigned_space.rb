@@ -2,7 +2,7 @@
 #
 # encoding: utf-8
 
-# Copyright (c) [2015] SUSE LLC
+# Copyright (c) [2015-2017] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -21,27 +21,29 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "storage"
+require "yast"
+require "y2storage/disk_size"
 
 module Y2Storage
-  class Proposal
-    # Each one of the spaces contained in a SpaceDistribution
+  module Planned
+    # Each one of the spaces contained in a PartitionsDistribution
     class AssignedSpace
       extend Forwardable
 
       # @return [FreeDiskSpace]
       attr_reader :disk_space
-      # @return [PlannedVolumesList]
-      attr_reader :volumes
+      # @return [Array<Planned::Partition>]
+      attr_reader :partitions
       # Number of logical partitions that must be created in the space
       attr_accessor :num_logical
 
       def_delegators :@disk_space, :disk_name, :disk_size, :region, :disk
 
-      def initialize(disk_space, volumes)
+      def initialize(disk_space, planned_partitions)
         @disk_space  = disk_space
-        @volumes     = volumes
+        @partitions  = planned_partitions
         @num_logical = 0
+        sort_partitions!
       end
 
       # Restriction imposed by the disk and the already existent partitions
@@ -72,18 +74,18 @@ module Y2Storage
       #  - the chances of having 2 volumes with max_start_offset in the same
       #    free space are very low
       def valid?
-        return true if usable_size >= volumes.target_disk_size(rounding: min_grain)
+        return true if usable_size >= DiskSize.sum(partitions.map(&:min), rounding: min_grain)
         # At first sight, there is no enough space, but maybe enforcing some
         # order...
-        !!volumes.enforced_last(usable_size, min_grain)
+        !enforced_last.nil?
       end
 
       # Space that will remain unused (wasted) after creating the partitions
       #
       # @return [DiskSize]
       def unused
-        max = volumes.max_disk_size
-        max >= usable_size ? 0 : usable_size - max
+        max = DiskSize.sum(partitions.map(&:max))
+        max >= usable_size ? DiskSize.zero : usable_size - max
       end
 
       # Space available in addition to the target
@@ -93,11 +95,11 @@ module Y2Storage
       # and then the extra size would be actually sligthly bigger than reported.
       # But being pessimistic is good here because we don't want to enforce that
       # situation.
-      # @see PlannedVolumesList#enforced_last
+      # @see #enforced_last
       #
       # @return [DiskSize]
       def extra_size
-        disk_size - volumes.target_disk_size(rounding: min_grain)
+        disk_size - DiskSize.sum(partitions.map(&:min), rounding: min_grain)
       end
 
       # Usable space available in addition to the target, taking into account
@@ -106,7 +108,7 @@ module Y2Storage
       # @see #usable_size
       # @return [DiskSize]
       def usable_extra_size
-        usable_size - volumes.target_disk_size
+        usable_size - DiskSize.sum(partitions.map(&:min))
       end
 
       # Space that can be distributed among the planned volumes.
@@ -143,7 +145,7 @@ module Y2Storage
       end
 
       def to_s
-        "#<AssignedSpace disk_space=#{disk_space}, volumes=#{volumes}>"
+        "#<AssignedSpace disk_space=#{disk_space}, partitions=#{partitions}>"
       end
 
     protected
@@ -160,6 +162,104 @@ module Y2Storage
 
       def min_grain
         disk_space.disk.min_grain
+      end
+
+      # Sorts the planned partitions in the most convenient way in order to
+      # create real partitions for them.
+      def sort_partitions!
+        @partitions = partitions_sorted_by_attr(:disk, :max_start_offset)
+        last = enforced_last
+        return unless last
+
+        @partitions.delete(last)
+        @partitions << last
+      end
+
+      # Returns the planned partition that must be placed at the end of a given
+      # space in order to make all the partitions fit there.
+      #
+      # This method only returns something meaningful if the only way to make the
+      # partitions fit into the space is ensuring that a particular one will be at
+      # the end. That corner case can only happen if the size of the given spaces
+      # is not divisible by min_grain.
+      #
+      # If the volumes fit in any order or if it's impossible to make them fit,
+      # the method returns nil.
+      #
+      # @param size_to_fill [DiskSize]
+      # @param min_grain [DiskSize]
+      # @return [Planned::Partition, nil]
+      def enforced_last
+        rounded_up = DiskSize.sum(partitions.map(&:min), rounding: min_grain)
+        # There is enough space to fit with any order
+        return nil if usable_size >= rounded_up
+
+        missing = rounded_up - usable_size
+        # It's impossible to fit
+        return nil if missing >= min_grain
+
+        partitions.detect do |partition|
+          partition.min_size.ceil(min_grain) - missing >= partition.min_size
+        end
+      end
+
+      def partitions_sorted_by_attr(*attrs, nils_first: false, descending: false)
+        partitions.each_with_index.sort do |one, other|
+          compare(one, other, attrs, nils_first, descending)
+        end.map(&:first)
+      end
+
+      # @param one [Array] first element: the partition, second: its original index
+      # @param other [Array] same structure than previous one
+      def compare(one, other, attrs, nils_first, descending)
+        one_part = one.first
+        other_part = other.first
+        result = compare_attr(one_part, other_part, attrs.first, nils_first, descending)
+        if result.zero?
+          if attrs.size > 1
+            # Try next attribute
+            compare(one, other, attrs[1..-1], nils_first, descending)
+          else
+            # Keep original order by checking the indexes
+            one.last <=> other.last
+          end
+        else
+          result
+        end
+      end
+
+      # @param one [Planned::Partition]
+      # @param other [Planned::Partition]
+      def compare_attr(one, other, attr, nils_first, descending)
+        one_value = one.send(attr)
+        other_value = other.send(attr)
+        if one_value.nil? || other_value.nil?
+          compare_with_nil(one_value, other_value, nils_first)
+        else
+          compare_values(one_value, other_value, descending)
+        end
+      end
+
+      # @param one [Planned::Partition]
+      # @param other [Planned::Partition]
+      def compare_values(one, other, descending)
+        if descending
+          other <=> one
+        else
+          one <=> other
+        end
+      end
+
+      # @param one [Planned::Partition]
+      # @param other [Planned::Partition]
+      def compare_with_nil(one, other, nils_first)
+        if one.nil? && other.nil?
+          0
+        elsif nils_first
+          one.nil? ? -1 : 1
+        else
+          one.nil? ? 1 : -1
+        end
       end
     end
   end

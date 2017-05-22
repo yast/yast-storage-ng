@@ -29,25 +29,22 @@ module Y2Storage
   module BootRequirementsStrategies
     # Strategy to calculate boot requirements in UEFI systems
     class UEFI < Base
-      def needed_partitions
+      def needed_partitions(target)
         volumes = super
-        volumes << efi_volume
+        volumes << efi_partition(target)
         volumes
       end
 
     protected
 
-      def efi_volume
-        vol = PlannedVolume.new("/boot/efi", Filesystems::Type::VFAT)
+      def efi_partition(target)
+        vol = Planned::Partition.new("/boot/efi", Filesystems::Type::VFAT)
         if reusable_efi
           vol.reuse = reusable_efi.name
         else
-          # So far we are always using msdos partition ids
           vol.partition_id = PartitionId::ESP
-          vol.min_size = DiskSize.MiB(33)
+          vol.min_size = target == :min ? DiskSize.MiB(33) : DiskSize.MiB(500)
           vol.max_size = DiskSize.unlimited
-          vol.desired_size = DiskSize.MiB(500)
-          vol.plain_partition = true
           vol.max_start_offset = DiskSize.TiB(2)
         end
         vol

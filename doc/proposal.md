@@ -25,8 +25,9 @@ proposal.propose
 proposal.devices # => Returns the proposed devicegraph
 ```
 
-`ProposalSettings` is basically a struct-like class to store several attributes.
-All the magic (and complexity) lives in `Proposal`, so let's zoom into it.
+`ProposalSettings` is basically a struct-like class to store several attributes
+and to read those attributes from the control file. All the magic (and
+complexity) lives in `Proposal`, so let's zoom into it.
 
 Zoom level 1: the proposal steps
 --------------------------------
@@ -34,26 +35,31 @@ Zoom level 1: the proposal steps
 The whole proposal mechanism is divided into two steps, each one of them
 implemented in its own class.
 
-In the first place, an instance of `Proposal::VolumesGenerator` is used to
-decide which partitions or LVM logical volumes should be created or reused.
-Every one of those volumes is represented by an instance of `PlannedVolume`.
+In the first place, an instance of `Proposal::PlannedDevicesGenerator` is
+used to decide which partitions, LVM logical volumes and Btrfs subvolumes
+should be created or reused. Every one of those devices is represented by an
+instance of `Planned::Partition`, `Planned::LvmLv` or `Planned::BtrfsSubvolume`,
+which offer a relatively flexible specification of the corresponding devices
+(e.g. min size, max size and weight, instead of a fixed final size).
 
-All the volumes are contained into an instance of `PlannedVolumesList`. Apart
-from offering several convenience methods to deal with the set of volumes, that
-list also offers an attribute `#target`, used all along the proposal to know if
-the goal at that point in time is to allocate the desired size for all volumes
-(`:desired`) or just the minimal one (`:min`). That goal can change over time.
-
-Once the requirements are known, it's time to start allocating those volumes.
+Once the requirements are known, it's time to start allocating those devices.
 That second step is performed by an instance of
 `Proposal::DevicegraphGenerator`. Given an initial devicegraph, a list of
-planned volumes and a set of proposal settings, it will return a new devicegraph
-containing the volumes. First it will try with `:desired` as target. If it fails
-to allocate the volumes, it will try again with `:min`, raising an exception if
-it fails in that second attempt.
+planned devices and a set of proposal settings, it will return a new devicegraph
+containing the final devices.
+
+This whole process is potentially repeated twice. In the first attempt, the
+instance of `Proposal::PlannedDevicesGenerator` is asked for the desired set of
+planned devices, so it will aim for the best possible size for each planned
+device. If the instance of `Proposal::DevicegraphGenerator` is not able to
+accommodate those planned devices, a second attempt will be performed. On that
+second attempt, the device generator will aim for a minimalistic set of planned
+devices, reducing the size expectations as much as possible. If the devicegraph
+generator also fails to allocate that smaller version of the planned devices, an
+exception is raised.
 
 Apart from the two main steps and the classes representing the set of planned
-volumes, there is another relevant class in this level of zoom. `DiskAnalyzer`
+devices, there is another relevant class in this level of zoom. `DiskAnalyzer`
 is used to analyze the initial devicegraph (that is, the content of the disks at
 the beginning of the installation process) and to provide useful information about
 it to all the other components.
@@ -76,17 +82,18 @@ a single free slot cannot be used to allocate four volumes if there is already
 an extended partition in other part of the disk, no matter how big the free slot
 is. And so on, the examples are countless.
 
-That's why there is a class called `Proposal::SpaceDistribution` that represents
-a distribution of volumes alongside all the available free space slots in a
-devicegraph. A `Proposal::SpaceDistribution` will only be valid if it honors all
-the restrictions imposed by the disks and by the volumes.
+That's why there is a class called `Planned::PartitionsDistribution` that
+represents a distribution of `Planned::Partition` objects alongside all the
+available free space slots in a devicegraph. A `Planned::PartitionsDistribution`
+will only be valid if it honors all the restrictions imposed by the disks and by
+the planned partitions.
 
 So the ultimate goal of a `Proposal::SpaceMaker` is to delete and resize
-partitions until it finds a suitable `Proposal::SpaceDistribution`. If at a
+partitions until it finds a suitable `Planned::PartitionsDistribution`. If at a
 given point in time there are several possible distributions, it will return the
 best one.
 
-Once the space is generated and the proposal knows how the volumes should be
+Once the space is generated and the proposal knows how the partitions should be
 distributed, it's the turn of `Proposal::PartitionCreator`. One instance of that
 class takes the space distribution created in the previous step and makes it
 real by creating the partitions and the filesystems.
@@ -97,7 +104,7 @@ LVM. They mainly work at partition level trusting an instance of
 
 The instance of `Proposal::LvmHelper` will take care (indirectly, see below) of
 adding the needed physical volumes, if any, to every attempt of
-`Proposal::SpaceDistribution`, taking into account all the roundings and
+`Planned::PartitionsDistribution`, taking into account all the roundings and
 overheads involved in any LVM setup.
 
 Once the instance of `Proposal::PartitionCreator` is done with its job (which
@@ -112,23 +119,22 @@ Zoom level 3: utility classes
 The classes described in the previous zoom level rely on some extra classes to
 do their job.
 
-An instance of `Proposal::SpaceDistribution` is basically a collection of
-`Proposal::AssignedSpace` objects. Every one of those objects relates a free
-disk slot with its set of planned volumes and also provides additional
+An instance of `Planned::PartitionsDistribution` is basically a collection of
+`Planned::AssignedSpace` objects. Every one of those objects relates a free
+disk slot with its set of planned partitions and also provides additional
 information, like the restrictions imposed by the disk to the partitions
-potentially created on that slot (`#partition_type`) or how many of the volumes
-should be created as logical partitions to fulfill the distribution
-(`#num_logical`).
+potentially created on that slot (`#partition_type`) or how many of the
+partitions should be logical to fulfill the distribution (`#num_logical`).
 
 To calculate the best space distribution for a given disk layout and to decide
 how much the existing partitions must be resized, `Proposal::SpaceMaker` relies on
-a class called `Proposal::SpaceDistributionCalculator`.
+a class called `Proposal::PartitionsDistributionCalculator`.
 
 Additionally, to delete the partitions, an operation that may be more complex
 that it looks like, the space maker relies on another utility class called
 `Proposal::PartitionKiller`.
 
 Last but not least, the class `Proposal::PhysVolCalculator` helps
-`Proposal::SpaceDistributionCalculator` and `Proposal::LvmHelper` in the task
-of creating a planned volume object for each needed physical volume and adding
-those volumes to all the potential space distributions.
+`Proposal::PartitionsDistributionCalculator` and `Proposal::LvmHelper` in the
+task of creating a planned partition object for each needed physical volume and
+adding those volumes to all the potential space distributions.
