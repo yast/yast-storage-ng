@@ -66,7 +66,7 @@ module Y2Storage
       # Create partitions in a single slot of free disk space.
       #
       # @param free_space [FreeDiskSpace] the slot
-      # @param partitions [Planned::Partition] partitions to create
+      # @param partitions [Array<Planned::Partition>] partitions to create
       # @param usable_size [DiskSize] real space to distribute among the planned
       #       partitions (part of free_space could be used for data structures)
       # @param num_logical [Integer] how many partitions should be logical

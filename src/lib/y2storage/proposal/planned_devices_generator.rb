@@ -2,7 +2,7 @@
 #
 # encoding: utf-8
 
-# Copyright (c) [2016] SUSE LLC
+# Copyright (c) [2016-2017] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -46,6 +46,9 @@ module Y2Storage
 
       # Devices that needs to be created to satisfy the settings
       #
+      # @param target [Symbol] :desired means the sizes of the planned devices
+      #   should be the ideal ones, :min for generating the smallest functional
+      #   devices
       # @return [Array<Planned::Device>]
       def planned_devices(target)
         @target = target

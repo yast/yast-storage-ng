@@ -181,7 +181,7 @@ module Y2Storage
       #
       # Of course, each disk space can appear on several lists.
       #
-      # @param planned_partitions [Planned::Partition]
+      # @param planned_partitions [Array<Planned::Partition>]
       # @param free_spaces [Array<FreeDiskSpace>]
       # @return [Hash{Planned::Partition => Array<FreeDiskSpace>}]
       def candidate_disk_spaces(planned_partitions, free_spaces)
