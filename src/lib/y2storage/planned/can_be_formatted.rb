@@ -47,6 +47,7 @@ module Y2Storage
 
       # Initializations of the mixin, to be called from the class constructor.
       def initialize_can_be_formatted
+        @subvolumes = []
       end
 
       # Creates a filesystem for the planned device on the specified real
@@ -94,7 +95,7 @@ module Y2Storage
       # @param other_mount_points [Array<String>] mount points of the other
       #   devices in the filesystem
       def remove_shadowed_subvolumes!(other_mount_points)
-        return if subvolumes.nil? || subvolumes.empty?
+        return if subvolumes.empty?
         self.subvolumes = subvolumes.reject { |subvol| subvol.shadowed?(other_mount_points) }
       end
 
