@@ -46,5 +46,32 @@ module Y2Storage
     #   @return [Array<String>] Action descriptions sorted according to
     #     dependencies among actions
     storage_forward :commit_actions_as_strings
+
+    storage_forward :storage_compound_actions, to: :compound_actions, as: "CompoundAction"
+    private :storage_compound_actions
+
+    # List of compound actions of the actiongraph.
+    #
+    # @note This is different from ::Storage#compound_actions because this
+    #   method makes sure the actions are already calculated, so there is no
+    #   need to trigger the generation of the compound actions manually.
+    #
+    # @see CompoundAction
+    #
+    # @return [Array<CompoundAction>]
+    def compound_actions
+      to_storage_value.generate_compound_actions unless generated_compound_actions?
+      storage_compound_actions
+    end
+
+  private
+
+    # Checks whether the compound actions have already been generated for this
+    # actiongraph and, thus, whether #storage_compound_actions contains
+    # meaningul information
+    def generated_compound_actions?
+      return false if storage_compound_actions.empty? and !empty?
+      true
+    end
   end
 end

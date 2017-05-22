@@ -42,6 +42,7 @@ module Y2Storage
         super()
         textdomain "storage-ng"
 
+        @collapsed_subvols = true
         @proposal = proposal
         @devicegraph = devicegraph
         propose! if proposal && !proposal.proposed?
@@ -62,6 +63,11 @@ module Y2Storage
 
       def expert_handler
         finish_dialog(:expert)
+      end
+
+      def subvols_handler
+        toggle_subvols
+        Yast::UI.ChangeWidget(Id(:summary), :Value, summary)
       end
 
     protected
@@ -98,12 +104,50 @@ module Y2Storage
         # TODO: if there is a proposal, use the meaningful description with
         # hyperlinks instead of just delegating the summary to libstorage
         if devicegraph
-          actiongraph = devicegraph.actiongraph
-          texts = actiongraph.commit_actions_as_strings.to_a
-          Yast::HTML.Para(Yast::HTML.List(texts))
+          actions = devicegraph.actiongraph.compound_actions
+          Yast::HTML.Para(actions_list(actions))
         else
           Yast::HTML.Para(Yast::HTML.Colorize(_("No proposal possible."), "red"))
         end
+      end
+
+      def actions_list(actions)
+        subvolume_actions, other_actions = actions.partition { |a| a.device_is?(:btrfs_subvolume) }
+        items = actions_to_items(other_actions)
+
+        if !subvolume_actions.empty?
+          size = subvolume_actions.size
+          if collapsed_subvols?
+            # TRANSLATORS: %d is the amount of actions. Do not change href
+            items << _("%d subvolume actions (<a href=\"subvols\">see details</a>)") % size
+          else
+            # TRANSLATORS: %d is the amount of actions. Do not change href
+            header = _("%d subvolume actions (<a href=\"subvols\">hide details</a>)") % size
+            list = html_list(actions_to_items(subvolume_actions))
+            items << header + list
+          end
+        end
+
+        html_list(items)
+      end
+
+      def html_list(items)
+        Yast::HTML.List(items)
+      end
+
+      def actions_to_items(actions)
+        delete, other = actions.partition(&:delete?)
+        result = delete.map { |d| Yast::HTML.Bold(d.sentence) }
+        result.concat(other.map(&:sentence))
+        result
+      end
+
+      def collapsed_subvols?
+        @collapsed_subvols
+      end
+
+      def toggle_subvols
+        @collapsed_subvols = !@collapsed_subvols
       end
 
       def dialog_title
@@ -114,7 +158,7 @@ module Y2Storage
         MarginBox(
           2, 1,
           VBox(
-            MinHeight(8, RichText(summary)),
+            MinHeight(8, RichText(Id(:summary), summary)),
             PushButton(Id(:guided), _("Guided Setup")),
             PushButton(Id(:expert), _("Expert partitioner"))
           )
