@@ -9,10 +9,7 @@ yast2-storage-ng is a reimplementation of the YaST storage module
 (yast2-storage) based on the also reimplemented library for storage manager
 ([libstorage-ng](https://github.com/openSUSE/libstorage-ng)).
 
-When finished, this module will contains essentially three parts:
-
-* Expert Partitioner: A powerful tool capable of actions such as creating
-  partitions and filesystems or configuring LVM and software RAID.
+When finished, this module will contain essentially two parts:
 
 * Storage Proposal: Based on the existing storage setup of a system proposes a
   storage layout for a new installation. Useful in two cases:
@@ -22,7 +19,8 @@ When finished, this module will contains essentially three parts:
       AutoYaST profile.
 
 * Code for the YaST installation workflow and support functions for other YaST
-  modules, organized into the Y2Storage Ruby namespace. That includes:
+  modules (such as the Partitioner, see below), organized into the Y2Storage
+  Ruby namespace. That includes:
     * A thin wrapper on top of several of the classes provided by the
       [libstorage-ng](https://github.com/openSUSE/libstorage-ng) Ruby bindings,
       like Devicegraph, Disk, etc. Check the libstorage-ng documentation for
@@ -32,7 +30,14 @@ When finished, this module will contains essentially three parts:
       for details about the wrapper classes.
     * Additional YaST-specific functionality.
 
-The module is entirely unsupported.
+In this moment, the module also includes a simple prototype of a possible
+reimplementation of the YaST Expert Partitioner, a powerful tool capable of
+actions such as creating partitions and filesystems or configuring LVM and
+software RAID. That prototype will be removed in the near future in favor of
+[this separate YaST module](https://github.com/yast/yast-partitioner), built on
+top of the functionality provided by this package.
+
+This module is entirely unsupported.
 
 ## Trying on Running System
 
@@ -68,11 +73,8 @@ following things must be taken into account:
   Btrfs for the root partition and a separate partition for `/home`, the
   hard disk requirements can grow up to 25GiB at the time of writing (slightly
   more than the regular openSUSE Tumbleweed).
-* There is a known bug deleting a preexisting Btrfs partition with subvolumes.
-  So the installation will fail if such partition must be deleted to accommodate
-  the new ones. As a workaround, all the existing filesystems can be removed
-  from the disk before starting the installation by running
-  `wipefs --all <disk_device>`.
+* The ISO image includes a relatively small selection of software, so choosing
+  Gnome or KDE Plasma in the "computer role" screen may not work as expected.
 
 ## Status
 
