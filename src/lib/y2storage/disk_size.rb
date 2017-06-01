@@ -71,6 +71,7 @@ module Y2Storage
     # @!scope class
     #
     # Accepts +Numeric+, +Strings+, or {DiskSize} objects as initializers.
+    # @raise [ArgumentError] if anything else is used as initializer
     #
     # @see initialize
     # @see parse
@@ -91,13 +92,15 @@ module Y2Storage
 
     # @see new
     def initialize(size = 0)
-      @size = if size.is_a?(Y2Storage::DiskSize)
-        size.to_i
-      elsif size.is_a?(::String)
-        Y2Storage::DiskSize.parse(size).size
-      else
-        size.round
-      end
+      @size =
+        if size.is_a?(Y2Storage::DiskSize)
+          size.to_i
+        elsif size.is_a?(::String)
+          Y2Storage::DiskSize.parse(size).size
+        elsif size.respond_to?(:round)
+          size.round
+        end
+      raise(ArgumentError, "Cannot get the bytes count for #{size.inspect}") unless @size
     end
 
     #
