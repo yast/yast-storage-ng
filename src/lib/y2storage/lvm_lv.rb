@@ -48,7 +48,7 @@ module Y2Storage
     #   Size of a stripe. DiskSize.zero if the LV is not striped.
     #   @return [DiskSize]
     storage_forward :stripe_size, as: "DiskSize"
-    storage_forward :stripe_size=, as: "DiskSize"
+    storage_forward :stripe_size=
 
     # @!method self.all(devicegraph)
     #   @param devicegraph [Devicegraph]
