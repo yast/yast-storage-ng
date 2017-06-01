@@ -112,6 +112,8 @@ describe Y2Storage::FakeDeviceFactory do
              '        lv_name: root',
              '        size: 16 GiB',
              '        file_system: ext4',
+             '        stripes: 2',
+             '        stripe_size: 8 GiB',
              '        mount_point: "/"',
              '    lvm_pvs:',
              '    - lvm_pv:',
