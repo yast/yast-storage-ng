@@ -75,6 +75,7 @@ module Y2Storage
     #   @param path [String] original path (without prefix)
     #   @return [String]
 
+    # @param storage_environment [::Storage::Environment]
     def initialize(storage_environment)
       @storage = Storage::Storage.new(storage_environment)
       activate_callbacks = Callbacks::Activate.new

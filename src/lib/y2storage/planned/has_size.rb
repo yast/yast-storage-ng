@@ -134,8 +134,8 @@ module Y2Storage
 
         # Devices that may grow when distributing the extra space
         #
-        # @param [Array]
-        # @return [Array]
+        # @param devices [Array<HasSize>]
+        # @return [Array<HasSize>]
         def extra_space_candidates(devices)
           devices.select { |dev| dev.size < dev.max_size }
         end
