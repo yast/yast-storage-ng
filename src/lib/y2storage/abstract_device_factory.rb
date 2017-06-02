@@ -25,6 +25,7 @@ require "yast"
 require "storage"
 require "yaml"
 require "tsort"
+require "y2storage/exceptions"
 
 module Y2Storage
   #
@@ -54,7 +55,7 @@ module Y2Storage
   class AbstractDeviceFactory
     include Yast::Logger
 
-    class HierarchyError < RuntimeError
+    class HierarchyError < Y2Storage::Error
     end
 
     attr_reader :devicegraph

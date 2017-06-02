@@ -41,6 +41,7 @@ require "y2storage/lvm_pv"
 require "y2storage/lvm_lv"
 require "y2storage/align_policy"
 
+require "y2storage/exceptions"
 require "y2storage/boot_requirements_checker"
 require "y2storage/devices_lists"
 require "y2storage/disk_analyzer"

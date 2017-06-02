@@ -24,9 +24,7 @@
 require "yast"
 require "y2storage/disk_size"
 require "y2storage/planned/assigned_space"
-# FIXME: generating proposal exceptions out of the Proposal namespace
-#        looks wrong.
-require "y2storage/proposal/exceptions"
+require "y2storage/exceptions"
 
 module Y2Storage
   module Planned
@@ -40,8 +38,8 @@ module Y2Storage
 
       # Constructor. Raises an exception when trying to create an invalid
       # distribution.
-      # @raise Proposal::NoDiskSpaceError
-      # @raise Proposal::NoMorePartitionSlotError
+      # @raise NoDiskSpaceError
+      # @raise NoMorePartitionSlotError
       #
       # @param partitions_by_disk_space [Hash{FreeDiskSpace => Array<Planned::Partition>}]
       def initialize(partitions_by_disk_space)
@@ -58,8 +56,8 @@ module Y2Storage
 
       # Result of adding more partitions to the existent distribution. Raises an
       # exception when trying to create an invalid distribution.
-      # @raise Proposal::NoDiskSpaceError
-      # @raise Proposal::NoMorePartitionSlotError
+      # @raise NoDiskSpaceError
+      # @raise NoMorePartitionSlotError
       #
       # @param partitions_by_disk_space [Hash{FreeDiskSpace => Planned::Partition}]
       def add_partitions(partitions_by_disk_space)
@@ -77,7 +75,7 @@ module Y2Storage
       # Assigned space associated to a given free space
       #
       # @param disk_space [FreeDiskSpace]
-      # @return [Proposal::AssignedSpace, nil]
+      # @return [Planned::AssignedSpace, nil]
       def space_at(disk_space)
         spaces.detect { |s| s.disk_space == disk_space }
       end
@@ -173,14 +171,14 @@ module Y2Storage
 
       # Transforms a FreeDiskSpace and a list of planned partitions into a
       # AssignedSpace object if the combination is valid.
-      # @raise Proposal::NoDiskSpaceError otherwise
+      # @raise NoDiskSpaceError otherwise
       #
       # @return [AssignedSpace]
       def assigned_space(disk_space, partitions)
         result = AssignedSpace.new(disk_space, partitions)
         if !result.valid?
           log.error "Invalid assigned space #{result}"
-          raise Proposal::NoDiskSpaceError, "Volumes cannot be allocated into the assigned space"
+          raise NoDiskSpaceError, "Volumes cannot be allocated into the assigned space"
         end
         result
       end
@@ -207,7 +205,7 @@ module Y2Storage
           calculate_num_logical_for(spaces, ptable)
         else
           if too_many_primary?(spaces, ptable)
-            raise Proposal::NoMorePartitionSlotError, "Too many primary partitions needed"
+            raise NoMorePartitionSlotError, "Too many primary partitions needed"
           end
           spaces.each do |space|
             prim = space.partition_type == :primary
@@ -219,19 +217,19 @@ module Y2Storage
 
       # Sets the value of #num_logical for a given assigned space
       #
-      # @raise Proposal::NoDiskSpaceError if the new value causes the partitions to not fit
+      # @raise NoDiskSpaceError if the new value causes the partitions to not fit
       def set_num_logical(assigned_space, num)
         assigned_space.num_logical = num
         if !assigned_space.valid?
           log.error "Invalid assigned space #{assigned_space} after adjusting num_logical"
-          raise Proposal::NoDiskSpaceError, "Partitions cannot be allocated into the assigned space"
+          raise NoDiskSpaceError, "Partitions cannot be allocated into the assigned space"
         end
       end
 
       def calculate_num_logical_for(spaces, ptable)
         if ptable.num_primary + spaces.size > ptable.max_primary
           log.error "Too sparce: #{ptable.num_primary} + #{spaces.size} > #{ptable.max_primary}"
-          raise Proposal::NoMorePartitionSlotError, "Too sparce distribution"
+          raise NoMorePartitionSlotError, "Too sparce distribution"
         end
 
         logical = PartitionsDistribution.partitions_in_new_extended(num_partitions(spaces), ptable)
@@ -253,7 +251,7 @@ module Y2Storage
         if spaces.size == 1
           space = spaces.first
           if !room_for_logical?(space, num_logical)
-            raise Proposal::NoDiskSpaceError, "No space for the logical partitions"
+            raise NoDiskSpaceError, "No space for the logical partitions"
           end
           set_num_logical(space, num_logical)
         end
@@ -262,11 +260,11 @@ module Y2Storage
         # The rest should be all primary.
         extended_space = extended_space(spaces, num_logical)
         if extended_space.nil?
-          raise Proposal::NoDiskSpaceError, "No suitable space to create the extended partition"
+          raise NoDiskSpaceError, "No suitable space to create the extended partition"
         end
         primary_spaces = spaces - [extended_space]
         if too_many_primary_with_extended?(primary_spaces, ptable)
-          raise Proposal::NoMorePartitionSlotError, "Too many primary partitions needed"
+          raise NoMorePartitionSlotError, "Too many primary partitions needed"
         end
         set_num_logical(extended_space, num_logical)
         primary_spaces.each { |s| set_num_logical(s, 0) }

@@ -104,7 +104,7 @@ describe Y2Storage::Dialogs::Proposal do
 
       context "if the proposal fails" do
         before do
-          allow(proposal).to receive(:propose).and_raise Y2Storage::Proposal::Error
+          allow(proposal).to receive(:propose).and_raise Y2Storage::Error
 
           # In this case, we just want to inspect the dialog content and then quit
           allow(Yast::UI).to receive(:UserInput).once.and_return :abort

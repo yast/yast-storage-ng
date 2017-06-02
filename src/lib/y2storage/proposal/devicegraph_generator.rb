@@ -48,7 +48,7 @@ module Y2Storage
       # @param space_maker [Proposal::SpaceMaker]
       #
       # @return [Devicegraph]
-      # @raise Proposal::Error if it was not possible to propose a devicegraph
+      # @raise [Error] if it was not possible to propose a devicegraph
       def devicegraph(planned_devices, initial_graph, space_maker)
         # We are going to alter the volumes in several ways, so let's be a
         # good citizen and do it in our own copy
@@ -75,7 +75,7 @@ module Y2Storage
       # Provides free disk space in the proposal devicegraph to fit the
       # planned partitions in.
       #
-      # @raise Proposal::Error if the goal is not reached
+      # @raise [Error] if the goal is not reached
       #
       # @param planned_partitions [Array<Planned::Partition>] set partitions to
       #     make space for.

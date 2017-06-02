@@ -26,10 +26,11 @@ require "storage/patches"
 require "y2storage/disk_size"
 require "y2storage/filesystems/type"
 require "y2storage/planned"
+require "y2storage/exceptions"
 
 module Y2Storage
   module BootRequirementsStrategies
-    class Error < RuntimeError
+    class Error < Y2Storage::Error
     end
 
     # Base class for the strategies used to calculate the boot partitioning

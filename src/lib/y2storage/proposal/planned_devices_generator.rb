@@ -25,7 +25,7 @@ require "fileutils"
 require "y2storage/planned"
 require "y2storage/disk_size"
 require "y2storage/boot_requirements_checker"
-require "y2storage/proposal/exceptions"
+require "y2storage/exceptions"
 
 module Y2Storage
   class Proposal

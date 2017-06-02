@@ -55,7 +55,7 @@ module Y2Storage
       # a set of planned partitions and the new physical volumes needed to
       # accomodate the planned LVM logical volumes.
       #
-      # @raise Proposal::Error if is not possible to accomodate the planned
+      # @raise [Error] if is not possible to accomodate the planned
       #   partitions and/or the physical volumes
       #
       # @param original_graph [Devicegraph] initial devicegraph

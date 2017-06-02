@@ -53,7 +53,7 @@ describe Y2Storage::Proposal do
       let(:dasd_type) { Y2Storage::DasdType::FBA }
 
       it "fails to make a proposal" do
-        expect { proposal.propose }.to raise_error Y2Storage::Proposal::Error
+        expect { proposal.propose }.to raise_error Y2Storage::Error
       end
     end
 
@@ -65,7 +65,7 @@ describe Y2Storage::Proposal do
         let(:dasd_format) { Y2Storage::DasdFormat::LDL }
 
         it "fails to make a proposal" do
-          expect { proposal.propose }.to raise_error Y2Storage::Proposal::Error
+          expect { proposal.propose }.to raise_error Y2Storage::Error
         end
       end
 

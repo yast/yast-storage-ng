@@ -23,7 +23,7 @@ require "yast"
 require "y2storage/proposal_settings"
 require "y2storage/storage_manager"
 require "y2storage/disk_analyzer"
-require "y2storage/proposal/exceptions"
+require "y2storage/exceptions"
 require "y2storage/proposal/planned_devices_generator"
 require "y2storage/proposal/devicegraph_generator"
 
@@ -78,8 +78,8 @@ module Y2Storage
 
     # Calculates the proposal
     #
-    # @raise [Proposal::UnexpectedCallError] if called more than once
-    # @raise [Proposal::NoDiskSpaceError] if there is no enough space to
+    # @raise [UnexpectedCallError] if called more than once
+    # @raise [NoDiskSpaceError] if there is no enough space to
     #           perform the installation
     def propose
       raise UnexpectedCallError if proposed?

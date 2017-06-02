@@ -23,7 +23,7 @@
 
 require "fileutils"
 require "y2storage/disk_size"
-require "y2storage/proposal/exceptions"
+require "y2storage/exceptions"
 require "y2storage/proposal/encrypter"
 require "y2storage/secret_attributes"
 
