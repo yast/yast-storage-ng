@@ -42,7 +42,7 @@ module Y2Storage
     storage_forward :empty?
 
     # @!attribute start
-    #   @return [Fixnum] position of the first sector of the region
+    #   @return [Fixnum] number of the first sector of the region
     storage_forward :start
     storage_forward :start=
 
@@ -52,12 +52,12 @@ module Y2Storage
     storage_forward :length=
 
     # @!attribute block_size
-    #   return [DiskSize] size of a single sector
+    #   @return [DiskSize] size of a single sector
     storage_forward :block_size, as: "DiskSize"
     storage_forward :block_size=
 
     # @!method end
-    #   return [Fixnum] position of the last sector of the region
+    #   @return [Fixnum] position of the last sector of the region
     storage_forward :end
 
     # @!method adjust_start(delta)
@@ -129,9 +129,9 @@ module Y2Storage
     # Creates a new object generating the corresponding Storage::Region object
     # and wrapping it.
     #
-    # @param start [Fixnum]
-    # @param length [Fixnum]
-    # @param block_size [Fixnum]
+    # @param start [Fixnum] starting sector number
+    # @param length [Fixnum] sector count
+    # @param block_size [Fixnum] sector size in bytes
     # @return [Region]
     def self.create(start, length, block_size)
       new(Storage::Region.new(start, length, block_size.to_i))
