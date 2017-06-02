@@ -24,8 +24,7 @@ require "y2storage/proposal_settings"
 require "y2storage/storage_manager"
 require "y2storage/disk_analyzer"
 require "y2storage/exceptions"
-require "y2storage/proposal/planned_devices_generator"
-require "y2storage/proposal/devicegraph_generator"
+require "y2storage/proposal"
 
 module Y2Storage
   # Class to calculate a storage proposal to install the system
