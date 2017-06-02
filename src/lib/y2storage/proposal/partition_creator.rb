@@ -27,7 +27,7 @@ require "y2storage/disk_size"
 require "y2storage/proposal/encrypter"
 
 module Y2Storage
-  class Proposal
+  module Proposal
     # Class to create partitions following a given distribution represented by
     # a Planned::PartitionsDistribution object
     class PartitionCreator

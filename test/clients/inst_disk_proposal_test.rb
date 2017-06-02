@@ -47,7 +47,8 @@ describe Y2Storage::Clients::InstDiskProposal do
       it "creates initial proposal settings based on the product (control.xml)" do
         expect(Y2Storage::ProposalSettings).to receive(:new_for_current_product)
           .and_return(proposal_settings)
-        expect(Y2Storage::Proposal).to receive(:new).with(hash_including(settings: proposal_settings))
+        expect(Y2Storage::GuidedProposal).to receive(:new)
+          .with(hash_including(settings: proposal_settings))
 
         allow(Y2Storage::Dialogs::Proposal).to receive(:new).and_return proposal_dialog
         allow(proposal_dialog).to receive(:run).and_return :abort
@@ -56,7 +57,7 @@ describe Y2Storage::Clients::InstDiskProposal do
 
       it "opens the proposal dialog with a pristine proposal" do
         expect(Y2Storage::Dialogs::Proposal).to receive(:new) do |proposal, devicegraph|
-          expect(proposal).to be_a Y2Storage::Proposal
+          expect(proposal).to be_a Y2Storage::GuidedProposal
           expect(proposal.proposed?).to eq false
           expect(devicegraph).to eq storage_manager.y2storage_staging
         end.and_return(proposal_dialog)
@@ -67,7 +68,7 @@ describe Y2Storage::Clients::InstDiskProposal do
     end
 
     context "when a proposal has already been accepted" do
-      let(:previous_proposal) { double("Y2Storage::Proposal", proposed?: true) }
+      let(:previous_proposal) { double("Y2Storage::GuidedProposal", proposed?: true) }
 
       before do
         allow(storage_manager).to receive(:proposal).and_return previous_proposal
@@ -100,7 +101,7 @@ describe Y2Storage::Clients::InstDiskProposal do
 
     context "after receiving :next from the proposal dialog" do
       let(:new_devicegraph) { double("Y2Storage::Devicegraph", used_features: 0) }
-      let(:new_proposal) { double("Y2Storage::Proposal", devices: new_devicegraph) }
+      let(:new_proposal) { double("Y2Storage::GuidedProposal", devices: new_devicegraph) }
 
       before do
         allow(Y2Storage::Dialogs::Proposal).to receive(:new).and_return(proposal_dialog)
@@ -182,7 +183,7 @@ describe Y2Storage::Clients::InstDiskProposal do
 
     context "after receiving :back from the proposal dialog" do
       let(:new_devicegraph) { double("Y2Storage::Devicegraph") }
-      let(:new_proposal) { double("Y2Storage::Proposal", devices: new_devicegraph) }
+      let(:new_proposal) { double("Y2Storage::GuidedProposal", devices: new_devicegraph) }
 
       before do
         allow(Y2Storage::Dialogs::Proposal).to receive(:new).and_return(proposal_dialog)
@@ -216,7 +217,7 @@ describe Y2Storage::Clients::InstDiskProposal do
       let(:guided_dialog) { double("Y2Storage::Dialogs::GuidedSetup") }
       let(:devicegraph) { double("Y2Storage::Devicegraph") }
       let(:settings) { double("Storage::ProposalSettings") }
-      let(:proposal) { double("Y2Storage::Proposal", devices: devicegraph, settings: settings) }
+      let(:proposal) { double("Y2Storage::GuidedProposal", devices: devicegraph, settings: settings) }
       let(:second_proposal_dialog) { double("Y2Storage::Dialogs::Proposal").as_null_object }
 
       before do
@@ -254,7 +255,7 @@ describe Y2Storage::Clients::InstDiskProposal do
       end
 
       context "if the guided setup returns :next" do
-        let(:new_settings) { double("Storage::ProposalSettings") }
+        let(:new_settings) { double("Y2Storage::ProposalSettings") }
 
         before do
           allow(proposal_dialog).to receive(:devicegraph).and_return(devicegraph)
@@ -266,7 +267,7 @@ describe Y2Storage::Clients::InstDiskProposal do
           expect(Y2Storage::Dialogs::Proposal).to receive(:new).once.ordered
             .and_return(proposal_dialog)
           expect(Y2Storage::Dialogs::Proposal).to receive(:new).once.ordered do |proposal, graph|
-            expect(proposal).to be_a Y2Storage::Proposal
+            expect(proposal).to be_a Y2Storage::GuidedProposal
             expect(proposal.proposed?).to eq false
             expect(proposal.settings).to eq new_settings
             expect(graph).to eq devicegraph

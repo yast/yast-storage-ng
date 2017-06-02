@@ -31,7 +31,7 @@ require "y2storage/proposal/partitions_distribution_calculator"
 require "y2storage/proposal/partition_killer"
 
 module Y2Storage
-  class Proposal
+  module Proposal
     # Class to provide free space for creating new partitions - either by
     # reusing existing unpartitioned space, by deleting existing partitions
     # or by resizing an existing Windows partition.

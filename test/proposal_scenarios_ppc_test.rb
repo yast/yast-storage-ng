@@ -26,7 +26,7 @@ require "y2storage"
 require_relative "support/proposal_examples"
 require_relative "support/proposal_context"
 
-describe Y2Storage::Proposal do
+describe Y2Storage::GuidedProposal do
   describe "#propose" do
     include_context "proposal"
 

@@ -28,7 +28,7 @@ require "y2storage/boot_requirements_checker"
 require "y2storage/exceptions"
 
 module Y2Storage
-  class Proposal
+  module Proposal
     #
     # Class to generate the list of planned devices of a proposal
     #

@@ -24,7 +24,7 @@ require_relative "spec_helper"
 require_relative "support/proposal_examples"
 require_relative "support/proposal_context"
 
-describe Y2Storage::Proposal do
+describe Y2Storage::GuidedProposal do
   include_context "proposal"
 
   subject(:proposal) { described_class.new(settings: settings) }

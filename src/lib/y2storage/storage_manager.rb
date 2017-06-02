@@ -58,7 +58,7 @@ module Y2Storage
     #
     # Nil if the devicegraph was set manually and not by accepting a proposal.
     #
-    # @return [Proposal, nil]
+    # @return [GuidedProposal, nil]
     attr_reader :proposal
 
     def_delegators :@storage, :environment, :arch, :rootprefix, :prepend_rootprefix, :rootprefix=
@@ -118,7 +118,7 @@ module Y2Storage
     # Stores the proposal, modifying the staging devicegraph and all the related
     # information.
     #
-    # @param proposal [Proposal]
+    # @param proposal [GuidedProposal]
     def proposal=(proposal)
       copy_to_staging(proposal.devices)
       @proposal = proposal

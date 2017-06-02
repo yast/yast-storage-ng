@@ -28,7 +28,7 @@ require "y2storage/proposal/encrypter"
 require "y2storage/secret_attributes"
 
 module Y2Storage
-  class Proposal
+  module Proposal
     # Class to encapsulate the calculation of all the LVM-related values and
     # to generate the LVM setup needed to allocate a set of planned volumes
     class LvmHelper

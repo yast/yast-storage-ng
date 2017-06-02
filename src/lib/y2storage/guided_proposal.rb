@@ -31,7 +31,7 @@ module Y2Storage
   # Class to calculate a storage proposal to install the system
   #
   # @example
-  #   proposal = Storage::Proposal.new
+  #   proposal = Storage::GuidedProposal.new
   #   proposal.settings.use_separate_home = true
   #   proposal.proposed? # => false
   #   proposal.devices   # => nil
@@ -42,7 +42,7 @@ module Y2Storage
   #   proposal.devices   # Proposed layout
   #   proposal.settings.use_separate_home = false # raises RuntimeError
   #
-  class Proposal
+  class GuidedProposal
     include Yast::Logger
 
     # Settings used to calculate the proposal. They cannot be altered after
@@ -113,7 +113,7 @@ module Y2Storage
 
     # @return [Array<Planned::Device>]
     def planned_devices_list(target)
-      generator = PlannedDevicesGenerator.new(populated_settings, clean_graph)
+      generator = Proposal::PlannedDevicesGenerator.new(populated_settings, clean_graph)
       generator.planned_devices(target)
     end
 
@@ -123,12 +123,12 @@ module Y2Storage
     # @param planned_devices [Array<Planned::Device>] devices to accomodate
     # @return [Devicegraph]
     def devicegraph(planned_devices)
-      generator = DevicegraphGenerator.new(populated_settings)
+      generator = Proposal::DevicegraphGenerator.new(populated_settings)
       generator.devicegraph(planned_devices, clean_graph, space_maker)
     end
 
     def space_maker
-      @space_maker ||= SpaceMaker.new(disk_analyzer, populated_settings)
+      @space_maker ||= Proposal::SpaceMaker.new(disk_analyzer, populated_settings)
     end
 
     # Disk analyzer used to analyze the initial devicegraph

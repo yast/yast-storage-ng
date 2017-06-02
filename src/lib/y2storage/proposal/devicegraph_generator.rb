@@ -28,7 +28,7 @@ require "y2storage/proposal/lvm_helper"
 require "y2storage/planned"
 
 module Y2Storage
-  class Proposal
+  module Proposal
     # Class to create devicegraphs that can accommodate a given collection of
     # volumes
     class DevicegraphGenerator

@@ -24,7 +24,7 @@
 require "storage"
 
 module Y2Storage
-  class Proposal
+  module Proposal
     # Utility class to encrypt devices and provide information related to
     # encryption
     class Encrypter
