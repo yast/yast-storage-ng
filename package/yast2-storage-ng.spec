@@ -23,7 +23,7 @@ BuildArch:	noarch
 BuildRoot:	%{_tmppath}/%{name}-%{version}-build
 Source:		%{name}-%{version}.tar.bz2
 
-Requires:	yast2
+Requires:	yast2 >= 3.2.37 
 Requires:	yast2-ruby-bindings
 Requires:	libstorage-ng-ruby
 
@@ -31,7 +31,7 @@ BuildRequires:	update-desktop-files
 BuildRequires:	libstorage-ng-ruby
 BuildRequires:	yast2-ruby-bindings
 BuildRequires:	yast2-devtools
-BuildRequires:	yast2
+BuildRequires:	yast2 >= 3.2.37
 BuildRequires:	rubygem(yast-rake)
 BuildRequires:	rubygem(rspec)
 
