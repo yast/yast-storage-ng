@@ -70,7 +70,7 @@ module Y2Storage
     # actiongraph and, thus, whether #storage_compound_actions contains
     # meaningul information
     def generated_compound_actions?
-      return false if storage_compound_actions.empty? and !empty?
+      return false if storage_compound_actions.empty? && !empty?
       true
     end
   end
