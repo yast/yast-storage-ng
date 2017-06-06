@@ -96,6 +96,34 @@ describe Y2Storage::PackageHandler do
       expect(Yast::Report).to receive(:Error)
       subject.commit
     end
-
   end
+
+  context("using a devicegraph with Ext4 and NTFS") do
+    let(:dg_features) { ::Storage::UF_EXT4 | ::Storage::UF_NTFS }
+    let(:devicegraph) { instance_double("::Storage::Devicegraph", used_features: dg_features) }
+    let(:feature_pkg) { ["e2fsprogs"] }
+    before do
+      allow(Yast::Package).to receive(:Installed).and_return(false)
+      allow(Yast::Package).to receive(:Installed).with("util-linux").and_return(true)
+      allow(Yast::Pkg).to receive(:PkgSolve).and_return(true)
+    end
+    subject do
+      pkg_handler = described_class.new
+      pkg_handler.add_feature_packages(devicegraph)
+      pkg_handler
+    end
+
+    it "does not insist on installing optional packages that are not available" do
+      allow(Yast::Package).to receive(:Available).with("ntfs-3g").and_return(false)
+      allow(Yast::Package).to receive(:Available).with("ntfsprogs").and_return(false)
+      expect(subject.pkg_list).to contain_exactly("e2fsprogs")
+    end
+    
+    it "still installs optional packages when available and needed" do
+      allow(Yast::Package).to receive(:Available).with("ntfs-3g").and_return(true)
+      allow(Yast::Package).to receive(:Available).with("ntfsprogs").and_return(true)
+      expect(subject.pkg_list).to contain_exactly("e2fsprogs", "ntfs-3g", "ntfsprogs")
+    end
+  end
+  
 end
