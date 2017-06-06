@@ -29,7 +29,7 @@ module Y2Storage
     # This is a wrapper for Storage::PartitionTable
     class Base < Device
       wrap_class Storage::PartitionTable,
-        downcast_to: ["PartitionTables::Msdos", "PartitionTables::Gpt"]
+        downcast_to: ["PartitionTables::Msdos", "PartitionTables::Gpt", "PartitionTables::Dasd"]
 
       # @!method type
       #   @return [PartitionTables::Type]
