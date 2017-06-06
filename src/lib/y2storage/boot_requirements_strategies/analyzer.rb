@@ -134,9 +134,9 @@ module Y2Storage
       # TODO: handle planned LV (not needed so far)
       def boot_disk_from_planned_dev
         return nil unless root_planned_dev
-        return nil unless root_planned_dev.respond_to?(:disk) && root_planned_dev.disk
+        return nil unless root_planned_dev.respond_to?(:disk)
 
-        devicegraph.disks.detect { |d| d.name == root.disk }
+        devicegraph.disks.detect { |d| d.name == root_planned_dev.disk }
       end
 
       def boot_disk_from_devicegraph
