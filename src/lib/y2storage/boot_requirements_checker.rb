@@ -39,9 +39,15 @@ module Y2Storage
     class Error < RuntimeError
     end
 
-    def initialize(settings, devicegraph)
-      @settings = settings
+    # Constructor
+    #
+    # @see #devicegraph
+    # @see #planned_devices
+    # @see #boot_disk_name
+    def initialize(devicegraph, planned_devices: [], boot_disk_name: nil)
       @devicegraph = devicegraph
+      @planned_devices = planned_devices
+      @boot_disk_name = boot_disk_name
     end
 
     # Partitions needed in order to be able to boot the system
@@ -61,8 +67,16 @@ module Y2Storage
 
   protected
 
-    attr_reader :settings
+    # @return [Devicegraph] starting situation.
     attr_reader :devicegraph
+
+    # @return [Array<Planned::Device>] devices that are already planned to be
+    #   added to the starting devicegraph.
+    attr_reader :planned_devices
+
+    # @return [String, nil] device name of the disk that the system will try to
+    #   boot first. Only useful in some scenarios like legacy boot.
+    attr_reader :boot_disk_name
 
     def arch
       @arch ||= StorageManager.instance.arch
@@ -71,16 +85,18 @@ module Y2Storage
     def strategy
       return @strategy unless @strategy.nil?
 
-      if arch.x86? && arch.efiboot?
-        @strategy = BootRequirementsStrategies::UEFI.new(settings, devicegraph)
-      elsif arch.s390?
-        @strategy = BootRequirementsStrategies::ZIPL.new(settings, devicegraph)
-      elsif arch.ppc?
-        @strategy = BootRequirementsStrategies::PReP.new(settings, devicegraph)
-      end
-
-      # Fallback to Legacy as default
-      @strategy ||= BootRequirementsStrategies::Legacy.new(settings, devicegraph)
+      klass =
+        if arch.x86? && arch.efiboot?
+          BootRequirementsStrategies::UEFI
+        elsif arch.s390?
+          BootRequirementsStrategies::ZIPL
+        elsif arch.ppc?
+          BootRequirementsStrategies::PReP
+        else
+          # Fallback to Legacy as default
+          BootRequirementsStrategies::Legacy
+        end
+      @strategy ||= klass.new(devicegraph, planned_devices, boot_disk_name)
     end
   end
 end

@@ -68,14 +68,17 @@ module Y2Storage
       #
       # @return [Array<Planned::Device>]
       def base_devices
-        boot_devices + [root_device]
+        root = root_device
+        boot_devices(root) + [root]
       end
 
       # Planned devices needed by the bootloader
       #
       # @return [Array<Planned::Device>]
-      def boot_devices
-        checker = BootRequirementsChecker.new(settings, devicegraph)
+      def boot_devices(root_dev)
+        checker = BootRequirementsChecker.new(
+          devicegraph, planned_devices: [root_dev], boot_disk_name: settings.root_device
+        )
         checker.needed_partitions(@target)
       rescue BootRequirementsChecker::Error => error
         raise NotBootableError, error.message

@@ -37,7 +37,7 @@ module Y2Storage
     protected
 
       def boot_partition_needed?
-        settings.use_lvm || settings.use_encryption
+        root_in_lvm? || encrypted_root?
       end
 
       def prep_partition_needed?
@@ -46,7 +46,7 @@ module Y2Storage
       end
 
       def prep_partition_missing?
-        partitions = root_disk.prep_partitions
+        partitions = boot_disk.prep_partitions
         partitions.nil? || partitions.empty?
       end
 
@@ -61,7 +61,7 @@ module Y2Storage
         vol.bootable = true
         # TODO: We have been told that PReP must be one of the first 4
         # partitions, ideally the first one. But we have not found any
-        # rational/evidence. Not implementing that for the time being
+        # rationale/evidence. Not implementing that for the time being
         vol
       end
 

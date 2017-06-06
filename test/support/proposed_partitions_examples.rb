@@ -27,9 +27,9 @@ RSpec.shared_examples "proposed boot partition" do
 
   let(:target) { nil }
 
-  it "requires /boot to be a non-encrypted ext4 partition in the system disk" do
+  it "requires /boot to be a non-encrypted ext4 partition in the booting disk" do
     expect(boot_part.filesystem_type.is?(:ext4)).to eq true
-    expect(boot_part.disk).to eq root_device
+    expect(boot_part.disk).to eq boot_disk.name
     expect(boot_part).to be_a Y2Storage::Planned::Partition
     expect(boot_part.encrypt?).to eq false
   end
@@ -160,8 +160,8 @@ RSpec.shared_examples "proposed /boot/zipl partition" do
     expect(zipl_part.filesystem_type.is?(:ext2)).to eq true
   end
 
-  it "requires /boot/zipl to be a non-encrypted partition in the system disk" do
-    expect(zipl_part.disk).to eq root_device
+  it "requires /boot/zipl to be a non-encrypted partition in the boot disk" do
+    expect(zipl_part.disk).to eq boot_disk.name
     expect(zipl_part).to be_a Y2Storage::Planned::Partition
     expect(zipl_part.encrypt?).to eq false
   end

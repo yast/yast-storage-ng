@@ -12,6 +12,7 @@
 # This program is distributed in the hope that it will be useful, but WITHOUT
 # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
 # FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+
 # more details.
 #
 # You should have received a copy of the GNU General Public License along
@@ -46,14 +47,13 @@ rescue => x
   pp x.backtrace
 end
 
-puts "\n---  settings  ---"
-settings = Y2Storage::ProposalSettings.new
-settings.use_lvm = true
-settings.root_device = ARGV[1]
-pp(settings)
+root_device = Y2Storage::Planned::LvmLv.new("/", Y2Storage::Filesystems::Type::BTRFS)
+boot_device = ARGV[1]
 
 puts "\n---  needed  ---"
-checker = Y2Storage::BootRequirementsChecker.new(settings, devicegraph)
+checker = Y2Storage::BootRequirementsChecker.new(
+  devicegraph, planned_devices: [root_device], boot_disk_name: boot_device
+)
 
 begin
   needed = checker.needed_partitions

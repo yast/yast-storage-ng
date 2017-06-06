@@ -51,11 +51,11 @@ module Y2Storage
       end
 
       def reusable_efi
-        @reusable_efi = biggest_efi_in_root_device || biggest_efi
+        @reusable_efi = biggest_efi_in_boot_device || biggest_efi
       end
 
-      def biggest_efi_in_root_device
-        biggest_partition(root_disk.efi_partitions)
+      def biggest_efi_in_boot_device
+        biggest_partition(boot_disk.efi_partitions)
       end
 
       def biggest_efi

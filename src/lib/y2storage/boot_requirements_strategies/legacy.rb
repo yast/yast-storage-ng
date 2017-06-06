@@ -43,16 +43,16 @@ module Y2Storage
     protected
 
       def grub_partition_needed?
-        root_ptable_type?(:gpt)
+        boot_ptable_type?(:gpt)
       end
 
       def grub_partition_missing?
-        partitions = root_disk.grub_partitions
+        partitions = boot_disk.grub_partitions
         partitions.nil? || partitions.empty?
       end
 
       def grub_in_mbr?
-        root_ptable_type?(:msdos) && !plain_btrfs?
+        boot_ptable_type?(:msdos) && !plain_btrfs?
       end
 
       def plain_btrfs?
@@ -60,11 +60,11 @@ module Y2Storage
       end
 
       def btrfs_without_lvm?
-        settings.root_filesystem_type.is?(:btrfs) && !settings.use_lvm
+        btrfs_root? && !root_in_lvm?
       end
 
       def btrfs_without_encryption?
-        settings.root_filesystem_type.is?(:btrfs) && !settings.use_encryption
+        btrfs_root? && !encrypted_root?
       end
 
       def boot_partition_needed?
@@ -72,7 +72,7 @@ module Y2Storage
       end
 
       def mbr_gap
-        root_disk.mbr_gap
+        boot_disk.mbr_gap
       end
 
       def grub_partition(target)
