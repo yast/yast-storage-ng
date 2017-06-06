@@ -118,12 +118,12 @@ describe Y2Storage::PackageHandler do
       allow(Yast::Package).to receive(:Available).with("ntfsprogs").and_return(false)
       expect(subject.pkg_list).to contain_exactly("e2fsprogs")
     end
-    
+
     it "still installs optional packages when available and needed" do
       allow(Yast::Package).to receive(:Available).with("ntfs-3g").and_return(true)
       allow(Yast::Package).to receive(:Available).with("ntfsprogs").and_return(true)
       expect(subject.pkg_list).to contain_exactly("e2fsprogs", "ntfs-3g", "ntfsprogs")
     end
   end
-  
+
 end
