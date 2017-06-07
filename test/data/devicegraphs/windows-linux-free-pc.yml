@@ -27,3 +27,7 @@
         mount_point:  /
         label:        root
 
+- disk:
+    name: /dev/sdb
+    size: 500 GiB
+    partition_table:  ms-dos

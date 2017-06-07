@@ -99,7 +99,7 @@ module Y2Storage
         memo[disk["device"]] = disk
       end
 
-      flexible_disks.reduce(drives) do |disk, memo|
+      drives = flexible_disks.each_with_object(drives) do |disk, memo|
         disk_name = first_usable_disk(disk, devicegraph, drives)
         memo[disk_name] = disk
       end
@@ -134,17 +134,15 @@ module Y2Storage
     end
 
     def first_usable_disk(disk_description, devicegraph, drives)
+      skip_list = SkipList.from_profile(disk_description.fetch("skip_list", []))
+
       devicegraph.disks.each do |disk|
         next if drives.keys.include?(disk.name)
-        next if skipped?(disk_description, disk)
+        next if skip_list.matches?(disk)
 
         return disk.name
       end
       nil
-    end
-
-    def skipped?(a, b)
-      false
     end
 
     # Delete unwanted partitions for the given disk

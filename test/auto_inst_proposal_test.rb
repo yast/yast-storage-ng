@@ -164,7 +164,39 @@ describe Y2Storage::AutoInstProposal do
       end
     end
 
-    describe "skipping a disk"
+    describe "skipping a disk" do
+      let(:skip_list) do
+        [{ "skip_key" => "name", "skip_value" => skip_device }]
+      end
+
+      let(:partitioning) do
+        [{ "use" => "all", "partitions" => [root, home], "skip_list" => skip_list }]
+      end
+
+      context "when a disk is included in the skip_list" do
+        let(:skip_device) { "sda" }
+
+        it "skips the given disk" do
+          proposal.propose
+          devicegraph = proposal.proposed_devicegraph
+          sdb1 = devicegraph.partitions.find { |p| p.name == "/dev/sdb1" }
+          expect(sdb1).to have_attributes(filesystem_label: "new_root")
+          sda1 = devicegraph.partitions.first
+          expect(sda1).to have_attributes(filesystem_label: "windows")
+        end
+      end
+
+      context "when no disk is included in the skip_list" do
+        let(:skip_device) { "sdc" }
+
+        it "does not skip any disk" do
+          proposal.propose
+          devicegraph = proposal.proposed_devicegraph
+          sda1 = devicegraph.partitions.first
+          expect(sda1).to have_attributes(filesystem_label: "new_root")
+        end
+      end
+    end
 
     describe "automatic partitioning" do
       let(:partitioning) do
