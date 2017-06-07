@@ -43,6 +43,10 @@ describe Y2Storage::AutoInstProposal do
       { "filesystem" => :xfs, "mount" => "/home", "size" => "50%", "create" => true }
     end
 
+    let(:swap) do
+      { "filesystem" => :swap, "mount" => "swap", "size" => "1GB", "create" => true }
+    end
+
     let(:partitioning) do
       [{ "device" => "/dev/sda", "use" => "all", "partitions" => [root, home] }]
     end
@@ -70,6 +74,34 @@ describe Y2Storage::AutoInstProposal do
           filesystem_type:       Y2Storage::Filesystems::Type.find("XFS"),
           filesystem_mountpoint: "/home",
           size:                  250.GiB
+        )
+      end
+    end
+
+    context "failing scenario" do
+      let(:root) { ROOT_PART.merge("create" => true, "size" => "max") }
+
+      let(:partitioning) do
+        [{ "device" => "/dev/sda", "use" => "all", "partitions" => [swap, root] }]
+      end
+
+      it "proposes a layout including those partitions" do
+        proposal.propose
+        devicegraph = proposal.proposed_devicegraph
+
+        expect(devicegraph.partitions.size).to eq(2)
+        swap, root = devicegraph.partitions
+
+        expect(swap).to have_attributes(
+          filesystem_type:       Y2Storage::Filesystems::Type.find("swap"),
+          filesystem_mountpoint: "swap",
+          size:                  1.GiB
+        )
+
+        expect(root).to have_attributes(
+          # FIXME: use a different filesystem type
+          filesystem_type:       Y2Storage::Filesystems::Type.find("ext4"),
+          filesystem_mountpoint: "/"
         )
       end
     end
