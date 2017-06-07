@@ -125,19 +125,9 @@ module Y2Storage
       checker = BootRequirementsChecker.new(devicegraph, planned_devices: planned_partitions)
       planned_partitions.concat(checker.needed_partitions)
 
-      # TODO: lvm_helper no obligatorio
-      calculator = Proposal::PartitionsDistributionCalculator.new(Proposal::LvmHelper.new([]))
-
-      disks = drives.map { |name, _x| Disk.find_by_name(devicegraph, name) }
-      # FIXME: spaces = disks.map(&:free_disk_spaces).flatten
-      spaces = disks.map(&:free_spaces).flatten
-      dist = calculator.best_distribution(planned_partitions, spaces)
-
-      part_creator = Proposal::PartitionCreator.new(devicegraph)
-
       # To extend in the future with planned_volumes, etc.
       @planned_devices = planned_partitions
-      @proposed_devicegraph = part_creator.create_partitions(dist)
+      @proposed_devicegraph = create_planned_stuff(devicegraph, drives.keys)
       @proposed = true
 
       nil
@@ -192,15 +182,15 @@ module Y2Storage
           part.encryption_password = part_description["crypt_key"]
         end
         part.mount_point = part_description["mount"]
-
-        if part_description["create"]
-          part.label = part_description["label"]
-          part.uuid = part_description["uuid"]
-        else
-          # TODO: tener en cuenta reusar PERO FORMATEANDO
-          # TODO: error si 1) no se especificó un dispositivo o 2) no existe
+        part.label = part_description["label"]
+        part.uuid = part_description["uuid"]
+        if part_description["create"] == false
           partition_to_reuse = find_partition_to_reuse(devicegraph, part_description)
-          part.reuse = partition_to_reuse.name unless partition_to_reuse.nil?
+          if partition_to_reuse
+            part.reuse = partition_to_reuse.name
+            part.reformat = !!part_description["format"]
+          end
+          # TODO: error si 1) no se especificó un dispositivo o 2) no existe
         end
 
         # Sizes: leave out reducing fixed sizes and 'auto'
@@ -243,6 +233,7 @@ module Y2Storage
     def delete_linux_partitions(devicegraph, disk)
       partition_killer = Proposal::PartitionKiller.new(devicegraph)
       parts = disk_analyzer.linux_partitions(disk)
+      # Si queremos reusar un LV o un VG... ¿protege sus PVs?
       parts.map(&:name).each { |n| partition_killer.delete(n) }
     end
 
@@ -252,6 +243,36 @@ module Y2Storage
       elsif part_description["label"]
         devicegraph.partitions.find { |p| p.filesystem_label == part_description["label"] }
       end
+    end
+
+    def create_planned_stuff(devicegraph, disk_names)
+      dist = best_distribution(devicegraph, disk_names)
+
+      part_creator = Proposal::PartitionCreator.new(devicegraph)
+      result = part_creator.create_partitions(dist)
+
+      @planned_devices.each do |planned|
+        planned.reuse!(result)
+      end
+      result
+    end
+
+    def best_distribution(devicegraph, disk_names)
+      disks = disk_names.map { |name| Disk.find_by_name(devicegraph, name) }
+      spaces = disks.map(&:free_spaces).flatten
+
+      parts_to_create = @planned_devices.each_with_object([]) do |planned, memo|
+        next unless planned.is_a?(Planned::Partition)
+        if planned.reuse
+          log.info "No need to create this partition, it will reuse #{planned.reuse}: #{planned}"
+          next
+        end
+        memo << planned
+      end
+
+      # TODO: lvm_helper no obligatorio
+      calculator = Proposal::PartitionsDistributionCalculator.new(Proposal::LvmHelper.new([]))
+      calculator.best_distribution(parts_to_create, spaces)
     end
   end
 end

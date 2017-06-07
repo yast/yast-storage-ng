@@ -31,6 +31,11 @@ module Y2Storage
     module CanBeEncrypted
       include SecretAttributes
 
+      # This value matches Storage::Luks.metadata_size, which is not exposed in
+      # the libstorage API
+      ENCRYPTION_OVERHEAD = DiskSize.MiB(2)
+      private_constant :ENCRYPTION_OVERHEAD
+
       # @!attribute encryption_password
       #   @return [String, nil] password used to encrypt the device. If is nil,
       #     it means the device will not be encrypted
@@ -45,6 +50,69 @@ module Y2Storage
       # @return [Boolean]
       def encrypt?
         !encryption_password.nil?
+      end
+
+      # Returns the (possibly encrypted) device to be used for the planned
+      # device. TODO: update this
+      #
+      # If encryption is requested by the planned device, the method will
+      # encrypt the plain device and will return the corresponding encrypted
+      # one. Otherwise, it will simply return the plain device.
+      #
+      # @param planned [Planned::Device]
+      # @param plain_device [BlkDevice]
+      # @return [BlkDevice]
+      def final_device!(plain_device)
+        result = super
+        if create_encryption?
+          result = result.create_encryption(dm_name_for(result))
+          result.password = encryption_password
+          log.info "Device encrypted. Returning the new device #{result.inspect}"
+        else
+          log.info "No need to encrypt. Returning the existing device #{result.inspect}"
+        end
+        result
+      end
+
+      def self.included(base)
+        base.extend(ClassMethods)
+      end
+
+    protected
+
+      def create_encryption?
+        return false unless encrypt?
+        return true unless reuse?
+        return reformat? if respond_to?(:reformat?)
+        false
+      end
+
+      # DeviceMapper name to use for the encrypted version of the given device.
+      #
+      # FIXME: with the current implementation (using the device kernel name
+      # instead of UUID or something similar), the DeviceMapper for an encrypted
+      # /dev/sda5 would be "cr_sda5", which implies a quite high risk of
+      # collision with existing DeviceMapper names.
+      #
+      # Revisit this after improving libstorage-ng capabilities about
+      # alternative names and DeviceMapper.
+      #
+      # @return [String]
+      def dm_name_for(device)
+        name = device.name.split("/").last
+        "cr_#{name}"
+      end
+
+      # Class methods for the mixin
+      module ClassMethods
+        # Space that will be used by the encryption data structures in a device.
+        # I.e. how much smaller will be an encrypted device compared to the plain
+        # one.
+        #
+        # @return [DiskSize]
+        def encryption_overhead
+          ENCRYPTION_OVERHEAD
+        end
       end
     end
   end

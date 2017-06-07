@@ -180,11 +180,8 @@ module Y2Storage
       # @param planned_partitions [Array<Planned::Partition>]
       # @param graph [Devicegraph] devicegraph to modify
       def reuse_partitions!(planned_partitions, graph)
-        planned_partitions.select { |v| v.reuse }.each do |vol|
-          partition = graph.partitions.detect { |part| part.name == vol.reuse }
-          filesystem = partition.filesystem
-          filesystem.mountpoint = vol.mount_point if vol.mount_point && !vol.mount_point.empty?
-          partition.boot = true if vol.bootable
+        planned_partitions.each do |planned|
+          planned.reuse!(graph)
         end
       end
     end
