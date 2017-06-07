@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Tue Jun  6 17:57:16 CEST 2017 - shundhammer@suse.de
+
+- Don't insist on installing filesystem support packages that
+  are not available in any repo (bsc#1039830)
+- 0.1.16
+
+-------------------------------------------------------------------
 Thu Jun  1 10:27:25 UTC 2017 - ancor@suse.com
 
 - Fixed a bug in LvmLv#stripe_size=

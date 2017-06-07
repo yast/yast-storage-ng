@@ -73,7 +73,27 @@ module Y2Storage
     #
     def add_feature_packages(devicegraph)
       used_features = UsedStorageFeatures.new(devicegraph)
-      add_packages(used_features.feature_packages)
+      packages = used_features.feature_packages
+      packages.delete_if do |pkg|
+        if unavailable_optional_package?(pkg)
+          log.warn("WARNING: Skipping unavailable filesystem support package #{pkg}")
+          true
+        else
+          false
+        end
+      end
+      add_packages(packages)
+    end
+
+    # Check if a package is an optional package that is unavailable.
+    # See also bsc#1039830
+    #
+    # @param package [String] package name
+    # @return [Boolean] true if package is optional and unavailable,
+    #                   false if not optional or if available.
+    def unavailable_optional_package?(package)
+      return false unless UsedStorageFeatures.optional_package?(package)
+      !Yast::Package.Available(package)
     end
 
     # Start a package dependency resolver run

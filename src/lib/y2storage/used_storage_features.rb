@@ -100,6 +100,16 @@ module Y2Storage
         # partition to it is handled by yast-bootloader in the inst-sys.
         UF_EFIBOOT:       "efibootmgr"
       }
+
+    # Storage-related packages that are nice to have, but not absolutely
+    # required.
+    #
+    # SLES-12 for example (unlike SLED-12) does not come with NTFS packages,
+    # so they cannot be installed. But there might already be an existing
+    # NTFS Windows partition on the disk; don't throw an error pop-up in that
+    # case, just log a warning (bsc#1039830).
+    #
+    OPTIONAL_PACKAGES = ["ntfs-3g", "ntfsprogs"]
     # configurable part ends here
     #======================================================================
 
@@ -198,6 +208,16 @@ module Y2Storage
     #
     def bitmask(feature)
       ::Storage.const_get(feature)
+    end
+
+    # Check if a storage-related package is an optional one, i.e. installation
+    # can safely continue without it.
+    #
+    # @param package [String] package name
+    # @return [Boolean] true if this is an optional package, false otherwise
+    #
+    def self.optional_package?(package)
+      UsedStorageFeatures::OPTIONAL_PACKAGES.include?(package)
     end
   end
 end
