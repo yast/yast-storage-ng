@@ -209,6 +209,16 @@ module Y2Storage
     def bitmask(feature)
       ::Storage.const_get(feature)
     end
+
+    # Check if a storage-related package is an optional one, i.e. installation
+    # can safely continue without it.
+    #
+    # @param package [String] package name
+    # @return [Boolean] true if this is an optional package, false otherwise
+    #
+    def self.optional_package?(package)
+      UsedStorageFeatures::OPTIONAL_PACKAGES.include?(package)
+    end
   end
 end
 
