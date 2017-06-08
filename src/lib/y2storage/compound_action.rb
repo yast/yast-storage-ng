@@ -42,6 +42,12 @@ module Y2Storage
     #   @return [Boolean] whether the action destroys the target device
     storage_forward :delete?
 
+    # Checks whether the target device is a concrete kind of device.
+    # @see Device#is?
+    #
+    # @param type [#to_sym] name of the device type, as defined in
+    #   each subclass.
+    # @return [Boolean]
     def device_is?(type)
       target_device.is?(type)
     end
