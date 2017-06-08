@@ -190,5 +190,16 @@ module Y2Storage
     def plain_device
       self
     end
+
+    # Checks whether a new filesystem (encrypted or not) should be created for
+    # this device
+    #
+    # @param initial_devicegraph [Devicegraph] devicegraph to use as starting
+    #   point when calculating the actions to perform
+    # @return [Boolean]
+    def to_be_formatted?(initial_devicegraph)
+      return false unless blk_filesystem
+      !blk_filesystem.exists_in_devicegraph?(initial_devicegraph)
+    end
   end
 end
