@@ -21,6 +21,7 @@
 
 require "yast"
 require "y2storage"
+require "y2storage/widgets/actions_summary"
 require "ui/installation_dialog"
 
 Yast.import "HTML"
@@ -30,9 +31,6 @@ module Y2Storage
     # Calculates the storage proposal during installation and provides
     # the user a summary of the storage proposal
     class Proposal < ::UI::InstallationDialog
-      # For Devicegraph#actiongraph
-      using Y2Storage::Refinements::Devicegraph
-
       attr_reader :proposal
       attr_reader :devicegraph
 
@@ -45,6 +43,8 @@ module Y2Storage
         @proposal = proposal
         @devicegraph = devicegraph
         propose! if proposal && !proposal.proposed?
+        actiongraph = @devicegraph ? @devicegraph.actiongraph : nil
+        @summary_widget = Widgets::ActionsSummary.new(Id(:summary), actiongraph)
       end
 
       def next_handler
@@ -62,6 +62,10 @@ module Y2Storage
 
       def expert_handler
         finish_dialog(:expert)
+      end
+
+      def handle_event(input)
+        @summary_widget.handle(input)
       end
 
     protected
@@ -98,11 +102,10 @@ module Y2Storage
         # TODO: if there is a proposal, use the meaningful description with
         # hyperlinks instead of just delegating the summary to libstorage
         if devicegraph
-          actiongraph = devicegraph.actiongraph
-          texts = actiongraph.commit_actions_as_strings.to_a
-          Yast::HTML.Para(Yast::HTML.List(texts))
+          @summary_widget.content
         else
-          Yast::HTML.Para(Yast::HTML.Colorize(_("No proposal possible."), "red"))
+          entry = Yast::HTML.Para(Yast::HTML.Colorize(_("No proposal possible."), "red"))
+          RichText(@summary_widget.id, entry)
         end
       end
 
@@ -114,7 +117,7 @@ module Y2Storage
         MarginBox(
           2, 1,
           VBox(
-            MinHeight(8, RichText(summary)),
+            MinHeight(8, summary),
             PushButton(Id(:guided), _("Guided Setup")),
             PushButton(Id(:expert), _("Expert partitioner"))
           )

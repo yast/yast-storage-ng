@@ -21,6 +21,7 @@
 
 require "y2storage/devicegraph"
 require "y2storage/actiongraph"
+require "y2storage/compound_action"
 require "y2storage/region"
 require "y2storage/resize_info"
 require "y2storage/device"
