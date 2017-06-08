@@ -176,5 +176,19 @@ describe Y2Storage::Dialogs::Proposal do
         expect(dialog.devicegraph).to eq devicegraph0
       end
     end
+
+    context "when subvolumes link is clicked" do
+      let(:proposal) { nil }
+      let(:event) { "summary--subvolumes" }
+
+      before do
+        allow(Yast::UI).to receive(:UserInput).twice.and_return(event, :next)
+      end
+
+      it "delegates the event to the summary widget" do
+        expect(summary_widget0).to receive(:handle).with(event)
+        dialog.run
+      end
+    end
   end
 end
