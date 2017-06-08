@@ -24,6 +24,8 @@ require_relative "spec_helper"
 require "y2storage"
 
 describe Y2Storage::BlkDevice do
+  using Y2Storage::Refinements::SizeCasts
+
   before do
     fake_scenario("complex-lvm-encrypt")
   end
@@ -109,6 +111,173 @@ describe Y2Storage::BlkDevice do
 
       it "returns nil" do
         expect(device.direct_lvm_pv).to be_nil
+      end
+    end
+  end
+
+  describe "#to_be_formatted?" do
+    let(:new_devicegraph) { Y2Storage::StorageManager.instance.y2storage_staging }
+    let(:new_device) { Y2Storage::BlkDevice.find_by_name(new_devicegraph, device_name) }
+
+    context "for the original device (same devicegraph)" do
+      let(:device_name) { "/dev/sda1" }
+      subject(:new_device) { device }
+
+      it "returns false" do
+        expect(new_device.to_be_formatted?(fake_devicegraph)).to eq false
+      end
+    end
+
+    context "if the device is empty (not encrypted or used)" do
+      context "if it didn't exist in the original devicegraph" do
+        before do
+          vg1 = Y2Storage::LvmVg.find_by_vg_name(new_devicegraph, "vg1")
+          vg1.create_lvm_lv("newlv", 1.GiB)
+        end
+
+        let(:device_name) { "/dev/vg1/newlv" }
+
+        it "returns false" do
+          expect(new_device.to_be_formatted?(fake_devicegraph)).to eq false
+        end
+      end
+
+      context "if it was empty in the original devicegraph" do
+        let(:device_name) { "/dev/sdb" }
+
+        it "returns false" do
+          expect(new_device.to_be_formatted?(fake_devicegraph)).to eq false
+        end
+      end
+
+      context "if it was not empty in the original devicegraph" do
+        let(:device_name) { "/dev/sda1" }
+        before { new_device.remove_descendants }
+
+        it "returns false" do
+          expect(new_device.to_be_formatted?(fake_devicegraph)).to eq false
+        end
+      end
+    end
+
+    context "if the device directly contains a filesystem" do
+      context "if it didn't exist in the original devicegraph" do
+        let(:device_name) { "/dev/vg1/newlv" }
+
+        before do
+          vg1 = Y2Storage::LvmVg.find_by_vg_name(new_devicegraph, "vg1")
+          vg1.create_lvm_lv("newlv", 1.GiB)
+          new_device.create_blk_filesystem(Y2Storage::Filesystems::Type::EXT4)
+        end
+
+        it "returns true" do
+          expect(new_device.to_be_formatted?(fake_devicegraph)).to eq true
+        end
+      end
+
+      context "if it contained a different filesystem in the original devicegraph" do
+        let(:device_name) { "/dev/sda1" }
+        before do
+          new_device.remove_descendants
+          new_device.create_blk_filesystem(Y2Storage::Filesystems::Type::EXT4)
+        end
+
+        it "returns true" do
+          expect(new_device.to_be_formatted?(fake_devicegraph)).to eq true
+        end
+      end
+
+      context "if it contained no filesystem in the original devicegraph" do
+        let(:device_name) { "/dev/sdb" }
+        before { new_device.create_blk_filesystem(Y2Storage::Filesystems::Type::EXT4) }
+
+        it "returns true" do
+          expect(new_device.to_be_formatted?(fake_devicegraph)).to eq true
+        end
+      end
+
+      context "if it already contained that filesystem in the original devicegraph" do
+        let(:device_name) { "/dev/sda1" }
+
+        it "returns false" do
+          expect(new_device.to_be_formatted?(fake_devicegraph)).to eq false
+        end
+      end
+    end
+
+    context "if the device contains an encrypted filesystem" do
+      context "if it didn't exist in the original devicegraph" do
+        let(:device_name) { "/dev/vg1/newlv" }
+
+        before do
+          vg1 = Y2Storage::LvmVg.find_by_vg_name(new_devicegraph, "vg1")
+          vg1.create_lvm_lv("newlv", 1.GiB)
+          new_enc = new_device.create_encryption("newenc")
+          new_enc.create_blk_filesystem(Y2Storage::Filesystems::Type::EXT4)
+        end
+
+        it "returns true" do
+          expect(new_device.to_be_formatted?(fake_devicegraph)).to eq true
+        end
+      end
+
+      context "if it contained a different filesystem in the original devicegraph" do
+        let(:device_name) { "/dev/sda4" }
+        before do
+          new_device.encryption.remove_descendants
+          new_device.encryption.create_blk_filesystem(Y2Storage::Filesystems::Type::EXT4)
+        end
+
+        it "returns true" do
+          expect(new_device.to_be_formatted?(fake_devicegraph)).to eq true
+        end
+      end
+
+      context "if it contained no filesystem in the original devicegraph" do
+        let(:device_name) { "/dev/sdb" }
+        before do
+          new_enc = new_device.create_encryption("newenc")
+          new_enc.create_blk_filesystem(Y2Storage::Filesystems::Type::EXT4)
+        end
+
+        it "returns true" do
+          expect(new_device.to_be_formatted?(fake_devicegraph)).to eq true
+        end
+      end
+
+      context "if it already contained that filesystem in the original devicegraph" do
+        let(:device_name) { "/dev/sda4" }
+
+        it "returns false" do
+          expect(new_device.to_be_formatted?(fake_devicegraph)).to eq false
+        end
+      end
+    end
+
+    context "if the device is used for other purpose (e.g. LVM PV)" do
+      let(:vg1) { Y2Storage::LvmVg.find_by_vg_name(new_devicegraph, "vg1") }
+
+      context "if it was empty in the original devicegraph" do
+        let(:device_name) { "/dev/sdb" }
+
+        before { vg1.add_lvm_pv(new_device) }
+
+        it "returns false" do
+          expect(new_device.to_be_formatted?(fake_devicegraph)).to eq false
+        end
+      end
+
+      context "if it was not empty in the original devicegraph" do
+        let(:device_name) { "/dev/sda1" }
+
+        before do
+          new_device.remove_descendants
+          vg1.add_lvm_pv(new_device)
+        end
+
+        it "returns false" do
+          expect(new_device.to_be_formatted?(fake_devicegraph)).to eq false
+        end
       end
     end
   end
