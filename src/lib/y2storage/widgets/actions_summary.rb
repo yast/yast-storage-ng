@@ -49,7 +49,7 @@ module Y2Storage
 
       # UI widget representation. It contains the list of actions.
       #
-      # @return [RichText]
+      # @return [Yast::Term]
       def content
         RichText(id, actions_summary)
       end
