@@ -31,7 +31,7 @@ BuildRequires:	update-desktop-files
 BuildRequires:	libstorage-ng-ruby
 BuildRequires:	yast2-ruby-bindings
 BuildRequires:	yast2-devtools
-BuildRequires:	yast2 >= 3.2.37
+BuildRequires:	yast2 >= 3.2.37 # EventDispatcher#event_handler is required
 BuildRequires:	rubygem(yast-rake)
 BuildRequires:	rubygem(rspec)
 
