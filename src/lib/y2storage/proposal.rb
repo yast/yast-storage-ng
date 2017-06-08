@@ -26,6 +26,10 @@ end
 
 require "y2storage/proposal/devicegraph_generator"
 require "y2storage/proposal/lvm_helper"
+require "y2storage/proposal/autoinst_devices_creator"
+require "y2storage/proposal/autoinst_devices_planner"
+require "y2storage/proposal/autoinst_space_maker"
+require "y2storage/proposal/autoinst_drives_map"
 require "y2storage/proposal/partition_creator"
 require "y2storage/proposal/partition_killer"
 require "y2storage/proposal/partitions_distribution_calculator"

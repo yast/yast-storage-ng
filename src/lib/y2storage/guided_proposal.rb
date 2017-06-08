@@ -63,7 +63,7 @@ module Y2Storage
     # @param disk_analyzer [DiskAnalyzer] if nil, a new one will be created
     #   based in the initial devicegraph
     def initialize(settings: nil, devicegraph: nil, disk_analyzer: nil)
-      @settings = settings || ProposalSettings.new
+      @settings = settings || ProposalSettings.new_for_current_product
       @proposed = false
       @initial_graph = devicegraph
       @disk_analyzer = disk_analyzer
