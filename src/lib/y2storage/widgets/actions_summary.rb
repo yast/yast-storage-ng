@@ -63,7 +63,6 @@ module Y2Storage
 
     protected
 
-      attr_reader :id
       attr_reader :actiongraph
       attr_reader :collapsed_subvolumes
 
