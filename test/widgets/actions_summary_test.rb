@@ -106,8 +106,8 @@ describe Y2Storage::Widgets::ActionsSummary do
       end
     end
 
-    context "when input is 'subvolumes'" do
-      let(:input) { :subvolumes }
+    context "when input matches with toggle subvolumes event" do
+      let(:input) { subject.toggle_subvolumes_event }
 
       it "toggles subvolumes list" do
         expect(subject).to receive(:toggle_subvolumes)

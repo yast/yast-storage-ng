@@ -40,16 +40,30 @@ module Y2Storage
         @collapsed_subvolumes = true
       end
 
+      # Main handler for the widget. It can modify the widget content.
+      #
+      # @param input [#to_s] event to handle
       def handle(input)
-        subvolumes_handler if input.to_s == "subvolumes"
+        subvolumes_handler if input.to_s == toggle_subvolumes_event
       end
 
+      # UI widget representation. It contains the list of actions.
+      #
+      # @return [RichText]
       def content
         RichText(id, actions_summary)
       end
 
+      # Name of the event to handle subvolumes toggling.
+      #
+      # @return [String]
+      def toggle_subvolumes_event
+        "#{id}--subvolumes"
+      end
+
     protected
 
+      attr_reader :id
       attr_reader :actiongraph
       attr_reader :collapsed_subvolumes
 
@@ -77,12 +91,13 @@ module Y2Storage
 
         return [] if actions.empty?
 
+        event = toggle_subvolumes_event
         if collapsed_subvolumes?
           # TRANSLATORS: %d is the amount of actions. Do not change href
-          [_("%d subvolume actions (<a href=\"subvolumes\">see details</a>)") % actions.size]
+          [_("%d subvolume actions (<a href=\"#{event}\">see details</a>)") % actions.size]
         else
           # TRANSLATORS: %d is the amount of actions. Do not change href
-          header = _("%d subvolume actions (<a href=\"subvolumes\">hide details</a>)") % actions.size
+          header = _("%d subvolume actions (<a href=\"#{event}\">hide details</a>)") % actions.size
           list = html_list(actions_to_items(actions))
           [header, list]
         end
