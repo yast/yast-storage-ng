@@ -181,13 +181,12 @@ describe Y2Storage::Dialogs::Proposal do
 
     context "when an actions presenter event happens" do
       let(:proposal) { nil }
-      let(:presenter_events) { ["subvolumes"] }
-      let(:event) { presenter_events.first }
+      let(:event) { "event" }
 
       before do
         allow(Yast::UI).to receive(:UserInput).twice.and_return(event, :next)
+        allow(actions_presenter0).to receive(:can_handle?).with(event).and_return(true)
         allow(actions_presenter0).to receive(:update_status)
-        allow(actions_presenter0).to receive(:events).and_return(presenter_events)
       end
 
       it "updates the actions presenter" do

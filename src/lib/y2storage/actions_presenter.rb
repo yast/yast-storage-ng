@@ -49,6 +49,13 @@ module Y2Storage
       Yast::HTML.Para(html_list(items))
     end
 
+    # Whether the event can be managed by the presenter
+    #
+    # @return [Boolean]
+    def can_handle?(event)
+      events.include?(event)
+    end
+
     # List of events that the presenter can manage
     #
     # @return [Array<String>]

@@ -58,7 +58,7 @@ module Y2Storage
       def ask_user(param)
         event = param["chosen_id"]
 
-        if actions_presenter.events.include?(event)
+        if actions_presenter.can_handle?(event)
           actions_presenter.update_status(event)
           result = :again
         else

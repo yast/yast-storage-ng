@@ -113,6 +113,20 @@ describe Y2Storage::ActionsPresenter do
     end
   end
 
+  describe "#can_handle?" do
+    before do
+      allow(subject).to receive(:events).and_return(["event1", "event2"])
+    end
+
+    it "returns true if the event is included in its list of events" do
+      expect(subject.can_handle?("event1")).to be_truthy
+    end
+
+    it "returns false if the event is not included in its list of events" do
+      expect(subject.can_handle?("event3")).to be_falsey
+    end
+  end
+
   describe "#events" do
     before do
       allow(subject).to receive(:toggle_subvolumes_event).and_return("subvolumes")
