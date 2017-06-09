@@ -34,19 +34,17 @@ module Y2Storage
     class PartitionsProposal < ::Installation::ProposalClient
       include Yast::Logger
 
-      def self.state(storage_manager)
-        return if staging_revision == storage_manager.staging_revision
-
-        self.staging_revision = storage_manager.staging_revision
-
-        staging = storage_manager.y2storage_staging
-        actiongraph = staging ? staging.actiongraph : nil
-        self.actions_presenter = ActionsPresenter.new(actiongraph)
-      end
-
       def initialize
-        create_proposal
-        self.class.state(storage_manager)
+        if storage_manager.proposal.nil?
+          proposal = new_proposal
+          proposal.propose
+          storage_manager.proposal = proposal
+        elsif !storage_manager.proposal.proposed?
+          storage_manager.proposal.propose
+        end
+        self.class.update_state
+      rescue Y2Storage::Proposal::Error
+        log.error("generating proposal failed")
       end
 
       def make_proposal(_attrs)
@@ -84,6 +82,17 @@ module Y2Storage
       class << self
         attr_accessor :staging_revision
         attr_accessor :actions_presenter
+
+        def update_state
+          storage_manager = StorageManager.instance
+          return if staging_revision == storage_manager.staging_revision
+
+          self.staging_revision = storage_manager.staging_revision
+
+          staging = storage_manager.y2storage_staging
+          actiongraph = staging ? staging.actiongraph : nil
+          self.actions_presenter = ActionsPresenter.new(actiongraph)
+        end
       end
 
       def actions_presenter
@@ -96,14 +105,6 @@ module Y2Storage
 
       def storage_manager
         StorageManager.instance
-      end
-
-      def create_proposal
-        proposal = storage_manager.proposal || new_proposal
-        proposal.propose if !proposal.proposed?
-        storage_manager.proposal = proposal if storage_manager.proposal.nil?
-      rescue Y2Storage::Proposal::Error
-        log.error("generating proposal failed")
       end
 
       def new_proposal
