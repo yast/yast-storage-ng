@@ -21,7 +21,7 @@
 
 require "yast"
 require "y2storage"
-require "y2storage/widgets/actions_summary"
+require "y2storage/dialogs/actions_presenter"
 require "ui/installation_dialog"
 
 Yast.import "HTML"
@@ -44,7 +44,7 @@ module Y2Storage
         @devicegraph = devicegraph
         propose! if proposal && !proposal.proposed?
         actiongraph = @devicegraph ? @devicegraph.actiongraph : nil
-        @summary_widget = Widgets::ActionsSummary.new(Id(:summary), actiongraph)
+        @actions_presenter = ActionsPresenter.new(actiongraph)
       end
 
       def next_handler
@@ -65,7 +65,10 @@ module Y2Storage
       end
 
       def handle_event(input)
-        @summary_widget.handle(input)
+        if @actions_presenter.events.include?(input)
+          @actions_presenter.update_status(input)
+          Yast::UI.ChangeWidget(Id(:summary), :Value, @actions_presenter.to_html)
+        end
       end
 
     protected
@@ -101,12 +104,13 @@ module Y2Storage
       def summary
         # TODO: if there is a proposal, use the meaningful description with
         # hyperlinks instead of just delegating the summary to libstorage
-        if devicegraph
-          @summary_widget.content
+        content = if devicegraph
+          @actions_presenter.to_html
         else
-          entry = Yast::HTML.Para(Yast::HTML.Colorize(_("No proposal possible."), "red"))
-          RichText(@summary_widget.id, entry)
+          Yast::HTML.Para(Yast::HTML.Colorize(_("No proposal possible."), "red"))
         end
+
+        RichText(Id(:summary), content)
       end
 
       def dialog_title
