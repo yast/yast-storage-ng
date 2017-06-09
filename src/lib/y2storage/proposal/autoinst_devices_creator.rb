@@ -69,7 +69,7 @@ module Y2Storage
       def best_distribution(planned_partitions, disk_names)
         disks = original_graph.disks.select { |d| disk_names.include?(d.name) }
         spaces = disks.map(&:free_spaces).flatten
-        # TODO: lvm_helper no obligatorio
+        # TODO: the calculator should not enforce the usage of LvmHelper
         calculator = Proposal::PartitionsDistributionCalculator.new(Proposal::LvmHelper.new([]))
 
         calculator.best_distribution(planned_partitions, spaces)

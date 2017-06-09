@@ -90,7 +90,9 @@ module Y2Storage
               part.reuse = partition_to_reuse.name
               part.reformat = !!part_description["format"]
             end
-            # TODO: error si 1) no se especificó un dispositivo o 2) no existe
+            # TODO: possible errors here
+            #   - missing information about what device to use
+            #   - the specified device was not found
           end
 
           # Sizes: leave out reducing fixed sizes and 'auto'
