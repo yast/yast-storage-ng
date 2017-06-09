@@ -23,7 +23,7 @@
 
 require "yast"
 require "y2storage"
-require "y2storage/dialogs/actions_presenter"
+require "y2storage/actions_presenter"
 require "installation/proposal_client"
 
 Yast.import "Popup"

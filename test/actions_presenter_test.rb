@@ -20,8 +20,8 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require_relative "../spec_helper"
-require "y2storage/dialogs/actions_presenter"
+require_relative "spec_helper"
+require "y2storage/actions_presenter"
 
 describe Y2Storage::ActionsPresenter do
   subject { described_class.new(actiongraph) }
