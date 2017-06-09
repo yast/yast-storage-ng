@@ -62,7 +62,8 @@ module Y2Storage
           actions_presenter.update_status(event)
           result = :again
         else
-          Yast::Report.Warning(_("This action is not enabled at this moment"))
+          Yast::Report.Warning(_("This is not enabled at this moment (event: %s)") % event)
+          log.warn("WARNING: impossible to manage even #{event}")
           result = :back
         end
 
