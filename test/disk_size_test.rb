@@ -319,11 +319,21 @@ describe Y2Storage::DiskSize do
       expect(described_class.parse("10 MB").to_i).to eq(10 * 1000**2)
     end
 
+    it "should accept deprecated units" do
+      expect(described_class.parse("10 K").to_i).to eq(10 * 1000)
+      expect(described_class.parse("10 M").to_i).to eq(10 * 1000**2)
+      expect(described_class.parse("10 G").to_i).to eq(10 * 1000**3)
+    end
+
     context "when using the legacy_unit flag" do
       let(:legacy) { true }
 
       it "considers international system units to be power of two" do
         expect(described_class.parse("10 MB", legacy_units: legacy).size).to eq(10 * 1024**2)
+      end
+
+      it "considers deprecated units to be power of two" do
+        expect(described_class.parse("10 M", legacy_units: legacy).to_i).to eq(10 * 1024**2)
       end
 
       it "reads units that are power of two in the usual way" do

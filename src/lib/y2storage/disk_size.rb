@@ -47,6 +47,8 @@ module Y2Storage
     include Comparable
 
     UNITS = ["B", "KiB", "MiB", "GiB", "TiB", "PiB", "EiB", "ZiB", "YiB"]
+    # Old units from AutoYaST (to be deprecated)
+    DEPRECATED_UNITS = ["K", "M", "G"]
     # International System of Units (SI)
     SI_UNITS = ["KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"]
     UNLIMITED = "unlimited"
@@ -390,7 +392,7 @@ module Y2Storage
 
       def unit(str)
         unit = str.gsub(number(str), "").strip
-        if !unit.empty? && !(UNITS + SI_UNITS).include?(unit)
+        if !unit.empty? && !(UNITS + SI_UNITS + DEPRECATED_UNITS).include?(unit)
           raise ArgumentError, "Bad unit: #{str}"
         end
         unit
@@ -403,6 +405,9 @@ module Y2Storage
         elsif SI_UNITS.include?(unit)
           base = 1000
           exp = SI_UNITS.index(unit) + 1
+        elsif DEPRECATED_UNITS.include?(unit)
+          base = 1000
+          exp = DEPRECATED_UNITS.index(unit) + 1
         else
           raise ArgumentError, "Bad unit: #{str}"
         end
