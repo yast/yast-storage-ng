@@ -102,6 +102,32 @@ module Y2Storage
         HOME_FILESYSTEMS.map { |f| find(f) }
       end
 
+      # Check if filesystem is usable as root (mountpoint "/") filesystem.
+      #
+      # return [Boolean]
+      #
+      # @example
+      #   devicegraph.filesystems.each do |fs|
+      #     puts "#{fs.type}: #{fs.type.root_ok?}"
+      #   end
+      #
+      def root_ok?
+        return Type.root_filesystems.include?(self)
+      end
+
+      # Check if filesystem is usable as home (mountpoint "/home") filesystem.
+      #
+      # return [Boolean]
+      #
+      # @example
+      #   devicegraph.filesystems.each do |fs|
+      #     puts "#{fs.type}: #{fs.type.home_ok?}"
+      #   end
+      #
+      def home_ok?
+        return Type.home_filesystems.include?(self)
+      end
+
       # Human readable text for a filesystem
       #
       # @return [String]
