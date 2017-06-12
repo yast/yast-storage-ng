@@ -119,7 +119,7 @@ describe "devices lists" do
           fs.mountpoints.first == "/"
         end
         expect(result).to contain_exactly(
-          an_object_having_attributes(label: "root")
+          an_object_having_attributes(label: "suse_root")
         )
       end
     end
@@ -382,7 +382,7 @@ describe "devices lists" do
         list = filesystems.with_mountpoint(["/home", "/non_existent", "/"])
         expect(list.size).to eq 2
         types = list.map(&:type)
-        expect(types).to contain_exactly(Storage::FsType_XFS, Storage::FsType_EXT4)
+        expect(types).to contain_exactly(Storage::FsType_XFS, Storage::FsType_BTRFS)
       end
 
       it "returns an empty list if nothing matches" do
