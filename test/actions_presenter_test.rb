@@ -74,40 +74,53 @@ describe Y2Storage::ActionsPresenter do
   describe "#to_html" do
     let(:compound_actions) { [ca_create_device, ca_delete_device] }
 
-    it "presents delete actions in bold" do
-      expect(subject.to_html).to include "<b>delete device action</b>"
-    end
+    context "when there is not an actiongraph" do
+      let(:actiongraph) { nil }
 
-    it "presents delete actions first" do
-      expect(subject.to_html)
-        .to include "<ul><li><b>delete device action</b></li><li>create device action</li>"
-    end
-
-    context "when there are not subvolume actions" do
-      let(:compound_actions) { [ca_create_device, ca_delete_device] }
-
-      it "does not include subvolumes line" do
-        expect(subject.to_html).not_to include "see details"
+      it "returns an empty html list" do
+        expect(subject.to_html).to include "<ul></ul>"
       end
     end
 
-    context "when there are subvolume actions" do
-      let(:compound_actions) { [ca_create_device, ca_create_subvol, ca_delete_device, ca_delete_subvol] }
+    context "when there is an actiongraph" do
 
-      it "presents collapsed subvolumes by default" do
-        expect(subject.to_html).to include "see details"
-        expect(subject.to_html).not_to include "delete subvolume"
-        expect(subject.to_html).not_to include "create subvolume"
+      it "presents delete actions in bold" do
+        expect(subject.to_html).to include "<b>delete device action</b>"
       end
 
-      context "when subvolume actions are expanded" do
-        before do
-          allow(subject).to receive(:collapsed_subvolumes?).and_return(false)
+      it "presents delete actions first" do
+        expect(subject.to_html)
+          .to include "<ul><li><b>delete device action</b></li><li>create device action</li>"
+      end
+
+      context "when there are not subvolume actions" do
+        let(:compound_actions) { [ca_create_device, ca_delete_device] }
+
+        it "does not include subvolumes line" do
+          expect(subject.to_html).not_to include "see details"
+        end
+      end
+
+      context "when there are subvolume actions" do
+        let(:compound_actions) do
+          [ca_create_device, ca_create_subvol, ca_delete_device, ca_delete_subvol]
         end
 
-        it "presents delete subvolume actions first" do
-          expect(subject.to_html)
-            .to include "<li><b>delete subvolume action</b></li><li>create subvolume action</li>"
+        it "presents collapsed subvolumes by default" do
+          expect(subject.to_html).to include "see details"
+          expect(subject.to_html).not_to include "delete subvolume"
+          expect(subject.to_html).not_to include "create subvolume"
+        end
+
+        context "when subvolume actions are expanded" do
+          before do
+            allow(subject).to receive(:collapsed_subvolumes?).and_return(false)
+          end
+
+          it "presents delete subvolume actions first" do
+            expect(subject.to_html)
+              .to include "<li><b>delete subvolume action</b></li><li>create subvolume action</li>"
+          end
         end
       end
     end
