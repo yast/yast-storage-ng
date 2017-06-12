@@ -50,16 +50,9 @@ module Y2Storage
       include Yast::Logger
 
       def initialize
-        if storage_manager.proposal.nil?
-          proposal = new_proposal
-          proposal.propose
-          storage_manager.proposal = proposal
-        elsif !storage_manager.proposal.proposed?
-          storage_manager.proposal.propose
-        end
+        textdomain "storage-ng"
+        ensure_proposed unless storage_manager.staging_changed?
         self.class.update_state
-      rescue Y2Storage::Proposal::Error
-        log.error("generating proposal failed")
       end
 
       def make_proposal(_attrs)
@@ -127,6 +120,18 @@ module Y2Storage
 
       def storage_manager
         StorageManager.instance
+      end
+
+      def ensure_proposed
+        if storage_manager.proposal.nil?
+          proposal = new_proposal
+          proposal.propose
+          storage_manager.proposal = proposal
+        elsif !storage_manager.proposal.proposed?
+          storage_manager.proposal.propose
+        end
+      rescue Y2Storage::Proposal::Error
+        log.error("generating proposal failed")
       end
 
       def new_proposal

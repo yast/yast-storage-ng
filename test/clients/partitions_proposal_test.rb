@@ -37,38 +37,61 @@ describe Y2Storage::Clients::PartitionsProposal do
   describe "#initialize" do
     let(:storage_manager) { Y2Storage::StorageManager.instance }
 
-    context "when there is not a proposal" do
-      it "calculates a new proposal" do
-        expect(storage_manager.proposal).to be_nil
-        subject
-        expect(storage_manager.proposal).not_to be_nil
-        expect(storage_manager.proposal.proposed?).to be true
+    context "when running the client for the first time" do
+      before do
+        allow(storage_manager).to receive(:staging_changed?).and_return false
+      end
+
+      context "and there is not a proposal" do
+        it "calculates a new proposal" do
+          expect(storage_manager.proposal).to be_nil
+          subject
+          expect(storage_manager.proposal).not_to be_nil
+          expect(storage_manager.proposal.proposed?).to be true
+        end
+      end
+
+      context "and a proposal already exists" do
+        before do
+          allow(storage_manager).to receive(:proposal).and_return(proposal)
+        end
+
+        let(:proposal) { instance_double(Y2Storage::Proposal, proposed?: proposed) }
+
+        context "but it is not calculated yet" do
+          let(:proposed) { false }
+
+          it "calculates the proposal" do
+            expect(storage_manager.proposal).to receive(:propose)
+            subject
+          end
+        end
+
+        context "and it is already calculated" do
+          let(:proposed) { true }
+
+          it "does not re-calculate the proposal" do
+            expect(storage_manager.proposal).to_not receive(:propose)
+            subject
+          end
+        end
       end
     end
 
-    context "when a proposal already exists" do
+    context "when the proposal has already been calculated or the staging manually set" do
       before do
-        allow(storage_manager).to receive(:proposal).and_return(proposal)
+        allow(storage_manager).to receive(:staging_changed?).and_return true
       end
 
-      let(:proposal) { instance_double(Y2Storage::Proposal, proposed?: proposed) }
-
-      context "but it is not calculated yet" do
-        let(:proposed) { false }
-
-        it "calculates the proposal" do
-          expect(storage_manager.proposal).to receive(:propose)
-          subject
-        end
+      it "does not propose anything" do
+        expect(storage_manager.proposal).not_to receive(:propose)
+        subject
       end
 
-      context "and it is already calculated" do
-        let(:proposed) { true }
-
-        it "does not re-calculate the proposal" do
-          expect(storage_manager.proposal).to_not receive(:propose)
-          subject
-        end
+      it "does not create a new proposal" do
+        proposal = storage_manager.proposal
+        subject
+        expect(storage_manager.proposal).to eq(proposal)
       end
     end
 
