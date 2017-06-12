@@ -78,20 +78,20 @@ describe Y2Storage::Clients::PartitionsProposal do
       end
     end
 
-    context "when the proposal has already been calculated or the staging manually set" do
+    context "when the staging devicegraph has already been manually set" do
       before do
         allow(storage_manager).to receive(:staging_changed?).and_return true
-      end
-
-      it "does not propose anything" do
-        expect(storage_manager.proposal).not_to receive(:propose)
-        subject
       end
 
       it "does not create a new proposal" do
         proposal = storage_manager.proposal
         subject
         expect(storage_manager.proposal).to eq(proposal)
+      end
+
+      it "does not propose anything" do
+        expect(storage_manager.proposal).not_to receive(:propose)
+        subject
       end
     end
 
@@ -138,27 +138,50 @@ describe Y2Storage::Clients::PartitionsProposal do
   end
 
   describe "#make_proposal" do
-    it "returns a hash with 'preformatted_proposal', 'links' and 'language_changed'" do
-      proposal = subject.make_proposal({})
-      expect(proposal).to be_a Hash
-      expect(proposal).to include("preformatted_proposal", "links", "language_changed")
+    context "when it has been successful" do
+      before do
+        allow(subject).to receive(:failed).and_return(false)
+      end
+
+      it "returns a hash with 'preformatted_proposal', 'links' and 'language_changed'" do
+        proposal = subject.make_proposal({})
+        expect(proposal).to be_a Hash
+        expect(proposal).to include("preformatted_proposal", "links", "language_changed")
+      end
+
+      it "returns html representation for 'preformatted_proposal' key" do
+        proposal = subject.make_proposal({})
+        html_content = actions_presenter.to_html
+        expect(proposal["preformatted_proposal"]).to eq html_content
+      end
+
+      it "includes actions presenter events in 'links' value" do
+        proposal = subject.make_proposal({})
+        presenter_events = actions_presenter.events
+        expect(proposal["links"]).to include(*presenter_events)
+      end
+
+      it "returns false for 'language_changed' key" do
+        proposal = subject.make_proposal({})
+        expect(proposal["language_changed"]).to be false
+      end
     end
 
-    it "returns html representation for 'preformatted_proposal' key" do
-      proposal = subject.make_proposal({})
-      html_content = actions_presenter.to_html
-      expect(proposal["preformatted_proposal"]).to eq html_content
-    end
+    context "when it has failed" do
+      before do
+        allow(subject).to receive(:failed).and_return(true)
+      end
 
-    it "includes actions presenter events in 'links' value" do
-      proposal = subject.make_proposal({})
-      presenter_events = actions_presenter.events
-      expect(proposal["links"]).to include(*presenter_events)
-    end
+      it "returns a hash with 'warning' and 'warning_level'" do
+        proposal = subject.make_proposal({})
+        expect(proposal).to be_a Hash
+        expect(proposal).to include("warning", "warning_level")
+      end
 
-    it "returns false for 'language_changed' key" do
-      proposal = subject.make_proposal({})
-      expect(proposal["language_changed"]).to be false
+      it "returns :blocker for 'warning_level' key" do
+        proposal = subject.make_proposal({})
+        expect(proposal["warning_level"]).to be :blocker
+      end
     end
   end
 

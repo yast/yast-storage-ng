@@ -24,7 +24,6 @@
 require "yast"
 require "y2storage"
 require "y2storage/actions_presenter"
-require "y2storage/dialogs/proposal"
 require "installation/proposal_client"
 
 Yast.import "Popup"
@@ -51,16 +50,13 @@ module Y2Storage
 
       def initialize
         textdomain "storage-ng"
+        @failed = false
         ensure_proposed unless storage_manager.staging_changed?
         self.class.update_state
       end
 
       def make_proposal(_attrs)
-        {
-          "preformatted_proposal" => actions_presenter.to_html,
-          "links"                 => actions_presenter.events,
-          "language_changed"      => false
-        }
+        failed ? failed_proposal : successful_proposal
       end
 
       def ask_user(param)
@@ -87,6 +83,8 @@ module Y2Storage
       end
 
     private
+
+      attr_reader :failed
 
       class << self
         attr_accessor :staging_revision
@@ -122,6 +120,24 @@ module Y2Storage
         StorageManager.instance
       end
 
+      def failed_proposal
+        {
+          "preformatted_proposal" => nil,
+          "links"                 => [],
+          "language_changed"      => false,
+          "warning"               => _("No proposal possible"),
+          "warning_level"         => :blocker
+        }
+      end
+
+      def successful_proposal
+        {
+          "preformatted_proposal" => actions_presenter.to_html,
+          "links"                 => actions_presenter.events,
+          "language_changed"      => false
+        }
+      end
+
       def ensure_proposed
         if storage_manager.proposal.nil?
           proposal = new_proposal
@@ -131,6 +147,7 @@ module Y2Storage
           storage_manager.proposal.propose
         end
       rescue Y2Storage::Proposal::Error
+        @failed = true
         log.error("generating proposal failed")
       end
 
