@@ -37,6 +37,32 @@ module Y2Storage
       #   @return [Array<Filesystems::Base>] all the filesystems in the given devicegraph
       storage_class_forward :all, as: "Filesystems::Base"
 
+      # Check if filesystem is usable as root (mountpoint "/") filesystem.
+      #
+      # return [Boolean]
+      #
+      # @example
+      #   devicegraph.filesystems.each do |fs|
+      #     puts "#{fs.type}: #{fs.root_ok?}"
+      #   end
+      #
+      def root_ok?
+        return Type.root_filesystems.include?(type)
+      end
+
+      # Check if filesystem is usable as home (mountpoint "/home") filesystem.
+      #
+      # return [Boolean]
+      #
+      # @example
+      #   devicegraph.filesystems.each do |fs|
+      #     puts "#{fs.type}: #{fs.home_ok?}"
+      #   end
+      #
+      def home_ok?
+        return Type.home_filesystems.include?(type)
+      end
+
     protected
 
       def types_for_is
