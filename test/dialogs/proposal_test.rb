@@ -28,24 +28,26 @@ Yast.import "Popup"
 Yast.import "Report"
 
 describe Y2Storage::Dialogs::Proposal do
+  include Yast::UIShortcuts
+
   subject(:dialog) { Y2Storage::Dialogs::Proposal.new(proposal, devicegraph0) }
 
   describe "#run" do
     let(:devicegraph0) { double("Storage::Devicegraph", actiongraph: actiongraph0) }
     let(:actiongraph0) { double("Storage::Actiongraph") }
-    let(:summary_widget0) do
-      double(Y2Storage::Widgets::ActionsSummary, id: "summary", content: widget_content0)
+    let(:actions_presenter0) do
+      double(Y2Storage::ActionsPresenter, to_html: presenter_content0)
     end
-    let(:widget_content0) { "<li>Action 1</li><li>Action 2</li>" }
+    let(:presenter_content0) { "<li>Action 1</li><li>Action 2</li>" }
 
     let(:devicegraph1) { double("Storage::Devicegraph", actiongraph: actiongraph1) }
     let(:actiongraph1) { double("Storage::Actiongraph") }
-    let(:summary_widget1) do
-      double(Y2Storage::Widgets::ActionsSummary, id: "summary", content: widget_content1)
+    let(:actions_presenter1) do
+      double(Y2Storage::ActionsPresenter, to_html: presenter_content1)
     end
-    let(:widget_content1) { "<li>Action 3</li><li>Action 4</li>" }
+    let(:presenter_content1) { "<li>Action 3</li><li>Action 4</li>" }
 
-    let(:summary_widget2) { double(Y2Storage::Widgets::ActionsSummary, id: "summary", content: nil) }
+    let(:actions_presenter2) { double(Y2Storage::ActionsPresenter, to_html: nil) }
 
     before do
       Y2Storage::StorageManager.create_test_instance
@@ -58,12 +60,12 @@ describe Y2Storage::Dialogs::Proposal do
       # Most straightforward scenario. Just click next
       allow(Yast::UI).to receive(:UserInput).once.and_return :next
 
-      allow(Y2Storage::Widgets::ActionsSummary)
-        .to receive(:new).with(anything, actiongraph0).and_return summary_widget0
-      allow(Y2Storage::Widgets::ActionsSummary)
-        .to receive(:new).with(anything, actiongraph1).and_return summary_widget1
-      allow(Y2Storage::Widgets::ActionsSummary)
-        .to receive(:new).with(anything, nil).and_return summary_widget2
+      allow(Y2Storage::ActionsPresenter)
+        .to receive(:new).with(actiongraph0).and_return actions_presenter0
+      allow(Y2Storage::ActionsPresenter)
+        .to receive(:new).with(actiongraph1).and_return actions_presenter1
+      allow(Y2Storage::ActionsPresenter)
+        .to receive(:new).with(nil).and_return actions_presenter2
     end
 
     context "when a pristine proposal is provided" do
@@ -84,7 +86,7 @@ describe Y2Storage::Dialogs::Proposal do
 
         it "displays the content of the summary widget for the calculated devicegraph" do
           expect(Yast::Wizard).to receive(:SetContents) do |_title, content|
-            expect(content.to_s).to include widget_content1
+            expect(content.to_s).to include presenter_content1
           end
           dialog.run
         end
@@ -140,7 +142,7 @@ describe Y2Storage::Dialogs::Proposal do
 
       it "displays the content of the summary widget for the provided devicegraph" do
         expect(Yast::Wizard).to receive(:SetContents) do |_title, content|
-          expect(content.to_s).to include widget_content0
+          expect(content.to_s).to include presenter_content0
         end
         dialog.run
       end
@@ -161,7 +163,7 @@ describe Y2Storage::Dialogs::Proposal do
 
       it "displays the content of the summary widget for the provided devicegraph" do
         expect(Yast::Wizard).to receive(:SetContents) do |_title, content|
-          expect(content.to_s).to include widget_content0
+          expect(content.to_s).to include presenter_content0
         end
         dialog.run
       end
@@ -177,16 +179,23 @@ describe Y2Storage::Dialogs::Proposal do
       end
     end
 
-    context "when subvolumes link is clicked" do
+    context "when an actions presenter event happens" do
       let(:proposal) { nil }
-      let(:event) { "summary--subvolumes" }
+      let(:event) { "event" }
 
       before do
         allow(Yast::UI).to receive(:UserInput).twice.and_return(event, :next)
+        allow(actions_presenter0).to receive(:can_handle?).with(event).and_return(true)
+        allow(actions_presenter0).to receive(:update_status)
       end
 
-      it "delegates the event to the summary widget" do
-        expect(summary_widget0).to receive(:handle).with(event)
+      it "updates the actions presenter" do
+        expect(actions_presenter0).to receive(:update_status).with(event)
+        dialog.run
+      end
+
+      it "refresh the summary" do
+        expect(Yast::UI).to receive(:ChangeWidget).with(Id(:summary), :Value, anything)
         dialog.run
       end
     end
