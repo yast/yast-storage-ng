@@ -61,15 +61,24 @@ module Y2Storage
         [:reuse]
       end
 
+      # Returns the (possibly processed) device to be used for the planned
+      # device.
+      #
+      # FIXME: temporary API. It should be improved.
       def final_device!(plain_device)
         plain_device.encrypted? ? plain_device.encryption : plain_device
       end
 
+      # Finds the device to reuse and sets its properties to match
+      # the planned device.
+      #
+      # @param devicegraph [Devicegraph] Device graph to adjust
       def reuse!(devicegraph)
         dev = device_to_reuse(devicegraph)
         reuse_device!(dev) if dev
       end
 
+      # Whether this planned device is expected to reuse an existing one
       def reuse?
         !(reuse.nil? || reuse.empty?)
       end

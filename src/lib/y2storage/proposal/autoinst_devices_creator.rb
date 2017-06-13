@@ -33,15 +33,18 @@ module Y2Storage
     class AutoinstDevicesCreator
       include Yast::Logger
 
+      # Constructor
+      #
+      # @param original_graph [Devicegraph] Devicegraph to be used as starting point
       def initialize(original_graph)
         @original_graph = original_graph
       end
 
-      # Proposed device graph including planned devices
+      # Devicegraph including all the specified planned devices
       #
       # @param planned_devices [Array<Planned::Partition>] Devices to create/reuse
       # @param disk_names [Array<String>] Disks to consider
-      # @return [Devicegraph]
+      # @return [Devicegraph] New devicegraph in which all the planned devices have been allocated
       def devicegraph(planned_devices, disk_names)
         planned_partitions = planned_devices.select { |dev| dev.is_a?(Planned::Partition) }
         reused, created = planned_partitions.partition(&:reuse?)
@@ -59,13 +62,15 @@ module Y2Storage
 
     protected
 
-      # @return [Devicegraph] Original device graph
+      # @return [Devicegraph] Original devicegraph
       attr_reader :original_graph
 
-      # Find the best distribution
+      # Finds the best distribution for the given planned partitions
       #
-      # @param planned_partitions [Array<Y2Storage::Planned::Partition>] Partitions to add
-      # @param disk_names         [Array<String>]                        Names of disks to consider
+      # @param planned_partitions [Array<Planned::Partition>] Partitions to add
+      # @param disk_names         [Array<String>]             Names of disks to consider
+      #
+      # @see Proposal::PartitionsDistributionCalculator#best_distribution
       def best_distribution(planned_partitions, disk_names)
         disks = original_graph.disks.select { |d| disk_names.include?(d.name) }
         spaces = disks.map(&:free_spaces).flatten

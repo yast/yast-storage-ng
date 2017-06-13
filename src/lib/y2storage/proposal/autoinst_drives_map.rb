@@ -30,11 +30,22 @@ module Y2Storage
     class AutoinstDrivesMap
       extend Forwardable
 
+      # @!method each_pair
+      #   Calls block once por each disk that contains the AutoYaST specification
+      #   passing as arguments the disk name and the specification itself.
+      #
+      #   @example
+      #     drives_map.each_pair do |disk_name, drive_spec|
+      #       puts "Drive for #{disk_name}: #{drive_spec}"
+      #     end
+      #
+      # @!method each
+      #   @see #each_pair
       def_delegators :@drives, :each, :each_pair
 
       # Constructor
       #
-      # @param devicegraph  [Devicegraph] Device graph
+      # @param devicegraph  [Devicegraph] Devicegraph where the disks are contained
       # @param partitioning [Array<Hash>] Partitioning layout from an AutoYaST profile
       def initialize(devicegraph, partitioning)
         # By now, consider only regular disks
@@ -53,7 +64,7 @@ module Y2Storage
         end
       end
 
-      # Return a list of disk names
+      # Returns the list of disk names
       #
       # @return [Array<String>] Disk names
       def disk_names
@@ -62,10 +73,10 @@ module Y2Storage
 
     protected
 
-      # Find the first usable disk for the given drive AutoYaST specification
+      # Find the first usable disk for the given <drive> AutoYaST specification
       #
-      # @param drive_spec [Hash] AutoYaST drive specification
-      # @param devicegrpah [Devicegraph] Device graph
+      # @param drive_spec  [Hash] AutoYaST drive specification
+      # @param devicegraph [Devicegraph] Devicegraph
       # @return [Disk,nil] Usable disk or nil if none is found
       def first_usable_disk(drive_spec, devicegraph)
         skip_list = SkipList.from_profile(drive_spec.fetch("skip_list", []))

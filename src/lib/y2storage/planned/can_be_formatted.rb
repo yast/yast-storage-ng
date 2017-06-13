@@ -61,6 +61,8 @@ module Y2Storage
       #
       # Do nothing if #filesystem_type is not set.
       #
+      # FIXME: temporary API. It should be improved.
+      #
       # @param blk_dev [BlkDevice]
       #
       # @return [Filesystems::BlkFilesystem] filesystem

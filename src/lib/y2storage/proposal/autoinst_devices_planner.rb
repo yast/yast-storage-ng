@@ -32,12 +32,14 @@ module Y2Storage
 
       # Constructor
       #
-      # @param devicegraph [Devicegraph]
+      # @param devicegraph [Devicegraph] Devicegraph to be used as starting point
       def initialize(devicegraph)
         @devicegraph = devicegraph
       end
 
-      # Return an array of planned devices based on the drives map
+      # Returns an array of planned devices according to the drives map
+      #
+      # @raise [Error] if not partitions were specified
       #
       # @param drives_map [Proposal::AutoinstDrivesMap] Drives map from AutoYaST
       # @return [Array<Planned::Partition>] List of planned partitions
@@ -61,12 +63,12 @@ module Y2Storage
 
     protected
 
-      # @return [Devicegraph] Device graph
+      # @return [Devicegraph] Starting devicegraph
       attr_reader :devicegraph
 
-      # Return an array of planned partitions for a given disk
+      # Returns an array of planned partitions for a given disk
       #
-      # @param disk         [Disk] Disk to put the partitions
+      # @param disk         [Disk] Disk to place the partitions on
       # @param partitioning [Hash] Partitioning specification from AutoYaST
       # @return [Array<Planned::Partition>] List of planned partitions
       def planned_for_disk(disk, spec)
@@ -77,7 +79,8 @@ module Y2Storage
           part.disk = disk.name
           # part.bootable no está en el perfil (¿existe lógica?)
           part.filesystem_type = filesystem_for(part_description["filesystem"])
-          part.partition_id = 131 # TODO: El que venga. Si nil, swap o linux
+          # TODO: set the correct id based on the filesystem type (move to Partition class?)
+          part.partition_id = 131
           if part_description["crypt_fs"]
             part.encryption_password = part_description["crypt_key"]
           end
@@ -105,10 +108,11 @@ module Y2Storage
         result
       end
 
-      # Regular expression to detect which kind of size is being used in an AutoYaST <size> element
+      # Regular expression to detect which kind of size is being used in an
+      # AutoYaST <size> element
       SIZE_REGEXP = /([\d,.]+)?([a-zA-Z%]+)/
 
-      # Return min and max sizes for the partition
+      # Returns min and max sizes for a partition specification
       #
       # @param description [Hash] Partition specification from AutoYaST
       # @return [[DiskSize,DiskSize]] min are max sizes for the given partition
@@ -116,7 +120,10 @@ module Y2Storage
       # @see SIZE_REGEXP
       def sizes_for(part_spec, disk)
         normalized_size = part_spec["size"].to_s.strip.downcase
-        return [disk.min_grain, DiskSize.unlimited] if normalized_size == "max" || normalized_size.empty?
+
+        if normalized_size == "max" || normalized_size.empty?
+          return [disk.min_grain, DiskSize.unlimited]
+        end
 
         _all, number, unit = SIZE_REGEXP.match(normalized_size).to_a
         size =
@@ -134,13 +141,13 @@ module Y2Storage
         Y2Storage::Filesystems::Type.find(type)
       end
 
-      # @param devicegraph [Devicegraph] Device graph
+      # @param devicegraph [Devicegraph] Devicegraph to search for the partition to reuse
       # @param part_spec   [Hash]        Partition specification from AutoYaST
       def find_partition_to_reuse(devicegraph, part_spec)
         if part_spec["partition_nr"]
-          devicegraph.partitions.find { |p| p.number == part_spec["partition_nr"] }
+          devicegraph.partitions.find { |i| i.number == part_spec["partition_nr"] }
         elsif part_spec["label"]
-          devicegraph.partitions.find { |p| p.filesystem_label == part_spec["label"] }
+          devicegraph.partitions.find { |i| i.filesystem_label == part_spec["label"] }
         end
       end
     end

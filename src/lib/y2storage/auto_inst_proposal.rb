@@ -36,14 +36,14 @@ module Y2Storage
   #   proposal.proposed_devicegraph # => nil
   #   proposal.planned_devices      # => nil
   #
-  #   proposal.propose   # => Performs the calculation
+  #   proposal.propose              # => Performs the calculation
   #
   #   proposal.proposed?            # => true
-  #   proposal.proposed_devicegraph # Proposed layout
+  #   proposal.proposed_devicegraph # => Proposed layout
   class AutoInstProposal
     include Yast::Logger
 
-    # @return [Hash] Partitioning information from an AutoYaST profile
+    # @return [Hash] Partitioning layout from an AutoYaST profile
     attr_reader :partitioning
 
     # @return [Devicegraph] Initial device graph
@@ -51,8 +51,8 @@ module Y2Storage
 
     # Planned devices calculated by the proposal, nil if the proposal has not
     # been calculated yet
-    # @return [Array<Planned::Device>]
     #
+    # @return [Array<Planned::Device>]
     attr_reader :planned_devices
 
     # Proposed layout of devices, nil if the proposal has not been
@@ -64,18 +64,20 @@ module Y2Storage
 
     # Constructor
     #
-    # @param disk_analyzer [DiskAnalyzer] Disk analyzer
     # @param partitioning [Array<Hash>] Partitioning schema from an AutoYaST profile
     # @param devicegraph  [Devicegraph] starting point. If nil, then probed devicegraph
     #   will be used
-    def initialize(disk_analyzer: nil, partitioning: [], devicegraph: nil)
+    # @param disk_analyzer [DiskAnalyzer] if nil, a new one will be created
+    #   based in the initial devicegraph
+    def initialize(partitioning: [], devicegraph: nil, disk_analyzer: nil)
       @partitioning = partitioning
-      @proposed = false
       @initial_devicegraph = devicegraph
       @disk_analyzer = disk_analyzer
+      @proposed = false
     end
 
     # Checks whether the proposal has already been calculated
+    #
     # @return [Boolean]
     def proposed?
       @proposed
@@ -104,6 +106,13 @@ module Y2Storage
 
   protected
 
+    # Calculates list of planned devices
+    #
+    # If the list does not contain any partition, then it follows
+    # the same approach than the guided proposal
+    #
+    # @param devicegraph [Devicegraph]
+    # @param drives [Proposal::AutoinstDrivesMap]
     def plan_devices(devicegraph, drives)
       planner = Proposal::AutoinstDevicesPlanner.new(devicegraph)
       planner.planned_devices(drives)

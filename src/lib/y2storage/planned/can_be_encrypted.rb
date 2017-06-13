@@ -53,13 +53,14 @@ module Y2Storage
       end
 
       # Returns the (possibly encrypted) device to be used for the planned
-      # device. TODO: update this
+      # device.
       #
       # If encryption is requested by the planned device, the method will
       # encrypt the plain device and will return the corresponding encrypted
       # one. Otherwise, it will simply return the plain device.
       #
-      # @param planned [Planned::Device]
+      # FIXME: temporary API. It should be improved.
+      #
       # @param plain_device [BlkDevice]
       # @return [BlkDevice]
       def final_device!(plain_device)
@@ -96,6 +97,8 @@ module Y2Storage
       #
       # Revisit this after improving libstorage-ng capabilities about
       # alternative names and DeviceMapper.
+      #
+      # FIXME: this should probably be moved to Encryption.
       #
       # @return [String]
       def dm_name_for(device)

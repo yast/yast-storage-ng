@@ -38,8 +38,9 @@ module Y2Storage
 
       # Constructor. Raises an exception when trying to create an invalid
       # distribution.
-      # @raise NoDiskSpaceError
-      # @raise NoMorePartitionSlotError
+      #
+      # @raise [NoDiskSpaceError]
+      # @raise [NoMorePartitionSlotError]
       #
       # @param partitions_by_disk_space [Hash{FreeDiskSpace => Array<Planned::Partition>}]
       def initialize(partitions_by_disk_space)
@@ -56,8 +57,9 @@ module Y2Storage
 
       # Result of adding more partitions to the existent distribution. Raises an
       # exception when trying to create an invalid distribution.
-      # @raise NoDiskSpaceError
-      # @raise NoMorePartitionSlotError
+      #
+      # @raise [NoDiskSpaceError]
+      # @raise [NoMorePartitionSlotError]
       #
       # @param partitions_by_disk_space [Hash{FreeDiskSpace => Planned::Partition}]
       def add_partitions(partitions_by_disk_space)
@@ -171,7 +173,8 @@ module Y2Storage
 
       # Transforms a FreeDiskSpace and a list of planned partitions into a
       # AssignedSpace object if the combination is valid.
-      # @raise NoDiskSpaceError otherwise
+      #
+      # @raise [NoDiskSpaceError] otherwise
       #
       # @return [AssignedSpace]
       def assigned_space(disk_space, partitions)
@@ -217,7 +220,7 @@ module Y2Storage
 
       # Sets the value of #num_logical for a given assigned space
       #
-      # @raise NoDiskSpaceError if the new value causes the partitions to not fit
+      # @raise [NoDiskSpaceError] if the new value causes the partitions to not fit
       def set_num_logical(assigned_space, num)
         assigned_space.num_logical = num
         if !assigned_space.valid?
