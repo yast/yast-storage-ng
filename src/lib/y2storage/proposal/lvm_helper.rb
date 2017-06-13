@@ -338,10 +338,6 @@ module Y2Storage
           root.lvm_lvs.any? { |lv| lv.lv_name == name }
         end
       end
-
-      def encrypter
-        @encrypter ||= Encrypter.new
-      end
     end
   end
 end
