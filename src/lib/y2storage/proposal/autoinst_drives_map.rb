@@ -21,6 +21,8 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
+require "y2storage/skip_list"
+
 module Y2Storage
   module Proposal
     # Utility class to map disk names to the corresponding AutoYaST <drive>
@@ -30,7 +32,11 @@ module Y2Storage
 
       def_delegators :@drives, :each, :each_pair
 
-      def initialize(devgraph, partitioning)
+      # Constructor
+      #
+      # @param devicegraph  [Devicegraph] Device graph
+      # @param partitioning [Array<Hash>] Partitioning layout from an AutoYaST profile
+      def initialize(devicegraph, partitioning)
         # By now, consider only regular disks
         disks = partitioning.select { |i| i.fetch("type", :CT_DISK) == :CT_DISK }
 
@@ -41,18 +47,26 @@ module Y2Storage
         end
 
         flexible_drives.each do |drive|
-          disk_name = first_usable_disk(drive, devgraph)
+          disk_name = first_usable_disk(drive, devicegraph)
           # TODO: what happens if there is no suitable disk?
           @drives[disk_name] = drive
         end
       end
 
+      # Return a list of disk names
+      #
+      # @return [Array<String>] Disk names
       def disk_names
         @drives.keys
       end
 
     protected
 
+      # Find the first usable disk for the given drive AutoYaST specification
+      #
+      # @param drive_spec [Hash] AutoYaST drive specification
+      # @param devicegrpah [Devicegraph] Device graph
+      # @return [Disk,nil] Usable disk or nil if none is found
       def first_usable_disk(drive_spec, devicegraph)
         skip_list = SkipList.from_profile(drive_spec.fetch("skip_list", []))
 

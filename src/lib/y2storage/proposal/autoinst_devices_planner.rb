@@ -30,10 +30,17 @@ module Y2Storage
     class AutoinstDevicesPlanner
       include Yast::Logger
 
+      # Constructor
+      #
+      # @param devicegraph [Devicegraph]
       def initialize(devicegraph)
         @devicegraph = devicegraph
       end
 
+      # Return an array of planned devices based on the drives map
+      #
+      # @param drives_map [Proposal::AutoinstDrivesMap] Drives map from AutoYaST
+      # @return [Array<Planned::Partition>] List of planned partitions
       def planned_devices(drives_map)
         result = []
 
@@ -54,11 +61,17 @@ module Y2Storage
 
     protected
 
+      # @return [Devicegraph] Device graph
       attr_reader :devicegraph
 
-      def planned_for_disk(disk, description)
+      # Return an array of planned partitions for a given disk
+      #
+      # @param disk         [Disk] Disk to put the partitions
+      # @param partitioning [Hash] Partitioning specification from AutoYaST
+      # @return [Array<Planned::Partition>] List of planned partitions
+      def planned_for_disk(disk, spec)
         result = []
-        description["partitions"].each do |part_description|
+        spec.fetch("partitions", []).each do |part_description|
           # TODO: fix Planned::Partition.initialize
           part = Y2Storage::Planned::Partition.new(nil, nil)
           part.disk = disk.name
@@ -90,9 +103,17 @@ module Y2Storage
         result
       end
 
+      # Regular expression to detect which kind of size is being used in an AutoYaST <size> element
       SIZE_REGEXP = /([\d,.]+)?([a-zA-Z%]+)/
-      def sizes_for(description, disk)
-        normalized_size = description["size"].to_s.strip.downcase
+
+      # Return min and max sizes for the partition
+      #
+      # @param description [Hash] Partition specification from AutoYaST
+      # @return [[DiskSize,DiskSize]] min are max sizes for the given partition
+      #
+      # @see SIZE_REGEXP
+      def sizes_for(part_spec, disk)
+        normalized_size = part_spec["size"].to_s.strip.downcase
         return [disk.min_grain, DiskSize.unlimited] if normalized_size == "max" || normalized_size.empty?
 
         _all, number, unit = SIZE_REGEXP.match(normalized_size).to_a
@@ -101,20 +122,23 @@ module Y2Storage
             percent = number.to_f
             (disk.size * percent) / 100.0
           else
-            DiskSize.parse(description["size"], legacy_units: true)
+            DiskSize.parse(part_spec["size"], legacy_units: true)
           end
         [size, size]
       end
 
-      def filesystem_for(filesystem)
-        Y2Storage::Filesystems::Type.find(filesystem)
+      # @param type [String,Symbol] Filesystem type name
+      def filesystem_for(type)
+        Y2Storage::Filesystems::Type.find(type)
       end
 
-      def find_partition_to_reuse(devicegraph, part_description)
-        if part_description["partition_nr"]
-          devicegraph.partitions.find { |p| p.number == part_description["partition_nr"] }
-        elsif part_description["label"]
-          devicegraph.partitions.find { |p| p.filesystem_label == part_description["label"] }
+      # @param devicegraph [Devicegraph] Device graph
+      # @param part_spec   [Hash]        Partition specification from AutoYaST
+      def find_partition_to_reuse(devicegraph, part_spec)
+        if part_spec["partition_nr"]
+          devicegraph.partitions.find { |p| p.number == part_spec["partition_nr"] }
+        elsif part_spec["label"]
+          devicegraph.partitions.find { |p| p.filesystem_label == part_spec["label"] }
         end
       end
     end

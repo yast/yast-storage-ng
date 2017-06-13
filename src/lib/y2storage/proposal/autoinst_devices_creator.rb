@@ -37,6 +37,11 @@ module Y2Storage
         @original_graph = original_graph
       end
 
+      # Proposed device graph including planned devices
+      #
+      # @param planned_devices [Array<Planned::Partition>] Devices to create/reuse
+      # @param disk_names [Array<String>] Disks to consider
+      # @return [Devicegraph]
       def devicegraph(planned_devices, disk_names)
         planned_partitions = planned_devices.select { |dev| dev.is_a?(Planned::Partition) }
         reused, created = planned_partitions.partition(&:reuse?)
@@ -48,16 +53,19 @@ module Y2Storage
         part_creator = Proposal::PartitionCreator.new(original_graph)
         result = part_creator.create_partitions(dist)
 
-        reused.each do |planned|
-          planned.reuse!(result)
-        end
+        reused.each { |r| r.reuse!(result) }
         result
       end
 
     protected
 
+      # @return [Devicegraph] Original device graph
       attr_reader :original_graph
 
+      # Find the best distribution
+      #
+      # @param planned_partitions [Array<Y2Storage::Planned::Partition>] Partitions to add
+      # @param disk_names         [Array<String>]                        Names of disks to consider
       def best_distribution(planned_partitions, disk_names)
         disks = original_graph.disks.select { |d| disk_names.include?(d.name) }
         spaces = disks.map(&:free_spaces).flatten
