@@ -146,7 +146,7 @@ module Y2Storage
         elsif !storage_manager.proposal.proposed?
           storage_manager.proposal.propose
         end
-      rescue Y2Storage::Proposal::Error
+      rescue Y2Storage::Error
         @failed = true
         log.error("generating proposal failed")
       end
@@ -155,7 +155,7 @@ module Y2Storage
         settings = ProposalSettings.new_for_current_product
         probed = storage_manager.y2storage_probed
         disk_analyzer = storage_manager.probed_disk_analyzer
-        Proposal.new(settings: settings, devicegraph: probed, disk_analyzer: disk_analyzer)
+        GuidedProposal.new(settings: settings, devicegraph: probed, disk_analyzer: disk_analyzer)
       end
     end
   end

@@ -92,7 +92,7 @@ describe Y2Storage::StorageManager do
   describe "#staging=" do
     let(:old_graph) { devicegraph_from("empty_hard_disk_50GiB") }
     let(:new_graph) { devicegraph_from("gpt_and_msdos") }
-    let(:proposal) { double("Y2Storage::Proposal", devices: old_graph) }
+    let(:proposal) { double("Y2Storage::GuidedProposal", devices: old_graph) }
 
     before do
       described_class.create_test_instance
@@ -120,7 +120,7 @@ describe Y2Storage::StorageManager do
 
   describe "#proposal=" do
     let(:new_graph) { devicegraph_from("gpt_and_msdos") }
-    let(:proposal) { double("Y2Storage::Proposal", devices: new_graph) }
+    let(:proposal) { double("Y2Storage::GuidedProposal", devices: new_graph) }
 
     before do
       described_class.create_test_instance
@@ -145,7 +145,7 @@ describe Y2Storage::StorageManager do
 
   describe "#staging_changed?" do
     let(:new_graph) { devicegraph_from("gpt_and_msdos") }
-    let(:proposal) { double("Y2Storage::Proposal", devices: new_graph) }
+    let(:proposal) { double("Y2Storage::GuidedProposal", devices: new_graph) }
 
     before do
       described_class.create_test_instance
