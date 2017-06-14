@@ -24,7 +24,6 @@ require "y2storage/storage_manager"
 require "y2storage/disk_analyzer"
 require "y2storage/proposal"
 require "y2storage/exceptions"
-require "y2storage/skip_list"
 
 module Y2Storage
   # Class to calculate a storage proposal for autoinstallation

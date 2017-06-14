@@ -20,13 +20,13 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require_relative "spec_helper"
+require_relative "../spec_helper"
 
 require "y2storage"
-require "y2storage/skip_list_value"
+require "y2storage/proposal/skip_list_value"
 
-describe Y2Storage::SkipListValue do
-  subject(:value) { Y2Storage::SkipListValue.new(disk) }
+describe Y2Storage::Proposal::SkipListValue do
+  subject(:value) { described_class.new(disk) }
 
   let(:scenario) { "windows-linux-free-pc" }
   let(:disk) { Y2Storage::Disk.find_by_name(fake_devicegraph, "/dev/sda") }

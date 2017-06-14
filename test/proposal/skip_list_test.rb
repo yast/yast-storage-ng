@@ -19,16 +19,16 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require_relative "spec_helper"
+require_relative "../spec_helper"
 
 require "y2storage"
-require "y2storage/skip_list"
+require "y2storage/proposal/skip_list"
 
-describe Y2Storage::SkipList do
-  subject(:list) { Y2Storage::SkipList.new([rule1, rule2]) }
+describe Y2Storage::Proposal::SkipList do
+  subject(:list) { described_class.new([rule1, rule2]) }
 
-  let(:rule1) { instance_double(Y2Storage::SkipListRule) }
-  let(:rule2) { instance_double(Y2Storage::SkipListRule) }
+  let(:rule1) { instance_double(Y2Storage::Proposal::SkipListRule) }
+  let(:rule2) { instance_double(Y2Storage::Proposal::SkipListRule) }
   let(:disk) { instance_double(Y2Storage::Disk) }
 
   describe ".from_profile" do
@@ -40,9 +40,9 @@ describe Y2Storage::SkipList do
     end
 
     it "creates a list with rules" do
-      allow(Y2Storage::SkipListRule).to receive(:from_profile_rule)
+      allow(Y2Storage::Proposal::SkipListRule).to receive(:from_profile_rule)
         .and_return(rule1, rule2)
-      list = Y2Storage::SkipList.from_profile(spec)
+      list = Y2Storage::Proposal::SkipList.from_profile(spec)
       expect(list.rules).to eq([rule1, rule2])
     end
   end

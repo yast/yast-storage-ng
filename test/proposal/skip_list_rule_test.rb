@@ -19,13 +19,13 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require_relative "spec_helper"
+require_relative "../spec_helper"
 
 require "y2storage"
-require "y2storage/skip_list_rule"
+require "y2storage/proposal/skip_list_rule"
 
-describe Y2Storage::SkipListRule do
-  subject(:rule) { Y2Storage::SkipListRule.new(key, predicate, reference) }
+describe Y2Storage::Proposal::SkipListRule do
+  subject(:rule) { described_class.new(key, predicate, reference) }
 
   let(:key) { "size_k" }
   let(:reference) { "1024" }
@@ -33,11 +33,11 @@ describe Y2Storage::SkipListRule do
   let(:disk) { instance_double("Y2Storage::Disk") }
   let(:size_k) { 1024 }
   let(:value) do
-    instance_double("Y2Storage::SkipListValue", size_k: size_k, device: "/dev/sda")
+    instance_double(Y2Storage::Proposal::SkipListValue, size_k: size_k, device: "/dev/sda")
   end
 
   before do
-    allow(Y2Storage::SkipListValue).to receive(:new).and_return(value)
+    allow(Y2Storage::Proposal::SkipListValue).to receive(:new).and_return(value)
   end
 
   describe ".from_profile_rule" do
