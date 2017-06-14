@@ -46,6 +46,10 @@ module Y2Storage
       end
 
       def prep_partition_missing?
+        # We don't check if the planned PReP partition is in the boot disk,
+        # whoever created it is in control of the details
+        return false if analyzer.planned_prep_partitions.any?
+
         partitions = boot_disk.prep_partitions
         partitions.nil? || partitions.empty?
       end

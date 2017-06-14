@@ -29,7 +29,7 @@ module Y2Storage
     class ZIPL < Base
       def needed_partitions(target)
         raise Error unless supported_boot_disk?
-        [zipl_partition(target)]
+        zipl_partition_missing? ? [zipl_partition(target)] : []
       end
 
     protected
@@ -42,6 +42,10 @@ module Y2Storage
           # TODO: DIAG disks (whatever they are) are not supported either
         end
         true
+      end
+
+      def zipl_partition_missing?
+        free_mountpoint?("/boot/zipl")
       end
 
       def zipl_partition(target)

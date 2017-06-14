@@ -131,6 +131,35 @@ module Y2Storage
         boot_ptable_type.is?(type)
       end
 
+      # Whether the passed path is already used as mount point by any planned
+      # device or by any device in the devicegraph
+      #
+      # @param path [String] mount point to check for
+      # @return [Boolean]
+      def free_mountpoint?(path)
+        return false if planned_devices.any? do |dev|
+          dev.mount_point && File.identical?(dev.mount_point, path)
+        end
+        return false if devicegraph.filesystems.any? do |fs|
+          fs.mountpoint && File.identical?(fs.mountpoint, path)
+        end
+        true
+      end
+
+      # Subset of the planned devices that are suitable as PReP
+      #
+      # @return [Array<Planned::Partition>]
+      def planned_prep_partitions
+        planned_partitions_with_id(PartitionId::PREP)
+      end
+
+      # Subset of the planned devices that are suitable as BIOS boot partitions
+      #
+      # @return [Array<Planned::Partition>]
+      def planned_grub_partitions
+        planned_partitions_with_id(PartitionId::BIOS_BOOT)
+      end
+
     protected
 
       attr_reader :devicegraph
@@ -158,6 +187,12 @@ module Y2Storage
       def boot_disk_from_devicegraph
         return nil unless root_filesystem
         root_filesystem.ancestors.find { |d| d.is?(:disk) }
+      end
+
+      def planned_partitions_with_id(id)
+        planned_devices.select do |dev|
+          dev.is_a?(Planned::Partition) && dev.partition_id == id
+        end
       end
     end
   end

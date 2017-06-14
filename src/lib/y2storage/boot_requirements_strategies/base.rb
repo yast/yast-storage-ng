@@ -40,7 +40,7 @@ module Y2Storage
       extend Forwardable
 
       def_delegators :@analyzer,
-        :boot_disk, :root_in_lvm?, :encrypted_root?, :btrfs_root?, :boot_ptable_type?
+        :boot_disk, :root_in_lvm?, :encrypted_root?, :btrfs_root?, :boot_ptable_type?, :free_mountpoint?
 
       # Constructor
       #
@@ -53,15 +53,21 @@ module Y2Storage
       end
 
       def needed_partitions(target)
-        boot_partition_needed? ? [boot_partition(target)] : []
+        return [] unless boot_partition_needed? && boot_partition_missing?
+        [boot_partition(target)]
       end
 
     protected
 
       attr_reader :devicegraph
+      attr_reader :analyzer
 
       def boot_partition_needed?
         false
+      end
+
+      def boot_partition_missing?
+        free_mountpoint?("/boot")
       end
 
       def boot_partition(target)

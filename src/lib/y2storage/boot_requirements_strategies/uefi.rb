@@ -31,11 +31,15 @@ module Y2Storage
     class UEFI < Base
       def needed_partitions(target)
         volumes = super
-        volumes << efi_partition(target)
+        volumes << efi_partition(target) if efi_missing?
         volumes
       end
 
     protected
+
+      def efi_missing?
+        free_mountpoint?("/boot/efi")
+      end
 
       def efi_partition(target)
         vol = Planned::Partition.new("/boot/efi", Filesystems::Type::VFAT)

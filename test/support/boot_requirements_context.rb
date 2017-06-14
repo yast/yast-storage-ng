@@ -40,10 +40,12 @@ RSpec.shared_context "boot requirements" do
   let(:analyzer) do
     double(
       "Y2Storage::BootRequirementsStrategies::Analyzer",
-      boot_disk:       boot_disk,
-      root_in_lvm?:    use_lvm,
-      encrypted_root?: use_encryption,
-      btrfs_root?:     use_btrfs
+      boot_disk:               boot_disk,
+      root_in_lvm?:            use_lvm,
+      encrypted_root?:         use_encryption,
+      btrfs_root?:             use_btrfs,
+      planned_prep_partitions: planned_prep_partitions,
+      planned_grub_partitions: planned_grub_partitions
     )
   end
 
@@ -51,6 +53,9 @@ RSpec.shared_context "boot requirements" do
   let(:use_encryption) { false }
   let(:use_btrfs) { true }
   let(:boot_ptable_type) { :msdos }
+  # Assume the needed partitions are not already planned in advance
+  let(:planned_prep_partitions) { [] }
+  let(:planned_grub_partitions) { [] }
 
   before do
     Y2Storage::StorageManager.create_test_instance
@@ -64,5 +69,7 @@ RSpec.shared_context "boot requirements" do
     allow(devicegraph).to receive(:disks).and_return [dev_sda, dev_sdb]
 
     allow(analyzer).to receive(:boot_ptable_type?) { |type| type == boot_ptable_type }
+    # Assume the needed partitions are not already planned in advance
+    allow(analyzer).to receive(:free_mountpoint?).and_return true
   end
 end

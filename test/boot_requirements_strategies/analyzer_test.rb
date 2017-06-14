@@ -364,4 +364,59 @@ describe Y2Storage::BootRequirementsStrategies::Analyzer do
       end
     end
   end
+
+  describe "#free_mountpoint?" do
+    subject(:analyzer) { described_class.new(devicegraph, planned_devs, boot_name) }
+    let(:point) { "/home" }
+
+    context "if there is a planned device for the queried mount point" do
+      let(:planned_devs) { [planned_partition(mount_point: "/home")] }
+
+      it "returns false" do
+        expect(analyzer.free_mountpoint?(point)).to eq false
+      end
+    end
+
+    context "if there is no planned device for the mount point" do
+      context "but the queried mount point is already assigned in the devicegraph" do
+        let(:scenario) { "mixed_disks" }
+
+        it "returns false" do
+          expect(analyzer.free_mountpoint?(point)).to eq false
+        end
+      end
+
+      context "and the mount point is not used in the devicegraph either" do
+        let(:scenario) { "double-windows-pc" }
+
+        it "returns true" do
+          expect(analyzer.free_mountpoint?(point)).to eq true
+        end
+      end
+    end
+  end
+
+  describe "#planned_prep_partitions" do
+    subject(:analyzer) { described_class.new(devicegraph, planned_devs, boot_name) }
+    let (:planned_prep) { planned_partition(partition_id: Y2Storage::PartitionId::PREP) }
+    let(:planned_devs) do
+      [planned_lv, planned_prep, planned_partition(partition_id: Y2Storage::PartitionId::LVM)]
+    end
+
+    it "returns a list of the planned partitions with the PReP id" do
+      expect(analyzer.planned_prep_partitions).to eq [planned_prep]
+    end
+  end
+
+  describe "#planned_grub_partitions" do
+    subject(:analyzer) { described_class.new(devicegraph, planned_devs, boot_name) }
+    let (:planned_grub) { planned_partition(partition_id: Y2Storage::PartitionId::BIOS_BOOT) }
+    let(:planned_devs) do
+      [planned_lv, planned_partition(partition_id: Y2Storage::PartitionId::PREP), planned_grub]
+    end
+
+    it "returns a list of the planned partitions with the BIOS boot id" do
+      expect(analyzer.planned_grub_partitions).to eq [planned_grub]
+    end
+  end
 end

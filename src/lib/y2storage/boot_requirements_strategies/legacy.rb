@@ -47,6 +47,10 @@ module Y2Storage
       end
 
       def grub_partition_missing?
+        # We don't check if the planned partition is in the boot disk,
+        # whoever created it is in control of the details
+        return false if analyzer.planned_grub_partitions.any?
+
         partitions = boot_disk.grub_partitions
         partitions.nil? || partitions.empty?
       end
