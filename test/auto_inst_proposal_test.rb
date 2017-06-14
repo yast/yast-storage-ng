@@ -32,7 +32,7 @@ describe Y2Storage::AutoInstProposal do
   describe "#propose" do
     using Y2Storage::Refinements::SizeCasts
 
-    ROOT_PART = { "filesystem" => :ext4, "mount" => "/", "size" => "25%", "label" => "new_root" }
+    ROOT_PART = { "filesystem" => :ext4, "mount" => "/", "size" => "25%", "label" => "new_root" }.freeze
 
     let(:scenario) { "windows-linux-free-pc" }
 
@@ -64,45 +64,24 @@ describe Y2Storage::AutoInstProposal do
         root, home = devicegraph.partitions
 
         expect(root).to have_attributes(
-          filesystem_type:       Y2Storage::Filesystems::Type.find("Ext4"),
+          filesystem_type:       Y2Storage::Filesystems::Type::EXT4,
           filesystem_mountpoint: "/",
           size:                  125.GiB
         )
 
         expect(home).to have_attributes(
-          # FIXME: use a different filesystem type
-          filesystem_type:       Y2Storage::Filesystems::Type.find("XFS"),
+          filesystem_type:       Y2Storage::Filesystems::Type::XFS,
           filesystem_mountpoint: "/home",
           size:                  250.GiB
         )
       end
     end
 
-    context "failing scenario" do
-      let(:root) { ROOT_PART.merge("create" => true, "size" => "max") }
-
-      let(:partitioning) do
-        [{ "device" => "/dev/sda", "use" => "all", "partitions" => [swap, root] }]
-      end
+    context "when the requested layout is not possible" do
+      let(:root) { ROOT_PART.merge("create" => true, "size" => "2TB") }
 
       it "proposes a layout including those partitions" do
-        proposal.propose
-        devicegraph = proposal.proposed_devicegraph
-
-        expect(devicegraph.partitions.size).to eq(2)
-        swap, root = devicegraph.partitions
-
-        expect(swap).to have_attributes(
-          filesystem_type:       Y2Storage::Filesystems::Type.find("swap"),
-          filesystem_mountpoint: "swap",
-          size:                  1.GiB
-        )
-
-        expect(root).to have_attributes(
-          # FIXME: use a different filesystem type
-          filesystem_type:       Y2Storage::Filesystems::Type.find("ext4"),
-          filesystem_mountpoint: "/"
-        )
+        expect { proposal.propose }.to raise_error(Y2Storage::Error)
       end
     end
 
@@ -116,7 +95,7 @@ describe Y2Storage::AutoInstProposal do
           { "filesystem" => :ext4, "mount" => "/", "partition_nr" => 1, "create" => false }
         end
 
-        xit "reuses the partition with the given partition number" do
+        it "reuses the partition with the given partition number" do
           proposal.propose
           devicegraph = proposal.proposed_devicegraph
           reused_part = devicegraph.partitions.find { |p| p.name == "/dev/sda1" }
@@ -130,7 +109,7 @@ describe Y2Storage::AutoInstProposal do
             "create" => false }
         end
 
-        xit "reuses the partition with the given label" do
+        it "reuses the partition with the given label" do
           proposal.propose
           devicegraph = proposal.proposed_devicegraph
           reused_part = devicegraph.partitions.find { |p| p.filesystem_label == "windows" }
@@ -177,8 +156,6 @@ describe Y2Storage::AutoInstProposal do
           labels = devicegraph.partitions.map(&:filesystem_label)
           expect(labels).to eq(["windows", "new_root"])
         end
-
-        it "raises an error if there is not enough space"
       end
 
       context "when the device should be initialized" do
@@ -186,7 +163,7 @@ describe Y2Storage::AutoInstProposal do
         let(:boot_checker) { double("Y2Storage::BootRequirementsChecker", needed_partitions: []) }
         before { allow(Y2Storage::BootRequirementsChecker).to receive(:new).and_return boot_checker }
 
-        xit "removes the old partitions" do
+        it "removes the old partitions" do
           proposal.propose
           devicegraph = proposal.proposed_devicegraph
           expect(devicegraph.partitions.size).to eq(1)
@@ -232,10 +209,30 @@ describe Y2Storage::AutoInstProposal do
 
     describe "automatic partitioning" do
       let(:partitioning) do
-        [{ "device" => "/dev/sda", "use" => "all" }]
+        [{ "device" => "/dev/sdb", "use" => "all" }]
       end
 
-      it "falls back to the product's proposal"
+      let(:settings) do
+        Y2Storage::ProposalSettings.new do |settings|
+          settings.use_lvm = false
+          settings.use_separate_home = false
+        end
+      end
+
+      before do
+        allow(Y2Storage::ProposalSettings).to receive(:new_for_current_product)
+          .and_return(settings)
+      end
+
+      it "falls back to the product's proposal with given disks" do
+        expect(Y2Storage::Proposal::PlannedDevicesGenerator).to receive(:new)
+          .with(settings, Y2Storage::Devicegraph)
+          .and_call_original
+        proposal.propose
+        devicegraph = proposal.proposed_devicegraph
+        sdb = devicegraph.disks.find { |d| d.name == "/dev/sdb" }
+        expect(sdb.partitions.size).to eq(2) # swap and root
+      end
     end
 
     context "when already called" do

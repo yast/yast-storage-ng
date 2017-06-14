@@ -53,6 +53,7 @@ module Y2Storage
         log.info "Partitions to create: #{created}"
 
         dist = best_distribution(created, disk_names)
+        raise Error if dist.nil?
         part_creator = Proposal::PartitionCreator.new(original_graph)
         result = part_creator.create_partitions(dist)
 

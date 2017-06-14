@@ -120,7 +120,7 @@ module Y2Storage
       guided_settings = ProposalSettings.new_for_current_product
       guided_settings.candidate_devices = drives.disk_names
       guided_planner = Proposal::PlannedDevicesGenerator.new(guided_settings, devicegraph)
-      guided_planner.planned_devices
+      guided_planner.planned_devices(:desired)
     end
 
     # Disk analyzer used to analyze the initial devicegraph
