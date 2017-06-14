@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Wed Jun 14 20:21:27 CEST 2017 - aschnell@suse.com
+
+- added probe function to StorageManager
+- 0.1.18
+
+-------------------------------------------------------------------
 Thu Jun  8 09:36:29 UTC 2017 - ancor@suse.com
 
 - Added new method BlkDevice#to_be_formatted? (needed by
