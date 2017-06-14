@@ -162,6 +162,6 @@ module Y2Storage
       def match_equal_to(value, reference)
         value == reference
       end
-      end
+    end
   end
 end
