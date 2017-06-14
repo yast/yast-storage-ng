@@ -30,7 +30,7 @@ module Y2Storage
   #
   # @example Example
   #   profile = Yast::Profile.current["partitioning"]
-  #   proposal = Y2Storage::AutoInstProposal.new(partitioning)
+  #   proposal = Y2Storage::AutoinstProposal.new(partitioning)
   #   proposal.proposed?            # => false
   #   proposal.proposed_devicegraph # => nil
   #   proposal.planned_devices      # => nil
@@ -39,7 +39,7 @@ module Y2Storage
   #
   #   proposal.proposed?            # => true
   #   proposal.proposed_devicegraph # => Proposed layout
-  class AutoInstProposal
+  class AutoinstProposal
     include Yast::Logger
 
     # @return [Hash] Partitioning layout from an AutoYaST profile

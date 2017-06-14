@@ -23,7 +23,7 @@ require "y2storage/proposal/skip_list_rule"
 
 module Y2Storage
   module Proposal
-    # Devices skip list for AutoInstProposal
+    # Devices skip list for AutoinstProposal
     #
     # This class determines when a device should be skipped based on a set of
     # predefined rules.

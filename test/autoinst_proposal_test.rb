@@ -23,10 +23,9 @@
 require_relative "spec_helper"
 require "storage"
 require "y2storage"
-# require_relative "support/proposal_context"
-require "y2storage/auto_inst_proposal"
+require "y2storage/autoinst_proposal"
 
-describe Y2Storage::AutoInstProposal do
+describe Y2Storage::AutoinstProposal do
   subject(:proposal) { described_class.new(partitioning: partitioning, devicegraph: fake_devicegraph) }
 
   describe "#propose" do
