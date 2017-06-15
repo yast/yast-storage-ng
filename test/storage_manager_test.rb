@@ -86,14 +86,14 @@ describe Y2Storage::StorageManager do
     end
 
     it "initializes #storage with the mocked devicegraphs" do
-      result = described_class.fake_from_xml(input_file_for("md2-devicegraph", suffix: "xml"))
+      described_class.fake_from_xml(input_file_for("md2-devicegraph", suffix: "xml"))
       expect(manager.storage).to be_a Storage::Storage
       expect(Storage::Disk.all(manager.probed).size).to eq 4
       expect(Storage::Disk.all(manager.staging).size).to eq 4
     end
 
     it "initializes #staging_revision" do
-      result = described_class.fake_from_xml(input_file_for("md2-devicegraph", suffix: "xml"))
+      described_class.fake_from_xml(input_file_for("md2-devicegraph", suffix: "xml"))
       expect(manager.staging_revision).to be_zero
     end
   end
