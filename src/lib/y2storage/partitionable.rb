@@ -181,6 +181,58 @@ module Y2Storage
       partition_table.mbr_gap
     end
 
+    # Free spaces inside the device
+    #
+    # @return [Array<FreeDiskSpace>]
+    def free_spaces
+      # Unused device
+      return Array(FreeDiskSpace.new(self, region.to_storage_value)) unless has_children?
+      # Device in use, but with no partition table
+      return [] if partition_table.nil?
+
+      partition_table.unused_partition_slots.map do |slot|
+        FreeDiskSpace.new(self, slot.region)
+      end
+    end
+
+    # Executes the given block in a context in which the device always have a
+    # partition table if possible, creating a temporary frozen one if needed.
+    #
+    # This allows any code to work under the assumption that a given device
+    # has an empty partition table of the YaST default type, even if that
+    # partition table is not yet created.
+    #
+    # @see preferred_ptable_type
+    #
+    # @example With a device that already has a partition table
+    #   partitioned_disk.as_not_empty do
+    #     partitioned_disk.partition_table # => returns the real partition table
+    #   end
+    #   partitioned_disk.partition_table # Still the same
+    #
+    # @example With a device not partitioned but formatted (or a PV)
+    #   lvm_pv_disk.as_not_empty do
+    #     lvm_pv_disk.partition_table # => raises DeviceHasWrongType
+    #   end
+    #   lvm_pv_disk.partition_table # Still the same
+    #
+    # @example With a completely empty device
+    #   empty_disk.as_not_empty do
+    #     empty_disk.partition_table # => a temporary PartitionTable
+    #   end
+    #   empty_disk.partition_table # Not longer there
+    def as_not_empty
+      fake_ptable = nil
+      if !has_children?
+        fake_ptable = create_partition_table(preferred_ptable_type)
+        fake_ptable.freeze
+      end
+
+      yield
+    ensure
+      remove_descendants if fake_ptable
+    end
+
   protected
 
     # Find partitions that have a given (set of) partition id(s).
