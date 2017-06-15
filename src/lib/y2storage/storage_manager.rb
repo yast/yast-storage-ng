@@ -230,6 +230,21 @@ module Y2Storage
         @instance
       end
 
+      # Use this as an alternative to the instance method.
+      # Probing is skipped and the device tree is initialized from xml_file.
+      # For xml definition ask or search source code of libstorage-ng.
+      # Any existing probed device tree is replaced.
+      #
+      # @return [StorageManager] singleton instance
+      #
+      def fake_from_xml(xml_file)
+        @instance ||= create_test_instance
+        @instance.probed.load(xml_file)
+        @instance.probed.copy(@instance.staging)
+
+        @instance
+      end
+
       # Creates the singleton instance skipping hardware probing.
       #
       # @return [StorageManager] singleton instance
