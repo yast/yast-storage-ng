@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Thu Jun 15 07:17:28 UTC 2017 - jreidinger@suse.com
+
+- Add new method StorageManager.fake_from_xml for easy loading
+  of xml device graphs
+- 0.1.18
+
+-------------------------------------------------------------------
 Thu Jun  8 09:36:29 UTC 2017 - ancor@suse.com
 
 - Added new method BlkDevice#to_be_formatted? (needed by
