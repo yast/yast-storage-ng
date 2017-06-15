@@ -21,10 +21,61 @@
 # find current contact information at www.suse.com.
 
 require_relative "spec_helper"
-require "storage"
-require "y2storage/fake_device_factory"
 
 describe Y2Storage::FakeDeviceFactory do
+
+  it "reads yaml of simple dasd and partition setup" do
+
+    environment = Storage::Environment.new(true, Storage::ProbeMode_NONE, Storage::TargetMode_DIRECT)
+    storage = Storage::Storage.new(environment)
+    staging = storage.staging
+
+    # rubocop:disable Style/StringLiterals
+
+    input = ['---',
+             '- dasd:',
+             '    name: "/dev/sda"',
+             '    size: 256 GiB',
+             '    block_size: 4 KiB',
+             '    partition_table: dasd',
+             '    partitions:',
+             '    - free:',
+             '        size: 1 MiB',
+             '        start: 0 B',
+             '    - partition:',
+             '        size: 0.5 GiB',
+             '        start: 1 MiB',
+             '        name: "/dev/sda1"',
+             '        type: primary',
+             '        file_system: swap',
+             '        mount_point: swap',
+             '    - partition:',
+             '        size: 16 GiB',
+             '        start: 513 MiB (0.50 GiB)',
+             '        name: "/dev/sda2"',
+             '        type: primary',
+             '        id: linux',
+             '        file_system: ext4',
+             '        mount_point: "/"']
+
+    # rubocop:enable all
+
+    io = StringIO.new(input.join("\n"))
+    Y2Storage::FakeDeviceFactory.load_yaml_file(staging, io)
+
+    expect(staging.num_devices).to eq 8
+    expect(staging.num_holders).to eq 7
+
+    sda = Storage.to_dasd(Storage::BlkDevice.find_by_name(staging, "/dev/sda"))
+    expect(sda.size).to eq 256 * Storage.GiB
+    expect(sda.region.block_size).to eq 4 * Storage.KiB
+
+    sda1 = Storage.to_partition(Storage::BlkDevice.find_by_name(staging, "/dev/sda1"))
+    expect(sda1.size).to eq 512 * Storage.MiB
+
+    sda2 = Storage.to_partition(Storage::BlkDevice.find_by_name(staging, "/dev/sda2"))
+    expect(sda2.size).to eq 16 * Storage.GiB
+  end
 
   it "reads yaml of simple disk and partition setup" do
 
