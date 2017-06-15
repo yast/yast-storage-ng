@@ -41,9 +41,9 @@ describe Y2Storage::Proposal::AutoinstDevicesCreator do
     described_class.new(Y2Storage::StorageManager.instance.y2storage_probed)
   end
 
-  describe "#devicegraph" do
+  describe "#populated_devicegraph" do
     it "creates new partitions" do
-      devicegraph = creator.devicegraph([new_part, reusable_part], "/dev/sda")
+      devicegraph = creator.populated_devicegraph([new_part, reusable_part], "/dev/sda")
       _win, _swap, _root, home = devicegraph.partitions
       expect(home).to have_attributes(
         filesystem_type:       filesystem_type,
@@ -52,7 +52,7 @@ describe Y2Storage::Proposal::AutoinstDevicesCreator do
     end
 
     it "reuses partitions" do
-      devicegraph = creator.devicegraph([new_part, reusable_part], "/dev/sda")
+      devicegraph = creator.populated_devicegraph([new_part, reusable_part], "/dev/sda")
       root = devicegraph.partitions.find { |p| p.filesystem_mountpoint == "/" }
       expect(root).to have_attributes(
         filesystem_label: "root"
@@ -60,7 +60,7 @@ describe Y2Storage::Proposal::AutoinstDevicesCreator do
     end
 
     it "ignores other disks" do
-      devicegraph = creator.devicegraph([new_part, reusable_part], "/dev/sda")
+      devicegraph = creator.populated_devicegraph([new_part, reusable_part], "/dev/sda")
       sdb = devicegraph.disks.find { |d| d.name == "/dev/sdb" }
       expect(sdb.partitions).to be_empty
     end

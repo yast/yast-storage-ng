@@ -43,7 +43,7 @@ module Y2Storage
       # @param original_graph     [Devicegraph] initial devicegraph
       # @param planned_partitions [Array<Planned::Partition>] set of partitions
       #     to make space for.
-      def provide_space(original_devicegraph, drives_map)
+      def cleaned_devicegraph(original_devicegraph, drives_map)
         devicegraph = original_devicegraph.dup
 
         drives_map.each_pair do |disk_name, drive_spec|

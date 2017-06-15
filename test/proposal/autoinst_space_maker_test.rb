@@ -34,15 +34,15 @@ describe Y2Storage::Proposal::AutoinstSpaceMaker do
 
   before { fake_scenario(scenario) }
 
-  describe "#provide_space" do
+  describe "#clean_devicegraph" do
     context "when 'use' key is set to 'all'" do
       it "removes all partitions" do
-        devicegraph = subject.provide_space(fake_devicegraph, drives_map)
+        devicegraph = subject.cleaned_devicegraph(fake_devicegraph, drives_map)
         expect(devicegraph.partitions).to be_empty
       end
 
       it "does not remove the partition table" do
-        devicegraph = subject.provide_space(fake_devicegraph, drives_map)
+        devicegraph = subject.cleaned_devicegraph(fake_devicegraph, drives_map)
         devicegraph.partitions
         disk = Y2Storage::Disk.find_by_name(devicegraph, "/dev/sda")
         expect(disk.partition_table).to_not be_nil
@@ -51,7 +51,7 @@ describe Y2Storage::Proposal::AutoinstSpaceMaker do
 
     context "when 'use' key is set to 'linux'" do
       it "removes only Linux partitions" do
-        devicegraph = subject.provide_space(fake_devicegraph, drives_map)
+        devicegraph = subject.cleaned_devicegraph(fake_devicegraph, drives_map)
         expect(devicegraph.partitions).to be_empty
       end
     end
@@ -60,12 +60,12 @@ describe Y2Storage::Proposal::AutoinstSpaceMaker do
       let(:partitioning) { [{ "device" => "/dev/sda", "initialize" => true }] }
 
       it "remove all partitions" do
-        devicegraph = subject.provide_space(fake_devicegraph, drives_map)
+        devicegraph = subject.cleaned_devicegraph(fake_devicegraph, drives_map)
         expect(devicegraph.partitions).to be_empty
       end
 
       it "removes the partitions table" do
-        devicegraph = subject.provide_space(fake_devicegraph, drives_map)
+        devicegraph = subject.cleaned_devicegraph(fake_devicegraph, drives_map)
         devicegraph.partitions
         disk = Y2Storage::Disk.find_by_name(devicegraph, "/dev/sda")
         expect(disk.partition_table).to be_nil

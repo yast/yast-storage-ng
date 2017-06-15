@@ -124,7 +124,7 @@ module Y2Storage
 
       # Cast the reference value in order to do the comparison
       #
-      # @param raw [String]
+      # @param raw [String,nil] Raw reference value (as it comes from the profile)
       # @return [String,Fixnum,Symbol] Converted reference value
       def cast_reference(raw, klass)
         if klass == Fixnum

@@ -28,8 +28,8 @@ require "y2storage/exceptions"
 module Y2Storage
   # Class to calculate a storage proposal for autoinstallation
   #
-  # @example Example
-  #   profile = Yast::Profile.current["partitioning"]
+  # @example Creating a proposal from the current AutoYaST profile
+  #   partitioning = Yast::Profile.current["partitioning"]
   #   proposal = Y2Storage::AutoinstProposal.new(partitioning)
   #   proposal.proposed?            # => false
   #   proposal.proposed_devicegraph # => nil
@@ -61,7 +61,7 @@ module Y2Storage
     # @param devicegraph  [Devicegraph] starting point. If nil, then probed devicegraph
     #   will be used
     # @param disk_analyzer [DiskAnalyzer] if nil, a new one will be created
-    #   based in the initial devicegraph
+    #   based on the initial devicegraph
     def initialize(partitioning: [], devicegraph: nil, disk_analyzer: nil)
       @partitioning = partitioning
       @initial_devicegraph = devicegraph
@@ -86,12 +86,10 @@ module Y2Storage
       drives = Proposal::AutoinstDrivesMap.new(initial_devicegraph, partitioning)
 
       space_maker = Proposal::AutoinstSpaceMaker.new(disk_analyzer)
-      devicegraph = space_maker.provide_space(initial_devicegraph, drives)
+      devicegraph = space_maker.cleaned_devicegraph(initial_devicegraph, drives)
 
       @proposed_devicegraph = propose_devicegraph(devicegraph, drives)
       @proposed = true
-
-      nil
     end
 
   protected
@@ -133,7 +131,7 @@ module Y2Storage
     # Calculates list of planned devices
     #
     # If the list does not contain any partition, then it follows the same
-    # approach than the guided proposal
+    # approach as the guided proposal
     #
     # @param devicegraph [Devicegraph]                 Starting point
     # @param drives      [Proposal::AutoinstDrivesMap] Devices map from an AutoYaST profile
@@ -143,12 +141,13 @@ module Y2Storage
       planner.planned_devices(drives)
     end
 
-    # Creates a devicegraph using the same approach than guided partitioning
+    # Creates a devicegraph using the same approach as guided partitioning
     #
     # @param devicegraph [Devicegraph]       Starting point
     # @param drives      [AutoinstDrivesMap] Devices map from an AutoYaST profile
     # @param target      [Symbol] :desired means the sizes of the partitions should
     #   be the ideal ones, :min for generating the smallest functional partitions
+    # @return [Devicegraph] Copy of devicegraph containing the planned devices
     def guided_devicegraph_for_target(devicegraph, drives, target)
       guided_settings = proposal_settings_for_disks(drives.disk_names)
       guided_planner = Proposal::PlannedDevicesGenerator.new(guided_settings, devicegraph)
@@ -160,10 +159,11 @@ module Y2Storage
     #
     # @param devicegraph     [Devicegraph]            Starting point
     # @param planned_devices [Array<Planned::Device>] Devices to add
-    # @return [Devicegraph]
+    # @param disk_names      [Array<String>]          Names of the disks to consider
+    # @return [Devicegraph] Copy of devicegraph containing the planned devices
     def create_devices(devicegraph, planned_devices, disk_names)
       devices_creator = Proposal::AutoinstDevicesCreator.new(devicegraph)
-      devices_creator.devicegraph(planned_devices, disk_names)
+      devices_creator.populated_devicegraph(planned_devices, disk_names)
     end
 
     # Returns the product's proposal settings for a given set of disks
@@ -181,6 +181,14 @@ module Y2Storage
     # @return [DiskAnalyzer]
     def disk_analyzer
       @disk_analyzer ||= DiskAnalyzer.new(initial_devicegraph)
+    end
+
+    # Devicegraph used as starting point
+    #
+    # @return devicegraph  [Devicegraph] starting point. Probed devicegraph will
+    #   be used if none was passed to the constructor.
+    def initial_devicegraph
+      @initial_devicegraph ||= Y2Storage::StorageManager.instance.probe
     end
   end
 end

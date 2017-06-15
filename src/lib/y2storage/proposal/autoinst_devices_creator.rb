@@ -45,7 +45,7 @@ module Y2Storage
       # @param planned_devices [Array<Planned::Partition>] Devices to create/reuse
       # @param disk_names [Array<String>] Disks to consider
       # @return [Devicegraph] New devicegraph in which all the planned devices have been allocated
-      def devicegraph(planned_devices, disk_names)
+      def populated_devicegraph(planned_devices, disk_names)
         planned_partitions = planned_devices.select { |dev| dev.is_a?(Planned::Partition) }
         reused, created = planned_partitions.partition(&:reuse?)
 
