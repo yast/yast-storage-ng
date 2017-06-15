@@ -119,9 +119,21 @@ module Y2Storage
       Actiongraph.new(graph)
     end
 
+    # @return [Array<Dasd>]
+    def dasds
+      Dasd.all(self)
+    end
+
     # @return [Array<Disk>]
     def disks
       Disk.all(self)
+    end
+
+    # All disk devices. This method is necessary because DASD devices
+    #   are not returned when asking for disks.
+    # @return [Array<Dasd|Disk>]
+    def disk_devices
+      dasds + disks
     end
 
     # @return [Array<Partition>]
