@@ -55,7 +55,7 @@ describe Y2Storage::AutoinstProposal do
     end
 
     context "when partitions are specified" do
-      it "proposes a layout including those partitions" do
+      it "proposes a layout including specified partitions" do
         proposal.propose
         devicegraph = proposal.proposed_devicegraph
 
@@ -79,8 +79,50 @@ describe Y2Storage::AutoinstProposal do
     context "when the requested layout is not possible" do
       let(:root) { ROOT_PART.merge("create" => true, "size" => "2TB") }
 
-      it "proposes a layout including those partitions" do
-        expect { proposal.propose }.to raise_error(Y2Storage::Error)
+      let(:suitable_root) do
+        Y2Storage::Planned::Partition.new("/").tap { |i| i.min_size = 20.GiB }
+      end
+
+      let(:non_suitable_root) do
+        Y2Storage::Planned::Partition.new("/").tap { |i| i.min_size = 500.GiB }
+      end
+
+      let(:planner) do
+        instance_double(Y2Storage::Proposal::PlannedDevicesGenerator)
+      end
+
+      before do
+        allow(Y2Storage::Proposal::PlannedDevicesGenerator).to receive(:new)
+          .and_return(planner)
+      end
+
+      it "falls back to a guided proposal approach" do
+        expect(planner).to receive(:planned_devices).with(:desired)
+          .and_return([suitable_root])
+        proposal.propose
+      end
+
+      context "and the guided proposal does not fit" do
+        before do
+          allow(planner).to receive(:planned_devices).with(:desired)
+            .and_return([non_suitable_root])
+        end
+
+        it "falls back to a minimal guided proposal" do
+          expect(planner).to receive(:planned_devices).with(:min)
+            .and_return([suitable_root])
+          proposal.propose
+        end
+      end
+
+      context "when no guided proposal is possible" do
+        before do
+          allow(planner).to receive(:planned_devices).and_return([non_suitable_root])
+        end
+
+        it "raises an error" do
+          expect { proposal.propose }.to raise_error(Y2Storage::Error)
+        end
       end
     end
 
@@ -212,9 +254,9 @@ describe Y2Storage::AutoinstProposal do
       end
 
       let(:settings) do
-        Y2Storage::ProposalSettings.new do |settings|
+        Y2Storage::ProposalSettings.new.tap do |settings|
           settings.use_lvm = false
-          settings.use_separate_home = false
+          settings.use_separate_home = true
         end
       end
 
@@ -230,7 +272,7 @@ describe Y2Storage::AutoinstProposal do
         proposal.propose
         devicegraph = proposal.proposed_devicegraph
         sdb = devicegraph.disks.find { |d| d.name == "/dev/sdb" }
-        expect(sdb.partitions.size).to eq(2) # swap and root
+        expect(sdb.partitions.size).to eq(2) # / and /home
       end
     end
 

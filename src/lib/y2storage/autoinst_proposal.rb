@@ -48,12 +48,6 @@ module Y2Storage
     # @return [Devicegraph] Initial device graph
     attr_reader :initial_devicegraph
 
-    # Planned devices calculated by the proposal, nil if the proposal has not
-    # been calculated yet
-    #
-    # @return [Array<Planned::Device>]
-    attr_reader :planned_devices
-
     # Proposed layout of devices, nil if the proposal has not been
     # calculated yet
     # @return [Devicegraph]
@@ -94,10 +88,7 @@ module Y2Storage
       space_maker = Proposal::AutoinstSpaceMaker.new(disk_analyzer)
       devicegraph = space_maker.provide_space(initial_devicegraph, drives)
 
-      @planned_devices = plan_devices(devicegraph, drives)
-
-      devices_creator = Proposal::AutoinstDevicesCreator.new(devicegraph)
-      @proposed_devicegraph = devices_creator.devicegraph(@planned_devices, drives.disk_names)
+      @proposed_devicegraph = propose_devicegraph(devicegraph, drives)
       @proposed = true
 
       nil
@@ -105,22 +96,82 @@ module Y2Storage
 
   protected
 
+    # Proposes a devicegraph based on given drives map
+    #
+    # This method falls back to #proposed_guided_devicegraph when the device map
+    # does not contain any partition.
+    #
+    # @param devicegraph [Devicegraph]                 Starting point
+    # @param drives      [Proposal::AutoinstDrivesMap] Devices map from an AutoYaST profile
+    # @return [Devicegraph] Devicegraph containing the planned devices
+    def propose_devicegraph(devicegraph, drives)
+      planned_devices = plan_devices(devicegraph, drives)
+      create_devices(devicegraph, planned_devices, drives.disk_names)
+    rescue Error
+      log.info "No partitions were specified. Falling back to guided setup planning."
+      propose_guided_devicegraph(devicegraph, drives)
+    end
+
+    # Finds a suitable devicegraph using the guided proposal approach
+    #
+    # If the :desired target fails, it will retry with the :min target.
+    #
+    # @param devicegraph [Devicegraph]       Starting point
+    # @param drives      [AutoinstDrivesMap] Devices map from an AutoYaST profile
+    # @return [Devicegraph] Proposed devicegraph using the guidede proposal approach
+    #
+    # @raise [Error] No suitable devicegraph was found
+    # @see proposed_guided_devicegraph
+    def propose_guided_devicegraph(devicegraph, drives)
+      guided_devicegraph_for_target(devicegraph, drives, :desired)
+    rescue Error
+      guided_devicegraph_for_target(devicegraph, drives, :min)
+    end
+
     # Calculates list of planned devices
     #
-    # If the list does not contain any partition, then it follows
-    # the same approach than the guided proposal
+    # If the list does not contain any partition, then it follows the same
+    # approach than the guided proposal
     #
-    # @param devicegraph [Devicegraph]
-    # @param drives [Proposal::AutoinstDrivesMap]
+    # @param devicegraph [Devicegraph]                 Starting point
+    # @param drives      [Proposal::AutoinstDrivesMap] Devices map from an AutoYaST profile
+    # @return [Array<Planned::Device>] Devices to add
     def plan_devices(devicegraph, drives)
       planner = Proposal::AutoinstDevicesPlanner.new(devicegraph)
       planner.planned_devices(drives)
-    rescue Error
-      log.info "No partitions were specified. Falling back to guided setup planning."
-      guided_settings = ProposalSettings.new_for_current_product
-      guided_settings.candidate_devices = drives.disk_names
+    end
+
+    # Creates a devicegraph using the same approach than guided partitioning
+    #
+    # @param devicegraph [Devicegraph]       Starting point
+    # @param drives      [AutoinstDrivesMap] Devices map from an AutoYaST profile
+    # @param target      [Symbol] :desired means the sizes of the partitions should
+    #   be the ideal ones, :min for generating the smallest functional partitions
+    def guided_devicegraph_for_target(devicegraph, drives, target)
+      guided_settings = proposal_settings_for_disks(drives.disk_names)
       guided_planner = Proposal::PlannedDevicesGenerator.new(guided_settings, devicegraph)
-      guided_planner.planned_devices(:desired)
+      planned_devices = guided_planner.planned_devices(target)
+      create_devices(devicegraph, planned_devices, drives.disk_names)
+    end
+
+    # Creates planned devices on a given devicegraph
+    #
+    # @param devicegraph     [Devicegraph]            Starting point
+    # @param planned_devices [Array<Planned::Device>] Devices to add
+    # @return [Devicegraph]
+    def create_devices(devicegraph, planned_devices, disk_names)
+      devices_creator = Proposal::AutoinstDevicesCreator.new(devicegraph)
+      devices_creator.devicegraph(planned_devices, disk_names)
+    end
+
+    # Returns the product's proposal settings for a given set of disks
+    #
+    # @param disk_names [Array<String>] Disks names to consider
+    # @return [ProposalSettings] Proposal settings considering only the given disks
+    def proposal_settings_for_disks(disk_names)
+      settings = ProposalSettings.new_for_current_product
+      settings.candidate_devices = disk_names
+      settings
     end
 
     # Disk analyzer used to analyze the initial devicegraph
