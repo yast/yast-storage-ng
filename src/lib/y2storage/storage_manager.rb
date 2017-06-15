@@ -232,8 +232,8 @@ module Y2Storage
 
       # Use this as an alternative to the instance method.
       # Probing is skipped and the device tree is initialized from xml_file.
-      # For xml definition ask or search source code of libstorage-ng.
       # Any existing probed device tree is replaced.
+      # @see {Devicegraph.load} for details about xml
       #
       # @return [StorageManager] singleton instance
       #
