@@ -79,50 +79,8 @@ describe Y2Storage::AutoinstProposal do
     context "when the requested layout is not possible" do
       let(:root) { ROOT_PART.merge("create" => true, "size" => "2TB") }
 
-      let(:suitable_root) do
-        Y2Storage::Planned::Partition.new("/").tap { |i| i.min_size = 20.GiB }
-      end
-
-      let(:non_suitable_root) do
-        Y2Storage::Planned::Partition.new("/").tap { |i| i.min_size = 500.GiB }
-      end
-
-      let(:planner) do
-        instance_double(Y2Storage::Proposal::PlannedDevicesGenerator)
-      end
-
-      before do
-        allow(Y2Storage::Proposal::PlannedDevicesGenerator).to receive(:new)
-          .and_return(planner)
-      end
-
-      it "falls back to a guided proposal approach" do
-        expect(planner).to receive(:planned_devices).with(:desired)
-          .and_return([suitable_root])
-        proposal.propose
-      end
-
-      context "and the guided proposal does not fit" do
-        before do
-          allow(planner).to receive(:planned_devices).with(:desired)
-            .and_return([non_suitable_root])
-        end
-
-        it "falls back to a minimal guided proposal" do
-          expect(planner).to receive(:planned_devices).with(:min)
-            .and_return([suitable_root])
-          proposal.propose
-        end
-      end
-
-      context "when no guided proposal is possible" do
-        before do
-          allow(planner).to receive(:planned_devices).and_return([non_suitable_root])
-        end
-
-        it "raises an error" do
-          expect { proposal.propose }.to raise_error(Y2Storage::Error)
-        end
+      it "raises an error" do
+        expect { proposal.propose }.to raise_error(Y2Storage::Error)
       end
     end
 

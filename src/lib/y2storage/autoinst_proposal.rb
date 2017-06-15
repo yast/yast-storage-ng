@@ -105,11 +105,13 @@ module Y2Storage
     # @param drives      [Proposal::AutoinstDrivesMap] Devices map from an AutoYaST profile
     # @return [Devicegraph] Devicegraph containing the planned devices
     def propose_devicegraph(devicegraph, drives)
-      planned_devices = plan_devices(devicegraph, drives)
-      create_devices(devicegraph, planned_devices, drives.disk_names)
-    rescue Error
-      log.info "No partitions were specified. Falling back to guided setup planning."
-      propose_guided_devicegraph(devicegraph, drives)
+      if drives.partitions?
+        planned_devices = plan_devices(devicegraph, drives)
+        create_devices(devicegraph, planned_devices, drives.disk_names)
+      else
+        log.info "No partitions were specified. Falling back to guided setup planning."
+        propose_guided_devicegraph(devicegraph, drives)
+      end
     end
 
     # Finds a suitable devicegraph using the guided proposal approach

@@ -77,4 +77,32 @@ describe Y2Storage::Proposal::AutoinstDrivesMap do
       expect(drives_map.disk_names).to eq(["/dev/sda"])
     end
   end
+
+  describe "#partitions?" do
+    context "when partitioning does not define partitions for any device" do
+      let(:partitioning) do
+        [
+          { "device" => "/dev/sda", "use" => "all" },
+          { "device" => "/dev/sdb", "use" => "all" }
+        ]
+      end
+
+      it "returns false" do
+        expect(drives_map.partitions?).to eq(false)
+      end
+    end
+
+    context "when partitioning defines partitions for some device" do
+      let(:partitioning) do
+        [
+          { "device" => "/dev/sda", "use" => "all", "partitions" => [{ "mount" => "/" }] },
+          { "device" => "/dev/sdb", "use" => "all" }
+        ]
+      end
+
+      it "returns true" do
+        expect(drives_map.partitions?).to eq(true)
+      end
+    end
+  end
 end

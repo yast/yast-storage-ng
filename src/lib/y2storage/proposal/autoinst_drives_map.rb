@@ -71,6 +71,29 @@ module Y2Storage
         @drives.keys
       end
 
+      # Returns whether the map contains partitions
+      #
+      # @example Containing partitions
+      #   devicegraph = Y2Storage::StorageManager.instance.y2storage_probed
+      #   profile = [
+      #     {
+      #       "device" => "/dev/sda", "use" => "all", "partitions" => [
+      #         { "mount" => "/" }
+      #       ]
+      #     }
+      #   ]
+      #   map = AutoinstMap.new(devicegraph, profile)
+      #   map.partitions? # => true
+      #
+      # @example Not containing partitions
+      #   devicegraph = Y2Storage::StorageManager.instance.y2storage_probed
+      #   profile = [{ "device" => "/dev/sda", "use" => "all" }]
+      #   map = AutoinstMap.new(devicegraph, profile)
+      #   map.partitions? # => false
+      def partitions?
+        @drives.values.any? { |i| !i.fetch("partitions", []).empty? }
+      end
+
     protected
 
       # Find the first usable disk for the given <drive> AutoYaST specification
