@@ -29,10 +29,11 @@ module Y2Storage
   # of enums. This mixin makes possible to define new classes that serve as an
   # object oriented interface to certain enums, adding extra methods as needed.
   #
-  # A class can include this mixing and then use the wrap_enum macro to point to
-  # the name of the enum. That will automatically add methods to fetch all the
-  # possible values, to compare them, etc. It will also add a constant for every
-  # possible value. Last but not least, the mixin also ensures compatibility
+  # A class can include this mixing and then use the {ClassMethods#wrap_enum}
+  # macro to point to the name of the enum. That will automatically add methods
+  # to fetch all the possible values ({ClassMethods#all .all}), to compare
+  # them, etc. It will also add a constant for every possible value (try
+  # `.constants`). Last but not least, the mixin also ensures compatibility
   # with the mechanisms used by StorageClassWrapper, making sure objects are
   # properly translated before being forwarded to the Storage namespace.
   #
