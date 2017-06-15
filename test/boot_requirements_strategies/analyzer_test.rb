@@ -398,7 +398,7 @@ describe Y2Storage::BootRequirementsStrategies::Analyzer do
 
   describe "#planned_prep_partitions" do
     subject(:analyzer) { described_class.new(devicegraph, planned_devs, boot_name) }
-    let (:planned_prep) { planned_partition(partition_id: Y2Storage::PartitionId::PREP) }
+    let(:planned_prep) { planned_partition(partition_id: Y2Storage::PartitionId::PREP) }
     let(:planned_devs) do
       [planned_lv, planned_prep, planned_partition(partition_id: Y2Storage::PartitionId::LVM)]
     end
@@ -410,7 +410,7 @@ describe Y2Storage::BootRequirementsStrategies::Analyzer do
 
   describe "#planned_grub_partitions" do
     subject(:analyzer) { described_class.new(devicegraph, planned_devs, boot_name) }
-    let (:planned_grub) { planned_partition(partition_id: Y2Storage::PartitionId::BIOS_BOOT) }
+    let(:planned_grub) { planned_partition(partition_id: Y2Storage::PartitionId::BIOS_BOOT) }
     let(:planned_devs) do
       [planned_lv, planned_partition(partition_id: Y2Storage::PartitionId::PREP), planned_grub]
     end
