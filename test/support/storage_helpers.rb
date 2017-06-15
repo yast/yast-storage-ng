@@ -28,8 +28,8 @@ module Yast
   module RSpec
     # RSpec extension to add YaST Storage specific helpers
     module StorageHelpers
-      def input_file_for(name)
-        File.join(DATA_PATH, "devicegraphs", "#{name}.yml")
+      def input_file_for(name, suffix: "yml")
+        File.join(DATA_PATH, "devicegraphs", "#{name}.#{suffix}")
       end
 
       def output_file_for(name)
