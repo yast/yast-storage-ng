@@ -22,9 +22,9 @@
 require_relative "../spec_helper"
 
 require "y2storage"
-require "y2storage/proposal/skip_list_rule"
+require "y2storage/proposal/skip_rule"
 
-describe Y2Storage::Proposal::SkipListRule do
+describe Y2Storage::Proposal::SkipRule do
   subject(:rule) { described_class.new(key, predicate, reference) }
 
   let(:key) { "size_k" }

@@ -27,8 +27,8 @@ require "y2storage/proposal/skip_list"
 describe Y2Storage::Proposal::SkipList do
   subject(:list) { described_class.new([rule1, rule2]) }
 
-  let(:rule1) { instance_double(Y2Storage::Proposal::SkipListRule) }
-  let(:rule2) { instance_double(Y2Storage::Proposal::SkipListRule) }
+  let(:rule1) { instance_double(Y2Storage::Proposal::SkipRule) }
+  let(:rule2) { instance_double(Y2Storage::Proposal::SkipRule) }
   let(:disk) { instance_double(Y2Storage::Disk) }
 
   describe ".from_profile" do
@@ -40,7 +40,7 @@ describe Y2Storage::Proposal::SkipList do
     end
 
     it "creates a list with rules" do
-      allow(Y2Storage::Proposal::SkipListRule).to receive(:from_profile_rule)
+      allow(Y2Storage::Proposal::SkipRule).to receive(:from_profile_rule)
         .and_return(rule1, rule2)
       list = Y2Storage::Proposal::SkipList.from_profile(spec)
       expect(list.rules).to eq([rule1, rule2])

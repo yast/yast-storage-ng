@@ -28,15 +28,15 @@ module Y2Storage
     # @example Using a rule
     #   Disk = Struct.new(:size_k)
     #   disk = Disk.new(8192)
-    #   rule = Proposal::SkipListRule.new(:size_k, :less_than, 16384)
+    #   rule = Proposal::SkipRule.new(:size_k, :less_than, 16384)
     #   rule.matches?(disk) #=> true
     #
     # @example Creating a rule from an AutoYaST profile hash
     #   hash = { "skip_key" => "size_k", "skip_if_less_than" => 16384,
     #     "skip_value" => 1024 }
-    #   Proposal::SkipListRule.from_profile_hash(hash)
+    #   Proposal::SkipRule.from_profile_hash(hash)
     #
-    class SkipListRule
+    class SkipRule
       # @return [String] Name of the attribute to check when applying the rule
       attr_reader :key
       # @return [Symbol] Comparison (:less_than, :more_than and :equal_to)

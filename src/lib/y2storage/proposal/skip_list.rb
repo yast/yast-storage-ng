@@ -19,7 +19,7 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "y2storage/proposal/skip_list_rule"
+require "y2storage/proposal/skip_rule"
 
 module Y2Storage
   module Proposal
@@ -58,7 +58,7 @@ module Y2Storage
         # @param profile_rules [Array<Hash>] List of profile skip rules
         # @return [SkipList]
         def from_profile(profile_rules)
-          rules = profile_rules.map { |h| SkipListRule.from_profile_rule(h) }
+          rules = profile_rules.map { |h| SkipRule.from_profile_rule(h) }
           new(rules)
         end
       end
