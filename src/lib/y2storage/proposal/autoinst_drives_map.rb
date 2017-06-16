@@ -27,6 +27,9 @@ module Y2Storage
   module Proposal
     # Utility class to map disk names to the corresponding AutoYaST <drive>
     # specification that will be applied to that disk.
+    #
+    # More information can be found in the 'Partitioning' section of the AutoYaST documentation:
+    # https://www.suse.com/documentation/sles-12/singlehtml/book_autoyast/book_autoyast.html#CreateProfile.Partitioning
     class AutoinstDrivesMap
       extend Forwardable
 

@@ -28,7 +28,7 @@ module Y2Storage
     # Strategy to calculate boot requirements in systems using ZIPL
     class ZIPL < Base
       def needed_partitions(target)
-        raise Error unless supported_boot_disk?
+        raise Error, "Impossible to boot system from the chosen disk" unless supported_boot_disk?
         zipl_partition_missing? ? [zipl_partition(target)] : []
       end
 

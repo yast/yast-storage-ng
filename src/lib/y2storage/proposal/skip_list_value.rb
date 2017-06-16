@@ -57,7 +57,7 @@ module Y2Storage
       #
       # @return [String] Last part of device name (for instance, sdb)
       def name
-        disk.name.split("/").last
+        disk.basename
       end
     end
   end

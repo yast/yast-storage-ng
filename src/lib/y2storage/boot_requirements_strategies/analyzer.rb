@@ -37,7 +37,7 @@ module Y2Storage
       # @param planned_devices [Array<Planned::Device>] devices that are already planned to be
       #   added to the starting devicegraph.
       # @param boot_disk_name  [String, nil] device name of the disk that the system will try to
-      #   boot first. Only useful in some scenarios like legacy boot.
+      #   boot first. Only useful in some scenarios like legacy boot. See {#boot_disk}.
       def initialize(devicegraph, planned_devices, boot_disk_name)
         @devicegraph = devicegraph
         @planned_devices = planned_devices
@@ -109,7 +109,7 @@ module Y2Storage
       # @return [Boolean] true if the root filesystem is going to be Btrfs
       def btrfs_root?
         if root_planned_dev
-          root_planned_dev.respond_to?(:filesystem_type) && root_planned_dev.filesystem_type.is?(:btrfs)
+          root_planned_dev.filesystem_type.is?(:btrfs)
         elsif root_filesystem
           root_filesystem.type.is?(:btrfs)
         else

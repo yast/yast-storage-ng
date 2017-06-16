@@ -44,6 +44,9 @@ module Y2Storage
     #     </skip_list>
     #   </drive>
     #
+    # More information can be found in the 'Partitioning' section of the AutoYaST documentation:
+    # https://www.suse.com/documentation/sles-12/singlehtml/book_autoyast/book_autoyast.html#CreateProfile.Partitioning
+    #
     # @example Building the list of rules from a hash
     #   list #=> [ {"skip_key" => "name", "skip_value" => "/dev/sda" }
     #   SkipList.from_profile(list)

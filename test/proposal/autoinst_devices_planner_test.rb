@@ -44,14 +44,6 @@ describe Y2Storage::Proposal::AutoinstDevicesPlanner do
   end
 
   describe "#planned_devices" do
-    context "when no partitions have been specified" do
-      let(:partitioning) { [{ "device" => "/dev/sda" }] }
-
-      it "raises an error" do
-        expect { planner.planned_devices(drives_map) }.to raise_error(Y2Storage::Error)
-      end
-    end
-
     context "when a boot partition is required" do
       let(:boot) { Y2Storage::Planned::Partition.new("/boot", Y2Storage::Filesystems::Type::EXT4) }
 

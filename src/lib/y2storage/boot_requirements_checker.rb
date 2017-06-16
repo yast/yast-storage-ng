@@ -76,6 +76,7 @@ module Y2Storage
 
     # @return [String, nil] device name of the disk that the system will try to
     #   boot first. Only useful in some scenarios like legacy boot.
+    #   See {BootRequirementsStrategies::Analyzer#boot_disk}.
     attr_reader :boot_disk_name
 
     def arch
@@ -96,7 +97,7 @@ module Y2Storage
           # Fallback to Legacy as default
           BootRequirementsStrategies::Legacy
         end
-      @strategy ||= klass.new(devicegraph, planned_devices, boot_disk_name)
+      @strategy = klass.new(devicegraph, planned_devices, boot_disk_name)
     end
   end
 end

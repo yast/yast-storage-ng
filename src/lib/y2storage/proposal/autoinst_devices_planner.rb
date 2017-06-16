@@ -39,8 +39,6 @@ module Y2Storage
 
       # Returns an array of planned devices according to the drives map
       #
-      # @raise [Error] if not partitions were specified
-      #
       # @param drives_map [Proposal::AutoinstDrivesMap] Drives map from AutoYaST
       # @return [Array<Planned::Partition>] List of planned partitions
       def planned_devices(drives_map)
@@ -49,10 +47,6 @@ module Y2Storage
         drives_map.each_pair do |disk_name, drive_spec|
           disk = Disk.find_by_name(devicegraph, disk_name)
           result.concat(planned_for_disk(disk, drive_spec))
-        end
-
-        if result.empty?
-          raise Error, "No partitions specified"
         end
 
         checker = BootRequirementsChecker.new(devicegraph, planned_devices: result)
@@ -73,25 +67,26 @@ module Y2Storage
       # @return [Array<Planned::Partition>] List of planned partitions
       def planned_for_disk(disk, spec)
         result = []
-        spec.fetch("partitions", []).each do |part_description|
+        spec.fetch("partitions", []).each do |part_spec|
           # TODO: fix Planned::Partition.initialize
           part = Y2Storage::Planned::Partition.new(nil, nil)
           part.disk = disk.name
-          # part.bootable no está en el perfil (¿existe lógica?)
-          part.filesystem_type = filesystem_for(part_description["filesystem"])
+          # TODO: part.bootable is not in the AutoYaST profile. Check if
+          # there's some logic to set it in the old code.
+          part.filesystem_type = filesystem_for(part_spec["filesystem"])
           # TODO: set the correct id based on the filesystem type (move to Partition class?)
           part.partition_id = 131
-          if part_description["crypt_fs"]
-            part.encryption_password = part_description["crypt_key"]
+          if part_spec["crypt_fs"]
+            part.encryption_password = part_spec["crypt_key"]
           end
-          part.mount_point = part_description["mount"]
-          part.label = part_description["label"]
-          part.uuid = part_description["uuid"]
-          if part_description["create"] == false
-            partition_to_reuse = find_partition_to_reuse(devicegraph, part_description)
-            if partition_to_reuse
-              part.reuse = partition_to_reuse.name
-              part.reformat = !!part_description["format"]
+          part.mount_point = part_spec["mount"]
+          part.label = part_spec["label"]
+          part.uuid = part_spec["uuid"]
+          if !part_spec.fetch("create", true)
+            part_to_reuse = find_partition_to_reuse(devicegraph, part_spec)
+            if part_to_reuse
+              part.reuse = part_to_reuse.name
+              part.reformat = !!part_spec["format"]
             end
             # TODO: possible errors here
             #   - missing information about what device to use
@@ -99,7 +94,7 @@ module Y2Storage
           end
 
           # Sizes: leave out reducing fixed sizes and 'auto'
-          min_size, max_size = sizes_for(part_description, disk)
+          min_size, max_size = sizes_for(part_spec, disk)
           part.min_size = min_size
           part.max_size = max_size
           result << part
@@ -115,7 +110,7 @@ module Y2Storage
       # Returns min and max sizes for a partition specification
       #
       # @param description [Hash] Partition specification from AutoYaST
-      # @return [[DiskSize,DiskSize]] min are max sizes for the given partition
+      # @return [[DiskSize,DiskSize]] min and max sizes for the given partition
       #
       # @see SIZE_REGEXP
       def sizes_for(part_spec, disk)
@@ -125,7 +120,7 @@ module Y2Storage
           return [disk.min_grain, DiskSize.unlimited]
         end
 
-        _all, number, unit = SIZE_REGEXP.match(normalized_size).to_a
+        number, unit = SIZE_REGEXP.match(normalized_size).values_at(1, 2)
         size =
           if unit == "%"
             percent = number.to_f

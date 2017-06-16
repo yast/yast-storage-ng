@@ -170,6 +170,8 @@ module Y2Storage
     #
     # @param disk_names [Array<String>] Disks names to consider
     # @return [ProposalSettings] Proposal settings considering only the given disks
+    #
+    # @see Y2Storage::BlkDevice#name
     def proposal_settings_for_disks(disk_names)
       settings = ProposalSettings.new_for_current_product
       settings.candidate_devices = disk_names
