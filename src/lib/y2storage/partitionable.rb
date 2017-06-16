@@ -40,10 +40,19 @@ module Y2Storage
     storage_forward :range=
 
     # @!method possible_partition_table_types
+    #   Possible partition table types for the disk. The first entry is
+    #     identical to the default partition table type for the disk
+    #
     #   @return [Array<PartitionTables::Type>]
     storage_forward :possible_partition_table_types, as: "PartitionTables::Type"
 
+    # @!method possible_partition_table_type
+    #   Default partition table type as reported by libstorage
+    #   @see #preferred_ptable_type
+    #
+    #   @return [PartitionTables::Type]
     storage_forward :default_partition_table_type, as: "PartitionTables::Type"
+    private :default_partition_table_type
 
     # @!method create_partition_table(pt_type)
     #   Creates a partition table of the specified type for the device.
@@ -233,6 +242,17 @@ module Y2Storage
       yield
     ensure
       remove_descendants if fake_ptable
+    end
+
+    # Default partition table type for newly created partition tables
+    #
+    # This method is needed because YaST criteria does not necessarily match
+    # the one followed by Storage::Disk#default_partition_table_type (which
+    # defaults to MBR partition tables in many cases)
+    #
+    # @return [PartitionTables::Type]
+    def preferred_ptable_type
+      default_partition_table_type
     end
 
   protected

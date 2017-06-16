@@ -30,7 +30,14 @@ describe Y2Storage::Disk do
     fake_scenario(scenario)
   end
   let(:scenario) { "gpt_msdos_and_empty" }
+  let(:disk_name) { "/dev/sda" }
   subject(:disk) { Y2Storage::Disk.find_by_name(fake_devicegraph, disk_name) }
+
+  describe "#preferred_ptable_type" do
+    it "returns gpt" do
+      expect(subject.preferred_ptable_type).to eq Y2Storage::PartitionTables::Type::GPT
+    end
+  end
 
   describe "#free_spaces" do
 

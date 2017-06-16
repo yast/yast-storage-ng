@@ -69,10 +69,7 @@ module Y2Storage
     end
 
     # Default partition table type for newly created partition tables
-    #
-    # This method is needed because YaST criteria does not necessarily match
-    # the one followed by Storage::Disk#default_partition_table_type (which
-    # defaults to MBR partition tables in many cases)
+    # @see Partitionable#preferred_ptable_type
     #
     # @return [PartitionTables::Type]
     def preferred_ptable_type

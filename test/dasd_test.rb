@@ -39,9 +39,8 @@ describe Y2Storage::Dasd do
   end
 
   describe "#preferred_ptable_type" do
-    it "is the default partition table type" do
-      default_type = subject.default_partition_table_type
-      expect(subject.preferred_ptable_type).to eq default_type
+    it "returns dasd" do
+      expect(subject.preferred_ptable_type).to eq Y2Storage::PartitionTables::Type::DASD
     end
   end
 end

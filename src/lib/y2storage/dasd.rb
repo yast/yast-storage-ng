@@ -70,14 +70,6 @@ module Y2Storage
       false
     end
 
-    # Default partition table type for newly created partition tables
-    # @see Disk#preferred_ptable_type
-    #
-    # @return [PartitionTables::Type]
-    def preferred_ptable_type
-      default_partition_table_type
-    end
-
   protected
 
     def types_for_is
