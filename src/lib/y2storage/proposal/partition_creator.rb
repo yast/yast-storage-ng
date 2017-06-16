@@ -135,11 +135,6 @@ module Y2Storage
         disk = free_space.disk
         ptable = partition_table(disk)
 
-        if !planned_partition.partition_id
-          id_name = planned_partition.mount_point == "swap" ? :swap : :other
-          planned_partition.partition_id = ptable.partition_id_for(id_name)
-        end
-
         if primary
           dev_name = next_free_primary_partition_name(disk.name, ptable)
           partition_type = PartitionType::PRIMARY
@@ -154,7 +149,7 @@ module Y2Storage
 
         region = new_region_with_size(free_space.region, planned_partition.size)
         partition = ptable.create_partition(dev_name, region, partition_type)
-        partition.id = planned_partition.partition_id
+        partition.id = partition_id(ptable, planned_partition)
         partition.boot = !!planned_partition.bootable if ptable.partition_boot_flag_supported?
         partition
       end
@@ -223,6 +218,30 @@ module Y2Storage
       # @return [PartitionTable]
       def partition_table(disk)
         disk.partition_table || disk.create_partition_table(disk.preferred_ptable_type)
+      end
+
+      # Returns the partition id that should be used for a new partition in
+      # a specific partition table.
+      #
+      # @note When a planned partition has not partition id, it will be set
+      #   based on the type of the partition table.
+      # @see PartitionTables::Base#partition_id_for
+      #
+      # @param ptable [PartitionsTable::Base] partition table
+      # @param planned_partition [Planned::Partition]
+      #
+      # @return [PartitionId]
+      def partition_id(ptable, planned_partition)
+        partition_id = planned_partition.partition_id
+        return partition_id if partition_id
+
+        partition_id = if planned_partition.mount_point == "swap"
+          PartitionId::SWAP
+        else
+          PartitionId::LINUX
+        end
+
+        ptable.partition_id_for(partition_id)
       end
     end
   end

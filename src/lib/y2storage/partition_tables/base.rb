@@ -116,23 +116,16 @@ module Y2Storage
       end
 
       # The partition id depends on the partition table type. For example,
-      # MSDOS partition tables use SWAP id for swap partitions, but DASD
-      # partiton tables always need LINUX id.
+      #   MSDOS partition tables use SWAP id for swap partitions, but DASD
+      #   partiton tables need LINUX id.
       #
       # With this method, each partition table can define the partition id
-      # it expects for each case.
+      #   it really expects for each case.
       #
-      # TODO: right now only :swap is considered.
-      #
-      # @param id_name [Symbol] a partition id name (e.g., :swap, :linux, :ntfs)
+      # @param partition_id [PartitionId]
       # @return [PartitionId]
-      def partition_id_for(id_name)
-        case id_name
-        when :swap
-          PartitionId::SWAP
-        else
-          PartitionId::LINUX
-        end
+      def partition_id_for(partition_id)
+        partition_id
       end
 
     protected

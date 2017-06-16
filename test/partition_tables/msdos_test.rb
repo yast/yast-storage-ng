@@ -34,8 +34,9 @@ describe Y2Storage::PartitionTables::Msdos do
   subject { disk.create_partition_table(partition_table_type) }
 
   describe "#partition_id_for" do
-    it "uses SWAP partition id for a swap" do
-      expect(subject.partition_id_for(:swap)).to eq Y2Storage::PartitionId::SWAP
+    it "uses the same partition id" do
+      swap = Y2Storage::PartitionId::SWAP
+      expect(subject.partition_id_for(swap)).to eq swap
     end
   end
 end

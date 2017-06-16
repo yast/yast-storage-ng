@@ -35,7 +35,13 @@ describe Y2Storage::PartitionTables::Dasd do
 
   describe "#partition_id_for" do
     it "uses LINUX partition id for a swap" do
-      expect(subject.partition_id_for(:swap)).to eq Y2Storage::PartitionId::LINUX
+      swap = Y2Storage::PartitionId::SWAP
+      expect(subject.partition_id_for(swap)).to eq Y2Storage::PartitionId::LINUX
+    end
+
+    it "uses the same partition id for others" do
+      ntfs = Y2Storage::PartitionId::NTFS
+      expect(subject.partition_id_for(ntfs)).to eq ntfs
     end
   end
 end
