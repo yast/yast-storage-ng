@@ -102,8 +102,7 @@ module Y2Storage
       #
       # @return [String]
       def dm_name_for(device)
-        name = device.name.split("/").last
-        "cr_#{name}"
+        "cr_#{device.basename}"
       end
 
       # Class methods for the mixin

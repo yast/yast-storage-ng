@@ -281,4 +281,12 @@ describe Y2Storage::BlkDevice do
       end
     end
   end
+
+  describe "#basename" do
+    let(:device_name) { "/dev/sda1" }
+
+    it "returns the basename of the device's name" do
+      expect(device.basename).to eq("sda1")
+    end
+  end
 end
