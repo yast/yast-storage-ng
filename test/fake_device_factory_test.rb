@@ -66,14 +66,14 @@ describe Y2Storage::FakeDeviceFactory do
     expect(staging.num_devices).to eq 8
     expect(staging.num_holders).to eq 7
 
-    sda = Storage.to_dasd(Storage::BlkDevice.find_by_name(staging, "/dev/sda"))
+    sda = Storage::Dasd.find_by_name(staging, "/dev/sda")
     expect(sda.size).to eq 256 * Storage.GiB
     expect(sda.region.block_size).to eq 4 * Storage.KiB
 
-    sda1 = Storage.to_partition(Storage::BlkDevice.find_by_name(staging, "/dev/sda1"))
+    sda1 = Storage::Partition.find_by_name(staging, "/dev/sda1")
     expect(sda1.size).to eq 512 * Storage.MiB
 
-    sda2 = Storage.to_partition(Storage::BlkDevice.find_by_name(staging, "/dev/sda2"))
+    sda2 = Storage::Partition.find_by_name(staging, "/dev/sda2")
     expect(sda2.size).to eq 16 * Storage.GiB
   end
 
