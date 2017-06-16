@@ -84,7 +84,7 @@ module Y2Storage
       # the objects coming from Storage and the nature of DevicesLists,
       # heterogeneous lists make no sense.
       #
-      # @raises TypeError if the types do not match
+      # @raise [TypeError] if the types do not match
       def +(other)
         if self.class != other.class
           raise TypeError, "#{other.class} is not a #{self.class}"

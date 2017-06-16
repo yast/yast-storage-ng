@@ -186,8 +186,6 @@ module Y2Storage
       # If the volumes fit in any order or if it's impossible to make them fit,
       # the method returns nil.
       #
-      # @param size_to_fill [DiskSize]
-      # @param min_grain [DiskSize]
       # @return [Planned::Partition, nil]
       def enforced_last
         rounded_up = DiskSize.sum(partitions.map(&:min), rounding: min_grain)

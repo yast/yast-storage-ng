@@ -305,8 +305,8 @@ module Y2Storage
     #
     # Some of the parameters ("mount_point", "label"...) really belong to the
     # file system which is a separate factory product, but it is more natural
-    # to specify this for the partition, so those data are kept in
-    # @file_system_data to be picked up in create_file_system when needed.
+    # to specify this for the partition, so those data are kept
+    # in @file_system_data to be picked up in create_file_system when needed.
     #
     # @param parent [String] disk name ("/dev/sda" etc.)
     #
@@ -533,8 +533,8 @@ module Y2Storage
     #
     # Some of the parameters ("mount_point", "label"...) really belong to the
     # file system which is a separate factory product, but it is more natural
-    # to specify this for the logical volume, so those data are kept in
-    # @file_system_data to be picked up in create_file_system when needed.
+    # to specify this for the logical volume, so those data are kept
+    # in @file_system_data to be picked up in create_file_system when needed.
     #
     # @param parent [Object] volume group object
     #
