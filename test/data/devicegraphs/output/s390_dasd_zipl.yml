@@ -6,27 +6,19 @@
     partitions:
     - partition:
         size: 200 MiB
-        start: 3 MiB
         name: "/dev/sda1"
-        type: primary
         id: linux
         file_system: ext2
         mount_point: "/boot/zipl"
     - partition:
         size: 40 GiB
-        start: 204 MiB
         name: "/dev/sda2"
-        type: primary
         id: linux
         file_system: btrfs
         mount_point: "/"
-        btrfs:
-          subvolumes: []
     - partition:
         size: 2 GiB
-        start: 41166 MiB (40.20 GiB)
         name: "/dev/sda3"
-        type: primary
         id: linux
         file_system: swap
         mount_point: swap

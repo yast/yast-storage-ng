@@ -6,17 +6,13 @@
     partitions:
     - partition:
         size: 200 MiB
-        start: 3 MiB
         name: "/dev/sda1"
-        type: primary
         id: linux
         file_system: ext2
         mount_point: "/boot/zipl"
     - partition:
         size: 43009 MiB (42.00 GiB)
-        start: 204 MiB
         name: "/dev/sda2"
-        type: primary
         id: lvm
 - lvm_vg:
     vg_name: system
