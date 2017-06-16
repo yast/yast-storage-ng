@@ -43,6 +43,8 @@ module Y2Storage
     #   @return [Array<PartitionTables::Type>]
     storage_forward :possible_partition_table_types, as: "PartitionTables::Type"
 
+    storage_forward :default_partition_table_type, as: "PartitionTables::Type"
+
     # @!method create_partition_table(pt_type)
     #   Creates a partition table of the specified type for the device.
     #

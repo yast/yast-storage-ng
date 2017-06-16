@@ -68,13 +68,15 @@ module Y2Storage
       transport.to_sym == :usb
     end
 
-    # Default partition type for newly created partitions
+    # Default partition table type for newly created partition tables
     #
     # This method is needed because YaST criteria does not necessarily match
     # the one followed by Storage::Disk#default_partition_table_type (which
     # defaults to MBR partition tables in many cases)
+    #
+    # @return [PartitionTables::Type]
     def preferred_ptable_type
-      # TODO: so far, DASD is not supported, so we always suggest GPT
+      # We always suggest GPT
       PartitionTables::Type.find(:gpt)
     end
 
