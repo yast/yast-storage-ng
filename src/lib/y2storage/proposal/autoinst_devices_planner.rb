@@ -73,26 +73,26 @@ module Y2Storage
       # @return [Array<Planned::Partition>] List of planned partitions
       def planned_for_disk(disk, spec)
         result = []
-        spec.fetch("partitions", []).each do |part_spec|
+        spec.fetch("partitions", []).each do |partition_spec|
           # TODO: fix Planned::Partition.initialize
-          part = Y2Storage::Planned::Partition.new(nil, nil)
-          part.disk = disk.name
-          # TODO: part.bootable is not in the AutoYaST profile. Check if
+          partition = Y2Storage::Planned::Partition.new(nil, nil)
+          partition.disk = disk.name
+          # TODO: partition.bootable is not in the AutoYaST profile. Check if
           # there's some logic to set it in the old code.
-          part.filesystem_type = filesystem_for(part_spec["filesystem"])
+          partition.filesystem_type = filesystem_for(partition_spec["filesystem"])
           # TODO: set the correct id based on the filesystem type (move to Partition class?)
-          part.partition_id = 131
-          if part_spec["crypt_fs"]
-            part.encryption_password = part_spec["crypt_key"]
+          partition.partition_id = 131
+          if partition_spec["crypt_fs"]
+            partition.encryption_password = partition_spec["crypt_key"]
           end
-          part.mount_point = part_spec["mount"]
-          part.label = part_spec["label"]
-          part.uuid = part_spec["uuid"]
-          if !part_spec.fetch("create", true)
-            part_to_reuse = find_partition_to_reuse(devicegraph, part_spec)
-            if part_to_reuse
-              part.reuse = part_to_reuse.name
-              part.reformat = !!part_spec["format"]
+          partition.mount_point = partition_spec["mount"]
+          partition.label = partition_spec["label"]
+          partition.uuid = partition_spec["uuid"]
+          if !partition_spec.fetch("create", true)
+            partition_to_reuse = find_partition_to_reuse(devicegraph, partition_spec)
+            if partition_to_reuse
+              partition.reuse = partition_to_reuse.name
+              partition.reformat = !!partition_spec["format"]
             end
             # TODO: possible errors here
             #   - missing information about what device to use
@@ -100,10 +100,10 @@ module Y2Storage
           end
 
           # Sizes: leave out reducing fixed sizes and 'auto'
-          min_size, max_size = sizes_for(part_spec, disk)
-          part.min_size = min_size
-          part.max_size = max_size
-          result << part
+          min_size, max_size = sizes_for(partition_spec, disk)
+          partition.min_size = min_size
+          partition.max_size = max_size
+          result << partition
         end
 
         result

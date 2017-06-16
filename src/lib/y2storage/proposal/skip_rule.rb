@@ -148,7 +148,7 @@ module Y2Storage
       # @return [String,Fixnum,Symbol] Converted reference value
       def cast_reference(raw, klass)
         if klass == Fixnum
-          raw.nil? ? 0 : raw.to_i
+          raw.to_i
         elsif klass == Symbol
           raw.to_sym
         else

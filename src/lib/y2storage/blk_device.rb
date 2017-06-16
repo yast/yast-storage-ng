@@ -202,15 +202,13 @@ module Y2Storage
       !blk_filesystem.exists_in_devicegraph?(initial_devicegraph)
     end
 
-    # Device's basename
-    #
-    # The basename corresponds to the last part of the device's name
+    # Last part of {#name}
     #
     # @example Get the device basename
-    #   device.name      # => "/dev/sda"
-    #   device.base_name # => "sda"
+    #   device.name     # => "/dev/sda"
+    #   device.basename # => "sda"
     #
-    # @return [String] Last part of the device name
+    # @return [String]
     def basename
       name.split("/").last
     end
