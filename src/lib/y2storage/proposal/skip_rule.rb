@@ -37,6 +37,8 @@ module Y2Storage
     #   Proposal::SkipRule.from_profile_hash(hash)
     #
     class SkipRule
+      class NotValidSkipRule < StandardError; end
+
       # @return [String] Name of the attribute to check when applying the rule
       attr_reader :key
       # @return [Symbol] Comparison (:less_than, :more_than and :equal_to)
@@ -98,9 +100,20 @@ module Y2Storage
       # @param disk [Disk] Disk to match
       # @return [Boolean] true if the disk matches the rule
       def matches?(disk)
+        return false unless valid?
         value_from_disk = value(disk)
         return false unless valid_class?(value_from_disk)
         send("match_#{predicate}", value_from_disk, cast_reference(raw_reference, value_from_disk.class))
+      end
+
+      # Determines whether the rule is valid
+      #
+      # A rule is valid when all elements (key, predicate and raw_reference)
+      # are defined.
+      #
+      # @return [Boolean] true if the rule is valid
+      def valid?
+        key && predicate && raw_reference
       end
 
       # Returns the value to compare from the disk
@@ -111,6 +124,13 @@ module Y2Storage
       # @see Proposal::SkipListValue
       def value(disk)
         SkipListValue.new(disk).send(key)
+      end
+
+      # Redefines #inspect method
+      #
+      # @return [String]
+      def inspect
+        "<SkipRule key='#{key}' predicate='#{predicate}' reference='#{raw_reference}'>"
       end
 
     private
@@ -124,13 +144,13 @@ module Y2Storage
 
       # Cast the reference value in order to do the comparison
       #
-      # @param raw [String,nil] Raw reference value (as it comes from the profile)
+      # @param raw [String] Raw reference value (as it comes from the profile)
       # @return [String,Fixnum,Symbol] Converted reference value
       def cast_reference(raw, klass)
         if klass == Fixnum
-          raw.to_i
+          raw.nil? ? 0 : raw.to_i
         elsif klass == Symbol
-          raw.respond_to?(:to_sym) ? raw.to_sym : :nothing
+          raw.to_sym
         else
           raw
         end

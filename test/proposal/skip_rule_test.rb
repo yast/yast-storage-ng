@@ -136,6 +136,14 @@ describe Y2Storage::Proposal::SkipRule do
           expect(rule.matches?(disk)).to be(false)
         end
       end
+
+      context "and rule is not valid" do
+        let(:key) { nil }
+
+        it "returns false" do
+          expect(rule.matches?(disk)).to be(false)
+        end
+      end
     end
 
     context "when predicate is greater_than" do
@@ -255,6 +263,47 @@ describe Y2Storage::Proposal::SkipRule do
           expect(rule.matches?(disk)).to be(false)
         end
       end
+    end
+  end
+
+  describe "#valid?" do
+    subject(:rule) { described_class.new(key, predicate, reference) }
+    let(:key) { "size_k" }
+    let(:value) { 0 }
+    let(:predicate) { :equal_to }
+
+    it "returns true" do
+      expect(rule).to be_valid
+    end
+
+    context "when skip key is missing" do
+      let(:key) { nil }
+
+      it "returns false" do
+        expect(rule).to_not be_valid
+      end
+    end
+
+    context "when skip reference value is missing" do
+      let(:reference) { nil }
+
+      it "returns false" do
+        expect(rule).to_not be_valid
+      end
+    end
+
+    context "when predicate is missing" do
+      let(:predicate) { nil }
+
+      it "returns false" do
+        expect(rule).to_not be_valid
+      end
+    end
+  end
+
+  describe "#inspect" do
+    it "returns an string in order to inspect the object" do
+      expect(rule.inspect).to eq("<SkipRule key='size_k' predicate='less_than' reference='1024'>")
     end
   end
 end

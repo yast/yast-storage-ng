@@ -27,8 +27,8 @@ require "y2storage/proposal/skip_list"
 describe Y2Storage::Proposal::SkipList do
   subject(:list) { described_class.new([rule1, rule2]) }
 
-  let(:rule1) { instance_double(Y2Storage::Proposal::SkipRule) }
-  let(:rule2) { instance_double(Y2Storage::Proposal::SkipRule) }
+  let(:rule1) { instance_double(Y2Storage::Proposal::SkipRule, matches?: true, valid?: true) }
+  let(:rule2) { instance_double(Y2Storage::Proposal::SkipRule, matches?: true, valid?: true) }
   let(:disk) { instance_double(Y2Storage::Disk) }
 
   describe ".from_profile" do
@@ -67,6 +67,19 @@ describe Y2Storage::Proposal::SkipList do
 
       it "returns false" do
         expect(list.matches?(disk)).to eq(false)
+      end
+    end
+
+    context "when some rule is not valid" do
+      before do
+        allow(rule1).to receive(:valid?).and_return(false)
+        allow(rule1).to receive(:inspect).and_return("rule1")
+      end
+
+      it "ignores the not valid rule" do
+        expect(rule1).to_not receive(:matches?)
+        expect(list.log).to receive(:error).with(/Some skip rules were ignored: rule1/)
+        expect(list.matches?(disk)).to eq(true)
       end
     end
   end

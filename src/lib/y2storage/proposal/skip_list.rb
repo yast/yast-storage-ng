@@ -49,6 +49,8 @@ module Y2Storage
     #   SkipList.from_profile(list)
     #
     class SkipList
+      include Yast::Logger
+
       # @return [Array<SkipRule>] List of rules to apply
       attr_reader :rules
 
@@ -74,7 +76,19 @@ module Y2Storage
       #
       # @return [Boolean] true only if it matches any rule
       def matches?(disk)
-        rules.any? { |r| r.matches?(disk) }
+        valid, not_valid = rules.partition(&:valid?)
+        log_not_valid_rules(not_valid) unless not_valid.empty?
+        valid.any? { |r| r.matches?(disk) }
+      end
+
+    private
+
+      # Log a list of rules as ignored
+      #
+      # @param not_valid_rules [Array<SkipRule>] List of ignored rules to log
+      def log_not_valid_rules(not_valid_rules)
+        ignored_descriptions = not_valid_rules.map(&:inspect).join(" ")
+        log.error("Some skip rules were ignored: #{ignored_descriptions}")
       end
     end
   end
