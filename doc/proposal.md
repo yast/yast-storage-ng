@@ -13,21 +13,21 @@ responsibility and interactions of each class.
 Zoom level 0: the public classes
 --------------------------------
 
-The proposal only offers two public classes, `Proposal` and `ProposalSettings`,
-that can be used like shown in this example:
+The proposal only offers two public classes, `GuidedProposal` and
+`ProposalSettings`, that can be used like shown in this example:
 
 ```ruby
 settings = ProposalSettings.new
 # Adjust the default settings if needed
 settings.use_separate_home = true
-proposal = Proposal.new(settings: settings)
+proposal = GuidedProposal.new(settings: settings)
 proposal.propose
 proposal.devices # => Returns the proposed devicegraph
 ```
 
 `ProposalSettings` is basically a struct-like class to store several attributes
 and to read those attributes from the control file. All the magic (and
-complexity) lives in `Proposal`, so let's zoom into it.
+complexity) lives in `GuidedProposal`, so let's zoom into it.
 
 Zoom level 1: the proposal steps
 --------------------------------
@@ -35,7 +35,8 @@ Zoom level 1: the proposal steps
 The whole proposal mechanism is divided into two steps, each one of them
 implemented in its own class.
 
-In the first place, an instance of `Proposal::PlannedDevicesGenerator` is
+In the first place, an instance of `Proposal::PlannedDevicesGenerator` (to be
+renamed in the future to `Proposal::DevicesPlanner`) is
 used to decide which partitions, LVM logical volumes and Btrfs subvolumes
 should be created or reused. Every one of those devices is represented by an
 instance of `Planned::Partition`, `Planned::LvmLv` or `Planned::BtrfsSubvolume`,

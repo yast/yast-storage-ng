@@ -305,21 +305,6 @@ describe Y2Storage::Proposal::PartitionCreator do
         expect(partition.filesystem.type.is?(:vfat)).to eq true
       end
 
-      it "delegates the possible encryption to Encrypter" do
-        encrypter = double("Y2Storage::Proposal::Encrypter")
-        expect(Y2Storage::Proposal::Encrypter).to receive(:new).and_return encrypter
-
-        expect(encrypter).to receive(:device_for) do |volume, plain_device|
-          expect(volume).to have_attributes(
-            partition_id: Y2Storage::PartitionId::ESP, min: 1.GiB, bootable: bootable
-          )
-          expect(plain_device.is?(:partition)).to eq true
-          plain_device
-        end
-
-        creator.create_partitions(distribution)
-      end
-
       context "if the partition must be encrypted" do
         before do
           vol.encryption_password = "s3cr3t"

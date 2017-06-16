@@ -36,13 +36,6 @@
 				- **requires a new GRUB partition**
 			- if there is already a GRUB partition
 				- **does not require any particular volume**
-	- with no partition table
-		- in a partitions-based proposal
-			- **requires a new GRUB partition (GPT partition table is assumed)**
-		- in a LVM-based proposal
-			- **requires a new GRUB partition (GPT partition table is assumed)**
-		- in an encrypted proposal
-			- **requires a new GRUB partition (GPT partition table is assumed)**
 	- with a MS-DOS partition table
 		- if the MBR gap is big enough to embed Grub
 			- in a partitions-based proposal
@@ -68,7 +61,7 @@
 			- in an encrypted proposal
 				- **raises an exception**
 	- when proposing a boot partition
-		- **requires /boot to be a non-encrypted ext4 partition in the system disk**
+		- **requires /boot to be a non-encrypted ext4 partition in the booting disk**
 		- when aiming for the recommended size
 			- **requires /boot to be at least 200 MiB large**
 		- when aiming for the minimal size
@@ -113,7 +106,7 @@
 	- with an encrypted proposal
 		- **requires only a /boot partition**
 - when proposing a boot partition
-	- **requires /boot to be a non-encrypted ext4 partition in the system disk**
+	- **requires /boot to be a non-encrypted ext4 partition in the booting disk**
 	- when aiming for the recommended size
 		- **requires /boot to be at least 200 MiB large**
 	- when aiming for the minimal size
@@ -148,7 +141,7 @@
 			- **requires only a /boot/zipl partition**
 - when proposing a /boot/zipl partition
 	- **requires /boot/zipl to be ext2 with at least 100 MiB**
-	- **requires /boot/zipl to be a non-encrypted partition in the system disk**
+	- **requires /boot/zipl to be a non-encrypted partition in the boot disk**
 	- when aiming for the recommended size
 		- **requires /boot/zipl to be at least 200 MiB large**
 	- when aiming for the minimal size

@@ -24,7 +24,7 @@ require_relative "spec_helper"
 require_relative "support/proposal_examples"
 require_relative "support/proposal_context"
 
-describe Y2Storage::Proposal do
+describe Y2Storage::GuidedProposal do
   include_context "proposal"
 
   subject(:proposal) { described_class.new(settings: settings) }
@@ -53,7 +53,7 @@ describe Y2Storage::Proposal do
       let(:dasd_type) { Y2Storage::DasdType::FBA }
 
       it "fails to make a proposal" do
-        expect { proposal.propose }.to raise_error Y2Storage::Proposal::Error
+        expect { proposal.propose }.to raise_error Y2Storage::Error
       end
     end
 
@@ -65,7 +65,7 @@ describe Y2Storage::Proposal do
         let(:dasd_format) { Y2Storage::DasdFormat::LDL }
 
         it "fails to make a proposal" do
-          expect { proposal.propose }.to raise_error Y2Storage::Proposal::Error
+          expect { proposal.propose }.to raise_error Y2Storage::Error
         end
       end
 

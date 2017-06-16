@@ -25,7 +25,7 @@ require "y2storage/disk_size"
 require "y2storage/planned"
 
 module Y2Storage
-  class Proposal
+  module Proposal
     # Class used by PartitionsDistributionCalculator to find the best
     # distribution of LVM physical volumes.
     class PhysVolCalculator

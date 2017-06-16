@@ -24,7 +24,7 @@
 require "storage"
 
 module Y2Storage
-  class Proposal
+  module Proposal
     # Utility class to delete partitions from a devicegraph
     class PartitionKiller
       include Yast::Logger

@@ -25,10 +25,10 @@ require "fileutils"
 require "y2storage/planned"
 require "y2storage/disk_size"
 require "y2storage/boot_requirements_checker"
-require "y2storage/proposal/exceptions"
+require "y2storage/exceptions"
 
 module Y2Storage
-  class Proposal
+  module Proposal
     #
     # Class to generate the list of planned devices of a proposal
     #
@@ -68,16 +68,22 @@ module Y2Storage
       #
       # @return [Array<Planned::Device>]
       def base_devices
-        boot_devices + [root_device]
+        root = root_device
+        boot_devices(root) + [root]
       end
 
       # Planned devices needed by the bootloader
       #
       # @return [Array<Planned::Device>]
-      def boot_devices
-        checker = BootRequirementsChecker.new(settings, devicegraph)
+      def boot_devices(root_dev)
+        checker = BootRequirementsChecker.new(
+          devicegraph, planned_devices: [root_dev], boot_disk_name: settings.root_device
+        )
         checker.needed_partitions(@target)
       rescue BootRequirementsChecker::Error => error
+        # As documented, {BootRequirementsChecker#needed_partition} raises this
+        # exception if it's impossible to get a bootable system, even adding
+        # more partitions.
         raise NotBootableError, error.message
       end
 

@@ -24,10 +24,9 @@
 require "fileutils"
 require "y2storage/planned"
 require "y2storage/disk_size"
-require "y2storage/proposal/encrypter"
 
 module Y2Storage
-  class Proposal
+  module Proposal
     # Class to create partitions following a given distribution represented by
     # a Planned::PartitionsDistribution object
     class PartitionCreator
@@ -101,8 +100,7 @@ module Y2Storage
             space = free_space_within(initial_free_space)
             primary = planned_partitions.size - idx > num_logical
             partition = create_partition(part, partition_id, space, primary)
-            final_device = encrypter.device_for(part, partition)
-            part.create_filesystem(final_device)
+            part.format!(partition)
             devicegraph.check
           rescue ::Storage::Exception => error
             raise Error, "Error allocating #{part}. Details: #{error}"
@@ -222,10 +220,6 @@ module Y2Storage
       # @return [PartitionTable]
       def partition_table(disk)
         disk.partition_table || disk.create_partition_table(disk.preferred_ptable_type)
-      end
-
-      def encrypter
-        @encrypter ||= Encrypter.new
       end
     end
   end

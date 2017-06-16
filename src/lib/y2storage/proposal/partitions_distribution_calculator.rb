@@ -28,7 +28,7 @@ require "y2storage/planned"
 require "y2storage/proposal/phys_vol_calculator"
 
 module Y2Storage
-  class Proposal
+  module Proposal
     # Class to find the optimal distribution of planned partitions into the
     # existing disk spaces
     class PartitionsDistributionCalculator

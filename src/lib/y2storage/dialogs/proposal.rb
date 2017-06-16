@@ -84,7 +84,7 @@ module Y2Storage
 
         proposal.propose
         self.devicegraph = proposal.devices
-      rescue Y2Storage::Proposal::Error
+      rescue Y2Storage::Error
         log.error("generating proposal failed")
         self.devicegraph = nil
       end

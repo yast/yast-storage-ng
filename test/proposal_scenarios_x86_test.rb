@@ -26,7 +26,7 @@ require "y2storage"
 require_relative "support/proposal_examples"
 require_relative "support/proposal_context"
 
-describe Y2Storage::Proposal do
+describe Y2Storage::GuidedProposal do
   describe "#propose" do
     include_context "proposal"
 
@@ -60,7 +60,7 @@ describe Y2Storage::Proposal do
           let(:separate_home) { true }
 
           it "fails to make a proposal" do
-            expect { proposal.propose }.to raise_error Y2Storage::Proposal::Error
+            expect { proposal.propose }.to raise_error Y2Storage::Error
           end
         end
 
@@ -68,7 +68,7 @@ describe Y2Storage::Proposal do
           let(:separate_home) { false }
 
           it "fails to make a proposal" do
-            expect { proposal.propose }.to raise_error Y2Storage::Proposal::Error
+            expect { proposal.propose }.to raise_error Y2Storage::Error
           end
         end
       end
