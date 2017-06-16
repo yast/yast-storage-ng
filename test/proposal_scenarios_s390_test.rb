@@ -88,7 +88,7 @@ describe Y2Storage::GuidedProposal do
             let(:separate_home) { true }
 
             it "fails to make a proposal" do
-              expect { proposal.propose }.to raise_error Y2Storage::Proposal::NoMorePartitionSlotError
+              expect { proposal.propose }.to raise_error Y2Storage::NoMorePartitionSlotError
             end
           end
         end

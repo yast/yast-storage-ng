@@ -66,12 +66,12 @@ module Y2Storage
         return @boot_disk if @boot_disk
 
         if boot_disk_name
-          @boot_disk = devicegraph.disks.find { |d| d.name == boot_disk_name }
+          @boot_disk = devicegraph.disk_devices.find { |d| d.name == boot_disk_name }
         end
 
         @boot_disk ||= boot_disk_from_planned_dev
         @boot_disk ||= boot_disk_from_devicegraph
-        @boot_disk ||= devicegraph.disks.first
+        @boot_disk ||= devicegraph.disk_devices.first
 
         @boot_disk
       end
@@ -185,7 +185,7 @@ module Y2Storage
         return nil unless root_planned_dev
         return nil unless root_planned_dev.respond_to?(:disk)
 
-        devicegraph.disks.find { |d| d.name == root_planned_dev.disk }
+        devicegraph.disk_devices.find { |d| d.name == root_planned_dev.disk }
       end
 
       def boot_disk_from_devicegraph
