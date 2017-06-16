@@ -81,6 +81,9 @@ module Y2Storage
         )
         checker.needed_partitions(@target)
       rescue BootRequirementsChecker::Error => error
+        # As documented, {BootRequirementsChecker#needed_partition} raises this
+        # exception if it's impossible to get a bootable system, even adding
+        # more partitions.
         raise NotBootableError, error.message
       end
 

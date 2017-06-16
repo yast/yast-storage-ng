@@ -30,6 +30,12 @@ module Y2Storage
   module Proposal
     # Class to create and reuse devices during the AutoYaST proposal, based
     # on the information contained in the profile.
+    #
+    # This class receives a devicegraph in which the previous devices have
+    # already been deleted or resized according to the AutoYaST profile. This
+    # is different from the guided setup equivalent step, in which the minimal
+    # amount of existing devices are deleted/resized on demand while trying to
+    # allocate the planned devices.
     class AutoinstDevicesCreator
       include Yast::Logger
 

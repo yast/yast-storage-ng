@@ -45,6 +45,9 @@ module Y2Storage
       # @return [String] Parent for all Btrfs subvolumes (typically "@")
       attr_accessor :default_subvolume
 
+      # @return [Boolean] Whether a reused device should be formatted. If set to
+      #   false, the existing filesystem should be kept. Only relevant if
+      #   #reuse? is true.
       attr_accessor :reformat
 
       # Initializations of the mixin, to be called from the class constructor.
@@ -105,6 +108,9 @@ module Y2Storage
         self.subvolumes = subvolumes.reject { |subvol| subvol.shadowed?(other_mount_points) }
       end
 
+      # @see #reformat
+      #
+      # @return [Boolean]
       def reformat?
         reformat
       end

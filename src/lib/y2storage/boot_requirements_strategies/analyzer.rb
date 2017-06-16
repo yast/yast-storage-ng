@@ -79,7 +79,8 @@ module Y2Storage
       # Whether the root (/) filesystem is going to be in a LVM logical volume
       #
       # @return [Boolean] true if the root filesystem is going to be in a LVM
-      #   logical volume.
+      #   logical volume. False if the root filesystem is unknown (not in the
+      #   planned devices or in the devicegraph) or is not placed in a LVM.
       def root_in_lvm?
         if root_planned_dev
           root_planned_dev.is_a?(Planned::LvmLv)
@@ -93,7 +94,8 @@ module Y2Storage
       # Whether the root (/) filesystem is going to be in an encrypted device
       #
       # @return [Boolean] true if the root filesystem is going to be in an
-      #   encrypted device.
+      #   encrypted device. False if the root filesystem is unknown (not in the
+      #   planned devices or in the devicegraph) or is not encrypted.
       def encrypted_root?
         if root_planned_dev
           root_planned_dev.respond_to?(:encrypt?) && root_planned_dev.encrypt?
@@ -106,7 +108,9 @@ module Y2Storage
 
       # Whether the root (/) filesystem is going to be Btrfs
       #
-      # @return [Boolean] true if the root filesystem is going to be Btrfs
+      # @return [Boolean] true if the root filesystem is going to be Btrfs.
+      #   False if the root filesystem is unknown (not in the planned devices
+      #   or in the devicegraph) or is not Btrfs.
       def btrfs_root?
         if root_planned_dev
           root_planned_dev.filesystem_type.is?(:btrfs)
