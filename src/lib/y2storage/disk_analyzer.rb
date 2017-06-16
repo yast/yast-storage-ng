@@ -36,7 +36,7 @@ module Y2Storage
   #
   # Class to analyze the disk devices (the storage setup) of the existing system:
   # Check the existing disk devices (Dasd or Disk) and their partitions what candidates
-  # there areto install on, typically eliminate the installation media from that list
+  # there are to install on, typically eliminate the installation media from that list
   # (unless there is no other disk), check if there already are any
   # partitions that look like there was a Linux system previously installed
   # on that machine, check if there is a Windows partition that could be
