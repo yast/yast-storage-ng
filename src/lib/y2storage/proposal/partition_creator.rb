@@ -94,12 +94,10 @@ module Y2Storage
       # @param num_logical [Symbol] logical partitions. See {#process_space}
       def create_planned_partitions(planned_partitions, initial_free_space, num_logical)
         planned_partitions.each_with_index do |part, idx|
-          partition_id = part.partition_id
-          partition_id ||= part.mount_point == "swap" ? PartitionId::SWAP : PartitionId::LINUX
           begin
             space = free_space_within(initial_free_space)
             primary = planned_partitions.size - idx > num_logical
-            partition = create_partition(part, partition_id, space, primary)
+            partition = create_partition(part, space, primary)
             part.format!(partition)
             devicegraph.check
           rescue ::Storage::Exception => error
@@ -114,7 +112,7 @@ module Y2Storage
       # @param initial_free_space [FreeDiskSpace] the original disk chunk, the
       #   returned free space will be within this area
       def free_space_within(initial_free_space)
-        disk = devicegraph.disks.detect { |d| d.name == initial_free_space.disk_name }
+        disk = devicegraph.disk_devices.detect { |d| d.name == initial_free_space.disk_name }
         spaces = disk.as_not_empty { disk.free_spaces }.select do |space|
           space.region.start >= initial_free_space.region.start &&
             space.region.start < initial_free_space.region.end
@@ -132,10 +130,15 @@ module Y2Storage
       # @param primary      [Boolean] whether the partition should be primary
       #                     or logical
       #
-      def create_partition(planned_partition, partition_id, free_space, primary)
+      def create_partition(planned_partition, free_space, primary)
         log.info "Creating partition for #{planned_partition.mount_point} with #{planned_partition.size}"
         disk = free_space.disk
         ptable = partition_table(disk)
+
+        if !planned_partition.partition_id
+          id_name = planned_partition.mount_point == "swap" ? :swap : :other
+          planned_partition.partition_id = ptable.partition_id_for(id_name)
+        end
 
         if primary
           dev_name = next_free_primary_partition_name(disk.name, ptable)
@@ -151,7 +154,7 @@ module Y2Storage
 
         region = new_region_with_size(free_space.region, planned_partition.size)
         partition = ptable.create_partition(dev_name, region, partition_type)
-        partition.id = partition_id
+        partition.id = planned_partition.partition_id
         partition.boot = !!planned_partition.bootable if ptable.partition_boot_flag_supported?
         partition
       end

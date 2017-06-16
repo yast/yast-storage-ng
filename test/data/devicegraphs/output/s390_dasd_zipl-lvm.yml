@@ -1,0 +1,38 @@
+---
+- dasd:
+    name: "/dev/sda"
+    size: 50 GiB
+    partition_table: dasd
+    partitions:
+    - partition:
+        size: 200 MiB
+        start: 3 MiB
+        name: "/dev/sda1"
+        type: primary
+        id: linux
+        file_system: ext2
+        mount_point: "/boot/zipl"
+    - partition:
+        size: 43009 MiB (42.00 GiB)
+        start: 204 MiB
+        name: "/dev/sda2"
+        type: primary
+        id: lvm
+- lvm_vg:
+    vg_name: system
+    lvm_lvs:
+    - lvm_lv:
+        lv_name: root
+        size: 40 GiB
+        file_system: btrfs
+        mount_point: "/"
+        btrfs:
+          subvolumes: []
+    - lvm_lv:
+        lv_name: swap
+        size: 2 GiB
+        file_system: swap
+        mount_point: swap
+    lvm_pvs:
+    - lvm_pv:
+        blk_device: "/dev/sda2"

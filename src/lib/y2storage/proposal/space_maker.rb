@@ -208,14 +208,15 @@ module Y2Storage
         end
       end
 
-      # List of candidate disks in the given devicegraph
+      # List of candidate disk devices in the given devicegraph
       #
       # @param devicegraph [Devicegraph]
-      # @param disk [String] optional disk name to restrict result to
-      # @return [DisksList]
-      def disks_for(devicegraph, disk = nil)
-        filter = disk || candidate_disk_names
-        devicegraph.disks.select { |d| filter.include?(d.name) }
+      # @param device_name [String] optional device_name device name to restrict
+      #   result to
+      # @return [Array<Dasd, Disk>]
+      def disks_for(devicegraph, device_name = nil)
+        filter = device_name || candidate_disk_names
+        devicegraph.disk_devices.select { |d| filter.include?(d.name) }
       end
 
       # @return [Array<String>]

@@ -63,7 +63,7 @@ module Y2Storage
       end
 
       def biggest_efi
-        efi_parts = devicegraph.disks.map(&:efi_partitions).flatten
+        efi_parts = devicegraph.disk_devices.map(&:efi_partitions).flatten
         biggest_partition(efi_parts)
       end
 

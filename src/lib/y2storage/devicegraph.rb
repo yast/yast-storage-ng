@@ -131,7 +131,7 @@ module Y2Storage
 
     # All disk devices. This method is necessary because DASD devices
     #   are not returned when asking for disks.
-    # @return [Array<Dasd|Disk>]
+    # @return [Array<Dasd, Disk>]
     def disk_devices
       dasds + disks
     end
