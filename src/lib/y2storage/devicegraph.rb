@@ -119,9 +119,37 @@ module Y2Storage
       Actiongraph.new(graph)
     end
 
+    # All the DASDs in the devicegraph
+    #
+    # @note Based on the libstorage classes hierarchy, DASDs are not considered to be disks.
+    # See #disk_devices for a method providing the whole list of both disks and DASDs.
+    # @see #disk_devices
+    #
+    # @return [Array<Dasd>]
+    def dasds
+      Dasd.all(self)
+    end
+
+    # All the disks in the devicegraph
+    #
+    # @note Based on the libstorage classes hierarchy, DASDs are not considered to be disks.
+    # See #disk_devices for a method providing the whole list of both disks and DASDs.
+    # @see #disk_devices
+    #
     # @return [Array<Disk>]
     def disks
       Disk.all(self)
+    end
+
+    # All the devices that are usually treated like disks by YaST
+    #
+    # Currently this method returns an array including all the disks and all the DASDs.
+    # @see #disks
+    # @see #dasds
+    #
+    # @return [Array<Dasd, Disk>]
+    def disk_devices
+      dasds + disks
     end
 
     # @return [Array<Partition>]

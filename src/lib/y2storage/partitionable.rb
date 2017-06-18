@@ -40,8 +40,19 @@ module Y2Storage
     storage_forward :range=
 
     # @!method possible_partition_table_types
+    #   Possible partition table types for the disk. The first entry is
+    #     identical to the default partition table type for the disk
+    #
     #   @return [Array<PartitionTables::Type>]
     storage_forward :possible_partition_table_types, as: "PartitionTables::Type"
+
+    # @!method possible_partition_table_type
+    #   Default partition table type as reported by libstorage
+    #   @see #preferred_ptable_type
+    #
+    #   @return [PartitionTables::Type]
+    storage_forward :default_partition_table_type, as: "PartitionTables::Type"
+    private :default_partition_table_type
 
     # @!method create_partition_table(pt_type)
     #   Creates a partition table of the specified type for the device.
@@ -179,6 +190,69 @@ module Y2Storage
       return nil unless partition_table
       return nil unless partition_table.respond_to?(:mbr_gap)
       partition_table.mbr_gap
+    end
+
+    # Free spaces inside the device
+    #
+    # @return [Array<FreeDiskSpace>]
+    def free_spaces
+      # Unused device
+      return Array(FreeDiskSpace.new(self, region.to_storage_value)) unless has_children?
+      # Device in use, but with no partition table
+      return [] if partition_table.nil?
+
+      partition_table.unused_partition_slots.map do |slot|
+        FreeDiskSpace.new(self, slot.region)
+      end
+    end
+
+    # Executes the given block in a context in which the device always have a
+    # partition table if possible, creating a temporary frozen one if needed.
+    #
+    # This allows any code to work under the assumption that a given device
+    # has an empty partition table of the YaST default type, even if that
+    # partition table is not yet created.
+    #
+    # @see preferred_ptable_type
+    #
+    # @example With a device that already has a partition table
+    #   partitioned_disk.as_not_empty do
+    #     partitioned_disk.partition_table # => returns the real partition table
+    #   end
+    #   partitioned_disk.partition_table # Still the same
+    #
+    # @example With a device not partitioned but formatted (or a PV)
+    #   lvm_pv_disk.as_not_empty do
+    #     lvm_pv_disk.partition_table # => raises DeviceHasWrongType
+    #   end
+    #   lvm_pv_disk.partition_table # Still the same
+    #
+    # @example With a completely empty device
+    #   empty_disk.as_not_empty do
+    #     empty_disk.partition_table # => a temporary PartitionTable
+    #   end
+    #   empty_disk.partition_table # Not longer there
+    def as_not_empty
+      fake_ptable = nil
+      if !has_children?
+        fake_ptable = create_partition_table(preferred_ptable_type)
+        fake_ptable.freeze
+      end
+
+      yield
+    ensure
+      remove_descendants if fake_ptable
+    end
+
+    # Default partition table type for newly created partition tables
+    #
+    # This method is needed because YaST criteria does not necessarily match
+    # the one followed by Storage::Disk#default_partition_table_type (which
+    # defaults to MBR partition tables in many cases)
+    #
+    # @return [PartitionTables::Type]
+    def preferred_ptable_type
+      default_partition_table_type
     end
 
   protected

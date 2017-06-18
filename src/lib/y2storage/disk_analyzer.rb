@@ -25,7 +25,7 @@ require "yast"
 require "storage"
 require "fileutils"
 require "y2storage/disk_size"
-require "y2storage/disk"
+require "y2storage/blk_device"
 require "y2storage/lvm_pv"
 require "y2storage/partition_id"
 require "y2storage/existing_filesystem"
@@ -34,17 +34,15 @@ Yast.import "Arch"
 
 module Y2Storage
   #
-  # Class to analyze the disks (the storage setup) of the existing system:
-  # Check the existing disks and their partitions what candidates there are
-  # to install on, typically eliminate the installation media from that list
+  # Class to analyze the disk devices (the storage setup) of the existing system:
+  # Check the existing disk devices (Dasd or Disk) and their partitions what candidates
+  # there are to install on, typically eliminate the installation media from that list
   # (unless there is no other disk), check if there already are any
   # partitions that look like there was a Linux system previously installed
   # on that machine, check if there is a Windows partition that could be
   # resized.
   #
-  # Some of those operations involve trying to mount the underlying
-  # filesystem.
-  #
+  # Some of those operations involve trying to mount the underlying filesystem.
   class DiskAnalyzer
     include Yast::Logger
 
@@ -121,7 +119,8 @@ module Y2Storage
     #
     # @return [Device]
     def device_by_name(name)
-      Disk.find_by_name(devicegraph, name)
+      # Using BlkDevice because it is necessary to search in both, Dasd and Disk.
+      BlkDevice.find_by_name(devicegraph, name)
     end
 
   private
@@ -142,13 +141,15 @@ module Y2Storage
       disks.map { |d| @disks_data[data][d.name] }.flatten.compact
     end
 
-    # Obtains a list of disks.
+    # Obtains a list of disk devices.
     #
-    # @param disks [Array<Disk, String>] disks to analyze. All disks by default.
-    # @return [Array<Disk>]
+    # @param disks [Array<Dasd, Disk, String>] disk device to analyze.
+    #   All disk devices by default.
+    # @return [Array<Dasd, Disk>]
     def disks_collection(disks)
-      disks = devicegraph.disks if disks.empty?
-      disks = disks.map { |d| d.is_a?(String) ? Disk.find_by_name(devicegraph, d) : d }
+      disks = devicegraph.disk_devices if disks.empty?
+      # Using BlkDevice because it is necessary to search in both, Dasd and Disk.
+      disks = disks.map { |d| d.is_a?(String) ? BlkDevice.find_by_name(devicegraph, d) : d }
       disks.compact
     end
 
@@ -215,14 +216,14 @@ module Y2Storage
       fs.release_name
     end
 
-    # Find disks that are suitable for installing Linux.
+    # Find disk devices that are suitable for installing Linux.
     # Put any USB disks to the end of that array.
     #
     # @return [Array<Disk>] candidate disks
     def find_candidate_disks
       @installation_disks = find_installation_disks
 
-      usb_disks, non_usb_disks = devicegraph.disks.partition { |d| d.usb? }
+      usb_disks, non_usb_disks = devicegraph.disk_devices.partition { |d| d.usb? }
 
       # Try with non-USB disks first.
       disks = remove_installation_disks(non_usb_disks)
@@ -244,7 +245,7 @@ module Y2Storage
       @installation_disks
     end
 
-    # Find disks that look like the current installation medium
+    # Find disk devices that look like the current installation medium
     # (the medium we just booted from to start the installation).
     #
     # This should be limited because some architectures (s/390) tend
@@ -254,7 +255,7 @@ module Y2Storage
     #
     # @return [Array<Disk>]
     def find_installation_disks
-      usb_disks, non_usb_disks = devicegraph.disks.partition { |d| d.usb? }
+      usb_disks, non_usb_disks = devicegraph.disk_devices.partition { |d| d.usb? }
       disks = usb_disks + non_usb_disks
       disks = disks.first(DEFAULT_CHECK_LIMIT)
       disks.select { |d| installation_disk?(d) }

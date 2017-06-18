@@ -1,3 +1,4 @@
+#!/usr/bin/env rspec
 # encoding: utf-8
 
 # Copyright (c) [2017] SUSE LLC
@@ -19,26 +20,27 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "y2storage/storage_class_wrapper"
-require "y2storage/partition_tables/base"
+require_relative "spec_helper"
+require "y2storage"
 
-module Y2Storage
-  module PartitionTables
-    # A DASD partition table
-    #
-    # This is a wrapper for Storage::DasdPt
-    class Dasd < Base
-      wrap_class Storage::DasdPt
+describe Y2Storage::Dasd do
 
-      # DASD partition table uses partition id LINUX for swap.
-      # @see PatitionTables::Base#partition_id_for
-      #
-      # @param partition_id [PartitionId]
-      # @return [PartitionId]
-      def partition_id_for(partition_id)
-        return PartitionId::LINUX if partition_id.is?(:swap)
-        super
-      end
+  before do
+    fake_scenario(scenario)
+  end
+
+  let(:scenario) { "empty_dasd_50GiB" }
+  subject { Y2Storage::Dasd.find_by_name(fake_devicegraph, "/dev/sda") }
+
+  describe "#usb?" do
+    it "returns false" do
+      expect(subject.usb?).to be_falsey
+    end
+  end
+
+  describe "#preferred_ptable_type" do
+    it "returns dasd" do
+      expect(subject.preferred_ptable_type).to eq Y2Storage::PartitionTables::Type::DASD
     end
   end
 end

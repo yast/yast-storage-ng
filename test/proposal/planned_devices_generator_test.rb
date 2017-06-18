@@ -53,7 +53,7 @@ describe Y2Storage::Proposal::PlannedDevicesGenerator do
           Y2Storage::Planned::Partition.new("/other_boot", vfat)
         ]
       )
-      allow(devicegraph).to receive(:disks).and_return [disk]
+      allow(devicegraph).to receive(:disk_devices).and_return [disk]
       allow(disk).to receive(:swap_partitions).and_return(swap_partitions)
 
       allow(Yast::Arch).to receive(:x86_64).and_return(arch == :x86_64)

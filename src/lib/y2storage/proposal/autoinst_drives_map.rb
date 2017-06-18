@@ -107,7 +107,7 @@ module Y2Storage
       def first_usable_disk(drive_spec, devicegraph)
         skip_list = SkipList.from_profile(drive_spec.fetch("skip_list", []))
 
-        devicegraph.disks.each do |disk|
+        devicegraph.disk_devices.each do |disk|
           next if disk_names.include?(disk.name)
           next if skip_list.matches?(disk)
 

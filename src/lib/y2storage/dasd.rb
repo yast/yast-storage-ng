@@ -31,7 +31,7 @@ module Y2Storage
 
     # @!method rotational?
     #   @return [Boolean] whether this is a rotational device
-    storage_forward :rotational?, to: :rotational
+    storage_forward :rotational?
 
     # @!method dasd_type
     #   @return [DasdType]
@@ -61,6 +61,13 @@ module Y2Storage
 
     def inspect
       "<Dasd #{name} #{size}>"
+    end
+
+    # DASD disks cannot be usb
+    #
+    # @return [Boolean]
+    def usb?
+      false
     end
 
   protected

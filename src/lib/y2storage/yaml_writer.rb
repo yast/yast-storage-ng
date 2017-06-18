@@ -21,10 +21,9 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "yast"
 require "yaml"
 require "storage"
-require "y2storage/disk_size.rb"
+require "y2storage"
 
 module Y2Storage
   #
@@ -35,7 +34,7 @@ module Y2Storage
 
     class << self
       #
-      # Write all devices from the specified device graph to a YAML file.
+      # Write all devices from the specified devicegraph to a YAML file.
       #
       # This is a singleton method for convenience. It creates a YamlWriter
       # internally for one-time usage. If you use this more often (for
@@ -71,69 +70,69 @@ module Y2Storage
     #
     # @param devicegraph [Devicegraph]
     # @return [Array<Hash>]
-    #
     def yaml_device_tree(devicegraph)
       yaml = []
-      devicegraph.disks.each { |disk| yaml << yaml_disk(disk) }
+      devicegraph.disk_devices.each { |device| yaml << yaml_disk_device(device) }
       devicegraph.lvm_vgs.each { |lvm_vg| yaml << yaml_lvm_vg(lvm_vg) }
       yaml
     end
 
   private
 
-    # Return the YAML counterpart of a Y2Storage::Disk.
+    # Return the YAML counterpart of a disk device
     #
-    # @param  disk [Disk]
+    # @param  device [Dasd, Disk]
     # @return [Hash]
-    #
-    def yaml_disk(disk)
-      content = basic_disk_attributes(disk)
-      if disk.partition_table
-        ptable = disk.partition_table
+    def yaml_disk_device(device)
+      content = basic_disk_device_attributes(device)
+      if device.partition_table
+        ptable = device.partition_table
         content["partition_table"] = ptable.type.to_s
         if ptable.type.is?(:msdos)
           content["mbr_gap"] = ptable.minimal_mbr_gap.to_s
         end
-        partitions = yaml_disk_partitions(disk)
+        partitions = yaml_disk_device_partitions(device)
         content["partitions"] = partitions unless partitions.empty?
       else
-        content.merge!(yaml_filesystem_and_encryption(disk))
+        content.merge!(yaml_filesystem_and_encryption(device))
       end
 
-      { "disk" => content }
+      device = device.is?(:dasd) ? "dasd" : "disk"
+      { device => content }
     end
 
-    # Basic attributes used to represent a disk
+    # Basic attributes used to represent a disk device
     #
-    # @param  disk [Disk]
+    # @param  device [Dasd, Disk]
     # @return [Hash{String => Object}]
-    #
-    def basic_disk_attributes(disk)
+    def basic_disk_device_attributes(device)
       {
-        "name"       => disk.name,
-        "size"       => disk.size.to_s,
-        "block_size" => disk.region.block_size.to_s,
-        "io_size"    => DiskSize.B(disk.topology.optimal_io_size).to_s,
-        "min_grain"  => disk.min_grain.to_s,
-        "align_ofs"  => DiskSize.B(disk.topology.alignment_offset).to_s
+        "name"       => device.name,
+        "size"       => device.size.to_s,
+        "block_size" => device.region.block_size.to_s,
+        "io_size"    => DiskSize.B(device.topology.optimal_io_size).to_s,
+        "min_grain"  => device.min_grain.to_s,
+        "align_ofs"  => DiskSize.B(device.topology.alignment_offset).to_s
       }
     end
 
-    # Returns a YAML representation of the partitions and free slots in a disk
+    # Returns a YAML representation of the partitions and free slots in a
+    #   disk device
     #
     # Free slots are calculated as best as we can and not part of the
-    # partition table object.
+    #   partition table object.
     #
-    # @param disk [Disk]
+    # @param disk [Dasd, Disk]
     # @return [Array<Hash>]
+    #
     # FIXME: this method offends three different complexity cops!
     # rubocop:disable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
-    def yaml_disk_partitions(disk)
+    def yaml_disk_device_partitions(device)
       partition_end = 0
       partition_end_max = 0
       partition_end_ext = 0
       partitions = []
-      sorted_parts = sorted_partitions(disk)
+      sorted_parts = sorted_partitions(device)
       sorted_parts.each do |partition|
 
         # if we are about to leave an extend partition, show what's left
@@ -171,24 +170,24 @@ module Y2Storage
         partitions << yaml_free_slot(DiskSize.B(partition_end_ext), DiskSize.B(gap)) if gap > 0
       end
 
-      # see if there's space left at the end of the disk
+      # see if there's space left at the end of the device
       # show also negative sizes so we know we've overstepped
-      gap = (disk.region.end + 1) * disk.region.block_size.to_i - partition_end_max
+      gap = (device.region.end + 1) * device.region.block_size.to_i - partition_end_max
       partitions << yaml_free_slot(DiskSize.B(partition_end_max), DiskSize.B(gap)) if gap != 0
 
       partitions
     end
     # rubocop:enable all
 
-    # Partitions sorted by position in the disk and by type
+    # Partitions sorted by position in the disk device and by type
     #
     # Start position is the primary criteria. In addition, extended partitions
     # are listed before any of its corresponding logical partitions
     #
-    # @param disk [Disk]
+    # @param device [Dasd, Disk]
     # @return [Array<Partition>]
-    def sorted_partitions(disk)
-      disk.partitions.sort do |a, b|
+    def sorted_partitions(device)
+      device.partitions.sort do |a, b|
         by_start = a.region.start <=> b.region.start
         if by_start.zero?
           a.type.is?(:extended) ? -1 : 1
@@ -198,13 +197,10 @@ module Y2Storage
       end
     end
 
-    #
     # Return the YAML counterpart of a Y2Storage::Partition.
     #
     # @param  partition [Partition]
     # @return [Hash]
-    #
-
     def yaml_partition(partition)
       content = {
         "size"  => partition.size.to_s,
@@ -311,7 +307,7 @@ module Y2Storage
 
     # Return the YAML counterpart of a filesystem and encryption.
     #
-    # @param parent [Disk|Partition|LvmLv]
+    # @param parent [Dasd, Disk, Partition, LvmLv]
     # @return [Hash]
     #
     def yaml_filesystem_and_encryption(parent)

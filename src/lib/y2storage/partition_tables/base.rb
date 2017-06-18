@@ -21,6 +21,7 @@
 
 require "y2storage/storage_class_wrapper"
 require "y2storage/device"
+require "y2storage/partition_tables/type"
 
 module Y2Storage
   module PartitionTables
@@ -112,6 +113,19 @@ module Y2Storage
         parts = partitions.map(&:inspect)
         slots = unused_partition_slots.map(&:to_s)
         "<PartitionTable #{self}[#{num_children}] #{parts}#{slots}>"
+      end
+
+      # The partition id depends on the partition table type. For example,
+      #   MSDOS partition tables use SWAP id for swap partitions, but DASD
+      #   partiton tables need LINUX id.
+      #
+      # With this method, each partition table can define the partition id
+      #   it really expects for each case.
+      #
+      # @param partition_id [PartitionId]
+      # @return [PartitionId]
+      def partition_id_for(partition_id)
+        partition_id
       end
 
     protected

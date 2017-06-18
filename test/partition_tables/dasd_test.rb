@@ -1,3 +1,4 @@
+#!/usr/bin/env rspec
 # encoding: utf-8
 
 # Copyright (c) [2017] SUSE LLC
@@ -19,26 +20,28 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "y2storage/storage_class_wrapper"
-require "y2storage/partition_tables/base"
+require_relative "../spec_helper"
+require "y2storage"
 
-module Y2Storage
-  module PartitionTables
-    # A DASD partition table
-    #
-    # This is a wrapper for Storage::DasdPt
-    class Dasd < Base
-      wrap_class Storage::DasdPt
+describe Y2Storage::PartitionTables::Dasd do
+  before do
+    fake_scenario("empty_dasd_50GiB")
+  end
 
-      # DASD partition table uses partition id LINUX for swap.
-      # @see PatitionTables::Base#partition_id_for
-      #
-      # @param partition_id [PartitionId]
-      # @return [PartitionId]
-      def partition_id_for(partition_id)
-        return PartitionId::LINUX if partition_id.is?(:swap)
-        super
-      end
+  let(:disk) { Y2Storage::Dasd.find_by_name(fake_devicegraph, "/dev/sda") }
+  let(:partition_table_type) { Y2Storage::PartitionTables::Type.find(:dasd) }
+
+  subject { disk.create_partition_table(partition_table_type) }
+
+  describe "#partition_id_for" do
+    it "returns LINUX partition id for swap" do
+      swap = Y2Storage::PartitionId::SWAP
+      expect(subject.partition_id_for(swap)).to eq Y2Storage::PartitionId::LINUX
+    end
+
+    it "returns the same partition id in other cases" do
+      ntfs = Y2Storage::PartitionId::NTFS
+      expect(subject.partition_id_for(ntfs)).to eq ntfs
     end
   end
 end
