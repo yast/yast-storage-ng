@@ -4,7 +4,7 @@ Mon Jun 19 06:58:54 UTC 2017 - jilopez@localhost
 - Adjustments to DASD to ensure the proposal works as expected
   in such devices.
 - Added Devicegraph#disk_devices to get all DASDs and disks.
-- DASD support added to Yaml reader and writer.
+- DASD support added to YAML reader and writer.
 
 -------------------------------------------------------------------
 Fri Jun 16 12:47:40 UTC 2017 - igonzalezsosa@suse.com
