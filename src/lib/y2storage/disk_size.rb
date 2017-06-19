@@ -615,6 +615,32 @@ module Y2Storage
       format("%.2f %s", size, unit)
     end
 
+    # A human readable representation that does not exceed the exact size.
+    #
+    # If we have 4.999 GiB of space and prefill the "Size" widget
+    # with a "5.00 GiB" it will then fail validation. We must round down.
+    #
+    # @see to_human_string
+    # @see human_ceil
+    def human_floor
+      return "unlimited" if unlimited?
+      float, unit_s = human_string_components
+      "#{(float * 100).floor / 100.0} #{unit_s}"
+    end
+
+    # A human readable representation that is at least the exact size.
+    #
+    # (This seems unnecessary because actual minimum sizes
+    # have few significant digits, but we use it for symmetry)
+    #
+    # @see to_human_string
+    # @see human_floor
+    def human_ceil
+      return "unlimited" if unlimited?
+      float, unit_s = human_string_components
+      "#{(float * 100).ceil / 100.0} #{unit_s}"
+    end
+
     # Exact value + human readable in parentheses (if the latter makes sense).
     #
     # The result can be passed to {new} or {parse} to get a {DiskSize} object of the same size.

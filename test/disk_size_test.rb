@@ -182,6 +182,36 @@ describe Y2Storage::DiskSize do
     end
   end
 
+  describe ".human_floor" do
+    context "when it has a specific size" do
+      it("returns human-readable string not exceeding the actual size") do
+        expect(described_class.B(4095 * 1024**0).human_floor).to eq("3.99 KiB")
+        expect(described_class.B(4095 * 1024**3).human_floor).to eq("3.99 TiB")
+      end
+    end
+
+    context "when it has unlimited size" do
+      it "returns 'unlimited'" do
+        expect(described_class.unlimited.human_floor).to eq("unlimited")
+      end
+    end
+  end
+
+  describe ".human_ceil" do
+    context "when it has a specific size" do
+      it("returns human-readable string not exceeding the actual size") do
+        expect(described_class.B(4097 * 1024**0).human_ceil).to eq("4.01 KiB")
+        expect(described_class.B(4097 * 1024**3).human_ceil).to eq("4.01 TiB")
+      end
+    end
+
+    context "when it has unlimited size" do
+      it "returns 'unlimited'" do
+        expect(described_class.unlimited.human_ceil).to eq("unlimited")
+      end
+    end
+  end
+
   describe "arithmetic operations" do
     it "should accept addition of another DiskSize" do
       disk_size = Y2Storage::DiskSize.GiB(10) + Y2Storage::DiskSize.GiB(20)
