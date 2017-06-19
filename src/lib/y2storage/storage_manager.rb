@@ -2,7 +2,7 @@
 #
 # encoding: utf-8
 
-# Copyright (c) [2015] SUSE LLC
+# Copyright (c) [2015,2017] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -80,9 +80,9 @@ module Y2Storage
       @storage = Storage::Storage.new(storage_environment)
       activate_callbacks = Callbacks::Activate.new
       @storage.activate(activate_callbacks)
-      @storage.probe
-      @staging_revision = 0
+      @staging_revision = -1
       @proposal = nil
+      probe
     end
 
     # FIXME: To be replaced by #y2storage_probed as soon as all everything is
@@ -113,7 +113,7 @@ module Y2Storage
     # @return [Boolean] false if the staging devicegraph is just the result of
     #   probing (so a direct copy of #probed), true otherwise.
     def staging_changed?
-      !staging_revision.zero?
+      @staging_revision != @staging_revision_after_probing
     end
 
     # Stores the proposal, modifying the staging devicegraph and all the related
@@ -143,6 +143,17 @@ module Y2Storage
     # using #staging= or #proposal=
     def update_staging_revision
       @staging_revision += 1
+    end
+
+    # Probes all storage devices.
+    #
+    # Invalidates the probed and staging devicegraph.
+    def probe
+      @storage.probe
+      update_staging_revision
+      @staging_revision_after_probing = @staging_revision
+      @y2probed = nil
+      @y2staging = nil
     end
 
     # Performs in the system all the necessary operations to make it match the
