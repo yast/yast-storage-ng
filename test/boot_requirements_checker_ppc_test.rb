@@ -33,7 +33,7 @@ describe Y2Storage::BootRequirementsChecker do
 
     let(:prep_id) { Y2Storage::PartitionId::PREP }
     let(:architecture) { :ppc }
-    let(:sda_part_table) { pt_msdos }
+    let(:boot_ptable_type) { :msdos }
 
     before do
       allow(storage_arch).to receive(:ppc_power_nv?).and_return(power_nv)
@@ -156,7 +156,7 @@ describe Y2Storage::BootRequirementsChecker do
       let(:boot_part) { find_vol("/boot", checker.needed_partitions(target)) }
       # Default values to ensure the presence of a /boot partition
       let(:use_lvm) { true }
-      let(:sda_part_table) { pt_msdos }
+      let(:boot_ptable_type) { :msdos }
       let(:prep_partitions) { [] }
       let(:power_nv) { true }
 

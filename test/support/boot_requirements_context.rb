@@ -29,45 +29,47 @@ RSpec.shared_context "boot requirements" do
     volumes.find { |p| p.mount_point == mount_point }
   end
 
-  subject(:checker) { described_class.new(settings, devicegraph) }
+  subject(:checker) { described_class.new(devicegraph) }
 
-  let(:root_device) { "/dev/sda" }
-  let(:settings) do
-    settings = Y2Storage::ProposalSettings.new
-    settings.root_device = root_device
-    settings.use_lvm = use_lvm
-    settings.root_filesystem_type = root_filesystem_type
-    settings.encryption_password = "12345678" if use_encryption
-    settings
-  end
   let(:storage_arch) { instance_double("::Storage::Arch") }
   let(:devicegraph) { double("Y2Storage::Devicegraph") }
   let(:dev_sda) { double("Y2Storage::Disk", name: "/dev/sda") }
   let(:dev_sdb) { double("Y2Storage::Disk", name: "/dev/sdb") }
-  let(:pt_gpt) { instance_double("Y2Storage::PartitionTable") }
-  let(:pt_msdos) { instance_double("Y2Storage::PartitionTable") }
-  let(:sda_part_table) { pt_msdos }
-  let(:root_filesystem_type) { Y2Storage::Filesystems::Type::BTRFS }
+
+  let(:boot_disk) { dev_sda }
+  let(:analyzer) do
+    double(
+      "Y2Storage::BootRequirementsStrategies::Analyzer",
+      boot_disk:               boot_disk,
+      root_in_lvm?:            use_lvm,
+      encrypted_root?:         use_encryption,
+      btrfs_root?:             use_btrfs,
+      planned_prep_partitions: planned_prep_partitions,
+      planned_grub_partitions: planned_grub_partitions
+    )
+  end
+
+  let(:use_lvm) { false }
   let(:use_encryption) { false }
+  let(:use_btrfs) { true }
+  let(:boot_ptable_type) { :msdos }
+  # Assume the needed partitions are not already planned in advance
+  let(:planned_prep_partitions) { [] }
+  let(:planned_grub_partitions) { [] }
 
   before do
     Y2Storage::StorageManager.create_test_instance
     allow(Y2Storage::StorageManager.instance).to receive(:arch).and_return(storage_arch)
+    allow(Y2Storage::BootRequirementsStrategies::Analyzer).to receive(:new).and_return(analyzer)
 
     allow(storage_arch).to receive(:x86?).and_return(architecture == :x86)
     allow(storage_arch).to receive(:ppc?).and_return(architecture == :ppc)
     allow(storage_arch).to receive(:s390?).and_return(architecture == :s390)
 
-    allow(devicegraph).to receive(:disks).and_return [dev_sda, dev_sdb]
+    allow(devicegraph).to receive(:disk_devices).and_return [dev_sda, dev_sdb]
 
-    if sda_part_table
-      allow(dev_sda).to receive(:partition_table).and_return(sda_part_table)
-    else
-      allow(dev_sda).to receive(:partition_table).and_return(nil)
-    end
-    allow(dev_sda).to receive(:as_not_empty).and_yield
-    allow(dev_sda).to receive(:preferred_ptable_type).and_return(Y2Storage::PartitionTables::Type::GPT)
-    allow(pt_gpt).to receive(:type).and_return(Y2Storage::PartitionTables::Type::GPT)
-    allow(pt_msdos).to receive(:type).and_return(Y2Storage::PartitionTables::Type::MSDOS)
+    allow(analyzer).to receive(:boot_ptable_type?) { |type| type == boot_ptable_type }
+    # Assume the needed partitions are not already planned in advance
+    allow(analyzer).to receive(:free_mountpoint?).and_return true
   end
 end

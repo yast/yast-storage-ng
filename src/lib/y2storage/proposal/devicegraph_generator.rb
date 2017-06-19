@@ -28,7 +28,7 @@ require "y2storage/proposal/lvm_helper"
 require "y2storage/planned"
 
 module Y2Storage
-  class Proposal
+  module Proposal
     # Class to create devicegraphs that can accommodate a given collection of
     # volumes
     class DevicegraphGenerator
@@ -48,7 +48,7 @@ module Y2Storage
       # @param space_maker [Proposal::SpaceMaker]
       #
       # @return [Devicegraph]
-      # @raise Proposal::Error if it was not possible to propose a devicegraph
+      # @raise [Error] if it was not possible to propose a devicegraph
       def devicegraph(planned_devices, initial_graph, space_maker)
         # We are going to alter the volumes in several ways, so let's be a
         # good citizen and do it in our own copy
@@ -75,7 +75,7 @@ module Y2Storage
       # Provides free disk space in the proposal devicegraph to fit the
       # planned partitions in.
       #
-      # @raise Proposal::Error if the goal is not reached
+      # @raise [Error] if the goal is not reached
       #
       # @param planned_partitions [Array<Planned::Partition>] set partitions to
       #     make space for.
@@ -180,11 +180,8 @@ module Y2Storage
       # @param planned_partitions [Array<Planned::Partition>]
       # @param graph [Devicegraph] devicegraph to modify
       def reuse_partitions!(planned_partitions, graph)
-        planned_partitions.select { |v| v.reuse }.each do |vol|
-          partition = graph.partitions.detect { |part| part.name == vol.reuse }
-          filesystem = partition.filesystem
-          filesystem.mountpoint = vol.mount_point if vol.mount_point && !vol.mount_point.empty?
-          partition.boot = true if vol.bootable
+        planned_partitions.each do |planned|
+          planned.reuse!(graph)
         end
       end
     end

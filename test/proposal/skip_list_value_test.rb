@@ -1,8 +1,7 @@
-#!/usr/bin/env ruby
-#
+#!/usr/bin/env rspec
 # encoding: utf-8
-
-# Copyright (c) [2016] SUSE LLC
+#
+# Copyright (c) [2017] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -21,21 +20,36 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-module Y2Storage
-  class Proposal
-    class Error < RuntimeError
+require_relative "../spec_helper"
+
+require "y2storage"
+require "y2storage/proposal/skip_list_value"
+
+describe Y2Storage::Proposal::SkipListValue do
+  subject(:value) { described_class.new(disk) }
+
+  let(:scenario) { "windows-linux-free-pc" }
+  let(:disk) { Y2Storage::Disk.find_by_name(fake_devicegraph, "/dev/sda") }
+
+  before do
+    fake_scenario(scenario)
+  end
+
+  describe "#size_k" do
+    it "returns the size in kilobytes" do
+      expect(value.size_k).to eq(disk.size.to_i)
     end
-    # There is no enough space in the disk
-    class NoDiskSpaceError < Error
+  end
+
+  describe "#device" do
+    it "returns the full device name" do
+      expect(value.device).to eq("/dev/sda")
     end
-    # There are not available partition slots in the disk
-    class NoMorePartitionSlotError < Error
-    end
-    # It's not possible to propose a bootable layout for the root device
-    class NotBootableError < Error
-    end
-    # A method was called more times than expected
-    class UnexpectedCallError < Error
+  end
+
+  describe "#name" do
+    it "returns the device name" do
+      expect(value.name).to eq("sda")
     end
   end
 end

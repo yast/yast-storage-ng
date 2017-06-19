@@ -28,25 +28,29 @@ module Y2Storage
     # Strategy to calculate boot requirements in systems using ZIPL
     class ZIPL < Base
       def needed_partitions(target)
-        raise Error unless supported_root_disk?
-        [zipl_partition(target)]
+        raise Error, "Impossible to boot system from the chosen disk" unless supported_boot_disk?
+        zipl_partition_missing? ? [zipl_partition(target)] : []
       end
 
     protected
 
-      def supported_root_disk?
-        return false unless root_disk
-        if root_disk.is?(:dasd)
-          return false if root_disk.dasd_type.is?(:fba)
-          return false if root_disk.dasd_format.is?(:ldl)
+      def supported_boot_disk?
+        return false unless boot_disk
+        if boot_disk.is?(:dasd)
+          return false if boot_disk.dasd_type.is?(:fba)
+          return false if boot_disk.dasd_format.is?(:ldl)
           # TODO: DIAG disks (whatever they are) are not supported either
         end
         true
       end
 
+      def zipl_partition_missing?
+        free_mountpoint?("/boot/zipl")
+      end
+
       def zipl_partition(target)
         vol = Planned::Partition.new("/boot/zipl", Filesystems::Type::EXT2)
-        vol.disk = root_disk.name
+        vol.disk = boot_disk.name
         vol.min_size = target == :min ? DiskSize.MiB(100) : DiskSize.MiB(200)
         vol.max_size = DiskSize.GiB(1)
         vol

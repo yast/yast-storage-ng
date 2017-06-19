@@ -21,11 +21,6 @@
 # find current contact information at www.suse.com.
 
 require_relative "spec_helper"
-require "storage"
-require "y2storage/yaml_writer"
-require "y2storage/disk"
-require "y2storage/partition_tables"
-require "y2storage/filesystems"
 
 describe Y2Storage::YamlWriter do
 
@@ -33,6 +28,36 @@ describe Y2Storage::YamlWriter do
     Y2Storage::StorageManager.create_test_instance
   end
   let(:staging) { Y2Storage::StorageManager.instance.y2storage_staging }
+
+  it "produces yaml of a simple DASD disk setup" do
+
+    sda = Y2Storage::Dasd.create(staging, "/dev/sda")
+    sda.size = 256 * Storage.GiB
+
+    sda.create_partition_table(Y2Storage::PartitionTables::Type::DASD)
+
+    # rubocop:disable Style/StringLiterals
+
+    result = ['---',
+              '- dasd:',
+              '    name: "/dev/sda"',
+              '    size: 256 GiB',
+              '    block_size: 0.5 KiB',
+              '    io_size: 0 B',
+              '    min_grain: 1 MiB',
+              '    align_ofs: 0 B',
+              '    partition_table: dasd',
+              '    partitions:',
+              '    - free:',
+              '        size: 256 GiB',
+              '        start: 0 B']
+
+    # rubocop:enable all
+
+    io = StringIO.new
+    Y2Storage::YamlWriter.write(staging, io)
+    expect(io.string).to eq result.join("\n") + "\n"
+  end
 
   it "produces yaml of a simple disk and partition setup" do
 

@@ -127,7 +127,7 @@ module Y2Storage
       # between the proposal and the dialogs.
       def new_proposal(settings)
         probed = storage_manager.y2storage_probed
-        Proposal.new(settings: settings, devicegraph: probed, disk_analyzer: probed_analyzer)
+        GuidedProposal.new(settings: settings, devicegraph: probed, disk_analyzer: probed_analyzer)
       end
     end
   end

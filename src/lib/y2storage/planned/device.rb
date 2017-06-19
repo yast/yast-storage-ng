@@ -22,6 +22,7 @@
 # find current contact information at www.suse.com.
 
 require "yast"
+require "y2storage/blk_device"
 
 module Y2Storage
   module Planned
@@ -37,10 +38,10 @@ module Y2Storage
     # functionality and properties by composition, including several of the
     # mixins defined in the {Planned} namespace.
     class Device
+      include Yast::Logger
+
       # @return [String] device name of an existing device to reuse for this
-      #   purpose. That means that no new device will be created and, thus, most
-      #   of the other attributes (with the obvious exception of #mount_point)
-      #   will be most likely ignored
+      #   purpose. As a result, some of the others attributes could be ignored.
       attr_accessor :reuse
 
       def to_s
@@ -60,7 +61,38 @@ module Y2Storage
         [:reuse]
       end
 
+      # Returns the (possibly processed) device to be used for the planned
+      # device.
+      #
+      # FIXME: temporary API. It should be improved.
+      def final_device!(plain_device)
+        plain_device.encrypted? ? plain_device.encryption : plain_device
+      end
+
+      # Finds the device to reuse and sets its properties to match
+      # the planned device.
+      #
+      # @param devicegraph [Devicegraph] Device graph to adjust
+      def reuse!(devicegraph)
+        dev = device_to_reuse(devicegraph)
+        reuse_device!(dev) if dev
+      end
+
+      # Whether this planned device is expected to reuse an existing one
+      def reuse?
+        !(reuse.nil? || reuse.empty?)
+      end
+
     protected
+
+      def reuse_device!(dev)
+        log.info "Reusing #{reuse} (#{dev}) for #{self}"
+      end
+
+      def device_to_reuse(devicegraph)
+        return nil unless reuse?
+        BlkDevice.find_by_name(devicegraph, reuse)
+      end
 
       def internal_state
         instance_variables.sort.map { |v| instance_variable_get(v) }

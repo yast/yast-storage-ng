@@ -24,10 +24,9 @@
 require "fileutils"
 require "y2storage/planned"
 require "y2storage/disk_size"
-require "y2storage/proposal/encrypter"
 
 module Y2Storage
-  class Proposal
+  module Proposal
     # Class to create partitions following a given distribution represented by
     # a Planned::PartitionsDistribution object
     class PartitionCreator
@@ -95,14 +94,11 @@ module Y2Storage
       # @param num_logical [Symbol] logical partitions. See {#process_space}
       def create_planned_partitions(planned_partitions, initial_free_space, num_logical)
         planned_partitions.each_with_index do |part, idx|
-          partition_id = part.partition_id
-          partition_id ||= part.mount_point == "swap" ? PartitionId::SWAP : PartitionId::LINUX
           begin
             space = free_space_within(initial_free_space)
             primary = planned_partitions.size - idx > num_logical
-            partition = create_partition(part, partition_id, space, primary)
-            final_device = encrypter.device_for(part, partition)
-            part.create_filesystem(final_device)
+            partition = create_partition(part, space, primary)
+            part.format!(partition)
             devicegraph.check
           rescue ::Storage::Exception => error
             raise Error, "Error allocating #{part}. Details: #{error}"
@@ -116,7 +112,7 @@ module Y2Storage
       # @param initial_free_space [FreeDiskSpace] the original disk chunk, the
       #   returned free space will be within this area
       def free_space_within(initial_free_space)
-        disk = devicegraph.disks.detect { |d| d.name == initial_free_space.disk_name }
+        disk = devicegraph.disk_devices.detect { |d| d.name == initial_free_space.disk_name }
         spaces = disk.as_not_empty { disk.free_spaces }.select do |space|
           space.region.start >= initial_free_space.region.start &&
             space.region.start < initial_free_space.region.end
@@ -134,7 +130,7 @@ module Y2Storage
       # @param primary      [Boolean] whether the partition should be primary
       #                     or logical
       #
-      def create_partition(planned_partition, partition_id, free_space, primary)
+      def create_partition(planned_partition, free_space, primary)
         log.info "Creating partition for #{planned_partition.mount_point} with #{planned_partition.size}"
         disk = free_space.disk
         ptable = partition_table(disk)
@@ -153,7 +149,7 @@ module Y2Storage
 
         region = new_region_with_size(free_space.region, planned_partition.size)
         partition = ptable.create_partition(dev_name, region, partition_type)
-        partition.id = partition_id
+        partition.id = partition_id(ptable, planned_partition)
         partition.boot = !!planned_partition.bootable if ptable.partition_boot_flag_supported?
         partition
       end
@@ -224,8 +220,28 @@ module Y2Storage
         disk.partition_table || disk.create_partition_table(disk.preferred_ptable_type)
       end
 
-      def encrypter
-        @encrypter ||= Encrypter.new
+      # Returns the partition id that should be used for a new partition in
+      # a specific partition table.
+      #
+      # @note When a planned partition has not partition id, it will be set
+      #   based on the type of the partition table.
+      # @see PartitionTables::Base#partition_id_for
+      #
+      # @param ptable [PartitionsTable::Base] partition table
+      # @param planned_partition [Planned::Partition]
+      #
+      # @return [PartitionId]
+      def partition_id(ptable, planned_partition)
+        partition_id = planned_partition.partition_id
+        return partition_id if partition_id
+
+        partition_id = if planned_partition.mount_point == "swap"
+          PartitionId::SWAP
+        else
+          PartitionId::LINUX
+        end
+
+        ptable.partition_id_for(partition_id)
       end
     end
   end

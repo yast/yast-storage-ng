@@ -34,8 +34,8 @@ module Y2Storage
       #
       # @see #with
       #
-      # @param [String, Array<String>] single mount point or array of possible
-      #     values
+      # @param value [String, Array<String>] single mount point,
+      #   or an array of possible values
       # @return [FilesystemsList]
       def with_mountpoint(value)
         with do |fs|

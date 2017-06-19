@@ -45,9 +45,15 @@ module Y2Storage
       # @return [String] Parent for all Btrfs subvolumes (typically "@")
       attr_accessor :default_subvolume
 
+      # @return [Boolean] Whether a reused device should be formatted. If set to
+      #   false, the existing filesystem should be kept. Only relevant if
+      #   #reuse? is true.
+      attr_accessor :reformat
+
       # Initializations of the mixin, to be called from the class constructor.
       def initialize_can_be_formatted
         @subvolumes = []
+        @reformat = false
       end
 
       # Creates a filesystem for the planned device on the specified real
@@ -58,14 +64,17 @@ module Y2Storage
       #
       # Do nothing if #filesystem_type is not set.
       #
+      # FIXME: temporary API. It should be improved.
+      #
       # @param blk_dev [BlkDevice]
       #
       # @return [Filesystems::BlkFilesystem] filesystem
-      def create_filesystem(blk_dev)
+      def format!(blk_dev)
+        final_device = final_device!(blk_dev)
         return nil unless filesystem_type
 
-        filesystem = blk_dev.create_blk_filesystem(filesystem_type)
-        filesystem.mountpoint = mount_point if mount_point && !mount_point.empty?
+        filesystem = final_device.create_blk_filesystem(filesystem_type)
+        assign_mountpoint(filesystem)
         filesystem.label = label if label
         filesystem.uuid = uuid if uuid
 
@@ -97,6 +106,13 @@ module Y2Storage
       def remove_shadowed_subvolumes!(other_mount_points)
         return if subvolumes.empty?
         self.subvolumes = subvolumes.reject { |subvol| subvol.shadowed?(other_mount_points) }
+      end
+
+      # @see #reformat
+      #
+      # @return [Boolean]
+      def reformat?
+        reformat
       end
 
     protected
@@ -140,6 +156,21 @@ module Y2Storage
           parent = parent.create_btrfs_subvolume(@default_subvolume)
         end
         parent
+      end
+
+      def reuse_device!(device)
+        super
+
+        if reformat
+          format!(device)
+        else
+          filesystem = final_device!(device).filesystem
+          assign_mountpoint(filesystem)
+        end
+      end
+
+      def assign_mountpoint(filesystem)
+        filesystem.mountpoint = mount_point if mount_point && !mount_point.empty?
       end
     end
   end

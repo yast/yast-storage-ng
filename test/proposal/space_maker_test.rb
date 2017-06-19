@@ -170,7 +170,7 @@ describe Y2Storage::Proposal::SpaceMaker do
 
       it "raises a NoDiskSpaceError exception" do
         expect { maker.provide_space(fake_devicegraph, volumes, lvm_helper) }
-          .to raise_error Y2Storage::Proposal::NoDiskSpaceError
+          .to raise_error Y2Storage::NoDiskSpaceError
       end
     end
 
@@ -280,7 +280,7 @@ describe Y2Storage::Proposal::SpaceMaker do
 
             it "raises a NoDiskSpaceError exception" do
               expect { maker.provide_space(fake_devicegraph, volumes, lvm_helper) }
-                .to raise_error Y2Storage::Proposal::NoDiskSpaceError
+                .to raise_error Y2Storage::NoDiskSpaceError
             end
           end
         end
@@ -341,7 +341,7 @@ describe Y2Storage::Proposal::SpaceMaker do
 
           it "raises a NoDiskSpaceError exception" do
             expect { maker.provide_space(fake_devicegraph, volumes, lvm_helper) }
-              .to raise_error Y2Storage::Proposal::NoDiskSpaceError
+              .to raise_error Y2Storage::NoDiskSpaceError
           end
         end
       end
@@ -463,7 +463,7 @@ describe Y2Storage::Proposal::SpaceMaker do
 
               it "raises a NoDiskSpaceError exception" do
                 expect { maker.provide_space(fake_devicegraph, volumes, lvm_helper) }
-                  .to raise_error Y2Storage::Proposal::NoDiskSpaceError
+                  .to raise_error Y2Storage::NoDiskSpaceError
               end
             end
           end
@@ -536,7 +536,7 @@ describe Y2Storage::Proposal::SpaceMaker do
 
             it "raises a NoDiskSpaceError exception" do
               expect { maker.provide_space(fake_devicegraph, volumes, lvm_helper) }
-                .to raise_error Y2Storage::Proposal::NoDiskSpaceError
+                .to raise_error Y2Storage::NoDiskSpaceError
             end
           end
         end
@@ -616,7 +616,7 @@ describe Y2Storage::Proposal::SpaceMaker do
         volumes = [vol1, vol2]
 
         expect { maker.provide_space(fake_devicegraph, volumes, lvm_helper) }
-          .to raise_error Y2Storage::Proposal::NoDiskSpaceError
+          .to raise_error Y2Storage::NoDiskSpaceError
       end
 
       it "deletes extended partitions when deleting all its logical children" do
@@ -652,7 +652,7 @@ describe Y2Storage::Proposal::SpaceMaker do
         ]
 
         expect { maker.provide_space(fake_devicegraph, volumes, lvm_helper) }
-          .to raise_error Y2Storage::Proposal::NoDiskSpaceError
+          .to raise_error Y2Storage::NoDiskSpaceError
       end
     end
 
@@ -710,7 +710,7 @@ describe Y2Storage::Proposal::SpaceMaker do
 
         it "raises an exception even if there is enough space in other disks" do
           expect { maker.provide_space(fake_devicegraph, volumes, lvm_helper) }
-            .to raise_error Y2Storage::Proposal::Error
+            .to raise_error Y2Storage::Error
         end
       end
 
@@ -815,7 +815,7 @@ describe Y2Storage::Proposal::SpaceMaker do
           planned_vol(mount_point: "/2", type: :ext4, min: 10.MiB)
         ]
         expect { maker.provide_space(fake_devicegraph, volumes, lvm_helper) }
-          .to raise_error Y2Storage::Proposal::NoDiskSpaceError
+          .to raise_error Y2Storage::NoDiskSpaceError
       end
     end
   end

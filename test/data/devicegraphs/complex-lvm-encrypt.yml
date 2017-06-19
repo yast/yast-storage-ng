@@ -20,7 +20,6 @@
         size:         10 GiB
         name:         /dev/sda2
         file_system:  ext4
-        mount_point:  /
         label:        root
 
     - partition:
@@ -112,6 +111,7 @@
             size:         2 GiB
             lv_name:      lv1
             file_system:  ext4
+            mount_point:  /
 
         - lvm_lv:
             size:         2 GiB

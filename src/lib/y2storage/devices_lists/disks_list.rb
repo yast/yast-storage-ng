@@ -83,7 +83,7 @@ module Y2Storage
       #
       # @see #with
       #
-      # @param [String, Array<String>] device name(s)
+      # @param value [String, Array<String>] device name(s)
       # @return [DisksList]
       def with_name_or_partition(value)
         disks = with(name: value).to_a

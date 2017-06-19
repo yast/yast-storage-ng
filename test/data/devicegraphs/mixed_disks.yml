@@ -19,7 +19,6 @@
         size:         unlimited
         name:         /dev/sda2
         file_system:  ext4
-        mount_point:  /
         label:        root
 
 - disk:
@@ -39,6 +38,7 @@
     - partition:
         size:         60 GiB
         name:         /dev/sdb2
+        mount_point:  /
         file_system:  btrfs
         label:        suse_root
 

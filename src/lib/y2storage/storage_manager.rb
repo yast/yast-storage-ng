@@ -58,7 +58,7 @@ module Y2Storage
     #
     # Nil if the devicegraph was set manually and not by accepting a proposal.
     #
-    # @return [Proposal, nil]
+    # @return [GuidedProposal, nil]
     attr_reader :proposal
 
     def_delegators :@storage, :environment, :arch, :rootprefix, :prepend_rootprefix, :rootprefix=
@@ -75,6 +75,7 @@ module Y2Storage
     #   @param path [String] original path (without prefix)
     #   @return [String]
 
+    # @param storage_environment [::Storage::Environment]
     def initialize(storage_environment)
       @storage = Storage::Storage.new(storage_environment)
       activate_callbacks = Callbacks::Activate.new
@@ -118,7 +119,7 @@ module Y2Storage
     # Stores the proposal, modifying the staging devicegraph and all the related
     # information.
     #
-    # @param proposal [Proposal]
+    # @param proposal [GuidedProposal]
     def proposal=(proposal)
       copy_to_staging(proposal.devices)
       @proposal = proposal
@@ -238,6 +239,21 @@ module Y2Storage
         fake_graph.copy(@instance.y2storage_probed)
         fake_graph.copy(@instance.y2storage_staging)
         @instance.storage.remove_devicegraph("fake")
+        @instance
+      end
+
+      # Use this as an alternative to the instance method.
+      # Probing is skipped and the device tree is initialized from xml_file.
+      # Any existing probed device tree is replaced.
+      # @see {Devicegraph.load} for details about xml
+      #
+      # @return [StorageManager] singleton instance
+      #
+      def fake_from_xml(xml_file)
+        @instance ||= create_test_instance
+        @instance.probed.load(xml_file)
+        @instance.probed.copy(@instance.staging)
+
         @instance
       end
 

@@ -99,6 +99,8 @@ module Y2Storage
     storage_forward :legacy_boot=
 
     # @!method self.create(devicegraph, name, region, type)
+    #   To get suitable values for this method, use
+    #   {PartitionTables::Base#unused_partition_slots}
     #   @see Region
     #   @see #type
     #

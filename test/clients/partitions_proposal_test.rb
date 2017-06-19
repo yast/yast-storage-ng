@@ -56,7 +56,7 @@ describe Y2Storage::Clients::PartitionsProposal do
           allow(storage_manager).to receive(:proposal).and_return(proposal)
         end
 
-        let(:proposal) { instance_double(Y2Storage::Proposal, proposed?: proposed) }
+        let(:proposal) { instance_double(Y2Storage::GuidedProposal, proposed?: proposed) }
 
         context "but it is not calculated yet" do
           let(:proposed) { false }

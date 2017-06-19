@@ -74,7 +74,26 @@ describe Y2Storage::StorageManager do
     end
 
     it "initializes #staging_revision" do
-      manager = described_class.create_test_instance
+      manager = described_class.fake_from_yaml(input_file_for("gpt_and_msdos"))
+      expect(manager.staging_revision).to be_zero
+    end
+  end
+
+  describe ".fake_from_xml" do
+    it "returns the singleton StorageManager object" do
+      result = described_class.fake_from_xml(input_file_for("md2-devicegraph", suffix: "xml"))
+      expect(result).to be_a described_class
+    end
+
+    it "initializes #storage with the mocked devicegraphs" do
+      described_class.fake_from_xml(input_file_for("md2-devicegraph", suffix: "xml"))
+      expect(manager.storage).to be_a Storage::Storage
+      expect(Storage::Disk.all(manager.probed).size).to eq 4
+      expect(Storage::Disk.all(manager.staging).size).to eq 4
+    end
+
+    it "initializes #staging_revision" do
+      described_class.fake_from_xml(input_file_for("md2-devicegraph", suffix: "xml"))
       expect(manager.staging_revision).to be_zero
     end
   end
@@ -92,7 +111,7 @@ describe Y2Storage::StorageManager do
   describe "#staging=" do
     let(:old_graph) { devicegraph_from("empty_hard_disk_50GiB") }
     let(:new_graph) { devicegraph_from("gpt_and_msdos") }
-    let(:proposal) { double("Y2Storage::Proposal", devices: old_graph) }
+    let(:proposal) { double("Y2Storage::GuidedProposal", devices: old_graph) }
 
     before do
       described_class.create_test_instance
@@ -120,7 +139,7 @@ describe Y2Storage::StorageManager do
 
   describe "#proposal=" do
     let(:new_graph) { devicegraph_from("gpt_and_msdos") }
-    let(:proposal) { double("Y2Storage::Proposal", devices: new_graph) }
+    let(:proposal) { double("Y2Storage::GuidedProposal", devices: new_graph) }
 
     before do
       described_class.create_test_instance
@@ -145,7 +164,7 @@ describe Y2Storage::StorageManager do
 
   describe "#staging_changed?" do
     let(:new_graph) { devicegraph_from("gpt_and_msdos") }
-    let(:proposal) { double("Y2Storage::Proposal", devices: new_graph) }
+    let(:proposal) { double("Y2Storage::GuidedProposal", devices: new_graph) }
 
     before do
       described_class.create_test_instance

@@ -31,11 +31,15 @@ module Y2Storage
     class UEFI < Base
       def needed_partitions(target)
         volumes = super
-        volumes << efi_partition(target)
+        volumes << efi_partition(target) if efi_missing?
         volumes
       end
 
     protected
+
+      def efi_missing?
+        free_mountpoint?("/boot/efi")
+      end
 
       def efi_partition(target)
         vol = Planned::Partition.new("/boot/efi", Filesystems::Type::VFAT)
@@ -51,15 +55,15 @@ module Y2Storage
       end
 
       def reusable_efi
-        @reusable_efi = biggest_efi_in_root_device || biggest_efi
+        @reusable_efi = biggest_efi_in_boot_device || biggest_efi
       end
 
-      def biggest_efi_in_root_device
-        biggest_partition(root_disk.efi_partitions)
+      def biggest_efi_in_boot_device
+        biggest_partition(boot_disk.efi_partitions)
       end
 
       def biggest_efi
-        efi_parts = devicegraph.disks.map(&:efi_partitions).flatten
+        efi_parts = devicegraph.disk_devices.map(&:efi_partitions).flatten
         biggest_partition(efi_parts)
       end
 

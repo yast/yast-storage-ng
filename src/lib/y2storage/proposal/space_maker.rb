@@ -31,7 +31,7 @@ require "y2storage/proposal/partitions_distribution_calculator"
 require "y2storage/proposal/partition_killer"
 
 module Y2Storage
-  class Proposal
+  module Proposal
     # Class to provide free space for creating new partitions - either by
     # reusing existing unpartitioned space, by deleting existing partitions
     # or by resizing an existing Windows partition.
@@ -55,7 +55,7 @@ module Y2Storage
       # a set of planned partitions and the new physical volumes needed to
       # accomodate the planned LVM logical volumes.
       #
-      # @raise Proposal::Error if is not possible to accomodate the planned
+      # @raise [Error] if is not possible to accomodate the planned
       #   partitions and/or the physical volumes
       #
       # @param original_graph [Devicegraph] initial devicegraph
@@ -208,14 +208,15 @@ module Y2Storage
         end
       end
 
-      # List of candidate disks in the given devicegraph
+      # List of candidate disk devices in the given devicegraph
       #
       # @param devicegraph [Devicegraph]
-      # @param disk [String] optional disk name to restrict result to
-      # @return [DisksList]
-      def disks_for(devicegraph, disk = nil)
-        filter = disk || candidate_disk_names
-        devicegraph.disks.select { |d| filter.include?(d.name) }
+      # @param device_name [String] optional device name to restrict result to
+      #
+      # @return [Array<Dasd, Disk>]
+      def disks_for(devicegraph, device_name = nil)
+        filter = device_name || candidate_disk_names
+        devicegraph.disk_devices.select { |d| filter.include?(d.name) }
       end
 
       # @return [Array<String>]

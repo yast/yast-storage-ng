@@ -23,6 +23,7 @@ require "y2storage/storage_enum_wrapper"
 
 module Y2Storage
   # Class to represent all the possible partition types
+  # (primary, extended, or logical)
   #
   # This is a wrapper for the Storage::PartitionType enum
   class PartitionType

@@ -84,6 +84,14 @@ module Y2Storage
       def self.to_string_attrs
         [:mount_point, :reuse, :min_size, :max_size, :disk, :max_start_offset, :subvolumes]
       end
+
+    protected
+
+      def reuse_device!(device)
+        super
+
+        device.boot = true if bootable && device.respond_to?(:boot=)
+      end
     end
   end
 end

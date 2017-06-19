@@ -22,15 +22,8 @@
 # find current contact information at www.suse.com.
 
 require "yast"
-require "y2storage/abstract_device_factory.rb"
-require "y2storage/disk_size.rb"
-require "y2storage/disk"
-require "y2storage/region"
-require "y2storage/align_policy"
-require "y2storage/partition_id"
-require "y2storage/partition_type"
-require "y2storage/partition_tables/type"
-require "y2storage/filesystems/type"
+require "y2storage"
+require "y2storage/abstract_device_factory"
 
 module Y2Storage
   #
@@ -42,12 +35,13 @@ module Y2Storage
   #
   class FakeDeviceFactory < AbstractDeviceFactory
     # Valid toplevel products of this factory
-    VALID_TOPLEVEL  = ["disk", "lvm_vg"]
+    VALID_TOPLEVEL  = ["dasd", "disk", "lvm_vg"]
 
     # Valid hierarchy within the products of this factory.
     # This indicates the permitted children types for each parent.
     VALID_HIERARCHY =
       {
+        "dasd"       => ["partition_table", "partitions", "file_system", "encryption"],
         "disk"       => ["partition_table", "partitions", "file_system", "encryption"],
         "partitions" => ["partition", "free"],
         "partition"  => ["file_system", "encryption", "btrfs"],
@@ -68,6 +62,9 @@ module Y2Storage
     # Sub-products are not listed here.
     VALID_PARAM =
       {
+        "dasd"            => [
+          "name", "size", "block_size", "io_size", "min_grain", "align_ofs"
+        ].concat(FILE_SYSTEM_PARAM),
         "disk"            => [
           "name", "size", "block_size", "io_size", "min_grain", "align_ofs", "mbr_gap"
         ].concat(FILE_SYSTEM_PARAM),
@@ -197,6 +194,22 @@ module Y2Storage
     # creating factory products.
     #
 
+    # Factory method to create a DASD disk.
+    #
+    # @param _parent [nil] (disks are toplevel)
+    # @param args [Hash] disk parameters:
+    #   "name"       device name ("/dev/sda" etc.)
+    #   "size"       disk size
+    #   "block_size" block size
+    #   "io_size"    optimal io size
+    #   "min_grain"  minimal grain
+    #   "align_ofs"  alignment offset
+    #
+    # @return [String] device name of the new DASD disk ("/dev/sda" etc.)
+    def create_dasd(_parent, args)
+      new_partitionable(Dasd, args)
+    end
+
     # Factory method to create a disk.
     #
     # @param _parent [nil] (disks are toplevel)
@@ -211,11 +224,23 @@ module Y2Storage
     #   "mbr_gap"    mbr gap (for msdos partition table)
     #
     # @return [String] device name of the new disk ("/dev/sda" etc.)
+    def create_disk(_parent, args)
+      new_partitionable(Disk, args)
+    end
+
+    # Method to create a partitionable.
+    # @see #create_dasd
+    # @see #create_disk
+    #
+    # @param partitionable_class [Dasd, Disk]
+    # @param args [Hash<String, String>]
+    #
+    # @return [String] device name
     #
     # FIXME: this method is too complex. It offends three different cops
     # related to complexity.
     # rubocop:disable Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity
-    def create_disk(_parent, args)
+    def new_partitionable(partitionable_class, args)
       @volumes = Set.new
       @free_blob      = nil
       @free_regions   = []
@@ -231,9 +256,9 @@ module Y2Storage
       @mbr_gap = args["mbr_gap"] if args["mbr_gap"]
       if block_size && block_size.size > 0
         r = Region.create(0, size.to_i / block_size.to_i, block_size)
-        disk = Disk.create(@devicegraph, name, r)
+        disk = partitionable_class.create(@devicegraph, name, r)
       else
-        disk = Disk.create(@devicegraph, name)
+        disk = partitionable_class.create(@devicegraph, name)
         disk.size = size
       end
       set_topology_attributes!(disk, args)
@@ -283,7 +308,7 @@ module Y2Storage
       log.info("#{__method__}( #{parent}, #{args} )")
       disk_name = parent
       ptable_type = str_to_ptable_type(args)
-      disk = Disk.find_by_name(@devicegraph, disk_name)
+      disk = Partitionable.find_by_name(@devicegraph, disk_name)
       ptable = disk.create_partition_table(ptable_type)
       if ptable.respond_to?(:minimal_mbr_gap=) && @mbr_gap
         ptable.minimal_mbr_gap = @mbr_gap
@@ -305,8 +330,8 @@ module Y2Storage
     #
     # Some of the parameters ("mount_point", "label"...) really belong to the
     # file system which is a separate factory product, but it is more natural
-    # to specify this for the partition, so those data are kept in
-    # @file_system_data to be picked up in create_file_system when needed.
+    # to specify this for the partition, so those data are kept
+    # in @file_system_data to be picked up in create_file_system when needed.
     #
     # @param parent [String] disk name ("/dev/sda" etc.)
     #
@@ -349,7 +374,7 @@ module Y2Storage
       type = fetch(PartitionType, type, "partition type", part_name)
       align = fetch(AlignPolicy,  align, "align policy",  part_name) if align
 
-      disk = Disk.find_by_name(devicegraph, disk_name)
+      disk = Partitionable.find_by_name(devicegraph, disk_name)
       ptable = disk.partition_table
       slots = ptable.unused_partition_slots
 
@@ -533,8 +558,8 @@ module Y2Storage
     #
     # Some of the parameters ("mount_point", "label"...) really belong to the
     # file system which is a separate factory product, but it is more natural
-    # to specify this for the logical volume, so those data are kept in
-    # @file_system_data to be picked up in create_file_system when needed.
+    # to specify this for the logical volume, so those data are kept
+    # in @file_system_data to be picked up in create_file_system when needed.
     #
     # @param parent [Object] volume group object
     #

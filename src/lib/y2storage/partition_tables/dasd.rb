@@ -29,6 +29,16 @@ module Y2Storage
     # This is a wrapper for Storage::DasdPt
     class Dasd < Base
       wrap_class Storage::DasdPt
+
+      # DASD partition table uses partition id LINUX for swap.
+      # @see PatitionTables::Base#partition_id_for
+      #
+      # @param partition_id [PartitionId]
+      # @return [PartitionId]
+      def partition_id_for(partition_id)
+        return PartitionId::LINUX if partition_id.is?(:swap)
+        super
+      end
     end
   end
 end

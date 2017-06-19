@@ -69,7 +69,7 @@ describe Y2Storage::Dialogs::Proposal do
     end
 
     context "when a pristine proposal is provided" do
-      let(:proposal) { double("Y2Storage::Proposal", proposed?: false) }
+      let(:proposal) { double("Y2Storage::GuidedProposal", proposed?: false) }
 
       it "calculates the proposed devicegraph" do
         allow(proposal).to receive(:devices).and_return devicegraph1
@@ -104,7 +104,7 @@ describe Y2Storage::Dialogs::Proposal do
 
       context "if the proposal fails" do
         before do
-          allow(proposal).to receive(:propose).and_raise Y2Storage::Proposal::Error
+          allow(proposal).to receive(:propose).and_raise Y2Storage::Error
 
           # In this case, we just want to inspect the dialog content and then quit
           allow(Yast::UI).to receive(:UserInput).once.and_return :abort
@@ -133,7 +133,7 @@ describe Y2Storage::Dialogs::Proposal do
     end
 
     context "when an already calculated proposal is provided" do
-      let(:proposal) { double("Y2Storage::Proposal", proposed?: true) }
+      let(:proposal) { double("Y2Storage::GuidedProposal", proposed?: true) }
 
       it "does not re-calculate the proposed devicegraph" do
         expect(proposal).to_not receive(:propose)

@@ -201,5 +201,16 @@ module Y2Storage
       return false unless blk_filesystem
       !blk_filesystem.exists_in_devicegraph?(initial_devicegraph)
     end
+
+    # Last part of {#name}
+    #
+    # @example Get the device basename
+    #   device.name     # => "/dev/sda"
+    #   device.basename # => "sda"
+    #
+    # @return [String]
+    def basename
+      name.split("/").last
+    end
   end
 end
