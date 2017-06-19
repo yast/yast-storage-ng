@@ -38,7 +38,7 @@ describe Y2Storage::StorageManager do
 
   describe ".new" do
     it "cannot be used directly" do
-      expect { described_class.new }.to raise_error
+      expect { described_class.new }.to raise_error(/private method/)
     end
   end
 
