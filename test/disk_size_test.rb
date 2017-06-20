@@ -212,7 +212,7 @@ describe Y2Storage::DiskSize do
     end
   end
 
-  describe "arithmetic operations" do
+  describe "#+" do
     it "should accept addition of another DiskSize" do
       disk_size = Y2Storage::DiskSize.GiB(10) + Y2Storage::DiskSize.GiB(20)
       expect(disk_size.to_i).to be == 30 * 1024**3
@@ -221,18 +221,76 @@ describe Y2Storage::DiskSize do
       disk_size = Y2Storage::DiskSize.MiB(20) + 512
       expect(disk_size.to_i).to be == 20 * 1024**2 + 512
     end
+    xit "should refuse addition of a string" do
+      expect { Y2Storage::DiskSize.MiB(20) + "512 B" }
+        .to raise_exception TypeError
+    end
+    it "should refuse addition of another type" do
+      expect { Y2Storage::DiskSize.MiB(20) + true }
+        .to raise_exception TypeError
+    end
+  end
+
+  describe "#-" do
+    it "should accept another DiskSize" do
+      disk_size = Y2Storage::DiskSize.GiB(20) - Y2Storage::DiskSize.GiB(5)
+      expect(disk_size.to_i).to be == 15 * 1024**3
+    end
+    it "should accept an int" do
+      disk_size = Y2Storage::DiskSize.KiB(3) - 1024
+      expect(disk_size.to_i).to be == 2048
+    end
+    xit "should refuse a string" do
+      expect { Y2Storage::DiskSize.MiB(20) - "512 B" }
+        .to raise_exception TypeError
+    end
+    it "should refuse another type" do
+      expect { Y2Storage::DiskSize.MiB(20) - true }
+        .to raise_exception TypeError
+    end
+  end
+
+  describe "#%" do
+    it "should accept another DiskSize" do
+      disk_size = Y2Storage::DiskSize.KiB(2) % Y2Storage::DiskSize.KB(1)
+      expect(disk_size.to_i).to be == 48
+    end
+    it "should accept an int" do
+      disk_size = Y2Storage::DiskSize.KiB(4) % 1000
+      expect(disk_size.to_i).to be == 96
+    end
+    xit "should refuse a string" do
+      expect { Y2Storage::DiskSize.MiB(20) % "1000 B" }
+        .to raise_exception TypeError
+    end
+    it "should refuse another type" do
+      expect { Y2Storage::DiskSize.MiB(20) % true }
+        .to raise_exception TypeError
+    end
+  end
+
+  describe "#*" do
     it "should accept multiplication with an int" do
       disk_size = Y2Storage::DiskSize.MiB(12) * 3
       expect(disk_size.to_i).to be == 12 * 1024**2 * 3
-    end
-    it "should accept division by an int" do
-      disk_size = Y2Storage::DiskSize.MiB(12) / 3
-      expect(disk_size.to_i).to be == 12 / 3 * 1024**2
     end
     it "should refuse multiplication with another DiskSize" do
       expect { Y2Storage::DiskSize.MiB(12) * Y2Storage::DiskSize.MiB(3) }
         .to raise_exception TypeError
     end
+  end
+
+  describe "#/" do
+    it "should accept division by an int" do
+      disk_size = Y2Storage::DiskSize.MiB(12) / 3
+      expect(disk_size.to_i).to be == 12 / 3 * 1024**2
+    end
+    it "should refuse another type" do
+      expect { Y2Storage::DiskSize.MiB(20) / true }
+        .to raise_exception TypeError
+    end
+    # DiskSize / DiskSize should be possible, returning an int,
+    # but we haven't needed it so far.
   end
 
   describe "arithmetic operations with unlimited and DiskSize" do
@@ -282,6 +340,12 @@ describe Y2Storage::DiskSize do
     it "operator >= should compare correctly" do
       expect(disk_size2 >= disk_size3).to be == true
     end
+    it "operators (via <=>) should not compare with incompatible types" do
+      expect { disk_size1 <=> true }
+        .to raise_exception TypeError
+    end
+    # Comparing with an integer (#to_i) seems to make sense,
+    # but we haven't needed it so far.
   end
 
   describe "comparison with unlimited" do
