@@ -78,7 +78,7 @@ module Y2Storage
       # for our purposes.
       def missing_space
         return DiskSize.zero if !planned_lvs || planned_lvs.empty?
-        substract_reused_vg_size(target_size)
+        substract_reused_vg_size(volume_group.target_size)
       end
 
       # Space that must be added to the volume group to fulfill the max size
@@ -93,7 +93,7 @@ module Y2Storage
       def max_extra_space
         return DiskSize.zero if !planned_lvs || planned_lvs.empty?
 
-        max = DiskSize.sum(planned_lvs.map(&:max_size), rounding: extent_size)
+        max = DiskSize.sum(planned_lvs.map(&:max_size), rounding: volume_group.extent_size)
         return max if max.unlimited? || !volume_group.reuse?
 
         substract_reused_vg_size(max)
@@ -111,7 +111,7 @@ module Y2Storage
       #
       # @return [DiskSize]
       def min_pv_size
-        extent_size + useless_pv_space
+        volume_group.extent_size + useless_pv_space
       end
 
       # Part of a physical volume that can be used to allocate planned volumes
@@ -121,7 +121,7 @@ module Y2Storage
       #     space wasted by rounding
       def useful_pv_space(size)
         size -= useless_pv_space
-        size.floor(extent_size)
+        size.floor(volume_group.extent_size)
       end
 
       # Total size that a partition must have in order to provide the given
@@ -131,7 +131,7 @@ module Y2Storage
       # @param useful_size [DiskSize] size usable to allocate logical volumes
       # @return [DiskSize] real size of the partition
       def real_pv_size(useful_size)
-        useful_size.ceil(extent_size) + useless_pv_space
+        useful_size.ceil(volume_group.extent_size) + useless_pv_space
       end
 
       # Volumes groups that could be reused by the proposal, sorted by
@@ -146,7 +146,7 @@ module Y2Storage
         return [] if encrypt?
 
         vgs = devicegraph.lvm_vgs
-        big_vgs, small_vgs = vgs.partition { |vg| vg.total_size >= target_size }
+        big_vgs, small_vgs = vgs.partition { |vg| vg.total_size >= volume_group.target_size }
         # Use #vg_name to ensure stable sorting
         big_vgs.sort_by! { |vg| [vg.total_size, vg.vg_name] }
         small_vgs.sort_by! { |vg| [vg.total_size, vg.vg_name] }
@@ -189,14 +189,6 @@ module Y2Storage
     protected
 
       attr_reader :planned_lvs
-
-      def extent_size
-        volume_group.extent_size
-      end
-
-      def target_size
-        volume_group.target_size
-      end
 
       def substract_reused_vg_size(size)
         vg_size = volume_group.total_size
