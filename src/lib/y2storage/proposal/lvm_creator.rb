@@ -65,8 +65,8 @@ module Y2Storage
 
     private
 
-      def find_vg(volume_group, devicegraph)
-        devicegraph.lvm_vgs.detect { |vg| vg.sid == volume_group.sid }
+      def find_vg(planned_vg, devicegraph)
+        devicegraph.lvm_vgs.detect { |vg| vg.vg_name == planned_vg.reuse }
       end
 
       def create_volume_group(devicegraph)
