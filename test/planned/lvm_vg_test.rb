@@ -46,10 +46,6 @@ describe Y2Storage::Planned::LvmVg do
       expect(planned_vg.extent_size).to eq(vg0.extent_size)
     end
 
-    it "sets available_space" do
-      expect(planned_vg.available_space).to eq(vg0.available_space)
-    end
-
     it "sets total_size" do
       expect(planned_vg.total_size).to eq(vg0.total_size)
     end

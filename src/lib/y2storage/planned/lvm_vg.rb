@@ -51,10 +51,6 @@ module Y2Storage
       # @return [DiskSize] Size of one extent
       attr_accessor :extent_size
 
-      # @return [DiskSize] Available space on the volume group
-      # FIXME: should it be here?
-      attr_accessor :available_space
-
       # @return [DiskSize] Total size of the volume group
       attr_writer :total_size
 
@@ -70,7 +66,6 @@ module Y2Storage
       def self.from_real_vg(real_vg)
         new(volume_group_name: real_vg.vg_name).tap do |vg|
           vg.extent_size = real_vg.extent_size
-          vg.available_space = real_vg.available_space
           vg.total_size = real_vg.total_size
           vg.pvs = real_vg.lvm_pvs.map { |v| LvmPv.from_real_pv(v) }
           vg.lvs = real_vg.lvm_lvs.map { |v| LvmLv.from_real_lv(v) }
