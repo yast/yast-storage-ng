@@ -50,15 +50,15 @@ module Y2Storage
       # @param pv_partitions [Array<String>] names of the newly created
       #     partitions that should be added as PVs to the volume group
       # @return [Devicegraph]
-      def create_volumes(planned_lvs, pv_partitions = [], reused_vg = nil)
+      def create_volumes(planned_vg, pv_partitions = [])
         new_graph = original_devicegraph.duplicate
-        return new_graph if planned_lvs.empty?
+        return new_graph if planned_vg.lvs.empty?
 
-        vg = reused_vg ? find_vg(reused_vg, new_graph) : create_volume_group(new_graph)
+        vg = planned_vg.reuse? ? find_vg(planned_vg, new_graph) : create_volume_group(new_graph)
 
         assign_physical_volumes!(vg, pv_partitions, new_graph)
-        make_space!(vg, planned_lvs)
-        create_logical_volumes!(vg, planned_lvs)
+        make_space!(vg, planned_vg.lvs)
+        create_logical_volumes!(vg, planned_vg.lvs)
 
         new_graph
       end

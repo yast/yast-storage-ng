@@ -63,8 +63,7 @@ module Y2Storage
       def create_volumes(original_graph, pv_partitions = [])
         lvm_creator = LvmCreator.new(original_graph)
         # FIXME: it won't be needed in the future
-        reused = volume_group.reuse? ? volume_group : nil
-        lvm_creator.create_volumes(planned_lvs, pv_partitions, reused)
+        lvm_creator.create_volumes(volume_group, pv_partitions)
       end
 
       # Space that must be added to the final volume group in order to make
