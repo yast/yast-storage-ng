@@ -96,6 +96,11 @@ equivalent, the old code is simply deleted, not commented.
 
 * Commented code in umount_finish.rb dealing with loop files.
 
+* Commented code in prep_shrink.rb that resizes all PReP partitions. I would
+  doubt the usefulness of this code at all. Partition sizes are adjusted
+  during the proposal. And even *if* we feel like adjusting something we
+  would do this only for the partition we actually use for booting.
+
 ## Changes in yast2-bootloader
 
 * Disabled some unit tests dealing with non-supported features (see below).
