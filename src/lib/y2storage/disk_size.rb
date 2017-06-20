@@ -604,53 +604,58 @@ module Y2Storage
     # Human-readable string. That is, represented in the biggest unit ("MiB",
     # "GiB", ...) that makes sense, even if it means losing some precision.
     #
+    # *rounding_method*:
+    #
+    # - `:round` - the default
+    #
+    # - `:floor` (available as {#human_floor}) -
+    # If we have 4.999 GiB of space, and ask the user how much of that
+    # should be used, prefilling the "Size" widget with the maximum
+    # rounded up to "5.00 GiB" it will then fail validation
+    # (checking that the entered value fits in the available space)
+    # We must round down.
+    #
+    # - `:ceil` (available as {#human_ceil}) -
+    # (This seems unnecessary because actual minimum sizes
+    # have few significant digits, but we provide it for symmetry)
+    #
+    # @param rounding_method [:round,:floor,:ceil] how to round
     # @return [String]
     #
     # @example
     #   x = DiskSize.KB(1)   #=> <DiskSize 0.98 KiB (1000)>
     #   x.to_human_string    #=> "0.98 KiB"
-    def to_human_string(round_method = :round)
+    #
+    #   smaller = DiskSize.new(4095)  #=> <DiskSize 4.00 KiB (4095)>
+    #   smaller.to_human_string       #=> "4.00 KiB"
+    #   smaller.human_floor           #=> "3.99 KiB"
+    #
+    #   larger = DiskSize.new(4097)   #=> <DiskSize 4.00 KiB (4097)>
+    #   larger.to_human_string        #=> "4.00 KiB"
+    #   larger.human_ceil             #=> "4.01 KiB"
+    #
+    # @see human_floor
+    # @see human_ceil
+    def to_human_string(rounding_method: :round)
       return "unlimited" if unlimited?
       float, unit_s = human_string_components
-      rounded = (float * 100).public_send(round_method) / 100.0
+      rounded = (float * 100).public_send(rounding_method) / 100.0
       # A plain "#{rounded} #{unit_s}" would not keep trailing zeros
       format("%.2f %s", rounded, unit_s)
     end
 
-    # A human readable string that does not exceed the exact size.
-    #
-    # If we have 4.999 GiB of space, and ask the user how much of that
-    # should be used, prefilling the "Size" widget with the maximum
-    # rounded up to "5.00 GiB" it will then fail validation.
-    # We must round down.
-    #
+    # to_human_string(rounding_method: :floor)
     # @return [String]
-    #
-    # @example
-    #   x = DiskSize.new(4095)  #=> <DiskSize 4.00 KiB (4095)>
-    #   x.to_human_string       #=> "4.00 KiB"
-    #   x.human_floor           #=> "3.99 KiB"
-    #
     # @see to_human_string
-    # @see human_ceil
     def human_floor
-      to_human_string(:floor)
+      to_human_string(rounding_method: :floor)
     end
 
-    # A human readable representation that is at least the exact size.
-    #
-    # (This seems unnecessary because actual minimum sizes
-    # have few significant digits, but we provide it for symmetry)
-    #
-    # @example
-    #   x = DiskSize.new(4097)  #=> <DiskSize 4.00 KiB (4097)>
-    #   x.to_human_string       #=> "4.00 KiB"
-    #   x.human_ceil            #=> "4.01 KiB"
-    #
+    # to_human_string(rounding_method: :ceil)
+    # @return [String]
     # @see to_human_string
-    # @see human_floor
     def human_ceil
-      to_human_string(:ceil)
+      to_human_string(rounding_method: :ceil)
     end
 
     # Exact value + human readable in parentheses (if the latter makes sense).
