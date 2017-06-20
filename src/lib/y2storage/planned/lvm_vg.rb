@@ -34,6 +34,11 @@ module Y2Storage
     class LvmVg < Device
       include Planned::HasSize
 
+      DEFAULT_VG_NAME = "system".freeze
+
+      DEFAULT_EXTENT_SIZE = DiskSize.MiB(4)
+      private_constant :DEFAULT_EXTENT_SIZE
+
       # @return [String] name to use for Y2Storage::LvmVg#vg_name
       attr_accessor :volume_group_name
 
@@ -47,10 +52,11 @@ module Y2Storage
       attr_accessor :extent_size
 
       # @return [DiskSize] Available space on the volume group
+      # FIXME: should it be here?
       attr_accessor :available_space
 
       # @return [DiskSize] Total size of the volume group
-      attr_accessor :total_size
+      attr_writer :total_size
 
       # @return [Fixnum] Internal storage id
       attr_accessor :sid
@@ -62,7 +68,7 @@ module Y2Storage
       #
       # @return [LvmVg] Volume group to base on
       def self.from_real_vg(real_vg)
-        new(real_vg.vg_name).tap do |vg|
+        new(volume_group_name: real_vg.vg_name).tap do |vg|
           vg.extent_size = real_vg.extent_size
           vg.available_space = real_vg.available_space
           vg.total_size = real_vg.total_size
@@ -73,9 +79,23 @@ module Y2Storage
         end
       end
 
-      def initialize(volume_group_name)
+      def initialize(volume_group_name: nil, lvs: [])
         initialize_has_size
-        @volume_group_name = volume_group_name
+        @volume_group_name = volume_group_name || DEFAULT_VG_NAME
+        @lvs = lvs
+        @pvs = []
+      end
+
+      def extent_size
+        @extent_size ||= DEFAULT_EXTENT_SIZE
+      end
+
+      def target_size
+        DiskSize.sum(lvs.map(&:min_size), rounding: extent_size)
+      end
+
+      def total_size
+        @total_size ||= DiskSize.zero
       end
 
       def self.to_string_attrs

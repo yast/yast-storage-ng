@@ -25,7 +25,8 @@ require_relative "../spec_helper"
 require "y2storage/planned"
 
 describe Y2Storage::Planned::LvmVg do
-  subject(:lvm_vg) { described_class.new(name) }
+  subject(:lvm_vg) { described_class.new(volume_group_name: name) }
+
   let(:lv_root) { Y2Storage::Planned::LvmLv.new("/", :ext4) }
   let(:name) { "system" }
   let(:vg0) { fake_devicegraph.lvm_vgs.find { |v| v.vg_name == "vg0" } }

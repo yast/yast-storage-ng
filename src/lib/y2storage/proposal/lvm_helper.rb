@@ -34,16 +34,10 @@ module Y2Storage
       include Yast::Logger
       include SecretAttributes
 
-      DEFAULT_EXTENT_SIZE = DiskSize.MiB(4)
-      private_constant :DEFAULT_EXTENT_SIZE
       # This is just an estimation chosen to match libstorage hardcoded value
       # See LvmVg::Impl::calculate_region() in storage-ng
       USELESS_PV_SPACE = DiskSize.MiB(1)
       private_constant :USELESS_PV_SPACE
-
-      # @return [LvmVg] Volume group that will be reused to allocate
-      # the proposed volumes, deleting the existing logical volumes if necessary
-      attr_reader :reused_volume_group
 
       # @!attribute encryption_password
       #   @return [String, nil] password used to encrypt the newly created
@@ -68,7 +62,9 @@ module Y2Storage
       # @return [Devicegraph]
       def create_volumes(original_graph, pv_partitions = [])
         lvm_creator = LvmCreator.new(original_graph)
-        lvm_creator.create_volumes(planned_lvs, pv_partitions, reused_volume_group)
+        # FIXME: it won't be needed in the future
+        reused = volume_group.reuse? ? volume_group : nil
+        lvm_creator.create_volumes(planned_lvs, pv_partitions, reused)
       end
 
       # Space that must be added to the final volume group in order to make
@@ -77,13 +73,11 @@ module Y2Storage
       # This method takes into account the size of the extents and all the
       # related roundings.
       #
-      # If there is a volume chosen to be reused (see {#reused_volume_group}),
+      # If there is a volume chosen to be reused (see {#volume_group}),
       # the method assumes all the space in that volume group can be reclaimed
       # for our purposes.
       def missing_space
         return DiskSize.zero if !planned_lvs || planned_lvs.empty?
-        return target_size unless reused_volume_group
-
         substract_reused_vg_size(target_size)
       end
 
@@ -93,24 +87,24 @@ module Y2Storage
       # This method takes into account the size of the extents and all the
       # related roundings.
       #
-      # If there is a volume chosen to be reused (see {#reused_volume_group}),
+      # If there is a volume chosen to be reused (see {#volume_group}),
       # the method assumes all the space in that volume group can be reclaimed
       # for our purposes.
       def max_extra_space
         return DiskSize.zero if !planned_lvs || planned_lvs.empty?
 
         max = DiskSize.sum(planned_lvs.map(&:max_size), rounding: extent_size)
-        return max if max.unlimited? || !reused_volume_group
+        return max if max.unlimited? || !volume_group.reuse?
 
         substract_reused_vg_size(max)
       end
 
       # Device names of the initial physical volumes of the volume group to be
-      # reused (see #reused_volume_group)
+      # reused (see #volume_group)
       #
       # @return [Array<String>]
       def partitions_in_vg
-        reused_volume_group ? reused_volume_group.pvs.map(&:name) : []
+        volume_group.pvs.map(&:name)
       end
 
       # Min size that a partition must have to be useful as PV for the proposal
@@ -180,7 +174,16 @@ module Y2Storage
       #
       #
       def reused_volume_group=(vg)
-        @reused_volume_group = vg.nil? ? nil : Y2Storage::Planned::LvmVg.from_real_vg(vg)
+        return @volume_group = nil if vg.nil?
+        @volume_group = Y2Storage::Planned::LvmVg.from_real_vg(vg)
+        @volume_group.lvs = planned_lvs
+        @volume_group
+      end
+
+      # @return [LvmVg] Volume group that will be reused to allocate
+      # the proposed volumes, deleting the existing logical volumes if necessary
+      def volume_group
+        @volume_group ||= Planned::LvmVg.new(lvs: planned_lvs)
       end
 
     protected
@@ -188,19 +191,15 @@ module Y2Storage
       attr_reader :planned_lvs
 
       def extent_size
-        if reused_volume_group
-          reused_volume_group.extent_size
-        else
-          DEFAULT_EXTENT_SIZE
-        end
+        volume_group.extent_size
       end
 
       def target_size
-        DiskSize.sum(planned_lvs.map(&:min_size), rounding: extent_size)
+        volume_group.target_size
       end
 
       def substract_reused_vg_size(size)
-        vg_size = reused_volume_group.total_size
+        vg_size = volume_group.total_size
         if vg_size < size
           size - vg_size
         else
