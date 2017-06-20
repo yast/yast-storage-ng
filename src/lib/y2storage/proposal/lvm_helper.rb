@@ -163,10 +163,10 @@ module Y2Storage
         return [] if encrypt?
 
         vgs = devicegraph.lvm_vgs
-        big_vgs, small_vgs = vgs.partition { |vg| total_size(vg) >= target_size }
+        big_vgs, small_vgs = vgs.partition { |vg| vg.total_size >= target_size }
         # Use #vg_name to ensure stable sorting
-        big_vgs.sort_by! { |vg| [total_size(vg), vg.vg_name] }
-        small_vgs.sort_by! { |vg| [total_size(vg), vg.vg_name] }
+        big_vgs.sort_by! { |vg| [vg.total_size, vg.vg_name] }
+        small_vgs.sort_by! { |vg| [vg.total_size, vg.vg_name] }
         small_vgs.reverse!
         big_vgs + small_vgs
       end
@@ -266,7 +266,7 @@ module Y2Storage
       #
       # @param volume_group [LvmVg] volume group to modify
       def create_logical_volumes!(volume_group)
-        vg_size = available_space(volume_group)
+        vg_size = volume_group.available_space
         lvs = Planned::LvmLv.distribute_space(planned_lvs, vg_size, rounding: extent_size)
         lvs.each do |lv|
           create_logical_volume(volume_group, lv)
@@ -294,20 +294,12 @@ module Y2Storage
       end
 
       def missing_vg_space(volume_group, target_space)
-        available = available_space(volume_group)
+        available = volume_group.available_space
         if available > target_space
           DiskSize.zero
         else
           target_space - available
         end
-      end
-
-      def available_space(volume_group)
-        volume_group.extent_size * volume_group.number_of_free_extents
-      end
-
-      def total_size(volume_group)
-        volume_group.extent_size * volume_group.number_of_extents
       end
 
       # Returns the name that is available taking original_name as a base. If
