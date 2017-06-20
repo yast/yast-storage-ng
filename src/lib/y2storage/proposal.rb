@@ -19,9 +19,11 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-# Namespace for all the utility classes used internally by the different kind
-# of proposals.
-module Proposal
+module Y2Storage
+  # Namespace for all the utility classes used internally by the different kind
+  # of proposals.
+  module Proposal
+  end
 end
 
 require "y2storage/proposal/devicegraph_generator"
