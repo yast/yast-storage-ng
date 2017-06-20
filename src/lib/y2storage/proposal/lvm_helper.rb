@@ -45,7 +45,7 @@ module Y2Storage
 
       # @return [LvmVg] Volume group that will be reused to allocate
       # the proposed volumes, deleting the existing logical volumes if necessary
-      attr_accessor :reused_volume_group
+      attr_reader :reused_volume_group
 
       # @!attribute encryption_password
       #   @return [String, nil] password used to encrypt the newly created
@@ -120,8 +120,7 @@ module Y2Storage
       #
       # @return [Array<String>]
       def partitions_in_vg
-        return [] unless reused_volume_group
-        reused_volume_group.lvm_pvs.map { |pv| pv.blk_device.name }
+        reused_volume_group ? reused_volume_group.pvs.map(&:name) : []
       end
 
       # Min size that a partition must have to be useful as PV for the proposal
@@ -187,13 +186,20 @@ module Y2Storage
         !encryption_password.nil?
       end
 
+      # Sets the VG to be reused
+      #
+      #
+      def reused_volume_group=(vg)
+        @reused_volume_group = vg.nil? ? nil : Y2Storage::Planned::LvmVg.from_real_vg(vg)
+      end
+
     protected
 
       attr_reader :planned_lvs
 
       def extent_size
         if reused_volume_group
-          DiskSize.new(reused_volume_group.extent_size)
+          reused_volume_group.extent_size
         else
           DEFAULT_EXTENT_SIZE
         end
@@ -204,7 +210,7 @@ module Y2Storage
       end
 
       def substract_reused_vg_size(size)
-        vg_size = total_size(reused_volume_group)
+        vg_size = reused_volume_group.total_size
         if vg_size < size
           size - vg_size
         else

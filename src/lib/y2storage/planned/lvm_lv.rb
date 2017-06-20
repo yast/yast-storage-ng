@@ -40,6 +40,15 @@ module Y2Storage
       # @return [String] name to use for Y2Storage::LvmLv#lv_name
       attr_accessor :logical_volume_name
 
+      # Builds a new object based on a real LvmLv one
+      #
+      # Copies original attributesko
+      def self.from_real_lv(real_lv)
+        new(real_lv.filesystem_mountpoint, real_lv.filesystem_type).tap do |lv|
+          lv.logical_volume_name = real_lv.lv_name
+        end
+      end
+
       # Constructor.
       #
       # @param mount_point [string] See {CanBeMounted#mount_point}
