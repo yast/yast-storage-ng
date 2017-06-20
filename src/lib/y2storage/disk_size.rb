@@ -609,36 +609,48 @@ module Y2Storage
     # @example
     #   x = DiskSize.KB(1)   #=> <DiskSize 0.98 KiB (1000)>
     #   x.to_human_string    #=> "0.98 KiB"
-    def to_human_string
+    def to_human_string(round_method = :round)
       return "unlimited" if unlimited?
-      size, unit = human_string_components
-      format("%.2f %s", size, unit)
+      float, unit_s = human_string_components
+      rounded = (float * 100).public_send(round_method) / 100.0
+      # A plain "#{rounded} #{unit_s}" would not keep trailing zeros
+      format("%.2f %s", rounded, unit_s)
     end
 
-    # A human readable representation that does not exceed the exact size.
+    # A human readable string that does not exceed the exact size.
     #
-    # If we have 4.999 GiB of space and prefill the "Size" widget
-    # with a "5.00 GiB" it will then fail validation. We must round down.
+    # If we have 4.999 GiB of space, and ask the user how much of that
+    # should be used, prefilling the "Size" widget with the maximum
+    # rounded up to "5.00 GiB" it will then fail validation.
+    # We must round down.
+    #
+    # @return [String]
+    #
+    # @example
+    #   x = DiskSize.new(4095)  #=> <DiskSize 4.00 KiB (4095)>
+    #   x.to_human_string       #=> "4.00 KiB"
+    #   x.human_floor           #=> "3.99 KiB"
     #
     # @see to_human_string
     # @see human_ceil
     def human_floor
-      return "unlimited" if unlimited?
-      float, unit_s = human_string_components
-      "#{(float * 100).floor / 100.0} #{unit_s}"
+      to_human_string(:floor)
     end
 
     # A human readable representation that is at least the exact size.
     #
     # (This seems unnecessary because actual minimum sizes
-    # have few significant digits, but we use it for symmetry)
+    # have few significant digits, but we provide it for symmetry)
+    #
+    # @example
+    #   x = DiskSize.new(4097)  #=> <DiskSize 4.00 KiB (4097)>
+    #   x.to_human_string       #=> "4.00 KiB"
+    #   x.human_ceil            #=> "4.01 KiB"
     #
     # @see to_human_string
     # @see human_floor
     def human_ceil
-      return "unlimited" if unlimited?
-      float, unit_s = human_string_components
-      "#{(float * 100).ceil / 100.0} #{unit_s}"
+      to_human_string(:ceil)
     end
 
     # Exact value + human readable in parentheses (if the latter makes sense).
