@@ -74,11 +74,17 @@ module Y2Storage
         xfs:      {
           name: "XFS"
         },
-        iso9669:  {
+        iso9660:  {
           name: "ISO9660"
         },
         udf:      {
           name: "UDF"
+        },
+        nfs:      {
+          name: "NFS"
+        },
+        nfs4:     {
+          name: "NFS4"
         }
       }
 

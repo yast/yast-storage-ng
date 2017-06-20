@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Tue Jun 20 09:20:55 UTC 2017 - knut.anderssen@suse.com
+
+- Fixed typo in Y2Storage::Filesystems::Type
+- 0.1.21
+
+-------------------------------------------------------------------
 Mon Jun 19 08:33:19 UTC 2017 - igonzalezsosa@suse.com
 
 - AutoinstProposal is loaded with the rest of the proposal
