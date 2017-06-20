@@ -22,7 +22,6 @@
 require "y2storage/planned/partition"
 require "y2storage/planned/lvm_lv"
 require "y2storage/planned/lvm_vg"
-require "y2storage/planned/lvm_pv"
 require "y2storage/planned/btrfs_subvolume"
 require "y2storage/planned/assigned_space"
 require "y2storage/planned/partitions_distribution"

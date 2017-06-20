@@ -103,7 +103,7 @@ module Y2Storage
       #
       # @return [Array<String>]
       def partitions_in_vg
-        volume_group.pvs.map(&:name)
+        volume_group.pvs
       end
 
       # Min size that a partition must have to be useful as PV for the proposal

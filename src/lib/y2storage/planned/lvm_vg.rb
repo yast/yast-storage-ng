@@ -55,6 +55,7 @@ module Y2Storage
       attr_writer :total_size
 
       # @return [Fixnum] Internal storage id
+      # FIXME: is it really needed?
       attr_accessor :sid
 
       # Builds a new instance based on a real VG
@@ -67,7 +68,7 @@ module Y2Storage
         new(volume_group_name: real_vg.vg_name).tap do |vg|
           vg.extent_size = real_vg.extent_size
           vg.total_size = real_vg.total_size
-          vg.pvs = real_vg.lvm_pvs.map { |v| LvmPv.from_real_pv(v) }
+          vg.pvs = real_vg.lvm_pvs.map { |v| v.blk_device.name }
           vg.lvs = real_vg.lvm_lvs.map { |v| LvmLv.from_real_lv(v) }
           vg.sid = real_vg.sid
           vg.reuse = real_vg.vg_name

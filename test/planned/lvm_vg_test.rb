@@ -59,7 +59,7 @@ describe Y2Storage::Planned::LvmVg do
     end
 
     it "sets pvs" do
-      expect(planned_vg.pvs.map(&:name)).to eq(["/dev/sda7"])
+      expect(planned_vg.pvs).to eq(["/dev/sda7"])
     end
 
     it "sets lvs" do
