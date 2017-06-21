@@ -60,6 +60,17 @@ module Y2Storage
     #   @return [Fixnum] position of the last sector of the region
     storage_forward :end
 
+    # @return [DiskSize] {#block_size} * {#length}
+    def size
+      block_size * length
+    end
+
+    # @param sector [Fixnum] disk sector number
+    # @return [Boolean] is *sector* inside the region?
+    def cover?(sector)
+      start <= sector && sector <= self.end
+    end
+
     # @!method adjust_start(delta)
     #   Moves the region by adding "delta" sectors to the start
     #

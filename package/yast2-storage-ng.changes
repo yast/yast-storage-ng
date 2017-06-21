@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Mon Jun 19 12:30:46 UTC 2017 - mvidner@suse.com
+
+- Added Y2Storage::DiskSize#human_floor, Y2Storage::Region#size
+- 0.1.21
+
+-------------------------------------------------------------------
 Mon Jun 19 08:33:19 UTC 2017 - igonzalezsosa@suse.com
 
 - AutoinstProposal is loaded with the rest of the proposal

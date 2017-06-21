@@ -604,15 +604,58 @@ module Y2Storage
     # Human-readable string. That is, represented in the biggest unit ("MiB",
     # "GiB", ...) that makes sense, even if it means losing some precision.
     #
+    # *rounding_method*:
+    #
+    # - `:round` - the default
+    #
+    # - `:floor` (available as {#human_floor}) -
+    # If we have 4.999 GiB of space, and ask the user how much of that
+    # should be used, prefilling the "Size" widget with the maximum
+    # rounded up to "5.00 GiB" it will then fail validation
+    # (checking that the entered value fits in the available space)
+    # We must round down.
+    #
+    # - `:ceil` (available as {#human_ceil}) -
+    # (This seems unnecessary because actual minimum sizes
+    # have few significant digits, but we provide it for symmetry)
+    #
+    # @param rounding_method [:round,:floor,:ceil] how to round
     # @return [String]
     #
     # @example
     #   x = DiskSize.KB(1)   #=> <DiskSize 0.98 KiB (1000)>
     #   x.to_human_string    #=> "0.98 KiB"
-    def to_human_string
+    #
+    #   smaller = DiskSize.new(4095)  #=> <DiskSize 4.00 KiB (4095)>
+    #   smaller.to_human_string       #=> "4.00 KiB"
+    #   smaller.human_floor           #=> "3.99 KiB"
+    #
+    #   larger = DiskSize.new(4097)   #=> <DiskSize 4.00 KiB (4097)>
+    #   larger.to_human_string        #=> "4.00 KiB"
+    #   larger.human_ceil             #=> "4.01 KiB"
+    #
+    # @see human_floor
+    # @see human_ceil
+    def to_human_string(rounding_method: :round)
       return "unlimited" if unlimited?
-      size, unit = human_string_components
-      format("%.2f %s", size, unit)
+      float, unit_s = human_string_components
+      rounded = (float * 100).public_send(rounding_method) / 100.0
+      # A plain "#{rounded} #{unit_s}" would not keep trailing zeros
+      format("%.2f %s", rounded, unit_s)
+    end
+
+    # to_human_string(rounding_method: :floor)
+    # @return [String]
+    # @see to_human_string
+    def human_floor
+      to_human_string(rounding_method: :floor)
+    end
+
+    # to_human_string(rounding_method: :ceil)
+    # @return [String]
+    # @see to_human_string
+    def human_ceil
+      to_human_string(rounding_method: :ceil)
     end
 
     # Exact value + human readable in parentheses (if the latter makes sense).

@@ -70,4 +70,36 @@ describe Y2Storage::Region do
       end
     end
   end
+
+  describe "#inspect" do
+    it "produces an informative String" do
+      expect(subject.inspect)
+        .to eq "<Region range: 100 - 1099, block_size: 1 KiB>"
+    end
+  end
+
+  describe "#size" do
+    it "calculates the DiskSize of the region" do
+      expect(subject.size).to be_a Y2Storage::DiskSize
+      expect(subject.size.to_i).to eq 1_024_000
+    end
+  end
+
+  describe "#cover?" do
+    it "returns false for the last sector outside" do
+      expect(subject.cover?(99)).to eq false
+    end
+    it "returns true for the first sector inside" do
+      expect(subject.cover?(100)).to eq true
+    end
+    it "returns true for a sector inside" do
+      expect(subject.cover?(500)).to eq true
+    end
+    it "returns true for the last sector inside" do
+      expect(subject.cover?(1099)).to eq true
+    end
+    it "returns false for the first sector outside" do
+      expect(subject.cover?(1100)).to eq false
+    end
+  end
 end
