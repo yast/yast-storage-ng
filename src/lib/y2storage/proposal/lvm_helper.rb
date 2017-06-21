@@ -169,9 +169,15 @@ module Y2Storage
         !encryption_password.nil?
       end
 
-      # Sets the VG to be reused
+      # Sets the volume group to be reused
       #
+      # Setting vg to nil means that no volume group will be reused.
       #
+      # @param vg [LvmVg,nil] Volume group to reuse
+      # @return [Planned::LvmVg,nil] Planned volume group which reuses the real one;
+      #   nil when no volume group will be reused.
+      #
+      # @see volume_group
       def reused_volume_group=(vg)
         return @volume_group = nil if vg.nil?
         @volume_group = Y2Storage::Planned::LvmVg.from_real_vg(vg)
@@ -179,8 +185,13 @@ module Y2Storage
         @volume_group
       end
 
-      # @return [LvmVg] Volume group that will be reused to allocate
-      # the proposed volumes, deleting the existing logical volumes if necessary
+      # Returns the planned volume group
+      #
+      # If no volume group is set (see {#reused_volume_group}), it will create
+      # a new one adding planned logical volumes ({#initialize}).
+      #
+      # @return [Planned::LvmVg] Volume group that will be reused to allocate
+      #   the proposed volumes, deleting the existing logical volumes if necessary
       def volume_group
         @volume_group ||= Planned::LvmVg.new(lvs: planned_lvs)
       end

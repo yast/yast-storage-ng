@@ -54,14 +54,10 @@ module Y2Storage
       # @return [DiskSize] Total size of the volume group
       attr_writer :total_size
 
-      # @return [Fixnum] Internal storage id
-      # FIXME: is it really needed?
-      attr_accessor :sid
-
       # Builds a new instance based on a real VG
       #
       # It copies information from the real VG to make sure it is available
-      # even if that real object disappears.
+      # even if the real object disappears.
       #
       # @return [LvmVg] Volume group to base on
       def self.from_real_vg(real_vg)
@@ -70,32 +66,47 @@ module Y2Storage
           vg.total_size = real_vg.total_size
           vg.pvs = real_vg.lvm_pvs.map { |v| v.blk_device.name }
           vg.lvs = real_vg.lvm_lvs.map { |v| LvmLv.from_real_lv(v) }
-          vg.sid = real_vg.sid
           vg.reuse = real_vg.vg_name
         end
       end
 
-      def initialize(volume_group_name: nil, lvs: [])
+      # Constructor
+      #
+      # @param volume_group_name [String] Name of the volume group
+      # @param lvs               [Array<Planned::LvmLv>] List of planned logical volumes
+      # @param pvs               [Array<String>] Name of partitions to be used as physical volumes
+      def initialize(volume_group_name: nil, lvs: [], pvs: [])
         initialize_has_size
         @volume_group_name = volume_group_name || DEFAULT_VG_NAME
         @lvs = lvs
-        @pvs = []
+        @pvs = pvs
       end
 
+      # Returns the size of each extent
+      #
+      # @return [DiskSize]
       def extent_size
         @extent_size ||= DEFAULT_EXTENT_SIZE
       end
 
+      # Determines the space needed to acommodate this volume group
+      #
+      # @return [DiskSize]
       def target_size
         DiskSize.sum(lvs.map(&:min_size), rounding: extent_size)
       end
 
+      # Determines the space currently used by the volume group
+      #
+      # It will be DiskSize.zero if it does not exist yet.
+      #
+      # @return [DiskSize]
       def total_size
         @total_size ||= DiskSize.zero
       end
 
       def self.to_string_attrs
-        [:reuse, :min_size, :max_size, :volume_group_name]
+        [:reuse, :volume_group_name]
       end
     end
   end

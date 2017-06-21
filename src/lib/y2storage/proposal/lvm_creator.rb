@@ -2,7 +2,7 @@
 #
 # encoding: utf-8
 
-# Copyright (c) [2015] SUSE LLC
+# Copyright (c) [2017] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -26,30 +26,35 @@ require "y2storage/disk_size"
 
 module Y2Storage
   module Proposal
+    # Class to create LVM volume groups and logical volumes following a
+    # Planned::LvmVg object
     class LvmCreator
       include Yast::Logger
 
+      # Default name for volume groups
       DEFAULT_VG_NAME = "system".freeze
+      # Default name for logical volumes
       DEFAULT_LV_NAME = "lv".freeze
 
       private_constant :DEFAULT_VG_NAME, :DEFAULT_LV_NAME
 
+      # @return [Devicegraph] initial devicegraph
       attr_reader :original_devicegraph
 
       # Constructor
       #
-      # @param original_devicegrpah [Devicegraph] Initial devicegraph
+      # @param original_devicegraph [Devicegraph] Initial devicegraph
       def initialize(original_devicegraph)
         @original_devicegraph = original_devicegraph
       end
 
-      # Returns a copy of the original devicegraph in which all the logical
-      # volumes (and the volume group, if needed) have been created.
+      # Returns a copy of the original devicegraph in which the volume
+      # group (and its logical volumes, if needed) have been created.
       #
-      # @param planned_lvs
+      # @param planned_vg [Planned::LvmVg]   Volume group to create
       # @param pv_partitions [Array<String>] names of the newly created
       #     partitions that should be added as PVs to the volume group
-      # @return [Devicegraph]
+      # @return [Devicegraph] New devicegraph containing the planned volume group
       def create_volumes(planned_vg, pv_partitions = [])
         new_graph = original_devicegraph.duplicate
         return new_graph if planned_vg.lvs.empty?
@@ -65,10 +70,21 @@ module Y2Storage
 
     private
 
+      # Find a volume group to be reused
+      #
+      # @param planned_vg  [Planned::LvmVg] Planned volume group marked as 'reused'
+      # @param devicegraph [Devicegraph]    Devicegraph to find the real volume group
+      # @return [LvmVg] Volume group to be reused
       def find_vg(planned_vg, devicegraph)
-        devicegraph.lvm_vgs.detect { |vg| vg.vg_name == planned_vg.reuse }
+        devicegraph.lvm_vgs.find { |vg| vg.vg_name == planned_vg.reuse }
       end
 
+      # Create a volume group in a devicegraph
+      #
+      # The volume group will be DEFAULT_VG_NAME.
+      #
+      # @param devicegraph [Devicegraph] Starting point
+      # @return [Devicegraph] New devicegraph containing the new volume group
       def create_volume_group(devicegraph)
         name = available_name(DEFAULT_VG_NAME, devicegraph)
         LvmVg.create(devicegraph, name)
@@ -126,6 +142,13 @@ module Y2Storage
         end
       end
 
+      # Creates a logical volume in a volume group
+      #
+      # This method modifies the volum group received as first argument.
+      #
+      # @param volume_group [LvmVg] Volume group
+      # @param planned_lv   [Planned::LvmLv] Planned logical volume to be used as reference
+      #   for the new one
       def create_logical_volume(volume_group, planned_lv)
         name = planned_lv.logical_volume_name || DEFAULT_LV_NAME
         name = available_name(name, volume_group)
@@ -146,6 +169,10 @@ module Y2Storage
         end
       end
 
+      # Missing space in the volume group to fullfil a target
+      #
+      # @param volume_group [LvmVg]    Volume group
+      # @param target_space [DiskSize] Required space
       def missing_vg_space(volume_group, target_space)
         available = volume_group.available_space
         if available > target_space
@@ -176,6 +203,14 @@ module Y2Storage
         name
       end
 
+      # Determines whether a name for a LV or a VG is already taken
+      #
+      # If a Devicegraph is given as {root}, it will search for a volume group
+      # named like {name}. On the other hand, it will assume that the {root}
+      # is a LvmVg and it will search for a volume group.
+      #
+      # @param name [String]      Name to check
+      # @param root [Devicegraph,LvmVg] Scope to search for the name
       def name_taken?(name, root)
         if root.is_a? Devicegraph
           root.lvm_vgs.any? { |vg| vg.vg_name == name }

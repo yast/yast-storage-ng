@@ -50,10 +50,6 @@ describe Y2Storage::Planned::LvmVg do
       expect(planned_vg.total_size).to eq(vg0.total_size)
     end
 
-    it "sets sid" do
-      expect(planned_vg.sid).to eq(vg0.sid)
-    end
-
     it "sets reuse" do
       expect(planned_vg.reuse).to eq(vg0.vg_name)
     end
