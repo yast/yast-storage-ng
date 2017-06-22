@@ -46,13 +46,16 @@ module Y2Storage
       #   @see #each_pair
       def_delegators :@drives, :each, :each_pair
 
+      # CT_MD is not supported yet
+      SUPPORTED_TYPES = [:CT_DISK, :CT_LVM].freeze
+
       # Constructor
       #
       # @param devicegraph  [Devicegraph] Devicegraph where the disks are contained
       # @param partitioning [Array<Hash>] Partitioning layout from an AutoYaST profile
       def initialize(devicegraph, partitioning)
         # By now, consider only regular disks
-        disks = partitioning.select { |i| i.fetch("type", :CT_DISK) == :CT_DISK }
+        disks = partitioning.select { |i| SUPPORTED_TYPES.include?(i.fetch("type", :CT_DISK)) }
 
         # First, assign fixed drives
         fixed_drives, flexible_drives = disks.partition { |i| i["device"] && !i["device"].empty? }
