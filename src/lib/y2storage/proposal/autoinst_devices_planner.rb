@@ -52,8 +52,14 @@ module Y2Storage
 
         drives_map.each_pair do |disk_name, drive_spec|
           disk = Disk.find_by_name(devicegraph, disk_name)
-          result.concat(planned_for_disk(disk, drive_spec))
+          if drive_spec.fetch("type", :CT_DISK).to_sym == :CT_DISK
+            result.concat(planned_for_disk(disk, drive_spec))
+          else
+            result << planned_for_vg(disk, drive_spec)
+          end
         end
+
+        # assign_pvs!(drives_map, result.select { |d| d.is_a?(Y2Storage::Planned::LvmVg) })
 
         checker = BootRequirementsChecker.new(devicegraph, planned_devices: result)
         result.concat(checker.needed_partitions)
@@ -63,12 +69,40 @@ module Y2Storage
 
     protected
 
+      # TODO: reusing vgs, lvs
+      # FIXME: sizes_for
+      def planned_for_vg(disk, spec)
+        vg = Y2Storage::Planned::LvmVg.new(volume_group_name: File.basename(spec["device"]))
+
+        spec.fetch("partitions", []).each_with_object(vg.lvs) do |lv_spec, memo|
+          # TODO: keep_unknown_lv
+          lv = Y2Storage::Planned::LvmLv.new(lv_spec["mount"], filesystem_for(lv_spec["filesystem"]))
+          lv.logical_volume_name = lv_spec["lv_name"]
+          if lv_spec["crypt_fs"]
+            lv.encryption_password = lv_spec["crypt_key"]
+          end
+
+          number, unit = size_to_components(lv_spec["size"])
+          if unit == "%"
+            lv.percent_size = number
+          else
+            # FIXME: create a different sizes_for or something like that
+            lv.min_size, lv.max_size = sizes_for(lv_spec, vg.extent_size, DiskSize.unlimited)
+          end
+          lv.label = lv_spec["label"]
+          lv.uuid = lv_spec["uuid"]
+          memo << lv
+        end
+        vg
+      end
+
       # @return [Devicegraph] Starting devicegraph
       attr_reader :devicegraph
 
       # Returns an array of planned partitions for a given disk
       #
       # @param disk         [Disk] Disk to place the partitions on
+      # FIXME: I should consider passing only the disk name (and not the whole object)
       # @param partitioning [Hash] Partitioning specification from AutoYaST
       # @return [Array<Planned::Partition>] List of planned partitions
       def planned_for_disk(disk, spec)
@@ -77,9 +111,13 @@ module Y2Storage
           # TODO: fix Planned::Partition.initialize
           partition = Y2Storage::Planned::Partition.new(nil, nil)
           partition.disk = disk.name
+          partition.lvm_volume_group_name = partition_spec["lvm_group"]
           # TODO: partition.bootable is not in the AutoYaST profile. Check if
           # there's some logic to set it in the old code.
-          partition.filesystem_type = filesystem_for(partition_spec["filesystem"])
+          if partition_spec["filesystem"]
+            partition.filesystem_type = filesystem_for(partition_spec["filesystem"])
+          end
+
           # TODO: set the correct id based on the filesystem type (move to Partition class?)
           partition.partition_id = 131
           if partition_spec["crypt_fs"]
@@ -100,7 +138,7 @@ module Y2Storage
           end
 
           # Sizes: leave out reducing fixed sizes and 'auto'
-          min_size, max_size = sizes_for(partition_spec, disk)
+          min_size, max_size = sizes_for(partition_spec, disk.min_grain, disk.size)
           partition.min_size = min_size
           partition.max_size = max_size
           result << partition
@@ -115,26 +153,34 @@ module Y2Storage
 
       # Returns min and max sizes for a partition specification
       #
-      # @param description [Hash] Partition specification from AutoYaST
+      # @param description [Hash]     Partition specification from AutoYaST
+      # @param min         [DiskSize]
+      # @param max         [DiskSize]
       # @return [[DiskSize,DiskSize]] min and max sizes for the given partition
       #
       # @see SIZE_REGEXP
-      def sizes_for(part_spec, disk)
+      def sizes_for(part_spec, min, max)
         normalized_size = part_spec["size"].to_s.strip.downcase
 
         if normalized_size == "max" || normalized_size.empty?
-          return [disk.min_grain, DiskSize.unlimited]
+          return [min, DiskSize.unlimited]
         end
 
         number, unit = SIZE_REGEXP.match(normalized_size).values_at(1, 2)
         size =
           if unit == "%"
             percent = number.to_f
-            (disk.size * percent) / 100.0
+            (max * percent) / 100.0
           else
             DiskSize.parse(part_spec["size"], legacy_units: true)
           end
         [size, size]
+      end
+
+      def size_to_components(size)
+        normalized_size = size.to_s.strip.downcase
+        number, unit = SIZE_REGEXP.match(normalized_size).values_at(1, 2)
+        [number.to_i, unit]
       end
 
       # @param type [String,Symbol] Filesystem type name

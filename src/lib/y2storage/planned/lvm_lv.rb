@@ -40,13 +40,16 @@ module Y2Storage
       # @return [String] name to use for Y2Storage::LvmLv#lv_name
       attr_accessor :logical_volume_name
 
+      # @return [Fixnum] percentage of the volume group size to be used for
+      #   this LV
+      attr_accessor :percent_size
+
       # Builds a new object based on a real LvmLv one
       #
       # The new instance represents the intention to reuse the real LV, so the
       # #reuse method will be set accordingly. On the other hand, it copies
       # information from the real LV to make sure it is available even if the
       # real object disappears.
-      #
       #
       # @param real_vg [Y2Storage::LvmVg] Logical volume group to get the values from
       # @return [LvmLv] New LvmLv instance based on real_lv

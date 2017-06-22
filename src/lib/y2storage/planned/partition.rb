@@ -60,6 +60,9 @@ module Y2Storage
       #   flag but is not needed in our grub2 setup.
       attr_accessor :bootable
 
+      # @return [String]
+      attr_accessor :lvm_volume_group_name
+
       # Constructor.
       #
       # @param mount_point [string] See {#mount_point}

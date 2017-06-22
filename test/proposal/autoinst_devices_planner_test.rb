@@ -25,6 +25,8 @@ require_relative "../spec_helper"
 require "y2storage/proposal/autoinst_devices_planner"
 
 describe Y2Storage::Proposal::AutoinstDevicesPlanner do
+  using Y2Storage::Refinements::SizeCasts
+
   subject(:planner) { described_class.new(fake_devicegraph) }
 
   let(:scenario) { "windows-linux-free-pc" }
@@ -151,6 +153,58 @@ describe Y2Storage::Proposal::AutoinstDevicesPlanner do
         devices = planner.planned_devices(drives_map)
         root = devices.find { |d| d.mount_point == "/" }
         expect(root.encryption_password).to eq("secret")
+      end
+    end
+
+    context "using LVM" do
+      let(:partitioning) do
+        [
+          { "device" => "/dev/sda", "partitions" => [lvm_pv] },
+          { "device" => "/dev/system", "partitions" => [root_spec], "type" => :CT_LVM }
+        ]
+      end
+
+      let(:lvm_pv) do
+        { "create" => true, "lvm_group" => "system", "size" => "max", "type" => :CT_LVM }
+      end
+
+      let(:lvm_spec) do
+        { "is_lvm_vg" => true, "partitions" => [root_spec] }
+      end
+
+      let(:root_spec) do
+        {
+          "mount" => "/", "filesystem" => "ext4", "lv_name" => "root", "size" => "20G",
+          "label" => "rootfs"
+        }
+      end
+
+      it "returns volume group and logical volumes" do
+        pv, vg = planner.planned_devices(drives_map)
+        expect(pv).to be_a(Y2Storage::Planned::Partition)
+        expect(vg).to be_a(Y2Storage::Planned::LvmVg)
+        expect(vg.lvs).to contain_exactly(
+          an_object_having_attributes(
+            "logical_volume_name" => "root",
+            "mount_point" => "/",
+            "reuse" => nil,
+            "min_size" => 20.GiB,
+            "max_size" => 20.GiB,
+            "label" => "rootfs"
+          )
+        )
+      end
+
+      context "specifying the size with percentages" do
+        let(:root_spec) do
+          { "mount" => "/", "filesystem" => "ext4", "lv_name" => "root", "size" => "50%" }
+        end
+
+        it "sets the 'percent_size' value" do
+          _pv, vg = planner.planned_devices(drives_map)
+          root_lv = vg.lvs.first
+          expect(root_lv).to have_attributes("percent_size" => 50)
+        end
       end
     end
   end
