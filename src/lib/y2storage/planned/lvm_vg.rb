@@ -45,29 +45,25 @@ module Y2Storage
       # @return [Array<Planned::LvmLv>] List of logical volumes
       attr_accessor :lvs
 
-      # @return [Array<Planned::Device>] List of physical volumes
+      # @return [Array<String>] Name of partitions to be used as physical volumes
       attr_accessor :pvs
 
       # @return [DiskSize] Size of one extent
       attr_accessor :extent_size
 
-      # @return [DiskSize] Total size of the volume group
-      attr_writer :total_size
-
       # Builds a new instance based on a real VG
       #
-      # It copies information from the real VG to make sure it is available
-      # even if the real object disappears.
+      # The new instance represents the intention to reuse the real VG, so the
+      # #reuse method will be set accordingly. On the other hand, it copies
+      # information from the real VG to make sure it is available even if the
+      # real_vg object disappears.
       #
-      # @return [LvmVg] Volume group to base on
+      # @param real_vg [Y2Storage::LvmVg] Volume group to base on
+      # @return [LvmVg] New LvmVg instance based on real_vg
       def self.from_real_vg(real_vg)
-        new(volume_group_name: real_vg.vg_name).tap do |vg|
-          vg.extent_size = real_vg.extent_size
-          vg.total_size = real_vg.total_size
-          vg.pvs = real_vg.lvm_pvs.map { |v| v.blk_device.name }
-          vg.lvs = real_vg.lvm_lvs.map { |v| LvmLv.from_real_lv(v) }
-          vg.reuse = real_vg.vg_name
-        end
+        vg = new(volume_group_name: real_vg.vg_name)
+        vg.initialize_from_real_vg(real_vg)
+        vg
       end
 
       # Constructor
@@ -77,9 +73,20 @@ module Y2Storage
       # @param pvs               [Array<String>] Name of partitions to be used as physical volumes
       def initialize(volume_group_name: nil, lvs: [], pvs: [])
         initialize_has_size
-        @volume_group_name = volume_group_name || DEFAULT_VG_NAME
+        @volume_group_name = volume_group_name
         @lvs = lvs
         @pvs = pvs
+      end
+
+      # Initializes the object taking the values from a real volume group
+      #
+      # @param real_vg [Y2Storage::LvmVg] Real volume group
+      def initialize_from_real_vg(real_vg)
+        @extent_size = real_vg.extent_size
+        @total_size = real_vg.total_size
+        @pvs = real_vg.lvm_pvs.map { |v| v.blk_device.name }
+        @lvs = real_vg.lvm_lvs.map { |v| LvmLv.from_real_lv(v) }
+        self.reuse = real_vg.vg_name
       end
 
       # Returns the size of each extent

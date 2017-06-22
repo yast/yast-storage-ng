@@ -62,7 +62,6 @@ module Y2Storage
       # @return [Devicegraph]
       def create_volumes(original_graph, pv_partitions = [])
         lvm_creator = LvmCreator.new(original_graph)
-        # FIXME: it won't be needed in the future
         lvm_creator.create_volumes(volume_group, pv_partitions)
       end
 
