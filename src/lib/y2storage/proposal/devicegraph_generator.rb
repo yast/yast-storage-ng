@@ -169,7 +169,8 @@ module Y2Storage
       # @return [Devicegraph]
       def create_partitions(distribution, initial_graph)
         partition_creator = PartitionCreator.new(initial_graph)
-        partition_creator.create_partitions(distribution)
+        result = partition_creator.create_partitions(distribution)
+        result.devicegraph
       end
 
       # Adjusts pre-existing (not created by us) partitions assigning its

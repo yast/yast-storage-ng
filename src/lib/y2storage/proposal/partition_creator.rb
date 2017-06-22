@@ -27,6 +27,16 @@ require "y2storage/disk_size"
 
 module Y2Storage
   module Proposal
+    # Partition creation result
+    #
+    # @!method devicegraph
+    # @return[Devicegraph] Devicegraph containing the new devices
+    #
+    # @!method devices_map
+    # @return[Hash<String,Planned::Partition>] Planned partitions indexed by the
+    #   device name where they were placed.
+    PartitionCreationResult = Struct.new(:devicegraph, :devices_map)
+
     # Class to create partitions following a given distribution represented by
     # a Planned::PartitionsDistribution object
     class PartitionCreator
@@ -49,11 +59,14 @@ module Y2Storage
       def create_partitions(distribution)
         self.devicegraph = original_graph.duplicate
 
-        distribution.spaces.each do |space|
-          process_free_space(space.disk_space, space.partitions, space.usable_size, space.num_logical)
+        devices_map = distribution.spaces.reduce({}) do |devices, space|
+          new_devices = process_free_space(
+            space.disk_space, space.partitions, space.usable_size, space.num_logical
+          )
+          devices.merge(new_devices)
         end
 
-        devicegraph
+        PartitionCreationResult.new(devicegraph, devices_map)
       end
 
     private
@@ -93,17 +106,20 @@ module Y2Storage
       # @param initial_free_space [FreeDiskSpace]
       # @param num_logical [Symbol] logical partitions. See {#process_space}
       def create_planned_partitions(planned_partitions, initial_free_space, num_logical)
+        devices_map = {}
         planned_partitions.each_with_index do |part, idx|
           begin
             space = free_space_within(initial_free_space)
             primary = planned_partitions.size - idx > num_logical
             partition = create_partition(part, space, primary)
             part.format!(partition)
+            devices_map[partition.name] = part
             devicegraph.check
           rescue ::Storage::Exception => error
             raise Error, "Error allocating #{part}. Details: #{error}"
           end
         end
+        devices_map
       end
 
       # Finds the remaining free space within the scope of the disk chunk

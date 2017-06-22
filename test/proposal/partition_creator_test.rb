@@ -46,17 +46,17 @@ describe Y2Storage::Proposal::PartitionCreator do
 
     let(:scenario) { "spaces_3_8_two_disks" }
 
-    it "creates the partitions honouring the distribution" do
+    let(:distribution) do
       space3 = disk_spaces.detect { |s| s.disk_size == (3.GiB - 1.MiB) }
       space8 = disk_spaces.detect { |s| s.disk_size == (8.GiB - 1.MiB) }
-      distribution = space_dist(
-        space3 => [root_vol, home_vol],
-        space8 => [swap_vol]
-      )
+      space_dist(space3 => [root_vol, home_vol], space8 => [swap_vol])
+    end
 
+    it "creates the partitions honouring the distribution" do
       result = creator.create_partitions(distribution)
-      sda = result.disks.detect { |d| d.name == "/dev/sda" }
-      sdb = result.disks.detect { |d| d.name == "/dev/sdb" }
+      devicegraph = result.devicegraph
+      sda = devicegraph.disks.detect { |d| d.name == "/dev/sda" }
+      sdb = devicegraph.disks.detect { |d| d.name == "/dev/sdb" }
 
       expect(sda.partitions).to contain_exactly(
         an_object_having_attributes(filesystem_mountpoint: "/"),
@@ -67,6 +67,14 @@ describe Y2Storage::Proposal::PartitionCreator do
         an_object_having_attributes(filesystem_mountpoint: "swap"),
         an_object_having_attributes(filesystem_mountpoint: nil)
       )
+    end
+
+    it "includes a devices map in the device" do
+      result = creator.create_partitions(distribution)
+      devices_map = result.devices_map
+      expect(devices_map["/dev/sda2"].mount_point).to eq("/")
+      expect(devices_map["/dev/sda3"].mount_point).to eq("/home")
+      expect(devices_map["/dev/sda2"].mount_point).to eq("/")
     end
 
     context "when filling a space with several partitions" do
@@ -84,7 +92,7 @@ describe Y2Storage::Proposal::PartitionCreator do
 
         it "creates partitions matching the volume sizes" do
           result = creator.create_partitions(distribution)
-          expect(result.partitions).to contain_exactly(
+          expect(result.devicegraph.partitions).to contain_exactly(
             an_object_having_attributes(filesystem_mountpoint: "/", size: 20.GiB),
             an_object_having_attributes(filesystem_mountpoint: "/home", size: 20.GiB),
             an_object_having_attributes(filesystem_mountpoint: "swap", size: 10.GiB - 1.MiB)
@@ -105,7 +113,7 @@ describe Y2Storage::Proposal::PartitionCreator do
 
         it "distributes the extra space" do
           result = creator.create_partitions(distribution)
-          expect(result.partitions).to contain_exactly(
+          expect(result.devicegraph.partitions).to contain_exactly(
             an_object_having_attributes(filesystem_mountpoint: "/", size: 23.GiB),
             an_object_having_attributes(filesystem_mountpoint: "/home", size: 26.GiB),
             an_object_having_attributes(filesystem_mountpoint: "swap", size: 1.GiB - 1.MiB)
@@ -122,7 +130,7 @@ describe Y2Storage::Proposal::PartitionCreator do
           # partition couldn't be created
           it "does not exhaust the space" do
             result = creator.create_partitions(distribution)
-            expect(result.partitions).to contain_exactly(
+            expect(result.devicegraph.partitions).to contain_exactly(
               an_object_having_attributes(filesystem_mountpoint: "/"),
               an_object_having_attributes(filesystem_mountpoint: "/home"),
               an_object_having_attributes(filesystem_mountpoint: "swap")
@@ -131,7 +139,7 @@ describe Y2Storage::Proposal::PartitionCreator do
 
           it "grows the small partition until the end of the slot" do
             result = creator.create_partitions(distribution)
-            partition = result.partitions.detect { |p| p.id.is?(:swap) }
+            partition = result.devicegraph.partitions.detect { |p| p.id.is?(:swap) }
             expect(partition.size).to eq 1.MiB
           end
         end
@@ -148,7 +156,7 @@ describe Y2Storage::Proposal::PartitionCreator do
 
         it "fills the whole space if possible" do
           result = creator.create_partitions(distribution)
-          expect(result.free_disk_spaces).to be_empty
+          expect(result.devicegraph.free_disk_spaces).to be_empty
         end
 
         context "if it's necessary to enforce a partition order" do
@@ -156,12 +164,12 @@ describe Y2Storage::Proposal::PartitionCreator do
 
           it "fills the whole space if possible" do
             result = creator.create_partitions(distribution)
-            expect(result.free_disk_spaces).to be_empty
+            expect(result.devicegraph.free_disk_spaces).to be_empty
           end
 
           it "places the required volume at the end" do
             result = creator.create_partitions(distribution)
-            expect(result.partitions.last.filesystem.type.is?(:vfat)).to eq true
+            expect(result.devicegraph.partitions.last.filesystem.type.is?(:vfat)).to eq true
           end
         end
       end
@@ -181,7 +189,7 @@ describe Y2Storage::Proposal::PartitionCreator do
 
         it "creates all partitions as primary" do
           result = creator.create_partitions(distribution)
-          expect(result.partitions).to contain_exactly(
+          expect(result.devicegraph.partitions).to contain_exactly(
             an_object_having_attributes(type: primary, name: "/dev/sda1"),
             an_object_having_attributes(type: primary, name: "/dev/sda2"),
             an_object_having_attributes(type: primary, filesystem_mountpoint: "/"),
@@ -198,7 +206,7 @@ describe Y2Storage::Proposal::PartitionCreator do
 
         it "creates no new primary partitions" do
           result = creator.create_partitions(distribution)
-          primary = partitions(result, :primary)
+          primary = partitions(result.devicegraph, :primary)
           expect(primary).to contain_exactly(
             an_object_having_attributes(name: "/dev/sda1", size: 78.GiB),
             an_object_having_attributes(name: "/dev/sda2", size: 100.GiB - 1.MiB)
@@ -207,7 +215,7 @@ describe Y2Storage::Proposal::PartitionCreator do
 
         it "creates an extended partition filling the whole space" do
           result = creator.create_partitions(distribution)
-          extended = partitions(result, :extended)
+          extended = partitions(result.devicegraph, :extended)
           expect(extended).to contain_exactly(
             an_object_having_attributes(name: "/dev/sda3", size: 22.GiB)
           )
@@ -215,7 +223,7 @@ describe Y2Storage::Proposal::PartitionCreator do
 
         it "creates all the partitions as logical" do
           result = creator.create_partitions(distribution)
-          logical = partitions(result, :logical)
+          logical = partitions(result.devicegraph, :logical)
           expect(logical).to contain_exactly(
             an_object_having_attributes(name: "/dev/sda5", size: 1.GiB),
             an_object_having_attributes(name: "/dev/sda6", size: 1.GiB)
@@ -231,7 +239,7 @@ describe Y2Storage::Proposal::PartitionCreator do
 
         it "creates as many primary partitions as needed" do
           result = creator.create_partitions(distribution)
-          primary = partitions(result, :primary)
+          primary = partitions(result.devicegraph, :primary)
           expect(primary).to contain_exactly(
             an_object_having_attributes(name: "/dev/sda1", size: 78.GiB),
             an_object_having_attributes(name: "/dev/sda2", size: (100.GiB - 1.MiB)),
@@ -241,7 +249,7 @@ describe Y2Storage::Proposal::PartitionCreator do
 
         it "creates an extended partition filling the remaining space" do
           result = creator.create_partitions(distribution)
-          extended = partitions(result, :extended)
+          extended = partitions(result.devicegraph, :extended)
           expect(extended).to contain_exactly(
             an_object_having_attributes(name: "/dev/sda4", size: 21.GiB)
           )
@@ -249,7 +257,7 @@ describe Y2Storage::Proposal::PartitionCreator do
 
         it "creates logical partitions for the remaining partitions" do
           result = creator.create_partitions(distribution)
-          logical = partitions(result, :logical)
+          logical = partitions(result.devicegraph, :logical)
           expect(logical).to contain_exactly an_object_having_attributes(name: "/dev/sda5", size: 1.GiB)
         end
       end
@@ -268,7 +276,7 @@ describe Y2Storage::Proposal::PartitionCreator do
 
       it "reuses the extended partition" do
         result = creator.create_partitions(distribution)
-        extended = partitions(result, :extended)
+        extended = partitions(result.devicegraph, :extended)
         expect(extended).to contain_exactly(
           an_object_having_attributes(name: "/dev/sda4", size: 22.GiB - 1.MiB)
         )
@@ -276,7 +284,7 @@ describe Y2Storage::Proposal::PartitionCreator do
 
       it "creates all the partitions as logical" do
         result = creator.create_partitions(distribution)
-        logical = partitions(result, :logical)
+        logical = partitions(result.devicegraph, :logical)
         expect(logical).to contain_exactly(
           an_object_having_attributes(name: "/dev/sda5", size: 1.GiB),
           an_object_having_attributes(name: "/dev/sda6", size: 1.GiB)
@@ -296,12 +304,14 @@ describe Y2Storage::Proposal::PartitionCreator do
       let(:distribution) { space_dist(disk_spaces.first => [vol]) }
 
       it "correctly sets the libstorage partition id" do
-        partition = creator.create_partitions(distribution).partitions.first
+        result = creator.create_partitions(distribution)
+        partition = result.devicegraph.partitions.first
         expect(partition.id.is?(:esp)).to eq true
       end
 
       it "formats the partition" do
-        partition = creator.create_partitions(distribution).partitions.first
+        result = creator.create_partitions(distribution)
+        partition = result.devicegraph.partitions.first
         expect(partition.filesystem.type.is?(:vfat)).to eq true
       end
 
@@ -311,7 +321,8 @@ describe Y2Storage::Proposal::PartitionCreator do
         end
 
         it "formats the encrypted device instead of the plain partition" do
-          partition = creator.create_partitions(distribution).partitions.first
+          result = creator.create_partitions(distribution)
+          partition = result.devicegraph.partitions.first
           expect(partition.encryption.filesystem.type.is?(:vfat)).to eq true
         end
       end
@@ -320,7 +331,7 @@ describe Y2Storage::Proposal::PartitionCreator do
         it "keeps the existing partition table" do
           old_table = fake_devicegraph.disks.first.partition_table
           result = creator.create_partitions(distribution)
-          new_table = result.disks.first.partition_table
+          new_table = result.devicegraph.disks.first.partition_table
 
           expect(new_table.type.is?(:msdos)).to eq true
           expect(new_table).to eq old_table
@@ -330,24 +341,28 @@ describe Y2Storage::Proposal::PartitionCreator do
           let(:bootable) { true }
 
           it "sets the boot flag" do
-            partition = creator.create_partitions(distribution).partitions.first
+            result = creator.create_partitions(distribution)
+            partition = result.devicegraph.partitions.first
             expect(partition.boot?).to eq true
           end
 
           it "does not set the legacy boot flag" do
-            partition = creator.create_partitions(distribution).partitions.first
+            result = creator.create_partitions(distribution)
+            partition = result.devicegraph.partitions.first
             expect(partition.legacy_boot?).to eq false
           end
         end
 
         context "if the partition is not bootable" do
           it "does not set the boot flag" do
-            partition = creator.create_partitions(distribution).partitions.first
+            result = creator.create_partitions(distribution)
+            partition = result.devicegraph.partitions.first
             expect(partition.boot?).to eq false
           end
 
           it "does not set the legacy boot flag" do
-            partition = creator.create_partitions(distribution).partitions.first
+            result = creator.create_partitions(distribution)
+            partition = result.devicegraph.partitions.first
             expect(partition.legacy_boot?).to eq false
           end
         end
@@ -359,7 +374,7 @@ describe Y2Storage::Proposal::PartitionCreator do
         it "keeps the existing partition table" do
           old_table = fake_devicegraph.disks.first.partition_table
           result = creator.create_partitions(distribution)
-          new_table = result.disks.first.partition_table
+          new_table = result.devicegraph.disks.first.partition_table
 
           expect(new_table.type.is?(:gpt)).to eq true
           expect(new_table).to eq old_table
@@ -369,24 +384,28 @@ describe Y2Storage::Proposal::PartitionCreator do
           let(:bootable) { true }
 
           it "does not set the boot flag" do
-            partition = creator.create_partitions(distribution).partitions.first
+            result = creator.create_partitions(distribution)
+            partition = result.devicegraph.partitions.first
             expect(partition.boot?).to eq false
           end
 
           it "does not set the legacy boot flag" do
-            partition = creator.create_partitions(distribution).partitions.first
+            result = creator.create_partitions(distribution)
+            partition = result.devicegraph.partitions.first
             expect(partition.legacy_boot?).to eq false
           end
         end
 
         context "if the partition is not bootable" do
           it "does not set the boot flag" do
-            partition = creator.create_partitions(distribution).partitions.first
+            result = creator.create_partitions(distribution)
+            partition = result.devicegraph.partitions.first
             expect(partition.boot?).to eq false
           end
 
           it "does not set the legacy boot flag" do
-            partition = creator.create_partitions(distribution).partitions.first
+            result = creator.create_partitions(distribution)
+            partition = result.devicegraph.partitions.first
             expect(partition.legacy_boot?).to eq false
           end
         end
@@ -397,7 +416,7 @@ describe Y2Storage::Proposal::PartitionCreator do
 
         it "creates a new partition table of the preferred type" do
           result = creator.create_partitions(distribution)
-          table = result.disks.first.partition_table
+          table = result.devicegraph.disks.first.partition_table
 
           expect(table.type.is?(:gpt)).to eq true
         end
