@@ -132,6 +132,20 @@ module Y2Storage
     #   @return [LvmVg] nil if there is no such volume group
     storage_class_forward :find_by_vg_name, as: "LvmVg"
 
+    # Determines the available space on the volume group
+    #
+    # @return [DiskSize] Available space in the volume group
+    def available_space
+      extent_size * number_of_free_extents
+    end
+
+    # Determines the total size of the volume group
+    #
+    # @return [DiskSize] Size of the volume group
+    def total_size
+      extent_size * number_of_extents
+    end
+
   protected
 
     def types_for_is

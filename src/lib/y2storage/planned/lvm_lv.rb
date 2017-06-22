@@ -40,6 +40,22 @@ module Y2Storage
       # @return [String] name to use for Y2Storage::LvmLv#lv_name
       attr_accessor :logical_volume_name
 
+      # Builds a new object based on a real LvmLv one
+      #
+      # The new instance represents the intention to reuse the real LV, so the
+      # #reuse method will be set accordingly. On the other hand, it copies
+      # information from the real LV to make sure it is available even if the
+      # real object disappears.
+      #
+      #
+      # @param real_vg [Y2Storage::LvmVg] Logical volume group to get the values from
+      # @return [LvmLv] New LvmLv instance based on real_lv
+      def self.from_real_lv(real_lv)
+        lv = new(real_lv.filesystem_mountpoint, real_lv.filesystem_type)
+        lv.initialize_from_real_lv(real_lv)
+        lv
+      end
+
       # Constructor.
       #
       # @param mount_point [string] See {CanBeMounted#mount_point}
@@ -61,6 +77,14 @@ module Y2Storage
           else
             @mount_point.sub(%r{^/}, "")
           end
+      end
+
+      # Initializes the object taking the values from a real logical volume
+      #
+      # @param real_vg [Y2Storage::LvmLv] Logical volume to get the values from
+      def initialize_from_real_lv(real_lv)
+        @logical_volume_name = real_lv.lv_name
+        self.reuse = real_lv.lv_name
       end
 
       def self.to_string_attrs
