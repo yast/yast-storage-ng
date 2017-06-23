@@ -159,13 +159,16 @@ describe Y2Storage::Proposal::AutoinstDevicesPlanner do
     context "using LVM" do
       let(:partitioning) do
         [
-          { "device" => "/dev/sda", "partitions" => [lvm_pv] },
-          { "device" => "/dev/system", "partitions" => [root_spec], "type" => :CT_LVM }
+          { "device" => "/dev/sda", "partitions" => [pv] }, vg
         ]
       end
 
-      let(:lvm_pv) do
-        { "create" => true, "lvm_group" => "system", "size" => "max", "type" => :CT_LVM }
+      let(:vg) do
+        { "device" => "/dev/vg0", "partitions" => [root_spec], "type" => :CT_LVM }
+      end
+
+      let(:pv) do
+        { "create" => true, "lvm_group" => "vg0", "size" => "max", "type" => :CT_LVM }
       end
 
       let(:lvm_spec) do
@@ -183,14 +186,18 @@ describe Y2Storage::Proposal::AutoinstDevicesPlanner do
         pv, vg = planner.planned_devices(drives_map)
         expect(pv).to be_a(Y2Storage::Planned::Partition)
         expect(vg).to be_a(Y2Storage::Planned::LvmVg)
+        expect(vg).to have_attributes(
+          "volume_group_name" => "vg0",
+          "reuse"             => nil
+        )
         expect(vg.lvs).to contain_exactly(
           an_object_having_attributes(
             "logical_volume_name" => "root",
-            "mount_point" => "/",
-            "reuse" => nil,
-            "min_size" => 20.GiB,
-            "max_size" => 20.GiB,
-            "label" => "rootfs"
+            "mount_point"         => "/",
+            "reuse"               => nil,
+            "min_size"            => 20.GiB,
+            "max_size"            => 20.GiB,
+            "label"               => "rootfs"
           )
         )
       end
@@ -204,6 +211,43 @@ describe Y2Storage::Proposal::AutoinstDevicesPlanner do
           _pv, vg = planner.planned_devices(drives_map)
           root_lv = vg.lvs.first
           expect(root_lv).to have_attributes("percent_size" => 50)
+        end
+      end
+
+      context "reusing logical volumes" do
+        let(:scenario) { "lvm-two-vgs" }
+
+        let(:root_spec) do
+          {
+            "create" => false, "mount" => "/", "filesystem" => "ext4", "lv_name" => "lv1",
+            "size" => "20G", "label" => "rootfs"
+          }
+        end
+
+        it "sets the reuse attribute of logical volumes" do
+          _pv, vg = planner.planned_devices(drives_map)
+          expect(vg.lvs).to contain_exactly(
+            an_object_having_attributes(
+              "logical_volume_name" => "lv1",
+              "reuse"               => "lv1"
+            )
+          )
+        end
+      end
+
+      context "reusing volume groups" do
+        let(:scenario) { "lvm-two-vgs" }
+
+        let(:vg) do
+          { "device" => "/dev/vg0", "partitions" => [root_spec], "type" => :CT_LVM, "create" => false }
+        end
+
+        it "sets the reuse attribute of volume groups" do
+          _pv, vg = planner.planned_devices(drives_map)
+          expect(vg).to have_attributes(
+            "volume_group_name" => "vg0",
+            "reuse"             => "vg0",
+          )
         end
       end
     end
