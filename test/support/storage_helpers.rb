@@ -64,6 +64,11 @@ module Yast
       # Backwards compatibility
       alias_method :planned_vol, :planned_partition
 
+      def planned_vg(attrs = {})
+        vg = Y2Storage::Planned::LvmVg.new
+        add_planned_attributes(vg, attrs)
+      end
+
       def planned_lv(attrs = {})
         lv = Y2Storage::Planned::LvmLv.new(nil)
         add_planned_attributes(lv, attrs)
