@@ -34,8 +34,6 @@ module Y2Storage
     class LvmVg < Device
       include Planned::HasSize
 
-      DEFAULT_VG_NAME = "system".freeze
-
       DEFAULT_EXTENT_SIZE = DiskSize.MiB(4)
       private_constant :DEFAULT_EXTENT_SIZE
 

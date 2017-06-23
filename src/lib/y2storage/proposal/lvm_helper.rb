@@ -34,6 +34,11 @@ module Y2Storage
       include Yast::Logger
       include SecretAttributes
 
+      # Default name for volume groups
+      DEFAULT_VG_NAME = "system".freeze
+
+      private_constant :DEFAULT_VG_NAME
+
       # This is just an estimation chosen to match libstorage hardcoded value
       # See LvmVg::Impl::calculate_region() in storage-ng
       USELESS_PV_SPACE = DiskSize.MiB(1)
@@ -192,7 +197,7 @@ module Y2Storage
       # @return [Planned::LvmVg] Volume group that will be reused to allocate
       #   the proposed volumes, deleting the existing logical volumes if necessary
       def volume_group
-        @volume_group ||= Planned::LvmVg.new(lvs: planned_lvs)
+        @volume_group ||= Planned::LvmVg.new(volume_group_name: DEFAULT_VG_NAME, lvs: planned_lvs)
       end
 
     protected
