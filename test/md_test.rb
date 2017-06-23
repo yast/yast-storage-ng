@@ -53,7 +53,7 @@ describe Y2Storage::Md do
 
   end
 
-  describe "#get_number" do
+  describe "#number" do
 
     it "returns 0 for /dev/md0" do
       expect(md.number).to eq 0
@@ -127,7 +127,7 @@ describe Y2Storage::Md do
 
   describe "#inspect" do
 
-    it "returns false since the MD RAID is not in /etc/mdadm.conf" do
+    it "inspects a MD object" do
       expect(md.inspect).to eq "<Md /dev/md0 32767 MiB (32.00 GiB) raid0>"
     end
 
