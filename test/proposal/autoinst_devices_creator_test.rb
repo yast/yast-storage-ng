@@ -64,5 +64,31 @@ describe Y2Storage::Proposal::AutoinstDevicesCreator do
       sdb = devicegraph.disks.find { |d| d.name == "/dev/sdb" }
       expect(sdb.partitions).to be_empty
     end
+
+    describe "using LVM" do
+      let(:scenario) { "empty_hard_disk_50GiB" }
+      let(:filesystem_type) { Y2Storage::Filesystems::Type::EXT4 }
+
+      let(:pv) { planned_partition(lvm_volume_group_name: "vg0") }
+
+      let(:lv_root) { planned_lv(mount_point: "/", logical_volume_name: "lv_root") }
+
+      let(:vg) { planned_vg(volume_group_name: "vg0", lvs: [lv_root]) }
+
+      it "adds volume groups" do
+        devicegraph = creator.populated_devicegraph([pv, vg], ["/dev/sda"])
+        vg = devicegraph.lvm_vgs.first
+        expect(vg.lvm_pvs.map(&:blk_device).map(&:name)).to eq(["/dev/sda1"])
+        expect(vg.vg_name).to eq("vg0")
+        expect(vg.lvm_lvs.map(&:lv_name)).to eq(["lv_root"])
+      end
+
+      it "adds logical volumes" do
+        devicegraph = creator.populated_devicegraph([pv, vg], ["/dev/sda"])
+        lv = devicegraph.lvm_lvs.first
+        expect(lv.lv_name).to eq("lv_root")
+        expect(lv.lvm_vg.vg_name).to eq("vg0")
+      end
+    end
   end
 end

@@ -63,8 +63,10 @@ module Y2Storage
         part_creator = Proposal::PartitionCreator.new(original_graph)
         result = part_creator.create_partitions(dist)
 
-        reused.each { |r| r.reuse!(result) }
-        result
+        reused.each { |r| r.reuse!(result.devicegraph) }
+
+        vgs = planned_devices.select { |dev| dev.is_a?(Planned::LvmVg) }
+        add_volume_groups(vgs, result.devicegraph, result.devices_map)
       end
 
     protected
@@ -85,6 +87,33 @@ module Y2Storage
         calculator = Proposal::PartitionsDistributionCalculator.new(Proposal::LvmHelper.new([]))
 
         calculator.best_distribution(planned_partitions, spaces)
+      end
+
+    private
+
+      # Adds volume groups to the given devicegraph
+      #
+      # @param vgs         [Array<Planned::LvmVg>]           List of planned volume groups to add
+      # @param devicegraph [Devicegraph]                     Starting point
+      # @param devices_map [Hash<String,Planned::Partition>] Map of device names and partitions
+      # @return [Devicegraph] Devicegraph containing the specified volume groups
+      def add_volume_groups(vgs, devicegraph, devices_map)
+        vgs.reduce(devicegraph) do |graph, vg|
+          lvm_creator = Proposal::LvmCreator.new(graph)
+          pvs = find_pvs_for(devices_map, vg.volume_group_name)
+          lvm_creator.create_volumes(vg, pvs)
+        end
+      end
+
+      # Finds physical volumes for a volume group
+      #
+      # @param devices_map [Hash<String,Planned::Partition>] Map of device names and partitions
+      # @param vg_name     [String] Volume group name
+      # @return [Array<String>] Physical volumes device names (eg. ["/dev/sda1"])
+      #
+      # @see Y2Storage::Proposal::PartitionCreator#create_partitions
+      def find_pvs_for(devices_map, vg_name)
+        devices_map.select { |_k, v| v.lvm_volume_group_name == vg_name }.keys
       end
     end
   end
