@@ -79,6 +79,16 @@ describe Y2Storage::Proposal::LvmCreator do
         )
       end
 
+      context "if the planned volume group does not contain any logical volume" do
+        let(:vg) { planned_vg(volume_group_name: "custom_vg", lvs: []) }
+
+        it "creates the volume group anyway" do
+          devicegraph = creator.create_volumes(vg, pv_partitions)
+          vgs = devicegraph.lvm_vgs
+          expect(vgs.map(&:vg_name)).to include "custom_vg"
+        end
+      end
+
       context "and encryption is used" do
         let(:scenario) { "lvm-new-encrypted-pvs" }
         let(:enc_password) { "SomePassphrase" }

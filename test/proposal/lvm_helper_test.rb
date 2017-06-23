@@ -268,5 +268,19 @@ describe Y2Storage::Proposal::LvmHelper do
         helper.create_volumes(fake_devicegraph, pv_partitions)
       end
     end
+
+    context "when the volume group is empty" do
+      let(:volumes) { [] }
+
+      it "does not create it" do
+        expect(Y2Storage::Proposal::LvmCreator).to_not receive(:new)
+        helper.create_volumes(fake_devicegraph, pv_partitions)
+      end
+
+      it "returns a copy of the original devicegraph" do
+        devicegraph = helper.create_volumes(fake_devicegraph, pv_partitions)
+        expect(devicegraph).to_not be(fake_devicegraph)
+      end
+    end
   end
 end

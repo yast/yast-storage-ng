@@ -66,6 +66,7 @@ module Y2Storage
       #     partitions that should be added as PVs to the volume group
       # @return [Devicegraph]
       def create_volumes(original_graph, pv_partitions = [])
+        return original_graph.duplicate if planned_lvs.empty?
         lvm_creator = LvmCreator.new(original_graph)
         lvm_creator.create_volumes(volume_group, pv_partitions)
       end
