@@ -25,7 +25,7 @@ require "yast"
 require "y2storage"
 require "y2storage/dialogs/proposal"
 require "y2storage/dialogs/guided_setup"
-require "expert_partitioner/main_dialog"
+require "y2partitioner/clients/main"
 
 module Y2Storage
   module Clients
@@ -97,7 +97,7 @@ module Y2Storage
       end
 
       def expert_partitioner
-        ExpertPartitioner::MainDialog.new.run
+        Y2Partitioner::Clients::Main.run
       end
 
       # Add storage-related software packages (filesystem tools etc.) to the
