@@ -27,6 +27,7 @@ Source:		%{name}-%{version}.tar.bz2
 Requires:	yast2 >= 3.2.37 
 Requires:	yast2-ruby-bindings
 Requires:	libstorage-ng-ruby
+Requires:	yast2-partitioner
 
 BuildRequires:	update-desktop-files
 BuildRequires:	libstorage-ng-ruby
