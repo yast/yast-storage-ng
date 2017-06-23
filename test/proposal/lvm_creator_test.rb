@@ -231,5 +231,25 @@ describe Y2Storage::Proposal::LvmCreator do
         expect(lv_names).to include("one", "one0", "one1", "one2")
       end
     end
+
+    context "when size is expressed as a percentage" do
+      let(:reused_vg) { nil }
+      let(:pv_partitions) { ["/dev/sda2"] }
+
+      before do
+        volumes.first.percent_size = 50
+        volumes.last.percent_size = 10
+      end
+
+      it "creates partitions matching the volume sizes" do
+        devicegraph = creator.create_volumes(vg, pv_partitions)
+        lvs = devicegraph.lvm_lvs.select { |lv| lv.lvm_vg.vg_name == "system" }
+
+        expect(lvs).to contain_exactly(
+          an_object_having_attributes(lv_name: "one", size: 15.GiB),
+          an_object_having_attributes(lv_name: "two", size: 3.GiB)
+        )
+      end
+    end
   end
 end
