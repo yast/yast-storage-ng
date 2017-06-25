@@ -68,18 +68,38 @@ module Y2Storage
     storage_forward :sysfs_path
 
     # @!method udev_paths
-    #   All the udev by-path links. An empty array for devices not handled by udev
-    #   Format is only link name so e.g. ["pci-0000:00:1f.2-ata-1-part2"] for
-    #   /dev/disk/by-path/pci-0000:00:1f.2-ata-1-part2
+    #   Names of all the udev by-path links. An empty array for devices
+    #   not handled by udev.
+    #   E.g. ["pci-0000:00:1f.2-ata-1-part2"]
+    #   @see #udev_full_paths
     #   @return [Array<String>]
     storage_forward :udev_paths
 
+    # Full paths of all the udev by-path links. An empty array for devices
+    # not handled by udev.
+    # E.g. ["/dev/disk/by-path/pci-0000:00:1f.2-ata-1-part2"]
+    # @see #udev_paths
+    # @return [Array<String>]
+    def udev_full_paths
+      udev_paths.map { |path| File.join("/dev", "disk", "by-path", path) }
+    end
+
     # @!method udev_ids
-    #   All the udev by-id links. An empty array for devices not handled by udev
-    #   Format is only link name so e.g. ["scsi-350014ee658db9ee6"] for
-    #   /dev/disk/by-id/scsi-350014ee658db9ee6
+    #   Names of all the udev by-id links. An empty array for devices
+    #   not handled by udev.
+    #   E.g. ["scsi-350014ee658db9ee6"]
+    #   @see #udev_full_ids
     #   @return [Array<String]
     storage_forward :udev_ids
+
+    # Full paths of all the udev by-id links. An empty array for devices
+    # not handled by udev.
+    # E.g. ["/dev/disk/by-id/scsi-350014ee658db9ee6"]
+    # @see #udev_ids
+    # @return [Array<String>]
+    def udev_full_ids
+      udev_ids.map { |id| File.join("/dev", "disk", "by-id", id) }
+    end
 
     # @!attribute dm_table_name
     #   Device-mapper table name. Empty if this is not a device-mapper device.
