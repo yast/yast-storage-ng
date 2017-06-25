@@ -74,7 +74,7 @@ module Y2Storage
         xfs:      {
           name: "XFS"
         },
-        iso9669:  {
+        iso9660:  {
           name: "ISO9660"
         },
         udf:      {
@@ -132,7 +132,7 @@ module Y2Storage
       #
       # @return [String]
       def to_human_string
-        default = ""
+        default = to_s
         properties = PROPERTIES[to_sym]
         return default unless properties
         properties[:name] || default
