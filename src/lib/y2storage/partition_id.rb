@@ -36,6 +36,52 @@ module Y2Storage
 
     private_constant :LINUX_SYSTEM_IDS, :WINDOWS_SYSTEM_IDS
 
+    # Partition ids for which the internal numeric id is the same than the
+    # corresponding fsid in the old libstorage.
+    # See {.new_from_legacy} and {#to_i_legacy}.
+    LEGACY_KEPT = [DOS12, DOS16, DOS32, NTFS, EXTENDED, PREP, LINUX, SWAP, LVM, RAID]
+
+    # Matching between fsids in the old libstorage and the corresponding
+    # partition id.
+    # See {.new_from_legacy} and {#to_i_legacy}.
+    LEGACY_TO_CURRENT = {
+      5   => EXTENDED, # In the past both 5 and 15 were recognized as extended
+      257 => UNKNOWN, # 257 used to mean mac_hidden, but is BIOS_BOOT now
+      258 => UNKNOWN, # 258 used to mean mac_hfs, but is WINDOWS_BASIC_DATA now
+      259 => BIOS_BOOT, # 259 is MICROSOFT_RESERVED now
+      263 => BIOS_BOOT,
+      264 => PREP
+    }
+
+    # Matching between partition ids and the number that was used to represent
+    # them in the old libstorage.
+    # See {.new_from_legacy} and {#to_i_legacy}.
+    CURRENT_TO_LEGACY = {
+      BIOS_BOOT          => 259, # BIOS_BOOT.to_i is 257, that used to mean mac_hidden
+      WINDOWS_BASIC_DATA => 0, # WINDOWS_BASIC_DATA.to_i is 258, that used to mean mac_hfs
+      MICROSOFT_RESERVED => 0, # MICROSOFT_RESERVED.to_i is 259, that used to mean BIOS_BOOT
+    }
+    private_constant :LEGACY_KEPT, :LEGACY_TO_CURRENT, :CURRENT_TO_LEGACY
+
+    # Partition id that was represented by the given numeric fsid in the old
+    # libstorage.
+    #
+    # @param number [Fixnum] fsid used in the old libstorage
+    # @return [PartitionId] corresponding id. UNKNOWN if there is no equivalent
+    def self.new_from_legacy(number)
+      return LEGACY_TO_CURRENT[number] if LEGACY_TO_CURRENT.key?(number)
+      return new(number) if LEGACY_KEPT.map(&:to_i).include?(number)
+      UNKNOWN
+    end
+
+    # Numeric fsid used in the old libstorage to represent this partition id.
+    #
+    # @return [Fixnum]
+    def to_i_legacy
+      return CURRENT_TO_LEGACY[self] if CURRENT_TO_LEGACY.key?(self)
+      to_i
+    end
+
     # Set of ids for partitions that are typically part of a Linux system.
     # This may be a normal Linux partition (type 0x83), a Linux swap partition
     # (type 0x82), an LVM partition, or a RAID partition.
