@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Tue Jun 27 15:05:52 UTC 2017 - igonzalezsosa@suse.com
+
+- Add LVM support for AutoYaST partitioning (bsc#1044697).
+- 0.1.24
+
+-------------------------------------------------------------------
 Tue Jun 27 09:04:58 UTC 2017 - ancor@suse.com
 
 - More robust Y2Storage::StorageManager#probe
