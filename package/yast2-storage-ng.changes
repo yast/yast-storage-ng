@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Mon Jun 26 08:56:07 UTC 2017 - aschnell@suse.com
+
+- Added Y2Storage::Md wrapper
+- 0.1.22
+
+-------------------------------------------------------------------
 Mon Jun 19 12:30:46 UTC 2017 - mvidner@suse.com
 
 - Added Y2Storage::DiskSize#human_floor, Y2Storage::Region#size
