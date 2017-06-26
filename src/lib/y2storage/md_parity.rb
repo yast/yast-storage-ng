@@ -55,11 +55,15 @@ module Y2Storage
       far_2:              N_("Two copies far"),
       far_3:              N_("Three copies far")
     }
+    private_constant :TRANSLATIONS
 
+    # Returns human readable representation of enum.
+    # @return [String]
+    # @raise [RuntimeError] when called on unknown ennum value.
     def to_human_string
       textdomain "storage"
 
-      string = TRANSLATIONS[to_sym] or raise "Unhandled MD raid type value '#{inspect}'"
+      string = TRANSLATIONS[to_sym] or raise "Unhandled MD raid parity value '#{inspect}'"
 
       _(string)
     end

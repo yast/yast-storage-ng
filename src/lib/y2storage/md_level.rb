@@ -28,6 +28,7 @@ module Y2Storage
   class MdLevel
     include StorageEnumWrapper
     include Yast::I18n
+    extend Yast::I18n
 
     wrap_enum "MdLevel"
 
@@ -39,11 +40,15 @@ module Y2Storage
       raid6:   N_("RAID6"),
       raid10:  N_("RAID10")
     }
+    private_constant :TRANSLATIONS
 
+    # Returns human readable representation of enum.
+    # @return [String]
+    # @raise [RuntimeError] when called on unknown ennum value.
     def to_human_string
       textdomain "storage"
 
-      string = TRANSLATIONS[to_sym] or raise "Unhandled MD raid type value '#{inspect}'"
+      string = TRANSLATIONS[to_sym] or raise "Unhandled MD raid level value '#{inspect}'"
 
       _(string)
     end
