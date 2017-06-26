@@ -72,6 +72,7 @@
             size:         2 GiB
             lv_name:      lv2
             file_system:  ext4
+            label:        rootfs
 
 - lvm_vg:
     vg_name: vg1

@@ -38,6 +38,7 @@ describe Y2Storage::Proposal::AutoinstDevicesPlanner do
   end
 
   let(:root_spec) { { "mount" => "/", "filesystem" => "ext4" } }
+  let(:lvm_group) { "vg0" }
 
   before do
     allow(Y2Storage::BootRequirementsChecker).to receive(:new)
@@ -164,11 +165,11 @@ describe Y2Storage::Proposal::AutoinstDevicesPlanner do
       end
 
       let(:vg) do
-        { "device" => "/dev/vg0", "partitions" => [root_spec], "type" => :CT_LVM }
+        { "device" => "/dev/#{lvm_group}", "partitions" => [root_spec], "type" => :CT_LVM }
       end
 
       let(:pv) do
-        { "create" => true, "lvm_group" => "vg0", "size" => "max", "type" => :CT_LVM }
+        { "create" => true, "lvm_group" => lvm_group, "size" => "max", "type" => :CT_LVM }
       end
 
       let(:lvm_spec) do
@@ -187,7 +188,7 @@ describe Y2Storage::Proposal::AutoinstDevicesPlanner do
         expect(pv).to be_a(Y2Storage::Planned::Partition)
         expect(vg).to be_a(Y2Storage::Planned::LvmVg)
         expect(vg).to have_attributes(
-          "volume_group_name" => "vg0",
+          "volume_group_name" => lvm_group,
           "reuse"             => nil
         )
         expect(vg.lvs).to contain_exactly(
@@ -224,8 +225,15 @@ describe Y2Storage::Proposal::AutoinstDevicesPlanner do
           }
         end
 
+        it "sets the reuse attribute of the volume group" do
+          _pv, vg = planner.planned_devices(drives_map)
+          expect(vg.reuse).to eq(lvm_group)
+          expect(vg.make_space_policy).to eq(:remove)
+        end
+
         it "sets the reuse attribute of logical volumes" do
           _pv, vg = planner.planned_devices(drives_map)
+          expect(vg.reuse).to eq(lvm_group)
           expect(vg.lvs).to contain_exactly(
             an_object_having_attributes(
               "logical_volume_name" => "lv1",
@@ -235,19 +243,66 @@ describe Y2Storage::Proposal::AutoinstDevicesPlanner do
         end
       end
 
-      context "reusing volume groups" do
+      context "reusing logical volumes by label" do
+        let(:scenario) { "lvm-two-vgs" }
+
+        let(:root_spec) do
+          {
+            "create" => false, "mount" => "/", "filesystem" => "ext4",
+            "size" => "20G", "label" => "rootfs"
+          }
+        end
+
+        it "sets the reuse attribute of logical volumes" do
+          _pv, vg = planner.planned_devices(drives_map)
+          expect(vg.reuse).to eq(lvm_group)
+          expect(vg.lvs).to contain_exactly(
+            an_object_having_attributes(
+              "logical_volume_name" => "lv2",
+              "reuse"               => "lv2"
+            )
+          )
+        end
+      end
+
+      context "when unknown logical volumes are required to be kept" do
         let(:scenario) { "lvm-two-vgs" }
 
         let(:vg) do
-          { "device" => "/dev/vg0", "partitions" => [root_spec], "type" => :CT_LVM, "create" => false }
+          {
+            "device" => "/dev/#{lvm_group}", "partitions" => [root_spec], "type" => :CT_LVM,
+            "keep_unknown_lv" => true
+          }
         end
 
-        it "sets the reuse attribute of volume groups" do
+        it "sets the reuse attribute of the volume group" do
           _pv, vg = planner.planned_devices(drives_map)
           expect(vg).to have_attributes(
-            "volume_group_name" => "vg0",
-            "reuse"             => "vg0",
-            "make_space_policy" => :remove
+            "volume_group_name" => lvm_group,
+            "reuse"             => lvm_group,
+            "make_space_policy" => :keep
+          )
+        end
+      end
+
+      context "when trying to reuse a logical volume which is in another volume group" do
+        let(:lvm_group) { "vg1" }
+        let(:scenario) { "lvm-two-vgs" }
+
+        let(:root_spec) do
+          {
+            "create" => false, "mount" => "/", "filesystem" => "ext4", "lv_name" => "lv2",
+            "size" => "20G", "label" => "rootfs"
+          }
+        end
+
+        it "does not set the reuse attribute of the logical volume" do
+          _pv, vg = planner.planned_devices(drives_map)
+          expect(vg.lvs).to contain_exactly(
+            an_object_having_attributes(
+              "logical_volume_name" => "lv2",
+              "reuse"               => nil
+            )
           )
         end
       end

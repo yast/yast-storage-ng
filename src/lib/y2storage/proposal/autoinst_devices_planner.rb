@@ -104,19 +104,16 @@ module Y2Storage
 
       # Returns a planned volume group according to an AutoYaST specification
       #
-      # TODO: keep_unknown_lv
-      #
       # @param partitioning [Hash] Partitioning specification from AutoYaST
       # @return [Planned::LvmVg] Planned volume group
       def planned_for_vg(spec)
         vg = Y2Storage::Planned::LvmVg.new(volume_group_name: File.basename(spec["device"]))
-        add_vg_reuse(vg, spec) unless spec.fetch("create", true)
 
         spec.fetch("partitions", []).each_with_object(vg.lvs) do |lv_spec, lvs|
           lv = Y2Storage::Planned::LvmLv.new(lv_spec["mount"], filesystem_for(lv_spec["filesystem"]))
           lv.logical_volume_name = lv_spec["lv_name"]
           add_common_device_attrs(lv, lv_spec)
-          add_lv_reuse(lv, lv_spec) unless lv_spec.fetch("create", true)
+          add_lv_reuse(lv, vg.volume_group_name, lv_spec) unless lv_spec.fetch("create", true)
 
           number, unit = size_to_components(lv_spec["size"])
           if unit == "%"
@@ -126,6 +123,8 @@ module Y2Storage
           end
           lvs << lv
         end
+
+        add_vg_reuse(vg, spec)
         vg
       end
 
@@ -165,11 +164,13 @@ module Y2Storage
       # This method modifies the first argument setting the values related to
       # reusing a logical volume (reuse and format).
       #
-      # @param lv   [Planned::LvmLv] Planned logical volume
-      # @param spec [Hash]           Fragment of an AutoYaST specification
-      def add_lv_reuse(lv, spec)
-        lv_to_reuse = find_lv_to_reuse(devicegraph, lv)
+      # @param lv      [Planned::LvmLv] Planned logical volume
+      # @param vg_name [String]         Volume group name to search for the logical volume to reuse
+      # @param spec    [Hash]           Fragment of an AutoYaST specification
+      def add_lv_reuse(lv, vg_name, spec)
+        lv_to_reuse = find_lv_to_reuse(devicegraph, vg_name, spec)
         return unless lv_to_reuse
+        lv.logical_volume_name ||= lv_to_reuse.lv_name
         add_device_reuse(lv, lv_to_reuse.lv_name, !!spec["format"])
       end
 
@@ -186,10 +187,11 @@ module Y2Storage
       # @param lv   [Planned::LvmLv] Planned volume group
       # @param spec [Hash]           Fragment of an AutoYaST specification
       def add_vg_reuse(vg, spec)
-        vg_to_reuse = find_vg_to_reuse(devicegraph, vg)
-        return unless vg_to_reuse
         vg.make_space_policy = spec.fetch("keep_unknown_lv", false) ? :keep : :remove
-        vg.reuse = vg_to_reuse.vg_name
+
+        return unless vg.make_space_policy == :keep || vg.lvs.any?(&:reuse?)
+        vg_to_reuse = find_vg_to_reuse(devicegraph, vg)
+        vg.reuse = vg_to_reuse.vg_name if vg_to_reuse
       end
 
       # Returns min and max sizes for a size specification
@@ -250,12 +252,15 @@ module Y2Storage
       end
 
       # @param devicegraph [Devicegraph] Devicegraph to search for the logical volume to reuse
-      # @param lv          [Planned::LvmLv] Planned logical volume
-      def find_lv_to_reuse(devicegraph, lv)
-        if lv.logical_volume_name
-          devicegraph.lvm_lvs.find { |v| v.lv_name == lv.logical_volume_name }
-        elsif lv.label
-          devicegraph.lvm_lvs.find { |v| v.label == lv.label }
+      # @param vg_name     [String]      Volume group name to search for the logical volume to reuse
+      # @param spec        [Hash]        Fragment of an AutoYaST specification
+      def find_lv_to_reuse(devicegraph, vg_name, spec)
+        vg = devicegraph.lvm_vgs.find { |v| v.vg_name == vg_name }
+        return unless vg
+        if spec["lv_name"]
+          vg.lvm_lvs.find { |v| v.lv_name == spec["lv_name"] }
+        elsif spec["label"]
+          vg.lvm_lvs.find { |v| v.filesystem_label == spec["label"] }
         end
       end
 
