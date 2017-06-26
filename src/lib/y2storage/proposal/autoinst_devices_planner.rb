@@ -95,6 +95,7 @@ module Y2Storage
           min_size, max_size = sizes_for(partition_spec["size"], disk.min_grain, disk.size)
           partition.min_size = min_size
           partition.max_size = max_size
+          partition.weight = 1 if max_size == DiskSize.unlimited
           result << partition
         end
 

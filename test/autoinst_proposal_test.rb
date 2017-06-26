@@ -242,7 +242,7 @@ describe Y2Storage::AutoinstProposal do
       end
 
       let(:lvm_pv) do
-        { "create" => true, "lvm_group" => "system", "size" => "20GB", "type" => :CT_LVM }
+        { "create" => true, "lvm_group" => "system", "size" => "max", "type" => :CT_LVM }
       end
 
       let(:lvm_spec) do
