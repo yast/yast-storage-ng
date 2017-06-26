@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Mon Jun 26 11:56:23 UTC 2017 - jreidinger@suse.com
+
+- Added Y2Storage::MdParity#to_human_string and
+  Y2Storage::MdLevel#to_human_string
+- 0.1.23
+
+-------------------------------------------------------------------
 Mon Jun 26 08:56:07 UTC 2017 - aschnell@suse.com
 
 - Added Y2Storage::Md wrapper
