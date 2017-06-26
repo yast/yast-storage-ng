@@ -58,6 +58,36 @@ module Y2Storage
         result
       end
 
+      # Clones a system into an AutoYaST profile section, creating an instance
+      # if this class from the information in a devicegraph.
+      #
+      # This implements the same behavior followed by the old AutoYaST
+      # cloning/export, which includes some custom logic beyond the direct
+      # transformation 1:1 of devices into <drive> sections. Check the
+      # implementation of the different subsections for more details.
+      #
+      # @note The original logic used to live in AutoinstPartPlan#ReadHelper.
+      #
+      # @param [Devicegraph] devicegraph to clone
+      # @return [PartitioningSection]
+      def self.new_from_storage(devicegraph)
+        result = new
+        # TODO: consider also LVM, NFS and TMPFS
+        result.drives = devicegraph.disk_devices.each_with_object([]) do |dev, array|
+          drive = DriveSection.new_from_storage(dev)
+          array << drive if drive
+        end
+        result
+      end
+
+      # Content of the section in the format used by the AutoYaST modules
+      # (nested arrays and hashes).
+      #
+      # @return [Array<Hash>] each element represents a <drive> section
+      def to_hashes
+        drives.map(&:to_hashes)
+      end
+
       # Drive sections with type :CT_DISK
       #
       # @return [Array<DriveSection>]
