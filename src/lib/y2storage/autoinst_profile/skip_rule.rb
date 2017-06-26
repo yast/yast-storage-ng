@@ -19,10 +19,10 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "y2storage/proposal/skip_list_value"
+require "y2storage/autoinst_profile/skip_list_value"
 
 module Y2Storage
-  module Proposal
+  module AutoinstProfile
     # AutoYaST device skip rule
     #
     # @example Using a rule

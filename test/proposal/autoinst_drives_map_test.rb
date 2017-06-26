@@ -27,11 +27,14 @@ describe Y2Storage::Proposal::AutoinstDrivesMap do
   subject(:drives_map) { described_class.new(fake_devicegraph, partitioning) }
 
   let(:scenario) { "windows-linux-free-pc" }
-  let(:partitioning) do
+  let(:partitioning_array) do
     [
       { "device" => "/dev/sda", "use" => "all" },
       { "use" => "all" }
     ]
+  end
+  let(:partitioning) do
+    Y2Storage::AutoinstProfile::PartitioningSection.new_from_hashes(partitioning_array)
   end
 
   before { fake_scenario(scenario) }
@@ -40,11 +43,13 @@ describe Y2Storage::Proposal::AutoinstDrivesMap do
     it "executes the given block for each name/drive in the map" do
       expect do |probe|
         drives_map.each(&probe)
-      end.to yield_successive_args(["/dev/sda", partitioning[0]], ["/dev/sdb", partitioning[1]])
+      end.to yield_successive_args(
+        ["/dev/sda", partitioning.drives[0]], ["/dev/sdb", partitioning.drives[1]]
+      )
     end
 
     context "when some device is on a skip list" do
-      let(:partitioning) do
+      let(:partitioning_array) do
         [
           { "use" => "all", "skip_list" => [{ "skip_key" => "device", "skip_value" => "/dev/sda" }] }
         ]
@@ -53,12 +58,12 @@ describe Y2Storage::Proposal::AutoinstDrivesMap do
       it "ignores the given device" do
         expect do |probe|
           drives_map.each(&probe)
-        end.to yield_successive_args(["/dev/sdb", partitioning[0]])
+        end.to yield_successive_args(["/dev/sdb", partitioning.drives[0]])
       end
     end
 
     context "when no suitable drive is found" do
-      let(:partitioning) do
+      let(:partitioning_array) do
         [
           { "device" => "/dev/sda", "use" => "all" },
           { "device" => "/dev/sdb", "use" => "all" },
@@ -71,7 +76,7 @@ describe Y2Storage::Proposal::AutoinstDrivesMap do
   end
 
   describe "#disk_names" do
-    let(:partitioning) { [{ "device" => "/dev/sda", "use" => "all" }] }
+    let(:partitioning_array) { [{ "device" => "/dev/sda", "use" => "all" }] }
 
     it "return disk names" do
       expect(drives_map.disk_names).to eq(["/dev/sda"])
@@ -80,7 +85,7 @@ describe Y2Storage::Proposal::AutoinstDrivesMap do
 
   describe "#partitions?" do
     context "when partitioning does not define partitions for any device" do
-      let(:partitioning) do
+      let(:partitioning_array) do
         [
           { "device" => "/dev/sda", "use" => "all" },
           { "device" => "/dev/sdb", "use" => "all" }
@@ -93,7 +98,7 @@ describe Y2Storage::Proposal::AutoinstDrivesMap do
     end
 
     context "when partitioning defines partitions for some device" do
-      let(:partitioning) do
+      let(:partitioning_array) do
         [
           { "device" => "/dev/sda", "use" => "all", "partitions" => [{ "mount" => "/" }] },
           { "device" => "/dev/sdb", "use" => "all" }

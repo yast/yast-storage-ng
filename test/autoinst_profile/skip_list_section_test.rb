@@ -22,13 +22,12 @@
 require_relative "../spec_helper"
 
 require "y2storage"
-require "y2storage/proposal/skip_list"
 
-describe Y2Storage::Proposal::SkipList do
+describe Y2Storage::AutoinstProfile::SkipListSection do
   subject(:list) { described_class.new([rule1, rule2]) }
 
-  let(:rule1) { instance_double(Y2Storage::Proposal::SkipRule, matches?: true, valid?: true) }
-  let(:rule2) { instance_double(Y2Storage::Proposal::SkipRule, matches?: true, valid?: true) }
+  let(:rule1) { instance_double(Y2Storage::AutoinstProfile::SkipRule, matches?: true, valid?: true) }
+  let(:rule2) { instance_double(Y2Storage::AutoinstProfile::SkipRule, matches?: true, valid?: true) }
   let(:disk) { instance_double(Y2Storage::Disk) }
 
   describe ".from_profile" do
@@ -40,9 +39,9 @@ describe Y2Storage::Proposal::SkipList do
     end
 
     it "creates a list with rules" do
-      allow(Y2Storage::Proposal::SkipRule).to receive(:from_profile_rule)
+      allow(Y2Storage::AutoinstProfile::SkipRule).to receive(:from_profile_rule)
         .and_return(rule1, rule2)
-      list = Y2Storage::Proposal::SkipList.from_profile(spec)
+      list = Y2Storage::AutoinstProfile::SkipListSection.new_from_hashes(spec)
       expect(list.rules).to eq([rule1, rule2])
     end
   end

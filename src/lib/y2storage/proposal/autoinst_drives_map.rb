@@ -21,25 +21,24 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "y2storage/proposal/skip_list"
-
 module Y2Storage
   module Proposal
-    # Utility class to map disk names to the corresponding AutoYaST <drive>
-    # specification that will be applied to that disk.
+    # Utility class to map disk names to the <drive> section of the AutoYaST
+    # profile that will be applied to that disk.
     #
-    # More information can be found in the 'Partitioning' section of the AutoYaST documentation:
-    # https://www.suse.com/documentation/sles-12/singlehtml/book_autoyast/book_autoyast.html#CreateProfile.Partitioning
+    # @see AutoinstProfile::PartitioningSection
+    # @see AutoinstProfile::DriveSection
     class AutoinstDrivesMap
       extend Forwardable
 
       # @!method each_pair
       #   Calls block once por each disk that contains the AutoYaST specification
-      #   passing as arguments the disk name and the specification itself.
+      #   passing as arguments the disk name and the corresponding
+      #   AutoinstProfile::DriveSection object.
       #
       #   @example
-      #     drives_map.each_pair do |disk_name, drive_spec|
-      #       puts "Drive for #{disk_name}: #{drive_spec}"
+      #     drives_map.each_pair do |disk_name, drive_section|
+      #       puts "Drive for #{disk_name}: #{drive_section}"
       #     end
       #
       # @!method each
@@ -49,15 +48,16 @@ module Y2Storage
       # Constructor
       #
       # @param devicegraph  [Devicegraph] Devicegraph where the disks are contained
-      # @param partitioning [Array<Hash>] Partitioning layout from an AutoYaST profile
+      # @param partitioning [AutoinstProfile::PartitioningSection] Partitioning layout
+      #   from an AutoYaST profile
       def initialize(devicegraph, partitioning)
         # By now, consider only regular disks
-        disks = partitioning.select { |i| i.fetch("type", :CT_DISK) == :CT_DISK }
+        disks = partitioning.disk_drives
 
         # First, assign fixed drives
-        fixed_drives, flexible_drives = disks.partition { |i| i["device"] && !i["device"].empty? }
+        fixed_drives, flexible_drives = disks.partition { |i| i.device }
         @drives = fixed_drives.each_with_object({}) do |disk, memo|
-          memo[disk["device"]] = disk
+          memo[disk.device] = disk
         end
 
         flexible_drives.each do |drive|
@@ -78,34 +78,36 @@ module Y2Storage
       #
       # @example Containing partitions
       #   devicegraph = Y2Storage::StorageManager.instance.y2storage_probed
-      #   profile = [
+      #   array = [
       #     {
       #       "device" => "/dev/sda", "use" => "all", "partitions" => [
       #         { "mount" => "/" }
       #       ]
       #     }
       #   ]
-      #   map = AutoinstMap.new(devicegraph, profile)
+      #   profile = AutoinstProfile::PartitioningSection.new_from_hashes(array)
+      #   map = AutoinstDriveMap.new(devicegraph, profile)
       #   map.partitions? # => true
       #
       # @example Not containing partitions
       #   devicegraph = Y2Storage::StorageManager.instance.y2storage_probed
-      #   profile = [{ "device" => "/dev/sda", "use" => "all" }]
-      #   map = AutoinstMap.new(devicegraph, profile)
+      #   array = [{ "device" => "/dev/sda", "use" => "all" }]
+      #   profile = AutoinstProfile::PartitioningSection.new_from_hashes(array)
+      #   map = AutoinstDriveMap.new(devicegraph, profile)
       #   map.partitions? # => false
       def partitions?
-        @drives.values.any? { |i| !i.fetch("partitions", []).empty? }
+        @drives.values.any? { |i| !i.partitions.empty? }
       end
 
     protected
 
       # Find the first usable disk for the given <drive> AutoYaST specification
       #
-      # @param drive_spec  [Hash] AutoYaST drive specification
+      # @param drive  [AutoinstProfile::DriveSection] AutoYaST drive specification
       # @param devicegraph [Devicegraph] Devicegraph
       # @return [Disk,nil] Usable disk or nil if none is found
-      def first_usable_disk(drive_spec, devicegraph)
-        skip_list = SkipList.from_profile(drive_spec.fetch("skip_list", []))
+      def first_usable_disk(drive, devicegraph)
+        skip_list = drive.skip_list
 
         devicegraph.disk_devices.each do |disk|
           next if disk_names.include?(disk.name)
