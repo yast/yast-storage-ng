@@ -23,9 +23,8 @@
 require_relative "../spec_helper"
 
 require "y2storage"
-require "y2storage/proposal/skip_list_value"
 
-describe Y2Storage::Proposal::SkipListValue do
+describe Y2Storage::AutoinstProfile::SkipListValue do
   subject(:value) { described_class.new(disk) }
 
   let(:scenario) { "windows-linux-free-pc" }

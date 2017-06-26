@@ -49,13 +49,13 @@ module Y2Storage
       def planned_devices(drives_map)
         result = []
 
-        drives_map.each_pair do |disk_name, drive_spec|
+        drives_map.each_pair do |disk_name, drive_section|
           disk = BlkDevice.find_by_name(devicegraph, disk_name)
-          case drive_spec.fetch("type", :CT_DISK)
+          case drive_section.type
           when :CT_DISK
-            result.concat(planned_for_disk(disk, drive_spec))
+            result.concat(planned_for_disk(disk, drive_section))
           when :CT_LVM
-            result << planned_for_vg(drive_spec)
+            result << planned_for_vg(drive_section)
           end
         end
 
@@ -73,28 +73,31 @@ module Y2Storage
       # Returns an array of planned partitions for a given disk
       #
       # @param disk [Disk,Dasd] Disk to place the partitions on
-      # @param spec [Hash]      Partitioning specification from AutoYaST
+      # @param drive [AutoinstProfile::DriveSection] drive section describing
+      #   the layout for the disk
       # @return [Array<Planned::Partition>] List of planned partitions
-      def planned_for_disk(disk, spec)
+      def planned_for_disk(disk, drive)
         result = []
-        spec.fetch("partitions", []).each do |partition_spec|
+        drive.partitions.each do |partition_section|
           # TODO: fix Planned::Partition.initialize
           partition = Y2Storage::Planned::Partition.new(nil, nil)
-          partition.disk = disk.name
-          partition.lvm_volume_group_name = partition_spec["lvm_group"]
+
           # TODO: partition.bootable is not in the AutoYaST profile. Check if
           # there's some logic to set it in the old code.
 
-          # TODO: set the correct id based on the filesystem type (move to Partition class?)
-          partition.partition_id = 131
-          add_common_device_attrs(partition, partition_spec)
-          add_partition_reuse(partition, partition_spec) unless partition_spec.fetch("create", true)
+          partition.disk = disk.name
+          partition.partition_id = partition_section.id_for_partition
+          partition.lvm_volume_group_name = partition_section.lvm_group
+
+          add_common_device_attrs(partition, partition_section)
+          add_partition_reuse(partition, partition_section) if partition_section.create == false
 
           # Sizes: leave out reducing fixed sizes and 'auto'
-          min_size, max_size = sizes_for(partition_spec["size"], disk.min_grain, disk.size)
+          min_size, max_size = sizes_for(partition_section.size, disk.min_grain, disk.size)
           partition.min_size = min_size
           partition.max_size = max_size
           partition.weight = 1 if max_size == DiskSize.unlimited
+
           result << partition
         end
 
@@ -103,27 +106,29 @@ module Y2Storage
 
       # Returns a planned volume group according to an AutoYaST specification
       #
-      # @param spec [Hash] Partitioning specification from AutoYaST
+      # @param drive [AutoinstProfile::DriveSection] drive section describing
+      #   the volume group
       # @return [Planned::LvmVg] Planned volume group
-      def planned_for_vg(spec)
-        vg = Y2Storage::Planned::LvmVg.new(volume_group_name: File.basename(spec["device"]))
+      def planned_for_vg(drive)
+        vg = Y2Storage::Planned::LvmVg.new(volume_group_name: File.basename(drive.device))
 
-        spec.fetch("partitions", []).each_with_object(vg.lvs) do |lv_spec, lvs|
-          lv = Y2Storage::Planned::LvmLv.new(lv_spec["mount"], filesystem_for(lv_spec["filesystem"]))
-          lv.logical_volume_name = lv_spec["lv_name"]
-          add_common_device_attrs(lv, lv_spec)
-          add_lv_reuse(lv, vg.volume_group_name, lv_spec) unless lv_spec.fetch("create", true)
+        drive.partitions.each_with_object(vg.lvs) do |lv_section, lvs|
+          # TODO: fix Planned::LvmLv.initialize
+          lv = Y2Storage::Planned::LvmLv.new(nil, nil)
+          lv.logical_volume_name = lv_section.lv_name
+          add_common_device_attrs(lv, lv_section)
+          add_lv_reuse(lv, vg.volume_group_name, lv_section) if lv_section.create == false
 
-          number, unit = size_to_components(lv_spec["size"])
+          number, unit = size_to_components(lv_section.size)
           if unit == "%"
             lv.percent_size = number
           else
-            lv.min_size, lv.max_size = sizes_for(lv_spec["size"], vg.extent_size, DiskSize.unlimited)
+            lv.min_size, lv.max_size = sizes_for(lv_section.size, vg.extent_size, DiskSize.unlimited)
           end
           lvs << lv
         end
 
-        add_vg_reuse(vg, spec)
+        add_vg_reuse(vg, drive)
         vg
       end
 
@@ -132,14 +137,14 @@ module Y2Storage
       # This method modifies the first argument setting crypt_key, crypt_fs,
       # mount, label, uuid and filesystem.
       #
-      # @param device [Planned::Device] Planned device
-      # @param spec   [Hash]            Fragment of an AutoYaST specification
-      def add_common_device_attrs(device, spec)
-        device.encryption_password = spec["crypt_key"] if spec["crypt_fs"]
-        device.mount_point = spec["mount"]
-        device.label = spec["label"]
-        device.uuid = spec["uuid"]
-        device.filesystem_type = filesystem_for(spec["filesystem"]) if spec["filesystem"]
+      # @param device  [Planned::Device] Planned device
+      # @param section [AutoinstProfile::PartitionSection] AutoYaST specification
+      def add_common_device_attrs(device, section)
+        device.encryption_password = section.crypt_key if section.crypt_fs
+        device.mount_point = section.mount
+        device.label = section.label
+        device.uuid = section.uuid
+        device.filesystem_type = section.type_for_filesystem
       end
 
       # Set 'reusing' attributes for a partition
@@ -148,11 +153,11 @@ module Y2Storage
       # reusing a partition (reuse and format).
       #
       # @param partition [Planned::Partition] Planned partition
-      # @param spec      [Hash]               Fragment of an AutoYaST specification
-      def add_partition_reuse(partition, spec)
-        partition_to_reuse = find_partition_to_reuse(devicegraph, spec)
+      # @param section   [AutoinstProfile::PartitionSection] AutoYaST specification
+      def add_partition_reuse(partition, section)
+        partition_to_reuse = find_partition_to_reuse(devicegraph, section)
         return unless partition_to_reuse
-        add_device_reuse(partition, partition_to_reuse.name, !!spec["format"])
+        add_device_reuse(partition, partition_to_reuse.name, !!section.format)
         # TODO: possible errors here
         #   - missing information about what device to use
         #   - the specified device was not found
@@ -165,12 +170,12 @@ module Y2Storage
       #
       # @param lv      [Planned::LvmLv] Planned logical volume
       # @param vg_name [String]         Volume group name to search for the logical volume to reuse
-      # @param spec    [Hash]           Fragment of an AutoYaST specification
-      def add_lv_reuse(lv, vg_name, spec)
-        lv_to_reuse = find_lv_to_reuse(devicegraph, vg_name, spec)
+      # @param section   [AutoinstProfile::PartitionSection] AutoYaST specification
+      def add_lv_reuse(lv, vg_name, section)
+        lv_to_reuse = find_lv_to_reuse(devicegraph, vg_name, section)
         return unless lv_to_reuse
         lv.logical_volume_name ||= lv_to_reuse.lv_name
-        add_device_reuse(lv, lv_to_reuse.name, !!spec["format"])
+        add_device_reuse(lv, lv_to_reuse.name, !!section.format)
       end
 
       def add_device_reuse(device, name, format)
@@ -184,9 +189,10 @@ module Y2Storage
       # reusing a volume group (reuse and format).
       #
       # @param vg   [Planned::LvmVg] Planned volume group
-      # @param spec [Hash]           Fragment of an AutoYaST specification
-      def add_vg_reuse(vg, spec)
-        vg.make_space_policy = spec.fetch("keep_unknown_lv", false) ? :keep : :remove
+      # @param drive [AutoinstProfile::DriveSection] drive section describing
+      #   the volume group
+      def add_vg_reuse(vg, drive)
+        vg.make_space_policy = drive.keep_unknown_lv ? :keep : :remove
 
         return unless vg.make_space_policy == :keep || vg.lvs.any?(&:reuse?)
         vg_to_reuse = find_vg_to_reuse(devicegraph, vg)
@@ -235,31 +241,27 @@ module Y2Storage
         [number.to_f, unit]
       end
 
-      # @param type [String,Symbol] Filesystem type name
-      def filesystem_for(type)
-        Y2Storage::Filesystems::Type.find(type)
-      end
-
-      # @param devicegraph [Devicegraph] Devicegraph to search for the partition to reuse
-      # @param spec        [Hash]        Partition specification from AutoYaST
-      def find_partition_to_reuse(devicegraph, spec)
-        if spec["partition_nr"]
-          devicegraph.partitions.find { |i| i.number == spec["partition_nr"] }
-        elsif spec["label"]
-          devicegraph.partitions.find { |i| i.filesystem_label == spec["label"] }
+      # @param devicegraph [Devicegraph] Devicegraph to search for the partitio to reuse
+      # @param part_spec [AutoinstProfile::PartitionSection] Partition specification
+      #   from AutoYaST
+      def find_partition_to_reuse(devicegraph, part_spec)
+        if part_spec.partition_nr
+          devicegraph.partitions.find { |i| i.number == part_spec.partition_nr }
+        elsif part_spec.label
+          devicegraph.partitions.find { |i| i.filesystem_label == part_spec.label }
         end
       end
 
       # @param devicegraph [Devicegraph] Devicegraph to search for the logical volume to reuse
       # @param vg_name     [String]      Volume group name to search for the logical volume to reuse
-      # @param spec        [Hash]        Fragment of an AutoYaST specification
-      def find_lv_to_reuse(devicegraph, vg_name, spec)
+      # @param part_spec   [AutoinstProfile::PartitionSection] LV specification from AutoYaST
+      def find_lv_to_reuse(devicegraph, vg_name, part_spec)
         vg = devicegraph.lvm_vgs.find { |v| v.vg_name == vg_name }
         return unless vg
-        if spec["lv_name"]
-          vg.lvm_lvs.find { |v| v.lv_name == spec["lv_name"] }
-        elsif spec["label"]
-          vg.lvm_lvs.find { |v| v.filesystem_label == spec["label"] }
+        if part_spec.lv_name
+          vg.lvm_lvs.find { |v| v.lv_name == part_spec.lv_name }
+        elsif part_spec.label
+          vg.lvm_lvs.find { |v| v.filesystem_label == part_spec.label }
         end
       end
 

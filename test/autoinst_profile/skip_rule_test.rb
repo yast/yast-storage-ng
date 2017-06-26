@@ -22,9 +22,8 @@
 require_relative "../spec_helper"
 
 require "y2storage"
-require "y2storage/proposal/skip_rule"
 
-describe Y2Storage::Proposal::SkipRule do
+describe Y2Storage::AutoinstProfile::SkipRule do
   subject(:rule) { described_class.new(key, predicate, reference) }
 
   let(:key) { "size_k" }
@@ -33,11 +32,11 @@ describe Y2Storage::Proposal::SkipRule do
   let(:disk) { instance_double("Y2Storage::Disk") }
   let(:size_k) { 1024 }
   let(:value) do
-    instance_double(Y2Storage::Proposal::SkipListValue, size_k: size_k, device: "/dev/sda")
+    instance_double(Y2Storage::AutoinstProfile::SkipListValue, size_k: size_k, device: "/dev/sda")
   end
 
   before do
-    allow(Y2Storage::Proposal::SkipListValue).to receive(:new).and_return(value)
+    allow(Y2Storage::AutoinstProfile::SkipListValue).to receive(:new).and_return(value)
   end
 
   describe ".from_profile_rule" do
