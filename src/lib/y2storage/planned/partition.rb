@@ -60,7 +60,7 @@ module Y2Storage
       #   flag but is not needed in our grub2 setup.
       attr_accessor :bootable
 
-      # @return [String]
+      # @return [String] name of the LVM volume group where the partition belongs
       attr_accessor :lvm_volume_group_name
 
       # Constructor.

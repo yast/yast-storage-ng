@@ -60,7 +60,12 @@ module Y2Storage
       # @return [Devicegraph] New devicegraph containing the planned volume group
       def create_volumes(planned_vg, pv_partitions = [])
         new_graph = original_devicegraph.duplicate
-        vg = planned_vg.reuse? ? find_vg(planned_vg, new_graph) : create_volume_group(new_graph, planned_vg)
+        vg =
+          if planned_vg.reuse?
+            find_vg(planned_vg, new_graph)
+          else
+            create_volume_group(new_graph, planned_vg)
+          end
 
         assign_physical_volumes(vg, pv_partitions, new_graph)
         make_space(vg, planned_vg.lvs)
@@ -156,6 +161,15 @@ module Y2Storage
         planned_lv.format!(lv)
       end
 
+      # Returns the size for the logical volume
+      #
+      # It returns the planned size (Planned::LogicalVolume#size) unless a
+      # percentage has been specified. In that case, it will use the volume
+      # group size and Planned::LogicalVolume#percent_size to calculate the
+      # desired size.
+      #
+      # @param [LvmVg]          Volume group where the logical volume will be placed
+      # @param [Planned::LvmLv] Planned logical volume
       def size_for(volume_group, planned_lv)
         return planned_lv.size unless planned_lv.percent_size
         (volume_group.size * planned_lv.percent_size / 100).ceil(volume_group.extent_size)

@@ -52,14 +52,13 @@ module Y2Storage
 
         drives_map.each_pair do |disk_name, drive_spec|
           disk = Disk.find_by_name(devicegraph, disk_name)
-          if drive_spec.fetch("type", :CT_DISK).to_sym == :CT_DISK
+          case drive_spec.fetch("type", :CT_DISK)
+          when :CT_DISK
             result.concat(planned_for_disk(disk, drive_spec))
-          else
-            result << planned_for_vg(disk, drive_spec)
+          when :CT_LVM
+            result << planned_for_vg(drive_spec)
           end
         end
-
-        # assign_pvs!(drives_map, result.select { |d| d.is_a?(Y2Storage::Planned::LvmVg) })
 
         checker = BootRequirementsChecker.new(devicegraph, planned_devices: result)
         result.concat(checker.needed_partitions)
@@ -89,11 +88,11 @@ module Y2Storage
 
           # TODO: set the correct id based on the filesystem type (move to Partition class?)
           partition.partition_id = 131
-          set_common_device_attrs(partition, partition_spec)
-          set_partition_reuse(partition, partition_spec) unless partition_spec.fetch("create", true)
+          add_common_device_attrs(partition, partition_spec)
+          add_partition_reuse(partition, partition_spec) unless partition_spec.fetch("create", true)
 
           # Sizes: leave out reducing fixed sizes and 'auto'
-          min_size, max_size = sizes_for(partition_spec, disk.min_grain, disk.size)
+          min_size, max_size = sizes_for(partition_spec["size"], disk.min_grain, disk.size)
           partition.min_size = min_size
           partition.max_size = max_size
           result << partition
@@ -102,42 +101,56 @@ module Y2Storage
         result
       end
 
-      # TODO: reusing vgs, lvs
-      # FIXME: sizes_for
-      def planned_for_vg(disk, spec)
+      # Returns a planned volume group according to an AutoYaST specification
+      #
+      # TODO: keep_unknown_lv
+      #
+      # @param partitioning [Hash] Partitioning specification from AutoYaST
+      # @return [Planned::LvmVg] Planned volume group
+      def planned_for_vg(spec)
         vg = Y2Storage::Planned::LvmVg.new(volume_group_name: File.basename(spec["device"]))
-        set_vg_reuse(vg) unless spec.fetch("create", true)
+        add_vg_reuse(vg) unless spec.fetch("create", true)
 
-        spec.fetch("partitions", []).each_with_object(vg.lvs) do |lv_spec, memo|
-          # TODO: keep_unknown_lv
+        spec.fetch("partitions", []).each_with_object(vg.lvs) do |lv_spec, lvs|
           lv = Y2Storage::Planned::LvmLv.new(lv_spec["mount"], filesystem_for(lv_spec["filesystem"]))
           lv.logical_volume_name = lv_spec["lv_name"]
-          set_common_device_attrs(lv, lv_spec)
-          set_lv_reuse(lv, lv_spec) unless lv_spec.fetch("create", true)
+          add_common_device_attrs(lv, lv_spec)
+          add_lv_reuse(lv, lv_spec) unless lv_spec.fetch("create", true)
 
           number, unit = size_to_components(lv_spec["size"])
           if unit == "%"
             lv.percent_size = number
           else
-            # FIXME: create a different sizes_for or something like that
-            lv.min_size, lv.max_size = sizes_for(lv_spec, vg.extent_size, DiskSize.unlimited)
+            lv.min_size, lv.max_size = sizes_for(lv_spec["size"], vg.extent_size, DiskSize.unlimited)
           end
-          memo << lv
+          lvs << lv
         end
         vg
       end
 
-      def set_common_device_attrs(device, spec)
+      # Set common devices attributes
+      #
+      # This method modifies the first argument setting crypt_key, crypt_fs,
+      # mount, label, uuid and filesystem.
+      #
+      # @param device [Planned::Device] Planned device
+      # @param sepc   [Hash]            Fragment of an AutoYaST specification
+      def add_common_device_attrs(device, spec)
         device.encryption_password = spec["crypt_key"] if spec["crypt_fs"]
         device.mount_point = spec["mount"]
         device.label = spec["label"]
         device.uuid = spec["uuid"]
-        if spec["filesystem"]
-          device.filesystem_type = filesystem_for(spec["filesystem"])
-        end
+        device.filesystem_type = filesystem_for(spec["filesystem"]) if spec["filesystem"]
       end
 
-      def set_partition_reuse(partition, spec)
+      # Set 'reusing' attributes for a partition
+      #
+      # This method modifies the first argument setting the values related to
+      # reusing a partition (reuse and format).
+      #
+      # @param partition [Planned::Partition] Planned partition
+      # @param spec      [Hash]               Fragment of an AutoYaST specification
+      def add_partition_reuse(partition, spec)
         partition_to_reuse = find_partition_to_reuse(devicegraph, spec)
         return unless partition_to_reuse
         partition.reuse = partition_to_reuse.name
@@ -147,53 +160,73 @@ module Y2Storage
         #   - the specified device was not found
       end
 
-      def set_lv_reuse(lv, spec)
+      # Set 'reusing' attributes for a logical volume
+      #
+      # This method modifies the first argument setting the values related to
+      # reusing a logical volume (reuse and format).
+      #
+      # @param lv   [Planned::LvmLv] Planned logical volume
+      # @param spec [Hash]           Fragment of an AutoYaST specification
+      def add_lv_reuse(lv, spec)
         lv_to_reuse = find_lv_to_reuse(devicegraph, lv)
         return unless lv_to_reuse
         lv.reuse = lv_to_reuse.lv_name
         lv.reformat = !!spec["format"]
       end
 
-      def set_vg_reuse(vg)
+      # Set 'reusing' attributes for a volume group
+      #
+      # This method modifies the first argument setting the values related to
+      # reusing a volume group (reuse and format).
+      #
+      # @param lv   [Planned::LvmLv] Planned volume group
+      # @param spec [Hash]           Fragment of an AutoYaST specification
+      def add_vg_reuse(vg)
         vg_to_reuse = find_vg_to_reuse(devicegraph, vg)
         return unless vg_to_reuse
         vg.reuse = vg_to_reuse.vg_name
+      end
+
+      # Returns min and max sizes for a size specification
+      #
+      # @param description [String]   Device size specification from AutoYaST
+      # @param min         [DiskSize] Minimum disk size
+      # @param max         [DiskSize] Maximum disk size
+      # @return [[DiskSize,DiskSize]] min and max sizes for the given partition
+      #
+      # @see SIZE_REGEXP
+      def sizes_for(size_spec, min, max)
+        normalized_size = size_spec.to_s.strip.downcase
+
+        return [min, DiskSize.unlimited] if normalized_size == "max" || normalized_size.empty?
+
+        number, unit = size_to_components(size_spec)
+        size =
+          if unit == "%"
+            percent = number.to_f
+            (max * percent) / 100.0
+          else
+            DiskSize.parse(size_spec, legacy_units: true)
+          end
+        [size, size]
       end
 
       # Regular expression to detect which kind of size is being used in an
       # AutoYaST <size> element
       SIZE_REGEXP = /([\d,.]+)?([a-zA-Z%]+)/
 
-      # Returns min and max sizes for a partition specification
+      # Extracts number and unit from an AutoYaST size specification
       #
-      # @param description [Hash]     Partition specification from AutoYaST
-      # @param min         [DiskSize]
-      # @param max         [DiskSize]
-      # @return [[DiskSize,DiskSize]] min and max sizes for the given partition
+      # @example Using with percentages
+      #   size_to_components("30%") # => [30.0, "%"]
+      # @example Using with space units
+      #   size_to_components("30GiB") # => [30.0, "GiB"]
       #
-      # @see SIZE_REGEXP
-      def sizes_for(part_spec, min, max)
-        normalized_size = part_spec["size"].to_s.strip.downcase
-
-        if normalized_size == "max" || normalized_size.empty?
-          return [min, DiskSize.unlimited]
-        end
-
+      # @return [[number,unit]] Number and unit
+      def size_to_components(size_spec)
+        normalized_size = size_spec.to_s.strip
         number, unit = SIZE_REGEXP.match(normalized_size).values_at(1, 2)
-        size =
-          if unit == "%"
-            percent = number.to_f
-            (max * percent) / 100.0
-          else
-            DiskSize.parse(part_spec["size"], legacy_units: true)
-          end
-        [size, size]
-      end
-
-      def size_to_components(size)
-        normalized_size = size.to_s.strip.downcase
-        number, unit = SIZE_REGEXP.match(normalized_size).values_at(1, 2)
-        [number.to_i, unit]
+        [number.to_f, unit]
       end
 
       # @param type [String,Symbol] Filesystem type name
