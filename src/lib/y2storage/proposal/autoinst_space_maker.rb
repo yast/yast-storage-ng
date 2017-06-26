@@ -65,6 +65,7 @@ module Y2Storage
       # @option drive_spec [Boolean] "initialize" Initialize the device
       # @option drive_spec [String]  "use"        Partitions to remove ("all" or "linux")
       def delete_stuff(devicegraph, disk, drive_spec)
+        return unless disk.respond_to?(:partition_table)
         if drive_spec["initialize"]
           disk.remove_descendants
           return
