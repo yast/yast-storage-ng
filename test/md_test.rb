@@ -22,8 +22,6 @@
 
 require_relative "spec_helper"
 require "y2storage"
-require "y2storage/md_level"
-require "y2storage/md_parity"
 
 describe Y2Storage::Md do
   using Y2Storage::Refinements::SizeCasts
