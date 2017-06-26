@@ -19,15 +19,18 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "y2storage/storage_class_wrapper"
 require "y2storage/actiongraph"
 require "y2storage/blk_device"
 require "y2storage/disk"
-require "y2storage/partition"
+require "y2storage/fake_device_factory"
 require "y2storage/filesystems/base"
 require "y2storage/filesystems/blk_filesystem"
 require "y2storage/filesystems/nfs"
-require "y2storage/fake_device_factory"
+require "y2storage/lvm_lv"
+require "y2storage/lvm_vg"
+require "y2storage/md"
+require "y2storage/partition"
+require "y2storage/storage_class_wrapper"
 require "y2storage/storage_manager"
 
 module Y2Storage
@@ -185,6 +188,11 @@ module Y2Storage
     # @return [Array<LvmLv>]
     def lvm_lvs
       LvmLv.all(self)
+    end
+
+    # @return [Array<Md>]
+    def md_raids
+      Md.all(self)
     end
 
     # @return [Array<FreeDiskSpace>]
