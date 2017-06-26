@@ -154,8 +154,7 @@ module Y2Storage
       def add_partition_reuse(partition, spec)
         partition_to_reuse = find_partition_to_reuse(devicegraph, spec)
         return unless partition_to_reuse
-        partition.reuse = partition_to_reuse.name
-        partition.reformat = !!spec["format"]
+        add_device_reuse(partition, partition_to_reuse.name, !!spec["format"])
         # TODO: possible errors here
         #   - missing information about what device to use
         #   - the specified device was not found
@@ -171,8 +170,12 @@ module Y2Storage
       def add_lv_reuse(lv, spec)
         lv_to_reuse = find_lv_to_reuse(devicegraph, lv)
         return unless lv_to_reuse
-        lv.reuse = lv_to_reuse.lv_name
-        lv.reformat = !!spec["format"]
+        add_device_reuse(lv, lv_to_reuse.lv_name, !!spec["format"])
+      end
+
+      def add_device_reuse(device, name, format)
+        device.reuse = name
+        device.reformat = format
       end
 
       # Set 'reusing' attributes for a volume group
