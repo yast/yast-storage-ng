@@ -84,6 +84,15 @@ module Y2Storage
         valid.any? { |r| r.matches?(disk) }
       end
 
+      # Content of the section in the format used by the AutoYaST modules
+      # (nested arrays and hashes).
+      #
+      # @return [Array<Hash>] each element represents an entry in the
+      #   <skip_list> section
+      def to_hashes
+        rules.map(&:to_profile_rule)
+      end
+
     private
 
       # Log a list of rules as ignored

@@ -126,6 +126,23 @@ module Y2Storage
         SkipListValue.new(disk).send(key)
       end
 
+      # Rule definition in the AutoYaST profile format used by the AutoYaST
+      # modules (nested arrays and hashes).
+      #
+      # Inverse of {.from_profile_rule}
+      # @see SkipListSection#to_hashes
+      #
+      # @return [Hash]
+      def to_profile_rule
+        result = { "skip_key" => key, "skip_value" => raw_reference }
+        if predicate == :less_than
+          result["skip_if_less_than"] = true
+        elsif predicate == :more_than
+          result["skip_if_more_than"] = true
+        end
+        result
+      end
+
       # Redefines #inspect method
       #
       # @return [String]

@@ -44,7 +44,8 @@ module Y2Storage
         # This method provides no extra validation, type conversion or
         # initialization to default values. Those responsibilities belong to the
         # AutoYaST modules. The hash is expected to be valid and
-        # contain the relevant information.
+        # contain the relevant information. Attributes are set to nil for
+        # missing keys and for blank values.
         #
         # @param [Hash] content of the corresponding section of the profile.
         #   Each element of the hash corresponds to one of the attributes
@@ -78,6 +79,22 @@ module Y2Storage
         init_scalars_from_hash(hash)
       end
 
+      # Content of the section in the format used by the AutoYaST modules
+      # (nested arrays and hashes).
+      #
+      # @return [Hash] each element of the hash corresponds to one of the
+      #     attributes defined in the section. Blank attributes are not
+      #     included.
+      def to_hashes
+        attributes.each_with_object({}) do |attrib, result|
+          value = attrib_value(attrib)
+          next if attrib_skip?(value)
+
+          key = attrib_key(attrib)
+          result[key] = value
+        end
+      end
+
     protected
 
       def attributes
@@ -89,6 +106,10 @@ module Y2Storage
       # @return [Boolean] true is the value is blank
       def attrib_skip?(value)
         value.nil? || value == [] || value == ""
+      end
+
+      def attrib_key(attrib)
+        (attrib[:xml_name] || attrib[:name]).to_s
       end
 
       def attrib_value(attrib)
