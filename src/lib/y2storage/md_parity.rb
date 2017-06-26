@@ -27,6 +27,8 @@ module Y2Storage
   # This is a wrapper for the Storage::MdParity enum
   class MdParity
     include StorageEnumWrapper
+    include Yast::I18n
+    extend Yast::I18n
 
     wrap_enum "MdParity"
 
