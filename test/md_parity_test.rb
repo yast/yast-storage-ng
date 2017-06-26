@@ -33,8 +33,7 @@ describe Y2Storage::MdParity do
     it "raises RuntimeError when unknown enum value is used" do
       enum = described_class.new(1)
       allow(enum).to receive(:to_sym).and_return(:crazy_stuff)
-      expect{enum.to_human_string}.to raise_error(RuntimeError)
+      expect { enum.to_human_string }.to raise_error(RuntimeError)
     end
   end
 end
-
