@@ -109,7 +109,7 @@ module Y2Storage
       # @return [Planned::LvmVg] Planned volume group
       def planned_for_vg(spec)
         vg = Y2Storage::Planned::LvmVg.new(volume_group_name: File.basename(spec["device"]))
-        add_vg_reuse(vg) unless spec.fetch("create", true)
+        add_vg_reuse(vg, spec) unless spec.fetch("create", true)
 
         spec.fetch("partitions", []).each_with_object(vg.lvs) do |lv_spec, lvs|
           lv = Y2Storage::Planned::LvmLv.new(lv_spec["mount"], filesystem_for(lv_spec["filesystem"]))
@@ -181,9 +181,10 @@ module Y2Storage
       #
       # @param lv   [Planned::LvmLv] Planned volume group
       # @param spec [Hash]           Fragment of an AutoYaST specification
-      def add_vg_reuse(vg)
+      def add_vg_reuse(vg, spec)
         vg_to_reuse = find_vg_to_reuse(devicegraph, vg)
         return unless vg_to_reuse
+        vg.make_space_policy = spec.fetch("keep_unknown_lv", false) ? :keep : :remove
         vg.reuse = vg_to_reuse.vg_name
       end
 

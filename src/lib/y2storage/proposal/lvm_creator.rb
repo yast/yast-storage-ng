@@ -49,14 +49,9 @@ module Y2Storage
       # Returns a copy of the original devicegraph in which the volume
       # group (and its logical volumes, if needed) have been created.
       #
-      # FIXME: the volume group will not be created if it does not contain
-      # any logical volume.
-      # FIXME: when reusing a volume group, all logical volumes will be
-      # removed in order to allocate new ones.
-      #
       # @param planned_vg [Planned::LvmVg]   Volume group to create
       # @param pv_partitions [Array<String>] names of the newly created
-      #     partitions that should be added as PVs to the volume group
+      #   partitions that should be added as PVs to the volume group
       # @return [Devicegraph] New devicegraph containing the planned volume group
       def create_volumes(planned_vg, pv_partitions = [])
         new_graph = original_devicegraph.duplicate
@@ -68,7 +63,7 @@ module Y2Storage
           end
 
         assign_physical_volumes(vg, pv_partitions, new_graph)
-        make_space(vg, planned_vg.lvs)
+        make_space(vg, planned_vg)
         create_logical_volumes(vg, planned_vg.lvs)
 
         new_graph
@@ -111,6 +106,29 @@ module Y2Storage
         end
       end
 
+      # Makes space for planned logical volumes
+      #
+      # When making free space, three different policies can be followed:
+      #
+      # * :needed: remove logical volumes until there's enough space for
+      #            planned ones.
+      # * :remove: remove all logical volumes.
+      # * :keep:   keep all logical volumes.
+      #
+      # This method modifies the volume group received as first argument.
+      #
+      # @param volume_group      [LvmVg] volume group to clean-up
+      # @param planned_lvs       [Planned::LvmVg] planned logical volume
+      def make_space(volume_group, planned_vg)
+        return if planned_vg.make_space_policy == :keep
+        case planned_vg.make_space_policy
+        when :needed
+          make_space_until_fit(volume_group, planned_vg.lvs)
+        when :remove
+          remove_logical_volumes(volume_group)
+        end
+      end
+
       # Makes sure the given volume group has enough free extends to allocate
       # all the planned volumes, by deleting the existing logical volumes.
       #
@@ -120,7 +138,7 @@ module Y2Storage
       # space is the minimum valid one.
       #
       # @param volume_group [LvmVg] volume group to modify
-      def make_space(volume_group, planned_lvs)
+      def make_space_until_fit(volume_group, planned_lvs)
         space_size = DiskSize.sum(planned_lvs.map(&:min_size))
         missing = missing_vg_space(volume_group, space_size)
         while missing > DiskSize.zero
@@ -132,6 +150,15 @@ module Y2Storage
           volume_group.delete_lvm_lv(lv_to_delete)
           missing = missing_vg_space(volume_group, space_size)
         end
+      end
+
+      # Remove all logical volumes from a volume group
+      #
+      # This method modifies the volume group received as a first argument.
+      #
+      # @param volume_group [LvmVg] volume group to remove logical volumes from
+      def remove_logical_volumes(volume_group)
+        volume_group.lvm_lvs.each { |v| volume_group.delete_lvm_lv(v) }
       end
 
       # Creates a logical volume for each planned volume.

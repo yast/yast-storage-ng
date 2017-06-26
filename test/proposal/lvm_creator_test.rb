@@ -143,14 +143,38 @@ describe Y2Storage::Proposal::LvmCreator do
         expect(lv_names).to include("lv1", "lv2")
       end
 
-      it "deletes existing LVs as needed to make space" do
-        volumes << planned_lv(type: :ext4, logical_volume_name: "three", min: 20.GiB)
+      context "when there is not enough space" do
+        before do
+          volumes << planned_lv(type: :ext4, logical_volume_name: "three", min: 20.GiB)
+        end
 
-        devicegraph = creator.create_volumes(vg, pv_partitions)
-        reused_vg = devicegraph.lvm_vgs.first
-        lv_names = reused_vg.lvm_lvs.map(&:lv_name)
-        expect(lv_names).to_not include "lv2"
-        expect(lv_names).to include "lv1"
+        it "deletes existing LVs as needed to make space" do
+          devicegraph = creator.create_volumes(vg, pv_partitions)
+          reused_vg = devicegraph.lvm_vgs.first
+          lv_names = reused_vg.lvm_lvs.map(&:lv_name)
+          expect(lv_names).to_not include "lv2"
+          expect(lv_names).to include "lv1"
+        end
+
+        context "and make policy is set to :keep" do
+          before { vg.make_space_policy = :keep }
+
+          it "does not delete any LV" do
+            volumes << planned_lv(type: :ext4, logical_volume_name: "three", min: 20.GiB)
+            expect { creator.create_volumes(vg, pv_partitions) }.to raise_error(RuntimeError)
+          end
+        end
+      end
+
+      context "and make space policy is set to :remove" do
+        before { vg.make_space_policy = :remove }
+
+        it "deletes all existing LVs" do
+          devicegraph = creator.create_volumes(vg, pv_partitions)
+          reused_vg = devicegraph.lvm_vgs.first
+          lv_names = reused_vg.lvm_lvs.map { |lv| lv.lv_name }
+          expect(lv_names).to eq(["one", "two"])
+        end
       end
     end
 

@@ -246,7 +246,8 @@ describe Y2Storage::Proposal::AutoinstDevicesPlanner do
           _pv, vg = planner.planned_devices(drives_map)
           expect(vg).to have_attributes(
             "volume_group_name" => "vg0",
-            "reuse"             => "vg0"
+            "reuse"             => "vg0",
+            "make_space_policy" => :remove
           )
         end
       end

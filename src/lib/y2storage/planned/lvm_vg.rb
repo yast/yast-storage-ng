@@ -49,6 +49,12 @@ module Y2Storage
       # @return [DiskSize] Size of one extent
       attr_accessor :extent_size
 
+      # @return [Symbol] Policy to make space for planned volume groups:
+      #   remove old logical volumes until new ones fit (:needed), remove
+      #   all old logical volumes (:remove) or not remove any logical
+      #   volume (:keep).
+      attr_accessor :make_space_policy
+
       # Builds a new instance based on a real VG
       #
       # The new instance represents the intention to reuse the real VG, so the
@@ -74,6 +80,7 @@ module Y2Storage
         @volume_group_name = volume_group_name
         @lvs = lvs
         @pvs = pvs
+        @make_space_policy = :needed
       end
 
       # Initializes the object taking the values from a real volume group
