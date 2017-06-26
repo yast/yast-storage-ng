@@ -59,9 +59,9 @@ module Y2Storage
     }
     private_constant :TRANSLATIONS
 
-    # Returns human readable representation of enum.
+    # Returns human readable representation of enum which is already translated.
     # @return [String]
-    # @raise [RuntimeError] when called on unknown ennum value.
+    # @raise [RuntimeError] when called on enum value for which translation is not yet defined.
     def to_human_string
       textdomain "storage"
 
