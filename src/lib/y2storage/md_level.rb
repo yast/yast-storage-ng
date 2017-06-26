@@ -27,7 +27,30 @@ module Y2Storage
   # This is a wrapper for the Storage::MdLevel enum
   class MdLevel
     include StorageEnumWrapper
+    include Yast::I18n
+    extend Yast::I18n
 
     wrap_enum "MdLevel"
+
+    TRANSLATIONS = {
+      unknown: N_("Unknown"),
+      raid0:   N_("RAID0"),
+      raid1:   N_("RAID1"),
+      raid5:   N_("RAID5"),
+      raid6:   N_("RAID6"),
+      raid10:  N_("RAID10")
+    }
+    private_constant :TRANSLATIONS
+
+    # Returns human readable representation of enum which is already translated.
+    # @return [String]
+    # @raise [RuntimeError] when called on enum value for which translation is not yet defined.
+    def to_human_string
+      textdomain "storage"
+
+      string = TRANSLATIONS[to_sym] or raise "Unhandled MD raid level value '#{inspect}'"
+
+      _(string)
+    end
   end
 end
