@@ -120,6 +120,13 @@ module Y2Storage
       def self.to_string_attrs
         [:reuse, :volume_group_name]
       end
+
+    protected
+
+      def device_to_reuse(devicegraph)
+        return nil unless reuse?
+        Y2Storage::LvmVg.find_by_vg_name(devicegraph, reuse)
+      end
     end
   end
 end
