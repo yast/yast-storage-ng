@@ -93,7 +93,7 @@ module Y2Storage
 
       # Creates planned partitions in the given devicegraph
       #
-      # @param planned_devices [Array<Planned::Partition>] Devices to create/reuse
+      # @param planned_partitions [Array<Planned::Partition>] Devices to create/reuse
       # @param disk_names [Array<String>] Disks to consider
       # @return [PartitionCreatorResult]
       def create_partitions(planned_partitions, disk_names)
@@ -140,8 +140,8 @@ module Y2Storage
 
       # Reuses volume groups for the given devicegraph
       #
-      # @param reused_partitions [Array<Planned::LvmVg>] Volume groups to reuse
-      # @param devicegraph       [Devicegraph]           Devicegraph to reuse partitions
+      # @param reused_vgs  [Array<Planned::LvmVg>] Volume groups to reuse
+      # @param devicegraph [Devicegraph]           Devicegraph to reuse partitions
       def reuse_vgs(reused_vgs, devicegraph)
         reused_vgs.each do |vg|
           vg.reuse!(devicegraph)

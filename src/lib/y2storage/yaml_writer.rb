@@ -122,7 +122,7 @@ module Y2Storage
     # Free slots are calculated as best as we can and not part of the
     #   partition table object.
     #
-    # @param disk [Dasd, Disk]
+    # @param device [Dasd, Disk]
     # @return [Array<Hash>]
     #
     # FIXME: this method offends three different complexity cops!

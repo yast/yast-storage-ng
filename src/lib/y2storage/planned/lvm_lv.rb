@@ -51,7 +51,7 @@ module Y2Storage
       # information from the real LV to make sure it is available even if the
       # real object disappears.
       #
-      # @param real_vg [Y2Storage::LvmVg] Logical volume group to get the values from
+      # @param real_lv [Y2Storage::LvmLv] Logical volume to get the values from
       # @return [LvmLv] New LvmLv instance based on real_lv
       def self.from_real_lv(real_lv)
         lv = new(real_lv.filesystem_mountpoint, real_lv.filesystem_type)
@@ -84,7 +84,7 @@ module Y2Storage
 
       # Initializes the object taking the values from a real logical volume
       #
-      # @param real_vg [Y2Storage::LvmLv] Logical volume to get the values from
+      # @param real_lv [Y2Storage::LvmLv] Logical volume to get the values from
       def initialize_from_real_lv(real_lv)
         @logical_volume_name = real_lv.lv_name
         self.reuse = real_lv.lv_name

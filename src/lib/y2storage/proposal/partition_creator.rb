@@ -30,11 +30,11 @@ module Y2Storage
     # Partition creation result
     #
     # @!method devicegraph
-    # @return[Devicegraph] Devicegraph containing the new devices
+    #   @return [Devicegraph] Devicegraph containing the new devices
     #
     # @!method devices_map
-    # @return[Hash<String,Planned::Partition>] Planned partitions indexed by the
-    #   device name where they were placed.
+    #   @return [Hash<String,Planned::Partition>] Planned partitions indexed by the
+    #     device name where they were placed.
     PartitionCreationResult = Struct.new(:devicegraph, :devices_map)
 
     # Class to create partitions following a given distribution represented by
@@ -105,6 +105,8 @@ module Y2Storage
       # @param planned_partitions [Array<Planned::Partition>]
       # @param initial_free_space [FreeDiskSpace]
       # @param num_logical [Symbol] logical partitions. See {#process_space}
+      # @return [Hash<String,Planned::Partition>] Planned partitions indexed by the
+      #   device name where they were placed
       def create_planned_partitions(planned_partitions, initial_free_space, num_logical)
         devices_map = {}
         planned_partitions.each_with_index do |part, idx|
@@ -141,7 +143,6 @@ module Y2Storage
       # specified slot of free space.
       #
       # @param planned_partition [Planned::Partition]
-      # @param partition_id [PartitionId]
       # @param free_space   [FreeDiskSpace]
       # @param primary      [Boolean] whether the partition should be primary
       #                     or logical

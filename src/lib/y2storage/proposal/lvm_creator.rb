@@ -117,8 +117,8 @@ module Y2Storage
       #
       # This method modifies the volume group received as first argument.
       #
-      # @param volume_group      [LvmVg] volume group to clean-up
-      # @param planned_lvs       [Planned::LvmVg] planned logical volume
+      # @param volume_group [LvmVg] volume group to clean-up
+      # @param planned_vg   [Planned::LvmVg] planned logical volume
       def make_space(volume_group, planned_vg)
         return if planned_vg.make_space_policy == :keep
         case planned_vg.make_space_policy
@@ -198,8 +198,8 @@ module Y2Storage
       # group size and Planned::LogicalVolume#percent_size to calculate the
       # desired size.
       #
-      # @param [LvmVg]          Volume group where the logical volume will be placed
-      # @param [Planned::LvmLv] Planned logical volume
+      # @param volume_group [LvmVg] Volume group where the logical volume will be placed
+      # @param planned_lv   [Planned::LvmLv] Planned logical volume
       def size_for(volume_group, planned_lv)
         return planned_lv.size unless planned_lv.percent_size
         (volume_group.size * planned_lv.percent_size / 100).ceil(volume_group.extent_size)

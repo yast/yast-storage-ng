@@ -192,7 +192,7 @@ module Y2Storage
 
       # Returns the planned volume group
       #
-      # If no volume group is set (see {#reused_volume_group}), it will create
+      # If no volume group is set (see {#reused_volume_group=}), it will create
       # a new one adding planned logical volumes ({#initialize}).
       #
       # @return [Planned::LvmVg] Volume group that will be reused to allocate

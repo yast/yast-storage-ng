@@ -132,7 +132,7 @@ module Y2Storage
       #
       # All volume groups should have a "device" property.
       #
-      # @parama vgs [Array<Hash>] List of volume group specifications from AutoYaST
+      # @param vgs [Array<Hash>] List of volume group specifications from AutoYaST
       def add_vgs(vgs)
         vgs.each { |v| @drives[v["device"]] = v }
       end

@@ -73,8 +73,8 @@ module Y2Storage
 
       # Returns an array of planned partitions for a given disk
       #
-      # @param disk         [Disk] Disk to place the partitions on
-      # @param partitioning [Hash] Partitioning specification from AutoYaST
+      # @param disk [Disk] Disk to place the partitions on
+      # @param spec [Hash] Partitioning specification from AutoYaST
       # @return [Array<Planned::Partition>] List of planned partitions
       def planned_for_disk(disk, spec)
         result = []
@@ -104,7 +104,7 @@ module Y2Storage
 
       # Returns a planned volume group according to an AutoYaST specification
       #
-      # @param partitioning [Hash] Partitioning specification from AutoYaST
+      # @param spec [Hash] Partitioning specification from AutoYaST
       # @return [Planned::LvmVg] Planned volume group
       def planned_for_vg(spec)
         vg = Y2Storage::Planned::LvmVg.new(volume_group_name: File.basename(spec["device"]))
@@ -134,7 +134,7 @@ module Y2Storage
       # mount, label, uuid and filesystem.
       #
       # @param device [Planned::Device] Planned device
-      # @param sepc   [Hash]            Fragment of an AutoYaST specification
+      # @param spec   [Hash]            Fragment of an AutoYaST specification
       def add_common_device_attrs(device, spec)
         device.encryption_password = spec["crypt_key"] if spec["crypt_fs"]
         device.mount_point = spec["mount"]
@@ -184,7 +184,7 @@ module Y2Storage
       # This method modifies the first argument setting the values related to
       # reusing a volume group (reuse and format).
       #
-      # @param lv   [Planned::LvmLv] Planned volume group
+      # @param vg   [Planned::LvmVg] Planned volume group
       # @param spec [Hash]           Fragment of an AutoYaST specification
       def add_vg_reuse(vg, spec)
         vg.make_space_policy = spec.fetch("keep_unknown_lv", false) ? :keep : :remove
@@ -196,9 +196,9 @@ module Y2Storage
 
       # Returns min and max sizes for a size specification
       #
-      # @param description [String]   Device size specification from AutoYaST
-      # @param min         [DiskSize] Minimum disk size
-      # @param max         [DiskSize] Maximum disk size
+      # @param size_spec [String]   Device size specification from AutoYaST
+      # @param min       [DiskSize] Minimum disk size
+      # @param max       [DiskSize] Maximum disk size
       # @return [[DiskSize,DiskSize]] min and max sizes for the given partition
       #
       # @see SIZE_REGEXP
@@ -242,7 +242,7 @@ module Y2Storage
       end
 
       # @param devicegraph [Devicegraph] Devicegraph to search for the partition to reuse
-      # @param part_spec   [Hash]        Partition specification from AutoYaST
+      # @param spec        [Hash]        Partition specification from AutoYaST
       def find_partition_to_reuse(devicegraph, spec)
         if spec["partition_nr"]
           devicegraph.partitions.find { |i| i.number == spec["partition_nr"] }
@@ -265,7 +265,7 @@ module Y2Storage
       end
 
       # @param devicegraph [Devicegraph] Devicegraph to search for the volume group to reuse
-      # @param lv          [Planned::LvmVg] Planned volume group
+      # @param vg          [Planned::LvmVg] Planned volume group
       def find_vg_to_reuse(devicegraph, vg)
         return nil unless vg.volume_group_name
         devicegraph.lvm_vgs.find { |v| v.vg_name == vg.volume_group_name }

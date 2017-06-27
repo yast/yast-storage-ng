@@ -40,9 +40,9 @@ module Y2Storage
 
       # Performs all the delete operations specified in the AutoYaST profile
       #
-      # @param original_graph     [Devicegraph] initial devicegraph
-      # @param planned_partitions [Array<Planned::Partition>] set of partitions
-      #     to make space for.
+      # @param original_devicegraph [Devicegraph] initial devicegraph
+      # @param drives_map           [Array<Planned::Partition>] set of partitions
+      #   to make space for.
       def cleaned_devicegraph(original_devicegraph, drives_map)
         devicegraph = original_devicegraph.dup
 
