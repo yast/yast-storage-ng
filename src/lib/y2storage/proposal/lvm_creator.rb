@@ -59,7 +59,7 @@ module Y2Storage
           if planned_vg.reuse?
             find_vg(planned_vg, new_graph)
           else
-            create_volume_group(new_graph, planned_vg)
+            create_volume_group(planned_vg, new_graph)
           end
 
         assign_physical_volumes(vg, pv_partitions, new_graph)
@@ -82,10 +82,10 @@ module Y2Storage
 
       # Create a volume group in a devicegraph
       #
-      # @param devicegraph [Devicegraph]    Starting point
       # @param planned_vg  [Planned::LvmVg] Planned volume group
+      # @param devicegraph [Devicegraph]    Starting point
       # @return [Devicegraph] New devicegraph containing the new volume group
-      def create_volume_group(devicegraph, planned_vg)
+      def create_volume_group(planned_vg, devicegraph)
         name = available_name(planned_vg.volume_group_name, devicegraph)
         LvmVg.create(devicegraph, name)
       end
