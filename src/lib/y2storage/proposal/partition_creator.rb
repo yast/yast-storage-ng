@@ -55,7 +55,7 @@ module Y2Storage
       # partitions have been created.
       #
       # @param distribution [Planned::PartitionsDistribution]
-      # @return [Devicegraph]
+      # @return [PartitionCreationResult]
       def create_partitions(distribution)
         self.devicegraph = original_graph.duplicate
 

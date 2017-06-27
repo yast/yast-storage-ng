@@ -65,7 +65,6 @@ module Y2Storage
         assign_physical_volumes(vg, pv_partitions, new_graph)
         make_space(vg, planned_vg)
         create_logical_volumes(vg, planned_vg.lvs)
-        planned_vg.lvs.select(&:reuse?).each { |v| v.reuse!(new_graph) }
 
         new_graph
       end
