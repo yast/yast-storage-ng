@@ -30,7 +30,8 @@ describe Y2Storage::Proposal::AutoinstDrivesMap do
   let(:partitioning) do
     [
       { "device" => "/dev/sda", "use" => "all" },
-      { "use" => "all" }
+      { "use" => "all" },
+      { "device" => "/dev/system", "type" => :CT_LVM }
     ]
   end
 
@@ -38,9 +39,9 @@ describe Y2Storage::Proposal::AutoinstDrivesMap do
 
   describe "#each" do
     it "executes the given block for each name/drive in the map" do
-      expect do |probe|
-        drives_map.each(&probe)
-      end.to yield_successive_args(["/dev/sda", partitioning[0]], ["/dev/sdb", partitioning[1]])
+      expect { |i| drives_map.each(&i) }.to yield_successive_args(
+        ["/dev/sda", partitioning[0]], ["/dev/sdb", partitioning[1]], ["/dev/system", partitioning[2]]
+      )
     end
 
     context "when some device is on a skip list" do
@@ -71,10 +72,15 @@ describe Y2Storage::Proposal::AutoinstDrivesMap do
   end
 
   describe "#disk_names" do
-    let(:partitioning) { [{ "device" => "/dev/sda", "use" => "all" }] }
+    let(:partitioning) do
+      [
+        { "device" => "/dev/sda", "use" => "all" },
+        { "device" => "/dev/system", "type" => :CT_LVM }
+      ]
+    end
 
     it "return disk names" do
-      expect(drives_map.disk_names).to eq(["/dev/sda"])
+      expect(drives_map.disk_names).to eq(["/dev/sda", "/dev/system"])
     end
   end
 

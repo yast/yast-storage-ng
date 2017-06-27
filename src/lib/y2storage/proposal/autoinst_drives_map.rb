@@ -46,28 +46,18 @@ module Y2Storage
       #   @see #each_pair
       def_delegators :@drives, :each, :each_pair
 
-      # CT_MD is not supported yet
-      SUPPORTED_TYPES = [:CT_DISK, :CT_LVM].freeze
-
       # Constructor
       #
       # @param devicegraph  [Devicegraph] Devicegraph where the disks are contained
       # @param partitioning [Array<Hash>] Partitioning layout from an AutoYaST profile
       def initialize(devicegraph, partitioning)
-        # By now, consider only regular disks
-        disks = partitioning.select { |i| SUPPORTED_TYPES.include?(i.fetch("type", :CT_DISK)) }
+        @drives = {}
 
-        # First, assign fixed drives
-        fixed_drives, flexible_drives = disks.partition { |i| i["device"] && !i["device"].empty? }
-        @drives = fixed_drives.each_with_object({}) do |disk, memo|
-          memo[disk["device"]] = disk
-        end
-
-        flexible_drives.each do |drive|
-          disk_name = first_usable_disk(drive, devicegraph)
-          # TODO: what happens if there is no suitable disk?
-          @drives[disk_name] = drive
-        end
+        disks = partitioning.select { |i| i.fetch("type", :CT_DISK) == :CT_DISK }
+        add_disks(disks, devicegraph)
+        vgs = partitioning.select { |i| i["type"] == :CT_LVM }
+        add_vgs(vgs)
+        @drives
       end
 
       # Returns the list of disk names
@@ -106,7 +96,7 @@ module Y2Storage
       #
       # @param drive_spec  [Hash] AutoYaST drive specification
       # @param devicegraph [Devicegraph] Devicegraph
-      # @return [Disk,nil] Usable disk or nil if none is found
+      # @return [String,nil] Usable disk name or nil if none is found
       def first_usable_disk(drive_spec, devicegraph)
         skip_list = SkipList.from_profile(drive_spec.fetch("skip_list", []))
 
@@ -117,6 +107,34 @@ module Y2Storage
           return disk.name
         end
         nil
+      end
+
+      # Adds disks to the devices map
+      #
+      # If some disk does not specify a "device" property, an usable disk will
+      # be chosen from the given devicegraph.
+      #
+      # @param disks [Array<Hash>] List of disk specifications from AutoYaST
+      # @param devicegraph [Devicegraph] Devicegraph to search for disks for "flexible" devices
+      def add_disks(disks, devicegraph)
+        fixed_drives, flexible_drives = disks.partition { |i| i["device"] && !i["device"].empty? }
+        fixed_drives.each do |drive|
+          @drives[drive["device"]] = drive
+        end
+
+        flexible_drives.each do |drive|
+          disk_name = first_usable_disk(drive, devicegraph)
+          @drives[disk_name] = drive
+        end
+      end
+
+      # Adds volume groups to the devices map
+      #
+      # All volume groups should have a "device" property.
+      #
+      # @parama vgs [Array<Hash>] List of volume group specifications from AutoYaST
+      def add_vgs(vgs)
+        vgs.each { |v| @drives[v["device"]] = v }
       end
     end
   end
