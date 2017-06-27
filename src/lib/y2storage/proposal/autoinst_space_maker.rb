@@ -48,6 +48,7 @@ module Y2Storage
 
         drives_map.each_pair do |disk_name, drive_spec|
           disk = Disk.find_by_name(devicegraph, disk_name)
+          next unless disk
           delete_stuff(devicegraph, disk, drive_spec)
         end
 
@@ -65,7 +66,6 @@ module Y2Storage
       # @option drive_spec [Boolean] "initialize" Initialize the device
       # @option drive_spec [String]  "use"        Partitions to remove ("all" or "linux")
       def delete_stuff(devicegraph, disk, drive_spec)
-        return unless disk.respond_to?(:partition_table)
         if drive_spec["initialize"]
           disk.remove_descendants
           return
