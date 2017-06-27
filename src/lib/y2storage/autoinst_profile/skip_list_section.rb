@@ -19,11 +19,11 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "y2storage/proposal/skip_rule"
+require "y2storage/autoinst_profile/skip_rule"
 
 module Y2Storage
-  module Proposal
-    # Devices skip list for AutoinstProposal
+  module AutoinstProfile
+    # Devices skip list in a <drive> section of an AutoYaST profile.
     #
     # This class determines when a device should be skipped based on a set of
     # predefined rules.
@@ -51,18 +51,18 @@ module Y2Storage
     #   list #=> [ {"skip_key" => "name", "skip_value" => "/dev/sda" }
     #   SkipList.from_profile(list)
     #
-    class SkipList
+    class SkipListSection
       include Yast::Logger
 
       # @return [Array<SkipRule>] List of rules to apply
       attr_reader :rules
 
       class << self
-        # Creates an skip list from an AutoYaST profile
+        # Creates a skip list from an AutoYaST profile
         #
         # @param profile_rules [Array<Hash>] List of profile skip rules
         # @return [SkipList]
-        def from_profile(profile_rules)
+        def new_from_hashes(profile_rules)
           rules = profile_rules.map { |h| SkipRule.from_profile_rule(h) }
           new(rules)
         end
@@ -82,6 +82,15 @@ module Y2Storage
         valid, not_valid = rules.partition(&:valid?)
         log_not_valid_rules(not_valid) unless not_valid.empty?
         valid.any? { |r| r.matches?(disk) }
+      end
+
+      # Content of the section in the format used by the AutoYaST modules
+      # (nested arrays and hashes).
+      #
+      # @return [Array<Hash>] each element represents an entry in the
+      #   <skip_list> section
+      def to_hashes
+        rules.map(&:to_profile_rule)
       end
 
     private

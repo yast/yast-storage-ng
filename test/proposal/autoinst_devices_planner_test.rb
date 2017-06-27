@@ -31,8 +31,11 @@ describe Y2Storage::Proposal::AutoinstDevicesPlanner do
   let(:drives_map) { Y2Storage::Proposal::AutoinstDrivesMap.new(fake_devicegraph, partitioning) }
   let(:boot_checker) { instance_double(Y2Storage::BootRequirementsChecker, needed_partitions: []) }
 
-  let(:partitioning) do
+  let(:partitioning_array) do
     [{ "device" => "/dev/sda", "partitions" => [root_spec] }]
+  end
+  let(:partitioning) do
+    Y2Storage::AutoinstProfile::PartitioningSection.new_from_hashes(partitioning_array)
   end
 
   let(:root_spec) { { "mount" => "/", "filesystem" => "ext4" } }
@@ -125,7 +128,7 @@ describe Y2Storage::Proposal::AutoinstDevicesPlanner do
     end
 
     context "specifying filesystem" do
-      let(:partitioning) do
+      let(:partitioning_array) do
         [{ "device" => "/dev/sda", "use" => "all", "partitions" => [root_spec, home_spec] }]
       end
 

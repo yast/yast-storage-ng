@@ -55,4 +55,12 @@ describe Y2Storage::PartitionId do
       expect(described_class.windows_system_ids.size).to eq size
     end
   end
+
+  describe ".new_from_legacy" do
+    pending
+  end
+
+  describe "#to_i_legacy" do
+    pending
+  end
 end

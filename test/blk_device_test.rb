@@ -289,4 +289,60 @@ describe Y2Storage::BlkDevice do
       expect(device.basename).to eq("sda1")
     end
   end
+
+  describe "#udev_full_paths" do
+    let(:device_name) { "/dev/sda1" }
+    before { allow(device).to receive(:udev_paths).and_return(paths) }
+
+    context "for devices with no known udev paths" do
+      let(:paths) { [] }
+
+      it "returns an empty array" do
+        expect(device.udev_full_paths).to eq []
+      end
+    end
+
+    context "for devices with several udev paths" do
+      let(:paths) { ["pci-0000:00:1f.2-ata-1", "pci-0000:00:1f.2-scsi-0:0:0:0"] }
+
+      it "returns an array" do
+        expect(device.udev_full_paths).to be_an Array
+      end
+
+      it "prepends '/dev/disk/by-path' to every path" do
+        expect(device.udev_full_paths).to contain_exactly(
+          "/dev/disk/by-path/pci-0000:00:1f.2-ata-1",
+          "/dev/disk/by-path/pci-0000:00:1f.2-scsi-0:0:0:0"
+        )
+      end
+    end
+  end
+
+  describe "#udev_full_ids" do
+    let(:device_name) { "/dev/sda1" }
+    before { allow(device).to receive(:udev_ids).and_return(ids) }
+
+    context "for devices with no known udev ids" do
+      let(:ids) { [] }
+
+      it "returns an empty array" do
+        expect(device.udev_full_ids).to eq []
+      end
+    end
+
+    context "for devices with several udev ids" do
+      let(:ids) { ["ata-HGST_HTS725050A7E630_TF655AWHGATD2L", "wwn-0x5000cca77fc4e744"] }
+
+      it "returns an array" do
+        expect(device.udev_full_ids).to be_an Array
+      end
+
+      it "prepends '/dev/disk/by-id' to every id" do
+        expect(device.udev_full_ids).to contain_exactly(
+          "/dev/disk/by-id/ata-HGST_HTS725050A7E630_TF655AWHGATD2L",
+          "/dev/disk/by-id/wwn-0x5000cca77fc4e744"
+        )
+      end
+    end
+  end
 end
