@@ -170,6 +170,7 @@ module Y2Storage
       def new_planned_partition
         res = Planned::Partition.new(nil)
         res.partition_id = PartitionId::LVM
+        res.lvm_volume_group_name = lvm_helper.volume_group.volume_group_name
         res.encryption_password = lvm_helper.encryption_password
         res.min_size = lvm_helper.min_pv_size
         res

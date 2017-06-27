@@ -81,7 +81,7 @@ module Y2Storage
       #
       # @return [Boolean]
       def lvm_pv?
-        partition_id && partition_id.is?(:lvm)
+        !lvm_volume_group_name.nil?
       end
 
       def self.to_string_attrs
