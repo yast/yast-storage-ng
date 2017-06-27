@@ -171,7 +171,7 @@ module Y2Storage
         lv_to_reuse = find_lv_to_reuse(devicegraph, vg_name, spec)
         return unless lv_to_reuse
         lv.logical_volume_name ||= lv_to_reuse.lv_name
-        add_device_reuse(lv, lv_to_reuse.lv_name, !!spec["format"])
+        add_device_reuse(lv, lv_to_reuse.name, !!spec["format"])
       end
 
       def add_device_reuse(device, name, format)

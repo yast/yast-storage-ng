@@ -237,7 +237,7 @@ describe Y2Storage::Proposal::AutoinstDevicesPlanner do
           expect(vg.lvs).to contain_exactly(
             an_object_having_attributes(
               "logical_volume_name" => "lv1",
-              "reuse"               => "lv1"
+              "reuse"               => "/dev/vg0/lv1"
             )
           )
         end
@@ -259,7 +259,7 @@ describe Y2Storage::Proposal::AutoinstDevicesPlanner do
           expect(vg.lvs).to contain_exactly(
             an_object_having_attributes(
               "logical_volume_name" => "lv2",
-              "reuse"               => "lv2"
+              "reuse"               => "/dev/vg0/lv2"
             )
           )
         end

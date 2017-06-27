@@ -65,6 +65,7 @@ module Y2Storage
         assign_physical_volumes(vg, pv_partitions, new_graph)
         make_space(vg, planned_vg)
         create_logical_volumes(vg, planned_vg.lvs)
+        planned_vg.lvs.select(&:reuse?).each { |v| v.reuse!(new_graph) }
 
         new_graph
       end
@@ -125,7 +126,8 @@ module Y2Storage
         when :needed
           make_space_until_fit(volume_group, planned_vg.lvs)
         when :remove
-          remove_logical_volumes(volume_group)
+          lvs_to_keep = planned_vg.lvs.select(&:reuse?).map(&:reuse)
+          remove_logical_volumes(volume_group, lvs_to_keep)
         end
       end
 
@@ -156,9 +158,11 @@ module Y2Storage
       #
       # This method modifies the volume group received as a first argument.
       #
-      # @param volume_group [LvmVg] volume group to remove logical volumes from
-      def remove_logical_volumes(volume_group)
-        volume_group.lvm_lvs.each { |v| volume_group.delete_lvm_lv(v) }
+      # @param volume_group [LvmVg]         volume group to remove logical volumes from
+      # @param lvs_to_keep  [Array<String>] name of logical volumes to keep
+      def remove_logical_volumes(volume_group, lvs_to_keep)
+        lvs_to_remove = volume_group.lvm_lvs.reject { |v| lvs_to_keep.include?(v.name) }
+        lvs_to_remove.each { |v| volume_group.delete_lvm_lv(v) }
       end
 
       # Creates a logical volume for each planned volume.
@@ -170,7 +174,7 @@ module Y2Storage
         vg_size = volume_group.available_space
         lvs = Planned::LvmLv.distribute_space(planned_lvs, vg_size, rounding: volume_group.extent_size)
         lvs.each do |lv|
-          create_logical_volume(volume_group, lv)
+          create_logical_volume(volume_group, lv) unless lv.reuse?
         end
       end
 

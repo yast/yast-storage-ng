@@ -166,14 +166,30 @@ describe Y2Storage::Proposal::LvmCreator do
         end
       end
 
-      context "and make space policy is set to :remove" do
+      context "when make space policy is set to :remove" do
         before { vg.make_space_policy = :remove }
 
-        it "deletes all existing LVs" do
-          devicegraph = creator.create_volumes(vg, pv_partitions)
-          reused_vg = devicegraph.lvm_vgs.first
-          lv_names = reused_vg.lvm_lvs.map { |lv| lv.lv_name }
-          expect(lv_names).to eq(["one", "two"])
+        context "and no LV is reused" do
+          it "deletes all existing LVs" do
+            devicegraph = creator.create_volumes(vg, pv_partitions)
+            reused_vg = devicegraph.lvm_vgs.first
+            lv_names = reused_vg.lvm_lvs.map { |lv| lv.lv_name }
+            expect(lv_names).to eq(["one", "two"])
+          end
+        end
+
+        context "and some LV should be reused" do
+          before do
+            reused_lv = vg.lvs.first
+            reused_lv.reuse = "/dev/vg0/lv1"
+          end
+
+          it "deletes all existing LVs but the reusable one" do
+            devicegraph = creator.create_volumes(vg, pv_partitions)
+            reused_vg = devicegraph.lvm_vgs.first
+            lv_names = reused_vg.lvm_lvs.map { |lv| lv.lv_name }
+            expect(lv_names).to eq(["lv1", "two"])
+          end
         end
       end
     end
