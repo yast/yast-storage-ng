@@ -244,4 +244,70 @@ describe Y2Storage::StorageManager do
       manager.commit
     end
   end
+
+  describe "#probe" do
+    before do
+      described_class.fake_from_yaml(input_file_for("gpt_and_msdos"))
+      # Ensure old values have been queried at least once
+      manager.y2storage_probed
+      manager.probed_disk_analyzer
+      manager.y2storage_staging
+      manager.proposal
+
+      # And now mock subsequent Storage calls
+      allow(manager.storage).to receive(:probe)
+      allow(manager.storage).to receive(:probed).and_return st_probed
+      allow(manager.storage).to receive(:staging).and_return st_staging
+    end
+
+    let(:st_probed) { Storage::Devicegraph.new(manager.storage) }
+    let(:st_staging) { Storage::Devicegraph.new(manager.storage) }
+    let(:devicegraph) { Y2Storage::Devicegraph.new(st_staging) }
+    let(:proposal) { double("Y2Storage::GuidedProposal", devices: devicegraph) }
+
+    it "refreshes #y2storage_probed" do
+      expect(manager.y2storage_probed.disks.size).to eq 6
+      # Calling twice (or more) does not result in a refresh
+      expect(manager.y2storage_probed.disks.size).to eq 6
+      expect(manager.y2storage_probed.to_storage_value).to_not eq st_probed
+
+      manager.probe
+
+      expect(manager.y2storage_probed.disks.size).to eq 0
+      expect(manager.y2storage_probed.to_storage_value).to eq st_probed
+    end
+
+    it "refreshes #y2storage_staging" do
+      expect(manager.y2storage_probed.disks.size).to eq 6
+      # Calling twice (or more) does not result in a refresh
+      expect(manager.y2storage_probed.disks.size).to eq 6
+      expect(manager.y2storage_probed.to_storage_value).to_not eq st_staging
+
+      manager.probe
+
+      expect(manager.y2storage_probed.disks.size).to eq 0
+      expect(manager.y2storage_probed.to_storage_value).to eq st_staging
+    end
+
+    it "increments the staging revision" do
+      pre = manager.staging_revision
+      manager.probe
+      expect(manager.staging_revision).to be > pre
+    end
+
+    it "refreshes #probed_disk_analyzer" do
+      pre = manager.probed_disk_analyzer
+      # Calling twice (or more) does not result in a refresh
+      expect(manager.probed_disk_analyzer).to eq pre
+
+      manager.probe
+      expect(manager.probed_disk_analyzer).to_not eq pre
+    end
+
+    it "sets #proposal to nil" do
+      manager.proposal = proposal
+      manager.probe
+      expect(manager.proposal).to be_nil
+    end
+  end
 end

@@ -39,8 +39,8 @@ module Y2Storage
 
     # Libstorage object
     #
-    # Calls to #probed, #staging, #environment and #arch are forwarded to this
-    # object.
+    # Calls to several methods (e.g. #environment, #arch and #rootprefix) are
+    # forwarded to this object.
     #
     # @return [Storage::Storage]
     attr_reader :storage
@@ -81,7 +81,6 @@ module Y2Storage
       activate_callbacks = Callbacks::Activate.new
       @storage.activate(activate_callbacks)
       @staging_revision = -1
-      @proposal = nil
       probe
     end
 
@@ -113,7 +112,7 @@ module Y2Storage
     # @return [Boolean] false if the staging devicegraph is just the result of
     #   probing (so a direct copy of #probed), true otherwise.
     def staging_changed?
-      @staging_revision != @staging_revision_after_probing
+      staging_revision != staging_revision_after_probing
     end
 
     # Stores the proposal, modifying the staging devicegraph and all the related
@@ -149,11 +148,17 @@ module Y2Storage
     #
     # Invalidates the probed and staging devicegraph.
     def probe
-      @storage.probe
+      storage.probe
       update_staging_revision
-      @staging_revision_after_probing = @staging_revision
+      @staging_revision_after_probing = staging_revision
+
+      # FIXME: the whole probing stuff needs to be revisited after removing the
+      # legacy API (i.e. #y2storage_probed vs #probed and #y2storage_staging vs
+      # #staging).
       @y2probed = nil
+      @probed_disk_analyzer = nil
       @y2staging = nil
+      @proposal = nil
     end
 
     # Performs in the system all the necessary operations to make it match the
@@ -173,6 +178,14 @@ module Y2Storage
     end
 
   private
+
+    # Value of #staging_revision right after executing the latest libstorage
+    # probing.
+    #
+    # Used to check if the system has been re-probed
+    #
+    # @return [Fixnum]
+    attr_reader :staging_revision_after_probing
 
     # Sets the devicegraph as the staging one, updating all the associated
     # information like #staging_revision

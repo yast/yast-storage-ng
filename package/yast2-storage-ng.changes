@@ -1,4 +1,9 @@
 -------------------------------------------------------------------
+Tue Jun 27 09:04:58 UTC 2017 - ancor@suse.com
+
+- More robust Y2Storage::StorageManager#probe
+
+-------------------------------------------------------------------
 Mon Jun 26 11:56:23 UTC 2017 - jreidinger@suse.com
 
 - Added Y2Storage::MdParity#to_human_string and
