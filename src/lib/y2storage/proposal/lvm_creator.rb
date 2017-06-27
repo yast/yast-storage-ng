@@ -187,22 +187,8 @@ module Y2Storage
       def create_logical_volume(volume_group, planned_lv)
         name = planned_lv.logical_volume_name || DEFAULT_LV_NAME
         name = available_name(name, volume_group)
-        lv = volume_group.create_lvm_lv(name, size_for(volume_group, planned_lv).to_i)
+        lv = volume_group.create_lvm_lv(name, planned_lv.size_in(volume_group))
         planned_lv.format!(lv)
-      end
-
-      # Returns the size for the logical volume
-      #
-      # It returns the planned size (Planned::LogicalVolume#size) unless a
-      # percentage has been specified. In that case, it will use the volume
-      # group size and Planned::LogicalVolume#percent_size to calculate the
-      # desired size.
-      #
-      # @param volume_group [LvmVg] Volume group where the logical volume will be placed
-      # @param planned_lv   [Planned::LvmLv] Planned logical volume
-      def size_for(volume_group, planned_lv)
-        return planned_lv.size unless planned_lv.percent_size
-        (volume_group.size * planned_lv.percent_size / 100).ceil(volume_group.extent_size)
       end
 
       # Best logical volume to delete next while trying to make space for the

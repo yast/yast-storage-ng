@@ -90,6 +90,20 @@ module Y2Storage
         self.reuse = real_lv.lv_name
       end
 
+      # Returns the size for the logical volume in a given volume group
+      #
+      # It returns the planned size (Planned::LvmLv#size) unless a
+      # percentage has been specified. In that case, it will use the volume
+      # group size and Planned::LvmLv#percent_size to calculate the
+      # desired size.
+      #
+      # @param volume_group [LvmVg] Volume group where the logical volume will be placed
+      # @return [DiskSize]
+      def size_in(volume_group)
+        return size unless percent_size
+        (volume_group.size * percent_size / 100).ceil(volume_group.extent_size)
+      end
+
       def self.to_string_attrs
         [:mount_point, :reuse, :min_size, :max_size, :logical_volume_name, :subvolumes]
       end
