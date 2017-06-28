@@ -56,6 +56,12 @@ module Y2Storage
         msdos:    {
           name: "FAT"
         },
+        nfs:      {
+          name: "NFS"
+        },
+        nfs4:     {
+          name: "NFS4"
+        },
         nilfs2:   {
           name: "NilFS"
         },
