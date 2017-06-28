@@ -420,7 +420,10 @@ module Y2Storage
     # Operators
     #
 
-    # Add a {DiskSize} object and a {DiskSize} or +Numeric+ object.
+    # Add a {DiskSize} object and another object. The other object must
+    # be acceptable to {new}.
+    #
+    # @param other [Numeric, String, DiskSize]
     #
     # @return [DiskSize]
     #
@@ -428,21 +431,20 @@ module Y2Storage
     #   x = DiskSize.MiB(3)      #=> <DiskSize 3.00 MiB (3145728)>
     #   y = DiskSize.KB(1)       #=> <DiskSize 0.98 KiB (1000)>
     #   x + 100                  #=> <DiskSize 3.00 MiB (3145828)>
+    #   x + "1 MiB"              #=> <DiskSize 4.00 MiB (4194304)>
     #   x + y                    #=> <DiskSize 3.00 MiB (3146728)>
     #   x + DiskSize.unlimited   #=> <DiskSize <unlimited> (-1)>
+    #   x + "unlimited"          #=> <DiskSize <unlimited> (-1)>
     #
     def +(other)
       return DiskSize.unlimited if any_operand_unlimited?(other)
-      if other.is_a?(Numeric)
-        DiskSize.new(@size + other)
-      elsif other.respond_to?(:size)
-        DiskSize.new(@size + other.size)
-      else
-        raise TypeError, "Unexpected #{other.class}; expected Numeric value or DiskSize"
-      end
+      DiskSize.new(@size + DiskSize.new(other).to_i)
     end
 
-    # Subtract a {DiskSize} object and a {DiskSize} or +Numeric+ object.
+    # Subtract a {DiskSize} object and another object. The other object
+    # must be acceptable to {new}.
+    #
+    # @param other [Numeric, String, DiskSize]
     #
     # @return [DiskSize]
     #
@@ -450,6 +452,7 @@ module Y2Storage
     #   x = DiskSize.MiB(3)      #=> <DiskSize 3.00 MiB (3145728)>
     #   y = DiskSize.KB(1)       #=> <DiskSize 0.98 KiB (1000)>
     #   x - 100                  #=> <DiskSize 3.00 MiB (3145628)>
+    #   x - "1 MiB"              #=> <DiskSize 2.00 MiB (2097152)>
     #   x - y                    #=> <DiskSize 3.00 MiB (3144728)>
     #   # sizes can be negative
     #   y - x                    #=> <DiskSize -3.00 MiB (-3144728)>
@@ -458,16 +461,13 @@ module Y2Storage
     #
     def -(other)
       return DiskSize.unlimited if any_operand_unlimited?(other)
-      if other.is_a?(Numeric)
-        DiskSize.new(@size - other)
-      elsif other.respond_to?(:size)
-        DiskSize.new(@size - other.size)
-      else
-        raise TypeError, "Unexpected #{other.class}; expected Numeric value or DiskSize"
-      end
+      DiskSize.new(@size - DiskSize.new(other).to_i)
     end
 
-    # The remainder dividing a {DiskSize} object by a {DiskSize} or +Numeric+ object.
+    # The remainder dividing a {DiskSize} object by another object. The
+    # other object must be acceptable to {new}.
+    #
+    # @param other [Numeric, String, DiskSize]
     #
     # @return [DiskSize]
     #
@@ -475,20 +475,17 @@ module Y2Storage
     #   x = DiskSize.MiB(3)   #=> <DiskSize 3.00 MiB (3145728)>
     #   y = DiskSize.KB(1)    #=> <DiskSize 0.98 KiB (1000)>
     #   x % 100               #=> <DiskSize 28.00 B (28)>
+    #   X % "1 MB"            #=> <DiskSize 142.31 KiB (145728)>
     #   x % y                 #=> <DiskSize 0.71 KiB (728)>
     #
     def %(other)
       return DiskSize.unlimited if any_operand_unlimited?(other)
-      if other.is_a?(Numeric)
-        DiskSize.new(@size % other)
-      elsif other.respond_to?(:size)
-        DiskSize.new(@size % other.size)
-      else
-        raise TypeError, "Unexpected #{other.class}; expected Numeric value or DiskSize"
-      end
+      DiskSize.new(@size % DiskSize.new(other).to_i)
     end
 
     # Multiply a {DiskSize} object by a +Numeric+ object.
+    #
+    # @param other [Numeric]
     #
     # @return [DiskSize]
     #
@@ -506,6 +503,8 @@ module Y2Storage
     end
 
     # Divide a {DiskSize} object by a +Numeric+ object.
+    #
+    # @param other [Numeric]
     #
     # @return [DiskSize]
     #
@@ -708,7 +707,8 @@ module Y2Storage
     #
     def any_operand_unlimited?(other)
       return true if unlimited?
-      return other.respond_to?(:unlimited?) && other.unlimited?
+      return true if other.respond_to?(:unlimited?) && other.unlimited?
+      return other.respond_to?(:to_s) && other.to_s == "unlimited"
     end
 
     # Checks whether makes sense to round the value to the given size
