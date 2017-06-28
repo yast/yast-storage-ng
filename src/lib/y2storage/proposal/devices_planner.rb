@@ -32,7 +32,7 @@ module Y2Storage
     #
     # Class to generate the list of planned devices of a proposal
     #
-    class PlannedDevicesGenerator
+    class DevicesPlanner
       include Yast::Logger
 
       attr_accessor :settings

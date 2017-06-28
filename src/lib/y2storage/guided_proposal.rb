@@ -112,7 +112,7 @@ module Y2Storage
 
     # @return [Array<Planned::Device>]
     def planned_devices_list(target)
-      generator = Proposal::PlannedDevicesGenerator.new(populated_settings, clean_graph)
+      generator = Proposal::DevicesPlanner.new(populated_settings, clean_graph)
       generator.planned_devices(target)
     end
 

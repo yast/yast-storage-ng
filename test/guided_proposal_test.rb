@@ -78,7 +78,7 @@ describe Y2Storage::GuidedProposal do
 
     context "with pre-existing swap partitions" do
       before do
-        allow(Y2Storage::Proposal::PlannedDevicesGenerator).to receive(:new).and_return dev_generator
+        allow(Y2Storage::Proposal::DevicesPlanner).to receive(:new).and_return dev_generator
         settings.root_device = "/dev/sda"
       end
 
@@ -94,7 +94,7 @@ describe Y2Storage::GuidedProposal do
         ]
       end
       let(:dev_generator) do
-        instance_double("Y2Storage::Proposal::PlannedDevicesGenerator", planned_devices: all_volumes)
+        instance_double("Y2Storage::Proposal::DevicesPlanner", planned_devices: all_volumes)
       end
 
       def sda(num)

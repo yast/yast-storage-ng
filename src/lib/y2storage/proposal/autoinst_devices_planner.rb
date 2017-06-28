@@ -30,9 +30,8 @@ module Y2Storage
     #
     # The list of planned devices is generated from the information that was
     # previously obtained from the AutoYaST profile. This is completely different
-    # to the guided proposal equivalent ({PlannedDevicesGenerator}), which
-    # generates the planned devices based on the proposal settings and its own
-    # logic.
+    # to the guided proposal equivalent ({DevicesPlanner}), which generates the
+    # planned devices based on the proposal settings and its own logic.
     class AutoinstDevicesPlanner
       include Yast::Logger
 
