@@ -45,7 +45,7 @@ module Y2Storage
     # @return [Hash] Partitioning layout from an AutoYaST profile
     attr_reader :partitioning
 
-    # @return [Devicegraph] Initial device graph
+    # @return [Devicegraph] Initial devicegraph
     attr_reader :initial_devicegraph
 
     # Proposed layout of devices, nil if the proposal has not been
@@ -187,8 +187,8 @@ module Y2Storage
 
     # Devicegraph used as starting point
     #
-    # @return devicegraph  [Devicegraph] starting point. Probed devicegraph will
-    #   be used if none was passed to the constructor.
+    # @return [Devicegraph] starting point. Probed devicegraph will be used if none was passed to
+    #   the constructor.
     def initial_devicegraph
       @initial_devicegraph ||= Y2Storage::StorageManager.instance.probe
     end

@@ -58,23 +58,28 @@ module Yast
 
       def planned_partition(attrs = {})
         part = Y2Storage::Planned::Partition.new(nil)
-        add_planned_attributes!(part, attrs)
+        add_planned_attributes(part, attrs)
       end
 
       # Backwards compatibility
       alias_method :planned_vol, :planned_partition
 
+      def planned_vg(attrs = {})
+        vg = Y2Storage::Planned::LvmVg.new
+        add_planned_attributes(vg, attrs)
+      end
+
       def planned_lv(attrs = {})
         lv = Y2Storage::Planned::LvmLv.new(nil)
-        add_planned_attributes!(lv, attrs)
+        add_planned_attributes(lv, attrs)
       end
 
       def planned_subvol(attrs = {})
         subvol = Y2Storage::Planned::BtrfsSubvolume.new
-        add_planned_attributes!(subvol, attrs)
+        add_planned_attributes(subvol, attrs)
       end
 
-      def add_planned_attributes!(device, attrs)
+      def add_planned_attributes(device, attrs)
         attrs = attrs.dup
 
         if device.respond_to?(:filesystem_type)

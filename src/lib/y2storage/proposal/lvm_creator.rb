@@ -31,12 +31,10 @@ module Y2Storage
     class LvmCreator
       include Yast::Logger
 
-      # Default name for volume groups
-      DEFAULT_VG_NAME = "system".freeze
       # Default name for logical volumes
       DEFAULT_LV_NAME = "lv".freeze
 
-      private_constant :DEFAULT_VG_NAME, :DEFAULT_LV_NAME
+      private_constant :DEFAULT_LV_NAME
 
       # @return [Devicegraph] initial devicegraph
       attr_reader :original_devicegraph
@@ -51,23 +49,21 @@ module Y2Storage
       # Returns a copy of the original devicegraph in which the volume
       # group (and its logical volumes, if needed) have been created.
       #
-      # FIXME: the volume group will not be created if it does not contain
-      # any logical volume.
-      # FIXME: when reusing a volume group, all logical volumes will be
-      # removed in order to allocate new ones.
-      #
       # @param planned_vg [Planned::LvmVg]   Volume group to create
       # @param pv_partitions [Array<String>] names of the newly created
-      #     partitions that should be added as PVs to the volume group
+      #   partitions that should be added as PVs to the volume group
       # @return [Devicegraph] New devicegraph containing the planned volume group
       def create_volumes(planned_vg, pv_partitions = [])
         new_graph = original_devicegraph.duplicate
-        return new_graph if planned_vg.lvs.empty?
-
-        vg = planned_vg.reuse? ? find_vg(planned_vg, new_graph) : create_volume_group(new_graph)
+        vg =
+          if planned_vg.reuse?
+            find_vg(planned_vg, new_graph)
+          else
+            create_volume_group(planned_vg, new_graph)
+          end
 
         assign_physical_volumes(vg, pv_partitions, new_graph)
-        make_space(vg, planned_vg.lvs)
+        make_space(vg, planned_vg)
         create_logical_volumes(vg, planned_vg.lvs)
 
         new_graph
@@ -86,12 +82,11 @@ module Y2Storage
 
       # Create a volume group in a devicegraph
       #
-      # The volume group will be DEFAULT_VG_NAME.
-      #
-      # @param devicegraph [Devicegraph] Starting point
+      # @param planned_vg  [Planned::LvmVg] Planned volume group
+      # @param devicegraph [Devicegraph]    Starting point
       # @return [Devicegraph] New devicegraph containing the new volume group
-      def create_volume_group(devicegraph)
-        name = available_name(DEFAULT_VG_NAME, devicegraph)
+      def create_volume_group(planned_vg, devicegraph)
+        name = available_name(planned_vg.volume_group_name, devicegraph)
         LvmVg.create(devicegraph, name)
       end
 
@@ -111,6 +106,30 @@ module Y2Storage
         end
       end
 
+      # Makes space for planned logical volumes
+      #
+      # When making free space, three different policies can be followed:
+      #
+      # * :needed: remove logical volumes until there's enough space for
+      #            planned ones.
+      # * :remove: remove all logical volumes.
+      # * :keep:   keep all logical volumes.
+      #
+      # This method modifies the volume group received as first argument.
+      #
+      # @param volume_group [LvmVg] volume group to clean-up
+      # @param planned_vg   [Planned::LvmVg] planned logical volume
+      def make_space(volume_group, planned_vg)
+        return if planned_vg.make_space_policy == :keep
+        case planned_vg.make_space_policy
+        when :needed
+          make_space_until_fit(volume_group, planned_vg.lvs)
+        when :remove
+          lvs_to_keep = planned_vg.lvs.select(&:reuse?).map(&:reuse)
+          remove_logical_volumes(volume_group, lvs_to_keep)
+        end
+      end
+
       # Makes sure the given volume group has enough free extends to allocate
       # all the planned volumes, by deleting the existing logical volumes.
       #
@@ -120,7 +139,7 @@ module Y2Storage
       # space is the minimum valid one.
       #
       # @param volume_group [LvmVg] volume group to modify
-      def make_space(volume_group, planned_lvs)
+      def make_space_until_fit(volume_group, planned_lvs)
         space_size = DiskSize.sum(planned_lvs.map(&:min_size))
         missing = missing_vg_space(volume_group, space_size)
         while missing > DiskSize.zero
@@ -134,6 +153,17 @@ module Y2Storage
         end
       end
 
+      # Remove all logical volumes from a volume group
+      #
+      # This method modifies the volume group received as a first argument.
+      #
+      # @param volume_group [LvmVg]         volume group to remove logical volumes from
+      # @param lvs_to_keep  [Array<String>] name of logical volumes to keep
+      def remove_logical_volumes(volume_group, lvs_to_keep)
+        lvs_to_remove = volume_group.lvm_lvs.reject { |v| lvs_to_keep.include?(v.name) }
+        lvs_to_remove.each { |v| volume_group.delete_lvm_lv(v) }
+      end
+
       # Creates a logical volume for each planned volume.
       #
       # This method modifies the volume group received as first argument.
@@ -142,14 +172,12 @@ module Y2Storage
       def create_logical_volumes(volume_group, planned_lvs)
         vg_size = volume_group.available_space
         lvs = Planned::LvmLv.distribute_space(planned_lvs, vg_size, rounding: volume_group.extent_size)
-        lvs.each do |lv|
-          create_logical_volume(volume_group, lv)
-        end
+        lvs.reject(&:reuse?).each { |v| create_logical_volume(volume_group, v) }
       end
 
       # Creates a logical volume in a volume group
       #
-      # This method modifies the volum group received as first argument.
+      # This method modifies the volume group received as first argument.
       #
       # @param volume_group [LvmVg] Volume group
       # @param planned_lv   [Planned::LvmLv] Planned logical volume to be used as reference
@@ -157,7 +185,7 @@ module Y2Storage
       def create_logical_volume(volume_group, planned_lv)
         name = planned_lv.logical_volume_name || DEFAULT_LV_NAME
         name = available_name(name, volume_group)
-        lv = volume_group.create_lvm_lv(name, planned_lv.size.to_i)
+        lv = volume_group.create_lvm_lv(name, planned_lv.size_in(volume_group))
         planned_lv.format!(lv)
       end
 

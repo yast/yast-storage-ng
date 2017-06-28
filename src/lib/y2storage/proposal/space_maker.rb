@@ -59,8 +59,7 @@ module Y2Storage
       #   partitions and/or the physical volumes
       #
       # @param original_graph [Devicegraph] initial devicegraph
-      # @param planned_partitions [Array<Planned::Partition>] set of partitions
-      #     to make space for.
+      # @param planned_partitions [Array<Planned::Partition>] set of partitions to make space for
       # @param lvm_helper [Proposal::LvmHelper] contains information about the
       #     planned LVM logical volumes and how to make space for them
       # @return [Hash] a hash with three elements:

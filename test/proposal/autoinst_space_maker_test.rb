@@ -71,5 +71,13 @@ describe Y2Storage::Proposal::AutoinstSpaceMaker do
         expect(disk.partition_table).to be_nil
       end
     end
+
+    context "when some given drive does not exist" do
+      let(:partitioning) { [{ "device" => "/dev/sdx", "use" => "all" }] }
+
+      it "ignores the device" do
+        expect { subject.cleaned_devicegraph(fake_devicegraph, drives_map) }.to_not raise_error
+      end
+    end
   end
 end

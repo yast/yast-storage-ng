@@ -40,14 +40,15 @@ module Y2Storage
 
       # Performs all the delete operations specified in the AutoYaST profile
       #
-      # @param original_graph     [Devicegraph] initial devicegraph
-      # @param planned_partitions [Array<Planned::Partition>] set of partitions
-      #     to make space for.
+      # @param original_devicegraph [Devicegraph] initial devicegraph
+      # @param drives_map           [Array<Planned::Partition>] set of partitions
+      #   to make space for.
       def cleaned_devicegraph(original_devicegraph, drives_map)
         devicegraph = original_devicegraph.dup
 
         drives_map.each_pair do |disk_name, drive_spec|
-          disk = Disk.find_by_name(devicegraph, disk_name)
+          disk = BlkDevice.find_by_name(devicegraph, disk_name)
+          next unless disk
           delete_stuff(devicegraph, disk, drive_spec)
         end
 

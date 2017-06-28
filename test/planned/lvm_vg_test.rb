@@ -68,4 +68,15 @@ describe Y2Storage::Planned::LvmVg do
       expect(lvm_vg.volume_group_name).to eq(name)
     end
   end
+
+  describe "#reuse!" do
+    before do
+      lvm_vg.reuse = name
+    end
+
+    it "finds the device to reuse" do
+      expect(Y2Storage::LvmVg).to receive(:find_by_vg_name).with(fake_devicegraph, name)
+      lvm_vg.reuse!(fake_devicegraph)
+    end
+  end
 end
