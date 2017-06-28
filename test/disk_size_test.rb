@@ -221,8 +221,12 @@ describe Y2Storage::DiskSize do
       disk_size = Y2Storage::DiskSize.MiB(20) + 512
       expect(disk_size.to_i).to be == 20 * 1024**2 + 512
     end
-    xit "should refuse addition of a string" do
-      expect { Y2Storage::DiskSize.MiB(20) + "512 B" }
+    it "should accept addition of a string with a valid disk size spec" do
+      disk_size = Y2Storage::DiskSize.MiB(20) + "512 KiB"
+      expect(disk_size.to_i).to be == 20 * 1024**2 + 512 * 1024
+    end
+    it "should refuse addition of a random string" do
+      expect { Y2Storage::DiskSize.MiB(20) + "Foo Bar" }
         .to raise_exception TypeError
     end
     it "should refuse addition of another type" do
@@ -232,19 +236,23 @@ describe Y2Storage::DiskSize do
   end
 
   describe "#-" do
-    it "should accept another DiskSize" do
+    it "should accept subtraction of another DiskSize" do
       disk_size = Y2Storage::DiskSize.GiB(20) - Y2Storage::DiskSize.GiB(5)
       expect(disk_size.to_i).to be == 15 * 1024**3
     end
-    it "should accept an int" do
+    it "should accept subtraction of an int" do
       disk_size = Y2Storage::DiskSize.KiB(3) - 1024
       expect(disk_size.to_i).to be == 2048
     end
-    xit "should refuse a string" do
-      expect { Y2Storage::DiskSize.MiB(20) - "512 B" }
+    it "should accept subtraction of a string with a valid disk size spec" do
+      disk_size = Y2Storage::DiskSize.MiB(20) - "512 KiB"
+      expect(disk_size.to_i).to be == 20 * 1024**2 - 512 * 1024
+    end
+    it "should refuse subtraction of a random string" do
+      expect { Y2Storage::DiskSize.MiB(20) + "Foo Bar" }
         .to raise_exception TypeError
     end
-    it "should refuse another type" do
+    it "should refuse subtraction of another type" do
       expect { Y2Storage::DiskSize.MiB(20) - true }
         .to raise_exception TypeError
     end
@@ -259,8 +267,12 @@ describe Y2Storage::DiskSize do
       disk_size = Y2Storage::DiskSize.KiB(4) % 1000
       expect(disk_size.to_i).to be == 96
     end
-    xit "should refuse a string" do
-      expect { Y2Storage::DiskSize.MiB(20) % "1000 B" }
+    it "should accept a string with a valid disk size spec" do
+      disk_size = Y2Storage::DiskSize.MiB(20) % "100 KB"
+      expect(disk_size.to_i).to be == 20 * 1024**2 % (100 * 1000)
+    end
+    it "should refuse a random string" do
+      expect { Y2Storage::DiskSize.MiB(20) % "Foo Bar" }
         .to raise_exception TypeError
     end
     it "should refuse another type" do
@@ -274,6 +286,14 @@ describe Y2Storage::DiskSize do
       disk_size = Y2Storage::DiskSize.MiB(12) * 3
       expect(disk_size.to_i).to be == 12 * 1024**2 * 3
     end
+    it "should accept multiplication with a float" do
+      disk_size = Y2Storage::DiskSize.B(10) * 4.5
+      expect(disk_size.to_i).to be == 45
+    end
+    it "should refuse multiplication with a string" do
+      expect { Y2Storage::DiskSize.MiB(12) * "100" }
+        .to raise_exception TypeError
+    end
     it "should refuse multiplication with another DiskSize" do
       expect { Y2Storage::DiskSize.MiB(12) * Y2Storage::DiskSize.MiB(3) }
         .to raise_exception TypeError
@@ -285,7 +305,15 @@ describe Y2Storage::DiskSize do
       disk_size = Y2Storage::DiskSize.MiB(12) / 3
       expect(disk_size.to_i).to be == 12 / 3 * 1024**2
     end
-    it "should refuse another type" do
+    it "should accept division by a float" do
+      disk_size = Y2Storage::DiskSize.B(10) / 2.5
+      expect(disk_size.to_i).to be == 4
+    end
+    it "should refuse division by a string" do
+      expect { Y2Storage::DiskSize.MiB(12) / "100" }
+        .to raise_exception TypeError
+    end
+    it "should refuse division by another type" do
       expect { Y2Storage::DiskSize.MiB(20) / true }
         .to raise_exception TypeError
     end
@@ -375,12 +403,24 @@ describe Y2Storage::DiskSize do
       expect(described_class.parse("7.00").to_i).to eq(7)
     end
 
+    it "should also accept signed numbers" do
+      expect(described_class.parse("-12").to_i).to eq(-12)
+      expect(described_class.parse("+12").to_i).to eq(+12)
+    end
+
     it "should work with integer and unit" do
       expect(described_class.parse("42 GiB").to_i).to eq(42 * 1024**3)
+      expect(described_class.parse("-42 GiB").to_i).to eq(-42 * 1024**3)
     end
 
     it "should work with float and unit" do
       expect(described_class.parse("43.00 GiB").to_i).to be == 43 * 1024**3
+      expect(described_class.parse("-43.00 GiB").to_i).to be == -43 * 1024**3
+    end
+
+    it "should work with non-integral numbers and unit" do
+      expect(described_class.parse("43.456 GB").to_i).to be == 43.456 * 1000**3
+      expect(described_class.parse("-43.456 GB").to_i).to be == -43.456 * 1000**3
     end
 
     it "should work with integer and unit without space between them" do
@@ -450,9 +490,9 @@ describe Y2Storage::DiskSize do
     end
 
     it "should reject invalid input" do
-      expect { described_class.parse("wrglbrmpf") }.to raise_error(ArgumentError)
-      expect { described_class.parse("47 00 GiB") }.to raise_error(ArgumentError)
-      expect { described_class.parse("0FFF MiB") }.to raise_error(ArgumentError)
+      expect { described_class.parse("wrglbrmpf") }.to raise_error(TypeError)
+      expect { described_class.parse("47 00 GiB") }.to raise_error(TypeError)
+      expect { described_class.parse("0FFF MiB") }.to raise_error(TypeError)
     end
   end
 

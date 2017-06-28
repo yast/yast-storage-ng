@@ -73,7 +73,7 @@ module Y2Storage
     # @!scope class
     #
     # Accepts +Numeric+, +Strings+, or {DiskSize} objects as initializers.
-    # @raise [ArgumentError] if anything else is used as initializer
+    # @raise [TypeError] if anything else is used as initializer
     #
     # @see initialize
     # @see parse
@@ -102,7 +102,7 @@ module Y2Storage
         elsif size.respond_to?(:round)
           size.round
         end
-      raise(ArgumentError, "Cannot get the bytes count for #{size.inspect}") unless @size
+      raise(TypeError, "Cannot convert #{size.inspect} to DiskSize") unless @size
     end
 
     #
@@ -344,7 +344,7 @@ module Y2Storage
       #
       # NUMBER [UNIT] [(COMMENT)] | unlimited
       #
-      # A non-negative floating point number, optionally followed by a binary unit (e.g. 'GiB'),
+      # A floating point number, optionally followed by a binary unit (e.g. 'GiB'),
       # optionally followed by a comment in parentheses (which is ignored).
       # Alternatively, the string 'unlimited' represents an infinite size.
       #
@@ -385,15 +385,15 @@ module Y2Storage
       end
 
       def number(str)
-        number = str.scan(/^\d+\.?\d*/).first
-        raise ArgumentError, "Bad number: #{str}" if number.nil?
+        number = str.scan(/^[+-]?\d+\.?\d*/).first
+        raise TypeError, "Not a number: #{str}" if number.nil?
         number
       end
 
       def unit(str)
         unit = str.gsub(number(str), "").strip
         if !unit.empty? && !(UNITS + SI_UNITS + DEPRECATED_UNITS).include?(unit)
-          raise ArgumentError, "Bad unit: #{str}"
+          raise TypeError, "Bad disk size unit: #{str}"
         end
         unit
       end
@@ -409,7 +409,7 @@ module Y2Storage
           base = 1000
           exp = DEPRECATED_UNITS.index(unit) + 1
         else
-          raise ArgumentError, "Bad unit: #{str}"
+          raise TypeError, "Bad disk size unit: #{str}"
         end
         base = 1024 if legacy_units
         number * base**exp
