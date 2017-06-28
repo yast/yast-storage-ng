@@ -51,7 +51,7 @@ module Y2Storage
         result = []
 
         drives_map.each_pair do |disk_name, drive_spec|
-          disk = Disk.find_by_name(devicegraph, disk_name)
+          disk = BlkDevice.find_by_name(devicegraph, disk_name)
           case drive_spec.fetch("type", :CT_DISK)
           when :CT_DISK
             result.concat(planned_for_disk(disk, drive_spec))
@@ -73,8 +73,8 @@ module Y2Storage
 
       # Returns an array of planned partitions for a given disk
       #
-      # @param disk [Disk] Disk to place the partitions on
-      # @param spec [Hash] Partitioning specification from AutoYaST
+      # @param disk [Disk,Dasd] Disk to place the partitions on
+      # @param spec [Hash]      Partitioning specification from AutoYaST
       # @return [Array<Planned::Partition>] List of planned partitions
       def planned_for_disk(disk, spec)
         result = []

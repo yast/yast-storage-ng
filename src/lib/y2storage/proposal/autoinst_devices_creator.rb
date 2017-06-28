@@ -60,7 +60,7 @@ module Y2Storage
 
         # Process planned volume groups
         planned_vgs = planned_devices.select { |d| d.is_a?(Planned::LvmVg) }
-        devicegraph = create_volume_groups(
+        devicegraph = set_up_lvm(
           planned_vgs, creator_result.devicegraph, creator_result.devices_map
         )
         vgs_to_reuse = planned_vgs.select(&:reuse?)
@@ -93,13 +93,13 @@ module Y2Storage
 
       # Creates planned partitions in the given devicegraph
       #
-      # @param planned_partitions [Array<Planned::Partition>] Devices to create/reuse
-      # @param disk_names [Array<String>] Disks to consider
+      # @param new_partitions [Array<Planned::Partition>] Devices to create
+      # @param disk_names     [Array<String>]             Disks to consider
       # @return [PartitionCreatorResult]
-      def create_partitions(planned_partitions, disk_names)
-        log.info "Partitions to create: #{planned_partitions}"
+      def create_partitions(new_partitions, disk_names)
+        log.info "Partitions to create: #{new_partitions}"
 
-        dist = best_distribution(planned_partitions, disk_names)
+        dist = best_distribution(new_partitions, disk_names)
         raise Error, "Could not find a valid partitioning distribution" if dist.nil?
         part_creator = Proposal::PartitionCreator.new(original_graph)
         part_creator.create_partitions(dist)
@@ -111,7 +111,7 @@ module Y2Storage
       # @param devicegraph [Devicegraph]                     Starting point
       # @param devices_map [Hash<String,Planned::Partition>] Map of device names and partitions
       # @return [Devicegraph] Devicegraph containing the specified volume groups
-      def create_volume_groups(vgs, devicegraph, devices_map)
+      def set_up_lvm(vgs, devicegraph, devices_map)
         vgs.reduce(devicegraph) do |graph, vg|
           lvm_creator = Proposal::LvmCreator.new(graph)
           pvs = find_pvs_for(devices_map, vg.volume_group_name)
@@ -145,7 +145,7 @@ module Y2Storage
       def reuse_vgs(reused_vgs, devicegraph)
         reused_vgs.each do |vg|
           vg.reuse!(devicegraph)
-          vg.lvs.each { |v| v.reuse!(devicegraph) }
+          vg.lvs.select(&:reuse?).each { |v| v.reuse!(devicegraph) }
         end
       end
     end

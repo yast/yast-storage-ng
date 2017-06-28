@@ -172,9 +172,7 @@ module Y2Storage
       def create_logical_volumes(volume_group, planned_lvs)
         vg_size = volume_group.available_space
         lvs = Planned::LvmLv.distribute_space(planned_lvs, vg_size, rounding: volume_group.extent_size)
-        lvs.each do |lv|
-          create_logical_volume(volume_group, lv) unless lv.reuse?
-        end
+        lvs.reject(&:reuse?).each { |v| create_logical_volume(volume_group, v) }
       end
 
       # Creates a logical volume in a volume group
