@@ -38,6 +38,7 @@ module Y2Storage
       attr_accessor :settings
 
       DEFAULT_SWAP_SIZE = DiskSize.GiB(2)
+      MIN_SWAP_SIZE = DiskSize.MiB(512)
 
       def initialize(settings, devicegraph)
         @settings = settings
@@ -101,6 +102,8 @@ module Y2Storage
         swap_size = DEFAULT_SWAP_SIZE
         if settings.enlarge_swap_for_suspend
           swap_size = [ram_size, swap_size].max
+        elsif @target == :min
+          swap_size = MIN_SWAP_SIZE
         end
         if settings.use_lvm
           swap_lv(swap_size)
