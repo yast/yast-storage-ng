@@ -24,6 +24,11 @@ $LOAD_PATH.unshift(File.expand_path("../../lib", __FILE__))
 
 require "y2storage"
 
+if !Process.euid.zero?
+  STDERR.puts "You need to run this script as 'root'."
+  exit 1
+end
+
 devicegraph = Y2Storage::StorageManager.instance.probed
 used_features = Y2Storage::UsedStorageFeatures.new(devicegraph)
 features = used_features.collect_features
