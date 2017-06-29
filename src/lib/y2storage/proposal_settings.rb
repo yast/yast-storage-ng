@@ -323,7 +323,7 @@ module Y2Storage
 
       begin
         value = DiskSize.parse(value, legacy_units: true)
-      rescue ArgumentError
+      rescue TypeError
         value = nil
       end
       send(:"#{attr}=", value) if value && value > DiskSize.zero
