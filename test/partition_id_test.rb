@@ -57,10 +57,42 @@ describe Y2Storage::PartitionId do
   end
 
   describe ".new_from_legacy" do
-    pending
+    context "when the numeric id is different from the one used in old libstorage" do
+      it "returns an PartitionId corresponding to the new number" do
+        expect(described_class.new_from_legacy(5)).to eq(Y2Storage::PartitionId::EXTENDED)
+      end
+    end
+
+    context "when the numeric id is still the same than the one used in old libstorage" do
+      it "returns an PartitionId corresponding to the current id" do
+        expect(described_class.new_from_legacy(131)).to eq(Y2Storage::PartitionId::LINUX)
+      end
+    end
+
+    context "when the id is not known" do
+      it "returns PartitionID::UKNOWN" do
+        expect(described_class.new_from_legacy(8192)).to eq(Y2Storage::PartitionId::UNKNOWN)
+      end
+    end
   end
 
   describe "#to_i_legacy" do
-    pending
+    subject(:partition_id) { described_class.new_from_legacy(numeric_id) }
+
+    context "when the numeric id is different from the one used in old libstorage" do
+      let(:numeric_id) { 264 }
+
+      it "returns the numeric id used in old libstorage" do
+        expect(partition_id.to_i_legacy).to eq(Y2Storage::PartitionId::PREP.to_i)
+      end
+    end
+
+    context "when the numeric id is still the same than the one used in libstorage-ng" do
+      let(:numeric_id) { 131 }
+
+      it "returns the same numeric id" do
+        expect(partition_id.to_i_legacy).to eq(numeric_id)
+      end
+    end
   end
 end
