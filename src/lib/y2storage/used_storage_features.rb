@@ -221,14 +221,3 @@ module Y2Storage
     end
   end
 end
-
-# if used standalone, do a minimalistic test case (invoke with "sudo"!)
-
-if $PROGRAM_NAME == __FILE__ # Called direcly as standalone command? (not via rspec or require)
-  devicegraph = Y2Storage::StorageManager.instance.probed
-  used_features = Y2Storage::UsedStorageFeatures.new(devicegraph)
-  features = used_features.collect_features
-  print("Used storage features: #{features}\n")
-  pkg_list = used_features.feature_packages
-  print("Needed packages: #{pkg_list}\n")
-end
