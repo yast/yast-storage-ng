@@ -19,6 +19,7 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
+require "pp"
 require "y2storage/actiongraph"
 require "y2storage/blk_device"
 require "y2storage/disk"
@@ -209,7 +210,7 @@ module Y2Storage
     #
     # @return [String]
     def to_str
-      recursive_to_a(device_tree).to_s
+      PP.pp(recursive_to_a(device_tree),"")
     end
 
   private
