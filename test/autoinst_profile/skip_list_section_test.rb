@@ -82,4 +82,16 @@ describe Y2Storage::AutoinstProfile::SkipListSection do
       end
     end
   end
+
+  describe "#to_hashes" do
+    subject(:list) { described_class.new([rule1]) }
+
+    let(:rule1_hash) { { "skip_key" => "device", "skip_value" => "sda" } }
+
+    before { allow(rule1).to receive(:to_profile_rule).and_return(rule1_hash) }
+
+    it "returns an array with exported rules" do
+      expect(list.to_hashes).to eq([rule1_hash])
+    end
+  end
 end

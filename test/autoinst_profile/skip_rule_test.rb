@@ -300,6 +300,43 @@ describe Y2Storage::AutoinstProfile::SkipRule do
     end
   end
 
+  describe "#to_profile_rule" do
+    it "returns a hash with key, value and predicate" do
+      expect(rule.to_profile_rule).to eq(
+        "skip_if_less_than" => true,
+        "skip_key"          => "size_k",
+        "skip_value"        => "1024"
+      )
+    end
+
+    context "when predicate is :less_than" do
+      let(:predicate) { :less_than }
+
+      it "includes a 'skip_if_less_than' element" do
+        expect(rule.to_profile_rule).to include("skip_if_less_than" => true)
+      end
+    end
+
+    context "when predicate is :more_than" do
+      let(:predicate) { :more_than }
+
+      it "includes a 'skip_if_more_than' element" do
+        expect(rule.to_profile_rule).to include("skip_if_more_than" => true)
+      end
+    end
+
+    context "otherwise" do
+      let(:predicate) { :equal_to }
+
+      it "does not include a predicate at all" do
+        expect(rule.to_profile_rule).to eq(
+          "skip_key"   => "size_k",
+          "skip_value" => "1024"
+        )
+      end
+    end
+  end
+
   describe "#inspect" do
     it "returns an string in order to inspect the object" do
       expect(rule.inspect).to eq("<SkipRule key='size_k' predicate='less_than' reference='1024'>")
