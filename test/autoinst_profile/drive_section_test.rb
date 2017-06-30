@@ -166,53 +166,166 @@ describe Y2Storage::AutoinstProfile::DriveSection do
     end
 
     context "if there are no partitions with a typical Windows id in the disk" do
+      let(:dev) { device("dasdb") }
+
       it "does not alter the initial value of #create for the partitions" do
-        skip
+        section = described_class.new_from_storage(dev)
+        expect(section.partitions.map(&:create)).to all(eq(true))
       end
 
       it "initializes #use to 'all'" do
-        skip
+        section = described_class.new_from_storage(dev)
+        expect(section.use).to eq "all"
       end
     end
 
     context "if there is some partition with a typical Windows id" do
+      let(:dev) { device("sde") }
+
+      before do
+        # SWIG makes very hard to use proper mocking. See comment above.
+        win = dev.partitions.first
+        win.boot = true if bootable
+        win.filesystem.mountpoint = mountpoint if mountpoint
+      end
+
+      let(:mountpoint) { nil }
+      let(:bootable) { false }
+
       context "and the Windows-alike partition is marked with the boot flag" do
+        let(:bootable) { true }
+
         it "initializes #use to 'all'" do
-          skip
+          section = described_class.new_from_storage(dev)
+          expect(section.use).to eq "all"
         end
 
         it "does not alter the initial value of #create for the partitions" do
-          skip
+          section = described_class.new_from_storage(dev)
+          expect(section.partitions.map(&:create)).to all(eq(true))
         end
       end
 
       context "and the Windows-alike partitions is mounted at /boot or below" do
+        let(:mountpoint) { "/boot" }
+
         it "initializes #use to 'all'" do
-          skip
+          section = described_class.new_from_storage(dev)
+          expect(section.use).to eq "all"
         end
 
         it "does not alter the initial value of #create for the partitions" do
-          skip
+          section = described_class.new_from_storage(dev)
+          expect(section.partitions.map(&:create)).to all(eq(true))
         end
       end
 
       context "and the Windows partition is not marked as bootable nor mounted at /boot" do
         it "initializes #use to the list of exported partition numbers" do
-          skip
-        end
-
-        context "and there is any non-Windows partition before it in the disk" do
-          it "sets #create to false for all the partitions" do
-            skip
-          end
+          section = described_class.new_from_storage(dev)
+          expect(section.use).to eq "2,3"
         end
 
         context "and the Windows partition(s) are the first partitions in the disk" do
           it "does not alter the initial value of #create for the partitions" do
-            skip
+            section = described_class.new_from_storage(dev)
+            expect(section.partitions.map(&:create)).to all(eq(true))
+          end
+        end
+
+        context "and there is any non-Windows partition before it in the disk" do
+          context "if the non-Windows partition is an extended one" do
+            let(:dev) { device("sdf") }
+
+            it "does not alter the initial value of #create for the partitions" do
+              section = described_class.new_from_storage(dev)
+              expect(section.partitions.map(&:create)).to all(eq(true))
+            end
+          end
+
+          context "if the non-Windows partition is not extended" do
+            let(:dev) { device("sdd") }
+
+            it "sets #create to false for all the partitions" do
+              section = described_class.new_from_storage(dev)
+              expect(section.partitions.map(&:create)).to all(eq(false))
+            end
           end
         end
       end
+    end
+  end
+
+  describe "#to_hashes" do
+    subject(:section) { described_class.new }
+
+    it "returns a hash with all the non-blank values using strings as keys" do
+      section.type = :CT_DISK
+      section.use = "all"
+      expect(section.to_hashes).to eq("type" => :CT_DISK, "use" => "all")
+    end
+
+    it "returns an empty hash if all the values are blank" do
+      expect(section.to_hashes).to eq({})
+    end
+
+    it "exports #initialize_attr as 'initialize'" do
+      section.initialize_attr = true
+      hash = section.to_hashes
+      expect(hash.keys).to include "initialize"
+      expect(hash.keys).to_not include "initialize_attr"
+      expect(hash["initialize"]).to eq true
+    end
+
+    it "does not export nil values" do
+      section.disklabel = nil
+      section.is_lvm_vg = nil
+      section.partitions = nil
+      hash = section.to_hashes
+      expect(hash.keys).to_not include "disklabel"
+      expect(hash.keys).to_not include "is_lvm_vg"
+      expect(hash.keys).to_not include "partitions"
+    end
+
+    it "does not export empty collections (#partitions and #skip_list)" do
+      section.partitions = []
+      section.skip_list = []
+      hash = section.to_hashes
+      expect(hash.keys).to_not include "partitions"
+      expect(hash.keys).to_not include "skip_list"
+    end
+
+    it "exports #partitions and #skip_list as arrays of hashes" do
+      part1 = Y2Storage::AutoinstProfile::PartitionSection.new
+      part1.create = true
+      section.partitions << part1
+      part2 = Y2Storage::AutoinstProfile::PartitionSection.new
+      part2.create = false
+      section.partitions << part2
+      rule = instance_double(Y2Storage::AutoinstProfile::SkipRule, to_profile_rule: {})
+      section.skip_list = Y2Storage::AutoinstProfile::SkipListSection.new([rule])
+
+      hash = section.to_hashes
+
+      expect(hash["partitions"]).to be_a(Array)
+      expect(hash["partitions"].size).to eq 2
+      expect(hash["partitions"]).to all(be_a(Hash))
+
+      expect(hash["skip_list"]).to be_a(Array)
+      expect(hash["skip_list"].size).to eq 1
+      expect(hash["skip_list"].first).to be_a Hash
+    end
+
+    it "exports false values" do
+      section.is_lvm_vg = false
+      hash = section.to_hashes
+      expect(hash.keys).to include "is_lvm_vg"
+      expect(hash["is_lvm_vg"]).to eq false
+    end
+
+    it "does not export empty strings" do
+      section.device = ""
+      expect(section.to_hashes.keys).to_not include "device"
     end
   end
 end
