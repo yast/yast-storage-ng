@@ -178,10 +178,11 @@ module Y2Storage
         root_vol
       end
 
+      # Sizes have to be adjusted only when using snapshots
       def adjust_btrfs_sizes!(planned_device)
-        return unless planned_device.btrfs?
+        return if !planned_device.btrfs? || !settings.use_snapshots
 
-        log.info "Increasing root filesystem size for Btrfs"
+        log.info "Increasing root filesystem size for snapshots"
         multiplicator = 1.0 + settings.btrfs_increase_percentage / 100.0
         planned_device.min_size *= multiplicator
         planned_device.max_size *= multiplicator
