@@ -137,17 +137,20 @@ module Y2Storage
       def self.new_from_storage(device)
         result = new
         # So far, only real partitions are supported
-        initialized = result.init_from_partition(device)
-        initialized ? result : nil
+        result.init_from_partition(device)
+        result
       end
 
       # Filesystem type to be used for the real partition object, based on the
       # #filesystem value.
       #
-      # @return [Filesystems::Type]
+      # @return [Filesystems::Type, nil] nil if #filesystem is not set or it's
+      #   impossible to infer the type
       def type_for_filesystem
         return nil unless filesystem
         Filesystems::Type.find(filesystem)
+      rescue NameError
+        nil
       end
 
       # Partition id to be used for the real partition object.
@@ -185,8 +188,6 @@ module Y2Storage
         # According to the comments there, that was done due to bnc#415005 and
         # bnc#262535.
         @size = partition.size.to_i.to_s if create
-
-        true
       end
 
     protected
@@ -222,8 +223,10 @@ module Y2Storage
 
       # @param fs [Filesystem::BlkFilesystem]
       def init_mount_options(fs)
-        @mount = fs.mountpoint if fs.mountpoint && !fs.mountpoint.empty?
-        @mountby = fs.mount_by.to_sym
+        if fs.mountpoint && !fs.mountpoint.empty?
+          @mount = fs.mountpoint if fs.mountpoint && !fs.mountpoint.empty?
+          @mountby = fs.mount_by.to_sym
+        end
         @fstab_options = fs.fstab_options.join(",") unless fs.fstab_options.empty?
       end
 
