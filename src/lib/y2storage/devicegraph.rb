@@ -210,7 +210,7 @@ module Y2Storage
     #
     # @return [String]
     def to_str
-      PP.pp(recursive_to_a(device_tree),"")
+      PP.pp(recursive_to_a(device_tree), "")
     end
 
   private
