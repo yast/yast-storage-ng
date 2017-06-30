@@ -57,11 +57,61 @@ module Y2Storage
     # @return [Devicegraph]
     attr_reader :devices
 
+    class << self
+      # Calculates the initial proposal
+      #
+      # If a proposal is not possible by honoring current settings, other settings
+      # are tried. For example, a proposal without separate home or without snapshots
+      # will be calculated.
+      #
+      # @see GuidedProposal#initialize
+      #
+      # @param settings [ProposalSettings]
+      # @param devicegraph [Devicegraph]
+      # @param disk_analyzer [DiskAnalyzer]
+      #
+      # @return [GuidedProposal]
+      def initial(settings: nil, devicegraph: nil, disk_analyzer: nil)
+        # Try proposal with initial settings
+        current_settings = settings || ProposalSettings.new_for_current_product
+        proposal = try_proposal(current_settings.dup, devicegraph, disk_analyzer)
+
+        # Try proposal without home
+        if !proposal.devices && current_settings.use_separate_home
+          current_settings.use_separate_home = false
+          proposal = try_proposal(current_settings.dup, devicegraph, disk_analyzer)
+        end
+
+        # Try proposal without snapshots
+        if !proposal.devices && current_settings.root_filesystem_type.is?(:btrfs)
+          current_settings.use_snapshots = false
+          proposal = try_proposal(current_settings.dup, devicegraph, disk_analyzer)
+        end
+
+        proposal
+      end
+
+    private
+
+      def try_proposal(settings, devicegraph, disk_analyzer)
+        proposal = GuidedProposal.new(
+          settings:      settings,
+          devicegraph:   devicegraph,
+          disk_analyzer: disk_analyzer
+        )
+        proposal.propose
+        proposal
+      rescue Y2Storage::Error
+        log.error("generating proposal failed")
+        proposal
+      end
+    end
+
     # @param settings [ProposalSettings] if nil, default settings will be used
     # @param devicegraph [Devicegraph] starting point. If nil, the probed
     #   devicegraph will be used
     # @param disk_analyzer [DiskAnalyzer] if nil, a new one will be created
-    #   based in the initial devicegraph
+    #   based on the initial devicegraph
     def initialize(settings: nil, devicegraph: nil, disk_analyzer: nil)
       @settings = settings || ProposalSettings.new_for_current_product
       @proposed = false

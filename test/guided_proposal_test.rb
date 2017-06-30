@@ -27,13 +27,89 @@ require_relative "support/proposal_examples"
 require_relative "support/proposal_context"
 
 describe Y2Storage::GuidedProposal do
+  using Y2Storage::Refinements::SizeCasts
+  let(:architecture) { :x86 }
+
+  include_context "proposal"
+
+  describe ".initial" do
+    subject(:proposal) { described_class.initial(settings: settings) }
+
+    let(:scenario) { "empty_hard_disk_gpt_25GiB" }
+
+    before do
+      settings.root_filesystem_type = root_filesystem
+      settings.use_snapshots = snapshots
+      settings.root_base_size = root_base_size
+      settings.root_max_size = root_max_size
+      settings.home_min_size = home_min_size
+    end
+
+    let(:root_filesystem) { Y2Storage::Filesystems::Type::BTRFS }
+
+    context "when it is possible to create a proposal using current settings" do
+      let(:separate_home) { true }
+      let(:snapshots) { true }
+      let(:root_base_size) { 3.GiB }
+      let(:root_max_size) { 3.GiB }
+      let(:home_min_size) { 5.GiB }
+
+      it "makes a valid proposal without changing settings" do
+        expect(proposal.settings.use_separate_home).to be true
+        expect(proposal.settings.use_snapshots).to be true
+        expect(proposal.devices).to_not be_nil
+      end
+    end
+
+    context "when it is not possible to create a proposal using separate home" do
+      let(:separate_home) { true }
+      let(:snapshots) { true }
+      let(:root_base_size) { 5.GiB }
+      let(:root_max_size) { 5.GiB }
+      let(:home_min_size) { 5.GiB }
+
+      it "tries without separate home" do
+        expect(proposal.settings.use_separate_home).to be false
+      end
+
+      context "and it is possible without separate home" do
+        it "makes a valid proposal only deactivating separate home" do
+          expect(proposal.settings.use_snapshots).to be true
+          expect(proposal.devices).to_not be_nil
+        end
+      end
+
+      context "and it is not possible without separate home" do
+        let(:root_base_size) { 10.GiB }
+        let(:root_max_size) { 10.GiB }
+
+        it "tries without snapshots" do
+          expect(proposal.settings.use_snapshots).to be false
+        end
+
+        context "and it is possible without snapshots" do
+          it "makes a valid proposal deactivating snapshots" do
+            expect(proposal.settings.use_snapshots).to be false
+            expect(proposal.devices).to_not be_nil
+          end
+        end
+
+        context "and it is not possible without snapshots" do
+          let(:root_base_size) { 25.GiB }
+          let(:root_max_size) { 25.GiB }
+
+          it "does not make a valid proposal" do
+            expect(proposal.settings.use_separate_home).to be false
+            expect(proposal.settings.use_snapshots).to be false
+            expect(proposal.devices).to be_nil
+          end
+        end
+      end
+    end
+  end
+
   describe "#propose" do
-    using Y2Storage::Refinements::SizeCasts
-
-    include_context "proposal"
-
     subject(:proposal) { described_class.new(settings: settings) }
-    let(:architecture) { :x86 }
 
     context "when forced to create a small partition" do
       let(:scenario) { "empty_hard_disk_gpt_25GiB" }
