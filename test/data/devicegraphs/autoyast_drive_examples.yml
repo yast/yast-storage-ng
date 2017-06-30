@@ -50,7 +50,6 @@
         size:         unlimited
         name:         /dev/dasdb3
         file_system:  xfs
-        label:        data
 
 - disk:
     name: /dev/sdc
@@ -201,3 +200,60 @@
         type: logical
         id: linux
         file_system: xfs
+        encryption:
+          name: /dev/mapper/cr_sdf7
+
+# Several special (from the PartitionSection point of view) partition ids
+- disk:
+    size: 800 GiB
+    name: "/dev/sdg"
+    partition_table: msdos
+    partitions:
+
+    - partition:
+        size: 75 GiB
+        name: /dev/sdg1
+        id: dos32
+        file_system: vfat
+
+    - partition:
+        size: 40 GiB
+        name: /dev/sdg2
+        id: prep
+        file_system: vfat
+
+    - partition:
+        size: 2 GiB
+        name: /dev/sdg3
+        id: dos16
+        file_system: vfat
+
+    - partition:
+        size: unlimited
+        name: /dev/sdg4
+        file_system: ext4
+
+# Just to have some BIOS BOOT partition
+- disk:
+    name: /dev/sdh
+    size: 50 GiB
+    partition_table: gpt
+    partitions:
+
+    - partition:
+        size:         40 GiB
+        name:         /dev/sdh1
+        file_system:  btrfs
+        mount_point:  "/"
+
+    - partition:
+        size:         1 MiB
+        name:         /dev/sdh2
+        id:           bios_boot
+
+    - partition:
+        size:         2 GiB
+        name:         /dev/sdh3
+        id:           swap
+        file_system:  swap
+        mount_point:  swap
