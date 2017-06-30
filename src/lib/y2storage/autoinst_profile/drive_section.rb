@@ -242,7 +242,9 @@ module Y2Storage
       # @return [Boolean]
       def reuse_partitions?(disk)
         linux_already_found = false
-        disk.partitions.each do |part|
+        disk.partitions.sort_by { |part| part.region.start }.each do |part|
+          next if part.type.is?(:extended)
+
           if windows?(part)
             return true if linux_already_found
           else
