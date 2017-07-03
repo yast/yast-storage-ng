@@ -106,8 +106,8 @@ module Y2Storage
         )
         proposal.propose
         proposal
-      rescue Y2Storage::Error
-        log.error("generating proposal failed")
+      rescue Y2Storage::Error => e
+        log.error("Proposal failed: #{e.inspect}")
         proposal
       end
     end
