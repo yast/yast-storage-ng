@@ -57,9 +57,9 @@ module Y2Storage
     # them in the old libstorage.
     # See {.new_from_legacy} and {#to_i_legacy}.
     CURRENT_TO_LEGACY = {
-      BIOS_BOOT          => 259, # BIOS_BOOT.to_i is 257, that used to mean mac_hidden
-      WINDOWS_BASIC_DATA => 0, # WINDOWS_BASIC_DATA.to_i is 258, that used to mean mac_hfs
-      MICROSOFT_RESERVED => 0, # MICROSOFT_RESERVED.to_i is 259, that used to mean BIOS_BOOT
+      BIOS_BOOT.to_i          => 259, # BIOS_BOOT.to_i is 257, that used to mean mac_hidden
+      WINDOWS_BASIC_DATA.to_i => 0, # WINDOWS_BASIC_DATA.to_i is 258, that used to mean mac_hfs
+      MICROSOFT_RESERVED.to_i => 0, # MICROSOFT_RESERVED.to_i is 259, that used to mean BIOS_BOOT
     }
     private_constant :LEGACY_KEPT, :LEGACY_TO_CURRENT, :CURRENT_TO_LEGACY
 
@@ -78,7 +78,7 @@ module Y2Storage
     #
     # @return [Fixnum]
     def to_i_legacy
-      return CURRENT_TO_LEGACY[self] if CURRENT_TO_LEGACY.key?(self)
+      return CURRENT_TO_LEGACY[to_i] if CURRENT_TO_LEGACY.key?(to_i)
       to_i
     end
 
