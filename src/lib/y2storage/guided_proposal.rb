@@ -93,6 +93,11 @@ module Y2Storage
 
     private
 
+      # Try a proposal with specific settings. Always returns the proposal, even
+      # when it is not possible to make a valid one. In that case, the resulting
+      # proposal will not have devices.
+      #
+      # @return [GuidedProposal]
       def try_proposal(settings, devicegraph, disk_analyzer)
         proposal = GuidedProposal.new(
           settings:      settings,
