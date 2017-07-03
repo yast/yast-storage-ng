@@ -146,6 +146,12 @@ module Y2Storage
       extent_size * number_of_extents
     end
 
+    # mimics BlkDevice API. Gets name as "/dev/#{vg_name}.
+    # @return [String]
+    def name
+      "/dev/#{vg_name}"
+    end
+
   protected
 
     def types_for_is
