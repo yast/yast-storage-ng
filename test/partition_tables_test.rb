@@ -50,6 +50,8 @@ describe Y2Storage::PartitionTables::Base do
 
   describe "#delete_all_partitions" do
     it "deletes all partitions in table" do
+      # NOTE: it is important here to have partition table with logical partitions
+      # as it need special handling, so test will cover it
       ptable.delete_all_partitions
       expect(ptable.partitions).to be_empty
     end
