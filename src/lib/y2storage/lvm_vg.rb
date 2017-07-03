@@ -152,6 +152,8 @@ module Y2Storage
       "/dev/#{vg_name}"
     end
 
+    alias_method :basename, :vg_name
+
   protected
 
     def types_for_is
