@@ -1,4 +1,13 @@
 -------------------------------------------------------------------
+Mon Jul  3 13:36:17 UTC 2017 - jreidinger@suse.com
+
+- add LvmVg#basename
+- add PartitionTables::Base#delete_all_partitions
+- add logger to all devices
+- add LvmVg#name
+- 0.1.25
+
+-------------------------------------------------------------------
 Tue Jun 27 15:05:52 UTC 2017 - igonzalezsosa@suse.com
 
 - Add LVM support for AutoYaST partitioning (bsc#1044697).

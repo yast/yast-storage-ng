@@ -19,6 +19,7 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
+require "yast"
 require "y2storage/storage_class_wrapper"
 
 module Y2Storage
@@ -29,6 +30,7 @@ module Y2Storage
   #
   # This is a wrapper for Storage::Device.
   class Device
+    include Yast::Logger
     include StorageClassWrapper
     wrap_class Storage::Device,
       downcast_to: ["BlkDevice", "Mountable", "PartitionTables::Base", "LvmPv", "LvmVg"]
