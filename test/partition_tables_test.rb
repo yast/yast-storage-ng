@@ -28,11 +28,11 @@ describe Y2Storage::PartitionTables::Base do
     fake_scenario("mixed_disks")
   end
 
+  subject(:ptable) { Y2Storage::Disk.find_by_name(fake_devicegraph, "/dev/sdb").partition_table }
+
   # Testing this because it's a nice example of usage of the Ruby wrapper
   # and because it was broken at some point
   describe "#inspect" do
-    subject(:ptable) { Y2Storage::Disk.find_by_name(fake_devicegraph, "/dev/sdb").partition_table }
-
     it "includes the partition table type" do
       expect(ptable.inspect).to include "Msdos"
     end
@@ -45,6 +45,13 @@ describe Y2Storage::PartitionTables::Base do
       expect(ptable.inspect).to include "Partition /dev/sdb5 300 GiB"
       expect(ptable.inspect).to include "Partition /dev/sdb6 500 GiB"
       expect(ptable.inspect).to include "Partition /dev/sdb7 10237 MiB"
+    end
+  end
+
+  describe "#delete_all_partitions" do
+    it "deletes all partitions in table" do
+      ptable.delete_all_partitions
+      expect(ptable.partitions).to be_empty
     end
   end
 end
