@@ -120,8 +120,13 @@ module Y2Storage
     def initialize(settings: nil, devicegraph: nil, disk_analyzer: nil)
       @settings = settings || ProposalSettings.new_for_current_product
       @proposed = false
-      @initial_graph = devicegraph
-      @disk_analyzer = disk_analyzer
+      if devicegraph.nil?
+        @initial_graph = StorageManager.instance.y2storage_probed
+        @disk_analyzer = StorageManager.instance.probed_disk_analyzer
+      else
+        @initial_graph = devicegraph
+        @disk_analyzer = disk_analyzer
+      end
     end
 
     # Checks whether the proposal has already being calculated
