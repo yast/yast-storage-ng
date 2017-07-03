@@ -293,6 +293,13 @@ module Y2Storage
       end
     end
 
+    # Check whether using btrfs filesystem with snapshots
+    #
+    # @return [Boolean]
+    def snapshots_active?
+      root_filesystem_type.is?(:btrfs) && use_snapshots
+    end
+
   protected
 
     # Value of a product feature in the partitioning section

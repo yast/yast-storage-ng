@@ -365,7 +365,7 @@ describe Y2Storage::Proposal::DevicesPlanner do
           ]
         end
 
-        context "and snapshots is not active" do
+        context "and snapshots are not active" do
           before do
             settings.use_snapshots = false
           end
@@ -391,7 +391,7 @@ describe Y2Storage::Proposal::DevicesPlanner do
           end
         end
 
-        context "and snapshots is active" do
+        context "and snapshots are active" do
           before do
             settings.use_snapshots = true
           end

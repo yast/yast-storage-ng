@@ -66,25 +66,30 @@ module Y2Storage
       #
       # @see GuidedProposal#initialize
       #
-      # @param settings [ProposalSettings]
-      # @param devicegraph [Devicegraph]
-      # @param disk_analyzer [DiskAnalyzer]
+      # @param settings [ProposalSettings] if nil, default settings will be used
+      # @param devicegraph [Devicegraph] starting point. If nil, the probed
+      #   devicegraph will be used
+      # @param disk_analyzer [DiskAnalyzer] if nil, a new one will be created
+      #   based on the initial devicegraph.
       #
       # @return [GuidedProposal]
       def initial(settings: nil, devicegraph: nil, disk_analyzer: nil)
         # Try proposal with initial settings
         current_settings = settings || ProposalSettings.new_for_current_product
+        log.info("Trying proposal with initial settings: #{current_settings}")
         proposal = try_proposal(current_settings.dup, devicegraph, disk_analyzer)
 
         # Try proposal without home
-        if !proposal.devices && current_settings.use_separate_home
+        if proposal.failed? && current_settings.use_separate_home
           current_settings.use_separate_home = false
+          log.info("Trying proposal without home: #{current_settings}")
           proposal = try_proposal(current_settings.dup, devicegraph, disk_analyzer)
         end
 
         # Try proposal without snapshots
-        if !proposal.devices && current_settings.root_filesystem_type.is?(:btrfs)
+        if proposal.failed? && current_settings.snapshots_active?
           current_settings.use_snapshots = false
+          log.info("Trying proposal without home neither snapshots: #{current_settings}")
           proposal = try_proposal(current_settings.dup, devicegraph, disk_analyzer)
         end
 
@@ -166,6 +171,13 @@ module Y2Storage
       end
 
       raise exception
+    end
+
+    # A proposal is failed when it has not devices after being proposed
+    #
+    # @return [Boolean] true if proposed and has not devices; false otherwise
+    def failed?
+      proposed? && devices.nil?
     end
 
   protected

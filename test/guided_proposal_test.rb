@@ -32,10 +32,10 @@ describe Y2Storage::GuidedProposal do
 
   include_context "proposal"
 
-  describe ".initial" do
-    subject(:proposal) { described_class.initial(settings: settings) }
+  let(:scenario) { "empty_hard_disk_gpt_25GiB" }
 
-    let(:scenario) { "empty_hard_disk_gpt_25GiB" }
+  describe ".initial" do
+    subject(:proposal) { described_class.initial(settings: current_settings) }
 
     before do
       settings.root_filesystem_type = root_filesystem
@@ -46,6 +46,22 @@ describe Y2Storage::GuidedProposal do
     end
 
     let(:root_filesystem) { Y2Storage::Filesystems::Type::BTRFS }
+    let(:snapshots) { settings.use_snapshots }
+    let(:root_base_size) { settings.root_base_size }
+    let(:root_max_size) { settings.root_max_size }
+    let(:home_min_size) { settings.home_min_size }
+
+    let(:current_settings) { settings }
+
+    context "when settings are not passed" do
+      let(:current_settings) { nil }
+
+      it "creates initial proposal settings based on the product (control.xml)" do
+        expect(Y2Storage::ProposalSettings).to receive(:new_for_current_product)
+          .and_call_original
+        proposal
+      end
+    end
 
     context "when it is possible to create a proposal using current settings" do
       let(:separate_home) { true }
@@ -294,6 +310,45 @@ describe Y2Storage::GuidedProposal do
           bios_boot = proposal.devices.partitions.select { |p| p.id.is?(:bios_boot) }
 
           expect(bios_boot).to be_empty
+        end
+      end
+    end
+  end
+
+  describe "#failed?" do
+    subject(:proposal) { described_class.new }
+
+    before do
+      allow(proposal).to receive(:proposed?).and_return(proposed)
+      allow(proposal).to receive(:devices).and_return(devices)
+    end
+
+    let(:devices) { nil }
+
+    context "when it is not proposed" do
+      let(:proposed) { false }
+
+      it "returns false" do
+        expect(proposal.failed?).to be false
+      end
+    end
+
+    context "when it is proposed" do
+      let(:proposed) { true }
+
+      context "and it has devices" do
+        let(:devices) { double("Y2Storage::Devicegraph") }
+
+        it "returns false" do
+          expect(proposal.failed?).to be false
+        end
+      end
+
+      context "and it has not devices" do
+        let(:devices) { nil }
+
+        it "returns true" do
+          expect(proposal.failed?).to be true
         end
       end
     end
