@@ -1,0 +1,40 @@
+---
+- disk:
+    name: /dev/sda
+    size: 25 GiB
+    partition_table: gpt
+    partitions:
+
+    - partition:
+        size: 1 MiB
+        name: /dev/sda1
+        id:   bios_boot
+
+    - partition:
+        size: 26212335.5 KiB
+        name: /dev/sda2
+        id:   lvm
+
+- lvm_vg:
+    vg_name: system
+
+    lvm_pvs:
+    - lvm_pv:
+        blk_device: "/dev/sda2"
+
+    lvm_lvs:
+    - lvm_lv:
+        lv_name:      home
+        size:         11004 MiB
+        file_system:  xfs
+        mount_point:  "/home"
+    - lvm_lv:
+        lv_name:      root
+        size:         12.5 GiB
+        file_system:  btrfs
+        mount_point:  "/"
+    - lvm_lv:
+        lv_name:      swap
+        size:         1792 MiB
+        file_system:  swap
+        mount_point:  swap
