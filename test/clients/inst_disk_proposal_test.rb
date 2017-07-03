@@ -34,9 +34,13 @@ describe Y2Storage::Clients::InstDiskProposal do
       Y2Storage::StorageManager.create_test_instance
       allow(proposal_dialog).to receive(:proposal)
       allow(proposal_dialog).to receive(:devicegraph)
+      allow(Y2Storage::GuidedProposal).to receive(:initial).and_return(initial_proposal)
     end
 
-    context "when running the client for the first time " do
+    let(:initial_proposal) { double("Y2Storage::GuidedProposal", devices: initial_devicegraph) }
+    let(:initial_devicegraph) { double("Y2Storage::Devicegraph") }
+
+    context "when running the client for the first time" do
       before do
         allow(storage_manager).to receive(:proposal).and_return nil
         allow(storage_manager).to receive(:staging_changed?).and_return false
@@ -47,7 +51,7 @@ describe Y2Storage::Clients::InstDiskProposal do
       it "creates initial proposal settings based on the product (control.xml)" do
         expect(Y2Storage::ProposalSettings).to receive(:new_for_current_product)
           .and_return(proposal_settings)
-        expect(Y2Storage::GuidedProposal).to receive(:new)
+        expect(Y2Storage::GuidedProposal).to receive(:initial)
           .with(hash_including(settings: proposal_settings))
 
         allow(Y2Storage::Dialogs::Proposal).to receive(:new).and_return proposal_dialog
@@ -55,11 +59,10 @@ describe Y2Storage::Clients::InstDiskProposal do
         client.run
       end
 
-      it "opens the proposal dialog with a pristine proposal" do
+      it "opens the proposal dialog with the initial proposal" do
         expect(Y2Storage::Dialogs::Proposal).to receive(:new) do |proposal, devicegraph|
-          expect(proposal).to be_a Y2Storage::GuidedProposal
-          expect(proposal.proposed?).to eq false
-          expect(devicegraph).to eq storage_manager.y2storage_staging
+          expect(proposal).to eq initial_proposal
+          expect(devicegraph).to eq proposal.devices
         end.and_return(proposal_dialog)
 
         expect(proposal_dialog).to receive(:run).and_return :abort
