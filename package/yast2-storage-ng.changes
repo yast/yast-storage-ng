@@ -1,4 +1,12 @@
 -------------------------------------------------------------------
+Tue Jul  4 08:32:12 UTC 2017 - ancor@suse.com
+
+- Added AutoinstProfile::PartitioningSection which allows to export
+  the current system (or any other devicegraph) to an AutoYaST
+  profile (only plain partitions supported so far).
+- 0.1.27
+
+-------------------------------------------------------------------
 Mon Jul  3 15:50:43 UTC 2017 - jlopez@suse.com
 
 - Adapt proposal to different situations (disable home, snapshots,
