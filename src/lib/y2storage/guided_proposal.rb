@@ -125,13 +125,17 @@ module Y2Storage
     def initialize(settings: nil, devicegraph: nil, disk_analyzer: nil)
       @settings = settings || ProposalSettings.new_for_current_product
       @proposed = false
-      if devicegraph.nil?
+      @initial_graph = devicegraph
+      @disk_analyzer = disk_analyzer
+
+      # Use probed devicegrah if no devicegraph is passed
+      if @initial_graph.nil?
         @initial_graph = StorageManager.instance.y2storage_probed
-        @disk_analyzer = StorageManager.instance.probed_disk_analyzer
-      else
-        @initial_graph = devicegraph
-        @disk_analyzer = disk_analyzer
+        # Use cached disk analyzer for probed devicegraph is no disk analyzer is passed
+        @disk_analyzer ||= StorageManager.instance.probed_disk_analyzer
       end
+      # Create new disk analyzer when devicegraph is passed but not disk analyzer
+      @disk_analyzer ||= DiskAnalyzer.new(@initial_graph)
     end
 
     # Checks whether the proposal has already being calculated
@@ -182,6 +186,12 @@ module Y2Storage
 
   protected
 
+    # Disk analyzer used to analyze the initial devicegraph
+    # @return [DiskAnalyzer]
+    attr_reader :disk_analyzer
+    # @return [Devicegraph]
+    attr_reader :initial_graph
+
     # @return [Array<Planned::Device>]
     def planned_devices_list(target)
       generator = Proposal::DevicesPlanner.new(populated_settings, clean_graph)
@@ -202,21 +212,10 @@ module Y2Storage
       @space_maker ||= Proposal::SpaceMaker.new(disk_analyzer, populated_settings)
     end
 
-    # Disk analyzer used to analyze the initial devicegraph
-    #
-    # @return [DiskAnalyzer]
-    def disk_analyzer
-      @disk_analyzer ||= DiskAnalyzer.new(initial_graph)
-    end
-
     # Copy of #initial_graph without all the partitions that must be wiped out
     # according to the settings
     def clean_graph
       @clean_graph ||= space_maker.delete_unwanted_partitions(initial_graph)
-    end
-
-    def initial_graph
-      @initial_graph ||= StorageManager.instance.y2storage_probed
     end
 
     # Copy of the original settings including some calculated and necessary
