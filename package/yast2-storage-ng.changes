@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Mon Jul  3 15:50:43 UTC 2017 - jlopez@suse.com
+
+- Adapt proposal to different situations (disable home, snapshots,
+  etc)
+- 0.1.26
+
+-------------------------------------------------------------------
 Mon Jul  3 13:36:17 UTC 2017 - jreidinger@suse.com
 
 - add LvmVg#basename

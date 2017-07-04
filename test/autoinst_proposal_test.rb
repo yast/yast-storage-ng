@@ -223,7 +223,7 @@ describe Y2Storage::AutoinstProposal do
       end
 
       it "falls back to the product's proposal with given disks" do
-        expect(Y2Storage::Proposal::PlannedDevicesGenerator).to receive(:new)
+        expect(Y2Storage::Proposal::DevicesPlanner).to receive(:new)
           .with(settings, Y2Storage::Devicegraph)
           .and_call_original
         proposal.propose

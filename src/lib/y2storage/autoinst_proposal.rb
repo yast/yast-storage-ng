@@ -150,7 +150,7 @@ module Y2Storage
     # @return [Devicegraph] Copy of devicegraph containing the planned devices
     def guided_devicegraph_for_target(devicegraph, drives, target)
       guided_settings = proposal_settings_for_disks(drives.disk_names)
-      guided_planner = Proposal::PlannedDevicesGenerator.new(guided_settings, devicegraph)
+      guided_planner = Proposal::DevicesPlanner.new(guided_settings, devicegraph)
       planned_devices = guided_planner.planned_devices(target)
       create_devices(devicegraph, planned_devices, drives.disk_names)
     end

@@ -43,9 +43,11 @@ module Y2Storage
         @devicegraph = storage_manager.y2storage_staging
         @proposal = storage_manager.proposal
         return if @proposal || storage_manager.staging_changed?
-        # If the staging devicegraph has never been set,
-        # start with a fresh proposal
-        @proposal = new_proposal(new_settings)
+        # If the staging devicegraph has never been set, try to make an
+        # initial proposal. When it is not possible a proposal using current
+        # settings, some attempts could be done by changing the settings.
+        @proposal = GuidedProposal.initial(settings: new_settings)
+        @devicegraph = @proposal.devices
       end
 
       def run

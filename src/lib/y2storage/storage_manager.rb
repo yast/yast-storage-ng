@@ -147,18 +147,12 @@ module Y2Storage
     # Probes all storage devices.
     #
     # Invalidates the probed and staging devicegraph.
+    # @see #refresh!
     def probe
       storage.probe
       update_staging_revision
       @staging_revision_after_probing = staging_revision
-
-      # FIXME: the whole probing stuff needs to be revisited after removing the
-      # legacy API (i.e. #y2storage_probed vs #probed and #y2storage_staging vs
-      # #staging).
-      @y2probed = nil
-      @probed_disk_analyzer = nil
-      @y2staging = nil
-      @proposal = nil
+      refresh!
     end
 
     # Performs in the system all the necessary operations to make it match the
@@ -175,6 +169,18 @@ module Y2Storage
     # @return [DiskAnalyzer]
     def probed_disk_analyzer
       @probed_disk_analyzer ||= DiskAnalyzer.new(y2storage_probed)
+    end
+
+    # Invalidates cached objects
+    #
+    # FIXME: the whole probing stuff needs to be revisited after removing the
+    # legacy API (i.e. #y2storage_probed vs #probed and #y2storage_staging vs
+    # #staging).
+    def refresh!
+      @y2probed = nil
+      @probed_disk_analyzer = nil
+      @y2staging = nil
+      @proposal = nil
     end
 
   private
@@ -243,10 +249,16 @@ module Y2Storage
       # Probing is skipped and the device tree is initialized from yaml_file.
       # Any existing probed device tree is replaced.
       #
-      # @return [StorageManager] singleton instance
+      # @note Cached objects are invalidated but creating new {Storage} instance
+      #   each time is avoided because it is a time consuming task.
       #
+      # @see #refresh!
+      #
+      # @return [StorageManager] singleton instance
       def fake_from_yaml(yaml_file = nil)
+        @instance.refresh! unless @instance.nil?
         @instance ||= create_test_instance
+
         fake_graph = Devicegraph.new(@instance.storage.create_devicegraph("fake"))
         Y2Storage::FakeDeviceFactory.load_yaml_file(fake_graph, yaml_file) if yaml_file
         fake_graph.copy(@instance.y2storage_probed)
@@ -260,9 +272,14 @@ module Y2Storage
       # Any existing probed device tree is replaced.
       # @see {Devicegraph.load} for details about xml
       #
-      # @return [StorageManager] singleton instance
+      # @note Cached objects are invalidated but creating new {Storage} instance
+      #   each time is avoided because it is a time consuming task.
       #
+      # @see #refresh!
+      #
+      # @return [StorageManager] singleton instance
       def fake_from_xml(xml_file)
+        @instance.refresh! unless @instance.nil?
         @instance ||= create_test_instance
         @instance.probed.load(xml_file)
         @instance.probed.copy(@instance.staging)

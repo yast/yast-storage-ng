@@ -310,4 +310,28 @@ describe Y2Storage::StorageManager do
       expect(manager.proposal).to be_nil
     end
   end
+
+  describe "#refresh!" do
+    let(:new_graph) { devicegraph_from("gpt_and_msdos") }
+    let(:proposal) { double("Y2Storage::GuidedProposal", devices: new_graph) }
+
+    before do
+      described_class.create_test_instance
+      described_class.instance.proposal = proposal
+    end
+
+    it "invalidates cached objects" do
+      probed = manager.y2storage_probed
+      staging = manager.y2storage_staging
+      disk_analyzer = manager.probed_disk_analyzer
+      proposal = manager.proposal
+
+      manager.refresh!
+
+      expect(manager.y2storage_probed.object_id).not_to eq probed.object_id
+      expect(manager.y2storage_staging.object_id).not_to eq staging.object_id
+      expect(manager.proposal).not_to eq proposal
+      expect(manager.probed_disk_analyzer).not_to eq disk_analyzer
+    end
+  end
 end
