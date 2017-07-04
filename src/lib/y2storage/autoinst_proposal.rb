@@ -63,7 +63,7 @@ module Y2Storage
     # @param disk_analyzer [DiskAnalyzer] if nil, a new one will be created
     #   based on the initial devicegraph
     def initialize(partitioning: [], devicegraph: nil, disk_analyzer: nil)
-      @partitioning = partitioning
+      @partitioning = AutoinstProfile::PartitioningSection.new_from_hashes(partitioning)
       @initial_devicegraph = devicegraph
       @disk_analyzer = disk_analyzer
       @proposed = false

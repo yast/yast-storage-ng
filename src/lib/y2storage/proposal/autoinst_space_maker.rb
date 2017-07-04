@@ -61,19 +61,18 @@ module Y2Storage
 
       # Deletes unwanted partitions for the given disk
       #
-      # @param disk        [Y2Storage::Disk] Disk
-      # @param drive_spec [Hash] Drive drive_spec from AutoYaST
-      # @option drive_spec [Boolean] "initialize" Initialize the device
-      # @option drive_spec [String]  "use"        Partitions to remove ("all" or "linux")
+      # @param devicegraph [Devicegraph]
+      # @param disk        [Disk]
+      # @param drive_spec  [AutoinstProfile::DriveSection]
       def delete_stuff(devicegraph, disk, drive_spec)
-        if drive_spec["initialize"]
+        if drive_spec.initialize_attr
           disk.remove_descendants
           return
         end
 
         # TODO: resizing of partitions
 
-        case drive_spec["use"]
+        case drive_spec.use
         when "all"
           disk.partition_table.remove_descendants if disk.partition_table
         when "linux"

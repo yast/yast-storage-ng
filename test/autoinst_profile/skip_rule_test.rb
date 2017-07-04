@@ -22,9 +22,8 @@
 require_relative "../spec_helper"
 
 require "y2storage"
-require "y2storage/proposal/skip_rule"
 
-describe Y2Storage::Proposal::SkipRule do
+describe Y2Storage::AutoinstProfile::SkipRule do
   subject(:rule) { described_class.new(key, predicate, reference) }
 
   let(:key) { "size_k" }
@@ -33,11 +32,11 @@ describe Y2Storage::Proposal::SkipRule do
   let(:disk) { instance_double("Y2Storage::Disk") }
   let(:size_k) { 1024 }
   let(:value) do
-    instance_double(Y2Storage::Proposal::SkipListValue, size_k: size_k, device: "/dev/sda")
+    instance_double(Y2Storage::AutoinstProfile::SkipListValue, size_k: size_k, device: "/dev/sda")
   end
 
   before do
-    allow(Y2Storage::Proposal::SkipListValue).to receive(:new).and_return(value)
+    allow(Y2Storage::AutoinstProfile::SkipListValue).to receive(:new).and_return(value)
   end
 
   describe ".from_profile_rule" do
@@ -297,6 +296,43 @@ describe Y2Storage::Proposal::SkipRule do
 
       it "returns false" do
         expect(rule).to_not be_valid
+      end
+    end
+  end
+
+  describe "#to_profile_rule" do
+    it "returns a hash with key, value and predicate" do
+      expect(rule.to_profile_rule).to eq(
+        "skip_if_less_than" => true,
+        "skip_key"          => "size_k",
+        "skip_value"        => "1024"
+      )
+    end
+
+    context "when predicate is :less_than" do
+      let(:predicate) { :less_than }
+
+      it "includes a 'skip_if_less_than' element" do
+        expect(rule.to_profile_rule).to include("skip_if_less_than" => true)
+      end
+    end
+
+    context "when predicate is :more_than" do
+      let(:predicate) { :more_than }
+
+      it "includes a 'skip_if_more_than' element" do
+        expect(rule.to_profile_rule).to include("skip_if_more_than" => true)
+      end
+    end
+
+    context "otherwise" do
+      let(:predicate) { :equal_to }
+
+      it "does not include a predicate at all" do
+        expect(rule.to_profile_rule).to eq(
+          "skip_key"   => "size_k",
+          "skip_value" => "1024"
+        )
       end
     end
   end
