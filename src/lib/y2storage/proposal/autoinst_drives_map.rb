@@ -116,7 +116,7 @@ module Y2Storage
       # @param disks [Array<AutoinstProfile::DriveSection>] List of disk specifications from AutoYaST
       # @param devicegraph [Devicegraph] Devicegraph to search for disks for "flexible" devices
       def add_disks(disks, devicegraph)
-        fixed_drives, flexible_drives = disks.partition { |i| i.device }
+        fixed_drives, flexible_drives = disks.partition(&:device)
         fixed_drives.each do |drive|
           @drives[drive.device] = drive
         end

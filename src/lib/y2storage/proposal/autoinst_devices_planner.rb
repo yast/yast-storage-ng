@@ -241,7 +241,7 @@ module Y2Storage
         [number.to_f, unit]
       end
 
-      # @param devicegraph [Devicegraph] Devicegraph to search for the partitio to reuse
+      # @param devicegraph [Devicegraph] Devicegraph to search for the partition to reuse
       # @param part_spec [AutoinstProfile::PartitionSection] Partition specification
       #   from AutoYaST
       def find_partition_to_reuse(devicegraph, part_spec)

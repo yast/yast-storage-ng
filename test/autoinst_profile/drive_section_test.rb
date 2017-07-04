@@ -141,7 +141,7 @@ describe Y2Storage::AutoinstProfile::DriveSection do
       let(:dev) { device("sdd") }
 
       before do
-        expect(Yast::Arch).to receive(:s390).and_return s390
+        allow(Yast::Arch).to receive(:s390).and_return s390
         allow(dev).to receive(:udev_full_paths)
           .and_return ["/dev/disk/by-path/1", "/dev/disk/by-path/2"]
       end

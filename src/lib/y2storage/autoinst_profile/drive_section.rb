@@ -149,13 +149,11 @@ module Y2Storage
         @partitions = partitions_from_disk(disk)
         return false if @partitions.empty?
 
-        if reuse_partitions?(disk)
-          @partitions.each { |part| part.create = false }
-        end
+        @partitions.each { |i| i.create = false } if reuse_partitions?(disk)
 
         # Same logic followed by the old exporter
         @use =
-          if disk.partitions.any? { |part| windows?(part) }
+          if disk.partitions.any? { |i| windows?(i) }
             @partitions.map(&:partition_nr).join(",")
           else
             "all"
@@ -242,7 +240,7 @@ module Y2Storage
       # @return [Boolean]
       def reuse_partitions?(disk)
         linux_already_found = false
-        disk.partitions.sort_by { |part| part.region.start }.each do |part|
+        disk.partitions.sort_by { |i| i.region.start }.each do |part|
           next if part.type.is?(:extended)
 
           if windows?(part)

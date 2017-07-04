@@ -130,6 +130,7 @@ describe Y2Storage::AutoinstProfile::PartitionSection do
     end
 
     context "if the partition is not encrypted" do
+      # Legacy behavior, use the same string we have always used
       it "initializes #crypt_key to a generic string" do
         expect(section_for("sdf7").crypt_key).to eq "ENTER KEY HERE"
       end
