@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Tue Jul  4 14:29:40 UTC 2017 - jlopez@suse.com
+
+- Proper assignment of default values for AutoinstProposal#new
+- 0.1.28
+
+-------------------------------------------------------------------
 Tue Jul  4 08:32:12 UTC 2017 - ancor@suse.com
 
 - Added AutoinstProfile::PartitioningSection which allows to export
