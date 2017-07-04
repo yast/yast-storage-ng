@@ -6,7 +6,7 @@
     partitions:
 
     - partition:
-        size:         12.5 GiB
+        size:         15565 MiB (15.20 GiB)
         name:         /dev/sda1
         file_system:  btrfs
         mount_point:  "/"
@@ -15,13 +15,13 @@
         name:         /dev/sda2
         id:           bios_boot
     - partition:
-        size:         1791 MiB 
+        size:         2 GiB
         name:         /dev/sda3
         id:           swap
         file_system:  swap
         mount_point:  swap
     - partition:
-        size:         11271151.5 KiB
+        size:         8176623.5 KiB (7.80 GiB)
         name:         /dev/sda4
         file_system:  xfs
         mount_point:  "/home"

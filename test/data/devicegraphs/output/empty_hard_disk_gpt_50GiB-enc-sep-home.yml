@@ -6,7 +6,7 @@
     partitions:
 
     - partition:
-        size:         22937 MiB
+        size:         25805 MiB (25.20 GiB)
         name:         /dev/sda1
         file_system:  btrfs
         mount_point:  "/"
@@ -29,7 +29,7 @@
           name: "/dev/mapper/cr_sda3"
           password: '12345678'
     - partition:
-        size:         26842095.5 KiB
+        size:         23905263.5 KiB (22.80 GiB)
         name:         /dev/sda4
         file_system:  xfs
         mount_point:  "/home"
