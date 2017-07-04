@@ -209,8 +209,10 @@ module Y2Storage
       @subvolumes                    = SubvolSpecification.fallback_list
 
       # Not yet in control.xml
-      @home_min_size            = DiskSize.GiB(10)
-      @home_max_size            = DiskSize.unlimited
+
+      # Use root_base_size until we have a separate entry for this in control.xml
+      @home_min_size = @root_base_size
+      @home_max_size = DiskSize.unlimited
     end
 
     # Overrides all the settings with values read from the YaST product features
@@ -236,6 +238,9 @@ module Y2Storage
       set_from_integer_feature(:btrfs_increase_percentage, :btrfs_increase_percentage)
 
       set_from_string_feature(:btrfs_default_subvolume, :btrfs_default_subvolume)
+
+      # Use root_base_size until we have a separate entry for this in control.xml
+      @home_min_size = @root_base_size
       read_subvolumes_section!
     end
 
