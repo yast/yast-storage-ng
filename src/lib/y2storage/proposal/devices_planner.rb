@@ -205,7 +205,12 @@ module Y2Storage
           home_vol.encryption_password = settings.encryption_password
         end
         home_vol.max_size = settings.home_max_size
-        home_vol.min_size = settings.home_min_size
+        home_vol.min_size =
+          if @target == :min
+            settings.root_base_size
+          else
+            settings.home_min_size
+          end
         home_vol.weight = 100.0 - settings.root_space_percent
         home_vol
       end

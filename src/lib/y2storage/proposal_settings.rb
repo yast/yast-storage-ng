@@ -209,6 +209,10 @@ module Y2Storage
       @subvolumes                    = SubvolSpecification.fallback_list
 
       # Not yet in control.xml
+      #
+      # @home_min_size is only used when calculating the :desired size for
+      # the proposal. If space is tight (i.e. using :min), @root_base_size is
+      # used instead. See also DevicesPlanner::home_device.
       @home_min_size            = DiskSize.GiB(10)
       @home_max_size            = DiskSize.unlimited
     end
