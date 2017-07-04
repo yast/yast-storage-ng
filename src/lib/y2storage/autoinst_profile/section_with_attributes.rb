@@ -47,7 +47,7 @@ module Y2Storage
         # contain the relevant information. Attributes are set to nil for
         # missing keys and for blank values.
         #
-        # @param [Hash] content of the corresponding section of the profile.
+        # @param hash [Hash] content of the corresponding section of the profile.
         #   Each element of the hash corresponds to one of the attributes
         #   defined in the section.
         # @return [SectionWithAttributes]
@@ -74,7 +74,7 @@ module Y2Storage
       # corresponding attributes, logging unknown keys. The subclass is expected
       # to refine this behavior if needed.
       #
-      # @param [Hash] see {.new_from_hashes}
+      # @param hash [Hash] see {.new_from_hashes}
       def init_from_hashes(hash)
         init_scalars_from_hash(hash)
       end

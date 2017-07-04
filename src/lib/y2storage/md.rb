@@ -87,9 +87,13 @@ module Y2Storage
     #   @return [String] superblock version of the MD RAID.
     storage_forward :superblock_version
 
-    # @!attribute in_etc_mdadm
-    #  Whether the MD RAID is included in /etc/mdadm.conf
+    # @!method in_etc_mdadm?
+    #   @return [Boolean] whether the MD RAID is included in /etc/mdadm.conf
     storage_forward :in_etc_mdadm?
+
+    # @!method in_etc_mdadm=(value)
+    #   @see #in_etc_mdadm?
+    #   @param value [Boolean]
     storage_forward :in_etc_mdadm=
 
     # @!method self.all(devicegraph)
@@ -103,7 +107,8 @@ module Y2Storage
     #   @return [Md] nil if there is no such md
     storage_class_forward :find_by_name, as: "Md"
 
-    # @!method self.find_by_name(devicegraph, name)
+    # @!method self.find_free_numeric_name(devicegraph)
+    #   @param devicegraph [Devicegraph]
     #   @return [String] next free numeric name for a MD RAID
     storage_class_forward :find_free_numeric_name
 

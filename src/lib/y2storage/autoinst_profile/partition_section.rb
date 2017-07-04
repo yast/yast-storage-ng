@@ -172,7 +172,7 @@ module Y2Storage
       # As usual, it keeps the behavior of the old clone functionality, check
       # the implementation of this class for details.
       #
-      # @param disk [Partition]
+      # @param partition [Partition]
       def init_from_partition(partition)
         @create = !NO_CREATE_IDS.include?(partition.id)
         @partition_nr = partition.number
