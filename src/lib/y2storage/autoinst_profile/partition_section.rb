@@ -65,7 +65,8 @@ module Y2Storage
           { name: :size },
           { name: :crypt_fs },
           { name: :loop_fs },
-          { name: :crypt_key }
+          { name: :crypt_key },
+          { name: :raid_name }
         ]
       end
 
@@ -121,6 +122,9 @@ module Y2Storage
 
       # @!attribute loop_fs
       #   @return [Boolean] undocumented attribute
+
+      # @!attribute raid_name
+      #   @return [String] RAID name in which this partition will be included
 
       def initialize
         @subvolumes = []

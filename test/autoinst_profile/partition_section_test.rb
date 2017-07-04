@@ -295,4 +295,14 @@ describe Y2Storage::AutoinstProfile::PartitionSection do
       end
     end
   end
+
+  describe "#raid_options" do
+    context "when the partition is on a RAID" do
+      it "returns a RaidOptions object"
+    end
+
+    context "when the partition is not on a RAID" do
+      it "returns nil"
+    end
+  end
 end
