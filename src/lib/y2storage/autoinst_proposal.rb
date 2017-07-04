@@ -60,14 +60,15 @@ module Y2Storage
     # @param partitioning [Array<Hash>] Partitioning schema from an AutoYaST profile
     # @param devicegraph  [Devicegraph] starting point. If nil, then probed devicegraph
     #   will be used
-    # @param disk_analyzer [DiskAnalyzer] if nil, a new one will be created
-    #   based on the initial devicegraph
+    # @param disk_analyzer [DiskAnalyzer] by default, the method will create a new one
+    #   based on the initial {devicegraph} or will use the one in {StorageManager} if
+    #   starting from probed (i.e. {devicegraph} argument is also missing)
     def initialize(partitioning: [], devicegraph: nil, disk_analyzer: nil)
       @partitioning = AutoinstProfile::PartitioningSection.new_from_hashes(partitioning)
       @initial_devicegraph = devicegraph
       @disk_analyzer = disk_analyzer
 
-      # Use probed devicegrah if no devicegraph is passed
+      # Use probed devicegraph if no devicegraph is passed
       if @initial_devicegraph.nil?
         @initial_devicegraph = StorageManager.instance.y2storage_probed
         # Use cached disk analyzer for probed devicegraph is no disk analyzer is passed

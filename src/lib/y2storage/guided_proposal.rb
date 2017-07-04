@@ -120,15 +120,16 @@ module Y2Storage
     # @param settings [ProposalSettings] if nil, default settings will be used
     # @param devicegraph [Devicegraph] starting point. If nil, the probed
     #   devicegraph will be used
-    # @param disk_analyzer [DiskAnalyzer] if nil, a new one will be created
-    #   based on the initial devicegraph
+    # @param disk_analyzer [DiskAnalyzer] by default, the method will create a new one
+    #   based on the initial {devicegraph} or will use the one in {StorageManager} if
+    #   starting from probed (i.e. {devicegraph} argument is also missing)
     def initialize(settings: nil, devicegraph: nil, disk_analyzer: nil)
       @settings = settings || ProposalSettings.new_for_current_product
       @proposed = false
       @initial_graph = devicegraph
       @disk_analyzer = disk_analyzer
 
-      # Use probed devicegrah if no devicegraph is passed
+      # Use probed devicegraph if no devicegraph is passed
       if @initial_graph.nil?
         @initial_graph = StorageManager.instance.y2storage_probed
         # Use cached disk analyzer for probed devicegraph is no disk analyzer is passed
