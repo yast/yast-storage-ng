@@ -66,6 +66,16 @@ module Y2Storage
       @partitioning = AutoinstProfile::PartitioningSection.new_from_hashes(partitioning)
       @initial_devicegraph = devicegraph
       @disk_analyzer = disk_analyzer
+
+      # Use probed devicegrah if no devicegraph is passed
+      if @initial_devicegraph.nil?
+        @initial_devicegraph = StorageManager.instance.y2storage_probed
+        # Use cached disk analyzer for probed devicegraph is no disk analyzer is passed
+        @disk_analyzer ||= StorageManager.instance.probed_disk_analyzer
+      end
+      # Create new disk analyzer when devicegraph is passed but not disk analyzer
+      @disk_analyzer ||= DiskAnalyzer.new(@initial_devicegraph)
+
       @proposed = false
     end
 
