@@ -66,7 +66,8 @@ module Y2Storage
           { name: :crypt_fs },
           { name: :loop_fs },
           { name: :crypt_key },
-          { name: :raid_name }
+          { name: :raid_name },
+          { name: :raid_options }
         ]
       end
 
@@ -126,8 +127,17 @@ module Y2Storage
       # @!attribute raid_name
       #   @return [String] RAID name in which this partition will be included
 
+      # @!attribute raid_options
+      #   @return [RaidOptionsSection] RAID options
+      #   @see RaidOptionsSection
+
       def initialize
         @subvolumes = []
+      end
+
+      def init_from_hashes(hash)
+        super
+        @raid_options = RaidOptionsSection.new_from_hashes(hash["raid_options"]) if hash["raid_options"]
       end
 
       # Clones a device into an AutoYaST profile section by creating an instance

@@ -111,10 +111,15 @@ module Y2Storage
       # @param hash [Hash] see {.new_from_hashes}
       def init_from_hashes(hash)
         super
-        @type ||= :CT_DISK
+        @type ||= default_type_for(hash)
         @use  ||= "all"
         @partitions = partitions_from_hash(hash)
         @skip_list = SkipListSection.new_from_hashes(hash.fetch("skip_list", []))
+      end
+
+      def default_type_for(hash)
+        return :CT_MD if hash["device"] == "/dev/md"
+        :CT_DISK
       end
 
       # Clones a drive into an AutoYaST profile section by creating an instance

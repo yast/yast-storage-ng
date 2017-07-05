@@ -212,6 +212,23 @@ describe Y2Storage::AutoinstProfile::PartitionSection do
       section = described_class.new_from_hashes(hash)
       expect(section.subvolumes).to eq []
     end
+
+    context "when raid_options are not present" do
+      it "initializes raid_options to nil" do
+        section = described_class.new_from_hashes(hash)
+        expect(section.raid_options).to be_nil
+      end
+    end
+
+    context "when raid_options are present" do
+      let(:hash) { { "raid_options" => { "chunk_size" => "1M" } } }
+
+      it "initalizes raid_options" do
+        section = described_class.new_from_hashes(hash)
+        expect(section.raid_options).to be_a(Y2Storage::AutoinstProfile::RaidOptionsSection)
+        expect(section.raid_options.chunk_size).to eq("1M")
+      end
+    end
   end
 
   describe "#to_hashes" do
@@ -293,16 +310,6 @@ describe Y2Storage::AutoinstProfile::PartitionSection do
         section.filesystem = nil
         expect(section.id_for_partition).to eq Y2Storage::PartitionId::LINUX
       end
-    end
-  end
-
-  describe "#raid_options" do
-    context "when the partition is on a RAID" do
-      it "returns a RaidOptions object"
-    end
-
-    context "when the partition is not on a RAID" do
-      it "returns nil"
     end
   end
 end

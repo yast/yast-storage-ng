@@ -30,6 +30,24 @@ describe Y2Storage::AutoinstProfile::DriveSection do
     Y2Storage::BlkDevice.find_by_name(fake_devicegraph, "/dev/#{name}")
   end
 
+  describe ".new_from_hashes" do
+    context "when type is not specified" do
+      let(:hash) { {} }
+
+      it "initializes it to :CT_DISK" do
+        expect(described_class.new_from_hashes(hash).type).to eq(:CT_DISK)
+      end
+
+      context "and device is /dev/md" do
+        let(:hash) { { "device" => "/dev/md" } }
+
+        it "initializes it to :CT_MD" do
+        expect(described_class.new_from_hashes(hash).type).to eq(:CT_MD)
+        end
+      end
+    end
+  end
+
   describe ".new_from_storage" do
     it "returns nil for a disk or DASD with no partitions" do
       expect(described_class.new_from_storage(device("dasda"))).to eq nil

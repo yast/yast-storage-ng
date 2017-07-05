@@ -92,14 +92,21 @@ module Y2Storage
       #
       # @return [Array<DriveSection>]
       def disk_drives
-        drives.select { |drive| drive.type == :CT_DISK }
+        drives.select { |d| d.type == :CT_DISK }
       end
 
       # Drive sections with type :CT_LVM
       #
       # @return [Array<DriveSection>]
       def lvm_drives
-        drives.select { |drive| drive.type == :CT_LVM }
+        drives.select { |d| d.type == :CT_LVM }
+      end
+
+      # Drive sections with type :CT_MD
+      #
+      # @return [Array<DriveSection>]
+      def md_drives
+        drives.select { |d| d.type == :CT_RAID }
       end
     end
   end

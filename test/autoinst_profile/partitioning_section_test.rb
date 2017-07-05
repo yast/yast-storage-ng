@@ -102,4 +102,16 @@ describe Y2Storage::AutoinstProfile::PartitioningSection do
       expect(device_names).to eq(["/dev/sda", "/dev/sdb"])
     end
   end
+
+  describe "#disk_drives" do
+    it "returns drives which type :CT_DISK"
+  end
+
+  describe "#lvm_drives" do
+    it "returns drives which type :CT_LVM"
+  end
+
+  describe "#md_drives" do
+    it "returns drives which type :CT_MD"
+  end
 end
