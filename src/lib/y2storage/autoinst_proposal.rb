@@ -19,6 +19,7 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
+require "yast"
 require "y2storage/proposal_settings"
 require "y2storage/exceptions"
 require "y2storage/proposal"
@@ -55,23 +56,19 @@ module Y2Storage
       @partitioning = AutoinstProfile::PartitioningSection.new_from_hashes(partitioning)
     end
 
+  private
+
     # Calculates the proposal
     #
-    # @raise [UnexpectedCallError] if called more than once
     # @raise [NoDiskSpaceError] if there is no enough space to perform the installation
-    def propose
-      raise UnexpectedCallError if proposed?
-
+    def calculate_proposal
       drives = Proposal::AutoinstDrivesMap.new(initial_devicegraph, partitioning)
 
       space_maker = Proposal::AutoinstSpaceMaker.new(disk_analyzer)
       devicegraph = space_maker.cleaned_devicegraph(initial_devicegraph, drives)
 
       @devices = propose_devicegraph(devicegraph, drives)
-      @proposed = true
     end
-
-  private
 
     # Proposes a devicegraph based on given drives map
     #

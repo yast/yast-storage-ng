@@ -19,6 +19,7 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
+require "yast"
 require "y2storage/proposal_settings"
 require "y2storage/exceptions"
 require "y2storage/proposal"
@@ -118,14 +119,13 @@ module Y2Storage
       @settings = settings || ProposalSettings.new_for_current_product
     end
 
+  private
+
     # Calculates the proposal
     #
-    # @raise [UnexpectedCallError] if called more than once
     # @raise [NoDiskSpaceError] if there is no enough space to perform the installation
-    def propose
-      raise UnexpectedCallError if proposed?
+    def calculate_proposal
       settings.freeze
-      @proposed = true
 
       exception = nil
       [:desired, :min].each do |target|
@@ -149,8 +149,6 @@ module Y2Storage
 
       raise exception
     end
-
-  private
 
     # @return [Array<Planned::Device>]
     def planned_devices_list(target)

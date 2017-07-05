@@ -22,6 +22,8 @@
 require "yast"
 require "y2storage/storage_manager"
 require "y2storage/disk_analyzer"
+require "y2storage/exceptions"
+require "abstract_method"
 
 module Y2Storage
   module Proposal
@@ -63,12 +65,16 @@ module Y2Storage
       end
 
       # Calculates the proposal
-      # @note It should be defined by derived classes
+      # @see #calculate_proposal
       #
-      # @raise [NotImplementedError]
+      # @raise [UnexpectedCallError] if called more than once
+      # @raise [Error] other errors could be raised. The specific errors depend on the
+      #   implementation of {calculate_proposal} in each derived class. See for example
+      #   {GuidedProposal#calculate_proposal} or {AutoinstProposal#calculate_proposal}
       def propose
-        raise NotImplementedError,
-          "Subclasses of #{Module.nesting.first} must override #{__method__}"
+        raise UnexpectedCallError if proposed?
+        @proposed = true
+        calculate_proposal
       end
 
       # Checks whether the proposal has already being calculated
@@ -92,6 +98,10 @@ module Y2Storage
       attr_reader :disk_analyzer
       # @return [Devicegraph]
       attr_reader :initial_devicegraph
+
+      # @!method calculate_proposal
+      #   Really calculates the proposal. It must be defined by derived classes.
+      abstract_method :calculate_proposal
     end
   end
 end
