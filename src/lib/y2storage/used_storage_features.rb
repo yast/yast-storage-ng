@@ -64,10 +64,9 @@ module Y2Storage
 
         # RAID technologies and related
         UF_DM:            "device-mapper",
-        UF_DMMULTIPATH:   ["device-mapper", "multipath-tools"],
+        UF_MULTIPATH:     ["device-mapper", "multipath-tools"],
         UF_DMRAID:        ["device-mapper", "dmraid"],
-        UF_MD:            "mdadm",
-        UF_MDPART:        "mdadm",
+        UF_MDRAID:        "mdadm",
 
         # Other filesystems
         UF_EXT2:          "e2fsprogs",
