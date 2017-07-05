@@ -20,40 +20,28 @@
 # find current contact information at www.suse.com.
 
 require "yast"
-require "y2storage/storage_manager"
-require "y2storage/disk_analyzer"
-require "y2storage/proposal"
+require "y2storage/proposal_settings"
 require "y2storage/exceptions"
+require "y2storage/proposal"
 
 module Y2Storage
   # Class to calculate a storage proposal for autoinstallation
   #
   # @example Creating a proposal from the current AutoYaST profile
   #   partitioning = Yast::Profile.current["partitioning"]
-  #   proposal = Y2Storage::AutoinstProposal.new(partitioning)
+  #   proposal = Y2Storage::AutoinstProposal.new(partitioning: partitioning)
   #   proposal.proposed?            # => false
-  #   proposal.proposed_devicegraph # => nil
+  #   proposal.devices              # => nil
   #   proposal.planned_devices      # => nil
   #
-  #   proposal.propose              # => Performs the calculation
+  #   proposal.propose              # Performs the calculation
   #
   #   proposal.proposed?            # => true
-  #   proposal.proposed_devicegraph # => Proposed layout
-  class AutoinstProposal
-    include Yast::Logger
-
+  #   proposal.devices              # => Proposed layout
+  #
+  class AutoinstProposal < Proposal::Base
     # @return [Hash] Partitioning layout from an AutoYaST profile
     attr_reader :partitioning
-
-    # @return [Devicegraph] Initial devicegraph
-    attr_reader :initial_devicegraph
-
-    # Proposed layout of devices, nil if the proposal has not been
-    # calculated yet
-    # @return [Devicegraph]
-    attr_reader :proposed_devicegraph
-
-    alias_method :devices, :proposed_devicegraph
 
     # Constructor
     #
@@ -64,46 +52,23 @@ module Y2Storage
     #   based on the initial {devicegraph} or will use the one in {StorageManager} if
     #   starting from probed (i.e. {devicegraph} argument is also missing)
     def initialize(partitioning: [], devicegraph: nil, disk_analyzer: nil)
+      super(devicegraph: devicegraph, disk_analyzer: disk_analyzer)
       @partitioning = AutoinstProfile::PartitioningSection.new_from_hashes(partitioning)
-      @initial_devicegraph = devicegraph
-      @disk_analyzer = disk_analyzer
-
-      # Use probed devicegraph if no devicegraph is passed
-      if @initial_devicegraph.nil?
-        @initial_devicegraph = StorageManager.instance.y2storage_probed
-        # Use cached disk analyzer for probed devicegraph is no disk analyzer is passed
-        @disk_analyzer ||= StorageManager.instance.probed_disk_analyzer
-      end
-      # Create new disk analyzer when devicegraph is passed but not disk analyzer
-      @disk_analyzer ||= DiskAnalyzer.new(@initial_devicegraph)
-
-      @proposed = false
     end
 
-    # Checks whether the proposal has already been calculated
-    #
-    # @return [Boolean]
-    def proposed?
-      @proposed
-    end
+  private
 
     # Calculates the proposal
     #
-    # @raise [UnexpectedCallError] if called more than once
     # @raise [NoDiskSpaceError] if there is no enough space to perform the installation
-    def propose
-      raise UnexpectedCallError if proposed?
-
+    def calculate_proposal
       drives = Proposal::AutoinstDrivesMap.new(initial_devicegraph, partitioning)
 
       space_maker = Proposal::AutoinstSpaceMaker.new(disk_analyzer)
       devicegraph = space_maker.cleaned_devicegraph(initial_devicegraph, drives)
 
-      @proposed_devicegraph = propose_devicegraph(devicegraph, drives)
-      @proposed = true
+      @devices = propose_devicegraph(devicegraph, drives)
     end
-
-  protected
 
     # Proposes a devicegraph based on given drives map
     #
@@ -115,8 +80,8 @@ module Y2Storage
     # @return [Devicegraph] Devicegraph containing the planned devices
     def propose_devicegraph(devicegraph, drives)
       if drives.partitions?
-        planned_devices = plan_devices(devicegraph, drives)
-        create_devices(devicegraph, planned_devices, drives.disk_names)
+        @planned_devices = plan_devices(devicegraph, drives)
+        create_devices(devicegraph, @planned_devices, drives.disk_names)
       else
         log.info "No partitions were specified. Falling back to guided setup planning."
         propose_guided_devicegraph(devicegraph, drives)
@@ -162,8 +127,8 @@ module Y2Storage
     def guided_devicegraph_for_target(devicegraph, drives, target)
       guided_settings = proposal_settings_for_disks(drives.disk_names)
       guided_planner = Proposal::DevicesPlanner.new(guided_settings, devicegraph)
-      planned_devices = guided_planner.planned_devices(target)
-      create_devices(devicegraph, planned_devices, drives.disk_names)
+      @planned_devices = guided_planner.planned_devices(target)
+      create_devices(devicegraph, @planned_devices, drives.disk_names)
     end
 
     # Creates planned devices on a given devicegraph
@@ -187,21 +152,6 @@ module Y2Storage
       settings = ProposalSettings.new_for_current_product
       settings.candidate_devices = disk_names
       settings
-    end
-
-    # Disk analyzer used to analyze the initial devicegraph
-    #
-    # @return [DiskAnalyzer]
-    def disk_analyzer
-      @disk_analyzer ||= DiskAnalyzer.new(initial_devicegraph)
-    end
-
-    # Devicegraph used as starting point
-    #
-    # @return [Devicegraph] starting point. Probed devicegraph will be used if none was passed to
-    #   the constructor.
-    def initial_devicegraph
-      @initial_devicegraph ||= Y2Storage::StorageManager.instance.probe
     end
   end
 end

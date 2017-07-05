@@ -1,7 +1,8 @@
 -------------------------------------------------------------------
 Tue Jul  4 14:29:40 UTC 2017 - jlopez@suse.com
 
-- Proper assignment of default values for AutoinstProposal#new
+- Added new class Y2Storage::Proposal::Base.
+- Proper assignment of default values for new proposals.
 - 0.1.28
 
 -------------------------------------------------------------------
