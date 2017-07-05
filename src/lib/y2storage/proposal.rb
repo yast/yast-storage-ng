@@ -26,6 +26,7 @@ module Y2Storage
   end
 end
 
+require "y2storage/proposal/base"
 require "y2storage/proposal/devicegraph_generator"
 require "y2storage/proposal/lvm_helper"
 require "y2storage/proposal/autoinst_devices_creator"
