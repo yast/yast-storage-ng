@@ -20,12 +20,12 @@
     lvm_lvs:
     - lvm_lv:
         lv_name:      home
-        size:         26212 MiB
+        size:         23344 MiB
         file_system:  xfs
         mount_point:  "/home"
     - lvm_lv:
         lv_name:      root
-        size:         22936 MiB
+        size:         25804 MiB
         file_system:  btrfs
         mount_point:  "/"
     - lvm_lv:

@@ -25,16 +25,16 @@
     lvm_lvs:
     - lvm_lv:
         lv_name:      home
-        size:         11004 MiB
+        size:         7984 MiB (7.80 GiB)
         file_system:  xfs
         mount_point:  "/home"
     - lvm_lv:
         lv_name:      root
-        size:         12.5 GiB
+        size:         15565 MiB (15.20 GiB)
         file_system:  btrfs
         mount_point:  "/"
     - lvm_lv:
         lv_name:      swap
-        size:         1792 MiB
+        size:         2 GiB
         file_system:  swap
         mount_point:  swap
