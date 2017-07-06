@@ -167,6 +167,15 @@ module Y2Storage
         true
       end
 
+      # Device name to be used for the real MD device
+      #
+      # @see PartitionSection#name_for_md for details
+      #
+      # @return [String] MD RAID device name
+      def name_for_md
+        partitions.first.name_for_md
+      end
+
     protected
 
       def partitions_from_hash(hash)

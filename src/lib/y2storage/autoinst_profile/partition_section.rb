@@ -180,6 +180,20 @@ module Y2Storage
         PartitionId::LINUX
       end
 
+      # Device name to be used for the real MD device
+      #
+      # This implements the AutoYaST documented logic, if 'raid_name' is
+      # provided as one of the corresponding 'raid_options', that name should be
+      # used. Otherwise the name will be inferred from 'partition_nr'.
+      #
+      # @return [String] MD RAID device name
+      def name_for_md
+        name = raid_options && raid_options.raid_name
+        return name unless name.nil? || name.empty?
+
+        "/dev/md#{partition_nr}"
+      end
+
       # Method used by {.new_from_storage} to populate the attributes when
       # cloning a partition device.
       #
