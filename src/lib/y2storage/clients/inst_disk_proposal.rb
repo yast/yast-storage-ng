@@ -101,7 +101,7 @@ module Y2Storage
         dialog = Y2Partitioner::Dialogs::Main.new
         result = dialog.run(storage_manager.y2storage_probed, @devicegraph)
         case result
-        # TODO: method Y2Partitioner::Dialogs::Main#run does not return :abort when aborting.
+        # NOTE: method Y2Partitioner::Dialogs::Main#run does not return :abort when aborting.
         when :abort
           @result = :abort
         when :next
