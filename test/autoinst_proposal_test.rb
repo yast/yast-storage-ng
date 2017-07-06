@@ -274,6 +274,42 @@ describe Y2Storage::AutoinstProposal do
       end
     end
 
+    describe "RAID" do
+      let(:partitioning) do
+        [
+          { "device" => "/dev/sda", "use" => "all", "partitions" => [root_spec, raid_spec] },
+          { "device" => "/dev/sdb", "use" => "all", "partitions" => [raid_spec] },
+          { "device" => "/dev/md", "partitions" => [home_spec] }
+        ]
+      end
+
+      let(:home_spec) do
+        { "mount" => "/home", "filesystem" => "xfs", "size" => "max", "raid_name" => "/dev/md1", "partition_nr" => 1, "raid_options" => raid_options }
+      end
+
+      let(:raid_options) do
+        { "raid_type" => "raid1" }
+      end
+
+      let(:root_spec) do
+        { "mount" => "/", "filesystem" => "ext4", "size" => "5G" }
+      end
+
+      let(:raid_spec) do
+        { "raid_name" => "/dev/md1", "size" => "20GB", "partition_id" => 253 }
+      end
+
+      it "creates a RAID" do
+        proposal.propose
+        devicegraph = proposal.proposed_devicegraph
+        expect(devicegraph.md_raids).to contain_exactly(
+          an_object_having_attributes(
+            "number" => 1
+          )
+        )
+      end
+    end
+
     context "when already called" do
       before do
         proposal.propose
