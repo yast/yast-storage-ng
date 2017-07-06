@@ -25,7 +25,7 @@ require "yast"
 require "y2storage"
 require "y2storage/dialogs/proposal"
 require "y2storage/dialogs/guided_setup"
-require "y2partitioner/clients/main"
+require "y2partitioner/dialogs/main"
 
 module Y2Storage
   module Clients
@@ -33,7 +33,7 @@ module Y2Storage
     # Delegates the calculations to the corresponding dialogs:
     #  Dialogs::Proposal to calculate the proposal
     #  Dialogs::GuidedSetup to calculate the proposal settings
-    #  ToBeDefined to manually calculate a devicegraph
+    #  Y2Partitioner::Dialogs::Main to manually calculate a devicegraph
     class InstDiskProposal
       include Yast
       include Yast::Logger
@@ -66,7 +66,6 @@ module Y2Storage
             settings = dialog.proposal ? dialog.proposal.settings : new_settings
             guided_setup(settings)
           when :expert
-            # TODO
             expert_partitioner
           end
         end
@@ -99,7 +98,16 @@ module Y2Storage
       end
 
       def expert_partitioner
-        Y2Partitioner::Clients::Main.run
+        dialog = Y2Partitioner::Dialogs::Main.new
+        result = dialog.run(storage_manager.y2storage_probed, @devicegraph)
+        case result
+        # NOTE: method Y2Partitioner::Dialogs::Main#run does not return :abort when aborting.
+        when :abort
+          @result = :abort
+        when :next
+          @proposal = nil
+          @devicegraph = dialog.device_graph
+        end
       end
 
       # Add storage-related software packages (filesystem tools etc.) to the

@@ -280,5 +280,64 @@ describe Y2Storage::Clients::InstDiskProposal do
         end
       end
     end
+
+    context "processing the expert partitioner result" do
+      before do
+        allow(Y2Storage::Dialogs::Proposal).to receive(:new).and_return(proposal_dialog)
+        allow(proposal_dialog).to receive(:run).and_return :expert
+        allow(proposal_dialog).to receive(:proposal).and_return(proposal)
+        allow(proposal_dialog).to receive(:devicegraph).and_return(devicegraph)
+
+        allow(Y2Partitioner::Dialogs::Main).to receive(:new).and_return(expert_dialog)
+        allow(expert_dialog).to receive(:run).and_return(result)
+
+        # Just to quit
+        allow(second_proposal_dialog).to receive(:run).and_return :abort
+      end
+
+      let(:devicegraph) { double("Y2Storage::Devicegraph") }
+      let(:proposal) { double("Y2Storage::GuidedProposal") }
+      let(:expert_dialog) { double("Y2Partitioner::Dialogs::Main") }
+      let(:second_proposal_dialog) { double("Y2Storage::Dialogs::Proposal").as_null_object }
+
+      context "if the expert partitioner returns :abort" do
+        let(:result) { :abort }
+
+        it "aborts" do
+          expect(client.run).to eq :abort
+        end
+      end
+
+      context "if the expert partitioner returns :back" do
+        let(:result) { :back }
+
+        it "opens a new proposal dialog again with the same values" do
+          expect(Y2Storage::Dialogs::Proposal).to receive(:new).once.ordered
+            .and_return(proposal_dialog)
+          expect(Y2Storage::Dialogs::Proposal).to receive(:new).once.ordered
+            .with(proposal, devicegraph).and_return(second_proposal_dialog)
+          client.run
+        end
+      end
+
+      context "if the expert partitioner returns :next" do
+        let(:result) { :next }
+
+        before do
+          allow(expert_dialog).to receive(:device_graph).and_return(new_devicegraph)
+        end
+
+        let(:new_devicegraph) { double("Y2Storage::Devicegraph") }
+
+        it "opens a new proposal dialog with a new devicegraph and without any proposal" do
+          expect(Y2Storage::Dialogs::Proposal).to receive(:new).once.ordered
+            .and_return(proposal_dialog)
+          expect(Y2Storage::Dialogs::Proposal).to receive(:new).once.ordered
+            .with(nil, new_devicegraph)
+            .and_return(second_proposal_dialog)
+          client.run
+        end
+      end
+    end
   end
 end
