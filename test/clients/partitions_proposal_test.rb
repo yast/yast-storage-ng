@@ -81,7 +81,10 @@ describe Y2Storage::Clients::PartitionsProposal do
     context "when the staging devicegraph has already been manually set" do
       before do
         allow(storage_manager).to receive(:staging_changed?).and_return true
+        allow(storage_manager).to receive(:proposal).and_return(proposal)
       end
+
+      let(:proposal) { instance_double(Y2Storage::GuidedProposal) }
 
       it "does not create a new proposal" do
         proposal = storage_manager.proposal
@@ -186,6 +189,66 @@ describe Y2Storage::Clients::PartitionsProposal do
   end
 
   describe "#ask_user" do
+    context "when 'chosen_id' is equal to the description id" do
+      let(:param) { { "chosen_id" => subject.description["id"] } }
+
+      before do
+        allow(Y2Partitioner::Dialogs::Main).to receive(:new).and_return(expert_dialog)
+        allow(expert_dialog).to receive(:run).and_return(result)
+        allow(Y2Storage::StorageManager.instance).to receive(:staging=)
+      end
+
+      let(:expert_dialog) { instance_double(Y2Partitioner::Dialogs::Main) }
+      let(:result) { :back }
+
+      it "it executes the expert partitioner" do
+        expect(expert_dialog).to receive(:run)
+        subject.ask_user(param)
+      end
+
+      context "and the expert partitioner returns :abort" do
+        let(:result) { :abort }
+
+        it "returns a hash with :finish for 'workflow_sequence' key" do
+          result = subject.ask_user(param)
+          expect(result).to be_a(Hash)
+          expect(result["workflow_sequence"]).to eq :finish
+        end
+      end
+
+      context "and the expert partitioner returns :back" do
+        let(:result) { :back }
+
+        it "returns a hash with :back for 'workflow_sequence' key" do
+          result = subject.ask_user(param)
+          expect(result).to be_a(Hash)
+          expect(result["workflow_sequence"]).to eq :back
+        end
+      end
+
+      context "and the expert partitioner returns :next" do
+        let(:result) { :next }
+
+        before do
+          allow(expert_dialog).to receive(:device_graph).and_return(new_devicegraph)
+        end
+
+        let(:new_devicegraph) { instance_double(Y2Storage::Devicegraph) }
+
+        it "sets the new calculated devicegraph" do
+          expect(Y2Storage::StorageManager.instance).to receive(:staging=)
+            .with(new_devicegraph)
+          subject.ask_user(param)
+        end
+
+        it "returns a hash with :again for 'workflow_sequence' key" do
+          result = subject.ask_user(param)
+          expect(result).to be_a(Hash)
+          expect(result["workflow_sequence"]).to eq :again
+        end
+      end
+    end
+
     context "when 'chosen_id' is an actions presenter event" do
       let(:param) { { "chosen_id" => actions_presenter.events.first } }
 
@@ -202,7 +265,7 @@ describe Y2Storage::Clients::PartitionsProposal do
       end
     end
 
-    context "when 'chosen_id' is not an actions presenter event" do
+    context "when 'chosen_id' is an unknown event" do
       let(:param) { { "chosen_id" => "whatever" } }
 
       it "shows a warning dialog" do
