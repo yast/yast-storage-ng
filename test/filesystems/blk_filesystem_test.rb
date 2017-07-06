@@ -88,4 +88,28 @@ describe Y2Storage::Filesystems::BlkFilesystem do
       end
     end
   end
+
+  describe "#in_network?" do
+    context "for a disk in network" do
+      let(:dev_name) { "/dev/sda1" }
+
+      it "returns true" do
+        allow_any_instance_of(Y2Storage::Disk)
+        .to receive(:network_trasporter?).and_return(true)
+
+        expect(filesystem.in_network?).to eq true
+      end
+    end
+
+    context "for a local disk" do
+      let(:dev_name) { "/dev/sda1" }
+
+      it "returns false" do
+        allow_any_instance_of(Y2Storage::Disk)
+        .to receive(:network_trasporter?).and_return(false)
+
+        expect(filesystem.in_network?).to eq false
+      end
+    end
+  end
 end

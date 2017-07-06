@@ -142,4 +142,26 @@ describe Y2Storage::Devicegraph do
       expect(device_names).to include("/dev/mapper/cr_sdd")
     end
   end
+
+  describe "#is_filesystem_in_network?" do
+    context "when filesystem is in network" do
+      before {allow_any_instance_of(Y2Storage::Filesystems::BlkFilesystem)
+        .to receive(:in_network?).and_return(true)}
+      let(:devicegraph) { Y2Storage::Devicegraph.new_from_file(input_file_for("mixed_disks")) }
+      
+      it "returns true" do
+        expect(devicegraph.is_filesystem_in_network?("/")).to eq true
+      end
+    end
+    
+    context "when filesystem is not in network" do
+      before {allow_any_instance_of(Y2Storage::Filesystems::BlkFilesystem)
+        .to receive(:in_network?).and_return(false)}
+      let(:devicegraph) { Y2Storage::Devicegraph.new_from_file(input_file_for("mixed_disks")) }
+      
+      it "returns false" do
+        expect(devicegraph.is_filesystem_in_network?("/")).to eq false
+      end
+    end
+  end
 end
