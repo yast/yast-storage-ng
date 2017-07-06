@@ -22,4 +22,5 @@
 require "y2storage/planned/can_be_encrypted"
 require "y2storage/planned/can_be_formatted"
 require "y2storage/planned/can_be_mounted"
+require "y2storage/planned/can_be_pv"
 require "y2storage/planned/has_size"
