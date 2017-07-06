@@ -143,24 +143,28 @@ describe Y2Storage::Devicegraph do
     end
   end
 
-  describe "#is_filesystem_in_network?" do
+  describe "#filesystem_in_network?" do
     context "when filesystem is in network" do
-      before {allow_any_instance_of(Y2Storage::Filesystems::BlkFilesystem)
-        .to receive(:in_network?).and_return(true)}
+      before do
+        allow_any_instance_of(Y2Storage::Filesystems::BlkFilesystem)
+          .to receive(:in_network?).and_return(true)
+      end
       let(:devicegraph) { Y2Storage::Devicegraph.new_from_file(input_file_for("mixed_disks")) }
-      
+
       it "returns true" do
-        expect(devicegraph.is_filesystem_in_network?("/")).to eq true
+        expect(devicegraph.filesystem_in_network?("/")).to eq true
       end
     end
-    
+
     context "when filesystem is not in network" do
-      before {allow_any_instance_of(Y2Storage::Filesystems::BlkFilesystem)
-        .to receive(:in_network?).and_return(false)}
+      before do
+        allow_any_instance_of(Y2Storage::Filesystems::BlkFilesystem)
+          .to receive(:in_network?).and_return(false)
+      end
       let(:devicegraph) { Y2Storage::Devicegraph.new_from_file(input_file_for("mixed_disks")) }
-      
+
       it "returns false" do
-        expect(devicegraph.is_filesystem_in_network?("/")).to eq false
+        expect(devicegraph.filesystem_in_network?("/")).to eq false
       end
     end
   end

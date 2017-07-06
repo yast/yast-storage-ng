@@ -95,7 +95,7 @@ describe Y2Storage::Filesystems::BlkFilesystem do
 
       it "returns true" do
         allow_any_instance_of(Y2Storage::Disk)
-        .to receive(:network_trasporter?).and_return(true)
+          .to receive(:network_trasporter?).and_return(true)
 
         expect(filesystem.in_network?).to eq true
       end
@@ -106,7 +106,7 @@ describe Y2Storage::Filesystems::BlkFilesystem do
 
       it "returns false" do
         allow_any_instance_of(Y2Storage::Disk)
-        .to receive(:network_trasporter?).and_return(false)
+          .to receive(:network_trasporter?).and_return(false)
 
         expect(filesystem.in_network?).to eq false
       end
