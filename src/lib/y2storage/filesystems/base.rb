@@ -37,6 +37,10 @@ module Y2Storage
       #   @return [Array<Filesystems::Base>] all the filesystems in the given devicegraph
       storage_class_forward :all, as: "Filesystems::Base"
 
+      def in_network?
+        return false
+      end
+
     protected
 
       def types_for_is

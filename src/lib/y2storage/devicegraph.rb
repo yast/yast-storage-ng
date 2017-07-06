@@ -162,6 +162,12 @@ module Y2Storage
       Filesystems::Base.all(self)
     end
 
+    # @return [Boolean]
+    def is_filesystem_in_network? (mountpoint)
+      filesystem = filesystems.find { |i| i.mountpoint == mountpoint }
+      filesystem.in_network?
+    end
+
     # @return [Array<Filesystems::BlkFilesystem>]
     def blk_filesystems
       Filesystems::BlkFilesystem.all(self)

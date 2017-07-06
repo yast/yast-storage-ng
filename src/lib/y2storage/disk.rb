@@ -68,6 +68,13 @@ module Y2Storage
       transport.to_sym == :usb
     end
 
+    # Checks if it's in network
+    #
+    # @return [Boolean]
+    def network_trasporter?
+      transport.to_sym == :iscsi or transport.to_sym == :fcoe
+    end
+
     # Default partition table type for newly created partition tables
     # @see Partitionable#preferred_ptable_type
     #
