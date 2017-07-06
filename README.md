@@ -68,11 +68,6 @@ following things must be taken into account:
 
 * Not all scenarios work at this point in time (see Status below).
 * Some user interfaces can be slightly different.
-* As with a regular Tumbleweed, for the partitioning proposal to work the hard
-  disk must be big enough to accommodate all the requested partitions. Using
-  Btrfs for the root partition and a separate partition for `/home`, the
-  hard disk requirements can grow up to 25GiB at the time of writing (slightly
-  more than the regular openSUSE Tumbleweed).
 * The ISO image includes a relatively small selection of software, so choosing
   Gnome or KDE Plasma in the "computer role" screen may not work as expected.
 
