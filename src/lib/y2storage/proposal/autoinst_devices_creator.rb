@@ -25,6 +25,7 @@ require "y2storage/proposal/partitions_distribution_calculator"
 # TODO: fix distribution calculator to don't require this
 require "y2storage/proposal/lvm_helper"
 require "y2storage/proposal/partition_creator"
+require "y2storage/proposal/md_creator"
 
 module Y2Storage
   module Proposal
@@ -58,15 +59,19 @@ module Y2Storage
         creator_result = create_partitions(parts_to_create, disk_names)
         reuse_partitions(parts_to_reuse, creator_result.devicegraph)
 
+        # Process planned MD arrays
+        planned_mds = planned_devices.select { |d| d.is_a?(Planned::Md) }
+        mds_to_reuse, mds_to_create = planned_mds.partition(&:reuse?)
+        creator_result.merge!(create_mds(mds_to_create, creator_result))
+        mds_to_reuse.each { |i| i.reuse!(creator_result.devicegraph) }
+
         # Process planned volume groups
         planned_vgs = planned_devices.select { |d| d.is_a?(Planned::LvmVg) }
-        devicegraph = set_up_lvm(
-          planned_vgs, creator_result.devicegraph, creator_result.devices_map
-        )
+        creator_result.merge!(set_up_lvm(planned_vgs, creator_result))
         vgs_to_reuse = planned_vgs.select(&:reuse?)
-        reuse_vgs(vgs_to_reuse, devicegraph)
+        reuse_vgs(vgs_to_reuse, creator_result.devicegraph)
 
-        devicegraph
+        creator_result.devicegraph
       end
 
     protected
@@ -107,27 +112,15 @@ module Y2Storage
 
       # Creates volume groups in the given devicegraph
       #
-      # @param vgs         [Array<Planned::LvmVg>]           List of planned volume groups to add
-      # @param devicegraph [Devicegraph]                     Starting point
-      # @param devices_map [Hash<String,Planned::Partition>] Map of device names and partitions
-      # @return [Devicegraph] Devicegraph containing the specified volume groups
-      def set_up_lvm(vgs, devicegraph, devices_map)
-        vgs.reduce(devicegraph) do |graph, vg|
-          lvm_creator = Proposal::LvmCreator.new(graph)
-          pvs = find_pvs_for(devices_map, vg.volume_group_name)
-          lvm_creator.create_volumes(vg, pvs)
+      # @param vgs             [Array<Planned::LvmVg>]   List of planned volume groups to add
+      # @param previous_result [Proposal::CreatorResult] Starting point
+      # @return                [Proposal::CreatorResult] Result containing the specified volume groups
+      def set_up_lvm(vgs, previous_result)
+        vgs.reduce(previous_result) do |result, vg|
+          lvm_creator = Proposal::LvmCreator.new(result.devicegraph)
+          pvs = previous_result.created_names { |d| d.pv_for?(vg.volume_group_name) }
+          result.merge(lvm_creator.create_volumes(vg, pvs))
         end
-      end
-
-      # Finds physical volumes for a volume group
-      #
-      # @param devices_map [Hash<String,Planned::Partition>] Map of device names and partitions
-      # @param vg_name     [String] Volume group name
-      # @return [Array<String>] Physical volumes device names (eg. ["/dev/sda1"])
-      #
-      # @see Y2Storage::Proposal::PartitionCreator#create_partitions
-      def find_pvs_for(devices_map, vg_name)
-        devices_map.select { |_k, v| v.lvm_volume_group_name == vg_name }.keys
       end
 
       # Reuses partitions for the given devicegraph
@@ -146,6 +139,19 @@ module Y2Storage
         reused_vgs.each do |vg|
           vg.reuse!(devicegraph)
           vg.lvs.select(&:reuse?).each { |v| v.reuse!(devicegraph) }
+        end
+      end
+
+      # Creates MD RAID devices in the given devicegraph
+      #
+      # @param mds             [Array<Planned::Md>]      List of planned MD arrays to create
+      # @param previous_result [Proposal::CreatorResult] Starting point
+      # @return                [Proposal::CreatorResult] Result containing the specified MD RAIDs
+      def create_mds(mds, previous_result)
+        mds.reduce(previous_result) do |result, md|
+          md_creator = Proposal::MdCreator.new(result.devicegraph)
+          devices = previous_result.created_names { |d| d.raid_name == md.name }
+          result.merge(md_creator.create_md(md, devices))
         end
       end
     end

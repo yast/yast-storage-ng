@@ -24,19 +24,10 @@
 require "fileutils"
 require "y2storage/planned"
 require "y2storage/disk_size"
+require "y2storage/proposal/creator_result"
 
 module Y2Storage
   module Proposal
-    # Partition creation result
-    #
-    # @!method devicegraph
-    #   @return [Devicegraph] Devicegraph containing the new devices
-    #
-    # @!method devices_map
-    #   @return [Hash<String,Planned::Partition>] Planned partitions indexed by the
-    #     device name where they were placed.
-    PartitionCreationResult = Struct.new(:devicegraph, :devices_map)
-
     # Class to create partitions following a given distribution represented by
     # a Planned::PartitionsDistribution object
     class PartitionCreator
@@ -55,7 +46,7 @@ module Y2Storage
       # partitions have been created.
       #
       # @param distribution [Planned::PartitionsDistribution]
-      # @return [PartitionCreationResult]
+      # @return [CreatorResult]
       def create_partitions(distribution)
         self.devicegraph = original_graph.duplicate
 
@@ -66,7 +57,7 @@ module Y2Storage
           devices.merge(new_devices)
         end
 
-        PartitionCreationResult.new(devicegraph, devices_map)
+        CreatorResult.new(devicegraph, devices_map)
       end
 
     private

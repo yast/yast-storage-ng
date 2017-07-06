@@ -229,6 +229,7 @@ describe Y2Storage::Proposal::LvmHelper do
     end
     let(:lvm_creator) { Y2Storage::Proposal::LvmCreator.new(fake_devicegraph) }
     let(:pv_partitions) { ["/dev/sda1", "/dev/sda3"] }
+    let(:creator_result) { double("Y2Storage::Proposal::CreatorResult", devicegraph: nil) }
 
     before do
       allow(Y2Storage::Proposal::LvmCreator).to receive(:new).and_return(lvm_creator)
@@ -243,14 +244,14 @@ describe Y2Storage::Proposal::LvmHelper do
 
     it "adds the new physical volumes to the new volume group" do
       expect(lvm_creator).to receive(:create_volumes)
-        .with(Y2Storage::Planned::LvmVg, pv_partitions)
+        .with(Y2Storage::Planned::LvmVg, pv_partitions).and_return creator_result
       helper.create_volumes(fake_devicegraph, pv_partitions)
     end
 
     it "adds the logical volumes to the volume group to be created" do
       expect(lvm_creator).to receive(:create_volumes) do |lvm_vg, _pv_partitions|
         expect(lvm_vg.lvs).to eq(volumes)
-      end
+      end.and_return creator_result
       helper.create_volumes(fake_devicegraph, pv_partitions)
     end
 
@@ -264,7 +265,7 @@ describe Y2Storage::Proposal::LvmHelper do
       it "reuses the given volume group" do
         expect(lvm_creator).to receive(:create_volumes) do |lvm_vg, _pv_partitions|
           expect(lvm_vg.reuse).to eq(reused_vg.vg_name)
-        end
+        end.and_return creator_result
         helper.create_volumes(fake_devicegraph, pv_partitions)
       end
     end

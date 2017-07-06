@@ -49,21 +49,21 @@ describe Y2Storage::Proposal::LvmCreator do
 
     context "if no volume group is reused" do
       it "creates a new volume group" do
-        devicegraph = creator.create_volumes(vg, pv_partitions)
+        devicegraph = creator.create_volumes(vg, pv_partitions).devicegraph
         vgs = devicegraph.lvm_vgs
         expect(vgs.size).to eq 2
         expect(vgs.map(&:vg_name)).to include "system"
       end
 
       it "adds the new physical volumes to the new volume group" do
-        devicegraph = creator.create_volumes(vg, pv_partitions)
+        devicegraph = creator.create_volumes(vg, pv_partitions).devicegraph
         new_vg = devicegraph.lvm_vgs.detect { |vg| vg.vg_name == "system" }
         pv_names = new_vg.lvm_pvs.map { |pv| pv.blk_device.name }
         expect(pv_names.sort).to eq pv_partitions.sort
       end
 
       it "creates a new logical volume for each planned volume" do
-        devicegraph = creator.create_volumes(vg, pv_partitions)
+        devicegraph = creator.create_volumes(vg, pv_partitions).devicegraph
         new_vg = devicegraph.lvm_vgs.detect { |vg| vg.vg_name == "system" }
         expect(new_vg.lvm_lvs).to contain_exactly(
           an_object_having_attributes(
@@ -83,7 +83,7 @@ describe Y2Storage::Proposal::LvmCreator do
         let(:vg) { planned_vg(volume_group_name: "custom_vg", lvs: []) }
 
         it "creates the volume group anyway" do
-          devicegraph = creator.create_volumes(vg, pv_partitions)
+          devicegraph = creator.create_volumes(vg, pv_partitions).devicegraph
           vgs = devicegraph.lvm_vgs
           expect(vgs.map(&:vg_name)).to include "custom_vg"
         end
@@ -94,7 +94,7 @@ describe Y2Storage::Proposal::LvmCreator do
         let(:enc_password) { "SomePassphrase" }
 
         it "uses the encrypted devices to create the physical volumes" do
-          devicegraph = creator.create_volumes(vg, pv_partitions)
+          devicegraph = creator.create_volumes(vg, pv_partitions).devicegraph
           new_vg = devicegraph.lvm_vgs.detect { |vg| vg.vg_name == "system" }
           pv_devices = new_vg.lvm_pvs.map(&:blk_device)
 
@@ -115,20 +115,20 @@ describe Y2Storage::Proposal::LvmCreator do
       end
 
       it "creates no additional volume group" do
-        devicegraph = creator.create_volumes(vg)
+        devicegraph = creator.create_volumes(vg).devicegraph
         vgs = devicegraph.lvm_vgs
         expect(vgs.size).to eq 1
       end
 
       it "adds the new physical volumes to the existing volume group" do
-        devicegraph = creator.create_volumes(vg, pv_partitions)
+        devicegraph = creator.create_volumes(vg, pv_partitions).devicegraph
         reused_vg = devicegraph.lvm_vgs.detect { |vg| vg.vg_name == "vg0" }
         pv_names = reused_vg.lvm_pvs.map { |pv| pv.blk_device.name }
         expect(pv_names.sort).to eq ["/dev/sda1", "/dev/sda2", "/dev/sda3"]
       end
 
       it "creates a new logical volume for each planned volume" do
-        devicegraph = creator.create_volumes(vg, pv_partitions)
+        devicegraph = creator.create_volumes(vg, pv_partitions).devicegraph
         reused_vg = devicegraph.lvm_vgs.first
         one = reused_vg.lvm_lvs.detect { |lv| lv.lv_name == "one" }
         expect(one).to have_attributes(filesystem_mountpoint: "/1", filesystem_type: ext4)
@@ -137,7 +137,7 @@ describe Y2Storage::Proposal::LvmCreator do
       end
 
       it "does not delete existing LVs if there is enough free space" do
-        devicegraph = creator.create_volumes(vg, pv_partitions)
+        devicegraph = creator.create_volumes(vg, pv_partitions).devicegraph
         reused_vg = devicegraph.lvm_vgs.first
         lv_names = reused_vg.lvm_lvs.map { |lv| lv.lv_name }
         expect(lv_names).to include("lv1", "lv2")
@@ -149,7 +149,7 @@ describe Y2Storage::Proposal::LvmCreator do
         end
 
         it "deletes existing LVs as needed to make space" do
-          devicegraph = creator.create_volumes(vg, pv_partitions)
+          devicegraph = creator.create_volumes(vg, pv_partitions).devicegraph
           reused_vg = devicegraph.lvm_vgs.first
           lv_names = reused_vg.lvm_lvs.map(&:lv_name)
           expect(lv_names).to_not include "lv2"
@@ -171,7 +171,7 @@ describe Y2Storage::Proposal::LvmCreator do
 
         context "and no LV is reused" do
           it "deletes all existing LVs" do
-            devicegraph = creator.create_volumes(vg, pv_partitions)
+            devicegraph = creator.create_volumes(vg, pv_partitions).devicegraph
             reused_vg = devicegraph.lvm_vgs.first
             lv_names = reused_vg.lvm_lvs.map { |lv| lv.lv_name }
             expect(lv_names).to eq(["one", "two"])
@@ -185,7 +185,7 @@ describe Y2Storage::Proposal::LvmCreator do
           end
 
           it "deletes all existing LVs but the reusable one" do
-            devicegraph = creator.create_volumes(vg, pv_partitions)
+            devicegraph = creator.create_volumes(vg, pv_partitions).devicegraph
             reused_vg = devicegraph.lvm_vgs.first
             lv_names = reused_vg.lvm_lvs.map { |lv| lv.lv_name }
             expect(lv_names).to eq(["lv1", "two"])
@@ -203,7 +203,7 @@ describe Y2Storage::Proposal::LvmCreator do
       end
 
       it "creates partitions matching the volume sizes" do
-        devicegraph = creator.create_volumes(vg, pv_partitions)
+        devicegraph = creator.create_volumes(vg, pv_partitions).devicegraph
         lvs = devicegraph.lvm_lvs.select { |lv| lv.lvm_vg.vg_name == "system" }
 
         expect(lvs).to contain_exactly(
@@ -228,7 +228,7 @@ describe Y2Storage::Proposal::LvmCreator do
       end
 
       it "distributes the extra space according to weights" do
-        devicegraph = creator.create_volumes(vg, pv_partitions)
+        devicegraph = creator.create_volumes(vg, pv_partitions).devicegraph
         lvs = devicegraph.lvm_lvs.select { |lv| lv.lvm_vg.vg_name == "system" }
 
         expect(lvs).to contain_exactly(
@@ -239,7 +239,7 @@ describe Y2Storage::Proposal::LvmCreator do
       end
 
       it "does not distribute more space than available" do
-        devicegraph = creator.create_volumes(vg, pv_partitions)
+        devicegraph = creator.create_volumes(vg, pv_partitions).devicegraph
         system_vg = devicegraph.lvm_vgs.detect { |vg| vg.vg_name == "system" }
         lvs = system_vg.lvm_lvs
         lvs_size = lvs.reduce(Y2Storage::DiskSize.zero) { |sum, lv| sum + lv.size }
@@ -254,7 +254,7 @@ describe Y2Storage::Proposal::LvmCreator do
       let(:pv_partitions) { ["/dev/sda2"] }
 
       it "chooses a new name adding a number" do
-        devicegraph = creator.create_volumes(vg, pv_partitions)
+        devicegraph = creator.create_volumes(vg, pv_partitions).devicegraph
         vg_names = devicegraph.lvm_vgs.map(&:vg_name)
         expect(vg_names).to contain_exactly("system", "system0")
       end
@@ -266,7 +266,7 @@ describe Y2Storage::Proposal::LvmCreator do
       let(:pv_partitions) { [] }
 
       it "chooses a new name adding a number" do
-        devicegraph = creator.create_volumes(vg, pv_partitions)
+        devicegraph = creator.create_volumes(vg, pv_partitions).devicegraph
         lv_names = devicegraph.lvm_lvs.map(&:lv_name)
         expect(lv_names).to include("one", "one0", "one1", "one2")
       end
@@ -282,7 +282,7 @@ describe Y2Storage::Proposal::LvmCreator do
       end
 
       it "creates partitions matching the volume sizes" do
-        devicegraph = creator.create_volumes(vg, pv_partitions)
+        devicegraph = creator.create_volumes(vg, pv_partitions).devicegraph
         lvs = devicegraph.lvm_lvs.select { |lv| lv.lvm_vg.vg_name == "system" }
 
         expect(lvs).to contain_exactly(

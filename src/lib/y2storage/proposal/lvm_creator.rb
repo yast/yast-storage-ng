@@ -23,6 +23,7 @@
 
 require "y2storage/planned"
 require "y2storage/disk_size"
+require "y2storage/proposal/creator_result"
 
 module Y2Storage
   module Proposal
@@ -52,7 +53,7 @@ module Y2Storage
       # @param planned_vg [Planned::LvmVg]   Volume group to create
       # @param pv_partitions [Array<String>] names of the newly created
       #   partitions that should be added as PVs to the volume group
-      # @return [Devicegraph] New devicegraph containing the planned volume group
+      # @return [CreatorResult] result containing the planned volume group
       def create_volumes(planned_vg, pv_partitions = [])
         new_graph = original_devicegraph.duplicate
         vg =
@@ -64,9 +65,10 @@ module Y2Storage
 
         assign_physical_volumes(vg, pv_partitions, new_graph)
         make_space(vg, planned_vg)
-        create_logical_volumes(vg, planned_vg.lvs)
+        devices_map = create_logical_volumes(vg, planned_vg.lvs)
+        devices_map[vg.name] = planned_vg
 
-        new_graph
+        CreatorResult.new(new_graph, devices_map)
       end
 
     private
@@ -169,10 +171,17 @@ module Y2Storage
       # This method modifies the volume group received as first argument.
       #
       # @param volume_group [LvmVg] volume group to modify
+      # @param planned_lvs [Array<Planned::LvmLv>] specification of the logical
+      #   volumes to create inside the volume group
+      # @return [Hash{String => Planned::LvmLv}] planned LVs indexed by the
+      #   device name of the real LV devices that were created
       def create_logical_volumes(volume_group, planned_lvs)
         vg_size = volume_group.available_space
         lvs = Planned::LvmLv.distribute_space(planned_lvs, vg_size, rounding: volume_group.extent_size)
-        lvs.reject(&:reuse?).each { |v| create_logical_volume(volume_group, v) }
+        lvs.reject(&:reuse?).each_with_object({}) do |planned_lv, hash|
+          lv = create_logical_volume(volume_group, planned_lv)
+          hash[lv.name] = planned_lv
+        end
       end
 
       # Creates a logical volume in a volume group
@@ -182,11 +191,13 @@ module Y2Storage
       # @param volume_group [LvmVg] Volume group
       # @param planned_lv   [Planned::LvmLv] Planned logical volume to be used as reference
       #   for the new one
+      # @return [LvmLv] created LV device
       def create_logical_volume(volume_group, planned_lv)
         name = planned_lv.logical_volume_name || DEFAULT_LV_NAME
         name = available_name(name, volume_group)
         lv = volume_group.create_lvm_lv(name, planned_lv.size_in(volume_group))
         planned_lv.format!(lv)
+        lv
       end
 
       # Best logical volume to delete next while trying to make space for the
