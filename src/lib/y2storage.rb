@@ -1,6 +1,6 @@
 # encoding: utf-8
 
-# Copyright (c) [2016] SUSE LLC
+# Copyright (c) [2016-2017] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -31,6 +31,9 @@ require "y2storage/dasd"
 require "y2storage/dasd_type"
 require "y2storage/data_transport"
 require "y2storage/dasd_format"
+require "y2storage/md"
+require "y2storage/md_level"
+require "y2storage/md_parity"
 require "y2storage/partition"
 require "y2storage/partition_id"
 require "y2storage/partition_type"
@@ -53,6 +56,7 @@ require "y2storage/package_handler"
 require "y2storage/planned"
 require "y2storage/proposal"
 require "y2storage/guided_proposal"
+require "y2storage/autoinst_profile"
 require "y2storage/autoinst_proposal"
 require "y2storage/proposal_settings"
 require "y2storage/refinements"

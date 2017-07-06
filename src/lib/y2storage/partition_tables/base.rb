@@ -128,6 +128,15 @@ module Y2Storage
         partition_id
       end
 
+      # deletes all partitions in partition table
+      def delete_all_partitions
+        to_delete = partitions.reject { |p| p.type.is?(:logical) }
+        to_delete.each do |partition|
+          log.info "deleting #{partition}"
+          delete_partition(partition)
+        end
+      end
+
     protected
 
       def types_for_is

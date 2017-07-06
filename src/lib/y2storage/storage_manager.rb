@@ -39,8 +39,8 @@ module Y2Storage
 
     # Libstorage object
     #
-    # Calls to #probed, #staging, #environment and #arch are forwarded to this
-    # object.
+    # Calls to several methods (e.g. #environment, #arch and #rootprefix) are
+    # forwarded to this object.
     #
     # @return [Storage::Storage]
     attr_reader :storage
@@ -81,7 +81,6 @@ module Y2Storage
       activate_callbacks = Callbacks::Activate.new
       @storage.activate(activate_callbacks)
       @staging_revision = -1
-      @proposal = nil
       probe
     end
 
@@ -113,7 +112,7 @@ module Y2Storage
     # @return [Boolean] false if the staging devicegraph is just the result of
     #   probing (so a direct copy of #probed), true otherwise.
     def staging_changed?
-      @staging_revision != @staging_revision_after_probing
+      staging_revision != staging_revision_after_probing
     end
 
     # Stores the proposal, modifying the staging devicegraph and all the related
@@ -148,12 +147,12 @@ module Y2Storage
     # Probes all storage devices.
     #
     # Invalidates the probed and staging devicegraph.
+    # @see #refresh!
     def probe
-      @storage.probe
+      storage.probe
       update_staging_revision
-      @staging_revision_after_probing = @staging_revision
-      @y2probed = nil
-      @y2staging = nil
+      @staging_revision_after_probing = staging_revision
+      refresh!
     end
 
     # Performs in the system all the necessary operations to make it match the
@@ -172,7 +171,27 @@ module Y2Storage
       @probed_disk_analyzer ||= DiskAnalyzer.new(y2storage_probed)
     end
 
+    # Invalidates cached objects
+    #
+    # FIXME: the whole probing stuff needs to be revisited after removing the
+    # legacy API (i.e. #y2storage_probed vs #probed and #y2storage_staging vs
+    # #staging).
+    def refresh!
+      @y2probed = nil
+      @probed_disk_analyzer = nil
+      @y2staging = nil
+      @proposal = nil
+    end
+
   private
+
+    # Value of #staging_revision right after executing the latest libstorage
+    # probing.
+    #
+    # Used to check if the system has been re-probed
+    #
+    # @return [Fixnum]
+    attr_reader :staging_revision_after_probing
 
     # Sets the devicegraph as the staging one, updating all the associated
     # information like #staging_revision
@@ -230,10 +249,16 @@ module Y2Storage
       # Probing is skipped and the device tree is initialized from yaml_file.
       # Any existing probed device tree is replaced.
       #
-      # @return [StorageManager] singleton instance
+      # @note Cached objects are invalidated but creating new {Storage} instance
+      #   each time is avoided because it is a time consuming task.
       #
+      # @see #refresh!
+      #
+      # @return [StorageManager] singleton instance
       def fake_from_yaml(yaml_file = nil)
+        @instance.refresh! unless @instance.nil?
         @instance ||= create_test_instance
+
         fake_graph = Devicegraph.new(@instance.storage.create_devicegraph("fake"))
         Y2Storage::FakeDeviceFactory.load_yaml_file(fake_graph, yaml_file) if yaml_file
         fake_graph.copy(@instance.y2storage_probed)
@@ -247,9 +272,14 @@ module Y2Storage
       # Any existing probed device tree is replaced.
       # @see {Devicegraph.load} for details about xml
       #
-      # @return [StorageManager] singleton instance
+      # @note Cached objects are invalidated but creating new {Storage} instance
+      #   each time is avoided because it is a time consuming task.
       #
+      # @see #refresh!
+      #
+      # @return [StorageManager] singleton instance
       def fake_from_xml(xml_file)
+        @instance.refresh! unless @instance.nil?
         @instance ||= create_test_instance
         @instance.probed.load(xml_file)
         @instance.probed.copy(@instance.staging)

@@ -607,4 +607,43 @@ describe Y2Storage::ProposalSettings do
       end
     end
   end
+
+  describe "#snapshots_active?" do
+    subject(:settings) { described_class.new }
+
+    before do
+      allow(settings).to receive(:root_filesystem_type).and_return(root_filesystem)
+      allow(settings).to receive(:use_snapshots).and_return(snapshots)
+    end
+
+    let(:snapshots) { false }
+
+    context "when root filesystem is not btrfs" do
+      let(:root_filesystem) { Y2Storage::Filesystems::Type::EXT4 }
+
+      it "returns false" do
+        expect(settings.snapshots_active?).to eq false
+      end
+    end
+
+    context "when root filesystem is btrfs" do
+      let(:root_filesystem) { Y2Storage::Filesystems::Type::BTRFS }
+
+      context "and it is not using snapshots" do
+        let(:snapshots) { false }
+
+        it "returns false" do
+          expect(settings.snapshots_active?).to eq false
+        end
+      end
+
+      context "and it is using snapshots" do
+        let(:snapshots) { true }
+
+        it "returns true" do
+          expect(settings.snapshots_active?).to eq true
+        end
+      end
+    end
+  end
 end

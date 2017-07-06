@@ -73,7 +73,7 @@ module Y2Storage
     # @!scope class
     #
     # Accepts +Numeric+, +Strings+, or {DiskSize} objects as initializers.
-    # @raise [ArgumentError] if anything else is used as initializer
+    # @raise [TypeError] if anything else is used as initializer
     #
     # @see initialize
     # @see parse
@@ -102,7 +102,7 @@ module Y2Storage
         elsif size.respond_to?(:round)
           size.round
         end
-      raise(ArgumentError, "Cannot get the bytes count for #{size.inspect}") unless @size
+      raise(TypeError, "Cannot convert #{size.inspect} to DiskSize") unless @size
     end
 
     #
@@ -344,7 +344,7 @@ module Y2Storage
       #
       # NUMBER [UNIT] [(COMMENT)] | unlimited
       #
-      # A non-negative floating point number, optionally followed by a binary unit (e.g. 'GiB'),
+      # A floating point number, optionally followed by a binary unit (e.g. 'GiB'),
       # optionally followed by a comment in parentheses (which is ignored).
       # Alternatively, the string 'unlimited' represents an infinite size.
       #
@@ -385,15 +385,15 @@ module Y2Storage
       end
 
       def number(str)
-        number = str.scan(/^\d+\.?\d*/).first
-        raise ArgumentError, "Bad number: #{str}" if number.nil?
+        number = str.scan(/^[+-]?\d+\.?\d*/).first
+        raise TypeError, "Not a number: #{str}" if number.nil?
         number
       end
 
       def unit(str)
         unit = str.gsub(number(str), "").strip
         if !unit.empty? && !(UNITS + SI_UNITS + DEPRECATED_UNITS).include?(unit)
-          raise ArgumentError, "Bad unit: #{str}"
+          raise TypeError, "Bad disk size unit: #{str}"
         end
         unit
       end
@@ -409,7 +409,7 @@ module Y2Storage
           base = 1000
           exp = DEPRECATED_UNITS.index(unit) + 1
         else
-          raise ArgumentError, "Bad unit: #{str}"
+          raise TypeError, "Bad disk size unit: #{str}"
         end
         base = 1024 if legacy_units
         number * base**exp
@@ -420,7 +420,10 @@ module Y2Storage
     # Operators
     #
 
-    # Add a {DiskSize} object and a {DiskSize} or +Numeric+ object.
+    # Add a {DiskSize} object and another object. The other object must
+    # be acceptable to {new}.
+    #
+    # @param other [Numeric, String, DiskSize]
     #
     # @return [DiskSize]
     #
@@ -428,21 +431,20 @@ module Y2Storage
     #   x = DiskSize.MiB(3)      #=> <DiskSize 3.00 MiB (3145728)>
     #   y = DiskSize.KB(1)       #=> <DiskSize 0.98 KiB (1000)>
     #   x + 100                  #=> <DiskSize 3.00 MiB (3145828)>
+    #   x + "1 MiB"              #=> <DiskSize 4.00 MiB (4194304)>
     #   x + y                    #=> <DiskSize 3.00 MiB (3146728)>
     #   x + DiskSize.unlimited   #=> <DiskSize <unlimited> (-1)>
+    #   x + "unlimited"          #=> <DiskSize <unlimited> (-1)>
     #
     def +(other)
       return DiskSize.unlimited if any_operand_unlimited?(other)
-      if other.is_a?(Numeric)
-        DiskSize.new(@size + other)
-      elsif other.respond_to?(:size)
-        DiskSize.new(@size + other.size)
-      else
-        raise TypeError, "Unexpected #{other.class}; expected Numeric value or DiskSize"
-      end
+      DiskSize.new(@size + DiskSize.new(other).to_i)
     end
 
-    # Subtract a {DiskSize} object and a {DiskSize} or +Numeric+ object.
+    # Subtract a {DiskSize} object and another object. The other object
+    # must be acceptable to {new}.
+    #
+    # @param other [Numeric, String, DiskSize]
     #
     # @return [DiskSize]
     #
@@ -450,6 +452,7 @@ module Y2Storage
     #   x = DiskSize.MiB(3)      #=> <DiskSize 3.00 MiB (3145728)>
     #   y = DiskSize.KB(1)       #=> <DiskSize 0.98 KiB (1000)>
     #   x - 100                  #=> <DiskSize 3.00 MiB (3145628)>
+    #   x - "1 MiB"              #=> <DiskSize 2.00 MiB (2097152)>
     #   x - y                    #=> <DiskSize 3.00 MiB (3144728)>
     #   # sizes can be negative
     #   y - x                    #=> <DiskSize -3.00 MiB (-3144728)>
@@ -458,16 +461,13 @@ module Y2Storage
     #
     def -(other)
       return DiskSize.unlimited if any_operand_unlimited?(other)
-      if other.is_a?(Numeric)
-        DiskSize.new(@size - other)
-      elsif other.respond_to?(:size)
-        DiskSize.new(@size - other.size)
-      else
-        raise TypeError, "Unexpected #{other.class}; expected Numeric value or DiskSize"
-      end
+      DiskSize.new(@size - DiskSize.new(other).to_i)
     end
 
-    # The remainder dividing a {DiskSize} object by a {DiskSize} or +Numeric+ object.
+    # The remainder dividing a {DiskSize} object by another object. The
+    # other object must be acceptable to {new}.
+    #
+    # @param other [Numeric, String, DiskSize]
     #
     # @return [DiskSize]
     #
@@ -475,20 +475,17 @@ module Y2Storage
     #   x = DiskSize.MiB(3)   #=> <DiskSize 3.00 MiB (3145728)>
     #   y = DiskSize.KB(1)    #=> <DiskSize 0.98 KiB (1000)>
     #   x % 100               #=> <DiskSize 28.00 B (28)>
+    #   X % "1 MB"            #=> <DiskSize 142.31 KiB (145728)>
     #   x % y                 #=> <DiskSize 0.71 KiB (728)>
     #
     def %(other)
       return DiskSize.unlimited if any_operand_unlimited?(other)
-      if other.is_a?(Numeric)
-        DiskSize.new(@size % other)
-      elsif other.respond_to?(:size)
-        DiskSize.new(@size % other.size)
-      else
-        raise TypeError, "Unexpected #{other.class}; expected Numeric value or DiskSize"
-      end
+      DiskSize.new(@size % DiskSize.new(other).to_i)
     end
 
     # Multiply a {DiskSize} object by a +Numeric+ object.
+    #
+    # @param other [Numeric]
     #
     # @return [DiskSize]
     #
@@ -506,6 +503,8 @@ module Y2Storage
     end
 
     # Divide a {DiskSize} object by a +Numeric+ object.
+    #
+    # @param other [Numeric]
     #
     # @return [DiskSize]
     #
@@ -708,7 +707,8 @@ module Y2Storage
     #
     def any_operand_unlimited?(other)
       return true if unlimited?
-      return other.respond_to?(:unlimited?) && other.unlimited?
+      return true if other.respond_to?(:unlimited?) && other.unlimited?
+      return other.respond_to?(:to_s) && other.to_s == "unlimited"
     end
 
     # Checks whether makes sense to round the value to the given size
@@ -752,57 +752,4 @@ module Y2Storage
       [size2 / 2.0, UNITS[unit_index]]
     end
   end
-end
-
-#
-#----------------------------------------------------------------------
-#
-if $PROGRAM_NAME == __FILE__ # Called direcly as standalone command? (not via rspec or require)
-  size = Y2Storage::DiskSize.new(0)
-  print "0 B: #{size} (#{size.size})\n"
-
-  size = Y2Storage::DiskSize.new(511) - Y2Storage::DiskSize.new(512)
-  print "too bad: 511 B - 512 B: #{size} (#{size.size})\n"
-
-  size = Y2Storage::DiskSize.new(42)
-  print "42 B: #{size} (#{size.size})\n"
-
-  size = Y2Storage::DiskSize.new(512)
-  print "512 B: #{size} (#{size.size})\n"
-
-  size = Y2Storage::DiskSize.KiB(42)
-  print "42 KiB: #{size} (#{size.size})\n"
-
-  size = Y2Storage::DiskSize.MiB(43)
-  print "43 MiB: #{size} (#{size.size})\n"
-
-  size = Y2Storage::DiskSize.GiB(44)
-  print "44 GiB: #{size} (#{size.size})\n"
-
-  size = Y2Storage::DiskSize.TiB(45)
-  print "45 TiB: #{size} (#{size.size})\n"
-
-  size = Y2Storage::DiskSize.PiB(46)
-  print "46 PiB: #{size} (#{size.size})\n"
-
-  size = Y2Storage::DiskSize.EiB(47)
-  print "47 EiB: #{size} (#{size.size})\n"
-
-  size = Y2Storage::DiskSize.TiB(48 * (1024**5))
-  print "Huge: #{size} (#{size.size})\n"
-
-  size = Y2Storage::DiskSize.unlimited
-  print "Hugest: #{size} (#{size.size})\n"
-
-  size = Y2Storage::DiskSize.MiB(12) * 3
-  print "3*12 MiB: #{size} (#{size.size})\n"
-
-  size2 = size + Y2Storage::DiskSize.MiB(20)
-  print "3*12+20 MiB: #{size2} (#{size2.size})\n"
-
-  size2 /= 13
-  print "(3*12+20)/7 MiB: #{size2} (#{size2.size})\n"
-
-  print "#{size} < #{size2} ? -> #{size < size2}\n"
-  print "#{size} > #{size2} ? -> #{size > size2}\n"
 end

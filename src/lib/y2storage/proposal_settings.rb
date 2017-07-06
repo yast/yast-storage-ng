@@ -209,6 +209,10 @@ module Y2Storage
       @subvolumes                    = SubvolSpecification.fallback_list
 
       # Not yet in control.xml
+      #
+      # @home_min_size is only used when calculating the :desired size for
+      # the proposal. If space is tight (i.e. using :min), @root_base_size is
+      # used instead. See also DevicesPlanner::home_device.
       @home_min_size            = DiskSize.GiB(10)
       @home_max_size            = DiskSize.unlimited
     end
@@ -293,6 +297,13 @@ module Y2Storage
       end
     end
 
+    # Check whether using btrfs filesystem with snapshots
+    #
+    # @return [Boolean]
+    def snapshots_active?
+      root_filesystem_type.is?(:btrfs) && use_snapshots
+    end
+
   protected
 
     # Value of a product feature in the partitioning section
@@ -323,7 +334,7 @@ module Y2Storage
 
       begin
         value = DiskSize.parse(value, legacy_units: true)
-      rescue ArgumentError
+      rescue TypeError
         value = nil
       end
       send(:"#{attr}=", value) if value && value > DiskSize.zero

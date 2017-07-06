@@ -48,23 +48,25 @@ module Y2Storage
 
       # Devicegraph including all the specified planned devices
       #
-      # @param planned_devices [Array<Planned::Partition>] Devices to create/reuse
+      # @param planned_devices [Array<Planned::Device>] Devices to create/reuse
       # @param disk_names [Array<String>] Disks to consider
       # @return [Devicegraph] New devicegraph in which all the planned devices have been allocated
       def populated_devicegraph(planned_devices, disk_names)
-        planned_partitions = planned_devices.select { |dev| dev.is_a?(Planned::Partition) }
-        reused, created = planned_partitions.partition(&:reuse?)
+        # Process planned partitions
+        planned_partitions = planned_devices.select { |d| d.is_a?(Planned::Partition) }
+        parts_to_reuse, parts_to_create = planned_partitions.partition(&:reuse?)
+        creator_result = create_partitions(parts_to_create, disk_names)
+        reuse_partitions(parts_to_reuse, creator_result.devicegraph)
 
-        log.info "Partitions to reuse (#{reused.map(&:reuse)}): #{reused}"
-        log.info "Partitions to create: #{created}"
+        # Process planned volume groups
+        planned_vgs = planned_devices.select { |d| d.is_a?(Planned::LvmVg) }
+        devicegraph = set_up_lvm(
+          planned_vgs, creator_result.devicegraph, creator_result.devices_map
+        )
+        vgs_to_reuse = planned_vgs.select(&:reuse?)
+        reuse_vgs(vgs_to_reuse, devicegraph)
 
-        dist = best_distribution(created, disk_names)
-        raise Error, "Could not find a valid partitioning distribution" if dist.nil?
-        part_creator = Proposal::PartitionCreator.new(original_graph)
-        result = part_creator.create_partitions(dist)
-
-        reused.each { |r| r.reuse!(result) }
-        result
+        devicegraph
       end
 
     protected
@@ -85,6 +87,66 @@ module Y2Storage
         calculator = Proposal::PartitionsDistributionCalculator.new(Proposal::LvmHelper.new([]))
 
         calculator.best_distribution(planned_partitions, spaces)
+      end
+
+    private
+
+      # Creates planned partitions in the given devicegraph
+      #
+      # @param new_partitions [Array<Planned::Partition>] Devices to create
+      # @param disk_names     [Array<String>]             Disks to consider
+      # @return [PartitionCreatorResult]
+      def create_partitions(new_partitions, disk_names)
+        log.info "Partitions to create: #{new_partitions}"
+
+        dist = best_distribution(new_partitions, disk_names)
+        raise Error, "Could not find a valid partitioning distribution" if dist.nil?
+        part_creator = Proposal::PartitionCreator.new(original_graph)
+        part_creator.create_partitions(dist)
+      end
+
+      # Creates volume groups in the given devicegraph
+      #
+      # @param vgs         [Array<Planned::LvmVg>]           List of planned volume groups to add
+      # @param devicegraph [Devicegraph]                     Starting point
+      # @param devices_map [Hash<String,Planned::Partition>] Map of device names and partitions
+      # @return [Devicegraph] Devicegraph containing the specified volume groups
+      def set_up_lvm(vgs, devicegraph, devices_map)
+        vgs.reduce(devicegraph) do |graph, vg|
+          lvm_creator = Proposal::LvmCreator.new(graph)
+          pvs = find_pvs_for(devices_map, vg.volume_group_name)
+          lvm_creator.create_volumes(vg, pvs)
+        end
+      end
+
+      # Finds physical volumes for a volume group
+      #
+      # @param devices_map [Hash<String,Planned::Partition>] Map of device names and partitions
+      # @param vg_name     [String] Volume group name
+      # @return [Array<String>] Physical volumes device names (eg. ["/dev/sda1"])
+      #
+      # @see Y2Storage::Proposal::PartitionCreator#create_partitions
+      def find_pvs_for(devices_map, vg_name)
+        devices_map.select { |_k, v| v.lvm_volume_group_name == vg_name }.keys
+      end
+
+      # Reuses partitions for the given devicegraph
+      #
+      # @param reused_partitions [Array<Planned::Partition>] Partitions to reuse
+      # @param devicegraph       [Devicegraph]               Devicegraph to reuse partitions
+      def reuse_partitions(reused_partitions, devicegraph)
+        reused_partitions.each { |r| r.reuse!(devicegraph) }
+      end
+
+      # Reuses volume groups for the given devicegraph
+      #
+      # @param reused_vgs  [Array<Planned::LvmVg>] Volume groups to reuse
+      # @param devicegraph [Devicegraph]           Devicegraph to reuse partitions
+      def reuse_vgs(reused_vgs, devicegraph)
+        reused_vgs.each do |vg|
+          vg.reuse!(devicegraph)
+          vg.lvs.select(&:reuse?).each { |v| v.reuse!(devicegraph) }
+        end
       end
     end
   end

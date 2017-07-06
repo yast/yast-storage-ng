@@ -20,7 +20,7 @@
 # find current contact information at www.suse.com.
 
 module Y2Storage
-  module Proposal
+  module AutoinstProfile
     # This class reads information from disks to be used as values when
     # on skip lists. On one hand, the class implements logic to find out
     # the needed values; on the other hand, it can offer a backward compatibility

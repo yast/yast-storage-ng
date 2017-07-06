@@ -2,6 +2,61 @@
 Thu Jul  6 08:11:59 UTC 2017 - gsouza@suse.com
 
 - Added verifications for disk in network.
+- 0.1.29
+
+-------------------------------------------------------------------
+Tue Jul  4 14:29:40 UTC 2017 - jlopez@suse.com
+
+- Added new class Y2Storage::Proposal::Base.
+- Proper assignment of default values for new proposals.
+- 0.1.28
+
+-------------------------------------------------------------------
+Tue Jul  4 08:32:12 UTC 2017 - ancor@suse.com
+
+- Added AutoinstProfile::PartitioningSection which allows to export
+  the current system (or any other devicegraph) to an AutoYaST
+  profile (only plain partitions supported so far).
+- 0.1.27
+
+-------------------------------------------------------------------
+Mon Jul  3 15:50:43 UTC 2017 - jlopez@suse.com
+
+- Adapt proposal to different situations (disable home, snapshots,
+  etc)
+- 0.1.26
+
+-------------------------------------------------------------------
+Mon Jul  3 13:36:17 UTC 2017 - jreidinger@suse.com
+
+- add LvmVg#basename
+- add PartitionTables::Base#delete_all_partitions
+- add logger to all devices
+- add LvmVg#name
+- 0.1.25
+
+-------------------------------------------------------------------
+Tue Jun 27 15:05:52 UTC 2017 - igonzalezsosa@suse.com
+
+- Add LVM support for AutoYaST partitioning (bsc#1044697).
+- 0.1.24
+
+-------------------------------------------------------------------
+Tue Jun 27 09:04:58 UTC 2017 - ancor@suse.com
+
+- More robust Y2Storage::StorageManager#probe
+
+-------------------------------------------------------------------
+Mon Jun 26 11:56:23 UTC 2017 - jreidinger@suse.com
+
+- Added Y2Storage::MdParity#to_human_string and
+  Y2Storage::MdLevel#to_human_string
+- 0.1.23
+
+-------------------------------------------------------------------
+Mon Jun 26 08:56:07 UTC 2017 - aschnell@suse.com
+
+- Added Y2Storage::Md wrapper
 - 0.1.22
 
 -------------------------------------------------------------------

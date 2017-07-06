@@ -40,6 +40,10 @@ module Y2Storage
       # @return [String] name to use for Y2Storage::LvmLv#lv_name
       attr_accessor :logical_volume_name
 
+      # @return [Fixnum] percentage of the volume group size to be used for
+      #   this LV
+      attr_accessor :percent_size
+
       # Builds a new object based on a real LvmLv one
       #
       # The new instance represents the intention to reuse the real LV, so the
@@ -47,8 +51,7 @@ module Y2Storage
       # information from the real LV to make sure it is available even if the
       # real object disappears.
       #
-      #
-      # @param real_vg [Y2Storage::LvmVg] Logical volume group to get the values from
+      # @param real_lv [Y2Storage::LvmLv] Logical volume to get the values from
       # @return [LvmLv] New LvmLv instance based on real_lv
       def self.from_real_lv(real_lv)
         lv = new(real_lv.filesystem_mountpoint, real_lv.filesystem_type)
@@ -81,10 +84,24 @@ module Y2Storage
 
       # Initializes the object taking the values from a real logical volume
       #
-      # @param real_vg [Y2Storage::LvmLv] Logical volume to get the values from
+      # @param real_lv [Y2Storage::LvmLv] Logical volume to get the values from
       def initialize_from_real_lv(real_lv)
         @logical_volume_name = real_lv.lv_name
         self.reuse = real_lv.lv_name
+      end
+
+      # Returns the size for the logical volume in a given volume group
+      #
+      # It returns the planned size (Planned::LvmLv#size) unless a
+      # percentage has been specified. In that case, it will use the volume
+      # group size and Planned::LvmLv#percent_size to calculate the
+      # desired size.
+      #
+      # @param volume_group [LvmVg] Volume group where the logical volume will be placed
+      # @return [DiskSize]
+      def size_in(volume_group)
+        return size unless percent_size
+        (volume_group.size * percent_size / 100).ceil(volume_group.extent_size)
       end
 
       def self.to_string_attrs

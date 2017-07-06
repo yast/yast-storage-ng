@@ -32,12 +32,14 @@ module Y2Storage
     #
     # Class to generate the list of planned devices of a proposal
     #
-    class PlannedDevicesGenerator
+    class DevicesPlanner
       include Yast::Logger
 
       attr_accessor :settings
 
-      DEFAULT_SWAP_SIZE = DiskSize.GiB(2)
+      MIN_SWAP_SIZE = DiskSize.MiB(512)
+      MAX_SWAP_SIZE = DiskSize.GiB(2) # This is also DEFAULT_SWAP_SIZE
+      SWAP_WEIGHT = 100 # Importance of swap if low free disk space
 
       def initialize(settings, devicegraph)
         @settings = settings
@@ -98,38 +100,44 @@ module Y2Storage
 
       # Device to host the swap space according to the settings.
       def swap_device
-        swap_size = DEFAULT_SWAP_SIZE
+        min_size = max_size = MAX_SWAP_SIZE
         if settings.enlarge_swap_for_suspend
-          swap_size = [ram_size, swap_size].max
+          min_size = max_size = [ram_size, max_size].max
+        elsif @target == :min
+          min_size = MIN_SWAP_SIZE
+          # leave max_size alone so any leftover free space can be distributed
+          # to swap, too according to SWAP_WEIGHT
         end
         if settings.use_lvm
-          swap_lv(swap_size)
+          swap_lv(min_size, max_size)
         else
-          swap_partition(swap_size)
+          swap_partition(min_size, max_size)
         end
       end
 
-      def swap_lv(size)
+      def swap_lv(min_size, max_size)
         lv = Planned::LvmLv.new("swap", Filesystems::Type::SWAP)
         lv.logical_volume_name = "swap"
-        lv.min_size = size
-        lv.max_size = size
+        lv.min_size = min_size
+        lv.max_size = max_size
+        lv.weight = SWAP_WEIGHT
         lv
       end
 
-      def swap_partition(size)
+      def swap_partition(min_size, max_size)
         part = Planned::Partition.new("swap", Filesystems::Type::SWAP)
         part.encryption_password = settings.encryption_password
         # NOTE: Enforcing the re-use of an existing partition limits the options
         # to propose a valid distribution of the planned partitions. For swap we
         # already have mechanisms to reuse UUIDs and labels, so maybe is smarter
         # to never reuse partitions as-is.
-        reuse = reusable_swap(size)
+        reuse = reusable_swap(max_size)
         if reuse
           part.reuse = reuse.name
         else
-          part.min_size  = size
-          part.max_size  = size
+          part.min_size = min_size
+          part.max_size = max_size
+          part.weight = SWAP_WEIGHT
         end
         part
       end
@@ -170,10 +178,11 @@ module Y2Storage
         root_vol
       end
 
+      # Sizes have to be adjusted only when using snapshots
       def adjust_btrfs_sizes!(planned_device)
-        return unless planned_device.btrfs?
+        return if !planned_device.btrfs? || !settings.use_snapshots
 
-        log.info "Increasing root filesystem size for Btrfs"
+        log.info "Increasing root filesystem size for snapshots"
         multiplicator = 1.0 + settings.btrfs_increase_percentage / 100.0
         planned_device.min_size *= multiplicator
         planned_device.max_size *= multiplicator
@@ -196,7 +205,12 @@ module Y2Storage
           home_vol.encryption_password = settings.encryption_password
         end
         home_vol.max_size = settings.home_max_size
-        home_vol.min_size = settings.home_min_size
+        home_vol.min_size =
+          if @target == :min
+            settings.root_base_size
+          else
+            settings.home_min_size
+          end
         home_vol.weight = 100.0 - settings.root_space_percent
         home_vol
       end

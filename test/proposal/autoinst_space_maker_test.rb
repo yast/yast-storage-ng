@@ -29,7 +29,10 @@ describe Y2Storage::Proposal::AutoinstSpaceMaker do
 
   let(:analyzer) { Y2Storage::DiskAnalyzer.new(fake_devicegraph) }
   let(:scenario) { "windows-linux-free-pc" }
-  let(:partitioning) { [{ "device" => "/dev/sda", "use" => "all" }] }
+  let(:partitioning_array) { [{ "device" => "/dev/sda", "use" => "all" }] }
+  let(:partitioning) do
+    Y2Storage::AutoinstProfile::PartitioningSection.new_from_hashes(partitioning_array)
+  end
   let(:drives_map) { Y2Storage::Proposal::AutoinstDrivesMap.new(fake_devicegraph, partitioning) }
 
   before { fake_scenario(scenario) }
@@ -57,7 +60,7 @@ describe Y2Storage::Proposal::AutoinstSpaceMaker do
     end
 
     context "when 'initialize' key is set to true" do
-      let(:partitioning) { [{ "device" => "/dev/sda", "initialize" => true }] }
+      let(:partitioning_array) { [{ "device" => "/dev/sda", "initialize" => true }] }
 
       it "remove all partitions" do
         devicegraph = subject.cleaned_devicegraph(fake_devicegraph, drives_map)
@@ -69,6 +72,14 @@ describe Y2Storage::Proposal::AutoinstSpaceMaker do
         devicegraph.partitions
         disk = Y2Storage::Disk.find_by_name(devicegraph, "/dev/sda")
         expect(disk.partition_table).to be_nil
+      end
+    end
+
+    context "when some given drive does not exist" do
+      let(:partitioning_array) { [{ "device" => "/dev/sdx", "use" => "all" }] }
+
+      it "ignores the device" do
+        expect { subject.cleaned_devicegraph(fake_devicegraph, drives_map) }.to_not raise_error
       end
     end
   end

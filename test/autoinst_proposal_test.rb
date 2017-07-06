@@ -56,7 +56,7 @@ describe Y2Storage::AutoinstProposal do
     context "when partitions are specified" do
       it "proposes a layout including specified partitions" do
         proposal.propose
-        devicegraph = proposal.proposed_devicegraph
+        devicegraph = proposal.devices
 
         expect(devicegraph.partitions.size).to eq(2)
         root, home = devicegraph.partitions
@@ -95,7 +95,7 @@ describe Y2Storage::AutoinstProposal do
 
         it "reuses the partition with the given partition number" do
           proposal.propose
-          devicegraph = proposal.proposed_devicegraph
+          devicegraph = proposal.devices
           reused_part = devicegraph.partitions.find { |p| p.name == "/dev/sda1" }
           expect(reused_part.filesystem_mountpoint).to eq("/")
         end
@@ -109,7 +109,7 @@ describe Y2Storage::AutoinstProposal do
 
         it "reuses the partition with the given label" do
           proposal.propose
-          devicegraph = proposal.proposed_devicegraph
+          devicegraph = proposal.devices
           reused_part = devicegraph.partitions.find { |p| p.filesystem_label == "windows" }
           expect(reused_part.filesystem_mountpoint).to eq("/")
         end
@@ -125,7 +125,7 @@ describe Y2Storage::AutoinstProposal do
 
         it "removes the old partitions" do
           proposal.propose
-          devicegraph = proposal.proposed_devicegraph
+          devicegraph = proposal.devices
           expect(devicegraph.partitions.size).to eq(1)
           part = devicegraph.partitions.first
           expect(part).to have_attributes(filesystem_label: "new_root")
@@ -137,7 +137,7 @@ describe Y2Storage::AutoinstProposal do
 
         it "keeps the old partitions" do
           proposal.propose
-          devicegraph = proposal.proposed_devicegraph
+          devicegraph = proposal.devices
           labels = devicegraph.partitions.map(&:filesystem_label)
           expect(labels).to eq(["windows", "swap", "root", "new_root"])
         end
@@ -150,7 +150,7 @@ describe Y2Storage::AutoinstProposal do
 
         it "keeps all partitions except Linux ones" do
           proposal.propose
-          devicegraph = proposal.proposed_devicegraph
+          devicegraph = proposal.devices
           labels = devicegraph.partitions.map(&:filesystem_label)
           expect(labels).to eq(["windows", "new_root"])
         end
@@ -163,7 +163,7 @@ describe Y2Storage::AutoinstProposal do
 
         it "removes the old partitions" do
           proposal.propose
-          devicegraph = proposal.proposed_devicegraph
+          devicegraph = proposal.devices
           expect(devicegraph.partitions.size).to eq(1)
           part = devicegraph.partitions.first
           expect(part).to have_attributes(filesystem_label: "new_root")
@@ -185,7 +185,7 @@ describe Y2Storage::AutoinstProposal do
 
         it "skips the given disk" do
           proposal.propose
-          devicegraph = proposal.proposed_devicegraph
+          devicegraph = proposal.devices
           sdb1 = devicegraph.partitions.find { |p| p.name == "/dev/sdb1" }
           expect(sdb1).to have_attributes(filesystem_label: "new_root")
           sda1 = devicegraph.partitions.first
@@ -198,7 +198,7 @@ describe Y2Storage::AutoinstProposal do
 
         it "does not skip any disk" do
           proposal.propose
-          devicegraph = proposal.proposed_devicegraph
+          devicegraph = proposal.devices
           sda1 = devicegraph.partitions.first
           expect(sda1).to have_attributes(filesystem_label: "new_root")
         end
@@ -223,13 +223,54 @@ describe Y2Storage::AutoinstProposal do
       end
 
       it "falls back to the product's proposal with given disks" do
-        expect(Y2Storage::Proposal::PlannedDevicesGenerator).to receive(:new)
+        expect(Y2Storage::Proposal::DevicesPlanner).to receive(:new)
           .with(settings, Y2Storage::Devicegraph)
           .and_call_original
         proposal.propose
-        devicegraph = proposal.proposed_devicegraph
+        devicegraph = proposal.devices
         sdb = devicegraph.disks.find { |d| d.name == "/dev/sdb" }
         expect(sdb.partitions.size).to eq(2) # / and /home
+      end
+    end
+
+    describe "LVM" do
+      let(:partitioning) do
+        [
+          { "device" => "/dev/sda", "use" => "all", "partitions" => [lvm_pv] },
+          { "device" => "/dev/system", "partitions" => [root_spec], "type" => :CT_LVM }
+        ]
+      end
+
+      let(:lvm_pv) do
+        { "create" => true, "lvm_group" => "system", "size" => "max", "type" => :CT_LVM }
+      end
+
+      let(:lvm_spec) do
+        { "is_lvm_vg" => true, "partitions" => [root_spec] }
+      end
+
+      let(:root_spec) do
+        { "mount" => "/", "filesystem" => "ext4", "lv_name" => "root", "size" => "1G" }
+      end
+
+      it "creates requested volume groups" do
+        proposal.propose
+        devicegraph = proposal.devices
+        expect(devicegraph.lvm_vgs).to contain_exactly(
+          an_object_having_attributes(
+            "vg_name" => "system"
+          )
+        )
+      end
+
+      it "creates requested logical volumes" do
+        proposal.propose
+        devicegraph = proposal.devices
+        expect(devicegraph.lvm_lvs).to contain_exactly(
+          an_object_having_attributes(
+            "lv_name" => "root"
+          )
+        )
       end
     end
 

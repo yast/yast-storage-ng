@@ -1,6 +1,6 @@
 # encoding: utf-8
 
-# Copyright (c) [2016] SUSE LLC
+# Copyright (c) [2016-2017] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -29,7 +29,11 @@ module Yast
     # RSpec extension to add YaST Storage specific helpers
     module StorageHelpers
       def input_file_for(name, suffix: "yml")
-        File.join(DATA_PATH, "devicegraphs", "#{name}.#{suffix}")
+        if suffix
+          File.join(DATA_PATH, "devicegraphs", "#{name}.#{suffix}")
+        else
+          File.join(DATA_PATH, "devicegraphs", name)
+        end
       end
 
       def output_file_for(name)
@@ -37,7 +41,11 @@ module Yast
       end
 
       def fake_scenario(scenario)
-        Y2Storage::StorageManager.fake_from_yaml(input_file_for(scenario))
+        if scenario.end_with?(".xml")
+          Y2Storage::StorageManager.fake_from_xml(input_file_for(scenario, suffix: nil))
+        else
+          Y2Storage::StorageManager.fake_from_yaml(input_file_for(scenario))
+        end
       end
 
       def fake_devicegraph
@@ -50,23 +58,28 @@ module Yast
 
       def planned_partition(attrs = {})
         part = Y2Storage::Planned::Partition.new(nil)
-        add_planned_attributes!(part, attrs)
+        add_planned_attributes(part, attrs)
       end
 
       # Backwards compatibility
       alias_method :planned_vol, :planned_partition
 
+      def planned_vg(attrs = {})
+        vg = Y2Storage::Planned::LvmVg.new
+        add_planned_attributes(vg, attrs)
+      end
+
       def planned_lv(attrs = {})
         lv = Y2Storage::Planned::LvmLv.new(nil)
-        add_planned_attributes!(lv, attrs)
+        add_planned_attributes(lv, attrs)
       end
 
       def planned_subvol(attrs = {})
         subvol = Y2Storage::Planned::BtrfsSubvolume.new
-        add_planned_attributes!(subvol, attrs)
+        add_planned_attributes(subvol, attrs)
       end
 
-      def add_planned_attributes!(device, attrs)
+      def add_planned_attributes(device, attrs)
         attrs = attrs.dup
 
         if device.respond_to?(:filesystem_type)
