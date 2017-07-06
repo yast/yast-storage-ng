@@ -284,7 +284,10 @@ describe Y2Storage::AutoinstProposal do
       end
 
       let(:home_spec) do
-        { "mount" => "/home", "filesystem" => "xfs", "size" => "max", "raid_name" => "/dev/md1", "partition_nr" => 1, "raid_options" => raid_options }
+        {
+          "mount" => "/home", "filesystem" => "xfs", "size" => "max",
+          "raid_name" => "/dev/md1", "partition_nr" => 1, "raid_options" => raid_options
+        }
       end
 
       let(:raid_options) do

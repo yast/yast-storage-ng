@@ -42,7 +42,7 @@ describe Y2Storage::AutoinstProfile::DriveSection do
         let(:hash) { { "device" => "/dev/md" } }
 
         it "initializes it to :CT_MD" do
-        expect(described_class.new_from_hashes(hash).type).to eq(:CT_MD)
+          expect(described_class.new_from_hashes(hash).type).to eq(:CT_MD)
         end
       end
     end
