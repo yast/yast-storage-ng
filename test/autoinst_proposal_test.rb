@@ -304,7 +304,7 @@ describe Y2Storage::AutoinstProposal do
 
       it "creates a RAID" do
         proposal.propose
-        devicegraph = proposal.proposed_devicegraph
+        devicegraph = proposal.devices
         expect(devicegraph.md_raids).to contain_exactly(
           an_object_having_attributes(
             "number" => 1
