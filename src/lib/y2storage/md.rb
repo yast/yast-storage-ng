@@ -33,7 +33,8 @@ module Y2Storage
 
     # @!method self.create(devicegraph, name)
     #   @param devicegraph [Devicegraph]
-    #   @param name [String]
+    #   @param name [String] name of the new device, like "/dev/md0",
+    #     "/dev/md/foo" or "/dev/md/1"
     #   @return [Md]
     storage_class_forward :create, as: "Md"
 
@@ -58,7 +59,7 @@ module Y2Storage
     storage_forward :numeric?
 
     # @!method number
-    #   @return [Int] the number of the MD RAID.
+    #   @return [Integer] the number of the MD RAID.
     storage_forward :number
 
     # @!attribute md_level
