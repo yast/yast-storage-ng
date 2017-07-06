@@ -106,7 +106,7 @@ module Y2Storage
       #
       # @return [Array<DriveSection>]
       def md_drives
-        drives.select { |d| d.type == :CT_RAID }
+        drives.select { |d| d.type == :CT_MD }
       end
     end
   end
