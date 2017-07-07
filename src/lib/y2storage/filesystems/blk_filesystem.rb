@@ -135,7 +135,7 @@ module Y2Storage
       # @return [Boolean]
       def in_network?
         disks = ancestors.find_all { |d| d.is?(:disk) }
-        disks.any?(&:network_transport?)
+        disks.any?(&:in_network?)
       end
 
     protected

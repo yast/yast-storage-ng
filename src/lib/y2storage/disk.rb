@@ -71,7 +71,7 @@ module Y2Storage
     # Checks if it's in network
     #
     # @return [Boolean]
-    def network_transport?
+    def in_network?
       transport.network?
     end
 
