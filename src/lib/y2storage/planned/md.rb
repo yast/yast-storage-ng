@@ -80,7 +80,10 @@ module Y2Storage
           if devices_order.nil? || devices_order.empty?
             devices.sort_by(&:name)
           else
-            devices.sort_by { |d| devices_order.index(d.name) }
+            included, missing = devices.partition { |d| devices_order.include?(d.name) }
+            included.sort_by! { |d| devices_order.index(d.name) }
+            missing.sort_by!(&:name)
+            included + missing
           end
 
         sorted.each do |device|
