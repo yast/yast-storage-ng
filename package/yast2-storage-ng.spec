@@ -36,6 +36,8 @@ BuildRequires:	yast2-devtools
 BuildRequires:	yast2 >= 3.2.37
 BuildRequires:	rubygem(yast-rake)
 BuildRequires:	rubygem(rspec)
+# Hopefully temporary: needed by the unit tests of inst_disk_proposal
+BuildRequires:  yast2-partitioner
 
 Group:		System/YaST
 License:	GPL-2.0 or GPL-3.0
