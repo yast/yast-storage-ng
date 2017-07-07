@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Thu Jul  6 08:11:59 UTC 2017 - gsouza@suse.com
+
+- Added verifications for disk in network.
+- 0.1.29
+
+-------------------------------------------------------------------
 Tue Jul  4 14:29:40 UTC 2017 - jlopez@suse.com
 
 - Added new class Y2Storage::Proposal::Base.

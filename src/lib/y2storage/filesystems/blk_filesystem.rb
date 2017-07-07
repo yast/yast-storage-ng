@@ -132,6 +132,12 @@ module Y2Storage
         storage_subvols.to_a.map { |vol| BtrfsSubvolume.new(vol) }
       end
 
+      # @return [Boolean]
+      def in_network?
+        disks = ancestors.find_all { |d| d.is?(:disk) }
+        disks.any?(&:in_network?)
+      end
+
     protected
 
       def types_for_is

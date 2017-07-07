@@ -29,5 +29,10 @@ module Y2Storage
     include StorageEnumWrapper
 
     wrap_enum "Transport"
+
+    # @return [Boolean]
+    def network?
+      to_sym == :iscsi || to_sym == :fcoe
+    end
   end
 end

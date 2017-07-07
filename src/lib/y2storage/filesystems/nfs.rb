@@ -53,6 +53,11 @@ module Y2Storage
       #   @return [Filesystems::Nfs] nil if there is no such NFS mount
       storage_class_forward :find_by_server_and_path, as: "Filesystems::Nfs"
 
+      # @return [Boolean]
+      def in_network?
+        return true
+      end
+
     protected
 
       def types_for_is

@@ -88,4 +88,60 @@ describe Y2Storage::Filesystems::BlkFilesystem do
       end
     end
   end
+
+  describe "#in_network?" do
+    let(:disk) { Y2Storage::BlkDevice.find_by_name(fake_devicegraph, "/dev/sda") }
+
+    context "for a single disk in network" do
+      let(:dev_name) { "/dev/sda1" }
+      before do
+        allow(filesystem).to receive(:ancestors).and_return([disk])
+        allow(disk).to receive(:in_network?).and_return(true)
+      end
+
+      it "returns true" do
+        expect(filesystem.in_network?).to eq true
+      end
+    end
+
+    context "for a single local disk" do
+      before do
+        allow(filesystem).to receive(:ancestors).and_return([disk])
+        allow(disk).to receive(:in_network?).and_return(false)
+      end
+      let(:dev_name) { "/dev/sda1" }
+
+      it "returns false" do
+        expect(filesystem.in_network?).to eq false
+      end
+    end
+
+    context "when filesystem has multiple ancestors and none is in network" do
+      before do
+        allow(filesystem).to receive(:ancestors).and_return([disk, second_disk])
+        allow(disk).to receive(:in_network?).and_return(false)
+        allow(second_disk).to receive(:in_network?).and_return(false)
+      end
+      let(:second_disk) { Y2Storage::BlkDevice.find_by_name(fake_devicegraph, "/dev/sdb") }
+      let(:dev_name) { "/dev/sda1" }
+
+      it "returns false" do
+        expect(filesystem.in_network?).to eq false
+      end
+    end
+
+    context "when filesystem has multiple ancestors and at least one disk is in network" do
+      before do
+        allow(filesystem).to receive(:ancestors).and_return([disk, second_disk])
+        allow(disk).to receive(:in_network?).and_return(false)
+        allow(second_disk).to receive(:in_network?).and_return(true)
+      end
+      let(:second_disk) { Y2Storage::BlkDevice.find_by_name(fake_devicegraph, "/dev/sdb") }
+      let(:dev_name) { "/dev/sda1" }
+
+      it "returns true" do
+        expect(filesystem.in_network?).to eq true
+      end
+    end
+  end
 end
