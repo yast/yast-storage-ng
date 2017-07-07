@@ -242,11 +242,7 @@ describe Y2Storage::AutoinstProposal do
       end
 
       let(:lvm_pv) do
-        { "create" => true, "lvm_group" => "system", "size" => "max", "type" => :CT_LVM }
-      end
-
-      let(:lvm_spec) do
-        { "is_lvm_vg" => true, "partitions" => [root_spec] }
+        { "create" => true, "lvm_group" => "system", "size" => "max" }
       end
 
       let(:root_spec) do
@@ -309,6 +305,74 @@ describe Y2Storage::AutoinstProposal do
           an_object_having_attributes(
             "number" => 1
           )
+        )
+      end
+    end
+
+    describe "LVM on RAID" do
+      let(:partitioning) do
+        [
+          { "device" => "/dev/sda", "use" => "all", "partitions" => [raid_spec] },
+          { "device" => "/dev/sdb", "use" => "all", "partitions" => [raid_spec] },
+          { "device" => "/dev/md", "partitions" => [md_spec] },
+          { "device" => "/dev/system", "partitions" => [root_spec, home_spec], "type" => :CT_LVM }
+        ]
+      end
+
+      let(:md_spec) do
+        {
+          "raid_name" => "/dev/md1", "partition_nr" => 1, "raid_options" => raid_options,
+          "lvm_group" => "system"
+        }
+      end
+
+      let(:raid_options) do
+        { "raid_type" => "raid0" }
+      end
+
+      let(:root_spec) do
+        { "mount" => "/", "filesystem" => :ext4, "lv_name" => "root", "size" => "5G" }
+      end
+
+      let(:home_spec) do
+        { "mount" => "/home", "filesystem" => :xfs, "lv_name" => "home", "size" => "5G" }
+      end
+
+      let(:raid_spec) do
+        { "raid_name" => "/dev/md1", "size" => "20GB", "partition_id" => 253 }
+      end
+
+      it "creates a RAID to be used as PV" do
+        proposal.propose
+        devicegraph = proposal.devices
+        expect(devicegraph.md_raids).to contain_exactly(
+          an_object_having_attributes(
+            "number"   => 1,
+            "md_level" => Y2Storage::MdLevel::RAID0
+          )
+        )
+        raid = devicegraph.md_raids.first
+        expect(raid.lvm_pv.lvm_vg.vg_name).to eq("system")
+      end
+
+      it "creates requested volume groups on top of the RAID device" do
+        proposal.propose
+        devicegraph = proposal.devices
+        expect(devicegraph.lvm_vgs).to contain_exactly(
+          an_object_having_attributes(
+            "vg_name" => "system"
+          )
+        )
+        vg = devicegraph.lvm_vgs.first.lvm_pvs.first
+        expect(vg.blk_device).to be_a(Y2Storage::Md)
+      end
+
+      it "creates requested logical volumes" do
+        proposal.propose
+        devicegraph = proposal.devices
+        expect(devicegraph.lvm_lvs).to contain_exactly(
+          an_object_having_attributes("lv_name" => "root", "filesystem_mountpoint" => "/"),
+          an_object_having_attributes("lv_name" => "home", "filesystem_mountpoint" => "/home")
         )
       end
     end
