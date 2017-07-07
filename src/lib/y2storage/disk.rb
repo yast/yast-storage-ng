@@ -71,8 +71,8 @@ module Y2Storage
     # Checks if it's in network
     #
     # @return [Boolean]
-    def network_trasporter?
-      transport.to_sym == :iscsi or transport.to_sym == :fcoe
+    def network_transport?
+      transport.network?
     end
 
     # Default partition table type for newly created partition tables

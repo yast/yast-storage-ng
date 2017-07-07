@@ -151,7 +151,7 @@ describe Y2Storage::Devicegraph do
     let(:filesystem) { blk_device.blk_filesystem }
     let(:devicegraph) { Y2Storage::Devicegraph.new_from_file(input_file_for("mixed_disks")) }
     let(:dev_name) { "/dev/sdb2" }
-    
+
     context "when filesystem is in network" do
       before do
         allow(filesystem).to receive(:in_network?).and_return(true)
@@ -167,12 +167,12 @@ describe Y2Storage::Devicegraph do
         allow(filesystem).to receive(:in_network?).and_return(false)
       end
       let(:devicegraph) { Y2Storage::Devicegraph.new_from_file(input_file_for("mixed_disks")) }
-    
+
       it "returns false" do
         expect(devicegraph.filesystem_in_network?("/")).to eq false
       end
     end
-    
+
     context "when mountpoint does not exist" do
       before do
         allow(filesystem).to receive(:in_network?).and_return(true)

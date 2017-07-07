@@ -169,6 +169,7 @@ module Y2Storage
     # @return [Boolean]
     def filesystem_in_network?(mountpoint)
       filesystem = filesystems.find { |i| i.mountpoint == mountpoint }
+      return false if filesystem.nil?
       filesystem.in_network?
     end
 

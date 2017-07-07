@@ -115,7 +115,7 @@ describe Y2Storage::Filesystems::BlkFilesystem do
         expect(filesystem.in_network?).to eq false
       end
     end
-    
+
     context "when filesystem has multiple ancestors and none is in network" do
       before do
         allow(filesystem).to receive(:ancestors).and_return([disk, second_disk])
@@ -129,7 +129,7 @@ describe Y2Storage::Filesystems::BlkFilesystem do
         expect(filesystem.in_network?).to eq false
       end
     end
-    
+
     context "when filesystem has multiple ancestors and at least one disk is in network" do
       before do
         allow(filesystem).to receive(:ancestors).and_return([disk, second_disk])
