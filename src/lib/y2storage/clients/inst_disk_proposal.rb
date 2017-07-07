@@ -37,6 +37,7 @@ module Y2Storage
     class InstDiskProposal
       include Yast
       include Yast::Logger
+      include InstDialogMixin
 
       def initialize
         # FIXME: use StorageManager#staging when everything is adapted
@@ -99,7 +100,10 @@ module Y2Storage
 
       def expert_partitioner
         dialog = Y2Partitioner::Dialogs::Main.new
-        result = dialog.run(storage_manager.y2storage_probed, @devicegraph)
+        result = without_title_on_left do
+          dialog.run(storage_manager.y2storage_probed, @devicegraph)
+        end
+
         case result
         # NOTE: method Y2Partitioner::Dialogs::Main#run does not return :abort when aborting.
         when :abort
