@@ -116,6 +116,7 @@ module Y2Storage
       # @param previous_result [Proposal::CreatorResult] Starting point
       # @return                [Proposal::CreatorResult] Result containing the specified volume groups
       def set_up_lvm(vgs, previous_result)
+        log.info "BEGIN: set_up_lvm: vgs=#{vgs.inspect} previous_result=#{previous_result.inspect}"
         vgs.reduce(previous_result) do |result, vg|
           lvm_creator = Proposal::LvmCreator.new(result.devicegraph)
           pvs = previous_result.created_names { |d| d.pv_for?(vg.volume_group_name) }

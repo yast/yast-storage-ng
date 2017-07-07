@@ -101,7 +101,7 @@ module Y2Storage
       # @param part_names [Array<String>] device names of the partitions
       # @param devicegraph [Devicegraph] to fetch the partitions
       def assign_physical_volumes(volume_group, part_names, devicegraph)
-        partitions = devicegraph.partitions.select { |p| part_names.include?(p.name) }
+        partitions = part_names.map { |n| BlkDevice.find_by_name(devicegraph, n) }
         partitions.each do |partition|
           device = partition.encryption || partition
           volume_group.add_lvm_pv(device)
