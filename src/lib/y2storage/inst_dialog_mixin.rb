@@ -40,6 +40,7 @@ module Y2Storage
     def without_title_on_left(&block)
       Yast::Wizard.OpenNextBackDialog
       result = block.call
+    ensure
       Yast::Wizard.CloseDialog
       result
     end
