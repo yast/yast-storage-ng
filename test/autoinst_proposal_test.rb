@@ -279,10 +279,12 @@ describe Y2Storage::AutoinstProposal do
         ]
       end
 
+      let(:md_device) { "/dev/md1" }
+
       let(:home_spec) do
         {
           "mount" => "/home", "filesystem" => "xfs", "size" => "max",
-          "raid_name" => "/dev/md1", "partition_nr" => 1, "raid_options" => raid_options
+          "raid_name" => md_device, "partition_nr" => 1, "raid_options" => raid_options
         }
       end
 
@@ -295,7 +297,7 @@ describe Y2Storage::AutoinstProposal do
       end
 
       let(:raid_spec) do
-        { "raid_name" => "/dev/md1", "size" => "20GB", "partition_id" => 253 }
+        { "raid_name" => md_device, "size" => "20GB", "partition_id" => 253 }
       end
 
       it "creates a RAID" do
@@ -306,6 +308,22 @@ describe Y2Storage::AutoinstProposal do
             "number" => 1
           )
         )
+      end
+
+      context "when using a named RAID" do
+        let(:raid_options) { { "raid_name" => md_device, "raid_type" => "raid0" } }
+        let(:md_device) { "/dev/md/data" }
+
+        it "uses the name instead of a number" do
+          proposal.propose
+          devicegraph = proposal.devices
+          expect(devicegraph.md_raids).to contain_exactly(
+            an_object_having_attributes(
+              "name"     => "/dev/md/data",
+              "md_level" => Y2Storage::MdLevel::RAID0
+            )
+          )
+        end
       end
     end
 
@@ -321,8 +339,7 @@ describe Y2Storage::AutoinstProposal do
 
       let(:md_spec) do
         {
-          "raid_name" => "/dev/md1", "partition_nr" => 1, "raid_options" => raid_options,
-          "lvm_group" => "system"
+          "partition_nr" => 1, "raid_options" => raid_options, "lvm_group" => "system"
         }
       end
 
