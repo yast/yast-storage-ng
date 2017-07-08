@@ -48,6 +48,7 @@ module Y2Storage
     # @see PartitionsProposal.update_state
     class PartitionsProposal < ::Installation::ProposalClient
       include Yast::Logger
+      include InstDialogMixin
 
       def initialize
         textdomain "storage-ng"
@@ -157,7 +158,7 @@ module Y2Storage
         dialog = Y2Partitioner::Dialogs::Main.new
         probed = storage_manager.y2storage_probed
         staging = storage_manager.y2storage_staging
-        result = dialog.run(probed, staging)
+        result = without_title_on_left { dialog.run(probed, staging) }
         storage_manager.staging = dialog.device_graph if result == :next
         result
       end
