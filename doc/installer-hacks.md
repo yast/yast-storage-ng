@@ -41,14 +41,6 @@ Notice that block comments are used even when one single line is commented.
 Needless to say, when a piece of code can be fully replaced by a storage-ng
 equivalent, the old code is simply deleted, not commented.
 
-## Changes in yast2-network
-
-* The system now uses storage-ng to check if the root path (/) is in a network 
-device, i.e. installation on top of NFS, ISCSI or FCOE.
-
-* Removed the dependency from (old) yast2-storage and added dependency from 
-  (new) yast2-storage-ng.
-
 ## Changes in yast2-packager
 
 * Commented some code dealing with NFS and encrypted volumes in
