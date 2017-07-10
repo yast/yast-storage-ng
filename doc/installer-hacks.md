@@ -43,12 +43,11 @@ equivalent, the old code is simply deleted, not commented.
 
 ## Changes in yast2-network
 
-* Commented the code used to check if the root path (/) is in a network device,
-  i.e. installation on top of NFS. As a result, the `nfsroot` mode is never
-  activated and `STARTMODE` is not set to "nfsroot" in the corresponding
-  `ifcfg-xx` file of the installed system.
+* The system now uses storage-ng to check if the root path (/) is in a network 
+device, i.e. installation on top of NFS, ISCSI or FCOE.
 
-* Removed the dependency from (old) yast2-storage
+* Removed the dependency from (old) yast2-storage and added dependency from 
+  (new) yast2-storage-ng.
 
 ## Changes in yast2-packager
 
