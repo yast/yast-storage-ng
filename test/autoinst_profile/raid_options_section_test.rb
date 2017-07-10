@@ -122,7 +122,9 @@ describe Y2Storage::AutoinstProfile::RaidOptionsSection do
       expect(raid_options.raid_type).to eq("raid0")
     end
 
-    it "initializes device_order"
+    it "initializes device_order" do
+      skip ".new_from_storage is not fully implemented yet"
+    end
 
     it "initializes raid_name" do
       expect(raid_options.raid_name).to eq("/dev/md0")

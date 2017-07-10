@@ -310,6 +310,13 @@ describe Y2Storage::AutoinstProposal do
         )
       end
 
+      it "adds the specified devices" do
+        proposal.propose
+        devicegraph = proposal.devices
+        raid = devicegraph.md_raids.first
+        expect(raid.devices.map(&:name)).to contain_exactly("/dev/sda2", "/dev/sdb1")
+      end
+
       context "when using a named RAID" do
         let(:raid_options) { { "raid_name" => md_device, "raid_type" => "raid0" } }
         let(:md_device) { "/dev/md/data" }

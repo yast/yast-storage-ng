@@ -25,7 +25,7 @@ require "yast"
 
 module Y2Storage
   module Planned
-    # Mixing for planned devices that can act as LVM physical volume
+    # Mixin for planned devices that can act as LVM physical volume
     # @see Planned::Device
     module CanBePv
       # @return [String] name of the LVM volume group for which this device

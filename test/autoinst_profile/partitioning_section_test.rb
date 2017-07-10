@@ -142,7 +142,7 @@ describe Y2Storage::AutoinstProfile::PartitioningSection do
         expect(section.md_drives).to contain_exactly(drive5, drive6, wrongdrv2, wrongdrv5)
       end
 
-      it "doesn't include drives of other types with device='/dev/md'" do
+      it "does not include drives of other types with device='/dev/md'" do
         expect(section.md_drives).to_not include wrongdrv1
       end
     end

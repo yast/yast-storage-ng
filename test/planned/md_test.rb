@@ -37,7 +37,7 @@ describe Y2Storage::Planned::Md do
 
     it "calls Y2Storage::Md#add_device for all the devices" do
       expect(real_md).to receive(:add_device).exactly(4).times
-      planned_md.add_devices(devices, real_md)
+      planned_md.add_devices(real_md, devices)
     end
 
     context "if #devices_order is not set" do
@@ -47,7 +47,7 @@ describe Y2Storage::Planned::Md do
         expect(real_md).to receive(:add_device).with(sdb1).ordered
         expect(real_md).to receive(:add_device).with(sdb2).ordered
 
-        planned_md.add_devices(devices, real_md)
+        planned_md.add_devices(real_md, devices)
       end
     end
 
@@ -62,7 +62,7 @@ describe Y2Storage::Planned::Md do
         expect(real_md).to receive(:add_device).with(sda2).ordered
         expect(real_md).to receive(:add_device).with(sdb1).ordered
 
-        planned_md.add_devices(devices, real_md)
+        planned_md.add_devices(real_md, devices)
       end
 
       context "if #devices_order contains devices that are not in the list" do
@@ -76,12 +76,12 @@ describe Y2Storage::Planned::Md do
           expect(real_md).to receive(:add_device).with(sda2).ordered
           expect(real_md).to receive(:add_device).with(sdb1).ordered
 
-          planned_md.add_devices(devices, real_md)
+          planned_md.add_devices(real_md, devices)
         end
 
         it "does not try to add additional devices" do
           expect(real_md).to receive(:add_device).exactly(4).times
-          planned_md.add_devices(devices, real_md)
+          planned_md.add_devices(real_md, devices)
         end
       end
 
@@ -90,7 +90,7 @@ describe Y2Storage::Planned::Md do
 
         it "adds all the devices" do
           expect(real_md).to receive(:add_device).exactly(4).times
-          planned_md.add_devices(devices, real_md)
+          planned_md.add_devices(real_md, devices)
         end
 
         it "adds first the sorted devices and then the rest (alphabetically)" do
@@ -99,7 +99,7 @@ describe Y2Storage::Planned::Md do
           expect(real_md).to receive(:add_device).with(sda1).ordered
           expect(real_md).to receive(:add_device).with(sdb1).ordered
 
-          planned_md.add_devices(devices, real_md)
+          planned_md.add_devices(real_md, devices)
         end
       end
     end

@@ -72,10 +72,10 @@ module Y2Storage
       # {#devices_order}. If #{devices_order} is nil or empty, the devices will
       # be added in alphabetical order (AutoYaST documented behavior).
       #
-      # @param devices [Array<Y2Storage::BlkDevice>] block devices to add
       # @param md_device [Y2Storage::Md] MD device created to represent this
       #   planned device. It will be modified.
-      def add_devices(devices, md_device)
+      # @param devices [Array<Y2Storage::BlkDevice>] block devices to add
+      def add_devices(md_device, devices)
         sorted =
           if devices_order.nil? || devices_order.empty?
             devices.sort_by(&:name)

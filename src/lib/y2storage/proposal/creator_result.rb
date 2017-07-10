@@ -26,6 +26,13 @@ module Y2Storage
     # Result of executing one of the devices creators. See
     # {Proposal::PartitionCreator}, {Proposal::LvmCreator},
     # {Proposal::MdCreator}
+    #
+    # FIXME: this class wouldn't be needed if each planned device would contain
+    # an attribute with the name of the created device. That would also mean a
+    # nicer API for some methods that currently receive the created device as
+    # argument, like Planned::Md.add_devices or Planned::CanBeFormatted#format!.
+    # That would imply that the creators would modify the list of planned
+    # devices received as argument enriching them with more information.
     class CreatorResult
       # @return [Devicegraph] Devicegraph containing the new devices
       attr_reader :devicegraph

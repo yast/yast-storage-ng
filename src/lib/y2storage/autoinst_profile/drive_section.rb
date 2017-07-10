@@ -173,6 +173,9 @@ module Y2Storage
       #
       # @return [String] MD RAID device name
       def name_for_md
+        # TODO: a proper profile will always include one partition for each MD
+        # drive, but as soon as we introduce error handling and reporting we
+        # should do something if #partitions is empty (wrong profile).
         partitions.first.name_for_md
       end
 

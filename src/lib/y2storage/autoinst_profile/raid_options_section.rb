@@ -38,7 +38,10 @@ module Y2Storage
       define_attr_accessors
 
       # @!attribute persistent_superblock
-      #   @return [Boolean] whether the RAID should use a persistent superblock
+      #   @return [Boolean] undocumented attribute. Is present in the profile
+      #     scheme but has been ignored for years and years. Persistent
+      #     superblocks are the default for RAID since 2011 and there is no code
+      #     in the old or the current libstorage to enforce the opposite.
 
       # @!attribute chunk_size
       #   @return [String] RAID's chunk size

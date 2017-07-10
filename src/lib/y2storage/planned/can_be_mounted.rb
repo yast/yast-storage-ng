@@ -25,7 +25,7 @@ require "yast"
 
 module Y2Storage
   module Planned
-    # Mixing for planned devices that can have a mount point.
+    # Mixin for planned devices that can have a mount point.
     # @see Planned::Device
     module CanBeMounted
       # @return [String] mount point for this planned device. This might be a

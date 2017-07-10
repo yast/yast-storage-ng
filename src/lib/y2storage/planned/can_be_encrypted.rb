@@ -26,7 +26,7 @@ require "y2storage/secret_attributes"
 
 module Y2Storage
   module Planned
-    # Mixing for planned devices that can have an encryption layer on top.
+    # Mixin for planned devices that can have an encryption layer on top.
     # @see Planned::Device
     module CanBeEncrypted
       include SecretAttributes
