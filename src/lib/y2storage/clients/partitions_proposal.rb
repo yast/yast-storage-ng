@@ -25,6 +25,7 @@ require "yast"
 require "y2storage"
 require "y2storage/actions_presenter"
 require "installation/proposal_client"
+require "y2partitioner/dialogs/main"
 
 Yast.import "Popup"
 
@@ -47,6 +48,7 @@ module Y2Storage
     # @see PartitionsProposal.update_state
     class PartitionsProposal < ::Installation::ProposalClient
       include Yast::Logger
+      include InstDialogMixin
 
       def initialize
         textdomain "storage-ng"
@@ -62,7 +64,10 @@ module Y2Storage
       def ask_user(param)
         event = param["chosen_id"]
 
-        if actions_presenter.can_handle?(event)
+        if event == description["id"]
+          result = expert_partitioner
+          result = { next: :again, back: :back, abort: :finish }[result]
+        elsif actions_presenter.can_handle?(event)
           actions_presenter.update_status(event)
           result = :again
         else
@@ -140,9 +145,7 @@ module Y2Storage
 
       def ensure_proposed
         if storage_manager.proposal.nil?
-          proposal = new_proposal
-          proposal.propose
-          storage_manager.proposal = proposal
+          storage_manager.proposal = GuidedProposal.initial
         elsif !storage_manager.proposal.proposed?
           storage_manager.proposal.propose
         end
@@ -151,11 +154,13 @@ module Y2Storage
         log.error("generating proposal failed")
       end
 
-      def new_proposal
-        settings = ProposalSettings.new_for_current_product
+      def expert_partitioner
+        dialog = Y2Partitioner::Dialogs::Main.new
         probed = storage_manager.y2storage_probed
-        disk_analyzer = storage_manager.probed_disk_analyzer
-        GuidedProposal.new(settings: settings, devicegraph: probed, disk_analyzer: disk_analyzer)
+        staging = storage_manager.y2storage_staging
+        result = without_title_on_left { dialog.run(probed, staging) }
+        storage_manager.staging = dialog.device_graph if result == :next
+        result
       end
     end
   end
