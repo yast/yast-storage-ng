@@ -95,4 +95,24 @@ describe Y2Storage::PartitionId do
       end
     end
   end
+
+  describe "#formattable?" do
+    it "returns true if partition can be formatted" do
+      expect(Y2Storage::PartitionId::NTFS.formattable?).to eq true
+    end
+
+    it "returns false otherwise" do
+      expect(Y2Storage::PartitionId::PREP.formattable?).to eq true
+    end
+  end
+
+  describe "#to_human_string" do
+    it "returns translated string" do
+      Y2Storage::PartitionId.constants.each do |constant|
+        partition = Y2Storage::PartitionId.const_get(constant)
+        next unless partition.is_a?(Y2Storage::PartitionId)
+        expect(partition.to_human_string).to be_a(::String)
+      end
+    end
+  end
 end
