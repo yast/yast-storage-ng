@@ -55,6 +55,7 @@ module Y2Storage
 
         add_disks(partitioning.disk_drives, devicegraph)
         add_vgs(partitioning.lvm_drives)
+        add_mds(partitioning.md_drives)
       end
 
       # Returns the list of disk names
@@ -134,6 +135,18 @@ module Y2Storage
       # @param vgs [Array<AutoinstProfile::DriveSection>] List of LVM VG specifications from AutoYaST
       def add_vgs(vgs)
         vgs.each { |v| @drives[v.device] = v }
+      end
+
+      # Adds MD arrays to the devices map
+      #
+      # @see AutoinstProfile::DriveSection#name_for_md for details about the
+      #   logic used to infer the device name.
+      #
+      # @param mds [Array<AutoinstProfile::DriveSection>] List of MD RAID specifications from AutoYaST
+      def add_mds(mds)
+        mds.each do |md|
+          @drives[md.name_for_md] = md
+        end
       end
     end
   end

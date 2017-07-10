@@ -102,4 +102,49 @@ describe Y2Storage::AutoinstProfile::PartitioningSection do
       expect(device_names).to eq(["/dev/sda", "/dev/sdb"])
     end
   end
+
+  describe "filtered drives lists" do
+    subject(:section) { described_class.new }
+    let(:drive1) { double("DriveSection", device: "/dev/sda", type: :CT_DISK) }
+    let(:drive2) { double("DriveSection", device: "/dev/sdb", type: :CT_DISK) }
+    let(:drive3) { double("DriveSection", device: "/dev/vg0", type: :CT_LVM) }
+    let(:drive4) { double("DriveSection", device: "/dev/vg1", type: :CT_LVM) }
+    let(:drive5) { double("DriveSection", device: "/dev/md", type: :CT_MD) }
+    let(:drive6) { double("DriveSection", device: "/dev/md", type: :CT_MD) }
+    let(:drive7) { double("DriveSection", type: :CT_DISK) }
+    let(:wrongdrv1) { double("DriveSection", device: "/dev/md", type: :CT_DISK) }
+    let(:wrongdrv2) { double("DriveSection", device: "/dev/sdc", type: :CT_MD) }
+    let(:wrongdrv3) { double("DriveSection", device: "/dev/sdd", type: :CT_WRONG) }
+    let(:wrongdrv4) { double("DriveSection", type: :CT_LVM) }
+    let(:wrongdrv5) { double("DriveSection", type: :CT_MD) }
+
+    before do
+      section.drives = [
+        drive1, drive2, drive3, drive4, drive5, drive6, drive7,
+        wrongdrv1, wrongdrv2, wrongdrv3, wrongdrv4, wrongdrv5
+      ]
+    end
+
+    describe "#disk_drives" do
+      it "returns drives which type is :CT_DISK, even if they look invalid" do
+        expect(section.disk_drives).to contain_exactly(drive1, drive2, drive7, wrongdrv1)
+      end
+    end
+
+    describe "#lvm_drives" do
+      it "returns drives which type is :CT_LVM, even if they look invalid" do
+        expect(section.lvm_drives).to contain_exactly(drive3, drive4, wrongdrv4)
+      end
+    end
+
+    describe "#md_drives" do
+      it "returns drives which type is :CT_MD, even if they look invalid" do
+        expect(section.md_drives).to contain_exactly(drive5, drive6, wrongdrv2, wrongdrv5)
+      end
+
+      it "does not include drives of other types with device='/dev/md'" do
+        expect(section.md_drives).to_not include wrongdrv1
+      end
+    end
+  end
 end

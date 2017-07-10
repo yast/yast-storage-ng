@@ -36,8 +36,9 @@ module Y2Storage
       include Planned::CanBeFormatted
       include Planned::CanBeMounted
       include Planned::CanBeEncrypted
+      include Planned::CanBePv
 
-      # @return [::Storage::IdNum] id of the partition. If nil, the final id is
+      # @return [PartitionId] id of the partition. If nil, the final id is
       #   expected to be inferred from the filesystem type.
       attr_accessor :partition_id
 
@@ -60,8 +61,9 @@ module Y2Storage
       #   flag but is not needed in our grub2 setup.
       attr_accessor :bootable
 
-      # @return [String] name of the LVM volume group where the partition belongs
-      attr_accessor :lvm_volume_group_name
+      # @return [String] name of the MD array to which this partition should
+      #   be added
+      attr_accessor :raid_name
 
       # Constructor.
       #
@@ -72,16 +74,10 @@ module Y2Storage
         initialize_can_be_formatted
         initialize_can_be_mounted
         initialize_can_be_encrypted
+        initialize_can_be_pv
 
         @mount_point = mount_point
         @filesystem_type = filesystem_type
-      end
-
-      # Checks whether the partition represents an LVM physical volume
-      #
-      # @return [Boolean]
-      def lvm_pv?
-        !lvm_volume_group_name.nil?
       end
 
       def self.to_string_attrs

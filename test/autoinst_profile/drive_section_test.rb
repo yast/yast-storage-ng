@@ -30,6 +30,24 @@ describe Y2Storage::AutoinstProfile::DriveSection do
     Y2Storage::BlkDevice.find_by_name(fake_devicegraph, "/dev/#{name}")
   end
 
+  describe ".new_from_hashes" do
+    context "when type is not specified" do
+      let(:hash) { {} }
+
+      it "initializes it to :CT_DISK" do
+        expect(described_class.new_from_hashes(hash).type).to eq(:CT_DISK)
+      end
+
+      context "and device is /dev/md" do
+        let(:hash) { { "device" => "/dev/md" } }
+
+        it "initializes it to :CT_MD" do
+          expect(described_class.new_from_hashes(hash).type).to eq(:CT_MD)
+        end
+      end
+    end
+  end
+
   describe ".new_from_storage" do
     it "returns nil for a disk or DASD with no partitions" do
       expect(described_class.new_from_storage(device("dasda"))).to eq nil
@@ -326,6 +344,77 @@ describe Y2Storage::AutoinstProfile::DriveSection do
     it "does not export empty strings" do
       section.device = ""
       expect(section.to_hashes.keys).to_not include "device"
+    end
+  end
+
+  describe "#name_for_md" do
+    subject(:section) { Y2Storage::AutoinstProfile::DriveSection.new }
+    let(:partition) { Y2Storage::AutoinstProfile::PartitionSection.new }
+
+    before do
+      section.partitions << partition
+      partition.partition_nr = 3
+    end
+
+    # Let's ensure DriveSection#raid_name (which has the same name but
+    # completely different meaning) has no influence in the result
+    context "if #raid_name (attribute directly in the partition) has value" do
+      before { partition.raid_name = "/dev/md25" }
+
+      context "if there is no <raid_options> section" do
+        it "returns a name based on partition_nr" do
+          expect(section.name_for_md).to eq "/dev/md3"
+        end
+      end
+
+      context "if there is a <raid_options> section" do
+        let(:raid_options) { Y2Storage::AutoinstProfile::RaidOptionsSection.new }
+        before { partition.raid_options = raid_options }
+
+        context "if <raid_options> contains an nil raid_name attribute" do
+          it "returns a name based on partition_nr" do
+            expect(section.name_for_md).to eq "/dev/md3"
+          end
+        end
+
+        context "if <raid_options> contains an empty raid_name attribute" do
+          before { raid_options.raid_name = "" }
+
+          it "returns a name based on partition_nr" do
+            expect(section.name_for_md).to eq "/dev/md3"
+          end
+        end
+
+        context "if <raid_options> contains an non-empty raid_name attribute" do
+          before { raid_options.raid_name = "/dev/md6" }
+
+          it "returns the name specified in <raid_options>" do
+            expect(section.name_for_md).to eq "/dev/md6"
+          end
+        end
+      end
+    end
+
+    context "if #raid_name (attribute directly in the partition) is nil" do
+      context "if there is no <raid_options> section" do
+        it "returns a name based on partition_nr" do
+          expect(section.name_for_md).to eq "/dev/md3"
+        end
+      end
+
+      # Same logic than above, there is no need to return all the possible
+      # sub-contexts
+      context "if there is a <raid_options> section with a raid name" do
+        let(:raid_options) { Y2Storage::AutoinstProfile::RaidOptionsSection.new }
+        before do
+          partition.raid_options = raid_options
+          raid_options.raid_name = "/dev/md7"
+        end
+
+        it "returns a name based in <raid_options>" do
+          expect(section.name_for_md).to eq "/dev/md7"
+        end
+      end
     end
   end
 end

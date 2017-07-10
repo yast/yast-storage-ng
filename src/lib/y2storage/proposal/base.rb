@@ -46,9 +46,9 @@ module Y2Storage
       #
       # @param devicegraph [Devicegraph] starting point. If nil, the probed
       #   devicegraph will be used
-      # @param disk_analyzer [DiskAnalyzer] by default,  a new one will be created
-      #   based on the initial {devicegraph} or it will use the one in {StorageManager}
-      #   if starting from probed (i.e. {devicegraph} argument is also missing)
+      # @param disk_analyzer [DiskAnalyzer] by default, a new one will be created
+      #   based on the initial devicegraph or it will use the one in {StorageManager}
+      #   if starting from probed (i.e. 'devicegraph' argument is also missing)
       def initialize(devicegraph: nil, disk_analyzer: nil)
         @proposed = false
         @initial_devicegraph = devicegraph

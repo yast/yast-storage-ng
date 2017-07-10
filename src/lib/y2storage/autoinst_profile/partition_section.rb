@@ -65,7 +65,9 @@ module Y2Storage
           { name: :size },
           { name: :crypt_fs },
           { name: :loop_fs },
-          { name: :crypt_key }
+          { name: :crypt_key },
+          { name: :raid_name },
+          { name: :raid_options }
         ]
       end
 
@@ -122,8 +124,20 @@ module Y2Storage
       # @!attribute loop_fs
       #   @return [Boolean] undocumented attribute
 
+      # @!attribute raid_name
+      #   @return [String] RAID name in which this partition will be included
+
+      # @!attribute raid_options
+      #   @return [RaidOptionsSection] RAID options
+      #   @see RaidOptionsSection
+
       def initialize
         @subvolumes = []
+      end
+
+      def init_from_hashes(hash)
+        super
+        @raid_options = RaidOptionsSection.new_from_hashes(hash["raid_options"]) if hash["raid_options"]
       end
 
       # Clones a device into an AutoYaST profile section by creating an instance
@@ -164,6 +178,20 @@ module Y2Storage
         return PartitionId.new_from_legacy(partition_id) if partition_id
         return PartitionId::SWAP if type_for_filesystem && type_for_filesystem.is?(:swap)
         PartitionId::LINUX
+      end
+
+      # Device name to be used for the real MD device
+      #
+      # This implements the AutoYaST documented logic, if 'raid_name' is
+      # provided as one of the corresponding 'raid_options', that name should be
+      # used. Otherwise the name will be inferred from 'partition_nr'.
+      #
+      # @return [String] MD RAID device name
+      def name_for_md
+        name = raid_options && raid_options.raid_name
+        return name unless name.nil? || name.empty?
+
+        "/dev/md#{partition_nr}"
       end
 
       # Method used by {.new_from_storage} to populate the attributes when

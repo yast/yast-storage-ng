@@ -56,6 +56,8 @@ module Y2Storage
             result.concat(planned_for_disk(disk, drive_section))
           when :CT_LVM
             result << planned_for_vg(drive_section)
+          when :CT_MD
+            result << planned_for_md(drive_section)
           end
         end
 
@@ -88,6 +90,7 @@ module Y2Storage
           partition.disk = disk.name
           partition.partition_id = partition_section.id_for_partition
           partition.lvm_volume_group_name = partition_section.lvm_group
+          partition.raid_name = partition_section.raid_name
 
           add_common_device_attrs(partition, partition_section)
           add_partition_reuse(partition, partition_section) if partition_section.create == false
@@ -130,6 +133,33 @@ module Y2Storage
 
         add_vg_reuse(vg, drive)
         vg
+      end
+
+      # Returns a MD array according to an AutoYaST specification
+      #
+      # @param drive [AutoinstProfile::DriveSection] drive section describing
+      #   the MD RAID
+      # @return [Planned::Md] Planned MD RAID
+      def planned_for_md(drive)
+        md = Planned::Md.new(name: drive.name_for_md)
+
+        part_section = drive.partitions.first
+        add_common_device_attrs(md, part_section)
+        md.lvm_volume_group_name = part_section.lvm_group
+        add_device_reuse(md, md.name, !!part_section.format) if part_section.create == false
+
+        raid_options = part_section.raid_options
+        if raid_options
+          md.chunk_size = chunk_size_from_string(raid_options.chunk_size) if raid_options.chunk_size
+          md.md_level = MdLevel.find(raid_options.raid_type) if raid_options.raid_type
+          md.md_parity = MdParity.find(raid_options.parity_algorithm) if raid_options.parity_algorithm
+        end
+
+        md
+      end
+
+      def chunk_size_from_string(string)
+        string =~ /\D/ ? DiskSize.parse(string) : DiskSize.KB(string.to_i)
       end
 
       # Set common devices attributes

@@ -111,10 +111,15 @@ module Y2Storage
       # @param hash [Hash] see {.new_from_hashes}
       def init_from_hashes(hash)
         super
-        @type ||= :CT_DISK
+        @type ||= default_type_for(hash)
         @use  ||= "all"
         @partitions = partitions_from_hash(hash)
         @skip_list = SkipListSection.new_from_hashes(hash.fetch("skip_list", []))
+      end
+
+      def default_type_for(hash)
+        return :CT_MD if hash["device"] == "/dev/md"
+        :CT_DISK
       end
 
       # Clones a drive into an AutoYaST profile section by creating an instance
@@ -160,6 +165,18 @@ module Y2Storage
           end
 
         true
+      end
+
+      # Device name to be used for the real MD device
+      #
+      # @see PartitionSection#name_for_md for details
+      #
+      # @return [String] MD RAID device name
+      def name_for_md
+        # TODO: a proper profile will always include one partition for each MD
+        # drive, but as soon as we introduce error handling and reporting we
+        # should do something if #partitions is empty (wrong profile).
+        partitions.first.name_for_md
       end
 
     protected

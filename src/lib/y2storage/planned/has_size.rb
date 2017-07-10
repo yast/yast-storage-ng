@@ -26,7 +26,7 @@ require "y2storage/disk_size"
 
 module Y2Storage
   module Planned
-    # Mixing enabling some classes of planned devices to specify the size of the
+    # Mixin enabling some classes of planned devices to specify the size of the
     # final device in a flexible way.
     # @see Planned::Device
     module HasSize
