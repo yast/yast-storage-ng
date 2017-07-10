@@ -85,6 +85,7 @@ module Y2Storage
     # @return [Hash]
     def yaml_disk_device(device)
       content = basic_disk_device_attributes(device)
+      content.merge!(dasd_additional_attributes(device)) if device.is?(:dasd)
       if device.partition_table
         ptable = device.partition_table
         content["partition_table"] = ptable.type.to_s
@@ -114,6 +115,17 @@ module Y2Storage
         "min_grain"  => device.min_grain.to_s,
         "align_ofs"  => DiskSize.B(device.topology.alignment_offset).to_s
       }
+    end
+
+    # Additional attributes for a DASD device
+    #
+    # @param  device [Dasd]
+    # @return [Hash{String => Object}]
+    def dasd_additional_attributes(device)
+      content = {}
+      content["type"] = device.dasd_type.to_s unless device.dasd_type.is?(:unknown)
+      content["format"] = device.dasd_format.to_s unless device.dasd_format.is?(:none)
+      content
     end
 
     # Returns a YAML representation of the partitions and free slots in a
