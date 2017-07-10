@@ -26,9 +26,46 @@ module Y2Storage
   #
   # This is a wrapper for the Storage::ID enum
   class PartitionId
+    include Yast::I18n
+    extend Yast::I18n
     include StorageEnumWrapper
 
     wrap_enum "ID"
+
+    NOT_ALLOW_FORMAT = [LVM, RAID, ESP, PREP, BIOS_BOOT, UNKNOWN].freeze
+    private_constant :NOT_ALLOW_FORMAT
+
+    TRANSLATIONS = {
+      DOS12              => N_("DOS12"),
+      DOS16              => N_("DOS16"),
+      DOS32              => N_("DOS32"),
+      SWAP               => N_("Linux Swap"),
+      LINUX              => N_("Linux"),
+      LVM                => N_("Linux LVM"),
+      RAID               => N_("Linux RAID"),
+      ESP                => N_("EFI System Partition"),
+      BIOS_BOOT          => N_("BIOS Boot Partition"),
+      PREP               => N_("PReP Boot Partition"),
+      NTFS               => N_("NTFS"),
+      EXTENDED           => N_("Extended"),
+      WINDOWS_BASIC_DATA => N_("Windows Data Partition"),
+      MICROSOFT_RESERVED => N_("Microsoft Reserved Partition"),
+      DIAG               => N_("Diagnostics Partition"),
+      UNKNOWN            => N_("Unknown")
+    }.freeze
+    private_constant :TRANSLATIONS
+
+    def to_human_string
+      textdomain "storage"
+
+      string = TRANSLATIONS[self] or raise "Unhandled Partition ID '#{inspect}'"
+
+      _(string)
+    end
+
+    def formattable?
+      !NOT_ALLOW_FORMAT.include?(to_sym)
+    end
 
     LINUX_SYSTEM_IDS = [LINUX, SWAP, LVM, RAID]
 
