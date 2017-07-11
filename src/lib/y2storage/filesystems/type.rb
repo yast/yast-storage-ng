@@ -20,6 +20,7 @@
 # find current contact information at www.suse.com.
 
 require "y2storage/storage_enum_wrapper"
+require "y2storage/partition_id"
 
 module Y2Storage
   module Filesystems
@@ -36,6 +37,11 @@ module Y2Storage
       EXT_FSTAB_OPTIONS = ["dev", "nodev", "usrquota", "grpquota", "acl",
                            "noacl"].freeze
 
+      # have properties of various filesystems. key is symbol of FsType and value is
+      # hash that can contain `:name` for human string for fs id, `:fstab_options` for
+      # fstab options supported for given fs id and `:default_partition_id` for partition id
+      # that should be used as the best fitted for given fs_id. But it is restricted to this one.
+      # if any key in hash is missing, default is used.
       PROPERTIES = {
         btrfs:    {
           fstab_options:       COMMON_FSTAB_OPTIONS,
@@ -82,10 +88,12 @@ module Y2Storage
         },
         swap:     {
           fstab_options:       ["pri="],
+          default_partition_id: PartitionId::SWAP,
           name: "Swap"
         },
         vfat:     {
           fstab_options:       COMMON_FSTAB_OPTIONS + ["dev", "nodev", "iocharset=", "codepage="],
+          default_partition_id: PartitionId::DOS32,
           name: "FAT"
         },
         xfs:      {
@@ -172,6 +180,14 @@ module Y2Storage
         default = []
         return default unless properties
         properties[:fstab_options] || default
+      end
+
+      # return the best fitting partition id for given filesystem type
+      def default_partition_id
+        properties = PROPERTIES[to_sym]
+        default = PartitionId::LINUX
+        return default unless properties
+        properties[:default_partition_id] || default
       end
     end
   end
