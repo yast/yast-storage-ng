@@ -44,20 +44,20 @@ module Y2Storage
       # if any key in hash is missing, default is used.
       PROPERTIES = {
         btrfs:    {
-          fstab_options:       COMMON_FSTAB_OPTIONS,
-          name: "BtrFS"
+          fstab_options: COMMON_FSTAB_OPTIONS,
+          name:          "BtrFS"
         },
         ext2:     {
-          fstab_options:       COMMON_FSTAB_OPTIONS + EXT_FSTAB_OPTIONS,
-          name: "Ext2"
+          fstab_options: COMMON_FSTAB_OPTIONS + EXT_FSTAB_OPTIONS,
+          name:          "Ext2"
         },
         ext3:     {
-          fstab_options:       COMMON_FSTAB_OPTIONS + EXT_FSTAB_OPTIONS + ["data="],
-          name: "Ext3"
+          fstab_options: COMMON_FSTAB_OPTIONS + EXT_FSTAB_OPTIONS + ["data="],
+          name:          "Ext3"
         },
         ext4:     {
-          fstab_options:       COMMON_FSTAB_OPTIONS + EXT_FSTAB_OPTIONS + ["data="],
-          name: "Ext4"
+          fstab_options: COMMON_FSTAB_OPTIONS + EXT_FSTAB_OPTIONS + ["data="],
+          name:          "Ext4"
         },
         hfs:      {
           name: "MacHFS"
@@ -87,26 +87,26 @@ module Y2Storage
           name: "Reiser"
         },
         swap:     {
-          fstab_options:       ["pri="],
+          fstab_options:        ["pri="],
           default_partition_id: PartitionId::SWAP,
-          name: "Swap"
+          name:                 "Swap"
         },
         vfat:     {
-          fstab_options:       COMMON_FSTAB_OPTIONS + ["dev", "nodev", "iocharset=", "codepage="],
+          fstab_options:        COMMON_FSTAB_OPTIONS + ["dev", "nodev", "iocharset=", "codepage="],
           default_partition_id: PartitionId::DOS32,
-          name: "FAT"
+          name:                 "FAT"
         },
         xfs:      {
-          fstab_options:       COMMON_FSTAB_OPTIONS + ["usrquota", "grpquota"],
-          name: "XFS"
+          fstab_options: COMMON_FSTAB_OPTIONS + ["usrquota", "grpquota"],
+          name:          "XFS"
         },
         iso9660:  {
-          fstab_options:       ["acl", "noacl"],
-          name: "ISO9660"
+          fstab_options: ["acl", "noacl"],
+          name:          "ISO9660"
         },
         udf:      {
-          fstab_options:       ["acl", "noacl"],
-          name: "UDF"
+          fstab_options: ["acl", "noacl"],
+          name:          "UDF"
         }
       }
 
@@ -171,7 +171,6 @@ module Y2Storage
       # @method to_human
       #   @deprecated use to_human_string instead
       alias_method :to_human, :to_human_string
-
 
       # returns list of string that specifies supported fstab options for given filesystem
       # @return [Array<String>]
