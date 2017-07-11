@@ -1,8 +1,8 @@
 -------------------------------------------------------------------
 Tue Jul 11 15:08:42 UTC 2017 - jreidinger@suse.com
 
-- Added Filesystem::Type#supported_fstab_options and
-  Filesystem::Type#default_partition_id
+- Added Filesystems::Type#supported_fstab_options and
+  Filesystems::Type#default_partition_id
 - 0.1.31
 
 -------------------------------------------------------------------

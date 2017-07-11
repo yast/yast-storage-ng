@@ -183,6 +183,12 @@ module Y2Storage
       end
 
       # return the best fitting partition id for given filesystem type
+      #
+      # @note: Take into account that the default partition id can be inappropriate for some
+      #   partition tables. Consider using {PartitionTable::Base#partition_id_for} to translate
+      #   the result to a supported id before assigning it to a partition.
+      #
+      # @return [PartitionId]
       def default_partition_id
         properties = PROPERTIES[to_sym]
         default = PartitionId::LINUX
