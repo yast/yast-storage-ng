@@ -158,7 +158,7 @@ module Y2Storage
         region = new_region_with_size(free_space.region, planned_partition.size)
         partition = ptable.create_partition(dev_name, region, partition_type)
         partition.id = partition_id(ptable, planned_partition)
-        partition.boot = !!planned_partition.bootable if ptable.partition_boot_flag_supported?
+        set_boot_flag(partition, planned_partition)
         partition
       end
 
@@ -250,6 +250,22 @@ module Y2Storage
         end
 
         ptable.partition_id_for(partition_id)
+      end
+
+      # Sets the boot or legacy_boot flag of the partition according to the type
+      # of partition and the value of PlannedPartition#bootable
+      #
+      # @param partition [Partition]
+      # @param planned_partition [Planned::Partition]
+      def set_boot_flag(partition, planned_partition)
+        ptable = partition.partition_table
+        value = !!planned_partition.bootable
+
+        if ptable.partition_boot_flag_supported?
+          partition.boot = value
+        elsif ptable.partition_legacy_boot_flag_supported?
+          partition.legacy_boot = value
+        end
       end
     end
   end

@@ -392,7 +392,7 @@ describe Y2Storage::Proposal::PartitionCreator do
           it "does not set the legacy boot flag" do
             result = creator.create_partitions(distribution)
             partition = result.devicegraph.partitions.first
-            expect(partition.legacy_boot?).to eq false
+            expect(partition.legacy_boot?).to eq true
           end
         end
 
