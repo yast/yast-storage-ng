@@ -33,4 +33,14 @@ describe Y2Storage::Filesystems::Type do
       expect(Y2Storage::Filesystems::Type::TMPFS.to_human_string).to eq "tmpfs"
     end
   end
+
+  describe "#supported_fstab_options" do
+    it "returns Array of supported options" do
+      Y2Storage::Filesystems::Type.constants.each do |const|
+        type = Y2Storage::Filesystems::Type.const_get(const)
+        next unless type.is_a?(Y2Storage::Filesystems::Type)
+        expect(type.supported_fstab_options).to be_a(::Array)
+      end
+    end
+  end
 end

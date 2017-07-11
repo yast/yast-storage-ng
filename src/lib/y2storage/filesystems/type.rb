@@ -31,17 +31,26 @@ module Y2Storage
 
       wrap_enum "FsType"
 
+      COMMON_FSTAB_OPTIONS = ["async", "atime", "noatime", "user", "nouser",
+                              "auto", "noauto", "ro", "rw", "defaults"].freeze
+      EXT_FSTAB_OPTIONS = ["dev", "nodev", "usrquota", "grpquota", "acl",
+                           "noacl"].freeze
+
       PROPERTIES = {
         btrfs:    {
+          fstab_options:       COMMON_FSTAB_OPTIONS,
           name: "BtrFS"
         },
         ext2:     {
+          fstab_options:       COMMON_FSTAB_OPTIONS + EXT_FSTAB_OPTIONS,
           name: "Ext2"
         },
         ext3:     {
+          fstab_options:       COMMON_FSTAB_OPTIONS + EXT_FSTAB_OPTIONS + ["data="],
           name: "Ext3"
         },
         ext4:     {
+          fstab_options:       COMMON_FSTAB_OPTIONS + EXT_FSTAB_OPTIONS + ["data="],
           name: "Ext4"
         },
         hfs:      {
@@ -72,18 +81,23 @@ module Y2Storage
           name: "Reiser"
         },
         swap:     {
+          fstab_options:       ["pri="],
           name: "Swap"
         },
         vfat:     {
+          fstab_options:       COMMON_FSTAB_OPTIONS + ["dev", "nodev", "iocharset=", "codepage="],
           name: "FAT"
         },
         xfs:      {
+          fstab_options:       COMMON_FSTAB_OPTIONS + ["usrquota", "grpquota"],
           name: "XFS"
         },
         iso9660:  {
+          fstab_options:       ["acl", "noacl"],
           name: "ISO9660"
         },
         udf:      {
+          fstab_options:       ["acl", "noacl"],
           name: "UDF"
         }
       }
@@ -92,7 +106,8 @@ module Y2Storage
 
       HOME_FILESYSTEMS = [:ext2, :ext3, :ext4, :btrfs, :reiserfs, :xfs]
 
-      private_constant :PROPERTIES, :ROOT_FILESYSTEMS, :HOME_FILESYSTEMS
+      private_constant :PROPERTIES, :ROOT_FILESYSTEMS, :HOME_FILESYSTEMS,
+        :COMMON_FSTAB_OPTIONS, :EXT_FSTAB_OPTIONS
 
       # Allowed filesystems for root
       #
@@ -148,6 +163,16 @@ module Y2Storage
       # @method to_human
       #   @deprecated use to_human_string instead
       alias_method :to_human, :to_human_string
+
+
+      # returns list of string that specifies supported fstab options for given filesystem
+      # @return [Array<String>]
+      def supported_fstab_options
+        properties = PROPERTIES[to_sym]
+        default = []
+        return default unless properties
+        properties[:fstab_options] || default
+      end
     end
   end
 end
