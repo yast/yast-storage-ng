@@ -40,12 +40,12 @@ module Storage
 
     # FIXME: The libstorage API for DASD is still not defined, let's assume it
     # will look like this (for mocking purposes)
-    def dasd_type
+    def type
       ::Storage::DasdType_UNKNOWN
     end
 
     # FIXME: see above
-    def dasd_format
+    def format
       ::Storage::DasdFormat_NONE
     end
   end

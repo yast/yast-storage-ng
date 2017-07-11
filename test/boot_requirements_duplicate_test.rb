@@ -184,14 +184,14 @@ describe Y2Storage::BootRequirementsChecker do
       # Default values to ensure the partition is needed
       let(:architecture) { :s390 }
       let(:dasd) { false }
-      let(:dasd_type) { Y2Storage::DasdType::UNKNOWN }
-      let(:dasd_format) { Y2Storage::DasdFormat::NONE }
+      let(:type) { Y2Storage::DasdType::UNKNOWN }
+      let(:format) { Y2Storage::DasdFormat::NONE }
       let(:use_lvm) { false }
 
       before do
         allow(dev_sda).to receive(:is?).with(:dasd).and_return(dasd)
-        allow(dev_sda).to receive(:dasd_type).and_return(dasd_type)
-        allow(dev_sda).to receive(:dasd_format).and_return(dasd_format)
+        allow(dev_sda).to receive(:type).and_return(type)
+        allow(dev_sda).to receive(:format).and_return(format)
         allow(analyzer).to receive(:free_mountpoint?).with("/boot/zipl")
           .and_return missing_zipl
       end

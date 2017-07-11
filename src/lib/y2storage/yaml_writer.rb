@@ -123,8 +123,8 @@ module Y2Storage
     # @return [Hash{String => Object}]
     def dasd_additional_attributes(device)
       content = {}
-      content["type"] = device.dasd_type.to_s unless device.dasd_type.is?(:unknown)
-      content["format"] = device.dasd_format.to_s unless device.dasd_format.is?(:none)
+      content["type"] = device.type.to_s unless device.type.is?(:unknown)
+      content["format"] = device.format.to_s unless device.format.is?(:none)
       content
     end
 

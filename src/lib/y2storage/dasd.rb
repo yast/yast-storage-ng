@@ -33,15 +33,15 @@ module Y2Storage
     #   @return [Boolean] whether this is a rotational device
     storage_forward :rotational?
 
-    # @!method dasd_type
+    # @!method type
     #   @return [DasdType]
-    storage_forward :dasd_type, as: "DasdType"
-    storage_forward :dasd_type=
+    storage_forward :type, as: "DasdType"
+    storage_forward :type=
 
-    # @!method dasd_format
+    # @!method format
     #   @return [DasdFormat]
-    storage_forward :dasd_format, as: "DasdFormat"
-    storage_forward :dasd_format=
+    storage_forward :format, as: "DasdFormat"
+    storage_forward :format=
 
     # @!method self.create(devicegraph, name, region_or_size = nil)
     #   @param devicegraph [Devicegraph]
