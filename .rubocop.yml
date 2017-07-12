@@ -18,30 +18,6 @@ Metrics/LineLength:
   Exclude:
     - 'test/used_storage_features_test.rb'
 
-
-# FIXME: Let's consider this temporary code and be permissive with the lack of
-# documentation
-Style/Documentation:
-  Exclude:
-    - 'src/lib/storage/extensions.rb'
-    - 'src/lib/expert_partitioner/ui_extensions.rb'
-    - 'src/lib/expert_partitioner/icons.rb'
-    - 'src/lib/expert_partitioner/tab_views/*/*'
-    - 'src/lib/expert_partitioner/tree_views/*'
-
-# FIXME: Let's consider this temporary code and be permissive with exceptions
-# suppresion
-Lint/HandleExceptions:
-  Exclude:
-    - 'src/lib/expert_partitioner/tab_views/*/*'
-    - 'src/lib/expert_partitioner/tree_views/*'
-    - 'src/lib/expert_partitioner/tree.rb'
-
-# These methods use CamelCase to mimic the libyui API
-Style/MethodName:
-  Exclude:
-    - 'src/lib/expert_partitioner/ui_extensions.rb'
-
 # This two are not equivalent if using refinements (and we use them to add
 # functionality to the classes coming from libstorage)
 #   using RefinementAddingFooToThing
