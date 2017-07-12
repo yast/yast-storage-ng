@@ -10,17 +10,3 @@ module CWM
   class WidgetTerm < Yast::Term
   end
 end
-
-module Y2Storage
-  # See http://www.rubydoc.info/github/yast/yast-storage-ng/Y2Storage/Devicegraph
-  class Devicegraph
-  end
-
-  # See http://www.rubydoc.info/github/yast/yast-storage-ng/Y2Storage/BlkDevice
-  class BlkDevice
-  end
-
-  # See http://www.rubydoc.info/github/yast/yast-storage-ng/Y2Storage/Region
-  class Region
-  end
-end

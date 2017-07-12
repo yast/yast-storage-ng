@@ -1,6 +1,6 @@
 require_relative "../test_helper"
 
-require "y2partitioner/format_mount/options"
+require "y2partitioner/format_mount/base"
 
 describe Y2Partitioner::FormatMount::Base do
   let(:subject) { described_class.new(partition, options) }

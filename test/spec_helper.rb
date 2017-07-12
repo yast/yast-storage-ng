@@ -27,6 +27,7 @@ ENV["Y2DIR"] = SRC_PATH
 ENV["LC_ALL"] = "en_US.UTF-8"
 
 require "yast"
+require "yast/rspec"
 
 if ENV["COVERAGE"]
   require "simplecov"
