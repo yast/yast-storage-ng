@@ -23,8 +23,8 @@ BuildArch:	noarch
 BuildRoot:	%{_tmppath}/%{name}-%{version}-build
 Source:		%{name}-%{version}.tar.bz2
 
-# EventDispatcher#event_handler is required
-Requires:	yast2 >= 3.2.37 
+# CWM::Dialog
+Requires:	yast2 >= 3.2.40
 Requires:	yast2-ruby-bindings
 Requires:	libstorage-ng-ruby
 
@@ -32,12 +32,10 @@ BuildRequires:	update-desktop-files
 BuildRequires:	libstorage-ng-ruby
 BuildRequires:	yast2-ruby-bindings
 BuildRequires:	yast2-devtools
-# EventDispatcher#event_handler is required
-BuildRequires:	yast2 >= 3.2.37
+# CWM::Dialog and RSpec.shared_examples for CWM
+BuildRequires:	yast2 >= 3.2.40
 BuildRequires:	rubygem(yast-rake)
 BuildRequires:	rubygem(rspec)
-# Hopefully temporary: needed by the unit tests of inst_disk_proposal
-BuildRequires:  yast2-partitioner
 
 Group:		System/YaST
 License:	GPL-2.0 or GPL-3.0
@@ -65,5 +63,6 @@ rake install DESTDIR="%{buildroot}"
 
 %doc COPYING
 %doc README.md
+%doc CONTRIBUTING.md
 
 %build
