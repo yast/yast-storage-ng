@@ -28,4 +28,7 @@ Yast::Tasks.configuration do |conf|
   # Non-existent project to prevent accidental submission to Tumbleweed
   conf.obs_sr_project = "NONE"
   conf.skip_license_check << /.*/
+  # TODO: improve it, at least do not get worse
+  # TODO: remove condition when new packaging tasks are accepted to factory
+  conf.documentation_minimal = 76 if conf.respond_to?(:documentation_minimal=)
 end
