@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Tue Jul 11 15:08:42 UTC 2017 - jreidinger@suse.com
+
+- Added Filesystems::Type#supported_fstab_options and
+  Filesystems::Type#default_partition_id
+- 0.1.31
+
+-------------------------------------------------------------------
 Tue Jul 11 11:18:06 UTC 2017 - jreidinger@suse.com
 
 - Added PartitionId#to_human_string and PartitionId::formattable?
