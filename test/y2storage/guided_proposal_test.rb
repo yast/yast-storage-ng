@@ -23,8 +23,8 @@
 require_relative "spec_helper"
 require "storage"
 require "y2storage"
-require_relative "support/proposal_examples"
-require_relative "support/proposal_context"
+require_relative "#{TEST_PATH}/support/proposal_examples"
+require_relative "#{TEST_PATH}/support/proposal_context"
 
 describe Y2Storage::GuidedProposal do
   using Y2Storage::Refinements::SizeCasts

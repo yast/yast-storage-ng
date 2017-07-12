@@ -20,7 +20,7 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require_relative "../../support/guided_setup_context"
+require_relative "#{TEST_PATH}/support/guided_setup_context"
 
 RSpec.shared_examples "wrong password" do
   it "shows an error message" do

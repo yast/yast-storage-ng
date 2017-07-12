@@ -15,8 +15,6 @@ SingleLineBlockParams:
 # little bit
 Metrics/LineLength:
   Max: 105
-  Exclude:
-    - 'test/used_storage_features_test.rb'
 
 # This two are not equivalent if using refinements (and we use them to add
 # functionality to the classes coming from libstorage)

@@ -21,7 +21,7 @@
 # find current contact information at www.suse.com.
 
 require_relative "spec_helper"
-require_relative "support/proposal_context"
+require_relative "#{TEST_PATH}/support/proposal_context"
 
 describe Y2Storage::GuidedProposal do
   include_context "proposal"
