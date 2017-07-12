@@ -63,7 +63,7 @@ module Y2Storage
     VALID_PARAM =
       {
         "dasd"            => [
-          "name", "size", "block_size", "io_size", "min_grain", "align_ofs"
+          "name", "size", "block_size", "io_size", "min_grain", "align_ofs", "type", "format"
         ].concat(FILE_SYSTEM_PARAM),
         "disk"            => [
           "name", "size", "block_size", "io_size", "min_grain", "align_ofs", "mbr_gap"
@@ -204,10 +204,20 @@ module Y2Storage
     #   "io_size"    optimal io size
     #   "min_grain"  minimal grain
     #   "align_ofs"  alignment offset
+    #   "type"       DASD type ("eckd", "fba")
+    #   "format"     DASD format ("ldl", "cdl")
     #
     # @return [String] device name of the new DASD disk ("/dev/sda" etc.)
     def create_dasd(_parent, args)
-      new_partitionable(Dasd, args)
+      name   = args["name"] || "/dev/dasda"
+      type   = args["type"] || "unknown"
+      format = args["format"] || "none"
+      type   = fetch(DasdType, type, "dasd type", name)
+      format = fetch(DasdFormat, format, "dasd format", name)
+      dasd = new_partitionable(Dasd, args)
+      dasd.dasd_type = type unless type.is?(:unknown)
+      dasd.dasd_format = format unless format.is?(:none)
+      dasd
     end
 
     # Factory method to create a disk.

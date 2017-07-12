@@ -88,6 +88,12 @@ or
 	lvm_pvs:
 	- lvm_pv:
 
+or
+
+    - dasd
+
+Very much like "disk" with some additional parameters.
+
 
 ### For Future Use
 
@@ -140,6 +146,22 @@ Example:
 - mount_point: mount point for a filesystem directly on the disk.
   Notice that partition_table and mount_point (filesystem) are mutually
   exclusive; a disk can only have either of them, never both.
+
+
+### dasd
+
+"dasd" is very similar to "disk", but S/390 specific. In addition to the
+parameters that "disk" offers, it can also have:
+
+- type: Type of the DASD to create.
+  Permitted values (case-insensitive):
+  - eckd
+  - fba
+
+- format: Format of the DASD to create.
+  Permitted values (case-insensitive):
+  - ldl
+  - cdl
 
 
 ### partition

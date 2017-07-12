@@ -36,14 +36,14 @@ describe Y2Storage::BootRequirementsChecker do
 
     before do
       allow(dev_sda).to receive(:is?).with(:dasd).and_return(dasd)
-      allow(dev_sda).to receive(:dasd_type).and_return(dasd_type)
-      allow(dev_sda).to receive(:dasd_format).and_return(dasd_format)
+      allow(dev_sda).to receive(:type).and_return(type)
+      allow(dev_sda).to receive(:format).and_return(format)
     end
 
     context "trying to install in a zfcp disk" do
       let(:dasd) { false }
-      let(:dasd_type) { Y2Storage::DasdType::UNKNOWN }
-      let(:dasd_format) { Y2Storage::DasdFormat::NONE }
+      let(:type) { Y2Storage::DasdType::UNKNOWN }
+      let(:format) { Y2Storage::DasdFormat::NONE }
 
       context "with a partitions-based proposal" do
         let(:use_lvm) { false }
@@ -79,9 +79,9 @@ describe Y2Storage::BootRequirementsChecker do
 
     context "trying to install in a FBA DASD disk" do
       let(:dasd) { true }
-      let(:dasd_type) { Y2Storage::DasdType::FBA }
+      let(:type) { Y2Storage::DasdType::FBA }
       # Format and LVM are irrelevant
-      let(:dasd_format) { Y2Storage::DasdFormat::NONE }
+      let(:format) { Y2Storage::DasdFormat::NONE }
       let(:use_lvm) { false }
 
       it "raises an error" do
@@ -92,10 +92,10 @@ describe Y2Storage::BootRequirementsChecker do
 
     context "trying to install in a (E)CKD DASD disk" do
       let(:dasd) { true }
-      let(:dasd_type) { Y2Storage::DasdType::ECKD }
+      let(:type) { Y2Storage::DasdType::ECKD }
 
       context "if the disk is formatted as LDL" do
-        let(:dasd_format) { Y2Storage::DasdFormat::LDL }
+        let(:format) { Y2Storage::DasdFormat::LDL }
         # LVM is irrelevant
         let(:use_lvm) { false }
 
@@ -106,7 +106,7 @@ describe Y2Storage::BootRequirementsChecker do
       end
 
       context "if the disk is formatted as CDL" do
-        let(:dasd_format) { Y2Storage::DasdFormat::CDL }
+        let(:format) { Y2Storage::DasdFormat::CDL }
 
         context "with a partitions-based proposal" do
           let(:use_lvm) { false }
@@ -145,8 +145,8 @@ describe Y2Storage::BootRequirementsChecker do
       let(:zipl_part) { find_vol("/boot/zipl", checker.needed_partitions(target)) }
       # Default values to ensure the partition is proposed
       let(:dasd) { false }
-      let(:dasd_type) { Y2Storage::DasdType::UNKNOWN }
-      let(:dasd_format) { Y2Storage::DasdFormat::NONE }
+      let(:type) { Y2Storage::DasdType::UNKNOWN }
+      let(:format) { Y2Storage::DasdFormat::NONE }
       let(:use_lvm) { false }
 
       include_examples "proposed /boot/zipl partition"

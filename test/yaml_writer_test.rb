@@ -33,6 +33,8 @@ describe Y2Storage::YamlWriter do
 
     sda = Y2Storage::Dasd.create(staging, "/dev/sda")
     sda.size = 256 * Storage.GiB
+    sda.type = Y2Storage::DasdType::ECKD
+    sda.format = Y2Storage::DasdFormat::LDL
 
     sda.create_partition_table(Y2Storage::PartitionTables::Type::DASD)
 
@@ -46,6 +48,8 @@ describe Y2Storage::YamlWriter do
               '    io_size: 0 B',
               '    min_grain: 1 MiB',
               '    align_ofs: 0 B',
+              '    type: eckd',
+              '    format: ldl',
               '    partition_table: dasd',
               '    partitions:',
               '    - free:',

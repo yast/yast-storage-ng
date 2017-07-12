@@ -37,8 +37,8 @@ module Y2Storage
       def supported_boot_disk?
         return false unless boot_disk
         if boot_disk.is?(:dasd)
-          return false if boot_disk.dasd_type.is?(:fba)
-          return false if boot_disk.dasd_format.is?(:ldl)
+          return false if boot_disk.type.is?(:fba)
+          return false if boot_disk.format.is?(:ldl)
           # TODO: DIAG disks (whatever they are) are not supported either
         end
         true

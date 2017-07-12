@@ -32,12 +32,12 @@ describe Y2Storage::GuidedProposal do
 
   describe "#propose" do
     before do
-      allow_any_instance_of(Y2Storage::Dasd).to receive(:dasd_type).and_return(dasd_type)
-      allow_any_instance_of(Y2Storage::Dasd).to receive(:dasd_format).and_return(dasd_format)
+      allow_any_instance_of(Y2Storage::Dasd).to receive(:type).and_return(type)
+      allow_any_instance_of(Y2Storage::Dasd).to receive(:format).and_return(format)
     end
 
-    let(:dasd_type) { Y2Storage::DasdType::UNKNOWN }
-    let(:dasd_format) { Y2Storage::DasdFormat::NONE }
+    let(:type) { Y2Storage::DasdType::UNKNOWN }
+    let(:format) { Y2Storage::DasdFormat::NONE }
 
     context "with a zfcp disk" do
       let(:scenario) { "empty_hard_disk_50GiB" }
@@ -48,7 +48,7 @@ describe Y2Storage::GuidedProposal do
 
     context "with a FBA DASD disk" do
       let(:scenario) { "empty_dasd_50GiB" }
-      let(:dasd_type) { Y2Storage::DasdType::FBA }
+      let(:type) { Y2Storage::DasdType::FBA }
 
       it "fails to make a proposal" do
         expect { proposal.propose }.to raise_error Y2Storage::Error
@@ -59,10 +59,10 @@ describe Y2Storage::GuidedProposal do
       let(:scenario) { "empty_dasd_50GiB" }
       let(:expected_scenario) { "s390_dasd_zipl" }
 
-      let(:dasd_type) { Y2Storage::DasdType::ECKD }
+      let(:type) { Y2Storage::DasdType::ECKD }
 
       context "formated as LDL" do
-        let(:dasd_format) { Y2Storage::DasdFormat::LDL }
+        let(:format) { Y2Storage::DasdFormat::LDL }
 
         it "fails to make a proposal" do
           expect { proposal.propose }.to raise_error Y2Storage::Error
@@ -70,7 +70,7 @@ describe Y2Storage::GuidedProposal do
       end
 
       context "formated as CDL" do
-        let(:dasd_format) { Y2Storage::DasdFormat::CDL }
+        let(:format) { Y2Storage::DasdFormat::CDL }
 
         context "not using LVM" do
           let(:lvm) { false }
