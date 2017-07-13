@@ -4,6 +4,8 @@
 [![Coverage Status](https://img.shields.io/coveralls/yast/yast-storage-ng/master.svg)](https://coveralls.io/github/yast/yast-storage-ng?branch=master)
 [![Code
 Climate](https://codeclimate.com/github/yast/yast-storage-ng/badges/gpa.svg)](https://codeclimate.com/github/yast/yast-storage-ng)
+[![Inline
+Docs](http://inch-ci.org/github/yast/yast-storage-ng.png?branch=master)](http://inch-ci.org/github/yast/yast-storage-ng)
 
 yast2-storage-ng is a reimplementation of the YaST storage module
 (yast2-storage) based on the also reimplemented library for storage manager
