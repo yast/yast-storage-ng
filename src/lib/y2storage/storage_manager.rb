@@ -249,8 +249,9 @@ module Y2Storage
       # Probing is skipped and the device tree is initialized from yaml_file.
       # Any existing probed device tree is replaced.
       #
-      # @note Cached objects are invalidated but creating new {Storage} instance
-      #   each time is avoided because it is a time consuming task.
+      # @note Cached objects are invalidated but creating new Storage
+      #   (libstorage) instance each time is avoided because it is a time
+      #   consuming task.
       #
       # @see #refresh!
       #
@@ -272,8 +273,9 @@ module Y2Storage
       # Any existing probed device tree is replaced.
       # @see {Devicegraph.load} for details about xml
       #
-      # @note Cached objects are invalidated but creating new {Storage} instance
-      #   each time is avoided because it is a time consuming task.
+      # @note Cached objects are invalidated but creating new Storage
+      #   (libstorage) instance each time is avoided because it is a time
+      #   consuming task.
       #
       # @see #refresh!
       #

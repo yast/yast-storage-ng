@@ -65,15 +65,7 @@ module Y2Storage
 
         log.info "Calculate all the possible distributions of planned partitions into spaces"
         dist_hashes = distribution_hashes(disk_spaces_by_part)
-
-        candidates = dist_hashes.map do |distribution_hash|
-          begin
-            Planned::PartitionsDistribution.new(distribution_hash)
-          rescue Error
-            next
-          end
-        end
-        candidates.compact!
+        candidates = distributions_from_hashes(dist_hashes)
 
         if lvm_helper.missing_space > DiskSize.zero
           log.info "Calculate LVM posibilities for the #{candidates.size} candidate distributions"
@@ -82,10 +74,7 @@ module Y2Storage
         end
         candidates.compact!
 
-        log.info "Comparing #{candidates.size} distributions"
-        result = candidates.sort { |a, b| a.better_than(b) }.first
-        log.info "best_for result: #{result}"
-        result
+        best_candidate(candidates)
       end
 
       # Space that should be freed when resizing an existing partition in
@@ -262,6 +251,36 @@ module Y2Storage
           out[value] ||= []
           out[value] << key
         end
+      end
+
+      # Transforms a set of hashes containing tentative partition distributions
+      # into proper {Planned::PartitionsDistribution} objects.
+      #
+      # Hashes describing invalid distributions are discarded, so the resulting
+      # array can have less elements than the original list.
+      #
+      # @param dist_hashes [Array<Hash{FreeDiskSpace => Array<Planned::Partition>}>]
+      # @return [Array<Planned::PartitionsDistribution>]
+      def distributions_from_hashes(dist_hashes)
+        dist_hashes.each_with_object([]) do |distribution_hash, array|
+          begin
+            dist = Planned::PartitionsDistribution.new(distribution_hash)
+          rescue Error
+            next
+          end
+          array << dist
+        end
+      end
+
+      # Best partitions distribution
+      #
+      # @param candidates [Array<Planned::PartitionsDistribution>]
+      # @return [Planned::PartitionsDistribution]
+      def best_candidate(candidates)
+        log.info "Comparing #{candidates.size} distributions"
+        result = candidates.sort { |a, b| a.better_than(b) }.first
+        log.info "best_for result: #{result}"
+        result
       end
     end
   end

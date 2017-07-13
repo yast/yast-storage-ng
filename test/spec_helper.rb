@@ -18,15 +18,16 @@
 
 # Set the paths
 SRC_PATH = File.expand_path("../../src", __FILE__)
-FAKE_DEPENDENCIES_PATH = File.expand_path("../fake_dependencies", __FILE__)
 DATA_PATH = File.expand_path("../data", __FILE__)
-ENV["Y2DIR"] = SRC_PATH + ":" + FAKE_DEPENDENCIES_PATH
+TEST_PATH = File.expand_path("..", __FILE__)
+ENV["Y2DIR"] = SRC_PATH
 
 # make sure we run the tests in English locale
 # (some tests check the output which is marked for translation)
 ENV["LC_ALL"] = "en_US.UTF-8"
 
 require "yast"
+require "yast/rspec"
 
 if ENV["COVERAGE"]
   require "simplecov"

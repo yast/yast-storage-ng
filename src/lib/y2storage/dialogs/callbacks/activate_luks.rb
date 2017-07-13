@@ -55,7 +55,6 @@ module Y2Storage
           finish_dialog(:cancel)
         end
 
-        # rubocop:disable  Metrics/MethodLength
         def dialog_content
           VBox(
             VSpacing(0.4),
@@ -64,21 +63,7 @@ module Y2Storage
               VBox(
                 Left(Heading(_("Encrypted Volume Activation"))),
                 VSpacing(0.2),
-                Left(
-                  Label(
-                    _("The following device contains an encryption signature but the\n" \
-                        "password is not yet known.")
-                  )
-                ),
-                VSpacing(0.2),
-                Left(Label("UUID: #{uuid}")),
-                VSpacing(0.2),
-                Left(
-                  Label(
-                    _("The password is needed if the device contains a system to be\n" \
-                        "updated or belongs to an LVM to be used during installation.")
-                  )
-                ),
+                *explanation_widgets,
                 VSpacing(0.2),
                 Left(Label(_("Do you want to provide the encryption password?"))),
                 Left(Password(Id(:password), Opt(:notify), _("Enter Encryption Password"))),
@@ -90,7 +75,6 @@ module Y2Storage
             )
           )
         end
-      # rubocop:enable all
 
       protected
 
@@ -108,6 +92,26 @@ module Y2Storage
 
         def activate_button
           Yast::UI.ChangeWidget(Id(:accept), :Enabled, password.size > 0)
+        end
+
+        def explanation_widgets
+          [
+            Left(
+              Label(
+                _("The following device contains an encryption signature but the\n" \
+                  "password is not yet known.")
+              )
+            ),
+            VSpacing(0.2),
+            Left(Label("UUID: #{uuid}")),
+            VSpacing(0.2),
+            Left(
+              Label(
+                _("The password is needed if the device contains a system to be\n" \
+                  "updated or belongs to an LVM to be used during installation.")
+              )
+            )
+          ]
         end
       end
     end

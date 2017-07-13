@@ -9,7 +9,10 @@ yast2-storage-ng is a reimplementation of the YaST storage module
 (yast2-storage) based on the also reimplemented library for storage manager
 ([libstorage-ng](https://github.com/openSUSE/libstorage-ng)).
 
-When finished, this module will contain essentially two parts:
+When finished, this module will contain essentially three parts:
+
+* YaST Expert Partitioner: a powerful tool capable of actions such as
+  creating partitions and filesystems or configuring LVM and software RAID.
 
 * Storage Proposal: Based on the existing storage setup of a system proposes a
   storage layout for a new installation. Useful in two cases:
@@ -18,8 +21,8 @@ When finished, this module will contain essentially two parts:
     * During auto-installation honoring the `partitioning` section of the
       AutoYaST profile.
 
-* Code for the YaST installation workflow and support functions for other YaST
-  modules (such as the Partitioner, see below), organized into the Y2Storage
+* Code for the YaST installation workflow and support functions for the above
+  mentioned components and for other YaST modules, organized into the Y2Storage
   Ruby namespace. That includes:
     * A thin wrapper on top of several of the classes provided by the
       [libstorage-ng](https://github.com/openSUSE/libstorage-ng) Ruby bindings,
@@ -29,13 +32,6 @@ When finished, this module will contain essentially two parts:
       namespace](http://www.rubydoc.info/github/yast/yast-storage-ng/master/Y2Storage)
       for details about the wrapper classes.
     * Additional YaST-specific functionality.
-
-In this moment, the module also includes a simple prototype of a possible
-reimplementation of the YaST Expert Partitioner, a powerful tool capable of
-actions such as creating partitions and filesystems or configuring LVM and
-software RAID. That prototype will be removed in the near future in favor of
-[this separate YaST module](https://github.com/yast/yast-partitioner), built on
-top of the functionality provided by this package.
 
 This module is entirely unsupported.
 
@@ -54,6 +50,15 @@ rpm -e --nodeps libstorage7 libstorage-ruby libstorage-python libstorage-devel l
 # it should be OK to ignore them.
 zypper in yast2-storage-ng
 ```
+
+Once the package is installed, the YaST Partitioner can be invoked running
+`yast2 partitioner` or `yast2 storage`.
+
+It is also possible to run it with a device graph from a file via
+`yast2 partitioner_testing <path to file>`. Supported formats are
+the [yast2-storage-ng yml
+format](https://github.com/yast/yast-storage-ng/blob/master/doc/fake-devicegraphs-yaml-format.md)
+and the [libstorage xml format](https://github.com/openSUSE/libstorage-ng).
 
 ## Trying the installation process
 
