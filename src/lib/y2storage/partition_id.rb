@@ -36,29 +36,29 @@ module Y2Storage
     private_constant :NOT_ALLOW_FORMAT
 
     TRANSLATIONS = {
-      DOS12              => N_("DOS12"),
-      DOS16              => N_("DOS16"),
-      DOS32              => N_("DOS32"),
-      SWAP               => N_("Linux Swap"),
-      LINUX              => N_("Linux"),
-      LVM                => N_("Linux LVM"),
-      RAID               => N_("Linux RAID"),
-      ESP                => N_("EFI System Partition"),
-      BIOS_BOOT          => N_("BIOS Boot Partition"),
-      PREP               => N_("PReP Boot Partition"),
-      NTFS               => N_("NTFS"),
-      EXTENDED           => N_("Extended"),
-      WINDOWS_BASIC_DATA => N_("Windows Data Partition"),
-      MICROSOFT_RESERVED => N_("Microsoft Reserved Partition"),
-      DIAG               => N_("Diagnostics Partition"),
-      UNKNOWN            => N_("Unknown")
+      DOS12.to_i              => N_("DOS12"),
+      DOS16.to_i              => N_("DOS16"),
+      DOS32.to_i              => N_("DOS32"),
+      SWAP.to_i               => N_("Linux Swap"),
+      LINUX.to_i              => N_("Linux"),
+      LVM.to_i                => N_("Linux LVM"),
+      RAID.to_i               => N_("Linux RAID"),
+      ESP.to_i                => N_("EFI System Partition"),
+      BIOS_BOOT.to_i          => N_("BIOS Boot Partition"),
+      PREP.to_i               => N_("PReP Boot Partition"),
+      NTFS.to_i               => N_("NTFS"),
+      EXTENDED.to_i           => N_("Extended"),
+      WINDOWS_BASIC_DATA.to_i => N_("Windows Data Partition"),
+      MICROSOFT_RESERVED.to_i => N_("Microsoft Reserved Partition"),
+      DIAG.to_i               => N_("Diagnostics Partition"),
+      UNKNOWN.to_i            => N_("Unknown")
     }.freeze
     private_constant :TRANSLATIONS
 
     def to_human_string
       textdomain "storage"
 
-      string = TRANSLATIONS[self] or raise "Unhandled Partition ID '#{inspect}'"
+      string = TRANSLATIONS[to_i] or raise "Unhandled Partition ID '#{inspect}'"
 
       _(string)
     end
