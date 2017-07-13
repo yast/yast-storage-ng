@@ -21,109 +21,7 @@
 
 require "yast"
 require "y2storage"
-
-module Y2Storage
-  module Filesystems
-    # FIXME: Temporal Monkey patching of fstab options per filesystem type. It
-    # could/should be moved to yast2-storage-ng.
-    class Type
-      COMMON_FSTAB_OPTIONS = ["async", "atime", "noatime", "user", "nouser",
-                              "auto", "noauto", "ro", "rw", "defaults"].freeze
-      EXT_FSTAB_OPTIONS = ["dev", "nodev", "usrquota", "grpquota", "acl",
-                           "noacl"].freeze
-
-      MOUNT_OPTIONS = {
-        btrfs:    {
-          fstab_options:       COMMON_FSTAB_OPTIONS,
-          supports_format:     true,
-          supports_encryption: true,
-          partition_id:        Y2Storage::PartitionId::LINUX
-        },
-        ext2:     {
-          fstab_options:       COMMON_FSTAB_OPTIONS + EXT_FSTAB_OPTIONS,
-          supports_format:     true,
-          supports_encryption: true,
-          partition_id:        Y2Storage::PartitionId::LINUX
-        },
-        ext3:     {
-          fstab_options:       COMMON_FSTAB_OPTIONS + EXT_FSTAB_OPTIONS + ["data="],
-          supports_format:     true,
-          supports_encryption: true,
-          partition_id:        Y2Storage::PartitionId::LINUX
-        },
-        ext4:     {
-          fstab_options:       COMMON_FSTAB_OPTIONS + EXT_FSTAB_OPTIONS + ["data="],
-          supports_format:     true,
-          supports_encryption: true,
-          partition_id:        Y2Storage::PartitionId::LINUX
-        },
-        hfs:      {
-          fstab_options: []
-        },
-        hfsplus:  {
-          fstab_options: []
-        },
-        jfs:      {
-          fstab_options: []
-        },
-        msdos:    {
-          fstab_options: []
-        },
-        nilfs2:   {
-          fstab_options: []
-        },
-        ntfs:     {
-          fstab_options: []
-        },
-        reiserfs: {
-          fstab_options: []
-        },
-        swap:     {
-          fstab_options:       ["pri="],
-          supports_format:     true,
-          supports_encryption: true,
-          partition_id:        Y2Storage::PartitionId::SWAP
-        },
-        vfat:     {
-          fstab_options:       COMMON_FSTAB_OPTIONS + ["dev", "nodev", "iocharset=", "codepage="],
-          supports_format:     true,
-          supports_encryption: true,
-          partition_id:        Y2Storage::PartitionId::DOS32
-        },
-        xfs:      {
-          fstab_options:       COMMON_FSTAB_OPTIONS + ["usrquota", "grpquota"],
-          supports_format:     true,
-          supports_encryption: true,
-          partition_id:        Y2Storage::PartitionId::LINUX
-        },
-        iso9669:  {
-          fstab_options:       ["acl", "noacl"],
-          supports_format:     false,
-          supports_encryption: false
-        },
-        udf:      {
-          fstab_options: ["acl", "noacl"]
-        }
-      }.freeze
-
-      def supported_fstab_options
-        MOUNT_OPTIONS[to_sym][:fstab_options] || []
-      end
-
-      def encryptable?
-        MOUNT_OPTIONS[to_sym].fetch(:supports_encryption, false)
-      end
-
-      def formattable?
-        MOUNT_OPTIONS[to_sym].fetch(:supports_format, false)
-      end
-
-      def supported_partition_id
-        MOUNT_OPTIONS[to_sym][:partition_id]
-      end
-    end
-  end
-end
+require "y2partitioner/refinements/filesystem_type"
 
 module Y2Partitioner
   module FormatMount
@@ -131,6 +29,8 @@ module Y2Partitioner
     # different dialogs avoiding the direct modification of the blk_device being
     # edited
     class Options
+      using Refinements::FilesystemType
+
       # @return [Y2Storage::Filesystem::Type]
       attr_accessor :filesystem_type
       # @return [:system, :data, :swap, :efi_boot]
@@ -225,7 +125,7 @@ module Y2Partitioner
           @filesystem_type.supported_fstab_options.include?(option.gsub(/=(.*)/, "="))
         end
 
-        @partition_id = filesystem_type.supported_partition_id || DEFAULT_PARTITION_ID
+        @partition_id = filesystem_type.default_partition_id || DEFAULT_PARTITION_ID
       end
 
       # Initializes the format and mount state based on the role given.

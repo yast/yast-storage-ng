@@ -1,6 +1,7 @@
 require "yast"
 require "y2storage"
 require "cwm/custom_widget"
+require "y2partitioner/refinements/filesystem_type"
 require "y2partitioner/format_mount/options"
 require "y2partitioner/dialogs/fstab_options"
 require "y2partitioner/widgets/fstab_options"
@@ -15,6 +16,8 @@ module Y2Partitioner
     # redrawing the interface in case of filesystem or partition selection
     # change.
     class FormatOptions < CWM::CustomWidget
+      using Refinements::FilesystemType
+
       def initialize(options)
         textdomain "storage"
 
@@ -141,6 +144,8 @@ module Y2Partitioner
 
     # Mount options for {Y2Storage::BlkDevice}
     class MountOptions < CWM::CustomWidget
+      using Refinements::FilesystemType
+
       def initialize(options)
         textdomain "storage"
 
@@ -331,6 +336,8 @@ module Y2Partitioner
 
     # Encryption selector
     class EncryptBlkDevice < CWM::CheckBox
+      using Refinements::FilesystemType
+
       def initialize(options)
         @options = options
       end

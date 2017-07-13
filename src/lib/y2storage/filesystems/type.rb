@@ -20,6 +20,7 @@
 # find current contact information at www.suse.com.
 
 require "y2storage/storage_enum_wrapper"
+require "y2storage/partition_id"
 
 module Y2Storage
   module Filesystems
@@ -31,18 +32,34 @@ module Y2Storage
 
       wrap_enum "FsType"
 
+      COMMON_FSTAB_OPTIONS = ["async", "atime", "noatime", "user", "nouser",
+                              "auto", "noauto", "ro", "rw", "defaults"].freeze
+      EXT_FSTAB_OPTIONS = ["dev", "nodev", "usrquota", "grpquota", "acl",
+                           "noacl"].freeze
+
+      # Hash with the properties of several filesystem types.
+      # Keys are the symbols representing the types and values are hashes that
+      # can contain `:name` for human string, `:fstab_options` for a list of
+      # supported /etc/fstab options and `:default_partition_id` for the partition
+      # id that fits better with the corresponding filesystem type.
+      # Not all combinations of filesystem types and properties are represented,
+      # default values are used for missing information.
       PROPERTIES = {
         btrfs:    {
-          name: "BtrFS"
+          fstab_options: COMMON_FSTAB_OPTIONS,
+          name:          "BtrFS"
         },
         ext2:     {
-          name: "Ext2"
+          fstab_options: COMMON_FSTAB_OPTIONS + EXT_FSTAB_OPTIONS,
+          name:          "Ext2"
         },
         ext3:     {
-          name: "Ext3"
+          fstab_options: COMMON_FSTAB_OPTIONS + EXT_FSTAB_OPTIONS + ["data="],
+          name:          "Ext3"
         },
         ext4:     {
-          name: "Ext4"
+          fstab_options: COMMON_FSTAB_OPTIONS + EXT_FSTAB_OPTIONS + ["data="],
+          name:          "Ext4"
         },
         hfs:      {
           name: "MacHFS"
@@ -72,19 +89,26 @@ module Y2Storage
           name: "Reiser"
         },
         swap:     {
-          name: "Swap"
+          fstab_options:        ["pri="],
+          default_partition_id: PartitionId::SWAP,
+          name:                 "Swap"
         },
         vfat:     {
-          name: "FAT"
+          fstab_options:        COMMON_FSTAB_OPTIONS + ["dev", "nodev", "iocharset=", "codepage="],
+          default_partition_id: PartitionId::DOS32,
+          name:                 "FAT"
         },
         xfs:      {
-          name: "XFS"
+          fstab_options: COMMON_FSTAB_OPTIONS + ["usrquota", "grpquota"],
+          name:          "XFS"
         },
         iso9660:  {
-          name: "ISO9660"
+          fstab_options: ["acl", "noacl"],
+          name:          "ISO9660"
         },
         udf:      {
-          name: "UDF"
+          fstab_options: ["acl", "noacl"],
+          name:          "UDF"
         }
       }
 
@@ -92,7 +116,8 @@ module Y2Storage
 
       HOME_FILESYSTEMS = [:ext2, :ext3, :ext4, :btrfs, :reiserfs, :xfs]
 
-      private_constant :PROPERTIES, :ROOT_FILESYSTEMS, :HOME_FILESYSTEMS
+      private_constant :PROPERTIES, :ROOT_FILESYSTEMS, :HOME_FILESYSTEMS,
+        :COMMON_FSTAB_OPTIONS, :EXT_FSTAB_OPTIONS
 
       # Allowed filesystems for root
       #
@@ -148,6 +173,30 @@ module Y2Storage
       # @method to_human
       #   @deprecated use to_human_string instead
       alias_method :to_human, :to_human_string
+
+      # Supported fstab options for filesystems of this type
+      #
+      # @return [Array<String>]
+      def supported_fstab_options
+        properties = PROPERTIES[to_sym]
+        default = []
+        return default unless properties
+        properties[:fstab_options] || default
+      end
+
+      # Best fitting partition id for this filesystem type
+      #
+      # @note: Take into account that the default partition id can be inappropriate for some
+      #   partition tables. Consider using {PartitionTables::Base#partition_id_for} to translate
+      #   the result to a supported id before assigning it to a partition.
+      #
+      # @return [PartitionId]
+      def default_partition_id
+        properties = PROPERTIES[to_sym]
+        default = PartitionId::LINUX
+        return default unless properties
+        properties[:default_partition_id] || default
+      end
     end
   end
 end
