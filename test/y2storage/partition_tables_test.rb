@@ -24,15 +24,17 @@ require_relative "spec_helper"
 require "y2storage"
 
 describe Y2Storage::PartitionTables::Base do
-  before do
-    fake_scenario("mixed_disks")
-  end
+  using Y2Storage::Refinements::SizeCasts
 
-  subject(:ptable) { Y2Storage::Disk.find_by_name(fake_devicegraph, "/dev/sdb").partition_table }
+  before { fake_scenario(scenario) }
+
+  let(:scenario) { "mixed_disks" }
 
   # Testing this because it's a nice example of usage of the Ruby wrapper
   # and because it was broken at some point
   describe "#inspect" do
+    subject(:ptable) { Y2Storage::Disk.find_by_name(fake_devicegraph, "/dev/sdb").partition_table }
+
     it "includes the partition table type" do
       expect(ptable.inspect).to include "Msdos"
     end
@@ -49,11 +51,38 @@ describe Y2Storage::PartitionTables::Base do
   end
 
   describe "#delete_all_partitions" do
+    subject(:ptable) { Y2Storage::Disk.find_by_name(fake_devicegraph, "/dev/sdb").partition_table }
+
     it "deletes all partitions in table" do
       # NOTE: it is important here to have partition table with logical partitions
       # as it need special handling, so test will cover it
       ptable.delete_all_partitions
       expect(ptable.partitions).to be_empty
+    end
+  end
+
+  describe "#unused_partition_slots" do
+    let(:scenario) { "alignment" }
+
+    let(:sda) { Y2Storage::Disk.find_by_name(fake_devicegraph, "/dev/sda") }
+    let(:sdb) { Y2Storage::Disk.find_by_name(fake_devicegraph, "/dev/sdb") }
+    let(:sdc) { Y2Storage::Disk.find_by_name(fake_devicegraph, "/dev/sdc") }
+
+    let(:sda_slot) { sda.partition_table.unused_partition_slots.first }
+    let(:sdb_slot) { sdb.partition_table.unused_partition_slots.first }
+    let(:sdc_slot) { sdc.partition_table.unused_partition_slots.first }
+
+    it "always returns start aligned slots" do
+      expect(sda_slot.region.start).to eq(4096)
+      expect(sdb_slot.region.start).to eq(4096)
+      expect(sdc_slot.region.start).to eq(4096)
+    end
+
+    it "returns all space till end" do
+      gpt_reserved_blocks = 16.5.KiB.to_i / sda.region.block_size.to_i
+
+      expect(sda_slot.region.end).to eq(sda.region.end - gpt_reserved_blocks)
+      expect(sdc_slot.region.end).to eq(sdc.region.end)
     end
   end
 end
