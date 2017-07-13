@@ -1,0 +1,4 @@
+files:
+  # define files included in the analysis
+    included:
+        - src/lib/**/*.rb
