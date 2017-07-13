@@ -3,6 +3,8 @@ Wed Jul 12 15:37:16 UTC 2017 - ancor@suse.com
 
 - Replaced the original prototype of the expert partitioner with
   the one coming from yast2-partitioner.
+- Added #supported_fstab_options and #default_partition_id methods
+  to Y2Storage::Filesystems::Type.
 - Removed Y2Storage::DevicesLists and not longer needed modules
   from Y2Storage::Refinements
 - 0.1.31
