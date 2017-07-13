@@ -38,16 +38,21 @@ describe Y2Storage::Planned::AssignedSpace do
   # PlannedVolumesList). So this should be replaced by tests verifying the order
   # using just the public API
   describe "#partitions_sorted_by_attr" do
+    subject { described_class.new(space, []) }
+
+    before do
+      allow(subject).to receive(:partitions).and_return [part1, part2, part3, part4]
+    end
+
+    let(:space) do
+      double("Y2Storage::FreeDiskSpace", disk: disk, disk_size: 500.GiB, align_grain: disk.min_grain)
+    end
+    let(:disk) { double("Y2Storage::Disk", min_grain: 1.MiB) }
+
     let(:part1) { partition("/p1", 100.MiB, 1.GiB, 2.GiB) }
     let(:part2) { partition("/p2", nil,     1.GiB, 2.GiB) }
     let(:part3) { partition("/p3", 100.GiB, 2.GiB, 4.GiB) }
     let(:part4) { partition("/p4", nil,     1.GiB, 3.GiB) }
-    let(:disk) { double("Y2Storage::Disk", min_grain: 1.MiB) }
-    let(:space) { double("Y2Storage::FreeDiskSpace", disk: disk, disk_size: 500.GiB) }
-
-    subject { described_class.new(space, []) }
-
-    before { allow(subject).to receive(:partitions).and_return [part1, part2, part3, part4] }
 
     it "returns an array" do
       expect(subject.send(:partitions_sorted_by_attr, :size)).to be_a Array
@@ -86,18 +91,22 @@ describe Y2Storage::Planned::AssignedSpace do
 
   # FIXME: same than above, testing a private method (same reason)
   describe "#enforced_last" do
+    subject { described_class.new(space, []) }
+
+    before do
+      allow(subject).to receive(:partitions).and_return [big_part1, small_part, big_part2]
+    end
+
+    let(:space) do
+      double("Y2Storage::FreeDiskSpace", disk: disk, disk_size: size, align_grain: disk.min_grain)
+    end
+    let(:disk) { double("Y2Storage::Disk", min_grain: min_grain) }
+
     let(:big_part1) { planned_vol(type: :vfat, min: 10.MiB) }
     let(:big_part2) { planned_vol(type: :vfat, min: 10.MiB) }
     let(:small_part) { planned_vol(type: :vfat, min: 1.MiB + 512.KiB) }
 
-    let(:disk) { double("Y2Storage::Disk", min_grain: min_grain) }
-    let(:space) { double("Y2Storage::FreeDiskSpace", disk: disk, disk_size: size) }
-
-    subject { described_class.new(space, []) }
-
-    before { allow(subject).to receive(:partitions).and_return [big_part1, small_part, big_part2] }
-
-    context "if all the partitions are divisible by min_grain" do
+    context "if all the partitions are divisible by align_grain" do
       let(:size) { 21.MiB + 512.KiB }
       let(:min_grain) { 512.KiB }
 
@@ -115,7 +124,7 @@ describe Y2Storage::Planned::AssignedSpace do
       end
     end
 
-    context "if the partitions don't fit into the space" do
+    context "if the partitions do not fit into the space" do
       let(:size) { 21.MiB }
       let(:min_grain) { 1.MiB }
 

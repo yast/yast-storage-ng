@@ -52,6 +52,12 @@ describe Y2Storage::Proposal::PartitionCreator do
       space_dist(space3 => [root_vol, home_vol], space8 => [swap_vol])
     end
 
+    it "uses align grain to properly align partitions" do
+      expect(disk_spaces.first).to receive(:align_grain).at_least(:once)
+
+      creator.create_partitions(distribution)
+    end
+
     it "creates the partitions honouring the distribution" do
       result = creator.create_partitions(distribution)
       devicegraph = result.devicegraph

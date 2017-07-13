@@ -78,8 +78,12 @@ module Y2Storage
           log.info "partition #{p.mount_point}\tmin: #{p.min}\tmax: #{p.max}\tweight: #{p.weight}"
         end
 
-        min_grain = free_space.disk.min_grain
-        partitions = Planned::Partition.distribute_space(partitions, usable_size, min_grain: min_grain)
+        align_grain = free_space.align_grain
+        partitions = Planned::Partition.distribute_space(
+          partitions,
+          usable_size,
+          align_grain: align_grain
+        )
         create_planned_partitions(partitions, free_space, num_logical)
       end
 

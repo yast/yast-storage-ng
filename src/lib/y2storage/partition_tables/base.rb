@@ -109,10 +109,37 @@ module Y2Storage
       #     legacy boot flag.
       storage_forward :partition_legacy_boot_flag_supported?
 
+      # @!method alignment
+      #   @return [Storage::Alignment] Low-level object to calculate partition
+      #     alignment based on hardware topology.
+      storage_forward :alignment
+      private :alignment
+
       def inspect
         parts = partitions.map(&:inspect)
         slots = unused_partition_slots.map(&:to_s)
         "<PartitionTable #{self}[#{num_children}] #{parts}#{slots}>"
+      end
+
+      # Grain for alignment
+      #
+      # The align grain of a partition table is the size unit that must be
+      # used to specify beginning and end of a partition in order to keep
+      # everything aligned.
+      #
+      # @note The align grain is similar to mininal grain for a device, but
+      #   it depends on both: the device topology and the partition table
+      #   alignment.
+      #
+      # @see Y2Storage::Partitionable#min_grain
+      #
+      # @return [DiskSize]
+      def align_grain
+        # @align_grain ||= DiskSize.new(alignment.grain)
+        # FIXME: The correct implementation is the commented in the line above
+        # (still not exposed in libstorage-ng API).
+        # Using this backwards-compatibility fallback meanwhile
+        @align_grain ||= partitionable.min_grain
       end
 
       # The partition id depends on the partition table type. For example,

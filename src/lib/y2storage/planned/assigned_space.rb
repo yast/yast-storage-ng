@@ -74,7 +74,7 @@ module Y2Storage
       #  - the chances of having 2 volumes with max_start_offset in the same
       #    free space are very low
       def valid?
-        return true if usable_size >= DiskSize.sum(partitions.map(&:min), rounding: min_grain)
+        return true if usable_size >= DiskSize.sum(partitions.map(&:min), rounding: align_grain)
         # At first sight, there is no enough space, but maybe enforcing some
         # order...
         !enforced_last.nil?
@@ -91,7 +91,7 @@ module Y2Storage
       # Space available in addition to the target
       #
       # This method is slightly pessimistic. In a quite specific corner case, one
-      # of the volumes could be adjusted down to not be divisible by min_grain
+      # of the volumes could be adjusted down to not be divisible by align_grain
       # and then the extra size would be actually sligthly bigger than reported.
       # But being pessimistic is good here because we don't want to enforce that
       # situation.
@@ -99,7 +99,7 @@ module Y2Storage
       #
       # @return [DiskSize]
       def extra_size
-        disk_size - DiskSize.sum(partitions.map(&:min), rounding: min_grain)
+        disk_size - DiskSize.sum(partitions.map(&:min), rounding: align_grain)
       end
 
       # Usable space available in addition to the target, taking into account
@@ -160,8 +160,12 @@ module Y2Storage
         extended.region.start <= space_start && extended.region.end > space_start
       end
 
-      def min_grain
-        disk_space.disk.min_grain
+      # Grain for alignment
+      # @see FreeDiskSpace#align_grain
+      #
+      # @return [DiskSize]
+      def align_grain
+        disk_space.align_grain
       end
 
       # Sorts the planned partitions in the most convenient way in order to
@@ -181,23 +185,23 @@ module Y2Storage
       # This method only returns something meaningful if the only way to make the
       # partitions fit into the space is ensuring that a particular one will be at
       # the end. That corner case can only happen if the size of the given spaces
-      # is not divisible by min_grain.
+      # is not divisible by align_grain.
       #
       # If the volumes fit in any order or if it's impossible to make them fit,
       # the method returns nil.
       #
       # @return [Planned::Partition, nil]
       def enforced_last
-        rounded_up = DiskSize.sum(partitions.map(&:min), rounding: min_grain)
+        rounded_up = DiskSize.sum(partitions.map(&:min), rounding: align_grain)
         # There is enough space to fit with any order
         return nil if usable_size >= rounded_up
 
         missing = rounded_up - usable_size
         # It's impossible to fit
-        return nil if missing >= min_grain
+        return nil if missing >= align_grain
 
         partitions.detect do |partition|
-          partition.min_size.ceil(min_grain) - missing >= partition.min_size
+          partition.min_size.ceil(align_grain) - missing >= partition.min_size
         end
       end
 
