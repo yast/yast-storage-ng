@@ -135,11 +135,7 @@ module Y2Storage
       #
       # @return [DiskSize]
       def align_grain
-        # @align_grain ||= DiskSize.new(alignment.grain)
-        # FIXME: The correct implementation is the commented in the line above
-        # (still not exposed in libstorage-ng API).
-        # Using this backwards-compatibility fallback meanwhile
-        @align_grain ||= partitionable.min_grain
+        @align_grain ||= DiskSize.new(alignment.grain)
       end
 
       # The partition id depends on the partition table type. For example,
