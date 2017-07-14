@@ -61,6 +61,9 @@ describe Y2Storage::PartitionTables::Base do
     end
   end
 
+  # This test ensures the behavior of libstorage is stable in the future, because, in order
+  # to generate aligned partitions, the proposal code heavily relies on the fact that
+  # Y2Storage::PartitionTable#unused_partition_slots returns start aligned regions.
   describe "#unused_partition_slots" do
     let(:scenario) { "alignment" }
 
