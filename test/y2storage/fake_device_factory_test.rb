@@ -35,6 +35,7 @@ describe Y2Storage::FakeDeviceFactory do
     input = ['---',
              '- dasd:',
              '    name: "/dev/sda"',
+             '    type: eckd',
              '    size: 256 GiB',
              '    block_size: 4 KiB',
              '    partition_table: dasd',
@@ -67,6 +68,7 @@ describe Y2Storage::FakeDeviceFactory do
     expect(staging.num_holders).to eq 7
 
     sda = Storage::Dasd.find_by_name(staging, "/dev/sda")
+    expect(sda.type).to eq Y2Storage::DasdType::ECKD.to_i
     expect(sda.size).to eq 256 * Storage.GiB
     expect(sda.region.block_size).to eq 4 * Storage.KiB
 

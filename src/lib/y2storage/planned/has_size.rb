@@ -83,15 +83,15 @@ module Y2Storage
         # @param space_size [DiskSize]
         # @param rounding [DiskSize, nil] min block size to distribute. Mainly used
         #     to distribute space among LVs honoring the PE size of the LVM
-        # @param min_grain [DiskSize, nil] minimal grain of the disk where the space
+        # @param align_grain [DiskSize, nil] align grain for the disk where the space
         #     is located. It only makes sense when distributing space among
         #     partitions.
         # @return [Array] list containing devices with an adjusted value
         #     for Planned::HasSize#size
-        def distribute_space(devices, space_size, rounding: nil, min_grain: nil)
+        def distribute_space(devices, space_size, rounding: nil, align_grain: nil)
           raise RuntimeError if space_size < DiskSize.sum(devices.map(&:min))
 
-          rounding ||= min_grain
+          rounding ||= align_grain
           rounding ||= DiskSize.new(1)
 
           new_list = devices.map do |device|
@@ -99,11 +99,11 @@ module Y2Storage
             new_dev.size = device.min_size.ceil(rounding)
             new_dev
           end
-          adjust_size_to_last_slot!(new_list.last, space_size, min_grain) if min_grain
+          adjust_size_to_last_slot!(new_list.last, space_size, align_grain) if align_grain
 
           extra_size = space_size - DiskSize.sum(new_list.map(&:size))
           unused = distribute_extra_space!(new_list, extra_size, rounding)
-          new_list.last.size += unused if min_grain && unused < min_grain
+          new_list.last.size += unused if align_grain && unused < align_grain
 
           new_list
         end
@@ -169,17 +169,17 @@ module Y2Storage
           size >= rounding
         end
 
-        def adjust_size_to_last_slot!(device, space_size, min_grain)
-          adjusted_size = adjusted_size_after_ceil(device, space_size, min_grain)
+        def adjust_size_to_last_slot!(device, space_size, align_grain)
+          adjusted_size = adjusted_size_after_ceil(device, space_size, align_grain)
           device.size = adjusted_size unless adjusted_size < device.min_size
         end
 
-        def adjusted_size_after_ceil(device, space_size, min_grain)
-          mod = space_size % min_grain
-          last_slot_size = mod.zero? ? min_grain : mod
-          return device.size if last_slot_size == min_grain
+        def adjusted_size_after_ceil(device, space_size, align_grain)
+          mod = space_size % align_grain
+          last_slot_size = mod.zero? ? align_grain : mod
+          return device.size if last_slot_size == align_grain
 
-          missing = min_grain - last_slot_size
+          missing = align_grain - last_slot_size
           device.size - missing
         end
 

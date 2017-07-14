@@ -71,6 +71,16 @@ module Y2Storage
       DiskSize.B(region.start * region.block_size)
     end
 
+    # Grain for alignment
+    #
+    # The align grain is the size unit that must be used to specify beginning and
+    # end of a partition in order to keep everything aligned.
+    #
+    # @return [DiskSize]
+    def align_grain
+      @align_grain ||= disk.as_not_empty { disk.partition_table.align_grain }
+    end
+
     def to_s
       "#<FreeDiskSpace disk_name=#{disk_name}, size=#{disk_size}, start_offset=#{start_offset}>"
     end

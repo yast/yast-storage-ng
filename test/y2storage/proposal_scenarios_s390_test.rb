@@ -24,6 +24,26 @@ require_relative "spec_helper"
 require_relative "#{TEST_PATH}/support/proposal_examples"
 require_relative "#{TEST_PATH}/support/proposal_context"
 
+RSpec::Matchers.define :be_start_aligned do
+  match do |partition|
+    grain = partition.partition_table.align_grain
+    block_size = partition.region.block_size
+    sector = partition.region.start
+    overhead = (block_size * sector) % grain
+    overhead.zero?
+  end
+end
+
+RSpec::Matchers.define :be_end_aligned do
+  match do |partition|
+    grain = partition.partition_table.align_grain
+    block_size = partition.region.block_size
+    sector = partition.region.end
+    overhead = (block_size * sector + block_size) % grain
+    overhead.zero?
+  end
+end
+
 describe Y2Storage::GuidedProposal do
   include_context "proposal"
 
@@ -81,6 +101,16 @@ describe Y2Storage::GuidedProposal do
             it "proposes the expected layout" do
               proposal.propose
               expect(proposal.devices.to_str).to eq expected.to_str
+            end
+
+            it "proposes partitions starting with correct alignment" do
+              proposal.propose
+              expect(proposal.devices.partitions).to all(be_start_aligned)
+            end
+
+            it "proposes partitions ending with correct alignment" do
+              proposal.propose
+              expect(proposal.devices.partitions).to all(be_end_aligned)
             end
           end
 

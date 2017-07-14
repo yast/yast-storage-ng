@@ -97,9 +97,10 @@ module Y2Storage
         #    be logical
         #  - resizing produces a new space
         #  - the LVM must be spread among all the available spaces
-        disk = partition.partitionable
-        needed = DiskSize.sum(planned_partitions.map(&:min), rounding: disk.min_grain)
+        align_grain = partition.partition_table.align_grain
+        needed = DiskSize.sum(planned_partitions.map(&:min), rounding: align_grain)
 
+        disk = partition.partitionable
         max_logical = max_logical(disk, planned_partitions)
         needed += Planned::AssignedSpace.overhead_of_logical(disk) * max_logical
 

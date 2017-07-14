@@ -59,6 +59,11 @@ describe Y2Storage::Proposal::PartitionsDistributionCalculator do
       context "if the space is big enough" do
         let(:vol3) { planned_vol(mount_point: "/3", type: :ext4, min: 3.GiB, max: 3.GiB) }
 
+        it "uses align grain to properly allocate partitions" do
+          expect(spaces.first).to receive(:align_grain).at_least(:once)
+          subject
+        end
+
         it "allocates all the volumes in the available space" do
           spaces = distribution.spaces
           expect(spaces.size).to eq 1
