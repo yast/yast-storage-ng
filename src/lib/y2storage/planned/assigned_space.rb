@@ -131,10 +131,14 @@ module Y2Storage
       # Space consumed by the EBR of one logical partition in a given disk
       # See https://en.wikipedia.org/wiki/Extended_boot_record
       #
+      # Currently, default partition table is GPT, so this method is called only
+      # when a msdos partition table already exits. A partition table is ensured
+      # to avoid possible issues in case of default partition table type changes.
+      #
       # @param disk [#topology]
       # @return [DiskSize]
       def self.overhead_of_logical(disk)
-        disk.min_grain
+        disk.as_not_empty { disk.partition_table.align_grain }
       end
 
       # Space consumed by the EBR of one logical partition within this space
