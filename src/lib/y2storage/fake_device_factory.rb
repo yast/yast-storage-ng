@@ -209,15 +209,22 @@ module Y2Storage
     #
     # @return [String] device name of the new DASD disk ("/dev/sda" etc.)
     def create_dasd(_parent, args)
-      name   = args["name"] || "/dev/dasda"
-      type   = args["type"] || "unknown"
-      format = args["format"] || "none"
-      type   = fetch(DasdType, type, "dasd type", name)
-      format = fetch(DasdFormat, format, "dasd format", name)
+      dasd_args = add_defaults_for_dasd(args)
       dasd = new_partitionable(Dasd, args)
-      dasd.dasd_type = type unless type.is?(:unknown)
-      dasd.dasd_format = format unless format.is?(:none)
-      dasd
+      type = fetch(DasdType, dasd_args["type"], "dasd type", dasd_args["name"])
+      format = fetch(DasdFormat, dasd_args["format"], "dasd format", dasd_args["name"])
+      dasd.type = type unless type.is?(:unknown)
+      dasd.format = format unless format.is?(:none)
+      dasd.name
+    end
+
+    def add_defaults_for_dasd(args)
+      dasd_args = args.dup
+      dasd_args["name"] ||= "/dev/dasda"
+      dasd_args["type"] ||= "unknown"
+      dasd_args["format"] ||= "none"
+      dasd_args["block_size"] ||= DiskSize.KiB(4) if dasd_args["type"] == "eckd"
+      dasd_args
     end
 
     # Factory method to create a disk.
@@ -235,7 +242,7 @@ module Y2Storage
     #
     # @return [String] device name of the new disk ("/dev/sda" etc.)
     def create_disk(_parent, args)
-      new_partitionable(Disk, args)
+      new_partitionable(Disk, args).name
     end
 
     # Method to create a partitionable.
@@ -245,7 +252,7 @@ module Y2Storage
     # @param partitionable_class [Dasd, Disk]
     # @param args [Hash<String, String>]
     #
-    # @return [String] device name
+    # @return [Y2Storage::Partitionable] device
     #
     # FIXME: this method is too complex. It offends three different cops
     # related to complexity.
@@ -276,7 +283,7 @@ module Y2Storage
       # 16 for scsi and 64 for ide. Now it's 256 for most of them.
       disk.range = args["range"] || 256
       file_system_directly_on_disk(disk, args) if args.keys.any? { |x| FILE_SYSTEM_PARAM.include?(x) }
-      name
+      disk
     end
     # rubocop:enable all
 
