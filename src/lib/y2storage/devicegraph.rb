@@ -145,6 +145,13 @@ module Y2Storage
       Disk.all(self)
     end
 
+    # All the multipath devices in the devicegraph
+    #
+    # @return [Array<Multipath>]
+    def multipaths
+      Multipath.all(self)
+    end
+
     # All the devices that are usually treated like disks by YaST
     #
     # Currently this method returns an array including all the disks and all the DASDs.
