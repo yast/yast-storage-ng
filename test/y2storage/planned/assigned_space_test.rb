@@ -145,7 +145,7 @@ describe Y2Storage::Planned::AssignedSpace do
       end
     end
 
-    context "if several partitions must be placed at the end" do
+    context "if several partitions could be placed at the end" do
       let(:partitions) { [big_part1, small_part1, small_part2, big_part2] }
 
       let(:size) { 23.MiB + 512.KiB }
