@@ -27,14 +27,13 @@ describe Y2Storage::DiskAnalyzer do
   using Y2Storage::Refinements::SizeCasts
 
   subject(:analyzer) { described_class.new(fake_devicegraph) }
+  let(:scenario) { "mixed_disks" }
 
   before do
     fake_scenario(scenario)
   end
 
   describe "#windows_partitions" do
-    let(:scenario) { "mixed_disks" }
-
     context "in a PC" do
       before do
         allow(Yast::Arch).to receive(:x86_64).and_return true
@@ -67,8 +66,6 @@ describe Y2Storage::DiskAnalyzer do
   end
 
   describe "#installed_systems" do
-    let(:scenario) { "mixed_disks" }
-
     before do
       allow(Yast::Arch).to receive(:x86_64).and_return true
       allow_any_instance_of(::Storage::BlkFilesystem).to receive(:detect_content_info)
@@ -114,6 +111,13 @@ describe Y2Storage::DiskAnalyzer do
       it "does not return installed systems for that disk" do
         expect(analyzer.installed_systems("/dev/sdc")).to be_empty
       end
+    end
+  end
+
+  describe "#candidate_disks" do
+    it "relies on Devicegraph#disk_devices" do
+      expect(fake_devicegraph).to receive(:disk_devices).at_least(:once).and_call_original
+      analyzer.candidate_disks
     end
   end
 end

@@ -8,7 +8,7 @@
       <sysfs-name>sda</sysfs-name>
       <sysfs-path>/devices/css0/0.0.0008/0.0.fa00/host0/rport-0:0-0/target0:0:0/0:0:0:1085554707/block/sda</sysfs-path>
       <region>
-        <length>2097152</length>
+        <length>2147483648</length>
         <block-size>512</block-size>
       </region>
       <udev-path>ccw-0.0.fa00-fc-0x500507630500873a-lun-0x401340b400000000</udev-path>
@@ -28,7 +28,7 @@
       <sysfs-name>sdb</sysfs-name>
       <sysfs-path>/devices/css0/0.0.0008/0.0.fa00/host0/rport-0:0-0/target0:0:0/0:0:0:1085620243/block/sdb</sysfs-path>
       <region>
-        <length>2097152</length>
+        <length>1073741824</length>
         <block-size>512</block-size>
       </region>
       <udev-path>ccw-0.0.fa00-fc-0x500507630500873a-lun-0x401340b500000000</udev-path>
@@ -48,7 +48,7 @@
       <sysfs-name>sdc</sysfs-name>
       <sysfs-path>/devices/css0/0.0.0008/0.0.fa00/host0/rport-0:0-1/target0:0:1/0:0:1:1085554707/block/sdc</sysfs-path>
       <region>
-        <length>2097152</length>
+        <length>2147483648</length>
         <block-size>512</block-size>
       </region>
       <udev-path>ccw-0.0.fa00-fc-0x500507630510473a-lun-0x401340b400000000</udev-path>
@@ -68,7 +68,7 @@
       <sysfs-name>sdd</sysfs-name>
       <sysfs-path>/devices/css0/0.0.0008/0.0.fa00/host0/rport-0:0-1/target0:0:1/0:0:1:1085620243/block/sdd</sysfs-path>
       <region>
-        <length>2097152</length>
+        <length>1073741824</length>
         <block-size>512</block-size>
       </region>
       <udev-path>ccw-0.0.fa00-fc-0x500507630510473a-lun-0x401340b500000000</udev-path>
@@ -100,13 +100,33 @@
       <type>ECKD</type>
       <format>CDL</format>
     </Dasd>
+    <Disk>
+      <sid>50</sid>
+      <name>/dev/sde</name>
+      <sysfs-name>sde</sysfs-name>
+      <sysfs-path>/devices/css0/0.0.0008/0.0.fa00/host0/rport-0:0-2/target0:0:1/0:0:1:1085620243/block/sde</sysfs-path>
+      <region>
+        <length>16777216</length>
+        <block-size>512</block-size>
+      </region>
+      <udev-path>ccw-0.0.fa00-fc-0x500507630519999a-lun-0x401340b500000000</udev-path>
+      <udev-path>ccw-0.0.fa00-zfcp-0x500507630519999a:0x401340b500000000</udev-path>
+      <udev-path>scsi-0:0:2:1085629999</udev-path>
+      <udev-id>scsi-36005076305ffc73a0000000000009999</udev-id>
+      <udev-id>scsi-SIBM_2107900_75L23719999</udev-id>
+      <udev-id>wwn-0x6005076305ffc73a0000000000009999</udev-id>
+      <topology/>
+      <range>256</range>
+      <rotational>true</rotational>
+      <transport>FC</transport>
+    </Disk>
     <Multipath>
       <sid>47</sid>
       <name>/dev/mapper/36005076305ffc73a00000000000013b4</name>
       <sysfs-name>dm-0</sysfs-name>
       <sysfs-path>/devices/virtual/block/dm-0</sysfs-path>
       <region>
-        <length>2097152</length>
+        <length>2147483648</length>
         <block-size>512</block-size>
       </region>
       <udev-id>scsi-36005076305ffc73a00000000000013b4</udev-id>
@@ -126,7 +146,7 @@
       <sysfs-name>dm-3</sysfs-name>
       <sysfs-path>/devices/virtual/block/dm-3</sysfs-path>
       <region>
-        <length>2097152</length>
+        <length>1073741824</length>
         <block-size>512</block-size>
       </region>
       <udev-id>scsi-36005076305ffc73a00000000000013b5</udev-id>

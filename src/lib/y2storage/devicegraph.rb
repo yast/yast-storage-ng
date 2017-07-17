@@ -154,13 +154,17 @@ module Y2Storage
 
     # All the devices that are usually treated like disks by YaST
     #
-    # Currently this method returns an array including all the disks and all the DASDs.
+    # Currently this method returns an array including all the multipath
+    # devices, as well as disks and DASDs that are not part of a multipath.
     # @see #disks
     # @see #dasds
+    # @see #multipath
     #
-    # @return [Array<Dasd, Disk>]
+    # @return [Array<Dasd, Disk, Multipath>]
     def disk_devices
-      dasds + disks
+      mp_parents = multipaths.map(&:parents).flatten
+      # Use #reject because Array#- is not trustworthy with SWIG
+      (multipaths + dasds + disks).reject { |d| mp_parents.include?(d) }
     end
 
     # @return [Array<Partition>]

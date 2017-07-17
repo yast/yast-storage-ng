@@ -63,6 +63,18 @@ module Y2Storage
       parents.any? { |i| i.respond_to?(:in_network?) && i.in_network? }
     end
 
+    # Checks whether some of the devices of the multipath are connected through
+    # USB.
+    #
+    # Although that is obviously very unlikely, this method is offered for
+    # symmetry reasons in relation to other disk-like devices like {Disk} or
+    # {Dasd}.
+    #
+    # @return [Boolean]
+    def usb?
+      parents.any? { |i| i.respond_to?(:usb?) && i.usb? }
+    end
+
     # Default partition table type for newly created partition tables
     # @see Partitionable#preferred_ptable_type
     #
