@@ -112,7 +112,7 @@ module Y2Storage
         "size"       => device.size.to_s,
         "block_size" => device.region.block_size.to_s,
         "io_size"    => DiskSize.B(device.topology.optimal_io_size).to_s,
-        "min_grain"  => device.min_grain.to_s,
+        "min_grain"  => DiskSize.B(device.topology.minimal_grain).to_s,
         "align_ofs"  => DiskSize.B(device.topology.alignment_offset).to_s
       }
     end

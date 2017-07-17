@@ -82,17 +82,6 @@ module Y2Storage
     #   @return [Array<Partitionable>] all the partitionable devices in the given devicegraph
     storage_class_forward :all, as: "Partitionable"
 
-    # Minimal grain of the partitionable
-    #
-    # The grain of a device is the smallest size unit that can be used to
-    # specify beginning and end of a partition in order to keep everything
-    # aligned.
-    #
-    # @return [DiskSize]
-    def min_grain
-      DiskSize.new(topology.minimal_grain)
-    end
-
     # Partitions in the device
     #
     # @return [Array<Partition>]
