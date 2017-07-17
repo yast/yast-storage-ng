@@ -63,6 +63,11 @@ module Y2Storage
     storage_forward :storage_siblings, to: :siblings, as: "Device"
     protected :storage_siblings
 
+    # @!method parents
+    #   Parents in the devicegraph in no particular order.
+    #   @return [Array<Device>]
+    storage_forward :parents, as: "Device"
+
     # @!method has_children?
     #   Check whether the device has children in the devicegraph
     #   it belongs to.

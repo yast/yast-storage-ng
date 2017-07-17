@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Mon Jul 17 09:07:39 UTC 2017 - ancor@suse.com
+
+- Adjusted the guided proposal to work properly on scenarios with
+  Multipath I/O.
+
+-------------------------------------------------------------------
 Wed Jul 12 15:37:16 UTC 2017 - ancor@suse.com
 
 - Replaced the original prototype of the expert partitioner with

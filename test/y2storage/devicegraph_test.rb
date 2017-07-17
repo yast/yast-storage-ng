@@ -184,4 +184,51 @@ describe Y2Storage::Devicegraph do
       end
     end
   end
+
+  describe "#disk_devices" do
+    before { fake_scenario(scenario) }
+    subject(:graph) { fake_devicegraph }
+
+    context "if there are no multipath devices" do
+      let(:scenario) { "autoyast_drive_examples" }
+
+      it "returns an array of devices" do
+        expect(graph.disk_devices).to be_an Array
+        expect(graph.disk_devices).to all(be_a(Y2Storage::Device))
+      end
+
+      it "includes all disks and DASDs" do
+        expect(graph.disk_devices.map(&:name)).to contain_exactly(
+          "/dev/dasda", "/dev/dasdb", "/dev/sda", "/dev/sdb", "/dev/sdc",
+          "/dev/sdd", "/dev/sde", "/dev/sdf", "/dev/sdg", "/dev/sdh"
+        )
+      end
+    end
+
+    context "if there are multipath devices" do
+      let(:scenario) { "empty-dasd-and-multipath.xml" }
+
+      it "returns an array of devices" do
+        expect(graph.disk_devices).to be_an Array
+        expect(graph.disk_devices).to all(be_a(Y2Storage::Device))
+      end
+
+      it "includes all the multipath devices" do
+        expect(graph.disk_devices.map(&:name)).to include(
+          "/dev/mapper/36005076305ffc73a00000000000013b4",
+          "/dev/mapper/36005076305ffc73a00000000000013b5"
+        )
+      end
+
+      it "includes all disks and DASDs that are not part of a multipath" do
+        expect(graph.disk_devices.map(&:name)).to include("/dev/dasdb", "/dev/sde")
+      end
+
+      it "does not include individual disks and DASDs from the multipaths" do
+        expect(graph.disk_devices.map(&:name)).to_not include(
+          "/dev/sda", "/dev/sdb", "/dev/sdc", "/dev/sdd"
+        )
+      end
+    end
+  end
 end
