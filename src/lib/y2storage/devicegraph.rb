@@ -158,7 +158,7 @@ module Y2Storage
     # devices, as well as disks and DASDs that are not part of a multipath.
     # @see #disks
     # @see #dasds
-    # @see #multipath
+    # @see #multipaths
     #
     # @return [Array<Dasd, Disk, Multipath>]
     def disk_devices
