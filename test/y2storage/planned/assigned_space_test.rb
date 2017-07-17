@@ -45,9 +45,9 @@ describe Y2Storage::Planned::AssignedSpace do
     end
 
     let(:space) do
-      double("Y2Storage::FreeDiskSpace", disk: disk, disk_size: 500.GiB, align_grain: disk.min_grain)
+      double("Y2Storage::FreeDiskSpace", disk: disk, disk_size: 500.GiB, align_grain: 1.MiB)
     end
-    let(:disk) { double("Y2Storage::Disk", min_grain: 1.MiB) }
+    let(:disk) { double("Y2Storage::Disk") }
 
     let(:part1) { partition("/p1", 100.MiB, 1.GiB, 2.GiB) }
     let(:part2) { partition("/p2", nil,     1.GiB, 2.GiB) }
@@ -98,9 +98,9 @@ describe Y2Storage::Planned::AssignedSpace do
     end
 
     let(:space) do
-      double("Y2Storage::FreeDiskSpace", disk: disk, disk_size: size, align_grain: disk.min_grain)
+      double("Y2Storage::FreeDiskSpace", disk: disk, disk_size: size, align_grain: align_grain)
     end
-    let(:disk) { double("Y2Storage::Disk", min_grain: min_grain) }
+    let(:disk) { double("Y2Storage::Disk") }
 
     let(:big_part1) { planned_vol(type: :vfat, min: 10.MiB) }
     let(:big_part2) { planned_vol(type: :vfat, min: 10.MiB) }
@@ -108,7 +108,7 @@ describe Y2Storage::Planned::AssignedSpace do
 
     context "if all the partitions are divisible by align_grain" do
       let(:size) { 21.MiB + 512.KiB }
-      let(:min_grain) { 512.KiB }
+      let(:align_grain) { 512.KiB }
 
       it "returns nil" do
         expect(subject.send(:enforced_last)).to be_nil
@@ -117,7 +117,7 @@ describe Y2Storage::Planned::AssignedSpace do
 
     context "if the space is big enough for any order" do
       let(:size) { 22.MiB }
-      let(:min_grain) { 1.MiB }
+      let(:align_grain) { 1.MiB }
 
       it "returns nil" do
         expect(subject.send(:enforced_last)).to be_nil
@@ -126,7 +126,7 @@ describe Y2Storage::Planned::AssignedSpace do
 
     context "if the partitions do not fit into the space" do
       let(:size) { 21.MiB }
-      let(:min_grain) { 1.MiB }
+      let(:align_grain) { 1.MiB }
 
       it "returns nil" do
         expect(subject.send(:enforced_last)).to be_nil
@@ -135,7 +135,7 @@ describe Y2Storage::Planned::AssignedSpace do
 
     context "if a given partition must be placed at the end" do
       let(:size) { 21.MiB + 512.KiB }
-      let(:min_grain) { 1.MiB }
+      let(:align_grain) { 1.MiB }
 
       it "returns the choosen partition" do
         expect(subject.send(:enforced_last)).to eq small_part

@@ -124,7 +124,7 @@ describe Y2Storage::Proposal::AutoinstDevicesPlanner do
         it "sets the size to 'unlimited'" do
           devices = planner.planned_devices(drives_map)
           root = devices.find { |d| d.mount_point == "/" }
-          expect(root.min_size).to eq(1.MiB)
+          expect(root.min_size).to eq(Y2Storage::DiskSize.B(1))
           expect(root.max_size).to eq(Y2Storage::DiskSize.unlimited)
         end
       end

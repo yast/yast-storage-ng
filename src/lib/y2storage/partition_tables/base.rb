@@ -131,8 +131,6 @@ module Y2Storage
       #   it depends on both: the device topology and the partition table
       #   alignment.
       #
-      # @see Y2Storage::Partitionable#min_grain
-      #
       # @return [DiskSize]
       def align_grain
         @align_grain ||= DiskSize.new(alignment.grain)
