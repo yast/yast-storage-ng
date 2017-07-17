@@ -94,7 +94,7 @@ describe Y2Storage::Planned::AssignedSpace do
     subject { described_class.new(space, []) }
 
     before do
-      allow(subject).to receive(:partitions).and_return [big_part1, small_part, big_part2]
+      allow(subject).to receive(:partitions).and_return partitions
     end
 
     let(:space) do
@@ -102,9 +102,12 @@ describe Y2Storage::Planned::AssignedSpace do
     end
     let(:disk) { double("Y2Storage::Disk") }
 
+    let(:partitions) { [big_part1, small_part1, big_part2] }
+
     let(:big_part1) { planned_vol(type: :vfat, min: 10.MiB) }
     let(:big_part2) { planned_vol(type: :vfat, min: 10.MiB) }
-    let(:small_part) { planned_vol(type: :vfat, min: 1.MiB + 512.KiB) }
+    let(:small_part1) { planned_vol(type: :vfat, min: 1.MiB + 512.KiB) }
+    let(:small_part2) { planned_vol(type: :vfat, min: 1.MiB + 512.KiB) }
 
     context "if all the partitions are divisible by align_grain" do
       let(:size) { 21.MiB + 512.KiB }
@@ -138,7 +141,18 @@ describe Y2Storage::Planned::AssignedSpace do
       let(:align_grain) { 1.MiB }
 
       it "returns the choosen partition" do
-        expect(subject.send(:enforced_last)).to eq small_part
+        expect(subject.send(:enforced_last)).to eq small_part1
+      end
+    end
+
+    context "if several partitions must be placed at the end" do
+      let(:partitions) { [big_part1, small_part1, small_part2, big_part2] }
+
+      let(:size) { 23.MiB + 512.KiB }
+      let(:align_grain) { 1.MiB }
+
+      it "returns the last partition that fits at the end" do
+        expect(subject.send(:enforced_last)).to eq small_part2
       end
     end
   end

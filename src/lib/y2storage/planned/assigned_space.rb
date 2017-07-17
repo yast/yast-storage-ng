@@ -204,7 +204,10 @@ module Y2Storage
         # It's impossible to fit
         return nil if missing >= align_grain
 
-        partitions.detect do |partition|
+        # Original partitions order is tried to be modified as less as possible.
+        # For that, candidates to place as last partition are searched starting
+        # from the end of the list of partitions.
+        partitions.reverse.detect do |partition|
           partition.min_size.ceil(align_grain) - missing >= partition.min_size
         end
       end
