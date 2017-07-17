@@ -22,6 +22,7 @@
 # find current contact information at www.suse.com.
 
 require "y2storage/disk"
+require "y2storage/disk_size"
 
 module Y2Storage
   module Proposal
@@ -69,6 +70,8 @@ module Y2Storage
 
     protected
 
+      PARTITION_MIN_SIZE = DiskSize.B(1)
+
       # @return [Devicegraph] Starting devicegraph
       attr_reader :devicegraph
 
@@ -96,7 +99,7 @@ module Y2Storage
           add_partition_reuse(partition, partition_section) if partition_section.create == false
 
           # Sizes: leave out reducing fixed sizes and 'auto'
-          min_size, max_size = sizes_for(partition_section.size, disk.min_grain, disk.size)
+          min_size, max_size = sizes_for(partition_section.size, PARTITION_MIN_SIZE, disk.size)
           partition.min_size = min_size
           partition.max_size = max_size
           partition.weight = 1 if max_size == DiskSize.unlimited
