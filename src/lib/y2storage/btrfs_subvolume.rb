@@ -36,7 +36,7 @@ module Y2Storage
     alias_method :filesystem, :btrfs
 
     # @!method id
-    #   @return [Fixnum]
+    #   @return [Integer]
     storage_forward :id
 
     # @!method top_level?

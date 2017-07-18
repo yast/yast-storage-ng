@@ -35,7 +35,7 @@ module Y2Storage
     #
     #   @raise [Storage::Exception] if name does not contain a number.
     #
-    #   @return [Fixnum]
+    #   @return [Integer]
     storage_forward :number
 
     # @!method partition_table

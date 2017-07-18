@@ -48,9 +48,9 @@ module Y2Storage
 
       # It runs 0
       PREDICATES = {
-        less_than: [Fixnum].freeze,
-        more_than: [Fixnum].freeze,
-        equal_to:  [Fixnum, Symbol, String].freeze
+        less_than: [Integer].freeze,
+        more_than: [Integer].freeze,
+        equal_to:  [Integer, Symbol, String].freeze
       }.freeze
 
       class << self
@@ -162,9 +162,9 @@ module Y2Storage
       # Cast the reference value in order to do the comparison
       #
       # @param raw [String] Raw reference value (as it comes from the profile)
-      # @return [String,Fixnum,Symbol] Converted reference value
+      # @return [String,Integer,Symbol] Converted reference value
       def cast_reference(raw, klass)
-        if klass == Fixnum
+        if klass == Integer
           raw.to_i
         elsif klass == Symbol
           raw.to_sym
@@ -175,8 +175,8 @@ module Y2Storage
 
       # less_than predicate
       #
-      # @param value     [Fixnum] Value to compare
-      # @param reference [Fixnum] Reference value
+      # @param value     [Integer] Value to compare
+      # @param reference [Integer] Reference value
       # @return [Boolean] true if +value+ is less than +reference+.
       def match_less_than(value, reference)
         value < reference
@@ -184,8 +184,8 @@ module Y2Storage
 
       # more_than predicate
       #
-      # @param value     [Fixnum] Value to compare
-      # @param reference [Fixnum] Reference value
+      # @param value     [Integer] Value to compare
+      # @param reference [Integer] Reference value
       # @return [Boolean] true if +value+ is greater than +reference+.
       def match_more_than(value, reference)
         value > reference
@@ -193,8 +193,8 @@ module Y2Storage
 
       # equal_to predicate
       #
-      # @param value     [Fixnum] Value to compare
-      # @param reference [Fixnum] Reference value
+      # @param value     [Integer] Value to compare
+      # @param reference [Integer] Reference value
       # @return [Boolean] true if +value+ is equal to +reference+.
       def match_equal_to(value, reference)
         value == reference

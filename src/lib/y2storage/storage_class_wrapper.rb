@@ -164,11 +164,11 @@ module Y2Storage
       #   # This is forwarded to Storage::BlkDevice#rotational
       #   device.rotational?
       #
-      #   # Returns a Y2Storage::DiskSize object instead of the Fixnum (bytes)
+      #   # Returns a Y2Storage::DiskSize object instead of the Integer (bytes)
       #   # returned by Storage::BlkDevice#size
       #   device.size
       #
-      #   # Transforms the argument to Fixnum (bytes) before passing it to
+      #   # Transforms the argument to Integer (bytes) before passing it to
       #   # Storage::BlkDevice#size=
       #   device.size = Y2Storage::DiskSize.GiB(20)
       #

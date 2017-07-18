@@ -390,7 +390,7 @@ module Y2Storage
       file_system_data_picker(part_name, args)
 
       id = id.to_i(16) if id.is_a?(::String) && id.start_with?("0x")
-      id   = fetch(PartitionId,   id,   "partition ID",   part_name) unless id.is_a?(Fixnum)
+      id   = fetch(PartitionId,   id,   "partition ID",   part_name) unless id.is_a?(Integer)
       type = fetch(PartitionType, type, "partition type", part_name)
       align = fetch(AlignPolicy,  align, "align policy",  part_name) if align
 

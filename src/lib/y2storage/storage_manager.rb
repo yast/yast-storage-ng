@@ -51,7 +51,7 @@ module Y2Storage
     # time the staging devicegraph is re-assigned.
     # @see #copy_to_staging
     #
-    # @return [Fixnum]
+    # @return [Integer]
     attr_reader :staging_revision
 
     # Proposal that was used to calculate the current staging devicegraph.
@@ -190,7 +190,7 @@ module Y2Storage
     #
     # Used to check if the system has been re-probed
     #
-    # @return [Fixnum]
+    # @return [Integer]
     attr_reader :staging_revision_after_probing
 
     # Sets the devicegraph as the staging one, updating all the associated

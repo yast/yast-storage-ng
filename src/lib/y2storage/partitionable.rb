@@ -35,7 +35,7 @@ module Y2Storage
     #   Maximum number of partitions that the kernel can handle for the device.
     #   It used to be 16 for scsi and 64 for ide. Now it's 256 for most devices.
     #
-    #   @return [Fixnum]
+    #   @return [Integer]
     storage_forward :range
     storage_forward :range=
 

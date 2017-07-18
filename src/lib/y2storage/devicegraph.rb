@@ -75,7 +75,7 @@ module Y2Storage
     storage_forward :check
 
     # @!method used_features
-    #   @return [Fixnum] bit-field with the used features of the devicegraph
+    #   @return [Integer] bit-field with the used features of the devicegraph
     storage_forward :used_features
 
     # @!method copy(dest)

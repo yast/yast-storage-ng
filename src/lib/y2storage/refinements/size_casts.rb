@@ -36,7 +36,7 @@ module Y2Storage
     #   20.GiB == Y2Storage::DiskSize.GiB(20)
     #   12.5.MiB == Y2Storage::DiskSize.MiB(12.5)
     module SizeCasts
-      REFINED_CLASSES = [::Fixnum, ::Float]
+      REFINED_CLASSES = [::Integer, ::Float]
       ADDED_METHODS = [
         :KiB, :MiB, :GiB, :TiB, :PiB, :EiB, :ZiB, :YiB,
         :KB, :MB, :GB, :TB, :PB, :EB, :ZB, :YB

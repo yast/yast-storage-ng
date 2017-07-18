@@ -103,7 +103,7 @@ module Y2Storage
     # Partition id that was represented by the given numeric fsid in the old
     # libstorage.
     #
-    # @param number [Fixnum] fsid used in the old libstorage
+    # @param number [Integer] fsid used in the old libstorage
     # @return [PartitionId] corresponding id. UNKNOWN if there is no equivalent
     def self.new_from_legacy(number)
       return LEGACY_TO_CURRENT[number] if LEGACY_TO_CURRENT.key?(number)
@@ -113,7 +113,7 @@ module Y2Storage
 
     # Numeric fsid used in the old libstorage to represent this partition id.
     #
-    # @return [Fixnum]
+    # @return [Integer]
     def to_i_legacy
       return CURRENT_TO_LEGACY[to_i] if CURRENT_TO_LEGACY.key?(to_i)
       to_i

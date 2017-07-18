@@ -42,12 +42,12 @@ module Y2Storage
     storage_forward :empty?
 
     # @!attribute start
-    #   @return [Fixnum] number of the first sector of the region
+    #   @return [Integer] number of the first sector of the region
     storage_forward :start
     storage_forward :start=
 
     # @!attribute length
-    #   @return [Fixnum] number of sectors in the region
+    #   @return [Integer] number of sectors in the region
     storage_forward :length
     storage_forward :length=
 
@@ -57,7 +57,7 @@ module Y2Storage
     storage_forward :block_size=
 
     # @!method end
-    #   @return [Fixnum] position of the last sector of the region
+    #   @return [Integer] position of the last sector of the region
     storage_forward :end
 
     # @return [DiskSize] {#block_size} * {#length}
@@ -65,7 +65,7 @@ module Y2Storage
       block_size * length
     end
 
-    # @param sector [Fixnum] disk sector number
+    # @param sector [Integer] disk sector number
     # @return [Boolean] is *sector* inside the region?
     def cover?(sector)
       start <= sector && sector <= self.end
@@ -77,7 +77,7 @@ module Y2Storage
     #   @raise [Storage::Exception] if trying to move the region before the
     #     start of the device
     #
-    #   @param delta [Fixnum] can be negative
+    #   @param delta [Integer] can be negative
     storage_forward :adjust_start
 
     # @!method adjust_length(delta)
@@ -86,7 +86,7 @@ module Y2Storage
     #   @raise [Storage::Exception] if trying to shrink the region to a negative
     #     size
     #
-    #   @param delta [Fixnum]
+    #   @param delta [Integer]
     storage_forward :adjust_length
 
     # @!method <(other)
@@ -140,9 +140,9 @@ module Y2Storage
     # Creates a new object generating the corresponding Storage::Region object
     # and wrapping it.
     #
-    # @param start [Fixnum] starting sector number
-    # @param length [Fixnum] sector count
-    # @param block_size [Fixnum] sector size in bytes
+    # @param start [Integer] starting sector number
+    # @param length [Integer] sector count
+    # @param block_size [Integer] sector size in bytes
     # @return [Region]
     def self.create(start, length, block_size)
       new(Storage::Region.new(start, length, block_size.to_i))

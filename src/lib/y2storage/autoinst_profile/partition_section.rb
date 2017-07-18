@@ -89,7 +89,7 @@ module Y2Storage
       #   @see #id_for_partition
 
       # @!attribute partition_id
-      #   @return [Fixnum] partition id. See #id_for_partition
+      #   @return [Integer] partition id. See #id_for_partition
 
       # @!attribute format
       #   @return [Boolean] whether the partition should be formatted
@@ -110,7 +110,7 @@ module Y2Storage
       #   @return [Symbol] :device, :label, :uuid, :path or :id
 
       # @!attribute partition_nr
-      #   @return [Fixnum] the partition number of this partition
+      #   @return [Integer] the partition number of this partition
 
       # @!attribute partition_type
       #   @return [String] undocumented attribute that can only contain "primary"

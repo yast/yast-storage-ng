@@ -45,10 +45,10 @@ module Y2Storage
 
     # Constructor for the wrapper object
     #
-    # @param value [Fixnum, #to_s] integer representation or name of the
+    # @param value [Integer, #to_s] integer representation or name of the
     #   concrete enum value
     def initialize(value)
-      if value.is_a?(::Fixnum)
+      if value.is_a?(::Integer)
         @storage_value = value
       else
         @storage_value = Storage.const_get("#{self.class.storage_enum}_#{value.to_s.upcase}")

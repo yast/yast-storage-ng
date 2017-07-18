@@ -36,7 +36,7 @@ module Y2Storage
       storage_forward :region, as: "Region"
 
       # @!method nr
-      #   @return [Fixnum] number of the possible new partition
+      #   @return [Integer] number of the possible new partition
       storage_forward :nr
 
       # @!method name

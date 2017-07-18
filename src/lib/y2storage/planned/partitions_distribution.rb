@@ -89,7 +89,7 @@ module Y2Storage
       end
 
       # Number of gaps (unused disk portions) introduced by the distribution
-      # @return [Fixnum]
+      # @return [Integer]
       def gaps_count
         spaces.reject { |s| s.unused.zero? }.size
       end
@@ -101,7 +101,7 @@ module Y2Storage
       end
 
       # Total number of planned partitions included in the distribution
-      # @return [Fixnum]
+      # @return [Integer]
       def partitions_count
         spaces.map { |sp| sp.partitions.size }.reduce(0, :+)
       end
@@ -109,7 +109,7 @@ module Y2Storage
       # Comparison method used to sort distributions based on how good are
       # they for installation purposes.
       #
-      # @return [Fixnum] -1, 0, 1 like <=>
+      # @return [Integer] -1, 0, 1 like <=>
       def better_than(other)
         # The smallest gaps the better
         res = gaps_total_disk_size <=> other.gaps_total_disk_size
@@ -293,7 +293,7 @@ module Y2Storage
       # Best candidate to hold the logical partition
       #
       # @param spaces [Array<AssignedSpace>] list of possible candidates
-      # @param num_logical [Fixnum]
+      # @param num_logical [Integer]
       # @return [AssignedSpace, nil]
       def extended_space(spaces, num_logical)
         spaces = spaces.select { |s| room_for_logical?(s, num_logical) }
@@ -305,7 +305,7 @@ module Y2Storage
       # Total number of partitions planned for a given list of spaces
       #
       # @param spaces [Array<AssignedSpace>] list of assigned spaces
-      # @return [Fixnum]
+      # @return [Integer]
       def num_partitions(spaces)
         spaces.map { |s| s.partitions.count }.reduce(0, :+)
       end
