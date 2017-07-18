@@ -189,7 +189,7 @@ describe Y2Storage::Devicegraph do
     before { fake_scenario(scenario) }
     subject(:graph) { fake_devicegraph }
 
-    context "if there are no multipath devices" do
+    context "if there are no multi-disk devices" do
       let(:scenario) { "autoyast_drive_examples" }
 
       it "returns an array of devices" do
@@ -228,6 +228,28 @@ describe Y2Storage::Devicegraph do
         expect(graph.disk_devices.map(&:name)).to_not include(
           "/dev/sda", "/dev/sdb", "/dev/sdc", "/dev/sdd"
         )
+      end
+    end
+    context "if there are DM RAIDs" do
+      let(:scenario) { "empty-dm_raids.xml" }
+
+      it "returns an array of devices" do
+        expect(graph.disk_devices).to be_an Array
+        expect(graph.disk_devices).to all(be_a(Y2Storage::Device))
+      end
+
+      it "includes all the DM RAIDs" do
+        expect(graph.disk_devices.map(&:name)).to include(
+          "/dev/mapper/isw_ddgdcbibhd_test1", "/dev/mapper/isw_ddgdcbibhd_test2"
+        )
+      end
+
+      it "includes all disks and DASDs that are not part of an MD RAID" do
+        expect(graph.disk_devices.map(&:name)).to include("/dev/sda")
+      end
+
+      it "does not include individual disks and DASDs from the MD RAID" do
+        expect(graph.disk_devices.map(&:name)).to_not include("/dev/sdb", "/dev/sdc")
       end
     end
   end

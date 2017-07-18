@@ -170,6 +170,27 @@ describe Y2Storage::GuidedProposal do
       end
     end
 
+    context "when installing in a DM RAID" do
+      let(:scenario) { "empty-dm_raids.xml" }
+      let(:windows_partitions) { {} }
+      let(:separate_home) { false }
+      let(:lvm) { false }
+
+      it "does not fail to make a proposal" do
+        expect { proposal.propose }.to_not raise_error
+      end
+
+      it "creates the needed partitions in the DM RAID" do
+        proposal.propose
+        raid = proposal.devices.dm_raids.first
+        expect(raid.partitions).to contain_exactly(
+          an_object_having_attributes(id: Y2Storage::PartitionId::BIOS_BOOT),
+          an_object_having_attributes(filesystem_mountpoint: "/"),
+          an_object_having_attributes(filesystem_mountpoint: "swap")
+        )
+      end
+    end
+
     context "when asked to delete all the existing partitions" do
       let(:scenario) { "windows-linux-lvm-pc" }
       let(:separate_home) { false }

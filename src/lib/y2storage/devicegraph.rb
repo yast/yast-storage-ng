@@ -152,19 +152,29 @@ module Y2Storage
       Multipath.all(self)
     end
 
+    # All the DM RAIDs in the devicegraph
+    #
+    # @return [Array<DmRaid>]
+    def dm_raids
+      DmRaid.all(self)
+    end
+
     # All the devices that are usually treated like disks by YaST
     #
     # Currently this method returns an array including all the multipath
-    # devices, as well as disks and DASDs that are not part of a multipath.
+    # devices and DM RAIDs, as well as disks and DASDs that are not part
+    # of any of the former.
     # @see #disks
     # @see #dasds
     # @see #multipaths
+    # @see #dm_raids
     #
     # @return [Array<Dasd, Disk, Multipath>]
     def disk_devices
-      mp_parents = multipaths.map(&:parents).flatten
+      multi_disk_devs = multipaths + dm_raids
+      parent_devs = multi_disk_devs.map(&:parents).flatten
       # Use #reject because Array#- is not trustworthy with SWIG
-      (multipaths + dasds + disks).reject { |d| mp_parents.include?(d) }
+      (multi_disk_devs + dasds + disks).reject { |d| parent_devs.include?(d) }
     end
 
     # @return [Array<Partition>]
