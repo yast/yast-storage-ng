@@ -100,14 +100,14 @@ module Y2Storage
             new_dev
           end
 
-          adjust_size_to_last_slot!(new_list.last, space_size, align_grain, end_alignment)
+          # The last space is extended until the end if we are working with partitions (align_grain is
+          # not nil) and the partition table allows that (end_alignment is false)
+          adjust_to_end = !align_grain.nil? && !end_alignment
 
+          adjust_size_to_last_slot(new_list.last, space_size, align_grain) if adjust_to_end
           extra_size = space_size - DiskSize.sum(new_list.map(&:size))
           unused = distribute_extra_space!(new_list, extra_size, rounding)
-
-          if align_grain && unused < align_grain && !end_alignment
-            new_list.last.size += unused
-          end
+          new_list.last.size += unused if adjust_to_end && unused < align_grain
 
           new_list
         end
@@ -173,8 +173,7 @@ module Y2Storage
           size >= rounding
         end
 
-        def adjust_size_to_last_slot!(device, space_size, align_grain, end_alignment)
-          return if align_grain.nil? || end_alignment
+        def adjust_size_to_last_slot(device, space_size, align_grain)
           adjusted_size = adjusted_size_after_ceil(device, space_size, align_grain)
           device.size = adjusted_size unless adjusted_size < device.min_size
         end
