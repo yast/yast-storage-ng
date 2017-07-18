@@ -24,7 +24,7 @@ require "y2storage/partitionable"
 require "y2storage/multi_disk_device"
 
 module Y2Storage
-  # A multipath device
+  # A DM RAID device
   #
   # This is a wrapper for Storage::DmRaid
   class DmRaid < Partitionable
