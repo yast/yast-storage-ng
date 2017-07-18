@@ -71,6 +71,7 @@ describe Y2Storage::FakeDeviceFactory do
     expect(sda.type).to eq Y2Storage::DasdType::ECKD.to_i
     expect(sda.size).to eq 256 * Storage.GiB
     expect(sda.region.block_size).to eq 4 * Storage.KiB
+    expect(sda.topology.minimal_grain).to eq 4 * Storage.KiB
 
     sda1 = Storage::Partition.find_by_name(staging, "/dev/sda1")
     expect(sda1.size).to eq 512 * Storage.MiB
