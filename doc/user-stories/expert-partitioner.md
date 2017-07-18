@@ -1,0 +1,382 @@
+
+# Expert partitioner specs
+
+## When 'Hard Disks' is selected in the tree view
+  * shows a table with the columns: Device, Size, F, Enc, Type, FS Type, Label, Mount Point, Start, End
+    * and the table is filled out with info of all disks and partitions
+  * shows the actions: 'Add Partition', 'Edit', 'Move', 'Resize' and 'Delete'
+    * and action 'Add Partition' is selected
+      * and the current selected row in the table is a disk
+        * starts wizard to add a new partition to the disk
+      * and the current selected row in the table is a partition
+        * starts wizard to add a new partition to the disk that the partition belongs to.
+    * and action 'Edit' is selected
+      * and the current selected row in the table is a disk
+        * shows the disk view for that specific disk
+      * and the current selected row in the table is a partition
+        * shows the edition dialog for that partition
+    * and action 'Move' is selected
+      * and the current selected row in the table is a disk
+        * shows a error popup
+      * and the current selected row in the table is a partition
+        * and it is possible to move the partition (forward or backward)
+          * shows a confirm popup to move the partition
+          * moves the partition
+        * and it is not possible to move the partition
+          * shows an error popup
+    * and action 'Delete' is selected
+      * and the current selected row in the table is a disk
+        * shows a confirm popup to delete all partitions of the disk
+        * removes all disk partitions
+      * and the current selected row in the table is a partition
+        * shows a confirm popup to delete the partition
+        * removes the partition
+
+## When a 'disk' is selected in the tree view
+  * shows a view with two tabs: 'Overview' and 'Partitions'
+  * and tab 'Overview' is selected
+    * shows a report with two sections: 'Device' and 'Hard Disk'
+      * where 'Device' section contains the folling disk info
+        * device name
+        * device size
+        * device path
+        * device id
+      * where 'Hard Disk' section contains the following disk info
+        * vendor
+        * model
+        * number of cylinders
+        * cylinder size
+        * bus
+        * sector size
+        * disk label
+    * shows a button for 'Health Test (SMART)'
+  * and tab 'Partitions' is selected
+    * shows a bar image with the disk partitions
+    * shows a table filled out with disk partitions info (same columns than before)
+    * shows the actions: 'Expert', 'Add', 'Edit', 'Move'
+      * and action 'Expert' is selected
+        * shows two options: 'Create New Partition Table' and 'Clone this Disk'
+          * and 'Create New Partition Table' is selected
+            * shows a popup to select a partition table type: MSDOS, GPT, DASD
+            * DASD is only showed for s390 arch
+            * and 'Ok' is selected
+              * asks for confirmation
+              * removes existing partition table
+              * creates a new partition table into the disk
+          * and 'Clone this Disk' is selected
+            * TODO
+      * and action 'Add' is selected
+        * shows wizard to add a new partition
+      * and action 'Edit' is selected
+        * shows dialog to edit the current selected partition in the table
+      * and action 'Move' is selected
+        * and it is possible to move the partition (forward or backward)
+          * shows a confirm popup to move the partition
+          * moves the partition
+        * and it is not possible to move the partition
+          * shows an error popup
+      * and action 'Delete' is selected
+        * shows a confirm popup to delete the partition
+        * deletes the partition
+
+## When a 'partition' is selected in the tree view
+* shows a report with two sections: 'Device' and 'File System'
+  * where 'Device' section contains the folling info
+    * Device
+    * Size
+    * Encrypted
+    * Device path
+    * Device id
+    * Fs id.
+  * where 'File system' section contains the folling info
+    * File system
+    * Mount point
+    * Label
+* shows the actions: 'Edit', 'Move', 'Resize' and 'Delete'
+  * and action 'Edit' is selected
+    * the same than in the "disk view"
+  * and action 'Move' is selected
+    * the same than in the "disk view"
+  * and action 'Delete' is selected
+    * the same than in the "disk view"
+
+## When 'Add partition' is selected
+* and there is not space enough
+  * shows an error popup
+* and it is not possible to create more partitions (max number of primary reached)
+  * shows an error popup
+* and it is possible to create a new partition
+  * shows a wizard with 4 steps
+    * select partition type
+    * select partition size
+    * select partition role
+    * set partition attributes (fs, mount point, etc)
+
+### When we are in wizard step to select the partition type
+* and there is no free space
+  * the step is skipped
+* and partition table is not MSDOS
+  * the step is skipped
+* and partition table is MSDOS
+  * and only it is possible to create primary partitions
+    * the step is skipped
+  * and only it is possible to create an extended partition
+    * the step is skipped
+  * and only it is possible to create an logical partition
+    * the step is skipped
+  * and there is space for a primary partition
+    * and the max of primary partitions is not reached
+      * shows option 'Primary partition'
+  * and there is not an extended partition
+    * shows option 'Extended partition' 
+  * and there is an extended partition with free space
+    * shows option 'Logical partition'
+
+### When we are in wizard step to select the partition size
+* shows three options
+  * Maximun size
+  * Custom size
+    * with maximum size by default
+  * Custom region
+    * with start and end cylinders of the free region by default
+* and partition is primary
+  * custom size is selected by default
+* and partition is extended
+  * maximum size is selected by default
+* and partition is logical
+  * custo region is selected by default
+
+### When we are in wizard step to select the role of the partition
+* and partition is extended
+  * the step is skipped
+* shows the following options
+  * operating system (i.e. root)
+  * data and ISV applications (any other mount point)
+  * swap
+  * raw volume (unformatted)
+* option 'data and ISV applications' is selected by default
+
+### When we are in wizard step for partition attributes
+* shows two sets of options: 'Formatting options' and 'Mounting options'
+  * where 'Formatting options' contains
+    * Format partition
+    * Do not format partition
+    * Encrypt device
+  * where 'Mounting options' contains
+    * Mount partition
+    * Do not mount partition
+* and partition role is 'Operating system'
+  * sets the following 'Formatting options' by default
+    * Format partition: true
+      * File System: Btrfs
+      * Enable snapshots: true
+    * Do not format partition: false
+      * File System Id: 0x83 Linux
+    * Encrypt: false
+  * sets the following options for 'Mounting options'
+    * Mount partition: true
+      * Mount point: first free of /, /home, /var
+    * Do not mount partition: false
+* and partition role is 'Data and ISV applications'
+  * sets the following 'Formatting options' by default
+    * Format partition: true
+      * File System: XFS
+    * Do not format partition: false
+      * File System Id: 0x83 Linux
+    * Encrypt: false
+  * sets the following options for 'Mounting options'
+    * Mount partition: true
+      * Mount point: first free of /, /home, /var
+    * Do not mount partition: false
+* and partition role is 'Swap'
+  * sets the following 'Formatting options' by default
+    * Format partition: true
+      * File System: Swap
+    * Do not format partition: false
+      * File System Id: 0x82 Linux Swap
+    * Encrypt: false
+  * sets the following options for 'Mounting options'
+    * Mount partition: true
+      * Mount point: swap
+    * Do not mount partition: false
+* and partition role is 'Raw volume'
+  * sets the following 'Formatting options' by default
+    * Format partition: false
+    * Do not format partition: true
+      * File System Id: 0x8E Linux LVM
+    * Encrypt: false
+  * sets the following options for 'Mounting options'
+    * Mount partition: false
+    * Do not mount partition: true
+* and 'Finish' button is selected
+  * and 'Mount partition' is true
+    * and 'Format partition' is false
+      * and partition is not formatted
+        * shows an error popup
+    * and mount point does not start by /
+      * shows an error popup
+    * and filesystem is swap
+      * and mount point is not swap
+        * shows an error popup
+
+#### When 'Format partition' is selected
+* disables 'File system Id'
+* allows to select a 'File system'
+  * where options are: BtrFs, EXT2, EXT3, EXT4, FAT, XFS, Swap 
+* and 'File system' is BtrFS
+  * does not show 'Options' button
+  * shows 'Enable snaphsots'
+  * and mount point is /
+    * marks 'Enable snapshots'
+  * shows button 'Subvolume Handling'
+  * sets 'File system Id' to 0x83 Linux
+* and 'File system' is EXT2
+  * shows 'Options' button
+  * and 'Options' is selected
+    * shows a dialog with the fields
+      * Stride Length in blocks: none
+      * Block size in bytes: auto (default), 1024, 2048, 4096
+      * Bytes per inode: auto (default), 1024, 2048, 4096, 8192, 16384, 32768
+      * Percentage of blocks reserved for root: 5.0
+      * Disable regular checks: false
+  * sets 'File system Id' to 0x83 Linux
+* and 'File system' is EXT3
+  * shows 'Options' button
+  * and 'Options' is selected
+    * shows a dialog with the fields
+      * Stride Length in blocks: none
+      * Block size in bytes: auto (default), 1024, 2048, 4096
+      * Bytes per inode: auto (default), 1024, 2048, 4096, 8192, 16384, 32768
+      * Percentage of blocks reserved for root: 5.0
+      * Disable regular checks: true
+      * Inode size: default, 128, 256, 512, 1024
+      * Directory index feature: false
+  * sets 'File system Id' to 0x83 Linux
+* and 'File system' is EXT4
+  * shows 'Options' button
+  * and 'Options' is selected
+    * shows a dialog with the fields
+      * Stride Length in blocks: none
+      * Block size in bytes: auto (default), 1024, 2048, 4096
+      * Bytes per inode: auto (default), 1024, 2048, 4096, 8192, 16384, 32768
+      * Percentage of blocks reserved for root: 5.0
+      * Disable regular checks: true
+      * Inode size: default, 128, 256, 512, 1024
+      * Directory index feature: false
+      * No journal: false
+  * sets 'File system Id' to 0x83 Linux
+* and 'File system' is FAT
+  * shows 'Options' button
+  * and 'Options' is selected
+    * shows a dialog with the fields
+      * Number of FATs: auto (default), 1, 2
+      * FAT size: auto (default), 12 bit, 16 bit, 32 bit
+      * Root dir entries: auto
+  * sets 'File system Id' to 0x0C Win95 FAT32
+* and 'File system' is XFS
+  * shows 'Options' button
+  * and 'Options' is selected
+    * shows a dialog with the fields
+      * Block size in bytes: auto (default), 1024, 2048, 4096
+      * Inode size: auto (default), 256, 512, 1024, 2048
+      * Percentage of inode space: auto (default), 5, 10, ..., 95, 100
+      * Inode aligned: auto (default), true, false
+  * sets 'File system Id' to 0x83 Linux
+* and 'File system' is Swap
+  * shows 'Options' button as disabled
+  * sets 'Mount point' to Swap
+  * sets 'File system Id' to 0x82 Linux swap
+
+#### When 'Do not format partition' is selected
+* disables 'Format partition' options
+* allows to select a 'File system Id'
+  * where options are: 0x83 Linux, 0x8E Linux LVM, 0x82 Linux swap, 0xFD Linux RAID, 0x07 NTFS, 0x0C Win 95 FAT, 0xA0 Hibernation
+    * and partition table is GPT
+      * options include: 0x00 BIOS Grub, 0x00 GPT PReP Boot, 0x00 EFI Boot
+* allows to enter a 'File system Id' manually
+* when 'File system Id' is 0x83 Linux, 0x07 NTFS, 0x0C Win 95 FAT, 0xA0 Hibernation, 0x00 EFI Boot
+  * enables 'Mounting options'
+* when 'File system Id' is 0x8E Linux LVM, 0xFD Linux RAID, 0xA0 Hibernation, 0x00 BIOS Grub, 0x00 GPT PReP Boot
+  * disables 'Mounting options'
+* when 'File system Id' is 0x82 Linux swap
+  * enables 'Mounting options'
+  * sets 'Mount point' to swap
+
+#### When 'Mount partition' is selected
+* allows to select 'Mount point'
+  * where options are: /, /home, /var, /opt, /boot, /srv, /tmp, /usr/local
+  * first free value is taken by default
+* allows to enter a 'Mount point' manually
+* and a 'Mount point' is indicated
+  * shows the button 'Fstab options'
+
+#### When 'Fstab options' is selected
+* and 'File system' is BtrFs
+  * shows a dialog with the following fields
+    * Mount in /etc/fstab by: Device name, Volume label, UUID (default), Device ID, Device path.
+    * Volume label:
+    * Mount Read-only: false
+    * No access time: false
+    * Mountable by user: false
+    * Do not mount at system start-up: false
+    * Arbitrary option value: subvol=@
+* and 'File system' is EXT2
+  * shows a dialog with the following fields
+    * Mount in /etc/fstab by: Device name, Volume label, UUID (default), Device ID, Device path.
+    * Volume label:
+    * Mount Read-only: false
+    * No access time: false
+    * Mountable by user: false
+    * Do not mount at system start-up: false
+    * Enable quota support: false
+    * Access control lists (ACL): true
+    * Extended user attributes: true
+    * Arbitrary option value:
+* and 'File system' is EXT3 or EXT4
+  * shows a dialog with the following fields
+    * Mount in /etc/fstab by: Device name, Volume label, UUID (default), Device ID, Device path.
+    * Volume label:
+    * Mount Read-only: false
+    * No access time: false
+    * Mountable by user: false
+    * Do not mount at system start-up: false
+    * Enable quota support: false
+    * Data journaling mode: journal, ordered (default), writeback 
+    * Access control lists (ACL): true
+    * Extended user attributes: true
+    * Arbitrary option value:
+* and 'File system' is FAT
+  * shows a dialog with the following fields
+    * Mount in /etc/fstab by: Device name, Volume label, UUID (default), Device ID, Device path.
+    * Volume label:
+    * Mount Read-only: false
+    * No access time: false
+    * Mountable by user: false
+    * Do not mount at system start-up: false
+    * Charset for file names: iso, utf8, etc (default blank)
+    * Codepage for short FAT names: 437, 852, 932, 936, 949, 950, (default blank)
+    * Arbitrary option value: users,gid=users,umask=0002,utf8=true
+* and 'File system' is XFS
+  * shows a dialog with the following fields
+    * Mount in /etc/fstab by: Device name, Volume label, UUID (default), Device ID, Device path.
+    * Volume label:
+    * Mount Read-only: false
+    * No access time: false
+    * Mountable by user: false
+    * Do not mount at system start-up: false
+    * Enable quota support: false
+    * Arbitrary option value:
+* and 'File system' is Swap
+  * shows a dialog with the following fields
+    * Mount in /etc/fstab by: Device name, Volume label, UUID (default), Device ID, Device path.
+    * Volume label:
+    * Swap priority:
+    * Arbitrary option value:
+    * Arbitrary option value:
+
+#### When 'Subvolume handling' is selected
+* shows a dialog with a list of all subvolumes
+* allows to add a new subvolume
+* allows to remove one subvolume from the list
+* alerts when trying to create a subvolume that does not start by /@
+  * automatically appends /@ to the subvolume path
