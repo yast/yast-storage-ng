@@ -29,7 +29,7 @@ module Y2Storage
   #
   # This is a wrapper for Storage::Partitionable
   class Partitionable < BlkDevice
-    wrap_class Storage::Partitionable, downcast_to: ["Disk", "Dasd", "Md", "Multipath"]
+    wrap_class Storage::Partitionable, downcast_to: ["Disk", "Dasd", "DmRaid", "Md", "Multipath"]
 
     # @!attribute range
     #   Maximum number of partitions that the kernel can handle for the device.

@@ -26,9 +26,9 @@ require "y2storage/multi_disk_device"
 module Y2Storage
   # A multipath device
   #
-  # This is a wrapper for Storage::Multipath
-  class Multipath < Partitionable
-    wrap_class Storage::Multipath
+  # This is a wrapper for Storage::DmRaid
+  class DmRaid < Partitionable
+    wrap_class Storage::DmRaid
     include MultiDiskDevice
 
     # @!method rotational?
@@ -39,29 +39,29 @@ module Y2Storage
     #   @param devicegraph [Devicegraph]
     #   @param name [String]
     #   @param region_or_size [Region, DiskSize]
-    #   @return [Multipath]
-    storage_class_forward :create, as: "Multipath"
+    #   @return [DmRaid]
+    storage_class_forward :create, as: "DmRaid"
 
     # @!method self.all(devicegraph)
     #   @param devicegraph [Devicegraph]
-    #   @return [Array<Multipath>] all the multipath devices in the given
-    #     devicegraph, sorted by name
-    storage_class_forward :all, as: "Multipath"
+    #   @return [Array<DmRaid>] all the DM RAIDs in the given devicegraph,
+    #     sorted by name
+    storage_class_forward :all, as: "DmRaid"
 
     # @!method self.find_by_name(devicegraph, name)
     #   @param devicegraph [Devicegraph]
     #   @param name [String] only the name returned by #name is considered
-    #   @return [Multipath] nil if there is no such device
-    storage_class_forward :find_by_name, as: "Multipath"
+    #   @return [DmRaid] nil if there is no such device
+    storage_class_forward :find_by_name, as: "DmRaid"
 
     def inspect
-      "<Multipath #{name} parents=#{parents}>"
+      "<DmRaid #{name} parents=#{parents}>"
     end
 
   protected
 
     def types_for_is
-      super << :multipath
+      super << :dm_raid
     end
   end
 end
