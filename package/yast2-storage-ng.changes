@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Tue Jul 18 11:43:26 UTC 2017 - ancor@suse.com
+
+- Adjusted the guided proposal to work properly on scenarios with
+  DM RAIDs.
+
+-------------------------------------------------------------------
 Mon Jul 17 09:07:39 UTC 2017 - ancor@suse.com
 
 - Adjusted the guided proposal to work properly on scenarios with
