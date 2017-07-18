@@ -30,6 +30,15 @@ module Y2Storage
     class Dasd < Base
       wrap_class Storage::DasdPt
 
+      # Whether the partitions should be end-aligned.
+      #
+      # DASD partition table requires end-aligned partitions.
+      #
+      # @return [Boolean] true
+      def require_end_alignment?
+        true
+      end
+
       # DASD partition table uses partition id LINUX for swap.
       # @see PatitionTables::Base#partition_id_for
       #

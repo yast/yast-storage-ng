@@ -136,6 +136,17 @@ module Y2Storage
         @align_grain ||= DiskSize.new(alignment.grain)
       end
 
+      # Whether the partitions should be end-aligned.
+      #
+      # Some kind of partition tables, for example DASD, requires end-aligned
+      # partitions. In general, this is not required for most of partion tables:
+      # MBR or GPT.
+      #
+      # @return [Boolean] false by default
+      def require_end_alignment?
+        false
+      end
+
       # The partition id depends on the partition table type. For example,
       #   MSDOS partition tables use SWAP id for swap partitions, but DASD
       #   partiton tables need LINUX id.

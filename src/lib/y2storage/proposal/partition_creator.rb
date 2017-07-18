@@ -79,11 +79,15 @@ module Y2Storage
         end
 
         align_grain = free_space.align_grain
+        end_alignment = free_space.require_end_alignment?
+
         partitions = Planned::Partition.distribute_space(
           partitions,
           usable_size,
-          align_grain: align_grain
+          align_grain:   align_grain,
+          end_alignment: end_alignment
         )
+
         create_planned_partitions(partitions, free_space, num_logical)
       end
 

@@ -2,4 +2,4 @@
 - dasd:
     name: /dev/sda
     type: eckd
-    size: 53687058432 (50 GiB)
+    size: 50 GiB

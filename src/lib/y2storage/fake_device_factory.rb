@@ -210,7 +210,7 @@ module Y2Storage
     # @return [String] device name of the new DASD disk ("/dev/sda" etc.)
     def create_dasd(_parent, args)
       dasd_args = add_defaults_for_dasd(args)
-      dasd = new_partitionable(Dasd, args)
+      dasd = new_partitionable(Dasd, dasd_args)
       type = fetch(DasdType, dasd_args["type"], "dasd type", dasd_args["name"])
       format = fetch(DasdFormat, dasd_args["format"], "dasd format", dasd_args["name"])
       dasd.type = type unless type.is?(:unknown)
@@ -223,7 +223,10 @@ module Y2Storage
       dasd_args["name"] ||= "/dev/dasda"
       dasd_args["type"] ||= "unknown"
       dasd_args["format"] ||= "none"
-      dasd_args["block_size"] ||= DiskSize.KiB(4) if dasd_args["type"] == "eckd"
+      if dasd_args["type"] == "eckd"
+        dasd_args["block_size"] ||= DiskSize.KiB(4)
+        dasd_args["min_grain"] ||= DiskSize.KiB(4)
+      end
       dasd_args
     end
 

@@ -45,8 +45,13 @@ describe Y2Storage::Planned::AssignedSpace do
     end
 
     let(:space) do
-      double("Y2Storage::FreeDiskSpace", disk: disk, disk_size: 500.GiB, align_grain: 1.MiB)
+      double("Y2Storage::FreeDiskSpace",
+        disk:                   disk,
+        disk_size:              500.GiB,
+        align_grain:            1.MiB,
+        require_end_alignment?: false)
     end
+
     let(:disk) { double("Y2Storage::Disk") }
 
     let(:part1) { partition("/p1", 100.MiB, 1.GiB, 2.GiB) }
@@ -100,7 +105,19 @@ describe Y2Storage::Planned::AssignedSpace do
     let(:space) do
       double("Y2Storage::FreeDiskSpace", disk: disk, disk_size: size, align_grain: align_grain)
     end
+
+    let(:space) do
+      double("Y2Storage::FreeDiskSpace",
+        disk:                   disk,
+        disk_size:              size,
+        align_grain:            align_grain,
+        require_end_alignment?: end_alignment)
+    end
+
     let(:disk) { double("Y2Storage::Disk") }
+    let(:size) { 50.MiB }
+    let(:align_grain) { 512.KiB }
+    let(:end_alignment) { false }
 
     let(:partitions) { [big_part1, small_part1, big_part2] }
 
@@ -108,6 +125,14 @@ describe Y2Storage::Planned::AssignedSpace do
     let(:big_part2) { planned_vol(type: :vfat, min: 10.MiB) }
     let(:small_part1) { planned_vol(type: :vfat, min: 1.MiB + 512.KiB) }
     let(:small_part2) { planned_vol(type: :vfat, min: 1.MiB + 512.KiB) }
+
+    context "if end-alignment is required" do
+      let(:end_alignment) { true }
+
+      it "returns nil" do
+        expect(subject.send(:enforced_last)).to be_nil
+      end
+    end
 
     context "if all the partitions are divisible by align_grain" do
       let(:size) { 21.MiB + 512.KiB }
