@@ -172,6 +172,14 @@ module Y2Storage
         disk_space.align_grain
       end
 
+      # Whether the partitions should be end-aligned.
+      # @see Y2Storage::FreeDiskSpace#require_end_alignment?
+      #
+      # @return [Boolean]
+      def require_end_alignment?
+        disk_space.require_end_alignment?
+      end
+
       # Sorts the planned partitions in the most convenient way in order to
       # create real partitions for them.
       def sort_partitions!
@@ -196,6 +204,9 @@ module Y2Storage
       #
       # @return [Planned::Partition, nil]
       def enforced_last
+        # It's impossible to fit if end-alignment is required
+        return nil if require_end_alignment?
+
         rounded_up = DiskSize.sum(partitions.map(&:min), rounding: align_grain)
         # There is enough space to fit with any order
         return nil if usable_size >= rounded_up

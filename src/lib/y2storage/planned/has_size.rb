@@ -88,7 +88,7 @@ module Y2Storage
         #     partitions.
         # @return [Array] list containing devices with an adjusted value
         #     for Planned::HasSize#size
-        def distribute_space(devices, space_size, rounding: nil, align_grain: nil)
+        def distribute_space(devices, space_size, rounding: nil, align_grain: nil, end_alignment: false)
           raise RuntimeError if space_size < DiskSize.sum(devices.map(&:min))
 
           rounding ||= align_grain
@@ -99,11 +99,15 @@ module Y2Storage
             new_dev.size = device.min_size.ceil(rounding)
             new_dev
           end
-          adjust_size_to_last_slot!(new_list.last, space_size, align_grain) if align_grain
+
+          adjust_size_to_last_slot!(new_list.last, space_size, align_grain, end_alignment)
 
           extra_size = space_size - DiskSize.sum(new_list.map(&:size))
           unused = distribute_extra_space!(new_list, extra_size, rounding)
-          new_list.last.size += unused if align_grain && unused < align_grain
+
+          if align_grain && unused < align_grain && !end_alignment
+            new_list.last.size += unused
+          end
 
           new_list
         end
@@ -169,7 +173,8 @@ module Y2Storage
           size >= rounding
         end
 
-        def adjust_size_to_last_slot!(device, space_size, align_grain)
+        def adjust_size_to_last_slot!(device, space_size, align_grain, end_alignment)
+          return if align_grain.nil? || end_alignment
           adjusted_size = adjusted_size_after_ceil(device, space_size, align_grain)
           device.size = adjusted_size unless adjusted_size < device.min_size
         end

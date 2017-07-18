@@ -81,6 +81,14 @@ module Y2Storage
       @align_grain ||= disk.as_not_empty { disk.partition_table.align_grain }
     end
 
+    # Whether the partitions should be end-aligned.
+    # @see Y2Storage::PartitionTables::Base#require_end_alignment?
+    #
+    # @return [Boolean]
+    def require_end_alignment?
+      @end_alignment ||= disk.as_not_empty { disk.partition_table.require_end_alignment? }
+    end
+
     def to_s
       "#<FreeDiskSpace disk_name=#{disk_name}, size=#{disk_size}, start_offset=#{start_offset}>"
     end
