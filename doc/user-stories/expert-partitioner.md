@@ -3,27 +3,41 @@
 
 ## When 'Hard Disks' is selected in the tree view
   * shows a table with the columns: Device, Size, F, Enc, Type, FS Type, Label, Mount Point, Start, End
+    * pending storage-ng: column 'Type'
     * and the table is filled out with info of all disks and partitions
   * shows the actions: 'Add Partition', 'Edit', 'Move', 'Resize' and 'Delete'
+    * pending storage-ng: 'Add Partition', 'Edit', 'Move' and 'Resize'
     * and action 'Add Partition' is selected
+      * pending storage-ng
       * and the current selected row in the table is a disk
         * starts wizard to add a new partition to the disk
       * and the current selected row in the table is a partition
         * starts wizard to add a new partition to the disk that the partition belongs to.
     * and action 'Edit' is selected
+      * pending storage-ng
       * and the current selected row in the table is a disk
         * shows the disk view for that specific disk
       * and the current selected row in the table is a partition
-        * shows the edition dialog for that partition
+        * and the partition is extended
+          * shows an error popup
+        * and the partition is not extended
+          * shows the edition dialog for that partition
     * and action 'Move' is selected
+      * pending storage-ng
       * and the current selected row in the table is a disk
-        * shows a error popup
+        * shows an error popup
       * and the current selected row in the table is a partition
         * and it is possible to move the partition (forward or backward)
           * shows a confirm popup to move the partition
           * moves the partition
         * and it is not possible to move the partition
           * shows an error popup
+    * and action 'Resize' is selected
+      * pending storage-ng
+      * and the current selected row in the table is a disk
+        * shows an error popup
+      * and the current selected row in the table is a partition
+        * shows the resize dialog
     * and action 'Delete' is selected
       * and the current selected row in the table is a disk
         * shows a confirm popup to delete all partitions of the disk
@@ -42,19 +56,21 @@
         * device path
         * device id
       * where 'Hard Disk' section contains the following disk info
-        * vendor
-        * model
-        * number of cylinders
-        * cylinder size
-        * bus
-        * sector size
+        * vendor (pending storage-ng)
+        * model (pending storage-ng)
+        * number of cylinders (pending storage-ng)
+        * cylinder size (pending storage-ng)
+        * bus (pending storage-ng)
+        * sector size (pending storage-ng)
         * disk label
     * shows a button for 'Health Test (SMART)'
+      * pending storage-ng
   * and tab 'Partitions' is selected
     * shows a bar image with the disk partitions
     * shows a table filled out with disk partitions info (same columns than before)
     * shows the actions: 'Expert', 'Add', 'Edit', 'Move'
       * and action 'Expert' is selected
+        * pending storage-ng
         * shows two options: 'Create New Partition Table' and 'Clone this Disk'
           * and 'Create New Partition Table' is selected
             * shows a popup to select a partition table type: MSDOS, GPT, DASD
@@ -64,17 +80,27 @@
               * removes existing partition table
               * creates a new partition table into the disk
           * and 'Clone this Disk' is selected
-            * TODO
+            * shows a popup dialog to select the disk where to clone
+            * and 'Ok' is selected
+              * shows a popup to confirm partitions deleting
+              * clones the disk partitions
       * and action 'Add' is selected
         * shows wizard to add a new partition
       * and action 'Edit' is selected
-        * shows dialog to edit the current selected partition in the table
+        * and the partition is extended
+          * shows an error popup
+        * and the partition is not extended
+          * shows dialog to edit the current selected partition in the table
       * and action 'Move' is selected
+        * pending storage-ng
         * and it is possible to move the partition (forward or backward)
           * shows a confirm popup to move the partition
           * moves the partition
         * and it is not possible to move the partition
           * shows an error popup
+      * and action 'Resize' is selected
+        * pending storage-ng
+        * shows the resize dialog
       * and action 'Delete' is selected
         * shows a confirm popup to delete the partition
         * deletes the partition
@@ -87,7 +113,7 @@
     * Encrypted
     * Device path
     * Device id
-    * Fs id.
+    * Fs id
   * where 'File system' section contains the folling info
     * File system
     * Mount point
@@ -96,9 +122,27 @@
   * and action 'Edit' is selected
     * the same than in the "disk view"
   * and action 'Move' is selected
+    * pending storage-ng
+    * the same than in the "disk view"
+  * and action 'Resize' is selected
+    * pending storage-ng
     * the same than in the "disk view"
   * and action 'Delete' is selected
     * the same than in the "disk view"
+
+## When 'Resize' is selected
+* pending storage-ng
+* and selected partition is extended
+  * shows an error popup
+* and selected partition is not extended
+  * shows a dialog with the following fields
+    * Maximum size (default)
+    * Minimum size
+    * Custom size
+  * and 'Ok' is selected
+    * and entered custom sized is not valid
+      * shows an error popup
+    * resizes the partition
 
 ## When 'Add partition' is selected
 * and there is not space enough
@@ -113,16 +157,12 @@
     * set partition attributes (fs, mount point, etc)
 
 ### When we are in wizard step to select the partition type
-* and there is no free space
-  * the step is skipped
 * and partition table is not MSDOS
   * the step is skipped
 * and partition table is MSDOS
   * and only it is possible to create primary partitions
     * the step is skipped
-  * and only it is possible to create an extended partition
-    * the step is skipped
-  * and only it is possible to create an logical partition
+  * and only it is possible to create logical partitions
     * the step is skipped
   * and there is space for a primary partition
     * and the max of primary partitions is not reached
@@ -140,15 +180,19 @@
   * Custom region
     * with start and end cylinders of the free region by default
 * and partition is primary
+  * pending storage-ng: maximum is selected
   * custom size is selected by default
 * and partition is extended
   * maximum size is selected by default
 * and partition is logical
-  * custo region is selected by default
+  * pending storage-ng: maximum is selected
+  * custom region is selected by default
+* and 'Next' is selected
+  * and partition is extended
+    * finishes wizard
+    * creates the partition
 
 ### When we are in wizard step to select the role of the partition
-* and partition is extended
-  * the step is skipped
 * shows the following options
   * operating system (i.e. root)
   * data and ISV applications (any other mount point)
@@ -166,6 +210,7 @@
     * Mount partition
     * Do not mount partition
 * and partition role is 'Operating system'
+  * pending storage-ng
   * sets the following 'Formatting options' by default
     * Format partition: true
       * File System: Btrfs
@@ -178,6 +223,7 @@
       * Mount point: first free of /, /home, /var
     * Do not mount partition: false
 * and partition role is 'Data and ISV applications'
+  * pending storage-ng
   * sets the following 'Formatting options' by default
     * Format partition: true
       * File System: XFS
@@ -189,6 +235,7 @@
       * Mount point: first free of /, /home, /var
     * Do not mount partition: false
 * and partition role is 'Swap'
+  * pending storage-ng
   * sets the following 'Formatting options' by default
     * Format partition: true
       * File System: Swap
@@ -200,6 +247,7 @@
       * Mount point: swap
     * Do not mount partition: false
 * and partition role is 'Raw volume'
+  * pending storage-ng
   * sets the following 'Formatting options' by default
     * Format partition: false
     * Do not format partition: true
@@ -209,6 +257,7 @@
     * Mount partition: false
     * Do not mount partition: true
 * and 'Finish' button is selected
+  * pending storage-ng
   * and 'Mount partition' is true
     * and 'Format partition' is false
       * and partition is not formatted
@@ -218,12 +267,14 @@
     * and filesystem is swap
       * and mount point is not swap
         * shows an error popup
+  * saves the partition options
 
 #### When 'Format partition' is selected
 * disables 'File system Id'
 * allows to select a 'File system'
   * where options are: BtrFs, EXT2, EXT3, EXT4, FAT, XFS, Swap 
 * and 'File system' is BtrFS
+  * pending storage-ng
   * does not show 'Options' button
   * shows 'Enable snaphsots'
   * and mount point is /
@@ -231,6 +282,7 @@
   * shows button 'Subvolume Handling'
   * sets 'File system Id' to 0x83 Linux
 * and 'File system' is EXT2
+  * pending storage-ng
   * shows 'Options' button
   * and 'Options' is selected
     * shows a dialog with the fields
@@ -241,6 +293,7 @@
       * Disable regular checks: false
   * sets 'File system Id' to 0x83 Linux
 * and 'File system' is EXT3
+  * pending storage-ng
   * shows 'Options' button
   * and 'Options' is selected
     * shows a dialog with the fields
@@ -253,6 +306,7 @@
       * Directory index feature: false
   * sets 'File system Id' to 0x83 Linux
 * and 'File system' is EXT4
+  * pending storage-ng
   * shows 'Options' button
   * and 'Options' is selected
     * shows a dialog with the fields
@@ -266,6 +320,7 @@
       * No journal: false
   * sets 'File system Id' to 0x83 Linux
 * and 'File system' is FAT
+  * pending storage-ng
   * shows 'Options' button
   * and 'Options' is selected
     * shows a dialog with the fields
@@ -274,6 +329,7 @@
       * Root dir entries: auto
   * sets 'File system Id' to 0x0C Win95 FAT32
 * and 'File system' is XFS
+  * pending storage-ng
   * shows 'Options' button
   * and 'Options' is selected
     * shows a dialog with the fields
@@ -283,6 +339,7 @@
       * Inode aligned: auto (default), true, false
   * sets 'File system Id' to 0x83 Linux
 * and 'File system' is Swap
+  * pending storage-ng
   * shows 'Options' button as disabled
   * sets 'Mount point' to Swap
   * sets 'File system Id' to 0x82 Linux swap
@@ -292,11 +349,15 @@
 * allows to select a 'File system Id'
   * where options are: 0x83 Linux, 0x8E Linux LVM, 0x82 Linux swap, 0xFD Linux RAID, 0x07 NTFS, 0x0C Win 95 FAT, 0xA0 Hibernation
     * and partition table is GPT
+      * pending storage-ng
       * options include: 0x00 BIOS Grub, 0x00 GPT PReP Boot, 0x00 EFI Boot
 * allows to enter a 'File system Id' manually
+  * pending storage-ng
 * when 'File system Id' is 0x83 Linux, 0x07 NTFS, 0x0C Win 95 FAT, 0xA0 Hibernation, 0x00 EFI Boot
+  * pending storage-ng
   * enables 'Mounting options'
 * when 'File system Id' is 0x8E Linux LVM, 0xFD Linux RAID, 0xA0 Hibernation, 0x00 BIOS Grub, 0x00 GPT PReP Boot
+  * pending storage-ng
   * disables 'Mounting options'
 * when 'File system Id' is 0x82 Linux swap
   * enables 'Mounting options'
@@ -306,23 +367,31 @@
 * allows to select 'Mount point'
   * where options are: /, /home, /var, /opt, /boot, /srv, /tmp, /usr/local
   * first free value is taken by default
+    * pending storage-ng
 * allows to enter a 'Mount point' manually
 * and a 'Mount point' is indicated
   * shows the button 'Fstab options'
+
+#### When 'Do not mount partition' is selected
+* pending storage-ng
+* disables 'Mount device' options
 
 #### When 'Fstab options' is selected
 * and 'File system' is BtrFs
   * shows a dialog with the following fields
     * Mount in /etc/fstab by: Device name, Volume label, UUID (default), Device ID, Device path.
+      * pending storage-ng: default Device name
     * Volume label:
     * Mount Read-only: false
     * No access time: false
     * Mountable by user: false
     * Do not mount at system start-up: false
     * Arbitrary option value: subvol=@
+      * pending storage-ng
 * and 'File system' is EXT2
   * shows a dialog with the following fields
     * Mount in /etc/fstab by: Device name, Volume label, UUID (default), Device ID, Device path.
+      * pending storage-ng: default Device name
     * Volume label:
     * Mount Read-only: false
     * No access time: false
@@ -330,11 +399,14 @@
     * Do not mount at system start-up: false
     * Enable quota support: false
     * Access control lists (ACL): true
+      * pending storage-ng
     * Extended user attributes: true
+      * pending storage-ng
     * Arbitrary option value:
 * and 'File system' is EXT3 or EXT4
   * shows a dialog with the following fields
     * Mount in /etc/fstab by: Device name, Volume label, UUID (default), Device ID, Device path.
+      * pending storage-ng: default Device name
     * Volume label:
     * Mount Read-only: false
     * No access time: false
@@ -342,23 +414,30 @@
     * Do not mount at system start-up: false
     * Enable quota support: false
     * Data journaling mode: journal, ordered (default), writeback 
+      * pending storage-ng: default journal
     * Access control lists (ACL): true
+      * pending storage-ng
     * Extended user attributes: true
+      * pending storage-ng
     * Arbitrary option value:
 * and 'File system' is FAT
   * shows a dialog with the following fields
     * Mount in /etc/fstab by: Device name, Volume label, UUID (default), Device ID, Device path.
+      * pending storage-ng: default Device name
     * Volume label:
     * Mount Read-only: false
     * No access time: false
     * Mountable by user: false
     * Do not mount at system start-up: false
     * Charset for file names: iso, utf8, etc (default blank)
+      * pending storage-ng
     * Codepage for short FAT names: 437, 852, 932, 936, 949, 950, (default blank)
     * Arbitrary option value: users,gid=users,umask=0002,utf8=true
+      * pending storage-ng: default value
 * and 'File system' is XFS
   * shows a dialog with the following fields
     * Mount in /etc/fstab by: Device name, Volume label, UUID (default), Device ID, Device path.
+      * pending storage-ng: default Device name
     * Volume label:
     * Mount Read-only: false
     * No access time: false
@@ -369,12 +448,13 @@
 * and 'File system' is Swap
   * shows a dialog with the following fields
     * Mount in /etc/fstab by: Device name, Volume label, UUID (default), Device ID, Device path.
+      * pending storage-ng: default Device name
     * Volume label:
     * Swap priority:
     * Arbitrary option value:
-    * Arbitrary option value:
 
 #### When 'Subvolume handling' is selected
+* pending storage-ng
 * shows a dialog with a list of all subvolumes
 * allows to add a new subvolume
 * allows to remove one subvolume from the list
