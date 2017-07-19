@@ -38,7 +38,7 @@ describe Y2Storage::Planned::CanBeEncrypted do
   describe "#final_device!" do
     let(:planned) { EncryptableDevice.new(password) }
     # TODO: test also #encrypted? => true
-    let(:plain_device) { instance_double("Y2Storage::BlkDevice", name: "/dev/sda1", encrypted?: false) }
+    let(:plain_device) { instance_double("Y2Storage::BlkDevice", basename: "sda1", encrypted?: false) }
     let(:luks) { instance_double("Storage::Encryption") }
 
     context "if the planned device has not encryption password" do
