@@ -1,4 +1,3 @@
 coverage/
 .yardoc/
-doc/*.html
-doc/*/
+doc/autodocs
