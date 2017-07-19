@@ -98,14 +98,15 @@ module Y2Storage
         btrfs? && !subvolumes.nil? && !subvolumes.empty?
       end
 
-      # Removes from #subvolumes all the plannes subvolumes that would be
-      # shadowed by another device mounted in any of the given mount points
+      # Planned subvolumes (from #subvolumes) that would be shadowed by any of
+      # the given planned devices.
       #
-      # @param other_mount_points [Array<String>] mount points of the other
-      #   devices in the filesystem
-      def remove_shadowed_subvolumes!(other_mount_points)
-        return if subvolumes.empty?
-        self.subvolumes = subvolumes.reject { |subvol| subvol.shadowed?(other_mount_points) }
+      # @param all_devices [Array<Planned::Device>] all the devices planned for
+      #   the system.
+      def shadowed_subvolumes(all_devices)
+        other_devices = all_devices - [self]
+        mount_points = other_devices.map { |dev| mount_point_for(dev) }.compact
+        subvolumes.select { |s| s.shadowed?(mount_points) }
       end
 
       # @see #reformat
@@ -171,6 +172,12 @@ module Y2Storage
 
       def assign_mountpoint(filesystem)
         filesystem.mountpoint = mount_point if mount_point && !mount_point.empty?
+      end
+
+      def mount_point_for(device)
+        return nil unless device.respond_to?(:mount_point)
+        return nil if device.mount_point.nil? || device.mount_point.empty?
+        device.mount_point
       end
     end
   end

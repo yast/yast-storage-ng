@@ -208,11 +208,61 @@ describe Y2Storage::AutoinstProfile::PartitionSection do
       expect(section.label).to be_nil
     end
 
-    it "initializes #subvolumes to an empty array if not present in the hash" do
-      section = described_class.new_from_hashes(hash)
-      expect(section.subvolumes).to eq []
+    context "when subvolumes are not present in the hash" do
+      it "initializes #subvolumes to an empty array" do
+        section = described_class.new_from_hashes(hash)
+        expect(section.subvolumes).to eq []
+      end
     end
 
+    context "when subvolumes are specified in the detailed format" do
+      let(:hash) do
+        {
+          "subvolumes" => [
+            { "path" => "var/lib/psql", "copy_on_write" => false },
+            { "path" => "srv" }
+          ]
+        }
+      end
+
+      it "initializes #subvolumes to the corresponding array of SubvolSpecification objects" do
+        subvolumes = described_class.new_from_hashes(hash).subvolumes
+        expect(subvolumes).to be_an(Array)
+        expect(subvolumes).to all(be_a(Y2Storage::SubvolSpecification))
+        expect(subvolumes).to contain_exactly(
+          an_object_having_attributes(path: "var/lib/psql", copy_on_write: false),
+          an_object_having_attributes(path: "srv", copy_on_write: true)
+        )
+      end
+    end
+
+    context "when subvolumes are specified as a list of paths" do
+      let(:hash) { { "subvolumes" => ["var/lib/psql", "srv"] } }
+
+      it "initializes #subvolumes to the corresponding array of SubvolSpecification objects" do
+        subvolumes = described_class.new_from_hashes(hash).subvolumes
+        expect(subvolumes).to be_an(Array)
+        expect(subvolumes).to all(be_a(Y2Storage::SubvolSpecification))
+        expect(subvolumes).to contain_exactly(
+          an_object_having_attributes(path: "var/lib/psql", copy_on_write: true),
+          an_object_having_attributes(path: "srv", copy_on_write: true)
+        )
+      end
+    end
+
+    context "when subvolumes are specified as a mix of paths and detailed information" do
+      let(:hash) { { "subvolumes" => ["var", { "path" => "srv", "copy_on_write" => false }] } }
+
+      it "initializes #subvolumes to the corresponding array of SubvolSpecification objects" do
+        subvolumes = described_class.new_from_hashes(hash).subvolumes
+        expect(subvolumes).to be_an(Array)
+        expect(subvolumes).to all(be_a(Y2Storage::SubvolSpecification))
+        expect(subvolumes).to contain_exactly(
+          an_object_having_attributes(path: "var", copy_on_write: true),
+          an_object_having_attributes(path: "srv", copy_on_write: false)
+        )
+      end
+    end
     context "when raid_options are not present" do
       it "initializes raid_options to nil" do
         section = described_class.new_from_hashes(hash)

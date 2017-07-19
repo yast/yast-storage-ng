@@ -286,15 +286,7 @@ module Y2Storage
       # Should not happen, #subvolumes is initialized in the constructor
       return [] if subvolumes.nil?
 
-      subvolumes.each_with_object([]) do |subvol, result|
-        new_planned = subvol.planned_subvolume
-        next if new_planned.nil?
-
-        # Overwrite previous definitions for the same path
-        result.delete_if { |s| s.path == new_planned.path }
-
-        result << new_planned
-      end
+      SubvolSpecification.planned_subvolumes(subvolumes)
     end
 
     # Check whether using btrfs filesystem with snapshots

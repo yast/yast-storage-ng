@@ -152,12 +152,39 @@ module Y2Storage
       res
     end
 
-    # Factory method: Create one SubvolSpecification from XML data stored as a map.
+    # Transforms a list of {SubvolSpecification} objects into an array of
+    # {Planned::BtrfsSubvolume} ones.
     #
+    # It includes only subvolumes that make sense for the current architecture
+    # and avoids duplicated paths.
+    #
+    # @param specs [Array<SubvolSpecification>] initial list
+    # @param mount_prefix [String] mount point of the device containing the
+    #     subvolumes
+    # @return [Array<Planned::BtrfsSubvolume>]
+    def self.planned_subvolumes(specs, mount_prefix: "/")
+      specs.each_with_object([]) do |subvol, result|
+        new_planned = subvol.planned_subvolume(mount_prefix: mount_prefix)
+        next if new_planned.nil?
+
+        # Overwrite previous definitions for the same path
+        result.delete_if { |s| s.path == new_planned.path }
+
+        result << new_planned
+      end
+    end
+
+    # Factory method: Create one SubvolSpecification from XML data.
+    #
+    # @param xml [Hash,String] can be a map (for fully specified subvolumes)
+    #   or just a string (for subvolumes specified just as a path)
     # @return [SubvolSpecification] or nil if error
     #
     def self.create_from_xml(xml)
-      return nil unless xml && xml.key?("path")
+      return nil if xml.nil?
+      xml = { "path" => xml } if xml.is_a?(String)
+      return nil unless xml.key?("path")
+
       path = xml["path"]
       cow = true
       if xml.key?("copy_on_write")
@@ -173,15 +200,20 @@ module Y2Storage
     end
 
     # Create a list of SubvolSpecification objects from the <subvolumes> part of
-    # control.xml. The map may be empty if there is a <subvolumes> section, but
-    # that section is empty.
+    # control.xml or an AutoYaST profile. The map may be empty if there is a
+    # <subvolumes> section, but that section is empty.
     #
     # Returns nil if the section is nil or impossible to process.
     #
     # This function does not do much error handling or reporting; it is assumed
-    # that control.xml is validated against its schema.
+    # that control.xml and/or the AutoYaST profile are validated against the
+    # corresponding schema.
     #
-    # @param subvolumes_xml list of XML <subvolume> entries
+    # Note that the AutoYaST format is a superset of the control.xml one,
+    # accepting fully described subvolumes (like in control.xml) and also
+    # subvolumes specified as a simple path.
+    #
+    # @param subvolumes_xml [Array] list of XML <subvolume> entries
     # @return [Array<SubvolSpecification>, nil]
     #
     def self.list_from_control_xml(subvolumes_xml)

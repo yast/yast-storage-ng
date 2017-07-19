@@ -21,6 +21,7 @@
 
 require "yast"
 require "y2storage/autoinst_profile/section_with_attributes"
+require "y2storage/subvol_specification"
 
 module Y2Storage
   module AutoinstProfile
@@ -116,7 +117,7 @@ module Y2Storage
       #   @return [String] undocumented attribute that can only contain "primary"
 
       # @!attribute subvolumes
-      #   @return [Array] list of subvolumes
+      #   @return [Array<SubvolSpecification>] list of subvolumes
 
       # @!attribute size
       #   @return [String] size of the partition in the flexible AutoYaST format
@@ -138,6 +139,7 @@ module Y2Storage
       def init_from_hashes(hash)
         super
         @raid_options = RaidOptionsSection.new_from_hashes(hash["raid_options"]) if hash["raid_options"]
+        @subvolumes = SubvolSpecification.list_from_control_xml(hash["subvolumes"]) if hash["subvolumes"]
       end
 
       # Clones a device into an AutoYaST profile section by creating an instance
