@@ -1,7 +1,12 @@
+# Introduction
 
-# Expert partitioner specs
+This document describes the expert partitioner behavior using specs. The idea is to document all the functionalities of the expert partitioner (for now, only regarding to plain partitions) with a similar format that we would obtain as rspec output. Note: these specs have been done manually, they are not the result of a real rspec test.
 
-## When 'Hard Disks' is selected in the tree view
+The specs are based on current version of expert partitioner for TW. The goal is to know and understand the gap between old and new expert partitioners. Missing parts in the new expert partitioner are marked as *pending* along the document.
+
+## Expert partitioner specs
+
+### When 'Hard Disks' is selected in the tree view
   * shows a table with the columns: Device, Size, F, Enc, Type, FS Type, Label, Mount Point, Start, End
     * and the table is filled out with info of all disks and partitions
   * shows the actions: 'Add Partition', 'Edit', 'Move', 'Resize' and 'Delete'
@@ -40,7 +45,7 @@
         * shows a confirm popup to delete the partition
         * removes the partition
 
-## When a 'disk' is selected in the tree view
+### When a 'disk' is selected in the tree view
   * shows a view with two tabs: 'Overview' and 'Partitions'
   * and tab 'Overview' is selected
     * shows a report with two sections: 'Device' and 'Hard Disk'
@@ -95,7 +100,7 @@
         * shows a confirm popup to delete the partition
         * deletes the partition
 
-## When a 'partition' is selected in the tree view
+### When a 'partition' is selected in the tree view
 * shows a report with two sections: 'Device' and 'File System'
   * where 'Device' section contains the folling info
     * Device
@@ -118,7 +123,7 @@
   * and action 'Delete' is selected
     * the same than in the "disk view"
 
-## *(pending) When 'Resize' is selected*
+### *(pending) When 'Resize' is selected*
 * and selected partition is extended
   * shows an error popup
 * and selected partition is not extended
@@ -131,7 +136,7 @@
       * shows an error popup
     * resizes the partition
 
-## When 'Add partition' is selected
+### When 'Add partition' is selected
 * and there is not space enough
   * shows an error popup
 * and it is not possible to create more partitions (max number of primary reached)
@@ -143,7 +148,7 @@
     * select partition role
     * set partition attributes (fs, mount point, etc)
 
-### When we are in wizard step to select the partition type
+#### When we are in wizard step to select the partition type
 * and partition table is not MSDOS
   * the step is skipped
 * and partition table is MSDOS
@@ -159,7 +164,7 @@
   * and there is an extended partition with free space
     * shows option 'Logical partition'
 
-### When we are in wizard step to select the partition size
+#### When we are in wizard step to select the partition size
 * shows three options
   * Maximun size
   * Custom size
@@ -177,7 +182,7 @@
     * finishes wizard
     * creates the partition
 
-### When we are in wizard step to select the role of the partition
+#### When we are in wizard step to select the role of the partition
 * shows the following options
   * operating system (i.e. root)
   * data and ISV applications (any other mount point)
@@ -185,7 +190,7 @@
   * raw volume (unformatted)
 * option 'data and ISV applications' is selected by default
 
-### When we are in wizard step for partition attributes
+#### When we are in wizard step for partition attributes
 * shows two sets of options: 'Formatting options' and 'Mounting options'
   * where 'Formatting options' contains
     * Format partition
@@ -249,7 +254,7 @@
         * shows an error popup
   * saves the partition options
 
-#### When 'Format partition' is selected
+##### When 'Format partition' is selected
 * disables 'File system Id'
 * allows to select a 'File system'
   * where options are: BtrFs, EXT2, EXT3, EXT4, FAT, XFS, Swap 
@@ -317,7 +322,7 @@
   * *(pending) sets 'Mount point' to Swap*
   * sets 'File system Id' to 0x82 Linux swap
 
-#### When 'Do not format partition' is selected
+##### When 'Do not format partition' is selected
 * disables 'Format partition' options
 * allows to select a 'File system Id'
   * where options are: 0x83 Linux, 0x8E Linux LVM, 0x82 Linux swap, 0xFD Linux RAID, 0x07 NTFS, 0x0C Win 95 FAT, 0xA0 Hibernation
@@ -332,7 +337,7 @@
   * enables 'Mounting options'
   * sets 'Mount point' to swap
 
-#### When 'Mount partition' is selected
+##### When 'Mount partition' is selected
 * allows to select 'Mount point'
   * where options are: /, /home, /var, /opt, /boot, /srv, /tmp, /usr/local
   * *(pending) first free value is taken by default*
@@ -340,10 +345,10 @@
 * and a 'Mount point' is indicated
   * shows the button 'Fstab options'
 
-#### When 'Do not mount partition' is selected
+##### When 'Do not mount partition' is selected
 * *(pending) disables 'Mount device' options*
 
-#### When 'Fstab options' is selected
+##### When 'Fstab options' is selected
 * and 'File system' is BtrFs
   * shows a dialog with the following fields
     * Mount in /etc/fstab by: Device name, Volume label, UUID (default), Device ID, Device path
@@ -406,7 +411,7 @@
     * Swap priority:
     * Arbitrary option value:
 
-#### *(pending) When 'Subvolume handling' is selected*
+##### *(pending) When 'Subvolume handling' is selected*
 * shows a dialog with a list of all subvolumes
 * allows to add a new subvolume
 * allows to remove one subvolume from the list
