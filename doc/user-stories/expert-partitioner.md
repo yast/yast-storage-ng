@@ -222,15 +222,15 @@ The specs are based on current version of expert partitioner for TW. The goal is
     * Mount partition: true
       * Mount point: first free of /, /home, /var
     * Do not mount partition: false
-* *(pending) and partition role is 'Swap'*
+* and partition role is 'Swap'
   * sets the following 'Formatting options' by default
-    * Format partition: true
+    * *(pending) Format partition: true*
       * File System: Swap
     * Do not format partition: false
       * File System Id: 0x82 Linux Swap
     * Encrypt: false
   * sets the following options for 'Mounting options'
-    * Mount partition: true
+    * *(pending) Mount partition: true*
       * Mount point: swap
     * Do not mount partition: false
 * *(pending) and partition role is 'Raw volume'*
@@ -265,20 +265,20 @@ The specs are based on current version of expert partitioner for TW. The goal is
     * marks 'Enable snapshots'
   * shows button 'Subvolume Handling'
   * sets 'File system Id' to 0x83 Linux
-* *(pending) and 'File system' is EXT2*
+* and 'File system' is EXT2
   * shows 'Options' button
   * and 'Options' is selected
-    * shows a dialog with the fields
+    * *(pending) shows a dialog with the fields*
       * Stride Length in blocks: none
       * Block size in bytes: auto (default), 1024, 2048, 4096
       * Bytes per inode: auto (default), 1024, 2048, 4096, 8192, 16384, 32768
       * Percentage of blocks reserved for root: 5.0
       * Disable regular checks: false
   * sets 'File system Id' to 0x83 Linux
-* *(pending) and 'File system' is EXT3*
+* and 'File system' is EXT3
   * shows 'Options' button
   * and 'Options' is selected
-    * shows a dialog with the fields
+    * *(pending) shows a dialog with the fields*
       * Stride Length in blocks: none
       * Block size in bytes: auto (default), 1024, 2048, 4096
       * Bytes per inode: auto (default), 1024, 2048, 4096, 8192, 16384, 32768
@@ -287,10 +287,10 @@ The specs are based on current version of expert partitioner for TW. The goal is
       * Inode size: default, 128, 256, 512, 1024
       * Directory index feature: false
   * sets 'File system Id' to 0x83 Linux
-* *(pending) and 'File system' is EXT4*
+* and 'File system' is EXT4
   * shows 'Options' button
   * and 'Options' is selected
-    * shows a dialog with the fields
+    * *(pending) shows a dialog with the fields*
       * Stride Length in blocks: none
       * Block size in bytes: auto (default), 1024, 2048, 4096
       * Bytes per inode: auto (default), 1024, 2048, 4096, 8192, 16384, 32768
@@ -300,18 +300,18 @@ The specs are based on current version of expert partitioner for TW. The goal is
       * Directory index feature: false
       * No journal: false
   * sets 'File system Id' to 0x83 Linux
-* *(pending) and 'File system' is FAT*
+* and 'File system' is FAT
   * shows 'Options' button
   * and 'Options' is selected
-    * shows a dialog with the fields
+    * *(pending) shows a dialog with the fields*
       * Number of FATs: auto (default), 1, 2
       * FAT size: auto (default), 12 bit, 16 bit, 32 bit
       * Root dir entries: auto
   * sets 'File system Id' to 0x0C Win95 FAT32
-* *(pending) and 'File system' is XFS*
+* and 'File system' is XFS
   * shows 'Options' button
   * and 'Options' is selected
-    * shows a dialog with the fields
+    * *(pending) shows a dialog with the fields*
       * Block size in bytes: auto (default), 1024, 2048, 4096
       * Inode size: auto (default), 256, 512, 1024, 2048
       * Percentage of inode space: auto (default), 5, 10, ..., 95, 100
