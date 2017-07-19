@@ -48,7 +48,7 @@ module Y2Storage
     # @!method sid
     #   @note This value is unique by device.
     #
-    #   @return [Fixnum] internal storage id.
+    #   @return [Integer] internal storage id.
     storage_forward :sid
 
     # @see ancestors
@@ -79,7 +79,7 @@ module Y2Storage
     #   Number of children the device has in the devicegraph
     #   it belongs to.
     #
-    #   @return [Fixnum]
+    #   @return [Integer]
     storage_forward :num_children
 
     # @!method exists_in_devicegraph?(devicegraph)

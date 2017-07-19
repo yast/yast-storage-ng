@@ -40,7 +40,7 @@ module Y2Storage
       # @return [String] name to use for Y2Storage::LvmLv#lv_name
       attr_accessor :logical_volume_name
 
-      # @return [Fixnum] percentage of the volume group size to be used for
+      # @return [Integer] percentage of the volume group size to be used for
       #   this LV
       attr_accessor :percent_size
 

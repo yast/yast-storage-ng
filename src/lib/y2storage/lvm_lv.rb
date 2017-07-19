@@ -40,7 +40,7 @@ module Y2Storage
 
     # @!attribute stripes
     #   Number of stripes. 0 if the LV is not striped
-    #   @return [Fixnum]
+    #   @return [Integer]
     storage_forward :stripes
     storage_forward :stripes=
 

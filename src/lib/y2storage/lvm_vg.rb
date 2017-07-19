@@ -58,7 +58,7 @@ module Y2Storage
     #   Total number of extents
     #   @see #extent_size
     #
-    #   @return [Fixnum] total number of extents
+    #   @return [Integer] total number of extents
     storage_forward :number_of_extents
 
     # @!method number_of_used_extents
@@ -66,14 +66,14 @@ module Y2Storage
     #   of extents in the volume group.
     #   @see #extent_size
     #
-    #   @return [Fixnum]
+    #   @return [Integer]
     storage_forward :number_of_used_extents
 
     # @!method number_of_free_extents
     #   Total number of available extents
     #   @see #extent_size
     #
-    #   @return [Fixnum]
+    #   @return [Integer]
     storage_forward :number_of_free_extents
 
     # @!method lvm_pvs

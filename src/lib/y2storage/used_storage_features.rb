@@ -203,7 +203,7 @@ module Y2Storage
     # feature is unknown to libstorage), this will throw a NameError.
     #
     # @param  feature [Symbol] UF_* feature
-    # @return [Fixnum] bitmask for that feature
+    # @return [Integer] bitmask for that feature
     #
     def bitmask(feature)
       ::Storage.const_get(feature)

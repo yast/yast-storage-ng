@@ -67,19 +67,19 @@ module Y2Storage
       storage_forward :partitionable, as: "Partitionable"
 
       # @!method max_primary
-      #   @return [Fixnum] maximum supported number of primary partitions
+      #   @return [Integer] maximum supported number of primary partitions
       storage_forward :max_primary
 
       # @!method num_primary
-      #   @return [Fixnum] current amount of primary partitions
+      #   @return [Integer] current amount of primary partitions
       storage_forward :num_primary
 
       # @!method max_logical
-      #   @return [Fixnum] maximum supported number of logical partitions
+      #   @return [Integer] maximum supported number of logical partitions
       storage_forward :max_logical
 
       # @!method num_logical
-      #   @return [Fixnum] current amount of logical partitions
+      #   @return [Integer] current amount of logical partitions
       storage_forward :num_logical
 
       # @!method extended_possible?

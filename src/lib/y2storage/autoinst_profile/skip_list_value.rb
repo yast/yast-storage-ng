@@ -41,7 +41,7 @@ module Y2Storage
 
       # Size in kilobytes
       #
-      # @return [Fixnum] Size
+      # @return [Integer] Size
       def size_k
         disk.size.to_i
       end

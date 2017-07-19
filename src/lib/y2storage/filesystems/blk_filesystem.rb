@@ -42,7 +42,7 @@ module Y2Storage
       storage_forward :supports_label?, to: :supports_label
 
       # @!method max_labelsize
-      #   @return [Fixnum] max size of the label
+      #   @return [Integer] max size of the label
       storage_forward :max_labelsize
 
       # @!attribute label
