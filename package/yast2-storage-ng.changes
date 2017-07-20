@@ -1,4 +1,9 @@
 -------------------------------------------------------------------
+Thu Jul 20 14:54:17 UTC 2017 - ancor@suse.com
+
+- Added pop-up to ask the user about multipath activation.
+
+-------------------------------------------------------------------
 Thu Jul 20 10:45:36 UTC 2017 - ancor@suse.com
 
 - Added Btrfs subvolumes support to the AutoYaST customized
