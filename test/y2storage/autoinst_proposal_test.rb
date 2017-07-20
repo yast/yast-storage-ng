@@ -73,6 +73,17 @@ describe Y2Storage::AutoinstProposal do
           size:                  250.GiB
         )
       end
+
+      context "when using btrfs" do
+        let(:root) { ROOT_PART.merge("create" => true, "filesystem" => :btrfs) }
+
+        it "creates Btrfs subvolumes" do
+          proposal.propose
+          root = proposal.devices.partitions.first.filesystem
+          expect(root.btrfs_subvolumes).to_not be_empty
+          expect(root.btrfs_subvolumes).to all(be_a(Y2Storage::BtrfsSubvolume))
+        end
+      end
     end
 
     context "when the requested layout is not possible" do
@@ -267,6 +278,19 @@ describe Y2Storage::AutoinstProposal do
             "lv_name" => "root"
           )
         )
+      end
+
+      context "when using btrfs" do
+        let(:root_spec) do
+          { "mount" => "/", "filesystem" => "btrfs", "lv_name" => "root", "size" => "1G" }
+        end
+
+        it "creates Btrfs subvolumes" do
+          proposal.propose
+          root = Y2Storage::LvmLv.find_by_name(proposal.devices, "/dev/system/root").filesystem
+          expect(root.btrfs_subvolumes).to_not be_empty
+          expect(root.btrfs_subvolumes).to all(be_a(Y2Storage::BtrfsSubvolume))
+        end
       end
     end
 

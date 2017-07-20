@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Thu Jul 20 10:45:36 UTC 2017 - ancor@suse.com
+
+- Added Btrfs subvolumes support to the AutoYaST customized
+  partitioning.
+
+-------------------------------------------------------------------
 Tue Jul 18 11:43:26 UTC 2017 - ancor@suse.com
 
 - Adjusted the guided proposal to work properly on scenarios with

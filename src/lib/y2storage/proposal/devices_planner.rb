@@ -55,7 +55,7 @@ module Y2Storage
       def planned_devices(target)
         @target = target
         devices = base_devices + additional_devices
-        remove_shadowed_subvols!(devices)
+        remove_shadowed_subvols(devices)
         devices
       end
 
@@ -215,20 +215,15 @@ module Y2Storage
         home_vol
       end
 
-      def remove_shadowed_subvols!(planned_devices)
+      def remove_shadowed_subvols(planned_devices)
         planned_devices.each do |device|
-          next unless device.respond_to?(:remove_shadowed_subvolumes!)
+          next unless device.respond_to?(:subvolumes)
 
-          other_devices = planned_devices.reject { |dev| dev == device }
-          mount_points = other_devices.map { |dev| mount_point_for(dev) }.compact
-          device.remove_shadowed_subvolumes!(mount_points)
+          device.shadowed_subvolumes(planned_devices).each do |subvol|
+            log.info "Subvolume #{subvol} would be shadowed. Removing it."
+            device.subvolumes.delete(subvol)
+          end
         end
-      end
-
-      def mount_point_for(device)
-        return nil unless device.respond_to?(:mount_point)
-        return nil if device.mount_point.nil? || device.mount_point.empty?
-        device.mount_point
       end
 
       # Return the total amount of RAM as DiskSize

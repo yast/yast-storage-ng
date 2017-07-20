@@ -23,6 +23,7 @@
 
 require_relative "../spec_helper"
 require "y2storage/proposal/autoinst_devices_planner"
+Yast.import "Arch"
 
 describe Y2Storage::Proposal::AutoinstDevicesPlanner do
   using Y2Storage::Refinements::SizeCasts
@@ -32,6 +33,7 @@ describe Y2Storage::Proposal::AutoinstDevicesPlanner do
   let(:scenario) { "windows-linux-free-pc" }
   let(:drives_map) { Y2Storage::Proposal::AutoinstDrivesMap.new(fake_devicegraph, partitioning) }
   let(:boot_checker) { instance_double(Y2Storage::BootRequirementsChecker, needed_partitions: []) }
+  let(:architecture) { :x86_64 }
 
   let(:partitioning_array) do
     [{ "device" => "/dev/sda", "partitions" => [root_spec] }]
@@ -47,6 +49,10 @@ describe Y2Storage::Proposal::AutoinstDevicesPlanner do
     allow(Y2Storage::BootRequirementsChecker).to receive(:new)
       .and_return(boot_checker)
     fake_scenario(scenario)
+
+    allow(Yast::Arch).to receive(:x86_64).and_return(architecture == :x86_64)
+    allow(Yast::Arch).to receive(:ppc).and_return(architecture == :ppc)
+    allow(Yast::Arch).to receive(:s390).and_return(architecture == :s390)
   end
 
   describe "#planned_devices" do
@@ -157,6 +163,87 @@ describe Y2Storage::Proposal::AutoinstDevicesPlanner do
         devices = planner.planned_devices(drives_map)
         root = devices.find { |d| d.mount_point == "/" }
         expect(root.encryption_password).to eq("secret")
+      end
+    end
+
+    context "using Btrfs for root" do
+      let(:partitioning_array) do
+        [{ "device" => "/dev/sda", "use" => "all", "partitions" => [root_spec, home_spec] }]
+      end
+      let(:home_spec) { { "mount" => "/home", "filesystem" => "xfs" } }
+      let(:root_spec) { { "mount" => "/", "filesystem" => "btrfs", "subvolumes" => subvolumes } }
+
+      let(:devices) { planner.planned_devices(drives_map) }
+      let(:root) { devices.find { |d| d.mount_point == "/" } }
+
+      context "when the profile contains a list of subvolumes" do
+        let(:subvolumes) { ["var", { "path" => "srv", "copy_on_write" => false }, "home"] }
+
+        it "plans a list of Planned::BtrfsSubvolume for root" do
+          expect(root.subvolumes).to be_an Array
+          expect(root.subvolumes).to all(be_a(Y2Storage::Planned::BtrfsSubvolume))
+        end
+
+        it "includes all the non-shadowed subvolumes" do
+          expect(root.subvolumes).to contain_exactly(
+            an_object_having_attributes(path: "var", copy_on_write: true),
+            an_object_having_attributes(path: "srv", copy_on_write: false)
+          )
+        end
+
+        # TODO: check that the user is warned, as soon as we introduce error
+        # reporting
+        it "excludes shadowed subvolumes" do
+          expect(root.subvolumes.map(&:path)).to_not include "home"
+        end
+      end
+
+      context "when there is no subvolumes list in the profile" do
+        let(:subvolumes) { nil }
+        let(:x86_subvolumes) { ["boot/grub2/i386-pc", "boot/grub2/x86_64-efi"] }
+        let(:s390_subvolumes) { ["boot/grub2/s390x-emu"] }
+
+        it "plans a list of Planned::BtrfsSubvolume for root" do
+          expect(root.subvolumes).to be_an Array
+          expect(root.subvolumes).to all(be_a(Y2Storage::Planned::BtrfsSubvolume))
+        end
+
+        it "plans the default subvolumes" do
+          expect(root.subvolumes).to include(
+            an_object_having_attributes(path: "srv",     copy_on_write: true),
+            an_object_having_attributes(path: "tmp",     copy_on_write: true),
+            an_object_having_attributes(path: "var/log", copy_on_write: true),
+            an_object_having_attributes(path: "var/lib/libvirt/images", copy_on_write: false)
+          )
+        end
+
+        it "excludes default subvolumes that are shadowed" do
+          expect(root.subvolumes.map(&:path)).to_not include "home"
+        end
+
+        context "when architecture is x86" do
+          let(:architecture) { :x86_64 }
+
+          it "plans default x86 specific subvolumes" do
+            expect(root.subvolumes.map(&:path)).to include(*x86_subvolumes)
+          end
+
+          it "does not plan other arch subvolumes" do
+            expect(root.subvolumes.map(&:path)).not_to include(*s390_subvolumes)
+          end
+        end
+
+        context "when architecture is s390" do
+          let(:architecture) { :s390 }
+
+          it "plans default s390 specific subvolumes" do
+            expect(root.subvolumes.map(&:path)).to include(*s390_subvolumes)
+          end
+
+          it "does not plan other arch subvolumes" do
+            expect(root.subvolumes.map(&:path)).not_to include(*x86_subvolumes)
+          end
+        end
       end
     end
 

@@ -23,6 +23,9 @@
 
 require "y2storage/disk"
 require "y2storage/disk_size"
+require "y2storage/boot_requirements_checker"
+require "y2storage/subvol_specification"
+require "y2storage/proposal_settings"
 
 module Y2Storage
   module Proposal
@@ -49,6 +52,7 @@ module Y2Storage
       # @return [Array<Planned::Partition>] List of planned partitions
       def planned_devices(drives_map)
         result = []
+        @default_subvolumes_used = false
 
         drives_map.each_pair do |disk_name, drive_section|
           disk = BlkDevice.find_by_name(devicegraph, disk_name)
@@ -64,6 +68,7 @@ module Y2Storage
 
         checker = BootRequirementsChecker.new(devicegraph, planned_devices: result)
         result.concat(checker.needed_partitions)
+        remove_shadowed_subvols(result)
 
         result
       end
@@ -96,6 +101,7 @@ module Y2Storage
           partition.raid_name = partition_section.raid_name
 
           add_common_device_attrs(partition, partition_section)
+          add_subvolumes_attrs(partition, partition_section)
           add_partition_reuse(partition, partition_section) if partition_section.create == false
 
           # Sizes: leave out reducing fixed sizes and 'auto'
@@ -123,6 +129,7 @@ module Y2Storage
           lv = Y2Storage::Planned::LvmLv.new(nil, nil)
           lv.logical_volume_name = lv_section.lv_name
           add_common_device_attrs(lv, lv_section)
+          add_subvolumes_attrs(lv, lv_section)
           add_lv_reuse(lv, vg.volume_group_name, lv_section) if lv_section.create == false
 
           number, unit = size_to_components(lv_section.size)
@@ -148,6 +155,7 @@ module Y2Storage
 
         part_section = drive.partitions.first
         add_common_device_attrs(md, part_section)
+        add_subvolumes_attrs(md, part_section)
         md.lvm_volume_group_name = part_section.lvm_group
         add_device_reuse(md, md.name, !!part_section.format) if part_section.create == false
 
@@ -178,6 +186,28 @@ module Y2Storage
         device.label = section.label
         device.uuid = section.uuid
         device.filesystem_type = section.type_for_filesystem
+      end
+
+      # Set devices attributes related to Btrfs subvolumes
+      #
+      # This method modifies the first argument setting default_subvolume and
+      # subvolumes.
+      #
+      # @param device  [Planned::Device] Planned device
+      # @param section [AutoinstProfile::PartitionSection] AutoYaST specification
+      def add_subvolumes_attrs(device, section)
+        return unless device.btrfs?
+
+        subvol_specs = section.subvolumes
+        mount = device.mount_point
+
+        if subvol_specs.empty? && mount == "/"
+          @default_subvolumes_used = true
+          subvol_specs = proposal_settings.subvolumes
+        end
+
+        device.default_subvolume = proposal_settings.btrfs_default_subvolume || ""
+        device.subvolumes = SubvolSpecification.planned_subvolumes(subvol_specs, mount_prefix: mount)
       end
 
       # Set 'reusing' attributes for a partition
@@ -303,6 +333,36 @@ module Y2Storage
       def find_vg_to_reuse(devicegraph, vg)
         return nil unless vg.volume_group_name
         devicegraph.lvm_vgs.find { |v| v.vg_name == vg.volume_group_name }
+      end
+
+      # Instance of {ProposalSettings} based on the current product.
+      #
+      # Used to ensure consistency between the guided proposal and the AutoYaST
+      # one when default values are used.
+      #
+      # @return [ProposalSettings]
+      def proposal_settings
+        @proposal_settings ||= ProposalSettings.new_for_current_product
+      end
+
+      def remove_shadowed_subvols(planned_devices)
+        planned_devices.each do |device|
+          next unless device.respond_to?(:subvolumes)
+
+          subvols_added =
+            device.respond_to?(:mount_point) && device.mount_point == "/" && @default_subvolumes_used
+
+          device.shadowed_subvolumes(planned_devices).each do |subvol|
+            if subvols_added
+              log.info "Default subvolume #{subvol} would be shadowed. Removing it."
+            else
+              # TODO: this should be reported to the user, but first we need to
+              # decide how error reporting will be handled in AutoinstProposal
+              log.warn "Subvolume #{subvol} from the profile would be shadowed. Removing it."
+            end
+            device.subvolumes.delete(subvol)
+          end
+        end
       end
     end
   end
