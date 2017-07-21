@@ -52,4 +52,10 @@ require_relative "support/storage_helpers"
 
 RSpec.configure do |c|
   c.include Yast::RSpec::StorageHelpers
+
+  c.before do
+    # Storage::Storage#activate should not be called during testing because we are not
+    # doing real probing.
+    allow_any_instance_of(Storage::Storage).to receive(:activate).and_return(true)
+  end
 end
