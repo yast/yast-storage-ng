@@ -220,7 +220,7 @@ module Y2Storage
       # @return [Region] Newly created region
       #
       def new_region_with_size(region, size)
-        blocks = (size / region.block_size).to_i
+        blocks = (size / region.block_size.to_i).to_i
         # Never exceed the region
         if region.start + blocks > region.end
           blocks = region.end - region.start + 1
