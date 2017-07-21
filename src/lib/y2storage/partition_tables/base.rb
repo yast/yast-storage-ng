@@ -121,6 +121,29 @@ module Y2Storage
         "<PartitionTable #{self}[#{num_children}] #{parts}#{slots}>"
       end
 
+      # Unused slot that contains a region
+      #
+      # @param region [Region]
+      # @return [PartitionTables::PartitionSlot, nil] nil when region is not
+      #   inside to any unused slot.
+      def unused_slot_for(region)
+        unused_partition_slots.detect { |s| region.inside?(s.region) }
+      end
+
+      # Whether the partition table contains the maximum number of primary partitions
+      #
+      # @return [Boolean]
+      def max_primary?
+        num_primary == max_primary
+      end
+
+      # Whether the partition table contains the maximum number of logical partitions
+      #
+      # @return [Boolean]
+      def max_logical?
+        num_logical == max_logical
+      end
+
       # Grain for alignment
       #
       # The align grain of a partition table is the size unit that must be

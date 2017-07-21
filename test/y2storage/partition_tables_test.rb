@@ -88,4 +88,56 @@ describe Y2Storage::PartitionTables::Base do
       expect(sdc_slot.region.end).to eq(sdc.region.end)
     end
   end
+
+  describe "#unused_slot_for" do
+    let(:scenario) { "spaces_5_3" }
+
+    subject(:ptable) { sda.partition_table }
+
+    let(:sda) { Y2Storage::Disk.find_by_name(fake_devicegraph, "/dev/sda") }
+
+    let(:unused_slots) { ptable.unused_partition_slots }
+    let(:unused_slot1) { unused_slots.first }
+    let(:unused_slot2) { unused_slots.last }
+
+    let(:region) { Y2Storage::Region.create(region_start, region_length, sda.region.block_size) }
+
+    context "when the region is inside of an unused slot" do
+      context "and fills all the slot" do
+        let(:region_start) { unused_slot1.region.start }
+        let(:region_length) { unused_slot1.region.length }
+
+        it "returns the correct slot" do
+          slot = ptable.unused_slot_for(region)
+
+          expect(slot).to be_a(Y2Storage::PartitionTables::PartitionSlot)
+          expect(slot.region.start).to eq(unused_slot1.region.start)
+          expect(slot.region.end).to eq(unused_slot1.region.end)
+        end
+      end
+
+      context "and does not fill all the slot" do
+        let(:region_start) { unused_slot2.region.start + 10 }
+        let(:region_length) { 20 }
+
+        it "returns the correct slot" do
+          slot = ptable.unused_slot_for(region)
+
+          expect(slot).to be_a(Y2Storage::PartitionTables::PartitionSlot)
+          expect(slot.region.start).to eq(unused_slot2.region.start)
+          expect(slot.region.end).to eq(unused_slot2.region.end)
+        end
+      end
+    end
+
+    context "when the region is not inside of an unused slot" do
+      let(:region_start) { unused_slot1.region.start - 10 }
+      let(:region_length) { 9 }
+
+      it "returns nil" do
+        slot = ptable.unused_slot_for(region)
+        expect(slot).to be_nil
+      end
+    end
+  end
 end
