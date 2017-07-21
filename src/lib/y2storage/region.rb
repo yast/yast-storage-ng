@@ -127,6 +127,15 @@ module Y2Storage
     #     different block sizes
     storage_forward :!=
 
+    # @!method inside?(other)
+    #   Checks whether the region is contained inside other region
+    #
+    #   @raise [Storage::DifferentBlockSizes] when regions have different block sizes
+    #
+    #   @param other [Region]
+    #   @return [Boolean]
+    storage_forward :inside?, to: :inside
+
     def inspect
       "<Region range: #{show_range}, block_size: #{block_size}>"
     end
