@@ -75,6 +75,7 @@ describe Y2Storage::Region do
     context "if both regions have a different block size" do
       let(:other) { Y2Storage::Region.create(100, 1000, 2.KiB) }
 
+      # Pending on exception binding in libstorage-ng.
       xit "raises Storage::DifferentBlockSizes" do
         expect { region.inside?(other) }.to raise_error Storage::DifferentBlockSizes
       end
