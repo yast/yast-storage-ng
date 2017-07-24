@@ -33,8 +33,6 @@ module Y2Storage
     class PartitionCreator
       include Yast::Logger
 
-      FIRST_LOGICAL_PARTITION_NUMBER = 5 # Number of the first logical partition (/dev/sdx5)
-
       # Initialize.
       #
       # @param original_graph [Devicegraph] initial devicegraph
@@ -211,38 +209,6 @@ module Y2Storage
         raise NoMorePartitionSlotError if slot.nil?
 
         ptable.create_partition(slot.name, free_space.region, PartitionType::EXTENDED)
-      end
-
-      # Return the next device name for a primary partition that is not already
-      # in use.
-      #
-      # @return [String] device_name ("/dev/sdx1", "/dev/sdx2", ...)
-      #
-      def next_free_primary_partition_name(disk_name, ptable)
-        # FIXME: This is broken by design. create_partition needs to return
-        # this information, not get it as an input parameter.
-        part_names = ptable.partitions.map(&:name)
-        1.upto(ptable.max_primary) do |i|
-          dev_name = "#{disk_name}#{i}"
-          return dev_name unless part_names.include?(dev_name)
-        end
-        raise NoMorePartitionSlotError
-      end
-
-      # Return the next device name for a logical partition that is not already
-      # in use. The first one is always /dev/sdx5.
-      #
-      # @return [String] device_name ("/dev/sdx5", "/dev/sdx6", ...)
-      #
-      def next_free_logical_partition_name(disk_name, ptable)
-        # FIXME: This is broken by design. create_partition needs to return
-        # this information, not get it as an input parameter.
-        part_names = ptable.partitions.map(&:name)
-        FIRST_LOGICAL_PARTITION_NUMBER.upto(ptable.max_logical) do |i|
-          dev_name = "#{disk_name}#{i}"
-          return dev_name unless part_names.include?(dev_name)
-        end
-        raise NoMorePartitionSlotError
       end
 
       # Create a new region from the given one, but with new size.
