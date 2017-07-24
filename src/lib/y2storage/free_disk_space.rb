@@ -46,7 +46,6 @@ module Y2Storage
       @disk = disk
       # Store a duplicate of the original region, which could change or be
       # deleted (don't trust the garbage collector when SWIG is involved)
-      # TODO: #to_storage_value to be removed when adapting this class
       region = Storage::Region.new(region.to_storage_value)
       @region = Y2Storage::Region.new(region)
     end
