@@ -67,15 +67,20 @@ describe Y2Storage::StorageManager do
     end
 
     it "initializes #storage with the mocked devicegraphs" do
-      manager = described_class.fake_from_yaml(input_file_for("gpt_and_msdos"))
+      described_class.fake_from_yaml(input_file_for("gpt_and_msdos"))
       expect(manager.storage).to be_a Storage::Storage
-      expect(Storage::Disk.all(manager.probed).size).to eq 6
-      expect(Storage::Disk.all(manager.staging).size).to eq 6
+      expect(Y2Storage::Disk.all(manager.probed).size).to eq 6
+      expect(Y2Storage::Disk.all(manager.staging).size).to eq 6
+    end
+
+    it "sets #storage as probed" do
+      described_class.fake_from_yaml(input_file_for("gpt_and_msdos"))
+      expect(manager.probed?).to be(true)
     end
 
     it "initializes #staging_revision" do
-      manager = described_class.fake_from_yaml(input_file_for("gpt_and_msdos"))
-      expect(manager.staging_revision).to be_zero
+      described_class.fake_from_yaml(input_file_for("gpt_and_msdos"))
+      expect(manager.staging_revision).to be(1)
     end
   end
 
@@ -88,13 +93,18 @@ describe Y2Storage::StorageManager do
     it "initializes #storage with the mocked devicegraphs" do
       described_class.fake_from_xml(input_file_for("md2-devicegraph", suffix: "xml"))
       expect(manager.storage).to be_a Storage::Storage
-      expect(Storage::Disk.all(manager.probed).size).to eq 4
-      expect(Storage::Disk.all(manager.staging).size).to eq 4
+      expect(Y2Storage::Disk.all(manager.probed).size).to eq 4
+      expect(Y2Storage::Disk.all(manager.staging).size).to eq 4
+    end
+
+    it "sets #storage as probed" do
+      described_class.fake_from_xml(input_file_for("md2-devicegraph", suffix: "xml"))
+      expect(manager.probed?).to be(true)
     end
 
     it "initializes #staging_revision" do
       described_class.fake_from_xml(input_file_for("md2-devicegraph", suffix: "xml"))
-      expect(manager.staging_revision).to be_zero
+      expect(manager.staging_revision).to be(1)
     end
   end
 
@@ -119,9 +129,9 @@ describe Y2Storage::StorageManager do
     end
 
     it "copies the provided devicegraph to staging" do
-      expect(manager.y2storage_staging).to eq old_graph
+      expect(manager.staging).to eq old_graph
       manager.staging = new_graph
-      expect(Storage::Disk.all(manager.staging).size).to eq 6
+      expect(Y2Storage::Disk.all(manager.staging).size).to eq 6
     end
 
     it "increments the staging revision" do
@@ -147,7 +157,7 @@ describe Y2Storage::StorageManager do
 
     it "copies the proposal result to staging" do
       manager.proposal = proposal
-      expect(Storage::Disk.all(manager.staging).size).to eq 6
+      expect(Y2Storage::Disk.all(manager.staging).size).to eq 6
     end
 
     it "increments the staging revision" do
@@ -249,9 +259,9 @@ describe Y2Storage::StorageManager do
     before do
       described_class.fake_from_yaml(input_file_for("gpt_and_msdos"))
       # Ensure old values have been queried at least once
-      manager.y2storage_probed
+      manager.probed
       manager.probed_disk_analyzer
-      manager.y2storage_staging
+      manager.staging
       manager.proposal
 
       # And now mock subsequent Storage calls
@@ -265,28 +275,50 @@ describe Y2Storage::StorageManager do
     let(:devicegraph) { Y2Storage::Devicegraph.new(st_staging) }
     let(:proposal) { double("Y2Storage::GuidedProposal", devices: devicegraph) }
 
-    it "refreshes #y2storage_probed" do
-      expect(manager.y2storage_probed.disks.size).to eq 6
-      # Calling twice (or more) does not result in a refresh
-      expect(manager.y2storage_probed.disks.size).to eq 6
-      expect(manager.y2storage_probed.to_storage_value).to_not eq st_probed
+    context "when the mode is test" do
+      before do
+        allow(manager).to receive(:test?).and_return(true)
+      end
 
-      manager.probe
-
-      expect(manager.y2storage_probed.disks.size).to eq 0
-      expect(manager.y2storage_probed.to_storage_value).to eq st_probed
+      it "does not perform real probing" do
+        expect(manager.storage).to_not receive(:probe)
+        manager.probe
+      end
     end
 
-    it "refreshes #y2storage_staging" do
-      expect(manager.y2storage_probed.disks.size).to eq 6
+    context "when the mode is not test" do
+      before do
+        allow(manager).to receive(:test?).and_return(false)
+      end
+
+      it "performs real probing" do
+        expect(manager.storage).to receive(:probe)
+        manager.probe
+      end
+    end
+
+    it "refreshes #probed" do
+      expect(manager.probed.disks.size).to eq 6
       # Calling twice (or more) does not result in a refresh
-      expect(manager.y2storage_probed.disks.size).to eq 6
-      expect(manager.y2storage_probed.to_storage_value).to_not eq st_staging
+      expect(manager.probed.disks.size).to eq 6
+      expect(manager.probed.to_storage_value).to_not eq st_probed
 
       manager.probe
 
-      expect(manager.y2storage_probed.disks.size).to eq 0
-      expect(manager.y2storage_probed.to_storage_value).to eq st_staging
+      expect(manager.probed.disks.size).to eq 0
+      expect(manager.probed.to_storage_value).to eq st_probed
+    end
+
+    it "refreshes #staging" do
+      expect(manager.probed.disks.size).to eq 6
+      # Calling twice (or more) does not result in a refresh
+      expect(manager.probed.disks.size).to eq 6
+      expect(manager.probed.to_storage_value).to_not eq st_staging
+
+      manager.probe
+
+      expect(manager.probed.disks.size).to eq 0
+      expect(manager.probed.to_storage_value).to eq st_staging
     end
 
     it "increments the staging revision" do
@@ -308,30 +340,6 @@ describe Y2Storage::StorageManager do
       manager.proposal = proposal
       manager.probe
       expect(manager.proposal).to be_nil
-    end
-  end
-
-  describe "#refresh!" do
-    let(:new_graph) { devicegraph_from("gpt_and_msdos") }
-    let(:proposal) { double("Y2Storage::GuidedProposal", devices: new_graph) }
-
-    before do
-      described_class.create_test_instance
-      described_class.instance.proposal = proposal
-    end
-
-    it "invalidates cached objects" do
-      probed = manager.y2storage_probed
-      staging = manager.y2storage_staging
-      disk_analyzer = manager.probed_disk_analyzer
-      proposal = manager.proposal
-
-      manager.refresh!
-
-      expect(manager.y2storage_probed.object_id).not_to eq probed.object_id
-      expect(manager.y2storage_staging.object_id).not_to eq staging.object_id
-      expect(manager.proposal).not_to eq proposal
-      expect(manager.probed_disk_analyzer).not_to eq disk_analyzer
     end
   end
 end

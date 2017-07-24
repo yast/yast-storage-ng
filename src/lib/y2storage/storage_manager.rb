@@ -47,7 +47,7 @@ module Y2Storage
 
     # Revision of the staging devicegraph.
     #
-    # Zero means no modification (staging looks like probed). Incremented every
+    # Zero means no modification (still not probed). Incremented every
     # time the staging devicegraph is re-assigned.
     # @see #copy_to_staging
     #
@@ -78,50 +78,70 @@ module Y2Storage
     # @param storage_environment [::Storage::Environment]
     def initialize(storage_environment)
       @storage = Storage::Storage.new(storage_environment)
+      @probed = false
+      reset_staging_revision
+    end
+
+    # Whether probing has been done
+    # @return [Boolean]
+    def probed?
+      @probed
+    end
+
+    # Increments #staging_revision
+    #
+    # To be called explicitly if the staging devicegraph is modified without
+    # using #staging= or #proposal=
+    def increase_staging_revision
+      @staging_revision += 1
+    end
+
+    # Resets the #staging_revision
+    #
+    # Useful when faking a devicegraph from yaml or xml.
+    # @see #fake_from_yaml
+    # @see #fake_from_xml
+    def reset_staging_revision
+      @staging_revision = 0
+      @staging_revision_after_probing = 0
+    end
+
+    # Performs activation actions (for example, multipath or luks password)
+    def activate
       activate_callbacks = Callbacks::Activate.new
       @storage.activate(activate_callbacks)
-      @staging_revision = -1
-      probe
     end
 
-    # FIXME: To be replaced by #y2storage_probed as soon as all everything is
-    # adapted to use the new wrapper
+    # Probes all storage devices.
+    #
+    # Invalidates the probed and staging devicegraph. Real probing is
+    # only performed when the instance is not for testing.
+    #
+    # @see #test?
+    def probe
+      @storage.probe unless test?
+
+      @probed = true
+      @probed_graph = nil
+      @staging_graph = nil
+      @probed_disk_analyzer = nil
+      @proposal = nil
+
+      increase_staging_revision
+      @staging_revision_after_probing = staging_revision
+    end
+
+    # Probed devicegraph
+    # @return [Devicegraph]
     def probed
-      storage.probed
+      probe unless probed?
+      @probed_graph ||= Devicegraph.new(storage.probed)
     end
 
-    # FIXME: this should become #probed after adapting other modules
-    def y2storage_probed
-      @y2probed ||= Devicegraph.new(storage.probed)
-    end
-
-    # FIXME: To be replaced by #y2storage_staging as soon as all everything is
-    # adapted to use the new wrapper
+    # Staging devicegraph
+    # @return [Devicegraph]
     def staging
-      storage.staging
-    end
-
-    # FIXME: this should become #staging after adapting other modules
-    def y2storage_staging
-      @y2staging ||= Devicegraph.new(storage.staging)
-    end
-
-    # Checks whether the staging devicegraph has been previously set, either
-    # manually or through a proposal.
-    #
-    # @return [Boolean] false if the staging devicegraph is just the result of
-    #   probing (so a direct copy of #probed), true otherwise.
-    def staging_changed?
-      staging_revision != staging_revision_after_probing
-    end
-
-    # Stores the proposal, modifying the staging devicegraph and all the related
-    # information.
-    #
-    # @param proposal [GuidedProposal]
-    def proposal=(proposal)
-      copy_to_staging(proposal.devices)
-      @proposal = proposal
+      @staging_graph ||= Devicegraph.new(storage.staging)
     end
 
     # Copies the manually-calculated (no proposal) devicegraph to staging.
@@ -136,23 +156,29 @@ module Y2Storage
       copy_to_staging(devicegraph)
     end
 
-    # Increments #staging_revision
+    # Stores the proposal, modifying the staging devicegraph and all the related
+    # information.
     #
-    # To be called explicitly if the staging devicegraph is modified without
-    # using #staging= or #proposal=
-    def update_staging_revision
-      @staging_revision += 1
+    # @param proposal [GuidedProposal]
+    def proposal=(proposal)
+      copy_to_staging(proposal.devices)
+      @proposal = proposal
     end
 
-    # Probes all storage devices.
+    # Disk analyzer used to analyze the probed devicegraph
     #
-    # Invalidates the probed and staging devicegraph.
-    # @see #refresh!
-    def probe
-      storage.probe
-      update_staging_revision
-      @staging_revision_after_probing = staging_revision
-      refresh!
+    # @return [DiskAnalyzer]
+    def probed_disk_analyzer
+      @probed_disk_analyzer ||= DiskAnalyzer.new(probed)
+    end
+
+    # Checks whether the staging devicegraph has been previously set, either
+    # manually or through a proposal.
+    #
+    # @return [Boolean] false if the staging devicegraph is just the result of
+    #   probing (so a direct copy of #probed), true otherwise.
+    def staging_changed?
+      staging_revision != staging_revision_after_probing
     end
 
     # Performs in the system all the necessary operations to make it match the
@@ -162,25 +188,6 @@ module Y2Storage
     def commit
       storage.calculate_actiongraph
       storage.commit
-    end
-
-    # Disk analyzer used to analyze the probed devicegraph
-    #
-    # @return [DiskAnalyzer]
-    def probed_disk_analyzer
-      @probed_disk_analyzer ||= DiskAnalyzer.new(y2storage_probed)
-    end
-
-    # Invalidates cached objects
-    #
-    # FIXME: the whole probing stuff needs to be revisited after removing the
-    # legacy API (i.e. #y2storage_probed vs #probed and #y2storage_staging vs
-    # #staging).
-    def refresh!
-      @y2probed = nil
-      @probed_disk_analyzer = nil
-      @y2staging = nil
-      @proposal = nil
     end
 
   private
@@ -193,13 +200,18 @@ module Y2Storage
     # @return [Integer]
     attr_reader :staging_revision_after_probing
 
+    # Checks whether we are running for tests
+    def test?
+      @storage.environment.probe_mode == Storage::ProbeMode_NONE
+    end
+
     # Sets the devicegraph as the staging one, updating all the associated
     # information like #staging_revision
     #
     # @param [Devicegraph] devicegraph to copy
     def copy_to_staging(devicegraph)
-      devicegraph.copy(y2storage_staging)
-      update_staging_revision
+      devicegraph.copy(staging)
+      increase_staging_revision
     end
 
     #
@@ -245,6 +257,13 @@ module Y2Storage
 
       alias_method :start_probing, :create_instance
 
+      # Creates the singleton instance skipping hardware probing.
+      #
+      # @return [StorageManager] singleton instance
+      def create_test_instance
+        create_instance(test_environment)
+      end
+
       # Use this as an alternative to the instance method.
       # Probing is skipped and the device tree is initialized from yaml_file.
       # Any existing probed device tree is replaced.
@@ -257,14 +276,17 @@ module Y2Storage
       #
       # @return [StorageManager] singleton instance
       def fake_from_yaml(yaml_file = nil)
-        @instance.refresh! unless @instance.nil?
         @instance ||= create_test_instance
+        @instance.reset_staging_revision
 
         fake_graph = Devicegraph.new(@instance.storage.create_devicegraph("fake"))
         Y2Storage::FakeDeviceFactory.load_yaml_file(fake_graph, yaml_file) if yaml_file
-        fake_graph.copy(@instance.y2storage_probed)
-        fake_graph.copy(@instance.y2storage_staging)
+
+        fake_graph.to_storage_value.copy(@instance.storage.probed)
+        fake_graph.to_storage_value.copy(@instance.storage.staging)
         @instance.storage.remove_devicegraph("fake")
+
+        @instance.probe
         @instance
       end
 
@@ -281,20 +303,14 @@ module Y2Storage
       #
       # @return [StorageManager] singleton instance
       def fake_from_xml(xml_file)
-        @instance.refresh! unless @instance.nil?
         @instance ||= create_test_instance
-        @instance.probed.load(xml_file)
-        @instance.probed.copy(@instance.staging)
+        @instance.reset_staging_revision
 
+        @instance.storage.probed.load(xml_file)
+        @instance.storage.probed.copy(@instance.storage.staging)
+
+        @instance.probe
         @instance
-      end
-
-      # Creates the singleton instance skipping hardware probing.
-      #
-      # @return [StorageManager] singleton instance
-      #
-      def create_test_instance
-        create_instance(test_environment)
       end
 
       # Make sure only .instance can be used to create objects
