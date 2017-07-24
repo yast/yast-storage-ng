@@ -33,8 +33,6 @@ module Y2Storage
     class PartitionCreator
       include Yast::Logger
 
-      FIRST_LOGICAL_PARTITION_NUMBER = 5 # Number of the first logical partition (/dev/sdx5)
-
       # Initialize.
       #
       # @param original_graph [Devicegraph] initial devicegraph
@@ -145,26 +143,57 @@ module Y2Storage
       # @param free_space   [FreeDiskSpace]
       # @param primary      [Boolean] whether the partition should be primary
       #                     or logical
-      #
       def create_partition(planned_partition, free_space, primary)
         log.info "Creating partition for #{planned_partition.mount_point} with #{planned_partition.size}"
-        disk = free_space.disk
-        ptable = partition_table(disk)
+        ptable = partition_table(free_space.disk)
 
         if primary
-          dev_name = next_free_primary_partition_name(disk.name, ptable)
-          partition_type = PartitionType::PRIMARY
+          create_primary_partition(planned_partition, free_space)
+        elsif !ptable.has_extended?
+          create_extended_partition(free_space)
+          free_space = free_space_within(free_space)
+          create_logical_partition(planned_partition, free_space)
         else
-          if !ptable.has_extended?
-            create_extended_partition(disk, free_space.region)
-            free_space = free_space_within(free_space)
-          end
-          dev_name = next_free_logical_partition_name(disk.name, ptable)
-          partition_type = PartitionType::LOGICAL
+          create_logical_partition(planned_partition, free_space)
         end
+      end
+
+      # Creates a primary partition
+      #
+      # @param planned_partition [Planned::Partition]
+      # @param free_space [FreeDiskSpace]
+      def create_primary_partition(planned_partition, free_space)
+        ptable = partition_table(free_space.disk)
+        raise NoMorePartitionSlotError if ptable.max_primary?
+
+        create_not_extended_partition(planned_partition, free_space, PartitionType::PRIMARY)
+      end
+
+      # Creates a logical partition
+      #
+      # @param planned_partition [Planned::Partition]
+      # @param free_space [FreeDiskSpace]
+      def create_logical_partition(planned_partition, free_space)
+        ptable = partition_table(free_space.disk)
+        raise NoMorePartitionSlotError if ptable.max_logical?
+
+        create_not_extended_partition(planned_partition, free_space, PartitionType::LOGICAL)
+      end
+
+      # Creates a not extended (primary or logical) partition
+      #
+      # @param planned_partition [Planned::Partition]
+      # @param free_space [FreeDiskSpace]
+      # @param type [PartitionType] PartitionType::PRIMARY or PartitionType::LOGICAL
+      def create_not_extended_partition(planned_partition, free_space, type)
+        ptable = partition_table(free_space.disk)
+
+        slot = ptable.unused_slot_for(free_space.region)
+        raise Error if slot.nil?
 
         region = new_region_with_size(free_space.region, planned_partition.size)
-        partition = ptable.create_partition(dev_name, region, partition_type)
+
+        partition = ptable.create_partition(slot.name, region, type)
         partition.id = partition_id(ptable, planned_partition)
         partition.boot = !!planned_partition.bootable if ptable.partition_boot_flag_supported?
         partition
@@ -172,44 +201,14 @@ module Y2Storage
 
       # Creates an extended partition
       #
-      # @param disk [Disk]
-      # @param region [Region]
-      def create_extended_partition(disk, region)
-        ptable = disk.partition_table
-        dev_name = next_free_primary_partition_name(disk.name, ptable)
-        ptable.create_partition(dev_name, region, PartitionType::EXTENDED)
-      end
+      # @param free_space [FreeDiskSpace]
+      def create_extended_partition(free_space)
+        ptable = partition_table(free_space.disk)
 
-      # Return the next device name for a primary partition that is not already
-      # in use.
-      #
-      # @return [String] device_name ("/dev/sdx1", "/dev/sdx2", ...)
-      #
-      def next_free_primary_partition_name(disk_name, ptable)
-        # FIXME: This is broken by design. create_partition needs to return
-        # this information, not get it as an input parameter.
-        part_names = ptable.partitions.map(&:name)
-        1.upto(ptable.max_primary) do |i|
-          dev_name = "#{disk_name}#{i}"
-          return dev_name unless part_names.include?(dev_name)
-        end
-        raise NoMorePartitionSlotError
-      end
+        slot = ptable.unused_slot_for(free_space.region)
+        raise NoMorePartitionSlotError if slot.nil?
 
-      # Return the next device name for a logical partition that is not already
-      # in use. The first one is always /dev/sdx5.
-      #
-      # @return [String] device_name ("/dev/sdx5", "/dev/sdx6", ...)
-      #
-      def next_free_logical_partition_name(disk_name, ptable)
-        # FIXME: This is broken by design. create_partition needs to return
-        # this information, not get it as an input parameter.
-        part_names = ptable.partitions.map(&:name)
-        FIRST_LOGICAL_PARTITION_NUMBER.upto(ptable.max_logical) do |i|
-          dev_name = "#{disk_name}#{i}"
-          return dev_name unless part_names.include?(dev_name)
-        end
-        raise NoMorePartitionSlotError
+        ptable.create_partition(slot.name, free_space.region, PartitionType::EXTENDED)
       end
 
       # Create a new region from the given one, but with new size.
@@ -220,7 +219,7 @@ module Y2Storage
       # @return [Region] Newly created region
       #
       def new_region_with_size(region, size)
-        blocks = (size / region.block_size).to_i
+        blocks = (size / region.block_size.to_i).to_i
         # Never exceed the region
         if region.start + blocks > region.end
           blocks = region.end - region.start + 1

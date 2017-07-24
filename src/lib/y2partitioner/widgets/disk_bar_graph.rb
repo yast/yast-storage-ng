@@ -16,11 +16,7 @@ module Y2Partitioner
       #   regions with labels, sorted by region start
       def regions_and_labels
         free_regions = @disk.free_spaces.map do |fs|
-          r = fs.region
-          # FIXME: FreeDiskSpace#region returns
-          # Storage::Region, not Y2Storage::Region
-          r = Y2Storage::Region.create(r.start, r.length, r.block_size)
-          [r, _("Unpartitioned")]
+          [fs.region, _("Unpartitioned")]
         end
 
         partitions = @disk.partitions.map do |part|

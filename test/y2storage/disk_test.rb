@@ -84,13 +84,13 @@ describe Y2Storage::Disk do
 
       it "starts counting right after the partition table" do
         region = disk.free_spaces.first.region
-        expect(region.start).to eq(ptable_size.to_i / region.block_size)
+        expect(region.start).to eq(ptable_size.to_i / region.block_size.to_i)
       end
 
       it "discards the space reserved by GPT at the end of the disk" do
         region = disk.free_spaces.first.region
         discarded = disk.region.end - region.end
-        expect(discarded * region.block_size).to eq gpt_final_space.to_i
+        expect(region.block_size * discarded).to eq gpt_final_space
       end
     end
 
@@ -104,7 +104,7 @@ describe Y2Storage::Disk do
 
       it "starts counting right after the partition table" do
         region = disk.free_spaces.first.region
-        expect(region.start).to eq(ptable_size.to_i / region.block_size)
+        expect(region.start).to eq(ptable_size.to_i / region.block_size.to_i)
       end
 
       it "counts after the end of the disk" do

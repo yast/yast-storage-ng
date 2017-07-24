@@ -30,27 +30,29 @@ module Y2Storage
   # Helper class to keep information about free disk space together.
   #
   class FreeDiskSpace
-    attr_reader :region, :disk
+    # @!attribute disk
+    #   @return [DiskSize]
+    attr_reader :disk
 
-    # Initialize.
+    # @!attribute region
+    #   @return [Region]
+    attr_reader :region
+
+    # Constructor
     #
-    # @param disk [::Storage::Disk]
-    #
-    # @param region [::Storage::Region]
-    #
+    # @param disk [Disk]
+    # @param region [Region]
     def initialize(disk, region)
       @disk = disk
       # Store a duplicate of the original region, which could change or be
       # deleted (don't trust the garbage collector when SWIG is involved)
-      # TODO: #to_storage_value to be removed when adapting this class
-      region = region.to_storage_value if region.respond_to?(:to_storage_value)
-      @region = Storage::Region.new(region)
+      region = Storage::Region.new(region.to_storage_value)
+      @region = Y2Storage::Region.new(region)
     end
 
     # Return the name of the disk this slot is on.
     #
     # @return [String] disk_name
-    #
     def disk_name
       @disk.name
     end
@@ -58,17 +60,15 @@ module Y2Storage
     # Return the size of this slot.
     #
     # @return [DiskSize]
-    #
     def disk_size
-      DiskSize.B(region.length * region.block_size)
+      region.size
     end
 
     # Offset of the slot relative to the beginning of the disk
     #
     # @return [DiskSize]
-    #
     def start_offset
-      DiskSize.B(region.start * region.block_size)
+      region.block_size * region.start
     end
 
     # Grain for alignment

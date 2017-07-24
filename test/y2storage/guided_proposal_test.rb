@@ -168,6 +168,18 @@ describe Y2Storage::GuidedProposal do
           an_object_having_attributes(filesystem_mountpoint: "swap")
         )
       end
+
+      it "creates the needed partitions with correct device names" do
+        proposal.propose
+        multipath = proposal.devices.multipaths.first
+        multipath_name = multipath.name
+        expect(multipath.partitions.map(&:name)).to contain_exactly(
+          "#{multipath_name}-part1",
+          "#{multipath_name}-part2",
+          "#{multipath_name}-part3",
+          "#{multipath_name}-part4"
+        )
+      end
     end
 
     context "when installing in a DM RAID" do
@@ -187,6 +199,17 @@ describe Y2Storage::GuidedProposal do
           an_object_having_attributes(id: Y2Storage::PartitionId::BIOS_BOOT),
           an_object_having_attributes(filesystem_mountpoint: "/"),
           an_object_having_attributes(filesystem_mountpoint: "swap")
+        )
+      end
+
+      it "creates the needed partitions with correct device names" do
+        proposal.propose
+        raid = proposal.devices.dm_raids.first
+        raid_name = raid.name
+        expect(raid.partitions.map(&:name)).to contain_exactly(
+          "#{raid_name}-part1",
+          "#{raid_name}-part2",
+          "#{raid_name}-part3"
         )
       end
     end

@@ -186,7 +186,7 @@ module Y2Storage
     # @return [Array<FreeDiskSpace>]
     def free_spaces
       # Unused device
-      return Array(FreeDiskSpace.new(self, region.to_storage_value)) unless has_children?
+      return Array(FreeDiskSpace.new(self, region)) unless has_children?
       # Device in use, but with no partition table
       return [] if partition_table.nil?
 
