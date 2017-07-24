@@ -116,7 +116,7 @@ describe Y2Storage::BlkDevice do
   end
 
   describe "#to_be_formatted?" do
-    let(:new_devicegraph) { Y2Storage::StorageManager.instance.y2storage_staging }
+    let(:new_devicegraph) { Y2Storage::StorageManager.instance.staging }
     let(:new_device) { Y2Storage::BlkDevice.find_by_name(new_devicegraph, device_name) }
 
     context "for the original device (same devicegraph)" do

@@ -41,7 +41,7 @@ module Y2Storage
 
       def initialize
         # FIXME: use StorageManager#staging when everything is adapted
-        @devicegraph = storage_manager.y2storage_staging
+        @devicegraph = storage_manager.staging
         @proposal = storage_manager.proposal
         return if @proposal || storage_manager.staging_changed?
         # If the staging devicegraph has never been set, try to make an
@@ -101,7 +101,7 @@ module Y2Storage
       def expert_partitioner
         dialog = Y2Partitioner::Dialogs::Main.new
         result = without_title_on_left do
-          dialog.run(storage_manager.y2storage_probed, @devicegraph)
+          dialog.run(storage_manager.probed, @devicegraph)
         end
 
         case result
@@ -140,7 +140,7 @@ module Y2Storage
       # ensure we share the DiskAnalyzer object (and hence we reuse its results)
       # between the proposal and the dialogs.
       def new_proposal(settings)
-        probed = storage_manager.y2storage_probed
+        probed = storage_manager.probed
         GuidedProposal.new(settings: settings, devicegraph: probed, disk_analyzer: probed_analyzer)
       end
     end

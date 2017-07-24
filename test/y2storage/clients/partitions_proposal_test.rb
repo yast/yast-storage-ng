@@ -100,7 +100,7 @@ describe Y2Storage::Clients::PartitionsProposal do
 
     context "when it has the current staging revision" do
       before do
-        described_class.staging_revision = 1
+        described_class.staging_revision = 2
         described_class.actions_presenter = presenter
       end
 
@@ -108,7 +108,7 @@ describe Y2Storage::Clients::PartitionsProposal do
 
       it "does not update the staging revision" do
         subject
-        expect(described_class.staging_revision).to eq(1)
+        expect(described_class.staging_revision).to eq(2)
       end
 
       it "does not update the actions presenter" do
@@ -121,7 +121,7 @@ describe Y2Storage::Clients::PartitionsProposal do
       before do
         described_class.staging_revision = 1
         described_class.actions_presenter = presenter1
-        allow(storage_manager).to receive(:staging_revision).and_return(2)
+        allow(storage_manager).to receive(:staging_revision).and_return(10)
         allow(Y2Storage::ActionsPresenter).to receive(:new).and_return(presenter2)
       end
 
@@ -130,7 +130,7 @@ describe Y2Storage::Clients::PartitionsProposal do
 
       it "updates the staging revision" do
         subject
-        expect(described_class.staging_revision).to eq 2
+        expect(described_class.staging_revision).to eq 10
       end
 
       it "updates the actions presenter" do

@@ -165,7 +165,7 @@ module Y2Storage
     #   @return [ResizeInfo]
     def detect_resize_info
       return nil unless exists_in_probed?
-      probed_device = StorageManager.instance.y2storage_probed.find_device(sid)
+      probed_device = StorageManager.instance.probed.find_device(sid)
       probed_device.storage_detect_resize_info
     end
 

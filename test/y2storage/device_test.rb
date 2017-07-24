@@ -99,7 +99,7 @@ describe Y2Storage::Device do
       allow(Storage).to receive(:to_partition) do |object|
         object
       end
-      allow(Y2Storage::StorageManager.instance).to receive(:y2storage_probed).and_return probed
+      allow(Y2Storage::StorageManager.instance).to receive(:probed).and_return probed
     end
 
     context "if the device does not exist in probed" do

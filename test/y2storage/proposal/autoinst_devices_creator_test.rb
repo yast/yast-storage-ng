@@ -38,7 +38,7 @@ describe Y2Storage::Proposal::AutoinstDevicesCreator do
   before { fake_scenario(scenario) }
 
   subject(:creator) do
-    described_class.new(Y2Storage::StorageManager.instance.y2storage_probed)
+    described_class.new(Y2Storage::StorageManager.instance.probed)
   end
 
   describe "#populated_devicegraph" do

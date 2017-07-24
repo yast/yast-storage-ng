@@ -30,7 +30,7 @@ module Y2Partitioner
 
         smanager = Y2Storage::StorageManager.instance
         dialog = Dialogs::Main.new
-        res = dialog.run(smanager.y2storage_probed, smanager.y2storage_staging)
+        res = dialog.run(smanager.probed, smanager.staging)
 
         # Running system: presenting "Expert Partitioner: Summary" step now
         # ep-main.rb SummaryDialog

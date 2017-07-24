@@ -49,7 +49,7 @@ module Yast
       end
 
       def fake_devicegraph
-        Y2Storage::StorageManager.instance.y2storage_probed
+        Y2Storage::StorageManager.instance.probed
       end
 
       def partition_double(name = "", disk_size = Y2Storage::DiskSize.MiB(10))

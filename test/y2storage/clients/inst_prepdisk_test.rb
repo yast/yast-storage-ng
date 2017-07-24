@@ -31,6 +31,7 @@ describe Y2Storage::Clients::InstPrepdisk do
   describe "#run" do
     before do
       Y2Storage::StorageManager.create_test_instance
+      Y2Storage::StorageManager.instance.probe
       allow(Yast::Installation).to receive(:destdir).and_return "/dest"
       allow(Yast::SCR).to receive(:Execute).and_return(true)
       allow(Yast::Mode).to receive(:update).and_return(mode == :update)
@@ -53,12 +54,12 @@ describe Y2Storage::Clients::InstPrepdisk do
       end
 
       it "saves probed devicegraph to a xml log file" do
-        expect(storage_manager.y2storage_probed).to receive(:save).with(/.*probed.*.xml/)
+        expect(storage_manager.probed).to receive(:save).with(/.*probed.*.xml/)
         client.run
       end
 
       it "saves staging devicegraph to a xml log file" do
-        expect(storage_manager.y2storage_staging).to receive(:save).with(/.*staging.*.xml/)
+        expect(storage_manager.staging).to receive(:save).with(/.*staging.*.xml/)
         client.run
       end
     end

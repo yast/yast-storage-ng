@@ -27,7 +27,7 @@ describe Y2Storage::YamlWriter do
   before do
     Y2Storage::StorageManager.create_test_instance
   end
-  let(:staging) { Y2Storage::StorageManager.instance.y2storage_staging }
+  let(:staging) { Y2Storage::StorageManager.instance.staging }
 
   it "produces yaml of a simple DASD disk setup" do
 

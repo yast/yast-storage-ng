@@ -30,7 +30,7 @@ describe Y2Storage::LvmVg do
 
   describe "#name" do
     it "returns string starting with /dev and containing vg_name" do
-      subject = Y2Storage::StorageManager.instance.y2storage_staging.lvm_vgs.first
+      subject = Y2Storage::StorageManager.instance.staging.lvm_vgs.first
       expect(subject.name).to start_with("/dev")
       expect(subject.name).to include(subject.vg_name)
     end
