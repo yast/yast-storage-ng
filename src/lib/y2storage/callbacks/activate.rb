@@ -24,14 +24,27 @@
 require "storage"
 require "y2storage/dialogs/callbacks/activate_luks"
 
+Yast.import "Popup"
+
 module Y2Storage
   module Callbacks
     # class to implement callbacks used during activate
     class Activate < Storage::ActivateCallbacks
       include Yast::Logger
+      include Yast::I18n
+
+      def initialize
+        textdomain "storage"
+        super
+      end
 
       def multipath
-        return false
+        Yast::Popup.YesNo(
+          _(
+            "The system seems to have multipath hardware.\n"\
+            "Do you want to activate multipath?"
+          )
+        )
       end
 
       def luks(uuid, attempt)
