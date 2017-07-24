@@ -76,7 +76,7 @@ describe Y2Storage::Callbacks::Activate do
     end
     let(:answer) { true }
 
-    it "asks the user wheter to activate multipath" do
+    it "asks the user whether to activate multipath" do
       expect(Yast::Popup).to receive(:YesNo).once
       subject.multipath
     end
