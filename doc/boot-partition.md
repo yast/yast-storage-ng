@@ -1,7 +1,7 @@
 Boot Partition Layout / Restrictions For Storage Proposal
 =========================================================
 
-[Revision 2016-07-14]
+[Revision 2017-07-25]
 
 #### Notes:
 
@@ -250,7 +250,34 @@ AI Ihno:
 
 - provide a script to detect DASD type (FBA, DIAG...), is it allowed to create a partition table?
 
+## aarch64 (Raspberry Pi 3)
 
+- see also fate #323484, bsc #1041475
+
+- RPi boots from sdcard, must have a msdos partition table
+
+- first, a firmware blob is read; this has to be on a dedicated
+  vfat partition that must not be deleted, this partition need not be the
+  first partition
+
+- the partition type of this partition is fixed (0xc?)
+
+- this firmware then loads a bootloader (u-boot)
+
+- u-boot then does the typical UEFI boot procedure (loading grub2, etc)
+
+- EFI system partition (ESP) must be marked as active
+
+- the special RPi partition contains some firmware blob (file name?),
+  u-boot, and a lot of RPi config files
+
+- the special RPi partition could be treated very similar to PReP on ppc
+
+- apart from this, it's a typical UEFI setup (with separate ESP) but with
+  msdos partition table on the sdcard (there's no restriction for the usb
+  disk) and ESP must be marked as active
+
+- installation can be via network or from usb-stick, selectable in u-boot (somehow?)
 
 # Summary of discussion
 
@@ -270,7 +297,9 @@ AI Ihno:
 - [PowerLinux Boot howto](https://www.ibm.com/developerworks/community/wikis/home?lang=en#!/wiki/W51a7ffcf4dfd_4b40_9d82_446ebc23c550/page/PowerLinux%20Boot%20howto)
 - [SLOF - Slimline Open Firmware](https://github.com/aik/SLOF/blob/master/slof/fs/packages/disk-label.fs)
 - [GRUB Documentation](https://www.gnu.org/software/grub/grub-documentation.html)
-- [GRUB wikipedia] (https://de.wikipedia.org/wiki/Grand_Unified_Bootloader)
+- [GRUB wikipedia](https://de.wikipedia.org/wiki/Grand_Unified_Bootloader)
+- [U-Boot](http://elinux.org/RPi_U-Boot)
+- [Raspberry Pi boot modes](https://github.com/raspberrypi/documentation/tree/master/hardware/raspberrypi/bootmodes)
 
 ## Internal Documentation
 
