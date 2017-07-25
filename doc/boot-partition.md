@@ -250,7 +250,28 @@ AI Ihno:
 
 - provide a script to detect DASD type (FBA, DIAG...), is it allowed to create a partition table?
 
+## aarch64 (RPi 3)
 
+- see also fate #323484, bsc #1041475
+
+- RPi boots from sdcard, must have a msdos partition table
+
+- first, a firmware blob is read; this has to be on a dedicated
+  vfat partition that must not be deleted, possibly this partition must be the
+  first partition (check!)
+
+- this firmware then loads a bootloader (u-boot)
+
+- u-boot then does the typical UEFI boot proceedure (loading grub2, etc)
+
+- this special RPi partition contains some firmware blob (file name?),
+  u-boot, and a lot of RPi config files
+
+- installation can be via network or from usb-stick, selectable in u-boot (via menu)
+
+- this dedicated RPi partition could be treated very similar to PReP on ppc;
+  apart from this, it's a typical UEFI setup but with msdos partition table
+  on the sdcard (there's not restriction for the usb disk)
 
 # Summary of discussion
 
