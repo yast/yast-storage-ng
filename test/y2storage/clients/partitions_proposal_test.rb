@@ -27,16 +27,15 @@ describe Y2Storage::Clients::PartitionsProposal do
   subject { described_class.new }
 
   before do
-    Y2Storage::StorageManager.fake_from_yaml(input_file_for("empty_hard_disk_gpt_50GiB"))
+    Y2Storage::StorageManager.instance.probe_from_yaml(input_file_for("empty_hard_disk_gpt_50GiB"))
     # To generate a new PartitionsProposal.actions_presenter for each test
     described_class.staging_revision = 0
   end
 
   let(:actions_presenter) { described_class.actions_presenter }
+  let(:storage_manager) { Y2Storage::StorageManager.instance }
 
   describe "#initialize" do
-    let(:storage_manager) { Y2Storage::StorageManager.instance }
-
     context "when running the client for the first time" do
       before do
         allow(storage_manager).to receive(:staging_changed?).and_return false
@@ -100,18 +99,22 @@ describe Y2Storage::Clients::PartitionsProposal do
 
     context "when it has the current staging revision" do
       before do
-        described_class.staging_revision = 2
-        described_class.actions_presenter = presenter
+        allow(storage_manager).to receive(:staging_revision).and_return(10)
+        described_class.staging_revision = revision
+        allow(storage_manager).to receive(:staging_changed?).and_return(true)
       end
 
       let(:presenter) { instance_double(Y2Storage::ActionsPresenter) }
+      let(:revision) { storage_manager.staging_revision }
 
       it "does not update the staging revision" do
+        described_class.staging_revision = revision
         subject
-        expect(described_class.staging_revision).to eq(2)
+        expect(described_class.staging_revision).to eq(revision)
       end
 
       it "does not update the actions presenter" do
+        described_class.actions_presenter = presenter
         subject
         expect(described_class.actions_presenter).to eq(presenter)
       end

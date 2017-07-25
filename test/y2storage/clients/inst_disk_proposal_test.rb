@@ -32,6 +32,8 @@ describe Y2Storage::Clients::InstDiskProposal do
 
     before do
       Y2Storage::StorageManager.create_test_instance
+      # Ensure probing
+      storage_manager.probe
       allow(proposal_dialog).to receive(:proposal)
       allow(proposal_dialog).to receive(:devicegraph)
       allow(Y2Storage::GuidedProposal).to receive(:initial).and_return(initial_proposal)
