@@ -270,8 +270,9 @@ AI Ihno:
 - installation can be via network or from usb-stick, selectable in u-boot (via menu)
 
 - this dedicated RPi partition could be treated very similar to PReP on ppc;
-  apart from this, it's a typical UEFI setup but with msdos partition table
-  on the sdcard (there's not restriction for the usb disk)
+  apart from this, it's a typical UEFI setup (with separate EFI system
+  partition) but with msdos partition table on the sdcard (there's not
+  restriction for the usb disk)
 
 # Summary of discussion
 
