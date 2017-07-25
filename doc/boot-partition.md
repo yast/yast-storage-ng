@@ -299,6 +299,7 @@ AI Ihno:
 - [GRUB Documentation](https://www.gnu.org/software/grub/grub-documentation.html)
 - [GRUB wikipedia](https://de.wikipedia.org/wiki/Grand_Unified_Bootloader)
 - [U-Boot](http://elinux.org/RPi_U-Boot)
+- [Raspberry Pi boot modes](https://github.com/raspberrypi/documentation/tree/master/hardware/raspberrypi/bootmodes)
 
 ## Internal Documentation
 
