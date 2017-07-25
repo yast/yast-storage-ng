@@ -40,7 +40,6 @@ module Y2Storage
       include InstDialogMixin
 
       def initialize
-        # FIXME: use StorageManager#staging when everything is adapted
         @devicegraph = storage_manager.staging
         @proposal = storage_manager.proposal
         return if @proposal || storage_manager.staging_changed?

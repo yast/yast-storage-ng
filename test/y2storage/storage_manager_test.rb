@@ -47,6 +47,11 @@ describe Y2Storage::StorageManager do
       expect(described_class.create_test_instance).to be_a described_class
     end
 
+    it "initializes #storage as not probed" do
+      manager = described_class.create_test_instance
+      expect(manager.probed?).to be(false)
+    end
+
     it "initializes #storage with empty devicegraphs" do
       manager = described_class.create_test_instance
       expect(manager.storage).to be_a Storage::Storage
@@ -57,54 +62,6 @@ describe Y2Storage::StorageManager do
     it "initializes #staging_revision" do
       manager = described_class.create_test_instance
       expect(manager.staging_revision).to be_zero
-    end
-  end
-
-  describe ".fake_from_yaml" do
-    it "returns the singleton StorageManager object" do
-      result = described_class.fake_from_yaml(input_file_for("gpt_and_msdos"))
-      expect(result).to be_a described_class
-    end
-
-    it "initializes #storage with the mocked devicegraphs" do
-      described_class.fake_from_yaml(input_file_for("gpt_and_msdos"))
-      expect(manager.storage).to be_a Storage::Storage
-      expect(Y2Storage::Disk.all(manager.probed).size).to eq 6
-      expect(Y2Storage::Disk.all(manager.staging).size).to eq 6
-    end
-
-    it "sets #storage as probed" do
-      described_class.fake_from_yaml(input_file_for("gpt_and_msdos"))
-      expect(manager.probed?).to be(true)
-    end
-
-    it "initializes #staging_revision" do
-      described_class.fake_from_yaml(input_file_for("gpt_and_msdos"))
-      expect(manager.staging_revision).to be(1)
-    end
-  end
-
-  describe ".fake_from_xml" do
-    it "returns the singleton StorageManager object" do
-      result = described_class.fake_from_xml(input_file_for("md2-devicegraph", suffix: "xml"))
-      expect(result).to be_a described_class
-    end
-
-    it "initializes #storage with the mocked devicegraphs" do
-      described_class.fake_from_xml(input_file_for("md2-devicegraph", suffix: "xml"))
-      expect(manager.storage).to be_a Storage::Storage
-      expect(Y2Storage::Disk.all(manager.probed).size).to eq 4
-      expect(Y2Storage::Disk.all(manager.staging).size).to eq 4
-    end
-
-    it "sets #storage as probed" do
-      described_class.fake_from_xml(input_file_for("md2-devicegraph", suffix: "xml"))
-      expect(manager.probed?).to be(true)
-    end
-
-    it "initializes #staging_revision" do
-      described_class.fake_from_xml(input_file_for("md2-devicegraph", suffix: "xml"))
-      expect(manager.staging_revision).to be(1)
     end
   end
 
@@ -257,7 +214,7 @@ describe Y2Storage::StorageManager do
 
   describe "#probe" do
     before do
-      described_class.fake_from_yaml(input_file_for("gpt_and_msdos"))
+      described_class.instance.probe_from_yaml(input_file_for("gpt_and_msdos"))
       # Ensure old values have been queried at least once
       manager.probed
       manager.probed_disk_analyzer
@@ -274,28 +231,6 @@ describe Y2Storage::StorageManager do
     let(:st_staging) { Storage::Devicegraph.new(manager.storage) }
     let(:devicegraph) { Y2Storage::Devicegraph.new(st_staging) }
     let(:proposal) { double("Y2Storage::GuidedProposal", devices: devicegraph) }
-
-    context "when the mode is test" do
-      before do
-        allow(manager).to receive(:test?).and_return(true)
-      end
-
-      it "does not perform real probing" do
-        expect(manager.storage).to_not receive(:probe)
-        manager.probe
-      end
-    end
-
-    context "when the mode is not test" do
-      before do
-        allow(manager).to receive(:test?).and_return(false)
-      end
-
-      it "performs real probing" do
-        expect(manager.storage).to receive(:probe)
-        manager.probe
-      end
-    end
 
     it "refreshes #probed" do
       expect(manager.probed.disks.size).to eq 6
@@ -339,6 +274,100 @@ describe Y2Storage::StorageManager do
     it "sets #proposal to nil" do
       manager.proposal = proposal
       manager.probe
+      expect(manager.proposal).to be_nil
+    end
+  end
+
+  describe "#probe_from_yaml" do
+    let(:st_devicegraph) { Storage::Devicegraph.new(manager.storage) }
+    let(:devicegraph) { Y2Storage::Devicegraph.new(st_devicegraph) }
+    let(:proposal) { double("Y2Storage::GuidedProposal", devices: devicegraph) }
+
+    it "refreshes #probed" do
+      manager = described_class.create_test_instance
+      expect(manager.probed).to be_empty
+
+      manager.probe_from_yaml(input_file_for("gpt_and_msdos"))
+
+      expect(manager.probed).to_not be_empty
+      expect(manager.probed.disks.size).to eq 6
+    end
+
+    it "refreshes #staging" do
+      manager = described_class.create_test_instance
+      expect(manager.staging).to be_empty
+
+      manager.probe_from_yaml(input_file_for("gpt_and_msdos"))
+
+      expect(manager.staging).to_not be_empty
+      expect(manager.staging.disks.size).to eq 6
+    end
+
+    it "increments the staging revision" do
+      pre = manager.staging_revision
+      manager.probe_from_yaml(input_file_for("gpt_and_msdos"))
+      expect(manager.staging_revision).to be > pre
+    end
+
+    it "refreshes #probed_disk_analyzer" do
+      pre = manager.probed_disk_analyzer
+      # Calling twice (or more) does not result in a refresh
+      expect(manager.probed_disk_analyzer).to eq pre
+
+      manager.probe_from_yaml(input_file_for("gpt_and_msdos"))
+      expect(manager.probed_disk_analyzer).to_not eq pre
+    end
+
+    it "sets #proposal to nil" do
+      manager.proposal = proposal
+      manager.probe_from_yaml(input_file_for("gpt_and_msdos"))
+      expect(manager.proposal).to be_nil
+    end
+  end
+
+  describe "#probe_from_xml" do
+    let(:st_devicegraph) { Storage::Devicegraph.new(manager.storage) }
+    let(:devicegraph) { Y2Storage::Devicegraph.new(st_devicegraph) }
+    let(:proposal) { double("Y2Storage::GuidedProposal", devices: devicegraph) }
+
+    it "refreshes #probed" do
+      manager = described_class.create_test_instance
+      expect(manager.probed).to be_empty
+
+      manager.probe_from_xml(input_file_for("md2-devicegraph", suffix: "xml"))
+
+      expect(manager.probed).to_not be_empty
+      expect(manager.probed.disks.size).to eq 4
+    end
+
+    it "refreshes #staging" do
+      manager = described_class.create_test_instance
+      expect(manager.staging).to be_empty
+
+      manager.probe_from_xml(input_file_for("md2-devicegraph", suffix: "xml"))
+
+      expect(manager.staging).to_not be_empty
+      expect(manager.staging.disks.size).to eq 4
+    end
+
+    it "increments the staging revision" do
+      pre = manager.staging_revision
+      manager.probe_from_xml(input_file_for("md2-devicegraph", suffix: "xml"))
+      expect(manager.staging_revision).to be > pre
+    end
+
+    it "refreshes #probed_disk_analyzer" do
+      pre = manager.probed_disk_analyzer
+      # Calling twice (or more) does not result in a refresh
+      expect(manager.probed_disk_analyzer).to eq pre
+
+      manager.probe_from_xml(input_file_for("md2-devicegraph", suffix: "xml"))
+      expect(manager.probed_disk_analyzer).to_not eq pre
+    end
+
+    it "sets #proposal to nil" do
+      manager.proposal = proposal
+      manager.probe_from_xml(input_file_for("md2-devicegraph", suffix: "xml"))
       expect(manager.proposal).to be_nil
     end
   end

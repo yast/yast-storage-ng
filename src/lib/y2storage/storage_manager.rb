@@ -29,10 +29,8 @@ require "y2storage/disk_analyzer"
 require "y2storage/callbacks/activate.rb"
 
 module Y2Storage
-  #
   # Singleton class to provide access to the libstorage Storage object and
   # to store related state information.
-  #
   class StorageManager
     include Yast::Logger
     extend Forwardable
@@ -50,6 +48,7 @@ module Y2Storage
     # Zero means no modification (still not probed). Incremented every
     # time the staging devicegraph is re-assigned.
     # @see #copy_to_staging
+    # @see #staging_changed
     #
     # @return [Integer]
     attr_reader :staging_revision
@@ -79,6 +78,8 @@ module Y2Storage
     def initialize(storage_environment)
       @storage = Storage::Storage.new(storage_environment)
       @probed = false
+      reset_probed
+      reset_staging
       reset_staging_revision
     end
 
@@ -96,17 +97,11 @@ module Y2Storage
       @staging_revision += 1
     end
 
-    # Resets the #staging_revision
+    # Activate devices like multipath, MD RAID, LVM and LUKS. It is not
+    # required to have probed the system to call this function. On the
+    # other hand after calling this function the system should be probed.
     #
-    # Useful when faking a devicegraph from yaml or xml.
-    # @see #fake_from_yaml
-    # @see #fake_from_xml
-    def reset_staging_revision
-      @staging_revision = 0
-      @staging_revision_after_probing = 0
-    end
-
-    # Performs activation actions (for example, multipath or luks password)
+    # @raise [Exception] if error during activation
     def activate
       activate_callbacks = Callbacks::Activate.new
       @storage.activate(activate_callbacks)
@@ -117,31 +112,28 @@ module Y2Storage
     # Invalidates the probed and staging devicegraph. Real probing is
     # only performed when the instance is not for testing.
     #
-    # @see #test?
+    # @raise [Exception] if error during probing
     def probe
-      @storage.probe unless test?
-
-      @probed = true
-      @probed_graph = nil
-      @staging_graph = nil
-      @probed_disk_analyzer = nil
-      @proposal = nil
-
-      increase_staging_revision
-      @staging_revision_after_probing = staging_revision
+      @storage.probe
+      probed_performed
     end
 
     # Probed devicegraph
     # @return [Devicegraph]
     def probed
-      probe unless probed?
-      @probed_graph ||= Devicegraph.new(storage.probed)
+      @probed_graph ||= begin
+        probe unless probed?
+        Devicegraph.new(storage.probed)
+      end
     end
 
     # Staging devicegraph
     # @return [Devicegraph]
     def staging
-      @staging_graph ||= Devicegraph.new(storage.staging)
+      @staging_graph ||= begin
+        probe unless probed?
+        Devicegraph.new(storage.staging)
+      end
     end
 
     # Copies the manually-calculated (no proposal) devicegraph to staging.
@@ -152,7 +144,6 @@ module Y2Storage
     #
     # @param [Devicegraph] devicegraph to copy
     def staging=(devicegraph)
-      @proposal = nil
       copy_to_staging(devicegraph)
     end
 
@@ -187,7 +178,28 @@ module Y2Storage
     # Beware: this method can cause data loss
     def commit
       storage.calculate_actiongraph
+      # TODO: add proper callbacks (CommitCallbacks class)
       storage.commit
+    end
+
+    # Probes from a yml file instead of doing real probing
+    def probe_from_yaml(yaml_file = nil)
+      fake_graph = Devicegraph.new(storage.create_devicegraph("fake"))
+      Y2Storage::FakeDeviceFactory.load_yaml_file(fake_graph, yaml_file) if yaml_file
+
+      fake_graph.to_storage_value.copy(storage.probed)
+      fake_graph.to_storage_value.copy(storage.staging)
+
+      probed_performed
+    ensure
+      storage.remove_devicegraph("fake")
+    end
+
+    # Probes from a xml file instead of doing real probing
+    def probe_from_xml(xml_file)
+      storage.probed.load(xml_file)
+      storage.probed.copy(storage.staging)
+      probed_performed
     end
 
   private
@@ -200,38 +212,64 @@ module Y2Storage
     # @return [Integer]
     attr_reader :staging_revision_after_probing
 
-    # Checks whether we are running for tests
-    def test?
-      @storage.environment.probe_mode == Storage::ProbeMode_NONE
-    end
-
     # Sets the devicegraph as the staging one, updating all the associated
     # information like #staging_revision
     #
     # @param [Devicegraph] devicegraph to copy
     def copy_to_staging(devicegraph)
       devicegraph.copy(staging)
+      staging_changed
+    end
+
+    # Invalidates previous probed devicegraph and its related data
+    def reset_probed
+      @probed_graph = nil
+      @probed_disk_analyzer = nil
+    end
+
+    alias_method :probed_changed, :reset_probed
+
+    # Invalidates previous staging devicegraph and its related data
+    def reset_staging
+      @staging_graph = nil
+      @proposal = nil
+    end
+
+    # Sets all necessary data after changing the staging devicegraph. To be executed
+    # always after a staging assignment
+    def staging_changed
+      reset_staging
       increase_staging_revision
     end
 
-    #
+    # Sets all necessary data after probing. To be executed always after probing
+    def probed_performed
+      @probed = true
+      probed_changed
+      staging_changed
+
+      @staging_revision_after_probing = staging_revision
+    end
+
+    # Resets the #staging_revision
+    def reset_staging_revision
+      @staging_revision = 0
+      @staging_revision_after_probing = 0
+    end
+
     # Class methods
-    #
     class << self
       # Returns the singleton instance.
       #
       # In the first call, it will create a libstorage instance (using common
-      # defaults) if there isn't one yet. That means that, by default, the first
-      # call will also trigger hardware probing.
+      # defaults) if there isn't one yet.
       #
       # @see .create_instance if you need special parameters for creating the
-      #   libstorage instance
-      # @see .create_test_instance if you just need to create an instance
-      #   without hardware probing
-      # @see .fake_from_yaml for easy mocking
+      #   libstorage instance.
+      # @see .create_test_instance if you just need to create an instance that
+      #   ensures not real hardware probing, even calling to #probe.
       #
       # @return [StorageManager]
-      #
       def instance
         create_instance unless @instance
         @instance
@@ -243,11 +281,9 @@ module Y2Storage
       # the hardware probing etc.
       #
       # If no Storage::Environment is provided, it uses a default one that
-      # implies hardware probing. This is why there is an alias
-      # StorageManager.start_probing to make this explicit.
+      # allows hardware probing.
       #
       # @return [StorageManager] singleton instance
-      #
       def create_instance(storage_environment = nil)
         storage_environment ||= ::Storage::Environment.new(true)
         create_logger
@@ -255,62 +291,12 @@ module Y2Storage
         @instance = new(storage_environment)
       end
 
-      alias_method :start_probing, :create_instance
-
-      # Creates the singleton instance skipping hardware probing.
+      # Creates the singleton instance for testing.
+      # This instance avoids to preform real probing or commit.
       #
       # @return [StorageManager] singleton instance
       def create_test_instance
         create_instance(test_environment)
-      end
-
-      # Use this as an alternative to the instance method.
-      # Probing is skipped and the device tree is initialized from yaml_file.
-      # Any existing probed device tree is replaced.
-      #
-      # @note Cached objects are invalidated but creating new Storage
-      #   (libstorage) instance each time is avoided because it is a time
-      #   consuming task.
-      #
-      # @see #refresh!
-      #
-      # @return [StorageManager] singleton instance
-      def fake_from_yaml(yaml_file = nil)
-        @instance ||= create_test_instance
-        @instance.reset_staging_revision
-
-        fake_graph = Devicegraph.new(@instance.storage.create_devicegraph("fake"))
-        Y2Storage::FakeDeviceFactory.load_yaml_file(fake_graph, yaml_file) if yaml_file
-
-        fake_graph.to_storage_value.copy(@instance.storage.probed)
-        fake_graph.to_storage_value.copy(@instance.storage.staging)
-        @instance.storage.remove_devicegraph("fake")
-
-        @instance.probe
-        @instance
-      end
-
-      # Use this as an alternative to the instance method.
-      # Probing is skipped and the device tree is initialized from xml_file.
-      # Any existing probed device tree is replaced.
-      # @see {Devicegraph.load} for details about xml
-      #
-      # @note Cached objects are invalidated but creating new Storage
-      #   (libstorage) instance each time is avoided because it is a time
-      #   consuming task.
-      #
-      # @see #refresh!
-      #
-      # @return [StorageManager] singleton instance
-      def fake_from_xml(xml_file)
-        @instance ||= create_test_instance
-        @instance.reset_staging_revision
-
-        @instance.storage.probed.load(xml_file)
-        @instance.storage.probed.copy(@instance.storage.staging)
-
-        @instance.probe
-        @instance
       end
 
       # Make sure only .instance can be used to create objects
