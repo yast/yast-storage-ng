@@ -51,6 +51,7 @@ describe Y2Storage::Proposal::AutoinstDevicesPlanner do
     fake_scenario(scenario)
 
     allow(Yast::Arch).to receive(:x86_64).and_return(architecture == :x86_64)
+    allow(Yast::Arch).to receive(:i386).and_return(architecture == :i386)
     allow(Yast::Arch).to receive(:ppc).and_return(architecture == :ppc)
     allow(Yast::Arch).to receive(:s390).and_return(architecture == :s390)
   end
