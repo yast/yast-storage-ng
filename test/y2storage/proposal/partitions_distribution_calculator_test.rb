@@ -197,7 +197,7 @@ describe Y2Storage::Proposal::PartitionsDistributionCalculator do
           let(:scenario) { "spaces_5_3_extended" }
 
           it "plans all partitions as logical" do
-            types = distribution.spaces.map { |s| s.partition_type }
+            types = distribution.spaces.map(&:partition_type)
             expect(types).to eq [:logical, :logical]
           end
         end
@@ -216,12 +216,12 @@ describe Y2Storage::Proposal::PartitionsDistributionCalculator do
               let(:scenario) { "spaces_5_3_used_extended" }
 
               it "sets the primary partition type for all the spaces" do
-                types = distribution.spaces.map { |s| s.partition_type }
+                types = distribution.spaces.map(&:partition_type)
                 expect(types).to eq [:primary, :primary]
               end
 
               it "plans all partitions as primary" do
-                logical = distribution.spaces.map { |s| s.num_logical }
+                logical = distribution.spaces.map(&:num_logical)
                 expect(logical).to eq [0, 0]
               end
             end
@@ -346,7 +346,7 @@ describe Y2Storage::Proposal::PartitionsDistributionCalculator do
       let(:lvm_max) { Y2Storage::DiskSize.unlimited }
 
       let(:pv_vols) do
-        volumes = distribution.spaces.map { |sp| sp.partitions }
+        volumes = distribution.spaces.map(&:partitions)
         volumes.map { |vols| vols.select(&:lvm_pv?) }.flatten
       end
 

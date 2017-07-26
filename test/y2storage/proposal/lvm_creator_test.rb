@@ -139,7 +139,7 @@ describe Y2Storage::Proposal::LvmCreator do
       it "does not delete existing LVs if there is enough free space" do
         devicegraph = creator.create_volumes(vg, pv_partitions).devicegraph
         reused_vg = devicegraph.lvm_vgs.first
-        lv_names = reused_vg.lvm_lvs.map { |lv| lv.lv_name }
+        lv_names = reused_vg.lvm_lvs.map(&:lv_name)
         expect(lv_names).to include("lv1", "lv2")
       end
 
@@ -173,7 +173,7 @@ describe Y2Storage::Proposal::LvmCreator do
           it "deletes all existing LVs" do
             devicegraph = creator.create_volumes(vg, pv_partitions).devicegraph
             reused_vg = devicegraph.lvm_vgs.first
-            lv_names = reused_vg.lvm_lvs.map { |lv| lv.lv_name }
+            lv_names = reused_vg.lvm_lvs.map(&:lv_name)
             expect(lv_names).to eq(["one", "two"])
           end
         end
@@ -187,7 +187,7 @@ describe Y2Storage::Proposal::LvmCreator do
           it "deletes all existing LVs but the reusable one" do
             devicegraph = creator.create_volumes(vg, pv_partitions).devicegraph
             reused_vg = devicegraph.lvm_vgs.first
-            lv_names = reused_vg.lvm_lvs.map { |lv| lv.lv_name }
+            lv_names = reused_vg.lvm_lvs.map(&:lv_name)
             expect(lv_names).to eq(["lv1", "two"])
           end
         end
