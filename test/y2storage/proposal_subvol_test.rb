@@ -118,7 +118,7 @@ describe Y2Storage::GuidedProposal do
           ]
 
           subject.propose
-          cow_subvolumes = subvolumes.reject { |s| s.nocow? }
+          cow_subvolumes = subvolumes.reject(&:nocow?)
 
           expect(cow_subvolumes.map(&:path)).to include(*expected_cow_subvolumes)
         end
@@ -132,7 +132,7 @@ describe Y2Storage::GuidedProposal do
           ]
 
           subject.propose
-          nocow_subvolumes = subvolumes.select { |s| s.nocow? }
+          nocow_subvolumes = subvolumes.select(&:nocow?)
 
           expect(nocow_subvolumes.map(&:path)).to contain_exactly(*expected_nocow_subvolumes)
         end

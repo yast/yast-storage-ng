@@ -673,7 +673,7 @@ module Y2Storage
     # @return [Object] default subvolume or nil if there is none
     #
     def find_default_subvolume(btrfs)
-      btrfs.btrfs_subvolumes.find { |s| s.default_btrfs_subvolume? }
+      btrfs.btrfs_subvolumes.find(&:default_btrfs_subvolume?)
     end
 
     # Factory method for a btrfs subvolume

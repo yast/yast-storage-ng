@@ -78,7 +78,7 @@ module Y2Storage
     # @param disks [Disk, String] disks to analyze. All disks by default.
     # @return [Array<Partition>]
     def linux_partitions(*disks)
-      data_for(*disks, :linux_partitions) { |d| d.linux_system_partitions }
+      data_for(*disks, :linux_partitions, &:linux_system_partitions)
     end
 
     # Release names of installed systems for every disk.
@@ -223,7 +223,7 @@ module Y2Storage
     def find_candidate_disks
       @installation_disks = find_installation_disks
 
-      usb_disks, non_usb_disks = devicegraph.disk_devices.partition { |d| d.usb? }
+      usb_disks, non_usb_disks = devicegraph.disk_devices.partition(&:usb?)
 
       # Try with non-USB disks first.
       disks = remove_installation_disks(non_usb_disks)
@@ -255,7 +255,7 @@ module Y2Storage
     #
     # @return [Array<Disk>]
     def find_installation_disks
-      usb_disks, non_usb_disks = devicegraph.disk_devices.partition { |d| d.usb? }
+      usb_disks, non_usb_disks = devicegraph.disk_devices.partition(&:usb?)
       disks = usb_disks + non_usb_disks
       disks = disks.first(DEFAULT_CHECK_LIMIT)
       disks.select { |d| installation_disk?(d) }

@@ -137,7 +137,7 @@ module Y2Storage
       end
 
       def to_s
-        spaces_str = spaces.map { |s| s.to_s }.join(", ")
+        spaces_str = spaces.map(&:to_s).join(", ")
         "#<PartitionsDistribution spaces=[#{spaces_str}]>"
       end
 
@@ -318,7 +318,7 @@ module Y2Storage
 
       # @see #comparable_string
       def partitions_comparable_string(partitions)
-        partitions_strings = partitions.map { |part| part.to_s }.sort
+        partitions_strings = partitions.map(&:to_s).sort
         "<partitions=#{partitions_strings.join}>"
       end
 

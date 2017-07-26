@@ -207,9 +207,9 @@ module Y2Storage
         lvs = volume_group.lvm_lvs
         big_lvs = lvs.select { |lv| lv.size >= target_space }
         if big_lvs.empty?
-          lvs.max_by { |lv| lv.size }
+          lvs.max_by(&:size)
         else
-          big_lvs.min_by { |lv| lv.size }
+          big_lvs.min_by(&:size)
         end
       end
 
