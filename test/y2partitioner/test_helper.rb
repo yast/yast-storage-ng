@@ -5,8 +5,8 @@ require "y2partitioner/device_graphs"
 
 def devicegraph_stub(name)
   path = File.join(TEST_PATH, "data", "devicegraphs", name)
-  Y2Storage::StorageManager.instance.probe_from_yaml(path)
   storage = Y2Storage::StorageManager.instance
+  storage.probe_from_yaml(path)
 
   Y2Partitioner::DeviceGraphs.create_instance(storage.probed, storage.staging)
   storage
