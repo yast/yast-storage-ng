@@ -32,6 +32,8 @@ describe Y2Storage::Clients::InstDiskProposal do
 
     before do
       Y2Storage::StorageManager.create_test_instance
+      # Ensure probing
+      storage_manager.probe
       allow(proposal_dialog).to receive(:proposal)
       allow(proposal_dialog).to receive(:devicegraph)
       allow(Y2Storage::GuidedProposal).to receive(:initial).and_return(initial_proposal)
@@ -80,7 +82,7 @@ describe Y2Storage::Clients::InstDiskProposal do
 
       it "opens the proposal dialog with the accepted proposal" do
         expect(Y2Storage::Dialogs::Proposal).to receive(:new)
-          .with(previous_proposal, storage_manager.y2storage_staging).and_return(proposal_dialog)
+          .with(previous_proposal, storage_manager.staging).and_return(proposal_dialog)
 
         expect(proposal_dialog).to receive(:run).and_return :abort
         client.run
@@ -95,7 +97,7 @@ describe Y2Storage::Clients::InstDiskProposal do
 
       it "opens the proposal dialog with no proposal" do
         expect(Y2Storage::Dialogs::Proposal).to receive(:new)
-          .with(nil, storage_manager.y2storage_staging).and_return(proposal_dialog)
+          .with(nil, storage_manager.staging).and_return(proposal_dialog)
 
         expect(proposal_dialog).to receive(:run).and_return :abort
         client.run
@@ -109,7 +111,7 @@ describe Y2Storage::Clients::InstDiskProposal do
       before do
         allow(Y2Storage::Dialogs::Proposal).to receive(:new).and_return(proposal_dialog)
         allow(proposal_dialog).to receive(:run).and_return :next
-        allow(storage_manager.y2storage_staging).to receive(:used_features).and_return 0
+        allow(storage_manager.staging).to receive(:used_features).and_return 0
       end
 
       context "if the dialog provides an accepted proposal" do
@@ -125,7 +127,7 @@ describe Y2Storage::Clients::InstDiskProposal do
         end
 
         it "copies the proposal devicegraph to the staging devicegraph" do
-          expect(new_devicegraph).to receive(:copy).with(storage_manager.y2storage_staging)
+          expect(new_devicegraph).to receive(:copy).with(storage_manager.staging)
 
           client.run
         end
@@ -155,7 +157,7 @@ describe Y2Storage::Clients::InstDiskProposal do
         end
 
         it "copies the forced devicegraph to the staging devicegraph" do
-          expect(new_devicegraph).to receive(:copy).with(storage_manager.y2storage_staging)
+          expect(new_devicegraph).to receive(:copy).with(storage_manager.staging)
 
           client.run
         end

@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Mon Jul 24 16:17:03 UTC 2017 - jlopez@suse.com
+
+- Removed temporary StorageManager API.
+- 0.1.32
+
+-------------------------------------------------------------------
 Thu Jul 20 14:54:17 UTC 2017 - ancor@suse.com
 
 - Added pop-up to ask the user about multipath activation.

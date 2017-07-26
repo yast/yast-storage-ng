@@ -8,8 +8,8 @@ describe Y2Partitioner::Widgets::OverviewTreePager do
   subject do
 
     smanager = Y2Storage::StorageManager.instance
-    system = smanager.y2storage_probed
-    current = smanager.y2storage_staging
+    system = smanager.probed
+    current = smanager.staging
     Y2Partitioner::DeviceGraphs.create_instance(system, current)
     described_class.new(current)
   end

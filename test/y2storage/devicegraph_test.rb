@@ -63,7 +63,7 @@ describe Y2Storage::Devicegraph do
       subject(:devicegraph) { with_sda2_deleted(fake_devicegraph) }
 
       it "uses the probed devicegraph as starting point" do
-        probed = Y2Storage::StorageManager.instance.y2storage_probed
+        probed = Y2Storage::StorageManager.instance.probed
         actiongraph1 = devicegraph.actiongraph(from: probed)
         actiongraph2 = devicegraph.actiongraph
         expect(actiongraph1.commit_actions_as_strings).to eq(actiongraph2.commit_actions_as_strings)

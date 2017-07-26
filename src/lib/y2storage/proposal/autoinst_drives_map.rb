@@ -68,7 +68,7 @@ module Y2Storage
       # Returns whether the map contains partitions
       #
       # @example Containing partitions
-      #   devicegraph = Y2Storage::StorageManager.instance.y2storage_probed
+      #   devicegraph = Y2Storage::StorageManager.instance.probed
       #   array = [
       #     {
       #       "device" => "/dev/sda", "use" => "all", "partitions" => [
@@ -81,7 +81,7 @@ module Y2Storage
       #   map.partitions? # => true
       #
       # @example Not containing partitions
-      #   devicegraph = Y2Storage::StorageManager.instance.y2storage_probed
+      #   devicegraph = Y2Storage::StorageManager.instance.probed
       #   array = [{ "device" => "/dev/sda", "use" => "all" }]
       #   profile = AutoinstProfile::PartitioningSection.new_from_hashes(array)
       #   map = AutoinstDriveMap.new(devicegraph, profile)

@@ -56,7 +56,7 @@ module Y2Storage
 
         # Use probed devicegraph if no devicegraph is passed
         if @initial_devicegraph.nil?
-          @initial_devicegraph = StorageManager.instance.y2storage_probed
+          @initial_devicegraph = StorageManager.instance.probed
           # Use cached disk analyzer for probed devicegraph is no disk analyzer is passed
           @disk_analyzer ||= StorageManager.instance.probed_disk_analyzer
         end

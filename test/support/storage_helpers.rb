@@ -42,14 +42,14 @@ module Yast
 
       def fake_scenario(scenario)
         if scenario.end_with?(".xml")
-          Y2Storage::StorageManager.fake_from_xml(input_file_for(scenario, suffix: nil))
+          Y2Storage::StorageManager.instance.probe_from_xml(input_file_for(scenario, suffix: nil))
         else
-          Y2Storage::StorageManager.fake_from_yaml(input_file_for(scenario))
+          Y2Storage::StorageManager.instance.probe_from_yaml(input_file_for(scenario))
         end
       end
 
       def fake_devicegraph
-        Y2Storage::StorageManager.instance.y2storage_probed
+        Y2Storage::StorageManager.instance.probed
       end
 
       def partition_double(name = "", disk_size = Y2Storage::DiskSize.MiB(10))

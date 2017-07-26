@@ -107,7 +107,7 @@ module Y2Storage
 
           self.staging_revision = storage_manager.staging_revision
 
-          staging = storage_manager.y2storage_staging
+          staging = storage_manager.staging
           actiongraph = staging ? staging.actiongraph : nil
           self.actions_presenter = ActionsPresenter.new(actiongraph)
         end
@@ -156,8 +156,8 @@ module Y2Storage
 
       def expert_partitioner
         dialog = Y2Partitioner::Dialogs::Main.new
-        probed = storage_manager.y2storage_probed
-        staging = storage_manager.y2storage_staging
+        probed = storage_manager.probed
+        staging = storage_manager.staging
         result = without_title_on_left { dialog.run(probed, staging) }
         storage_manager.staging = dialog.device_graph if result == :next
         result
