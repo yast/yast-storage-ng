@@ -30,6 +30,9 @@ module Y2Partitioner
     NFS = "yast-nfs.png".freeze
 
     # icon
+    BTRFS = NFS
+
+    # icon
     UNUSED = "yast-unused-device.png".freeze
 
     # icon

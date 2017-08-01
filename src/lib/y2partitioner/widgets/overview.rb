@@ -11,6 +11,7 @@ require "y2partitioner/widgets/lvm_vg_page"
 require "y2partitioner/widgets/md_raids_page"
 require "y2partitioner/widgets/md_raid_page"
 require "y2partitioner/widgets/partition_page"
+require "y2partitioner/widgets/btrfs_page"
 
 Yast.import "Hostname"
 
@@ -160,7 +161,7 @@ module Y2Partitioner
       end
 
       def btrfs_items
-        item_for("btrfs", _("Btrfs"), icon: Icons::NFS)
+        CWM::PagerTreeItem.new(BtrfsPage.new, icon: Icons::BTRFS)
       end
 
       def tmpfs_items
