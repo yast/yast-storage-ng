@@ -90,6 +90,12 @@ module Y2Storage
     #   @return [Device]
     storage_forward :find_device, as: "Device"
 
+    # @!method remove_device(device)
+    #   Removes the device from the devicegraph
+    #
+    #   @param device [Device]
+    storage_forward :remove_device
+
     # Creates a new devicegraph with the information read from a file
     #
     # @param filename [String]
