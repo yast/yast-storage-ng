@@ -661,7 +661,8 @@ module Y2Storage
           raise HierarchyError, "No btrfs on #{parent}"
         end
         toplevel = filesystem.top_level_btrfs_subvolume
-        toplevel.create_btrfs_subvolume(default_subvolume)
+        subvolume = toplevel.create_btrfs_subvolume(default_subvolume)
+        subvolume.set_default_btrfs_subvolume
       end
       parent
     end
@@ -689,7 +690,7 @@ module Y2Storage
     def create_subvolume(parent, args)
       log.info("#{__method__}( #{parent}, #{args} )")
       path  = args["path"]
-      nocow = args["nocow"] || "false"
+      nocow = args["nocow"] || false
       raise ArgumentError, "No path for subvolume" unless path
 
       blk_device = BlkDevice.find_by_name(@devicegraph, parent)
@@ -697,7 +698,7 @@ module Y2Storage
       parent_subvol = find_default_subvolume(btrfs) || btrfs.top_level_btrfs_subvolume
 
       subvol = parent_subvol.create_btrfs_subvolume(path)
-      subvol.nocow = nocow == "true"
+      subvol.nocow = nocow
       subvol
     end
 
