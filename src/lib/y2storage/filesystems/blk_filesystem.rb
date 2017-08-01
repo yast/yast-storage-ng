@@ -121,6 +121,35 @@ module Y2Storage
         BtrfsSubvolume.new(storage_subvol)
       end
 
+      # The default Btrfs subvolume (typically @).
+      #
+      # @note When a new Btrfs filesystem is created, a top level subvolume is added and
+      #   initialized as default subvolume.
+      #
+      # @see #top_level_btrfs_subvolume
+      #
+      # @return [BtrfsSubvolume] nil if it makes no sense for this filesystem
+      def default_btrfs_subvolume
+        return nil unless supports_btrfs_subvolumes?
+
+        storage_subvol = Storage.to_btrfs(to_storage_value).default_btrfs_subvolume
+        BtrfsSubvolume.new(storage_subvol)
+      end
+
+      # Finds a subvolume by its path
+      #
+      # @param path [String] subvolume path
+      # @return [BtrfsSubvolume, nil] nil if it does not find a subvolume with this path
+      def find_btrfs_subvolume_by_path(path)
+        return nil unless supports_btrfs_subvolumes?
+
+        btrfs = Storage.to_btrfs(to_storage_value)
+        storage_subvol = btrfs.find_btrfs_subvolume_by_path(path)
+        BtrfsSubvolume.new(storage_subvol)
+      rescue Storage::BtrfsSubvolumeNotFoundByPath
+        nil
+      end
+
       # Collection of Btrfs subvolumes of the device
       #
       # @return [Array<BtrfsSubvolumes>] empty if it makes no sense for this
