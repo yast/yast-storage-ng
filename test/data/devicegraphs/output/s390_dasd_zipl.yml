@@ -2,23 +2,23 @@
 - dasd:
     name: "/dev/sda"
     type: eckd
-    size: 50 GiB
+    size: 23 GiB
     partition_table: dasd
     partitions:
     - partition:
-        size: 204816 KiB (200.02 MiB)
+        size: 102432 KiB (100.03 MiB)
         name: "/dev/sda1"
         id: linux
         file_system: ext2
         mount_point: "/boot/zipl"
     - partition:
-        size: 41943072 KiB (40.00 GiB)
+        size: 21917568 KiB (20.90 GiB)
         name: "/dev/sda2"
         id: linux
         file_system: btrfs
         mount_point: "/"
     - partition:
-        size: 2097168 KiB (2.00 GiB)
+        size: 2097120 KiB (2.00 GiB)
         name: "/dev/sda3"
         id: linux
         file_system: swap
