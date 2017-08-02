@@ -84,9 +84,9 @@ module Y2Storage
     #   @return [String] the UUID of the MD RAID.
     storage_forward :uuid
 
-    # @!attribute superblock_version
-    #   @return [String] superblock version of the MD RAID.
-    storage_forward :superblock_version
+    # @!attribute metadata
+    #   @return [String] metadata format of the MD RAID, e.g. "1.0" or "imsm".
+    storage_forward :metadata
 
     # @!method in_etc_mdadm?
     #   @return [Boolean] whether the MD RAID is included in /etc/mdadm.conf

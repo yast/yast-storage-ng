@@ -107,10 +107,10 @@ describe Y2Storage::Md do
 
   end
 
-  describe "#superblock_version" do
+  describe "#metadata" do
 
-    it "returns the MD RAID superblock version as a string" do
-      expect(md.superblock_version).to eq "1.0"
+    it "returns the MD RAID metadata as a string" do
+      expect(md.metadata).to eq "1.0"
     end
 
   end
