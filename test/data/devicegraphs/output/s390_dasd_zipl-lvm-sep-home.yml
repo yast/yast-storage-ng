@@ -2,7 +2,7 @@
 - dasd:
     name: "/dev/sda"
     type: eckd
-    size: 50 GiB
+    size: 23 GiB
     partition_table: dasd
     partitions:
     - partition:
@@ -12,7 +12,7 @@
         file_system: ext2
         mount_point: /boot/zipl
     - partition:
-        size: 52326240 KiB (49.90 GiB)
+        size: 24014688 KiB (22.90 GiB)
         name: "/dev/sda2"
         id: lvm
 - lvm_vg:
@@ -20,12 +20,12 @@
     lvm_lvs:
     - lvm_lv:
         lv_name: home
-        size: 23280 MiB (22.73 GiB)
+        size: 6696 MiB (6.54 GiB)
         file_system: xfs
         mount_point: "/home"
     - lvm_lv:
         lv_name: root
-        size: 25768 MiB (25.16 GiB)
+        size: 14704 MiB (14.36 GiB)
         file_system: btrfs
         mount_point: "/"
     - lvm_lv:
