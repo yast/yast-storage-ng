@@ -160,10 +160,10 @@ module Y2Storage
           extra_size = extra_size.ceil(rounding)
           extra_size = available_size.floor(rounding) if extra_size > available_size
 
-          new_size = extra_size + device.size
+          new_size = device.size + extra_size
           if new_size > device.max_size
-            # Increase just until reaching the max size
-            device.max_size - device.size
+            # Increase just until reaching the max size, ensuring rounding
+            (device.max_size - device.size).floor(rounding)
           else
             extra_size
           end
