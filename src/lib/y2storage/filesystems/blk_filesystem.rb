@@ -161,6 +161,31 @@ module Y2Storage
         storage_subvols.to_a.map { |vol| BtrfsSubvolume.new(vol) }
       end
 
+      def default_btrfs_subvolume_path
+        default_subvolume = default_btrfs_subvolume
+        if default_subvolume.nil? || default_subvolume.top_level?
+          DEFAULT_BTRFS_SUBVOLUME_PATH
+        else
+          default_subvolume.path
+        end
+      end
+
+      def ensure_default_btrfs_subvolume
+        subvolume = default_btrfs_subvolume
+
+        if subvolume.nil? || subvolume.top_level?
+          subvolume = btrfs_subvolumes.detect { |s| s.path == DEFAULT_BTRFS_SUBVOLUME_PATH }
+
+          if subvolume.nil?
+            subvolume = create_default_subvolume
+          elsif !subvolume.default_btrfs_subvolume?
+            subvolume.set_default_btrfs_subvolume
+          end
+        end
+
+        subvolume
+      end
+
       # @return [Boolean]
       def in_network?
         disks = ancestors.find_all { |d| d.is?(:disk) }
@@ -168,6 +193,17 @@ module Y2Storage
       end
 
     protected
+
+      DEFAULT_BTRFS_SUBVOLUME_PATH = "@"
+
+      def create_default_subvolume
+        top_level_subvolume = top_level_btrfs_subvolume
+        subvolume = top_level_subvolume.create_btrfs_subvolume(DEFAULT_BTRFS_SUBVOLUME_PATH)
+        subvolume.nocow = false
+        subvolume.mountpoint = DEFAULT_BTRFS_SUBVOLUME_PATH
+        subvolume.set_default_btrfs_subvolume
+        subvolume
+      end
 
       def types_for_is
         super << :blk_filesystem
