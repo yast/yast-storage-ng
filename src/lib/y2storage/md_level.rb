@@ -33,12 +33,13 @@ module Y2Storage
     wrap_enum "MdLevel"
 
     TRANSLATIONS = {
-      unknown: N_("Unknown"),
-      raid0:   N_("RAID0"),
-      raid1:   N_("RAID1"),
-      raid5:   N_("RAID5"),
-      raid6:   N_("RAID6"),
-      raid10:  N_("RAID10")
+      unknown:   N_("Unknown"),
+      raid0:     N_("RAID0"),
+      raid1:     N_("RAID1"),
+      raid5:     N_("RAID5"),
+      raid6:     N_("RAID6"),
+      raid10:    N_("RAID10"),
+      container: N_("Container")
     }
     private_constant :TRANSLATIONS
 
