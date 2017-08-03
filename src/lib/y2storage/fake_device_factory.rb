@@ -690,7 +690,7 @@ module Y2Storage
     def create_subvolume(parent, args)
       log.info("#{__method__}( #{parent}, #{args} )")
       path  = args["path"]
-      nocow = args["nocow"] || false
+      nocow = args.fetch("nocow", false)
       raise ArgumentError, "No path for subvolume" unless path
 
       blk_device = BlkDevice.find_by_name(@devicegraph, parent)
