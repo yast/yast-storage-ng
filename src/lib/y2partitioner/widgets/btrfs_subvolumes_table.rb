@@ -29,6 +29,9 @@ module Y2Partitioner
         change_items(items)
       end
 
+      # Returns the selected subvolume
+      #
+      # @return [BtrfsSubvolume, nil] nil whether anything is selected
       def selected_subvolume
         return nil if items.empty? || !value
 

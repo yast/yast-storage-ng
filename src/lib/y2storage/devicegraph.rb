@@ -94,6 +94,7 @@ module Y2Storage
     #   Removes the device from the devicegraph
     #
     #   @param device [Device]
+    #   @raise [Exception] if the device is not found
     storage_forward :remove_device
 
     # Creates a new devicegraph with the information read from a file
