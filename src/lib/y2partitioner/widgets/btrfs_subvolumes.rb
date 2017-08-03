@@ -22,10 +22,12 @@ module Y2Partitioner
         self.handle_all_events = true
       end
 
-      # FIXME: this handle should belongs to the dialog
+      # FIXME: The help handle does not work without wizard
+      #
+      # This handle should belongs to the dialog
       # @see Dialogs::BtrfsSubvolumes
       def handle(event)
-        Yast::Wizard.ShowHelp(help) if event["ID"] == :help
+        handle_help if event["ID"] == :help
         nil
       end
 
@@ -41,6 +43,9 @@ module Y2Partitioner
             "<p>Enable automatic snapshots for a Btrfs filesystem with snapper.</p>"
           )
         end
+
+        # TODO: widget for enabale snapshot is not implemented yet
+        text += "TODO enable snapshots help"
 
         text
       end
@@ -58,6 +63,17 @@ module Y2Partitioner
             Widgets::BtrfsSubvolumesDeleteButton.new(table)
           )
         )
+      end
+
+    private
+
+      # Show help of all widgets that belong to its content
+      def handle_help
+        text = []
+        Yast::CWM.widgets_in_contents([self]).each do |widget|
+          text << widget.help if widget.respond_to?(:help)
+        end
+        Yast::Wizard.ShowHelp(text.join("\n"))
       end
     end
   end

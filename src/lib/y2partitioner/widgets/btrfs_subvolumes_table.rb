@@ -36,6 +36,20 @@ module Y2Partitioner
         filesystem.find_btrfs_subvolume_by_path(path)
       end
 
+      # Builds the help, including columns help
+      def help
+        text = []
+
+        text << _("<p>The table contains:</p>")
+
+        columns.each do |column|
+          help_method = "#{column}_help"
+          text << "<p>" + send(help_method) + "</p>" if respond_to?(help_method, true)
+        end
+
+        text.join("\n")
+      end
+
     private
 
       def columns
@@ -82,6 +96,17 @@ module Y2Partitioner
 
       def nocow_value(subvolume)
         subvolume.nocow? ? _("Yes") : _("No")
+      end
+
+      # Help
+
+      def path_help
+        _("<b>Path</b> shows the subvolume path.")
+      end
+
+      def nocow_help
+        _("<b>noCoW</b> shows the subvolume noCoW attribute. " \
+          "If set, the subvolume is not copy on write.")
       end
     end
   end
