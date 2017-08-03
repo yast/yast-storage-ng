@@ -28,10 +28,8 @@ module Y2Partitioner
       end
 
       def selected_filesystem
-        return nil if items.empty? || !value
-
-        device_name = value[/table:partition:(.*)/, 1]
-        device = Y2Storage::BlkDevice.find_by_name(DeviceGraphs.instance.current, device_name)
+        device = selected_device
+        return nil if device.nil?
         device.filesystem
       end
 
