@@ -15,6 +15,7 @@ describe Y2Partitioner::Widgets::BtrfsTable do
   end
 
   # FIXME: default tests check that all column headers are strings, but they also can be a Yast::Term
+
   # include_examples "CWM::Table"
 
   describe "#header" do

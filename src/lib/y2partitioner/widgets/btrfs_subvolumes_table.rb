@@ -10,21 +10,27 @@ module Y2Partitioner
 
       attr_reader :filesystem
 
-      # @param filesystem [BlkFilesystem] a btrfs filesystem
+      # @param filesystem [Y2Storage::Filesystems::BlkFilesystem] a btrfs filesystem
       def initialize(filesystem)
         textdomain "storage"
 
         @filesystem = filesystem
       end
 
+      # Table header
       def header
         columns.map { |c| send("#{c}_title") }
       end
 
+      # Items do not include top level and defatul btrfs subvolumes
+      #
+      # @see Y2Storage::BtrfsSubvolume#top_level?
+      # @see Y2Storage::BtrfsSubvolume#default_btrfs_subvolume?
       def items
         subvolumes.map { |s| values_for(s) }
       end
 
+      # Updates table content
       def refresh
         change_items(items)
       end

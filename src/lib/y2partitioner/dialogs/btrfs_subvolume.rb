@@ -11,6 +11,7 @@ module Y2Partitioner
       attr_reader :filesystem
       attr_reader :form
 
+      # @param filesystem [Y2Storage::Filesystems::BlkFilesystem] a btrfs filesystem
       def initialize(filesystem)
         textdomain "storage"
 
@@ -22,6 +23,7 @@ module Y2Partitioner
         _("Add subvolume")
       end
 
+      # Shows widgets for the subvolume attributes
       def contents
         HVSquash(
           VBox(
@@ -31,6 +33,9 @@ module Y2Partitioner
         )
       end
 
+      # Custom layout
+      #
+      # Similar to {Popup#layout} but without help button
       def layout
         VBox(
           HSpacing(50),
@@ -48,7 +53,8 @@ module Y2Partitioner
       end
 
       # Form object for the dialog
-      # Widgets use this object to storage data:
+      #
+      # Widgets use this object to storage data
       class Form
         # @!attribute path
         #   subvolume path
@@ -68,6 +74,8 @@ module Y2Partitioner
         attr_reader :form
         attr_reader :filesystem
 
+        # @param form [Dialogs::BtrfsSubvolume::Form]
+        # @param filesystem [Y2Storage::Filesystems::BlkFilesystem] a btrfs filesystem
         def initialize(form, filesystem: nil)
           @form = form
           @filesystem = filesystem
@@ -86,6 +94,11 @@ module Y2Partitioner
           self.value = form.path
         end
 
+        # Validates the path
+        #
+        # Path cannot be empty
+        # Path must start by default subvolume path
+        # Path must be uniq
         def validate
           valid = true
 
@@ -111,6 +124,7 @@ module Y2Partitioner
           Yast::UI.SetFocus(Id(widget_id))
         end
 
+        # Updates #value by prefixing path with default subvolume path if it is necessary
         def fix_path
           default_subvolume_path = default_path
           prefix = default_subvolume_path + "/"
@@ -127,8 +141,8 @@ module Y2Partitioner
         end
 
         # If a default subvolume exists, its path is consider as default path.
-        # In case that the top subvolume is set as default one, a default path
-        # for default btrfs subvolume is returned.
+        # In case that the top subvolume is set as default one, the default path
+        # for default btrfs subvolumes is returned.
         #
         # @see Y2Storage::Filesystems::BlkFilesystem#default_btrfs_subvolume_path
         #
@@ -143,6 +157,7 @@ module Y2Partitioner
           end
         end
 
+        # Checks if there is a subvolume with the entered path
         def exist_path?
           filesystem.btrfs_subvolumes.any? { |s| s.path == value }
         end
@@ -153,6 +168,8 @@ module Y2Partitioner
         attr_reader :form
         attr_reader :filesystem
 
+        # @param form [Dialogs::BtrfsSubvolume::Form]
+        # @param filesystem [Y2Storage::Filesystems::BlkFilesystem] a btrfs filesystem
         def initialize(form, filesystem: nil)
           @form = form
           @filesystem = filesystem

@@ -12,10 +12,12 @@ module Y2Partitioner
         textdomain "storage"
       end
 
+      # @macro seeAbstractWidget
       def label
         _("Btrfs")
       end
 
+      # @macro seeCustomWidget
       def contents
         return @contents if @contents
 
@@ -37,6 +39,9 @@ module Y2Partitioner
 
     private
 
+      # Returns all btrfs filesystems
+      #
+      # @return [Array<Y2Storage::Filesystems::BlkFilesystem>]
       def btrfs_filesystems
         DeviceGraphs.instance.current.filesystems.select { |f| f.type.is?(:btrfs) }
       end

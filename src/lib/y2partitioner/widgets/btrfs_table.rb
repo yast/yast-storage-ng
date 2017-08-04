@@ -13,26 +13,34 @@ module Y2Partitioner
 
       attr_reader :filesystems
 
-      # @param filesystems [Array<Y2Storage::BlkFilesystem>] btrfs filesystems
+      # @param filesystems [Array<Y2Storage::Filesystems::BlkFilesystem>] btrfs filesystems
       def initialize(filesystems)
         textdomain "storage"
         @filesystems = filesystems
       end
 
+      # @see CWM::Table#header
       def header
         columns.map { |c| send("#{c}_title") }
       end
 
+      # @see CWM::Table#items
       def items
         filesystems.map { |f| values_for(f) }
       end
 
+      # Returns the filesystem of the selected row
+      #
+      # @return [Y2Storage::Filesystems::BlkFilesystem] nil if there is no selected row
       def selected_filesystem
         device = selected_device
         return nil if device.nil?
         device.filesystem
       end
 
+      # Table help
+      #
+      # Shows help of all columns
       def help
         header = _(
           "<p>This view shows all Btrfs filesystems.</p>" \

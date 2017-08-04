@@ -10,12 +10,13 @@ module Y2Partitioner
   module Widgets
     # Widget to manage btrfs subvolumes of a specific filesystem
     #
-    # FIXME: How to handle events directly from a CWM dialog?
+    # FIXME: How to handle events directly from a CWM::Dialog ?
     # Events for :help and :cancel buttons should be managed from the dialog,
     # for example to show a popup with the help.
     class BtrfsSubvolumes < CWM::CustomWidget
       attr_reader :filesystem
 
+      # @param filesystem [Y2Storage::Filesystems::BlkFilesystem] a btrfs filesystem
       def initialize(filesystem)
         @filesystem = filesystem
 
@@ -59,7 +60,8 @@ module Y2Partitioner
           )
         end
 
-        # TODO: widget for enabale snapshot is not implemented yet
+        # TODO: widget for enabale snapshot is not implemented yet. Waiting for snapshots
+        # support in libstorage-ng
         text += "TODO enable snapshots help"
 
         text
