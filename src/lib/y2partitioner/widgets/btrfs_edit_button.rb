@@ -1,4 +1,5 @@
 require "yast"
+require "y2partitioner/widgets/btrfs_table"
 require "y2partitioner/dialogs/btrfs_subvolumes"
 
 Yast.import "Popup"

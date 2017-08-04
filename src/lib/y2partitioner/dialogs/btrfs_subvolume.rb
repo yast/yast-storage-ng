@@ -1,4 +1,5 @@
 require "yast"
+require "cwm"
 require "y2partitioner/dialogs/popup"
 
 Yast.import "Popup"
@@ -61,114 +62,114 @@ module Y2Partitioner
           @nocow = false
         end
       end
-    end
-  end
 
-  # Input field to set the subvolume path
-  class SubvolumePath < CWM::InputField
-    attr_reader :form
-    attr_reader :filesystem
+      # Input field to set the subvolume path
+      class SubvolumePath < CWM::InputField
+        attr_reader :form
+        attr_reader :filesystem
 
-    def initialize(form, filesystem: nil)
-      @form = form
-      @filesystem = filesystem
-    end
+        def initialize(form, filesystem: nil)
+          @form = form
+          @filesystem = filesystem
+        end
 
-    def label
-      _("Path")
-    end
+        def label
+          _("Path")
+        end
 
-    def store
-      form.path = value
-    end
+        def store
+          form.path = value
+        end
 
-    def init
-      focus
-      self.value = form.path
-    end
+        def init
+          focus
+          self.value = form.path
+        end
 
-    def validate
-      valid = true
+        def validate
+          valid = true
 
-      focus
+          focus
 
-      if value.empty?
-        Yast::Popup.Message(_("Empty subvolume path not allowed."))
-        valid = false
-      elsif !filesystem.nil?
-        fix_path
-        if exist_path?
-          Yast::Popup.Message(format(_("Subvolume name %s already exists."), value))
-          valid = false
+          if value.empty?
+            Yast::Popup.Message(_("Empty subvolume path not allowed."))
+            valid = false
+          elsif !filesystem.nil?
+            fix_path
+            if exist_path?
+              Yast::Popup.Message(format(_("Subvolume name %s already exists."), value))
+              valid = false
+            end
+          end
+
+          valid
+        end
+
+      private
+
+        def focus
+          Yast::UI.SetFocus(Id(widget_id))
+        end
+
+        def fix_path
+          default_subvolume_path = default_path
+          prefix = default_subvolume_path + "/"
+
+          return value if value.start_with?(prefix)
+
+          message = format(
+            _("Only subvolume names starting with \"%s\" currently allowed!\n" \
+              "Automatically prepending \"%s\" to name of subvolume."), prefix, prefix
+          )
+          Yast::Popup.Message(message)
+
+          self.value = File.join(default_subvolume_path, value)
+        end
+
+        # If a default subvolume exists, its path is consider as default path.
+        # In case that the top subvolume is set as default one, a default path
+        # for default btrfs subvolume is returned.
+        #
+        # @see Y2Storage::Filesystems::BlkFilesystem#default_btrfs_subvolume_path
+        #
+        # @return [String]
+        def default_path
+          default_subvolume = filesystem.default_btrfs_subvolume
+
+          if default_subvolume.nil? || default_subvolume.top_level?
+            filesystem.default_btrfs_subvolume_path
+          else
+            default_subvolume.path
+          end
+        end
+
+        def exist_path?
+          filesystem.btrfs_subvolumes.any? { |s| s.path == value }
         end
       end
 
-      valid
-    end
+      # Input field to set the subvolume nocow attribute
+      class SubvolumeNocow < CWM::CheckBox
+        attr_reader :form
+        attr_reader :filesystem
 
-  private
+        def initialize(form, filesystem: nil)
+          @form = form
+          @filesystem = filesystem
+        end
 
-    def focus
-      Yast::UI.SetFocus(Id(widget_id))
-    end
+        def label
+          _("noCoW")
+        end
 
-    def fix_path
-      default_subvolume_path = default_path
-      prefix = default_subvolume_path + "/"
+        def store
+          form.nocow = value
+        end
 
-      return value if value.start_with?(prefix)
-
-      message = format(
-        _("Only subvolume names starting with \"%s\" currently allowed!\n" \
-          "Automatically prepending \"%s\" to name of subvolume."), prefix, prefix
-      )
-      Yast::Popup.Message(message)
-
-      self.value = File.join(default_subvolume_path, value)
-    end
-
-    # If a default subvolume exists, its path is consider as default path.
-    # In case that the top subvolume is set as default one, a default path
-    # for default btrfs subvolume is returned.
-    #
-    # @see Y2Storage::Filesystems::BlkFilesystem#default_btrfs_subvolume_path
-    #
-    # @return [String]
-    def default_path
-      default_subvolume = filesystem.default_btrfs_subvolume
-
-      if default_subvolume.nil? || default_subvolume.top_level?
-        filesystem.default_btrfs_subvolume_path
-      else
-        default_subvolume.path
+        def init
+          self.value = form.nocow
+        end
       end
-    end
-
-    def exist_path?
-      filesystem.btrfs_subvolumes.any? { |s| s.path == value }
-    end
-  end
-
-  # Input field to set the subvolume nocow attribute
-  class SubvolumeNocow < CWM::CheckBox
-    attr_reader :form
-    attr_reader :filesystem
-
-    def initialize(form, filesystem: nil)
-      @form = form
-      @filesystem = filesystem
-    end
-
-    def label
-      _("noCoW")
-    end
-
-    def store
-      form.nocow = value
-    end
-
-    def init
-      self.value = form.nocow
     end
   end
 end

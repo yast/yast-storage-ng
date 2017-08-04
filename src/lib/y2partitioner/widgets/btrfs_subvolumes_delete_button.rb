@@ -28,7 +28,7 @@ module Y2Partitioner
           Yast::Popup.Error(_("There are any subvolume selected"))
         else
           result = Yast::Popup.YesNo(
-            # TRANSLATORS: %s is the subvolume to be deleted
+            # TRANSLATORS: %s is the path of the subvolume to be deleted
             format(_("Really delete subvolume %s?"), subvolume.path)
           )
 

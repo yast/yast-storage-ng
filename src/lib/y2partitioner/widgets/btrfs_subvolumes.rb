@@ -31,6 +31,21 @@ module Y2Partitioner
         nil
       end
 
+      def contents
+        table = Widgets::BtrfsSubvolumesTable.new(filesystem)
+
+        VBox(
+          # TODO: libstorage must manage snapshots
+          HBox(HSpacing(1), Left(CheckBox(_("Enable snapshots"), false))),
+          VSpacing(1),
+          table,
+          HBox(
+            Widgets::BtrfsSubvolumesAddButton.new(table),
+            Widgets::BtrfsSubvolumesDeleteButton.new(table)
+          )
+        )
+      end
+
       # FIXME: this should belongs to the dialog
       # @see Dialogs::BtrfsSubvolumes
       def help
@@ -48,21 +63,6 @@ module Y2Partitioner
         text += "TODO enable snapshots help"
 
         text
-      end
-
-      def contents
-        table = Widgets::BtrfsSubvolumesTable.new(filesystem)
-
-        VBox(
-          # TODO: libstorage must manage snapshots
-          HBox(HSpacing(1), Left(CheckBox(_("Enable snapshots"), false))),
-          VSpacing(1),
-          table,
-          HBox(
-            Widgets::BtrfsSubvolumesAddButton.new(table),
-            Widgets::BtrfsSubvolumesDeleteButton.new(table)
-          )
-        )
       end
 
     private
