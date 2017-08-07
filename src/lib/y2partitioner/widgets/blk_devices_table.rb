@@ -35,7 +35,7 @@ module Y2Partitioner
       def selected_device
         return nil if items.empty? || !value
 
-        device_name = value[/table:(.*):(.*)/, 2]
+        device_name = value[/table:.*:(.*)/, 1]
         Y2Storage::BlkDevice.find_by_name(DeviceGraphs.instance.current, device_name)
       end
 
