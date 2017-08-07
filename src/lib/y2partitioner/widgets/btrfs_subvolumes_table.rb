@@ -120,7 +120,7 @@ module Y2Partitioner
           "Copy on write means that when something is copied, the resource is shared without " \
           "doing a real copy. The shared resource is actually copied when first write operation " \
           "is performed. With noCoW, the resource is always copied during initialization. " \
-          "This is useful when runtime performace is required, and there is no risk for delaying " \
+          "This is useful when runtime performace is required, so there is no risk for delaying " \
           "copy when application is running.")
       end
     end
