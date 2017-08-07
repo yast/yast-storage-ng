@@ -100,22 +100,23 @@ module Y2Partitioner
         # Path must start by default subvolume path
         # Path must be uniq
         def validate
-          valid = true
-
-          focus
-
           if value.empty?
             Yast::Popup.Message(_("Empty subvolume path not allowed."))
-            valid = false
+            invalid = true
           elsif !filesystem.nil?
             fix_path
             if exist_path?
               Yast::Popup.Message(format(_("Subvolume name %s already exists."), value))
-              valid = false
+              invalid = true
             end
           end
 
-          valid
+          if invalid
+            focus
+            false
+          else
+            true
+          end
         end
 
       private
