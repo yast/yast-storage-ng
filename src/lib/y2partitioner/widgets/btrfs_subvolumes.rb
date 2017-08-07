@@ -47,8 +47,6 @@ module Y2Partitioner
         )
       end
 
-      # FIXME: this should belongs to the dialog
-      # @see Dialogs::BtrfsSubvolumes
       def help
         text = _(
           "<p>Create and remove subvolumes from a Btrfs filesystem.</p>\n"
@@ -70,6 +68,8 @@ module Y2Partitioner
     private
 
       # Show help of all widgets that belong to its content
+      # FIXME: this should belongs to the dialog
+      # @see Dialogs::BtrfsSubvolumes
       def handle_help
         text = []
         Yast::CWM.widgets_in_contents([self]).each do |widget|

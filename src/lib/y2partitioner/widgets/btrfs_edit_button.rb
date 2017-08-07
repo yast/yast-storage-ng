@@ -27,7 +27,7 @@ module Y2Partitioner
         filesystem = table.selected_filesystem
 
         if filesystem.nil?
-          Yast::Popup.Error(_("There are no filesystems to edit."))
+          Yast::Popup.Error(_("There is no filesystem selected to edit."))
         else
           Dialogs::BtrfsSubvolumes.new(filesystem).run
         end

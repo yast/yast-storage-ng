@@ -132,8 +132,8 @@ module Y2Partitioner
           return value if value.start_with?(prefix)
 
           message = format(
-            _("Only subvolume names starting with \"%s\" currently allowed!\n" \
-              "Automatically prepending \"%s\" to name of subvolume."), prefix, prefix
+            _("Only subvolume names starting with \"%{prefix}\" currently allowed!\n" \
+              "Automatically prepending \"%{prefix}\" to name of subvolume."), prefix: prefix
           )
           Yast::Popup.Message(message)
 
@@ -176,6 +176,9 @@ module Y2Partitioner
         end
 
         def label
+          # TRANSLATORS: noCoW is acronym to "not use Copy on Write" feature for BtrFS.
+          # It is an expert value, so if no suitable expression exists in your language,
+          # then keep it as it is.
           _("noCoW")
         end
 

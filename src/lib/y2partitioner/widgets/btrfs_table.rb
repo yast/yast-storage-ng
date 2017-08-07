@@ -46,7 +46,7 @@ module Y2Partitioner
           "<p>This view shows all Btrfs filesystems.</p>" \
           "<p>The table contains:</p>" \
         )
-        fields = HELP_FIELDS.map { |f| helptext_for(f) }.join("\n")
+        fields = HELP_FIELDS.map { |f| helptext_for(f) }.join("<br />")
         header + fields
       end
 

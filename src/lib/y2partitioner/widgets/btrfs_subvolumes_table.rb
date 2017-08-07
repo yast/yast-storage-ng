@@ -93,7 +93,8 @@ module Y2Partitioner
       end
 
       def nocow_title
-        # TRANSLATORS: table header, nocow subvolume attribute
+        # TRANSLATORS: table header, nocow subvolume attribute (do not use copy
+        # on write feature)
         Center(_("noCoW"))
       end
 
@@ -115,7 +116,12 @@ module Y2Partitioner
 
       def nocow_help
         _("<b>noCoW</b> shows the subvolume noCoW attribute. " \
-          "If set, the subvolume is not copy on write.")
+          "If set, the subvolume explicitly does not use Btrfs copy on write feature. " \
+          "Copy on write means that when something is copied, the resource is shared without " \
+          "doing a real copy. The shared resource is actually copied when first write operation " \
+          "is performed. With noCoW, the resource is always copied during initialization. " \
+          "This is useful when runtime performace is required, and there is no risk for delaying " \
+          "copy when application is running.")
       end
     end
   end

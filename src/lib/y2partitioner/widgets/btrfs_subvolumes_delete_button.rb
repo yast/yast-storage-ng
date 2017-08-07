@@ -31,7 +31,7 @@ module Y2Partitioner
         subvolume = table.selected_subvolume
 
         if subvolume.nil?
-          Yast::Popup.Error(_("There are any subvolume selected"))
+          Yast::Popup.Error(_("Nothing selected"))
         else
           result = Yast::Popup.YesNo(
             # TRANSLATORS: %s is the path of the subvolume to be deleted
