@@ -62,7 +62,7 @@ describe Y2Storage::Filesystems::Btrfs do
   end
 
   describe "#find_btrfs_subvolume_by_path" do
-    context "where exists a subvolume with the searched path" do
+    context "when exists a subvolume with the searched path" do
       it "returns the subvolume with that path" do
         path = "@/home"
         subvolume = filesystem.find_btrfs_subvolume_by_path(path)
@@ -72,9 +72,8 @@ describe Y2Storage::Filesystems::Btrfs do
       end
     end
 
-    context "where does not exist a subvolume with the searched path" do
-      # TODO: Needed bindings for Storage::BtrfsSubvolumeNotFoundByPath
-      xit "returns nil" do
+    context "when does not exist a subvolume with the searched path" do
+      it "returns nil" do
         expect(filesystem.find_btrfs_subvolume_by_path("@/foo")).to be_nil
       end
     end
@@ -183,11 +182,6 @@ describe Y2Storage::Filesystems::Btrfs do
 
     context "when the filesystem has not a subvolume with the indicated path" do
       let(:path) { "@/foo" }
-
-      # FIXME: this is not necessary with bindings for Storage::BtrfsSubvolumeNotFoundByPath
-      before do
-        allow(filesystem).to receive(:find_btrfs_subvolume_by_path).and_return(nil)
-      end
 
       it "does not delete any subvolume" do
         subvolumes_before = filesystem.btrfs_subvolumes
