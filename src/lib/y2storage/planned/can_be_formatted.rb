@@ -126,37 +126,14 @@ module Y2Storage
       # @param filesystem [Filesystems::BlkFilesystem]
       def btrfs_setup(filesystem)
         return unless filesystem.supports_btrfs_subvolumes?
-        parent_subvol = get_parent_subvol(filesystem)
-        parent_subvol.set_default_btrfs_subvolume
+        # If a default subvolume is configured (in control.xml), create it; if not,
+        # use the toplevel subvolume that is implicitly created by mkfs.btrfs.
+        parent_subvol = filesystem.get_or_create_default_btrfs_subvolume(path: @default_subvolume)
 
         return unless subvolumes?
         subvolumes.each do |planned_subvolume|
           planned_subvolume.create_subvol(parent_subvol, @default_subvolume)
         end
-      end
-
-      # Get the parent subvolume for all others on Btrfs 'filesystem':
-      #
-      # If a default subvolume is configured (in control.xml), create it; if not,
-      # use the toplevel subvolume that is implicitly created by mkfs.btrfs.
-      #
-      # @param filesystem [Filesystems::BlkFilesystem]
-      #
-      # @return [BtrfsSubvolume]
-      #
-      def get_parent_subvol(filesystem)
-        # The toplevel subvolume is implicitly created by mkfs.btrfs.
-        # It does not have a name, and its subvolume ID is always 5.
-        parent = filesystem.top_level_btrfs_subvolume
-        if @default_subvolume && !@default_subvolume.empty?
-          # If the "@" subvolume is specified in control.xml, this must be
-          # created first, and it will be the parent of all the other
-          # subvolumes. Otherwise, the toplevel subvolume is their direct parent.
-          # Notice that this "@" subvolume does not show up in "btrfs subvolume
-          # list".
-          parent = parent.create_btrfs_subvolume(@default_subvolume)
-        end
-        parent
       end
 
       def reuse_device!(device)

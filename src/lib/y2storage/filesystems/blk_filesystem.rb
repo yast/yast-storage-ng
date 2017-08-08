@@ -27,9 +27,9 @@ module Y2Storage
   module Filesystems
     # A local filesystem.
     #
-    # This a wrapper for Storage::BlkFilesystem
+    # This is a wrapper for Storage::BlkFilesystem
     class BlkFilesystem < Base
-      wrap_class Storage::BlkFilesystem
+      wrap_class Storage::BlkFilesystem, downcast_to: ["Filesystems::Btrfs"]
 
       # @!method self.all(devicegraph)
       #   @param devicegraph [Devicegraph]
@@ -102,97 +102,7 @@ module Y2Storage
       # Checks whether the filesystem has the capability of hosting Btrfs
       # subvolumes
       def supports_btrfs_subvolumes?
-        Storage.btrfs?(to_storage_value)
-      end
-
-      # Collection of Btrfs subvolumes of the device
-      #
-      # @return [Array<BtrfsSubvolumes>] empty if it makes no sense for this
-      #   filesystem
-      def btrfs_subvolumes
-        return [] unless supports_btrfs_subvolumes?
-
-        storage_subvols = Storage.to_btrfs(to_storage_value).btrfs_subvolumes
-        storage_subvols.to_a.map { |vol| BtrfsSubvolume.new(vol) }
-      end
-
-      # Top level Btrfs subvolume
-      #
-      # Btrfs filesystems always have a top level subvolume, the mkfs.btrfs
-      # command implicitly creates it, so does libstorage when creating the
-      # data structures.
-      #
-      # The top level Btrfs subvolume always has ID 5.
-      #
-      # @return [BtrfsSubvolume] nil if it makes no sense for this filesystem
-      def top_level_btrfs_subvolume
-        return nil unless supports_btrfs_subvolumes?
-
-        storage_subvol = Storage.to_btrfs(to_storage_value).top_level_btrfs_subvolume
-        BtrfsSubvolume.new(storage_subvol)
-      end
-
-      # The default Btrfs subvolume (typically @).
-      #
-      # @note When a new Btrfs filesystem is created, a top level subvolume is added and
-      #   initialized as default subvolume.
-      #
-      # @see #top_level_btrfs_subvolume
-      #
-      # @return [BtrfsSubvolume, nil] nil if it makes no sense for this filesystem
-      def default_btrfs_subvolume
-        return nil unless supports_btrfs_subvolumes?
-
-        storage_subvol = Storage.to_btrfs(to_storage_value).default_btrfs_subvolume
-        BtrfsSubvolume.new(storage_subvol)
-      end
-
-      # The path that the default btrfs subvolume should have
-      #
-      # @return [String, nil] nil if it makes no sense for this filesystem
-      def default_btrfs_subvolume_path
-        return nil unless supports_btrfs_subvolumes?
-
-        DEFAULT_BTRFS_SUBVOLUME_PATH
-      end
-
-      # Finds a subvolume by its path
-      #
-      # @param path [String] subvolume path
-      # @return [BtrfsSubvolume, nil] nil if it does not find a subvolume with this path
-      def find_btrfs_subvolume_by_path(path)
-        return nil unless supports_btrfs_subvolumes?
-
-        btrfs = Storage.to_btrfs(to_storage_value)
-        storage_subvol = btrfs.find_btrfs_subvolume_by_path(path)
-        BtrfsSubvolume.new(storage_subvol)
-      rescue Storage::BtrfsSubvolumeNotFoundByPath
-        nil
-      end
-
-      # Creates a new default btrfs subvolume if it does not exist or the top level
-      # subvolume is set as default
-      #
-      # The new default subvolume is created with the deault path for default subvolumes.
-      # @see #default_btrfs_subvolume_path
-      #
-      # @return [BtrfsSubvolume]
-      def ensure_default_btrfs_subvolume
-        return nil unless supports_btrfs_subvolumes?
-
-        subvolume = default_btrfs_subvolume
-
-        if subvolume.nil? || subvolume.top_level?
-          subvolume = btrfs_subvolumes.detect { |s| s.path == default_btrfs_subvolume_path }
-
-          if subvolume.nil?
-            subvolume = create_default_subvolume
-          elsif !subvolume.default_btrfs_subvolume?
-            subvolume.set_default_btrfs_subvolume
-          end
-        end
-
-        subvolume
+        is?(:btrfs)
       end
 
       # @return [Boolean]
@@ -202,24 +112,6 @@ module Y2Storage
       end
 
     protected
-
-      # Path that the default btrfs subvolume should have
-      # TODO: Make it configurable
-      DEFAULT_BTRFS_SUBVOLUME_PATH = "@"
-
-      # Creates a default btrfs subvolume with the default path
-      #
-      # The default subvolume is created as child of top level subvolume.
-      #
-      # @return [BtrfsSubvolume]
-      def create_default_subvolume
-        top_level_subvolume = top_level_btrfs_subvolume
-        subvolume = top_level_subvolume.create_btrfs_subvolume(default_btrfs_subvolume_path)
-        subvolume.nocow = false
-        subvolume.mountpoint = default_btrfs_subvolume_path
-        subvolume.set_default_btrfs_subvolume
-        subvolume
-      end
 
       def types_for_is
         super << :blk_filesystem
