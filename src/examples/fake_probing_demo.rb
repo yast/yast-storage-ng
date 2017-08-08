@@ -24,7 +24,7 @@ $LOAD_PATH.unshift(File.expand_path("../../lib", __FILE__))
 
 require "y2storage"
 
-Y2Storage::StorageManager.instance.probe_from_yaml
+Y2Storage::StorageManager.create_test_instance
 devicegraph = Y2Storage::StorageManager.instance.probed
 Y2Storage::Disk.create(devicegraph, "/dev/sdx")
 Y2Storage::Disk.create(devicegraph, "/dev/sdy")
