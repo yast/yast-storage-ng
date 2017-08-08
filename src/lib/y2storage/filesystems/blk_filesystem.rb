@@ -21,7 +21,6 @@
 
 require "y2storage/storage_class_wrapper"
 require "y2storage/filesystems/base"
-require "y2storage/btrfs_subvolume"
 
 module Y2Storage
   module Filesystems
@@ -99,10 +98,11 @@ module Y2Storage
         blk_devices.map(&:plain_device)
       end
 
-      # Checks whether the filesystem has the capability of hosting Btrfs
-      # subvolumes
+      # Checks whether the filesystem has the capability of hosting Btrfs subvolumes
+      #
+      # It only should be true for Btrfs.
       def supports_btrfs_subvolumes?
-        is?(:btrfs)
+        false
       end
 
       # @return [Boolean]

@@ -66,6 +66,11 @@ module Y2Storage
       #   @return [BtrfsSubvolume, nil] nil if it does not find a subvolume with this path
       storage_forward :find_btrfs_subvolume_by_path, as: "BtrfsSubvolume"
 
+      # Only Btrfs should support subvolumes
+      def supports_btrfs_subvolumes?
+        true
+      end
+
       # Return the default subvolume, creating it when necessary
       #
       # If a specific default subvolume path is requested, create it; if not,
