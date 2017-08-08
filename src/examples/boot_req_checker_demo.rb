@@ -35,11 +35,16 @@ $LOAD_PATH.unshift(File.expand_path("../../lib", __FILE__))
 require "y2storage"
 require "pp"
 
+if !Process.euid.zero?
+  STDERR.puts "You need to run this script as 'root'."
+  exit 1
+end
+
 begin
-  Y2Storage::StorageManager.fake_from_yaml(ARGV[0]) unless ARGV[0].nil? || ARGV[0].empty?
+  Y2Storage::StorageManager.probe_from_yaml(ARGV[0]) unless ARGV[0].nil? || ARGV[0].empty?
   sm = Y2Storage::StorageManager.instance
 
-  devicegraph = sm.y2storage_probed
+  devicegraph = sm.probed
   Y2Storage::YamlWriter.write(devicegraph, $stdout)
 rescue => x
   puts "exception: #{x}"

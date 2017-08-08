@@ -24,11 +24,11 @@ $LOAD_PATH.unshift(File.expand_path("../../lib", __FILE__))
 
 require "y2storage"
 
-devicegraph = Y2Storage::StorageManager.fake_from_yaml.y2storage_probed
+Y2Storage::StorageManager.create_test_instance
+devicegraph = Y2Storage::StorageManager.instance.probed
 Y2Storage::Disk.create(devicegraph, "/dev/sdx")
 Y2Storage::Disk.create(devicegraph, "/dev/sdy")
 Y2Storage::Disk.create(devicegraph, "/dev/sdz")
 
-probed = Y2Storage::StorageManager.instance.y2storage_probed
 puts("Probed disks:")
-probed.disks.each { |disk| puts("  Found disk #{disk.name}") }
+devicegraph.disks.each { |disk| puts("  Found disk #{disk.name}") }

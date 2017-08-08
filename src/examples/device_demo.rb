@@ -86,15 +86,17 @@ end
 
 abort usage if !ARGV.empty?
 
-if yaml_input.nil?
-  if Process::UID.eid != 0 && !File.readable?("/dev/loop-control")
-    STDERR.puts("This requires root permissions, otherwise hardware probing might fail.")
-    STDERR.puts("Start this with sudo.")
-  end
-  devicegraph = Y2Storage::StorageManager.instance.y2storage_probed
-else
-  devicegraph = Y2Storage::StorageManager.fake_from_yaml(yaml_input).y2storage_probed
+if !Process.euid.zero?
+  STDERR.puts "You need to run this script as 'root'."
+  exit 1
 end
+
+if yaml_input.nil?
+  Y2Storage::StorageManager.instance.probe
+else
+  Y2Storage::StorageManager.instance.probe_from_yaml(yaml_input)
+end
+devicegraph = Y2Storage::StorageManager.instance.probed
 
 if opt_propose
   # propose new device graph
