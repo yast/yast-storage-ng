@@ -91,9 +91,11 @@ module Y2Storage
     storage_forward :find_device, as: "Device"
 
     # @!method remove_device(device)
-    #   Removes the device from the devicegraph
+    #   Removes the device from the devicegraph. Only use this
+    #   function if there is no special function to delete a device,
+    #   e.g. PartitionTable.delete_partition() or LvmVg.delete_lvm_lv().
     #
-    #   @param device [Device]
+    #   @param device [Device, Integer] device or sid
     #   @raise [Exception] if the device is not found
     storage_forward :remove_device
 
