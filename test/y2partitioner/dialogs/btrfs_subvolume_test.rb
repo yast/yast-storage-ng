@@ -66,16 +66,17 @@ describe Y2Partitioner::Dialogs::BtrfsSubvolume do
       end
 
       context "when a path is entered" do
-        context "and the path does not start correctly" do
-          let(:value) { "foo" }
+        context "and the path does not start with default subvolume path" do
+          let(:value) { "///foo" }
 
           it "shows a message" do
             expect(Yast::Popup).to receive(:Message)
             subject.validate
           end
 
-          it "fixes the path before validating it" do
-            expect(subject).to receive(:value=).with("@/foo")
+          it "removes extra slashes and prepend the default subvolume path" do
+            expect(subject).to receive(:value=).with("foo").ordered
+            expect(subject).to receive(:value=).with(/^@\/.*/).ordered
             subject.validate
           end
         end

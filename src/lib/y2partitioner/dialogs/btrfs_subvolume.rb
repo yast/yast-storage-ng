@@ -126,9 +126,14 @@ module Y2Partitioner
         end
 
         # Updates #value by prefixing path with default subvolume path if it is necessary
+        #
+        # Path should be a relative path. Starting slashes are removed. A popup message is
+        # presented when the default subvolume path is going to be added.
         def fix_path
-          default_subvolume_path = default_path
-          prefix = default_subvolume_path + "/"
+          self.value = value.sub(/^\/*/, "")
+
+          default_subvolume_path = filesystem.default_btrfs_subvolume.path
+          prefix = default_subvolume_path.empty? ? "" : default_subvolume_path + "/"
 
           return value if value.start_with?(prefix)
 
@@ -139,23 +144,6 @@ module Y2Partitioner
           Yast::Popup.Message(message)
 
           self.value = File.join(default_subvolume_path, value)
-        end
-
-        # If a default subvolume exists, its path is consider as default path.
-        # In case that the top subvolume is set as default one, the default path
-        # for default btrfs subvolumes is returned.
-        #
-        # @see Y2Storage::Filesystems::BlkFilesystem#default_btrfs_subvolume_path
-        #
-        # @return [String]
-        def default_path
-          default_subvolume = filesystem.default_btrfs_subvolume
-
-          if default_subvolume.nil? || default_subvolume.top_level?
-            filesystem.default_btrfs_subvolume_path
-          else
-            default_subvolume.path
-          end
         end
 
         # Checks if there is a subvolume with the entered path
