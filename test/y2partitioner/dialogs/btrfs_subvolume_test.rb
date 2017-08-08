@@ -68,6 +68,19 @@ describe Y2Partitioner::Dialogs::BtrfsSubvolume do
       end
 
       context "when a path is entered" do
+        context "and the default subvolume is the top level one" do
+          let(:dev_name) { "/dev/sdb2" }
+
+          context "and the entered path is an absolute path" do
+            let(:value) { "///foo" }
+
+            it "removes extra slashes" do
+              expect(subject).to receive(:value=).with("foo")
+              subject.validate
+            end
+          end
+        end
+
         context "and the path does not start with default subvolume path" do
           let(:value) { "///foo" }
 
