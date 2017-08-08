@@ -251,7 +251,10 @@ module Y2Storage
         processed_args = processed_storage_args(*args)
         result = storage_object.public_send(method, *processed_args)
         processed_storage_result(result, wrapper_class_name)
-      rescue Storage::WrongNumberOfChildren, Storage::DeviceHasWrongType, Storage::DeviceNotFound
+      rescue Storage::WrongNumberOfChildren,
+             Storage::DeviceHasWrongType,
+             Storage::DeviceNotFound,
+             Storage::BtrfsSubvolumeNotFoundByPath
         raise_errors ? raise : nil
       end
 
