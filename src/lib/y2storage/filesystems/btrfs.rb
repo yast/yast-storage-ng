@@ -54,12 +54,6 @@ module Y2Storage
       #   @return [BtrfsSubvolume]
       storage_forward :default_btrfs_subvolume, as: "BtrfsSubvolume"
 
-      # @!method default_btrfs_subvolume=(subvolume)
-      #   Set the default Btrfs subvolume
-      #
-      #   @param subvolume [BtrfsSubvolume]
-      storage_forward :default_btrfs_subvolume=
-
       # @!method btrfs_subvolumes
       #   Collection of Btrfs subvolumes of the filesystem
       #   @return [Array<BtrfsSubvolumes>]
