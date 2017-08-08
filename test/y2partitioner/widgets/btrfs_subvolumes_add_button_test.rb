@@ -39,16 +39,30 @@ describe Y2Partitioner::Widgets::BtrfsSubvolumesAddButton do
     context "when the dialog is accepted" do
       let(:result) { :ok }
 
-      let(:form) { double("dialog form", path: "@/foo", nocow: false) }
+      let(:form) { double("dialog form", path: "@/foo", nocow: true) }
 
-      it "creates a new subvolume" do
+      it "creates a new subvolume with correct path and nocow attribute" do
         subvolumes = filesystem.btrfs_subvolumes
         expect(subvolumes.map(&:path)).to_not include(form.path)
 
         subject.handle
 
         expect(filesystem.btrfs_subvolumes.size > subvolumes.size).to be(true)
-        expect(filesystem.btrfs_subvolumes.map(&:path)).to include(form.path)
+
+        subvolume = filesystem.btrfs_subvolumes.detect { |s| s.path == form.path }
+        expect(subvolume).to_not be_nil
+        expect(subvolume.nocow?).to eq(form.nocow)
+      end
+
+      it "creates a new subvolume with correct mount point" do
+        mountpoint = File.join(filesystem.mountpoint, "foo")
+
+        subvolumes = filesystem.btrfs_subvolumes
+        expect(subvolumes.map(&:mountpoint)).to_not include(mountpoint)
+
+        subject.handle
+
+        expect(filesystem.btrfs_subvolumes.map(&:mountpoint)).to include(mountpoint)
       end
 
       it "refreshes the table" do

@@ -46,15 +46,30 @@ module Y2Partitioner
       # Creates a new subvolume with the form values
       # @see Dialogs::BtrfsSubvolume::Form
       #
-      # Before adding the new subvolume, a default subvolume is created if it does not exist.
-      # @see Y2Storage::Filesystems::BlkFilesystem#ensure_default_btrfs_subvolume
+      # The mount point is generated from the subvolume path and
+      # the filesystem mount point.
+      # @see #mountpoint
       def add_subvolume(form)
-        filesystem.ensure_default_btrfs_subvolume
-
         parent = filesystem.default_btrfs_subvolume
         subvol = parent.create_btrfs_subvolume(form.path)
         subvol.nocow = form.nocow
-        subvol.mountpoint = form.path
+        subvol.mountpoint = mountpoint(form.path)
+      end
+
+      # Generates the subvolume mount point
+      #
+      # The subvolume mount point is generated from the subvolume path and
+      # the filesystem mount point.
+      def mountpoint(path)
+        File.join(filesystem.mountpoint, subvolume_relative_path(path))
+      end
+
+      def subvolume_relative_path(path)
+        path.sub(btrfs_root_path, "")
+      end
+
+      def btrfs_root_path
+        filesystem.default_btrfs_subvolume.path + "/"
       end
     end
   end
