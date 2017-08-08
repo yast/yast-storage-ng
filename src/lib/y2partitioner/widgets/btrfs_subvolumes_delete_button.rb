@@ -39,19 +39,13 @@ module Y2Partitioner
           )
 
           if result
-            delete_subvolume(subvolume)
+            devicegraph = DeviceGraphs.instance.current
+            table.filesystem.delete_btrfs_subvolume(devicegraph, subvolume.path)
             table.refresh
           end
         end
 
         nil
-      end
-
-    private
-
-      def delete_subvolume(subvolume)
-        subvolume.remove_descendants
-        DeviceGraphs.instance.current.remove_device(subvolume)
       end
     end
   end

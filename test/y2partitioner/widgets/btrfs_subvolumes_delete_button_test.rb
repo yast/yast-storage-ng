@@ -13,6 +13,7 @@ describe Y2Partitioner::Widgets::BtrfsSubvolumesDeleteButton do
   let(:table) do
     instance_double(
       Y2Partitioner::Widgets::BtrfsSubvolumesTable,
+      filesystem:         filesystem,
       selected_subvolume: selected_subvolume,
       refresh:            nil
     )
