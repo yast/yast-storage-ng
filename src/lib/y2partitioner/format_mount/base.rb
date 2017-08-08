@@ -50,7 +50,14 @@ module Y2Partitioner
           @partition.password = @options.password
         end
 
-        @partition.create_filesystem(@options.filesystem_type) if @options.format
+        if @options.format
+          filesystem = @partition.create_filesystem(@options.filesystem_type)
+
+          if filesystem.is?(:btrfs)
+            default_path = Y2Storage::Filesystems::Btrfs.default_btrfs_subvolume_path
+            filesystem.ensure_default_btrfs_subvolume(path: default_path)
+          end
+        end
 
         true
       end
