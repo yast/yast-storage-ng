@@ -73,32 +73,28 @@ module Y2Storage
 
       # Return the default subvolume, creating it when necessary
       #
-      # If a specific default subvolume path is requested, create it; if not,
-      # use the toplevel subvolume that is implicitly created by mkfs.btrfs.
+      # If a specific default subvolume path is requested, returns a subvolume with
+      # that path; if not, use the toplevel subvolume that is implicitly created by mkfs.btrfs.
       #
       # This default subvolume is the parent for all others on Btrfs 'filesystem'.
       #
       # @param path [String, nil] path for the default subvolume
       #
       # @return [BtrfsSubvolume]
-      def get_or_create_default_btrfs_subvolume(path: nil)
-        # The toplevel subvolume is implicitly created by mkfs.btrfs.
-        # It does not have a name, and its subvolume ID is always 5.
-        top_level = top_level_btrfs_subvolume
-        if path && !path.empty?
-          # If the "@" subvolume is specified in control.xml, this must be
-          # created first, and it will be the parent of all the other
-          # subvolumes. Otherwise, the toplevel subvolume is their direct parent.
-          # Notice that this "@" subvolume does not show up in "btrfs subvolume
-          # list".
-          default_subvolume = top_level.create_btrfs_subvolume(path)
-          default_subvolume.set_default_btrfs_subvolume
-        else
-          # Top level is set as default
-          default_subvolume = top_level
-        end
+      def ensure_default_btrfs_subvolume(path: nil)
+        # If no path is specified, we are fine with whatever the current default subvolume is
+        # (presumably the toplevel one implicitly created by mkfs.btrfs).
+        return default_btrfs_subvolume if path.nil?
 
-        default_subvolume
+        # If a given default subvolume (typically "@") is specified in control.xml, this must be
+        # created first (or promoted to default if it already exists), and it will be the parent of
+        # all the other subvolumes. Otherwise, the toplevel subvolume would be their direct parent.
+        # Notice that this "@" subvolume does not show up in "btrfs subvolume list".
+        subvolume = find_btrfs_subvolume_by_path(path)
+        subvolume ||= top_level_btrfs_subvolume.create_btrfs_subvolume(path)
+        subvolume.set_default_btrfs_subvolume unless subvolume.default_btrfs_subvolume?
+
+        subvolume
       end
 
       # Deletes a btrfs subvolume that belongs to the filesystem

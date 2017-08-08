@@ -80,29 +80,90 @@ describe Y2Storage::Filesystems::Btrfs do
     end
   end
 
-  describe "#get_or_create_default_btrfs_subvolume" do
-    let(:dev_name) { "/dev/sdb2" }
+  describe "#ensure_default_btrfs_subvolume" do
+    let(:sda2) { "/dev/sda2" } # default is @
+    let(:sdb2) { "/dev/sdb2" } # default is top level
 
-    context "when it is not necessary to create a specific default subvolume" do
-      let(:path) { "" }
+    context "when the requested default path is nil" do
+      let(:dev_name) { sda2 }
+      let(:path) { nil }
 
-      it "returns the top level subvolume" do
-        top_level = filesystem.top_level_btrfs_subvolume
-        default = filesystem.get_or_create_default_btrfs_subvolume(path: path)
+      it "does not create a new subvolume" do
+        subvolumes = filesystem.btrfs_subvolumes
+        filesystem.ensure_default_btrfs_subvolume(path: path)
 
-        expect(default).to eq(top_level)
+        expect(filesystem.btrfs_subvolumes.map(&:path) - subvolumes.map(&:path)).to be_empty
+      end
+
+      it "returns the current default subvolume" do
+        default = filesystem.default_btrfs_subvolume
+        subvolume = filesystem.ensure_default_btrfs_subvolume(path: path)
+
+        expect(subvolume).to eq(default)
       end
     end
 
-    context "when it is necessary to create a specific default subvolume" do
+    context "when the requested default path is the top level subvolume path" do
+      let(:dev_name) { sda2 }
+      let(:path) { filesystem.top_level_btrfs_subvolume.path }
+
+      it "does not create a new subvolume" do
+        subvolumes = filesystem.btrfs_subvolumes
+        filesystem.ensure_default_btrfs_subvolume(path: path)
+
+        expect(filesystem.btrfs_subvolumes.map(&:path) - subvolumes.map(&:path)).to be_empty
+      end
+
+      it "returns the top level subvolume" do
+        subvolume = filesystem.ensure_default_btrfs_subvolume(path: path)
+        expect(subvolume.top_level?).to be(true)
+      end
+
+      it "sets the top level subvolume as default subvolume" do
+        expect(filesystem.top_level_btrfs_subvolume.default_btrfs_subvolume?).to eq(false)
+
+        filesystem.ensure_default_btrfs_subvolume(path: path)
+
+        expect(filesystem.top_level_btrfs_subvolume.default_btrfs_subvolume?).to eq(true)
+      end
+    end
+
+    context "when the requested default path does not exist" do
+      let(:dev_name) { sdb2 }
       let(:path) { "@" }
 
-      it "creates a default subvolume with the correct path" do
+      it "creates a new default subvolume with the requested path" do
         expect(filesystem.btrfs_subvolumes.map(&:path)).to_not include(path)
 
-        default = filesystem.get_or_create_default_btrfs_subvolume(path: path)
+        subvolume = filesystem.ensure_default_btrfs_subvolume(path: path)
 
-        expect(default.path).to eq(path)
+        expect(subvolume.default_btrfs_subvolume?).to be(true)
+        expect(subvolume.path).to eq(path)
+      end
+    end
+
+    context "when the requested default path already exists" do
+      let(:dev_name) { sda2 }
+      let(:path) { "@/home" }
+
+      it "does not create a new subvolume" do
+        subvolumes = filesystem.btrfs_subvolumes
+        filesystem.ensure_default_btrfs_subvolume(path: path)
+
+        expect(filesystem.btrfs_subvolumes.map(&:path) - subvolumes.map(&:path)).to be_empty
+      end
+
+      it "returns the subvolume with the requested path" do
+        subvolume = filesystem.ensure_default_btrfs_subvolume(path: path)
+        expect(subvolume.path).to eq(path)
+      end
+
+      it "sets the subvolume as default subvolume" do
+        expect(filesystem.find_btrfs_subvolume_by_path(path).default_btrfs_subvolume?).to eq(false)
+
+        filesystem.ensure_default_btrfs_subvolume(path: path)
+
+        expect(filesystem.find_btrfs_subvolume_by_path(path).default_btrfs_subvolume?).to eq(true)
       end
     end
   end

@@ -128,7 +128,7 @@ module Y2Storage
         return unless filesystem.supports_btrfs_subvolumes?
         # If a default subvolume is configured (in control.xml), create it; if not,
         # use the toplevel subvolume that is implicitly created by mkfs.btrfs.
-        parent_subvol = filesystem.get_or_create_default_btrfs_subvolume(path: @default_subvolume)
+        parent_subvol = filesystem.ensure_default_btrfs_subvolume(path: @default_subvolume)
 
         return unless subvolumes?
         subvolumes.each do |planned_subvolume|
