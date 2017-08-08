@@ -102,6 +102,18 @@ module Y2Storage
         default_subvolume
       end
 
+      # Deletes a btrfs subvolume that belongs to the filesystem
+      #
+      # @param devicegraph [Devicegraph]
+      # @param path [String] path of subvolume to delete
+      def delete_btrfs_subvolume(devicegraph, path)
+        subvolume = find_btrfs_subvolume_by_path(path)
+        return if subvolume.nil?
+
+        subvolume.remove_descendants
+        devicegraph.to_storage_value.remove_device(subvolume.to_storage_value)
+      end
+
       # The path that a new default btrfs subvolume should have
       #
       # @return [String]

@@ -106,4 +106,33 @@ describe Y2Storage::Filesystems::Btrfs do
       end
     end
   end
+
+  describe "#delete_btrfs_subvolume" do
+    let(:devicegraph) { Y2Storage::StorageManager.instance.staging }
+
+    context "when the filesystem has a subvolume with the indicated path" do
+      let(:path) { "@/home" }
+
+      it "deletes the subvolume" do
+        expect(filesystem.btrfs_subvolumes.map(&:path)).to include(path)
+        filesystem.delete_btrfs_subvolume(devicegraph, path)
+        expect(filesystem.btrfs_subvolumes.map(&:path)).to_not include(path)
+      end
+    end
+
+    context "when the filesystem has not a subvolume with the indicated path" do
+      let(:path) { "@/foo" }
+
+      # FIXME: this is not necessary with bindings for Storage::BtrfsSubvolumeNotFoundByPath
+      before do
+        allow(filesystem).to receive(:find_btrfs_subvolume_by_path).and_return(nil)
+      end
+
+      it "does not delete any subvolume" do
+        subvolumes_before = filesystem.btrfs_subvolumes
+        filesystem.delete_btrfs_subvolume(devicegraph, path)
+        expect(filesystem.btrfs_subvolumes).to eq(subvolumes_before)
+      end
+    end
+  end
 end
