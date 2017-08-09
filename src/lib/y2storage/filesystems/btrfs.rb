@@ -113,9 +113,14 @@ module Y2Storage
 
       # The path that a new default btrfs subvolume should have
       #
-      # @return [String]
+      # @return [String, nil] nil if default subvolume is not specified in control.xml
       def self.default_btrfs_subvolume_path
-        Yast::ProductFeatures.GetStringFeature("partitioning", "btrfs_default_subvolume")
+        section = "partitioning"
+        feature = "btrfs_default_subvolume"
+
+        return nil unless Yast::ProductFeatures.GetSection(section).key?(feature)
+
+        Yast::ProductFeatures.GetStringFeature(section, feature)
       end
 
     protected

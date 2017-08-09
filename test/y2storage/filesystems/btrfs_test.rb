@@ -190,4 +190,33 @@ describe Y2Storage::Filesystems::Btrfs do
       end
     end
   end
+
+  describe ".default_btrfs_subvolume_path" do
+    before do
+      allow(Yast::ProductFeatures).to receive(:GetSection).with("partitioning").and_return(section)
+      allow(section).to receive(:key?).with("btrfs_default_subvolume").and_return(has_key)
+      allow(Yast::ProductFeatures).to receive(:GetStringFeature)
+        .with("partitioning", "btrfs_default_subvolume").and_return(default_subvolume)
+    end
+
+    let(:section) { double("section") }
+
+    let(:default_subvolume) { "@" }
+
+    context "when default btrfs subvolume is not specified in control.xml" do
+      let(:has_key) { false }
+
+      it "returns nil" do
+        expect(described_class.default_btrfs_subvolume_path).to eq(nil)
+      end
+    end
+
+    context "when default btrfs subvolume is specified in control.xml" do
+      let(:has_key) { true }
+
+      it "returns the specified default subvolume path" do
+        expect(described_class.default_btrfs_subvolume_path).to eq(default_subvolume)
+      end
+    end
+  end
 end
