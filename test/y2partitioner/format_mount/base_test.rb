@@ -50,16 +50,10 @@ describe Y2Partitioner::FormatMount::Base do
       allow(partition).to receive(:remove_descendants)
       allow(partition).to receive(:create_filesystem).and_return(created_filesystem)
       allow(partition).to receive(:create_encryption)
-      allow(created_filesystem).to receive(:is?).with(:btrfs).and_return(btrfs)
+      allow(created_filesystem).to receive(:supports_btrfs_subvolumes?).and_return(btrfs)
     end
 
-    let(:created_filesystem) do
-      if btrfs
-        instance_double(Y2Storage::Filesystems::Btrfs)
-      else
-        instance_double(Y2Storage::Filesystems::BlkFilesystem)
-      end
-    end
+    let(:created_filesystem) { instance_double(Y2Storage::Filesystems::BlkFilesystem) }
 
     let(:btrfs) { false }
 
@@ -99,6 +93,7 @@ describe Y2Partitioner::FormatMount::Base do
       end
 
       context "and the filesystem is btrfs" do
+        let(:created_filesystem) { instance_double(Y2Storage::Filesystems::Btrfs) }
         let(:btrfs) { true }
 
         it "ensures a default btrfs subvolume" do

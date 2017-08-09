@@ -53,7 +53,7 @@ module Y2Partitioner
         if @options.format
           filesystem = @partition.create_filesystem(@options.filesystem_type)
 
-          if filesystem.is?(:btrfs)
+          if filesystem.supports_btrfs_subvolumes?
             default_path = Y2Storage::Filesystems::Btrfs.default_btrfs_subvolume_path
             filesystem.ensure_default_btrfs_subvolume(path: default_path)
           end
