@@ -23,10 +23,6 @@ require "yast/rake"
 Rake::Task["package"].prerequisites.delete("check:changelog")
 
 Yast::Tasks.configuration do |conf|
-  # The package does not live in the official YaST:Head OBS project
-  conf.obs_project = "YaST:storage-ng"
-  # Non-existent project to prevent accidental submission to Tumbleweed
-  conf.obs_sr_project = "NONE"
   conf.skip_license_check << /.*/
   # TODO: improve it, at least do not get worse
   # TODO: remove condition when new packaging tasks are accepted to factory
