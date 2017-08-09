@@ -8,10 +8,10 @@ require "y2storage"
 arg = Yast::WFM.Args.first
 case arg
 when /.ya?ml$/
-  Y2Storage::StorageManager.fake_from_yaml(arg)
+  Y2Storage::StorageManager.instance.probe_from_yaml(arg)
 when /.xml$/
   # note: support only xml device graph, not xml output of probing commands
-  Y2Storage::StorageManager.fake_from_xml(arg)
+  Y2Storage::StorageManager.instance.probe_from_xml(arg)
 else
   raise "Invalid testing parameter #{arg}, expecting foo.yml or foo.xml."
 end

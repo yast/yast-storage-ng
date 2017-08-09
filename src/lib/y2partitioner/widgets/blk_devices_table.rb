@@ -3,6 +3,8 @@ require "yast"
 require "cwm/table"
 
 require "y2partitioner/icons"
+require "y2partitioner/device_graphs"
+require "y2storage/blk_device"
 
 module Y2Partitioner
   module Widgets
@@ -25,6 +27,16 @@ module Y2Partitioner
       def handle
         id = value[/table:(.*)/, 1]
         @pager.handle("ID" => id)
+      end
+
+      # Device object selected in the table
+      #
+      # @return [Y2Storage::BlkDevice, nil] nil if anything is selected
+      def selected_device
+        return nil if items.empty? || !value
+
+        device_name = value[/table:.*:(.*)/, 1]
+        Y2Storage::BlkDevice.find_by_name(DeviceGraphs.instance.current, device_name)
       end
 
       # TRANSLATORS: table header, "F" stands for Format flag. Keep it short,

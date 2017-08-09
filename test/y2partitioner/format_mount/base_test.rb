@@ -48,9 +48,14 @@ describe Y2Partitioner::FormatMount::Base do
 
     before do
       allow(partition).to receive(:remove_descendants)
-      allow(partition).to receive(:create_filesystem)
+      allow(partition).to receive(:create_filesystem).and_return(created_filesystem)
       allow(partition).to receive(:create_encryption)
+      allow(created_filesystem).to receive(:supports_btrfs_subvolumes?).and_return(btrfs)
     end
+
+    let(:created_filesystem) { instance_double(Y2Storage::Filesystems::BlkFilesystem) }
+
+    let(:btrfs) { false }
 
     context "when the partition has not been set to be formated or encrypted" do
       it "returns false" do
@@ -87,11 +92,20 @@ describe Y2Partitioner::FormatMount::Base do
         subject.apply_format_options!
       end
 
+      context "and the filesystem is btrfs" do
+        let(:created_filesystem) { instance_double(Y2Storage::Filesystems::Btrfs) }
+        let(:btrfs) { true }
+
+        it "ensures a default btrfs subvolume" do
+          expect(created_filesystem).to receive(:ensure_default_btrfs_subvolume)
+          subject.apply_format_options!
+        end
+      end
+
       it "returns true" do
         expect(subject.apply_format_options!).to eql(true)
       end
     end
-
   end
 
   context "#apply_mount_options!" do
