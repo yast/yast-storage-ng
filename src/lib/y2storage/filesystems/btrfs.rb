@@ -74,16 +74,18 @@ module Y2Storage
       # Return the default subvolume, creating it when necessary
       #
       # If a specific default subvolume path is requested, returns a subvolume with
-      # that path; if not, use the toplevel subvolume that is implicitly created by mkfs.btrfs.
-      #
+      # that path. If requested path is nil, returns the current default subvolume,
+      # presumably the toplevel one implicitly created by mkfs.btrfs.
+
       # This default subvolume is the parent for all others on Btrfs 'filesystem'.
+      #
+      # @note When requested path is the empty string and a default subvolume already
+      #   exists (for example @), top level subvolume will be set as default.
       #
       # @param path [String, nil] path for the default subvolume
       #
       # @return [BtrfsSubvolume]
       def ensure_default_btrfs_subvolume(path: nil)
-        # If no path is specified, we are fine with whatever the current default subvolume is
-        # (presumably the toplevel one implicitly created by mkfs.btrfs).
         return default_btrfs_subvolume if path.nil?
 
         # If a given default subvolume (typically "@") is specified in control.xml, this must be
