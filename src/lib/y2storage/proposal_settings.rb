@@ -338,10 +338,9 @@ module Y2Storage
     end
 
     # Reads the "subvolumes" section of control.xml
-    # @see SubvolSpecification.list_from_control_xml
+    # @see SubvolSpecification.from_control_file
     def read_subvolumes_section!
-      xml = Yast::ProductFeatures.GetSection("partitioning")
-      subvols = SubvolSpecification.list_from_control_xml(xml["subvolumes"])
+      subvols = SubvolSpecification.from_control_file
       if subvols
         self.subvolumes = subvols
       else

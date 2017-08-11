@@ -22,6 +22,8 @@
 require "yast"
 require "y2storage"
 require "y2partitioner/format_mount/options"
+require "y2partitioner/format_mount/root_subvolumes_builder"
+require "y2storage/filesystems/btrfs"
 
 module Y2Partitioner
   module FormatMount
@@ -50,31 +52,92 @@ module Y2Partitioner
           @partition.password = @options.password
         end
 
-        if @options.format
-          filesystem = @partition.create_filesystem(@options.filesystem_type)
-
-          if filesystem.supports_btrfs_subvolumes?
-            default_path = Y2Storage::Filesystems::Btrfs.default_btrfs_subvolume_path
-            filesystem.ensure_default_btrfs_subvolume(path: default_path)
-          end
+        if format?
+          filesystem = partition.create_filesystem(options.filesystem_type)
+          create_default_btrfs_subvolume if filesystem.supports_btrfs_subvolumes?
         end
 
         true
       end
 
       def apply_mount_options!
-        return false unless @partition.filesystem
+        return false if filesystem.nil?
 
-        if @options.mount
-          @partition.filesystem.mount_point = @options.mount_point
-          @partition.filesystem.mount_by = @options.mount_by
-          @partition.filesystem.label = @options.label if @options.label
-          @partition.filesystem.fstab_options = @options.fstab_options
-        else
-          @partition.filesystem.mount_point = ""
-        end
+        set_mount_point
+        set_mount_options
 
         true
+      end
+
+    private
+
+      attr_reader :partition
+
+      attr_reader :options
+
+      def filesystem
+        partition.filesystem
+      end
+
+      def set_mount_point
+        return unless change_mount_point?
+
+        subvolume_actions_before_set_mount_point
+        filesystem.mount_point = mount? ? options.mount_point : ""
+        subvolume_actions_after_set_mount_point
+      end
+
+      def set_mount_options
+        return unless mount?
+
+        filesystem.mount_by = options.mount_by
+        filesystem.label = options.label if options.label
+        filesystem.fstab_options = options.fstab_options
+      end
+
+      def subvolume_actions_before_set_mount_point
+        if btrfs_root?
+          # Filesystem was Btrfs for /, so remove current subvolumes
+          RootSubvolumesBuilder.remove_subvolumes
+        elsif has_mount_point?
+          # Filesystem had a mount point, so create shadowed subvolumes again
+          RootSubvolumesBuilder.add_subvolumes_shadowed_by(filesystem.mount_point)
+        end
+      end
+
+      def subvolume_actions_after_set_mount_point
+        if btrfs_root?
+          # New btrfs for /, so create subvolumes
+          RootSubvolumesBuilder.create_subvolumes
+        elsif has_mount_point?
+          # Filesystem has a new mount point, so remove shadowed subvolumes
+          RootSubvolumesBuilder.remove_subvolumes_shadowed_by(filesystem.mount_point)
+        end
+      end
+
+      def mount?
+        options.mount
+      end
+
+      def change_mount_point?
+        (!mount? && has_mount_point?) || (mount? && has_different_mount_point?)
+      end
+
+      def has_mount_point?
+        !filesystem.mount_point.nil? && !filesystem.mount_point.empty?
+      end
+
+      def has_different_mount_point?
+        filesystem.mount_point != options.mount_point
+      end
+
+      def btrfs_root?
+        filesystem.supports_btrfs_subvolumes? && filesystem.root?
+      end
+
+      def create_default_btrfs_subvolume
+        default_path = Y2Storage::Filesystems::Btrfs.default_btrfs_subvolume_path
+        filesystem.ensure_default_btrfs_subvolume(path: default_path)
       end
     end
   end

@@ -100,5 +100,47 @@ module Y2Storage
       new_options.each { |opt| to_storage_value.fstab_options << opt } if new_options
       fstab_options
     end
+
+    def root?
+      mount_point == ROOT_PATH
+    end
+
+    # Checks whether a mount point is shadowed by other
+    #
+    # @param mount_point [String]
+    # @param other_mount_point [String]
+    #
+    # @return [Boolean] true if {mount_point} is shadowed by {other_mount_point}
+    def self.shadowed?(mount_point, other_mount_point)
+      return false if mount_point.nil? || other_mount_point.nil?
+      # Just checking with start_with? is not sufficient:
+      # "/bootinger/schlonz".start_with?("/boot") -> true
+      # So append "/" to make sure only complete subpaths are compared:
+      # "/bootinger/schlonz/".start_with?("/boot/") -> false
+      # "/boot/schlonz/".start_with?("/boot/") -> true
+      check_path = "#{mount_point}/"
+      check_path.start_with?("#{other}/")
+    end
+
+    def self.shadowers(devicegraph, mount_point, exclude: nil)
+      mount_points = Mountable.all(devicegraph).map(&:mount_point)
+      exclude = [exclude].flatten.compact
+      mount_points -= exclude
+
+      mount_points.select { |m| Mountable.shadowed?(mount_point, m) }
+    end
+
+    def shadowed?(devicegraph)
+      !Mountable.shadowers(devicegraph, exclude: mount_point).empty?
+    end
+
+    def shadowed_by?(devicegraph, mount_point)
+      Mountable.shadowers(devicegraph).include?(mount_point)
+    end
+
+  private
+
+    ROOT_PATH = "/".freeze
+    
   end
 end

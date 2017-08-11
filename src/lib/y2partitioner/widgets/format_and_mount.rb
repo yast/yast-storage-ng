@@ -332,6 +332,10 @@ module Y2Partitioner
       def items
         SUGGESTED_MOUNT_POINTS.map { |mp| [mp, mp] }
       end
+
+      def validate
+        true
+      end
     end
 
     # Encryption selector

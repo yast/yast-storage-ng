@@ -76,7 +76,7 @@ module Y2Storage
       # If a specific default subvolume path is requested, returns a subvolume with
       # that path. If requested path is nil, returns the current default subvolume,
       # presumably the toplevel one implicitly created by mkfs.btrfs.
-
+      #
       # This default subvolume is the parent for all others on Btrfs 'filesystem'.
       #
       # @note When requested path is the empty string and a default subvolume already
@@ -109,6 +109,19 @@ module Y2Storage
 
         subvolume.remove_descendants
         devicegraph.to_storage_value.remove_device(subvolume.to_storage_value)
+      end
+
+      # def delete_btrfs_subvolumes(devicegraph)
+      #   subvolumes = btrfs_subvolumes.reject { |s| s.top_level? }
+      #   subvolumes.each do |subvolume|
+      #     delete_btrfs_subvolume(devicegraph, subvolume.path)
+      #   end
+      # end
+
+      def create_btrfs_subvolume(path, nocow)
+        subvolume = default_btrfs_subvolume.create_btrfs_subvolume(path)
+        subvolume.nocow = nocow
+        subvolume
       end
 
       # The path that a new default btrfs subvolume should have

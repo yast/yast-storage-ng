@@ -24,6 +24,7 @@ require "yast"
 require "y2storage/planned/btrfs_subvolume"
 
 Yast.import "Arch"
+Yast.import "ProductFeatures"
 
 module Y2Storage
   # Helper class to represent a subvolume specification as defined
@@ -243,6 +244,16 @@ module Y2Storage
       )
       subvols.each { |subvol| subvol.archs = SUBVOL_ARCHS[subvol.path] }
       subvols.sort!
+    end
+
+    def self.for_current_product
+      specs = from_control_file || fallback_list
+      specs.select(&:current_arch?)
+    end
+    
+    def self.from_control_file
+      xml = Yast::ProductFeatures.GetSection("partitioning")
+      list_from_control_xml(xml["subvolumes"])
     end
   end
 end
