@@ -97,14 +97,23 @@ module Y2Storage
       @staging_revision += 1
     end
 
-    # Activate devices like multipath, MD RAID, LVM and LUKS. It is not
-    # required to have probed the system to call this function. On the
-    # other hand after calling this function the system should be probed.
+    # Activate devices like multipath, MD and DM RAID, LVM and LUKS. It is not
+    # required to have probed the system to call this function. On the other
+    # hand after calling this function the system should be probed.
     #
     # @raise [Exception] if error during activation
     def activate
       activate_callbacks = Callbacks::Activate.new
       @storage.activate(activate_callbacks)
+    end
+
+    # Deactivate devices like multipath, MD and DM RAID, LVM and LUKS. It is
+    # not required to have probed the system to call this function. On the
+    # other hand after calling this function the system should be probed.
+    #
+    # @return [DeactivateStatus] status of subsystems
+    def deactivate
+      @storage.deactivate
     end
 
     # Probes all storage devices.
