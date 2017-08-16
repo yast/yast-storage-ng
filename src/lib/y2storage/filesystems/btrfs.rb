@@ -111,17 +111,45 @@ module Y2Storage
         devicegraph.to_storage_value.remove_device(subvolume.to_storage_value)
       end
 
-      # def delete_btrfs_subvolumes(devicegraph)
-      #   subvolumes = btrfs_subvolumes.reject { |s| s.top_level? }
-      #   subvolumes.each do |subvolume|
-      #     delete_btrfs_subvolume(devicegraph, subvolume.path)
-      #   end
-      # end
-
+      # Creates a btrfs subvolume associated to the filesystem
+      #
+      # @note The subvolume mount point is generated from the {path} and the
+      #   filesystem mount point.
+      #
+      # @see #btrfs_subvolume_mount_point
+      #
+      # @param path [string] absolute subvolume path
+      # @param nocow [Boolean] no copy on write property 
       def create_btrfs_subvolume(path, nocow)
         subvolume = default_btrfs_subvolume.create_btrfs_subvolume(path)
         subvolume.nocow = nocow
+        subvolume.mountpoint = btrfs_subvolume_mount_point(path)
         subvolume
+      end
+
+      # Returns a subvolume mount point build from the path
+      #
+      # The subvolume mount point is generated from the filesystem mount point and
+      # the relative version of {path}.
+      #
+      # @param path [String] a subvolume path
+      #
+      # @return [String, nil] nil whether the filesystem is not mounted
+      def btrfs_subvolume_mount_point(path)
+        return nil if mount_point.nil?
+        File.join(mount_point, btrfs_subvolume_relative_path(path))
+      end
+
+      # Returns a proper absolute subvolume path for the filesystem
+      #
+      # The subvolume absolute path is generated from the default subvolume path and
+      # the relative version of {path}.
+      #
+      # @param path [String] a subvolume path (absolute or relative)
+      #
+      # @return [String] subvolume absolute path for the filesystem
+      def btrfs_subvolume_path(path)
+        File.join(default_btrfs_subvolume_prefix, btrfs_subvolume_relative_path(path))
       end
 
       # The path that a new default btrfs subvolume should have
@@ -137,6 +165,14 @@ module Y2Storage
       end
 
     protected
+
+      def btrfs_subvolume_relative_path(path)
+        path.sub(default_btrfs_subvolume_prefix, "")
+      end
+
+      def default_btrfs_subvolume_prefix
+        default_btrfs_subvolume.path + "/"
+      end
 
       def types_for_is
         super << :btrfs

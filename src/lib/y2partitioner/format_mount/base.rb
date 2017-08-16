@@ -45,16 +45,19 @@ module Y2Partitioner
       def apply_format_options!
         return false unless @options.encrypt || @options.format
 
-        @partition.remove_descendants
+        partition.remove_descendants
 
-        if @options.encrypt
-          @partition = @partition.create_encryption("cr_#{@partition.basename}")
-          @partition.password = @options.password
+        if encrypt?
+          @partition = partition.create_encryption("cr_#{@partition.basename}")
+          partition.password = options.password
         end
 
         if format?
           filesystem = partition.create_filesystem(options.filesystem_type)
-          create_default_btrfs_subvolume if filesystem.supports_btrfs_subvolumes?
+          if filesystem.supports_btrfs_subvolumes?
+            default_path = Y2Storage::Filesystems::Btrfs.default_btrfs_subvolume_path
+            filesystem.ensure_default_btrfs_subvolume(path: default_path)
+          end
         end
 
         true
@@ -74,10 +77,6 @@ module Y2Partitioner
       attr_reader :partition
 
       attr_reader :options
-
-      def filesystem
-        partition.filesystem
-      end
 
       def set_mount_point
         return unless change_mount_point?
@@ -115,8 +114,20 @@ module Y2Partitioner
         end
       end
 
+      def format?
+        options.format
+      end
+
       def mount?
         options.mount
+      end
+
+      def encrypt?
+        options.encrypt
+      end
+
+      def filesystem
+        partition.filesystem
       end
 
       def change_mount_point?
@@ -133,11 +144,6 @@ module Y2Partitioner
 
       def btrfs_root?
         filesystem.supports_btrfs_subvolumes? && filesystem.root?
-      end
-
-      def create_default_btrfs_subvolume
-        default_path = Y2Storage::Filesystems::Btrfs.default_btrfs_subvolume_path
-        filesystem.ensure_default_btrfs_subvolume(path: default_path)
       end
     end
   end

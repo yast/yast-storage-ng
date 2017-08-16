@@ -47,10 +47,11 @@ module Y2Partitioner
 
         create_subvolumes_spec_for_current_product
 
-        default_subvolume = filesystem.default_btrfs_subvolume
+        default_path = Y2Storage::Filesystems::Btrfs.default_btrfs_subvolume_path
+        filesystem.ensure_default_btrfs_subvolume(path: default_path)
+
         subvolumes_spec.each do |spec|
-          subvolume = default_subvolume.create_btrfs_subvolume(spec.path)
-          subvolume.nocow = !spec.copy_on_right
+          create_subvolume_from_spec(spec)
         end
 
         true
@@ -83,8 +84,8 @@ module Y2Partitioner
       def add_subvolume(path, nocow)
         return false if sid.nil?
 
-        add_subvolume_spec(path, nocow)
-        filesystem.create_btrfs_subvolume(path, nocow)
+        spec = add_subvolume_spec(path, nocow)
+        create_subvolume_from_spec(spec)
 
         true
       end
@@ -101,9 +102,8 @@ module Y2Partitioner
       def add_subvolumes_shadowed_by(mount_point)
         return false if sid.nil?
 
-        fs = filesystem
         subvolumes_spec_shadowed_by(mount_point).each do |spec|
-          fs.create_btrfs_subvolume(spec.path, !spec.copy_on_right)
+          create_subvolume_from_spec(spec)
         end
 
         true
@@ -139,19 +139,24 @@ module Y2Partitioner
       end
 
       def create_subvolumes_spec_for_current_product
-        Y2Storage::SubvolSpecification.for_current_product
+        @subvolumes_spec = Y2Storage::SubvolSpecification.for_current_product
+        @subvolumes_spec.each do |spec|
+          spec.path = filesystem.btrfs_subvolume_path(spec.path)
+        end
       end
 
       def create_subvolumes_spec_from_filesystem
         @subvolumes_spec = []
 
         subvolumes.each do |subvolume|
-          add_subvolume_spec(subvolume.path, subvolume.nocow)
+          add_subvolume_spec(subvolume.path, subvolume.nocow?)
         end
       end
 
       def add_subvolume_spec(path, nocow)
-        @subvolumes_spec << Y2Storage::SubvolSpecification.new(path, copy_on_right: !nocow)
+        spec = Y2Storage::SubvolSpecification.new(path, copy_on_write: !nocow)
+        @subvolumes_spec << spec
+        spec
       end
 
       def remove_subvolume_spec(path)
@@ -159,15 +164,19 @@ module Y2Partitioner
       end
 
       def subvolumes_shadowed_by(mount_point)
-        subvolumes.select do |s| s.shadowed_by?(devicegraph, mount_point) }
+        subvolumes.select { |s| s.shadowed_by?(devicegraph, mount_point) }
       end
 
       def subvolumes_spec_shadowed_by(mount_point)
         fs = filesystem
         subvolumes_spec.select do |spec|
-          subvolume_mount_point = File.join(fs.mount_point, spec.path)
-          Y2Storage::Mountable.shadowed?(subvolume_mount_point, mount_point)
+          subvolume_mount_point = filesystem.btrfs_subvolume_mount_point(spec.path)
+          Y2Storage::Mountable.shadowing?(mount_point, subvolume_mount_point)
         end
+      end
+
+      def create_subvolume_from_spec(spec)
+        filesystem.create_btrfs_subvolume(spec.path, !spec.copy_on_write)
       end
 
       def devicegraph
@@ -175,7 +184,7 @@ module Y2Partitioner
       end
 
       def filesystem
-        filesystems = Y2Storage::BlkFilesystem.all(devicegraph)
+        filesystems = Y2Storage::Filesystems::BlkFilesystem.all(devicegraph)
         filesystems.detect { |f| f.supports_btrfs_subvolumes? && f.root? }
       end
 
@@ -185,7 +194,7 @@ module Y2Partitioner
       end
 
       def subvolumes
-        filesystem.btrfs_subvolumes.reject { |s| s.top_level || s.default_btrfs_subvolume? }
+        filesystem.btrfs_subvolumes.reject { |s| s.top_level? || s.default_btrfs_subvolume? }
       end
 
       class << self        

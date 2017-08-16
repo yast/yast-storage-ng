@@ -1,5 +1,6 @@
 require "yast"
 require "cwm"
+require "y2partitioner/format_mount/root_subvolumes_builder"
 
 Yast.import "Popup"
 
@@ -35,19 +36,28 @@ module Y2Partitioner
 
         return nil unless confirm(device)
 
-        partition_table = device.partition_table
         if device.is?(:disk)
           log.info "deleting partitions for #{device}"
-          partition_table.delete_all_partitions
+          device.partition_table.partitions.each { |p| delete_partition(p) }
         else
           log.info "deleting partition #{device}"
-          partition_table.delete_partition(device)
+          delete_partition(device)
         end
 
         :redraw
       end
 
     private
+
+      def delete_partition(device)
+        add_subvolumes_shadowed_by(device.filesystem)
+        device.partition_table.delete_partition(device)
+      end
+
+      def add_subvolumes_shadowed_by(filesystem)
+        return if filesystem.nil? || filesystem.mount_point.nil? || filesystem.root?
+        FormatMount::RootSubvolumesBuilder.add_subvolumes_shadowed_by(filesystem.mount_point)
+      end
 
       def confirm(device)
         names = children_names(device)

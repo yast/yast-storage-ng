@@ -57,8 +57,8 @@ describe Y2Partitioner::Dialogs::BtrfsSubvolume do
       context "when no path is entered" do
         let(:value) { "" }
 
-        it "shows a message" do
-          expect(Yast::Popup).to receive(:Message)
+        it "shows an error message" do
+          expect(Yast::Popup).to receive(:Error)
           subject.validate
         end
 
@@ -84,8 +84,8 @@ describe Y2Partitioner::Dialogs::BtrfsSubvolume do
         context "and the path does not start with default subvolume path" do
           let(:value) { "///foo" }
 
-          it "shows a message" do
-            expect(Yast::Popup).to receive(:Message)
+          it "shows an error message" do
+            expect(Yast::Popup).to receive(:Error).at_least(:once)
             subject.validate
           end
 
@@ -107,8 +107,8 @@ describe Y2Partitioner::Dialogs::BtrfsSubvolume do
         context "and there is a subvolume with that path" do
           let(:value) { "@/home" }
 
-          it "shows a message" do
-            expect(Yast::Popup).to receive(:Message)
+          it "shows an error message" do
+            expect(Yast::Popup).to receive(:Error)
             subject.validate
           end
 
