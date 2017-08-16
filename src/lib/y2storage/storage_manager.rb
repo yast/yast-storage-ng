@@ -111,7 +111,8 @@ module Y2Storage
     # not required to have probed the system to call this function. On the
     # other hand after calling this function the system should be probed.
     #
-    # @return [DeactivateStatus] status of subsystems
+    # @return [Storage::DeactivateStatus] status of subsystems, see
+    #   libstorage-ng documentation for details.
     def deactivate
       @storage.deactivate
     end
