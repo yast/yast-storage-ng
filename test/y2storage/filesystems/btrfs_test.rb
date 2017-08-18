@@ -219,4 +219,50 @@ describe Y2Storage::Filesystems::Btrfs do
       end
     end
   end
+
+  describe "#auto_deleted_subvols" do
+    let(:subvol1) { Y2Storage::SubvolSpecification.new("path1") }
+    let(:subvol2) { Y2Storage::SubvolSpecification.new("path2", copy_on_write: false) }
+
+    it "returns an empty array by default" do
+      expect(filesystem.auto_deleted_subvols).to eq []
+    end
+
+    it "allows to store a list of SubvolSpecification objects" do
+      filesystem.auto_deleted_subvols = [subvol1, subvol2]
+
+      expect(filesystem.auto_deleted_subvols).to all(be_a(Y2Storage::SubvolSpecification))
+      expect(filesystem.auto_deleted_subvols).to contain_exactly(
+        an_object_having_attributes(path: "path1", copy_on_write: true),
+        an_object_having_attributes(path: "path2", copy_on_write: false)
+      )
+    end
+
+    it "returns a copy of the stored objects instead of the original ones" do
+      filesystem.auto_deleted_subvols = [subvol1, subvol2]
+
+      expect(filesystem.auto_deleted_subvols).to_not eq [subvol1, subvol2]
+    end
+
+    it "shares the stored value with all the instances of the filesystem" do
+      filesystem.auto_deleted_subvols = [subvol1, subvol2]
+
+      another = Y2Storage::BlkDevice.find_by_name(fake_devicegraph, dev_name).filesystem
+      expect(another.auto_deleted_subvols).to contain_exactly(
+        an_object_having_attributes(path: "path1", copy_on_write: true),
+        an_object_having_attributes(path: "path2", copy_on_write: false)
+      )
+    end
+
+    it "gets copied when the devicegraph is cloned" do
+      filesystem.auto_deleted_subvols = [subvol1, subvol2]
+      new_graph = fake_devicegraph.dup
+
+      another = Y2Storage::BlkDevice.find_by_name(new_graph, dev_name).filesystem
+      expect(another.auto_deleted_subvols).to contain_exactly(
+        an_object_having_attributes(path: "path1", copy_on_write: true),
+        an_object_having_attributes(path: "path2", copy_on_write: false)
+      )
+    end
+  end
 end
