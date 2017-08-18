@@ -89,7 +89,7 @@ module Y2Partitioner
     class FstabOptions < CWM::CustomWidget
       include FstabCommon
 
-      SUPPORTED_FILESYSTEMS = %i(btrfs ext2 ext3 ext4 reiserfs).freeze
+      SUPPORTED_FILESYSTEMS = %i(btrfs ext2 ext3 ext4).freeze
 
       def initialize(options)
         @options = options

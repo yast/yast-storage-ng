@@ -242,7 +242,7 @@ module Y2Partitioner
 
     # BlkDevice Filesystem selector
     class BlkDeviceFilesystem < CWM::ComboBox
-      SUPPORTED_FILESYSTEMS = %i(swap btrfs ext2 ext3 ext4 vfat xfs reiserfs).freeze
+      SUPPORTED_FILESYSTEMS = %i(swap btrfs ext2 ext3 ext4 vfat xfs).freeze
 
       def initialize(options)
         textdomain "storage"

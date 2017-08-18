@@ -86,7 +86,7 @@ module Y2Storage
           name: "NTFS"
         },
         reiserfs: {
-          name: "Reiser"
+          name: "ReiserFS"
         },
         swap:     {
           fstab_options:        ["pri="],
@@ -112,9 +112,9 @@ module Y2Storage
         }
       }
 
-      ROOT_FILESYSTEMS = [:ext2, :ext3, :ext4, :btrfs, :reiserfs, :xfs]
+      ROOT_FILESYSTEMS = [:ext2, :ext3, :ext4, :btrfs, :xfs]
 
-      HOME_FILESYSTEMS = [:ext2, :ext3, :ext4, :btrfs, :reiserfs, :xfs]
+      HOME_FILESYSTEMS = [:ext2, :ext3, :ext4, :btrfs, :xfs]
 
       private_constant :PROPERTIES, :ROOT_FILESYSTEMS, :HOME_FILESYSTEMS,
         :COMMON_FSTAB_OPTIONS, :EXT_FSTAB_OPTIONS
