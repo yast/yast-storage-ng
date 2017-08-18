@@ -123,6 +123,25 @@ module Y2Storage
         Yast::ProductFeatures.GetStringFeature(section, feature)
       end
 
+      # Subvolumes that have been automatically deleted without user
+      # intervention to avoid shadowing.
+      #
+      # @note This relies on the userdata mechanism (see {#userdata_value}), so
+      # modifications to the returned object will not be automatically persisted
+      # to the device. Always use {#auto_deleted_subvols=} to modify the list.
+      #
+      # @return [Array<SubvolSpecification>]
+      def auto_deleted_subvols
+        userdata_value(:auto_deleted_subvols) || []
+      end
+
+      # Stores the information for {#auto_deleted_subvols}
+      #
+      # @param subvols [Array<SubvolSpecification>]
+      def auto_deleted_subvols=(subvols)
+        save_userdata(:auto_deleted_subvols, subvols || [])
+      end
+
     protected
 
       def types_for_is
