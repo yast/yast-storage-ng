@@ -1,4 +1,12 @@
 -------------------------------------------------------------------
+Fri Aug 18 08:56:36 UTC 2017 - knut.anderssen@suse.com
+
+- ReiserFS is not allowed anymore, it was already removed in SLE 12
+  for new installations and was only supported for upgrades.
+  (fate#323394)
+- 3.3.2
+
+-------------------------------------------------------------------
 Wed Aug 16 10:24:07 UTC 2017 - ancor@suse.com
 
 - Added deactivation of virtual devices (multipath, LVM, etc.)
