@@ -1,4 +1,9 @@
 -------------------------------------------------------------------
+Mon Aug 21 13:40:03 CEST 2017 - snwint@suse.de
+
+- adjust package description in spec file
+
+-------------------------------------------------------------------
 Mon Aug 21 10:20:59 UTC 2017 - ancor@suse.com
 
 - When displaying partition ids to the user, use names that are
