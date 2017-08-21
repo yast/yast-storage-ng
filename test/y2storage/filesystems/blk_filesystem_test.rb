@@ -42,7 +42,7 @@ describe Y2Storage::Filesystems::BlkFilesystem do
     end
 
     context "for a no-Btrfs filesystem" do
-      let(:dev_name) { "/dev/sdb3" }
+      let(:dev_name) { "/dev/sdb5" }
 
       it "returns false" do
         expect(filesystem.supports_btrfs_subvolumes?).to eq false
