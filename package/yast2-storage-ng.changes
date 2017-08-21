@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Mon Aug 21 10:20:59 UTC 2017 - ancor@suse.com
+
+- When displaying partition ids to the user, use names that are
+  more similar to old yast-storage (part of fate#318196).
+- 3.3.3
+
+-------------------------------------------------------------------
 Fri Aug 18 08:56:36 UTC 2017 - knut.anderssen@suse.com
 
 - ReiserFS is not allowed anymore, it was already removed in SLE 12
