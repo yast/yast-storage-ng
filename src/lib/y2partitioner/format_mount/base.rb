@@ -146,8 +146,8 @@ module Y2Partitioner
         path = filesystem.btrfs_subvolume_path(spec.path)
         nocow = !spec.copy_on_write
         subvolume = filesystem.create_btrfs_subvolume(path, nocow)
-        # Automatically proposed subvolumes can be shadowed
-        subvolume.can_be_shadowed = true
+        # Proposed subvolumes can be automatically deleted when they are shadowed
+        subvolume.can_be_auto_deleted = true
       end
 
       def update_mount_points

@@ -127,11 +127,11 @@ describe Y2Partitioner::Widgets::MountPoint do
               device = Y2Storage::BlkDevice.find_by_name(devicegraph, "/dev/sda2")
               filesystem = device.filesystem
               subvolume = filesystem.create_btrfs_subvolume("@/foo", false)
-              subvolume.can_be_shadowed = can_be_shadowed
+              subvolume.can_be_auto_deleted = can_be_auto_deleted
             end
 
             context "and the subvolume cannot be shadowed" do
-              let(:can_be_shadowed) { false }
+              let(:can_be_auto_deleted) { false }
 
               it "shows an error message" do
                 expect(Yast::Popup).to receive(:Error)
@@ -144,7 +144,7 @@ describe Y2Partitioner::Widgets::MountPoint do
             end
 
             context "and the subvolume can be shadowed" do
-              let(:can_be_shadowed) { true }
+              let(:can_be_auto_deleted) { true }
 
               it "returns true" do
                 expect(subject.validate).to be(true)

@@ -207,7 +207,7 @@ module Y2Storage
       #
       # @param devicegraph [Devicegraph]
       def shadow_btrfs_subvolumes(devicegraph)
-        subvolumes = btrfs_subvolumes.select(&:can_be_shadowed?)
+        subvolumes = btrfs_subvolumes.select(&:can_be_auto_deleted?)
         subvolumes.each do |subvolume|
           next unless subvolume.shadowed?(devicegraph)
           shadow_btrfs_subvolume(devicegraph, subvolume.path)
@@ -251,7 +251,7 @@ module Y2Storage
         return false if spec.nil?
 
         subvolume = create_btrfs_subvolume(spec.path, !spec.copy_on_write)
-        subvolume.can_be_shadowed = true
+        subvolume.can_be_auto_deleted = true
         remove_auto_deleted_subvolume(subvolume.path)
         true
       end

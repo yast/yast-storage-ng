@@ -58,8 +58,8 @@ module Y2Storage
         subvol = parent_subvol.create_btrfs_subvolume(name)
         subvol.nocow = !copy_on_write
         subvol.mountpoint = mount_point
-        # Proposed subvolumes can be shadowed
-        subvol.can_be_shadowed = true
+        # Proposed subvolumes can be automatically deleted when they are shadowed
+        subvol.can_be_auto_deleted = true
         subvol
       end
     end

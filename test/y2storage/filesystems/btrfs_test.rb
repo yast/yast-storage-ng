@@ -378,12 +378,12 @@ describe Y2Storage::Filesystems::Btrfs do
     before do
       partition.filesystem.mount_point = mount_point
       subvolume = filesystem.create_btrfs_subvolume(subvolume_path, false)
-      subvolume.can_be_shadowed = can_be_shadowed
+      subvolume.can_be_auto_deleted = can_be_auto_deleted
     end
 
     let(:partition) { Y2Storage::BlkDevice.find_by_name(devicegraph, "/dev/sdb5") }
 
-    let(:can_be_shadowed) { true }
+    let(:can_be_auto_deleted) { true }
 
     context "when any subvolume is shadowed" do
       let(:mount_point) { "/foo" }
@@ -401,7 +401,7 @@ describe Y2Storage::Filesystems::Btrfs do
       let(:subvolume_path) { "@/foo/bar" }
 
       context "and the subvolume can be shadowed" do
-        let(:can_be_shadowed) { true }
+        let(:can_be_auto_deleted) { true }
 
         it "removes the subvolume" do
           expect(filesystem.find_btrfs_subvolume_by_path(subvolume_path)).to_not be(nil)
@@ -419,7 +419,7 @@ describe Y2Storage::Filesystems::Btrfs do
       end
 
       context "and the subvolume cannot be shadowed" do
-        let(:can_be_shadowed) { false }
+        let(:can_be_auto_deleted) { false }
 
         it "does not remove the subvolume" do
           expect(filesystem.find_btrfs_subvolume_by_path(subvolume_path)).to_not be(nil)

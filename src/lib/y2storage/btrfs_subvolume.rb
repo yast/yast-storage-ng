@@ -77,16 +77,18 @@ module Y2Storage
       to_storage_value.public_send(:default_btrfs_subvolume=)
     end
 
-    # Whether the subvolume can be shadowed
+    # Whether the subvolume can be auto deleted, for example when a proposed
+    # subvolume is shadowed
+    #
     # @return [Boolean]
-    def can_be_shadowed?
-      value = userdata_value(:can_be_shadowed)
+    def can_be_auto_deleted?
+      value = userdata_value(:can_be_auto_deleted)
       value.nil? ? false : value
     end
 
-    # @see #can_be_shadowed?
-    def can_be_shadowed=(value)
-      save_userdata(:can_be_shadowed, value)
+    # @see #can_be_auto_deleted?
+    def can_be_auto_deleted=(value)
+      save_userdata(:can_be_auto_deleted, value)
     end
 
     # Checks whether the subvolume is shadowed by any other mount point in the system

@@ -379,7 +379,7 @@ module Y2Partitioner
       #
       # @return [Boolean] true if mount point does not shadow a subvolume
       def subvolumes_shadowing_validation
-        subvolumes = mounted_devices.select { |d| d.is?(:btrfs_subvolume) && !d.can_be_shadowed? }
+        subvolumes = mounted_devices.select { |d| d.is?(:btrfs_subvolume) && !d.can_be_auto_deleted? }
         subvolumes_mount_points = subvolumes.map(&:mount_point).compact.select { |m| !m.empty? }
 
         subvolumes_mount_points.each do |mount_point|
