@@ -699,6 +699,7 @@ module Y2Storage
 
       subvol = parent_subvol.create_btrfs_subvolume(path)
       subvol.nocow = nocow
+      subvol.mount_point = subvol.filesystem.btrfs_subvolume_mount_point(path)
       subvol
     end
 
