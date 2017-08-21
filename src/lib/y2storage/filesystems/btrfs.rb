@@ -131,7 +131,7 @@ module Y2Storage
       # Returns a proper absolute subvolume path for the filesystem
       #
       # The subvolume absolute path is generated from the default subvolume path and
-      # the relative version of {path}.
+      # the relative version of path.
       #
       # @param path [String] a subvolume path (absolute or relative)
       #
@@ -143,7 +143,7 @@ module Y2Storage
       # Returns a subvolume mount point build from a path
       #
       # The subvolume mount point is generated from the filesystem mount point and
-      # the relative version of {path}. When the filesystem is not mounted, the
+      # the relative version of path. When the filesystem is not mounted, the
       # subvolume mount point it will be nil.
       #
       # @param path [String] a subvolume path (absolute or relative)
@@ -221,7 +221,7 @@ module Y2Storage
         auto_deleted_subvolumes.each do |spec|
           mount_point = btrfs_subvolume_mount_point(spec.path)
           next if BtrfsSubvolume.shadowed?(devicegraph, mount_point)
-          unshadow_btrfs_subvolume(devicegraph, spec.path)
+          unshadow_btrfs_subvolume(spec.path)
         end
       end
 
@@ -244,9 +244,8 @@ module Y2Storage
       # Creates a previously shadowed subvolume
       # The subvolume is removed from {auto_deleted_subvolumes} list
       #
-      # @param devicegraph [Devicegraph]
       # @param path [String] subvolume path
-      def unshadow_btrfs_subvolume(_devicegraph, path)
+      def unshadow_btrfs_subvolume(path)
         spec = auto_deleted_subvolumes.detect { |s| s.path == path }
         return false if spec.nil?
 

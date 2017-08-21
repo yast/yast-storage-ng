@@ -119,7 +119,7 @@ module Y2Storage
     # @param mount_point [String]
     # @param other_mount_point [String]
     #
-    # @return [Boolean] true if {other_mount_point} is shadowed by {mount_point}
+    # @return [Boolean] true if other_mount_point is shadowed by mount_point
     def self.shadowing?(mount_point, other_mount_point)
       return false if mount_point.nil? || other_mount_point.nil?
       return false if mount_point.empty? || other_mount_point.empty?
