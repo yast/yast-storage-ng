@@ -22,6 +22,7 @@
 # find current contact information at www.suse.com.
 
 require "yast"
+require "y2storage/btrfs_subvolume"
 
 module Y2Storage
   module Planned
@@ -38,22 +39,14 @@ module Y2Storage
       end
 
       # Checks whether this device is shadowed by any of the given mount points
+      # @see BtrfsSubvolume#shadowing?
       #
       # @param other_mount_points [Array<String>]
       #
       # @return [Boolean]
       def shadowed?(other_mount_points)
         return false if mount_point.nil? || other_mount_points.nil?
-        # Just checking with start_with? is not sufficient:
-        # "/bootinger/schlonz".start_with?("/boot") -> true
-        # So append "/" to make sure only complete subpaths are compared:
-        # "/bootinger/schlonz/".start_with?("/boot/") -> false
-        # "/boot/schlonz/".start_with?("/boot/") -> true
-        check_path = "#{mount_point}/"
-        other_mount_points.any? do |other|
-          next false if other.nil?
-          check_path.start_with?("#{other}/")
-        end
+        other_mount_points.compact.any? { |m| Y2Storage::BtrfsSubvolume.shadowing?(m, mount_point) }
       end
     end
   end
