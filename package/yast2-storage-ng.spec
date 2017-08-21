@@ -39,10 +39,12 @@ BuildRequires:	rubygem(rspec)
 
 Group:		System/YaST
 License:	GPL-2.0 or GPL-3.0
-Summary:	YaST2 - Example module using libstorage-ng
+Summary:	YaST2 - Storage Configuration
 
 %description
-A YaST2 example module using libstorage-ng.
+This package contains the files for YaST2 that handle access to disk
+devices during installation and on an installed system.
+This YaST2 module uses libstorage-ng.
 
 %prep
 %setup -n %{name}-%{version}
