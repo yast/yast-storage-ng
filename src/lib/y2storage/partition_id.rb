@@ -40,7 +40,7 @@ module Y2Storage
       DOS16.to_i              => N_("DOS16"),
       DOS32.to_i              => N_("DOS32"),
       SWAP.to_i               => N_("Linux Swap"),
-      LINUX.to_i              => N_("Linux"),
+      LINUX.to_i              => N_("Linux Native"),
       LVM.to_i                => N_("Linux LVM"),
       RAID.to_i               => N_("Linux RAID"),
       ESP.to_i                => N_("EFI System Partition"),
