@@ -100,5 +100,13 @@ module Y2Storage
       new_options.each { |opt| to_storage_value.fstab_options << opt } if new_options
       fstab_options
     end
+
+    # Checks whether the device is mounted as root
+    # @return [Boolean]
+    def root?
+      mount_point == ROOT_PATH
+    end
+
+    ROOT_PATH = "/".freeze
   end
 end
