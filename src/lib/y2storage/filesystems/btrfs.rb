@@ -22,6 +22,7 @@
 require "y2storage/storage_class_wrapper"
 require "y2storage/filesystems/blk_filesystem"
 require "y2storage/btrfs_subvolume"
+require "y2storage/subvol_specification"
 
 Yast.import "ProductFeatures"
 
@@ -76,7 +77,7 @@ module Y2Storage
       # If a specific default subvolume path is requested, returns a subvolume with
       # that path. If requested path is nil, returns the current default subvolume,
       # presumably the toplevel one implicitly created by mkfs.btrfs.
-
+      #
       # This default subvolume is the parent for all others on Btrfs 'filesystem'.
       #
       # @note When requested path is the empty string and a default subvolume already
@@ -111,6 +112,67 @@ module Y2Storage
         devicegraph.to_storage_value.remove_device(subvolume.to_storage_value)
       end
 
+      # Creates a new btrfs subvolume for the filesystem
+      #
+      # @note The subvolume mount point is generated from the filesystem mount point
+      # and the subvolume path.
+      #
+      # @see #btrfs_subvolume_mount_point
+      #
+      # @param path [string] absolute subvolume path
+      # @param nocow [Boolean] no copy on write property
+      def create_btrfs_subvolume(path, nocow)
+        subvolume = default_btrfs_subvolume.create_btrfs_subvolume(path)
+        subvolume.nocow = nocow
+        subvolume.mountpoint = btrfs_subvolume_mount_point(path)
+        subvolume
+      end
+
+      # Returns a proper absolute subvolume path for the filesystem
+      #
+      # The subvolume absolute path is generated from the default subvolume path and
+      # the relative version of {path}.
+      #
+      # @param path [String] a subvolume path (absolute or relative)
+      #
+      # @return [String] subvolume absolute path for the filesystem
+      def btrfs_subvolume_path(path)
+        File.join(default_btrfs_subvolume_prefix, btrfs_subvolume_relative_path(path))
+      end
+
+      # Returns a subvolume mount point build from a path
+      #
+      # The subvolume mount point is generated from the filesystem mount point and
+      # the relative version of {path}. When the filesystem is not mounted, the
+      # subvolume mount point it will be nil.
+      #
+      # @param path [String] a subvolume path (absolute or relative)
+      #
+      # @return [String, nil] nil whether the filesystem is not mounted
+      def btrfs_subvolume_mount_point(path)
+        return nil if mount_point.nil? || mount_point.empty?
+        File.join(mount_point, btrfs_subvolume_relative_path(path))
+      end
+
+      # Subvolumes that have been automatically deleted without user
+      # intervention to avoid shadowing.
+      #
+      # @note This relies on the userdata mechanism (see {#userdata_value}), so
+      # modifications to the returned object will not be automatically persisted
+      # to the device. Always use {#auto_deleted_subvolumes=} to modify the list.
+      #
+      # @return [Array<SubvolSpecification>]
+      def auto_deleted_subvolumes
+        userdata_value(:auto_deleted_subvolumes) || []
+      end
+
+      # Stores the information for {#auto_deleted_subvolumes}
+      #
+      # @param subvolumes [Array<SubvolSpecification>]
+      def auto_deleted_subvolumes=(subvolumes)
+        save_userdata(:auto_deleted_subvolumes, subvolumes || [])
+      end
+
       # The path that a new default btrfs subvolume should have
       #
       # @return [String, nil] nil if default subvolume is not specified in control.xml
@@ -123,26 +185,108 @@ module Y2Storage
         Yast::ProductFeatures.GetStringFeature(section, feature)
       end
 
-      # Subvolumes that have been automatically deleted without user
-      # intervention to avoid shadowing.
+      # Updates the list of subvolumes for the Btrfs filesystem mounted at root
       #
-      # @note This relies on the userdata mechanism (see {#userdata_value}), so
-      # modifications to the returned object will not be automatically persisted
-      # to the device. Always use {#auto_deleted_subvols=} to modify the list.
+      # Subvolumes are shadowed or unshadowed according to current mount points
+      # in the whole system.
       #
-      # @return [Array<SubvolSpecification>]
-      def auto_deleted_subvols
-        userdata_value(:auto_deleted_subvols) || []
+      # @see #shadow_btrfs_subvolumes
+      # @see #unshadow_btrfs_subvolumes
+      #
+      # @param devicegraph [Devicegraph]
+      def self.refresh_root_subvolumes_shadowing(devicegraph)
+        filesystem = BlkFilesystem.all(devicegraph).detect { |f| f.root? && f.is?(:btrfs) }
+        return if filesystem.nil?
+
+        filesystem.shadow_btrfs_subvolumes(devicegraph)
+        filesystem.unshadow_btrfs_subvolumes(devicegraph)
       end
 
-      # Stores the information for {#auto_deleted_subvols}
+      # Removes current shadowed subvolumes
+      # Only subvolumes that "can be shadowed" will be removed.
       #
-      # @param subvols [Array<SubvolSpecification>]
-      def auto_deleted_subvols=(subvols)
-        save_userdata(:auto_deleted_subvols, subvols || [])
+      # @param devicegraph [Devicegraph]
+      def shadow_btrfs_subvolumes(devicegraph)
+        subvolumes = btrfs_subvolumes.select(&:can_be_shadowed?)
+        subvolumes.each do |subvolume|
+          next unless subvolume.shadowed?(devicegraph)
+          shadow_btrfs_subvolume(devicegraph, subvolume.path)
+        end
+      end
+
+      # Creates subvolumes that were previously removed because they were shadowed
+      #
+      # @param devicegraph [Devicegraph]
+      def unshadow_btrfs_subvolumes(devicegraph)
+        auto_deleted_subvolumes.each do |spec|
+          mount_point = btrfs_subvolume_mount_point(spec.path)
+          next if BtrfsSubvolume.shadowed?(devicegraph, mount_point)
+          unshadow_btrfs_subvolume(devicegraph, spec.path)
+        end
       end
 
     protected
+
+      # Removes a subvolume
+      # The subvolume is cached into {auto_deleted_subvolumes} list
+      #
+      # @param devicegraph [Devicegraph]
+      # @param path [String] subvolume path
+      def shadow_btrfs_subvolume(devicegraph, path)
+        subvolume = find_btrfs_subvolume_by_path(path)
+        return false if subvolume.nil?
+
+        add_auto_deleted_subvolume(subvolume.path, subvolume.nocow?)
+        delete_btrfs_subvolume(devicegraph, subvolume.path)
+        true
+      end
+
+      # Creates a previously shadowed subvolume
+      # The subvolume is removed from {auto_deleted_subvolumes} list
+      #
+      # @param devicegraph [Devicegraph]
+      # @param path [String] subvolume path
+      def unshadow_btrfs_subvolume(_devicegraph, path)
+        spec = auto_deleted_subvolumes.detect { |s| s.path == path }
+        return false if spec.nil?
+
+        subvolume = create_btrfs_subvolume(spec.path, !spec.copy_on_write)
+        subvolume.can_be_shadowed = true
+        remove_auto_deleted_subvolume(subvolume.path)
+        true
+      end
+
+      # Adds a subvolume to the list of auto deleted subvolumes
+      # @see #auto_deleted_list
+      #
+      # @param path [String] subvolume path
+      # @param nocow [Boolean] nocow attribute
+      def add_auto_deleted_subvolume(path, nocow)
+        spec = Y2Storage::SubvolSpecification.new(path, copy_on_write: !nocow)
+        specs = auto_deleted_subvolumes.push(spec)
+        self.auto_deleted_subvolumes = specs
+      end
+
+      # Removes a subvolume from the list of auto deleted subvolumes
+      # @see #auto_deleted_list
+      #
+      # @param path [String] subvolume path
+      def remove_auto_deleted_subvolume(path)
+        specs = auto_deleted_subvolumes.reject { |s| s.path == path }
+        self.auto_deleted_subvolumes = specs
+      end
+
+      # Relative version of a subvolume path
+      # @return [String]
+      def btrfs_subvolume_relative_path(path)
+        path.sub(default_btrfs_subvolume_prefix, "")
+      end
+
+      # Path prefix for subvolumes path
+      # @return [String]
+      def default_btrfs_subvolume_prefix
+        default_btrfs_subvolume.path + "/"
+      end
 
       def types_for_is
         super << :btrfs

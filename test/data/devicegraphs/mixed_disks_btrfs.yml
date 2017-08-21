@@ -75,7 +75,6 @@
     - partition:
         size:         60 GiB
         name:         /dev/sdb2
-        mount_point:  /
         file_system:  btrfs
         label:        suse_root
 
