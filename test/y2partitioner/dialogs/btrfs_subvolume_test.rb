@@ -57,8 +57,8 @@ describe Y2Partitioner::Dialogs::BtrfsSubvolume do
       context "when no path is entered" do
         let(:value) { "" }
 
-        it "shows a message" do
-          expect(Yast::Popup).to receive(:Message)
+        it "shows an error message" do
+          expect(Yast::Popup).to receive(:Error)
           subject.validate
         end
 
@@ -69,13 +69,13 @@ describe Y2Partitioner::Dialogs::BtrfsSubvolume do
 
       context "when a path is entered" do
         context "and the default subvolume is the top level one" do
-          let(:dev_name) { "/dev/sdb2" }
+          let(:dev_name) { "/dev/sdb3" }
 
           context "and the entered path is an absolute path" do
             let(:value) { "///foo" }
 
             it "removes extra slashes" do
-              expect(subject).to receive(:value=).with("foo")
+              expect(subject).to receive(:value=).with("foo").ordered
               subject.validate
             end
           end
@@ -84,8 +84,8 @@ describe Y2Partitioner::Dialogs::BtrfsSubvolume do
         context "and the path does not start with default subvolume path" do
           let(:value) { "///foo" }
 
-          it "shows a message" do
-            expect(Yast::Popup).to receive(:Message)
+          it "shows an error message" do
+            expect(Yast::Popup).to receive(:Error).at_least(:once)
             subject.validate
           end
 
@@ -97,18 +97,46 @@ describe Y2Partitioner::Dialogs::BtrfsSubvolume do
         end
 
         context "and there is no subvolume with that path" do
-          let(:value) { "@/foo" }
+          context "and the mount point already exists" do
+            let(:value) { "@/home" }
 
-          it "returns true" do
-            expect(subject.validate).to be(true)
+            it "shows an error message" do
+              expect(Yast::Popup).to receive(:Error).at_least(:once)
+              subject.validate
+            end
+
+            it "returns false" do
+              expect(subject.validate).to be(false)
+            end
+          end
+
+          context "and the mount point does not exist yet" do
+            let(:value) { "@/foo" }
+
+            it "returns true" do
+              expect(subject.validate).to be(true)
+            end
           end
         end
 
         context "and there is a subvolume with that path" do
           let(:value) { "@/home" }
 
-          it "shows a message" do
-            expect(Yast::Popup).to receive(:Message)
+          it "shows an error message" do
+            expect(Yast::Popup).to receive(:Error)
+            subject.validate
+          end
+
+          it "returns false" do
+            expect(subject.validate).to be(false)
+          end
+        end
+
+        context "and the subvolume is shadowed" do
+          let(:value) { "@/mnt/foo" }
+
+          it "shows an error message" do
+            expect(Yast::Popup).to receive(:Error)
             subject.validate
           end
 
