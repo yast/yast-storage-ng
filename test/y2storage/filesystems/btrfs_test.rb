@@ -130,7 +130,7 @@ describe Y2Storage::Filesystems::Btrfs do
     end
 
     context "when the requested default path does not exist" do
-      let(:dev_name) { sdb2 }
+      let(:dev_name) { "/dev/sdb3" }
       let(:path) { "@" }
 
       it "creates a new default subvolume with the requested path" do
