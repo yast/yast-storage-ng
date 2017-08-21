@@ -49,13 +49,112 @@ describe Y2Partitioner::Widgets::BlkDeviceFilesystem do
 end
 
 describe Y2Partitioner::Widgets::MountPoint do
-  let(:format_options) do
-    double("Format Options")
+  before do
+    devicegraph_stub("mixed_disks_btrfs.yml")
   end
 
-  subject { described_class.new(format_options) }
+  subject { described_class.new(options) }
+
+  let(:options) { double(Y2Partitioner::FormatMount::Options) }
 
   include_examples "CWM::AbstractWidget"
+
+  describe "#validate" do
+
+    before do
+      allow(subject).to receive(:enabled?).and_return(enabled)
+      allow(subject).to receive(:value).and_return(value)
+      allow(options).to receive(:name).and_return(name)
+    end
+
+    let(:value) { nil }
+    let(:name) { nil }
+
+    context "when the widget is not enabled" do
+      let(:enabled) { false }
+
+      it "returns true" do
+        expect(subject.validate).to be(true)
+      end
+    end
+
+    context "when the widget is enabled" do
+      let(:enabled) { true }
+
+      context "and the mount point is not indicated" do
+        let(:value) { "" }
+
+        it "shows an error message" do
+          expect(Yast::Popup).to receive(:Error)
+          subject.validate
+        end
+
+        it "returns false" do
+          expect(subject.validate).to be(false)
+        end
+      end
+
+      context "and the mount point is indicated" do
+        let(:name) { "/dev/sdb2" }
+
+        context "and the mount point already exists" do
+          let(:value) { "/home" }
+
+          it "shows an error message" do
+            expect(Yast::Popup).to receive(:Error)
+            subject.validate
+          end
+
+          it "returns false" do
+            expect(subject.validate).to be(false)
+          end
+        end
+
+        context "and the mount point does not exist" do
+          context "and the mount point does not shadow any subvolume" do
+            let(:value) { "/foo" }
+
+            it "returns true" do
+              expect(subject.validate).to be(true)
+            end
+          end
+
+          context "and the mount point shadows a subvolume" do
+            let(:value) { "/foo" }
+
+            before do
+              devicegraph = Y2Partitioner::DeviceGraphs.instance.current
+              device = Y2Storage::BlkDevice.find_by_name(devicegraph, "/dev/sda2")
+              filesystem = device.filesystem
+              subvolume = filesystem.create_btrfs_subvolume("@/foo", false)
+              subvolume.can_be_shadowed = can_be_shadowed
+            end
+
+            context "and the subvolume cannot be shadowed" do
+              let(:can_be_shadowed) { false }
+
+              it "shows an error message" do
+                expect(Yast::Popup).to receive(:Error)
+                subject.validate
+              end
+
+              it "returns false" do
+                expect(subject.validate).to be(false)
+              end
+            end
+
+            context "and the subvolume can be shadowed" do
+              let(:can_be_shadowed) { true }
+
+              it "returns true" do
+                expect(subject.validate).to be(true)
+              end
+            end
+          end
+        end
+      end
+    end
+  end
 end
 
 describe Y2Partitioner::Widgets::InodeSize do

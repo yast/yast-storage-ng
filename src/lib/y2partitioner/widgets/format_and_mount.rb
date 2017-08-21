@@ -5,6 +5,8 @@ require "y2partitioner/refinements/filesystem_type"
 require "y2partitioner/format_mount/options"
 require "y2partitioner/dialogs/fstab_options"
 require "y2partitioner/widgets/fstab_options"
+require "y2storage/mountable"
+require "y2storage/btrfs_subvolume"
 
 Yast.import "Popup"
 
@@ -18,6 +20,8 @@ module Y2Partitioner
     class FormatOptions < CWM::CustomWidget
       using Refinements::FilesystemType
 
+      # Constructor
+      # @param options [FormatMount::Options]
       def initialize(options)
         textdomain "storage"
 
@@ -305,10 +309,11 @@ module Y2Partitioner
     end
 
     # MountPoint selector
-    # FIXME: Implement validate, verifying if the mount_point is in use.
     class MountPoint < CWM::ComboBox
       SUGGESTED_MOUNT_POINTS = %w(/ /home /var /opt /srv /tmp).freeze
 
+      # Constructor
+      # @param options [FormatMount::Options]
       def initialize(options)
         @options = options
       end
@@ -331,6 +336,123 @@ module Y2Partitioner
 
       def items
         SUGGESTED_MOUNT_POINTS.map { |mp| [mp, mp] }
+      end
+
+      # The following condintions are checked:
+      # - The mount point is not empty
+      # - The mount point is unique
+      # - The mount point does not shadow a "non shadowable" subvolume
+      def validate
+        return true if !enabled?
+
+        content_validation && uniqueness_validation && subvolumes_shadowing_validation
+      end
+
+    private
+
+      # Validates not empty mount point
+      # An error popup is shown when an empty mount point is entered.
+      #
+      # @return [Boolean] true if mount point is not empty
+      def content_validation
+        return true unless value.empty?
+
+        Yast::Popup.Error(_("Empty mount point not allowed."))
+        false
+      end
+
+      # Validates that mount point is unique in the whole system
+      # An error popup is shown when the mount point already exists.
+      #
+      # @see #duplicated_mount_point?
+      #
+      # @return [Boolean] true if mount point is unique
+      def uniqueness_validation
+        return true unless duplicated_mount_point?
+
+        Yast::Popup.Error(_("This mount point is already in use. Select a different one."))
+        false
+      end
+
+      # Validates that the mount point does not shadow a "non shadowable" subvolume
+      # An error popup is shown when a subvolume is shadowed by the mount point.
+      #
+      # @return [Boolean] true if mount point does not shadow a subvolume
+      def subvolumes_shadowing_validation
+        subvolumes = mounted_devices.select { |d| d.is?(:btrfs_subvolume) && !d.can_be_shadowed? }
+        subvolumes_mount_points = subvolumes.map(&:mount_point).compact.select { |m| !m.empty? }
+
+        subvolumes_mount_points.each do |mount_point|
+          next unless Y2Storage::BtrfsSubvolume.shadowing?(value, mount_point)
+          Yast::Popup.Error(
+            format(_("The Btrfs subvolume mounted at %s is shadowed."), mount_point)
+          )
+          return false
+        end
+
+        true
+      end
+
+      # Checks if the mount point is duplicated
+      # @return [Boolean]
+      def duplicated_mount_point?
+        devices = mounted_devices.reject { |d| d.is?(:btrfs_subvolume) }
+        mount_points = devices.map(&:mount_point)
+        mount_points.include?(value)
+      end
+
+      # Returns the devices that are currently mounted in the system
+      # It prevents to return the devices associated to the current filesystem.
+      #
+      # @see #filesystem_devices
+      #
+      # @return [Array<Y2Storage::Mountable>]
+      def mounted_devices
+        fs_sids = filesystem_devices.map(&:sid)
+        devices = Y2Storage::Mountable.all(devicegraph)
+        devices = devices.select { |d| !d.mount_point.nil? && !d.mount_point.empty? }
+        devices.reject { |d| fs_sids.include?(d.sid) }
+      end
+
+      # Returns the devices associated to the current filesystem.
+      #
+      # @note The devices associated to the filesystem are the filesystem itself and its
+      #   subvolumes in case of a btrfs filesystem.
+      #
+      # @return [Array<Y2Storage::Mountable>]
+      def filesystem_devices
+        fs = filesystem
+        return [] if fs.nil?
+
+        devices = [fs]
+        devices += filesystem_subvolumes if fs.is?(:btrfs)
+        devices
+      end
+
+      # Subvolumes to take into account
+      # @return [Array[Y2Storage::BtrfsSubvolume]]
+      def filesystem_subvolumes
+        filesystem.btrfs_subvolumes.select { |s| !s.top_level? && !s.default_btrfs_subvolume? }
+      end
+
+      # Current device
+      # @return [Y2Storage::BlkDevice, nil]
+      def device
+        return nil if @options.name.nil?
+        Y2Storage::BlkDevice.find_by_name(devicegraph, @options.name)
+      end
+
+      # Filesystem for the current device
+      # @return [Y2Storage::Filesystems::BlkFilesystem, nil]
+      def filesystem
+        dev = device
+        return nil if dev.nil?
+
+        dev.filesystem
+      end
+
+      def devicegraph
+        DeviceGraphs.instance.current
       end
     end
 
