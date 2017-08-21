@@ -232,11 +232,11 @@ module Y2Storage
     #
     #   save_userdata(:aliases, ["dev_one", "dev_two"])
     #
-    #   userdata_value(:aliases).concat "dev_three"
+    #   userdata_value(:aliases).push "dev_three"
     #   userdata_value(:aliases) # => ["dev_one", "dev_two"]
     #
     #   tmp = userdata_value(:aliases)
-    #   tmp.concat "dev_three"
+    #   tmp.push "dev_three"
     #   save_userdata(:aliases, tmp)
     #   userdata_value(:aliases) # => ["dev_one", "dev_two", "dev_three"]
     #
