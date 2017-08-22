@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Mon Aug 21 22:47:04 UTC 2017 - knut.anderssen@suse.com
+
+- Added support for legacy filesystems (fate#323394).
+- 3.3.4
+
+-------------------------------------------------------------------
 Mon Aug 21 13:40:03 CEST 2017 - snwint@suse.de
 
 - adjust package description in spec file

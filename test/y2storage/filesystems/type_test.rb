@@ -53,4 +53,56 @@ describe Y2Storage::Filesystems::Type do
       end
     end
   end
+
+  describe "#legacy_root_filesystems" do
+    let(:reiserfs) { Y2Storage::Filesystems::Type::REISERFS }
+
+    it "returns an array of filesystems that were valid for '/' mountpoint" do
+      expect(Y2Storage::Filesystems::Type.legacy_root_filesystems).to include(reiserfs)
+    end
+  end
+
+  describe "#legacy_home_filesystems" do
+    let(:reiserfs) { Y2Storage::Filesystems::Type::REISERFS }
+
+    it "returns an array of filesystems that were valid for '/home' mountpoint" do
+      expect(Y2Storage::Filesystems::Type.legacy_home_filesystems).to include(reiserfs)
+    end
+  end
+
+  describe "#legacy_root?" do
+    context "for a filesystem that is not legacy" do
+      it "returns false" do
+        Y2Storage::Filesystems::Type.root_filesystems.each do |filesystem|
+          expect(filesystem.legacy_root?).to eq(false)
+        end
+      end
+    end
+
+    context "for a legacy filesystem that was valid for '/' mountpoint" do
+      it "returns true" do
+        Y2Storage::Filesystems::Type.legacy_root_filesystems.each do |filesystem|
+          expect(filesystem.legacy_root?).to eq(true)
+        end
+      end
+    end
+  end
+
+  describe "#legacy_home?" do
+    context "for a filesystem that is not legacy" do
+      it "returns false" do
+        Y2Storage::Filesystems::Type.home_filesystems.each do |filesystem|
+          expect(filesystem.legacy_home?).to eq(false)
+        end
+      end
+    end
+
+    context "for a legacy filesystem that was valid for '/home' mount point" do
+      it "returns true" do
+        Y2Storage::Filesystems::Type.legacy_home_filesystems.each do |filesystem|
+          expect(filesystem.legacy_home?).to eq(true)
+        end
+      end
+    end
+  end
 end

@@ -116,8 +116,13 @@ module Y2Storage
 
       HOME_FILESYSTEMS = [:ext2, :ext3, :ext4, :btrfs, :xfs]
 
+      LEGACY_ROOT_FILESYSTEMS = [:reiserfs]
+
+      LEGACY_HOME_FILESYSTEMS = [:reiserfs]
+
       private_constant :PROPERTIES, :ROOT_FILESYSTEMS, :HOME_FILESYSTEMS,
-        :COMMON_FSTAB_OPTIONS, :EXT_FSTAB_OPTIONS
+        :COMMON_FSTAB_OPTIONS, :EXT_FSTAB_OPTIONS, :LEGACY_ROOT_FILESYSTEMS,
+        :LEGACY_HOME_FILESYSTEMS
 
       # Allowed filesystems for root
       #
@@ -126,11 +131,25 @@ module Y2Storage
         ROOT_FILESYSTEMS.map { |f| find(f) }
       end
 
+      # Legacy filesystems allowed for root
+      #
+      # @return [Array<Filesystems::Type>]
+      def self.legacy_root_filesystems
+        LEGACY_ROOT_FILESYSTEMS.map { |f| find(f) }
+      end
+
       # Allowed filesystems for home
       #
       # @return [Array<Filesystems::Type>]
       def self.home_filesystems
         HOME_FILESYSTEMS.map { |f| find(f) }
+      end
+
+      # Legacy filesystems allowed for home
+      #
+      # @return [Array<Filesystems::Type>]
+      def self.legacy_home_filesystems
+        LEGACY_HOME_FILESYSTEMS.map { |f| find(f) }
       end
 
       # Check if filesystem is usable as root (mountpoint "/") filesystem.
@@ -146,6 +165,19 @@ module Y2Storage
         return Type.root_filesystems.include?(self)
       end
 
+      # Check if filesystem was usable as root (mountpoint "/") filesystem.
+      #
+      # return [Boolean]
+      #
+      # @example
+      #   devicegraph.filesystems.each do |fs|
+      #     puts "#{fs.type}: #{fs.type.legacy_root?}"
+      #   end
+      #
+      def legacy_root?
+        Type.legacy_root_filesystems.include?(self)
+      end
+
       # Check if filesystem is usable as home (mountpoint "/home") filesystem.
       #
       # return [Boolean]
@@ -157,6 +189,19 @@ module Y2Storage
       #
       def home_ok?
         return Type.home_filesystems.include?(self)
+      end
+
+      # Check if filesystem was usable as home (mountpoint "/home") filesystem.
+      #
+      # return [Boolean]
+      #
+      # @example
+      #   devicegraph.filesystems.each do |fs|
+      #     puts "#{fs.type}: #{fs.type.legacy_home?}"
+      #   end
+      #
+      def legacy_home?
+        Type.legacy_home_filesystems.include?(self)
       end
 
       # Human readable text for a filesystem
