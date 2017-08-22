@@ -116,9 +116,9 @@ module Y2Storage
 
       HOME_FILESYSTEMS = [:ext2, :ext3, :ext4, :btrfs, :xfs]
 
-      LEGACY_ROOT_FILESYSTEMS = [:jfs, :reiserfs]
+      LEGACY_ROOT_FILESYSTEMS = [:reiserfs]
 
-      LEGACY_HOME_FILESYSTEMS = [:jfs, :reiserfs]
+      LEGACY_HOME_FILESYSTEMS = [:reiserfs]
 
       private_constant :PROPERTIES, :ROOT_FILESYSTEMS, :HOME_FILESYSTEMS,
         :COMMON_FSTAB_OPTIONS, :EXT_FSTAB_OPTIONS, :LEGACY_ROOT_FILESYSTEMS,
