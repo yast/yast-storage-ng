@@ -1,6 +1,7 @@
 require "yast"
 require "cwm"
 require "y2partitioner/dialogs/popup"
+require "y2storage/filesystems/btrfs"
 
 Yast.import "Popup"
 
@@ -98,15 +99,19 @@ module Y2Partitioner
         #
         # Path cannot be empty
         # Path must start by default subvolume path
-        # Path must be uniq
+        # Path must be uniq for the filesystem
+        # Mount point must be uniq in the whole system
         def validate
           if value.empty?
-            Yast::Popup.Message(_("Empty subvolume path not allowed."))
+            Yast::Popup.Error(_("Empty subvolume path not allowed."))
             invalid = true
           elsif !filesystem.nil?
             fix_path
             if exist_path?
-              Yast::Popup.Message(format(_("Subvolume name %s already exists."), value))
+              Yast::Popup.Error(format(_("Subvolume name %s already exists."), value))
+              invalid = true
+            elsif exist_mount_point?
+              Yast::Popup.Error(format(_("Mount point %s already exists."), mount_point))
               invalid = true
             end
           end
@@ -149,6 +154,23 @@ module Y2Partitioner
         # Checks if there is a subvolume with the entered path
         def exist_path?
           filesystem.btrfs_subvolumes.any? { |s| s.path == value }
+        end
+
+        # Checks if the mount point already exists in the system
+        # @see Mountable#shadowed?
+        #
+        # @return [Boolean]
+        def exist_mount_point?
+          devicegraph = DeviceGraphs.instance.current
+          Y2Storage::Mountable.shadowed?(devicegraph, mount_point)
+        end
+
+        # Proper mount point for the current filesystem
+        # @see Y2Storage::Filesystems::Btrfs#btrfs_subvolume_mount_point
+        #
+        # @return [String, nil] nil if the filesystem is not mounted
+        def mount_point
+          filesystem.btrfs_subvolume_mount_point(value)
         end
       end
 

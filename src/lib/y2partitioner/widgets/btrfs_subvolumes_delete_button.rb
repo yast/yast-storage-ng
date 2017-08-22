@@ -2,6 +2,7 @@ require "yast"
 require "cwm"
 require "y2partitioner/widgets/btrfs_subvolumes_table"
 require "y2partitioner/device_graphs"
+require "y2partitioner/format_mount/root_subvolumes_builder"
 
 Yast.import "Popup"
 
@@ -39,14 +40,29 @@ module Y2Partitioner
           )
 
           if result
-            devicegraph = DeviceGraphs.instance.current
-            table.filesystem.delete_btrfs_subvolume(devicegraph, subvolume.path)
+            remove_subvolume(subvolume.path)
             table.refresh
           end
         end
 
         nil
       end
+
+    private
+
+      def filesystem
+        table.filesystem
+      end
+
+      def remove_subvolume(path)
+        if filesystem.root?
+          FormatMount::RootSubvolumesBuilder.remove_subvolume(path)
+        else
+          devicegraph = DeviceGraphs.instance.current
+          filesystem.delete_btrfs_subvolume(devicegraph, path)
+        end
+      end
+
     end
   end
 end

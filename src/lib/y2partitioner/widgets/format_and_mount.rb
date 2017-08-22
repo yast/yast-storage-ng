@@ -332,6 +332,18 @@ module Y2Partitioner
       def items
         SUGGESTED_MOUNT_POINTS.map { |mp| [mp, mp] }
       end
+
+      def validate
+        devicegraph = DeviceGraphs.instance.current
+        # New mount point could shadow btrfs subvolumes that belongs to root filesystem
+        shadowers = Y2Storage::Mountable.shadowers(devicegraph, value)
+        shadowers.reject! { |s| s.is?(:btrfs_subvolume) && s.filesystem.root? }
+
+        return true if shadowers.empty?
+
+        Yast::Popup.Error(_("This mount point is already in use. Select a different one."))
+        false
+      end
     end
 
     # Encryption selector

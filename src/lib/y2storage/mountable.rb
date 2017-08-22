@@ -100,5 +100,99 @@ module Y2Storage
       new_options.each { |opt| to_storage_value.fstab_options << opt } if new_options
       fstab_options
     end
+
+    # Checks whether the filesystem is mounted as root
+    # @return [Boolean]
+    def root?
+      mount_point == ROOT_PATH
+    end
+
+    # Checks whether a mount point is shadowing to another mount point
+    #
+    # @note The existence of devices with that mount points is not checked.
+    #
+    # @param mount_point [String]
+    # @param other_mount_point [String]
+    #
+    # @return [Boolean] true if {other_mount_point} is shadowed by {mount_point}
+    def self.shadowing?(mount_point, other_mount_point)
+      return false if mount_point.nil? || other_mount_point.nil?
+      # Just checking with start_with? is not sufficient:
+      # "/bootinger/schlonz".start_with?("/boot") -> true
+      # So append "/" to make sure only complete subpaths are compared:
+      # "/bootinger/schlonz/".start_with?("/boot/") -> false
+      # "/boot/schlonz/".start_with?("/boot/") -> true
+      check_path = "#{other_mount_point}/"
+      check_path.start_with?("#{mount_point}/")
+    end
+
+    # Checks whether a mount point is currently shadowed by other specific mount point
+    #
+    # @param devicegraph [Devicegraph]
+    # @param mount_point [String] mount point to check
+    # @param other_mount_point [String] mount point
+    #
+    # @return [Boolean] true if {mount_point} is shadowed by {other_mount_point}
+    def self.shadowed_by?(devicegraph, mount_point, other_mount_point)
+      device = Mountable.all(devicegraph).detect? { |m| m.mount_point == other_mount_point }
+      return false if device.nil?
+
+      Mountable.shadowing?(device.mount_point, mount_point)
+    end
+
+    # Checks whether a mount point is currently shadowed by any other mount point
+    #
+    # @param devicegraph [Devicegraph]
+    # @param mount_point [String] mount point to check
+    #
+    # @return [Boolean]
+    def self.shadowed?(devicegraph, mount_point)
+      Mountable.all(devicegraph).any? { |m| Mountable.shadowing?(m.mount_point, mount_point) }
+    end
+
+    # Returns the current shadowers for a specific mount point
+    #
+    # @param devicegraph [Devicegraph]
+    # @param mount_point [String] mount point
+    #
+    # @return [Array<Mountable>] shadowers
+    def self.shadowers(devicegraph, mount_point)
+      Mountable.all(devicegraph).select { |m| Mountable.shadowing?(m.mount_point, mount_point) }
+    end
+
+    # Checks whether the current mount point is shadowed by other specific mount point
+    #
+    # @param devicegraph [Devicegraph]
+    # @param mount_point [String] other mount point
+    #
+    # @return [Boolean] true if the current mount point is shadowed by {mount_point}
+    def shadowed_by?(devicegraph, mount_point)
+      shadowers(devicegraph).map(&:mount_point).include?(mount_point)
+    end
+
+    # Checks whether the current mount point is shadowed by any other mount point
+    #
+    # @param devicegraph [Devicegraph]
+    #
+    # @return [Boolean]
+    def shadowed?(devicegraph)
+      !shadowers(devicegraph).empty?
+    end
+
+    # Returns the list of shadowers for the current mount point. It prevents to return
+    # itself as shadower.
+    #
+    # @param devicegraph [Devicegraph]
+    #
+    # @return [Array<Mountable>] shadowers
+    def shadowers(devicegraph)
+      shadowers = Mountable.shadowers(devicegraph, mount_point)
+      shadowers.reject { |m| m.sid == sid }
+    end
+
+  private
+
+    ROOT_PATH = "/".freeze
+    
   end
 end

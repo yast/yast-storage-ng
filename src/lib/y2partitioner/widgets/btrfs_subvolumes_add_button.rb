@@ -2,6 +2,7 @@ require "yast"
 require "cwm"
 require "y2partitioner/widgets/btrfs_subvolumes_table"
 require "y2partitioner/dialogs/btrfs_subvolume"
+require "y2partitioner/format_mount/root_subvolumes_builder"
 
 Yast.import "Popup"
 
@@ -30,7 +31,8 @@ module Y2Partitioner
         result = subvolume_dialog.run
 
         if result == :ok
-          add_subvolume(subvolume_dialog.form)
+          form = subvolume_dialog.form
+          add_subvolume(form.path, form.nocow)
           table.refresh
         end
 
@@ -48,28 +50,13 @@ module Y2Partitioner
       #
       # The mount point is generated from the subvolume path and
       # the filesystem mount point.
-      # @see #mountpoint
-      def add_subvolume(form)
-        parent = filesystem.default_btrfs_subvolume
-        subvol = parent.create_btrfs_subvolume(form.path)
-        subvol.nocow = form.nocow
-        subvol.mountpoint = mountpoint(form.path)
-      end
-
-      # Generates the subvolume mount point
-      #
-      # The subvolume mount point is generated from the subvolume path and
-      # the filesystem mount point.
-      def mountpoint(path)
-        File.join(filesystem.mountpoint, subvolume_relative_path(path))
-      end
-
-      def subvolume_relative_path(path)
-        path.sub(btrfs_root_path, "")
-      end
-
-      def btrfs_root_path
-        filesystem.default_btrfs_subvolume.path + "/"
+      # @see Y2Storage::Filesystems::Btrfs#btrfs_subvolume_mount_point
+      def add_subvolume(path, nocow)
+        if filesystem.root?
+          FormatMount::RootSubvolumesBuilder.add_subvolume(path, nocow)
+        else
+          filesystem.create_btrfs_subvolume(path, nocow)
+        end
       end
     end
   end
