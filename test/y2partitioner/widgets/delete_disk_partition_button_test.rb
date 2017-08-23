@@ -68,8 +68,8 @@ describe Y2Partitioner::Widgets::DeleteDiskPartitionButton do
           expect(Y2Storage::BlkDevice.find_by_name(devicegraph, device_name)).to be_nil
         end
 
-        it "refresh root subvolumes shadowing" do
-          expect(Y2Storage::Filesystems::Btrfs).to receive(:refresh_root_subvolumes_shadowing)
+        it "refresh btrfs subvolumes shadowing" do
+          expect(Y2Storage::Filesystems::Btrfs).to receive(:refresh_subvolumes_shadowing)
           subject.handle
         end
 

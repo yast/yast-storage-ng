@@ -694,13 +694,7 @@ module Y2Storage
       raise ArgumentError, "No path for subvolume" unless path
 
       blk_device = BlkDevice.find_by_name(@devicegraph, parent)
-      btrfs = blk_device.filesystem
-      parent_subvol = find_default_subvolume(btrfs) || btrfs.top_level_btrfs_subvolume
-
-      subvol = parent_subvol.create_btrfs_subvolume(path)
-      subvol.nocow = nocow
-      subvol.mount_point = subvol.filesystem.btrfs_subvolume_mount_point(path)
-      subvol
+      blk_device.filesystem.create_btrfs_subvolume(path, nocow)
     end
 
   private

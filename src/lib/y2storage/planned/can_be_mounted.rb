@@ -37,17 +37,6 @@ module Y2Storage
       # Initializations of the mixin, to be called from the class constructor.
       def initialize_can_be_mounted
       end
-
-      # Checks whether this device is shadowed by any of the given mount points
-      # @see BtrfsSubvolume#shadowing?
-      #
-      # @param other_mount_points [Array<String>]
-      #
-      # @return [Boolean]
-      def shadowed?(other_mount_points)
-        return false if mount_point.nil? || other_mount_points.nil?
-        other_mount_points.compact.any? { |m| Y2Storage::BtrfsSubvolume.shadowing?(m, mount_point) }
-      end
     end
   end
 end

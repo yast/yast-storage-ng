@@ -216,6 +216,64 @@ describe Y2Storage::Filesystems::Btrfs do
     end
   end
 
+  describe "#add_btrfs_subvolumes" do
+    let(:specs) { [spec1, spec2] }
+
+    context "when subvolumes for the indicated specs do not exist" do
+      let(:spec1) { Y2Storage::SubvolSpecification.new("foo") }
+      let(:spec2) { Y2Storage::SubvolSpecification.new("bar") }
+
+      it "creates the subvolumes indicated in specs" do
+        expect(filesystem.find_btrfs_subvolume_by_path("@/foo")).to be_nil
+        expect(filesystem.find_btrfs_subvolume_by_path("@/bar")).to be_nil
+
+        filesystem.add_btrfs_subvolumes(specs)
+
+        expect(filesystem.find_btrfs_subvolume_by_path("@/foo")).to_not be_nil
+        expect(filesystem.find_btrfs_subvolume_by_path("@/bar")).to_not be_nil
+      end
+
+      it "creates new subvolumes as 'can be auto deleted'" do
+        filesystem.add_btrfs_subvolumes(specs)
+        expect(filesystem.find_btrfs_subvolume_by_path("@/foo").can_be_auto_deleted?).to eq(true)
+        expect(filesystem.find_btrfs_subvolume_by_path("@/bar").can_be_auto_deleted?).to eq(true)
+      end
+
+      it "does not set the existing subvolumes as 'can be deleted'" do
+        filesystem.add_btrfs_subvolumes(specs)
+        expect(filesystem.find_btrfs_subvolume_by_path("@/home").can_be_auto_deleted?).to eq(false)
+      end
+    end
+
+    context "when a subvolume already exists" do
+      let(:spec1) { Y2Storage::SubvolSpecification.new("foo") }
+      let(:spec2) { Y2Storage::SubvolSpecification.new("home") }
+
+      it "does not create the subvolume again" do
+        home_subvolume = filesystem.find_btrfs_subvolume_by_path("@/home")
+        filesystem.add_btrfs_subvolumes(specs)
+        home_subvolumes = filesystem.btrfs_subvolumes.select { |s| s.path == "@/home" }
+
+        expect(home_subvolumes.size).to eq(1)
+        expect(home_subvolume).to eq(home_subvolumes.first)
+      end
+    end
+
+    context "when a subvolume spec is not for the current arch" do
+      before do
+        allow(Yast::Arch).to receive(:x86_64).and_return(true)
+      end
+
+      let(:spec1) { Y2Storage::SubvolSpecification.new("foo") }
+      let(:spec2) { Y2Storage::SubvolSpecification.new("bar", archs: ["s390"]) }
+
+      it "does not create the subvolume for other archs" do
+        filesystem.add_btrfs_subvolumes(specs)
+        expect(filesystem.find_btrfs_subvolume_by_path("@/bar")).to be_nil
+      end
+    end
+  end
+
   describe "#btrfs_subvolume_path" do
     context "when the path is correct for the filesystem" do
       let(:path) { "@/foo" }
@@ -260,6 +318,60 @@ describe Y2Storage::Filesystems::Btrfs do
 
       it "returns the subvolume mount point for the indicated path" do
         expect(filesystem.btrfs_subvolume_mount_point("@/foo")).to eq("/var/foo")
+      end
+    end
+  end
+
+  describe ".btrfs_subvolume_path" do
+    let(:default_subvolume_path) { "@" }
+    let(:path) { "foo" }
+
+    it "creates a subvolume path" do
+      expect(described_class.btrfs_subvolume_path(default_subvolume_path, path)).to eq("@/foo")
+    end
+
+    context "when the default subvolume path is nil" do
+      let(:default_subvolume_path) { nil }
+
+      it "returns nil" do
+        expect(described_class.btrfs_subvolume_path(default_subvolume_path, path)).to be(nil)
+      end
+    end
+
+    context "when the subvolume path is nil" do
+      let(:path) { nil }
+
+      it "returns nil" do
+        expect(described_class.btrfs_subvolume_path(default_subvolume_path, path)).to be(nil)
+      end
+    end
+  end
+
+  describe ".btrfs_subvolume_mount_point" do
+    let(:path) { "bar" }
+
+    context "when the filesystem is not mounted" do
+      let(:mount_point) { nil }
+
+      it "returns nil" do
+        expect(described_class.btrfs_subvolume_mount_point(mount_point, path)).to be_nil
+      end
+    end
+
+    context "when the subvolume path is nil" do
+      let(:mount_point) { "/" }
+      let(:path) { nil }
+
+      it "returns nil" do
+        expect(described_class.btrfs_subvolume_mount_point(mount_point, path)).to be(nil)
+      end
+    end
+
+    context "when the filesystem is mounted" do
+      let(:mount_point) { "/foo" }
+
+      it "returns the subvolume mount point for the indicated path" do
+        expect(described_class.btrfs_subvolume_mount_point(mount_point, path)).to eq("/foo/bar")
       end
     end
   end
@@ -339,42 +451,60 @@ describe Y2Storage::Filesystems::Btrfs do
     end
   end
 
-  describe ".refresh_root_subvolumes_shadowing" do
+  describe ".refresh_subvolumes_shadowing" do
     before do
       filesystem.mount_point = mount_point
       allow(Y2Storage::Filesystems::BlkFilesystem).to receive(:all).and_return([filesystem])
     end
 
-    context "when there is not a btrfs filesystem mounted as root" do
-      let(:mount_point) { "/foo" }
-
-      it "does not shadow subvolumes" do
-        expect(filesystem).to_not receive(:shadow_btrfs_subvolumes)
-        described_class.refresh_root_subvolumes_shadowing(devicegraph)
-      end
-
-      it "does not unshadow subvolumes" do
-        expect(filesystem).to_not receive(:unshadow_btrfs_subvolumes)
-        described_class.refresh_root_subvolumes_shadowing(devicegraph)
-      end
-    end
-
-    context "when there is a btrfs filesystem mounted as root" do
+    context "when there is a root btrfs filesystem" do
       let(:mount_point) { "/" }
 
       it "shadows subvolumes of root filesystem" do
-        expect(filesystem).to receive(:shadow_btrfs_subvolumes)
-        described_class.refresh_root_subvolumes_shadowing(devicegraph)
+        expect(filesystem).to receive(:remove_shadowed_subvolumes)
+        described_class.refresh_subvolumes_shadowing(devicegraph)
       end
 
       it "unshadows subvolumes of root filesystem" do
-        expect(filesystem).to receive(:unshadow_btrfs_subvolumes)
-        described_class.refresh_root_subvolumes_shadowing(devicegraph)
+        expect(filesystem).to receive(:restore_unshadowed_subvolumes)
+        described_class.refresh_subvolumes_shadowing(devicegraph)
+      end
+    end
+
+    context "when there is a not root btrfs filesystem" do
+      let(:mount_point) { "/foo" }
+
+      it "shadows subvolumes of the filesystem" do
+        expect(filesystem).to receive(:remove_shadowed_subvolumes)
+        described_class.refresh_subvolumes_shadowing(devicegraph)
+      end
+
+      it "unshadows subvolumes of the filesystem" do
+        expect(filesystem).to receive(:restore_unshadowed_subvolumes)
+        described_class.refresh_subvolumes_shadowing(devicegraph)
+      end
+    end
+
+    context "when there is a not btrfs filesystem" do
+      let(:mount_point) { "/" }
+
+      before do
+        allow(filesystem).to receive(:supports_btrfs_subvolumes?).and_return(false)
+      end
+
+      it "does not try to shadow subvolumes for the filesystem" do
+        expect(filesystem).to_not receive(:remove_shadowed_subvolumes)
+        described_class.refresh_subvolumes_shadowing(devicegraph)
+      end
+
+      it "does not try to unshadow subvolumes for the filesystem" do
+        expect(filesystem).to_not receive(:restore_unshadowed_subvolumes)
+        described_class.refresh_subvolumes_shadowing(devicegraph)
       end
     end
   end
 
-  describe "#shadow_btrfs_subvolumes" do
+  describe "#remove_shadowed_subvolumes" do
     before do
       partition.filesystem.mount_point = mount_point
       subvolume = filesystem.create_btrfs_subvolume(subvolume_path, false)
@@ -391,7 +521,7 @@ describe Y2Storage::Filesystems::Btrfs do
 
       it "does not remove any subvolume" do
         subvolumes = filesystem.btrfs_subvolumes
-        filesystem.shadow_btrfs_subvolumes(devicegraph)
+        filesystem.remove_shadowed_subvolumes(devicegraph)
         expect(filesystem.btrfs_subvolumes).to eq(subvolumes)
       end
     end
@@ -400,43 +530,43 @@ describe Y2Storage::Filesystems::Btrfs do
       let(:mount_point) { "/foo" }
       let(:subvolume_path) { "@/foo/bar" }
 
-      context "and the subvolume can be shadowed" do
+      context "and the subvolume can be auto deleted" do
         let(:can_be_auto_deleted) { true }
 
         it "removes the subvolume" do
           expect(filesystem.find_btrfs_subvolume_by_path(subvolume_path)).to_not be(nil)
-          filesystem.shadow_btrfs_subvolumes(devicegraph)
+          filesystem.remove_shadowed_subvolumes(devicegraph)
           expect(filesystem.find_btrfs_subvolume_by_path(subvolume_path)).to be(nil)
         end
 
         it "adds the subvolume to the list of auto deleted subvolumes" do
           expect(filesystem.auto_deleted_subvolumes).to be_empty
-          filesystem.shadow_btrfs_subvolumes(devicegraph)
+          filesystem.remove_shadowed_subvolumes(devicegraph)
           expect(filesystem.auto_deleted_subvolumes).to include(
             an_object_having_attributes(path: subvolume_path)
           )
         end
       end
 
-      context "and the subvolume cannot be shadowed" do
+      context "and the subvolume cannot be auto deleted" do
         let(:can_be_auto_deleted) { false }
 
         it "does not remove the subvolume" do
           expect(filesystem.find_btrfs_subvolume_by_path(subvolume_path)).to_not be(nil)
-          filesystem.shadow_btrfs_subvolumes(devicegraph)
+          filesystem.remove_shadowed_subvolumes(devicegraph)
           expect(filesystem.find_btrfs_subvolume_by_path(subvolume_path)).to_not be(nil)
         end
 
         it "does not add the subvolume to the list of auto deleted subvolumes" do
           expect(filesystem.auto_deleted_subvolumes).to be_empty
-          filesystem.shadow_btrfs_subvolumes(devicegraph)
+          filesystem.remove_shadowed_subvolumes(devicegraph)
           expect(filesystem.auto_deleted_subvolumes).to be_empty
         end
       end
     end
   end
 
-  describe ".unshadow_btrfs_subvolumes" do
+  describe "#restore_unshadowed_subvolumes" do
     before do
       partition.filesystem.mount_point = mount_point
       filesystem.auto_deleted_subvolumes = shadowed_subvolumes
@@ -451,7 +581,7 @@ describe Y2Storage::Filesystems::Btrfs do
 
       it "does not add subvolumes" do
         subvolumes = filesystem.btrfs_subvolumes
-        filesystem.unshadow_btrfs_subvolumes(devicegraph)
+        filesystem.restore_unshadowed_subvolumes(devicegraph)
         expect(filesystem.btrfs_subvolumes).to eq(subvolumes)
       end
     end
@@ -466,7 +596,7 @@ describe Y2Storage::Filesystems::Btrfs do
 
         it "adds the subvolume to the filesystem" do
           expect(filesystem.find_btrfs_subvolume_by_path(subvolume_path)).to be(nil)
-          filesystem.unshadow_btrfs_subvolumes(devicegraph)
+          filesystem.restore_unshadowed_subvolumes(devicegraph)
           expect(filesystem.find_btrfs_subvolume_by_path(subvolume_path)).to_not be(nil)
         end
 
@@ -475,7 +605,7 @@ describe Y2Storage::Filesystems::Btrfs do
             an_object_having_attributes(path: subvolume_path)
           )
 
-          filesystem.unshadow_btrfs_subvolumes(devicegraph)
+          filesystem.restore_unshadowed_subvolumes(devicegraph)
 
           expect(filesystem.auto_deleted_subvolumes).to_not include(
             an_object_having_attributes(path: subvolume_path)
@@ -489,7 +619,7 @@ describe Y2Storage::Filesystems::Btrfs do
 
         it "does not add the subvolume to the filesystem" do
           expect(filesystem.find_btrfs_subvolume_by_path(subvolume_path)).to be(nil)
-          filesystem.unshadow_btrfs_subvolumes(devicegraph)
+          filesystem.restore_unshadowed_subvolumes(devicegraph)
           expect(filesystem.find_btrfs_subvolume_by_path(subvolume_path)).to be(nil)
 
         end
@@ -499,7 +629,7 @@ describe Y2Storage::Filesystems::Btrfs do
             an_object_having_attributes(path: subvolume_path)
           )
 
-          filesystem.unshadow_btrfs_subvolumes(devicegraph)
+          filesystem.restore_unshadowed_subvolumes(devicegraph)
 
           expect(filesystem.auto_deleted_subvolumes).to include(
             an_object_having_attributes(path: subvolume_path)

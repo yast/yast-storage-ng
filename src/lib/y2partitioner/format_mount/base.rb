@@ -109,11 +109,11 @@ module Y2Partitioner
       # When the filesystem is btrfs and root, default proposed subvolumes are added
       # in case they are not been probed.
       # When the filesystem is btrfs, the mount point of the resulting subvolumes is updated.
-      # Shadowing control of root btrfs subvolumes is always performed.
+      # Shadowing control of btrfs subvolumes is always performed.
       def subvolume_actions_after_set_mount_point
         add_proposed_subvolumes if btrfs_root?
         update_mount_points if btrfs?
-        Y2Storage::Filesystems::Btrfs.refresh_root_subvolumes_shadowing(devicegraph)
+        Y2Storage::Filesystems::Btrfs.refresh_subvolumes_shadowing(devicegraph)
       end
 
       def delete_new_subvolumes
@@ -127,27 +127,15 @@ module Y2Partitioner
         filesystem.btrfs_subvolumes.select { |s| !s.exists_in_devicegraph?(devicegraph) }
       end
 
-      # Only proposed subvolumes that have not been already probed are added
+      # A proposed subvolume is added only when it does not exist in the filesystem and it
+      # makes sense for the current architecture
+      #
+      # @see Y2Storage::Filesystems::Btrfs#add_btrfs_subvolumes
       def add_proposed_subvolumes
-        specs = Y2Storage::SubvolSpecification.for_current_product
+        specs = Y2Storage::SubvolSpecification.from_control_file
+        specs = Y2Storage::SubvolSpecification.fallback_list if specs.nil? || specs.empty?
 
-        specs.each do |spec|
-          next if exist_subvolume?(spec)
-          add_proposed_subvolume(spec)
-        end
-      end
-
-      def exist_subvolume?(spec)
-        path = filesystem.btrfs_subvolume_path(spec.path)
-        !filesystem.find_btrfs_subvolume_by_path(path).nil?
-      end
-
-      def add_proposed_subvolume(spec)
-        path = filesystem.btrfs_subvolume_path(spec.path)
-        nocow = !spec.copy_on_write
-        subvolume = filesystem.create_btrfs_subvolume(path, nocow)
-        # Proposed subvolumes can be automatically deleted when they are shadowed
-        subvolume.can_be_auto_deleted = true
+        filesystem.add_btrfs_subvolumes(specs)
       end
 
       def update_mount_points

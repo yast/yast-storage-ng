@@ -213,23 +213,23 @@ describe Y2Partitioner::FormatMount::Base do
               expect(mount_points).to all(start_with(mount_point))
             end
 
-            it "refresh btrfs subvolumes for root" do
-              expect(Y2Storage::Filesystems::Btrfs).to receive(:refresh_root_subvolumes_shadowing)
+            it "refresh btrfs subvolumes shadowing" do
+              expect(Y2Storage::Filesystems::Btrfs).to receive(:refresh_subvolumes_shadowing)
               subject.apply_mount_options!
             end
 
             context "and the new mount point is root" do
               let(:mount_point) { "/" }
 
-              it "adds the proposed subvolumes that have not been probed" do
-                specs = Y2Storage::SubvolSpecification.for_current_product
+              it "adds the proposed subvolumes for the current arch that do not exist" do
+                specs = Y2Storage::SubvolSpecification.fallback_list
+                arch_specs = Y2Storage::SubvolSpecification.for_current_arch(specs)
+                paths = arch_specs.map { |s| filesystem.btrfs_subvolume_path(s.path) }
 
-                paths = specs.map { |s| filesystem.btrfs_subvolume_path(s.path) }
                 expect(paths.any? { |p| filesystem.find_btrfs_subvolume_by_path(p).nil? }).to be(true)
 
                 subject.apply_mount_options!
 
-                paths = specs.map { |s| filesystem.btrfs_subvolume_path(s.path) }
                 expect(paths.any? { |p| filesystem.find_btrfs_subvolume_by_path(p).nil? }).to be(false)
               end
             end

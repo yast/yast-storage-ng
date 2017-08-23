@@ -190,7 +190,6 @@ module Y2Storage
     # @return [Array<SubvolSpecification>] list of specifications (usually read
     #   from the control file) that will be used to plan the Btrfs subvolumes of
     #   the root filesystem
-    #   @see #planned_subvolumes
     attr_accessor :subvolumes
 
     PRODUCT_SECTION = "partitioning"
@@ -273,20 +272,6 @@ module Y2Storage
         "  home_min_size: #{home_min_size}\n" \
         "  home_max_size: #{home_max_size}\n" \
         "  subvolumes: \n#{subvolumes}\n"
-    end
-
-    # List of Planned::BtrfsSubvolume objects based on the specifications stored
-    # at #subvolumes (i.e. read from the product features).
-    #
-    # It includes only subvolumes that make sense for the current architecture
-    # and avoids duplicated paths.
-    #
-    # @return [Array<Planned::BtrfsSubvolume>]
-    def planned_subvolumes
-      # Should not happen, #subvolumes is initialized in the constructor
-      return [] if subvolumes.nil?
-
-      SubvolSpecification.planned_subvolumes(subvolumes)
     end
 
     # Check whether using btrfs filesystem with snapshots

@@ -192,7 +192,7 @@ module Y2Storage
         return unless planned_device.btrfs? && settings.subvolumes
 
         planned_device.default_subvolume = settings.btrfs_default_subvolume || ""
-        planned_device.subvolumes = settings.planned_subvolumes
+        planned_device.subvolumes = settings.subvolumes
         log.info "Adding Btrfs subvolumes: \n#{planned_device.subvolumes}"
       end
 

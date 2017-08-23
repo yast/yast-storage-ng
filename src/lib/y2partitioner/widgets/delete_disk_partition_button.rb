@@ -54,7 +54,7 @@ module Y2Partitioner
         device.partition_table.delete_partition(device)
 
         devicegraph = DeviceGraphs.instance.current
-        Y2Storage::Filesystems::Btrfs.refresh_root_subvolumes_shadowing(devicegraph)
+        Y2Storage::Filesystems::Btrfs.refresh_subvolumes_shadowing(devicegraph)
       end
 
       def confirm(device)
