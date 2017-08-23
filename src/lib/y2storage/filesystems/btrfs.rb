@@ -177,7 +177,7 @@ module Y2Storage
       #   filesystem.btrfs_subvolume_mount_point("bar") # => "/foo/bar"
       #   filesystem.btrfs_subvolume_mount_point("@/bar") # => "/foo/bar"
       #
-      # @param path [String] a subvolume path (absolute or relative)
+      # @param subvolume_path [String] a subvolume path (absolute or relative)
       #
       # @return [String, nil] nil whether the filesystem is not mounted
       def btrfs_subvolume_mount_point(subvolume_path)
