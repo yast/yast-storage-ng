@@ -667,16 +667,6 @@ module Y2Storage
       parent
     end
 
-    # Helper function to obtain the default subvolume of a Btrfs.
-    #
-    # @param btrfs [Object] btrfs filesystem to search in
-    #
-    # @return [Object] default subvolume or nil if there is none
-    #
-    def find_default_subvolume(btrfs)
-      btrfs.btrfs_subvolumes.find(&:default_btrfs_subvolume?)
-    end
-
     # Factory method for a btrfs subvolume
     #
     # @param parent [String] Name of the partition or LVM LV
