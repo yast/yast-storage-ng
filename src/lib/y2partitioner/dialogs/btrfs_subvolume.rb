@@ -1,6 +1,7 @@
 require "yast"
 require "cwm"
 require "y2partitioner/dialogs/popup"
+require "y2storage/filesystems/btrfs"
 
 Yast.import "Popup"
 
@@ -94,29 +95,24 @@ module Y2Partitioner
           self.value = form.path
         end
 
-        # Validates the path
+        # Validates the subvolume path
         #
-        # Path cannot be empty
-        # Path must start by default subvolume path
-        # Path must be uniq
+        # @note The subvolume shadowing is also checked due to its mount point
+        #   is generated from the subvolume path.
+        #
+        # The following condintions are checked:
+        # - The subvolume path is not empty
+        # - The subvolume path starts by the default subvolume path
+        # - The subvolume path in unique for the filesystem
+        # - The subvolume is not shadowed
         def validate
-          if value.empty?
-            Yast::Popup.Message(_("Empty subvolume path not allowed."))
-            invalid = true
-          elsif !filesystem.nil?
-            fix_path
-            if exist_path?
-              Yast::Popup.Message(format(_("Subvolume name %s already exists."), value))
-              invalid = true
-            end
-          end
+          fix_path
 
-          if invalid
-            focus
-            false
-          else
-            true
-          end
+          valid = content_validation && uniqueness_validation && shadowing_validation
+          return true if valid
+
+          focus
+          false
         end
 
       private
@@ -125,11 +121,48 @@ module Y2Partitioner
           Yast::UI.SetFocus(Id(widget_id))
         end
 
+        # Validates not empty path
+        # An error popup is shown when entered path is empty.
+        #
+        # @return [Boolean] true if path is not empty
+        def content_validation
+          return true unless value.empty?
+
+          Yast::Popup.Error(_("Empty subvolume path not allowed."))
+          false
+        end
+
+        # Validates not duplicated path
+        # An error popup is shown when entered path already exists in the filesystem.
+        #
+        # @return [Boolean] true if path does not exist
+        def uniqueness_validation
+          return true unless exist_path?
+
+          Yast::Popup.Error(format(_("Subvolume name %s already exists."), value))
+          false
+        end
+
+        # Validates not shadowed subvolume
+        # An error popup is shown when the subvolume is shadowed.
+        #
+        # @return [Boolean] true if subvolume is shadowed
+        def shadowing_validation
+          return true unless shadowed?
+
+          Yast::Popup.Error(format(_("Mount point %s is shadowed."), mount_point))
+          false
+        end
+
         # Updates #value by prefixing path with default subvolume path if it is necessary
         #
         # Path should be a relative path. Starting slashes are removed. A popup message is
         # presented when the default subvolume path is going to be added.
+        #
+        # @see Y2Storage::Filesystems::Btrfs#btrfs_subvolume_path
         def fix_path
+          return if value.empty?
+
           self.value = value.sub(/^\/*/, "")
 
           default_subvolume_path = filesystem.default_btrfs_subvolume.path
@@ -143,12 +176,28 @@ module Y2Partitioner
           )
           Yast::Popup.Message(message)
 
-          self.value = File.join(default_subvolume_path, value)
+          self.value = filesystem.btrfs_subvolume_path(value)
         end
 
-        # Checks if there is a subvolume with the entered path
+        # Checks if the filesystem already has a subvolume with the entered path
+        # @return [Boolean]
         def exist_path?
           filesystem.btrfs_subvolumes.any? { |s| s.path == value }
+        end
+
+        # Checks if the subvolume is shadowed
+        # @return [Boolean]
+        def shadowed?
+          devicegraph = DeviceGraphs.instance.current
+          Y2Storage::BtrfsSubvolume.shadowed?(devicegraph, mount_point)
+        end
+
+        # Subvolume mount point
+        # @see Y2Storage::Filesystems::Btrfs#btrfs_subvolume_mount_point
+        #
+        # @return [String, nil] nil if the filesystem is not mounted
+        def mount_point
+          filesystem.btrfs_subvolume_mount_point(value)
         end
       end
 

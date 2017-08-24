@@ -21,6 +21,7 @@
 
 require "yast"
 require "y2storage/storage_class_wrapper"
+require "yaml"
 
 module Y2Storage
   # An abstract base class of storage devices and a vertex in the Devicegraph.
@@ -115,6 +116,16 @@ module Y2Storage
     #   Remove device descendants in the devicegraph it belongs to.
     storage_forward :remove_descendants
 
+    # @!attribute userdata
+    #   Collection of free-form text fields to be stored in the devicegraph
+    #   alongside the device. Useful for users of the library to add their own
+    #   status information.
+    #
+    #   @return [Storage::MapStringString]
+    storage_forward :userdata
+    storage_forward :userdata=
+    protected :userdata, :userdata=
+
     # Ancestors in the devicegraph in no particular order, not including the
     # device itself.
     #
@@ -194,6 +205,48 @@ module Y2Storage
     end
 
   protected
+
+    # Stores any object in the userdata of the device.
+    #
+    # This method takes care of serializing the information to make sure it fits
+    # into the userdata mechanism.
+    # @see #userdata
+    #
+    # @param key [#to_s] name of the information in the userdata container
+    # @param value [Object] information to store
+    def save_userdata(key, value)
+      userdata[key.to_s] = value.to_yaml
+    end
+
+    # Returns a copy of any information previously stored in the device using
+    # {#save_userdata}.
+    #
+    # This method takes care of deserializing the stored information.
+    #
+    # Take into account that the result is just a copy of the information, so
+    # changes in the object will not be persisted to the userdata.
+    # #{save_userdata} must be used to update the information in the device if
+    # needed.
+    #
+    # @example Updating a value
+    #
+    #   save_userdata(:aliases, ["dev_one", "dev_two"])
+    #
+    #   userdata_value(:aliases).push "dev_three"
+    #   userdata_value(:aliases) # => ["dev_one", "dev_two"]
+    #
+    #   tmp = userdata_value(:aliases)
+    #   tmp.push "dev_three"
+    #   save_userdata(:aliases, tmp)
+    #   userdata_value(:aliases) # => ["dev_one", "dev_two", "dev_three"]
+    #
+    # @param key [#to_s] name of the information in the userdata container
+    # @return [Object] a copy of the previously stored object
+    def userdata_value(key)
+      serialized = userdata[key.to_s]
+      return nil if serialized.nil?
+      YAML.load(serialized)
+    end
 
     def types_for_is
       []

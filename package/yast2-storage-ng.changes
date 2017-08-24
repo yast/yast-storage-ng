@@ -1,4 +1,14 @@
 -------------------------------------------------------------------
+Mon Aug 23 19:33:27 UTC 2017 - jlopez@suse.com
+
+- Added methods to save user data into libstorage-ng objects.
+- Added subvolume shadowing control to the expert partitioner.
+- Added mount point validation to the expert partitioner.
+- Removed Planned::BtrfsSubvolume class.
+- Part of fate#318196
+- 3.3.5
+
+-------------------------------------------------------------------
 Mon Aug 21 22:47:04 UTC 2017 - knut.anderssen@suse.com
 
 - Added support for legacy filesystems (fate#323394).

@@ -20,7 +20,7 @@ describe Y2Partitioner::Widgets::BtrfsPage do
       table = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::BtrfsTable) }
 
       expect(table).to_not be_nil
-      expect(table.items.size).to eq(2)
+      expect(table.items.size).to eq(3)
     end
 
     it "shows a edit btrfs button" do

@@ -39,7 +39,7 @@ module Y2Storage
       # @return [String] UUID to enforce in the filesystem
       attr_accessor :uuid
 
-      # @return [Array<Planned::BtrfsSubvolume>] Btrfs subvolumes
+      # @return [Array<SubvolSpecification>] Btrfs subvolume specifications
       attr_accessor :subvolumes
 
       # @return [String] Parent for all Btrfs subvolumes (typically "@")
@@ -98,15 +98,14 @@ module Y2Storage
         btrfs? && !subvolumes.nil? && !subvolumes.empty?
       end
 
-      # Planned subvolumes (from #subvolumes) that would be shadowed by any of
-      # the given planned devices.
+      # Subvolume specifications that would be shadowed by any of the given planned devices.
       #
-      # @param all_devices [Array<Planned::Device>] all the devices planned for
-      #   the system.
+      # @param all_devices [Array<Planned::Device>] all the devices planned for the system.
+      # @return [Array<SubvolSpecification>]
       def shadowed_subvolumes(all_devices)
         other_devices = all_devices - [self]
-        mount_points = other_devices.map { |dev| mount_point_for(dev) }.compact
-        subvolumes.select { |s| s.shadowed?(mount_points) }
+        other_mount_points = other_devices.map { |dev| mount_point_for(dev) }.compact
+        subvolumes.select { |s| s.shadowed?(mount_point, other_mount_points) }
       end
 
       # @see #reformat
@@ -128,12 +127,10 @@ module Y2Storage
         return unless filesystem.supports_btrfs_subvolumes?
         # If a default subvolume is configured (in control.xml), create it; if not,
         # use the toplevel subvolume that is implicitly created by mkfs.btrfs.
-        parent_subvol = filesystem.ensure_default_btrfs_subvolume(path: @default_subvolume)
-
+        filesystem.ensure_default_btrfs_subvolume(path: @default_subvolume)
         return unless subvolumes?
-        subvolumes.each do |planned_subvolume|
-          planned_subvolume.create_subvol(parent_subvol, @default_subvolume)
-        end
+
+        filesystem.add_btrfs_subvolumes(subvolumes)
       end
 
       def reuse_device!(device)

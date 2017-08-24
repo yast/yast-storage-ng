@@ -354,14 +354,14 @@ describe Y2Storage::Proposal::DevicesPlanner do
       context "if Btrfs is used" do
         before do
           settings.root_filesystem_type = btrfs
-          allow(settings).to receive(:planned_subvolumes).and_return settings_subvolumes
+          allow(settings).to receive(:subvolumes).and_return settings_subvolumes
         end
 
         let(:root) { subject.planned_devices(:desired).detect { |v| v.mount_point == "/" } }
         let(:settings_subvolumes) do
           [
-            planned_subvol(path: "var", mount_point: "/var"),
-            planned_subvol(path: "home", mount_point: "/home")
+            Y2Storage::SubvolSpecification.new("var"),
+            Y2Storage::SubvolSpecification.new("home")
           ]
         end
 

@@ -190,7 +190,6 @@ module Y2Storage
     # @return [Array<SubvolSpecification>] list of specifications (usually read
     #   from the control file) that will be used to plan the Btrfs subvolumes of
     #   the root filesystem
-    #   @see #planned_subvolumes
     attr_accessor :subvolumes
 
     PRODUCT_SECTION = "partitioning"
@@ -275,20 +274,6 @@ module Y2Storage
         "  subvolumes: \n#{subvolumes}\n"
     end
 
-    # List of Planned::BtrfsSubvolume objects based on the specifications stored
-    # at #subvolumes (i.e. read from the product features).
-    #
-    # It includes only subvolumes that make sense for the current architecture
-    # and avoids duplicated paths.
-    #
-    # @return [Array<Planned::BtrfsSubvolume>]
-    def planned_subvolumes
-      # Should not happen, #subvolumes is initialized in the constructor
-      return [] if subvolumes.nil?
-
-      SubvolSpecification.planned_subvolumes(subvolumes)
-    end
-
     # Check whether using btrfs filesystem with snapshots
     #
     # @return [Boolean]
@@ -338,10 +323,9 @@ module Y2Storage
     end
 
     # Reads the "subvolumes" section of control.xml
-    # @see SubvolSpecification.list_from_control_xml
+    # @see SubvolSpecification.from_control_file
     def read_subvolumes_section!
-      xml = Yast::ProductFeatures.GetSection("partitioning")
-      subvols = SubvolSpecification.list_from_control_xml(xml["subvolumes"])
+      subvols = SubvolSpecification.from_control_file
       if subvols
         self.subvolumes = subvols
       else

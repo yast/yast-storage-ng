@@ -74,11 +74,6 @@ module Yast
         add_planned_attributes(lv, attrs)
       end
 
-      def planned_subvol(attrs = {})
-        subvol = Y2Storage::Planned::BtrfsSubvolume.new
-        add_planned_attributes(subvol, attrs)
-      end
-
       def add_planned_attributes(device, attrs)
         attrs = attrs.dup
 

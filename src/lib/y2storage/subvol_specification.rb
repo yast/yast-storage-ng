@@ -21,9 +21,9 @@
 # find current contact information at www.novell.com.
 
 require "yast"
-require "y2storage/planned/btrfs_subvolume"
 
 Yast.import "Arch"
+Yast.import "ProductFeatures"
 
 module Y2Storage
   # Helper class to represent a subvolume specification as defined
@@ -134,44 +134,29 @@ module Y2Storage
       use_subvol
     end
 
-    # Generates a Planned::BtrfsSubvolume based on the specification.
+    # Checks whether this device is shadowed by any of the given mount points
+    # @see BtrfsSubvolume#shadowing?
     #
-    # Returns nil if the subvolume makes no sense in the current system (e.g.
-    # incorrect architecture).
+    # @param other_mount_points [Array<String>]
     #
-    # @param mount_prefix [String] mount point of the device containing the
-    #     subvolume
-    # @return [Planned::BtrfsSubvolume, nil]
-    def planned_subvolume(mount_prefix: "/")
-      return nil unless current_arch?
-
-      res = Planned::BtrfsSubvolume.new
-      res.path = path
-      res.copy_on_write = copy_on_write
-      res.mount_point = mount_prefix + path
-      res
+    # @return [Boolean]
+    def shadowed?(fs_mount_point, other_mount_points)
+      return false if fs_mount_point.nil? || other_mount_points.nil?
+      mount_point = Y2Storage::Filesystems::Btrfs.btrfs_subvolume_mount_point(fs_mount_point, path)
+      other_mount_points.compact.any? { |m| Y2Storage::BtrfsSubvolume.shadowing?(m, mount_point) }
     end
 
-    # Transforms a list of {SubvolSpecification} objects into an array of
-    # {Planned::BtrfsSubvolume} ones.
+    # Creates a new btrfs subvolume for the indicated filesystem
     #
-    # It includes only subvolumes that make sense for the current architecture
-    # and avoids duplicated paths.
+    # @note The new subvolume is set as 'can be auto deleted'.
     #
-    # @param specs [Array<SubvolSpecification>] initial list
-    # @param mount_prefix [String] mount point of the device containing the
-    #     subvolumes
-    # @return [Array<Planned::BtrfsSubvolume>]
-    def self.planned_subvolumes(specs, mount_prefix: "/")
-      specs.each_with_object([]) do |subvol, result|
-        new_planned = subvol.planned_subvolume(mount_prefix: mount_prefix)
-        next if new_planned.nil?
-
-        # Overwrite previous definitions for the same path
-        result.delete_if { |s| s.path == new_planned.path }
-
-        result << new_planned
-      end
+    # @param filesystem [Filesystems::Btrfs]
+    # @return [BtrfsSubvolume]
+    def create_btrfs_subvolume(filesystem)
+      subvolume_path = filesystem.btrfs_subvolume_path(path)
+      subvolume = filesystem.create_btrfs_subvolume(subvolume_path, !copy_on_write)
+      subvolume.can_be_auto_deleted = true
+      subvolume
     end
 
     # Factory method: Create one SubvolSpecification from XML data.
@@ -179,7 +164,6 @@ module Y2Storage
     # @param xml [Hash,String] can be a map (for fully specified subvolumes)
     #   or just a string (for subvolumes specified just as a path)
     # @return [SubvolSpecification] or nil if error
-    #
     def self.create_from_xml(xml)
       return nil if xml.nil?
       xml = { "path" => xml } if xml.is_a?(String)
@@ -215,7 +199,6 @@ module Y2Storage
     #
     # @param subvolumes_xml [Array] list of XML <subvolume> entries
     # @return [Array<SubvolSpecification>, nil]
-    #
     def self.list_from_control_xml(subvolumes_xml)
       return nil if subvolumes_xml.nil?
       return nil unless subvolumes_xml.respond_to?(:map)
@@ -243,6 +226,27 @@ module Y2Storage
       )
       subvols.each { |subvol| subvol.archs = SUBVOL_ARCHS[subvol.path] }
       subvols.sort!
+    end
+
+    # Filters specs and returns only what makes sense for the current architecture
+    #
+    # @see #current_arch?
+    #
+    # @param specs [Array<SubvolSpecification>]
+    # @return [Array<SubvolSpecification>]
+    def self.for_current_arch(specs)
+      specs.select(&:current_arch?)
+    end
+
+    # Creates a list of SubvolSpecification objects from the <subvolumes> part of
+    # control.xml or an AutoYaST profile.
+    #
+    # @see .list_from_control_xml
+    #
+    # @return [Array<SubvolSpecification>, nil]
+    def self.from_control_file
+      xml = Yast::ProductFeatures.GetSection("partitioning")
+      list_from_control_xml(xml["subvolumes"])
     end
   end
 end

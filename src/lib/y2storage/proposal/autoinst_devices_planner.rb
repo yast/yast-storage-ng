@@ -207,7 +207,7 @@ module Y2Storage
         end
 
         device.default_subvolume = proposal_settings.btrfs_default_subvolume || ""
-        device.subvolumes = SubvolSpecification.planned_subvolumes(subvol_specs, mount_prefix: mount)
+        device.subvolumes = subvol_specs
       end
 
       # Set 'reusing' attributes for a partition

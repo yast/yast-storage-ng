@@ -7,8 +7,10 @@ module Y2Partitioner
   module Widgets
     # Delete a partition
     class DeleteDiskPartitionButton < CWM::PushButton
-      # @param device
+      # Constructor
+      # @param device [Y2Storage::BlkDevice]
       # @param table [Y2Partitioner::Widgets::BlkDevicesTable]
+      # @param device_graph [Y2Storage::Devicegraph]
       def initialize(device: nil, table: nil, device_graph: nil)
         textdomain "storage"
 
@@ -35,19 +37,25 @@ module Y2Partitioner
 
         return nil unless confirm(device)
 
-        partition_table = device.partition_table
         if device.is?(:disk)
           log.info "deleting partitions for #{device}"
-          partition_table.delete_all_partitions
+          device.partition_table.partitions.each { |p| delete_partition(p) }
         else
           log.info "deleting partition #{device}"
-          partition_table.delete_partition(device)
+          delete_partition(device)
         end
 
         :redraw
       end
 
     private
+
+      def delete_partition(device)
+        device.partition_table.delete_partition(device)
+
+        devicegraph = DeviceGraphs.instance.current
+        Y2Storage::Filesystems::Btrfs.refresh_subvolumes_shadowing(devicegraph)
+      end
 
       def confirm(device)
         names = children_names(device)

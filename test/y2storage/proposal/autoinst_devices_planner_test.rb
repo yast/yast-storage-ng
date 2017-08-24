@@ -180,9 +180,9 @@ describe Y2Storage::Proposal::AutoinstDevicesPlanner do
       context "when the profile contains a list of subvolumes" do
         let(:subvolumes) { ["var", { "path" => "srv", "copy_on_write" => false }, "home"] }
 
-        it "plans a list of Planned::BtrfsSubvolume for root" do
+        it "plans a list of SubvolSpecification for root" do
           expect(root.subvolumes).to be_an Array
-          expect(root.subvolumes).to all(be_a(Y2Storage::Planned::BtrfsSubvolume))
+          expect(root.subvolumes).to all(be_a(Y2Storage::SubvolSpecification))
         end
 
         it "includes all the non-shadowed subvolumes" do
@@ -204,9 +204,9 @@ describe Y2Storage::Proposal::AutoinstDevicesPlanner do
         let(:x86_subvolumes) { ["boot/grub2/i386-pc", "boot/grub2/x86_64-efi"] }
         let(:s390_subvolumes) { ["boot/grub2/s390x-emu"] }
 
-        it "plans a list of Planned::BtrfsSubvolume for root" do
+        it "plans a list of SubvolSpecification for root" do
           expect(root.subvolumes).to be_an Array
-          expect(root.subvolumes).to all(be_a(Y2Storage::Planned::BtrfsSubvolume))
+          expect(root.subvolumes).to all(be_a(Y2Storage::SubvolSpecification))
         end
 
         it "plans the default subvolumes" do
@@ -228,10 +228,6 @@ describe Y2Storage::Proposal::AutoinstDevicesPlanner do
           it "plans default x86 specific subvolumes" do
             expect(root.subvolumes.map(&:path)).to include(*x86_subvolumes)
           end
-
-          it "does not plan other arch subvolumes" do
-            expect(root.subvolumes.map(&:path)).not_to include(*s390_subvolumes)
-          end
         end
 
         context "when architecture is s390" do
@@ -239,10 +235,6 @@ describe Y2Storage::Proposal::AutoinstDevicesPlanner do
 
           it "plans default s390 specific subvolumes" do
             expect(root.subvolumes.map(&:path)).to include(*s390_subvolumes)
-          end
-
-          it "does not plan other arch subvolumes" do
-            expect(root.subvolumes.map(&:path)).not_to include(*x86_subvolumes)
           end
         end
       end

@@ -667,16 +667,6 @@ module Y2Storage
       parent
     end
 
-    # Helper function to obtain the default subvolume of a Btrfs.
-    #
-    # @param btrfs [Object] btrfs filesystem to search in
-    #
-    # @return [Object] default subvolume or nil if there is none
-    #
-    def find_default_subvolume(btrfs)
-      btrfs.btrfs_subvolumes.find(&:default_btrfs_subvolume?)
-    end
-
     # Factory method for a btrfs subvolume
     #
     # @param parent [String] Name of the partition or LVM LV
@@ -694,12 +684,7 @@ module Y2Storage
       raise ArgumentError, "No path for subvolume" unless path
 
       blk_device = BlkDevice.find_by_name(@devicegraph, parent)
-      btrfs = blk_device.filesystem
-      parent_subvol = find_default_subvolume(btrfs) || btrfs.top_level_btrfs_subvolume
-
-      subvol = parent_subvol.create_btrfs_subvolume(path)
-      subvol.nocow = nocow
-      subvol
+      blk_device.filesystem.create_btrfs_subvolume(path, nocow)
     end
 
   private

@@ -77,6 +77,81 @@ module Y2Storage
       to_storage_value.public_send(:default_btrfs_subvolume=)
     end
 
+    # Whether the subvolume can be auto deleted, for example when a proposed
+    # subvolume is shadowed
+    #
+    # @return [Boolean]
+    def can_be_auto_deleted?
+      value = userdata_value(:can_be_auto_deleted)
+      value.nil? ? false : value
+    end
+
+    # @see #can_be_auto_deleted?
+    def can_be_auto_deleted=(value)
+      save_userdata(:can_be_auto_deleted, value)
+    end
+
+    # Checks whether the subvolume is shadowed by any other mount point in the system
+    #
+    # @param devicegraph [Devicegraph]
+    #
+    # @return [Boolean] true if the subvolume is shadowed
+    def shadowed?(devicegraph)
+      !shadowers(devicegraph).empty?
+    end
+
+    # Returns the devices that shadow the subvolume
+    #
+    # It prevents to return the subvolume itself or its filesystem as shadower.
+    #
+    # @param devicegraph [Devicegraph]
+    #
+    # @return [Array<Mountable>] shadowers
+    def shadowers(devicegraph)
+      shadowers = BtrfsSubvolume.shadowers(devicegraph, mount_point)
+      shadowers.reject { |s| s.sid == sid || s.sid == btrfs.sid }
+    end
+
+    # Checks whether a mount point is shadowing another mount point
+    #
+    # @note The existence of devices with that mount points is not checked.
+    #
+    # @param mount_point [String]
+    # @param other_mount_point [String]
+    #
+    # @return [Boolean] true if other_mount_point is shadowed by mount_point
+    def self.shadowing?(mount_point, other_mount_point)
+      return false if mount_point.nil? || other_mount_point.nil?
+      return false if mount_point.empty? || other_mount_point.empty?
+      # Just checking with start_with? is not sufficient:
+      # "/bootinger/schlonz".start_with?("/boot") -> true
+      # So append "/" to make sure only complete subpaths are compared:
+      # "/bootinger/schlonz/".start_with?("/boot/") -> false
+      # "/boot/schlonz/".start_with?("/boot/") -> true
+      check_path = "#{other_mount_point}/"
+      check_path.start_with?("#{mount_point}/")
+    end
+
+    # Checks whether a mount point is currently shadowed by any other mount point
+    #
+    # @param devicegraph [Devicegraph]
+    # @param mount_point [String] mount point to check
+    #
+    # @return [Boolean]
+    def self.shadowed?(devicegraph, mount_point)
+      !shadowers(devicegraph, mount_point).empty?
+    end
+
+    # Returns the current shadowers for a specific mount point
+    #
+    # @param devicegraph [Devicegraph]
+    # @param mount_point [String] mount point
+    #
+    # @return [Array<Mountable>] shadowers
+    def self.shadowers(devicegraph, mount_point)
+      Mountable.all(devicegraph).select { |m| shadowing?(m.mount_point, mount_point) }
+    end
+
   protected
 
     def types_for_is
