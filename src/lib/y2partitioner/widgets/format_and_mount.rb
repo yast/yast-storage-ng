@@ -341,7 +341,7 @@ module Y2Partitioner
       # The following condintions are checked:
       # - The mount point is not empty
       # - The mount point is unique
-      # - The mount point does not shadow a "non shadowable" subvolume
+      # - The mount point does not shadow a subvolume that cannot be auto deleted
       def validate
         return true if !enabled?
 
@@ -374,7 +374,7 @@ module Y2Partitioner
         false
       end
 
-      # Validates that the mount point does not shadow a "non shadowable" subvolume
+      # Validates that the mount point does not shadow a subvolume that cannot be auto deleted
       # An error popup is shown when a subvolume is shadowed by the mount point.
       #
       # @return [Boolean] true if mount point does not shadow a subvolume

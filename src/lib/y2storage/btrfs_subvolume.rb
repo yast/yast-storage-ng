@@ -112,7 +112,7 @@ module Y2Storage
       shadowers.reject { |s| s.sid == sid || s.sid == btrfs.sid }
     end
 
-    # Checks whether a mount point is shadowing to another mount point
+    # Checks whether a mount point is shadowing another mount point
     #
     # @note The existence of devices with that mount points is not checked.
     #
