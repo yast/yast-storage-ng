@@ -205,6 +205,7 @@ describe Y2Storage::SubvolSpecification do
     before do
       fake_scenario("mixed_disks_btrfs")
       subject.path = "foo"
+      subject.copy_on_write = false
     end
 
     let(:blk_device) { Y2Storage::BlkDevice.find_by_name(devicegraph, dev_name) }
@@ -221,6 +222,11 @@ describe Y2Storage::SubvolSpecification do
       expect(filesystem.find_btrfs_subvolume_by_path("@/foo")).to be_nil
       subject.create_btrfs_subvolume(filesystem)
       expect(filesystem.find_btrfs_subvolume_by_path("@/foo")).to_not be_nil
+    end
+
+    it "creates the subvolume with correct nocow attribute" do
+      subvolume = subject.create_btrfs_subvolume(filesystem)
+      expect(subvolume.nocow?).to be(true)
     end
 
     it "creates the subvolume as 'can be auto deleted'" do
