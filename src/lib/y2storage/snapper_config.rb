@@ -29,7 +29,10 @@ module Y2Storage
   class SnapperConfig
     include Yast::Logger
 
-    # FIXME
+    INSTALLATION_HELPER_COMMAND = "/usr/lib/snapper/installation-helper"
+    SNAPPER_COMMAND = "/usr/bin/snapper"
+
+    # FIXME: Import stuff correctly
     def main
       textdomain "storage"
 
@@ -39,65 +42,40 @@ module Y2Storage
     end
 
     def configure_snapper?
-      part = Storage.GetEntryForMountpoint("/")
-      if part.fetch("used_fs", :unknown) != :btrfs
-        return false
-      end
-      userdata = part.fetch("userdata", {})
-      return false if userdata.fetch("/", "") != "snapshots"
-      true
+      return false unless root_device.filesystem.btrfs?
+      # userdata = part.fetch("userdata", {})
+      # return false if userdata.fetch("/", "") != "snapshots"
+      return root_device.use_snapshots?
     end
 
     class << self
       def step1
-        log.info("configuring snapper for root fs - step 1")
-
-        part = Storage.GetEntryForMountpoint("/")
-
         # TRANSLATORS: first snapshot description
         snapshot_description = _("first root filesystem")
-        if bash_log_output("/usr/lib/snapper/installation-helper --step 1 " \
-                           "--device '#{String.Quote(part["device"])}' " \
-                           "--description '#{String.Quote(snapshot_description)}'") != 0
-          log.error("configuring snapper for root fs failed")
-        end
+        installation_helper(1,
+          "--device", String.Quote(root_device.name),
+          "--description", String.Quote(snapshot_description))
       end
 
       def step2
-        log.info("configuring snapper for root fs - step 2")
-
-        part = Storage.GetEntryForMountpoint("/")
-
-        if bash_log_output("/usr/lib/snapper/installation-helper --step 2 " \
-                           "--device '#{String.Quote(part["device"])}' " \
-                           "--root-prefix '#{String.Quote(Installation.destdir)}' " \
-                           "--default-subvolume-name '" \
-                           "#{String.Quote(Storage.default_subvolume_name)}'") != 0
-          log.error("configuring snapper for root fs failed")
-        end
+        installation_helper(2,
+          "--device", String.Quote(root_device.name),
+          "--root-prefix", String.Quote(dest_dir),
+          "--default-subvolume-name", String.Quote(default_subvolume_name))
       end
 
       def step3
-        log.info("configuring snapper for root fs - step 3")
-
-        if bash_log_output("/usr/lib/snapper/installation-helper --step 3 " \
-                           "--root-prefix '#{String.Quote(Installation.destdir)}' " \
-                           "--default-subvolume-name " \
-                           "'#{String.Quote(Storage.default_subvolume_name)}'") != 0
-          log.error("configuring snapper for root fs failed")
-        end
+        installation_helper(3,
+          "--root-prefix", String.Quote(dest_dir),
+          "--default-subvolume-name ", String.Quote(default_subvolume_name))
       end
 
       def step4
-        log.info("configuring snapper for root fs - step 4")
+        return unless installation_helper(4) == 0
 
-        if bash_log_output("/usr/lib/snapper/installation-helper --step 4") != 0
-          log.error("configuring snapper for root fs failed")
-        end
-
-        bash_log_output("/usr/bin/snapper --no-dbus set-config " \
-                        "NUMBER_CLEANUP=yes NUMBER_LIMIT=2-10 NUMBER_LIMIT_IMPORTANT=4-10 " \
-                        "TIMELINE_CREATE=no")
+        bash_log_output("#{SNAPPER_COMMAND} --no-dbus set-config " \
+          "NUMBER_CLEANUP=yes NUMBER_LIMIT=2-10 NUMBER_LIMIT_IMPORTANT=4-10 " \
+          "TIMELINE_CREATE=no")
 
         SCR.Write(path(".sysconfig.yast2.USE_SNAPPER"), "yes")
         SCR.Write(path(".sysconfig.yast2"), nil)
@@ -108,10 +86,36 @@ module Y2Storage
       def step6
         log.info("configuring snapper for root fs - step 6")
 
-        bash_log_output("/usr/bin/snapper --no-dbus setup-quota")
+        bash_log_output("#{SNAPPER_COMMAND} --no-dbus setup-quota")
       end
 
     private
+
+      def root_device
+        # FIXME: Use storage-ng calls
+        part = Storage.GetEntryForMountpoint("/")
+        part["device"]
+      end
+
+      def dest_dir
+        # FIXME: Use storage-ng calls (?)
+        Installation.destdir
+      end
+
+      def default_subvolume_name
+        Storage.default_subvolume_name
+      end
+
+      def installation_helper(step, *args)
+        log.info("configuring snapper for root fs - step #{step}")
+        command = INSTALLATION_HELPER_COMMAND
+        command << " --step #{step} "
+        command << args.join(" ") unless args.nil?
+
+        cmd_exit = bash_log_output(command)
+        log.error("configuring snapper for root fs failed") unless cmd_exit == 0
+        cmd_exit
+      end
 
       def bash_log_output(command)
         log.info("Executing #{command}")
@@ -120,7 +124,8 @@ module Y2Storage
         cmd_stderr = cmd_result["stderr"] || ""
         cmd_exit   = cmd_result["exit"]
 
-        log.info("exit: #{cmd_exit}")
+        log.error("Command failed with exit value #{cmd_exit}") unless cmd_exit == 0
+
         cmd_stdout.each_line { |line| log.info("stdout: #{line}") }
         cmd_stderr.each_line { |line| log.info("stderr: #{line}") }
 
