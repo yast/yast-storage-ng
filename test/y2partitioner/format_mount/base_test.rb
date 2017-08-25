@@ -111,7 +111,7 @@ describe Y2Partitioner::FormatMount::Base do
 
   context "#apply_mount_options!" do
     before do
-      fake_scenario("mixed_disks_btrfs")
+      devicegraph_stub("mixed_disks_btrfs.yml")
     end
 
     let(:blk_device) { Y2Storage::BlkDevice.find_by_name(devicegraph, dev_name) }
