@@ -7,12 +7,16 @@ require "y2partitioner/widgets/help"
 
 module Y2Partitioner
   module Widgets
-    # Table widget to represent a given list of Y2Sto
+    # Table widget to represent a given list of devices
     class BlkDevicesTable < CWM::Table
       include Help
       include Yast::I18n
       extend Yast::I18n
 
+      # Constructor
+      #
+      # @param devices [Array<Y2Storage::Device>]
+      # @param pager [CWM::TreePager]
       def initialize(devices, pager)
         textdomain "storage"
 
@@ -47,7 +51,7 @@ module Y2Partitioner
 
       # Device object selected in the table
       #
-      # @return [Y2Storage::BlkDevice, nil] nil if anything is selected
+      # @return [Y2Storage::Device, nil] nil if anything is selected
       def selected_device
         return nil if items.empty? || !value
 
@@ -55,19 +59,32 @@ module Y2Partitioner
         devicegraph.find_device(sid)
       end
 
+      # Adds new columns to show in the table
+      #
+      # @note When a column :column_name is added, the methods #column_name_title
+      #   and #column_name_value should exist.
+      #
+      # @param column_names [*Symbol]
       def add_columns(*column_names)
         columns.concat(column_names)
       end
 
+      # Avoids to show some columns in the table
+      #
+      # @param column_names [*Symbol]
       def remove_columns(*column_names)
         column_names.each { |c| columns.delete(c) }
       end
 
+      # Fixes a set of specific columns to show in the table
+      #
+      # @param column_names [*Symbol]
       def show_columns(*column_names)
         @columns = column_names
       end
 
       # @macro seeAbstractWidget
+      # @see #columns_help
       def help
         header = _(
           "<p>This view shows storage devices.</p>" \
@@ -109,6 +126,7 @@ module Y2Partitioner
         ]
       end
 
+      # @see #helptext_for
       def columns_help
         columns.map { |c| helptext_for(c) }.join("\n")
       end

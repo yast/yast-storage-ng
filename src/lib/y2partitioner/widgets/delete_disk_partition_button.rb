@@ -6,22 +6,22 @@ Yast.import "HTML"
 
 module Y2Partitioner
   module Widgets
-    # Delete a partition
+    # Button for deleting a disk or partition
     class DeleteDiskPartitionButton < CWM::PushButton
       # Constructor
       # @param device [Y2Storage::BlkDevice]
       # @param table [Y2Partitioner::Widgets::BlkDevicesTable]
-      # @param device_graph [Y2Storage::Devicegraph]
-      def initialize(device: nil, table: nil, device_graph: nil)
+      # @param devicegraph [Y2Storage::Devicegraph]
+      def initialize(device: nil, table: nil, devicegraph: nil)
         textdomain "storage"
 
-        unless device || (table && device_graph)
-          raise ArgumentError,
-            "At least device or combination of table and device_graph have to be set"
+        unless device || (table && devicegraph)
+          raise ArgumentError, "At least device or combination of table and devicegraph have to be set"
         end
+
         @device = device
         @table = table
-        @device_graph = device_graph
+        @devicegraph = devicegraph
       end
 
       def label
@@ -38,13 +38,21 @@ module Y2Partitioner
 
         return nil unless confirm(device)
 
-        delete_devices(device)
+        delete_device(device)
         :redraw
       end
 
     private
 
-      def delete_devices(device)
+      # Deletes the indicated device
+      #
+      # @note When the device is a disk, all its partitions are deleted.
+      #
+      # @note Shadowing for BtrFS subvolumes is always refreshed.
+      # @see Y2Storage::Filesystems::Btrfs.refresh_subvolumes_shadowing
+      #
+      # @param device [Y2Storage::BlkDevice]
+      def delete_device(device)
         if device.is?(:disk)
           log.info "deleting partitions for #{device}"
           device.partition_table.delete_all_partitions

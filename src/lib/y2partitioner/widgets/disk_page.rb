@@ -15,6 +15,10 @@ module Y2Partitioner
     class DiskPage < CWM::Page
       attr_reader :disk
 
+      # Constructor
+      #
+      # @param disk [Y2Storage::Disk]
+      # @param pager [CWM::TreePager]
       def initialize(disk, pager)
         textdomain "storage"
 
@@ -48,6 +52,9 @@ module Y2Partitioner
 
     # A Tab for a disk
     class DiskTab < CWM::Tab
+      # Constructor
+      #
+      # @param disk [Y2Storage::Disk]
       def initialize(disk)
         textdomain "storage"
 
@@ -70,6 +77,10 @@ module Y2Partitioner
     class PartitionsTab < CWM::Tab
       attr_reader :disk
 
+      # Constructor
+      #
+      # @param disk [Y2Storage::Disk]
+      # @param pager [CWM::TreePager]
       def initialize(disk, pager)
         textdomain "storage"
 
@@ -96,8 +107,8 @@ module Y2Partitioner
             AddButton.new(disk, table),
             EditButton.new(disk, table),
             DeleteDiskPartitionButton.new(
-              device_graph: DeviceGraphs.instance.current,
-              table:        table
+              devicegraph: DeviceGraphs.instance.current,
+              table:       table
             )
           )
         )
@@ -111,7 +122,10 @@ module Y2Partitioner
 
       # Add a partition
       class AddButton < CWM::PushButton
-        # Y2Storage::Disk
+        # Constructor
+        #
+        # @param disk [Y2Storage::Disk]
+        # @param table [BlkDevicesTable]
         def initialize(disk, table)
           textdomain "storage"
 
@@ -134,7 +148,7 @@ module Y2Partitioner
         # Constructor
         #
         # @param disk [Y2Storage::Disk]
-        # @param table [Y2Partitioner::Widgets::BlkDevicesTable]
+        # @param table [BlkDevicesTable]
         def initialize(disk, table)
           textdomain "storage"
 

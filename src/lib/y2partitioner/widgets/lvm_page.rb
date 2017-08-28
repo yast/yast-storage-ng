@@ -6,6 +6,9 @@ module Y2Partitioner
   module Widgets
     # A Page for LVM devices
     class LvmPage < CWM::Page
+      # Constructor
+      #
+      # @param pager [CWM::TreePager]
       def initialize(pager)
         textdomain "storage"
 
@@ -36,6 +39,9 @@ module Y2Partitioner
 
     private
 
+      # Returns all vgs and their lvs
+      #
+      # @return [Array<Y2Storage::LvmVg, Y2Storage::LvmLv>]
       def devices
         devicegraph.lvm_vgs.reduce([]) do |devices, vg|
           devices << vg

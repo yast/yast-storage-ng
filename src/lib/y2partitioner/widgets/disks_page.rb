@@ -5,10 +5,13 @@ require "y2partitioner/widgets/blk_devices_table"
 
 module Y2Partitioner
   module Widgets
-    # A Page for block devices: contains a {BlkDevicesTable}
+    # A Page for block disks and its partitions. It contains a {BlkDevicesTable}
     class DisksPage < CWM::Page
       include Yast::I18n
 
+      # Constructor
+      #
+      # @param pager [CWM::TreePager]
       def initialize(pager)
         textdomain "storage"
 
@@ -38,8 +41,8 @@ module Y2Partitioner
           HBox(
             # TODO: add and edit need to be also added
             DeleteDiskPartitionButton.new(
-              device_graph: devicegraph,
-              table:        table
+              devicegraph: devicegraph,
+              table:       table
             )
           )
         )
@@ -47,15 +50,18 @@ module Y2Partitioner
 
     private
 
-      def devicegraph
-        DeviceGraphs.instance.current
-      end
-
+      # Returns all disks and their partitions
+      #
+      # @return [Array<Y2Storage::BlkDevice>]
       def devices
         devicegraph.disks.reduce([]) do |devices, disk|
           devices << disk
           devices.concat(disk.partitions)
         end
+      end
+
+      def devicegraph
+        DeviceGraphs.instance.current
       end
     end
   end

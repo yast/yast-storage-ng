@@ -9,6 +9,8 @@ module Y2Partitioner
   module Widgets
     # A Page for a partition
     class PartitionPage < CWM::Page
+      # Constructor
+      #
       # @param [Y2Storage::Partition] partition
       def initialize(partition)
         textdomain "storage"
@@ -43,10 +45,11 @@ module Y2Partitioner
       end
 
       # Edit a partition
-      # FIXME: this is NEARLY a duplicate of DiskPage::EditButton
-      # but that one works with a table.
+      # FIXME: this is NEARLY a duplicate of DiskPage::EditButton but that one works with a table.
       # Analogous to DeleteDiskPartitionButton??
       class EditButton < CWM::PushButton
+        # Constructor
+        #
         # @param partition [Y2Storage::Partition]
         def initialize(partition)
           textdomain "storage"

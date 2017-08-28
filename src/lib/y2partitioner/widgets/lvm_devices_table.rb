@@ -4,11 +4,13 @@ require "y2partitioner/widgets/lvm_lv_attributes"
 
 module Y2Partitioner
   module Widgets
-    # Table widget to represent given list of Y2Storage::Mds together.
+    # Table widget to represent a given list of LVM devices.
     class LvmDevicesTable < BlkDevicesTable
       include LvmLvAttributes
 
-      # @param mds [Array<Y2Storage::Md>] devices to display
+      # Constructor
+      #
+      # @param devices [Array<Y2Storage::Lvm_vg, Y2Storage::Lvm_lv>] devices to display
       # @param pager [CWM::Pager] table have feature, that double click change content of pager
       #   if someone do not need this feature, make it only optional
       def initialize(devices, pager)

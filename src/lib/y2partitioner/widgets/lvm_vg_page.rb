@@ -11,6 +11,10 @@ module Y2Partitioner
   module Widgets
     # A Page for a LVM Volume Group. It contains several tabs.
     class LvmVgPage < CWM::Page
+      # Constructor
+      #
+      # @param lvm_vg [Y2Storage::Lvm_vg]
+      # @param pager [CWM::TreePager]
       def initialize(lvm_vg, pager)
         textdomain "storage"
 
@@ -43,8 +47,11 @@ module Y2Partitioner
       end
     end
 
-    # A Tab for a disk
+    # A Tab for a LVM Volume Group info
     class LvmVgTab < CWM::Tab
+      # Constructor
+      #
+      # @param lvm_vg [Y2Storage::Lvm_vg]
       def initialize(lvm_vg)
         textdomain "storage"
 
@@ -63,8 +70,12 @@ module Y2Partitioner
       end
     end
 
-    # A Tab for LVM logical volumes
+    # A Tab for the LVM logical volumes of a volume group
     class LvmLvTab < CWM::Tab
+      # Constructor
+      #
+      # @param lvm_vg [Y2Storage::Lvm_vg]
+      # @param pager [CWM::TreePager]
       def initialize(lvm_vg, pager)
         textdomain "storage"
 
@@ -87,6 +98,9 @@ module Y2Partitioner
 
     private
 
+      # Returns a table with all logical volumes of a volume group
+      #
+      # @return [LvmDevicesTable]
       def table
         return @table unless @table.nil?
         @table = LvmDevicesTable.new(devices, @pager)
@@ -99,10 +113,15 @@ module Y2Partitioner
       end
     end
 
-    # A Tab for a LVM physical volumes
+    # A Tab for the LVM physical volumes of a volume group
     class LvmPvTab < CWM::Tab
+      # Constructor
+      #
+      # @param lvm_vg [Y2Storage::Lvm_vg]
+      # @param pager [CWM::TreePager]
       def initialize(lvm_vg, pager)
         textdomain "storage"
+
         @lvm_vg = lvm_vg
         @pager = pager
       end
@@ -120,6 +139,9 @@ module Y2Partitioner
 
     private
 
+      # Returns a table with all physical volumes of a volume group
+      #
+      # @return [BlkDevicesTable]
       def table
         return @table unless @table.nil?
         @table = BlkDevicesTable.new(devices, @pager)

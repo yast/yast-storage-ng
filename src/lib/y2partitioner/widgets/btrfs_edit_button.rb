@@ -10,7 +10,7 @@ module Y2Partitioner
     class BtrfsEditButton < CWM::PushButton
       attr_reader :table
 
-      # @param table [Widgets::BtrfsTable]
+      # @param table [Widgets::BlkDevicesTable]
       def initialize(table)
         textdomain "storage"
         @table = table
@@ -21,8 +21,9 @@ module Y2Partitioner
         _("Edit...")
       end
 
-      # Opens a dialog to manage the list of subvolumes. In case of there is no
-      # selected table row, it shows an error.
+      # Opens a dialog to manage the list of subvolumes of the selected device
+      #
+      # @note In case of there is no selected table row, it shows an error.
       def handle
         filesystem = selected_filesystem
 
@@ -37,6 +38,9 @@ module Y2Partitioner
 
     private
 
+      # Filesystem of the currently selected device
+      #
+      # @return [Y2Storage::Filesystems::BlkFilesystem, nil]
       def selected_filesystem
         device = table.selected_device
         device.nil? ? nil : device.filesystem

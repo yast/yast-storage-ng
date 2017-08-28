@@ -16,7 +16,7 @@ describe Y2Partitioner::Widgets::DeleteDiskPartitionButton do
 
   let(:devicegraph) { Y2Partitioner::DeviceGraphs.instance.current }
 
-  subject { described_class.new(device: device, table: table, device_graph: devicegraph) }
+  subject { described_class.new(device: device, table: table, devicegraph: devicegraph) }
 
   include_examples "CWM::PushButton"
 

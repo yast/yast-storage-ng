@@ -9,6 +9,10 @@ module Y2Partitioner
   module Widgets
     # A Page for a md raid device: contains {MdTab} and {MdUsedDevicesTab}
     class MdRaidPage < CWM::Page
+      # Constructor
+      #
+      # @param md [Y2Storage::Md]
+      # @param pager [CWM::TreePager]
       def initialize(md, pager)
         textdomain "storage"
 
@@ -42,6 +46,9 @@ module Y2Partitioner
 
     # A Tab for a Md raid description
     class MdTab < CWM::Tab
+      # Constructor
+      #
+      # @param md [Y2Storage::Md]
       def initialize(md)
         textdomain "storage"
         @md = md
@@ -65,6 +72,10 @@ module Y2Partitioner
 
     # A Tab for devices used by given md raid device
     class MdUsedDevicesTab < CWM::Tab
+      # Constructor
+      #
+      # @param md [Y2Storage::Md]
+      # @param pager [CWM::TreePager]
       def initialize(md, pager)
         textdomain "storage"
         @md = md
@@ -83,6 +94,9 @@ module Y2Partitioner
 
     private
 
+      # Returns a table with all devices used by a MD raid
+      #
+      # @return [BlkDevicesTable]
       def table
         return @table unless @table.nil?
         @table = BlkDevicesTable.new(devices, @pager)

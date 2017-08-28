@@ -6,10 +6,13 @@ Yast.import "Hostname"
 
 module Y2Partitioner
   module Widgets
-    # A Page for block devices: contains a {BlkDevicesTable}
+    # A Page for all storage devices
     class SystemPage < CWM::Page
       include Yast::I18n
 
+      # Constructor
+      #
+      # @param pager [CWM::TreePager]
       def initialize(pager)
         textdomain "storage"
 
@@ -43,6 +46,9 @@ module Y2Partitioner
 
       attr_reader :hostname
 
+      # The table contains all storage devices, including LVM Vgs
+      #
+      # @return [BlkDevicesTable]
       def table
         return @table unless @table.nil?
         @table = BlkDevicesTable.new(devices, @pager)
@@ -50,6 +56,11 @@ module Y2Partitioner
         @table
       end
 
+      # Returns all storage devices
+      #
+      # @note LVM Vgs are included.
+      #
+      # @return [Array<Y2Storage::Device>]
       def devices
         disk_devices + lvm_vgs
       end

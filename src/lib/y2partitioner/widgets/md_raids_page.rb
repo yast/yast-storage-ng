@@ -5,10 +5,13 @@ require "y2partitioner/widgets/md_raids_table"
 
 module Y2Partitioner
   module Widgets
-    # A Page for md raids: contains a {MdRaidTable}
+    # A Page for md raids: contains a {MdRaidsTable}
     class MdRaidsPage < CWM::Page
       include Yast::I18n
 
+      # Constructor
+      #
+      # @param pager [CWM::TreePager]
       def initialize(pager)
         textdomain "storage"
 

@@ -45,8 +45,7 @@ module Y2Partitioner
 
     # Widget representing partitioner overview pager with tree on left side and rest on right side.
     #
-    # It has replace point where it displays more details
-    # about selected element in partitioning.
+    # It has replace point where it displays more details about selected element in partitioning.
     class OverviewTreePager < CWM::TreePager
       def initialize
         textdomain "storage"
