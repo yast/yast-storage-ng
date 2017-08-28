@@ -41,15 +41,22 @@ module Y2Storage
     end
 
     class << self
+      include Yast::I18n
+
+      # [String] The last command line
       attr_reader :last_cmd_line
+
+      # [Boolean] Actually execute commands or just fake it?
       attr_accessor :execute_commands
 
       def initialize
         textdomain "storage"
         Yast.import "Installation"
+        Yast.import "SCR"
+
         # The last command line
         @last_cmd_line = ""
-        # Flag: Actually execute commands or just fake it?
+        @last_result = {}
         @execute_commands = true
       end
 
@@ -144,8 +151,8 @@ module Y2Storage
           "NUMBER_LIMIT_IMPORTANT=4-10",
           "TIMELINE_CREATE=no")
 
-        SCR.Write(path(".sysconfig.yast2.USE_SNAPPER"), "yes")
-        SCR.Write(path(".sysconfig.yast2"), nil)
+        Yast::SCR.Write(path(".sysconfig.yast2.USE_SNAPPER"), "yes")
+        Yast::SCR.Write(path(".sysconfig.yast2"), nil)
       end
 
       # There is no step 5 in installation-helper, so this is missing here as well.
@@ -162,13 +169,12 @@ module Y2Storage
         execute_on_target(SNAPPER_COMMAND, "--no-dbus setup-quota")
       end
 
-    private
-
       # Return the device of the root filesystem from the staging devicegraph.
       def root_device
         # FIXME: Use storage-ng calls
-        part = Storage.GetEntryForMountpoint("/")
-        part["device"]
+        # part = Storage.GetEntryForMountpoint("/")
+        # part["device"]
+        "/dev/sda1"
       end
 
       # Return the destination directory, i.e. the path of the mount point of
@@ -216,12 +222,12 @@ module Y2Storage
         cmd_line = build_command_line(cmd, *args)
         if @execute_commands
           log.info("Executing on target: #{cmd_line}")
-          cmd_result = SCR.Execute(path(".target.bash_output"), cmd_line)
+          @last_result = Yast::SCR.Execute(Yast::path(".target.bash_output"), cmd_line)
         else
           log.info("NOT executing on target: #{cmd_line}")
-          cmd_result = { "exit" => 0 }
+          @last_result = { "exit" => 0 }
         end
-        log_cmd_result(cmd_line, cmd_result)
+        log_cmd_result(cmd_line, @last_result)
       end
 
       # Build a command line from a command and its arguments:
@@ -235,8 +241,8 @@ module Y2Storage
       # @return [String] complete command line
       #
       def build_command_line(cmd, *args)
-        words = [cmd.strip]
-        words << args.map { |arg| Shellwords.escape(arg.strip) }
+        words = args.map { |arg| Shellwords.escape(arg.strip) }
+        words.unshift(cmd.strip)
         @last_cmd_line = words.join(" ")
       end
 
@@ -255,6 +261,24 @@ module Y2Storage
         cmd_stdout.each_line { |line| log.info("stdout: #{line}") }
         cmd_stderr.each_line { |line| log.info("stderr: #{line}") }
         cmd_exit
+      end
+
+      # Return the stdout output of the last command.
+      # @return [String]
+      def last_stdout
+        @last_result["stdout"] || ""
+      end
+
+      # Return the stdout output of the last command.
+      # @return [String]
+      def last_stderr
+        @last_result["stderr"] || ""
+      end
+
+      # Return the stdout output of the last command.
+      # @return [Integer]
+      def last_exit_status
+        @last_result["exit"] || -1
       end
     end
   end
