@@ -33,13 +33,6 @@ module Y2Storage
     INSTALLATION_HELPER_COMMAND = "/usr/lib/snapper/installation-helper"
     SNAPPER_COMMAND = "/usr/bin/snapper"
 
-    # FIXME: Import stuff correctly
-    def main
-      textdomain "storage"
-
-      Yast.import "Installation"
-    end
-
     def configure_snapper?
       return false unless root_device.filesystem.btrfs?
       # userdata = part.fetch("userdata", {})
@@ -48,6 +41,35 @@ module Y2Storage
     end
 
     class << self
+      attr_reader :last_cmd_line
+      attr_accessor :execute_commands
+
+      def initialize
+        textdomain "storage"
+        Yast.import "Installation"
+        # The last command line
+        @last_cmd_line = ""
+        # Flag: Actually execute commands or just fake it?
+        @execute_commands = true
+      end
+
+      #
+      # Snapper configuration step 1 (running in the inst-sys):
+      #
+      # Temporarily mount the btrfs on the root device, create the directories
+      # (recursively) for /etc/snapper/configs and a configuration file for the
+      # root filesystem.  Then create a first single snapshot and set this to
+      # the default snapshot.
+      #
+      # Preconditions (maybe incomplete):
+      #
+      # - root device is formatted with btrfs
+      # - default subvolume for device is set to the final value (for the
+      #   installation)
+      #
+      # See also
+      # https://github.com/openSUSE/snapper/blob/master/client/installation-helper.cc
+      #
       def step1
         # TRANSLATORS: first snapshot description
         snapshot_description = _("first root filesystem")
@@ -56,6 +78,19 @@ module Y2Storage
           "--description", snapshot_description)
       end
 
+      #
+      # Snapper configuration step 2 (running in the inst-sys):
+      #
+      # Mount the @/.snapshots or .snapshots subvolume.
+      #
+      # Preconditions (maybe incomplete):
+      #
+      # - default subvolume of device is mounted at root prefix
+      # - @/.snapshots or .snapshots subvolume is not mounted
+      #
+      # See also
+      # https://github.com/openSUSE/snapper/blob/master/client/installation-helper.cc
+      #
       def step2
         installation_helper(2,
           "--device", root_device.name,
@@ -63,16 +98,46 @@ module Y2Storage
           "--default-subvolume-name", default_subvolume_name)
       end
 
+      #
+      # Snapper configuration step 3 (running in the inst-sys):
+      #
+      # Add @/.snapshots or .snapshots to /etc/fstab.
+      #
+      # Preconditions (maybe incomplete):
+      #
+      # - default subvolume of device is mounted at root prefix
+      # - etc/fstab at root prefix contains an entry for the default subvolume
+      #   of the device
+      #
+      # See also
+      # https://github.com/openSUSE/snapper/blob/master/client/installation-helper.cc
+      #
       def step3
         installation_helper(3,
           "--root-prefix", dest_dir,
           "--default-subvolume-name", default_subvolume_name)
       end
 
+      #
+      # Snapper configuration step 4 (running in a chroot environment on the
+      # installation target):
+      #
+      # Add the snapper configuration for the root filesystem to
+      # /etc/sysconfig/snapper, set the snapper clean-up strategy and set
+      # "USE_SNAPPER" in /etc/sysconfig/yast2.
+      #
+      # Preconditions (maybe incomplete):
+      #
+      # - The snapper packages are installed in the installation target
+      # - All preconditions for snapper hooks are satisfied
+      #
+      # See also
+      # https://github.com/openSUSE/snapper/blob/master/client/installation-helper.cc
+      #
       def step4
         return unless installation_helper(4) == 0
 
-        bash_log_output(SNAPPER_COMMAND,
+        execute_on_target(SNAPPER_COMMAND,
           "--no-dbus set-config",
           "NUMBER_CLEANUP=yes",
           "NUMBER_LIMIT=2-10",
@@ -83,12 +148,18 @@ module Y2Storage
         SCR.Write(path(".sysconfig.yast2"), nil)
       end
 
-      # There is no step 5 in installation-helper, so this is missing here as well
+      # There is no step 5 in installation-helper, so this is missing here as well.
 
+      #
+      # Snapper configuration step 6 (running in a chroot environment on the
+      # installation target):
+      #
+      # First real snapper call.
+      #
       def step6
         log.info("configuring snapper for root fs - step 6")
 
-        bash_log_output(SNAPPER_COMMAND, "--no-dbus setup-quota")
+        execute_on_target(SNAPPER_COMMAND, "--no-dbus setup-quota")
       end
 
     private
@@ -128,7 +199,7 @@ module Y2Storage
         log.info("configuring snapper for root fs - step #{step}")
         args = ["--step", step.to_s] + args
 
-        cmd_exit = bash_log_output(INSTALLATION_HELPER_COMMAND, args)
+        cmd_exit = execute_on_target(INSTALLATION_HELPER_COMMAND, args)
         log.error("configuring snapper for root fs failed") unless cmd_exit == 0
         cmd_exit
       end
@@ -141,13 +212,32 @@ module Y2Storage
       # @param args [Array<String>] additional arguments
       # @return [Integer] command exit status
       #
-      def bash_log_output(cmd, *args)
-        words = [cmd]
-        words << args.map { |arg| Shellwords.escape(arg) }
-        cmd_line = args.join(" ")
-        log.info("Executing #{cmd_line}")
-        cmd_result = SCR.Execute(path(".target.bash_output"), cmd_line)
-        log_cmd_result(cmd_result)
+      def execute_on_target(cmd, *args)
+        cmd_line = build_command_line(cmd, *args)
+        if @execute_commands
+          log.info("Executing on target: #{cmd_line}")
+          cmd_result = SCR.Execute(path(".target.bash_output"), cmd_line)
+        else
+          log.info("NOT executing on target: #{cmd_line}")
+          cmd_result = { "exit" => 0 }
+        end
+        log_cmd_result(cmd_line, cmd_result)
+      end
+
+      # Build a command line from a command and its arguments:
+      # Strip each component's leading and trailing whitespace, shell-quote
+      # each argument and join them with a single space.
+      #
+      # As a side effect, this stores the command line in @@last_cmd_line.
+      #
+      # @param cmd [String] command binary to execute
+      # @param args [Array<String>] additional arguments
+      # @return [String] complete command line
+      #
+      def build_command_line(cmd, *args)
+        words = [cmd.strip]
+        words << args.map { |arg| Shellwords.escape(arg.strip) }
+        @last_cmd_line = words.join(" ")
       end
 
       # Write the result of an executed command to the log.
