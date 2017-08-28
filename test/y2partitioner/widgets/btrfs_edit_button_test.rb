@@ -7,16 +7,16 @@ describe Y2Partitioner::Widgets::BtrfsEditButton do
   subject { described_class.new(table) }
 
   let(:table) do
-    instance_double(Y2Partitioner::Widgets::BtrfsTable, selected_filesystem: selected_filesystem)
+    instance_double(Y2Partitioner::Widgets::BlkDevicesTable, selected_device: selected_device)
   end
 
-  let(:selected_filesystem) { nil }
+  let(:selected_device) { nil }
 
   include_examples "CWM::PushButton"
 
   describe "#handle" do
     context "when there is no selected item in the table" do
-      let(:selected_filesystem) { nil }
+      let(:selected_device) { nil }
 
       it "shows an error popup" do
         expect(Yast::Popup).to receive(:Error)
@@ -25,8 +25,8 @@ describe Y2Partitioner::Widgets::BtrfsEditButton do
     end
 
     context "when there is a selected item in the table" do
-      let(:selected_filesystem) do
-        instance_double(Y2Storage::Filesystems::BlkFilesystem)
+      let(:selected_device) do
+        instance_double(Y2Storage::Partition, filesystem: double("Btrfs"))
       end
 
       before do

@@ -2,6 +2,7 @@ require "yast"
 require "cwm"
 
 Yast.import "Popup"
+Yast.import "HTML"
 
 module Y2Partitioner
   module Widgets
@@ -28,7 +29,7 @@ module Y2Partitioner
       end
 
       def handle
-        device = @device || id_to_device(@table.value)
+        device = @device || @table.selected_device
 
         if device.nil?
           Yast::Popup.Error(_("No device selected"))
@@ -37,21 +38,21 @@ module Y2Partitioner
 
         return nil unless confirm(device)
 
-        if device.is?(:disk)
-          log.info "deleting partitions for #{device}"
-          device.partition_table.partitions.each { |p| delete_partition(p) }
-        else
-          log.info "deleting partition #{device}"
-          delete_partition(device)
-        end
-
+        delete_devices(device)
         :redraw
       end
 
     private
 
-      def delete_partition(device)
-        device.partition_table.delete_partition(device)
+      def delete_devices(device)
+        if device.is?(:disk)
+          log.info "deleting partitions for #{device}"
+          device.partition_table.delete_all_partitions
+        else
+          log.info "deleting partition #{device}"
+          disk = device.disk
+          disk.partition_table.delete_partition(device)
+        end
 
         devicegraph = DeviceGraphs.instance.current
         Y2Storage::Filesystems::Btrfs.refresh_subvolumes_shadowing(devicegraph)
@@ -83,20 +84,6 @@ module Y2Partitioner
         device.descendants.map do |dev|
           dev.name if dev.respond_to?(:name)
         end.compact
-      end
-
-      def id_to_device(id)
-        return nil if id.nil?
-
-        if id.start_with?("table:partition")
-          partition_name = id[/table:partition:(.*)/, 1]
-          Y2Storage::Partition.find_by_name(@device_graph, partition_name)
-        elsif id.start_with?("table:disk")
-          disk_name = id[/table:disk:(.*)/, 1]
-          Y2Storage::Disk.find_by_name(@device_graph, disk_name)
-        else
-          raise "Unknown id in table '#{id}'"
-        end
       end
 
       # @param rich_text [String]

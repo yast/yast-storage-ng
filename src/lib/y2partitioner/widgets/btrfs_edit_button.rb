@@ -1,6 +1,6 @@
 require "yast"
-require "y2partitioner/widgets/btrfs_table"
 require "y2partitioner/dialogs/btrfs_subvolumes"
+require "y2partitioner/widgets/blk_devices_table"
 
 Yast.import "Popup"
 
@@ -24,7 +24,7 @@ module Y2Partitioner
       # Opens a dialog to manage the list of subvolumes. In case of there is no
       # selected table row, it shows an error.
       def handle
-        filesystem = table.selected_filesystem
+        filesystem = selected_filesystem
 
         if filesystem.nil?
           Yast::Popup.Error(_("There is no filesystem selected to edit."))
@@ -33,6 +33,13 @@ module Y2Partitioner
         end
 
         nil
+      end
+
+    private
+
+      def selected_filesystem
+        device = table.selected_device
+        device.nil? ? nil : device.filesystem
       end
     end
   end

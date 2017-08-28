@@ -1,7 +1,7 @@
 require "cwm/tree_pager"
-
-require "y2partitioner/widgets/md_raid_table"
 require "y2partitioner/icons"
+require "y2partitioner/device_graphs"
+require "y2partitioner/widgets/md_raids_table"
 
 module Y2Partitioner
   module Widgets
@@ -9,10 +9,9 @@ module Y2Partitioner
     class MdRaidsPage < CWM::Page
       include Yast::I18n
 
-      def initialize(devices, pager)
+      def initialize(pager)
         textdomain "storage"
 
-        @devices = devices
         @pager = pager
       end
 
@@ -34,8 +33,14 @@ module Y2Partitioner
               Heading(_("RAID"))
             )
           ),
-          MdRaidTable.new(@devices, @pager)
+          MdRaidsTable.new(devices, @pager)
         )
+      end
+
+    private
+
+      def devices
+        Y2Storage::Md.all(DeviceGraphs.instance.current)
       end
     end
   end

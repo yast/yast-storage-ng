@@ -26,7 +26,7 @@ module Y2Partitioner
         MarginBox(
           0.5,
           0.5,
-          Widgets::OverviewTreePager.new(DeviceGraphs.instance.current)
+          Widgets::OverviewTreePager.new
         )
       end
 

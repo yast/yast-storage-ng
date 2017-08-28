@@ -1,19 +1,17 @@
 require "cwm/widget"
 require "cwm/tree"
-
-require "y2partitioner/device_graphs"
 require "y2partitioner/icons"
-require "y2partitioner/widgets/blk_devices_page"
+require "y2partitioner/device_graphs"
+require "y2partitioner/widgets/system_page"
+require "y2partitioner/widgets/disks_page"
 require "y2partitioner/widgets/disk_page"
-require "y2partitioner/widgets/lvm_page"
-require "y2partitioner/widgets/lvm_lv_page"
-require "y2partitioner/widgets/lvm_vg_page"
+require "y2partitioner/widgets/partition_page"
 require "y2partitioner/widgets/md_raids_page"
 require "y2partitioner/widgets/md_raid_page"
-require "y2partitioner/widgets/partition_page"
+require "y2partitioner/widgets/lvm_page"
+require "y2partitioner/widgets/lvm_vg_page"
+require "y2partitioner/widgets/lvm_lv_page"
 require "y2partitioner/widgets/btrfs_page"
-
-Yast.import "Hostname"
 
 module Y2Partitioner
   module Widgets
@@ -50,19 +48,16 @@ module Y2Partitioner
     # It has replace point where it displays more details
     # about selected element in partitioning.
     class OverviewTreePager < CWM::TreePager
-      # creates new widget for given device graph
-      # @param [Y2Storage::Devicegraph] device_graph
-      def initialize(device_graph)
+      def initialize
         textdomain "storage"
-        @hostname = Yast::Hostname.CurrentHostname
-        @device_graph = device_graph
+
         super(OverviewTree.new(items))
       end
 
       # @see http://www.rubydoc.info/github/yast/yast-yast2/CWM%2FTree:items
       def items
         [
-          item_for("all", @hostname, icon: Icons::ALL, subtree: machine_items),
+          system_items,
           # TODO: only if there is graph support UI.HasSpecialWidget(:Graph)
           item_for("devicegraph", _("Device Graph"), icon: Icons::GRAPH),
           # TODO: only if there is graph support UI.HasSpecialWidget(:Graph)
@@ -74,10 +69,15 @@ module Y2Partitioner
 
     private
 
-      def machine_items
-        [
-          harddisk_items,
-          raid_items,
+      def devicegraph
+        DeviceGraphs.instance.current
+      end
+
+      def system_items
+        page = SystemPage.new(self)
+        children = [
+          disks_items,
+          raids_items,
           lvm_items,
           crypt_files_items,
           device_mapper_items,
@@ -86,64 +86,52 @@ module Y2Partitioner
           tmpfs_items,
           unused_items
         ]
-      end
-
-      def harddisk_items
-        blk_devices = @device_graph.disks.reduce([]) do |acc, disk|
-          acc << disk
-          acc.concat(disk.partitions)
-        end
-        page = BlkDevicesPage.new(blk_devices, self)
-        CWM::PagerTreeItem.new(page, children: disks_items, icon: Icons::HD)
+        CWM::PagerTreeItem.new(page, children: children, icon: Icons::ALL)
       end
 
       def disks_items
-        @device_graph.disks.map do |disk|
-          page = DiskPage.new(disk.name, self)
-          CWM::PagerTreeItem.new(page, children: partition_items(disk))
-        end
+        page = DisksPage.new(self)
+        children = devicegraph.disks.map { |d| disk_items(d) }
+        CWM::PagerTreeItem.new(page, children: children, icon: Icons::HD)
       end
 
-      def partition_items(disk)
-        disk.partitions.map do |partition|
-          page = PartitionPage.new(partition)
-          CWM::PagerTreeItem.new(page)
-        end
+      def disk_items(disk)
+        page = DiskPage.new(disk, self)
+        children = disk.partitions.map { |p| partition_items(p) }
+        CWM::PagerTreeItem.new(page, children: children)
       end
 
-      def raid_items
-        page = MdRaidsPage.new(Y2Storage::Md.all(@device_graph), self)
-        CWM::PagerTreeItem.new(page, children: mds_items, icon: Icons::RAID)
+      def partition_items(partition)
+        page = PartitionPage.new(partition)
+        CWM::PagerTreeItem.new(page)
       end
 
-      def mds_items
-        Y2Storage::Md.all(@device_graph).map do |md|
-          page = MdRaidPage.new(md, self)
-          CWM::PagerTreeItem.new(page)
-        end
+      def raids_items
+        page = MdRaidsPage.new(self)
+        children = Y2Storage::Md.all(devicegraph).map { |m| raid_items(m) }
+        CWM::PagerTreeItem.new(page, children: children, icon: Icons::RAID)
+      end
+
+      def raid_items(md)
+        page = MdRaidPage.new(md, self)
+        CWM::PagerTreeItem.new(page)
       end
 
       def lvm_items
-        lvms = @device_graph.lvm_vgs.reduce([]) do |acc, lvm_vg|
-          acc << lvm_vg
-          acc.concat(lvm_vg.lvm_lvs)
-        end
-        page = LvmPage.new(lvms, self)
-        CWM::PagerTreeItem.new(page, children: lvm_vgs_items, icon: Icons::LVM)
+        page = LvmPage.new(self)
+        children = devicegraph.lvm_vgs.map { |v| lvm_vg_items(v) }
+        CWM::PagerTreeItem.new(page, children: children, icon: Icons::LVM)
       end
 
-      def lvm_vgs_items
-        @device_graph.lvm_vgs.map do |vg|
-          page = LvmVgPage.new(vg, self)
-          CWM::PagerTreeItem.new(page, children: lvm_lvs_items(vg))
-        end
+      def lvm_vg_items(vg)
+        page = LvmVgPage.new(vg, self)
+        children = vg.lvm_lvs.map { |l| lvm_lv_items(l) }
+        CWM::PagerTreeItem.new(page, children: children)
       end
 
-      def lvm_lvs_items(vg)
-        vg.lvm_lvs.map do |lv|
-          page = LvmLvPage.new(lv)
-          CWM::PagerTreeItem.new(page)
-        end
+      def lvm_lv_items(lv)
+        page = LvmLvPage.new(lv)
+        CWM::PagerTreeItem.new(page)
       end
 
       def crypt_files_items
@@ -161,7 +149,8 @@ module Y2Partitioner
       end
 
       def btrfs_items
-        CWM::PagerTreeItem.new(BtrfsPage.new, icon: Icons::BTRFS)
+        page = BtrfsPage.new(self)
+        CWM::PagerTreeItem.new(page, icon: Icons::BTRFS)
       end
 
       def tmpfs_items

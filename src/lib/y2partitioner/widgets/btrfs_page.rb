@@ -1,6 +1,6 @@
 require "yast"
 require "y2partitioner/icons"
-require "y2partitioner/widgets/btrfs_table"
+require "y2partitioner/widgets/blk_devices_table"
 require "y2partitioner/widgets/btrfs_edit_button"
 require "y2partitioner/device_graphs"
 
@@ -8,8 +8,10 @@ module Y2Partitioner
   module Widgets
     # Page for Btrfs filesystems
     class BtrfsPage < CWM::Page
-      def initialize
+      def initialize(pager)
         textdomain "storage"
+
+        @pager = pager
       end
 
       # @macro seeAbstractWidget
@@ -22,8 +24,6 @@ module Y2Partitioner
         return @contents if @contents
 
         icon = Icons.small_icon(Icons::BTRFS)
-        table = BtrfsTable.new(btrfs_filesystems)
-
         @contents = VBox(
           Left(
             HBox(
@@ -38,6 +38,17 @@ module Y2Partitioner
       end
 
     private
+
+      def table
+        return @table unless @table.nil?
+        @table = BlkDevicesTable.new(devices, @pager)
+        @table.remove_columns(:start_cyl, :end_cyl)
+        @table
+      end
+
+      def devices
+        btrfs_filesystems.map { |f| f.plain_blk_devices.first }
+      end
 
       # Returns all btrfs filesystems
       #

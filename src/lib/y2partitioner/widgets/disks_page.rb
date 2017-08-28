@@ -1,19 +1,17 @@
 require "cwm/tree_pager"
-
-require "y2partitioner/widgets/delete_disk_partition_button"
-require "y2partitioner/widgets/disk_table"
 require "y2partitioner/icons"
+require "y2partitioner/widgets/delete_disk_partition_button"
+require "y2partitioner/widgets/blk_devices_table"
 
 module Y2Partitioner
   module Widgets
     # A Page for block devices: contains a {BlkDevicesTable}
-    class BlkDevicesPage < CWM::Page
+    class DisksPage < CWM::Page
       include Yast::I18n
 
-      def initialize(devices, pager)
+      def initialize(pager)
         textdomain "storage"
 
-        @devices = devices
         @pager = pager
       end
 
@@ -26,8 +24,8 @@ module Y2Partitioner
       def contents
         return @contents if @contents
 
+        table = BlkDevicesTable.new(devices, @pager)
         icon = Icons.small_icon(Icons::HD)
-        table = DiskTable.new(@devices, @pager)
         @contents = VBox(
           Left(
             HBox(
@@ -40,11 +38,24 @@ module Y2Partitioner
           HBox(
             # TODO: add and edit need to be also added
             DeleteDiskPartitionButton.new(
-              device_graph: DeviceGraphs.instance.current,
+              device_graph: devicegraph,
               table:        table
             )
           )
         )
+      end
+
+    private
+
+      def devicegraph
+        DeviceGraphs.instance.current
+      end
+
+      def devices
+        devicegraph.disks.reduce([]) do |devices, disk|
+          devices << disk
+          devices.concat(disk.partitions)
+        end
       end
     end
   end

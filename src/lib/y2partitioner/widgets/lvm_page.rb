@@ -1,16 +1,14 @@
-require "cwm/pager"
-
-require "y2partitioner/widgets/lvm_table"
+require "cwm/tree_pager"
+require "y2partitioner/device_graphs"
+require "y2partitioner/widgets/lvm_devices_table"
 
 module Y2Partitioner
   module Widgets
-    # A Page for for given list of Y2Storage::LvmLV|Y2Storage::LvmVG.
+    # A Page for LVM devices
     class LvmPage < CWM::Page
-      # @param [Y2Storage::LvmLV|Y2Storage::LvmVG] devices to display
-      def initialize(devices, pager)
+      def initialize(pager)
         textdomain "storage"
 
-        @devices = devices
         @pager = pager
       end
 
@@ -32,8 +30,21 @@ module Y2Partitioner
               Heading(_("Volume Management"))
             )
           ),
-          LvmTable.new(@devices, @pager)
+          LvmDevicesTable.new(devices, @pager)
         )
+      end
+
+    private
+
+      def devices
+        devicegraph.lvm_vgs.reduce([]) do |devices, vg|
+          devices << vg
+          devices.concat(vg.lvm_lvs)
+        end
+      end
+
+      def devicegraph
+        DeviceGraphs.instance.current
       end
     end
   end

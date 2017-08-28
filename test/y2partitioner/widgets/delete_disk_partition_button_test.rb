@@ -12,7 +12,7 @@ describe Y2Partitioner::Widgets::DeleteDiskPartitionButton do
 
   let(:device_name) { "/dev/sda2" }
 
-  let(:table) { double("table") }
+  let(:table) { double("table", selected_device: device) }
 
   let(:devicegraph) { Y2Partitioner::DeviceGraphs.instance.current }
 

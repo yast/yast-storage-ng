@@ -118,9 +118,10 @@ module Y2Partitioner
       # return translated text for given field in table or description
       # TODO: old yast2-storage method, need some cleaning
       def helptext_for(field)
-        ret = "<p>"
+        text = TEXTS[field]
+        return "" if text.nil?
 
-        text = TEXTS.fetch(field)
+        ret = "<p>"
         ret << _(text)
         if Yast::Mode.normal
           text2 = NORMAL_MODE_TEXTS[field]
