@@ -302,7 +302,7 @@ module Y2Storage
       end
 
       # Creates the singleton instance for testing.
-      # This instance avoids to preform real probing or commit.
+      # This instance avoids to perform real probing or commit.
       #
       # @return [StorageManager] singleton instance
       def create_test_instance
