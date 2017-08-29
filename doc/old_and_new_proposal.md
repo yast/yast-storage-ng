@@ -59,7 +59,7 @@ filesystem.
 ### Other general options
 
 The `partitioning` section of `control.xml` goes beyond the configuration of
-the proposal's behaviour. It also contains some options to influence other
+the proposal's behavior. It also contains some options to influence other
 aspect of YaST, mainly the installer.
 
   * `root_subvolume_read_only`. Whether the installer should set readonly for
@@ -80,14 +80,14 @@ partitioning" feature: `prefer_remove`, `remove_special_partitions`,
 
 ## How the old proposal distributes the space
 
-This part of the document explain how the storage proposal works in
+This part of the document explains how the storage proposal works in
 yast-storage. The content of this section is inferred from the existing
 documentation, some inspection of `StorageProposal.rb` and quite some manual
 tests. It may not be 100% accurate, specially since many changes have been
 introduced over time.
 
 The explanations are intentionally simplified to keep the focus on the main
-topic: the influence of the current settings in the behaviour of the proposal
+topic: the influence of the current settings in the behavior of the proposal
 in the most common and simple scenarios.
 
 For clarity reasons, the logic used to assign space to swap or the special
@@ -161,7 +161,7 @@ A first step decides which volumes will be needed. Each volume will originate a
 partition or a LV in the second step.
 
 If the new format of `control.xml` is used (see [the specification
-document](old_and_new_control.md), the basic list of planned volumes will be
+document](old_and_new_control.md)), the basic list of planned volumes will be
 taken from the `<volumes>` subsection of the control file, except for those
 the user explicitly disables. If the legacy format is used, there are always at
 least two planned volumes (one for swap and one for root) and potentially
@@ -187,7 +187,7 @@ decided using the corresponding weights. No volume will grow beyond its maximum
 size, even if that means leaving unused space in the disk.
 
 Using LVM doesn't make a big difference. The VG (with its required PVs) is
-created to accomodate the size of all the created LVs, although the exact
+created to accommodate the size of all the created LVs, although the exact
 behavior in that regard can be influenced. See below.
 
 ### Making space
@@ -212,7 +212,7 @@ configurable by the user in every proposal run.
 
 ### Creation of LVM structures
 
-Warning: this section describes some optional behaviours that are still not
+Warning: this section describes some optional behaviors that are still not
 implemented in yast-storage-ng, although they would be very easy to add to the
 current codebase.
 
@@ -249,7 +249,7 @@ The new `partitioning` section will still contain the
 `root_subvolume_read_only`, `proposal_settings_editable`,
 `expert_partitioner_warning` and `use_separate_multipath_module` options
 described in this document's subsection "Other general options" at "Settings in
-yast-storage". These options will retain its exact form and meaning.
+yast-storage". These options will retain their exact form and meaning.
 
 In addition that, there will be two new subsections: `proposal` and `volumes`.
 
@@ -259,21 +259,26 @@ The `proposal` subsection will be used to configure some general aspects of the
 storage proposal (referenced as "guided setup" in the UI) and will contain the
 following options.
 
-  * `default_lvm`. Whether LVM should be used by default.
-  * `default_encrypt`. Whether encryption should be used by default.
-  * `default_windows_delete`. Default value for the automatic delete mode for
+  * `lvm`. Whether LVM should be used by default.
+  * `encrypt`. Whether encryption should be used by default.
+  * `windows_delete_mode`. Default value for the automatic delete mode for
     Windows partitions. It can be `none`, `all` or `ondemand`. For more
     information, see the description of the new proposal above.
-  * `default_linux_delete`. Default value for the automatic delete mode for
-    Linux partitions. See `default_windows_delete` above.
-  * `default_other_delete`. Default value for the automatic delete mode for
-    other partitions. See `default_windows_delete` above.
-  * `default_resize_windows`. Default value for the user setting deciding
-    whether to resize Windows systems if needed.
+  * `linux_delete_mode`. Default value for the automatic delete mode for
+    Linux partitions. Again, it can be `none`, `all` or `ondemand`.
+  * `other_delete_mode`. Default value for the automatic delete mode for
+    other partitions. Once again, it can be `none`, `all` or `ondemand`.
+  * `resize_windows`. Default value for the user setting deciding whether to
+    resize Windows systems if needed.
   * `lvm_vg_strategy`. If the user decides to use LVM, strategy to decide the
     size of the volume group (and, thus, the number and size of created physical
-    volumes). It can be `use_available`, `use_needed` or `use_vg_size`. See the
-    description of the new proposal above.
+    volumes). There are three possible values.
+    * `use_available`. The VG will be created to use all the available space,
+      thus the VG size could be greater than the sum of LVs sizes.
+    * `use_needed`. The created VG will match the requirements 1:1, so its size
+      will be exactly the sum of all the LVs sizes.
+    * `use_vg_size`. The VG will have a predefined size, that could be greater
+      than the LVs sizes.
   * `lvm_vg_size`. If `use_vg_size` is specified in the previous option, this
     will specify the predefined size of the LVM volume group.
 
@@ -288,9 +293,15 @@ options listed here. Having read the "How the new proposal distributes the
 space" may be important to fully understand some of them.
 
   * `mount_point`. Directory where the volume will be mounted in the system.
-  * `fstypes`. A collection of acceptable file system types. If no list if
+  * `proposed`. Default value of the user setting deciding whether this volume
+    should be created or skipped.
+  * `proposed_configurable`. Whether the user can change the previous setting
+    in the UI. I.e. whether the user can activate/deactivate the volume. Of
+    course, setting `proposed` to false and `proposed_configurable` also to
+    false has the same effect than deleting the whole `<volume>` entry.
+  * `fstypes`. A collection of acceptable file system types. If no list is
     given, YaST will use a fallback one based on the mount point.
-  * `default_fstype`. Default file system type to format the volume.
+  * `fstype`. Default file system type to format the volume.
   * `desired_size`. Initial size to use in the first proposal attempt.
   * `min_size`. Initial size to use in the second proposal attempt.
   * `max_size`. Maximum size to assign to the volume. It can also contain the
@@ -299,19 +310,14 @@ space" may be important to fully understand some of them.
   * `max_size_lvm`. When LVM is used, this option can be used to override the
     value at `max_size`.
   * `weight`. Value used to distribute the extra space (after assigning the
-    minimal ones) among the volumes.
-  * `adjust_by_ram`. Whether the initial and max sizes of each attempt should
-    be adjusted based in the RAM size. Possible values are "true", "false",
-    "optional", with "false" being the default if not present and "optional"
-    meaning the user can decide via UI. So far the adaptation consist in
-    ensuring all the sizes are, at least, as big as the RAM. In the future, an
-    extra `adjust_by_ram_mode` option could be added to allow other approaches.
-  * `default_adjust_by_ram`. If the previous value is "optional", whether to
-    enable the option by default.
-  * `optional`. If true, the user will be able to skip the creation of this
-    volume.
-  * `default_enabled`. If the volume is optional, whether its creation should be
-    enabled by default.
+    initial ones) among the volumes.
+  * `adjust_by_ram`. Default value for the user setting deciding whether the
+    initial and max sizes of each attempt should be adjusted based in the RAM
+    size. So far the adaptation consists in ensuring all the sizes are, at
+    least, as big as the RAM. In the future, an extra `adjust_by_ram_mode`
+    option could be added to allow other approaches.
+  * `adjust_by_ram_configurable`. Whether the user can change the previous
+    setting in the UI.
   * `fallback_for_min_size`. Mount point of another volume. If the volume being
     defined is disabled, the `min_size` of that another volume will be increased
     by the `min_size` of this disabled volume.
@@ -328,11 +334,10 @@ expert partitioner, if a Btrfs filesystem is created and assigned to the mount
 point of the volume, these settings will also be used to suggest the filesystem
 options.
 
-  * `snapshots`. Whether snapshots should be activated. Possible values are
-    "true", "false" and "optional", with "false" being the default if not
-    present and "optional" meaning the user can decide via UI.
-  * `default_snapshots`. If the previous value is "optional", whether to
-    enable the option by default.
+  * `snapshots`. Default value for the user setting deciding whether snapshots
+    should be activated.
+  * `snapshots_configurable`. Whether the user can change the previous setting
+    in the UI.
   * `snapshots_size`. Similar to `btrfs_increase_percentage` in the
     yast-storage format, but slightly more flexible. If it's a size, the initial
     and maximum sizes for the volume will be increased according if snapshots
@@ -344,7 +349,7 @@ options.
     separate setting instead of making it just another subvolume in the list
     above is debatable.
 
-And finally there is an option that deserves a sligthly more detailed
+And finally there is an option that deserves a slightly more detailed
 explanation.
 
   * `disable_order`. Volumes with some value here will be disabled (or snapshots
@@ -382,26 +387,26 @@ use case.
 ```xml
 <partitioning>
   <proposal>
-    <default_lvm config:type="boolean">false</default_lvm>
-    <default_encrypt config:type="boolean">false</default_encrypt>
-    <default_windows_delete>all</default_windows_delete>
-    <default_linux_delete>ondemand</default_linux_delete>
-    <default_other_delete>ondemand</default_other_delete>
-    <lvm_vg_strategy>use_available</lvm_vg_strategy>
+    <lvm config:type="boolean">false</default_lvm>
+    <encrypt config:type="boolean">false</default_encrypt>
+    <windows_delete_mode>all</windows_delete_mode>
+    <linux_delete>ondemand</linux_delete_mode>
+    <other_delete_mode>ondemand</other_delete_mode>
+    <lvm_vg_strategy_mode>use_available</lvm_vg_strategy>
   </proposal>
 
   <volumes config:type="list">
     <!-- The root filesystem -->
     <volume>
       <mount_point>/</mount_point>
-      <default_fstype>btrfs</default_fstype>
+      <fstype>btrfs</fstype>
       <desired_size>5GiB</desired_size>
       <min_size>3GiB</min_size>
       <max_size>10GiB</max_size>
       <weight>35</weight>
 
-      <snapshots>optional</snapshots>
-      <default_snapshots config:type="boolean">true</default_snapshots>
+      <snapshots config:type="boolean">true</snapshots>
+      <snapshots_configurable config:type="boolean">true</snapshots_configurable>
       <snapshots_size>300</snapshots_size>
       <!-- Disable snapshots for / if disabling /home and giving up on
            enlarged swap is not enough -->
@@ -421,8 +426,8 @@ use case.
       <mount_point>/home</mount_point>
       <default_fstype>xfs</default_fstype>
 
-      <optional config:type="boolean">true</optional>
-      <default_enabled config:type="boolean">true</default_enabled>
+      <proposed config:type="boolean">true</proposed>
+      <proposed_configurable config:type="boolean">true</proposed_configurable>
       <!-- Disable it in first place if we don't fit in the disk -->
       <disable_order>1</disable_order>
 
@@ -447,8 +452,8 @@ use case.
       <min_size>1GiB</min_size>
       <max_size>2GiB</max_size>
       <weight>10</weight>
-      <adjust_by_ram>optional</adjust_by_ram>
-      <default_adjust_by_ram config:type="boolean">true</default_adjust_by_ram>
+      <adjust_by_ram config:type="boolean">true</adjust_by_ram>
+      <adjust_by_ram_configurable config:type="boolean">true</adjust_by_ram_configurable>
       <!-- Give up on enlarging to RAM if we still don't fit in the disk
            after disabling separate home -->
       <disable_order>2</disable_order>
@@ -465,12 +470,12 @@ Windows friendly).
 
 ```xml
 <proposal>
-  <default_lvm config:type="boolean">false</default_lvm>
-  <default_encrypt config:type="boolean">false</default_encrypt>
-  <default_resize_windows config:type="boolean">true</default_resize_windows>
-  <default_windows_delete>ondemand</default_windows_delete>
-  <default_linux_delete>ondemand</default_linux_delete>
-  <default_other_delete>ondemand</default_other_delete>
+  <lvm config:type="boolean">false</lvm>
+  <encrypt config:type="boolean">false</encrypt>
+  <resize_windows config:type="boolean">true</resize_windows>
+  <windows_delete_mode>ondemand</windows_delete_mode>
+  <linux_delete_mode>ondemand</linux_delete_mode>
+  <other_delete_mode>ondemand</other_delete_mode>
   <lvm_vg_strategy>use_available</lvm_vg_strategy>
 </proposal>
 ```
@@ -483,11 +488,11 @@ inspiration. Maybe some aspects don't fit the SAP requirements exactly.
 ```xml
 <partitioning>
   <proposal>
-    <default_lvm config:type="boolean">true</default_lvm>
-    <default_encrypt config:type="boolean">false</default_encrypt>
-    <default_windows_delete>all</default_windows_delete>
-    <default_linux_delete>ondemand</default_linux_delete>
-    <default_other_delete>ondemand</default_other_delete>
+    <lvm config:type="boolean">true</lvm>
+    <encrypt config:type="boolean">false</encrypt>
+    <windows_delete_mode>all</windows_delete_mode>
+    <linux_delete_mode>ondemand</linux_delete_mode>
+    <other_delete_mode>ondemand</other_delete_mode>
     <lvm_vg_strategy>use_available</lvm_vg_strategy>
   </proposal>
 
@@ -495,14 +500,15 @@ inspiration. Maybe some aspects don't fit the SAP requirements exactly.
     <!-- The root filesystem -->
     <volume>
       <mount_point>/</mount_point>
-      <!-- Enforce Btrfs for root, don't offer any other option -->
+      <!-- Enforce Btrfs for root by not offering any other option -->
       <fstypes>btrfs</fstypes>
       <desired_size>40GiB</desired_size>
       <min_size>30GiB</min_size>
       <max_size>60GiB</max_size>
       <weight>50</weight>
       <!-- Always use snapshots, no matter what -->
-      <snapshots>true</snapshots>
+      <snapshots config:type="boolean">true</snapshots>
+      <snapshots_configurable config:type="boolean">false</snapshots_configurable>
 
       <btrfs_default_subvolume>@</btrfs_default_subvolume>
       <subvolumes config:type="list">
@@ -536,7 +542,7 @@ inspiration. Maybe some aspects don't fit the SAP requirements exactly.
 
 ### Proposed behavior for CaaSP
 
-Once again, this example is just an aproximation to show the possibilities.
+Once again, this example is just an approximation to show the possibilities.
 
 ```xml
 <partitioning>
@@ -547,13 +553,13 @@ Once again, this example is just an aproximation to show the possibilities.
   <expert_partitioner_warning config:type="boolean">true</expert_partitioner_warning>
   <root_subvolume_read_only config:type="boolean">true</root_subvolume_read_only>
 
-  <!-- All default settings will become final, since the user can't change it -->
+  <!-- All default settings will become final, since the user can't change them -->
   <proposal>
-    <default_lvm config:type="boolean">false</default_lvm>
+    <lvm config:type="boolean">false</lvm>
     <!-- Delete all previous partitions -->
-    <default_windows_delete>all</default_windows_delete>
-    <default_linux_delete>all</default_linux_delete>
-    <default_other_delete>all</default_other_delete>
+    <windows_delete_mode>all</windows_delete_mode>
+    <linux_delete_mode>all</linux_delete_mode>
+    <other_delete_mode>all</other_delete_mode>
   </proposal>
 
   <volumes config:type="list">
@@ -561,13 +567,14 @@ Once again, this example is just an aproximation to show the possibilities.
     <volume>
       <mount_point>/</mount_point>
       <!-- Default == final, since the user can't change it -->
-      <default_fstype>btrfs</default_fstype>
+      <fstype>btrfs</fstype>
       <desired_size>15GiB</desired_size>
       <min_size>10GiB</min_size>
       <max_size>30GiB</max_size>
       <weight>80</weight>
       <!-- Always use snapshots, no matter what -->
-      <snapshots>true</snapshots>
+      <snapshots config:type="boolean">true</snapshots>
+      <snapshots_configurable config:type="boolean">false</snapshots_configurable>
 
       <btrfs_default_subvolume>@</btrfs_default_subvolume>
       <subvolumes config:type="list">
@@ -582,8 +589,9 @@ Once again, this example is just an aproximation to show the possibilities.
     <volume>
       <mount_point>/var/lib/docker</mount_point>
       <!-- Default == final, since the user can't change it -->
-      <default_fstype>btrfs</default_fstype>
-      <snapshots>false</snapshots>
+      <fstype>btrfs</fstype>
+      <snapshots config:type="boolean">false</snapshots>
+      <snapshots_configurable config:type="boolean">false</snapshots_configurable>
 
       <!-- No max_size specified, so unlimited -->
       <desired_size>10GiB</desired_size>
@@ -591,8 +599,8 @@ Once again, this example is just an aproximation to show the possibilities.
       <weight>20</weight>
 
       <!-- Give up in a separate partition if the min size doesn't fit -->
-      <optional config:type="boolean">true</optional>
-      <default_enabled config:type="boolean">true</default_enabled>
+      <proposed config:type="boolean">true</proposed>
+      <proposed_configurable config:type="boolean">true</proposed_configurable>
       <disable_order>1</disable_order>
       <!-- If this volume is disabled, we want "/" to become greedy
           (unlimited max) -->
@@ -682,7 +690,7 @@ NOTE: to be reviewed and refined
 
 The behavior of the old proposal is completely different depending on the value
 of `vm_keep_unpartitioned_region`. If that setting evaluates to true, an
-acceptable way to emulate the behaviour with no modifications in the current
+acceptable way to emulate the behavior with no modifications in the current
 code would be:
 
 * Root volume
