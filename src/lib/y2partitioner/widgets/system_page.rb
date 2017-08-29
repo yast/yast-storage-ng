@@ -1,12 +1,13 @@
 require "cwm/tree_pager"
 require "y2partitioner/icons"
 require "y2partitioner/widgets/blk_devices_table"
+require "y2partitioner/widgets/rescan_devices_button"
 
 Yast.import "Hostname"
 
 module Y2Partitioner
   module Widgets
-    # A Page for all storage devices
+    # A Page for all storage devices in the system
     class SystemPage < CWM::Page
       include Yast::I18n
 
@@ -38,7 +39,8 @@ module Y2Partitioner
               Heading(format(_("Available Storage on %s"), hostname))
             )
           ),
-          table
+          table,
+          HBox(RescanDevicesButton.new)
         )
       end
 

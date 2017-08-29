@@ -19,7 +19,7 @@ module Y2Partitioner
       end
 
       def title
-        _("Partitioner")
+        _("Expert Partitioner")
       end
 
       def contents
