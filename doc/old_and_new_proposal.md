@@ -368,14 +368,16 @@ fashion.
 
 ## Some examples of control file with the new format
 
-**WIP.**
-
 This section shows how it would be possible to reproduce the current behavior of
 several products via the new proposal and the new suggested format for
 `control.xml`. Hopefully, it also illustrates how easy would be to accommodate
 changes that are currently very hard or impossible to achieve.
 
 ### Current behavior of SLES
+
+Some values are a direct translation of the current `control.xml` and others
+(like the relationship with Windows partitions) are inferred from the typical SLES
+use case.
 
 ```xml
 <partitioning>
@@ -451,6 +453,153 @@ changes that are currently very hard or impossible to achieve.
            after disabling separate home -->
       <disable_order>2</disable_order>
     </volume>
+  </volumes>
+</partitioning>
+```
+
+### Current behavior of openSUSE
+
+The `volumes` subsection wouldn't be much different from SLES, with the exception
+of some sizes. But the `proposal` one would probably look like this (more MS
+Windows friendly).
+
+```xml
+<proposal>
+  <default_lvm config:type="boolean">false</default_lvm>
+  <default_encrypt config:type="boolean">false</default_encrypt>
+  <default_resize_windows config:type="boolean">true</default_resize_windows>
+  <default_windows_delete>ondemand</default_windows_delete>
+  <default_linux_delete>ondemand</default_linux_delete>
+  <default_other_delete>ondemand</default_other_delete>
+  <lvm_vg_strategy>use_available</lvm_vg_strategy>
+</proposal>
+```
+
+### Proposed behavior for SLES4SAP
+
+Just a tentative to show the possibilities of the new proposal and serve as an
+inspiration. Maybe some aspects don't fit the SAP requirements exactly.
+
+```xml
+<partitioning>
+  <proposal>
+    <default_lvm config:type="boolean">true</default_lvm>
+    <default_encrypt config:type="boolean">false</default_encrypt>
+    <default_windows_delete>all</default_windows_delete>
+    <default_linux_delete>ondemand</default_linux_delete>
+    <default_other_delete>ondemand</default_other_delete>
+    <lvm_vg_strategy>use_available</lvm_vg_strategy>
+  </proposal>
+
+  <volumes config:type="list">
+    <!-- The root filesystem -->
+    <volume>
+      <mount_point>/</mount_point>
+      <!-- Enforce Btrfs for root, don't offer any other option -->
+      <fstypes>btrfs</fstypes>
+      <desired_size>40GiB</desired_size>
+      <min_size>30GiB</min_size>
+      <max_size>60GiB</max_size>
+      <weight>50</weight>
+      <!-- Always use snapshots, no matter what -->
+      <snapshots>true</snapshots>
+
+      <btrfs_default_subvolume>@</btrfs_default_subvolume>
+      <subvolumes config:type="list">
+        <!--
+          This would be the same than the <subvolumes> list in the current
+          (old) control.xml. Reproducing the whole list doesn't make much sense.
+        -->
+      </subvolumes>
+    </volume>
+
+    <!-- The swap volume -->
+    <volume>
+      <mount_point>swap</mount_point>
+
+      <desired_size>6GiB</desired_size>
+      <min_size>4GiB</min_size>
+      <max_size>10GiB</max_size>
+      <weight>50</weight>
+    </volume>
+
+    <!--
+      No home filesystem, so the option of a separate home is not even
+      offered to the user.
+      On the other hand, a separate data volume (optional or mandatory) could
+      be defined.
+    -->
+
+  </volumes>
+</partitioning>
+```
+
+### Proposed behavior for CaaSP
+
+Once again, this example is just an aproximation to show the possibilities.
+
+```xml
+<partitioning>
+
+  <!-- Don't allow the user to use the Guided Setup -->
+  <proposal_settings_editable config:type="boolean">false</proposal_settings_editable>
+  <!-- Advise the user against using the expert partitioner -->
+  <expert_partitioner_warning config:type="boolean">true</expert_partitioner_warning>
+  <root_subvolume_read_only config:type="boolean">true</root_subvolume_read_only>
+
+  <!-- All default settings will become final, since the user can't change it -->
+  <proposal>
+    <default_lvm config:type="boolean">false</default_lvm>
+    <!-- Delete all previous partitions -->
+    <default_windows_delete>all</default_windows_delete>
+    <default_linux_delete>all</default_linux_delete>
+    <default_other_delete>all</default_other_delete>
+  </proposal>
+
+  <volumes config:type="list">
+    <!-- The root filesystem -->
+    <volume>
+      <mount_point>/</mount_point>
+      <!-- Default == final, since the user can't change it -->
+      <default_fstype>btrfs</default_fstype>
+      <desired_size>15GiB</desired_size>
+      <min_size>10GiB</min_size>
+      <max_size>30GiB</max_size>
+      <weight>80</weight>
+      <!-- Always use snapshots, no matter what -->
+      <snapshots>true</snapshots>
+
+      <btrfs_default_subvolume>@</btrfs_default_subvolume>
+      <subvolumes config:type="list">
+        <!--
+          This would be the same than the <subvolumes> list in the current
+          (old) control.xml. Reproducing the whole list doesn't make much sense.
+        -->
+      </subvolumes>
+    </volume>
+
+    <!-- The /var/lib/docker filesystem -->
+    <volume>
+      <mount_point>/var/lib/docker</mount_point>
+      <!-- Default == final, since the user can't change it -->
+      <default_fstype>btrfs</default_fstype>
+      <snapshots>false</snapshots>
+
+      <!-- No max_size specified, so unlimited -->
+      <desired_size>10GiB</desired_size>
+      <min_size>10GiB</min_size>
+      <weight>20</weight>
+
+      <!-- Give up in a separate partition if the min size doesn't fit -->
+      <optional config:type="boolean">true</optional>
+      <default_enabled config:type="boolean">true</default_enabled>
+      <disable_order>1</disable_order>
+      <!-- If this volume is disabled, we want "/" to become greedy
+          (unlimited max) -->
+      <fallback_for_max_size>/</fallback_for_max_size>
+    </volume>
+
+    <!-- No swap partition is defined, so it's never created -->
   </volumes>
 </partitioning>
 ```
