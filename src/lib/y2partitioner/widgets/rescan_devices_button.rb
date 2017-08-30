@@ -31,25 +31,22 @@ module Y2Partitioner
         Yast::Popup.YesNo(
           # TRANSLATORS
           format(
-            _("Current changes will be discarted, including changes done by the proposal. " \
+            _("Current changes will be discarted, including changes done by the proposal.\n" \
               "Do you want to continue?")
           )
         )
       end
 
       # Reprobes and updates devicegraphs for the partitioner
+      #
+      # @note A message is shown during the reprobing action
       def reprobe
-        Yast::UI.OpenDialog(
-          Opt(:decorated),
-          MarginBox(2, 1, Label(_("Rescanning disks...")))
-        )
-
-        Y2Storage::StorageManager.instance.probe
-        probed = Y2Storage::StorageManager.instance.probed
-        staging = Y2Storage::StorageManager.instance.staging
-        DeviceGraphs.create_instance(probed, staging)
-
-        Yast::UI.CloseDialog
+        Yast::Popup.Feedback("", _("Rescanning disks...")) do
+          Y2Storage::StorageManager.instance.probe
+          probed = Y2Storage::StorageManager.instance.probed
+          staging = Y2Storage::StorageManager.instance.staging
+          DeviceGraphs.create_instance(probed, staging)
+        end
       end
     end
   end

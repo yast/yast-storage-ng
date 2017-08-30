@@ -41,7 +41,7 @@ describe Y2Partitioner::Widgets::RescanDevicesButton do
       let(:accepted) { true }
 
       it "shows an status message" do
-        expect(Yast::UI).to receive(:OpenDialog)
+        expect(Yast::Popup).to receive(:Feedback)
         subject.handle
       end
 
