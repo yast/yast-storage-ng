@@ -22,8 +22,8 @@ describe Y2Partitioner::Widgets::BtrfsSubvolumesAddButton do
   end
 
   let(:filesystem) do
-    devicegraph = Y2Partitioner::DeviceGraphs.instance.current
-    Y2Storage::BlkDevice.find_by_name(devicegraph, "/dev/sda2").filesystem
+    device_graph = Y2Partitioner::DeviceGraphs.instance.current
+    Y2Storage::BlkDevice.find_by_name(device_graph, "/dev/sda2").filesystem
   end
 
   include_examples "CWM::PushButton"

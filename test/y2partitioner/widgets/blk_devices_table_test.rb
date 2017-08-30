@@ -8,11 +8,11 @@ describe Y2Partitioner::Widgets::BlkDevicesTable do
     devicegraph_stub("mixed_disks_btrfs.yml")
   end
 
-  let(:devicegraph) { Y2Partitioner::DeviceGraphs.instance.current }
+  let(:device_graph) { Y2Partitioner::DeviceGraphs.instance.current }
 
   subject { described_class.new(devices, pager) }
 
-  let(:devices) { devicegraph.disks }
+  let(:devices) { device_graph.disks }
 
   let(:pager) { double("Pager") }
 
@@ -60,7 +60,7 @@ describe Y2Partitioner::Widgets::BlkDevicesTable do
         end
 
         let(:selected_device) do
-          Y2Storage::BlkDevice.find_by_name(devicegraph, selected_device_name)
+          Y2Storage::BlkDevice.find_by_name(device_graph, selected_device_name)
         end
 
         let(:selected_device_name) { "/dev/sda2" }

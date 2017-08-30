@@ -107,8 +107,8 @@ module Y2Partitioner
             AddButton.new(disk, table),
             EditButton.new(disk, table),
             DeleteDiskPartitionButton.new(
-              devicegraph: DeviceGraphs.instance.current,
-              table:       table
+              device_graph: DeviceGraphs.instance.current,
+              table:        table
             )
           )
         )

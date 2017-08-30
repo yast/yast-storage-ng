@@ -11,17 +11,17 @@ module Y2Partitioner
       # Constructor
       # @param device [Y2Storage::BlkDevice]
       # @param table [Y2Partitioner::Widgets::BlkDevicesTable]
-      # @param devicegraph [Y2Storage::Devicegraph]
-      def initialize(device: nil, table: nil, devicegraph: nil)
+      # @param device_graph [Y2Storage::Devicegraph]
+      def initialize(device: nil, table: nil, device_graph: nil)
         textdomain "storage"
 
-        unless device || (table && devicegraph)
-          raise ArgumentError, "At least device or combination of table and devicegraph have to be set"
+        unless device || (table && device_graph)
+          raise ArgumentError, "At least device or combination of table and device_graph have to be set"
         end
 
         @device = device
         @table = table
-        @devicegraph = devicegraph
+        @device_graph = device_graph
       end
 
       def label
@@ -62,8 +62,8 @@ module Y2Partitioner
           disk.partition_table.delete_partition(device)
         end
 
-        devicegraph = DeviceGraphs.instance.current
-        Y2Storage::Filesystems::Btrfs.refresh_subvolumes_shadowing(devicegraph)
+        device_graph = DeviceGraphs.instance.current
+        Y2Storage::Filesystems::Btrfs.refresh_subvolumes_shadowing(device_graph)
       end
 
       def confirm(device)

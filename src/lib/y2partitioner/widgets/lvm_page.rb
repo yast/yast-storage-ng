@@ -43,13 +43,13 @@ module Y2Partitioner
       #
       # @return [Array<Y2Storage::LvmVg, Y2Storage::LvmLv>]
       def devices
-        devicegraph.lvm_vgs.reduce([]) do |devices, vg|
+        device_graph.lvm_vgs.reduce([]) do |devices, vg|
           devices << vg
           devices.concat(vg.lvm_lvs)
         end
       end
 
-      def devicegraph
+      def device_graph
         DeviceGraphs.instance.current
       end
     end

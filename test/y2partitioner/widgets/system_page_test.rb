@@ -8,9 +8,9 @@ describe Y2Partitioner::Widgets::SystemPage do
     devicegraph_stub("mixed_disks_btrfs.yml")
   end
 
-  let(:devicegraph) { Y2Partitioner::DeviceGraphs.instance.current }
+  let(:device_graph) { Y2Partitioner::DeviceGraphs.instance.current }
 
-  let(:devices) { Y2Storage::BlkDevice.all(devicegraph) }
+  let(:devices) { Y2Storage::BlkDevice.all(device_graph) }
 
   subject { described_class.new(pager) }
 

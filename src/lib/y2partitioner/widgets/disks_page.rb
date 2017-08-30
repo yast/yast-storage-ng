@@ -41,8 +41,8 @@ module Y2Partitioner
           HBox(
             # TODO: add and edit need to be also added
             DeleteDiskPartitionButton.new(
-              devicegraph: devicegraph,
-              table:       table
+              device_graph: device_graph,
+              table:        table
             )
           )
         )
@@ -54,13 +54,13 @@ module Y2Partitioner
       #
       # @return [Array<Y2Storage::BlkDevice>]
       def devices
-        devicegraph.disks.reduce([]) do |devices, disk|
+        device_graph.disks.reduce([]) do |devices, disk|
           devices << disk
           devices.concat(disk.partitions)
         end
       end
 
-      def devicegraph
+      def device_graph
         DeviceGraphs.instance.current
       end
     end

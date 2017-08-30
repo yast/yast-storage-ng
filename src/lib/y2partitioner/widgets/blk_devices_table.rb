@@ -56,7 +56,7 @@ module Y2Partitioner
         return nil if items.empty? || !value
 
         sid = value[/.*:(.*)/, 1].to_i
-        devicegraph.find_device(sid)
+        device_graph.find_device(sid)
       end
 
       # Adds new columns to show in the table
@@ -115,7 +115,7 @@ module Y2Partitioner
         :end
       ].freeze
 
-      def devicegraph
+      def device_graph
         DeviceGraphs.instance.current
       end
 

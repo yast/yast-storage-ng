@@ -113,18 +113,18 @@ module Y2Partitioner
       def subvolume_actions_after_set_mount_point
         add_proposed_subvolumes if btrfs_root?
         update_mount_points if btrfs?
-        Y2Storage::Filesystems::Btrfs.refresh_subvolumes_shadowing(devicegraph)
+        Y2Storage::Filesystems::Btrfs.refresh_subvolumes_shadowing(device_graph)
       end
 
       def delete_new_subvolumes
-        new_subvolumes.each { |s| filesystem.delete_btrfs_subvolume(devicegraph, s.path) }
+        new_subvolumes.each { |s| filesystem.delete_btrfs_subvolume(device_graph, s.path) }
       end
 
       # Subvolumes that have not been probed
       # @return [Array<Y2Storage::BtrfsSubvolume>]
       def new_subvolumes
-        devicegraph = DeviceGraphs.instance.system
-        filesystem.btrfs_subvolumes.select { |s| !s.exists_in_devicegraph?(devicegraph) }
+        device_graph = DeviceGraphs.instance.system
+        filesystem.btrfs_subvolumes.select { |s| !s.exists_in_devicegraph?(device_graph) }
       end
 
       # A proposed subvolume is added only when it does not exist in the filesystem and it
@@ -145,7 +145,7 @@ module Y2Partitioner
         end
       end
 
-      def devicegraph
+      def device_graph
         DeviceGraphs.instance.current
       end
 

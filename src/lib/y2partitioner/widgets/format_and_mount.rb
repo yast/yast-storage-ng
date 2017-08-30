@@ -409,7 +409,7 @@ module Y2Partitioner
       # @return [Array<Y2Storage::Mountable>]
       def mounted_devices
         fs_sids = filesystem_devices.map(&:sid)
-        devices = Y2Storage::Mountable.all(devicegraph)
+        devices = Y2Storage::Mountable.all(device_graph)
         devices = devices.select { |d| !d.mount_point.nil? && !d.mount_point.empty? }
         devices.reject { |d| fs_sids.include?(d.sid) }
       end
@@ -439,7 +439,7 @@ module Y2Partitioner
       # @return [Y2Storage::BlkDevice, nil]
       def device
         return nil if @options.name.nil?
-        Y2Storage::BlkDevice.find_by_name(devicegraph, @options.name)
+        Y2Storage::BlkDevice.find_by_name(device_graph, @options.name)
       end
 
       # Filesystem for the current device
@@ -451,7 +451,7 @@ module Y2Partitioner
         dev.filesystem
       end
 
-      def devicegraph
+      def device_graph
         DeviceGraphs.instance.current
       end
     end

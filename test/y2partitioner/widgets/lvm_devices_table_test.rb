@@ -8,11 +8,11 @@ describe Y2Partitioner::Widgets::LvmDevicesTable do
     devicegraph_stub("lvm-two-vgs.yml")
   end
 
-  let(:devicegraph) { Y2Partitioner::DeviceGraphs.instance.current }
+  let(:device_graph) { Y2Partitioner::DeviceGraphs.instance.current }
 
   subject { described_class.new(devices, pager) }
 
-  let(:devices) { devicegraph.lvm_vgs }
+  let(:devices) { device_graph.lvm_vgs }
 
   let(:pager) { double("Pager") }
 

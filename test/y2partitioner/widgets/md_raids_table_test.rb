@@ -9,11 +9,11 @@ describe Y2Partitioner::Widgets::MdRaidsTable do
     # devicegraph_stub("mds.yml")
   end
 
-  let(:devicegraph) { Y2Partitioner::DeviceGraphs.instance.current }
+  let(:device_graph) { Y2Partitioner::DeviceGraphs.instance.current }
 
   subject { described_class.new(devices, pager) }
 
-  let(:devices) { devicegraph.md_raids }
+  let(:devices) { device_graph.md_raids }
 
   let(:pager) { double("Pager") }
 

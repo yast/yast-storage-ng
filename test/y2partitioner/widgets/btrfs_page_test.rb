@@ -8,9 +8,9 @@ describe Y2Partitioner::Widgets::BtrfsPage do
     devicegraph_stub("mixed_disks_btrfs.yml")
   end
 
-  let(:devicegraph) { Y2Partitioner::DeviceGraphs.instance.current }
+  let(:device_graph) { Y2Partitioner::DeviceGraphs.instance.current }
 
-  let(:btrfs_filesystems) { devicegraph.filesystems.select { |f| f.is?(:btrfs) } }
+  let(:btrfs_filesystems) { device_graph.filesystems.select { |f| f.is?(:btrfs) } }
 
   let(:btrfs_devices) { btrfs_filesystems.map(&:blk_devices).flatten }
 

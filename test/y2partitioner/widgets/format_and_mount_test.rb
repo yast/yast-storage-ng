@@ -123,8 +123,8 @@ describe Y2Partitioner::Widgets::MountPoint do
             let(:value) { "/foo" }
 
             before do
-              devicegraph = Y2Partitioner::DeviceGraphs.instance.current
-              device = Y2Storage::BlkDevice.find_by_name(devicegraph, "/dev/sda2")
+              device_graph = Y2Partitioner::DeviceGraphs.instance.current
+              device = Y2Storage::BlkDevice.find_by_name(device_graph, "/dev/sda2")
               filesystem = device.filesystem
               subvolume = filesystem.create_btrfs_subvolume("@/foo", false)
               subvolume.can_be_auto_deleted = can_be_auto_deleted

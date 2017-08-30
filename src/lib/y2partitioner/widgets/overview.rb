@@ -68,7 +68,7 @@ module Y2Partitioner
 
     private
 
-      def devicegraph
+      def device_graph
         DeviceGraphs.instance.current
       end
 
@@ -90,7 +90,7 @@ module Y2Partitioner
 
       def disks_items
         page = DisksPage.new(self)
-        children = devicegraph.disks.map { |d| disk_items(d) }
+        children = device_graph.disks.map { |d| disk_items(d) }
         CWM::PagerTreeItem.new(page, children: children, icon: Icons::HD)
       end
 
@@ -107,7 +107,7 @@ module Y2Partitioner
 
       def raids_items
         page = MdRaidsPage.new(self)
-        children = Y2Storage::Md.all(devicegraph).map { |m| raid_items(m) }
+        children = Y2Storage::Md.all(device_graph).map { |m| raid_items(m) }
         CWM::PagerTreeItem.new(page, children: children, icon: Icons::RAID)
       end
 
@@ -118,7 +118,7 @@ module Y2Partitioner
 
       def lvm_items
         page = LvmPage.new(self)
-        children = devicegraph.lvm_vgs.map { |v| lvm_vg_items(v) }
+        children = device_graph.lvm_vgs.map { |v| lvm_vg_items(v) }
         CWM::PagerTreeItem.new(page, children: children, icon: Icons::LVM)
       end
 

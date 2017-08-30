@@ -68,20 +68,20 @@ module Y2Partitioner
       end
 
       def disk_devices
-        devicegraph.disk_devices.reduce([]) do |devices, disk|
+        device_graph.disk_devices.reduce([]) do |devices, disk|
           devices << disk
           devices.concat(disk.partitions)
         end
       end
 
       def lvm_vgs
-        devicegraph.lvm_vgs.reduce([]) do |devices, vg|
+        device_graph.lvm_vgs.reduce([]) do |devices, vg|
           devices << vg
           devices.concat(vg.lvm_lvs)
         end
       end
 
-      def devicegraph
+      def device_graph
         DeviceGraphs.instance.current
       end
     end
