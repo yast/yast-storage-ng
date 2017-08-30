@@ -20,7 +20,6 @@
 # find current contact information at www.suse.com.
 
 require "yast"
-require "shellwords"
 
 module Y2Storage
   # Class to configure snapper for the root filesystem of a fresh installation.
@@ -50,8 +49,6 @@ module Y2Storage
       attr_accessor :execute_commands
 
       def initialize
-        textdomain "storage"
-        Yast.import "Installation"
         Yast.import "SCR"
 
         # The last command line
@@ -60,70 +57,7 @@ module Y2Storage
         @execute_commands = true
       end
 
-      #
-      # Snapper configuration step 1 (running in the inst-sys):
-      #
-      # Temporarily mount the btrfs on the root device, create the directories
-      # (recursively) for /etc/snapper/configs and a configuration file for the
-      # root filesystem.  Then create a first single snapshot and set this to
-      # the default snapshot.
-      #
-      # Preconditions (maybe incomplete):
-      #
-      # - root device is formatted with btrfs
-      # - default subvolume for device is set to the final value (for the
-      #   installation)
-      #
-      # See also
-      # https://github.com/openSUSE/snapper/blob/master/client/installation-helper.cc
-      #
-      def step1
-        # TRANSLATORS: first snapshot description
-        snapshot_description = _("first root filesystem")
-        installation_helper(1,
-          "--device", root_device.name,
-          "--description", snapshot_description)
-      end
-
-      #
-      # Snapper configuration step 2 (running in the inst-sys):
-      #
-      # Mount the @/.snapshots or .snapshots subvolume.
-      #
-      # Preconditions (maybe incomplete):
-      #
-      # - default subvolume of device is mounted at root prefix
-      # - @/.snapshots or .snapshots subvolume is not mounted
-      #
-      # See also
-      # https://github.com/openSUSE/snapper/blob/master/client/installation-helper.cc
-      #
-      def step2
-        installation_helper(2,
-          "--device", root_device.name,
-          "--root-prefix", dest_dir,
-          "--default-subvolume-name", default_subvolume_name)
-      end
-
-      #
-      # Snapper configuration step 3 (running in the inst-sys):
-      #
-      # Add @/.snapshots or .snapshots to /etc/fstab.
-      #
-      # Preconditions (maybe incomplete):
-      #
-      # - default subvolume of device is mounted at root prefix
-      # - etc/fstab at root prefix contains an entry for the default subvolume
-      #   of the device
-      #
-      # See also
-      # https://github.com/openSUSE/snapper/blob/master/client/installation-helper.cc
-      #
-      def step3
-        installation_helper(3,
-          "--root-prefix", dest_dir,
-          "--default-subvolume-name", default_subvolume_name)
-      end
+      # step1..3 are done in libstorage-ng in BtrfsImpl.cc via the SnapperConfig class.
 
       #
       # Snapper configuration step 4 (running in a chroot environment on the
@@ -145,14 +79,15 @@ module Y2Storage
         return unless installation_helper(4) == 0
 
         execute_on_target(SNAPPER_COMMAND,
-          "--no-dbus set-config",
+          "--no-dbus",
+          "set-config",
           "NUMBER_CLEANUP=yes",
           "NUMBER_LIMIT=2-10",
           "NUMBER_LIMIT_IMPORTANT=4-10",
           "TIMELINE_CREATE=no")
 
-        Yast::SCR.Write(path(".sysconfig.yast2.USE_SNAPPER"), "yes")
-        Yast::SCR.Write(path(".sysconfig.yast2"), nil)
+        Yast::SCR.Write(Yast.path(".sysconfig.yast2.USE_SNAPPER"), "yes")
+        Yast::SCR.Write(Yast.path(".sysconfig.yast2"), nil)
       end
 
       # There is no step 5 in installation-helper, so this is missing here as well.
@@ -169,31 +104,6 @@ module Y2Storage
         execute_on_target(SNAPPER_COMMAND, "--no-dbus setup-quota")
       end
 
-      # Return the device of the root filesystem from the staging devicegraph.
-      def root_device
-        # FIXME: Use storage-ng calls
-        # part = Storage.GetEntryForMountpoint("/")
-        # part["device"]
-        "/dev/sda1"
-      end
-
-      # Return the destination directory, i.e. the path of the mount point of
-      # the installation target system (the system that is currently being
-      # installed).
-      #
-      # @return [String]
-      def dest_dir
-        # FIXME: Use storage-ng calls (?)
-        Installation.destdir
-      end
-
-      # Return the name of the default subvolume.
-      #
-      # @return [String]
-      def default_subvolume_name
-        Storage.default_subvolume_name
-      end
-
       # Call the installation_helper command with one of its steps and optional
       # additional arguments.
       #
@@ -205,14 +115,13 @@ module Y2Storage
         log.info("configuring snapper for root fs - step #{step}")
         args = ["--step", step.to_s] + args
 
-        cmd_exit = execute_on_target(INSTALLATION_HELPER_COMMAND, args)
+        cmd_exit = execute_on_target(INSTALLATION_HELPER_COMMAND, *args)
         log.error("configuring snapper for root fs failed") unless cmd_exit == 0
         cmd_exit
       end
 
       # Execute a command with arguments on the target system (the machine that
-      # is currently being installed). The arguments will be shell-quoted,
-      # i.e. quotes and blanks are escaped with a backslash.
+      # is currently being installed).
       #
       # @param cmd [String] command binary to execute
       # @param args [Array<String>] additional arguments
@@ -222,7 +131,7 @@ module Y2Storage
         cmd_line = build_command_line(cmd, *args)
         if @execute_commands
           log.info("Executing on target: #{cmd_line}")
-          @last_result = Yast::SCR.Execute(Yast::path(".target.bash_output"), cmd_line)
+          @last_result = Yast::SCR.Execute(Yast.path(".target.bash_output"), cmd_line)
         else
           log.info("NOT executing on target: #{cmd_line}")
           @last_result = { "exit" => 0 }
@@ -230,9 +139,9 @@ module Y2Storage
         log_cmd_result(cmd_line, @last_result)
       end
 
-      # Build a command line from a command and its arguments:
-      # Strip each component's leading and trailing whitespace, shell-quote
-      # each argument and join them with a single space.
+      # Build a command line from a command and its arguments: Strip each
+      # component's leading and trailing whitespace and join them with a single
+      # space.
       #
       # As a side effect, this stores the command line in @@last_cmd_line.
       #
@@ -241,7 +150,7 @@ module Y2Storage
       # @return [String] complete command line
       #
       def build_command_line(cmd, *args)
-        words = args.map { |arg| Shellwords.escape(arg.strip) }
+        words = args.map(&:strip)
         words.unshift(cmd.strip)
         @last_cmd_line = words.join(" ")
       end
