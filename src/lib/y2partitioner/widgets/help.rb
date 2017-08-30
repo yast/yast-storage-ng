@@ -34,7 +34,7 @@ module Y2Partitioner
 
         encrypted:        N_("<b>Encrypted</b> shows whether the device is\nencrypted."),
 
-        end_cyl:          N_("<b>End Cylinder</b> shows the end cylinder of\nthe partition."),
+        end:              N_("<b>End</b> shows the end block of\nthe partition."),
 
         fc_fcp_lun:       N_("<b>LUN</b> shows the Logical Unit Number for\nFibre Channel disks."),
 
@@ -81,7 +81,7 @@ module Y2Partitioner
 
         size:             N_("<b>Size</b> shows the size of the device."),
 
-        start_cyl:        N_("<b>Start Cylinder</b> shows the start cylinder\nof the partition."),
+        start:            N_("<b>Start</b> shows the start block\nof the partition."),
 
         stripes:          N_("<b>Stripes</b> shows the stripe number for LVM\nlogical volumes " \
           "and, if greater than one, the stripe size in parenthesis.\n"),

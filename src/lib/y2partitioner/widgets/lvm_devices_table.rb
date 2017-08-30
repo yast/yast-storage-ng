@@ -16,7 +16,7 @@ module Y2Partitioner
       def initialize(devices, pager)
         super
         add_columns(:pe_size, :stripes)
-        remove_columns(:start_cyl, :end_cyl)
+        remove_columns(:start, :end)
       end
 
     private

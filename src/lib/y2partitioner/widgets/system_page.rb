@@ -35,7 +35,7 @@ module Y2Partitioner
           Left(
             HBox(
               Image(icon, ""),
-              # TRANSLATORS: Heading. String followed by name of partition
+              # TRANSLATORS: Heading. String followed by the hostname
               Heading(format(_("Available Storage on %s"), hostname))
             )
           ),
@@ -54,7 +54,7 @@ module Y2Partitioner
       def table
         return @table unless @table.nil?
         @table = BlkDevicesTable.new(devices, @pager)
-        @table.remove_columns(:start_cyl, :end_cyl)
+        @table.remove_columns(:start, :end)
         @table
       end
 

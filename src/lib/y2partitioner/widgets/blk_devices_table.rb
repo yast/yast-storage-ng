@@ -99,31 +99,32 @@ module Y2Partitioner
       attr_reader :pager
       attr_reader :devices
 
-      # TRANSLATORS: table header, "F" stands for Format flag. Keep it short,
-      # ideally single letter.
+      # TRANSLATORS: "F" stands for Format flag. Keep it short, ideally a single letter.
       FORMAT_FLAG = N_("F")
+
+      DEFAULT_COLUMNS = [
+        :device,
+        :size,
+        :format,
+        :encrypted,
+        :type,
+        :filesystem_type,
+        :filesystem_label,
+        :mount_point,
+        :start,
+        :end
+      ].freeze
 
       def devicegraph
         DeviceGraphs.instance.current
       end
 
       def columns
-        @columns ||= default_columns
+        @columns ||= default_columns.dup
       end
 
       def default_columns
-        [
-          :device,
-          :size,
-          :format,
-          :encrypted,
-          :type,
-          :filesystem_type,
-          :filesystem_label,
-          :mount_point,
-          :start_cyl,
-          :end_cyl
-        ]
+        DEFAULT_COLUMNS
       end
 
       # @see #helptext_for
@@ -157,9 +158,7 @@ module Y2Partitioner
       end
 
       def format_title
-        # TRANSLATORS: table header, "F" stands for Format flag. Keep it short,
-        # ideally single letter
-        Center(_(BlkDevicesTable::FORMAT_FLAG))
+        Center(FORMAT_FLAG)
       end
 
       def encrypted_title
@@ -174,7 +173,7 @@ module Y2Partitioner
       end
 
       def filesystem_type_title
-        # TRANSLATORS: table header, Files system type. In this case "BtrFS"
+        # TRANSLATORS: table header, file system type
         _("FS Type")
       end
 
@@ -188,12 +187,12 @@ module Y2Partitioner
         _("Mount Point")
       end
 
-      def start_cyl_title
+      def start_title
         # TRANSLATORS: table header, which sector is the first one for device. E.g. "0"
         Right(_("Start"))
       end
 
-      def end_cyl_title
+      def end_title
         # TRANSLATORS: table header, which sector is the the last for device. E.g. "126"
         Right(_("End"))
       end
@@ -211,7 +210,7 @@ module Y2Partitioner
       def format_value(device)
         return "" unless device.respond_to?(:to_be_formatted?)
         already_formatted = !device.to_be_formatted?(DeviceGraphs.instance.system)
-        already_formatted ? "" : _(BlkDevicesTable::FORMAT_FLAG)
+        already_formatted ? "" : _(FORMAT_FLAG)
       end
 
       def encrypted_value(device)
@@ -251,12 +250,12 @@ module Y2Partitioner
         fs.nil? ? "" : fs.mount_point
       end
 
-      def start_cyl_value(device)
+      def start_value(device)
         return "" unless device.respond_to?(:region)
         device.region.start
       end
 
-      def end_cyl_value(device)
+      def end_value(device)
         return "" unless device.respond_to?(:region)
         device.region.end
       end
