@@ -18,8 +18,9 @@ module Y2Partitioner
 
       # @param filesystem [Y2Storage::Filesystems::BlkFilesystem] a btrfs filesystem
       def initialize(filesystem)
-        @filesystem = filesystem
+        textdomain "storage"
 
+        @filesystem = filesystem
         self.handle_all_events = true
       end
 

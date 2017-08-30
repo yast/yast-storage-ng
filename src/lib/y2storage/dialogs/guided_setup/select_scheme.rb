@@ -31,6 +31,11 @@ module Y2Storage
     class GuidedSetup
       # Dialog to select partitioning scheme.
       class SelectScheme < Base
+        def initialize(*params)
+          textdomain "storage"
+          super
+        end
+
         # Handler for :encryption check box.
         # @param focus [Boolean] whether password field should be focused
         def encryption_handler(focus: true)

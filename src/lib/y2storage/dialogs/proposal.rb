@@ -38,7 +38,7 @@ module Y2Storage
         log.info "Proposal dialog: start with #{proposal.inspect}"
 
         super()
-        textdomain "storage-ng"
+        textdomain "storage"
 
         @proposal = proposal
         @devicegraph = devicegraph

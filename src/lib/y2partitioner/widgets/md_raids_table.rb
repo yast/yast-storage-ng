@@ -11,6 +11,8 @@ module Y2Partitioner
       # @param pager [CWM::Pager] table have feature, that double click change content of pager
       #   if someone do not need this feature, make it only optional
       def initialize(devices, pager)
+        textdomain "storage"
+
         super
         add_columns(:raid_type, :chunk_size)
         remove_columns(:start, :end)

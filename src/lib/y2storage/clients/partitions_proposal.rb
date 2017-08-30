@@ -51,7 +51,7 @@ module Y2Storage
       include InstDialogMixin
 
       def initialize
-        textdomain "storage-ng"
+        textdomain "storage"
         @failed = false
         ensure_proposed unless storage_manager.staging_changed?
         self.class.update_state

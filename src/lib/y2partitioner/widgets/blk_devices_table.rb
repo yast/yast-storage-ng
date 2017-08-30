@@ -13,6 +13,8 @@ module Y2Partitioner
       include Yast::I18n
       extend Yast::I18n
 
+      textdomain "storage"
+
       # Constructor
       #
       # @param devices [Array<Y2Storage::Device>]

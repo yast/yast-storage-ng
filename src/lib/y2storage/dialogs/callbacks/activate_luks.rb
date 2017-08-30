@@ -37,7 +37,7 @@ module Y2Storage
         secret_attr :encryption_password
 
         def initialize(uuid, attempt)
-          textdomain "storage-ng"
+          textdomain "storage"
           @uuid = uuid
           @attempt = attempt
         end
