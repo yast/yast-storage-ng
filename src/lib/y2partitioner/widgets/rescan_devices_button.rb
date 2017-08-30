@@ -4,6 +4,7 @@ require "y2partitioner/device_graphs"
 require "y2storage/storage_manager"
 
 Yast.import "Popup"
+Yast.import "Mode"
 
 module Y2Partitioner
   module Widgets
@@ -28,13 +29,21 @@ module Y2Partitioner
     private
 
       def continue?
-        Yast::Popup.YesNo(
+        Yast::Popup.YesNo(rescan_message)
+      end
+
+      def rescan_message
+        if Yast::Mode.installation
           # TRANSLATORS
-          format(
-            _("Current changes will be discarted, including changes done by the proposal.\n" \
-              "Do you want to continue?")
-          )
-        )
+          _("Re-scanning the storage devices will invalidate all the configuration options\n"\
+            "set in the installer regarding storage, with no possibility to withdraw.\n\n" \
+            "That includes the result and settings of the guided setup as well as the manual\n"\
+            "changes performed in the expert partitioner.")
+        else
+          # TRANSLATORS
+          _("Re-scanning the storage devices will invalidate all the previous changes with\n"\
+            "no possibility to withdraw.")
+        end
       end
 
       # Reprobes and updates devicegraphs for the partitioner

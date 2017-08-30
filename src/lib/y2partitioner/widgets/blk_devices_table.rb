@@ -160,7 +160,7 @@ module Y2Partitioner
       end
 
       def format_title
-        Center(FORMAT_FLAG)
+        Center(_(FORMAT_FLAG))
       end
 
       def encrypted_title
