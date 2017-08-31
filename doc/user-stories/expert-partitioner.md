@@ -428,7 +428,7 @@ The specs are based on current version of expert partitioner for TW. The goal is
 * *(pending) and action 'Add RAID' is selected*
   * and there is less than two not mounted partitions
     * shows an error message
-  * and there is at least two not mounted partitions with correct partition ID (not windows)
+  * and there is at least two not mounted partitions with correct partition ID (LINUX, SWAP, LVM, RAID)
     * shows a wizard to create a new RAID
 * *(pending) and action 'Edit' is selected*
   * shows dialog to edit the RAID partition
@@ -466,6 +466,8 @@ The specs are based on current version of expert partitioner for TW. The goal is
 * and tab 'Used Devices' is selected
   * shows a table with the columns: Device, Size, F, Enc and Type
     * and the table is filled out with info of all devices that belong to the RAID
+  * and an item in the table is selected (double click)
+    * jumps to the corresponding partition in the 'Hard Disks' section
 
 ### *(pending) When 'Add RAID' is selected*
 * shows a wizard with 5 steps
@@ -514,6 +516,9 @@ The specs are based on current version of expert partitioner for TW. The goal is
     * reorder RAID devices by moving to bottom the current selected device from 'Selected Devices'
   * and action 'Classify' is selected
     * shows a dialog to classify the RAID devices
+  * and 'next' is selected
+    * and there are not enough selected devices for the selected RAID type
+      * shows an error popup and does not allow to continue
 
 ##### *(pending) When we are in the dialog to classify the RAID devices*
 * shows a table with the columns: Device, Class
