@@ -80,6 +80,7 @@ module Y2Storage
         filesystem.uuid = uuid if uuid
 
         btrfs_setup(filesystem)
+        filesystem.configure_snapper = true if use_snapshots?
 
         filesystem
       end
