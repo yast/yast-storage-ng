@@ -45,6 +45,14 @@ module Y2Storage
         return @configure_snapper || false
       end
 
+      # Reset status. This should be done when a new proposal is calculated to
+      # avoid carrying over values from the last one which might now be
+      # obsolete.
+      def reset
+        @configure_snapper = false
+        @last_cmd = nil
+      end
+
       # Do everything that has to be done to configure snapper after RPMs are
       # installed on the installation target.
       def post_rpm_install

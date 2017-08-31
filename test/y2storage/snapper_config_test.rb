@@ -69,6 +69,12 @@ describe Y2Storage::SnapperConfig do
         subject.post_rpm_install
         expect(subject.last_cmd).to start_with("/usr/bin")
       end
+
+      it "does nothing after reset" do
+        subject.reset
+        subject.post_rpm_install
+        expect(subject.last_cmd).to be nil
+      end
     end
   end
 end
