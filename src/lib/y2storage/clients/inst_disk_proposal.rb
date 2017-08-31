@@ -108,7 +108,8 @@ module Y2Storage
           @proposal = nil
           @devicegraph = dialog.device_graph
         when :back
-          # Try to create a proposal when staging has not changed (i.e., after rescannig devices)
+          # Try to create a proposal when staging has been reseted to probed
+          # (i.e., after rescannig devices)
           create_initial_proposal unless storage_manager.staging_changed?
         end
       end

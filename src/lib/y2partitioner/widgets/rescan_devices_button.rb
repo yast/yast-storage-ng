@@ -34,15 +34,14 @@ module Y2Partitioner
 
       def rescan_message
         if Yast::Mode.installation
-          # TRANSLATORS
-          _("Re-scanning the storage devices will invalidate all the configuration options\n"\
-            "set in the installer regarding storage, with no possibility to withdraw.\n\n" \
-            "That includes the result and settings of the guided setup as well as the manual\n"\
-            "changes performed in the expert partitioner.")
+          _("Re-scanning the storage devices will invalidate all the configuration\n" \
+            "options set in the installer regarding storage, with no possibility\n" \
+            "to withdraw.\n" \
+            "That includes the result and settings of the guided setup as well as\n" \
+            "the manual changes performed in the expert partitioner.")
         else
-          # TRANSLATORS
-          _("Re-scanning the storage devices will invalidate all the previous changes with\n"\
-            "no possibility to withdraw.")
+          _("Re-scanning the storage devices will invalidate all the previous\n" \
+            "changes with no possibility to withdraw.")
         end
       end
 

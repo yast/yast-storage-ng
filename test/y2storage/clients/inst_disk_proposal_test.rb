@@ -317,7 +317,7 @@ describe Y2Storage::Clients::InstDiskProposal do
           allow(storage_manager).to receive(:staging_changed?).and_return change
         end
 
-        context "and the devicegraph has changed" do
+        context "and the staging devicegraph is not a direct copy of probed" do
           let(:change) { true }
 
           it "opens a new proposal dialog again with the same values" do
@@ -329,7 +329,7 @@ describe Y2Storage::Clients::InstDiskProposal do
           end
         end
 
-        context "and the devicegraph has not changed" do
+        context "and the staging devicegraph is a direct copy of probed" do
           let(:change) { false }
 
           before do
