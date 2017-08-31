@@ -175,7 +175,16 @@ module Y2Storage
           end
         adjust_btrfs_sizes!(root_vol)
         init_btrfs_subvolumes!(root_vol)
+        root_vol.use_snapshots
+        enable_root_snapshots(root) if @settings.use_snapshots
         root_vol
+      end
+
+      # Enable snapshots on a Btrfs root volume.
+      # @param root_vol [PlannedDevice]
+      def enable_root_snapshots(root_vol)
+        return unless root_vol.btrfs?
+        root_vol.use_snapshots = true
       end
 
       # Sizes have to be adjusted only when using snapshots
