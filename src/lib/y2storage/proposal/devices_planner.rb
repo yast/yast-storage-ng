@@ -25,6 +25,7 @@ require "fileutils"
 require "y2storage/planned"
 require "y2storage/disk_size"
 require "y2storage/boot_requirements_checker"
+require "y2storage/snapper_config.rb"
 require "y2storage/exceptions"
 
 module Y2Storage
@@ -44,6 +45,7 @@ module Y2Storage
       def initialize(settings, devicegraph)
         @settings = settings
         @devicegraph = devicegraph
+        SnapperConfig.reset
       end
 
       # Devices that needs to be created to satisfy the settings
@@ -185,6 +187,7 @@ module Y2Storage
       def enable_root_snapshots(root_vol)
         return unless root_vol.btrfs?
         root_vol.use_snapshots = true
+        SnapperConfig.configure_snapper = true
       end
 
       # Sizes have to be adjusted only when using snapshots
