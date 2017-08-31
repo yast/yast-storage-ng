@@ -27,66 +27,47 @@ require "y2storage/snapper_config.rb"
 describe Y2Storage::SnapperConfig do
   subject { Y2Storage::SnapperConfig }
 
-  describe ".build_command_line" do
-    it "builds a simple command line" do
-      expect(subject.build_command_line("echo", "hello", "world")).to eq("echo hello world")
-    end
-
-    it "handles commands without arguments" do
-      expect(subject.build_command_line("echo")).to eq("echo")
-    end
-
-    it "strips whitespace off arguments" do
-      expect(subject.build_command_line("echo", " hello ", "  world ")).to eq("echo hello world")
-    end
-
-    it "strips whitespace off the command" do
-      expect(subject.build_command_line(" echo ", "hello", "world")).to eq("echo hello world")
-    end
-
-    it "sets last_cmd_line" do
-      subject.build_command_line("do_something", "--quickly ", " --force ")
-      expect(subject.last_cmd_line).to eq("do_something --quickly --force")
-    end
-  end
-
   describe ".execute_on_target" do
-    it "does not really execute commands if execute_commands is false" do
-      subject.execute_commands = false
-      expect(subject.execute_on_target("/usr/bin/wrglbrmpf", "--force")).to eq(0)
+    it "executes commands by default" do
+      expect(subject.execute_on_target("ls /wrglbrmpf")).to eq(2)
+      expect(subject.execute_on_target("/usr/bin/false")).to eq(1)
+      expect(subject.execute_on_target("/usr/bin/wrglbrmpf")).to eq(127)
     end
 
-    it "does execute commands if execute_commands is true" do
-      subject.execute_commands = true
-      expect(subject.execute_on_target("ls", "/wrglbrmpf")).to eq(2)
+    it "does not execute commands if execute_commands? returns false" do
+      allow(subject).to receive(:execute_commands?).and_return(false)
+      expect(subject.execute_on_target("/usr/bin/wrglbrmpf --force")).to eq(0)
     end
 
-    it "returns stdout of an executed command" do
-      subject.execute_on_target("echo", "hello", "world")
-      expect(subject.last_stdout).to eq("hello world\n")
-      expect(subject.last_stderr).to be_empty
+    it "sets last_cmd" do
+      allow(subject).to receive(:execute_commands?).and_return(false)
+      cmd = "do_something --quickly  --force"
+      subject.execute_on_target(cmd)
+      expect(subject.last_cmd).to eq(cmd)
     end
   end
 
-  describe ".steps" do
+  describe ".configure_snapper" do
+    it "is false by default" do
+      expect(subject.configure_snapper?).to be false
+    end
+
+    it "keeps a value once set" do
+      subject.configure_snapper = true
+      expect(subject.configure_snapper?).to be true
+    end
+  end
+
+  context "smoke test" do
     before do
-      subject.execute_commands = false
+      allow(subject).to receive(:execute_commands?).and_return(false)
     end
 
-    describe ".step4" do
-      it "calls installation-helper correctly with step4" do
-        subject.step4
-        expect(subject.last_cmd_line).to eq("/usr/bin/snapper " \
-          "--no-dbus set-config NUMBER_CLEANUP=yes " \
-          "NUMBER_LIMIT=2-10 NUMBER_LIMIT_IMPORTANT=4-10 " \
-          "TIMELINE_CREATE=no")
-      end
-    end
-
-    describe ".step6" do
-      it "calls installation-helper correctly with step6" do
-        subject.step6
-        expect(subject.last_cmd_line).to eq("/usr/bin/snapper --no-dbus setup-quota")
+    describe ".post_rpm_install" do
+      it "does not crash" do
+        subject.configure_snapper = true
+        subject.post_rpm_install
+        expect(subject.last_cmd).to start_with("/usr/bin")
       end
     end
   end

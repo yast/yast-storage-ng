@@ -24,135 +24,85 @@ require "yast"
 module Y2Storage
   # Class to configure snapper for the root filesystem of a fresh installation.
   #
-  # This is little more than a wrapper around the "installation-helper" program
-  # which is part of snapper.
+  # Part of this is done in libstorage-ng while the root filesystem is created
+  # in Filesystems/BtrfsImpl.cc and Utils/SnapperConfig.cc.
+  #
+  # This part here is what is left to do after the package installation is
+  # complete.
   class SnapperConfig
     include Yast::Logger
 
-    INSTALLATION_HELPER_COMMAND = "/usr/lib/snapper/installation-helper"
-    SNAPPER_COMMAND = "/usr/bin/snapper"
-
-    def configure_snapper?
-      return false unless root_device.filesystem.btrfs?
-      # userdata = part.fetch("userdata", {})
-      # return false if userdata.fetch("/", "") != "snapshots"
-      return root_device.use_snapshots?
-    end
-
     class << self
-      include Yast::I18n
-
       # [String] The last command line
-      attr_reader :last_cmd_line
+      attr_reader :last_cmd
 
-      # [Boolean] Actually execute commands or just fake it?
-      attr_accessor :execute_commands
+      # Flag that snapper should actually be configured.  The default is
+      # false. Set this when marking the root btrfs to use snapshots.
+      attr_writer :configure_snapper
 
-      def initialize
-        Yast.import "SCR"
-
-        # The last command line
-        @last_cmd_line = ""
-        @last_result = {}
-        @execute_commands = true
+      # Check if snapper should be configured.
+      def configure_snapper?
+        return @configure_snapper || false
       end
 
-      # step1..3 are done in libstorage-ng in BtrfsImpl.cc via the SnapperConfig class.
+      # Do everything that has to be done to configure snapper after RPMs are
+      # installed on the installation target.
+      def post_rpm_install
+        return unless configure_snapper?
 
-      #
-      # Snapper configuration step 4 (running in a chroot environment on the
-      # installation target):
-      #
-      # Add the snapper configuration for the root filesystem to
-      # /etc/sysconfig/snapper, set the snapper clean-up strategy and set
-      # "USE_SNAPPER" in /etc/sysconfig/yast2.
-      #
-      # Preconditions (maybe incomplete):
-      #
-      # - The snapper packages are installed in the installation target
-      # - All preconditions for snapper hooks are satisfied
-      #
-      # See also
-      # https://github.com/openSUSE/snapper/blob/master/client/installation-helper.cc
-      #
-      def step4
-        return unless installation_helper(4) == 0
+        installation_helper_step_4
+        write_snapper_config
+        update_etc_sysconfig_yast2
+        setup_snapper_quota
+      end
 
-        execute_on_target(SNAPPER_COMMAND,
-          "--no-dbus",
-          "set-config",
-          "NUMBER_CLEANUP=yes",
-          "NUMBER_LIMIT=2-10",
-          "NUMBER_LIMIT_IMPORTANT=4-10",
+      def installation_helper_step_4
+        execute_on_target("/usr/lib/snapper/installation-helper --step 4")
+      end
+
+      def write_snapper_config
+        execute_on_target("/usr/bin/snapper " \
+          "--no-dbus " \
+          "set-config " \
+          "NUMBER_CLEANUP=yes " \
+          "NUMBER_LIMIT=2-10 " \
+          "NUMBER_LIMIT_IMPORTANT=4-10 " \
           "TIMELINE_CREATE=no")
+      end
 
+      def update_etc_sysconfig_yast2
+        return unless execute_commands?
         Yast::SCR.Write(Yast.path(".sysconfig.yast2.USE_SNAPPER"), "yes")
         Yast::SCR.Write(Yast.path(".sysconfig.yast2"), nil)
       end
 
-      # There is no step 5 in installation-helper, so this is missing here as well.
-
-      #
-      # Snapper configuration step 6 (running in a chroot environment on the
-      # installation target):
-      #
-      # First real snapper call.
-      #
-      def step6
-        log.info("configuring snapper for root fs - step 6")
-
-        execute_on_target(SNAPPER_COMMAND, "--no-dbus setup-quota")
+      def setup_snapper_quota
+        execute_on_target("/usr/bin/snapper --no-dbus setup-quota")
       end
 
-      # Call the installation_helper command with one of its steps and optional
-      # additional arguments.
+      # Execute a command line on the target system (the machine that is
+      # currently being installed).
       #
-      # @param step [Integer] step number
-      # @param args [Array<String>] additional arguments
+      # @param cmd [String] command line
       # @return [Integer] command exit status
       #
-      def installation_helper(step, *args)
-        log.info("configuring snapper for root fs - step #{step}")
-        args = ["--step", step.to_s] + args
-
-        cmd_exit = execute_on_target(INSTALLATION_HELPER_COMMAND, *args)
-        log.error("configuring snapper for root fs failed") unless cmd_exit == 0
-        cmd_exit
-      end
-
-      # Execute a command with arguments on the target system (the machine that
-      # is currently being installed).
-      #
-      # @param cmd [String] command binary to execute
-      # @param args [Array<String>] additional arguments
-      # @return [Integer] command exit status
-      #
-      def execute_on_target(cmd, *args)
-        cmd_line = build_command_line(cmd, *args)
-        if @execute_commands
-          log.info("Executing on target: #{cmd_line}")
-          @last_result = Yast::SCR.Execute(Yast.path(".target.bash_output"), cmd_line)
+      def execute_on_target(cmd)
+        @last_cmd = cmd
+        if execute_commands?
+          log.info("Executing on target: #{cmd}")
+          result = Yast::SCR.Execute(Yast.path(".target.bash_output"), cmd)
+          log_cmd_result(cmd, result)
+          result["exit"]
         else
-          log.info("NOT executing on target: #{cmd_line}")
-          @last_result = { "exit" => 0 }
+          log.info("NOT executing on target: #{cmd}")
+          0
         end
-        log_cmd_result(cmd_line, @last_result)
       end
 
-      # Build a command line from a command and its arguments: Strip each
-      # component's leading and trailing whitespace and join them with a single
-      # space.
-      #
-      # As a side effect, this stores the command line in @@last_cmd_line.
-      #
-      # @param cmd [String] command binary to execute
-      # @param args [Array<String>] additional arguments
-      # @return [String] complete command line
-      #
-      def build_command_line(cmd, *args)
-        words = args.map(&:strip)
-        words.unshift(cmd.strip)
-        @last_cmd_line = words.join(" ")
+      # For testing: Check if commands should actually be executed.
+      # Override this to prevent undesired side effects.
+      def execute_commands?
+        return true
       end
 
       # Write the result of an executed command to the log.
@@ -170,24 +120,6 @@ module Y2Storage
         cmd_stdout.each_line { |line| log.info("stdout: #{line}") }
         cmd_stderr.each_line { |line| log.info("stderr: #{line}") }
         cmd_exit
-      end
-
-      # Return the stdout output of the last command.
-      # @return [String]
-      def last_stdout
-        @last_result["stdout"] || ""
-      end
-
-      # Return the stdout output of the last command.
-      # @return [String]
-      def last_stderr
-        @last_result["stderr"] || ""
-      end
-
-      # Return the stdout output of the last command.
-      # @return [Integer]
-      def last_exit_status
-        @last_result["exit"] || -1
       end
     end
   end
