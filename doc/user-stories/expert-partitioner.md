@@ -142,11 +142,12 @@ The specs are based on current version of expert partitioner for TW. The goal is
 * and it is not possible to create more partitions (max number of primary reached)
   * shows an error popup
 * and it is possible to create a new partition
-  * shows a wizard with 4 steps
+  * shows a wizard with 5 steps
     * select partition type
     * select partition size
     * select partition role
     * set partition attributes (fs, mount point, etc)
+    * set encrypt password (optional)
 
 #### When we are in wizard step to select the partition type
 * and partition table is not MSDOS
@@ -160,7 +161,7 @@ The specs are based on current version of expert partitioner for TW. The goal is
     * and the max of primary partitions is not reached
       * shows option 'Primary partition'
   * and there is not an extended partition
-    * shows option 'Extended partition' 
+    * shows option 'Extended partition'
   * and there is an extended partition with free space
     * shows option 'Logical partition'
 
@@ -252,12 +253,14 @@ The specs are based on current version of expert partitioner for TW. The goal is
     * and filesystem is swap
       * and mount point is not swap
         * shows an error popup
+  * and 'Encrypt device' is true
+    * shows a new wizard step to enter the password
   * saves the partition options
 
 ##### When 'Format partition' is selected
 * disables 'File system Id'
 * allows to select a 'File system'
-  * where options are: BtrFs, EXT2, EXT3, EXT4, FAT, XFS, Swap 
+  * where options are: BtrFs, EXT2, EXT3, EXT4, FAT, XFS, Swap
 * *(pending) and 'File system' is BtrFS*
   * does not show 'Options' button
   * shows 'Enable snaphsots'
@@ -417,3 +420,148 @@ The specs are based on current version of expert partitioner for TW. The goal is
 * allows to remove one subvolume from the list
 * alerts when trying to create a subvolume that does not start by /@
   * automatically appends /@ to the subvolume path
+
+### When 'RAID' is selected in the tree view
+* shows a table with the columns: Device, Size, F, Enc, Type, FS Type, Label, Mount Point, RAID Type, Chunk Size
+  * and the table is filled out with info of all RAID devices
+* *(pending) shows the actions: 'Add RAID', 'Edit', 'Resize' and 'Delete'*
+* *(pending) and action 'Add RAID' is selected*
+  * and there is less than two not mounted partitions
+    * shows an error message
+  * and there is at least two not mounted partitions with correct partition ID (LINUX, SWAP, LVM, RAID)
+    * shows a wizard to create a new RAID
+* *(pending) and action 'Edit' is selected*
+  * shows dialog to edit the RAID partition
+* *(pending) and action 'Resize' is selected*
+  * shows a dialog to modify the RAID devices
+* *(pending) and action 'Delete' is selected*
+  * shows a confirm popup to delete the RAID
+  * deletes the RAID
+
+### *(pending) When a 'RAID' is selected in the tree view*
+* shows a view with two tabs: 'Overview' and 'Used Devices'
+* and tab 'Overview' is selected
+  * shows a report with three sections: 'Device', 'RAID' and 'File System'
+    * where 'Device' section contains the folling info
+      * device name
+      * device size
+      * encrypted
+      * device id
+    * where 'RAID' section contains the following info
+      * RAID type
+      * chunk size
+      * parity algorithm
+    * where 'File System' section contains the following info
+      * file system
+      * mount point
+      * label
+  * shows the actions: 'Edit', 'Resize' and 'Delete'
+    * and action 'Edit' is selected
+      * shows dialog to edit the RAID partition (similar to edit disk partition)
+    * and action 'Resize' is selected
+      * shows a dialog to modify the RADID devices
+    * and action 'Delete' is selected
+      * shows a confirm popup to delete the RAID
+      * deletes the RAID
+* and tab 'Used Devices' is selected
+  * shows a table with the columns: Device, Size, F, Enc and Type
+    * and the table is filled out with info of all devices that belong to the RAID
+  * and an item in the table is selected (double click)
+    * jumps to the corresponding partition in the 'Hard Disks' section
+
+### *(pending) When 'Add RAID' is selected*
+* shows a wizard with 5 steps
+  * select RAID type and devices
+  * select RAID options
+  * select partition role
+    * same wizard step than in partition creation (see above)
+  * set partition attributes (fs, mount point, etc)
+    * same wizard step than in partition creation (see above)
+    * 'File System Id' is not shown (automatically set to Linux RAID)
+  * set encrypt password (optional)
+    * same wizard step than in partition creation (see above)
+
+#### *(pending) When we are in wizard step to select RAID type and devices*
+* shows the following options
+  * RAID Type
+    * RAID 0 (at least 2 devices)
+    * RAID 1 (at least 2 devices)
+    * RAID 5 (at least 3 devices)
+    * RAID 6 (at least 4 devices)
+    * RAID 10 (at least 2 devices)
+  * RAID Name (opcional)
+  * Available Devices
+    * shows a table with the columns: Device, Size, Enc, Type
+      * and the table is filled out with info of available devices for RAID
+  * Selected Devices
+    * shows a table with the columns: Device, Size, Enc, Type
+    * and the table is filled out with info of devices that belong to the RAID
+* shows the actions: 'Add', 'Add All', 'Remove', 'Remove All'
+  * and action 'Add' is selected
+    * move the selected device from 'Available devices' to 'Selected Devices'
+  * and action 'Add All' is selected
+    * move all devices from 'Available devices' to 'Selected Devices'
+  * and action 'Remove' is selected
+    * move the selected device from 'Selected Devices' to 'Available devices'
+  * and action 'Remove All' is selected
+    * move all devices from 'Selected Devices' to'Available devices'
+* shows the actions: 'Top', 'Up', 'Down', 'Bottom' and 'Classify'
+  * and action 'Top' is selected
+    * reorder RAID devices by moving to top the current selected device from 'Selected Devices'
+  * and action 'Up' is selected
+    * reorder RAID devices by moving up the current selected device from 'Selected Devices'
+  * and action 'Down' is selected
+    * reorder RAID devices by moving down the current selected device from 'Selected Devices'
+  * and action 'Bottom' is selected
+    * reorder RAID devices by moving to bottom the current selected device from 'Selected Devices'
+  * and action 'Classify' is selected
+    * shows a dialog to classify the RAID devices
+  * and 'next' is selected
+    * and there are not enough selected devices for the selected RAID type
+      * shows an error popup and does not allow to continue
+
+##### *(pending) When we are in the dialog to classify the RAID devices*
+* shows a table with the columns: Device, Class
+  * and the table is filled out with info of devices that belong to the RAID
+* shows the actions: 'Class A', 'Class B', 'Class C', 'Class D' and 'Class E'
+  * and one of them is selected:
+    * set the class of all selected devices from the table
+* shows the actions: 'Sorted (AAABBBCCC)', 'Interleaved (ABCABCABC)' and 'Pattern File'
+  * and action 'Sorted (AAABBBCCC)' is selected
+    * sorts devices by class
+  * and action 'Interleaved (ABCABCABC)' is selected
+    * sorts devices by class in interleaved order
+  * and action 'Pattern File' is selected
+    * opens a dialog to select a pattern file
+    * sets class to devices according to the pattern file
+
+#### *(pending) When we are in wizard step to select RAID options*
+  * when selected RAID type is: RAID0 or RAID1
+    * shows the following options
+      * Chunk Size
+        * values: 4 KiB, 8 KiB, 16 KiB, 32 KiB, 128 KiB, 256 KiB, 512 KiB, 1 MiB, 2 MiB, 4 MiB
+    * and RAID type is RADI0
+      * default chunk size: 32 KiB
+    * and RAID type is RADI1
+      * default chunk size: 4 KiB
+  * when selected RAID type is: RAID5, RAID6 or RAID10
+    * shows the following options
+      * Chunk Size
+        * values: 4 KiB, 8 KiB, 16 KiB, 32 KiB, 128 KiB, 256 KiB, 512 KiB, 1 MiB, 2 MiB, 4 MiB
+      * Parity Algorithm
+        * values: default, n2, o2, f2, n3, o3, f3
+    * and RAID type is RAID5 or RAID6
+      * default chunk size: 128 KiB
+      * default parity algorithm: default
+    * and RAID type is RAID10
+      * default chunk size: 32 KiB
+      * default parity algorithm: default
+
+### *(pending) When 'Edit' is selected*
+* same dialog than partition edition (see above)
+* 'File System Id' is not shown
+
+### *(pending) When 'Resize' is selected*
+* same dialog than wizard step to select RAID type and devices
+* 'RAID Type' is not shown
+* 'RAID Name' is not shown
