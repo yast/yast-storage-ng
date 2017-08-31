@@ -28,6 +28,11 @@ module Y2Storage
     class GuidedSetup
       # Dialog for root disk selection.
       class SelectRootDisk < Base
+        def initialize(*params)
+          textdomain "storage"
+          super
+        end
+
         # This dialog should be skipped when there is only one candidate
         # disk for installation and there are not installed systems.
         def skip?

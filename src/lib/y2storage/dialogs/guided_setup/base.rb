@@ -31,9 +31,10 @@ module Y2Storage
       # Base class for guided setup dialogs.
       class Base < ::UI::InstallationDialog
         def initialize(guided_setup)
+          textdomain "storage"
+
           super()
           log.info "#{self.class}: start with #{guided_setup.settings.inspect}"
-          textdomain "storage-ng"
           @guided_setup = guided_setup
         end
 

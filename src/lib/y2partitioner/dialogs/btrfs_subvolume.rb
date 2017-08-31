@@ -188,8 +188,8 @@ module Y2Partitioner
         # Checks if the subvolume is shadowed
         # @return [Boolean]
         def shadowed?
-          devicegraph = DeviceGraphs.instance.current
-          Y2Storage::BtrfsSubvolume.shadowed?(devicegraph, mount_point)
+          device_graph = DeviceGraphs.instance.current
+          Y2Storage::BtrfsSubvolume.shadowed?(device_graph, mount_point)
         end
 
         # Subvolume mount point

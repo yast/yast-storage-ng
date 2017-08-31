@@ -10,8 +10,8 @@ describe Y2Partitioner::Widgets::BtrfsSubvolumesTable do
   subject { described_class.new(filesystem) }
 
   let(:filesystem) do
-    devicegraph = Y2Partitioner::DeviceGraphs.instance.current
-    Y2Storage::BlkDevice.find_by_name(devicegraph, "/dev/sda2").filesystem
+    device_graph = Y2Partitioner::DeviceGraphs.instance.current
+    Y2Storage::BlkDevice.find_by_name(device_graph, "/dev/sda2").filesystem
   end
 
   describe "#header" do

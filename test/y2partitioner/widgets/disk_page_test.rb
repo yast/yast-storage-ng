@@ -17,11 +17,7 @@ describe Y2Partitioner::Widgets::DiskPage do
     double("BlkDevicesTable", value: "table:partition:/dev/hdf4", items: ["a", "b"])
   end
 
-  subject { described_class.new("mydisk", pager) }
-  before do
-    allow(Y2Storage::Disk)
-      .to receive(:find_by_name).and_return(disk)
-  end
+  subject { described_class.new(disk, pager) }
 
   include_examples "CWM::Page"
 
@@ -32,13 +28,17 @@ describe Y2Partitioner::Widgets::DiskPage do
   end
 
   describe Y2Partitioner::Widgets::PartitionsTab do
-    subject { described_class.new("mydisk", pager) }
+    subject { described_class.new(disk, pager) }
 
     include_examples "CWM::Tab"
   end
 
   describe Y2Partitioner::Widgets::PartitionsTab::AddButton do
-    subject { described_class.new("mydisk") }
+    subject { described_class.new(disk, ui_table) }
+    before do
+      allow(Y2Partitioner::Sequences::AddPartition)
+        .to receive(:new).and_return(double(run: :next))
+    end
 
     include_examples "CWM::PushButton"
   end
@@ -46,8 +46,8 @@ describe Y2Partitioner::Widgets::DiskPage do
   describe Y2Partitioner::Widgets::PartitionsTab::EditButton do
     subject { described_class.new(disk, ui_table) }
     before do
-      allow(Y2Partitioner::Sequences::EditBlkDevice)
-        .to receive(:new).and_return(double(run: :next))
+      allow(Y2Partitioner::Sequences::EditBlkDevice).to receive(:new).and_return(double(run: :next))
+      allow(ui_table).to receive(:selected_device).and_return(double("Device"))
     end
 
     include_examples "CWM::PushButton"

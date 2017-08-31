@@ -11,8 +11,8 @@ describe Y2Partitioner::Dialogs::BtrfsSubvolume do
   subject { described_class.new(filesystem) }
 
   let(:filesystem) do
-    devicegraph = Y2Partitioner::DeviceGraphs.instance.current
-    Y2Storage::BlkDevice.find_by_name(devicegraph, dev_name).filesystem
+    device_graph = Y2Partitioner::DeviceGraphs.instance.current
+    Y2Storage::BlkDevice.find_by_name(device_graph, dev_name).filesystem
   end
 
   let(:dev_name) { "/dev/sda2" }

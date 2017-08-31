@@ -19,14 +19,14 @@ module Y2Partitioner
       end
 
       def title
-        _("Partitioner")
+        _("Expert Partitioner")
       end
 
       def contents
         MarginBox(
           0.5,
           0.5,
-          Widgets::OverviewTreePager.new(DeviceGraphs.instance.current)
+          Widgets::OverviewTreePager.new
         )
       end
 

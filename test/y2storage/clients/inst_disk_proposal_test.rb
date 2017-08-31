@@ -313,12 +313,40 @@ describe Y2Storage::Clients::InstDiskProposal do
       context "if the expert partitioner returns :back" do
         let(:result) { :back }
 
-        it "opens a new proposal dialog again with the same values" do
-          expect(Y2Storage::Dialogs::Proposal).to receive(:new).once.ordered
-            .and_return(proposal_dialog)
-          expect(Y2Storage::Dialogs::Proposal).to receive(:new).once.ordered
-            .with(proposal, devicegraph).and_return(second_proposal_dialog)
-          client.run
+        before do
+          allow(storage_manager).to receive(:staging_changed?).and_return change
+        end
+
+        context "and the staging devicegraph is not a direct copy of probed" do
+          let(:change) { true }
+
+          it "opens a new proposal dialog again with the same values" do
+            expect(Y2Storage::Dialogs::Proposal).to receive(:new).once.ordered
+              .and_return(proposal_dialog)
+            expect(Y2Storage::Dialogs::Proposal).to receive(:new).once.ordered
+              .with(proposal, devicegraph).and_return(second_proposal_dialog)
+            client.run
+          end
+        end
+
+        context "and the staging devicegraph is a direct copy of probed" do
+          let(:change) { false }
+
+          before do
+            allow(Y2Storage::GuidedProposal).to receive(:initial)
+              .and_return(initial_proposal, new_proposal)
+          end
+
+          let(:new_proposal) { double("Y2Storage::GuidedProposal", devices: new_devicegraph) }
+          let(:new_devicegraph) { double("Y2Storage::Devicegraph") }
+
+          it "opens a new proposal dialog with a new proposal" do
+            expect(Y2Storage::Dialogs::Proposal).to receive(:new).once.ordered
+              .and_return(proposal_dialog)
+            expect(Y2Storage::Dialogs::Proposal).to receive(:new).once.ordered
+              .with(new_proposal, new_devicegraph).and_return(second_proposal_dialog)
+            client.run
+          end
         end
       end
 

@@ -29,6 +29,11 @@ module Y2Storage
     class GuidedSetup
       # Dialog to select filesystems.
       class SelectFilesystem < Base
+        def initialize(*params)
+          textdomain "storage"
+          super
+        end
+
         def root_filesystem_handler
           filesystem = Filesystems::Type.find(widget_value(:root_filesystem))
           widget_update(:snapshots, filesystem.is?(:btrfs), attr: :Enabled)

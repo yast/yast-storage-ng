@@ -28,6 +28,11 @@ module Y2Storage
     class GuidedSetup
       # Dialog for disks selection for the proposal.
       class SelectDisks < Base
+        def initialize(*params)
+          textdomain "storage"
+          super
+        end
+
         # This dialog has to be skipped when there is only
         # one candidate disk for installing.
         def skip?

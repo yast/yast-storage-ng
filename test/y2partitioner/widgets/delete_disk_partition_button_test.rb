@@ -8,15 +8,15 @@ describe Y2Partitioner::Widgets::DeleteDiskPartitionButton do
     devicegraph_stub("mixed_disks_btrfs.yml")
   end
 
-  let(:device) { Y2Storage::BlkDevice.find_by_name(devicegraph, device_name) }
+  let(:device) { Y2Storage::BlkDevice.find_by_name(device_graph, device_name) }
 
   let(:device_name) { "/dev/sda2" }
 
-  let(:table) { double("table") }
+  let(:table) { double("table", selected_device: device) }
 
-  let(:devicegraph) { Y2Partitioner::DeviceGraphs.instance.current }
+  let(:device_graph) { Y2Partitioner::DeviceGraphs.instance.current }
 
-  subject { described_class.new(device: device, table: table, device_graph: devicegraph) }
+  subject { described_class.new(device: device, table: table, device_graph: device_graph) }
 
   include_examples "CWM::PushButton"
 
@@ -65,7 +65,7 @@ describe Y2Partitioner::Widgets::DeleteDiskPartitionButton do
 
         it "deletes the device" do
           subject.handle
-          expect(Y2Storage::BlkDevice.find_by_name(devicegraph, device_name)).to be_nil
+          expect(Y2Storage::BlkDevice.find_by_name(device_graph, device_name)).to be_nil
         end
 
         it "refresh btrfs subvolumes shadowing" do

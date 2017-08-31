@@ -1,12 +1,11 @@
 require "cwm/widget"
 require "cwm/tree_pager"
-
-require "y2partitioner/device_graphs"
 require "y2partitioner/icons"
+require "y2partitioner/device_graphs"
 require "y2partitioner/sequences/add_partition"
 require "y2partitioner/sequences/edit_blk_device"
 require "y2partitioner/widgets/delete_disk_partition_button"
-require "y2partitioner/widgets/disk_table"
+require "y2partitioner/widgets/blk_devices_table"
 require "y2partitioner/widgets/disk_bar_graph"
 require "y2partitioner/widgets/disk_description"
 
@@ -14,16 +13,18 @@ module Y2Partitioner
   module Widgets
     # A Page for a disk: contains {DiskTab} and {PartitionsTab}
     class DiskPage < CWM::Page
-      def initialize(disk_name, pager)
-        textdomain "storage"
-        @disk_name = disk_name
-        @pager = pager
-        self.widget_id = "disk:" + disk_name
-      end
+      attr_reader :disk
 
-      def disk
-        dg = DeviceGraphs.instance.current
-        Y2Storage::Disk.find_by_name(dg, @disk_name)
+      # Constructor
+      #
+      # @param disk [Y2Storage::Disk]
+      # @param pager [CWM::TreePager]
+      def initialize(disk, pager)
+        textdomain "storage"
+
+        @disk = disk
+        @pager = pager
+        self.widget_id = "disk:" + disk.name
       end
 
       # @macro seeAbstractWidget
@@ -38,12 +39,12 @@ module Y2Partitioner
           Left(
             HBox(
               Image(icon, ""),
-              Heading(format(_("Hard Disk: %s"), @disk_name))
+              Heading(format(_("Hard Disk: %s"), disk.name))
             )
           ),
           CWM::Tabs.new(
             DiskTab.new(disk),
-            PartitionsTab.new(@disk_name, @pager)
+            PartitionsTab.new(disk, @pager)
           )
         )
       end
@@ -51,8 +52,12 @@ module Y2Partitioner
 
     # A Tab for a disk
     class DiskTab < CWM::Tab
+      # Constructor
+      #
+      # @param disk [Y2Storage::Disk]
       def initialize(disk)
         textdomain "storage"
+
         @disk = disk
       end
 
@@ -70,66 +75,17 @@ module Y2Partitioner
 
     # A Tab for disk partitions
     class PartitionsTab < CWM::Tab
-      # Add a partition
-      class AddButton < CWM::PushButton
-        # Y2Storage::Disk
-        def initialize(disk_name)
-          textdomain "storage"
-          @disk_name = disk_name
-        end
+      attr_reader :disk
 
-        def label
-          _("Add...")
-        end
-
-        def handle
-          res = Sequences::AddPartition.new(@disk_name).run
-          res == :finish ? :redraw : nil
-        end
-      end
-
-      # Edit a partition
-      class EditButton < CWM::PushButton
-        # Constructor
-        #
-        # @param disk [Y2Storage::Disk]
-        # @param table [Y2Partitioner::Widgets::BlkDevicesTable]
-        def initialize(disk, table)
-          textdomain "storage"
-          @disk = disk
-          @table = table
-        end
-
-        def label
-          _("Edit...")
-        end
-
-        def handle
-          if @table.items.empty? || !@table.value
-            Yast::Popup.Error(_("There are no partitions to edit."))
-            return nil
-          end
-
-          name = @table.value[/table:partition:(.*)/, 1]
-          partition = @disk.partitions.detect { |p| p.name == name }
-
-          Sequences::EditBlkDevice.new(partition).run
-
-          # sym == :next ? :redraw : nil
-          # must redraw because we've replaced the original dialog contents!
-          :redraw
-        end
-      end
-
-      def initialize(disk_name, pager)
+      # Constructor
+      #
+      # @param disk [Y2Storage::Disk]
+      # @param pager [CWM::TreePager]
+      def initialize(disk, pager)
         textdomain "storage"
-        @disk_name = disk_name
-        @pager = pager
-      end
 
-      def disk
-        dg = DeviceGraphs.instance.current
-        Y2Storage::Disk.find_by_name(dg, @disk_name)
+        @disk = disk
+        @pager = pager
       end
 
       def initial
@@ -143,19 +99,81 @@ module Y2Partitioner
 
       # @macro seeCustomWidget
       def contents
-        @partitions_table = DiskTable.new(disk.partitions, @pager)
+        table = BlkDevicesTable.new(devices, @pager)
         @contents ||= VBox(
           DiskBarGraph.new(disk),
-          @partitions_table,
+          table,
           HBox(
-            AddButton.new(@disk_name),
-            EditButton.new(disk, @partitions_table),
+            AddButton.new(disk, table),
+            EditButton.new(disk, table),
             DeleteDiskPartitionButton.new(
               device_graph: DeviceGraphs.instance.current,
-              table:        @partitions_table
+              table:        table
             )
           )
         )
+      end
+
+    private
+
+      def devices
+        disk.partitions
+      end
+
+      # Add a partition
+      class AddButton < CWM::PushButton
+        # Constructor
+        #
+        # @param disk [Y2Storage::Disk]
+        # @param table [BlkDevicesTable]
+        def initialize(disk, table)
+          textdomain "storage"
+
+          @disk = disk
+          @table = table
+        end
+
+        def label
+          _("Add...")
+        end
+
+        def handle
+          res = Sequences::AddPartition.new(@disk.name).run
+          res == :finish ? :redraw : nil
+        end
+      end
+
+      # Edit a partition
+      class EditButton < CWM::PushButton
+        # Constructor
+        #
+        # @param disk [Y2Storage::Disk]
+        # @param table [BlkDevicesTable]
+        def initialize(disk, table)
+          textdomain "storage"
+
+          @disk = disk
+          @table = table
+        end
+
+        def label
+          _("Edit...")
+        end
+
+        def handle
+          partition = @table.selected_device
+
+          if partition.nil?
+            Yast::Popup.Error(_("There are no partitions to edit."))
+            return nil
+          end
+
+          Sequences::EditBlkDevice.new(partition).run
+
+          # sym == :next ? :redraw : nil
+          # must redraw because we've replaced the original dialog contents!
+          :redraw
+        end
       end
     end
   end

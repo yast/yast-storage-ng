@@ -43,11 +43,8 @@ module Y2Storage
         @devicegraph = storage_manager.staging
         @proposal = storage_manager.proposal
         return if @proposal || storage_manager.staging_changed?
-        # If the staging devicegraph has never been set, try to make an
-        # initial proposal. When it is not possible a proposal using current
-        # settings, some attempts could be done by changing the settings.
-        @proposal = GuidedProposal.initial(settings: new_settings)
-        @devicegraph = @proposal.devices
+        # If the staging devicegraph has never been set, try to make an initial proposal
+        create_initial_proposal
       end
 
       def run
@@ -110,6 +107,10 @@ module Y2Storage
         when :next
           @proposal = nil
           @devicegraph = dialog.device_graph
+        when :back
+          # Try to create a proposal when staging has been reseted to probed
+          # (i.e., after rescannig devices)
+          create_initial_proposal unless storage_manager.staging_changed?
         end
       end
 
@@ -133,6 +134,15 @@ module Y2Storage
 
       def probed_analyzer
         storage_manager.probed_disk_analyzer
+      end
+
+      # When it is not possible a proposal using current settings, some attempts
+      # could be done by changing the settings
+      #
+      # @see GuidedProposal.initial
+      def create_initial_proposal
+        @proposal = GuidedProposal.initial(settings: new_settings)
+        @devicegraph = @proposal.devices
       end
 
       # A new storage proposal using probed and its disk analyzer. Used to

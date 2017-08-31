@@ -1,17 +1,21 @@
 require "cwm/widget"
 require "cwm/tree_pager"
-
-require "y2partitioner/device_graphs"
 require "y2partitioner/icons"
+require "y2partitioner/device_graphs"
 require "y2partitioner/widgets/md_description"
-require "y2partitioner/widgets/md_used_devices_table"
+require "y2partitioner/widgets/blk_devices_table"
 
 module Y2Partitioner
   module Widgets
     # A Page for a md raid device: contains {MdTab} and {MdUsedDevicesTab}
     class MdRaidPage < CWM::Page
+      # Constructor
+      #
+      # @param md [Y2Storage::Md]
+      # @param pager [CWM::TreePager]
       def initialize(md, pager)
         textdomain "storage"
+
         @md = md
         @pager = pager
         self.widget_id = "md:" + @md.name
@@ -42,6 +46,9 @@ module Y2Partitioner
 
     # A Tab for a Md raid description
     class MdTab < CWM::Tab
+      # Constructor
+      #
+      # @param md [Y2Storage::Md]
       def initialize(md)
         textdomain "storage"
         @md = md
@@ -65,6 +72,10 @@ module Y2Partitioner
 
     # A Tab for devices used by given md raid device
     class MdUsedDevicesTab < CWM::Tab
+      # Constructor
+      #
+      # @param md [Y2Storage::Md]
+      # @param pager [CWM::TreePager]
       def initialize(md, pager)
         textdomain "storage"
         @md = md
@@ -78,7 +89,23 @@ module Y2Partitioner
 
       # @macro seeCustomWidget
       def contents
-        @contents ||= VBox(MdUsedDevicesTable.new(@md, @pager))
+        @contents ||= VBox(table)
+      end
+
+    private
+
+      # Returns a table with all devices used by a MD raid
+      #
+      # @return [BlkDevicesTable]
+      def table
+        return @table unless @table.nil?
+        @table = BlkDevicesTable.new(devices, @pager)
+        @table.show_columns(:device, :size, :format, :encrypted, :type)
+        @table
+      end
+
+      def devices
+        @md.devices
       end
     end
   end

@@ -50,8 +50,8 @@ module Y2Partitioner
     private
 
       def delete_subvolume(subvolume)
-        devicegraph = DeviceGraphs.instance.current
-        filesystem.delete_btrfs_subvolume(devicegraph, subvolume.path)
+        device_graph = DeviceGraphs.instance.current
+        filesystem.delete_btrfs_subvolume(device_graph, subvolume.path)
       end
 
       def filesystem

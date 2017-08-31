@@ -11,8 +11,8 @@ describe Y2Partitioner::Widgets::BtrfsSubvolumes do
   subject { described_class.new(filesystem) }
 
   let(:filesystem) do
-    devicegraph = Y2Partitioner::DeviceGraphs.instance.current
-    devicegraph.filesystems.detect { |f| f.type.is?(:btrfs) }
+    device_graph = Y2Partitioner::DeviceGraphs.instance.current
+    device_graph.filesystems.detect { |f| f.type.is?(:btrfs) }
   end
 
   include_examples "CWM::CustomWidget"

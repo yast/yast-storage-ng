@@ -1,6 +1,6 @@
 require "yast"
-require "y2partitioner/widgets/btrfs_table"
 require "y2partitioner/dialogs/btrfs_subvolumes"
+require "y2partitioner/widgets/blk_devices_table"
 
 Yast.import "Popup"
 
@@ -10,7 +10,7 @@ module Y2Partitioner
     class BtrfsEditButton < CWM::PushButton
       attr_reader :table
 
-      # @param table [Widgets::BtrfsTable]
+      # @param table [Widgets::BlkDevicesTable]
       def initialize(table)
         textdomain "storage"
         @table = table
@@ -21,10 +21,11 @@ module Y2Partitioner
         _("Edit...")
       end
 
-      # Opens a dialog to manage the list of subvolumes. In case of there is no
-      # selected table row, it shows an error.
+      # Opens a dialog to manage the list of subvolumes of the selected device
+      #
+      # @note In case of there is no selected table row, it shows an error.
       def handle
-        filesystem = table.selected_filesystem
+        filesystem = selected_filesystem
 
         if filesystem.nil?
           Yast::Popup.Error(_("There is no filesystem selected to edit."))
@@ -33,6 +34,16 @@ module Y2Partitioner
         end
 
         nil
+      end
+
+    private
+
+      # Filesystem of the currently selected device
+      #
+      # @return [Y2Storage::Filesystems::BlkFilesystem, nil]
+      def selected_filesystem
+        device = table.selected_device
+        device.nil? ? nil : device.filesystem
       end
     end
   end

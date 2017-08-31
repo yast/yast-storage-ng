@@ -47,7 +47,7 @@ module Y2Storage
     PROPOSAL_ID = "storage_proposal"
 
     def initialize
-      textdomain("storage-ng")
+      textdomain("storage")
       reset
     end
 
