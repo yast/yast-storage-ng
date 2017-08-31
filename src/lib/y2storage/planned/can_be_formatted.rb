@@ -54,6 +54,7 @@ module Y2Storage
       def initialize_can_be_formatted
         @subvolumes = []
         @reformat = false
+        @use_snapshots = false
       end
 
       # Creates a filesystem for the planned device on the specified real
@@ -113,6 +114,22 @@ module Y2Storage
       # @return [Boolean]
       def reformat?
         reformat
+      end
+
+      # Set the use_snapshots flag, i.e. if the device should use snapshots.
+      # Notice that this is only supported for Btrfs that is newly created, and
+      # only during installation.
+      #
+      # @param val [Boolean] use snapshots on this device?
+      def use_snapshots=(val)
+        @use_snapshots = (btrfs? && mount_point == "/") ? val : false
+      end
+
+      # Check if this device should use snapshots.
+      #
+      # @return [Boolean]
+      def use_snapshots?
+        @use_snapshots
       end
 
     protected
