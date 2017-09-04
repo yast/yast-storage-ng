@@ -174,6 +174,36 @@ describe Y2Storage::GuidedProposal do
           expect(subvolumes.map(&:path)).not_to include(*x86_subvolumes)
         end
       end
+
+      context "when snapshots are enabled in the settings" do
+        before { settings.use_snapshots = true }
+
+        it "enables snapshots for the root filesystem" do
+          subject.propose
+          expect(root_filesystem.configure_snapper).to eq true
+        end
+      end
+
+      context "when snapshots are disabled in the settings" do
+        before { settings.use_snapshots = false }
+
+        it "does not enable snapshots for the root filesystem" do
+          subject.propose
+          expect(root_filesystem.configure_snapper).to eq false
+        end
+      end
+    end
+
+    context "when snapshots are enabled in the settings but root filesystem is not BtrFS" do
+      before do
+        settings.root_filesystem_type = Y2Storage::Filesystems::Type::EXT4
+        settings.use_snapshots = true
+      end
+
+      it "does not try to enable snapshots" do
+        expect { subject.propose }.to_not raise_error
+        expect(root_filesystem.respond_to?(:configure_snapper)).to eq false
+      end
     end
   end
 end

@@ -27,6 +27,10 @@ require "y2storage/fake_device_factory"
 require "y2storage/devicegraph"
 require "y2storage/disk_analyzer"
 require "y2storage/callbacks/activate.rb"
+require "yast2/fs_snapshot"
+
+Yast.import "Mode"
+Yast.import "Stage"
 
 module Y2Storage
   # Singleton class to provide access to the libstorage Storage object and
@@ -187,6 +191,7 @@ module Y2Storage
     #
     # Beware: this method can cause data loss
     def commit
+      Yast2::FsSnapshot.configure_on_install = configure_snapper?
       storage.calculate_actiongraph
       # TODO: add proper callbacks (CommitCallbacks class)
       storage.commit
@@ -267,6 +272,31 @@ module Y2Storage
       @staging_revision_after_probing = 0
     end
 
+    # Whether the final steps to configure Snapper should be performed by YaST
+    # at the end of the installation process.
+    #
+    # @return [Boolean]
+    def configure_snapper?
+      if !Yast::Mode.installation || !Yast::Stage.initial
+        log.info "Not a fresh installation. Don't configure Snapper."
+        return false
+      end
+
+      root = staging.filesystems.find(&:root?)
+      if !root
+        log.info "No root filesystem in staging. Don't configure Snapper."
+        return false
+      end
+
+      if !root.respond_to?(:configure_snapper)
+        log.info "The root filesystem can't configure snapper."
+        return false
+      end
+
+      log.info "Configure Snapper? #{root.configure_snapper}"
+      root.configure_snapper
+    end
+
     # Class methods
     class << self
       # Returns the singleton instance.
@@ -302,7 +332,7 @@ module Y2Storage
       end
 
       # Creates the singleton instance for testing.
-      # This instance avoids to preform real probing or commit.
+      # This instance avoids to perform real probing or commit.
       #
       # @return [StorageManager] singleton instance
       def create_test_instance

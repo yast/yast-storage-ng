@@ -67,6 +67,14 @@ module Y2Storage
       #   @return [BtrfsSubvolume, nil] nil if it does not find a subvolume with this path
       storage_forward :find_btrfs_subvolume_by_path, as: "BtrfsSubvolume"
 
+      # @!attribute configure_snapper
+      #   Whether libstorage-ng should perform the initial steps to configure
+      #   Snapper on this filesystem
+      #
+      #   @return [Boolean]
+      storage_forward :configure_snapper
+      storage_forward :configure_snapper=
+
       # Only Btrfs should support subvolumes
       def supports_btrfs_subvolumes?
         true

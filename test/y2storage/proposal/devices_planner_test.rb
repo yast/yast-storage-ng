@@ -349,6 +349,11 @@ describe Y2Storage::Proposal::DevicesPlanner do
             )
           )
         end
+
+        it "does not plan snapshots for the root device" do
+          root = subject.planned_devices(:desired).find(&:root?)
+          expect(root.snapshots?).to eq false
+        end
       end
 
       context "if Btrfs is used" do
@@ -389,6 +394,11 @@ describe Y2Storage::Proposal::DevicesPlanner do
               )
             )
           end
+
+          it "does not plan snapshots for the root device" do
+            root = subject.planned_devices(:desired).find(&:root?)
+            expect(root.snapshots?).to eq false
+          end
         end
 
         context "and snapshots are active" do
@@ -414,6 +424,11 @@ describe Y2Storage::Proposal::DevicesPlanner do
                 filesystem_type: btrfs
               )
             )
+          end
+
+          it "plans snapshots for the root device" do
+            root = subject.planned_devices(:desired).find(&:root?)
+            expect(root.snapshots?).to eq true
           end
         end
 

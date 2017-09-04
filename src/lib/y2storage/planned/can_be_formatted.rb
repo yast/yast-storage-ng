@@ -54,6 +54,7 @@ module Y2Storage
       def initialize_can_be_formatted
         @subvolumes = []
         @reformat = false
+        @snapshots = false
       end
 
       # Creates a filesystem for the planned device on the specified real
@@ -115,15 +116,32 @@ module Y2Storage
         reformat
       end
 
+      # Whether activation and configurion of Btrfs snapshots is wanted, if
+      # possible, in the resulting filesystem.
+      #
+      # @see #snapshots?
+      attr_writer :snapshots
+
+      # Whether Btrfs snapshots should be activated in the resulting filesystem.
+      #
+      # @return [Boolean] true if snapshots are requested (see {#snapshots=}) and
+      #   possible (so far, only for Btrfs root filesystems).
+      def snapshots?
+        @snapshots && btrfs? && mount_point == "/"
+      end
+
     protected
 
       # Creates subvolumes in the previously created filesystem that is placed
       # in the final device.
       #
-      # This also sets other Btrfs attributes, like the default subvolume.
+      # This also sets other Btrfs attributes, like the default subvolume or
+      # Filesystems::Btrfs#configure_snapper
       #
       # @param filesystem [Filesystems::BlkFilesystem]
       def btrfs_setup(filesystem)
+        filesystem.configure_snapper = snapshots? if filesystem.respond_to?(:configure_snapper=)
+
         return unless filesystem.supports_btrfs_subvolumes?
         # If a default subvolume is configured (in control.xml), create it; if not,
         # use the toplevel subvolume that is implicitly created by mkfs.btrfs.
