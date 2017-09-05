@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Tue Sep  5 17:24:37 CEST 2017 - schubi@suse.de
+
+- AutoYaST: Handle sizes without unit correctly. (bnc#1056168)
+- 3.3.8
+
+-------------------------------------------------------------------
 Tue Sep  5 06:00:08 UTC 2017 - ancor@suse.com
 
 - Create Btrfs in the guided setup if requested to do so (part of
