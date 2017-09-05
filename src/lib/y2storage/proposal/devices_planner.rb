@@ -173,23 +173,32 @@ module Y2Storage
           else
             root_vol.max_size
           end
-        adjust_btrfs_sizes!(root_vol)
-        init_btrfs_subvolumes!(root_vol)
+        setup_btrfs(root_vol)
         root_vol
       end
 
-      # Sizes have to be adjusted only when using snapshots
-      def adjust_btrfs_sizes!(planned_device)
-        return if !planned_device.btrfs? || !settings.use_snapshots
+      def setup_btrfs(planned_vol)
+        return unless planned_vol.btrfs?
 
-        log.info "Increasing root filesystem size for snapshots"
+        if settings.use_snapshots && planned_vol.root?
+          log.info "Enabling snapshots for '/'"
+          planned_vol.snapshots = true
+          adjust_btrfs_sizes(planned_vol)
+        end
+
+        init_btrfs_subvolumes(planned_vol)
+      end
+
+      # Sizes have to be adjusted only when using snapshots
+      def adjust_btrfs_sizes(planned_device)
         multiplicator = 1.0 + settings.btrfs_increase_percentage / 100.0
+        log.info "Increasing root filesystem size for snapshots (#{multiplicator})"
         planned_device.min_size *= multiplicator
         planned_device.max_size *= multiplicator
       end
 
-      def init_btrfs_subvolumes!(planned_device)
-        return unless planned_device.btrfs? && settings.subvolumes
+      def init_btrfs_subvolumes(planned_device)
+        return unless settings.subvolumes
 
         planned_device.default_subvolume = settings.btrfs_default_subvolume || ""
         planned_device.subvolumes = settings.subvolumes

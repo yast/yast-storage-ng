@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Tue Sep  5 06:00:08 UTC 2017 - ancor@suse.com
+
+- Create Btrfs in the guided setup if requested to do so (part of
+  fate#318196).
+- 3.3.7
+
+-------------------------------------------------------------------
 Wed Aug 30 15:44:35 UTC 2017 - jlopez@suse.com
 
 - Added overall summary for the expert partitioner.

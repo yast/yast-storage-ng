@@ -16,15 +16,15 @@
 #
 
 Name:		yast2-storage-ng
-Version:        3.3.6
+Version:        3.3.7
 Release:	0
 BuildArch:	noarch
 
 BuildRoot:	%{_tmppath}/%{name}-%{version}-build
 Source:		%{name}-%{version}.tar.bz2
 
-# CWM::Dialog
-Requires:	yast2 >= 3.2.40
+# Yast2::FsSnapshots.configure_on_install=
+Requires:	yast2 >= 4.0.3
 Requires:	yast2-ruby-bindings
 Requires:	libstorage-ng-ruby
 
@@ -32,8 +32,8 @@ BuildRequires:	update-desktop-files
 BuildRequires:	libstorage-ng-ruby
 BuildRequires:	yast2-ruby-bindings
 BuildRequires:	yast2-devtools
-# CWM::Dialog and RSpec.shared_examples for CWM
-BuildRequires:	yast2 >= 3.2.40
+# Yast2::FsSnapshots.configure_on_install=
+BuildRequires:	yast2 >= 4.0.3
 BuildRequires:	rubygem(yast-rake)
 BuildRequires:	rubygem(rspec)
 

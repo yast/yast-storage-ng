@@ -32,6 +32,7 @@ describe Y2Storage::Clients::InstPrepdisk do
     before do
       Y2Storage::StorageManager.create_test_instance
       Y2Storage::StorageManager.instance.probe
+      allow(storage_manager).to receive(:commit)
       allow(Yast::Installation).to receive(:destdir).and_return "/dest"
       allow(Yast::SCR).to receive(:Execute).and_return(true)
       allow(Yast::Mode).to receive(:update).and_return(mode == :update)

@@ -199,7 +199,11 @@ describe Y2Storage::StorageManager do
       described_class.create_test_instance
       allow(manager.storage).to receive(:calculate_actiongraph)
       allow(manager.storage).to receive(:commit)
+      allow(Yast::Mode).to receive(:installation).and_return(mode == :installation)
+      allow(Yast::Stage).to receive(:initial).and_return(mode == :installation)
     end
+
+    let(:mode) { :normal }
 
     it "delegates calculation of the needed actions to libstorage" do
       expect(manager.storage).to receive(:calculate_actiongraph)
@@ -209,6 +213,61 @@ describe Y2Storage::StorageManager do
     it "commits the changes to libstorage" do
       expect(manager.storage).to receive(:commit)
       manager.commit
+    end
+
+    context "during installation" do
+      let(:mode) { :installation }
+      let(:staging) { double("Y2Storage::Devicegraph", filesystems: filesystems) }
+      let(:filesystems) { [root_fs, another_fs] }
+      let(:root_fs) { double("Y2Storage::BlkFilesystem", root?: true) }
+      let(:another_fs) { double("Y2Storage::BlkFilesystem", root?: false) }
+
+      before do
+        allow(manager).to receive(:staging).and_return staging
+      end
+
+      context "if the root filesystem does not respond to #configure_snapper" do
+        it "sets FsSnapshot.configure_on_install? to false" do
+          manager.commit
+          expect(Yast2::FsSnapshot.configure_on_install?).to eq false
+        end
+      end
+
+      context "if the root filesystem is set to configure snapper" do
+        before { allow(root_fs).to receive(:configure_snapper).and_return true }
+
+        it "sets FsSnapshot.configure_on_install? to true" do
+          manager.commit
+          expect(Yast2::FsSnapshot.configure_on_install?).to eq true
+        end
+      end
+
+      context "if the root filesystem is set to not configure snapper" do
+        before { allow(root_fs).to receive(:configure_snapper).and_return false }
+
+        it "sets FsSnapshot.configure_on_install? to false" do
+          manager.commit
+          expect(Yast2::FsSnapshot.configure_on_install?).to eq false
+        end
+      end
+
+      context "if there is no root filesystem" do
+        let(:filesystems) { [another_fs] }
+
+        it "sets FsSnapshot.configure_on_install? to false" do
+          manager.commit
+          expect(Yast2::FsSnapshot.configure_on_install?).to eq false
+        end
+      end
+    end
+
+    context "in normal mode" do
+      let(:mode) { :normal }
+
+      it "sets FsSnapshot.configure_on_install? to false" do
+        manager.commit
+        expect(Yast2::FsSnapshot.configure_on_install?).to eq false
+      end
     end
   end
 

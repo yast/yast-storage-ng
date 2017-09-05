@@ -37,6 +37,12 @@ module Y2Storage
       # Initializations of the mixin, to be called from the class constructor.
       def initialize_can_be_mounted
       end
+
+      # Whether the device will be mounted as root
+      # @return [Boolean]
+      def root?
+        mount_point == Mountable::ROOT_PATH
+      end
     end
   end
 end
