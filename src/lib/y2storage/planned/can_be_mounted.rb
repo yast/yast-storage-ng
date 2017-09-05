@@ -41,7 +41,7 @@ module Y2Storage
       # Whether the device will be mounted as root
       # @return [Boolean]
       def root?
-        mount_point == "/"
+        mount_point == Mountable::ROOT_PATH
       end
     end
   end

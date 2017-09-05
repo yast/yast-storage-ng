@@ -127,7 +127,7 @@ module Y2Storage
       # @return [Boolean] true if snapshots are requested (see {#snapshots=}) and
       #   possible (so far, only for Btrfs root filesystems).
       def snapshots?
-        @snapshots && btrfs? && mount_point == "/"
+        @snapshots && btrfs? && root?
       end
 
     protected

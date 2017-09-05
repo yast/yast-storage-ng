@@ -191,6 +191,7 @@ module Y2Storage
     #
     # Beware: this method can cause data loss
     def commit
+      # Tell FsSnapshot whether Snapper should be configured later
       Yast2::FsSnapshot.configure_on_install = configure_snapper?
       storage.calculate_actiongraph
       # TODO: add proper callbacks (CommitCallbacks class)
