@@ -301,12 +301,9 @@ module Y2Storage
       # @return [[number,unit]] Number and unit
       def size_to_components(size_spec)
         normalized_size = size_spec.to_s.strip
-        if INTEGER_SIZE_REGEXP.match(normalized_size)
-          return [normalized_size.to_f, "B"]
-        else
-          number, unit = INTEGER_SIZE_REGEXP_WITH_UNIT.match(normalized_size).values_at(1, 2)
-          return [number.to_f, unit]
-        end
+        return [normalized_size.to_f, "B"] if INTEGER_SIZE_REGEXP.match(normalized_size)
+        number, unit = INTEGER_SIZE_REGEXP_WITH_UNIT.match(normalized_size).values_at(1, 2)
+        [number.to_f, unit]
       end
 
       # @param devicegraph [Devicegraph] Devicegraph to search for the partition to reuse
