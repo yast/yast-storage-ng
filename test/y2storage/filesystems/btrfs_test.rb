@@ -262,6 +262,7 @@ describe Y2Storage::Filesystems::Btrfs do
     context "when a subvolume spec is not for the current arch" do
       before do
         allow(Yast::Arch).to receive(:x86_64).and_return(true)
+        allow(Yast::Arch).to receive(:s390).and_return(false)
       end
 
       let(:spec1) { Y2Storage::SubvolSpecification.new("foo") }
