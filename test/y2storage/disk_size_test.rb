@@ -459,6 +459,11 @@ describe Y2Storage::DiskSize do
       expect(described_class.parse("10 G").to_i).to eq(10 * 1000**3)
     end
 
+    it "should not be case sensitive" do
+      expect(described_class.parse("10k").to_i).to eq(10 * 1000)
+      expect(described_class.parse("10Kb").to_i).to eq(10 * 1000)
+    end
+
     context "when using the legacy_unit flag" do
       let(:legacy) { true }
 

@@ -390,11 +390,15 @@ module Y2Storage
         number
       end
 
+      # Include all units for comparison
+      ALL_UNITS = (UNITS + DEPRECATED_UNITS + SI_UNITS).freeze
+
       def unit(str)
         unit = str.gsub(number(str), "").strip
-        if !unit.empty? && !(UNITS + SI_UNITS + DEPRECATED_UNITS).include?(unit)
-          raise TypeError, "Bad disk size unit: #{str}"
-        end
+        return "" if unit.empty?
+
+        unit = ALL_UNITS.find { |v| v.casecmp(unit).zero? }
+        raise TypeError, "Bad disk size unit: #{str}" if unit.nil?
         unit
       end
 
