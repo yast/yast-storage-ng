@@ -1,7 +1,7 @@
 -------------------------------------------------------------------
 Wed Sep  6 14:59:46 UTC 2017 - igonzalezsosa@suse.com
 
-- Ignore case when parsing sizes (bsc#1056715)
+- Ignore case when parsing sizes (bsc#1056715 and bsc#1055913).
 - 3.3.9
 
 -------------------------------------------------------------------
