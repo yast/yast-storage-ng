@@ -101,6 +101,18 @@ describe Y2Storage::Proposal::AutoinstDevicesPlanner do
         { "mount" => "/", "filesystem" => "ext4", "size" => size }
       end
 
+      context "when a number is given only" do
+        let(:disk_size) { Y2Storage::DiskSize.B(10) }
+        let(:size) { "10" }
+
+        it "sets the size according to that number and using unit B" do
+          devices = planner.planned_devices(drives_map)
+          root = devices.find { |d| d.mount_point == "/" }
+          expect(root.min_size).to eq(disk_size)
+          expect(root.max_size).to eq(disk_size)
+        end
+      end
+
       context "when a number+unit is given" do
         let(:disk_size) { 5.GiB }
         let(:size) { "5GB" }

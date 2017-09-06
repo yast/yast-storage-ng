@@ -288,7 +288,8 @@ module Y2Storage
 
       # Regular expression to detect which kind of size is being used in an
       # AutoYaST <size> element
-      SIZE_REGEXP = /([\d,.]+)?([a-zA-Z%]+)/
+      INTEGER_SIZE_REGEXP = /^(\d)+$/
+      INTEGER_SIZE_REGEXP_WITH_UNIT = /([\d,.]+)?([a-zA-Z%]+)/
 
       # Extracts number and unit from an AutoYaST size specification
       #
@@ -300,7 +301,8 @@ module Y2Storage
       # @return [[number,unit]] Number and unit
       def size_to_components(size_spec)
         normalized_size = size_spec.to_s.strip
-        number, unit = SIZE_REGEXP.match(normalized_size).values_at(1, 2)
+        return [normalized_size.to_f, "B"] if INTEGER_SIZE_REGEXP.match(normalized_size)
+        number, unit = INTEGER_SIZE_REGEXP_WITH_UNIT.match(normalized_size).values_at(1, 2)
         [number.to_f, unit]
       end
 
