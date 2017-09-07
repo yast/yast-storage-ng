@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Thu Sep  7 13:45:07 UTC 2017 - jlopez@suse.com
+
+- Fix partitioner bug creating partition with custom size
+  (bsc#1057049)
+- 3.3.12
+
+-------------------------------------------------------------------
 Thu Sep  7 08:34:59 UTC 2017 - ancor@suse.com
 
 - AutoYaST: support for Btrfs snapshots (part of fate#318196).
