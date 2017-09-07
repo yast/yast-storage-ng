@@ -3,20 +3,31 @@ require_relative "../test_helper"
 require "y2partitioner/format_mount/base"
 
 describe Y2Partitioner::FormatMount::Base do
-  let(:subject) { described_class.new(partition, options) }
-  let(:options) { Y2Partitioner::FormatMount::Options.new }
-  let(:filesystem_type) { instance_double(Y2Storage::Filesystems::Type) }
-  let(:partition) do
-    instance_double(
-      Y2Storage::Partition,
-      name:       "/dev/test_partition",
-      basename:   "test_partition",
-      id:         Y2Storage::PartitionId::LVM,
-      type:       "primary",
-      filesystem: filesystem
-    )
+  before do
+    devicegraph_stub("mixed_disks_btrfs.yml")
+
+    allow(options).to receive(:format).and_return(format)
+    allow(options).to receive(:encrypt).and_return(encrypt)
+    allow(options).to receive(:password).and_return(password)
+    allow(options).to receive(:filesystem_type).and_return(filesystem_type)
+    allow(options).to receive(:mount).and_return(mount)
+    allow(options).to receive(:mount_point).and_return(mount_point)
   end
-  let(:filesystem) { instance_double(Y2Storage::Filesystems::BlkFilesystem) }
+
+  let(:subject) { described_class.new(partition, options) }
+
+  let(:options) { Y2Partitioner::FormatMount::Options.new }
+
+  let(:devicegraph) { Y2Storage::StorageManager.instance.staging }
+  let(:dev_name) { "/dev/sda2" }
+  let(:partition) { Y2Storage::BlkDevice.find_by_name(devicegraph, dev_name) }
+
+  let(:format) { false }
+  let(:encrypt) { false }
+  let(:password) { "LOTP_password" }
+  let(:filesystem_type) { Y2Storage::Filesystems::Type::EXT4 }
+  let(:mount) { false }
+  let(:mount_point) { "" }
 
   context "#apply_options!" do
     before do
@@ -41,87 +52,71 @@ describe Y2Partitioner::FormatMount::Base do
 
       subject.apply_options!
     end
-
   end
 
   context "#apply_format_options!" do
-    let(:encrypted) { instance_double(Y2Storage::Encryption) }
+    context "when the partition has not been set to be formatted or encrypted" do
+      let(:format) { false }
+      let(:encrypt) { false }
 
-    before do
-      allow(partition).to receive(:remove_descendants)
-      allow(partition).to receive(:create_filesystem).and_return(created_filesystem)
-      allow(partition).to receive(:create_encryption)
-      allow(created_filesystem).to receive(:supports_btrfs_subvolumes?).and_return(btrfs)
-    end
-
-    let(:created_filesystem) { instance_double(Y2Storage::Filesystems::BlkFilesystem) }
-
-    let(:btrfs) { false }
-
-    context "when the partition has not been set to be formated or encrypted" do
       it "returns false" do
-        expect(subject.apply_format_options!).to eql(false)
+        expect(subject.apply_format_options!).to eq(false)
       end
     end
 
-    context "when the partition has been set to be formated or encrypted" do
-      before do
-        allow(options).to receive(:format).and_return(true)
+    context "when the partition has been set to be formatted or encrypted" do
+      let(:format) { true }
+
+      it "returns true" do
+        expect(subject.apply_format_options!).to eq(true)
       end
 
       it "removes all partition descendants" do
-        expect(partition).to receive(:remove_descendants)
-
+        expect(partition).to receive(:remove_descendants).and_call_original
         subject.apply_format_options!
       end
 
-      it "encrypts the partition if encrypted has been selected" do
-        allow(options).to receive(:format).and_return(false)
-        allow(options).to receive(:encrypt).and_return(true)
-        allow(options).to receive(:password).and_return("LOTP_password")
-        expect(partition).to receive(:create_encryption).with("cr_#{partition.basename}")
-          .and_return(encrypted)
-        expect(encrypted).to receive(:password=).with("LOTP_password")
+      context "when the partition has been set to be encrypted" do
+        let(:encrypt) { true }
 
-        subject.apply_format_options!
-      end
-
-      it "creates a new filesystem with the filesystem type configured if formated" do
-        allow(options).to receive(:filesystem_type).and_return(filesystem_type)
-        expect(partition).to receive(:create_filesystem).with(filesystem_type)
-
-        subject.apply_format_options!
-      end
-
-      context "and the filesystem is btrfs" do
-        let(:created_filesystem) { instance_double(Y2Storage::Filesystems::Btrfs) }
-        let(:btrfs) { true }
-
-        it "ensures a default btrfs subvolume" do
-          expect(created_filesystem).to receive(:ensure_default_btrfs_subvolume)
+        it "encrypts the partition" do
+          expect(partition.encrypted?).to be(false)
           subject.apply_format_options!
+          expect(partition.encryption.password).to eq(password)
         end
       end
 
-      it "returns true" do
-        expect(subject.apply_format_options!).to eql(true)
+      context "when the partition has been set to be formatted" do
+        let(:format) { true }
+
+        it "formats the partition" do
+          previous_fs_sid = partition.filesystem.sid
+          subject.apply_format_options!
+          expect(partition.filesystem.sid).to_not eq(previous_fs_sid)
+        end
+
+        it "formats with the selected filesystem" do
+          subject.apply_format_options!
+          expect(partition.filesystem.type).to eq(filesystem_type)
+        end
+
+        context "and the filesystem is btrfs" do
+          let(:filesystem_type) { Y2Storage::Filesystems::Type::BTRFS }
+
+          it "ensures a default btrfs subvolume" do
+            subject.apply_format_options!
+            expect(partition.filesystem.default_btrfs_subvolume).to_not be_nil
+          end
+        end
       end
     end
   end
 
   context "#apply_mount_options!" do
-    before do
-      devicegraph_stub("mixed_disks_btrfs.yml")
-    end
-
-    let(:blk_device) { Y2Storage::BlkDevice.find_by_name(devicegraph, dev_name) }
-
-    let(:dev_name) { "/dev/sda2" }
-
-    let(:devicegraph) { Y2Storage::StorageManager.instance.staging }
-
     context "when the partiton has not filesystem" do
-      let(:filesystem) { nil }
+      before do
+        allow(partition).to receive(:filesystem).and_return(nil)
+      end
 
       it "returns false" do
         expect(subject.apply_mount_options!).to be(false)
@@ -129,17 +124,7 @@ describe Y2Partitioner::FormatMount::Base do
     end
 
     context "when the partition has a filesystem" do
-      let(:filesystem) { blk_device.filesystem }
-
-      before do
-        allow(options).to receive(:mount).and_return(mount)
-        allow(options).to receive(:mount_point).and_return(mount_point)
-        allow(filesystem).to receive(:supports_btrfs_subvolumes?).and_return(btrfs)
-      end
-
-      let(:mount) { false }
-      let(:mount_point) { nil }
-      let(:btrfs) { false }
+      let(:filesystem) { partition.filesystem }
 
       it "returns true" do
         expect(subject.apply_mount_options!).to be(true)
@@ -192,14 +177,6 @@ describe Y2Partitioner::FormatMount::Base do
           context "and the filesystem is Btrfs" do
             let(:btrfs) { true }
 
-            it "deletes the not probed subvolumes" do
-              path = "@/foo"
-              filesystem.create_btrfs_subvolume(path, false)
-              subject.apply_mount_options!
-
-              expect(filesystem.find_btrfs_subvolume_by_path(path)).to be_nil
-            end
-
             it "does not delete the probed subvolumes" do
               subvolumes = filesystem.btrfs_subvolumes
               subject.apply_mount_options!
@@ -209,13 +186,33 @@ describe Y2Partitioner::FormatMount::Base do
 
             it "updates the subvolumes mount points" do
               subject.apply_mount_options!
-              mount_points = filesystem.btrfs_subvolumes.map(&:mount_point)
+              mount_points = filesystem.btrfs_subvolumes.map(&:mount_point).compact
               expect(mount_points).to all(start_with(mount_point))
+            end
+
+            it "does not change mount point for special subvolumes" do
+              subject.apply_mount_options!
+              expect(filesystem.top_level_btrfs_subvolume.mount_point.to_s).to be_empty
+              expect(filesystem.default_btrfs_subvolume.mount_point.to_s).to be_empty
             end
 
             it "refresh btrfs subvolumes shadowing" do
               expect(Y2Storage::Filesystems::Btrfs).to receive(:refresh_subvolumes_shadowing)
               subject.apply_mount_options!
+            end
+
+            context "and it has 'not probed' subvolumes" do
+              let(:dev_name) { "/dev/sdb3" }
+              let(:path) { "@/foo" }
+
+              before do
+                filesystem.create_btrfs_subvolume(path, false)
+              end
+
+              it "deletes the not probed subvolumes" do
+                subject.apply_mount_options!
+                expect(filesystem.find_btrfs_subvolume_by_path(path)).to be_nil
+              end
             end
 
             context "and the new mount point is root" do

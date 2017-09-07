@@ -226,6 +226,10 @@ module Y2Storage
 
       # The path that a new default btrfs subvolume should have
       #
+      # TODO: The logic for obtaining a default subvolume path should be in the
+      #   Y2Storage::SubvolSpecification class. In case that control file does not
+      #   have a default path, it should fall back to a hard coded value.
+      #
       # @return [String, nil] nil if default subvolume is not specified in control.xml
       def self.default_btrfs_subvolume_path
         section = "partitioning"

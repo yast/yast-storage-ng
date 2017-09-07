@@ -101,7 +101,7 @@ module Y2Partitioner
       #
       # When the filesystem is btrfs, the not probed subvolumes are deleted.
       def subvolume_actions_before_set_mount_point
-        delete_new_subvolumes if btrfs?
+        delete_not_probed_subvolumes if btrfs?
       end
 
       # Actions to perform after setting a new mount point
@@ -116,15 +116,23 @@ module Y2Partitioner
         Y2Storage::Filesystems::Btrfs.refresh_subvolumes_shadowing(device_graph)
       end
 
-      def delete_new_subvolumes
-        new_subvolumes.each { |s| filesystem.delete_btrfs_subvolume(device_graph, s.path) }
+      # Deletes not probed subvolumes
+      def delete_not_probed_subvolumes
+        loop do
+          subvolume = find_not_probed_subvolume
+          return if subvolume.nil?
+          filesystem.delete_btrfs_subvolume(device_graph, subvolume.path)
+        end
       end
 
-      # Subvolumes that have not been probed
-      # @return [Array<Y2Storage::BtrfsSubvolume>]
-      def new_subvolumes
+      # Finds first not probed subvolume
+      #
+      # @note Top level and default subvolumes are not taken into account (see {#subvolumes}).
+      #
+      # @return [Y2Storage::BtrfsSubvolume, nil]
+      def find_not_probed_subvolume
         device_graph = DeviceGraphs.instance.system
-        filesystem.btrfs_subvolumes.select { |s| !s.exists_in_devicegraph?(device_graph) }
+        subvolumes.detect { |s| !s.exists_in_devicegraph?(device_graph) }
       end
 
       # A proposed subvolume is added only when it does not exist in the filesystem and it
@@ -138,9 +146,12 @@ module Y2Partitioner
         filesystem.add_btrfs_subvolumes(specs)
       end
 
+      # Updates subvolumes mount point
+      #
+      # @note Top level and default subvolumes are not taken into account (see {#subvolumes}).
       def update_mount_points
         fs = filesystem
-        fs.btrfs_subvolumes.each do |subvolume|
+        subvolumes.each do |subvolume|
           subvolume.mount_point = fs.btrfs_subvolume_mount_point(subvolume.path)
         end
       end
@@ -163,6 +174,14 @@ module Y2Partitioner
 
       def filesystem
         partition.filesystem
+      end
+
+      # Btrfs subvolumes without top level and default ones
+      def subvolumes
+        filesystem.btrfs_subvolumes.select do |subvolume|
+          !subvolume.top_level? &&
+            !subvolume.default_btrfs_subvolume?
+        end
       end
 
       def change_mount_point?
