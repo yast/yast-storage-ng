@@ -181,13 +181,19 @@ describe Y2Storage::Proposal::AutoinstDevicesPlanner do
 
     context "using Btrfs for root" do
       let(:partitioning_array) do
-        [{ "device" => "/dev/sda", "use" => "all", "partitions" => [root_spec, home_spec] }]
+        [{
+          "device" => "/dev/sda", "use" => "all",
+          "enable_snapshots" => snapshots, "partitions" => [root_spec, home_spec]
+        }]
       end
-      let(:home_spec) { { "mount" => "/home", "filesystem" => "xfs" } }
+      let(:home_spec) { { "mount" => "/home", "filesystem" => "btrfs" } }
       let(:root_spec) { { "mount" => "/", "filesystem" => "btrfs", "subvolumes" => subvolumes } }
+      let(:snapshots) { false }
+      let(:subvolumes) { nil }
 
       let(:devices) { planner.planned_devices(drives_map) }
       let(:root) { devices.find { |d| d.mount_point == "/" } }
+      let(:home) { devices.find { |d| d.mount_point == "/home" } }
 
       context "when the profile contains a list of subvolumes" do
         let(:subvolumes) { ["var", { "path" => "srv", "copy_on_write" => false }, "home"] }
@@ -248,6 +254,42 @@ describe Y2Storage::Proposal::AutoinstDevicesPlanner do
           it "plans default s390 specific subvolumes" do
             expect(root.subvolumes.map(&:path)).to include(*s390_subvolumes)
           end
+        end
+      end
+
+      context "when the usage of snapshots is not specified" do
+        let(:snapshots) { nil }
+
+        it "enables snapshots for '/'" do
+          expect(root.snapshots?).to eq true
+        end
+
+        it "does not enable snapshots for other filesystems in the drive" do
+          expect(home.snapshots?).to eq false
+        end
+      end
+
+      context "when snapshots are disabled" do
+        let(:snapshots) { false }
+
+        it "does not enable snapshots for '/'" do
+          expect(root.snapshots?).to eq false
+        end
+
+        it "does not enable snapshots for other filesystems in the drive" do
+          expect(home.snapshots?).to eq false
+        end
+      end
+
+      context "when snapshots are enabled" do
+        let(:snapshots) { true }
+
+        it "enables snapshots for '/'" do
+          expect(root.snapshots?).to eq true
+        end
+
+        it "does not enable snapshots for other filesystems in the drive" do
+          expect(home.snapshots?).to eq false
         end
       end
     end
