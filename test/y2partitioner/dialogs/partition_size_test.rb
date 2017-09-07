@@ -63,17 +63,27 @@ describe "Partition Size widgets" do
   end
 
   describe Y2Partitioner::Dialogs::PartitionSize::CustomRegion do
-    subject { described_class.new(ptemplate, regions) }
     before do
-      allow(subject).to receive(:query_widgets)
-        .and_return [2200, 2500]
+      allow(subject).to receive(:query_widgets).and_return [2200, 2500]
     end
+
+    subject { described_class.new(ptemplate, regions) }
 
     include_examples "CWM::CustomWidget"
 
     describe "#region" do
       it "returns a Region" do
         expect(subject.region).to be_a Y2Storage::Region
+      end
+    end
+
+    describe "#store" do
+      it "does not change the partition template" do
+        ptemplate_before = ptemplate.dup
+        subject.store
+
+        expect(ptemplate.region).to_not eq(subject.region)
+        expect(ptemplate.region).to eq(ptemplate_before.region)
       end
     end
   end
