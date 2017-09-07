@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Thu Sep  7 08:34:59 UTC 2017 - ancor@suse.com
+
+- AutoYaST: support for Btrfs snapshots (part of #fate#318196).
+- 3.3.11
+
+-------------------------------------------------------------------
 Wed Sep  6 15:33:27 UTC 2017 - jlopez@suse.com
 
 - Fix bug when formatting with expert partitioner (bsc#1057405).
