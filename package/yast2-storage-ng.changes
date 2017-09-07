@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Thu Sep  7 13:28:28 CEST 2017 - schubi@suse.de
+
+- AutoYaST: Handle size "auto" correctly (bnc#1056182)
+- 3.3.12
+
+-------------------------------------------------------------------
 Thu Sep  7 08:34:59 UTC 2017 - ancor@suse.com
 
 - AutoYaST: support for Btrfs snapshots (part of fate#318196).
