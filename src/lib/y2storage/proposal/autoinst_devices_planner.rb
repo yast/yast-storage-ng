@@ -100,8 +100,7 @@ module Y2Storage
           partition.lvm_volume_group_name = partition_section.lvm_group
           partition.raid_name = partition_section.raid_name
 
-          add_common_device_attrs(partition, partition_section)
-          add_subvolumes_attrs(partition, partition_section)
+          device_config(partition, partition_section, drive)
           add_partition_reuse(partition, partition_section) if partition_section.create == false
 
           # Sizes: leave out reducing fixed sizes and 'auto'
@@ -128,8 +127,7 @@ module Y2Storage
           # TODO: fix Planned::LvmLv.initialize
           lv = Y2Storage::Planned::LvmLv.new(nil, nil)
           lv.logical_volume_name = lv_section.lv_name
-          add_common_device_attrs(lv, lv_section)
-          add_subvolumes_attrs(lv, lv_section)
+          device_config(lv, lv_section, drive)
           add_lv_reuse(lv, vg.volume_group_name, lv_section) if lv_section.create == false
 
           number, unit = size_to_components(lv_section.size)
@@ -154,8 +152,7 @@ module Y2Storage
         md = Planned::Md.new(name: drive.name_for_md)
 
         part_section = drive.partitions.first
-        add_common_device_attrs(md, part_section)
-        add_subvolumes_attrs(md, part_section)
+        device_config(md, part_section, drive)
         md.lvm_volume_group_name = part_section.lvm_group
         add_device_reuse(md, md.name, !!part_section.format) if part_section.create == false
 
@@ -173,6 +170,20 @@ module Y2Storage
         string =~ /\D/ ? DiskSize.parse(string) : DiskSize.KB(string.to_i)
       end
 
+      # Set all the common attributes that are shared by any device defined by
+      # a <partition> section of AutoYaST (i.e. a LV, MD or partition).
+      #
+      # @param device  [Planned::Device] Planned device
+      # @param partition_section [AutoinstProfile::PartitionSection] AutoYaST
+      #   specification of the concrete device
+      # @param drive_section [AutoinstProfile::DriveSection] AutoYaST drive
+      #   section containing the partition one
+      def device_config(device, partition_section, drive_section)
+        add_common_device_attrs(device, partition_section)
+        add_snapshots(device, drive_section)
+        add_subvolumes_attrs(device, partition_section)
+      end
+
       # Set common devices attributes
       #
       # This method modifies the first argument setting crypt_key, crypt_fs,
@@ -186,6 +197,22 @@ module Y2Storage
         device.label = section.label
         device.uuid = section.uuid
         device.filesystem_type = section.type_for_filesystem
+      end
+
+      # Set device attributes related to snapshots
+      #
+      # This method modifies the first argument
+      #
+      # @param device  [Planned::Device] Planned device
+      # @param drive_section [AutoinstProfile::DriveSection] AutoYaST specification
+      def add_snapshots(device, drive_section)
+        return unless device.respond_to?(:root?) && device.root?
+
+        # Always try to enable snapshots if possible
+        snapshots = true
+        snapshots = false if drive_section.enable_snapshots == false
+
+        device.snapshots = snapshots
       end
 
       # Set devices attributes related to Btrfs subvolumes

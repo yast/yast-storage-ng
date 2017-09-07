@@ -76,12 +76,30 @@ describe Y2Storage::AutoinstProposal do
 
       context "when using btrfs" do
         let(:root) { ROOT_PART.merge("create" => true, "filesystem" => :btrfs) }
+        let(:root_fs) { proposal.devices.partitions.first.filesystem }
 
         it "creates Btrfs subvolumes" do
           proposal.propose
-          root = proposal.devices.partitions.first.filesystem
-          expect(root.btrfs_subvolumes).to_not be_empty
-          expect(root.btrfs_subvolumes).to all(be_a(Y2Storage::BtrfsSubvolume))
+          expect(root_fs.btrfs_subvolumes).to_not be_empty
+          expect(root_fs.btrfs_subvolumes).to all(be_a(Y2Storage::BtrfsSubvolume))
+        end
+
+        it "enables Snapper configuration for '/' by default" do
+          proposal.propose
+          expect(root_fs.configure_snapper).to eq true
+        end
+
+        context "when disabling snapshots" do
+          let(:partitioning) do
+            [{
+              "device" => "/dev/sda", "use" => "all", "partitions" => [root], "enable_snapshots" => false
+            }]
+          end
+
+          it "does not enable Snapper configuration for '/'" do
+            proposal.propose
+            expect(root_fs.configure_snapper).to eq false
+          end
         end
       end
     end
@@ -284,12 +302,53 @@ describe Y2Storage::AutoinstProposal do
         let(:root_spec) do
           { "mount" => "/", "filesystem" => "btrfs", "lv_name" => "root", "size" => "1G" }
         end
+        let(:root_fs) do
+          Y2Storage::LvmLv.find_by_name(proposal.devices, "/dev/system/root").filesystem
+        end
 
         it "creates Btrfs subvolumes" do
           proposal.propose
-          root = Y2Storage::LvmLv.find_by_name(proposal.devices, "/dev/system/root").filesystem
-          expect(root.btrfs_subvolumes).to_not be_empty
-          expect(root.btrfs_subvolumes).to all(be_a(Y2Storage::BtrfsSubvolume))
+          expect(root_fs.btrfs_subvolumes).to_not be_empty
+          expect(root_fs.btrfs_subvolumes).to all(be_a(Y2Storage::BtrfsSubvolume))
+        end
+
+        it "enables Snapper configuration for '/' by default" do
+          proposal.propose
+          expect(root_fs.configure_snapper).to eq true
+        end
+
+        context "when disabling snapshots in the drive containing '/'" do
+          let(:partitioning) do
+            [
+              { "device" => "/dev/sda", "use" => "all", "partitions" => [lvm_pv] },
+              {
+                "device" => "/dev/system", "partitions" => [root_spec],
+                "type" => :CT_LVM, "enable_snapshots" => false
+              }
+            ]
+          end
+
+          it "does not enable Snapper configuration for '/'" do
+            proposal.propose
+            expect(root_fs.configure_snapper).to eq false
+          end
+        end
+
+        context "when disabling snapshots in any other drive" do
+          let(:partitioning) do
+            [
+              {
+                "device" => "/dev/sda", "use" => "all",
+                "partitions" => [lvm_pv], "enable_snapshots" => false
+              },
+              { "device" => "/dev/system", "partitions" => [root_spec], "type" => :CT_LVM }
+            ]
+          end
+
+          it "enables Snapper configuration for '/'" do
+            proposal.propose
+            expect(root_fs.configure_snapper).to eq true
+          end
         end
       end
     end
