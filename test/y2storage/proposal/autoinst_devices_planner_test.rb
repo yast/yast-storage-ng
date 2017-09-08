@@ -151,7 +151,7 @@ describe Y2Storage::Proposal::AutoinstDevicesPlanner do
       context "when 'auto' is given" do
         let(:size) { "auto" }
 
-        it "sets the size to 'unlimited'" do
+        it "sets the size to 'unlimited' (temporary workaround until it is supported)" do
           devices = planner.planned_devices(drives_map)
           root = devices.find { |d| d.mount_point == "/" }
           expect(root.min_size).to eq(Y2Storage::DiskSize.B(1))
