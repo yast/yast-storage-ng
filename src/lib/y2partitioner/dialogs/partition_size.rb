@@ -41,9 +41,7 @@ module Y2Partitioner
       # return finish for extended partition, as it can set only type and its size
       def run
         res = super
-
         res = :finish if res == :next && @ptemplate.type.is?(:extended)
-
         res
       end
 
@@ -308,6 +306,8 @@ module Y2Partitioner
 
       # Specify start+end of the region
       class CustomRegion < CWM::CustomWidget
+        attr_reader :region
+
         # @param ptemplate [Sequences::PartitionTemplate]
         #   a partition template, collecting data for a partition to be created
         # @param regions [Array<Y2Storage::Region>]
@@ -316,8 +316,7 @@ module Y2Partitioner
           textdomain "storage"
           @ptemplate = ptemplate
           @regions = regions
-
-          @ptemplate.region ||= @regions.max_by(&:size)
+          @region = @ptemplate.region || @regions.max_by(&:size)
         end
 
         # @macro seeCustomWidget
@@ -352,7 +351,7 @@ module Y2Partitioner
           start_block, end_block = query_widgets
           len = end_block - start_block + 1
           bsize = @regions.first.block_size # where does this come from?
-          @ptemplate.region = Y2Storage::Region.create(start_block, len, bsize)
+          @region = Y2Storage::Region.create(start_block, len, bsize)
         end
 
         # @macro seeAbstractWidget
@@ -367,10 +366,6 @@ module Y2Partitioner
           Yast::Popup.Error(_("The region entered is invalid."))
           Yast::UI.SetFocus(Id(:start_block))
           false
-        end
-
-        def region
-          @ptemplate.region
         end
       end
     end
