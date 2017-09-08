@@ -300,7 +300,11 @@ module Y2Storage
       def sizes_for(size_spec, min, max)
         normalized_size = size_spec.to_s.strip.downcase
 
-        return [min, DiskSize.unlimited] if normalized_size == "max" || normalized_size.empty?
+        # FIXME: Temporary workaround to avoid crash when size 'auto'
+        # (which is still not supported) is used (bnc#1056182).
+        # So 'auto' will be handled like there is no size defined at
+        # all.
+        return [min, DiskSize.unlimited] if ["", "max", "auto"].include?(normalized_size)
 
         number, unit = size_to_components(size_spec)
         size =

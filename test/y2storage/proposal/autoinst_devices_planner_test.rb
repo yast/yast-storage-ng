@@ -147,6 +147,28 @@ describe Y2Storage::Proposal::AutoinstDevicesPlanner do
           expect(root.max_size).to eq(Y2Storage::DiskSize.unlimited)
         end
       end
+
+      context "when 'auto' is given" do
+        let(:size) { "auto" }
+
+        it "sets the size to 'unlimited' (temporary workaround until it is supported)" do
+          devices = planner.planned_devices(drives_map)
+          root = devices.find { |d| d.mount_point == "/" }
+          expect(root.min_size).to eq(Y2Storage::DiskSize.B(1))
+          expect(root.max_size).to eq(Y2Storage::DiskSize.unlimited)
+        end
+      end
+
+      context "when empty entry is given" do
+        let(:size) { "" }
+
+        it "sets the size to 'unlimited'" do
+          devices = planner.planned_devices(drives_map)
+          root = devices.find { |d| d.mount_point == "/" }
+          expect(root.min_size).to eq(Y2Storage::DiskSize.B(1))
+          expect(root.max_size).to eq(Y2Storage::DiskSize.unlimited)
+        end
+      end
     end
 
     context "specifying filesystem" do

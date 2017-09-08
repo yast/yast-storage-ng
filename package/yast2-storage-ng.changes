@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Thu Sep  7 14:28:28 UTC 2017 - schubi@suse.de
+
+- AutoYaST: Temporary workaround to avoid crash when size 'auto'
+  (which is still not supported) is used (bnc#1056182).
+- 3.3.13
+
+-------------------------------------------------------------------
 Thu Sep  7 13:45:07 UTC 2017 - jlopez@suse.com
 
 - Fix partitioner bug creating partition with custom size
