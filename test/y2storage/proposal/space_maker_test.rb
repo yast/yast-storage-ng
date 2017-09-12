@@ -168,9 +168,9 @@ describe Y2Storage::Proposal::SpaceMaker do
       let(:scenario) { "empty_hard_disk_mbr_50GiB" }
       let(:vol1) { planned_vol(mount_point: "/1", type: :ext4, min: 60.GiB) }
 
-      it "raises a NoDiskSpaceError exception" do
+      it "raises an Error exception" do
         expect { maker.provide_space(fake_devicegraph, volumes, lvm_helper) }
-          .to raise_error Y2Storage::NoDiskSpaceError
+          .to raise_error Y2Storage::Error
       end
     end
 
@@ -278,9 +278,9 @@ describe Y2Storage::Proposal::SpaceMaker do
             let(:resize_windows) { false }
             let(:delete_windows) { :none }
 
-            it "raises a NoDiskSpaceError exception" do
+            it "raises an Error exception" do
               expect { maker.provide_space(fake_devicegraph, volumes, lvm_helper) }
-                .to raise_error Y2Storage::NoDiskSpaceError
+                .to raise_error Y2Storage::Error
             end
           end
         end
@@ -339,9 +339,9 @@ describe Y2Storage::Proposal::SpaceMaker do
           let(:resize_windows) { false }
           let(:delete_windows) { :none }
 
-          it "raises a NoDiskSpaceError exception" do
+          it "raises an Error exception" do
             expect { maker.provide_space(fake_devicegraph, volumes, lvm_helper) }
-              .to raise_error Y2Storage::NoDiskSpaceError
+              .to raise_error Y2Storage::Error
           end
         end
       end
@@ -461,9 +461,9 @@ describe Y2Storage::Proposal::SpaceMaker do
             context "if deleting Windows not is allowed" do
               let(:delete_windows) { :none }
 
-              it "raises a NoDiskSpaceError exception" do
+              it "raises an Error exception" do
                 expect { maker.provide_space(fake_devicegraph, volumes, lvm_helper) }
-                  .to raise_error Y2Storage::NoDiskSpaceError
+                  .to raise_error Y2Storage::Error
               end
             end
           end
@@ -534,9 +534,9 @@ describe Y2Storage::Proposal::SpaceMaker do
           context "if deleting Windows is not allowed" do
             let(:delete_windows) { :none }
 
-            it "raises a NoDiskSpaceError exception" do
+            it "raises an Error exception" do
               expect { maker.provide_space(fake_devicegraph, volumes, lvm_helper) }
-                .to raise_error Y2Storage::NoDiskSpaceError
+                .to raise_error Y2Storage::Error
             end
           end
         end
@@ -610,13 +610,13 @@ describe Y2Storage::Proposal::SpaceMaker do
         expect(result[:deleted_partitions].map(&:sid)).to_not include sda6.sid
       end
 
-      it "raises a NoDiskSpaceError exception if deleting is not enough" do
+      it "raises an Error exception if deleting is not enough" do
         vol1 = planned_vol(mount_point: "/1", type: :ext4, min: 980.GiB)
         vol2 = planned_vol(mount_point: "/2", reuse: "/dev/sda2")
         volumes = [vol1, vol2]
 
         expect { maker.provide_space(fake_devicegraph, volumes, lvm_helper) }
-          .to raise_error Y2Storage::NoDiskSpaceError
+          .to raise_error Y2Storage::Error
       end
 
       it "deletes extended partitions when deleting all its logical children" do
@@ -652,7 +652,7 @@ describe Y2Storage::Proposal::SpaceMaker do
         ]
 
         expect { maker.provide_space(fake_devicegraph, volumes, lvm_helper) }
-          .to raise_error Y2Storage::NoDiskSpaceError
+          .to raise_error Y2Storage::Error
       end
     end
 
@@ -815,7 +815,7 @@ describe Y2Storage::Proposal::SpaceMaker do
           planned_vol(mount_point: "/2", type: :ext4, min: 10.MiB)
         ]
         expect { maker.provide_space(fake_devicegraph, volumes, lvm_helper) }
-          .to raise_error Y2Storage::NoDiskSpaceError
+          .to raise_error Y2Storage::Error
       end
     end
   end

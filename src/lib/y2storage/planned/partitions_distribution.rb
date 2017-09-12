@@ -280,14 +280,19 @@ module Y2Storage
       end
 
       def too_many_primary?(spaces, ptable)
-        return false unless ptable.extended_possible?
-        # If there is no extended partition already, we know that all the
-        # assigned spaces of this disk will have a nil partition_type
-        # So nothing to check
-        return false unless ptable.has_extended?
+        primary_spaces = spaces.select { |s| s.partition_type == :primary }
 
-        primary = spaces.select { |s| s.partition_type == :primary }
-        too_many_primary_with_extended?(primary, ptable)
+        if !ptable.extended_possible?
+          num_primary = ptable.num_primary + num_partitions(primary_spaces)
+          return num_primary > ptable.max_primary
+        elsif ptable.has_extended?
+          too_many_primary_with_extended?(primary_spaces, ptable)
+        else
+          # If there is no extended partition already, we know that all the
+          # assigned spaces of this disk will have a nil partition_type
+          # So nothing to check
+          return false
+        end
       end
 
       # Best candidate to hold the logical partition

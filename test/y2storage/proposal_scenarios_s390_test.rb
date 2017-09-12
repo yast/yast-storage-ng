@@ -112,13 +112,22 @@ describe Y2Storage::GuidedProposal do
               proposal.propose
               expect(proposal.devices.partitions).to all(be_end_aligned)
             end
+
+            context "and a partition already exists" do
+              let(:scenario) { "dasd_50GiB" }
+
+              it "proposes the expected layout" do
+                proposal.propose
+                expect(proposal.devices.to_str).to eq expected.to_str
+              end
+            end
           end
 
           context "when try to create more than three partitions" do
             let(:separate_home) { true }
 
             it "fails to make a proposal" do
-              expect { proposal.propose }.to raise_error Y2Storage::NoMorePartitionSlotError
+              expect { proposal.propose }.to raise_error Y2Storage::Error
             end
           end
         end
