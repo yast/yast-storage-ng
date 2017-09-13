@@ -345,4 +345,101 @@ describe Y2Storage::BlkDevice do
       end
     end
   end
+
+  describe "#udev_full_label" do
+    let(:device_name) { "/dev/sda1" }
+    before { allow(device).to receive(:blk_filesystem).and_return(filesystem) }
+
+    context "for devices without filesystem" do
+      let(:filesystem) { nil }
+
+      it "returns nil" do
+        expect(device.udev_full_label).to eq nil
+      end
+    end
+
+    context "for devices without label" do
+      let(:filesystem) { double(label: "") }
+
+      it "returns nil" do
+        expect(device.udev_full_label).to eq nil
+      end
+    end
+
+    context "for devices with a label" do
+      let(:filesystem) { double(label: "DATA") }
+
+      it "returns an string" do
+        expect(device.udev_full_label).to be_an String
+      end
+
+      it "prepends '/dev/disk/by-label' to the label" do
+        expect(device.udev_full_label).to eq(
+          "/dev/disk/by-label/DATA"
+        )
+      end
+    end
+  end
+
+  describe "#udev_full_uuid" do
+    let(:device_name) { "/dev/sda1" }
+    before { allow(device).to receive(:blk_filesystem).and_return(filesystem) }
+
+    context "for devices without filesystem" do
+      let(:filesystem) { nil }
+
+      it "returns nil" do
+        expect(device.udev_full_uuid).to eq nil
+      end
+    end
+
+    context "for devices without uuid" do
+      let(:filesystem) { double(uuid: "") }
+
+      it "returns nil" do
+        expect(device.udev_full_uuid).to eq nil
+      end
+    end
+
+    context "for devices with a uuid" do
+      let(:filesystem) { double(uuid: "DATA") }
+
+      it "returns an string" do
+        expect(device.udev_full_uuid).to be_an String
+      end
+
+      it "prepends '/dev/disk/by-uuid' to the uuid" do
+        expect(device.udev_full_uuid).to eq(
+          "/dev/disk/by-uuid/DATA"
+        )
+      end
+    end
+  end
+
+  describe "#udev_full_all" do
+    let(:device_name) { "/dev/sda1" }
+    before do
+      allow(device).to receive(:blk_filesystem).and_return(double(label: "DATA", uuid: ""))
+      allow(device).to receive(:udev_ids).and_return([])
+      allow(device).to receive(:udev_paths).and_return(
+        ["pci-0000:00:1f.2-ata-1", "pci-0000:00:1f.2-scsi-0:0:0:0"]
+      )
+    end
+
+    it "returns array" do
+      expect(device.udev_full_all).to be_an Array
+    end
+
+    it "does not contain any nil" do
+      expect(device.udev_full_all).to_not include(nil)
+    end
+
+    it "contains all full udev links" do
+      expect(device.udev_full_all).to contain_exactly(
+        "/dev/disk/by-path/pci-0000:00:1f.2-ata-1",
+        "/dev/disk/by-path/pci-0000:00:1f.2-scsi-0:0:0:0",
+        "/dev/disk/by-label/DATA"
+      )
+    end
+  end
 end

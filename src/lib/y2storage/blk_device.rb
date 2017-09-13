@@ -67,6 +67,20 @@ module Y2Storage
     #   @return [String]
     storage_forward :sysfs_path
 
+    # Full paths of all the udev by-* links. an empty array for devices
+    # not handled by udev.
+    # @see #udev_full_paths
+    # @see #udev_full_ids
+    # @see #udev_full_uuid
+    # @see #udev_full_label
+    # @return [Array<String>]
+    def udev_full_all
+      res = udev_full_paths.concat(udev_full_ids)
+      res << udev_full_uuid << udev_full_label
+
+      res.compact
+    end
+
     # @!method udev_paths
     #   Names of all the udev by-path links. An empty array for devices
     #   not handled by udev.
@@ -180,11 +194,33 @@ module Y2Storage
       blk_filesystem.label
     end
 
+    # full path of the udev by-label link or `nil` if it does not exist.
+    # e.g. "/dev/disk/by-label/DATA"
+    # @see #udev_paths
+    # @return [String]
+    def udev_full_label
+      label = filesystem_label
+
+      return nil if label.nil? || label.empty?
+      File.join("/dev", "disk", "by-label", label)
+    end
+
     # UUID of the filesystem, if any
     # @return [String, nil]
     def filesystem_uuid
       return nil unless blk_filesystem
       blk_filesystem.uuid
+    end
+
+    # full path of the udev by-uuid link or `nil` if it does not exist.
+    # e.g. "/dev/disk/by-uuid/a1dc747af-6ef7-44b9-b4f8-d200a5f933ec"
+    # @see #udev_paths
+    # @return [String]
+    def udev_full_uuid
+      uuid = filesystem_uuid
+
+      return nil if uuid.nil? || uuid.empty?
+      File.join("/dev", "disk", "by-uuid", uuid)
     end
 
     # Type of the filesystem, if any
