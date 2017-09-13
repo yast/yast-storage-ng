@@ -67,6 +67,20 @@ module Y2Storage
     #   @return [String]
     storage_forward :sysfs_path
 
+    # full paths of all the udev by-* links. an empty array for devices
+    # not handled by udev.
+    # @see #udev_full_paths
+    # @see #udev_full_ids
+    # @see #udev_full_uuid
+    # @see #udev_full_label
+    # @return [Array<String>]
+    def udev_full_all
+      res = udev_full_paths.concat(udev_full_ids)
+      res << udev_full_uuid << udev_full_label
+
+      res.compact
+    end
+
     # @!method udev_paths
     #   Names of all the udev by-path links. An empty array for devices
     #   not handled by udev.
@@ -75,13 +89,13 @@ module Y2Storage
     #   @return [Array<String>]
     storage_forward :udev_paths
 
-    # Full paths of all the udev by-path links. An empty array for devices
+    # full paths of all the udev by-path links. an empty array for devices
     # not handled by udev.
-    # E.g. ["/dev/disk/by-path/pci-0000:00:1f.2-ata-1-part2"]
+    # e.g. ["/dev/disk/by-path/pci-0000:00:1f.2-ata-1-part2"]
     # @see #udev_paths
     # @return [Array<String>]
     def udev_full_paths
-      udev_paths.map { |path| File.join("/dev", "disk", "by-path", path) }
+      udev_paths.map { |path| file.join("/dev", "disk", "by-path", path) }
     end
 
     # @!method udev_ids
@@ -180,11 +194,33 @@ module Y2Storage
       blk_filesystem.label
     end
 
+    # full path of the udev by-label link or `nil` if it does not exist.
+    # e.g. "/dev/disk/by-label/DATA"
+    # @see #udev_paths
+    # @return [String]
+    def udev_full_label
+      label = filesystem_label
+
+      return nil unless label
+      file.join("/dev", "disk", "by-uuid", label)
+    end
+
     # UUID of the filesystem, if any
     # @return [String, nil]
     def filesystem_uuid
       return nil unless blk_filesystem
       blk_filesystem.uuid
+    end
+
+    # full path of the udev by-uuid link or `nil` if it does not exist.
+    # e.g. "/dev/disk/by-uuid/a1dc747af-6ef7-44b9-b4f8-d200a5f933ec"
+    # @see #udev_paths
+    # @return [String]
+    def udev_full_uuid
+      uuid = filesystem_uuid
+
+      return nil unless uuid
+      file.join("/dev", "disk", "by-uuid", uuid)
     end
 
     # Type of the filesystem, if any
