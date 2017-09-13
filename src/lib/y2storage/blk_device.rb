@@ -201,8 +201,8 @@ module Y2Storage
     def udev_full_label
       label = filesystem_label
 
-      return nil unless label
-      file.join("/dev", "disk", "by-uuid", label)
+      return nil if label.nil? || label.empty?
+      File.join("/dev", "disk", "by-label", label)
     end
 
     # UUID of the filesystem, if any
@@ -219,8 +219,8 @@ module Y2Storage
     def udev_full_uuid
       uuid = filesystem_uuid
 
-      return nil unless uuid
-      file.join("/dev", "disk", "by-uuid", uuid)
+      return nil if uuid.nil? || uuid.empty?
+      File.join("/dev", "disk", "by-uuid", uuid)
     end
 
     # Type of the filesystem, if any
