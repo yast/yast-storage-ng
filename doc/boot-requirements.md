@@ -81,6 +81,23 @@
 		- when aiming for the minimal size
 			- **requires /boot/efi to be at least 33 MiB large**
 
+## needed partitions in an aarch64 system
+- with a partitions-based proposal
+	- if there are no EFI partitions
+		- **requires only a new /boot/efi partition**
+	- if there is already an EFI partition
+		- **only requires to use the existing EFI partition**
+- with a LVM-based proposal
+	- if there are no EFI partitions
+		- **requires only a new /boot/efi partition**
+	- if there is already an EFI partition
+		- **only requires to use the existing EFI partition**
+- with an encrypted proposal
+	- if there are no EFI partitions
+		- **requires only a new /boot/efi partition**
+	- if there is already an EFI partition
+		- **only requires to use the existing EFI partition**
+
 ## needed partitions in a PPC64 system
 - in a non-PowerNV system (KVM/LPAR)
 	- with a partitions-based proposal

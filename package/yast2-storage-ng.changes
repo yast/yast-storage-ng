@@ -1,8 +1,14 @@
 -------------------------------------------------------------------
-Wed Sep 13 13:44:52 UTC 2017 - jreidinger@suse.com
+Wed Sep 13 14:44:52 UTC 2017 - jreidinger@suse.com
 
 - add all full udev links and helper to list them all
   (useful for fixing bsc#1057604)
+- 3.3.16
+
+-------------------------------------------------------------------
+Wed Sep 13 14:03:00 UTC 2017 - snwint@suse.com
+
+- don't limit uefi to x86_64 (bsc#1056629)
 - 3.3.15
 
 -------------------------------------------------------------------
