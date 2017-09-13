@@ -184,7 +184,7 @@ module Y2Storage
         resize_windows!(planned_partitions, disk, force: true)
         delete_partitions!(planned_partitions, :windows, keep, disk)
 
-        raise NoDiskSpaceError unless success?(planned_partitions)
+        raise Error unless success?(planned_partitions)
       end
 
       # Additional space that needs to be freed while resizing a partition in

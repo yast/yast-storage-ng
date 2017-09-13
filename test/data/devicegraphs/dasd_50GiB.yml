@@ -1,0 +1,12 @@
+---
+- dasd:
+    name: /dev/sda
+    type: eckd
+    size: 23 GiB
+    partition_table: dasd
+    partitions:
+    - partition:
+        size: 100 MiB
+        name: "/dev/sda1"
+        id: linux
+        file_system: ext2
