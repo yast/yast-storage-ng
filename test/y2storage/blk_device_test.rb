@@ -348,10 +348,18 @@ describe Y2Storage::BlkDevice do
 
   describe "#udev_full_label" do
     let(:device_name) { "/dev/sda1" }
-    before { allow(device).to receive(:filesystem_label).and_return(label) }
+    before { allow(device).to receive(:blk_filesystem).and_return(filesystem) }
+
+    context "for devices without filesystem" do
+      let(:filesystem) { nil }
+
+      it "returns nil" do
+        expect(device.udev_full_label).to eq nil
+      end
+    end
 
     context "for devices without label" do
-      let(:label) { nil }
+      let(:filesystem) { double(label: "") }
 
       it "returns nil" do
         expect(device.udev_full_label).to eq nil
@@ -359,7 +367,7 @@ describe Y2Storage::BlkDevice do
     end
 
     context "for devices with a label" do
-      let(:label) { "DATA" }
+      let(:filesystem) { double(label: "DATA") }
 
       it "returns an string" do
         expect(device.udev_full_label).to be_an String
@@ -375,10 +383,18 @@ describe Y2Storage::BlkDevice do
 
   describe "#udev_full_uuid" do
     let(:device_name) { "/dev/sda1" }
-    before { allow(device).to receive(:filesystem_uuid).and_return(uuid) }
+    before { allow(device).to receive(:blk_filesystem).and_return(filesystem) }
+
+    context "for devices without filesystem" do
+      let(:filesystem) { nil }
+
+      it "returns nil" do
+        expect(device.udev_full_uuid).to eq nil
+      end
+    end
 
     context "for devices without uuid" do
-      let(:uuid) { nil }
+      let(:filesystem) { double(uuid: "") }
 
       it "returns nil" do
         expect(device.udev_full_uuid).to eq nil
@@ -386,7 +402,7 @@ describe Y2Storage::BlkDevice do
     end
 
     context "for devices with a uuid" do
-      let(:uuid) { "DATA" }
+      let(:filesystem) { double(uuid: "DATA") }
 
       it "returns an string" do
         expect(device.udev_full_uuid).to be_an String
@@ -403,8 +419,7 @@ describe Y2Storage::BlkDevice do
   describe "#udev_full_all" do
     let(:device_name) { "/dev/sda1" }
     before do
-      allow(device).to receive(:filesystem_uuid).and_return(nil)
-      allow(device).to receive(:filesystem_label).and_return("DATA")
+      allow(device).to receive(:blk_filesystem).and_return(double(label: "DATA", uuid: ""))
       allow(device).to receive(:udev_ids).and_return([])
       allow(device).to receive(:udev_paths).and_return(
         ["pci-0000:00:1f.2-ata-1", "pci-0000:00:1f.2-scsi-0:0:0:0"]
