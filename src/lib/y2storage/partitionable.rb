@@ -244,6 +244,14 @@ module Y2Storage
       default_partition_table_type
     end
 
+    # Returns the partition table, creating an empty one if needed.
+    # @see #preferred_ptable_type
+    #
+    # @return [PartitionTable]
+    def ensure_partition_table
+      partition_table || create_partition_table(preferred_ptable_type)
+    end
+
   protected
 
     # Find partitions that have a given (set of) partition id(s).
