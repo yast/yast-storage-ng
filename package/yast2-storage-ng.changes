@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Wed Sep 13 14:03:00 UTC 2017 - snwint@suse.com
+
+- don't limit uefi to x86_64 (bsc#1056629)
+- 3.3.15
+
+-------------------------------------------------------------------
 Tue Sep 12 15:54:47 UTC 2017 - jlopez@suse.com
 
 - Fix proposal to not try to create more than 3 partitions in a
