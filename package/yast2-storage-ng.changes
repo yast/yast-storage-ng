@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Wed Sep 13 13:44:52 UTC 2017 - jreidinger@suse.com
+
+- add all full udev links and helper to list them all
+  (useful for fixing bsc#1057604)
+- 3.3.15
+
+-------------------------------------------------------------------
 Tue Sep 12 15:54:47 UTC 2017 - jlopez@suse.com
 
 - Fix proposal to not try to create more than 3 partitions in a
