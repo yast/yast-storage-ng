@@ -87,7 +87,7 @@ module Y2Storage
       return @strategy unless @strategy.nil?
 
       klass =
-        if arch.x86? && arch.efiboot?
+        if arch.efiboot?
           BootRequirementsStrategies::UEFI
         elsif arch.s390?
           BootRequirementsStrategies::ZIPL
