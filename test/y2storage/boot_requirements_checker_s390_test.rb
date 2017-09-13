@@ -35,6 +35,7 @@ describe Y2Storage::BootRequirementsChecker do
     let(:use_lvm) { false }
 
     before do
+      allow(storage_arch).to receive(:efiboot?).and_return(false)
       allow(dev_sda).to receive(:is?).with(:dasd).and_return(dasd)
       allow(dev_sda).to receive(:type).and_return(type)
       allow(dev_sda).to receive(:format).and_return(format)

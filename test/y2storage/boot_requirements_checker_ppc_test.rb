@@ -37,6 +37,7 @@ describe Y2Storage::BootRequirementsChecker do
 
     before do
       allow(storage_arch).to receive(:ppc_power_nv?).and_return(power_nv)
+      allow(storage_arch).to receive(:efiboot?).and_return(false)
       allow(dev_sda).to receive(:grub_partitions).and_return []
       allow(dev_sda).to receive(:prep_partitions).and_return prep_partitions
     end
