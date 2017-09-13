@@ -67,7 +67,7 @@ module Y2Storage
     #   @return [String]
     storage_forward :sysfs_path
 
-    # full paths of all the udev by-* links. an empty array for devices
+    # Full paths of all the udev by-* links. an empty array for devices
     # not handled by udev.
     # @see #udev_full_paths
     # @see #udev_full_ids
@@ -89,13 +89,13 @@ module Y2Storage
     #   @return [Array<String>]
     storage_forward :udev_paths
 
-    # full paths of all the udev by-path links. an empty array for devices
+    # Full paths of all the udev by-path links. An empty array for devices
     # not handled by udev.
-    # e.g. ["/dev/disk/by-path/pci-0000:00:1f.2-ata-1-part2"]
+    # E.g. ["/dev/disk/by-path/pci-0000:00:1f.2-ata-1-part2"]
     # @see #udev_paths
     # @return [Array<String>]
     def udev_full_paths
-      udev_paths.map { |path| file.join("/dev", "disk", "by-path", path) }
+      udev_paths.map { |path| File.join("/dev", "disk", "by-path", path) }
     end
 
     # @!method udev_ids
