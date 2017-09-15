@@ -23,6 +23,7 @@
 
 require "yast"
 require "y2storage/secret_attributes"
+require "y2storage/encryption"
 
 module Y2Storage
   module Planned
@@ -66,7 +67,7 @@ module Y2Storage
       def final_device!(plain_device)
         result = super
         if create_encryption?
-          result = result.create_encryption(dm_name_for(result))
+          result = result.create_encryption(Encryption.dm_name_for(result))
           result.password = encryption_password
           log.info "Device encrypted. Returning the new device #{result.inspect}"
         else
@@ -86,23 +87,6 @@ module Y2Storage
         return true unless reuse?
         return reformat? if respond_to?(:reformat?)
         false
-      end
-
-      # DeviceMapper name to use for the encrypted version of the given device.
-      #
-      # FIXME: with the current implementation (using the device kernel name
-      # instead of UUID or something similar), the DeviceMapper for an encrypted
-      # /dev/sda5 would be "cr_sda5", which implies a quite high risk of
-      # collision with existing DeviceMapper names.
-      #
-      # Revisit this after improving libstorage-ng capabilities about
-      # alternative names and DeviceMapper.
-      #
-      # FIXME: this should probably be moved to Encryption.
-      #
-      # @return [String]
-      def dm_name_for(device)
-        "cr_#{device.basename}"
       end
 
       # Class methods for the mixin
