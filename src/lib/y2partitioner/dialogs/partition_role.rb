@@ -8,38 +8,45 @@ Yast.import "Popup"
 
 module Y2Partitioner
   module Dialogs
-    # Determine the role of the new partition to be created which will allow to
-    # propose some default format and mount options for it.
+    # Determine the role of the new partition or LVM logical volume to be
+    # created which will allow to propose some default format and mount options
+    # for it.
     # Part of {Sequences::AddPartition}.
     # Formerly MiniWorkflowStepRole
     class PartitionRole < CWM::Dialog
-      # @param disk_name [String]
-      # @param options [Y2Partitioner::FormatMount::Options]
-      def initialize(disk_name, options)
+      # @param controller [Sequences::FilesystemController]
+      def initialize(controller)
         textdomain "storage"
 
-        @disk_name = disk_name
-        @options = options
+        @controller = controller
       end
 
       # @macro seeDialog
       def title
         # dialog title
-        Yast::Builtins.sformat(_("Add Partition on %1"), @disk_name)
+        Yast::Builtins.sformat(_("Add Partition on %1"), disk_name)
       end
 
       # @macro seeDialog
       def contents
-        HVSquash(RoleChoice.new(@options))
+        HVSquash(RoleChoice.new(controller))
+      end
+
+    private
+
+      attr_reader :controller
+
+      def disk_name
+        controller.blk_device.partitionable.name
       end
 
       # Choose the role of the new partition
       class RoleChoice < CWM::RadioButtons
-        # @param options [Y2Partitioner::FormatMount::Options]
-        def initialize(options)
+        # @param controller [Sequences::Filesystemcontroller]
+        def initialize(controller)
           textdomain "storage"
 
-          @options = options
+          @controller = controller
         end
 
         # @macro seeAbstractWidget
@@ -64,12 +71,12 @@ module Y2Partitioner
 
         # @macro seeAbstractWidget
         def init
-          self.value = @options.role || :data
+          self.value = @controller.role || :data
         end
 
         # @macro seeAbstractWidget
         def store
-          @options.options_for_role(value) if @options.role != value
+          @controller.role = value
         end
       end
     end

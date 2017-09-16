@@ -5,12 +5,16 @@ require "y2storage"
 module Y2Partitioner
   module Widgets
     # The fstab options are mostly checkboxes and combo boxes that share some
-    # commong methods, so this is a mixin for that share code.
+    # common methods, so this is a mixin for that share code.
     module FstabCommon
-      def initialize(options)
+      def initialize(controller)
         textdomain "storage"
 
-        @options = options
+        @controller = controller
+      end
+
+      def filesystem
+        @controller.filesystem
       end
 
       def init
@@ -22,14 +26,14 @@ module Y2Partitioner
       # explicitely or checking if the values it is responsable of are
       # supported by the filesystem.
       def supported_by_filesystem?
-        return false if !@options.filesystem_type
+        return false if filesystem.nil?
 
         if self.class.const_defined?("SUPPORTED_FILESYSTEMS")
           self.class::SUPPORTED_FILESYSTEMS
-            .include?(@options.filesystem_type.to_sym)
+            .include?(filesystem.type.to_sym)
         else
           self.class::VALUES.all? do |v|
-            @options.filesystem_type.supported_fstab_options.include?(v)
+            filesystem.type.supported_fstab_options.include?(v)
           end
         end
       end
@@ -51,18 +55,19 @@ module Y2Partitioner
       end
 
       def delete_from_fstab!(option)
-        @options.fstab_options.delete_if { |o| o =~ option }
+        # The options can only be modified using BlkDevice#fstab_options=
+        filesystem.fstab_options = filesystem.fstab_options.reject { |o| o =~ option }
       end
 
     private
 
       # Common regexp checkbox widgets init.
       def init_regexp
-        i = @options.fstab_options.index { |o| o =~ self.class::REGEXP }
+        i = filesystem.fstab_options.index { |o| o =~ self.class::REGEXP }
 
         self.value =
           if i
-            @options.fstab_options[i].gsub(self.class::REGEXP, "")
+            filesystem.fstab_options[i].gsub(self.class::REGEXP, "")
           else
             self.class::DEFAULT
           end
@@ -78,7 +83,7 @@ module Y2Partitioner
       end
 
       def handle
-        Dialogs::FstabOptions.new(@options).run
+        Dialogs::FstabOptions.new(@controller).run
 
         nil
       end
@@ -91,8 +96,8 @@ module Y2Partitioner
 
       SUPPORTED_FILESYSTEMS = %i(btrfs ext2 ext3 ext4).freeze
 
-      def initialize(options)
-        @options = options
+      def initialize(controller)
+        @controller = controller
 
         self.handle_all_events = true
       end
@@ -118,15 +123,15 @@ module Y2Partitioner
 
       def contents
         VBox(
-          Left(MountBy.new(@options)),
+          Left(MountBy.new(@controller)),
           VSpacing(1),
-          Left(VolumeLabel.new(@options)),
+          Left(VolumeLabel.new(@controller)),
           VSpacing(1),
-          Left(GeneralOptions.new(@options)),
-          Left(FilesystemsOptions.new(@options)),
-          * ui_term_with_vspace(JournalOptions.new(@options)),
-          * ui_term_with_vspace(AclOptions.new(@options)),
-          Left(ArbitraryOptions.new(@options))
+          Left(GeneralOptions.new(@controller)),
+          Left(FilesystemsOptions.new(@controller)),
+          * ui_term_with_vspace(JournalOptions.new(@controller)),
+          * ui_term_with_vspace(AclOptions.new(@controller)),
+          Left(ArbitraryOptions.new(@controller))
         )
       end
 
@@ -146,11 +151,11 @@ module Y2Partitioner
       end
 
       def store
-        @options.label = value
+        filesystem.label = value
       end
 
       def init
-        self.value = @options.label
+        self.value = filesystem.label
       end
     end
 
@@ -164,11 +169,11 @@ module Y2Partitioner
       end
 
       def store
-        @options.mount_by = selected_mount_by
+        filesystem.mount_by = selected_mount_by
       end
 
       def init
-        value = @options.mount_by ? @options.mount_by.to_sym : :uuid
+        value = filesystem.mount_by ? filesystem.mount_by.to_sym : :uuid
         Yast::UI.ChangeWidget(Id(:mt_group), :Value, value)
       end
 
@@ -217,11 +222,11 @@ module Y2Partitioner
 
       def widgets
         [
-          ReadOnly.new(@options),
-          Noatime.new(@options),
-          MountUser.new(@options),
-          Noauto.new(@options),
-          Quota.new(@options)
+          ReadOnly.new(@controller),
+          Noatime.new(@controller),
+          MountUser.new(@controller),
+          Noauto.new(@controller),
+          Quota.new(@controller)
         ]
       end
     end
@@ -233,14 +238,16 @@ module Y2Partitioner
 
       # FIXME: It is common to almost all regexp widgets not only for checkboxes
       def init
-        self.value = @options.fstab_options.include?(checked_value)
+        self.value = filesystem.fstab_options.include?(checked_value)
       end
 
       # FIXME: It is common to almost all regexp widgets not only for checkboxes
       def store
         delete_from_fstab!(Regexp.union(options))
 
-        @options.fstab_options << checked_value if value
+        return unless value
+        # The options can only be modified using BlkDevice#fstab_options=
+        filesystem.fstab_options = filesystem.fstab_options + [checked_value]
       end
 
     private
@@ -324,13 +331,15 @@ module Y2Partitioner
       end
 
       def init
-        self.value = @options.fstab_options.any? { |o| VALUES.include?(o) }
+        self.value = filesystem.fstab_options.any? { |o| VALUES.include?(o) }
       end
 
       def store
         delete_from_fstab!(Regexp.union(VALUES))
 
-        @options.fstab_options << "usrquota" << "grpquota" if value
+        return unless value
+        # The options can only be modified using BlkDevice#fstab_options=
+        filesystem.fstab_options = filesystem.fstab_options + ["usrquota", "grpquota"]
       end
     end
 
@@ -349,7 +358,8 @@ module Y2Partitioner
       def store
         delete_from_fstab!(REGEXP)
 
-        @options.fstab_options << "data=#{value}"
+        # The options can only be modified using BlkDevice#fstab_options=
+        filesystem.fstab_options = filesystem.fstab_options + ["data=#{value}"]
       end
 
       def items
@@ -395,8 +405,8 @@ module Y2Partitioner
     # that it is responsable of should be defined, removing them if not set or
     # supported by the current filesystem.
     class ArbitraryOptions < CWM::InputField
-      def initialize(options)
-        @options = options
+      def initialize(controller)
+        @controller = controller
       end
 
       def opt
@@ -420,9 +430,9 @@ module Y2Partitioner
 
       def widgets
         [
-          SwapPriority.new(@options),
-          IOCharset.new(@options),
-          Codepage.new(@options)
+          SwapPriority.new(@controller),
+          IOCharset.new(@controller),
+          Codepage.new(@controller)
         ]
       end
     end
@@ -442,7 +452,8 @@ module Y2Partitioner
       def store
         delete_from_fstab!(REGEXP)
 
-        @options.fstab_options << "pri=#{value}"
+        # The options can only be modified using BlkDevice#fstab_options=
+        filesystem.fstab_options = filesystem.fstab_options + ["pri=#{value}"]
       end
 
       def help
@@ -465,15 +476,16 @@ module Y2Partitioner
       ].freeze
 
       def init
-        i = @options.fstab_options.index { |o| o =~ REGEXP }
+        i = filesystem.fstab_options.index { |o| o =~ REGEXP }
 
-        self.value = i ? @options.fstab_options[i].gsub(REGEXP, "") : DEFAULT
+        self.value = i ? filesystem.fstab_options[i].gsub(REGEXP, "") : DEFAULT
       end
 
       def store
         delete_from_fstab!(/^iocharset=/)
 
-        @options.fstab_options << "iocharset=#{value}"
+        # The options can only be modified using BlkDevice#fstab_options=
+        filesystem.fstab_options = filesystem.fstab_options + ["iocharset=#{value}"]
       end
 
       def label
@@ -506,9 +518,11 @@ module Y2Partitioner
       DEFAULT = "".freeze
 
       def store
-        @options.fstab_options.delete_if { |o| o =~ REGEXP }
+        # The options can only be modified using BlkDevice#fstab_options=
+        filesystem.fstab_options = filesystem.fstab_options.reject { |o| o =~ REGEXP }
 
-        @options.fstab_options << "codepage=#{value}" if value && !value.empty?
+        return if value && !value.empty?
+        filesystem.fstab_options = filesystem.fstab_options + ["codepage=#{value}"]
       end
 
       def label

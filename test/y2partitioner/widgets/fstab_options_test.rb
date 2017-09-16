@@ -36,8 +36,19 @@ RSpec.shared_examples "FstabCheckBox" do
 end
 
 describe Y2Partitioner::Widgets do
-  let(:options) { Y2Partitioner::FormatMount::Options.new }
-  subject { described_class.new(options) }
+  let(:controller) { double("FilesystemController", filesystem: filesystem) }
+  let(:fs_type) { double("Type", supported_fstab_options: [], to_sym: :type) }
+  let(:filesystem) do
+    double("BlkFilesystem", fstab_options: [], type: fs_type, label: nil, mount_by: nil)
+  end
+
+  before do
+    allow(filesystem).to receive(:fstab_options=)
+    allow(filesystem).to receive(:label=)
+    allow(filesystem).to receive(:mount_by=)
+  end
+
+  subject { described_class.new(controller) }
 
   describe Y2Partitioner::Widgets::FstabOptions do
     include_examples "CWM::CustomWidget"

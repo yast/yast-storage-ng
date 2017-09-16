@@ -16,10 +16,9 @@ module Y2Partitioner
     class EditBlkDevice < UI::Sequence
       include Yast::Logger
       # @param partition [Y2Storage::BlkDevice]
-      def initialize(partition)
+      def initialize(blk_device)
         textdomain "storage"
-        @options = FormatMount::Options.new(partition: partition)
-        @partition = partition
+        @fs_controller = FilesystemController.new(blk_device)
       end
 
       def run
@@ -27,8 +26,7 @@ module Y2Partitioner
           "ws_start"       => "preconditions",
           "preconditions"  => { next: "format_options" },
           "format_options" => { next: "password" },
-          "password"       => { next: "commit" },
-          "commit"         => { finish: :finish }
+          "password"       => { next: :finish, finish: :finish }
         }
 
         sym = nil
@@ -51,7 +49,7 @@ module Y2Partitioner
       end
 
       def preconditions
-        if @partition.type.is?(:extended)
+        if blk_device.is?(:partition) && blk_device.type.is?(:extended)
           Yast::Popup.Error(_("An extended partition cannot be edited"))
           :back
         else
@@ -61,22 +59,26 @@ module Y2Partitioner
       skip_stack :preconditions
 
       def format_options
-        @format_dialog ||= Dialogs::FormatAndMount.new(@options)
-
-        @format_dialog.run
+        Dialogs::FormatAndMount.run(fs_controller)
       end
 
       def password
-        return :next unless @options.encrypt
-        @encrypt_dialog ||= Dialogs::EncryptPassword.new(@options)
-
-        @encrypt_dialog.run
+        result =
+          if fs_controller.to_be_encrypted?
+            Dialogs::EncryptPassword.run(fs_controller)
+          else
+            :finish
+          end
+        fs_controller.finish if [:next, :finish].include?(result)
+        result
       end
 
-      def commit
-        FormatMount::Base.new(@partition, @options).apply_options!
+    private
 
-        :finish
+      attr_reader :fs_controller
+
+      def blk_device
+        fs_controller.blk_device
       end
     end
   end

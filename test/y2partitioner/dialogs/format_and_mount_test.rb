@@ -4,9 +4,10 @@ require "cwm/rspec"
 require "y2partitioner/dialogs/format_and_mount"
 
 describe Y2Partitioner::Dialogs::FormatAndMount do
-  let(:options) { double("Format Options", name: "/dev/test_part") }
+  let(:controller) { double("FilesystemController", blk_device: partition) }
+  let(:partition) { double("Partition", name: "/dev/sda1") }
 
-  subject { described_class.new(options) }
+  subject { described_class.new(controller) }
 
   include_examples "CWM::Dialog"
 end

@@ -11,11 +11,11 @@ module Y2Partitioner
     class PartitionType < CWM::Dialog
       # Choose partition type: primary/extended/logical.
       class TypeChoice < CWM::RadioButtons
-        # @param ptemplate [#type] a Y2Storage::PartitionType field
-        def initialize(ptemplate, slots)
+        # @param controller [Sequences::PartitionController]
+        def initialize(controller)
           textdomain "storage"
-          @ptemplate = ptemplate
-          @slots = slots
+          @controller = controller
+          @slots = controller.unused_slots
         end
 
         # @macro seeAbstractWidget
@@ -53,20 +53,20 @@ module Y2Partitioner
         def init
           # Pick the first one available
           default_pt = Y2Storage::PartitionType.new(items.first.first)
-          self.value = (@ptemplate.type ||= default_pt).to_s
+          self.value = (@controller.type ||= default_pt).to_s
         end
 
         # @macro seeAbstractWidget
         def store
-          @ptemplate.type = Y2Storage::PartitionType.new(value)
+          @controller.type = Y2Storage::PartitionType.new(value)
         end
       end
 
-      # @param slots [Array<Y2Storage::PartitionTables::PartitionSlot>]
-      def initialize(disk_name, ptemplate, slots)
-        @disk_name = disk_name
-        @ptemplate = ptemplate
-        @slots = slots
+      # @param controller [Sequences::PartitionController]
+      #   partition controller collecting data for a partition to be created
+      def initialize(controller)
+        @disk_name = controller.disk_name
+        @controller = controller
         textdomain "storage"
       end
 
@@ -87,7 +87,7 @@ module Y2Partitioner
         when 0
           raise "No partition type possible"
         when 1
-          @ptemplate.type = Y2Storage::PartitionType.new(type_choice.items.first.first)
+          @controller.type = Y2Storage::PartitionType.new(type_choice.items.first.first)
           :next
         else
           super
@@ -97,7 +97,7 @@ module Y2Partitioner
     private
 
       def type_choice
-        @type_choice ||= TypeChoice.new(@ptemplate, @slots)
+        @type_choice ||= TypeChoice.new(@controller)
       end
     end
   end
