@@ -89,6 +89,13 @@ module Y2Partitioner
         ptable.delete_partition(@partition)
         @partition = nil
       end
+
+      # Whether is possible to create any new partition in the disk
+      #
+      # @return [Boolean]
+      def new_partition_possible?
+        unused_slots.any?(&:available?)
+      end
     end
   end
 end

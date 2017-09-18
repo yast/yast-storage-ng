@@ -57,16 +57,13 @@ module Y2Partitioner
       end
 
       def preconditions
-        if part_controller.unused_slots.empty?
-          Yast::Popup.Error(
-            Yast::Builtins.sformat(
-              _("It is not possible to create a partition on %1."),
-              disk_name
-            )
-          )
-          return :back
-        end
-        :next
+        return :next if part_controller.new_partition_possible?
+
+        Yast::Popup.Error(
+          # TRANSLATORS: %s is a device name (e.g. "/dev/sda")
+          _("It is not possible to create a partition on %s.") % disk_name
+        )
+        :back
       end
       skip_stack :preconditions
 

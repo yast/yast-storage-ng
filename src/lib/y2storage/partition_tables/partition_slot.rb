@@ -20,6 +20,7 @@
 # find current contact information at www.suse.com.
 
 require "y2storage/storage_class_wrapper"
+require "y2storage/partition_type"
 
 module Y2Storage
   module PartitionTables
@@ -75,6 +76,14 @@ module Y2Storage
       end
 
       alias_method :to_s, :inspect
+
+      # Whether the slot can be used to create a partition of any type
+      #
+      # @return [Boolean]
+      def available?
+        PartitionType.all.any? { |part| possible?(part) }
+      end
+
 
     private
 
