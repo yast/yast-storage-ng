@@ -26,7 +26,7 @@ require "y2partitioner/device_graphs"
 module Y2Partitioner
   module Sequences
     # This class stores information about a future partition so that information
-    # can be shared across the diferent dialogs of the process. It also takes
+    # can be shared across the different dialogs of the process. It also takes
     # care of updating the devicegraph when needed.
     class PartitionController
       # @return [Y2Storage::PartitionType]

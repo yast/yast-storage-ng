@@ -124,7 +124,7 @@ module Y2Partitioner
           # It's kind of expected that these attributes are preserved when
           # changing the filesystem type, with the exceptions below
           mount_by = filesystem.mount_by
-          mountpoint = filesystem.mountpoint
+          mountpoint = filesystem.mountpoint unless type.is?(:swap)
           label = filesystem.label
 
           mountpoint = "" if mountpoint == "swap" && !type.is?(:swap)
