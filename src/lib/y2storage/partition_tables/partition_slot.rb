@@ -84,7 +84,6 @@ module Y2Storage
         PartitionType.all.any? { |part| possible?(part) }
       end
 
-
     private
 
       # rubocop:disable Metrics/CyclomaticComplexity
