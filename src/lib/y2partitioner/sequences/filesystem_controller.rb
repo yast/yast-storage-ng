@@ -118,27 +118,23 @@ module Y2Partitioner
         # Make sure type has the correct... well, type :-)
         type = Y2Storage::Filesystems::Type.new(type)
 
-        mountpoint = "swap" if type.is?(:swap)
+        # It's kind of expected that these attributes are preserved when
+        # changing the filesystem type, with the exceptions below
+        mount_point = current_value_for(:mount_point)
+        mount_by = current_value_for(:mount_by)
+        label = current_value_for(:label)
 
-        if filesystem
-          # It's kind of expected that these attributes are preserved when
-          # changing the filesystem type, with the exceptions below
-          mount_by = filesystem.mount_by
-          mountpoint = filesystem.mountpoint unless type.is?(:swap)
-          label = filesystem.label
-
-          mountpoint = "" if mountpoint == "swap" && !type.is?(:swap)
-
-          if !new?(filesystem)
-            # Copying the label from the filesystem in the disk looks unexpected
-            label = nil
-            @backup_graph = working_graph.dup
-          end
+        if type.is?(:swap)
+          mount_point = "swap"
+        elsif mount_point == "swap"
+          mount_point = ""
         end
+
+        @backup_graph = working_graph.dup if filesystem && !new?(filesystem)
 
         delete_filesystem
         create_filesystem(type)
-        assign_fs_attrs(mount_by: mount_by, mountpoint: mountpoint, label: label)
+        assign_fs_attrs(mount_by: mount_by, mountpoint: mount_point, label: label)
         self.partition_id = filesystem.type.default_partition_id
       end
 
@@ -212,6 +208,20 @@ module Y2Partitioner
       def assign_fs_attrs(attrs = {})
         attrs.each_pair do |attr, value|
           filesystem.send(:"#{attr}=", value) unless value.nil?
+        end
+      end
+
+      def current_value_for(attribute)
+        return nil if filesystem.nil?
+
+        case attribute
+        when :mount_by
+          filesystem.mount_by
+        when :mount_point
+          filesystem.mount_point
+        when :label
+          # Copying the label from the filesystem in the disk looks unexpected
+          new?(filesystem) ? filesystem.label : nil
         end
       end
     end
