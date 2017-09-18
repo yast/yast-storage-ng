@@ -21,7 +21,7 @@ module Y2Partitioner
       using Refinements::FilesystemType
 
       # Constructor
-      # @param options [FormatMount::Options]
+      # @param controller [Sequences::FilesystemController]
       def initialize(controller, mount_options_widget)
         textdomain "storage"
 
@@ -39,6 +39,7 @@ module Y2Partitioner
         refresh
       end
 
+      # Synchronize the widget with the information from the controller
       def refresh
         @encrypt_widget.refresh
         @filesystem_widget.refresh
@@ -64,6 +65,7 @@ module Y2Partitioner
         end
       end
 
+      # @macro seeAbstractWidget
       def handle(event)
         case event["ID"]
         when :format_device
@@ -150,6 +152,7 @@ module Y2Partitioner
     class MountOptions < CWM::CustomWidget
       using Refinements::FilesystemType
 
+      # @param controller [Sequences::FilesystemController]
       def initialize(controller)
         textdomain "storage"
 
@@ -169,6 +172,7 @@ module Y2Partitioner
         refresh
       end
 
+      # Synchronize the widget with the information from the controller
       def refresh
         @mount_point_widget.refresh
 
@@ -219,6 +223,7 @@ module Y2Partitioner
         )
       end
 
+      # @macro seeAbstractWidget
       def handle(event)
         mountpoint = @mount_point_widget.value.to_s
 
@@ -247,6 +252,7 @@ module Y2Partitioner
     class BlkDeviceFilesystem < CWM::ComboBox
       SUPPORTED_FILESYSTEMS = %i(swap btrfs ext2 ext3 ext4 vfat xfs).freeze
 
+      # @param controller [Sequences::FilesystemController]
       def initialize(controller)
         textdomain "storage"
 
@@ -261,6 +267,7 @@ module Y2Partitioner
         refresh
       end
 
+      # Synchronize the widget with the information from the controller
       def refresh
         fs_type = @controller.filesystem_type
         self.value = fs_type ? fs_type.to_sym : nil
@@ -286,6 +293,7 @@ module Y2Partitioner
     # Push Button that launches a dialog to set speficic options for the
     # selected filesystem
     class FormatOptionsButton < CWM::PushButton
+      # @param controller [Sequences::FilesystemController]
       def initialize(controller)
         @controller = controller
       end
@@ -298,6 +306,7 @@ module Y2Partitioner
         _("Options...")
       end
 
+      # @macro seeAbstractWidget
       def handle
         Yast::Popup.Error("Not yet implemented") # Dialogs::FormatOptions.new(@options).run
 
@@ -310,7 +319,7 @@ module Y2Partitioner
       SUGGESTED_MOUNT_POINTS = %w(/ /home /var /opt /srv /tmp).freeze
 
       # Constructor
-      # @param options [FormatMount::Options]
+      # @param controller [Sequences::FilesystemController]
       def initialize(controller)
         @controller = controller
       end
@@ -319,6 +328,7 @@ module Y2Partitioner
         refresh
       end
 
+      # Synchronize the widget with the information from the controller
       def refresh
         self.value = @controller.mount_point
       end
@@ -445,6 +455,7 @@ module Y2Partitioner
     class EncryptBlkDevice < CWM::CheckBox
       using Refinements::FilesystemType
 
+      # @param controller [Sequences::FilesystemController]
       def initialize(controller)
         @controller = controller
       end
@@ -461,10 +472,12 @@ module Y2Partitioner
         refresh
       end
 
+      # Synchronize the widget with the information from the controller
       def refresh
         self.value = @controller.encrypt
       end
 
+      # @macro seeAbstractWidget
       def handle(event)
         @controller.encrypt = value if event["ID"] == widget_id
         nil
@@ -514,6 +527,7 @@ module Y2Partitioner
 
     # Partition identifier selector
     class PartitionId < CWM::ComboBox
+      # @param controller [Sequences::FilesystemController]
       def initialize(controller)
         @controller = controller
       end
@@ -526,6 +540,7 @@ module Y2Partitioner
         refresh
       end
 
+      # Synchronize the widget with the information from the controller
       def refresh
         self.value = @controller.partition_id.to_sym
       end
