@@ -1,6 +1,6 @@
 # Introduction
 
-This document describes the expert partitioner behavior using specs. The idea is to document all the functionalities of the expert partitioner (for now, only regarding to plain partitions) with a similar format that we would obtain as rspec output. Note: these specs have been done manually, they are not the result of a real rspec test.
+This document describes the expert partitioner behavior using specs. The idea is to document all the functionalities of the expert partitioner with a similar format that we would obtain as rspec output. Note: these specs have been done manually, they are not the result of a real rspec test.
 
 The specs are based on current version of expert partitioner for TW. The goal is to know and understand the gap between old and new expert partitioners. Missing parts in the new expert partitioner are marked as *pending* along the document.
 
@@ -492,7 +492,7 @@ The specs are based on current version of expert partitioner for TW. The goal is
   * RAID Name (opcional)
   * Available Devices
     * shows a table with the columns: Device, Size, Enc, Type
-      * and the table is filled out with info of available devices for RAID
+    * and the table is filled out with info of available devices for RAID
   * Selected Devices
     * shows a table with the columns: Device, Size, Enc, Type
     * and the table is filled out with info of devices that belong to the RAID
@@ -536,26 +536,26 @@ The specs are based on current version of expert partitioner for TW. The goal is
     * sets class to devices according to the pattern file
 
 #### *(pending) When we are in wizard step to select RAID options*
-  * when selected RAID type is: RAID0 or RAID1
-    * shows the following options
-      * Chunk Size
-        * values: 4 KiB, 8 KiB, 16 KiB, 32 KiB, 128 KiB, 256 KiB, 512 KiB, 1 MiB, 2 MiB, 4 MiB
-    * and RAID type is RADI0
-      * default chunk size: 32 KiB
-    * and RAID type is RADI1
-      * default chunk size: 4 KiB
-  * when selected RAID type is: RAID5, RAID6 or RAID10
-    * shows the following options
-      * Chunk Size
-        * values: 4 KiB, 8 KiB, 16 KiB, 32 KiB, 128 KiB, 256 KiB, 512 KiB, 1 MiB, 2 MiB, 4 MiB
-      * Parity Algorithm
-        * values: default, n2, o2, f2, n3, o3, f3
-    * and RAID type is RAID5 or RAID6
-      * default chunk size: 128 KiB
-      * default parity algorithm: default
-    * and RAID type is RAID10
-      * default chunk size: 32 KiB
-      * default parity algorithm: default
+* when selected RAID type is: RAID0 or RAID1
+  * shows the following options
+    * Chunk Size
+      * values: 4 KiB, 8 KiB, 16 KiB, 32 KiB, 128 KiB, 256 KiB, 512 KiB, 1 MiB, 2 MiB, 4 MiB
+  * and RAID type is RADI0
+    * default chunk size: 32 KiB
+  * and RAID type is RADI1
+    * default chunk size: 4 KiB
+* when selected RAID type is: RAID5, RAID6 or RAID10
+  * shows the following options
+    * Chunk Size
+      * values: 4 KiB, 8 KiB, 16 KiB, 32 KiB, 128 KiB, 256 KiB, 512 KiB, 1 MiB, 2 MiB, 4 MiB
+    * Parity Algorithm
+      * values: default, n2, o2, f2, n3, o3, f3
+  * and RAID type is RAID5 or RAID6
+    * default chunk size: 128 KiB
+    * default parity algorithm: default
+  * and RAID type is RAID10
+    * default chunk size: 32 KiB
+    * default parity algorithm: default
 
 ### *(pending) When 'Edit' is selected*
 * same dialog than partition edition (see above)
@@ -565,3 +565,179 @@ The specs are based on current version of expert partitioner for TW. The goal is
 * same dialog than wizard step to select RAID type and devices
 * 'RAID Type' is not shown
 * 'RAID Name' is not shown
+
+### When 'Volume Management' is selected in the tree view
+* shows a table with the columns: Device, Size, F, Enc, Type, FS Type, Label, Mount Point, Metadata, PE Size, Stripes
+  * and the table is filled out with info of all VGs and Lvs
+* *(pending) shows the actions: 'Add', 'Edit', 'Resize' and 'Delete'*
+* *(pending) and action 'Add' is selected*
+  * and the table is empty
+    * shows an option to add "Volume group"
+  * and the table is not empty (at least one VG)
+    * shows an option to add "Volume Group"
+    * shows an option to add "Logical Volume"
+* *(pending) and action 'Edit' is selected*
+  * and a VG is selected in the table
+    * shows the general view of the VG (same than selecting the VG in the tree view)
+  * and a LV is selected in the table
+    * shows dialog to edit the LV
+* *(pending) and action 'Resize' is selected*
+  * and a VG is selected in the table
+    * shows dialog to resize the VG
+  * and a LV is selected in the table
+    * shows popup dialog to resize the LV
+* *(pending) and action 'Delete' is selected*
+  * and a VG is selected in the table
+    * shows a confirm popup to delete the VG and its LVs
+    * deletes the VG (and its LVs)
+  * and a LV is selected in the table
+    * shows a confirm popup to delete the LV
+    * deletes the LV
+
+#### When 'Add' + 'Volume Group' is selected
+* and there are not valid unused devices (0x8e Linux, 0x83 LVM, 0xFD RAID)
+  * shows an error popup
+* and there are valid unused devices
+  * shows the following options
+    * Volume Group Name
+    * Physical Extend Size
+    * Available Physical Volumes
+      * shows a table with the columns: Device, Size, Enc, Type
+      * and the table is filled out with info of available devices for LVM
+    * Selected Physical volumes
+      * shows a table with the columns: Device, Size, Enc, Type
+      * and the table is filled out with the devices that belong to the VG
+  * shows the actions: 'Add', 'Add All', 'Remove', 'Remove All'
+    * and action 'Add' is selected
+      * move the selected device from 'Available Physical Volumes' to 'Selected Physical Volumes'
+    * and action 'Add All' is selected
+      * move all devices from 'Available Physical Volumes' to 'Selected Physical Volumes'
+    * and action 'Remove' is selected
+      * move the selected device from 'Selected Physical Volumes' to 'Available Physical Volumes'
+    * and action 'Remove All' is selected
+      * move all devices from 'Selected Physical Volumes' to'Available Physical Volumes'
+  * and 'Finish' is selected
+    * and 'Volume Group Name' is empty
+      * shows an error popup
+      * avoids to continue
+    * and there are not selected physical volumes
+      * shows an error popup
+      * avoids to continue
+    * creates the VG
+
+#### When 'Resize' is selected (over a VG)
+* same dialog than 'Add' + 'Volume Group' (see above)
+* 'Volume Group Name' is not shown
+* 'Physical Extend Size' is not shown
+
+### *(pending) When a 'VG' is selected in the tree view*
+* shows a view with three tabs: 'Overview', 'Logical Volumes' and 'Physical Volumes'
+  * tab 'Logical Volumes' is selected by default
+* and tab 'Overview' is selected
+  * shows a report with two sections: 'Device' and 'LVM'
+    * where 'LVM' section contains the folling info
+      * device name
+      * device size
+    * where 'LVM' section contains the following info
+      * Metadata
+      * PE Size
+* and tab 'Logical Volumes' is selected
+  * shows a bar image with the LVs
+  * shows a table with the columns: Device, Size, F, Enc, Type, FS Type, Label, Mount Point, Stripes
+    * and the table is filled out with info of LVs that belong to the VG
+  * shows the actions: 'Add', 'Edit', 'Resize' and 'Delete'
+    * and action 'Add' is selected
+      * shows wizard to add a new LV
+    * and action 'Edit' is selected
+      * shows dialog to edit the current selected LV in the table
+      * same dialog than partition edition (see above)
+      * 'File System Id' is not shown
+    * and action 'Resize' is selected
+      * shows popup dialog to resize the current selected LV in the table
+    * and action 'Delete' is selected
+      * shows a confirm popup to delete the selected LV
+      * deletes the LV
+* and tab 'Physical Volumes' is selected
+  * shows a table with the columns: Device, Size, F, Enc, Type
+    * and the table is filled out with info of PVs that belong to the VG
+
+#### When 'Add' is selected
+* and there is not free space in the VG
+  * shows an error popup
+* and there is free space in the VG
+  * shows a wizard with 5 steps
+    * select LV name and type
+    * select LV size
+    * select LV role
+      * same wizard step than in partition creation (see above)
+    * set fs attributes (fs type, mount point, etc)
+      * same wizard step than in partition creation (see above)
+      * 'File System Id' is not shown
+    * set encrypt password (optional)
+      * same wizard step than in partition creation (see above)
+
+##### When we are in the wizard step to select the LV name and type
+* shows two sections: 'Name' and 'Type'
+  * where 'Name' contains
+    * 'Logical volume' field for the name of the LV
+  * where 'Type' contains the options
+    * Normal Volume
+    * Thin Pool
+    * Thin Volume
+  * and 'Thin Volume' is selected
+    * enables 'Used Pool' selectbox
+  * and 'next' is selected
+    * and 'Logical Volume' field is empty
+      * shows an error popup
+      * avoids to continue
+    * and 'Logical Volume' field is not empty
+      * continues to the wizard step to select the LV size
+
+##### When we are in the wizard step to select the LV size
+* shows two sections: 'Size' and 'Stripes'
+  * where 'size' contains the options
+    * Maximun Size
+      * selected by default
+    * Custom Size
+      * filled out with maximum size by default
+  * where 'Stripes' contains the fields
+    * Number
+    * Size
+  * and 'next' is selected
+    * and 'Custom Size' is selected
+      * and entered size is not valid
+        * shows an error popup
+        * avoids to continue
+    * continues to the wizard step select LV role
+
+#### When 'resize' is selected
+* shows a popup dialog with three options
+  * Maximum Size
+  * Minimum Size
+  * Custom Size
+  * and 'OK' is selected
+    * and 'Custom Size' is selected
+      * and entered size is not valid (minimum <= size <= maximum)
+        * shows an error popup
+        * avoids to continue
+    * updates the LV size
+
+### *(pending) When a LV is selected in the tree view*
+* shows a report with three sections: 'Device', 'LVM' and 'File System'
+  * where 'Device' section contains the folling info
+    * Device
+    * Size
+    * Encrypted
+  * where 'LVM' section contains the folling info
+    * Stripes
+  * where 'File system' section contains the folling info
+    * File system
+    * Mount point
+    * Label
+* shows the actions: 'Edit', 'Resize' and 'Delete'
+  * and action 'Edit' is selected
+    * the same than in the "VG view"
+  * and action 'Resize' is selected
+    * the same than in the "VG view"
+  * and action 'Delete' is selected
+    * the same than in the "VG view"
