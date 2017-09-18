@@ -34,7 +34,8 @@ module Y2Partitioner
           "size"           => { next: "role", finish: :finish },
           "role"           => { next: "format_options" },
           "format_options" => { next: "password" },
-          "password"       => { next: :finish, finish: :finish }
+          "password"       => { next: "commit" },
+          "commit"         => { finish: :finish }
         }
 
         sym = nil
@@ -92,14 +93,13 @@ module Y2Partitioner
       end
 
       def password
-        result =
-          if fs_controller.to_be_encrypted?
-            Dialogs::EncryptPassword.run(fs_controller)
-          else
-            :finish
-          end
-        fs_controller.finish if [:next, :finish].include?(result)
-        result
+        return :next unless fs_controller.to_be_encrypted?
+        Dialogs::EncryptPassword.run(fs_controller)
+      end
+
+      def commit
+        fs_controller.finish
+        :finish
       end
 
     private
