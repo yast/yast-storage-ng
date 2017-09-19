@@ -1,4 +1,13 @@
 -------------------------------------------------------------------
+Tue Sep 19 07:26:06 UTC 2017 - ancor@suse.com
+
+- Improved creation and modification of partitions in the Expert
+  Partitioner (bsc#1057869, bsc#1057874).
+- Added button to define the Btrfs subvolumes directly during
+  creation or modification.
+- 3.3.17
+
+-------------------------------------------------------------------
 Wed Sep 13 14:44:52 UTC 2017 - jreidinger@suse.com
 
 - add all full udev links and helper to list them all
