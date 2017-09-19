@@ -26,10 +26,12 @@ Source:		%{name}-%{version}.tar.bz2
 # Yast2::FsSnapshots.configure_on_install=
 Requires:	yast2 >= 4.0.3
 Requires:	yast2-ruby-bindings
-Requires:	libstorage-ng-ruby
+# BlkDevice#remove_encryption
+Requires:	libstorage-ng-ruby >= 3.3.22
 
 BuildRequires:	update-desktop-files
-BuildRequires:	libstorage-ng-ruby
+# BlkDevice#remove_encryption
+BuildRequires:	libstorage-ng-ruby >= 3.3.22
 BuildRequires:	yast2-ruby-bindings
 BuildRequires:	yast2-devtools
 # Yast2::FsSnapshots.configure_on_install=

@@ -176,10 +176,10 @@ module Y2Partitioner
 
         if to_be_encrypted?
           name = Y2Storage::Encryption.dm_name_for(blk_device)
-          enc = blk_device.force_encryption(name, working_graph)
+          enc = blk_device.create_encryption(name)
           enc.password = encrypt_password
         elsif blk_device.encrypted? && !encrypt
-          blk_device.remove_encryption(working_graph)
+          blk_device.remove_encryption
         end
       end
 

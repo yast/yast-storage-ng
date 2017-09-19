@@ -132,9 +132,28 @@ module Y2Storage
     # @!method create_encryption(dm_name)
     #   Creates a new encryption object on top of the device.
     #
+    #   If the blk device has children, the children will become children of
+    #   the encryption device.
+    #
+    #   @note: NEVER use this if any child of the block device already exists
+    #   in the real system. It will fail during commit.
+    #
     #   @param dm_name [String] see #dm_table_name
     #   @return [Encryption]
     storage_forward :create_encryption, as: "Encryption", raise_errors: true
+
+    # @!method remove_encryption
+    #   Removes an encryption device on the block device.
+    #
+    #   If the encryption device has children, the children will become direct
+    #   children of the block device.
+    #
+    #   @note: NEVER use this if any child of the encryption device already
+    #   exists in the real system. It will fail during commit.
+    #
+    #   @raise [Storage::WrongNumberOfChildren, Storage::DeviceHasWrongType] if
+    #     the device is not encrypted.
+    storage_forward :remove_encryption, raise_errors: true
 
     # @!method direct_blk_filesystem
     #   Filesystem directly placed in the device (no encryption or any other
@@ -267,78 +286,6 @@ module Y2Storage
     # @return [String]
     def basename
       name.split("/").last
-    end
-
-    # Creates a new encryption object on top of the device, even if there are
-    # already other devices there.
-    #
-    # This method makes possible to add an encryption layer between the block
-    # device and its filesystem.
-    #
-    # @note: NEVER use this if the filesystem (or any child of the block device)
-    # already exists in the real system. It will fail during commit.
-    #
-    # @see #create_encryption
-    #
-    # FIXME: this method plays too much with libstorage-ng internals. The
-    # functionality should be moved to the library.
-    #
-    # @param dm_name [String] see #dm_table_name
-    # @param devicegraph [Devicegraph] should not be needed after moving the
-    #   method to libstorage-ng
-    # @return [Encryption] the newly created encryption device
-    def force_encryption(dm_name, devicegraph)
-      return create_encryption(dm_name) if num_children.zero?
-
-      # Work directly with the SWIG object
-      devicegraph = devicegraph.to_storage_value
-
-      children = []
-      to_storage_value.out_holders.each do |holder|
-        raise "Unexpected holder" unless Storage.filesystem_user?(holder)
-        children << holder.target
-        devicegraph.remove_holder(holder)
-      end
-
-      enc = create_encryption(dm_name)
-      children.each do |child|
-        Storage::FilesystemUser.create(devicegraph, enc.to_storage_value, child)
-      end
-
-      enc
-    end
-
-    # Removes the existing encryption object without deleting the filesystem
-    # hanging on it.
-    #
-    # If the encrypted device have a filesystem, it will be "relocated" directly
-    # to this block device.
-    #
-    # @note: NEVER use this if the filesystem (or any child of the block device)
-    # already exists in the real system. It will fail during commit.
-    #
-    # FIXME: this method plays too much with libstorage-ng internals. The
-    # functionality should be moved to the library.
-    #
-    # @param devicegraph [Devicegraph] should not be needed after moving the
-    #   method to libstorage-ng
-    def remove_encryption(devicegraph)
-      return unless encrypted?
-
-      # Work directly with the SWIG object
-      devicegraph = devicegraph.to_storage_value
-
-      children = []
-      encryption.to_storage_value.out_holders.each do |holder|
-        raise "Unexpected holder" unless Storage.filesystem_user?(holder)
-        children << holder.target
-        devicegraph.remove_holder(holder)
-      end
-
-      remove_descendants
-      children.each do |child|
-        Storage::FilesystemUser.create(devicegraph, to_storage_value, child)
-      end
     end
   end
 end
