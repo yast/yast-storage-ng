@@ -187,6 +187,23 @@ module Y2Storage
       descendants.detect { |dev| dev.is?(:lvm_pv) && dev.blk_device == self }
     end
 
+    # MD array defined on top of the device, either directly or through an
+    # encryption layer.
+    #
+    # @return [Md] nil if neither the raw device or its encrypted version
+    #   are used by an MD RAID device
+    def md
+      descendants.detect { |dev| dev.is?(:md) && dev.plain_devices.include?(plain_device) }
+    end
+
+    # MD array defined directly on top of the device (no encryption or any
+    # other layer in between)
+    #
+    # @return [Md] nil if the raw device is not used by any MD RAID device
+    def direct_md
+      descendants.detect { |dev| dev.is?(:md) && dev.devices.include?(self) }
+    end
+
     # Label of the filesystem, if any
     # @return [String, nil]
     def filesystem_label

@@ -46,13 +46,13 @@ module Y2Storage
     #   Adds a block device to the MD RAID.
     #
     #   @param blk_device [BlkDevice]
-    storage_forward :add_device
+    storage_forward :add_device, raise_errors: true
 
     # @!method remove_device(blk_device)
     #   Removes a block device from the MD RAID.
     #
     #   @param blk_device [BlkDevice]
-    storage_forward :remove_device
+    storage_forward :remove_device, raise_errors: true
 
     # @!method numeric?
     #   @return [Boolean] whether the MD RAID has a numeric name
@@ -124,6 +124,16 @@ module Y2Storage
     def preferred_ptable_type
       # We always suggest GPT
       PartitionTables::Type.find(:gpt)
+    end
+
+    # Raw (non encrypted) versions of the devices included in the MD array.
+    #
+    # If none of the devices is encrypted, this is equivalent to #devices,
+    # otherwise it returns the original devices instead of the encryption ones.
+    #
+    # @return [Array<BlkDevice>]
+    def plain_devices
+      devices.map(&:plain_device)
     end
 
   protected
