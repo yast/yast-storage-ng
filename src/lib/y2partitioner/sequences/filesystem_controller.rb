@@ -22,6 +22,8 @@
 require "yast"
 require "y2storage"
 require "y2partitioner/device_graphs"
+require "y2storage/filesystems/btrfs"
+require "y2storage/subvol_specification"
 
 module Y2Partitioner
   module Sequences
@@ -111,7 +113,8 @@ module Y2Partitioner
         return unless fs_type
 
         create_filesystem(fs_type)
-        assign_fs_attrs(mountpoint: mount_point, mount_by: mount_by)
+        assign_fs_attrs(mount_by: mount_by)
+        self.mount_point = mount_point
       end
 
       def new_filesystem(type)
@@ -134,8 +137,9 @@ module Y2Partitioner
 
         delete_filesystem
         create_filesystem(type)
-        assign_fs_attrs(mount_by: mount_by, mountpoint: mount_point, label: label)
+        assign_fs_attrs(mount_by: mount_by, label: label)
         self.partition_id = filesystem.type.default_partition_id
+        self.mount_point = mount_point
       end
 
       def dont_format
@@ -157,6 +161,14 @@ module Y2Partitioner
         partition_id = Y2Storage::PartitionId.new(partition_id)
         ptable = blk_device.partition_table
         blk_device.id = ptable.partition_id_for(partition_id)
+      end
+
+      def mount_point=(mount_point)
+        return if filesystem.nil? || filesystem.mount_point == mount_point
+
+        before_set_mount_point
+        filesystem.mount_point = mount_point
+        after_set_mount_point
       end
 
       def finish
@@ -191,18 +203,24 @@ module Y2Partitioner
 
       def create_filesystem(type)
         blk_device.create_blk_filesystem(type)
+
+        if btrfs?
+          default_path = Y2Storage::Filesystems::Btrfs.default_btrfs_subvolume_path
+          filesystem.ensure_default_btrfs_subvolume(path: default_path)
+        end
       end
 
       def restore_filesystem
         mount_by = filesystem.mount_by
-        mountpoint = filesystem.mountpoint
+        mount_point = filesystem.mount_point
         label = filesystem.label
 
         @backup_graph.copy(working_graph)
         @backup_graph = nil
         @encrypt = blk_device.encrypted?
 
-        assign_fs_attrs(mount_by: mount_by, mountpoint: mountpoint, label: label)
+        assign_fs_attrs(mount_by: mount_by, label: label)
+        self.mount_point = mount_point
       end
 
       def assign_fs_attrs(attrs = {})
@@ -223,6 +241,75 @@ module Y2Partitioner
           # Copying the label from the filesystem in the disk looks unexpected
           new?(filesystem) ? filesystem.label : nil
         end
+      end
+
+      def before_set_mount_point
+        # When the filesystem is btrfs, the not probed subvolumes are deleted.
+        delete_not_probed_subvolumes if btrfs?
+      end
+
+      def after_set_mount_point
+        # When the filesystem is btrfs and root, default proposed subvolumes are added
+        # in case they are not been probed.
+        add_proposed_subvolumes if btrfs? && root?
+        # When the filesystem is btrfs, the mount point of the resulting subvolumes is updated.
+        update_mount_points if btrfs?
+        # Shadowing control of btrfs subvolumes is always performed.
+        Y2Storage::Filesystems::Btrfs.refresh_subvolumes_shadowing(working_graph)
+      end
+
+      # Deletes not probed subvolumes
+      def delete_not_probed_subvolumes
+        loop do
+          subvolume = find_not_probed_subvolume
+          return if subvolume.nil?
+          filesystem.delete_btrfs_subvolume(working_graph, subvolume.path)
+        end
+      end
+
+      # Finds first not probed subvolume
+      #
+      # @note Top level and default subvolumes are not taken into account (see {#subvolumes}).
+      #
+      # @return [Y2Storage::BtrfsSubvolume, nil]
+      def find_not_probed_subvolume
+        device_graph = DeviceGraphs.instance.system
+        subvolumes.detect { |s| !s.exists_in_devicegraph?(device_graph) }
+      end
+
+      # A proposed subvolume is added only when it does not exist in the filesystem and it
+      # makes sense for the current architecture
+      #
+      # @see Y2Storage::Filesystems::Btrfs#add_btrfs_subvolumes
+      def add_proposed_subvolumes
+        specs = Y2Storage::SubvolSpecification.from_control_file
+        specs = Y2Storage::SubvolSpecification.fallback_list if specs.nil? || specs.empty?
+
+        filesystem.add_btrfs_subvolumes(specs)
+      end
+
+      # Updates subvolumes mount point
+      #
+      # @note Top level and default subvolumes are not taken into account (see {#subvolumes}).
+      def update_mount_points
+        subvolumes.each do |subvolume|
+          subvolume.mount_point = filesystem.btrfs_subvolume_mount_point(subvolume.path)
+        end
+      end
+
+      # Btrfs subvolumes without top level and default ones
+      def subvolumes
+        filesystem.btrfs_subvolumes.select do |subvolume|
+          !subvolume.top_level? && !subvolume.default_btrfs_subvolume?
+        end
+      end
+
+      def btrfs?
+        filesystem.supports_btrfs_subvolumes?
+      end
+
+      def root?
+        filesystem.root?
       end
     end
   end

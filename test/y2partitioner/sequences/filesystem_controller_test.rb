@@ -455,6 +455,120 @@ describe Y2Partitioner::Sequences::FilesystemController do
     end
   end
 
+  describe "#mount_point=" do
+    let(:mount_point) { nil }
+
+    context "when the currently editing devices has no filesystem" do
+      before do
+        device.remove_descendants
+      end
+
+      it "does nothing" do
+        devicegraph = Y2Partitioner::DeviceGraphs.instance.current.dup
+        subject.mount_point = mount_point
+
+        expect(devicegraph).to eq(Y2Partitioner::DeviceGraphs.instance.current)
+      end
+    end
+
+    context "when the currently editing devices has filesystem" do
+      let(:filesystem) { subject.filesystem }
+
+      context "and tries to set the same mount point" do
+        let(:mount_point) { device.filesystem.mount_point }
+
+        it "does nothing" do
+          devicegraph = Y2Partitioner::DeviceGraphs.instance.current.dup
+          subject.mount_point = mount_point
+
+          expect(devicegraph).to eq(Y2Partitioner::DeviceGraphs.instance.current)
+        end
+      end
+
+      context "and tries to set a different mount point" do
+        let(:mount_point) { "/foo" }
+
+        it "changes the filesystem mount point" do
+          subject.mount_point = mount_point
+          expect(filesystem.mount_point).to eq(mount_point)
+        end
+
+        context "and the filesystem is Btrfs" do
+          let(:dev_name) { "/dev/sda2" }
+
+          it "does not delete the probed subvolumes" do
+            subvolumes = filesystem.btrfs_subvolumes
+            subject.mount_point = mount_point
+
+            expect(filesystem.btrfs_subvolumes).to include(*subvolumes)
+          end
+
+          it "updates the subvolumes mount points" do
+            subject.mount_point = mount_point
+            mount_points = filesystem.btrfs_subvolumes.map(&:mount_point).compact
+            expect(mount_points).to all(start_with(mount_point))
+          end
+
+          it "does not change mount point for special subvolumes" do
+            subject.mount_point = mount_point
+            expect(filesystem.top_level_btrfs_subvolume.mount_point.to_s).to be_empty
+            expect(filesystem.default_btrfs_subvolume.mount_point.to_s).to be_empty
+          end
+
+          it "refresh btrfs subvolumes shadowing" do
+            expect(Y2Storage::Filesystems::Btrfs).to receive(:refresh_subvolumes_shadowing)
+            subject.mount_point = mount_point
+          end
+
+          context "and it has 'not probed' subvolumes" do
+            let(:dev_name) { "/dev/sdb3" }
+            let(:path) { "@/bar" }
+
+            before do
+              filesystem.create_btrfs_subvolume(path, false)
+            end
+
+            it "deletes the not probed subvolumes" do
+              subject.mount_point = mount_point
+              expect(filesystem.find_btrfs_subvolume_by_path(path)).to be_nil
+            end
+          end
+
+          context "and the new mount point is root" do
+            let(:mount_point) { "/" }
+
+            before do
+              device.filesystem.mount_point = "/no_root"
+            end
+
+            it "adds the proposed subvolumes for the current arch that do not exist" do
+              specs = Y2Storage::SubvolSpecification.fallback_list
+              arch_specs = Y2Storage::SubvolSpecification.for_current_arch(specs)
+              paths = arch_specs.map { |s| filesystem.btrfs_subvolume_path(s.path) }
+
+              expect(paths.any? { |p| filesystem.find_btrfs_subvolume_by_path(p).nil? }).to be(true)
+
+              subject.mount_point = mount_point
+
+              expect(paths.any? { |p| filesystem.find_btrfs_subvolume_by_path(p).nil? }).to be(false)
+            end
+          end
+
+          context "and the new mount point is not root" do
+            let(:mount_point) { "/foo" }
+
+            it "does not add new subvolumes" do
+              paths = filesystem.btrfs_subvolumes.map(&:path)
+              subject.mount_point = mount_point
+
+              expect(filesystem.btrfs_subvolumes.map(&:path)).to eq(paths)
+            end
+          end
+        end
+      end
+    end
+  end
+
   describe "#finish" do
     before do
       allow(subject).to receive(:can_change_encrypt?).and_return(can_change_encrypt)
