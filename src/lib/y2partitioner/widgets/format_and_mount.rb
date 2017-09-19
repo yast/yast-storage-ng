@@ -1,10 +1,10 @@
 require "yast"
 require "y2storage"
-require "cwm/custom_widget"
+require "cwm"
 require "y2partitioner/refinements/filesystem_type"
-require "y2partitioner/format_mount/options"
 require "y2partitioner/dialogs/fstab_options"
 require "y2partitioner/widgets/fstab_options"
+require "y2partitioner/dialogs/btrfs_subvolumes"
 require "y2storage/mountable"
 require "y2storage/btrfs_subvolume"
 
@@ -160,6 +160,7 @@ module Y2Partitioner
 
         @mount_point_widget = MountPoint.new(controller)
         @fstab_options_widget = FstabOptionsButton.new(controller)
+        @btrfs_subvolumes_widget = BtrfsSubvolumesButton.new(controller)
 
         self.handle_all_events = true
       end
@@ -175,6 +176,7 @@ module Y2Partitioner
       # Synchronize the widget with the information from the controller
       def refresh
         @mount_point_widget.refresh
+        @btrfs_subvolumes_widget.refresh
 
         if filesystem
           Yast::UI.ChangeWidget(Id(:mount_device), :Enabled, true)
@@ -217,7 +219,8 @@ module Y2Partitioner
                   ),
                   Left(RadioButton(Id(:no_mount_device), Opt(:notify), _("Do not mount device")))
                 )
-              )
+              ),
+              HBox(Left(@btrfs_subvolumes_widget))
             )
           )
         )
@@ -225,19 +228,20 @@ module Y2Partitioner
 
       # @macro seeAbstractWidget
       def handle(event)
-        mountpoint = @mount_point_widget.value.to_s
+        mount_point = @mount_point_widget.value.to_s
 
         case event["ID"]
         when :mount_device
-          @controller.filesystem.mountpoint = mountpoint
+          @controller.mount_point = mount_point
           @fstab_options_widget.enable
           @mount_point_widget.enable
         when :no_mount_device
+          @controller.mount_point = ""
           @fstab_options_widget.disable
           @mount_point_widget.disable
         when @mount_point_widget.widget_id
-          @controller.filesystem.mountpoint = mountpoint
-          if mountpoint.nil? || mountpoint.empty?
+          @controller.mount_point = mount_point
+          if mount_point.nil? || mount_point.empty?
             @fstab_options_widget.disable
           else
             @fstab_options_widget.enable
@@ -448,6 +452,49 @@ module Y2Partitioner
 
       def filesystem
         @controller.filesystem
+      end
+    end
+
+    # The subvolumes button is implemented as a replace point to allow hidden it
+    class BtrfsSubvolumesButton < CWM::ReplacePoint
+      def initialize(controller)
+        @controller = controller
+        super(widget: current_widget)
+      end
+
+      def refresh
+        replace(current_widget)
+      end
+
+    private
+
+      def filesystem
+        @controller.filesystem
+      end
+
+      def current_widget
+        if filesystem && filesystem.supports_btrfs_subvolumes?
+          Button.new(@controller)
+        else
+          CWM::Empty.new("empty_widget")
+        end
+      end
+
+      # Button to manage btrfs subvolumes
+      class Button < CWM::PushButton
+        # @param controller [Sequences::FilesystemController]
+        def initialize(controller)
+          @controller = controller
+        end
+
+        def label
+          _("Subvolume Handling")
+        end
+
+        def handle
+          Dialogs::BtrfsSubvolumes.new(@controller.filesystem).run
+          nil
+        end
       end
     end
 
