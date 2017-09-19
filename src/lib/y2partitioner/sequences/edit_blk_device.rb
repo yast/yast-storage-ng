@@ -5,7 +5,6 @@ require "y2partitioner/dialogs/partition_size"
 require "y2partitioner/dialogs/partition_type"
 require "y2partitioner/dialogs/encrypt_password"
 require "y2partitioner/dialogs/format_and_mount"
-require "y2partitioner/format_mount/base"
 
 Yast.import "Popup"
 Yast.import "Wizard"
