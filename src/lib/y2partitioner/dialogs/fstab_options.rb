@@ -8,11 +8,11 @@ module Y2Partitioner
     # CWM Dialog to set specific fstab options for the blk_device being added
     # or edited.
     class FstabOptions < Popup
-      # @param options [Y2Partitioner::FormatMount::Options]
-      def initialize(options)
+      # @param controller [Sequences::FilesystemController]
+      def initialize(controller)
         textdomain "storage"
 
-        @options = options
+        @controller = controller
       end
 
       def title
@@ -23,7 +23,7 @@ module Y2Partitioner
         HBox(
           HStretch(),
           HSpacing(1),
-          HVSquash(Widgets::FstabOptions.new(@options)),
+          HVSquash(Widgets::FstabOptions.new(@controller)),
           HStretch(),
           HSpacing(1)
         )
