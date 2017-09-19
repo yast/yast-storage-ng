@@ -3,17 +3,14 @@ require "cwm/table"
 
 require "y2partitioner/icons"
 require "y2partitioner/device_graphs"
-require "y2partitioner/widgets/help"
+require "y2partitioner/widgets/blk_device_columns"
 
 module Y2Partitioner
   module Widgets
     # Table widget to represent a given list of devices
     class BlkDevicesTable < CWM::Table
-      include Help
       include Yast::I18n
-      extend Yast::I18n
-
-      textdomain "storage"
+      include BlkDeviceColumns
 
       # Constructor
       #
@@ -26,16 +23,6 @@ module Y2Partitioner
         @pager = pager
       end
 
-      # @see CWM::Table#header
-      def header
-        columns.map { |c| send("#{c}_title") }
-      end
-
-      # @see CWM::Table#items
-      def items
-        devices.map { |d| values_for(d) }
-      end
-
       def opt
         [:notify]
       end
@@ -44,11 +31,6 @@ module Y2Partitioner
       def handle
         id = value[/table:(.*)/, 1]
         @pager.handle("ID" => id)
-      end
-
-      # Updates table content
-      def refresh
-        change_items(items)
       end
 
       # Device object selected in the table
@@ -101,9 +83,6 @@ module Y2Partitioner
       attr_reader :pager
       attr_reader :devices
 
-      # TRANSLATORS: "F" stands for Format flag. Keep it short, ideally a single letter.
-      FORMAT_FLAG = N_("F")
-
       DEFAULT_COLUMNS = [
         :device,
         :size,
@@ -127,139 +106,6 @@ module Y2Partitioner
 
       def default_columns
         DEFAULT_COLUMNS
-      end
-
-      # @see #helptext_for
-      def columns_help
-        columns.map { |c| helptext_for(c) }.join("\n")
-      end
-
-      def values_for(device)
-        [row_id(device)] + columns.map { |c| send("#{c}_value", device) }
-      end
-
-      def row_id(device)
-        "table:device:#{device.sid}"
-      end
-
-      def filesystem(device)
-        return nil unless device.respond_to?(:filesystem)
-        device.filesystem
-      end
-
-      # Column titles
-
-      def device_title
-        # TRANSLATORS: table header, Device is physical name of block device, e.g. "/dev/sda1"
-        _("Device")
-      end
-
-      def size_title
-        # TRANSLATORS: table header, size of block device e.g. "8.00 GiB"
-        Right(_("Size"))
-      end
-
-      def format_title
-        Center(_(FORMAT_FLAG))
-      end
-
-      def encrypted_title
-        # TRANSLATORS: table header, flag if device is encrypted. Keep it short,
-        # ideally three letters. Keep in sync with Enc used later for format marker.
-        Center(_("Enc"))
-      end
-
-      def type_title
-        # TRANSLATORS: table header, type of disk or partition. Can be longer. E.g. "Linux swap"
-        _("Type")
-      end
-
-      def filesystem_type_title
-        # TRANSLATORS: table header, file system type
-        _("FS Type")
-      end
-
-      def filesystem_label_title
-        # TRANSLATORS: table header, disk or partition label. Can be empty.
-        _("Label")
-      end
-
-      def mount_point_title
-        # TRANSLATORS: table header, where is device mounted. Can be empty. E.g. "/" or "/home"
-        _("Mount Point")
-      end
-
-      def start_title
-        # TRANSLATORS: table header, which sector is the first one for device. E.g. "0"
-        Right(_("Start"))
-      end
-
-      def end_title
-        # TRANSLATORS: table header, which sector is the the last for device. E.g. "126"
-        Right(_("End"))
-      end
-
-      # Values
-
-      def device_value(device)
-        device.name
-      end
-
-      def size_value(device)
-        device.size.to_human_string
-      end
-
-      def format_value(device)
-        return "" unless device.respond_to?(:to_be_formatted?)
-        already_formatted = !device.to_be_formatted?(DeviceGraphs.instance.system)
-        already_formatted ? "" : _(FORMAT_FLAG)
-      end
-
-      def encrypted_value(device)
-        return "" unless device.respond_to?(:encrypted?)
-        return "" unless device.encrypted?
-
-        if Yast::UI.GetDisplayInfo["HasIconSupport"]
-          icon_path = Icons.small_icon(Icons::ENCRYPTED)
-          cell(icon(icon_path))
-        else
-          "E"
-        end
-      end
-
-      def type_value(_device)
-        # TODO: add PartitionType#to_human_string to yast2-storage-ng.
-        # TODO: also type for disks. Old one: https://github.com/yast/yast-storage/blob/master/src/modules/StorageFields.rb#L517
-        #   for disk, lets add it to partitioner, unless someone else need it
-        "TODO"
-      end
-
-      def filesystem_type_value(device)
-        fs = filesystem(device)
-        return "" if fs.nil?
-
-        type = fs.type
-        type.nil? ? "" : type.to_human
-      end
-
-      def filesystem_label_value(device)
-        fs = filesystem(device)
-        fs.nil? ? "" : fs.label
-      end
-
-      def mount_point_value(device)
-        fs = filesystem(device)
-        fs.nil? ? "" : fs.mount_point
-      end
-
-      def start_value(device)
-        return "" unless device.respond_to?(:region)
-        device.region.start
-      end
-
-      def end_value(device)
-        return "" unless device.respond_to?(:region)
-        device.region.end
       end
     end
   end
