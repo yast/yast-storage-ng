@@ -442,4 +442,64 @@ describe Y2Storage::BlkDevice do
       )
     end
   end
+
+  describe "#md" do
+    before { fake_scenario("subvolumes-and-empty-md.xml") }
+
+    context "for a device directly used in an MD array" do
+      let(:device_name) { "/dev/sda4" }
+
+      it "returns the Md device" do
+        expect(device.md).to be_a Y2Storage::Md
+        expect(device.md.devices).to include device
+      end
+    end
+
+    context "for a device encrypted and used in an MD array" do
+      let(:device_name) { "/dev/sda5" }
+
+      it "returns the Md device" do
+        expect(device.md).to be_a Y2Storage::Md
+        expect(device.md.devices).to include device.encryption
+      end
+    end
+
+    context "for a device that is not part of any MD array" do
+      let(:device_name) { "/dev/sda3" }
+
+      it "returns nil" do
+        expect(device.md).to be_nil
+      end
+    end
+  end
+
+  describe "#direct_md" do
+    before { fake_scenario("subvolumes-and-empty-md.xml") }
+
+    context "for a device directly used in an MD array" do
+      let(:device_name) { "/dev/sda4" }
+
+      it "returns the Md device" do
+        expect(device.direct_md).to be_a Y2Storage::Md
+        expect(device.direct_md.devices).to include device
+      end
+    end
+
+    context "for a device encrypted and used in an MD array" do
+      let(:device_name) { "/dev/sda5" }
+
+      it "returns nil" do
+        expect(device.direct_md).to be_nil
+      end
+    end
+
+    context "for a device that is not part of any MD array" do
+      let(:device_name) { "/dev/sda3" }
+
+      it "returns nil" do
+        expect(device.direct_md).to be_nil
+      end
+    end
+  end
+
 end
