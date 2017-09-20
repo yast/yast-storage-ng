@@ -69,6 +69,40 @@ describe Y2Partitioner::Widgets::BtrfsSubvolumesAddButton do
         expect(table).to receive(:refresh)
         subject.handle
       end
+
+      context "if the subvolume is shadowed" do
+        let(:form) { double("dialog form", path: "@/mnt/foo", nocow: true) }
+
+        before do
+          allow(Y2Partitioner::Dialogs::BtrfsSubvolume).to receive(:new)
+            .and_return(dialog, second_dialog)
+        end
+        let(:second_dialog) { instance_double(Y2Partitioner::Dialogs::BtrfsSubvolume, run: :cancel) }
+
+        it "shows an error message" do
+          expect(Yast::Popup).to receive(:Error)
+          subject.handle
+        end
+
+        it "opens the Btrfs dialog again prefilled with the same information" do
+          expect(Y2Partitioner::Dialogs::BtrfsSubvolume).to receive(:new).with(filesystem, nil).ordered
+            .and_return(dialog)
+          expect(Y2Partitioner::Dialogs::BtrfsSubvolume).to receive(:new).with(filesystem, form).ordered
+            .and_return(second_dialog)
+
+          subject.handle
+        end
+
+        it "does not create a new subvolume" do
+          subvolumes = filesystem.btrfs_subvolumes
+          expect(subvolumes.map(&:path)).to_not include(form.path)
+
+          subject.handle
+
+          expect(filesystem.btrfs_subvolumes.size).to eq subvolumes.size
+          expect(filesystem.btrfs_subvolumes.map(&:path)).to_not include(form.path)
+        end
+      end
     end
 
     context "when the dialog is not accepted" do

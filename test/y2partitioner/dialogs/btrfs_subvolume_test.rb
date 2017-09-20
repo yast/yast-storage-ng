@@ -84,11 +84,6 @@ describe Y2Partitioner::Dialogs::BtrfsSubvolume do
         context "and the path does not start with default subvolume path" do
           let(:value) { "///foo" }
 
-          it "shows an error message" do
-            expect(Yast::Popup).to receive(:Error).at_least(:once)
-            subject.validate
-          end
-
           it "removes extra slashes and prepend the default subvolume path" do
             expect(subject).to receive(:value=).with("foo").ordered
             expect(subject).to receive(:value=).with(/^@\/.*/).ordered
@@ -121,19 +116,6 @@ describe Y2Partitioner::Dialogs::BtrfsSubvolume do
 
         context "and there is a subvolume with that path" do
           let(:value) { "@/home" }
-
-          it "shows an error message" do
-            expect(Yast::Popup).to receive(:Error)
-            subject.validate
-          end
-
-          it "returns false" do
-            expect(subject.validate).to be(false)
-          end
-        end
-
-        context "and the subvolume is shadowed" do
-          let(:value) { "@/mnt/foo" }
 
           it "shows an error message" do
             expect(Yast::Popup).to receive(:Error)
