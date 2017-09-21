@@ -60,7 +60,6 @@ module Y2Partitioner
       def initialize(device)
         @blk_device_name = device.name
         @encrypt = blk_device.encrypted?
-        @initial_graph = working_graph.dup
       end
 
       # Plain block device being modified, i.e. device where the filesystem is
@@ -192,6 +191,13 @@ module Y2Partitioner
 
       # Makes the changes related to the option "do not format" in the UI, which
       # implies removing any new filesystem or respecting the preexisting one.
+      #
+      # @note With the current implementation there is a corner case that
+      # doesn't work like the traditional expert partitioner. If a partition
+      # preexisting in the disk is edited (e.g. replacing the filesystem with a
+      # new one) and then we the user tries to edit it again, "do not format"
+      # will actually mean leaving the partition unformatted, not respecting the
+      # filesystem on the system.
       def dont_format
         return if filesystem.nil?
         return unless new?(filesystem)
@@ -290,12 +296,16 @@ module Y2Partitioner
         DeviceGraphs.instance.current
       end
 
+      def system_graph
+        DeviceGraphs.instance.system
+      end
+
       def can_change_encrypt?
         filesystem.nil? || new?(filesystem)
       end
 
       def new?(device)
-        !device.exists_in_devicegraph?(@initial_graph)
+        !device.exists_in_devicegraph?(system_graph)
       end
 
       def delete_filesystem
