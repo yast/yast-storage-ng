@@ -189,6 +189,27 @@ describe Y2Storage::Clients::PartitionsProposal do
         expect(proposal["warning_level"]).to be :blocker
       end
     end
+
+    context "in simple mode" do
+
+      it "returns a simple preformatted proposal with 'Default'" do
+        proposal = subject.make_proposal("simple_mode" => true)
+        expect(proposal).to be_a Hash
+        expect(proposal).to include("preformatted_proposal", "links", "language_changed")
+        expect(proposal["preformatted_proposal"]).to eq "Default"
+      end
+
+      it "returns a simple preformatted proposal with 'Custom' after using the partitioner" do
+        subject.make_proposal("simple_mode" => true)
+        # Pretend the proposal was reset by manual partitioning
+        allow(Y2Storage::StorageManager.instance).to receive(:proposal).and_return(nil)
+        proposal = subject.make_proposal("simple_mode" => true)
+        expect(proposal).to be_a Hash
+        expect(proposal).to include("preformatted_proposal", "links", "language_changed")
+        expect(proposal["preformatted_proposal"]).to eq "Custom"
+      end
+
+    end
   end
 
   describe "#ask_user" do

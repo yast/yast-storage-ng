@@ -53,11 +53,13 @@ module Y2Storage
       def initialize
         textdomain "storage"
         @failed = false
+        @simple_mode = false
         ensure_proposed unless storage_manager.staging_changed?
         self.class.update_state
       end
 
-      def make_proposal(_attrs)
+      def make_proposal(param)
+        @simple_mode = param["simple_mode"] || false
         failed ? failed_proposal : successful_proposal
       end
 
@@ -137,10 +139,24 @@ module Y2Storage
 
       def successful_proposal
         {
-          "preformatted_proposal" => actions_presenter.to_html,
+          "preformatted_proposal" => preformatted_proposal,
           "links"                 => actions_presenter.events,
           "language_changed"      => false
         }
+      end
+
+      def preformatted_proposal
+        return nil if @failed
+        if @simple_mode
+          # Translators: Short description of the partitioning setup
+          manual_partitioning? ? _("Custom") : _("Default")
+        else
+          actions_presenter.to_html
+        end
+      end
+
+      def manual_partitioning?
+        storage_manager.proposal.nil?
       end
 
       def ensure_proposed
