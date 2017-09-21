@@ -5,15 +5,16 @@ require "y2partitioner/widgets/format_and_mount"
 
 describe Y2Partitioner::Widgets::FormatOptions do
   let(:controller) { double("FilesystemController", filesystem: nil) }
-  let(:widget) { double("MountOptionsWidget") }
-  subject { described_class.new(controller, widget) }
+  let(:parent) { double("FormatMountOptions") }
+  subject { described_class.new(controller, parent) }
 
   include_examples "CWM::CustomWidget"
 end
 
 describe Y2Partitioner::Widgets::MountOptions do
   let(:controller) { double("FilesystemController", filesystem: nil) }
-  subject { described_class.new(controller) }
+  let(:parent) { double("FormatMountOptions") }
+  subject { described_class.new(controller, parent) }
 
   include_examples "CWM::CustomWidget"
 end

@@ -25,6 +25,8 @@ require "y2partitioner/device_graphs"
 require "y2storage/filesystems/btrfs"
 require "y2storage/subvol_specification"
 
+Yast.import "Mode"
+
 module Y2Partitioner
   module Sequences
     # This class stores information about a filesystem being created or modified
@@ -240,6 +242,46 @@ module Y2Partitioner
         elsif blk_device.encrypted? && !encrypt
           blk_device.remove_encryption
         end
+      end
+
+      # Whether is possible to define the generic format options for the current
+      # filesystem
+      #
+      # @return [Boolean]
+      def format_options_supported?
+        to_be_formatted? && !filesystem.type.is?(:btrfs)
+      end
+
+      # Whether is possible to set the snapshots configuration for the current
+      # filesystem
+      #
+      # @see Y2Storage::Filesystems::Btrfs.configure_snapper
+      #
+      # @return [Boolean]
+      def snapshots_supported?
+        return false unless Yast::Mode.installation
+        return false unless to_be_formatted?
+        filesystem.root? && filesystem.respond_to?(:configure_snapper=)
+      end
+
+      # Sets configure_snapper for the filesystem if it makes sense
+      #
+      # @see Y2Storage::Filesystems::Btrfs.configure_snapper=
+      #
+      # @param value [Boolean]
+      def configure_snapper=(value)
+        return if filesystem.nil? || !filesystem.respond_to?(:configure_snapper)
+        filesystem.configure_snapper = value
+      end
+
+      # Status of the snapshots configuration for the filesystem
+      #
+      # @see Y2Storage::Filesystems::Btrfs.configure_snapper
+      #
+      # @return [Boolean]
+      def configure_snapper
+        return false if filesystem.nil? || !filesystem.respond_to?(:configure_snapper)
+        filesystem.configure_snapper
       end
 
     private
