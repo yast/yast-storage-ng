@@ -97,10 +97,10 @@ module Y2Partitioner
 
         # Validates the subvolume path
         #
-        # The following condintions are checked:
+        # The following conditions are checked:
         # - The subvolume path is not empty
         # - The subvolume path starts by the default subvolume path
-        # - The subvolume path in unique for the filesystem
+        # - The subvolume path is unique for the filesystem
         def validate
           fix_path
 

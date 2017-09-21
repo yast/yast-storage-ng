@@ -32,59 +32,97 @@ module Y2Partitioner
     # dialogs can always work directly on a BlkFilesystem object correctly
     # placed in the devicegraph.
     class FilesystemController
-      # @return [Symbol]
+      # @return [Symbol] Role chosen be the user for the device
       attr_accessor :role
 
-      # @return [Boolean] whether the user wants to encrypt the device
+      # @return [Boolean] Whether the user wants to encrypt the device
       attr_accessor :encrypt
 
-      # @return [String] password for the encryption device
+      # @return [String] Password for the encryption device
       attr_accessor :encrypt_password
 
-      # return [String]
+      # Name of the plain device
+      #
+      # @see #blk_device
+      # @return [String]
       attr_reader :blk_device_name
 
+      # Type for the role "system"
       DEFAULT_FS = Y2Storage::Filesystems::Type::BTRFS
+      # Type for the role "data"
       DEFAULT_HOME_FS = Y2Storage::Filesystems::Type::XFS
       DEFAULT_PARTITION_ID = Y2Storage::PartitionId::LINUX
       private_constant :DEFAULT_FS, :DEFAULT_HOME_FS, :DEFAULT_PARTITION_ID
 
+      # @param device [Y2Storage::BlkDevice] see {#blk_device)
       def initialize(device)
         @blk_device_name = device.name
         @encrypt = blk_device.encrypted?
         @initial_graph = working_graph.dup
       end
 
+      # Plain block device being modified, i.e. device where the filesystem is
+      # located or where it will be eventually placed/removed.
+      #
+      # Note this is always the plain device, no matter if it is encrypted or
+      # not.
+      #
+      # @return [Y2Storage::BlkDevice]
       def blk_device
         Y2Storage::BlkDevice.find_by_name(working_graph, blk_device_name)
       end
 
+      # Filesystem object being modified
+      #
+      # @return [Y2Storage::BlkFilesystem]
       def filesystem
         blk_device.filesystem
       end
 
+      # Type of the current filesystem
+      #
+      # @return [Y2Storage::Filesystems::Type, nil] nil if there is no
+      #   filesystem
       def filesystem_type
         filesystem ? filesystem.type : nil
       end
 
+      # Whether the block device will be formatted, i.e. a new filesystem will
+      # be created when commiting the devicegraph.
+      #
+      # @return [Boolean]
       def to_be_formatted?
         return false if filesystem.nil?
         new?(filesystem)
       end
 
+      # Whether a new encryption device will be created for the block device
+      #
+      # @return [Boolean]
       def to_be_encrypted?
         return false unless can_change_encrypt?
         encrypt && !blk_device.encrypted?
       end
 
+      # Mount point of the current filesystem
+      #
+      # @return [string, nil] nil if there is no filesystem
       def mount_point
         filesystem ? filesystem.mountpoint : nil
       end
 
+      # Partition id of the block device if it is a partition
+      #
+      # @return [Y2Storage::PartitionId, nil] nil if {#blk_device} is not a
+      #   partition
       def partition_id
         blk_device.is?(:partition) ? blk_device.id : nil
       end
 
+      # Modifies the block filesystem based on {#role}
+      #
+      # This creates a new filesystem object on top of the block device if
+      # needed, modifies the partition id when it makes sense, etc.
       def apply_role
         delete_filesystem
         @encrypt = false
@@ -117,6 +155,14 @@ module Y2Partitioner
         self.mount_point = mount_point
       end
 
+      # Creates a new filesystem on top of the block device, removing the
+      # previous one if any, as a result of the user choosing the option in the
+      # UI to format the device.
+      #
+      # Some information from the previous filesystem (like the mountpoint or
+      # the label) is kept in the new filesystem if it makes sense.
+      #
+      # @param type of the new filesystem
       def new_filesystem(type)
         # Make sure type has the correct... well, type :-)
         type = Y2Storage::Filesystems::Type.new(type)
@@ -142,6 +188,8 @@ module Y2Partitioner
         self.mount_point = mount_point
       end
 
+      # Makes the changes related to the option "do not format" in the UI, which
+      # implies removing any new filesystem or respecting the preexisting one.
       def dont_format
         return if filesystem.nil?
         return unless new?(filesystem)
@@ -153,6 +201,7 @@ module Y2Partitioner
         end
       end
 
+      # Sets the partition id of the block device if it makes sense
       def partition_id=(partition_id)
         return unless blk_device.is?(:partition)
         return if partition_id.nil?
@@ -163,6 +212,13 @@ module Y2Partitioner
         blk_device.id = ptable.partition_id_for(partition_id)
       end
 
+      # Sets the mount point of the filesystem if there is one
+      #
+      # Take into account that modifying the mount point can have side effects
+      # if the filesystem doesn't exist yet, like changing the list of
+      # subvolumes if the new or old mount point is "/".
+      #
+      # @param mount_point [String] new mount point
       def mount_point=(mount_point)
         return if filesystem.nil? || filesystem.mount_point == mount_point
 
@@ -171,6 +227,9 @@ module Y2Partitioner
         after_set_mount_point
       end
 
+      # Applies last changes to the block device at the end of the wizard, which
+      # mainly means encrypting the device or removing the encryption layer for
+      # non preexisting devices.
       def finish
         return unless can_change_encrypt?
 

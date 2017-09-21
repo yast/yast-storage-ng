@@ -26,5 +26,5 @@ Yast::Tasks.configuration do |conf|
   conf.skip_license_check << /.*/
   # TODO: improve it, at least do not get worse
   # TODO: remove condition when new packaging tasks are accepted to factory
-  conf.documentation_minimal = 77 if conf.respond_to?(:documentation_minimal=)
+  conf.documentation_minimal = 78 if conf.respond_to?(:documentation_minimal=)
 end
