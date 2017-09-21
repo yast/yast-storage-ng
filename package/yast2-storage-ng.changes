@@ -1,4 +1,13 @@
 -------------------------------------------------------------------
+Thu Sep 21 14:54:28 UTC 2017 - ancor@suse.com
+
+- More backwards-compatible behavior when formatting partitions in
+  the expert partitioner.
+- Checkbox to enable snapshots for "/" in the expert partitioner.
+- Both part of fate#318196
+- 3.3.18
+
+-------------------------------------------------------------------
 Tue Sep 19 07:26:06 UTC 2017 - ancor@suse.com
 
 - Improved creation and modification of partitions in the Expert
