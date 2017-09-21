@@ -69,6 +69,11 @@ module Y2Storage
     #   @return [Array<Device>]
     storage_forward :parents, as: "Device"
 
+    # @!method children
+    #   Children in the devicegraph in no particular order.
+    #   @return [Array<Device>]
+    storage_forward :children, as: "Device"
+
     # @!method has_children?
     #   Check whether the device has children in the devicegraph
     #   it belongs to.

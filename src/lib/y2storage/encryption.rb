@@ -50,6 +50,21 @@ module Y2Storage
       blk_device
     end
 
+    # DeviceMapper name to use for the encrypted version of the given device.
+    #
+    # FIXME: with the current implementation (using the device kernel name
+    # instead of UUID or something similar), the DeviceMapper for an encrypted
+    # /dev/sda5 would be "cr_sda5", which implies a quite high risk of
+    # collision with existing DeviceMapper names.
+    #
+    # Revisit this after improving libstorage-ng capabilities about
+    # alternative names and DeviceMapper.
+    #
+    # @return [String]
+    def self.dm_name_for(device)
+      "cr_#{device.basename}"
+    end
+
   protected
 
     def types_for_is

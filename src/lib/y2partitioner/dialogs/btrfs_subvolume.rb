@@ -13,11 +13,11 @@ module Y2Partitioner
       attr_reader :form
 
       # @param filesystem [Y2Storage::Filesystems::BlkFilesystem] a btrfs filesystem
-      def initialize(filesystem)
+      def initialize(filesystem, form = nil)
         textdomain "storage"
 
         @filesystem = filesystem
-        @form = Form.new
+        @form = form || Form.new
       end
 
       def title
@@ -97,18 +97,14 @@ module Y2Partitioner
 
         # Validates the subvolume path
         #
-        # @note The subvolume shadowing is also checked due to its mount point
-        #   is generated from the subvolume path.
-        #
-        # The following condintions are checked:
+        # The following conditions are checked:
         # - The subvolume path is not empty
         # - The subvolume path starts by the default subvolume path
-        # - The subvolume path in unique for the filesystem
-        # - The subvolume is not shadowed
+        # - The subvolume path is unique for the filesystem
         def validate
           fix_path
 
-          valid = content_validation && uniqueness_validation && shadowing_validation
+          valid = content_validation && uniqueness_validation
           return true if valid
 
           focus
@@ -143,17 +139,6 @@ module Y2Partitioner
           false
         end
 
-        # Validates not shadowed subvolume
-        # An error popup is shown when the subvolume is shadowed.
-        #
-        # @return [Boolean] true if subvolume is shadowed
-        def shadowing_validation
-          return true unless shadowed?
-
-          Yast::Popup.Error(format(_("Mount point %s is shadowed."), mount_point))
-          false
-        end
-
         # Updates #value by prefixing path with default subvolume path if it is necessary
         #
         # Path should be a relative path. Starting slashes are removed. A popup message is
@@ -183,21 +168,6 @@ module Y2Partitioner
         # @return [Boolean]
         def exist_path?
           filesystem.btrfs_subvolumes.any? { |s| s.path == value }
-        end
-
-        # Checks if the subvolume is shadowed
-        # @return [Boolean]
-        def shadowed?
-          device_graph = DeviceGraphs.instance.current
-          Y2Storage::BtrfsSubvolume.shadowed?(device_graph, mount_point)
-        end
-
-        # Subvolume mount point
-        # @see Y2Storage::Filesystems::Btrfs#btrfs_subvolume_mount_point
-        #
-        # @return [String, nil] nil if the filesystem is not mounted
-        def mount_point
-          filesystem.btrfs_subvolume_mount_point(value)
         end
       end
 

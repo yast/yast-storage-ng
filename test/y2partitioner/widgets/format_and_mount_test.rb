@@ -4,46 +4,36 @@ require "cwm/rspec"
 require "y2partitioner/widgets/format_and_mount"
 
 describe Y2Partitioner::Widgets::FormatOptions do
-  let(:format_options) do
-    double("Format Options", filesystem_type: Y2Storage::Filesystems::Type::XFS,
-           format: false, encrypt: false)
-  end
-  subject { described_class.new(format_options) }
+  let(:controller) { double("FilesystemController", filesystem: nil) }
+  let(:widget) { double("MountOptionsWidget") }
+  subject { described_class.new(controller, widget) }
 
   include_examples "CWM::CustomWidget"
 end
 
 describe Y2Partitioner::Widgets::MountOptions do
-  let(:format_options) do
-    double("Format Options", filesystem_mountpoint: "/foo",
-                             filesystem_type:       Y2Storage::Filesystems::Type::XFS)
-  end
-  subject { described_class.new(format_options) }
+  let(:controller) { double("FilesystemController", filesystem: nil) }
+  subject { described_class.new(controller) }
 
   include_examples "CWM::CustomWidget"
 end
 
 describe Y2Partitioner::Widgets::FstabOptionsButton do
-  let(:format_options) do
-    double("Format Options")
-  end
+  let(:controller) { double("FilesystemController", filesystem: nil) }
 
   before do
     allow(Y2Partitioner::Dialogs::FstabOptions)
       .to receive(:new).and_return(double(run: :next))
   end
 
-  subject { described_class.new(format_options) }
+  subject { described_class.new(controller) }
 
   include_examples "CWM::PushButton"
 end
 
 describe Y2Partitioner::Widgets::BlkDeviceFilesystem do
-  let(:format_options) do
-    double("Format Options")
-  end
-
-  subject { described_class.new(format_options) }
+  let(:controller) { double("FilesystemController", filesystem: nil) }
+  subject { described_class.new(controller) }
 
   include_examples "CWM::AbstractWidget"
 end
@@ -53,9 +43,9 @@ describe Y2Partitioner::Widgets::MountPoint do
     devicegraph_stub("mixed_disks_btrfs.yml")
   end
 
-  subject { described_class.new(options) }
+  let(:controller) { double("FilesystemController", filesystem: nil) }
 
-  let(:options) { double(Y2Partitioner::FormatMount::Options) }
+  subject { described_class.new(controller) }
 
   include_examples "CWM::AbstractWidget"
 
@@ -64,11 +54,9 @@ describe Y2Partitioner::Widgets::MountPoint do
     before do
       allow(subject).to receive(:enabled?).and_return(enabled)
       allow(subject).to receive(:value).and_return(value)
-      allow(options).to receive(:name).and_return(name)
     end
 
     let(:value) { nil }
-    let(:name) { nil }
 
     context "when the widget is not enabled" do
       let(:enabled) { false }
@@ -94,61 +82,57 @@ describe Y2Partitioner::Widgets::MountPoint do
         end
       end
 
-      context "and the mount point is indicated" do
-        let(:name) { "/dev/sdb2" }
+      context "and the mount point already exists" do
+        let(:value) { "/home" }
 
-        context "and the mount point already exists" do
-          let(:value) { "/home" }
+        it "shows an error message" do
+          expect(Yast::Popup).to receive(:Error)
+          subject.validate
+        end
 
-          it "shows an error message" do
-            expect(Yast::Popup).to receive(:Error)
-            subject.validate
-          end
+        it "returns false" do
+          expect(subject.validate).to be(false)
+        end
+      end
 
-          it "returns false" do
-            expect(subject.validate).to be(false)
+      context "and the mount point does not exist" do
+        context "and the mount point does not shadow any subvolume" do
+          let(:value) { "/foo" }
+
+          it "returns true" do
+            expect(subject.validate).to be(true)
           end
         end
 
-        context "and the mount point does not exist" do
-          context "and the mount point does not shadow any subvolume" do
-            let(:value) { "/foo" }
+        context "and the mount point shadows a subvolume" do
+          let(:value) { "/foo" }
 
-            it "returns true" do
-              expect(subject.validate).to be(true)
+          before do
+            device_graph = Y2Partitioner::DeviceGraphs.instance.current
+            device = Y2Storage::BlkDevice.find_by_name(device_graph, "/dev/sda2")
+            filesystem = device.filesystem
+            subvolume = filesystem.create_btrfs_subvolume("@/foo", false)
+            subvolume.can_be_auto_deleted = can_be_auto_deleted
+          end
+
+          context "and the subvolume cannot be shadowed" do
+            let(:can_be_auto_deleted) { false }
+
+            it "shows an error message" do
+              expect(Yast::Popup).to receive(:Error)
+              subject.validate
+            end
+
+            it "returns false" do
+              expect(subject.validate).to be(false)
             end
           end
 
-          context "and the mount point shadows a subvolume" do
-            let(:value) { "/foo" }
+          context "and the subvolume can be shadowed" do
+            let(:can_be_auto_deleted) { true }
 
-            before do
-              device_graph = Y2Partitioner::DeviceGraphs.instance.current
-              device = Y2Storage::BlkDevice.find_by_name(device_graph, "/dev/sda2")
-              filesystem = device.filesystem
-              subvolume = filesystem.create_btrfs_subvolume("@/foo", false)
-              subvolume.can_be_auto_deleted = can_be_auto_deleted
-            end
-
-            context "and the subvolume cannot be shadowed" do
-              let(:can_be_auto_deleted) { false }
-
-              it "shows an error message" do
-                expect(Yast::Popup).to receive(:Error)
-                subject.validate
-              end
-
-              it "returns false" do
-                expect(subject.validate).to be(false)
-              end
-            end
-
-            context "and the subvolume can be shadowed" do
-              let(:can_be_auto_deleted) { true }
-
-              it "returns true" do
-                expect(subject.validate).to be(true)
-              end
+            it "returns true" do
+              expect(subject.validate).to be(true)
             end
           end
         end
@@ -168,21 +152,15 @@ describe Y2Partitioner::Widgets::InodeSize do
 end
 
 describe Y2Partitioner::Widgets::BlockSize do
-  let(:format_options) do
-    double("Format Options")
-  end
-
-  subject { described_class.new(format_options) }
+  let(:controller) { double("FilesystemController", filesystem: nil) }
+  subject { described_class.new(controller) }
 
   include_examples "CWM::AbstractWidget"
 end
 
 describe Y2Partitioner::Widgets::PartitionId do
-  let(:format_options) do
-    double("Format Options")
-  end
-
-  subject { described_class.new(format_options) }
+  let(:controller) { double("FilesystemController", filesystem: nil) }
+  subject { described_class.new(controller) }
 
   include_examples "CWM::AbstractWidget"
 end

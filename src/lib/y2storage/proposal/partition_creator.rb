@@ -145,7 +145,7 @@ module Y2Storage
       #                     or logical
       def create_partition(planned_partition, free_space, primary)
         log.info "Creating partition for #{planned_partition.mount_point} with #{planned_partition.size}"
-        ptable = partition_table(free_space.disk)
+        ptable = free_space.disk.ensure_partition_table
 
         if primary
           create_primary_partition(planned_partition, free_space)
@@ -163,7 +163,7 @@ module Y2Storage
       # @param planned_partition [Planned::Partition]
       # @param free_space [FreeDiskSpace]
       def create_primary_partition(planned_partition, free_space)
-        ptable = partition_table(free_space.disk)
+        ptable = free_space.disk.ensure_partition_table
         raise NoMorePartitionSlotError if ptable.max_primary?
 
         create_not_extended_partition(planned_partition, free_space, PartitionType::PRIMARY)
@@ -174,7 +174,7 @@ module Y2Storage
       # @param planned_partition [Planned::Partition]
       # @param free_space [FreeDiskSpace]
       def create_logical_partition(planned_partition, free_space)
-        ptable = partition_table(free_space.disk)
+        ptable = free_space.disk.ensure_partition_table
         raise NoMorePartitionSlotError if ptable.max_logical?
 
         create_not_extended_partition(planned_partition, free_space, PartitionType::LOGICAL)
@@ -186,7 +186,7 @@ module Y2Storage
       # @param free_space [FreeDiskSpace]
       # @param type [PartitionType] PartitionType::PRIMARY or PartitionType::LOGICAL
       def create_not_extended_partition(planned_partition, free_space, type)
-        ptable = partition_table(free_space.disk)
+        ptable = free_space.disk.ensure_partition_table
 
         slot = ptable.unused_slot_for(free_space.region)
         raise Error if slot.nil?
@@ -203,7 +203,7 @@ module Y2Storage
       #
       # @param free_space [FreeDiskSpace]
       def create_extended_partition(free_space)
-        ptable = partition_table(free_space.disk)
+        ptable = free_space.disk.ensure_partition_table
 
         slot = ptable.unused_slot_for(free_space.region)
         raise NoMorePartitionSlotError if slot.nil?
@@ -225,14 +225,6 @@ module Y2Storage
           blocks = region.end - region.start + 1
         end
         Region.create(region.start, blocks, region.block_size)
-      end
-
-      # Returns the partition table for disk, creating an empty one if needed
-      #
-      # @param disk [Disk]
-      # @return [PartitionTable]
-      def partition_table(disk)
-        disk.partition_table || disk.create_partition_table(disk.preferred_ptable_type)
       end
 
       # Returns the partition id that should be used for a new partition in

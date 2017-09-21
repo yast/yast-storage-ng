@@ -1,6 +1,8 @@
 require "yast"
 require "ui/sequence"
 require "y2partitioner/device_graphs"
+require "y2partitioner/sequences/partition_controller"
+require "y2partitioner/sequences/filesystem_controller"
 require "y2partitioner/dialogs/partition_role"
 require "y2partitioner/dialogs/partition_size"
 require "y2partitioner/dialogs/partition_type"
@@ -10,35 +12,18 @@ Yast.import "Wizard"
 
 module Y2Partitioner
   module Sequences
-    # Collecting params of partition to be created
-    # and remembering them across dialogs
-    class PartitionTemplate
-      # @return [Y2Storage::PartitionType]
-      attr_accessor :type
-      # @return [:max_size,:custom_size,:custom_region]
-      attr_accessor :size_choice
-      # for {#size_choice} == :custom_size
-      # @return [Y2Storage::DiskSize]
-      attr_accessor :custom_size
-      # for any {#size_choice} value this ends up with a valid value
-      # @return [Y2Storage::Region]
-      attr_accessor :region
-    end
-
     # formerly EpCreatePartition, DlgCreatePartition
     class AddPartition < UI::Sequence
       include Yast::Logger
       # @param disk_name [String]
       def initialize(disk_name)
         textdomain "storage"
-        @disk_name = disk_name
-        @ptemplate = PartitionTemplate.new
-        @options = FormatMount::Options.new
+
+        @part_controller = PartitionController.new(disk_name)
       end
 
-      def disk
-        dg = DeviceGraphs.instance.current
-        Y2Storage::Disk.find_by_name(dg, @disk_name)
+      def disk_name
+        part_controller.disk_name
       end
 
       def run
@@ -46,7 +31,7 @@ module Y2Partitioner
           "ws_start"       => "preconditions",
           "preconditions"  => { next: "type" },
           "type"           => { next: "size" },
-          "size"           => { next: "role", finish: "commit" },
+          "size"           => { next: "role", finish: :finish },
           "role"           => { next: "format_options" },
           "format_options" => { next: "password" },
           "password"       => { next: "commit" },
@@ -73,85 +58,53 @@ module Y2Partitioner
       end
 
       def preconditions
-        pt = partition_table(disk)
-        slots = pt.unused_partition_slots
-        if slots.empty?
-          Yast::Popup.Error(
-            Yast::Builtins.sformat(
-              _("It is not possible to create a partition on %1."),
-              @disk_name
-            )
-          )
-          return :back
-        end
-        @slots = slots
-        :next
+        return :next if part_controller.new_partition_possible?
+
+        Yast::Popup.Error(
+          # TRANSLATORS: %s is a device name (e.g. "/dev/sda")
+          _("It is not possible to create a partition on %s.") % disk_name
+        )
+        :back
       end
       skip_stack :preconditions
 
       def type
-        Dialogs::PartitionType.run(disk.name, @ptemplate, @slots)
+        Dialogs::PartitionType.run(part_controller)
       end
 
       def size
-        Dialogs::PartitionSize.run(disk.name, @ptemplate, @slots.map(&:region))
+        part_controller.delete_partition
+        result = Dialogs::PartitionSize.run(part_controller)
+        part_controller.create_partition if [:next, :finish].include?(result)
+        @fs_controller = FilesystemController.new(part_controller.partition) if result == :next
+        result
       end
 
       def role
-        Dialogs::PartitionRole.run(disk.name, @options)
+        result = Dialogs::PartitionRole.run(fs_controller)
+        fs_controller.apply_role if result == :next
+        result
       end
 
       skip_stack :role
 
-      def commit
-        ptable = disk.partition_table
-        name = next_free_partition_name(@disk_name, ptable, @ptemplate.type)
-        partition = ptable.create_partition(name, @ptemplate.region, @ptemplate.type)
-
-        if !@ptemplate.type.is?(:extended)
-          FormatMount::Base.new(partition, @options).apply_options!
-        end
-
-        :finish
-      end
-
       def format_options
-        @format_dialog ||= Dialogs::FormatAndMount.new(@options)
-
-        @format_dialog.run
+        Dialogs::FormatAndMount.run(fs_controller)
       end
 
       def password
-        return :next unless @options.encrypt
-        @encrypt_dialog ||= Dialogs::EncryptPassword.new(@options)
+        return :next unless fs_controller.to_be_encrypted?
+        Dialogs::EncryptPassword.run(fs_controller)
+      end
 
-        @encrypt_dialog.run
+      def commit
+        fs_controller.finish
+        :finish
       end
 
     private
 
-      # FIXME: stolen from Y2Storage::Proposal::PartitionCreator
-      def next_free_partition_name(disk_name, ptable, type)
-        # FIXME: This is broken by design. create_partition needs to return
-        # this information, not get it as an input parameter.
-        part_names = ptable.partitions.map(&:name)
-        first, last = if type.is?(:logical)
-          [ptable.max_primary + 1, 1024]
-        else
-          [1, ptable.max_primary]
-        end
-        first.upto(last) do |i|
-          dev_name = "#{disk_name}#{i}"
-          return dev_name unless part_names.include?(dev_name)
-        end
-        raise NoMorePartitionSlotError
-      end
-
-      # FIXME: stolen from Y2Storage::Proposal::PartitionCreator
-      # Make it DRY
-      def partition_table(disk)
-        disk.partition_table || disk.create_partition_table(disk.preferred_ptable_type)
-      end
+      attr_reader :part_controller, :fs_controller
     end
   end
 end

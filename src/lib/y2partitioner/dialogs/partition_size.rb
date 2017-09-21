@@ -13,18 +13,15 @@ module Y2Partitioner
     # Part of {Sequences::AddPartition}.
     # Formerly MiniWorkflowStepPartitionSize
     class PartitionSize < CWM::Dialog
-      # @param disk_name [String]
-      # @param ptemplate [Sequences::PartitionTemplate]
-      #   a partition template, collecting data for a partition to be created
-      # @param regions [Array<Y2Storage::Region>]
-      #   regions available to create a partition in
-      def initialize(disk_name, ptemplate, regions)
-        raise ArgumentError, "No region to make a partition in" if regions.empty?
-
+      # @param controller [Sequences::PartitionController]
+      #   a partition controller, collecting data for a partition to be created
+      def initialize(controller)
         textdomain "storage"
-        @disk_name = disk_name
-        @ptemplate = ptemplate
-        @regions = regions
+        @disk_name = controller.disk_name
+        @controller = controller
+        @regions = controller.unused_slots.map(&:region)
+
+        raise ArgumentError, "No region to make a partition in" if @regions.empty?
       end
 
       # @macro seeDialog
@@ -35,13 +32,13 @@ module Y2Partitioner
 
       # @macro seeDialog
       def contents
-        HVSquash(SizeWidget.new(@ptemplate, @regions))
+        HVSquash(SizeWidget.new(@controller, @regions))
       end
 
       # return finish for extended partition, as it can set only type and its size
       def run
         res = super
-        res = :finish if res == :next && @ptemplate.type.is?(:extended)
+        res = :finish if res == :next && @controller.type.is?(:extended)
         res
       end
 
@@ -144,13 +141,13 @@ module Y2Partitioner
       # Choose a size (region, really) for a new partition
       # from several options: use maximum, enter size, enter start+end
       class SizeWidget < ControllerRadioButtons
-        # @param ptemplate [Sequences::PartitionTemplate]
-        #   a partition template, collecting data for a partition to be created
+        # @param controller [Sequences::PartitionController]
+        #   a controller collecting data for a partition to be created
         # @param regions [Array<Y2Storage::Region>]
         #   regions available to create a partition in
-        def initialize(ptemplate, regions)
+        def initialize(controller, regions)
           textdomain "storage"
-          @ptemplate = ptemplate
+          @controller = controller
           @regions = regions
           @largest_region = @regions.max_by(&:size)
         end
@@ -173,14 +170,14 @@ module Y2Partitioner
         def widgets
           @widgets ||= [
             MaxSizeDummy.new(@largest_region),
-            CustomSizeInput.new(@ptemplate, @regions),
-            CustomRegion.new(@ptemplate, @regions)
+            CustomSizeInput.new(@controller, @regions),
+            CustomRegion.new(@controller, @regions)
           ]
         end
 
         # @macro seeAbstractWidget
         def init
-          self.value = (@ptemplate.size_choice ||= :max_size)
+          self.value = (@controller.size_choice ||= :max_size)
           # trigger disabling the other subwidgets
           handle("ID" => value)
         end
@@ -189,8 +186,8 @@ module Y2Partitioner
         def store
           w = current_widget
           w.store
-          @ptemplate.region = w.region
-          @ptemplate.size_choice = value
+          @controller.region = w.region
+          @controller.size_choice = value
         end
       end
 
@@ -214,27 +211,27 @@ module Y2Partitioner
         # @return [Y2Storage::DiskSize]
         attr_reader :min_size, :max_size
 
-        # @param ptemplate [Sequences::PartitionTemplate]
-        #   a partition template, collecting data for a partition to be created
+        # @param controller [Sequences::PartitionController]
+        #   a controller collecting data for a partition to be created
         # @param regions [Array<Y2Storage::Region>]
         #   regions available to create a partition in
-        def initialize(ptemplate, regions)
+        def initialize(controller, regions)
           textdomain "storage"
-          @ptemplate = ptemplate
+          @controller = controller
           @regions = regions
           largest_region = @regions.max_by(&:size)
           @max_size = largest_region.size
           @min_size = Y2Storage::DiskSize.new(1)
         end
 
-        # Forward to ptemplate
+        # Forward to controller
         def size
-          @ptemplate.custom_size
+          @controller.custom_size
         end
 
-        # Forward to ptemplate
+        # Forward to controller
         def size=(v)
-          @ptemplate.custom_size = v
+          @controller.custom_size = v
         end
 
         # @return [Y2Storage::Region] the smallest region
@@ -308,15 +305,15 @@ module Y2Partitioner
       class CustomRegion < CWM::CustomWidget
         attr_reader :region
 
-        # @param ptemplate [Sequences::PartitionTemplate]
-        #   a partition template, collecting data for a partition to be created
+        # @param controller [Sequences::PartitionController]
+        #   a controller collecting data for a partition to be created
         # @param regions [Array<Y2Storage::Region>]
         #   regions available to create a partition in
-        def initialize(ptemplate, regions)
+        def initialize(controller, regions)
           textdomain "storage"
-          @ptemplate = ptemplate
+          @controller = controller
           @regions = regions
-          @region = @ptemplate.region || @regions.max_by(&:size)
+          @region = @controller.region || @regions.max_by(&:size)
         end
 
         # @macro seeCustomWidget

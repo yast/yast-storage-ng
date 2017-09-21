@@ -132,9 +132,28 @@ module Y2Storage
     # @!method create_encryption(dm_name)
     #   Creates a new encryption object on top of the device.
     #
+    #   If the blk device has children, the children will become children of
+    #   the encryption device.
+    #
+    #   @note: NEVER use this if any child of the block device already exists
+    #   in the real system. It will fail during commit.
+    #
     #   @param dm_name [String] see #dm_table_name
     #   @return [Encryption]
     storage_forward :create_encryption, as: "Encryption", raise_errors: true
+
+    # @!method remove_encryption
+    #   Removes an encryption device on the block device.
+    #
+    #   If the encryption device has children, the children will become direct
+    #   children of the block device.
+    #
+    #   @note: NEVER use this if any child of the encryption device already
+    #   exists in the real system. It will fail during commit.
+    #
+    #   @raise [Storage::WrongNumberOfChildren, Storage::DeviceHasWrongType] if
+    #     the device is not encrypted.
+    storage_forward :remove_encryption, raise_errors: true
 
     # @!method direct_blk_filesystem
     #   Filesystem directly placed in the device (no encryption or any other

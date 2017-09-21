@@ -5,7 +5,6 @@ require "y2partitioner/dialogs/partition_size"
 require "y2partitioner/dialogs/partition_type"
 require "y2partitioner/dialogs/encrypt_password"
 require "y2partitioner/dialogs/format_and_mount"
-require "y2partitioner/format_mount/base"
 
 Yast.import "Popup"
 Yast.import "Wizard"
@@ -15,11 +14,10 @@ module Y2Partitioner
     # BlkDevice edition
     class EditBlkDevice < UI::Sequence
       include Yast::Logger
-      # @param partition [Y2Storage::BlkDevice]
-      def initialize(partition)
+      # @param blk_device [Y2Storage::BlkDevice]
+      def initialize(blk_device)
         textdomain "storage"
-        @options = FormatMount::Options.new(partition: partition)
-        @partition = partition
+        @fs_controller = FilesystemController.new(blk_device)
       end
 
       def run
@@ -51,7 +49,7 @@ module Y2Partitioner
       end
 
       def preconditions
-        if @partition.type.is?(:extended)
+        if blk_device.is?(:partition) && blk_device.type.is?(:extended)
           Yast::Popup.Error(_("An extended partition cannot be edited"))
           :back
         else
@@ -61,22 +59,25 @@ module Y2Partitioner
       skip_stack :preconditions
 
       def format_options
-        @format_dialog ||= Dialogs::FormatAndMount.new(@options)
-
-        @format_dialog.run
+        Dialogs::FormatAndMount.run(fs_controller)
       end
 
       def password
-        return :next unless @options.encrypt
-        @encrypt_dialog ||= Dialogs::EncryptPassword.new(@options)
-
-        @encrypt_dialog.run
+        return :next unless fs_controller.to_be_encrypted?
+        Dialogs::EncryptPassword.run(fs_controller)
       end
 
       def commit
-        FormatMount::Base.new(@partition, @options).apply_options!
-
+        fs_controller.finish
         :finish
+      end
+
+    private
+
+      attr_reader :fs_controller
+
+      def blk_device
+        fs_controller.blk_device
       end
     end
   end
