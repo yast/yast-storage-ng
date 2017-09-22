@@ -165,3 +165,77 @@ describe Y2Partitioner::Widgets::PartitionId do
 
   include_examples "CWM::AbstractWidget"
 end
+
+describe Y2Partitioner::Widgets::Snapshots do
+  let(:controller) { double("FilesystemController", filesystem: nil) }
+  subject { described_class.new(controller) }
+
+  include_examples "CWM::AbstractWidget"
+end
+
+describe Y2Partitioner::Widgets::FormatOptionsArea do
+  let(:controller) { double("FilesystemController", filesystem: nil) }
+  subject(:widget) { described_class.new(controller) }
+
+  include_examples "CWM::AbstractWidget"
+
+  describe "#refresh" do
+    let(:options_button) { double("FormatOptionsButton", enable: nil, disable: nil) }
+    let(:snapshots_checkbox) { double("Snapshots", refresh: nil) }
+
+    before do
+      allow(Y2Partitioner::Widgets::FormatOptionsButton).to receive(:new).and_return options_button
+      allow(Y2Partitioner::Widgets::Snapshots).to receive(:new).and_return snapshots_checkbox
+      allow(controller).to receive(:snapshots_supported?).and_return snapshots_supported
+      allow(controller).to receive(:format_options_supported?).and_return options_supported
+    end
+
+    context "if snapshots are supported for the current block device" do
+      let(:snapshots_supported) { true }
+
+      context "and format options are also supported" do
+        let(:options_supported) { true }
+
+        it "shows the snapshot checkbox in sync with the value from the controller" do
+          expect(widget).to receive(:show).with(snapshots_checkbox).ordered
+          expect(snapshots_checkbox).to receive(:refresh).ordered
+          widget.refresh
+        end
+      end
+
+      context "and format options are not supported" do
+        let(:options_supported) { false }
+
+        it "shows the snapshot checkbox in sync with the value from the controller" do
+          expect(widget).to receive(:show).with(snapshots_checkbox).ordered
+          expect(snapshots_checkbox).to receive(:refresh).ordered
+          widget.refresh
+        end
+      end
+    end
+
+    context "if snapshots are not supported for the current block device" do
+      let(:snapshots_supported) { false }
+
+      context "and format options are supported" do
+        let(:options_supported) { true }
+
+        it "shows the enabled options button" do
+          expect(widget).to receive(:show).with(options_button).ordered
+          expect(options_button).to receive(:enable).ordered
+          widget.refresh
+        end
+      end
+
+      context "and format options are not supported either" do
+        let(:options_supported) { false }
+
+        it "shows the disabled options button" do
+          expect(widget).to receive(:show).with(options_button).ordered
+          expect(options_button).to receive(:disable).ordered
+          widget.refresh
+        end
+      end
+    end
+  end
+end

@@ -11,3 +11,31 @@ describe Y2Partitioner::Dialogs::FormatAndMount do
 
   include_examples "CWM::Dialog"
 end
+
+describe Y2Partitioner::Dialogs::FormatAndMount::FormatMountOptions do
+  let(:controller) { double("FilesystemController", filesystem: nil) }
+  subject(:widget) { described_class.new(controller) }
+
+  include_examples "CWM::CustomWidget"
+
+  describe "#refresh_others" do
+    let(:format_widget) { double("FormatOptions") }
+    let(:mount_widget) { double("MountOptions") }
+
+    before do
+      allow(Y2Partitioner::Widgets::FormatOptions).to receive(:new).and_return format_widget
+      allow(Y2Partitioner::Widgets::MountOptions).to receive(:new).and_return mount_widget
+      allow(mount_widget).to receive(:refresh)
+    end
+
+    it "does not call #refresh for the widget triggering the update" do
+      expect(format_widget).to_not receive(:refresh)
+      widget.refresh_others(format_widget)
+    end
+
+    it "calls #refresh for the widget not triggering the update" do
+      expect(mount_widget).to receive(:refresh)
+      widget.refresh_others(format_widget)
+    end
+  end
+end
