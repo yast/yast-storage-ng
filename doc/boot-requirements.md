@@ -2,101 +2,31 @@
 [//]: # (document was automatically created using 'rake doc:bootspecs')
 
 # Y2Storage::BootRequirementsChecker
-## needed partitions in a x86 system
-- using UEFI
-	- with a partitions-based proposal
-		- if there are no EFI partitions
-			- **requires only a new /boot/efi partition**
-		- if there is already an EFI partition
-			- **only requires to use the existing EFI partition**
-	- with a LVM-based proposal
-		- if there are no EFI partitions
-			- **requires only a new /boot/efi partition**
-		- if there is already an EFI partition
-			- **only requires to use the existing EFI partition**
-	- with an encrypted proposal
-		- if there are no EFI partitions
-			- **requires only a new /boot/efi partition**
-		- if there is already an EFI partition
-			- **only requires to use the existing EFI partition**
-- not using UEFI (legacy PC)
-	- with GPT partition table
-		- in a partitions-based proposal
-			- if there is no GRUB partition
-				- **requires a new GRUB partition**
-			- if there is already a GRUB partition
-				- **does not require any particular volume**
-		- in a LVM-based proposal
-			- if there is no GRUB partition
-				- **requires a new GRUB partition**
-			- if there is already a GRUB partition
-				- **does not require any particular volume**
-		- in an encrypted proposal
-			- if there is no GRUB partition
-				- **requires a new GRUB partition**
-			- if there is already a GRUB partition
-				- **does not require any particular volume**
-	- with a MS-DOS partition table
-		- if the MBR gap is big enough to embed Grub
-			- in a partitions-based proposal
-				- **does not require any particular volume**
-			- in a LVM-based proposal
-				- if the MBR gap has additional space for grubenv
-					- **does not require any particular volume**
-				- if the MBR gap has no additional space
-					- **requires only a /boot partition**
-			- in an encrypted proposal
-				- if the MBR gap has additional space for grubenv
-					- **does not require any particular volume**
-				- if the MBR gap has no additional space
-					- **requires only a /boot partition**
-		- with too small MBR gap
-			- in a partitions-based proposal
-				- if proposing root (/) as Btrfs
-					- **does not require any particular volume**
-				- if proposing root (/) as non-Btrfs
-					- **raises an exception**
-			- in a LVM-based proposal
-				- **raises an exception**
-			- in an encrypted proposal
-				- **raises an exception**
-	- when proposing a boot partition
-		- **requires /boot to be a non-encrypted ext4 partition in the booting disk**
-		- when aiming for the recommended size
-			- **requires /boot to be at least 200 MiB large**
-		- when aiming for the minimal size
-			- **requires /boot to be at least 100 MiB large**
-	- when proposing an new GRUB partition
-		- **requires it to have the correct id**
-		- **requires it to be a non-encrypted partition**
-		- when aiming for the recommended size
-			- **requires it to be between 1 and 8MiB, despite the alignment**
-		- when aiming for the minimal size
-			- **requires it to be between 256KiB and 8MiB, despite the alignment**
-	- when proposing an new EFI partition
-		- **requires /boot/efi to be a non-encrypted vfat partition**
-		- **requires /boot/efi to be close enough to the beginning of disk**
-		- when aiming for the recommended size
-			- **requires /boot/efi to be at least 500 MiB large**
-		- when aiming for the minimal size
-			- **requires /boot/efi to be at least 33 MiB large**
-
 ## needed partitions in an aarch64 system
 - with a partitions-based proposal
 	- if there are no EFI partitions
 		- **requires only a new /boot/efi partition**
 	- if there is already an EFI partition
-		- **only requires to use the existing EFI partition**
+		- and it does not have enough size
+			- **requires only a new /boot/efi partition**
+		- and it has enough size
+			- **only requires to use the existing EFI partition**
 - with a LVM-based proposal
 	- if there are no EFI partitions
 		- **requires only a new /boot/efi partition**
 	- if there is already an EFI partition
-		- **only requires to use the existing EFI partition**
+		- and it does not have enough size
+			- **requires only a new /boot/efi partition**
+		- and it has enough size
+			- **only requires to use the existing EFI partition**
 - with an encrypted proposal
 	- if there are no EFI partitions
 		- **requires only a new /boot/efi partition**
 	- if there is already an EFI partition
-		- **only requires to use the existing EFI partition**
+		- and it does not have enough size
+			- **requires only a new /boot/efi partition**
+		- and it has enough size
+			- **only requires to use the existing EFI partition**
 
 ## needed partitions in a PPC64 system
 - in a non-PowerNV system (KVM/LPAR)
@@ -163,3 +93,91 @@
 		- **requires /boot/zipl to be at least 200 MiB large**
 	- when aiming for the minimal size
 		- **requires /boot/zipl to be at least 100 MiB large**
+
+## needed partitions in a x86 system
+- using UEFI
+	- with a partitions-based proposal
+		- if there are no EFI partitions
+			- **requires only a new /boot/efi partition**
+		- if there is already an EFI partition
+			- and it does not have enough size
+				- **requires only a new /boot/efi partition**
+			- and it has enough size
+				- **only requires to use the existing EFI partition**
+	- with a LVM-based proposal
+		- if there are no EFI partitions
+			- **requires only a new /boot/efi partition**
+		- if there is already an EFI partition
+			- and it does not have enough size
+				- **requires only a new /boot/efi partition**
+			- and it has enough size
+				- **only requires to use the existing EFI partition**
+	- with an encrypted proposal
+		- if there are no EFI partitions
+			- **requires only a new /boot/efi partition**
+		- if there is already an EFI partition
+			- and it does not have enough size
+				- **requires only a new /boot/efi partition**
+			- and it has enough size
+				- **only requires to use the existing EFI partition**
+- not using UEFI (legacy PC)
+	- with GPT partition table
+		- in a partitions-based proposal
+			- if there is no GRUB partition
+				- **requires a new GRUB partition**
+			- if there is already a GRUB partition
+				- **does not require any particular volume**
+		- in a LVM-based proposal
+			- if there is no GRUB partition
+				- **requires a new GRUB partition**
+			- if there is already a GRUB partition
+				- **does not require any particular volume**
+		- in an encrypted proposal
+			- if there is no GRUB partition
+				- **requires a new GRUB partition**
+			- if there is already a GRUB partition
+				- **does not require any particular volume**
+	- with a MS-DOS partition table
+		- if the MBR gap is big enough to embed Grub
+			- in a partitions-based proposal
+				- **does not require any particular volume**
+			- in a LVM-based proposal
+				- if the MBR gap has additional space for grubenv
+					- **does not require any particular volume**
+				- if the MBR gap has no additional space
+					- **requires only a /boot partition**
+			- in an encrypted proposal
+				- if the MBR gap has additional space for grubenv
+					- **does not require any particular volume**
+				- if the MBR gap has no additional space
+					- **requires only a /boot partition**
+		- with too small MBR gap
+			- in a partitions-based proposal
+				- if proposing root (/) as Btrfs
+					- **does not require any particular volume**
+				- if proposing root (/) as non-Btrfs
+					- **raises an exception**
+			- in a LVM-based proposal
+				- **raises an exception**
+			- in an encrypted proposal
+				- **raises an exception**
+	- when proposing a boot partition
+		- **requires /boot to be a non-encrypted ext4 partition in the booting disk**
+		- when aiming for the recommended size
+			- **requires /boot to be at least 200 MiB large**
+		- when aiming for the minimal size
+			- **requires /boot to be at least 100 MiB large**
+	- when proposing an new GRUB partition
+		- **requires it to have the correct id**
+		- **requires it to be a non-encrypted partition**
+		- when aiming for the recommended size
+			- **requires it to be between 1 and 8MiB, despite the alignment**
+		- when aiming for the minimal size
+			- **requires it to be between 256KiB and 8MiB, despite the alignment**
+	- when proposing an new EFI partition
+		- **requires /boot/efi to be a non-encrypted vfat partition**
+		- **requires /boot/efi to be close enough to the beginning of disk**
+		- when aiming for the recommended size
+			- **requires /boot/efi to be at least 500 MiB large**
+		- when aiming for the minimal size
+			- **requires /boot/efi to be at least 33 MiB large**
