@@ -26,7 +26,7 @@ require "storage"
 require "y2storage/fake_device_factory"
 require "y2storage/devicegraph"
 require "y2storage/disk_analyzer"
-require "y2storage/callbacks/activate.rb"
+require "y2storage/callbacks"
 require "yast2/fs_snapshot"
 
 Yast.import "Mode"
@@ -193,9 +193,9 @@ module Y2Storage
     def commit
       # Tell FsSnapshot whether Snapper should be configured later
       Yast2::FsSnapshot.configure_on_install = configure_snapper?
+      callbacks = Callbacks::Commit.new
       storage.calculate_actiongraph
-      # TODO: add proper callbacks (CommitCallbacks class)
-      storage.commit
+      storage.commit(callbacks)
     end
 
     # Probes from a yml file instead of doing real probing

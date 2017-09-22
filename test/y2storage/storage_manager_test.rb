@@ -210,8 +210,9 @@ describe Y2Storage::StorageManager do
       manager.commit
     end
 
-    it "commits the changes to libstorage" do
+    it "commits the changes to libstorage passing the corresponding callbacks" do
       expect(manager.storage).to receive(:commit)
+        .with(instance_of(Y2Storage::Callbacks::Commit))
       manager.commit
     end
 
