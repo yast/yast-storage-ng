@@ -20,7 +20,7 @@
 namespace :doc do
   desc "Build boot requirements spec."
   task :bootspecs do
-    files = Dir["**/test/boot_requirements_checker_*_test.rb"]
+    files = Dir["**/test/y2storage/boot_requirements_checker_*_test.rb"]
     sh "rspec" \
       " --require ./src/tools/md_formatter.rb" \
       " --format MdFormatter" \

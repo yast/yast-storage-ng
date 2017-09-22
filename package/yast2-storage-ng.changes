@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Fri Sep 22 15:20:51 UTC 2017 - jlopez@suse.com
+
+- Avoid to reuse small efi partitions (bsc#1056640).
+- 3.3.19
+
+-------------------------------------------------------------------
 Thu Sep 21 14:54:28 UTC 2017 - ancor@suse.com
 
 - More backwards-compatible behavior when formatting partitions in

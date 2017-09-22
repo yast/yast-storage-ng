@@ -26,6 +26,8 @@ require_relative "#{TEST_PATH}/support/boot_requirements_context"
 require "y2storage"
 
 describe Y2Storage::BootRequirementsChecker do
+  using Y2Storage::Refinements::SizeCasts
+
   describe "planning of partitions that are already there" do
     include_context "boot requirements"
 
@@ -76,7 +78,7 @@ describe Y2Storage::BootRequirementsChecker do
           let(:missing_efi) { true }
 
           context "if there is suitable EFI partition in the devicegraph" do
-            let(:efi_partitions) { [partition_double("/dev/sda1")] }
+            let(:efi_partitions) { [partition_double("/dev/sda1", 50.MiB)] }
 
             it "proposes to use the existing EFI partition" do
               expect(checker.needed_partitions).to contain_exactly(

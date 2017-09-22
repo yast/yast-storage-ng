@@ -21,8 +21,8 @@
 # find current contact information at www.suse.com.
 
 RSpec.shared_context "plain UEFI" do
-  context "with a partitions-based proposal" do
-    let(:use_lvm) { false }
+  RSpec.shared_context "UEFI partition" do
+    using Y2Storage::Refinements::SizeCasts
 
     context "if there are no EFI partitions" do
       let(:efi_partitions) { [] }
@@ -35,62 +35,46 @@ RSpec.shared_context "plain UEFI" do
     end
 
     context "if there is already an EFI partition" do
-      let(:efi_partitions) { [partition_double("/dev/sda1")] }
+      let(:efi_partitions) { [partition_double("/dev/sda1", size)] }
 
-      it "only requires to use the existing EFI partition" do
-        expect(checker.needed_partitions).to contain_exactly(
-          an_object_having_attributes(mount_point: "/boot/efi", reuse: "/dev/sda1")
-        )
+      context "and it does not have enough size" do
+        let(:size) { 32.MiB }
+
+        it "requires only a new /boot/efi partition" do
+          expect(checker.needed_partitions).to contain_exactly(
+            an_object_having_attributes(mount_point: "/boot/efi", reuse: nil)
+          )
+        end
+      end
+
+      context "and it has enough size" do
+        let(:size) { 33.MiB }
+
+        it "only requires to use the existing EFI partition" do
+          expect(checker.needed_partitions).to contain_exactly(
+            an_object_having_attributes(mount_point: "/boot/efi", reuse: "/dev/sda1")
+          )
+        end
       end
     end
+  end
+
+  context "with a partitions-based proposal" do
+    let(:use_lvm) { false }
+
+    include_context "UEFI partition"
   end
 
   context "with a LVM-based proposal" do
     let(:use_lvm) { true }
 
-    context "if there are no EFI partitions" do
-      let(:efi_partitions) { [] }
-
-      it "requires only a new /boot/efi partition" do
-        expect(checker.needed_partitions).to contain_exactly(
-          an_object_having_attributes(mount_point: "/boot/efi", reuse: nil)
-        )
-      end
-    end
-
-    context "if there is already an EFI partition" do
-      let(:efi_partitions) { [partition_double("/dev/sda1")] }
-
-      it "only requires to use the existing EFI partition" do
-        expect(checker.needed_partitions).to contain_exactly(
-          an_object_having_attributes(mount_point: "/boot/efi", reuse: "/dev/sda1")
-        )
-      end
-    end
+    include_context "UEFI partition"
   end
 
   context "with an encrypted proposal" do
     let(:use_lvm) { false }
     let(:use_encryption) { true }
 
-    context "if there are no EFI partitions" do
-      let(:efi_partitions) { [] }
-
-      it "requires only a new /boot/efi partition" do
-        expect(checker.needed_partitions).to contain_exactly(
-          an_object_having_attributes(mount_point: "/boot/efi", reuse: nil)
-        )
-      end
-    end
-
-    context "if there is already an EFI partition" do
-      let(:efi_partitions) { [partition_double("/dev/sda1")] }
-
-      it "only requires to use the existing EFI partition" do
-        expect(checker.needed_partitions).to contain_exactly(
-          an_object_having_attributes(mount_point: "/boot/efi", reuse: "/dev/sda1")
-        )
-      end
-    end
+    include_context "UEFI partition"
   end
 end
