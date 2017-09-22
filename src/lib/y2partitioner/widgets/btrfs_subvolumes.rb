@@ -37,9 +37,6 @@ module Y2Partitioner
         table = Widgets::BtrfsSubvolumesTable.new(filesystem)
 
         VBox(
-          # TODO: libstorage must manage snapshots
-          HBox(HSpacing(1), Left(CheckBox(_("Enable snapshots"), false))),
-          VSpacing(1),
           table,
           HBox(
             Widgets::BtrfsSubvolumesAddButton.new(table),
@@ -49,21 +46,7 @@ module Y2Partitioner
       end
 
       def help
-        text = _(
-          "<p>Create and remove subvolumes from a Btrfs filesystem.</p>\n"
-        )
-
-        if Yast::Mode.installation
-          text += _(
-            "<p>Enable automatic snapshots for a Btrfs filesystem with snapper.</p>"
-          )
-        end
-
-        # TODO: widget for enabale snapshot is not implemented yet. Waiting for snapshots
-        # support in libstorage-ng
-        text += "TODO enable snapshots help"
-
-        text
+        _("<p>Create and remove subvolumes from a Btrfs filesystem.</p>\n")
       end
 
     private

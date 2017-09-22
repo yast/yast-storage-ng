@@ -28,7 +28,7 @@ describe Y2Partitioner::Sequences::FilesystemController do
     devicegraph_stub("mixed_disks_btrfs.yml")
   end
 
-  subject { described_class.new(device) }
+  subject(:controller) { described_class.new(device) }
 
   let(:device) { Y2Storage::BlkDevice.find_by_name(devicegraph, dev_name) }
 
@@ -183,6 +183,46 @@ describe Y2Partitioner::Sequences::FilesystemController do
       it "returns nil" do
         expect(subject.partition_id).to be_nil
       end
+    end
+  end
+
+  describe "#configure_snapper" do
+    context "when the currently editing device has a Btrfs filesystem" do
+      let(:dev_name) { "/dev/sda2" }
+
+      it "returns the filesystem value for #configure_snapper" do
+        expect(controller.configure_snapper).to eq false
+        device.filesystem.configure_snapper = true
+        expect(controller.configure_snapper).to eq true
+      end
+    end
+
+    context "when the currently editing device has a no-Btrfs filesystem" do
+      let(:dev_name) { "/dev/sdb6" }
+
+      it "returns false" do
+        expect(controller.configure_snapper).to eq false
+      end
+    end
+
+    context "when the currently editing device has no filesystem" do
+      let(:dev_name) { "/dev/sdb7" }
+
+      it "returns false" do
+        expect(controller.configure_snapper).to eq false
+      end
+    end
+  end
+
+  describe "#configure_snapper=" do
+    let(:dev_name) { "/dev/sda2" }
+
+    it "sets #configure_snapper for the current Btrfs filesystem" do
+      expect(device.filesystem.configure_snapper).to eq false
+      controller.configure_snapper = true
+      expect(device.filesystem.configure_snapper).to eq true
+      controller.configure_snapper = false
+      expect(device.filesystem.configure_snapper).to eq false
     end
   end
 
@@ -644,6 +684,215 @@ describe Y2Partitioner::Sequences::FilesystemController do
             subject.finish
 
             expect(devicegraph).to eq(Y2Partitioner::DeviceGraphs.instance.current)
+          end
+        end
+      end
+    end
+  end
+
+  describe "#format_options_supported?" do
+    context "when the currently editing device has no filesystem" do
+      let(:dev_name) { "/dev/sdb7" }
+
+      it "returns false" do
+        expect(controller.format_options_supported?).to eq false
+      end
+    end
+
+    context "when the currently editing device has a filesystem" do
+      context "that is a preexisting Btrfs one" do
+        let(:dev_name) { "/dev/sda2" }
+
+        it "returns false" do
+          expect(controller.format_options_supported?).to eq false
+        end
+      end
+
+      context "that is a preexisting no-Btrfs one" do
+        let(:dev_name) { "/dev/sdb5" }
+
+        it "returns false" do
+          expect(controller.format_options_supported?).to eq false
+        end
+      end
+
+      context "that is a new (to be created) Btrfs" do
+        it "returns false" do
+          device.remove_descendants
+          device.create_filesystem(Y2Storage::Filesystems::Type::BTRFS)
+
+          expect(controller.format_options_supported?).to eq false
+        end
+      end
+
+      context "that is a new (to be created) no-Btrfs" do
+        it "returns true" do
+          device.remove_descendants
+          device.create_filesystem(Y2Storage::Filesystems::Type::EXT4)
+
+          expect(controller.format_options_supported?).to eq true
+        end
+      end
+    end
+  end
+
+  describe "#snapshots_supported?" do
+    before { allow(Yast::Mode).to receive(:installation).and_return inst_mode }
+    let(:inst_mode) { false }
+
+    context "when the currently editing device has no filesystem" do
+      let(:dev_name) { "/dev/sdb7" }
+
+      context "in installation mode" do
+        let(:inst_mode) { true }
+
+        it "returns false" do
+          expect(controller.snapshots_supported?).to eq false
+        end
+      end
+
+      context "in normal mode" do
+        let(:inst_mode) { false }
+
+        it "returns false" do
+          expect(controller.snapshots_supported?).to eq false
+        end
+      end
+    end
+
+    context "when the currently editing device has a filesystem" do
+      context "that is a preexisting Btrfs one" do
+        let(:dev_name) { "/dev/sda2" }
+
+        context "in installation mode" do
+          let(:inst_mode) { true }
+
+          it "returns false" do
+            expect(controller.snapshots_supported?).to eq false
+          end
+        end
+
+        context "in normal mode" do
+          let(:inst_mode) { false }
+
+          it "returns false" do
+            expect(controller.snapshots_supported?).to eq false
+          end
+        end
+      end
+
+      context "that is a preexisting no-Btrfs one" do
+        let(:dev_name) { "/dev/sdb5" }
+
+        context "in installation mode" do
+          let(:inst_mode) { true }
+
+          it "returns false" do
+            expect(controller.snapshots_supported?).to eq false
+          end
+        end
+
+        context "in normal mode" do
+          let(:inst_mode) { false }
+
+          it "returns false" do
+            expect(controller.snapshots_supported?).to eq false
+          end
+        end
+      end
+
+      context "that is a new (to be created) Btrfs" do
+        before do
+          device.remove_descendants
+          device.create_filesystem(Y2Storage::Filesystems::Type::BTRFS)
+          device.filesystem.mountpoint = mntpnt
+        end
+
+        context "if is going to be mounted as root" do
+          let(:mntpnt) { "/" }
+
+          context "in installation mode" do
+            let(:inst_mode) { true }
+
+            it "returns true" do
+              expect(controller.snapshots_supported?).to eq true
+            end
+          end
+
+          context "in normal mode" do
+            let(:inst_mode) { false }
+
+            it "returns false" do
+              expect(controller.snapshots_supported?).to eq false
+            end
+          end
+        end
+
+        context "if is not going to be mounted as root" do
+          let(:mntpnt) { "/var" }
+
+          context "in installation mode" do
+            let(:inst_mode) { true }
+
+            it "returns false" do
+              expect(controller.snapshots_supported?).to eq false
+            end
+          end
+
+          context "in normal mode" do
+            let(:inst_mode) { false }
+
+            it "returns false" do
+              expect(controller.snapshots_supported?).to eq false
+            end
+          end
+        end
+      end
+
+      context "that is a new (to be created) no-Btrfs" do
+        before do
+          device.remove_descendants
+          device.create_filesystem(Y2Storage::Filesystems::Type::EXT4)
+          device.filesystem.mountpoint = mntpnt
+        end
+
+        context "if is going to be mounted as root" do
+          let(:mntpnt) { "/" }
+
+          context "in installation mode" do
+            let(:inst_mode) { true }
+
+            it "returns false" do
+              expect(controller.snapshots_supported?).to eq false
+            end
+          end
+
+          context "in normal mode" do
+            let(:inst_mode) { false }
+
+            it "returns false" do
+              expect(controller.snapshots_supported?).to eq false
+            end
+          end
+        end
+
+        context "if is not going to be mounted as root" do
+          let(:mntpnt) { "/var" }
+
+          context "in installation mode" do
+            let(:inst_mode) { true }
+
+            it "returns false" do
+              expect(controller.snapshots_supported?).to eq false
+            end
+          end
+
+          context "in normal mode" do
+            let(:inst_mode) { false }
+
+            it "returns false" do
+              expect(controller.snapshots_supported?).to eq false
+            end
           end
         end
       end

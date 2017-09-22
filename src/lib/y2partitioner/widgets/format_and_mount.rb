@@ -22,19 +22,22 @@ module Y2Partitioner
 
       # Constructor
       # @param controller [Sequences::FilesystemController]
-      def initialize(controller, mount_options_widget)
+      # @param parent_widget [#refresh_others] container widget that must be
+      #   notified after every relevant update to the controller information
+      def initialize(controller, parent_widget)
         textdomain "storage"
 
         @controller        = controller
         @encrypt_widget    = EncryptBlkDevice.new(@controller)
         @filesystem_widget = BlkDeviceFilesystem.new(@controller)
-        @format_options    = FormatOptionsButton.new(@controller)
+        @format_options    = FormatOptionsArea.new(@controller)
         @partition_id      = PartitionId.new(@controller)
-        @mount_options     = mount_options_widget
+        @parent_widget     = parent_widget
 
         self.handle_all_events = true
       end
 
+      # @macro seeAbstractWidget
       def init
         refresh
       end
@@ -44,14 +47,13 @@ module Y2Partitioner
         @encrypt_widget.refresh
         @filesystem_widget.refresh
         @partition_id.refresh
-        @mount_options.refresh
+        @format_options.refresh
 
         if controller.to_be_formatted?
           Yast::UI.ChangeWidget(Id(:format_device), :Value, true)
 
           @encrypt_widget.enable
           @filesystem_widget.enable
-          @format_options.enable
           @partition_id.disable
         else
           Yast::UI.ChangeWidget(Id(:no_format_device), :Value, true)
@@ -60,7 +62,6 @@ module Y2Partitioner
           # on the encryption value
           controller.filesystem ? @encrypt_widget.disable : @encrypt_widget.enable
           @filesystem_widget.disable
-          @format_options.disable
           @partition_id.enable
         end
       end
@@ -135,16 +136,19 @@ module Y2Partitioner
       def select_format
         controller.new_filesystem(@filesystem_widget.value)
         refresh
+        @parent_widget.refresh_others(self)
       end
 
       def select_no_format
         controller.dont_format
         refresh
+        @parent_widget.refresh_others(self)
       end
 
       def change_partition_id
         controller.partition_id = @partition_id.value
         refresh
+        @parent_widget.refresh_others(self)
       end
     end
 
@@ -153,10 +157,13 @@ module Y2Partitioner
       using Refinements::FilesystemType
 
       # @param controller [Sequences::FilesystemController]
-      def initialize(controller)
+      # @param parent_widget [#refresh_others] container widget that must be
+      #   notified after every relevant update to the controller information
+      def initialize(controller, parent_widget)
         textdomain "storage"
 
         @controller = controller
+        @parent_widget = parent_widget
 
         @mount_point_widget = MountPoint.new(controller)
         @fstab_options_widget = FstabOptionsButton.new(controller)
@@ -169,6 +176,7 @@ module Y2Partitioner
         @controller.filesystem
       end
 
+      # @macro seeAbstractWidget
       def init
         refresh
       end
@@ -228,27 +236,45 @@ module Y2Partitioner
 
       # @macro seeAbstractWidget
       def handle(event)
-        mount_point = @mount_point_widget.value.to_s
+        refresh_others = true
 
         case event["ID"]
         when :mount_device
-          @controller.mount_point = mount_point
-          @fstab_options_widget.enable
-          @mount_point_widget.enable
+          mount_device
         when :no_mount_device
-          @controller.mount_point = ""
-          @fstab_options_widget.disable
-          @mount_point_widget.disable
+          no_mount_device
         when @mount_point_widget.widget_id
-          @controller.mount_point = mount_point
-          if mount_point.nil? || mount_point.empty?
-            @fstab_options_widget.disable
-          else
-            @fstab_options_widget.enable
-          end
+          mount_point_change
+        else
+          refresh_others = false
         end
+        @parent_widget.refresh_others(self) if refresh_others
 
         nil
+      end
+
+    private
+
+      def mount_device
+        @controller.mount_point = @mount_point_widget.value.to_s
+        @fstab_options_widget.enable
+        @mount_point_widget.enable
+      end
+
+      def no_mount_device
+        @controller.mount_point = ""
+        @fstab_options_widget.disable
+        @mount_point_widget.disable
+      end
+
+      def mount_point_change
+        mount_point = @mount_point_widget.value.to_s
+        @controller.mount_point = mount_point
+        if mount_point.nil? || mount_point.empty?
+          @fstab_options_widget.disable
+        else
+          @fstab_options_widget.enable
+        end
       end
     end
 
@@ -263,10 +289,12 @@ module Y2Partitioner
         @controller = controller
       end
 
+      # @macro seeAbstractWidget
       def opt
         %i(hstretch notify)
       end
 
+      # @macro seeAbstractWidget
       def init
         refresh
       end
@@ -294,6 +322,40 @@ module Y2Partitioner
       end
     end
 
+    # Widget to support the current UI hack in which the snapshots checkbox and
+    # the format options button are displayed alternatively based on the
+    # filesystem type and other criteria.
+    #
+    # The behavior is not 100% the same than the old partitioner (which
+    # sometimes leaded to unsupported situations), but is equivalent for all the
+    # supported scenarios.
+    class FormatOptionsArea < CWM::ReplacePoint
+      def initialize(controller)
+        @controller       = controller
+        @options_button   = FormatOptionsButton.new(controller)
+        @snapper_checkbox = Snapshots.new(controller)
+        super(id: "format_options_area", widget: @options_button)
+      end
+
+      alias_method :show, :replace
+
+      # @macro seeAbstractWidget
+      def init
+        refresh
+      end
+
+      # Synchronizes the widget with the information from the controller
+      def refresh
+        if @controller.snapshots_supported?
+          show(@snapper_checkbox)
+          @snapper_checkbox.refresh
+        else
+          show(@options_button)
+          @controller.format_options_supported? ? @options_button.enable : @options_button.disable
+        end
+      end
+    end
+
     # Push Button that launches a dialog to set speficic options for the
     # selected filesystem
     class FormatOptionsButton < CWM::PushButton
@@ -302,6 +364,7 @@ module Y2Partitioner
         @controller = controller
       end
 
+      # @macro seeAbstractWidget
       def opt
         %i(hstretch notify)
       end
@@ -318,6 +381,34 @@ module Y2Partitioner
       end
     end
 
+    # Btrfs snapshots selector
+    class Snapshots < CWM::CheckBox
+      # @param controller [Sequences::FilesystemController]
+      def initialize(controller)
+        @controller = controller
+      end
+
+      def label
+        _("Enable Snapshots")
+      end
+
+      # @macro seeAbstractWidget
+      def opt
+        %i(notify)
+      end
+
+      # Synchronizes the widget with the information from the controller
+      def refresh
+        self.value = @controller.configure_snapper
+      end
+
+      # @macro seeAbstractWidget
+      def handle(event)
+        @controller.configure_snapper = value if event["ID"] == widget_id
+        nil
+      end
+    end
+
     # MountPoint selector
     class MountPoint < CWM::ComboBox
       SUGGESTED_MOUNT_POINTS = %w(/ /home /var /opt /srv /tmp).freeze
@@ -328,6 +419,7 @@ module Y2Partitioner
         @controller = controller
       end
 
+      # @macro seeAbstractWidget
       def init
         refresh
       end
@@ -341,6 +433,7 @@ module Y2Partitioner
         _("Mount Point")
       end
 
+      # @macro seeAbstractWidget
       def opt
         %i(editable hstretch notify)
       end
@@ -459,7 +552,7 @@ module Y2Partitioner
     class BtrfsSubvolumesButton < CWM::ReplacePoint
       def initialize(controller)
         @controller = controller
-        super(widget: current_widget)
+        super(id: "subvolumes_button", widget: current_widget)
       end
 
       def refresh
@@ -511,10 +604,12 @@ module Y2Partitioner
         _("Encrypt Device")
       end
 
+      # @macro seeAbstractWidget
       def opt
         %i(notify)
       end
 
+      # @macro seeAbstractWidget
       def init
         refresh
       end
@@ -579,10 +674,12 @@ module Y2Partitioner
         @controller = controller
       end
 
+      # @macro seeAbstractWidget
       def opt
         %i(hstretch notify)
       end
 
+      # @macro seeAbstractWidget
       def init
         refresh
       end

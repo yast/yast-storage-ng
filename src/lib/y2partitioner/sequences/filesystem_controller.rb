@@ -25,6 +25,8 @@ require "y2partitioner/device_graphs"
 require "y2storage/filesystems/btrfs"
 require "y2storage/subvol_specification"
 
+Yast.import "Mode"
+
 module Y2Partitioner
   module Sequences
     # This class stores information about a filesystem being created or modified
@@ -58,7 +60,6 @@ module Y2Partitioner
       def initialize(device)
         @blk_device_name = device.name
         @encrypt = blk_device.encrypted?
-        @initial_graph = working_graph.dup
       end
 
       # Plain block device being modified, i.e. device where the filesystem is
@@ -190,6 +191,13 @@ module Y2Partitioner
 
       # Makes the changes related to the option "do not format" in the UI, which
       # implies removing any new filesystem or respecting the preexisting one.
+      #
+      # @note With the current implementation there is a corner case that
+      # doesn't work like the traditional expert partitioner. If a partition
+      # preexisting in the disk is edited (e.g. replacing the filesystem with a
+      # new one) and then we the user tries to edit it again, "do not format"
+      # will actually mean leaving the partition unformatted, not respecting the
+      # filesystem on the system.
       def dont_format
         return if filesystem.nil?
         return unless new?(filesystem)
@@ -242,10 +250,54 @@ module Y2Partitioner
         end
       end
 
+      # Whether is possible to define the generic format options for the current
+      # filesystem
+      #
+      # @return [Boolean]
+      def format_options_supported?
+        to_be_formatted? && !filesystem.type.is?(:btrfs)
+      end
+
+      # Whether is possible to set the snapshots configuration for the current
+      # filesystem
+      #
+      # @see Y2Storage::Filesystems::Btrfs.configure_snapper
+      #
+      # @return [Boolean]
+      def snapshots_supported?
+        return false unless Yast::Mode.installation
+        return false unless to_be_formatted?
+        filesystem.root? && filesystem.respond_to?(:configure_snapper=)
+      end
+
+      # Sets configure_snapper for the filesystem if it makes sense
+      #
+      # @see Y2Storage::Filesystems::Btrfs.configure_snapper=
+      #
+      # @param value [Boolean]
+      def configure_snapper=(value)
+        return if filesystem.nil? || !filesystem.respond_to?(:configure_snapper)
+        filesystem.configure_snapper = value
+      end
+
+      # Status of the snapshots configuration for the filesystem
+      #
+      # @see Y2Storage::Filesystems::Btrfs.configure_snapper
+      #
+      # @return [Boolean]
+      def configure_snapper
+        return false if filesystem.nil? || !filesystem.respond_to?(:configure_snapper)
+        filesystem.configure_snapper
+      end
+
     private
 
       def working_graph
         DeviceGraphs.instance.current
+      end
+
+      def system_graph
+        DeviceGraphs.instance.system
       end
 
       def can_change_encrypt?
@@ -253,7 +305,7 @@ module Y2Partitioner
       end
 
       def new?(device)
-        !device.exists_in_devicegraph?(@initial_graph)
+        !device.exists_in_devicegraph?(system_graph)
       end
 
       def delete_filesystem
