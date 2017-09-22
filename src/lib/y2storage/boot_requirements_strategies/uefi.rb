@@ -37,6 +37,9 @@ module Y2Storage
 
     protected
 
+      MIN_SIZE = DiskSize.MiB(33).freeze
+      DESIRED_SIZE = DiskSize.MiB(500).freeze
+
       def efi_missing?
         free_mountpoint?("/boot/efi")
       end
@@ -47,7 +50,7 @@ module Y2Storage
           vol.reuse = reusable_efi.name
         else
           vol.partition_id = PartitionId::ESP
-          vol.min_size = target == :min ? DiskSize.MiB(33) : DiskSize.MiB(500)
+          vol.min_size = target == :min ? MIN_SIZE : DESIRED_SIZE
           vol.max_size = DiskSize.unlimited
           vol.max_start_offset = DiskSize.TiB(2)
         end
@@ -55,7 +58,9 @@ module Y2Storage
       end
 
       def reusable_efi
-        @reusable_efi = biggest_efi_in_boot_device || biggest_efi
+        efi = biggest_efi_in_boot_device || biggest_efi
+        efi = nil if !efi.nil? && efi.size < MIN_SIZE
+        @reusable_efi = efi
       end
 
       def biggest_efi_in_boot_device
