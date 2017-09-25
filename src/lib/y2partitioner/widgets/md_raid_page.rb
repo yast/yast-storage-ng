@@ -3,7 +3,7 @@ require "cwm/tree_pager"
 require "y2partitioner/icons"
 require "y2partitioner/device_graphs"
 require "y2partitioner/widgets/md_description"
-require "y2partitioner/widgets/blk_devices_table"
+require "y2partitioner/widgets/configurable_blk_devices_table"
 
 module Y2Partitioner
   module Widgets
@@ -96,10 +96,10 @@ module Y2Partitioner
 
       # Returns a table with all devices used by a MD raid
       #
-      # @return [BlkDevicesTable]
+      # @return [ConfigurableBlkDevicesTable]
       def table
         return @table unless @table.nil?
-        @table = BlkDevicesTable.new(devices, @pager)
+        @table = ConfigurableBlkDevicesTable.new(devices, @pager)
         @table.show_columns(:device, :size, :format, :encrypted, :type)
         @table
       end

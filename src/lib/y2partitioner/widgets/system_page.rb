@@ -1,6 +1,6 @@
 require "cwm/tree_pager"
 require "y2partitioner/icons"
-require "y2partitioner/widgets/blk_devices_table"
+require "y2partitioner/widgets/configurable_blk_devices_table"
 require "y2partitioner/widgets/rescan_devices_button"
 
 Yast.import "Hostname"
@@ -50,10 +50,10 @@ module Y2Partitioner
 
       # The table contains all storage devices, including LVM Vgs
       #
-      # @return [BlkDevicesTable]
+      # @return [ConfigurableBlkDevicesTable]
       def table
         return @table unless @table.nil?
-        @table = BlkDevicesTable.new(devices, @pager)
+        @table = ConfigurableBlkDevicesTable.new(devices, @pager)
         @table.remove_columns(:start, :end)
         @table
       end

@@ -1,10 +1,10 @@
 require "yast"
-require "y2partitioner/widgets/blk_devices_table"
+require "y2partitioner/widgets/configurable_blk_devices_table"
 
 module Y2Partitioner
   module Widgets
     # Table widget to represent a given list of Y2Storage::Mds together.
-    class MdRaidsTable < BlkDevicesTable
+    class MdRaidsTable < ConfigurableBlkDevicesTable
       # Constructor
       #
       # @param devices [Array<Y2Storage::Md>] devices to display

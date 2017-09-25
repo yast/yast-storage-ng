@@ -1,11 +1,11 @@
 require "cwm/tree_pager"
 require "y2partitioner/icons"
 require "y2partitioner/widgets/delete_disk_partition_button"
-require "y2partitioner/widgets/blk_devices_table"
+require "y2partitioner/widgets/configurable_blk_devices_table"
 
 module Y2Partitioner
   module Widgets
-    # A Page for block disks and its partitions. It contains a {BlkDevicesTable}
+    # A Page for block disks and its partitions. It contains a {ConfigurableBlkDevicesTable}
     class DisksPage < CWM::Page
       include Yast::I18n
 
@@ -27,7 +27,7 @@ module Y2Partitioner
       def contents
         return @contents if @contents
 
-        table = BlkDevicesTable.new(devices, @pager)
+        table = ConfigurableBlkDevicesTable.new(devices, @pager)
         icon = Icons.small_icon(Icons::HD)
         @contents = VBox(
           Left(

@@ -1,6 +1,6 @@
 require "yast"
 require "y2partitioner/dialogs/btrfs_subvolumes"
-require "y2partitioner/widgets/blk_devices_table"
+require "y2partitioner/widgets/configurable_blk_devices_table"
 
 Yast.import "Popup"
 
@@ -10,7 +10,7 @@ module Y2Partitioner
     class BtrfsEditButton < CWM::PushButton
       attr_reader :table
 
-      # @param table [Widgets::BlkDevicesTable]
+      # @param table [Widgets::ConfigurableBlkDevicesTable]
       def initialize(table)
         textdomain "storage"
         @table = table
