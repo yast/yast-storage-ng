@@ -1,4 +1,9 @@
 -------------------------------------------------------------------
+Mon Sep 25 10:44:42 CEST 2017 - snwint@suse.de
+
+- updated installer hacks document: ssh key import works
+
+-------------------------------------------------------------------
 Fri Sep 22 15:20:51 UTC 2017 - jlopez@suse.com
 
 - Avoid to reuse small efi partitions (bsc#1056640).
