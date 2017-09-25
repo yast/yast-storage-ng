@@ -10,6 +10,10 @@ describes why and sketches a possible solution. After fixing the problem
 (hopefully sooner than later) this document will become obsolete and should be
 deleted.
 
+Additionally, another problematic situation is presented at the end of the
+document. Although it affects a completely different part of the expert
+partitioner it could be fixed with basically the same proposed approach.
+
 ## The problem
 
 When editing a partition (the same applies to any other block device that can
@@ -74,3 +78,28 @@ confusing, since "do not format" means "do what the proposal suggested".
 
 Some other behaviors were tested or considered, but the result was usually
 tricky in one way or another and is not worth describing them all here.
+
+## More problems
+
+When creating an MD RAID in the expert partitioner, the user can select the
+partitions to add by just choosing them from a list of available devices. In
+the same screen, the user can interactively change the RAID level (mirroring,
+striping, etc.). When any of these things are changed, the size of the resulting
+MD array displayed in the UI is dinamically updated.
+
+Following the new partitioner phylosophy, the partitions are immediately added to
+or removed from the MD device libstorage-ng object when the user (de)select them,
+so the UI can directly rely on the logic in the storage-ng object to report the
+size. Unfortunately, adding the partitions to the MD array changes some
+attributes of that partition and removes all its current descendants in the
+devicegraph, like any possible file-system or LUKS device. If the user decides
+then to move the partition out of the definitive list, that partition would have
+been already harmed even if it ends up not being used.
+
+The problem can be fixed without needing to rethink the whole expert partitioner
+functionality and without having to duplicate logic. Just by adding to
+libstorage-ng the mechanism already commented above - the possibility to
+restore a device and its descendants from a different devicegraph (a backup
+performed when entering the "Add RAID" workflow, in this case). So the whole
+partition and related devices can be restored if the partition is taken out of
+the list of selected ones.

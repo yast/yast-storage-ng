@@ -60,6 +60,49 @@ describe Y2Storage::Md do
     end
   end
 
+  describe "#md_name" do
+    context "for a numeric RAID" do
+      let(:scenario) { "md2-devicegraph.xml" }
+      let(:md_name) { "/dev/md0" }
+
+      it "returns nil" do
+        expect(md.md_name).to be_nil
+      end
+    end
+
+    context "for a named RAID" do
+      let(:scenario) { "subvolumes-and-empty-md.xml" }
+      let(:md_name) { "/dev/md/strip0" }
+
+      it "returns the array name" do
+        expect(md.md_name).to eq "strip0"
+      end
+    end
+  end
+
+  describe "#md_name=" do
+    context "receiving a non-empty string" do
+      it "sets the array name" do
+        md.md_name = "foobar"
+        expect(md.md_name).to eq "foobar"
+        expect(md.name).to eq "/dev/md/foobar"
+        expect(md.numeric?).to eq false
+      end
+    end
+
+    context "receiving an empty string" do
+      it "raises an error" do
+        expect { md.md_name = "" }.to raise_error ArgumentError
+      end
+    end
+
+    context "receiving nil" do
+      it "raises an error" do
+        expect { md.md_name = nil }.to raise_error ArgumentError
+      end
+    end
+  end
+
   describe "#numeric?" do
 
     it "returns true for /dev/md0" do

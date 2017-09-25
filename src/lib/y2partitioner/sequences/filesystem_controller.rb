@@ -222,8 +222,7 @@ module Y2Partitioner
 
         # Make sure partition_id has the correct type
         partition_id = Y2Storage::PartitionId.new(partition_id)
-        ptable = blk_device.partition_table
-        blk_device.id = ptable.partition_id_for(partition_id)
+        blk_device.adapted_id = partition_id
       end
 
       # Sets the mount point of the filesystem if there is one

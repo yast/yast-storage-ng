@@ -58,6 +58,7 @@ module Y2Storage
     # @!attribute id
     #   {PartitionId Id} of the partition.
     #   @see PartitionId
+    #   @see #adapted_id= for a safer alternative to set this value
     #
     #   @return [PartitionId]
     storage_forward :id, as: "PartitionId"
@@ -136,6 +137,18 @@ module Y2Storage
     # @return [String]
     def inspect
       "<Partition #{name} #{size}, #{region.show_range}>"
+    end
+
+    # Sets the id, ensuring its value is compatible with the partition table.
+    #
+    # In general, use this method instead of #id= if unsure.
+    #
+    # @see PartitionTables::Base#partition_id_for
+    # @see #id
+    #
+    # @param partition_id [PartitionId]
+    def adapted_id=(partition_id)
+      self.id = partition_table.partition_id_for(partition_id)
     end
 
   protected

@@ -136,6 +136,30 @@ module Y2Storage
       devices.map(&:plain_device)
     end
 
+    # Name of the named RAID, if any
+    #
+    # @return [String, nil] nil if this is not a named array
+    def md_name
+      return nil if numeric?
+      basename
+    end
+
+    # Sets the name, effectively turning the device into a named array
+    #
+    # @note: Only works if the array does not exist yet in the system. Cannot be
+    #   used to rename in-disk arrays.
+    # @note: Trying to 'unset' the name does not turn the array back into a
+    #   numeric one, it raises an exception instead.
+    # @note: Is actually possible to set the array to numeric again assigning
+    #   the name to mdX where X is a correct (available) number, but that
+    #   behavior is not granted to work in the future.
+    def md_name=(new_name)
+      if new_name.nil? || new_name.empty?
+        raise ArgumentError, "Resetting the name back to numeric is not supported"
+      end
+      self.name = "/dev/md/#{new_name}"
+    end
+
   protected
 
     def types_for_is

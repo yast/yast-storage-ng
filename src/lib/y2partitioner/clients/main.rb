@@ -5,16 +5,6 @@ require "y2storage"
 
 Yast.import "Popup"
 
-# Work around YARD inability to link across repos/gems:
-# (declaring macros here works because YARD sorts by filename size(!))
-
-# @!macro [new] seeAbstractWidget
-#   @see http://www.rubydoc.info/github/yast/yast-yast2/CWM%2FAbstractWidget:${0}
-# @!macro [new] seeCustomWidget
-#   @see http://www.rubydoc.info/github/yast/yast-yast2/CWM%2FCustomWidget:${0}
-# @!macro [new] seeDialog
-#   @see http://www.rubydoc.info/github/yast/yast-yast2/CWM%2FDialog:${0}
-
 module Y2Partitioner
   # YaST "clients" are the CLI entry points
   module Clients
