@@ -79,9 +79,6 @@ equivalent, the old code is simply deleted, not commented.
   such technologies we will need an object-oriented replacement. Or maybe it's
   not needed anymore if udev does that job now.
 
-* Commented the code that reads files from previous installations right after
-  hard drives probing. It affects importing of previous ssh keys and users.
-
 * Commented the code used to remember across executions (self-update) that the
   user canceled multipath activation.
 
