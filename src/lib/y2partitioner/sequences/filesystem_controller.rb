@@ -49,6 +49,10 @@ module Y2Partitioner
       # @return [String]
       attr_reader :blk_device_name
 
+      # Title to display in the dialogs during the process
+      # @return [String]
+      attr_reader :wizard_title
+
       # Type for the role "system"
       DEFAULT_FS = Y2Storage::Filesystems::Type::BTRFS
       # Type for the role "data"
@@ -57,9 +61,11 @@ module Y2Partitioner
       private_constant :DEFAULT_FS, :DEFAULT_HOME_FS, :DEFAULT_PARTITION_ID
 
       # @param device [Y2Storage::BlkDevice] see {#blk_device)
-      def initialize(device)
+      # @param wizard_title [String]
+      def initialize(device, wizard_title)
         @blk_device_name = device.name
         @encrypt = blk_device.encrypted?
+        @wizard_title = wizard_title
       end
 
       # Plain block device being modified, i.e. device where the filesystem is
@@ -211,7 +217,7 @@ module Y2Partitioner
 
       # Sets the partition id of the block device if it makes sense
       def partition_id=(partition_id)
-        return unless blk_device.is?(:partition)
+        return unless partition_id_supported?
         return if partition_id.nil?
 
         # Make sure partition_id has the correct type
@@ -268,6 +274,13 @@ module Y2Partitioner
         return false unless Yast::Mode.installation
         return false unless to_be_formatted?
         filesystem.root? && filesystem.respond_to?(:configure_snapper=)
+      end
+
+      # Whether is possible to set the partition id for the block device
+      #
+      # @return [Boolean]
+      def partition_id_supported?
+        blk_device.is?(:partition)
       end
 
       # Sets configure_snapper for the filesystem if it makes sense

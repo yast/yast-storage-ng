@@ -28,7 +28,7 @@ describe Y2Partitioner::Sequences::FilesystemController do
     devicegraph_stub("mixed_disks_btrfs.yml")
   end
 
-  subject(:controller) { described_class.new(device) }
+  subject(:controller) { described_class.new(device, "The title") }
 
   let(:device) { Y2Storage::BlkDevice.find_by_name(devicegraph, dev_name) }
 
@@ -43,6 +43,12 @@ describe Y2Partitioner::Sequences::FilesystemController do
 
     it "returns the currently editing block device" do
       expect(subject.blk_device.name).to eq(dev_name)
+    end
+  end
+
+  describe "wizard_title" do
+    it "returns the string passed to the constructor" do
+      expect(controller.wizard_title).to eq "The title"
     end
   end
 

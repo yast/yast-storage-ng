@@ -29,6 +29,8 @@ module Y2Partitioner
     # can be shared across the different dialogs of the process. It also takes
     # care of updating the devicegraph when needed.
     class PartitionController
+      include Yast::I18n
+
       # @return [Y2Storage::PartitionType]
       attr_accessor :type
 
@@ -56,6 +58,8 @@ module Y2Partitioner
       attr_reader :disk_name
 
       def initialize(disk_name)
+        textdomain "storage"
+
         @disk_name = disk_name
       end
 
@@ -95,6 +99,13 @@ module Y2Partitioner
       # @return [Boolean]
       def new_partition_possible?
         unused_slots.any?(&:available?)
+      end
+
+      # Title to display in the dialogs during the process
+      # @return [String]
+      def wizard_title
+        # TRANSLATORS: dialog title. %s is a device name like /dev/sda
+        _("Add Partition on %s") % disk_name
       end
     end
   end

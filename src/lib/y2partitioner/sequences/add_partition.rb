@@ -76,7 +76,11 @@ module Y2Partitioner
         part_controller.delete_partition
         result = Dialogs::PartitionSize.run(part_controller)
         part_controller.create_partition if [:next, :finish].include?(result)
-        @fs_controller = FilesystemController.new(part_controller.partition) if result == :next
+        if result == :next
+          part = part_controller.partition
+          title = part_controller.wizard_title
+          @fs_controller = FilesystemController.new(part, title)
+        end
         result
       end
 

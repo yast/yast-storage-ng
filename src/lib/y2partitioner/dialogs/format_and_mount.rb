@@ -16,7 +16,7 @@ module Y2Partitioner
       end
 
       def title
-        "Edit Partition #{@controller.blk_device.name}"
+        @controller.wizard_title
       end
 
       def contents

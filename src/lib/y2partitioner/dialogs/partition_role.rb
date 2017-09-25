@@ -23,8 +23,7 @@ module Y2Partitioner
 
       # @macro seeDialog
       def title
-        # dialog title
-        Yast::Builtins.sformat(_("Add Partition on %1"), disk_name)
+        @controller.wizard_title
       end
 
       # @macro seeDialog
@@ -35,10 +34,6 @@ module Y2Partitioner
     private
 
       attr_reader :controller
-
-      def disk_name
-        controller.blk_device.partitionable.name
-      end
 
       # Choose the role of the new partition
       class RoleChoice < CWM::RadioButtons
