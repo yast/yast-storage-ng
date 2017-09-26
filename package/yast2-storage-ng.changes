@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Tue Sep 26 16:47:44 CEST 2017 - shundhammer@suse.de
+
+- Implemented simple proposal for CASP (bsc#1058736)
+- 3.3.20
+
+-------------------------------------------------------------------
 Mon Sep 25 10:44:42 CEST 2017 - snwint@suse.de
 
 - updated installer hacks document: ssh key import works
