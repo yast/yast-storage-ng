@@ -192,21 +192,23 @@ describe Y2Storage::Clients::PartitionsProposal do
 
     context "in simple mode" do
 
-      it "returns a simple preformatted proposal with 'Default'" do
+      it "returns a label_proposal with 'Default'" do
         proposal = subject.make_proposal("simple_mode" => true)
         expect(proposal).to be_a Hash
-        expect(proposal).to include("preformatted_proposal", "links", "language_changed")
-        expect(proposal["preformatted_proposal"]).to eq "Default"
+        expect(proposal).to include("label_proposal")
+        expect(proposal["label_proposal"]).to be_a Array
+        expect(proposal["label_proposal"]).to eq ["Default"]
       end
 
-      it "returns a simple preformatted proposal with 'Custom' after using the partitioner" do
+      it "returns a label_proposal with 'Custom' after using the partitioner" do
         subject.make_proposal("simple_mode" => true)
         # Pretend the proposal was reset by manual partitioning
         allow(Y2Storage::StorageManager.instance).to receive(:proposal).and_return(nil)
         proposal = subject.make_proposal("simple_mode" => true)
         expect(proposal).to be_a Hash
-        expect(proposal).to include("preformatted_proposal", "links", "language_changed")
-        expect(proposal["preformatted_proposal"]).to eq "Custom"
+        expect(proposal).to include("label_proposal")
+        expect(proposal["label_proposal"]).to be_a Array
+        expect(proposal["label_proposal"]).to eq ["Custom"]
       end
 
     end

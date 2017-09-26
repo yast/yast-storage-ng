@@ -133,26 +133,23 @@ module Y2Storage
           "links"                 => [],
           "language_changed"      => false,
           "warning"               => _("No proposal possible"),
-          "warning_level"         => :blocker
+          "warning_level"         => :blocker,
+          "label_proposal"        => [_("No proposal possible")]
         }
       end
 
       def successful_proposal
         {
-          "preformatted_proposal" => preformatted_proposal,
+          "preformatted_proposal" => actions_presenter.to_html,
           "links"                 => actions_presenter.events,
-          "language_changed"      => false
+          "language_changed"      => false,
+          "label_proposal"        => [simple_proposal]
         }
       end
 
-      def preformatted_proposal
-        return nil if @failed
-        if @simple_mode
-          # Translators: Short description of the partitioning setup
-          manual_partitioning? ? _("Custom") : _("Default")
-        else
-          actions_presenter.to_html
-        end
+      def simple_proposal
+        # Translators: Short description of the partitioning setup
+        manual_partitioning? ? _("Custom") : _("Default")
       end
 
       def manual_partitioning?
