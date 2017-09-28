@@ -103,6 +103,27 @@ if opt_propose
   settings = Y2Storage::ProposalSettings.new
   settings.use_lvm = opt_lvm
   settings.encryption_password = opt_encryption
+
+  settings.extra_volumes << {
+    "lvm_ok" => true,
+    "mount_point" => "/data1",
+    "filesystem_type" => "ext4",
+    "encryption_password" => "foobar",
+    "min_size" => Y2Storage::DiskSize.GiB(10),
+    "max_size" => Y2Storage::DiskSize.GiB(50),
+    "weight" => 100.0,
+  }
+
+  settings.extra_volumes << {
+    "lvm_ok" => true,
+    "mount_point" => "/data2",
+    "filesystem_type" => "xfs",
+#    "encryption_password" => "foobar",
+    "min_size" => Y2Storage::DiskSize.GiB(40),
+    "max_size" => Y2Storage::DiskSize.GiB(200),
+    "weight" => 100.0,
+  }
+
   proposal = Y2Storage::GuidedProposal.new(settings: settings)
   proposal.propose
   devicegraph = proposal.devices
