@@ -64,6 +64,7 @@ describe Y2Partitioner::Sequences::AddMd do
       context "if the user goes forward through all the dialogs" do
         before do
           allow(Y2Partitioner::Dialogs::Md).to receive(:run).and_return :next
+          allow(Y2Partitioner::Dialogs::MdOptions).to receive(:run).and_return :next
           allow(Y2Partitioner::Dialogs::PartitionRole).to receive(:run).and_return :next
           allow(Y2Partitioner::Dialogs::FormatAndMount).to receive(:run).and_return :next
         end
@@ -86,6 +87,7 @@ describe Y2Partitioner::Sequences::AddMd do
       context "if the user aborts the process at some point" do
         before do
           allow(Y2Partitioner::Dialogs::Md).to receive(:run).and_return :next
+          allow(Y2Partitioner::Dialogs::MdOptions).to receive(:run).and_return :next
           allow(Y2Partitioner::Dialogs::PartitionRole).to receive(:run).and_return :next
           allow(Y2Partitioner::Dialogs::FormatAndMount).to receive(:run).and_return :abort
         end

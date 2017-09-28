@@ -3,6 +3,7 @@ require "ui/sequence"
 require "y2partitioner/device_graphs"
 require "y2partitioner/sequences/md_controller"
 require "y2partitioner/dialogs/md"
+require "y2partitioner/dialogs/md_options"
 require "y2partitioner/sequences/filesystem_controller"
 
 Yast.import "Wizard"
@@ -20,7 +21,8 @@ module Y2Partitioner
         sequence_hash = {
           "ws_start"       => "preconditions",
           "preconditions"  => { next: "devices" },
-          "devices"        => { next: "role" },
+          "devices"        => { next: "md_options" },
+          "md_options"     => { next: "role" },
           "role"           => { next: "format_options" },
           "format_options" => { next: "password" },
           "password"       => { next: "commit" },
@@ -57,10 +59,17 @@ module Y2Partitioner
         )
         :back
       end
+
       skip_stack :preconditions
 
       def devices
         result = Dialogs::Md.run(md_controller)
+        md_controller.apply_default_options if result == :next
+        result
+      end
+
+      def md_options
+        result = Dialogs::MdOptions.run(md_controller)
         if result == :next
           @fs_controller = FilesystemController.new(md_controller.md, md_controller.wizard_title)
         end

@@ -25,6 +25,8 @@ require "y2partitioner/device_graphs"
 require "y2partitioner/sequences/md_controller"
 
 describe Y2Partitioner::Sequences::MdController do
+  using Y2Storage::Refinements::SizeCasts
+
   before do
     devicegraph_stub("complex-lvm-encrypt.yml")
   end
@@ -298,6 +300,38 @@ describe Y2Partitioner::Sequences::MdController do
     end
   end
 
+  describe "#chunk_size" do
+    it "returns the chunk size of the Md device" do
+      size = Y2Storage::DiskSize.MiB(10)
+      controller.md.chunk_size = size
+      expect(controller.chunk_size).to eq size
+    end
+  end
+
+  describe "#chunk_size=" do
+    it "sets the chunk size of the Md device" do
+      size = Y2Storage::DiskSize.MiB(10)
+      controller.chunk_size = size
+      expect(controller.md.chunk_size).to eq size
+    end
+  end
+
+  describe "#md_parity" do
+    it "returns the parity algorithm of the Md device" do
+      parity = Y2Storage::MdParity::OFFSET_2
+      controller.md.md_parity = parity
+      expect(controller.md_parity).to eq parity
+    end
+  end
+
+  describe "#md_parity=" do
+    it "sets the parity algorithm of the Md device" do
+      parity = Y2Storage::MdParity::OFFSET_2
+      controller.md_parity = parity
+      expect(controller.md.md_parity).to eq parity
+    end
+  end
+
   describe "#wizard_title" do
     it "returns a string containing the Md device name" do
       expect(controller.wizard_title).to be_a String
@@ -307,6 +341,172 @@ describe Y2Partitioner::Sequences::MdController do
       expect(controller.wizard_title).to be_a String
       expect(controller.wizard_title).to_not include "/dev/md0"
       expect(controller.wizard_title).to include "/dev/md/foobar"
+    end
+  end
+
+  describe "#apply_default_options" do
+    before do
+      controller.md_level = md_level
+    end
+
+    context "when the Md device is a RAID0" do
+      let(:md_level) { Y2Storage::MdLevel::RAID0 }
+
+      it "sets chunk size to 32 KiB" do
+        controller.apply_default_options
+        expect(controller.md.chunk_size).to eq(32.KiB)
+      end
+
+      it "does not set the parity" do
+        controller.apply_default_options
+        expect(controller.md).to_not receive(:md_parity=)
+      end
+    end
+
+    context "when the Md device is a RAID1" do
+      let(:md_level) { Y2Storage::MdLevel::RAID1 }
+
+      it "sets chunk size to 4 KiB" do
+        controller.apply_default_options
+        expect(controller.md.chunk_size).to eq(4.KiB)
+      end
+
+      it "does not set the parity" do
+        controller.apply_default_options
+        expect(controller.md).to_not receive(:md_parity=)
+      end
+    end
+
+    context "when the Md device is a RAID5" do
+      let(:md_level) { Y2Storage::MdLevel::RAID5 }
+
+      it "sets chunk size to 128 KiB" do
+        controller.apply_default_options
+        expect(controller.md.chunk_size).to eq(128.KiB)
+      end
+
+      it "sets parity to default" do
+        controller.apply_default_options
+        expect(controller.md.md_parity).to eq(Y2Storage::MdParity::DEFAULT)
+      end
+    end
+
+    context "when the Md device is a RAID6" do
+      let(:md_level) { Y2Storage::MdLevel::RAID6 }
+
+      it "sets chunk size to 128 KiB" do
+        controller.apply_default_options
+        expect(controller.md.chunk_size).to eq(128.KiB)
+      end
+
+      it "sets parity to default" do
+        controller.apply_default_options
+        expect(controller.md.md_parity).to eq(Y2Storage::MdParity::DEFAULT)
+      end
+    end
+
+    context "when the Md device is a RAID10" do
+      let(:md_level) { Y2Storage::MdLevel::RAID10 }
+
+      it "sets chunk size to 32 KiB" do
+        controller.apply_default_options
+        expect(controller.md.chunk_size).to eq(32.KiB)
+      end
+
+      it "sets parity to default" do
+        controller.apply_default_options
+        expect(controller.md.md_parity).to eq(Y2Storage::MdParity::DEFAULT)
+      end
+    end
+
+    context "when the Md device has unknown level" do
+      let(:md_level) { Y2Storage::MdLevel::UNKNOWN }
+
+      it "sets chunk size to 4 KiB" do
+        controller.apply_default_options
+        expect(controller.md.chunk_size).to eq(4.KiB)
+      end
+
+      it "does not set the parity" do
+        controller.apply_default_options
+        expect(controller.md).to_not receive(:md_parity=)
+      end
+    end
+
+    context "when the Md device is a container" do
+      let(:md_level) { Y2Storage::MdLevel::CONTAINER }
+
+      it "sets chunk size to 4 KiB" do
+        controller.apply_default_options
+        expect(controller.md.chunk_size).to eq(4.KiB)
+      end
+
+      it "does not set the parity" do
+        controller.apply_default_options
+        expect(controller.md).to_not receive(:md_parity=)
+      end
+    end
+  end
+
+  describe "#parity_supported?" do
+    before do
+      controller.md_level = md_level
+    end
+
+    context "when the Md device is a RAID0" do
+      let(:md_level) { Y2Storage::MdLevel::RAID0 }
+
+      it "returns false" do
+        expect(controller.parity_supported?).to be(false)
+      end
+    end
+
+    context "when the Md device is a RAID1" do
+      let(:md_level) { Y2Storage::MdLevel::RAID1 }
+
+      it "returns false" do
+        expect(controller.parity_supported?).to be(false)
+      end
+    end
+
+    context "when the Md device is a RAID5" do
+      let(:md_level) { Y2Storage::MdLevel::RAID5 }
+
+      it "returns true" do
+        expect(controller.parity_supported?).to be(true)
+      end
+    end
+
+    context "when the Md device is a RAID6" do
+      let(:md_level) { Y2Storage::MdLevel::RAID6 }
+
+      it "returns true" do
+        expect(controller.parity_supported?).to be(true)
+      end
+    end
+
+    context "when the Md device is a RAID10" do
+      let(:md_level) { Y2Storage::MdLevel::RAID10 }
+
+      it "returns true" do
+        expect(controller.parity_supported?).to be(true)
+      end
+    end
+
+    context "when the Md device has unknown level" do
+      let(:md_level) { Y2Storage::MdLevel::UNKNOWN }
+
+      it "returns false" do
+        expect(controller.parity_supported?).to be(false)
+      end
+    end
+
+    context "when the Md device a container" do
+      let(:md_level) { Y2Storage::MdLevel::CONTAINER }
+
+      it "returns false" do
+        expect(controller.parity_supported?).to be(false)
+      end
     end
   end
 end

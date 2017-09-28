@@ -32,7 +32,8 @@ module Y2Partitioner
       include Yast::I18n
       extend Forwardable
 
-      def_delegators :md, :md_level, :md_level=, :md_name
+      def_delegators :md, :md_level, :md_level=, :md_name,
+        :chunk_size, :chunk_size=, :md_parity, :md_parity=
 
       # @return [Y2Storage::Md] device being created
       attr_reader :md
@@ -125,6 +126,25 @@ module Y2Partitioner
         _("Add RAID %s") % md.name
       end
 
+      # Sets default values for the chunk size and parity algorithm of the Md device
+      #
+      # @note Md level must be previously set.
+      # @see #default_chunk_size
+      # @see #default_md_parity
+      def apply_default_options
+        md.chunk_size = default_chunk_size
+        md.md_parity = default_md_parity if parity_supported?
+      end
+
+      # Whether is possible to set the parity configuration for the current Md device
+      #
+      # @note Parity algorithm only makes sense for Raid5, Raid6 and Raid10.
+      #
+      # @return [Boolean]
+      def parity_supported?
+        [:raid5, :raid6, :raid10].include?(md.md_level.to_sym)
+      end
+
     private
 
       def working_graph
@@ -139,6 +159,25 @@ module Y2Partitioner
 
         mount = partition.filesystem.mountpoint
         mount.nil? || mount.empty?
+      end
+
+      def default_chunk_size
+        case md.md_level.to_sym
+        when :raid0
+          Y2Storage::DiskSize.KiB(32)
+        when :raid1
+          Y2Storage::DiskSize.KiB(4)
+        when :raid5, :raid6
+          Y2Storage::DiskSize.KiB(128)
+        when :raid10
+          Y2Storage::DiskSize.KiB(32)
+        else
+          Y2Storage::DiskSize.KiB(4)
+        end
+      end
+
+      def default_md_parity
+        Y2Storage::MdParity.find(:default)
       end
     end
   end
