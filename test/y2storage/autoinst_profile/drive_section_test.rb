@@ -46,6 +46,22 @@ describe Y2Storage::AutoinstProfile::DriveSection do
         end
       end
     end
+
+    context "when 'use' element is not specified" do
+      let(:hash) { {} }
+
+      it "uses 'all'" do
+        expect(described_class.new_from_hashes(hash).use).to eq("all")
+      end
+    end
+
+    context "when 'use' element is specified as a list of numbers" do
+      let(:hash) { { "use" => " 1,3, 5 " } }
+
+      it "sets 'use' as an array of numbers" do
+        expect(described_class.new_from_hashes(hash).use).to eq([1, 3, 5])
+      end
+    end
   end
 
   describe ".new_from_storage" do
@@ -241,7 +257,7 @@ describe Y2Storage::AutoinstProfile::DriveSection do
       context "and the Windows partition is not marked as bootable nor mounted at /boot" do
         it "initializes #use to the list of exported partition numbers" do
           section = described_class.new_from_storage(dev)
-          expect(section.use).to eq "2,3"
+          expect(section.use).to eq [2, 3]
         end
 
         context "and the Windows partition(s) are the first partitions in the disk" do
@@ -344,6 +360,16 @@ describe Y2Storage::AutoinstProfile::DriveSection do
     it "does not export empty strings" do
       section.device = ""
       expect(section.to_hashes.keys).to_not include "device"
+    end
+
+    context "when use is a list of partition numbers" do
+      before do
+        section.use = [1, 2, 3]
+      end
+
+      it "exports 'use' as a string" do
+        expect(section.to_hashes).to include("use" => "1,2,3")
+      end
     end
   end
 
