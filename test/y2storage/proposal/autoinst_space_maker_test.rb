@@ -53,9 +53,13 @@ describe Y2Storage::Proposal::AutoinstSpaceMaker do
     end
 
     context "when 'use' key is set to 'linux'" do
+      let(:partitioning_array) { [{ "device" => "/dev/sda", "use" => "linux" }] }
+
       it "removes only Linux partitions" do
         devicegraph = subject.cleaned_devicegraph(fake_devicegraph, drives_map)
-        expect(devicegraph.partitions).to be_empty
+        expect(devicegraph.partitions).to contain_exactly(
+          an_object_having_attributes(name: "/dev/sda1")
+        )
       end
     end
 
