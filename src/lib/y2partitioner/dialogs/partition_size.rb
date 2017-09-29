@@ -221,7 +221,7 @@ module Y2Partitioner
           @regions = regions
           largest_region = @regions.max_by(&:size)
           @max_size = largest_region.size
-          @min_size = Y2Storage::DiskSize.new(1)
+          @min_size = largest_region.block_size
         end
 
         # Forward to controller
@@ -270,28 +270,26 @@ module Y2Partitioner
         # @macro seeAbstractWidget
         def validate
           v = value
-          if v.nil? || v > max_size
-            min_s = min_size.human_ceil
-            max_s = max_size.human_floor
-            Yast::Popup.Error(
-              Yast::Builtins.sformat(
-                # error popup, %1 and %2 are replaced by sizes
-                _("The size entered is invalid. Enter a size between %1 and %2."),
-                min_s, max_s
-              )
+          return true unless v.nil? || v < min_size || v > max_size
+
+          min_s = min_size.human_ceil
+          max_s = max_size.human_floor
+          Yast::Popup.Error(
+            Yast::Builtins.sformat(
+              # error popup, %1 and %2 are replaced by sizes
+              _("The size entered is invalid. Enter a size between %1 and %2."),
+              min_s, max_s
             )
-            # TODO: Let CWM set the focus
-            Yast::UI.SetFocus(Id(widget_id))
-            false
-          else
-            true
-          end
+          )
+          # TODO: Let CWM set the focus
+          Yast::UI.SetFocus(Id(widget_id))
+          false
         end
 
         # @return [Y2Storage::DiskSize,nil]
         def value
           Y2Storage::DiskSize.from_human_string(super)
-        rescue ArgumentError
+        rescue TypeError
           nil
         end
 

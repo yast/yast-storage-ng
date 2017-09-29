@@ -5,6 +5,8 @@ require "y2partitioner/dialogs/partition_size"
 require "y2partitioner/sequences/add_partition"
 
 describe "Partition Size widgets" do
+  using Y2Storage::Refinements::SizeCasts
+
   let(:controller) do
     pt = Y2Partitioner::Sequences::PartitionController.new("/dev/sda")
     pt.region = region
@@ -50,14 +52,57 @@ describe "Partition Size widgets" do
 
     describe "#validate" do
       before do
-        allow(subject).to receive(:value)
-          .and_return Y2Storage::DiskSize.new(2_000_000)
+        allow(subject).to receive(:value).and_return size
       end
 
-      it "pops up an error when the size is too big" do
-        expect(Yast::Popup).to receive(:Error)
-        expect(Yast::UI).to receive(:SetFocus)
-        expect(subject.validate).to eq false
+      context "when the entered size is too big" do
+        let(:size) { 2.TiB }
+
+        it "returns false" do
+          expect(subject.validate).to eq false
+        end
+
+        it "pops up an error" do
+          expect(Yast::Popup).to receive(:Error)
+          expect(Yast::UI).to receive(:SetFocus)
+          subject.validate
+        end
+      end
+
+      context "when the entered size is too small" do
+        let(:size) { 0.1.KiB }
+
+        it "returns false" do
+          expect(subject.validate).to eq false
+        end
+
+        it "pops up an error" do
+          expect(Yast::Popup).to receive(:Error)
+          expect(Yast::UI).to receive(:SetFocus)
+          subject.validate
+        end
+      end
+
+      context "when the entered value is not a correct size" do
+        let(:size) { nil }
+
+        it "returns false" do
+          expect(subject.validate).to eq false
+        end
+
+        it "pops up an error" do
+          expect(Yast::Popup).to receive(:Error)
+          expect(Yast::UI).to receive(:SetFocus)
+          subject.validate
+        end
+      end
+
+      context "when the entered value is a correct size" do
+        let(:size) { 1.MiB }
+
+        it "returns true" do
+          expect(subject.validate).to eq true
+        end
       end
     end
   end
