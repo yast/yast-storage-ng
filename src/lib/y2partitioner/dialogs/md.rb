@@ -191,16 +191,14 @@ module Y2Partitioner
 
         # @see Widgets::DevicesSelection#select
         def select(sids)
-          sids.each do |sid|
-            device = unselected.find { |dev| dev.sid == sid }
+          find_devices(sids, unselected).each do |device|
             controller.add_device(device)
           end
         end
 
         # @see Widgets::DevicesSelection#select
         def unselect(sids)
-          sids.each do |sid|
-            device = selected.find { |dev| dev.sid == sid }
+          find_devices(sids, selected).each do |device|
             controller.remove_device(device)
           end
         end
@@ -208,6 +206,12 @@ module Y2Partitioner
       private
 
         attr_reader :controller
+
+        def find_devices(sids, list)
+          sids.map do |sid|
+            list.find { |dev| dev.sid == sid }
+          end.compact
+        end
       end
     end
   end
