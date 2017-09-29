@@ -97,6 +97,15 @@ module Y2Storage
     #   @param value [Boolean]
     storage_forward :in_etc_mdadm=
 
+    # @!method minimal_number_of_devices
+    #   Minimal number of devices required by the RAID.
+    #
+    #   For RAIDs of level CONTAINER it returns 0 (those RAIDs cannot be created
+    #   or modified anyway).
+    #
+    #   @return [Integer]
+    storage_forward :minimal_number_of_devices
+
     # @!method self.all(devicegraph)
     #   @param devicegraph [Devicegraph]
     #   @return [Array<Md>] all the mds in the given devicegraph

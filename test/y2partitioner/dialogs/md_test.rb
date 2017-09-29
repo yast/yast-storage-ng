@@ -309,5 +309,32 @@ describe Y2Partitioner::Dialogs::Md do
         end
       end
     end
+
+    describe "#validate" do
+      context "if there are enough devices in the MD array" do
+        it "shows no pop-up" do
+          expect(Yast::Popup).to_not receive(:Error)
+          widget.validate
+        end
+
+        it "returns true" do
+          expect(widget.validate).to eq true
+        end
+      end
+
+      context "if there are not enough devices in the MD array" do
+        before { controller.remove_device(dev("/dev/sda3")) }
+
+        it "shows an error pop-up" do
+          expect(Yast::Popup).to receive(:Error)
+          widget.validate
+        end
+
+        it "returns false" do
+          allow(Yast::Popup).to receive(:Error)
+          expect(widget.validate).to eq false
+        end
+      end
+    end
   end
 end

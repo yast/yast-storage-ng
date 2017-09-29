@@ -300,6 +300,13 @@ describe Y2Partitioner::Sequences::MdController do
     end
   end
 
+  describe "#min_devices" do
+    it "forwards the call to #minimal_number_of_devices on the Md device" do
+      expect(controller.md).to receive(:minimal_number_of_devices).and_return 12
+      expect(controller.min_devices).to eq 12
+    end
+  end
+
   describe "#chunk_size" do
     it "returns the chunk size of the Md device" do
       size = Y2Storage::DiskSize.MiB(10)

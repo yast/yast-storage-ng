@@ -13,6 +13,8 @@ require "y2partitioner/widgets/devices_selection"
 # @!macro [new] seeDialog
 #   @see http://www.rubydoc.info/github/yast/yast-yast2/CWM%2FDialog:${0}
 
+Yast.import "Popup"
+
 module Y2Partitioner
   module Dialogs
     # Form to set the type, name and devices of an MD RAID to be created
@@ -201,6 +203,26 @@ module Y2Partitioner
           find_devices(sids, selected).each do |device|
             controller.remove_device(device)
           end
+        end
+
+        # Validates the number of devices.
+        #
+        # In fact, the devices are added and removed immediately as soon as
+        # the user interacts with the widget, so this validation is only used to
+        # prevent the user from reaching the next step in the wizard if the MD
+        # array is not valid, not to prevent the information to be stored in
+        # the Md object.
+        #
+        # @macro seeAbstractWidget
+        def validate
+          return true if controller.devices_in_md.size >= controller.min_devices
+
+          error_args = { raid_level: controller.md_level.to_human_string, min: controller.min_devices }
+          Yast::Popup.Error(
+            # TRANSLATORS: raid_level is a RAID level (e.g. RAID10); min is a number
+            _("For %{raid_level}, select at least %{min} devices.") % error_args
+          )
+          false
         end
 
       private

@@ -145,6 +145,15 @@ module Y2Partitioner
         [:raid5, :raid6, :raid10].include?(md.md_level.to_sym)
       end
 
+      # Minimal number of devices required for the Md object.
+      #
+      # @see Y2Storage::Md#minimal_number_of_devices
+      #
+      # @return [Integer]
+      def min_devices
+        md.minimal_number_of_devices
+      end
+
     private
 
       def working_graph
