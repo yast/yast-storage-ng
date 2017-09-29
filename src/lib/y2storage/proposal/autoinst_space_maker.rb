@@ -72,16 +72,27 @@ module Y2Storage
 
         # TODO: resizing of partitions
 
-        case drive_spec.use
+        delete_by_use(devicegraph, disk, drive_spec.use)
+      end
+
+      # Deletes unwanted partition according to the "use" element
+      #
+      # @param devicegraph [Devicegraph]
+      # @param disk        [Disk]
+      # @param use         [String,Array<Integer>] Use value ("all", "linux", "free"
+      #   or a list of partition numbers)
+      def delete_by_use(devicegraph, disk, use)
+        return if use == "free"
+        case use
         when "all"
           disk.partition_table.remove_descendants if disk.partition_table
         when "linux"
           delete_linux_partitions(devicegraph, disk)
         when Array
-          delete_partitions_by_number(devicegraph, disk, drive_spec.use)
+          delete_partitions_by_number(devicegraph, disk, use)
         else
           # TODO: better error handling
-          log.warn "Unknown value '#{drive_spec.use}' for 'use' element in driver specification"
+          log.warn "Unknown value '#{use}' for 'use' element in driver specification"
         end
       end
 
