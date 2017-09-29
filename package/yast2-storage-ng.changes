@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Fri Sep 29 10:54:54 UTC 2017 - jlopez@suse.com
+
+- Fix validation when trying to create a partition with custom
+  size (bsc#1060864).
+- 3.3.21
+
+-------------------------------------------------------------------
 Tue Sep 26 16:47:44 CEST 2017 - shundhammer@suse.de
 
 - Implemented simple proposal for CASP (bsc#1058736)
