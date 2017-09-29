@@ -14,10 +14,12 @@ module Y2Partitioner
     # BlkDevice edition
     class EditBlkDevice < UI::Sequence
       include Yast::Logger
+
       # @param blk_device [Y2Storage::BlkDevice]
       def initialize(blk_device)
         textdomain "storage"
-        @fs_controller = FilesystemController.new(blk_device)
+        @blk_device = blk_device
+        @fs_controller = FilesystemController.new(blk_device, title)
       end
 
       def run
@@ -74,10 +76,11 @@ module Y2Partitioner
 
     private
 
-      attr_reader :fs_controller
+      attr_reader :fs_controller, :blk_device
 
-      def blk_device
-        fs_controller.blk_device
+      def title
+        # TRANSLATORS: dialog title. %s is a device name like /dev/sda1
+        _("Edit Partition %s") % blk_device.name
       end
     end
   end

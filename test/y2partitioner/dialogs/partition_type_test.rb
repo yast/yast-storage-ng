@@ -4,7 +4,9 @@ require "cwm/rspec"
 require "y2partitioner/dialogs/partition_type"
 
 describe Y2Partitioner::Dialogs::PartitionType do
-  let(:controller) { double("PartitionController", unused_slots: slots, disk_name: "/dev/sda") }
+  let(:controller) do
+    double("PartitionController", unused_slots: slots, disk_name: "/dev/sda", wizard_title: "")
+  end
   let(:slots) { [] }
 
   subject { described_class.new(controller) }

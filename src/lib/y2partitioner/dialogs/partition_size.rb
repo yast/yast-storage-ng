@@ -26,8 +26,7 @@ module Y2Partitioner
 
       # @macro seeDialog
       def title
-        # dialog title
-        Yast::Builtins.sformat(_("Add Partition on %1"), @disk_name)
+        @controller.wizard_title
       end
 
       # @macro seeDialog

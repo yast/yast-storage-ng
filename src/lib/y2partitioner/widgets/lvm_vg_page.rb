@@ -2,7 +2,7 @@ require "cwm/widget"
 require "cwm/tree_pager"
 require "cwm/tabs"
 require "y2partitioner/icons"
-require "y2partitioner/widgets/blk_devices_table"
+require "y2partitioner/widgets/configurable_blk_devices_table"
 require "y2partitioner/widgets/lvm_devices_table"
 require "y2partitioner/widgets/lvm_vg_bar_graph"
 require "y2partitioner/widgets/lvm_vg_description"
@@ -141,10 +141,10 @@ module Y2Partitioner
 
       # Returns a table with all physical volumes of a volume group
       #
-      # @return [BlkDevicesTable]
+      # @return [ConfigurableBlkDevicesTable]
       def table
         return @table unless @table.nil?
-        @table = BlkDevicesTable.new(devices, @pager)
+        @table = ConfigurableBlkDevicesTable.new(devices, @pager)
         @table.show_columns(:device, :size, :format, :encrypted, :type)
         @table
       end

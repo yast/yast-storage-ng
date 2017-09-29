@@ -35,12 +35,72 @@ describe Y2Storage::Md do
   subject(:md) { Y2Storage::Md.find_by_name(fake_devicegraph, md_name) }
 
   describe "#devices" do
+    let(:scenario) { "subvolumes-and-empty-md.xml" }
+    let(:md_name) { "/dev/md/strip0" }
 
-    it "returns the array of BlkDevices use" do
-      # TODO: check the complete return value
-      expect(md.devices.size).to eq 2
+    it "returns the array of BlkDevices used" do
+      expect(md.devices).to be_an Array
+
+      sda4 = Y2Storage::Partition.find_by_name(fake_devicegraph, "/dev/sda4")
+      sda5_enc = Y2Storage::Partition.find_by_name(fake_devicegraph, "/dev/sda5").encryption
+      expect(md.devices).to contain_exactly(sda4, sda5_enc)
+    end
+  end
+
+  describe "#plain_devices" do
+    let(:scenario) { "subvolumes-and-empty-md.xml" }
+    let(:md_name) { "/dev/md/strip0" }
+
+    it "returns the non-encrypted devices for the used BlkDevices" do
+      expect(md.plain_devices).to be_an Array
+
+      sda4 = Y2Storage::Partition.find_by_name(fake_devicegraph, "/dev/sda4")
+      sda5 = Y2Storage::Partition.find_by_name(fake_devicegraph, "/dev/sda5")
+      expect(md.plain_devices).to contain_exactly(sda4, sda5)
+    end
+  end
+
+  describe "#md_name" do
+    context "for a numeric RAID" do
+      let(:scenario) { "md2-devicegraph.xml" }
+      let(:md_name) { "/dev/md0" }
+
+      it "returns nil" do
+        expect(md.md_name).to be_nil
+      end
     end
 
+    context "for a named RAID" do
+      let(:scenario) { "subvolumes-and-empty-md.xml" }
+      let(:md_name) { "/dev/md/strip0" }
+
+      it "returns the array name" do
+        expect(md.md_name).to eq "strip0"
+      end
+    end
+  end
+
+  describe "#md_name=" do
+    context "receiving a non-empty string" do
+      it "sets the array name" do
+        md.md_name = "foobar"
+        expect(md.md_name).to eq "foobar"
+        expect(md.name).to eq "/dev/md/foobar"
+        expect(md.numeric?).to eq false
+      end
+    end
+
+    context "receiving an empty string" do
+      it "raises an error" do
+        expect { md.md_name = "" }.to raise_error ArgumentError
+      end
+    end
+
+    context "receiving nil" do
+      it "raises an error" do
+        expect { md.md_name = nil }.to raise_error ArgumentError
+      end
+    end
   end
 
   describe "#numeric?" do
@@ -149,7 +209,7 @@ describe Y2Storage::Md do
 
   end
 
-  describe "#find_free_numeric_name" do
+  describe ".find_free_numeric_name" do
 
     it "returns the next free number MD RAID name" do
       expect(Y2Storage::Md.find_free_numeric_name(fake_devicegraph)).to eq "/dev/md3"

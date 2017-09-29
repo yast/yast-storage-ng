@@ -7,7 +7,9 @@ describe Y2Partitioner::Widgets::BtrfsEditButton do
   subject { described_class.new(table) }
 
   let(:table) do
-    instance_double(Y2Partitioner::Widgets::BlkDevicesTable, selected_device: selected_device)
+    instance_double(
+      Y2Partitioner::Widgets::ConfigurableBlkDevicesTable, selected_device: selected_device
+    )
   end
 
   let(:selected_device) { nil }

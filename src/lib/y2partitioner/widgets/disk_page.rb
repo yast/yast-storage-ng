@@ -5,7 +5,7 @@ require "y2partitioner/device_graphs"
 require "y2partitioner/sequences/add_partition"
 require "y2partitioner/sequences/edit_blk_device"
 require "y2partitioner/widgets/delete_disk_partition_button"
-require "y2partitioner/widgets/blk_devices_table"
+require "y2partitioner/widgets/configurable_blk_devices_table"
 require "y2partitioner/widgets/disk_bar_graph"
 require "y2partitioner/widgets/disk_description"
 
@@ -99,7 +99,7 @@ module Y2Partitioner
 
       # @macro seeCustomWidget
       def contents
-        table = BlkDevicesTable.new(devices, @pager)
+        table = ConfigurableBlkDevicesTable.new(devices, @pager)
         @contents ||= VBox(
           DiskBarGraph.new(disk),
           table,
@@ -125,7 +125,7 @@ module Y2Partitioner
         # Constructor
         #
         # @param disk [Y2Storage::Disk]
-        # @param table [BlkDevicesTable]
+        # @param table [ConfigurableBlkDevicesTable]
         def initialize(disk, table)
           textdomain "storage"
 
@@ -148,7 +148,7 @@ module Y2Partitioner
         # Constructor
         #
         # @param disk [Y2Storage::Disk]
-        # @param table [BlkDevicesTable]
+        # @param table [ConfigurableBlkDevicesTable]
         def initialize(disk, table)
           textdomain "storage"
 

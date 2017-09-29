@@ -1,6 +1,7 @@
 require "cwm/tree_pager"
 require "y2partitioner/icons"
 require "y2partitioner/device_graphs"
+require "y2partitioner/sequences/add_md"
 require "y2partitioner/widgets/md_raids_table"
 
 module Y2Partitioner
@@ -36,7 +37,8 @@ module Y2Partitioner
               Heading(_("RAID"))
             )
           ),
-          MdRaidsTable.new(devices, @pager)
+          MdRaidsTable.new(devices, @pager),
+          HBox(AddButton.new)
         )
       end
 
@@ -44,6 +46,23 @@ module Y2Partitioner
 
       def devices
         Y2Storage::Md.all(DeviceGraphs.instance.current)
+      end
+
+      # Button to fire the wizard to add a new MD array ({Sequences::AddMd})
+      class AddButton < CWM::PushButton
+        # Constructor
+        def initialize
+          textdomain "storage"
+        end
+
+        def label
+          _("Add RAID...")
+        end
+
+        def handle
+          res = Sequences::AddMd.new.run
+          res == :finish ? :redraw : nil
+        end
       end
     end
   end

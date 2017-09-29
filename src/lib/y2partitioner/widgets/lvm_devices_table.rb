@@ -1,11 +1,11 @@
 require "yast"
-require "y2partitioner/widgets/blk_devices_table"
+require "y2partitioner/widgets/configurable_blk_devices_table"
 require "y2partitioner/widgets/lvm_lv_attributes"
 
 module Y2Partitioner
   module Widgets
     # Table widget to represent a given list of LVM devices.
-    class LvmDevicesTable < BlkDevicesTable
+    class LvmDevicesTable < ConfigurableBlkDevicesTable
       include LvmLvAttributes
 
       # Constructor

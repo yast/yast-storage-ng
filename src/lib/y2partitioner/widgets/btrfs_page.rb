@@ -1,7 +1,7 @@
 require "yast"
 require "y2partitioner/icons"
 require "y2partitioner/device_graphs"
-require "y2partitioner/widgets/blk_devices_table"
+require "y2partitioner/widgets/configurable_blk_devices_table"
 require "y2partitioner/widgets/btrfs_edit_button"
 
 module Y2Partitioner
@@ -41,10 +41,10 @@ module Y2Partitioner
 
       # A Btrfs table is a table of devices formatted as BtrFS
       #
-      # @return [BlkDevicesTable]
+      # @return [ConfigurableBlkDevicesTable]
       def table
         return @table unless @table.nil?
-        @table = BlkDevicesTable.new(devices, @pager)
+        @table = ConfigurableBlkDevicesTable.new(devices, @pager)
         @table.remove_columns(:start, :end)
         @table
       end

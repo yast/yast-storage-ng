@@ -1,37 +1,28 @@
 require "yast"
 require "ui/sequence"
 require "y2partitioner/device_graphs"
-require "y2partitioner/sequences/partition_controller"
+require "y2partitioner/sequences/md_controller"
+require "y2partitioner/dialogs/md"
+require "y2partitioner/dialogs/md_options"
 require "y2partitioner/sequences/filesystem_controller"
-require "y2partitioner/dialogs/partition_role"
-require "y2partitioner/dialogs/partition_size"
-require "y2partitioner/dialogs/partition_type"
-require "y2partitioner/dialogs/encrypt_password"
 
 Yast.import "Wizard"
 
 module Y2Partitioner
   module Sequences
-    # formerly EpCreatePartition, DlgCreatePartition
-    class AddPartition < UI::Sequence
+    # formerly EpCreateRaid
+    class AddMd < UI::Sequence
       include Yast::Logger
-      # @param disk_name [String]
-      def initialize(disk_name)
+      def initialize
         textdomain "storage"
-
-        @part_controller = PartitionController.new(disk_name)
-      end
-
-      def disk_name
-        part_controller.disk_name
       end
 
       def run
         sequence_hash = {
           "ws_start"       => "preconditions",
-          "preconditions"  => { next: "type" },
-          "type"           => { next: "size" },
-          "size"           => { next: "role", finish: :finish },
+          "preconditions"  => { next: "devices" },
+          "devices"        => { next: "md_options" },
+          "md_options"     => { next: "role" },
           "role"           => { next: "format_options" },
           "format_options" => { next: "password" },
           "password"       => { next: "commit" },
@@ -40,6 +31,9 @@ module Y2Partitioner
 
         sym = nil
         DeviceGraphs.instance.transaction do
+          # The controller object must be created within the transaction
+          @md_controller = MdController.new
+
           sym = wizard_next_back do
             super(sequence: sequence_hash)
           end
@@ -58,28 +52,26 @@ module Y2Partitioner
       end
 
       def preconditions
-        return :next if part_controller.new_partition_possible?
+        return :next unless md_controller.available_devices.size < 2
 
         Yast::Popup.Error(
-          # TRANSLATORS: %s is a device name (e.g. "/dev/sda")
-          _("It is not possible to create a partition on %s.") % disk_name
+          _("There are not enough suitable unused devices to create a RAID.")
         )
         :back
       end
+
       skip_stack :preconditions
 
-      def type
-        Dialogs::PartitionType.run(part_controller)
+      def devices
+        result = Dialogs::Md.run(md_controller)
+        md_controller.apply_default_options if result == :next
+        result
       end
 
-      def size
-        part_controller.delete_partition
-        result = Dialogs::PartitionSize.run(part_controller)
-        part_controller.create_partition if [:next, :finish].include?(result)
+      def md_options
+        result = Dialogs::MdOptions.run(md_controller)
         if result == :next
-          part = part_controller.partition
-          title = part_controller.wizard_title
-          @fs_controller = FilesystemController.new(part, title)
+          @fs_controller = FilesystemController.new(md_controller.md, md_controller.wizard_title)
         end
         result
       end
@@ -108,7 +100,7 @@ module Y2Partitioner
 
     private
 
-      attr_reader :part_controller, :fs_controller
+      attr_reader :md_controller, :fs_controller
     end
   end
 end

@@ -52,6 +52,7 @@
         size:         810 GiB
         name:         /dev/sdb4
         type:         extended
+        id:           extended
 
     - partition:
         size:         300 GiB

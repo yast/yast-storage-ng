@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Fri Sep 29 15:06:42 UTC 2017 - ancor@suse.com
+
+- Partitioner: option to create an MD RAID (part of fate#318196).
+- 3.3.22
+
+-------------------------------------------------------------------
 Fri Sep 29 10:54:54 UTC 2017 - jlopez@suse.com
 
 - Fix validation when trying to create a partition with custom

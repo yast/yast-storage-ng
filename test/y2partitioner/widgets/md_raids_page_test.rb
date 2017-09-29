@@ -21,3 +21,33 @@ describe Y2Partitioner::Widgets::MdRaidsPage do
     end
   end
 end
+
+describe Y2Partitioner::Widgets::MdRaidsPage::AddButton do
+  subject(:button) { described_class.new }
+
+  let(:sequence) { double("AddMd") }
+
+  before do
+    allow(Y2Partitioner::Sequences::AddMd).to receive(:new).and_return sequence
+    allow(sequence).to receive(:run)
+  end
+
+  include_examples "CWM::PushButton"
+
+  describe "#handle" do
+    it "starts an AddMd sequence" do
+      expect(sequence).to receive(:run)
+      button.handle
+    end
+
+    it "returns :redraw if the sequence returns :finish" do
+      allow(sequence).to receive(:run).and_return :finish
+      expect(button.handle).to eq :redraw
+    end
+
+    it "returns nil if the sequence does not return :finish" do
+      allow(sequence).to receive(:run).and_return :back
+      expect(button.handle).to be_nil
+    end
+  end
+end

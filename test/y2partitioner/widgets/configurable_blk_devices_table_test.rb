@@ -1,9 +1,9 @@
 require_relative "../test_helper"
 
 require "cwm/rspec"
-require "y2partitioner/widgets/blk_devices_table"
+require "y2partitioner/widgets/configurable_blk_devices_table"
 
-describe Y2Partitioner::Widgets::BlkDevicesTable do
+describe Y2Partitioner::Widgets::ConfigurableBlkDevicesTable do
   before do
     devicegraph_stub("mixed_disks_btrfs.yml")
   end
