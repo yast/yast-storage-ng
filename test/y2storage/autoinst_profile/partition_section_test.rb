@@ -283,6 +283,7 @@ describe Y2Storage::AutoinstProfile::PartitionSection do
         )
       end
     end
+
     context "when raid_options are not present" do
       it "initializes raid_options to nil" do
         section = described_class.new_from_hashes(hash)
@@ -297,6 +298,15 @@ describe Y2Storage::AutoinstProfile::PartitionSection do
         section = described_class.new_from_hashes(hash)
         expect(section.raid_options).to be_a(Y2Storage::AutoinstProfile::RaidOptionsSection)
         expect(section.raid_options.chunk_size).to eq("1M")
+      end
+    end
+
+    context "when fstopt is present" do
+      let(:hash) { { "fstopt" => "ro, acl" } }
+
+      it "initializes fstab_options" do
+        section = described_class.new_from_hashes(hash)
+        expect(section.fstab_options).to eq(["ro", "acl"])
       end
     end
   end
@@ -326,7 +336,7 @@ describe Y2Storage::AutoinstProfile::PartitionSection do
 
     it "exports fstab_options as a string if they are present" do
       section.fstab_options = ["ro", "acl"]
-      expect(section.to_hashes["fstab_options"]).to eq("ro,acl")
+      expect(section.to_hashes["fstopt"]).to eq("ro,acl")
     end
   end
 

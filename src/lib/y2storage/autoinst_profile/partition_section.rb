@@ -70,7 +70,7 @@ module Y2Storage
           { name: :raid_name },
           { name: :raid_options },
           { name: :mkfs_options },
-          { name: :fstab_options }
+          { name: :fstab_options, xml_name: :fstopt }
         ]
       end
 
@@ -137,6 +137,9 @@ module Y2Storage
 
       # @!attribute mkfs_options
       #   @return [String] mkfs options
+      #
+      # @!attribute fstab_options
+      #   @return [Array<String>] Options to be used in the fstab for the filesystem
 
       def initialize
         @subvolumes = []
@@ -146,7 +149,7 @@ module Y2Storage
         super
         @raid_options = RaidOptionsSection.new_from_hashes(hash["raid_options"]) if hash["raid_options"]
         @subvolumes = SubvolSpecification.list_from_control_xml(hash["subvolumes"]) if hash["subvolumes"]
-        @fstab_options = hash["fstab_options"].split(",").map(&:strip) if hash["fstab_options"]
+        @fstab_options = hash["fstopt"].split(",").map(&:strip) if hash["fstopt"]
       end
 
       # Clones a device into an AutoYaST profile section by creating an instance
@@ -241,7 +244,7 @@ module Y2Storage
 
       def to_hashes
         hash = super
-        hash["fstab_options"] = fstab_options.join(",") if fstab_options && !fstab_options.empty?
+        hash["fstopt"] = fstab_options.join(",") if fstab_options && !fstab_options.empty?
         hash
       end
 

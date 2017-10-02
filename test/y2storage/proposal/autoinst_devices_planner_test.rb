@@ -44,10 +44,7 @@ describe Y2Storage::Proposal::AutoinstDevicesPlanner do
   end
 
   let(:root_spec) do
-    {
-      "mount" => "/", "filesystem" => "ext4", "fstab_options" => "ro,acl",
-      "mkfs_options" => "-b 2048"
-    }
+    { "mount" => "/", "filesystem" => "ext4", "fstopt" => "ro,acl", "mkfs_options" => "-b 2048" }
   end
 
   let(:lvm_group) { "vg0" }
