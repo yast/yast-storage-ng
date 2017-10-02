@@ -27,7 +27,14 @@ require "y2storage/planned/partition"
 
 describe Y2Storage::Proposal::AutoinstDevicesCreator do
   let(:filesystem_type) { Y2Storage::Filesystems::Type::EXT4 }
-  let(:new_part) { Y2Storage::Planned::Partition.new("/home", Y2Storage::Filesystems::Type::EXT4) }
+  let(:mount_by_type) { Y2Storage::Filesystems::MountByType::PATH }
+  let(:new_part) do
+    Y2Storage::Planned::Partition.new("/home", Y2Storage::Filesystems::Type::EXT4).tap do |part|
+      part.fstab_options = ["ro", "acl"]
+      part.mkfs_options = "-b 2048"
+      part.mount_by = mount_by_type
+    end
+  end
   let(:scenario) { "windows-linux-free-pc" }
   let(:reusable_part) do
     Y2Storage::Planned::Partition.new("/", filesystem_type).tap do |part|
@@ -49,6 +56,15 @@ describe Y2Storage::Proposal::AutoinstDevicesCreator do
         filesystem_type:       filesystem_type,
         filesystem_mountpoint: "/home"
       )
+    end
+
+    it "sets filesystem options" do
+      devicegraph = creator.populated_devicegraph([new_part, reusable_part], "/dev/sda")
+      home = devicegraph.partitions.last
+      fs = home.filesystem
+      expect(fs.mkfs_options).to eq("-b 2048")
+      expect(fs.fstab_options).to eq(["ro", "acl"])
+      expect(fs.mount_by).to eq(mount_by_type)
     end
 
     it "reuses partitions" do

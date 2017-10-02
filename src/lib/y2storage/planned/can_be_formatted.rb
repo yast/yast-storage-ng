@@ -50,6 +50,9 @@ module Y2Storage
       #   #reuse? is true.
       attr_accessor :reformat
 
+      # @return [String] Options to be passed to the mkfs tool
+      attr_accessor :mkfs_options
+
       # Initializations of the mixin, to be called from the class constructor.
       def initialize_can_be_formatted
         @subvolumes = []
@@ -78,6 +81,9 @@ module Y2Storage
         assign_mountpoint(filesystem)
         filesystem.label = label if label
         filesystem.uuid = uuid if uuid
+        filesystem.mkfs_options = mkfs_options if mkfs_options
+        filesystem.fstab_options = fstab_options if fstab_options
+        filesystem.mount_by = mount_by if mount_by
 
         btrfs_setup(filesystem)
 

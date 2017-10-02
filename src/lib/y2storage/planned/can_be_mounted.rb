@@ -34,6 +34,12 @@ module Y2Storage
       #   "swap".
       attr_accessor :mount_point
 
+      # @return [Y2Storage::MountByType]
+      attr_accessor :mount_by
+
+      # @return [Array<String>]
+      attr_accessor :fstab_options
+
       # Initializations of the mixin, to be called from the class constructor.
       def initialize_can_be_mounted
       end

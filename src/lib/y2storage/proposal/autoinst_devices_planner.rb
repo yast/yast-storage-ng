@@ -197,6 +197,9 @@ module Y2Storage
         device.label = section.label
         device.uuid = section.uuid
         device.filesystem_type = section.type_for_filesystem
+        device.mount_by = section.type_for_mountby
+        device.mkfs_options = section.mkfs_options
+        device.fstab_options = section.fstab_options
       end
 
       # Set device attributes related to snapshots
