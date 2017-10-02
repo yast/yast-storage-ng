@@ -430,7 +430,7 @@ The specs are based on current version of expert partitioner for TW. The goal is
     * shows an error message
   * and there is at least two not mounted partitions with correct partition ID (LINUX, SWAP, LVM, RAID)
     * shows a wizard to create a new RAID
-* *(pending) and action 'Edit' is selected*
+* and action 'Edit' is selected
   * shows dialog to edit the RAID partition
 * *(pending) and action 'Resize' is selected*
   * shows a dialog to modify the RAID devices
@@ -557,7 +557,7 @@ The specs are based on current version of expert partitioner for TW. The goal is
     * default chunk size: 32 KiB
     * default parity algorithm: default
 
-### *(pending) When 'Edit' is selected*
+### When 'Edit' is selected
 * same dialog than partition edition (see above)
 * 'File System Id' is not shown
 
@@ -722,7 +722,7 @@ The specs are based on current version of expert partitioner for TW. The goal is
         * avoids to continue
     * updates the LV size
 
-### *(pending) When a LV is selected in the tree view*
+### When a LV is selected in the tree view
 * shows a report with three sections: 'Device', 'LVM' and 'File System'
   * where 'Device' section contains the folling info
     * Device
@@ -737,7 +737,7 @@ The specs are based on current version of expert partitioner for TW. The goal is
 * shows the actions: 'Edit', 'Resize' and 'Delete'
   * and action 'Edit' is selected
     * the same than in the "VG view"
-  * and action 'Resize' is selected
+  * *(pending) and action 'Resize' is selected*
     * the same than in the "VG view"
-  * and action 'Delete' is selected
+  * *(pending) and action 'Delete' is selected*
     * the same than in the "VG view"
