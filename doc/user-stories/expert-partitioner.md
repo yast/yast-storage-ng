@@ -10,12 +10,12 @@ The specs are based on current version of expert partitioner for TW. The goal is
   * shows a table with the columns: Device, Size, F, Enc, Type, FS Type, Label, Mount Point, Start, End
     * and the table is filled out with info of all disks and partitions
   * shows the actions: 'Add Partition', 'Edit', 'Move', 'Resize' and 'Delete'
-    * *(pending) and action 'Add Partition' is selected*
+    * and action 'Add Partition' is selected
       * and the current selected row in the table is a disk
         * starts wizard to add a new partition to the disk
       * and the current selected row in the table is a partition
         * starts wizard to add a new partition to the disk that the partition belongs to.
-    * *(pending) and action 'Edit' is selected*
+    * and action 'Edit' is selected
       * and the current selected row in the table is a disk
         * shows the disk view for that specific disk
       * and the current selected row in the table is a partition
@@ -200,7 +200,7 @@ The specs are based on current version of expert partitioner for TW. The goal is
   * where 'Mounting options' contains
     * Mount partition
     * Do not mount partition
-* *(pending) and partition role is 'Operating system'*
+* and partition role is 'Operating system'
   * sets the following 'Formatting options' by default
     * Format partition: true
       * File System: Btrfs
@@ -212,7 +212,7 @@ The specs are based on current version of expert partitioner for TW. The goal is
     * Mount partition: true
       * Mount point: first free of /, /home, /var
     * Do not mount partition: false
-* *(pending) and partition role is 'Data and ISV applications'*
+* and partition role is 'Data and ISV applications'
   * sets the following 'Formatting options' by default
     * Format partition: true
       * File System: XFS
@@ -225,16 +225,16 @@ The specs are based on current version of expert partitioner for TW. The goal is
     * Do not mount partition: false
 * and partition role is 'Swap'
   * sets the following 'Formatting options' by default
-    * *(pending) Format partition: true*
+    * Format partition: true
       * File System: Swap
     * Do not format partition: false
       * File System Id: 0x82 Linux Swap
     * Encrypt: false
   * sets the following options for 'Mounting options'
-    * *(pending) Mount partition: true*
+    * Mount partition: true
       * Mount point: swap
     * Do not mount partition: false
-* *(pending) and partition role is 'Raw volume'*
+* and partition role is 'Raw volume'
   * sets the following 'Formatting options' by default
     * Format partition: false
     * Do not format partition: true
@@ -243,7 +243,7 @@ The specs are based on current version of expert partitioner for TW. The goal is
   * sets the following options for 'Mounting options'
     * Mount partition: false
     * Do not mount partition: true
-* *(pending) and 'Finish' button is selected*
+* and 'Finish' button is selected
   * and 'Mount partition' is true
     * and 'Format partition' is false
       * and partition is not formatted
@@ -261,7 +261,7 @@ The specs are based on current version of expert partitioner for TW. The goal is
 * disables 'File system Id'
 * allows to select a 'File system'
   * where options are: BtrFs, EXT2, EXT3, EXT4, FAT, XFS, Swap
-* *(pending) and 'File system' is BtrFS*
+* and 'File system' is BtrFS
   * does not show 'Options' button
   * shows 'Enable snaphsots'
   * and mount point is /
@@ -349,7 +349,7 @@ The specs are based on current version of expert partitioner for TW. The goal is
   * shows the button 'Fstab options'
 
 ##### When 'Do not mount partition' is selected
-* *(pending) disables 'Mount device' options*
+* * disables 'Mount device' options
 
 ##### When 'Fstab options' is selected
 * and 'File system' is BtrFs
@@ -382,7 +382,7 @@ The specs are based on current version of expert partitioner for TW. The goal is
     * Mountable by user: false
     * Do not mount at system start-up: false
     * Enable quota support: false
-    * *(pending) Data journaling mode: journal, ordered (default), writeback*
+    * Data journaling mode: journal, ordered (default), writeback
     * *(pending) Access control lists (ACL): true*
     * *(pending) Extended user attributes: true*
     * Arbitrary option value:
@@ -414,7 +414,7 @@ The specs are based on current version of expert partitioner for TW. The goal is
     * Swap priority:
     * Arbitrary option value:
 
-##### *(pending) When 'Subvolume handling' is selected*
+##### When 'Subvolume handling' is selected
 * shows a dialog with a list of all subvolumes
 * allows to add a new subvolume
 * allows to remove one subvolume from the list
@@ -425,7 +425,7 @@ The specs are based on current version of expert partitioner for TW. The goal is
 * shows a table with the columns: Device, Size, F, Enc, Type, FS Type, Label, Mount Point, RAID Type, Chunk Size
   * and the table is filled out with info of all RAID devices
 * *(pending) shows the actions: 'Add RAID', 'Edit', 'Resize' and 'Delete'*
-* *(pending) and action 'Add RAID' is selected*
+* and action 'Add RAID' is selected
   * and there is less than two not mounted partitions
     * shows an error message
   * and there is at least two not mounted partitions with correct partition ID (LINUX, SWAP, LVM, RAID)
@@ -469,7 +469,7 @@ The specs are based on current version of expert partitioner for TW. The goal is
   * and an item in the table is selected (double click)
     * jumps to the corresponding partition in the 'Hard Disks' section
 
-### *(pending) When 'Add RAID' is selected*
+### When 'Add RAID' is selected*
 * shows a wizard with 5 steps
   * select RAID type and devices
   * select RAID options
@@ -481,7 +481,7 @@ The specs are based on current version of expert partitioner for TW. The goal is
   * set encrypt password (optional)
     * same wizard step than in partition creation (see above)
 
-#### *(pending) When we are in wizard step to select RAID type and devices*
+#### When we are in wizard step to select RAID type and devices*
 * shows the following options
   * RAID Type
     * RAID 0 (at least 2 devices)
@@ -489,7 +489,7 @@ The specs are based on current version of expert partitioner for TW. The goal is
     * RAID 5 (at least 3 devices)
     * RAID 6 (at least 4 devices)
     * RAID 10 (at least 2 devices)
-  * RAID Name (opcional)
+  * RAID Name (optional)
   * Available Devices
     * shows a table with the columns: Device, Size, Enc, Type
     * and the table is filled out with info of available devices for RAID
@@ -505,7 +505,7 @@ The specs are based on current version of expert partitioner for TW. The goal is
     * move the selected device from 'Selected Devices' to 'Available devices'
   * and action 'Remove All' is selected
     * move all devices from 'Selected Devices' to'Available devices'
-* shows the actions: 'Top', 'Up', 'Down', 'Bottom' and 'Classify'
+* *(pending) shows the actions: 'Top', 'Up', 'Down', 'Bottom' and 'Classify'*
   * and action 'Top' is selected
     * reorder RAID devices by moving to top the current selected device from 'Selected Devices'
   * and action 'Up' is selected
@@ -535,7 +535,7 @@ The specs are based on current version of expert partitioner for TW. The goal is
     * opens a dialog to select a pattern file
     * sets class to devices according to the pattern file
 
-#### *(pending) When we are in wizard step to select RAID options*
+#### When we are in wizard step to select RAID options
 * when selected RAID type is: RAID0 or RAID1
   * shows the following options
     * Chunk Size
