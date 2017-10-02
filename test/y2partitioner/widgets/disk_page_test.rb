@@ -42,14 +42,4 @@ describe Y2Partitioner::Widgets::DiskPage do
 
     include_examples "CWM::PushButton"
   end
-
-  describe Y2Partitioner::Widgets::PartitionsTab::EditButton do
-    subject { described_class.new(disk, ui_table) }
-    before do
-      allow(Y2Partitioner::Sequences::EditBlkDevice).to receive(:new).and_return(double(run: :next))
-      allow(ui_table).to receive(:selected_device).and_return(double("Device"))
-    end
-
-    include_examples "CWM::PushButton"
-  end
 end
