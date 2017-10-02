@@ -68,7 +68,9 @@ module Y2Storage
           { name: :loop_fs },
           { name: :crypt_key },
           { name: :raid_name },
-          { name: :raid_options }
+          { name: :raid_options },
+          { name: :mkfs_options },
+          { name: :fstab_options }
         ]
       end
 
@@ -109,6 +111,7 @@ module Y2Storage
 
       # @!attribute mountby
       #   @return [Symbol] :device, :label, :uuid, :path or :id
+      #   @see #type_for_mountby
 
       # @!attribute partition_nr
       #   @return [Integer] the partition number of this partition
@@ -132,6 +135,9 @@ module Y2Storage
       #   @return [RaidOptionsSection] RAID options
       #   @see RaidOptionsSection
 
+      # @!attribute mkfs_options
+      #   @return [String] mkfs options
+
       def initialize
         @subvolumes = []
       end
@@ -140,6 +146,7 @@ module Y2Storage
         super
         @raid_options = RaidOptionsSection.new_from_hashes(hash["raid_options"]) if hash["raid_options"]
         @subvolumes = SubvolSpecification.list_from_control_xml(hash["subvolumes"]) if hash["subvolumes"]
+        @fstab_options = hash["fstab_options"].split(",").map(&:strip) if hash["fstab_options"]
       end
 
       # Clones a device into an AutoYaST profile section by creating an instance
@@ -165,6 +172,18 @@ module Y2Storage
       def type_for_filesystem
         return nil unless filesystem
         Filesystems::Type.find(filesystem)
+      rescue NameError
+        nil
+      end
+
+      # Name schema type to be used for the real partition object, based on the
+      # #filesystem value
+      #
+      # @return [Filesystems::MountByType, nil] nil if #filesystem is not set
+      #   or it's impossible to infer the type
+      def type_for_mountby
+        return nil unless mountby
+        Filesystems::MountByType.find(mountby)
       rescue NameError
         nil
       end
@@ -220,6 +239,12 @@ module Y2Storage
         @size = partition.size.to_i.to_s if create
       end
 
+      def to_hashes
+        hash = super
+        hash["fstab_options"] = fstab_options.join(",") if fstab_options && !fstab_options.empty?
+        hash
+      end
+
     protected
 
       # Uses legacy ids for backwards compatibility. For example, BIOS Boot
@@ -254,10 +279,10 @@ module Y2Storage
       # @param fs [Filesystem::BlkFilesystem]
       def init_mount_options(fs)
         if fs.mountpoint && !fs.mountpoint.empty?
-          @mount = fs.mountpoint if fs.mountpoint && !fs.mountpoint.empty?
+          @mount = fs.mountpoint
           @mountby = fs.mount_by.to_sym
         end
-        @fstab_options = fs.fstab_options.join(",") unless fs.fstab_options.empty?
+        @fstab_options = fs.fstab_options unless fs.fstab_options.empty?
       end
 
       # Whether the given existing partition should be reported as GRUB (GPT
