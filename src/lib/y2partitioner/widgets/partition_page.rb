@@ -39,8 +39,12 @@ module Y2Partitioner
             )
           ),
           PartitionDescription.new(@partition),
-          EditBlkDeviceButton.new(device: @partition),
-          DeleteDiskPartitionButton.new(device: @partition)
+          Left(
+            HBox(
+              EditBlkDeviceButton.new(device: @partition),
+              DeleteDiskPartitionButton.new(device: @partition)
+            )
+          )
         )
       end
     end

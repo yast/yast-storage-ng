@@ -103,12 +103,14 @@ module Y2Partitioner
         @contents ||= VBox(
           DiskBarGraph.new(disk),
           table,
-          HBox(
-            AddButton.new(disk, table),
-            EditBlkDeviceButton.new(table: table),
-            DeleteDiskPartitionButton.new(
-              device_graph: DeviceGraphs.instance.current,
-              table:        table
+          Left(
+            HBox(
+              AddButton.new(disk, table),
+              EditBlkDeviceButton.new(table: table),
+              DeleteDiskPartitionButton.new(
+                device_graph: DeviceGraphs.instance.current,
+                table:        table
+              )
             )
           )
         )
