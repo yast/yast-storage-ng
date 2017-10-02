@@ -3,6 +3,7 @@ require "y2partitioner/icons"
 require "y2partitioner/device_graphs"
 require "y2partitioner/sequences/add_md"
 require "y2partitioner/widgets/md_raids_table"
+require "y2partitioner/widgets/edit_blk_device_button"
 
 module Y2Partitioner
   module Widgets
@@ -29,6 +30,7 @@ module Y2Partitioner
         return @contents if @contents
 
         icon = Icons.small_icon(Icons::RAID)
+        table = MdRaidsTable.new(devices, @pager)
         @contents = VBox(
           Left(
             HBox(
@@ -37,8 +39,13 @@ module Y2Partitioner
               Heading(_("RAID"))
             )
           ),
-          MdRaidsTable.new(devices, @pager),
-          HBox(AddButton.new)
+          table,
+          Left(
+            HBox(
+              AddButton.new,
+              EditBlkDeviceButton.new(table: table)
+            )
+          )
         )
       end
 

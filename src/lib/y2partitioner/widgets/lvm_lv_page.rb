@@ -2,6 +2,7 @@ require "cwm/pager"
 
 require "y2partitioner/icons"
 require "y2partitioner/widgets/lvm_lv_description"
+require "y2partitioner/widgets/edit_blk_device_button"
 
 module Y2Partitioner
   module Widgets
@@ -33,7 +34,8 @@ module Y2Partitioner
               Heading(format(_("Logical Volume: %s"), @lvm_lv.name))
             )
           ),
-          LvmLvDescription.new(@lvm_lv)
+          LvmLvDescription.new(@lvm_lv),
+          Left(HBox(EditBlkDeviceButton.new(device: @lvm_lv)))
         )
       end
     end

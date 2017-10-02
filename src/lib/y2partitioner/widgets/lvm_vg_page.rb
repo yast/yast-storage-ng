@@ -6,6 +6,7 @@ require "y2partitioner/widgets/configurable_blk_devices_table"
 require "y2partitioner/widgets/lvm_devices_table"
 require "y2partitioner/widgets/lvm_vg_bar_graph"
 require "y2partitioner/widgets/lvm_vg_description"
+require "y2partitioner/widgets/edit_blk_device_button"
 
 module Y2Partitioner
   module Widgets
@@ -92,7 +93,9 @@ module Y2Partitioner
       def contents
         @contents ||= VBox(
           LvmVgBarGraph.new(@lvm_vg),
-          table
+          table,
+          Left(HBox(EditBlkDeviceButton.new(table: table)))
+
         )
       end
 
