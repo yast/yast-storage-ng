@@ -56,7 +56,9 @@ module Y2Storage
       }
 
     # Valid parameters for file_system
-    FILE_SYSTEM_PARAM = ["mount_point", "label", "uuid", "fstab_options", "btrfs"]
+    FILE_SYSTEM_PARAM = [
+      "mount_point", "label", "uuid", "fstab_options", "btrfs", "mount_by", "mkfs_options"
+    ]
 
     # Valid parameters for each product of this factory.
     # Sub-products are not listed here.
@@ -467,9 +469,15 @@ module Y2Storage
     end
 
     def assign_file_system_params(file_system, fs_param)
-      ["mount_point", "label", "uuid", "fstab_options"].each do |param|
+      ["mount_point", "label", "uuid", "fstab_options", "mkfs_options"].each do |param|
         value = fs_param[param]
         file_system.public_send(:"#{param}=", value) if value
+      end
+
+      if fs_param["mount_by"]
+        file_system.mount_by = fetch(
+          Filesystems::MountByType, fs_param["mount_by"], "mount by name schema", file_system
+        )
       end
     end
 
