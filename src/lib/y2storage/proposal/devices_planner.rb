@@ -95,6 +95,9 @@ module Y2Storage
       def additional_devices
         devices = [swap_device]
         devices << home_device if @settings.use_separate_home
+        @settings.extra_volumes.each do |device|
+          devices << extra_device(device)
+        end
         devices
       end
 
@@ -222,6 +225,23 @@ module Y2Storage
           end
         home_vol.weight = 100.0 - settings.root_space_percent
         home_vol
+      end
+
+      # Create a new Planned::Device from a hash
+      def extra_device(device)
+        fs_type = device["filesystem_type"]
+        fs_type = Filesystems::Type.find(fs_type) unless fs_type.is_a?(Y2Storage::Filesystems::Type);
+
+        if settings.use_lvm && device["lvm_ok"]
+          vol = Planned::LvmLv.new(device["mount_point"], fs_type)
+        else
+          vol = Planned::Partition.new(device["mount_point"], fs_type)
+        end
+        vol.encryption_password = device["encryption_password"]
+        vol.max_size = device["max_size"]
+        vol.min_size = device["min_size"]
+        vol.weight = device["weight"]
+        vol
       end
 
       def remove_shadowed_subvols(planned_devices)

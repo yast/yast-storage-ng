@@ -186,6 +186,7 @@ module Y2Storage
     attr_accessor :root_subvolume_read_only
     attr_accessor :home_min_size
     attr_accessor :home_max_size
+    attr_accessor :extra_volumes
 
     # @return [Array<SubvolSpecification>] list of specifications (usually read
     #   from the control file) that will be used to plan the Btrfs subvolumes of
@@ -214,6 +215,9 @@ module Y2Storage
       # used instead. See also DevicesPlanner::home_device.
       @home_min_size            = DiskSize.GiB(10)
       @home_max_size            = DiskSize.unlimited
+
+      # Extra volumes may be defined via control.xml.
+      @extra_volumes = []
     end
 
     # Overrides all the settings with values read from the YaST product features
