@@ -85,7 +85,7 @@ describe Y2Partitioner::Widgets do
           end
         end
 
-        context "and the mount point already exists" do
+        context "and the mount point is not 'swap' and already exists" do
           let(:value) { "/home" }
 
           it "shows an error message" do
@@ -95,6 +95,19 @@ describe Y2Partitioner::Widgets do
 
           it "returns false" do
             expect(subject.validate).to be(false)
+          end
+        end
+
+        context "and the mount point is 'swap', that already exists" do
+          let(:value) { "swap" }
+
+          it "does not show any error message" do
+            expect(Yast::Popup).to_not receive(:Error)
+            subject.validate
+          end
+
+          it "returns true" do
+            expect(subject.validate).to be(true)
           end
         end
 
