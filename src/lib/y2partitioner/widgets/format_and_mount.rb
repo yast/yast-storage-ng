@@ -505,6 +505,10 @@ module Y2Partitioner
       # Checks if the mount point is duplicated
       # @return [Boolean]
       def duplicated_mount_point?
+        # The special mount point "swap" can be used for several devices at the
+        # same time.
+        return false if value == "swap"
+
         devices = mounted_devices.reject { |d| d.is?(:btrfs_subvolume) }
         mount_points = devices.map(&:mount_point)
         mount_points.include?(value)

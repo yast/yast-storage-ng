@@ -4,6 +4,7 @@ require "y2partitioner/icons"
 require "y2partitioner/device_graphs"
 require "y2partitioner/widgets/md_description"
 require "y2partitioner/widgets/configurable_blk_devices_table"
+require "y2partitioner/widgets/edit_blk_device_button"
 
 module Y2Partitioner
   module Widgets
@@ -66,7 +67,11 @@ module Y2Partitioner
       # @macro seeCustomWidget
       def contents
         # Page wants a WidgetTerm, not an AbstractWidget
-        @contents ||= VBox(MdDescription.new(@md))
+        @contents ||=
+          VBox(
+            MdDescription.new(@md),
+            Left(HBox(EditBlkDeviceButton.new(device: @md)))
+          )
       end
     end
 

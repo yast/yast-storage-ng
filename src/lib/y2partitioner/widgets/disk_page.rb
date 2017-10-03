@@ -3,8 +3,8 @@ require "cwm/tree_pager"
 require "y2partitioner/icons"
 require "y2partitioner/device_graphs"
 require "y2partitioner/sequences/add_partition"
-require "y2partitioner/sequences/edit_blk_device"
 require "y2partitioner/widgets/delete_disk_partition_button"
+require "y2partitioner/widgets/edit_blk_device_button"
 require "y2partitioner/widgets/configurable_blk_devices_table"
 require "y2partitioner/widgets/disk_bar_graph"
 require "y2partitioner/widgets/disk_description"
@@ -103,12 +103,14 @@ module Y2Partitioner
         @contents ||= VBox(
           DiskBarGraph.new(disk),
           table,
-          HBox(
-            AddButton.new(disk, table),
-            EditButton.new(disk, table),
-            DeleteDiskPartitionButton.new(
-              device_graph: DeviceGraphs.instance.current,
-              table:        table
+          Left(
+            HBox(
+              AddButton.new(disk, table),
+              EditBlkDeviceButton.new(table: table),
+              DeleteDiskPartitionButton.new(
+                device_graph: DeviceGraphs.instance.current,
+                table:        table
+              )
             )
           )
         )
@@ -140,39 +142,6 @@ module Y2Partitioner
         def handle
           res = Sequences::AddPartition.new(@disk.name).run
           res == :finish ? :redraw : nil
-        end
-      end
-
-      # Edit a partition
-      class EditButton < CWM::PushButton
-        # Constructor
-        #
-        # @param disk [Y2Storage::Disk]
-        # @param table [ConfigurableBlkDevicesTable]
-        def initialize(disk, table)
-          textdomain "storage"
-
-          @disk = disk
-          @table = table
-        end
-
-        def label
-          _("Edit...")
-        end
-
-        def handle
-          partition = @table.selected_device
-
-          if partition.nil?
-            Yast::Popup.Error(_("There are no partitions to edit."))
-            return nil
-          end
-
-          Sequences::EditBlkDevice.new(partition).run
-
-          # sym == :next ? :redraw : nil
-          # must redraw because we've replaced the original dialog contents!
-          :redraw
         end
       end
     end

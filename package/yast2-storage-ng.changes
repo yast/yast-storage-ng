@@ -1,4 +1,13 @@
 -------------------------------------------------------------------
+Tue Oct  3 07:06:32 UTC 2017 - ancor@suse.com
+
+- Partitioner: buttons to edit the filesystem in RAID and LVM LV.
+- Partitioner: correct positioning of some buttons.
+- Partitioner: allow to mount several swap devices.
+- All part of fate#318196.
+- 3.3.23
+
+-------------------------------------------------------------------
 Fri Sep 29 15:06:42 UTC 2017 - ancor@suse.com
 
 - Partitioner: option to create an MD RAID (part of fate#318196).

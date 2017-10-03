@@ -79,8 +79,18 @@ module Y2Partitioner
       attr_reader :fs_controller, :blk_device
 
       def title
-        # TRANSLATORS: dialog title. %s is a device name like /dev/sda1
-        _("Edit Partition %s") % blk_device.name
+        if blk_device.is?(:md)
+          # TRANSLATORS: dialog title. %s is a device name like /dev/md0
+          _("Edit RAID %s") % blk_device.name
+        elsif blk_device.is?(:lvm_lv)
+          msg_args = { lv_name: blk_device.lv_name, vg: blk_device.lvm_vg.name }
+          # TRANSLATORS: dialog title. %{lv_name} is an LVM LV name (e.g.'root'),
+          # %{vg} is the device name of an LVM VG (e.g. '/dev/system').
+          _("Edit Logical Volume %{lv_name} on %{vg}") % msg_args
+        else
+          # TRANSLATORS: dialog title. %s is a device name like /dev/sda1
+          _("Edit Partition %s") % blk_device.name
+        end
       end
     end
   end
