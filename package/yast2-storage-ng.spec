@@ -61,6 +61,7 @@ rake install DESTDIR="%{buildroot}"
 %defattr(-,root,root)
 %{yast_dir}/clients/*.rb
 %{yast_dir}/lib
+%{yast_desktopdir}/*.desktop
 
 # agents-scr
 %{yast_scrconfdir}/*.scr
