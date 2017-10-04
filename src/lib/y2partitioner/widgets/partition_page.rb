@@ -19,6 +19,11 @@ module Y2Partitioner
         self.widget_id = "partition:" + partition.name
       end
 
+      # @return [Y2Storage::Partition] partition the page is about
+      def device
+        @partition
+      end
+
       # @macro seeAbstractWidget
       def label
         @partition.basename

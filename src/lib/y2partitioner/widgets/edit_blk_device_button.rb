@@ -1,6 +1,7 @@
 require "yast"
 require "cwm"
 require "y2partitioner/sequences/edit_blk_device"
+require "y2partitioner/ui_state"
 
 Yast.import "Popup"
 
@@ -34,6 +35,7 @@ module Y2Partitioner
           return nil
         end
 
+        UIState.instance.select_row(device.sid)
         Sequences::EditBlkDevice.new(device).run
 
         # sym == :next ? :redraw : nil

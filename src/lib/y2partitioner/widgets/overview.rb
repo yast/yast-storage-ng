@@ -2,6 +2,7 @@ require "cwm/widget"
 require "cwm/tree"
 require "y2partitioner/icons"
 require "y2partitioner/device_graphs"
+require "y2partitioner/ui_state"
 require "y2partitioner/widgets/system_page"
 require "y2partitioner/widgets/disks_page"
 require "y2partitioner/widgets/disk_page"
@@ -64,6 +65,19 @@ module Y2Partitioner
           item_for("summary", _("Installation Summary"), icon: Icons::SUMMARY),
           item_for("settings", _("Settings"), icon: Icons::SETTINGS)
         ]
+      end
+
+      # Overrides default behavior of TreePager to register the new state with
+      # {UIState} before jumping to the tree node
+      def switch_page(page)
+        UIState.instance.go_to_tree_node(page)
+        super
+      end
+
+      # Ensures the tree is properly initialized according to {UIState} after
+      # a redraw.
+      def initial_page
+        UIState.instance.find_tree_node(@pages) || super
       end
 
     private

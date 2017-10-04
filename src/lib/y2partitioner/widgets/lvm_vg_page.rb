@@ -1,6 +1,6 @@
 require "cwm/widget"
 require "cwm/tree_pager"
-require "cwm/tabs"
+require "y2partitioner/widgets/tabs"
 require "y2partitioner/icons"
 require "y2partitioner/widgets/configurable_blk_devices_table"
 require "y2partitioner/widgets/lvm_devices_table"
@@ -24,6 +24,11 @@ module Y2Partitioner
         self.widget_id = "lvm_vg:" + lvm_vg.vg_name
       end
 
+      # @return [Y2Storage::LvmVg] volume group the page is about
+      def device
+        @lvm_vg
+      end
+
       # @macro seeAbstractWidget
       def label
         @lvm_vg.vg_name
@@ -39,7 +44,7 @@ module Y2Partitioner
               Heading(format(_("Volume Group: %s"), "/dev/" + @lvm_vg.vg_name))
             )
           ),
-          CWM::Tabs.new(
+          Tabs.new(
             LvmVgTab.new(@lvm_vg),
             LvmLvTab.new(@lvm_vg, @pager),
             LvmPvTab.new(@lvm_vg, @pager)

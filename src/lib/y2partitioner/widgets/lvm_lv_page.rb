@@ -16,6 +16,11 @@ module Y2Partitioner
         self.widget_id = "lvm_lv:" + lvm_lv.name
       end
 
+      # @return [Y2Storage::LvmLv] logical volume the page is about
+      def device
+        @lvm_lv
+      end
+
       # @macro seeAbstractWidget
       def label
         @lvm_lv.lv_name

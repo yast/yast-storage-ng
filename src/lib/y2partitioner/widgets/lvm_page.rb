@@ -6,6 +6,9 @@ module Y2Partitioner
   module Widgets
     # A Page for LVM devices
     class LvmPage < CWM::Page
+      include Yast::I18n
+      extend Yast::I18n
+
       # Constructor
       #
       # @param pager [CWM::TreePager]
@@ -15,9 +18,18 @@ module Y2Partitioner
         @pager = pager
       end
 
+      # Label for all the instances
+      #
+      # @see #label
+      #
+      # @return [String]
+      def self.label
+        _("Volume Management")
+      end
+
       # @macro seeAbstractWidget
       def label
-        _("Volume Management")
+        self.class.label
       end
 
       # @macro seeCustomWidget

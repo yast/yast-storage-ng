@@ -22,6 +22,11 @@ module Y2Partitioner
         self.widget_id = "md:" + @md.name
       end
 
+      # @return [Y2Storage::Md] RAID the page is about
+      def device
+        @md
+      end
+
       # @macro seeAbstractWidget
       def label
         @md.basename
@@ -37,7 +42,7 @@ module Y2Partitioner
               Heading(format(_("RAID: %s"), @md.name))
             )
           ),
-          CWM::Tabs.new(
+          Tabs.new(
             MdTab.new(@md),
             MdUsedDevicesTab.new(@md, @pager)
           )

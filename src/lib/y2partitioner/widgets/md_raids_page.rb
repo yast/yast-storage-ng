@@ -10,6 +10,7 @@ module Y2Partitioner
     # A Page for md raids: contains a {MdRaidsTable}
     class MdRaidsPage < CWM::Page
       include Yast::I18n
+      extend Yast::I18n
 
       # Constructor
       #
@@ -20,9 +21,18 @@ module Y2Partitioner
         @pager = pager
       end
 
+      # Label for all the instances
+      #
+      # @see #label
+      #
+      # @return [String]
+      def self.label
+        _("RAID")
+      end
+
       # @macro seeAbstractWidget
       def label
-        _("RAID")
+        self.class.label
       end
 
       # @macro seeCustomWidget

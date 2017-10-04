@@ -2,6 +2,7 @@ require "yast"
 require "cwm/table"
 
 require "y2partitioner/device_graphs"
+require "y2partitioner/ui_state"
 require "y2partitioner/widgets/blk_devices_table"
 
 module Y2Partitioner
@@ -24,6 +25,12 @@ module Y2Partitioner
 
       def opt
         [:notify]
+      end
+
+      # @macro seeAbstractWidget
+      def init
+        initial_sid = UIState.instance.row_sid
+        self.value = row_id(initial_sid) if initial_sid
       end
 
       # @macro seeAbstractWidget

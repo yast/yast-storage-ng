@@ -13,7 +13,9 @@ module Y2Partitioner
   module Widgets
     # A Page for a disk: contains {DiskTab} and {PartitionsTab}
     class DiskPage < CWM::Page
+      # @return [Y2Storage::Device] Disk this page is about
       attr_reader :disk
+      alias_method :device, :disk
 
       # Constructor
       #
@@ -42,7 +44,7 @@ module Y2Partitioner
               Heading(format(_("Hard Disk: %s"), disk.name))
             )
           ),
-          CWM::Tabs.new(
+          Tabs.new(
             DiskTab.new(disk),
             PartitionsTab.new(disk, @pager)
           )

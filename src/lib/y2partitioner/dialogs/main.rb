@@ -1,6 +1,7 @@
 require "yast"
 require "cwm/dialog"
 require "y2partitioner/device_graphs"
+require "y2partitioner/ui_state"
 require "y2partitioner/widgets/overview"
 
 Yast.import "Label"
@@ -50,6 +51,7 @@ module Y2Partitioner
       # @return [Symbol] result of dialog
       def run(system, initial)
         DeviceGraphs.create_instance(system, initial)
+        UIState.create_instance
         res = nil
         loop do
           res = super()

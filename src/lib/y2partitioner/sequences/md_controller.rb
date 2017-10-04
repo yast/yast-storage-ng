@@ -22,6 +22,7 @@
 require "yast"
 require "y2storage"
 require "y2partitioner/device_graphs"
+require "y2partitioner/ui_state"
 
 module Y2Partitioner
   module Sequences
@@ -47,6 +48,7 @@ module Y2Partitioner
         @md = Y2Storage::Md.create(working_graph, name)
         @md.md_level = Y2Storage::MdLevel::RAID0 if @md.md_level.is?(:unknown)
         @initial_name = @md.name
+        UIState.instance.select_row(@md)
       end
 
       # Partitions that can be selected to become part of the MD array

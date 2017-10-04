@@ -68,8 +68,12 @@ module Y2Partitioner
         [row_id(device)] + columns.map { |c| send("#{c}_value", device) }
       end
 
+      # LibYUI id to use for the row used to represent a device
+      #
+      # @param device [Y2Storage::Device, Integer] sid or device object
       def row_id(device)
-        "table:device:#{device.sid}"
+        sid = device.respond_to?(:sid) ? device.sid : device.to_i
+        "table:device:#{sid}"
       end
 
       def filesystem(device)
