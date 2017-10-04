@@ -14,7 +14,7 @@ X-SuSE-YaST-SortKey=
 X-SuSE-YaST-AutoInstResource=
 
 Icon=yast-disk
-Exec=xdg-su -c "/sbin/yast2 disk"
+Exec=xdg-su -c "/sbin/yast2 partitioner"
 
 Name=Partitioner
 GenericName=Partition hard disks (including RAID, LVM, and encrypted file systems)
