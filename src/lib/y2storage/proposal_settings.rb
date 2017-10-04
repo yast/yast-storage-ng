@@ -192,6 +192,11 @@ module Y2Storage
     #   the root filesystem
     attr_accessor :subvolumes
 
+    # @return [Symbol] Type of data in ProposalSettings. :legcay for the
+    #   old format, :ng for the new format. Proposal::DevicesPlanner uses
+    #   this to select the planning strategy.
+    attr_accessor :format
+
     PRODUCT_SECTION = "partitioning"
     private_constant :PRODUCT_SECTION
 
@@ -214,6 +219,9 @@ module Y2Storage
       # used instead. See also DevicesPlanner::home_device.
       @home_min_size            = DiskSize.GiB(10)
       @home_max_size            = DiskSize.unlimited
+
+      # depends on the control.xml data
+      @format = :legacy
     end
 
     # Overrides all the settings with values read from the YaST product features

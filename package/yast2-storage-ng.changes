@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Wed Oct  4 12:11:11 UTC 2017 - snwint@suse.com
+
+- separate planning strategies from DevicesPlanner into
+  DevicesPlannerStrategies module
+- 3.3.24
+
+-------------------------------------------------------------------
 Tue Oct  3 07:06:32 UTC 2017 - ancor@suse.com
 
 - Partitioner: buttons to edit the filesystem in RAID and LVM LV.
