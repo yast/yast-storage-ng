@@ -23,6 +23,7 @@ require "rspec"
 require "yast"
 require "storage"
 require "y2storage"
+require "y2partitioner/device_graphs"
 
 module Yast
   module RSpec
@@ -46,6 +47,18 @@ module Yast
         else
           Y2Storage::StorageManager.instance.probe_from_yaml(input_file_for(scenario))
         end
+      end
+
+      # Used when testing the partitioner
+      def devicegraph_stub(name)
+        # Backwards compatibility, #fake_scenario assumes Yaml by default, but
+        # #devicegraph_stub always expects the full file name
+        name = name.chomp(".yml")
+        fake_scenario(name)
+
+        storage = Y2Storage::StorageManager.instance
+        Y2Partitioner::DeviceGraphs.create_instance(storage.probed, storage.staging)
+        storage
       end
 
       def fake_devicegraph
