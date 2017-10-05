@@ -16,7 +16,7 @@
 #
 
 Name:		yast2-storage-ng
-Version:        3.3.24
+Version:        3.3.25
 Release:	0
 BuildArch:	noarch
 
@@ -61,6 +61,7 @@ rake install DESTDIR="%{buildroot}"
 %defattr(-,root,root)
 %{yast_dir}/clients/*.rb
 %{yast_dir}/lib
+%{yast_desktopdir}/*.desktop
 
 # agents-scr
 %{yast_scrconfdir}/*.scr
