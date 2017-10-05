@@ -5,8 +5,7 @@ require "y2partitioner/widgets/md_raids_table"
 
 describe Y2Partitioner::Widgets::MdRaidsTable do
   before do
-    # TODO: reader/writer for Mds
-    # devicegraph_stub("mds.yml")
+    devicegraph_stub("md2-devicegraph.xml")
   end
 
   let(:device_graph) { Y2Partitioner::DeviceGraphs.instance.current }
@@ -21,13 +20,13 @@ describe Y2Partitioner::Widgets::MdRaidsTable do
   # include_examples "CWM::Table"
 
   describe "#header" do
-    xit "returns array" do
+    it "returns array" do
       expect(subject.header).to be_a(::Array)
     end
   end
 
   describe "#items" do
-    xit "returns array of arrays" do
+    it "returns array of arrays" do
       expect(subject.items).to be_a(::Array)
       expect(subject.items.first).to be_a(::Array)
     end
