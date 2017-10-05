@@ -12,7 +12,7 @@ describe Y2Partitioner::Widgets::Pages::System do
 
   let(:devices) { Y2Storage::BlkDevice.all(device_graph) }
 
-  subject { described_class.new(pager) }
+  subject { described_class.new("hostname", pager) }
 
   let(:pager) { double("OverviewTreePager") }
 

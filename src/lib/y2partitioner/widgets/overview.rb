@@ -39,9 +39,13 @@ module Y2Partitioner
     #
     # It has replace point where it displays more details about selected element in partitioning.
     class OverviewTreePager < CWM::TreePager
-      def initialize
+      # Constructor
+      #
+      # @param [String] hostname of the system
+      def initialize(hostname)
         textdomain "storage"
 
+        @hostname = hostname
         super(OverviewTree.new(items))
       end
 
@@ -73,12 +77,14 @@ module Y2Partitioner
 
     private
 
+      attr_reader :hostname
+
       def device_graph
         DeviceGraphs.instance.current
       end
 
       def system_items
-        page = Pages::System.new(self)
+        page = Pages::System.new(hostname, self)
         children = [
           disks_items,
           raids_items,
