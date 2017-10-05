@@ -39,7 +39,7 @@ The whole list of proposal-specific attributes is: `try_separate_home`,
 `vm_home_max_size`, `vm_keep_unpartitioned_region` and
 `btrfs_increase_percentage`.
 
-### Options to influence proposal and partitioner 
+### Options to influence proposal and partitioner
 
 In addition to the list above, there are two options, related to the usage of
 Btrfs for the root filesystem, that are used by the proposal and also by the
@@ -153,7 +153,7 @@ the default).
 
 ## How the new proposal distributes the space
 
-The new proposal uses the following two-steps approach when 
+The new proposal uses the following two-steps approach when
 deciding which partitions should be created/deleted/resized and how much
 space to assign to every new partition or logical volume.
 
@@ -264,12 +264,12 @@ use case.
 ```xml
 <partitioning>
   <proposal>
-    <lvm config:type="boolean">false</default_lvm>
-    <encrypt config:type="boolean">false</default_encrypt>
+    <lvm config:type="boolean">false</lvm>
+    <encrypt config:type="boolean">false</encrypt>
     <windows_delete_mode>all</windows_delete_mode>
-    <linux_delete>ondemand</linux_delete_mode>
+    <linux_delete_mode>ondemand</linux_delete_mode>
     <other_delete_mode>ondemand</other_delete_mode>
-    <lvm_vg_strategy_mode>use_available</lvm_vg_strategy>
+    <lvm_vg_strategy_mode>use_available</lvm_vg_strategy_mode>
   </proposal>
 
   <volumes config:type="list">
