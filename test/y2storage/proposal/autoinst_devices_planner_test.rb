@@ -196,8 +196,8 @@ describe Y2Storage::Proposal::AutoinstDevicesPlanner do
         devices = planner.planned_devices(drives_map)
         root = devices.find { |d| d.mount_point == "/" }
         home = devices.find { |d| d.mount_point == "/home" }
-        expect(root.filesystem_type).to eq(Y2Storage::Filesystems::Type::EXT4)
-        expect(home.filesystem_type).to eq(Y2Storage::Filesystems::Type::XFS)
+        expect(root.mount_by).to be_nil
+        expect(home.mount_by).to eq(Y2Storage::Filesystems::MountByType::UUID)
       end
 
       it "sets fstab options" do
