@@ -35,7 +35,7 @@ describe Y2Storage::Proposal::SpaceMaker do
   end
 
   let(:settings) do
-    settings = Y2Storage::ProposalSettings.new
+    settings = Y2Storage::ProposalSettings.new_for_current_product
     settings.candidate_devices = ["/dev/sda"]
     settings.root_device = "/dev/sda"
     settings.resize_windows = resize_windows

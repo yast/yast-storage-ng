@@ -117,7 +117,7 @@ RSpec.shared_context "guided setup requirements" do
 
   let(:analyzer) { instance_double(Y2Storage::DiskAnalyzer) }
 
-  let(:settings) { Y2Storage::ProposalSettings.new }
+  let(:settings) { Y2Storage::ProposalSettings.new_for_current_product }
 
   let(:all_disks) { [] }
   let(:candidate_disks) { [] }

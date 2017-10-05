@@ -36,7 +36,7 @@ describe Y2Storage::Proposal::DevicesPlanner do
 
     let(:devicegraph) { instance_double("Y2Storage::Devicegraph") }
     let(:disk) { instance_double("Y2Storage::Disk", name: "/dev/sda") }
-    let(:settings) { Y2Storage::ProposalSettings.new }
+    let(:settings) { Y2Storage::ProposalSettings.new_for_current_product }
     let(:boot_checker) { instance_double("Y2Storage::BootRequirementChecker") }
 
     # Some reasonable defaults
