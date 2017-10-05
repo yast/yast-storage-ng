@@ -120,8 +120,10 @@ module Y2Storage
     def apply_defaults
       @fs_types   ||= []
       @subvolumes ||= []
+      @max_size   ||= DiskSize.unlimited
     end
 
+    # For some features (i.e., fs_types and subvolumes) fallback values could be applied
     def load_features
       {
         mount_point:                :string,
@@ -152,7 +154,7 @@ module Y2Storage
         send(loader, feature, source: volume_features)
       end
 
-      apply_fallback_subvolumes if root? && subvolumes.empty?
+      apply_fallbacks
     end
 
     def fs_types=(types)
@@ -172,8 +174,29 @@ module Y2Storage
       mount_point && mount_point == "/"
     end
 
-    def apply_fallback_subvolumes
-      self.subvolumes = SubvolSpecification.fallback_list
+    def apply_fallbacks
+      apply_subvolumes_fallback
+      apply_fs_types_fallback
+    end
+
+    def apply_subvolumes_fallback
+      return unless subvolumes.empty?
+      @subvolumes = root? ? SubvolSpecification.fallback_list : []
+    end
+
+    def apply_fs_types_fallback
+      return unless fs_types.empty?
+
+      types = case mount_point
+      when "/"
+        Filesystems::Type.root_filesystems
+      when "/home"
+        Filesystems::Type.home_filesystems
+      else
+        []
+      end
+
+      @fs_types = types
     end
   end
 end

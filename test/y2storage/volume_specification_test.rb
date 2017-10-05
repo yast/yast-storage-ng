@@ -34,7 +34,7 @@ describe Y2Storage::VolumeSpecification do
         {
           "mount_point" => "/home",
           "proposed"    => true,
-          "max_size"    => "5 GiB",
+          "min_size"    => "5 GiB",
           "weight"      => "300"
         }
       end
@@ -42,17 +42,17 @@ describe Y2Storage::VolumeSpecification do
       it "creates an object with the indicated features" do
         expect(subject.mount_point).to eq("/home")
         expect(subject.proposed).to eq(true)
-        expect(subject.max_size).to eq(5.GiB)
+        expect(subject.min_size).to eq(5.GiB)
         expect(subject.weight).to eq(300)
       end
 
       it "does not set the missing features" do
-        expect(subject.min_size).to be_nil
+        expect(subject.desired_size).to be_nil
         expect(subject.fs_type).to be_nil
       end
 
-      it "sets fs_types to empty by default" do
-        expect(subject.fs_types).to be_empty
+      it "sets max_size to unlimited by default" do
+        expect(subject.max_size).to eq(Y2Storage::DiskSize.unlimited)
       end
 
       context "when a fs_type is indicated" do
@@ -76,7 +76,35 @@ describe Y2Storage::VolumeSpecification do
         end
       end
 
-      context "when a list of possible fs_types is indicated" do
+      context "when the list of fs_types is not indicated" do
+        let(:volume_features) { { "mount_point" => mount_point } }
+
+        context "and the volume is root" do
+          let(:mount_point) { "/" }
+
+          it "sets a fallback list of fs_types for root" do
+            expect(subject.fs_types).to eq(Y2Storage::Filesystems::Type.root_filesystems)
+          end
+        end
+
+        context "and the volume is home" do
+          let(:mount_point) { "/home" }
+
+          it "sets a fallback list of fs_types for home" do
+            expect(subject.fs_types).to eq(Y2Storage::Filesystems::Type.home_filesystems)
+          end
+        end
+
+        context "and the volume is neither root nor home" do
+          let(:mount_point) { "/tmp" }
+
+          it "sets an empty list of fs_types" do
+            expect(subject.fs_types).to be_empty
+          end
+        end
+      end
+
+      context "when a list of fs_types is indicated" do
         let(:volume_features) { { "fs_types" => fs_types } }
 
         context "and all of them are valid types" do
@@ -108,7 +136,7 @@ describe Y2Storage::VolumeSpecification do
           end
         end
 
-        context "and the volume root" do
+        context "and the volume is root" do
           let(:mount_point) { "/" }
 
           it "sets a fallback list of subvolumes" do
@@ -132,7 +160,7 @@ describe Y2Storage::VolumeSpecification do
             end
           end
 
-          context "and the volume root" do
+          context "and the volume is root" do
             let(:mount_point) { "/" }
 
             it "sets a fallback list of subvolumes" do
