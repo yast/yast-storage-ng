@@ -717,14 +717,20 @@ describe Y2Storage::ProposalSettings do
   describe "#to_s" do
     subject(:settings) { described_class.new }
 
+    before do
+      stub_partitioning_features
+    end
+
     context "when the format is :legacy" do
+      let(:initial_partitioning_features) { {} }
+
       it "generates a string representation for legacy format" do
         expect(settings.to_s).to match("(legacy)")
       end
     end
 
     context "when the format is :ng" do
-      let(:initial_partitioning_features) { { "proposal" => [], "volumes" => volumes_features } }
+      let(:initial_partitioning_features) { { "proposal" => [], "volumes" => {} } }
 
       it "generates a string representation for ng format" do
         expect(settings.to_s).to match("(ng)")

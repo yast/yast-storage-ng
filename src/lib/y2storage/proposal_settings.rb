@@ -210,6 +210,11 @@ module Y2Storage
     LVM_VG_STRATEGIES = [:use_available, :use_needed, :use_vg_size]
     private_constant :LVM_VG_STRATEGIES
 
+    def ng_format?
+      return false if partitioning_section.nil?
+      partitioning_section.key?("proposal") && partitioning_section.key?("volumes")
+    end
+
     def apply_defaults
       ng_format? ? apply_ng_defaults : apply_legacy_defaults
     end
@@ -288,11 +293,6 @@ module Y2Storage
       load_integer_feature(:btrfs_increase_percentage)
       load_feature(:btrfs_default_subvolume)
       load_subvolumes_feature(:subvolumes)
-    end
-
-    def ng_format?
-      return false if partitioning_section.nil?
-      partitioning_section.key?("proposal") && partitioning_section.key?("volumes")
     end
 
     def validated_delete_mode(mode)
