@@ -1,9 +1,9 @@
-require_relative "../test_helper"
+require_relative "../../test_helper"
 
 require "cwm/rspec"
-require "y2partitioner/widgets/md_raids_page"
+require "y2partitioner/widgets/pages"
 
-describe Y2Partitioner::Widgets::MdRaidsPage do
+describe Y2Partitioner::Widgets::Pages::MdRaids do
   subject { described_class.new(pager) }
 
   let(:pager) { double("OverviewTreePager") }
@@ -22,7 +22,7 @@ describe Y2Partitioner::Widgets::MdRaidsPage do
   end
 end
 
-describe Y2Partitioner::Widgets::MdRaidsPage::AddButton do
+describe Y2Partitioner::Widgets::Pages::MdRaids::AddButton do
   subject(:button) { described_class.new }
 
   let(:sequence) { double("AddMd") }

@@ -1,9 +1,9 @@
-require_relative "../test_helper"
+require_relative "../../test_helper"
 
 require "cwm/rspec"
-require "y2partitioner/widgets/partition_page"
+require "y2partitioner/widgets/pages"
 
-describe Y2Partitioner::Widgets::PartitionPage do
+describe Y2Partitioner::Widgets::Pages::Partition do
   let(:partition) { double("Partition", name: "/dev/hdz1", basename: "hdz1") }
 
   subject { described_class.new(partition) }

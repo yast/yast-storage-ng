@@ -1,9 +1,9 @@
-require_relative "../test_helper"
+require_relative "../../test_helper"
 
 require "cwm/rspec"
-require "y2partitioner/widgets/lvm_lv_page"
+require "y2partitioner/widgets/pages"
 
-describe Y2Partitioner::Widgets::LvmLvPage do
+describe Y2Partitioner::Widgets::Pages::LvmLv do
   let(:lvm_lv) { double("LvmLv", name: "Baggins", lv_name: "Bilbo") }
 
   subject { described_class.new(lvm_lv) }

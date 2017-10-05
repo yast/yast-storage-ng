@@ -1,9 +1,9 @@
-require_relative "../test_helper"
+require_relative "../../test_helper"
 
 require "cwm/rspec"
-require "y2partitioner/widgets/lvm_vg_page"
+require "y2partitioner/widgets/pages"
 
-describe Y2Partitioner::Widgets::LvmVgPage do
+describe Y2Partitioner::Widgets::Pages::LvmVg do
   let(:pager) { double("Pager") }
   let(:lvm_vg) { double("LvmVg", vg_name: "Hugo") }
 

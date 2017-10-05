@@ -1,5 +1,4 @@
-require "y2partitioner/widgets/md_raids_page"
-require "y2partitioner/widgets/lvm_page"
+require "y2partitioner/widgets/pages"
 
 module Y2Partitioner
   # Singleton class to keep the position of the user in the UI and other similar
@@ -110,11 +109,11 @@ module Y2Partitioner
       if device.is?(:partition)
         [device.sid, device.partitionable.sid]
       elsif device.is?(:md)
-        [device.sid, Widgets::MdRaidsPage.label]
+        [device.sid, Widgets::Pages::MdRaids.label]
       elsif device.is?(:lvm_lv)
         [device.sid, device.lvm_vg.sid]
       elsif device.is?(:lvm_vg)
-        [device.sid, Widgets::LvmPage.label]
+        [device.sid, Widgets::Pages::Lvm.label]
       else
         [device.sid]
       end

@@ -1,9 +1,9 @@
-require_relative "../test_helper"
+require_relative "../../test_helper"
 
 require "cwm/rspec"
-require "y2partitioner/widgets/md_raid_page"
+require "y2partitioner/widgets/pages"
 
-describe Y2Partitioner::Widgets::MdRaidPage do
+describe Y2Partitioner::Widgets::Pages::MdRaid do
   let(:pager) { double("Pager") }
 
   let(:md) { double("Disk", name: "mymd", basename: "md", devices: []) }
@@ -12,13 +12,13 @@ describe Y2Partitioner::Widgets::MdRaidPage do
 
   include_examples "CWM::Page"
 
-  describe Y2Partitioner::Widgets::MdTab do
+  describe Y2Partitioner::Widgets::Pages::MdTab do
     subject { described_class.new(md) }
 
     include_examples "CWM::Tab"
   end
 
-  describe Y2Partitioner::Widgets::MdUsedDevicesTab do
+  describe Y2Partitioner::Widgets::Pages::MdUsedDevicesTab do
     subject { described_class.new(md, pager) }
 
     include_examples "CWM::Tab"

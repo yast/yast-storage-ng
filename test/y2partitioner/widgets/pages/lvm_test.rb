@@ -1,16 +1,16 @@
-require_relative "../test_helper"
+require_relative "../../test_helper"
 
 require "cwm/rspec"
-require "y2partitioner/widgets/system_page"
+require "y2partitioner/widgets/pages"
 
-describe Y2Partitioner::Widgets::SystemPage do
+describe Y2Partitioner::Widgets::Pages::Lvm do
   before do
-    devicegraph_stub("mixed_disks_btrfs.yml")
+    devicegraph_stub("lvm-two-vgs.yml")
   end
 
   let(:device_graph) { Y2Partitioner::DeviceGraphs.instance.current }
 
-  let(:devices) { Y2Storage::BlkDevice.all(device_graph) }
+  let(:devices) { (device_graph.lvm_vgs + device_graph.lvm_vgs.map(&:lvm_lvs)).flatten.compact }
 
   subject { described_class.new(pager) }
 
@@ -21,8 +21,8 @@ describe Y2Partitioner::Widgets::SystemPage do
   describe "#contents" do
     let(:widgets) { Yast::CWM.widgets_in_contents([subject]) }
 
-    it "shows a table with all devices" do
-      table = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::BlkDevicesTable) }
+    it "shows a table with the vgs devices and their lvs" do
+      table = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::LvmDevicesTable) }
 
       expect(table).to_not be_nil
 
