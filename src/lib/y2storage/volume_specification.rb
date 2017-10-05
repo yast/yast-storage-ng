@@ -28,27 +28,76 @@ module Y2Storage
   class VolumeSpecification
     include PartitioningFeatures
 
+    # @return [String] directory where the volume will be mounted in the system
     attr_accessor :mount_point
+
+    # @return [Boolean] whether this volume should be created or skipped
     attr_accessor :proposed
+
+    # @return [Boolean] whether the user can change the proposed setting in the UI
     attr_accessor :proposed_configurable
+
+    # @return [List<Filesystems::Type>] acceptable filesystem types
     attr_accessor :fs_types
+
+    # @return [Filesystems::Type] default file system type to format the volume
     attr_accessor :fs_type
+
+    # @return [DiskSize] initial size to use in the first proposal attempt
     attr_accessor :desired_size
+
+    # @return [DiskSize] initial size to use in the first proposal attempt
     attr_accessor :min_size
+
+    # @return [DiskSize] initial size to use in the second proposal attempt
     attr_accessor :max_size
+
+    # @return [DiskSize] when LVM is used, this option can be used to override
+    #   the value at max_size
     attr_accessor :max_size_lvm
+
+    # @return [Numeric] value used to distribute the extra space (after assigning
+    #   the initial ones) among the volumes
     attr_accessor :weight
+
+    # @return [Boolean] whether the initial and max sizes of each attempt should be
+    #   adjusted based in the RAM size
     attr_accessor :adjust_by_ram
+
+    # @return [Boolean] whether the user can change the adjust_by_ram setting in the UI
     attr_accessor :adjust_by_ram_configurable
+
+    # @return [String] mount point of another volume
     attr_accessor :fallback_for_min_size
+
+    # @return [String] mount point of another volume
     attr_accessor :fallback_for_max_size
+
+    # @return [String] mount point of another volume
     attr_accessor :fallback_for_max_size_lvm
+
+    # @return [String] mount point of another volume
     attr_accessor :fallback_for_weight
+
+    # @return [Boolean] whether snapshots should be activated
     attr_accessor :snapshots
+
+    # @return [Boolean] whether the user can change the snapshots setting in the UI
     attr_accessor :snapshots_configurable
+
+    # @return [DiskSize] the initial and maximum sizes for the volume will be
+    #   increased according if snapshots are being used. If it's a number, it
+    #   will be used as a percentage of the original sizes.
     attr_accessor :snapshots_size
+
+    # @return [Array<SubvolSpecification>] list of specifications (usually read
+    #   from the control file) that will be used to plan the Btrfs subvolumes
     attr_accessor :subvolumes
+
+    # @return [String] default btrfs subvolume path
     attr_accessor :btrfs_default_subvolume
+
+    # @return [Numeric] order to disable volumes if needed to make the initial proposal
     attr_accessor :disable_order
 
     alias_method :proposed?, :proposed

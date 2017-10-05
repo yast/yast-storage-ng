@@ -29,11 +29,11 @@ describe Y2Storage::ProposalSettings do
 
   using Y2Storage::Refinements::SizeCasts
 
-  # All test are using ProposalSettings#new_for_current_product to initialize
+  # Other test are using ProposalSettings#new_for_current_product to initialize
   # the settings. That method sets some default values when there is not
   # imported features (i.e., when control.xml is not found).
   #
-  # Due to the tests rely on new settings with default values, it is necessary
+  # Due to the tests rely on settings with pristine default values, it is necessary
   # to reset the product features to not interfer in other tests.
   after(:all) do
     Yast::ProductFeatures.Import({})

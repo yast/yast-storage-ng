@@ -1,5 +1,3 @@
-#!/usr/bin/env ruby
-#
 # encoding: utf-8
 
 # Copyright (c) [2015] SUSE LLC
@@ -30,49 +28,107 @@ require "y2storage/filesystems/type"
 require "y2storage/partitioning_features"
 
 module Y2Storage
+  # Class to manage settings used by the proposal (typically read from control.xml)
   #
-  # User-configurable settings for the storage proposal.
-  # Those are settings the user can change in the UI.
-  #
+  # When a new object is created, all settings are nil or [] in case of a list is
+  # expected. See {#for_current_product} to initialize settings with some values.
   class ProposalSettings
     include SecretAttributes
     include PartitioningFeatures
 
+    # @note :legacy format
     # @return [Boolean] whether to use LVM
     attr_accessor :use_lvm
 
+    # @note :legacy format
     # @return [Filesystems::Type] type to use for the root filesystem
     attr_accessor :root_filesystem_type
-    #
+
+    # @note :legacy format
     # @return [Boolean] whether to enable snapshots (only if Btrfs is used)
     attr_accessor :use_snapshots
 
+    # @note :legacy format
     # @return [Boolean] whether to propose separate partition/volume for /home
     attr_accessor :use_separate_home
 
+    # @note :legacy format
     # @return [Filesystems::Type] type to use for the home filesystem, if a
     #   separate one is proposed
     attr_accessor :home_filesystem_type
 
+    # @note :legacy format
     # @return [Boolean] whether to enlarge swap based on the RAM size, to ensure
     #   the classic suspend-to-ram works
     attr_accessor :enlarge_swap_for_suspend
 
+    # @note :legacy format
     # @return [String] device name of the disk in which / must be placed. If set
     #   to nil, the proposal will try to find a good candidate
     attr_accessor :root_device
 
+    # @note :legacy format
+    # @return [Boolean] whether to resize Windows systems if needed
+    attr_accessor :resize_windows
+
+    # @note :legacy format
+    # @return [DiskSize] root size used when calculating the :min size for
+    #   the proposal.
+    attr_accessor :root_base_size
+
+    # @note :legacy format
+    # @return [DiskSize] root size used when calculating the :desired size for
+    #   the proposal.
+    attr_accessor :root_max_size
+
+    # @note :legacy format
+    # @return [Numeric] used to adjust size when distributing extra space
+    attr_accessor :root_space_percent
+
+    # @note :legacy format
+    # @return [Numeric] used to adjust size when using snapshots
+    attr_accessor :btrfs_increase_percentage
+
+    # @note :legacy format
+    # @return [DiskSize] min disk size to allow a separate home
+    attr_accessor :min_size_to_use_separate_home
+
+    # @note :legacy format
+    # @return [String] default btrfs subvolume path
+    attr_accessor :btrfs_default_subvolume
+
+    # @note :legacy format
+    # @return [Boolean]
+    attr_accessor :root_subvolume_read_only
+
+    # @note :legacy format
+    # @return [DiskSize] home size used when calculating the :min size for
+    #   the proposal. If space is tight, {root_base_size} is used instead.
+    #   See also {Y2Storage::DevicesPlannerStrategies::Legacy#home_device}.
+    attr_accessor :home_min_size
+
+    # @note :legacy format
+    # @return [DiskSize] home size used when calculating the :desired size for
+    #   the proposal
+    attr_accessor :home_max_size
+
+    # @note :legacy format
+    # @return [Array<SubvolSpecification>] list of specifications (usually read
+    #   from the control file) that will be used to plan the Btrfs subvolumes of
+    #   the root filesystem
+    attr_accessor :subvolumes
+
+    # @note :legacy and :ng formats
     # @return [Array<String>] device names of the disks that can be used for the
     #   installation. If nil, the proposal will try find suitable devices
     attr_accessor :candidate_devices
 
     # @!attribute encryption_password
+    #   @note :legacy and :ng formats
     #   @return [String] password to use when creating new encryption devices
-    secret_attr   :encryption_password
+    secret_attr :encryption_password
 
-    # @return [Boolean] whether to resize Windows systems if needed
-    attr_accessor :resize_windows
-
+    # @note :legacy and :ng formats
     # @return [Symbol] what to do regarding removal of existing partitions
     #   hosting a Windows system.
     #
@@ -83,39 +139,38 @@ module Y2Storage
     #   @raise ArgumentError if any other value is assigned
     attr_reader :windows_delete_mode
 
+    # @note :legacy and :ng formats
     # @return [Symbol] what to do regarding removal of existing Linux
     #   partitions. See {DiskAnalyzer} for the definition of "Linux partitions".
     #   @see #windows_delete_mode for the possible values and exceptions
     attr_reader :linux_delete_mode
 
+    # @note :legacy and :ng formats
     # @return [Symbol] what to do regarding removal of existing partitions that
     #   don't fit in #windows_delete_mode or #linux_delete_mode.
     #   @see #windows_delete_mode for the possible values and exceptions
     attr_reader :other_delete_mode
 
-    attr_accessor :root_base_size
-    attr_accessor :root_max_size
-    attr_accessor :root_space_percent
-    attr_accessor :btrfs_increase_percentage
-    attr_accessor :min_size_to_use_separate_home
-    attr_accessor :btrfs_default_subvolume
-    attr_accessor :root_subvolume_read_only
-
-    # Not yet in control.xml
+    # @note :ng format
+    # @return [Symbol] if the user decides to use LVM, strategy to decide the size
+    #   of the volume group (and, thus, the number and size of created physical volumes).
     #
-    # @home_min_size is only used when calculating the :desired size for
-    # the proposal. If space is tight (i.e. using :min), @root_base_size is
-    # used instead. See also DevicesPlanner::home_device.
-    attr_accessor :home_min_size
-    attr_accessor :home_max_size
-
-    # @return [Array<SubvolSpecification>] list of specifications (usually read
-    #   from the control file) that will be used to plan the Btrfs subvolumes of
-    #   the root filesystem
-    attr_accessor :subvolumes
-
+    #   * :use_available The VG will be created to use all the available space, thus the
+    #     VG size could be greater than the sum of LVs sizes.
+    #   * use_needed: The created VG will match the requirements 1:1, so its size will be
+    #     exactly the sum of all the LVs sizes.
+    #   * use_vg_size: The VG will have a predefined size, that could be greater than the
+    #     LVs sizes.
     attr_reader   :lvm_vg_strategy
+
+    # @note :ng format
+    # @return [DiskSize] if :use_vg_size is specified in the previous option, this will
+    #   specify the predefined size of the LVM volume group.
     attr_accessor :lvm_vg_size
+
+    # @note :ng format
+    # @return [Array<VolumeSpecification>] list of volumes specifications used during
+    #   the proposal
     attr_accessor :volumes
 
     alias_method :lvm, :use_lvm
@@ -124,9 +179,7 @@ module Y2Storage
     LEGACY_FORMAT = :legacy
     NG_FORMAT = :ng
 
-    # New object initialized according to the YaST product features
-    # (i.e. /control.xml)
-    #
+    # New object initialized according to the YaST product features (i.e. /control.xml)
     # @return [ProposalSettings]
     def self.new_for_current_product
       settings = new
@@ -134,15 +187,24 @@ module Y2Storage
       settings
     end
 
+    # Set settings according to the current product
     def for_current_product
       apply_defaults
       load_features
     end
 
+    # Current format used in control file
+    #
+    # Format is considered :ng only if subsections 'proposal' and 'volumes' are
+    # present in the 'partitioning' section.
+    #
+    # @return [Symbol] :ng or :legacy
     def format
       ng_format? ? NG_FORMAT : LEGACY_FORMAT
     end
 
+    # Whether encryption must be used
+    # @return [Boolean]
     def use_encryption
       !encryption_password.nil?
     end
@@ -215,10 +277,16 @@ module Y2Storage
       partitioning_section.key?("proposal") && partitioning_section.key?("volumes")
     end
 
+    # Sets default values for the settings.
+    # These will be the final values when the setting is not specified in the control file
     def apply_defaults
       ng_format? ? apply_ng_defaults : apply_legacy_defaults
     end
 
+    # Overrides the settings with values read from the YaST product features
+    # (i.e. values in /control.xml).
+    #
+    # Settings omitted in the product features are not modified.
     def load_features
       ng_format? ? load_ng_features : load_legacy_features
     end
@@ -272,13 +340,6 @@ module Y2Storage
       self.home_max_size                 ||= Y2Storage::DiskSize.unlimited
     end
 
-    # Overrides all the settings with values read from the YaST product features
-    # (i.e. values in /control.xml).
-    #
-    # Settings omitted in the product features are not modified. For backwards
-    # compatibility reasons, features with a value of zero are also ignored.
-    #
-    # Calling this method modifies the object
     def load_legacy_features
       load_feature(:proposal_lvm, to: :use_lvm)
       load_feature(:try_separate_home, to: :use_separate_home)

@@ -24,15 +24,45 @@ require "yast"
 Yast.import "ProductFeatures"
 
 module Y2Storage
-  # Mixin that enables a class to define attributes that are never exposed via
-  #   #inspect, #to_s or similar methods, with the goal of preventing
-  #   unintentional leaks of sensitive information in the application logs.
+  # Mixin that allows to load features from partitioning section of control file
   module PartitioningFeatures
+    # Assign the value of a specific feature into an object attribute.
+    # @param feature [List<Symbol, String>] feature path (e.g., [:proposal, :lvm])
+    # @param to [Symbol, String] attribute name where to store the feature value
+    # @param source [Hash] from where to read the features
+    #
+    # @example
+    #   settings.use_lvm #=> nil
+    #   settings.load_feature(:proposal_lvm, to: :use_lvm)
+    #   settings.use_lvm #=> false
+    #
+    # When :to parameter is not indicated, the last value of feature path is considered
+    # the attribute name:
+    #
+    # @example
+    #   settings.lvm #=> nil
+    #   settings.load_feature(:proposal, :lvm)
+    #   settings.lvm #=> false
+    #
+    # When the feature needs to be loaded from a specific subsection, the subsection can
+    # be passed as :source parameter:
+    #
+    # @example
+    #   settings.lvm #=> nil
+    #   settings.load_feature(:lvm, source: {lvm: true})
+    #   settings.lvm #=> true
+    #
     def load_feature(*feature, to: nil, source: partitioning_section)
       value = feature(*feature, source: source)
       set_feature(*feature, to, value)
     end
 
+    # Assign an integer feature (see {#load_feature})
+    # For backwards compatibility reasons, features with a value of zero are ignored.
+    #
+    # @param feature [List<Symbol, String>] feature path (e.g., [:proposal, :lvm])
+    # @param to [Symbol, String] attribute name where to store the feature value
+    # @param source [Hash] from where to read the features
     def load_integer_feature(*feature, to: nil, source: partitioning_section)
       value = feature(*feature, source: source)
       return nil if value.nil?
@@ -41,6 +71,12 @@ module Y2Storage
       set_feature(*feature, to, value) if value >= 0
     end
 
+    # Assing a size feature (see {#load_feature})
+    # The feature value is converted to a {DiskSize}.
+    #
+    # @param feature [List<Symbol, String>] feature path (e.g., [:proposal, :lvm])
+    # @param to [Symbol, String] attribute name where to store the feature value
+    # @param source [Hash] from where to read the features
     def load_size_feature(*feature, to: nil, source: partitioning_section)
       value = feature(*feature, source: source)
       return nil if value.nil?
@@ -53,14 +89,24 @@ module Y2Storage
       set_feature(*feature, to, value) if value && value > DiskSize.zero
     end
 
-    # Reads the "subvolumes" section of control.xml
-    # @see SubvolSpecification.from_control_file
+    # Assing subvolumes from "subvolumes" section (see {#load_feature})
+    # The list of subvolumes is converted to a list of {SubvolSpecification}
+    #
+    # @param feature [List<Symbol, String>] feature path (e.g., [:proposal, :lvm])
+    # @param to [Symbol, String] attribute name where to store the feature value
+    # @param source [Hash] from where to read the features
     def load_subvolumes_feature(*feature, to: nil, source: partitioning_section)
       value = feature(*feature, source: source)
       value = SubvolSpecification.list_from_control_xml(value)
       set_feature(*feature, to, value) if value
     end
 
+    # Assing volumes from "volumes" section (see {#load_feature})
+    # The list of volumes is converted to a list of {VolumeSpecification}
+    #
+    # @param feature [List<Symbol, String>] feature path (e.g., [:proposal, :lvm])
+    # @param to [Symbol, String] attribute name where to store the feature value
+    # @param source [Hash] from where to read the features
     def load_volumes_feature(*feature, to: nil, source: partitioning_section)
       value = feature(*feature, source: source)
       return nil if value.nil?
@@ -69,6 +115,10 @@ module Y2Storage
       set_feature(*feature, to, value)
     end
 
+    # Read a feature and returns the raw value
+    #
+    # @param feature [List<Symbol, String>] feature path (e.g., [:proposal, :lvm])
+    # @param source [Hash] from where to read the features
     def feature(*feature, source: partitioning_section)
       feature = feature.map(&:to_s)
       Yast::Ops.get(source, feature)
