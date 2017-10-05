@@ -1,11 +1,13 @@
 require "yast"
 require "cwm/dialog"
 require "y2partitioner/device_graphs"
+require "y2partitioner/ui_state"
 require "y2partitioner/widgets/overview"
 
 Yast.import "Label"
 Yast.import "Mode"
 Yast.import "Popup"
+Yast.import "Hostname"
 
 module Y2Partitioner
   module Dialogs
@@ -26,7 +28,7 @@ module Y2Partitioner
         MarginBox(
           0.5,
           0.5,
-          Widgets::OverviewTreePager.new
+          Widgets::OverviewTreePager.new(hostname)
         )
       end
 
@@ -50,6 +52,7 @@ module Y2Partitioner
       # @return [Symbol] result of dialog
       def run(system, initial)
         DeviceGraphs.create_instance(system, initial)
+        UIState.create_instance
         res = nil
         loop do
           res = super()
@@ -64,6 +67,18 @@ module Y2Partitioner
         @device_graph = DeviceGraphs.instance.current
 
         res
+      end
+
+    protected
+
+      # Hostname of the current system.
+      #
+      # Getting the hostname is sometimes a little bit slow, so the value is
+      # cached to be reused in every dialog redraw
+      #
+      # @return [String]
+      def hostname
+        @hostname ||= Yast::Hostname.CurrentHostname
       end
     end
   end

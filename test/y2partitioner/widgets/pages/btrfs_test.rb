@@ -1,9 +1,9 @@
-require_relative "../test_helper"
+require_relative "../../test_helper"
 
 require "cwm/rspec"
-require "y2partitioner/widgets/btrfs_page"
+require "y2partitioner/widgets/pages"
 
-describe Y2Partitioner::Widgets::BtrfsPage do
+describe Y2Partitioner::Widgets::Pages::Btrfs do
   before do
     devicegraph_stub("mixed_disks_btrfs.yml")
   end

@@ -1,4 +1,14 @@
 -------------------------------------------------------------------
+Thu Oct  5 14:38:22 UTC 2017 - ancor@suse.com
+
+- Partitioner: don't return to the summary screen after each
+  operation.
+- Partitioner: speedup the refresh time after each operation (by
+  not querying the hostname again).
+- Both part of fate#318196.
+- 3.3.26
+
+-------------------------------------------------------------------
 Wed Oct  4 17:28:24 CEST 2017 - shundhammer@suse.de
 
 - Added disk.desktop file for partitioner (bsc#1059528)

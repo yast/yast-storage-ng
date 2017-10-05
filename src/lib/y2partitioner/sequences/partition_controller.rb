@@ -22,6 +22,7 @@
 require "yast"
 require "y2storage"
 require "y2partitioner/device_graphs"
+require "y2partitioner/ui_state"
 
 module Y2Partitioner
   module Sequences
@@ -83,6 +84,7 @@ module Y2Partitioner
         ptable = disk.ensure_partition_table
         slot = ptable.unused_slot_for(region)
         @partition = ptable.create_partition(slot.name, region, type)
+        UIState.instance.select_row(@partition)
       end
 
       # Removes the previously created partition from the disk

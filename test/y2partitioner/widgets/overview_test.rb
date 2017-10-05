@@ -10,7 +10,7 @@ describe Y2Partitioner::Widgets::OverviewTreePager do
     system = smanager.probed
     current = smanager.staging
     Y2Partitioner::DeviceGraphs.create_instance(system, current)
-    described_class.new
+    described_class.new("hostname")
   end
 
   include_examples "CWM::Pager"

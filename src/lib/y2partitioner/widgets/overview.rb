@@ -2,16 +2,8 @@ require "cwm/widget"
 require "cwm/tree"
 require "y2partitioner/icons"
 require "y2partitioner/device_graphs"
-require "y2partitioner/widgets/system_page"
-require "y2partitioner/widgets/disks_page"
-require "y2partitioner/widgets/disk_page"
-require "y2partitioner/widgets/partition_page"
-require "y2partitioner/widgets/md_raids_page"
-require "y2partitioner/widgets/md_raid_page"
-require "y2partitioner/widgets/lvm_page"
-require "y2partitioner/widgets/lvm_vg_page"
-require "y2partitioner/widgets/lvm_lv_page"
-require "y2partitioner/widgets/btrfs_page"
+require "y2partitioner/ui_state"
+require "y2partitioner/widgets/pages"
 
 module Y2Partitioner
   module Widgets
@@ -47,9 +39,13 @@ module Y2Partitioner
     #
     # It has replace point where it displays more details about selected element in partitioning.
     class OverviewTreePager < CWM::TreePager
-      def initialize
+      # Constructor
+      #
+      # @param [String] hostname of the system
+      def initialize(hostname)
         textdomain "storage"
 
+        @hostname = hostname
         super(OverviewTree.new(items))
       end
 
@@ -66,14 +62,29 @@ module Y2Partitioner
         ]
       end
 
+      # Overrides default behavior of TreePager to register the new state with
+      # {UIState} before jumping to the tree node
+      def switch_page(page)
+        UIState.instance.go_to_tree_node(page)
+        super
+      end
+
+      # Ensures the tree is properly initialized according to {UIState} after
+      # a redraw.
+      def initial_page
+        UIState.instance.find_tree_node(@pages) || super
+      end
+
     private
+
+      attr_reader :hostname
 
       def device_graph
         DeviceGraphs.instance.current
       end
 
       def system_items
-        page = SystemPage.new(self)
+        page = Pages::System.new(hostname, self)
         children = [
           disks_items,
           raids_items,
@@ -89,47 +100,47 @@ module Y2Partitioner
       end
 
       def disks_items
-        page = DisksPage.new(self)
+        page = Pages::Disks.new(self)
         children = device_graph.disks.map { |d| disk_items(d) }
         CWM::PagerTreeItem.new(page, children: children, icon: Icons::HD)
       end
 
       def disk_items(disk)
-        page = DiskPage.new(disk, self)
+        page = Pages::Disk.new(disk, self)
         children = disk.partitions.map { |p| partition_items(p) }
         CWM::PagerTreeItem.new(page, children: children)
       end
 
       def partition_items(partition)
-        page = PartitionPage.new(partition)
+        page = Pages::Partition.new(partition)
         CWM::PagerTreeItem.new(page)
       end
 
       def raids_items
-        page = MdRaidsPage.new(self)
+        page = Pages::MdRaids.new(self)
         children = Y2Storage::Md.all(device_graph).map { |m| raid_items(m) }
         CWM::PagerTreeItem.new(page, children: children, icon: Icons::RAID)
       end
 
       def raid_items(md)
-        page = MdRaidPage.new(md, self)
+        page = Pages::MdRaid.new(md, self)
         CWM::PagerTreeItem.new(page)
       end
 
       def lvm_items
-        page = LvmPage.new(self)
+        page = Pages::Lvm.new(self)
         children = device_graph.lvm_vgs.map { |v| lvm_vg_items(v) }
         CWM::PagerTreeItem.new(page, children: children, icon: Icons::LVM)
       end
 
       def lvm_vg_items(vg)
-        page = LvmVgPage.new(vg, self)
+        page = Pages::LvmVg.new(vg, self)
         children = vg.lvm_lvs.map { |l| lvm_lv_items(l) }
         CWM::PagerTreeItem.new(page, children: children)
       end
 
       def lvm_lv_items(lv)
-        page = LvmLvPage.new(lv)
+        page = Pages::LvmLv.new(lv)
         CWM::PagerTreeItem.new(page)
       end
 
@@ -148,7 +159,7 @@ module Y2Partitioner
       end
 
       def btrfs_items
-        page = BtrfsPage.new(self)
+        page = Pages::Btrfs.new(self)
         CWM::PagerTreeItem.new(page, icon: Icons::BTRFS)
       end
 
