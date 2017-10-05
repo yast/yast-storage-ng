@@ -3,7 +3,7 @@ Type=Application
 Categories=Settings;System;Qt;X-SuSE-YaST;X-SuSE-YaST-System;
 
 X-KDE-HasReadOnlyMode=true
-X-SuSE-YaST-Call=disk
+X-SuSE-YaST-Call=partitioner
 
 X-SuSE-YaST-Group=System
 X-SuSE-YaST-Argument=
