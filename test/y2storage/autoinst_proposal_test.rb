@@ -240,7 +240,7 @@ describe Y2Storage::AutoinstProposal do
       end
 
       let(:settings) do
-        Y2Storage::ProposalSettings.new.tap do |settings|
+        Y2Storage::ProposalSettings.new_for_current_product.tap do |settings|
           settings.use_lvm = false
           settings.use_separate_home = true
         end

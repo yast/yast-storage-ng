@@ -58,7 +58,7 @@ RSpec.shared_context "proposal" do
   let(:encrypt) { false }
   let(:test_with_subvolumes) { false }
   let(:settings) do
-    settings = Y2Storage::ProposalSettings.new
+    settings = Y2Storage::ProposalSettings.new_for_current_product
     settings.use_separate_home = separate_home
     settings.use_lvm = lvm
     settings.encryption_password = encrypt ? "12345678" : nil

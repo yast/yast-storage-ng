@@ -82,7 +82,7 @@ describe Y2Storage::Dialogs::GuidedSetup do
 
   subject { described_class.new(settings, analyzer) }
 
-  let(:settings) { Y2Storage::ProposalSettings.new }
+  let(:settings) { Y2Storage::ProposalSettings.new_for_current_product }
   let(:analyzer) { instance_double(Y2Storage::DiskAnalyzer) }
 
   describe "#run" do
