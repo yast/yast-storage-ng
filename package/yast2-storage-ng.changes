@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Fri Oct  6 07:11:35 UTC 2017 - jlopez@suse.com
+
+- Added support for reading new format of proposal settings.
+- Part of fate#318196.
+- 3.3.27
+
+-------------------------------------------------------------------
 Thu Oct  5 14:38:22 UTC 2017 - ancor@suse.com
 
 - Partitioner: don't return to the summary screen after each
