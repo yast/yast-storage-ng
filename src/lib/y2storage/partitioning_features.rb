@@ -44,8 +44,9 @@ module Y2Storage
     #   settings.load_feature(:proposal, :lvm)
     #   settings.lvm #=> false
     #
-    # When the feature needs to be loaded from a specific subsection, the subsection can
-    # be passed as :source parameter:
+    # By default, the feature is loaded from the content of the <partitioning> section of
+    # the product features. The argument :source can be used to provide the content of any
+    # other section or subsection:
     #
     # @example
     #   settings.lvm #=> nil
