@@ -49,48 +49,6 @@ describe Y2Storage::ProposalSettings do
 
   let(:initial_partitioning_features) { {} }
 
-  describe "#format" do
-    context "when 'partitioning' section does not exist" do
-      before do
-        stub_features("another_section" => { "value" => true })
-      end
-
-      it "returns :legacy" do
-        expect(subject.format).to eq(Y2Storage::ProposalSettings::LEGACY_FORMAT)
-      end
-    end
-
-    context "when 'partitioning' section exists" do
-      before do
-        stub_partitioning_features(features)
-      end
-
-      context "and 'proposal' subsection does not exist" do
-        let(:features) { { "volumes" => [] } }
-
-        it "returns :legacy" do
-          expect(subject.format).to eq(Y2Storage::ProposalSettings::LEGACY_FORMAT)
-        end
-      end
-
-      context "and 'volumes' subsection does not exist" do
-        let(:features) { { "proposal" => {} } }
-
-        it "returns :legacy" do
-          expect(subject.format).to eq(Y2Storage::ProposalSettings::LEGACY_FORMAT)
-        end
-      end
-
-      context "and 'proposal' and 'volumes' subsections exist" do
-        let(:features) { { "proposal" => {}, "volumes" => [] } }
-
-        it "returns :ng" do
-          expect(subject.format).to eq(Y2Storage::ProposalSettings::NG_FORMAT)
-        end
-      end
-    end
-  end
-
   describe "#for_current_product" do
     subject(:settings) { described_class.new }
 
@@ -100,6 +58,11 @@ describe Y2Storage::ProposalSettings do
 
         settings.use_lvm = true
         settings.root_base_size = 45.GiB
+      end
+
+      it "sets format to :legacy" do
+        settings.for_current_product
+        expect(settings.format).to eq(Y2Storage::ProposalSettings::LEGACY_FORMAT)
       end
 
       it "does not modify initalized settings" do
@@ -244,12 +207,18 @@ describe Y2Storage::ProposalSettings do
       end
     end
 
-    context "when the format is :legacy" do
+    context "when the 'partitioning' section has legacy format" do
       let(:initial_partitioning_features) { {} }
 
       def read_feature(feature, value)
         stub_partitioning_features(feature => value)
         settings.for_current_product
+      end
+
+      it "sets format to :legacy" do
+        stub_partitioning_features
+        settings.for_current_product
+        expect(settings.format).to eq(Y2Storage::ProposalSettings::LEGACY_FORMAT)
       end
 
       it "sets 'use_lvm' based on the feature 'proposal_lvm'" do
@@ -278,13 +247,6 @@ describe Y2Storage::ProposalSettings do
         expect(settings.use_snapshots).to eq true
         read_feature("proposal_snapshots", false)
         expect(settings.use_snapshots).to eq false
-      end
-
-      it "sets 'root_subvolume_read_only' based on the feature 'root_subvolume_read_only'" do
-        read_feature("root_subvolume_read_only", true)
-        expect(settings.root_subvolume_read_only).to eq true
-        read_feature("root_subvolume_read_only", false)
-        expect(settings.root_subvolume_read_only).to eq false
       end
 
       it "sets 'root_base_size' based on the feature 'root_base_size'" do
@@ -516,7 +478,7 @@ describe Y2Storage::ProposalSettings do
       end
     end
 
-    context "when the format is :ng" do
+    context "when the partitioning section has :ng format" do
       let(:initial_partitioning_features) do
         { "proposal" => proposal_features, "volumes" => volumes_features }
       end
@@ -528,6 +490,12 @@ describe Y2Storage::ProposalSettings do
       def read_feature(feature, value)
         stub_partitioning_features("proposal" => { feature => value })
         settings.for_current_product
+      end
+
+      it "sets format to :ng" do
+        stub_partitioning_features
+        settings.for_current_product
+        expect(settings.format).to eq(Y2Storage::ProposalSettings::NG_FORMAT)
       end
 
       it "sets 'lvm' based on the feature in the 'proposal' section" do
@@ -715,7 +683,7 @@ describe Y2Storage::ProposalSettings do
   end
 
   describe "#to_s" do
-    subject(:settings) { described_class.new }
+    subject(:settings) { described_class.new_for_current_product }
 
     before do
       stub_partitioning_features

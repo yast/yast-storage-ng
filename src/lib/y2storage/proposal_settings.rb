@@ -63,22 +63,13 @@ module Y2Storage
     attr_accessor :enlarge_swap_for_suspend
 
     # @note :legacy format
-    # @return [String] device name of the disk in which / must be placed. If set
-    #   to nil, the proposal will try to find a good candidate
-    attr_accessor :root_device
-
-    # @note :legacy format
-    # @return [Boolean] whether to resize Windows systems if needed
-    attr_accessor :resize_windows
-
-    # @note :legacy format
     # @return [DiskSize] root size used when calculating the :min size for
     #   the proposal.
     attr_accessor :root_base_size
 
     # @note :legacy format
-    # @return [DiskSize] root size used when calculating the :desired size for
-    #   the proposal.
+    # @return [DiskSize] maximum allowed size for root. This size is also used as
+    #   base size when calculating the :desired size for the proposal.
     attr_accessor :root_max_size
 
     # @note :legacy format
@@ -98,18 +89,14 @@ module Y2Storage
     attr_accessor :btrfs_default_subvolume
 
     # @note :legacy format
-    # @return [Boolean]
-    attr_accessor :root_subvolume_read_only
-
-    # @note :legacy format
     # @return [DiskSize] home size used when calculating the :min size for
     #   the proposal. If space is tight, {root_base_size} is used instead.
     #   See also {Y2Storage::DevicesPlannerStrategies::Legacy#home_device}.
     attr_accessor :home_min_size
 
     # @note :legacy format
-    # @return [DiskSize] home size used when calculating the :desired size for
-    #   the proposal
+    # @return [DiskSize] maximum allowed size for home. This size is also used as
+    #   base size when calculating the :desired size for the proposal.
     attr_accessor :home_max_size
 
     # @note :legacy format
@@ -117,6 +104,15 @@ module Y2Storage
     #   from the control file) that will be used to plan the Btrfs subvolumes of
     #   the root filesystem
     attr_accessor :subvolumes
+
+    # @note :legacy and :ng formats
+    # @return [String] device name of the disk in which / must be placed. If set
+    #   to nil, the proposal will try to find a good candidate
+    attr_accessor :root_device
+
+    # @note :legacy and :ng formats
+    # @return [Boolean] whether to resize Windows systems if needed
+    attr_accessor :resize_windows
 
     # @note :legacy and :ng formats
     # @return [Array<String>] device names of the disks that can be used for the
@@ -128,15 +124,19 @@ module Y2Storage
     #   @return [String] password to use when creating new encryption devices
     secret_attr :encryption_password
 
+    # What to do regarding removal of existing partitions hosting a Windows system.
+    #
+    # Options:
+    #
+    # * :none Never delete a Windows partition.
+    # * :ondemand Delete Windows partitions as needed by the proposal.
+    # * :all Delete all Windows partitions, even if not needed.
+    #
     # @note :legacy and :ng formats
-    # @return [Symbol] what to do regarding removal of existing partitions
-    #   hosting a Windows system.
     #
-    #   * :none Never delete a Windows partition.
-    #   * :ondemand Delete Windows partitions as needed by the proposal.
-    #   * :all Delete all Windows partitions, even if not needed.
+    # @raise ArgumentError if any other value is assigned
     #
-    #   @raise ArgumentError if any other value is assigned
+    # @return [Symbol]
     attr_reader :windows_delete_mode
 
     # @note :legacy and :ng formats
@@ -151,17 +151,22 @@ module Y2Storage
     #   @see #windows_delete_mode for the possible values and exceptions
     attr_reader :other_delete_mode
 
-    # @note :ng format
-    # @return [Symbol] if the user decides to use LVM, strategy to decide the size
-    #   of the volume group (and, thus, the number and size of created physical volumes).
+    # When the user decides to use LVM, strategy to decide the size of the volume
+    # group (and, thus, the number and size of created physical volumes).
     #
-    #   * :use_available The VG will be created to use all the available space, thus the
-    #     VG size could be greater than the sum of LVs sizes.
-    #   * use_needed: The created VG will match the requirements 1:1, so its size will be
-    #     exactly the sum of all the LVs sizes.
-    #   * use_vg_size: The VG will have a predefined size, that could be greater than the
-    #     LVs sizes.
-    attr_reader   :lvm_vg_strategy
+    # Options:
+    #
+    # * :use_available The VG will be created to use all the available space, thus the
+    #   VG size could be greater than the sum of LVs sizes.
+    # * :use_needed The created VG will match the requirements 1:1, so its size will be
+    #   exactly the sum of all the LVs sizes.
+    # * :use_vg_size The VG will have a predefined size, that could be greater than the
+    #   LVs sizes.
+    #
+    # @note :ng format
+    #
+    # @return [Symbol] :use_available, :used_needed or :use_vg_size
+    attr_reader :lvm_vg_strategy
 
     # @note :ng format
     # @return [DiskSize] if :use_vg_size is specified in the previous option, this will
@@ -172,6 +177,10 @@ module Y2Storage
     # @return [Array<VolumeSpecification>] list of volumes specifications used during
     #   the proposal
     attr_accessor :volumes
+
+    # Format of <partitioning> section
+    # @return [Symbol] :legacy, :ng
+    attr_reader :format
 
     alias_method :lvm, :use_lvm
     alias_method :lvm=, :use_lvm=
@@ -189,18 +198,9 @@ module Y2Storage
 
     # Set settings according to the current product
     def for_current_product
+      @format = features_format
       apply_defaults
       load_features
-    end
-
-    # Current format used in control file
-    #
-    # Format is considered :ng only if subsections 'proposal' and 'volumes' are
-    # present in the 'partitioning' section.
-    #
-    # @return [Symbol] :ng or :legacy
-    def format
-      ng_format? ? NG_FORMAT : LEGACY_FORMAT
     end
 
     # Whether encryption must be used
@@ -272,9 +272,23 @@ module Y2Storage
     LVM_VG_STRATEGIES = [:use_available, :use_needed, :use_vg_size]
     private_constant :LVM_VG_STRATEGIES
 
+    # Format used in control file
+    #
+    # Format is considered :ng only if subsections <proposal> and <volumes> are
+    # present in the 'partitioning' section.
+    #
+    # @note When there is no <partitioning> section, legacy format is considered.
+    #
+    # @return [Symbol, nil] :ng or :legacy
+    def features_format
+      return LEGACY_FORMAT if partitioning_section.nil?
+
+      has_ng_subsections = partitioning_section.key?("proposal") && partitioning_section.key?("volumes")
+      has_ng_subsections ? NG_FORMAT : LEGACY_FORMAT
+    end
+
     def ng_format?
-      return false if partitioning_section.nil?
-      partitioning_section.key?("proposal") && partitioning_section.key?("volumes")
+      format == NG_FORMAT
     end
 
     # Sets default values for the settings.
@@ -291,16 +305,21 @@ module Y2Storage
       ng_format? ? load_ng_features : load_legacy_features
     end
 
+    # FIXME: Improve implementation. Use composition to encapsulate logic for
+    # ng and legacy formats
     def apply_ng_defaults
-      self.lvm                           ||= false
-      self.resize_windows                ||= true
-      self.windows_delete_mode           ||= :ondemand
-      self.linux_delete_mode             ||= :ondemand
-      self.other_delete_mode             ||= :ondemand
-      self.lvm_vg_strategy               ||= :use_needed
-      self.volumes                       ||= []
+      self.lvm                 ||= false
+      self.resize_windows      ||= true
+      # TODO: once other strategies are available, change default value (:use_available)
+      self.windows_delete_mode ||= :ondemand
+      self.linux_delete_mode   ||= :ondemand
+      self.other_delete_mode   ||= :ondemand
+      self.lvm_vg_strategy     ||= :use_needed
+      self.volumes             ||= []
     end
 
+    # FIXME: Improve implementation. Use composition to encapsulate logic for
+    # ng and legacy formats
     def load_ng_features
       load_feature(:proposal, :lvm)
       load_feature(:proposal, :resize_windows)
@@ -312,26 +331,30 @@ module Y2Storage
       load_volumes_feature(:volumes)
     end
 
+    # FIXME: Improve implementation. Use composition to encapsulate logic for
+    # ng and legacy formats
     def apply_legacy_defaults
       apply_default_legacy_sizes
-      self.use_lvm                       ||= false
-      self.encryption_password           ||= nil
-      self.root_filesystem_type          ||= Y2Storage::Filesystems::Type::BTRFS
-      self.use_snapshots                 ||= true
-      self.use_separate_home             ||= true
-      self.home_filesystem_type          ||= Y2Storage::Filesystems::Type::XFS
-      self.enlarge_swap_for_suspend      ||= false
-      self.resize_windows                ||= true
-      self.windows_delete_mode           ||= :ondemand
-      self.linux_delete_mode             ||= :ondemand
-      self.other_delete_mode             ||= :ondemand
-      self.root_space_percent            ||= 40
-      self.btrfs_increase_percentage     ||= 300.0
-      self.btrfs_default_subvolume       ||= "@"
-      self.root_subvolume_read_only      ||= false
-      self.subvolumes                    ||= SubvolSpecification.fallback_list
+      self.use_lvm                   ||= false
+      self.encryption_password       ||= nil
+      self.root_filesystem_type      ||= Y2Storage::Filesystems::Type::BTRFS
+      self.use_snapshots             ||= true
+      self.use_separate_home         ||= true
+      self.home_filesystem_type      ||= Y2Storage::Filesystems::Type::XFS
+      self.enlarge_swap_for_suspend  ||= false
+      self.resize_windows            ||= true
+      # TODO: once other strategies are available, change default value (:use_available)
+      self.windows_delete_mode       ||= :ondemand
+      self.linux_delete_mode         ||= :ondemand
+      self.other_delete_mode         ||= :ondemand
+      self.root_space_percent        ||= 40
+      self.btrfs_increase_percentage ||= 300.0
+      self.btrfs_default_subvolume   ||= "@"
+      self.subvolumes                ||= SubvolSpecification.fallback_list
     end
 
+    # FIXME: Improve implementation. Use composition to encapsulate logic for
+    # ng and legacy formats
     def apply_default_legacy_sizes
       self.root_base_size                ||= Y2Storage::DiskSize.GiB(3)
       self.root_max_size                 ||= Y2Storage::DiskSize.GiB(10)
@@ -340,12 +363,13 @@ module Y2Storage
       self.home_max_size                 ||= Y2Storage::DiskSize.unlimited
     end
 
+    # FIXME: Improve implementation. Use composition to encapsulate logic for
+    # ng and legacy formats
     def load_legacy_features
       load_feature(:proposal_lvm, to: :use_lvm)
       load_feature(:try_separate_home, to: :use_separate_home)
       load_feature(:proposal_snapshots, to: :use_snapshots)
       load_feature(:swap_for_suspend, to: :enlarge_swap_for_suspend)
-      load_feature(:root_subvolume_read_only)
       load_size_feature(:root_base_size)
       load_size_feature(:root_max_size)
       load_size_feature(:vm_home_max_size, to: :home_max_size)
@@ -373,15 +397,21 @@ module Y2Storage
       result
     end
 
+    # FIXME: Improve implementation. Use composition to encapsulate logic for
+    # ng and legacy format
     def ng_check_root_snapshots
       root_volume = volumes.detect { |v| v.mount_point == "/" }
       root_volume.nil? ? false : root_volume.snapshots?
     end
 
+    # FIXME: Improve implementation. Use composition to encapsulate logic for
+    # ng and legacy format
     def legacy_check_root_snapshots
       root_filesystem_type.is?(:btrfs) && use_snapshots
     end
 
+    # FIXME: Improve implementation. Use composition to encapsulate logic for
+    # ng and legacy formats
     def ng_string_representation
       "Storage ProposalSettings (#{format})\n" \
       "  proposal:\n" \
@@ -396,6 +426,8 @@ module Y2Storage
       "    #{volumes}"
     end
 
+    # FIXME: Improve implementation. Use composition to encapsulate logic for
+    # ng and legacy formats
     def legacy_string_representation
       "Storage ProposalSettings (#{format})\n" \
       "  use_lvm: #{use_lvm}\n" \
@@ -412,7 +444,6 @@ module Y2Storage
       "  btrfs_increase_percentage: #{btrfs_increase_percentage}\n" \
       "  min_size_to_use_separate_home: #{min_size_to_use_separate_home}\n" \
       "  btrfs_default_subvolume: #{btrfs_default_subvolume}\n" \
-      "  root_subvolume_read_only: #{root_subvolume_read_only}\n" \
       "  home_min_size: #{home_min_size}\n" \
       "  home_max_size: #{home_max_size}\n" \
       "  subvolumes: \n#{subvolumes}\n"
