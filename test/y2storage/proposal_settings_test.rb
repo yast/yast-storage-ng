@@ -29,7 +29,7 @@ describe Y2Storage::ProposalSettings do
 
   using Y2Storage::Refinements::SizeCasts
 
-  # Other test are using ProposalSettings#new_for_current_product to initialize
+  # Other tests are using ProposalSettings#new_for_current_product to initialize
   # the settings. That method sets some default values when there is not
   # imported features (i.e., when control.xml is not found).
   #
@@ -600,6 +600,41 @@ describe Y2Storage::ProposalSettings do
       expect(from_product.use_lvm).to eq true
       expect(from_product.root_space_percent).to eq 50
       expect(from_product.home_max_size).to eq 500.GiB
+    end
+  end
+
+  describe "#format" do
+    context "when new settings are created from scratch" do
+      subject(:settings) { described_class.new }
+
+      it "returns nil" do
+        expect(settings.format).to be_nil
+      end
+    end
+
+    context "when settings are created for the current product" do
+      subject(:settings) { described_class.new_for_current_product }
+
+      let(:initial_partitioning_features) { { "proposal" => [], "volumes" => [] } }
+
+      it "returns the current format of product features" do
+        stub_partitioning_features
+        expect(settings.format).to eq(Y2Storage::ProposalSettings::NG_FORMAT)
+      end
+
+      context "and then the product features changes" do
+        before do
+          stub_partitioning_features
+          settings
+          stub_features({})
+        end
+
+        it "does not update the format value" do
+          expect(settings.format).to eq(Y2Storage::ProposalSettings::NG_FORMAT)
+          expect(described_class.new_for_current_product.format)
+            .to eq(Y2Storage::ProposalSettings::LEGACY_FORMAT)
+        end
+      end
     end
   end
 
