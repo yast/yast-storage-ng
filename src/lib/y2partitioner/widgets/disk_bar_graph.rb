@@ -1,8 +1,5 @@
 require "cwm/widget"
 
-# FIXME: just for Region#size
-require "y2partitioner/dialogs/partition_size"
-
 module Y2Partitioner
   module Widgets
     # Widget that shows bar graph for given disk if UI support it
