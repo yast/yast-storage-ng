@@ -269,7 +269,7 @@ use case.
     <windows_delete_mode>all</windows_delete_mode>
     <linux_delete_mode>ondemand</linux_delete_mode>
     <other_delete_mode>ondemand</other_delete_mode>
-    <lvm_vg_strategy_mode>use_available</lvm_vg_strategy_mode>
+    <lvm_vg_strategy>use_available</lvm_vg_strategy>
   </proposal>
 
   <volumes config:type="list">
