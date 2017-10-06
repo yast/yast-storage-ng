@@ -98,8 +98,18 @@ describe Y2Storage::VolumeSpecification do
         context "and the volume is neither root nor home" do
           let(:mount_point) { "/tmp" }
 
-          it "sets an empty list of fs_types" do
-            expect(subject.fs_types).to be_empty
+          context "and a fs_type is indicated" do
+            let(:volume_features) { { "mount_point" => mount_point, "fs_type" => :ext3 } }
+
+            it "sets a list with that fs_type" do
+              expect(subject.fs_types).to eq([Y2Storage::Filesystems::Type::EXT3])
+            end
+          end
+
+          context "and a fs_type is not indicated" do
+            it "sets an emtpy list" do
+              expect(subject.fs_types).to be_empty
+            end
           end
         end
       end
@@ -163,9 +173,8 @@ describe Y2Storage::VolumeSpecification do
           context "and the volume is root" do
             let(:mount_point) { "/" }
 
-            it "sets a fallback list of subvolumes" do
-              expect(subject.subvolumes).to_not be_empty
-              expect(subject.subvolumes).to all(be_a(Y2Storage::SubvolSpecification))
+            it "sets an empty list of subvolumes" do
+              expect(subject.subvolumes).to be_empty
             end
           end
         end

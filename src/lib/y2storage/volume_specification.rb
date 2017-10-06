@@ -46,10 +46,10 @@ module Y2Storage
     # @return [DiskSize] initial size to use in the first proposal attempt
     attr_accessor :desired_size
 
-    # @return [DiskSize] initial size to use in the first proposal attempt
+    # @return [DiskSize] initial size to use in the second proposal attempt
     attr_accessor :min_size
 
-    # @return [DiskSize] initial size to use in the second proposal attempt
+    # @return [DiskSize] maximum size to assign to the volume
     attr_accessor :max_size
 
     # @return [DiskSize] when LVM is used, this option can be used to override
@@ -107,24 +107,22 @@ module Y2Storage
     alias_method :snapshots?, :snapshots
     alias_method :snapshots_configurable?, :snapshots_configurable
 
+    # Constructor
+    # @param volume_features [Hash] features for a volume
     def initialize(volume_features)
-      @volume_features = volume_features
       apply_defaults
-      load_features
+      load_features(volume_features)
     end
 
   private
 
-    attr_reader :volume_features
-
     def apply_defaults
-      @fs_types   ||= []
-      @subvolumes ||= []
-      @max_size   ||= DiskSize.unlimited
+      @max_size ||= DiskSize.unlimited
     end
 
     # For some features (i.e., fs_types and subvolumes) fallback values could be applied
-    def load_features
+
+    def load_features(volume_features)
       {
         mount_point:                :string,
         proposed:                   :boolean,
@@ -179,13 +177,16 @@ module Y2Storage
       apply_fs_types_fallback
     end
 
+    # If subvolumes is missing, a hard-coded list is used for root. If the section is
+    # there but empty, no subvolumes are created.
     def apply_subvolumes_fallback
-      return unless subvolumes.empty?
+      return unless subvolumes.nil?
       @subvolumes = root? ? SubvolSpecification.fallback_list : []
     end
 
+    # If fs_types is missing or is empty, a hard-coded list is used
     def apply_fs_types_fallback
-      return unless fs_types.empty?
+      return if fs_types && !fs_types.empty?
 
       types = case mount_point
       when "/"
@@ -193,7 +194,7 @@ module Y2Storage
       when "/home"
         Filesystems::Type.home_filesystems
       else
-        []
+        [fs_type].compact
       end
 
       @fs_types = types
