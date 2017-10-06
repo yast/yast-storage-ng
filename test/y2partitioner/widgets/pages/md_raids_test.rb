@@ -4,6 +4,8 @@ require "cwm/rspec"
 require "y2partitioner/widgets/pages"
 
 describe Y2Partitioner::Widgets::Pages::MdRaids do
+  before { devicegraph_stub("one-empty-disk.yml") }
+
   subject { described_class.new(pager) }
 
   let(:pager) { double("OverviewTreePager") }
@@ -28,6 +30,7 @@ describe Y2Partitioner::Widgets::Pages::MdRaids::AddButton do
   let(:sequence) { double("AddMd") }
 
   before do
+    devicegraph_stub("one-empty-disk.yml")
     allow(Y2Partitioner::Sequences::AddMd).to receive(:new).and_return sequence
     allow(sequence).to receive(:run)
   end
