@@ -1,4 +1,13 @@
 -------------------------------------------------------------------
+Mon Oct  9 12:29:13 UTC 2017 - igonzalezsosa@suse.com
+
+- AutoYaST: proper handling of the 'use' element allowing to
+  delete a set of partitions (bsc#1061042)
+- AutoYaST: support for mkfs_options, fstopt and mount_by elements
+  (bsc#1061289)
+- 4.0.0
+
+-------------------------------------------------------------------
 Fri Oct  6 07:11:35 UTC 2017 - jlopez@suse.com
 
 - Added support for reading new format of proposal settings.
