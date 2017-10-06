@@ -310,10 +310,10 @@ module Y2Storage
     def apply_ng_defaults
       self.lvm                 ||= false
       self.resize_windows      ||= true
-      # TODO: once other strategies are available, change default value (:use_available)
       self.windows_delete_mode ||= :ondemand
       self.linux_delete_mode   ||= :ondemand
       self.other_delete_mode   ||= :ondemand
+      # TODO: once other strategies are available, change default value (:use_available)
       self.lvm_vg_strategy     ||= :use_needed
       self.volumes             ||= []
     end
@@ -343,7 +343,6 @@ module Y2Storage
       self.home_filesystem_type      ||= Y2Storage::Filesystems::Type::XFS
       self.enlarge_swap_for_suspend  ||= false
       self.resize_windows            ||= true
-      # TODO: once other strategies are available, change default value (:use_available)
       self.windows_delete_mode       ||= :ondemand
       self.linux_delete_mode         ||= :ondemand
       self.other_delete_mode         ||= :ondemand
