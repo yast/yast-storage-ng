@@ -1,57 +1,20 @@
 require "yast"
-require "ui/sequence"
-require "y2partitioner/device_graphs"
+require "y2partitioner/sequences/transaction_wizard"
+require "y2partitioner/sequences/new_blk_device"
 require "y2partitioner/sequences/partition_controller"
-require "y2partitioner/sequences/filesystem_controller"
 require "y2partitioner/dialogs"
-
-Yast.import "Wizard"
 
 module Y2Partitioner
   module Sequences
     # formerly EpCreatePartition, DlgCreatePartition
-    class AddPartition < UI::Sequence
-      include Yast::Logger
+    class AddPartition < TransactionWizard
+      include NewBlkDevice
+
       # @param disk_name [String]
       def initialize(disk_name)
-        textdomain "storage"
+        super()
 
         @part_controller = PartitionController.new(disk_name)
-      end
-
-      def disk_name
-        part_controller.disk_name
-      end
-
-      def run
-        sequence_hash = {
-          "ws_start"       => "preconditions",
-          "preconditions"  => { next: "type" },
-          "type"           => { next: "size" },
-          "size"           => { next: "role", finish: :finish },
-          "role"           => { next: "format_options" },
-          "format_options" => { next: "password" },
-          "password"       => { next: "commit" },
-          "commit"         => { finish: :finish }
-        }
-
-        sym = nil
-        DeviceGraphs.instance.transaction do
-          sym = wizard_next_back do
-            super(sequence: sequence_hash)
-          end
-
-          sym == :finish
-        end
-        sym
-      end
-
-      # FIXME: move to Wizard
-      def wizard_next_back(&block)
-        Yast::Wizard.OpenNextBackDialog
-        block.call
-      ensure
-        Yast::Wizard.CloseDialog
       end
 
       def preconditions
@@ -76,36 +39,28 @@ module Y2Partitioner
         if result == :next
           part = part_controller.partition
           title = part_controller.wizard_title
-          @fs_controller = FilesystemController.new(part, title)
+          self.fs_controller = FilesystemController.new(part, title)
         end
         result
       end
 
-      def role
-        result = Dialogs::PartitionRole.run(fs_controller)
-        fs_controller.apply_role if result == :next
-        result
+    protected
+
+      attr_reader :part_controller
+
+      # @see TransactionWizard
+      def sequence_hash
+        {
+          "ws_start"      => "preconditions",
+          "preconditions" => { next: "type" },
+          "type"          => { next: "size" },
+          "size"          => { next: new_blk_device_step1, finish: :finish }
+        }.merge(new_blk_device_steps)
       end
 
-      skip_stack :role
-
-      def format_options
-        Dialogs::FormatAndMount.run(fs_controller)
+      def disk_name
+        part_controller.disk_name
       end
-
-      def password
-        return :next unless fs_controller.to_be_encrypted?
-        Dialogs::EncryptPassword.run(fs_controller)
-      end
-
-      def commit
-        fs_controller.finish
-        :finish
-      end
-
-    private
-
-      attr_reader :part_controller, :fs_controller
     end
   end
 end

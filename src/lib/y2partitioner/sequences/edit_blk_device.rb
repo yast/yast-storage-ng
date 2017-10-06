@@ -1,50 +1,19 @@
 require "yast"
-require "ui/sequence"
-require "y2partitioner/device_graphs"
+require "y2partitioner/sequences/transaction_wizard"
+require "y2partitioner/sequences/filesystem_controller"
 require "y2partitioner/dialogs"
 
 Yast.import "Popup"
-Yast.import "Wizard"
 
 module Y2Partitioner
   module Sequences
     # BlkDevice edition
-    class EditBlkDevice < UI::Sequence
-      include Yast::Logger
-
+    class EditBlkDevice < TransactionWizard
       # @param blk_device [Y2Storage::BlkDevice]
       def initialize(blk_device)
-        textdomain "storage"
+        super()
         @blk_device = blk_device
         @fs_controller = FilesystemController.new(blk_device, title)
-      end
-
-      def run
-        sequence_hash = {
-          "ws_start"       => "preconditions",
-          "preconditions"  => { next: "format_options" },
-          "format_options" => { next: "password" },
-          "password"       => { next: "commit" },
-          "commit"         => { finish: :finish }
-        }
-
-        sym = nil
-        DeviceGraphs.instance.transaction do
-          sym = wizard_next_back do
-            super(sequence: sequence_hash)
-          end
-          sym == :finish
-        end
-
-        sym
-      end
-
-      # FIXME: move to Wizard
-      def wizard_next_back(&block)
-        Yast::Wizard.OpenNextBackDialog
-        block.call
-      ensure
-        Yast::Wizard.CloseDialog
       end
 
       def preconditions
@@ -71,9 +40,20 @@ module Y2Partitioner
         :finish
       end
 
-    private
+    protected
 
       attr_reader :fs_controller, :blk_device
+
+      # @see TransactionWizard
+      def sequence_hash
+        {
+          "ws_start"       => "preconditions",
+          "preconditions"  => { next: "format_options" },
+          "format_options" => { next: "password" },
+          "password"       => { next: "commit" },
+          "commit"         => { finish: :finish }
+        }
+      end
 
       def title
         if blk_device.is?(:md)
