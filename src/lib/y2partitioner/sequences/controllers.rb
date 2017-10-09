@@ -35,3 +35,4 @@ end
 require "y2partitioner/sequences/controllers/filesystem"
 require "y2partitioner/sequences/controllers/md"
 require "y2partitioner/sequences/controllers/partition"
+require "y2partitioner/sequences/controllers/lvm_lv"
