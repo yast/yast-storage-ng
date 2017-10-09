@@ -2,14 +2,14 @@ require_relative "../test_helper"
 
 require "cwm/rspec"
 require "y2partitioner/widgets/format_and_mount"
-require "y2partitioner/sequences/filesystem_controller"
+require "y2partitioner/sequences/controllers"
 
 describe Y2Partitioner::Widgets do
   before { devicegraph_stub("lvm-two-vgs.yml") }
 
   let(:blk_device) { Y2Storage::Partition.find_by_name(fake_devicegraph, "/dev/sda1") }
   let(:controller) do
-    Y2Partitioner::Sequences::FilesystemController.new(blk_device, "")
+    Y2Partitioner::Sequences::Controllers::Filesystem.new(blk_device, "")
   end
 
   describe Y2Partitioner::Widgets::FormatOptions do

@@ -3,7 +3,7 @@ require "y2partitioner/icons"
 require "y2partitioner/widgets/delete_disk_partition_button"
 require "y2partitioner/widgets/edit_blk_device_button"
 require "y2partitioner/widgets/partition_description"
-require "y2partitioner/dialogs/format_and_mount"
+require "y2partitioner/dialogs"
 
 module Y2Partitioner
   module Widgets

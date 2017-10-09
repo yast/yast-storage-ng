@@ -20,11 +20,11 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require_relative "../test_helper"
+require_relative "../../test_helper"
 require "y2partitioner/device_graphs"
-require "y2partitioner/sequences/md_controller"
+require "y2partitioner/sequences/controllers/md"
 
-describe Y2Partitioner::Sequences::MdController do
+describe Y2Partitioner::Sequences::Controllers::Md do
   using Y2Storage::Refinements::SizeCasts
 
   before do

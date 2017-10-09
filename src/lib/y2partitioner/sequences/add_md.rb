@@ -1,55 +1,14 @@
 require "yast"
-require "ui/sequence"
-require "y2partitioner/device_graphs"
-require "y2partitioner/sequences/md_controller"
-require "y2partitioner/dialogs/md"
-require "y2partitioner/dialogs/md_options"
-require "y2partitioner/sequences/filesystem_controller"
-
-Yast.import "Wizard"
+require "y2partitioner/sequences/transaction_wizard"
+require "y2partitioner/sequences/new_blk_device"
+require "y2partitioner/sequences/controllers"
+require "y2partitioner/dialogs"
 
 module Y2Partitioner
   module Sequences
     # formerly EpCreateRaid
-    class AddMd < UI::Sequence
-      include Yast::Logger
-      def initialize
-        textdomain "storage"
-      end
-
-      def run
-        sequence_hash = {
-          "ws_start"       => "preconditions",
-          "preconditions"  => { next: "devices" },
-          "devices"        => { next: "md_options" },
-          "md_options"     => { next: "role" },
-          "role"           => { next: "format_options" },
-          "format_options" => { next: "password" },
-          "password"       => { next: "commit" },
-          "commit"         => { finish: :finish }
-        }
-
-        sym = nil
-        DeviceGraphs.instance.transaction do
-          # The controller object must be created within the transaction
-          @md_controller = MdController.new
-
-          sym = wizard_next_back do
-            super(sequence: sequence_hash)
-          end
-
-          sym == :finish
-        end
-        sym
-      end
-
-      # FIXME: move to Wizard
-      def wizard_next_back(&block)
-        Yast::Wizard.OpenNextBackDialog
-        block.call
-      ensure
-        Yast::Wizard.CloseDialog
-      end
+    class AddMd < TransactionWizard
+      include NewBlkDevice
 
       def preconditions
         return :next unless md_controller.available_devices.size < 2
@@ -71,36 +30,30 @@ module Y2Partitioner
       def md_options
         result = Dialogs::MdOptions.run(md_controller)
         if result == :next
-          @fs_controller = FilesystemController.new(md_controller.md, md_controller.wizard_title)
+          self.fs_controller = Controllers::Filesystem.new(md_controller.md, md_controller.wizard_title)
         end
         result
       end
 
-      def role
-        result = Dialogs::PartitionRole.run(fs_controller)
-        fs_controller.apply_role if result == :next
-        result
+    protected
+
+      attr_reader :md_controller
+
+      # @see TransactionWizard
+      def sequence_hash
+        {
+          "ws_start"      => "preconditions",
+          "preconditions" => { next: "devices" },
+          "devices"       => { next: "md_options" },
+          "md_options"    => { next: new_blk_device_step1 }
+        }.merge(new_blk_device_steps)
       end
 
-      skip_stack :role
-
-      def format_options
-        Dialogs::FormatAndMount.run(fs_controller)
+      # @see TransactionWizard
+      def init_transaction
+        # The controller object must be created within the transaction
+        @md_controller = Controllers::Md.new
       end
-
-      def password
-        return :next unless fs_controller.to_be_encrypted?
-        Dialogs::EncryptPassword.run(fs_controller)
-      end
-
-      def commit
-        fs_controller.finish
-        :finish
-      end
-
-    private
-
-      attr_reader :md_controller, :fs_controller
     end
   end
 end

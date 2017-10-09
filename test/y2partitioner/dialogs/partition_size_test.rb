@@ -8,7 +8,7 @@ describe "Partition Size widgets" do
   using Y2Storage::Refinements::SizeCasts
 
   let(:controller) do
-    pt = Y2Partitioner::Sequences::PartitionController.new("/dev/sda")
+    pt = Y2Partitioner::Sequences::Controllers::Partition.new("/dev/sda")
     pt.region = region
     pt.custom_size = Y2Storage::DiskSize.MiB(1)
     pt

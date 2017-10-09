@@ -4,7 +4,7 @@ require "yast"
 require "cwm/rspec"
 require "y2storage"
 require "y2partitioner/dialogs/md"
-require "y2partitioner/sequences/md_controller"
+require "y2partitioner/sequences/controllers"
 
 Yast.import "UI"
 
@@ -12,7 +12,7 @@ describe Y2Partitioner::Dialogs::Md do
   before { devicegraph_stub("lvm-two-vgs.yml") }
 
   let(:controller) do
-    Y2Partitioner::Sequences::MdController.new
+    Y2Partitioner::Sequences::Controllers::Md.new
   end
 
   subject { described_class.new(controller) }
@@ -58,7 +58,7 @@ describe Y2Partitioner::Dialogs::Md do
       end
     end
 
-    let(:controller) { Y2Partitioner::Sequences::MdController.new }
+    let(:controller) { Y2Partitioner::Sequences::Controllers::Md.new }
 
     let(:current_graph) { Y2Partitioner::DeviceGraphs.instance.current }
 
