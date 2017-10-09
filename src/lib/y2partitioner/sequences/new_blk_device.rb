@@ -1,5 +1,5 @@
 require "yast"
-require "y2partitioner/sequences/filesystem_controller"
+require "y2partitioner/sequences/controllers"
 require "y2partitioner/dialogs"
 
 Yast.import "Wizard"
@@ -60,6 +60,7 @@ module Y2Partitioner
 
       # Filesystem controller that must be instantiated at some point before
       # the provided steps are executed.
+      # @return [Controllers::Filesystem]
       attr_accessor :fs_controller
 
       # Sequence steps provided by the mixin

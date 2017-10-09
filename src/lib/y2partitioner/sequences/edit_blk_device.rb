@@ -1,6 +1,6 @@
 require "yast"
 require "y2partitioner/sequences/transaction_wizard"
-require "y2partitioner/sequences/filesystem_controller"
+require "y2partitioner/sequences/controllers"
 require "y2partitioner/dialogs"
 
 Yast.import "Popup"
@@ -13,7 +13,7 @@ module Y2Partitioner
       def initialize(blk_device)
         super()
         @blk_device = blk_device
-        @fs_controller = FilesystemController.new(blk_device, title)
+        @fs_controller = Controllers::Filesystem.new(blk_device, title)
       end
 
       def preconditions

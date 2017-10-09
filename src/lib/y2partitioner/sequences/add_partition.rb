@@ -1,7 +1,7 @@
 require "yast"
 require "y2partitioner/sequences/transaction_wizard"
 require "y2partitioner/sequences/new_blk_device"
-require "y2partitioner/sequences/partition_controller"
+require "y2partitioner/sequences/controllers"
 require "y2partitioner/dialogs"
 
 module Y2Partitioner
@@ -14,7 +14,7 @@ module Y2Partitioner
       def initialize(disk_name)
         super()
 
-        @part_controller = PartitionController.new(disk_name)
+        @part_controller = Controllers::Partition.new(disk_name)
       end
 
       def preconditions
@@ -39,7 +39,7 @@ module Y2Partitioner
         if result == :next
           part = part_controller.partition
           title = part_controller.wizard_title
-          self.fs_controller = FilesystemController.new(part, title)
+          self.fs_controller = Controllers::Filesystem.new(part, title)
         end
         result
       end

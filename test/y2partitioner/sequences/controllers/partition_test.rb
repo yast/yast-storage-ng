@@ -20,10 +20,10 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require_relative "../test_helper"
-require "y2partitioner/sequences/partition_controller"
+require_relative "../../test_helper"
+require "y2partitioner/sequences/controllers/partition"
 
-describe Y2Partitioner::Sequences::PartitionController do
+describe Y2Partitioner::Sequences::Controllers::Partition do
   before do
     devicegraph_stub("mixed_disks_btrfs.yml")
   end

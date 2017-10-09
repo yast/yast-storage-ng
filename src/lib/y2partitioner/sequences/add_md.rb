@@ -1,7 +1,7 @@
 require "yast"
 require "y2partitioner/sequences/transaction_wizard"
 require "y2partitioner/sequences/new_blk_device"
-require "y2partitioner/sequences/md_controller"
+require "y2partitioner/sequences/controllers"
 require "y2partitioner/dialogs"
 
 module Y2Partitioner
@@ -30,7 +30,7 @@ module Y2Partitioner
       def md_options
         result = Dialogs::MdOptions.run(md_controller)
         if result == :next
-          self.fs_controller = FilesystemController.new(md_controller.md, md_controller.wizard_title)
+          self.fs_controller = Controllers::Filesystem.new(md_controller.md, md_controller.wizard_title)
         end
         result
       end
@@ -52,7 +52,7 @@ module Y2Partitioner
       # @see TransactionWizard
       def init_transaction
         # The controller object must be created within the transaction
-        @md_controller = MdController.new
+        @md_controller = Controllers::Md.new
       end
     end
   end
