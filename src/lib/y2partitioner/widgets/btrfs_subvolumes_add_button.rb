@@ -2,7 +2,7 @@ require "yast"
 require "cwm"
 require "y2partitioner/device_graphs"
 require "y2partitioner/widgets/btrfs_subvolumes_table"
-require "y2partitioner/dialogs"
+require "y2partitioner/dialogs/btrfs_subvolume"
 
 module Y2Partitioner
   module Widgets
