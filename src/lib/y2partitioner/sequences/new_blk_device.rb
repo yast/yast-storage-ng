@@ -1,6 +1,8 @@
 require "yast"
-require "y2partitioner/sequences/controllers"
-require "y2partitioner/dialogs"
+require "y2partitioner/sequences/controllers/filesystem"
+require "y2partitioner/dialogs/partition_role"
+require "y2partitioner/dialogs/format_and_mount"
+require "y2partitioner/dialogs/encrypt_password"
 
 Yast.import "Wizard"
 
