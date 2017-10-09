@@ -190,12 +190,13 @@ module Y2Storage
     # staging devicegraph.
     #
     # Beware: this method can cause data loss
-    def commit
+    def commit(force_rw: false)
       # Tell FsSnapshot whether Snapper should be configured later
       Yast2::FsSnapshot.configure_on_install = configure_snapper?
       callbacks = Callbacks::Commit.new
       storage.calculate_actiongraph
-      storage.commit(callbacks)
+      commit_options = ::Storage::CommitOptions.new(force_rw)
+      storage.commit(commit_options, callbacks)
     end
 
     # Probes from a yml file instead of doing real probing

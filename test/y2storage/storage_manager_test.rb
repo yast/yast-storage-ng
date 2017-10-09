@@ -212,8 +212,16 @@ describe Y2Storage::StorageManager do
 
     it "commits the changes to libstorage passing the corresponding callbacks" do
       expect(manager.storage).to receive(:commit)
-        .with(instance_of(Y2Storage::Callbacks::Commit))
+        .with(anything, instance_of(Y2Storage::Callbacks::Commit))
       manager.commit
+    end
+
+    it "commits the changes to libstorage passing the corresponding options" do
+      expect(manager.storage).to receive(:commit) do |options, _callbacks|
+        expect(options).to be_a(Storage::CommitOptions)
+        expect(options.force_rw).to eq(true)
+      end
+      manager.commit(force_rw: true)
     end
 
     context "during installation" do
