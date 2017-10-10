@@ -53,7 +53,6 @@ RSpec.shared_context "devices planner" do
     allow(devicegraph).to receive(:disk_devices).and_return [disk]
     allow(disk).to receive(:swap_partitions).and_return(swap_partitions)
 
-    allow(Yast::Arch).to receive(:x86_64).and_return(arch == :x86_64)
-    allow(Yast::Arch).to receive(:s390).and_return(arch == :s390)
+    allow(Yast::Arch).to receive(:architecture).and_return(arch)
   end
 end
