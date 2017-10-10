@@ -19,49 +19,33 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "fileutils"
-require "y2storage/planned"
-require "y2storage/disk_size"
-require "y2storage/boot_requirements_checker"
-require "y2storage/exceptions"
+require "y2storage/proposal/devices_planner_strategies/base"
 
 module Y2Storage
   module Proposal
     module DevicesPlannerStrategies
-      #
-      # Class to generate the list of planned devices of a proposal
-      #
-      class Legacy
-        include Yast::Logger
-
-        attr_accessor :settings
-
+      # Class to generate the list of planned devices of a proposal when
+      # the format of propsal settings is legacy.
+      class Legacy < Base
         MIN_SWAP_SIZE = DiskSize.MiB(512)
         MAX_SWAP_SIZE = DiskSize.GiB(2) # This is also DEFAULT_SWAP_SIZE
         SWAP_WEIGHT = 100 # Importance of swap if low free disk space
 
-        def initialize(settings, devicegraph)
-          @settings = settings
-          @devicegraph = devicegraph
-        end
-
         # List of devices (read: partitions or volumes) that need to be
         # created to satisfy the settings.
         #
-        # @param target [Symbol] :desired means the sizes of the planned devices
-        #   should be the ideal ones, :min for generating the smallest functional
-        #   devices
+        # @see Base#planned_devices
+        #
+        # @param target [Symbol] :desired, :min
         # @return [Array<Planned::Device>]
         def planned_devices(target)
           @target = target
           devices = base_devices + additional_devices
-          remove_shadowed_subvols(devices)
+          remove_shadowed_subvolumes(devices)
           devices
         end
 
       protected
-
-        attr_reader :devicegraph
 
         # Minimal set of devices that is needed to decide if a bootable
         # system can be installed
@@ -71,22 +55,7 @@ module Y2Storage
         # @return [Array<Planned::Device>]
         def base_devices
           root = root_device
-          boot_devices(root) + [root]
-        end
-
-        # Planned devices needed by the bootloader
-        #
-        # @return [Array<Planned::Device>]
-        def boot_devices(root_dev)
-          checker = BootRequirementsChecker.new(
-            devicegraph, planned_devices: [root_dev], boot_disk_name: settings.root_device
-          )
-          checker.needed_partitions(@target)
-        rescue BootRequirementsChecker::Error => error
-          # As documented, {BootRequirementsChecker#needed_partition} raises this
-          # exception if it's impossible to get a bootable system, even adding
-          # more partitions.
-          raise NotBootableError, error.message
+          planned_boot_devices([root]) + [root]
         end
 
         # Additional devices not needed for booting, like swap and /home
@@ -140,20 +109,6 @@ module Y2Storage
             part.weight = SWAP_WEIGHT
           end
           part
-        end
-
-        # Swap partition that can be reused.
-        #
-        # It returns the smaller partition that is big enough for our purposes.
-        #
-        # @return [Partition]
-        def reusable_swap(required_size)
-          return nil if settings.use_lvm || settings.use_encryption
-
-          partitions = devicegraph.disk_devices.map(&:swap_partitions).flatten
-          partitions.select! { |part| part.size >= required_size }
-          # Use #name in case of #size tie to provide stable sorting
-          partitions.sort_by { |part| [part.size, part.name] }.first
         end
 
         # Planned device to hold "/" according to the settings.
@@ -222,28 +177,6 @@ module Y2Storage
             end
           home_vol.weight = 100.0 - settings.root_space_percent
           home_vol
-        end
-
-        def remove_shadowed_subvols(planned_devices)
-          planned_devices.each do |device|
-            next unless device.respond_to?(:subvolumes)
-
-            device.shadowed_subvolumes(planned_devices).each do |subvol|
-              log.info "Subvolume #{subvol} would be shadowed. Removing it."
-              device.subvolumes.delete(subvol)
-            end
-          end
-        end
-
-        # Return the total amount of RAM as DiskSize
-        #
-        # @return [DiskSize] current RAM size
-        #
-        def ram_size
-          # FIXME: use the .proc.meminfo agent and its MemTotal field
-          #   mem_info_map = Convert.to_map(SCR.Read(path(".proc.meminfo")))
-          # See old Partitions.rb: SwapSizeMb()
-          DiskSize.GiB(8)
         end
       end
     end
