@@ -89,8 +89,16 @@ module Y2Storage
       def planned_for_disk(disk, drive)
         result = []
         drive.partitions.each do |partition_section|
+          # Sizes: leave out reducing fixed sizes and 'auto'
+          min_size, max_size = sizes_for(partition_section, PARTITION_MIN_SIZE, disk.size)
+          next if min_size.nil?
+
           # TODO: fix Planned::Partition.initialize
           partition = Y2Storage::Planned::Partition.new(nil, nil)
+
+          partition.min_size = min_size
+          partition.max_size = max_size
+          partition.weight = 1 if max_size == DiskSize.unlimited
 
           # TODO: partition.bootable is not in the AutoYaST profile. Check if
           # there's some logic to set it in the old code.
@@ -102,12 +110,6 @@ module Y2Storage
 
           device_config(partition, partition_section, drive)
           add_partition_reuse(partition, partition_section) if partition_section.create == false
-
-          # Sizes: leave out reducing fixed sizes and 'auto'
-          min_size, max_size = sizes_for(partition_section.size, PARTITION_MIN_SIZE, disk.size)
-          partition.min_size = min_size
-          partition.max_size = max_size
-          partition.weight = 1 if max_size == DiskSize.unlimited
 
           result << partition
         end
@@ -134,7 +136,8 @@ module Y2Storage
           if unit == "%"
             lv.percent_size = number
           else
-            lv.min_size, lv.max_size = sizes_for(lv_section.size, vg.extent_size, DiskSize.unlimited)
+            lv.min_size, lv.max_size = sizes_for(lv_section, vg.extent_size, DiskSize.unlimited)
+            next if lv.min_size.nil?
           end
           lvs << lv
         end
@@ -292,6 +295,22 @@ module Y2Storage
         vg.reuse = vg_to_reuse.vg_name if vg_to_reuse
       end
 
+      def sizes_for(section, min, max)
+        size = section.size.to_s.strip.downcase
+        sizes =
+          if size == "auto"
+            auto_sizes_for(section.mount)
+          else
+            extract_sizes_for(section.size, min, max)
+          end
+
+        if sizes.nil? || sizes.any?(&:nil?)
+          log.warn "Could not determine size for #{section.mount} (size='#{section.size}')"
+        end
+
+        sizes
+      end
+
       # Returns min and max sizes for a size specification
       #
       # @param size_spec [String]   Device size specification from AutoYaST
@@ -300,14 +319,10 @@ module Y2Storage
       # @return [[DiskSize,DiskSize]] min and max sizes for the given partition
       #
       # @see SIZE_REGEXP
-      def sizes_for(size_spec, min, max)
+      def extract_sizes_for(size_spec, min, max)
         normalized_size = size_spec.to_s.strip.downcase
 
-        # FIXME: Temporary workaround to avoid crash when size 'auto'
-        # (which is still not supported) is used (bnc#1056182).
-        # So 'auto' will be handled like there is no size defined at
-        # all.
-        return [min, DiskSize.unlimited] if ["", "max", "auto"].include?(normalized_size)
+        return [min, DiskSize.unlimited] if ["", "max"].include?(normalized_size)
 
         number, unit = size_to_components(size_spec)
         size =
@@ -399,6 +414,24 @@ module Y2Storage
             device.subvolumes.delete(subvol)
           end
         end
+      end
+
+      DEFAULT_SIZES = {
+        "swap" => [DiskSize.MiB(512), DiskSize.GiB(2)].freeze
+      }.freeze
+
+      # @return [nil,Array<DiskSize>]
+      def auto_sizes_for(mount_point)
+        spec = volume_spec_for(mount_point)
+        return DEFAULT_SIZES[mount_point] if spec.nil?
+
+        default_min, default_max = DEFAULT_SIZES[mount_point] || []
+        [spec.min_size || default_min, spec.max_size || default_max]
+      end
+
+      def volume_spec_for(mount_point)
+        return nil if proposal_settings.volumes.empty?
+        proposal_settings.volumes.find { |v| v.mount_point == mount_point }
       end
     end
   end
