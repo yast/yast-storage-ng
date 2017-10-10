@@ -33,8 +33,14 @@ module Y2Storage
       class Base
         include Yast::Logger
 
+        # Settings used to calculate the planned devices
+        # @return [ProposalSettings]
         attr_accessor :settings
 
+        # Constructor
+        #
+        # @param settings [ProposalSettings]
+        # @param devicegraph [Devicegraph]
         def initialize(settings, devicegraph)
           @settings = settings
           @devicegraph = devicegraph
@@ -62,6 +68,7 @@ module Y2Storage
 
         # Planned devices needed by the bootloader
         #
+        # @param planned_devices [Array<Planned::Device>] devices that have been planned
         # @return [Array<Planned::Device>]
         def planned_boot_devices(planned_devices)
           checker = BootRequirementsChecker.new(
@@ -79,6 +86,7 @@ module Y2Storage
         #
         # It returns the smaller partition that is big enough for our purposes.
         #
+        # @param required_size [DiskSize]
         # @return [Partition]
         def reusable_swap(required_size)
           return nil if settings.use_lvm || settings.use_encryption
@@ -90,6 +98,7 @@ module Y2Storage
         end
 
         # Delete shadowed subvolumes from each planned device
+        # @param planned_devices [Array<Planned::Device>] devices that have been planned
         def remove_shadowed_subvolumes(planned_devices)
           planned_devices.each do |device|
             next unless device.respond_to?(:subvolumes)

@@ -61,6 +61,8 @@ module Y2Storage
 
         # Adjusts planned device values according to settings
         #
+        # @note planned_device is modified
+        #
         # @param planned_device [Planned::Device]
         # @param volume [VolumeSpecification]
         def adjust_to_settings(planned_device, volume)

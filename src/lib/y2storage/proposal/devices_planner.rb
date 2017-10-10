@@ -35,8 +35,14 @@ module Y2Storage
         ng:     DevicesPlannerStrategies::Ng
       }
 
+      # Settings used to calculate the planned devices
+      # @return [ProposalSettings]
       attr_accessor :settings
 
+      # Constructor
+      #
+      # @param settings [ProposalSettings]
+      # @param devicegraph [Devicegraph]
       def initialize(settings, devicegraph)
         @settings = settings
         @devicegraph = devicegraph
