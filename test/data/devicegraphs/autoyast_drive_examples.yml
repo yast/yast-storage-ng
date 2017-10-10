@@ -78,6 +78,11 @@
         file_system:  ext4
         mount_point:  /
         label:        root
+        mount_by:     uuid
+        mkfs_options: -b 2048
+        fstab_options:
+          - ro
+          - acl
 
 - disk:
     size: 800.00 GiB

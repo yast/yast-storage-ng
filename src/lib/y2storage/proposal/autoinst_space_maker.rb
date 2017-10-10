@@ -72,11 +72,27 @@ module Y2Storage
 
         # TODO: resizing of partitions
 
-        case drive_spec.use
+        delete_by_use(devicegraph, disk, drive_spec.use)
+      end
+
+      # Deletes unwanted partition according to the "use" element
+      #
+      # @param devicegraph [Devicegraph]
+      # @param disk        [Disk]
+      # @param use         [String,Array<Integer>] Use value ("all", "linux", "free"
+      #   or a list of partition numbers)
+      def delete_by_use(devicegraph, disk, use)
+        return if use == "free"
+        case use
         when "all"
           disk.partition_table.remove_descendants if disk.partition_table
         when "linux"
           delete_linux_partitions(devicegraph, disk)
+        when Array
+          delete_partitions_by_number(devicegraph, disk, use)
+        else
+          # TODO: better error handling
+          log.warn "Unknown value '#{use}' for 'use' element in driver specification"
         end
       end
 
@@ -89,6 +105,17 @@ module Y2Storage
         parts = disk_analyzer.linux_partitions(disk)
         # TODO: when introducing supporting for LVM, should we protect here
         # the PVs of VGs that are going to be reused somehow?
+        parts.map(&:name).each { |n| partition_killer.delete(n) }
+      end
+
+      # Deletes Linux partitions which number is included in a list
+      #
+      # @param devicegraph [Devicegraph]    Working devicegraph
+      # @param disk        [Disk]           Disk to remove partitions from
+      # @param partition_nrs [Array<Integer>] List of partition numbers
+      def delete_partitions_by_number(devicegraph, disk, partition_nrs)
+        partition_killer = Proposal::PartitionKiller.new(devicegraph)
+        parts = disk.partitions.select { |n| partition_nrs.include?(n.number) }
         parts.map(&:name).each { |n| partition_killer.delete(n) }
       end
     end

@@ -102,11 +102,13 @@ describe Y2Storage::AutoinstProfile::PartitionSection do
     context "if the partition contains no filesystem" do
       before { allow_any_instance_of(Y2Storage::Partition).to receive(:filesystem).and_return nil }
 
-      it "initializes #filesystem, #label, #mount and #mountby to nil" do
+      it "initializes #filesystem, #label, #mount, #mountby, #fstab_options and #mkfs_options to nil" do
         expect(section_for("sdc3").filesystem).to be_nil
         expect(section_for("sdc3").label).to be_nil
         expect(section_for("sdc3").mount).to be_nil
         expect(section_for("sdc3").mountby).to be_nil
+        expect(section_for("sdc3").fstab_options).to be_nil
+        expect(section_for("sdc3").mkfs_options).to be_nil
       end
 
       it "initializes #format to false despite the partition id" do
@@ -114,6 +116,24 @@ describe Y2Storage::AutoinstProfile::PartitionSection do
         expect(section_for("sdg2").format).to eq false
         expect(section_for("sdg3").format).to eq false
         expect(section_for("sdg4").format).to eq false
+      end
+    end
+
+    context "if the partition has a mountby name schema" do
+      it "initializes #mountby with the proper type" do
+        expect(section_for("sdc3").mountby).to eq(:uuid)
+      end
+    end
+
+    context "if the partition has fstab options" do
+      it "initializes #fstab_options with the proper type" do
+        expect(section_for("sdc3").fstab_options).to eq(["ro", "acl"])
+      end
+    end
+
+    context "if the partition has mkfs options" do
+      it "initializes #mountby with the proper type" do
+        expect(section_for("sdc3").mkfs_options).to eq("-b 2048")
       end
     end
 
@@ -263,6 +283,7 @@ describe Y2Storage::AutoinstProfile::PartitionSection do
         )
       end
     end
+
     context "when raid_options are not present" do
       it "initializes raid_options to nil" do
         section = described_class.new_from_hashes(hash)
@@ -277,6 +298,15 @@ describe Y2Storage::AutoinstProfile::PartitionSection do
         section = described_class.new_from_hashes(hash)
         expect(section.raid_options).to be_a(Y2Storage::AutoinstProfile::RaidOptionsSection)
         expect(section.raid_options.chunk_size).to eq("1M")
+      end
+    end
+
+    context "when fstopt is present" do
+      let(:hash) { { "fstopt" => "ro, acl" } }
+
+      it "initializes fstab_options" do
+        section = described_class.new_from_hashes(hash)
+        expect(section.fstab_options).to eq(["ro", "acl"])
       end
     end
   end
@@ -298,6 +328,16 @@ describe Y2Storage::AutoinstProfile::PartitionSection do
       section.subvolumes = []
       expect(section.to_hashes.keys).to_not include "subvolumes"
     end
+
+    it "does not export fstab options if it is empty" do
+      section.fstab_options = []
+      expect(section.to_hashes.keys).to_not include("fstab_options")
+    end
+
+    it "exports fstab_options as a string if they are present" do
+      section.fstab_options = ["ro", "acl"]
+      expect(section.to_hashes["fstopt"]).to eq("ro,acl")
+    end
   end
 
   describe "#type_for_filesystem" do
@@ -313,6 +353,27 @@ describe Y2Storage::AutoinstProfile::PartitionSection do
       expect(subject.type_for_filesystem).to eq Y2Storage::Filesystems::Type::SWAP
       section.filesystem = :btrfs
       expect(subject.type_for_filesystem).to eq Y2Storage::Filesystems::Type::BTRFS
+    end
+
+    it "returns nil for unknown values of #filesystem" do
+      section.filesystem = :strange
+      expect(subject.type_for_filesystem).to be_nil
+    end
+  end
+
+  describe "#type_for_mountby" do
+    subject(:section) { described_class.new }
+
+    it "returns nil if #mountby is not set" do
+      section.mountby = nil
+      expect(subject.type_for_mountby).to be_nil
+    end
+
+    it "returns a Filesystems::Type corresponding to the symbol at #filesystem" do
+      section.mountby = :uuid
+      expect(subject.type_for_mountby).to eq Y2Storage::Filesystems::MountByType::UUID
+      section.mountby = :device
+      expect(subject.type_for_mountby).to eq Y2Storage::Filesystems::MountByType::DEVICE
     end
 
     it "returns nil for unknown values of #filesystem" do

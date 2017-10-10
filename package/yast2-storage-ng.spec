@@ -16,7 +16,7 @@
 #
 
 Name:		yast2-storage-ng
-Version:        3.3.27
+Version:        4.0.0
 Release:	0
 BuildArch:	noarch
 
@@ -26,8 +26,8 @@ Source:		%{name}-%{version}.tar.bz2
 # Yast2::FsSnapshots.configure_on_install=
 Requires:	yast2 >= 4.0.3
 Requires:	yast2-ruby-bindings
-# BlkDevice#remove_encryption
-Requires:	libstorage-ng-ruby >= 3.3.22
+# Storage::CommitOptions
+Requires:	libstorage-ng-ruby >= 3.3.45
 
 BuildRequires:	update-desktop-files
 # BlkDevice#remove_encryption

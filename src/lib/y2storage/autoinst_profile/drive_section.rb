@@ -93,7 +93,7 @@ module Y2Storage
       #   @return [Symbol] :CT_DISK or :CT_LVM
 
       # @!attribute use
-      #   @return [String] strategy AutoYaST will use to partition the disk
+      #   @return [String,Array<Integer>] strategy AutoYaST will use to partition the disk
 
       # @!attribute skip_list
       #   @return [Array<SkipListSection] collection of <skip_list> entries
@@ -112,7 +112,7 @@ module Y2Storage
       def init_from_hashes(hash)
         super
         @type ||= default_type_for(hash)
-        @use  ||= "all"
+        @use = use_value_from_string(hash.fetch("use", "all"))
         @partitions = partitions_from_hash(hash)
         @skip_list = SkipListSection.new_from_hashes(hash.fetch("skip_list", []))
       end
@@ -159,7 +159,7 @@ module Y2Storage
         # Same logic followed by the old exporter
         @use =
           if disk.partitions.any? { |i| windows?(i) }
-            @partitions.map(&:partition_nr).join(",")
+            @partitions.map(&:partition_nr)
           else
             "all"
           end
@@ -177,6 +177,17 @@ module Y2Storage
         # drive, but as soon as we introduce error handling and reporting we
         # should do something if #partitions is empty (wrong profile).
         partitions.first.name_for_md
+      end
+
+      # Content of the section in the format used by the AutoYaST modules
+      #
+      # @return [Hash] each element of the hash corresponds to one of the
+      #     attributes defined in the section. Blank attributes are not
+      #     included.
+      def to_hashes
+        hash = super
+        hash["use"] = use.join(",") if use.is_a?(Array)
+        hash
       end
 
     protected
@@ -267,6 +278,18 @@ module Y2Storage
           end
         end
         false
+      end
+
+      # Return value for the "use" element
+      #
+      # If the given string is a comma separated list of numbers, it will
+      # return an array containing those numbers. Otherwise, the original
+      # value will be returned.
+      #
+      # @return [String,Array<Integer>]
+      def use_value_from_string(use)
+        return use unless use =~ /(\d+,?)+/
+        use.split(",").select { |n| n =~ /\d+/ }.map(&:to_i)
       end
     end
   end

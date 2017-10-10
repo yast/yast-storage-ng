@@ -38,11 +38,15 @@ describe Y2Storage::Proposal::AutoinstDevicesPlanner do
   let(:partitioning_array) do
     [{ "device" => "/dev/sda", "partitions" => [root_spec] }]
   end
+
   let(:partitioning) do
     Y2Storage::AutoinstProfile::PartitioningSection.new_from_hashes(partitioning_array)
   end
 
-  let(:root_spec) { { "mount" => "/", "filesystem" => "ext4" } }
+  let(:root_spec) do
+    { "mount" => "/", "filesystem" => "ext4", "fstopt" => "ro,acl", "mkfs_options" => "-b 2048" }
+  end
+
   let(:lvm_group) { "vg0" }
 
   before do
@@ -171,13 +175,13 @@ describe Y2Storage::Proposal::AutoinstDevicesPlanner do
       end
     end
 
-    context "specifying filesystem" do
+    context "specifying filesystem options" do
       let(:partitioning_array) do
         [{ "device" => "/dev/sda", "use" => "all", "partitions" => [root_spec, home_spec] }]
       end
 
       let(:home_spec) do
-        { "mount" => "/home", "filesystem" => "xfs" }
+        { "mount" => "/home", "filesystem" => "xfs", "mountby" => :uuid }
       end
 
       it "sets the filesystem" do
@@ -186,6 +190,26 @@ describe Y2Storage::Proposal::AutoinstDevicesPlanner do
         home = devices.find { |d| d.mount_point == "/home" }
         expect(root.filesystem_type).to eq(Y2Storage::Filesystems::Type::EXT4)
         expect(home.filesystem_type).to eq(Y2Storage::Filesystems::Type::XFS)
+      end
+
+      it "sets the mountby properties" do
+        devices = planner.planned_devices(drives_map)
+        root = devices.find { |d| d.mount_point == "/" }
+        home = devices.find { |d| d.mount_point == "/home" }
+        expect(root.mount_by).to be_nil
+        expect(home.mount_by).to eq(Y2Storage::Filesystems::MountByType::UUID)
+      end
+
+      it "sets fstab options" do
+        devices = planner.planned_devices(drives_map)
+        root = devices.find { |d| d.mount_point == "/" }
+        expect(root.fstab_options).to eq(["ro", "acl"])
+      end
+
+      it "sets mkfs options" do
+        devices = planner.planned_devices(drives_map)
+        root = devices.find { |d| d.mount_point == "/" }
+        expect(root.mkfs_options).to eq("-b 2048")
       end
     end
 

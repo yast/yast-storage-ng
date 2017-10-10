@@ -56,7 +56,7 @@ module Y2Storage
         manager.staging.save(Yast::Directory.logdir + "/inst-staging_devicegraph.xml")
 
         manager.rootprefix = Yast::Installation.destdir
-        manager.commit
+        manager.commit(force_rw: true)
 
         mount_in_target("/dev", "devtmpfs", "-t devtmpfs")
         mount_in_target("/proc", "proc", "-t proc")

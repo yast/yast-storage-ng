@@ -114,9 +114,11 @@ describe Y2Storage::FakeDeviceFactory do
              '        id: linux',
              '        file_system: ext4',
              '        mount_point: "/"',
+             '        mount_by: path',
              '        fstab_options:',
              '        - acl',
              '        - user_xattr',
+             '        mkfs_options: -b 2048',
              '    - free:',
              '        size: 245247 MiB (239.50 GiB)',
              '        start: 16897 MiB (16.50 GiB)']
@@ -139,7 +141,8 @@ describe Y2Storage::FakeDeviceFactory do
     sda2 = Storage.to_partition(Storage::BlkDevice.find_by_name(staging, "/dev/sda2"))
     expect(sda2.size).to eq 16 * Storage.GiB
     expect(sda2.filesystem.fstab_options.to_a).to contain_exactly("acl", "user_xattr")
-
+    expect(sda2.filesystem.mkfs_options).to eq("-b 2048")
+    expect(sda2.filesystem.mount_by).to eql(Y2Storage::Filesystems::MountByType::PATH.to_i)
   end
 
   it "reads yaml of simple lvm setup" do

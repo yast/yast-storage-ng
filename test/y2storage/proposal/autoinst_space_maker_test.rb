@@ -37,7 +37,7 @@ describe Y2Storage::Proposal::AutoinstSpaceMaker do
 
   before { fake_scenario(scenario) }
 
-  describe "#clean_devicegraph" do
+  describe "#cleaned_devicegraph" do
     context "when 'use' key is set to 'all'" do
       it "removes all partitions" do
         devicegraph = subject.cleaned_devicegraph(fake_devicegraph, drives_map)
@@ -53,9 +53,38 @@ describe Y2Storage::Proposal::AutoinstSpaceMaker do
     end
 
     context "when 'use' key is set to 'linux'" do
+      let(:partitioning_array) { [{ "device" => "/dev/sda", "use" => "linux" }] }
+
       it "removes only Linux partitions" do
         devicegraph = subject.cleaned_devicegraph(fake_devicegraph, drives_map)
-        expect(devicegraph.partitions).to be_empty
+        expect(devicegraph.partitions).to contain_exactly(
+          an_object_having_attributes(name: "/dev/sda1")
+        )
+      end
+    end
+
+    context "when 'use' is set to a list of partition numbers" do
+      let(:partitioning_array) { [{ "device" => "/dev/sda", "use" => "2,3" }] }
+
+      it "removes specified partitions" do
+        devicegraph = subject.cleaned_devicegraph(fake_devicegraph, drives_map)
+        expect(devicegraph.partitions).to contain_exactly(
+          an_object_having_attributes(name: "/dev/sda1")
+        )
+      end
+    end
+
+    context "when 'use' is set to an invalid value" do
+      let(:partitioning_array) { [{ "device" => "/dev/sda", "use" => "wrong-value" }] }
+
+      it "does not remove any partition" do
+        devicegraph = subject.cleaned_devicegraph(fake_devicegraph, drives_map)
+        expect(devicegraph.partitions.size).to eq(3)
+      end
+
+      it "logs a warning message" do
+        expect(subject.log).to receive(:warn).with(/wrong-value/)
+        subject.cleaned_devicegraph(fake_devicegraph, drives_map)
       end
     end
 
