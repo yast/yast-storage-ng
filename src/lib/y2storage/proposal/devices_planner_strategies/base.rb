@@ -40,7 +40,7 @@ module Y2Storage
           @devicegraph = devicegraph
         end
 
-        # @!method planned_devices
+        # @!method planned_devices(target)
         #   List of devices (read: partitions or volumes) that need to be
         #   created to satisfy the settings.
         #

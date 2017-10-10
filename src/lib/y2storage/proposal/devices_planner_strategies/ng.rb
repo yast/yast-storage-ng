@@ -133,7 +133,7 @@ module Y2Storage
         # Adjusts values when planned device is root
         #
         # @param planned_device [Planned::Device]
-        # @param volume [VolumeSpecification]
+        # @param _volume [VolumeSpecification]
         def adjust_root(planned_device, _volume)
           planned_device.disk = settings.root_device if planned_device.is_a?(Planned::Partition)
         end
@@ -141,7 +141,7 @@ module Y2Storage
         # Adjusts values when planned device is swap
         #
         # @param planned_device [Planned::Device]
-        # @param volume [VolumeSpecification]
+        # @param _volume [VolumeSpecification]
         def adjust_swap(planned_device, _volume)
           if planned_device.is_a?(Planned::Partition)
             reuse = reusable_swap(planned_device.min_size)
