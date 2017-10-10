@@ -23,19 +23,26 @@ require "y2storage/proposal/devices_planner_strategies"
 
 module Y2Storage
   module Proposal
+    # Class to generate the list of planned devices of a proposal.
     #
-    # Class to generate the list of planned devices of a proposal
-    #
+    # Different strategies to generate planned devices are used
+    # depending on the format of the proposal settings.
     class DevicesPlanner
       include Yast::Logger
 
       STRATEGIES = {
         legacy: DevicesPlannerStrategies::Legacy,
-        ng:     DevicesPlannerStrategies::NG
+        ng:     DevicesPlannerStrategies::Ng
       }
 
+      # Settings used to calculate the planned devices
+      # @return [ProposalSettings]
       attr_accessor :settings
 
+      # Constructor
+      #
+      # @param settings [ProposalSettings]
+      # @param devicegraph [Devicegraph]
       def initialize(settings, devicegraph)
         @settings = settings
         @devicegraph = devicegraph

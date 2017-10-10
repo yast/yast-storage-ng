@@ -43,6 +43,12 @@ RSpec.shared_context "proposal" do
     allow(storage_arch).to receive(:x86?).and_return(architecture == :x86)
     allow(storage_arch).to receive(:ppc?).and_return(architecture == :ppc)
     allow(storage_arch).to receive(:s390?).and_return(architecture == :s390)
+
+    if settings_format == :ng
+      file = File.join(DATA_PATH, "control_files", control_file)
+      settings = Yast::XML.XMLToYCPFile(file)
+      Yast::ProductFeatures.Import(settings)
+    end
   end
 
   let(:architecture) { :x86 }
@@ -53,11 +59,16 @@ RSpec.shared_context "proposal" do
   let(:resize_info) do
     instance_double("Y2Storage::ResizeInfo", resize_ok?: true, min_size: 40.GiB)
   end
+
+  let(:settings_format) { :legacy }
+
+  let(:settings) { settings_format == :legacy ? legacy_settings : ng_settings }
+
   let(:separate_home) { false }
   let(:lvm) { false }
   let(:encrypt) { false }
   let(:test_with_subvolumes) { false }
-  let(:settings) do
+  let(:legacy_settings) do
     settings = Y2Storage::ProposalSettings.new_for_current_product
     settings.use_separate_home = separate_home
     settings.use_lvm = lvm
@@ -66,6 +77,10 @@ RSpec.shared_context "proposal" do
     settings.subvolumes = nil unless test_with_subvolumes
     settings
   end
+
+  let(:ng_settings) { Y2Storage::ProposalSettings.new_for_current_product }
+
+  let(:control_file) { nil }
 
   let(:expected_scenario) { scenario }
   let(:expected) do

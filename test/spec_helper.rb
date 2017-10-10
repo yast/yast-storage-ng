@@ -52,4 +52,15 @@ require_relative "support/storage_helpers"
 
 RSpec.configure do |c|
   c.include Yast::RSpec::StorageHelpers
+
+  # Some tests use ProposalSettings#new_for_current_product to initialize
+  # the settings. That method sets some default values when there is not
+  # imported features (i.e., when control.xml is not found).
+  #
+  # The product features could be modified during testing. Due to there are
+  # tests reling on settings with pristine default values, it is necessary to
+  # reset the product features to not interfer in the results.
+  c.after(:all) do
+    Yast::ProductFeatures.Import({})
+  end
 end

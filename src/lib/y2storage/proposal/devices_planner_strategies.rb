@@ -19,5 +19,14 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
+module Y2Storage
+  module Proposal
+    # Namespace to group the different strategies to plan devices. The planner
+    # strategy depends on the format of the proposal settings.
+    module DevicesPlannerStrategies
+    end
+  end
+end
+
 require "y2storage/proposal/devices_planner_strategies/legacy"
 require "y2storage/proposal/devices_planner_strategies/ng"
