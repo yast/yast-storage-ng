@@ -108,5 +108,7 @@ module Y2Storage
     end
 
     ROOT_PATH = "/".freeze
+
+    SWAP_PATH = "swap".freeze
   end
 end
