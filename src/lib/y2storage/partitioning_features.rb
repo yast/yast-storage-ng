@@ -72,7 +72,7 @@ module Y2Storage
       set_feature(*feature, to, value) if value >= 0
     end
 
-    # Assing a size feature (see {#load_feature})
+    # Assign a size feature (see {#load_feature})
     # The feature value is converted to a {DiskSize}.
     #
     # @param feature [List<Symbol, String>] feature path (e.g., [:proposal, :lvm])
@@ -90,7 +90,7 @@ module Y2Storage
       set_feature(*feature, to, value) if value && value > DiskSize.zero
     end
 
-    # Assing subvolumes from "subvolumes" section (see {#load_feature})
+    # Assign subvolumes from "subvolumes" section (see {#load_feature})
     # The list of subvolumes is converted to a list of {SubvolSpecification}
     #
     # @param feature [List<Symbol, String>] feature path (e.g., [:proposal, :lvm])
@@ -102,7 +102,7 @@ module Y2Storage
       set_feature(*feature, to, value) if value
     end
 
-    # Assing volumes from "volumes" section (see {#load_feature})
+    # Assign volumes from "volumes" section (see {#load_feature})
     # The list of volumes is converted to a list of {VolumeSpecification}
     #
     # @param feature [List<Symbol, String>] feature path (e.g., [:proposal, :lvm])

@@ -142,6 +142,7 @@ module Y2Storage
         min_size:                   :size,
         max_size:                   :size,
         max_size_lvm:               :size,
+        # FIXME: allow snapshots_size to be both: a percentage and a disk size
         snapshots_size:             :size,
         weight:                     :integer,
         disable_order:              :integer,
