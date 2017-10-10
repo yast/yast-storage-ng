@@ -43,6 +43,12 @@ RSpec.shared_context "proposal" do
     allow(storage_arch).to receive(:x86?).and_return(architecture == :x86)
     allow(storage_arch).to receive(:ppc?).and_return(architecture == :ppc)
     allow(storage_arch).to receive(:s390?).and_return(architecture == :s390)
+
+    if settings_format == :ng
+      file = File.join(DATA_PATH, "control_files", control_file)
+      settings = Yast::XML.XMLToYCPFile(file)
+      Yast::ProductFeatures.Import(settings)
+    end
   end
 
   let(:architecture) { :x86 }
@@ -72,12 +78,7 @@ RSpec.shared_context "proposal" do
     settings
   end
 
-  let(:ng_settings) do
-    file = File.join(DATA_PATH, "control_files", control_file)
-    settings = Yast::XML.XMLToYCPFile(file)
-    Yast::ProductFeatures.Import(settings)
-    Y2Storage::ProposalSettings.new_for_current_product
-  end
+  let(:ng_settings) { Y2Storage::ProposalSettings.new_for_current_product }
 
   let(:control_file) { nil }
 
