@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Tue Oct 10 11:11:59 UTC 2017 - jlopez@suse.com
+
+- Adapt proposal to work with new format of proposal settings.
+- Part of fate#318196.
+- 4.0.1
+
+-------------------------------------------------------------------
 Mon Oct  9 12:29:13 UTC 2017 - igonzalezsosa@suse.com
 
 - AutoYaST: proper handling of the 'use' element allowing to
