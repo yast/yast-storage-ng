@@ -265,7 +265,6 @@ use case.
 <partitioning>
   <proposal>
     <lvm config:type="boolean">false</lvm>
-    <encrypt config:type="boolean">false</encrypt>
     <windows_delete_mode>all</windows_delete_mode>
     <linux_delete_mode>ondemand</linux_delete_mode>
     <other_delete_mode>ondemand</other_delete_mode>
@@ -276,7 +275,7 @@ use case.
     <!-- The root filesystem -->
     <volume>
       <mount_point>/</mount_point>
-      <fstype>btrfs</fstype>
+      <fs_type>btrfs</fs_type>
       <desired_size>5GiB</desired_size>
       <min_size>3GiB</min_size>
       <max_size>10GiB</max_size>
@@ -301,7 +300,7 @@ use case.
     <!-- The home filesystem -->
     <volume>
       <mount_point>/home</mount_point>
-      <default_fstype>xfs</default_fstype>
+      <fs_type>xfs</fs_type>
 
       <proposed config:type="boolean">true</proposed>
       <proposed_configurable config:type="boolean">true</proposed_configurable>
@@ -324,7 +323,7 @@ use case.
     <!-- The swap volume -->
     <volume>
       <mount_point>swap</mount_point>
-      <fstype>swap</fstype>
+      <fs_type>swap</fs_type>
 
       <desired_size>2GiB</desired_size>
       <min_size>1GiB</min_size>
@@ -349,7 +348,6 @@ probably look like this (more MS Windows friendly).
 ```xml
 <proposal>
   <lvm config:type="boolean">false</lvm>
-  <encrypt config:type="boolean">false</encrypt>
   <resize_windows config:type="boolean">true</resize_windows>
   <windows_delete_mode>ondemand</windows_delete_mode>
   <linux_delete_mode>ondemand</linux_delete_mode>
@@ -378,7 +376,6 @@ enable or disable in the "Guided Setup" (the former "Proposal Settings").
 <partitioning>
   <proposal>
     <lvm config:type="boolean">true</lvm>
-    <encrypt config:type="boolean">false</encrypt>
     <windows_delete_mode>all</windows_delete_mode>
     <linux_delete_mode>ondemand</linux_delete_mode>
     <other_delete_mode>ondemand</other_delete_mode>
@@ -390,7 +387,7 @@ enable or disable in the "Guided Setup" (the former "Proposal Settings").
     <volume>
       <mount_point>/</mount_point>
       <!-- Enforce Btrfs for root by not offering any other option -->
-      <fstypes>btrfs</fstypes>
+      <fs_types>btrfs</fs_types>
       <desired_size>40GiB</desired_size>
       <min_size>30GiB</min_size>
       <max_size>60GiB</max_size>
@@ -411,7 +408,7 @@ enable or disable in the "Guided Setup" (the former "Proposal Settings").
     <!-- The swap volume -->
     <volume>
       <mount_point>swap</mount_point>
-      <fstype>swap</fstype>
+      <fs_type>swap</fs_type>
 
       <desired_size>6GiB</desired_size>
       <min_size>4GiB</min_size>
@@ -470,7 +467,7 @@ proposal to:
     <volume>
       <mount_point>/</mount_point>
       <!-- Default == final, since the user can't change it -->
-      <fstype>btrfs</fstype>
+      <fs_type>btrfs</fs_type>
       <desired_size>15GiB</desired_size>
       <min_size>10GiB</min_size>
       <max_size>30GiB</max_size>
@@ -492,7 +489,7 @@ proposal to:
     <volume>
       <mount_point>/var/lib/docker</mount_point>
       <!-- Default == final, since the user can't change it -->
-      <fstype>btrfs</fstype>
+      <fs_type>btrfs</fs_type>
       <snapshots config:type="boolean">false</snapshots>
       <snapshots_configurable config:type="boolean">false</snapshots_configurable>
 
@@ -546,7 +543,7 @@ storage proposal (referenced as "guided setup" in the UI) and will contain the
 following options.
 
   * `lvm`. Whether LVM should be used by default.
-  * `encrypt`. Whether encryption should be used by default.
+  * ~~`encrypt`. Whether encryption should be used by default.~~
   * `windows_delete_mode`. Default value for the automatic delete mode for
     Windows partitions. It can be `none`, `all` or `ondemand`. For more
     information, see the description of the new proposal above.
@@ -585,9 +582,9 @@ space" may be important to fully understand some of them.
     in the UI. I.e. whether the user can activate/deactivate the volume. Of
     course, setting `proposed` to false and `proposed_configurable` also to
     false has the same effect than deleting the whole `<volume>` entry.
-  * `fstypes`. A collection of acceptable file system types. If no list is
+  * `fs_types`. A collection of acceptable file system types. If no list is
     given, YaST will use a fallback one based on the mount point.
-  * `fstype`. Default file system type to format the volume.
+  * `fs_type`. Default file system type to format the volume.
   * `desired_size`. Initial size to use in the first proposal attempt.
   * `min_size`. Initial size to use in the second proposal attempt.
   * `max_size`. Maximum size to assign to the volume. It can also contain the
@@ -648,7 +645,7 @@ those default settings, it will perform new attempts altering the settings. For
 that, it will follow the `disable_order` for each volume with that field.
 
 In the first iteration, it will look for the lowest number there. If
-`adjust_by_swap` is optional in that volume and enabled, it will disable it. If
+`adjust_by_ram` is optional in that volume and enabled, it will disable it. If
 that is not enough and snapshots are optional but enabled, it will disable them
 and try again (assuming Btrfs is being used). If that's still not enough, it
 will disable the whole volume if it's optional.
