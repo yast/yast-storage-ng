@@ -27,71 +27,73 @@ require "storage"
 require "y2storage"
 
 describe Y2Storage::Proposal::DevicesPlannerStrategies::Ng do
+  using Y2Storage::Refinements::SizeCasts
+
+  include_context "devices planner"
+
+  subject { described_class.new(settings, devicegraph) }
+
+  let(:settings) { Y2Storage::ProposalSettings.new_for_current_product }
+
+  before do
+    settings.encryption_password = password
+  end
+
+  let(:password) { nil }
+
+  let(:control_file_content) do
+    {
+      "proposal" => {
+        "lvm" => lvm
+      },
+      "volumes"  => volumes
+    }
+  end
+
+  let(:lvm) { false }
+
+  let(:volumes) { [volume] }
+
+  let(:volume) do
+    {
+      "proposed"      => proposed,
+      "mount_point"   => mount_point,
+      "fs_type"       => fs_type,
+      "desired_size"  => desired_size.to_s,
+      "min_size"      => min_size.to_s,
+      "max_size"      => max_size.to_s,
+      "weight"        => weight,
+      "max_size_lvm"  => max_size_lvm.to_s,
+      "adjust_by_ram" => adjust_by_ram
+    }
+  end
+
+  let(:volumes) { [volume] }
+
+  let(:proposed) { true }
+
+  let(:mount_point) { "/" }
+
+  let(:fs_type) { :ext3 }
+
+  let(:desired_size) { 10.GiB }
+
+  let(:min_size) { 5.GiB }
+
+  let(:max_size) { 20.GiB }
+
+  let(:weight) { 100 }
+
+  let(:max_size_lvm) { nil }
+
+  let(:adjust_by_ram) { nil }
+
   describe "#planned_devices" do
-    using Y2Storage::Refinements::SizeCasts
-
-    include_context "devices planner"
-
-    subject { described_class.new(settings, devicegraph) }
-
-    let(:control_file_content) do
-      {
-        "proposal" => {
-          "lvm" => lvm
-        },
-        "volumes"  => volumes
-      }
-    end
-
-    let(:lvm) { false }
-
-    let(:volume) do
-      {
-        "proposed"      => proposed,
-        "mount_point"   => mount_point,
-        "fs_type"       => fs_type,
-        "desired_size"  => desired_size.to_s,
-        "min_size"      => min_size.to_s,
-        "max_size"      => max_size.to_s,
-        "weight"        => weight,
-        "max_size_lvm"  => max_size_lvm.to_s,
-        "adjust_by_ram" => adjust_by_ram
-      }
-    end
-
-    let(:volumes) { [volume] }
-
-    let(:proposed) { true }
-
-    let(:mount_point) { "/" }
-
-    let(:fs_type) { :ext3 }
-
-    let(:desired_size) { 10.GiB }
-
-    let(:min_size) { 5.GiB }
-
-    let(:max_size) { 20.GiB }
-
-    let(:weight) { 100 }
-
-    let(:max_size_lvm) { nil }
-
-    let(:adjust_by_ram) { nil }
-
     let(:target) { :desired }
 
-    let(:boot_checker) { instance_double("Y2Storage::BootRequirementChecker") }
-
-    let(:settings) { Y2Storage::ProposalSettings.new_for_current_product }
-
-    let(:devicegraph) { instance_double("Y2Storage::Devicegraph") }
-
-    subject { described_class.new(settings, devicegraph) }
-
     it "returns an array of planned devices" do
-      expect(subject.planned_devices(:desired)).to be_a Array
-      expect(subject.planned_devices(:desired)).to all(be_a(Y2Storage::Planned::Device))
+      expect(subject.planned_devices(target)).to be_a Array
+      expect(subject.planned_devices(target)).to all(be_a(Y2Storage::Planned::Device))
     end
 
     it "includes the partitions needed by BootRequirementChecker" do
@@ -102,11 +104,7 @@ describe Y2Storage::Proposal::DevicesPlannerStrategies::Ng do
     end
 
     context "when a volume is specified in <volumes> section" do
-      before do
-        settings.encryption_password = password
-      end
-
-      let(:password) { nil }
+      let(:volumes) { [volume] }
 
       let(:planned_devices) { subject.planned_devices(target) }
 
@@ -125,10 +123,6 @@ describe Y2Storage::Proposal::DevicesPlannerStrategies::Ng do
 
         it "plans a device for the <volume> entry" do
           expect(planned_devices).to include(an_object_having_attributes(mount_point: mount_point))
-        end
-
-        it "plans a device with weight according to the <volume> entry" do
-          expect(planned_device.weight).to eq(weight)
         end
 
         context "and it is proposing a partition-based setup" do
@@ -175,6 +169,63 @@ describe Y2Storage::Proposal::DevicesPlannerStrategies::Ng do
           end
         end
 
+        context "when it is adjusting the weight" do
+          it "sets weight value according to <volume> entry" do
+            expect(planned_device.weight).to eq(weight)
+          end
+
+          context "and there is another volume with weight fallback" do
+            let(:volumes) { [volume, home_volume] }
+
+            let(:home_volume) do
+              {
+                "proposed"            => home_proposed,
+                "mount_point"         => "/home",
+                "fs_type"             => "xfs",
+                "weight"              => home_weight,
+                "desired_size"        => "10 GiB",
+                "min_size"            => "8 GiB",
+                "max_size"            => "15 GiB",
+                "fallback_for_weight" => fallback_for_weight
+              }
+            end
+
+            let(:home_proposed) { false }
+
+            let(:home_weight) { 50 }
+
+            let(:fallback_for_weight) { nil }
+
+            context "and that volume is proposed" do
+              let(:home_proposed) { true }
+
+              it "sets weight whithout include fallback values" do
+                expect(planned_device.weight).to eq(weight)
+              end
+            end
+
+            context "and that volume is not proposed" do
+              let(:home_proposed) { false }
+
+              context "and the fallback for weight is not the current volume" do
+                let(:fallback_for_weight) { "swap" }
+
+                it "sets weight without including fallback values" do
+                  expect(planned_device.weight).to eq(weight)
+                end
+              end
+
+              context "and the fallback for weight is the current volume" do
+                let(:fallback_for_weight) { mount_point }
+
+                it "sets weight taking into account the fallback values" do
+                  expect(planned_device.weight).to eq(weight + home_weight)
+                end
+              end
+            end
+          end
+        end
+
         context "when it is adjusting the max_size" do
           context "and it is proposing a partition-based setup" do
             let(:lvm) { false }
@@ -203,6 +254,70 @@ describe Y2Storage::Proposal::DevicesPlannerStrategies::Ng do
               end
             end
           end
+
+          context "when there is another not proposed volume" do
+            let(:volumes) { [volume, home_volume] }
+
+            let(:home_volume) do
+              {
+                "proposed"                  => false,
+                "mount_point"               => "/home",
+                "max_size"                  => home_max_size.to_s,
+                "max_size_lvm"              => home_max_size_lvm.to_s,
+                "fallback_for_max_size"     => fallback_for_max_size,
+                "fallback_for_max_size_lvm" => fallback_for_max_size_lvm
+              }
+            end
+
+            let(:home_max_size) { 50.GiB }
+            let(:home_max_size_lvm) { 100.GiB }
+            let(:fallback_for_max_size) { nil }
+            let(:fallback_for_max_size_lvm) { nil }
+
+            context "with max_size fallback to the current volume" do
+              let(:fallback_for_max_size) { mount_point }
+
+              context "and it is proposing a partition-based setup" do
+                let(:lvm) { false }
+
+                it "sets max_size including max_size fallback values" do
+                  expect(planned_device.max_size).to eq(max_size + home_max_size)
+                end
+              end
+
+              context "and it is proposing a LVM-based setup" do
+                let(:lvm) { true }
+
+                let(:max_size_lvm) { 10.GiB }
+
+                it "sets max_size without including max_size fallback values" do
+                  expect(planned_device.max_size).to eq(max_size_lvm)
+                end
+              end
+            end
+
+            context "with max_size_lvm fallback to the current volume" do
+              let(:fallback_for_max_size_lvm) { mount_point }
+
+              context "and it is proposing a partition-based setup" do
+                let(:lvm) { false }
+
+                it "sets max_size without including max_size_lvm fallback values" do
+                  expect(planned_device.max_size).to eq(max_size)
+                end
+              end
+
+              context "and it is proposing a LVM-based setup" do
+                let(:lvm) { true }
+
+                let(:max_size_lvm) { 10.GiB }
+
+                it "sets max_size including max_size_lvm fallback values" do
+                  expect(planned_device.max_size).to eq(max_size_lvm + home_max_size_lvm)
+                end
+              end
+            end
+          end
         end
 
         context "when it is adjunsting the min_size" do
@@ -212,6 +327,30 @@ describe Y2Storage::Proposal::DevicesPlannerStrategies::Ng do
             it "sets min_size value according to the desired_size in <volume> entry" do
               expect(planned_device.min_size).to eq(desired_size)
             end
+
+            context "and there is another not proposed volume" do
+              let(:volumes) { [volume, home_volume] }
+
+              let(:home_volume) do
+                {
+                  "proposed"                  => false,
+                  "mount_point"               => "/home",
+                  "desired_size"              => home_desired_size.to_s,
+                  "fallback_for_desired_size" => fallback_for_desired_size
+                }
+              end
+
+              let(:home_desired_size) { 50.GiB }
+              let(:fallback_for_desired_size) { nil }
+
+              context "with desired_size fallback to the current volume" do
+                let(:fallback_for_desired_size) { mount_point }
+
+                it "sets min_size including desired_size fallback values" do
+                  expect(planned_device.min_size).to eq(desired_size + home_desired_size)
+                end
+              end
+            end
           end
 
           context "and it is calculating min sizes" do
@@ -219,6 +358,30 @@ describe Y2Storage::Proposal::DevicesPlannerStrategies::Ng do
 
             it "sets min_size value according to the min_size in <volume> entry" do
               expect(planned_device.min_size).to eq(min_size)
+            end
+
+            context "and there is another not proposed volume" do
+              let(:volumes) { [volume, home_volume] }
+
+              let(:home_volume) do
+                {
+                  "proposed"              => false,
+                  "mount_point"           => "/home",
+                  "min_size"              => home_min_size.to_s,
+                  "fallback_for_min_size" => fallback_for_min_size
+                }
+              end
+
+              let(:home_min_size) { 20.GiB }
+              let(:fallback_for_min_size) { nil }
+
+              context "with min_size fallback to the current volume" do
+                let(:fallback_for_min_size) { mount_point }
+
+                it "sets min_size including min_size fallback values" do
+                  expect(planned_device.min_size).to eq(min_size + home_min_size)
+                end
+              end
             end
           end
         end

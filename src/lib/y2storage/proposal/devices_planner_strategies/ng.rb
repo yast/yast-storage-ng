@@ -66,12 +66,8 @@ module Y2Storage
         # @param planned_device [Planned::Device]
         # @param volume [VolumeSpecification]
         def adjust_to_settings(planned_device, volume)
-          planned_device.weight = volume.weight
-
-          if planned_device.is_a?(Planned::Partition)
-            planned_device.encryption_password = settings.encryption_password
-          end
-
+          adjust_weight(planned_device, volume)
+          adjust_encryption(planned_device, volume)
           adjust_sizes(planned_device, volume)
           adjust_btrfs(planned_device, volume)
 
@@ -79,16 +75,38 @@ module Y2Storage
           adjust_swap(planned_device, volume) if planned_device.swap?
         end
 
+        # Adjusts planned device weight according to settings
+        #
+        # @param planned_device [Planned::Device]
+        # @param volume [VolumeSpecification]
+        def adjust_weight(planned_device, volume)
+          planned_device.weight = value_with_fallbacks(volume, :weight)
+        end
+
+        # Adjusts planned device encryption according to settings
+        #
+        # @param planned_device [Planned::Device]
+        # @param volume [VolumeSpecification]
+        def adjust_encryption(planned_device, _volume)
+          if planned_device.is_a?(Planned::Partition)
+            planned_device.encryption_password = settings.encryption_password
+          end
+        end
+
         # Adjusts planned device sizes according to settings
         #
         # @param planned_device [Planned::Device]
         # @param volume [VolumeSpecification]
         def adjust_sizes(planned_device, volume)
-          max_size = volume.max_size
-          max_size = volume.max_size_lvm if settings.lvm && volume.max_size_lvm
+          min_size = value_with_fallbacks(volume, :min_size)
+          desired_size = value_with_fallbacks(volume, :desired_size)
+          max_size = value_with_fallbacks(volume, :max_size)
+          max_size_lvm = value_with_fallbacks(volume, :max_size_lvm)
+
+          max_size = max_size_lvm if settings.lvm && max_size_lvm > DiskSize.zero
           planned_device.max_size = max_size
 
-          min_size = target == :min ? volume.min_size : volume.desired_size
+          min_size = target == :min ? min_size : desired_size
           planned_device.min_size = min_size
 
           if volume.adjust_by_ram?
@@ -148,6 +166,37 @@ module Y2Storage
           else
             planned_device.logical_volume_name = "swap"
           end
+        end
+
+        # Calculates the value for a specific attribute taking into
+        # account the fallback values
+        #
+        # @param volume [VolumeSpecification]
+        # @param attr [Symbol, String]
+        def value_with_fallbacks(volume, attr)
+          value = volume.send(attr)
+
+          volumes = volumes_with_fallback(volume.mount_point, attr)
+          return value if volumes.empty?
+
+          volumes.inject(value) { |total, v| total + v.send(attr) }
+        end
+
+        # Searches for volume specifications that have fallback value
+        # for a specific mount point
+        #
+        # @param mount_point [String]
+        # @param attr [Symbol, String]
+        #
+        # @return [Array<VolumeSpecification>]
+        def volumes_with_fallback(mount_point, attr)
+          not_proposed_volumes.select { |v| v.send("fallback_for_#{attr}") == mount_point }
+        end
+
+        # Searches for not proposed volume specifications
+        # @return [Array<VolumeSpecification>]
+        def not_proposed_volumes
+          settings.volumes.select { |v| !v.proposed? }
         end
       end
     end
