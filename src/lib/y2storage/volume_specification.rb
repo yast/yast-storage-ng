@@ -121,6 +121,7 @@ module Y2Storage
 
     def apply_defaults
       @max_size ||= DiskSize.unlimited
+      @max_size_lvm ||= DiskSize.zero
     end
 
     # For some features (i.e., fs_types and subvolumes) fallback values could be applied
