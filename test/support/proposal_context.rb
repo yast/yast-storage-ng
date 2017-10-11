@@ -45,9 +45,7 @@ RSpec.shared_context "proposal" do
     allow(storage_arch).to receive(:s390?).and_return(architecture == :s390)
 
     if settings_format == :ng
-      file = File.join(DATA_PATH, "control_files", control_file)
-      settings = Yast::XML.XMLToYCPFile(file)
-      Yast::ProductFeatures.Import(settings)
+      Yast::ProductFeatures.Import(control_file_content)
     end
   end
 
@@ -81,6 +79,11 @@ RSpec.shared_context "proposal" do
   let(:ng_settings) { Y2Storage::ProposalSettings.new_for_current_product }
 
   let(:control_file) { nil }
+
+  let(:control_file_content) do
+    file = File.join(DATA_PATH, "control_files", control_file)
+    Yast::XML.XMLToYCPFile(file)
+  end
 
   let(:expected_scenario) { scenario }
   let(:expected) do

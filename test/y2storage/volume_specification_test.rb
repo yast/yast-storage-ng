@@ -55,6 +55,10 @@ describe Y2Storage::VolumeSpecification do
         expect(subject.max_size).to eq(Y2Storage::DiskSize.unlimited)
       end
 
+      it "sets max_size_lvm to zero by default" do
+        expect(subject.max_size_lvm).to eq(Y2Storage::DiskSize.zero)
+      end
+
       context "when a fs_type is indicated" do
         let(:volume_features) { { "fs_type" => fs_type } }
 

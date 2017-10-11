@@ -71,6 +71,9 @@ module Y2Storage
     attr_accessor :fallback_for_min_size
 
     # @return [String] mount point of another volume
+    attr_accessor :fallback_for_desired_size
+
+    # @return [String] mount point of another volume
     attr_accessor :fallback_for_max_size
 
     # @return [String] mount point of another volume
@@ -118,6 +121,7 @@ module Y2Storage
 
     def apply_defaults
       @max_size ||= DiskSize.unlimited
+      @max_size_lvm ||= DiskSize.zero
     end
 
     # For some features (i.e., fs_types and subvolumes) fallback values could be applied
@@ -132,6 +136,7 @@ module Y2Storage
         adjust_by_ram:              :boolean,
         adjust_by_ram_configurable: :boolean,
         fallback_for_min_size:      :string,
+        fallback_for_desired_size:  :string,
         fallback_for_max_size:      :string,
         fallback_for_max_size_lvm:  :string,
         fallback_for_weight:        :string,
