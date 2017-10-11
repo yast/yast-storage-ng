@@ -43,8 +43,9 @@ describe Y2Storage::Proposal::DevicesPlanner do
       end
 
       it "returns an array of planned devices" do
-        expect(subject.planned_devices(:desired)).to be_a Array
-        expect(subject.planned_devices(:desired)).to all(be_a(Y2Storage::Planned::Device))
+        planned_devices = subject.planned_devices(:desired)
+        expect(planned_devices).to be_a Array
+        expect(planned_devices).to all(be_a(Y2Storage::Planned::Device))
       end
     end
 
@@ -66,8 +67,9 @@ describe Y2Storage::Proposal::DevicesPlanner do
       end
 
       it "returns an array of planned devices" do
-        expect(subject.planned_devices(:desired)).to be_a Array
-        expect(subject.planned_devices(:desired)).to all(be_a(Y2Storage::Planned::Device))
+        planned_devices = subject.planned_devices(:desired)
+        expect(planned_devices).to be_a Array
+        expect(planned_devices).to all(be_a(Y2Storage::Planned::Device))
       end
     end
   end

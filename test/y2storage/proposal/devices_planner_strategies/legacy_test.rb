@@ -35,8 +35,9 @@ describe Y2Storage::Proposal::DevicesPlannerStrategies::Legacy do
     subject { described_class.new(settings, devicegraph) }
 
     it "returns an array of planned devices" do
-      expect(subject.planned_devices(:desired)).to be_a Array
-      expect(subject.planned_devices(:desired)).to all(be_a(Y2Storage::Planned::Device))
+      planned_devices = subject.planned_devices(:desired)
+      expect(planned_devices).to be_a Array
+      expect(planned_devices).to all(be_a(Y2Storage::Planned::Device))
     end
 
     it "includes the partitions needed by BootRequirementChecker" do
