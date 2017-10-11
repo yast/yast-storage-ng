@@ -86,7 +86,7 @@ module Y2Storage
         # Adjusts planned device encryption according to settings
         #
         # @param planned_device [Planned::Device]
-        # @param volume [VolumeSpecification]
+        # @param _volume [VolumeSpecification]
         def adjust_encryption(planned_device, _volume)
           if planned_device.is_a?(Planned::Partition)
             planned_device.encryption_password = settings.encryption_password
