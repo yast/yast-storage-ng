@@ -534,6 +534,10 @@ proposal to:
     it (basically if the disk is bigger than 20 GiB, according to the sizes in
     the example).
 
+> FIXME:
+> `proposal_settings_editable`, `expert_partitioner_warning`, `root_subvolume_read_only`
+> in the following example do not exist (yet). Equivalents would have to appeasr in the `proposal` section.
+
 ```xml
 <partitioning>
 
