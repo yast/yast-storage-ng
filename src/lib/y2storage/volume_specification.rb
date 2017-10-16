@@ -158,7 +158,7 @@ module Y2Storage
     end
 
     # For some features (i.e., fs_types and subvolumes) fallback values could be applied
-
+    # @param volume_features [Hash] features for a volume
     def load_features(volume_features)
       FEATURES.each do |feature, type|
         type = nil if [:string, :boolean, :list].include?(type)

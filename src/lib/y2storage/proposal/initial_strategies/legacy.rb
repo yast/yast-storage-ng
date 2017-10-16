@@ -19,6 +19,7 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
+require "yast"
 require "y2storage/proposal/initial_strategies/base"
 
 module Y2Storage
@@ -48,7 +49,7 @@ module Y2Storage
           # version of settings to allow modify them after the proposal is performed.
           current_settings = settings || ProposalSettings.new_for_current_product
           log.info("Trying proposal with initial settings: #{current_settings}")
-          proposal = try_proposal(current_settings.dup, devicegraph, disk_analyzer)
+          proposal = try_proposal(Yast.deep_copy(current_settings), devicegraph, disk_analyzer)
 
           proposal = try_without_home(proposal, current_settings, devicegraph, disk_analyzer)
           proposal = try_without_snapshots(proposal, current_settings, devicegraph, disk_analyzer)
@@ -62,7 +63,7 @@ module Y2Storage
           if proposal.failed? && current_settings.use_separate_home
             current_settings.use_separate_home = false
             log.info("Trying proposal without home: #{current_settings}")
-            proposal = try_proposal(current_settings.dup, devicegraph, disk_analyzer)
+            proposal = try_proposal(Yast.deep_copy(current_settings), devicegraph, disk_analyzer)
           end
           proposal
         end
@@ -72,7 +73,7 @@ module Y2Storage
           if proposal.failed? && current_settings.snapshots_active?
             current_settings.use_snapshots = false
             log.info("Trying proposal without home neither snapshots: #{current_settings}")
-            proposal = try_proposal(current_settings.dup, devicegraph, disk_analyzer)
+            proposal = try_proposal(Yast.deep_copy(current_settings), devicegraph, disk_analyzer)
           end
           proposal
         end

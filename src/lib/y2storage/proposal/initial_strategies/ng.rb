@@ -19,6 +19,7 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
+require "yast"
 require "y2storage/proposal/initial_strategies/base"
 
 module Y2Storage
@@ -54,7 +55,7 @@ module Y2Storage
           # Try proposal with initial settings
           current_settings = settings || ProposalSettings.new_for_current_product
           log.info("Trying proposal with initial settings: #{current_settings}")
-          proposal = try_proposal(current_settings.dup, devicegraph, disk_analyzer)
+          proposal = try_proposal(Yast.deep_copy(current_settings), devicegraph, disk_analyzer)
 
           loop do
             volume = first_configurable_volume(current_settings)
@@ -79,7 +80,7 @@ module Y2Storage
           if proposal.failed? && adjust_by_ram_active_and_configurable?(volume)
             volume.adjust_by_ram = false
             log.info("Trying proposal after disabling 'adjust_by_ram' for '#{volume.mount_point}'")
-            proposal = try_proposal(current_settings.dup, devicegraph, disk_analyzer)
+            proposal = try_proposal(Yast.deep_copy(current_settings), devicegraph, disk_analyzer)
           end
           proposal
         end
@@ -89,7 +90,7 @@ module Y2Storage
           if proposal.failed? && snapshots_active_and_configurable?(volume)
             volume.snapshots = false
             log.info("Trying proposal after disabling 'snapshots' for '#{volume.mount_point}'")
-            proposal = try_proposal(current_settings.dup, devicegraph, disk_analyzer)
+            proposal = try_proposal(Yast.deep_copy(current_settings), devicegraph, disk_analyzer)
           end
           proposal
         end
@@ -99,7 +100,7 @@ module Y2Storage
           if proposal.failed? && proposed_active_and_configurable?(volume)
             volume.proposed = false
             log.info("Trying proposal after disabling '#{volume.mount_point}'")
-            proposal = try_proposal(current_settings.dup, devicegraph, disk_analyzer)
+            proposal = try_proposal(Yast.deep_copy(current_settings), devicegraph, disk_analyzer)
           end
           proposal
         end
