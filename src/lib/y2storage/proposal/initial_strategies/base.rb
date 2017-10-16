@@ -32,7 +32,7 @@ module Y2Storage
       class Base
         include Yast::Logger
 
-        # @!method initial_proposal(settings, devicegraph, diskanalizer)
+        # @!method initial_proposal(settings, devicegraph, disk_analyzer)
         #   Calculates the initial proposal. It must be defined by derived classes.
         #
         #   @see GuidedProposal#initialize
