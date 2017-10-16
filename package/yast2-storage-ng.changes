@@ -1,4 +1,12 @@
 -------------------------------------------------------------------
+Mon Oct 16 10:02:24 UTC 2017 - jlopez@suse.com
+
+- Add strategies to try an initial valid proposal, even changing
+  settings when necessary.
+- Part of fate#318196.
+- 4.0.2
+
+-------------------------------------------------------------------
 Tue Oct 10 11:11:59 UTC 2017 - jlopez@suse.com
 
 - Adapt proposal to work with new format of proposal settings.

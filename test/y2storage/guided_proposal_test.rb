@@ -35,23 +35,11 @@ describe Y2Storage::GuidedProposal do
   let(:scenario) { "empty_hard_disk_gpt_25GiB" }
 
   describe ".initial" do
-    subject(:proposal) { described_class.initial(settings: current_settings) }
+    subject(:proposal) { described_class.initial(settings: settings) }
 
-    before do
-      settings.root_filesystem_type = root_filesystem
-      settings.use_snapshots = snapshots
-      settings.root_base_size = root_base_size
-      settings.root_max_size = root_max_size
-      settings.home_min_size = home_min_size
+    it "generates a proposal" do
+      expect(proposal).to be_a(Y2Storage::GuidedProposal)
     end
-
-    let(:root_filesystem) { Y2Storage::Filesystems::Type::BTRFS }
-    let(:snapshots) { settings.use_snapshots }
-    let(:root_base_size) { settings.root_base_size }
-    let(:root_max_size) { settings.root_max_size }
-    let(:home_min_size) { settings.home_min_size }
-
-    let(:current_settings) { settings }
 
     context "when settings are not passed" do
       let(:current_settings) { nil }
@@ -63,63 +51,32 @@ describe Y2Storage::GuidedProposal do
       end
     end
 
-    context "when it is possible to create a proposal using current settings" do
-      let(:separate_home) { true }
-      let(:snapshots) { true }
-      let(:root_base_size) { 3.GiB }
-      let(:root_max_size) { 3.GiB }
-      let(:home_min_size) { 5.GiB }
+    context "when settings has legacy format" do
+      let(:settings_format) { :legacy }
 
-      it "makes a valid proposal without changing settings" do
-        expect(proposal.settings.use_separate_home).to be true
-        expect(proposal.settings.use_snapshots).to be true
-        expect(proposal.devices).to_not be_nil
+      it "uses Legacy strategy to generate the initial proposal" do
+        expect(Y2Storage::Proposal::InitialStrategies::Legacy).to receive(:new).and_call_original
+        proposal
       end
     end
 
-    context "when it is not possible to create a proposal using separate home" do
-      let(:separate_home) { true }
-      let(:snapshots) { true }
-      let(:root_base_size) { 5.GiB }
-      let(:root_max_size) { 5.GiB }
-      let(:home_min_size) { 5.GiB }
+    context "when settings has ng format" do
+      let(:settings_format) { :ng }
 
-      it "tries without separate home" do
-        expect(proposal.settings.use_separate_home).to be false
+      let(:control_file_content) do
+        {
+          "partitioning" => {
+            "proposal" => {
+              "lvm" => false
+            },
+            "volumes"  => []
+          }
+        }
       end
 
-      context "and it is possible without separate home" do
-        it "makes a valid proposal only deactivating separate home" do
-          expect(proposal.settings.use_snapshots).to be true
-          expect(proposal.devices).to_not be_nil
-        end
-      end
-
-      context "and it is not possible without separate home" do
-        let(:root_base_size) { 10.GiB }
-        let(:root_max_size) { 10.GiB }
-
-        it "tries without snapshots" do
-          expect(proposal.settings.use_snapshots).to be false
-        end
-
-        context "and it is possible without snapshots" do
-          it "makes a valid proposal deactivating snapshots" do
-            expect(proposal.settings.use_snapshots).to be false
-            expect(proposal.devices).to_not be_nil
-          end
-        end
-
-        context "and it is not possible without snapshots" do
-          let(:root_base_size) { 25.GiB }
-          let(:root_max_size) { 25.GiB }
-
-          it "does not make a valid proposal" do
-            expect(proposal.settings.use_separate_home).to be false
-            expect(proposal.settings.use_snapshots).to be false
-            expect(proposal.devices).to be_nil
-          end
-        end
+      it "uses Ng strategy to generate the initial proposal" do
+        expect(Y2Storage::Proposal::InitialStrategies::Ng).to receive(:new).and_call_original
+        proposal
       end
     end
   end

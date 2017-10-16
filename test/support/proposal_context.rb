@@ -44,9 +44,7 @@ RSpec.shared_context "proposal" do
     allow(storage_arch).to receive(:ppc?).and_return(architecture == :ppc)
     allow(storage_arch).to receive(:s390?).and_return(architecture == :s390)
 
-    if settings_format == :ng
-      Yast::ProductFeatures.Import(control_file_content)
-    end
+    Yast::ProductFeatures.Import(control_file_content)
   end
 
   let(:architecture) { :x86 }
@@ -81,8 +79,12 @@ RSpec.shared_context "proposal" do
   let(:control_file) { nil }
 
   let(:control_file_content) do
-    file = File.join(DATA_PATH, "control_files", control_file)
-    Yast::XML.XMLToYCPFile(file)
+    if control_file
+      file = File.join(DATA_PATH, "control_files", control_file)
+      Yast::XML.XMLToYCPFile(file)
+    else
+      {}
+    end
   end
 
   let(:expected_scenario) { scenario }

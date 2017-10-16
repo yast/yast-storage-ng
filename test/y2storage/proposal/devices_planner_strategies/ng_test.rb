@@ -407,6 +407,7 @@ describe Y2Storage::Proposal::DevicesPlannerStrategies::Ng do
             volume.merge(
               "snapshots"               => snapshots,
               "snapshots_size"          => snapshots_size.to_s,
+              "snapshots_percentage"    => snapshots_percentage,
               "btrfs_default_subvolume" => btrfs_default_subvolume,
               "subvolumes"              => subvolumes
             )
@@ -417,6 +418,8 @@ describe Y2Storage::Proposal::DevicesPlannerStrategies::Ng do
           let(:snapshots) { false }
 
           let(:snapshots_size) { 1.GiB }
+
+          let(:snapshots_percentage) { nil }
 
           let(:btrfs_default_subvolume) { "@" }
 
@@ -446,21 +449,27 @@ describe Y2Storage::Proposal::DevicesPlannerStrategies::Ng do
               expect(planned_device.snapshots?).to eq(true)
             end
 
-            context "and snapshots_size is a number" do
-              let(:snapshots_size) { 100 }
+            context "and snapshots_size is indicated" do
+              let(:snapshots_size) { 1.GiB }
+              let(:snapshots_percentage) { 100 }
 
-              xit "considers it a percentage and increases the min and max sizes" do
-                expect(planned_device.min_size).to eq(desired_size * 2)
-                expect(planned_device.max_size).to eq(max_size * 2)
+              it "the min and max sizes are increased by the indicated size" do
+                expect(planned_device.min_size).to eq(desired_size + snapshots_size)
+                expect(planned_device.max_size).to eq(max_size + snapshots_size)
               end
             end
 
-            context "and snapshots_size is a disk size" do
-              let(:snapshots_size) { 1.GiB }
+            context "and snapshots_size is not indicated" do
+              let(:snapshots_size) { nil }
 
-              it "increases the min and max sizes" do
-                expect(planned_device.min_size).to eq(desired_size + snapshots_size)
-                expect(planned_device.max_size).to eq(max_size + snapshots_size)
+              context "and snapshots_percentage is indicated" do
+                let(:snapshots_percentage) { 100 }
+
+                it "the min and max sizes are increased by the indicated percentage" do
+                  # percentage == 100%, this means that final size should be the double
+                  expect(planned_device.min_size).to eq(desired_size * 2)
+                  expect(planned_device.max_size).to eq(max_size * 2)
+                end
               end
             end
           end
