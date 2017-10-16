@@ -26,10 +26,10 @@ require "y2storage"
 require_relative "#{TEST_PATH}/support/proposal_context"
 
 describe Y2Storage::GuidedProposal do
-  describe "#propose" do
+  describe ".initial" do
     include_context "proposal"
 
-    subject(:proposal) { described_class.new(settings: settings) }
+    subject(:proposal) { described_class.initial(settings: settings) }
 
     let(:architecture) { :x86 }
 
@@ -42,7 +42,6 @@ describe Y2Storage::GuidedProposal do
       let(:expected_scenario) { "empty_hard_disk_gpt_50GiB_caasp" }
 
       it "proposes the expected layout" do
-        proposal.propose
         expect(proposal.devices.to_str).to eq expected.to_str
       end
     end
@@ -51,8 +50,7 @@ describe Y2Storage::GuidedProposal do
       let(:scenario) { "empty_hard_disk_15GiB" }
       let(:expected_scenario) { "empty_hard_disk_gpt_15GiB_caasp" }
 
-      xit "proposes the expected layout" do
-        proposal.propose
+      it "proposes the expected layout" do
         expect(proposal.devices.to_str).to eq expected.to_str
       end
     end
