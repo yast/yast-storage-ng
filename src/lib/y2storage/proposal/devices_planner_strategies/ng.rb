@@ -134,14 +134,11 @@ module Y2Storage
         # @param planned_device [Planned::Device]
         # @param volume [VolumeSpecification]
         def adjust_btrfs_sizes(planned_device, volume)
-          return if volume.snapshots_size.nil?
-
-          case volume.snapshots_size
-          when DiskSize
+          if volume.snapshots_size
             planned_device.min_size += volume.snapshots_size
             planned_device.max_size += volume.snapshots_size
-          when Integer
-            multiplicator = 1.0 + volume.snapshots_size / 100.0
+          elsif volume.snapshots_percentage
+            multiplicator = 1.0 + volume.snapshots_percentage / 100.0
             planned_device.min_size *= multiplicator
             planned_device.max_size *= multiplicator
           end

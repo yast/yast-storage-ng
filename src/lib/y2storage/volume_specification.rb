@@ -88,10 +88,16 @@ module Y2Storage
     # @return [Boolean] whether the user can change the snapshots setting in the UI
     attr_accessor :snapshots_configurable
 
+    # @note snaphots_size and snapshots_percentage are exclusive in the control file.
     # @return [DiskSize] the initial and maximum sizes for the volume will be
-    #   increased according if snapshots are being used. If it's a number, it
-    #   will be used as a percentage of the original sizes.
+    #   increased according if snapshots are being used.
     attr_accessor :snapshots_size
+
+    # @note snaphots_size and snapshots_percentage are exclusive in the control file.
+    # @return [Integer] the initial and maximum sizes for the volume will be
+    #   increased according if snapshots are being used. It represents a percentage
+    #   of the original sizes.
+    attr_accessor :snapshots_percentage
 
     # @return [Array<SubvolSpecification>] list of specifications (usually read
     #   from the control file) that will be used to plan the Btrfs subvolumes
@@ -119,6 +125,33 @@ module Y2Storage
 
   private
 
+    FEATURES = {
+      mount_point:                :string,
+      proposed:                   :boolean,
+      proposed_configurable:      :boolean,
+      fs_types:                   :list,
+      fs_type:                    :string,
+      adjust_by_ram:              :boolean,
+      adjust_by_ram_configurable: :boolean,
+      fallback_for_min_size:      :string,
+      fallback_for_desired_size:  :string,
+      fallback_for_max_size:      :string,
+      fallback_for_max_size_lvm:  :string,
+      fallback_for_weight:        :string,
+      snapshots:                  :boolean,
+      snapshots_configurable:     :boolean,
+      btrfs_default_subvolume:    :string,
+      desired_size:               :size,
+      min_size:                   :size,
+      max_size:                   :size,
+      max_size_lvm:               :size,
+      snapshots_size:             :size,
+      snapshots_percentage:       :integer,
+      weight:                     :integer,
+      disable_order:              :integer,
+      subvolumes:                 :subvolumes
+    }.freeze
+
     def apply_defaults
       @max_size ||= DiskSize.unlimited
       @max_size_lvm ||= DiskSize.zero
@@ -127,32 +160,7 @@ module Y2Storage
     # For some features (i.e., fs_types and subvolumes) fallback values could be applied
 
     def load_features(volume_features)
-      {
-        mount_point:                :string,
-        proposed:                   :boolean,
-        proposed_configurable:      :boolean,
-        fs_types:                   :list,
-        fs_type:                    :string,
-        adjust_by_ram:              :boolean,
-        adjust_by_ram_configurable: :boolean,
-        fallback_for_min_size:      :string,
-        fallback_for_desired_size:  :string,
-        fallback_for_max_size:      :string,
-        fallback_for_max_size_lvm:  :string,
-        fallback_for_weight:        :string,
-        snapshots:                  :boolean,
-        snapshots_configurable:     :boolean,
-        btrfs_default_subvolume:    :string,
-        desired_size:               :size,
-        min_size:                   :size,
-        max_size:                   :size,
-        max_size_lvm:               :size,
-        # FIXME: allow snapshots_size to be both: a percentage and a disk size
-        snapshots_size:             :size,
-        weight:                     :integer,
-        disable_order:              :integer,
-        subvolumes:                 :subvolumes
-      }.each do |feature, type|
+      FEATURES.each do |feature, type|
         type = nil if [:string, :boolean, :list].include?(type)
         loader = type.nil? ? "load_feature" : "load_#{type}_feature"
         send(loader, feature, source: volume_features)
