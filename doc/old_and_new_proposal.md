@@ -246,7 +246,7 @@ space to assign to every new partition or logical volume.
 A first step decides which volumes will be needed. Each volume will originate a
 partition or a LV in the second step.
 
-If the new format is used in the `partitioning` section in`control.xml`
+If the new format is used in the `partitioning` section in `control.xml`
 the basic list of planned volumes will be
 taken from the `volumes` subsection, except for those
 the user explicitly disables. If the legacy format is used, there are always at
@@ -536,7 +536,7 @@ proposal to:
 
 > FIXME:
 > `proposal_settings_editable`, `expert_partitioner_warning`, `root_subvolume_read_only`
-> in the following example do not exist (yet). Equivalents would have to appeasr in the `proposal` section.
+> in the following example do not exist (yet). Equivalents would have to appear in the `proposal` section.
 
 ```xml
 <partitioning>
@@ -768,12 +768,8 @@ calculated. If YaST is not able to make space for all the volumes required by
 those default settings, it will perform new attempts altering the settings. For
 that, it will follow the `disable_order` for each volume with that field.
 
-> FIXME: unclear (and not yet implemented anyway)
->
-> `adjust_by_ram` is optional == `adjust_by_ram_configurable`?
-
 In the first iteration, it will look for the lowest number there. If
-`adjust_by_ram` is optional in that volume and enabled, it will disable it. If
+`adjust_by_ram_configurable` is true in that volume, it will disable `adjust_by_ram`. If
 that is not enough and snapshots are optional but enabled, it will disable them
 and try again (assuming Btrfs is being used). If that's still not enough, it
 will disable the whole volume if it's optional.
