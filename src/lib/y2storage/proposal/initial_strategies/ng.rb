@@ -96,10 +96,9 @@ module Y2Storage
           proposal
         end
 
-        # Try proposal again after disabling the volume.
-        # Volumes without disable_order should not be disabled
+        # Try proposal again after disabling the volume
         def try_without_proposed(proposal, current_settings, volume, devicegraph, disk_analyzer)
-          if proposal.failed? && proposed_active_and_configurable?(volume) && volume.disable_order
+          if proposal.failed? && proposed_active_and_configurable?(volume)
             volume.proposed = false
             log.info("Trying proposal after disabling '#{volume.mount_point}'")
             proposal = try_proposal(current_settings.dup, devicegraph, disk_analyzer)
@@ -108,6 +107,8 @@ module Y2Storage
         end
 
         # Returns the first volume (according to disable_order) whose settings could be modified.
+        #
+        # @note Volumes without disable order are left to the end.
         #
         # @param settings [ProposalSettings]
         # @return [VolumeSpecification, nil]
@@ -118,32 +119,34 @@ module Y2Storage
           (with_disable_order.sort_by(&:disable_order) + without_disable_order).first
         end
 
-        # A volume is configurable if its settings can be modified. That is, #adjust_by_ram,
-        # #snapshots or #proposed are true and some of them could be change to false.
+        # A volume is configurable if it is proposed and its settings can be modified.
+        # That is, #adjust_by_ram, #snapshots or #proposed are true and some of them
+        # could be change to false.
         #
         # @param volume [VolumeSpecification]
         # @return [Boolean]
         def configurable_volume?(volume)
           volume.proposed? && (
+            proposed_active_and_configurable?(volume) ||
             adjust_by_ram_active_and_configurable?(volume) ||
             snapshots_active_and_configurable?(volume))
         end
 
-        # Whether the volume is proposed and it could be changed
+        # Whether the volume is proposed and it could be configured
         # @param volume [VolumeSpecification]
         # @return [Boolean]
         def proposed_active_and_configurable?(volume)
           active_and_configurable?(volume, :proposed)
         end
 
-        # Whether the volume has adjust_by_ram to true and it could be changed
+        # Whether the volume has adjust_by_ram to true and it could be configured
         # @param volume [VolumeSpecification]
         # @return [Boolean]
         def adjust_by_ram_active_and_configurable?(volume)
           active_and_configurable?(volume, :adjust_by_ram)
         end
 
-        # Whether the volume has snapshots to true and it could be changed
+        # Whether the volume has snapshots to true and it could be configured
         # @param volume [VolumeSpecification]
         # @return [Boolean]
         def snapshots_active_and_configurable?(volume)
@@ -151,7 +154,7 @@ module Y2Storage
           active_and_configurable?(volume, :snapshots)
         end
 
-        # Whether a volume has an attribute to true and it could be changed
+        # Whether a volume has an attribute to true and it could be configured
         # @param volume [VolumeSpecification]
         # @param attr [String, Symbol]
         #
