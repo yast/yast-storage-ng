@@ -83,7 +83,7 @@ module Y2Storage
       #
       # The strategy depends on the settings format.
       #
-      # @see ProposalSeetings#format
+      # @see ProposalSettings#format
       #
       # @param settings [ProposalSettings]
       # @return [Proposal::InitialStrategies::Legacy, Proposal::InitialStrategies::Ng]

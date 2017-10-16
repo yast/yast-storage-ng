@@ -43,25 +43,37 @@ module Y2Storage
         #
         # @return [GuidedProposal]
         def initial_proposal(settings: nil, devicegraph: nil, disk_analyzer: nil)
-          # Try proposal with initial settings
+          # Try proposal with initial settings.
+          # Each proposal freezes its settings, so the proposal is called with a duplicated
+          # version of settings to allow modify them after the proposal is performed.
           current_settings = settings || ProposalSettings.new_for_current_product
           log.info("Trying proposal with initial settings: #{current_settings}")
           proposal = try_proposal(current_settings.dup, devicegraph, disk_analyzer)
 
-          # Try proposal without home
+          proposal = try_without_home(proposal, current_settings, devicegraph, disk_analyzer)
+          proposal = try_without_snapshots(proposal, current_settings, devicegraph, disk_analyzer)
+          proposal
+        end
+
+      private
+
+        # Try proposal without home
+        def try_without_home(proposal, current_settings, devicegraph, disk_analyzer)
           if proposal.failed? && current_settings.use_separate_home
             current_settings.use_separate_home = false
             log.info("Trying proposal without home: #{current_settings}")
             proposal = try_proposal(current_settings.dup, devicegraph, disk_analyzer)
           end
+          proposal
+        end
 
-          # Try proposal without snapshots
+        # Try proposal without snapshots
+        def try_without_snapshots(proposal, current_settings, devicegraph, disk_analyzer)
           if proposal.failed? && current_settings.snapshots_active?
             current_settings.use_snapshots = false
             log.info("Trying proposal without home neither snapshots: #{current_settings}")
             proposal = try_proposal(current_settings.dup, devicegraph, disk_analyzer)
           end
-
           proposal
         end
       end

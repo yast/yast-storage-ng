@@ -69,8 +69,6 @@ module Y2Storage
 
             proposal = try_without_proposed(proposal, current_settings, volume,
               devicegraph, disk_analyzer)
-
-            next
           end
         end
 
