@@ -53,7 +53,7 @@ describe Y2Storage::Proposal::InitialStrategies::Legacy do
 
     let(:current_settings) { settings }
 
-    context "when settings are not passed" do
+    context "when settings are not given" do
       let(:current_settings) { nil }
 
       it "creates initial proposal settings based on the product (control.xml)" do
@@ -63,7 +63,7 @@ describe Y2Storage::Proposal::InitialStrategies::Legacy do
       end
     end
 
-    context "when it is possible to create a proposal using current settings" do
+    context "when settings are given" do
       let(:separate_home) { true }
       let(:snapshots) { true }
       let(:root_base_size) { 3.GiB }
@@ -75,50 +75,39 @@ describe Y2Storage::Proposal::InitialStrategies::Legacy do
         expect(proposal.settings.use_snapshots).to be true
         expect(proposal.devices).to_not be_nil
       end
-    end
 
-    context "when it is not possible to create a proposal using separate home" do
-      let(:separate_home) { true }
-      let(:snapshots) { true }
-      let(:root_base_size) { 5.GiB }
-      let(:root_max_size) { 5.GiB }
-      let(:home_min_size) { 5.GiB }
+      context "when it is not possible to create a proposal using current settings" do
+        let(:separate_home) { true }
+        let(:snapshots) { true }
+        let(:root_base_size) { 5.GiB }
+        let(:root_max_size) { 5.GiB }
+        let(:home_min_size) { 5.GiB }
 
-      it "tries without separate home" do
-        expect(proposal.settings.use_separate_home).to be false
-      end
-
-      context "and it is possible without separate home" do
-        it "makes a valid proposal only deactivating separate home" do
+        it "makes a valid proposal without separate home" do
+          expect(proposal.settings.use_separate_home).to be false
           expect(proposal.settings.use_snapshots).to be true
           expect(proposal.devices).to_not be_nil
         end
       end
 
-      context "and it is not possible without separate home" do
+      context "when it is not possible to create a proposal using a separate home" do
         let(:root_base_size) { 10.GiB }
         let(:root_max_size) { 10.GiB }
 
-        it "tries without snapshots" do
+        it "makes a valid proposal deactivating snapshots" do
           expect(proposal.settings.use_snapshots).to be false
+          expect(proposal.devices).to_not be_nil
         end
+      end
 
-        context "and it is possible without snapshots" do
-          it "makes a valid proposal deactivating snapshots" do
-            expect(proposal.settings.use_snapshots).to be false
-            expect(proposal.devices).to_not be_nil
-          end
-        end
+      context "when it is not possible even without snapshots" do
+        let(:root_base_size) { 25.GiB }
+        let(:root_max_size) { 25.GiB }
 
-        context "and it is not possible without snapshots" do
-          let(:root_base_size) { 25.GiB }
-          let(:root_max_size) { 25.GiB }
-
-          it "does not make a valid proposal" do
-            expect(proposal.settings.use_separate_home).to be false
-            expect(proposal.settings.use_snapshots).to be false
-            expect(proposal.devices).to be_nil
-          end
+        it "does not make a valid proposal" do
+          expect(proposal.settings.use_separate_home).to be false
+          expect(proposal.settings.use_snapshots).to be false
+          expect(proposal.devices).to be_nil
         end
       end
     end

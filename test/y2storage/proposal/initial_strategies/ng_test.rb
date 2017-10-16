@@ -29,7 +29,7 @@ describe Y2Storage::Proposal::InitialStrategies::Ng do
   using Y2Storage::Refinements::SizeCasts
 
   def volume_settings(settings, mount_point)
-    settings.volumes.detect { |v| v.mount_point == mount_point }
+    settings.volumes.find { |v| v.mount_point == mount_point }
   end
 
   include_context "proposal"
@@ -158,22 +158,15 @@ describe Y2Storage::Proposal::InitialStrategies::Ng do
       let(:swap_max_size) { 10.GiB }
       let(:swap_disable_order) { 1 }
 
-      it "tries without adjust_by_ram" do
-        expect(swap_settings.adjust_by_ram?).to be(false)
+      it "makes a valid proposal only deactivating adjust_by_ram" do
+        expect(proposal.failed?).to be(false)
+
         expect(root_settings.adjust_by_ram?).to be(true)
-      end
+        expect(root_settings.snapshots?).to be(true)
+        expect(root_settings.proposed?).to be(true)
 
-      context "and it is possible without adjust_by_ram" do
-        it "makes a valid proposal only deactivating adjust_by_ram" do
-          expect(proposal.failed?).to be(false)
-
-          expect(root_settings.adjust_by_ram?).to be(true)
-          expect(root_settings.snapshots?).to be(true)
-          expect(root_settings.proposed?).to be(true)
-
-          expect(swap_settings.adjust_by_ram?).to be(false)
-          expect(swap_settings.proposed?).to be(true)
-        end
+        expect(swap_settings.adjust_by_ram?).to be(false)
+        expect(swap_settings.proposed?).to be(true)
       end
     end
 
@@ -185,19 +178,12 @@ describe Y2Storage::Proposal::InitialStrategies::Ng do
       let(:root_max_size) { Y2Storage::DiskSize.unlimited }
       let(:root_snapshots_size) { 5.GiB }
 
-      it "tries without snapshots" do
+      it "makes a valid proposal deactivating snapshots" do
+        expect(proposal.failed?).to be(false)
+
         expect(root_settings.adjust_by_ram?).to be(false)
         expect(root_settings.snapshots?).to be(false)
-      end
-
-      context "and it is possible without snapshots" do
-        it "makes a valid proposal deactivating snapshots" do
-          expect(proposal.failed?).to be(false)
-
-          expect(root_settings.adjust_by_ram?).to be(false)
-          expect(root_settings.snapshots?).to be(false)
-          expect(root_settings.proposed?).to be(true)
-        end
+        expect(root_settings.proposed?).to be(true)
       end
     end
 
@@ -215,7 +201,9 @@ describe Y2Storage::Proposal::InitialStrategies::Ng do
       let(:home_snapshots_size) { 5.GiB }
       let(:home_disable_order) { 1 }
 
-      it "tries deactivating the volume" do
+      it "makes a valid proposal deactivating the volume" do
+        expect(proposal.failed?).to be(false)
+
         expect(root_settings.adjust_by_ram?).to be(true)
         expect(root_settings.snapshots?).to be(true)
         expect(root_settings.proposed?).to be(true)
@@ -223,14 +211,6 @@ describe Y2Storage::Proposal::InitialStrategies::Ng do
         expect(home_settings.adjust_by_ram?).to be(false)
         expect(home_settings.snapshots?).to be(false)
         expect(home_settings.proposed?).to be(false)
-      end
-
-      context "and it is possible without the volume" do
-        it "makes a valid proposal deactivating the volume" do
-          expect(proposal.failed?).to be(false)
-          expect(root_settings.proposed?).to be(true)
-          expect(home_settings.proposed?).to be(false)
-        end
       end
     end
 
@@ -251,7 +231,7 @@ describe Y2Storage::Proposal::InitialStrategies::Ng do
       let(:home_max_size) { 50.GiB }
       let(:home_snapshots_size) { 5.GiB }
 
-      context "and disable_order implies to dactivate all possible volumes" do
+      context "and disable_order implies to deactivate all possible volumes" do
         let(:swap_disable_order) { 1 }
         let(:home_disable_order) { 2 }
 
@@ -262,7 +242,7 @@ describe Y2Storage::Proposal::InitialStrategies::Ng do
         end
       end
 
-      context "and disable_order implies to dactivate big volumes first" do
+      context "and disable_order implies to deactivate big volumes first" do
         let(:swap_disable_order) { 2 }
         let(:home_disable_order) { 1 }
 

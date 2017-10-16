@@ -466,6 +466,7 @@ describe Y2Storage::Proposal::DevicesPlannerStrategies::Ng do
                 let(:snapshots_percentage) { 100 }
 
                 it "the min and max sizes are increased by the indicated percentage" do
+                  # percentage == 100%, this means that final size should be the double
                   expect(planned_device.min_size).to eq(desired_size * 2)
                   expect(planned_device.max_size).to eq(max_size * 2)
                 end
