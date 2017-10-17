@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Tue Oct 17 16:45:21 CEST 2017 - shundhammer@suse.de
+
+- Terminate extra space distribution loop if nothing could be
+  distributed anymore (bsc#1063392)
+- 4.0.3
+
+-------------------------------------------------------------------
 Tue Oct 17 11:25:03 UTC 2017 - snwint@suse.com
 
 - finalize control.xml description (fate#318196)
