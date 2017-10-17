@@ -131,6 +131,7 @@ module Y2Storage
               assigned_size += device_extra
             end
             extra_size -= assigned_size
+            break if assigned_size.zero? # (bsc#1063392)
           end
           log.info("Could not distribute #{extra_size}") unless extra_size.zero?
           extra_size
