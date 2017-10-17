@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Tue Oct 17 11:25:03 UTC 2017 - snwint@suse.com
+
+- finalize control.xml description (fate#318196)
+- 4.0.3
+
+-------------------------------------------------------------------
 Mon Oct 16 10:02:24 UTC 2017 - jlopez@suse.com
 
 - Add strategies to try an initial valid proposal, even changing
