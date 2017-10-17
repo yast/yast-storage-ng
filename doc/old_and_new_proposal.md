@@ -534,18 +534,11 @@ proposal to:
     it (basically if the disk is bigger than 20 GiB, according to the sizes in
     the example).
 
-> FIXME:
-> `proposal_settings_editable`, `expert_partitioner_warning`, `root_subvolume_read_only`
-> in the following example do not exist (yet). Equivalents would have to appear in the `proposal` section.
-
 ```xml
 <partitioning>
 
-  <!-- Don't allow the user to use the Guided Setup -->
-  <proposal_settings_editable config:type="boolean">false</proposal_settings_editable>
   <!-- Advise the user against using the expert partitioner -->
   <expert_partitioner_warning config:type="boolean">true</expert_partitioner_warning>
-  <root_subvolume_read_only config:type="boolean">true</root_subvolume_read_only>
 
   <!-- All default settings will become final, since the user can't change them -->
   <proposal>
@@ -554,6 +547,9 @@ proposal to:
     <windows_delete_mode config:type="symbol">all</windows_delete_mode>
     <linux_delete_mode config:type="symbol">all</linux_delete_mode>
     <other_delete_mode config:type="symbol">all</other_delete_mode>
+    <root_subvolume_read_only config:type="boolean">true</root_subvolume_read_only>
+    <!-- Don't allow the user to use the Guided Setup -->
+    <proposal_settings_editable config:type="boolean">false</proposal_settings_editable>
   </proposal>
 
   <volumes config:type="list">
@@ -622,16 +618,16 @@ distributes the space".
 
 ### General structure
 
-> FIXME:
-> The following paragraph is is not true.
+The new `partitioning` section contains
+  * `expert_partitioner_warning`  
+    If `true`, an extra warning pop-up is
+    displayed if the user enters the expert partitioner during installation.
+  * `use_separate_multipath_module`  
+    If `true`, the multipath client from the yast2-multipath package is used to
+    setup a multipath config.
+    If `false`, the multipath setup is done by yast-storage-ng.
 
-The new `partitioning` section will still contain the
-`root_subvolume_read_only`, `proposal_settings_editable`,
-`expert_partitioner_warning` and `use_separate_multipath_module` options
-described in this document's subsection "Other general options" at "Settings in
-yast-storage". These options will retain their exact form and meaning.
-
-In addition that, there will be two new subsections: `proposal` and `volumes`.
+In addition to that, there are two new subsections: `proposal` and `volumes`.
 
 ### The `proposal` subsection
 
@@ -668,6 +664,10 @@ following options.
       will be exactly the sum of all the LVs sizes.
   * `lvm_vg_size`  
     Specifies the predefined size of the LVM volume group.
+  * `proposal_settings_editable`  
+    If `false`, the user is not allowed to change the proposal settings.
+  * `root_subvolume_read_only`  
+    If `true`, the "/"-volume is set read-only (mainly for CaaSP).
 
 ### The `volumes` subsection
 
