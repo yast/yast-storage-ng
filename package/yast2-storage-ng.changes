@@ -1,9 +1,16 @@
 -------------------------------------------------------------------
+Wed Oct 18 08:26:57 UTC 2017 - igonzalezsosa@suse.com
+
+- AutoYaST: add basic support for error handling
+- AutoYaST: handle 'size: auto' correctly
+- 4.0.5
+
+-------------------------------------------------------------------
 Tue Oct 17 16:45:21 CEST 2017 - shundhammer@suse.de
 
 - Terminate extra space distribution loop if nothing could be
   distributed anymore (bsc#1063392)
-- 4.0.3
+- 4.0.4
 
 -------------------------------------------------------------------
 Tue Oct 17 11:25:03 UTC 2017 - snwint@suse.com
