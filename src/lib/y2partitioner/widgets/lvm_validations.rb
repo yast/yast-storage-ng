@@ -20,34 +20,35 @@
 # find current contact information at www.suse.com.
 
 require "yast"
-require "cwm"
-require "y2partitioner/sequences/add_lvm_lv"
-require "y2partitioner/widgets/lvm_validations"
+require "y2storage/lvm_vg"
+require "y2storage/lvm_lv"
+
+Yast.import "Popup"
 
 module Y2Partitioner
   module Widgets
     # Button for opening the workflow to add a logical volume to a volume group.
-    class AddLvmLvButton < CWM::PushButton
-      include LvmValidations
-
-      # Constructor
-      # @param vg [Y2Storage::LvmVg]
-      def initialize(vg)
-        textdomain "storage"
-        @vg = vg
+    module LvmValidations
+      # TODO
+      def validate_add_vg
+        return true
       end
 
-      # @macro seeAbstractWidget
-      def label
-        _("Add...")
-      end
+      def validate_add_lv(vg)
+        if vg.nil?
+          Yast::Popup.Error(_("No device selected"))
+          return false
+        end
 
-      # @macro seeAbstractWidget
-      def handle
-        return nil unless validate_add_lv(@vg)
+        if vg.number_of_free_extents == 0
+          Yast::Popup.Error(
+            # TRANSLATORS: %s is a volume group name (e.g. "system")
+            _("No free space left in the volume group \"%s\".") % vg.vg_name
+          )
+          return false
+        end
 
-        Sequences::AddLvmLv.new(@vg).run
-        :redraw
+        return true
       end
     end
   end
