@@ -68,7 +68,7 @@ module Y2Storage
     def calculate_proposal
       drives = Proposal::AutoinstDrivesMap.new(initial_devicegraph, partitioning)
 
-      space_maker = Proposal::AutoinstSpaceMaker.new(disk_analyzer)
+      space_maker = Proposal::AutoinstSpaceMaker.new(disk_analyzer, problems_list)
       devicegraph = space_maker.cleaned_devicegraph(initial_devicegraph, drives)
 
       @devices = propose_devicegraph(devicegraph, drives)

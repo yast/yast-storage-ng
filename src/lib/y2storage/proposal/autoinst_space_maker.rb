@@ -31,11 +31,15 @@ module Y2Storage
     class AutoinstSpaceMaker
       include Yast::Logger
 
+      # @return [AutoinstProblems::List] List of detected problems
+      attr_reader :problems_list
+
       # Constructor
       #
       # @param disk_analyzer [DiskAnalyzer] information about existing partitions
-      def initialize(disk_analyzer)
+      def initialize(disk_analyzer, problems_list = nil)
         @disk_analyzer = disk_analyzer
+        @problems_list = problems_list || AutoinstProblems::List.new
       end
 
       # Performs all the delete operations specified in the AutoYaST profile
@@ -91,8 +95,7 @@ module Y2Storage
         when Array
           delete_partitions_by_number(devicegraph, disk, use)
         else
-          # TODO: better error handling
-          log.warn "Unknown value '#{use}' for 'use' element in driver specification"
+          register_invalid_use_value(disk, use)
         end
       end
 
@@ -117,6 +120,18 @@ module Y2Storage
         partition_killer = Proposal::PartitionKiller.new(devicegraph)
         parts = disk.partitions.select { |n| partition_nrs.include?(n.number) }
         parts.map(&:name).each { |n| partition_killer.delete(n) }
+      end
+
+      # Register an invalid/missing value for 'use'
+      #
+      # @param disk        [Disk]
+      # @param use         [String,Array<Integer>] Use value ("all", "linux", "free"
+      def register_invalid_use_value(disk, use)
+        if use.nil?
+          problems_list.add(:missing_value, disk.name, :use)
+        else
+          problems_list.add(:invalid_value, disk.name, :use, use)
+        end
       end
     end
   end
