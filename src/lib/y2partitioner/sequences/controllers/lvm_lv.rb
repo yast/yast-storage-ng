@@ -47,6 +47,21 @@ module Y2Partitioner
         # @return [Y2Storage::DiskSize]
         attr_accessor :size
 
+        # @return [Symbol] :normal, :thin_pool, :thin
+        attr_accessor :type_choice
+
+        # Name of the selected thin pool (when type is :thin)
+        # @return [String, nil]
+        attr_accessor :thin_pool
+
+        # Number of stripes selected
+        # @return [Integer]
+        attr_accessor :stripes_number
+
+        # Stripe size selected
+        # @return [DiskSize]
+        attr_accessor :stripes_size
+
         # Name of the logical volume to create
         # @return [String]
         attr_accessor :lv_name
@@ -82,6 +97,8 @@ module Y2Partitioner
         # Creates the LV in the VG according to the controller attributes
         def create_lv
           @lv = vg.create_lvm_lv(lv_name, size)
+          @lv.stripes = stripes_number if stripes_number
+          @lv.stripe_size = stripes_size  if stripes_size
           UIState.instance.select_row(@lv)
         end
 
@@ -112,6 +129,37 @@ module Y2Partitioner
         # @return [Y2Storage::DiskSize]
         def max_size
           vg.available_space
+        end
+
+        # Possible stripe numbers for the new LV
+        #
+        # @note Stripes number options is a value from 1 and the number
+        #   of physical volumes in the volume group.
+        #
+        # @return [Array<Integer>]
+        def stripes_number_options
+          pvs_size = vg.lvm_pvs.size
+          (1..pvs_size).to_a
+        end
+
+        # Possible stripe sizes for the new LV
+        #
+        # @note Stripes size options is a power of two value from 4 KiB and
+        #   the volume group extent size.
+        #
+        # @return [Array<DiskSize>]
+        def stripes_size_options
+          extend_size = vg.extent_size
+          sizes = [Y2Storage::DiskSize.new("4 KiB")]
+
+          loop do
+            next_size = sizes.last * 2
+            break if next_size > extend_size
+
+            sizes << next_size
+          end
+
+          sizes
         end
 
         # Validates a candidate name for the LV

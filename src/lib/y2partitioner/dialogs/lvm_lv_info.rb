@@ -1,3 +1,24 @@
+# encoding: utf-8
+
+# Copyright (c) [2017] SUSE LLC
+#
+# All Rights Reserved.
+#
+# This program is free software; you can redistribute it and/or modify it
+# under the terms of version 2 of the GNU General Public License as published
+# by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+# more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, contact SUSE LLC.
+#
+# To contact SUSE LLC about this file by physical or electronic mail, you may
+# find current contact information at www.suse.com.
+
 require "yast"
 require "y2storage"
 require "cwm"
@@ -25,7 +46,16 @@ module Y2Partitioner
 
       # @macro seeDialog
       def contents
-        HVSquash(NameWidget.new(@controller))
+        HVSquash(
+          VBox(
+            Frame(
+              _("Name"),
+              NameWidget.new(@controller)
+            ),
+            VSpacing(),
+            TypeWidget.new(@controller)
+          )
+        )
       end
 
       # Name of the logical volume
@@ -78,6 +108,78 @@ module Y2Partitioner
           else
             true
           end
+        end
+      end
+
+      # Choose a size for a new logical volume either choosing the maximum or
+      # entering a custom size
+      class TypeWidget < Widgets::ControllerRadioButtons
+        # @param controller [Sequences::Controllers::LvmLv]
+        #   a controller collecting data for a LV to be created
+        def initialize(controller)
+          textdomain "storage"
+          @controller = controller
+        end
+
+        # @macro seeAbstractWidget
+        def label
+          _("Type")
+        end
+
+        # @see Widgets::ControllerRadioButtons
+        def items
+          [
+            [:normal, _("Normal Volume")],
+            [:thin_pool, _("Thin Pool")],
+            [:thin, _("Thin Volume")]
+          ]
+        end
+
+        # @see Widgets::ControllerRadioButtons
+        def widgets
+          @widgets ||= [
+            CWM::Empty.new("normal_widget"),
+            CWM::Empty.new("thin_pool_widget"),
+            UsedPoolSelector.new(@controller)
+          ]
+        end
+
+        # @macro seeAbstractWidget
+        def init
+          self.value = (@controller.type_choice ||= :normal)
+          # trigger disabling the other subwidgets
+          handle("ID" => value)
+        end
+
+        # @macro seeAbstractWidget
+        def store
+          @controller.type_choice = value
+          @controller.thin_pool = current_widget.value if value == :thin
+        end
+      end
+
+      # Selector for used pool
+      # TODO: thin provisioning should be implemented in libstorage-ng
+      class UsedPoolSelector < CWM::ComboBox
+        # @param controller [Sequences::Controllers::LvmLv]
+        #   a controller collecting data for a LV to be created
+        def initialize(controller)
+          textdomain "storage"
+          @controller = controller
+        end
+
+        # @macro seeAbstractWidget
+        def label
+          _("Used Pool")
+        end
+
+        def init
+          thin_pool = @controller.thin_pool
+          self.value = thin_pool if thin_pool
+        end
+
+        def items
+          []
         end
       end
     end

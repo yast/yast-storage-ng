@@ -1,3 +1,24 @@
+# encoding: utf-8
+
+# Copyright (c) [2017] SUSE LLC
+#
+# All Rights Reserved.
+#
+# This program is free software; you can redistribute it and/or modify it
+# under the terms of version 2 of the GNU General Public License as published
+# by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+# more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, contact SUSE LLC.
+#
+# To contact SUSE LLC about this file by physical or electronic mail, you may
+# find current contact information at www.suse.com.
+
 require "yast"
 require "y2storage"
 require "cwm"
@@ -7,8 +28,7 @@ Yast.import "Popup"
 
 module Y2Partitioner
   module Dialogs
-    # Determine the size of a logical volume to be created and its number of
-    # stripes.
+    # Determine the size of a logical volume to be created and its number of stripes.
     # Part of {Sequences::AddLvmLv}.
     class LvmLvSize < CWM::Dialog
       # @param controller [Sequences::Controllers::LvmLv]
@@ -25,7 +45,13 @@ module Y2Partitioner
 
       # @macro seeDialog
       def contents
-        HVSquash(SizeWidget.new(@controller))
+        HVSquash(
+          VBox(
+            Left(SizeWidget.new(@controller)),
+            VSpacing(),
+            Left(StripesWidget.new(@controller))
+          )
+        )
       end
 
       # Choose a size for a new logical volume either choosing the maximum or
@@ -163,6 +189,93 @@ module Y2Partitioner
         attr_reader :min
         # @return [Y2Storage::DiskSize]
         attr_reader :max
+      end
+    end
+
+    # Choose stripes number and size for a new logical volume
+    class StripesWidget < CWM::CustomWidget
+      # @param controller [Sequences::Controllers::LvmLv]
+      #   a controller collecting data for a LV to be created
+      def initialize(controller)
+        textdomain "storage"
+        @controller = controller
+      end
+
+      # @macro seeAbstractWidget
+      def contents
+        Frame(
+          _("Stripes"),
+          HBox(
+            stripes_number_widget,
+            stripes_size_widget
+          )
+        )
+      end
+
+      def store
+        @controller.stripes_number = stripes_number_widget.value
+        @controller.stripes_size = stripes_size_widget.value
+      end
+
+    private
+
+      def stripes_number_widget
+        @stripes_number_widget ||= StripesNumberSelector.new(@controller)
+      end
+
+      def stripes_size_widget
+        @stripes_size_widget ||= StripesSizeSelector.new(@controller)
+      end
+    end
+
+    # Selector for the stripes number
+    class StripesNumberSelector < CWM::ComboBox
+      # @param controller [Sequences::Controllers::LvmLv]
+      #   a controller collecting data for a LV to be created
+      def initialize(controller)
+        textdomain "storage"
+        @controller = controller
+      end
+
+      # @macro seeAbstractWidget
+      def label
+        _("Number")
+      end
+
+      def init
+        self.value = @controller.stripes_number
+      end
+
+      def items
+        @controller.stripes_number_options.map { |n| [n, n.to_s] }
+      end
+    end
+
+    # Selector for the stripes size
+    class StripesSizeSelector < CWM::ComboBox
+      # @param controller [Sequences::Controllers::LvmLv]
+      #   a controller collecting data for a LV to be created
+      def initialize(controller)
+        textdomain "storage"
+        @controller = controller
+      end
+
+      # @macro seeAbstractWidget
+      def label
+        _("Size")
+      end
+
+      def init
+        self.value = @controller.stripes_size.to_s
+      end
+
+      def items
+        @controller.stripes_size_options.map { |s| [s.to_s, s.to_s] }
+      end
+
+      # @return [Y2Storage::DiskSize]
+      def value
+        Y2Storage::DiskSize.new(super)
       end
     end
   end
