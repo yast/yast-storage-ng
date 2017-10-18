@@ -50,8 +50,8 @@ describe Y2Storage::AutoinstProfile::DriveSection do
     context "when 'use' element is not specified" do
       let(:hash) { {} }
 
-      it "uses 'all'" do
-        expect(described_class.new_from_hashes(hash).use).to eq("all")
+      it "uses nil" do
+        expect(described_class.new_from_hashes(hash).use).to be_nil
       end
     end
 
