@@ -1,8 +1,6 @@
-#!/usr/bin/env ruby
-#
 # encoding: utf-8
 
-# Copyright (c) [2016] SUSE LLC
+# Copyright (c) [2017] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -22,22 +20,28 @@
 # find current contact information at www.suse.com.
 
 module Y2Storage
-  # Base class for Y2Storage exceptions
-  class Error < RuntimeError
-  end
-  # There is no enough space in the disk
-  class NoDiskSpaceError < Error
-  end
-  # There are not available partition slots in the disk
-  class NoMorePartitionSlotError < Error
-  end
-  # It's not possible to propose a bootable layout for the root device
-  class NotBootableError < Error
-  end
-  # A method was called more times than expected
-  class UnexpectedCallError < Error
-  end
-  # A device was not found
-  class DeviceNotFoundError < Error
+  module Proposal
+    # This class holds information about size devices for AutoYaST
+    class AutoinstSize
+      # @return [String] User provided value ("10GB", "auto", "max", etc.)
+      attr_reader :value
+      # @return [DiskSize,nil] Minimal size
+      attr_reader :min
+      # @return [DiskSize,nil] Maximal size
+      attr_reader :max
+      # @return [Integer,nil] Weight
+      attr_reader :weight
+      # @return [Float] Device's percentage
+      attr_reader :percentage
+
+      # Constructor
+      def initialize(value, min: nil, max: nil, weight: nil, percentage: nil)
+        @value = value
+        @min = min
+        @max = max
+        @weight = weight
+        @percentage = percentage
+      end
+    end
   end
 end

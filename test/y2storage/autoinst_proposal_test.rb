@@ -25,7 +25,14 @@ require "storage"
 require "y2storage"
 
 describe Y2Storage::AutoinstProposal do
-  subject(:proposal) { described_class.new(partitioning: partitioning, devicegraph: fake_devicegraph) }
+  subject(:proposal) do
+    described_class.new(
+      partitioning: partitioning, devicegraph: fake_devicegraph, problems_list: problems_list
+    )
+  end
+
+  let(:partitioning) { [] }
+  let(:problems_list) { Y2Storage::AutoinstProblems::List.new }
 
   describe "#propose" do
     using Y2Storage::Refinements::SizeCasts
@@ -491,6 +498,22 @@ describe Y2Storage::AutoinstProposal do
 
       it "raises an error" do
         expect { proposal.propose }.to raise_error(Y2Storage::UnexpectedCallError)
+      end
+    end
+  end
+
+  describe "#problems_list" do
+    context "when a list was given" do
+      it "returns the given list" do
+        expect(proposal.problems_list).to eq(problems_list)
+      end
+    end
+
+    context "when no list was given" do
+      subject(:proposal) { described_class.new(partitioning: [], devicegraph: fake_devicegraph) }
+
+      it "returns a new list" do
+        expect(proposal.problems_list).to be_a(Y2Storage::AutoinstProblems::List)
       end
     end
   end

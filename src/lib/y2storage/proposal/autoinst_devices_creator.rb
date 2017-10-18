@@ -26,6 +26,7 @@ require "y2storage/proposal/partitions_distribution_calculator"
 require "y2storage/proposal/lvm_helper"
 require "y2storage/proposal/partition_creator"
 require "y2storage/proposal/md_creator"
+require "y2storage/exceptions"
 
 module Y2Storage
   module Proposal
@@ -105,7 +106,7 @@ module Y2Storage
         log.info "Partitions to create: #{new_partitions}"
 
         dist = best_distribution(new_partitions, disk_names)
-        raise Error, "Could not find a valid partitioning distribution" if dist.nil?
+        raise NoDiskSpaceError, "Could not find a valid partitioning distribution" if dist.nil?
         part_creator = Proposal::PartitionCreator.new(original_graph)
         part_creator.create_partitions(dist)
       end
