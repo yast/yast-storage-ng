@@ -21,33 +21,24 @@
 
 require "yast"
 require "cwm"
-require "y2partitioner/sequences/add_lvm_lv"
-require "y2partitioner/widgets/lvm_validations"
+require "y2partitioner/widgets/blk_device_button"
+require "y2partitioner/ui_state"
+
+Yast.import "Popup"
 
 module Y2Partitioner
   module Widgets
-    # Button for opening the workflow to add a logical volume to a volume group
-    class AddLvmLvButton < CWM::PushButton
-      include LvmValidations
-
-      # Constructor
-      # @param vg [Y2Storage::LvmVg]
-      def initialize(vg)
-        textdomain "storage"
-        @vg = vg
-      end
-
+    # Button for resizing a volume group or logical volume
+    class ResizeLvmButton < BlkDeviceButton
       # @macro seeAbstractWidget
       def label
-        _("Add...")
+        _("Resize...")
       end
 
-      # @macro seeAbstractWidget
-      def handle
-        return nil unless validate_add_lv(@vg)
-
-        Sequences::AddLvmLv.new(@vg).run
-        :redraw
+      # TODO
+      # @see BlkDeviceButton#actions
+      def actions
+        Yast::Popup.Warning("Not yet implemented")
       end
     end
   end

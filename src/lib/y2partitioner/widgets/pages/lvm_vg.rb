@@ -1,3 +1,24 @@
+# encoding: utf-8
+
+# Copyright (c) [2017] SUSE LLC
+#
+# All Rights Reserved.
+#
+# This program is free software; you can redistribute it and/or modify it
+# under the terms of version 2 of the GNU General Public License as published
+# by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+# more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, contact SUSE LLC.
+#
+# To contact SUSE LLC about this file by physical or electronic mail, you may
+# find current contact information at www.suse.com.
+
 require "cwm/widget"
 require "cwm/tree_pager"
 require "y2partitioner/widgets/tabs"
@@ -6,8 +27,10 @@ require "y2partitioner/widgets/configurable_blk_devices_table"
 require "y2partitioner/widgets/lvm_devices_table"
 require "y2partitioner/widgets/lvm_vg_bar_graph"
 require "y2partitioner/widgets/lvm_vg_description"
-require "y2partitioner/widgets/edit_blk_device_button"
 require "y2partitioner/widgets/add_lvm_lv_button"
+require "y2partitioner/widgets/edit_lvm_button"
+require "y2partitioner/widgets/resize_lvm_button"
+require "y2partitioner/widgets/delete_lvm_button"
 
 module Y2Partitioner
   module Widgets
@@ -96,6 +119,10 @@ module Y2Partitioner
           _("Log&ical Volumes")
         end
 
+        def initial
+          true
+        end
+
         # @macro seeCustomWidget
         def contents
           @contents ||= VBox(
@@ -104,10 +131,11 @@ module Y2Partitioner
             Left(
               HBox(
                 AddLvmLvButton.new(@lvm_vg),
-                EditBlkDeviceButton.new(table: table)
+                EditLvmButton.new(table: table),
+                ResizeLvmButton.new(table: table),
+                DeleteLvmButton.new(table: table)
               )
             )
-
           )
         end
 

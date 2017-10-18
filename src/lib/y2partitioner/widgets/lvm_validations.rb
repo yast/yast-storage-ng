@@ -27,13 +27,23 @@ Yast.import "Popup"
 
 module Y2Partitioner
   module Widgets
-    # Button for opening the workflow to add a logical volume to a volume group.
+    # Mixin for validations before start a LVM wizard
+    #
+    # This validations are typically performed in the buttons that launch a wizard.
+    #
+    # @see AddLvmButton
     module LvmValidations
       # TODO
       def validate_add_vg
         return true
       end
 
+      # Validates that a new lv might be added to a specific vg
+      #
+      # @note Popup error messages are presented when some validations fail.
+      #
+      # @param vg [LvmVg]
+      # @return [Boolean]
       def validate_add_lv(vg)
         if vg.nil?
           Yast::Popup.Error(_("No device selected"))

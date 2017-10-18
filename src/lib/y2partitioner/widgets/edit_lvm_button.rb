@@ -21,32 +21,32 @@
 
 require "yast"
 require "cwm"
-require "y2partitioner/sequences/add_lvm_lv"
-require "y2partitioner/widgets/lvm_validations"
+require "y2partitioner/sequences/edit_blk_device"
+require "y2partitioner/widgets/blk_device_button"
+require "y2partitioner/ui_state"
 
 module Y2Partitioner
   module Widgets
-    # Button for opening the workflow to add a logical volume to a volume group
-    class AddLvmLvButton < CWM::PushButton
-      include LvmValidations
-
-      # Constructor
-      # @param vg [Y2Storage::LvmVg]
-      def initialize(vg)
-        textdomain "storage"
-        @vg = vg
-      end
-
+    # Button for editing a volume group or logical volume
+    class EditLvmButton < BlkDeviceButton
       # @macro seeAbstractWidget
       def label
-        _("Add...")
+        _("Edit...")
       end
 
-      # @macro seeAbstractWidget
-      def handle
-        return nil unless validate_add_lv(@vg)
+      # When a vg is edited, go directly to that vg entry in the tree view.
+      # When a lv is edited, start the proper wizard.
+      # @see BlkDeviceButton#actions
+      def actions
+        case device
+        when Y2Storage::LvmVg
+          page = pager.device_page(device)
+          UIState.instance.go_to_tree_node(page)
+        when Y2Storage::LvmLv
+          UIState.instance.select_row(device.sid)
+          Sequences::EditBlkDevice.new(device).run
+        end
 
-        Sequences::AddLvmLv.new(@vg).run
         :redraw
       end
     end
