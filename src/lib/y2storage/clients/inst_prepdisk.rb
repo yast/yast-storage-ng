@@ -38,6 +38,8 @@ module Y2Storage
       include Yast
       include Yast::Logger
 
+      EFIVARS_PATH = "/sys/firmware/efi/efivars".freeze
+
       def run
         return :auto if Mode.update
 
@@ -61,6 +63,7 @@ module Y2Storage
         mount_in_target("/dev", "devtmpfs", "-t devtmpfs")
         mount_in_target("/proc", "proc", "-t proc")
         mount_in_target("/sys", "sysfs", "-t sysfs")
+        mount_in_target(EFIVARS_PATH, "efivarfs", "-t efivarfs") if File.exists?(EFIVARS_PATH)
       end
 
       def mount_in_target(path, device, options)
