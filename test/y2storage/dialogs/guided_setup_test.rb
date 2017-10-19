@@ -42,7 +42,7 @@ describe Y2Storage::Dialogs::GuidedSetup do
   end
 
   def allow_run_select_filesystem(&block)
-    allow_dialog(Y2Storage::Dialogs::GuidedSetup::SelectFilesystem, :run, &block)
+    allow_dialog(Y2Storage::Dialogs::GuidedSetup::SelectFilesystem::Legacy, :run, &block)
   end
 
   def allow_run_all_dialogs
@@ -65,7 +65,7 @@ describe Y2Storage::Dialogs::GuidedSetup do
     allow_not_skip_dialog(Y2Storage::Dialogs::GuidedSetup::SelectDisks)
     allow_not_skip_dialog(Y2Storage::Dialogs::GuidedSetup::SelectRootDisk)
     allow_not_skip_dialog(Y2Storage::Dialogs::GuidedSetup::SelectScheme)
-    allow_not_skip_dialog(Y2Storage::Dialogs::GuidedSetup::SelectFilesystem)
+    allow_not_skip_dialog(Y2Storage::Dialogs::GuidedSetup::SelectFilesystem::Legacy)
   end
 
   def expect_run_dialog(dialog)

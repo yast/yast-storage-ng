@@ -264,6 +264,10 @@ module Y2Storage
       ng_format? ? ng_check_root_snapshots : legacy_check_root_snapshots
     end
 
+    def ng_format?
+      format == NG_FORMAT
+    end
+
   private
 
     DELETE_MODES = [:none, :all, :ondemand]
@@ -285,10 +289,6 @@ module Y2Storage
 
       has_ng_subsections = partitioning_section.key?("proposal") && partitioning_section.key?("volumes")
       has_ng_subsections ? NG_FORMAT : LEGACY_FORMAT
-    end
-
-    def ng_format?
-      format == NG_FORMAT
     end
 
     # Sets default values for the settings.

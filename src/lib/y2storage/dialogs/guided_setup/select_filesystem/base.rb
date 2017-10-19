@@ -19,6 +19,29 @@
 # To contact Novell about this file by physical or electronic mail, you may
 # find current contact information at www.novell.com.
 
-require "y2storage/dialogs/guided_setup/select_filesystem/legacy"
-require "y2storage/dialogs/guided_setup/select_filesystem/ng"
+require "yast"
+require "y2storage"
+require "y2storage/dialogs/guided_setup/base"
+require "y2storage/filesystems/type"
 
+module Y2Storage
+  module Dialogs
+    class GuidedSetup
+      class SelectFilesystem
+        class Base < GuidedSetup::Base
+          # Base class for the dialog to select filesystems.
+          class SelectFilesystem::Legacy < Base
+            def initialize(*params)
+              textdomain "storage"
+              super
+            end
+
+            def dialog_title
+              _("Filesystem Options")
+            end
+          end
+        end
+      end
+    end
+  end
+end
