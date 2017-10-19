@@ -44,7 +44,7 @@ module Y2Storage
     attr_reader :partitioning
 
     # @return [Hash] List of found AutoYaST problems
-    attr_reader :problems_list
+    attr_reader :issues_list
 
     # Constructor
     #
@@ -54,9 +54,9 @@ module Y2Storage
     # @param disk_analyzer [DiskAnalyzer] by default, the method will create a new one
     #   based on the initial devicegraph or will use the one in {StorageManager} if
     #   starting from probed (i.e. 'devicegraph' argument is also missing)
-    def initialize(partitioning: [], devicegraph: nil, disk_analyzer: nil, problems_list: nil)
+    def initialize(partitioning: [], devicegraph: nil, disk_analyzer: nil, issues_list: nil)
       super(devicegraph: devicegraph, disk_analyzer: disk_analyzer)
-      @problems_list = problems_list || Y2Storage::AutoinstProblems::List.new
+      @issues_list = issues_list || Y2Storage::AutoinstIssues::List.new
       @partitioning = AutoinstProfile::PartitioningSection.new_from_hashes(partitioning)
     end
 
@@ -68,7 +68,7 @@ module Y2Storage
     def calculate_proposal
       drives = Proposal::AutoinstDrivesMap.new(initial_devicegraph, partitioning)
 
-      space_maker = Proposal::AutoinstSpaceMaker.new(disk_analyzer, problems_list)
+      space_maker = Proposal::AutoinstSpaceMaker.new(disk_analyzer, issues_list)
       devicegraph = space_maker.cleaned_devicegraph(initial_devicegraph, drives)
 
       @devices = propose_devicegraph(devicegraph, drives)
@@ -117,7 +117,7 @@ module Y2Storage
     # @param drives      [Proposal::AutoinstDrivesMap] Devices map from an AutoYaST profile
     # @return [Array<Planned::Device>] Devices to add
     def plan_devices(devicegraph, drives)
-      planner = Proposal::AutoinstDevicesPlanner.new(devicegraph, problems_list)
+      planner = Proposal::AutoinstDevicesPlanner.new(devicegraph, issues_list)
       planner.planned_devices(drives)
     end
 

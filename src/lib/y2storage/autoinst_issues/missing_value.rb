@@ -19,18 +19,32 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "y2storage/autoinst_problems/problem"
+require "y2storage/autoinst_issues/issue"
 
 module Y2Storage
-  module AutoinstProblems
-    # The proposal was successful but there is not root partition (/) defined.
+  module AutoinstIssues
+    # Represents an AutoYaST situation where a mandatory value is missing.
     #
-    # This is a fatal error because the installation is not possible.
-    class MissingRoot < Problem
-      # Return problem severity
+    # @example Missing value for attribute 'size' in '/dev/sda' device.
+    #   problem = MissingValue.new("/dev/sda", :size)
+    class MissingValue < Issue
+      # @return [String] Device affected by this error
+      attr_reader :device
+
+      # @return [Symbol] Name of the missing attribute
+      attr_reader :attr
+
+      # @param device [String] Device (`/`, `/dev/sda`, etc.)
+      # @param attr   [Symbol] Name of the missing attribute
+      def initialize(device, attr)
+        @device = device
+        @attr = attr
+      end
+
+      # Fatal problem
       #
       # @return [Symbol] :fatal
-      # @see Problem#severity
+      # @see Issue#severity
       def severity
         :fatal
       end
@@ -38,9 +52,10 @@ module Y2Storage
       # Return the error message to be displayed
       #
       # @return [String] Error message
-      # @see Problem#message
+      # @see Issue#message
       def message
-        _("No root partition (/) was found.")
+        # TRANSLATORS: AutoYaST attribute name and device name (ag. /dev/sda1)
+        format(_("Missing attribute '%s' on '%s'"), attr, device)
       end
     end
   end

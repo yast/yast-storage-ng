@@ -21,14 +21,14 @@
 # find current contact information at www.suse.com.
 
 require_relative "../../spec_helper"
-require "y2storage/autoinst_problems/invalid_value"
+require "y2storage/autoinst_issues/invalid_value"
 
-describe Y2Storage::AutoinstProblems::InvalidValue do
-  subject(:problem) { described_class.new("/", :size, "auto") }
+describe Y2Storage::AutoinstIssues::InvalidValue do
+  subject(:issue) { described_class.new("/", :size, "auto") }
 
   describe "#message" do
     it "includes relevant information" do
-      message = problem.message
+      message = issue.message
       expect(message).to include "/"
       expect(message).to include "size"
       expect(message).to include "auto"
@@ -36,30 +36,30 @@ describe Y2Storage::AutoinstProblems::InvalidValue do
 
     context "when no new value was given" do
       it "includes a warning about the section being skipped" do
-        expect(problem.message).to include "the section will be skipped"
+        expect(issue.message).to include "the section will be skipped"
       end
     end
 
     context "when a new value was given" do
-      subject(:problem) { described_class.new("/", :size, "auto", "some-value") }
+      subject(:issue) { described_class.new("/", :size, "auto", "some-value") }
 
       it "includes a warning about the section being skipped" do
-        expect(problem.message).to include "replaced by 'some-value'"
+        expect(issue.message).to include "replaced by 'some-value'"
       end
     end
 
     context "when :skip is given as new value" do
-      subject(:problem) { described_class.new("/", :size, "auto", :skip) }
+      subject(:issue) { described_class.new("/", :size, "auto", :skip) }
 
       it "includes a warning about the section being skipped" do
-        expect(problem.message).to include "the section will be skipped"
+        expect(issue.message).to include "the section will be skipped"
       end
     end
   end
 
   describe "#severity" do
     it "returns :warn" do
-      expect(problem.severity).to eq(:warn)
+      expect(issue.severity).to eq(:warn)
     end
   end
 end

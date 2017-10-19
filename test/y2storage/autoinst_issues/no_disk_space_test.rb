@@ -21,21 +21,20 @@
 # find current contact information at www.suse.com.
 
 require_relative "../../spec_helper"
-require "y2storage/autoinst_problems/exception"
+require "y2storage/autoinst_issues/invalid_value"
 
-describe Y2Storage::AutoinstProblems::Exception do
-  subject(:problem) { described_class.new(error) }
-  let(:error) { double("Error", message: "error message") }
+describe Y2Storage::AutoinstIssues::NoDiskSpace do
+  subject(:issue) { described_class.new }
 
   describe "#message" do
-    it "includes relevant information" do
-      expect(problem.message).to match(/A problem.*#{error.message}/)
+    it "returns a description of the issue" do
+      expect(issue.message).to eq("Not enough disk space")
     end
   end
 
   describe "#severity" do
     it "returns :fatal" do
-      expect(problem.severity).to eq(:fatal)
+      expect(issue.severity).to eq(:fatal)
     end
   end
 end

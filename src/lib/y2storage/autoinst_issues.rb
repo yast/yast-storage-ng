@@ -20,24 +20,24 @@
 # find current contact information at www.suse.com.
 
 module Y2Storage
-  # Y2Storage::AutoinstProblems offers an API to register and report storage
+  # Y2Storage::AutoinstIssues offers an API to register and report storage
   # related AutoYaST problems.
   #
   # Basically, it works by registering found problems when creating the
   # partitioning proposal (based on AutoYaST profile) and displaying them to
-  # the user. Check {Y2Storage::AutoinstProblems::Problem} in order to
+  # the user. Check {Y2Storage::AutoinstIssues::Issue} in order to
   # find out more details about the kind of problems.
   #
   # About registering errors, an instance of the
-  # {Y2Storage::AutoinstProblems::List} will be used.
-  module AutoinstProblems
+  # {Y2Storage::AutoinstIssues::List} will be used.
+  module AutoinstIssues
   end
 end
 
-require "y2storage/autoinst_problems/list"
-require "y2storage/autoinst_problems/problem"
-require "y2storage/autoinst_problems/invalid_value"
-require "y2storage/autoinst_problems/missing_value"
-require "y2storage/autoinst_problems/missing_root"
-require "y2storage/autoinst_problems/exception"
-require "y2storage/autoinst_problems/no_disk_space"
+require "y2storage/autoinst_issues/list"
+require "y2storage/autoinst_issues/issue"
+require "y2storage/autoinst_issues/invalid_value"
+require "y2storage/autoinst_issues/missing_value"
+require "y2storage/autoinst_issues/missing_root"
+require "y2storage/autoinst_issues/exception"
+require "y2storage/autoinst_issues/no_disk_space"

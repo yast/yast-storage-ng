@@ -1,10 +1,10 @@
 module Y2Storage
-  module AutoinstProblems
+  module AutoinstIssues
     # Base class for storage-ng autoinstallation problems.
     #
-    # Y2Storage::AutoinstProblems offers an API to register and report storage
+    # Y2Storage::AutoinstIssues offers an API to register and report storage
     # related AutoYaST problems.
-    class Problem
+    class Issue
       include Yast::I18n
 
       # Return problem severity
@@ -12,10 +12,10 @@ module Y2Storage
       # * :fatal: abort the installation.
       # * :warn:  display a warning.
       #
-      # @return [Symbol] Problem severity (:warn, :fatal)
+      # @return [Symbol] Issue severity (:warn, :fatal)
       # @raise NotImplementedError
       #
-      # @see Problem#severity
+      # @see Issue#severity
       def severity
         raise NotImplementedError
       end

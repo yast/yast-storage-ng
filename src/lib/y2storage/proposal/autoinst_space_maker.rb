@@ -31,15 +31,15 @@ module Y2Storage
     class AutoinstSpaceMaker
       include Yast::Logger
 
-      # @return [AutoinstProblems::List] List of detected problems
-      attr_reader :problems_list
+      # @return [AutoinstIssues::List] List of detected problems
+      attr_reader :issues_list
 
       # Constructor
       #
       # @param disk_analyzer [DiskAnalyzer] information about existing partitions
-      def initialize(disk_analyzer, problems_list = nil)
+      def initialize(disk_analyzer, issues_list = nil)
         @disk_analyzer = disk_analyzer
-        @problems_list = problems_list || AutoinstProblems::List.new
+        @issues_list = issues_list || AutoinstIssues::List.new
       end
 
       # Performs all the delete operations specified in the AutoYaST profile
@@ -128,9 +128,9 @@ module Y2Storage
       # @param use         [String,Array<Integer>] Use value ("all", "linux", "free"
       def register_invalid_use_value(disk, use)
         if use.nil?
-          problems_list.add(:missing_value, disk.name, :use)
+          issues_list.add(:missing_value, disk.name, :use)
         else
-          problems_list.add(:invalid_value, disk.name, :use, use)
+          issues_list.add(:invalid_value, disk.name, :use, use)
         end
       end
     end

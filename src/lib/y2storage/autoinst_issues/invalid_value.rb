@@ -19,15 +19,15 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "y2storage/autoinst_problems/problem"
+require "y2storage/autoinst_issues/issue"
 
 module Y2Storage
-  module AutoinstProblems
+  module AutoinstIssues
     # Represents an AutoYaST situation where an invalid value was given.
     #
     # @example Invalid value 'auto' for attribute :size on /home partition
     #   problem = MissingValue.new("/home", :size, "auto")
-    class InvalidValue < Problem
+    class InvalidValue < Issue
       # @return [String] Device affected by this error
       attr_reader :device
       # @return [Symbol] Name of the missing attribute
@@ -58,7 +58,7 @@ module Y2Storage
       # Return the error message to be displayed
       #
       # @return [String] Error message
-      # @see Problem#message
+      # @see Issue#message
       def message
         format(
           # TRANSLATORS: 1: generic value; 2: AutoYaST attribute name; 3: device name (eg. /dev/sda1);

@@ -22,7 +22,7 @@
 require "forwardable"
 
 module Y2Storage
-  module AutoinstProblems
+  module AutoinstIssues
     # List of storage related AutoYaST problems
     #
     # @example Registering some problems
@@ -58,12 +58,12 @@ module Y2Storage
       #   list.add(:invalid_value, "/", :size, "auto")
       #   list.empty? #=> false
       #
-      # @param type        [Symbol] Problem type
+      # @param type        [Symbol] Issue type
       # @param *extra_args [Object] Additional arguments for the given problem
-      # @return [Array<Problem>] List of problems
+      # @return [Array<Issue>] List of problems
       def add(type, *extra_args)
         class_name = type.to_s.split("_").map(&:capitalize).join
-        klass = Y2Storage::AutoinstProblems.const_get(class_name)
+        klass = Y2Storage::AutoinstIssues.const_get(class_name)
         self << klass.new(*extra_args)
       end
 
@@ -76,7 +76,7 @@ module Y2Storage
 
       # Returns an array containing registered problems
       #
-      # @return [Array<Problem>] List of problems
+      # @return [Array<Issue>] List of problems
       def to_a
         @items
       end

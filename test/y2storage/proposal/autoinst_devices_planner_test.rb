@@ -23,19 +23,19 @@
 require_relative "../spec_helper"
 require "y2storage/proposal/autoinst_devices_planner"
 require "y2storage/volume_specification"
-require "y2storage/autoinst_problems/list"
+require "y2storage/autoinst_issues/list"
 Yast.import "Arch"
 
 describe Y2Storage::Proposal::AutoinstDevicesPlanner do
   using Y2Storage::Refinements::SizeCasts
 
-  subject(:planner) { described_class.new(fake_devicegraph, problems_list) }
+  subject(:planner) { described_class.new(fake_devicegraph, issues_list) }
 
   let(:scenario) { "windows-linux-free-pc" }
   let(:drives_map) { Y2Storage::Proposal::AutoinstDrivesMap.new(fake_devicegraph, partitioning) }
   let(:boot_checker) { instance_double(Y2Storage::BootRequirementsChecker, needed_partitions: []) }
   let(:architecture) { :x86_64 }
-  let(:problems_list) { Y2Storage::AutoinstProblems::List.new }
+  let(:issues_list) { Y2Storage::AutoinstIssues::List.new }
 
   let(:partitioning_array) do
     [{ "device" => "/dev/sda", "partitions" => [root_spec] }]
@@ -159,8 +159,8 @@ describe Y2Storage::Proposal::AutoinstDevicesPlanner do
 
         it "registers an error" do
           planner.planned_devices(drives_map)
-          expect(problems_list.to_a.size).to eq(1)
-          error = problems_list.to_a.first
+          expect(issues_list.to_a.size).to eq(1)
+          error = issues_list.to_a.first
           expect(error.value).to eq("huh?")
           expect(error.attr).to eq(:size)
           expect(error.device).to eq("/")
@@ -220,8 +220,8 @@ describe Y2Storage::Proposal::AutoinstDevicesPlanner do
 
           it "reports an error" do
             planner.planned_devices(drives_map)
-            expect(problems_list.to_a.size).to eq(1)
-            error = problems_list.to_a.first
+            expect(issues_list.to_a.size).to eq(1)
+            error = issues_list.to_a.first
             expect(error.value).to eq("auto")
             expect(error.attr).to eq(:size)
             expect(error.device).to eq("/home")
@@ -489,8 +489,8 @@ describe Y2Storage::Proposal::AutoinstDevicesPlanner do
 
         it "registers an error" do
           planner.planned_devices(drives_map)
-          expect(problems_list.to_a.size).to eq(1)
-          error = problems_list.to_a.first
+          expect(issues_list.to_a.size).to eq(1)
+          error = issues_list.to_a.first
           expect(error.value).to eq("huh?")
           expect(error.attr).to eq(:size)
           expect(error.device).to eq("/")

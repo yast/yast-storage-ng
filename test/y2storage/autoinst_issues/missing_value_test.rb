@@ -21,20 +21,20 @@
 # find current contact information at www.suse.com.
 
 require_relative "../../spec_helper"
-require "y2storage/autoinst_problems/missing_value"
+require "y2storage/autoinst_issues/missing_value"
 
-describe Y2Storage::AutoinstProblems::MissingValue do
-  subject(:problem) { described_class.new("/home", :size) }
+describe Y2Storage::AutoinstIssues::MissingValue do
+  subject(:issue) { described_class.new("/home", :size) }
 
   describe "#message" do
-    it "returns a description of the problem" do
-      expect(problem.message).to match(/Missing attribute.*size.*'\/home'/)
+    it "returns a description of the issue" do
+      expect(issue.message).to match(/Missing attribute.*size.*'\/home'/)
     end
   end
 
   describe "#severity" do
     it "returns :fatal" do
-      expect(problem.severity).to eq(:fatal)
+      expect(issue.severity).to eq(:fatal)
     end
   end
 end

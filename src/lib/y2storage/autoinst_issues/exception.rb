@@ -19,10 +19,10 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "y2storage/autoinst_problems/problem"
+require "y2storage/autoinst_issues/issue"
 
 module Y2Storage
-  module AutoinstProblems
+  module AutoinstIssues
     # Represents a problem that occurs when an exception is raised.
     #
     # This error is used as a fallback for any problem that arises during
@@ -33,9 +33,9 @@ module Y2Storage
     #   begin
     #     do_stuff # some exception is raised
     #   rescue SomeException => e
-    #     new Y2Storage::AutoinstProblems::Exception.new(e)
+    #     new Y2Storage::AutoinstIssues::Exception.new(e)
     #   end
-    class Exception < Problem
+    class Exception < Issue
       # @return [StandardError]
       attr_reader :error
 
@@ -47,7 +47,7 @@ module Y2Storage
       # Return problem severity
       #
       # @return [Symbol] :fatal
-      # @see Problem#severity
+      # @see Issue#severity
       def severity
         :fatal
       end
@@ -55,7 +55,7 @@ module Y2Storage
       # Return the error message to be displayed
       #
       # @return [String] Error message
-      # @see Problem#message
+      # @see Issue#message
       def message
         format(
           _("A problem ocurred while creating the partitioning plan: %s"),

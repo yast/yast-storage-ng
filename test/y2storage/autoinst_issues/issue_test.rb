@@ -21,33 +21,33 @@
 # find current contact information at www.suse.com.
 
 require_relative "../../spec_helper"
-require "y2storage/autoinst_problems/problem"
+require "y2storage/autoinst_issues/issue"
 
-describe Y2Storage::AutoinstProblems::Problem do
-  subject(:problem) { described_class.new }
+describe Y2Storage::AutoinstIssues::Issue do
+  subject(:issue) { described_class.new }
 
   describe "#message" do
     it "raise a NotImplementedError exception" do
-      expect { problem.message }.to raise_error(NotImplementedError)
+      expect { issue.message }.to raise_error(NotImplementedError)
     end
   end
 
   describe "#severity" do
     it "returns :warn" do
-      expect { problem.severity }.to raise_error(NotImplementedError)
+      expect { issue.severity }.to raise_error(NotImplementedError)
     end
   end
 
   describe "#warn?" do
     before do
-      allow(problem).to receive(:severity).and_return(severity)
+      allow(issue).to receive(:severity).and_return(severity)
     end
 
     context "when severity is :warn" do
       let(:severity) { :warn }
 
       it "returns true" do
-        expect(problem).to be_warn
+        expect(issue).to be_warn
       end
     end
 
@@ -55,21 +55,21 @@ describe Y2Storage::AutoinstProblems::Problem do
       let(:severity) { :fatal }
 
       it "returns false" do
-        expect(problem).to_not be_warn
+        expect(issue).to_not be_warn
       end
     end
   end
 
   describe "#fatal?" do
     before do
-      allow(problem).to receive(:severity).and_return(severity)
+      allow(issue).to receive(:severity).and_return(severity)
     end
 
     context "when severity is :fatal" do
       let(:severity) { :fatal }
 
       it "returns true" do
-        expect(problem).to be_fatal
+        expect(issue).to be_fatal
       end
     end
 
@@ -77,7 +77,7 @@ describe Y2Storage::AutoinstProblems::Problem do
       let(:severity) { :warn }
 
       it "returns false" do
-        expect(problem).to_not be_fatal
+        expect(issue).to_not be_fatal
       end
     end
   end

@@ -21,23 +21,23 @@
 # find current contact information at www.suse.com.
 
 require_relative "../../spec_helper"
-require "y2storage/autoinst_problems/list"
-require "y2storage/autoinst_problems/exception"
-require "y2storage/autoinst_problems/invalid_value"
+require "y2storage/autoinst_issues/list"
+require "y2storage/autoinst_issues/exception"
+require "y2storage/autoinst_issues/invalid_value"
 
-describe Y2Storage::AutoinstProblems::List do
+describe Y2Storage::AutoinstIssues::List do
   subject(:list) { described_class.new }
 
-  let(:problem) { instance_double(Y2Storage::AutoinstProblems::Exception) }
+  let(:issue) { instance_double(Y2Storage::AutoinstIssues::Exception) }
 
   describe "#add" do
-    it "adds a new problem to the list" do
+    it "adds a new issue to the list" do
       list.add(:exception, StandardError.new)
-      expect(list.to_a).to all(be_an(Y2Storage::AutoinstProblems::Exception))
+      expect(list.to_a).to all(be_an(Y2Storage::AutoinstIssues::Exception))
     end
 
-    it "pass extra arguments to problem instance constructor" do
-      expect(Y2Storage::AutoinstProblems::InvalidValue)
+    it "pass extra arguments to issue instance constructor" do
+      expect(Y2Storage::AutoinstIssues::InvalidValue)
         .to receive(:new).with("/", :size, "value")
       list.add(:invalid_value, "/", :size, "value")
     end
@@ -50,13 +50,13 @@ describe Y2Storage::AutoinstProblems::List do
       end
     end
 
-    context "when some problem was added" do
+    context "when some issue was added" do
       before do
         2.times { list.add(:exception, StandardError.new) }
       end
 
-      it "returns an array containing added problems" do
-        expect(list.to_a).to all(be_a(Y2Storage::AutoinstProblems::Exception))
+      it "returns an array containing added issues" do
+        expect(list.to_a).to all(be_a(Y2Storage::AutoinstIssues::Exception))
         expect(list.to_a.size).to eq(2)
       end
     end
@@ -69,7 +69,7 @@ describe Y2Storage::AutoinstProblems::List do
       end
     end
 
-    context "when some problem was added" do
+    context "when some issue was added" do
       before { list.add(:exception, StandardError.new) }
 
       it "returns false" do

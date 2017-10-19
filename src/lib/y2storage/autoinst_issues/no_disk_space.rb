@@ -1,4 +1,3 @@
-#!/usr/bin/env rspec
 # encoding: utf-8
 
 # Copyright (c) [2017] SUSE LLC
@@ -20,21 +19,27 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require_relative "../../spec_helper"
-require "y2storage/autoinst_problems/missing_root"
+require "y2storage/autoinst_issues/issue"
 
-describe Y2Storage::AutoinstProblems::MissingRoot do
-  subject(:problem) { described_class.new }
+module Y2Storage
+  module AutoinstIssues
+    # There is no enough disk space to build the storage proposal
+    class NoDiskSpace < Issue
+      # Fatal problem
+      #
+      # @return [Symbol] :fatal
+      # @see Issue#severity
+      def severity
+        :fatal
+      end
 
-  describe "#message" do
-    it "returns a description of the problem" do
-      expect(problem.message).to include "No root partition"
-    end
-  end
-
-  describe "#severity" do
-    it "returns :fatal" do
-      expect(problem.severity).to eq(:fatal)
+      # Return the error message to be displayed
+      #
+      # @return [String] Error message
+      # @see Issue#message
+      def message
+        _("Not enough disk space")
+      end
     end
   end
 end

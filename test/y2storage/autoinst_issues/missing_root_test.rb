@@ -21,20 +21,20 @@
 # find current contact information at www.suse.com.
 
 require_relative "../../spec_helper"
-require "y2storage/autoinst_problems/invalid_value"
+require "y2storage/autoinst_issues/missing_root"
 
-describe Y2Storage::AutoinstProblems::NoDiskSpace do
-  subject(:problem) { described_class.new }
+describe Y2Storage::AutoinstIssues::MissingRoot do
+  subject(:issue) { described_class.new }
 
   describe "#message" do
-    it "returns a description of the problem" do
-      expect(problem.message).to eq("Not enough disk space")
+    it "returns a description of the issue" do
+      expect(issue.message).to include "No root partition"
     end
   end
 
   describe "#severity" do
     it "returns :fatal" do
-      expect(problem.severity).to eq(:fatal)
+      expect(issue.severity).to eq(:fatal)
     end
   end
 end

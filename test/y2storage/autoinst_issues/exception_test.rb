@@ -1,3 +1,4 @@
+#!/usr/bin/env rspec
 # encoding: utf-8
 
 # Copyright (c) [2017] SUSE LLC
@@ -19,27 +20,22 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "y2storage/autoinst_problems/problem"
+require_relative "../../spec_helper"
+require "y2storage/autoinst_issues/exception"
 
-module Y2Storage
-  module AutoinstProblems
-    # There is no enough disk space to build the storage proposal
-    class NoDiskSpace < Problem
-      # Fatal problem
-      #
-      # @return [Symbol] :fatal
-      # @see Problem#severity
-      def severity
-        :fatal
-      end
+describe Y2Storage::AutoinstIssues::Exception do
+  subject(:issue) { described_class.new(error) }
+  let(:error) { double("Error", message: "error message") }
 
-      # Return the error message to be displayed
-      #
-      # @return [String] Error message
-      # @see Problem#message
-      def message
-        _("Not enough disk space")
-      end
+  describe "#message" do
+    it "includes relevant information" do
+      expect(issue.message).to match(/A problem.*#{error.message}/)
+    end
+  end
+
+  describe "#severity" do
+    it "returns :fatal" do
+      expect(issue.severity).to eq(:fatal)
     end
   end
 end

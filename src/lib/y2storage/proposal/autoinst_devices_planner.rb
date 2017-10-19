@@ -43,10 +43,10 @@ module Y2Storage
       # Constructor
       #
       # @param devicegraph [Devicegraph] Devicegraph to be used as starting point
-      # @param problems_list [Y2Storage::AutoinstProblems::List]
-      def initialize(devicegraph, problems_list)
+      # @param issues_list [Y2Storage::AutoinstIssues::List]
+      def initialize(devicegraph, issues_list)
         @devicegraph = devicegraph
-        @problems_list = problems_list
+        @issues_list = issues_list
       end
 
       # Returns an array of planned devices according to the drives map
@@ -81,8 +81,8 @@ module Y2Storage
 
       # @return [Devicegraph] Starting devicegraph
       attr_reader :devicegraph
-      # @return [AutoinstProblems::List] Starting devicegraph
-      attr_reader :problems_list
+      # @return [AutoinstIssues::List] Starting devicegraph
+      attr_reader :issues_list
 
       # Returns an array of planned partitions for a given disk
       #
@@ -331,7 +331,7 @@ module Y2Storage
 
         if size_info.nil?
           section_id = part_section.mount || disk.name
-          problems_list.add(:invalid_value, section_id, :size, part_section.size)
+          issues_list.add(:invalid_value, section_id, :size, part_section.size)
           return false
         end
 
@@ -352,7 +352,7 @@ module Y2Storage
 
         if size_info.nil?
           section_id = lv_section.mount || vg.name
-          problems_list.add(:invalid_value, section_id, :size, lv_section.size)
+          issues_list.add(:invalid_value, section_id, :size, lv_section.size)
           return false
         end
 
