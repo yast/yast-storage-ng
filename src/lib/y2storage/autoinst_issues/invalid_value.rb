@@ -72,8 +72,10 @@ module Y2Storage
       # Return a messsage explaining what should be done with the value.
       def new_value_message
         if new_value == :skip
+          # TRANSLATORS: it refers to an AutoYaST profile section
           _("the section will be skipped")
         else
+          # TRANSLATORS: 'value' is the value for an AutoYaST element (a number or a string)
           _("replaced by '%{value}'") % { value: new_value }
         end
       end
