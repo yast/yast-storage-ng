@@ -36,8 +36,7 @@ module Y2Storage
       include Enumerable
       extend Forwardable
 
-      def_delegators :@items, :each, :<<
-      def_delegator :@items, :empty?
+      def_delegators :@items, :each, :empty?, :<<
 
       # Constructor
       def initialize
@@ -58,8 +57,8 @@ module Y2Storage
       #   list.add(:invalid_value, "/", :size, "auto")
       #   list.empty? #=> false
       #
-      # @param type        [Symbol] Issue type
-      # @param *extra_args [Object] Additional arguments for the given problem
+      # @param type       [Symbol] Issue type
+      # @param extra_args [Array] Additional arguments for the given problem
       # @return [Array<Issue>] List of problems
       def add(type, *extra_args)
         class_name = type.to_s.split("_").map(&:capitalize).join

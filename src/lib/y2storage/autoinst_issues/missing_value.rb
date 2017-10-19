@@ -54,8 +54,8 @@ module Y2Storage
       # @return [String] Error message
       # @see Issue#message
       def message
-        # TRANSLATORS: AutoYaST attribute name and device name (ag. /dev/sda1)
-        format(_("Missing attribute '%s' on '%s'"), attr, device)
+        # TRANSLATORS: AutoYaST element name and device name (ag. /dev/sda1)
+        _("Missing attribute '%{attr}' on '%{device}'") % { attr: attr, device: device }
       end
     end
   end

@@ -43,7 +43,7 @@ module Y2Storage
       # Constructor
       #
       # @param devicegraph [Devicegraph] Devicegraph to be used as starting point
-      # @param issues_list [Y2Storage::AutoinstIssues::List]
+      # @param issues_list [AutoinstIssues::List] List of AutoYaST issues to register them
       def initialize(devicegraph, issues_list)
         @devicegraph = devicegraph
         @issues_list = issues_list

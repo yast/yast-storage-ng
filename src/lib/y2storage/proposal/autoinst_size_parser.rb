@@ -46,9 +46,10 @@ module Y2Storage
       #   size_info.min #=> 10.GiB
       #   size_info.max #=> 10.GiB
       #
-      # @param section [Y2Storage::AutoinstProfile::PartitionSection]
-      # @param min     [DiskSize] Minimal size
-      # @param max     [DiskSize] Maximal size
+      # @param size_spec   [String] Size specification ("10GB", "auto", "max", etc.)
+      # @param mount_point [String] Mount point
+      # @param min         [DiskSize] Minimal size
+      # @param max         [DiskSize] Maximal size
       # @return [AutoinstSize] Object containing information about size
       #
       # @see AutoinstSize

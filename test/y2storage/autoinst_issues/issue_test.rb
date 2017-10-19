@@ -27,13 +27,13 @@ describe Y2Storage::AutoinstIssues::Issue do
   subject(:issue) { described_class.new }
 
   describe "#message" do
-    it "raise a NotImplementedError exception" do
+    it "raises a NotImplementedError exception" do
       expect { issue.message }.to raise_error(NotImplementedError)
     end
   end
 
   describe "#severity" do
-    it "returns :warn" do
+    it "raises a NotImplementedError exception" do
       expect { issue.severity }.to raise_error(NotImplementedError)
     end
   end

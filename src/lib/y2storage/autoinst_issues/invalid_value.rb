@@ -26,7 +26,7 @@ module Y2Storage
     # Represents an AutoYaST situation where an invalid value was given.
     #
     # @example Invalid value 'auto' for attribute :size on /home partition
-    #   problem = MissingValue.new("/home", :size, "auto")
+    #   problem = InvalidValue.new("/home", :size, "auto")
     class InvalidValue < Issue
       # @return [String] Device affected by this error
       attr_reader :device
@@ -60,12 +60,11 @@ module Y2Storage
       # @return [String] Error message
       # @see Issue#message
       def message
-        format(
-          # TRANSLATORS: 1: generic value; 2: AutoYaST attribute name; 3: device name (eg. /dev/sda1);
-          # 4: short explanation about what should be done with the value
-          _("Invalid value '%s' for attribute '%s' on '%s' (%s)."),
-          value, attr, device, new_value_message
-        )
+        # TRANSLATORS: 'value' is a generic value (number or string)
+        # 'attr' is an AutoYaST element name; 'device' is a device name (eg. /dev/sda1);
+        # 'new_value_message' is a short explanation about what should be done with the value.
+        _("Invalid value '%{value}' for attribute '%{attr}' on '%{device}' (%{new_value_message}).") %
+          { value: value, attr: attr, device: device, new_value_message: new_value_message }
       end
 
     private
@@ -75,7 +74,7 @@ module Y2Storage
         if new_value == :skip
           _("the section will be skipped")
         else
-          _(format("replaced by '%<value>s'", value: new_value))
+          _("replaced by '%{value}'") % { value: new_value }
         end
       end
     end

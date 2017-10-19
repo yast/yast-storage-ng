@@ -14,8 +14,6 @@ module Y2Storage
       #
       # @return [Symbol] Issue severity (:warn, :fatal)
       # @raise NotImplementedError
-      #
-      # @see Issue#severity
       def severity
         raise NotImplementedError
       end

@@ -125,7 +125,7 @@ module Y2Storage
       # Register an invalid/missing value for 'use'
       #
       # @param disk        [Disk]
-      # @param use         [String,Array<Integer>] Use value ("all", "linux", "free"
+      # @param use         [String,Array<Integer>] Use value ("all", "linux", "free")
       def register_invalid_use_value(disk, use)
         if use.nil?
           issues_list.add(:missing_value, disk.name, :use)

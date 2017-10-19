@@ -43,7 +43,7 @@ module Y2Storage
     # @return [Hash] Partitioning layout from an AutoYaST profile
     attr_reader :partitioning
 
-    # @return [Hash] List of found AutoYaST problems
+    # @return [AutoinstIssues::List] List of found AutoYaST issues
     attr_reader :issues_list
 
     # Constructor
@@ -54,6 +54,7 @@ module Y2Storage
     # @param disk_analyzer [DiskAnalyzer] by default, the method will create a new one
     #   based on the initial devicegraph or will use the one in {StorageManager} if
     #   starting from probed (i.e. 'devicegraph' argument is also missing)
+    # @param issues_list [AutoinstIssues::List] List of AutoYaST issues to register them
     def initialize(partitioning: [], devicegraph: nil, disk_analyzer: nil, issues_list: nil)
       super(devicegraph: devicegraph, disk_analyzer: disk_analyzer)
       @issues_list = issues_list || Y2Storage::AutoinstIssues::List.new
