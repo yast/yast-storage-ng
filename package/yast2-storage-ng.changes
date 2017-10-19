@@ -1,8 +1,15 @@
 -------------------------------------------------------------------
-Wed Oct 18 08:26:57 UTC 2017 - igonzalezsosa@suse.com
+Thu Oct 19 14:27:49 UTC 2017 - igonzalezsosa@suse.com
 
 - AutoYaST: add basic support for error handling
 - AutoYaST: handle 'size: auto' correctly
+- 4.0.6
+
+-------------------------------------------------------------------
+Thu Oct 19 13:05:35 UTC 2017 - jsrain@suse.cz
+
+- During installation, mount efivarfs in /mnt/sys/firmware/efivars
+  if present in inst-sys (bsc#1063063)
 - 4.0.5
 
 -------------------------------------------------------------------
