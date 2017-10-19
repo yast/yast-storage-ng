@@ -1,5 +1,4 @@
 #!/usr/bin/env rspec
-#
 # encoding: utf-8
 
 # Copyright (c) [2017] SUSE LLC
@@ -23,17 +22,20 @@
 
 require_relative "../spec_helper"
 require "y2storage/proposal/autoinst_devices_planner"
+require "y2storage/volume_specification"
+require "y2storage/autoinst_issues/list"
 Yast.import "Arch"
 
 describe Y2Storage::Proposal::AutoinstDevicesPlanner do
   using Y2Storage::Refinements::SizeCasts
 
-  subject(:planner) { described_class.new(fake_devicegraph) }
+  subject(:planner) { described_class.new(fake_devicegraph, issues_list) }
 
   let(:scenario) { "windows-linux-free-pc" }
   let(:drives_map) { Y2Storage::Proposal::AutoinstDrivesMap.new(fake_devicegraph, partitioning) }
   let(:boot_checker) { instance_double(Y2Storage::BootRequirementsChecker, needed_partitions: []) }
   let(:architecture) { :x86_64 }
+  let(:issues_list) { Y2Storage::AutoinstIssues::List.new }
 
   let(:partitioning_array) do
     [{ "device" => "/dev/sda", "partitions" => [root_spec] }]
@@ -105,7 +107,7 @@ describe Y2Storage::Proposal::AutoinstDevicesPlanner do
         { "mount" => "/", "filesystem" => "ext4", "size" => size }
       end
 
-      context "when a number is given only" do
+      context "when only a number is given" do
         let(:disk_size) { Y2Storage::DiskSize.B(10) }
         let(:size) { "10" }
 
@@ -152,14 +154,91 @@ describe Y2Storage::Proposal::AutoinstDevicesPlanner do
         end
       end
 
-      context "when 'auto' is given" do
-        let(:size) { "auto" }
+      context "when an invalid value is given" do
+        let(:size) { "huh?" }
 
-        it "sets the size to 'unlimited' (temporary workaround until it is supported)" do
-          devices = planner.planned_devices(drives_map)
-          root = devices.find { |d| d.mount_point == "/" }
-          expect(root.min_size).to eq(Y2Storage::DiskSize.B(1))
-          expect(root.max_size).to eq(Y2Storage::DiskSize.unlimited)
+        it "registers an error" do
+          planner.planned_devices(drives_map)
+          expect(issues_list.to_a.size).to eq(1)
+          error = issues_list.to_a.first
+          expect(error.value).to eq("huh?")
+          expect(error.attr).to eq(:size)
+          expect(error.device).to eq("/")
+          expect(error.new_value).to eq(:skip)
+        end
+      end
+
+      context "when 'auto' is given" do
+        let(:size) { "max" } # FIXME: root_size
+
+        let(:auto_spec) do
+          { "mount" => "swap", "filesystem" => "swap", "size" => "auto" }
+        end
+
+        let(:partitioning_array) do
+          [{ "device" => "/dev/sda", "partitions" => [root_spec, auto_spec] }]
+        end
+
+        let(:settings) do
+          instance_double(Y2Storage::ProposalSettings, volumes: volumes)
+        end
+
+        let(:volumes) { [] }
+
+        before do
+          allow(Y2Storage::ProposalSettings).to receive(:new_for_current_product)
+            .and_return(settings)
+        end
+
+        context "when min and max are defined in the control file" do
+          let(:volumes) do
+            [
+              Y2Storage::VolumeSpecification.new(
+                "mount_point" => "swap", "min_size" => "128MiB", "max_size" => "1GiB"
+              )
+            ]
+          end
+
+          it "sets min and max" do
+            devices = planner.planned_devices(drives_map)
+            swap = devices.find { |d| d.mount_point == "swap" }
+            expect(swap.min_size).to eq(128.MiB)
+            expect(swap.max_size).to eq(1.GiB)
+          end
+        end
+
+        context "when no default values are defined in the control file" do
+          let(:auto_spec) do
+            { "mount" => "/home", "filesystem" => "ext4", "size" => "auto" }
+          end
+
+          it "ignores the device" do
+            devices = planner.planned_devices(drives_map)
+            home = devices.find { |d| d.mount_point == "/home" }
+            expect(home).to be_nil
+          end
+
+          it "reports an error" do
+            planner.planned_devices(drives_map)
+            expect(issues_list.to_a.size).to eq(1)
+            error = issues_list.to_a.first
+            expect(error.value).to eq("auto")
+            expect(error.attr).to eq(:size)
+            expect(error.device).to eq("/home")
+          end
+
+          context "and device will be used as swap" do
+            let(:auto_spec) do
+              { "mount" => "swap", "filesystem" => "swap", "size" => "auto" }
+            end
+
+            it "sets default values" do
+              devices = planner.planned_devices(drives_map)
+              swap = devices.find { |d| d.mount_point == "swap" }
+              expect(swap.min_size).to eq(512.MiB)
+              expect(swap.max_size).to eq(2.GiB)
+            end
+          end
         end
       end
 
@@ -395,6 +474,27 @@ describe Y2Storage::Proposal::AutoinstDevicesPlanner do
           _pv, vg = planner.planned_devices(drives_map)
           root_lv = vg.lvs.first
           expect(root_lv).to have_attributes("percent_size" => 50)
+        end
+      end
+
+      context "specifying the size with 'huh?'" do
+        let(:root_spec) do
+          { "mount" => "/", "filesystem" => "ext4", "lv_name" => "root", "size" => "huh?" }
+        end
+
+        it "skips the volume" do
+          _pv, vg = planner.planned_devices(drives_map)
+          expect(vg.lvs).to be_empty
+        end
+
+        it "registers an error" do
+          planner.planned_devices(drives_map)
+          expect(issues_list.to_a.size).to eq(1)
+          error = issues_list.to_a.first
+          expect(error.value).to eq("huh?")
+          expect(error.attr).to eq(:size)
+          expect(error.device).to eq("/")
+          expect(error.new_value).to eq(:skip)
         end
       end
 

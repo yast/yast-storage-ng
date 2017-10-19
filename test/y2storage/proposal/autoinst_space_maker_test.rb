@@ -82,9 +82,36 @@ describe Y2Storage::Proposal::AutoinstSpaceMaker do
         expect(devicegraph.partitions.size).to eq(3)
       end
 
-      it "logs a warning message" do
-        expect(subject.log).to receive(:warn).with(/wrong-value/)
+      it "registers a warning" do
         subject.cleaned_devicegraph(fake_devicegraph, drives_map)
+
+        problems = subject.issues_list.to_a
+        expect(problems.size).to eq(1)
+        problem = problems.first
+        expect(problem.device).to eq("/dev/sda")
+        expect(problem.attr).to eq(:use)
+        expect(problem.value).to eq("wrong-value")
+        expect(problem).to be_a(Y2Storage::AutoinstIssues::InvalidValue)
+      end
+    end
+
+    context "when 'use' is missing" do
+      let(:partitioning_array) { [{ "device" => "/dev/sda" }] }
+
+      it "does not remove any partition" do
+        devicegraph = subject.cleaned_devicegraph(fake_devicegraph, drives_map)
+        expect(devicegraph.partitions.size).to eq(3)
+      end
+
+      it "registers a warning" do
+        subject.cleaned_devicegraph(fake_devicegraph, drives_map)
+
+        problems = subject.issues_list.to_a
+        expect(problems.size).to eq(1)
+        problem = problems.first
+        expect(problem.device).to eq("/dev/sda")
+        expect(problem.attr).to eq(:use)
+        expect(problem).to be_a(Y2Storage::AutoinstIssues::MissingValue)
       end
     end
 

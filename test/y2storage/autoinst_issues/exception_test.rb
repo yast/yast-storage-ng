@@ -1,8 +1,7 @@
-#!/usr/bin/env ruby
-#
+#!/usr/bin/env rspec
 # encoding: utf-8
 
-# Copyright (c) [2016] SUSE LLC
+# Copyright (c) [2017] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -21,23 +20,22 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-module Y2Storage
-  # Base class for Y2Storage exceptions
-  class Error < RuntimeError
+require_relative "../../spec_helper"
+require "y2storage/autoinst_issues/exception"
+
+describe Y2Storage::AutoinstIssues::Exception do
+  subject(:issue) { described_class.new(error) }
+  let(:error) { double("Error", message: "error message") }
+
+  describe "#message" do
+    it "includes relevant information" do
+      expect(issue.message).to match(/A problem.*#{error.message}/)
+    end
   end
-  # There is no enough space in the disk
-  class NoDiskSpaceError < Error
-  end
-  # There are not available partition slots in the disk
-  class NoMorePartitionSlotError < Error
-  end
-  # It's not possible to propose a bootable layout for the root device
-  class NotBootableError < Error
-  end
-  # A method was called more times than expected
-  class UnexpectedCallError < Error
-  end
-  # A device was not found
-  class DeviceNotFoundError < Error
+
+  describe "#severity" do
+    it "returns :fatal" do
+      expect(issue.severity).to eq(:fatal)
+    end
   end
 end

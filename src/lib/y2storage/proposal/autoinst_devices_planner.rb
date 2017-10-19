@@ -26,6 +26,7 @@ require "y2storage/disk_size"
 require "y2storage/boot_requirements_checker"
 require "y2storage/subvol_specification"
 require "y2storage/proposal_settings"
+require "y2storage/proposal/autoinst_size_parser"
 
 module Y2Storage
   module Proposal
@@ -42,8 +43,10 @@ module Y2Storage
       # Constructor
       #
       # @param devicegraph [Devicegraph] Devicegraph to be used as starting point
-      def initialize(devicegraph)
+      # @param issues_list [AutoinstIssues::List] List of AutoYaST issues to register them
+      def initialize(devicegraph, issues_list)
         @devicegraph = devicegraph
+        @issues_list = issues_list
       end
 
       # Returns an array of planned devices according to the drives map
@@ -58,6 +61,7 @@ module Y2Storage
           disk = BlkDevice.find_by_name(devicegraph, disk_name)
           case drive_section.type
           when :CT_DISK
+            raise DeviceNotFoundError, "#{disk_name} device not found" if disk.nil?
             result.concat(planned_for_disk(disk, drive_section))
           when :CT_LVM
             result << planned_for_vg(drive_section)
@@ -75,10 +79,10 @@ module Y2Storage
 
     protected
 
-      PARTITION_MIN_SIZE = DiskSize.B(1)
-
       # @return [Devicegraph] Starting devicegraph
       attr_reader :devicegraph
+      # @return [AutoinstIssues::List] Starting devicegraph
+      attr_reader :issues_list
 
       # Returns an array of planned partitions for a given disk
       #
@@ -88,9 +92,11 @@ module Y2Storage
       # @return [Array<Planned::Partition>] List of planned partitions
       def planned_for_disk(disk, drive)
         result = []
-        drive.partitions.each do |partition_section|
+        drive.partitions.each_with_index do |partition_section|
           # TODO: fix Planned::Partition.initialize
           partition = Y2Storage::Planned::Partition.new(nil, nil)
+
+          next unless assign_size_to_partition(disk, partition, partition_section)
 
           # TODO: partition.bootable is not in the AutoYaST profile. Check if
           # there's some logic to set it in the old code.
@@ -102,12 +108,6 @@ module Y2Storage
 
           device_config(partition, partition_section, drive)
           add_partition_reuse(partition, partition_section) if partition_section.create == false
-
-          # Sizes: leave out reducing fixed sizes and 'auto'
-          min_size, max_size = sizes_for(partition_section.size, PARTITION_MIN_SIZE, disk.size)
-          partition.min_size = min_size
-          partition.max_size = max_size
-          partition.weight = 1 if max_size == DiskSize.unlimited
 
           result << partition
         end
@@ -130,12 +130,7 @@ module Y2Storage
           device_config(lv, lv_section, drive)
           add_lv_reuse(lv, vg.volume_group_name, lv_section) if lv_section.create == false
 
-          number, unit = size_to_components(lv_section.size)
-          if unit == "%"
-            lv.percent_size = number
-          else
-            lv.min_size, lv.max_size = sizes_for(lv_section.size, vg.extent_size, DiskSize.unlimited)
-          end
+          next unless assign_size_to_lv(vg, lv, lv_section)
           lvs << lv
         end
 
@@ -292,75 +287,27 @@ module Y2Storage
         vg.reuse = vg_to_reuse.vg_name if vg_to_reuse
       end
 
-      # Returns min and max sizes for a size specification
-      #
-      # @param size_spec [String]   Device size specification from AutoYaST
-      # @param min       [DiskSize] Minimum disk size
-      # @param max       [DiskSize] Maximum disk size
-      # @return [[DiskSize,DiskSize]] min and max sizes for the given partition
-      #
-      # @see SIZE_REGEXP
-      def sizes_for(size_spec, min, max)
-        normalized_size = size_spec.to_s.strip.downcase
-
-        # FIXME: Temporary workaround to avoid crash when size 'auto'
-        # (which is still not supported) is used (bnc#1056182).
-        # So 'auto' will be handled like there is no size defined at
-        # all.
-        return [min, DiskSize.unlimited] if ["", "max", "auto"].include?(normalized_size)
-
-        number, unit = size_to_components(size_spec)
-        size =
-          if unit == "%"
-            percent = number.to_f
-            (max * percent) / 100.0
-          else
-            DiskSize.parse(size_spec, legacy_units: true)
-          end
-        [size, size]
-      end
-
-      # Regular expression to detect which kind of size is being used in an
-      # AutoYaST <size> element
-      INTEGER_SIZE_REGEXP = /^(\d)+$/
-      INTEGER_SIZE_REGEXP_WITH_UNIT = /([\d,.]+)?([a-zA-Z%]+)/
-
-      # Extracts number and unit from an AutoYaST size specification
-      #
-      # @example Using with percentages
-      #   size_to_components("30%") # => [30.0, "%"]
-      # @example Using with space units
-      #   size_to_components("30GiB") # => [30.0, "GiB"]
-      #
-      # @return [[number,unit]] Number and unit
-      def size_to_components(size_spec)
-        normalized_size = size_spec.to_s.strip
-        return [normalized_size.to_f, "B"] if INTEGER_SIZE_REGEXP.match(normalized_size)
-        number, unit = INTEGER_SIZE_REGEXP_WITH_UNIT.match(normalized_size).values_at(1, 2)
-        [number.to_f, unit]
-      end
-
       # @param devicegraph [Devicegraph] Devicegraph to search for the partition to reuse
-      # @param part_spec [AutoinstProfile::PartitionSection] Partition specification
+      # @param part_section [AutoinstProfile::PartitionSection] Partition specification
       #   from AutoYaST
-      def find_partition_to_reuse(devicegraph, part_spec)
-        if part_spec.partition_nr
-          devicegraph.partitions.find { |i| i.number == part_spec.partition_nr }
-        elsif part_spec.label
-          devicegraph.partitions.find { |i| i.filesystem_label == part_spec.label }
+      def find_partition_to_reuse(devicegraph, part_section)
+        if part_section.partition_nr
+          devicegraph.partitions.find { |i| i.number == part_section.partition_nr }
+        elsif part_section.label
+          devicegraph.partitions.find { |i| i.filesystem_label == part_section.label }
         end
       end
 
       # @param devicegraph [Devicegraph] Devicegraph to search for the logical volume to reuse
       # @param vg_name     [String]      Volume group name to search for the logical volume to reuse
-      # @param part_spec   [AutoinstProfile::PartitionSection] LV specification from AutoYaST
-      def find_lv_to_reuse(devicegraph, vg_name, part_spec)
+      # @param part_section   [AutoinstProfile::PartitionSection] LV specification from AutoYaST
+      def find_lv_to_reuse(devicegraph, vg_name, part_section)
         vg = devicegraph.lvm_vgs.find { |v| v.vg_name == vg_name }
         return unless vg
-        if part_spec.lv_name
-          vg.lvm_lvs.find { |v| v.lv_name == part_spec.lv_name }
-        elsif part_spec.label
-          vg.lvm_lvs.find { |v| v.filesystem_label == part_spec.label }
+        if part_section.lv_name
+          vg.lvm_lvs.find { |v| v.lv_name == part_section.lv_name }
+        elsif part_section.label
+          vg.lvm_lvs.find { |v| v.filesystem_label == part_section.label }
         end
       end
 
@@ -369,6 +316,54 @@ module Y2Storage
       def find_vg_to_reuse(devicegraph, vg)
         return nil unless vg.volume_group_name
         devicegraph.lvm_vgs.find { |v| v.vg_name == vg.volume_group_name }
+      end
+
+      # @return [DiskSize] Minimal partition size
+      PARTITION_MIN_SIZE = DiskSize.B(1).freeze
+
+      # Assign disk size according to AutoYaSt section
+      #
+      # @param disk        [Disk,Dasd]          Disk to put the partitions on
+      # @param partition   [Planned::Partition] Partition to assign the size to
+      # @param part_section   [AutoinstProfile::PartitionSection] Partition specification from AutoYaST
+      def assign_size_to_partition(disk, partition, part_section)
+        size_info = parse_size(part_section, PARTITION_MIN_SIZE, disk.size)
+
+        if size_info.nil?
+          section_id = part_section.mount || disk.name
+          issues_list.add(:invalid_value, section_id, :size, part_section.size)
+          return false
+        end
+
+        partition.min_size = size_info.min
+        partition.max_size = size_info.max
+        partition.weight = 1 if size_info.max == DiskSize.unlimited
+        true
+      end
+
+      # Assign LV size according to AutoYaST section
+      #
+      # @param vg         [Planned::LvmVg] Volume group
+      # @param lv         [Planned::LvmLv] Logical volume
+      # @param lv_section [AutoinstProfile::PartitionSection] AutoYaST section
+      # @return [Boolean] true if the size was parsed and asssigned; false it was not valid
+      def assign_size_to_lv(vg, lv, lv_section)
+        size_info = parse_size(lv_section, vg.extent_size, DiskSize.unlimited)
+
+        if size_info.nil?
+          section_id = lv_section.mount || vg.name
+          issues_list.add(:invalid_value, section_id, :size, lv_section.size)
+          return false
+        end
+
+        if size_info.percentage
+          lv.percent_size = size_info.percentage
+        else
+          lv.min_size = size_info.min
+          lv.max_size = size_info.max
+        end
+
+        true
       end
 
       # Instance of {ProposalSettings} based on the current product.
@@ -399,6 +394,16 @@ module Y2Storage
             device.subvolumes.delete(subvol)
           end
         end
+      end
+
+      # Parse the 'size' element
+      #
+      # @param section [AutoinstProfile::PartitionSection]
+      # @param min     [DiskSize] Minimal size
+      # @param max     [DiskSize] Maximal size
+      # @see AutoinstSizeParser
+      def parse_size(section, min, max)
+        AutoinstSizeParser.new(proposal_settings).parse(section.size, section.mount, min, max)
       end
     end
   end

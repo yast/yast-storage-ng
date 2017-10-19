@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Thu Oct 19 14:27:49 UTC 2017 - igonzalezsosa@suse.com
+
+- AutoYaST: add basic support for error handling
+- AutoYaST: handle 'size: auto' correctly
+- 4.0.6
+
+-------------------------------------------------------------------
 Thu Oct 19 13:05:35 UTC 2017 - jsrain@suse.cz
 
 - During installation, mount efivarfs in /mnt/sys/firmware/efivars
@@ -10,7 +17,7 @@ Tue Oct 17 16:45:21 CEST 2017 - shundhammer@suse.de
 
 - Terminate extra space distribution loop if nothing could be
   distributed anymore (bsc#1063392)
-- 4.0.3
+- 4.0.4
 
 -------------------------------------------------------------------
 Tue Oct 17 11:25:03 UTC 2017 - snwint@suse.com

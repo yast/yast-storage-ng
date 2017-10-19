@@ -1,8 +1,6 @@
-#!/usr/bin/env ruby
-#
 # encoding: utf-8
 
-# Copyright (c) [2016] SUSE LLC
+# Copyright (c) [2017] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -21,23 +19,29 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
+require "y2storage/autoinst_issues/issue"
+
 module Y2Storage
-  # Base class for Y2Storage exceptions
-  class Error < RuntimeError
-  end
-  # There is no enough space in the disk
-  class NoDiskSpaceError < Error
-  end
-  # There are not available partition slots in the disk
-  class NoMorePartitionSlotError < Error
-  end
-  # It's not possible to propose a bootable layout for the root device
-  class NotBootableError < Error
-  end
-  # A method was called more times than expected
-  class UnexpectedCallError < Error
-  end
-  # A device was not found
-  class DeviceNotFoundError < Error
+  module AutoinstIssues
+    # The proposal was successful but there is not root partition (/) defined.
+    #
+    # This is a fatal error because the installation is not possible.
+    class MissingRoot < Issue
+      # Return problem severity
+      #
+      # @return [Symbol] :fatal
+      # @see Issue#severity
+      def severity
+        :fatal
+      end
+
+      # Return the error message to be displayed
+      #
+      # @return [String] Error message
+      # @see Issue#message
+      def message
+        _("No root partition (/) was found.")
+      end
+    end
   end
 end

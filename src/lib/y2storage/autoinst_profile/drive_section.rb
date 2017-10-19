@@ -112,7 +112,7 @@ module Y2Storage
       def init_from_hashes(hash)
         super
         @type ||= default_type_for(hash)
-        @use = use_value_from_string(hash.fetch("use", "all"))
+        @use = use_value_from_string(hash["use"]) if hash["use"]
         @partitions = partitions_from_hash(hash)
         @skip_list = SkipListSection.new_from_hashes(hash.fetch("skip_list", []))
       end
