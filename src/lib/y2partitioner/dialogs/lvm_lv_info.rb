@@ -111,8 +111,9 @@ module Y2Partitioner
         end
       end
 
-      # Choose a size for a new logical volume either choosing the maximum or
-      # entering a custom size
+      # Choose the type of the new logical volume (normal, thin or thin pool)
+      # @note When the selected type is :thin, it also allows to select the
+      #   used thin pool (see {ThinPoolSelector}).
       class TypeWidget < Widgets::ControllerRadioButtons
         # @param controller [Sequences::Controllers::LvmLv]
         #   a controller collecting data for a LV to be created
@@ -140,7 +141,7 @@ module Y2Partitioner
           @widgets ||= [
             CWM::Empty.new("normal_widget"),
             CWM::Empty.new("thin_pool_widget"),
-            UsedPoolSelector.new(@controller)
+            ThinPoolSelector.new(@controller)
           ]
         end
 
@@ -158,9 +159,9 @@ module Y2Partitioner
         end
       end
 
-      # Selector for used pool
+      # Selector for used thin pool
       # TODO: thin provisioning should be implemented in libstorage-ng
-      class UsedPoolSelector < CWM::ComboBox
+      class ThinPoolSelector < CWM::ComboBox
         # @param controller [Sequences::Controllers::LvmLv]
         #   a controller collecting data for a LV to be created
         def initialize(controller)

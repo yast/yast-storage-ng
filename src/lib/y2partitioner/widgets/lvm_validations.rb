@@ -30,8 +30,10 @@ module Y2Partitioner
     # Mixin for validations before start a LVM wizard
     #
     # This validations are typically performed in the buttons that launch a wizard.
-    #
     # @see AddLvmButton
+    #
+    # @note Validations are performed before launching the wizard to avoid rendering
+    #   issues when showing a popup before the first wizard dialog is presented.
     module LvmValidations
       # TODO
       def validate_add_vg

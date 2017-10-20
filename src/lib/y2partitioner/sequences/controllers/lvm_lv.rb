@@ -83,7 +83,6 @@ module Y2Partitioner
         # @param vg [Y2Storage::LvmVg] see {#vg}
         def initialize(vg)
           textdomain "storage"
-
           @vg_name = vg.vg_name
         end
 
@@ -139,6 +138,8 @@ module Y2Partitioner
         # @return [Array<Integer>]
         def stripes_number_options
           pvs_size = vg.lvm_pvs.size
+          return [] if pvs_size == 0
+
           (1..pvs_size).to_a
         end
 
@@ -149,12 +150,12 @@ module Y2Partitioner
         #
         # @return [Array<DiskSize>]
         def stripes_size_options
-          extend_size = vg.extent_size
+          extent_size = vg.extent_size
           sizes = [Y2Storage::DiskSize.new("4 KiB")]
 
           loop do
             next_size = sizes.last * 2
-            break if next_size > extend_size
+            break if next_size > extent_size
 
             sizes << next_size
           end

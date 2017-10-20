@@ -13,10 +13,11 @@ module Y2Partitioner
       # @param vg [Y2Storage::LvmVg]
       def initialize(vg)
         super()
-
         @controller = Controllers::LvmLv.new(vg)
       end
 
+      # FIXME: this validations are also performed by buttons before wizard starts,
+      # so they could be removed from here.
       def preconditions
         return :next if controller.free_extents > 0
 
