@@ -29,21 +29,30 @@ require "y2partitioner/dialogs/partition_role"
 require "y2partitioner/dialogs/format_and_mount"
 
 describe Y2Partitioner::Sequences::AddLvmLv do
+  using Y2Storage::Refinements::SizeCasts
+
+  # Defined as method instead of let clause because using let, it points to the
+  # current devicegraph at the moment to use #current_size for first time, but
+  # after a transaction, the current devicegraph could change. The tests need to
+  # always read the current devicegraph, even after a transaction.
+  def current_graph
+    Y2Partitioner::DeviceGraphs.instance.current
+  end
+
   before do
     allow(Yast::Wizard).to receive(:OpenNextBackDialog)
     allow(Yast::Wizard).to receive(:CloseDialog)
 
-    devicegraph_stub("lvm-two-vgs.yml")
+    devicegraph_stub("lvm-four-vgs.yml")
   end
 
-  let(:vg) { Y2Storage::LvmVg.find_by_vg_name(fake_devicegraph, "vg0") }
-
   subject(:sequence) { described_class.new(vg) }
+
+  let(:vg) { Y2Storage::LvmVg.find_by_vg_name(current_graph, "vg6") }
 
   describe "#run" do
     context "if there is no free space in the VG" do
       before do
-        allow(Yast::Popup).to receive(:Error)
         vg.create_lvm_lv("filler", vg.available_space)
       end
 
@@ -58,7 +67,56 @@ describe Y2Partitioner::Sequences::AddLvmLv do
     end
 
     context "if there is available space in the VG" do
-      pending
+      before do
+        # Mockup of collected data when go through the dialogs
+        allow(sequence).to receive(:controller).and_return(controller)
+        controller.lv_name = "lv1"
+        controller.size = 1.GiB
+      end
+
+      let(:controller) { Y2Partitioner::Sequences::Controllers::LvmLv.new(vg) }
+
+      context "if the user goes forward through all the dialogs" do
+        before do
+          allow(Y2Partitioner::Dialogs::LvmLvInfo).to receive(:run).and_return :next
+          allow(Y2Partitioner::Dialogs::LvmLvSize).to receive(:run).and_return :next
+          allow(Y2Partitioner::Dialogs::PartitionRole).to receive(:run).and_return :next
+          allow(Y2Partitioner::Dialogs::FormatAndMount).to receive(:run).and_return :next
+        end
+
+        it "returns :finish" do
+          expect(sequence.run).to eq :finish
+        end
+
+        it "creates a new lv device" do
+          lvs = Y2Storage::LvmLv.all(current_graph)
+          expect(lvs.size).to eq 0
+
+          sequence.run
+
+          lvs = Y2Storage::LvmLv.all(current_graph)
+          expect(lvs.size).to eq 1
+        end
+      end
+
+      context "if the user aborts the process at some point" do
+        before do
+          allow(Y2Partitioner::Dialogs::LvmLvInfo).to receive(:run).and_return :next
+          allow(Y2Partitioner::Dialogs::LvmLvSize).to receive(:run).and_return :next
+          allow(Y2Partitioner::Dialogs::PartitionRole).to receive(:run).and_return :next
+          allow(Y2Partitioner::Dialogs::FormatAndMount).to receive(:run).and_return :abort
+        end
+
+        it "returns :abort" do
+          expect(sequence.run).to eq :abort
+        end
+
+        it "does not create any lv device in the devicegraph" do
+          sequence.run
+          lvs = Y2Storage::LvmLv.all(current_graph)
+          expect(lvs.size).to eq 0
+        end
+      end
     end
   end
 end
