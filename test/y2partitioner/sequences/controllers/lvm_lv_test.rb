@@ -1,3 +1,4 @@
+#!/usr/bin/env rspec
 # encoding: utf-8
 
 # Copyright (c) [2017] SUSE LLC
@@ -19,20 +20,9 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-module Y2Partitioner
-  # Namespace for all the UI::Sequence objects of the expert partitioner
-  module Sequences
-    # The different classes on this namespace store information about a device
-    # being created or modified in a sequence and take care of updating the
-    # devicegraph when needed according to that information. That glues
-    # the different dialogs across the process, all together and to the
-    # devicegraph.
-    module Controllers
-    end
-  end
-end
-
-require "y2partitioner/sequences/controllers/filesystem"
-require "y2partitioner/sequences/controllers/md"
-require "y2partitioner/sequences/controllers/partition"
+require_relative "../../test_helper"
 require "y2partitioner/sequences/controllers/lvm_lv"
+
+describe Y2Partitioner::Sequences::Controllers::LvmLv do
+  pending
+end
