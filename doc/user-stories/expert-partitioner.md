@@ -569,14 +569,14 @@ The specs are based on current version of expert partitioner for TW. The goal is
 ### When 'Volume Management' is selected in the tree view
 * shows a table with the columns: Device, Size, F, Enc, Type, FS Type, Label, Mount Point, Metadata, PE Size, Stripes
   * and the table is filled out with info of all VGs and Lvs
-* *(pending) shows the actions: 'Add', 'Edit', 'Resize' and 'Delete'*
-* *(pending) and action 'Add' is selected*
-  * and the table is empty
+* shows the actions: 'Add', 'Edit', 'Resize' and 'Delete'
+* and action 'Add' is selected
+  * *(pending) and the table is empty*
     * shows an option to add "Volume group"
   * and the table is not empty (at least one VG)
     * shows an option to add "Volume Group"
     * shows an option to add "Logical Volume"
-* *(pending) and action 'Edit' is selected*
+* and action 'Edit' is selected
   * and a VG is selected in the table
     * shows the general view of the VG (same than selecting the VG in the tree view)
   * and a LV is selected in the table
@@ -594,7 +594,7 @@ The specs are based on current version of expert partitioner for TW. The goal is
     * shows a confirm popup to delete the LV
     * deletes the LV
 
-#### When 'Add' + 'Volume Group' is selected
+#### *(pending) When 'Add' + 'Volume Group' is selected*
 * and there are not valid unused devices (0x8e Linux, 0x83 LVM, 0xFD RAID)
   * shows an error popup
 * and there are valid unused devices
@@ -625,12 +625,12 @@ The specs are based on current version of expert partitioner for TW. The goal is
       * avoids to continue
     * creates the VG
 
-#### When 'Resize' is selected (over a VG)
+#### *(pending) When 'Resize' is selected (over a VG)*
 * same dialog than 'Add' + 'Volume Group' (see above)
 * 'Volume Group Name' is not shown
 * 'Physical Extend Size' is not shown
 
-### *(pending) When a 'VG' is selected in the tree view*
+### When a 'VG' is selected in the tree view
 * shows a view with three tabs: 'Overview', 'Logical Volumes' and 'Physical Volumes'
   * tab 'Logical Volumes' is selected by default
 * and tab 'Overview' is selected
@@ -639,7 +639,7 @@ The specs are based on current version of expert partitioner for TW. The goal is
       * device name
       * device size
     * where 'LVM' section contains the following info
-      * Metadata
+      * *(pending) Metadata*
       * PE Size
 * and tab 'Logical Volumes' is selected
   * shows a bar image with the LVs
@@ -652,9 +652,9 @@ The specs are based on current version of expert partitioner for TW. The goal is
       * shows dialog to edit the current selected LV in the table
       * same dialog than partition edition (see above)
       * 'File System Id' is not shown
-    * and action 'Resize' is selected
+    * *(pending) and action 'Resize' is selected*
       * shows popup dialog to resize the current selected LV in the table
-    * and action 'Delete' is selected
+    * *(pending) and action 'Delete' is selected*
       * shows a confirm popup to delete the selected LV
       * deletes the LV
 * and tab 'Physical Volumes' is selected
@@ -675,6 +675,11 @@ The specs are based on current version of expert partitioner for TW. The goal is
       * 'File System Id' is not shown
     * set encrypt password (optional)
       * same wizard step than in partition creation (see above)
+* *(pending) and the row selected is a thin pool lv*
+  * sets 'Type' to 'Thin Volume'
+  * sets 'Used Pool' to the selected thin pool
+* *(pending) and only it is possible to add a thin pool lv*
+  * sets 'Type' to 'Thin Pool'
 
 ##### When we are in the wizard step to select the LV name and type
 * shows two sections: 'Name' and 'Type'
@@ -710,7 +715,7 @@ The specs are based on current version of expert partitioner for TW. The goal is
         * avoids to continue
     * continues to the wizard step select LV role
 
-#### When 'resize' is selected
+#### *(pending) When 'resize' is selected*
 * shows a popup dialog with three options
   * Maximum Size
   * Minimum Size
