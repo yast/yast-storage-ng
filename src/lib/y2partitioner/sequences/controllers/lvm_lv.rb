@@ -54,11 +54,11 @@ module Y2Partitioner
         # @return [String, nil]
         attr_accessor :thin_pool
 
-        # Number of stripes selected
+        # Selected stripes number
         # @return [Integer]
         attr_accessor :stripes_number
 
-        # Stripe size selected
+        # Selected stripe size
         # @return [DiskSize]
         attr_accessor :stripes_size
 
@@ -132,7 +132,7 @@ module Y2Partitioner
 
         # Possible stripe numbers for the new LV
         #
-        # @note Stripes number options is a value from 1 and the number
+        # @note Stripes number options is a value from 1 to the number
         #   of physical volumes in the volume group.
         #
         # @return [Array<Integer>]

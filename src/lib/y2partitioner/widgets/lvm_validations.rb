@@ -37,7 +37,7 @@ module Y2Partitioner
     module LvmValidations
       # TODO
       def validate_add_vg
-        return true
+        true
       end
 
       # Validates that a new lv might be added to a specific vg
@@ -60,7 +60,7 @@ module Y2Partitioner
           return false
         end
 
-        return true
+        true
       end
     end
   end

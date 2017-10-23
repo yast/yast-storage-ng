@@ -16,10 +16,26 @@ module Y2Partitioner
         @controller = Controllers::LvmLv.new(vg)
       end
 
+      # Wizard step to indicate properties for a new logical volume,
+      # i.e., the name and type.
+      #
+      # @note Given values are stored into the controller.
+      # @see Controllers::LvmLv
+      # @see Dialogs::LvmLvInfo.run
       def name_and_type
         Dialogs::LvmLvInfo.run(controller)
       end
 
+      # Wizard step to indicate the size and stripes data (number and size)
+      # for the new logical volume.
+      #
+      # @note Given values are stored into the controller and then a new
+      #   logical volume is created with those values. When a previous logical
+      #   volume exists (e.g, when going back in the wizard), that volume is
+      #   deleted before creating a new one.
+      #
+      # @see Controllers::LvmLv
+      # @see Dialogs::LvmLvSize.run
       def size
         controller.delete_lv
         result = Dialogs::LvmLvSize.run(controller)
@@ -33,6 +49,7 @@ module Y2Partitioner
 
     protected
 
+      # @return [Controllers::LvmLv]
       attr_reader :controller
 
       # @see TransactionWizard

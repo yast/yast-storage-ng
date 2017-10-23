@@ -54,8 +54,10 @@ module Y2Partitioner
 
     protected
 
+      # @return [CWM::TreePager]
       attr_reader :pager
 
+      # @return [Y2Partitioner::Widgets::ConfigurableBlkDevicesTable]
       attr_reader :table
 
       # Device to modify

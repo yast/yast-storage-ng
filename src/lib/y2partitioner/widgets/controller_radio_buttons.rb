@@ -83,6 +83,8 @@ module Y2Partitioner
       end
 
       # Tell the UI to change the currently selected radio button
+      # @param val [Symbol, String] id of the widget corresponding
+      #   to the currently selected option
       def value=(val)
         Yast::UI.ChangeWidget(Id(widget_id), :CurrentButton, val)
       end
@@ -102,14 +104,14 @@ module Y2Partitioner
       end
 
       def buttons_with_widgets
-        items = self.items
-        widgets = self.widgets
-        if items.size != widgets.size
+        current_items = items
+        current_widgets = widgets
+        if current_items.size != current_widgets.size
           raise ArgumentError,
-            "Length mismatch: items #{items.size}, widgets #{widgets.size}"
+            "Length mismatch: items #{current_items.size}, widgets #{current_widgets.size}"
         end
 
-        terms = items.zip(widgets).map do |(id, text), widget|
+        terms = current_items.zip(current_widgets).map do |(id, text), widget|
           VBox(
             VSpacing(vspacing),
             Left(RadioButton(Id(id), Opt(:notify), text)),

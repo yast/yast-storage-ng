@@ -157,11 +157,9 @@ module Y2Partitioner
           min_s = min.human_ceil
           max_s = max.human_floor
           Yast::Popup.Error(
-            Yast::Builtins.sformat(
-              # error popup, %1 and %2 are replaced by sizes
-              _("The size entered is invalid. Enter a size between %1 and %2."),
-              min_s, max_s
-            )
+            # error popup, :min and :max are replaced by sizes
+            format(_("The size entered is invalid. Enter a size between %{min} and %{max}."),
+              min: min_s, max: max_s)
           )
           Yast::UI.SetFocus(Id(widget_id))
           false

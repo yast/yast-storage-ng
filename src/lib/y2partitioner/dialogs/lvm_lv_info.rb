@@ -155,12 +155,12 @@ module Y2Partitioner
         # @macro seeAbstractWidget
         def store
           @controller.type_choice = value
-          @controller.thin_pool = current_widget.value if value == :thin
+          @controller.thin_pool = value == :thin ? current_widget.value : nil
         end
       end
 
       # Selector for used thin pool
-      # TODO: thin provisioning should be implemented in libstorage-ng
+      # TODO
       class ThinPoolSelector < CWM::ComboBox
         # @param controller [Sequences::Controllers::LvmLv]
         #   a controller collecting data for a LV to be created
@@ -174,9 +174,9 @@ module Y2Partitioner
           _("Used Pool")
         end
 
+        # @macro seeAbstractWidget
         def init
-          thin_pool = @controller.thin_pool
-          self.value = thin_pool if thin_pool
+          self.value = @controller.thin_pool
         end
 
         def items

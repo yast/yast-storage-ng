@@ -119,6 +119,7 @@ module Y2Partitioner
           _("Log&ical Volumes")
         end
 
+        # Selects this tab by default
         def initial
           true
         end
