@@ -111,9 +111,9 @@ describe Y2Partitioner::Sequences::Controllers::LvmLv do
   describe "#delete_lv" do
     context "when a lv has not been created" do
       it "does not modify the editing vg" do
-        lvs = controller.vg.lvm_lvs
+        previous_lvs = controller.vg.lvm_lvs
         controller.delete_lv
-        expect(controller.vg.lvm_lvs).to eq(lvs)
+        expect(controller.vg.lvm_lvs).to eq(previous_lvs)
       end
     end
 

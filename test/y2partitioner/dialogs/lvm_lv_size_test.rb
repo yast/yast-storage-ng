@@ -92,7 +92,7 @@ describe Y2Partitioner::Dialogs::LvmLvSize do
 
         let(:custom_size) { 1.GiB }
 
-        it "sets #size in the controller to the value indicated" do
+        it "sets #size in the controller to the given value" do
           widget.store
           expect(controller.size).to eq(custom_size)
         end
@@ -118,7 +118,7 @@ describe Y2Partitioner::Dialogs::LvmLvSize do
     include_examples "CWM::AbstractWidget"
 
     describe "#validate" do
-      context "when indicated value in not a valid size" do
+      context "when given value in not a valid size" do
         let(:value) { nil }
 
         it "returns false" do
@@ -131,7 +131,7 @@ describe Y2Partitioner::Dialogs::LvmLvSize do
         end
       end
 
-      context "when indicated value in less than min size" do
+      context "when given value is less than min size" do
         let(:value) { 1.KiB }
 
         it "returns false" do
@@ -144,7 +144,7 @@ describe Y2Partitioner::Dialogs::LvmLvSize do
         end
       end
 
-      context "when indicated value in bigger than max size" do
+      context "when given value in bigger than max size" do
         let(:value) { 100.GiB }
 
         it "returns false" do
@@ -157,7 +157,7 @@ describe Y2Partitioner::Dialogs::LvmLvSize do
         end
       end
 
-      context "when indicated value in between min and max sizes" do
+      context "when given value in between min and max sizes" do
         let(:value) { 6.GiB }
 
         it "returns true" do
@@ -186,9 +186,13 @@ describe Y2Partitioner::Dialogs::LvmLvSize do
           .to receive(:new).and_return(stripes_size_widget)
       end
 
-      let(:stripes_number_widget) { double("StripesNumberSelector", value: stripes_number) }
+      let(:stripes_number_widget) do
+        instance_double(Y2Partitioner::Dialogs::LvmLvSize::StripesNumberSelector, value: stripes_number)
+      end
 
-      let(:stripes_size_widget) { double("StripesSizeSelector", value: stripes_size) }
+      let(:stripes_size_widget) do
+        instance_double(Y2Partitioner::Dialogs::LvmLvSize::StripesSizeSelector, value: stripes_size)
+      end
 
       let(:stripes_number) { 3 }
 

@@ -163,7 +163,14 @@ describe Y2Partitioner::Dialogs::LvmLvInfo do
       context "when the selected type is not :thin" do
         let(:value) { :normal }
 
-        it "does not set #thin_pool in the controller" do
+        let(:used_pool) { "lv_thin_pool" }
+
+        before do
+          controller.thin_pool = used_pool
+        end
+
+        it "sets #thin_pool to nil in the controller" do
+          expect(controller.thin_pool).to eq(used_pool)
           widget.store
           expect(controller.thin_pool).to be_nil
         end
