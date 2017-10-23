@@ -571,7 +571,7 @@ The specs are based on current version of expert partitioner for TW. The goal is
   * and the table is filled out with info of all VGs and Lvs
 * shows the actions: 'Add', 'Edit', 'Resize' and 'Delete'
 * and action 'Add' is selected
-  * *(pending) and the table is empty*
+  * and the table is empty
     * shows an option to add "Volume group"
   * and the table is not empty (at least one VG)
     * shows an option to add "Volume Group"
