@@ -45,15 +45,30 @@ describe Y2Partitioner::Dialogs::LvmLvInfo do
   describe Y2Partitioner::Dialogs::LvmLvInfo::NameWidget do
     subject(:widget) { described_class.new(controller) }
 
-    before do
-      allow(widget).to receive(:value).and_return(value)
-    end
-
-    let(:value) { nil }
-
     include_examples "CWM::AbstractWidget"
 
+    describe "#init" do
+      before do
+        controller.lv_name = lv_name
+      end
+
+      let(:lv_name) { "lv1" }
+
+      it "sets #value stored in the controller" do
+        expect(widget).to receive(:value=).with(lv_name)
+        widget.init
+      end
+
+      it "gets focus" do
+        expect(Yast::UI).to receive(:SetFocus).with(Id(widget.widget_id))
+        widget.init
+      end
+    end
+
     describe "#validate" do
+      before do
+        allow(widget).to receive(:value).and_return(value)
+      end
 
       context "when no lv name is entered" do
         let(:value) { nil }
@@ -109,6 +124,10 @@ describe Y2Partitioner::Dialogs::LvmLvInfo do
     end
 
     describe "#store" do
+      before do
+        allow(widget).to receive(:value).and_return(value)
+      end
+
       let(:value) { "lv3" }
 
       it "sets #lv_name in the controller" do
