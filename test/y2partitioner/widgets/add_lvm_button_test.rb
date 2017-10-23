@@ -36,7 +36,37 @@ describe Y2Partitioner::Widgets::AddLvmButton do
 
   let(:selected_device) { nil }
 
-  include_examples "CWM::PushButton"
+  include_examples "CWM::AbstractWidget"
+
+  describe "#items" do
+    it "returns a list" do
+      expect(button.items).to be_a(Array)
+    end
+
+    context "when there are vgs in the system" do
+      it "includes option for adding a vg" do
+        expect(button.items.map(&:first)).to include(:add_volume_group)
+      end
+
+      it "includes option for adding a lv" do
+        expect(button.items.map(&:first)).to include(:add_logical_volume)
+      end
+    end
+
+    context "when there are no vgs in the system" do
+      before do
+        allow(Y2Partitioner::DeviceGraphs.instance.current).to receive(:lvm_vgs).and_return([])
+      end
+
+      it "includes option for adding a vg" do
+        expect(button.items.map(&:first)).to include(:add_volume_group)
+      end
+
+      it "does not include option for adding a lv" do
+        expect(button.items.map(&:first)).to_not include(:add_logical_volume)
+      end
+    end
+  end
 
   describe "#handle" do
     before do
