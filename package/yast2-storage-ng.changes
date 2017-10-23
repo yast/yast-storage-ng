@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Mon Oct 23 17:14:01 CEST 2017 - snwint@suse.de
+
+- have volumes in control.xml proposed by default (fate#318196)
+- 4.0.8
+
+-------------------------------------------------------------------
 Fri Oct 20 17:28:16 UTC 2017 - jlopez@suse.com
 
 - Partitioner: support for creating logical volumes.
