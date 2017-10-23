@@ -76,6 +76,7 @@ module Y2Partitioner
         # @macro seeAbstractWidget
         def init
           self.value = @controller.lv_name
+          Yast::UI.SetFocus(Id(widget_id))
         end
 
         # @macro seeAbstractWidget
