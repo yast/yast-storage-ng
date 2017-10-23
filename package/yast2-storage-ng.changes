@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Fri Oct 20 17:28:16 UTC 2017 - jlopez@suse.com
+
+- Partitioner: support for creating logical volumes.
+- Part of fate#318196.
+- 4.0.7
+
+-------------------------------------------------------------------
 Thu Oct 19 14:27:49 UTC 2017 - igonzalezsosa@suse.com
 
 - AutoYaST: add basic support for error handling

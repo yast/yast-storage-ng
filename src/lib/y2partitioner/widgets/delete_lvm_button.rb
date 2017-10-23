@@ -19,20 +19,26 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
+require "yast"
+require "cwm"
+require "y2partitioner/widgets/blk_device_button"
+
+Yast.import "Popup"
+
 module Y2Partitioner
-  # Namespace for all the UI::Sequence objects of the expert partitioner
-  module Sequences
-    # The different classes on this namespace store information about a device
-    # being created or modified in a sequence and take care of updating the
-    # devicegraph when needed according to that information. That glues
-    # the different dialogs across the process, all together and to the
-    # devicegraph.
-    module Controllers
+  module Widgets
+    # Button for deleting a volume group or logical volume
+    class DeleteLvmButton < BlkDeviceButton
+      # @macro seeAbstractWidget
+      def label
+        _("Delete...")
+      end
+
+      # TODO
+      # @see BlkDeviceButton#actions
+      def actions
+        Yast::Popup.Warning("Not yet implemented")
+      end
     end
   end
 end
-
-require "y2partitioner/sequences/controllers/filesystem"
-require "y2partitioner/sequences/controllers/md"
-require "y2partitioner/sequences/controllers/partition"
-require "y2partitioner/sequences/controllers/lvm_lv"

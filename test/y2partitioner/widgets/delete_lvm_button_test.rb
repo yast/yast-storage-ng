@@ -23,39 +23,41 @@
 require_relative "../test_helper"
 
 require "cwm/rspec"
-require "y2partitioner/device_graphs"
-require "y2partitioner/widgets/overview"
+require "y2partitioner/widgets/delete_lvm_button"
 
-describe Y2Partitioner::Widgets::OverviewTreePager do
+describe Y2Partitioner::Widgets::DeleteLvmButton do
   before do
     devicegraph_stub("lvm-two-vgs.yml")
   end
 
-  subject { described_class.new("hostname") }
+  subject(:button) { described_class.new(pager: pager, table: table) }
 
-  include_examples "CWM::Pager"
+  let(:table) { double("table", selected_device: device) }
 
-  describe "#device_page" do
+  let(:device) { nil }
+
+  let(:pager) { double("pager") }
+
+  include_examples "CWM::PushButton"
+
+  describe "#handle" do
     let(:current_graph) { Y2Partitioner::DeviceGraphs.instance.current }
 
     let(:vg) { Y2Storage::LvmVg.find_by_vg_name(current_graph, "vg0") }
 
-    context "when there is a page associated to the requested device" do
+    let(:lv) { vg.lvm_lvs.first }
+
+    context "when the current device is a vg" do
       let(:device) { vg }
 
-      it "returns the page" do
-        page = subject.device_page(device)
-        expect(page).to be_a(CWM::Page)
-        expect(page.device).to eq(device)
+      xit "deletes the vg and its lvs" do
       end
     end
 
-    context "when there is not a page associated to the requested device" do
-      let(:device) { vg.lvm_pvs.first }
+    context "when the current device is a lv" do
+      let(:device) { lv }
 
-      it "returns nil" do
-        page = subject.device_page(device)
-        expect(page).to be_nil
+      xit "deletes the lv" do
       end
     end
   end

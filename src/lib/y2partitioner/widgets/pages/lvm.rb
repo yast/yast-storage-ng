@@ -1,6 +1,32 @@
+# encoding: utf-8
+
+# Copyright (c) [2017] SUSE LLC
+#
+# All Rights Reserved.
+#
+# This program is free software; you can redistribute it and/or modify it
+# under the terms of version 2 of the GNU General Public License as published
+# by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+# more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, contact SUSE LLC.
+#
+# To contact SUSE LLC about this file by physical or electronic mail, you may
+# find current contact information at www.suse.com.
+
 require "cwm/tree_pager"
 require "y2partitioner/device_graphs"
 require "y2partitioner/widgets/lvm_devices_table"
+require "y2partitioner/widgets/add_lvm_button"
+require "y2partitioner/widgets/add_lvm_vg_button"
+require "y2partitioner/widgets/edit_lvm_button"
+require "y2partitioner/widgets/resize_lvm_button"
+require "y2partitioner/widgets/delete_lvm_button"
 
 module Y2Partitioner
   module Widgets
@@ -46,11 +72,40 @@ module Y2Partitioner
                 Heading(_("Volume Management"))
               )
             ),
-            LvmDevicesTable.new(devices, @pager)
+            table,
+            Left(
+              HBox(
+                add_button,
+                EditLvmButton.new(pager: @pager, table: table),
+                ResizeLvmButton.new(pager: @pager, table: table),
+                DeleteLvmButton.new(pager: @pager, table: table)
+              )
+            )
           )
         end
 
       private
+
+        # Table with all vgs and their lvs
+        #
+        # @return [LvmDevicesTable]
+        def table
+          @table ||= LvmDevicesTable.new(devices, @pager)
+        end
+
+        # When there are no vgs, a button for adding a new vg is showed.
+        # Otherwise, a menu button is showed for adding a vg or lv.
+        #
+        # @return [AddLvmVgButton, AddLvmButton]
+        def add_button
+          vgs = device_graph.lvm_vgs
+
+          if vgs.size == 0
+            AddLvmVgButton.new
+          else
+            AddLvmButton.new(table)
+          end
+        end
 
         # Returns all vgs and their lvs
         #

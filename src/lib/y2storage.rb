@@ -45,6 +45,7 @@ require "y2storage/encryption"
 require "y2storage/lvm_vg"
 require "y2storage/lvm_pv"
 require "y2storage/lvm_lv"
+require "y2storage/lv_type"
 require "y2storage/align_policy"
 
 require "y2storage/exceptions"

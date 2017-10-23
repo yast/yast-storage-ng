@@ -1,3 +1,4 @@
+#!/usr/bin/env rspec
 # encoding: utf-8
 
 # Copyright (c) [2017] SUSE LLC
@@ -17,22 +18,27 @@
 # with this program; if not, contact SUSE LLC.
 #
 # To contact SUSE LLC about this file by physical or electronic mail, you may
-# find current contact information at www.suse.com.
+# find current contact information at www.suse.com
 
-module Y2Partitioner
-  # Namespace for all the UI::Sequence objects of the expert partitioner
-  module Sequences
-    # The different classes on this namespace store information about a device
-    # being created or modified in a sequence and take care of updating the
-    # devicegraph when needed according to that information. That glues
-    # the different dialogs across the process, all together and to the
-    # devicegraph.
-    module Controllers
+require_relative "../test_helper"
+
+require "cwm/rspec"
+require "y2partitioner/widgets/add_lvm_vg_button"
+
+describe Y2Partitioner::Widgets::AddLvmVgButton do
+  before do
+    devicegraph_stub("lvm-two-vgs.yml")
+  end
+
+  subject(:button) { described_class.new }
+
+  include_examples "CWM::PushButton"
+
+  describe "#handle" do
+    # TODO
+    it "shows a popup" do
+      expect(Yast::Popup).to receive(:Warning)
+      button.handle
     end
   end
 end
-
-require "y2partitioner/sequences/controllers/filesystem"
-require "y2partitioner/sequences/controllers/md"
-require "y2partitioner/sequences/controllers/partition"
-require "y2partitioner/sequences/controllers/lvm_lv"

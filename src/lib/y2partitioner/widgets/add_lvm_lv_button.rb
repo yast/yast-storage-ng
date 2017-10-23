@@ -19,20 +19,36 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
+require "yast"
+require "cwm"
+require "y2partitioner/sequences/add_lvm_lv"
+require "y2partitioner/widgets/lvm_validations"
+
 module Y2Partitioner
-  # Namespace for all the UI::Sequence objects of the expert partitioner
-  module Sequences
-    # The different classes on this namespace store information about a device
-    # being created or modified in a sequence and take care of updating the
-    # devicegraph when needed according to that information. That glues
-    # the different dialogs across the process, all together and to the
-    # devicegraph.
-    module Controllers
+  module Widgets
+    # Button for opening the workflow to add a logical volume to a volume group
+    class AddLvmLvButton < CWM::PushButton
+      include LvmValidations
+
+      # Constructor
+      # @param vg [Y2Storage::LvmVg]
+      def initialize(vg)
+        textdomain "storage"
+        @vg = vg
+      end
+
+      # @macro seeAbstractWidget
+      def label
+        _("Add...")
+      end
+
+      # @macro seeAbstractWidget
+      def handle
+        return nil unless validate_add_lv(@vg)
+
+        Sequences::AddLvmLv.new(@vg).run
+        :redraw
+      end
     end
   end
 end
-
-require "y2partitioner/sequences/controllers/filesystem"
-require "y2partitioner/sequences/controllers/md"
-require "y2partitioner/sequences/controllers/partition"
-require "y2partitioner/sequences/controllers/lvm_lv"

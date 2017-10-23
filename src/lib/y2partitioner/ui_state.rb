@@ -1,4 +1,5 @@
-require "y2partitioner/widgets/pages"
+require "y2partitioner/widgets/pages/md_raids"
+require "y2partitioner/widgets/pages/lvm"
 
 module Y2Partitioner
   # Singleton class to keep the position of the user in the UI and other similar
