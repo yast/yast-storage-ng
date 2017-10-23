@@ -16,19 +16,6 @@ module Y2Partitioner
         @controller = Controllers::LvmLv.new(vg)
       end
 
-      # FIXME: this validations are also performed by buttons before wizard starts,
-      # so they could be removed from here.
-      def preconditions
-        return :next if controller.free_extents > 0
-
-        Yast::Popup.Error(
-          # TRANSLATORS: %s is a volume group name (e.g. "system")
-          _("No free space left in the volume group \"%s\".") % vg_name
-        )
-        :back
-      end
-      skip_stack :preconditions
-
       def name_and_type
         Dialogs::LvmLvInfo.run(controller)
       end
@@ -51,8 +38,7 @@ module Y2Partitioner
       # @see TransactionWizard
       def sequence_hash
         {
-          "ws_start"      => "preconditions",
-          "preconditions" => { next: "name_and_type" },
+          "ws_start"      => "name_and_type",
           "name_and_type" => { next: "size" },
           "size"          => { next: new_blk_device_step1, finish: :finish }
         }.merge(new_blk_device_steps)

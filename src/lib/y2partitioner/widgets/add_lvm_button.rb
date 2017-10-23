@@ -24,6 +24,8 @@ require "cwm"
 require "y2partitioner/sequences/add_lvm_lv"
 require "y2partitioner/widgets/lvm_validations"
 
+Yast.import "Popup"
+
 module Y2Partitioner
   module Widgets
     # Button for opening the workflow to add a volume group or logical volume
