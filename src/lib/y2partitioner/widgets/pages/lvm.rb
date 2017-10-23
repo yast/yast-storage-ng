@@ -23,6 +23,7 @@ require "cwm/tree_pager"
 require "y2partitioner/device_graphs"
 require "y2partitioner/widgets/lvm_devices_table"
 require "y2partitioner/widgets/add_lvm_button"
+require "y2partitioner/widgets/add_lvm_vg_button"
 require "y2partitioner/widgets/edit_lvm_button"
 require "y2partitioner/widgets/resize_lvm_button"
 require "y2partitioner/widgets/delete_lvm_button"
@@ -74,7 +75,7 @@ module Y2Partitioner
             table,
             Left(
               HBox(
-                AddLvmButton.new(table),
+                add_button,
                 EditLvmButton.new(pager: @pager, table: table),
                 ResizeLvmButton.new(pager: @pager, table: table),
                 DeleteLvmButton.new(pager: @pager, table: table)
@@ -90,6 +91,20 @@ module Y2Partitioner
         # @return [LvmDevicesTable]
         def table
           @table ||= LvmDevicesTable.new(devices, @pager)
+        end
+
+        # When there are no vgs, a button for adding a new vg is showed.
+        # Otherwise, a menu button is showed for adding a vg or lv.
+        #
+        # @return [AddLvmVgButton, AddLvmButton]
+        def add_button
+          vgs = device_graph.lvm_vgs
+
+          if vgs.size == 0
+            AddLvmVgButton.new
+          else
+            AddLvmButton.new(table)
+          end
         end
 
         # Returns all vgs and their lvs

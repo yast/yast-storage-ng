@@ -5,8 +5,10 @@ require "y2partitioner/widgets/pages"
 
 describe Y2Partitioner::Widgets::Pages::Lvm do
   before do
-    devicegraph_stub("lvm-two-vgs.yml")
+    devicegraph_stub(scenario)
   end
+
+  let(:scenario) { "lvm-two-vgs.yml" }
 
   let(:device_graph) { Y2Partitioner::DeviceGraphs.instance.current }
 
@@ -30,6 +32,22 @@ describe Y2Partitioner::Widgets::Pages::Lvm do
       items_name = table.items.map { |i| i[1] }
 
       expect(items_name.sort).to eq(devices_name.sort)
+    end
+
+    context "when there are vgs" do
+      it "shows a menu button to create a new vg or lv" do
+        button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::AddLvmButton) }
+        expect(button).to_not be_nil
+      end
+    end
+
+    context "when there are no vgs" do
+      let(:scenario) { "empty_hard_disk_50GiB" }
+
+      it "shows a button to create a new vg" do
+        button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::AddLvmVgButton) }
+        expect(button).to_not be_nil
+      end
     end
   end
 end
