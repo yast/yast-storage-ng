@@ -34,20 +34,24 @@ describe Y2Partitioner::Widgets::Pages::Lvm do
       expect(items_name.sort).to eq(devices_name.sort)
     end
 
-    context "when there are vgs" do
-      it "shows a menu button to create a new vg or lv" do
-        button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::AddLvmButton) }
-        expect(button).to_not be_nil
-      end
+    it "shows a menu button to create a new vg or lv" do
+      button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::AddLvmButton) }
+      expect(button).to_not be_nil
     end
 
-    context "when there are no vgs" do
-      let(:scenario) { "empty_hard_disk_50GiB" }
+    it "shows a button to edit a vg or lv" do
+      button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::EditLvmButton) }
+      expect(button).to_not be_nil
+    end
 
-      it "shows a button to create a new vg" do
-        button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::AddLvmVgButton) }
-        expect(button).to_not be_nil
-      end
+    it "shows a button to resize a vg or lv" do
+      button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::ResizeLvmButton) }
+      expect(button).to_not be_nil
+    end
+
+    it "shows a button to delete a vg or lv" do
+      button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::DeleteLvmButton) }
+      expect(button).to_not be_nil
     end
   end
 end

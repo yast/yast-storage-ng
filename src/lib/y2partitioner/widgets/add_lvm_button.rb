@@ -29,7 +29,7 @@ Yast.import "Popup"
 module Y2Partitioner
   module Widgets
     # Button for opening the workflow to add a volume group or logical volume
-    class AddLvmButton < CWM::CustomWidget
+    class AddLvmButton < CWM::MenuButton
       include LvmValidations
 
       # Constructor
@@ -41,14 +41,20 @@ module Y2Partitioner
         self.handle_all_events = true
       end
 
-      def contents
-        MenuButton(
-          _("Add..."),
-          [
-            Item(Id(:add_volume_group), _("Volume Group")),
-            Item(Id(:add_logical_volume), _("Logical Volume"))
-          ]
-        )
+      # @macro seeAbstractWidget
+      def label
+        _("Add...")
+      end
+
+      # When there is no vg, only shows an option to add a new vg.
+      # Otherwise, options for adding a vg or lv are shown.
+      # @return [Array<[Symbol, String]>] list of menu options
+      def items
+        items = [[:add_volume_group, _("Volume Group")]]
+        if !device_graph.lvm_vgs.empty?
+          items << [:add_logical_volume, _("Logical Volume")]
+        end
+        items
       end
 
       # @param event [Hash] UI event
@@ -88,6 +94,10 @@ module Y2Partitioner
         when Y2Storage::LvmLv
           device.lvm_vg
         end
+      end
+
+      def device_graph
+        DeviceGraphs.instance.current
       end
     end
   end

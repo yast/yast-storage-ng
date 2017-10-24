@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Mon Oct 23 17:53:27 UTC 2017 - jlopez@suse.com
+
+- Partitioner: show only option to create vg when there are no vgs.
+- Part of fate#318196.
+- 4.0.9
+
+-------------------------------------------------------------------
 Mon Oct 23 17:14:01 CEST 2017 - snwint@suse.de
 
 - have volumes in control.xml proposed by default (fate#318196)
