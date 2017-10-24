@@ -56,6 +56,23 @@ describe Y2Storage::AutoinstProfile::PartitionSection do
       expect(section_for("sdb1").size).to eq Y2Storage::DiskSize.GiB(780).to_i.to_s
     end
 
+    context "when filesystem is btrfs" do
+      it "initializes subvolumes" do
+        subvolumes = section_for("sdd3").subvolumes
+        expect(subvolumes).to all(be_a(Y2Storage::SubvolSpecification))
+      end
+
+      it "initializes default_btrfs_subvolume_name" do
+        expect(section_for("sdd3").default_btrfs_subvolume_name).to eq("@")
+      end
+
+      context "and there are not subvolumes" do
+        it "initializes subvolumes as an empty array" do
+          expect(section_for("dasdb2").subvolumes).to eq([])
+        end
+      end
+    end
+
     context "if the partition contains a filesystem" do
       it "initializes #filesystem with the corresponding symbol" do
         expect(section_for("dasdb1").filesystem).to eq :swap
@@ -229,9 +246,16 @@ describe Y2Storage::AutoinstProfile::PartitionSection do
     end
 
     context "when subvolumes are not present in the hash" do
-      it "initializes #subvolumes to an empty array" do
+      it "initializes #subvolumes to nil" do
         section = described_class.new_from_hashes(hash)
-        expect(section.subvolumes).to eq []
+        expect(section.subvolumes).to be_nil
+      end
+    end
+
+    context "when subvolumes are present in the hash but value is nil" do
+      it "initializes #subvolumes to an empty array" do
+        section = described_class.new_from_hashes(hash.merge("subvolumes" => nil))
+        expect(section.subvolumes).to be_nil
       end
     end
 
@@ -324,9 +348,40 @@ describe Y2Storage::AutoinstProfile::PartitionSection do
       expect(section.to_hashes).to eq({})
     end
 
-    it "does not export #subvolumes if it is empty" do
-      section.subvolumes = []
+    it "does not export #subvolumes if nil" do
+      section.subvolumes = nil
       expect(section.to_hashes.keys).to_not include "subvolumes"
+    end
+
+    context "when some subvolume exist" do
+      before do
+        section.subvolumes = [
+          Y2Storage::SubvolSpecification.new("@/var/log", copy_on_write: true)
+        ]
+      end
+
+      it "exports subvolumes as an array of hashes" do
+        expect(section.to_hashes["subvolumes"]).to eq(
+          [{ "path" => "@/var/log", "copy_on_write" => true }]
+        )
+      end
+
+      context "when a default subvolume was specified" do
+        before do
+          section.default_btrfs_subvolume_name = "@"
+        end
+
+        it "removes default subvolume from path" do
+          expect(section.to_hashes["subvolumes"]).to eq(
+            [{ "path" => "var/log", "copy_on_write" => true }]
+          )
+        end
+      end
+    end
+
+    it "exports default btrfs subvolume name" do
+      section.default_btrfs_subvolume_name = "@"
+      expect(section.to_hashes["default_btrfs_subvolume_name"]).to eq("@")
     end
 
     it "does not export fstab options if it is empty" do

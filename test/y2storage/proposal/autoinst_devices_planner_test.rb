@@ -382,6 +382,14 @@ describe Y2Storage::Proposal::AutoinstDevicesPlanner do
         end
       end
 
+      context "when there is an empty subvolumes list in the profile" do
+        let(:subvolumes) { [] }
+
+        it "does not plan any subvolume" do
+          expect(root.subvolumes).to eq([])
+        end
+      end
+
       context "when the usage of snapshots is not specified" do
         let(:snapshots) { nil }
 

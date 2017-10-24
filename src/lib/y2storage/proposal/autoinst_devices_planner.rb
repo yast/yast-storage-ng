@@ -226,7 +226,7 @@ module Y2Storage
         subvol_specs = section.subvolumes
         mount = device.mount_point
 
-        if subvol_specs.empty? && mount == "/"
+        if subvol_specs.nil? && mount == "/"
           @default_subvolumes_used = true
           subvol_specs = proposal_settings.subvolumes
         end
