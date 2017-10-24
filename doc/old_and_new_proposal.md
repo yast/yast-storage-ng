@@ -677,7 +677,7 @@ following options.
       The created VG will match the requirements 1:1, so its size
       will be exactly the sum of all the LVs sizes.
     * `use_vg_size`  
-      The VG will have exactly this size.
+      The VG will have exactly the size specified in `lvm_vg_size`.
   * `lvm_vg_size`  
     Specifies the predefined size of the LVM volume group.
   * `proposal_settings_editable`  
