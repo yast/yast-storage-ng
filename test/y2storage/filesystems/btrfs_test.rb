@@ -639,4 +639,22 @@ describe Y2Storage::Filesystems::Btrfs do
       end
     end
   end
+
+  describe "#default_subvolume_name" do
+    context "when a default subvolume name is set to '@'" do
+      let(:dev_name) { "/dev/sda2" }
+
+      it "returns the default subvolume name '@'" do
+        expect(subject.default_subvolume_name).to eq("@")
+      end
+    end
+
+    context "when default subvolume name is not set" do
+      let(:dev_name) { "/dev/sdd1" }
+
+      it "returns an empty string" do
+        expect(subject.default_subvolume_name).to eq("")
+      end
+    end
+  end
 end

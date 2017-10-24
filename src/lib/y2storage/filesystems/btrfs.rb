@@ -301,6 +301,18 @@ module Y2Storage
         end
       end
 
+      # Determines the default subvolume name
+      #
+      # When a default subvolume name have been used, a subvolume named after
+      # it lives under the #top_level_btrfs_subvolume. Otherwise, an empty
+      # string will be taken as the default subvolume name.
+      #
+      # @return [String] Default subvolume name
+      def default_subvolume_name
+        children = top_level_btrfs_subvolume.children
+        children.size == 1 ? children.first.path : ""
+      end
+
     protected
 
       # Removes a subvolume
