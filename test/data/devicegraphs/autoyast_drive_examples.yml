@@ -140,6 +140,10 @@
             - subvolume:
                 path: "@/var/lib/pgsql"
                 nocow: true
+            - subvolume:
+                path: "@/.snapshots"
+            - subvolume:
+                path: "@/.snapshots/1/snapshot"
 
     - partition:
         size: 12290 MiB

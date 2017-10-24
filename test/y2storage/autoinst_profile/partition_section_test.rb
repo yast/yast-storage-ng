@@ -66,6 +66,11 @@ describe Y2Storage::AutoinstProfile::PartitionSection do
         expect(section_for("sdd3").default_btrfs_subvolume_name).to eq("@")
       end
 
+      it "ignores snapshots" do
+        paths = section_for("sdd3").subvolumes.map(&:path)
+        expect(paths).to_not include("@/.snapshots")
+      end
+
       context "and there are not subvolumes" do
         it "initializes subvolumes as an empty array" do
           expect(section_for("dasdb2").subvolumes).to eq([])
