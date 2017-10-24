@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Tue Oct 24 13:48:42 UTC 2017 - igonzalezsosa@suse.com
+
+- Add support to clone subvolumes when using AutoYaST (bsc#1064875)
+- 4.0.10
+
+-------------------------------------------------------------------
 Mon Oct 23 17:53:27 UTC 2017 - jlopez@suse.com
 
 - Partitioner: show only option to create vg when there are no vgs.
