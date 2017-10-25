@@ -12,15 +12,18 @@ require "y2partitioner/widgets/disk_description"
 module Y2Partitioner
   module Widgets
     module Pages
-      # A Page for a disk: contains {DiskTab} and {PartitionsTab}
+      # Page for a disk device (disk, dasd or multipath).
+      #
+      # This page contains a {DiskTab} and a {PartitionsTab}. In case of multipath,
+      # it also contains a {MultipathDisksTab}.
       class Disk < CWM::Page
-        # @return [Y2Storage::Device] Disk this page is about
+        # @return [Y2Storage::BlkDevice] Disk device this page is about
         attr_reader :disk
         alias_method :device, :disk
 
         # Constructor
         #
-        # @param disk [Y2Storage::Disk]
+        # @param disk [Y2Storage::Disk, Y2Storage::Dasd, Y2Storage::Multipath]
         # @param pager [CWM::TreePager]
         def initialize(disk, pager)
           textdomain "storage"
@@ -45,19 +48,36 @@ module Y2Partitioner
                 Heading(format(_("Hard Disk: %s"), disk.name))
               )
             ),
-            Tabs.new(
-              DiskTab.new(disk),
-              PartitionsTab.new(disk, @pager)
-            )
+            tabs
           )
+        end
+
+      private
+
+        # Tabs to show device data
+        #
+        # In general, two tabs are presented: one for the device info and
+        # another one with the device partitions. When the device is a multipath,
+        # a third tab is used to show the disks that belong to the multipath.
+        #
+        # @return [Tabs]
+        def tabs
+          tabs = [
+            DiskTab.new(disk),
+            PartitionsTab.new(disk, @pager)
+          ]
+
+          tabs << MultipathDisksTab.new(disk, @pager) if disk.is?(:multipath)
+
+          Tabs.new(*tabs)
         end
       end
 
-      # A Tab for a disk
+      # A Tab for disk device description
       class DiskTab < CWM::Tab
         # Constructor
         #
-        # @param disk [Y2Storage::Disk]
+        # @param disk [Y2Storage::BlkDevice]
         def initialize(disk)
           textdomain "storage"
 
@@ -76,13 +96,13 @@ module Y2Partitioner
         end
       end
 
-      # A Tab for disk partitions
+      # A Tab for disk device partitions
       class PartitionsTab < CWM::Tab
         attr_reader :disk
 
         # Constructor
         #
-        # @param disk [Y2Storage::Disk]
+        # @param disk [Y2Storage::BlkDevice]
         # @param pager [CWM::TreePager]
         def initialize(disk, pager)
           textdomain "storage"
@@ -129,7 +149,7 @@ module Y2Partitioner
         class AddButton < CWM::PushButton
           # Constructor
           #
-          # @param disk [Y2Storage::Disk]
+          # @param disk [Y2Storage::BlkDevice]
           # @param table [ConfigurableBlkDevicesTable]
           def initialize(disk, table)
             textdomain "storage"
@@ -146,6 +166,48 @@ module Y2Partitioner
             res = Sequences::AddPartition.new(@disk.name).run
             res == :finish ? :redraw : nil
           end
+        end
+      end
+
+      # A Tab for the disks that belong to a multipath
+      class MultipathDisksTab < CWM::Tab
+        # Constructor
+        #
+        # @param lvm_vg [Y2Storage::Multipath]
+        # @param pager [CWM::TreePager]
+        def initialize(multipath, pager)
+          textdomain "storage"
+
+          @multipath = multipath
+          @pager = pager
+        end
+
+        # @macro seeAbstractWidget
+        def label
+          _("&Used Devices")
+        end
+
+        # @macro seeCustomWidget
+        def contents
+          # Page wants a WidgetTerm, not an AbstractWidget
+          @contents ||= VBox(table)
+        end
+
+      private
+
+        # Returns a table with all disks of a multipath
+        #
+        # @return [ConfigurableBlkDevicesTable]
+        def table
+          return @table unless @table.nil?
+          @table = ConfigurableBlkDevicesTable.new(devices, @pager)
+          @table.show_columns(:device, :size, :format, :encrypted, :type)
+          @table
+        end
+
+        # Multipath disks
+        def devices
+          @multipath.parents
         end
       end
     end
