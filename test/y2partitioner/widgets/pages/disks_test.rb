@@ -12,7 +12,9 @@ describe Y2Partitioner::Widgets::Pages::Disks do
 
   let(:devices) { (device_graph.disks + device_graph.disks.map(&:partitions)).flatten.compact }
 
-  subject { described_class.new(pager) }
+  subject { described_class.new(disks, pager) }
+
+  let(:disks) { device_graph.disks }
 
   let(:pager) { double("OverviewTreePager") }
 

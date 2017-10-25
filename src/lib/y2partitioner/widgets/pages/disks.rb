@@ -12,10 +12,12 @@ module Y2Partitioner
 
         # Constructor
         #
+        # @param disks [Array<Y2Storage::BlkDevice>]
         # @param pager [CWM::TreePager]
-        def initialize(pager)
+        def initialize(disks, pager)
           textdomain "storage"
 
+          @disks = disks
           @pager = pager
         end
 
@@ -51,11 +53,14 @@ module Y2Partitioner
 
       private
 
+        # @return [Array<Y2Storage::BlkDevice>]
+        attr_reader :disks
+
         # Returns all disks and their partitions
         #
         # @return [Array<Y2Storage::BlkDevice>]
         def devices
-          device_graph.disks.reduce([]) do |devices, disk|
+          disks.reduce([]) do |devices, disk|
             devices << disk
             devices.concat(disk.partitions)
           end
