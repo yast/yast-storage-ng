@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Wed Oct 25 17:28:48 UTC 2017 - jlopez@suse.com
+
+- Partitioner: allow to work with multipath devices.
+- Part of fate#318196.
+- 4.0.12
+
+-------------------------------------------------------------------
 Wed Oct 25 13:12:37 UTC 2017 - igonzalezsosa@suse.com
 
 - Add support to clone subvolumes when using AutoYaST (bsc#1064875)
