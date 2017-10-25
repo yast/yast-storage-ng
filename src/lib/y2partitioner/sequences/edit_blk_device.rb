@@ -32,6 +32,8 @@ module Y2Partitioner
     class EditBlkDevice < TransactionWizard
       # @param blk_device [Y2Storage::BlkDevice]
       def initialize(blk_device)
+        textdomain "storage"
+
         super()
         @blk_device = blk_device
         @fs_controller = Controllers::Filesystem.new(blk_device, title)

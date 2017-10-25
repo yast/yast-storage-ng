@@ -33,8 +33,9 @@ module Y2Partitioner
 
       # @param disk_name [String]
       def initialize(disk_name)
-        super()
+        textdomain "storage"
 
+        super()
         @part_controller = Controllers::Partition.new(disk_name)
       end
 
