@@ -23,7 +23,6 @@ require "yast"
 require "cwm/table"
 
 require "y2partitioner/device_graphs"
-require "y2partitioner/ui_state"
 require "y2partitioner/widgets/blk_devices_table"
 
 module Y2Partitioner
