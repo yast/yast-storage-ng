@@ -33,8 +33,33 @@ describe Y2Partitioner::Widgets::DeleteDiskPartitionButton do
         subject.handle
       end
 
+      it "does not delete the device" do
+        subject.handle
+        expect(Y2Storage::BlkDevice.find_by_name(device_graph, device_name)).to_not be_nil
+      end
+
       it "returns nil" do
         expect(subject.handle).to be(nil)
+      end
+    end
+
+    context "when selected device is a disk device" do
+      context "and does not have partitions" do
+        let(:device_name) { "/dev/sdc" }
+
+        it "shows an error message" do
+          expect(Yast::Popup).to receive(:Error)
+          subject.handle
+        end
+
+        it "does not delete the device" do
+          subject.handle
+          expect(Y2Storage::BlkDevice.find_by_name(device_graph, device_name)).to_not be_nil
+        end
+
+        it "returns nil" do
+          expect(subject.handle).to be(nil)
+        end
       end
     end
 
@@ -54,6 +79,11 @@ describe Y2Partitioner::Widgets::DeleteDiskPartitionButton do
 
       context "when the confirm message is not accepted" do
         let(:accept) { false }
+
+        it "does not delete the device" do
+          subject.handle
+          expect(Y2Storage::BlkDevice.find_by_name(device_graph, device_name)).to_not be_nil
+        end
 
         it "returns nil" do
           expect(subject.handle).to be_nil

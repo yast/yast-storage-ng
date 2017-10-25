@@ -1,12 +1,13 @@
 require "yast"
 require "cwm"
+require "y2partitioner/ui_state"
 
 Yast.import "Popup"
 Yast.import "HTML"
 
 module Y2Partitioner
   module Widgets
-    # Button for deleting a disk or partition
+    # Button for deleting a disk device or partition
     class DeleteDiskPartitionButton < CWM::PushButton
       # Constructor
       # @param device [Y2Storage::BlkDevice]
@@ -24,18 +25,17 @@ module Y2Partitioner
         @device_graph = device_graph
       end
 
+      # @macro seeAbstractWidget
       def label
         _("Delete...")
       end
 
+      # Checks whether delete action can be performed and if so,
+      # a confirmation popup is shown.
+      #
+      # @note Delete action is carried out only if user confirms.
       def handle
-        device = @device || @table.selected_device
-
-        if device.nil?
-          Yast::Popup.Error(_("No device selected"))
-          return nil
-        end
-
+        return nil unless delete_validations
         return nil unless confirm(device)
 
         delete_device(device)
@@ -44,22 +44,71 @@ module Y2Partitioner
 
     private
 
+      # Current device to delete
+      #
+      # @return [Y2Storage::BlkDevice]
+      def device
+        @device || @table.selected_device
+      end
+
+      # Checks whether the device can be deleted
+      #
+      # @note Some popups could be shown when it is not possible
+      #   to delete the device.
+      #
+      # @return [Boolean] {true} if it is possible to delete the device;
+      #   {false} otherwise.
+      def delete_validations
+        presence_validation && not_empty_partitions_validation
+      end
+
+      # Checks whether there is a device to delete
+      #
+      # @note An error popup is shown when there is no device.
+      #
+      # @return [Boolean]
+      def presence_validation
+        return true unless device.nil?
+
+        Yast::Popup.Error(_("No device selected"))
+        false
+      end
+
+      # Checks whether a partitionable has any partition for deleting
+      #
+      # @note An error popup is shown when there is no partition.
+      #
+      # @return [Boolean]
+      def not_empty_partitions_validation
+        return true unless device.is?(:partitionable)
+
+        partition_table = device.partition_table
+        if partition_table.nil? || partition_table.partitions.empty?
+          Yast::Popup.Error(_("There are no partitions to delete on this disk"))
+          return false
+        end
+
+        true
+      end
+
       # Deletes the indicated device
       #
-      # @note When the device is a disk, all its partitions are deleted.
+      # @note When the device is a partitionable, all its partitions are deleted.
       #
       # @note Shadowing for BtrFS subvolumes is always refreshed.
       # @see Y2Storage::Filesystems::Btrfs.refresh_subvolumes_shadowing
       #
       # @param device [Y2Storage::BlkDevice]
       def delete_device(device)
-        if device.is?(:disk)
+        if device.is?(:partitionable)
           log.info "deleting partitions for #{device}"
-          device.partition_table.delete_all_partitions
+          device.partition_table.delete_all_partitions unless device.partition_table.nil?
+          UIState.instance.select_row(device)
         else
           log.info "deleting partition #{device}"
-          disk = device.disk
-          disk.partition_table.delete_partition(device)
+          partitionable = device.partitionable
+          partitionable.partition_table.delete_partition(device)
+          UIState.instance.select_row(partitionable)
         end
 
         device_graph = DeviceGraphs.instance.current
