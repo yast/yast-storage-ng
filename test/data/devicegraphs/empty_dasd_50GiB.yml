@@ -2,4 +2,5 @@
 - dasd:
     name: /dev/sda
     type: eckd
+    format: cdl
     size: 23 GiB

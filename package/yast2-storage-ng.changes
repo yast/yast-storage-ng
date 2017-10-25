@@ -1,7 +1,13 @@
 -------------------------------------------------------------------
-Tue Oct 24 13:48:42 UTC 2017 - igonzalezsosa@suse.com
+Wed Oct 25 13:12:37 UTC 2017 - igonzalezsosa@suse.com
 
 - Add support to clone subvolumes when using AutoYaST (bsc#1064875)
+- 4.0.11
+
+-------------------------------------------------------------------
+Wed Oct 25 12:32:58 CEST 2017 - snwint@suse.de
+
+- adjust control.xml documentation
 - 4.0.10
 
 -------------------------------------------------------------------
