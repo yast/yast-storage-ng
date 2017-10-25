@@ -291,7 +291,7 @@ module Y2Storage
         @fstab_options = fs.fstab_options unless fs.fstab_options.empty?
       end
 
-      # @param fs [Filesystem::BlkFilesystem]
+      # @param fs [Filesystem::BlkFilesystem] Filesystem to add subvolumes if required
       def init_subvolumes(fs)
         return unless fs.supports_btrfs_subvolumes?
 
