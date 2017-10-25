@@ -118,28 +118,68 @@ describe Y2Storage::AutoinstProposal do
 
       context "when an existing partition_nr is specified" do
         let(:root) do
-          { "filesystem" => :ext4, "mount" => "/", "partition_nr" => 1, "create" => false }
+          { "mount" => "/", "partition_nr" => 3, "create" => false }
         end
 
         it "reuses the partition with the given partition number" do
           proposal.propose
           devicegraph = proposal.devices
-          reused_part = devicegraph.partitions.find { |p| p.name == "/dev/sda1" }
-          expect(reused_part.filesystem_mountpoint).to eq("/")
+          reused_part = devicegraph.partitions.find { |p| p.name == "/dev/sda3" }
+          expect(reused_part).to have_attributes(
+            filesystem_type:       Y2Storage::Filesystems::Type::EXT4,
+            filesystem_mountpoint: "/"
+          )
         end
       end
 
       context "when an existing label is specified" do
         let(:root) do
-          { "filesystem" => :ext4, "mount" => "/", "mountby" => :label, "label" => "windows",
+          { "mount" => "/", "mountby" => :label, "label" => "root",
             "create" => false }
         end
 
         it "reuses the partition with the given label" do
           proposal.propose
           devicegraph = proposal.devices
-          reused_part = devicegraph.partitions.find { |p| p.filesystem_label == "windows" }
-          expect(reused_part.filesystem_mountpoint).to eq("/")
+          reused_part = devicegraph.partitions.find { |p| p.filesystem_label == "root" }
+          expect(reused_part).to have_attributes(
+            filesystem_type:       Y2Storage::Filesystems::Type::EXT4,
+            filesystem_mountpoint: "/"
+          )
+        end
+      end
+
+      context "when partition is marked to be formatted" do
+        let(:root) do
+          { "mount" => "/", "partition_nr" => 3, "create" => false,
+            "format" => true, "filesystem" => :btrfs }
+        end
+
+        it "reuses the partition with the given format" do
+          proposal.propose
+          devicegraph = proposal.devices
+          reused_part = devicegraph.partitions.find { |p| p.name == "/dev/sda3" }
+          expect(reused_part).to have_attributes(
+            filesystem_type:       Y2Storage::Filesystems::Type::BTRFS,
+            filesystem_mountpoint: "/"
+          )
+        end
+      end
+
+      context "when a different filesystem is specified" do
+        let(:root) do
+          { "mount" => "/", "partition_nr" => 3, "create" => false,
+            "format" => false, "filesystem" => :btrfs }
+        end
+
+        it "ignores the given filesystem" do
+          proposal.propose
+          devicegraph = proposal.devices
+          reused_part = devicegraph.partitions.find { |p| p.name == "/dev/sda3" }
+          expect(reused_part).to have_attributes(
+            filesystem_type:       Y2Storage::Filesystems::Type::EXT4,
+            filesystem_mountpoint: "/"
+          )
         end
       end
     end

@@ -244,7 +244,7 @@ module Y2Storage
       # @param section   [AutoinstProfile::PartitionSection] AutoYaST specification
       def add_partition_reuse(partition, section)
         partition_to_reuse = find_partition_to_reuse(devicegraph, section)
-        return unless partition_to_reuse
+        partition.filesystem_type ||= partition_to_reuse.filesystem_type
         add_device_reuse(partition, partition_to_reuse.name, !!section.format)
         # TODO: possible errors here
         #   - missing information about what device to use
@@ -263,6 +263,7 @@ module Y2Storage
         lv_to_reuse = find_lv_to_reuse(devicegraph, vg_name, section)
         return unless lv_to_reuse
         lv.logical_volume_name ||= lv_to_reuse.lv_name
+        lv.filesystem_type ||= lv_to_reuse.filesystem_type
         add_device_reuse(lv, lv_to_reuse.name, !!section.format)
       end
 
