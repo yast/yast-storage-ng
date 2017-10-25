@@ -173,7 +173,7 @@ module Y2Partitioner
       class MultipathDisksTab < CWM::Tab
         # Constructor
         #
-        # @param lvm_vg [Y2Storage::Multipath]
+        # @param multipath [Y2Storage::Multipath]
         # @param pager [CWM::TreePager]
         def initialize(multipath, pager)
           textdomain "storage"
