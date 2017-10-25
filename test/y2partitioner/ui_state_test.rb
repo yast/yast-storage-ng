@@ -31,6 +31,8 @@ describe Y2Partitioner::UIState do
 
   let(:device) { Y2Storage::BlkDevice.find_by_name(fake_devicegraph, device_name) }
 
+  let(:disks) { fake_devicegraph.disks }
+
   describe ".new" do
     it "cannot be used directly" do
       expect { described_class.new }.to raise_error(/private method/)
@@ -59,7 +61,7 @@ describe Y2Partitioner::UIState do
   describe "#find_tree_node" do
     let(:pager) { double("TreePager") }
     let(:system_page) { Y2Partitioner::Widgets::Pages::System.new("", pager) }
-    let(:disks_page) { Y2Partitioner::Widgets::Pages::Disks.new(pager) }
+    let(:disks_page) { Y2Partitioner::Widgets::Pages::Disks.new(disks, pager) }
     let(:md_raids_page) { Y2Partitioner::Widgets::Pages::MdRaids.new(pager) }
     let(:lvm_page) { Y2Partitioner::Widgets::Pages::Lvm.new(pager) }
     let(:btrfs_page) { Y2Partitioner::Widgets::Pages::Btrfs.new(pager) }
