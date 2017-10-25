@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Wed Oct 25 12:32:58 CEST 2017 - snwint@suse.de
+
+- adjust control.xml documentation
+- 4.0.10
+
+-------------------------------------------------------------------
 Mon Oct 23 17:53:27 UTC 2017 - jlopez@suse.com
 
 - Partitioner: show only option to create vg when there are no vgs.
