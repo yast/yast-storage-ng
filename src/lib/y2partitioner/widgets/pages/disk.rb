@@ -8,6 +8,7 @@ require "y2partitioner/widgets/edit_blk_device_button"
 require "y2partitioner/widgets/configurable_blk_devices_table"
 require "y2partitioner/widgets/disk_bar_graph"
 require "y2partitioner/widgets/disk_description"
+require "y2partitioner/widgets/used_devices_tab"
 
 module Y2Partitioner
   module Widgets
@@ -15,7 +16,7 @@ module Y2Partitioner
       # Page for a disk device (disk, dasd or multipath).
       #
       # This page contains a {DiskTab} and a {PartitionsTab}. In case of multipath,
-      # it also contains a {MultipathDisksTab}.
+      # it also contains a {UsedDevicesTab}.
       class Disk < CWM::Page
         # @return [Y2Storage::BlkDevice] Disk device this page is about
         attr_reader :disk
@@ -67,7 +68,7 @@ module Y2Partitioner
             PartitionsTab.new(disk, @pager)
           ]
 
-          tabs << MultipathDisksTab.new(disk, @pager) if disk.is?(:multipath)
+          tabs << UsedDevicesTab.new(disk.parents, @pager) if disk.is?(:multipath)
 
           Tabs.new(*tabs)
         end
@@ -166,48 +167,6 @@ module Y2Partitioner
             res = Sequences::AddPartition.new(@disk.name).run
             res == :finish ? :redraw : nil
           end
-        end
-      end
-
-      # A Tab for the disks that belong to a multipath
-      class MultipathDisksTab < CWM::Tab
-        # Constructor
-        #
-        # @param multipath [Y2Storage::Multipath]
-        # @param pager [CWM::TreePager]
-        def initialize(multipath, pager)
-          textdomain "storage"
-
-          @multipath = multipath
-          @pager = pager
-        end
-
-        # @macro seeAbstractWidget
-        def label
-          _("&Used Devices")
-        end
-
-        # @macro seeCustomWidget
-        def contents
-          # Page wants a WidgetTerm, not an AbstractWidget
-          @contents ||= VBox(table)
-        end
-
-      private
-
-        # Returns a table with all disks of a multipath
-        #
-        # @return [ConfigurableBlkDevicesTable]
-        def table
-          return @table unless @table.nil?
-          @table = ConfigurableBlkDevicesTable.new(devices, @pager)
-          @table.show_columns(:device, :size, :format, :encrypted, :type)
-          @table
-        end
-
-        # Multipath disks
-        def devices
-          @multipath.parents
         end
       end
     end

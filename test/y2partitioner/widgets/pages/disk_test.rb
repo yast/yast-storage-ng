@@ -32,8 +32,8 @@ describe Y2Partitioner::Widgets::Pages::Disk do
         subject.contents
       end
 
-      it "does not show a multipath disks tab" do
-        expect(Y2Partitioner::Widgets::Pages::MultipathDisksTab).to_not receive(:new)
+      it "does not show a used devices tab" do
+        expect(Y2Partitioner::Widgets::UsedDevicesTab).to_not receive(:new)
         subject.contents
       end
     end
@@ -53,8 +53,8 @@ describe Y2Partitioner::Widgets::Pages::Disk do
         subject.contents
       end
 
-      it "shows a multipath disks tab" do
-        expect(Y2Partitioner::Widgets::Pages::MultipathDisksTab).to receive(:new)
+      it "shows a used devices tab" do
+        expect(Y2Partitioner::Widgets::UsedDevicesTab).to receive(:new)
         subject.contents
       end
     end
@@ -86,11 +86,5 @@ describe Y2Partitioner::Widgets::Pages::Disk do
     end
 
     include_examples "CWM::PushButton"
-  end
-
-  describe Y2Partitioner::Widgets::Pages::MultipathDisksTab do
-    subject { described_class.new(disk, pager) }
-
-    include_examples "CWM::Tab"
   end
 end
