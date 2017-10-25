@@ -188,52 +188,58 @@ This chapter presents a brief summary of the new elements in the
 
 ### Storage proposal settings
 
-The settings are grouped into two subsections of the `partitioning` section:
+Most settings are grouped into two subsections of the `partitioning` section:
   * `proposal`  
     Holds general settings for the proposal.
   * `volumes`  
     A list of `volume` elements holding specific settings for each volume that should be created. Note
     that you really must add one section for each volume. There are no defaults.
 
+Besides these, there are two further elements:
+  * (**FIXME - not done**) `expert_partitioner_warning` *(boolean, default: `false`)*
+  * (**FIXME - not done**) `use_separate_multipath_module` *(boolean, default: `false`)*
+
 #### Global settings in `proposal` section
 
-  * `lvm` *(boolean)*
-  * `resize_windows` *(boolean)*
-  * `windows_delete_mode` *(`none`, `ondemand`, `all`)*
-  * `linux_delete_mode` *(`none`, `ondemand`, `all`)*
-  * `other_delete_mode` *(`none`, `ondemand`, `all`)*
-  * `lvm_vg_strategy` *(`use_available`, `used_needed`, `use_vg_size`)*
-  * `lvm_vg_size` *(disksize)*
+  * `lvm` *(boolean, default: `false`)*
+  * `resize_windows` *(boolean, default: `true`)*
+  * `windows_delete_mode` *(`none`, `ondemand`, `all`, default: `ondemand`)*
+  * `linux_delete_mode` *(`none`, `ondemand`, `all`, default: `ondemand`)*
+  * `other_delete_mode` *(`none`, `ondemand`, `all`, default: `ondemand`)*
+  * (**FIXME - not done, it's always `use_needed`**) `lvm_vg_strategy` *(`use_available`, `use_needed`, `use_vg_size`, default: `use_needed`)*
+  * (**FIXME - not done**)`lvm_vg_size` *(disksize, default: `0 B`)*
 
 
 #### Volume-specific settings in `volume` sections
 
-  * `mount_point` *(string)*
-  * `proposed` *(boolean)*
-  * `proposed_configurable` *(boolean)*
-  * `fs_types` *(string)*
-  * `fs_type` *(string)*
-  * `desired_size` *(disksize)*
-  * `min_size` *(disksize)*
-  * `max_size` *(disksize)*
-  * `max_size_lvm` *(disksize)*
-  * `weight` *(integer)*
-  * `adjust_by_ram` *(boolean)*
-  * `adjust_by_ram_configurable` *(boolean)*
-  * `fallback_for_min_size` *(string)*
-  * `fallback_for_max_size` *(string)*
-  * `fallback_for_max_size_lvm` *(string)*
-  * `fallback_for_weight` *(string)*
-  * `snapshots` *(boolean)*
-  * `snapshots_configurable` *(boolean)*
-  * `snapshots_size` *(disksize)*
-  * `snapshots_percentage` *(integer)*
-  * `subvolumes` *(subsection)*
-  * `btrfs_default_subvolume` *(string)*
-  * `disable_order` *(integer)*
+  * `mount_point` *(string, default: no mountpoint)*
+  * `proposed` *(boolean, default: `true`)*
+  * `proposed_configurable` *(boolean, default: `true`)*
+  * `fs_types` *(string, default: `ext2,ext3,ext4,btrfs,xfs`)*
+  * `fs_type` *(string, default: no type)*
+  * `desired_size` *(disksize, default: `0 B`)*
+  * `min_size` *(disksize, default: `0 B`)*
+  * `max_size` *(disksize, default: `unlimited`)*
+  * `max_size_lvm` *(disksize, default: `0 B`)*
+  * `weight` *(integer, default: `0`)*
+  * `adjust_by_ram` *(boolean, default: `false`)*
+  * `adjust_by_ram_configurable` *(boolean, default: `false`)*
+  * `fallback_for_min_size` *(string, default: no fallback)*
+  * `fallback_for_max_size` *(string, default: no fallback)*
+  * `fallback_for_max_size_lvm` *(string, default: no fallback)*
+  * `fallback_for_weight` *(string, default: no fallback)*
+  * `snapshots` *(boolean, default: `false`)*
+  * `snapshots_configurable` *(boolean, default: `false`)*
+  * `snapshots_size` *(disksize, default: `0 B`)*
+  * `snapshots_percentage` *(integer, default: `0`)*
+  * `subvolumes` *(subsection, default: either empty list or internal fallback list for '/' volume)*
+  * `btrfs_default_subvolume` *(string, default: no special default subvolume)*
+  * `disable_order` *(integer, default: never disabled)*
 
 The `subvolumes` section holds a list of elements describing Btrfs
 subsections. The section uses the same format as in the legacy code.
+
+> Note: If `btrfs_default_subvolume` is set it is implicitly added to the `subvolumes` list.
 
 ### How the new proposal distributes the space
 
@@ -473,7 +479,7 @@ enable or disable in the "Guided Setup" (the former "Proposal Settings").
   </proposal>
 
   <volumes config:type="list">
-    <!-- The root filesystem -->
+    <!-- The '/' filesystem -->
     <volume>
       <mount_point>/</mount_point>
       <!-- Enforce Btrfs for root by not offering any other option -->
@@ -485,6 +491,9 @@ enable or disable in the "Guided Setup" (the former "Proposal Settings").
       <!-- Always use snapshots, no matter what -->
       <snapshots config:type="boolean">true</snapshots>
       <snapshots_configurable config:type="boolean">false</snapshots_configurable>
+
+      <!-- You don't want to miss the / volume -->
+      <proposed_configurable config:type="boolean">false</proposed_configurable>
 
       <btrfs_default_subvolume>@</btrfs_default_subvolume>
       <subvolumes config:type="list">
@@ -536,7 +545,6 @@ proposal to:
 
 ```xml
 <partitioning>
-
   <!-- Advise the user against using the expert partitioner -->
   <expert_partitioner_warning config:type="boolean">true</expert_partitioner_warning>
 
@@ -547,13 +555,14 @@ proposal to:
     <windows_delete_mode config:type="symbol">all</windows_delete_mode>
     <linux_delete_mode config:type="symbol">all</linux_delete_mode>
     <other_delete_mode config:type="symbol">all</other_delete_mode>
+    <!-- Make '/' volume read-only -->
     <root_subvolume_read_only config:type="boolean">true</root_subvolume_read_only>
     <!-- Don't allow the user to use the Guided Setup -->
     <proposal_settings_editable config:type="boolean">false</proposal_settings_editable>
   </proposal>
 
   <volumes config:type="list">
-    <!-- The root filesystem -->
+    <!-- The '/' filesystem -->
     <volume>
       <mount_point>/</mount_point>
       <!-- Default == final, since the user can't change it -->
@@ -566,7 +575,11 @@ proposal to:
       <snapshots config:type="boolean">true</snapshots>
       <snapshots_configurable config:type="boolean">false</snapshots_configurable>
 
+      <!-- You don't want to miss the / volume -->
+      <proposed_configurable config:type="boolean">false</proposed_configurable>
+
       <btrfs_default_subvolume>@</btrfs_default_subvolume>
+
       <subvolumes config:type="list">
         <!--
           This would be the same than the <subvolumes> list in the current
@@ -575,7 +588,7 @@ proposal to:
       </subvolumes>
     </volume>
 
-    <!-- The /var/lib/docker filesystem -->
+    <!-- Use /var/lib/docker as separate partition if 10+ GiB available -->
     <volume>
       <mount_point>/var/lib/docker</mount_point>
       <!-- Default == final, since the user can't change it -->
@@ -583,18 +596,19 @@ proposal to:
       <snapshots config:type="boolean">false</snapshots>
       <snapshots_configurable config:type="boolean">false</snapshots_configurable>
 
-      <!-- No max_size specified, so unlimited -->
-      <desired_size config:type="disksize">10 GiB</desired_size>
+      <desired_size config:type="disksize">15 GiB</desired_size>
       <min_size config:type="disksize">10 GiB</min_size>
+      <max_size config:type="disksize">unlimited</max_size>
       <weight config:type="integer">20</weight>
 
-      <!-- Give up in a separate partition if the min size doesn't fit -->
-      <proposed config:type="boolean">true</proposed>
-      <proposed_configurable config:type="boolean">true</proposed_configurable>
+      <!-- Give up separate partition if it doesn't fit -->
       <disable_order config:type="integer">1</disable_order>
-      <!-- If this volume is disabled, we want "/" to become greedy
-          (unlimited max) -->
+
+      <!-- If this volume is disabled, we want "/" to increase -->
+      <!-- (don't increase min size as it would be pointless) -->
+      <fallback_for_desired_size>/</fallback_for_desired_size>
       <fallback_for_max_size>/</fallback_for_max_size>
+      <fallback_for_weight>/</fallback_for_weight>
     </volume>
 
     <!-- No swap partition is defined, so it's never created -->
@@ -662,8 +676,10 @@ following options.
     * `use_needed`  
       The created VG will match the requirements 1:1, so its size
       will be exactly the sum of all the LVs sizes.
+    * `use_vg_size`  
+      The VG will have exactly the size specified in `lvm_vg_size`.
   * `lvm_vg_size`  
-    Specifies the predefined size of the LVM volume group.
+    Specifies the predefined size of the LVM volume group if `lvm_vg_strategy` is `use_vg_size`.
   * `proposal_settings_editable`  
     If `false`, the user is not allowed to change the proposal settings.
   * `root_subvolume_read_only`  

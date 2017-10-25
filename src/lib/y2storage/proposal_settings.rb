@@ -165,7 +165,7 @@ module Y2Storage
     #
     # @note :ng format
     #
-    # @return [Symbol] :use_available, :used_needed or :use_vg_size
+    # @return [Symbol] :use_available, :use_needed or :use_vg_size
     attr_reader :lvm_vg_strategy
 
     # @note :ng format
