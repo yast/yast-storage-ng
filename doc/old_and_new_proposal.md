@@ -206,7 +206,7 @@ Besides these, there are two further elements:
   * `windows_delete_mode` *(`none`, `ondemand`, `all`, default: `ondemand`)*
   * `linux_delete_mode` *(`none`, `ondemand`, `all`, default: `ondemand`)*
   * `other_delete_mode` *(`none`, `ondemand`, `all`, default: `ondemand`)*
-  * `lvm_vg_strategy` *(`use_available`, `used_needed`, `use_vg_size`, default: `use_needed`)*
+  * (**FIXME - not done, it's always `use_needed`**) `lvm_vg_strategy` *(`use_available`, `use_needed`, `use_vg_size`, default: `use_needed`)*
   * (**FIXME - not done**)`lvm_vg_size` *(disksize, default: `0 B`)*
 
 
@@ -679,7 +679,7 @@ following options.
     * `use_vg_size`  
       The VG will have exactly the size specified in `lvm_vg_size`.
   * `lvm_vg_size`  
-    Specifies the predefined size of the LVM volume group.
+    Specifies the predefined size of the LVM volume group if `lvm_vg_strategy` is `use_vg_size`.
   * `proposal_settings_editable`  
     If `false`, the user is not allowed to change the proposal settings.
   * `root_subvolume_read_only`  
