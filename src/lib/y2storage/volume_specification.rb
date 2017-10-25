@@ -123,6 +123,13 @@ module Y2Storage
       load_features(volume_features)
     end
 
+    # @see #fs_type
+    #
+    # @param type [Filesystems::Type, String]
+    def fs_type=(type)
+      @fs_type = validated_fs_type(type)
+    end
+
   private
 
     FEATURES = {
@@ -183,10 +190,6 @@ module Y2Storage
 
     def fs_types=(types)
       @fs_types = types.map { |t| validated_fs_type(t) }
-    end
-
-    def fs_type=(type)
-      @fs_type = validated_fs_type(type)
     end
 
     def validated_fs_type(type)
