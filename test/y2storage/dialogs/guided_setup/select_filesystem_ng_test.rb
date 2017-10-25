@@ -112,6 +112,33 @@ describe Y2Storage::Dialogs::GuidedSetup::SelectFilesystem::Ng do
       it "does not go up in smoke" do
         subject.run
       end
+
+      it "selects the root filesystem type from the settings" do
+        fs_type = Y2Storage::Filesystems::Type::EXT4
+        subject.root_vol.send(:fs_type=, fs_type)
+
+        expect_select(:root_fs_type, fs_type.to_sym)
+        subject.run
+      end
+
+      it "saves settings correctly" do
+        root_fs_type = Y2Storage::Filesystems::Type::XFS
+        var_lib_docker_fs_type = Y2Storage::Filesystems::Type::EXT4
+        select_widget(:root_fs_type, root_fs_type.to_sym)
+        select_widget(:var_lib_docker_fs_type, var_lib_docker_fs_type.to_sym)
+        select_widget(:propose_var_lib_docker)
+        select_widget(:snapshots)
+
+        subject.run
+
+        var_lib_docker_vol = subject.other_volumes.first
+        expect(subject.root_vol.fs_type).to eq(root_fs_type)
+        expect(subject.root_vol.proposed?).to eq(true)
+        expect(subject.root_vol.snapshots?).to eq(true)
+
+        expect(var_lib_docker_vol.fs_type).to eq(var_lib_docker_fs_type)
+        expect(var_lib_docker_vol.proposed?).to eq(true)
+      end
     end
   end
 end
