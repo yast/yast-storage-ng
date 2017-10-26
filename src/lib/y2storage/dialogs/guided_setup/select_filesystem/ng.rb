@@ -125,8 +125,7 @@ module Y2Storage
           #
           def root_vol_widget
             return nil if @root_vol.nil?
-            fs_types = @root_vol.fs_types || Filesystems::Type.root_filesystems
-            items = fs_types.map do |fs|
+            items = @root_vol.fs_types.map do |fs|
               Item(Id(fs.to_sym), fs.to_human_string, fs == @root_vol.fs_type)
             end
             VBox(
@@ -221,8 +220,7 @@ module Y2Storage
           #
           def fs_type_widget(vol, vol_name)
             return Empty() unless fs_type_user_configurable?(vol)
-            fs_types = vol.fs_types || Filesystems::Type.home_filesystems
-            items = fs_types.map { |fs| Item(Id(fs.to_sym), fs.to_human_string) }
+            items = vol.fs_types.map { |fs| Item(Id(fs.to_sym), fs.to_human_string) }
             Left(
               HBox(
                 HSpacing(2),
