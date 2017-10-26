@@ -30,7 +30,7 @@ require "y2storage/dialogs/guided_setup"
 require "pp"
 
 DATA_DIR = "../../test/data"
-FALLBACK_CONTROL_FILE = DATA_DIR + "/control_files/volumes_ng/control.SLE-like.xml"
+FALLBACK_CONTROL_FILE = DATA_DIR + "/control_files/volumes_ng/control.SLE-with-data.xml"
 FALLBACK_DEVICEGRAPH_FILE = DATA_DIR + "/devicegraphs/empty_hard_disk_gpt_50GiB.yml"
 
 control_file = Yast::WFM.Args[0] || FALLBACK_CONTROL_FILE
