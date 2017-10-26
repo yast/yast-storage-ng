@@ -53,10 +53,19 @@ module Y2Partitioner
         self.value = row_id(initial_sid) if initial_sid
       end
 
+      # Jumps to the page associated to the selected device
+      #
+      # @note Event is launched after double clicking over a row.
+      #
       # @macro seeAbstractWidget
       def handle
-        id = value[/table:(.*)/, 1]
-        @pager.handle("ID" => id)
+        device = selected_device
+        return nil if device.nil?
+
+        page = pager.device_page(device)
+        return nil if page.nil?
+
+        pager.handle("ID" => page.widget_id)
       end
 
       # Device object selected in the table
