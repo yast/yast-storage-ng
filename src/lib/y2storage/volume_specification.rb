@@ -176,6 +176,9 @@ module Y2Storage
     end
 
     def fs_types=(types)
+      if types.is_a?(String)
+        types = types.split(/\s*,\s*/)
+      end
       @fs_types = types.map { |t| validated_fs_type(t) }
     end
 
@@ -208,10 +211,13 @@ module Y2Storage
       types = case mount_point
       when "/"
         Filesystems::Type.root_filesystems
+      when "swap"
+        [Filesystems::Type::SWAP]
       when "/home"
         Filesystems::Type.home_filesystems
       else
-        [fs_type].compact
+        # TO DO: Check if a different list makes sense (probably not)
+        Filesystems::Type.home_filesystems
       end
 
       @fs_types = types
