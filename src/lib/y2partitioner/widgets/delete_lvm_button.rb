@@ -31,6 +31,7 @@ module Y2Partitioner
     class DeleteLvmButton < BlkDeviceButton
       # @macro seeAbstractWidget
       def label
+        # TRANSLATORS: button label to delete a volume group or logical volume
         _("Delete...")
       end
 

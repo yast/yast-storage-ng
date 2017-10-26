@@ -43,6 +43,7 @@ module Y2Partitioner
 
       # @macro seeAbstractWidget
       def label
+        # TRANSLATORS: button label to add a volume group or logical volume
         _("Add...")
       end
 

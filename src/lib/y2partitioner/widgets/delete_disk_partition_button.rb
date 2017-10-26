@@ -48,6 +48,7 @@ module Y2Partitioner
 
       # @macro seeAbstractWidget
       def label
+        # TRANSLATORS: button label to delete a disk device or partition
         _("Delete...")
       end
 

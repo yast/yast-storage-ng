@@ -32,6 +32,7 @@ module Y2Partitioner
     class ResizeLvmButton < BlkDeviceButton
       # @macro seeAbstractWidget
       def label
+        # TRANSLATORS: button label to resize a volume group or logical volume
         _("Resize...")
       end
 

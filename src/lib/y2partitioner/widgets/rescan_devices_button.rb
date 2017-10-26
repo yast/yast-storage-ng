@@ -14,7 +14,9 @@ module Y2Partitioner
         textdomain "storage"
       end
 
+      # @macro seeAbstractWidget
       def label
+        # TRANSLATORS: button label to rescan devices
         _("Rescan Devices")
       end
 

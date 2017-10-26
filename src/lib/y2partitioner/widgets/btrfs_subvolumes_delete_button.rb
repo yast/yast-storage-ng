@@ -19,7 +19,9 @@ module Y2Partitioner
       end
 
       # Widget label
+      # @macro seeAbstractWidget
       def label
+        # TRANSLATORS: button label to delete a btrfs subvolume
         _("Delete...")
       end
 

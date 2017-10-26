@@ -17,7 +17,9 @@ module Y2Partitioner
         @table = table
       end
 
+      # @macro seeAbstractWidget
       def label
+        # TRANSLATORS: button label to add a btrfs subvolume
         _("Add...")
       end
 
