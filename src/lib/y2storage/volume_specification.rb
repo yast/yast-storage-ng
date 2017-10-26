@@ -177,7 +177,7 @@ module Y2Storage
 
     def fs_types=(types)
       if types.is_a?(String)
-        types = types.split(/\s*,\s*/)
+        types = types.strip.split(/\s*,\s*/)
       end
       @fs_types = types.map { |t| validated_fs_type(t) }
     end
