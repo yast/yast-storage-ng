@@ -27,7 +27,7 @@ require "y2storage/filesystems/type"
 module Y2Storage
   module Dialogs
     class GuidedSetup
-      class SelectFilesystem
+      module SelectFilesystem
         # Dialog to select filesystems.
         # This is the simpler version for the legacy-style proposal settings that
         # support only a separate home volume.
