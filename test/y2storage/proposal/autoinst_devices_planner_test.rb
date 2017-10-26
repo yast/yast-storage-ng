@@ -157,7 +157,7 @@ describe Y2Storage::Proposal::AutoinstDevicesPlanner do
       context "when an invalid value is given" do
         let(:size) { "huh?" }
 
-        it "registers an error" do
+        it "registers an issue" do
           planner.planned_devices(drives_map)
           issue = issues_list.find { |i| i.is_a?(Y2Storage::AutoinstIssues::InvalidValue) }
           expect(issue.value).to eq("huh?")
@@ -216,7 +216,7 @@ describe Y2Storage::Proposal::AutoinstDevicesPlanner do
             expect(home).to be_nil
           end
 
-          it "reports an error" do
+          it "registers an issue" do
             planner.planned_devices(drives_map)
             issue = issues_list.find { |i| i.is_a?(Y2Storage::AutoinstIssues::InvalidValue) }
             expect(issue.value).to eq("auto")
@@ -491,7 +491,7 @@ describe Y2Storage::Proposal::AutoinstDevicesPlanner do
           expect(vg.lvs).to be_empty
         end
 
-        it "registers an error" do
+        it "registers an issue" do
           planner.planned_devices(drives_map)
           issue = issues_list.find { |i| i.is_a?(Y2Storage::AutoinstIssues::InvalidValue) }
           expect(issue.value).to eq("huh?")
