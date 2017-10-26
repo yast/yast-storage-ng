@@ -71,7 +71,7 @@ module Y2Storage
           { name: :raid_options },
           { name: :mkfs_options },
           { name: :fstab_options, xml_name: :fstopt },
-          { name: :default_btrfs_subvolume_name }
+          { name: :subvolumes_prefix }
         ]
       end
 
@@ -143,7 +143,7 @@ module Y2Storage
       # @!attribute fstab_options
       #   @return [Array<String>] Options to be used in the fstab for the filesystem
 
-      # @!attribute default_btrfs_subvolume_name
+      # @!attribute subvolumes_prefix
       #   @return [String] Name of the default Btrfs subvolume
 
       def init_from_hashes(hash)
@@ -295,11 +295,11 @@ module Y2Storage
       def init_subvolumes(fs)
         return unless fs.supports_btrfs_subvolumes?
 
-        @default_btrfs_subvolume_name = fs.default_subvolume_name
+        @subvolumes_prefix = fs.subvolumes_prefix
 
-        snapshots_root = File.join(@default_btrfs_subvolume_name.to_s, ".snapshots")
+        snapshots_root = File.join(@subvolumes_prefix.to_s, ".snapshots")
         valid_subvolumes = fs.btrfs_subvolumes.reject do |subvol|
-          subvol.path.empty? || subvol.path == @default_btrfs_subvolume_name ||
+          subvol.path.empty? || subvol.path == @subvolumes_prefix ||
             subvol.path.start_with?(snapshots_root)
         end
 
@@ -334,7 +334,7 @@ module Y2Storage
       # @return [Array<Hash>] Array of hash-based representations of subvolumes
       def subvolumes_to_hashes
         subvolumes.map do |subvol|
-          subvol_path = subvol.path.sub(/\A#{@default_btrfs_subvolume_name}\//, "")
+          subvol_path = subvol.path.sub(/\A#{@subvolumes_prefix}\//, "")
           { "path" => subvol_path, "copy_on_write" => subvol.copy_on_write }
         end
       end

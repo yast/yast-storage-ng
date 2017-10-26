@@ -62,8 +62,8 @@ describe Y2Storage::AutoinstProfile::PartitionSection do
         expect(subvolumes).to all(be_a(Y2Storage::SubvolSpecification))
       end
 
-      it "initializes default_btrfs_subvolume_name" do
-        expect(section_for("sdd3").default_btrfs_subvolume_name).to eq("@")
+      it "initializes subvolumes_prefix" do
+        expect(section_for("sdd3").subvolumes_prefix).to eq("@")
       end
 
       it "ignores snapshots" do
@@ -373,7 +373,7 @@ describe Y2Storage::AutoinstProfile::PartitionSection do
 
       context "when a default subvolume was specified" do
         before do
-          section.default_btrfs_subvolume_name = "@"
+          section.subvolumes_prefix = "@"
         end
 
         it "removes default subvolume from path" do
@@ -385,8 +385,8 @@ describe Y2Storage::AutoinstProfile::PartitionSection do
     end
 
     it "exports default btrfs subvolume name" do
-      section.default_btrfs_subvolume_name = "@"
-      expect(section.to_hashes["default_btrfs_subvolume_name"]).to eq("@")
+      section.subvolumes_prefix = "@"
+      expect(section.to_hashes["subvolumes_prefix"]).to eq("@")
     end
 
     it "does not export fstab options if it is empty" do
