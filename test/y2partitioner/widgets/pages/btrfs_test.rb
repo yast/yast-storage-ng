@@ -27,7 +27,7 @@ describe Y2Partitioner::Widgets::Pages::Btrfs do
       table = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::BlkDevicesTable) }
 
       expect(table).to_not be_nil
-      expect(table.items.size).to eq(3)
+      expect(table.items.size).to eq(4)
 
       devices_name = btrfs_devices.map(&:name)
       items_name = table.items.map { |i| i[1] }

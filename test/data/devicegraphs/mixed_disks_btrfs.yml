@@ -129,3 +129,51 @@
     name: /dev/sdc
     size: 500 GiB
     partition_table: ms-dos
+
+- disk:
+    name: /dev/sdd
+    size: 200 GiB
+    partition_table:  ms-dos
+    partitions:
+
+    - partition:
+        size:         unlimited
+        name:         /dev/sdd1
+        mount_point:  /
+        label:        root
+        file_system:  btrfs
+        btrfs:
+            subvolumes:
+            - subvolume:
+                path: "@/home"
+                nocow: false
+            - subvolume:
+                path: "@/srv"
+                nocow: false
+            - subvolume:
+                path: "@/tmp"
+                nocow: false
+            - subvolume:
+                path: "@/usr/local"
+                nocow: false
+            - subvolume:
+                path: "@/var/cache"
+                nocow: false
+            - subvolume:
+                path: "@/var/crash"
+                nocow: false
+            - subvolume:
+                path: "@/log"
+                nocow: false
+            - subvolume:
+                path: "@/opt"
+                nocow: false
+            - subvolume:
+                path: "@/var/lib/mariadb"
+                nocow: true
+            - subvolume:
+                path: "@/var/lib/mysql"
+                nocow: true
+            - subvolume:
+                path: "@/var/lib/pgsql"
+                nocow: true

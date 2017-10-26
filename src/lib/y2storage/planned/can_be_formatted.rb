@@ -105,6 +105,7 @@ module Y2Storage
       # @param all_devices [Array<Planned::Device>] all the devices planned for the system.
       # @return [Array<SubvolSpecification>]
       def shadowed_subvolumes(all_devices)
+        return [] if subvolumes.nil?
         other_devices = all_devices - [self]
         other_mount_points = other_devices.map { |dev| mount_point_for(dev) }.compact
         subvolumes.select { |s| s.shadowed?(mount_point, other_mount_points) }

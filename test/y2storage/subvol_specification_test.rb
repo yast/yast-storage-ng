@@ -40,6 +40,21 @@ describe Y2Storage::SubvolSpecification do
   let(:path) { "" }
   let(:archs) { [] }
 
+  describe ".create_from_btrfs_subvolume" do
+    before do
+      fake_scenario("mixed_disks_btrfs")
+    end
+
+    let(:blk_device) { Y2Storage::BlkDevice.find_by_name(fake_devicegraph, "/dev/sdb2") }
+    let(:subvolume) { blk_device.filesystem.create_btrfs_subvolume("/tmp", true) }
+
+    it "returns a new SubvolSpecification with path and copy_on_write from real subvolume" do
+      subvol_spec = Y2Storage::SubvolSpecification.create_from_btrfs_subvolume(subvolume)
+      expect(subvol_spec.path).to eq("/tmp")
+      expect(subvol_spec.copy_on_write).to eq(false)
+    end
+  end
+
   describe "#current_arch?" do
 
     context "when 'archs' is an empty array" do

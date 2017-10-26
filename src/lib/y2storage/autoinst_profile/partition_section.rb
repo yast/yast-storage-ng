@@ -70,7 +70,8 @@ module Y2Storage
           { name: :raid_name },
           { name: :raid_options },
           { name: :mkfs_options },
-          { name: :fstab_options, xml_name: :fstopt }
+          { name: :fstab_options, xml_name: :fstopt },
+          { name: :subvolumes_prefix }
         ]
       end
 
@@ -120,7 +121,8 @@ module Y2Storage
       #   @return [String] undocumented attribute that can only contain "primary"
 
       # @!attribute subvolumes
-      #   @return [Array<SubvolSpecification>] list of subvolumes
+      #   @return [Array<SubvolSpecification>,nil] list of subvolumes or nil if not
+      #     supported (from storage) or not specified (from hashes)
 
       # @!attribute size
       #   @return [String] size of the partition in the flexible AutoYaST format
@@ -141,9 +143,8 @@ module Y2Storage
       # @!attribute fstab_options
       #   @return [Array<String>] Options to be used in the fstab for the filesystem
 
-      def initialize
-        @subvolumes = []
-      end
+      # @!attribute subvolumes_prefix
+      #   @return [String] Name of the default Btrfs subvolume
 
       def init_from_hashes(hash)
         super
@@ -245,6 +246,7 @@ module Y2Storage
       def to_hashes
         hash = super
         hash["fstopt"] = fstab_options.join(",") if fstab_options && !fstab_options.empty?
+        hash["subvolumes"] = subvolumes_to_hashes if subvolumes
         hash
       end
 
@@ -276,6 +278,7 @@ module Y2Storage
         @filesystem = fs.type.to_sym
         @label = fs.label unless fs.label.empty?
         @mkfs_options = fs.mkfs_options unless fs.mkfs_options.empty?
+        init_subvolumes(fs)
         init_mount_options(fs)
       end
 
@@ -286,6 +289,23 @@ module Y2Storage
           @mountby = fs.mount_by.to_sym
         end
         @fstab_options = fs.fstab_options unless fs.fstab_options.empty?
+      end
+
+      # @param fs [Filesystem::BlkFilesystem] Filesystem to add subvolumes if required
+      def init_subvolumes(fs)
+        return unless fs.supports_btrfs_subvolumes?
+
+        @subvolumes_prefix = fs.subvolumes_prefix
+
+        snapshots_root = File.join(@subvolumes_prefix.to_s, ".snapshots")
+        valid_subvolumes = fs.btrfs_subvolumes.reject do |subvol|
+          subvol.path.empty? || subvol.path == @subvolumes_prefix ||
+            subvol.path.start_with?(snapshots_root)
+        end
+
+        @subvolumes = valid_subvolumes.map do |subvol|
+          SubvolSpecification.create_from_btrfs_subvolume(subvol)
+        end
       end
 
       # Whether the given existing partition should be reported as GRUB (GPT
@@ -305,6 +325,18 @@ module Y2Storage
       def enforce_bios_boot?(partition)
         return false if partition.filesystem_mountpoint.nil?
         partition.id.is?(:windows_system) && partition.filesystem_mountpoint.include?("/boot")
+      end
+
+      # Returns an array of hashes representing subvolumes
+      #
+      # AutoYaST only uses a subset of subvolumes properties: 'path' and 'copy_on_write'.
+      #
+      # @return [Array<Hash>] Array of hash-based representations of subvolumes
+      def subvolumes_to_hashes
+        subvolumes.map do |subvol|
+          subvol_path = subvol.path.sub(/\A#{@subvolumes_prefix}\//, "")
+          { "path" => subvol_path, "copy_on_write" => subvol.copy_on_write }
+        end
       end
     end
   end

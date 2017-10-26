@@ -183,6 +183,16 @@ module Y2Storage
       planned_subvol
     end
 
+    # Create a SubvolSpecification from a Btrfs subvolume
+    #
+    # @param subvolume [BtrfsSubvolume] Btrfs subvolume
+    # @return [SubvolSpecification]
+    def self.create_from_btrfs_subvolume(subvolume)
+      subvol = SubvolSpecification.new(subvolume.path, copy_on_write: !subvolume.nocow?)
+      log.info "Creating from Btrfs subvolume: #{subvol}"
+      subvol
+    end
+
     # Create a list of SubvolSpecification objects from the <subvolumes> part of
     # control.xml or an AutoYaST profile. The map may be empty if there is a
     # <subvolumes> section, but that section is empty.
