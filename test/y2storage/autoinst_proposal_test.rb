@@ -119,6 +119,19 @@ describe Y2Storage::AutoinstProposal do
       end
     end
 
+    context "when no root partition is proposed" do
+      let(:partitioning) do
+        [{ "device" => "/dev/sda", "use" => "all", "partitions" => [home] }]
+      end
+
+      it "registers an issue" do
+        proposal.propose
+
+        issue = issues_list.find { |i| i.is_a?(Y2Storage::AutoinstIssues::MissingRoot) }
+        expect(issue).to_not be_nil
+      end
+    end
+
     describe "reusing partitions" do
       let(:partitioning) do
         [{ "device" => "/dev/sda", "use" => "free", "partitions" => [root] }]
