@@ -44,7 +44,7 @@ describe Y2Storage::Dialogs::GuidedSetup::SelectFilesystem::Ng do
 
     describe "#settings" do
       it "uses NG settings" do
-        expect(subject.settings.ng_format?).to be(true)
+        expect(subject.settings.ng_format?).to be true
       end
 
       it "has 2 volumes" do
@@ -54,11 +54,11 @@ describe Y2Storage::Dialogs::GuidedSetup::SelectFilesystem::Ng do
       it "has a root_vol with Btrfs" do
         expect(subject.root_vol.mount_point).to eq "/"
         expect(subject.root_vol.fs_type).to eq Y2Storage::Filesystems::Type::BTRFS
-        expect(subject.root_vol.proposed).to be(true)
+        expect(subject.root_vol.proposed).to be true
       end
 
       it "enforces snapshots for the root_vol" do
-        expect(subject.root_vol.snapshots).to be(true)
+        expect(subject.root_vol.snapshots).to be true
         expect(subject.root_vol.snapshots_configurable).to be(false)
       end
 
@@ -138,6 +138,50 @@ describe Y2Storage::Dialogs::GuidedSetup::SelectFilesystem::Ng do
 
         expect(var_lib_docker_vol.fs_type).to eq(var_lib_docker_fs_type)
         expect(var_lib_docker_vol.proposed?).to eq(true)
+      end
+    end
+  end
+
+  context "In a standard SLE-like configuration with root, swap and separate /home" do
+    let(:control_file) { "control.SLE-like.xml" }
+
+    describe "#settings" do
+      it "uses NG settings" do
+        expect(subject.settings.ng_format?).to be true
+      end
+
+      it "has 3 volumes" do
+        expect(subject.settings.volumes.size).to be == 3
+      end
+
+      it "has a root_vol with Btrfs" do
+        expect(subject.root_vol.mount_point).to eq "/"
+        expect(subject.root_vol.fs_type).to eq Y2Storage::Filesystems::Type::BTRFS
+        expect(subject.root_vol.proposed).to be true
+      end
+
+      it "has root snapshots, but does not enforce them" do
+        expect(subject.root_vol.snapshots).to be true
+        expect(subject.root_vol.snapshots_configurable).to be true
+      end
+
+      it "has a home_vol" do
+        expect(subject.home_vol).not_to be nil
+        expect(subject.home_vol.mount_point).to eq "/home"
+      end
+
+      it "has have a swap_vol" do
+        expect(subject.home_vol).not_to be nil
+        expect(subject.swap_vol.mount_point).to eq "swap"
+        expect(subject.swap_vol.fs_type).to eq Y2Storage::Filesystems::Type::SWAP
+      end
+
+      it "does not have any other volume" do
+        expect(subject.other_volumes.empty?).to be true
+      end
+
+      it "has the expected widgets" do
+        subject.run
       end
     end
   end
