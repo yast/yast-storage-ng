@@ -36,8 +36,6 @@ defined by a role can be overridden in the next steps if necessary.&lt;/p&gt;</l
 
     <partitioning>
         <!-- taken from control.CAASP.xml and modified just for the purpose of testing the proposal settings UI -->
-      
-        <expert_partitioner_warning config:type="boolean">true</expert_partitioner_warning>
 
         <proposal>
             <lvm config:type="boolean">false</lvm>
@@ -53,12 +51,9 @@ defined by a role can be overridden in the next steps if necessary.&lt;/p&gt;</l
                 <min_size config:type="disksize">12 GiB</min_size>
                 <max_size config:type="disksize">30 GiB</max_size>
                 <weight config:type="integer">80</weight>
-                
+
                 <snapshots config:type="boolean">true</snapshots>
                 <snapshots_configurable config:type="boolean">true</snapshots_configurable>
-
-                <!-- You don't want to miss the / volume -->
-                <proposed_configurable config:type="boolean">false</proposed_configurable>
 
                 <!-- the default subvolume "@" was requested by product management -->
                 <btrfs_default_subvolume>@</btrfs_default_subvolume>
@@ -102,7 +97,7 @@ defined by a role can be overridden in the next steps if necessary.&lt;/p&gt;</l
                 <fs_type>ext4</fs_type>
                 <!-- <fs_types>ext4,xfs</fs_types> -->
                 <snapshots config:type="boolean">false</snapshots>
-                
+
                 <proposed config:type="boolean">false</proposed>
                 <proposed_configurable config:type="boolean">true</proposed_configurable>
 
@@ -132,6 +127,9 @@ defined by a role can be overridden in the next steps if necessary.&lt;/p&gt;</l
                 <min_size config:type="disksize">1 GiB</min_size>
                 <max_size config:type="disksize">16 GiB</max_size>
                 <weight config:type="integer">20</weight>
+
+                <adjust_by_ram config:type="boolean">false</adjust_by_ram>
+                <adjust_by_ram_configurable config:type="boolean">true</adjust_by_ram_configurable>
 
                 <!-- Give up in a separate partition if the min size doesn't fit -->
                 <disable_order config:type="integer">2</disable_order>

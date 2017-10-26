@@ -95,6 +95,7 @@ module Y2Storage
 
         # Should be implemented by derived classes.
         def initialize_widgets
+          log.error("ERROR: initialize_widgets not implemented by derived class")
           nil
         end
 

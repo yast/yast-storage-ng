@@ -179,8 +179,10 @@ describe Y2Storage::Dialogs::GuidedSetup::SelectFilesystem::Ng do
       it "does not have any other volume" do
         expect(subject.other_volumes.empty?).to be true
       end
+    end
 
-      it "has the expected widgets" do
+    describe "#run" do
+      it "does not go up in smoke" do
         subject.run
       end
     end

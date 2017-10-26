@@ -28,7 +28,7 @@ module Y2Storage
   module Dialogs
     class GuidedSetup
       # Dialog to select filesystems.
-      class SelectFilesystem
+      module SelectFilesystem
         # This is the more advanced version for the NG-style proposal settings
         # that support more than just a separate home volume.
         # See also SelectFilesystem::Legacy.
@@ -42,13 +42,16 @@ module Y2Storage
             @home_vol = find_vol("/home")
             @swap_vol = find_vol("swap")
             @other_volumes = find_other_volumes
+
+            ensure_root_vol_defaults
+            ensure_swap_vol_defaults
           end
 
-        protected
-
-          # Enable or disable widgets for the root volume
+          # Enable or disable widgets for the root volume.
+          # Automatically called when the user selects a value in the
+          # root_fs_type combo box.
           #
-          def root_vol_handler
+          def root_fs_type_handler
             fs_type = widget_value(:root_fs_type)
             return if fs_type.nil?
             fs_type = Filesystems::Type.find(fs_type)
@@ -58,41 +61,39 @@ module Y2Storage
             widget_update(:snapshots, enable_snapshots, attr: :Enabled)
           end
 
-          # Enable or disable widgets for the home volume
+          # next_handler and back_handler are inherited from GuidedSetup::Base
+
+          # Event handler for other events that are not handled automatically
+          # in any of the above _handler methods.
           #
-          def home_vol_handler
-            vol_handler(@home_vol)
+          def handle_event(widget_id)
+            if widget_id.to_s.start_with?("propose_")
+              fs_type_widget_id = widget_id.to_s.gsub(/^propose_/, "") + "_fs_type"
+              propose = widget_value(widget_id)
+              widget_update(fs_type_widget_id.to_sym, propose, attr: :Enabled)
+            end
           end
 
-          # Enable or disable widgets for the swap volume
+        protected
+
+          # Ensure reasonable defaults for some members of the root volume
           #
-          def swap_vol_handler
+          def ensure_root_vol_defaults
+            return if @root_vol.nil?
+            @root_vol.proposed = true # A root volume is definitely required
+            using_btrfs = @root_vol.fs_type.is?(:btrfs)
+            @root_vol.snapshots = using_btrfs if @root_vol.snapshots.nil?
+            @root_vol.snapshots_configurable = using_btrfs if @root_vol.snapshots_configurable.nil?
+          end
+
+          # Ensure reasonable defaults for some members of the swap volume, but
+          # just for the main swap volume, not just for every other one that
+          # might also be there.
+          #
+          def ensure_swap_vol_defaults
             return if @swap_vol.nil?
-            widget_update(:enlarge_swap, @swap_vol.adjust_by_ram_configurable?, attr: :Enabled)
-          end
-
-          # Enable or disable widgets for all 'other' volumes
-          #
-          def other_volumes_handler
-            @other_volumes.each { |vol| vol_handler(vol) }
-          end
-
-          # Enable or disable widgets for one volume that has a "propose" check
-          # box and possibly a filesystem selection combo box (i.e. home and
-          # any of the 'other' volumes)
-          #
-          # @param vol [VolumeSpecification]
-          #
-          def vol_handler(vol)
-            return if vol.nil?
-            return unless fs_type_user_configurable?(vol)
-            vol_name = vol.mount_point
-            propose = widget_value(propose_widget_id(vol_name))
-            combo_box_id = fs_type_widget_id(vol_name)
-            widget_update(combo_box_id, propose, attr: :Enabled)
-            # Make sure something is selected
-            current_val = widget_value(combo_box_id)
-            widget_update(combo_box_id, vol.fs_type.to_sym) if current_val.nil?
+            @swap_vol.adjust_by_ram ||= false
+            @swap_vol.adjust_by_ram_configurable ||= true
           end
 
           # Return a widget term for the dialog content, i.e. all the volumes
@@ -101,15 +102,20 @@ module Y2Storage
           # @return [WidgetTerm]
           #
           def dialog_content
-            fs = [root_vol_widget, home_vol_widget]
-            fs << other_volumes_widgets
-            fs << swap_vol_widget
-            fs.flatten!.compact!
-            HBox(
-              fs.each_with_object(VBox()) do |vbox, widget|
-                vbox << VSpacing(2) unless vbox.empty?
-                vbox << widget
-              end
+            widgets = [root_vol_widget, home_vol_widget]
+            widgets << other_volumes_widgets
+            widgets << swap_vol_widget
+            widgets.flatten!.compact!
+
+            content = widgets.each_with_object(VBox()) do |widget, vbox|
+              vbox << VSpacing(2) unless vbox.empty?
+              vbox << widget
+            end
+
+            HVCenter(
+              HSquash(
+                content
+              )
             )
           end
 
@@ -153,6 +159,7 @@ module Y2Storage
           #
           def swap_vol_widget
             return nil if @swap_vol.nil?
+            return nil unless @swap_vol.adjust_by_ram_configurable?
             Left(
               CheckBox(
                 Id(:enlarge_swap),
@@ -167,7 +174,7 @@ module Y2Storage
           # @return [Array<WidgetTerm>]
           #
           def other_volumes_widgets
-            @other_volumes.each_with_object([]) { |vol| vol_widget(vol) }
+            @other_volumes.each_with_object([]) { |vol, widgets| widgets << vol_widget(vol) }
           end
 
           # Return a widget term for a volume with an optional name.
@@ -284,10 +291,45 @@ module Y2Storage
             widget_update(:root_fs_type, @root_vol.fs_type.to_sym) unless @root_vol.nil?
             widget_update(:snapshots, @root_vol.snapshots?) unless @root_vol.nil?
             widget_update(:enlarge_swap, @swap_vol.adjust_by_ram?) unless @swap_vol.nil?
-            root_vol_handler
-            home_vol_handler
-            swap_vol_handler
-            other_volumes_handler
+            root_fs_type_handler
+            init_swap_vol_widgets
+            init_home_vol_widgets
+            init_other_volumes_widgets
+          end
+
+          # Enable or disable widgets for the swap volume
+          #
+          def init_swap_vol_widgets
+            return if @swap_vol.nil?
+            widget_update(:enlarge_swap, @swap_vol.adjust_by_ram_configurable?, attr: :Enabled)
+          end
+
+          def init_home_vol_widgets
+            init_vol_widgets(@home_vol)
+          end
+
+          # Enable or disable widgets for all 'other' volumes
+          #
+          def init_other_volumes_widgets
+            @other_volumes.each { |vol| init_vol_widgets(vol) }
+          end
+
+          # Enable or disable widgets for one volume that has a "propose" check
+          # box and possibly a filesystem selection combo box (i.e. home and
+          # any of the 'other' volumes)
+          #
+          # @param vol [VolumeSpecification]
+          #
+          def init_vol_widgets(vol)
+            return if vol.nil?
+            return unless fs_type_user_configurable?(vol)
+            vol_name = vol.mount_point
+            propose = widget_value(propose_widget_id(vol_name))
+            combo_box_id = fs_type_widget_id(vol_name)
+            widget_update(combo_box_id, propose, attr: :Enabled)
+            # Make sure something is selected
+            current_val = widget_value(combo_box_id)
+            widget_update(combo_box_id, vol.fs_type.to_sym) if current_val.nil?
           end
 
           # Update the settings: Fetch the current widget values and store them
@@ -329,7 +371,10 @@ module Y2Storage
           #
           def find_vol(mount_point)
             return nil if settings.volumes.nil?
-            settings.volumes.find { |vol| vol.mount_point == mount_point }
+            vol = settings.volumes.find { |v| v.mount_point == mount_point }
+            found = vol.nil? ? "No" : "Found"
+            log.info("#{found} volume with mount point \"#{mount_point}\" in the settings")
+            vol
           end
 
           # Find all "other" VolumeSpecifications from the proposal settings,
@@ -339,7 +384,11 @@ module Y2Storage
           #
           def find_other_volumes
             return [] if settings.volumes.nil?
-            settings.volumes.reject { |vol| [@root_vol, @home_vol, @swap_vol].include?(vol) }
+            other_vol = settings.volumes.reject { |vol| [@root_vol, @home_vol, @swap_vol].include?(vol) }
+            other_vol.each do |vol|
+              log.info("Found other volume with mount point \"#{vol.mount_point}\" in the settings")
+            end
+            other_vol
           end
         end
       end

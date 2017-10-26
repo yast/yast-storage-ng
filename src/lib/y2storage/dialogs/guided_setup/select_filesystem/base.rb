@@ -27,18 +27,16 @@ require "y2storage/filesystems/type"
 module Y2Storage
   module Dialogs
     class GuidedSetup
-      class SelectFilesystem
+      module SelectFilesystem
+        # Base class for the dialog to select filesystems.
         class Base < GuidedSetup::Base
-          # Base class for the dialog to select filesystems.
-          class SelectFilesystem::Legacy < Base
-            def initialize(*params)
-              textdomain "storage"
-              super
-            end
+          def initialize(*params)
+            textdomain "storage"
+            super
+          end
 
-            def dialog_title
-              _("Filesystem Options")
-            end
+          def dialog_title
+            _("Filesystem Options")
           end
         end
       end
