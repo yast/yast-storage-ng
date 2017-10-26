@@ -188,7 +188,10 @@ module Y2Storage
       apply_fallbacks
     end
 
+    # @param types [Array<String>, String] an array of filesystem types or a
+    #   list of comma-separated ones
     def fs_types=(types)
+      types = types.split(/\s*,\s*/) if types.is_a?(String)
       @fs_types = types.map { |t| validated_fs_type(t) }
     end
 
