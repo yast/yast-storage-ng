@@ -95,7 +95,7 @@ defined by a role can be overridden in the next steps if necessary.&lt;/p&gt;</l
                 <mount_point>/home</mount_point>
 
                 <fs_type>ext4</fs_type>
-                <fs_types>ext4, xfs, btrfs</fs_types>
+                <fs_types>ext4, xfs, btrfs</fs_types> -->
                 <snapshots config:type="boolean">false</snapshots>
 
                 <proposed config:type="boolean">false</proposed>
@@ -108,6 +108,56 @@ defined by a role can be overridden in the next steps if necessary.&lt;/p&gt;</l
 
                 <!-- Give up in a separate partition if the min size doesn't fit -->
                 <disable_order config:type="integer">1</disable_order>
+
+                <!-- If this volume is disabled, we want "/" to increase -->
+                <fallback_for_desired_size>/</fallback_for_desired_size>
+                <fallback_for_max_size>/</fallback_for_max_size>
+                <fallback_for_weight>/</fallback_for_weight>
+            </volume>
+
+            <!-- /data1 partition -->
+            <volume>
+                <mount_point>/data1</mount_point>
+
+                <fs_type>xfs</fs_type>
+                <fs_types>ext4,xfs</fs_types>
+                <snapshots config:type="boolean">false</snapshots>
+
+                <proposed config:type="boolean">true</proposed>
+                <proposed_configurable config:type="boolean">true</proposed_configurable>
+
+                <desired_size config:type="disksize">12 GiB</desired_size>
+                <min_size config:type="disksize">3 GiB</min_size>
+                <max_size config:type="disksize">100 GiB</max_size>
+                <weight config:type="integer">20</weight>
+
+                <!-- Give up in a separate partition if the min size doesn't fit -->
+                <disable_order config:type="integer">4</disable_order>
+
+                <!-- If this volume is disabled, we want "/" to increase -->
+                <fallback_for_desired_size>/</fallback_for_desired_size>
+                <fallback_for_max_size>/</fallback_for_max_size>
+                <fallback_for_weight>/</fallback_for_weight>
+            </volume>
+
+            <!-- /data2 partition -->
+            <volume>
+                <mount_point>/data2</mount_point>
+
+                <fs_type>ext4</fs_type>
+                <fs_types>ext3, ext4</fs_types> -->
+                <snapshots config:type="boolean">false</snapshots>
+
+                <proposed config:type="boolean">false</proposed>
+                <proposed_configurable config:type="boolean">true</proposed_configurable>
+
+                <desired_size config:type="disksize">12 GiB</desired_size>
+                <min_size config:type="disksize">3 GiB</min_size>
+                <max_size config:type="disksize">100 GiB</max_size>
+                <weight config:type="integer">20</weight>
+
+                <!-- Give up in a separate partition if the min size doesn't fit -->
+                <disable_order config:type="integer">3</disable_order>
 
                 <!-- If this volume is disabled, we want "/" to increase -->
                 <fallback_for_desired_size>/</fallback_for_desired_size>
