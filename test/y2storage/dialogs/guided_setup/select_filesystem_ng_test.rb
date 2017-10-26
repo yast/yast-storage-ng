@@ -187,4 +187,52 @@ describe Y2Storage::Dialogs::GuidedSetup::SelectFilesystem::Ng do
       end
     end
   end
+
+  context "In an extended SLE-like configuration with an additional /data volume" do
+    let(:control_file) { "control.SLE-with-data.xml" }
+
+    describe "#settings" do
+      it "uses NG settings" do
+        expect(subject.settings.ng_format?).to be true
+      end
+
+      it "has 4 volumes" do
+        expect(subject.settings.volumes.size).to be == 4
+      end
+
+      it "has a root_vol with Btrfs" do
+        expect(subject.root_vol.mount_point).to eq "/"
+        expect(subject.root_vol.fs_type).to eq Y2Storage::Filesystems::Type::BTRFS
+        expect(subject.root_vol.proposed).to be true
+      end
+
+      it "has root snapshots, but does not enforce them" do
+        expect(subject.root_vol.snapshots).to be true
+        expect(subject.root_vol.snapshots_configurable).to be true
+      end
+
+      it "has a home_vol" do
+        expect(subject.home_vol).not_to be nil
+        expect(subject.home_vol.mount_point).to eq "/home"
+      end
+
+      it "has have a swap_vol" do
+        expect(subject.home_vol).not_to be nil
+        expect(subject.swap_vol.mount_point).to eq "swap"
+        expect(subject.swap_vol.fs_type).to eq Y2Storage::Filesystems::Type::SWAP
+      end
+
+      it "has one other_vol /data" do
+        expect(subject.other_volumes.size).to be == 1
+        data_vol = subject.other_volumes.first
+        expect(data_vol.mount_point).to eq "/data"
+      end
+    end
+
+    describe "#run" do
+      it "does not go up in smoke" do
+        subject.run
+      end
+    end
+  end
 end
