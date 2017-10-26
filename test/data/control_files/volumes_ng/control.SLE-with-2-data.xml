@@ -95,7 +95,7 @@ defined by a role can be overridden in the next steps if necessary.&lt;/p&gt;</l
                 <mount_point>/home</mount_point>
 
                 <fs_type>ext4</fs_type>
-                <fs_types>ext4, xfs, btrfs</fs_types> -->
+                <fs_types>ext4, xfs, btrfs</fs_types>
                 <snapshots config:type="boolean">false</snapshots>
 
                 <proposed config:type="boolean">false</proposed>
