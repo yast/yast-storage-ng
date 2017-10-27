@@ -66,10 +66,10 @@ module Y2Partitioner
         end
 
         # Device being partitioned
-        # @return [Y2Storage::Disk]
+        # @return [Y2Storage::BlkDevice]
         def disk
           dg = DeviceGraphs.instance.current
-          Y2Storage::Disk.find_by_name(dg, disk_name)
+          Y2Storage::BlkDevice.find_by_name(dg, disk_name)
         end
 
         # Available slots to create the partition

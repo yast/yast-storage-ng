@@ -1,3 +1,24 @@
+# encoding: utf-8
+
+# Copyright (c) [2017] SUSE LLC
+#
+# All Rights Reserved.
+#
+# This program is free software; you can redistribute it and/or modify it
+# under the terms of version 2 of the GNU General Public License as published
+# by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+# more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, contact SUSE LLC.
+#
+# To contact SUSE LLC about this file by physical or electronic mail, you may
+# find current contact information at www.suse.com.
+
 require "cwm/tree_pager"
 require "y2partitioner/icons"
 require "y2partitioner/widgets/delete_disk_partition_button"
@@ -12,10 +33,12 @@ module Y2Partitioner
 
         # Constructor
         #
+        # @param disks [Array<Y2Storage::BlkDevice>]
         # @param pager [CWM::TreePager]
-        def initialize(pager)
+        def initialize(disks, pager)
           textdomain "storage"
 
+          @disks = disks
           @pager = pager
         end
 
@@ -51,11 +74,14 @@ module Y2Partitioner
 
       private
 
+        # @return [Array<Y2Storage::BlkDevice>]
+        attr_reader :disks
+
         # Returns all disks and their partitions
         #
         # @return [Array<Y2Storage::BlkDevice>]
         def devices
-          device_graph.disks.reduce([]) do |devices, disk|
+          disks.reduce([]) do |devices, disk|
             devices << disk
             devices.concat(disk.partitions)
           end

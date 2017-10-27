@@ -28,10 +28,12 @@ require "y2partitioner/widgets/overview"
 
 describe Y2Partitioner::Widgets::OverviewTreePager do
   before do
-    devicegraph_stub("lvm-two-vgs.yml")
+    devicegraph_stub(scenario)
   end
 
   subject { described_class.new("hostname") }
+
+  let(:scenario) { "lvm-two-vgs.yml" }
 
   include_examples "CWM::Pager"
 
@@ -56,6 +58,73 @@ describe Y2Partitioner::Widgets::OverviewTreePager do
       it "returns nil" do
         page = subject.device_page(device)
         expect(page).to be_nil
+      end
+    end
+  end
+
+  describe "#contents" do
+    let(:scenario) { "empty-dasd-and-multipath.xml" }
+
+    let(:widgets) { Yast::CWM.widgets_in_contents([subject]) }
+
+    let(:overview_tree) { widgets.find { |w| w.is_a?(Y2Partitioner::Widgets::OverviewTree) } }
+
+    let(:disks_pager) do
+      system_pager = overview_tree.items.find { |i| i.page.is_a?(Y2Partitioner::Widgets::Pages::System) }
+      system_pager.children.values.find { |i| i.page.is_a?(Y2Partitioner::Widgets::Pages::Disks) }
+    end
+
+    let(:disks_pages) { disks_pager.pages - [disks_pager.page] }
+
+    it "has a OverviewTree widget" do
+      expect(overview_tree).to_not be_nil
+    end
+
+    it "has a pager for the disk devices" do
+      expect(disks_pager).to_not be_nil
+    end
+
+    context "when there are disk, dasd or multipath devices" do
+      let(:scenario) { "empty-dasd-and-multipath.xml" }
+
+      let(:md0) { "/dev/mapper/36005076305ffc73a00000000000013b4" }
+
+      let(:md3) { "/dev/mapper/36005076305ffc73a00000000000013b5" }
+
+      let(:dasd) { "/dev/dasdb" }
+
+      let(:sde) { "/dev/sde" }
+
+      it "disks pager has a page for each dasd device" do
+        dasd_page = disks_pages.find { |p| p.device.name == dasd }
+        expect(dasd_page).to_not be_nil
+      end
+
+      it "disks pager has a page for each multipath device" do
+        md0_page = disks_pages.find { |p| p.device.name == md0 }
+        expect(md0_page).to_not be_nil
+
+        md3_page = disks_pages.find { |p| p.device.name == md3 }
+        expect(md3_page).to_not be_nil
+      end
+
+      it "disks pager has a page for each disk device" do
+        sde_page = disks_pages.find { |p| p.device.name == sde }
+        expect(sde_page).to_not be_nil
+      end
+
+      it "disks pager has not a page for disks belonging to a multipath" do
+        sda_page = disks_pages.find { |p| p.device.name == "/dev/sda" }
+        expect(sda_page).to be_nil
+      end
+    end
+
+    context "when there are volume groups" do
+      let(:scenario) { "lvm-two-vgs.yml" }
+
+      it "disk pager has not vg pages" do
+        vg_pages = disks_pages.select { |p| p.is_a?(Y2Partitioner::Widgets::Pages::LvmVg) }
+        expect(vg_pages).to be_empty
       end
     end
   end

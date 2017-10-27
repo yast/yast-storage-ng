@@ -1,3 +1,4 @@
+#!/usr/bin/env rspec
 # encoding: utf-8
 
 # Copyright (c) [2017] SUSE LLC
@@ -17,30 +18,19 @@
 # with this program; if not, contact SUSE LLC.
 #
 # To contact SUSE LLC about this file by physical or electronic mail, you may
-# find current contact information at www.suse.com.
+# find current contact information at www.suse.com
 
-require "yast"
-require "cwm"
-require "y2partitioner/widgets/blk_device_button"
-require "y2partitioner/ui_state"
+require_relative "../test_helper"
 
-Yast.import "Popup"
+require "cwm/rspec"
+require "y2partitioner/widgets/used_devices_tab"
 
-module Y2Partitioner
-  module Widgets
-    # Button for resizing a volume group or logical volume
-    class ResizeLvmButton < BlkDeviceButton
-      # @macro seeAbstractWidget
-      def label
-        # TRANSLATORS: button label to resize a volume group or logical volume
-        _("Resize...")
-      end
+describe Y2Partitioner::Widgets::UsedDevicesTab do
+  subject { described_class.new(disk, pager) }
 
-      # TODO
-      # @see BlkDeviceButton#actions
-      def actions
-        Yast::Popup.Warning("Not yet implemented")
-      end
-    end
-  end
+  let(:disk) { double("Disk") }
+
+  let(:pager) { double("Pager") }
+
+  include_examples "CWM::Tab"
 end
