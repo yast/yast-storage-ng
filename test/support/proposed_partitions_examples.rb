@@ -102,16 +102,18 @@ RSpec.shared_examples "proposed EFI partition" do
   context "when aiming for the recommended size" do
     let(:target) { :desired }
 
-    it "requires /boot/efi to be at least 500 MiB large" do
+    it "requires /boot/efi to be exactly 500 MiB large" do
       expect(efi_part.min_size).to eq 500.MiB
+      expect(efi_part.max_size).to eq 500.MiB
     end
   end
 
   context "when aiming for the minimal size" do
     let(:target) { :min }
 
-    it "requires /boot/efi to be at least 33 MiB large" do
+    it "requires /boot/efi to be between 33 MiB and 500 MiB large" do
       expect(efi_part.min_size).to eq 33.MiB
+      expect(efi_part.max_size).to eq 500.MiB
     end
   end
 end
