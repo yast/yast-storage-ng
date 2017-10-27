@@ -104,6 +104,7 @@ RSpec.shared_examples "proposed EFI partition" do
 
     it "requires /boot/efi to be at least 500 MiB large" do
       expect(efi_part.min_size).to eq 500.MiB
+      expect(efi_part.max_size).to eq 500.MiB
     end
   end
 
@@ -112,6 +113,7 @@ RSpec.shared_examples "proposed EFI partition" do
 
     it "requires /boot/efi to be at least 33 MiB large" do
       expect(efi_part.min_size).to eq 33.MiB
+      expect(efi_part.max_size).to eq 500.MiB
     end
   end
 end
