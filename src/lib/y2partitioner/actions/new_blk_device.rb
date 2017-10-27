@@ -1,5 +1,5 @@
 require "yast"
-require "y2partitioner/sequences/controllers/filesystem"
+require "y2partitioner/actions/controllers/filesystem"
 require "y2partitioner/dialogs/partition_role"
 require "y2partitioner/dialogs/format_and_mount"
 require "y2partitioner/dialogs/encrypt_password"
@@ -7,8 +7,8 @@ require "y2partitioner/dialogs/encrypt_password"
 Yast.import "Wizard"
 
 module Y2Partitioner
-  module Sequences
-    # Mixin for all those expert partitioner sequences that create a block
+  module Actions
+    # Mixin for all those expert partitioner actions that create a block
     # device that can be formatted, mounted and/or encrypted at the end of the
     # sequence.
     #
@@ -18,7 +18,7 @@ module Y2Partitioner
     # execution of those steps.
     #
     # @example
-    #   class ExampleSequence < TransactionWizard
+    #   class ExampleAction < TransactionWizard
     #     include NewBlkDevice
     #
     #     def first_step

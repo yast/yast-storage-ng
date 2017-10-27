@@ -22,9 +22,9 @@
 
 require_relative "../../test_helper"
 require "y2partitioner/device_graphs"
-require "y2partitioner/sequences/controllers/lvm_lv"
+require "y2partitioner/actions/controllers/lvm_lv"
 
-describe Y2Partitioner::Sequences::Controllers::LvmLv do
+describe Y2Partitioner::Actions::Controllers::LvmLv do
   using Y2Storage::Refinements::SizeCasts
 
   subject(:controller) { described_class.new(vg) }

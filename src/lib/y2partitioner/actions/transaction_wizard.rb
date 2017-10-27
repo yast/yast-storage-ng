@@ -5,9 +5,9 @@ require "y2partitioner/device_graphs"
 Yast.import "Wizard"
 
 module Y2Partitioner
-  module Sequences
+  module Actions
     # Base class for the sequences that modify the devicegraph with a
-    # transaction (most of the expert partitioner sequences)
+    # transaction (most of the expert partitioner actions)
     class TransactionWizard < UI::Sequence
       include Yast::Logger
 

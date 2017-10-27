@@ -30,9 +30,9 @@ module Y2Partitioner
   module Dialogs
     # Form to enter the basic information about a logical volume to be created,
     # line the name and type
-    # Part of {Sequences::AddLvmLv}.
+    # Part of {Actions::AddLvmLv}.
     class LvmLvInfo < CWM::Dialog
-      # @param controller [Sequences::Controllers::LvmLv]
+      # @param controller [Actions::Controllers::LvmLv]
       #   a LV controller, collecting data for a logical volume to be created
       def initialize(controller)
         textdomain "storage"
@@ -60,7 +60,7 @@ module Y2Partitioner
 
       # Name of the logical volume
       class NameWidget < CWM::InputField
-        # @param controller [Sequences::Controllers::LvmLv]
+        # @param controller [Actions::Controllers::LvmLv]
         #   a controller collecting data for a LV to be created
         def initialize(controller)
           super()
@@ -116,7 +116,7 @@ module Y2Partitioner
       # @note When the selected type is :thin, it also allows to select the
       #   used thin pool (see {ThinPoolSelector}).
       class TypeWidget < Widgets::ControllerRadioButtons
-        # @param controller [Sequences::Controllers::LvmLv]
+        # @param controller [Actions::Controllers::LvmLv]
         #   a controller collecting data for a LV to be created
         def initialize(controller)
           textdomain "storage"
@@ -163,7 +163,7 @@ module Y2Partitioner
       # Selector for used thin pool
       # TODO
       class ThinPoolSelector < CWM::ComboBox
-        # @param controller [Sequences::Controllers::LvmLv]
+        # @param controller [Actions::Controllers::LvmLv]
         #   a controller collecting data for a LV to be created
         def initialize(controller)
           textdomain "storage"

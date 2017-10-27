@@ -28,7 +28,7 @@ require "y2storage/subvol_specification"
 Yast.import "Mode"
 
 module Y2Partitioner
-  module Sequences
+  module Actions
     module Controllers
       # This class stores information about a filesystem being created or modified
       # and takes care of updating the devicegraph when needed, so the different

@@ -20,14 +20,14 @@
 # find current contact information at www.suse.com.
 
 require "yast"
-require "y2partitioner/sequences/transaction_wizard"
-require "y2partitioner/sequences/controllers"
+require "y2partitioner/actions/transaction_wizard"
+require "y2partitioner/actions/controllers"
 require "y2partitioner/dialogs"
 
 Yast.import "Popup"
 
 module Y2Partitioner
-  module Sequences
+  module Actions
     # BlkDevice edition
     class EditBlkDevice < TransactionWizard
       # @param blk_device [Y2Storage::BlkDevice]

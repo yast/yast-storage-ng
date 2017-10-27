@@ -98,7 +98,7 @@ describe Y2Partitioner::Widgets::Pages::Disk do
     subject { described_class.new(disk, ui_table) }
 
     before do
-      allow(Y2Partitioner::Sequences::AddPartition)
+      allow(Y2Partitioner::Actions::AddPartition)
         .to receive(:new).and_return(double(run: :next))
     end
 

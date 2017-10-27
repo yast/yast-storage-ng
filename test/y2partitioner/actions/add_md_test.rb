@@ -22,12 +22,12 @@
 
 require_relative "../test_helper"
 require "y2partitioner/device_graphs"
-require "y2partitioner/sequences/add_md"
+require "y2partitioner/actions/add_md"
 require "y2partitioner/dialogs/md"
 require "y2partitioner/dialogs/partition_role"
 require "y2partitioner/dialogs/format_and_mount"
 
-describe Y2Partitioner::Sequences::AddMd do
+describe Y2Partitioner::Actions::AddMd do
   before do
     allow(Yast::Wizard).to receive(:OpenNextBackDialog)
     allow(Yast::Wizard).to receive(:CloseDialog)

@@ -21,7 +21,7 @@
 
 require "yast"
 require "cwm"
-require "y2partitioner/sequences/add_lvm_lv"
+require "y2partitioner/actions/add_lvm_lv"
 Yast.import "Popup"
 
 module Y2Partitioner
@@ -78,7 +78,7 @@ module Y2Partitioner
           return nil
         end
 
-        res = Sequences::AddLvmLv.new(vg).run
+        res = Actions::AddLvmLv.new(vg).run
         res == :finish ? :redraw : nil
       end
 

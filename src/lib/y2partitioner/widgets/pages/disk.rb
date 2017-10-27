@@ -23,7 +23,7 @@ require "cwm/widget"
 require "cwm/tree_pager"
 require "y2partitioner/icons"
 require "y2partitioner/device_graphs"
-require "y2partitioner/sequences/add_partition"
+require "y2partitioner/actions/add_partition"
 require "y2partitioner/widgets/delete_blk_device_button"
 require "y2partitioner/widgets/edit_blk_device_button"
 require "y2partitioner/widgets/configurable_blk_devices_table"
@@ -182,7 +182,7 @@ module Y2Partitioner
           end
 
           def handle
-            res = Sequences::AddPartition.new(@disk.name).run
+            res = Actions::AddPartition.new(@disk.name).run
             res == :finish ? :redraw : nil
           end
         end

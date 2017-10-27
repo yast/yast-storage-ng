@@ -9,7 +9,7 @@ describe Y2Partitioner::Widgets::EditBlkDeviceButton do
 
   before do
     devicegraph_stub("mixed_disks_btrfs.yml")
-    allow(Y2Partitioner::Sequences::EditBlkDevice).to receive(:new).and_return sequence
+    allow(Y2Partitioner::Actions::EditBlkDevice).to receive(:new).and_return sequence
   end
 
   context "when defined for a concrete device" do
@@ -19,7 +19,7 @@ describe Y2Partitioner::Widgets::EditBlkDeviceButton do
 
     describe "#handle" do
       it "opens the edit workflow for the device" do
-        expect(Y2Partitioner::Sequences::EditBlkDevice).to receive(:new).with(device)
+        expect(Y2Partitioner::Actions::EditBlkDevice).to receive(:new).with(device)
         button.handle
       end
 
@@ -52,7 +52,7 @@ describe Y2Partitioner::Widgets::EditBlkDeviceButton do
         end
 
         it "does not open the edit workflow" do
-          expect(Y2Partitioner::Sequences::EditBlkDevice).to_not receive(:new)
+          expect(Y2Partitioner::Actions::EditBlkDevice).to_not receive(:new)
           button.handle
         end
 
@@ -68,7 +68,7 @@ describe Y2Partitioner::Widgets::EditBlkDeviceButton do
 
         describe "#handle" do
           it "opens the edit workflow for the device" do
-            expect(Y2Partitioner::Sequences::EditBlkDevice).to receive(:new).with(device)
+            expect(Y2Partitioner::Actions::EditBlkDevice).to receive(:new).with(device)
             button.handle
           end
 

@@ -20,13 +20,13 @@
 # find current contact information at www.suse.com.
 
 require "yast"
-require "y2partitioner/sequences/transaction_wizard"
-require "y2partitioner/sequences/new_blk_device"
-require "y2partitioner/sequences/controllers"
+require "y2partitioner/actions/transaction_wizard"
+require "y2partitioner/actions/new_blk_device"
+require "y2partitioner/actions/controllers"
 require "y2partitioner/dialogs"
 
 module Y2Partitioner
-  module Sequences
+  module Actions
     # formerly EpCreatePartition, DlgCreatePartition
     class AddPartition < TransactionWizard
       include NewBlkDevice

@@ -70,7 +70,7 @@ describe Y2Partitioner::Widgets::AddLvmButton do
 
   describe "#handle" do
     before do
-      allow(Y2Partitioner::Sequences::AddLvmLv).to receive(:new).and_return sequence
+      allow(Y2Partitioner::Actions::AddLvmLv).to receive(:new).and_return sequence
     end
 
     let(:sequence) { double("AddLvmLv", run: :result) }
@@ -97,7 +97,7 @@ describe Y2Partitioner::Widgets::AddLvmButton do
         let(:selected_option) { :add_logical_volume }
 
         it "opens the workflow for adding a new lv to the vg" do
-          expect(Y2Partitioner::Sequences::AddLvmLv).to receive(:new).with(vg)
+          expect(Y2Partitioner::Actions::AddLvmLv).to receive(:new).with(vg)
           button.handle(event)
         end
 
@@ -127,7 +127,7 @@ describe Y2Partitioner::Widgets::AddLvmButton do
         let(:selected_option) { :add_logical_volume }
 
         it "opens the workflow for adding a new lv to its vg" do
-          expect(Y2Partitioner::Sequences::AddLvmLv).to receive(:new).with(vg)
+          expect(Y2Partitioner::Actions::AddLvmLv).to receive(:new).with(vg)
           button.handle(event)
         end
 

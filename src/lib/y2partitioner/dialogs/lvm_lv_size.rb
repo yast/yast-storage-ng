@@ -29,9 +29,9 @@ Yast.import "Popup"
 module Y2Partitioner
   module Dialogs
     # Determine the size of a logical volume to be created and its number of stripes.
-    # Part of {Sequences::AddLvmLv}.
+    # Part of {Actions::AddLvmLv}.
     class LvmLvSize < CWM::Dialog
-      # @param controller [Sequences::Controllers::LvmLv]
+      # @param controller [Actions::Controllers::LvmLv]
       #   a LV controller, collecting data for a logical volume to be created
       def initialize(controller)
         textdomain "storage"
@@ -57,7 +57,7 @@ module Y2Partitioner
       # Choose a size for a new logical volume either choosing the maximum or
       # entering a custom size
       class SizeWidget < Widgets::ControllerRadioButtons
-        # @param controller [Sequences::Controllers::LvmLv]
+        # @param controller [Actions::Controllers::LvmLv]
         #   a controller collecting data for a LV to be created
         def initialize(controller)
           textdomain "storage"
@@ -191,7 +191,7 @@ module Y2Partitioner
 
       # Choose stripes number and size for a new logical volume
       class StripesWidget < CWM::CustomWidget
-        # @param controller [Sequences::Controllers::LvmLv]
+        # @param controller [Actions::Controllers::LvmLv]
         #   a controller collecting data for a LV to be created
         def initialize(controller)
           textdomain "storage"
@@ -227,7 +227,7 @@ module Y2Partitioner
 
       # Selector for the stripes number
       class StripesNumberSelector < CWM::ComboBox
-        # @param controller [Sequences::Controllers::LvmLv]
+        # @param controller [Actions::Controllers::LvmLv]
         #   a controller collecting data for a LV to be created
         def initialize(controller)
           textdomain "storage"
@@ -250,7 +250,7 @@ module Y2Partitioner
 
       # Selector for the stripes size
       class StripesSizeSelector < CWM::ComboBox
-        # @param controller [Sequences::Controllers::LvmLv]
+        # @param controller [Actions::Controllers::LvmLv]
         #   a controller collecting data for a LV to be created
         def initialize(controller)
           textdomain "storage"

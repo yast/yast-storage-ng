@@ -21,7 +21,7 @@
 
 require "yast"
 require "cwm"
-require "y2partitioner/sequences/edit_blk_device"
+require "y2partitioner/actions/edit_blk_device"
 require "y2partitioner/widgets/blk_device_button"
 require "y2partitioner/ui_state"
 
@@ -61,7 +61,7 @@ module Y2Partitioner
       # Opens workflow to edit the lv
       def edit_lv
         UIState.instance.select_row(device.sid)
-        Sequences::EditBlkDevice.new(device).run
+        Actions::EditBlkDevice.new(device).run
       end
     end
   end

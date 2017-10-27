@@ -8,7 +8,7 @@ module Y2Partitioner
     # CWM Dialog to set specific fstab options for the blk_device being added
     # or edited.
     class FstabOptions < Popup
-      # @param controller [Sequences::FilesystemController]
+      # @param controller [Actions::Controllers::Filesystem]
       def initialize(controller)
         textdomain "storage"
 

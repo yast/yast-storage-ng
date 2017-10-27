@@ -22,9 +22,9 @@
 
 require_relative "../../test_helper"
 require "y2partitioner/device_graphs"
-require "y2partitioner/sequences/controllers/md"
+require "y2partitioner/actions/controllers/md"
 
-describe Y2Partitioner::Sequences::Controllers::Md do
+describe Y2Partitioner::Actions::Controllers::Md do
   using Y2Storage::Refinements::SizeCasts
 
   before do

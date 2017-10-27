@@ -11,10 +11,10 @@ module Y2Partitioner
   module Dialogs
     # Determine the size of a partition to be created, in the form
     # of a {Y2Storage::Region}.
-    # Part of {Sequences::AddPartition}.
+    # Part of {Actions::AddPartition}.
     # Formerly MiniWorkflowStepPartitionSize
     class PartitionSize < CWM::Dialog
-      # @param controller [Sequences::PartitionController]
+      # @param controller [Actions::Controllers::Partition]
       #   a partition controller, collecting data for a partition to be created
       def initialize(controller)
         textdomain "storage"
@@ -45,7 +45,7 @@ module Y2Partitioner
       # Choose a size (region, really) for a new partition
       # from several options: use maximum, enter size, enter start+end
       class SizeWidget < Widgets::ControllerRadioButtons
-        # @param controller [Sequences::PartitionController]
+        # @param controller [Actions::Controllers::Partition]
         #   a controller collecting data for a partition to be created
         # @param regions [Array<Y2Storage::Region>]
         #   regions available to create a partition in
@@ -115,7 +115,7 @@ module Y2Partitioner
         # @return [Y2Storage::DiskSize]
         attr_reader :min_size, :max_size
 
-        # @param controller [Sequences::PartitionController]
+        # @param controller [Actions::Controllers::Partition]
         #   a controller collecting data for a partition to be created
         # @param regions [Array<Y2Storage::Region>]
         #   regions available to create a partition in
@@ -207,7 +207,7 @@ module Y2Partitioner
       class CustomRegion < CWM::CustomWidget
         attr_reader :region
 
-        # @param controller [Sequences::PartitionController]
+        # @param controller [Actions::Controllers::Partition]
         #   a controller collecting data for a partition to be created
         # @param regions [Array<Y2Storage::Region>]
         #   regions available to create a partition in

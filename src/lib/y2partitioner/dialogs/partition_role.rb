@@ -11,10 +11,10 @@ module Y2Partitioner
     # Determine the role of the new partition or LVM logical volume to be
     # created which will allow to propose some default format and mount options
     # for it.
-    # Part of {Sequences::AddPartition}.
+    # Part of {Actions::AddPartition}.
     # Formerly MiniWorkflowStepRole
     class PartitionRole < CWM::Dialog
-      # @param controller [Sequences::FilesystemController]
+      # @param controller [Actions::Controllers::Filesystem]
       def initialize(controller)
         textdomain "storage"
 
@@ -37,7 +37,7 @@ module Y2Partitioner
 
       # Choose the role of the new partition
       class RoleChoice < CWM::RadioButtons
-        # @param controller [Sequences::Filesystemcontroller]
+        # @param controller [Actions::Controllers::Filesystem]
         def initialize(controller)
           textdomain "storage"
 

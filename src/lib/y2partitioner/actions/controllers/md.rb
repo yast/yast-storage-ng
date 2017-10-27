@@ -25,7 +25,7 @@ require "y2partitioner/device_graphs"
 require "y2partitioner/ui_state"
 
 module Y2Partitioner
-  module Sequences
+  module Actions
     module Controllers
       # This class stores information about an MD RAID being created and takes
       # care of updating the devicegraph when needed, so the different dialogs

@@ -42,7 +42,7 @@ describe Y2Partitioner::Widgets::EditLvmButton do
 
   describe "#handle" do
     before do
-      allow(Y2Partitioner::Sequences::EditBlkDevice).to receive(:new).and_return sequence
+      allow(Y2Partitioner::Actions::EditBlkDevice).to receive(:new).and_return sequence
     end
 
     let(:sequence) { double("EditBlkDevice", run: :result) }
@@ -76,7 +76,7 @@ describe Y2Partitioner::Widgets::EditLvmButton do
       let(:device) { lv }
 
       it "opens the workflow for editing the lv" do
-        expect(Y2Partitioner::Sequences::EditBlkDevice).to receive(:new).with(lv)
+        expect(Y2Partitioner::Actions::EditBlkDevice).to receive(:new).with(lv)
         button.handle
       end
 

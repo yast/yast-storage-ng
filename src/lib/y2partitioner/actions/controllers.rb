@@ -20,10 +20,10 @@
 # find current contact information at www.suse.com.
 
 module Y2Partitioner
-  # Namespace for all the UI::Sequence objects of the expert partitioner
-  module Sequences
+  # Namespace for all the Action objects of the expert partitioner
+  module Actions
     # The different classes on this namespace store information about a device
-    # being created or modified in a sequence and take care of updating the
+    # being created or modified in an action and take care of updating the
     # devicegraph when needed according to that information. That glues
     # the different dialogs across the process, all together and to the
     # devicegraph.
@@ -32,7 +32,7 @@ module Y2Partitioner
   end
 end
 
-require "y2partitioner/sequences/controllers/filesystem"
-require "y2partitioner/sequences/controllers/md"
-require "y2partitioner/sequences/controllers/partition"
-require "y2partitioner/sequences/controllers/lvm_lv"
+require "y2partitioner/actions/controllers/filesystem"
+require "y2partitioner/actions/controllers/md"
+require "y2partitioner/actions/controllers/partition"
+require "y2partitioner/actions/controllers/lvm_lv"

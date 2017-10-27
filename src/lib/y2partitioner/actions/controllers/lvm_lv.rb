@@ -25,7 +25,7 @@ require "y2partitioner/device_graphs"
 require "y2partitioner/ui_state"
 
 module Y2Partitioner
-  module Sequences
+  module Actions
     module Controllers
       # This class stores information about a future LVM logical volume and
       # takes care of creating it on the devicegraph when needed.

@@ -20,7 +20,7 @@ module Y2Partitioner
       using Refinements::FilesystemType
 
       # Constructor
-      # @param controller [Sequences::FilesystemController]
+      # @param controller [Actions::Controllers::Filesystem]
       # @param parent_widget [#refresh_others] container widget that must be
       #   notified after every relevant update to the controller information
       def initialize(controller, parent_widget)
@@ -155,7 +155,7 @@ module Y2Partitioner
     class MountOptions < CWM::CustomWidget
       using Refinements::FilesystemType
 
-      # @param controller [Sequences::FilesystemController]
+      # @param controller [Actions::Controllers::Filesystem]
       # @param parent_widget [#refresh_others] container widget that must be
       #   notified after every relevant update to the controller information
       def initialize(controller, parent_widget)
@@ -286,7 +286,7 @@ module Y2Partitioner
       # Useful for other widgets with handle_all_events
       alias_method :event_id, :widget_id
 
-      # @param controller [Sequences::FilesystemController]
+      # @param controller [Actions::Controllers::Filesystem]
       def initialize(controller)
         textdomain "storage"
 
@@ -363,7 +363,7 @@ module Y2Partitioner
     # Push Button that launches a dialog to set speficic options for the
     # selected filesystem
     class FormatOptionsButton < CWM::PushButton
-      # @param controller [Sequences::FilesystemController]
+      # @param controller [Actions::Controllers::Filesystem]
       def initialize(controller)
         @controller = controller
       end
@@ -387,7 +387,7 @@ module Y2Partitioner
 
     # Btrfs snapshots selector
     class Snapshots < CWM::CheckBox
-      # @param controller [Sequences::FilesystemController]
+      # @param controller [Actions::Controllers::Filesystem]
       def initialize(controller)
         @controller = controller
       end
@@ -418,7 +418,7 @@ module Y2Partitioner
       SUGGESTED_MOUNT_POINTS = %w(/ /home /var /opt /srv /tmp).freeze
 
       # Constructor
-      # @param controller [Sequences::FilesystemController]
+      # @param controller [Actions::Controllers::Filesystem]
       def initialize(controller)
         @controller = controller
       end
@@ -583,7 +583,7 @@ module Y2Partitioner
 
       # Button to manage btrfs subvolumes
       class Button < CWM::PushButton
-        # @param controller [Sequences::FilesystemController]
+        # @param controller [Actions::Controllers::Filesystem]
         def initialize(controller)
           @controller = controller
         end
@@ -603,7 +603,7 @@ module Y2Partitioner
     class EncryptBlkDevice < CWM::CheckBox
       using Refinements::FilesystemType
 
-      # @param controller [Sequences::FilesystemController]
+      # @param controller [Actions::Controllers::Filesystem]
       def initialize(controller)
         @controller = controller
       end
@@ -678,7 +678,7 @@ module Y2Partitioner
     # Partition identifier selector or empty widget if changing the partition id
     # is not possible
     class PartitionId < CWM::CustomWidget
-      # @param controller [Sequences::FilesystemController]
+      # @param controller [Actions::Controllers::Filesystem]
       def initialize(controller)
         @controller = controller
         @selector = PartitionIdComboBox.new(controller) if controller.partition_id_supported?
@@ -722,7 +722,7 @@ module Y2Partitioner
 
     # Partition identifier selector
     class PartitionIdComboBox < CWM::ComboBox
-      # @param controller [Sequences::FilesystemController]
+      # @param controller [Actions::Controllers::Filesystem]
       def initialize(controller)
         @controller = controller
       end

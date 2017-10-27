@@ -25,7 +25,7 @@ require_relative "../test_helper"
 require "cwm/rspec"
 require "y2storage"
 require "y2partitioner/dialogs"
-require "y2partitioner/sequences/controllers"
+require "y2partitioner/actions/controllers"
 
 describe Y2Partitioner::Dialogs::LvmLvInfo do
   before do
@@ -34,7 +34,7 @@ describe Y2Partitioner::Dialogs::LvmLvInfo do
 
   subject { described_class.new(controller) }
 
-  let(:controller) { Y2Partitioner::Sequences::Controllers::LvmLv.new(vg) }
+  let(:controller) { Y2Partitioner::Actions::Controllers::LvmLv.new(vg) }
 
   let(:vg) { Y2Storage::LvmVg.find_by_vg_name(current_graph, "vg0") }
 

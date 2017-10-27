@@ -1,11 +1,11 @@
 require "yast"
-require "y2partitioner/sequences/transaction_wizard"
-require "y2partitioner/sequences/new_blk_device"
-require "y2partitioner/sequences/controllers"
+require "y2partitioner/actions/transaction_wizard"
+require "y2partitioner/actions/new_blk_device"
+require "y2partitioner/actions/controllers"
 require "y2partitioner/dialogs"
 
 module Y2Partitioner
-  module Sequences
+  module Actions
     # Wizard to add a new LVM logical volume
     class AddLvmLv < TransactionWizard
       include NewBlkDevice

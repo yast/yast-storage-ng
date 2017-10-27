@@ -22,13 +22,13 @@
 
 require_relative "../test_helper"
 require "y2partitioner/device_graphs"
-require "y2partitioner/sequences/add_lvm_lv"
+require "y2partitioner/actions/add_lvm_lv"
 require "y2partitioner/dialogs/lvm_lv_info"
 require "y2partitioner/dialogs/lvm_lv_size"
 require "y2partitioner/dialogs/partition_role"
 require "y2partitioner/dialogs/format_and_mount"
 
-describe Y2Partitioner::Sequences::AddLvmLv do
+describe Y2Partitioner::Actions::AddLvmLv do
   using Y2Storage::Refinements::SizeCasts
 
   # Defined as method instead of let clause because using let, it points to the
@@ -58,7 +58,7 @@ describe Y2Partitioner::Sequences::AddLvmLv do
       controller.size = 1.GiB
     end
 
-    let(:controller) { Y2Partitioner::Sequences::Controllers::LvmLv.new(vg) }
+    let(:controller) { Y2Partitioner::Actions::Controllers::LvmLv.new(vg) }
 
     context "if there is no free space in the vg" do
       before do

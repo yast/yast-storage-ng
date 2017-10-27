@@ -40,13 +40,13 @@ describe Y2Partitioner::Widgets::AddLvmLvButton do
 
   describe "#handle" do
     before do
-      allow(Y2Partitioner::Sequences::AddLvmLv).to receive(:new).and_return sequence
+      allow(Y2Partitioner::Actions::AddLvmLv).to receive(:new).and_return sequence
     end
 
     let(:sequence) { double("AddLvmLv", run: :result) }
 
     it "opens the workflow for adding a new lv to the vg" do
-      expect(Y2Partitioner::Sequences::AddLvmLv).to receive(:new).with(vg)
+      expect(Y2Partitioner::Actions::AddLvmLv).to receive(:new).with(vg)
       button.handle
     end
 

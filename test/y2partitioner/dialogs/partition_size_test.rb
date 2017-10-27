@@ -2,13 +2,13 @@ require_relative "../test_helper"
 
 require "cwm/rspec"
 require "y2partitioner/dialogs/partition_size"
-require "y2partitioner/sequences/add_partition"
+require "y2partitioner/actions/add_partition"
 
 describe "Partition Size widgets" do
   using Y2Storage::Refinements::SizeCasts
 
   let(:controller) do
-    pt = Y2Partitioner::Sequences::Controllers::Partition.new("/dev/sda")
+    pt = Y2Partitioner::Actions::Controllers::Partition.new("/dev/sda")
     pt.region = region
     pt.custom_size = Y2Storage::DiskSize.MiB(1)
     pt

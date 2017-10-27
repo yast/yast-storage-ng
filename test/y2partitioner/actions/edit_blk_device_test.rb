@@ -21,16 +21,16 @@
 # find current contact information at www.suse.com.
 
 require_relative "../test_helper"
-require "y2partitioner/sequences/controllers"
-require "y2partitioner/sequences/edit_blk_device"
+require "y2partitioner/actions/controllers"
+require "y2partitioner/actions/edit_blk_device"
 
-describe Y2Partitioner::Sequences::EditBlkDevice do
+describe Y2Partitioner::Actions::EditBlkDevice do
   describe "#initialize" do
     before { devicegraph_stub(scenario) }
 
     let(:scenario) { "complex-lvm-encrypt.yml" }
     let(:device) { Y2Storage::BlkDevice.find_by_name(fake_devicegraph, dev_name) }
-    let(:controller_class) { Y2Partitioner::Sequences::Controllers::Filesystem }
+    let(:controller_class) { Y2Partitioner::Actions::Controllers::Filesystem }
 
     context "if working on a partition" do
       let(:dev_name) { "/dev/sda1" }

@@ -21,7 +21,7 @@
 
 require "yast"
 require "cwm"
-require "y2partitioner/sequences/edit_blk_device"
+require "y2partitioner/actions/edit_blk_device"
 require "y2partitioner/widgets/blk_device_button"
 require "y2partitioner/ui_state"
 
@@ -40,7 +40,7 @@ module Y2Partitioner
       # @see BlkDeviceButton#actions
       def actions
         UIState.instance.select_row(device.sid)
-        res = Sequences::EditBlkDevice.new(device).run
+        res = Actions::EditBlkDevice.new(device).run
         res == :finish ? :redraw : nil
       end
     end

@@ -21,9 +21,9 @@
 # find current contact information at www.suse.com.
 
 require_relative "../../test_helper"
-require "y2partitioner/sequences/controllers/partition"
+require "y2partitioner/actions/controllers/partition"
 
-describe Y2Partitioner::Sequences::Controllers::Partition do
+describe Y2Partitioner::Actions::Controllers::Partition do
   before do
     devicegraph_stub("mixed_disks_btrfs.yml")
   end

@@ -21,7 +21,7 @@
 
 require "yast"
 require "cwm"
-require "y2partitioner/sequences/add_lvm_lv"
+require "y2partitioner/actions/add_lvm_lv"
 
 module Y2Partitioner
   module Widgets
@@ -42,7 +42,7 @@ module Y2Partitioner
 
       # @macro seeAbstractWidget
       def handle
-        res = Sequences::AddLvmLv.new(@vg).run
+        res = Actions::AddLvmLv.new(@vg).run
         res == :finish ? :redraw : nil
       end
     end

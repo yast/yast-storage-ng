@@ -31,7 +31,7 @@ describe Y2Partitioner::Widgets::Pages::MdRaids::AddButton do
 
   before do
     devicegraph_stub("one-empty-disk.yml")
-    allow(Y2Partitioner::Sequences::AddMd).to receive(:new).and_return sequence
+    allow(Y2Partitioner::Actions::AddMd).to receive(:new).and_return sequence
     allow(sequence).to receive(:run)
   end
 
