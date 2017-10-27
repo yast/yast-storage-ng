@@ -143,8 +143,7 @@ module Y2Partitioner
       #
       # @return [Array<Y2Storage::BlkDevice>]
       def disk_devices
-        disk_types = [Y2Storage::Disk, Y2Storage::Dasd, Y2Storage::Multipath]
-        device_graph.disk_devices.select { |d| disk_types.include?(d.class) }
+        device_graph.disk_devices.select { |d| d.is?(:disk, :dasd, :multipath) }
       end
 
       def partition_items(partition)

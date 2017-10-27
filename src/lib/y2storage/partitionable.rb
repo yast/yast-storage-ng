@@ -260,9 +260,5 @@ module Y2Storage
     def partitions_with_id(*ids)
       partitions.reject { |p| p.type.is?(:extended) }.select { |p| p.id.is?(*ids) }
     end
-
-    def types_for_is
-      super << :partitionable
-    end
   end
 end

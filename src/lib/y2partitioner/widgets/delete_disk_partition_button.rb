@@ -81,7 +81,8 @@ module Y2Partitioner
       # @return [Boolean] {true} if it is possible to delete the device;
       #   {false} otherwise.
       def delete_validations
-        presence_validation && not_empty_partitions_validation
+        return false unless validate_presence
+        device.is?(:partition) ? true : validate_partition_table
       end
 
       # Checks whether there is a device to delete
@@ -89,21 +90,19 @@ module Y2Partitioner
       # @note An error popup is shown when there is no device.
       #
       # @return [Boolean]
-      def presence_validation
+      def validate_presence
         return true unless device.nil?
 
         Yast::Popup.Error(_("No device selected"))
         false
       end
 
-      # Checks whether a partitionable has any partition for deleting
+      # Checks whether a disk device has any partition for deleting
       #
       # @note An error popup is shown when there is no partition.
       #
       # @return [Boolean]
-      def not_empty_partitions_validation
-        return true unless device.is?(:partitionable)
-
+      def validate_partition_table
         partition_table = device.partition_table
         if partition_table.nil? || partition_table.partitions.empty?
           Yast::Popup.Error(_("There are no partitions to delete on this disk"))
