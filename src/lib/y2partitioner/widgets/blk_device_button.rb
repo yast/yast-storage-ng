@@ -44,11 +44,7 @@ module Y2Partitioner
 
       # @macro seeAbstractWidget
       def handle
-        if device.nil?
-          Yast::Popup.Error(_("No device selected"))
-          return nil
-        end
-
+        return nil unless validate_presence
         actions
       end
 
@@ -60,7 +56,7 @@ module Y2Partitioner
       # @return [Y2Partitioner::Widgets::ConfigurableBlkDevicesTable]
       attr_reader :table
 
-      # Device to modify
+      # Device on which to act
       def device
         @device || table.selected_device
       end
@@ -68,6 +64,18 @@ module Y2Partitioner
       # Actions to perform when the button is clicked
       # @return [Symbol, nil] result
       abstract_method :actions
+
+      # Checks whether there is a device on which to act
+      #
+      # @note An error popup is shown when there is no device.
+      #
+      # @return [Boolean]
+      def validate_presence
+        return true unless device.nil?
+
+        Yast::Popup.Error(_("No device selected"))
+        false
+      end
     end
   end
 end

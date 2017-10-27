@@ -20,92 +20,62 @@
 # find current contact information at www.suse.com.
 
 require "yast"
-require "cwm"
+require "yast/i18n"
 require "y2partitioner/ui_state"
+require "y2partitioner/device_graphs"
 
 Yast.import "Popup"
 Yast.import "HTML"
 
 module Y2Partitioner
-  module Widgets
-    # Button for deleting a disk device or partition
-    class DeleteDiskPartitionButton < CWM::PushButton
+  module Actions
+    # Action for deleting a block device
+    class DeleteBlkDevice
+      include Yast::Logger
+      include Yast::I18n
+      include Yast::UIShortcuts
+
       # Constructor
       # @param device [Y2Storage::BlkDevice]
-      # @param table [Y2Partitioner::Widgets::BlkDevicesTable]
-      # @param device_graph [Y2Storage::Devicegraph]
-      def initialize(device: nil, table: nil, device_graph: nil)
+      def initialize(device)
         textdomain "storage"
 
-        unless device || (table && device_graph)
-          raise ArgumentError, "At least device or combination of table and device_graph have to be set"
-        end
-
         @device = device
-        @table = table
-        @device_graph = device_graph
-      end
-
-      # @macro seeAbstractWidget
-      def label
-        # TRANSLATORS: button label to delete a disk device or partition
-        _("Delete...")
       end
 
       # Checks whether delete action can be performed and if so,
       # a confirmation popup is shown.
       #
       # @note Delete action is carried out only if user confirms.
-      def handle
-        return nil unless delete_validations
-        return nil unless confirm(device)
-
+      #
+      # @return [Symbol, nil]
+      def run
+        return :back unless validate && confirm(device)
         delete_device(device)
-        :redraw
+        :finish
       end
 
     private
 
-      # Current device to delete
-      #
-      # @return [Y2Storage::BlkDevice]
-      def device
-        @device || @table.selected_device
+      attr_reader :device
+
+      # Current devicegraph
+      # @return [Y2Storage::Devicegraph]
+      def device_graph
+        DeviceGraphs.instance.current
       end
 
-      # Checks whether the device can be deleted
-      #
-      # @note Some popups could be shown when it is not possible
-      #   to delete the device.
-      #
-      # @return [Boolean] {true} if it is possible to delete the device;
-      #   {false} otherwise.
-      def delete_validations
-        return false unless validate_presence
-        device.is?(:partition) ? true : validate_partition_table
-      end
-
-      # Checks whether there is a device to delete
-      #
-      # @note An error popup is shown when there is no device.
-      #
-      # @return [Boolean]
-      def validate_presence
-        return true unless device.nil?
-
-        Yast::Popup.Error(_("No device selected"))
-        false
-      end
-
-      # Checks whether a disk device has any partition for deleting
+      # Checks whether there is any partition for deleting
       #
       # @note An error popup is shown when there is no partition.
       #
       # @return [Boolean]
-      def validate_partition_table
+      def validate
+        return true if device.is?(:partition)
+
         partition_table = device.partition_table
         if partition_table.nil? || partition_table.partitions.empty?
-          Yast::Popup.Error(_("There are no partitions to delete on this disk"))
+          Yast::Popup.Error(_("There are no partitions to delete on this device"))
           return false
         end
 
@@ -114,7 +84,7 @@ module Y2Partitioner
 
       # Deletes the indicated device
       #
-      # @note When the device has a partition table, all its partitions are deleted.
+      # @note When the device is a disk device, all its partitions are deleted.
       #
       # @note Shadowing for BtrFS subvolumes is always refreshed.
       # @see Y2Storage::Filesystems::Btrfs.refresh_subvolumes_shadowing
@@ -122,18 +92,28 @@ module Y2Partitioner
       # @param device [Y2Storage::BlkDevice]
       def delete_device(device)
         if device.is?(:partition)
-          log.info "deleting partition #{device}"
-          partitionable = device.partitionable
-          partitionable.partition_table.delete_partition(device)
-          UIState.instance.select_row(partitionable)
+          delete_partition
         else
-          log.info "deleting partitions for #{device}"
-          device.partition_table.delete_all_partitions unless device.partition_table.nil?
-          UIState.instance.select_row(device)
+          delete_disk_device
         end
 
         device_graph = DeviceGraphs.instance.current
         Y2Storage::Filesystems::Btrfs.refresh_subvolumes_shadowing(device_graph)
+      end
+
+      # Deletes a partition
+      def delete_partition
+        log.info "deleting partition #{device}"
+        disk_device = device.partitionable
+        disk_device.partition_table.delete_partition(device)
+        UIState.instance.select_row(disk_device)
+      end
+
+      # Deletes all partitions of a disk device
+      def delete_disk_device
+        log.info "deleting partitions for #{device}"
+        device.partition_table.delete_all_partitions unless device.partition_table.nil?
+        UIState.instance.select_row(device)
       end
 
       def confirm(device)
