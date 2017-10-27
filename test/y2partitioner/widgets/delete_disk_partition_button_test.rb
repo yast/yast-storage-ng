@@ -115,9 +115,27 @@ describe Y2Partitioner::Widgets::DeleteDiskPartitionButton do
       context "when the confirm message is accepted" do
         let(:accept) { true }
 
-        it "deletes the device" do
-          subject.handle
-          expect(Y2Storage::BlkDevice.find_by_name(device_graph, device_name)).to be_nil
+        context "and the device is a partition" do
+          let(:device_name) { "/dev/sda2" }
+
+          it "deletes the partition" do
+            subject.handle
+            expect(Y2Storage::BlkDevice.find_by_name(device_graph, device_name)).to be_nil
+          end
+        end
+
+        context "and the device is not a partition" do
+          let(:device_name) { "/dev/sda" }
+
+          before do
+            allow(Yast::UI).to receive(:UserInput).and_return(:yes)
+          end
+
+          it "deletes all its partitions" do
+            expect(device.partitions).to_not be_empty
+            subject.handle
+            expect(device.partitions).to be_empty
+          end
         end
 
         it "refresh btrfs subvolumes shadowing" do

@@ -114,22 +114,22 @@ module Y2Partitioner
 
       # Deletes the indicated device
       #
-      # @note When the device is a partitionable, all its partitions are deleted.
+      # @note When the device has a partition table, all its partitions are deleted.
       #
       # @note Shadowing for BtrFS subvolumes is always refreshed.
       # @see Y2Storage::Filesystems::Btrfs.refresh_subvolumes_shadowing
       #
       # @param device [Y2Storage::BlkDevice]
       def delete_device(device)
-        if device.is?(:partitionable)
-          log.info "deleting partitions for #{device}"
-          device.partition_table.delete_all_partitions unless device.partition_table.nil?
-          UIState.instance.select_row(device)
-        else
+        if device.is?(:partition)
           log.info "deleting partition #{device}"
           partitionable = device.partitionable
           partitionable.partition_table.delete_partition(device)
           UIState.instance.select_row(partitionable)
+        else
+          log.info "deleting partitions for #{device}"
+          device.partition_table.delete_all_partitions unless device.partition_table.nil?
+          UIState.instance.select_row(device)
         end
 
         device_graph = DeviceGraphs.instance.current
