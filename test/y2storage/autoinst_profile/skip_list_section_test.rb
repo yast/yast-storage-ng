@@ -20,11 +20,13 @@
 # find current contact information at www.suse.com.
 
 require_relative "../spec_helper"
-
+require_relative "#{TEST_PATH}/support/autoinst_profile_examples"
 require "y2storage"
 
 describe Y2Storage::AutoinstProfile::SkipListSection do
   subject(:list) { described_class.new([rule1, rule2]) }
+
+  include_examples "autoinst section"
 
   let(:rule1) { instance_double(Y2Storage::AutoinstProfile::SkipRule, matches?: true, valid?: true) }
   let(:rule2) { instance_double(Y2Storage::AutoinstProfile::SkipRule, matches?: true, valid?: true) }

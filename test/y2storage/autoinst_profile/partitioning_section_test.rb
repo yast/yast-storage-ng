@@ -24,6 +24,7 @@ require_relative "../spec_helper"
 require "y2storage"
 
 describe Y2Storage::AutoinstProfile::PartitioningSection do
+  subject(:section) { described_class.new }
   let(:sda) { { "device" => "/dev/sda", "use" => "linux" } }
   let(:sdb) { { "device" => "/dev/sdb", "use" => "all" } }
   let(:disk_section) { instance_double(Y2Storage::AutoinstProfile::DriveSection) }
@@ -33,9 +34,9 @@ describe Y2Storage::AutoinstProfile::PartitioningSection do
   describe ".new_from_hashes" do
     before do
       allow(Y2Storage::AutoinstProfile::DriveSection).to receive(:new_from_hashes)
-        .with(sda).and_return(disk_section)
+        .with(sda, Y2Storage::AutoinstProfile::PartitioningSection).and_return(disk_section)
       allow(Y2Storage::AutoinstProfile::DriveSection).to receive(:new_from_hashes)
-        .with(sdb).and_return(dasd_section)
+        .with(sdb, Y2Storage::AutoinstProfile::PartitioningSection).and_return(dasd_section)
     end
 
     it "returns a new PartitioningSection object" do
@@ -51,7 +52,7 @@ describe Y2Storage::AutoinstProfile::PartitioningSection do
     # just in case...
     it "ignores hashes that couldn't be converted into DriveSection objects" do
       allow(Y2Storage::AutoinstProfile::DriveSection).to receive(:new_from_hashes)
-        .with(sda).and_return(nil)
+        .with(sda, Y2Storage::AutoinstProfile::PartitioningSection).and_return(nil)
 
       section = described_class.new_from_hashes(partitioning)
       expect(section.drives).to eq([dasd_section])
@@ -145,6 +146,18 @@ describe Y2Storage::AutoinstProfile::PartitioningSection do
       it "does not include drives of other types with device='/dev/md'" do
         expect(section.md_drives).to_not include wrongdrv1
       end
+    end
+  end
+
+  describe "#section_name" do
+    it "returns 'partitioning'" do
+      expect(section.section_name).to eq("partitioning")
+    end
+  end
+
+  describe "#parent" do
+    it "returns nil" do
+      expect(section.parent).to be_nil
     end
   end
 end

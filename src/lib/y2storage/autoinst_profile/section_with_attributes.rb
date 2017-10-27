@@ -47,12 +47,13 @@ module Y2Storage
         # contain the relevant information. Attributes are set to nil for
         # missing keys and for blank values.
         #
-        # @param hash [Hash] content of the corresponding section of the profile.
+        # @param hash   [Hash]   content of the corresponding section of the profile.
         #   Each element of the hash corresponds to one of the attributes
         #   defined in the section.
+        # @param parent [Object] parent section
         # @return [SectionWithAttributes]
-        def new_from_hashes(hash)
-          result = new
+        def new_from_hashes(hash, parent = nil)
+          result = new(parent)
           result.init_from_hashes(hash)
           result
         end
@@ -66,6 +67,18 @@ module Y2Storage
             attr_accessor attrib[:name]
           end
         end
+      end
+
+      # This value is only set when {new} or {new_from_hashes} are used.
+      #
+      # @return [SectionWithAttributes] Parent section
+      attr_reader :parent
+
+      # Constructor
+      #
+      # @param parent [SectionWithAttributes] Parent section
+      def initialize(parent = nil)
+        @parent = parent
       end
 
       # Method used by {.new_from_hashes} to populate the attributes.
@@ -93,6 +106,23 @@ module Y2Storage
           key = attrib_key(attrib)
           result[key] = value
         end
+      end
+
+      # Returns the section name
+      #
+      # In some cases, the section name does not match with the XML name
+      # and this method should be redefined.
+      #
+      # @example
+      #   section = PartitioningSection.new
+      #   section.section_name #=> "partitioning"
+      #
+      # @return [String] Section name
+      def section_name
+        klass_name = self.class.name.split("::").last
+        klass_name
+          .gsub(/([a-z])([A-Z])/, "\\1_\\2").downcase
+          .gsub(/_section\z/, "")
       end
 
     protected

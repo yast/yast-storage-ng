@@ -21,10 +21,15 @@
 # find current contact information at www.suse.com.
 
 require_relative "../spec_helper"
+require_relative "#{TEST_PATH}/support/autoinst_profile_examples"
 require "y2storage"
 
 describe Y2Storage::AutoinstProfile::PartitionSection do
+  subject(:section) { described_class.new }
+
   before { fake_scenario("autoyast_drive_examples") }
+
+  include_examples "autoinst section"
 
   def device(name)
     Y2Storage::BlkDevice.find_by_name(fake_devicegraph, "/dev/#{name}")
@@ -481,6 +486,12 @@ describe Y2Storage::AutoinstProfile::PartitionSection do
         section.filesystem = nil
         expect(section.id_for_partition).to eq Y2Storage::PartitionId::LINUX
       end
+    end
+  end
+
+  describe "#section_name" do
+    it "returns 'partitions'" do
+      expect(section.section_name).to eq("partitions")
     end
   end
 end

@@ -148,7 +148,9 @@ module Y2Storage
 
       def init_from_hashes(hash)
         super
-        @raid_options = RaidOptionsSection.new_from_hashes(hash["raid_options"]) if hash["raid_options"]
+        if hash["raid_options"]
+          @raid_options = RaidOptionsSection.new_from_hashes(hash["raid_options"], self)
+        end
         @subvolumes = SubvolSpecification.list_from_control_xml(hash["subvolumes"]) if hash["subvolumes"]
         @fstab_options = hash["fstopt"].split(",").map(&:strip) if hash["fstopt"]
       end
@@ -248,6 +250,13 @@ module Y2Storage
         hash["fstopt"] = fstab_options.join(",") if fstab_options && !fstab_options.empty?
         hash["subvolumes"] = subvolumes_to_hashes if subvolumes
         hash
+      end
+
+      # Return section name
+      #
+      # @return [String] "partitions"
+      def section_name
+        "partitions"
       end
 
     protected

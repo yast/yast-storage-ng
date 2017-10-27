@@ -56,23 +56,29 @@ module Y2Storage
 
       # @return [Array<SkipRule>] List of rules to apply
       attr_reader :rules
+      #
+      # @return [SectionWithAttributes] Parent section
+      attr_reader :parent
 
       class << self
         # Creates a skip list from an AutoYaST profile
         #
         # @param profile_rules [Array<Hash>] List of profile skip rules
+        # @param parent        [Object]      Parent section
         # @return [SkipList]
-        def new_from_hashes(profile_rules)
+        def new_from_hashes(profile_rules, parent = nil)
           rules = profile_rules.map { |h| SkipRule.from_profile_rule(h) }
-          new(rules)
+          new(rules, parent)
         end
       end
 
       # Constructor
       #
-      # @param rules [Array<SkipRule>] List of rules to apply
-      def initialize(rules)
+      # @param rules  [Array<SkipRule>] List of rules to apply
+      # @param parent [Object]          parent section
+      def initialize(rules, parent = nil)
         @rules = rules
+        @parent = parent
       end
 
       # Determines whether a disk matches any of the rules on the list
