@@ -26,8 +26,9 @@ require "y2partitioner/sequences/edit_blk_device"
 
 describe Y2Partitioner::Sequences::EditBlkDevice do
   describe "#initialize" do
-    before { devicegraph_stub("complex-lvm-encrypt.yml") }
+    before { devicegraph_stub(scenario) }
 
+    let(:scenario) { "complex-lvm-encrypt.yml" }
     let(:device) { Y2Storage::BlkDevice.find_by_name(fake_devicegraph, dev_name) }
     let(:controller_class) { Y2Partitioner::Sequences::Controllers::Filesystem }
 
@@ -62,6 +63,22 @@ describe Y2Partitioner::Sequences::EditBlkDevice do
       it "includes the RAID device name in the title passed to the controller" do
         expect(controller_class).to receive(:new).with(device, /dev\/md0/)
         described_class.new(device)
+      end
+    end
+
+    context "if called on an extended partition" do
+      let(:scenario) { "mixed_disks.yml" }
+      let(:dev_name) { "/dev/sdb4" }
+      subject(:sequence) { described_class.new(device) }
+
+      it "shows an error popup" do
+        expect(Yast::Popup).to receive(:Error)
+        sequence.run
+      end
+
+      it "quits returning :back" do
+        allow(Yast::Popup).to receive(:Error)
+        expect(sequence.run).to eq :back
       end
     end
   end

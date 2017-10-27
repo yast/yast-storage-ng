@@ -23,9 +23,14 @@ module Y2Partitioner
         DeviceGraphs.instance.transaction do
           init_transaction
 
-          sym = wizard_next_back do
-            super(sequence: sequence_hash)
-          end
+          sym =
+            if run?
+              wizard_next_back do
+                super(sequence: sequence_hash)
+              end
+            else
+              :back
+            end
 
           sym == :finish
         end
@@ -55,6 +60,16 @@ module Y2Partitioner
         block.call
       ensure
         Yast::Wizard.CloseDialog
+      end
+
+      # Checks whether it makes sense to execute the sequence, reporting to the
+      # user the possible reasons for not running it.
+      #
+      # To be defined, if needed, by each subclass.
+      #
+      # @return [Boolean]
+      def run?
+        true
       end
     end
   end

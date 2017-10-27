@@ -11,17 +11,6 @@ module Y2Partitioner
     class AddMd < TransactionWizard
       include NewBlkDevice
 
-      def preconditions
-        return :next unless md_controller.available_devices.size < 2
-
-        Yast::Popup.Error(
-          _("There are not enough suitable unused devices to create a RAID.")
-        )
-        :back
-      end
-
-      skip_stack :preconditions
-
       def devices
         result = Dialogs::Md.run(md_controller)
         md_controller.apply_default_options if result == :next
@@ -43,10 +32,9 @@ module Y2Partitioner
       # @see TransactionWizard
       def sequence_hash
         {
-          "ws_start"      => "preconditions",
-          "preconditions" => { next: "devices" },
-          "devices"       => { next: "md_options" },
-          "md_options"    => { next: new_blk_device_step1 }
+          "ws_start"   => "devices",
+          "devices"    => { next: "md_options" },
+          "md_options" => { next: new_blk_device_step1 }
         }.merge(new_blk_device_steps)
       end
 
@@ -54,6 +42,16 @@ module Y2Partitioner
       def init_transaction
         # The controller object must be created within the transaction
         @md_controller = Controllers::Md.new
+      end
+
+      # @see TransactionWizard
+      def run?
+        return true unless md_controller.available_devices.size < 2
+
+        Yast::Popup.Error(
+          _("There are not enough suitable unused devices to create a RAID.")
+        )
+        false
       end
     end
   end

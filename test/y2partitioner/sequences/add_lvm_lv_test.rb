@@ -60,6 +60,28 @@ describe Y2Partitioner::Sequences::AddLvmLv do
 
     let(:controller) { Y2Partitioner::Sequences::Controllers::LvmLv.new(vg) }
 
+    context "if there is no free space in the vg" do
+      before do
+        allow(controller).to receive(:free_extents).and_return 0
+        allow(Yast::Popup).to receive(:Error)
+      end
+
+      it "shows an error popup" do
+        expect(Yast::Popup).to receive(:Error)
+        sequence.run
+      end
+
+      it "quits returning :back" do
+        expect(sequence.run).to eq :back
+      end
+
+      it "does not create any lv device in the devicegraph" do
+        sequence.run
+        lvs = Y2Storage::LvmLv.all(current_graph)
+        expect(lvs.size).to eq 0
+      end
+    end
+
     context "if the user goes forward through all the dialogs" do
       before do
         allow(Y2Partitioner::Dialogs::LvmLvInfo).to receive(:run).and_return :next

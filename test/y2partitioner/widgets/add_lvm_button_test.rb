@@ -96,33 +96,19 @@ describe Y2Partitioner::Widgets::AddLvmButton do
       context "and option for adding lv is selected" do
         let(:selected_option) { :add_logical_volume }
 
-        context "and there is no free space in the vg" do
-          before do
-            allow(vg).to receive(:number_of_free_extents).and_return(0)
-          end
-
-          it "returns nil" do
-            expect(button.handle(event)).to be_nil
-          end
-
-          it "shows an error popup" do
-            expect(Yast::Popup).to receive(:Error)
-            button.handle(event)
-          end
+        it "opens the workflow for adding a new lv to the vg" do
+          expect(Y2Partitioner::Sequences::AddLvmLv).to receive(:new).with(vg)
+          button.handle(event)
         end
 
-        context "and there is free space in the vg" do
-          before do
-            allow(vg).to receive(:number_of_free_extents).and_return(2)
-          end
-          it "opens the workflow for adding a new lv to the vg" do
-            expect(Y2Partitioner::Sequences::AddLvmLv).to receive(:new).with(vg)
-            button.handle(event)
-          end
+        it "returns :redraw if the workflow returns :finish" do
+          allow(sequence).to receive(:run).and_return :finish
+          expect(button.handle(event)).to eq :redraw
+        end
 
-          it "returns :redraw independently of the workflow result" do
-            expect(button.handle(event)).to eq :redraw
-          end
+        it "returns nil if the workflow does not return :finish" do
+          allow(sequence).to receive(:run).and_return :back
+          expect(button.handle(event)).to be_nil
         end
       end
     end
@@ -137,38 +123,40 @@ describe Y2Partitioner::Widgets::AddLvmButton do
         end
       end
 
-      context "add option for adding lv is selected" do
+      context "and option for adding lv is selected" do
         let(:selected_option) { :add_logical_volume }
 
-        context "and there is no free space in its vg" do
-          before do
-            allow(vg).to receive(:number_of_free_extents).and_return(0)
-          end
-
-          it "returns nil" do
-            expect(button.handle(event)).to be_nil
-          end
-
-          it "shows an error popup" do
-            expect(Yast::Popup).to receive(:Error)
-            button.handle(event)
-          end
+        it "opens the workflow for adding a new lv to its vg" do
+          expect(Y2Partitioner::Sequences::AddLvmLv).to receive(:new).with(vg)
+          button.handle(event)
         end
 
-        context "and there is free space in its vg" do
-          before do
-            allow(vg).to receive(:number_of_free_extents).and_return(2)
-            allow(lv).to receive(:lvm_vg).and_return(vg)
-          end
+        it "returns :redraw if the workflow returns :finish" do
+          allow(sequence).to receive(:run).and_return :finish
+          expect(button.handle(event)).to eq :redraw
+        end
 
-          it "opens the workflow for adding a new lv to its vg" do
-            expect(Y2Partitioner::Sequences::AddLvmLv).to receive(:new).with(vg)
-            button.handle(event)
-          end
+        it "returns nil if the workflow does not return :finish" do
+          allow(sequence).to receive(:run).and_return :back
+          expect(button.handle(event)).to be_nil
+        end
+      end
+    end
 
-          it "returns :redraw independently of the workflow result" do
-            expect(button.handle(event)).to eq :redraw
-          end
+    context "when no device is selected in the table" do
+      let(:selected_device) { nil }
+
+      context "and option for adding lv is selected" do
+        let(:selected_option) { :add_logical_volume }
+
+        it "shows an error popup" do
+          expect(Yast::Popup).to receive(:Error)
+          button.handle(event)
+        end
+
+        it "returns nil" do
+          allow(Yast::Popup).to receive(:Error)
+          expect(button.handle(event)).to be_nil
         end
       end
     end

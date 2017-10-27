@@ -39,16 +39,6 @@ module Y2Partitioner
         @fs_controller = Controllers::Filesystem.new(blk_device, title)
       end
 
-      def preconditions
-        if blk_device.is?(:partition) && blk_device.type.is?(:extended)
-          Yast::Popup.Error(_("An extended partition cannot be edited"))
-          :back
-        else
-          :next
-        end
-      end
-      skip_stack :preconditions
-
       def format_options
         Dialogs::FormatAndMount.run(fs_controller)
       end
@@ -70,8 +60,7 @@ module Y2Partitioner
       # @see TransactionWizard
       def sequence_hash
         {
-          "ws_start"       => "preconditions",
-          "preconditions"  => { next: "format_options" },
+          "ws_start"       => "format_options",
           "format_options" => { next: "password" },
           "password"       => { next: "commit" },
           "commit"         => { finish: :finish }
@@ -90,6 +79,15 @@ module Y2Partitioner
         else
           # TRANSLATORS: dialog title. %s is a device name like /dev/sda1
           _("Edit Partition %s") % blk_device.name
+        end
+      end
+
+      def run?
+        if blk_device.is?(:partition) && blk_device.type.is?(:extended)
+          Yast::Popup.Error(_("An extended partition cannot be edited"))
+          false
+        else
+          true
         end
       end
     end

@@ -5,6 +5,12 @@ Fri Oct 27 11:33:55 UTC 2017 - jsrain@suse.cz
 - 4.0.13
 
 -------------------------------------------------------------------
+Thu Oct 26 15:30:53 UTC 2017 - ancor@suse.com
+
+- Partitioner: small adjustments in the verifications performed
+  before running some wizards.
+
+-------------------------------------------------------------------
 Wed Oct 25 17:28:48 UTC 2017 - jlopez@suse.com
 
 - Partitioner: allow to work with multipath devices.

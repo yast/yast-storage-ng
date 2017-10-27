@@ -67,6 +67,17 @@ module Y2Partitioner
       def vg_name
         controller.vg_name
       end
+
+      # @see TransactionWizard
+      def run?
+        return true if controller.free_extents > 0
+
+        Yast::Popup.Error(
+          # TRANSLATORS: %s is a volume group name (e.g. "system")
+          _("No free space left in the volume group \"%s\".") % vg_name
+        )
+        false
+      end
     end
   end
 end
