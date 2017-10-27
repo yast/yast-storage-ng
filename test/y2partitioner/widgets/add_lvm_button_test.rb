@@ -142,5 +142,23 @@ describe Y2Partitioner::Widgets::AddLvmButton do
         end
       end
     end
+
+    context "when no device is selected in the table" do
+      let(:selected_device) { nil }
+
+      context "and option for adding lv is selected" do
+        let(:selected_option) { :add_logical_volume }
+
+        it "shows an error popup" do
+          expect(Yast::Popup).to receive(:Error)
+          button.handle(event)
+        end
+
+        it "returns nil" do
+          allow(Yast::Popup).to receive(:Error)
+          expect(button.handle(event)).to be_nil
+        end
+      end
+    end
   end
 end
