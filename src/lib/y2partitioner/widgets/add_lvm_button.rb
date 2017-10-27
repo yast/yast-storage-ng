@@ -22,16 +22,12 @@
 require "yast"
 require "cwm"
 require "y2partitioner/sequences/add_lvm_lv"
-require "y2partitioner/widgets/lvm_validations"
-
 Yast.import "Popup"
 
 module Y2Partitioner
   module Widgets
     # Button for opening the workflow to add a volume group or logical volume
     class AddLvmButton < CWM::MenuButton
-      include LvmValidations
-
       # Constructor
       # @param table [Y2Partitioner::Widgets::ConfigurableBlkDevicesTable]
       def initialize(table)
@@ -73,16 +69,17 @@ module Y2Partitioner
       attr_reader :table
 
       def add_vg
-        return nil unless validate_add_vg
-
         Yast::Popup.Warning("Not yet implemented")
       end
 
       def add_lv
-        return nil unless validate_add_lv(vg)
+        if vg.nil?
+          Yast::Popup.Error(_("No device selected"))
+          return nil
+        end
 
-        Sequences::AddLvmLv.new(vg).run
-        :redraw
+        res = Sequences::AddLvmLv.new(vg).run
+        res == :finish ? :redraw : nil
       end
 
       def vg

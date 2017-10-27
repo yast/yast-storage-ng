@@ -22,14 +22,11 @@
 require "yast"
 require "cwm"
 require "y2partitioner/sequences/add_lvm_lv"
-require "y2partitioner/widgets/lvm_validations"
 
 module Y2Partitioner
   module Widgets
     # Button for opening the workflow to add a logical volume to a volume group
     class AddLvmLvButton < CWM::PushButton
-      include LvmValidations
-
       # Constructor
       # @param vg [Y2Storage::LvmVg]
       def initialize(vg)
@@ -45,10 +42,8 @@ module Y2Partitioner
 
       # @macro seeAbstractWidget
       def handle
-        return nil unless validate_add_lv(@vg)
-
-        Sequences::AddLvmLv.new(@vg).run
-        :redraw
+        res = Sequences::AddLvmLv.new(@vg).run
+        res == :finish ? :redraw : nil
       end
     end
   end

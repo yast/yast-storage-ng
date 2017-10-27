@@ -39,17 +39,6 @@ module Y2Partitioner
         @part_controller = Controllers::Partition.new(disk_name)
       end
 
-      def preconditions
-        return :next if part_controller.new_partition_possible?
-
-        Yast::Popup.Error(
-          # TRANSLATORS: %s is a device name (e.g. "/dev/sda")
-          _("It is not possible to create a partition on %s.") % disk_name
-        )
-        :back
-      end
-      skip_stack :preconditions
-
       def type
         Dialogs::PartitionType.run(part_controller)
       end
@@ -73,15 +62,25 @@ module Y2Partitioner
       # @see TransactionWizard
       def sequence_hash
         {
-          "ws_start"      => "preconditions",
-          "preconditions" => { next: "type" },
-          "type"          => { next: "size" },
-          "size"          => { next: new_blk_device_step1, finish: :finish }
+          "ws_start" => "type",
+          "type"     => { next: "size" },
+          "size"     => { next: new_blk_device_step1, finish: :finish }
         }.merge(new_blk_device_steps)
       end
 
       def disk_name
         part_controller.disk_name
+      end
+
+      # @see TransactionWizard
+      def run?
+        return true if part_controller.new_partition_possible?
+
+        Yast::Popup.Error(
+          # TRANSLATORS: %s is a device name (e.g. "/dev/sda")
+          _("It is not possible to create a partition on %s.") % disk_name
+        )
+        false
       end
     end
   end

@@ -23,8 +23,14 @@ describe Y2Partitioner::Widgets::EditBlkDeviceButton do
         button.handle
       end
 
-      it "returns :redraw independently of the workflow result" do
+      it "returns :redraw if the workflow returns :finish" do
+        allow(sequence).to receive(:run).and_return :finish
         expect(button.handle).to eq :redraw
+      end
+
+      it "returns nil if the workflow does not return :finish" do
+        allow(sequence).to receive(:run).and_return :back
+        expect(button.handle).to be_nil
       end
     end
   end
@@ -66,8 +72,14 @@ describe Y2Partitioner::Widgets::EditBlkDeviceButton do
             button.handle
           end
 
-          it "returns :redraw independently of the workflow result" do
+          it "returns :redraw if the workflow returns :finish" do
+            allow(sequence).to receive(:run).and_return :finish
             expect(button.handle).to eq :redraw
+          end
+
+          it "returns nil if the workflow does not return :finish" do
+            allow(sequence).to receive(:run).and_return :back
+            expect(button.handle).to be_nil
           end
         end
       end
