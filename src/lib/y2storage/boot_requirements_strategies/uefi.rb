@@ -39,6 +39,7 @@ module Y2Storage
 
       MIN_SIZE = DiskSize.MiB(33).freeze
       DESIRED_SIZE = DiskSize.MiB(500).freeze
+      MAX_SIZE = DiskSize.MiB(500).freeze
 
       def efi_missing?
         free_mountpoint?("/boot/efi")
@@ -51,7 +52,7 @@ module Y2Storage
         else
           vol.partition_id = PartitionId::ESP
           vol.min_size = target == :min ? MIN_SIZE : DESIRED_SIZE
-          vol.max_size = DiskSize.unlimited
+          vol.max_size = MAX_SIZE
           vol.max_start_offset = DiskSize.TiB(2)
         end
         vol

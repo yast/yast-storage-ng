@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Fri Oct 27 11:33:55 UTC 2017 - jsrain@suse.cz
+
+- Limit maximal proposed size of EFI partition (bsc#1062775)
+- 4.0.12
+
+-------------------------------------------------------------------
 Wed Oct 25 13:12:37 UTC 2017 - igonzalezsosa@suse.com
 
 - Add support to clone subvolumes when using AutoYaST (bsc#1064875)
