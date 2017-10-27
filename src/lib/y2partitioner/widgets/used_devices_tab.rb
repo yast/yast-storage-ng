@@ -24,7 +24,7 @@ require "y2partitioner/widgets/configurable_blk_devices_table"
 
 module Y2Partitioner
   module Widgets
-    # Class to represent a tab with a list of devices beloging to
+    # Class to represent a tab with a list of devices belonging to
     # a specific device (raid, multipath, etc)
     class UsedDevicesTab < CWM::Tab
       # Constructor
@@ -49,7 +49,7 @@ module Y2Partitioner
 
     private
 
-      # Returns a table with all devices used by a MD raid
+      # Returns a table with all devices used by the container device
       #
       # @return [ConfigurableBlkDevicesTable]
       def table
