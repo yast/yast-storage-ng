@@ -2,6 +2,7 @@ require_relative "../test_helper"
 
 require "cwm/rspec"
 require "y2partitioner/widgets/configurable_blk_devices_table"
+require "y2partitioner/widgets/overview"
 
 describe Y2Partitioner::Widgets::ConfigurableBlkDevicesTable do
   before do
@@ -14,7 +15,7 @@ describe Y2Partitioner::Widgets::ConfigurableBlkDevicesTable do
 
   let(:devices) { device_graph.disks }
 
-  let(:pager) { double("Pager") }
+  let(:pager) { instance_double(Y2Partitioner::Widgets::OverviewTreePager) }
 
   # FIXME: default tests check that all column headers are strings, but they also can be a Yast::Term
   # include_examples "CWM::Table"
@@ -29,6 +30,44 @@ describe Y2Partitioner::Widgets::ConfigurableBlkDevicesTable do
     it "returns array of arrays" do
       expect(subject.items).to be_a(::Array)
       expect(subject.items.first).to be_a(::Array)
+    end
+  end
+
+  describe "#handle" do
+    before do
+      allow(subject).to receive(:selected_device).and_return(device)
+      allow(pager).to receive(:device_page).with(device).and_return(page)
+    end
+
+    let(:device) { nil }
+
+    let(:page) { nil }
+
+    context "when there is no selected device" do
+      it "returns nil" do
+        expect(subject.handle).to be_nil
+      end
+    end
+
+    context "when there is no page associated to the selected device" do
+      let(:device) { Y2Storage::LvmPv.all(device_graph).first }
+
+      let(:page) { nil }
+
+      it "returns nil" do
+        expect(subject.handle).to be_nil
+      end
+    end
+
+    context "when there is a page associated to the selected device" do
+      let(:device) { Y2Storage::Disk.all(device_graph).first }
+
+      let(:page) { instance_double(Y2Partitioner::Widgets::Pages::Disk, widget_id: "disk_page_id") }
+
+      it "goes to the device page" do
+        expect(pager).to receive(:handle).with("ID" => "disk_page_id")
+        subject.handle
+      end
     end
   end
 

@@ -2,6 +2,14 @@
 Fri Oct 27 11:33:55 UTC 2017 - jsrain@suse.cz
 
 - Limit maximal proposed size of EFI partition (bsc#1062775)
+- 4.0.13
+
+-------------------------------------------------------------------
+Wed Oct 25 17:28:48 UTC 2017 - jlopez@suse.com
+
+- Partitioner: allow to work with multipath devices.
+- bsc#1058373 and bsc#1028853.
+- Part of fate#318196.
 - 4.0.12
 
 -------------------------------------------------------------------

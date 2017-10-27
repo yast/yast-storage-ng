@@ -19,46 +19,44 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "yast"
+require "cwm/widget"
 require "y2partitioner/widgets/configurable_blk_devices_table"
 
 module Y2Partitioner
   module Widgets
-    # Table widget to represent a given list of Y2Storage::Mds together.
-    class MdRaidsTable < ConfigurableBlkDevicesTable
+    # Class to represent a tab with a list of devices belonging to
+    # a specific device (raid, multipath, etc)
+    class UsedDevicesTab < CWM::Tab
       # Constructor
       #
-      # @param devices [Array<Y2Storage::Md>] devices to display
-      # @param pager [CWM::Pager] table have feature, that double click change content of pager
-      #   if someone do not need this feature, make it only optional
+      # @param devices [Array<Y2Storage::BlkDevice>]
+      # @param pager [CWM::TreePager]
       def initialize(devices, pager)
         textdomain "storage"
+        @devices = devices
+        @pager = pager
+      end
 
-        super
-        add_columns(:raid_type, :chunk_size)
-        remove_columns(:start, :end)
+      # @macro seeAbstractWidget
+      def label
+        _("&Used Devices")
+      end
+
+      # @macro seeCustomWidget
+      def contents
+        @contents ||= VBox(table)
       end
 
     private
 
-      def raid_type_title
-        # TRANSLATORS: table header, type of md raid.
-        _("RAID Type")
-      end
-
-      def chunk_size_title
-        # TRANSLATORS: table header, chunk size of md raid
-        _("Chunk Size")
-      end
-
-      def raid_type_value(device)
-        device.md_level.to_human_string
-      end
-
-      def chunk_size_value(device)
-        # according to mdadm(8): chunk size "is only meaningful for RAID0, RAID4,
-        # RAID5, RAID6, and RAID10"
-        device.chunk_size.zero? ? "" : device.chunk_size.to_human_string
+      # Returns a table with all devices used by the container device
+      #
+      # @return [ConfigurableBlkDevicesTable]
+      def table
+        return @table unless @table.nil?
+        @table = ConfigurableBlkDevicesTable.new(@devices, @pager)
+        @table.show_columns(:device, :size, :format, :encrypted, :type)
+        @table
       end
     end
   end

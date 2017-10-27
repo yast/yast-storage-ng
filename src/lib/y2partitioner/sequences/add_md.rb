@@ -2,7 +2,8 @@ require "yast"
 require "y2partitioner/sequences/transaction_wizard"
 require "y2partitioner/sequences/new_blk_device"
 require "y2partitioner/sequences/controllers"
-require "y2partitioner/dialogs"
+require "y2partitioner/dialogs/md"
+require "y2partitioner/dialogs/md_options"
 
 module Y2Partitioner
   module Sequences

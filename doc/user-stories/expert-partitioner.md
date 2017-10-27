@@ -652,6 +652,9 @@ The specs are based on current version of expert partitioner for TW. The goal is
       * shows dialog to edit the current selected LV in the table
       * same dialog than partition edition (see above)
       * 'File System Id' is not shown
+      * *(pending) and selected LV is a thin pool*
+        * shows an error popup
+        * does not allow to edit the LV
     * *(pending) and action 'Resize' is selected*
       * shows popup dialog to resize the current selected LV in the table
     * *(pending) and action 'Delete' is selected*

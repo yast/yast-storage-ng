@@ -1,12 +1,34 @@
+# encoding: utf-8
+
+# Copyright (c) [2017] SUSE LLC
+#
+# All Rights Reserved.
+#
+# This program is free software; you can redistribute it and/or modify it
+# under the terms of version 2 of the GNU General Public License as published
+# by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+# more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, contact SUSE LLC.
+#
+# To contact SUSE LLC about this file by physical or electronic mail, you may
+# find current contact information at www.suse.com.
+
 require "yast"
 require "cwm"
+require "y2partitioner/ui_state"
 
 Yast.import "Popup"
 Yast.import "HTML"
 
 module Y2Partitioner
   module Widgets
-    # Button for deleting a disk or partition
+    # Button for deleting a disk device or partition
     class DeleteDiskPartitionButton < CWM::PushButton
       # Constructor
       # @param device [Y2Storage::BlkDevice]
@@ -24,18 +46,18 @@ module Y2Partitioner
         @device_graph = device_graph
       end
 
+      # @macro seeAbstractWidget
       def label
+        # TRANSLATORS: button label to delete a disk device or partition
         _("Delete...")
       end
 
+      # Checks whether delete action can be performed and if so,
+      # a confirmation popup is shown.
+      #
+      # @note Delete action is carried out only if user confirms.
       def handle
-        device = @device || @table.selected_device
-
-        if device.nil?
-          Yast::Popup.Error(_("No device selected"))
-          return nil
-        end
-
+        return nil unless delete_validations
         return nil unless confirm(device)
 
         delete_device(device)
@@ -44,22 +66,70 @@ module Y2Partitioner
 
     private
 
+      # Current device to delete
+      #
+      # @return [Y2Storage::BlkDevice]
+      def device
+        @device || @table.selected_device
+      end
+
+      # Checks whether the device can be deleted
+      #
+      # @note Some popups could be shown when it is not possible
+      #   to delete the device.
+      #
+      # @return [Boolean] {true} if it is possible to delete the device;
+      #   {false} otherwise.
+      def delete_validations
+        return false unless validate_presence
+        device.is?(:partition) ? true : validate_partition_table
+      end
+
+      # Checks whether there is a device to delete
+      #
+      # @note An error popup is shown when there is no device.
+      #
+      # @return [Boolean]
+      def validate_presence
+        return true unless device.nil?
+
+        Yast::Popup.Error(_("No device selected"))
+        false
+      end
+
+      # Checks whether a disk device has any partition for deleting
+      #
+      # @note An error popup is shown when there is no partition.
+      #
+      # @return [Boolean]
+      def validate_partition_table
+        partition_table = device.partition_table
+        if partition_table.nil? || partition_table.partitions.empty?
+          Yast::Popup.Error(_("There are no partitions to delete on this disk"))
+          return false
+        end
+
+        true
+      end
+
       # Deletes the indicated device
       #
-      # @note When the device is a disk, all its partitions are deleted.
+      # @note When the device has a partition table, all its partitions are deleted.
       #
       # @note Shadowing for BtrFS subvolumes is always refreshed.
       # @see Y2Storage::Filesystems::Btrfs.refresh_subvolumes_shadowing
       #
       # @param device [Y2Storage::BlkDevice]
       def delete_device(device)
-        if device.is?(:disk)
-          log.info "deleting partitions for #{device}"
-          device.partition_table.delete_all_partitions
-        else
+        if device.is?(:partition)
           log.info "deleting partition #{device}"
-          disk = device.disk
-          disk.partition_table.delete_partition(device)
+          partitionable = device.partitionable
+          partitionable.partition_table.delete_partition(device)
+          UIState.instance.select_row(partitionable)
+        else
+          log.info "deleting partitions for #{device}"
+          device.partition_table.delete_all_partitions unless device.partition_table.nil?
+          UIState.instance.select_row(device)
         end
 
         device_graph = DeviceGraphs.instance.current

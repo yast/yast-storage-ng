@@ -127,8 +127,9 @@ module Y2Partitioner
       end
 
       def disks_items
-        page = Pages::Disks.new(self)
-        children = device_graph.disks.map { |d| disk_items(d) }
+        devices = disk_devices
+        page = Pages::Disks.new(devices, self)
+        children = disk_devices.map { |d| disk_items(d) }
         CWM::PagerTreeItem.new(page, children: children, icon: Icons::HD)
       end
 
@@ -136,6 +137,13 @@ module Y2Partitioner
         page = Pages::Disk.new(disk, self)
         children = disk.partitions.map { |p| partition_items(p) }
         CWM::PagerTreeItem.new(page, children: children)
+      end
+
+      # Hard disks section contains disks, dasd and multipath devices
+      #
+      # @return [Array<Y2Storage::BlkDevice>]
+      def disk_devices
+        device_graph.disk_devices.select { |d| d.is?(:disk, :dasd, :multipath) }
       end
 
       def partition_items(partition)

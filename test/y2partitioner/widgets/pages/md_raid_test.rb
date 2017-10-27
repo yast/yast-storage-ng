@@ -19,10 +19,4 @@ describe Y2Partitioner::Widgets::Pages::MdRaid do
 
     include_examples "CWM::Tab"
   end
-
-  describe Y2Partitioner::Widgets::Pages::MdUsedDevicesTab do
-    subject { described_class.new(md, pager) }
-
-    include_examples "CWM::Tab"
-  end
 end
