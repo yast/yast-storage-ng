@@ -40,8 +40,8 @@ module Y2Partitioner
       # @see BlkDeviceButton#actions
       def actions
         UIState.instance.select_row(device.sid)
-        Sequences::EditBlkDevice.new(device).run
-        :redraw
+        res = Sequences::EditBlkDevice.new(device).run
+        res == :finish ? :redraw : nil
       end
     end
   end
