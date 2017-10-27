@@ -17,8 +17,6 @@ module Y2Partitioner
     # redrawing the interface in case of filesystem or partition selection
     # change.
     class FormatOptions < CWM::CustomWidget
-      using Refinements::FilesystemType
-
       # Constructor
       # @param controller [Actions::Controllers::Filesystem]
       # @param parent_widget [#refresh_others] container widget that must be
@@ -153,8 +151,6 @@ module Y2Partitioner
 
     # Mount options for {Y2Storage::BlkDevice}
     class MountOptions < CWM::CustomWidget
-      using Refinements::FilesystemType
-
       # @param controller [Actions::Controllers::Filesystem]
       # @param parent_widget [#refresh_others] container widget that must be
       #   notified after every relevant update to the controller information
@@ -601,8 +597,6 @@ module Y2Partitioner
 
     # Encryption selector
     class EncryptBlkDevice < CWM::CheckBox
-      using Refinements::FilesystemType
-
       # @param controller [Actions::Controllers::Filesystem]
       def initialize(controller)
         @controller = controller
