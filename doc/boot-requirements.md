@@ -178,6 +178,6 @@
 		- **requires /boot/efi to be a non-encrypted vfat partition**
 		- **requires /boot/efi to be close enough to the beginning of disk**
 		- when aiming for the recommended size
-			- **requires /boot/efi to be at least 500 MiB large**
+			- **requires /boot/efi to be exactly 500 MiB large**
 		- when aiming for the minimal size
-			- **requires /boot/efi to be at least 33 MiB large**
+			- **requires /boot/efi to be between 33 MiB and 500 MiB large**
