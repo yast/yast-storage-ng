@@ -25,4 +25,11 @@ module Y2Partitioner
   end
 end
 
-require "y2partitioner/actions/delete_blk_device"
+require "y2partitioner/actions/add_lvm_lv"
+require "y2partitioner/actions/add_md"
+require "y2partitioner/actions/add_partition"
+require "y2partitioner/actions/delete_device"
+require "y2partitioner/actions/delete_disk"
+require "y2partitioner/actions/delete_lvm_lv"
+require "y2partitioner/actions/delete_partition"
+require "y2partitioner/actions/edit_blk_device"
