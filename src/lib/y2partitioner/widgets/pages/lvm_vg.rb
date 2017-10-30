@@ -29,7 +29,7 @@ require "y2partitioner/widgets/lvm_vg_bar_graph"
 require "y2partitioner/widgets/lvm_vg_description"
 require "y2partitioner/widgets/add_lvm_lv_button"
 require "y2partitioner/widgets/edit_lvm_button"
-require "y2partitioner/widgets/resize_lvm_button"
+require "y2partitioner/widgets/lvm_resize_button"
 require "y2partitioner/widgets/delete_lvm_button"
 
 module Y2Partitioner
@@ -133,7 +133,7 @@ module Y2Partitioner
               HBox(
                 AddLvmLvButton.new(@lvm_vg),
                 EditLvmButton.new(table: table),
-                ResizeLvmButton.new(table: table),
+                LvmResizeButton.new(table: table),
                 DeleteLvmButton.new(table: table)
               )
             )

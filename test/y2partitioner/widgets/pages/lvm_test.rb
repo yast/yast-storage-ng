@@ -45,7 +45,7 @@ describe Y2Partitioner::Widgets::Pages::Lvm do
     end
 
     it "shows a button to resize a vg or lv" do
-      button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::ResizeLvmButton) }
+      button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::LvmResizeButton) }
       expect(button).to_not be_nil
     end
 

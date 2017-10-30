@@ -29,7 +29,7 @@ Yast.import "Popup"
 module Y2Partitioner
   module Widgets
     # Button for resizing a volume group or logical volume
-    class ResizeLvmButton < BlkDeviceButton
+    class LvmResizeButton < BlkDeviceButton
       # @macro seeAbstractWidget
       def label
         # TRANSLATORS: button label to resize a volume group or logical volume
