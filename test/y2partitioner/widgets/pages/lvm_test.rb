@@ -35,7 +35,7 @@ describe Y2Partitioner::Widgets::Pages::Lvm do
     end
 
     it "shows a menu button to create a new vg or lv" do
-      button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::AddLvmButton) }
+      button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::LvmAddButton) }
       expect(button).to_not be_nil
     end
 

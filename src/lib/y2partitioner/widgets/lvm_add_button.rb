@@ -27,7 +27,7 @@ Yast.import "Popup"
 module Y2Partitioner
   module Widgets
     # Button for opening the workflow to add a volume group or logical volume
-    class AddLvmButton < CWM::MenuButton
+    class LvmAddButton < CWM::MenuButton
       # Constructor
       # @param table [Y2Partitioner::Widgets::ConfigurableBlkDevicesTable]
       def initialize(table)
