@@ -36,8 +36,8 @@ module Y2Storage
       # @return [Symbol] Name of the missing attribute
       attr_reader :attr
 
-      # @param device [String] Device (`/`, `/dev/sda`, etc.)
-      # @param attr   [Symbol] Name of the missing attribute
+      # @param section [Object] Section where it was detected (see {AutoinstProfile})
+      # @param attr    [Symbol] Name of the missing attribute
       def initialize(section, attr)
         @section = section
         @attr = attr

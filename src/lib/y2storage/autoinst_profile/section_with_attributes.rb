@@ -69,9 +69,9 @@ module Y2Storage
         end
       end
 
-      # This value is only set when {new} or {new_from_hashes} are used.
+      # This value only makes sense when {.new_from_hashes} is used.
       #
-      # @return [SectionWithAttributes] Parent section
+      # @return [Object] Parent section
       attr_reader :parent
 
       # Constructor
