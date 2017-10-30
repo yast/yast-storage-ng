@@ -68,6 +68,23 @@ describe Y2Storage::Dialogs::Proposal do
         .to receive(:new).with(nil).and_return actions_presenter2
     end
 
+    # Convenience method to inspect the tree of terms for the UI
+    def nested_id_term(id, term)
+      term.nested_find do |i|
+        i.is_a?(Yast::Term) && i.value == :id && i.params.first == id
+      end
+    end
+
+    # Convenience method to inspect the tree of terms for the UI
+    def menu_button_item_with_id(id, content)
+      content.nested_find do |i|
+        next unless i.is_a?(Yast::Term)
+        next unless i.value == :MenuButton
+        items = i.params.last
+        items.any? { |item| nested_id_term(id, item) }
+      end
+    end
+
     context "when a pristine proposal is provided" do
       let(:proposal) { double("Y2Storage::GuidedProposal", proposed?: false) }
 
@@ -100,6 +117,13 @@ describe Y2Storage::Dialogs::Proposal do
           dialog.run
           expect(dialog.devicegraph).to eq devicegraph1
         end
+
+        it "displays an option to run the partitioner from the current devicegraph" do
+          expect(Yast::Wizard).to receive(:SetContents) do |_title, content|
+            expect(menu_button_item_with_id(:expert_from_proposal, content)).to_not be_nil
+          end
+          dialog.run
+        end
       end
 
       context "if the proposal fails" do
@@ -129,6 +153,13 @@ describe Y2Storage::Dialogs::Proposal do
           dialog.run
           expect(dialog.devicegraph).to be_nil
         end
+
+        it "does not display an option to run the partitioner from the current devicegraph" do
+          expect(Yast::Wizard).to receive(:SetContents) do |_title, content|
+            expect(menu_button_item_with_id(:expert_from_proposal, content)).to be_nil
+          end
+          dialog.run
+        end
       end
     end
 
@@ -156,6 +187,13 @@ describe Y2Storage::Dialogs::Proposal do
         dialog.run
         expect(dialog.devicegraph).to eq devicegraph0
       end
+
+      it "displays an option to run the partitioner from the current devicegraph" do
+        expect(Yast::Wizard).to receive(:SetContents) do |_title, content|
+          expect(menu_button_item_with_id(:expert_from_proposal, content)).to_not be_nil
+        end
+        dialog.run
+      end
     end
 
     context "when no proposal is provided" do
@@ -177,6 +215,13 @@ describe Y2Storage::Dialogs::Proposal do
         dialog.run
         expect(dialog.devicegraph).to eq devicegraph0
       end
+
+      it "displays an option to run the partitioner from the current devicegraph" do
+        expect(Yast::Wizard).to receive(:SetContents) do |_title, content|
+          expect(menu_button_item_with_id(:expert_from_proposal, content)).to_not be_nil
+        end
+        dialog.run
+      end
     end
 
     context "when an actions presenter event happens" do
@@ -197,6 +242,30 @@ describe Y2Storage::Dialogs::Proposal do
       it "refresh the summary" do
         expect(Yast::UI).to receive(:ChangeWidget).with(Id(:summary), :Value, anything)
         dialog.run
+      end
+    end
+
+    context "when the user decides to run the expert partitioner from the proposed devicegraph" do
+      let(:proposal) { double("Y2Storage::GuidedProposal", proposed?: true) }
+
+      before do
+        allow(Yast::UI).to receive(:UserInput).and_return(:expert_from_proposal)
+      end
+
+      it "returns :expert_from_proposal" do
+        expect(dialog.run).to eq :expert_from_proposal
+      end
+    end
+
+    context "when the user decides to run the expert partitioner from the probed devicegraph" do
+      let(:proposal) { double("Y2Storage::GuidedProposal", proposed?: true) }
+
+      before do
+        allow(Yast::UI).to receive(:UserInput).and_return(:expert_from_probed)
+      end
+
+      it "returns :expert_from_probed" do
+        expect(dialog.run).to eq :expert_from_probed
       end
     end
   end
