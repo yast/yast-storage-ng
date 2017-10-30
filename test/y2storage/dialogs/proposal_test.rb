@@ -244,5 +244,29 @@ describe Y2Storage::Dialogs::Proposal do
         dialog.run
       end
     end
+
+    context "when the user decides to run the expert partitioner from the proposed devicegraph" do
+      let(:proposal) { double("Y2Storage::GuidedProposal", proposed?: true) }
+
+      before do
+        allow(Yast::UI).to receive(:UserInput).and_return(:expert_from_proposal)
+      end
+
+      it "returns :expert_from_proposal" do
+        expect(dialog.run).to eq :expert_from_proposal
+      end
+    end
+
+    context "when the user decides to run the expert partitioner from the probed devicegraph" do
+      let(:proposal) { double("Y2Storage::GuidedProposal", proposed?: true) }
+
+      before do
+        allow(Yast::UI).to receive(:UserInput).and_return(:expert_from_probed)
+      end
+
+      it "returns :expert_from_probed" do
+        expect(dialog.run).to eq :expert_from_probed
+      end
+    end
   end
 end
