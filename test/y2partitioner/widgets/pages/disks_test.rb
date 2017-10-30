@@ -57,7 +57,7 @@ describe Y2Partitioner::Widgets::Pages::Disks do
     end
 
     it "shows a delete button" do
-      button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::BlkDeviceDeleteButton) }
+      button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::DeviceDeleteButton) }
       expect(button).to_not be_nil
     end
   end

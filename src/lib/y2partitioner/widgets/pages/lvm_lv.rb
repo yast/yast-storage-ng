@@ -25,7 +25,7 @@ require "y2partitioner/icons"
 require "y2partitioner/widgets/lvm_lv_description"
 require "y2partitioner/widgets/lvm_edit_button"
 require "y2partitioner/widgets/lvm_resize_button"
-require "y2partitioner/widgets/lvm_delete_button"
+require "y2partitioner/widgets/device_delete_button"
 
 module Y2Partitioner
   module Widgets
@@ -68,7 +68,7 @@ module Y2Partitioner
               HBox(
                 LvmEditButton.new(device: @lvm_lv),
                 LvmResizeButton.new(device: @lvm_lv),
-                LvmDeleteButton.new(device: @lvm_lv)
+                DeviceDeleteButton.new(device: @lvm_lv)
               )
             )
           )
