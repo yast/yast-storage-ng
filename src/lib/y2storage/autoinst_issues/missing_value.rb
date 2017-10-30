@@ -26,7 +26,9 @@ module Y2Storage
     # Represents an AutoYaST situation where a mandatory value is missing.
     #
     # @example Missing value for attribute 'size' in '/dev/sda' device.
-    #   problem = MissingValue.new("/dev/sda", :size)
+    #   section = AutoinstProfile::PartitionSection.new_from_hashes({})
+    #   problem = MissingValue.new(section, :size)
+    #   problem.attr #=> :size
     class MissingValue < Issue
       # @return [String] Device affected by this error
       attr_reader :device
@@ -36,8 +38,8 @@ module Y2Storage
 
       # @param device [String] Device (`/`, `/dev/sda`, etc.)
       # @param attr   [Symbol] Name of the missing attribute
-      def initialize(device, attr)
-        @device = device
+      def initialize(section, attr)
+        @section = section
         @attr = attr
       end
 
@@ -54,8 +56,8 @@ module Y2Storage
       # @return [String] Error message
       # @see Issue#message
       def message
-        # TRANSLATORS: AutoYaST element name and device name (ag. /dev/sda1)
-        _("Missing attribute '%{attr}' on '%{device}'") % { attr: attr, device: device }
+        # TRANSLATORS: AutoYaST element
+        _("Missing element '%{attr}'") % { attr: attr }
       end
     end
   end

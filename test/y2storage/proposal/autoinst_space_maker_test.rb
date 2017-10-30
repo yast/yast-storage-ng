@@ -86,7 +86,6 @@ describe Y2Storage::Proposal::AutoinstSpaceMaker do
         subject.cleaned_devicegraph(fake_devicegraph, drives_map)
 
         issue = subject.issues_list.find { |i| i.is_a?(Y2Storage::AutoinstIssues::InvalidValue) }
-        expect(issue.device).to eq("/dev/sda")
         expect(issue.attr).to eq(:use)
         expect(issue.value).to eq("wrong-value")
       end
@@ -104,7 +103,6 @@ describe Y2Storage::Proposal::AutoinstSpaceMaker do
         subject.cleaned_devicegraph(fake_devicegraph, drives_map)
 
         issue = subject.issues_list.find { |i| i.is_a?(Y2Storage::AutoinstIssues::MissingValue) }
-        expect(issue.device).to eq("/dev/sda")
         expect(issue.attr).to eq(:use)
       end
     end

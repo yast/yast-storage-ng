@@ -76,26 +76,25 @@ module Y2Storage
 
         # TODO: resizing of partitions
 
-        delete_by_use(devicegraph, disk, drive_spec.use)
+        delete_by_use(devicegraph, disk, drive_spec)
       end
 
       # Deletes unwanted partition according to the "use" element
       #
       # @param devicegraph [Devicegraph]
       # @param disk        [Disk]
-      # @param use         [String,Array<Integer>] Use value ("all", "linux", "free"
-      #   or a list of partition numbers)
-      def delete_by_use(devicegraph, disk, use)
-        return if use == "free"
-        case use
+      # @param drive_spec  [AutoinstProfile::DriveSection]
+      def delete_by_use(devicegraph, disk, drive_spec)
+        return if drive_spec.use == "free"
+        case drive_spec.use
         when "all"
           disk.partition_table.remove_descendants if disk.partition_table
         when "linux"
           delete_linux_partitions(devicegraph, disk)
         when Array
-          delete_partitions_by_number(devicegraph, disk, use)
+          delete_partitions_by_number(devicegraph, disk, drive_spec.use)
         else
-          register_invalid_use_value(disk, use)
+          register_invalid_use_value(drive_spec)
         end
       end
 
@@ -124,13 +123,12 @@ module Y2Storage
 
       # Register an invalid/missing value for 'use'
       #
-      # @param disk        [Disk]
-      # @param use         [String,Array<Integer>] Use value ("all", "linux", "free")
-      def register_invalid_use_value(disk, use)
-        if use.nil?
-          issues_list.add(:missing_value, disk.name, :use)
+      # @param drive_spec  [AutoinstProfile::DriveSection]
+      def register_invalid_use_value(drive_spec)
+        if drive_spec.use
+          issues_list.add(:invalid_value, drive_spec, :use)
         else
-          issues_list.add(:invalid_value, disk.name, :use, use)
+          issues_list.add(:missing_value, drive_spec, :use)
         end
       end
     end

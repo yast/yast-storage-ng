@@ -22,13 +22,18 @@
 
 require_relative "../../spec_helper"
 require "y2storage/autoinst_issues/missing_value"
+require "y2storage/autoinst_profile/partition_section"
 
 describe Y2Storage::AutoinstIssues::MissingValue do
-  subject(:issue) { described_class.new("/home", :size) }
+  subject(:issue) { described_class.new(section, :size) }
+
+  let(:section) do
+    instance_double(Y2Storage::AutoinstProfile::PartitionSection)
+  end
 
   describe "#message" do
     it "returns a description of the issue" do
-      expect(issue.message).to match(/Missing attribute.*size.*'\/home'/)
+      expect(issue.message).to match(/Missing element 'size'/)
     end
   end
 
