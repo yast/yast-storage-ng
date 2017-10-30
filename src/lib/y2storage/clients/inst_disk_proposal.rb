@@ -101,7 +101,6 @@ module Y2Storage
         end
 
         case result
-        # NOTE: method Y2Partitioner::Dialogs::Main#run does not return :abort when aborting.
         when :abort
           @result = :abort
         when :next
