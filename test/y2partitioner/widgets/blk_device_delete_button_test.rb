@@ -23,9 +23,9 @@
 require_relative "../test_helper"
 
 require "cwm/rspec"
-require "y2partitioner/widgets/delete_blk_device_button"
+require "y2partitioner/widgets/blk_device_delete_button"
 
-describe Y2Partitioner::Widgets::DeleteBlkDeviceButton do
+describe Y2Partitioner::Widgets::BlkDeviceDeleteButton do
   subject { described_class.new(table: table) }
 
   let(:table) do

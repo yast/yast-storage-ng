@@ -26,7 +26,7 @@ require "y2partitioner/actions/delete_blk_device"
 module Y2Partitioner
   module Widgets
     # Button for deleting a disk device or partition
-    class DeleteBlkDeviceButton < BlkDeviceButton
+    class BlkDeviceDeleteButton < BlkDeviceButton
       # @macro seeAbstractWidget
       def label
         # TRANSLATORS: button label to delete a disk device or partition
