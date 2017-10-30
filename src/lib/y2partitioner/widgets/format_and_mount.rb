@@ -1,7 +1,6 @@
 require "yast"
 require "y2storage"
 require "cwm"
-require "y2partitioner/refinements/filesystem_type"
 require "y2partitioner/dialogs/btrfs_subvolumes"
 require "y2partitioner/widgets/fstab_options"
 require "y2storage/mountable"
