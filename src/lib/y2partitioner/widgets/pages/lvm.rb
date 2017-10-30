@@ -23,7 +23,7 @@ require "cwm/tree_pager"
 require "y2partitioner/device_graphs"
 require "y2partitioner/widgets/lvm_devices_table"
 require "y2partitioner/widgets/lvm_add_button"
-require "y2partitioner/widgets/edit_lvm_button"
+require "y2partitioner/widgets/lvm_edit_button"
 require "y2partitioner/widgets/lvm_resize_button"
 require "y2partitioner/widgets/lvm_delete_button"
 
@@ -75,7 +75,7 @@ module Y2Partitioner
             Left(
               HBox(
                 LvmAddButton.new(table),
-                EditLvmButton.new(pager: @pager, table: table),
+                LvmEditButton.new(pager: @pager, table: table),
                 LvmResizeButton.new(pager: @pager, table: table),
                 LvmDeleteButton.new(pager: @pager, table: table)
               )

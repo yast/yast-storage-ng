@@ -28,7 +28,7 @@ require "y2partitioner/ui_state"
 module Y2Partitioner
   module Widgets
     # Button for editing a volume group or logical volume
-    class EditLvmButton < BlkDeviceButton
+    class LvmEditButton < BlkDeviceButton
       # @macro seeAbstractWidget
       def label
         _("Edit...")
