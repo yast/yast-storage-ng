@@ -1,9 +1,9 @@
 require_relative "../test_helper"
 
 require "cwm/rspec"
-require "y2partitioner/widgets/edit_blk_device_button"
+require "y2partitioner/widgets/blk_device_edit_button"
 
-describe Y2Partitioner::Widgets::EditBlkDeviceButton do
+describe Y2Partitioner::Widgets::BlkDeviceEditButton do
   let(:device) { Y2Storage::BlkDevice.find_by_name(fake_devicegraph, "/dev/sda2") }
   let(:sequence) { double("EditBlkDevice", run: :result) }
 

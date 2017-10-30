@@ -25,7 +25,7 @@ require "y2partitioner/icons"
 require "y2partitioner/device_graphs"
 require "y2partitioner/actions/add_partition"
 require "y2partitioner/widgets/delete_blk_device_button"
-require "y2partitioner/widgets/edit_blk_device_button"
+require "y2partitioner/widgets/blk_device_edit_button"
 require "y2partitioner/widgets/configurable_blk_devices_table"
 require "y2partitioner/widgets/disk_bar_graph"
 require "y2partitioner/widgets/disk_description"
@@ -151,7 +151,7 @@ module Y2Partitioner
             Left(
               HBox(
                 AddButton.new(disk, table),
-                EditBlkDeviceButton.new(pager: @pager, table: table),
+                BlkDeviceEditButton.new(pager: @pager, table: table),
                 DeleteBlkDeviceButton.new(pager: @pager, table: table)
               )
             )

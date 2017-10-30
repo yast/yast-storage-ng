@@ -31,7 +31,7 @@ module Y2Partitioner
   module Widgets
     # Button for opening the editing workflow (basically mount and format
     # options) on a block device.
-    class EditBlkDeviceButton < BlkDeviceButton
+    class BlkDeviceEditButton < BlkDeviceButton
       # TRANSLATORS: button label to edit a block device
       def label
         _("Edit...")

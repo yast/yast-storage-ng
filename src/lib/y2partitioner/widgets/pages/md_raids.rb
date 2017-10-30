@@ -24,7 +24,7 @@ require "y2partitioner/icons"
 require "y2partitioner/device_graphs"
 require "y2partitioner/actions/add_md"
 require "y2partitioner/widgets/md_raids_table"
-require "y2partitioner/widgets/edit_blk_device_button"
+require "y2partitioner/widgets/blk_device_edit_button"
 
 module Y2Partitioner
   module Widgets
@@ -75,7 +75,7 @@ module Y2Partitioner
             Left(
               HBox(
                 AddButton.new,
-                EditBlkDeviceButton.new(table: table)
+                BlkDeviceEditButton.new(table: table)
               )
             )
           )
