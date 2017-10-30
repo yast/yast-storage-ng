@@ -60,10 +60,11 @@ module Y2Storage
           when :next
             save_to_storage_manager
           when :guided
-            settings = dialog.proposal ? dialog.proposal.settings : new_settings
-            guided_setup(settings)
-          when :expert
-            expert_partitioner
+            guided_setup
+          when :expert_from_proposal
+            expert_partitioner(@devicegraph)
+          when :expert_from_probed
+            expert_partitioner(storage_manager.probed)
           end
         end
 
@@ -84,7 +85,8 @@ module Y2Storage
         add_storage_packages
       end
 
-      def guided_setup(settings)
+      def guided_setup
+        settings = @proposal ? @proposal.settings : new_settings
         dialog = Dialogs::GuidedSetup.new(settings, probed_analyzer)
         case dialog.run
         when :abort
@@ -94,14 +96,15 @@ module Y2Storage
         end
       end
 
-      def expert_partitioner
+      def expert_partitioner(initial_graph)
+        return unless initial_graph
+
         dialog = Y2Partitioner::Dialogs::Main.new
         result = without_title_on_left do
-          dialog.run(storage_manager.probed, @devicegraph)
+          dialog.run(storage_manager.probed, initial_graph)
         end
 
         case result
-        # NOTE: method Y2Partitioner::Dialogs::Main#run does not return :abort when aborting.
         when :abort
           @result = :abort
         when :next

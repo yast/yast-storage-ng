@@ -60,8 +60,16 @@ module Y2Storage
         finish_dialog(:guided)
       end
 
-      def expert_handler
-        finish_dialog(:expert)
+      def expert_from_proposal_handler
+        puts "WEIRD COVERAGE"
+        finish_dialog(:expert_from_proposal)
+        puts "ONLY I TRAVIS"
+      end
+
+      def expert_from_probed_handler
+        puts "WEIRD COVERAGE TWO"
+        finish_dialog(:expert_from_probed)
+        puts "ONLY I TRAVIS TOO"
       end
 
       def handle_event(input)
@@ -117,13 +125,22 @@ module Y2Storage
         _("Suggested Partitioning")
       end
 
+      def expert_partitioner
+        items = []
+        if devicegraph
+          items << Item(Id(:expert_from_proposal), _("Start with Current Proposal"))
+        end
+        items << Item(Id(:expert_from_probed), _("Start with Existing Partitions"))
+        MenuButton(_("Expert Partitioner"), items)
+      end
+
       def dialog_content
         MarginBox(
           2, 1,
           VBox(
             MinHeight(8, summary),
             PushButton(Id(:guided), _("Guided Setup")),
-            PushButton(Id(:expert), _("Expert partitioner"))
+            expert_partitioner
           )
         )
       end
