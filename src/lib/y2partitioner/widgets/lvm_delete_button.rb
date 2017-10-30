@@ -28,7 +28,7 @@ Yast.import "Popup"
 module Y2Partitioner
   module Widgets
     # Button for deleting a volume group or logical volume
-    class DeleteLvmButton < BlkDeviceButton
+    class LvmDeleteButton < BlkDeviceButton
       # @macro seeAbstractWidget
       def label
         # TRANSLATORS: button label to delete a volume group or logical volume

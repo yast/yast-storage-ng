@@ -23,9 +23,9 @@
 require_relative "../test_helper"
 
 require "cwm/rspec"
-require "y2partitioner/widgets/delete_lvm_button"
+require "y2partitioner/widgets/lvm_delete_button"
 
-describe Y2Partitioner::Widgets::DeleteLvmButton do
+describe Y2Partitioner::Widgets::LvmDeleteButton do
   before do
     devicegraph_stub("lvm-two-vgs.yml")
   end

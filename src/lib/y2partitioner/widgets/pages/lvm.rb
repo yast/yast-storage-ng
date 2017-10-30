@@ -25,7 +25,7 @@ require "y2partitioner/widgets/lvm_devices_table"
 require "y2partitioner/widgets/lvm_add_button"
 require "y2partitioner/widgets/edit_lvm_button"
 require "y2partitioner/widgets/lvm_resize_button"
-require "y2partitioner/widgets/delete_lvm_button"
+require "y2partitioner/widgets/lvm_delete_button"
 
 module Y2Partitioner
   module Widgets
@@ -77,7 +77,7 @@ module Y2Partitioner
                 LvmAddButton.new(table),
                 EditLvmButton.new(pager: @pager, table: table),
                 LvmResizeButton.new(pager: @pager, table: table),
-                DeleteLvmButton.new(pager: @pager, table: table)
+                LvmDeleteButton.new(pager: @pager, table: table)
               )
             )
           )
