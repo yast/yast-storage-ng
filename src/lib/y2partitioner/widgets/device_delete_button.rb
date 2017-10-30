@@ -37,14 +37,14 @@ module Y2Partitioner
         _("Delete...")
       end
 
-      # Performs the delete action using the proper {Action} class
+      # Performs the delete action using the proper {Actions} class
       #
       # @see Actions::DeleteDevice#run
       # @see Actions::DeleteDisk
       # @see Actions::DeletePartition
       # @see Actions::DeleteLvmLv
       #
-      # @return [:redraw, nil] {:redraw} when the action is performed; {nil} otherwise
+      # @return [:redraw, nil] :redraw when the action is performed; nil otherwise
       def actions
         action_class = if device.is?(:disk)
           Actions::DeleteDisk
