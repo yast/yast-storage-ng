@@ -24,17 +24,18 @@ require "cwm"
 
 module Y2Partitioner
   module Widgets
-    # Base button class for modifying a block device (edit, resize, delete, etc)
-    class BlkDeviceButton < CWM::PushButton
+    # Base class for a button that performs some action over a specificic device,
+    # e.g., edit, resize, delete, etc.
+    class DeviceButton < CWM::PushButton
       # Constructor
       # @param pager [CWM::TreePager]
       # @param table [Y2Partitioner::Widgets::ConfigurableBlkDevicesTable]
-      # @param device [Y2Storage::BlkDevice]
+      # @param device [Y2Storage::Device]
       def initialize(pager: nil, table: nil, device: nil)
         textdomain "storage"
 
         unless device || table
-          raise ArgumentError, "Please provide either a block device or a table with devices"
+          raise ArgumentError, "Please provide either a device or a table with devices"
         end
 
         @pager = pager
@@ -57,6 +58,8 @@ module Y2Partitioner
       attr_reader :table
 
       # Device on which to act
+      #
+      # @return [Y2Storage::Device]
       def device
         @device || table.selected_device
       end

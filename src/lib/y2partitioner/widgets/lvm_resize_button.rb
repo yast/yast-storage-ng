@@ -21,7 +21,7 @@
 
 require "yast"
 require "cwm"
-require "y2partitioner/widgets/blk_device_button"
+require "y2partitioner/widgets/device_button"
 require "y2partitioner/ui_state"
 
 Yast.import "Popup"
@@ -29,7 +29,7 @@ Yast.import "Popup"
 module Y2Partitioner
   module Widgets
     # Button for resizing a volume group or logical volume
-    class LvmResizeButton < BlkDeviceButton
+    class LvmResizeButton < DeviceButton
       # @macro seeAbstractWidget
       def label
         # TRANSLATORS: button label to resize a volume group or logical volume
@@ -37,7 +37,7 @@ module Y2Partitioner
       end
 
       # TODO
-      # @see BlkDeviceButton#actions
+      # @see DeviceButton#actions
       def actions
         Yast::Popup.Warning("Not yet implemented")
       end

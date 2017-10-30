@@ -22,13 +22,13 @@
 require "yast"
 require "cwm"
 require "y2partitioner/actions/edit_blk_device"
-require "y2partitioner/widgets/blk_device_button"
+require "y2partitioner/widgets/device_button"
 require "y2partitioner/ui_state"
 
 module Y2Partitioner
   module Widgets
     # Button for editing a volume group or logical volume
-    class LvmEditButton < BlkDeviceButton
+    class LvmEditButton < DeviceButton
       # @macro seeAbstractWidget
       def label
         _("Edit...")
@@ -38,7 +38,7 @@ module Y2Partitioner
 
       # When a vg is edited, go directly to that vg entry in the tree view.
       # When a lv is edited, start the proper wizard.
-      # @see BlkDeviceButton#actions
+      # @see DeviceButton#actions
       def actions
         case device
         when Y2Storage::LvmVg

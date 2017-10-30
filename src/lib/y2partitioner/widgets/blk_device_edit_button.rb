@@ -22,7 +22,7 @@
 require "yast"
 require "cwm"
 require "y2partitioner/actions/edit_blk_device"
-require "y2partitioner/widgets/blk_device_button"
+require "y2partitioner/widgets/device_button"
 require "y2partitioner/ui_state"
 
 Yast.import "Popup"
@@ -31,13 +31,13 @@ module Y2Partitioner
   module Widgets
     # Button for opening the editing workflow (basically mount and format
     # options) on a block device.
-    class BlkDeviceEditButton < BlkDeviceButton
+    class BlkDeviceEditButton < DeviceButton
       # TRANSLATORS: button label to edit a block device
       def label
         _("Edit...")
       end
 
-      # @see BlkDeviceButton#actions
+      # @see DeviceButton#actions
       def actions
         UIState.instance.select_row(device.sid)
         res = Actions::EditBlkDevice.new(device).run
