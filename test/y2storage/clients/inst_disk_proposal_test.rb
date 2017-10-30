@@ -218,6 +218,53 @@ describe Y2Storage::Clients::InstDiskProposal do
       end
     end
 
+    describe "calling the expert partitioner" do
+      let(:partitioner) { double("Y2Partitioner::Dialogs::Main") }
+
+      before do
+        allow(Y2Partitioner::Dialogs::Main).to receive(:new).and_return partitioner
+
+        allow(Y2Storage::Dialogs::Proposal).to receive(:new).and_return(proposal_dialog)
+        # First open the partitioner, then force quit to end the test
+        allow(proposal_dialog).to receive(:run).and_return(action, :abort)
+      end
+
+      context "if received :expert_from_proposal from the proposal dialog" do
+        let(:action) { :expert_from_proposal }
+
+        before do
+          allow(proposal_dialog).to receive(:devicegraph).and_return proposed_graph
+        end
+
+        context "if there is a proposed devicegraph" do
+          let(:proposed_graph) { double("Y2Storage::Devicegraph") }
+
+          it "opens the partitioner with the proposed devicegraph as starting point" do
+            expect(partitioner).to receive(:run).with(storage_manager.probed, proposed_graph)
+            client.run
+          end
+        end
+
+        context "if no devicegraph has been proposed" do
+          let(:proposed_graph) { nil }
+
+          it "does not open the partitioner" do
+            expect(partitioner).to_not receive(:run)
+            client.run
+          end
+        end
+      end
+
+      context "if received :expert_from_probed from the proposal dialog" do
+        let(:action) { :expert_from_probed }
+
+        it "opens the partitioner with the probed devicegraph as starting point" do
+          expect(partitioner).to receive(:run).with(storage_manager.probed, storage_manager.probed)
+          client.run
+        end
+      end
+    end
+
     context "processing the guided setup result" do
       let(:guided_dialog) { double("Y2Storage::Dialogs::GuidedSetup") }
       let(:devicegraph) { double("Y2Storage::Devicegraph") }
@@ -286,7 +333,7 @@ describe Y2Storage::Clients::InstDiskProposal do
     context "processing the expert partitioner result" do
       before do
         allow(Y2Storage::Dialogs::Proposal).to receive(:new).and_return(proposal_dialog)
-        allow(proposal_dialog).to receive(:run).and_return :expert
+        allow(proposal_dialog).to receive(:run).and_return :expert_from_proposal
         allow(proposal_dialog).to receive(:proposal).and_return(proposal)
         allow(proposal_dialog).to receive(:devicegraph).and_return(devicegraph)
 

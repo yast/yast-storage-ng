@@ -62,8 +62,10 @@ module Y2Storage
           when :guided
             settings = dialog.proposal ? dialog.proposal.settings : new_settings
             guided_setup(settings)
-          when :expert
-            expert_partitioner
+          when :expert_from_proposal
+            expert_partitioner(@devicegraph) if @devicegraph
+          when :expert_from_probed
+            expert_partitioner(storage_manager.probed)
           end
         end
 
@@ -94,10 +96,10 @@ module Y2Storage
         end
       end
 
-      def expert_partitioner
+      def expert_partitioner(initial_graph)
         dialog = Y2Partitioner::Dialogs::Main.new
         result = without_title_on_left do
-          dialog.run(storage_manager.probed, @devicegraph)
+          dialog.run(storage_manager.probed, initial_graph)
         end
 
         case result
