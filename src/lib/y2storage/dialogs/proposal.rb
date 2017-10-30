@@ -61,11 +61,15 @@ module Y2Storage
       end
 
       def expert_from_proposal_handler
+        puts "WEIRD COVERAGE"
         finish_dialog(:expert_from_proposal)
+        puts "ONLY I TRAVIS"
       end
 
       def expert_from_probed_handler
+        puts "WEIRD COVERAGE TWO"
         finish_dialog(:expert_from_probed)
+        puts "ONLY I TRAVIS TOO"
       end
 
       def handle_event(input)
