@@ -124,10 +124,10 @@ module Y2Storage
       def expert_partitioner
         items = []
         if devicegraph
-          items << Item(Id(:expert_from_proposal), _("Start with Current Proposal"))
+          items << Item(Id(:expert_from_proposal), _("Start with &Current Proposal"))
         end
-        items << Item(Id(:expert_from_probed), _("Start with Existing Partitions"))
-        MenuButton(_("Expert Partitioner"), items)
+        items << Item(Id(:expert_from_probed), _("Start with Existing &Partitions"))
+        MenuButton(_("&Expert Partitioner"), items)
       end
 
       def dialog_content
@@ -135,7 +135,7 @@ module Y2Storage
           2, 1,
           VBox(
             MinHeight(8, summary),
-            PushButton(Id(:guided), _("Guided Setup")),
+            PushButton(Id(:guided), _("&Guided Setup")),
             expert_partitioner
           )
         )
