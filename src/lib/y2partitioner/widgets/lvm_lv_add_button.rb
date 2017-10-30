@@ -26,7 +26,7 @@ require "y2partitioner/actions/add_lvm_lv"
 module Y2Partitioner
   module Widgets
     # Button for opening the workflow to add a logical volume to a volume group
-    class AddLvmLvButton < CWM::PushButton
+    class LvmLvAddButton < CWM::PushButton
       # Constructor
       # @param vg [Y2Storage::LvmVg]
       def initialize(vg)

@@ -23,9 +23,9 @@
 require_relative "../test_helper"
 
 require "cwm/rspec"
-require "y2partitioner/widgets/add_lvm_lv_button"
+require "y2partitioner/widgets/lvm_lv_add_button"
 
-describe Y2Partitioner::Widgets::AddLvmLvButton do
+describe Y2Partitioner::Widgets::LvmLvAddButton do
   before do
     devicegraph_stub("lvm-two-vgs.yml")
   end
