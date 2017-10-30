@@ -1,4 +1,12 @@
 -------------------------------------------------------------------
+Mon Oct 30 13:32:02 UTC 2017 - ancor@suse.com
+
+- Added an option in the installer to run the expert partitioner
+  with the current storage layout as starting point.
+- Possible fix for bsc#1055644 and part of fate#318196.
+- 4.0.14
+
+-------------------------------------------------------------------
 Fri Oct 27 11:33:55 UTC 2017 - jsrain@suse.cz
 
 - Limit maximal proposed size of EFI partition (bsc#1062775)
