@@ -23,32 +23,24 @@ require "y2storage/autoinst_issues/issue"
 
 module Y2Storage
   module AutoinstIssues
-    # Represents an AutoYaST situation where a mandatory value is missing.
+    # Represents a situation where, although a device was supposed to be reused,
+    # no enough information was provided in order to determine which device to reuse.
     #
-    # @example Missing value for attribute 'size' in '/dev/sda' device.
+    # @example
     #   section = AutoinstProfile::PartitionSection.new_from_hashes({})
-    #   problem = MissingValue.new(section, :size)
-    #   problem.attr #=> :size
-    class MissingValue < Issue
-      # @return [String] Device affected by this error
-      attr_reader :device
-
-      # @return [Symbol] Name of the missing attribute
-      attr_reader :attr
-
+    #   problem = MissingReuseInfo.new(section)
+    class MissingReuseInfo < Issue
       # @param section [#parent,#section_name] Section where it was detected (see {AutoinstProfile})
-      # @param attr    [Symbol] Name of the missing attribute
-      def initialize(section, attr)
+      def initialize(section)
         @section = section
-        @attr = attr
       end
 
-      # Fatal problem
+      # Return problem severity
       #
-      # @return [Symbol] :fatal
+      # @return [Symbol] :warn
       # @see Issue#severity
       def severity
-        :fatal
+        :warn
       end
 
       # Return the error message to be displayed
@@ -56,8 +48,7 @@ module Y2Storage
       # @return [String] Error message
       # @see Issue#message
       def message
-        # TRANSLATORS: AutoYaST element
-        _("Missing element '%{attr}'") % { attr: attr }
+        _("Not enough information to locate a device to reuse")
       end
     end
   end

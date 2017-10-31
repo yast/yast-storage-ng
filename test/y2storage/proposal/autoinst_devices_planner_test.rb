@@ -89,13 +89,51 @@ describe Y2Storage::Proposal::AutoinstDevicesPlanner do
 
       context "when a partition label is specified" do
         let(:root_spec) do
-          { "create" => false, "mount" => "/", "filesystem" => "ext4", "label" => "root" }
+          { "create" => false, "mount" => "/", "filesystem" => :ext4, "label" => "root" }
         end
 
         it "reuses the partition with that label" do
           devices = planner.planned_devices(drives_map)
           root = devices.find { |d| d.mount_point == "/" }
           expect(root.reuse).to eq("/dev/sda3")
+        end
+      end
+
+      context "when the partition to reuse does not exist" do
+        let(:root_spec) do
+          { "create" => false, "mount" => "/", "filesystem" => :ext4, "partition_nr" => 99 }
+        end
+
+        it "adds a new partition" do
+          devices = planner.planned_devices(drives_map)
+          root = devices.find { |d| d.mount_point == "/" }
+          expect(root.reuse).to be_nil
+        end
+
+        it "registers an issue" do
+          expect(issues_list).to be_empty
+          planner.planned_devices(drives_map)
+          issue = issues_list.find { |i| i.is_a?(Y2Storage::AutoinstIssues::MissingReusableDevice) }
+          expect(issue).to_not be_nil
+        end
+      end
+
+      context "when no partition number or label is specified" do
+        let(:root_spec) do
+          { "create" => false, "mount" => "/", "filesystem" => :ext4 }
+        end
+
+        it "adds a new partition" do
+          devices = planner.planned_devices(drives_map)
+          root = devices.find { |d| d.mount_point == "/" }
+          expect(root.reuse).to be_nil
+        end
+
+        it "registers an issue" do
+          expect(issues_list).to be_empty
+          planner.planned_devices(drives_map)
+          issue = issues_list.find { |i| i.is_a?(Y2Storage::AutoinstIssues::MissingReuseInfo) }
+          expect(issue).to_not be_nil
         end
       end
     end
@@ -157,7 +195,8 @@ describe Y2Storage::Proposal::AutoinstDevicesPlanner do
       context "when an invalid value is given" do
         let(:size) { "huh?" }
 
-        it "registers an error" do
+        it "registers an issue" do
+          expect(issues_list).to be_empty
           planner.planned_devices(drives_map)
           issue = issues_list.find { |i| i.is_a?(Y2Storage::AutoinstIssues::InvalidValue) }
           expect(issue.value).to eq("huh?")
@@ -216,7 +255,8 @@ describe Y2Storage::Proposal::AutoinstDevicesPlanner do
             expect(home).to be_nil
           end
 
-          it "reports an error" do
+          it "registers an issue" do
+            expect(issues_list).to be_empty
             planner.planned_devices(drives_map)
             issue = issues_list.find { |i| i.is_a?(Y2Storage::AutoinstIssues::InvalidValue) }
             expect(issue.value).to eq("auto")
@@ -491,7 +531,8 @@ describe Y2Storage::Proposal::AutoinstDevicesPlanner do
           expect(vg.lvs).to be_empty
         end
 
-        it "registers an error" do
+        it "registers an issue" do
+          expect(issues_list).to be_empty
           planner.planned_devices(drives_map)
           issue = issues_list.find { |i| i.is_a?(Y2Storage::AutoinstIssues::InvalidValue) }
           expect(issue.value).to eq("huh?")
@@ -503,50 +544,129 @@ describe Y2Storage::Proposal::AutoinstDevicesPlanner do
       context "reusing logical volumes" do
         let(:scenario) { "lvm-two-vgs" }
 
-        let(:root_spec) do
-          {
-            "create" => false, "mount" => "/", "filesystem" => "ext4", "lv_name" => "lv1",
-            "size" => "20G", "label" => "rootfs"
-          }
-        end
+        context "when volume name is specified" do
+          let(:root_spec) do
+            {
+              "create" => false, "mount" => "/", "filesystem" => "ext4", "lv_name" => "lv1",
+              "size" => "20G"
+            }
+          end
 
-        it "sets the reuse attribute of the volume group" do
-          _pv, vg = planner.planned_devices(drives_map)
-          expect(vg.reuse).to eq(lvm_group)
-          expect(vg.make_space_policy).to eq(:remove)
-        end
+          it "sets the reuse attribute of the volume group" do
+            _pv, vg = planner.planned_devices(drives_map)
+            expect(vg.reuse).to eq(lvm_group)
+            expect(vg.make_space_policy).to eq(:remove)
+          end
 
-        it "sets the reuse attribute of logical volumes" do
-          _pv, vg = planner.planned_devices(drives_map)
-          expect(vg.reuse).to eq(lvm_group)
-          expect(vg.lvs).to contain_exactly(
-            an_object_having_attributes(
-              "logical_volume_name" => "lv1",
-              "reuse"               => "/dev/vg0/lv1"
+          it "sets the reuse attribute of logical volumes" do
+            _pv, vg = planner.planned_devices(drives_map)
+            expect(vg.reuse).to eq(lvm_group)
+            expect(vg.lvs).to contain_exactly(
+              an_object_having_attributes(
+                "logical_volume_name" => "lv1",
+                "reuse"               => "/dev/vg0/lv1"
+              )
             )
-          )
-        end
-      end
-
-      context "reusing logical volumes by label" do
-        let(:scenario) { "lvm-two-vgs" }
-
-        let(:root_spec) do
-          {
-            "create" => false, "mount" => "/", "filesystem" => "ext4",
-            "size" => "20G", "label" => "rootfs"
-          }
+          end
         end
 
-        it "sets the reuse attribute of logical volumes" do
-          _pv, vg = planner.planned_devices(drives_map)
-          expect(vg.reuse).to eq(lvm_group)
-          expect(vg.lvs).to contain_exactly(
-            an_object_having_attributes(
-              "logical_volume_name" => "lv2",
-              "reuse"               => "/dev/vg0/lv2"
+        context "when label is specified" do
+          let(:root_spec) do
+            {
+              "create" => false, "mount" => "/", "filesystem" => "ext4",
+              "size" => "20G", "label" => "rootfs"
+            }
+          end
+
+          it "sets the reuse attribute of logical volumes" do
+            _pv, vg = planner.planned_devices(drives_map)
+            expect(vg.reuse).to eq(lvm_group)
+            expect(vg.lvs).to contain_exactly(
+              an_object_having_attributes(
+                "logical_volume_name" => "lv2",
+                "reuse"               => "/dev/vg0/lv2"
+              )
             )
-          )
+          end
+        end
+
+        context "when the logical volume to be reused does not exist" do
+          let(:root_spec) do
+            {
+              "create" => false, "mount" => "/", "filesystem" => "ext4", "lv_name" => "new_lv",
+              "size" => "20G"
+            }
+          end
+
+          it "adds a new logical volume" do
+            _pv, vg = planner.planned_devices(drives_map)
+            expect(vg.reuse).to be_nil
+            expect(vg.lvs).to contain_exactly(
+              an_object_having_attributes(
+                "logical_volume_name" => "new_lv",
+                "reuse"               => nil
+              )
+            )
+          end
+
+          it "registers an issue" do
+            expect(issues_list).to be_empty
+            planner.planned_devices(drives_map)
+            issue = issues_list.find { |i| i.is_a?(Y2Storage::AutoinstIssues::MissingReusableDevice) }
+            expect(issue).to_not be_nil
+          end
+        end
+
+        context "when no volume name or label is specified" do
+          let(:root_spec) do
+            {
+              "create" => false, "mount" => "/", "filesystem" => "ext4", "size" => "20G"
+            }
+          end
+
+          it "adds a new logical volume" do
+            _pv, vg = planner.planned_devices(drives_map)
+            expect(vg.reuse).to be_nil
+            expect(vg.lvs).to contain_exactly(
+              an_object_having_attributes(
+                "reuse" => nil
+              )
+            )
+          end
+
+          it "registers an issue" do
+            expect(issues_list).to be_empty
+            planner.planned_devices(drives_map)
+            issue = issues_list.find { |i| i.is_a?(Y2Storage::AutoinstIssues::MissingReuseInfo) }
+            expect(issue).to_not be_nil
+          end
+
+          it "does not register a missing reusable device error" do
+            expect(issues_list).to be_empty
+            planner.planned_devices(drives_map)
+            issue = issues_list.find { |i| i.is_a?(Y2Storage::AutoinstIssues::MissingReusableDevice) }
+            expect(issue).to be_nil
+          end
+        end
+
+        context "when the volume group does not exist" do
+          let(:vg) do
+            { "device" => "/dev/dummy", "partitions" => [root_spec], "type" => :CT_LVM }
+          end
+
+          let(:root_spec) do
+            {
+              "create" => false, "mount" => "/", "filesystem" => "ext4", "lv_name" => "lv1",
+              "size" => "20G"
+            }
+          end
+
+          it "registers an issue" do
+            expect(issues_list).to be_empty
+            planner.planned_devices(drives_map)
+            issue = issues_list.find { |i| i.is_a?(Y2Storage::AutoinstIssues::MissingReusableDevice) }
+            expect(issue).to_not be_nil
+          end
         end
       end
 
@@ -567,6 +687,31 @@ describe Y2Storage::Proposal::AutoinstDevicesPlanner do
             "reuse"             => lvm_group,
             "make_space_policy" => :keep
           )
+        end
+
+        context "but volume group does not exist" do
+          let(:vg) do
+            {
+              "device" => "/dev/dummy", "partitions" => [root_spec], "type" => :CT_LVM,
+              "keep_unknown_lv" => true
+            }
+          end
+
+          it "adds a new volume group" do
+            _pv, vg = planner.planned_devices(drives_map)
+            expect(vg).to have_attributes(
+              "volume_group_name" => "dummy",
+              "reuse"             => nil,
+              "make_space_policy" => :keep
+            )
+          end
+
+          it "registers an issue" do
+            expect(issues_list).to be_empty
+            planner.planned_devices(drives_map)
+            issue = issues_list.find { |i| i.is_a?(Y2Storage::AutoinstIssues::MissingReusableDevice) }
+            expect(issue).to_not be_nil
+          end
         end
       end
 

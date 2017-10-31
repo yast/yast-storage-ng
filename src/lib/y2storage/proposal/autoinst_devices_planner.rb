@@ -52,7 +52,7 @@ module Y2Storage
       # Returns an array of planned devices according to the drives map
       #
       # @param drives_map [Proposal::AutoinstDrivesMap] Drives map from AutoYaST
-      # @return [Array<Planned::Partition>] List of planned partitions
+      # @return [Array<Planned::Device>] List of planned devices
       def planned_devices(drives_map)
         result = []
         @default_subvolumes_used = false
@@ -70,8 +70,7 @@ module Y2Storage
           end
         end
 
-        checker = BootRequirementsChecker.new(devicegraph, planned_devices: result)
-        result.concat(checker.needed_partitions)
+        add_boot(result)
         remove_shadowed_subvols(result)
 
         result
@@ -245,10 +244,8 @@ module Y2Storage
       def add_partition_reuse(partition, section)
         partition_to_reuse = find_partition_to_reuse(devicegraph, section)
         return unless partition_to_reuse
+        partition.filesystem_type ||= partition_to_reuse.filesystem_type
         add_device_reuse(partition, partition_to_reuse.name, !!section.format)
-        # TODO: possible errors here
-        #   - missing information about what device to use
-        #   - the specified device was not found
       end
 
       # Set 'reusing' attributes for a logical volume
@@ -263,6 +260,7 @@ module Y2Storage
         lv_to_reuse = find_lv_to_reuse(devicegraph, vg_name, section)
         return unless lv_to_reuse
         lv.logical_volume_name ||= lv_to_reuse.lv_name
+        lv.filesystem_type ||= lv_to_reuse.filesystem_type
         add_device_reuse(lv, lv_to_reuse.name, !!section.format)
       end
 
@@ -283,7 +281,7 @@ module Y2Storage
         vg.make_space_policy = drive.keep_unknown_lv ? :keep : :remove
 
         return unless vg.make_space_policy == :keep || vg.lvs.any?(&:reuse?)
-        vg_to_reuse = find_vg_to_reuse(devicegraph, vg)
+        vg_to_reuse = find_vg_to_reuse(devicegraph, vg, drive)
         vg.reuse = vg_to_reuse.vg_name if vg_to_reuse
       end
 
@@ -291,11 +289,18 @@ module Y2Storage
       # @param part_section [AutoinstProfile::PartitionSection] Partition specification
       #   from AutoYaST
       def find_partition_to_reuse(devicegraph, part_section)
-        if part_section.partition_nr
-          devicegraph.partitions.find { |i| i.number == part_section.partition_nr }
-        elsif part_section.label
-          devicegraph.partitions.find { |i| i.filesystem_label == part_section.label }
-        end
+        device =
+          if part_section.partition_nr
+            devicegraph.partitions.find { |i| i.number == part_section.partition_nr }
+          elsif part_section.label
+            devicegraph.partitions.find { |i| i.filesystem_label == part_section.label }
+          else
+            issues_list.add(:missing_reuse_info, part_section)
+            nil
+          end
+
+        issues_list.add(:missing_reusable_device, part_section) unless device
+        device
       end
 
       # @param devicegraph [Devicegraph] Devicegraph to search for the logical volume to reuse
@@ -303,19 +308,33 @@ module Y2Storage
       # @param part_section   [AutoinstProfile::PartitionSection] LV specification from AutoYaST
       def find_lv_to_reuse(devicegraph, vg_name, part_section)
         vg = devicegraph.lvm_vgs.find { |v| v.vg_name == vg_name }
-        return unless vg
-        if part_section.lv_name
-          vg.lvm_lvs.find { |v| v.lv_name == part_section.lv_name }
-        elsif part_section.label
-          vg.lvm_lvs.find { |v| v.filesystem_label == part_section.label }
+        if vg.nil?
+          issues_list.add(:missing_reusable_device, part_section)
+          return
         end
+
+        device =
+          if part_section.lv_name
+            vg.lvm_lvs.find { |v| v.lv_name == part_section.lv_name }
+          elsif part_section.label
+            vg.lvm_lvs.find { |v| v.filesystem_label == part_section.label }
+          else
+            issues_list.add(:missing_reuse_info, part_section)
+            :missing_info
+          end
+
+        issues_list.add(:missing_reusable_device, part_section) unless device
+        :missing_info == device ? nil : device
       end
 
       # @param devicegraph [Devicegraph] Devicegraph to search for the volume group to reuse
       # @param vg          [Planned::LvmVg] Planned volume group
-      def find_vg_to_reuse(devicegraph, vg)
+      # @param drive       [AutoinstProfile::DriveSection] drive section describing
+      def find_vg_to_reuse(devicegraph, vg, drive)
         return nil unless vg.volume_group_name
-        devicegraph.lvm_vgs.find { |v| v.vg_name == vg.volume_group_name }
+        device = devicegraph.lvm_vgs.find { |v| v.vg_name == vg.volume_group_name }
+        issues_list.add(:missing_reusable_device, drive) unless device
+        device
       end
 
       # @return [DiskSize] Minimal partition size
@@ -402,6 +421,23 @@ module Y2Storage
       # @see AutoinstSizeParser
       def parse_size(section, min, max)
         AutoinstSizeParser.new(proposal_settings).parse(section.size, section.mount, min, max)
+      end
+
+      # Add devices to make the system bootable
+      #
+      # @return [Array<Planned::Device>] List of planned devices
+      def add_boot(devices)
+        return unless root?(devices)
+        checker = BootRequirementsChecker.new(devicegraph, planned_devices: devices)
+        devices.concat(checker.needed_partitions)
+      end
+
+      # Determines whether the list of devices includes a root partition
+      #
+      # @return [Boolean] true if there is a root partition; false otherwise.
+      def root?(devices)
+        return true if devices.any? { |d| d.respond_to?(:mount_point) && d.mount_point == "/" }
+        issues_list.add(:missing_root)
       end
     end
   end

@@ -7,7 +7,7 @@ module Y2Storage
     class Issue
       include Yast::I18n
 
-      # @return [Object] section where the problem was detected (see {AutoinstProfile})
+      # @return [#parent,#section_name] Section where it was detected (see {AutoinstProfile})
       attr_reader :section
 
       # Return problem severity

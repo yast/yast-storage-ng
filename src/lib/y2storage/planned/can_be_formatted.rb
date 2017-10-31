@@ -77,6 +77,7 @@ module Y2Storage
         final_device = final_device!(blk_dev)
         return nil unless filesystem_type
 
+        final_device.remove_descendants
         filesystem = final_device.create_blk_filesystem(filesystem_type)
         assign_mountpoint(filesystem)
         setup_filesystem(filesystem)
