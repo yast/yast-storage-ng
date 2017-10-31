@@ -49,7 +49,7 @@ module Y2Storage
       #
       # @return [Integer,String,Symbol] Invalid value
       def value
-        section.send(attr)
+        section.public_send(attr)
       end
 
       # Return problem severity

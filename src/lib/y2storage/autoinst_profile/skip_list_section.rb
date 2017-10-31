@@ -63,8 +63,8 @@ module Y2Storage
       class << self
         # Creates a skip list from an AutoYaST profile
         #
-        # @param profile_rules [Array<Hash>] List of profile skip rules
-        # @param parent        [Object]      Parent section
+        # @param profile_rules [Array<Hash>]           List of profile skip rules
+        # @param parent        [#parent,#section_name] Parent section
         # @return [SkipList]
         def new_from_hashes(profile_rules, parent = nil)
           rules = profile_rules.map { |h| SkipRule.from_profile_rule(h) }
@@ -74,8 +74,8 @@ module Y2Storage
 
       # Constructor
       #
-      # @param rules  [Array<SkipRule>] List of rules to apply
-      # @param parent [Object]          parent section
+      # @param rules  [Array<SkipRule>]       List of rules to apply
+      # @param parent [#parent,#section_name] parent section
       def initialize(rules, parent = nil)
         @rules = rules
         @parent = parent

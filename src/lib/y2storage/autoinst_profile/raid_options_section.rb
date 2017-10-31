@@ -58,7 +58,7 @@ module Y2Storage
       # @!attribute raid_name
       #   @return [String] undocumented attribute
 
-      # @param parent [Object] parent section
+      # @param parent [#parent,#section_name] parent section
       def initialize(parent = nil)
         @parent = parent
         @device_order = []

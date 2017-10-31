@@ -100,7 +100,7 @@ module Y2Storage
 
       # Constructor
       #
-      # @param parent [Object] parent section
+      # @param parent [#parent,#section_name] parent section
       def initialize(parent = nil)
         @parent = parent
         @partitions = []

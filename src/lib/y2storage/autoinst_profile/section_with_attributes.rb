@@ -47,10 +47,10 @@ module Y2Storage
         # contain the relevant information. Attributes are set to nil for
         # missing keys and for blank values.
         #
-        # @param hash   [Hash]   content of the corresponding section of the profile.
+        # @param hash   [Hash] content of the corresponding section of the profile.
         #   Each element of the hash corresponds to one of the attributes
         #   defined in the section.
-        # @param parent [Object] parent section
+        # @param parent [#parent,#section_name] parent section
         # @return [SectionWithAttributes]
         def new_from_hashes(hash, parent = nil)
           result = new(parent)
@@ -71,7 +71,7 @@ module Y2Storage
 
       # This value only makes sense when {.new_from_hashes} is used.
       #
-      # @return [Object] Parent section
+      # @return [#parent,#section_name] Parent section
       attr_reader :parent
 
       # Constructor
@@ -122,7 +122,7 @@ module Y2Storage
         klass_name = self.class.name.split("::").last
         klass_name
           .gsub(/([a-z])([A-Z])/, "\\1_\\2").downcase
-          .gsub(/_section\z/, "")
+          .chomp("_section")
       end
 
     protected
