@@ -30,9 +30,6 @@ module Y2Storage
     #   problem = MissingValue.new(section, :size)
     #   problem.attr #=> :size
     class MissingValue < Issue
-      # @return [String] Device affected by this error
-      attr_reader :device
-
       # @return [Symbol] Name of the missing attribute
       attr_reader :attr
 
