@@ -1,4 +1,16 @@
 -------------------------------------------------------------------
+Tue Oct 31 12:14:18 UTC 2017 - igonzalezsosa@suse.com
+
+- AutoYaST: fix reuse of partitions (bsc#1060637).
+- AutoYaST: improve error handling when trying to reuse a partition
+  fails.
+- AutoYaST: when a problem is detected while creating a proposal,
+  register in which section it was found.
+- AutoYaST: register an issue when a proposel does not contain
+  a root (/) partition.
+- 4.0.15
+
+-------------------------------------------------------------------
 Mon Oct 30 13:32:02 UTC 2017 - ancor@suse.com
 
 - Added an option in the installer to run the expert partitioner
