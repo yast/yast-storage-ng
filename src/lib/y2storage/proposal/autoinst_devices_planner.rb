@@ -330,8 +330,7 @@ module Y2Storage
         size_info = parse_size(part_section, PARTITION_MIN_SIZE, disk.size)
 
         if size_info.nil?
-          section_id = part_section.mount || disk.name
-          issues_list.add(:invalid_value, section_id, :size, part_section.size)
+          issues_list.add(:invalid_value, part_section, :size)
           return false
         end
 
@@ -351,8 +350,7 @@ module Y2Storage
         size_info = parse_size(lv_section, vg.extent_size, DiskSize.unlimited)
 
         if size_info.nil?
-          section_id = lv_section.mount || vg.name
-          issues_list.add(:invalid_value, section_id, :size, lv_section.size)
+          issues_list.add(:invalid_value, lv_section, :size)
           return false
         end
 

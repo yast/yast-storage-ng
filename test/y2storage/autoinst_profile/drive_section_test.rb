@@ -21,9 +21,14 @@
 # find current contact information at www.suse.com.
 
 require_relative "../spec_helper"
+require_relative "#{TEST_PATH}/support/autoinst_profile_sections_examples"
 require "y2storage"
 
 describe Y2Storage::AutoinstProfile::DriveSection do
+  subject(:section) { described_class.new }
+
+  include_examples "autoinst section"
+
   before { fake_scenario("autoyast_drive_examples") }
 
   def device(name)
@@ -32,7 +37,8 @@ describe Y2Storage::AutoinstProfile::DriveSection do
 
   describe ".new_from_hashes" do
     context "when type is not specified" do
-      let(:hash) { {} }
+      let(:root) { { "mount" => "/" } }
+      let(:hash) { { "partitions" => [root] } }
 
       it "initializes it to :CT_DISK" do
         expect(described_class.new_from_hashes(hash).type).to eq(:CT_DISK)
@@ -44,6 +50,12 @@ describe Y2Storage::AutoinstProfile::DriveSection do
         it "initializes it to :CT_MD" do
           expect(described_class.new_from_hashes(hash).type).to eq(:CT_MD)
         end
+      end
+
+      it "initializes partitions" do
+        expect(Y2Storage::AutoinstProfile::PartitionSection).to receive(:new_from_hashes)
+          .with(root, Y2Storage::AutoinstProfile::DriveSection)
+        described_class.new_from_hashes(hash)
       end
     end
 
@@ -60,6 +72,15 @@ describe Y2Storage::AutoinstProfile::DriveSection do
 
       it "sets 'use' as an array of numbers" do
         expect(described_class.new_from_hashes(hash).use).to eq([1, 3, 5])
+      end
+
+      context "when a parent is given" do
+        let(:parent) { double("parent") }
+        let(:section) { described_class.new_from_hashes(hash, parent) }
+
+        it "sets the index" do
+          expect(section.parent).to eq(parent)
+        end
       end
     end
   end
@@ -441,6 +462,12 @@ describe Y2Storage::AutoinstProfile::DriveSection do
           expect(section.name_for_md).to eq "/dev/md7"
         end
       end
+    end
+  end
+
+  describe "#section_name" do
+    it "returns 'drives'" do
+      expect(section.section_name).to eq("drives")
     end
   end
 end

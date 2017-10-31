@@ -159,12 +159,10 @@ describe Y2Storage::Proposal::AutoinstDevicesPlanner do
 
         it "registers an error" do
           planner.planned_devices(drives_map)
-          expect(issues_list.to_a.size).to eq(1)
-          error = issues_list.to_a.first
-          expect(error.value).to eq("huh?")
-          expect(error.attr).to eq(:size)
-          expect(error.device).to eq("/")
-          expect(error.new_value).to eq(:skip)
+          issue = issues_list.find { |i| i.is_a?(Y2Storage::AutoinstIssues::InvalidValue) }
+          expect(issue.value).to eq("huh?")
+          expect(issue.attr).to eq(:size)
+          expect(issue.new_value).to eq(:skip)
         end
       end
 
@@ -220,11 +218,9 @@ describe Y2Storage::Proposal::AutoinstDevicesPlanner do
 
           it "reports an error" do
             planner.planned_devices(drives_map)
-            expect(issues_list.to_a.size).to eq(1)
-            error = issues_list.to_a.first
-            expect(error.value).to eq("auto")
-            expect(error.attr).to eq(:size)
-            expect(error.device).to eq("/home")
+            issue = issues_list.find { |i| i.is_a?(Y2Storage::AutoinstIssues::InvalidValue) }
+            expect(issue.value).to eq("auto")
+            expect(issue.attr).to eq(:size)
           end
 
           context "and device will be used as swap" do
@@ -497,12 +493,10 @@ describe Y2Storage::Proposal::AutoinstDevicesPlanner do
 
         it "registers an error" do
           planner.planned_devices(drives_map)
-          expect(issues_list.to_a.size).to eq(1)
-          error = issues_list.to_a.first
-          expect(error.value).to eq("huh?")
-          expect(error.attr).to eq(:size)
-          expect(error.device).to eq("/")
-          expect(error.new_value).to eq(:skip)
+          issue = issues_list.find { |i| i.is_a?(Y2Storage::AutoinstIssues::InvalidValue) }
+          expect(issue.value).to eq("huh?")
+          expect(issue.attr).to eq(:size)
+          expect(issue.new_value).to eq(:skip)
         end
       end
 

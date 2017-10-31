@@ -82,16 +82,12 @@ describe Y2Storage::Proposal::AutoinstSpaceMaker do
         expect(devicegraph.partitions.size).to eq(3)
       end
 
-      it "registers a warning" do
+      it "registers an issue" do
         subject.cleaned_devicegraph(fake_devicegraph, drives_map)
 
-        problems = subject.issues_list.to_a
-        expect(problems.size).to eq(1)
-        problem = problems.first
-        expect(problem.device).to eq("/dev/sda")
-        expect(problem.attr).to eq(:use)
-        expect(problem.value).to eq("wrong-value")
-        expect(problem).to be_a(Y2Storage::AutoinstIssues::InvalidValue)
+        issue = subject.issues_list.find { |i| i.is_a?(Y2Storage::AutoinstIssues::InvalidValue) }
+        expect(issue.attr).to eq(:use)
+        expect(issue.value).to eq("wrong-value")
       end
     end
 
@@ -103,15 +99,11 @@ describe Y2Storage::Proposal::AutoinstSpaceMaker do
         expect(devicegraph.partitions.size).to eq(3)
       end
 
-      it "registers a warning" do
+      it "registers an issue" do
         subject.cleaned_devicegraph(fake_devicegraph, drives_map)
 
-        problems = subject.issues_list.to_a
-        expect(problems.size).to eq(1)
-        problem = problems.first
-        expect(problem.device).to eq("/dev/sda")
-        expect(problem.attr).to eq(:use)
-        expect(problem).to be_a(Y2Storage::AutoinstIssues::MissingValue)
+        issue = subject.issues_list.find { |i| i.is_a?(Y2Storage::AutoinstIssues::MissingValue) }
+        expect(issue.attr).to eq(:use)
       end
     end
 

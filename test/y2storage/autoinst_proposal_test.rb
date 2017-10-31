@@ -111,14 +111,6 @@ describe Y2Storage::AutoinstProposal do
       end
     end
 
-    context "when the requested layout is not possible" do
-      let(:root) { ROOT_PART.merge("create" => true, "size" => "2TB") }
-
-      it "raises an error" do
-        expect { proposal.propose }.to raise_error(Y2Storage::Error)
-      end
-    end
-
     describe "reusing partitions" do
       let(:partitioning) do
         [{ "device" => "/dev/sda", "use" => "free", "partitions" => [root] }]

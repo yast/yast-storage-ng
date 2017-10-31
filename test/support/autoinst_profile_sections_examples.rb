@@ -1,7 +1,6 @@
-#!/usr/bin/env rspec
 # encoding: utf-8
 
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2016] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -20,26 +19,17 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require_relative "../../spec_helper"
-require "y2storage/autoinst_issues/missing_value"
-require "y2storage/autoinst_profile/partition_section"
+require "y2storage/autoinst_profile/section_with_attributes"
 
-describe Y2Storage::AutoinstIssues::MissingValue do
-  subject(:issue) { described_class.new(section, :size) }
-
-  let(:section) do
-    instance_double(Y2Storage::AutoinstProfile::PartitionSection)
+RSpec.shared_examples "autoinst section" do
+  let(:parent) do
+    Y2Storage::AutoinstProfile::SectionWithAttributes.new
   end
 
-  describe "#message" do
-    it "returns a description of the issue" do
-      expect(issue.message).to match(/Missing element 'size'/)
-    end
-  end
-
-  describe "#severity" do
-    it "returns :fatal" do
-      expect(issue.severity).to eq(:fatal)
+  describe ".new_from_hashes" do
+    it "sets the parent section" do
+      section = described_class.new_from_hashes({}, parent)
+      expect(section.parent).to eq(parent)
     end
   end
 end

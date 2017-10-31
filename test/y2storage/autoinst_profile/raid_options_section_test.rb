@@ -21,10 +21,13 @@
 # find current contact information at www.suse.com.
 
 require_relative "../spec_helper"
+require_relative "#{TEST_PATH}/support/autoinst_profile_sections_examples"
 require "y2storage"
 
 describe Y2Storage::AutoinstProfile::RaidOptionsSection do
   using Y2Storage::Refinements::SizeCasts
+
+  include_examples "autoinst section"
 
   let(:spec) do
     {

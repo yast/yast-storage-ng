@@ -7,6 +7,9 @@ module Y2Storage
     class Issue
       include Yast::I18n
 
+      # @return [Object] section where the problem was detected (see {AutoinstProfile})
+      attr_reader :section
+
       # Return problem severity
       #
       # * :fatal: abort the installation.

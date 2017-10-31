@@ -22,14 +22,18 @@
 
 require_relative "../../spec_helper"
 require "y2storage/autoinst_issues/invalid_value"
+require "y2storage/autoinst_profile/partition_section"
 
 describe Y2Storage::AutoinstIssues::InvalidValue do
-  subject(:issue) { described_class.new("/", :size, "auto") }
+  subject(:issue) { described_class.new(section, :size) }
+
+  let(:section) do
+    instance_double(Y2Storage::AutoinstProfile::PartitionSection, size: "auto")
+  end
 
   describe "#message" do
     it "includes relevant information" do
       message = issue.message
-      expect(message).to include "/"
       expect(message).to include "size"
       expect(message).to include "auto"
     end
@@ -41,7 +45,7 @@ describe Y2Storage::AutoinstIssues::InvalidValue do
     end
 
     context "when a new value was given" do
-      subject(:issue) { described_class.new("/", :size, "auto", "some-value") }
+      subject(:issue) { described_class.new(section, :size, "some-value") }
 
       it "includes a warning about the section being skipped" do
         expect(issue.message).to include "replaced by 'some-value'"
@@ -49,7 +53,7 @@ describe Y2Storage::AutoinstIssues::InvalidValue do
     end
 
     context "when :skip is given as new value" do
-      subject(:issue) { described_class.new("/", :size, "auto", :skip) }
+      subject(:issue) { described_class.new(section, :size, :skip) }
 
       it "includes a warning about the section being skipped" do
         expect(issue.message).to include "the section will be skipped"

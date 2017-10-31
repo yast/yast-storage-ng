@@ -37,6 +37,16 @@ module Y2Storage
         @drives = []
       end
 
+      # Returns the parent section
+      #
+      # This method only exist to conform to other sections API (like classes
+      # derived from {SectionWithAttributes}).
+      #
+      # @return [nil]
+      def parent
+        nil
+      end
+
       # Creates an instance based on the profile representation used by the
       # AutoYaST modules (nested arrays and hashes).
       #
@@ -52,7 +62,7 @@ module Y2Storage
       def self.new_from_hashes(drives_array)
         result = new
         result.drives = drives_array.each_with_object([]) do |hash, array|
-          drive = DriveSection.new_from_hashes(hash)
+          drive = DriveSection.new_from_hashes(hash, self)
           array << drive if drive
         end
         result
@@ -107,6 +117,13 @@ module Y2Storage
       # @return [Array<DriveSection>]
       def md_drives
         drives.select { |d| d.type == :CT_MD }
+      end
+
+      # Return section name
+      #
+      # @return [String] "partitioning"
+      def section_name
+        "partitioning"
       end
     end
   end

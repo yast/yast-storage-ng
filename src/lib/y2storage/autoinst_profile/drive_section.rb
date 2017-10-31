@@ -98,7 +98,11 @@ module Y2Storage
       # @!attribute skip_list
       #   @return [Array<SkipListSection] collection of <skip_list> entries
 
-      def initialize
+      # Constructor
+      #
+      # @param parent [#parent,#section_name] parent section
+      def initialize(parent = nil)
+        @parent = parent
         @partitions = []
         @skip_list = SkipListSection.new([])
       end
@@ -114,7 +118,7 @@ module Y2Storage
         @type ||= default_type_for(hash)
         @use = use_value_from_string(hash["use"]) if hash["use"]
         @partitions = partitions_from_hash(hash)
-        @skip_list = SkipListSection.new_from_hashes(hash.fetch("skip_list", []))
+        @skip_list = SkipListSection.new_from_hashes(hash.fetch("skip_list", []), self)
       end
 
       def default_type_for(hash)
@@ -190,11 +194,18 @@ module Y2Storage
         hash
       end
 
+      # Return section name
+      #
+      # @return [String] "drives"
+      def section_name
+        "drives"
+      end
+
     protected
 
       def partitions_from_hash(hash)
         return [] unless hash["partitions"]
-        hash["partitions"].map { |part| PartitionSection.new_from_hashes(part) }
+        hash["partitions"].map { |part| PartitionSection.new_from_hashes(part, self) }
       end
 
       def partitions_from_disk(disk)

@@ -26,26 +26,30 @@ module Y2Storage
     # Represents an AutoYaST situation where an invalid value was given.
     #
     # @example Invalid value 'auto' for attribute :size on /home partition
-    #   problem = InvalidValue.new("/home", :size, "auto")
+    #   section = AutoinstProfile::PartitioningSection.new_from_hashes({"size" => "auto"})
+    #   problem = InvalidValue.new(section, :size)
+    #   problem.value #=> "auto"
+    #   problem.attr  #=> :size
     class InvalidValue < Issue
-      # @return [String] Device affected by this error
-      attr_reader :device
       # @return [Symbol] Name of the missing attribute
       attr_reader :attr
-      # @return [Object] Invalid value
-      attr_reader :value
       # @return [Object] New value or :skip to skip the section.
       attr_reader :new_value
 
-      # @param device    [String] Device (`/`, `/dev/sda`, etc.)
-      # @param attr      [Symbol] Name of the missing attribute
-      # @param value     [Integer,String,Symbol] Invalid value
+      # @param section   [Object] Section where it was detected (see {AutoinstProfile})
+      # @param attr      [Symbol] Name of the invalid attribute
       # @param new_value [Integer,String,Symbol] New value or :skip to skip the section
-      def initialize(device, attr, value, new_value = :skip)
-        @device = device
+      def initialize(section, attr, new_value = :skip)
+        @section = section
         @attr = attr
-        @value = value
         @new_value = new_value
+      end
+
+      # Return the invalid value
+      #
+      # @return [Integer,String,Symbol] Invalid value
+      def value
+        section.public_send(attr)
       end
 
       # Return problem severity
@@ -60,11 +64,10 @@ module Y2Storage
       # @return [String] Error message
       # @see Issue#message
       def message
-        # TRANSLATORS: 'value' is a generic value (number or string)
-        # 'attr' is an AutoYaST element name; 'device' is a device name (eg. /dev/sda1);
-        # 'new_value_message' is a short explanation about what should be done with the value.
-        _("Invalid value '%{value}' for attribute '%{attr}' on '%{device}' (%{new_value_message}).") %
-          { value: value, attr: attr, device: device, new_value_message: new_value_message }
+        # TRANSLATORS: 'value' is a generic value (number or string) 'attr' is an AutoYaST element
+        # name; 'new_value_message' is a short explanation about what should be done with the value.
+        _("Invalid value '%{value}' for attribute '%{attr}' (%{new_value_message}).") %
+          { value: value, attr: attr, new_value_message: new_value_message }
       end
 
     private
