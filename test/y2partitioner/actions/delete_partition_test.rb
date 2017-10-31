@@ -27,27 +27,63 @@ require "y2partitioner/actions/delete_partition"
 
 describe Y2Partitioner::Actions::DeletePartition do
   before do
-    devicegraph_stub("mixed_disks_btrfs.yml")
+    devicegraph_stub(scenario)
   end
+
+  subject { described_class.new(device) }
 
   let(:device) { Y2Storage::BlkDevice.find_by_name(device_graph, device_name) }
 
   let(:device_graph) { Y2Partitioner::DeviceGraphs.instance.current }
-
-  subject { described_class.new(device) }
 
   describe "#run" do
     before do
       allow(Yast::Popup).to receive(:YesNo).and_return(accept)
     end
 
+    let(:scenario) { "lvm-two-vgs.yml" }
+
     let(:device_name) { "/dev/sda2" }
 
     let(:accept) { nil }
 
-    it "shows a confirm message" do
-      expect(Yast::Popup).to receive(:YesNo)
-      subject.run
+    context "when deleting a plain partition" do
+      let(:device_name) { "/dev/sda2" }
+
+      it "shows a confirm message" do
+        expect(Yast::Popup).to receive(:YesNo)
+        subject.run
+      end
+    end
+
+    context "when deleting a partition used by LVM" do
+      let(:device_name) { "/dev/sda5" }
+
+      it "shows a specific confirm message for LVM" do
+        devices = ["/dev/vg1", "/dev/vg1/lv1"]
+
+        expect(subject).to receive(:confirm_recursive_delete)
+          .with(array_including(*devices), /LVM/, anything, anything)
+          .and_call_original
+
+        subject.run
+      end
+    end
+
+    context "when deleting a partition used by MD Raid" do
+      let(:scenario) { "md_raid.xml" }
+
+      let(:device_name) { "/dev/sda1" }
+
+      it "shows a specific confirm message for Md Raid" do
+        devices = ["/dev/md/md0"]
+
+        expect(subject).to receive(:confirm_recursive_delete)
+          .with(array_including(*devices), /RAID/, anything, anything)
+          .and_call_original
+
+        subject.run
+      end
     end
 
     context "when the confirm message is not accepted" do

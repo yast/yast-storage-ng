@@ -87,31 +87,47 @@ module Y2Partitioner
 
       # Confirmation message before performing the delete action
       def confirm
-        names = children_names
-
-        if names.empty?
-          Yast::Popup.YesNo(
-            # TRANSLATORS %s is device to be deleted
-            format(_("Really delete %s?"), device.name)
-          )
-        else
-          confirm_recursive_delete(
-            names,
-            _("Confirm Deleting of All Partitions"),
-            # TRANSLATORS: type stands for type of device and name is its identifier
-            format(_("The %{type} \"%{name}\" contains at least one another device.\n" \
-              "If you proceed, the following devices will be deleted:"),
-              name: device.name,
-              type: device.is?(:disk) ? _("disk") : _("partition")),
-            format(_("Really delete all devices on \"%s\"?"), device.name)
-          )
-        end
+        Yast::Popup.YesNo(
+          # TRANSLATORS %s is the name of the device to be deleted (e.g., /dev/sda1)
+          format(_("Really delete %s?"), device.name)
+        )
       end
 
-      def children_names
+      # Devices that depends on the device to delete
+      #
+      # For example, a Vg depends on some partitions used as physical volumes,
+      # so the vg should be deleted when one of that partitions is deleted.
+      #
+      # This method obtains the name of all devices that should be deleted when
+      # the current device is deleted. This info is useful for some confirm messages.
+      #
+      # @see DeleteDisk@confirm
+      #
+      # @return [Array<String>] name of dependent devices
+      def dependent_devices
         device.descendants.map do |dev|
           dev.name if dev.respond_to?(:name)
         end.compact
+      end
+
+      # Helpful method to show a descriptive confirm message with all affected devices
+      #
+      # @see DeleteDisk@confirm
+      def confirm_recursive_delete(devices, headline, label_before, label_after)
+        button_box = ButtonBox(
+          PushButton(Id(:yes), Opt(:okButton), Yast::Label.DeleteButton),
+          PushButton(
+            Id(:no_button),
+            Opt(:default, :cancelButton),
+            Yast::Label.CancelButton
+          )
+        )
+
+        fancy_question(headline,
+          label_before,
+          Yast::HTML.List(devices.sort),
+          label_after,
+          button_box)
       end
 
       # @param rich_text [String]
@@ -143,24 +159,6 @@ module Y2Partitioner
         Yast::UI.CloseDialog
 
         ret == :yes
-      end
-
-      # TODO: copy and pasted code from old storage, feel free to improve
-      def confirm_recursive_delete(devices, headline, label_before, label_after)
-        button_box = ButtonBox(
-          PushButton(Id(:yes), Opt(:okButton), Yast::Label.DeleteButton),
-          PushButton(
-            Id(:no_button),
-            Opt(:default, :cancelButton),
-            Yast::Label.CancelButton
-          )
-        )
-
-        fancy_question(headline,
-          label_before,
-          Yast::HTML.List(devices.sort),
-          label_after,
-          button_box)
       end
     end
   end

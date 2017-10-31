@@ -28,6 +28,7 @@ module Y2Partitioner
     #
     # @see DeleteDevice
     class DeleteLvmLv < DeleteDevice
+      # Confirmation message before performing the delete action
       def confirm
         Yast::Popup.YesNo(
           # TRANSLATORS %s is the name of the logical volume to be deleted

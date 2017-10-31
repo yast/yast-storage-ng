@@ -37,11 +37,29 @@ module Y2Partitioner
       def validate
         partition_table = device.partition_table
         if partition_table.nil? || partition_table.partitions.empty?
-          Yast::Popup.Error(_("There are no partitions to delete on this device"))
+          Yast::Popup.Error(_("There are no partitions to delete on this disk"))
           return false
         end
 
         true
+      end
+
+      # Confirmation message before performing the delete action
+      #
+      # It shows all partitions (and dependent devices) that will be deleted.
+      #
+      # @see DeleteDevice#dependent_devices
+      # @see DeleteDevice#confirm_recursive_delete
+      def confirm
+        confirm_recursive_delete(
+          dependent_devices,
+          _("Confirm Deleting of All Partitions"),
+          # TRANSLATORS: name is the name of the disk to be deleted (e.g., /dev/sda)
+          format(_("The disk \"%{name}\" contains at least one partition.\n" \
+            "If you proceed, the following partitions will be deleted:"), name: device.name),
+          # TRANSLATORS: name is the name of the disk to be deleted (e.g., /dev/sda)
+          format(_("Really delete all partitions on \"%{name}\"?"), name: device.name)
+        )
       end
 
       # Deletes all partitions of a disk device (see {DeleteDevice#device})
