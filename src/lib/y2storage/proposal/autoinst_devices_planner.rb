@@ -243,11 +243,9 @@ module Y2Storage
       # @param section   [AutoinstProfile::PartitionSection] AutoYaST specification
       def add_partition_reuse(partition, section)
         partition_to_reuse = find_partition_to_reuse(devicegraph, section)
+        return unless partition_to_reuse
         partition.filesystem_type ||= partition_to_reuse.filesystem_type
         add_device_reuse(partition, partition_to_reuse.name, !!section.format)
-        # TODO: possible errors here
-        #   - missing information about what device to use
-        #   - the specified device was not found
       end
 
       # Set 'reusing' attributes for a logical volume
@@ -283,7 +281,7 @@ module Y2Storage
         vg.make_space_policy = drive.keep_unknown_lv ? :keep : :remove
 
         return unless vg.make_space_policy == :keep || vg.lvs.any?(&:reuse?)
-        vg_to_reuse = find_vg_to_reuse(devicegraph, vg)
+        vg_to_reuse = find_vg_to_reuse(devicegraph, vg, drive)
         vg.reuse = vg_to_reuse.vg_name if vg_to_reuse
       end
 
@@ -291,11 +289,18 @@ module Y2Storage
       # @param part_section [AutoinstProfile::PartitionSection] Partition specification
       #   from AutoYaST
       def find_partition_to_reuse(devicegraph, part_section)
-        if part_section.partition_nr
-          devicegraph.partitions.find { |i| i.number == part_section.partition_nr }
-        elsif part_section.label
-          devicegraph.partitions.find { |i| i.filesystem_label == part_section.label }
-        end
+        device =
+          if part_section.partition_nr
+            devicegraph.partitions.find { |i| i.number == part_section.partition_nr }
+          elsif part_section.label
+            devicegraph.partitions.find { |i| i.filesystem_label == part_section.label }
+          else
+            issues_list.add(:missing_reuse_info, part_section)
+            nil
+          end
+
+        issues_list.add(:missing_reusable_device, part_section) unless device
+        device
       end
 
       # @param devicegraph [Devicegraph] Devicegraph to search for the logical volume to reuse
@@ -303,19 +308,33 @@ module Y2Storage
       # @param part_section   [AutoinstProfile::PartitionSection] LV specification from AutoYaST
       def find_lv_to_reuse(devicegraph, vg_name, part_section)
         vg = devicegraph.lvm_vgs.find { |v| v.vg_name == vg_name }
-        return unless vg
-        if part_section.lv_name
-          vg.lvm_lvs.find { |v| v.lv_name == part_section.lv_name }
-        elsif part_section.label
-          vg.lvm_lvs.find { |v| v.filesystem_label == part_section.label }
+        if vg.nil?
+          issues_list.add(:missing_reusable_device, part_section)
+          return
         end
+
+        device =
+          if part_section.lv_name
+            vg.lvm_lvs.find { |v| v.lv_name == part_section.lv_name }
+          elsif part_section.label
+            vg.lvm_lvs.find { |v| v.filesystem_label == part_section.label }
+          else
+            issues_list.add(:missing_reuse_info, part_section)
+            :missing_info
+          end
+
+        issues_list.add(:missing_reusable_device, part_section) unless device
+        :missing_info == device ? nil : device
       end
 
       # @param devicegraph [Devicegraph] Devicegraph to search for the volume group to reuse
       # @param vg          [Planned::LvmVg] Planned volume group
-      def find_vg_to_reuse(devicegraph, vg)
+      # @param drive       [AutoinstProfile::DriveSection] drive section describing
+      def find_vg_to_reuse(devicegraph, vg, drive)
         return nil unless vg.volume_group_name
-        devicegraph.lvm_vgs.find { |v| v.vg_name == vg.volume_group_name }
+        device = devicegraph.lvm_vgs.find { |v| v.vg_name == vg.volume_group_name }
+        issues_list.add(:missing_reusable_device, drive) unless device
+        device
       end
 
       # @return [DiskSize] Minimal partition size
@@ -420,7 +439,6 @@ module Y2Storage
         return true if devices.any? { |d| d.respond_to?(:mount_point) && d.mount_point == "/" }
         issues_list.add(:missing_root)
       end
-
     end
   end
 end

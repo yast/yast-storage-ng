@@ -62,7 +62,7 @@ module Y2Storage
       def self.new_from_hashes(drives_array)
         result = new
         result.drives = drives_array.each_with_object([]) do |hash, array|
-          drive = DriveSection.new_from_hashes(hash, self)
+          drive = DriveSection.new_from_hashes(hash, result)
           array << drive if drive
         end
         result

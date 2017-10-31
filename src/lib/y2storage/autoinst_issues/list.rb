@@ -26,12 +26,13 @@ module Y2Storage
     # List of storage related AutoYaST problems
     #
     # @example Registering some problems
+    #   section = PartitionSection.new({})
     #   list = List.new
     #   list.add(:missing_root)
-    #   list.add(:invalid_value, "/", :size, "auto")
+    #   list.add(:invalid_value, section, :size, "auto")
     #
     # @example Iterating through the list of problems
-    #   list.map(&:severity) #=> [:fatal]
+    #   list.map(&:severity) #=> [:warn]
     class List
       include Enumerable
       extend Forwardable
