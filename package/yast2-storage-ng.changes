@@ -6,7 +6,7 @@ Tue Oct 31 12:14:18 UTC 2017 - igonzalezsosa@suse.com
   fails.
 - AutoYaST: when a problem is detected while creating a proposal,
   register in which section it was found.
-- AutoYaST: register an issue when a proposel does not contain
+- AutoYaST: register an issue when a proposal does not contain
   a root (/) partition.
 - 4.0.15
 

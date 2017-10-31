@@ -111,6 +111,7 @@ describe Y2Storage::Proposal::AutoinstDevicesPlanner do
         end
 
         it "registers an issue" do
+          expect(issues_list).to be_empty
           planner.planned_devices(drives_map)
           issue = issues_list.find { |i| i.is_a?(Y2Storage::AutoinstIssues::MissingReusableDevice) }
           expect(issue).to_not be_nil
@@ -129,6 +130,7 @@ describe Y2Storage::Proposal::AutoinstDevicesPlanner do
         end
 
         it "registers an issue" do
+          expect(issues_list).to be_empty
           planner.planned_devices(drives_map)
           issue = issues_list.find { |i| i.is_a?(Y2Storage::AutoinstIssues::MissingReuseInfo) }
           expect(issue).to_not be_nil
@@ -194,6 +196,7 @@ describe Y2Storage::Proposal::AutoinstDevicesPlanner do
         let(:size) { "huh?" }
 
         it "registers an issue" do
+          expect(issues_list).to be_empty
           planner.planned_devices(drives_map)
           issue = issues_list.find { |i| i.is_a?(Y2Storage::AutoinstIssues::InvalidValue) }
           expect(issue.value).to eq("huh?")
@@ -253,6 +256,7 @@ describe Y2Storage::Proposal::AutoinstDevicesPlanner do
           end
 
           it "registers an issue" do
+            expect(issues_list).to be_empty
             planner.planned_devices(drives_map)
             issue = issues_list.find { |i| i.is_a?(Y2Storage::AutoinstIssues::InvalidValue) }
             expect(issue.value).to eq("auto")
@@ -528,6 +532,7 @@ describe Y2Storage::Proposal::AutoinstDevicesPlanner do
         end
 
         it "registers an issue" do
+          expect(issues_list).to be_empty
           planner.planned_devices(drives_map)
           issue = issues_list.find { |i| i.is_a?(Y2Storage::AutoinstIssues::InvalidValue) }
           expect(issue.value).to eq("huh?")
@@ -605,6 +610,7 @@ describe Y2Storage::Proposal::AutoinstDevicesPlanner do
           end
 
           it "registers an issue" do
+            expect(issues_list).to be_empty
             planner.planned_devices(drives_map)
             issue = issues_list.find { |i| i.is_a?(Y2Storage::AutoinstIssues::MissingReusableDevice) }
             expect(issue).to_not be_nil
@@ -629,12 +635,14 @@ describe Y2Storage::Proposal::AutoinstDevicesPlanner do
           end
 
           it "registers an issue" do
+            expect(issues_list).to be_empty
             planner.planned_devices(drives_map)
             issue = issues_list.find { |i| i.is_a?(Y2Storage::AutoinstIssues::MissingReuseInfo) }
             expect(issue).to_not be_nil
           end
 
           it "does not register a missing reusable device error" do
+            expect(issues_list).to be_empty
             planner.planned_devices(drives_map)
             issue = issues_list.find { |i| i.is_a?(Y2Storage::AutoinstIssues::MissingReusableDevice) }
             expect(issue).to be_nil
@@ -654,6 +662,7 @@ describe Y2Storage::Proposal::AutoinstDevicesPlanner do
           end
 
           it "registers an issue" do
+            expect(issues_list).to be_empty
             planner.planned_devices(drives_map)
             issue = issues_list.find { |i| i.is_a?(Y2Storage::AutoinstIssues::MissingReusableDevice) }
             expect(issue).to_not be_nil
@@ -698,6 +707,7 @@ describe Y2Storage::Proposal::AutoinstDevicesPlanner do
           end
 
           it "registers an issue" do
+            expect(issues_list).to be_empty
             planner.planned_devices(drives_map)
             issue = issues_list.find { |i| i.is_a?(Y2Storage::AutoinstIssues::MissingReusableDevice) }
             expect(issue).to_not be_nil
