@@ -1,5 +1,5 @@
 -------------------------------------------------------------------
-Tue Nov  1 09:11:23 UTC 2017 - jlopez@suse.com
+Wed Nov  1 09:11:23 UTC 2017 - jlopez@suse.com
 
 - Partitioner: support for deleting logical volumes.
 - Part of fate#318196.
