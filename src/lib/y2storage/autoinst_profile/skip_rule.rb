@@ -37,6 +37,8 @@ module Y2Storage
     #   Proposal::SkipRule.from_profile_hash(hash)
     #
     class SkipRule
+      include Yast::Logger
+
       class NotValidSkipRule < StandardError; end
 
       # @return [String] Name of the attribute to check when applying the rule
@@ -123,7 +125,10 @@ module Y2Storage
       #
       # @see Proposal::SkipListValue
       def value(disk)
-        SkipListValue.new(disk).send(key)
+        SkipListValue.new(disk).public_send(key)
+      rescue NoMethodError
+        log.warn "Unknown skip list key: #{key}"
+        false
       end
 
       # Rule definition in the AutoYaST profile format used by the AutoYaST
