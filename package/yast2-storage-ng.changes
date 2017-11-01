@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Wed Nov  1 08:23:17 UTC 2017 - igonzalezsosa@suse.com
+
+- AutoYaST: do not crash when an unknown key is used in a
+  skip list (bsc#1065670). 
+- 4.0.16
+
+-------------------------------------------------------------------
 Tue Oct 31 12:14:18 UTC 2017 - igonzalezsosa@suse.com
 
 - AutoYaST: fix reuse of partitions (bsc#1060637).
