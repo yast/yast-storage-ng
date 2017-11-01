@@ -96,4 +96,10 @@ describe Y2Storage::AutoinstProfile::SkipListSection do
       expect(list.to_hashes).to eq([rule1_hash])
     end
   end
+
+  describe "#section_name" do
+    it "returns 'skip_list'" do
+      expect(list.section_name).to eq("skip_list")
+    end
+  end
 end
