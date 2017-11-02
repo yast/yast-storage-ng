@@ -130,6 +130,42 @@ module Y2Storage
       @fs_type = validated_fs_type(type)
     end
 
+    # Whether the user can configure some aspect of the volume
+    #
+    # Returns false if there is no chance for the volume to be proposed or if
+    # none of its attributes can be configured by the user.
+    #
+    # @return [Boolean]
+    def configurable?
+      return false if !proposed && !proposed_configurable?
+
+      proposed_configurable? ||
+        adjust_by_ram_configurable? ||
+        snapshots_configurable? ||
+        fs_type_configurable?
+    end
+
+    # Checks whether #fs_type can be configured by the user
+    #
+    # @return [Boolean]
+    def fs_type_configurable?
+      fs_types.size > 1
+    end
+
+    # Whether the resulting device will be mounted as root
+    #
+    # @return [Boolean]
+    def root?
+      mount_point && mount_point == "/"
+    end
+
+    # Whether the resulting device will be mounted as swap
+    #
+    # @return [Boolean]
+    def swap?
+      mount_point && mount_point == "swap"
+    end
+
   private
 
     FEATURES = {
@@ -199,10 +235,6 @@ module Y2Storage
       return type if type.is_a?(Filesystems::Type)
       raise(ArgumentError, "Filesystem cannot be nil") unless type
       Filesystems::Type.find(type.downcase.to_sym)
-    end
-
-    def root?
-      mount_point && mount_point == "/"
     end
 
     def apply_fallbacks

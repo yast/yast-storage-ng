@@ -26,7 +26,7 @@ require "y2storage"
 describe Y2Storage::VolumeSpecification do
   using Y2Storage::Refinements::SizeCasts
 
-  subject { described_class.new(volume_features) }
+  subject(:volume) { described_class.new(volume_features) }
 
   describe "#initialize" do
     let(:volume_features) do
@@ -354,6 +354,141 @@ describe Y2Storage::VolumeSpecification do
             an_object_having_attributes(path: "opt", copy_on_write: true,  archs: nil)
           )
         end
+      end
+    end
+  end
+
+  describe "#fs_type_configurable?" do
+    context "when no file system type is specified at all" do
+      let(:volume_features) { {} }
+
+      it "returns false" do
+        expect(volume.fs_type_configurable?).to eq false
+      end
+    end
+
+    context "when #fs_types is explicitly assigned to []" do
+      let(:volume_features) { { "fs_types" => [] } }
+
+      it "returns false" do
+        expect(volume.fs_type_configurable?).to eq false
+      end
+    end
+
+    context "when only one file system type is supported" do
+      let(:volume_features) { { "fs_type" => "btrfs", "fs_types" => "btrfs" } }
+
+      it "returns false" do
+        expect(volume.fs_type_configurable?).to eq false
+      end
+    end
+
+    context "when several file system types are supported" do
+      let(:volume_features) { { "fs_types" => "btrfs,ext3" } }
+
+      it "returns true" do
+        expect(volume.fs_type_configurable?).to eq true
+      end
+    end
+  end
+
+  describe "#configurable?" do
+    context "if the volume cannot be proposed" do
+      let(:volume_features) { { "proposed" => false, "proposed_configurable" => false } }
+
+      it "returns false" do
+        expect(volume.configurable?).to eq false
+      end
+    end
+
+    context "if there is nothing the user can influence" do
+      let(:volume_features) do
+        {
+          "proposed"                   => true,
+          "proposed_configurable"      => false,
+          "adjust_by_ram_configurable" => false,
+          "snapshots_configurable"     => false,
+          "fs_types"                   => []
+        }
+      end
+
+      it "returns false" do
+        expect(volume.configurable?).to eq false
+      end
+    end
+
+    context "if the volume can be enabled/disabled" do
+      let(:volume_features) do
+        {
+          "proposed_configurable"      => true,
+          "adjust_by_ram_configurable" => false,
+          "snapshots_configurable"     => false,
+          "fs_types"                   => []
+        }
+      end
+
+      it "returns true" do
+        expect(volume.configurable?).to eq true
+      end
+    end
+
+    context "if the user can decide to adapt the size to the RAM one" do
+      let(:volume_features) do
+        {
+          "proposed_configurable"      => false,
+          "adjust_by_ram_configurable" => true,
+          "snapshots_configurable"     => false,
+          "fs_types"                   => []
+        }
+      end
+
+      it "returns true" do
+        expect(volume.configurable?).to eq true
+      end
+    end
+
+    context "if the user can be enable/disable snapshots" do
+      let(:volume_features) do
+        {
+          "proposed_configurable"      => false,
+          "adjust_by_ram_configurable" => false,
+          "snapshots_configurable"     => true,
+          "fs_types"                   => []
+        }
+      end
+
+      it "returns true" do
+        expect(volume.configurable?).to eq true
+      end
+    end
+
+    context "if several file system types are supported" do
+      let(:volume_features) do
+        {
+          "proposed_configurable"      => false,
+          "adjust_by_ram_configurable" => false,
+          "snapshots_configurable"     => false,
+          "fs_types"                   => ["ext3", "ext4"]
+        }
+      end
+
+      it "returns true" do
+        expect(volume.configurable?).to eq true
+      end
+    end
+
+    context "if several settings can be influenced by the user" do
+      let(:volume_features) do
+        {
+          "proposed_configurable"      => true,
+          "adjust_by_ram_configurable" => false,
+          "snapshots_configurable"     => true,
+          "fs_types"                   => ["ext3", "ext4"]
+        }
+      end
+
+      it "returns true" do
+        expect(volume.configurable?).to eq true
       end
     end
   end

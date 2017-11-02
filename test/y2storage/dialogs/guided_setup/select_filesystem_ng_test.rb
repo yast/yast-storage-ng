@@ -23,216 +23,603 @@
 require_relative "../../spec_helper.rb"
 require_relative "#{TEST_PATH}/support/guided_setup_context"
 require_relative "#{TEST_PATH}/support/proposal_context"
-require "pp"
+
+describe Y2Storage::Dialogs::GuidedSetup::SelectFilesystem::Ng::VolumeWidget do
+  # Convenience method to inspect the tree of terms for the UI
+  def term_with_id(regexp, content)
+    content.nested_find do |param|
+      next unless param.is_a?(Yast::Term)
+      param.params.any? { |i| i.is_a?(Yast::Term) && i.value == :id && regexp.match?(i.params.first) }
+    end
+  end
+
+  # Value of a widget term
+  def item_value(item)
+    # The value of the term is actually the first param of its inner Id term
+    id_term = item.params.find { |i| i.is_a?(Yast::Term) && i.value == :id }
+    id_term.params.first
+  end
+
+  subject(:widget) { described_class.new(settings, index) }
+
+  let(:settings) { double("ProposalSettings", lvm: lvm, volumes: volumes) }
+  let(:lvm) { false }
+
+  let(:volumes) do
+    [
+      root_vol,
+      home_vol,
+      Y2Storage::VolumeSpecification.new(vol_features.merge("mount_point" => "swap")),
+      Y2Storage::VolumeSpecification.new(vol_features.merge("mount_point" => "/var/lib")),
+      Y2Storage::VolumeSpecification.new(vol_features.merge("adjust_by_ram_configurable" => true))
+    ]
+  end
+  let(:vol_features) { {} }
+
+  let(:root_vol) do
+    Y2Storage::VolumeSpecification.new(
+      vol_features.merge("mount_point" => "/", "snapshots_configurable" => true)
+    )
+  end
+  let(:home_vol) do
+    Y2Storage::VolumeSpecification.new(
+      vol_features.merge("mount_point" => "/home", "fs_type" => "ext4", "fs_types" => "ext3,ext4")
+    )
+  end
+
+  describe "#content" do
+    let(:proposed_checkbox) { term_with_id(/_proposed$/, widget.content) }
+    let(:fs_type_combo) { term_with_id(/_fs_type$/, widget.content) }
+    let(:snapshots_checkbox) { term_with_id(/_snapshots$/, widget.content) }
+    let(:adjust_by_ram_checkbox) { term_with_id(/_adjust_by_ram$/, widget.content) }
+
+    context "if the user can decide the filesystem type" do
+      let(:index) { 1 }
+      let(:items) { fs_type_combo.params.last }
+
+      it "includes a combo box with all the volume types" do
+        expect(fs_type_combo.value).to eq :ComboBox
+        item_ids = items.map { |i| item_value(i) }
+        expect(item_ids).to contain_exactly(:ext3, :ext4)
+      end
+
+      it "initializes the combo box with the default option" do
+        chosen = items.find { |i| i.params.last == true }
+        expect(item_value(chosen)).to eq :ext4
+      end
+    end
+
+    context "if the user cannot decide the filesystem type" do
+      let(:index) { 2 }
+
+      it "does not include a combo box to select the filesystem type" do
+        expect(fs_type_combo).to be_nil
+      end
+    end
+
+    context "if the user can decide whether to enlarge by ram" do
+      let(:index) { 4 }
+
+      it "includes the corresponding check box" do
+        expect(adjust_by_ram_checkbox.value).to eq :CheckBox
+      end
+    end
+
+    context "if the user can not decide whether to enlarge by ram" do
+      let(:index) { 0 }
+
+      it "does not include the corresponding check box" do
+        expect(adjust_by_ram_checkbox).to be_nil
+      end
+    end
+
+    context "installing without LVM" do
+      let(:lvm) { false }
+
+      context "if the volume is optional" do
+        before { vol_features["proposed_configurable"] = true }
+
+        context "if the volume is home" do
+          let(:index) { 1 }
+
+          it "includes a check box to enable it with the appropiate label" do
+            expect(proposed_checkbox.value).to eq :CheckBox
+            expect(proposed_checkbox.params[-2]).to include "Home"
+            expect(proposed_checkbox.params[-2]).to include "Partition"
+          end
+        end
+
+        context "if the volume is swap" do
+          let(:index) { 2 }
+
+          it "includes a check box to enable it with the appropiate label" do
+            expect(proposed_checkbox.value).to eq :CheckBox
+            expect(proposed_checkbox.params[-2]).to include "Swap"
+            expect(proposed_checkbox.params[-2]).to include "Partition"
+          end
+        end
+
+        context "if the volume has a mount point different to swap or /home" do
+          let(:index) { 3 }
+
+          it "includes a check box to enable it with the appropiate label" do
+            expect(proposed_checkbox.value).to eq :CheckBox
+            expect(proposed_checkbox.params[-2]).to include "/var/lib"
+            expect(proposed_checkbox.params[-2]).to include "Partition"
+          end
+        end
+
+        context "if the volume has no mount point" do
+          let(:index) { 4 }
+
+          it "includes a check box to enable it with the appropiate label" do
+            expect(proposed_checkbox.value).to eq :CheckBox
+            expect(proposed_checkbox.params[-2]).to include "Additional"
+            expect(proposed_checkbox.params[-2]).to include "Partition"
+          end
+        end
+      end
+
+      context "if the volume is mandatory" do
+        before { vol_features["proposed_configurable"] = false }
+
+        let(:first_label) do
+          widget.content.nested_find { |w| w.is_a?(Yast::Term) && w.value == :Label }
+        end
+
+        context "if the volume is root" do
+          let(:index) { 0 }
+
+          it "does not include a check box to enable or disable it" do
+            expect(proposed_checkbox).to eq nil
+          end
+
+          it "includes the appropiate label" do
+            expect(first_label.params.first).to include "Root"
+            expect(first_label.params.first).to include "Partition"
+          end
+        end
+
+        context "if the volume is /home" do
+          let(:index) { 1 }
+
+          it "does not include a check box to enable or disable it" do
+            expect(proposed_checkbox).to eq nil
+          end
+
+          it "includes the appropiate label" do
+            expect(first_label.params.first).to include "Home"
+            expect(first_label.params.first).to include "Partition"
+          end
+        end
+
+        context "if the volume is swap" do
+          let(:index) { 2 }
+
+          it "does not include a check box to enable or disable it" do
+            expect(proposed_checkbox).to eq nil
+          end
+
+          it "includes the appropiate label" do
+            expect(first_label.params.first).to include "Swap"
+            expect(first_label.params.first).to include "Partition"
+          end
+        end
+
+        context "if the volume has a mount point different to swap or /home" do
+          let(:index) { 3 }
+
+          it "does not include a check box to enable or disable it" do
+            expect(proposed_checkbox).to eq nil
+          end
+
+          it "includes the appropiate label" do
+            expect(first_label.params.first).to include "/var/lib"
+            expect(first_label.params.first).to include "Partition"
+          end
+        end
+
+        context "if the volume has no mount point" do
+          let(:index) { 4 }
+
+          it "does not include a check box to enable or disable it" do
+            expect(proposed_checkbox).to eq nil
+          end
+
+          it "includes the appropiate label" do
+            expect(first_label.params.first).to include "Additional"
+            expect(first_label.params.first).to include "Partition"
+          end
+        end
+      end
+    end
+
+    context "installing with LVM" do
+      let(:lvm) { true }
+
+      context "if the volume is optional" do
+        before { vol_features["proposed_configurable"] = true }
+
+        context "if the volume is home" do
+          let(:index) { 1 }
+
+          it "includes a check box to enable it with the appropiate label" do
+            expect(proposed_checkbox.value).to eq :CheckBox
+            expect(proposed_checkbox.params[-2]).to include "Home"
+            expect(proposed_checkbox.params[-2]).to include "Volume"
+          end
+        end
+
+        context "if the volume is swap" do
+          let(:index) { 2 }
+
+          it "includes a check box to enable it with the appropiate label" do
+            expect(proposed_checkbox.value).to eq :CheckBox
+            expect(proposed_checkbox.params[-2]).to include "Swap"
+            expect(proposed_checkbox.params[-2]).to include "Volume"
+          end
+        end
+
+        context "if the volume has a mount point different to swap or /home" do
+          let(:index) { 3 }
+
+          it "includes a check box with the appropiate label" do
+            expect(proposed_checkbox.value).to eq :CheckBox
+            expect(proposed_checkbox.params[-2]).to include "/var/lib"
+            expect(proposed_checkbox.params[-2]).to include "Volume"
+          end
+        end
+
+        context "if the volume has no mount point" do
+          let(:index) { 4 }
+
+          it "includes a check box to enable it with the appropiate label" do
+            expect(proposed_checkbox.value).to eq :CheckBox
+            expect(proposed_checkbox.params[-2]).to include "Additional"
+            expect(proposed_checkbox.params[-2]).to include "Volume"
+          end
+        end
+      end
+
+      context "if the volume is mandatory" do
+        before { vol_features["proposed_configurable"] = false }
+
+        let(:first_label) do
+          widget.content.nested_find { |w| w.is_a?(Yast::Term) && w.value == :Label }
+        end
+
+        context "if the volume is root" do
+          let(:index) { 0 }
+
+          it "does not include a check box to enable or disable it" do
+            expect(proposed_checkbox).to eq nil
+          end
+
+          it "includes the appropiate label" do
+            expect(first_label.params.first).to include "Root"
+            expect(first_label.params.first).to include "Volume"
+          end
+        end
+
+        context "if the volume is /home" do
+          let(:index) { 1 }
+
+          it "does not include a check box to enable or disable it" do
+            expect(proposed_checkbox).to eq nil
+          end
+
+          it "includes the appropiate label" do
+            expect(first_label.params.first).to include "Home"
+            expect(first_label.params.first).to include "Volume"
+          end
+        end
+
+        context "if the volume is swap" do
+          let(:index) { 2 }
+
+          it "does not include a check box to enable or disable it" do
+            expect(proposed_checkbox).to eq nil
+          end
+
+          it "includes the appropiate label" do
+            expect(first_label.params.first).to include "Swap"
+            expect(first_label.params.first).to include "Volume"
+          end
+        end
+
+        context "if the volume has a mount point different to swap or /home" do
+          let(:index) { 3 }
+
+          it "does not include a check box to enable or disable it" do
+            expect(proposed_checkbox).to eq nil
+          end
+
+          it "includes the appropiate label" do
+            expect(first_label.params.first).to include "/var/lib"
+            expect(first_label.params.first).to include "Volume"
+          end
+        end
+
+        context "if the volume has no mount point" do
+          let(:index) { 4 }
+
+          it "does not include a check box to enable or disable it" do
+            expect(proposed_checkbox).to eq nil
+          end
+
+          it "includes the appropiate label" do
+            expect(first_label.params.first).to include "Additional"
+            expect(first_label.params.first).to include "Volume"
+          end
+        end
+      end
+    end
+  end
+
+  describe "#store" do
+    let(:index) { 0 }
+    let(:volume) { volumes[index] }
+    let(:vol_features) do
+      {
+        "proposed"                   => false,
+        "proposed_configurable"      => true,
+        "fs_type"                    => :ext3,
+        "fs_types"                   => "btrfs,ext3,ext4",
+        "snapshots"                  => false,
+        "snapshots_configurable"     => true,
+        "adjust_by_ram"              => true,
+        "adjust_by_ram_configurable" => true
+      }
+    end
+
+    before do
+      allow(Yast::UI).to receive(:QueryWidget) do |id, _attr|
+        case id.params.first
+        when /_proposed/
+          true
+        when /_fs_type/
+          :btrfs
+        when /_snapshots/
+          true
+        when /_adjust_by_ram/
+          false
+        end
+      end
+    end
+
+    it "updates #proposed for the volume" do
+      widget.store
+      expect(volume.proposed).to eq true
+    end
+
+    it "updates #fs_type for the volume" do
+      widget.store
+      expect(volume.fs_type).to eq Y2Storage::Filesystems::Type::BTRFS
+    end
+
+    it "updates #snapshots for the volume" do
+      widget.store
+      expect(volume.snapshots).to eq true
+    end
+
+    it "updates #adjust_by_ram for the volume" do
+      widget.store
+      expect(volume.adjust_by_ram).to eq false
+    end
+  end
+
+  describe "#handle" do
+    let(:index) { 0 }
+    let(:volume) { volumes[index] }
+    let(:vol_features) { { "adjust_by_ram_configurable" => true } }
+
+    before do
+      allow(Yast::UI).to receive(:QueryWidget)
+      allow(Yast::UI).to receive(:ChangeWidget)
+    end
+
+    context "when the user enables the volume" do
+      let(:widget_id) { "vol_#{index}_proposed" }
+
+      before do
+        allow(Yast::UI).to receive(:QueryWidget).with(Id(widget_id), :Value).and_return true
+      end
+
+      it "enables the file system type combo, if any" do
+        expect(Yast::UI).to receive(:ChangeWidget).with(Id("vol_0_fs_type"), :Enabled, true)
+        widget.handle(widget_id)
+      end
+
+      it "enables the snapshots check box, if needed" do
+        allow(Yast::UI).to receive(:QueryWidget).with(Id("vol_0_fs_type"), :Value).and_return :btrfs
+        expect(Yast::UI).to receive(:ChangeWidget).with(Id("vol_0_snapshots"), :Enabled, true)
+        widget.handle(widget_id)
+      end
+
+      it "enables the adjust by ram check box, if any" do
+        expect(Yast::UI).to receive(:ChangeWidget).with(Id("vol_0_adjust_by_ram"), :Enabled, true)
+        widget.handle(widget_id)
+      end
+    end
+
+    context "when the user disables the volume" do
+      let(:widget_id) { "vol_#{index}_proposed" }
+
+      before do
+        allow(Yast::UI).to receive(:QueryWidget).with(Id(widget_id), :Value).and_return false
+      end
+
+      it "disables the file system type combo, if any" do
+        expect(Yast::UI).to receive(:ChangeWidget).with(Id("vol_0_fs_type"), :Enabled, false)
+        widget.handle(widget_id)
+      end
+
+      it "disables the snapshots check box, if any" do
+        allow(Yast::UI).to receive(:QueryWidget).with(Id("vol_0_fs_type"), :Value).and_return :btrfs
+        expect(Yast::UI).to receive(:ChangeWidget).with(Id("vol_0_snapshots"), :Enabled, false)
+        widget.handle(widget_id)
+      end
+
+      it "disables the adjust by ram check box, if any" do
+        expect(Yast::UI).to receive(:ChangeWidget).with(Id("vol_0_adjust_by_ram"), :Enabled, false)
+        widget.handle(widget_id)
+      end
+    end
+
+    context "when the user selects the Btrfs file system type" do
+      let(:widget_id) { "vol_#{index}_fs_type" }
+
+      before do
+        allow(Yast::UI).to receive(:QueryWidget).with(Id(widget_id), :Value).and_return :btrfs
+        allow(Yast::UI).to receive(:QueryWidget).with(Id("vol_0_proposed"), :Value).and_return true
+      end
+
+      context "if snapshots are configurable" do
+        let(:index) { 0 }
+
+        it "enables the snapshots check box" do
+          expect(Yast::UI).to receive(:ChangeWidget).with(Id("vol_0_snapshots"), :Enabled, true)
+          widget.handle(widget_id)
+        end
+      end
+
+      context "if snapshots are not configurable" do
+        let(:index) { 1 }
+
+        it "does not try to enable or disable any other widget" do
+          expect(Yast::UI).to_not receive(:ChangeWidget)
+          widget.handle(widget_id)
+        end
+      end
+    end
+
+    context "when the user selects a non-Btrfs file system type" do
+      let(:widget_id) { "vol_#{index}_fs_type" }
+
+      before do
+        allow(Yast::UI).to receive(:QueryWidget).with(Id(widget_id), :Value).and_return :ext3
+        allow(Yast::UI).to receive(:QueryWidget).with(Id("vol_0_proposed"), :Value).and_return true
+      end
+
+      context "if snapshots are configurable" do
+        let(:index) { 0 }
+
+        it "disables the snapshots check box" do
+          expect(Yast::UI).to receive(:ChangeWidget).with(Id("vol_0_snapshots"), :Enabled, false)
+          widget.handle(widget_id)
+        end
+      end
+
+      context "if snapshots are not configurable" do
+        let(:index) { 1 }
+
+        it "does not try to enable or disable any other widget" do
+          expect(Yast::UI).to_not receive(:ChangeWidget)
+          widget.handle(widget_id)
+        end
+      end
+    end
+  end
+end
 
 describe Y2Storage::Dialogs::GuidedSetup::SelectFilesystem::Ng do
-  include_context "proposal"
   include_context "guided setup requirements"
 
-  let(:scenario) { "empty_hard_disk_gpt_25GiB" }
-  let(:control_file_content) { Yast::XML.XMLToYCPFile(File.join(DATA_PATH, "control_files/volumes_ng", control_file)) }
-  let(:settings) { Y2Storage::ProposalSettings.new_for_current_product }
+  subject(:dialog) { described_class.new(guided_setup) }
 
-  subject { described_class.new(guided_setup) }
+  before { allow(settings).to receive(:volumes).and_return volumes }
 
-  before do
-    Yast::ProductFeatures.Import(control_file_content)
+  let(:widget_class) { Y2Storage::Dialogs::GuidedSetup::SelectFilesystem::Ng::VolumeWidget }
+
+  describe "#run" do
+    let(:volumes) do
+      [
+        double("VolumeSpecification", configurable?: true),
+        double("VolumeSpecification", configurable?: false),
+        double("VolumeSpecification", configurable?: true)
+      ]
+    end
+
+    let(:widget0) { double("VolumeWidget", content: [], init: true, store: true) }
+    let(:widget2) { double("VolumeWidget", content: [], init: true, store: true) }
+
+    it "shows a VolumeWidget for every configurable volume" do
+      expect(widget_class).to receive(:new).with(settings, 0).and_return widget0
+      expect(widget_class).to receive(:new).with(settings, 2).and_return widget2
+      expect(widget0).to receive(:content)
+      expect(widget0).to receive(:init)
+      expect(widget2).to receive(:content)
+      expect(widget2).to receive(:init)
+
+      dialog.run
+    end
+
+    it "ignores volumes that are not configurable" do
+      expect(widget_class).to_not receive(:new).with(settings, 1)
+      dialog.run
+    end
+
+    it "calls VolumeWidget#store for all the widgets" do
+      allow(widget_class).to receive(:new).and_return(widget0, widget2)
+      expect(widget0).to receive(:store)
+      expect(widget2).to receive(:store)
+
+      dialog.run
+    end
   end
 
-  context "In a CaaSP configuration with root and separate /var/lib/docker" do
-    let(:control_file) { "control.CAASP.xml" }
+  describe "skip?" do
+    context "when the settings contain no volumes" do
+      let(:volumes) { [] }
 
-    describe "#settings" do
-      it "uses NG settings" do
-        expect(subject.settings.ng_format?).to be true
-      end
-
-      it "has 2 volumes" do
-        expect(subject.settings.volumes.size).to be == 2
-      end
-
-      it "has a root_vol with Btrfs" do
-        expect(subject.root_vol.mount_point).to eq "/"
-        expect(subject.root_vol.fs_type).to eq Y2Storage::Filesystems::Type::BTRFS
-        expect(subject.root_vol.proposed).to be true
-      end
-
-      it "enforces snapshots for the root_vol" do
-        expect(subject.root_vol.snapshots).to be true
-        expect(subject.root_vol.snapshots_configurable).to be(false)
-      end
-
-      it "does not have a home_vol" do
-        expect(subject.home_vol).to be nil
-      end
-
-      it "does not have a swap_vol" do
-        expect(subject.home_vol).to be nil
-      end
-
-      it "has one other_vol /var/lib/docker with Btrfs" do
-        expect(subject.other_volumes.size).to be == 1
-        expect(subject.other_volumes.first.mount_point).to eq "/var/lib/docker"
-        expect(subject.other_volumes.first.fs_type).to eq Y2Storage::Filesystems::Type::BTRFS
+      it "returns true" do
+        expect(dialog.skip?).to eq true
       end
     end
 
-    describe "#normalized_id" do
-      it "leaves normal strings untouched" do
-        expect(subject.send(:normalized_id, "foo")).to eq "foo"
+    context "when none of the volumes are configurable" do
+      let(:volumes) do
+        [
+          double("VolumeSpecification", configurable?: false),
+          double("VolumeSpecification", configurable?: false)
+        ]
       end
 
-      it "changes slashes and other special characters to underscores" do
-        expect(subject.send(:normalized_id, "/my/weird/path")).to eq "my_weird_path"
-        expect(subject.send(:normalized_id, "!some$weird*name!")).to eq "some_weird_name"
-      end
-
-      it "cleans up underscores" do
-        expect(subject.send(:normalized_id, "/$my/weird!!/path?!?")).to eq "my_weird_path"
+      it "returns true" do
+        expect(dialog.skip?).to eq true
       end
     end
 
-    describe "#propose_widget_id" do
-      it "returns the expected normalized widget IDs" do
-        expect(subject.send(:propose_widget_id, "Home")).to eq :propose_home
-        expect(subject.send(:propose_widget_id, "/home")).to eq :propose_home
-        expect(subject.send(:propose_widget_id, "/var/lib/docker")).to eq :propose_var_lib_docker
-      end
-    end
-
-    describe "#fs_type_widget_id" do
-      it "returns the expected normalized widget IDs" do
-        expect(subject.send(:fs_type_widget_id, "Home")).to eq :home_fs_type
-        expect(subject.send(:fs_type_widget_id, "/home")).to eq :home_fs_type
-        expect(subject.send(:fs_type_widget_id, "/var/lib/docker")).to eq :var_lib_docker_fs_type
-      end
-    end
-
-    describe "#run" do
-      it "does not go up in smoke" do
-        subject.run
+    context "when some volume is configurable" do
+      let(:volumes) do
+        [
+          double("VolumeSpecification", configurable?: false),
+          double("VolumeSpecification", configurable?: true)
+        ]
       end
 
-      it "selects the root filesystem type from the settings" do
-        fs_type = Y2Storage::Filesystems::Type::EXT4
-        subject.root_vol.send(:fs_type=, fs_type)
-
-        expect_select(:root_fs_type, fs_type.to_sym)
-        subject.run
-      end
-
-      it "saves settings correctly" do
-        root_fs_type = Y2Storage::Filesystems::Type::XFS
-        var_lib_docker_fs_type = Y2Storage::Filesystems::Type::EXT4
-        select_widget(:root_fs_type, root_fs_type.to_sym)
-        select_widget(:var_lib_docker_fs_type, var_lib_docker_fs_type.to_sym)
-        select_widget(:propose_var_lib_docker)
-        select_widget(:snapshots)
-
-        subject.run
-
-        var_lib_docker_vol = subject.other_volumes.first
-        expect(subject.root_vol.fs_type).to eq(root_fs_type)
-        expect(subject.root_vol.proposed?).to eq(true)
-        expect(subject.root_vol.snapshots?).to eq(true)
-
-        expect(var_lib_docker_vol.fs_type).to eq(var_lib_docker_fs_type)
-        expect(var_lib_docker_vol.proposed?).to eq(true)
+      it "returns false" do
+        expect(dialog.skip?).to eq false
       end
     end
   end
 
-  context "In a standard SLE-like configuration with root, swap and separate /home" do
-    let(:control_file) { "control.SLE-like.xml" }
-
-    describe "#settings" do
-      it "uses NG settings" do
-        expect(subject.settings.ng_format?).to be true
-      end
-
-      it "has 3 volumes" do
-        expect(subject.settings.volumes.size).to be == 3
-      end
-
-      it "has a root_vol with Btrfs" do
-        expect(subject.root_vol.mount_point).to eq "/"
-        expect(subject.root_vol.fs_type).to eq Y2Storage::Filesystems::Type::BTRFS
-        expect(subject.root_vol.proposed).to be true
-      end
-
-      it "has root snapshots, but does not enforce them" do
-        expect(subject.root_vol.snapshots).to be true
-        expect(subject.root_vol.snapshots_configurable).to be true
-      end
-
-      it "has a home_vol" do
-        expect(subject.home_vol).not_to be nil
-        expect(subject.home_vol.mount_point).to eq "/home"
-      end
-
-      it "has have a swap_vol" do
-        expect(subject.home_vol).not_to be nil
-        expect(subject.swap_vol.mount_point).to eq "swap"
-        expect(subject.swap_vol.fs_type).to eq Y2Storage::Filesystems::Type::SWAP
-      end
-
-      it "does not have any other volume" do
-        expect(subject.other_volumes.empty?).to be true
-      end
+  describe "#handle_event" do
+    let(:volumes) do
+      [
+        double("VolumeSpecification", configurable?: true),
+        double("VolumeSpecification", configurable?: true)
+      ]
     end
+    let(:widget0) { double("VolumeWidget") }
+    let(:widget1) { double("VolumeWidget") }
+    let(:event) { "an event" }
 
-    describe "#run" do
-      it "does not go up in smoke" do
-        subject.run
-      end
-    end
-  end
-
-  context "In an extended SLE-like configuration with an additional /data volume" do
-    let(:control_file) { "control.SLE-with-data.xml" }
-
-    describe "#settings" do
-      it "uses NG settings" do
-        expect(subject.settings.ng_format?).to be true
-      end
-
-      it "has 4 volumes" do
-        expect(subject.settings.volumes.size).to be == 4
-      end
-
-      it "has a root_vol with Btrfs" do
-        expect(subject.root_vol.mount_point).to eq "/"
-        expect(subject.root_vol.fs_type).to eq Y2Storage::Filesystems::Type::BTRFS
-        expect(subject.root_vol.proposed).to be true
-      end
-
-      it "has root snapshots, but does not enforce them" do
-        expect(subject.root_vol.snapshots).to be true
-        expect(subject.root_vol.snapshots_configurable).to be true
-      end
-
-      it "has a home_vol" do
-        expect(subject.home_vol).not_to be nil
-        expect(subject.home_vol.mount_point).to eq "/home"
-      end
-
-      it "has have a swap_vol" do
-        expect(subject.home_vol).not_to be nil
-        expect(subject.swap_vol.mount_point).to eq "swap"
-        expect(subject.swap_vol.fs_type).to eq Y2Storage::Filesystems::Type::SWAP
-      end
-
-      it "has one other_vol /data" do
-        expect(subject.other_volumes.size).to be == 1
-        data_vol = subject.other_volumes.first
-        expect(data_vol.mount_point).to eq "/data"
-      end
-    end
-
-    describe "#run" do
-      it "does not go up in smoke" do
-        subject.run
-      end
+    it "delegates to the #handle method of all volume widgets" do
+      allow(widget_class).to receive(:new).and_return(widget0, widget1)
+      expect(widget0).to receive(:handle).with(event)
+      expect(widget1).to receive(:handle).with(event)
+      dialog.handle_event(event)
     end
   end
 end

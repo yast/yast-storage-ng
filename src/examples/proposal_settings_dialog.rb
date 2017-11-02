@@ -23,7 +23,6 @@
 # Usage:
 #   Y2DIR=../src/ /sbin/yast2 proposal_settings_dialog.rb example_control.xml fake_devicegraph.yml
 
-
 require "yast"
 require "y2storage"
 require "y2storage/dialogs/guided_setup"

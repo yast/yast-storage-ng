@@ -34,66 +34,299 @@ module Y2Storage
         # See also SelectFilesystem::Legacy.
         #
         class Ng < Base
-          attr_reader :root_vol, :home_vol, :swap_vol, :other_volumes
-
-          def initialize(*params)
-            super
-            @root_vol = find_vol("/")
-            @home_vol = find_vol("/home")
-            @swap_vol = find_vol("swap")
-            @other_volumes = find_other_volumes
-
-            ensure_root_vol_defaults
-            ensure_swap_vol_defaults
-          end
-
-          # Enable or disable widgets for the root volume.
-          # Automatically called when the user selects a value in the
-          # root_fs_type combo box.
+          # Internal class to draw the widget representing a single volume and
+          # to handle its UI events.
           #
-          def root_fs_type_handler
-            fs_type = widget_value(:root_fs_type)
-            return if fs_type.nil?
-            fs_type = Filesystems::Type.find(fs_type)
+          # The dialog is basically a collection of such widgets, one for every
+          # volume that can be configured.
+          class VolumeWidget
+            include Yast::UIShortcuts
+            include Yast::I18n
 
-            enable_snapshots = fs_type.is?(:btrfs)
-            enable_snapshots &&= @root_vol.snapshots_configurable? unless @root_vol.nil?
-            widget_update(:snapshots, enable_snapshots, attr: :Enabled)
-          end
-
-          # next_handler and back_handler are inherited from GuidedSetup::Base
-
-          # Event handler for other events that are not handled automatically
-          # in any of the above _handler methods.
-          #
-          def handle_event(widget_id)
-            if widget_id.to_s.start_with?("propose_")
-              fs_type_widget_id = widget_id.to_s.gsub(/^propose_/, "") + "_fs_type"
-              propose = widget_value(widget_id)
-              widget_update(fs_type_widget_id.to_sym, propose, attr: :Enabled)
+            # @param settings [ProposalSettings] see {#settings}
+            def initialize(settings, index)
+              @settings = settings
+              @index = index
+              @volume = settings.volumes[index]
             end
+
+            # Widget term for the volume, including widgets for everything the
+            # user can configure
+            #
+            # @return [WidgetTerm]
+            def content
+              terms = []
+              header = volume.proposed_configurable? ? proposed_term : header_term
+              terms << Left(header)
+              terms << indented(fs_type_term) if volume.fs_type_configurable?
+              terms << indented(snapshots_term) if volume.snapshots_configurable?
+              terms << indented(adjust_by_ram_term) if volume.adjust_by_ram_configurable?
+              VBox(*terms)
+            end
+
+            # Handles UI event, updating this widget if needed
+            def handle(event)
+              case event.to_s
+              when proposed_widget_id
+                proposed_handler
+              when fs_type_widget_id
+                fs_type_handler
+              end
+            end
+
+            # Initialize the widget status
+            def init
+              proposed_handler
+            end
+
+            # Updates the volume with the values from the UI
+            def store
+              volume.proposed = proposed?
+
+              if volume.fs_type_configurable?
+                fs_type = Yast::UI.QueryWidget(Id(fs_type_widget_id), :Value)
+                fs_type = Filesystems::Type.find(fs_type)
+                volume.fs_type = fs_type
+              end
+
+              if volume.snapshots_configurable?
+                volume.snapshots = Yast::UI.QueryWidget(Id(snapshots_widget_id), :Value)
+              end
+
+              if volume.adjust_by_ram_configurable?
+                volume.adjust_by_ram = Yast::UI.QueryWidget(Id(adjust_by_ram_widget_id), :Value)
+              end
+            end
+
+          protected
+
+            # Proposal settings being defined by the user
+            # @return [ProposalSettings]
+            attr_reader :settings
+
+            # Volume specification to be configured by the user
+            # @return [VolumeSpecification]
+            attr_reader :volume
+
+            # Position of #volume within the volumes list at #settings.
+            #
+            # Useful to relate UI elements to the corresponding volume
+            attr_reader :index
+
+            # Returns the passed term enclosed in some extra ones to make it
+            # appear indented in the UI
+            #
+            # @return [WidgetTerm]
+            def indented(term)
+              Left(HBox(HSpacing(2), term))
+            end
+
+            # Widget term for the title of the volume in case it's always
+            # proposed
+            #
+            # @return [WidgetTerm]
+            def header_term
+              text = settings.lvm ? header_for_lvm : header_for_partition
+              Label(text)
+            end
+
+            # @see #header_term
+            def header_for_lvm
+              case volume.mount_point
+              when "/"
+                # TRANSLATORS: "Volume" refers to an LVM logical volume.
+                _("Settings for the Root Volume")
+              when "/home"
+                # TRANSLATORS: "Volume" refers to an LVM logical volume.
+                _("Settings for the Home Volume")
+              when "swap"
+                # TRANSLATORS: "Volume" refers to an LVM logical volume.
+                _("Settings for Swap Volume")
+              when nil
+                # TRANSLATORS: "Volume" refers to an LVM logical volume and
+                # "Additional" implies it will be created but not mounted
+                _("Settings for Additional Volume")
+              else
+                # TRANSLATORS: "Volume" refers to a LVM logical volume. %s is a mount point.
+                _("Settings for the %s Volume") % volume.mount_point
+              end
+            end
+
+            # @see #header_term
+            def header_for_partition
+              case volume.mount_point
+              when "/"
+                _("Settings for the Root Partition")
+              when "/home"
+                _("Settings for the Home Partition")
+              when "swap"
+                _("Settings for Swap Partition")
+              when nil
+                # TRANSLATORS: "Additional" because it will be created but not mounted
+                _("Settings for Additional Partition")
+              else
+                # TRANSLATORS: %s is a mount point (e.g. /var/lib)
+                _("Settings for the %s Partition") % volume.mount_point
+              end
+            end
+
+            # Return a widget term for the checkbox to select if the volume
+            # should be proposed.
+            #
+            # @return [WidgetTerm]
+            def proposed_term
+              text = settings.lvm ? proposed_label_for_lvm : proposed_label_for_partition
+              CheckBox(Id(proposed_widget_id), Opt(:notify), text, volume.proposed?)
+            end
+
+            # @see #proposed_term
+            def proposed_label_for_lvm
+              case volume.mount_point
+              when "/home"
+                # TRANSLATORS: "Volume" refers to a LVM logical volume.
+                _("Propose Separate Home Volume")
+              when "swap"
+                # TRANSLATORS: "Volume" refers to a LVM logical volume.
+                _("Propose Separate Swap Volume")
+              when nil
+                # TRANSLATORS: "Volume" refers to an LVM logical volume and
+                # "Additional" implies it will be created but not mounted
+                _("Propose Additional Volume")
+              else
+                # TRANSLATORS: "Volume" refers to a LVM logical volume. %s is a mount point.
+                _("Propose Separate %s Volume") % volume.mount_point
+              end
+            end
+
+            # @see #proposed_term
+            def proposed_label_for_partition
+              case volume.mount_point
+              when "/home"
+                _("Propose Separate Home Partition")
+              when "swap"
+                _("Propose Separate Swap Partition")
+              when nil
+                # TRANSLATORS: "Additional" because it will be created but not mounted
+                _("Propose Additional Partition")
+              else
+                # TRANSLATORS: %s is a mount point (e.g. /var/lib)
+                _("Propose Separate %s Partition") % volume.mount_point
+              end
+            end
+
+            # Return a widget term for the volume's filesystem type.
+            #
+            # @return [WidgetTerm]
+            def fs_type_term
+              items = volume.fs_types.map do |fs|
+                Item(Id(fs.to_sym), fs.to_human_string, volume.fs_type == fs)
+              end
+
+              ComboBox(Id(fs_type_widget_id), Opt(:notify), _("File System Type"), items)
+            end
+
+            # Check box for enabling snapshots
+            #
+            # @return [WidgetTerm]
+            def snapshots_term
+              CheckBox(Id(snapshots_widget_id), _("Enable Snapshots"), volume.snapshots?)
+            end
+
+            # Check box for enlarging to RAM size
+            #
+            # @return [WidgetTerm]
+            def adjust_by_ram_term
+              text = volume.swap? ? _("Enlarge to RAM Size for Suspend") : _("Enlarge to RAM size")
+              CheckBox(Id(adjust_by_ram_widget_id), text, volume.adjust_by_ram?)
+            end
+
+            # Handler to be executed when the user selects a filesystem type for
+            # the volume
+            def fs_type_handler
+              fs_type = Yast::UI.QueryWidget(Id(fs_type_widget_id), :Value)
+              return unless fs_type
+
+              fs_type = Filesystems::Type.find(fs_type)
+              set_widget_enabled(:snapshots, proposed? && fs_type.is?(:btrfs))
+            end
+
+            # Handler to be executed when the user changes the check box for
+            # enabling/disabling the volume
+            def proposed_handler
+              set_widget_enabled(:adjust_by_ram, proposed?)
+              set_widget_enabled(:fs_type, proposed?)
+              fs_type_handler
+            end
+
+            # Enables or disabled a given widget if it exists
+            def set_widget_enabled(widget, value)
+              return unless volume.public_send(:"#{widget}_configurable?")
+              Yast::UI.ChangeWidget(Id(send(:"#{widget}_widget_id")), :Enabled, value)
+            end
+
+            # Whether the volume will be proposed or not, based on the volume
+            # definition and the current status of the UI
+            def proposed?
+              return volume.proposed unless volume.proposed_configurable?
+              Yast::UI.QueryWidget(Id(proposed_widget_id), :Value)
+            end
+
+            # Normalized ID for the volume
+            #
+            # @return [String]
+            def normalized_id
+              @normalized_id ||= "vol_#{index}"
+            end
+
+            # Return the widget ID of the volume's checkbox to enable or disable
+            # proposing it
+            #
+            # @return [String]
+            def proposed_widget_id
+              normalized_id + "_proposed"
+            end
+
+            # Return the widget ID of the volume's combo box to select the
+            # filesystem type
+            #
+            # @return [String]
+            def fs_type_widget_id
+              normalized_id + "_fs_type"
+            end
+
+            # Widget ID of the volume's check box to enable snapshots
+            #
+            # @return [String]
+            def snapshots_widget_id
+              normalized_id + "_snapshots"
+            end
+
+            # Widget ID of the volume's check box to enlarge to RAM
+            #
+            # @return [String]
+            def adjust_by_ram_widget_id
+              normalized_id + "_adjust_by_ram"
+            end
+          end
+
+          def handle_event(event)
+            volume_widgets.each { |w| w.handle(event) }
+          end
+
+          def skip?
+            settings.volumes.none?(&:configurable?)
           end
 
         protected
 
-          # Ensure reasonable defaults for some members of the root volume
-          #
-          def ensure_root_vol_defaults
-            return if @root_vol.nil?
-            @root_vol.proposed = true # A root volume is definitely required
-            using_btrfs = @root_vol.fs_type.is?(:btrfs)
-            @root_vol.snapshots = using_btrfs if @root_vol.snapshots.nil?
-            @root_vol.snapshots_configurable = using_btrfs if @root_vol.snapshots_configurable.nil?
-          end
-
-          # Ensure reasonable defaults for some members of the swap volume, but
-          # just for the main swap volume, not just for every other one that
-          # might also be there.
-          #
-          def ensure_swap_vol_defaults
-            return if @swap_vol.nil?
-            @swap_vol.adjust_by_ram ||= false
-            @swap_vol.adjust_by_ram_configurable ||= true
+          # Set of widgets to display, one for every volume in the settings that
+          # is configurable by the user
+          def volume_widgets
+            @volume_widgets ||=
+              settings.volumes.to_enum.with_index.map do |vol, idx|
+                next unless vol.configurable?
+                VolumeWidget.new(settings, idx)
+              end.compact
           end
 
           # Return a widget term for the dialog content, i.e. all the volumes
@@ -102,14 +335,9 @@ module Y2Storage
           # @return [WidgetTerm]
           #
           def dialog_content
-            widgets = [root_vol_widget, home_vol_widget]
-            widgets << other_volumes_widgets
-            widgets << swap_vol_widget
-            widgets.flatten!.compact!
-
-            content = widgets.each_with_object(VBox()) do |widget, vbox|
-              vbox << VSpacing(2) unless vbox.empty?
-              vbox << widget
+            content = volume_widgets.each_with_object(VBox()) do |widget, vbox|
+              vbox << VSpacing(1.4) unless vbox.empty?
+              vbox << widget.content
             end
 
             HVCenter(
@@ -119,274 +347,15 @@ module Y2Storage
             )
           end
 
-          # Return a widget term for the root volume.
-          #
-          # @return [WidgetTerm]
-          #
-          def root_vol_widget
-            return nil if @root_vol.nil?
-            items = @root_vol.fs_types.map do |fs|
-              Item(Id(fs.to_sym), fs.to_human_string, fs == @root_vol.fs_type)
-            end
-            VBox(
-              Left(
-                ComboBox(
-                  Id(:root_fs_type), Opt(:notify), _("File System for Root Partition"), items
-                )
-              ),
-              Left(
-                HBox(
-                  HSpacing(3),
-                  Left(CheckBox(Id(:snapshots), _("Enable Snapshots"), @root_vol.snapshots?))
-                )
-              )
-            )
-          end
-
-          # Return a widget term for the home volume.
-          #
-          # @return [WidgetTerm]
-          #
-          def home_vol_widget
-            # Translators: name of the partition that holds the users' home directories (/home)
-            vol_widget(@home_vol, _("Home"))
-          end
-
-          # Return a widget term for the swap volume.
-          #
-          # @return [WidgetTerm]
-          #
-          def swap_vol_widget
-            return nil if @swap_vol.nil?
-            return nil unless @swap_vol.adjust_by_ram_configurable?
-            Left(
-              CheckBox(
-                Id(:enlarge_swap),
-                _("Enlarge Swap for Suspend"),
-                @swap_vol.adjust_by_ram?
-              )
-            )
-          end
-
-          # Return the widgets for the 'other' volumes, i.e. all except root, home, swap.
-          #
-          # @return [Array<WidgetTerm>]
-          #
-          def other_volumes_widgets
-            @other_volumes.each_with_object([]) { |vol, widgets| widgets << vol_widget(vol) }
-          end
-
-          # Return a widget term for a volume with an optional name.
-          # If not specified, use the mount point as the name.
-          #
-          # @param vol [VolumeSpecification]
-          # @param vol_name [String]
-          # @return [WidgetTerm]
-          def vol_widget(vol, vol_name = nil)
-            return nil if vol.nil?
-            return nil unless vol.proposed? || vol.proposed_configurable?
-            vol_name ||= vol.mount_point
-            VBox(
-              propose_widget(vol, vol_name),
-              fs_type_widget(vol, vol_name)
-            )
-          end
-
-          # Return a widget term for the checkbox to select if a partition should be proposed.
-          # The checkbox might be disabled if the user is not allowed to change this value.
-          # The idea is to show the user even in that case that the partition
-          # will be created, even if he cannot prevent that.
-          #
-          # @param vol [VolumeSpecification]
-          # @param vol_name [String]
-          # @return [WidgetTerm]
-          #
-          def propose_widget(vol, vol_name)
-            cb_opt = Opt(:notify)
-            cb_opt << :disabled unless vol.proposed_configurable?
-            Left(
-              CheckBox(Id(propose_widget_id(vol_name)), cb_opt,
-                # Translators: %1 is the name of the partition ("root", "home", "/data", ...
-                Yast::Builtins.sformat(_("Propose Separate %1 Partition"), vol_name),
-                vol.proposed?)
-            )
-          end
-
-          # Return a widget term for a volume's filesystem type.
-          #
-          # @param vol [VolumeSpecification]
-          # @param vol_name [String]
-          # @return [WidgetTerm]
-          #
-          def fs_type_widget(vol, vol_name)
-            return Empty() unless fs_type_user_configurable?(vol)
-            items = vol.fs_types.map { |fs| Item(Id(fs.to_sym), fs.to_human_string) }
-            Left(
-              HBox(
-                HSpacing(2),
-                ComboBox(
-                  Id(fs_type_widget_id(vol_name)),
-                  # Translators: %1 is the name of the partition ("root", "home", "/data", ...
-                  Yast::Builtins.sformat(_("File System for %1 Partition"), vol_name),
-                  items
-                )
-              )
-            )
-          end
-
-          # Check if the filesystem type for a volume should be user configurable.
-          #
-          # @param vol [VolumeSpecification]
-          # @return [Boolean]
-          #
-          def fs_type_user_configurable?(vol)
-            return false if vol.fs_type == :swap
-            return false if vol.fs_types == [:swap]
-            true
-          end
-
-          # Create a normalized ID for a volume: Use its name or mount point,
-          # strip any leading slash, replace any other special character with
-          # an underscore and simplify underscores.
-          # "/home" -> "home"
-          # "/var/lib/docker" -> "var_lib_docker"
-          # "any?! weird!! name__whatever" -> "any_weird_name_whatever"
-          #
-          # @param name [String]
-          # @return [String]
-          #
-          def normalized_id(name)
-            id = name.gsub(/[^a-zA-Z0-9_]/, "_")
-            id.gsub!(/__+/, "_")
-            id.gsub!(/^_/, "")
-            id.gsub!(/_$/, "")
-            id.downcase
-          end
-
-          # Return the widget ID of a volume's checkbox to enable or disable
-          # proposing it
-          #
-          # @param vol_name [String]
-          # @return [Symbol]
-          #
-          def propose_widget_id(vol_name)
-            ("propose_" + normalized_id(vol_name)).to_sym
-          end
-
-          # Return the widget ID of a volume's combo box to select the
-          # filesystem type
-          #
-          # @param vol_name [String]
-          # @return [Symbol]
-          #
-          def fs_type_widget_id(vol_name)
-            (normalized_id(vol_name) + "_fs_type").to_sym
-          end
-
-          # Initialize the interactive widgets
-          #
           def initialize_widgets
-            widget_update(:root_fs_type, @root_vol.fs_type.to_sym) unless @root_vol.nil?
-            widget_update(:snapshots, @root_vol.snapshots?) unless @root_vol.nil?
-            widget_update(:enlarge_swap, @swap_vol.adjust_by_ram?) unless @swap_vol.nil?
-            root_fs_type_handler
-            init_swap_vol_widgets
-            init_home_vol_widgets
-            init_other_volumes_widgets
-          end
-
-          # Enable or disable widgets for the swap volume
-          #
-          def init_swap_vol_widgets
-            return if @swap_vol.nil?
-            widget_update(:enlarge_swap, @swap_vol.adjust_by_ram_configurable?, attr: :Enabled)
-          end
-
-          def init_home_vol_widgets
-            init_vol_widgets(@home_vol)
-          end
-
-          # Enable or disable widgets for all 'other' volumes
-          #
-          def init_other_volumes_widgets
-            @other_volumes.each { |vol| init_vol_widgets(vol) }
-          end
-
-          # Enable or disable widgets for one volume that has a "propose" check
-          # box and possibly a filesystem selection combo box (i.e. home and
-          # any of the 'other' volumes)
-          #
-          # @param vol [VolumeSpecification]
-          #
-          def init_vol_widgets(vol)
-            return if vol.nil?
-            return unless fs_type_user_configurable?(vol)
-            vol_name = vol.mount_point
-            propose = widget_value(propose_widget_id(vol_name))
-            combo_box_id = fs_type_widget_id(vol_name)
-            widget_update(combo_box_id, propose, attr: :Enabled)
-            # Make sure something is selected
-            current_val = widget_value(combo_box_id)
-            widget_update(combo_box_id, vol.fs_type.to_sym) if current_val.nil?
+            volume_widgets.each(&:init)
           end
 
           # Update the settings: Fetch the current widget values and store them
           # in the settings.
           #
           def update_settings!
-            if !@root_vol.nil?
-              fs_type = widget_value(:root_fs_type)
-              @root_vol.fs_type = Filesystems::Type.find(fs_type) unless fs_type.nil?
-              @root_vol.snapshots = widget_value(:snapshots)
-            end
-            if !@swap_vol.nil?
-              @swap_vol.adjust_by_ram = widget_value(:enlarge_swap)
-              @swap_vol.fs_type = Y2Storage::Filesystems::Type::SWAP
-            end
-            update_vol_settings!(@home_vol)
-            @other_volumes.each { |vol| update_vol_settings!(vol) }
-          end
-
-          # Update the settings for one volume.
-          # This works only for volumes that have a mount point.
-          #
-          # @param vol [VolumeSpecification]
-          #
-          def update_vol_settings!(vol)
-            return if vol.nil?
-            vol_name = vol.mount_point
-            vol.proposed = widget_value(propose_widget_id(vol_name))
-            if fs_type_user_configurable?(vol)
-              fs_type = widget_value(fs_type_widget_id(vol_name))
-              vol.fs_type = Filesystems::Type.find(fs_type) unless fs_type.nil?
-            end
-          end
-
-          # Find a VolumeSpecification from the proposal settings based on its
-          # mount point.
-          #
-          # @param mount_point [String]
-          #
-          def find_vol(mount_point)
-            return nil if settings.volumes.nil?
-            vol = settings.volumes.find { |v| v.mount_point == mount_point }
-            found = vol.nil? ? "No" : "Found"
-            log.info("#{found} volume with mount point \"#{mount_point}\" in the settings")
-            vol
-          end
-
-          # Find all "other" VolumeSpecifications from the proposal settings,
-          # i.e. volumes other than the standard root, home, swap volumes.
-          #
-          # @return [Array<VolumeSpecifications>]
-          #
-          def find_other_volumes
-            return [] if settings.volumes.nil?
-            other_vol = settings.volumes.reject { |vol| [@root_vol, @home_vol, @swap_vol].include?(vol) }
-            other_vol.each do |vol|
-              log.info("Found other volume with mount point \"#{vol.mount_point}\" in the settings")
-            end
-            other_vol
+            volume_widgets.each(&:store)
           end
         end
       end

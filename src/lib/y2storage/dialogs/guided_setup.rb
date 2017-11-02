@@ -52,7 +52,7 @@ module Y2Storage
           "select_disks"      => -> { run_dialog(SelectDisks) },
           "select_root_disk"  => -> { run_dialog(SelectRootDisk) },
           "select_scheme"     => -> { run_dialog(SelectScheme) },
-          "select_filesystem" => -> { run_dialog(settings.ng_format? ? SelectFilesystem::Ng : SelectFilesystem::Legacy) }
+          "select_filesystem" => -> { run_dialog(select_filesystem_class) }
         }
 
         sequence = {
@@ -77,6 +77,11 @@ module Y2Storage
           @result = dialog.run
         end
         @result ||= :next
+      end
+
+      # Subclass of {SelectFilesystem::Base} that must be used
+      def select_filesystem_class
+        settings.ng_format? ? SelectFilesystem::Ng : SelectFilesystem::Legacy
       end
     end
   end

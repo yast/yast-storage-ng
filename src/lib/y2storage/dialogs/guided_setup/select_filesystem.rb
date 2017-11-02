@@ -21,4 +21,3 @@
 
 require "y2storage/dialogs/guided_setup/select_filesystem/legacy"
 require "y2storage/dialogs/guided_setup/select_filesystem/ng"
-
