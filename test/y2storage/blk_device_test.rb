@@ -502,4 +502,29 @@ describe Y2Storage::BlkDevice do
     end
   end
 
+  describe "#hwinfo" do
+    let(:device_name) { "/dev/sda" }
+
+    before do
+      allow(Y2Storage::HWInfoReader.instance).to receive(:for_device)
+        .with(device.name)
+        .and_return(hwinfo)
+    end
+
+    context "when hardware info is available" do
+      let(:hwinfo) { OpenStruct.new(driver_modules: ["ahci", "sd"]) }
+
+      it "returns the hardware info" do
+        expect(device.hwinfo).to eq(hwinfo)
+      end
+    end
+
+    context "when hardware info is not available" do
+      let(:hwinfo) { nil }
+
+      it "returns nil" do
+        expect(device.hwinfo).to eq(nil)
+      end
+    end
+  end
 end
