@@ -35,6 +35,8 @@ module Y2Storage
       private :disk
 
       # Constructor
+      #
+      # @param disk [Y2Storage::Disk] Disk
       def initialize(disk)
         @disk = disk
       end

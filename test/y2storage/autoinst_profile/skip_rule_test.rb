@@ -263,6 +263,21 @@ describe Y2Storage::AutoinstProfile::SkipRule do
         end
       end
     end
+
+    context "when key is not supported" do
+      before do
+        allow(value).to receive(key).and_raise(NoMethodError)
+      end
+
+      it "returns false" do
+        expect(rule.matches?(disk)).to eq(false)
+      end
+
+      it "logs a warning" do
+        expect(rule.log).to receive(:warn).with("Unknown skip list key: size_k")
+        rule.matches?(disk)
+      end
+    end
   end
 
   describe "#valid?" do

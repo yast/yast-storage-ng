@@ -80,7 +80,7 @@ module Y2Storage
 
       # @return [Devicegraph] Starting devicegraph
       attr_reader :devicegraph
-      # @return [AutoinstIssues::List] Starting devicegraph
+      # @return [AutoinstIssues::List] List of AutoYaST issues to register them
       attr_reader :issues_list
 
       # Returns an array of planned partitions for a given disk

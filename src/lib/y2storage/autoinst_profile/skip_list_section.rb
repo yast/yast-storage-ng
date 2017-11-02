@@ -99,6 +99,13 @@ module Y2Storage
         rules.map(&:to_profile_rule)
       end
 
+      # Return section name
+      #
+      # @return [String] "skip_list"
+      def section_name
+        "skip_list"
+      end
+
     private
 
       # Log a list of rules as ignored
