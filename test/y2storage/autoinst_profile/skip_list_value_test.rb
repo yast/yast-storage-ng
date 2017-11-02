@@ -51,4 +51,26 @@ describe Y2Storage::AutoinstProfile::SkipListValue do
       expect(value.name).to eq("sda")
     end
   end
+
+  describe "#method_missing" do
+    let(:hwinfo) { OpenStruct.new(driver: ["ahci"]) }
+
+    before do
+      allow(disk).to receive(:hwinfo).and_return(hwinfo)
+    end
+
+    context "when a method is not defined" do
+      context "but is available in the associated hwinfo object" do
+        it "returns value from hwinfo" do
+          expect(value.driver).to eq(hwinfo.driver)
+        end
+      end
+
+      context "and is not available in the associated hwinfo object" do
+        it "raises NoMethodError" do
+          expect { value.other }.to raise_error(NoMethodError)
+        end
+      end
+    end
+  end
 end

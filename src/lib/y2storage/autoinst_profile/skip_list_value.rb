@@ -26,9 +26,15 @@ module Y2Storage
     # the needed values; on the other hand, it can offer a backward compatibility
     # layer.
     #
+    # When some undefined method is called (for instance, the `driver` method),
+    # it will try to get the required value from the hardware information
+    # object which can be accessed through BlkDevice#hwinfo.
+    #
     # NOTE: At this point, only a subset of them are implemented. Have a look at
     # `yast2 ayast_probe` to find out which values are supported in the old
     # libstorage.
+    #
+    # @see BlkDevice#hwinfo
     class SkipListValue
       # @return [Y2Storage::Disk] Disk
       attr_reader :disk
@@ -60,6 +66,23 @@ module Y2Storage
       # @return [String] Last part of device name (for instance, sdb)
       def name
         disk.basename
+      end
+
+    private
+
+      # Redefine method_missing in order to try to to get additional values from hardware info
+      def method_missing(meth, *_args, &_block)
+        if disk.hwinfo && disk.hwinfo.respond_to?(meth)
+          disk.hwinfo.public_send(meth)
+        else
+          super
+        end
+      end
+
+      # Redefine respond_to_missing
+      def respond_to_missing?(meth, _include_private = false)
+        return true if super
+        disk.hwinfo ? disk.hwinfo.respond_to?(meth) : false
       end
     end
   end
