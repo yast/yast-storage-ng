@@ -18,7 +18,7 @@ Yast.import "Popup"
 module Y2Partitioner
   module Dialogs
     # Form to set the type, name and devices of an MD RAID to be created
-    # Part of {Sequences::AddMd}.
+    # Part of {Actions::AddMd}.
     class Md < CWM::Dialog
       def initialize(controller)
         textdomain "storage"
@@ -56,7 +56,7 @@ module Y2Partitioner
 
       # Widget to select the RAID level
       class LevelChoice < CWM::CustomWidget
-        # @param controller [Sequences::MdController]
+        # @param controller [Actions::Controllers::Md]
         # @param devices_widget [#refresh_sizes] widget containing the lists of
         #   devices selected for the RAID
         def initialize(controller, devices_widget)

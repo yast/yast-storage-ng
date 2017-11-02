@@ -6,9 +6,9 @@ require "cwm"
 module Y2Partitioner
   module Dialogs
     # Form to set the chunk size and parity of an MD RAID
-    # Part of {Sequences::AddMd}.
+    # Part of {Actions::AddMd}.
     class MdOptions < CWM::Dialog
-      # @param controller [Sequences::MdController]
+      # @param controller [Actions::Controllers::Md]
       def initialize(controller)
         textdomain "storage"
 
@@ -38,7 +38,7 @@ module Y2Partitioner
 
       # Widget to select the chunk size
       class ChunkSize < CWM::ComboBox
-        # @param controller [Sequences::MdController]
+        # @param controller [Actions::Controllers::Md]
         def initialize(controller)
           textdomain "storage"
           @controller = controller
@@ -75,7 +75,7 @@ module Y2Partitioner
 
       # Widget to select the md parity
       class Parity < CWM::ComboBox
-        # @param controller [Sequences::MdController]
+        # @param controller [Actions::Controllers::Md]
         def initialize(controller)
           textdomain "storage"
 

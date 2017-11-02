@@ -23,9 +23,9 @@ require "cwm/widget"
 require "cwm/tree_pager"
 require "y2partitioner/icons"
 require "y2partitioner/device_graphs"
-require "y2partitioner/sequences/add_partition"
-require "y2partitioner/widgets/delete_disk_partition_button"
-require "y2partitioner/widgets/edit_blk_device_button"
+require "y2partitioner/actions/add_partition"
+require "y2partitioner/widgets/device_delete_button"
+require "y2partitioner/widgets/blk_device_edit_button"
 require "y2partitioner/widgets/configurable_blk_devices_table"
 require "y2partitioner/widgets/disk_bar_graph"
 require "y2partitioner/widgets/disk_description"
@@ -151,11 +151,8 @@ module Y2Partitioner
             Left(
               HBox(
                 AddButton.new(disk, table),
-                EditBlkDeviceButton.new(table: table),
-                DeleteDiskPartitionButton.new(
-                  device_graph: DeviceGraphs.instance.current,
-                  table:        table
-                )
+                BlkDeviceEditButton.new(pager: @pager, table: table),
+                DeviceDeleteButton.new(pager: @pager, table: table)
               )
             )
           )
@@ -185,7 +182,7 @@ module Y2Partitioner
           end
 
           def handle
-            res = Sequences::AddPartition.new(@disk.name).run
+            res = Actions::AddPartition.new(@disk.name).run
             res == :finish ? :redraw : nil
           end
         end

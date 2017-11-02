@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Wed Nov  1 09:11:23 UTC 2017 - jlopez@suse.com
+
+- Partitioner: support for deleting logical volumes.
+- Part of fate#318196.
+- 4.0.17
+
+-------------------------------------------------------------------
 Wed Nov  1 08:23:17 UTC 2017 - igonzalezsosa@suse.com
 
 - AutoYaST: do not crash when an unknown key is used in a

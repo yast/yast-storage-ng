@@ -21,7 +21,7 @@
 
 require "cwm/tree_pager"
 require "y2partitioner/icons"
-require "y2partitioner/widgets/delete_disk_partition_button"
+require "y2partitioner/widgets/device_delete_button"
 require "y2partitioner/widgets/configurable_blk_devices_table"
 
 module Y2Partitioner
@@ -64,10 +64,7 @@ module Y2Partitioner
             table,
             HBox(
               # TODO: add and edit need to be also added
-              DeleteDiskPartitionButton.new(
-                device_graph: device_graph,
-                table:        table
-              )
+              DeviceDeleteButton.new(pager: pager, table: table)
             )
           )
         end
@@ -77,6 +74,9 @@ module Y2Partitioner
         # @return [Array<Y2Storage::BlkDevice>]
         attr_reader :disks
 
+        # @return [CWM::TreePager]
+        attr_reader :pager
+
         # Returns all disks and their partitions
         #
         # @return [Array<Y2Storage::BlkDevice>]
@@ -85,10 +85,6 @@ module Y2Partitioner
             devices << disk
             devices.concat(disk.partitions)
           end
-        end
-
-        def device_graph
-          DeviceGraphs.instance.current
         end
       end
     end

@@ -23,9 +23,9 @@ require "cwm/pager"
 
 require "y2partitioner/icons"
 require "y2partitioner/widgets/lvm_lv_description"
-require "y2partitioner/widgets/edit_lvm_button"
-require "y2partitioner/widgets/resize_lvm_button"
-require "y2partitioner/widgets/delete_lvm_button"
+require "y2partitioner/widgets/lvm_edit_button"
+require "y2partitioner/widgets/lvm_resize_button"
+require "y2partitioner/widgets/device_delete_button"
 
 module Y2Partitioner
   module Widgets
@@ -66,9 +66,9 @@ module Y2Partitioner
             LvmLvDescription.new(@lvm_lv),
             Left(
               HBox(
-                EditLvmButton.new(device: @lvm_lv),
-                ResizeLvmButton.new(device: @lvm_lv),
-                DeleteLvmButton.new(device: @lvm_lv)
+                LvmEditButton.new(device: @lvm_lv),
+                LvmResizeButton.new(device: @lvm_lv),
+                DeviceDeleteButton.new(device: @lvm_lv)
               )
             )
           )

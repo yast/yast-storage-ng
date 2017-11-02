@@ -6,12 +6,12 @@ module Y2Partitioner
   module Dialogs
     # Determine the type (primary/extended/logical)
     # of a partition to be created.
-    # Part of {Sequences::AddPartition}.
+    # Part of {Actions::AddPartition}.
     # Formerly MiniWorkflowStepPartitionType
     class PartitionType < CWM::Dialog
       # Choose partition type: primary/extended/logical.
       class TypeChoice < CWM::RadioButtons
-        # @param controller [Sequences::PartitionController]
+        # @param controller [Actions::Controllers::Partition]
         def initialize(controller)
           textdomain "storage"
           @controller = controller
@@ -62,7 +62,7 @@ module Y2Partitioner
         end
       end
 
-      # @param controller [Sequences::PartitionController]
+      # @param controller [Actions::Controllers::Partition]
       #   partition controller collecting data for a partition to be created
       def initialize(controller)
         @disk_name = controller.disk_name
