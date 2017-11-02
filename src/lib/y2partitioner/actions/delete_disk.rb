@@ -56,7 +56,7 @@ module Y2Partitioner
           _("Confirm Deleting of All Partitions"),
           # TRANSLATORS: name is the name of the disk to be deleted (e.g., /dev/sda)
           format(_("The disk \"%{name}\" contains at least one partition.\n" \
-            "If you proceed, the following partitions will be deleted:"), name: device.name),
+            "If you proceed, the following devices will be deleted:"), name: device.name),
           # TRANSLATORS: name is the name of the disk to be deleted (e.g., /dev/sda)
           format(_("Really delete all partitions on \"%{name}\"?"), name: device.name)
         )
