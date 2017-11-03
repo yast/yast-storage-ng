@@ -74,10 +74,7 @@ module Y2Storage
         return @devices
       end
 
-      space_maker = Proposal::AutoinstSpaceMaker.new(disk_analyzer, issues_list)
-      devicegraph = space_maker.cleaned_devicegraph(initial_devicegraph, drives)
-
-      @devices = propose_devicegraph(devicegraph, drives)
+      @devices = propose_devicegraph(initial_devicegraph, drives)
     end
 
     # Proposes a devicegraph based on given drives map
@@ -91,6 +88,10 @@ module Y2Storage
     def propose_devicegraph(devicegraph, drives)
       if drives.partitions?
         @planned_devices = plan_devices(devicegraph, drives)
+
+        space_maker = Proposal::AutoinstSpaceMaker.new(disk_analyzer, issues_list)
+        devicegraph = space_maker.cleaned_devicegraph(devicegraph, drives, @planned_devices)
+
         create_devices(devicegraph, @planned_devices, drives.disk_names)
       else
         log.info "No partitions were specified. Falling back to guided setup planning."

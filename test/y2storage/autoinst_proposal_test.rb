@@ -262,11 +262,24 @@ describe Y2Storage::AutoinstProposal do
       end
 
       let(:pv) do
-        { "create" => true, "lvm_group" => lvm_group, "size" => "max", "type" => :CT_LVM }
+        { "create" => false, "lvm_group" => lvm_group, "size" => "max", "type" => :CT_LVM }
       end
 
       it "reuses the volume group" do
         proposal.propose
+        devicegraph = proposal.devices
+        expect(devicegraph.partitions).to contain_exactly(
+          an_object_having_attributes("name" => "/dev/sda1"), # new pv
+          an_object_having_attributes("name" => "/dev/sda3"),
+          an_object_having_attributes("name" => "/dev/sda5")
+        )
+
+        vg = devicegraph.lvm_vgs.first
+        expect(vg.vg_name).to eq(lvm_group)
+        expect(vg.lvm_pvs.map(&:blk_device)).to contain_exactly(
+          an_object_having_attributes("name" => "/dev/sda1"), # new pv
+          an_object_having_attributes("name" => "/dev/sda5")
+        )
       end
     end
 
