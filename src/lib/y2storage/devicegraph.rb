@@ -98,7 +98,8 @@ module Y2Storage
     #
     # @see #remove_md
     #
-    # @param [Device, Integer] a device or its {Device#sid sid}
+    # @param device [Device, Integer] a device or its {Device#sid sid}
+    #
     # @raise [DeviceNotFoundBySid] if a device with given sid is not found
     storage_forward :remove_device
     private :remove_device
@@ -245,7 +246,7 @@ module Y2Storage
 
     # Removes a Md raid and all its descendants
     #
-    # @param [Md]
+    # @param md [Md]
     def remove_md(md)
       md.remove_descendants
       remove_device(md)
