@@ -239,6 +239,37 @@ describe Y2Storage::AutoinstProposal do
       end
     end
 
+    describe "reusing logical volumes" do
+      let(:scenario) { "lvm-two-vgs" }
+
+      let(:lvm_group) { "vg0" }
+
+      let(:root) do
+        {
+          "create" => false, "mount" => "/", "filesystem" => "ext4", "lv_name" => "lv1",
+          "size" => "20G"
+        }
+      end
+
+      let(:partitioning) do
+        [
+          { "device" => "/dev/sda", "use" => "all", "partitions" => [pv] }, vg
+        ]
+      end
+
+      let(:vg) do
+        { "device" => "/dev/#{lvm_group}", "partitions" => [root], "type" => :CT_LVM }
+      end
+
+      let(:pv) do
+        { "create" => true, "lvm_group" => lvm_group, "size" => "max", "type" => :CT_LVM }
+      end
+
+      it "reuses the volume group" do
+        proposal.propose
+      end
+    end
+
     describe "skipping a disk" do
       let(:skip_list) do
         [{ "skip_key" => "name", "skip_value" => skip_device }]
