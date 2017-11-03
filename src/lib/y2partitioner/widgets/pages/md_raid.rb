@@ -27,6 +27,8 @@ require "y2partitioner/widgets/md_description"
 require "y2partitioner/widgets/configurable_blk_devices_table"
 require "y2partitioner/widgets/blk_device_edit_button"
 require "y2partitioner/widgets/used_devices_tab"
+require "y2partitioner/widgets/device_resize_button"
+require "y2partitioner/widgets/device_delete_button"
 
 module Y2Partitioner
   module Widgets
@@ -98,7 +100,13 @@ module Y2Partitioner
           @contents ||=
             VBox(
               MdDescription.new(@md),
-              Left(HBox(BlkDeviceEditButton.new(device: @md)))
+              Left(
+                HBox(
+                  BlkDeviceEditButton.new(device: @md),
+                  DeviceResizeButton.new(device: @md),
+                  DeviceDeleteButton.new(device: @md)
+                )
+              )
             )
         end
       end
