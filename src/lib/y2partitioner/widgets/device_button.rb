@@ -22,6 +22,8 @@
 require "yast"
 require "cwm"
 
+Yast.import "Popup"
+
 module Y2Partitioner
   module Widgets
     # Base class for a button that performs some action over a specificic device,
@@ -65,8 +67,27 @@ module Y2Partitioner
       end
 
       # Actions to perform when the button is clicked
-      # @return [Symbol, nil] result
-      abstract_method :actions
+      #
+      # @return [:redraw, nil] :redraw when the action is performed; nil otherwise
+      def actions
+        if actions_class.nil?
+          Yast::Popup.Warning("Not yet implemented")
+          return nil
+        end
+
+        actions_result = actions_class.new(device).run
+        result(actions_result)
+      end
+
+      # @return [Actions] an Actions class name to perform the expected actions
+      abstract_method :actions_class
+
+      # By default, it returns :redraw when the action is performed; nil otherwise
+      #
+      # @return [:redraw, nil]
+      def result(actions_result)
+        actions_result == :finish ? :redraw : nil
+      end
 
       # Checks whether there is a device on which to act
       #

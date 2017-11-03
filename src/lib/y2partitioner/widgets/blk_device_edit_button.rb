@@ -37,11 +37,13 @@ module Y2Partitioner
         _("Edit...")
       end
 
+    private
+
       # @see DeviceButton#actions
       def actions
         UIState.instance.select_row(device.sid)
-        res = Actions::EditBlkDevice.new(device).run
-        res == :finish ? :redraw : nil
+        actions_result = Actions::EditBlkDevice.new(device).run
+        result(actions_result)
       end
     end
   end

@@ -90,6 +90,20 @@ module Y2Storage
     #   @return [Device]
     storage_forward :find_device, as: "Device"
 
+    # @!method remove_device(device)
+    #
+    # Removes a device from the devicegraph. Only use this
+    # method if there is no special method to delete a device,
+    # e.g., PartitionTable.delete_partition() or LvmVg.delete_lvm_lv().
+    #
+    # @see #remove_md
+    #
+    # @param device [Device, Integer] a device or its {Device#sid sid}
+    #
+    # @raise [DeviceNotFoundBySid] if a device with given sid is not found
+    storage_forward :remove_device
+    private :remove_device
+
     # Creates a new devicegraph with the information read from a file
     #
     # @param filename [String]
@@ -228,6 +242,20 @@ module Y2Storage
     # @return [Array<FreeDiskSpace>]
     def free_disk_spaces
       disks.reduce([]) { |sum, disk| sum + disk.free_spaces }
+    end
+
+    # Removes a Md raid and all its descendants
+    #
+    # @param md [Md]
+    #
+    # @raise [ArgumentError] if the md does not exist in the devicegraph
+    def remove_md(md)
+      if md.nil? || !md_raids.include?(md)
+        raise ArgumentError, "Md RAID not found"
+      end
+
+      md.remove_descendants
+      remove_device(md)
     end
 
     # String to represent the whole devicegraph, useful for comparison in

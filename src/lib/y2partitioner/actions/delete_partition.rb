@@ -33,8 +33,8 @@ module Y2Partitioner
       def confirm
         if used_by_lvm?
           confirm_for_used_by_lvm
-        elsif used_by_md_raid?
-          confirm_for_used_by_md_raid
+        elsif used_by_md?
+          confirm_for_used_by_md
         else
           super
         end
@@ -50,39 +50,11 @@ module Y2Partitioner
 
     private
 
-      # Checks whether the partition is used as physical volume
-      #
-      # @return [Boolean] true if partition belongs to a volume group; false otherwise
-      def used_by_lvm?
-        !vg.nil?
-      end
-
-      # Volume group that the partition belongs to
-      #
-      # @return [Y2Storage::LvmVg, nil] nil if the partition does not belong to
-      #   a volume group
-      def vg
-        device.descendants.find { |d| d.is?(:lvm_vg) }
-      end
-
-      # Checks whether the partition is used by a md raid
-      #
-      # @return [Boolean] true if partition belongs to a md raid; false otherwise
-      def used_by_md_raid?
-        !md_raid.nil?
-      end
-
-      # Md Raid that the partition belongs to
-      #
-      # @return [Y2Storage::Md, nil] nil if the partition does not belong to a md raid
-      def md_raid
-        device.descendants.find { |d| d.is?(:md) }
-      end
-
       # Confirmation when the partition belongs to a volume group
       #
       # @see DeleteDevice#dependent_devices
       # @see DeleteDevice#confirm_recursive_delete
+      # @see DeleteDevice#lvm_vg
       def confirm_for_used_by_lvm
         confirm_recursive_delete(
           dependent_devices,
@@ -91,11 +63,11 @@ module Y2Partitioner
           #   belongs to (e.g., /dev/system)
           format(_("The selected partition is used by volume group \"%{name}\".\n" \
             "To keep the system in a consistent state, the following volume group\n" \
-            "and its logical volumes will be deleted:"), name: vg.name),
+            "and its logical volumes will be deleted:"), name: lvm_vg.name),
           # TRANSLATORS: partition is the name of the partition to be deleted (e.g., /dev/sda1),
           #   and vg is the name of the volume group to be deleted (e.g., /dev/system)
-          format(_("Delete partition \"%{partition}\" and volume group \"%{vg}\"?"),
-            partition: device.name, vg: vg.name)
+          format(_("Delete partition \"%{partition}\" and volume group \"%{lvm_vg}\"?"),
+            partition: device.name, lvm_vg: lvm_vg.name)
         )
       end
 
@@ -103,18 +75,19 @@ module Y2Partitioner
       #
       # @see DeleteDevice#dependent_devices
       # @see DeleteDevice#confirm_recursive_delete
-      def confirm_for_used_by_md_raid
+      # @see DeleteDevice#md
+      def confirm_for_used_by_md
         confirm_recursive_delete(
           dependent_devices,
           _("Confirm Deleting Partition Used by RAID"),
           # TRANSLATORS: name is the name of the partition to be deleted (e.g., /dev/sda1)
           format(_("The selected partition belongs to RAID \"%{name}\".\n" \
             "To keep the system in a consistent state, the following\n" \
-            "RAID device will be deleted:"), name: md_raid.name),
+            "RAID device will be deleted:"), name: md.name),
           # TRANSLATORS: partition is the name of the partition to be deleted (e.g., /dev/sda1),
           #   and md_raid is the name of the raid to be deleted (e.g., /dev/md/md1)
-          format(_("Delete partition \"%{partition}\" and RAID \"%{md_raid}\"?"),
-            partition: device.name, md_raid: md_raid.name)
+          format(_("Delete partition \"%{partition}\" and RAID \"%{md}\"?"),
+            partition: device.name, md: md.name)
         )
       end
     end
