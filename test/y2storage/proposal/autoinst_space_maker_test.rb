@@ -237,7 +237,7 @@ describe Y2Storage::Proposal::AutoinstSpaceMaker do
           Y2Storage::Planned::Partition.new("/").tap { |p| p.reuse = "/dev/sda1" }
         end
 
-        it "does not removes the partition table" do
+        it "does not remove the partition table" do
           devicegraph = subject.cleaned_devicegraph(fake_devicegraph, drives_map, planned_devices)
           devicegraph.partitions
           disk = Y2Storage::Disk.find_by_name(devicegraph, "/dev/sda")
