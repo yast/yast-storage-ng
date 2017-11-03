@@ -1,4 +1,13 @@
 -------------------------------------------------------------------
+Thu Nov  2 17:58:28 UTC 2017 - igonzalezsosa@suse.com
+
+- AutoYaST: query hardware information on skip lists (bsc#1065668).
+- AutoYaST: support multi-valued keys on skip lists.
+- AutoYaST: do not crash when no suitable disk for installation
+  is found.
+- 4.0.18
+
+-------------------------------------------------------------------
 Wed Nov  1 09:11:23 UTC 2017 - jlopez@suse.com
 
 - Partitioner: support for deleting logical volumes.

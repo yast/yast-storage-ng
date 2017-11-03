@@ -124,7 +124,7 @@ module Y2Storage
 
         flexible_drives.each do |drive|
           disk_name = first_usable_disk(drive, devicegraph)
-          @drives[disk_name] = drive
+          @drives[disk_name] = drive if disk_name
         end
       end
 

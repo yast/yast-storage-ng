@@ -99,13 +99,18 @@ module Y2Storage
 
       # Determines whether a disk matches the rule
       #
+      # When the value coming from the disk is an array, it will match if any
+      # of those values matches the reference.
+      #
       # @param disk [Disk] Disk to match
       # @return [Boolean] true if the disk matches the rule
       def matches?(disk)
         return false unless valid?
-        value_from_disk = value(disk)
-        return false unless valid_class?(value_from_disk)
-        send("match_#{predicate}", value_from_disk, cast_reference(raw_reference, value_from_disk.class))
+        values_from_disk = Array(value(disk))
+        values_from_disk.any? do |value|
+          return false unless valid_class?(value)
+          send("match_#{predicate}", value, cast_reference(raw_reference, value.class))
+        end
       end
 
       # Determines whether the rule is valid

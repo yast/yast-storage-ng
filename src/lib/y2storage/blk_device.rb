@@ -21,6 +21,7 @@
 
 require "y2storage/storage_class_wrapper"
 require "y2storage/device"
+require "y2storage/hwinfo_reader"
 
 module Y2Storage
   # Base class for most devices having a device name, udev path and udev ids.
@@ -303,6 +304,15 @@ module Y2Storage
     # @return [String]
     def basename
       name.split("/").last
+    end
+
+    # Return hardware information for the device
+    #
+    # @return [OpenStruct,nil] Hardware information; nil if no information was found.
+    #
+    # @see Y2Storage::HWInfoReader
+    def hwinfo
+      Y2Storage::HWInfoReader.instance.for_device(name)
     end
   end
 end

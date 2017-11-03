@@ -32,7 +32,12 @@ describe Y2Storage::AutoinstProfile::SkipRule do
   let(:disk) { instance_double("Y2Storage::Disk") }
   let(:size_k) { 1024 }
   let(:value) do
-    instance_double(Y2Storage::AutoinstProfile::SkipListValue, size_k: size_k, device: "/dev/sda")
+    double(
+      "Y2Storage::AutoinstProfile::SkipListValue",
+      size_k: size_k,
+      device: "/dev/sda",
+      driver: ["ahci", "sd"]
+    )
   end
 
   before do
@@ -260,6 +265,26 @@ describe Y2Storage::AutoinstProfile::SkipRule do
 
         it "returns false" do
           expect(rule.matches?(disk)).to be(false)
+        end
+      end
+
+      context "when current value is an array" do
+        let(:key) { "driver" }
+
+        context "and some value matches" do
+          let(:reference) { "ahci" }
+
+          it "returns true" do
+            expect(rule.matches?(disk)).to be(true)
+          end
+        end
+
+        context "no value matches" do
+          let(:reference) { "some_driver" }
+
+          it "returns false" do
+            expect(rule.matches?(disk)).to be(false)
+          end
         end
       end
     end

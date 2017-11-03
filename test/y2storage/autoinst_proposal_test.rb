@@ -271,6 +271,19 @@ describe Y2Storage::AutoinstProposal do
           expect(sda1).to have_attributes(filesystem_label: "new_root")
         end
       end
+
+      context "when no disks are suitable for installation" do
+        let(:skip_list) do
+          [{ "skip_key" => "name", "skip_value" => "sda" },
+           { "skip_key" => "name", "skip_value" => "sdb" }]
+        end
+
+        it "registers an issue" do
+          expect(issues_list).to receive(:add).with(:no_disk)
+          proposal.propose
+        end
+
+      end
     end
 
     describe "automatic partitioning" do

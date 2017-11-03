@@ -27,6 +27,7 @@ require "y2storage/fake_device_factory"
 require "y2storage/devicegraph"
 require "y2storage/disk_analyzer"
 require "y2storage/callbacks"
+require "y2storage/hwinfo_reader"
 require "yast2/fs_snapshot"
 
 Yast.import "Mode"
@@ -242,6 +243,7 @@ module Y2Storage
     def reset_probed
       @probed_graph = nil
       @probed_disk_analyzer = nil
+      Y2Storage::HWInfoReader.instance.reset
     end
 
     alias_method :probed_changed, :reset_probed
