@@ -247,7 +247,13 @@ module Y2Storage
     # Removes a Md raid and all its descendants
     #
     # @param md [Md]
+    #
+    # @raise [ArgumentError] if the md does not exist in the devicegraph
     def remove_md(md)
+      if md.nil? || !md_raids.include?(md)
+        raise ArgumentError, "Md RAID not found"
+      end
+
       md.remove_descendants
       remove_device(md)
     end

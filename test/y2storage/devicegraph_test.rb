@@ -294,5 +294,22 @@ describe Y2Storage::Devicegraph do
       existing_descendants = descendants_sid.map { |sid| devicegraph.find_device(sid) }.compact
       expect(existing_descendants).to be_empty
     end
+
+    context "when the md does not exist in the devicegraph" do
+      before do
+        Y2Storage::Md.create(other_devicegraph, md1_name)
+      end
+
+      let(:other_devicegraph) { devicegraph.dup }
+
+      let(:md1_name) { "/dev/md/md1" }
+
+      it "raises an exception and does not remove the md" do
+        md1 = Y2Storage::Md.find_by_name(other_devicegraph, md1_name)
+
+        expect { devicegraph.remove_md(md1) }.to raise_error(ArgumentError)
+        expect(Y2Storage::Md.find_by_name(other_devicegraph, md1_name)).to_not be_nil
+      end
+    end
   end
 end
