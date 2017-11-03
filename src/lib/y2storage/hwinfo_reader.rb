@@ -37,7 +37,7 @@ module Y2Storage
   #   hwinfo.device_file #=> "/dev/sda"
   #
   # @example Cleaning the cache
-  #   HWInfo.instance.reset!
+  #   HWInfo.instance.reset
   class HWInfoReader
     include Singleton
 
@@ -52,15 +52,22 @@ module Y2Storage
     # Reset the cache
     #
     # The values will be loaded when #for_device is called again.
-    def reset!
+    def reset
       @data = nil
     end
 
   private
 
+    # Return devices information from hwinfo
+    #
+    # The information is cached. It can be cleaned by calling #reset.
+    #
+    # @return [Hash<String,OpenStruct>] Hardware information indexed by device name
+    #
+    # @see #data_from_hwinfo
+    # @see #reset
     def data
-      return @data if @data
-      @data = data_from_hwinfo
+      @data ||= data_from_hwinfo
     end
 
     # @return [Regexp] Regular expression to extract the 'bus' from the first line

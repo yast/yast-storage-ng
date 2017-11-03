@@ -27,13 +27,13 @@ describe Y2Storage::HWInfoReader do
   let(:reader) { described_class.instance }
   let(:hwinfo_output) { File.read(File.join(DATA_PATH, "hwinfo.txt")) }
 
-  describe "#for_device" do
-    before do
-      allow(Yast::Execute).to receive(:on_target!)
-        .with(/hwinfo/, anything, anything, anything).and_return(hwinfo_output)
-      reader.reset!
-    end
+  before do
+    allow(Yast::Execute).to receive(:on_target!)
+      .with(/hwinfo/, anything, anything, anything).and_return(hwinfo_output)
+    reader.reset
+  end
 
+  describe "#for_device" do
     it "returns hardware information for the given device" do
       data = reader.for_device("/dev/sda")
       expect(data).to be_a(OpenStruct)
@@ -59,6 +59,21 @@ describe Y2Storage::HWInfoReader do
         .once
       reader.for_device("/dev/sda")
       reader.for_device("/dev/sda")
+    end
+  end
+
+  describe "#reset" do
+    context "when information is cached" do
+      before do
+        reader.for_device("/dev/sda")
+      end
+
+      it "resets information" do
+        reader.reset
+        expect(Yast::Execute).to receive(:on_target!)
+          .with("/usr/sbin/hwinfo", "--disk", "--listmd", stdout: :capture)
+        reader.for_device("/dev/sda")
+      end
     end
   end
 end

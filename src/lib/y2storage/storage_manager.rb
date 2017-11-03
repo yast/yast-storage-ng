@@ -243,7 +243,7 @@ module Y2Storage
     def reset_probed
       @probed_graph = nil
       @probed_disk_analyzer = nil
-      Y2Storage::HWInfoReader.instance.reset!
+      Y2Storage::HWInfoReader.instance.reset
     end
 
     alias_method :probed_changed, :reset_probed
