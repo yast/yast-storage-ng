@@ -188,11 +188,13 @@ module Y2Partitioner
 
       def start_value(device)
         return "" unless device.respond_to?(:region)
+        return "" if device.region.empty?
         device.region.start
       end
 
       def end_value(device)
         return "" unless device.respond_to?(:region)
+        return "" if device.region.empty?
         device.region.end
       end
     end
