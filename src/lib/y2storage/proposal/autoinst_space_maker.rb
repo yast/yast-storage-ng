@@ -187,7 +187,7 @@ module Y2Storage
             all << devicegraph.partitions.find { |p| device.reuse == p.name }
           when Y2Storage::Planned::LvmVg
             vg = devicegraph.lvm_vgs.find { |v| File.join("/dev", device.reuse) == v.name }
-            all.concat(vg.lvm_pvs.map(&:blk_device))
+            all.concat(vg.lvm_pvs)
           when Y2Storage::Planned::Md
             all << devicegraph.md_raids.find { |r| device.reuse == r.name }
           end
