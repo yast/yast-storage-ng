@@ -253,4 +253,46 @@ describe Y2Storage::Devicegraph do
       end
     end
   end
+
+  describe "#remove_md" do
+    subject(:devicegraph) { Y2Storage::StorageManager.instance.staging }
+
+    before do
+      fake_scenario("md_raid.xml")
+
+      # Create a Vg over the md raid
+      md = Y2Storage::Md.find_by_name(devicegraph, md_name)
+      md.remove_descendants
+
+      vg = Y2Storage::LvmVg.create(devicegraph, vg_name)
+      vg.add_lvm_pv(md)
+      vg.create_lvm_lv("lv1", Y2Storage::DiskSize.GiB(1))
+    end
+
+    let(:md_name) { "/dev/md/md0" }
+
+    let(:vg_name) { "vg0" }
+
+    it "removes the given md device" do
+      md = Y2Storage::Md.find_by_name(devicegraph, md_name)
+      expect(md).to_not be_nil
+
+      devicegraph.remove_md(md)
+
+      md = Y2Storage::Md.find_by_name(devicegraph, md_name)
+      expect(md).to be_nil
+    end
+
+    it "removes all md descendants" do
+      md = Y2Storage::Md.find_by_name(devicegraph, md_name)
+      descendants_sid = md.descendants.map(&:sid)
+
+      expect(descendants_sid).to_not be_empty
+
+      devicegraph.remove_md(md)
+
+      existing_descendants = descendants_sid.map { |sid| devicegraph.find_device(sid) }.compact
+      expect(existing_descendants).to be_empty
+    end
+  end
 end
