@@ -239,6 +239,50 @@ describe Y2Storage::AutoinstProposal do
       end
     end
 
+    describe "reusing logical volumes" do
+      let(:scenario) { "lvm-two-vgs" }
+
+      let(:lvm_group) { "vg0" }
+
+      let(:root) do
+        {
+          "create" => false, "mount" => "/", "filesystem" => "ext4", "lv_name" => "lv1",
+          "size" => "20G"
+        }
+      end
+
+      let(:partitioning) do
+        [
+          { "device" => "/dev/sda", "use" => "all", "partitions" => [pv] }, vg
+        ]
+      end
+
+      let(:vg) do
+        { "device" => "/dev/#{lvm_group}", "partitions" => [root], "type" => :CT_LVM }
+      end
+
+      let(:pv) do
+        { "create" => false, "lvm_group" => lvm_group, "size" => "max", "type" => :CT_LVM }
+      end
+
+      it "reuses the volume group" do
+        proposal.propose
+        devicegraph = proposal.devices
+        expect(devicegraph.partitions).to contain_exactly(
+          an_object_having_attributes("name" => "/dev/sda1"), # new pv
+          an_object_having_attributes("name" => "/dev/sda3"),
+          an_object_having_attributes("name" => "/dev/sda5")
+        )
+
+        vg = devicegraph.lvm_vgs.first
+        expect(vg.vg_name).to eq(lvm_group)
+        expect(vg.lvm_pvs.map(&:blk_device)).to contain_exactly(
+          an_object_having_attributes("name" => "/dev/sda1"), # new pv
+          an_object_having_attributes("name" => "/dev/sda5")
+        )
+      end
+    end
+
     describe "skipping a disk" do
       let(:skip_list) do
         [{ "skip_key" => "name", "skip_value" => skip_device }]
@@ -462,6 +506,43 @@ describe Y2Storage::AutoinstProposal do
           expect(devicegraph.md_raids).to contain_exactly(
             an_object_having_attributes(
               "name"     => "/dev/md/data",
+              "md_level" => Y2Storage::MdLevel::RAID0
+            )
+          )
+        end
+      end
+
+      context "reusing a RAID" do
+        let(:scenario) { "md_raid.xml" }
+        let(:md_device) { "/dev/md/md0" }
+
+        let(:partitioning) do
+          [
+            { "device" => "/dev/sda", "use" => "all", "partitions" => [root_spec, raid_spec] },
+            { "device" => "/dev/md", "partitions" => [home_spec] }
+          ]
+        end
+
+        let(:raid_options) { { "raid_name" => md_device, "raid_type" => "raid0" } }
+
+        let(:home_spec) do
+          {
+            "mount" => "/home", "filesystem" => "xfs", "size" => "max",
+            "raid_name" => md_device, "partition_nr" => 0, "raid_options" => raid_options,
+            "create" => false
+          }
+        end
+
+        let(:raid_spec) do
+          { "raid_name" => md_device, "create" => false }
+        end
+
+        it "reuses a RAID" do
+          proposal.propose
+          devicegraph = proposal.devices
+          expect(devicegraph.md_raids).to contain_exactly(
+            an_object_having_attributes(
+              "name"     => "/dev/md/md0",
               "md_level" => Y2Storage::MdLevel::RAID0
             )
           )
