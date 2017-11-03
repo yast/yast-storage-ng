@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Fri Nov  3 15:11:42 UTC 2017 - igonzalezsosa@suse.com
+
+- AutoYaST: do not remove partitions that are supposed to be reused
+  (bsc#1066398).
+- 4.0.20
+
+-------------------------------------------------------------------
 Fri Nov 03 14:27:02 CET 2017 - aschnell@suse.com
 
 - do not query end of region if region is empty (bsc#1066290)
