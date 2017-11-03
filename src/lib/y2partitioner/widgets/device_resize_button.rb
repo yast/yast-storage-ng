@@ -20,26 +20,23 @@
 # find current contact information at www.suse.com.
 
 require "yast"
-require "cwm"
 require "y2partitioner/widgets/device_button"
-require "y2partitioner/ui_state"
-
-Yast.import "Popup"
 
 module Y2Partitioner
   module Widgets
-    # Button for resizing a volume group or logical volume
-    class LvmResizeButton < DeviceButton
+    # Button for resizing a device
+    class DeviceResizeButton < DeviceButton
       # @macro seeAbstractWidget
       def label
-        # TRANSLATORS: button label to resize a volume group or logical volume
+        # TRANSLATORS: label for button to resize a device
         _("Resize...")
       end
 
-      # TODO
-      # @see DeviceButton#actions
-      def actions
-        Yast::Popup.Warning("Not yet implemented")
+    private
+
+      # Returns the proper Actions class to perform the resize action
+      def actions_class
+        nil
       end
     end
   end

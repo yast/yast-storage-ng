@@ -93,6 +93,42 @@ module Y2Partitioner
         )
       end
 
+      # Checks whether the device is used as physical volume
+      #
+      # @return [Boolean] true if device belongs to a volume group; false otherwise
+      def used_by_lvm?
+        !lvm_vg.nil?
+      end
+
+      # Volume group that the device belongs to
+      #
+      # @see Y2Storage::BlkDevice#lvm_pv
+      #
+      # @return [Y2Storage::LvmVg, nil] nil if the device does not belong to
+      #   a volume group
+      def lvm_vg
+        return nil unless device.respond_to?(:lvm_pv)
+
+        lvm_pv = device.lvm_pv
+        lvm_pv ? lvm_pv.lvm_vg : nil
+      end
+
+      # Checks whether the device is used by a md raid
+      #
+      # @return [Boolean] true if device belongs to a md raid; false otherwise
+      def used_by_md?
+        !md.nil?
+      end
+
+      # Md Raid that the device belongs to
+      #
+      # @see Y2Storage::BlkDevice#md
+      #
+      # @return [Y2Storage::Md, nil] nil if the device does not belong to a md raid
+      def md
+        device.md
+      end
+
       # Devices that depends on the device to delete
       #
       # For example, a Vg depends on some partitions used as physical volumes,

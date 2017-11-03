@@ -113,6 +113,18 @@ describe Y2Partitioner::Widgets::DeviceDeleteButton do
           subject.handle
         end
       end
+
+      context "and the device is a md raid" do
+        let(:device_type) { :md }
+
+        let(:action_class) { Y2Partitioner::Actions::DeleteMd }
+
+        it "performs the action for deleting a md raid" do
+          expect(action_class).to receive(:new).with(device).and_return(action)
+          expect(action).to receive(:run)
+          subject.handle
+        end
+      end
     end
   end
 end

@@ -23,41 +23,41 @@
 require_relative "../test_helper"
 
 require "cwm/rspec"
-require "y2partitioner/widgets/lvm_resize_button"
+require "y2partitioner/widgets/device_resize_button"
+require "y2partitioner/widgets/configurable_blk_devices_table"
 
-describe Y2Partitioner::Widgets::LvmResizeButton do
-  before do
-    devicegraph_stub("lvm-two-vgs.yml")
+describe Y2Partitioner::Widgets::DeviceResizeButton do
+  subject { described_class.new(table: table) }
+
+  let(:table) do
+    instance_double(Y2Partitioner::Widgets::ConfigurableBlkDevicesTable,
+      selected_device: device)
   end
 
-  subject(:button) { described_class.new(pager: pager, table: table) }
-
-  let(:table) { double("table", selected_device: device) }
-
   let(:device) { nil }
-
-  let(:pager) { double("pager") }
 
   include_examples "CWM::PushButton"
 
   describe "#handle" do
-    let(:current_graph) { Y2Partitioner::DeviceGraphs.instance.current }
+    context "when no device is selected" do
+      let(:device) { nil }
 
-    let(:vg) { Y2Storage::LvmVg.find_by_vg_name(current_graph, "vg0") }
+      it "shows an error message" do
+        expect(Yast::Popup).to receive(:Error)
+        subject.handle
+      end
 
-    let(:lv) { vg.lvm_lvs.first }
-
-    context "when the current device is a vg" do
-      let(:device) { vg }
-
-      xit "opens the dialog for resizing the vg" do
+      it "returns nil" do
+        expect(subject.handle).to be(nil)
       end
     end
 
-    context "when the current device is a lv" do
-      let(:device) { lv }
+    context "when a device is selected" do
+      let(:device) { instance_double(Y2Storage::Md) }
 
-      xit "opens the dialog for resizing the lv" do
+      # TODO
+      it "returns nil" do
+        expect(subject.handle).to be(nil)
       end
     end
   end

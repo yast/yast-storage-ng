@@ -25,6 +25,8 @@ require "y2partitioner/device_graphs"
 require "y2partitioner/actions/add_md"
 require "y2partitioner/widgets/md_raids_table"
 require "y2partitioner/widgets/blk_device_edit_button"
+require "y2partitioner/widgets/device_resize_button"
+require "y2partitioner/widgets/device_delete_button"
 
 module Y2Partitioner
   module Widgets
@@ -62,7 +64,6 @@ module Y2Partitioner
           return @contents if @contents
 
           icon = Icons.small_icon(Icons::RAID)
-          table = MdRaidsTable.new(devices, @pager)
           @contents = VBox(
             Left(
               HBox(
@@ -75,7 +76,9 @@ module Y2Partitioner
             Left(
               HBox(
                 AddButton.new,
-                BlkDeviceEditButton.new(table: table)
+                BlkDeviceEditButton.new(table: table),
+                DeviceResizeButton.new(pager: @pager, table: table),
+                DeviceDeleteButton.new(pager: @pager, table: table)
               )
             )
           )
@@ -83,6 +86,16 @@ module Y2Partitioner
 
       private
 
+        # Table with all md raids
+        #
+        # @return [MdRaidsTable]
+        def table
+          @table ||= MdRaidsTable.new(devices, @pager)
+        end
+
+        # Returns all md raids
+        #
+        # @return [Array<Y2Storage::Md>]
         def devices
           Y2Storage::Md.all(DeviceGraphs.instance.current)
         end

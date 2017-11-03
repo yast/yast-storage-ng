@@ -424,7 +424,7 @@ The specs are based on current version of expert partitioner for TW. The goal is
 ### When 'RAID' is selected in the tree view
 * shows a table with the columns: Device, Size, F, Enc, Type, FS Type, Label, Mount Point, RAID Type, Chunk Size
   * and the table is filled out with info of all RAID devices
-* *(pending) shows the actions: 'Add RAID', 'Edit', 'Resize' and 'Delete'*
+* shows the actions: 'Add RAID', 'Edit', 'Resize' and 'Delete'
 * and action 'Add RAID' is selected
   * and there is less than two not mounted partitions
     * shows an error message
@@ -434,11 +434,11 @@ The specs are based on current version of expert partitioner for TW. The goal is
   * shows dialog to edit the RAID partition
 * *(pending) and action 'Resize' is selected*
   * shows a dialog to modify the RAID devices
-* *(pending) and action 'Delete' is selected*
+* and action 'Delete' is selected
   * shows a confirm popup to delete the RAID
   * deletes the RAID
 
-### *(pending) When a 'RAID' is selected in the tree view*
+### When a 'RAID' is selected in the tree view
 * shows a view with two tabs: 'Overview' and 'Used Devices'
 * and tab 'Overview' is selected
   * shows a report with three sections: 'Device', 'RAID' and 'File System'
@@ -458,7 +458,7 @@ The specs are based on current version of expert partitioner for TW. The goal is
   * shows the actions: 'Edit', 'Resize' and 'Delete'
     * and action 'Edit' is selected
       * shows dialog to edit the RAID partition (similar to edit disk partition)
-    * and action 'Resize' is selected
+    * *(pending) and action 'Resize' is selected*
       * shows a dialog to modify the RADID devices
     * and action 'Delete' is selected
       * shows a confirm popup to delete the RAID
@@ -466,7 +466,7 @@ The specs are based on current version of expert partitioner for TW. The goal is
 * and tab 'Used Devices' is selected
   * shows a table with the columns: Device, Size, F, Enc and Type
     * and the table is filled out with info of all devices that belong to the RAID
-  * and an item in the table is selected (double click)
+  * *(pending) and an item in the table is selected (double click)*
     * jumps to the corresponding partition in the 'Hard Disks' section
 
 ### When 'Add RAID' is selected*
@@ -586,8 +586,8 @@ The specs are based on current version of expert partitioner for TW. The goal is
     * shows dialog to resize the VG
   * and a LV is selected in the table
     * shows popup dialog to resize the LV
-* *(pending) and action 'Delete' is selected*
-  * and a VG is selected in the table
+* and action 'Delete' is selected
+  * *(pending) and a VG is selected in the table*
     * shows a confirm popup to delete the VG and its LVs
     * deletes the VG (and its LVs)
   * and a LV is selected in the table
@@ -657,7 +657,7 @@ The specs are based on current version of expert partitioner for TW. The goal is
         * does not allow to edit the LV
     * *(pending) and action 'Resize' is selected*
       * shows popup dialog to resize the current selected LV in the table
-    * *(pending) and action 'Delete' is selected*
+    * and action 'Delete' is selected
       * shows a confirm popup to delete the selected LV
       * deletes the LV
 * and tab 'Physical Volumes' is selected
@@ -747,5 +747,5 @@ The specs are based on current version of expert partitioner for TW. The goal is
     * the same than in the "VG view"
   * *(pending) and action 'Resize' is selected*
     * the same than in the "VG view"
-  * *(pending) and action 'Delete' is selected*
+  * and action 'Delete' is selected
     * the same than in the "VG view"
