@@ -53,15 +53,15 @@ module Y2Partitioner
       def confirm_for_used_by_lvm
         confirm_recursive_delete(
           dependent_devices,
-          _("Confirm Deleting Md RAID Used by LVM"),
+          _("Confirm Deleting RAID Used by LVM"),
           # TRANSLATORS: name is the name of the volume group that the md raid
           #   belongs to (e.g., /dev/system)
-          format(_("The selected md raid is used by volume group \"%{name}\".\n" \
+          format(_("The selected RAID is used by volume group \"%{name}\".\n" \
             "To keep the system in a consistent state, the following volume group\n" \
             "and its logical volumes will be deleted:"), name: lvm_vg.name),
           # TRANSLATORS: md is the name of the md raid to be deleted (e.g., /dev/md/md1),
           #   and vg is the name of the volume group to be deleted (e.g., /dev/system)
-          format(_("Delete md raid \"%{md}\" and volume group \"%{lvm_vg}\"?"),
+          format(_("Delete RAID \"%{md}\" and volume group \"%{lvm_vg}\"?"),
             md: device.name, lvm_vg: lvm_vg.name)
         )
       end

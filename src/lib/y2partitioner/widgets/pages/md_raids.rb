@@ -95,7 +95,7 @@ module Y2Partitioner
 
         # Returns all md raids
         #
-        # @return [Array<Y2Storage::LvmVg, Y2Storage::LvmLv>]
+        # @return [Array<Y2Storage::Md>]
         def devices
           Y2Storage::Md.all(DeviceGraphs.instance.current)
         end
