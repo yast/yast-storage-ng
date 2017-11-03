@@ -148,7 +148,7 @@ module Y2Storage
         part_section = drive.partitions.first
         device_config(md, part_section, drive)
         md.lvm_volume_group_name = part_section.lvm_group
-        add_device_reuse(md, md.name, !!part_section.format) if part_section.create == false
+        add_md_reuse(md, part_section) if part_section.create == false
 
         raid_options = part_section.raid_options
         if raid_options
@@ -283,6 +283,20 @@ module Y2Storage
         return unless vg.make_space_policy == :keep || vg.lvs.any?(&:reuse?)
         vg_to_reuse = find_vg_to_reuse(devicegraph, vg, drive)
         vg.reuse = vg_to_reuse.vg_name if vg_to_reuse
+      end
+
+      # Set 'reusing' attributes for a MD RAID
+      #
+      # @param md      [Planned::Md] Planned MD RAID
+      # @param section [AutoinstProfile::PartitionSection] AutoYaST specification
+      def add_md_reuse(md, section)
+        # TODO: fix when not using named raids
+        md_to_reuse = devicegraph.md_raids.find { |m| m.name == md.name }
+        if md_to_reuse.nil?
+          issues_list.add(:missing_reusable_device, section)
+          return
+        end
+        add_device_reuse(md, md_to_reuse.name, !!section.format)
       end
 
       # @param devicegraph [Devicegraph] Devicegraph to search for the partition to reuse

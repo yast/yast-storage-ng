@@ -511,6 +511,43 @@ describe Y2Storage::AutoinstProposal do
           )
         end
       end
+
+      context "reusing a RAID" do
+        let(:scenario) { "md_raid.xml" }
+        let(:md_device) { "/dev/md/md0" }
+
+        let(:partitioning) do
+          [
+            { "device" => "/dev/sda", "use" => "all", "partitions" => [root_spec, raid_spec] },
+            { "device" => "/dev/md", "partitions" => [home_spec] }
+          ]
+        end
+
+        let(:raid_options) { { "raid_name" => md_device, "raid_type" => "raid0" } }
+
+        let(:home_spec) do
+          {
+            "mount" => "/home", "filesystem" => "xfs", "size" => "max",
+            "raid_name" => md_device, "partition_nr" => 0, "raid_options" => raid_options,
+            "create" => false
+          }
+        end
+
+        let(:raid_spec) do
+          { "raid_name" => md_device, "create" => false }
+        end
+
+        it "reuses a RAID" do
+          proposal.propose
+          devicegraph = proposal.devices
+          expect(devicegraph.md_raids).to contain_exactly(
+            an_object_having_attributes(
+              "name"     => "/dev/md/md0",
+              "md_level" => Y2Storage::MdLevel::RAID0
+            )
+          )
+        end
+      end
     end
 
     describe "LVM on RAID" do
