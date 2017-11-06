@@ -68,11 +68,62 @@ module Y2Storage
         disk.basename
       end
 
+      # @return [String,nil] DASD format or nil if not a DASD device
+      #   backward compatibility
+      def dasd_format
+        return nil unless disk.is_a?(Y2Storage::Dasd)
+        disk.format.to_s
+      end
+
+      # @return [String,nil] DASD type or nil if not a DASD device
+      def dasd_type
+        return nil unless disk.is_a?(Y2Storage::Dasd)
+        disk.type.to_s
+      end
+
+      # @return [String] Partition table type ("msdos", "gpt", etc.)
+      def label
+        return nil if disk.partition_table.nil?
+        disk.partition_table.type.to_s
+      end
+
+      # @return [Integer] Max number of primery partitions
+      def max_primary
+        return nil if disk.partition_table.nil?
+        disk.partition_table.max_primary
+      end
+
+      # @return [Integer] Max number of logical partitions
+      def max_logical
+        return nil if disk.partition_table.nil?
+        disk.partition_table.max_logical
+      end
+
+      # @return [String] Disk transport
+      def transport
+        disk.transport.to_s
+      end
+
+      # @return [Integer] Block size
+      def sector_size
+        disk.region.block_size.to_i
+      end
+
+      # @return [Array<String>] Device udev identifiers
+      def udev_id
+        disk.udev_ids
+      end
+
+      # @return [Array<String>] Device udev paths
+      def udev_path
+        disk.udev_paths
+      end
+
     private
 
       # Redefine method_missing in order to try to to get additional values from hardware info
       def method_missing(meth, *_args, &_block)
-        if disk.hwinfo && disk.hwinfo.respond_to?(meth)
+        if disk.hwinfo && HWINFO_KEYS.include?(meth) && disk.hwinfo.respond_to?(meth)
           disk.hwinfo.public_send(meth)
         else
           super
