@@ -35,7 +35,7 @@ describe Y2Storage::Proposal::AutoinstSizeParser do
   let(:volumes) do
     [
       Y2Storage::VolumeSpecification.new(
-        "mount_point" => "swap", "min_size" => "128MiB", "max_size" => "1GiB"
+        "mount_point" => "swap", "min_size" => "128MiB", "max_size" => "1GiB", "weight" => 50
       )
     ]
   end
@@ -69,7 +69,11 @@ describe Y2Storage::Proposal::AutoinstSizeParser do
           expect(size_info.min).to eq(128.MiB)
           expect(size_info.max).to eq(1.GiB)
           expect(size_info.percentage).to be_nil
-          expect(size_info.weight).to be_nil
+        end
+
+        it "sets weight according to control file value" do
+          size_info = parser.parse("auto", "swap", MIN, MAX)
+          expect(size_info.weight).to eq(50)
         end
       end
 
