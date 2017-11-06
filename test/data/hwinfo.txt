@@ -47,6 +47,7 @@
   Geometry (Logical): CHS 121601/255/63
   Size: 1953525168 sectors a 512 bytes
   Capacity: 931 GB (1000204886016 bytes)
+  I/O Ports: 0xe000-0xefff (rw)
   Config Status: cfg=no, avail=yes, need=no, active=unknown
   Attached to: #12 (RAID bus controller)
 

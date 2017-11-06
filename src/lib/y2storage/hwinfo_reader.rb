@@ -103,7 +103,7 @@ module Y2Storage
       body.lines.map(&:strip).each_with_object(OpenStruct.new) do |line, data|
         key, value = line.split(":", 2)
         next if value.nil?
-        key = key.downcase.tr(" ", "_").tr("()", "")
+        key = key.downcase.tr(" ", "_").tr("()/", "")
         value = value.tr("\"()", "").strip
         parsed_value = MULTI_VALUED.include?(key) ? parse_multi(value) : parse_single(value)
         data.public_send("#{key}=", parsed_value)
