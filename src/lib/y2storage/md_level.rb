@@ -36,6 +36,7 @@ module Y2Storage
       unknown:   N_("Unknown"),
       raid0:     N_("RAID0"),
       raid1:     N_("RAID1"),
+      raid4:     N_("RAID4"),
       raid5:     N_("RAID5"),
       raid6:     N_("RAID6"),
       raid10:    N_("RAID10"),
