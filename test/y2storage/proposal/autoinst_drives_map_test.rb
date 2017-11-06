@@ -40,6 +40,37 @@ describe Y2Storage::Proposal::AutoinstDrivesMap do
 
   before { fake_scenario(scenario) }
 
+  describe ".new" do
+    context "when a device does not exist" do
+      let(:partitioning_array) do
+        [{ "device" => "/dev/sdx", "use" => "all" }]
+      end
+
+      it "raises a DeviceNotFoundError exception" do
+        expect { described_class.new(fake_devicegraph, partitioning) }
+          .to raise_error(Y2Storage::DeviceNotFoundError)
+      end
+    end
+
+    context "when a disk udev link is used" do
+      let(:root_by_label) { Y2Storage::BlkDevice.find_by_name(fake_devicegraph, "/dev/sda3") }
+
+      let(:partitioning_array) do
+        [{ "device" => "/dev/disk/by-label/root" }]
+      end
+
+      before do
+        allow(Y2Storage::BlkDevice).to receive(:find_by_udev_link)
+          .with(fake_devicegraph, "/dev/disk/by-label/root").and_return(root_by_label)
+      end
+
+      it "uses its kernel name" do
+        described_class.new(fake_devicegraph, partitioning)
+        expect(drives_map.disk_names).to eq(["/dev/sda3"])
+      end
+    end
+  end
+
   describe "#each" do
     it "executes the given block for each name/drive in the map" do
       drives = partitioning.drives

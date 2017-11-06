@@ -21,6 +21,8 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
+require "y2storage/exceptions"
+
 module Y2Storage
   module Proposal
     # Utility class to map disk names to the <drive> section of the AutoYaST
@@ -119,7 +121,9 @@ module Y2Storage
       def add_disks(disks, devicegraph)
         fixed_drives, flexible_drives = disks.partition(&:device)
         fixed_drives.each do |drive|
-          @drives[drive.device] = drive
+          disk = find_disk(devicegraph, drive.device)
+          raise DeviceNotFoundError, "#{drive.device} device not found" if disk.nil?
+          @drives[disk.name] = drive
         end
 
         flexible_drives.each do |drive|
@@ -147,6 +151,17 @@ module Y2Storage
         mds.each do |md|
           @drives[md.name_for_md] = md
         end
+      end
+
+      # Find a disk using its name or a udev link
+      #
+      # First it tries using the kernel name (eg. /dev/sda1) and, if it fails,
+      # it tries again using udev links.
+      #
+      # @return [BlkDevice,nil]
+      def find_disk(devicegraph, device_name)
+        BlkDevice.find_by_name(devicegraph, device_name) ||
+          BlkDevice.find_by_udev_link(devicegraph, device_name)
       end
     end
   end
