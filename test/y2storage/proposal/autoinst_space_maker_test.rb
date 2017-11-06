@@ -247,7 +247,11 @@ describe Y2Storage::Proposal::AutoinstSpaceMaker do
     end
 
     context "when some given drive does not exist" do
-      let(:partitioning_array) { [{ "device" => "/dev/sdx", "use" => "all" }] }
+      let(:drives_map) { instance_double(Y2Storage::Proposal::AutoinstDrivesMap) }
+
+      before do
+        allow(drives_map).to receive(:each_pair).and_yield("/dev/sdx", {})
+      end
 
       it "ignores the device" do
         expect { subject.cleaned_devicegraph(fake_devicegraph, drives_map, planned_devices) }
