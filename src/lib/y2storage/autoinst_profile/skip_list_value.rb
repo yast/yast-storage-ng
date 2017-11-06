@@ -19,8 +19,47 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
+require "y2storage/dasd"
+
 module Y2Storage
   module AutoinstProfile
+    # @return [Array<Symbol>] hwinfo keys that can be used as a skip list key
+    HWINFO_KEYS = [
+      :bios_id,
+      :device_file,
+      :device_files,
+      :device_number,
+      :drive_status,
+      :driver,
+      :driver_modules,
+      :hardware_class,
+      :model,
+      :parent_id,
+      :revision,
+      :serial_id,
+      :sysfs_busid,
+      :sysfs_device_link,
+      :sysfs_id,
+      :unique_id,
+      :vendor
+    ].freeze
+
+    # @return [Array<Symbol>] list of supported keys (in addition to hwinfo ones)
+    KEYS = [
+      :size_k,
+      :device,
+      :name,
+      :dasd_format,
+      :dasd_type,
+      :label,
+      :max_primary,
+      :max_logical,
+      :transport,
+      :sector_size,
+      :udev_id,
+      :udev_path
+    ].freeze
+
     # This class reads information from disks to be used as values when
     # on skip lists. On one hand, the class implements logic to find out
     # the needed values; on the other hand, it can offer a backward compatibility
@@ -117,6 +156,17 @@ module Y2Storage
       # @return [Array<String>] Device udev paths
       def udev_path
         disk.udev_paths
+      end
+
+      # Convert disk information to a hash
+      #
+      # @return [Hash<String,Object>] Supported keys and values for the given device
+      def to_hash
+        hwinfo_hash = disk.hwinfo.to_h.select { |k, _v| HWINFO_KEYS.include?(k) }
+        KEYS.each_with_object(hwinfo_hash) do |key, all|
+          value = public_send(key)
+          all[key] = value if value
+        end
       end
 
     private

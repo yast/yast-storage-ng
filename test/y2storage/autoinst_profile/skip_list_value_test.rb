@@ -29,9 +29,13 @@ describe Y2Storage::AutoinstProfile::SkipListValue do
 
   let(:scenario) { "windows-linux-free-pc" }
   let(:disk) { Y2Storage::Disk.find_by_name(fake_devicegraph, "/dev/sda") }
+  let(:partition_table) { disk.partition_table }
 
   before do
     fake_scenario(scenario)
+    allow(disk).to receive(:partition_table).and_return(partition_table)
+    allow(disk.partition_table).to receive(:max_primary).and_return(4)
+    allow(disk.partition_table).to receive(:max_logical).and_return(256)
   end
 
   describe "#size_k" do
@@ -167,6 +171,42 @@ describe Y2Storage::AutoinstProfile::SkipListValue do
       it "returns nil" do
         expect(value.dasd_type).to be_nil
       end
+    end
+  end
+
+  describe "#to_hash" do
+    let(:hwinfo) { OpenStruct.new(bios_id: "0x80", driver: ["ahci"], unknown: "value") }
+
+    before do
+      allow(disk).to receive(:hwinfo).and_return(
+        bios_id: "0x80",
+        driver:  ["ahci"]
+      )
+    end
+
+    it "returns a hash containing supported keys and values" do
+      expect(value.to_hash).to eq(
+        bios_id:     "0x80",
+        device:      "/dev/sda",
+        driver:      ["ahci"],
+        label:       "msdos",
+        max_logical: 256,
+        max_primary: 4,
+        name:        "sda",
+        sector_size: 512,
+        size_k:      536870912000,
+        transport:   "unknown",
+        udev_id:     [],
+        udev_path:   []
+      )
+    end
+
+    it "does not include unknown keys" do
+      expect(value.to_hash.keys).to_not include(:unknown)
+    end
+
+    it "does not include 'nil' values" do
+      expect(value.dasd_format).to be_nil
     end
   end
 end
