@@ -45,7 +45,12 @@ module Y2Storage
       # @return [String] Error message
       # @see Issue#message
       def message
-        _("Not suitable disk was found")
+        if section.device
+          # TRANSLATORS: kernel device name (eg. '/dev/sda1')
+          _("Disk '%s' was not found") % section.device
+        else
+          _("Not suitable disk was found")
+        end
       end
     end
   end
