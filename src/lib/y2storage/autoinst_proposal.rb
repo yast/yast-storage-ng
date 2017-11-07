@@ -90,12 +90,58 @@ module Y2Storage
 
         space_maker = Proposal::AutoinstSpaceMaker.new(disk_analyzer, issues_list)
         devicegraph = space_maker.cleaned_devicegraph(devicegraph, drives, @planned_devices)
+        add_partition_tables(devicegraph, drives)
+        @planned_devices.concat(boot_devices(devicegraph, @planned_devices))
 
         create_devices(devicegraph, @planned_devices, drives.disk_names)
       else
         log.info "No partitions were specified. Falling back to guided setup planning."
         propose_guided_devicegraph(devicegraph, drives)
       end
+    end
+
+    # Add partition tables
+    #
+    # This method create partitions table for disks which are missing one.
+    # The devicegraph which is passed as first argument will be modified.
+    #
+    # @param devicegraph [Devicegraph]                 Starting point
+    # @param drives      [Proposal::AutoinstDrivesMap] Devices map from an AutoYaST profile
+    def add_partition_tables(devicegraph, drives)
+      drives.each do |disk_name, drive_spec|
+        disk = devicegraph.disk_devices.find { |d| d.name == disk_name }
+        next if disk.nil? || disk.partition_table
+
+        ptable_type =
+          if drive_spec.disklabel
+            Y2Storage::PartitionTables::Type.find(drive_spec.disklabel)
+          else
+            Y2Storage::PartitionTables::Type::MSDOS
+          end
+        disk.create_partition_table(ptable_type)
+      end
+    end
+
+    # Add devices to make the system bootable
+    #
+    # The devicegraph which is passed as first argument will be modified.
+    #
+    # @param devicegraph [Devicegraph]         Starting point
+    # @param devices     [Array<Planned:Device>] List of planned devices
+    # @return [Array<Planned::Device>] List of required planned devices to boot
+    def boot_devices(devicegraph, devices)
+      return unless root?(devices)
+      checker = BootRequirementsChecker.new(devicegraph, planned_devices: devices)
+      checker.needed_partitions
+    end
+
+    # Determines whether the list of devices includes a root partition
+    #
+    # @param  devices [Array<Planned:Device>] List of planned devices
+    # @return [Boolean] true if there is a root partition; false otherwise.
+    def root?(devices)
+      return true if devices.any? { |d| d.respond_to?(:mount_point) && d.mount_point == "/" }
+      issues_list.add(:missing_root)
     end
 
     # Finds a suitable devicegraph using the guided proposal approach

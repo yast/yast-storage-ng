@@ -629,6 +629,101 @@ describe Y2Storage::AutoinstProposal do
         expect { proposal.propose }.to raise_error(Y2Storage::UnexpectedCallError)
       end
     end
+
+    describe "when boot partition is required" do
+      let(:scenario) { "empty_hard_disk_50GiB" }
+
+      let(:boot_checker) do
+        instance_double(Y2Storage::BootRequirementsChecker, needed_partitions: [planned_boot])
+      end
+
+      let(:planned_boot) do
+        Y2Storage::Planned::Partition.new(nil).tap do |part|
+          part.min_size = 1.MiB
+          part.max_size = 1.MiB
+          part.partition_id = Y2Storage::PartitionId::BIOS_BOOT
+        end
+      end
+
+      before do
+        allow(Y2Storage::BootRequirementsChecker).to receive(:new).and_return(boot_checker)
+      end
+
+      let(:partitioning) do
+        [{ "use" => "all", "partitions" => [swap, root], "disklabel" => "gpt" }]
+      end
+
+      it "creates the boot partition" do
+        proposal.propose
+        devicegraph = proposal.devices
+        disk = devicegraph.disk_devices.first
+        expect(disk.name).to eq("/dev/sda")
+        expect(disk.partition_table.type).to eq(Y2Storage::PartitionTables::Type::GPT)
+      end
+    end
+
+    describe "partition table" do
+      let(:root) { ROOT_PART.merge("create" => true, "size" => "max") }
+
+      let(:swap) do
+        { "filesystem" => :swap, "mount" => "swap", "size" => "1GB", "create" => true }
+      end
+
+      context "when does not exist" do
+        let(:scenario) { "empty_hard_disk_50GiB" }
+
+        context "and it is not defined in the profile" do
+          let(:partitioning) do
+            [{ "use" => "all", "partitions" => [swap, root] }]
+          end
+
+          it "creates a 'msdos' partition" do
+            proposal.propose
+            devicegraph = proposal.devices
+            disk = devicegraph.disk_devices.first
+            expect(disk.name).to eq("/dev/sda")
+            expect(disk.partition_table.type).to eq(Y2Storage::PartitionTables::Type::MSDOS)
+          end
+        end
+
+        context "and it is defined in the profile" do
+          let(:partitioning) do
+            [{ "use" => "all", "partitions" => [swap, root], "disklabel" => "gpt" }]
+          end
+
+          it "creates a partition of the given type" do
+            proposal.propose
+            devicegraph = proposal.devices
+            disk = devicegraph.disk_devices.first
+            expect(disk.name).to eq("/dev/sda")
+            expect(disk.partition_table.type).to eq(Y2Storage::PartitionTables::Type::GPT)
+          end
+        end
+      end
+
+      context "when partition table exist" do
+        let(:scenario) { "windows-linux-free-pc" }
+
+        context "and a different type is requested" do
+          let(:partitioning) do
+            [
+              {
+                "use" => "all", "partitions" => [swap, root], "disklabel" => "gpt",
+                "initialize" => true
+              }
+            ]
+          end
+
+          it "creates a partition of the given type" do
+            proposal.propose
+            devicegraph = proposal.devices
+            disk = devicegraph.disk_devices.first
+            expect(disk.name).to eq("/dev/sda")
+            expect(disk.partition_table.type).to eq(Y2Storage::PartitionTables::Type::GPT)
+          end
+        end
+      end
+    end
   end
 
   describe "#issues_list" do
