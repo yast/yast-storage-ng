@@ -78,22 +78,25 @@ describe Y2Storage::Proposal::AutoinstDrivesMap do
     end
 
     context "when a disk udev link is used" do
-      let(:root_by_label) do
-        Y2Storage::BlkDevice.find_by_name(fake_devicegraph, "/dev/sda3")
+      let(:udev_link) { "/dev/disk/by-label/root" }
+
+      let(:disk) do
+        instance_double(Y2Storage::Disk, name: "/dev/sda", udev_full_all: [udev_link])
       end
 
       let(:partitioning_array) do
-        [{ "device" => "/dev/disk/by-label/root" }]
+        [{ "device" => udev_link }]
       end
 
       before do
-        allow(Y2Storage::BlkDevice).to receive(:find_by_udev_link)
-          .with(fake_devicegraph, "/dev/disk/by-label/root").and_return(root_by_label)
+        allow(fake_devicegraph).to receive(:disk_devices)
+          .and_return([disk])
+        allow(disk).to receive(:udev_full_all).and_return([udev_link])
       end
 
       it "uses its kernel name" do
         described_class.new(fake_devicegraph, partitioning, issues_list)
-        expect(drives_map.disk_names).to eq(["/dev/sda3"])
+        expect(drives_map.disk_names).to eq(["/dev/sda"])
       end
     end
   end
