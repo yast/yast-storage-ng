@@ -42,6 +42,7 @@ describe Y2Storage::HWInfoReader do
                     unique_id:        "3OOL.7kkY9irDFZ4",
                     driver_modules:   ["ahci"],
                     driver:           ["ahci", "sd"],
+                    io_ports:         "0xe000-0xefff rw",
                     geometry_logical: "CHS 121601/255/63")
     end
 
