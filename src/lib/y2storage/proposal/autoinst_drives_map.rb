@@ -103,7 +103,7 @@ module Y2Storage
       #
       # @param drive  [AutoinstProfile::DriveSection] AutoYaST drive specification
       # @param devicegraph [Devicegraph] Devicegraph
-      # @return [String,nil] Usable disk name or nil if none is found
+      # @return [Disk,nil] Usable disk name or nil if none is found
       def first_usable_disk(drive, devicegraph)
         skip_list = drive.skip_list
 
@@ -111,7 +111,7 @@ module Y2Storage
           next if disk_names.include?(disk.name)
           next if skip_list.matches?(disk)
 
-          return disk.name
+          return disk
         end
         nil
       end
@@ -137,14 +137,14 @@ module Y2Storage
         end
 
         flexible_drives.each do |drive|
-          disk_name = first_usable_disk(drive, devicegraph)
+          disk = first_usable_disk(drive, devicegraph)
 
-          if disk_name.nil?
+          if disk.nil?
             issues_list.add(:no_disk, drive)
             next
           end
 
-          @drives[disk_name] = drive
+          @drives[disk.name] = drive
         end
       end
 
