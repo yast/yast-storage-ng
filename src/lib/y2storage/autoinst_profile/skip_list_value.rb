@@ -110,13 +110,13 @@ module Y2Storage
       # @return [String,nil] DASD format or nil if not a DASD device
       #   backward compatibility
       def dasd_format
-        return nil unless disk.is_a?(Y2Storage::Dasd)
+        return nil unless disk.is?(:dasd)
         disk.format.to_s
       end
 
       # @return [String,nil] DASD type or nil if not a DASD device
       def dasd_type
-        return nil unless disk.is_a?(Y2Storage::Dasd)
+        return nil unless disk.is?(:dasd)
         disk.type.to_s
       end
 
