@@ -123,6 +123,10 @@ module Y2Storage
       load_features(volume_features)
     end
 
+    def fs_type=(type)
+      @fs_type = validated_fs_type(type)
+    end
+
   private
 
     FEATURES = {
@@ -172,14 +176,14 @@ module Y2Storage
     end
 
     def fs_types=(types)
+      if types.is_a?(String)
+        types = types.strip.split(/\s*,\s*/)
+      end
       @fs_types = types.map { |t| validated_fs_type(t) }
     end
 
-    def fs_type=(type)
-      @fs_type = validated_fs_type(type)
-    end
-
     def validated_fs_type(type)
+      return type if type.is_a?(Filesystems::Type)
       raise(ArgumentError, "Filesystem cannot be nil") unless type
       Filesystems::Type.find(type.downcase.to_sym)
     end
@@ -207,10 +211,13 @@ module Y2Storage
       types = case mount_point
       when "/"
         Filesystems::Type.root_filesystems
+      when "swap"
+        [Filesystems::Type::SWAP]
       when "/home"
         Filesystems::Type.home_filesystems
       else
-        [fs_type].compact
+        # TO DO: Check if a different list makes sense (probably not)
+        Filesystems::Type.home_filesystems
       end
 
       @fs_types = types
