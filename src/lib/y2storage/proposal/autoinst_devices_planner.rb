@@ -58,10 +58,9 @@ module Y2Storage
         @default_subvolumes_used = false
 
         drives_map.each_pair do |disk_name, drive_section|
-          disk = BlkDevice.find_by_name(devicegraph, disk_name)
           case drive_section.type
           when :CT_DISK
-            raise DeviceNotFoundError, "#{disk_name} device not found" if disk.nil?
+            disk = BlkDevice.find_by_name(devicegraph, disk_name)
             result.concat(planned_for_disk(disk, drive_section))
           when :CT_LVM
             result << planned_for_vg(drive_section)

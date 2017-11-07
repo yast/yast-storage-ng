@@ -21,6 +21,8 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
+require "y2storage/exceptions"
+
 module Y2Storage
   module Proposal
     # Utility class to map disk names to the <drive> section of the AutoYaST
@@ -45,13 +47,18 @@ module Y2Storage
       #   @see #each_pair
       def_delegators :@drives, :each, :each_pair
 
+      # @return [AutoinstIssues::List] List of found AutoYaST issues
+      attr_reader :issues_list
+
       # Constructor
       #
       # @param devicegraph  [Devicegraph] Devicegraph where the disks are contained
       # @param partitioning [AutoinstProfile::PartitioningSection] Partitioning layout
       #   from an AutoYaST profile
-      def initialize(devicegraph, partitioning)
+      # @param issues_list [AutoinstIssues::List] List of AutoYaST issues to register them
+      def initialize(devicegraph, partitioning, issues_list)
         @drives = {}
+        @issues_list = issues_list
 
         add_disks(partitioning.disk_drives, devicegraph)
         add_vgs(partitioning.lvm_drives)
@@ -96,7 +103,7 @@ module Y2Storage
       #
       # @param drive  [AutoinstProfile::DriveSection] AutoYaST drive specification
       # @param devicegraph [Devicegraph] Devicegraph
-      # @return [String,nil] Usable disk name or nil if none is found
+      # @return [Disk,nil] Usable disk or nil if none is found
       def first_usable_disk(drive, devicegraph)
         skip_list = drive.skip_list
 
@@ -104,7 +111,7 @@ module Y2Storage
           next if disk_names.include?(disk.name)
           next if skip_list.matches?(disk)
 
-          return disk.name
+          return disk
         end
         nil
       end
@@ -119,12 +126,25 @@ module Y2Storage
       def add_disks(disks, devicegraph)
         fixed_drives, flexible_drives = disks.partition(&:device)
         fixed_drives.each do |drive|
-          @drives[drive.device] = drive
+          disk = find_disk(devicegraph, drive.device)
+
+          if disk.nil?
+            issues_list.add(:no_disk, drive)
+            next
+          end
+
+          @drives[disk.name] = drive
         end
 
         flexible_drives.each do |drive|
-          disk_name = first_usable_disk(drive, devicegraph)
-          @drives[disk_name] = drive if disk_name
+          disk = first_usable_disk(drive, devicegraph)
+
+          if disk.nil?
+            issues_list.add(:no_disk, drive)
+            next
+          end
+
+          @drives[disk.name] = drive
         end
       end
 
@@ -146,6 +166,18 @@ module Y2Storage
       def add_mds(mds)
         mds.each do |md|
           @drives[md.name_for_md] = md
+        end
+      end
+
+      # Find a disk using its name or a udev link
+      #
+      # First it tries using the kernel name (eg. /dev/sda1) and, if it fails,
+      # it tries again using udev links.
+      #
+      # @return [Disk,nil] Usable disk or nil if none is found
+      def find_disk(devicegraph, device_name)
+        devicegraph.disk_devices.find do |device|
+          device.name == device_name || device.udev_full_all.include?(device_name)
         end
       end
     end

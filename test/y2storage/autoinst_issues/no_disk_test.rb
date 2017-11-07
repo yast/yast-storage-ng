@@ -24,11 +24,29 @@ require_relative "../../spec_helper"
 require "y2storage/autoinst_issues/no_disk"
 
 describe Y2Storage::AutoinstIssues::NoDisk do
-  subject(:issue) { described_class.new }
+  subject(:issue) { described_class.new(section) }
+
+  let(:section) do
+    instance_double(Y2Storage::AutoinstProfile::DriveSection, device: device_name)
+  end
+
+  let(:device_name) { nil }
 
   describe "#message" do
-    it "returns a description of the issue" do
-      expect(issue.message).to include "Not suitable disk"
+    context "when a device was not given" do
+      let(:device_name) { nil }
+
+      it "returns a general description of the issue" do
+        expect(issue.message).to include "Not suitable disk"
+      end
+    end
+
+    context "when a device was given" do
+      let(:device_name) { "/dev/sda" }
+
+      it "returns a description including the device name" do
+        expect(issue.message).to eq("Disk '/dev/sda' was not found")
+      end
     end
   end
 

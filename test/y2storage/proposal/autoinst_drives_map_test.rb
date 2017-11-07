@@ -24,7 +24,7 @@ require_relative "../spec_helper"
 require "y2storage/proposal/autoinst_drives_map"
 
 describe Y2Storage::Proposal::AutoinstDrivesMap do
-  subject(:drives_map) { described_class.new(fake_devicegraph, partitioning) }
+  subject(:drives_map) { described_class.new(fake_devicegraph, partitioning, issues_list) }
 
   let(:scenario) { "windows-linux-free-pc" }
   let(:partitioning_array) do
@@ -37,8 +37,69 @@ describe Y2Storage::Proposal::AutoinstDrivesMap do
   let(:partitioning) do
     Y2Storage::AutoinstProfile::PartitioningSection.new_from_hashes(partitioning_array)
   end
+  let(:issues_list) do
+    Y2Storage::AutoinstIssues::List.new
+  end
 
   before { fake_scenario(scenario) }
+
+  describe ".new" do
+    context "when a device does not exist" do
+      let(:partitioning_array) do
+        [{ "device" => "/dev/sdx", "use" => "all" }]
+      end
+
+      it "registers an issue" do
+        expect(issues_list).to be_empty
+        described_class.new(fake_devicegraph, partitioning, issues_list)
+        issue = issues_list.find { |i| i.is_a?(Y2Storage::AutoinstIssues::NoDisk) }
+        expect(issue).to_not be_nil
+      end
+    end
+
+    context "when a suitable device does not exist" do
+      let(:skip_list) do
+        [
+          { "skip_key" => "name", "skip_value" => "sda" },
+          { "skip_key" => "name", "skip_value" => "sdb" }
+        ]
+      end
+
+      let(:partitioning_array) do
+        [{ "use" => "all", "skip_list" => skip_list }]
+      end
+
+      it "registers an issue" do
+        expect(issues_list).to be_empty
+        described_class.new(fake_devicegraph, partitioning, issues_list)
+        issue = issues_list.find { |i| i.is_a?(Y2Storage::AutoinstIssues::NoDisk) }
+        expect(issue).to_not be_nil
+      end
+    end
+
+    context "when a disk udev link is used" do
+      let(:udev_link) { "/dev/disk/by-label/root" }
+
+      let(:disk) do
+        instance_double(Y2Storage::Disk, name: "/dev/sda", udev_full_all: [udev_link])
+      end
+
+      let(:partitioning_array) do
+        [{ "device" => udev_link }]
+      end
+
+      before do
+        allow(fake_devicegraph).to receive(:disk_devices)
+          .and_return([disk])
+        allow(disk).to receive(:udev_full_all).and_return([udev_link])
+      end
+
+      it "uses its kernel name" do
+        described_class.new(fake_devicegraph, partitioning, issues_list)
+        expect(drives_map.disk_names).to eq(["/dev/sda"])
+      end
+    end
+  end
 
   describe "#each" do
     it "executes the given block for each name/drive in the map" do

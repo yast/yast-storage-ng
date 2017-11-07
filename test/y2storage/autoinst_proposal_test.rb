@@ -323,10 +323,13 @@ describe Y2Storage::AutoinstProposal do
         end
 
         it "registers an issue" do
-          expect(issues_list).to receive(:add).with(:no_disk)
+          expect(proposal.issues_list).to be_empty
           proposal.propose
+          issue = proposal.issues_list.find do |i|
+            i.is_a?(Y2Storage::AutoinstIssues::NoDisk)
+          end
+          expect(issue).to_not be_nil
         end
-
       end
     end
 

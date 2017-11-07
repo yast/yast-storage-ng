@@ -32,7 +32,9 @@ describe Y2Storage::Proposal::AutoinstDevicesPlanner do
   subject(:planner) { described_class.new(fake_devicegraph, issues_list) }
 
   let(:scenario) { "windows-linux-free-pc" }
-  let(:drives_map) { Y2Storage::Proposal::AutoinstDrivesMap.new(fake_devicegraph, partitioning) }
+  let(:drives_map) do
+    Y2Storage::Proposal::AutoinstDrivesMap.new(fake_devicegraph, partitioning, issues_list)
+  end
   let(:boot_checker) { instance_double(Y2Storage::BootRequirementsChecker, needed_partitions: []) }
   let(:architecture) { :x86_64 }
   let(:issues_list) { Y2Storage::AutoinstIssues::List.new }

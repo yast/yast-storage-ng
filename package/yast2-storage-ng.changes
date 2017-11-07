@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Tue Nov  7 09:38:19 UTC 2017 - igonzalezsosa@suse.com
+
+- AutoYaST: add support for udev links in the <device/> element
+  (bsc#1066320)
+- 4.0.22
+
+-------------------------------------------------------------------
 Fri Nov  3 15:11:42 UTC 2017 - igonzalezsosa@suse.com
 
 - AutoYaST: do not remove partitions that are supposed to be reused

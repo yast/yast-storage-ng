@@ -23,10 +23,16 @@ require "y2storage/autoinst_issues/issue"
 
 module Y2Storage
   module AutoinstIssues
-    # Represents an AutoYaST situation where no suitable disk for installation was found
+    # Represents an AutoYaST situation where no suitable disk was found.
     #
-    # This is a fatal error because the installation is not possible.
+    # This is a fatal error because AutoYaST needs to determine which disks will be used
+    # during installation.
     class NoDisk < Issue
+      # @param section [#parent,#section_name] Section where it was detected (see {AutoinstProfile})
+      def initialize(section)
+        @section = section
+      end
+
       # Return problem severity
       #
       # @return [Symbol] :fatal
@@ -39,7 +45,12 @@ module Y2Storage
       # @return [String] Error message
       # @see Issue#message
       def message
-        _("Not suitable disk for installation was found")
+        if section.device
+          # TRANSLATORS: kernel device name (eg. '/dev/sda1')
+          _("Disk '%s' was not found") % section.device
+        else
+          _("Not suitable disk was found")
+        end
       end
     end
   end

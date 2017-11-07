@@ -23,6 +23,7 @@
 
 require_relative "../spec_helper"
 require "y2storage/proposal/autoinst_space_maker"
+require "y2storage/autoinst_issues/list"
 
 describe Y2Storage::Proposal::AutoinstSpaceMaker do
   subject(:space_maker) { described_class.new(analyzer) }
@@ -35,12 +36,17 @@ describe Y2Storage::Proposal::AutoinstSpaceMaker do
   end
 
   let(:planned_devices) { [] }
-  let(:drives_map) { Y2Storage::Proposal::AutoinstDrivesMap.new(fake_devicegraph, partitioning) }
+  let(:drives_map) do
+    Y2Storage::Proposal::AutoinstDrivesMap.new(fake_devicegraph, partitioning, issues_list)
+  end
   let(:planned_partition) do
     Y2Storage::Planned::Partition.new("/").tap { |p| p.reuse = "/dev/sda8" }
   end
   let(:planned_vg) do
     Y2Storage::Planned::LvmVg.new(volume_group_name: "vg0").tap { |p| p.reuse = "vg0" }
+  end
+  let(:issues_list) do
+    Y2Storage::AutoinstIssues::List
   end
 
   before { fake_scenario(scenario) }
@@ -247,7 +253,11 @@ describe Y2Storage::Proposal::AutoinstSpaceMaker do
     end
 
     context "when some given drive does not exist" do
-      let(:partitioning_array) { [{ "device" => "/dev/sdx", "use" => "all" }] }
+      let(:drives_map) { instance_double(Y2Storage::Proposal::AutoinstDrivesMap) }
+
+      before do
+        allow(drives_map).to receive(:each_pair).and_yield("/dev/sdx", {})
+      end
 
       it "ignores the device" do
         expect { subject.cleaned_devicegraph(fake_devicegraph, drives_map, planned_devices) }
