@@ -27,10 +27,40 @@ require "y2storage/planned"
 describe Y2Storage::Planned::LvmLv do
   using Y2Storage::Refinements::SizeCasts
 
-  subject(:lvm_lv) { described_class.new("/") }
+  subject(:lvm_lv) { described_class.new(mount_point) }
+
+  let(:mount_point) { "/" }
 
   let(:volume_group) do
     instance_double(Y2Storage::LvmVg, size: 30.GiB, extent_size: 4.MiB)
+  end
+
+  describe "#initialize" do
+    context "when creating a planned lv for a given mount point" do
+      context "and the mount point is '/'" do
+        let(:mount_point) { "/" }
+
+        it "sets lv name to 'root'" do
+          expect(subject.logical_volume_name).to eq("root")
+        end
+      end
+
+      context "and the mount point is not '/'" do
+        let(:mount_point) { "/var/lib/docker" }
+
+        it "sets lv name based on mount point" do
+          expect(subject.logical_volume_name).to eq("var_lib_docker")
+        end
+      end
+    end
+
+    context "when creating a planned lv without mount point" do
+      let(:mount_point) { nil }
+
+      it "does not set lv name" do
+        expect(subject.logical_volume_name).to be_nil
+      end
+    end
   end
 
   describe "#size_in" do
