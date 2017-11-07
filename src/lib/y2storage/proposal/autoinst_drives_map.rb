@@ -47,13 +47,18 @@ module Y2Storage
       #   @see #each_pair
       def_delegators :@drives, :each, :each_pair
 
+      # @return [AutoinstIssues::List] List of found AutoYaST issues
+      attr_reader :issues_list
+
       # Constructor
       #
       # @param devicegraph  [Devicegraph] Devicegraph where the disks are contained
       # @param partitioning [AutoinstProfile::PartitioningSection] Partitioning layout
       #   from an AutoYaST profile
-      def initialize(devicegraph, partitioning)
+      # @param issues_list [AutoinstIssues::List] List of AutoYaST issues to register them
+      def initialize(devicegraph, partitioning, issues_list)
         @drives = {}
+        @issues_list = issues_list
 
         add_disks(partitioning.disk_drives, devicegraph)
         add_vgs(partitioning.lvm_drives)
@@ -122,13 +127,24 @@ module Y2Storage
         fixed_drives, flexible_drives = disks.partition(&:device)
         fixed_drives.each do |drive|
           disk = find_disk(devicegraph, drive.device)
-          raise DeviceNotFoundError, "#{drive.device} device not found" if disk.nil?
+
+          if disk.nil?
+            issues_list.add(:no_disk, drive)
+            next
+          end
+
           @drives[disk.name] = drive
         end
 
         flexible_drives.each do |drive|
           disk_name = first_usable_disk(drive, devicegraph)
-          @drives[disk_name] = drive if disk_name
+
+          if disk_name.nil?
+            issues_list.add(:no_disk, drive)
+            next
+          end
+
+          @drives[disk_name] = drive
         end
       end
 

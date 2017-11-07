@@ -24,7 +24,7 @@ require_relative "../spec_helper"
 require "y2storage/proposal/autoinst_drives_map"
 
 describe Y2Storage::Proposal::AutoinstDrivesMap do
-  subject(:drives_map) { described_class.new(fake_devicegraph, partitioning) }
+  subject(:drives_map) { described_class.new(fake_devicegraph, partitioning, issues_list) }
 
   let(:scenario) { "windows-linux-free-pc" }
   let(:partitioning_array) do
@@ -37,6 +37,9 @@ describe Y2Storage::Proposal::AutoinstDrivesMap do
   let(:partitioning) do
     Y2Storage::AutoinstProfile::PartitioningSection.new_from_hashes(partitioning_array)
   end
+  let(:issues_list) do
+    Y2Storage::AutoinstIssues::List.new
+  end
 
   before { fake_scenario(scenario) }
 
@@ -46,14 +49,38 @@ describe Y2Storage::Proposal::AutoinstDrivesMap do
         [{ "device" => "/dev/sdx", "use" => "all" }]
       end
 
-      it "raises a DeviceNotFoundError exception" do
-        expect { described_class.new(fake_devicegraph, partitioning) }
-          .to raise_error(Y2Storage::DeviceNotFoundError)
+      it "registers an issue" do
+        expect(issues_list).to be_empty
+        described_class.new(fake_devicegraph, partitioning, issues_list)
+        issue = issues_list.find { |i| i.is_a?(Y2Storage::AutoinstIssues::NoDisk) }
+        expect(issue).to_not be_nil
+      end
+    end
+
+    context "when a suitable device does not exist" do
+      let(:skip_list) do
+        [
+          { "skip_key" => "name", "skip_value" => "sda" },
+          { "skip_key" => "name", "skip_value" => "sdb" }
+        ]
+      end
+
+      let(:partitioning_array) do
+        [{ "use" => "all", "skip_list" => skip_list }]
+      end
+
+      it "registers an issue" do
+        expect(issues_list).to be_empty
+        described_class.new(fake_devicegraph, partitioning, issues_list)
+        issue = issues_list.find { |i| i.is_a?(Y2Storage::AutoinstIssues::NoDisk) }
+        expect(issue).to_not be_nil
       end
     end
 
     context "when a disk udev link is used" do
-      let(:root_by_label) { Y2Storage::BlkDevice.find_by_name(fake_devicegraph, "/dev/sda3") }
+      let(:root_by_label) do
+        Y2Storage::BlkDevice.find_by_name(fake_devicegraph, "/dev/sda3")
+      end
 
       let(:partitioning_array) do
         [{ "device" => "/dev/disk/by-label/root" }]
@@ -65,7 +92,7 @@ describe Y2Storage::Proposal::AutoinstDrivesMap do
       end
 
       it "uses its kernel name" do
-        described_class.new(fake_devicegraph, partitioning)
+        described_class.new(fake_devicegraph, partitioning, issues_list)
         expect(drives_map.disk_names).to eq(["/dev/sda3"])
       end
     end
