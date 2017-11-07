@@ -68,15 +68,6 @@ module Y2Storage
     #   @return [String]
     storage_forward :sysfs_path
 
-    class << self
-      # Find a block device through one of its udev-* links
-      #
-      # @return [BlkDevice,nil] return a block device or nil is non was found
-      def find_by_udev_link(devicegraph, link)
-        all(devicegraph).find { |d| d.udev_full_all.include?(link) }
-      end
-    end
-
     # Full paths of all the udev by-* links. an empty array for devices
     # not handled by udev.
     # @see #udev_full_paths

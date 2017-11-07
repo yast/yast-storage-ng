@@ -32,29 +32,6 @@ describe Y2Storage::BlkDevice do
 
   subject(:device) { Y2Storage::BlkDevice.find_by_name(fake_devicegraph, device_name) }
 
-  describe ".find_by_udev_link" do
-    let(:device) do
-      instance_double(Y2Storage::BlkDevice, udev_full_all: ["/dev/disk/by-label/root"])
-    end
-
-    before do
-      allow(Y2Storage::BlkDevice).to receive(:all).with(fake_devicegraph)
-        .and_return([device])
-    end
-
-    it "returns the device with has the given link" do
-      expect(described_class.find_by_udev_link(fake_devicegraph, "/dev/disk/by-label/root"))
-        .to eq(device)
-    end
-
-    context "when no device with the given link exists" do
-      it "returns nil" do
-        expect(described_class.find_by_udev_link(fake_devicegraph, "/dev/disk/by-label/other"))
-          .to be_nil
-      end
-    end
-  end
-
   describe "#plain_device" do
     context "for a non encrypted device" do
       let(:device_name) { "/dev/sda2" }
