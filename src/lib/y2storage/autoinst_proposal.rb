@@ -67,9 +67,8 @@ module Y2Storage
     #
     # @raise [NoDiskSpaceError] if there is no enough space to perform the installation
     def calculate_proposal
-      drives = Proposal::AutoinstDrivesMap.new(initial_devicegraph, partitioning)
-      if drives.disk_names.empty?
-        issues_list.add(:no_disk)
+      drives = Proposal::AutoinstDrivesMap.new(initial_devicegraph, partitioning, issues_list)
+      if issues_list.fatal?
         @devices = []
         return @devices
       end
