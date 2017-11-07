@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Tue Nov  7 13:18:35 UTC 2017 - igonzalezsosa@suse.com
+
+- AutoYaST: adjust the list of allowed keys in skip lists
+  (bsc#1065668)
+- 4.0.23
+
+-------------------------------------------------------------------
 Tue Nov  7 09:38:19 UTC 2017 - igonzalezsosa@suse.com
 
 - AutoYaST: add support for udev links in the <device/> element
