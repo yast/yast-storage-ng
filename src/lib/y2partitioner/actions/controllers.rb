@@ -35,4 +35,5 @@ end
 require "y2partitioner/actions/controllers/filesystem"
 require "y2partitioner/actions/controllers/md"
 require "y2partitioner/actions/controllers/partition"
+require "y2partitioner/actions/controllers/partition_table"
 require "y2partitioner/actions/controllers/lvm_lv"
