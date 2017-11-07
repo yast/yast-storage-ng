@@ -103,7 +103,7 @@ module Y2Storage
       #
       # @param drive  [AutoinstProfile::DriveSection] AutoYaST drive specification
       # @param devicegraph [Devicegraph] Devicegraph
-      # @return [Disk,nil] Usable disk name or nil if none is found
+      # @return [Disk,nil] Usable disk or nil if none is found
       def first_usable_disk(drive, devicegraph)
         skip_list = drive.skip_list
 
@@ -174,7 +174,7 @@ module Y2Storage
       # First it tries using the kernel name (eg. /dev/sda1) and, if it fails,
       # it tries again using udev links.
       #
-      # @return [Disk,nil] Usable disk name or nil if none is found
+      # @return [Disk,nil] Usable disk or nil if none is found
       def find_disk(devicegraph, device_name)
         devicegraph.disk_devices.find do |device|
           device.name == device_name || device.udev_full_all.include?(device_name)
