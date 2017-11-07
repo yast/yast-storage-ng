@@ -215,7 +215,7 @@ Besides these, there are two further elements:
   * `mount_point` *(string, default: no mountpoint)*
   * `proposed` *(boolean, default: `true`)*
   * `proposed_configurable` *(boolean, default: `false`)*
-  * `fs_types` *(string, default: internal fallback list for '/' and '/home' volumes. Value of `fs_type` is always included in the list )*
+  * `fs_types` *(string, default: internal fallback list for '/' and '/home' volumes, empty list otherwise. In addition, the value of 'fs_type' is always included in the list )*
   * `fs_type` *(string, default: no type)*
   * `desired_size` *(disksize, default: `0 B`)*
   * `min_size` *(disksize, default: `0 B`)*
@@ -482,8 +482,9 @@ enable or disable in the "Guided Setup" (the former "Proposal Settings").
     <!-- The '/' filesystem -->
     <volume>
       <mount_point>/</mount_point>
-      <!-- Default == final, since the user can't change it -->
+      <!-- Enforce Btrfs for root by not offering any other option -->
       <fs_type>btrfs</fs_type>
+      <fs_types>btrfs</fs_types>
       <desired_size config:type="disksize">40 GiB</desired_size>
       <min_size config:type="disksize">30 GiB</min_size>
       <max_size config:type="disksize">60 GiB</max_size>
@@ -565,7 +566,7 @@ proposal to:
     <!-- The '/' filesystem -->
     <volume>
       <mount_point>/</mount_point>
-      <!-- Default == final, since the user can't change it -->
+      <!-- Default == final, since the user can't change it (proposal_settings_editable == false) -->
       <fs_type>btrfs</fs_type>
       <desired_size config:type="disksize">15 GiB</desired_size>
       <min_size config:type="disksize">10 GiB</min_size>
@@ -591,7 +592,7 @@ proposal to:
     <!-- Use /var/lib/docker as separate partition if 10+ GiB available -->
     <volume>
       <mount_point>/var/lib/docker</mount_point>
-      <!-- Default == final, since the user can't change it -->
+      <!-- Default == final, since the user can't change it (proposal_settings_editable == false) -->
       <fs_type>btrfs</fs_type>
       <snapshots config:type="boolean">false</snapshots>
       <snapshots_configurable config:type="boolean">false</snapshots_configurable>
