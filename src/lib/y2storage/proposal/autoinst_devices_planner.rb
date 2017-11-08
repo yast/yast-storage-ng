@@ -69,7 +69,6 @@ module Y2Storage
           end
         end
 
-        add_boot(result)
         remove_shadowed_subvols(result)
 
         result
@@ -434,23 +433,6 @@ module Y2Storage
       # @see AutoinstSizeParser
       def parse_size(section, min, max)
         AutoinstSizeParser.new(proposal_settings).parse(section.size, section.mount, min, max)
-      end
-
-      # Add devices to make the system bootable
-      #
-      # @return [Array<Planned::Device>] List of planned devices
-      def add_boot(devices)
-        return unless root?(devices)
-        checker = BootRequirementsChecker.new(devicegraph, planned_devices: devices)
-        devices.concat(checker.needed_partitions)
-      end
-
-      # Determines whether the list of devices includes a root partition
-      #
-      # @return [Boolean] true if there is a root partition; false otherwise.
-      def root?(devices)
-        return true if devices.any? { |d| d.respond_to?(:mount_point) && d.mount_point == "/" }
-        issues_list.add(:missing_root)
       end
     end
   end

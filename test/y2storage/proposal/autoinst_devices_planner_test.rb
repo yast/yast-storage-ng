@@ -65,17 +65,6 @@ describe Y2Storage::Proposal::AutoinstDevicesPlanner do
   end
 
   describe "#planned_devices" do
-    context "when a boot partition is required" do
-      let(:boot) { Y2Storage::Planned::Partition.new("/boot", Y2Storage::Filesystems::Type::EXT4) }
-
-      it "adds the boot partition" do
-        expect(Y2Storage::BootRequirementsChecker).to receive(:new)
-          .and_return(boot_checker)
-        expect(boot_checker).to receive(:needed_partitions).and_return([boot])
-        expect(planner.planned_devices(drives_map).map(&:mount_point)).to include("/boot")
-      end
-    end
-
     context "reusing partitions" do
       context "when a partition number is specified" do
         let(:root_spec) do
