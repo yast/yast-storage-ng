@@ -232,8 +232,8 @@ module Y2Storage
     end
 
     def validated_fs_type(type)
-      return type if type.is_a?(Filesystems::Type)
       raise(ArgumentError, "Filesystem cannot be nil") unless type
+      return type if type.is_a?(Filesystems::Type)
       Filesystems::Type.find(type.downcase.to_sym)
     end
 

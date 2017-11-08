@@ -19,5 +19,16 @@
 # To contact Novell about this file by physical or electronic mail, you may
 # find current contact information at www.novell.com.
 
+module Y2Storage
+  module Dialogs
+    class GuidedSetup
+      # Module containing different versions of the SelectFilesystem dialog, one
+      # for each format supported by ProposalSettings.
+      module SelectFilesystem
+      end
+    end
+  end
+end
+
 require "y2storage/dialogs/guided_setup/select_filesystem/legacy"
 require "y2storage/dialogs/guided_setup/select_filesystem/ng"
