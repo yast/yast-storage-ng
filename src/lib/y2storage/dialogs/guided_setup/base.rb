@@ -93,7 +93,7 @@ module Y2Storage
           true
         end
 
-        # Should be implemented by derived classes.
+        # To be implemented by derived classes, if needed
         def initialize_widgets
           nil
         end

@@ -20,9 +20,10 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
+require_relative "../../../spec_helper.rb"
 require_relative "#{TEST_PATH}/support/guided_setup_context"
 
-describe Y2Storage::Dialogs::GuidedSetup::SelectFilesystem do
+describe Y2Storage::Dialogs::GuidedSetup::SelectFilesystem::Legacy do
   include_context "guided setup requirements"
 
   subject { described_class.new(guided_setup) }
