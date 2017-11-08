@@ -1,4 +1,12 @@
 -------------------------------------------------------------------
+Wed Nov  8 05:54:04 UTC 2017 - igonzalezsosa@suse.com
+
+- AutoYaST: fix space distribution when partition table does not
+  exist (bsc#1065061)
+- AutoYaST: set partition tables type according to the profile
+- 4.0.24
+
+-------------------------------------------------------------------
 Tue Nov  7 13:18:35 UTC 2017 - igonzalezsosa@suse.com
 
 - AutoYaST: adjust the list of allowed keys in skip lists
