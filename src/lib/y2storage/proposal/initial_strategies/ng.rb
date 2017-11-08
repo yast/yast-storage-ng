@@ -132,10 +132,14 @@ module Y2Storage
         end
 
         # Whether the volume is proposed and it could be configured
+        #
+        # @note A volume is considered configurable if it has disable order. Otherwise,
+        #   only the user is allowed to manually disable the volume using the UI.
+        #
         # @param volume [VolumeSpecification]
         # @return [Boolean]
         def proposed_active_and_configurable?(volume)
-          active_and_configurable?(volume, :proposed)
+          active_and_configurable?(volume, :proposed) && !volume.disable_order.nil?
         end
 
         # Whether the volume has adjust_by_ram to true and it could be configured

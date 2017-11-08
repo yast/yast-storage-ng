@@ -19,6 +19,7 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
+require "yast"
 require "y2storage/planned"
 require "y2storage/disk_size"
 require "y2storage/boot_requirements_checker"
@@ -31,6 +32,7 @@ module Y2Storage
       # Abstract base class with common functionalty for different devices
       # planner strategies.
       class Base
+        include Yast
         include Yast::Logger
 
         # Settings used to calculate the planned devices
@@ -112,12 +114,12 @@ module Y2Storage
 
         # Return the total amount of RAM as DiskSize
         #
+        # @note RAM size is read from /proc/meminfo, where sizes are supposed to
+        #   be in KiB.
+        #
         # @return [DiskSize] current RAM size
         def ram_size
-          # FIXME: use the .proc.meminfo agent and its MemTotal field
-          #   mem_info_map = Convert.to_map(SCR.Read(path(".proc.meminfo")))
-          # See old Partitions.rb: SwapSizeMb()
-          DiskSize.GiB(8)
+          DiskSize.KiB(Yast::SCR.Read(path(".proc.meminfo"))["memtotal"])
         end
       end
     end

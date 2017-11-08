@@ -56,7 +56,7 @@ describe Y2Storage::Proposal::InitialStrategies::Ng do
   let(:root_volume) do
     {
       "proposed"                   => true,
-      "proposed_configurable"      => false,
+      "proposed_configurable"      => root_proposed_configurable,
       "mount_point"                => "/",
       "fs_type"                    => "btrfs",
       "desired_size"               => root_desired_size.to_s,
@@ -117,6 +117,8 @@ describe Y2Storage::Proposal::InitialStrategies::Ng do
     let(:swap_settings) { volume_settings(proposal.settings, "swap") }
 
     let(:lvm) { false }
+
+    let(:root_proposed_configurable) { false }
 
     context "when settings are not passed" do
       let(:settings) { nil }
@@ -261,6 +263,7 @@ describe Y2Storage::Proposal::InitialStrategies::Ng do
       let(:root_min_size) { 25.GiB }
       let(:root_max_size) { Y2Storage::DiskSize.unlimited }
       let(:root_snapshots_size) { 5.GiB }
+      let(:root_proposed_configurable) { true }
 
       let(:swap_desired_size) { 2.GiB }
       let(:swap_min_size) { 2.GiB }
@@ -274,9 +277,12 @@ describe Y2Storage::Proposal::InitialStrategies::Ng do
       let(:home_disable_order) { 2 }
 
       it "disables all possible volumes" do
-        expect(root_settings.proposed?).to be(true)
         expect(swap_settings.proposed?).to be(false)
         expect(home_settings.proposed?).to be(false)
+      end
+
+      it "does not disable volumes without disable order" do
+        expect(root_settings.proposed?).to be(true)
       end
 
       it "does not make a valid proposal" do

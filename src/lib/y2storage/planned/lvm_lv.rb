@@ -76,7 +76,8 @@ module Y2Storage
           if @mount_point == "/"
             "root"
           else
-            @mount_point.sub(%r{^/}, "")
+            lv_name = @mount_point.sub(%r{^/}, "")
+            lv_name.tr("/", "_")
           end
       end
 

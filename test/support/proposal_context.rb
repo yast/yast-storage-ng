@@ -45,10 +45,17 @@ RSpec.shared_context "proposal" do
     allow(storage_arch).to receive(:s390?).and_return(architecture == :s390)
 
     Yast::ProductFeatures.Import(control_file_content)
+
+    allow(Yast::SCR).to receive(:Read).and_call_original
+
+    allow(Yast::SCR).to receive(:Read).with(path(".proc.meminfo"))
+      .and_return("memtotal" => memtotal)
   end
 
   let(:architecture) { :x86 }
   let(:ppc_power_nv) { false }
+
+  let(:memtotal) { 8.GiB.to_i / 1.KiB.to_i }
 
   let(:disk_analyzer) { Y2Storage::DiskAnalyzer.new(fake_devicegraph) }
   let(:storage_arch) { instance_double("::Storage::Arch") }

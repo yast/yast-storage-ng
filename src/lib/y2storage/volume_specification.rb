@@ -153,10 +153,20 @@ module Y2Storage
     }.freeze
 
     def apply_defaults
-      @max_size ||= DiskSize.unlimited
-      @max_size_lvm ||= DiskSize.zero
-      @proposed ||= true
-      @proposed_configurable ||= true
+      @proposed                   = true
+      @proposed_configurable      = false
+      @desired_size               = DiskSize.zero
+      @min_size                   = DiskSize.zero
+      @max_size                   = DiskSize.unlimited
+      @max_size_lvm               = DiskSize.zero
+      @weight                     = 0
+      @adjust_by_ram              = false
+      @adjust_by_ram_configurable = false
+      @snapshots                  = false
+      @snapshots_configurable     = false
+      @snapshots_size             = DiskSize.zero
+      @snapshots_percentage       = 0
+      @fs_types                   = []
     end
 
     # For some features (i.e., fs_types and subvolumes) fallback values could be applied
@@ -200,20 +210,25 @@ module Y2Storage
       @subvolumes = root? ? SubvolSpecification.fallback_list : []
     end
 
-    # If fs_types is missing or is empty, a hard-coded list is used
+    # If fs_types is empty, a hard-coded list is used for root and home.
+    #
+    # @note It always includes fs_type in the list.
     def apply_fs_types_fallback
-      return if fs_types && !fs_types.empty?
-
-      types = case mount_point
-      when "/"
-        Filesystems::Type.root_filesystems
-      when "/home"
-        Filesystems::Type.home_filesystems
-      else
-        [fs_type].compact
+      if fs_types.empty?
+        if mount_point == "/"
+          @fs_types = Filesystems::Type.root_filesystems
+        end
+        if mount_point == "/home"
+          @fs_types = Filesystems::Type.home_filesystems
+        end
       end
 
-      @fs_types = types
+      include_fs_type
+    end
+
+    # Adds fs_type to the list of possible filesystems
+    def include_fs_type
+      @fs_types.unshift(fs_type) if fs_type && !fs_types.include?(fs_type)
     end
   end
 end

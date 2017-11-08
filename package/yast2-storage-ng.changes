@@ -4,6 +4,15 @@ Wed Nov  8 05:54:04 UTC 2017 - igonzalezsosa@suse.com
 - AutoYaST: fix space distribution when partition table does not
   exist (bsc#1065061)
 - AutoYaST: set partition tables type according to the profile
+- 4.0.25
+
+-------------------------------------------------------------------
+Tue Nov  7 13:48:43 UTC 2017 - jlopez@suse.com
+
+- Fix name of planned logical volumes.
+- Take into account real RAM size to plan volumes.
+- Add scenario tests using new partitioning settings.
+- Part of fate#318196.
 - 4.0.24
 
 -------------------------------------------------------------------

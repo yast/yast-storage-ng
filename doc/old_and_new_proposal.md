@@ -54,12 +54,12 @@ Btrfs for the root filesystem, that are used by the proposal and also by the
 expert partitioner when suggesting the default configuration for such
 filesystem.
 
-  * `subvolumes`  
+  * `subvolumes`
     Optional list of Btrfs subvolumes. If it is missing, a
     hard-coded list is used. If the section is there but empty, no subvolumes
     are created. Each subvolume section has a mandatory `path` and optional
     `copy_on_write` and `archs` elements.
-  * `btrfs_default_subvolume`  
+  * `btrfs_default_subvolume`
     The default subvolume is not represented by an
     entry in the `subvolumes` list, but with a separate option that specifies only
     its path. The path of the default subvolume is prepended to the path of all
@@ -72,14 +72,14 @@ The `partitioning` section of `control.xml` goes beyond the configuration of
 the proposal's behavior. It also contains some options to influence other
 aspect of YaST, mainly the installer.
 
-  * `root_subvolume_read_only`  
+  * `root_subvolume_read_only`
     Whether the installer should set readonly for `/` at the end of installation.
-  * `proposal_settings_editable`  
+  * `proposal_settings_editable`
     Whether the user can change the proposal settings in the UI.
-  * `expert_partitioner_warning`  
+  * `expert_partitioner_warning`
     Whether an extra warning pop-up should be
     displayed if the user enters the expert partitioner during installation.
-  * `use_separate_multipath_module`  
+  * `use_separate_multipath_module`
     Whether to call the `multipath` client
     from the yast2-multipath package. If false, the `multipath-simple` client
     from yast2-storage is used.
@@ -171,7 +171,7 @@ Settings used to influence the behavior of the new storage code are read
 from the `partitioning` section of `control.xml`.
 
 > Note: You can either use the old legacy entries described in the last chapter or the
-new settings.  
+new settings.
 > But: **Mixing old and new elements is not allowed.**
 
 To use the new settings put a `proposal` *and* a `volumes` subsection into
@@ -189,9 +189,9 @@ This chapter presents a brief summary of the new elements in the
 ### Storage proposal settings
 
 Most settings are grouped into two subsections of the `partitioning` section:
-  * `proposal`  
+  * `proposal`
     Holds general settings for the proposal.
-  * `volumes`  
+  * `volumes`
     A list of `volume` elements holding specific settings for each volume that should be created. Note
     that you really must add one section for each volume. There are no defaults.
 
@@ -214,8 +214,8 @@ Besides these, there are two further elements:
 
   * `mount_point` *(string, default: no mountpoint)*
   * `proposed` *(boolean, default: `true`)*
-  * `proposed_configurable` *(boolean, default: `true`)*
-  * `fs_types` *(string, default: `ext2,ext3,ext4,btrfs,xfs`)*
+  * `proposed_configurable` *(boolean, default: `false`)*
+  * `fs_types` *(string, default: internal fallback list for '/' and '/home' volumes, empty list otherwise. In addition, the value of 'fs_type' is always included in the list )*
   * `fs_type` *(string, default: no type)*
   * `desired_size` *(disksize, default: `0 B`)*
   * `min_size` *(disksize, default: `0 B`)*
@@ -292,18 +292,18 @@ that's achieved deleting or resizing existing partitions. The selection of
 partitions to resize or delete can be influenced with four settings that are
 configurable by the user in every proposal run.
 
-  * `windows_delete_mode`  
+  * `windows_delete_mode`
     What to do regarding removal of existing partitions hosting a Windows system.
     * `none`: Never delete a Windows partition.
     * `ondemand`: Only delete the Windows partitions that must be removed in order to make
       the proposal possible.
     * `all`: Delete all Windows partitions, even if not needed.
-  * `linux_delete_mode`  
+  * `linux_delete_mode`
     The same but for partitions that are part of a
     Linux installation (partition id linux, swap, lvm or raid).
-  * `other_delete_mode`  
+  * `other_delete_mode`
     For all other partitions that don't fit into the former two groups.
-  * `resize_windows`  
+  * `resize_windows`
     Whether to resize Windows systems if needed.
 
 #### Creation of LVM structures
@@ -483,6 +483,7 @@ enable or disable in the "Guided Setup" (the former "Proposal Settings").
     <volume>
       <mount_point>/</mount_point>
       <!-- Enforce Btrfs for root by not offering any other option -->
+      <fs_type>btrfs</fs_type>
       <fs_types>btrfs</fs_types>
       <desired_size config:type="disksize">40 GiB</desired_size>
       <min_size config:type="disksize">30 GiB</min_size>
@@ -565,7 +566,7 @@ proposal to:
     <!-- The '/' filesystem -->
     <volume>
       <mount_point>/</mount_point>
-      <!-- Default == final, since the user can't change it -->
+      <!-- Default == final, since the user can't change it (proposal_settings_editable == false) -->
       <fs_type>btrfs</fs_type>
       <desired_size config:type="disksize">15 GiB</desired_size>
       <min_size config:type="disksize">10 GiB</min_size>
@@ -591,7 +592,7 @@ proposal to:
     <!-- Use /var/lib/docker as separate partition if 10+ GiB available -->
     <volume>
       <mount_point>/var/lib/docker</mount_point>
-      <!-- Default == final, since the user can't change it -->
+      <!-- Default == final, since the user can't change it (proposal_settings_editable == false) -->
       <fs_type>btrfs</fs_type>
       <snapshots config:type="boolean">false</snapshots>
       <snapshots_configurable config:type="boolean">false</snapshots_configurable>
@@ -633,10 +634,10 @@ distributes the space".
 ### General structure
 
 The new `partitioning` section contains
-  * `expert_partitioner_warning`  
+  * `expert_partitioner_warning`
     If `true`, an extra warning pop-up is
     displayed if the user enters the expert partitioner during installation.
-  * `use_separate_multipath_module`  
+  * `use_separate_multipath_module`
     If `true`, the multipath client from the yast2-multipath package is used to
     setup a multipath config.
     If `false`, the multipath setup is done by yast-storage-ng.
@@ -649,40 +650,40 @@ The `proposal` subsection is used to configure some general aspects of the
 storage proposal (referenced as "guided setup" in the UI) and contains the
 following options.
 
-  * `lvm`  
+  * `lvm`
     Whether LVM should be used by default.
-  * ~~`encrypt`  
+  * ~~`encrypt`
     Whether encryption should be used by default.~~
-  * `windows_delete_mode`  
+  * `windows_delete_mode`
     Default value for the automatic delete mode for
     Windows partitions. It can be `none`, `all` or `ondemand`. For more
     information, see the description of the new proposal above.
-  * `linux_delete_mode`  
+  * `linux_delete_mode`
     Default value for the automatic delete mode for
     Linux partitions. Again, it can be `none`, `all` or `ondemand`.
-  * `other_delete_mode`  
+  * `other_delete_mode`
     Default value for the automatic delete mode for
     other partitions. Once again, it can be `none`, `all` or `ondemand`.
-  * `resize_windows`  
+  * `resize_windows`
     Default value for the user setting deciding whether to
     resize Windows systems if needed.
-  * `lvm_vg_strategy`  
+  * `lvm_vg_strategy`
     If the user decides to use LVM, strategy to decide the
     size of the volume group (and, thus, the number and size of created physical
     volumes). There are three possible values.
-    * `use_available`  
+    * `use_available`
       The VG will be created to use all the available space,
       thus the VG size could be greater than the sum of LVs sizes.
-    * `use_needed`  
+    * `use_needed`
       The created VG will match the requirements 1:1, so its size
       will be exactly the sum of all the LVs sizes.
-    * `use_vg_size`  
+    * `use_vg_size`
       The VG will have exactly the size specified in `lvm_vg_size`.
-  * `lvm_vg_size`  
+  * `lvm_vg_size`
     Specifies the predefined size of the LVM volume group if `lvm_vg_strategy` is `use_vg_size`.
-  * `proposal_settings_editable`  
+  * `proposal_settings_editable`
     If `false`, the user is not allowed to change the proposal settings.
-  * `root_subvolume_read_only`  
+  * `root_subvolume_read_only`
     If `true`, the "/"-volume is set read-only (mainly for CaaSP).
 
 ### The `volumes` subsection
@@ -695,54 +696,54 @@ It is a collection of `volume` subsections, each of them with the
 options listed here. Having read the "How the new proposal distributes the
 space" may be important to fully understand some of them.
 
-  * `mount_point`  
+  * `mount_point`
     Directory where the volume will be mounted in the system.
-  * `proposed`  
+  * `proposed`
     Default value of the user setting deciding whether this volume
     should be created or skipped.
-  * `proposed_configurable`  
+  * `proposed_configurable`
     Whether the user can change the previous setting
     in the UI. I.e. whether the user can activate/deactivate the volume. Of
     course, setting `proposed` to false and `proposed_configurable` also to
     false has the same effect than deleting the whole `<volume>` entry.
-  * `fs_types`  
+  * `fs_types`
     A collection of acceptable file system types. If no list is
     given, YaST will use a fallback based on the mount point.
-  * `fs_type`  
+  * `fs_type`
     Default file system type to format the volume.
-  * `desired_size`  
+  * `desired_size`
     Initial size to use in the first proposal attempt.
-  * `min_size`  
+  * `min_size`
     Initial size to use in the second proposal attempt.
-  * `max_size`  
+  * `max_size`
     Maximum size to assign to the volume. It can also contain the
     value `unlimited` (meaning as big as possible). This will be considered the
     default value if the option is not present.
-  * `max_size_lvm`  
+  * `max_size_lvm`
     When LVM is used, this option can be used to override the
     value at `max_size`.
-  * `weight`  
+  * `weight`
     Value used to distribute the extra space (after assigning the
     initial ones) among the volumes.
-  * `adjust_by_ram`  
+  * `adjust_by_ram`
     Default value for the user setting deciding whether the
     initial and max sizes of each attempt should be adjusted based in the RAM
     size. So far the adaptation consists in ensuring all the sizes are, at
     least, as big as the RAM. In the future, an extra `adjust_by_ram_mode`
     option could be added to allow other approaches.
-  * `adjust_by_ram_configurable`  
+  * `adjust_by_ram_configurable`
     Whether the user can change the previous setting in the UI.
-  * `fallback_for_min_size`  
+  * `fallback_for_min_size`
     Mount point of another volume. If the volume being
     defined is disabled, the `min_size` of that another volume will be increased
     by the `min_size` of this disabled volume.
-  * `fallback_for_desired_size`  
+  * `fallback_for_desired_size`
     Same than before, but for `desired_size`.
-  * `fallback_for_max_size`  
+  * `fallback_for_max_size`
     Same than before, but for `max_size`.
-  * `fallback_for_max_size_lvm`  
+  * `fallback_for_max_size_lvm`
     Same than before, but for `max_size_lvm`.
-  * `fallback_for_weight`  
+  * `fallback_for_weight`
     Same than before, but for the volume weight.
 
 Some options only apply if the chosen filesystem type for the volume is
@@ -753,28 +754,28 @@ expert partitioner, if a Btrfs filesystem is created and assigned to the mount
 point of the volume, these settings will also be used to suggest the filesystem
 options.
 
-  * `snapshots`  
+  * `snapshots`
     Default value for the user setting deciding whether snapshots
     should be activated.
-  * `snapshots_configurable`  
+  * `snapshots_configurable`
     Whether the user can change the previous setting
     in the UI.
-  * `snapshots_size`  
+  * `snapshots_size`
     The initial
     and maximum sizes for the volume will be increased accordingly if snapshots
     are being used.
-  * `snapshots_percentage`  
+  * `snapshots_percentage`
     Like `snapshots_size` but as a percentage of the
     original sizes (just like the original `btrfs_increase_percentage`).
-  * `subvolumes`  
+  * `subvolumes`
     Equivalent to the previous option that used to apply only to "/".
-  * `btrfs_default_subvolume`  
+  * `btrfs_default_subvolume`
     Same than before.
 
 And finally there is an option that deserves a slightly more detailed
 explanation.
 
-  * `disable_order`  
+  * `disable_order`
     Volumes with some value here will be disabled (or snapshots
     deactivated) if needed to make the initial proposal. See detailed
     explanation below.
@@ -814,23 +815,23 @@ The following settings are currently read by the new proposal and used with
 exactly the same meaning.
   * `proposal_lvm`
   * `try_separate_home`
-  * `limit_try_home`  
+  * `limit_try_home`
   * `proposal_snapshots`
   * `root_space_percent`
   * `btrfs_increase_percentage`
   * `btrfs_default_subvolume`
   * `subvolumes`
-  * `swap_for_suspend`  
+  * `swap_for_suspend`
 
 The following settings are read and used in a slightly different way.
- * `root_base_size`  
+ * `root_base_size`
    Used to set the min size for the root planned volume.
- * `root_max_size`  
+ * `root_max_size`
    Used to set the max size for the root planned volume. That
    is different from the old proposal because that maximum size is always
    honored in the new proposal, while in the old one the setting only applies to
    some scenarios (LVM and partition-based with a separate home).
- * `vm_home_max_size`  
+ * `vm_home_max_size`
    Used to set the max size for the home planned volume.
    Again, that means the setting is always honored, in contrast to the old
    proposal that only uses it if LVM is proposed.

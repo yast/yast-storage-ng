@@ -54,5 +54,8 @@ RSpec.shared_context "devices planner" do
     allow(disk).to receive(:swap_partitions).and_return(swap_partitions)
 
     allow(Yast::Arch).to receive(:architecture).and_return(arch)
+
+    allow(Yast::SCR).to receive(:Read).with(path(".proc.meminfo"))
+      .and_return("memtotal" => 8.GiB.to_i / 1.KiB.to_i)
   end
 end
