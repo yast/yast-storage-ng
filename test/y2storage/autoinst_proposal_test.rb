@@ -630,35 +630,63 @@ describe Y2Storage::AutoinstProposal do
       end
     end
 
-    describe "when boot partition is required" do
+    describe "boot partition" do
       let(:scenario) { "empty_hard_disk_50GiB" }
 
-      let(:boot_checker) do
-        instance_double(Y2Storage::BootRequirementsChecker, needed_partitions: [planned_boot])
-      end
+      let(:planned_boots) { [] }
 
-      let(:planned_boot) do
-        Y2Storage::Planned::Partition.new(nil).tap do |part|
-          part.min_size = 1.MiB
-          part.max_size = 1.MiB
-          part.partition_id = Y2Storage::PartitionId::BIOS_BOOT
-        end
+      let(:boot_checker) do
+        instance_double(Y2Storage::BootRequirementsChecker, needed_partitions: planned_boots)
       end
 
       before do
         allow(Y2Storage::BootRequirementsChecker).to receive(:new).and_return(boot_checker)
       end
 
+
       let(:partitioning) do
         [{ "use" => "all", "partitions" => [swap, root], "disklabel" => "gpt" }]
       end
 
-      it "creates the boot partition" do
+      context "when a boot partition is required" do
+        let(:planned_boots) { [planned_boot] }
+
+        let(:planned_boot) do
+          Y2Storage::Planned::Partition.new(nil).tap do |part|
+            part.min_size = 1.MiB
+            part.max_size = 1.MiB
+            part.partition_id = Y2Storage::PartitionId::BIOS_BOOT
+          end
+        end
+
+        it "creates the boot partition" do
+          proposal.propose
+          devicegraph = proposal.devices
+          disk = devicegraph.disk_devices.first
+          boot = devicegraph.partitions.find { |p| p.id == Y2Storage::PartitionId::BIOS_BOOT }
+          expect(boot).to_not be_nil
+        end
+      end
+
+      context "when a boot partition is not required" do
+        let(:planned_boots) { [] }
+
+        it "does not create a boot partition" do
+          proposal.propose
+          devicegraph = proposal.devices
+          disk = devicegraph.disk_devices.first
+          boot = devicegraph.partitions.find { |p| p.id == Y2Storage::PartitionId::BIOS_BOOT }
+          expect(boot).to be_nil
+        end
+      end
+
+      it "checks for boot partition after partition tables have been created" do
+        expect(Y2Storage::BootRequirementsChecker).to receive(:new) do |devicegraph, _planned|
+          disk = devicegraph.disks.first
+          expect(disk.partition_table).to_not be_nil
+          boot_checker
+        end
         proposal.propose
-        devicegraph = proposal.devices
-        disk = devicegraph.disk_devices.first
-        expect(disk.name).to eq("/dev/sda")
-        expect(disk.partition_table.type).to eq(Y2Storage::PartitionTables::Type::GPT)
       end
     end
 
@@ -701,25 +729,38 @@ describe Y2Storage::AutoinstProposal do
         end
       end
 
-      context "when partition table exist" do
+      context "when does exist" do
         let(:scenario) { "windows-linux-free-pc" }
+        let(:partitioning) do
+          [
+            {
+              "use" => "all", "partitions" => [swap, root], "disklabel" => "gpt",
+              "initialize" => initialize_value
+            }
+          ]
+        end
 
-        context "and a different type is requested" do
-          let(:partitioning) do
-            [
-              {
-                "use" => "all", "partitions" => [swap, root], "disklabel" => "gpt",
-                "initialize" => true
-              }
-            ]
-          end
+        context "and a different type is requested and 'initialize' element is set to 'true'" do
+          let(:initialize_value) { true }
 
-          it "creates a partition of the given type" do
+          it "creates a partition table of the given type" do
             proposal.propose
             devicegraph = proposal.devices
             disk = devicegraph.disk_devices.first
             expect(disk.name).to eq("/dev/sda")
             expect(disk.partition_table.type).to eq(Y2Storage::PartitionTables::Type::GPT)
+          end
+        end
+
+        context "and a different type is requested but 'initialize' element is set to 'false'" do
+          let(:initialize_value) { false }
+
+          it "does not change the partition table" do
+            proposal.propose
+            devicegraph = proposal.devices
+            disk = devicegraph.disk_devices.first
+            expect(disk.name).to eq("/dev/sda")
+            expect(disk.partition_table.type).to eq(Y2Storage::PartitionTables::Type::MSDOS)
           end
         end
       end
