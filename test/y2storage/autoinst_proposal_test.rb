@@ -643,7 +643,6 @@ describe Y2Storage::AutoinstProposal do
         allow(Y2Storage::BootRequirementsChecker).to receive(:new).and_return(boot_checker)
       end
 
-
       let(:partitioning) do
         [{ "use" => "all", "partitions" => [swap, root], "disklabel" => "gpt" }]
       end
@@ -662,7 +661,6 @@ describe Y2Storage::AutoinstProposal do
         it "creates the boot partition" do
           proposal.propose
           devicegraph = proposal.devices
-          disk = devicegraph.disk_devices.first
           boot = devicegraph.partitions.find { |p| p.id == Y2Storage::PartitionId::BIOS_BOOT }
           expect(boot).to_not be_nil
         end
@@ -674,7 +672,6 @@ describe Y2Storage::AutoinstProposal do
         it "does not create a boot partition" do
           proposal.propose
           devicegraph = proposal.devices
-          disk = devicegraph.disk_devices.first
           boot = devicegraph.partitions.find { |p| p.id == Y2Storage::PartitionId::BIOS_BOOT }
           expect(boot).to be_nil
         end
