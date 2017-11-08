@@ -410,7 +410,7 @@ describe Y2Storage::Dialogs::GuidedSetup::SelectFilesystem::VolumeWidget do
   describe "#handle" do
     let(:index) { 0 }
     let(:volume) { volumes[index] }
-    let(:vol_features) { { "adjust_by_ram_configurable" => true } }
+    let(:vol_features) { { "proposed_configurable" => true, "adjust_by_ram_configurable" => true } }
 
     before do
       allow(Yast::UI).to receive(:QueryWidget)
