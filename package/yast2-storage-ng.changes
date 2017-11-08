@@ -1,4 +1,12 @@
 -------------------------------------------------------------------
+Wed Nov  8 10:07:09 UTC 2017 - ancor@suse.com
+
+- Added support in the UI of the guided setup for the new format
+  of <volumes> in the control file.
+- Part of fate#318196.
+- 4.0.26
+
+-------------------------------------------------------------------
 Wed Nov  8 05:54:04 UTC 2017 - igonzalezsosa@suse.com
 
 - AutoYaST: fix space distribution when partition table does not
