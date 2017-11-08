@@ -25,13 +25,11 @@ require "y2storage"
 
 describe Y2Storage::PartitionTables::Gpt do
   before do
-    fake_scenario("empty_hard_disk_50GiB")
+    fake_scenario("empty_hard_disk_gpt_50GiB")
   end
 
   let(:disk) { Y2Storage::Disk.find_by_name(fake_devicegraph, "/dev/sda") }
-  let(:partition_table_type) { Y2Storage::PartitionTables::Type.find(:gpt) }
-
-  subject { disk.create_partition_table(partition_table_type) }
+  subject { disk.partition_table }
 
   describe "#partition_id_for" do
     it "uses the WINDOWS_BASIC_DATA partition id for WINDOWS_BASIC_DATA" do
