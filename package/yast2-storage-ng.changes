@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Wed Nov  8 16:03:31 UTC 2017 - snwint@suse.com
+
+- safer handling of partition ids (bsc#1060993
+- 4.0.28
+
+-------------------------------------------------------------------
 Wed Nov  8 14:45:22 UTC 2017 - igonzalezsosa@suse.com
 
 - AutoYaST: filter out old '@' entries when importing the list of
