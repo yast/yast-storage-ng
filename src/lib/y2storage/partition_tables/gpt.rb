@@ -37,6 +37,20 @@ module Y2Storage
       # @!method pmbr_boot=(value)
       #   @attr value [Boolean] set/unset flag
       storage_forward :pmbr_boot=
+
+      # GPT partition table doesn't use that many different ids.
+      # @see PatitionTables::Base#partition_id_for
+      #
+      # @param partition_id [PartitionId]
+      # @return [PartitionId]
+      def partition_id_for(partition_id)
+        case partition_id.to_sym
+        when :ntfs, :dos32, :dos16, :dos12
+          PartitionId::WINDOWS_BASIC_DATA
+        else
+          super
+        end
+      end
     end
   end
 end

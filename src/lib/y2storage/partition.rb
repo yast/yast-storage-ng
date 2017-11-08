@@ -149,6 +149,11 @@ module Y2Storage
     # @param partition_id [PartitionId]
     def adapted_id=(partition_id)
       self.id = partition_table.partition_id_for(partition_id)
+    rescue ::Storage::Exception
+      # if we made some mistake, log an error but don't break completely
+      fallback_id = PartitionId::LINUX
+      log.error "Failed to set partition id #{partition_id}, falling back to #{fallback_id}"
+      self.id = fallback_id
     end
 
   protected

@@ -23,35 +23,40 @@
 require_relative "../spec_helper"
 require "y2storage"
 
-describe Y2Storage::PartitionTables::Dasd do
+describe Y2Storage::PartitionTables::Gpt do
   before do
-    fake_scenario("empty_dasd_50GiB")
+    fake_scenario("empty_hard_disk_50GiB")
   end
 
-  let(:disk) { Y2Storage::Dasd.find_by_name(fake_devicegraph, "/dev/sda") }
-  let(:partition_table_type) { Y2Storage::PartitionTables::Type.find(:dasd) }
+  let(:disk) { Y2Storage::Disk.find_by_name(fake_devicegraph, "/dev/sda") }
+  let(:partition_table_type) { Y2Storage::PartitionTables::Type.find(:gpt) }
 
   subject { disk.create_partition_table(partition_table_type) }
 
   describe "#partition_id_for" do
-    it "uses the LVM partition id for LVM" do
-      p_id = Y2Storage::PartitionId::LVM
+    it "uses the WINDOWS_BASIC_DATA partition id for WINDOWS_BASIC_DATA" do
+      p_id = Y2Storage::PartitionId::WINDOWS_BASIC_DATA
       expect(subject.partition_id_for(p_id)).to eq p_id
     end
 
-    it "uses the RAID partition id for RAID" do
-      p_id = Y2Storage::PartitionId::RAID
+    it "uses the MICROSOFT_RESERVED partition id for MICROSOFT_RESERVED" do
+      p_id = Y2Storage::PartitionId::MICROSOFT_RESERVED
       expect(subject.partition_id_for(p_id)).to eq p_id
     end
 
-    it "uses the LINUX partition id for swap" do
+    it "uses the SWAP partition id for SWAP" do
       p_id = Y2Storage::PartitionId::SWAP
-      expect(subject.partition_id_for(p_id)).to eq Y2Storage::PartitionId::LINUX
+      expect(subject.partition_id_for(p_id)).to eq Y2Storage::PartitionId::SWAP
     end
 
-    it "maps other partition ids to LINUX" do
+    it "uses the WINDOWS_BASIC_DATA partition id for NTFS" do
       p_id = Y2Storage::PartitionId::NTFS
-      expect(subject.partition_id_for(p_id)).to eq Y2Storage::PartitionId::LINUX
+      expect(subject.partition_id_for(p_id)).to eq Y2Storage::PartitionId::WINDOWS_BASIC_DATA
+    end
+
+    it "uses the WINDOWS_BASIC_DATA partition id for DOS32" do
+      p_id = Y2Storage::PartitionId::DOS32
+      expect(subject.partition_id_for(p_id)).to eq Y2Storage::PartitionId::WINDOWS_BASIC_DATA
     end
   end
 end
