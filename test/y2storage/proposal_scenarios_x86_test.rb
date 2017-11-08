@@ -27,6 +27,8 @@ require_relative "#{TEST_PATH}/support/proposal_examples"
 require_relative "#{TEST_PATH}/support/proposal_context"
 
 describe Y2Storage::GuidedProposal do
+  using Y2Storage::Refinements::SizeCasts
+
   describe "#propose" do
     include_context "proposal"
 
@@ -129,6 +131,90 @@ describe Y2Storage::GuidedProposal do
       let(:scenario) { "empty_hard_disk_gpt_50GiB" }
 
       include_examples "all proposed layouts"
+
+      context "when the partitioning section has :ng format" do
+        let(:settings_format) { :ng }
+
+        let(:control_file_content) do
+          {
+            "partitioning" => {
+              "proposal" => {
+                "lvm" => lvm
+              },
+              "volumes"  => volumes
+            }
+          }
+        end
+
+        let(:root) do
+          {
+            "mount_point"  => "/",
+            "fs_type"      => "ext4",
+            "min_size"     => "5 GiB",
+            "max_size"     => "unlimited",
+            "desired_size" => "15 GiB",
+            "weight"       => 70
+          }
+        end
+
+        let(:swap) do
+          {
+            "mount_point"   => "swap",
+            "fs_type"       => "swap",
+            "min_size"      => "2 GiB",
+            "max_size"      => "8 GiB",
+            "desired_size"  => "4 GiB",
+            "weight"        => 30,
+            "adjust_by_ram" => true
+          }
+        end
+
+        let(:docker) do
+          {
+            "mount_point"  => "/var/lib/docker",
+            "fs_type"      => "btrfs",
+            "min_size"     => "5 GiB",
+            "max_size"     => "20 GiB",
+            "desired_size" => "15 GiB",
+            "weight"       => 30
+          }
+        end
+
+        context "using LVM" do
+          let(:lvm) { true }
+
+          # Regresion test to check that lvm volumes are generated with correct names
+          context "with root and docker data volumes" do
+            let(:volumes) { [root, docker] }
+
+            let(:expected_scenario) { "empty_hard_disk_gpt_50GiB-root-docker" }
+
+            it "proposes the expected layout" do
+              proposal.propose
+              expect(proposal.devices.to_str).to eq expected.to_str
+            end
+          end
+        end
+
+        context "not using LVM" do
+          let(:lvm) { false }
+
+          # Regresion test to check the usage of system ram size instead of a fixed value
+          context "with root and swap (with adjust_by_ram) volumes" do
+            let(:volumes) { [root, swap] }
+
+            # RAM size is 16 GiB
+            let(:memtotal) { 16.GiB.to_i / 1.KiB.to_i }
+
+            let(:expected_scenario) { "empty_hard_disk_gpt_50GiB-root-swap" }
+
+            it "proposes the expected layout" do
+              proposal.propose
+              expect(proposal.devices.to_str).to eq expected.to_str
+            end
+          end
+        end
+      end
     end
   end
 end
