@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Wed Nov  8 14:45:22 UTC 2017 - igonzalezsosa@suse.com
+
+- AutoYaST: filter out old '@' entries when importing the list of
+  subvolumes (bsc#1061253)
+- 4.0.27
+
+-------------------------------------------------------------------
 Wed Nov  8 10:07:09 UTC 2017 - ancor@suse.com
 
 - Added support in the UI of the guided setup for the new format
