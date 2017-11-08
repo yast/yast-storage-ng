@@ -45,10 +45,10 @@ module Y2Storage
       # @return [PartitionId]
       def partition_id_for(partition_id)
         case partition_id.to_sym
-          when :ntfs, :dos32, :dos16, :dos12
-            PartitionId::WINDOWS_BASIC_DATA
-          else
-            super
+        when :ntfs, :dos32, :dos16, :dos12
+          PartitionId::WINDOWS_BASIC_DATA
+        else
+          super
         end
       end
     end

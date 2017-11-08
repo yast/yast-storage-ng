@@ -47,10 +47,10 @@ module Y2Storage
       # @return [PartitionId]
       def partition_id_for(partition_id)
         case partition_id.to_sym
-          when :lvm, :raid
-            super
-          else
-            PartitionId::LINUX
+        when :lvm, :raid
+          super
+        else
+          PartitionId::LINUX
         end
       end
     end
