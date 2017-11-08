@@ -318,6 +318,17 @@ describe Y2Storage::AutoinstProfile::PartitionSection do
       end
     end
 
+    context "when the '@' subvolume is present" do
+      let(:hash) { { "subvolumes" => ["@", "srv"] } }
+
+      it "filters out the '@' subvolume" do
+        subvolumes = described_class.new_from_hashes(hash).subvolumes
+        expect(subvolumes).to contain_exactly(
+          an_object_having_attributes(path: "srv", copy_on_write: true)
+        )
+      end
+    end
+
     context "when raid_options are not present" do
       it "initializes raid_options to nil" do
         section = described_class.new_from_hashes(hash)
