@@ -34,14 +34,24 @@ describe Y2Storage::PartitionTables::Dasd do
   subject { disk.create_partition_table(partition_table_type) }
 
   describe "#partition_id_for" do
-    it "returns LINUX partition id for swap" do
-      swap = Y2Storage::PartitionId::SWAP
-      expect(subject.partition_id_for(swap)).to eq Y2Storage::PartitionId::LINUX
+    it "uses the LVM partition id for LVM" do
+      p_id = Y2Storage::PartitionId::LVM
+      expect(subject.partition_id_for(p_id)).to eq p_id
     end
 
-    it "returns the same partition id in other cases" do
-      ntfs = Y2Storage::PartitionId::NTFS
-      expect(subject.partition_id_for(ntfs)).to eq ntfs
+    it "uses the RAID partition id for RAID" do
+      p_id = Y2Storage::PartitionId::RAID
+      expect(subject.partition_id_for(p_id)).to eq p_id
+    end
+
+    it "uses the LINUX partition id for swap" do
+      p_id = Y2Storage::PartitionId::SWAP
+      expect(subject.partition_id_for(p_id)).to eq Y2Storage::PartitionId::LINUX
+    end
+
+    it "maps other partition ids to LINUX" do
+      p_id = Y2Storage::PartitionId::NTFS
+      expect(subject.partition_id_for(p_id)).to eq Y2Storage::PartitionId::LINUX
     end
   end
 end

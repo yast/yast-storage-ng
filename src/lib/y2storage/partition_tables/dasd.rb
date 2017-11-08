@@ -40,13 +40,18 @@ module Y2Storage
       end
 
       # DASD partition table uses partition id LINUX for swap.
+      # In fact, it uses LINUX for everything except LVM and RAID.
       # @see PatitionTables::Base#partition_id_for
       #
       # @param partition_id [PartitionId]
       # @return [PartitionId]
       def partition_id_for(partition_id)
-        return PartitionId::LINUX if partition_id.is?(:swap)
-        super
+        case partition_id.to_sym
+          when :lvm, :raid
+            super
+          else
+            PartitionId::LINUX
+        end
       end
     end
   end
