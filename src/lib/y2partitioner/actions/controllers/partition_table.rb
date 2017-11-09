@@ -32,6 +32,7 @@ module Y2Partitioner
       # process. It also takes care of updating the devicegraph when needed.
       class PartitionTable
         include Yast::I18n
+        include Yast::Logger
 
         # Partition table type to be used. If not set, the default type for
         # this type of disk is used: one of Gpt, Msdos, Dasd.
@@ -48,33 +49,32 @@ module Y2Partitioner
         # @return [String]
         attr_reader :disk_name
 
+        # The disk we are working on
+        # @return [Y2Storage::Disk] or [Y2Storage::Dasd]
+        attr_reader :disk
+
         def initialize(disk_name)
           textdomain "storage"
 
           @disk_name = disk_name
-          types = possible_partition_table_types
-          @type = types.nil? ? nil : types.first
-        end
-
-        # Device to create a new partition table on
-        # @return [Y2Storage::BlkDevice]
-        def disk
-          dg = DeviceGraphs.instance.current
-          Y2Storage::BlkDevice.find_by_name(dg, disk_name)
+          @disk = find_disk(disk_name)
+          log.error("Can't find disk #{@disk_name}") if @disk.nil?
+          @type = possible_partition_table_types.first
         end
 
         # Create the partition table on the disk.
         def create_partition_table
-          return if type.nil?
-          d = disk
-          d.remove_descendants
-          d.create_partition_table(type)
-          UIState.instance.select_row(d)
+          return if @type.nil? || @disk.nil?
+
+          @disk.remove_descendants
+          @disk.create_partition_table(@type)
+          UIState.instance.select_row(@disk)
         end
 
         # Return the partition table types that are supported by this disk.
         def possible_partition_table_types
-          disk.possible_partition_table_types
+          return [] if @disk.nil?
+          @disk.possible_partition_table_types
         end
 
         # Check if a partition table can be created on this disk.
@@ -92,6 +92,15 @@ module Y2Partitioner
         def wizard_title
           # TRANSLATORS: dialog title. %s is a device name like /dev/sda
           _("Create New Partition Table on %s") % disk_name
+        end
+
+      private
+
+        # Find the disk or dasd
+        # @return [Y2Storage::BlkDevice]
+        def find_disk(name)
+          dg = DeviceGraphs.instance.current
+          Y2Storage::BlkDevice.find_by_name(dg, name)
         end
       end
     end
