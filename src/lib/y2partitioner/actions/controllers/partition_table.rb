@@ -52,7 +52,8 @@ module Y2Partitioner
           textdomain "storage"
 
           @disk_name = disk_name
-          @type = nil
+          types = possible_partition_table_types
+          @type = types.nil? ? nil : types.first
         end
 
         # Device to create a new partition table on
