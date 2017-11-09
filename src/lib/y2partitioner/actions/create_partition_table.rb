@@ -28,6 +28,8 @@ module Y2Partitioner
   module Actions
     # Action for creating a new partition table
     class CreatePartitionTable < TransactionWizard
+      attr_reader :controller
+
       # @param disk_name [String]
       def initialize(disk_name)
         textdomain "storage"
@@ -36,13 +38,7 @@ module Y2Partitioner
         @controller = Controllers::PartitionTable.new(disk_name)
       end
 
-      def type
-        Dialogs::PartitionTableType.run(controller)
-      end
-
     protected
-
-      attr_reader :controller
 
       # @see TransactionWizard
       def sequence_hash
