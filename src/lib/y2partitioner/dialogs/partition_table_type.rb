@@ -50,7 +50,6 @@ module Y2Partitioner
 
         # @macro seeAbstractWidget
         def init
-          # Pick the first one available
           set_default
         end
 
@@ -60,7 +59,7 @@ module Y2Partitioner
         end
 
         def set_default
-          @value = @supported_types.first
+          self.value = @supported_types.first
         end
       end
 
