@@ -25,7 +25,7 @@ require "y2partitioner/actions/controllers/partition"
 
 describe Y2Partitioner::Actions::Controllers::PartitionTable do
   context "PC with 2 disks" do
-    before do
+    before(:all) do
       devicegraph_stub("mixed_disks_btrfs.yml")
     end
 
@@ -91,7 +91,7 @@ describe Y2Partitioner::Actions::Controllers::PartitionTable do
   end
 
   context "S/390 DASD" do
-    before do
+    before(:all) do
       devicegraph_stub("dasd_50GiB.yml")
     end
 
