@@ -84,7 +84,7 @@ module Y2Storage
 
       # Space wasted by the distribution
       # @return [DiskSize]
-      def gaps_total_disk_size
+      def gaps_total_size
         DiskSize.sum(spaces.map(&:unused))
       end
 
@@ -96,8 +96,14 @@ module Y2Storage
 
       # Total space available for the planned partitions
       # @return [DiskSize]
-      def spaces_total_disk_size
+      def spaces_total_size
         DiskSize.sum(spaces.map(&:disk_size))
+      end
+
+      # Number of assigned spaces in the distribution
+      # @return [Integer]
+      def spaces_count
+        spaces.count
       end
 
       # Total number of planned partitions included in the distribution
@@ -111,29 +117,75 @@ module Y2Storage
       #
       # @return [Integer] -1, 0, 1 like <=>
       def better_than(other)
-        # The smallest gaps the better
-        res = gaps_total_disk_size <=> other.gaps_total_disk_size
-        return res unless res.zero?
+        criteria = [
+          # The smaller gaps the better
+          [:gaps_total_size, :smaller],
 
-        # The fewer gaps the better
-        res = gaps_count <=> other.gaps_count
-        return res unless res.zero?
+          # The fewer gaps the better
+          [:gaps_count, :smaller],
 
-        # The fewer physical volumes the better
-        res = partitions_count <=> other.partitions_count
-        return res unless res.zero?
+          # The fewer physical volumes the better
+          [:partitions_count, :smaller],
 
-        # The less fragmentation the better
-        res = spaces.count <=> other.spaces.count
-        return res unless res.zero?
+          # The bigger installation the better
+          [:spaces_total_size, :bigger],
 
-        # The biggest installation the better
-        res = other.spaces_total_disk_size <=> spaces_total_disk_size
-        return res unless res.zero?
+          # We want the partitions with biggest weight to be placed in the spaces
+          # in which there is more extra space to be distributed
+          [:weight_space_deviation, :smaller],
+
+          # The less fragmentation the better
+          [:spaces_count, :smaller]
+        ]
+
+        criteria.each do |criterion, order|
+          res = public_send(criterion) <=> other.public_send(criterion)
+          res *= -1 if order == :bigger
+          return res unless res.zero?
+        end
 
         # Just to ensure stable sorting between different executions in case
         # of absolute draw in all previous criteria
         comparable_string <=> other.comparable_string
+      end
+
+      # A coefficient expresing how far is the distribution from the ideal
+      # situation in which there is a 1:1 correlation between the weights of the
+      # partitions in every assigned space and the extra disk in that space to
+      # be distributed.
+      #
+      # In general, for two distributions that are considered equivalent in
+      # any other aspect, the one in which the partitions with biggest weights
+      # are placed in the spaces with more "growth potential" is considered the
+      # best. This coefficient is zero if the proportion of weights (of every
+      # assigned space compared with the total) is equal to the proportion of
+      # extra spaces (same calculation).
+      #
+      # @see #better_than
+      # @return [Float] a number between 0.0 and 1.0
+      def weight_space_deviation
+        extra_sizes = spaces.map { |i| i.usable_extra_size.to_i }
+        total_extra_size = extra_sizes.reduce(:+)
+
+        weights = spaces.map(&:total_weight)
+        total_weight = weights.reduce(:+)
+
+        # Edge case #1:
+        # No partition looks interested in growing, so we are fine whatever
+        # the extra sizes are
+        return 0.0 if total_weight.zero?
+        # Edge case #2:
+        # All the spaces are fully packet since the beginning, so no chance for
+        # any partition to grow
+        return 1.0 if total_extra_size.zero?
+
+        normalized_sizes = extra_sizes.map! { |i| i.to_f / total_extra_size }
+        normalized_weights = weights.map! { |i| i.to_f / total_weight }
+
+        diffs = normalized_sizes.each_with_index.map do |size, idx|
+          (size - normalized_weights[idx]).abs
+        end
+        diffs.reduce(:+)
       end
 
       def to_s
