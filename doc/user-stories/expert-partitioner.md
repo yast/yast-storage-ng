@@ -594,7 +594,7 @@ The specs are based on current version of expert partitioner for TW. The goal is
     * shows a confirm popup to delete the LV
     * deletes the LV
 
-#### *(pending) When 'Add' + 'Volume Group' is selected*
+#### When 'Add' + 'Volume Group' is selected
 * and there are not valid unused devices (0x8e Linux, 0x83 LVM, 0xFD RAID)
   * shows an error popup
 * and there are valid unused devices
