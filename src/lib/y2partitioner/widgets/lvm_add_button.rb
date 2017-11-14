@@ -21,6 +21,7 @@
 
 require "yast"
 require "cwm"
+require "y2partitioner/actions/add_lvm_vg"
 require "y2partitioner/actions/add_lvm_lv"
 Yast.import "Popup"
 
@@ -45,6 +46,7 @@ module Y2Partitioner
 
       # When there is no vg, only shows an option to add a new vg.
       # Otherwise, options for adding a vg or lv are shown.
+      #
       # @return [Array<[Symbol, String]>] list of menu options
       def items
         items = [[:add_volume_group, _("Volume Group")]]
@@ -54,34 +56,54 @@ module Y2Partitioner
         items
       end
 
+      # Runs the corresponding action for adding a logical volume or volume group
+      #
       # @param event [Hash] UI event
+      # @return [:redraw, nil] :redraw when the action is performed; nil otherwise
       def handle(event)
-        case event["ID"]
+        result = case event["ID"]
         when :add_volume_group
           add_vg
         when :add_logical_volume
           add_lv
         end
+
+        result == :finish ? :redraw : nil
       end
 
     private
 
+      # @return [Y2Partitioner::Widgets::ConfigurableBlkDevicesTable]
       attr_reader :table
 
+      # Runs action for adding a new volume group
+      # @see Actions::AddLvmVg
+      #
+      # @return [Symbol] :finish, :abort
       def add_vg
-        Yast::Popup.Warning("Not yet implemented")
+        Actions::AddLvmVg.new.run
       end
 
+      # Runs action for adding a new logical volume to the selected volume group
+      # @see Actions::AddLvmLv
+      #
+      # @return [Symbol, nil] :finish, :abort. Returns nil when it is not possible
+      #   to determine the volume group (see {#vg}).
       def add_lv
         if vg.nil?
           Yast::Popup.Error(_("No device selected"))
           return nil
         end
 
-        res = Actions::AddLvmLv.new(vg).run
-        res == :finish ? :redraw : nil
+        Actions::AddLvmLv.new(vg).run
       end
 
+      # Returns the volume group associated to the selected table row
+      #
+      # @note When the selected table row correspond to a logical volume,
+      # the volume group to which the logical volume belongs to is returned.
+      #
+      # @return [Y2Storage::LvmVg, nil] returns nil when no row is selected
       def vg
         device = table.selected_device
         return nil if device.nil?
@@ -94,6 +116,7 @@ module Y2Partitioner
         end
       end
 
+      # @return [Y2Storage::Devicegraph] current devicegraph
       def device_graph
         DeviceGraphs.instance.current
       end
