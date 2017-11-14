@@ -124,8 +124,11 @@ module Y2Partitioner
           return true unless controller.duplicated_vg_name?
 
           Yast::Popup.Error(
-            _("The volume group name \"#{controller.vg_name}\" conflicts\n" \
-              "with another entry in the /dev directory.")
+            format(
+              _("The volume group name \"%{vg_name}\" conflicts\n" \
+                "with another entry in the /dev directory."),
+              vg_name: controller.vg_name
+            )
           )
 
           false
