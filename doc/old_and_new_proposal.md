@@ -221,7 +221,7 @@ Besides these, there are two further elements:
   * `min_size` *(disksize, default: `0 B`)*
   * `max_size` *(disksize, default: `unlimited`)*
   * `max_size_lvm` *(disksize, default: `0 B`)*
-  * `weight` *(integer, default: `0`)*
+  * `weight` *(integer, default: `0`, so extra size is not assigned)*
   * `adjust_by_ram` *(boolean, default: `false`)*
   * `adjust_by_ram_configurable` *(boolean, default: `false`)*
   * `fallback_for_min_size` *(string, default: no fallback)*
