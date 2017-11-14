@@ -344,6 +344,42 @@ describe Y2Storage::DiskSize do
     end
   end
 
+  describe "#power_of_two?" do
+    let(:disk_size) { Y2Storage::DiskSize.new(size) }
+
+    context "when the number of bytes is power of two" do
+      let(:size) { "8 MiB" }
+
+      it "returns true" do
+        expect(disk_size.power_of_two?).to be(true)
+      end
+    end
+
+    context "when the number of bytes is not power of two" do
+      let(:size) { "8 MB" }
+
+      it "returns false" do
+        expect(disk_size.power_of_two?).to be(false)
+      end
+    end
+
+    context "when the size is zero" do
+      let(:disk_size) { zero }
+
+      it "returns false" do
+        expect(disk_size.power_of_two?).to be(false)
+      end
+    end
+
+    context "when the size is unlimited" do
+      let(:disk_size) { unlimited }
+
+      it "returns false" do
+        expect(disk_size.power_of_two?).to be(false)
+      end
+    end
+  end
+
   describe "comparison" do
     disk_size1 = Y2Storage::DiskSize.GiB(24)
     disk_size2 = Y2Storage::DiskSize.GiB(32)

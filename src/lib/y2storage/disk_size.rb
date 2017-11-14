@@ -549,6 +549,25 @@ module Y2Storage
       @size == 0
     end
 
+    # Test if {DiskSize} is power of 2 (amount of bytes is power of 2).
+    #
+    # @note To check power of two, the amount of bytes is converted to
+    #   a binary number and then the number of 1's is counted.
+    #   A binary number is power of 2 if and only if it contains only an 1.
+    #
+    # @return [Boolean]
+    #
+    # @example
+    #   x = DiskSize.KiB(4) #=> <DiskSize 4.00 KiB (4096)>
+    #   x.power_of_two?     #=> true
+    #
+    #   x = DiskSize.KB(4) #=> <DiskSize 3.91 KiB (4000)>
+    #   x.power_of_two?    #=> false
+    def power_of_two?
+      return false if zero? || unlimited?
+      size.to_s(2).count("1") == 1
+    end
+
     # Compare two {DiskSize} objects.
     #
     # @return [Integer]
