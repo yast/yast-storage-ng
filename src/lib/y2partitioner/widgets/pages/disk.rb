@@ -23,7 +23,7 @@ require "cwm/widget"
 require "cwm/tree_pager"
 require "y2partitioner/icons"
 require "y2partitioner/device_graphs"
-require "y2partitioner/actions/add_partition"
+require "y2partitioner/widgets/partition_add_button"
 require "y2partitioner/widgets/device_delete_button"
 require "y2partitioner/widgets/blk_device_edit_button"
 require "y2partitioner/widgets/configurable_blk_devices_table"
@@ -150,7 +150,7 @@ module Y2Partitioner
             table,
             Left(
               HBox(
-                AddButton.new(disk, table),
+                PartitionAddButton.new(device: disk),
                 BlkDeviceEditButton.new(pager: @pager, table: table),
                 DeviceDeleteButton.new(pager: @pager, table: table)
               )
@@ -162,29 +162,6 @@ module Y2Partitioner
 
         def devices
           disk.partitions
-        end
-
-        # Add a partition
-        class AddButton < CWM::PushButton
-          # Constructor
-          #
-          # @param disk [Y2Storage::BlkDevice]
-          # @param table [ConfigurableBlkDevicesTable]
-          def initialize(disk, table)
-            textdomain "storage"
-
-            @disk = disk
-            @table = table
-          end
-
-          def label
-            _("Add...")
-          end
-
-          def handle
-            res = Actions::AddPartition.new(@disk.name).run
-            res == :finish ? :redraw : nil
-          end
         end
       end
     end

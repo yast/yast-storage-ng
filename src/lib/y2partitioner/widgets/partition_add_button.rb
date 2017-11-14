@@ -21,27 +21,26 @@
 
 require "yast"
 require "y2partitioner/widgets/device_button"
-require "y2partitioner/actions/add_lvm_lv"
+require "y2partitioner/actions/add_partition"
 
 module Y2Partitioner
   module Widgets
-    # Button for opening the workflow to add a logical volume to a volume group
-    class LvmLvAddButton < DeviceButton
+    # Button for adding a partition
+    class PartitionAddButton < DeviceButton
       # @macro seeAbstractWidget
       def label
-        # TRANSLATORS: button label to add a logical volume
+        # TRANSLATORS: label for button to add a partition
         _("Add...")
       end
 
     private
 
-      # Returns the proper Actions class to perform the action for adding a
-      # logical volume
+      # Returns the proper Actions class to perform the action for adding a partition
       #
       # @see DeviceButton#actions
-      # @see Actions::AddLvmLv
+      # @see Actions::AddPartition
       def actions_class
-        Actions::AddLvmLv
+        Actions::AddPartition
       end
     end
   end

@@ -22,8 +22,8 @@
 require "cwm/tree_pager"
 require "y2partitioner/icons"
 require "y2partitioner/device_graphs"
-require "y2partitioner/actions/add_md"
 require "y2partitioner/widgets/md_raids_table"
+require "y2partitioner/widgets/md_add_button"
 require "y2partitioner/widgets/blk_device_edit_button"
 require "y2partitioner/widgets/device_resize_button"
 require "y2partitioner/widgets/device_delete_button"
@@ -75,7 +75,7 @@ module Y2Partitioner
             table,
             Left(
               HBox(
-                AddButton.new,
+                MdAddButton.new,
                 BlkDeviceEditButton.new(table: table),
                 DeviceResizeButton.new(pager: @pager, table: table),
                 DeviceDeleteButton.new(pager: @pager, table: table)
@@ -98,23 +98,6 @@ module Y2Partitioner
         # @return [Array<Y2Storage::Md>]
         def devices
           Y2Storage::Md.all(DeviceGraphs.instance.current)
-        end
-
-        # Button to fire the wizard to add a new MD array ({Actions::AddMd})
-        class AddButton < CWM::PushButton
-          # Constructor
-          def initialize
-            textdomain "storage"
-          end
-
-          def label
-            _("Add RAID...")
-          end
-
-          def handle
-            res = Actions::AddMd.new.run
-            res == :finish ? :redraw : nil
-          end
         end
       end
     end

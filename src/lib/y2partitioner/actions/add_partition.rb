@@ -31,12 +31,12 @@ module Y2Partitioner
     class AddPartition < TransactionWizard
       include NewBlkDevice
 
-      # @param disk_name [String]
-      def initialize(disk_name)
+      # @param disk [Y2Storage::BlkDevice]
+      def initialize(disk)
         textdomain "storage"
 
         super()
-        @part_controller = Controllers::Partition.new(disk_name)
+        @part_controller = Controllers::Partition.new(disk.name)
       end
 
       def type

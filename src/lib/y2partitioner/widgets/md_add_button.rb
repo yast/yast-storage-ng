@@ -20,28 +20,29 @@
 # find current contact information at www.suse.com.
 
 require "yast"
-require "y2partitioner/widgets/device_button"
-require "y2partitioner/actions/add_lvm_lv"
+require "cwm"
+require "y2partitioner/actions/add_md"
 
 module Y2Partitioner
   module Widgets
-    # Button for opening the workflow to add a logical volume to a volume group
-    class LvmLvAddButton < DeviceButton
-      # @macro seeAbstractWidget
-      def label
-        # TRANSLATORS: button label to add a logical volume
-        _("Add...")
+    # Button for openng a wizard to add a new MD array
+    class MdAddButton < CWM::PushButton
+      # Constructor
+      def initialize
+        textdomain "storage"
       end
 
-    private
+      # @macro seeAbstractWidget
+      def label
+        # TRANSLATORS: button label to add a MD Raid
+        _("Add RAID...")
+      end
 
-      # Returns the proper Actions class to perform the action for adding a
-      # logical volume
-      #
-      # @see DeviceButton#actions
-      # @see Actions::AddLvmLv
-      def actions_class
-        Actions::AddLvmLv
+      # @macro seeAbstractWidget
+      # @see Actions::AddMd
+      def handle
+        res = Actions::AddMd.new.run
+        res == :finish ? :redraw : nil
       end
     end
   end

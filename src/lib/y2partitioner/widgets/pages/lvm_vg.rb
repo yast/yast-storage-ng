@@ -131,7 +131,7 @@ module Y2Partitioner
             table,
             Left(
               HBox(
-                LvmLvAddButton.new(@lvm_vg),
+                LvmLvAddButton.new(device: @lvm_vg),
                 LvmEditButton.new(table: table),
                 DeviceResizeButton.new(table: table),
                 DeviceDeleteButton.new(table: table)

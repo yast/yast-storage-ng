@@ -93,20 +93,4 @@ describe Y2Partitioner::Widgets::Pages::Disk do
 
     include_examples "CWM::Tab"
   end
-
-  describe Y2Partitioner::Widgets::Pages::PartitionsTab::AddButton do
-    subject { described_class.new(disk, ui_table) }
-
-    before do
-      allow(Y2Partitioner::Actions::AddPartition)
-        .to receive(:new).and_return(double(run: :next))
-    end
-
-    let(:ui_table) do
-      instance_double(Y2Partitioner::Widgets::BlkDevicesTable,
-        value: "table:partition:/dev/hdf4", items: ["a", "b"])
-    end
-
-    include_examples "CWM::PushButton"
-  end
 end
