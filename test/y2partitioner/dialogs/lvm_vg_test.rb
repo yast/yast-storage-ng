@@ -186,8 +186,10 @@ describe Y2Partitioner::Dialogs::LvmVg do
 
     describe "#handle" do
       before do
-        allow(subject).to receive(:value).and_return("1 MiB")
+        allow(subject).to receive(:value).and_return(value)
       end
+
+      let(:value) { "1 MiB" }
 
       it "stores in the controller the given extent size" do
         expect(controller.extent_size).to_not eq(1.MiB)
@@ -197,6 +199,34 @@ describe Y2Partitioner::Dialogs::LvmVg do
 
       it "returns nil" do
         expect(subject.handle).to be_nil
+      end
+
+      context "when no extent size is given" do
+        let(:value) { "" }
+
+        before do
+          controller.extent_size = "1 MiB"
+        end
+
+        it "stores nil in the controller" do
+          expect(controller.extent_size).to_not be_nil
+          subject.handle
+          expect(controller.extent_size).to be_nil
+        end
+      end
+
+      context "when extent size with not valid format is given" do
+        let(:value) { "4 bad units" }
+
+        before do
+          controller.extent_size = "1 MiB"
+        end
+
+        it "stores nil in the controller" do
+          expect(controller.extent_size).to_not be_nil
+          subject.handle
+          expect(controller.extent_size).to be_nil
+        end
       end
     end
 
