@@ -1,4 +1,12 @@
 -------------------------------------------------------------------
+Wed Nov 15 15:55:51 UTC 2017 - ancor@suse.com
+
+- When proposing a partitions layout for installation, prefer
+  getting big installations and arranging the partitions by their
+  weights over creating adjacent partitions. Part of fate#318196.
+- 4.0.30
+
+-------------------------------------------------------------------
 Tue Nov 14 15:41:21 UTC 2017 - jlopez@suse.com
 
 - Partitioner: added support for creating volume groups.
