@@ -82,43 +82,28 @@ module Y2Partitioner
           vg.extent_size = extent_size
         end
 
-        # Checks whether the given volume group name is empty
+        # Error messages for the volume group name
         #
-        # @return [Boolean] true if volume group name is "" or nil; false otherwise
-        def empty_vg_name?
-          vg_name.nil? || vg_name.empty?
+        # @note When there is no error, an empty list is returned.
+        #
+        # @return [Array<String>] list of errors
+        def vg_name_errors
+          errors = []
+          errors << empty_vg_name_message if empty_vg_name?
+          errors << illegal_vg_name_message if vg_name && illegal_vg_name?
+          errors << duplicated_vg_name_message if vg_name && duplicated_vg_name?
+          errors
         end
 
-        # Checks whether the givem volume group name has illegal characters
+        # Error messages for the extent size
         #
-        # @see ALLOWED_NAME_CHARS
+        # @note When there is no error, an empty list is returned.
         #
-        # @return [Boolean] true if volume group name has illegal characters;
-        #   false otherwise
-        def illegal_vg_name?
-          vg_name.split(//).any? { |c| !ALLOWED_NAME_CHARS.include?(c) }
-        end
-
-        # Checks whether it exists another device with the given volume group name
-        #
-        # @return [Boolean] true if there is another device with the same name;
-        #   false otherwise
-        def duplicated_vg_name?
-          name = File.join("/dev", vg_name)
-          Y2Storage::BlkDevice.all(working_graph).map(&:name).include?(name)
-        end
-
-        # Checks whether the given extent size is not valid
-        #
-        # @note Extent size is valid if it is bigger than 1 KiB, multiple of 128 KiB
-        #   and power of 2.
-        #
-        # @return [Boolean] true if the extent size is not valid; false otherwise
-        def invalid_extent_size?
-          !(extent_size &&
-            extent_size > Y2Storage::DiskSize.KiB(1) &&
-            extent_size % Y2Storage::DiskSize.KiB(128) == Y2Storage::DiskSize.zero &&
-            extent_size.power_of_two?)
+        # @return [Array<String>] list of errors
+        def extent_size_errors
+          errors = []
+          errors << invalid_extent_size_message if invalid_extent_size?
+          errors
         end
 
         # Devices that can be selected to become physical volume of a volume group
@@ -202,6 +187,87 @@ module Y2Partitioner
           @vg = Y2Storage::LvmVg.create(working_graph, vg_name)
         end
 
+        # Checks whether the given volume group name is empty
+        #
+        # @return [Boolean] true if volume group name is "" or nil; false otherwise
+        def empty_vg_name?
+          vg_name.nil? || vg_name.empty?
+        end
+
+        # Error message to show when the given volume group name is empty
+        #
+        # @return [String]
+        def empty_vg_name_message
+          _("Enter a name for the volume group.")
+        end
+
+        # Checks whether the given volume group name has illegal characters
+        #
+        # @see ALLOWED_NAME_CHARS
+        #
+        # @return [Boolean] true if volume group name has illegal characters;
+        #   false otherwise
+        def illegal_vg_name?
+          vg_name.split(//).any? { |c| !ALLOWED_NAME_CHARS.include?(c) }
+        end
+
+        # Error message to show when the given volume group name contains illegal
+        # characters
+        #
+        # @return [String]
+        def illegal_vg_name_message
+          _("The name for the volume group contains illegal characters. Allowed\n" \
+            "are alphanumeric characters, \".\", \"_\", \"-\" and \"+\"")
+        end
+
+        # Checks whether it exists another device with the given volume group name
+        #
+        # @return [Boolean] true if there is another device with the same name;
+        #   false otherwise
+        def duplicated_vg_name?
+          # libstorage has the logic to generate a volume group name, so the name could
+          # assigned to the volume group, then check the duplicity of the name and restore
+          # previous name if the given one is duplicated. Instead of that, the logic to
+          # generate the volume group name has been duplicated here due to its simplicity.
+          name = File.join("/dev", vg_name)
+          Y2Storage::BlkDevice.all(working_graph).map(&:name).include?(name)
+        end
+
+        # Error message to show when the given volume group name is duplicated
+        #
+        # @return [String]
+        def duplicated_vg_name_message
+          # TRANSLATORS: vg_name is replaced by the name of the volume group
+          format(
+            _("The volume group name \"%{vg_name}\" conflicts\n" \
+              "with another entry in the /dev directory."),
+            vg_name: vg_name
+          )
+        end
+
+        # Checks whether the given extent size is not valid
+        #
+        # @note Extent size is valid if it is bigger than 1 KiB, multiple of 128 KiB
+        #   and power of 2.
+        #
+        # @return [Boolean] true if the extent size is not valid; false otherwise
+        def invalid_extent_size?
+          !(extent_size &&
+            extent_size > Y2Storage::DiskSize.KiB(1) &&
+            extent_size % Y2Storage::DiskSize.KiB(128) == Y2Storage::DiskSize.zero &&
+            extent_size.power_of_two?)
+        end
+
+        # Error message to show when the given extent size is not valid
+        #
+        # @see #invalid_extent_size?
+        #
+        # @return [String]
+        def invalid_extent_size_message
+          _("The data entered in invalid. Insert a physical extent size larger than 1 KiB\n" \
+            "in powers of 2 and multiple of 128 KiB, for example, \"512 KiB\" or \"4 MiB\"")
+        end
+
         # Checks whether a device is availabe to be used as physical volume
         #
         # @return [Boolean] true if the device is available; false otherwise
@@ -229,7 +295,7 @@ module Y2Partitioner
         # Checks whether a device is available to be used as physical volume
         #
         # @note A device is available when it has not partitions and it is not
-        #   not formatted and it does not belong to another device (raid or volume
+        #   formatted and it does not belong to another device (raid or volume
         #   group). A device is also available when it is formated but not mounted.
         #
         # @return [Boolean] true if the device is available; false otherwise

@@ -96,81 +96,69 @@ describe Y2Partitioner::Actions::Controllers::LvmVg do
     end
   end
 
-  describe "#empty_vg_name?" do
+  describe "#vg_name_errors" do
     before do
       allow(controller).to receive(:vg_name).and_return(value)
+    end
+
+    let(:value) { nil }
+
+    it "returns an array" do
+      expect(controller.vg_name_errors).to be_a(Array)
     end
 
     context "when vg name is nil" do
       let(:value) { nil }
 
-      it "returns true" do
-        expect(controller.empty_vg_name?).to be(true)
+      it "contains a message for empty vg name" do
+        errors = controller.vg_name_errors
+        expect(errors).to_not be_empty
+        expect(errors).to include(/Enter a name/)
       end
     end
 
     context "when vg name is an empty string" do
       let(:value) { "" }
 
-      it "returns true" do
-        expect(controller.empty_vg_name?).to be(true)
+      it "contains a message for empty vg name" do
+        errors = controller.vg_name_errors
+        expect(errors).to_not be_empty
+        expect(errors).to include(/Enter a name/)
       end
     end
 
-    context "when vg name is not an empty string" do
-      let(:value) { "vg0" }
-
-      it "returns false" do
-        expect(controller.empty_vg_name?).to be(false)
-      end
-    end
-  end
-
-  describe "#illegal_vg_name?" do
-    before do
-      allow(controller).to receive(:vg_name).and_return(value)
-    end
-
-    context "when the vg only contains alphanumeric characters, \".\", \"_\", \"-\" and \"+\"" do
-      let(:value) { "vg.n_a-me+" }
-
-      it "returns false" do
-        expect(controller.illegal_vg_name?).to be(false)
-      end
-    end
-
-    context "when the vg name contains other characters" do
+    context "when the vg name contains illegal characters" do
       let(:value) { "vg_name$" }
 
-      it "returns true" do
-        expect(controller.illegal_vg_name?).to be(true)
-      end
-    end
-  end
-
-  describe "#duplicated_vg_name?" do
-    before do
-      allow(controller).to receive(:vg_name).and_return(value)
-    end
-
-    context "when there is not other device with the same name" do
-      let(:value) { "vg10" }
-
-      it "returns false" do
-        expect(controller.duplicated_vg_name?).to be(false)
+      it "contains a message for illegal vg name" do
+        errors = controller.vg_name_errors
+        expect(errors).to_not be_empty
+        expect(errors).to include(/contains illegal characters/)
       end
     end
 
     context "when there is other device with the same name" do
       let(:value) { "sda" }
 
-      it "returns true" do
-        expect(controller.duplicated_vg_name?).to be(true)
+      it "contains a message for duplicated vg name" do
+        errors = controller.vg_name_errors
+        expect(errors).to_not be_empty
+        expect(errors).to include(/another entry in the \/dev/)
+      end
+    end
+
+    context "when the vg name only contains alphanumeric characters, " \
+            " \".\", \"_\", \"-\" and \"+\" and it is not duplicated" do
+      let(:value) { "vg.n_a-me+" }
+
+      it "returns an empty list" do
+        errors = controller.vg_name_errors
+        expect(errors).to be_empty
       end
     end
   end
 
-  describe "#invalid_extent_size?" do
+  describe "#extent_size_errors" do
     before do
       allow(controller).to receive(:extent_size).and_return(value)
     end
@@ -178,40 +166,49 @@ describe Y2Partitioner::Actions::Controllers::LvmVg do
     context "when the extent size is nil" do
       let(:value) { nil }
 
-      it "returns true" do
-        expect(controller.invalid_extent_size?).to be(true)
+      it "contains a message for invalid extent size" do
+        errors = controller.extent_size_errors
+        expect(errors).to_not be_empty
+        expect(errors).to include(/data entered in invalid/)
       end
     end
 
     context "when the extent size is less than 1 KiB" do
       let(:value) { 0.5.KiB }
 
-      it "returns true" do
-        expect(controller.invalid_extent_size?).to be(true)
+      it "contains a message for invalid extent size" do
+        errors = controller.extent_size_errors
+        expect(errors).to_not be_empty
+        expect(errors).to include(/data entered in invalid/)
       end
     end
 
     context "when the extent size is not multiple of 128 KiB" do
       let(:value) { 10.KiB }
 
-      it "returns true" do
-        expect(controller.invalid_extent_size?).to be(true)
+      it "contains a message for invalid extent size" do
+        errors = controller.extent_size_errors
+        expect(errors).to_not be_empty
+        expect(errors).to include(/data entered in invalid/)
       end
     end
 
     context "when the extent size is not power of two" do
       let(:value) { 6.MiB }
 
-      it "returns true" do
-        expect(controller.invalid_extent_size?).to be(true)
+      it "contains a message for invalid extent size" do
+        errors = controller.extent_size_errors
+        expect(errors).to_not be_empty
+        expect(errors).to include(/data entered in invalid/)
       end
     end
 
     context "when the extent size is bigger than 1 KiB, multiple of 128 KiB and power of two" do
       let(:value) { 16.MiB }
 
-      it "returns false" do
-        expect(controller.invalid_extent_size?).to be(false)
+      it "returns an empty list" do
+        errors = controller.extent_size_errors
+        expect(errors).to be_empty
       end
     end
   end

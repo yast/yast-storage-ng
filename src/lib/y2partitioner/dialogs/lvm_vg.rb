@@ -70,14 +70,23 @@ module Y2Partitioner
         end
 
         # @macro seeAbstractWidget
-        # Checks whether the given value is valid
+        # Checks whether the given volume group name is valid
         #
-        # @note An error popup is shown when necessary.
+        # @note An error popup is shown when the name is not valid.
+        #
+        # @see Actions::Controllers::LvmVg#vg_name_errors
         #
         # @return [Boolean]
         def validate
+          errors = controller.vg_name_errors
+          return true if errors.empty?
+
+          # When an error happens the focus should be set into this widget
           focus
-          presence_validation && legal_characters_validation && uniqueness_validation
+
+          # First error is showed
+          Yast::Popup.Error(errors.first)
+          false
         end
 
       private
@@ -88,50 +97,6 @@ module Y2Partitioner
         # Sets the focus into this widget
         def focus
           Yast::UI.SetFocus(Id(widget_id))
-        end
-
-        # Checks whether some value was entered
-        #
-        # @return [Boolean]
-        def presence_validation
-          return true unless controller.empty_vg_name?
-
-          Yast::Popup.Error(
-            _("Enter a name for the volume group.")
-          )
-
-          false
-        end
-
-        # Checks whether the entered value has only legal characters
-        #
-        # @return [Boolean]
-        def legal_characters_validation
-          return true unless controller.illegal_vg_name?
-
-          Yast::Popup.Error(
-            _("The name for the volume group contains illegal characters. Allowed\n" \
-              "are alphanumeric characters, \".\", \"_\", \"-\" and \"+\"")
-          )
-
-          false
-        end
-
-        # Checks whether there is not another device with the entered name
-        #
-        # @return [Boolean]
-        def uniqueness_validation
-          return true unless controller.duplicated_vg_name?
-
-          Yast::Popup.Error(
-            format(
-              _("The volume group name \"%{vg_name}\" conflicts\n" \
-                "with another entry in the /dev directory."),
-              vg_name: controller.vg_name
-            )
-          )
-
-          false
         end
       end
 
@@ -178,19 +143,19 @@ module Y2Partitioner
         end
 
         # @macro seeAbstractWidget
-        # Checks whether the given value is valid
+        # Checks whether the given extent size is valid
         #
-        # @note An error popup is shown when necessary.
+        # @note An error popup is shown when the extent size is not valid.
+        #
+        # @see Actions::Controllers::LvmVg#extent_size_errors
         #
         # @return [Boolean]
         def validate
-          return true unless controller.invalid_extent_size?
+          errors = controller.extent_size_errors
+          return true if errors.empty?
 
-          Yast::Popup.Error(
-            _("The data entered in invalid. Insert a physical extent size larger than 1 KiB\n" \
-              "in powers of 2 and multiple of 128 KiB, for example, \"512 KiB\" or \"4 MiB\"")
-          )
-
+          # First error is showed
+          Yast::Popup.Error(errors.first)
           false
         end
       end
@@ -234,10 +199,10 @@ module Y2Partitioner
           end
         end
 
-        # Validates physical volume was added to the volume group
+        # Validates that at least one physical volume was added to the volume group
         # @macro seeAbstractWidget
         #
-        # @note An error popup is shown when necessary.
+        # @note An error popup is shown when no physical volume was added.
         #
         # @return [Boolean]
         def validate
