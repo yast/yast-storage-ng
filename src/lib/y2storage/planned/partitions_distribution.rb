@@ -164,11 +164,8 @@ module Y2Storage
       # @see #better_than
       # @return [Float] a number between 0.0 and 1.0
       def weight_space_deviation
-        extra_sizes = spaces.map { |i| i.usable_extra_size.to_i }
-        total_extra_size = extra_sizes.reduce(:+)
-
-        weights = spaces.map(&:total_weight)
-        total_weight = weights.reduce(:+)
+        total_extra_size = spaces.map(&:usable_extra_size).reduce(:+)
+        total_weight = spaces.map(&:total_weight).reduce(:+)
 
         # Edge case #1:
         # No partition looks interested in growing, so we are fine whatever
@@ -179,11 +176,10 @@ module Y2Storage
         # any partition to grow
         return 1.0 if total_extra_size.zero?
 
-        normalized_sizes = extra_sizes.map! { |i| i.to_f / total_extra_size }
-        normalized_weights = weights.map! { |i| i.to_f / total_weight }
-
-        diffs = normalized_sizes.each_with_index.map do |size, idx|
-          (size - normalized_weights[idx]).abs
+        diffs = spaces.map do |space|
+          normalized_size = space.usable_extra_size.to_i.to_f / total_extra_size.to_i
+          normalized_weight = space.total_weight.to_f / total_weight
+          (normalized_size - normalized_weight).abs
         end
         diffs.reduce(:+)
       end
