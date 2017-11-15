@@ -237,7 +237,7 @@ module Y2Partitioner
         #
         # @return [String]
         def duplicated_vg_name_message
-          # TRANSLATORS: vg_name is replaced by the name of the volume group
+          # TRANSLATORS: %{vg_name} is replaced by the name of the volume group
           format(
             _("The volume group name \"%{vg_name}\" conflicts\n" \
               "with another entry in the /dev directory."),
