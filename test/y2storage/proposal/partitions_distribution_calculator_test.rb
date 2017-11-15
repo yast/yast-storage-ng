@@ -149,8 +149,9 @@ describe Y2Storage::Proposal::PartitionsDistributionCalculator do
     end
 
     context "when there are several free spaces" do
+      let(:scenario) { "spaces_5_6_8_10" }
+
       context "if the sum of all spaces is not big enough" do
-        let(:scenario) { "spaces_5_6_8_10" }
         let(:vol3) { planned_vol(mount_point: "/3", type: :ext4, min: 30.GiB, max: 30.GiB) }
 
         it "returns no distribution (nil)" do
@@ -158,38 +159,63 @@ describe Y2Storage::Proposal::PartitionsDistributionCalculator do
         end
       end
 
-      context "if all the volumes fit in one space" do
-        let(:scenario) { "spaces_5_6_8_10" }
+      context "if only one distribution ensures that not gaps will be introduced" do
         let(:vol3) { planned_vol(mount_point: "/3", type: :ext4, min: 3.GiB, max: 3.GiB) }
 
-        it "allocates all the partitions in the same space" do
+        it "returns that best distribution" do
+          expect(distribution.gaps_count).to eq 0
           spaces = distribution.spaces
           expect(spaces.size).to eq 1
-          expect(spaces.first.partitions).to contain_exactly(vol1, vol2, vol3)
-        end
-
-        it "uses the biggest space it can fill completely" do
-          space = distribution.spaces.first
-          expect(space.disk_size).to eq 8.GiB
+          expect(distribution.spaces_total_size).to eq 8.GiB
         end
       end
 
-      context "if no single space is big enough" do
+      context "if one distribution creates smaller gaps than the others" do
+        let(:scenario) { "spaces_4_4" }
         let(:vol3) { planned_vol(mount_point: "/3", type: :ext4, min: 3.GiB, max: 3.GiB) }
 
-        context "and it's possible to avoid gaps" do
-          let(:scenario) { "spaces_5_3" }
+        it "returns that best distribution" do
+          expect(distribution.gaps_total_size).to eq 1021.MiB
+        end
+      end
 
-          it "completely fills all the used spaces" do
-            expect(distribution.gaps_count).to eq 0
+      context "if there are several distributions that wouldn't introduce gaps" do
+        let(:vol3) { planned_vol(mount_point: "/3", type: :ext4, min: 3.GiB, max: 3.GiB) }
+
+        context "and one of them results in a bigger installation" do
+          let(:vol3) { planned_vol(mount_point: "/3", type: :ext4, min: 3.GiB, max: 4.GiB) }
+
+          it "returns that best distribution" do
+            # The expected distribution is: everything in the 10 GiB space
+            expect(distribution.spaces.size).to eq 1
+            expect(distribution.spaces_total_size).to eq 10.GiB
           end
         end
 
-        context "and it's not possible to fill all the spaces" do
-          let(:scenario) { "spaces_4_4" }
+        context "and several ones would result in an equally big installation" do
+          context "but one has better distributed weights (lower #weight_space_deviation)" do
+            let(:scenario) { "spaces_5_3" }
 
-          it "creates the smallest possible gap" do
-            expect(distribution.gaps_total_size).to eq 1021.MiB
+            it "returns that best distribution" do
+              # The expected distribution is: vol1 and vol3 to the first space
+              grouping = distribution.spaces.map(&:partitions)
+              expect(grouping).to eq [[vol1, vol3], [vol2]]
+            end
+          end
+
+          context "with an equivalent distribution of weights (#weight_space_deviation)" do
+            let(:scenario) { "spaces_5_5_10" }
+            before do
+              vol1.min = 3.GiB
+              vol2.max = 2.GiB
+            end
+            let(:vol3) { planned_vol(mount_point: "/3", type: :ext4, min: 5.GiB, max: 5.GiB, weight: 2) }
+
+            it "returns the distribution in which the new partitions are more grouped" do
+              # The expected distribution is: everything in the 10 GiB space
+              expect(distribution.spaces.size).to eq 1
+              expect(distribution.spaces_total_size).to eq 10.GiB
+            end
           end
         end
 
@@ -358,21 +384,6 @@ describe Y2Storage::Proposal::PartitionsDistributionCalculator do
         end
       end
 
-      context "if one space can host the volumes and the LVM space" do
-        let(:lvm_size) { 2.GiB }
-
-        it "allocates everything in the same space" do
-          spaces = distribution.spaces
-          expect(spaces.size).to eq 1
-          expect(spaces.first.partitions).to contain_exactly(
-            vol1,
-            vol2,
-            vol3,
-            an_object_having_attributes(partition_id: Y2Storage::PartitionId::LVM)
-          )
-        end
-      end
-
       context "if only one space can host all the LVM space" do
         let(:lvm_size) { 9.GiB }
 
@@ -417,7 +428,14 @@ describe Y2Storage::Proposal::PartitionsDistributionCalculator do
         end
 
         context "if there are other volumes in the same space" do
-          let(:space) { distribution.spaces.detect { |s| s.partitions.size > 1 } }
+          # Let's enforce the creation of more PVs to ensure there is one space
+          # with one PV and one planned volume
+          let(:lvm_size) { 18.GiB }
+          let(:space) do
+            distribution.spaces.detect do |space|
+              space.partitions.size > 1 && space.partitions.any?(&:lvm_pv?)
+            end
+          end
 
           it "sets the weight of the PV according to the other volumes" do
             pv_vol = space.partitions.detect(&:lvm_pv?)
@@ -427,10 +445,14 @@ describe Y2Storage::Proposal::PartitionsDistributionCalculator do
         end
 
         context "if the PV is alone in the disk space" do
-          let(:space) { distribution.spaces.detect { |s| s.partitions.size == 1 } }
+          let(:space) do
+            distribution.spaces.detect do |space|
+              space.partitions.size == 1 && space.partitions.first.lvm_pv?
+            end
+          end
 
           it "sets the weight of the PV to one" do
-            pv_vol = space.partitions.detect(&:lvm_pv?)
+            pv_vol = space.partitions.first
             expect(pv_vol.weight).to eq 1
           end
         end
