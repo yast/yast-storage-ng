@@ -117,6 +117,10 @@ module Y2Storage
       #
       # @return [Integer] -1, 0, 1 like <=>
       def better_than(other)
+        # Sorted list of criteria (starting with the most important) to use in
+        # order to select which distribution is best. Basically names of methods
+        # that return something comparable using #<=>, followed by the direction
+        # of the comparison (whether a bigger value is better or worse).
         criteria = [
           # The smaller gaps the better
           [:gaps_total_size, :smaller],
