@@ -84,7 +84,7 @@ module Y2Storage
 
       # Space wasted by the distribution
       # @return [DiskSize]
-      def gaps_total_disk_size
+      def gaps_total_size
         DiskSize.sum(spaces.map(&:unused))
       end
 
@@ -96,7 +96,7 @@ module Y2Storage
 
       # Total space available for the planned partitions
       # @return [DiskSize]
-      def spaces_total_disk_size
+      def spaces_total_size
         DiskSize.sum(spaces.map(&:disk_size))
       end
 
@@ -112,7 +112,7 @@ module Y2Storage
       # @return [Integer] -1, 0, 1 like <=>
       def better_than(other)
         # The smallest gaps the better
-        res = gaps_total_disk_size <=> other.gaps_total_disk_size
+        res = gaps_total_size <=> other.gaps_total_size
         return res unless res.zero?
 
         # The fewer gaps the better
@@ -128,7 +128,7 @@ module Y2Storage
         return res unless res.zero?
 
         # The biggest installation the better
-        res = other.spaces_total_disk_size <=> spaces_total_disk_size
+        res = other.spaces_total_size <=> spaces_total_size
         return res unless res.zero?
 
         # Just to ensure stable sorting between different executions in case

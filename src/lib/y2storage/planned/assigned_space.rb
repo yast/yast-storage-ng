@@ -67,6 +67,13 @@ module Y2Storage
         end
       end
 
+      # Sum of the weights of all the planned partitions assigned to this space
+      #
+      # @return [Integer]
+      def total_weight
+        partitions.map { |p| p.weight || 0 }.reduce(:+)
+      end
+
       # Checks if the volumes really fit into the assigned space
       #
       # TODO: We do not check for start_offset. Anyways,

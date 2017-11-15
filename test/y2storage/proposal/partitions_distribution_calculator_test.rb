@@ -189,7 +189,7 @@ describe Y2Storage::Proposal::PartitionsDistributionCalculator do
           let(:scenario) { "spaces_4_4" }
 
           it "creates the smallest possible gap" do
-            expect(distribution.gaps_total_disk_size).to eq 1021.MiB
+            expect(distribution.gaps_total_size).to eq 1021.MiB
           end
         end
 
@@ -324,7 +324,7 @@ describe Y2Storage::Proposal::PartitionsDistributionCalculator do
         end
 
         it "creates the smallest possible gap" do
-          expect(distribution.gaps_total_disk_size).to eq(2.GiB - 1.MiB)
+          expect(distribution.gaps_total_size).to eq(2.GiB - 1.MiB)
         end
       end
 
@@ -421,7 +421,7 @@ describe Y2Storage::Proposal::PartitionsDistributionCalculator do
 
           it "sets the weight of the PV according to the other volumes" do
             pv_vol = space.partitions.detect(&:lvm_pv?)
-            total_weight = space.partitions.map(&:weight).reduce(:+)
+            total_weight = space.total_weight
             expect(pv_vol.weight).to eq(total_weight / 2.0)
           end
         end
@@ -447,7 +447,7 @@ describe Y2Storage::Proposal::PartitionsDistributionCalculator do
         # This test was added because we figured out that the original algorithm
         # to create physical volume was leading to discard some valid solutions
         it "returns the best possible solution (minimal gap)" do
-          expect(distribution.gaps_total_disk_size).to be <= (4.GiB - 9.MiB)
+          expect(distribution.gaps_total_size).to be <= (4.GiB - 9.MiB)
           expect(distribution.gaps_count).to eq 1
         end
       end
