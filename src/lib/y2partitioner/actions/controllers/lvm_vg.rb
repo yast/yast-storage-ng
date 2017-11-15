@@ -255,7 +255,7 @@ module Y2Partitioner
           !(extent_size &&
             extent_size > Y2Storage::DiskSize.KiB(1) &&
             extent_size % Y2Storage::DiskSize.KiB(128) == Y2Storage::DiskSize.zero &&
-            extent_size.power_of_two?)
+            extent_size.power_of?(2))
         end
 
         # Error message to show when the given extent size is not valid

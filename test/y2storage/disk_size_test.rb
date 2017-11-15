@@ -344,30 +344,27 @@ describe Y2Storage::DiskSize do
     end
   end
 
-  describe "#power_of_two?" do
-    let(:disk_size) { Y2Storage::DiskSize.new(size) }
-
-    context "when the number of bytes is power of two" do
-      let(:size) { "8 MiB" }
-
+  describe "#power_of?" do
+    context "when the number of bytes is power of the given value" do
       it "returns true" do
-        expect(disk_size.power_of_two?).to be(true)
+        expect(8.MiB.power_of?(2)).to be(true)
+        expect(100.KB.power_of?(10)).to be(true)
       end
     end
 
-    context "when the number of bytes is not power of two" do
-      let(:size) { "8 MB" }
-
+    context "when the number of bytes is not power of the given value" do
       it "returns false" do
-        expect(disk_size.power_of_two?).to be(false)
+        expect(8.MiB.power_of?(10)).to be(false)
+        expect(100.KB.power_of?(2)).to be(false)
       end
     end
 
     context "when the size is zero" do
-      let(:disk_size) { zero }
-
       it "returns false" do
-        expect(disk_size.power_of_two?).to be(false)
+        expect(described_class.zero.power_of?(0)).to be(false)
+        expect(described_class.zero.power_of?(1)).to be(false)
+        expect(described_class.zero.power_of?(2)).to be(false)
+        expect(described_class.zero.power_of?(5)).to be(false)
       end
     end
 
@@ -375,7 +372,10 @@ describe Y2Storage::DiskSize do
       let(:disk_size) { unlimited }
 
       it "returns false" do
-        expect(disk_size.power_of_two?).to be(false)
+        expect(described_class.unlimited.power_of?(0)).to be(false)
+        expect(described_class.unlimited.power_of?(1)).to be(false)
+        expect(described_class.unlimited.power_of?(2)).to be(false)
+        expect(described_class.unlimited.power_of?(5)).to be(false)
       end
     end
   end
