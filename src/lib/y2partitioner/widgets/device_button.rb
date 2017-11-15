@@ -36,10 +36,6 @@ module Y2Partitioner
       def initialize(pager: nil, table: nil, device: nil)
         textdomain "storage"
 
-        unless device || table
-          raise ArgumentError, "Please provide either a device or a table with devices"
-        end
-
         @pager = pager
         @table = table
         @device = device
@@ -63,7 +59,8 @@ module Y2Partitioner
       #
       # @return [Y2Storage::Device]
       def device
-        @device || table.selected_device
+        return @device unless @device.nil?
+        table.nil? ? nil : table.selected_device
       end
 
       # Actions to perform when the button is clicked

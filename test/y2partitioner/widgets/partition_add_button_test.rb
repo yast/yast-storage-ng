@@ -23,20 +23,12 @@
 require_relative "../test_helper"
 
 require "cwm/rspec"
-require "y2partitioner/widgets/lvm_lv_add_button"
+require "y2partitioner/widgets/partition_add_button"
 
-describe Y2Partitioner::Widgets::LvmLvAddButton do
-  before do
-    devicegraph_stub("lvm-two-vgs.yml")
-  end
+describe Y2Partitioner::Widgets::PartitionAddButton do
+  subject { described_class.new(device: device) }
 
-  subject(:button) { described_class.new(device: device) }
-
-  let(:device) { vg }
-
-  let(:vg) { Y2Storage::LvmVg.find_by_vg_name(current_graph, "vg0") }
-
-  let(:current_graph) { Y2Partitioner::DeviceGraphs.instance.current }
+  let(:device) { nil }
 
   include_examples "CWM::PushButton"
 
@@ -55,7 +47,7 @@ describe Y2Partitioner::Widgets::LvmLvAddButton do
     end
 
     context "when a device is given" do
-      let(:device) { vg }
+      let(:device) { instance_double(Y2Storage::Disk, name: "/dev/sda") }
 
       before do
         allow(action_class).to receive(:new).with(device).and_return(action)
@@ -63,9 +55,9 @@ describe Y2Partitioner::Widgets::LvmLvAddButton do
 
       let(:action) { instance_double(action_class) }
 
-      let(:action_class) { Y2Partitioner::Actions::AddLvmLv }
+      let(:action_class) { Y2Partitioner::Actions::AddPartition }
 
-      it "performs the action for adding a logical volume" do
+      it "performs the action for adding a partition" do
         expect(action_class).to receive(:new).with(device).and_return(action)
         expect(action).to receive(:run)
         subject.handle

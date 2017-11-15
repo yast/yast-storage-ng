@@ -69,12 +69,6 @@ describe Y2Partitioner::Widgets::LvmAddButton do
   end
 
   describe "#handle" do
-    before do
-      allow(Y2Partitioner::Actions::AddLvmLv).to receive(:new).and_return sequence
-    end
-
-    let(:sequence) { double("AddLvmLv", run: :result) }
-
     let(:vg) { Y2Storage::LvmVg.find_by_vg_name(current_graph, "vg0") }
 
     let(:lv) { vg.lvm_lvs.first }
@@ -83,71 +77,82 @@ describe Y2Partitioner::Widgets::LvmAddButton do
 
     let(:event) { { "ID" => selected_option } }
 
-    context "when a vg is selected in the table" do
-      let(:selected_device) { vg }
+    context "when option for adding vg is selected" do
+      let(:selected_option) { :add_volume_group }
 
-      context "and option for adding vg is selected" do
-        let(:selected_option) { :add_volume_group }
-
-        xit "opens the workflow for adding a new vg" do
-        end
+      before do
+        allow(Y2Partitioner::Actions::AddLvmVg).to receive(:new).and_return sequence
       end
 
-      context "and option for adding lv is selected" do
-        let(:selected_option) { :add_logical_volume }
+      let(:sequence) { instance_double(Y2Partitioner::Actions::AddLvmVg, run: nil) }
 
-        it "opens the workflow for adding a new lv to the vg" do
-          expect(Y2Partitioner::Actions::AddLvmLv).to receive(:new).with(vg)
-          button.handle(event)
-        end
+      it "opens the workflow for adding a new vg" do
+        expect(Y2Partitioner::Actions::AddLvmVg).to receive(:new)
+        button.handle(event)
+      end
 
-        it "returns :redraw if the workflow returns :finish" do
-          allow(sequence).to receive(:run).and_return :finish
-          expect(button.handle(event)).to eq :redraw
-        end
+      it "returns :redraw if the workflow returns :finish" do
+        allow(sequence).to receive(:run).and_return :finish
+        expect(button.handle(event)).to eq :redraw
+      end
 
-        it "returns nil if the workflow does not return :finish" do
-          allow(sequence).to receive(:run).and_return :back
-          expect(button.handle(event)).to be_nil
-        end
+      it "returns nil if the workflow does not return :finish" do
+        allow(sequence).to receive(:run).and_return :back
+        expect(button.handle(event)).to be_nil
       end
     end
 
-    context "when a lv is selected in the table" do
-      let(:selected_device) { lv }
+    context "when option for adding lv is selected" do
+      let(:selected_option) { :add_logical_volume }
 
-      context "and option for adding vg is selected" do
-        let(:selected_option) { :add_volume_group }
+      before do
+        allow(Y2Partitioner::Actions::AddLvmLv).to receive(:new).and_return sequence
+      end
 
-        xit "opens the workflow for adding a new vg" do
+      let(:sequence) { instance_double(Y2Partitioner::Actions::AddLvmLv, run: nil) }
+
+      context "and a device is selected in the table" do
+        context "and the device is a vg" do
+          let(:selected_device) { vg }
+
+          it "opens the workflow for adding a new lv to the vg" do
+            expect(Y2Partitioner::Actions::AddLvmLv).to receive(:new).with(vg)
+            button.handle(event)
+          end
+
+          it "returns :redraw if the workflow returns :finish" do
+            allow(sequence).to receive(:run).and_return :finish
+            expect(button.handle(event)).to eq :redraw
+          end
+
+          it "returns nil if the workflow does not return :finish" do
+            allow(sequence).to receive(:run).and_return :back
+            expect(button.handle(event)).to be_nil
+          end
+        end
+
+        context "and the device is a lv" do
+          let(:selected_device) { lv }
+
+          it "opens the workflow for adding a new lv to its vg" do
+            expect(Y2Partitioner::Actions::AddLvmLv).to receive(:new).with(vg)
+            button.handle(event)
+          end
+
+          it "returns :redraw if the workflow returns :finish" do
+            allow(sequence).to receive(:run).and_return :finish
+            expect(button.handle(event)).to eq :redraw
+          end
+
+          it "returns nil if the workflow does not return :finish" do
+            allow(sequence).to receive(:run).and_return :back
+            expect(button.handle(event)).to be_nil
+          end
         end
       end
 
-      context "and option for adding lv is selected" do
-        let(:selected_option) { :add_logical_volume }
-
-        it "opens the workflow for adding a new lv to its vg" do
-          expect(Y2Partitioner::Actions::AddLvmLv).to receive(:new).with(vg)
-          button.handle(event)
-        end
-
-        it "returns :redraw if the workflow returns :finish" do
-          allow(sequence).to receive(:run).and_return :finish
-          expect(button.handle(event)).to eq :redraw
-        end
-
-        it "returns nil if the workflow does not return :finish" do
-          allow(sequence).to receive(:run).and_return :back
-          expect(button.handle(event)).to be_nil
-        end
-      end
-    end
-
-    context "when no device is selected in the table" do
-      let(:selected_device) { nil }
-
-      context "and option for adding lv is selected" do
-        let(:selected_option) { :add_logical_volume }
+      context "and no device is selected in the table" do
+        let(:selected_device) { nil }
 
         it "shows an error popup" do
           expect(Yast::Popup).to receive(:Error)

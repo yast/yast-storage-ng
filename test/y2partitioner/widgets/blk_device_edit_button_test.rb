@@ -12,10 +12,10 @@ describe Y2Partitioner::Widgets::BlkDeviceEditButton do
     allow(Y2Partitioner::Actions::EditBlkDevice).to receive(:new).and_return sequence
   end
 
+  include_examples "CWM::PushButton"
+
   context "when defined for a concrete device" do
     subject(:button) { described_class.new(device: device) }
-
-    include_examples "CWM::PushButton"
 
     describe "#handle" do
       it "opens the edit workflow for the device" do
@@ -41,10 +41,8 @@ describe Y2Partitioner::Widgets::BlkDeviceEditButton do
     subject(:button) { described_class.new(table: table) }
 
     describe "#handle" do
-      context "and no device is selected in the table" do
+      context "when no device is selected in the table" do
         before { allow(table).to receive(:selected_device).and_return(nil) }
-
-        include_examples "CWM::PushButton"
 
         it "shows an error message" do
           expect(Yast::Popup).to receive(:Error)
@@ -61,35 +59,23 @@ describe Y2Partitioner::Widgets::BlkDeviceEditButton do
         end
       end
 
-      context "and a device is selected in the table" do
+      context "when a device is selected in the table" do
         before { allow(table).to receive(:selected_device).and_return(device) }
 
-        include_examples "CWM::PushButton"
-
-        describe "#handle" do
-          it "opens the edit workflow for the device" do
-            expect(Y2Partitioner::Actions::EditBlkDevice).to receive(:new).with(device)
-            button.handle
-          end
-
-          it "returns :redraw if the workflow returns :finish" do
-            allow(sequence).to receive(:run).and_return :finish
-            expect(button.handle).to eq :redraw
-          end
-
-          it "returns nil if the workflow does not return :finish" do
-            allow(sequence).to receive(:run).and_return :back
-            expect(button.handle).to be_nil
-          end
+        it "opens the edit workflow for the device" do
+          expect(Y2Partitioner::Actions::EditBlkDevice).to receive(:new).with(device)
+          button.handle
         end
-      end
-    end
-  end
 
-  context "when no device or table is specified" do
-    describe "#initialize" do
-      it "raises an exception" do
-        expect { described_class.new }.to raise_error ArgumentError
+        it "returns :redraw if the workflow returns :finish" do
+          allow(sequence).to receive(:run).and_return :finish
+          expect(button.handle).to eq :redraw
+        end
+
+        it "returns nil if the workflow does not return :finish" do
+          allow(sequence).to receive(:run).and_return :back
+          expect(button.handle).to be_nil
+        end
       end
     end
   end

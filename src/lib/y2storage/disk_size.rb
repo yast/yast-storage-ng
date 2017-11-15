@@ -549,6 +549,23 @@ module Y2Storage
       @size == 0
     end
 
+    # Test if {DiskSize} (amount of bytes) is power of certain value
+    #
+    # @return [Boolean]
+    #
+    # @example
+    #   x = DiskSize.KiB(4)   #=> <DiskSize 4.00 KiB (4096)>
+    #   x.power_of?(2)        #=> true
+    #   x.power_of?(10)       #=> false
+    #
+    #   x = DiskSize.KB(100)  #=> <DiskSize 97.66 KiB (100000)>
+    #   x.power_of?(2)        #=> false
+    #   x.power_of?(10)       #=> true
+    def power_of?(exp)
+      return false if unlimited?
+      (Math.log(size, exp) % 1).zero?
+    end
+
     # Compare two {DiskSize} objects.
     #
     # @return [Integer]
