@@ -1,4 +1,12 @@
 -------------------------------------------------------------------
+Thu Nov 16 10:31:04 UTC 2017 - jlopez@suse.com
+
+- Improve logging: add wrapper param for guard method and dump xml
+  representation of the devicegraph to the logs.
+- Part of fate#318196.
+- 4.0.31
+
+-------------------------------------------------------------------
 Wed Nov 15 15:55:51 UTC 2017 - ancor@suse.com
 
 - When proposing a partitions layout for installation, prefer
