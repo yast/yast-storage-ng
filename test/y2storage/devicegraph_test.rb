@@ -312,4 +312,30 @@ describe Y2Storage::Devicegraph do
       end
     end
   end
+
+  describe "#to_xml" do
+    before { fake_scenario("empty_hard_disk_50GiB") }
+
+    subject(:devicegraph) { fake_devicegraph }
+
+    def create_partition(disk)
+      disk.ensure_partition_table
+      slot = disk.partition_table.unused_partition_slots.first
+      disk.partition_table.create_partition(slot.name, slot.region, Y2Storage::PartitionType::PRIMARY)
+    end
+
+    it "returns a string" do
+      expect(devicegraph.to_xml).to be_a(String)
+    end
+
+    it "contains the xml representation of the devicegraph" do
+      expect(devicegraph.to_xml).to match(/^\<\?xml/)
+      expect(devicegraph.to_xml.scan(/\<Disk\>/).size).to eq(1)
+      expect(devicegraph.to_xml.scan(/\<Partition\>/).size).to eq(0)
+
+      create_partition(devicegraph.disks.first)
+
+      expect(devicegraph.to_xml.scan(/\<Partition\>/).size).to eq(1)
+    end
+  end
 end
