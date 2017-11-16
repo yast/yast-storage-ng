@@ -86,7 +86,7 @@ module Y2Storage
     protected
 
       def reuse_device!(dev)
-        log.info "Reusing #{reuse} (#{dev}) for #{self}"
+        log.info "Reusing #{reuse} (#{dev.inspect}) for #{self}"
       end
 
       def device_to_reuse(devicegraph)
