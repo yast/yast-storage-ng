@@ -164,13 +164,14 @@ module Y2Storage
     #
     #   @return [Filesystems::BlkFilesystem] nil if the raw device is not
     #     formatted
-    storage_forward :direct_blk_filesystem, to: :blk_filesystem, as: "Filesystems::BlkFilesystem"
+    storage_forward :direct_blk_filesystem,
+      to: :blk_filesystem, as: "Filesystems::BlkFilesystem", check_with: :has_blk_filesystem
 
     # @!method encryption
     #   Encryption device directly placed on top of the device
     #
     #   @return [Encryption] nil if the device is not encrypted
-    storage_forward :encryption, as: "Encryption"
+    storage_forward :encryption, as: "Encryption", check_with: :has_encryption
 
     # Checks whether the device is encrypted
     #

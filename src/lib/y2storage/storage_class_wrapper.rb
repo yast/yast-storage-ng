@@ -127,6 +127,8 @@ module Y2Storage
       # @param method [Symbol] name of the method to define
       # @param as [String] name of the class to convert the result, nil if the
       #   value must be returned as-is (after turning any vector into an array)
+      # @param check_with [Symbol] name of a check method. This method is used
+      #   to avoid certain calls to the library that produce an exception.
       # @param raise_errors [Boolean] whether to disable the mechanism that
       #   turns into a nil result all the exceptions of type
       #   WrongNumberOfChildren, DeviceHasWrongType and DeviceNotFound.
@@ -188,11 +190,11 @@ module Y2Storage
       #   # (is not masked like in the example above).
       #   device.create_blk_filesystem(fs_type)
       #
-      def storage_forward(method, to: nil, as: nil, raise_errors: false)
+      def storage_forward(method, to: nil, as: nil, check_with: nil, raise_errors: false)
         modifiers = { as: as, raise_errors: raise_errors }
         target = to || method
         define_method(method) do |*args|
-          StorageClassWrapper.forward(to_storage_value, target, modifiers, *args)
+          StorageClassWrapper.forward(to_storage_value, target, check_with, modifiers, *args)
         end
       end
 
@@ -200,11 +202,11 @@ module Y2Storage
       # instance ones.
       #
       # @see #storage_forward
-      def storage_class_forward(method, to: nil, as: nil, raise_errors: false)
+      def storage_class_forward(method, to: nil, as: nil, check_with: nil, raise_errors: false)
         modifiers = { as: as, raise_errors: raise_errors }
         target = to || method
         define_singleton_method(method) do |*args|
-          StorageClassWrapper.forward(storage_class, target, modifiers, *args)
+          StorageClassWrapper.forward(storage_class, target, check_with, modifiers, *args)
         end
       end
 
@@ -244,7 +246,9 @@ module Y2Storage
     # the class using the mixin
     class << self
       # @see ClassMethods#storage_forward
-      def forward(storage_object, method, modifiers, *args)
+      def forward(storage_object, method, check_method, modifiers, *args)
+        return nil unless pass_check?(storage_object, check_method)
+
         wrapper_class_name = modifiers[:as]
         raise_errors = modifiers[:raise_errors]
 
@@ -256,6 +260,20 @@ module Y2Storage
              Storage::DeviceNotFound,
              Storage::BtrfsSubvolumeNotFoundByPath
         raise_errors ? raise : nil
+      end
+
+      # Evaluates the check method
+      #
+      # @note If a check method is not given, the check will be considered
+      #   as passed.
+      #
+      # @param storage_object [Object] an storage object
+      # @param check_method [Symbol, nil] check method
+      #
+      # @return [Boolean] true when the check is passed; false otherwise
+      def pass_check?(storage_object, check_method = nil)
+        return true if check_method.nil?
+        storage_object.public_send(check_method)
       end
 
       def class_for(class_name)

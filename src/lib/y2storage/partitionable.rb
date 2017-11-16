@@ -70,7 +70,7 @@ module Y2Storage
     # @!method partition_table
     #   @return [PartitionTables::Base] the concrete subclass will depend
     #     on the type
-    storage_forward :partition_table, as: "PartitionTables::Base"
+    storage_forward :partition_table, as: "PartitionTables::Base", check_with: :has_partition_table
 
     # @!method topology
     #   @return [Storage::Topology] Low-level object describing the device
