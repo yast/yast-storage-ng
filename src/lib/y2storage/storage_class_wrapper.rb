@@ -127,8 +127,9 @@ module Y2Storage
       # @param method [Symbol] name of the method to define
       # @param as [String] name of the class to convert the result, nil if the
       #   value must be returned as-is (after turning any vector into an array)
-      # @param check_with [Symbol] name of a check method. This method is used
-      #   to avoid certain calls to the library that produce an exception.
+      # @param check_with [Symbol] name of a boolean method used to check whether
+      #   the forwarded method actually returns a value. Exception mechanism is
+      #   used as fallback when this method is not indicated.
       # @param raise_errors [Boolean] whether to disable the mechanism that
       #   turns into a nil result all the exceptions of type
       #   WrongNumberOfChildren, DeviceHasWrongType and DeviceNotFound.
@@ -151,7 +152,9 @@ module Y2Storage
       #       storage_forward :size=
       #       storage_forward :udev_paths
       #       storage_forward :rotational?, to: :rotational
-      #       storage_forward :blk_filesystem, as: "Filesystems::BlkFilesystem"
+      #       storage_forward :blk_filesystem,
+      #         as: "Filesystems::BlkFilesystem",
+      #         check_with: :has_blk_filesystem
       #       storage_forward :create_blk_filesystem,
       #         as: "Filesystems::BlkFilesystem",
       #         raise_errors: true
@@ -191,10 +194,10 @@ module Y2Storage
       #   device.create_blk_filesystem(fs_type)
       #
       def storage_forward(method, to: nil, as: nil, check_with: nil, raise_errors: false)
-        modifiers = { as: as, raise_errors: raise_errors }
+        modifiers = { as: as, check_with: check_with, raise_errors: raise_errors }
         target = to || method
         define_method(method) do |*args|
-          StorageClassWrapper.forward(to_storage_value, target, check_with, modifiers, *args)
+          StorageClassWrapper.forward(to_storage_value, target, modifiers, *args)
         end
       end
 
@@ -203,10 +206,10 @@ module Y2Storage
       #
       # @see #storage_forward
       def storage_class_forward(method, to: nil, as: nil, check_with: nil, raise_errors: false)
-        modifiers = { as: as, raise_errors: raise_errors }
+        modifiers = { as: as, check_with: check_with, raise_errors: raise_errors }
         target = to || method
         define_singleton_method(method) do |*args|
-          StorageClassWrapper.forward(storage_class, target, check_with, modifiers, *args)
+          StorageClassWrapper.forward(storage_class, target, modifiers, *args)
         end
       end
 
@@ -246,11 +249,12 @@ module Y2Storage
     # the class using the mixin
     class << self
       # @see ClassMethods#storage_forward
-      def forward(storage_object, method, check_method, modifiers, *args)
-        return nil unless pass_check?(storage_object, check_method)
-
+      def forward(storage_object, method, modifiers, *args)
         wrapper_class_name = modifiers[:as]
+        check_method = modifiers[:check_with]
         raise_errors = modifiers[:raise_errors]
+
+        return nil unless pass_check?(storage_object, check_method)
 
         processed_args = processed_storage_args(*args)
         result = storage_object.public_send(method, *processed_args)
