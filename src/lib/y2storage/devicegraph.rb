@@ -20,6 +20,7 @@
 # find current contact information at www.suse.com.
 
 require "pp"
+require "tempfile"
 require "y2storage/actiongraph"
 require "y2storage/blk_device"
 require "y2storage/disk"
@@ -268,6 +269,24 @@ module Y2Storage
     # @return [String]
     def to_str
       PP.pp(recursive_to_a(device_tree), "")
+    end
+
+    # Generates a string representation of the devicegraph in xml format
+    #
+    # @note The library offers a #save method to obtain the devicegraph in xml
+    #   format, but it requires a file path where to dump the result. For this
+    #   reason a temporary file is used here, but it would not be necessary if
+    #   the library directly returns the xml string without save it into a file.
+    #
+    # @return [String]
+    def to_xml
+      file = Tempfile.new("devicegraph.xml")
+      save(file.path)
+      file.read
+    ensure
+      # Do not wait for garbage collector and delete the file right away
+      file.close
+      file.unlink
     end
 
   private

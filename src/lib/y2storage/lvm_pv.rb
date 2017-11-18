@@ -36,14 +36,14 @@ module Y2Storage
 
     # @!method lvm_vg
     #   @return [LvmVg] volume group the PV is part of
-    storage_forward :lvm_vg, as: "LvmVg"
+    storage_forward :lvm_vg, as: "LvmVg", check_with: :has_lvm_vg
 
     # @!method blk_device
     #   Block device directly hosting the PV. That is, for encrypted PVs it
     #   returns the encryption device.
     #
     #   @return [BlkDevice]
-    storage_forward :blk_device, as: "BlkDevice"
+    storage_forward :blk_device, as: "BlkDevice", check_with: :has_blk_device
 
     # Raw (non encrypted) version of the device hosting the PV.
     #

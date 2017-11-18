@@ -197,6 +197,10 @@ module Y2Storage
       callbacks = Callbacks::Commit.new
       storage.calculate_actiongraph
       commit_options = ::Storage::CommitOptions.new(force_rw)
+
+      # Save committed devicegraph into logs
+      log.info("Committed devicegraph\n{staging.to_xml}")
+
       storage.commit(commit_options, callbacks)
     end
 
@@ -261,11 +265,14 @@ module Y2Storage
       increase_staging_revision
     end
 
-    # Sets all necessary data after probing. To be executed always after probing
+    # Sets all necessary data after probing. To be executed always after probing.
     def probed_performed
       @probed = true
       probed_changed
       staging_changed
+
+      # Save probed devicegraph into logs
+      log.info("Probed devicegraph\n#{probed.to_xml}")
 
       @staging_revision_after_probing = staging_revision
     end
