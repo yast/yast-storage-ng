@@ -1,4 +1,9 @@
 -------------------------------------------------------------------
+Mon Nov 20 15:40:58 UTC 2017 - shundhammer@suse.com
+
+- Added "Create New Partition Table" in partitioner
+
+-------------------------------------------------------------------
 Thu Nov 16 10:31:04 UTC 2017 - jlopez@suse.com
 
 - Improve logging: add wrapper param for guard method and dump xml
