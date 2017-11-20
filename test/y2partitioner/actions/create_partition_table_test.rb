@@ -27,7 +27,7 @@ require "y2partitioner/actions/create_partition_table"
 
 describe Y2Partitioner::Actions::CreatePartitionTable do
   let(:select_dialog) { Y2Partitioner::Dialogs::PartitionTableType }
-  
+
   context "With a PC with 2 disks with some partitions" do
     before do
       devicegraph_stub("mixed_disks_btrfs.yml")
@@ -43,7 +43,7 @@ describe Y2Partitioner::Actions::CreatePartitionTable do
         expect(subject.controller).to receive(:create_partition_table)
         subject.run
       end
-      
+
       it "Runs the workflow, but does not delete data if not confirmed" do
         expect(select_dialog).to receive(:run).and_return :next
         expect(Yast::Popup).to receive(:YesNo).and_return false
@@ -87,7 +87,7 @@ describe Y2Partitioner::Actions::CreatePartitionTable do
         expect(subject.controller).to receive(:create_partition_table)
         subject.run
       end
-      
+
       it "Runs the workflow, but does not delete data if not confirmed" do
         expect(select_dialog).not_to receive(:run)
         expect(Yast::Popup).to receive(:YesNo).and_return false
