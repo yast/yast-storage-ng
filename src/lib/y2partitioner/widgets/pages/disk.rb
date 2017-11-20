@@ -23,10 +23,10 @@ require "cwm/widget"
 require "cwm/tree_pager"
 require "y2partitioner/icons"
 require "y2partitioner/device_graphs"
-require "y2partitioner/actions/create_partition_table"
 require "y2partitioner/widgets/partition_add_button"
 require "y2partitioner/widgets/device_delete_button"
 require "y2partitioner/widgets/blk_device_edit_button"
+require "y2partitioner/widgets/disk_expert_menu_button"
 require "y2partitioner/widgets/configurable_blk_devices_table"
 require "y2partitioner/widgets/disk_bar_graph"
 require "y2partitioner/widgets/disk_description"
@@ -155,7 +155,7 @@ module Y2Partitioner
                 BlkDeviceEditButton.new(pager: @pager, table: table),
                 DeviceDeleteButton.new(pager: @pager, table: table),
                 HStretch(),
-                CreatePartitionTableButton.new(disk, table)
+                DiskExpertMenuButton.new(disk: disk)
               )
             )
           )
@@ -165,19 +165,6 @@ module Y2Partitioner
 
         def devices
           disk.partitions
-        end
-
-        # Create a new partition table
-        class CreatePartitionTableButton < DiskButton
-          def label
-            _("Create New Partition Table...")
-          end
-
-          def handle
-            log.info("Creating a new partition table for #{@disk.name}")
-            res = Actions::CreatePartitionTable.new(@disk.name).run
-            res == :finish ? :redraw : nil
-          end
         end
       end
     end
