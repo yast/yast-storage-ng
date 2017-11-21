@@ -107,7 +107,7 @@ describe Y2Storage::AutoinstProfile::SkipListValue do
     let(:disk) { Y2Storage::Dasd.find_by_name(fake_devicegraph, "/dev/sda") }
 
     it "returns format" do
-      expect(value.dasd_format).to eq("none")
+      expect(value.dasd_format).to eq("cdl")
     end
 
     context "when device is not dasd" do
