@@ -53,6 +53,7 @@ module Y2Partitioner
         # @return [Y2Storage::Disk] or [Y2Storage::Dasd]
         attr_reader :disk
 
+        # @param [String] disk_name
         def initialize(disk_name)
           textdomain "storage"
 
@@ -62,7 +63,7 @@ module Y2Partitioner
           @type = possible_partition_table_types.first
         end
 
-        # Create the partition table on the disk.
+        # Create the disk partition table in the devicegraph.
         def create_partition_table
           return if @type.nil? || @disk.nil?
 

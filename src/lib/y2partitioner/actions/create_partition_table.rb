@@ -60,7 +60,7 @@ module Y2Partitioner
       # Ask the user for confirmation message before creating the partition
       # table.
       def confirm
-        # TRANSLATORS %s is the name of the logical volume to be deleted
+        # TRANSLATORS %s is the disk device name ("/dev/sda" or similar)
         msg = _("Really create a new partition table on %s?") % disk_name
         msg += "\n\n"
         msg += _("This will delete all existing partitions on that device\n" \

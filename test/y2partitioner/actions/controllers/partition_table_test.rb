@@ -21,7 +21,7 @@
 # find current contact information at www.suse.com.
 
 require_relative "../../test_helper"
-require "y2partitioner/actions/controllers/partition"
+require "y2partitioner/actions/controllers/partition_table"
 
 describe Y2Partitioner::Actions::Controllers::PartitionTable do
   context "With a PC with 2 disks with some partitions" do
