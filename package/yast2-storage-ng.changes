@@ -2,6 +2,8 @@
 Mon Nov 20 15:40:58 UTC 2017 - shundhammer@suse.com
 
 - Added "Create New Partition Table" in partitioner
+- Part of fate#318196.
+- 4.0.32
 
 -------------------------------------------------------------------
 Thu Nov 16 10:31:04 UTC 2017 - jlopez@suse.com
