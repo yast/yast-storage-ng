@@ -230,6 +230,10 @@ describe Y2Storage::AutoinstProfile::PartitionSection do
         expect(section_for("sdh2").partition_id).to eq 259
       end
     end
+
+    it "initializes resize to false" do
+      expect(section_for("sdh1").resize).to eq(false)
+    end
   end
 
   describe ".new_from_hashes" do

@@ -71,7 +71,8 @@ module Y2Storage
           { name: :raid_options },
           { name: :mkfs_options },
           { name: :fstab_options, xml_name: :fstopt },
-          { name: :subvolumes_prefix }
+          { name: :subvolumes_prefix },
+          { name: :resize }
         ]
       end
 
@@ -233,6 +234,7 @@ module Y2Storage
         @partition_nr = partition.number
         @partition_type = "primary" if partition.type.is?(:primary)
         @partition_id = partition_id_from(partition)
+        @resize = false
 
         init_encryption_fields(partition)
         init_filesystem_fields(partition)
