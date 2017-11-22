@@ -32,6 +32,7 @@ module Y2Storage
     class LvmLv < Device
       include Planned::HasSize
       include Planned::CanBeFormatted
+      include Planned::CanBeResized
       include Planned::CanBeMounted
       include Planned::CanBeEncrypted
 

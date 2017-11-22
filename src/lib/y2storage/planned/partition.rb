@@ -32,6 +32,7 @@ module Y2Storage
     class Partition < Device
       include Planned::HasSize
       include Planned::CanBeFormatted
+      include Planned::CanBeResized
       include Planned::CanBeMounted
       include Planned::CanBeEncrypted
       include Planned::CanBePv
