@@ -20,29 +20,37 @@
 # find current contact information at www.suse.com.
 
 require "yast"
-require "y2partitioner/widgets/device_button"
-require "y2partitioner/actions/resize_md"
+require "cwm/dialog"
+require "y2partitioner/widgets/md_devices_selector"
 
 module Y2Partitioner
-  module Widgets
-    # Button for resizing a device
-    class DeviceResizeButton < DeviceButton
-      # @macro seeAbstractWidget
-      def label
-        # TRANSLATORS: label for button for resizing a device
-        _("Resize...")
+  module Dialogs
+    # Dialog for resizing a MD RAID
+    class MdResize < CWM::Dialog
+      # Constructor
+      #
+      # @param controller [Actions::Controllers::Md]
+      def initialize(controller)
+        textdomain "storage"
+
+        @controller = controller
+      end
+
+      # @macro seeDialog
+      def title
+        controller.wizard_title(action: :resize)
+      end
+
+      # @macro seeDialog
+      # @see Widgets::MdDevicesSelector
+      def contents
+        @contents ||= VBox(Widgets::MdDevicesSelector.new(controller))
       end
 
     private
 
-      # Returns the proper Actions class to perform the resize action
-      #
-      # @see Actions::ResizeMd
-      #
-      # @return [Object] action for resizing the device
-      def actions_class
-        Actions::ResizeMd if device.is?(:md)
-      end
+      # @return [Actions::Controllers::Md]
+      attr_reader :controller
     end
   end
 end
