@@ -47,6 +47,43 @@ describe Y2Storage::Partition do
     end
   end
 
+  describe ".sorted_by_name" do
+    it "returns a list of Y2Storage::Partition objects" do
+      partitions = Y2Storage::Partition.sorted_by_name(fake_devicegraph)
+      expect(partitions).to be_an Array
+      expect(partitions).to all(be_a(Y2Storage::Partition))
+    end
+
+    it "includes all primary, extended and logical partitions, sorted by name" do
+      partitions = Y2Storage::Partition.sorted_by_name(fake_devicegraph)
+      expect(partitions.map(&:basename)).to eq [
+        "dasdb1", "dasdb2", "dasdb3", "nvme0n1p1", "nvme0n1p2", "nvme0n1p3", "nvme0n1p4",
+        "sdb1", "sdb2", "sdc1", "sdc2", "sdc3", "sdd1", "sdd2", "sdd3", "sdd4", "sdd5",
+        "sdd6", "sdf1", "sdf2", "sdf5", "sdf6", "sdf7", "sdf8", "sdf9", "sdf10", "sdf11",
+        "sdh1", "sdh2", "sdh3", "sdaa1", "sdaa2", "sdaa3"
+      ]
+    end
+
+    context "even if Partitionable.all returns an unsorted array" do
+      before do
+        allow(Y2Storage::Partitionable).to receive(:all) do |devicegraph|
+          # Let's shuffle things a bit
+          Y2Storage::BlkDevice.all(devicegraph).select { |i| i.is?(:dasd, :disk) }.shuffle
+        end
+      end
+
+      it "returns an array sorted by name" do
+        partitions = Y2Storage::Partition.sorted_by_name(fake_devicegraph)
+        expect(partitions.map(&:basename)).to eq [
+          "dasdb1", "dasdb2", "dasdb3", "nvme0n1p1", "nvme0n1p2", "nvme0n1p3", "nvme0n1p4",
+          "sdb1", "sdb2", "sdc1", "sdc2", "sdc3", "sdd1", "sdd2", "sdd3", "sdd4", "sdd5",
+          "sdd6", "sdf1", "sdf2", "sdf5", "sdf6", "sdf7", "sdf8", "sdf9", "sdf10", "sdf11",
+          "sdh1", "sdh2", "sdh3", "sdaa1", "sdaa2", "sdaa3"
+        ]
+      end
+    end
+  end
+
   describe "#adapted_id=" do
     subject(:partition) { Y2Storage::Partition.find_by_name(fake_devicegraph, "/dev/sdb1") }
 

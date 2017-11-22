@@ -126,12 +126,30 @@ module Y2Storage
       partitionable.is_a?(Disk) ? partitionable : nil
     end
 
-    # All partitions in the given devicegraph.
+    # All partitions in the given devicegraph, in no particular order
     #
     # @param devicegraph [Devicegraph]
     # @return [Array<Partition>]
     def self.all(devicegraph)
       Partitionable.all(devicegraph).map(&:partitions).flatten
+    end
+
+    # All partitions in the given devicegraph, sorted by name
+    #
+    # See {Partitionable#compare_by_name} to know more about the sorting.
+    #
+    # @param devicegraph [Devicegraph]
+    # @return [Array<Partition>]
+    def self.sorted_by_name(devicegraph)
+      Partitionable.sorted_by_name(devicegraph).each_with_object([]) do |partitionable, result|
+        partitions = partitionable.partitions.sort do |a, b|
+          # Within the same partition table, the equivalent of Partitionable#compare_by_name
+          # is sorting by name size and then alphabetically
+          by_size = a.name.size <=> b.name.size
+          by_size.zero? ? a.name <=> b.name : by_size
+        end
+        result.concat(partitions)
+      end
     end
 
     # @return [String]

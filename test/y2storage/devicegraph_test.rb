@@ -189,6 +189,11 @@ describe Y2Storage::Devicegraph do
     before { fake_scenario(scenario) }
     subject(:graph) { fake_devicegraph }
 
+    def less_than_next(device, collection)
+      next_dev = collection[collection.index(device) + 1]
+      next_dev.nil? || Y2Storage::Partitionable.compare_by_name(device, next_dev)
+    end
+
     context "if there are no multi-disk devices" do
       let(:scenario) { "autoyast_drive_examples" }
 
@@ -197,20 +202,41 @@ describe Y2Storage::Devicegraph do
         expect(graph.disk_devices).to all(be_a(Y2Storage::Device))
       end
 
-      it "includes all disks and DASDs" do
-        expect(graph.disk_devices.map(&:name)).to contain_exactly(
-          "/dev/dasda", "/dev/dasdb", "/dev/sda", "/dev/sdb", "/dev/sdc",
-          "/dev/sdd", "/dev/sdaa", "/dev/sdf", "/dev/sdh", "/dev/nvme0n1"
-        )
+      it "includes all disks and DASDs sorted by name" do
+        expect(graph.disk_devices.map(&:name)).to eq [
+          "/dev/dasda", "/dev/dasdb", "/dev/nvme0n1", "/dev/sda", "/dev/sdb",
+          "/dev/sdc", "/dev/sdd", "/dev/sdf", "/dev/sdh", "/dev/sdaa"
+        ]
+      end
+
+      context "even if Disk.all and Dasd.all return unsorted arrays" do
+        before do
+          allow(Y2Storage::Disk).to receive(:all) do |devicegraph|
+            # Let's shuffle things a bit
+            Y2Storage::Partitionable.all(devicegraph).select { |i| i.is?(:disk) }.shuffle
+          end
+          dasda = Y2Storage::Dasd.find_by_name(fake_devicegraph, "/dev/dasda")
+          dasdb = Y2Storage::Dasd.find_by_name(fake_devicegraph, "/dev/dasdb")
+          allow(Y2Storage::Dasd).to receive(:all).and_return [dasdb, dasda]
+        end
+
+        it "returns an array sorted by name" do
+          expect(graph.disk_devices.map(&:name)).to eq [
+            "/dev/dasda", "/dev/dasdb", "/dev/nvme0n1", "/dev/sda", "/dev/sdb",
+            "/dev/sdc", "/dev/sdd", "/dev/sdf", "/dev/sdh", "/dev/sdaa"
+          ]
+        end
       end
     end
 
     context "if there are multipath devices" do
       let(:scenario) { "empty-dasd-and-multipath.xml" }
 
-      it "returns an array of devices" do
-        expect(graph.disk_devices).to be_an Array
-        expect(graph.disk_devices).to all(be_a(Y2Storage::Device))
+      it "returns a sorted array of devices" do
+        devices = graph.disk_devices
+        expect(devices).to be_an Array
+        expect(devices).to all(be_a(Y2Storage::Device))
+        expect(devices).to all(satisfy { |dev| less_than_next(dev, devices) })
       end
 
       it "includes all the multipath devices" do
@@ -229,13 +255,33 @@ describe Y2Storage::Devicegraph do
           "/dev/sda", "/dev/sdb", "/dev/sdc", "/dev/sdd"
         )
       end
+
+      context "even if Disk.all and Multipath.all return unsorted arrays" do
+        # Let's shuffle things a bit
+        before do
+          allow(Y2Storage::Disk).to receive(:all) do |devicegraph|
+            Y2Storage::Partitionable.all(devicegraph).select { |i| i.is?(:disk) }.shuffle
+          end
+          allow(Y2Storage::Multipath).to receive(:all) do |devicegraph|
+            Y2Storage::Partitionable.all(devicegraph).select { |i| i.is?(:multipath) }.shuffle
+          end
+        end
+
+        it "returns an array sorted by name" do
+          devices = graph.disk_devices
+          expect(devices).to all(satisfy { |dev| less_than_next(dev, devices) })
+        end
+      end
     end
+
     context "if there are DM RAIDs" do
       let(:scenario) { "empty-dm_raids.xml" }
 
-      it "returns an array of devices" do
-        expect(graph.disk_devices).to be_an Array
-        expect(graph.disk_devices).to all(be_a(Y2Storage::Device))
+      it "returns a sorted array of devices" do
+        devices = graph.disk_devices
+        expect(devices).to be_an Array
+        expect(devices).to all(be_a(Y2Storage::Device))
+        expect(devices).to all(satisfy { |dev| less_than_next(dev, devices) })
       end
 
       it "includes all the DM RAIDs" do
