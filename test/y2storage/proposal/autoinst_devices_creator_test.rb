@@ -26,6 +26,8 @@ require "y2storage/proposal/autoinst_devices_creator"
 require "y2storage/planned/partition"
 
 describe Y2Storage::Proposal::AutoinstDevicesCreator do
+  using Y2Storage::Refinements::SizeCasts
+
   let(:filesystem_type) { Y2Storage::Filesystems::Type::EXT4 }
   let(:mount_by_type) { Y2Storage::Filesystems::MountByType::PATH }
   let(:new_part) do
@@ -104,6 +106,112 @@ describe Y2Storage::Proposal::AutoinstDevicesCreator do
         lv = devicegraph.lvm_lvs.first
         expect(lv.lv_name).to eq("lv_root")
         expect(lv.lvm_vg.vg_name).to eq("vg0")
+      end
+    end
+
+    describe "resizing partitions" do
+      let(:root) do
+        Y2Storage::Planned::Partition.new("/", filesystem_type).tap do |part|
+          part.reuse = "/dev/sda1"
+          part.resize = true
+          part.max_size = 200.GiB
+        end
+      end
+
+      let(:home) do
+        Y2Storage::Planned::Partition.new("/home", filesystem_type).tap do |part|
+          part.reuse = "/dev/sda2"
+          part.resize = true
+          part.size = 52.GiB
+        end
+      end
+
+      let(:resize_info) do
+        {
+          "/dev/sda1" => info_sda1,
+          "/dev/sda2" => info_sda2
+        }
+      end
+
+      let(:info_sda1) do
+        instance_double(
+          Y2Storage::ResizeInfo, min_size: 1.GiB, max_size: 250.GiB, resize_ok?: true
+        )
+      end
+
+      let(:info_sda2) do
+        instance_double(
+          Y2Storage::ResizeInfo, min_size: 1.GiB, max_size: 52.GiB, resize_ok?: true
+        )
+      end
+
+      before do
+        allow_any_instance_of(Y2Storage::Partition).to receive(:detect_resize_info) do |part|
+          resize_info[part.name]
+        end
+      end
+
+      it "assigns sizes to each partition to resize" do
+        devicegraph = creator.populated_devicegraph([home, root], "/dev/sda")
+
+        root = devicegraph.partitions.find { |p| p.filesystem_mountpoint == "/" }
+        expect(root.size).to eq(200.GiB)
+
+        home = devicegraph.partitions.find { |p| p.filesystem_mountpoint == "/home" }
+        expect(home.size).to eq(52.GiB)
+      end
+    end
+
+    describe "resizing logical volumes" do
+      let(:scenario) { "lvm-two-vgs" }
+
+      let(:pv) { planned_partition(reuse: "/dev/sda7") }
+
+      let(:vg) do
+        planned_vg(reuse: "vg0", lvs: [root, home], pvs: [pv])
+      end
+
+      let(:root) do
+        planned_lv(mount_point: "/", reuse: "/dev/vg0/lv1", resize: true, max_size: 1.GiB)
+      end
+
+      let(:home) do
+        planned_lv(mount_point: "/home", reuse: "/dev/vg0/lv2", resize: true, max_size: 3.GiB)
+      end
+
+      let(:resize_info) do
+        {
+          "/dev/vg0/lv1" => info_lv1,
+          "/dev/vg0/lv2" => info_lv2
+        }
+      end
+
+      let(:info_lv1) do
+        instance_double(
+          Y2Storage::ResizeInfo, min_size: 1.GiB, max_size: 250.GiB, resize_ok?: true
+        )
+      end
+
+      let(:info_lv2) do
+        instance_double(
+          Y2Storage::ResizeInfo, min_size: 1.GiB, max_size: 52.GiB, resize_ok?: true
+        )
+      end
+
+      before do
+        allow_any_instance_of(Y2Storage::LvmLv).to receive(:detect_resize_info) do |lv|
+          resize_info[lv.name]
+        end
+      end
+
+      it "assigns sizes to each partition to resize" do
+        devicegraph = creator.populated_devicegraph([pv, vg], ["/dev/sda"])
+
+        root = devicegraph.lvm_lvs.find { |p| p.filesystem_mountpoint == "/" }
+        expect(root.size).to eq(1.GiB)
+
+        home = devicegraph.lvm_lvs.find { |p| p.filesystem_mountpoint == "/home" }
+        expect(home.size).to eq(3.GiB)
       end
     end
   end

@@ -184,6 +184,57 @@ describe Y2Storage::AutoinstProposal do
       end
     end
 
+    describe "resizing partitions" do
+      let(:root) do
+        {
+          "mount" => "/", "partition_nr" => 3, "create" => false, "resize" => true,
+          "size" => size
+        }
+      end
+
+      let(:size) { "100GiB" }
+      let(:resize_ok) { true }
+      let(:resize_info) do
+        instance_double(
+          Y2Storage::ResizeInfo, min_size: 512.MiB, max_size: 245.GiB, resize_ok?: resize_ok
+        )
+      end
+
+      before do
+        allow_any_instance_of(Y2Storage::Partition).to receive(:detect_resize_info)
+          .and_return(resize_info)
+      end
+
+      it "sets the partitions' size" do
+        proposal.propose
+        devicegraph = proposal.devices
+        reused_part = devicegraph.partitions.find { |p| p.name == "/dev/sda3" }
+        expect(reused_part.size).to eq(100.GiB)
+      end
+
+      context "when requested size is smaller than the minimal resize limit" do
+        let(:size) { "256MB" }
+
+        it "sets the size to the minimal allowed size" do
+          proposal.propose
+          devicegraph = proposal.devices
+          reused_part = devicegraph.partitions.find { |p| p.name == "/dev/sda3" }
+          expect(reused_part.size).to eq(resize_info.min_size)
+        end
+      end
+
+      context "when requested size is greater than the maximal resize limit" do
+        let(:size) { "250GiB" }
+
+        it "sets the size to the maximal allowed size" do
+          proposal.propose
+          devicegraph = proposal.devices
+          reused_part = devicegraph.partitions.find { |p| p.name == "/dev/sda3" }
+          expect(reused_part.size).to eq(resize_info.max_size)
+        end
+      end
+    end
+
     describe "removing partitions" do
       let(:scenario) { "windows-linux-free-pc" }
       let(:partitioning) { [{ "device" => "/dev/sda", "partitions" => [root], "use" => use }] }
@@ -280,6 +331,75 @@ describe Y2Storage::AutoinstProposal do
           an_object_having_attributes("name" => "/dev/sda1"), # new pv
           an_object_having_attributes("name" => "/dev/sda5")
         )
+      end
+    end
+
+    describe "resizing logical volumes" do
+      let(:scenario) { "lvm-two-vgs" }
+
+      let(:lvm_group) { "vg0" }
+
+      let(:root) do
+        {
+          "create" => false, "mount" => "/", "filesystem" => "ext4", "lv_name" => "lv1",
+          "size" => size, "resize" => true
+        }
+      end
+
+      let(:partitioning) do
+        [
+          { "device" => "/dev/sda", "use" => "all", "partitions" => [pv] }, vg
+        ]
+      end
+
+      let(:vg) do
+        { "device" => "/dev/#{lvm_group}", "partitions" => [root], "type" => :CT_LVM }
+      end
+
+      let(:pv) do
+        { "create" => false, "lvm_group" => lvm_group, "size" => "max", "type" => :CT_LVM }
+      end
+
+      let(:size) { "1GiB" }
+
+      let(:resize_info) do
+        instance_double(
+          Y2Storage::ResizeInfo, min_size: 512.MiB, max_size: 2.GiB, resize_ok?: true
+        )
+      end
+
+      before do
+        allow_any_instance_of(Y2Storage::LvmLv).to receive(:detect_resize_info)
+          .and_return(resize_info)
+      end
+
+      it "sets the partitions' size" do
+        proposal.propose
+        devicegraph = proposal.devices
+        reused_lv = devicegraph.lvm_lvs.find { |l| l.name == "/dev/vg0/lv1" }
+        expect(reused_lv.size).to eq(1.GiB)
+      end
+
+      context "when requested size smaller than the minimal resize limit" do
+        let(:size) { "0.5GiB" }
+
+        it "sets the size to the minimal allowed size" do
+          proposal.propose
+          devicegraph = proposal.devices
+          reused_lv = devicegraph.lvm_lvs.find { |l| l.name == "/dev/vg0/lv1" }
+          expect(reused_lv.size).to eq(resize_info.min_size)
+        end
+      end
+
+      context "when requested size greater than the maximal resize limit" do
+        let(:size) { "4GiB" }
+
+        it "sets the size to the maximal allowed size" do
+          proposal.propose
+          devicegraph = proposal.devices
+          reused_lv = devicegraph.lvm_lvs.find { |l| l.name == "/dev/vg0/lv1" }
+          expect(reused_lv.size).to eq(resize_info.max_size)
+        end
       end
     end
 

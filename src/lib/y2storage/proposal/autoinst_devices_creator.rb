@@ -130,7 +130,8 @@ module Y2Storage
       # @param reused_partitions [Array<Planned::Partition>] Partitions to reuse
       # @param devicegraph       [Devicegraph]               Devicegraph to reuse partitions
       def reuse_partitions(reused_partitions, devicegraph)
-        reused_partitions.each { |r| r.reuse!(devicegraph) }
+        shrinking, not_shrinking = reused_partitions.partition { |p| p.shrink?(devicegraph) }
+        (shrinking + not_shrinking).each { |r| r.reuse!(devicegraph) }
       end
 
       # Reuses volume groups for the given devicegraph
@@ -140,8 +141,20 @@ module Y2Storage
       def reuse_vgs(reused_vgs, devicegraph)
         reused_vgs.each do |vg|
           vg.reuse!(devicegraph)
-          vg.lvs.select(&:reuse?).each { |v| v.reuse!(devicegraph) }
+          reuse_lvs(vg.lvs.select(&:reuse?), devicegraph)
         end
+      end
+
+      # Reuses logical volumes for the given devicegraph
+      #
+      # Shrinking logical volumes should be processed first in order to free
+      # some space for growing ones.
+      #
+      # @param reused_lvs  [Array<Planned::LvmLv>] Logical volumes to reuse
+      # @param devicegraph [Devicegraph]           Devicegraph to reuse partitions
+      def reuse_lvs(reused_lvs, devicegraph)
+        shrinking, not_shrinking = reused_lvs.partition { |l| l.shrink?(devicegraph) }
+        (shrinking + not_shrinking).each { |v| v.reuse!(devicegraph) }
       end
 
       # Creates MD RAID devices in the given devicegraph
