@@ -359,9 +359,9 @@ describe Y2Partitioner::Actions::Controllers::Md do
     context "when the Md device is a RAID0" do
       let(:md_level) { Y2Storage::MdLevel::RAID0 }
 
-      it "sets chunk size to 32 KiB" do
+      it "sets chunk size to 64 KiB" do
         controller.apply_default_options
-        expect(controller.md.chunk_size).to eq(32.KiB)
+        expect(controller.md.chunk_size).to eq(64.KiB)
       end
 
       it "does not set the parity" do
@@ -415,9 +415,9 @@ describe Y2Partitioner::Actions::Controllers::Md do
     context "when the Md device is a RAID10" do
       let(:md_level) { Y2Storage::MdLevel::RAID10 }
 
-      it "sets chunk size to 32 KiB" do
+      it "sets chunk size to 64 KiB" do
         controller.apply_default_options
-        expect(controller.md.chunk_size).to eq(32.KiB)
+        expect(controller.md.chunk_size).to eq(64.KiB)
       end
 
       it "sets parity to default" do
@@ -429,9 +429,9 @@ describe Y2Partitioner::Actions::Controllers::Md do
     context "when the Md device has unknown level" do
       let(:md_level) { Y2Storage::MdLevel::UNKNOWN }
 
-      it "sets chunk size to 4 KiB" do
+      it "sets chunk size to 64 KiB" do
         controller.apply_default_options
-        expect(controller.md.chunk_size).to eq(4.KiB)
+        expect(controller.md.chunk_size).to eq(64.KiB)
       end
 
       it "does not set the parity" do
@@ -443,9 +443,9 @@ describe Y2Partitioner::Actions::Controllers::Md do
     context "when the Md device is a container" do
       let(:md_level) { Y2Storage::MdLevel::CONTAINER }
 
-      it "sets chunk size to 4 KiB" do
+      it "sets chunk size to 64 KiB" do
         controller.apply_default_options
-        expect(controller.md.chunk_size).to eq(4.KiB)
+        expect(controller.md.chunk_size).to eq(64.KiB)
       end
 
       it "does not set the parity" do

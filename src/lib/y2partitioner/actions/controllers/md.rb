@@ -157,6 +157,20 @@ module Y2Partitioner
           md.minimal_number_of_devices
         end
 
+        # Possible chunk sizes for the Md object depending on its md_level.
+        #
+        # @return [Array<Y2Storage::DiskSize>]
+        def chunk_sizes
+          sizes = []
+          size = min_chunk_size
+
+          while size <= max_chunk_size
+            sizes << Y2Storage::DiskSize.new(size)
+            size *= 2
+          end
+          sizes
+        end
+
       private
 
         def working_graph
@@ -173,18 +187,26 @@ module Y2Partitioner
           mount.nil? || mount.empty?
         end
 
+        def min_chunk_size
+          [default_chunk_size, Y2Storage::DiskSize.KiB(64)].min
+        end
+
+        def max_chunk_size
+          Y2Storage::DiskSize.MiB(64)
+        end
+
         def default_chunk_size
           case md.md_level.to_sym
           when :raid0
-            Y2Storage::DiskSize.KiB(32)
+            Y2Storage::DiskSize.KiB(64)
           when :raid1
             Y2Storage::DiskSize.KiB(4)
           when :raid5, :raid6
             Y2Storage::DiskSize.KiB(128)
           when :raid10
-            Y2Storage::DiskSize.KiB(32)
+            Y2Storage::DiskSize.KiB(64)
           else
-            Y2Storage::DiskSize.KiB(4)
+            Y2Storage::DiskSize.KiB(64)
           end
         end
 

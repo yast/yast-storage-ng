@@ -743,7 +743,7 @@ module Y2Storage
       return [UNLIMITED, ""] if @size == -1
 
       unit_index = 0
-      # prefer, 0.50 MiB over 512 KiB
+      # prefer 0.50 MiB over 512 KiB
       size2 = @size * 2
 
       while size2.abs >= 1024.0 && unit_index < UNITS.size - 1
