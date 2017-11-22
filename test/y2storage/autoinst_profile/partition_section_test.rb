@@ -115,14 +115,14 @@ describe Y2Storage::AutoinstProfile::PartitionSection do
       end
 
       it "initializes #format to true for most partition ids" do
-        expect(section_for("sdg1").format).to eq true
-        expect(section_for("sdg4").format).to eq true
+        expect(section_for("nvme0n1p1").format).to eq true
+        expect(section_for("nvme0n1p4").format).to eq true
       end
 
       # Weird logic inherited from the old code
       it "initializes #format to false for PReP and DOS16 partitions" do
-        expect(section_for("sdg2").format).to eq false
-        expect(section_for("sdg3").format).to eq false
+        expect(section_for("nvme0n1p2").format).to eq false
+        expect(section_for("nvme0n1p3").format).to eq false
       end
     end
 
@@ -139,10 +139,10 @@ describe Y2Storage::AutoinstProfile::PartitionSection do
       end
 
       it "initializes #format to false despite the partition id" do
-        expect(section_for("sdg1").format).to eq false
-        expect(section_for("sdg2").format).to eq false
-        expect(section_for("sdg3").format).to eq false
-        expect(section_for("sdg4").format).to eq false
+        expect(section_for("nvme0n1p1").format).to eq false
+        expect(section_for("nvme0n1p2").format).to eq false
+        expect(section_for("nvme0n1p3").format).to eq false
+        expect(section_for("nvme0n1p4").format).to eq false
       end
     end
 

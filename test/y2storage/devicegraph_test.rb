@@ -200,7 +200,7 @@ describe Y2Storage::Devicegraph do
       it "includes all disks and DASDs" do
         expect(graph.disk_devices.map(&:name)).to contain_exactly(
           "/dev/dasda", "/dev/dasdb", "/dev/sda", "/dev/sdb", "/dev/sdc",
-          "/dev/sdd", "/dev/sde", "/dev/sdf", "/dev/sdg", "/dev/sdh"
+          "/dev/sdd", "/dev/sdaa", "/dev/sdf", "/dev/sdh", "/dev/nvme0n1"
         )
       end
     end

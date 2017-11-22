@@ -40,8 +40,9 @@ describe Y2Storage::Partition do
       partitions = Y2Storage::Partition.all(fake_devicegraph)
       expect(partitions.map(&:basename)).to contain_exactly(
         "sdb1", "sdb2", "dasdb1", "dasdb2", "dasdb3", "sdc1", "sdc2", "sdc3", "sdd1",
-        "sdd2", "sdd3", "sdd4", "sdd5", "sdd6", "sde1", "sde2", "sde3", "sdf1", "sdf2",
-        "sdf5", "sdf6", "sdf7", "sdg1", "sdg2", "sdg3", "sdg4", "sdh1", "sdh2", "sdh3"
+        "sdd2", "sdd3", "sdd4", "sdd5", "sdd6", "sdaa1", "sdaa2", "sdaa3", "sdf1", "sdf2",
+        "sdf5", "sdf6", "sdf7", "sdf8", "sdf9", "sdf10", "sdf11", "sdh1", "sdh2", "sdh3",
+        "nvme0n1p1", "nvme0n1p2", "nvme0n1p3", "nvme0n1p4"
       )
     end
   end

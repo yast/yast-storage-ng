@@ -235,7 +235,7 @@ describe Y2Storage::AutoinstProfile::DriveSection do
     end
 
     context "if there is some partition with a typical Windows id" do
-      let(:dev) { device("sde") }
+      let(:dev) { device("sdaa") }
 
       before do
         # SWIG makes very hard to use proper mocking. See comment above.
