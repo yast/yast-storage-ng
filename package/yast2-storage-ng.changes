@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Wed Nov 22 19:19:27 UTC 2017 - jlopez@suse.com
+
+- Partitioner: added support for resizing MD RAIDs.
+- Part of fate#318196.
+- 4.0.34
+
+-------------------------------------------------------------------
 Wed Nov 22 17:11:41 UTC 2017 - shundhammer@suse.com
 
 - No RAID chunk size below 64 kiB for most types of RAID
