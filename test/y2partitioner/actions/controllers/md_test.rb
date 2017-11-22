@@ -28,28 +28,66 @@ describe Y2Partitioner::Actions::Controllers::Md do
   using Y2Storage::Refinements::SizeCasts
 
   before do
-    devicegraph_stub("complex-lvm-encrypt.yml")
+    devicegraph_stub(scenario)
   end
 
   subject(:controller) { described_class.new }
 
   let(:current_graph) { Y2Partitioner::DeviceGraphs.instance.current }
 
-  describe "#md" do
-    it "returns a new Y2Storage::Md" do
-      expect(Y2Storage::Md.all(current_graph)).to be_empty
-      md = controller.md
-      expect(md).to be_a(Y2Storage::Md)
-      expect(Y2Storage::Md.all(current_graph)).to include md
+  let(:scenario) { "complex-lvm-encrypt.yml" }
+
+  describe "#initialize" do
+    context "when no Md device is given" do
+      it "creates a new Md device with a valid level" do
+        expect(current_graph.md_raids).to be_empty
+        described_class.new
+        expect(current_graph.md_raids).to_not be_empty
+        expect(current_graph.md_raids.first.md_level.is?(:unknown)).to eq(false)
+      end
+    end
+
+    context "when a Md device is given" do
+      let(:scenario) { "md_raid.xml" }
+
+      let(:md) { current_graph.md_raids.first }
+
+      it "does not creates a new Md device" do
+        mds = current_graph.md_raids
+        described_class.new(md: md)
+        expect(current_graph.md_raids).to eq(mds)
+      end
+
+      it "uses the given Md device" do
+        controller = described_class.new(md: md)
+        expect(controller.md).to eq(md)
+      end
     end
   end
 
-  describe "#initialize" do
-    it "creates the new Md device with a valid level" do
-      expect(Y2Storage::Md.all(current_graph)).to be_empty
-      described_class.new
-      expect(Y2Storage::Md.all(current_graph)).to_not be_empty
-      expect(Y2Storage::Md.all(current_graph).first.md_level.is?(:unknown)).to eq false
+  describe "#md" do
+    it "returns a Y2Storage::Md" do
+      expect(controller.md).to be_a(Y2Storage::Md)
+    end
+
+    context "when the controller is created without Md device" do
+      it "returns the new created Md device" do
+        expect(current_graph.md_raids).to be_empty
+        md = controller.md
+        expect(current_graph.md_raids).to include(md)
+      end
+    end
+
+    context "when the controller is created with a Md device" do
+      let(:scenario) { "md_raid.xml" }
+
+      let(:md) { current_graph.md_raids.first }
+
+      subject(:controller) { described_class.new(md: md) }
+
+      it "returns the given Md device" do
+        expect(controller.md).to eq(md)
+      end
     end
   end
 
@@ -294,16 +332,30 @@ describe Y2Partitioner::Actions::Controllers::Md do
   end
 
   describe "#md_size" do
+    let(:md) { instance_double(Y2Storage::Md, size: size) }
+
+    let(:size) { Y2Storage::DiskSize.new(1254) }
+
+    before do
+      allow(controller).to receive(:md).and_return(md)
+    end
+
     it "returns the size of the Md device" do
-      expect(controller.md).to receive(:size).and_return Y2Storage::DiskSize.new(1254)
-      expect(controller.md_size).to eq Y2Storage::DiskSize.new(1254)
+      expect(controller.md_size).to eq(md.size)
     end
   end
 
   describe "#min_devices" do
+    let(:md) { instance_double(Y2Storage::Md, minimal_number_of_devices: min_devices) }
+
+    let(:min_devices) { 12 }
+
+    before do
+      allow(controller).to receive(:md).and_return(md)
+    end
+
     it "forwards the call to #minimal_number_of_devices on the Md device" do
-      expect(controller.md).to receive(:minimal_number_of_devices).and_return 12
-      expect(controller.min_devices).to eq 12
+      expect(controller.min_devices).to eq(md.minimal_number_of_devices)
     end
   end
 
@@ -340,14 +392,49 @@ describe Y2Partitioner::Actions::Controllers::Md do
   end
 
   describe "#wizard_title" do
-    it "returns a string containing the Md device name" do
-      expect(controller.wizard_title).to be_a String
-      expect(controller.wizard_title).to include "/dev/md0"
-      expect(controller.wizard_title).to_not include "/dev/md/foobar"
-      controller.md_name = "foobar"
-      expect(controller.wizard_title).to be_a String
-      expect(controller.wizard_title).to_not include "/dev/md0"
-      expect(controller.wizard_title).to include "/dev/md/foobar"
+    let(:wizard_title) { controller.wizard_title(action: action) }
+
+    context "when no action is given" do
+      let(:action) { nil }
+
+      it "returns nil" do
+        expect(wizard_title).to be_nil
+      end
+    end
+
+    context "when valid action is given" do
+      let(:action) { :add }
+
+      it "returns a string containing the name of the Md device" do
+        wizard_title = controller.wizard_title(action: action)
+        expect(wizard_title).to be_a(String)
+        expect(wizard_title).to include("/dev/md0")
+        expect(wizard_title).to_not include("/dev/md/foobar")
+
+        controller.md_name = "foobar"
+
+        wizard_title = controller.wizard_title(action: action)
+        expect(wizard_title).to_not include("/dev/md0")
+        expect(wizard_title).to include("/dev/md/foobar")
+      end
+    end
+
+    context "when action is :add" do
+      let(:action) { :add }
+
+      it "returns a string containing the title for adding a Md device" do
+        expect(wizard_title).to be_a(String)
+        expect(wizard_title).to include("Add RAID")
+      end
+    end
+
+    context "when action is :resize" do
+      let(:action) { :resize }
+
+      it "returns a string containing the title for resizing a Md device" do
+        expect(wizard_title).to be_a(String)
+        expect(wizard_title).to include("Resize RAID")
+      end
     end
   end
 

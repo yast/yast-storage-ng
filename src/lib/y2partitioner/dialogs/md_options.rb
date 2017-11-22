@@ -19,7 +19,7 @@ module Y2Partitioner
 
       # @macro seeDialog
       def title
-        @controller.wizard_title
+        @controller.wizard_title(action: :add)
       end
 
       # @macro seeDialog
