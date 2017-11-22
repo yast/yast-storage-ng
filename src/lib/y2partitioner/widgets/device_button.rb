@@ -38,7 +38,7 @@ module Y2Partitioner
 
         @pager = pager
         @table = table
-        @device = device
+        @device_sid = device.sid unless device.nil?
       end
 
       # @macro seeAbstractWidget
@@ -55,12 +55,25 @@ module Y2Partitioner
       # @return [Y2Partitioner::Widgets::ConfigurableBlkDevicesTable]
       attr_reader :table
 
+      # @return [Integer] device sid
+      attr_reader :device_sid
+
+      # Current devicegraph
+      #
+      # @return [Y2Storage::Devicegraph]
+      def working_graph
+        DeviceGraphs.instance.current
+      end
+
       # Device on which to act
       #
       # @return [Y2Storage::Device]
       def device
-        return @device unless @device.nil?
-        table.nil? ? nil : table.selected_device
+        if device_sid
+          working_graph.find_device(device_sid)
+        elsif table
+          table.selected_device
+        end
       end
 
       # Actions to perform when the button is clicked

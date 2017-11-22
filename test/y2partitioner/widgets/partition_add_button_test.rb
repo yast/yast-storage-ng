@@ -47,11 +47,12 @@ describe Y2Partitioner::Widgets::PartitionAddButton do
     end
 
     context "when a device is given" do
-      let(:device) { instance_double(Y2Storage::Disk, name: "/dev/sda") }
-
       before do
+        devicegraph_stub("one-empty-disk.yml")
         allow(action_class).to receive(:new).with(device).and_return(action)
       end
+
+      let(:device) { Y2Partitioner::DeviceGraphs.instance.current.disks.first }
 
       let(:action) { instance_double(action_class) }
 
