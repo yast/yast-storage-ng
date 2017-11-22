@@ -54,7 +54,7 @@ module Y2Partitioner
         end
 
         def items
-          SIZES.map { |s| [Y2Storage::DiskSize.new(s).to_s, s] }
+          @controller.chunk_sizes.map { |s| [s.to_s, s.to_s] }
         end
 
         # @macro seeAbstractWidget
@@ -66,11 +66,6 @@ module Y2Partitioner
         def store
           @controller.chunk_size = Y2Storage::DiskSize.new(value)
         end
-
-        SIZES = ["4 KiB", "8 KiB", "16 KiB", "32 KiB", "128 KiB",
-                 "256 KiB", "512 KiB", "1 MiB", "2 MiB", "4 MiB"].freeze
-
-        private_constant :SIZES
       end
 
       # Widget to select the md parity
