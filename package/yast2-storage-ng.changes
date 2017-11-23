@@ -3,6 +3,7 @@ Thu Nov 23 13:05:31 UTC 2017 - ancor@suse.com
 
 - Ensure that disks considered for (auto)installation are always
   sorted in a stable and consistent way based on its device name.
+  Preparation for bsc#1049901 and part of fate#31896.
 - 4.0.35
 
 -------------------------------------------------------------------
