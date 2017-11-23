@@ -116,6 +116,9 @@ module Y2Storage
     # @return [Integer] -1 if this object should appear before the one passed as
     #   argument (less than). 1 otherwise.
     def compare_by_name(other)
+      # In practice, two devices cannot have the same name. But let's take the
+      # case in consideration to ensure full compatibility with <=>
+      return 0 if name == other.name
       Partitionable.compare_by_name(self, other) ? -1 : 1
     end
 
