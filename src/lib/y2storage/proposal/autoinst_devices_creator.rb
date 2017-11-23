@@ -58,7 +58,7 @@ module Y2Storage
         planned_partitions = planned_devices.select { |d| d.is_a?(Planned::Partition) }
         parts_to_reuse, parts_to_create = planned_partitions.partition(&:reuse?)
         creator_result = create_partitions(parts_to_create, disk_names)
-        reuse_partitions(parts_to_reuse, creator_result.devicegraph)
+        reuse_devices(parts_to_reuse, creator_result.devicegraph)
 
         # Process planned MD arrays
         planned_mds = planned_devices.select { |d| d.is_a?(Planned::Md) }
@@ -125,13 +125,16 @@ module Y2Storage
         end
       end
 
-      # Reuses partitions for the given devicegraph
+      # Reuses partitions or logical volumes for the given devicegraph
       #
-      # @param reused_partitions [Array<Planned::Partition>] Partitions to reuse
-      # @param devicegraph       [Devicegraph]               Devicegraph to reuse partitions
-      def reuse_partitions(reused_partitions, devicegraph)
-        shrinking, not_shrinking = reused_partitions.partition { |p| p.shrink?(devicegraph) }
-        (shrinking + not_shrinking).each { |r| r.reuse!(devicegraph) }
+      # Shrinking partitions/logical volumes should be processed first in order to free
+      # some space for growing ones.
+      #
+      # @param reused_devices  [Array<Planned::Partition,Planned::LvmLv>] Logical volumes to reuse
+      # @param devicegraph     [Devicegraph] Devicegraph to reuse partitions
+      def reuse_devices(reused_devices, devicegraph)
+        shrinking, not_shrinking = reused_devices.partition { |d| d.shrink?(devicegraph) }
+        (shrinking + not_shrinking).each { |d| d.reuse!(devicegraph) }
       end
 
       # Reuses volume groups for the given devicegraph
@@ -141,20 +144,8 @@ module Y2Storage
       def reuse_vgs(reused_vgs, devicegraph)
         reused_vgs.each do |vg|
           vg.reuse!(devicegraph)
-          reuse_lvs(vg.lvs.select(&:reuse?), devicegraph)
+          reuse_devices(vg.lvs.select(&:reuse?), devicegraph)
         end
-      end
-
-      # Reuses logical volumes for the given devicegraph
-      #
-      # Shrinking logical volumes should be processed first in order to free
-      # some space for growing ones.
-      #
-      # @param reused_lvs  [Array<Planned::LvmLv>] Logical volumes to reuse
-      # @param devicegraph [Devicegraph]           Devicegraph to reuse partitions
-      def reuse_lvs(reused_lvs, devicegraph)
-        shrinking, not_shrinking = reused_lvs.partition { |l| l.shrink?(devicegraph) }
-        (shrinking + not_shrinking).each { |v| v.reuse!(devicegraph) }
       end
 
       # Creates MD RAID devices in the given devicegraph

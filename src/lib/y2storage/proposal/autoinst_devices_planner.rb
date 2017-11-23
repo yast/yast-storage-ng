@@ -292,9 +292,9 @@ module Y2Storage
         add_device_reuse(md, md_to_reuse.name, section)
       end
 
-      # @param partition [Planned::Partition,Planned::LvmLV] Planned device
-      # @param name      [String] Name of the device to reuse
-      # @param section   [AutoinstProfile::PartitionSection] AutoYaST specification
+      # @param device  [Planned::Partition,Planned::LvmLV] Planned device
+      # @param name    [String] Name of the device to reuse
+      # @param section [AutoinstProfile::PartitionSection] AutoYaST specification
       def add_device_reuse(device, name, section)
         device.reuse = name
         device.reformat = !!section.format
