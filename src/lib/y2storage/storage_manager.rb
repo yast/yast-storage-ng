@@ -199,7 +199,7 @@ module Y2Storage
       commit_options = ::Storage::CommitOptions.new(force_rw)
 
       # Save committed devicegraph into logs
-      log.info("Committed devicegraph\n{staging.to_xml}")
+      log.info("Committed devicegraph\n#{staging.to_xml}")
 
       storage.commit(commit_options, callbacks)
     end
