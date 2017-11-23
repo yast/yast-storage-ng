@@ -109,6 +109,13 @@ module Yast
       def space_dist(vols_by_space)
         Y2Storage::Planned::PartitionsDistribution.new(vols_by_space)
       end
+
+      # Shuffles an array in a predictable way by enforcing a known seed.
+      #
+      # Useful to test sorting while still being able to reproduce errors.
+      def shuffle(array)
+        array.shuffle(random: Random.new(12345))
+      end
     end
   end
 end

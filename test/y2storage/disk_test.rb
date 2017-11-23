@@ -380,7 +380,7 @@ describe Y2Storage::Disk do
       before do
         allow(Y2Storage::Disk).to receive(:all) do |devicegraph|
           # Let's shuffle things a bit
-          Y2Storage::Partitionable.all(devicegraph).select { |i| i.is?(:disk) }.shuffle
+          shuffle(Y2Storage::Partitionable.all(devicegraph).select { |i| i.is?(:disk) })
         end
       end
 

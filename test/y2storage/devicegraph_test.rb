@@ -213,7 +213,7 @@ describe Y2Storage::Devicegraph do
         before do
           allow(Y2Storage::Disk).to receive(:all) do |devicegraph|
             # Let's shuffle things a bit
-            Y2Storage::Partitionable.all(devicegraph).select { |i| i.is?(:disk) }.shuffle
+            shuffle(Y2Storage::Partitionable.all(devicegraph).select { |i| i.is?(:disk) })
           end
           dasda = Y2Storage::Dasd.find_by_name(fake_devicegraph, "/dev/dasda")
           dasdb = Y2Storage::Dasd.find_by_name(fake_devicegraph, "/dev/dasdb")
@@ -260,10 +260,10 @@ describe Y2Storage::Devicegraph do
         # Let's shuffle things a bit
         before do
           allow(Y2Storage::Disk).to receive(:all) do |devicegraph|
-            Y2Storage::Partitionable.all(devicegraph).select { |i| i.is?(:disk) }.shuffle
+            shuffle(Y2Storage::Partitionable.all(devicegraph).select { |i| i.is?(:disk) })
           end
           allow(Y2Storage::Multipath).to receive(:all) do |devicegraph|
-            Y2Storage::Partitionable.all(devicegraph).select { |i| i.is?(:multipath) }.shuffle
+            shuffle(Y2Storage::Partitionable.all(devicegraph).select { |i| i.is?(:multipath) })
           end
         end
 

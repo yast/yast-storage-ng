@@ -68,7 +68,7 @@ describe Y2Storage::Partition do
       before do
         allow(Y2Storage::Partitionable).to receive(:all) do |devicegraph|
           # Let's shuffle things a bit
-          Y2Storage::BlkDevice.all(devicegraph).select { |i| i.is?(:dasd, :disk) }.shuffle
+          shuffle(Y2Storage::BlkDevice.all(devicegraph).select { |i| i.is?(:dasd, :disk) })
         end
       end
 
