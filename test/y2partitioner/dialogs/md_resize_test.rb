@@ -1,3 +1,4 @@
+#!/usr/bin/env rspec
 # encoding: utf-8
 
 # Copyright (c) [2017] SUSE LLC
@@ -19,30 +20,31 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
+require_relative "../test_helper"
+
 require "yast"
-require "y2partitioner/widgets/device_button"
-require "y2partitioner/actions/resize_md"
+require "cwm/rspec"
+require "y2storage"
+require "y2partitioner/dialogs/md_resize"
+require "y2partitioner/actions/controllers/md"
 
-module Y2Partitioner
-  module Widgets
-    # Button for resizing a device
-    class DeviceResizeButton < DeviceButton
-      # @macro seeAbstractWidget
-      def label
-        # TRANSLATORS: label for button for resizing a device
-        _("Resize...")
+describe Y2Partitioner::Dialogs::MdResize do
+  before do
+    Y2Storage::StorageManager.create_test_instance
+  end
+
+  let(:controller) { Y2Partitioner::Actions::Controllers::Md.new }
+
+  subject { described_class.new(controller) }
+
+  include_examples "CWM::Dialog"
+
+  describe "#contents" do
+    it "contains a widget for selecting devices" do
+      widget = subject.contents.nested_find do |i|
+        i.is_a?(Y2Partitioner::Widgets::MdDevicesSelector)
       end
-
-    private
-
-      # Returns the proper Actions class to perform the resize action
-      #
-      # @see Actions::ResizeMd
-      #
-      # @return [Object] action for resizing the device
-      def actions_class
-        Actions::ResizeMd if device.is?(:md)
-      end
+      expect(widget).to_not be_nil
     end
   end
 end

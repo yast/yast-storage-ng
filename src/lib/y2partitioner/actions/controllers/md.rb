@@ -27,9 +27,9 @@ require "y2partitioner/ui_state"
 module Y2Partitioner
   module Actions
     module Controllers
-      # This class stores information about an MD RAID being created and takes
-      # care of updating the devicegraph when needed, so the different dialogs
-      # can always work directly on a real Md object in the devicegraph.
+      # This class stores information about an MD RAID being created or modified
+      # and takes care of updating the devicegraph when needed, so the different
+      # dialogs can always work directly on a real Md object in the devicegraph.
       class Md
         include Yast::I18n
         extend Forwardable
@@ -37,19 +37,30 @@ module Y2Partitioner
         def_delegators :md, :md_level, :md_level=, :md_name,
           :chunk_size, :chunk_size=, :md_parity, :md_parity=
 
-        # @return [Y2Storage::Md] device being created
-        attr_reader :md
-
         # Constructor
         #
-        # @note This will create a new Md object in the devicegraph right away.
-        def initialize
+        # @note When the device is not given, a new Md object will be created in
+        #   the devicegraph right away.
+        #
+        # @param md [Y2Storage::Md] a MD RAID to work on
+        def initialize(md: nil)
           textdomain "storage"
-          name = Y2Storage::Md.find_free_numeric_name(working_graph)
-          @md = Y2Storage::Md.create(working_graph, name)
-          @md.md_level = Y2Storage::MdLevel::RAID0 if @md.md_level.is?(:unknown)
-          @initial_name = @md.name
-          UIState.instance.select_row(@md)
+
+          # A MD RAID is given when it is going to be resized
+          @action = md.nil? ? :add : :resize
+
+          md ||= new_md
+
+          @md_sid = md.sid
+          @initial_name = md.name
+          UIState.instance.select_row(md)
+        end
+
+        # MD RAID being modified
+        #
+        # @return [Y2Storage::Md]
+        def md
+          working_graph.find_device(@md_sid)
         end
 
         # Partitions that can be selected to become part of the MD array
@@ -123,10 +134,21 @@ module Y2Partitioner
         end
 
         # Title to display in the dialogs during the process
+        #
+        # @note The returned title depends on the action to perform (see {#initialize})
+        #
         # @return [String]
         def wizard_title
-          # TRANSLATORS: dialog title. %s is a device name like /dev/md0
-          _("Add RAID %s") % md.name
+          case @action
+          when :add
+            # TRANSLATORS: dialog title when creating a MD RAID.
+            # %s is a device name like /dev/md0
+            _("Add RAID %s") % md.name
+          when :resize
+            # TRANSLATORS: dialog title when resizing a MD RAID.
+            # %s is a device name like /dev/md0
+            _("Resize RAID %s") % md.name
+          end
         end
 
         # Sets default values for the chunk size and parity algorithm of the Md device
@@ -175,6 +197,16 @@ module Y2Partitioner
 
         def working_graph
           DeviceGraphs.instance.current
+        end
+
+        # Creates a new MD RAID
+        #
+        # @return [Y2Storage::Md]
+        def new_md
+          name = Y2Storage::Md.find_free_numeric_name(working_graph)
+          md = Y2Storage::Md.create(working_graph, name)
+          md.md_level = Y2Storage::MdLevel::RAID0 if md.md_level.is?(:unknown)
+          md
         end
 
         def available?(partition)

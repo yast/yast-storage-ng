@@ -67,7 +67,7 @@ The specs are based on current version of expert partitioner for TW. The goal is
     * shows a bar image with the disk partitions
     * shows a table filled out with disk partitions info (same columns than before)
     * shows the actions: 'Expert', 'Add', 'Edit', 'Move'
-      * *(pending) and action 'Expert' is selected*
+      * and action 'Expert' is selected
         * shows two options: 'Create New Partition Table' and 'Clone this Disk'
           * and 'Create New Partition Table' is selected
             * shows a popup to select a partition table type: MSDOS, GPT, DASD
@@ -76,7 +76,7 @@ The specs are based on current version of expert partitioner for TW. The goal is
               * asks for confirmation
               * removes existing partition table
               * creates a new partition table into the disk
-          * and 'Clone this Disk' is selected
+          * *(pending) and 'Clone this Disk' is selected*
             * shows a popup dialog to select the disk where to clone
             * and 'Ok' is selected
               * shows a popup to confirm partitions deleting
@@ -322,7 +322,7 @@ The specs are based on current version of expert partitioner for TW. The goal is
   * sets 'File system Id' to 0x83 Linux
 * and 'File system' is Swap
   * *(pending) shows 'Options' button as disabled*
-  * *(pending) sets 'Mount point' to Swap*
+  * sets 'Mount point' to Swap
   * sets 'File system Id' to 0x82 Linux swap
 
 ##### When 'Do not format partition' is selected
@@ -432,7 +432,7 @@ The specs are based on current version of expert partitioner for TW. The goal is
     * shows a wizard to create a new RAID
 * and action 'Edit' is selected
   * shows dialog to edit the RAID partition
-* *(pending) and action 'Resize' is selected*
+* and action 'Resize' is selected
   * shows a dialog to modify the RAID devices
 * and action 'Delete' is selected
   * shows a confirm popup to delete the RAID
@@ -458,7 +458,7 @@ The specs are based on current version of expert partitioner for TW. The goal is
   * shows the actions: 'Edit', 'Resize' and 'Delete'
     * and action 'Edit' is selected
       * shows dialog to edit the RAID partition (similar to edit disk partition)
-    * *(pending) and action 'Resize' is selected*
+    * and action 'Resize' is selected
       * shows a dialog to modify the RADID devices
     * and action 'Delete' is selected
       * shows a confirm popup to delete the RAID
@@ -466,10 +466,10 @@ The specs are based on current version of expert partitioner for TW. The goal is
 * and tab 'Used Devices' is selected
   * shows a table with the columns: Device, Size, F, Enc and Type
     * and the table is filled out with info of all devices that belong to the RAID
-  * *(pending) and an item in the table is selected (double click)*
+  * and an item in the table is selected (double click)
     * jumps to the corresponding partition in the 'Hard Disks' section
 
-### When 'Add RAID' is selected*
+### When 'Add RAID' is selected
 * shows a wizard with 5 steps
   * select RAID type and devices
   * select RAID options
@@ -481,7 +481,7 @@ The specs are based on current version of expert partitioner for TW. The goal is
   * set encrypt password (optional)
     * same wizard step than in partition creation (see above)
 
-#### When we are in wizard step to select RAID type and devices*
+#### When we are in wizard step to select RAID type and devices
 * shows the following options
   * RAID Type
     * RAID 0 (at least 2 devices)
@@ -561,7 +561,7 @@ The specs are based on current version of expert partitioner for TW. The goal is
 * same dialog than partition edition (see above)
 * 'File System Id' is not shown
 
-### *(pending) When 'Resize' is selected*
+### When 'Resize' is selected
 * same dialog than wizard step to select RAID type and devices
 * 'RAID Type' is not shown
 * 'RAID Name' is not shown
