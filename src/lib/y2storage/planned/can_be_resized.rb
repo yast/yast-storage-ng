@@ -52,25 +52,33 @@ module Y2Storage
 
       # Implements reuse_device! hook
       #
+      # @param device [Y2Storage::Device]
       # @see Y2Storage::Planned::Device#reuse_device!
       def reuse_device!(device)
         super
 
         return unless resize?
 
-        info = device.detect_resize_info
-        return unless info.resize_ok?
+        resize_info = device.detect_resize_info
+        return unless resize_info.resize_ok?
 
+        resize_device!(device, resize_info)
+      end
+
+      # Assigns size to the real device in order to resize it
+      #
+      # @param device [Y2Storage::Device]
+      def resize_device!(device, resize_info)
         device.size =
-          if max_size > info.max_size
-            info.max_size
-          elsif max_size < info.min_size
-            info.min_size
+          if max_size > resize_info.max_size || max_size == DiskSize.unlimited
+            resize_info.max_size
+          elsif max_size < resize_info.min_size
+            resize_info.min_size
           else
             max_size
           end
 
-        if max_size != device.size
+        if max_size != device.size && max_size != DiskSize.unlimited
           log.warn "Resizing #{reuse} to #{max_size} was not possible. Using #{device.size} instead."
         end
       end

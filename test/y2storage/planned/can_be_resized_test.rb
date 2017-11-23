@@ -64,7 +64,8 @@ describe Y2Storage::Planned::CanBeResized do
     end
 
     it "does not log any warning regarding resizing" do
-      expect(planned).to_not receive(:warn).with(/Resizing/)
+      allow(real_device).to receive(:size).and_return(planned.max_size)
+      expect(planned.log).to_not receive(:warn).with(/Resizing/)
       planned.reuse!(devicegraph)
     end
 
@@ -82,7 +83,7 @@ describe Y2Storage::Planned::CanBeResized do
       end
     end
 
-    context "when expected size is smaller than maximal allowed size" do
+    context "when expected size is greater than maximal allowed size" do
       let(:max_size) { 15.GiB }
 
       it "uses the maximal size" do
@@ -92,6 +93,20 @@ describe Y2Storage::Planned::CanBeResized do
 
       it "logs a warning" do
         expect(planned.log).to receive(:warn).with(/Resizing/)
+        planned.reuse!(devicegraph)
+      end
+    end
+
+    context "when expected size is unlimited" do
+      let(:max_size) { Y2Storage::DiskSize.unlimited }
+
+      it "uses the maximal size" do
+        expect(real_device).to receive(:size=).with(resize_info.max_size)
+        planned.reuse!(devicegraph)
+      end
+
+      it "does not log any warning regarding resizing" do
+        expect(planned.log).to_not receive(:warn).with(/Resizing/)
         planned.reuse!(devicegraph)
       end
     end
