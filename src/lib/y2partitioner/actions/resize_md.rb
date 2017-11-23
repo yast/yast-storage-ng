@@ -23,6 +23,7 @@ require "yast"
 require "y2partitioner/actions/transaction_wizard"
 require "y2partitioner/actions/controllers/md"
 require "y2partitioner/dialogs/md_resize"
+require "y2partitioner/device_graphs"
 
 Yast.import "Popup"
 
@@ -108,7 +109,8 @@ module Y2Partitioner
 
       # @return [Boolean] true if the MD RAID is already created on disk; false otherwise
       def committed?
-        controller.md.exists_in_probed?
+        system = Y2Partitioner::DeviceGraphs.instance.system
+        controller.md.exists_in_devicegraph?(system)
       end
 
       # @return [Boolean] true if the MD RAID belongs to a volume group; false otherwise
