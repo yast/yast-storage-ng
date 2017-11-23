@@ -99,6 +99,40 @@ describe Y2Storage::Proposal::AutoinstDrivesMap do
         expect(drives_map.disk_names).to eq(["/dev/sda"])
       end
     end
+
+    context "when several disks match" do
+      let(:scenario) { "autoyast_drive_examples" }
+      let(:partitioning_array) do
+        # The "use" field is used to distinguish the drives later
+        [
+          { "use" => "all" }, { "use" => "1" }, { "use" => "1,2" }, { "use" => "free" }
+        ]
+      end
+
+      it "selects the disks in the order given by Partitionable#compare_by_name" do
+        expect(drives_map.each_pair.map { |name, drive| [name, drive.use] }).to contain_exactly(
+          ["/dev/dasda", "all"], ["/dev/dasdb", [1]], ["/dev/nvme0n1", [1, 2]], ["/dev/sda", "free"]
+        )
+      end
+
+      context "even if Disk.all and Dasd.all return unsorted arrays" do
+        before do
+          allow(Y2Storage::Disk).to receive(:all) do |devicegraph|
+            # Let's shuffle things a bit
+            shuffle(Y2Storage::Partitionable.all(devicegraph).select { |i| i.is?(:disk) })
+          end
+          dasda = Y2Storage::Dasd.find_by_name(fake_devicegraph, "/dev/dasda")
+          dasdb = Y2Storage::Dasd.find_by_name(fake_devicegraph, "/dev/dasdb")
+          allow(Y2Storage::Dasd).to receive(:all).and_return [dasdb, dasda]
+        end
+
+        it "selects the disks in the order given by Partitionable#compare_by_name" do
+          expect(drives_map.each_pair.map { |name, drive| [name, drive.use] }).to contain_exactly(
+            ["/dev/dasda", "all"], ["/dev/dasdb", [1]], ["/dev/nvme0n1", [1, 2]], ["/dev/sda", "free"]
+          )
+        end
+      end
+    end
   end
 
   describe "#each" do

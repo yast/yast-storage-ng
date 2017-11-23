@@ -43,4 +43,48 @@ describe Y2Storage::Dasd do
       expect(subject.preferred_ptable_type).to eq Y2Storage::PartitionTables::Type::DASD
     end
   end
+
+  describe ".all" do
+    let(:scenario) { "autoyast_drive_examples" }
+
+    it "returns a list of Y2Storage::Dasd objects" do
+      dasds = Y2Storage::Dasd.all(fake_devicegraph)
+      expect(dasds).to be_an Array
+      expect(dasds).to all(be_a(Y2Storage::Dasd))
+    end
+
+    it "includes all dasds in the devicegraph and nothing else" do
+      dasds = Y2Storage::Dasd.all(fake_devicegraph)
+      expect(dasds.map(&:basename)).to contain_exactly("dasda", "dasdb")
+    end
+  end
+
+  describe ".sorted_by_name" do
+    let(:scenario) { "autoyast_drive_examples" }
+
+    it "returns a list of Y2Storage::Dasd objects" do
+      dasds = Y2Storage::Dasd.sorted_by_name(fake_devicegraph)
+      expect(dasds).to be_an Array
+      expect(dasds).to all(be_a(Y2Storage::Dasd))
+    end
+
+    it "includes all dasds in the devicegraph, sorted by name and nothing else" do
+      dasds = Y2Storage::Dasd.sorted_by_name(fake_devicegraph)
+      expect(dasds.map(&:basename)).to eq ["dasda", "dasdb"]
+    end
+
+    context "even if Dasd.all returns an unsorted array" do
+      before do
+        first = Y2Storage::Dasd.find_by_name(fake_devicegraph, "/dev/dasda")
+        second = Y2Storage::Dasd.find_by_name(fake_devicegraph, "/dev/dasdb")
+        # Inverse order
+        allow(Y2Storage::Dasd).to receive(:all).and_return [second, first]
+      end
+
+      it "returns an array sorted by name" do
+        dasds = Y2Storage::Dasd.sorted_by_name(fake_devicegraph)
+        expect(dasds.map(&:basename)).to eq ["dasda", "dasdb"]
+      end
+    end
+  end
 end

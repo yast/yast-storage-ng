@@ -342,4 +342,54 @@ describe Y2Storage::Disk do
       end
     end
   end
+
+  describe ".all" do
+    let(:scenario) { "autoyast_drive_examples" }
+
+    it "returns a list of Y2Storage::Disk objects" do
+      disks = Y2Storage::Disk.all(fake_devicegraph)
+      expect(disks).to be_an Array
+      expect(disks).to all(be_a(Y2Storage::Disk))
+    end
+
+    it "includes all disks in the devicegraph and nothing else" do
+      disks = Y2Storage::Disk.all(fake_devicegraph)
+      expect(disks.map(&:basename)).to contain_exactly(
+        "sda", "sdb", "sdc", "sdd", "sdaa", "sdf", "nvme0n1", "sdh"
+      )
+    end
+  end
+
+  describe ".sorted_by_name" do
+    let(:scenario) { "autoyast_drive_examples" }
+
+    it "returns a list of Y2Storage::Disk objects" do
+      disks = Y2Storage::Disk.sorted_by_name(fake_devicegraph)
+      expect(disks).to be_an Array
+      expect(disks).to all(be_a(Y2Storage::Disk))
+    end
+
+    it "includes all disks in the devicegraph, sorted by name, and nothing else" do
+      disks = Y2Storage::Disk.sorted_by_name(fake_devicegraph)
+      expect(disks.map(&:basename)).to eq [
+        "nvme0n1", "sda", "sdb", "sdc", "sdd", "sdf", "sdh", "sdaa"
+      ]
+    end
+
+    context "even if Disk.all returns an unsorted array" do
+      before do
+        allow(Y2Storage::Disk).to receive(:all) do |devicegraph|
+          # Let's shuffle things a bit
+          shuffle(Y2Storage::Partitionable.all(devicegraph).select { |i| i.is?(:disk) })
+        end
+      end
+
+      it "returns an array sorted by name" do
+        disks = Y2Storage::Disk.sorted_by_name(fake_devicegraph)
+        expect(disks.map(&:basename)).to eq [
+          "nvme0n1", "sda", "sdb", "sdc", "sdd", "sdf", "sdh", "sdaa"
+        ]
+      end
+    end
+  end
 end

@@ -175,37 +175,9 @@
         file_system: vfat
         label: recovery
 
-# Like sdc but with MS-DOS partition table
-- disk:
-    name: /dev/sde
-    size: 500 GiB
-    partition_table:  msdos
-    partitions:
-
-    - partition:
-        size:         250 GiB
-        name:         /dev/sde1
-        id:           ntfs
-        file_system:  ntfs
-        label:        windows
-
-    - partition:
-        size:         2 GiB
-        name:         /dev/sde2
-        id:           swap
-        file_system:  swap
-        mount_point:  swap
-        label:        swap
-
-    - partition:
-        size:         20 GiB
-        name:         /dev/sde3
-        file_system:  ext4
-        mount_point:  /
-        label:        root
-
 # With extended partitions between the Windows ones, to ensure extended is not
 # confused with a Linux
+# Listed in this file before /dev/sde, to challenge Y2Storage a bit
 - disk:
     size: 800.00 GiB
     name: "/dev/sdf"
@@ -213,7 +185,7 @@
     partitions:
 
     - partition:
-        size: 745470 MiB
+        size: 745460 MiB
         name: /dev/sdf1
         id: ntfs
         file_system: ntfs
@@ -248,34 +220,84 @@
         encryption:
           name: /dev/mapper/cr_sdf7
 
+    - partition:
+        size: 10 GiB
+        name: "/dev/sdf8"
+        type: logical
+
+    - partition:
+        size: 10 GiB
+        name: "/dev/sdf9"
+        type: logical
+
+    - partition:
+        size: 10 GiB
+        name: "/dev/sdf10"
+        type: logical
+
+    - partition:
+        size: 10 GiB
+        name: "/dev/sdf11"
+        type: logical
+
+# Like sdc but with MS-DOS partition table
+# Use sdaa to challenge us even if we don't have all the possible sd[a-z]
+- disk:
+    name: /dev/sdaa
+    size: 500 GiB
+    partition_table:  msdos
+    partitions:
+
+    - partition:
+        size:         250 GiB
+        name:         /dev/sdaa1
+        id:           ntfs
+        file_system:  ntfs
+        label:        windows
+
+    - partition:
+        size:         2 GiB
+        name:         /dev/sdaa2
+        id:           swap
+        file_system:  swap
+        mount_point:  swap
+        label:        swap
+
+    - partition:
+        size:         20 GiB
+        name:         /dev/sdaa3
+        file_system:  ext4
+        mount_point:  /
+        label:        root
+
 # Several special (from the PartitionSection point of view) partition ids
 - disk:
     size: 800 GiB
-    name: "/dev/sdg"
+    name: "/dev/nvme0n1"
     partition_table: msdos
     partitions:
 
     - partition:
         size: 75 GiB
-        name: /dev/sdg1
+        name: /dev/nvme0n1p1
         id: dos32
         file_system: vfat
 
     - partition:
         size: 40 GiB
-        name: /dev/sdg2
+        name: /dev/nvme0n1p2
         id: prep
         file_system: vfat
 
     - partition:
         size: 2 GiB
-        name: /dev/sdg3
+        name: /dev/nvme0n1p3
         id: dos16
         file_system: vfat
 
     - partition:
         size: unlimited
-        name: /dev/sdg4
+        name: /dev/nvme0n1p4
         file_system: ext4
 
 # Just to have some BIOS BOOT partition

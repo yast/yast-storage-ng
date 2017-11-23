@@ -52,7 +52,8 @@ module Y2Storage
 
     # @!method self.all(devicegraph)
     #   @param devicegraph [Devicegraph]
-    #   @return [Array<Dasd>] all the DASDs in the given devicegraph
+    #   @return [Array<Dasd>] all the DASDs in the given devicegraph,
+    #     in no particular order
     storage_class_forward :all, as: "Dasd"
 
     # @!method self.find_by_name(devicegraph, name)

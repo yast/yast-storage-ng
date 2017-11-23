@@ -79,8 +79,59 @@ module Y2Storage
 
     # @!method self.all(devicegraph)
     #   @param devicegraph [Devicegraph]
-    #   @return [Array<Partitionable>] all the partitionable devices in the given devicegraph
+    #   @return [Array<Partitionable>] all the partitionable devices in the given devicegraph,
+    #     in no particular order
     storage_class_forward :all, as: "Partitionable"
+
+    # @!method self.compare_by_name(lhs, rhs)
+    #   Compare two devices by their name, used for sorting sets of
+    #   partitionable devices.
+    #
+    #   Using this method to compare and sort would result is something similar
+    #   to alphabetical order but with some desired exceptions like:
+    #
+    #   * /dev/sda, /dev/sdb, ..., /dev/sdaa
+    #   * /dev/md1, /dev/md2, ..., /dev/md10
+    #
+    #   @param lhs [Partitionable]
+    #   @param rhs [Partitionable]
+    #   @return [boolean] true if the first argument should appear first in a
+    #       sorted list (less than)
+    storage_class_forward :compare_by_name
+
+    # Compare to another device by name, used for sorting sets of
+    # partitionable devices.
+    #
+    # Using this method to compare and sort would result is something similar
+    # to alphabetical order but with some desired exceptions like:
+    #
+    # * /dev/sda, /dev/sdb, ..., /dev/sdaa
+    # * /dev/md1, /dev/md2, ..., /dev/md10
+    #
+    # Unlike the class method {Partitionable.compare_by_name}, which is boolean,
+    # this method follows the Ruby convention of returning -1 or 1 in the same
+    # cases than the <=> operator.
+    #
+    # @param other [Partitionable]
+    # @return [Integer] -1 if this object should appear before the one passed as
+    #   argument (less than). 1 otherwise.
+    def compare_by_name(other)
+      # In practice, two devices cannot have the same name. But let's take the
+      # case in consideration to ensure full compatibility with <=>
+      return 0 if name == other.name
+      Partitionable.compare_by_name(self, other) ? -1 : 1
+    end
+
+    # All the devices of the correspondig class found in the given devicegraph,
+    # sorted by name
+    #
+    # See {Partitionable#compare_by_name} to know more about the sorting.
+    #
+    # @param devicegraph [Devicegraph]
+    # @return [Array<#compare_by_name>]
+    def self.sorted_by_name(devicegraph)
+      all(devicegraph).sort { |a, b| a.compare_by_name(b) }
+    end
 
     # Partitions in the device
     #
