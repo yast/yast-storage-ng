@@ -130,9 +130,24 @@ module Y2Storage
     # @param devices     [Array<Planned:Device>] List of planned devices
     # @return [Array<Planned::Device>] List of required planned devices to boot
     def boot_devices(devicegraph, devices)
-      return unless root?(devices)
-      checker = BootRequirementsChecker.new(devicegraph, planned_devices: devices)
+      mountable_devices = find_mountable_devices(devices)
+      return unless root?(mountable_devices)
+      checker = BootRequirementsChecker.new(devicegraph, planned_devices: mountable_devices)
       checker.needed_partitions
+    end
+
+    # Return mountable devices from the list of planned ones
+    #
+    # @param devices [Array<Planned::Device>] List of planned devices
+    # @return [Array<Planned::Device>] List of devices that can be mounted
+    def find_mountable_devices(devices)
+      devices.each_with_object([]) do |dev, all|
+        if dev.respond_to?(:mount_point)
+          all << dev
+        elsif dev.is_a?(Planned::LvmVg)
+          all.concat(dev.lvs)
+        end
+      end
     end
 
     # Determines whether the list of devices includes a root partition

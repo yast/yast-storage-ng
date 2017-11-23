@@ -81,6 +81,11 @@ describe Y2Storage::AutoinstProposal do
         )
       end
 
+      it "does not register any issue" do
+        proposal.propose
+        expect(issues_list).to be_empty
+      end
+
       context "when using btrfs" do
         let(:root) { ROOT_PART.merge("create" => true, "filesystem" => :btrfs) }
         let(:root_fs) { proposal.devices.partitions.first.filesystem }
@@ -107,6 +112,20 @@ describe Y2Storage::AutoinstProposal do
             proposal.propose
             expect(root_fs.configure_snapper).to eq false
           end
+        end
+      end
+
+      context "when no root is proposed" do
+        let(:partitioning) do
+          [{ "device" => "/dev/sda", "use" => "all", "partitions" => [home] }]
+        end
+
+        it "registers an issue" do
+          proposal.propose
+          issue = issues_list.find do |i|
+            i.is_a?(Y2Storage::AutoinstIssues::MissingRoot)
+          end
+          expect(issue).to_not be_nil
         end
       end
     end
@@ -485,7 +504,7 @@ describe Y2Storage::AutoinstProposal do
       let(:partitioning) do
         [
           { "device" => "/dev/sda", "use" => "all", "partitions" => [lvm_pv] },
-          { "device" => "/dev/system", "partitions" => [root_spec], "type" => :CT_LVM }
+          { "device" => "/dev/system", "partitions" => lvs, "type" => :CT_LVM }
         ]
       end
 
@@ -496,6 +515,8 @@ describe Y2Storage::AutoinstProposal do
       let(:root_spec) do
         { "mount" => "/", "filesystem" => "ext4", "lv_name" => "root", "size" => "1G" }
       end
+
+      let(:lvs) { [root_spec] }
 
       it "creates requested volume groups" do
         proposal.propose
@@ -515,6 +536,11 @@ describe Y2Storage::AutoinstProposal do
             "lv_name" => "root"
           )
         )
+      end
+
+      it "does not register any issue" do
+        proposal.propose
+        expect(issues_list).to be_empty
       end
 
       context "when using btrfs" do
@@ -568,6 +594,22 @@ describe Y2Storage::AutoinstProposal do
             proposal.propose
             expect(root_fs.configure_snapper).to eq true
           end
+        end
+      end
+
+      context "when no root is proposed" do
+        let(:home_spec) do
+          { "mount" => "/home", "filesystem" => "ext4", "lv_name" => "root", "size" => "1G" }
+        end
+
+        let(:lvs) { [home_spec] }
+
+        it "registers an issue" do
+          proposal.propose
+          issue = issues_list.find do |i|
+            i.is_a?(Y2Storage::AutoinstIssues::MissingRoot)
+          end
+          expect(issue).to_not be_nil
         end
       end
     end
