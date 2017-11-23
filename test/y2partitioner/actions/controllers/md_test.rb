@@ -392,48 +392,38 @@ describe Y2Partitioner::Actions::Controllers::Md do
   end
 
   describe "#wizard_title" do
-    let(:wizard_title) { controller.wizard_title(action: action) }
+    subject(:controller) { described_class.new(md: md) }
 
-    context "when no action is given" do
-      let(:action) { nil }
+    let(:md) { nil }
 
-      it "returns nil" do
-        expect(wizard_title).to be_nil
-      end
+    it "returns a string containing the name of the Md device" do
+      wizard_title = controller.wizard_title
+      expect(wizard_title).to be_a(String)
+      expect(wizard_title).to include("/dev/md0")
+      expect(wizard_title).to_not include("/dev/md/foobar")
+
+      controller.md_name = "foobar"
+
+      wizard_title = controller.wizard_title
+      expect(wizard_title).to_not include("/dev/md0")
+      expect(wizard_title).to include("/dev/md/foobar")
     end
 
-    context "when valid action is given" do
-      let(:action) { :add }
-
-      it "returns a string containing the name of the Md device" do
-        wizard_title = controller.wizard_title(action: action)
-        expect(wizard_title).to be_a(String)
-        expect(wizard_title).to include("/dev/md0")
-        expect(wizard_title).to_not include("/dev/md/foobar")
-
-        controller.md_name = "foobar"
-
-        wizard_title = controller.wizard_title(action: action)
-        expect(wizard_title).to_not include("/dev/md0")
-        expect(wizard_title).to include("/dev/md/foobar")
-      end
-    end
-
-    context "when action is :add" do
-      let(:action) { :add }
+    context "when a new MD RAID is being created" do
+      let(:md) { nil }
 
       it "returns a string containing the title for adding a Md device" do
-        expect(wizard_title).to be_a(String)
-        expect(wizard_title).to include("Add RAID")
+        expect(controller.wizard_title).to be_a(String)
+        expect(controller.wizard_title).to include("Add RAID")
       end
     end
 
-    context "when action is :resize" do
-      let(:action) { :resize }
+    context "when a MD RAID is being resized" do
+      let(:md) { Y2Storage::Md.create(current_graph, "/dev/md0") }
 
       it "returns a string containing the title for resizing a Md device" do
-        expect(wizard_title).to be_a(String)
-        expect(wizard_title).to include("Resize RAID")
+        expect(controller.wizard_title).to be_a(String)
+        expect(controller.wizard_title).to include("Resize RAID")
       end
     end
   end

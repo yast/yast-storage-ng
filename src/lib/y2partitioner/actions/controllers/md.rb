@@ -46,6 +46,9 @@ module Y2Partitioner
         def initialize(md: nil)
           textdomain "storage"
 
+          # A MD RAID is given when it is going to be resized
+          @action = md.nil? ? :add : :resize
+
           md ||= new_md
 
           @md_sid = md.sid
@@ -132,10 +135,11 @@ module Y2Partitioner
 
         # Title to display in the dialogs during the process
         #
-        # @param action [Symbol] action currently being performed (:add, :resize)
+        # @note The returned title depends on the action to perform (see {#initialize})
+        #
         # @return [String]
-        def wizard_title(action: nil)
-          case action
+        def wizard_title
+          case @action
           when :add
             # TRANSLATORS: dialog title when creating a MD RAID.
             # %s is a device name like /dev/md0

@@ -38,7 +38,7 @@ module Y2Partitioner
 
       # @macro seeDialog
       def title
-        controller.wizard_title(action: :resize)
+        controller.wizard_title
       end
 
       # @macro seeDialog
