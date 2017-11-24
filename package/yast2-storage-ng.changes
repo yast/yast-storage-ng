@@ -1,4 +1,13 @@
 -------------------------------------------------------------------
+Thu Nov 23 15:27:23 UTC 2017 - igonzalezsosa@suse.com
+
+- AutoYaST: add support to resize partitions and logical volumes
+  (bsc#1069505).
+- AutoYaST: fix detection of root partition when using LVM
+  (bsc#1069647).
+- 4.0.36
+
+-------------------------------------------------------------------
 Thu Nov 23 13:05:31 UTC 2017 - ancor@suse.com
 
 - Ensure that disks considered for (auto)installation are always

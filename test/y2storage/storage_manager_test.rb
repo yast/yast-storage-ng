@@ -226,7 +226,7 @@ describe Y2Storage::StorageManager do
 
     context "during installation" do
       let(:mode) { :installation }
-      let(:staging) { double("Y2Storage::Devicegraph", filesystems: filesystems) }
+      let(:staging) { double("Y2Storage::Devicegraph", filesystems: filesystems, to_xml: "xml") }
       let(:filesystems) { [root_fs, another_fs] }
       let(:root_fs) { double("Y2Storage::BlkFilesystem", root?: true) }
       let(:another_fs) { double("Y2Storage::BlkFilesystem", root?: false) }

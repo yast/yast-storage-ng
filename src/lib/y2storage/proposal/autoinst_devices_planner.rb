@@ -243,7 +243,7 @@ module Y2Storage
         partition_to_reuse = find_partition_to_reuse(devicegraph, section)
         return unless partition_to_reuse
         partition.filesystem_type ||= partition_to_reuse.filesystem_type
-        add_device_reuse(partition, partition_to_reuse.name, !!section.format)
+        add_device_reuse(partition, partition_to_reuse.name, section)
       end
 
       # Set 'reusing' attributes for a logical volume
@@ -253,18 +253,13 @@ module Y2Storage
       #
       # @param lv      [Planned::LvmLv] Planned logical volume
       # @param vg_name [String]         Volume group name to search for the logical volume to reuse
-      # @param section   [AutoinstProfile::PartitionSection] AutoYaST specification
+      # @param section [AutoinstProfile::PartitionSection] AutoYaST specification
       def add_lv_reuse(lv, vg_name, section)
         lv_to_reuse = find_lv_to_reuse(devicegraph, vg_name, section)
         return unless lv_to_reuse
         lv.logical_volume_name ||= lv_to_reuse.lv_name
         lv.filesystem_type ||= lv_to_reuse.filesystem_type
-        add_device_reuse(lv, lv_to_reuse.name, !!section.format)
-      end
-
-      def add_device_reuse(device, name, format)
-        device.reuse = name
-        device.reformat = format
+        add_device_reuse(lv, lv_to_reuse.name, section)
       end
 
       # Set 'reusing' attributes for a volume group
@@ -294,7 +289,16 @@ module Y2Storage
           issues_list.add(:missing_reusable_device, section)
           return
         end
-        add_device_reuse(md, md_to_reuse.name, !!section.format)
+        add_device_reuse(md, md_to_reuse.name, section)
+      end
+
+      # @param device  [Planned::Partition,Planned::LvmLV] Planned device
+      # @param name    [String] Name of the device to reuse
+      # @param section [AutoinstProfile::PartitionSection] AutoYaST specification
+      def add_device_reuse(device, name, section)
+        device.reuse = name
+        device.reformat = !!section.format
+        device.resize = !!section.resize if device.respond_to?(:resize=)
       end
 
       # @param devicegraph [Devicegraph] Devicegraph to search for the partition to reuse
