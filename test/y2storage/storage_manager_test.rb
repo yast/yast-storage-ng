@@ -102,6 +102,33 @@ describe Y2Storage::StorageManager do
       manager.staging = new_graph
       expect(manager.proposal).to be_nil
     end
+
+    context "when trying to assign staging to itself" do
+      # In the past, copying staging into itself, i.e. staging.copy(staging),
+      # caused it to become a completely empty devicegraph.
+      it "does not modify or break staging" do
+        old_staging = manager.staging
+        expect(old_staging.disks.size).to eq 1
+
+        manager.staging = old_staging
+
+        expect(manager.staging).to eq old_graph
+        expect(manager.staging).to_not be_empty
+        expect(manager.staging.disks.size).to eq 1
+      end
+    end
+
+    it "increments the staging revision" do
+      pre = manager.staging_revision
+      manager.staging = new_graph
+      expect(manager.staging_revision).to be > pre
+    end
+
+    it "sets #proposal to nil" do
+      expect(manager.proposal).to_not be_nil
+      manager.staging = manager.staging
+      expect(manager.proposal).to be_nil
+    end
   end
 
   describe "#proposal=" do

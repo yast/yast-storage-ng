@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Fri Nov 24 13:25:34 UTC 2017 - ancor@suse.com
+
+- Fixed a problem when confirming the very same partitioning schema
+  several times (bug#1069671).
+- 4.0.38
+
+-------------------------------------------------------------------
 Fri Nov 24 12:23:03 UTC 2017 - igonzalezsosa@suse.com
 
 - AutoYaST: safer handling of partition ids (bsc#1067207).
