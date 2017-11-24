@@ -191,7 +191,7 @@ describe Y2Storage::Devicegraph do
 
     def less_than_next(device, collection)
       next_dev = collection[collection.index(device) + 1]
-      next_dev.nil? || Y2Storage::Partitionable.compare_by_name(device, next_dev)
+      next_dev.nil? || device.compare_by_name(next_dev) < 0
     end
 
     context "if there are no multi-disk devices" do

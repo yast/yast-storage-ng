@@ -527,4 +527,34 @@ describe Y2Storage::BlkDevice do
       end
     end
   end
+
+  describe ".sorted_by_name" do
+    before { fake_scenario("sorting/disks_and_dasds1") }
+
+    it "returns all the blk devices sorted by name" do
+      devices = Y2Storage::BlkDevice.sorted_by_name(fake_devicegraph)
+      expect(devices.map(&:basename)).to eq %w(
+        dasda dasda1 dasda2 dasda10 dasdb dasdab dasdb1 dasdb2 dasdb3
+        nvme0n1 nvme0n1p1 nvme0n1p2 nvme0n1p3 nvme0n1p4 nvme0n1p10 nvme0n1p11 nvme0n1p40
+        nvme0n2 nvme0n2p1 nvme0n2p2 nvme1n1 nvme1n1p1 nvme1n1p2
+        sda sdb sdaa sdb1 sdb2 sdc sdc1 sdc2 sdc3 sdc4 sdc10 sdc21 sdaa1 sdaa2 sdaa3
+      )
+    end
+  end
+
+  describe "#compare_by_name" do
+    context "when devices of different types share a common name structure" do
+      before { fake_scenario("sorting/disks_and_dasds2") }
+
+      let(:vda) { Y2Storage::Disk.find_by_name(fake_devicegraph, "/dev/vda") }
+      let(:vdaa) { Y2Storage::Dasd.find_by_name(fake_devicegraph, "/dev/vdaa") }
+      let(:vdb) { Y2Storage::Disk.find_by_name(fake_devicegraph, "/dev/vdb") }
+
+      it "allows to sort them by name, no matter the input order" do
+        [vda, vdaa, vdb].permutation do |input|
+          expect(input.sort { |a, b| a.compare_by_name(b) }).to eq [vda, vdb, vdaa]
+        end
+      end
+    end
+  end
 end

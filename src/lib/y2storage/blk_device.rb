@@ -31,6 +31,8 @@ module Y2Storage
     wrap_class Storage::BlkDevice,
       downcast_to: ["Partitionable", "Partition", "Encryption", "LvmLv"]
 
+    DEVDIR = "/dev/".freeze
+
     # @!method self.all(devicegraph)
     #   @param devicegraph [Devicegraph]
     #   @return [Array<BlkDevice>] all the block devices in the given devicegraph
@@ -314,6 +316,72 @@ module Y2Storage
     # @see Y2Storage::HWInfoReader
     def hwinfo
       Y2Storage::HWInfoReader.instance.for_device(name)
+    end
+
+    # Regular expression matching with the name of this device.
+    #
+    # @see .name_regexps
+    def name_regexp
+      self.class.name_regexps.find { |regexp| regexp.match?(name) }
+    end
+
+    # To be redefined by each subclass, possible structures of a device name.
+    #
+    # Each regular expression must capture (using parenthesis) all the variable
+    # parts of the name, that will be compared using #compare_substrings
+    #
+    # @return [Array<Regexp>]
+    def self.name_regexps
+      []
+    end
+
+    # All the devices of the correspondig class found in the given devicegraph,
+    # sorted by name
+    #
+    # See {#compare_by_name} to know more about the sorting.
+    #
+    # @param devicegraph [Devicegraph]
+    # @return [Array<BlkDevice>]
+    def self.sorted_by_name(devicegraph)
+      all(devicegraph).sort { |a, b| a.compare_by_name(b) }
+    end
+
+    # Compare to another device by name, used for sorting sets of
+    # block devices.
+    #
+    # Using this method to compare and sort would result is something similar
+    # to alphabetical order but with some desired exceptions like:
+    #
+    # * /dev/sda, /dev/sdb, ..., /dev/sdaa
+    # * /dev/md1, /dev/md2, ..., /dev/md10
+    #
+    # @param other [BlkDevice]
+    # @return [Integer] -1 if this object should appear before the one passed as
+    #   argument (less than). 1 otherwise.
+    def compare_by_name(other)
+      # Check if both names follow the same structure
+      if name_regexp && name_regexp == other.name_regexp
+        match = name_regexp.match(name)
+        other_match = other.name_regexp.match(other.name)
+
+        # If both names follow the same structure, compare by order each one of
+        # the variable parts by size and alphabetical order
+        match.captures.each_with_index do |capture, index|
+          other_capture = other_match.captures[index]
+          result = compare_substrings(capture, other_capture)
+          return result unless result.zero?
+        end
+      end
+
+      # The names don't share a matching expression, fallback to pure
+      # alphabetical order
+      name <=> other.name
+    end
+
+    # Compare two strings by size and, in case of tie, by alphabetical order
+    def compare_substrings(lhs, rhs)
+      by_size = lhs.size <=> rhs.size
+      by_size.zero? ? lhs <=> rhs : by_size
     end
   end
 end
