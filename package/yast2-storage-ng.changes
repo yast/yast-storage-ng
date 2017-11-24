@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Fri Nov 24 12:23:03 UTC 2017 - igonzalezsosa@suse.com
+
+- AutoYaST: safer handling of partition ids (bsc#1067207).
+- 4.0.37
+
+-------------------------------------------------------------------
 Thu Nov 23 15:27:23 UTC 2017 - igonzalezsosa@suse.com
 
 - AutoYaST: add support to resize partitions and logical volumes
