@@ -194,7 +194,7 @@ module Y2Storage
         region = new_region_with_size(free_space.region, planned_partition.size)
 
         partition = ptable.create_partition(slot.name, region, type)
-        partition.id = partition_id(ptable, planned_partition)
+        partition.adapted_id = partition_id(planned_partition)
         partition.boot = !!planned_partition.bootable if ptable.partition_boot_flag_supported?
         partition
       end
@@ -230,25 +230,18 @@ module Y2Storage
       # Returns the partition id that should be used for a new partition in
       # a specific partition table.
       #
-      # @note When a planned partition has not partition id, it will be set
-      #   based on the type of the partition table.
-      # @see PartitionTables::Base#partition_id_for
-      #
-      # @param ptable [PartitionsTable::Base] partition table
       # @param planned_partition [Planned::Partition]
       #
       # @return [PartitionId]
-      def partition_id(ptable, planned_partition)
+      def partition_id(planned_partition)
         partition_id = planned_partition.partition_id
         return partition_id if partition_id
 
-        partition_id = if planned_partition.mount_point == "swap"
+        if planned_partition.mount_point == "swap"
           PartitionId::SWAP
         else
           PartitionId::LINUX
         end
-
-        ptable.partition_id_for(partition_id)
       end
     end
   end
