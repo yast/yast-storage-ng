@@ -104,8 +104,8 @@ describe Y2Storage::StorageManager do
     end
 
     context "when trying to assign staging to itself" do
-      # It used to be in bug basically running staging.copy(staging), which
-      # resulted in staging becoming empty
+      # In the past, copying staging into itself, i.e. staging.copy(staging),
+      # caused it to become a completely empty devicegraph.
       it "does not modify or break staging" do
         old_staging = manager.staging
         expect(old_staging.disks.size).to eq 1
