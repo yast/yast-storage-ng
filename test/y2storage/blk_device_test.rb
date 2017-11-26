@@ -534,10 +534,10 @@ describe Y2Storage::BlkDevice do
     it "returns all the blk devices sorted by name" do
       devices = Y2Storage::BlkDevice.sorted_by_name(fake_devicegraph)
       expect(devices.map(&:basename)).to eq %w(
-        dasda dasda1 dasda2 dasda10 dasdb dasdab dasdb1 dasdb2 dasdb3
+        dasda dasda1 dasda2 dasda10 dasdb dasdb1 dasdb2 dasdb3 dasdab
         nvme0n1 nvme0n1p1 nvme0n1p2 nvme0n1p3 nvme0n1p4 nvme0n1p10 nvme0n1p11 nvme0n1p40
         nvme0n2 nvme0n2p1 nvme0n2p2 nvme1n1 nvme1n1p1 nvme1n1p2
-        sda sdb sdaa sdb1 sdb2 sdc sdc1 sdc2 sdc3 sdc4 sdc10 sdc21 sdaa1 sdaa2 sdaa3
+        sda sdb sdb1 sdb2 sdc sdc1 sdc2 sdc3 sdc4 sdc10 sdc21 sdaa sdaa1 sdaa2 sdaa3
       )
     end
   end

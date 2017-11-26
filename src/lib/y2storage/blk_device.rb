@@ -360,7 +360,7 @@ module Y2Storage
     #   argument (less than). 1 otherwise.
     def compare_by_name(other)
       # Check if both names follow the same structure
-      if name_regexp && name_regexp == other.name_regexp
+      if compatible_regexps?(other)
         match = name_regexp.match(name)
         other_match = other.name_regexp.match(other.name)
 
@@ -368,14 +368,36 @@ module Y2Storage
         # the variable parts by size and alphabetical order
         match.captures.each_with_index do |capture, index|
           other_capture = other_match.captures[index]
+          # Turns out they were equivalent until this point... but self if
+          # longer
+          return 1 if other_capture.nil?
+
           result = compare_substrings(capture, other_capture)
           return result unless result.zero?
         end
+
+        # They were equivalent until the end of self, but other is longer
+        return -1
       end
 
       # The names don't share a matching expression, fallback to pure
       # alphabetical order
       name <=> other.name
+    end
+
+    # Whether the #name_regexp of this device is comparable with the
+    # #name_regexp of another.
+    #
+    # Two regexp are comparable if they are the same (like comparing a /dev/vda
+    # disk with a /dev/vdb DASD) or if one is an extended version of the other
+    # (like comparing a /dev/sdaa2 partition with a /dev/sdb disk).
+    #
+    # @return [Boolean]
+    def compatible_regexps?(other)
+      return false if name_regexp.nil? || other.name_regexp.nil?
+      regexp_string = name_regexp.inspect.chomp("/")
+      other_string = other.name_regexp.inspect.chomp("/")
+      regexp_string.start_with?(other_string) || other_string.start_with?(regexp_string)
     end
 
     # Compare two strings by size and, in case of tie, by alphabetical order
