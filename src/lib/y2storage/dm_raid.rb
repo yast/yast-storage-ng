@@ -54,6 +54,15 @@ module Y2Storage
     #   @return [DmRaid] nil if there is no such device
     storage_class_forward :find_by_name, as: "DmRaid"
 
+    # Whether the RAID is defined by software
+    #
+    # @note DM RAIDS are not defined by sofware.
+    #
+    # @return [Boolean] false
+    def software_defined?
+      false
+    end
+
     def inspect
       "<DmRaid #{name} parents=#{parents}>"
     end
