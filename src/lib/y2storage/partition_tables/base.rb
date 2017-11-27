@@ -109,6 +109,13 @@ module Y2Storage
       #     legacy boot flag.
       storage_forward :partition_legacy_boot_flag_supported?
 
+      # @!method partition_id_supported?(id)
+      #
+      #   @param id [Integer] the partition id
+      #
+      #   @return [Boolean] whether a partition can have this partition id.
+      storage_forward :partition_id_supported?
+
       # @!method alignment
       #   @return [Storage::Alignment] Low-level object to calculate partition
       #     alignment based on hardware topology.
