@@ -97,6 +97,18 @@ module Y2Partitioner
           @partition = nil
         end
 
+        # Removes the filesystem when the disk is directly formatted
+        def delete_filesystem
+          disk.delete_filesystem
+        end
+
+        # Whether the disk is directly formatted
+        #
+        # @return [Boolean]
+        def disk_formatted?
+          !disk.filesystem.nil?
+        end
+
         # Whether is possible to create any new partition in the disk
         #
         # @return [Boolean]

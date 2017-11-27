@@ -25,10 +25,12 @@ require "y2partitioner/actions/controllers/partition"
 
 describe Y2Partitioner::Actions::Controllers::Partition do
   before do
-    devicegraph_stub("mixed_disks_btrfs.yml")
+    devicegraph_stub(scenario)
   end
 
-  subject { described_class.new(disk_name) }
+  subject(:controller) { described_class.new(disk_name) }
+
+  let(:scenario) { "mixed_disks_btrfs.yml" }
 
   describe "#disk" do
     let(:disk_name) { "/dev/sda" }
@@ -103,6 +105,47 @@ describe Y2Partitioner::Actions::Controllers::Partition do
       expect(subject.partition).to_not be_nil
       subject.delete_partition
       expect(subject.partition).to be_nil
+    end
+  end
+
+  describe "#delete_filesystem" do
+    let(:disk_name) { "/dev/sda" }
+
+    before do
+      allow(subject).to receive(:disk).and_return(disk)
+    end
+
+    let(:disk) { instance_double(Y2Storage::Disk) }
+
+    it "deletes the filesystem directly over the disk" do
+      expect(controller.disk).to receive(:delete_filesystem)
+      controller.delete_filesystem
+    end
+  end
+
+  describe "#disk_formatted?" do
+    let(:disk_name) { "/dev/sda" }
+
+    before do
+      allow(subject).to receive(:disk).and_return(disk)
+    end
+
+    let(:disk) { instance_double(Y2Storage::Disk, filesystem: filesystem) }
+
+    context "when the disk is not directly formatted" do
+      let(:filesystem) { nil }
+
+      it "returns false" do
+        expect(subject.disk_formatted?).to eq(false)
+      end
+    end
+
+    context "when the disk is directly formatted" do
+      let(:filesystem) { instance_double(Y2Storage::Filesystems::Btrfs) }
+
+      it "returns true" do
+        expect(subject.disk_formatted?).to eq(true)
+      end
     end
   end
 
