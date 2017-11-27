@@ -39,4 +39,26 @@ describe Y2Storage::PartitionTables::Msdos do
       expect(subject.partition_id_for(swap)).to eq swap
     end
   end
+
+  describe "#:partition_id_supported?" do
+    it "ms-dos can have a LINUX partition" do
+      expect(subject.partition_id_supported?(Y2Storage::PartitionId::LINUX)).to eq true
+    end
+
+    it "ms-dos can NOT have a WINDOWS_BASIC_DATA partition" do
+      expect(subject.partition_id_supported?(Y2Storage::PartitionId::WINDOWS_BASIC_DATA)).to eq false
+    end
+
+    it "ms-dos can have a DOS32 partition" do
+      expect(subject.partition_id_supported?(Y2Storage::PartitionId::DOS32)).to eq true
+    end
+
+    it "ms-dos can NOT have an UNKNOWN partition" do
+      expect(subject.partition_id_supported?(Y2Storage::PartitionId::UNKNOWN)).to eq false
+    end
+
+    it "ms-dos can NOT have partition id 0" do
+      expect(subject.partition_id_supported?(0)).to eq false
+    end
+  end
 end

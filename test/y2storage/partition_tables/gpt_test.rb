@@ -57,4 +57,26 @@ describe Y2Storage::PartitionTables::Gpt do
       expect(subject.partition_id_for(p_id)).to eq Y2Storage::PartitionId::WINDOWS_BASIC_DATA
     end
   end
+
+  describe "#:partition_id_supported?" do
+    it "gpt can have a LINUX partition" do
+      expect(subject.partition_id_supported?(Y2Storage::PartitionId::LINUX)).to eq true
+    end
+
+    it "gpt can have a WINDOWS_BASIC_DATA partition" do
+      expect(subject.partition_id_supported?(Y2Storage::PartitionId::WINDOWS_BASIC_DATA)).to eq true
+    end
+
+    it "gpt can NOT have a DOS32 partition" do
+      expect(subject.partition_id_supported?(Y2Storage::PartitionId::DOS32)).to eq false
+    end
+
+    it "gpt can have an UNKNOWN partition" do
+      expect(subject.partition_id_supported?(Y2Storage::PartitionId::UNKNOWN)).to eq true
+    end
+
+    it "gpt can NOT have partition id 0" do
+      expect(subject.partition_id_supported?(0)).to eq false
+    end
+  end
 end
