@@ -35,10 +35,10 @@ require "y2partitioner/widgets/used_devices_tab"
 module Y2Partitioner
   module Widgets
     module Pages
-      # Page for a disk device (disk, dasd or multipath).
+      # Page for a disk device (Disk, Dasd, BIOS RAID or Multipath).
       #
-      # This page contains a {DiskTab} and a {PartitionsTab}. In case of multipath,
-      # it also contains a {UsedDevicesTab}.
+      # This page contains a {DiskTab} and a {PartitionsTab}. In case of Multipath
+      # or BIOS RAID, it also contains a {UsedDevicesTab}.
       class Disk < CWM::Page
         # @return [Y2Storage::BlkDevice] Disk device this page is about
         attr_reader :disk
@@ -46,7 +46,8 @@ module Y2Partitioner
 
         # Constructor
         #
-        # @param disk [Y2Storage::Disk, Y2Storage::Dasd, Y2Storage::Multipath]
+        # @param disk [Y2Storage::Disk, Y2Storage::Dasd, Y2Storage::DmRaid,
+        #              Y2Storage::MdMember, Y2Storage::Multipath]
         # @param pager [CWM::TreePager]
         def initialize(disk, pager)
           textdomain "storage"
@@ -80,8 +81,8 @@ module Y2Partitioner
         # Tabs to show device data
         #
         # In general, two tabs are presented: one for the device info and
-        # another one with the device partitions. When the device is a multipath,
-        # a third tab is used to show the disks that belong to the multipath.
+        # another one with the device partitions. When the device is a  BIOS RAID or
+        # Multipath, a third tab is used to show the disks that belong to the device.
         #
         # @return [Tabs]
         def tabs
@@ -90,9 +91,29 @@ module Y2Partitioner
             PartitionsTab.new(disk, @pager)
           ]
 
-          tabs << UsedDevicesTab.new(disk.parents, @pager) if disk.is?(:multipath)
+          tabs << UsedDevicesTab.new(used_devices, @pager) if need_used_devices_tab?
 
           Tabs.new(*tabs)
+        end
+
+        # Whether a extra tab for used devices is necessary
+        #
+        # @return [Boolean]
+        def need_used_devices_tab?
+          disk.is?(:multipath, :dm_raid, :md)
+        end
+
+        # Devices used by the RAID or Multipath
+        #
+        # @return [Array<BlkDevice>]
+        def used_devices
+          if disk.is?(:multipath, :dm_raid)
+            disk.parents
+          elsif disk.is?(:md)
+            disk.devices
+          else
+            []
+          end
         end
       end
 
