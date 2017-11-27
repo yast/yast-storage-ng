@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Mon Nov 27 17:08:52 UTC 2017 - snwint@suse.com
+
+- make PartitionTables::partition_id_supported? available
+- 4.0.39
+
+-------------------------------------------------------------------
 Fri Nov 24 13:25:34 UTC 2017 - ancor@suse.com
 
 - Fixed a problem when confirming the very same partitioning schema
