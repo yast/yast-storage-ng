@@ -31,7 +31,7 @@ require "y2partitioner/widgets/device_delete_button"
 module Y2Partitioner
   module Widgets
     module Pages
-      # A Page for md raids: contains a {MdRaidsTable}
+      # A Page for Software RAIDs. It contains a {MdRaidsTable}.
       class MdRaids < CWM::Page
         include Yast::I18n
         extend Yast::I18n
@@ -86,18 +86,19 @@ module Y2Partitioner
 
       private
 
-        # Table with all md raids
+        # Table with all Software RAIDs
         #
         # @return [MdRaidsTable]
         def table
           @table ||= MdRaidsTable.new(devices, @pager)
         end
 
-        # Returns all md raids
+        # Returns all Software RAIDs
         #
         # @return [Array<Y2Storage::Md>]
         def devices
-          Y2Storage::Md.all(DeviceGraphs.instance.current)
+          devicegraph = DeviceGraphs.instance.current
+          devicegraph.software_raids
         end
       end
     end
