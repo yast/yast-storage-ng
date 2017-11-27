@@ -155,10 +155,10 @@ describe Y2Partitioner::Actions::Controllers::Partition do
       allow(subject).to receive(:disk).and_return(disk)
     end
 
-    let(:disk) { instance_double(Y2Storage::Disk, filesystem: filesystem) }
+    let(:disk) { instance_double(Y2Storage::Disk, formatted?: formatted) }
 
     context "when the disk is not formatted" do
-      let(:filesystem) { nil }
+      let(:formatted) { false }
 
       it "returns false" do
         expect(subject.disk_formatted?).to eq(false)
@@ -166,7 +166,7 @@ describe Y2Partitioner::Actions::Controllers::Partition do
     end
 
     context "when the disk is formatted" do
-      let(:filesystem) { instance_double(Y2Storage::Filesystems::Btrfs) }
+      let(:formatted) { true }
 
       it "returns true" do
         expect(subject.disk_formatted?).to eq(true)

@@ -218,8 +218,28 @@ describe Y2Storage::Md do
   end
 
   describe "#software_defined?" do
-    it "returns true" do
-      expect(md.software_defined?).to eq(true)
+    context "if the RAID is a MD (Software RAID)" do
+      subject(:md) { Y2Storage::Md.create(fake_devicegraph, "/dev/md10") }
+
+      it "returns true" do
+        expect(md.software_defined?).to eq(true)
+      end
+    end
+
+    context "if the RAID is a MD Member (BIOS RAID)" do
+      subject(:md) { Y2Storage::MdMember.create(fake_devicegraph, "/dev/md10") }
+
+      it "returns false" do
+        expect(md.software_defined?).to eq(false)
+      end
+    end
+
+    context "if the RAID is a MD Container" do
+      subject(:md) { Y2Storage::MdContainer.create(fake_devicegraph, "/dev/md/imsm0") }
+
+      it "returns false" do
+        expect(md.software_defined?).to eq(false)
+      end
     end
   end
 end
