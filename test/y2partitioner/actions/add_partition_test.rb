@@ -62,7 +62,34 @@ describe Y2Partitioner::Actions::AddPartition do
       end
     end
 
-    context "if the disk is directly formatted" do
+    context "if the disk is in use" do
+      let(:scenario) { "empty_hard_disk_50GiB.yml" }
+
+      let(:disk_name) { "/dev/sda" }
+
+      before do
+        md = Y2Storage::Md.create(current_graph, "/dev/md0")
+        md.add_device(disk)
+      end
+
+      it "shows an error popup" do
+        expect(Yast::Popup).to receive(:Error)
+        action.run
+      end
+
+      it "quits returning :back" do
+        expect(action.run).to eq(:back)
+      end
+
+      it "does not create any partition" do
+        partitions_before = Y2Storage::Disk.find_by_name(current_graph, disk_name).partitions
+        action.run
+        partitions_after = Y2Storage::Disk.find_by_name(current_graph, disk_name).partitions
+        expect(partitions_after).to eq(partitions_before)
+      end
+    end
+
+    context "if the disk is formatted" do
       let(:scenario) { "empty_hard_disk_50GiB.yml" }
 
       let(:disk_name) { "/dev/sda" }

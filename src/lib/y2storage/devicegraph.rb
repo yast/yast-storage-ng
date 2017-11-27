@@ -203,7 +203,7 @@ module Y2Storage
 
     # All Software RAIDs in the devicegraph, sorted by name
     #
-    # @note Software RAIDs are all Md devices less MdMember and MdContainer devices.
+    # @note Software RAIDs are all Md devices except MdMember and MdContainer devices.
     #
     # @return [Array<Md>]
     def software_raids

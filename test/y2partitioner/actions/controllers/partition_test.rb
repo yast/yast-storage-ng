@@ -30,6 +30,8 @@ describe Y2Partitioner::Actions::Controllers::Partition do
 
   subject(:controller) { described_class.new(disk_name) }
 
+  let(:current_graph) { Y2Partitioner::DeviceGraphs.instance.current }
+
   let(:scenario) { "mixed_disks_btrfs.yml" }
 
   describe "#disk" do
@@ -117,9 +119,32 @@ describe Y2Partitioner::Actions::Controllers::Partition do
 
     let(:disk) { instance_double(Y2Storage::Disk) }
 
-    it "deletes the filesystem directly over the disk" do
+    it "deletes the filesystem over the disk" do
       expect(controller.disk).to receive(:delete_filesystem)
       controller.delete_filesystem
+    end
+  end
+
+  describe "#disk_used?" do
+    let(:scenario) { "empty_hard_disk_50GiB.yml" }
+
+    let(:disk_name) { "/dev/sda" }
+
+    context "when the disk is not in use" do
+      it "returns false" do
+        expect(subject.disk_used?).to eq(false)
+      end
+    end
+
+    context "when the disk is in use" do
+      before do
+        vg = Y2Storage::LvmVg.create(current_graph, "vg0")
+        vg.add_lvm_pv(subject.disk)
+      end
+
+      it "returns true" do
+        expect(subject.disk_used?).to eq(true)
+      end
     end
   end
 
@@ -132,7 +157,7 @@ describe Y2Partitioner::Actions::Controllers::Partition do
 
     let(:disk) { instance_double(Y2Storage::Disk, filesystem: filesystem) }
 
-    context "when the disk is not directly formatted" do
+    context "when the disk is not formatted" do
       let(:filesystem) { nil }
 
       it "returns false" do
@@ -140,7 +165,7 @@ describe Y2Partitioner::Actions::Controllers::Partition do
       end
     end
 
-    context "when the disk is directly formatted" do
+    context "when the disk is formatted" do
       let(:filesystem) { instance_double(Y2Storage::Filesystems::Btrfs) }
 
       it "returns true" do

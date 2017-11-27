@@ -83,15 +83,30 @@ module Y2Partitioner
       end
 
       # @see TransactionWizard
-      # @note In case the device is directly formatted, the wizard is started
+      # @note In case the device is formatted, the wizard is started
       #   only if the user confirms to delete the current filesystem.
       #
       # @return [Boolean]
       def run?
-        not_formatted_validation && available_space_validation
+        not_used_validation && not_formatted_validation && available_space_validation
       end
 
-      # Checks whether the device is directly formatted
+      # Checks whether the device is not used
+      #
+      # @see Controllers::Partition#disk_used?
+      #
+      # @return [Boolean] true if device is not used; false otherwise.
+      def not_used_validation
+        return true unless part_controller.disk_used?
+
+        Yast::Popup.Error(
+          _("The disk is in use and cannot be modified.")
+        )
+
+        false
+      end
+
+      # Checks whether the device is not formatted
       #
       # @see Controllers::Partition#disk_formatted?
       #
@@ -117,9 +132,8 @@ module Y2Partitioner
       #
       # @see Controllers::Partition#new_partition_possible?
       #
-      # @note When the device is directly formatted, it is consisered that
-      #   there is enough space for a new partition due to the filesystem
-      #   could be deleted.
+      # @note When the device is formatted, it is consisered that there is enough
+      #   space for a new partition due to the filesystem could be deleted.
       #
       # @return [Boolean]
       def available_space_validation

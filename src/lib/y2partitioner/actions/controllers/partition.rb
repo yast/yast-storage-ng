@@ -102,11 +102,18 @@ module Y2Partitioner
           disk.delete_filesystem
         end
 
-        # Whether the disk is directly formatted
+        # Whether the disk is used
+        #
+        # @return [Boolean]
+        def disk_used?
+          disk.used?
+        end
+
+        # Whether the disk is formatted
         #
         # @return [Boolean]
         def disk_formatted?
-          !disk.filesystem.nil?
+          disk.formatted?
         end
 
         # Whether is possible to create any new partition in the disk
