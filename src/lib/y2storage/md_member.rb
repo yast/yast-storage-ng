@@ -26,6 +26,12 @@ module Y2Storage
   # A BIOS MD RAID
   #
   # This is a wrapper for Storage::MdMember
+  #
+  # Some BIOS RAIDs (IMSM and DDF) can be handled by mdadm as MD RAIDs. For each of
+  # these RAIDs a container device exists in the system ({MdContainer} class).
+  # The RAIDs inside the container have type {MdMember}.
+  #
+  # MD Members can be used as generic MD RAIDs.
   class MdMember < Md
     wrap_class Storage::MdMember
 

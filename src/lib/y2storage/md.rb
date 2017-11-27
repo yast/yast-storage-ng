@@ -28,6 +28,9 @@ module Y2Storage
   # A MD RAID
   #
   # This is a wrapper for Storage::Md
+  #
+  # @note Some BIOS RAIDs (IMSM and DDF) can be handled by mdadm as MD RAIDs,
+  #   see {MdContainer} and {MdMember} subclasses.
   class Md < Partitionable
     wrap_class Storage::Md, downcast_to: ["MdMember", "MdContainer"]
 
@@ -128,6 +131,12 @@ module Y2Storage
     end
 
     # Whether the RAID is defined by software
+    #
+    # This method is used to distinguish between Software RAID and BIOS RAID,
+    # see {Devicegraph#bios_raids} and {Devicegraph#software_raids}.
+    #
+    # All RAID classes should define this method, see {DmRaid#software_defined?},
+    # {MdContainer#software_defined?} and {MdMember#software_defined?}.
     #
     # @note MD RAIDS are considered defined by sofware.
     #
