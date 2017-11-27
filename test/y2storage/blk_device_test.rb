@@ -34,10 +34,33 @@ describe Y2Storage::BlkDevice do
 
   let(:scenario) { "complex-lvm-encrypt" }
 
+  describe "#formatted?" do
+    let(:device_name) { "/dev/sda" }
+
+    context "when the device is not formatted" do
+      it "returns false" do
+        expect(device.formatted?).to eq(false)
+      end
+    end
+
+    context "when the device is formatted" do
+      let(:device_name) { "/dev/sda" }
+
+      before do
+        device.remove_descendants
+        device.create_filesystem(Y2Storage::Filesystems::Type::EXT3)
+      end
+
+      it "returns true" do
+        expect(device.formatted?).to eq(true)
+      end
+    end
+  end
+
   describe "#delete_filesystem" do
     let(:scenario) { "md-imsm1-devicegraph.xml" }
 
-    context "when the device is directly formatted" do
+    context "when the device is formatted" do
       let(:device_name) { "/dev/md/a" }
 
       it "removes the filesystem" do
@@ -47,7 +70,7 @@ describe Y2Storage::BlkDevice do
       end
     end
 
-    context "when the device is not directly formatted" do
+    context "when the device is not formatted" do
       let(:device_name) { "/dev/md/b" }
 
       it "does not modify the device" do
@@ -550,6 +573,93 @@ describe Y2Storage::BlkDevice do
 
       it "returns nil" do
         expect(device.hwinfo).to eq(nil)
+      end
+    end
+  end
+
+  describe "#used?" do
+    context "when the device is used as physical volume" do
+      let(:scenario) { "empty_hard_disk_50GiB" }
+
+      let(:device_name) { "/dev/sda" }
+
+      before do
+        vg = Y2Storage::LvmVg.create(fake_devicegraph, "vg0")
+        vg.add_lvm_pv(device)
+      end
+
+      it "returns true" do
+        expect(device.used?).to eq(true)
+      end
+    end
+
+    context "when the device belongs to a MD RAID" do
+      let(:scenario) { "mixed_disks" }
+
+      let(:device_name) { "/dev/sda" }
+
+      before do
+        device.remove_descendants
+        md = Y2Storage::Md.create(fake_devicegraph, "/dev/md0")
+        md.add_device(device)
+      end
+
+      it "returns true" do
+        expect(device.used?).to eq(true)
+      end
+    end
+
+    context "when the device belongs to a DM RAID" do
+      let(:scenario) { "md-imsm1-devicegraph.xml" }
+
+      let(:device_name) { "/dev/sdc" }
+
+      it "returns true" do
+        expect(device.used?).to eq(true)
+      end
+    end
+
+    context "when the device belongs to a Multipath" do
+      let(:scenario) { "empty-dasd-and-multipath.xml" }
+
+      let(:device_name) { "/dev/sda" }
+
+      it "returns true" do
+        expect(device.used?).to eq(true)
+      end
+    end
+
+    context "when the device has a partition table" do
+      let(:scenario) { "md_raid.xml" }
+
+      let(:device_name) { "/dev/sda" }
+
+      it "returns false" do
+        expect(device.used?).to eq(false)
+      end
+    end
+
+    context "when the device is formatted" do
+      let(:scenario) { "empty_hard_disk_50GiB" }
+
+      let(:device_name) { "/dev/sda" }
+
+      before do
+        device.create_filesystem(Y2Storage::Filesystems::Type::EXT3)
+      end
+
+      it "returns false" do
+        expect(device.used?).to eq(false)
+      end
+    end
+
+    context "when the device is empty" do
+      let(:scenario) { "empty_hard_disk_50GiB" }
+
+      let(:device_name) { "/dev/sda" }
+
+      it "returns false" do
+        expect(device.used?).to eq(false)
       end
     end
   end

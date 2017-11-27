@@ -191,7 +191,14 @@ module Y2Storage
 
     alias_method :filesystem, :blk_filesystem
 
-    # Removes the filesystem when the device is directly formatted
+    # Checks whether the device is formatted
+    #
+    # @return [Boolean]
+    def formatted?
+      !filesystem.nil?
+    end
+
+    # Removes the filesystem when the device is formatted
     def delete_filesystem
       return if filesystem.nil?
       remove_descendants
@@ -320,6 +327,16 @@ module Y2Storage
     # @see Y2Storage::HWInfoReader
     def hwinfo
       Y2Storage::HWInfoReader.instance.for_device(name)
+    end
+
+    # Checks whether the device is in use
+    #
+    # @note A device is in use when it is used as physical volume, belongs to a
+    #   multipath or belongs to a raid.
+    #
+    # @return [Boolean]
+    def used?
+      partition_table.nil? && descendants.any? { |d| d.is?(:lvm_pv, :md, :dm_raid, :multipath) }
     end
   end
 end
