@@ -31,6 +31,7 @@ require "y2storage/filesystems/nfs"
 require "y2storage/lvm_lv"
 require "y2storage/lvm_vg"
 require "y2storage/md"
+require "y2storage/md_member"
 require "y2storage/partition"
 require "y2storage/storage_class_wrapper"
 require "y2storage/storage_manager"
@@ -174,25 +175,60 @@ module Y2Storage
       DmRaid.sorted_by_name(self)
     end
 
+    # All the MD RAIDs in the devicegraph, sorted by name
+    #
+    # @return [Array<Md>]
+    def md_raids
+      Md.sorted_by_name(self)
+    end
+
+    # All MD BIOS RAIDs in the devicegraph, sorted by name
+    #
+    # @note The class MdMember is used by libstorage-ng to represent MD BIOS RAIDs.
+    #
+    # @return [Array<MdMember>]
+    def md_member_raids
+      MdMember.sorted_by_name(self)
+    end
+
+    # All BIOS RAIDs in the devicegraph, sorted by name
+    #
+    # @note BIOS RAIDs are the set composed by MD BIOS RAIDs and DM RAIDs.
+    #
+    # @return [Array<DmRaid, MdMember>]
+    def bios_raids
+      devices = dm_raids + md_member_raids
+      devices.sort { |a, b| a.compare_by_name(b) }
+    end
+
+    # All Software RAIDs in the devicegraph, sorted by name
+    #
+    # @note Software RAIDs are all Md devices less MdMember and MdContainer devices.
+    #
+    # @return [Array<Md>]
+    def software_raids
+      md_raids.select(&:software_defined?)
+    end
+
     # All the devices that are usually treated like disks by YaST, sorted by
     # name
     #
     # Currently this method returns an array including all the multipath
-    # devices and DM RAIDs, as well as disks and DASDs that are not part
+    # devices and BIOS RAIDs, as well as disks and DASDs that are not part
     # of any of the former.
     # @see #disks
     # @see #dasds
     # @see #multipaths
-    # @see #dm_raids
+    # @see #bios_raids
     #
-    # @return [Array<Dasd, Disk, Multipath, DmRaid>]
+    # @return [Array<Dasd, Disk, Multipath, DmRaid, MdMember>]
     def disk_devices
       # NOTE: to avoid sorting something that is going to be sorted again, we
       # could call Disk.all instead of #disks, Multipath.all instead
       # of #multipaths and so on. But the current implementation is more
       # readable and the impact is probably unnoticeable.
 
-      multi_disk_devs = multipaths + dm_raids
+      multi_disk_devs = multipaths + bios_raids
       parent_devs = multi_disk_devs.map(&:parents).flatten
       # Use #reject because Array#- is not trustworthy with SWIG
       devices = (multi_disk_devs + dasds + disks).reject { |d| parent_devs.include?(d) }
@@ -240,13 +276,6 @@ module Y2Storage
     # @return [Array<LvmLv>]
     def lvm_lvs
       LvmLv.all(self)
-    end
-
-    # All the MD RAIDs in the devicegraph, sorted by name
-    #
-    # @return [Array<Md>]
-    def md_raids
-      Md.sorted_by_name(self)
     end
 
     # @return [Array<FreeDiskSpace>]
