@@ -29,7 +29,7 @@ module Y2Storage
   #
   # This is a wrapper for Storage::Md
   class Md < Partitionable
-    wrap_class Storage::Md
+    wrap_class Storage::Md, downcast_to: ["MdMember", "MdContainer"]
 
     # @!method self.create(devicegraph, name)
     #   @param devicegraph [Devicegraph]
@@ -123,7 +123,17 @@ module Y2Storage
     storage_class_forward :find_free_numeric_name
 
     def inspect
-      "<Md #{name} #{size} #{md_level}>"
+      md_class = self.class.name.split("::").last
+      "<#{md_class} #{name} #{size} #{md_level}>"
+    end
+
+    # Whether the RAID is defined by software
+    #
+    # @note MD RAIDS are considered defined by sofware.
+    #
+    # @return [Boolean] true
+    def software_defined?
+      true
     end
 
     # Default partition table type for newly created partition tables

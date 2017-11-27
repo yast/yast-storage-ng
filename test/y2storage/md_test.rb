@@ -217,4 +217,9 @@ describe Y2Storage::Md do
 
   end
 
+  describe "#software_defined?" do
+    it "returns true" do
+      expect(md.software_defined?).to eq(true)
+    end
+  end
 end
