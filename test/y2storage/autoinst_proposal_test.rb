@@ -513,7 +513,7 @@ describe Y2Storage::AutoinstProposal do
       end
 
       let(:root_spec) do
-        { "mount" => "/", "filesystem" => "ext4", "lv_name" => "root", "size" => "1G" }
+        { "mount" => "/", "filesystem" => "ext4", "lv_name" => "root", "size" => "1GB" }
       end
 
       let(:lvs) { [root_spec] }
@@ -533,7 +533,8 @@ describe Y2Storage::AutoinstProposal do
         devicegraph = proposal.devices
         expect(devicegraph.lvm_lvs).to contain_exactly(
           an_object_having_attributes(
-            "lv_name" => "root"
+            "lv_name" => "root",
+            "size"    => 1.GiB
           )
         )
       end
@@ -541,6 +542,19 @@ describe Y2Storage::AutoinstProposal do
       it "does not register any issue" do
         proposal.propose
         expect(issues_list).to be_empty
+      end
+
+      context "when 'max' is used as size" do
+        let(:root_spec) do
+          { "mount" => "/", "filesystem" => "ext4", "lv_name" => "root", "size" => "max" }
+        end
+
+        it "uses the whole volume group" do
+          proposal.propose
+          devicegraph = proposal.devices
+          lv = devicegraph.lvm_lvs.first
+          expect(lv.size).to eq(500.GiB - 4.MiB)
+        end
       end
 
       context "when using btrfs" do

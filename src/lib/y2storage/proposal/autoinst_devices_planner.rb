@@ -371,7 +371,7 @@ module Y2Storage
 
         partition.min_size = size_info.min
         partition.max_size = size_info.max
-        partition.weight = 1 if size_info.max == DiskSize.unlimited
+        partition.weight = 1 if size_info.unlimited?
         true
       end
 
@@ -395,6 +395,7 @@ module Y2Storage
           lv.min_size = size_info.min
           lv.max_size = size_info.max
         end
+        lv.weight = 1 if size_info.unlimited?
 
         true
       end
