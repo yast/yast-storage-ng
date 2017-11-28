@@ -87,35 +87,25 @@ describe Y2Storage::Device do
     end
   end
 
-  describe "#detect_resize_info" do
-    let(:probed) { double(Y2Storage::Devicegraph) }
-    let(:probed_partition) { double(Y2Storage::Partition, storage_detect_resize_info: resize_info) }
-    let(:resize_info) { double(Y2Storage::ResizeInfo) }
-    let(:wrapped_partition) { double(Storage::Partition, exists_in_probed?: in_probed, sid: 444) }
-
-    subject(:staging_partition) { Y2Storage::Partition.new(wrapped_partition) }
-
-    before do
-      allow(Storage).to receive(:to_partition) do |object|
-        object
-      end
-      allow(Y2Storage::StorageManager.instance).to receive(:probed).and_return probed
-    end
-
-    context "if the device does not exist in probed" do
-      let(:in_probed) { false }
-
-      it "returns nil" do
-        expect(staging_partition.detect_resize_info).to be_nil
+  describe "#can_resize?" do
+    subject(:device) { Y2Storage::Partition.find_by_name(fake_devicegraph, "/dev/sda1") }
+    let(:resize_info) { double(Y2Storage::ResizeInfo, resize_ok?: resize_ok) }
+ 
+    before { allow(device).to receive(:detect_resize_info).and_return resize_info }
+ 
+    context "if libstorage-nd reports that resizing is possible" do
+      let(:resize_ok) { true }
+ 
+      it "returns true" do
+        expect(device.can_resize?).to eq true
       end
     end
-
-    context "if the device exists in probed" do
-      let(:in_probed) { true }
-
-      it "returns the resize info from the equivalent partition in probed" do
-        expect(probed).to receive(:find_device).with(444).and_return probed_partition
-        expect(staging_partition.detect_resize_info).to eq resize_info
+ 
+    context "if libstorage-ng reports that resizing is not possible" do
+      let(:resize_ok) { false }
+ 
+      it "returns false" do
+        expect(device.can_resize?).to eq false
       end
     end
   end

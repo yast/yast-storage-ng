@@ -180,6 +180,10 @@ module Y2Storage
     # the result of this method is the combined information about this device
     # and all its children.
     #
+    # Since this calls detect_resize_info internally, it might be an expensive
+    # operation. If the ResizeInfo from detect_resize_info is needed afterwards
+    # anyway, consider using it directly and caching the value for later reuse.
+    #
     # @return [Boolean] true if the device can be resized, false if not.
     def can_resize?
       detect_resize_info.resize_ok?
