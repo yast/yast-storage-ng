@@ -148,6 +148,72 @@ describe Y2Partitioner::Actions::Controllers::Partition do
     end
   end
 
+  describe "#disk_used?" do
+    context "when the disk is used as physical volume" do
+      let(:scenario) { "empty_hard_disk_50GiB" }
+
+      let(:disk_name) { "/dev/sda" }
+
+      before do
+        vg = Y2Storage::LvmVg.create(current_graph, "vg0")
+        vg.add_lvm_pv(subject.disk)
+      end
+
+      it "returns true" do
+        expect(subject.disk_used?).to eq(true)
+      end
+    end
+
+    context "when the disk belongs to a MD RAID" do
+      let(:scenario) { "empty_hard_disk_50GiB" }
+
+      let(:disk_name) { "/dev/sda" }
+
+      before do
+        md = Y2Storage::Md.create(current_graph, "/dev/md0")
+        md.add_device(subject.disk)
+      end
+
+      it "returns true" do
+        expect(subject.disk_used?).to eq(true)
+      end
+    end
+
+    context "when the disk has a partition table" do
+      let(:scenario) { "md_raid.xml" }
+
+      let(:disk_name) { "/dev/sda" }
+
+      it "returns false" do
+        expect(subject.disk_used?).to eq(false)
+      end
+    end
+
+    context "when the disk is formatted" do
+      let(:scenario) { "empty_hard_disk_50GiB" }
+
+      let(:disk_name) { "/dev/sda" }
+
+      before do
+        subject.disk.create_filesystem(Y2Storage::Filesystems::Type::EXT3)
+      end
+
+      it "returns false" do
+        expect(subject.disk_used?).to eq(false)
+      end
+    end
+
+    context "when the disk is empty" do
+      let(:scenario) { "empty_hard_disk_50GiB" }
+
+      let(:disk_name) { "/dev/sda" }
+
+      it "returns false" do
+        expect(subject.disk_used?).to eq(false)
+      end
+    end
+  end
+
   describe "#disk_formatted?" do
     let(:disk_name) { "/dev/sda" }
 

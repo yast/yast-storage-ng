@@ -102,11 +102,14 @@ module Y2Partitioner
           disk.delete_filesystem
         end
 
-        # Whether the disk is used
+        # Whether the disk is in use
+        #
+        # @note A disk is in use when it is used as physical volume or
+        #   belongs to a MD RAID.
         #
         # @return [Boolean]
         def disk_used?
-          disk.used?
+          disk.partition_table.nil? && disk.descendants.any? { |d| d.is?(:lvm_pv, :md) }
         end
 
         # Whether the disk is formatted

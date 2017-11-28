@@ -328,15 +328,5 @@ module Y2Storage
     def hwinfo
       Y2Storage::HWInfoReader.instance.for_device(name)
     end
-
-    # Checks whether the device is in use
-    #
-    # @note A device is in use when it is used as physical volume, belongs to a
-    #   multipath or belongs to a raid.
-    #
-    # @return [Boolean]
-    def used?
-      partition_table.nil? && descendants.any? { |d| d.is?(:lvm_pv, :md, :dm_raid, :multipath) }
-    end
   end
 end
