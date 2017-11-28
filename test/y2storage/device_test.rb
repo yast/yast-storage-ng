@@ -92,6 +92,7 @@ describe Y2Storage::Device do
     subject(:device) { Y2Storage::Partition.find_by_name(fake_devicegraph, "/dev/sda2") }
 
     it "reports that it can resize an ext4 partition" do
+      allow(resize_info).to receive(:resize_ok).and_return true
       allow(device.to_storage_value).to receive(:detect_resize_info).and_return resize_info
       expect(device.can_resize?).to eq true
     end
