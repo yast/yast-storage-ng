@@ -185,6 +185,23 @@ module Y2Storage
       probed_device.storage_detect_resize_info
     end
 
+    # Check if the device can be resized.
+    #
+    # As long as a device is just planned and does not yet exist on disk, most
+    # devices (where the size can be set at all) can be resized. If it exists
+    # on disk, however, there might be other restrictions: Many filesystem
+    # types can be resized, but not all, and other types of device may or may
+    # not support this.
+    #
+    # @return [Boolean] true if the device can be resized, false if not.
+    def can_resize?
+      if exists_in_probed?
+        can_resize_existing?
+      else
+        can_resize_planned?
+      end
+    end
+
     # Checks whether the device is a concrete kind(s) of device.
     #
     # Always false for this base class, which represents an abstract device.
@@ -251,6 +268,61 @@ module Y2Storage
       serialized = userdata[key.to_s]
       return nil if serialized.nil?
       YAML.load(serialized)
+    end
+
+    # Check if an existing device can be resized.
+    #
+    # In this case, libstorage-ng will do the checking, depending on what kind
+    # of BlkDevice this is, if it supports resizing in general (not all
+    # filesystems support it) and if it supports it in the current specific
+    # setup. If there is an encryption layer in between, libstorage-ng will
+    # check both the encryption layer and the filesystem.
+    #
+    # @return [Boolean] true if the device can be resized, false if not.
+    def can_resize_existing?
+      probed_device = StorageManager.instance.probed.find_device(sid)
+      probed_device.storage_detect_resize_info.resize_ok
+    end
+
+    # Check if a device that is only planned, but does not exist yet on disk,
+    # can be resized.
+    #
+    # This leaves a lot more freedom because there are no restrictions about
+    # filesystem types; we don't need any external filesystem tools to do the
+    # resizing, we can just set the size of the planned device.
+    #
+    # This affects planned partitions, filesystems, LUKS layers and the
+    # like. Disks or dasds will always be in the probed devicegraph, so this
+    # does not apply to them (and of course you cannot resize a disk or a dasd
+    # since there are underlying physical devices).
+    #
+    # @return [Boolean] true if the device can be resized, false if not.
+    def can_resize_planned?
+      return can_resize_planned_partition? if is?(:partition)
+      false
+    end
+
+    # Check if a partition that is only planned, but does not exist yet on
+    # disk, can be resized.
+    #
+    # @return [Boolean] true if it can be resized, false if not.
+    def can_resize_planned_partition?
+      # If there is a filesystem on this partition (possibly with an encryption
+      # layer in between), we can always resize it at this stage - as long as
+      # it doesn't exist on disk yet. If it does, can_resize_existing? will ask
+      # the library (but we shouldn't get to this function in the first place).
+      return true if has_blk_filesystem
+      if type.is?(:extended)
+        # Can resize an extended partition only as long as it's still empty.
+        # Since there can only be one extended partition on each disk, it is
+        # sufficient to check if there is any logical partition at all; if
+        # there is, it belongs to that one extended partition.
+        return partitionable.num_logical > 0
+      end
+      # For the time being, we don't allow LVM PVs or MD members to be resized.
+      # There is no UI in the partitioner for this anyway (yet).
+      return false if is?(:lvm_pv) || is?(:md_member)
+      true
     end
 
     def types_for_is
