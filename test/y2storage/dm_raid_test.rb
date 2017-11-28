@@ -86,4 +86,10 @@ describe Y2Storage::DmRaid do
       expect(dm_raid.parents.map(&:name)).to contain_exactly("/dev/sdb", "/dev/sdc")
     end
   end
+
+  describe "#software_defined?" do
+    it "returns false" do
+      expect(dm_raid.software_defined?).to eq(false)
+    end
+  end
 end

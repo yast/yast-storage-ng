@@ -119,12 +119,55 @@ describe Y2Partitioner::Widgets::OverviewTreePager do
       end
     end
 
+    context "when there are BIOS RAIDs" do
+      let(:scenario) { "md-imsm1-devicegraph.xml" }
+
+      let(:mda) { "/dev/md/a" }
+
+      let(:mdb) { "/dev/md/b" }
+
+      let(:sda) { "/dev/sda" }
+
+      it "disks pager has a page for each BIOS RAID device" do
+        mda_page = disks_pages.find { |p| p.device.name == mda }
+        expect(mda_page).to_not be_nil
+
+        mdb_page = disks_pages.find { |p| p.device.name == mdb }
+        expect(mdb_page).to_not be_nil
+      end
+
+      it "disks pager has a page for each disk device" do
+        sda_page = disks_pages.find { |p| p.device.name == sda }
+        expect(sda_page).to_not be_nil
+      end
+
+      it "disks pager has not a page for disks belonging to a BIOS RAID" do
+        sdb_page = disks_pages.find { |p| p.device.name == "/dev/sdb" }
+        expect(sdb_page).to be_nil
+
+        sdc_page = disks_pages.find { |p| p.device.name == "/dev/sdc" }
+        expect(sdc_page).to be_nil
+
+        sdd_page = disks_pages.find { |p| p.device.name == "/dev/sdd" }
+        expect(sdd_page).to be_nil
+      end
+    end
+
     context "when there are volume groups" do
       let(:scenario) { "lvm-two-vgs.yml" }
 
       it "disk pager has not vg pages" do
         vg_pages = disks_pages.select { |p| p.is_a?(Y2Partitioner::Widgets::Pages::LvmVg) }
         expect(vg_pages).to be_empty
+      end
+    end
+
+    context "when there are Software RAIDs" do
+      let(:scenario) { "md_raid.xml" }
+
+      it "disk pager has not Software RAID pages" do
+        md_pages = disks_pages.select { |p| p.is_a?(Y2Partitioner::Widgets::Pages::MdRaid) }
+        expect(md_pages).to be_empty
       end
     end
   end

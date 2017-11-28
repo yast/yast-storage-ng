@@ -48,7 +48,7 @@ module Y2Partitioner
 
         attr_reader :hostname
 
-        # The table contains all storage devices, including LVM Vgs
+        # The table contains all storage devices, including Software RAIDs and LVM Vgs
         #
         # @return [ConfigurableBlkDevicesTable]
         def table
@@ -60,11 +60,11 @@ module Y2Partitioner
 
         # Returns all storage devices
         #
-        # @note LVM Vgs are included.
+        # @note Software RAIDs and LVM Vgs are included.
         #
         # @return [Array<Y2Storage::Device>]
         def devices
-          disk_devices + lvm_vgs
+          disk_devices + software_raids + lvm_vgs
         end
 
         def disk_devices
@@ -79,6 +79,10 @@ module Y2Partitioner
             devices << vg
             devices.concat(vg.lvm_lvs)
           end
+        end
+
+        def software_raids
+          device_graph.software_raids
         end
 
         def device_graph

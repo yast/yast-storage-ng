@@ -23,6 +23,7 @@ require "cwm/tree_pager"
 require "y2partitioner/icons"
 require "y2partitioner/widgets/device_delete_button"
 require "y2partitioner/widgets/configurable_blk_devices_table"
+require "y2partitioner/device_graphs"
 
 module Y2Partitioner
   module Widgets

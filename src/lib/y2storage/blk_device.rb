@@ -191,6 +191,19 @@ module Y2Storage
 
     alias_method :filesystem, :blk_filesystem
 
+    # Checks whether the device is formatted
+    #
+    # @return [Boolean]
+    def formatted?
+      !filesystem.nil?
+    end
+
+    # Removes the filesystem when the device is formatted
+    def delete_filesystem
+      return if filesystem.nil?
+      remove_descendants
+    end
+
     # LVM physical volume defined on top of the device, either directly or
     # through an encryption layer.
     #

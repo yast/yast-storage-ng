@@ -97,6 +97,28 @@ module Y2Partitioner
           @partition = nil
         end
 
+        # Removes the filesystem when the disk is directly formatted
+        def delete_filesystem
+          disk.delete_filesystem
+        end
+
+        # Whether the disk is in use
+        #
+        # @note A disk is in use when it is used as physical volume or
+        #   belongs to a MD RAID.
+        #
+        # @return [Boolean]
+        def disk_used?
+          disk.partition_table.nil? && disk.descendants.any? { |d| d.is?(:lvm_pv, :md) }
+        end
+
+        # Whether the disk is formatted
+        #
+        # @return [Boolean]
+        def disk_formatted?
+          disk.formatted?
+        end
+
         # Whether is possible to create any new partition in the disk
         #
         # @return [Boolean]

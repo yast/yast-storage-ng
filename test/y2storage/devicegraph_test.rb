@@ -185,6 +185,82 @@ describe Y2Storage::Devicegraph do
     end
   end
 
+  describe "#bios_raids" do
+    before do
+      fake_scenario("mixed_disks")
+    end
+
+    subject(:devicegraph) { fake_devicegraph }
+
+    context "when there are BIOS RAIDs" do
+      before do
+        dm0 = Y2Storage::DmRaid.create(devicegraph, "/dev/mapper/imsm0")
+        dm1 = Y2Storage::DmRaid.create(devicegraph, "/dev/mapper/imsm1")
+        allow(Y2Storage::Md).to receive(:all).and_return [dm1, dm0]
+
+        md0 = Y2Storage::MdMember.create(devicegraph, "/dev/md0")
+        md1 = Y2Storage::MdMember.create(devicegraph, "/dev/md/1")
+        md2 = Y2Storage::MdMember.create(devicegraph, "/dev/md2")
+        allow(Y2Storage::Md).to receive(:all).and_return [md2, md0, md1]
+      end
+
+      it "includes all DM RAIDs and BIOS MD RAIDs sorted by name" do
+        expect(devicegraph.bios_raids.map(&:name)).to eq [
+          "/dev/mapper/imsm0",
+          "/dev/mapper/imsm1",
+          "/dev/md/1",
+          "/dev/md0",
+          "/dev/md2"
+        ]
+      end
+    end
+
+    context "when there are not BIOS RAIDs" do
+      before do
+        Y2Storage::Md.create(devicegraph, "/dev/md/0")
+      end
+
+      it "does not include any device" do
+        expect(devicegraph.bios_raids).to be_empty
+      end
+    end
+  end
+
+  describe "#software_raids" do
+    before do
+      fake_scenario("mixed_disks")
+    end
+
+    subject(:devicegraph) { fake_devicegraph }
+
+    context "when there are Software RAIDs" do
+      before do
+        md0 = Y2Storage::Md.create(devicegraph, "/dev/md0")
+        md1 = Y2Storage::Md.create(devicegraph, "/dev/md/1")
+        md2 = Y2Storage::Md.create(devicegraph, "/dev/md2")
+        allow(Y2Storage::Md).to receive(:all).and_return [md2, md0, md1]
+      end
+
+      it "includes all Software RAIDs sorted by name" do
+        expect(devicegraph.software_raids.map(&:name)).to eq [
+          "/dev/md/1",
+          "/dev/md0",
+          "/dev/md2"
+        ]
+      end
+    end
+
+    context "when there are not Software RAIDs" do
+      before do
+        Y2Storage::MdMember.create(devicegraph, "/dev/md0")
+      end
+
+      it "does not include any device" do
+        expect(devicegraph.software_raids).to be_empty
+      end
+    end
+  end
+
   describe "#disk_devices" do
     before { fake_scenario(scenario) }
     subject(:graph) { fake_devicegraph }
@@ -274,8 +350,12 @@ describe Y2Storage::Devicegraph do
       end
     end
 
-    context "if there are DM RAIDs" do
+    context "if there are BIOS RAIDs" do
       let(:scenario) { "empty-dm_raids.xml" }
+
+      before do
+        Y2Storage::MdMember.create(graph, "/dev/md0")
+      end
 
       it "returns a sorted array of devices" do
         devices = graph.disk_devices
@@ -284,9 +364,9 @@ describe Y2Storage::Devicegraph do
         expect(devices).to all(satisfy { |dev| less_than_next(dev, devices) })
       end
 
-      it "includes all the DM RAIDs" do
+      it "includes all the BIOS RAIDs" do
         expect(graph.disk_devices.map(&:name)).to include(
-          "/dev/mapper/isw_ddgdcbibhd_test1", "/dev/mapper/isw_ddgdcbibhd_test2"
+          "/dev/mapper/isw_ddgdcbibhd_test1", "/dev/mapper/isw_ddgdcbibhd_test2", "/dev/md0"
         )
       end
 

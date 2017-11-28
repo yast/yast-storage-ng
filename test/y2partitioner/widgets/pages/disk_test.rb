@@ -43,7 +43,7 @@ describe Y2Partitioner::Widgets::Pages::Disk do
   include_examples "CWM::Page"
 
   describe "#contents" do
-    context "when the device is not multipath" do
+    context "when the device is neither BIOS RAID nor multipath" do
       it "shows a disk tab" do
         expect(Y2Partitioner::Widgets::Pages::DiskTab).to receive(:new)
         subject.contents
@@ -56,6 +56,27 @@ describe Y2Partitioner::Widgets::Pages::Disk do
 
       it "does not show a used devices tab" do
         expect(Y2Partitioner::Widgets::UsedDevicesTab).to_not receive(:new)
+        subject.contents
+      end
+    end
+
+    context "when the device is a BIOS RAID" do
+      let(:scenario) { "md-imsm1-devicegraph.xml" }
+
+      let(:disk) { current_graph.bios_raids.first }
+
+      it "shows a disk tab" do
+        expect(Y2Partitioner::Widgets::Pages::DiskTab).to receive(:new)
+        subject.contents
+      end
+
+      it "shows a partitions tab" do
+        expect(Y2Partitioner::Widgets::Pages::PartitionsTab).to receive(:new)
+        subject.contents
+      end
+
+      it "shows a used devices tab" do
+        expect(Y2Partitioner::Widgets::UsedDevicesTab).to receive(:new)
         subject.contents
       end
     end

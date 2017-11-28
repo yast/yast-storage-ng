@@ -28,8 +28,11 @@ module Y2Storage
   # A MD RAID
   #
   # This is a wrapper for Storage::Md
+  #
+  # @note Some BIOS RAIDs (IMSM and DDF) can be handled by mdadm as MD RAIDs,
+  #   see {MdContainer} and {MdMember} subclasses.
   class Md < Partitionable
-    wrap_class Storage::Md
+    wrap_class Storage::Md, downcast_to: ["MdMember", "MdContainer"]
 
     # @!method self.create(devicegraph, name)
     #   @param devicegraph [Devicegraph]
@@ -123,7 +126,23 @@ module Y2Storage
     storage_class_forward :find_free_numeric_name
 
     def inspect
-      "<Md #{name} #{size} #{md_level}>"
+      md_class = self.class.name.split("::").last
+      "<#{md_class} #{name} #{size} #{md_level}>"
+    end
+
+    # Whether the RAID is defined by software
+    #
+    # This method is used to distinguish between Software RAID and BIOS RAID,
+    # see {Devicegraph#bios_raids} and {Devicegraph#software_raids}.
+    #
+    # All RAID classes should define this method, see {DmRaid#software_defined?},
+    # {MdContainer#software_defined?} and {MdMember#software_defined?}.
+    #
+    # @note MD RAIDS are considered defined by sofware.
+    #
+    # @return [Boolean] true
+    def software_defined?
+      true
     end
 
     # Default partition table type for newly created partition tables

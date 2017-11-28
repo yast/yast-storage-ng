@@ -25,10 +25,14 @@ require "y2partitioner/actions/controllers/partition"
 
 describe Y2Partitioner::Actions::Controllers::Partition do
   before do
-    devicegraph_stub("mixed_disks_btrfs.yml")
+    devicegraph_stub(scenario)
   end
 
-  subject { described_class.new(disk_name) }
+  subject(:controller) { described_class.new(disk_name) }
+
+  let(:current_graph) { Y2Partitioner::DeviceGraphs.instance.current }
+
+  let(:scenario) { "mixed_disks_btrfs.yml" }
 
   describe "#disk" do
     let(:disk_name) { "/dev/sda" }
@@ -103,6 +107,136 @@ describe Y2Partitioner::Actions::Controllers::Partition do
       expect(subject.partition).to_not be_nil
       subject.delete_partition
       expect(subject.partition).to be_nil
+    end
+  end
+
+  describe "#delete_filesystem" do
+    let(:disk_name) { "/dev/sda" }
+
+    before do
+      allow(subject).to receive(:disk).and_return(disk)
+    end
+
+    let(:disk) { instance_double(Y2Storage::Disk) }
+
+    it "deletes the filesystem over the disk" do
+      expect(controller.disk).to receive(:delete_filesystem)
+      controller.delete_filesystem
+    end
+  end
+
+  describe "#disk_used?" do
+    let(:scenario) { "empty_hard_disk_50GiB.yml" }
+
+    let(:disk_name) { "/dev/sda" }
+
+    context "when the disk is not in use" do
+      it "returns false" do
+        expect(subject.disk_used?).to eq(false)
+      end
+    end
+
+    context "when the disk is in use" do
+      before do
+        vg = Y2Storage::LvmVg.create(current_graph, "vg0")
+        vg.add_lvm_pv(subject.disk)
+      end
+
+      it "returns true" do
+        expect(subject.disk_used?).to eq(true)
+      end
+    end
+  end
+
+  describe "#disk_used?" do
+    context "when the disk is used as physical volume" do
+      let(:scenario) { "empty_hard_disk_50GiB" }
+
+      let(:disk_name) { "/dev/sda" }
+
+      before do
+        vg = Y2Storage::LvmVg.create(current_graph, "vg0")
+        vg.add_lvm_pv(subject.disk)
+      end
+
+      it "returns true" do
+        expect(subject.disk_used?).to eq(true)
+      end
+    end
+
+    context "when the disk belongs to a MD RAID" do
+      let(:scenario) { "empty_hard_disk_50GiB" }
+
+      let(:disk_name) { "/dev/sda" }
+
+      before do
+        md = Y2Storage::Md.create(current_graph, "/dev/md0")
+        md.add_device(subject.disk)
+      end
+
+      it "returns true" do
+        expect(subject.disk_used?).to eq(true)
+      end
+    end
+
+    context "when the disk has a partition table" do
+      let(:scenario) { "md_raid.xml" }
+
+      let(:disk_name) { "/dev/sda" }
+
+      it "returns false" do
+        expect(subject.disk_used?).to eq(false)
+      end
+    end
+
+    context "when the disk is formatted" do
+      let(:scenario) { "empty_hard_disk_50GiB" }
+
+      let(:disk_name) { "/dev/sda" }
+
+      before do
+        subject.disk.create_filesystem(Y2Storage::Filesystems::Type::EXT3)
+      end
+
+      it "returns false" do
+        expect(subject.disk_used?).to eq(false)
+      end
+    end
+
+    context "when the disk is empty" do
+      let(:scenario) { "empty_hard_disk_50GiB" }
+
+      let(:disk_name) { "/dev/sda" }
+
+      it "returns false" do
+        expect(subject.disk_used?).to eq(false)
+      end
+    end
+  end
+
+  describe "#disk_formatted?" do
+    let(:disk_name) { "/dev/sda" }
+
+    before do
+      allow(subject).to receive(:disk).and_return(disk)
+    end
+
+    let(:disk) { instance_double(Y2Storage::Disk, formatted?: formatted) }
+
+    context "when the disk is not formatted" do
+      let(:formatted) { false }
+
+      it "returns false" do
+        expect(subject.disk_formatted?).to eq(false)
+      end
+    end
+
+    context "when the disk is formatted" do
+      let(:formatted) { true }
+
+      it "returns true" do
+        expect(subject.disk_formatted?).to eq(true)
+      end
     end
   end
 

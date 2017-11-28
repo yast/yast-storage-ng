@@ -39,6 +39,12 @@ module Y2Partitioner
         @part_controller = Controllers::Partition.new(disk.name)
       end
 
+      # Removes the filesystem when the device is directly formatted
+      def delete_filesystem
+        part_controller.delete_filesystem if part_controller.disk_formatted?
+        :next
+      end
+
       def type
         Dialogs::PartitionType.run(part_controller)
       end
@@ -57,29 +63,91 @@ module Y2Partitioner
 
     protected
 
+      # @return [Controllers::Partition]
       attr_reader :part_controller
 
       # @see TransactionWizard
       def sequence_hash
         {
-          "ws_start" => "type",
-          "type"     => { next: "size" },
-          "size"     => { next: new_blk_device_step1, finish: :finish }
+          "ws_start"          => "delete_filesystem",
+          "delete_filesystem" => { next: "type" },
+          "type"              => { next: "size" },
+          "size"              => { next: new_blk_device_step1, finish: :finish }
         }.merge(new_blk_device_steps)
       end
+
+      skip_stack :delete_filesystem
 
       def disk_name
         part_controller.disk_name
       end
 
       # @see TransactionWizard
+      # @note In case the device is formatted, the wizard is started
+      #   only if the user confirms to delete the current filesystem.
+      #
+      # @return [Boolean]
       def run?
+        not_used_validation && not_formatted_validation && available_space_validation
+      end
+
+      # Checks whether the device is not used
+      #
+      # @see Controllers::Partition#disk_used?
+      #
+      # @return [Boolean] true if device is not used; false otherwise.
+      def not_used_validation
+        return true unless part_controller.disk_used?
+
+        Yast::Popup.Error(
+          _("The disk is in use and cannot be modified.")
+        )
+
+        false
+      end
+
+      # Checks whether the device is not formatted
+      #
+      # @see Controllers::Partition#disk_formatted?
+      #
+      # @note A confirm popup to delete the filesystem is shown when the device
+      #   is directly formatted.
+      #
+      # @return [Boolean] true if device is not formatted or confirm popup is
+      #   accepted; false otherwise.
+      def not_formatted_validation
+        return true unless part_controller.disk_formatted?
+
+        Yast::Popup.YesNo(
+          # TRANSLATORS: %{name} is a device name (e.g. "/dev/sda")
+          format(
+            _("The device %{name} is directly formatted.\n"\
+              "Remove the filesystem on %{name}?"),
+            name: disk_name
+          )
+        )
+      end
+
+      # Checks whether it is possible to create a new partition.
+      #
+      # @see Controllers::Partition#new_partition_possible?
+      #
+      # @note When the device is formatted, it is consisered that there is enough
+      #   space for a new partition due to the filesystem could be deleted.
+      #
+      # @return [Boolean]
+      def available_space_validation
+        return true if part_controller.disk_formatted?
         return true if part_controller.new_partition_possible?
 
         Yast::Popup.Error(
-          # TRANSLATORS: %s is a device name (e.g. "/dev/sda")
-          _("It is not possible to create a partition on %s.") % disk_name
+          format(
+            # TRANSLATORS: %{name} is a device name (e.g. "/dev/sda")
+            _("It is not possible to create a partition on %{name}."),
+            name: disk_name
+          )
         )
+
         false
       end
     end

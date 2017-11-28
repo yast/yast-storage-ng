@@ -27,10 +27,59 @@ describe Y2Storage::BlkDevice do
   using Y2Storage::Refinements::SizeCasts
 
   before do
-    fake_scenario("complex-lvm-encrypt")
+    fake_scenario(scenario)
   end
 
   subject(:device) { Y2Storage::BlkDevice.find_by_name(fake_devicegraph, device_name) }
+
+  let(:scenario) { "complex-lvm-encrypt" }
+
+  describe "#formatted?" do
+    let(:device_name) { "/dev/sda" }
+
+    context "when the device is not formatted" do
+      it "returns false" do
+        expect(device.formatted?).to eq(false)
+      end
+    end
+
+    context "when the device is formatted" do
+      let(:device_name) { "/dev/sda" }
+
+      before do
+        device.remove_descendants
+        device.create_filesystem(Y2Storage::Filesystems::Type::EXT3)
+      end
+
+      it "returns true" do
+        expect(device.formatted?).to eq(true)
+      end
+    end
+  end
+
+  describe "#delete_filesystem" do
+    let(:scenario) { "md-imsm1-devicegraph.xml" }
+
+    context "when the device is formatted" do
+      let(:device_name) { "/dev/md/a" }
+
+      it "removes the filesystem" do
+        expect(device.filesystem).to_not be_nil
+        device.delete_filesystem
+        expect(device.filesystem).to be_nil
+      end
+    end
+
+    context "when the device is not formatted" do
+      let(:device_name) { "/dev/md/b" }
+
+      it "does not modify the device" do
+        children_before = device.children
+        device.delete_filesystem
+        expect(device.children).to eq(children_before)
+      end
+    end
+  end
 
   describe "#plain_device" do
     context "for a non encrypted device" do

@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Mon Nov 27 17:49:38 UTC 2017 - jlopez@suse.com
+
+- Allow to work with BIOS RAIDs as regular disks (bsc#1067349).
+- Allow to create partition table over directly formatted devices.
+- 4.0.40
+
+-------------------------------------------------------------------
 Mon Nov 27 17:08:52 UTC 2017 - snwint@suse.com
 
 - make PartitionTables::partition_id_supported? available
