@@ -90,20 +90,20 @@ describe Y2Storage::Device do
   describe "#can_resize?" do
     subject(:device) { Y2Storage::Partition.find_by_name(fake_devicegraph, "/dev/sda1") }
     let(:resize_info) { double(Y2Storage::ResizeInfo, resize_ok?: resize_ok) }
- 
+
     before { allow(device).to receive(:detect_resize_info).and_return resize_info }
- 
+
     context "if libstorage-nd reports that resizing is possible" do
       let(:resize_ok) { true }
- 
+
       it "returns true" do
         expect(device.can_resize?).to eq true
       end
     end
- 
+
     context "if libstorage-ng reports that resizing is not possible" do
       let(:resize_ok) { false }
- 
+
       it "returns false" do
         expect(device.can_resize?).to eq false
       end
