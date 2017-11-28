@@ -181,6 +181,12 @@ describe Y2Storage::Proposal::AutoinstDevicesPlanner do
           expect(root.min_size).to eq(Y2Storage::DiskSize.B(1))
           expect(root.max_size).to eq(Y2Storage::DiskSize.unlimited)
         end
+
+        it "sets the weight to '1'" do
+          devices = planner.planned_devices(drives_map)
+          root = devices.find { |d| d.mount_point == "/" }
+          expect(root.weight).to eq(1)
+        end
       end
 
       context "when an invalid value is given" do
@@ -500,35 +506,78 @@ describe Y2Storage::Proposal::AutoinstDevicesPlanner do
         )
       end
 
-      context "specifying the size with percentages" do
+      context "specifying size" do
+        using Y2Storage::Refinements::SizeCasts
+
         let(:root_spec) do
-          { "mount" => "/", "filesystem" => "ext4", "lv_name" => "root", "size" => "50%" }
+          { "mount" => "/", "filesystem" => "ext4", "lv_name" => "root", "size" => size }
         end
 
-        it "sets the 'percent_size' value" do
-          _pv, vg = planner.planned_devices(drives_map)
-          root_lv = vg.lvs.first
-          expect(root_lv).to have_attributes("percent_size" => 50)
-        end
-      end
+        context "when only a number is given" do
+          let(:size) { "10" }
 
-      context "specifying the size with 'huh?'" do
-        let(:root_spec) do
-          { "mount" => "/", "filesystem" => "ext4", "lv_name" => "root", "size" => "huh?" }
-        end
-
-        it "skips the volume" do
-          _pv, vg = planner.planned_devices(drives_map)
-          expect(vg.lvs).to be_empty
+          it "sets the size according to that number and using unit B" do
+            _pv, vg = planner.planned_devices(drives_map)
+            root_lv = vg.lvs.first
+            expect(root_lv.min_size).to eq(Y2Storage::DiskSize.B(10))
+            expect(root_lv.max_size).to eq(Y2Storage::DiskSize.B(10))
+          end
         end
 
-        it "registers an issue" do
-          expect(issues_list).to be_empty
-          planner.planned_devices(drives_map)
-          issue = issues_list.find { |i| i.is_a?(Y2Storage::AutoinstIssues::InvalidValue) }
-          expect(issue.value).to eq("huh?")
-          expect(issue.attr).to eq(:size)
-          expect(issue.new_value).to eq(:skip)
+        context "when a number+unit is given" do
+          let(:size) { "5GB" }
+
+          it "sets the size according to that number and using unit B" do
+            _pv, vg = planner.planned_devices(drives_map)
+            root_lv = vg.lvs.first
+            expect(root_lv.min_size).to eq(5.GiB)
+            expect(root_lv.max_size).to eq(5.GiB)
+          end
+        end
+
+        context "when a percentage is given" do
+          let(:size) { "50%" }
+
+          it "sets the 'percent_size' value" do
+            _pv, vg = planner.planned_devices(drives_map)
+            root_lv = vg.lvs.first
+            expect(root_lv).to have_attributes("percent_size" => 50)
+          end
+        end
+
+        context "when 'max' is given" do
+          let(:size) { "max" }
+
+          it "sets the size according to that number and using unit B" do
+            _pv, vg = planner.planned_devices(drives_map)
+            root_lv = vg.lvs.first
+            expect(root_lv.min_size).to eq(vg.extent_size)
+            expect(root_lv.max_size).to eq(Y2Storage::DiskSize.unlimited)
+          end
+
+          it "sets the weight to '1'" do
+            _pv, vg = planner.planned_devices(drives_map)
+            root_lv = vg.lvs.first
+            expect(root_lv.weight).to eq(1)
+          end
+        end
+
+        context "when an invalid value is given" do
+          let(:size) { "huh?" }
+
+          it "skips the volume" do
+            _pv, vg = planner.planned_devices(drives_map)
+            expect(vg.lvs).to be_empty
+          end
+
+          it "registers an issue" do
+            expect(issues_list).to be_empty
+            planner.planned_devices(drives_map)
+            issue = issues_list.find { |i| i.is_a?(Y2Storage::AutoinstIssues::InvalidValue) }
+            expect(issue.value).to eq("huh?")
+            expect(issue.attr).to eq(:size)
+            expect(issue.new_value).to eq(:skip)
+          end
         end
       end
 
