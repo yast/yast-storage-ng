@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Tue Nov 28 13:35:34 UTC 2017 - igonzalezsosa@suse.com
+
+- AutoYaST: honor size=max for logical volumes (bsc#1070131).
+- 4.0.41
+
+-------------------------------------------------------------------
 Mon Nov 27 17:49:38 UTC 2017 - jlopez@suse.com
 
 - Allow to work with BIOS RAIDs as regular disks (bsc#1067349).
