@@ -42,6 +42,13 @@ module Y2Storage
         @weight = weight
         @percentage = percentage
       end
+
+      # Determines whether the size is unlimited
+      #
+      # @return [Boolean] +true+ if unlimited; +false+ otherwise.
+      def unlimited?
+        !!max && max.unlimited?
+      end
     end
   end
 end
