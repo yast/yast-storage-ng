@@ -119,13 +119,7 @@ module Y2Storage
     #   @see can_resize?
     #
     #   @return [ResizeInfo]
-    storage_forward :detect_resize_info
-
-    # @!method storage_detect_resize_info
-    #   @abstract Each subclass defines it.
-    #   @see detect_resize_info
-    storage_forward :storage_detect_resize_info, to: :detect_resize_info, as: "ResizeInfo"
-    protected :storage_detect_resize_info
+    storage_forward :detect_resize_info, as: "ResizeInfo"
 
     # @!method remove_descendants
     #   Remove device descendants in the devicegraph it belongs to.
@@ -188,7 +182,7 @@ module Y2Storage
     #
     # @return [Boolean] true if the device can be resized, false if not.
     def can_resize?
-      detect_resize_info.resize_ok
+      detect_resize_info.resize_ok?
     end
 
     # Checks whether the device is a concrete kind(s) of device.
