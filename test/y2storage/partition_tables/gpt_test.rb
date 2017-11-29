@@ -58,7 +58,7 @@ describe Y2Storage::PartitionTables::Gpt do
     end
   end
 
-  describe "#:partition_id_supported?" do
+  describe "#partition_id_supported?" do
     it "gpt can have a LINUX partition" do
       expect(subject.partition_id_supported?(Y2Storage::PartitionId::LINUX)).to eq true
     end
@@ -77,6 +77,20 @@ describe Y2Storage::PartitionTables::Gpt do
 
     it "gpt can NOT have partition id 0" do
       expect(subject.partition_id_supported?(0)).to eq false
+    end
+  end
+
+  describe "#supported_partition_ids" do
+    it "list includes the LINUX id" do
+      expect(subject.supported_partition_ids).to include Y2Storage::PartitionId::LINUX
+    end
+
+    it "list includes the WINDOWS_BASIC_DATA id" do
+      expect(subject.supported_partition_ids).to include Y2Storage::PartitionId::WINDOWS_BASIC_DATA
+    end
+
+    it "list does not include the UNKNOWN id" do
+      expect(subject.supported_partition_ids).not_to include Y2Storage::PartitionId::UNKNOWN
     end
   end
 end
