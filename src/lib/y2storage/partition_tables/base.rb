@@ -199,6 +199,17 @@ module Y2Storage
         end
       end
 
+      # List of supported partition ids suitable for a particular partition table.
+      #
+      # @see partition_id_supported?
+      #
+      # @return [Array<PartitionId>]
+      def supported_partition_ids
+        PartitionId.all.find_all do |id|
+          partition_id_supported?(id) && id != PartitionId::UNKNOWN
+        end
+      end
+
     protected
 
       def types_for_is
