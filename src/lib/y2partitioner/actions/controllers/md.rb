@@ -70,14 +70,14 @@ module Y2Partitioner
           working_graph.partitions.select { |part| available?(part) }
         end
 
-        # Partitions that are already part of the MD array
+        # Partitions that are already part of the MD array, sorted by position
         #
         # @return [Array<Y2Storage::Partition>]
         def devices_in_md
-          md.plain_devices
+          md.sorted_plain_devices
         end
 
-        # Adds a device to the Md array
+        # Adds a device at the end of the Md array
         #
         # It removes any previous children (like filesystems) from the device and
         # adapts the partition id if possible.
@@ -95,7 +95,7 @@ module Y2Partitioner
           # the partitioner.
           device.adapted_id = Y2Storage::PartitionId::RAID if device.is?(:partition)
           device.remove_descendants
-          md.add_device(device)
+          md.push_device(device)
         end
 
         # Removes a device from the Md array
@@ -110,6 +110,40 @@ module Y2Partitioner
 
           # TODO: restore status and descendants of the device when it makes sense
           md.remove_device(device)
+        end
+
+        # Modifies the position of some devices in the MD RAID, moving them one
+        # step up (before in the list) or down (later in the list)
+        #
+        # @param sids [Array<Integer>] sids of the devices to move. They all must
+        #   be part of {#devices_in_md}
+        # @param up [Symbol] true to move devices up, false to move them down
+        def devices_one_step(sids, up: true)
+          devices = md.sorted_devices
+          to_move = indexes_of_devices(sids, devices)
+          new_order = move_indexes(to_move, devices.size, up)
+
+          md.sorted_devices = new_order.map { |idx| devices[idx] }
+        end
+
+        # Modifies the position of some devices in the MD RAID, moving them to
+        # the beginning of the list.
+        #
+        # @param sids [Array<Integer>] sids of the devices to move. They all must
+        #   be part of {#devices_in_md}
+        def devices_to_top(sids)
+          selected, others = md.sorted_devices.partition { |dev| sids.include?(dev.plain_device.sid) }
+          md.sorted_devices = selected + others
+        end
+
+        # Modifies the position of some devices in the MD RAID, moving them to
+        # the end of the list.
+        #
+        # @param sids [Array<Integer>] sids of the devices to move. They all must
+        #   be part of {#devices_in_md}
+        def devices_to_bottom(sids)
+          selected, others = md.sorted_devices.partition { |dev| sids.include?(dev.plain_device.sid) }
+          md.sorted_devices = others + selected
         end
 
         # Effective size of the resulting Md device
@@ -244,6 +278,41 @@ module Y2Partitioner
 
         def default_md_parity
           Y2Storage::MdParity.find(:default)
+        end
+
+        # Indexes of the given sids within a full list of devices
+        #
+        # It locates devices by its sid or by the sid of its plain device
+        # (useful if some encrypted devices that are part of the MD).
+        def indexes_of_devices(sids, list)
+          sids.map { |sid| list.index { |dev| dev.plain_device.sid == sid } }.compact
+        end
+
+        def move_indexes(idxs_to_move, list_size, up)
+          indexes = Array(0..(list_size - 1))
+          # When moving down, we must iterate the list in inverse order for the
+          # algorithm to work.
+          indexes.reverse! unless up
+
+          consecutive = 0
+          indexes.sort_by do |idx|
+            if idxs_to_move.include?(idx)
+              # This logic is better explained with an example. Let's say we want
+              # the third, fourth and fifth devices in the list to go up and, thus,
+              # be placed before the current second one. These will be the results:
+              #
+              #   third  -> 0.9   (reduced enough to be before 1)
+              #   fourth -> 0.99  (extra decimal, stable sorting among the moving devices)
+              #   fifth  -> 0.999 (same here)
+              #   second -> 1     (original index, the other branch of the 'if')
+              consecutive += 1
+              delta = consecutive + 0.1**consecutive
+              up ? idx - delta : idx + delta
+            else
+              consecutive = 0
+              idx
+            end
+          end
         end
       end
     end

@@ -39,9 +39,13 @@ describe Y2Partitioner::Widgets::MdDevicesSelector do
     row.any? { |column| column.match?(regexp) }
   end
 
+  # Checks whether the rows match the expression, taking the order of both sets
+  # into account
   def rows_match?(rows, *args)
-    args.all? do |arg|
-      rows.any? { |row| row_match?(row, arg) }
+    return false if rows.size != args.size
+
+    args.each.with_index.all? do |arg, idx|
+      row_match?(rows[idx], arg)
     end
   end
 
@@ -69,8 +73,8 @@ describe Y2Partitioner::Widgets::MdDevicesSelector do
 
     devicegraph_stub("complex-lvm-encrypt.yml")
 
-    controller.add_device(dev("/dev/sda3"))
     controller.add_device(dev("/dev/sde3"))
+    controller.add_device(dev("/dev/sda3"))
   end
 
   include_examples "CWM::CustomWidget"
@@ -79,14 +83,12 @@ describe Y2Partitioner::Widgets::MdDevicesSelector do
     describe "#contents" do
       it "displays all the unselected devices in the corresponding table" do
         items = unselected_table.items
-        expect(items.size).to eq 2
         expect(rows_match?(items, "^/dev/sda2$", "^/dev/sda4$")).to eq true
       end
 
       it "displays all the selected devices in the corresponding table and order" do
         items = selected_table.items
-        expect(items.size).to eq 2
-        expect(rows_match?(items, "^/dev/sda3$", "^/dev/sde3$")).to eq true
+        expect(rows_match?(items, "^/dev/sde3$", "^/dev/sda3$")).to eq true
       end
     end
   end
@@ -100,10 +102,10 @@ describe Y2Partitioner::Widgets::MdDevicesSelector do
         expect(controller.available_devices).to be_empty
       end
 
-      it "includes all the devices in the MD array" do
+      it "adds all the available devices at the end of the MD array" do
         widget.handle(event)
         expect(controller.devices_in_md.map(&:name)).to contain_exactly(
-          "/dev/sda2", "/dev/sda3", "/dev/sda4", "/dev/sde3"
+          "/dev/sde3", "/dev/sda3", "/dev/sda2", "/dev/sda4"
         )
       end
     end
@@ -114,7 +116,7 @@ describe Y2Partitioner::Widgets::MdDevicesSelector do
       it "displays all the selected devices in the corresponding table" do
         items = selected_table.items
         expect(items.size).to eq 4
-        names = ["/dev/sda2$", "/dev/sda3$", "/dev/sda4$", "/dev/sde3$"]
+        names = ["/dev/sde3$", "/dev/sda3$", "/dev/sda2$", "/dev/sda4$"]
         expect(rows_match?(items, *names)).to eq true
       end
 
@@ -138,23 +140,21 @@ describe Y2Partitioner::Widgets::MdDevicesSelector do
       describe "#handle" do
         it "does not alter the controller lists (no changes)" do
           widget.handle(event)
-          expect(controller.devices_in_md.map(&:name)).to contain_exactly("/dev/sda3", "/dev/sde3")
-          expect(controller.available_devices.map(&:name)).to contain_exactly("/dev/sda2", "/dev/sda4")
+          expect(controller.devices_in_md.map(&:name)).to eq ["/dev/sde3", "/dev/sda3"]
+          expect(controller.available_devices.map(&:name)).to eq ["/dev/sda2", "/dev/sda4"]
         end
       end
 
       describe "#contents" do
         before { widget.handle(event) }
 
-        it "displays all the selected devices in the corresponding table" do
+        it "displays all the selected devices in the corresponding table and order" do
           items = selected_table.items
-          expect(items.size).to eq 2
-          expect(rows_match?(items, "/dev/sda3$", "/dev/sde3$")).to eq true
+          expect(rows_match?(items, "/dev/sde3$", "/dev/sda3$")).to eq true
         end
 
-        it "displays all the available devices in the corresponding table" do
+        it "displays all the available devices in the corresponding table and order" do
           items = unselected_table.items
-          expect(items.size).to eq 2
           expect(rows_match?(items, "/dev/sda2$", "/dev/sda4$")).to eq true
         end
       end
@@ -164,11 +164,11 @@ describe Y2Partitioner::Widgets::MdDevicesSelector do
       let(:selection) { ["unselected:device:#{dev("/dev/sda2").sid}"] }
 
       describe "#handle" do
-        it "adds the devices to the MD RAID" do
+        it "adds the devices at the end of the MD RAID" do
           widget.handle(event)
-          expect(controller.devices_in_md.map(&:name)).to contain_exactly(
-            "/dev/sda2", "/dev/sda3", "/dev/sde3"
-          )
+          expect(controller.devices_in_md.map(&:name)).to eq [
+            "/dev/sde3", "/dev/sda3", "/dev/sda2"
+          ]
         end
 
         it "causes the device to not be longer available" do
@@ -180,10 +180,10 @@ describe Y2Partitioner::Widgets::MdDevicesSelector do
       describe "#contents" do
         before { widget.handle(event) }
 
-        it "displays all the selected devices in the corresponding table" do
+        it "displays all the selected devices in the corresponding table and order" do
           items = selected_table.items
           expect(items.size).to eq 3
-          expect(rows_match?(items, "/dev/sda2$", "/dev/sda3$", "/dev/sde3$")).to eq true
+          expect(rows_match?(items, "/dev/sde3$", "/dev/sda3$", "/dev/sda2$")).to eq true
         end
 
         it "displays all the available devices in the corresponding table" do
@@ -220,7 +220,7 @@ describe Y2Partitioner::Widgets::MdDevicesSelector do
         expect(items).to be_empty
       end
 
-      it "displays all the available devices in the corresponding table" do
+      it "displays all the available devices in the corresponding table and order" do
         items = unselected_table.items
         expect(items.size).to eq 4
         names = ["/dev/sda2$", "/dev/sda3$", "/dev/sda4$", "/dev/sde3$"]
@@ -242,23 +242,21 @@ describe Y2Partitioner::Widgets::MdDevicesSelector do
       describe "#handle" do
         it "does not alter the controller lists (no changes)" do
           widget.handle(event)
-          expect(controller.devices_in_md.map(&:name)).to contain_exactly("/dev/sda3", "/dev/sde3")
-          expect(controller.available_devices.map(&:name)).to contain_exactly("/dev/sda2", "/dev/sda4")
+          expect(controller.devices_in_md.map(&:name)).to eq ["/dev/sde3", "/dev/sda3"]
+          expect(controller.available_devices.map(&:name)).to eq ["/dev/sda2", "/dev/sda4"]
         end
       end
 
       describe "#contents" do
         before { widget.handle(event) }
 
-        it "displays all the selected devices in the corresponding table" do
+        it "displays all the selected devices in the corresponding table and order" do
           items = selected_table.items
-          expect(items.size).to eq 2
-          expect(rows_match?(items, "/dev/sda3$", "/dev/sde3$")).to eq true
+          expect(rows_match?(items, "/dev/sde3$", "/dev/sda3$")).to eq true
         end
 
-        it "displays all the available devices in the corresponding table" do
+        it "displays all the available devices in the corresponding table and order" do
           items = unselected_table.items
-          expect(items.size).to eq 2
           expect(rows_match?(items, "/dev/sda2$", "/dev/sda4$")).to eq true
         end
       end
@@ -286,14 +284,223 @@ describe Y2Partitioner::Widgets::MdDevicesSelector do
 
         it "displays all the selected devices in the corresponding table" do
           items = selected_table.items
-          expect(items.size).to eq 1
           expect(rows_match?(items, "/dev/sde3$")).to eq true
         end
 
-        it "displays all the available devices in the corresponding table" do
+        it "displays all the available devices in the corresponding table and order" do
           items = unselected_table.items
-          expect(items.size).to eq 3
           expect(rows_match?(items, "/dev/sda2$", "/dev/sda3$", "/dev/sda4$")).to eq true
+        end
+      end
+    end
+  end
+
+  context "ordering devices" do
+    before do
+      allow(selected_table).to receive(:value).and_return selection
+
+      # Let's start with all devices in the 'selected' list, to have more
+      # testing options
+      controller.add_device(dev("/dev/sda2"))
+      controller.add_device(dev("/dev/sda4"))
+    end
+
+    context "pushing the 'Up' button" do
+      let(:event) { { "ID" => :up } }
+
+      context "if there were no marked item in the 'selected' table" do
+        let(:selection) { [] }
+
+        describe "#handle" do
+          it "does not alter the controller lists (no changes)" do
+            widget.handle(event)
+            expect(controller.devices_in_md.map(&:name)).to eq [
+              "/dev/sde3", "/dev/sda3", "/dev/sda2", "/dev/sda4"
+            ]
+            expect(controller.available_devices).to be_empty
+          end
+        end
+
+        describe "#contents" do
+          before { widget.handle(event) }
+
+          it "keeps displaying all the selected devices in the corresponding table and order" do
+            names = ["/dev/sde3$", "/dev/sda3$", "/dev/sda2$", "/dev/sda4$"]
+            expect(rows_match?(selected_table.items, *names)).to eq true
+          end
+        end
+      end
+
+      context "if there were some marked items in the 'selected' table" do
+        let(:selection) do
+          ["selected:device:#{dev("/dev/sda3").sid}", "selected:device:#{dev("/dev/sda4").sid}"]
+        end
+
+        describe "#handle" do
+          it "moves all the chosen devices one position forward in the MD RAID" do
+            widget.handle(event)
+            expect(controller.devices_in_md.map(&:name)).to eq [
+              "/dev/sda3", "/dev/sde3", "/dev/sda4", "/dev/sda2"
+            ]
+          end
+        end
+
+        describe "#contents" do
+          before { widget.handle(event) }
+
+          it "displays all the selected devices in the corresponding table and order" do
+            names = ["/dev/sda3$", "/dev/sde3$", "/dev/sda4$", "/dev/sda2$"]
+            expect(rows_match?(selected_table.items, *names)).to eq true
+          end
+        end
+      end
+    end
+
+    context "pushing the 'Down' button" do
+      let(:event) { { "ID" => :down } }
+
+      context "if there were no marked item in the 'selected' table" do
+        let(:selection) { [] }
+
+        describe "#handle" do
+          it "does not alter the controller lists (no changes)" do
+            widget.handle(event)
+            expect(controller.devices_in_md.map(&:name)).to eq [
+              "/dev/sde3", "/dev/sda3", "/dev/sda2", "/dev/sda4"
+            ]
+            expect(controller.available_devices).to be_empty
+          end
+        end
+
+        describe "#contents" do
+          before { widget.handle(event) }
+
+          it "keeps displaying all the selected devices in the corresponding table and order" do
+            names = ["/dev/sde3$", "/dev/sda3$", "/dev/sda2$", "/dev/sda4$"]
+            expect(rows_match?(selected_table.items, *names)).to eq true
+          end
+        end
+      end
+
+      context "if there were some marked items in the 'selected' table" do
+        let(:selection) { ["selected:device:#{dev("/dev/sda3").sid}"] }
+
+        describe "#handle" do
+          it "moves all the chosen devices one position backwards in the MD RAID" do
+            widget.handle(event)
+            expect(controller.devices_in_md.map(&:name)).to eq [
+              "/dev/sde3", "/dev/sda2", "/dev/sda3", "/dev/sda4"
+            ]
+          end
+        end
+
+        describe "#contents" do
+          before { widget.handle(event) }
+
+          it "displays all the selected devices in the corresponding table and order" do
+            names = ["/dev/sde3$", "/dev/sda2$", "/dev/sda3$", "/dev/sda4$"]
+            expect(rows_match?(selected_table.items, *names)).to eq true
+          end
+        end
+      end
+    end
+
+    context "pushing the 'Top' button" do
+      let(:event) { { "ID" => :top } }
+
+      context "if there were no marked item in the 'selected' table" do
+        let(:selection) { [] }
+
+        describe "#handle" do
+          it "does not alter the controller lists (no changes)" do
+            widget.handle(event)
+            expect(controller.devices_in_md.map(&:name)).to eq [
+              "/dev/sde3", "/dev/sda3", "/dev/sda2", "/dev/sda4"
+            ]
+            expect(controller.available_devices).to be_empty
+          end
+        end
+
+        describe "#contents" do
+          before { widget.handle(event) }
+
+          it "keeps displaying all the selected devices in the corresponding table and order" do
+            names = ["/dev/sde3$", "/dev/sda3$", "/dev/sda2$", "/dev/sda4$"]
+            expect(rows_match?(selected_table.items, *names)).to eq true
+          end
+        end
+      end
+
+      context "if there were some marked items in the 'selected' table" do
+        let(:selection) do
+          ["selected:device:#{dev("/dev/sda3").sid}", "selected:device:#{dev("/dev/sda4").sid}"]
+        end
+
+        describe "#handle" do
+          it "moves all the chosen devices to the beginning in the MD RAID" do
+            widget.handle(event)
+            expect(controller.devices_in_md.map(&:name)).to eq [
+              "/dev/sda3", "/dev/sda4", "/dev/sde3", "/dev/sda2"
+            ]
+          end
+        end
+
+        describe "#contents" do
+          before { widget.handle(event) }
+
+          it "displays all the selected devices in the corresponding table and order" do
+            names = ["/dev/sda3$", "/dev/sda4$", "/dev/sde3$", "/dev/sda2$"]
+            expect(rows_match?(selected_table.items, *names)).to eq true
+          end
+        end
+      end
+    end
+
+    context "pushing the 'Bottom' button" do
+      let(:event) { { "ID" => :bottom } }
+
+      context "if there were no marked item in the 'selected' table" do
+        let(:selection) { [] }
+
+        describe "#handle" do
+          it "does not alter the controller lists (no changes)" do
+            widget.handle(event)
+            expect(controller.devices_in_md.map(&:name)).to eq [
+              "/dev/sde3", "/dev/sda3", "/dev/sda2", "/dev/sda4"
+            ]
+            expect(controller.available_devices).to be_empty
+          end
+        end
+
+        describe "#contents" do
+          before { widget.handle(event) }
+
+          it "keeps displaying all the selected devices in the corresponding table and order" do
+            names = ["/dev/sde3$", "/dev/sda3$", "/dev/sda2$", "/dev/sda4$"]
+            expect(rows_match?(selected_table.items, *names)).to eq true
+          end
+        end
+      end
+
+      context "if there were some marked items in the 'selected' table" do
+        let(:selection) { ["selected:device:#{dev("/dev/sde3").sid}"] }
+
+        describe "#handle" do
+          it "moves all the chosen devices to the end in the MD RAID" do
+            widget.handle(event)
+            expect(controller.devices_in_md.map(&:name)).to eq [
+              "/dev/sda3", "/dev/sda2", "/dev/sda4", "/dev/sde3"
+            ]
+          end
+        end
+
+        describe "#contents" do
+          before { widget.handle(event) }
+
+          it "displays all the selected devices in the corresponding table and order" do
+            names = ["/dev/sda3$", "/dev/sda2$", "/dev/sda4$", "/dev/sde3$"]
+            expect(rows_match?(selected_table.items, *names)).to eq true
+          end
         end
       end
     end

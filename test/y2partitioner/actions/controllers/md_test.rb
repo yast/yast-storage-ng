@@ -37,6 +37,12 @@ describe Y2Partitioner::Actions::Controllers::Md do
 
   let(:scenario) { "complex-lvm-encrypt.yml" }
 
+  def dev(name)
+    result = Y2Storage::BlkDevice.find_by_name(current_graph, name)
+    result ||= Y2Storage::LvmVg.all(current_graph).find { |i| i.name == name }
+    result
+  end
+
   describe "#initialize" do
     context "when no Md device is given" do
       it "creates a new Md device with a valid level" do
@@ -92,12 +98,6 @@ describe Y2Partitioner::Actions::Controllers::Md do
   end
 
   describe "#available_devices" do
-    def dev(name)
-      result = Y2Storage::BlkDevice.find_by_name(current_graph, name)
-      result ||= Y2Storage::LvmVg.all(current_graph).find { |i| i.name == name }
-      result
-    end
-
     it "returns an array of partitions" do
       expect(controller.available_devices).to be_an Array
       expect(controller.available_devices).to all be_a(Y2Storage::Partition)
@@ -149,14 +149,18 @@ describe Y2Partitioner::Actions::Controllers::Md do
 
     before do
       cr_sda4.remove_descendants
-      controller.md.add_device(cr_sda4)
-      controller.md.add_device(sda3)
+      controller.md.push_device(cr_sda4)
+      controller.md.push_device(sda3)
     end
 
     it "returns an array with all the partitions in the Md device" do
       expect(controller.devices_in_md).to be_an Array
       expect(controller.devices_in_md).to all be_a(Y2Storage::Partition)
       expect(controller.devices_in_md.size).to eq 2
+    end
+
+    it "returns a list sorted by the position of the devices in the RAID" do
+      expect(controller.devices_in_md.map(&:name)).to eq ["/dev/sda4", "/dev/sda3"]
     end
 
     it "includes the partitions directly used by the RAID" do
@@ -183,9 +187,9 @@ describe Y2Partitioner::Actions::Controllers::Md do
       controller.md.add_device(sda1)
     end
 
-    it "adds the device to the MD RAID" do
+    it "adds the device to the MD RAID, as the last element" do
       controller.add_device(sda2)
-      expect(controller.md.devices).to include sda2
+      expect(controller.md.sorted_devices.last).to eq sda2
     end
 
     it "does not remove any previous device from the MD RAID" do
@@ -208,11 +212,6 @@ describe Y2Partitioner::Actions::Controllers::Md do
       expect(sda2.filesystem).to_not be_nil
       controller.add_device(sda2)
       expect(sda2.filesystem).to be_nil
-    end
-
-    it "adds the device to the MD RAID" do
-      controller.add_device(sda2)
-      expect(controller.md.devices).to include sda2
     end
 
     it "removes the previous encryption from the device" do
@@ -259,6 +258,229 @@ describe Y2Partitioner::Actions::Controllers::Md do
     it "raises an exception if trying to remove a device that is not in the RAID" do
       controller.remove_device(sda2)
       expect { controller.remove_device(sda2) }.to raise_error ArgumentError
+    end
+  end
+
+  describe "#devices_one_step" do
+    let(:scenario) { "complex-lvm-encrypt.yml" }
+    let(:sda2)    { dev("/dev/sda2") }
+    let(:sda3)    { dev("/dev/sda3") }
+    let(:sda4)    { dev("/dev/sda4") }
+    let(:cr_sda4) { dev("/dev/mapper/cr_sda4") }
+    let(:sde1)    { dev("/dev/sde1") }
+    let(:cr_sde1) { dev("/dev/mapper/cr_sde1") }
+    let(:sde2)    { dev("/dev/sde2") }
+    let(:sde3)    { dev("/dev/sde3") }
+
+    before do
+      [cr_sde1, sde2, sde3, sda2, sda3, cr_sda4].each do |dev|
+        dev.remove_descendants
+        controller.md.push_device(dev)
+      end
+    end
+
+    context "moving up" do
+      let(:up) { true }
+
+      context "when only one element is marked" do
+        context "if the sid matches one device in the RAID" do
+          context "if the device was already the first one" do
+            let(:sids) { [cr_sde1.sid] }
+
+            it "changes nothing" do
+              controller.devices_one_step(sids, up: up)
+              expect(controller.md.sorted_devices).to eq [cr_sde1, sde2, sde3, sda2, sda3, cr_sda4]
+            end
+          end
+
+          context "if the devices was not the first one" do
+            let(:sids) { [sde2.sid] }
+
+            it "moves the device forward in the RAID devices list" do
+              controller.devices_one_step(sids, up: up)
+              expect(controller.md.sorted_devices).to eq [sde2, cr_sde1, sde3, sda2, sda3, cr_sda4]
+            end
+          end
+        end
+
+        context "if the sid matches the corresponding plain device of an encryption in the RAID" do
+          context "if the device was already the first one" do
+            let(:sids) { [sde1.sid] }
+
+            it "changes nothing" do
+              controller.devices_one_step(sids, up: up)
+              expect(controller.md.sorted_devices).to eq [cr_sde1, sde2, sde3, sda2, sda3, cr_sda4]
+            end
+          end
+
+          context "if the devices was not the first one" do
+            let(:sids) { [sda4.sid] }
+
+            it "moves the device forward in the RAID devices list" do
+              controller.devices_one_step(sids, up: up)
+              expect(controller.md.sorted_devices).to eq [cr_sde1, sde2, sde3, sda2, cr_sda4, sda3]
+            end
+          end
+        end
+
+        context "if the sid matches a device not in the RAID (nor directly or through encryption)" do
+          let(:sids) { [dev("/dev/sda1").sid] }
+
+          it "changes nothing" do
+            controller.devices_one_step(sids, up: up)
+            expect(controller.md.sorted_devices).to eq [cr_sde1, sde2, sde3, sda2, sda3, cr_sda4]
+          end
+        end
+
+        context "if the sid doesn't match any device in the devicegraph" do
+          # sids are always > 42
+          let(:sids) { [22] }
+
+          it "changes nothing" do
+            controller.devices_one_step(sids, up: up)
+            expect(controller.md.sorted_devices).to eq [cr_sde1, sde2, sde3, sda2, sda3, cr_sda4]
+          end
+        end
+      end
+
+      # This was failing in one of the proposed algorithms
+      context "when the last two elements were marked" do
+        let(:sids) { [sda3.sid, sda4.sid] }
+
+        it "moves them both together as a unit" do
+          controller.devices_one_step(sids, up: up)
+          expect(controller.md.sorted_devices).to eq [cr_sde1, sde2, sde3, sda3, cr_sda4, sda2]
+        end
+      end
+
+      context "when several adjacent elements were marked" do
+        let(:sids) { [sda3.sid, sda2.sid, sde3.sid] }
+
+        it "moves them all together as a unit" do
+          controller.devices_one_step(sids, up: up)
+          expect(controller.md.sorted_devices).to eq [cr_sde1, sde3, sda2, sda3, sde2, cr_sda4]
+        end
+      end
+
+      context "when adjacent and non-adjacents elements were marked" do
+        let(:sids) { [sde2.sid, sde1.sid, sda2.sid, sda3.sid] }
+
+        it "moves everything correctly" do
+          controller.devices_one_step(sids, up: up)
+          expect(controller.md.sorted_devices).to eq [cr_sde1, sde2, sda2, sda3, sde3, cr_sda4]
+        end
+      end
+
+      context "when all elements but one were were marked" do
+        let(:sids) { [sde1.sid, sde3.sid, sda2.sid, sda3.sid, sda4.sid] }
+
+        it "moves the non-marked device to the end" do
+          controller.devices_one_step(sids, up: up)
+          expect(controller.md.sorted_devices).to eq [cr_sde1, sde3, sda2, sda3, cr_sda4, sde2]
+        end
+      end
+    end
+
+    context "moving down" do
+      let(:up) { false }
+
+      context "when only one element is marked" do
+        context "if the sid matches one device in the RAID" do
+          context "if the device was already the last one" do
+            let(:sids) { [cr_sda4.sid] }
+
+            it "changes nothing" do
+              controller.devices_one_step(sids, up: up)
+              expect(controller.md.sorted_devices).to eq [cr_sde1, sde2, sde3, sda2, sda3, cr_sda4]
+            end
+          end
+
+          context "if the devices was not the last one" do
+            let(:sids) { [sde2.sid] }
+
+            it "moves the device backwards in the RAID devices list" do
+              controller.devices_one_step(sids, up: up)
+              expect(controller.md.sorted_devices).to eq [cr_sde1, sde3, sde2, sda2, sda3, cr_sda4]
+            end
+          end
+        end
+
+        context "if the sid matches the corresponding plain device of an encryption in the RAID" do
+          context "if the device was already the last one" do
+            let(:sids) { [sda4.sid] }
+
+            it "changes nothing" do
+              controller.devices_one_step(sids, up: up)
+              expect(controller.md.sorted_devices).to eq [cr_sde1, sde2, sde3, sda2, sda3, cr_sda4]
+            end
+          end
+
+          context "if the devices was not the last one" do
+            let(:sids) { [sde1.sid] }
+
+            it "moves the device backwards in the RAID devices list" do
+              controller.devices_one_step(sids, up: up)
+              expect(controller.md.sorted_devices).to eq [sde2, cr_sde1, sde3, sda2, sda3, cr_sda4]
+            end
+          end
+        end
+
+        context "if the sid matches a device not in the RAID (nor directly or through encryption)" do
+          let(:sids) { [dev("/dev/sda1").sid] }
+
+          it "changes nothing" do
+            controller.devices_one_step(sids, up: up)
+            expect(controller.md.sorted_devices).to eq [cr_sde1, sde2, sde3, sda2, sda3, cr_sda4]
+          end
+        end
+
+        context "if the sid doesn't match any device in the devicegraph" do
+          # sids are always > 42
+          let(:sids) { [22] }
+
+          it "changes nothing" do
+            controller.devices_one_step(sids, up: up)
+            expect(controller.md.sorted_devices).to eq [cr_sde1, sde2, sde3, sda2, sda3, cr_sda4]
+          end
+        end
+      end
+
+      # This was failing in one of the proposed algorithms
+      context "when the first two elements were marked" do
+        let(:sids) { [sde1.sid, sde2.sid] }
+
+        it "moves them both together as a unit" do
+          controller.devices_one_step(sids, up: up)
+          expect(controller.md.sorted_devices).to eq [sde3, cr_sde1, sde2, sda2, sda3, cr_sda4]
+        end
+      end
+
+      context "when several adjacent elements were marked" do
+        let(:sids) { [sde3.sid, sda2.sid, sda3.sid] }
+
+        it "moves them all together as a unit" do
+          controller.devices_one_step(sids, up: up)
+          expect(controller.md.sorted_devices).to eq [cr_sde1, sde2, cr_sda4, sde3, sda2, sda3]
+        end
+      end
+
+      context "when adjacent and non-adjacents elements were marked" do
+        let(:sids) { [sda2.sid, sda4.sid, sde1.sid, sde2.sid] }
+
+        it "moves everything correctly" do
+          controller.devices_one_step(sids, up: up)
+          expect(controller.md.sorted_devices).to eq [sde3, cr_sde1, sde2, sda3, sda2, cr_sda4]
+        end
+      end
+
+      context "when all elements but one were were marked" do
+        let(:sids) { [sde1.sid, sde3.sid, sda2.sid, sda3.sid, sda4.sid] }
+
+        it "moves the non-marked device to the beginning" do
+          controller.devices_one_step(sids, up: up)
+          expect(controller.md.sorted_devices).to eq [sde2, cr_sde1, sde3, sda2, sda3, cr_sda4]
+        end
+      end
     end
   end
 
