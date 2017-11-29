@@ -1,7 +1,8 @@
 require "cwm/pager"
 require "y2partitioner/icons"
-require "y2partitioner/widgets/device_delete_button"
 require "y2partitioner/widgets/blk_device_edit_button"
+require "y2partitioner/widgets/device_resize_button"
+require "y2partitioner/widgets/device_delete_button"
 require "y2partitioner/widgets/partition_description"
 require "y2partitioner/dialogs"
 
@@ -48,6 +49,7 @@ module Y2Partitioner
             Left(
               HBox(
                 BlkDeviceEditButton.new(device: @partition),
+                DeviceResizeButton.new(device: @partition),
                 DeviceDeleteButton.new(device: @partition)
               )
             )
