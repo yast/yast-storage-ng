@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Wed Nov 29 13:54:41 UTC 2017 - snwint@suse.com
+
+- adjust list of partition ids in expert partitioner (bsc#1060993,
+  fate#314888)
+- 4.0.42
+
+-------------------------------------------------------------------
 Tue Nov 28 13:35:34 UTC 2017 - igonzalezsosa@suse.com
 
 - AutoYaST: honor size=max for logical volumes (bsc#1070131).
