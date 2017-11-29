@@ -39,6 +39,7 @@ module Y2Partitioner
         textdomain "storage"
 
         @partition = partition
+        @resize_info = partition.detect_resize_info
         UIState.instance.select_row(partition)
       end
 
@@ -58,72 +59,35 @@ module Y2Partitioner
       # @return [Y2Storage::Partition] partition to resize
       attr_reader :partition
 
+      # @return [Y2Storage::ResizeInfo]
+      attr_reader :resize_info
+
       # Runs the dialog to resize the partition
       #
       # @return [Symbol] :finish if the dialog returns :next; dialog result otherwise.
       def resize
-        result = Dialogs::PartitionResize.run(partition)
-        # TODO: align the size
+        result = Dialogs::PartitionResize.run(partition, resize_info)
+
+        # TODO: align the partition
+
         result == :next ? :finish : result
       end
 
-      # Validations before performing the resize action
+      # Checks whether the resize action can be performed
+      #
+      # @see Y2Storage::ResizeInfo#resize_ok?
       #
       # @return [Boolean] true if the resize action can be performed; false otherwise.
       def validate
-        not_extended_validation &&
-          not_used_validation &&
-          formatted_validation
-      end
+        return true if resize_info.resize_ok?
 
-      # Checks whether the partition is not extended
-      #
-      # @note An error popup is shown if the partition is extended.
-      #
-      # @return [Boolean] true is the partition is not extended; false otherwise.
-      def not_extended_validation
-        return true unless partition.type.is?(:extended)
+        # TODO: Distinguish the reason why it is not possible to resize, for example:
+        # * partition used by commited LVM or MD RAID
+        # * extended partition with committed logical partitions
 
         Yast::Popup.Error(
           # TRANSLATORS: an error popup message
-          _("An extended partition cannot be resized.")
-        )
-
-        false
-      end
-
-      # Checks whether the partition is not used by LVM or MD RAID
-      #
-      # @note An error popup is shown if the partition is in use.
-      #
-      # @return [Boolean] true is the partition is in use; false otherwise.
-      def not_used_validation
-        return true unless partition.descendants.any? { |d| d.is?(:lvm_pv, :md) }
-
-        Yast::Popup.Error(
-          format(
-            # TRANSLATORS: an error popup message, where %{name} is the name of
-            # a partition (e.g., /dev/sda1)
-            _("The partition %{name} is in use. It cannot be\n"\
-              "resized. To resize %{name}, make sure it is not used."),
-            name: partition.name
-          )
-        )
-
-        false
-      end
-
-      # Checks whether the partition is formatted
-      #
-      # @note An error popup is shown if the partition is not formatted.
-      #
-      # @return [Boolean] true is the partition is formatted; false otherwise.
-      def formatted_validation
-        return true if partition.formatted?
-
-        Yast::Popup.Error(
-          # TRANSLATORS: an error popup message
-          _("Resize not supported by underlying device.")
+          _("This partition cannot be resized.")
         )
 
         false

@@ -15,16 +15,18 @@ module Y2Partitioner
       # Constructor
       #
       # @param partition [Y2Storage::Partition] partition to resize
-      def initialize(partition)
+      # @param resize_info [Y2Storage::ResizeInfo] partition resize info
+      def initialize(partition, resize_info)
         textdomain "storage"
 
         @partition = partition
+        @resize_info = resize_info
         @space_info = partition.filesystem.detect_space_info if committed_partition?
       end
 
       # @macro seeDialog
       def title
-        # TRANSLATORS: dialog title, where %{name} is the name of a partition (e.g., /dev/sda)
+        # TRANSLATORS: dialog title, where %{name} is the name of a partition (e.g., /dev/sda1)
         format(_("Resize Partition %{name}"), name: partition.name)
       end
 
@@ -32,7 +34,7 @@ module Y2Partitioner
       def contents
         HVSquash(
           VBox(
-            SizeSelector.new(partition),
+            SizeSelector.new(partition, resize_info),
             size_info
           )
         )
@@ -42,7 +44,7 @@ module Y2Partitioner
       def run
         res = super
 
-        # TODO: Check mount
+        # TODO: check mount
 
         res
       end
@@ -58,8 +60,19 @@ module Y2Partitioner
       # @return [Y2Storage::Partition]
       attr_reader :partition
 
+      # @return [Y2Storage::ResizeInfo]
+      attr_reader :resize_info
+
       # @return [Y2Storage::SpaceInfo]
       attr_reader :space_info
+
+      # Whether the partition exists on disk
+      #
+      # @return [Boolean] true if the partition exists on disk; false otherwise.
+      def committed_partition?
+        system = DeviceGraphs.instance.system
+        partition.exists_in_devicegraph?(system)
+      end
 
       # Disk size in use
       #
@@ -70,14 +83,6 @@ module Y2Partitioner
       def used_size
         return nil unless committed_partition?
         space_info.used
-      end
-
-      # Whether the partition exists on disk
-      #
-      # @return [Boolean] true if the partition exists on disk; false otherwise.
-      def committed_partition?
-        system = DeviceGraphs.instance.system
-        partition.exists_in_devicegraph?(system)
       end
 
       # Widgets to show size info of the partition (current and used sizes)
@@ -108,11 +113,15 @@ module Y2Partitioner
       #
       # @note The partition is updated with the selected size.
       class SizeSelector < Widgets::ControllerRadioButtons
-        def initialize(partition)
+        # Constructor
+        #
+        # @param partition [Y2Storage::Partition]
+        # @param resize_info [Y2Storage::ResizeInfo]
+        def initialize(partition, resize_info)
           textdomain "storage"
 
           @partition = partition
-          @resize_info = partition.detect_resize_info
+          @resize_info = resize_info
         end
 
         # @macro seeAbstractWidget
