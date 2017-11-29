@@ -1,4 +1,6 @@
-engines:
+version: "2" # According to documentation, required to adjust maintainability checks
+
+plugins:
   # disable Rubocop at CodeClimate, it cannot read the shared config from
   # the /usr/share/YaST2/data/devtools/data/rubocop_yast_style.yml file
   rubocop:
@@ -6,13 +8,17 @@ engines:
 
   duplication:
     enabled: true
-    exclude_paths:
+    exclude_patterns:
       - "test/"
     config:
       languages:
       - ruby
 
-ratings:
-  paths:
-  - "**.rb"
-  - Rakefile
+checks:
+  method-lines:
+    config:
+      threshold: 30 # Same limit than YaST's Rubocop config
+
+  method-count:
+    config:
+      threshold: 50 # FIXME: temporarily raised to an absurdly high value to postpone the discussion
