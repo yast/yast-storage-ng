@@ -466,4 +466,20 @@ describe Y2Storage::StorageManager do
       expect(manager.proposal).to be_nil
     end
   end
+
+  describe "#activate" do
+    it "starts libstorage-ng activation using the default callbacks" do
+      expect(manager.storage).to receive(:activate).with(Y2Storage::Callbacks::Activate)
+      manager.activate
+    end
+
+    context "when callbacks are given" do
+      let(:custom_callbacks) { double("callbacks") }
+
+      it "starts libstorage-ng activation using given callbacks" do
+        expect(manager.storage).to receive(:activate).with(custom_callbacks)
+        manager.activate(custom_callbacks)
+      end
+    end
+  end
 end
