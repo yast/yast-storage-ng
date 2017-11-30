@@ -21,7 +21,7 @@ module Y2Partitioner
 
         @partition = partition
         @resize_info = resize_info
-        @space_info = partition.filesystem.detect_space_info if committed_partition?
+        detect_space_info
       end
 
       # @macro seeDialog
@@ -50,7 +50,7 @@ module Y2Partitioner
       end
 
       # @macro seeDialog
-      # Necessary to mimic a wizard dialog layout and behaviour
+      # Necessary to mimic wizard dialog layout and behaviour
       def should_open_dialog?
         true
       end
@@ -66,6 +66,15 @@ module Y2Partitioner
       # @return [Y2Storage::SpaceInfo]
       attr_reader :space_info
 
+      def detect_space_info
+        return unless formatted_partition? && committed_partition?
+        @space_info = partition.filesystem.detect_space_info
+      end
+
+      def formatted_partition?
+        partition.formatted?
+      end
+
       # Whether the partition exists on disk
       #
       # @return [Boolean] true if the partition exists on disk; false otherwise.
@@ -76,22 +85,22 @@ module Y2Partitioner
 
       # Disk size in use
       #
-      # @note This value only makes sense if the partitions is committed.
+      # @note This value only makes sense if the partition is formatted and committed.
       #
-      # @return [Y2Storage::Disksize, nil] nil if the partition does not exist
-      #   on disk.
+      # @return [Y2Storage::Disksize, nil] nil if it is not possible to detect its
+      #   space info.
       def used_size
-        return nil unless committed_partition?
+        return nil if space_info.nil?
         space_info.used
       end
 
       # Widgets to show size info of the partition (current and used sizes)
       #
-      # @note Used size is only shown if the partition exists on disk.
+      # @note Used size is only shown if space info can be detected.
       def size_info
         widgets = []
         widgets << current_size_info
-        widgets << used_size_info if committed_partition?
+        widgets << used_size_info unless space_info.nil?
         VBox(*widgets)
       end
 
@@ -168,8 +177,8 @@ module Y2Partitioner
         end
 
         # @macro seeAbstractWidget
-        # Whether the indicated value is valid
-        # It must be a disk size between min and max possible sizes.
+        # Whether the indicated value is valid. It must be a disk size
+        # between min and max possible sizes.
         #
         # @note An error popup is shown when the given size is not valid.
         #
