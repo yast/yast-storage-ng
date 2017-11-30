@@ -67,8 +67,7 @@ module Y2Partitioner
       # @return [Symbol] :finish if the dialog returns :next; dialog result otherwise.
       def resize
         result = Dialogs::PartitionResize.run(partition, resize_info)
-
-        # TODO: align the partition
+        fix_end_alignment(resize_info)
 
         result == :next ? :finish : result
       end
@@ -91,6 +90,45 @@ module Y2Partitioner
         )
 
         false
+      end
+
+      # After the partition's size was changed during resizing, make sure the
+      # new size meets all alignment requirements, but is still between
+      # min_size and max_size. This may change the partition's size (and
+      # region).
+      #
+      # @param resize_info [ResizeInfo]
+      def fix_end_alignment(resize_info)
+        return if @partition.nil?
+
+        ptable = @partition.disk.partition_table
+        return @partition.region.size unless ptable.require_end_alignment?
+
+        region = ptable.alignment.align(@partition.region, AlignPolicy::KEEP_END)
+        min_blocks = (resize_info.min_size / region.block_size).to_i
+        max_blocks = (resize_info.max_size / region.block_size).to_i
+        grain_blocks = (ptable.align_grain / region.block_size).to_i
+
+        @partition.region = fix_region_end(region, min_blocks, max_blocks, grain_blocks)
+      end
+
+      # Make sure a region's end is between min_blocks and max_blocks. If it
+      # is not, add or subtract blocks in grain_blocks increments. All sizes
+      # are specified in that region's block size.
+      #
+      # @param region [Y2Storage::Region]
+      # @param min [Fixnum]
+      # @param max [Fixnum]
+      # @param grain [Fixnum]
+      #
+      # @return [Y2Storage::Region] adjusted region
+      def fix_region_end(region, min, max, grain)
+        if region.length < min
+          region.adjust_length(grain * ((min.to_f - region.length) / grain).ceil)
+        elsif region.length > max
+          region.adjust_length(grain * ((max.to_f - region.length) / grain).floor)
+        end
+        region
       end
     end
   end
