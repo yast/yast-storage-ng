@@ -181,10 +181,19 @@ module Y2Storage
     #
     # @see #devices for an unsorted version of this
     #
+    # To know more about why order of devices is relevant, check fate#313521.
+    #
     # @note This returns an array based on the underlying SWIG structure,
     # modifying the returned object will have no effect in the Md object.
     # To modify the list of devices in the MD array, check other methods like
     # {#sorted_devices=}, {#push_device}, {#add_device} or {#remove_device}.
+    #
+    # @note libstorage-ng considers that a device with a sort-key of 0 has no
+    # specific position in the list. Such devices are listed at the beginning of
+    # the list by this method.
+    #
+    # @note Take into account that this method returns a mix of RAID devices and
+    # spare devices, since {#devices} makes no difference between both.
     #
     # @return [Array<BlkDevice>]
     def sorted_devices
