@@ -104,7 +104,7 @@ module Y2Partitioner
         ptable = @partition.disk.partition_table
         return @partition.region.size unless ptable.require_end_alignment?
 
-        region = ptable.alignment.align(@partition.region, AlignPolicy::KEEP_END)
+        region = ptable.alignment.align(@partition.region, AlignPolicy::ALIGN_END)
         min_blocks = (resize_info.min_size / region.block_size).to_i
         max_blocks = (resize_info.max_size / region.block_size).to_i
         grain_blocks = (ptable.align_grain / region.block_size).to_i
