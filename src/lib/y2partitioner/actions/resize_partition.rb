@@ -46,7 +46,7 @@ module Y2Partitioner
       # Checks whether it is possible to resize the partition, and if so,
       # the action is performed.
       #
-      # @note An error popup is shown then the partition cannot be resized.
+      # @note An error popup is shown when the partition cannot be resized.
       #
       # @return [Symbol, nil]
       def run

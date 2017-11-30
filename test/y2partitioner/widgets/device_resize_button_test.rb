@@ -25,6 +25,7 @@ require_relative "../test_helper"
 require "cwm/rspec"
 require "y2partitioner/widgets/device_resize_button"
 require "y2partitioner/widgets/configurable_blk_devices_table"
+require "y2partitioner/device_graphs"
 
 describe Y2Partitioner::Widgets::DeviceResizeButton do
   subject { described_class.new(table: table) }
@@ -53,41 +54,97 @@ describe Y2Partitioner::Widgets::DeviceResizeButton do
     end
 
     context "when a device is selected" do
-      let(:device) { instance_double(Y2Storage::Md) }
-
       before do
-        allow(device).to receive(:is?).with(anything).and_return(false)
-        allow(device).to receive(:is?).with(device_type).and_return(true)
-
-        allow(Y2Partitioner::Actions::DeleteDevice).to receive(:new)
-        allow(action_class).to receive(:new).with(device).and_return(action)
+        devicegraph_stub(scenario)
       end
 
-      let(:action) { instance_double(action_class) }
+      let(:current_graph) { Y2Partitioner::DeviceGraphs.instance.current }
 
-      let(:action_class) { Y2Partitioner::Actions::ResizeMd }
-
-      let(:device_type) { :md }
-
-      it "returns :redraw if the resize action returns :finish" do
-        allow(action).to receive(:run).and_return(:finish)
-        expect(subject.handle).to eq(:redraw)
-      end
-
-      it "returns nil if the resize action does not return :finish" do
-        allow(action).to receive(:run).and_return(:back)
-        expect(subject.handle).to be_nil
-      end
+      let(:device) { Y2Storage::BlkDevice.find_by_name(current_graph, device_name) }
 
       context "and the device is a MD RAID" do
-        let(:device_type) { :md }
+        before do
+          allow_any_instance_of(Y2Partitioner::Actions::ResizeMd).to receive(:run)
+            .and_return(action_result)
+        end
 
-        let(:action_class) { Y2Partitioner::Actions::ResizeMd }
+        let(:action_result) { nil }
+
+        let(:scenario) { "md_raid.xml" }
+
+        let(:device_name) { "/dev/md/md0" }
 
         it "performs the action for deleting a MD RAID" do
-          expect(action_class).to receive(:new).with(device).and_return(action)
-          expect(action).to receive(:run)
+          expect_any_instance_of(Y2Partitioner::Actions::ResizeMd).to receive(:run)
           subject.handle
+        end
+
+        context "and resize action is correctly performed" do
+          let(:action_result) { :finish }
+
+          it "returns :redraw" do
+            expect(subject.handle).to eq(:redraw)
+          end
+        end
+
+        context "and resize action is not correctly performed" do
+          let(:action_result) { :back }
+
+          it "returns nil" do
+            expect(subject.handle).to be_nil
+          end
+        end
+      end
+
+      context "and the device is a partition" do
+        before do
+          allow_any_instance_of(Y2Partitioner::Actions::ResizePartition).to receive(:run)
+            .and_return(action_result)
+
+          allow_any_instance_of(Y2Storage::Partition).to receive(:detect_resize_info)
+            .and_return(nil)
+        end
+
+        let(:action_result) { nil }
+
+        let(:scenario) { "mixed_disks.yml" }
+
+        let(:device_name) { "/dev/sda1" }
+
+        it "performs the action for deleting a partition" do
+          expect_any_instance_of(Y2Partitioner::Actions::ResizePartition).to receive(:run)
+          subject.handle
+        end
+
+        context "and resize action is correctly performed" do
+          let(:action_result) { :finish }
+
+          it "returns :redraw" do
+            expect(subject.handle).to eq(:redraw)
+          end
+        end
+
+        context "and resize action is not correctly performed" do
+          let(:action_result) { :back }
+
+          it "returns nil" do
+            expect(subject.handle).to be_nil
+          end
+        end
+      end
+
+      context "and resize action is not supported for the device" do
+        let(:scenario) { "mixed_disks.yml" }
+
+        let(:device_name) { "/dev/sda" }
+
+        it "shows an error popup" do
+          expect(Yast::Popup).to receive(:Error)
+          subject.handle
+        end
+
+        it "returns nil" do
+          expect(subject.handle).to be_nil
         end
       end
     end

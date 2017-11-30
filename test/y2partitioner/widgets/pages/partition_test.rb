@@ -33,4 +33,23 @@ describe Y2Partitioner::Widgets::Pages::Partition do
   subject { described_class.new(partition) }
 
   include_examples "CWM::Page"
+
+  describe "#contents" do
+    let(:widgets) { Yast::CWM.widgets_in_contents([subject]) }
+
+    it "shows a button for editing the partition" do
+      button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::BlkDeviceEditButton) }
+      expect(button).to_not be_nil
+    end
+
+    it "shows a button for resizing the partition" do
+      button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::DeviceResizeButton) }
+      expect(button).to_not be_nil
+    end
+
+    it "shows a button for deleting the partition" do
+      button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::DeviceDeleteButton) }
+      expect(button).to_not be_nil
+    end
+  end
 end
