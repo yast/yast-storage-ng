@@ -83,6 +83,14 @@ describe Y2Storage::AutoinstProfile::DriveSection do
         end
       end
     end
+
+    context "when enable_snapshots is not set" do
+      let(:hash) { { "use" => "1,3,5" } }
+
+      it "initializes enable_snapshots to 'true'" do
+        expect(described_class.new_from_hashes(hash).enable_snapshots).to eq(true)
+      end
+    end
   end
 
   describe ".new_from_storage" do

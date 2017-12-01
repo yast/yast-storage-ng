@@ -117,6 +117,7 @@ module Y2Storage
         super
         @type ||= default_type_for(hash)
         @use = use_value_from_string(hash["use"]) if hash["use"]
+        @enable_snapshots = true unless hash.key?("enable_snapshots")
         @partitions = partitions_from_hash(hash)
         @skip_list = SkipListSection.new_from_hashes(hash.fetch("skip_list", []), self)
       end

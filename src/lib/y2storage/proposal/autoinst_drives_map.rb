@@ -97,6 +97,13 @@ module Y2Storage
         @drives.values.any? { |i| !i.partitions.empty? }
       end
 
+      # Determine whether any of the drives sets snapshots enabled
+      #
+      # @return [Boolean]
+      def use_snapshots?
+        @drives.empty? || @drives.values.any?(&:enable_snapshots)
+      end
+
     protected
 
       # Find the first usable disk for the given <drive> AutoYaST specification
