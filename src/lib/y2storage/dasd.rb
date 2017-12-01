@@ -66,6 +66,10 @@ module Y2Storage
       "<Dasd #{name} #{size}>"
     end
 
+    def self.name_regexps
+      [/#{DEVDIR}dasd([[:alpha:]]+)/, /#{DEVDIR}vd([[:alpha:]]+)/]
+    end
+
     # DASD disks cannot be usb
     #
     # @return [Boolean]

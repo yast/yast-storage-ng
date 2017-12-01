@@ -134,27 +134,17 @@ module Y2Storage
       Partitionable.all(devicegraph).map(&:partitions).flatten
     end
 
-    # All partitions in the given devicegraph, sorted by name
-    #
-    # See {Partitionable#compare_by_name} to know more about the sorting.
-    #
-    # @param devicegraph [Devicegraph]
-    # @return [Array<Partition>]
-    def self.sorted_by_name(devicegraph)
-      Partitionable.sorted_by_name(devicegraph).each_with_object([]) do |partitionable, result|
-        partitions = partitionable.partitions.sort do |a, b|
-          # Within the same partition table, the equivalent of Partitionable#compare_by_name
-          # is sorting by name size and then alphabetically
-          by_size = a.name.size <=> b.name.size
-          by_size.zero? ? a.name <=> b.name : by_size
-        end
-        result.concat(partitions)
-      end
-    end
-
     # @return [String]
     def inspect
       "<Partition #{name} #{size}, #{region.show_range}>"
+    end
+
+    def self.name_regexps
+      [
+        /#{DEVDIR}sd([[:alpha:]]+)(\d+)/, /#{DEVDIR}vd([[:alpha:]]+)(\d+)/,
+        /#{DEVDIR}dasd([[:alpha:]]+)(\d+)/, /#{DEVDIR}pmem(\d+)p(\d+)/,
+        /#{DEVDIR}mmcblk(\d+)p(\d+)/, /#{DEVDIR}nvme(\d+)n(\d+)p(\d+)/
+      ]
     end
 
     # Sets the id, ensuring its value is compatible with the partition table.
