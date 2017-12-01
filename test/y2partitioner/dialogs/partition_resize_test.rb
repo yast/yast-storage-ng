@@ -96,7 +96,18 @@ describe Y2Partitioner::Dialogs::PartitionResize do
         end
       end
 
-      context "and it is formatted" do
+      context "and it is a swap partition" do
+        before do
+          allow(partition).to receive(:id).and_return(Y2Storage::PartitionId::SWAP)
+        end
+
+        it "does not show the used size" do
+          label = find_label(subject.contents, "Currently used")
+          expect(label).to be_nil
+        end
+      end
+
+      context "and it is formatted and it is not swap" do
         before do
           allow(partition).to receive(:filesystem).and_return(filesystem)
         end

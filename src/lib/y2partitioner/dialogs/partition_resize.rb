@@ -67,10 +67,13 @@ module Y2Partitioner
       attr_reader :space_info
 
       def detect_space_info
-        return unless formatted_partition? && committed_partition?
+        return unless formatted_partition? && committed_partition? && !swap_partition?
         @space_info = partition.filesystem.detect_space_info
       end
 
+      # Whether the partition is formatted
+      #
+      # @return [Boolean]
       def formatted_partition?
         partition.formatted?
       end
@@ -81,6 +84,13 @@ module Y2Partitioner
       def committed_partition?
         system = DeviceGraphs.instance.system
         partition.exists_in_devicegraph?(system)
+      end
+
+      # Whether the partition is for swap
+      #
+      # @return [Boolean]
+      def swap_partition?
+        partition.id.is?(:swap)
       end
 
       # Disk size in use
