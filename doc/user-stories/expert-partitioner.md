@@ -505,7 +505,7 @@ The specs are based on current version of expert partitioner for TW. The goal is
     * move the selected device from 'Selected Devices' to 'Available devices'
   * and action 'Remove All' is selected
     * move all devices from 'Selected Devices' to'Available devices'
-* *(pending) shows the actions: 'Top', 'Up', 'Down', 'Bottom' and 'Classify'*
+* shows the actions: 'Top', 'Up', 'Down' and 'Bottom'
   * and action 'Top' is selected
     * reorder RAID devices by moving to top the current selected device from 'Selected Devices'
   * and action 'Up' is selected
@@ -514,11 +514,13 @@ The specs are based on current version of expert partitioner for TW. The goal is
     * reorder RAID devices by moving down the current selected device from 'Selected Devices'
   * and action 'Bottom' is selected
     * reorder RAID devices by moving to bottom the current selected device from 'Selected Devices'
+* *(pending) shows the action 'Classify'*
   * and action 'Classify' is selected
     * shows a dialog to classify the RAID devices
-  * and 'next' is selected
-    * and there are not enough selected devices for the selected RAID type
-      * shows an error popup and does not allow to continue
+* and 'next' is selected
+  * and there are not enough selected devices for the selected RAID type
+    * shows an error popup and does not allow to continue
+
 
 ##### *(pending) When we are in the dialog to classify the RAID devices*
 * shows a table with the columns: Device, Class

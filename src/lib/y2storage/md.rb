@@ -42,13 +42,25 @@ module Y2Storage
     storage_class_forward :create, as: "Md"
 
     # @!method devices
-    #   @return [Array<BlkDevice>] block devices used by the MD RAID
+    #   Block devices used by the MD RAID, in no particular order
+    #
+    #   @note This returns an array based on the underlying SWIG vector,
+    #   modifying the returned object will have no effect in the Md object.
+    #   To modify the list of devices in the MD array, check other methods like
+    #   {#add_device} or {#remove_device}.
+    #
+    #   @return [Array<BlkDevice>]
     storage_forward :devices, as: "BlkDevice"
 
     # @!method add_device(blk_device)
     #   Adds a block device to the MD RAID.
     #
+    #   The device is added in an undefined position, but the holder object is
+    #   returned, so the caller can enforce the position (or any other of the
+    #   properties defined by the libstorage-ng holder) after the operation.
+    #
     #   @param blk_device [BlkDevice]
+    #   @return [Storage::MdUser]
     storage_forward :add_device, raise_errors: true
 
     # @!method remove_device(blk_device)
@@ -164,6 +176,80 @@ module Y2Storage
       devices.map(&:plain_device)
     end
 
+    # Block devices used in the MD array, sorted according to its position in
+    # the RAID.
+    #
+    # @see #devices for an unsorted version of this
+    #
+    # To know more about why order of devices is relevant, check fate#313521.
+    #
+    # @note This returns an array based on the underlying SWIG structure,
+    # modifying the returned object will have no effect in the Md object.
+    # To modify the list of devices in the MD array, check other methods like
+    # {#sorted_devices=}, {#push_device}, {#add_device} or {#remove_device}.
+    #
+    # @note libstorage-ng considers that a device with a sort-key of 0 has no
+    # specific position in the list. Such devices are listed at the beginning of
+    # the list by this method.
+    #
+    # @note Take into account that this method returns a mix of RAID devices and
+    # spare devices, since {#devices} makes no difference between both.
+    #
+    # @return [Array<BlkDevice>]
+    def sorted_devices
+      md_users.sort_by(&:sort_key).map { |holder| Y2Storage::Device.downcasted_new(holder.source) }
+    end
+
+    # Raw (non encrypted) versions of the devices included in the MD array,
+    # sorted according to the position of the devices in the RAID.
+    #
+    # If none of the devices is encrypted, this is equivalent to #sorted_devices,
+    # otherwise it returns the original devices instead of the encryption ones.
+    #
+    # @return [Array<BlkDevice>]
+    def sorted_plain_devices
+      sorted_devices.map(&:plain_device)
+    end
+
+    # Updates the sorted list of devices in the array.
+    #
+    # Devices that are not currently in the RAID will be added, those that are
+    # in the RAID but not in the passed list will be removed and, finally, order
+    # will be forced to match the passed list.
+    #
+    # @note If the RAID already exists in the system, libstorage-ng cannot alter
+    # the list of devices or reorder them. In such scenario, only removing
+    # faulty devices or modifying the list of spare ones is possible. Thus,
+    # never call this method on a Md device that already exists in the real
+    # system or the commit operation will likely fail.
+    #
+    # @see #sorted_devices
+    #
+    # @param devs_list [Array<BlkDevice>]
+    def sorted_devices=(devs_list)
+      deleted = devices - devs_list
+      deleted.each { |dev| remove_device(dev) }
+
+      added = devs_list - devices
+      added.each { |dev| add_device(dev) }
+
+      md_users.each do |holder|
+        index = devs_list.index { |dev| dev.sid == holder.source_sid }
+        holder.sort_key = index + 1
+      end
+    end
+
+    # Adds a device to the RAID as the last one in the list of sorted devices.
+    #
+    # @see #add_device
+    # @see #sorted_devices
+    #
+    # @param device [BlkDevice]
+    def push_device(device)
+      holder = add_device(device)
+      holder.sort_key = md_users.map(&:sort_key).max + 1
+    end
+
     # Name of the named RAID, if any
     #
     # @return [String, nil] nil if this is not a named array
@@ -189,6 +275,17 @@ module Y2Storage
     end
 
   protected
+
+    # Holders connecting the MD Raid to its component block devices in the
+    # devicegraph.
+    #
+    # Direct access to these objects is needed to control the sorting of the
+    # devices or to identify devices marked as spare or faulty.
+    #
+    # @return [Array<Storage::MdUser>]
+    def md_users
+      to_storage_value.in_holders.to_a.map { |h| Storage.to_md_user(h) }
+    end
 
     def types_for_is
       super << :md

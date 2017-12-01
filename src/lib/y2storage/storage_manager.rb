@@ -107,8 +107,8 @@ module Y2Storage
     # hand after calling this function the system should be probed.
     #
     # @raise [Exception] if error during activation
-    def activate
-      activate_callbacks = Callbacks::Activate.new
+    def activate(callbacks = nil)
+      activate_callbacks = callbacks || Callbacks::Activate.new
       @storage.activate(activate_callbacks)
     end
 
