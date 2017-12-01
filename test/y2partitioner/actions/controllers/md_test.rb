@@ -371,7 +371,7 @@ describe Y2Partitioner::Actions::Controllers::Md do
         end
       end
 
-      context "when all elements but one were were marked" do
+      context "when all elements but one were marked" do
         let(:sids) { [sde1.sid, sde3.sid, sda2.sid, sda3.sid, sda4.sid] }
 
         it "moves the non-marked device to the end" do

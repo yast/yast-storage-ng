@@ -359,7 +359,7 @@ describe Y2Partitioner::Widgets::MdDevicesSelector do
     context "pushing the 'Down' button" do
       let(:event) { { "ID" => :down } }
 
-      context "if there were no marked item in the 'selected' table" do
+      context "if there was no marked item in the 'selected' table" do
         let(:selection) { [] }
 
         describe "#handle" do
