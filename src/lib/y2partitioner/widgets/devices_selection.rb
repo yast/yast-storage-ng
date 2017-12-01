@@ -76,7 +76,8 @@ module Y2Partitioner
               @selected_table,
               ReplacePoint(Id(:selected_size), Empty())
             )
-          )
+          ),
+          right_area
         )
       end
 
@@ -136,6 +137,17 @@ module Y2Partitioner
 
       def unselected_label
         _("Available Devices:")
+      end
+
+      # Content at the right of the two lists of devices, empty by default.
+      #
+      # To be redefined by descending class so the area can be used to place
+      # additional controls or information, like the buttons used to reorder the
+      # elements of a RAID.
+      #
+      # @return [CWM::WidgetTerm]
+      def right_area
+        Empty()
       end
 
       def selection_buttons
@@ -256,6 +268,17 @@ module Y2Partitioner
         # @see BlkDevicesTable
         def row_id(device)
           "#{widget_id}:device:#{device.sid}"
+        end
+
+        # Updates the table content ensuring the selected rows remain selected
+        # if possible, even if they changed their position.
+        #
+        # Keeping the selection makes possible for the user to chain several
+        # actions on the same devices (for example, when ordering).
+        def refresh
+          current_value = value
+          super
+          self.value = current_value
         end
       end
     end

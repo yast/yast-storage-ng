@@ -82,9 +82,70 @@ module Y2Partitioner
         false
       end
 
+      # @macro seeAbstractWidget
+      def handle(event)
+        id = event["ID"]
+        return super unless id
+
+        case id.to_sym
+        when :up
+          controller.devices_one_step(sids_to_move, up: true)
+          refresh
+        when :top
+          controller.devices_to_top(sids_to_move)
+          refresh
+        when :down
+          controller.devices_one_step(sids_to_move, up: false)
+          refresh
+        when :bottom
+          controller.devices_to_bottom(sids_to_move)
+          refresh
+        else
+          super
+        end
+
+        nil
+      end
+
     private
 
       attr_reader :controller
+
+      # Content at the right of the two lists of devices, used to display the
+      # ordering buttons.
+      def right_area
+        MarginBox(
+          1,
+          1,
+          HSquash(
+            VBox(*order_buttons)
+          )
+        )
+      end
+
+      # Identifiers of the devices that are marked by the user to be moved
+      #
+      # @return [Array<Integer>]
+      def sids_to_move
+        sids_for(@selected_table.value)
+      end
+
+      # Buttons to rearrange the devices in the MD
+      def order_buttons
+        [
+          # TRANSLATORS: button to move an item to the first position of a sorted list
+          PushButton(Id(:top), Opt(:hstretch), _("Top")),
+          VSpacing(0.5),
+          # TRANSLATORS: button to move an item one position up in a sorted list
+          PushButton(Id(:up), Opt(:hstretch), _("Up")),
+          VSpacing(0.5),
+          # TRANSLATORS: button to move an item one position down in a sorted list
+          PushButton(Id(:down), Opt(:hstretch), _("Down")),
+          VSpacing(0.5),
+          # TRANSLATORS: button to move an item to the last position of a sorted list
+          PushButton(Id(:bottom), Opt(:hstretch), _("Bottom"))
+        ]
+      end
 
       def find_devices(sids, list)
         sids.map do |sid|

@@ -740,8 +740,13 @@ module Y2Partitioner
       end
 
       def items
-        Y2Storage::PartitionId.all.map do |part_id|
-          [part_id.to_sym, part_id.to_human_string]
+        blk_dev = @controller.blk_device
+        if blk_dev.is?(:partition)
+          blk_dev.partition_table.supported_partition_ids.map do |part_id|
+            [part_id.to_sym, part_id.to_human_string]
+          end
+        else
+          []
         end
       end
     end
