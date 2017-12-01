@@ -126,6 +126,30 @@ module Y2Storage
       partitionable.is_a?(Disk) ? partitionable : nil
     end
 
+    # Whether the first sector of the partition is aligned according to
+    # the partition table grain.
+    #
+    # @return [Boolean]
+    def start_aligned?
+      grain = partition_table.align_grain
+      block_size = region.block_size
+      sector = region.start
+      overhead = (block_size * sector) % grain
+      overhead.zero?
+    end
+
+    # Whether the final sector of the partition is aligned according to
+    # the partition table grain.
+    #
+    # @return [Boolean]
+    def end_aligned?
+      grain = partition_table.align_grain
+      block_size = region.block_size
+      sector = region.end
+      overhead = (block_size * sector + block_size) % grain
+      overhead.zero?
+    end
+
     # All partitions in the given devicegraph, in no particular order
     #
     # @param devicegraph [Devicegraph]

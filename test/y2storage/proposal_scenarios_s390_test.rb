@@ -26,21 +26,13 @@ require_relative "#{TEST_PATH}/support/proposal_context"
 
 RSpec::Matchers.define :be_start_aligned do
   match do |partition|
-    grain = partition.partition_table.align_grain
-    block_size = partition.region.block_size
-    sector = partition.region.start
-    overhead = (block_size * sector) % grain
-    overhead.zero?
+    partition.start_aligned?
   end
 end
 
 RSpec::Matchers.define :be_end_aligned do
   match do |partition|
-    grain = partition.partition_table.align_grain
-    block_size = partition.region.block_size
-    sector = partition.region.end
-    overhead = (block_size * sector + block_size) % grain
-    overhead.zero?
+    partition.end_aligned?
   end
 end
 
