@@ -102,7 +102,7 @@ module Y2Partitioner
         return if partition.nil?
 
         ptable = partition.partition_table
-        return if !ptable.require_end_alignment? || partition.end_aligned?
+        return if partition.end_aligned?
 
         region = ptable.align(partition.region, Y2Storage::AlignPolicy::ALIGN_END)
         min_blocks = (resize_info.min_size.to_i / region.block_size.to_i)
@@ -116,10 +116,12 @@ module Y2Partitioner
       # is not, add or subtract blocks in grain_blocks increments. All sizes
       # are specified in that region's block size.
       #
+      # @note region parameter could be modified.
+      #
       # @param region [Y2Storage::Region]
-      # @param min [Fixnum]
-      # @param max [Fixnum]
-      # @param grain [Fixnum]
+      # @param min [Integer]
+      # @param max [Integer]
+      # @param grain [Integer]
       #
       # @return [Y2Storage::Region] adjusted region
       def fix_region_end(region, min, max, grain)

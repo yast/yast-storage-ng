@@ -93,12 +93,26 @@ describe Y2Partitioner::Actions::ResizePartition do
           context "when the partition table does not require end-alignment" do
             let(:scenario) { "mixed_disks" }
 
-            let(:new_size) { 1233.MiB }
+            context "and the partition is end-aligned" do
+              let(:new_size) { 10.MiB }
 
-            it "does not change the partition size" do
-              size_before = partition.size
-              subject.send(:fix_end_alignment, resize_info)
-              expect(partition.size).to eq(size_before)
+              it "does not change the partition size" do
+                size_before = partition.size
+
+                expect(partition.end_aligned?).to eq(true)
+                action.run
+                expect(partition.size).to eq(size_before)
+              end
+            end
+
+            context "and the partition is not end-aligned" do
+              let(:new_size) { 10.5.MiB }
+
+              it "aligns the partition" do
+                expect(partition.end_aligned?).to eq(false)
+                action.run
+                expect(partition.end_aligned?).to eq(true)
+              end
             end
           end
 
@@ -112,7 +126,7 @@ describe Y2Partitioner::Actions::ResizePartition do
                 size_before = partition.size
 
                 expect(partition.end_aligned?).to eq(true)
-                subject.send(:fix_end_alignment, resize_info)
+                action.run
                 expect(partition.size).to eq(size_before)
               end
             end
@@ -122,7 +136,7 @@ describe Y2Partitioner::Actions::ResizePartition do
 
               it "aligns the partition" do
                 expect(partition.end_aligned?).to eq(false)
-                subject.send(:fix_end_alignment, resize_info)
+                action.run
                 expect(partition.end_aligned?).to eq(true)
               end
             end
