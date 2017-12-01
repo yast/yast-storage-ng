@@ -25,15 +25,11 @@ require_relative "#{TEST_PATH}/support/proposal_examples"
 require_relative "#{TEST_PATH}/support/proposal_context"
 
 RSpec::Matchers.define :be_start_aligned do
-  match do |partition|
-    partition.start_aligned?
-  end
+  match(&:start_aligned?)
 end
 
 RSpec::Matchers.define :be_end_aligned do
-  match do |partition|
-    partition.end_aligned?
-  end
+  match(&:end_aligned?)
 end
 
 describe Y2Storage::GuidedProposal do
