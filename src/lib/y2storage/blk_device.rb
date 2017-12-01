@@ -22,6 +22,7 @@
 require "y2storage/storage_class_wrapper"
 require "y2storage/device"
 require "y2storage/hwinfo_reader"
+require "y2storage/comparable_by_name"
 
 module Y2Storage
   # Base class for most devices having a device name, udev path and udev ids.
@@ -30,6 +31,8 @@ module Y2Storage
   class BlkDevice < Device
     wrap_class Storage::BlkDevice,
       downcast_to: ["Partitionable", "Partition", "Encryption", "LvmLv"]
+
+    include ComparableByName
 
     # @!method self.all(devicegraph)
     #   @param devicegraph [Devicegraph]

@@ -135,6 +135,25 @@ module Y2Storage
     storage_forward :userdata=
     protected :userdata, :userdata=
 
+    # @!method self.compare_by_name(lhs, rhs)
+    #   Compare two devices by their name, used for sorting sets of
+    #   block devices and/or LVM VGs.
+    #
+    #   Using this method to compare and sort would result is something similar
+    #   to alphabetical order but with some desired exceptions like:
+    #
+    #   * /dev/sda, /dev/sdb, ..., /dev/sdaa
+    #   * /dev/md1, /dev/md2, ..., /dev/md10
+    #
+    #   @raise [Storage::Exception] if trying to compare something that is not
+    #   {BlkDevice} or {LvmVg}
+    #
+    #   @param lhs [BlkDevice, LvmVg]
+    #   @param rhs [BlkDevice, LvmVg]
+    #   @return [boolean] true if the first argument should appear first in a
+    #       sorted list (less than)
+    storage_class_forward :compare_by_name
+
     # Ancestors in the devicegraph in no particular order, not including the
     # device itself.
     #

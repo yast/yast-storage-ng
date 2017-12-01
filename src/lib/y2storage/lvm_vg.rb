@@ -21,6 +21,7 @@
 
 require "y2storage/storage_class_wrapper"
 require "y2storage/device"
+require "y2storage/comparable_by_name"
 
 module Y2Storage
   # A Volume Group of the Logical Volume Manager (LVM)
@@ -28,6 +29,8 @@ module Y2Storage
   # This is a wrapper for Storage::LvmVg
   class LvmVg < Device
     wrap_class Storage::LvmVg
+
+    include ComparableByName
 
     # @!attribute vg_name
     #   @return [String] volume group name (e.g."vg0"), not to be confused
