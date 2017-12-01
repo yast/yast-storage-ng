@@ -370,7 +370,8 @@ describe Y2Storage::BootRequirementsStrategies::Analyzer do
     let(:point) { "/home" }
 
     context "if there is a planned device for the queried mount point" do
-      let(:planned_devs) { [planned_partition(mount_point: "/home")] }
+      let(:planned_devs) { [planned_partition(mount_point: "/some-dir")] }
+      let(:point) { "/some-dir" }
 
       it "returns false" do
         expect(analyzer.free_mountpoint?(point)).to eq false
@@ -380,6 +381,7 @@ describe Y2Storage::BootRequirementsStrategies::Analyzer do
     context "if there is no planned device for the mount point" do
       context "but the queried mount point is already assigned in the devicegraph" do
         let(:scenario) { "mixed_disks" }
+        let(:planned_devs) { [planned_partition(mount_point: "/home")] }
 
         it "returns false" do
           expect(analyzer.free_mountpoint?(point)).to eq false
