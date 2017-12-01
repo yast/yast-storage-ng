@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Fri Dec  1 13:02:09 UTC 2017 - jlopez@suse.com
+
+- Partitoner: added support for resizing partitions (bsc#1057586).
+- Part of fate#318196.
+- 4.0.45
+
+-------------------------------------------------------------------
 Thu Nov 30 16:14:49 UTC 2017 - ancor@suse.com
 
 - Partitioner: added buttons to sort the devices being added to
