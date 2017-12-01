@@ -1,8 +1,21 @@
 -------------------------------------------------------------------
-Fri Dec  1 13:02:09 UTC 2017 - jlopez@suse.com
+Fri Dec  1 16:02:09 UTC 2017 - jlopez@suse.com
 
 - Partitoner: added support for resizing partitions (bsc#1057586).
 - Part of fate#318196.
+- 4.0.47
+
+-------------------------------------------------------------------
+Fri Dec  1 15:34:11 UTC 2017 - igonzalezsosa@suse.com
+
+- Fix boot partition detection (bsc#1070621).
+- 4.0.46
+
+-------------------------------------------------------------------
+Fri Dec  1 12:27:34 UTC 2017 - igonzalezsosa@suse.com
+
+- AutoYaST honors 'use' and 'initialize' elements even if the
+  list of partitions is missing (related to bsc#1065061).
 - 4.0.45
 
 -------------------------------------------------------------------
