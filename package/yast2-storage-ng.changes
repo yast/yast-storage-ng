@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Fri Dec  1 12:27:34 UTC 2017 - igonzalezsosa@suse.com
+
+- AutoYaST honors 'use' and 'initialize' elements even if the
+  list of partitions is missing (related to bsc#1065061).
+- 4.0.45
+
+-------------------------------------------------------------------
 Thu Nov 30 16:14:49 UTC 2017 - ancor@suse.com
 
 - Partitioner: added buttons to sort the devices being added to

@@ -88,8 +88,7 @@ module Y2Storage
       if drives.partitions?
         @planned_devices = plan_devices(devicegraph, drives)
 
-        space_maker = Proposal::AutoinstSpaceMaker.new(disk_analyzer, issues_list)
-        devicegraph = space_maker.cleaned_devicegraph(devicegraph, drives, @planned_devices)
+        devicegraph = clean_graph(devicegraph, drives, @planned_devices)
         add_partition_tables(devicegraph, drives)
         @planned_devices.concat(boot_devices(devicegraph, @planned_devices))
 
@@ -170,9 +169,12 @@ module Y2Storage
     # @raise [Error] No suitable devicegraph was found
     # @see proposed_guided_devicegraph
     def propose_guided_devicegraph(devicegraph, drives)
-      guided_devicegraph_for_target(devicegraph, drives, :desired)
-    rescue Error
-      guided_devicegraph_for_target(devicegraph, drives, :min)
+      devicegraph = clean_graph(devicegraph, drives, [])
+      begin
+        guided_devicegraph_for_target(devicegraph, drives, :desired)
+      rescue Error
+        guided_devicegraph_for_target(devicegraph, drives, :min)
+      end
     end
 
     # Calculates list of planned devices
@@ -186,6 +188,19 @@ module Y2Storage
     def plan_devices(devicegraph, drives)
       planner = Proposal::AutoinstDevicesPlanner.new(devicegraph, issues_list)
       planner.planned_devices(drives)
+    end
+
+    # Clean a devicegraph according to an AutoYaST drives map
+    #
+    # @param devicegraph     [Devicegraph]       Starting point
+    # @param drives          [AutoinstDrivesMap] Devices map from an AutoYaST profile
+    # @param planned_devices [<Planned::Device>] Planned devices
+    # @return [Devicegraph] Clean devicegraph
+    #
+    # @see Y2Storage::Proposal::AutoinstSpaceMaker
+    def clean_graph(devicegraph, drives, planned_devices)
+      space_maker = Proposal::AutoinstSpaceMaker.new(disk_analyzer, issues_list)
+      space_maker.cleaned_devicegraph(devicegraph, drives, planned_devices)
     end
 
     # Creates a devicegraph using the same approach as guided partitioning
