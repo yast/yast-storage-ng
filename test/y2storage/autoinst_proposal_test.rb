@@ -474,7 +474,7 @@ describe Y2Storage::AutoinstProposal do
 
     describe "automatic partitioning" do
       let(:partitioning) do
-        [{ "device" => "/dev/sdb", "use" => "all" }]
+        [{ "device" => "/dev/sda", "use" => use }]
       end
 
       let(:settings) do
@@ -484,19 +484,40 @@ describe Y2Storage::AutoinstProposal do
         end
       end
 
+      let(:planned_root) { planned_partition(mount_point: "/", type: :ext4) }
+
+      let(:planner) do
+        instance_double(Y2Storage::Proposal::DevicesPlanner, planned_devices: [planned_root])
+      end
+
+      let(:use) { "all" }
+
       before do
         allow(Y2Storage::ProposalSettings).to receive(:new_for_current_product)
           .and_return(settings)
+        allow(Y2Storage::Proposal::DevicesPlanner).to receive(:new)
+          .with(settings, Y2Storage::Devicegraph)
+          .and_return(planner)
       end
 
       it "falls back to the product's proposal with given disks" do
-        expect(Y2Storage::Proposal::DevicesPlanner).to receive(:new)
-          .with(settings, Y2Storage::Devicegraph)
-          .and_call_original
         proposal.propose
         devicegraph = proposal.devices
-        sdb = devicegraph.disks.find { |d| d.name == "/dev/sdb" }
-        expect(sdb.partitions.size).to eq(2) # / and /home
+        sda = devicegraph.disks.find { |d| d.name == "/dev/sda" }
+        expect(sda.partitions).to contain_exactly(
+          an_object_having_attributes("filesystem_mountpoint" => "/")
+        )
+      end
+
+      context "when a subset of partitions should be used" do
+        let(:use) { "1" }
+
+        it "keeps partitions that should not be removed" do
+          proposal.propose
+          devicegraph = proposal.devices
+          sda = devicegraph.disks.find { |d| d.name == "/dev/sda" }
+          expect(sda.partitions.size).to eq(3)
+        end
       end
     end
 
