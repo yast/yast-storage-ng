@@ -99,17 +99,17 @@ module Y2Partitioner
       #
       # @param resize_info [ResizeInfo]
       def fix_end_alignment(resize_info)
-        return if @partition.nil?
+        return if partition.nil?
 
-        ptable = @partition.disk.partition_table
-        return @partition.region.size unless ptable.require_end_alignment?
+        ptable = partition.partition_table
+        return if !ptable.require_end_alignment? || partition.end_aligned?
 
-        region = ptable.alignment.align(@partition.region, AlignPolicy::ALIGN_END)
-        min_blocks = (resize_info.min_size / region.block_size).to_i
-        max_blocks = (resize_info.max_size / region.block_size).to_i
-        grain_blocks = (ptable.align_grain / region.block_size).to_i
+        region = ptable.align(partition.region, Y2Storage::AlignPolicy::ALIGN_END)
+        min_blocks = (resize_info.min_size.to_i / region.block_size.to_i)
+        max_blocks = (resize_info.max_size.to_i / region.block_size.to_i)
+        grain_blocks = (ptable.align_grain.to_i / region.block_size.to_i)
 
-        @partition.region = fix_region_end(region, min_blocks, max_blocks, grain_blocks)
+        partition.region = fix_region_end(region, min_blocks, max_blocks, grain_blocks)
       end
 
       # Make sure a region's end is between min_blocks and max_blocks. If it
