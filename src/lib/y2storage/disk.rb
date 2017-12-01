@@ -62,6 +62,13 @@ module Y2Storage
       "<Disk #{name} #{size}>"
     end
 
+    def self.name_regexps
+      [
+        /#{DEVDIR}sd([[:alpha:]]+)/, /#{DEVDIR}vd([[:alpha:]]+)/, /#{DEVDIR}pmem(\d+)/,
+        /#{DEVDIR}mmcblk(\d+)/, /#{DEVDIR}nvme(\d+)n(\d+)/
+      ]
+    end
+
     # Checks if it's an USB disk
     #
     # @return [Boolean]
