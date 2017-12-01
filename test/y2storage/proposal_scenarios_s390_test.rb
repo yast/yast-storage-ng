@@ -25,23 +25,11 @@ require_relative "#{TEST_PATH}/support/proposal_examples"
 require_relative "#{TEST_PATH}/support/proposal_context"
 
 RSpec::Matchers.define :be_start_aligned do
-  match do |partition|
-    grain = partition.partition_table.align_grain
-    block_size = partition.region.block_size
-    sector = partition.region.start
-    overhead = (block_size * sector) % grain
-    overhead.zero?
-  end
+  match(&:start_aligned?)
 end
 
 RSpec::Matchers.define :be_end_aligned do
-  match do |partition|
-    grain = partition.partition_table.align_grain
-    block_size = partition.region.block_size
-    sector = partition.region.end
-    overhead = (block_size * sector + block_size) % grain
-    overhead.zero?
-  end
+  match(&:end_aligned?)
 end
 
 describe Y2Storage::GuidedProposal do

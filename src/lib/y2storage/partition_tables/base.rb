@@ -116,6 +116,16 @@ module Y2Storage
       #   @return [Boolean] whether a partition can have this partition id.
       storage_forward :partition_id_supported?
 
+      # @!method align(region, align_policy = AlignPolicy::ALIGN_END, align_type = AlignType::OPTIMAL)
+      #   Align the region according to align policy and align type.
+      #
+      #   @param region [Region] region to align
+      #   @param align_policy [AlignPolicy] policy to consider while aligning
+      #   @param align_type [AlignType]
+      #
+      #   @return [Region]
+      storage_forward :align, as: "Region"
+
       # @!method alignment
       #   @return [Storage::Alignment] Low-level object to calculate partition
       #     alignment based on hardware topology.

@@ -26,6 +26,8 @@ require "y2partitioner/dialogs/partition_resize"
 require "y2partitioner/device_graphs"
 
 describe Y2Partitioner::Actions::ResizePartition do
+  using Y2Storage::Refinements::SizeCasts
+
   before do
     allow(Yast::Wizard).to receive(:OpenNextBackDialog)
     allow(Yast::Wizard).to receive(:CloseDialog)
@@ -35,10 +37,12 @@ describe Y2Partitioner::Actions::ResizePartition do
 
   context "With a mixed partition setup" do
     before do
-      devicegraph_stub("mixed_disks.yml")
+      devicegraph_stub(scenario)
 
       allow(partition).to receive(:detect_resize_info).and_return(resize_info)
     end
+
+    let(:scenario) { "mixed_disks.yml" }
 
     let(:current_graph) { Y2Partitioner::DeviceGraphs.instance.current }
 
@@ -51,13 +55,13 @@ describe Y2Partitioner::Actions::ResizePartition do
         max_size:   max_size)
     end
 
+    let(:can_resize) { nil }
+
+    let(:min_size) { 100.KiB }
+
+    let(:max_size) { 1.GiB }
+
     describe "#run" do
-      let(:can_resize) { nil }
-
-      let(:min_size) { nil }
-
-      let(:max_size) { nil }
-
       context "when the partition cannot be resized" do
         let(:can_resize) { false }
 
@@ -77,10 +81,51 @@ describe Y2Partitioner::Actions::ResizePartition do
         context "and the user goes forward in the dialog" do
           before do
             allow(Y2Partitioner::Dialogs::PartitionResize).to receive(:run).and_return(:next)
+            partition.size = new_size
           end
+
+          let(:new_size) { 1.GiB }
 
           it "returns :finish" do
             expect(action.run).to eq(:finish)
+          end
+
+          context "when the partition table does not require end-alignment" do
+            let(:scenario) { "mixed_disks" }
+
+            let(:new_size) { 1233.MiB }
+
+            it "does not change the partition size" do
+              size_before = partition.size
+              subject.send(:fix_end_alignment, resize_info)
+              expect(partition.size).to eq(size_before)
+            end
+          end
+
+          context "when the partition table requires end-alignment" do
+            let(:scenario) { "dasd_50GiB.yml" }
+
+            context "and the partition is end-aligned" do
+              let(:new_size) { 102432.KiB }
+
+              it "does not change the partition size" do
+                size_before = partition.size
+
+                expect(partition.end_aligned?).to eq(true)
+                subject.send(:fix_end_alignment, resize_info)
+                expect(partition.size).to eq(size_before)
+              end
+            end
+
+            context "and the partition is not end-aligned" do
+              let(:new_size) { 12344.KiB }
+
+              it "aligns the partition" do
+                expect(partition.end_aligned?).to eq(false)
+                subject.send(:fix_end_alignment, resize_info)
+                expect(partition.end_aligned?).to eq(true)
+              end
+            end
           end
         end
 
@@ -97,9 +142,6 @@ describe Y2Partitioner::Actions::ResizePartition do
     end
 
     describe "#fix_region_end" do
-      let(:can_resize) { true }
-      let(:min_size) { nil }
-      let(:max_size) { nil }
       let(:region) { Y2Storage::Region.create(50, 100, Y2Storage::DiskSize.new(100)) }
 
       it "leaves a region untouched if in range" do
@@ -124,18 +166,6 @@ describe Y2Partitioner::Actions::ResizePartition do
         new_region = subject.send(:fix_region_end, region, 85, 85, 10)
         expect(new_region.start).to eq 50
         expect(new_region.length).to eq 80
-      end
-    end
-
-    describe "#fix_end_alignment" do
-      let(:can_resize) { true }
-      let(:min_size) { Y2Storage::DiskSize.zero }
-      let(:max_size) { partition.size }
-
-      it "does not change anything in the normal case" do
-        old_size = partition.size
-        subject.send(:fix_end_alignment, resize_info)
-        expect(partition.size).to eq old_size
       end
     end
   end

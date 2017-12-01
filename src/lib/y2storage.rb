@@ -49,6 +49,7 @@ require "y2storage/lvm_pv"
 require "y2storage/lvm_lv"
 require "y2storage/lv_type"
 require "y2storage/align_policy"
+require "y2storage/align_type"
 require "y2storage/resize_info"
 require "y2storage/space_info"
 
