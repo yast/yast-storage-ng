@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Thu Nov 30 16:14:49 UTC 2017 - ancor@suse.com
+
+- Partitioner: added buttons to sort the devices being added to
+  an MD RAID (part of fate#318196).
+- 4.0.44
+
+-------------------------------------------------------------------
 Thu Nov 30 16:13:18 UTC 2017 - igonzalezsosa@suse.com
 
 - Do not ignore start_multipath setting (bsc#1070343).
