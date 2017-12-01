@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Fri Dec  1 15:34:11 UTC 2017 - igonzalezsosa@suse.com
+
+- Fix boot partition detection (bsc#1070621).
+- 4.0.46
+
+-------------------------------------------------------------------
 Fri Dec  1 12:27:34 UTC 2017 - igonzalezsosa@suse.com
 
 - AutoYaST honors 'use' and 'initialize' elements even if the

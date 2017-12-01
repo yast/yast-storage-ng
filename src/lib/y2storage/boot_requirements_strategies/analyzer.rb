@@ -22,6 +22,7 @@
 # find current contact information at www.suse.com.
 
 require "yast"
+require "pathname"
 require "y2storage/planned"
 
 module Y2Storage
@@ -135,17 +136,18 @@ module Y2Storage
         boot_ptable_type.is?(type)
       end
 
-      # Whether the passed path is already used as mount point by any planned
+      # Whether the passed path is not already used as mount point by any planned
       # device or by any device in the devicegraph
       #
       # @param path [String] mount point to check for
       # @return [Boolean]
       def free_mountpoint?(path)
+        cleanpath = Pathname.new(path).cleanpath
         return false if planned_devices.any? do |dev|
-          dev.mount_point && File.identical?(dev.mount_point, path)
+          dev.mount_point && Pathname.new(dev.mount_point).cleanpath == cleanpath
         end
         return false if devicegraph.filesystems.any? do |fs|
-          fs.mountpoint && File.identical?(fs.mountpoint, path)
+          fs.mount_point && Pathname.new(fs.mount_point).cleanpath == cleanpath
         end
         true
       end
