@@ -35,4 +35,11 @@ describe Y2Storage::LvmVg do
       expect(subject.name).to include(subject.vg_name)
     end
   end
+
+  describe ".sorted_by_name" do
+    it "returns all the volume groups sorted by name" do
+      devices = Y2Storage::LvmVg.sorted_by_name(fake_devicegraph)
+      expect(devices.map(&:basename)).to eq ["vg0", "vg1"]
+    end
+  end
 end
