@@ -126,27 +126,6 @@ module Y2Storage
       partitionable.is_a?(Disk) ? partitionable : nil
     end
 
-    # Position of the first block of the region
-    #
-    # @return [Integer]
-    def start
-      region.start
-    end
-
-    # Position of the last block of the region
-    #
-    # @return [Integer]
-    def end
-      region.end
-    end
-
-    # Size of a single block
-    #
-    # @return [DiskSize]
-    def block_size
-      region.block_size
-    end
-
     # Grain for alignment
     #
     # @see PartitionTables::Base#align_grain

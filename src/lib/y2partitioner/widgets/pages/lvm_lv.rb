@@ -30,7 +30,7 @@ require "y2partitioner/widgets/device_delete_button"
 module Y2Partitioner
   module Widgets
     module Pages
-      # A Page for a partition
+      # A Page for a LVM Logical Volume
       class LvmLv < CWM::Page
         # @param lvm_lv [Y2Storage::LvmLv]
         def initialize(lvm_lv)
