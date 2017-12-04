@@ -1,8 +1,16 @@
 -------------------------------------------------------------------
-Fri Dec  1 16:02:09 UTC 2017 - jlopez@suse.com
+Fri Dec  1 17:02:09 UTC 2017 - jlopez@suse.com
 
 - Partitoner: added support for resizing partitions (bsc#1057586).
 - Part of fate#318196.
+- 4.0.48
+
+-------------------------------------------------------------------
+Fri Dec  1 16:58:14 UTC 2017 - ancor@suse.com
+
+- Rely on the new improved mechanism of libstorage-ng to sort
+  devices by name. Preparation for bsc#1049901 and part of
+  fate#31896.
 - 4.0.47
 
 -------------------------------------------------------------------

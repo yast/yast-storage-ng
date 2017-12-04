@@ -361,7 +361,7 @@ describe Y2Storage::Disk do
   end
 
   describe ".sorted_by_name" do
-    let(:scenario) { "autoyast_drive_examples" }
+    let(:scenario) { "sorting/disks_and_dasds1" }
 
     it "returns a list of Y2Storage::Disk objects" do
       disks = Y2Storage::Disk.sorted_by_name(fake_devicegraph)
@@ -372,7 +372,7 @@ describe Y2Storage::Disk do
     it "includes all disks in the devicegraph, sorted by name, and nothing else" do
       disks = Y2Storage::Disk.sorted_by_name(fake_devicegraph)
       expect(disks.map(&:basename)).to eq [
-        "nvme0n1", "sda", "sdb", "sdc", "sdd", "sdf", "sdh", "sdaa"
+        "nvme0n1", "nvme0n2", "nvme1n1", "sda", "sdb", "sdc", "sdaa"
       ]
     end
 
@@ -387,7 +387,7 @@ describe Y2Storage::Disk do
       it "returns an array sorted by name" do
         disks = Y2Storage::Disk.sorted_by_name(fake_devicegraph)
         expect(disks.map(&:basename)).to eq [
-          "nvme0n1", "sda", "sdb", "sdc", "sdd", "sdf", "sdh", "sdaa"
+          "nvme0n1", "nvme0n2", "nvme1n1", "sda", "sdb", "sdc", "sdaa"
         ]
       end
     end
