@@ -101,7 +101,9 @@ module Y2Storage
       #
       # @return [Boolean]
       def use_snapshots?
-        @drives.empty? || @drives.values.any?(&:enable_snapshots)
+        @drives.empty? || @drives.values.any? do |drive|
+          drive.enable_snapshots.nil? || drive.enable_snapshots
+        end
       end
 
     protected

@@ -225,6 +225,19 @@ describe Y2Storage::Proposal::AutoinstDrivesMap do
       end
     end
 
+    context "when snapshots are not explicitly disabled for any drive" do
+      let(:partitioning_array) do
+        [
+          { "device" => "/dev/sda", "use" => "all" },
+          { "device" => "/dev/sdb", "use" => "all" }
+        ]
+      end
+
+      it "returns true" do
+        expect(drives_map.use_snapshots?).to eq(true)
+      end
+    end
+
     context "when snapshots are disabled for all drives" do
       let(:partitioning_array) do
         [
