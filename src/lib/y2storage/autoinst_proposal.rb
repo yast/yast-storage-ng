@@ -211,7 +211,7 @@ module Y2Storage
     #   be the ideal ones, :min for generating the smallest functional partitions
     # @return [Devicegraph] Copy of devicegraph containing the planned devices
     def guided_devicegraph_for_target(devicegraph, drives, target)
-      guided_settings = proposal_settings_for_disks(drives.disk_names)
+      guided_settings = proposal_settings_for_disks(drives)
       guided_planner = Proposal::DevicesPlanner.new(guided_settings, devicegraph)
       @planned_devices = guided_planner.planned_devices(target)
       create_devices(devicegraph, @planned_devices, drives.disk_names)
@@ -230,13 +230,14 @@ module Y2Storage
 
     # Returns the product's proposal settings for a given set of disks
     #
-    # @param disk_names [Array<String>] Disks names to consider
+    # @param drives [Proposal::AutoinstDrivesMap] Devices map from an AutoYaST profile
     # @return [ProposalSettings] Proposal settings considering only the given disks
     #
     # @see Y2Storage::BlkDevice#name
-    def proposal_settings_for_disks(disk_names)
+    def proposal_settings_for_disks(drives)
       settings = ProposalSettings.new_for_current_product
-      settings.candidate_devices = disk_names
+      settings.use_snapshots = drives.use_snapshots?
+      settings.candidate_devices = drives.disk_names
       settings
     end
   end

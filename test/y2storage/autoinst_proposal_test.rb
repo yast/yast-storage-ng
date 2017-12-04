@@ -519,6 +519,28 @@ describe Y2Storage::AutoinstProposal do
           expect(sda.partitions.size).to eq(3)
         end
       end
+
+      context "when snapshots are disabled in the profile" do
+        let(:partitioning) do
+          [{ "device" => "/dev/sda", "use" => use, "enable_snapshots" => false }]
+        end
+
+        it "disables use_snapshots setting" do
+          expect(settings).to receive(:use_snapshots=).with(false)
+          proposal.propose
+        end
+      end
+
+      context "when snapshots are enabled in the profile" do
+        let(:partitioning) do
+          [{ "device" => "/dev/sda", "use" => use, "enable_snapshots" => true }]
+        end
+
+        it "enables use_snapshots setting" do
+          expect(settings).to receive(:use_snapshots=).with(true)
+          proposal.propose
+        end
+      end
     end
 
     describe "LVM" do
