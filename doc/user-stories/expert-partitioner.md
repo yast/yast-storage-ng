@@ -32,7 +32,7 @@ The specs are based on current version of expert partitioner for TW. The goal is
           * moves the partition
         * and it is not possible to move the partition
           * shows an error popup
-    * *(pending) and action 'Resize' is selected*
+    * and action 'Resize' is selected
       * and the current selected row in the table is a disk
         * shows an error popup
       * and the current selected row in the table is a partition
@@ -94,7 +94,7 @@ The specs are based on current version of expert partitioner for TW. The goal is
           * moves the partition
         * and it is not possible to move the partition
           * shows an error popup
-      * *(pending) and action 'Resize' is selected*
+      * and action 'Resize' is selected
         * shows the resize dialog
       * and action 'Delete' is selected
         * shows a confirm popup to delete the partition
@@ -118,13 +118,13 @@ The specs are based on current version of expert partitioner for TW. The goal is
     * the same than in the "disk view"
   * *(pending) and action 'Move' is selected*
     * the same than in the "disk view"
-  * *(pending) and action 'Resize' is selected*
+  * and action 'Resize' is selected
     * the same than in the "disk view"
   * and action 'Delete' is selected
     * the same than in the "disk view"
 
-### *(pending) When 'Resize' is selected*
-* and selected partition is extended
+### When 'Resize' is selected
+* *(pending) and selected partition is extended*
   * shows an error popup
 * and selected partition is not extended
   * shows a dialog with the following fields

@@ -126,6 +126,33 @@ module Y2Storage
       partitionable.is_a?(Disk) ? partitionable : nil
     end
 
+    # Grain for alignment
+    #
+    # @see PartitionTables::Base#align_grain
+    #
+    # @return [DiskSize]
+    def align_grain
+      partition_table.align_grain
+    end
+
+    # Whether the first block of the partition is aligned according to
+    # the partition table grain.
+    #
+    # @return [Boolean]
+    def start_aligned?
+      overhead = (block_size * start) % align_grain
+      overhead.zero?
+    end
+
+    # Whether the final block of the partition is aligned according to
+    # the partition table grain.
+    #
+    # @return [Boolean]
+    def end_aligned?
+      overhead = (block_size * self.end + block_size) % align_grain
+      overhead.zero?
+    end
+
     # All partitions in the given devicegraph, in no particular order
     #
     # @param devicegraph [Devicegraph]

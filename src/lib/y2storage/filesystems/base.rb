@@ -37,6 +37,17 @@ module Y2Storage
       #   @return [Array<Filesystems::Base>] all the filesystems in the given devicegraph
       storage_class_forward :all, as: "Filesystems::Base"
 
+      # @!method detect_space_info
+      #   Information about the free space on a device.
+      #
+      #   If the filesystem already exists on the disk (i.e., in the probed
+      #   devicegraph), this will mount it and then call the "df" command.
+      #   Since both operations are expensive, caching this value is advised if
+      #   it is needed repeatedly.
+      #
+      #   @return [SpaceInfo]
+      storage_forward :detect_space_info, as: "SpaceInfo"
+
       #   @return [Boolean]
       def in_network?
         return false

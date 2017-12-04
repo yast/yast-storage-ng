@@ -71,6 +71,27 @@ module Y2Storage
     #   @return [String]
     storage_forward :sysfs_path
 
+    # Position of the first block of the region
+    #
+    # @return [Integer]
+    def start
+      region.start
+    end
+
+    # Position of the last block of the region
+    #
+    # @return [Integer]
+    def end
+      region.end
+    end
+
+    # Size of a single block
+    #
+    # @return [DiskSize]
+    def block_size
+      region.block_size
+    end
+
     # Full paths of all the udev by-* links. an empty array for devices
     # not handled by udev.
     # @see #udev_full_paths

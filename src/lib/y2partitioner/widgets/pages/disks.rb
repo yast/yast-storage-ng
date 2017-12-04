@@ -21,6 +21,7 @@
 
 require "cwm/tree_pager"
 require "y2partitioner/icons"
+require "y2partitioner/widgets/device_resize_button"
 require "y2partitioner/widgets/device_delete_button"
 require "y2partitioner/widgets/configurable_blk_devices_table"
 require "y2partitioner/device_graphs"
@@ -63,9 +64,12 @@ module Y2Partitioner
               )
             ),
             table,
-            HBox(
-              # TODO: add and edit need to be also added
-              DeviceDeleteButton.new(pager: pager, table: table)
+            Left(
+              HBox(
+                # TODO: add, edit and move buttons need to be also added
+                DeviceResizeButton.new(pager: pager, table: table),
+                DeviceDeleteButton.new(pager: pager, table: table)
+              )
             )
           )
         end

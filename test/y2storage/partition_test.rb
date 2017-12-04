@@ -135,4 +135,56 @@ describe Y2Storage::Partition do
       end
     end
   end
+
+  describe "#start_aligned?" do
+    let(:scenario) { "dasd_50GiB" }
+
+    subject(:partition) { Y2Storage::Partition.find_by_name(fake_devicegraph, "/dev/sda1") }
+
+    before do
+      partition.region.start = start
+    end
+
+    context "when the first sector is aligned" do
+      let(:start) { 48 }
+
+      it "returns true" do
+        expect(partition.start_aligned?).to eq(true)
+      end
+    end
+
+    context "when the first sector is not aligned" do
+      let(:start) { 100 }
+
+      it "returns false" do
+        expect(partition.start_aligned?).to eq(false)
+      end
+    end
+  end
+
+  describe "#end_aligned?" do
+    let(:scenario) { "dasd_50GiB" }
+
+    subject(:partition) { Y2Storage::Partition.find_by_name(fake_devicegraph, "/dev/sda1") }
+
+    before do
+      partition.region.length = length
+    end
+
+    context "when the last sector is aligned" do
+      let(:length) { 96 }
+
+      it "returns true" do
+        expect(partition.end_aligned?).to eq(true)
+      end
+    end
+
+    context "when the last sector is not aligned" do
+      let(:length) { 100 }
+
+      it "returns false" do
+        expect(partition.end_aligned?).to eq(false)
+      end
+    end
+  end
 end

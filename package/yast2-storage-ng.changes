@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Mon Dec  4 09:02:09 UTC 2017 - jlopez@suse.com
+
+- Partitoner: added support for resizing partitions (bsc#1057586).
+- Part of fate#318196.
+- 4.0.49
+
+-------------------------------------------------------------------
 Mon Dec  4 08:55:17 UTC 2017 - igonzalezsosa@suse.com
 
 - AutoYaST does not ignore the 'enable_snapshots' setting even

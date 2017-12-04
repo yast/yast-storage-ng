@@ -21,7 +21,10 @@
 
 require "yast"
 require "y2partitioner/widgets/device_button"
+require "y2partitioner/actions/resize_partition"
 require "y2partitioner/actions/resize_md"
+
+Yast.import "Popup"
 
 module Y2Partitioner
   module Widgets
@@ -35,13 +38,39 @@ module Y2Partitioner
 
     private
 
+      # @see DeviceButton#actions
+      def actions
+        return nil unless device_validation
+        super
+      end
+
+      # Checks whether the device supports resizing
+      #
+      # @note An error popup is shown when the device does not support resizing.
+      #
+      # @return [Boolean] true if the device supports resizing; false otherwise.
+      def device_validation
+        return true if device.is?(:partition, :md)
+
+        Yast::Popup.Error(
+          _("Hard disks, BIOS RAIDs and multipath\n"\
+            "devices cannot be resized.")
+        )
+        false
+      end
+
       # Returns the proper Actions class to perform the resize action
       #
+      # @see Actions::ResizePartition
       # @see Actions::ResizeMd
       #
       # @return [Object] action for resizing the device
       def actions_class
-        Actions::ResizeMd if device.is?(:md)
+        if device.is?(:partition)
+          Actions::ResizePartition
+        elsif device.is?(:md)
+          Actions::ResizeMd
+        end
       end
     end
   end

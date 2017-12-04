@@ -43,6 +43,8 @@ describe Y2Partitioner::Widgets::Pages::Disk do
   include_examples "CWM::Page"
 
   describe "#contents" do
+    let(:widgets) { Yast::CWM.widgets_in_contents([subject]) }
+
     context "when the device is neither BIOS RAID nor multipath" do
       it "shows a disk tab" do
         expect(Y2Partitioner::Widgets::Pages::DiskTab).to receive(:new)
@@ -107,11 +109,49 @@ describe Y2Partitioner::Widgets::Pages::Disk do
     subject { described_class.new(disk) }
 
     include_examples "CWM::Tab"
+
+    describe "#contents" do
+      let(:widgets) { Yast::CWM.widgets_in_contents([subject]) }
+
+      it "shows the description of the disk" do
+        description = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::DiskDescription) }
+        expect(description).to_not be_nil
+      end
+    end
   end
 
   describe Y2Partitioner::Widgets::Pages::PartitionsTab do
     subject { described_class.new(disk, pager) }
 
     include_examples "CWM::Tab"
+
+    describe "#contents" do
+      let(:widgets) { Yast::CWM.widgets_in_contents([subject]) }
+
+      it "shows a button for adding a new partition" do
+        button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::PartitionAddButton) }
+        expect(button).to_not be_nil
+      end
+
+      it "shows a button for editing a device" do
+        button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::BlkDeviceEditButton) }
+        expect(button).to_not be_nil
+      end
+
+      it "shows a button for resizing a partition" do
+        button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::DeviceResizeButton) }
+        expect(button).to_not be_nil
+      end
+
+      it "shows a button for deleting a device" do
+        button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::DeviceDeleteButton) }
+        expect(button).to_not be_nil
+      end
+
+      it "shows the expert button" do
+        button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::DiskExpertMenuButton) }
+        expect(button).to_not be_nil
+      end
+    end
   end
 end
