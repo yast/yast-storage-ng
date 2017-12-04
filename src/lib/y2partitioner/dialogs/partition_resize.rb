@@ -117,12 +117,16 @@ module Y2Partitioner
       # Widget for current size
       def current_size_info
         size = partition.size.to_human_string
+        # TRANSLATORS: label for current size of the partition, where %{size} is
+        # replaced by a size (e.g., 5.5 GiB)
         Left(Label(format("Current size: %{size}", size: size)))
       end
 
       # Widget for used size
       def used_size_info
         size = used_size.to_human_string
+        # TRANSLATORS: label for currently used size of the partition, where %{size} is
+        # replaced by a size (e.g., 5.5 GiB)
         Left(Label(format("Currently used: %{size}", size: size)))
       end
     end

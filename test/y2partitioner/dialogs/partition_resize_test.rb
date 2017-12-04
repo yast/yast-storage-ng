@@ -63,7 +63,7 @@ describe Y2Partitioner::Dialogs::PartitionResize do
       end
     end
 
-    it "contents a widget for selecting the new size" do
+    it "contains a widget for selecting the new size" do
       widget = subject.contents.nested_find do |w|
         w.is_a?(Y2Partitioner::Dialogs::PartitionResize::SizeSelector)
       end

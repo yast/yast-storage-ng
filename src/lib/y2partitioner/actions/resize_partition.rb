@@ -67,7 +67,7 @@ module Y2Partitioner
       # @return [Symbol] :finish if the dialog returns :next; dialog result otherwise.
       def resize
         result = Dialogs::PartitionResize.run(partition, resize_info)
-        fix_end_alignment(resize_info)
+        fix_end_alignment
 
         result == :next ? :finish : result
       end
@@ -94,16 +94,13 @@ module Y2Partitioner
 
       # After the partition's size was changed during resizing, make sure the
       # new size meets all alignment requirements, but is still between
-      # min_size and max_size. This may change the partition's size (and
-      # region).
+      # min_size and max_size.
       #
-      # @param resize_info [ResizeInfo]
-      def fix_end_alignment(resize_info)
-        return if partition.nil?
+      # @note This may change the partition's size (and region).
+      def fix_end_alignment
+        return if partition.nil? || partition.end_aligned?
 
         ptable = partition.partition_table
-        return if partition.end_aligned?
-
         region = ptable.align(partition.region, Y2Storage::AlignPolicy::ALIGN_END)
         min_blocks = (resize_info.min_size.to_i / region.block_size.to_i)
         max_blocks = (resize_info.max_size.to_i / region.block_size.to_i)

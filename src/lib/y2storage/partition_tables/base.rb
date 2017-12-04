@@ -123,7 +123,7 @@ module Y2Storage
       #   @param align_policy [AlignPolicy] policy to consider while aligning
       #   @param align_type [AlignType]
       #
-      #   @return [Region]
+      #   @return [Region] always returns a new object
       storage_forward :align, as: "Region"
 
       # @!method alignment
