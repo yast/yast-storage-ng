@@ -206,9 +206,9 @@ describe Y2Storage::AutoinstProfile::PartitionSection do
       context "and it's configured to be mounted under /boot" do
         let(:mountpoint) { "/boot" }
 
-        it "initializes #partition_id to 259 (legacy id for BIOS BOOT)" do
+        it "initializes #partition_id to 263 (legacy id for BIOS BOOT)" do
           section = described_class.new_from_storage(dev)
-          expect(section.partition_id).to eq 259
+          expect(section.partition_id).to eq 263
         end
       end
 
@@ -227,7 +227,7 @@ describe Y2Storage::AutoinstProfile::PartitionSection do
         # Legacy (and also current) value for Linux
         expect(section_for("sdh1").partition_id).to eq 131
         # Legacy value for bios_boot (current is 257)
-        expect(section_for("sdh2").partition_id).to eq 259
+        expect(section_for("sdh2").partition_id).to eq 263
       end
     end
 
@@ -469,7 +469,7 @@ describe Y2Storage::AutoinstProfile::PartitionSection do
 
     context "if #partition_id is set" do
       context "to a legacy integer value" do
-        let(:partition_id) { 259 }
+        let(:partition_id) { 263 }
 
         it "returns the corresponding PartitionId object" do
           expect(section.id_for_partition).to eq Y2Storage::PartitionId::BIOS_BOOT
