@@ -263,7 +263,7 @@ module Y2Storage
     def partitions_with_id(*ids)
       # Sorting is not mandatory, but keeping the output stable looks like a
       # sane practice.
-      partitions.sort_by(&:number).reject { |p| p.type.is?(:extended) }.select { |p| p.id.is?(*ids) }
+      partitions.reject { |p| p.type.is?(:extended) }.select { |p| p.id.is?(*ids) }.sort_by(&:number)
     end
   end
 end
