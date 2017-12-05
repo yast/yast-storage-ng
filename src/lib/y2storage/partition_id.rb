@@ -76,7 +76,7 @@ module Y2Storage
     # Partition ids for which the internal numeric id is the same than the
     # corresponding fsid in the old libstorage.
     # See {.new_from_legacy} and {#to_i_legacy}.
-    LEGACY_KEPT = [DOS12, DOS16, DOS32, NTFS, EXTENDED, PREP, LINUX, SWAP, LVM, RAID]
+    LEGACY_KEPT = [DOS12, DOS16, DOS32, NTFS, EXTENDED, PREP, LINUX, SWAP, LVM, RAID, ESP]
 
     # Matching between fsids in the old libstorage and the corresponding
     # partition id.
