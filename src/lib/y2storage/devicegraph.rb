@@ -235,9 +235,11 @@ module Y2Storage
       devices.sort { |a, b| a.compare_by_name(b) }
     end
 
+    # All partitions in the devicegraph, sorted by name
+    #
     # @return [Array<Partition>]
     def partitions
-      Partition.all(self)
+      Partition.sorted_by_name(self)
     end
 
     # @return [Array<Filesystems::Base>]
@@ -263,9 +265,11 @@ module Y2Storage
       Filesystems::Nfs.all(self)
     end
 
+    # All the LVM volume groups in the devicegraph, sorted by name
+    #
     # @return [Array<LvmVg>]
     def lvm_vgs
-      LvmVg.all(self)
+      LvmVg.sorted_by_name(self)
     end
 
     # @return [Array<LvmPv>]
@@ -273,9 +277,11 @@ module Y2Storage
       LvmPv.all(self)
     end
 
+    # All the LVM logical volumes in the devicegraph, sorted by name
+    #
     # @return [Array<LvmLv>]
     def lvm_lvs
-      LvmLv.all(self)
+      LvmLv.sorted_by_name(self)
     end
 
     # @return [Array<FreeDiskSpace>]

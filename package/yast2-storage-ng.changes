@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Tue Dec  5 06:46:00 UTC 2017 - ancor@suse.com
+
+- Don't trust any longer the order of any collection coming from
+  libstorage-ng (related to bsc#1049901 and part of fate#31896).
+- 4.0.50
+
+-------------------------------------------------------------------
 Mon Dec  4 09:02:09 UTC 2017 - jlopez@suse.com
 
 - Partitoner: added support for resizing partitions (bsc#1057586).

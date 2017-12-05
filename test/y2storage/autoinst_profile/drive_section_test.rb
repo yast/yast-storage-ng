@@ -239,7 +239,7 @@ describe Y2Storage::AutoinstProfile::DriveSection do
 
       before do
         # SWIG makes very hard to use proper mocking. See comment above.
-        win = dev.partitions.first
+        win = dev.partitions.sort_by(&:number).first
         win.boot = true if bootable
         win.filesystem.mountpoint = mountpoint if mountpoint
       end

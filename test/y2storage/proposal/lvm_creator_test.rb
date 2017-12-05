@@ -174,7 +174,7 @@ describe Y2Storage::Proposal::LvmCreator do
             devicegraph = creator.create_volumes(vg, pv_partitions).devicegraph
             reused_vg = devicegraph.lvm_vgs.first
             lv_names = reused_vg.lvm_lvs.map(&:lv_name)
-            expect(lv_names).to eq(["one", "two"])
+            expect(lv_names).to contain_exactly("one", "two")
           end
         end
 
@@ -188,7 +188,7 @@ describe Y2Storage::Proposal::LvmCreator do
             devicegraph = creator.create_volumes(vg, pv_partitions).devicegraph
             reused_vg = devicegraph.lvm_vgs.first
             lv_names = reused_vg.lvm_lvs.map(&:lv_name)
-            expect(lv_names).to eq(["lv1", "two"])
+            expect(lv_names).to contain_exactly("lv1", "two")
           end
         end
       end

@@ -272,7 +272,7 @@ module Y2Storage
     # @return [Array<Hash>]
     #
     def yaml_lvm_vg_lvm_lvs(lvm_vg)
-      lvm_vg.lvm_lvs.map { |lvm_lv| yaml_lvm_lv(lvm_lv) }
+      lvm_vg.lvm_lvs.sort_by(&:lv_name).map { |lvm_lv| yaml_lvm_lv(lvm_lv) }
     end
 
     # Return the YAML counterpart of a Y2Storage::LvmLv.

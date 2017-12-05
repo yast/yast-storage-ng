@@ -59,7 +59,7 @@ describe Y2Storage::Planned::LvmVg do
     end
 
     it "sets lvs" do
-      expect(planned_vg.lvs.map(&:logical_volume_name)).to eq(["lv1", "lv2"])
+      expect(planned_vg.lvs.map(&:logical_volume_name)).to contain_exactly("lv1", "lv2")
     end
   end
 

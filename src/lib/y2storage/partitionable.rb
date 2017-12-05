@@ -164,7 +164,9 @@ module Y2Storage
     #
     # @return [Array<Partition>]
     def possible_windows_partitions
-      partitions.select { |p| p.type.is?(:primary) && p.id.is?(:windows_system) }
+      # Sorting is not mandatory, but keeping the output stable looks like a
+      # sane practice.
+      partitions.select { |p| p.type.is?(:primary) && p.id.is?(:windows_system) }.sort_by(&:number)
     end
 
     # Size between MBR and first partition.
@@ -259,7 +261,9 @@ module Y2Storage
     #
     # @return [Array<Partition>}]
     def partitions_with_id(*ids)
-      partitions.reject { |p| p.type.is?(:extended) }.select { |p| p.id.is?(*ids) }
+      # Sorting is not mandatory, but keeping the output stable looks like a
+      # sane practice.
+      partitions.reject { |p| p.type.is?(:extended) }.select { |p| p.id.is?(*ids) }.sort_by(&:number)
     end
   end
 end
