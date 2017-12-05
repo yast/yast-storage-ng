@@ -76,16 +76,20 @@ module Y2Storage
     # Partition ids for which the internal numeric id is the same than the
     # corresponding fsid in the old libstorage.
     # See {.new_from_legacy} and {#to_i_legacy}.
-    LEGACY_KEPT = [DOS12, DOS16, DOS32, NTFS, EXTENDED, PREP, LINUX, SWAP, LVM, RAID]
+    LEGACY_KEPT = [DOS12, DOS16, DOS32, NTFS, EXTENDED, PREP, LINUX, SWAP, LVM, RAID, DIAG, ESP]
 
     # Matching between fsids in the old libstorage and the corresponding
     # partition id.
     # See {.new_from_legacy} and {#to_i_legacy}.
     LEGACY_TO_CURRENT = {
+      4   => DOS16, # Known as "FAT16 <32M"
       5   => EXTENDED, # In the past both 5 and 15 were recognized as extended
+      11  => DOS32, # Known as "Win95 FAT32" as an alternative to 0x0c (Win95 FAT32 LBA)
+      14  => DOS16, # Known as "Win95 FAT16" as an alternative to 0x06 (FAT16)
       257 => UNKNOWN, # 257 used to mean mac_hidden, but is BIOS_BOOT now
       258 => UNKNOWN, # 258 used to mean mac_hfs, but is WINDOWS_BASIC_DATA now
-      259 => BIOS_BOOT, # 259 is MICROSOFT_RESERVED now
+      259 => ESP, # 259 is MICROSOFT_RESERVED now
+      261 => MICROSOFT_RESERVED,
       263 => BIOS_BOOT,
       264 => PREP
     }
@@ -94,9 +98,10 @@ module Y2Storage
     # them in the old libstorage.
     # See {.new_from_legacy} and {#to_i_legacy}.
     CURRENT_TO_LEGACY = {
-      BIOS_BOOT.to_i          => 259, # BIOS_BOOT.to_i is 257, that used to mean mac_hidden
+      BIOS_BOOT.to_i          => 263, # BIOS_BOOT.to_i is 257, that used to mean mac_hidden
+      ESP.to_i                => 259, # ESP.to_i is 239, that used to have no special meaning
       WINDOWS_BASIC_DATA.to_i => 0, # WINDOWS_BASIC_DATA.to_i is 258, that used to mean mac_hfs
-      MICROSOFT_RESERVED.to_i => 0, # MICROSOFT_RESERVED.to_i is 259, that used to mean BIOS_BOOT
+      MICROSOFT_RESERVED.to_i => 261, # MICROSOFT_RESERVED.to_i is 261, that used to mean BIOS_BOOT
     }
     private_constant :LEGACY_KEPT, :LEGACY_TO_CURRENT, :CURRENT_TO_LEGACY
 
