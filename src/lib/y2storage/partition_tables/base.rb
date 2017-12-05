@@ -58,7 +58,7 @@ module Y2Storage
       storage_forward :delete_partition
 
       # @!method partitions
-      #   All the partitions, sorted by partition number
+      #   All the partitions, in no particular order
       #   @return [Array<Partition>]
       storage_forward :partitions, as: "Partition"
 

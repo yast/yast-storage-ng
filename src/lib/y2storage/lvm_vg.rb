@@ -99,7 +99,7 @@ module Y2Storage
     storage_forward :remove_lvm_pv
 
     # @!method lvm_lvs
-    #   @return [Array<LvmLv>] logical volumes in the VG
+    #   @return [Array<LvmLv>] logical volumes in the VG, in no particular order
     storage_forward :lvm_lvs, as: "LvmLv"
 
     # @!method create_lvm_lv(lv_name, size)

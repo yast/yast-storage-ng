@@ -135,7 +135,7 @@ module Y2Partitioner
 
       def disk_items(disk)
         page = Pages::Disk.new(disk, self)
-        children = disk.partitions.map { |p| partition_items(p) }
+        children = disk.partitions.sort_by(&:number).map { |p| partition_items(p) }
         CWM::PagerTreeItem.new(page, children: children)
       end
 
@@ -165,7 +165,7 @@ module Y2Partitioner
 
       def lvm_vg_items(vg)
         page = Pages::LvmVg.new(vg, self)
-        children = vg.lvm_lvs.map { |l| lvm_lv_items(l) }
+        children = vg.lvm_lvs.sort_by(&:lv_name).map { |l| lvm_lv_items(l) }
         CWM::PagerTreeItem.new(page, children: children)
       end
 

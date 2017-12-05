@@ -209,7 +209,7 @@ module Y2Storage
       end
 
       def partitions_from_disk(disk)
-        disk.partitions.each_with_object([]) do |storage_partition, result|
+        disk.partitions.sort_by(&:number).each_with_object([]) do |storage_partition, result|
           next if skip_partition?(storage_partition)
 
           partition = PartitionSection.new_from_storage(storage_partition)
