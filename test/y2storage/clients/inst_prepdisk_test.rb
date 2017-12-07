@@ -63,6 +63,48 @@ describe Y2Storage::Clients::InstPrepdisk do
         expect(storage_manager.staging).to receive(:save).with(/.*staging.*.xml/)
         client.run
       end
+
+      VIRTUAL_FS = [
+        { dir: "/dest/dev",  type: "devtmpfs", opts: "-t devtmpfs" },
+        { dir: "/dest/proc", type: "proc",     opts: "-t proc" },
+        { dir: "/dest/sys",  type: "sysfs",    opts: "-t sysfs" },
+        { dir: "/dest/run",  type: "tmpfs",    opts: "-t tmpfs" }
+      ].freeze
+
+      VIRTUAL_FS.each do |spec|
+        context "if #{spec[:dir]} does not exist on destination" do
+          before do
+            allow(Yast::FileUtils).to receive(:Exists).and_return(false)
+          end
+
+          it "mounts creates and mount #{spec[:dir]}" do
+            expect(Yast::SCR).to receive(:Execute)
+              .with(Yast::Path.new(".target.mkdir"), spec[:dir])
+
+            expect(Yast::SCR).to receive(:Execute)
+              .with(Yast::Path.new(".target.mount"), [spec[:type], spec[:dir]], spec[:opts])
+            client.run
+          end
+        end
+
+        context "if #{spec[:dir]} exists on destination" do
+          before do
+            allow(Yast::FileUtils).to receive(:Exists).and_return(true)
+          end
+
+          it "does not try to create #{spec[:dir]}" do
+            expect(Yast::SCR).to_not receive(:Execute)
+              .with(Yast::Path.new(".target.mkdir"), spec[:dir])
+            client.run
+          end
+
+          it "mounts #{spec[:dir]}" do
+            expect(Yast::SCR).to receive(:Execute)
+              .with(Yast::Path.new(".target.mount"), [spec[:type], spec[:dir]], spec[:opts])
+            client.run
+          end
+        end
+      end
     end
 
     context "in update mode" do

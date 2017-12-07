@@ -63,6 +63,7 @@ module Y2Storage
         mount_in_target("/dev", "devtmpfs", "-t devtmpfs")
         mount_in_target("/proc", "proc", "-t proc")
         mount_in_target("/sys", "sysfs", "-t sysfs")
+        mount_in_target("/run", "tmpfs", "-t tmpfs")
         mount_in_target(EFIVARS_PATH, "efivarfs", "-t efivarfs") if File.exist?(EFIVARS_PATH)
       end
 
