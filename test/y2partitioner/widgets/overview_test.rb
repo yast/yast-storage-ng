@@ -29,6 +29,7 @@ require "y2partitioner/widgets/overview"
 describe Y2Partitioner::Widgets::OverviewTreePager do
   before do
     devicegraph_stub(scenario)
+    subject.init
   end
 
   subject { described_class.new("hostname") }
