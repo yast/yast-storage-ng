@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Fri Dec  8 17:34:17 CET 2017 - locilka@suse.com
+
+- Fixed dependencies (yast2 >= 4.0.24) (fate#318196)
+- 4.0.52
+
+-------------------------------------------------------------------
 Tue Dec  5 14:32:26 UTC 2017 - igonzalezsosa@suse.com
 
 - AutoYaST: assign the correct partition_id to /boot/efi
