@@ -24,7 +24,7 @@ BuildRoot:	%{_tmppath}/%{name}-%{version}-build
 Source:		%{name}-%{version}.tar.bz2
 
 # Yast2::FsSnapshots.configure_on_install=
-Requires:	yast2 >= 4.0.3
+Requires:	yast2 >= 4.0.24
 Requires:	yast2-ruby-bindings
 # Storage::CommitOptions
 Requires:	libstorage-ng-ruby >= 3.3.45
@@ -38,7 +38,7 @@ BuildRequires:	yast2-devtools
 # openSUSE:Factory project config
 BuildRequires:  yast2-xml
 # Yast2::FsSnapshots.configure_on_install=
-BuildRequires:	yast2 >= 4.0.3
+BuildRequires:	yast2 >= 4.0.24
 BuildRequires:	rubygem(yast-rake)
 BuildRequires:	rubygem(rspec)
 
