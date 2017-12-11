@@ -416,12 +416,7 @@ module Y2Storage
           break if success?(planned_partitions)
           log.info "Checking if the disk #{dsk.name} has a partition table"
 
-          if !dsk.has_children?
-            log.info "Nothing to do"
-            next
-          end
-
-          if dsk.partition_table.nil?
+          if dsk.has_children? && dsk.partition_table.nil?
             log.info "Found something that is not a partition table"
             remove_content(dsk, lvm_helper)
           end
