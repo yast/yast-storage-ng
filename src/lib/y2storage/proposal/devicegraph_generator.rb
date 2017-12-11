@@ -112,7 +112,7 @@ module Y2Storage
             result = space_maker.provide_space(devicegraph, planned_partitions, lvm_helper)
             log.info "Found enough space including LVM, reusing #{vg}"
             return result
-          rescue NoDiskSpaceError
+          rescue Error
             next
           end
         end
