@@ -56,6 +56,16 @@ describe Y2Partitioner::Widgets::Pages::Disks do
       expect(items_name.sort).to eq(devices_name.sort)
     end
 
+    it "shows a partition add button" do
+      button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::PartitionAddButton) }
+      expect(button).to_not be_nil
+    end
+
+    it "shows an edit button" do
+      button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::BlkDeviceEditButton) }
+      expect(button).to_not be_nil
+    end
+
     it "shows a resize button" do
       button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::DeviceResizeButton) }
       expect(button).to_not be_nil
