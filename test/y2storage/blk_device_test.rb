@@ -44,8 +44,6 @@ describe Y2Storage::BlkDevice do
     end
 
     context "when the device is formatted" do
-      let(:device_name) { "/dev/sda" }
-
       before do
         device.remove_descendants
         device.create_filesystem(Y2Storage::Filesystems::Type::EXT3)
@@ -53,6 +51,39 @@ describe Y2Storage::BlkDevice do
 
       it "returns true" do
         expect(device.formatted?).to eq(true)
+      end
+    end
+  end
+
+  describe "#formatted_as?" do
+    let(:device_name) { "/dev/sda" }
+
+    context "when the device is not formatted" do
+      it "returns false" do
+        expect(device.formatted_as?(:swap)).to eq(false)
+      end
+    end
+
+    context "when the device is formatted" do
+      before do
+        device.remove_descendants
+        device.create_filesystem(Y2Storage::Filesystems::Type::EXT3)
+      end
+
+      context "and it is formatted in a given filesystem type" do
+        let(:fs_types) { [:ext2, :ext3, :ext4] }
+
+        it "returns true" do
+          expect(device.formatted_as?(*fs_types)).to eq(true)
+        end
+      end
+
+      context "and it is not formatted in a given filesystem type" do
+        let(:fs_types) { [:ext4, :btrfs] }
+
+        it "returns false" do
+          expect(device.formatted_as?(*fs_types)).to eq(false)
+        end
       end
     end
   end

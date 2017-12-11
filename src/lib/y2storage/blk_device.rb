@@ -222,6 +222,14 @@ module Y2Storage
       !filesystem.nil?
     end
 
+    # Checks whether the device is formatted with specific filesystem format
+    #
+    # @param fs_types [Array<Symbol>] :ext2, :btrfs, :swap, etc (see {Filesystems::Type})
+    # @return [Boolean] true if formatted with one of the given formats; false otherwise.
+    def formatted_as?(*fs_types)
+      formatted? && filesystem.type.is?(*fs_types)
+    end
+
     # Removes the filesystem when the device is formatted
     def delete_filesystem
       return if filesystem.nil?

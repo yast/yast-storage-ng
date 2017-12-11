@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Mon Dec 11 12:56:35 UTC 2017 - jlopez@suse.com
+
+- Improve detection of efi and swap partitions.
+- bsc#1071775 and bsc#1065234
+- 4.0.53
+
+-------------------------------------------------------------------
 Fri Dec  8 17:34:17 CET 2017 - locilka@suse.com
 
 - Fixed dependencies (yast2 >= 4.0.24) (fate#318196)
