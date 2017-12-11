@@ -174,7 +174,7 @@ describe Y2Storage::Proposal::SpaceMaker do
       end
     end
 
-    context "if the only disk has no partition table" do
+    context "if the only disk has no partition table and is not used in any other way" do
       let(:scenario) { "empty_hard_disk_50GiB" }
       let(:vol1) { planned_vol(mount_point: "/1", type: :ext4, min: 40.GiB) }
 
@@ -192,6 +192,59 @@ describe Y2Storage::Proposal::SpaceMaker do
         result = maker.provide_space(fake_devicegraph, volumes, lvm_helper)
         space = result[:partitions_distribution].spaces.first
         expect(space.disk_size).to eq(50.GiB - gpt_size - gpt_final_space)
+      end
+    end
+
+    context "if the only disk is directly used as PV (no partition table)" do
+      let(:scenario) { "lvm-disk-as-pv.xml" }
+      let(:vol1) { planned_vol(mount_point: "/1", type: :ext4, min: 5.GiB) }
+
+      it "empties the disk deleting the LVM VG" do
+        expect(fake_devicegraph.lvm_vgs.size).to eq 1
+
+        result = maker.provide_space(fake_devicegraph, volumes, lvm_helper)
+        disk = result[:devicegraph].disks.first
+        expect(disk.has_children?).to eq false
+        expect(result[:devicegraph].lvm_vgs).to be_empty
+      end
+
+      it "assumes a (future) GPT partition table" do
+        gpt_size = 1.MiB
+        # The final 16.5 KiB are reserved by GPT
+        gpt_final_space = 16.5.KiB
+
+        result = maker.provide_space(fake_devicegraph, volumes, lvm_helper)
+        space = result[:partitions_distribution].spaces.first
+        expect(space.disk_size).to eq(space.disk.size - gpt_size - gpt_final_space)
+      end
+    end
+
+    context "if the only available device is directly formatted (no partition table)" do
+      let(:scenario) { "multipath-formatted.xml" }
+      let(:vol1) { planned_vol(mount_point: "/1", type: :ext4, min: 5.GiB) }
+
+      before do
+        settings.candidate_devices = ["/dev/mapper/0QEMU_QEMU_HARDDISK_mpath1"]
+        settings.root_device = "/dev/mapper/0QEMU_QEMU_HARDDISK_mpath1"
+      end
+
+      it "empties the device deleting the filesystem" do
+        expect(fake_devicegraph.filesystems.size).to eq 1
+
+        result = maker.provide_space(fake_devicegraph, volumes, lvm_helper)
+        disk = result[:devicegraph].disk_devices.first
+        expect(disk.has_children?).to eq false
+        expect(result[:devicegraph].filesystems).to be_empty
+      end
+
+      it "assumes a (future) GPT partition table" do
+        gpt_size = 1.MiB
+        # The final 16.5 KiB are reserved by GPT
+        gpt_final_space = 16.5.KiB
+
+        result = maker.provide_space(fake_devicegraph, volumes, lvm_helper)
+        space = result[:partitions_distribution].spaces.first
+        expect(space.disk_size).to eq(space.disk.size - gpt_size - gpt_final_space)
       end
     end
 

@@ -61,5 +61,33 @@ describe Y2Storage::GuidedProposal do
         include_examples "proposed layout"
       end
     end
+
+    # Regression test for bug#1067670 in which no proposal was provided
+    context "if the only available device is directly formatted (no partition table)" do
+      let(:scenario) { "multipath-formatted.xml" }
+      let(:ppc_power_nv) { false }
+
+      context "using LVM" do
+        let(:lvm) { true }
+
+        it "deletes the existing filesystem and proposes a new LVM layout" do
+          expect(fake_devicegraph.partitions).to be_empty
+          proposal.propose
+          expect(proposal.devices.partitions).to_not be_empty
+          expect(proposal.devices.lvm_vgs).to_not be_empty
+        end
+      end
+
+      context "not using LVM" do
+        let(:lvm) { false }
+
+        it "deletes the existing filesystem and proposes a new partition-based layout" do
+          expect(fake_devicegraph.partitions).to be_empty
+          proposal.propose
+          expect(proposal.devices.partitions).to_not be_empty
+          expect(proposal.devices.lvm_vgs).to be_empty
+        end
+      end
+    end
   end
 end
