@@ -199,7 +199,7 @@ describe Y2Storage::GuidedProposal do
         context "not using LVM" do
           let(:lvm) { false }
 
-          # Regresion test to check the usage of system ram size instead of a fixed value
+          # Regression test to check the usage of system ram size instead of a fixed value
           context "with root and swap (with adjust_by_ram) volumes" do
             let(:volumes) { [root, swap] }
 
@@ -213,6 +213,33 @@ describe Y2Storage::GuidedProposal do
               expect(proposal.devices.to_str).to eq expected.to_str
             end
           end
+        end
+      end
+    end
+
+    # Regression test for bug#1071949 in which no proposal was provided
+    context "if the whole disk is used as PV (no partition table)" do
+      let(:scenario) { "lvm-disk-as-pv.xml" }
+
+      context "using LVM" do
+        let(:lvm) { true }
+
+        it "deletes the existing VG and proposes a new LVM layout" do
+          expect(fake_devicegraph.partitions).to be_empty
+          proposal.propose
+          expect(proposal.devices.partitions).to_not be_empty
+          expect(proposal.devices.lvm_vgs).to_not be_empty
+        end
+      end
+
+      context "not using LVM" do
+        let(:lvm) { false }
+
+        it "deletes the existing LVM and proposes a new partition-based layout" do
+          expect(fake_devicegraph.partitions).to be_empty
+          proposal.propose
+          expect(proposal.devices.partitions).to_not be_empty
+          expect(proposal.devices.lvm_vgs).to be_empty
         end
       end
     end

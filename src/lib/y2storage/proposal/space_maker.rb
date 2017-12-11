@@ -87,13 +87,13 @@ module Y2Storage
         # To make sure we are not freeing space in a useless place, let's
         # first restrict the operations to disks with particular requirements
         planned_partitions_by_disk(partitions).each do |disk, parts|
-          resize_and_delete!(parts, keep, disk: disk)
+          resize_and_delete!(parts, keep, lvm_helper, disk: disk)
         end
         # Doing something similar for #max_start_offset is more difficult and
         # doesn't pay off (#max_start_offset is used just in one case)
 
         # Now with the full set of planned partitions and all the candidate disks
-        resize_and_delete!(partitions, keep)
+        resize_and_delete!(partitions, keep, lvm_helper)
 
         {
           devicegraph:             @new_graph,
@@ -170,8 +170,10 @@ module Y2Storage
       #     to make space for
       # @param keep [Array<String>] device names of partitions that should not
       #     be deleted
+      # @param lvm_helper [Proposal::LvmHelper] contains information about how
+      #     to deal with the existing LVM volume groups
       # @param disk [String] optional disk name to restrict operations to
-      def resize_and_delete!(planned_partitions, keep, disk: nil)
+      def resize_and_delete!(planned_partitions, keep, lvm_helper, disk: nil)
         log.info "Resize and delete. disk: #{disk}"
 
         @distribution = nil
@@ -183,6 +185,9 @@ module Y2Storage
         # If everything else failed, try resizing Windows before deleting it
         resize_windows!(planned_partitions, disk, force: true)
         delete_partitions!(planned_partitions, :windows, keep, disk)
+        # If deleting partitions was not enough, maybe there is no partition
+        # table and we have to wipe the disk
+        delete_disk_content(planned_partitions, lvm_helper, disk)
 
         raise Error unless success?(planned_partitions)
       end
@@ -394,6 +399,47 @@ module Y2Storage
               !windows_part_names(disk).include?(part.name)
           end
         end
+      end
+
+      # Wipe the content of disk-like devices not containining a partition table,
+      # like disks directly formatted or used as members of an LVM or software RAID.
+      #
+      # @param planned_partitions [Array<Planned::Partition>] list of
+      #   partitions to allocate, used to know how much space is still missing
+      # @param lvm_helper [Proposal::LvmHelper] contains information about how
+      #     to deal with the existing LVM volume groups
+      # @param disk [String] optional disk name to restrict operations to
+      def delete_disk_content(planned_partitions, lvm_helper, disk)
+        log.info "BEGIN delete_disk_content with disk #{disk}"
+
+        disks_for(new_graph, disk).each do |dsk|
+          break if success?(planned_partitions)
+          log.info "Checking if the disk #{dsk.name} has a partition table"
+
+          if dsk.has_children? && dsk.partition_table.nil?
+            log.info "Found something that is not a partition table"
+            remove_content(dsk, lvm_helper)
+          end
+        end
+
+        log.info "END delete_disk_content"
+      end
+
+      # Remove descendants of a disk and also partitions from other disks that
+      # are not longer useful afterwards
+      #
+      # TODO: delete partitions that were part of the removed VG and/or RAID
+      #
+      # @param disk [Partitionable] disk-like device to cleanup. It must not be
+      #   part of a multipath device or a BIOS RAID.
+      # @param lvm_helper [Proposal::LvmHelper] contains information about how
+      #     to deal with the existing LVM volume groups
+      def remove_content(disk, lvm_helper)
+        if disk.descendants.any? { |dev| lvm_helper.vg_to_reuse?(dev) }
+          log.info "Not cleaning up #{disk.name} because its VG must be reused"
+          return
+        end
+        disk.remove_descendants
       end
 
       # Device names of windows partitions detected by disk_analyzer

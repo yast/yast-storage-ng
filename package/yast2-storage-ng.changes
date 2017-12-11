@@ -1,4 +1,13 @@
 -------------------------------------------------------------------
+Mon Dec 11 15:32:28 UTC 2017 - ancor@suse.com
+
+- Improved how the proposal handles disks that are in use but don't
+  have a partition table (directly formatted disks, disks that are
+  direct members of an LVM or RAID, etc.).
+  Preliminary fix for bsc#1071949 and bsc#1067670.
+- 4.0.54
+
+-------------------------------------------------------------------
 Mon Dec 11 12:56:35 UTC 2017 - jlopez@suse.com
 
 - Improve detection of efi and swap partitions.
