@@ -184,10 +184,22 @@ module Y2Storage
       #
       # @see volume_group
       def reused_volume_group=(vg)
-        return @volume_group = nil if vg.nil?
-        @volume_group = Y2Storage::Planned::LvmVg.from_real_vg(vg)
-        @volume_group.lvs = planned_lvs
-        @volume_group
+        # Invalidate cached value
+        @volume_group = nil
+
+        return @reused_volume_group = nil if vg.nil?
+        @reused_volume_group = Y2Storage::Planned::LvmVg.from_real_vg(vg)
+        @reused_volume_group.lvs = planned_lvs
+        @reused_volume_group
+      end
+
+      # Checks whether the passed device is the volume group to be reused
+      #
+      # @param device [Device]
+      # @return [Boolean]
+      def vg_to_reuse?(device)
+        return false unless @reused_volume_group
+        device.is?(:lvm_vg) && @reused_volume_group.volume_group_name == device.vg_name
       end
 
       # Returns the planned volume group
@@ -195,10 +207,12 @@ module Y2Storage
       # If no volume group is set (see {#reused_volume_group=}), it will create
       # a new one adding planned logical volumes ({#initialize}).
       #
-      # @return [Planned::LvmVg] Volume group that will be reused to allocate
+      # @return [Planned::LvmVg] Volume group that will be used to allocate
       #   the proposed volumes, deleting the existing logical volumes if necessary
       def volume_group
+        @volume_group ||= @reused_volume_group
         @volume_group ||= Planned::LvmVg.new(volume_group_name: DEFAULT_VG_NAME, lvs: planned_lvs)
+        @volume_group
       end
 
     protected
