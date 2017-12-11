@@ -1,4 +1,12 @@
 -------------------------------------------------------------------
+Mon Dec 11 15:40:36 UTC 2017 - jlopez@suse.com
+
+- Partitioner: add buttons to Hard Disks section for creating new
+  partitions and editing devices.
+- Part of fate#318196.
+- 4.0.55
+
+-------------------------------------------------------------------
 Mon Dec 11 15:32:28 UTC 2017 - ancor@suse.com
 
 - Improved how the proposal handles disks that are in use but don't
