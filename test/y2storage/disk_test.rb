@@ -321,10 +321,60 @@ describe Y2Storage::Disk do
     end
   end
 
+  describe "#efi_partitions" do
+    let(:scenario) { "gpt_and_msdos" }
+
+    context "when the disk has no ESP partitions" do
+      let(:disk_name) { "/dev/sda" }
+
+      it "returns an empty array" do
+        expect(disk.efi_partitions).to be_empty
+      end
+    end
+
+    context "when the disk has ESP partitions" do
+      let(:disk_name) { "/dev/sdd" }
+
+      before do
+        gpt = disk.partition_table
+        sdd1 = gpt.create_partition("/dev/sdd1", Y2Storage::Region.create(2048, 1048576, 512),
+          Y2Storage::PartitionType::PRIMARY)
+        sdd1.id = Y2Storage::PartitionId::ESP
+        sdd2 = gpt.create_partition("/dev/sdd2", Y2Storage::Region.create(1050624, 33554432, 512),
+          Y2Storage::PartitionType::PRIMARY)
+        sdd2.id = Y2Storage::PartitionId::ESP
+      end
+
+      context "but any of them is formatted as vfat" do
+        before do
+          partition = disk.partition_table.partitions.first
+          partition.create_filesystem(Y2Storage::Filesystems::Type::EXT4)
+        end
+
+        it "returns an empty array" do
+          expect(disk.efi_partitions).to be_empty
+        end
+      end
+
+      context "and some of them are formatted as vfat" do
+        before do
+          partition = disk.partition_table.partitions.first
+          partition.create_filesystem(Y2Storage::Filesystems::Type::VFAT)
+        end
+
+        it "returns an array with the ESP vfat partitions" do
+          expect(disk.efi_partitions).to be_a(Array)
+          expect(disk.efi_partitions).to all(be_a(Y2Storage::Partition))
+          expect(disk.efi_partitions).to contain_exactly(an_object_having_attributes(name: "/dev/sdd1"))
+        end
+      end
+    end
+  end
+
   describe "#swap_partitions" do
     let(:scenario) { "mixed_disks" }
 
-    context "for a disk with no swap partitions" do
+    context "when the disk has no swap partitions" do
       let(:disk_name) { "/dev/sda" }
 
       it "returns an empty array" do
@@ -332,13 +382,26 @@ describe Y2Storage::Disk do
       end
     end
 
-    context "for a disk with swap partitions" do
+    context "when the disk has swap partitions" do
       let(:disk_name) { "/dev/sdb" }
 
-      it "returns an array of partitions" do
-        expect(disk.swap_partitions).to be_a Array
-        expect(disk.swap_partitions.size).to eq 1
-        expect(disk.swap_partitions.first).to be_a Y2Storage::Partition
+      context "but any of them is formatted as swap" do
+        before do
+          partition = disk.partition_table.partitions.first
+          partition.delete_filesystem
+        end
+
+        it "returns an empty array" do
+          expect(disk.swap_partitions).to be_empty
+        end
+      end
+
+      context "and some of them are formatted as swap" do
+        it "returns an array with the swap partitions" do
+          expect(disk.swap_partitions).to be_a(Array)
+          expect(disk.swap_partitions).to all(be_a(Y2Storage::Partition))
+          expect(disk.swap_partitions).to contain_exactly(an_object_having_attributes(name: "/dev/sdb1"))
+        end
       end
     end
   end

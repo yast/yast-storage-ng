@@ -125,7 +125,7 @@ module Y2Storage
     #
     # @return [Array<Partition>]
     def efi_partitions
-      partitions_with_id(:esp)
+      partitions_with_id(:esp).select { |p| p.formatted_as?(:vfat) }
     end
 
     # Partitions that can be used as PReP partition
@@ -146,7 +146,7 @@ module Y2Storage
     #
     # @return [Array<Partition>]
     def swap_partitions
-      partitions_with_id(:swap)
+      partitions_with_id(:swap).select { |p| p.formatted_as?(:swap) }
     end
 
     # Partitions that can host part of a Linux system.
