@@ -16,7 +16,7 @@
 #
 
 Name:		yast2-storage-ng
-Version:        4.0.54
+Version:        4.0.55
 Release:	0
 BuildArch:	noarch
 
@@ -37,7 +37,7 @@ BuildRequires:	yast2-devtools
 # yast2-xml dependency is added by yast2 but ignored in the
 # openSUSE:Factory project config
 BuildRequires:  yast2-xml
-# Yast2::FsSnapshots.configure_on_install=
+# CWM::Pager#current_page
 BuildRequires:	yast2 >= 4.0.24
 BuildRequires:	rubygem(yast-rake)
 BuildRequires:	rubygem(rspec)

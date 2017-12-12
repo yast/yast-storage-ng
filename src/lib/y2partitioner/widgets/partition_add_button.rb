@@ -28,19 +28,41 @@ module Y2Partitioner
     # Button for adding a partition
     class PartitionAddButton < DeviceButton
       # @macro seeAbstractWidget
+      # The label depends on the page where the button is used
       def label
         # TRANSLATORS: label for button to add a partition
-        _("Add...")
+        disks_page? ? _("Add Partition...") : _("Add...")
       end
 
     private
 
-      # Returns the proper Actions class to perform the action for adding a partition
+      # When the selected device is a partition, its partitionable (disk, dasd,
+      # multipath or BIOS RAID) is considered as the selected device
+      #
+      # @see DeviceButton#device
+      #
+      # @return [Y2Storage::Device, nil]
+      def device
+        dev = super
+        return dev if dev.nil?
+
+        dev.is?(:partition) ? dev.partitionable : dev
+      end
+
+      # Returns the proper Actions class for adding a partition
       #
       # @see DeviceButton#actions
       # @see Actions::AddPartition
       def actions_class
         Actions::AddPartition
+      end
+
+      # Whether the button is used in a disks page (see {Pages::Disks})
+      #
+      # @return [Boolean]
+      def disks_page?
+        return false if pager.nil?
+        pager.current_page.is_a?(Pages::Disks)
       end
     end
   end

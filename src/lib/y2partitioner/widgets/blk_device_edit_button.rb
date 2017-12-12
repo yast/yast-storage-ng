@@ -29,21 +29,52 @@ Yast.import "Popup"
 
 module Y2Partitioner
   module Widgets
-    # Button for opening the editing workflow (basically mount and format
-    # options) on a block device.
+    # Button for editing a block device
     class BlkDeviceEditButton < DeviceButton
-      # TRANSLATORS: button label to edit a block device
       def label
+        # TRANSLATORS: button label for editing a block device
         _("Edit...")
       end
 
     private
 
       # @see DeviceButton#actions
+      # When the device is a disk, dasd, multipath or bios raid, edit means
+      # to jump to the tree page of that device. For partition or software
+      # raid, the editing workflow to select mount and format options is shown.
       def actions
         UIState.instance.select_row(device.sid)
-        actions_result = Actions::EditBlkDevice.new(device).run
-        result(actions_result)
+        partition? || software_raid? ? super : go_to_disk_page
+      end
+
+      # Whether the device is a partition
+      #
+      # @return [Booelan]
+      def partition?
+        device.is?(:partition)
+      end
+
+      # Whether the device is a software raid
+      #
+      # @return [Booelan]
+      def software_raid?
+        device.is?(:md) && device.software_defined?
+      end
+
+      # If pager is known, jumps to the disk device page
+      def go_to_disk_page
+        return unless pager
+
+        page = pager.device_page(device)
+        UIState.instance.go_to_tree_node(page)
+        :redraw
+      end
+
+      # Returns the proper Actions class for editing
+      #
+      # @see Actions::EditBlkDevice
+      def actions_class
+        Actions::EditBlkDevice
       end
     end
   end
