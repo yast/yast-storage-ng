@@ -264,7 +264,7 @@ module Y2Partitioner
         #
         # @return [String]
         def invalid_extent_size_message
-          _("The data entered in invalid. Insert a physical extent size larger than 1 KiB\n" \
+          _("The data entered is invalid. Insert a physical extent size larger than 1 KiB\n" \
             "in powers of 2 and multiple of 128 KiB, for example, \"512 KiB\" or \"4 MiB\"")
         end
 
