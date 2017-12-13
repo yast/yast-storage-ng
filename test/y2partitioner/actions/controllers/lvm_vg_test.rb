@@ -169,7 +169,7 @@ describe Y2Partitioner::Actions::Controllers::LvmVg do
       it "contains a message for invalid extent size" do
         errors = controller.extent_size_errors
         expect(errors).to_not be_empty
-        expect(errors).to include(/data entered in invalid/)
+        expect(errors).to include(/data entered is invalid/)
       end
     end
 
@@ -179,7 +179,7 @@ describe Y2Partitioner::Actions::Controllers::LvmVg do
       it "contains a message for invalid extent size" do
         errors = controller.extent_size_errors
         expect(errors).to_not be_empty
-        expect(errors).to include(/data entered in invalid/)
+        expect(errors).to include(/data entered is invalid/)
       end
     end
 
@@ -189,7 +189,7 @@ describe Y2Partitioner::Actions::Controllers::LvmVg do
       it "contains a message for invalid extent size" do
         errors = controller.extent_size_errors
         expect(errors).to_not be_empty
-        expect(errors).to include(/data entered in invalid/)
+        expect(errors).to include(/data entered is invalid/)
       end
     end
 
@@ -199,7 +199,7 @@ describe Y2Partitioner::Actions::Controllers::LvmVg do
       it "contains a message for invalid extent size" do
         errors = controller.extent_size_errors
         expect(errors).to_not be_empty
-        expect(errors).to include(/data entered in invalid/)
+        expect(errors).to include(/data entered is invalid/)
       end
     end
 
