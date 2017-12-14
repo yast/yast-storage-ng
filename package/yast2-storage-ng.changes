@@ -3,7 +3,7 @@ Thu Dec 14 12:01:48 UTC 2017 - ancor@suse.com
 
 - Fixed a recently added unit test to not rely on libstorage-ng
   sorting. Related to bsc#1049901 and part of fate#31896.
-- 4.0.55
+- 4.0.56
 
 -------------------------------------------------------------------
 Mon Dec 11 15:40:36 UTC 2017 - jlopez@suse.com
@@ -11,7 +11,7 @@ Mon Dec 11 15:40:36 UTC 2017 - jlopez@suse.com
 - Partitioner: add buttons to Hard Disks section for creating new
   partitions and editing devices.
 - Part of fate#318196.
-- 4.0.56
+- 4.0.55
 
 -------------------------------------------------------------------
 Mon Dec 11 15:32:28 UTC 2017 - ancor@suse.com
