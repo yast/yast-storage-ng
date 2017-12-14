@@ -345,7 +345,7 @@ describe Y2Storage::Disk do
         sdd2.id = Y2Storage::PartitionId::ESP
       end
 
-      context "but any of them is formatted as vfat" do
+      context "but none of them is formatted as vfat" do
         before do
           partition = disk.partition_table.partitions.first
           partition.create_filesystem(Y2Storage::Filesystems::Type::EXT4)
@@ -358,7 +358,7 @@ describe Y2Storage::Disk do
 
       context "and some of them are formatted as vfat" do
         before do
-          partition = disk.partition_table.partitions.first
+          partition = Y2Storage::Partition.find_by_name(fake_devicegraph, "/dev/sdd1")
           partition.create_filesystem(Y2Storage::Filesystems::Type::VFAT)
         end
 
@@ -385,11 +385,8 @@ describe Y2Storage::Disk do
     context "when the disk has swap partitions" do
       let(:disk_name) { "/dev/sdb" }
 
-      context "but any of them is formatted as swap" do
-        before do
-          partition = disk.partition_table.partitions.first
-          partition.delete_filesystem
-        end
+      context "but none of them is formatted as swap" do
+        before { disk.swap_partitions.each(&:delete_filesystem) }
 
         it "returns an empty array" do
           expect(disk.swap_partitions).to be_empty
