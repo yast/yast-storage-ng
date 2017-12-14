@@ -385,11 +385,8 @@ describe Y2Storage::Disk do
     context "when the disk has swap partitions" do
       let(:disk_name) { "/dev/sdb" }
 
-      context "but any of them is formatted as swap" do
-        before do
-          partition = disk.partition_table.partitions.first
-          partition.delete_filesystem
-        end
+      context "but none of them is formatted as swap" do
+        before { disk.swap_partitions.each(&:delete_filesystem) }
 
         it "returns an empty array" do
           expect(disk.swap_partitions).to be_empty
