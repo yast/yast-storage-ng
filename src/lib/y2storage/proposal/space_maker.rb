@@ -98,7 +98,7 @@ module Y2Storage
         {
           devicegraph:             @new_graph,
           deleted_partitions:      deleted_partitions,
-          partitions_distribution: @distribution
+          partitions_distribution: @distribution[nil]
         }
       end
 
@@ -154,13 +154,17 @@ module Y2Storage
       # that made it possible.
       #
       # @return [Boolean]
-      def success?(planned_partitions)
+      def success?(planned_partitions, disk)
+        @distribution ||= {}
+
+        return true if @distribution[disk]
+
         spaces = free_spaces(new_graph)
-        @distribution ||= dist_calculator.best_distribution(planned_partitions, spaces)
-        !!@distribution
+        @distribution[disk] = dist_calculator.best_distribution(planned_partitions, spaces)
+        !!@distribution[disk]
       rescue Error => e
         log.info "Exception while trying to distribute partitions: #{e}"
-        @distribution = nil
+        @distribution[disk] = nil
         false
       end
 
@@ -189,7 +193,7 @@ module Y2Storage
         # table and we have to wipe the disk
         delete_disk_content(planned_partitions, lvm_helper, disk)
 
-        raise Error unless success?(planned_partitions)
+        raise Error unless success?(planned_partitions, disk)
       end
 
       # Additional space that needs to be freed while resizing a partition in
@@ -236,7 +240,7 @@ module Y2Storage
       # @param force [Boolean] whether to resize Windows even if there are
       #   Linux partitions in the same disk
       def resize_windows!(planned_partitions, disk, force: false)
-        return if success?(planned_partitions)
+        return if success?(planned_partitions, disk)
         return unless settings.resize_windows
         part_names = windows_part_names(disk)
         return if part_names.empty?
@@ -252,7 +256,7 @@ module Y2Storage
           ].min
           shrink_partition(res[:partition], shrink_size)
 
-          success?(planned_partitions)
+          success?(planned_partitions, disk)
         end
 
         log.info "Didn't manage to free enough space by resizing Windows" unless success
@@ -329,11 +333,11 @@ module Y2Storage
       #       be deleted
       # @param disk [String] optional disk name to restrict operations to
       def delete_partitions!(planned_partitions, type, keep, disk)
-        return if success?(planned_partitions)
+        return if success?(planned_partitions, disk)
         return if settings.delete_forbidden?(type)
 
         log.info("Deleting partitions to make space")
-        delete_candidates!(new_graph, type, keep, disk) { success?(planned_partitions) }
+        delete_candidates!(new_graph, type, keep, disk) { success?(planned_partitions, disk) }
       end
 
       # @see #delete_partitions! and #delete_unwanted_partitions
@@ -413,7 +417,7 @@ module Y2Storage
         log.info "BEGIN delete_disk_content with disk #{disk}"
 
         disks_for(new_graph, disk).each do |dsk|
-          break if success?(planned_partitions)
+          break if success?(planned_partitions, disk)
           log.info "Checking if the disk #{dsk.name} has a partition table"
 
           if dsk.has_children? && dsk.partition_table.nil?
