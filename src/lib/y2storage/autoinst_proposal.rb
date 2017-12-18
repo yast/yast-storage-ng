@@ -101,7 +101,9 @@ module Y2Storage
 
     # Add partition tables
     #
-    # This method create partitions table for disks which are missing one.
+    # This method create/change partitions tables according to information
+    # specified in the profile. Disks containing any partition will be ignored.
+    #
     # The devicegraph which is passed as first argument will be modified.
     #
     # @param devicegraph [Devicegraph]                 Starting point
@@ -109,16 +111,38 @@ module Y2Storage
     def add_partition_tables(devicegraph, drives)
       drives.each do |disk_name, drive_spec|
         disk = devicegraph.disk_devices.find { |d| d.name == disk_name }
-        next if disk.nil? || disk.partition_table
+        next if disk.nil? || !disk.partitions.empty?
 
-        ptable_type =
-          if drive_spec.disklabel
-            Y2Storage::PartitionTables::Type.find(drive_spec.disklabel)
-          else
-            Y2Storage::PartitionTables::Type::MSDOS
-          end
-        disk.create_partition_table(ptable_type)
+        update_partition_table(disk, suitable_ptable_type(disk, drive_spec))
       end
+    end
+
+    # Determines which partition table type should be used
+    #
+    # @param disk        [Y2Storage::Disk] Disk to set the partition table on
+    # @param drive_spec  [Y2Storage::AutoinstProfile::DriveSection] Drive section from the profile
+    # @return [Y2Storage::PartitionTables::Type] Partition table type
+    def suitable_ptable_type(disk, drive_spec)
+      ptable_type = nil
+      if drive_spec.disklabel
+        ptable_type = Y2Storage::PartitionTables::Type.find(drive_spec.disklabel)
+      end
+
+      disk_ptable_type = disk.partition_table ? disk.partition_table.type : nil
+      ptable_type || disk_ptable_type || Y2Storage::PartitionTables::Type::MSDOS
+    end
+
+    # Update partition table
+    #
+    # It does nothing if current partition table type and wanted one are the same.
+    # The disk object is modified.
+    #
+    # @param disk        [Y2Storage::Disk] Disk to set the partition table on
+    # @param ptable_type [Y2Storage::PartitionTables::Type] Partition table type
+    def update_partition_table(disk, ptable_type)
+      return if disk.partition_table && disk.partition_table.type == ptable_type
+      disk.remove_descendants if disk.partition_table
+      disk.create_partition_table(ptable_type)
     end
 
     # Add devices to make the system bootable

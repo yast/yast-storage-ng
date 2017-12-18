@@ -924,8 +924,7 @@ describe Y2Storage::AutoinstProposal do
           it "creates a 'msdos' partition" do
             proposal.propose
             devicegraph = proposal.devices
-            disk = devicegraph.disk_devices.first
-            expect(disk.name).to eq("/dev/sda")
+            disk = Y2Storage::BlkDevice.find_by_name(devicegraph, "/dev/sda")
             expect(disk.partition_table.type).to eq(Y2Storage::PartitionTables::Type::MSDOS)
           end
         end
@@ -938,8 +937,7 @@ describe Y2Storage::AutoinstProposal do
           it "creates a partition of the given type" do
             proposal.propose
             devicegraph = proposal.devices
-            disk = devicegraph.disk_devices.first
-            expect(disk.name).to eq("/dev/sda")
+            disk = Y2Storage::BlkDevice.find_by_name(devicegraph, "/dev/sda")
             expect(disk.partition_table.type).to eq(Y2Storage::PartitionTables::Type::GPT)
           end
         end
@@ -947,10 +945,11 @@ describe Y2Storage::AutoinstProposal do
 
       context "when does exist" do
         let(:scenario) { "windows-linux-free-pc" }
+        let(:initialize_value) { false }
         let(:partitioning) do
           [
             {
-              "use" => "all", "partitions" => [swap, root], "disklabel" => "gpt",
+              "use" => use, "partitions" => [swap, root], "disklabel" => "gpt",
               "initialize" => initialize_value
             }
           ]
@@ -958,24 +957,34 @@ describe Y2Storage::AutoinstProposal do
 
         context "and a different type is requested and 'initialize' element is set to 'true'" do
           let(:initialize_value) { true }
+          let(:use) { "1,2" }
 
           it "creates a partition table of the given type" do
             proposal.propose
             devicegraph = proposal.devices
-            disk = devicegraph.disk_devices.first
-            expect(disk.name).to eq("/dev/sda")
+            disk = Y2Storage::BlkDevice.find_by_name(devicegraph, "/dev/sda")
             expect(disk.partition_table.type).to eq(Y2Storage::PartitionTables::Type::GPT)
           end
         end
 
-        context "and a different type is requested but 'initialize' element is set to 'false'" do
-          let(:initialize_value) { false }
+        context "and a different type is requested and there are no partitions" do
+          let(:use) { "all" }
+
+          it "creates a partition table of the given type" do
+            proposal.propose
+            devicegraph = proposal.devices
+            disk = Y2Storage::BlkDevice.find_by_name(devicegraph, "/dev/sda")
+            expect(disk.partition_table.type).to eq(Y2Storage::PartitionTables::Type::GPT)
+          end
+        end
+
+        context "and a different type is requested but there are partitions" do
+          let(:use) { "1,2" }
 
           it "does not change the partition table" do
             proposal.propose
             devicegraph = proposal.devices
-            disk = devicegraph.disk_devices.first
-            expect(disk.name).to eq("/dev/sda")
+            disk = Y2Storage::BlkDevice.find_by_name(devicegraph, "/dev/sda")
             expect(disk.partition_table.type).to eq(Y2Storage::PartitionTables::Type::MSDOS)
           end
         end
