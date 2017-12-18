@@ -921,11 +921,11 @@ describe Y2Storage::AutoinstProposal do
             [{ "use" => "all", "partitions" => [swap, root] }]
           end
 
-          it "creates a 'msdos' partition" do
+          it "creates a partition table of the preferred type" do
             proposal.propose
             devicegraph = proposal.devices
             disk = Y2Storage::BlkDevice.find_by_name(devicegraph, "/dev/sda")
-            expect(disk.partition_table.type).to eq(Y2Storage::PartitionTables::Type::MSDOS)
+            expect(disk.partition_table.type).to eq(disk.preferred_ptable_type)
           end
         end
 

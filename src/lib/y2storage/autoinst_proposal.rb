@@ -129,7 +129,7 @@ module Y2Storage
       end
 
       disk_ptable_type = disk.partition_table ? disk.partition_table.type : nil
-      ptable_type || disk_ptable_type || Y2Storage::PartitionTables::Type::MSDOS
+      ptable_type || disk_ptable_type || disk.preferred_ptable_type
     end
 
     # Update partition table
