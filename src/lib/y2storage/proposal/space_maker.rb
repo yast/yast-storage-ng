@@ -84,15 +84,32 @@ module Y2Storage
           partitions.delete(part)
         end
 
-        # To make sure we are not freeing space in a useless place, let's
-        # first restrict the operations to disks with particular requirements
+        # To make sure we are not freeing space in useless places first
+        # restrict the operations to disks with particular disk
+        # requirements.
+        #
+        # planned_partitions_by_disk() returns all partitions restricted to
+        # a certain disk. Most times partitions are free to be created
+        # anywhere but sometimes it is known in advance on which disk they
+        # should be created.
+        #
+        # Start by assigning space to them.
+        #
+        # The result (if successful) is kept in @distribution.
+        #
         planned_partitions_by_disk(partitions).each do |disk, parts|
           resize_and_delete!(parts, keep, lvm_helper, disk: disk)
         end
+
         # Doing something similar for #max_start_offset is more difficult and
         # doesn't pay off (#max_start_offset is used just in one case)
 
-        # Now with the full set of planned partitions and all the candidate disks
+        # Now repeat the process with the full set of planned partitions and all the candidate
+        # disks.
+        #
+        # Note that the result of the run above is not lost as already
+        # assigned partitions are taken into account.
+        #
         resize_and_delete!(partitions, keep, lvm_helper)
 
         {
@@ -155,8 +172,11 @@ module Y2Storage
       #
       # @return [Boolean]
       def success?(planned_partitions)
-        spaces = free_spaces(new_graph)
-        @distribution ||= dist_calculator.best_distribution(planned_partitions, spaces)
+        # Once a distribution has been found we don't have to look for another one.
+        if !@distribution
+          spaces = free_spaces(new_graph)
+          @distribution = dist_calculator.best_distribution(planned_partitions, spaces)
+        end
         !!@distribution
       rescue Error => e
         log.info "Exception while trying to distribute partitions: #{e}"
@@ -173,24 +193,63 @@ module Y2Storage
       # @param lvm_helper [Proposal::LvmHelper] contains information about how
       #     to deal with the existing LVM volume groups
       # @param disk [String] optional disk name to restrict operations to
+      #
+      # rubocop:disable Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity
+      #
       def resize_and_delete!(planned_partitions, keep, lvm_helper, disk: nil)
-        log.info "Resize and delete. disk: #{disk}"
+        log.info "Resize and delete. disk: #{disk}, planned partitions:"
+        planned_partitions.each do |p|
+          log.info "  mount: #{p.mount_point}, disk: #{p.disk}, min: #{p.min}, max: #{p.max}"
+        end
 
+        # restart evaluation
         @distribution = nil
 
-        # Initially, resize only if there are no Linux partitions in the disk
+        # maybe it works already...
+        return if success?(planned_partitions)
+
+        # Try various methods to free space. Stop when a valid partition
+        # layout has been found.
+
+        # step 1
+        # resize Windows partitions only if there are no Linux partitions on the disk
+        log.info "Step 1"
         resize_windows!(planned_partitions, disk, force: false)
+        return if @distribution
+
+        # step 2
+        # delete Linux partitions
+        log.info "Step 2"
         delete_partitions!(planned_partitions, :linux, keep, disk)
+        return if @distribution
+
+        # step 3
+        # delete other (non-Windows) partitions
+        log.info "Step 3"
         delete_partitions!(planned_partitions, :other, keep, disk)
-        # If everything else failed, try resizing Windows before deleting it
+        return if @distribution
+
+        # step 4
+        # resize Windows partitions
+        log.info "Step 4"
         resize_windows!(planned_partitions, disk, force: true)
+        return if @distribution
+
+        # step 5
+        # delete Windows partitions
+        log.info "Step 5"
         delete_partitions!(planned_partitions, :windows, keep, disk)
-        # If deleting partitions was not enough, maybe there is no partition
+        return if @distribution
+
+        # step 6
+        # if deleting partitions was not enough, maybe there is no partition
         # table and we have to wipe the disk
+        log.info "Step 6"
         delete_disk_content(planned_partitions, lvm_helper, disk)
 
-        raise Error unless success?(planned_partitions)
+        raise Error unless @distribution
       end
+      # rubocop:enable all
 
       # Additional space that needs to be freed while resizing a partition in
       # order to reach the goal
@@ -236,7 +295,6 @@ module Y2Storage
       # @param force [Boolean] whether to resize Windows even if there are
       #   Linux partitions in the same disk
       def resize_windows!(planned_partitions, disk, force: false)
-        return if success?(planned_partitions)
         return unless settings.resize_windows
         part_names = windows_part_names(disk)
         return if part_names.empty?
@@ -314,7 +372,7 @@ module Y2Storage
       # @param partition [Partition]
       # @param shrink_size [DiskSize] size of the space to substract
       def shrink_partition(partition, shrink_size)
-        log.info "Shrinking #{partition.name} by #{shrink_size}"
+        log.info "Shrinking #{partition.name} (#{partition.size}) by #{shrink_size}"
         partition.size = partition.size - shrink_size
       end
 
@@ -329,7 +387,6 @@ module Y2Storage
       #       be deleted
       # @param disk [String] optional disk name to restrict operations to
       def delete_partitions!(planned_partitions, type, keep, disk)
-        return if success?(planned_partitions)
         return if settings.delete_forbidden?(type)
 
         log.info("Deleting partitions to make space")
@@ -413,13 +470,14 @@ module Y2Storage
         log.info "BEGIN delete_disk_content with disk #{disk}"
 
         disks_for(new_graph, disk).each do |dsk|
-          break if success?(planned_partitions)
           log.info "Checking if the disk #{dsk.name} has a partition table"
 
-          if dsk.has_children? && dsk.partition_table.nil?
-            log.info "Found something that is not a partition table"
-            remove_content(dsk, lvm_helper)
-          end
+          next unless dsk.has_children? && dsk.partition_table.nil?
+
+          log.info "Found something that is not a partition table"
+          remove_content(dsk, lvm_helper)
+
+          break if success?(planned_partitions)
         end
 
         log.info "END delete_disk_content"
