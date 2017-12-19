@@ -637,4 +637,65 @@ describe Y2Storage::BlkDevice do
       end
     end
   end
+
+  # This is mostly a direct forward to libstorage-ng, but this test is here
+  # because Storage::BlkDevice#find_by_any_name does not follow the usual
+  # libstorage-ng convention for exceptions.
+  describe "find_by_any_name" do
+    # The libstorage-ng counterpart of this method performs a real lookup in the
+    # system, so this can hardly be tested without a lot of mocking.
+    let(:storage_class) { Storage::BlkDevice }
+    let(:name) { "/dev/something" }
+
+    context "when libstorage-ng returns an object" do
+      let(:storage_device) do
+        Storage::BlkDevice.find_by_name(fake_devicegraph.to_storage_value, "/dev/sda")
+      end
+
+      it "returns the Y2Storage wrapped version of that object" do
+        expect(storage_class).to receive(:find_by_any_name).with(fake_devicegraph, name)
+          .and_return(storage_device)
+
+        result = described_class.find_by_any_name(fake_devicegraph, name)
+        expect(result).to be_a described_class
+        expect(result.to_storage_value).to eq storage_device
+      end
+    end
+
+    context "when libstorage-ng throws a DeviceNotFoundByName exception" do
+      before do
+        allow(storage_class).to receive(:find_by_any_name) do
+          raise Storage::DeviceNotFoundByName.new("A libstorage-ng error")
+        end
+      end
+
+      it "returns nil" do
+        expect(described_class.find_by_any_name(fake_devicegraph, name)).to be_nil
+      end
+    end
+
+    context "when libstorage-ng throws a DeviceHasWrongType exception" do
+      before do
+        allow(storage_class).to receive(:find_by_any_name) do
+          raise Storage::DeviceHasWrongType.new("", "A libstorage-ng error")
+        end
+      end
+
+      it "returns nil" do
+        expect(described_class.find_by_any_name(fake_devicegraph, name)).to be_nil
+      end
+    end
+
+    context "when libstorage-ng throws a general Storage exception" do
+      before do
+        allow(storage_class).to receive(:find_by_any_name) do
+          raise Storage::Exception.new("A libstorage-ng error")
+        end
+      end
+
+      it "returns nil" do
+        expect(described_class.find_by_any_name(fake_devicegraph, name)).to be_nil
+      end
+    end
+  end
 end
