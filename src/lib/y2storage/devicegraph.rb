@@ -284,6 +284,13 @@ module Y2Storage
       LvmLv.sorted_by_name(self)
     end
 
+    # Find device with given name e.g. /dev/sda3
+    # @param [String] name
+    # @return [Device, nil] if found Device and if not, then nil
+    def find_by_name(name)
+      BlkDevice.find_by_name(self, name) || lvm_vgs.find { |vg| vg.name == name }
+    end
+
     # @return [Array<FreeDiskSpace>]
     def free_disk_spaces
       disks.reduce([]) { |sum, disk| sum + disk.free_spaces }
