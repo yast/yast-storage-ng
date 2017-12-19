@@ -261,6 +261,37 @@ describe Y2Storage::Devicegraph do
     end
   end
 
+  describe "#find_by_name" do
+    before { fake_scenario("complex-lvm-encrypt") }
+    subject(:devicegraph) { fake_devicegraph }
+
+    context "there is BlkDevice with given name" do
+      it "returns that device" do
+        blk_device = devicegraph.find_by_name("/dev/sda1")
+
+        expect(blk_device).to_not be_nil
+        expect(blk_device.name).to eq "/dev/sda1"
+      end
+    end
+
+    context "there is LvmVg with given name" do
+      it "returns that device" do
+        blk_device = devicegraph.find_by_name("/dev/vg0")
+
+        expect(blk_device).to_not be_nil
+        expect(blk_device.name).to eq "/dev/vg0"
+      end
+    end
+
+    context "given name does not exists" do
+      it "returns nil" do
+        blk_device = devicegraph.find_by_name("/dev/drunk_chameleon")
+
+        expect(blk_device).to be_nil
+      end
+    end
+  end
+
   describe "#disk_devices" do
     before { fake_scenario(scenario) }
     subject(:graph) { fake_devicegraph }
