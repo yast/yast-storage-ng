@@ -665,7 +665,7 @@ describe Y2Storage::BlkDevice do
     context "when libstorage-ng throws a DeviceNotFoundByName exception" do
       before do
         allow(storage_class).to receive(:find_by_any_name) do
-          raise Storage::DeviceNotFoundByName.new("A libstorage-ng error")
+          raise Storage::DeviceNotFoundByName, "A libstorage-ng error"
         end
       end
 
@@ -677,7 +677,7 @@ describe Y2Storage::BlkDevice do
     context "when libstorage-ng throws a DeviceHasWrongType exception" do
       before do
         allow(storage_class).to receive(:find_by_any_name) do
-          raise Storage::DeviceHasWrongType.new("", "A libstorage-ng error")
+          raise Storage::DeviceHasWrongType.new("A libstorage-ng error", "")
         end
       end
 
@@ -689,7 +689,7 @@ describe Y2Storage::BlkDevice do
     context "when libstorage-ng throws a general Storage exception" do
       before do
         allow(storage_class).to receive(:find_by_any_name) do
-          raise Storage::Exception.new("A libstorage-ng error")
+          raise Storage::Exception, "A libstorage-ng error"
         end
       end
 
