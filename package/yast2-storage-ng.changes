@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Wed Dec 20 12:04:42 CET 2017 - aschnell@suse.com
+
+- added obsoletes (bsc#1073645)
+- 4.0.60
+
+-------------------------------------------------------------------
 Tue Dec 19 17:12:27 UTC 2017 - ancor@suse.com
 
 - Added BlkDevice.find_by_any_name (needed for bsc#1073254)

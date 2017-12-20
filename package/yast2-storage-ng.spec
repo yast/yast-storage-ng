@@ -16,7 +16,7 @@
 #
 
 Name:		yast2-storage-ng
-Version:        4.0.59
+Version:        4.0.60
 Release:	0
 BuildArch:	noarch
 
@@ -41,6 +41,8 @@ BuildRequires:  yast2-xml
 BuildRequires:	yast2 >= 4.0.24
 BuildRequires:	rubygem(yast-rake)
 BuildRequires:	rubygem(rspec)
+
+Obsoletes:	yast2-storage
 
 Group:		System/YaST
 License:	GPL-2.0 or GPL-3.0
