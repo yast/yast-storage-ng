@@ -116,8 +116,7 @@ module Y2Storage
         subvolume = find_btrfs_subvolume_by_path(path)
         return if subvolume.nil?
 
-        subvolume.remove_descendants
-        devicegraph.to_storage_value.remove_device(subvolume.to_storage_value)
+        devicegraph.remove_btrfs_subvolume(subvolume)
       end
 
       # Creates a new btrfs subvolume for the filesystem

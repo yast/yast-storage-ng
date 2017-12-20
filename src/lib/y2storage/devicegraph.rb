@@ -99,6 +99,8 @@ module Y2Storage
     # e.g., PartitionTable.delete_partition() or LvmVg.delete_lvm_lv().
     #
     # @see #remove_md
+    # @see #remove_lvm_vg
+    # @see #remove_btrfs_subvolume
     #
     # @param device [Device, Integer] a device or its {Device#sid sid}
     #
@@ -298,16 +300,42 @@ module Y2Storage
 
     # Removes a Md raid and all its descendants
     #
+    # It also removes other devices that may have become useless, like the
+    # LvmPv devices of any removed LVM volume group.
+    #
+    # @see #remove_lvm_vg
+    #
     # @param md [Md]
     #
     # @raise [ArgumentError] if the md does not exist in the devicegraph
     def remove_md(md)
-      if md.nil? || !md_raids.include?(md)
-        raise ArgumentError, "Md RAID not found"
-      end
+      raise(ArgumentError, "Incorrect device #{md.inspect}") unless md && md.is?(:md)
+      remove_with_dependants(md)
+    end
 
-      md.remove_descendants
-      remove_device(md)
+    # Removes an LVM VG, all its descendants and the associated PV devices
+    #
+    # Note this removes the LvmPv devices, not the real block devices hosting
+    # those physical volumes.
+    #
+    # @param vg [LvmVg]
+    #
+    # @raise [ArgumentError] if the volume group does not exist in the devicegraph
+    def remove_lvm_vg(vg)
+      raise(ArgumentError, "Incorrect device #{vg.inspect}") unless vg && vg.is?(:lvm_vg)
+      remove_with_dependants(vg)
+    end
+
+    # Removes a Btrfs subvolume and all its descendants
+    #
+    # @param subvol [BtrfsSubvolume]
+    #
+    # @raise [ArgumentError] if the subvolume does not exist in the devicegraph
+    def remove_btrfs_subvolume(subvol)
+      if subvol.nil? || !subvol.is?(:btrfs_subvolume)
+        raise ArgumentError, "Incorrect device #{subvol.inspect}"
+      end
+      remove_with_dependants(subvol)
     end
 
     # String to represent the whole devicegraph, useful for comparison in
@@ -360,6 +388,36 @@ module Y2Storage
     def device_tree
       writer = Y2Storage::YamlWriter.new
       writer.yaml_device_tree(self)
+    end
+
+    # Removes a device, all its descendants and also the potential orphans of
+    # all the removed devices.
+    #
+    # @see Device#potential_orphans
+    #
+    # @param device [Device]
+    # @param keep [Array<Device>] used to control the recursive calls
+    #
+    # @raise [ArgumentError] if the device does not exist in the devicegraph
+    def remove_with_dependants(device, keep: [])
+      raise(ArgumentError, "No device provided") if device.nil?
+      raise(ArgumentError, "Device not found") unless device.exists_in_devicegraph?(self)
+
+      children = device.children
+      until children.empty?
+        remove_with_dependants(children.first, keep: keep + [device])
+        children = device.children
+      end
+
+      orphans = device.respond_to?(:potential_orphans) ? device.potential_orphans : []
+      remove_device(device)
+
+      orphans.each do |dev|
+        next if keep.include?(dev)
+
+        dev.remove_descendants
+        remove_device(dev)
+      end
     end
   end
 end
