@@ -147,7 +147,7 @@ module Y2Storage
       # As usual, it keeps the behavior of the old clone functionality, check
       # the implementation of this class for details.
       #
-      # @param disk [Disk, Dasd]
+      # @param disk [Y2Storage::Disk, Y2Storage::Dasd] Disk
       def init_from_disk(disk)
         return false if disk.partitions.empty?
 
@@ -158,6 +158,7 @@ module Y2Storage
         @partitions = partitions_from_disk(disk)
         return false if @partitions.empty?
 
+        @enable_snapshots = enabled_snapshots?(disk)
         @partitions.each { |i| i.create = false } if reuse_partitions?(disk)
 
         # Same logic followed by the old exporter
@@ -301,6 +302,18 @@ module Y2Storage
       def use_value_from_string(use)
         return use unless use =~ /(\d+,?)+/
         use.split(",").select { |n| n =~ /\d+/ }.map(&:to_i)
+      end
+
+      # Determine whether snapshots are enabled for the current drive
+      #
+      # Currently AutoYaST does not support enabling/disabling snapshots
+      # for a partition but for the whole disk.
+      #
+      # @param disk [Y2Storage::Disk, Y2Storage::Dasd] Disk
+      # @return [Boolean] true if snapshots are enabled
+      def enabled_snapshots?(disk)
+        filesystems = disk.partitions.map(&:filesystem)
+        filesystems.any? { |f| f.respond_to?(:snapshots?) && f.snapshots? }
       end
     end
   end
