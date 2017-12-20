@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Tue Dec 19 17:12:27 UTC 2017 - ancor@suse.com
+
+- Added BlkDevice.find_by_any_name (needed for bsc#1073254)
+- 4.0.59
+
+-------------------------------------------------------------------
 Tue Dec 19 14:05:33 UTC 2017 - jreidinger@suse.com
 
 - Add DeviceGraph#find_by_name call (needed for bsc#1072908)

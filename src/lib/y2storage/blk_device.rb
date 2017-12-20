@@ -45,6 +45,22 @@ module Y2Storage
     #   @return [BlkDevice] nil if there is no such block device
     storage_class_forward :find_by_name, as: "BlkDevice"
 
+    # @!method self.find_by_any_name(devicegraph, name)
+    #   Finds a block device by any name including any symbolic link in
+    #   the /dev directory.
+    #
+    #   @note: Might require a system lookup and is therefore slow.
+    #   @note: According to libstorage-ng, it only works on the probed
+    #   devicegraph. Likely, even that is not reliable after a commit.
+    #
+    #   @raise [Storage::Exception] if the devicegraph provided as first
+    #     argument is not the probed one
+    #
+    #   @param devicegraph [Devicegraph] the probed devicegraph
+    #   @param name [String] any kind of device name
+    #   @return [BlkDevice] nil if there is no such block device
+    storage_class_forward :find_by_any_name, as: "BlkDevice"
+
     # @!attribute name
     #   @return [String] kernel-style device name
     #     (e.g. "/dev/sda2" or "/dev/vg_name/lv_name")
@@ -94,6 +110,11 @@ module Y2Storage
 
     # Full paths of all the udev by-* links. an empty array for devices
     # not handled by udev.
+    #
+    # Take into account that libstorage-ng intentionally filter outs many udev
+    # paths and ids, so the list is expected to be incomplete. If you need to
+    # lookup a device by its udev name, check {.find_by_all_names}.
+    #
     # @see #udev_full_paths
     # @see #udev_full_ids
     # @see #udev_full_uuid
@@ -110,6 +131,10 @@ module Y2Storage
     #   Names of all the udev by-path links. An empty array for devices
     #   not handled by udev.
     #   E.g. ["pci-0000:00:1f.2-ata-1-part2"]
+    #
+    #   Take into account that libstorage-ng intentionally filter outs many udev
+    #   paths. Check the documentation of {#udev_full_all} for more information.
+    #
     #   @see #udev_full_paths
     #   @return [Array<String>]
     storage_forward :udev_paths
@@ -117,6 +142,10 @@ module Y2Storage
     # Full paths of all the udev by-path links. An empty array for devices
     # not handled by udev.
     # E.g. ["/dev/disk/by-path/pci-0000:00:1f.2-ata-1-part2"]
+    #
+    # Take into account that libstorage-ng intentionally filter outs many udev
+    # paths. Check the documentation of {#udev_full_all} for more information.
+    #
     # @see #udev_paths
     # @return [Array<String>]
     def udev_full_paths
@@ -127,6 +156,10 @@ module Y2Storage
     #   Names of all the udev by-id links. An empty array for devices
     #   not handled by udev.
     #   E.g. ["scsi-350014ee658db9ee6"]
+    #
+    #   Take into account that libstorage-ng intentionally filter outs many udev
+    #   ids. Check the documentation of {#udev_full_all} for more information.
+    #
     #   @see #udev_full_ids
     #   @return [Array<String]
     storage_forward :udev_ids
@@ -134,6 +167,10 @@ module Y2Storage
     # Full paths of all the udev by-id links. An empty array for devices
     # not handled by udev.
     # E.g. ["/dev/disk/by-id/scsi-350014ee658db9ee6"]
+    #
+    # Take into account that libstorage-ng intentionally filter outs many udev
+    # ids. Check the documentation of {#udev_full_all} for more information.
+    #
     # @see #udev_ids
     # @return [Array<String>]
     def udev_full_ids
