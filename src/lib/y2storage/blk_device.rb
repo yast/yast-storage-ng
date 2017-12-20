@@ -51,32 +51,15 @@ module Y2Storage
     #
     #   @note: Might require a system lookup and is therefore slow.
     #   @note: According to libstorage-ng, it only works on the probed
-    #   devicegraph. Likely, even that is not true after a commit.
+    #   devicegraph. Likely, even that is not reliable after a commit.
     #
-    #   @raise [Storage::Exception] according to libstorage-ng documentation,
-    #     this method can throw any type of Storage exception.
-    #   @param devicegraph [Devicegraph]
+    #   @raise [Storage::Exception] if the devicegraph provided as first
+    #     argument is not the probed one
+    #
+    #   @param devicegraph [Devicegraph] the probed devicegraph
     #   @param name [String] any kind of device name
-    #   @return [BlkDevice]
-    storage_class_forward :storage_find_by_any_name,
-      to: "find_by_any_name", as: "BlkDevice", raise_errors: true
-    private_class_method :storage_find_by_any_name
-
-    # Finds a block device by any name including any symbolic link in
-    # the /dev directory.
-    #
-    # @note: Might require a system lookup and is therefore slow.
-    # @note: According to libstorage-ng, it only works on the probed
-    # devicegraph. Likely, even that is not true after a commit.
-    #
-    # @param devicegraph [Devicegraph]
-    # @param name [String] any kind of device name
-    # @return [BlkDevice] nil if there is no such block device
-    def self.find_by_any_name(devicegraph, name)
-      storage_find_by_any_name(devicegraph, name)
-    rescue Storage::Exception
-      nil
-    end
+    #   @return [BlkDevice] nil if there is no such block device
+    storage_class_forward :find_by_any_name, as: "BlkDevice"
 
     # @!attribute name
     #   @return [String] kernel-style device name

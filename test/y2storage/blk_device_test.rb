@@ -686,15 +686,16 @@ describe Y2Storage::BlkDevice do
       end
     end
 
-    context "when libstorage-ng throws a general Storage exception" do
+    context "when libstorage-ng throws a general Storage exception (wrong devicegraph)" do
       before do
         allow(storage_class).to receive(:find_by_any_name) do
           raise Storage::Exception, "A libstorage-ng error"
         end
       end
 
-      it "returns nil" do
-        expect(described_class.find_by_any_name(fake_devicegraph, name)).to be_nil
+      it "propagates the exception" do
+        expect { described_class.find_by_any_name(fake_devicegraph, name) }
+          .to raise_error Storage::Exception
       end
     end
   end
