@@ -228,7 +228,8 @@ module Y2Storage
           subvol_specs = proposal_settings.subvolumes
         end
 
-        device.default_subvolume = proposal_settings.btrfs_default_subvolume || ""
+        device.default_subvolume = section.subvolumes_prefix ||
+          proposal_settings.legacy_btrfs_default_subvolume
         device.subvolumes = subvol_specs
       end
 
