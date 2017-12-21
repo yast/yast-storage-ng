@@ -268,6 +268,16 @@ module Y2Storage
       format == NG_FORMAT
     end
 
+    # FIXME: Improve implementation. Use composition to encapsulate logic for
+    # ng and legacy format
+    def legacy_btrfs_default_subvolume
+      return btrfs_default_subvolume unless ng_format?
+      return nil if volumes.empty?
+      root_volume = volumes.find { |v| v.mount_point == "/" }
+      return root_volume.btrfs_default_subvolume if root_volume
+      volumes.first.btrfs_default_subvolume
+    end
+
   private
 
     DELETE_MODES = [:none, :all, :ondemand]

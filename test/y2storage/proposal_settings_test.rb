@@ -707,6 +707,64 @@ describe Y2Storage::ProposalSettings do
     end
   end
 
+  describe "#legacy_btrfs_default_subvolume" do
+    context "when the format is :ng" do
+      let(:initial_partitioning_features) { { "proposal" => [], "volumes" => volumes_features } }
+      subject(:settings) { described_class.new_for_current_product }
+
+      before do
+        stub_partitioning_features
+      end
+
+      context "and there are no volumes" do
+        let(:volumes_features) { [] }
+
+        it "returns nil" do
+          expect(settings.legacy_btrfs_default_subvolume).to eq(nil)
+        end
+      end
+
+      context "and there is not a root volume" do
+        let(:volumes_features) { [{ "mount_point" => "/home", "btrfs_default_subvolume" => "#" }] }
+
+        it "returns the btrfs_default_subvolume value from the first volume" do
+          expect(settings.legacy_btrfs_default_subvolume).to eq("#")
+        end
+      end
+
+      context "and there is a root volume" do
+        let(:volumes_features) do
+          [{ "mount_point" => "/", "btrfs_default_subvolume" => btrfs_default_subvolume }]
+        end
+
+        context "and btrfs default subvolume name is set for root" do
+          let(:btrfs_default_subvolume) { "@" }
+
+          it "returns the btrfs_default_subvolume from root" do
+            expect(settings.legacy_btrfs_default_subvolume).to eq("@")
+          end
+        end
+
+        context "and btrfs default subvolume name is not set for root" do
+          let(:btrfs_default_subvolume) { nil }
+
+          it "returns nil" do
+            expect(settings.legacy_btrfs_default_subvolume).to be_nil
+          end
+        end
+      end
+    end
+
+    context "when the format is :legacy" do
+      subject(:settings) { described_class.new }
+
+      it "returns btrfs_default_subvolume value" do
+        settings.btrfs_default_subvolume = "#"
+        expect(settings.legacy_btrfs_default_subvolume).to eq("#")
+      end
+    end
+  end
+
   describe "#to_s" do
     subject(:settings) { described_class.new_for_current_product }
 
