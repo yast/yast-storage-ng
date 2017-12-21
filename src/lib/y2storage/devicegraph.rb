@@ -45,6 +45,7 @@ module Y2Storage
   #
   # This is a wrapper for Storage::Devicegraph
   class Devicegraph
+    include Yast::Logger
     include StorageClassWrapper
     wrap_class Storage::Devicegraph
 
@@ -286,11 +287,62 @@ module Y2Storage
       LvmLv.sorted_by_name(self)
     end
 
+    # All the block devices in the devicegraph, sorted by name
+    #
+    # @return [Array<BlkDevice>]
+    def blk_devices
+      BlkDevice.sorted_by_name(self)
+    end
+
     # Find device with given name e.g. /dev/sda3
     # @param [String] name
     # @return [Device, nil] if found Device and if not, then nil
     def find_by_name(name)
       BlkDevice.find_by_name(self, name) || lvm_vgs.find { |vg| vg.name == name }
+    end
+
+    # Finds a device by any name including any symbolic link in the /dev directory
+    #
+    # This is different from {BlkDevice.find_by_any_name} in several ways:
+    #
+    # * It will find any matching device, not only block devices (e.g. LVM VGs
+    #   also have a name but are not block devices).
+    # * It can be called on any devicegraph, not only probed.
+    # * It uses a system lookup only when necessary (i.e. all the cheaper
+    #   methods for finding the device have been unsuccessful).
+    # * It avoids system lookup in potentially risky scenarios (like an outdated
+    #   {StorageManager#probed}).
+    #
+    # @param name [String] can be a kernel name like "/dev/sda1" or any symbolic
+    #   link below the /dev directory
+    # @return [Device, nil] the found device, nil if no device matches the name
+    def find_by_any_name(name)
+      # First check using the device name
+      result = find_by_name(name)
+      # If not found, check udev names directly handled by libstorage-ng
+      result ||= blk_devices.find { |dev| dev.udev_full_all.include?(name) }
+      log.info "Device #{result.inspect} found by its libstorage-ng name #{name}"
+      return result if result
+
+      # If no result yet, there is still a chance using the slower
+      # BlkDevice.find_by_any_name. Unfortunatelly this only works in the
+      # probed devicegraph by design. Moreover it can only be safely called
+      # under certain circumstances.
+      if !udev_lookup_possible?
+        log.info "System lookup cannot be used to find #{name}"
+        return nil
+      end
+
+      probed = StorageManager.instance.probed
+      found = BlkDevice.find_by_any_name(probed, name)
+      if found.nil?
+        log.info "Device #{name} not found via system lookup"
+        return nil
+      end
+
+      result = find_device(found.sid)
+      log.info "Result of system lookup for #{name}: #{result.inspect}"
+      result
     end
 
     # @return [Array<FreeDiskSpace>]
@@ -418,6 +470,19 @@ module Y2Storage
         dev.remove_descendants
         remove_device(dev)
       end
+    end
+
+    # Whether it's reasonably safe to use BlkDevice.find_by_any_name
+    #
+    # @return [Boolean]
+    def udev_lookup_possible?
+      # Checking when the operation is safe is quite tricky, since we must
+      # ensure than the list of block devices in #probed matches 1:1 the list
+      # of block devices in the system.
+      #
+      # Although it's not 100% precise, checking whether commit has not been
+      # called provides a seasonable result.
+      !StorageManager.instance.committed?
     end
   end
 end

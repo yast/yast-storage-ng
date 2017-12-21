@@ -52,6 +52,11 @@ describe Y2Storage::StorageManager do
       expect(manager.probed?).to be(false)
     end
 
+    it "initializes #storage as not committed" do
+      manager = described_class.create_test_instance
+      expect(manager.committed?).to be(false)
+    end
+
     it "initializes #storage with empty devicegraphs" do
       manager = described_class.create_test_instance
       expect(manager.storage).to be_a Storage::Storage
@@ -479,6 +484,45 @@ describe Y2Storage::StorageManager do
       it "starts libstorage-ng activation using given callbacks" do
         expect(manager.storage).to receive(:activate).with(custom_callbacks)
         manager.activate(custom_callbacks)
+      end
+    end
+  end
+
+  describe "#committed?" do
+    before { fake_scenario("gpt_and_msdos") }
+    subject(:manager) { described_class.instance }
+
+    context "initially" do
+      it "returns false" do
+        expect(manager.committed?).to eq false
+      end
+    end
+
+    context "after reprobing" do
+      before { manager.probe_from_yaml(input_file_for("empty_hard_disk_50GiB")) }
+
+      it "returns false" do
+        expect(manager.committed?).to eq false
+      end
+    end
+
+    context "after calling #commit" do
+      before do
+        allow(manager.storage).to receive(:calculate_actiongraph)
+        allow(manager.storage).to receive(:commit)
+        manager.commit
+      end
+
+      it "returns true" do
+        expect(manager.committed?).to eq true
+      end
+
+      context "and then reprobing" do
+        before { manager.probe_from_yaml(input_file_for("empty_hard_disk_50GiB")) }
+
+        it "returns false" do
+          expect(manager.committed?).to eq false
+        end
       end
     end
   end
