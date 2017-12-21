@@ -299,6 +299,33 @@ describe Y2Storage::Filesystems::Btrfs do
         expect(filesystem.btrfs_subvolume_path(path)).to eq("@/foo")
       end
     end
+
+    context "when the prefix for the filesystem is empty" do
+      let(:default_subvolume) do
+        instance_double(Y2Storage::BtrfsSubvolume, path: "")
+      end
+
+      before do
+        allow(filesystem).to receive(:default_btrfs_subvolume)
+          .and_return(default_subvolume)
+      end
+
+      context "when the path is an absolute path" do
+        let(:path) { "/foo" }
+
+        it "returns a fixed relative path without any prefix" do
+          expect(filesystem.btrfs_subvolume_path(path)).to eq("foo")
+        end
+      end
+
+      context "when the path is a relative path" do
+        let(:path) { "foo" }
+
+        it "returns a fixed relative path without any prefix" do
+          expect(filesystem.btrfs_subvolume_path(path)).to eq("foo")
+        end
+      end
+    end
   end
 
   describe "#btrfs_subvolume_mount_point" do

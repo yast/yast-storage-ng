@@ -23,6 +23,7 @@ require "y2storage/storage_class_wrapper"
 require "y2storage/filesystems/blk_filesystem"
 require "y2storage/btrfs_subvolume"
 require "y2storage/subvol_specification"
+require "pathname"
 
 Yast.import "ProductFeatures"
 
@@ -191,6 +192,9 @@ module Y2Storage
         Btrfs.btrfs_subvolume_mount_point(mount_point, path_without_prefix(subvolume_path))
       end
 
+      # @return [Pathname] Object that represents the root path
+      ROOT_PATH = Pathname.new("/")
+
       # Returns a subvolume path generated from a default subvolume path and
       # the a subvolume path
       #
@@ -203,7 +207,9 @@ module Y2Storage
       # @return [String, nil] nil whether any path is not valid
       def self.btrfs_subvolume_path(default_subvolume_path, subvolume_path)
         return nil if default_subvolume_path.nil? || subvolume_path.nil?
-        File.join(default_subvolume_path, subvolume_path)
+        path = Pathname(File.join(default_subvolume_path, subvolume_path))
+        return path.to_s unless path.absolute?
+        path.relative_path_from(ROOT_PATH).to_s
       end
 
       # Returns a subvolume mount point generated from a filesystem mount point and a
