@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Fri Dec 22 16:12:48 UTC 2017 - igonzalezsosa@suse.com
+
+- AutoYaST: export the enable_snapshots element (bsc#1073544)
+- 4.0.65
+
+-------------------------------------------------------------------
 Fri Dec 22 15:40:13 UTC 2017 - igonzalezsosa@suse.com
 
 - AutoYaST: export the enable_snapshots element (bsc#1073544)
