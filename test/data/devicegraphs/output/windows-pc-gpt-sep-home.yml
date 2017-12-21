@@ -6,7 +6,7 @@
     partitions:
 
     - partition:
-        size: 745471 MiB
+        size: 745470 MiB
         name: /dev/sda1
         id: windows_basic_data
         file_system: ntfs
@@ -32,7 +32,7 @@
         mount_point: swap
 
     - partition:
-        size: 10.00 GiB
+        size: 10241 MiB
         name: "/dev/sda6"
         id: linux
         file_system: xfs

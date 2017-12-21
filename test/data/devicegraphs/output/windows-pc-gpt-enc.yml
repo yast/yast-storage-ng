@@ -6,7 +6,7 @@
     partitions:
 
     - partition:
-        size: 755711 MiB
+        size: 755710 MiB
         name: /dev/sda1
         id: windows_basic_data
         file_system: ntfs
@@ -38,6 +38,9 @@
           type: luks
           name: "/dev/mapper/cr_sda5"
           password: '12345678'
+
+    - free:
+        size: 1 MiB
 
     - partition:
         size: unlimited

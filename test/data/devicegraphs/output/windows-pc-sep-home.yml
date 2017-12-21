@@ -6,7 +6,7 @@
     partitions:
 
     - partition:
-        size: 745470 MiB
+        size: 745469 MiB
         name: /dev/sda1
         id: 0x7
         file_system: ntfs
@@ -21,7 +21,7 @@
         mount_point: "/"
 
     - partition:
-        size: 12290 MiB
+        size: 12291 MiB
         name: "/dev/sda4"
         type: extended
         id: extended
@@ -35,7 +35,7 @@
         mount_point: swap
 
     - partition:
-        size: 10 GiB
+        size: 10241 MiB
         name: "/dev/sda6"
         type: logical
         id: linux

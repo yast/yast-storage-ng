@@ -6,7 +6,7 @@
     partitions:
 
     - partition:
-        size: 738.00 GiB
+        size: 755711 MiB
         name: /dev/sda1
         id: 0x7
         file_system: ntfs
@@ -26,6 +26,9 @@
         id: swap
         file_system: swap
         mount_point: swap
+
+    - free:
+       size: 1 MiB
 
     - partition:
         size: unlimited

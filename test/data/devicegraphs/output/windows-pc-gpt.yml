@@ -6,7 +6,7 @@
     partitions:
 
     - partition:
-        size: 755711 MiB
+        size: 755710 MiB
         name: /dev/sda1
         id: windows_basic_data
         file_system: ntfs
@@ -30,6 +30,9 @@
         id: swap
         file_system: swap
         mount_point: swap
+
+    - free:
+        size: 1 MiB
 
     - partition:
         size: unlimited

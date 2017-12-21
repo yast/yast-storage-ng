@@ -6,7 +6,7 @@
     partitions:
 
     - partition:
-        size: 738.00 GiB
+        size: 755711 MiB
         name: /dev/sda1
         id: 0x7
         file_system: ntfs
@@ -34,6 +34,9 @@
           type: luks
           name: "/dev/mapper/cr_sda4"
           password: '12345678'
+
+    - free:
+        size: 1 MiB
 
     - partition:
         size: unlimited

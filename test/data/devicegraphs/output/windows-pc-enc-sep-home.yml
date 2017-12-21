@@ -6,7 +6,7 @@
     partitions:
 
     - partition:
-        size: 745470 MiB
+        size: 745469 MiB
         name: /dev/sda1
         id: 0x7
         file_system: ntfs
@@ -25,7 +25,7 @@
           password: '12345678'
 
     - partition:
-        size: 12290 MiB
+        size: 12291 MiB
         name: "/dev/sda4"
         type: extended
         id: extended
@@ -43,7 +43,7 @@
           password: '12345678'
 
     - partition:
-        size: 10 GiB
+        size: 10241 MiB
         name: "/dev/sda6"
         type: logical
         id: linux
