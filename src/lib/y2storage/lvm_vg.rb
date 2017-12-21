@@ -157,6 +157,13 @@ module Y2Storage
 
     alias_method :basename, :vg_name
 
+    # @see Device#potential_orphans
+    #
+    # @return [Array<Device>]
+    def potential_orphans
+      lvm_pvs
+    end
+
   protected
 
     def types_for_is

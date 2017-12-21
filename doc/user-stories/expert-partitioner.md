@@ -589,7 +589,7 @@ The specs are based on current version of expert partitioner for TW. The goal is
   * and a LV is selected in the table
     * shows popup dialog to resize the LV
 * and action 'Delete' is selected
-  * *(pending) and a VG is selected in the table*
+  * and a VG is selected in the table
     * shows a confirm popup to delete the VG and its LVs
     * deletes the VG (and its LVs)
   * and a LV is selected in the table

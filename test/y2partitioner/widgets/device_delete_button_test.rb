@@ -125,6 +125,18 @@ describe Y2Partitioner::Widgets::DeviceDeleteButton do
           subject.handle
         end
       end
+
+      context "and the device is an LVM volume group" do
+        let(:device_type) { :lvm_vg }
+
+        let(:action_class) { Y2Partitioner::Actions::DeleteLvmVg }
+
+        it "performs the action for deleting a VG" do
+          expect(action_class).to receive(:new).with(device).and_return(action)
+          expect(action).to receive(:run)
+          subject.handle
+        end
+      end
     end
   end
 end

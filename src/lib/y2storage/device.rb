@@ -193,6 +193,19 @@ module Y2Storage
       storage_siblings(itself)
     end
 
+    # Devices that are NOT descendants of this one but that would become
+    # useless if this device is deleted.
+    #
+    # Used to identify potential leftovers for those devices that don't have a
+    # explicit method in libstorage-ng to remove them and whose associated
+    # devices would be overlooked by {#remove_descendants}, like the physical
+    # volumes of a volume group.
+    #
+    # @return [Array<Device>]
+    def potential_orphans
+      []
+    end
+
     # Check if the device can be resized.
     #
     # If the device has any children, they are also taken into account;

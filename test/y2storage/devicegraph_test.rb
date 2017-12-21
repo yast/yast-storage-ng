@@ -423,12 +423,16 @@ describe Y2Storage::Devicegraph do
 
       vg = Y2Storage::LvmVg.create(devicegraph, vg_name)
       vg.add_lvm_pv(md)
+
+      sda3.remove_descendants
+      vg.add_lvm_pv(sda3)
+
       vg.create_lvm_lv("lv1", Y2Storage::DiskSize.GiB(1))
     end
 
     let(:md_name) { "/dev/md/md0" }
-
     let(:vg_name) { "vg0" }
+    let(:sda3) { devicegraph.find_by_name("/dev/sda3") }
 
     it "removes the given md device" do
       md = Y2Storage::Md.find_by_name(devicegraph, md_name)
@@ -452,6 +456,22 @@ describe Y2Storage::Devicegraph do
       expect(existing_descendants).to be_empty
     end
 
+    it "removes the orphans resulting from deleting the descendants" do
+      md = Y2Storage::Md.find_by_name(devicegraph, md_name)
+
+      expect(sda3.lvm_pv).to_not be_nil
+      devicegraph.remove_md(md)
+      expect(sda3.lvm_pv).to be_nil
+    end
+
+    it "does not remove other devices" do
+      md = Y2Storage::Md.find_by_name(devicegraph, md_name)
+
+      expect(sda3.exists_in_devicegraph?(devicegraph)).to eq true
+      devicegraph.remove_md(md)
+      expect(sda3.exists_in_devicegraph?(devicegraph)).to eq true
+    end
+
     context "when the md does not exist in the devicegraph" do
       before do
         Y2Storage::Md.create(other_devicegraph, md1_name)
@@ -466,6 +486,69 @@ describe Y2Storage::Devicegraph do
 
         expect { devicegraph.remove_md(md1) }.to raise_error(ArgumentError)
         expect(Y2Storage::Md.find_by_name(other_devicegraph, md1_name)).to_not be_nil
+      end
+    end
+  end
+
+  describe "#remove_lvm_vg" do
+    subject(:devicegraph) { Y2Storage::StorageManager.instance.staging }
+
+    let(:vg_name) { "/dev/vg1" }
+
+    before { fake_scenario("lvm-two-vgs") }
+
+    it "removes the given LvmVg device" do
+      vg = devicegraph.find_by_name(vg_name)
+
+      expect(vg).to_not be_nil
+      devicegraph.remove_lvm_vg(vg)
+      expect(devicegraph.find_by_name(vg_name)).to be_nil
+    end
+
+    it "removes all VG descendants" do
+      vg = devicegraph.find_by_name(vg_name)
+      descendants_sid = vg.descendants.map(&:sid)
+
+      expect(descendants_sid).to_not be_empty
+      devicegraph.remove_lvm_vg(vg)
+
+      survivors = descendants_sid.map { |sid| devicegraph.find_device(sid) }.compact
+      expect(survivors).to be_empty
+    end
+
+    it "removes all the LvmPv devices associated to the VG" do
+      vg = devicegraph.find_by_name(vg_name)
+      pv_sids = vg.lvm_pvs.map(&:sid)
+
+      expect(pv_sids).to_not be_empty
+      devicegraph.remove_lvm_vg(vg)
+      surviving_pvs = pv_sids.map { |sid| devicegraph.find_device(sid) }.compact
+      expect(surviving_pvs).to be_empty
+    end
+
+    it "does not remove the block devices hosting the PVs" do
+      vg = devicegraph.find_by_name(vg_name)
+      blk_devices = vg.lvm_pvs.map(&:blk_device)
+
+      expect(blk_devices).to_not be_empty
+      devicegraph.remove_lvm_vg(vg)
+      surviving_devs = blk_devices.map { |dev| devicegraph.find_device(dev.sid) }
+      expect(surviving_devs).to eq blk_devices
+    end
+
+    context "when the VG does not exist in the devicegraph" do
+      let(:other_devicegraph) { devicegraph.dup }
+      let(:new_vg_name) { "new_vg" }
+
+      before do
+        Y2Storage::LvmVg.create(other_devicegraph, new_vg_name)
+      end
+
+      it "raises an exception and does not remove the VG" do
+        vg = Y2Storage::LvmVg.find_by_vg_name(other_devicegraph, new_vg_name)
+
+        expect { devicegraph.remove_lvm_vg(vg) }.to raise_error ArgumentError
+        expect(Y2Storage::LvmVg.find_by_vg_name(other_devicegraph, new_vg_name)).to_not be_nil
       end
     end
   end

@@ -1,4 +1,12 @@
 -------------------------------------------------------------------
+Wed Dec 20 15:33:49 UTC 2017 - ancor@suse.com
+
+- Partitioner: support for deleting an LVM volume group.
+- Correct handling of orphan physical volume devices.
+- Fix for bsc#106956 and part of fate#31896.
+- 4.0.61
+
+-------------------------------------------------------------------
 Wed Dec 20 12:04:42 CET 2017 - aschnell@suse.com
 
 - added obsoletes (bsc#1073645)
