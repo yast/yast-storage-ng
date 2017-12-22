@@ -1,4 +1,9 @@
 -------------------------------------------------------------------
+Fri Dec 22 15:40:13 UTC 2017 - igonzalezsosa@suse.com
+
+- AutoYaST: export the enable_snapshots element (bsc#1073544)
+
+-------------------------------------------------------------------
 Fri Dec 22 15:17:35 UTC 2017 - snwint@suse.com
 
 - rewrite SpaceMaker::resize_and_delete! to be more human-readable
