@@ -220,7 +220,7 @@ module Y2Storage
           #
           # ** Note **
           #
-          # There are two steps where we try to resize a Windows partition. 
+          # There are two steps where we try to resize a Windows partition.
           # Both should be mutually exclusive. But the 'force' argument
           # itself doesn't ensure this. However: when we did a resize in
           # Step 1 we either did a partial resize - in this case we don't
