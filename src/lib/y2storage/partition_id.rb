@@ -58,7 +58,7 @@ module Y2Storage
     def to_human_string
       textdomain "storage"
 
-      string = TRANSLATIONS[to_i] or raise "Unhandled Partition ID '#{inspect}'"
+      string = TRANSLATIONS[to_i] || "0x#{to_i.to_s(16)}"
 
       _(string)
     end
