@@ -41,7 +41,7 @@ describe Y2Storage::GuidedProposal do
     end
   end
 
-  # Regression tests
+  # Regression tests (bsc#1058027)
   describe ".initial" do
     before do
       Y2Storage::StorageManager.create_test_instance
