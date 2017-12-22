@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Fri Dec 22 10:26:05 UTC 2017 - igonzalezsosa@suse.com
+
+- Do not crash when showing an unhandled partition id
+  (bsc#1068087)
+
+-------------------------------------------------------------------
 Wed Dec 20 15:33:49 UTC 2017 - ancor@suse.com
 
 - Partitioner: support for deleting an LVM volume group.

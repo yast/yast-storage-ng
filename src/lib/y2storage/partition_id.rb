@@ -29,6 +29,7 @@ module Y2Storage
     include Yast::I18n
     extend Yast::I18n
     include StorageEnumWrapper
+    include Yast::Logger
 
     wrap_enum "ID"
 
@@ -58,7 +59,11 @@ module Y2Storage
     def to_human_string
       textdomain "storage"
 
-      string = TRANSLATIONS[to_i] or raise "Unhandled Partition ID '#{inspect}'"
+      string = TRANSLATIONS[to_i]
+      if string.nil?
+        log.warn "Unhandled Partition ID '#{inspect}'"
+        string = "0x#{to_i.to_s(16)}"
+      end
 
       _(string)
     end

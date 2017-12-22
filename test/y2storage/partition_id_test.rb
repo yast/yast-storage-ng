@@ -114,5 +114,13 @@ describe Y2Storage::PartitionId do
         expect(partition.to_human_string).to be_a(::String)
       end
     end
+
+    context "when it is an unhandled partition id" do
+      subject(:partition_id) { Y2Storage::PartitionId.new(9999) }
+
+      it "returns the id formatted as an hexadecimal number" do
+        expect(partition_id.to_human_string).to eq("0x270f")
+      end
+    end
   end
 end
