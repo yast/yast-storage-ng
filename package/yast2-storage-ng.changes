@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Fri Dec 22 15:17:35 UTC 2017 - snwint@suse.com
+
+- rewrite SpaceMaker::resize_and_delete! to be more human-readable
+- 4.0.64
+
+-------------------------------------------------------------------
 Fri Dec 22 14:40:04 UTC 2017 - snwint@suse.com
 
 - fix unnecessary Windows partition deletion (bsc #1066386)
