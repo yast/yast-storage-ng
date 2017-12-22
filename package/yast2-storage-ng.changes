@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Fri Dec 22 14:40:04 UTC 2017 - snwint@suse.com
+
+- fix unnecessary Windows partition deletion (bsc #1066386)
+- 4.0.63
+
+-------------------------------------------------------------------
 Fri Dec 22 12:35:29 UTC 2017 - snwint@suse.com
 
 - fix logic in GuidedProposal::calculate_proposal (bsc#1058027)
