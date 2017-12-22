@@ -140,7 +140,7 @@ describe Y2Storage::GuidedProposal do
     end
 
     context "when installing in a DM RAID" do
-      let(:scenario) { "empty-dm_raids.xml" }
+      let(:scenario) { "empty-dm_raids_no_sda.xml" }
       let(:windows_partitions) { {} }
       let(:separate_home) { false }
       let(:lvm) { false }
@@ -151,8 +151,8 @@ describe Y2Storage::GuidedProposal do
 
       it "creates the needed partitions in the DM RAID" do
         proposal.propose
-        raid = proposal.devices.dm_raids.first
-        expect(raid.partitions).to contain_exactly(
+        raids = proposal.devices.dm_raids.map(&:partitions).flatten
+        expect(raids).to contain_exactly(
           an_object_having_attributes(id: Y2Storage::PartitionId::BIOS_BOOT),
           an_object_having_attributes(filesystem_mountpoint: "/"),
           an_object_having_attributes(filesystem_mountpoint: "swap")
@@ -161,7 +161,8 @@ describe Y2Storage::GuidedProposal do
 
       it "creates the needed partitions with correct device names" do
         proposal.propose
-        raid = proposal.devices.dm_raids.first
+        # note: potentially order dependent; thera are two raids defined
+        raid = proposal.devices.dm_raids.last
         raid_name = raid.name
         expect(raid.partitions.map(&:name)).to contain_exactly(
           "#{raid_name}-part1",

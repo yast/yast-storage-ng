@@ -40,4 +40,40 @@ describe Y2Storage::GuidedProposal do
       include_examples "LVM-based proposed layouts"
     end
   end
+
+  # Regression tests (bsc#1058027)
+  describe ".initial" do
+    before do
+      Y2Storage::StorageManager.create_test_instance
+    end
+
+    let(:devicegraph) { Y2Storage::StorageManager.instance.probed }
+
+    context "with a disk of 10 GiB" do
+      before do
+        sda = Y2Storage::Disk.create(devicegraph, "/dev/sda")
+        sda.size = Y2Storage::DiskSize.GiB(10)
+      end
+
+      it "produces a proposal" do
+        proposal = described_class.initial
+        expect(proposal.devices).to_not be_nil
+      end
+    end
+
+    context "with two disks of 10 GiB and 2 GiB" do
+      before do
+        sda = Y2Storage::Disk.create(devicegraph, "/dev/sda")
+        sda.size = Y2Storage::DiskSize.GiB(10)
+
+        sdb = Y2Storage::Disk.create(devicegraph, "/dev/sdb")
+        sdb.size = Y2Storage::DiskSize.GiB(2)
+      end
+
+      it "produces a proposal" do
+        proposal = described_class.initial
+        expect(proposal.devices).to_not be_nil
+      end
+    end
+  end
 end
