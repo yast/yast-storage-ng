@@ -101,6 +101,17 @@ describe Y2Storage::GuidedProposal do
       include_examples "all proposed layouts"
     end
 
+    context "in a 50 GiB Windows-only PC with GPT partition table" do
+      let(:scenario) { "windows-pc-50GiB-gpt" }
+      let(:windows_partitions) { [partition_double("/dev/sda1")] }
+      let(:resize_info) do
+        instance_double("Y2Storage::ResizeInfo", resize_ok?: true, min_size: 1.GiB)
+      end
+
+      # essential part of the example: Windows partition has been resized
+      include_examples "partition-based proposed layouts"
+    end
+
     context "in a windows/linux multiboot PC with GPT partition table" do
       let(:scenario) { "windows-linux-multiboot-pc-gpt" }
 

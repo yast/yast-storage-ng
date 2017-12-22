@@ -107,7 +107,20 @@ module Y2Storage
         pvs_to_create = free_spaces.size + 1
         needed += lvm_space_to_make(pvs_to_create)
 
-        needed - available_space(free_spaces)
+        # The exact amount of available free space is hard to predict.
+        #
+        # Resizing can introduce a misaligned free space blob. Take this
+        # into account by reducing the free space by the disk's alignment
+        # granularity. This is slightly too pessimistic (we could check the
+        # alignment) - but good enough.
+        #
+        # A good example of such a block is the free space at the end of a
+        # GPT which is practically guaranteed to be misaligned due to the
+        # GPT meta data stored at the disk's end.
+        #
+        available = [available_space(free_spaces) - align_grain, DiskSize.zero].max
+
+        needed - available
       end
 
     protected
