@@ -119,6 +119,10 @@ module Y2Storage
 
       exception = nil
       [:desired, :min].each do |target|
+
+        # reset root_device, else #candidate_roots will just use it
+        populated_settings.root_device = nil
+
         candidate_roots.each do |disk_name|
           log.info "Trying to make a proposal with target #{target} and root #{disk_name}"
 
