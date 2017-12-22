@@ -185,11 +185,25 @@ describe Y2Storage::AutoinstProfile::DriveSection do
           end
         end
       end
-    end
 
-    it "initializes #type to :CT_DISK for both disks and DASDs" do
-      expect(described_class.new_from_storage(device("dasdb")).type).to eq :CT_DISK
-      expect(described_class.new_from_storage(device("sdc")).type).to eq :CT_DISK
+      it "initializes #type to :CT_DISK for both disks and DASDs" do
+        expect(described_class.new_from_storage(device("dasdb")).type).to eq :CT_DISK
+        expect(described_class.new_from_storage(device("sdc")).type).to eq :CT_DISK
+      end
+
+      context "when snapshots are enabled for some filesystem" do
+        it "initializes 'enable_snapshots' to true" do
+          section = described_class.new_from_storage(device("sdd"))
+          expect(section.enable_snapshots).to eq(true)
+        end
+      end
+
+      context "when snapshots are not enabled for any filesystem" do
+        it "initializes 'enable_snapshots' to false" do
+          section = described_class.new_from_storage(device("sdh"))
+          expect(section.enable_snapshots).to eq(false)
+        end
+      end
     end
 
     describe "initializing DriveSection#device" do

@@ -312,6 +312,15 @@ module Y2Storage
         children.size == 1 ? children.first.path : ""
       end
 
+      # Determines whether the snapshots (snapper) are activated
+      #
+      # @return [Boolean] true if snapshots are present
+      def snapshots?
+        snapshots_root = File.join(subvolumes_prefix, ".snapshots")
+        snapshots_subvolume = btrfs_subvolumes.any? { |s| s.path == snapshots_root }
+        snapshots_subvolume || configure_snapper
+      end
+
     protected
 
       # Removes a subvolume

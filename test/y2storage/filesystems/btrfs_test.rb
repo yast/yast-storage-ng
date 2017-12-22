@@ -657,4 +657,47 @@ describe Y2Storage::Filesystems::Btrfs do
       end
     end
   end
+
+  describe "#snapshots?" do
+    before do
+      allow(subject).to receive(:btrfs_subvolumes).and_return(subvolumes)
+      allow(subject).to receive(:subvolumes_prefix).and_return("@")
+    end
+
+    context "when a subvolume for snapshots exist" do
+      let(:subvolumes) do
+        [
+          instance_double(Y2Storage::BtrfsSubvolume, path: "@"),
+          instance_double(Y2Storage::BtrfsSubvolume, path: "@/.snapshots")
+        ]
+      end
+
+      it "returns true" do
+        expect(subject.snapshots?).to eq(true)
+      end
+    end
+
+    context "when no subvolume for snapshots exist" do
+      let(:subvolumes) do
+        [
+          instance_double(Y2Storage::BtrfsSubvolume, path: "@"),
+          instance_double(Y2Storage::BtrfsSubvolume, path: "@/srv")
+        ]
+      end
+
+      it "returns false" do
+        expect(subject.snapshots?).to eq(false)
+      end
+
+      context "but snapper will be configured" do
+        before do
+          allow(subject).to receive(:configure_snapper).and_return(true)
+        end
+
+        it "returns true" do
+          expect(subject.snapshots?).to eq(true)
+        end
+      end
+    end
+  end
 end
