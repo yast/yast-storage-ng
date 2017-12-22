@@ -688,6 +688,16 @@ describe Y2Storage::Filesystems::Btrfs do
       it "returns false" do
         expect(subject.snapshots?).to eq(false)
       end
+
+      context "but snapper will be configured" do
+        before do
+          allow(subject).to receive(:configure_snapper).and_return(true)
+        end
+
+        it "returns true" do
+          expect(subject.snapshots?).to eq(true)
+        end
+      end
     end
   end
 end
