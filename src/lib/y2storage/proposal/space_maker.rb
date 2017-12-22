@@ -194,8 +194,6 @@ module Y2Storage
       #     to deal with the existing LVM volume groups
       # @param disk [String] optional disk name to restrict operations to
       #
-      # rubocop:disable Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity
-      #
       def resize_and_delete!(planned_partitions, keep, lvm_helper, disk: nil)
         log.info "Resize and delete. disk: #{disk}, planned partitions:"
         planned_partitions.each do |p|
@@ -211,45 +209,44 @@ module Y2Storage
         # Try various methods to free space. Stop when a valid partition
         # layout has been found.
 
-        # step 1
-        # resize Windows partitions only if there are no Linux partitions on the disk
-        log.info "Step 1"
-        resize_windows!(planned_partitions, disk, force: false)
-        return if @distribution
+        methods_and_args = [
+          # step 1 - resize Windows partitions only if there are no Linux partitions on the disk
+          [:resize_windows!,     [{ force: false }]],
+          # step 2 - # delete Linux partitions
+          [:delete_partitions!,  [:linux, keep]],
+          # step 3 - delete other (non-Windows) partitions
+          [:delete_partitions!,  [:other, keep]],
+          # step 4 - resize Windows partitions
+          #
+          # ** Note **
+          #
+          # There are two steps where we try to resize a Windows partition. 
+          # Both should be mutually exclusive. But the 'force' argument
+          # itself doesn't ensure this. However: when we did a resize in
+          # Step 1 we either did a partial resize - in this case we don't
+          # reach this step as it will have freed enough space (else it
+          # would have been a full resize). Or we did a full resize in
+          # Step 1 - then the remaining size in the Windows partition will
+          # be zero and this second resize won't happen.
+          [:resize_windows!,     [{ force: true }]],
+          # step 5 - delete Windows partitions
+          [:delete_partitions!,  [:windows, keep]],
+          # step 6 - if deleting partitions was not enough, maybe there is no
+          # partition table and we have to wipe the disk
+          [:delete_disk_content, [lvm_helper]]
+        ]
 
-        # step 2
-        # delete Linux partitions
-        log.info "Step 2"
-        delete_partitions!(planned_partitions, :linux, keep, disk)
-        return if @distribution
+        methods_and_args.each_with_index do |method_and_args, idx|
+          method, extra_args = method_and_args
 
-        # step 3
-        # delete other (non-Windows) partitions
-        log.info "Step 3"
-        delete_partitions!(planned_partitions, :other, keep, disk)
-        return if @distribution
+          log.info "Step #{idx + 1} - #{method}"
+          send(method, planned_partitions, disk, *extra_args)
 
-        # step 4
-        # resize Windows partitions
-        log.info "Step 4"
-        resize_windows!(planned_partitions, disk, force: true)
-        return if @distribution
-
-        # step 5
-        # delete Windows partitions
-        log.info "Step 5"
-        delete_partitions!(planned_partitions, :windows, keep, disk)
-        return if @distribution
-
-        # step 6
-        # if deleting partitions was not enough, maybe there is no partition
-        # table and we have to wipe the disk
-        log.info "Step 6"
-        delete_disk_content(planned_partitions, lvm_helper, disk)
+          break if @distribution
+        end
 
         raise Error unless @distribution
       end
-      # rubocop:enable all
 
       # Additional space that needs to be freed while resizing a partition in
       # order to reach the goal
@@ -382,11 +379,11 @@ module Y2Storage
       # @see #deletion_candidate_partitions for supported types
       #
       # @param planned_partitions [Array<Planned::Partition>]
+      # @param disk [String] optional disk name to restrict operations to
       # @param type [Symbol] type of partition to delete
       # @param keep [Array<String>] device names of partitions that should not
       #       be deleted
-      # @param disk [String] optional disk name to restrict operations to
-      def delete_partitions!(planned_partitions, type, keep, disk)
+      def delete_partitions!(planned_partitions, disk, type, keep)
         return if settings.delete_forbidden?(type)
 
         log.info("Deleting partitions to make space")
@@ -463,10 +460,10 @@ module Y2Storage
       #
       # @param planned_partitions [Array<Planned::Partition>] list of
       #   partitions to allocate, used to know how much space is still missing
+      # @param disk [String] optional disk name to restrict operations to
       # @param lvm_helper [Proposal::LvmHelper] contains information about how
       #     to deal with the existing LVM volume groups
-      # @param disk [String] optional disk name to restrict operations to
-      def delete_disk_content(planned_partitions, lvm_helper, disk)
+      def delete_disk_content(planned_partitions, disk, lvm_helper)
         log.info "BEGIN delete_disk_content with disk #{disk}"
 
         disks_for(new_graph, disk).each do |dsk|
