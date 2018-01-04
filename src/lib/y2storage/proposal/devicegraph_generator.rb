@@ -155,6 +155,7 @@ module Y2Storage
         new_swap_volumes.each_with_index do |swap_volume, idx|
           deleted_swap = deleted_swaps[idx]
           break unless deleted_swap
+          break unless deleted_swap.formatted_as?(:swap)
 
           swap_volume.uuid = deleted_swap.filesystem.uuid
           swap_volume.label = deleted_swap.filesystem.label
