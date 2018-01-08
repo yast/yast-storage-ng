@@ -1,7 +1,7 @@
 -------------------------------------------------------------------
 Mon Jan  8 11:52:30 UTC 2018 - igonzalezsosa@suse.com
 
-- AutoYaST: export the enable_snapshots element (bsc#1073544)
+- Force the subvolume name to be relative (related to bsc#1073548)
 - 4.0.65
 
 -------------------------------------------------------------------
