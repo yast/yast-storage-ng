@@ -229,7 +229,7 @@ describe Y2Storage::GuidedProposal do
       end
 
       def sda(num)
-        proposal.devices.partitions.detect { |p| p.name == "/dev/sda#{num}" }
+        proposal.devices.find_by_name("/dev/sda#{num}")
       end
 
       it "reuses suitable swap partitions" do
@@ -263,6 +263,35 @@ describe Y2Storage::GuidedProposal do
         expect(sda(6)).to have_attributes(
           filesystem_mountpoint: "swap", filesystem_uuid: "", filesystem_label: ""
         )
+      end
+
+      context "when it deletes partitions with id swap but not containing a swap" do
+        let(:scenario) { "false-swaps" }
+        let(:all_volumes) do
+          [
+            planned_vol(mount_point: "/", type: :ext4, min: 8.5.GiB),
+            planned_vol(mount_point: "swap", type: :swap, min: 1.GiB),
+          ]
+        end
+
+        # Regression test for bsc#1071515
+        it "does not fail" do
+          expect { proposal.propose }.to_not raise_error
+        end
+
+        it "ignores UUIDs and labels of non-swap filesystems" do
+          proposal.propose
+          swap = proposal.devices.disks.first.swap_partitions.first
+          expect(swap.filesystem.uuid).to_not eq "33333333-3333-3333-3333-33333333"
+          expect(swap.filesystem.label).to_not eq "old_root"
+        end
+
+        it "reuses UUID and label of deleted real swap partitions" do
+          proposal.propose
+          swap = proposal.devices.disks.first.swap_partitions.first
+          expect(swap.filesystem.uuid).to eq "44444444-4444-4444-4444-44444444"
+          expect(swap.filesystem.label).to eq "old_swap"
+        end
       end
     end
 
