@@ -270,11 +270,12 @@ describe Y2Storage::GuidedProposal do
         let(:all_volumes) do
           [
             planned_vol(mount_point: "/", type: :ext4, min: 8.5.GiB),
-            planned_vol(mount_point: "swap", type: :swap, min: 1.GiB),
+            planned_vol(mount_point: "swap", type: :swap, min: 1.GiB)
           ]
         end
 
-        # Regression test for bsc#1071515
+        # Regression test for bsc#1071515. It used to raise an exception when an
+        # unformatted swap (like /dev/sda1 in our test data) had been deleted.
         it "does not fail" do
           expect { proposal.propose }.to_not raise_error
         end
