@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Mon Jan  8 11:37:06 UTC 2018 - ancor@suse.com
+
+- Fixed error when calculating the proposal on top of a BIOS RAID
+  (bsc#1067349)
+
+-------------------------------------------------------------------
 Fri Dec 22 15:40:13 UTC 2017 - igonzalezsosa@suse.com
 
 - AutoYaST: export the enable_snapshots element (bsc#1073544)
