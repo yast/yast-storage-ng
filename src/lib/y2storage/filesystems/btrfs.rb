@@ -198,6 +198,8 @@ module Y2Storage
       # Returns a subvolume path generated from a default subvolume path and
       # the a subvolume path
       #
+      # The path is forced to be relative.
+      #
       # @example
       #   Btrfs.btrfs_subvolume_path("@", "foo") # => "@/foo"
       #
