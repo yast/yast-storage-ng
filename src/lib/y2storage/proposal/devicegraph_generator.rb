@@ -149,7 +149,9 @@ module Y2Storage
       # @param deleted_partitions [Array<Partition>] partitions
       #     deleted from the initial devicegraph
       def refine_planned_partitions!(planned_partitions, deleted_partitions)
-        deleted_swaps = deleted_partitions.select { |part| part.id.is?(:swap) }
+        deleted_swaps = deleted_partitions.select do |part|
+          part.id.is?(:swap) && part.formatted_as?(:swap)
+        end
         new_swap_volumes = planned_partitions.select { |vol| !vol.reuse && vol.mount_point == "swap" }
 
         new_swap_volumes.each_with_index do |swap_volume, idx|
