@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Mon Jan  8 11:52:30 UTC 2018 - igonzalezsosa@suse.com
+
+- Force the subvolume name to be relative (related to bsc#1073548)
+- 4.0.65
+
+-------------------------------------------------------------------
 Mon Jan  8 11:37:06 UTC 2018 - ancor@suse.com
 
 - Fixed error when calculating the proposal on top of a BIOS RAID

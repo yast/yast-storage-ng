@@ -113,6 +113,19 @@ describe Y2Storage::AutoinstProposal do
             expect(root_fs.configure_snapper).to eq false
           end
         end
+
+        context "when subvolumes prefix is set for a given partition" do
+          let(:root) do
+            ROOT_PART.merge(
+              "create" => true, "filesystem" => :btrfs, "subvolumes_prefix" => "PREFIX"
+            )
+          end
+
+          it "sets the subvolumes prefix" do
+            proposal.propose
+            expect(root_fs.subvolumes_prefix).to eq("PREFIX")
+          end
+        end
       end
 
       context "when no root is proposed" do
