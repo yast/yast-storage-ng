@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Mon Jan  8 12:46:38 UTC 2018 - ancor@suse.com
+
+- Do not try to reuse UUID and label from unformatted swap
+  partitions (bsc#1071515).
+- 4.0.66
+
+-------------------------------------------------------------------
 Mon Jan  8 11:52:30 UTC 2018 - igonzalezsosa@suse.com
 
 - Force the subvolume name to be relative (related to bsc#1073548)
