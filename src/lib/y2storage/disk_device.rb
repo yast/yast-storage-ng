@@ -25,7 +25,7 @@ module Y2Storage
   # @see Devicegraph::disk_devices
   #
   # Includes several methods usually checked by the partitioner, the proposal
-  # and other components. This mixing offers a default conservative
+  # and other components. This mixin offers a default conservative
   # implementation that can be overridden or extended in any of the classes.
   module DiskDevice
     # Checks whether it's an USB disk
