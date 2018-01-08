@@ -22,6 +22,7 @@
 require "y2storage/storage_class_wrapper"
 require "y2storage/blk_device"
 require "y2storage/partition_tables"
+require "y2storage/disk_device"
 
 module Y2Storage
   # Base class for all the devices that can contain a partition table, like
@@ -30,6 +31,7 @@ module Y2Storage
   # This is a wrapper for Storage::Partitionable
   class Partitionable < BlkDevice
     wrap_class Storage::Partitionable, downcast_to: ["Disk", "Dasd", "DmRaid", "Md", "Multipath"]
+    include DiskDevice
 
     # @!attribute range
     #   Maximum number of partitions that the kernel can handle for the device.

@@ -49,4 +49,11 @@ describe Y2Storage::MdMember do
       expect(subject.software_defined?).to eq(false)
     end
   end
+
+  # bsc#1067349
+  describe "#usb?" do
+    it "returns false" do
+      expect(subject.usb?).to eq(false)
+    end
+  end
 end

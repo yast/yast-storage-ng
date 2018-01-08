@@ -79,6 +79,21 @@ describe Y2Storage::GuidedProposal do
         proposal
       end
     end
+
+    # Regression test for bsc#1067349
+    context "with a BIOS MD RAID" do
+      let(:scenario) { "rste_swraid.xml" }
+
+      it "does not rise an exception" do
+        expect { described_class.initial(settings: settings) }.to_not raise_error
+      end
+
+      it "generates a valid calculated proposal" do
+        result = described_class.initial(settings: settings)
+        expect(result).to be_a Y2Storage::GuidedProposal
+        expect(result.devices).to be_a Y2Storage::Devicegraph
+      end
+    end
   end
 
   describe "#propose" do
