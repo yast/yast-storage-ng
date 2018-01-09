@@ -89,10 +89,11 @@ module Y2Storage
     alias_method :mount_point=, :mountpoint=
 
     # Is the mount persistent?
-    # @return [Boolen] true if the mount point is saved to /etc/fstab
+    #
+    # @return [Boolean] true if the mount point is saved to /etc/fstab
     #   (and will be mounted at boot again), false otherwise
     def persistent?
-      to_storage_value.mount_point.in_etc_fstab?
+      to_storage_value.has_mount_point && to_storage_value.mount_point.in_etc_fstab?
     end
 
     # Sets the options to use in /etc/fstab for a newly created filesystem.
