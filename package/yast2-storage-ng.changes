@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Tue Jan  9 15:36:15 UTC 2018 - lslezak@suse.cz
+
+- Added Mountable#persistent? (needed for bsc#1073696)
+- 4.0.68
+
+-------------------------------------------------------------------
 Mon Jan  8 22:16:30 UTC 2018 - ancor@suse.com
 
 - Added Devicegraph#find_by_any_name (needed for bsc#1073254)
