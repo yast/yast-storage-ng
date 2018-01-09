@@ -24,6 +24,12 @@ require_relative "spec_helper"
 require "y2storage"
 
 describe Y2Storage::Devicegraph do
+  # Used to check sorting by name
+  def less_than_next?(device, collection)
+    next_dev = collection[collection.index(device) + 1]
+    next_dev.nil? || device.compare_by_name(next_dev) < 0
+  end
+
   describe "#actiongraph" do
     def with_sda2_deleted(initial_graph)
       graph = initial_graph.dup
@@ -292,14 +298,133 @@ describe Y2Storage::Devicegraph do
     end
   end
 
+  describe "#find_by_any_name" do
+    before { fake_scenario("complex-lvm-encrypt") }
+    subject(:devicegraph) { Y2Storage::StorageManager.instance.staging }
+
+    context "if there is BlkDevice with given name" do
+      it "returns that device" do
+        blk_device = devicegraph.find_by_any_name("/dev/sda1")
+
+        expect(blk_device).to_not be_nil
+        expect(blk_device.name).to eq "/dev/sda1"
+      end
+
+      it "does not perform a system lookup" do
+        expect(Y2Storage::BlkDevice).to_not receive(:find_by_any_name)
+      end
+    end
+
+    context "if there is LvmVg with given name" do
+      it "returns that device" do
+        blk_device = devicegraph.find_by_name("/dev/vg0")
+
+        expect(blk_device).to_not be_nil
+        expect(blk_device.name).to eq "/dev/vg0"
+      end
+
+      it "does not perform a system lookup" do
+        expect(Y2Storage::BlkDevice).to_not receive(:find_by_any_name)
+      end
+    end
+
+    context "if there is BlkDevice containing a filesystem with a matching UUID" do
+      it "returns that device" do
+        blk_device = devicegraph.find_by_any_name("/dev/disk/by-uuid/abcdefgh-ijkl-mnop-qrst-uvwxyzzz")
+
+        expect(blk_device).to_not be_nil
+        expect(blk_device.name).to eq "/dev/mapper/cr_vg1_lv2"
+      end
+
+      it "does not perform a system lookup" do
+        expect(Y2Storage::BlkDevice).to_not receive(:find_by_any_name)
+      end
+    end
+
+    context "if there is BlkDevice containing a filesystem with a matching label" do
+      it "returns that device" do
+        blk_device = devicegraph.find_by_any_name("/dev/disk/by-label/root")
+
+        expect(blk_device).to_not be_nil
+        expect(blk_device.name).to eq "/dev/sda2"
+      end
+
+      it "does not perform a system lookup" do
+        expect(Y2Storage::BlkDevice).to_not receive(:find_by_any_name)
+      end
+    end
+
+    context "if no device is matched by its name or any of the known udev names" do
+      let(:name) { "/dev/drunk_chameleon" }
+
+      before do
+        allow(Y2Storage::StorageManager.instance).to receive(:committed?).and_return committed
+      end
+
+      context "if the probed devicegraph is still up-to-date" do
+        let(:committed) { false }
+
+        it "performs a system lookup on the probed devicegraph" do
+          expect(Y2Storage::BlkDevice).to receive(:find_by_any_name).with(fake_devicegraph, name)
+          devicegraph.find_by_any_name(name)
+        end
+
+        context "if the lookup returns a valid probed device" do
+          let(:probed_device) { fake_devicegraph.find_by_name("/dev/sdf1") }
+
+          before do
+            allow(Y2Storage::BlkDevice).to receive(:find_by_any_name).and_return probed_device
+          end
+
+          context "and that device still exists in the target devicegraph" do
+            it "returns the corresponding device" do
+              found = devicegraph.find_by_any_name(name)
+              expected = devicegraph.find_by_name("/dev/sdf1")
+              expect(found).to eq expected
+            end
+          end
+
+          context "and there is no equivalent device in the target devicegraph" do
+            before do
+              partition = devicegraph.find_by_name("/dev/sdf1")
+              partition.partition_table.delete_partition(partition)
+            end
+
+            it "returns nil" do
+              found = devicegraph.find_by_any_name(name)
+              expect(found).to be_nil
+            end
+          end
+        end
+
+        context "if the lookup finds nothing" do
+          before do
+            allow(Y2Storage::BlkDevice).to receive(:find_by_any_name).and_return nil
+          end
+
+          it "returns nil" do
+            expect(devicegraph.find_by_any_name(name)).to be_nil
+          end
+        end
+      end
+
+      context "if the probed devicegraph may be outdated" do
+        let(:committed) { true }
+
+        it "returns nil" do
+          expect(devicegraph.find_by_any_name(name)).to be_nil
+        end
+
+        it "does not perform a system lookup" do
+          expect(Y2Storage::BlkDevice).to_not receive(:find_by_any_name)
+        end
+      end
+    end
+  end
+
   describe "#disk_devices" do
     before { fake_scenario(scenario) }
     subject(:graph) { fake_devicegraph }
-
-    def less_than_next(device, collection)
-      next_dev = collection[collection.index(device) + 1]
-      next_dev.nil? || device.compare_by_name(next_dev) < 0
-    end
 
     context "if there are no multi-disk devices" do
       let(:scenario) { "autoyast_drive_examples" }
@@ -343,7 +468,7 @@ describe Y2Storage::Devicegraph do
         devices = graph.disk_devices
         expect(devices).to be_an Array
         expect(devices).to all(be_a(Y2Storage::Device))
-        expect(devices).to all(satisfy { |dev| less_than_next(dev, devices) })
+        expect(devices).to all(satisfy { |dev| less_than_next?(dev, devices) })
       end
 
       it "includes all the multipath devices" do
@@ -376,7 +501,7 @@ describe Y2Storage::Devicegraph do
 
         it "returns an array sorted by name" do
           devices = graph.disk_devices
-          expect(devices).to all(satisfy { |dev| less_than_next(dev, devices) })
+          expect(devices).to all(satisfy { |dev| less_than_next?(dev, devices) })
         end
       end
     end
@@ -392,7 +517,7 @@ describe Y2Storage::Devicegraph do
         devices = graph.disk_devices
         expect(devices).to be_an Array
         expect(devices).to all(be_a(Y2Storage::Device))
-        expect(devices).to all(satisfy { |dev| less_than_next(dev, devices) })
+        expect(devices).to all(satisfy { |dev| less_than_next?(dev, devices) })
       end
 
       it "includes all the BIOS RAIDs" do
@@ -576,6 +701,27 @@ describe Y2Storage::Devicegraph do
       create_partition(devicegraph.disks.first)
 
       expect(devicegraph.to_xml.scan(/\<Partition\>/).size).to eq(1)
+    end
+  end
+
+  describe "#blk_devices" do
+    before { fake_scenario("complex-lvm-encrypt") }
+    subject(:list) { fake_devicegraph.blk_devices }
+
+    it "returns a sorted array of block devices" do
+      expect(list).to be_a Array
+      expect(list).to all(be_a(Y2Storage::BlkDevice))
+      expect(list).to all(satisfy { |dev| less_than_next?(dev, list) })
+    end
+
+    it "finds all the devices" do
+      expect(list.size).to eq 24
+    end
+
+    it "does not include other devices like volume groups" do
+      expect(fake_devicegraph.lvm_vgs).to_not be_empty
+      vg1 = fake_devicegraph.lvm_vgs.first
+      expect(list).to_not include vg1
     end
   end
 end

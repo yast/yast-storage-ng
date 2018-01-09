@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Mon Jan  8 22:16:30 UTC 2018 - ancor@suse.com
+
+- Added Devicegraph#find_by_any_name (needed for bsc#1073254)
+- 4.0.67
+
+-------------------------------------------------------------------
 Mon Jan  8 12:46:38 UTC 2018 - ancor@suse.com
 
 - Do not try to reuse UUID and label from unformatted swap

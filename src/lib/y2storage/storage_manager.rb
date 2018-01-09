@@ -187,6 +187,19 @@ module Y2Storage
       staging_revision != staging_revision_after_probing
     end
 
+    # Checks whether the staging devicegraph has been committed to the system.
+    #
+    # @see #commit
+    #
+    # If this is false, the probed devicegraph (see {#probed}) should perfectly
+    # match the real current system... as long as the system has not been
+    # modified externally to YaST, which is impossible to control.
+    #
+    # @return [Boolean]
+    def committed?
+      @committed
+    end
+
     # Performs in the system all the necessary operations to make it match the
     # staging devicegraph.
     #
@@ -202,6 +215,7 @@ module Y2Storage
       log.info("Committed devicegraph\n#{staging.to_xml}")
 
       storage.commit(commit_options, callbacks)
+      @committed = true
     end
 
     # Probes from a yml file instead of doing real probing
@@ -248,6 +262,7 @@ module Y2Storage
     def reset_probed
       @probed_graph = nil
       @probed_disk_analyzer = nil
+      @committed = false
       Y2Storage::HWInfoReader.instance.reset
     end
 

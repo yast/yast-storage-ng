@@ -134,5 +134,6 @@
             size:         5 GiB
             lv_name:      lv2
             file_system:  ext4
+            uuid:         "abcdefgh-ijkl-mnop-qrst-uvwxyzzz"
             encryption:
               name: /dev/mapper/cr_vg1_lv2
