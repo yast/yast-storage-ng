@@ -50,6 +50,24 @@ describe Y2Storage::Filesystems::BlkFilesystem do
     end
   end
 
+  describe "#persistent?" do
+    context "for not mounted filesystem" do
+      let(:dev_name) { "/dev/sdb3" }
+
+      it "returns false" do
+        expect(filesystem.persistent?).to eq false
+      end
+
+      context "after adding a mount point" do
+        before { filesystem.mount_point = "/mnt/test" }
+
+        it "returns true" do
+          expect(filesystem.persistent?).to eq true
+        end
+      end
+    end
+  end
+
   describe "#in_network?" do
     let(:disk) { Y2Storage::BlkDevice.find_by_name(fake_devicegraph, "/dev/sda") }
 
