@@ -39,7 +39,6 @@ module Y2Partitioner
         textdomain "storage"
 
         @partition = partition
-        @resize_info = partition.detect_resize_info
         UIState.instance.select_row(partition)
       end
 
@@ -59,14 +58,18 @@ module Y2Partitioner
       # @return [Y2Storage::Partition] partition to resize
       attr_reader :partition
 
+      # Resize information of the partition to be resized
+      #
       # @return [Y2Storage::ResizeInfo]
-      attr_reader :resize_info
+      def resize_info
+        partition.resize_info
+      end
 
       # Runs the dialog to resize the partition
       #
       # @return [Symbol] :finish if the dialog returns :next; dialog result otherwise.
       def resize
-        result = Dialogs::PartitionResize.run(partition, resize_info)
+        result = Dialogs::PartitionResize.run(partition)
         fix_end_alignment
 
         result == :next ? :finish : result

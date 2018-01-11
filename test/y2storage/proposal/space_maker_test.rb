@@ -289,7 +289,7 @@ describe Y2Storage::Proposal::SpaceMaker do
             end
 
             before do
-              allow_any_instance_of(Y2Storage::Filesystems::BlkFilesystem)
+              allow_any_instance_of(Y2Storage::Partition)
                 .to receive(:detect_resize_info).and_return(resize_info)
             end
 
@@ -349,7 +349,7 @@ describe Y2Storage::Proposal::SpaceMaker do
           end
 
           before do
-            allow_any_instance_of(Y2Storage::Filesystems::BlkFilesystem).to receive(:detect_resize_info)
+            allow_any_instance_of(Y2Storage::Partition).to receive(:detect_resize_info)
               .and_return(resize_info)
           end
 
@@ -408,7 +408,7 @@ describe Y2Storage::Proposal::SpaceMaker do
       let(:windows_partitions) { [partition_double("/dev/sda1")] }
 
       before do
-        allow_any_instance_of(Y2Storage::Filesystems::BlkFilesystem).to receive(:detect_resize_info)
+        allow_any_instance_of(Y2Storage::Partition).to receive(:detect_resize_info)
           .and_return(resize_info)
       end
 
@@ -611,7 +611,7 @@ describe Y2Storage::Proposal::SpaceMaker do
 
       before do
         settings.candidate_devices = ["/dev/sda", "/dev/sdb"]
-        allow_any_instance_of(Y2Storage::Filesystems::BlkFilesystem).to receive(:detect_resize_info)
+        allow_any_instance_of(Y2Storage::Partition).to receive(:detect_resize_info)
           .and_return(resize_info)
       end
 
@@ -750,7 +750,7 @@ describe Y2Storage::Proposal::SpaceMaker do
 
       before do
         settings.candidate_devices = ["/dev/sda", "/dev/sdb"]
-        allow_any_instance_of(Y2Storage::Filesystems::BlkFilesystem).to receive(:detect_resize_info)
+        allow_any_instance_of(Y2Storage::Partition).to receive(:detect_resize_info)
           .and_return(resize_info)
       end
 
@@ -833,7 +833,7 @@ describe Y2Storage::Proposal::SpaceMaker do
         # We are reusing vg1
         expect(lvm_helper).to receive(:partitions_in_vg).and_return ["/dev/sda5", "/dev/sda9"]
         # At some point, we can try to resize Windows
-        allow_any_instance_of(Y2Storage::Filesystems::BlkFilesystem).to receive(:detect_resize_info)
+        allow_any_instance_of(Y2Storage::Partition).to receive(:detect_resize_info)
           .and_return(resize_info)
       end
 

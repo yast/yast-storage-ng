@@ -32,6 +32,7 @@ describe Y2Partitioner::Dialogs::PartitionResize do
 
   before do
     devicegraph_stub("mixed_disks.yml")
+    allow(partition).to receive(:detect_resize_info).and_return resize_info
   end
 
   let(:current_graph) { Y2Partitioner::DeviceGraphs.instance.current }
@@ -50,7 +51,7 @@ describe Y2Partitioner::Dialogs::PartitionResize do
       max_size:   100.GiB)
   end
 
-  subject { described_class.new(partition, resize_info) }
+  subject { described_class.new(partition) }
 
   include_examples "CWM::Dialog"
 
@@ -125,10 +126,11 @@ describe Y2Partitioner::Dialogs::PartitionResize do
   end
 
   describe Y2Partitioner::Dialogs::PartitionResize::SizeSelector do
-    subject(:widget) { described_class.new(partition, resize_info) }
+    subject(:widget) { described_class.new(partition) }
 
     before do
       allow(subject).to receive(:current_widget).and_return(current_widget)
+      allow(partition).to receive(:detect_resize_info).and_return resize_info
     end
 
     let(:max_size_widget) { subject.widgets[0] }

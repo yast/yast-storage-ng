@@ -397,5 +397,17 @@ module Y2Storage
     def hwinfo
       Y2Storage::HWInfoReader.instance.for_device(name)
     end
+
+    # Size of the space that could be theoretically reclaimed by shrinking the
+    # device
+    #
+    # It does not guarantee the new free space can really be used. Other
+    # restrictions (like alignment or the max number of partitions) may apply.
+    #
+    # @return [DiskSize]
+    def recoverable_size
+      return DiskSize.zero unless resize_info.resize_ok?
+      size - resize_info.min_size
+    end
   end
 end

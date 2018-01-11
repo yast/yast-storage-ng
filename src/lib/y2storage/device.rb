@@ -116,6 +116,13 @@ module Y2Storage
     #   If the device has any children, they are also taken into account;
     #   the result of this method is the combined information about this device
     #   and all its children.
+    #
+    #   Note that the minimal and maximal are not aligned.
+    #
+    #   If the device already exists on the disk (i.e., in the probed
+    #   devicegraph), this operation can be expensive. Thus, consider using
+    #   {#resize_info} or any other caching mechanism.
+    #
     #   @see can_resize?
     #
     #   @return [ResizeInfo]
@@ -206,6 +213,37 @@ module Y2Storage
       []
     end
 
+    # Information about the possibility of resizing a given device.
+    #
+    # This method relies on {#detect_resize_info}, caching the result for the
+    # whole lifecycle of this object.
+    #
+    # Take into account that the lifecycle of a Y2Storage::Device object is
+    # usually sorter than the one of its corresponding libstorage-ng C++ object.
+    # Due to the nature of SWIG, every query to the devicegraph will return a
+    # new Y2Storage::Device object. This is actually convenient in this case to
+    # control the lifetime of the caching.
+    #
+    # @example Caching the #detect_resize_info result
+    #
+    #   partition1 = disk.partitions.first
+    #
+    #   partition1.resize_info  # This calls #detect_resize_info
+    #   @same_part = partition1
+    #   @same_part.resize_info # Don't call #detect_resize_info, use cached
+    #
+    #  disk.partitions.first.resize_info # This calls #detect_resize_info
+    #    # because disk.partitions.first returns a new object representing
+    #    # the same device than partition1 (but not the same object).
+    #
+    #  @see #detect_resize_info
+    def resize_info
+      @resize_info ||= begin
+        log.info "Calling #detect_resize_info"
+        detect_resize_info
+      end
+    end
+
     # Check if the device can be resized.
     #
     # If the device has any children, they are also taken into account;
@@ -218,7 +256,7 @@ module Y2Storage
     #
     # @return [Boolean] true if the device can be resized, false if not.
     def can_resize?
-      detect_resize_info.resize_ok?
+      resize_info.resize_ok?
     end
 
     # Checks whether the device is a concrete kind(s) of device.
