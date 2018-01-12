@@ -46,6 +46,69 @@ RSpec.shared_examples "boot disk in devicegraph" do
     end
   end
 
+  context "if a partition over a Dasd device is configured as '/' in the devicegraph" do
+    let(:scenario) { "dasd_50GiB" }
+
+    before do
+      partition = Y2Storage::Partition.find_by_name(fake_devicegraph, "/dev/sda1")
+      partition.filesystem.mount_point = "/"
+    end
+
+    it "returns a Dasd object" do
+      expect(analyzer.boot_disk).to be_a Y2Storage::Dasd
+    end
+
+    it "returns the dasd device containing the '/' partition" do
+      expect(analyzer.boot_disk.name).to eq "/dev/sda"
+    end
+  end
+
+  context "if a partition over a Multipath device is configured as '/' in the devicegraph" do
+    let(:scenario) { "empty-dasd-and-multipath.xml" }
+
+    let(:multipath_name) { "/dev/mapper/36005076305ffc73a00000000000013b4" }
+
+    before do
+      device = Y2Storage::BlkDevice.find_by_name(fake_devicegraph, multipath_name)
+      part = device.partition_table.create_partition("/dev/#{multipath_name}-1",
+        Y2Storage::Region.create(2048, 1048576, 512),
+        Y2Storage::PartitionType::PRIMARY)
+      fs = part.create_filesystem(Y2Storage::Filesystems::Type::EXT4)
+      fs.mount_point = "/"
+    end
+
+    it "returns a Multipath object" do
+      expect(analyzer.boot_disk).to be_a Y2Storage::Multipath
+    end
+
+    it "returns the Multipath device containing the '/' partition" do
+      expect(analyzer.boot_disk.name).to eq multipath_name
+    end
+  end
+
+  context "if a partition over a BIOS RAID is configured as '/' in the devicegraph" do
+    let(:scenario) { "empty-dm_raids.xml" }
+
+    let(:raid_name) { "/dev/mapper/isw_ddgdcbibhd_test1" }
+
+    before do
+      device = Y2Storage::BlkDevice.find_by_name(fake_devicegraph, raid_name)
+      part = device.partition_table.create_partition("/dev/#{raid_name}-1",
+        Y2Storage::Region.create(2048, 1048576, 512),
+        Y2Storage::PartitionType::PRIMARY)
+      fs = part.create_filesystem(Y2Storage::Filesystems::Type::EXT4)
+      fs.mount_point = "/"
+    end
+
+    it "returns a BIOS RAID" do
+      expect(analyzer.boot_disk.is?(:bios_raid)).to eq(true)
+    end
+
+    it "returns the BIOS RAID containing the '/' partition" do
+      expect(analyzer.boot_disk.name).to eq raid_name
+    end
+  end
+
   context "if a LVM LV is configured as '/' in the devicegraph" do
     let(:scenario) { "complex-lvm-encrypt" }
 
