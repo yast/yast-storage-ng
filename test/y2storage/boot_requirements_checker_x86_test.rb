@@ -48,8 +48,13 @@ describe Y2Storage::BootRequirementsChecker do
       allow(dev_sda).to receive(:mbr_gap).and_return mbr_gap_size
       allow(dev_sda).to receive(:grub_partitions).and_return grub_partitions
       allow(dev_sda).to receive(:efi_partitions).and_return efi_partitions
+      allow(dev_sda).to receive(:partitions).and_return(grub_partitions + efi_partitions)
       allow(dev_sdb).to receive(:efi_partitions).and_return other_efi_partitions
+      allow(dev_sdb).to receive(:partitions).and_return(other_efi_partitions)
+      allow(grub_partition).to receive(:match_volume?).and_return(true)
     end
+
+    let(:grub_partition) { partition_double("/dev/sda1") }
 
     context "using UEFI" do
       let(:efiboot) { true }
@@ -77,7 +82,7 @@ describe Y2Storage::BootRequirementsChecker do
           end
 
           context "if there is already a GRUB partition" do
-            let(:grub_partitions) { [partition_double("/dev/sda2")] }
+            let(:grub_partitions) { [grub_partition] }
 
             it "does not require any particular volume" do
               expect(checker.needed_partitions).to be_empty
@@ -99,7 +104,7 @@ describe Y2Storage::BootRequirementsChecker do
           end
 
           context "if there is already a GRUB partition" do
-            let(:grub_partitions) { [partition_double("/dev/sda2")] }
+            let(:grub_partitions) { [grub_partition] }
 
             it "does not require any particular volume" do
               expect(checker.needed_partitions).to be_empty
@@ -122,7 +127,7 @@ describe Y2Storage::BootRequirementsChecker do
           end
 
           context "if there is already a GRUB partition" do
-            let(:grub_partitions) { [partition_double("/dev/sda2")] }
+            let(:grub_partitions) { [grub_partition] }
 
             it "does not require any particular volume" do
               expect(checker.needed_partitions).to be_empty
@@ -252,7 +257,7 @@ describe Y2Storage::BootRequirementsChecker do
         # Default values to ensure a GRUB partition
         let(:boot_ptable_type) { :gpt }
         let(:efiboot) { false }
-        let(:grub_partitions) { {} }
+        let(:grub_partitions) { [] }
 
         include_examples "proposed GRUB partition"
       end

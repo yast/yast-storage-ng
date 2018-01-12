@@ -1,5 +1,3 @@
-#!/usr/bin/env ruby
-#
 # encoding: utf-8
 
 # Copyright (c) [2015] SUSE LLC
@@ -22,11 +20,14 @@
 # find current contact information at www.suse.com.
 
 require "yast"
+require "yast/i18n"
 require "y2storage/disk_size"
 require "y2storage/filesystems/type"
 require "y2storage/planned"
 require "y2storage/boot_requirements_strategies/analyzer"
 require "y2storage/exceptions"
+require "y2storage/volume_specification"
+require "y2storage/setup_error"
 
 module Y2Storage
   module BootRequirementsStrategies
@@ -37,10 +38,12 @@ module Y2Storage
     # requirements
     class Base
       include Yast::Logger
+      include Yast::I18n
       extend Forwardable
 
       def_delegators :@analyzer,
-        :boot_disk, :root_in_lvm?, :encrypted_root?, :btrfs_root?, :boot_ptable_type?, :free_mountpoint?
+        :root_filesystem, :boot_disk, :root_in_lvm?, :root_in_software_raid?,
+        :encrypted_root?, :btrfs_root?, :boot_ptable_type?, :free_mountpoint?
 
       # Constructor
       #
@@ -48,19 +51,49 @@ module Y2Storage
       # @see [BootRequirementsChecker#planned_devices]
       # @see [BootRequirementsChecker#boot_disk_name]
       def initialize(devicegraph, planned_devices, boot_disk_name)
+        textdomain "storage"
+
         @devicegraph = devicegraph
         @analyzer = Analyzer.new(devicegraph, planned_devices, boot_disk_name)
       end
 
+      # Partitions that should be created to boot the system
+      #
+      # @param target [Symbol] :desired, :min
+      #
+      # @return [Array<Planned::Partition>]
       def needed_partitions(target)
-        return [] unless boot_partition_needed? && boot_partition_missing?
-        [boot_partition(target)]
+        planned_partitions = []
+        planned_partitions << boot_partition(target) if boot_partition_needed? && boot_partition_missing?
+        planned_partitions
+      end
+
+      # All boot errors detected in the setup, for example, when a /boot/efi partition
+      # is missing in a UEFI system
+      #
+      # @note This method should be overloaded for derived classes.
+      #
+      # @see SetupError
+      #
+      # @return [Array<SetupError>]
+      def errors
+        []
       end
 
     protected
 
+      # @return [Devicegraph]
       attr_reader :devicegraph
+
+      # @return [BootRequirementsStrategies::Analyzer]
       attr_reader :analyzer
+
+      # Whether there is not root
+      #
+      # @return [Boolean] true if there is no root; false otherwise.
+      def root_filesystem_missing?
+        root_filesystem.nil?
+      end
 
       def boot_partition_needed?
         false
@@ -70,12 +103,55 @@ module Y2Storage
         free_mountpoint?("/boot")
       end
 
+      # @return [VolumeSpecification]
+      def boot_volume
+        return @boot_volume unless @boot_volume.nil?
+
+        @boot_volume = VolumeSpecification.new({})
+        @boot_volume.mount_point = "/boot"
+        @boot_volume.fs_types = Filesystems::Type.root_filesystems
+        @boot_volume.fs_type = Filesystems::Type::EXT4
+        @boot_volume.min_size = DiskSize.MiB(100)
+        @boot_volume.desired_size = DiskSize.MiB(200)
+        @boot_volume.max_size = DiskSize.MiB(500)
+        @boot_volume
+      end
+
+      # @return [Planned::Partition]
       def boot_partition(target)
-        vol = Planned::Partition.new("/boot", Filesystems::Type::EXT4)
-        vol.disk = boot_disk.name
-        vol.min_size = target == :min ? DiskSize.MiB(100) : DiskSize.MiB(200)
-        vol.max_size = DiskSize.MiB(500)
-        vol
+        planned_partition = create_planned_partition(boot_volume, target)
+        planned_partition.disk = boot_disk.name
+        planned_partition
+      end
+
+      # Create a planned partition from a volume specification
+      #
+      # @param volume [VolumeSpecification]
+      # @param target [Symbol] :desired, :min
+      #
+      # @return [VolumeSpecification]
+      def create_planned_partition(volume, target)
+        planned_partition = Planned::Partition.new(volume.mount_point, volume.fs_type)
+        planned_partition.min_size = target == :min ? volume.min_size : volume.desired_size
+        planned_partition.max_size = volume.max_size
+        planned_partition.partition_id = volume.partition_id
+        planned_partition
+      end
+
+      # Whether there is no partition that matches the volume
+      #
+      # @return [Boolean] true if there is no partition; false otherwise.
+      def missing_partition_for?(volume)
+        Partition.all(devicegraph).none? { |p| p.match_volume?(volume) }
+      end
+
+      # Specific error when the boot disk cannot be detected
+      #
+      # @return [SetupError]
+      def unknown_boot_disk_error
+        # TRANSLATORS: error message
+        error_message = _("Unknwon boot disk")
+        SetupError.new(message: error_message)
       end
     end
   end

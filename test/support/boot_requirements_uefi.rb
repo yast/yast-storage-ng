@@ -35,10 +35,16 @@ RSpec.shared_context "plain UEFI" do
     end
 
     context "if there is already an EFI partition" do
-      let(:efi_partitions) { [partition_double("/dev/sda1", size)] }
+      let(:efi_partitions) { [efi_partition] }
 
-      context "and it does not have enough size" do
-        let(:size) { 32.MiB }
+      let(:efi_partition) { partition_double("/dev/sda1") }
+
+      before do
+        allow(efi_partition).to receive(:match_volume?).and_return(match)
+      end
+
+      context "and it is not a suitable EFI partition (not enough size, invalid filesystem)" do
+        let(:match) { false }
 
         it "requires only a new /boot/efi partition" do
           expect(checker.needed_partitions).to contain_exactly(
@@ -47,8 +53,8 @@ RSpec.shared_context "plain UEFI" do
         end
       end
 
-      context "and it has enough size" do
-        let(:size) { 33.MiB }
+      context "and it is a suitable EFI partition (enough size, valid filesystem)" do
+        let(:match) { true }
 
         it "only requires to use the existing EFI partition" do
           expect(checker.needed_partitions).to contain_exactly(

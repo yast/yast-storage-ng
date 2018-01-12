@@ -1,5 +1,3 @@
-#!/usr/bin/env ruby
-#
 # encoding: utf-8
 
 # Copyright (c) [2015] SUSE LLC
@@ -28,16 +26,38 @@ module Y2Storage
   module BootRequirementsStrategies
     # Strategy to calculate boot requirements in systems using PReP
     class PReP < Base
+      # @see Base#needed_partitions
       def needed_partitions(target)
-        volumes = super
-        volumes << prep_partition(target) if prep_partition_needed? && prep_partition_missing?
-        volumes
+        planned_partitions = super
+        planned_partitions << prep_partition(target) if prep_partition_needed? && prep_partition_missing?
+        planned_partitions
+      end
+
+      # Boot errors in the current setup
+      #
+      # @return [Array<SetupError>]
+      def errors
+        errors = super
+
+        if root_filesystem_missing?
+          errors << unknown_boot_disk_error
+        else
+          if prep_partition_needed? && missing_partition_for?(prep_volume)
+            errors << SetupError.new(missing_volume: prep_volume)
+          end
+
+          if boot_partition_needed? && missing_partition_for?(boot_volume)
+            errors << SetupError.new(missing_volume: boot_volume)
+          end
+        end
+
+        errors
       end
 
     protected
 
       def boot_partition_needed?
-        root_in_lvm? || encrypted_root?
+        root_in_lvm? || root_in_software_raid? || encrypted_root?
       end
 
       def prep_partition_needed?
@@ -48,25 +68,33 @@ module Y2Storage
       def prep_partition_missing?
         # We don't check if the planned PReP partition is in the boot disk,
         # whoever created it is in control of the details
-        return false if analyzer.planned_prep_partitions.any?
-
-        partitions = boot_disk.prep_partitions
-        partitions.nil? || partitions.empty?
+        current_devices = analyzer.planned_devices + boot_disk.partitions
+        current_devices.none? { |d| d.match_volume?(prep_volume) }
       end
 
-      def prep_partition(target)
-        vol = Planned::Partition.new(nil)
+      # @return [VolumeSpecification]
+      def prep_volume
+        return @prep_volume unless @prep_volume.nil?
+
+        @prep_volume = VolumeSpecification.new({})
         # So far we are always using msdos partition ids
-        vol.partition_id = PartitionId::PREP
-        vol.min_size = target == :min ? DiskSize.KiB(256) : DiskSize.MiB(1)
-        vol.max_size = DiskSize.MiB(8)
-        # Make sure that alignment does not result in a too big partition
-        vol.align = :keep_size
-        vol.bootable = true
+        @prep_volume.partition_id = PartitionId::PREP
+        @prep_volume.min_size = DiskSize.KiB(256)
+        @prep_volume.desired_size = DiskSize.MiB(1)
+        @prep_volume.max_size = DiskSize.MiB(8)
         # TODO: We have been told that PReP must be one of the first 4
         # partitions, ideally the first one. But we have not found any
         # rationale/evidence. Not implementing that for the time being
-        vol
+        @prep_volume
+      end
+
+      # @return [Planned::Partition]
+      def prep_partition(target)
+        planned_partition = create_planned_partition(prep_volume, target)
+        # Make sure that alignment does not result in a too big partition
+        planned_partition.align = :keep_size
+        planned_partition.bootable = true
+        planned_partition
       end
 
       def arch

@@ -46,7 +46,9 @@ describe Y2Storage::BootRequirementsChecker do
       allow(dev_sda).to receive(:mbr_gap).and_return mbr_gap_size
       allow(dev_sda).to receive(:grub_partitions).and_return grub_partitions
       allow(dev_sda).to receive(:efi_partitions).and_return efi_partitions
-      allow(dev_sdb).to receive(:efi_partitions).and_return other_efi_partitions
+      allow(dev_sda).to receive(:partitions).and_return(grub_partitions + efi_partitions)
+      allow(dev_sdb).to receive(:efi_partitions).and_return(other_efi_partitions)
+      allow(dev_sdb).to receive(:partitions).and_return(other_efi_partitions)
     end
 
     context "when /boot/efi is needed" do
@@ -78,7 +80,13 @@ describe Y2Storage::BootRequirementsChecker do
           let(:missing_efi) { true }
 
           context "if there is suitable EFI partition in the devicegraph" do
-            let(:efi_partitions) { [partition_double("/dev/sda1", 50.MiB)] }
+            let(:efi_partitions) { [efi_partition] }
+
+            let(:efi_partition) { partition_double("/dev/sda1") }
+
+            before do
+              allow(efi_partition).to receive(:match_volume?).and_return(true)
+            end
 
             it "proposes to use the existing EFI partition" do
               expect(checker.needed_partitions).to contain_exactly(
@@ -148,11 +156,17 @@ describe Y2Storage::BootRequirementsChecker do
 
       before do
         allow(storage_arch).to receive(:ppc_power_nv?).and_return false
-        allow(dev_sda).to receive(:prep_partitions).and_return prep_partitions
+        allow(dev_sda).to receive(:partitions).and_return prep_partitions
       end
 
-      context "and some PReP is already in the list of planned partitions" do
-        let(:planned_prep_partitions) { [planned_partition] }
+      context "and a suitable PReP is already in the list of planned partitions" do
+        let(:planned_prep_partitions) { [planned_prep_partition] }
+
+        let(:planned_prep_partition) { [planned_partition] }
+
+        before do
+          allow(planned_prep_partition).to receive(:match_volume?).and_return(true)
+        end
 
         it "does not propose another PReP" do
           expect(checker.needed_partitions).to be_empty
@@ -172,8 +186,14 @@ describe Y2Storage::BootRequirementsChecker do
           end
         end
 
-        context "but there is already a PReP partition in the disk" do
-          let(:prep_partitions) { [partition_double("/dev/sda1")] }
+        context "but there is already a suitable PReP partition in the disk" do
+          let(:prep_partitions) { [prep_partition] }
+
+          let(:prep_partition) { partition_double("/dev/sda1") }
+
+          before do
+            allow(prep_partition).to receive(:match_volume?).and_return(true)
+          end
 
           it "does not propose another PReP" do
             expect(checker.needed_partitions).to be_empty
@@ -232,7 +252,13 @@ describe Y2Storage::BootRequirementsChecker do
       let(:boot_ptable_type) { :gpt }
 
       context "and some GRUB is already in the list of planned partitions" do
-        let(:planned_grub_partitions) { [planned_partition] }
+        let(:planned_grub_partitions) { [planned_grub_partition] }
+
+        before do
+          allow(planned_grub_partition).to receive(:match_volume?).and_return(true)
+        end
+
+        let(:planned_grub_partition) { planned_partition }
 
         it "does not propose another GRUB partition" do
           expect(checker.needed_partitions).to be_empty
@@ -253,7 +279,13 @@ describe Y2Storage::BootRequirementsChecker do
         end
 
         context "but there is already a GRUB partition in the disk" do
-          let(:grub_partitions) { [partition_double("/dev/sda1")] }
+          let(:grub_partitions) { [grub_partition] }
+
+          let(:grub_partition) { partition_double("/dev/sda1") }
+
+          before do
+            allow(grub_partition).to receive(:match_volume?).with(anything).and_return(true)
+          end
 
           it "does not propose another GRUB partition" do
             expect(checker.needed_partitions).to be_empty

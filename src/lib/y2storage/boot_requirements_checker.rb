@@ -1,5 +1,3 @@
-#!/usr/bin/env ruby
-#
 # encoding: utf-8
 
 # Copyright (c) [2015] SUSE LLC
@@ -56,13 +54,30 @@ module Y2Storage
     #     enough to make the system bootable
     #
     # @param target [Symbol] :desired means the sizes of the partitions should
-    #   be the ideal ones, :min for generating the smallest functional
-    #   partitions
+    #   be the ideal ones, :min for generating the smallest functional partitions
+    #
     # @return [Array<Planned::Partition>]
     def needed_partitions(target = :desired)
       strategy.needed_partitions(target)
     rescue BootRequirementsStrategies::Error => error
       raise Error, error.message
+    end
+
+    # Whether the current setup contains all necessary devices for booting
+    #
+    # @return [Boolean]
+    def valid?
+      errors.empty?
+    end
+
+    # All boot errors detected in the setup, for example, when a /boot/efi partition
+    # is missing in a UEFI system
+    #
+    # @see SetupError
+    #
+    # @return [Array<SetupError>]
+    def errors
+      strategy.errors
     end
 
   protected

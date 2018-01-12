@@ -1,5 +1,3 @@
-#!/usr/bin/env ruby
-#
 # encoding: utf-8
 
 # Copyright (c) [2015] SUSE LLC
@@ -29,10 +27,24 @@ module Y2Storage
   module BootRequirementsStrategies
     # Strategy to calculate boot requirements in UEFI systems
     class UEFI < Base
+      # @see Base#needed_partitions
       def needed_partitions(target)
-        volumes = super
-        volumes << efi_partition(target) if efi_missing?
-        volumes
+        planned_partitions = super
+        planned_partitions << efi_partition(target) if efi_missing?
+        planned_partitions
+      end
+
+      # Boot errors in the current setup
+      #
+      # @return [Array<SetupError>]
+      def errors
+        errors = super
+
+        if missing_partition_for?(efi_volume)
+          errors << SetupError.new(missing_volume: efi_volume)
+        end
+
+        errors
       end
 
     protected
@@ -45,32 +57,47 @@ module Y2Storage
         free_mountpoint?("/boot/efi")
       end
 
+      # @return [VolumeSpecification]
+      def efi_volume
+        return @efi_volume unless @efi_volume.nil?
+
+        @efi_volume = VolumeSpecification.new({})
+        @efi_volume.mount_point = "/boot/efi"
+        @efi_volume.fs_types = [Filesystems::Type::VFAT]
+        @efi_volume.fs_type = Filesystems::Type::VFAT
+        @efi_volume.partition_id = PartitionId::ESP
+        @efi_volume.min_size = MIN_SIZE
+        @efi_volume.desired_size = DESIRED_SIZE
+        @efi_volume.max_size = MAX_SIZE
+        @efi_volume
+      end
+
+      # @return [Planned::Partition]
       def efi_partition(target)
-        vol = Planned::Partition.new("/boot/efi", Filesystems::Type::VFAT)
+        planned_partition = create_planned_partition(efi_volume, target)
         if reusable_efi
-          vol.reuse = reusable_efi.name
+          planned_partition.reuse = reusable_efi.name
         else
-          vol.partition_id = PartitionId::ESP
-          vol.min_size = target == :min ? MIN_SIZE : DESIRED_SIZE
-          vol.max_size = MAX_SIZE
-          vol.max_start_offset = DiskSize.TiB(2)
+          planned_partition.max_start_offset = DiskSize.TiB(2)
         end
-        vol
+        planned_partition
       end
 
       def reusable_efi
-        efi = biggest_efi_in_boot_device || biggest_efi
-        efi = nil if !efi.nil? && efi.size < MIN_SIZE
-        @reusable_efi = efi
+        @reusable_efi = biggest_efi_in_boot_device || biggest_efi
       end
 
       def biggest_efi_in_boot_device
-        biggest_partition(boot_disk.efi_partitions)
+        biggest_partition(suitable_efi_partitions(boot_disk))
       end
 
       def biggest_efi
-        efi_parts = devicegraph.disk_devices.map(&:efi_partitions).flatten
-        biggest_partition(efi_parts)
+        efi_partitions = devicegraph.disk_devices.map { |d| suitable_efi_partitions(d) }.flatten
+        biggest_partition(efi_partitions)
+      end
+
+      def suitable_efi_partitions(device)
+        device.partitions.select { |p| p.match_volume?(efi_volume, exclude: :mount_point) }
       end
 
       def biggest_partition(partitions)

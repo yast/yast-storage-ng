@@ -30,6 +30,13 @@ module Y2Storage
     # information (regarding calculation of boot requirements) about the
     # expected final system.
     class Analyzer
+      # Devices that are already planned to be added to the starting devicegraph.
+      # @return [Array<Planned::Device>]
+      attr_reader :planned_devices
+
+      # @return [Filesystems::Base, nil] nil if there is not filesystem for root
+      attr_reader :root_filesystem
+
       # Constructor
       #
       # @param devicegraph     [Devicegraph] starting situation.
@@ -85,6 +92,22 @@ module Y2Storage
           root_planned_dev.is_a?(Planned::LvmLv)
         elsif root_filesystem
           root_filesystem.plain_blk_devices.any? { |dev| dev.is?(:lvm_lv) }
+        else
+          false
+        end
+      end
+
+      # Whether the root (/) filesystem is over a Software RAID
+      #
+      # @return [Boolean] true if the root filesystem is going to be in a
+      #   Software RAID. False if the root filesystem is unknown (not in the
+      #   planned devices or in the devicegraph) or is not placed over a Software
+      #   RAID.
+      def root_in_software_raid?
+        if root_planned_dev
+          root_planned_dev.is_a?(Planned::Md)
+        elsif root_filesystem
+          root_filesystem.ancestors.any? { |dev| dev.is?(:software_raid) }
         else
           false
         end
@@ -171,10 +194,8 @@ module Y2Storage
     protected
 
       attr_reader :devicegraph
-      attr_reader :planned_devices
       attr_reader :boot_disk_name
       attr_reader :root_planned_dev
-      attr_reader :root_filesystem
 
       def boot_ptable_type
         return nil unless boot_disk

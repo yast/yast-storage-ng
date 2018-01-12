@@ -40,7 +40,11 @@ describe Y2Storage::BootRequirementsChecker do
       allow(storage_arch).to receive(:efiboot?).and_return(false)
       allow(dev_sda).to receive(:grub_partitions).and_return []
       allow(dev_sda).to receive(:prep_partitions).and_return prep_partitions
+      allow(dev_sda).to receive(:partitions).and_return(prep_partitions)
+      allow(prep_partition).to receive(:match_volume?).and_return(true)
     end
+
+    let(:prep_partition) { partition_double("/dev/sda1") }
 
     context "in a non-PowerNV system (KVM/LPAR)" do
       let(:power_nv) { false }
@@ -59,7 +63,7 @@ describe Y2Storage::BootRequirementsChecker do
         end
 
         context "if there is already a PReP partition in the disk" do
-          let(:prep_partitions) { [partition_double("/dev/sda1")] }
+          let(:prep_partitions) { [prep_partition] }
 
           it "does not require any particular volume" do
             expect(checker.needed_partitions).to be_empty
@@ -82,7 +86,7 @@ describe Y2Storage::BootRequirementsChecker do
         end
 
         context "if there is already a PReP partition in the disk" do
-          let(:prep_partitions) { [partition_double("/dev/sda1")] }
+          let(:prep_partitions) { [prep_partition] }
 
           it "requires only a /boot partition" do
             expect(checker.needed_partitions).to contain_exactly(
@@ -108,7 +112,7 @@ describe Y2Storage::BootRequirementsChecker do
         end
 
         context "if there is already a PReP partition in the disk" do
-          let(:prep_partitions) { [partition_double("/dev/sda1")] }
+          let(:prep_partitions) { [prep_partition] }
 
           it "requires only a /boot partition" do
             expect(checker.needed_partitions).to contain_exactly(

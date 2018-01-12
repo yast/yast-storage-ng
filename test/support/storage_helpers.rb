@@ -87,6 +87,11 @@ module Yast
         add_planned_attributes(lv, attrs)
       end
 
+      def planned_md(attrs = {})
+        md = Y2Storage::Planned::Md.new
+        add_planned_attributes(md, attrs)
+      end
+
       def add_planned_attributes(device, attrs)
         attrs = attrs.dup
 

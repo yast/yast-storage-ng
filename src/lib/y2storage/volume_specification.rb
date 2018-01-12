@@ -28,6 +28,9 @@ module Y2Storage
   class VolumeSpecification
     include PartitioningFeatures
 
+    # @return [PartitionId] when the volume needs to be a partition with a specific id
+    attr_accessor :partition_id
+
     # @return [String] directory where the volume will be mounted in the system
     attr_accessor :mount_point
 
@@ -37,11 +40,11 @@ module Y2Storage
     # @return [Boolean] whether the user can change the proposed setting in the UI
     attr_accessor :proposed_configurable
 
-    # @return [List<Filesystems::Type>] acceptable filesystem types
-    attr_accessor :fs_types
-
     # @return [Filesystems::Type] default file system type to format the volume
-    attr_accessor :fs_type
+    attr_reader :fs_type
+
+    # @return [List<Filesystems::Type>] acceptable filesystem types
+    attr_reader :fs_types
 
     # @return [DiskSize] initial size to use in the first proposal attempt
     attr_accessor :desired_size
@@ -128,6 +131,13 @@ module Y2Storage
     # @param type [Filesystems::Type, String]
     def fs_type=(type)
       @fs_type = validated_fs_type(type)
+    end
+
+    # @param types [Array<String>, String] an array of filesystem types or a
+    #   list of comma-separated ones
+    def fs_types=(types)
+      types = types.strip.split(/\s*,\s*/) if types.is_a?(String)
+      @fs_types = types.map { |t| validated_fs_type(t) }
     end
 
     # Whether the user can configure some aspect of the volume
@@ -222,13 +232,6 @@ module Y2Storage
       end
 
       apply_fallbacks
-    end
-
-    # @param types [Array<String>, String] an array of filesystem types or a
-    #   list of comma-separated ones
-    def fs_types=(types)
-      types = types.strip.split(/\s*,\s*/) if types.is_a?(String)
-      @fs_types = types.map { |t| validated_fs_type(t) }
     end
 
     def validated_fs_type(type)

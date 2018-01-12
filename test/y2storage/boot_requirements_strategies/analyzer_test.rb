@@ -141,6 +141,25 @@ describe Y2Storage::BootRequirementsStrategies::Analyzer do
       expect(planned_devs.map(&:mount_point)).to eq ["/boot", "/"]
       expect(devicegraph.actiongraph(from: initial_graph)).to be_empty
     end
+
+    context "when there is a root" do
+      let(:scenario) { "mixed_disks" }
+
+      it "stores the root filesystem" do
+        analyzer = described_class.new(devicegraph, planned_devs, boot_name)
+        expect(analyzer.root_filesystem).to be_a(Y2Storage::Filesystems::Base)
+        expect(analyzer.root_filesystem.mount_point).to eq("/")
+      end
+    end
+
+    context "when there is no root" do
+      let(:scenario) { "empty_hard_disk_50GiB" }
+
+      it "does not store a filesystem" do
+        analyzer = described_class.new(devicegraph, planned_devs, boot_name)
+        expect(analyzer.root_filesystem).to be_nil
+      end
+    end
   end
 
   describe "#boot_disk" do
@@ -236,6 +255,95 @@ describe Y2Storage::BootRequirementsStrategies::Analyzer do
 
       it "returns false" do
         expect(analyzer.root_in_lvm?).to eq false
+      end
+    end
+  end
+
+  describe "#root_in_software_raid?" do
+    subject(:analyzer) { described_class.new(devicegraph, planned_devs, boot_name) }
+
+    context "if '/' is a planned software raid" do
+      let(:planned_root) { planned_md(mount_point: "/") }
+
+      it "returns true" do
+        expect(analyzer.root_in_software_raid?).to eq true
+      end
+    end
+
+    context "if '/' is a planned partition" do
+      let(:planned_root) { planned_partition(mount_point: "/") }
+
+      it "returns false" do
+        expect(analyzer.root_in_software_raid?).to eq false
+      end
+    end
+
+    context "if '/' is a planned logical volume" do
+      let(:planned_root) { planned_lv(mount_point: "/") }
+
+      it "returns false" do
+        expect(analyzer.root_in_software_raid?).to eq false
+      end
+    end
+
+    context "if '/' is a software raid from the devicegraph" do
+      let(:planned_devs) { [] }
+      let(:scenario) { "md2-devicegraph.xml" }
+
+      before do
+        md = Y2Storage::Md.find_by_name(fake_devicegraph, "/dev/md0")
+        md.remove_descendants
+        fs = md.create_filesystem(Y2Storage::Filesystems::Type::EXT4)
+        fs.mount_point = "/"
+      end
+
+      it "returns true" do
+        expect(analyzer.root_in_software_raid?).to eq true
+      end
+    end
+
+    context "if '/' is a partition over a software raid from the devicegraph" do
+      let(:planned_devs) { [] }
+      let(:scenario) { "md2-devicegraph.xml" }
+
+      before do
+        md = Y2Storage::Md.find_by_name(fake_devicegraph, "/dev/md0")
+        part = md.partition_table.create_partition("/dev/md0-1",
+          Y2Storage::Region.create(2048, 1048576, 512),
+          Y2Storage::PartitionType::PRIMARY)
+        fs = part.create_filesystem(Y2Storage::Filesystems::Type::EXT4)
+        fs.mount_point = "/"
+      end
+
+      it "returns true" do
+        expect(analyzer.root_in_software_raid?).to eq true
+      end
+    end
+
+    context "if '/' is a partition over a disk from the devicegraph" do
+      let(:planned_devs) { [] }
+      let(:scenario) { "mixed_disks" }
+
+      it "returns false" do
+        expect(analyzer.root_in_software_raid?).to eq false
+      end
+    end
+
+    context "if '/' is a logical volume from the devicegraph" do
+      let(:planned_devs) { [] }
+      let(:scenario) { "complex-lvm-encrypt" }
+
+      it "returns false" do
+        expect(analyzer.root_in_software_raid?).to eq false
+      end
+    end
+
+    context "if no device or planned device is configured as '/'" do
+      let(:planned_devs) { [] }
+      let(:scenario) { "double-windows-pc" }
+
+      it "returns false" do
+        expect(analyzer.root_in_software_raid?).to eq false
       end
     end
   end
