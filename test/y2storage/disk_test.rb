@@ -256,6 +256,60 @@ describe Y2Storage::Disk do
     end
   end
 
+  describe "#multipath_wire?" do
+    context "when the disk is a multipath wire" do
+      let(:scenario) { "multipath-formatted.xml" }
+
+      let(:disk_name) { "/dev/sda" }
+
+      it "returns true" do
+        expect(disk.multipath_wire?).to eq(true)
+      end
+    end
+
+    context "when the disk is not a multipath wire" do
+      let(:scenario) { "mixed_disks" }
+
+      let(:disk_name) { "/dev/sda" }
+
+      it "returns false" do
+        expect(disk.multipath_wire?).to eq(false)
+      end
+    end
+  end
+
+  describe "#bios_raid_disk?" do
+    context "when the disk belongs to a BIOS RAID" do
+      let(:scenario) { "empty-dm_raids.xml" }
+
+      let(:disk_name) { "/dev/sdb" }
+
+      it "returns true" do
+        expect(disk.bios_raid_disk?).to eq(true)
+      end
+    end
+
+    context "when the disk belongs to a Software RAID" do
+      let(:scenario) { "md_raid.xml" }
+
+      let(:disk_name) { "/dev/sda" }
+
+      it "returns false" do
+        expect(disk.bios_raid_disk?).to eq(false)
+      end
+    end
+
+    context "when the disk does not belong to a RAID" do
+      let(:scenario) { "mixed_disks" }
+
+      let(:disk_name) { "/dev/sda" }
+
+      it "returns false" do
+        expect(disk.bios_raid_disk?).to eq(false)
+      end
+    end
+  end
+
   describe "#is?" do
     let(:disk_name) { "/dev/sda" }
 
@@ -279,6 +333,39 @@ describe Y2Storage::Disk do
 
     it "returns false for a list of names not containing :disk" do
       expect(disk.is?(:filesystem, :partition)).to eq false
+    end
+
+    context "when the disk is a multipath wire" do
+      let(:scenario) { "multipath-formatted.xml" }
+
+      let(:disk_name) { "/dev/sda" }
+
+      it "returns false for values whose symbol is :disk_device" do
+        expect(disk.is?(:disk_device)).to eq false
+        expect(disk.is?("disk_device")).to eq false
+      end
+    end
+
+    context "when the disk belongs to a BIOS RAID" do
+      let(:scenario) { "empty-dm_raids.xml" }
+
+      let(:disk_name) { "/dev/sdb" }
+
+      it "returns false for values whose symbol is :disk_device" do
+        expect(disk.is?(:disk_device)).to eq false
+        expect(disk.is?("disk_device")).to eq false
+      end
+    end
+
+    context "when the disk is not a multipath wire and it does not belong to a RAID" do
+      let(:scenario) { "mixed_disks" }
+
+      let(:disk_name) { "/dev/sda" }
+
+      it "returns true for values whose symbol is :disk_device" do
+        expect(disk.is?(:disk_device)).to eq true
+        expect(disk.is?("disk_device")).to eq true
+      end
     end
   end
 

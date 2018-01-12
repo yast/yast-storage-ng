@@ -226,16 +226,7 @@ module Y2Storage
     #
     # @return [Array<Dasd, Disk, Multipath, DmRaid, MdMember>]
     def disk_devices
-      # NOTE: to avoid sorting something that is going to be sorted again, we
-      # could call Disk.all instead of #disks, Multipath.all instead
-      # of #multipaths and so on. But the current implementation is more
-      # readable and the impact is probably unnoticeable.
-
-      multi_disk_devs = multipaths + bios_raids
-      parent_devs = multi_disk_devs.map(&:parents).flatten
-      # Use #reject because Array#- is not trustworthy with SWIG
-      devices = (multi_disk_devs + dasds + disks).reject { |d| parent_devs.include?(d) }
-      devices.sort { |a, b| a.compare_by_name(b) }
+      BlkDevice.sorted_by_name(self).select { |d| d.is?(:disk_device) }
     end
 
     # All partitions in the devicegraph, sorted by name

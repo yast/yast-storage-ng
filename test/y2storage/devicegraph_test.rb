@@ -440,25 +440,6 @@ describe Y2Storage::Devicegraph do
           "/dev/sdc", "/dev/sdd", "/dev/sdf", "/dev/sdh", "/dev/sdaa"
         ]
       end
-
-      context "even if Disk.all and Dasd.all return unsorted arrays" do
-        before do
-          allow(Y2Storage::Disk).to receive(:all) do |devicegraph|
-            # Let's shuffle things a bit
-            shuffle(Y2Storage::Partitionable.all(devicegraph).select { |i| i.is?(:disk) })
-          end
-          dasda = Y2Storage::Dasd.find_by_name(fake_devicegraph, "/dev/dasda")
-          dasdb = Y2Storage::Dasd.find_by_name(fake_devicegraph, "/dev/dasdb")
-          allow(Y2Storage::Dasd).to receive(:all).and_return [dasdb, dasda]
-        end
-
-        it "returns an array sorted by name" do
-          expect(graph.disk_devices.map(&:name)).to eq [
-            "/dev/dasda", "/dev/dasdb", "/dev/nvme0n1", "/dev/sda", "/dev/sdb",
-            "/dev/sdc", "/dev/sdd", "/dev/sdf", "/dev/sdh", "/dev/sdaa"
-          ]
-        end
-      end
     end
 
     context "if there are multipath devices" do
@@ -471,7 +452,7 @@ describe Y2Storage::Devicegraph do
         expect(devices).to all(satisfy { |dev| less_than_next?(dev, devices) })
       end
 
-      it "includes all the multipath devices" do
+      it "includes all multipath devices" do
         expect(graph.disk_devices.map(&:name)).to include(
           "/dev/mapper/36005076305ffc73a00000000000013b4",
           "/dev/mapper/36005076305ffc73a00000000000013b5"
@@ -486,23 +467,6 @@ describe Y2Storage::Devicegraph do
         expect(graph.disk_devices.map(&:name)).to_not include(
           "/dev/sda", "/dev/sdb", "/dev/sdc", "/dev/sdd"
         )
-      end
-
-      context "even if Disk.all and Multipath.all return unsorted arrays" do
-        # Let's shuffle things a bit
-        before do
-          allow(Y2Storage::Disk).to receive(:all) do |devicegraph|
-            shuffle(Y2Storage::Partitionable.all(devicegraph).select { |i| i.is?(:disk) })
-          end
-          allow(Y2Storage::Multipath).to receive(:all) do |devicegraph|
-            shuffle(Y2Storage::Partitionable.all(devicegraph).select { |i| i.is?(:multipath) })
-          end
-        end
-
-        it "returns an array sorted by name" do
-          devices = graph.disk_devices
-          expect(devices).to all(satisfy { |dev| less_than_next?(dev, devices) })
-        end
       end
     end
 
@@ -520,7 +484,7 @@ describe Y2Storage::Devicegraph do
         expect(devices).to all(satisfy { |dev| less_than_next?(dev, devices) })
       end
 
-      it "includes all the BIOS RAIDs" do
+      it "includes all BIOS RAIDs" do
         expect(graph.disk_devices.map(&:name)).to include(
           "/dev/mapper/isw_ddgdcbibhd_test1", "/dev/mapper/isw_ddgdcbibhd_test2", "/dev/md0"
         )

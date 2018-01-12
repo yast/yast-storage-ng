@@ -21,6 +21,8 @@
 
 require "y2storage/storage_class_wrapper"
 require "y2storage/md"
+require "y2storage/disk_device"
+require "y2storage/multi_disk_device"
 
 module Y2Storage
   # A BIOS MD RAID
@@ -34,6 +36,8 @@ module Y2Storage
   # MD Members can be used as generic MD RAIDs.
   class MdMember < Md
     wrap_class Storage::MdMember
+    include DiskDevice
+    include MultiDiskDevice
 
     # @!method self.create(devicegraph, name)
     #   @param devicegraph [Devicegraph]

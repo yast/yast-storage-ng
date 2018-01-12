@@ -21,6 +21,7 @@
 
 require "y2storage/storage_class_wrapper"
 require "y2storage/partitionable"
+require "y2storage/disk_device"
 
 module Y2Storage
   # A DASD (direct-access storage device), typically used in mainframes
@@ -28,6 +29,7 @@ module Y2Storage
   # This is a wrapper for Storage::Dasd
   class Dasd < Partitionable
     wrap_class Storage::Dasd
+    include DiskDevice
 
     # @!method rotational?
     #   @return [Boolean] whether this is a rotational device

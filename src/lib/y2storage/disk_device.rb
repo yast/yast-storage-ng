@@ -41,5 +41,27 @@ module Y2Storage
     def in_network?
       false
     end
+
+    # Checks whether the device is a multipath wire
+    #
+    # @return [Boolean]
+    def multipath_wire?
+      descendants.any? { |d| d.is?(:multipath) }
+    end
+
+    # Checks whether the device is a disk belonging to a BIOS RAID
+    #
+    # @return [Boolean]
+    def bios_raid_disk?
+      descendants.any? { |d| d.is?(:bios_raid) }
+    end
+
+  protected
+
+    def types_for_is
+      types = super
+      types << :disk_device unless multipath_wire? || bios_raid_disk?
+      types
+    end
   end
 end
