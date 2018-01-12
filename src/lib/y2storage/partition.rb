@@ -226,6 +226,13 @@ module Y2Storage
 
   protected
 
+    # Values for volume specification matching
+    #
+    # @see MatchVolumeSpec
+    def volume_match_values
+      super.merge(partition_id: id)
+    end
+
     def types_for_is
       super << :partition
     end

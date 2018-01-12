@@ -22,6 +22,7 @@
 require "yast"
 require "y2storage/planned/device"
 require "y2storage/planned/mixins"
+require "y2storage/match_volume_spec"
 
 module Y2Storage
   module Planned
@@ -35,6 +36,7 @@ module Y2Storage
       include Planned::CanBeResized
       include Planned::CanBeMounted
       include Planned::CanBeEncrypted
+      include MatchVolumeSpec
 
       # @return [String] name to use for Y2Storage::LvmLv#lv_name
       attr_accessor :logical_volume_name
@@ -106,6 +108,20 @@ module Y2Storage
 
       def self.to_string_attrs
         [:mount_point, :reuse, :min_size, :max_size, :logical_volume_name, :subvolumes]
+      end
+
+    protected
+
+      # Values for volume specification matching
+      #
+      # @see MatchVolumeSpec
+      def volume_match_values
+        {
+          mount_point:  mount_point,
+          size:         min_size,
+          fs_type:      filesystem_type,
+          partition_id: nil
+        }
       end
     end
   end

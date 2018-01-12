@@ -22,6 +22,7 @@
 require "yast"
 require "y2storage/planned/device"
 require "y2storage/planned/mixins"
+require "y2storage/match_volume_spec"
 
 module Y2Storage
   module Planned
@@ -36,6 +37,7 @@ module Y2Storage
       include Planned::CanBeMounted
       include Planned::CanBeEncrypted
       include Planned::CanBePv
+      include MatchVolumeSpec
 
       # @return [PartitionId] id of the partition. If nil, the final id is
       #   expected to be inferred from the filesystem type.
@@ -85,9 +87,20 @@ module Y2Storage
 
     protected
 
+      # Values for volume specification matching
+      #
+      # @see MatchVolumeSpec
+      def volume_match_values
+        {
+          mount_point:  mount_point,
+          size:         min_size,
+          fs_type:      filesystem_type,
+          partition_id: partition_id
+        }
+      end
+
       def reuse_device!(device)
         super
-
         device.boot = true if bootable && device.respond_to?(:boot=)
       end
     end
