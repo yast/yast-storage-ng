@@ -288,7 +288,11 @@ module Y2Storage
     end
 
     def types_for_is
-      super << :md
+      types = super
+      types << :md
+      types << :raid if software_defined?
+      types << :software_raid if software_defined?
+      types
     end
   end
 end

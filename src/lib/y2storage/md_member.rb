@@ -70,7 +70,11 @@ module Y2Storage
   protected
 
     def types_for_is
-      super << :md_member
+      types = super
+      types << :md_member
+      types << :raid
+      types << :bios_raid
+      types
     end
   end
 end

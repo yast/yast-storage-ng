@@ -194,14 +194,20 @@ module Y2Storage
       MdMember.sorted_by_name(self)
     end
 
+    # All RAIDs in the devicegraph, sorted by name
+    #
+    # @return [Array<Md, MdMember, DmRaid>]
+    def raids
+      BlkDevice.sorted_by_name(self).select { |d| d.is?(:raid) }
+    end
+
     # All BIOS RAIDs in the devicegraph, sorted by name
     #
     # @note BIOS RAIDs are the set composed by MD BIOS RAIDs and DM RAIDs.
     #
     # @return [Array<DmRaid, MdMember>]
     def bios_raids
-      devices = dm_raids + md_member_raids
-      devices.sort { |a, b| a.compare_by_name(b) }
+      BlkDevice.sorted_by_name(self).select { |d| d.is?(:bios_raid) }
     end
 
     # All Software RAIDs in the devicegraph, sorted by name
@@ -210,7 +216,7 @@ module Y2Storage
     #
     # @return [Array<Md>]
     def software_raids
-      md_raids.select(&:software_defined?)
+      BlkDevice.sorted_by_name(self).select { |d| d.is?(:software_raid) }
     end
 
     # All the devices that are usually treated like disks by YaST, sorted by

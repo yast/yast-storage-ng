@@ -72,7 +72,11 @@ module Y2Storage
   protected
 
     def types_for_is
-      super << :dm_raid
+      types = super
+      types << :dm_raid
+      types << :raid
+      types << :bios_raid
+      types
     end
   end
 end

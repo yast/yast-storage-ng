@@ -66,6 +66,21 @@ describe Y2Storage::DmRaid do
       expect(dm_raid.is?("DM_RAID")).to eq false
     end
 
+    it "returns true for values whose symbol is :raid" do
+      expect(subject.is?(:raid)).to eq true
+      expect(subject.is?("raid")).to eq true
+    end
+
+    it "returns true for values whose symbol is :bios_raid" do
+      expect(subject.is?(:bios_raid)).to eq true
+      expect(subject.is?("bios_raid")).to eq true
+    end
+
+    it "returns false for values whose symbol is :software_raid" do
+      expect(subject.is?(:software_raid)).to eq false
+      expect(subject.is?("software_raid")).to eq false
+    end
+
     it "returns false for different device names like :disk or :partition" do
       expect(dm_raid.is?(:disk)).to eq false
       expect(dm_raid.is?(:partition)).to eq false
