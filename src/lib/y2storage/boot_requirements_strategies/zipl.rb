@@ -70,8 +70,8 @@ module Y2Storage
 
         @zipl_volume = VolumeSpecification.new({})
         @zipl_volume.mount_point = "/boot/zipl"
-        @zipl_volume.fs_types = [Filesystems::Type::EXT2]
-        @zipl_volume.fs_type = Filesystems::Type::EXT2
+        @zipl_volume.fs_types = Filesystems::Type.zipl_filesystems
+        @zipl_volume.fs_type = Filesystems::Type.zipl_filesystems.first
         @zipl_volume.min_size = DiskSize.MiB(100)
         @zipl_volume.desired_size = DiskSize.MiB(200)
         @zipl_volume.max_size = DiskSize.GiB(1)
