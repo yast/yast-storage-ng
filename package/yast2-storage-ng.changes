@@ -4,7 +4,9 @@ Mon Jan 15 14:22:32 UTC 2018 - jlopez@suse.com
 - Added sanity checks for partitioning setup.
 - Partitioner: setup issues are shown to the user before continue.
   Mandatory product volumes are required according to control file.
-- 4.0.70
+- Part of fate#31896 and fix for bsc#1059160, bsc#1055747 and
+  bsc#1063957.
+- 4.0.69
 
 -------------------------------------------------------------------
 Mon Jan 15 12:51:01 UTC 2018 - ancor@suse.com
@@ -14,7 +16,6 @@ Mon Jan 15 12:51:01 UTC 2018 - ancor@suse.com
   alignment types, in addition to the optimal one.
 - Added a (temporary) workaround to a possible bug in libstorage-ng
   regarding alignment.
-- 4.0.69
 
 -------------------------------------------------------------------
 Tue Jan  9 15:36:15 UTC 2018 - lslezak@suse.cz
