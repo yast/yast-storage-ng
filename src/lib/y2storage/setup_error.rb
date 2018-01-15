@@ -54,9 +54,8 @@ module Y2Storage
 
   private
 
-    # Error text for a volume
+    # Error text for the missing volume
     #
-    # @param volume [VolumeSpecification]
     # @return [String]
     def message_for_missing_volume
       if mount_point_info
@@ -66,9 +65,8 @@ module Y2Storage
       end
     end
 
-    # Error text when the volume has mount point
+    # Error text when the missing volume has mount point
     #
-    # @param volume [VolumeSpecification]
     # @return [String]
     def message_with_mount_point
       if partition_id_info && fs_types_info
@@ -82,9 +80,8 @@ module Y2Storage
       end
     end
 
-    # Error text when the volume does not have mount point
+    # Error text when the missing volume does not have mount point
     #
-    # @param volume [VolumeSpecification]
     # @return [String]
     def message_without_mount_point
       if partition_id_info && fs_types_info
@@ -98,7 +95,6 @@ module Y2Storage
       end
     end
 
-    # @param volume [VolumeSpecification]
     # @return [String]
     def message_with_mount_point_and_partition_id_and_fs
       # TRANSLATORS: error message, where %{mount_point} is repalaced by a mount point
@@ -115,7 +111,6 @@ module Y2Storage
       )
     end
 
-    # @param volume [VolumeSpecification]
     # @return [String]
     def message_with_mount_point_and_partition_id
       # TRANSLATORS: error message, where %{mount_point} is repalaced by a mount point
@@ -129,7 +124,6 @@ module Y2Storage
       )
     end
 
-    # @param volume [VolumeSpecification]
     # @return [String]
     def message_with_mount_point_and_fs
       # TRANSLATORS: error message, where %{mount_point} is repalaced by a mount point
@@ -144,7 +138,6 @@ module Y2Storage
       )
     end
 
-    # @param volume [VolumeSpecification]
     # @return [String]
     def message_with_mount_point_default
       # TRANSLATORS: error message, where %{mount_point} is repalaced by a mount point
@@ -156,7 +149,6 @@ module Y2Storage
       )
     end
 
-    # @param volume [VolumeSpecification]
     # @return [String]
     def message_with_partition_id_and_fs
       # TRANSLATORS: error message, where %{size} is replaced by a disk size (e.g., 5 GiB),
@@ -171,7 +163,6 @@ module Y2Storage
       )
     end
 
-    # @param volume [VolumeSpecification]
     # @return [String]
     def message_with_partition_id
       # TRANSLATORS: error message, where %{size} is replaced by a disk size (e.g., 5 GiB) and
@@ -184,7 +175,6 @@ module Y2Storage
       )
     end
 
-    # @param volume [VolumeSpecification]
     # @return [String]
     def message_with_fs
       # TRANSLATORS: error message, where %{size} is replaced by a disk size (e.g., 5 GiB) and
@@ -197,7 +187,6 @@ module Y2Storage
       )
     end
 
-    # @param volume [VolumeSpecification]
     # @return [String]
     def message_without_mount_point_default
       # TRANSLATORS: error message, where %{size} is replaced by a disk size (e.g., 5 GiB).
@@ -209,7 +198,6 @@ module Y2Storage
 
     # Volume mount point to show in the error message
     #
-    # @param volume [VolumeSpecification]
     # @return [String, nil]
     def mount_point_info
       missing_volume.mount_point
@@ -217,7 +205,6 @@ module Y2Storage
 
     # Volume partition id to show in the error message
     #
-    # @param volume [VolumeSpecification]
     # @return [Integer, nil]
     def partition_id_info
       missing_volume.partition_id
@@ -225,7 +212,6 @@ module Y2Storage
 
     # Possible volume fileystem types to show in the error message
     #
-    # @param volume [VolumeSpecification]
     # @return [String, nil]
     def fs_types_info
       return nil if missing_volume.fs_types.empty?
@@ -234,7 +220,6 @@ module Y2Storage
 
     # Volume size to show in the error message
     #
-    # @param volume [VolumeSpecification]
     # @return [DiskSize, nil]
     def size_info
       missing_volume.min_size
