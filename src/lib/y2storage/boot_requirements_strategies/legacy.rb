@@ -73,6 +73,14 @@ module Y2Storage
         mbr_gap && mbr_gap >= GRUB_SIZE
       end
 
+      # FIXME: Bootloader could work properly without BIOS BOOT when the
+      # partition supports embedding or it is possible to boot from the
+      # partition. For example, for EXT filesystem it is possible to boot
+      # from the partition, and grub2 can be embedded into the partition
+      # when BTRFS is used. For LVM or RAID it is not possible to neither
+      # embed nor boot from the partition.
+      #
+      # (gpt && (lvm || raid || encrypted)) || (gpt  && !ext && !btrfs)
       def grub_partition_needed?
         boot_ptable_type?(:gpt)
       end
