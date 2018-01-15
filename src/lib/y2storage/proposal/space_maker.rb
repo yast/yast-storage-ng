@@ -345,21 +345,17 @@ module Y2Storage
 
       # Reduces the size of a partition
       #
-      # If possible, it reduces the size of the partition by target_shrink_size.
+      # If possible, it reduces the size of the partition by shrink_size.
       # Otherwise, it reduces the size as much as possible.
       #
       # This method does not take alignment into account.
       #
       # @param partition [Partition]
-      # @param target_shrink_size [DiskSize] size of the space to substract
-      #   ideally
-      def shrink_partition(partition, target_shrink_size)
-        shrink_size = [partition.recoverable_size, target_shrink_size].min
-
-        log.info "Shrinking #{partition.name} (#{partition.size}) "\
-          "by #{shrink_size} (target: #{target_shrink_size})"
-
-        partition.size = partition.size - shrink_size
+      # @param shrink_size [DiskSize] size of the space to substract ideally
+      def shrink_partition(partition, shrink_size)
+        log.info "Shrinking #{partition.name}"
+        # Explicitly avoid alignment to keep current behavior (to be reconsidered)
+        partition.resize(partition.size - shrink_size, align_type: nil)
       end
 
       # Use force to create space: delete partitions if a given type while
