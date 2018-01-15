@@ -156,8 +156,11 @@ module Y2Storage
 
       # Allowed filesystems for zipl boot partition
       #
+      # EXT2 is the preferred type used by default when the proposal
+      # proposes a new zipl partition.
+      #
       # @note See page 13 in following link
-      # https://share.confex.com/share/123/webprogram/Handout/\
+      #   https://share.confex.com/share/123/webprogram/Handout/\
       #   Session15694/SHARE_Bootloader_Ihno_PittsPPT_0.09.pdf
       #
       # @return [Array<Filesystems::Type>]
