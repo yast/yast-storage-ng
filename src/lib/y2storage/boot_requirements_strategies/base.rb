@@ -150,7 +150,7 @@ module Y2Storage
       # @return [SetupError]
       def unknown_boot_disk_error
         # TRANSLATORS: error message
-        error_message = _("Unknwon boot disk")
+        error_message = _("Boot requirements cannot be determined because there is no '/' mount point")
         SetupError.new(message: error_message)
       end
     end

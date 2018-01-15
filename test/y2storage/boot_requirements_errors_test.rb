@@ -90,7 +90,7 @@ describe Y2Storage::BootRequirementsChecker do
         expect(checker.errors).to all(be_a(Y2Storage::SetupError))
 
         message = checker.errors.first.message
-        expect(message).to match(/boot disk/)
+        expect(message).to match(/there is no '\/'/)
       end
     end
 
@@ -100,7 +100,7 @@ describe Y2Storage::BootRequirementsChecker do
         expect(checker.errors).to all(be_a(Y2Storage::SetupError))
 
         message = checker.errors.first.message
-        expect(message).to match(/cannot be used/)
+        expect(message).to match(/is not supported/)
       end
     end
 

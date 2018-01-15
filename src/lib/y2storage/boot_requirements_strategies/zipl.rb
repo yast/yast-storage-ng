@@ -90,7 +90,10 @@ module Y2Storage
       # @return [SetupError]
       def unsupported_boot_disk_error
         # TRANSLATORS: error message
-        error_message = _("Current boot disk cannot be used for booting")
+        error_message = _(
+          "Looks like the system is going to be installed on a FBA " \
+          "or LDL device. Booting from such device is not supported"
+        )
         SetupError.new(message: error_message)
       end
     end

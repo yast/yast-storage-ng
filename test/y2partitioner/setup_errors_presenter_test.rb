@@ -70,7 +70,7 @@ describe Y2Partitioner::SetupErrorsPresenter do
         let(:product_errors) { [] }
 
         it "contains a general error message for boot errors" do
-          expect(subject.to_html).to match(/could not load/)
+          expect(subject.to_html).to match(/not be able to boot/)
         end
 
         it "does not contain a general error message for product errors" do
