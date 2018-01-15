@@ -51,12 +51,6 @@ module Y2Storage
       #   the partition can start
       attr_accessor :max_start_offset
 
-      # @return [Symbol] modifier to pass to ::Storage::Region#align when
-      #   creating the volume. :keep_size to avoid size changes. nil to use
-      #   default alignment.
-      #   FIXME: this one is just guessing the final API of alignment
-      attr_accessor :align
-
       # @return [Boolean] whether the boot flag should be set. Expected to be
       #   used only with ms-dos style partition tables. GPT has a similar legacy
       #   flag but is not needed in our grub2 setup.

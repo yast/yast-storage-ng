@@ -139,7 +139,6 @@ module Y2Storage
       # @return [Planned::Partition]
       def grub_partition(target)
         planned_partition = create_planned_partition(grub_volume, target)
-        planned_partition.align = :keep_size
         planned_partition.bootable = false
         planned_partition
       end

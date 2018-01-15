@@ -91,8 +91,6 @@ module Y2Storage
       # @return [Planned::Partition]
       def prep_partition(target)
         planned_partition = create_planned_partition(prep_volume, target)
-        # Make sure that alignment does not result in a too big partition
-        planned_partition.align = :keep_size
         planned_partition.bootable = true
         planned_partition
       end
