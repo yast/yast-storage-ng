@@ -24,6 +24,8 @@ require_relative "spec_helper"
 require "y2storage"
 
 describe Y2Storage::Partition do
+  using Y2Storage::Refinements::SizeCasts
+
   before do
     fake_scenario(scenario)
   end
@@ -184,6 +186,256 @@ describe Y2Storage::Partition do
 
       it "returns false" do
         expect(partition.end_aligned?).to eq(false)
+      end
+    end
+  end
+
+  describe "#resize" do
+    let(:scenario) { "dasd1.xml" }
+
+    subject(:partition) { Y2Storage::Partition.find_by_name(fake_devicegraph, "/dev/dasda3") }
+
+    before { allow(partition).to receive(:detect_resize_info).and_return resize_info }
+
+    let(:resize_info) { double(Y2Storage::ResizeInfo, resize_ok?: ok, min_size: min, max_size: max) }
+    let(:ok) { true }
+    let(:min) { 2.GiB }
+    let(:max) { 5.GiB }
+
+    context "if the partition cannot be resized" do
+      let(:ok) { false }
+
+      it "does not modify the partition" do
+        initial_size = partition.size
+        initial_end = partition.end
+        initial_start = partition.start
+
+        partition.resize(4.5.GiB)
+
+        expect(partition.size).to eq initial_size
+        expect(partition.end).to eq initial_end
+        expect(partition.start).to eq initial_start
+      end
+    end
+
+    RSpec.shared_examples "start not modified" do
+      it "does not modify the partition start" do
+        initial_start = partition.start
+        partition.resize(new_size, align_type: align_type)
+        expect(partition.start).to eq initial_start
+      end
+    end
+
+    RSpec.shared_examples "requested size" do
+      it "resizes the partition to the requested size" do
+        partition.resize(new_size, align_type: align_type)
+        expect(partition.size).to eq new_size
+      end
+    end
+
+    RSpec.shared_examples "closest valid value" do
+      it "resizes the partition to the closest valid size" do
+        partition.resize(new_size, align_type: align_type)
+
+        expect(partition.size).to_not eq new_size
+        diff = (new_size.to_i - partition.size.to_i).abs
+        expect(diff).to be < partition.partition_table.align_grain(align_type).to_i
+      end
+    end
+
+    # A couple of shortcuts
+    let(:optimal) { Y2Storage::AlignType::OPTIMAL }
+    let(:required) { Y2Storage::AlignType::REQUIRED }
+
+    context "if the requested size causes the end to be fully aligned" do
+      let(:new_size) { 4.5.GiB - 3.MiB + 960.KiB }
+
+      context "and align_type is set to nil" do
+        let(:align_type) { nil }
+
+        include_examples "requested size"
+        include_examples "start not modified"
+      end
+
+      # TODO: there is a bug in libstorage-ng
+      context "and align_type is set to OPTIMAL" do
+        let(:align_type) { optimal }
+
+        include_examples "requested size"
+        include_examples "start not modified"
+      end
+
+      context "and align_type is set to REQUIRED" do
+        let(:align_type) { required }
+
+        include_examples "requested size"
+        include_examples "start not modified"
+      end
+    end
+
+    context "if the new size causes the end to be misaligned" do
+      let(:new_size) { 4.5.GiB + 64.KiB }
+
+      context "and align_type is set to nil" do
+        let(:align_type) { nil }
+
+        include_examples "requested size"
+        include_examples "start not modified"
+
+        it "does not align the end of the partition" do
+          partition.resize(new_size, align_type: align_type)
+
+          expect(partition.end_aligned?(required)).to eq false
+          expect(partition.end_aligned?(optimal)).to eq false
+        end
+      end
+
+      context "and align_type is set to OPTIMAL" do
+        let(:align_type) { optimal }
+
+        include_examples "closest valid value"
+
+        it "ensures the end of the partition is optimally aligned" do
+          partition.resize(new_size, align_type: align_type)
+          expect(partition.end_aligned?).to eq true
+        end
+
+        include_examples "start not modified"
+      end
+
+      context "and align_type is set to REQUIRED" do
+        let(:align_type) { required }
+
+        include_examples "closest valid value"
+
+        it "ensures the end of the partition is aligned to requirements" do
+          partition.resize(new_size, align_type: align_type)
+          expect(partition.end_aligned?(required)).to eq true
+        end
+
+        include_examples "start not modified"
+      end
+    end
+
+    context "if the new size causes the end to be aligned only to hard requirements" do
+      let(:new_size) { 4.5.GiB }
+
+      context "and align_type is set to nil" do
+        let(:align_type) { nil }
+
+        include_examples "requested size"
+        include_examples "start not modified"
+      end
+
+      context "and align_type is set to OPTIMAL" do
+        let(:align_type) { optimal }
+
+        include_examples "closest valid value"
+
+        it "ensures the end of the partition is optimally aligned" do
+          partition.resize(new_size, align_type: align_type)
+          expect(partition.end_aligned?).to eq true
+        end
+
+        include_examples "start not modified"
+      end
+
+      context "and align_type is set to REQUIRED" do
+        let(:align_type) { required }
+
+        include_examples "requested size"
+        include_examples "start not modified"
+      end
+    end
+
+    context "if the new size is bigger than the max resizing size" do
+      let(:max) { 5.GiB }
+      let(:new_size) { 5.5.GiB }
+
+      context "and align_type is nil" do
+        let(:align_type) { nil }
+
+        it "sets the size of the partition to the max" do
+          partition.resize(new_size, align_type: align_type)
+          expect(partition.size).to eq max
+        end
+      end
+
+      context "and align_type is not nil" do
+        let(:align_type) { optimal }
+
+        context "and is possible to align whithin the resizing limits (min & max)" do
+          it "resizes the partition to the maximum aligned size" do
+            partition.resize(new_size, align_type: align_type)
+
+            expect(partition.size).to be < max
+            expect(max - partition.size).to be < partition.partition_table.align_grain
+            expect(partition.end_aligned?).to eq true
+          end
+        end
+
+        # Corner case, there is no single aligned point between min and max
+        context "and is impossible to honor both the alignment and the resizing limits" do
+          let(:min) { max - 700.KiB }
+
+          it "sets the size of the partition to the max" do
+            partition.resize(new_size, align_type: align_type)
+            expect(partition.size).to eq max
+          end
+        end
+      end
+    end
+
+    context "if the new size is smaller than the min resizing size" do
+      let(:min) { 2.GiB }
+      let(:new_size) { 1.GiB }
+
+      context "and align_type is nil" do
+        let(:align_type) { nil }
+
+        it "sets the size of the partition to the min" do
+          partition.resize(new_size, align_type: align_type)
+          expect(partition.size).to eq min
+        end
+      end
+
+      context "and align_type is not nil" do
+        let(:align_type) { optimal }
+
+        context "and is possible to align whithin the resizing limits (min & max)" do
+          it "resizes the partition to the minimal aligned size" do
+            partition.resize(new_size, align_type: align_type)
+
+            expect(partition.size).to be > min
+            expect(partition.size - min).to be < partition.partition_table.align_grain
+            expect(partition.end_aligned?).to eq true
+          end
+        end
+
+        # Corner case, there is no single aligned point between min and max
+        context "and is impossible to honor both the alignment and the resizing limits" do
+          let(:min) { max - 700.KiB }
+
+          it "sets the size of the partition to the min" do
+            partition.resize(new_size, align_type: align_type)
+            expect(partition.size).to eq min
+          end
+        end
+      end
+    end
+
+    context "if the new size is within the resizing limits (min & max)" do
+      let(:new_size) { min + 64.KiB }
+
+      # Corner case, there is no single aligned point between min and max
+      context "but those limits make alignment impossible" do
+        let(:min) { max - 700.KiB }
+
+        it "resizes the partition to the requested size with no alignment" do
+          partition.resize(new_size, align_type: optimal)
+          expect(partition.size).to eq new_size
+          expect(partition.end_aligned?(optimal)).to eq false
+        end
       end
     end
   end

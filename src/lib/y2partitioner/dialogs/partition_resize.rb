@@ -15,12 +15,10 @@ module Y2Partitioner
       # Constructor
       #
       # @param partition [Y2Storage::Partition] partition to resize
-      # @param resize_info [Y2Storage::ResizeInfo] partition resize info
-      def initialize(partition, resize_info)
+      def initialize(partition)
         textdomain "storage"
 
         @partition = partition
-        @resize_info = resize_info
         detect_space_info
       end
 
@@ -34,7 +32,7 @@ module Y2Partitioner
       def contents
         HVSquash(
           VBox(
-            SizeSelector.new(partition, resize_info),
+            SizeSelector.new(partition),
             size_info
           )
         )
@@ -59,9 +57,6 @@ module Y2Partitioner
 
       # @return [Y2Storage::Partition]
       attr_reader :partition
-
-      # @return [Y2Storage::ResizeInfo]
-      attr_reader :resize_info
 
       # @return [Y2Storage::SpaceInfo]
       attr_reader :space_info
@@ -139,12 +134,10 @@ module Y2Partitioner
         # Constructor
         #
         # @param partition [Y2Storage::Partition]
-        # @param resize_info [Y2Storage::ResizeInfo]
-        def initialize(partition, resize_info)
+        def initialize(partition)
           textdomain "storage"
 
           @partition = partition
-          @resize_info = resize_info
         end
 
         # @macro seeAbstractWidget
@@ -182,7 +175,7 @@ module Y2Partitioner
         # @macro seeAbstractWidget
         # Updates the partition with the new size
         def store
-          partition.size = current_widget.size
+          partition.resize(current_widget.size)
         end
 
         # @macro seeAbstractWidget
@@ -220,8 +213,12 @@ module Y2Partitioner
         # @return [Y2Storage::Partition]
         attr_reader :partition
 
+        # Resize information of the partition to be resized
+        #
         # @return [Y2Storage::ResizeInfo]
-        attr_reader :resize_info
+        def resize_info
+          partition.resize_info
+        end
 
         # Min possible size
         #

@@ -126,9 +126,13 @@ module Y2Storage
       #   @return [Region] always returns a new object
       storage_forward :align, as: "Region"
 
-      # @!method alignment
-      #   @return [Storage::Alignment] Low-level object to calculate partition
-      #     alignment based on hardware topology.
+      # @!method alignment(align_type = AlignType::OPTIMAL)
+      #   Low-level object to calculate partition alignment based on hardware
+      #   topology.
+      #
+      #   @param align_type [AlignType] alignment type to use in all the
+      #     calculations
+      #   @return [Storage::Alignment]
       storage_forward :alignment
       private :alignment
 
@@ -167,13 +171,16 @@ module Y2Storage
       # used to specify beginning and end of a partition in order to keep
       # everything aligned.
       #
-      # @note The align grain is similar to mininal grain for a device, but
+      # @note The align grain is similar to minimal grain for a device, but
       #   it depends on both: the device topology and the partition table
       #   alignment.
       #
+      # @param align_type [AlignType, nil] if ommitted, it will use the default
+      #   value of {#alignment}
       # @return [DiskSize]
-      def align_grain
-        @align_grain ||= DiskSize.new(alignment.grain)
+      def align_grain(align_type = nil)
+        align_obj = align_type ? alignment(align_type) : alignment
+        DiskSize.new(align_obj.grain)
       end
 
       # Whether the partitions should be end-aligned.

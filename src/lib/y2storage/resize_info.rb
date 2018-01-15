@@ -24,6 +24,11 @@ require "y2storage/storage_class_wrapper"
 module Y2Storage
   # Information about the possibility of resizing a given device
   #
+  # This class is not aimed to represent every possible set of conditions
+  # or circumstances. As a result, although some devices (like LVM PVs on-disk)
+  # can be shrunk with limitations (see pvresize), their ResizeInfo reports them
+  # as if shrinking is not possible.
+  #
   # This is a wrapper for Storage::ResizeInfo
   class ResizeInfo
     include StorageClassWrapper
@@ -34,11 +39,19 @@ module Y2Storage
     storage_forward :resize_ok?, to: :resize_ok
 
     # @!method min_size
-    #   @return [DiskSize] minimal size the device can be resized to
+    #   Minimal size the device can be resized to
+    #
+    #   Note this is not aligned.
+    #
+    #   @return [DiskSize]
     storage_forward :min_size, as: "DiskSize"
 
     # @!method max_size
-    #   @return [DiskSize] maximum size the device can be resized to
+    #   Maximum size the device can be resized to
+    #
+    #   Note this is not aligned.
+    #
+    #   @return [DiskSize]
     storage_forward :max_size, as: "DiskSize"
   end
 end

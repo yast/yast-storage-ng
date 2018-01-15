@@ -1,4 +1,13 @@
 -------------------------------------------------------------------
+Mon Jan 15 12:51:01 UTC 2018 - ancor@suse.com
+
+- Some code reorganization regarding alignment and resizing.
+- Added to several places in the API the possibilty of using other
+  alignment types, in addition to the optimal one.
+- Added a (temporary) workaround to a possible bug in libstorage-ng
+  regarding alignment.
+
+-------------------------------------------------------------------
 Tue Jan  9 15:36:15 UTC 2018 - lslezak@suse.cz
 
 - Added Mountable#persistent? (needed for bsc#1073696)

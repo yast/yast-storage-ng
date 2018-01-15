@@ -300,12 +300,9 @@ module Y2Storage
         parts_by_disk = partitions_by_disk(part_names)
         remove_linux_disks!(parts_by_disk) unless force
 
-        success = sorted_resizables(parts_by_disk.values.flatten).any? do |res|
-          shrink_size = [
-            res[:recoverable_size],
-            resizing_size(res[:partition], planned_partitions, disk)
-          ].min
-          shrink_partition(res[:partition], shrink_size)
+        success = sorted_resizables(parts_by_disk.values.flatten).any? do |part|
+          target_shrink_size = resizing_size(part, planned_partitions, disk)
+          shrink_partition(part, target_shrink_size)
 
           success?(planned_partitions)
         end
@@ -336,41 +333,29 @@ module Y2Storage
         linux_part_names(disk_name).any?
       end
 
-      # List of partitions that can be resized, including the size of the
-      # space that can be reclaimed for each partition.
-      #
-      # The list is sorted so the partitions with more recoverable space are
-      # listed first.
+      # Sorted list of partitions that can be resized, partitions with more
+      # recoverable space appear first in the list
       #
       # @param partitions [Array<Partition>] list of partitions
-      # @return [Array<Hash>] each element contains
-      #     :partition (Partition) and :recoverable_size (DiskSize)
+      # @return [Array<Partition>]
       def sorted_resizables(partitions)
-        resizables = partitions.map do |part|
-          { partition: part, recoverable_size: recoverable_size(part) }
-        end
-
-        resizables.delete_if { |res| res[:recoverable_size].zero? }
-        resizables.sort_by { |res| res[:recoverable_size] }.reverse
-      end
-
-      # Size of the space that can be reclaimed in a partition
-      #
-      # @param partition [Partition]
-      # @return [DiskSize]
-      def recoverable_size(partition)
-        info = partition.filesystem.detect_resize_info
-        return DiskSize.zero unless info.resize_ok?
-        partition.size - info.min_size
+        resizables = partitions.reject { |part| part.recoverable_size.zero? }
+        resizables.sort_by(&:recoverable_size).reverse
       end
 
       # Reduces the size of a partition
       #
+      # If possible, it reduces the size of the partition by shrink_size.
+      # Otherwise, it reduces the size as much as possible.
+      #
+      # This method does not take alignment into account.
+      #
       # @param partition [Partition]
-      # @param shrink_size [DiskSize] size of the space to substract
+      # @param shrink_size [DiskSize] size of the space to substract ideally
       def shrink_partition(partition, shrink_size)
-        log.info "Shrinking #{partition.name} (#{partition.size}) by #{shrink_size}"
-        partition.size = partition.size - shrink_size
+        log.info "Shrinking #{partition.name}"
+        # Explicitly avoid alignment to keep current behavior (to be reconsidered)
+        partition.resize(partition.size - shrink_size, align_type: nil)
       end
 
       # Use force to create space: delete partitions if a given type while

@@ -31,7 +31,7 @@ RSpec.shared_context "proposal" do
       !!(partition.filesystem.label =~ /indows/)
     end
 
-    allow_any_instance_of(Y2Storage::Filesystems::BlkFilesystem).to receive(:detect_resize_info)
+    allow_any_instance_of(Y2Storage::Partition).to receive(:detect_resize_info)
       .and_return(resize_info)
 
     allow(Yast::Arch).to receive(:x86_64).and_return(architecture == :x86)
@@ -60,7 +60,7 @@ RSpec.shared_context "proposal" do
   let(:disk_analyzer) { Y2Storage::DiskAnalyzer.new(fake_devicegraph) }
   let(:storage_arch) { instance_double("::Storage::Arch") }
   let(:resize_info) do
-    instance_double("Y2Storage::ResizeInfo", resize_ok?: true, min_size: 40.GiB)
+    instance_double("Y2Storage::ResizeInfo", resize_ok?: true, min_size: 40.GiB, max_size: 800.GiB)
   end
 
   let(:settings_format) { :legacy }
