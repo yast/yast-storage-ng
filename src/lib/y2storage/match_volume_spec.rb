@@ -70,7 +70,7 @@ module Y2Storage
     # Whether the size value matches the volume min size
     #
     # @note The size matches when the give size value is equal or bigger
-    #   than the volume min size. It always return false if a size value
+    #   than the volume min size. It always returns false if a size value
     #   is not given.
     #
     # @param volume [VolumeSpecification]
