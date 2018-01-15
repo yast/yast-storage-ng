@@ -60,7 +60,7 @@ module Y2Partitioner
           device_udev_by_path.join(Yast::HTML.Newline),
           device_udev_by_id.join(Yast::HTML.Newline),
           # TRANSLATORS: acronym for Filesystem Identifier
-          format(_("FS ID: %s"), "TODO")
+          format(_("Partition ID: %s"), "TODO")
         ]
       end
     end
