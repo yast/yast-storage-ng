@@ -129,15 +129,19 @@ describe Y2Storage::Planned::Md do
       let(:mount_point) { volume_mount_point }
       let(:filesystem_type) { volume_fs_types.first }
 
-      it "returns true" do
-        expect(planned_md.match_volume?(volume)).to eq(true)
-      end
+      context "and the size is excluded for matching" do
+        let(:exclude) { :size }
 
-      context "but the volume requires a specific partition id" do
-        let(:volume_partition_id) { Y2Storage::PartitionId::ESP }
+        it "returns true" do
+          expect(planned_md.match_volume?(volume, exclude: exclude)).to eq(true)
+        end
 
-        it "returns false" do
-          expect(planned_md.match_volume?(volume)).to eq(false)
+        context "but the volume requires a specific partition id" do
+          let(:volume_partition_id) { Y2Storage::PartitionId::ESP }
+
+          it "returns false" do
+            expect(planned_md.match_volume?(volume, exclude: exclude)).to eq(false)
+          end
         end
       end
     end

@@ -70,11 +70,13 @@ module Y2Storage
     # Whether the size value matches the volume min size
     #
     # @note The size matches when the give size value is equal or bigger
-    #   than the volume min size.
+    #   than the volume min size. It always return false if a size value
+    #   is not given.
     #
     # @param volume [VolumeSpecification]
     # @return [Boolean]
     def match_size?(volume)
+      return false if volume_match_values[:size].nil?
       volume_match_values[:size] >= volume.min_size
     end
 

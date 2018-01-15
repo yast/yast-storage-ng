@@ -21,7 +21,6 @@
 
 require "yast"
 require "yast/i18n"
-require "y2storage"
 
 module Y2Storage
   # Class to represent storage setup error
@@ -97,7 +96,7 @@ module Y2Storage
 
     # @return [String]
     def message_with_mount_point_and_partition_id_and_fs
-      # TRANSLATORS: error message, where %{mount_point} is repalaced by a mount point
+      # TRANSLATORS: error message, where %{mount_point} is replaced by a mount point
       # (e.g., /lib/docker), %{size} by a disk size (e.g., 5 GiB), %{partition_id} by a
       # partition id (e.g., Linux) and %{fs_types} by a list of filesystem types separated
       # by comma (e.g., ext2, ext3, ext4).
@@ -113,7 +112,7 @@ module Y2Storage
 
     # @return [String]
     def message_with_mount_point_and_partition_id
-      # TRANSLATORS: error message, where %{mount_point} is repalaced by a mount point
+      # TRANSLATORS: error message, where %{mount_point} is replaced by a mount point
       # (e.g., /lib/docker), %{size} by a disk size (e.g., 5 GiB) and %{partition_id}.
       format(
         "Missing device for %{mount_point} with size equal or bigger than %{size} " \
@@ -126,7 +125,7 @@ module Y2Storage
 
     # @return [String]
     def message_with_mount_point_and_fs
-      # TRANSLATORS: error message, where %{mount_point} is repalaced by a mount point
+      # TRANSLATORS: error message, where %{mount_point} is replaced by a mount point
       # (e.g., /lib/docker), %{size} by a disk size (e.g., 5 GiB) and %{fs_types} by a
       # list of filesystem types separated by comma (e.g., ext2, ext3, ext4).
       format(
@@ -140,7 +139,7 @@ module Y2Storage
 
     # @return [String]
     def message_with_mount_point_default
-      # TRANSLATORS: error message, where %{mount_point} is repalaced by a mount point
+      # TRANSLATORS: error message, where %{mount_point} is replaced by a mount point
       # (e.g., /lib/docker) and %{size} by a disk size (e.g., 5 GiB).
       format(
         "Missing device for %{mount_point} with size equal or bigger than %{size} ",

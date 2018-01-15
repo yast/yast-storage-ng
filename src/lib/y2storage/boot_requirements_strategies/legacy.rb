@@ -47,7 +47,7 @@ module Y2Storage
           errors << unknown_boot_disk_error
         elsif boot_partition_table_missing?
           errors << unknown_boot_partition_table_error
-        elsif grub_partition_needed?
+        elsif boot_ptable_type?(:gpt)
           errors += errors_on_gpt
         else
           errors += errors_on_msdos

@@ -20,7 +20,8 @@
 # find current contact information at www.suse.com.
 
 require "yast"
-require "y2storage"
+require "y2storage/blk_device"
+require "y2storage/setup_error"
 require "y2storage/boot_requirements_checker"
 require "y2storage/proposal_settings"
 

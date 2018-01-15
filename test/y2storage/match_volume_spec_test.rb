@@ -112,6 +112,20 @@ describe Y2Storage::MatchVolumeSpec do
         end
       end
 
+      context "but the size is nil" do
+        let(:size) { nil }
+
+        it "returns false" do
+          expect(matcher.match_volume?(volume)).to eq(false)
+        end
+
+        context "and size is excluded for matching" do
+          it "returns true" do
+            expect(matcher.match_volume?(volume, exclude: :size)).to eq(true)
+          end
+        end
+      end
+
       context "and fs type is included in the possible fs for the volume" do
         let(:fs_type) { Y2Storage::Filesystems::Type::SWAP }
 
