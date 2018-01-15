@@ -232,7 +232,7 @@ describe Y2Partitioner::Dialogs::PartitionResize do
               subject.store
               expect(partition.size).to eq adjusted_size
               expect(partition.end_aligned?).to eq(true)
-              expect(adjusted_size).to be >= min_size
+              expect(partition.size).to be >= min_size
             end
           end
         end
