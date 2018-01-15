@@ -105,7 +105,7 @@ describe Y2Storage::GuidedProposal do
       let(:scenario) { "windows-pc-50GiB-gpt" }
       let(:windows_partitions) { [partition_double("/dev/sda1")] }
       let(:resize_info) do
-        instance_double("Y2Storage::ResizeInfo", resize_ok?: true, min_size: 1.GiB)
+        instance_double("Y2Storage::ResizeInfo", resize_ok?: true, min_size: 1.GiB, max_size: 50.GiB)
       end
 
       # essential part of the example: Windows partition has been resized

@@ -156,5 +156,25 @@ module Y2Storage
     def self.create(start, length, block_size)
       new(Storage::Region.new(start, length, block_size.to_i))
     end
+
+    # Whether the first block of the region is aligned according to
+    # the given grain
+    #
+    # @param grain [DiskSize]
+    # @return [Boolean]
+    def start_aligned?(grain)
+      overhead = (block_size * start) % grain
+      overhead.zero?
+    end
+
+    # Whether the final block of the region is aligned according to
+    # the given grain.
+    #
+    # @param grain [DiskSize]
+    # @return [Boolean]
+    def end_aligned?(grain)
+      overhead = (block_size * self.end + block_size) % grain
+      overhead.zero?
+    end
   end
 end

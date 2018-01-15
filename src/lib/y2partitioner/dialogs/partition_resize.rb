@@ -175,7 +175,7 @@ module Y2Partitioner
         # @macro seeAbstractWidget
         # Updates the partition with the new size
         def store
-          partition.size = current_widget.size
+          partition.resize(current_widget.size)
         end
 
         # @macro seeAbstractWidget

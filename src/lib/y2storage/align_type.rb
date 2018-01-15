@@ -24,6 +24,10 @@ require "y2storage/storage_enum_wrapper"
 module Y2Storage
   # Class to represent all the possible align types implemented by libstorage
   #
+  # AlignType::REQUIRED can be used to align only to hard requirements.
+  # AlignType::OPTIMAL implies aligning to both hard requirements and topology
+  #   information, which optimizes performance.
+  #
   # This is a wrapper for the Storage::AlignType enum
   class AlignType
     include StorageEnumWrapper

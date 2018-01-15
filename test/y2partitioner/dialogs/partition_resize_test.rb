@@ -31,17 +31,24 @@ describe Y2Partitioner::Dialogs::PartitionResize do
   using Y2Storage::Refinements::SizeCasts
 
   before do
-    devicegraph_stub("mixed_disks.yml")
+    devicegraph_stub(scenario)
     allow(partition).to receive(:detect_resize_info).and_return resize_info
   end
 
   let(:current_graph) { Y2Partitioner::DeviceGraphs.instance.current }
+  let(:scenario) { "mixed_disks" }
 
   # Creates a new partition
   let(:partition) do
     sdc = Y2Storage::Disk.find_by_name(current_graph, "/dev/sdc")
-    sdc.partition_table.create_partition("/dev/sdc1", Y2Storage::Region.create(2048, 1048576, 512),
-      Y2Storage::PartitionType::PRIMARY)
+    if sdc
+      sdc.partition_table.create_partition("/dev/sdc1", Y2Storage::Region.create(2048, 1048576, 512),
+        Y2Storage::PartitionType::PRIMARY)
+    else
+      # DASD case, just take the first partition. That should be enough for
+      # these tests
+      current_graph.partitions.first
+    end
   end
 
   let(:resize_info) do
@@ -145,8 +152,9 @@ describe Y2Partitioner::Dialogs::PartitionResize do
 
     let(:resize_info) do
       instance_double(Y2Storage::ResizeInfo,
-        min_size: min_size,
-        max_size: max_size)
+        resize_ok?: true,
+        min_size:   min_size,
+        max_size:   max_size)
     end
 
     let(:current_widget) { max_size_widget }
@@ -157,18 +165,98 @@ describe Y2Partitioner::Dialogs::PartitionResize do
       context "when max size is selected" do
         let(:current_widget) { max_size_widget }
 
-        it "updates the partition with the max size" do
-          subject.store
-          expect(partition.size).to eq(max_size)
+        RSpec.shared_examples "max sizes" do
+          context "and the max size causes an end-aligned partition" do
+            let(:max_size) { aligned_max_size }
+
+            it "updates the partition with the max size" do
+              subject.store
+              expect(partition.size).to eq max_size
+              expect(partition.end_aligned?).to eq(true)
+            end
+          end
+
+          context "and the max size causes a not end-aligned partition" do
+            let(:max_size) { not_aligned_max_size }
+
+            it "updates the partition with the max aligned size" do
+              subject.store
+              expect(partition.size).to eq adjusted_size
+              expect(partition.end_aligned?).to eq(true)
+              expect(adjusted_size).to be <= max_size
+            end
+          end
+        end
+
+        context "when the partition table does not require end-alignment" do
+          let(:scenario) { "mixed_disks" }
+
+          let(:aligned_max_size) { 100.GiB }
+
+          let(:not_aligned_max_size) { 100.GiB + 0.5.MiB }
+          let(:adjusted_size) { 100.GiB }
+
+          include_examples "max sizes"
+        end
+
+        context "when the partition table requires end-alignment (DASD)" do
+          let(:scenario) { "dasd_50GiB.yml" }
+
+          let(:aligned_max_size) { 204864.KiB }
+
+          let(:not_aligned_max_size) { 200.MiB }
+          let(:adjusted_size) { 204768.KiB }
+
+          include_examples "max sizes"
         end
       end
 
       context "when min size is selected" do
         let(:current_widget) { min_size_widget }
 
-        it "updates the partition with the min size" do
-          subject.store
-          expect(partition.size).to eq(min_size)
+        RSpec.shared_examples "min sizes" do
+          context "and the min size causes an end-aligned partition" do
+            let(:min_size) { aligned_min_size }
+
+            it "updates the partition with the min size" do
+              subject.store
+              expect(partition.size).to eq min_size
+              expect(partition.end_aligned?).to eq(true)
+            end
+          end
+
+          context "and the min size causes a not end-aligned partition" do
+            let(:min_size) { not_aligned_min_size }
+
+            it "updates the partition with the min aligned size" do
+              subject.store
+              expect(partition.size).to eq adjusted_size
+              expect(partition.end_aligned?).to eq(true)
+              expect(adjusted_size).to be >= min_size
+            end
+          end
+        end
+
+        context "when the partition table does not require end-alignment" do
+          let(:scenario) { "mixed_disks" }
+
+          let(:aligned_min_size) { 10.MiB }
+
+          let(:not_aligned_min_size) { 10.4.MiB }
+          let(:adjusted_size) { 11.MiB }
+
+          include_examples "min sizes"
+        end
+
+        context "when the partition table requires end-alignment (DASD)" do
+          let(:scenario) { "dasd_50GiB.yml" }
+
+          let(:aligned_min_size) { 24768.KiB }
+
+          let(:not_aligned_min_size) { 12344.KiB }
+          let(:adjusted_size) { 12384.KiB }
+
+          include_examples "min sizes"
         end
       end
 
@@ -179,11 +267,50 @@ describe Y2Partitioner::Dialogs::PartitionResize do
           allow(current_widget).to receive(:size).and_return(custom_size)
         end
 
-        let(:custom_size) { 5.5.GiB }
+        RSpec.shared_examples "custom sizes" do
+          context "and the entered size causes an end-aligned partition" do
+            let(:custom_size) { aligned_size }
 
-        it "updates the partition with the custom size" do
-          subject.store
-          expect(partition.size).to eq(custom_size)
+            it "updates the partition with the entered size" do
+              subject.store
+              expect(partition.size).to eq aligned_size
+              expect(partition.end_aligned?).to eq(true)
+            end
+          end
+
+          context "and the entered size causes a not end-aligned partition" do
+            let(:custom_size) { not_aligned_size }
+
+            it "updates the partition with the closest valid aligned size" do
+              subject.store
+              expect(partition.size).to eq adjusted_size
+              expect(partition.end_aligned?).to eq(true)
+              expect(adjusted_size).to be <= max_size
+              expect(adjusted_size).to be >= min_size
+            end
+          end
+        end
+
+        context "when the partition table does not require end-alignment" do
+          let(:scenario) { "mixed_disks" }
+
+          let(:aligned_size) { 50.GiB }
+
+          let(:not_aligned_size) { 50.GiB + 0.5.MiB }
+          let(:adjusted_size) { 50.GiB }
+
+          include_examples "custom sizes"
+        end
+
+        context "when the partition table requires end-alignment (DASD)" do
+          let(:scenario) { "dasd_50GiB.yml" }
+
+          let(:aligned_size) { 204864.KiB }
+
+          let(:not_aligned_size) { 200.MiB }
+          let(:adjusted_size) { 204768.KiB }
+
+          include_examples "custom sizes"
         end
       end
     end

@@ -285,7 +285,7 @@ describe Y2Storage::Proposal::SpaceMaker do
           context "if resizing Windows is allowed" do
             let(:resize_windows) { true }
             let(:resize_info) do
-              instance_double("Y2Storage::ResizeInfo", resize_ok?: true, min_size: 100.GiB)
+              instance_double("ResizeInfo", resize_ok?: true, min_size: 100.GiB, max_size: 800.GiB)
             end
 
             before do
@@ -345,7 +345,7 @@ describe Y2Storage::Proposal::SpaceMaker do
         context "if resizing Windows is allowed" do
           let(:resize_windows) { true }
           let(:resize_info) do
-            instance_double("Y2Storage::ResizeInfo", resize_ok?: true, min_size: 100.GiB)
+            instance_double("ResizeInfo", resize_ok?: true, min_size: 100.GiB, max_size: 800.GiB)
           end
 
           before do
@@ -403,7 +403,7 @@ describe Y2Storage::Proposal::SpaceMaker do
     context "with one disk containing a Windows partition and no Linux ones" do
       let(:scenario) { "windows-pc" }
       let(:resize_info) do
-        instance_double("Y2Storage::ResizeInfo", resize_ok?: true, min_size: 730.GiB)
+        instance_double("Y2Storage::ResizeInfo", resize_ok?: true, min_size: 730.GiB, max_size: 800.GiB)
       end
       let(:windows_partitions) { [partition_double("/dev/sda1")] }
 
@@ -599,7 +599,7 @@ describe Y2Storage::Proposal::SpaceMaker do
     context "if there are two Windows partitions" do
       let(:scenario) { "double-windows-pc" }
       let(:resize_info) do
-        instance_double("Y2Storage::ResizeInfo", resize_ok?: true, min_size: 50.GiB)
+        instance_double("Y2Storage::ResizeInfo", resize_ok?: true, min_size: 50.GiB, max_size: 800.GiB)
       end
       let(:windows_partitions) do
         [
@@ -740,7 +740,7 @@ describe Y2Storage::Proposal::SpaceMaker do
     context "when some volumes have disk restrictions" do
       let(:scenario) { "mixed_disks" }
       let(:resize_info) do
-        instance_double("Y2Storage::ResizeInfo", resize_ok?: true, min_size: 50.GiB)
+        instance_double("Y2Storage::ResizeInfo", resize_ok?: true, min_size: 50.GiB, max_size: 800.GiB)
       end
       let(:windows_partitions) { [partition_double("/dev/sda1")] }
       let(:vol1) { planned_vol(mount_point: "/1", type: :ext4, disk: "/dev/sda") }
@@ -826,7 +826,7 @@ describe Y2Storage::Proposal::SpaceMaker do
       let(:scenario) { "lvm-two-vgs" }
       let(:windows_partitions) { [partition_double("/dev/sda1")] }
       let(:resize_info) do
-        instance_double("Y2Storage::ResizeInfo", resize_ok?: true, min_size: 10.GiB)
+        instance_double("Y2Storage::ResizeInfo", resize_ok?: true, min_size: 10.GiB, max_size: 800.GiB)
       end
 
       before do

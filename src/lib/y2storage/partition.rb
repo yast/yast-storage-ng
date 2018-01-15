@@ -22,6 +22,8 @@
 require "y2storage/storage_class_wrapper"
 require "y2storage/blk_device"
 require "y2storage/disk"
+require "y2storage/align_policy"
+require "y2storage/align_type"
 
 module Y2Storage
   # A partition in a partitionable device (like a disk or RAID).
@@ -130,27 +132,66 @@ module Y2Storage
     #
     # @see PartitionTables::Base#align_grain
     #
+    # @param align_type [AlignType, nil]
     # @return [DiskSize]
-    def align_grain
-      partition_table.align_grain
+    def align_grain(align_type = nil)
+      partition_table.align_grain(align_type)
     end
 
     # Whether the first block of the partition is aligned according to
     # the partition table grain.
     #
+    # @param align_type [AlignType, nil] see #align_grain
     # @return [Boolean]
-    def start_aligned?
-      overhead = (block_size * start) % align_grain
-      overhead.zero?
+    def start_aligned?(align_type = nil)
+      region.start_aligned?(align_grain(align_type))
     end
 
     # Whether the final block of the partition is aligned according to
     # the partition table grain.
     #
+    # @param align_type [AlignType, nil] see #align_grain
     # @return [Boolean]
-    def end_aligned?
-      overhead = (block_size * self.end + block_size) % align_grain
-      overhead.zero?
+    def end_aligned?(align_type = nil)
+      region.end_aligned?(align_grain(align_type))
+    end
+
+    # Resizes the partition by moving its end, taking alignment and resizing
+    # limits into account.
+    #
+    # This method never moves the partition start. If possible, the new end
+    # will always be aligned.
+    #
+    # The new end will always be within the min and max provided by
+    # #{#resize_info}, even if the requested size is bigger or smaller than
+    # those limits or if that means giving up on alignment.
+    #
+    # It does nothing if resizing is not possible (see {ResizeInfo#resize_ok?}).
+    #
+    # @param new_size [DiskSize] temptative new size of the partition, take into
+    #   account that the result may differ a bit due to alignment or limits
+    # @param align_type [AlignType] type of alignment
+    def resize(new_size, align_type: AlignType::OPTIMAL)
+      log.info "Trying to resize #{name} (#{size}) to #{new_size} (align: #{align_type})"
+      return unless can_resize?
+
+      max = resize_info.max_size
+      min = resize_info.min_size
+      self.size =
+        if new_size > max
+          max
+        elsif new_size < min
+          min
+        else
+          new_size
+        end
+      log.info "Partition #{name} size initially set to #{size}"
+
+      # NOTE: maybe it also makes sense to skip aligning if the new region ends
+      # at the end of the disk
+      return if align_type.nil?
+      self.region = aligned_region(align_type)
+      log.info "Partition #{name} finally adjusted to #{size}"
     end
 
     # All partitions in the given devicegraph, in no particular order
@@ -187,6 +228,72 @@ module Y2Storage
 
     def types_for_is
       super << :partition
+    end
+
+    # Region resulting from aligning and applying limits to the current
+    # partition region.
+    #
+    # It may be the original region if a new region couldn't be calculated (i.e.
+    # it's not possible to honor alignment and limits at the same time).
+    #
+    # @see #resize
+    #
+    # @param align_type [AlignType] type of alignment
+    def aligned_region(align_type)
+      new_region = align_region_end(region, align_type)
+      fix_region_end(new_region, align_type)
+
+      if new_region.size > resize_info.max_size || new_region.size < resize_info.min_size
+        region
+      else
+        new_region
+      end
+    end
+
+    # Aligns the end of a region, leaving the start untouched.
+    #
+    # FIXME: This is a temporary method since, in theory, libstorage-ng should
+    # provide this functionality, but it's buggy right now.
+    #
+    # @param region [Region] original region to align
+    # @param align_type [AlignType]
+    # @return [Region] a copy of region with the same start but the end aligned
+    #   according to align_type
+    def align_region_end(region, align_type)
+      # partition_table.align(region, AlignPolicy::ALIGN_END, align_type)
+
+      # This whole method could be implemented just by the commented line above.
+      # But there is a bug in libstorage-ng that causes it to alter the start of
+      # the region, even with the policy ALIGN_END.
+      # So here it comes the workaround
+      if region.end_aligned?(align_grain(align_type))
+        Region.create(region.start, region.length, region.block_size)
+      else
+        region_end = partition_table.align(region, AlignPolicy::ALIGN_END, align_type).end
+        Region.create(region.start, region_end - region.start + 1, region.block_size)
+      end
+    end
+
+    # Ensures the end of the given region is within the resizing limits of the
+    # partition and keeps the same alignment.
+    #
+    # @note This modifies the region parameter
+    #
+    # @param region [Region] region to adjust, can be modified
+    # @param align_type [AlignType]
+    def fix_region_end(region, align_type)
+      block_size = region.block_size.to_i
+      length     = region.length
+
+      min_blks   = resize_info.min_size.to_i / block_size
+      max_blks   = resize_info.max_size.to_i / block_size
+      grain_blks = align_grain(align_type).to_i / block_size
+
+      if length < min_blks
+        region.adjust_length(grain_blks * ((min_blks.to_f - length) / grain_blks).ceil)
+      elsif length > max_blks
+        region.adjust_length(grain_blks * ((max_blks.to_f - length) / grain_blks).floor)
+      end
     end
   end
 end

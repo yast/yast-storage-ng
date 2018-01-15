@@ -70,7 +70,6 @@ module Y2Partitioner
       # @return [Symbol] :finish if the dialog returns :next; dialog result otherwise.
       def resize
         result = Dialogs::PartitionResize.run(partition)
-        fix_end_alignment
 
         result == :next ? :finish : result
       end
@@ -93,44 +92,6 @@ module Y2Partitioner
         )
 
         false
-      end
-
-      # After the partition's size was changed during resizing, make sure the
-      # new size meets all alignment requirements, but is still between
-      # min_size and max_size.
-      #
-      # @note This may change the partition's size (and region).
-      def fix_end_alignment
-        return if partition.nil? || partition.end_aligned?
-
-        ptable = partition.partition_table
-        region = ptable.align(partition.region, Y2Storage::AlignPolicy::ALIGN_END)
-        min_blocks = (resize_info.min_size.to_i / region.block_size.to_i)
-        max_blocks = (resize_info.max_size.to_i / region.block_size.to_i)
-        grain_blocks = (ptable.align_grain.to_i / region.block_size.to_i)
-
-        partition.region = fix_region_end(region, min_blocks, max_blocks, grain_blocks)
-      end
-
-      # Make sure a region's end is between min_blocks and max_blocks. If it
-      # is not, add or subtract blocks in grain_blocks increments. All sizes
-      # are specified in that region's block size.
-      #
-      # @note region parameter could be modified.
-      #
-      # @param region [Y2Storage::Region]
-      # @param min [Integer]
-      # @param max [Integer]
-      # @param grain [Integer]
-      #
-      # @return [Y2Storage::Region] adjusted region
-      def fix_region_end(region, min, max, grain)
-        if region.length < min
-          region.adjust_length(grain * ((min.to_f - region.length) / grain).ceil)
-        elsif region.length > max
-          region.adjust_length(grain * ((max.to_f - region.length) / grain).floor)
-        end
-        region
       end
     end
   end
