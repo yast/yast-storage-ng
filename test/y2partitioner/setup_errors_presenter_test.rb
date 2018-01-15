@@ -46,8 +46,8 @@ describe Y2Partitioner::SetupErrorsPresenter do
       let(:boot_errors) { [] }
       let(:product_errors) { [] }
 
-      it "returns nil" do
-        expect(subject.to_html).to be_nil
+      it "returns an empty string" do
+        expect(subject.to_html).to be_empty
       end
     end
 

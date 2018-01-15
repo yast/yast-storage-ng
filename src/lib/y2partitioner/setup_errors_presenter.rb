@@ -40,10 +40,12 @@ module Y2Partitioner
 
     # HTML represetation of the storage setup errors
     #
-    # @return [String, nil] nil if there are no errors
+    # @note An empty string is returned when there is no error.
+    #
+    # @return [String]
     def to_html
       errors = [boot_errors_html, product_errors_html].compact
-      return nil if errors.empty?
+      return "" if errors.empty?
 
       errors.join(Yast::HTML.Newline)
     end
@@ -55,18 +57,18 @@ module Y2Partitioner
 
     # HTML representation for boot errors
     #
-    # @return [String]
+    # @return [String, nil] nil if there is no boot error
     def boot_errors_html
       errors = setup_checker.boot_errors
       # TRANSLATORS
-      header = _("The system could not load because the following errors were found:\n")
+      header = _("The system might not be able to boot:\n")
 
       errors_html(header, errors)
     end
 
     # HTML representation for mandatory product errors
     #
-    # @return [String]
+    # @return [String, nil] nil if there is no product error
     def product_errors_html
       errors = setup_checker.product_errors
       # TRANSLATORS
@@ -82,7 +84,7 @@ module Y2Partitioner
     # @param header [String] header text
     # @param errors [Array<SetupError>] list of errors
     #
-    # @return [String]
+    # @return [String, nil] nil if there is no error
     def errors_html(header, errors)
       return nil if errors.empty?
 
