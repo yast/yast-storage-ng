@@ -19,12 +19,16 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
+require "yast"
+require "yast2/popup"
 require "cwm/widget"
 require "cwm/tree"
 require "y2partitioner/icons"
 require "y2partitioner/device_graphs"
 require "y2partitioner/ui_state"
 require "y2partitioner/widgets/pages"
+require "y2partitioner/setup_errors_presenter"
+require "y2storage/setup_checker"
 
 module Y2Partitioner
   module Widgets
@@ -100,6 +104,27 @@ module Y2Partitioner
       # @return [CWM::Page, nil]
       def device_page(device)
         @pages.find { |p| p.respond_to?(:device) && p.device.sid == device.sid }
+      end
+
+      # @macro seeAbstractWidget
+      # Checks whether the current setup is valid, that is, it contains necessary
+      # devices for booting (e.g., /boot/efi) and for the system runs properly (e.g., /).
+      #
+      # @see Y2Storage::SetupChecker
+      #
+      # @return [Boolean]
+      def validate
+        setup_checker = Y2Storage::SetupChecker.new(device_graph)
+        return true if setup_checker.valid?
+
+        errors = SetupErrorsPresenter.new(setup_checker).to_html
+        # FIXME: improve Yast2::Popup to allow some text before the buttons
+        errors += _("Do you want to continue?")
+
+        result = Yast2::Popup.show(errors,
+          headline: :error, richtext: true, buttons: :yes_no, focus: :no)
+
+        result == :yes
       end
 
     private

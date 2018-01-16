@@ -66,20 +66,18 @@ RSpec.shared_examples "proposed GRUB partition" do
   context "when aiming for the recommended size" do
     let(:target) { :desired }
 
-    it "requires it to be between 1 and 8MiB, despite the alignment" do
+    it "requires it to be between 1 and 8MiB" do
       expect(grub_part.min).to eq 1.MiB
       expect(grub_part.max).to eq 8.MiB
-      expect(grub_part.align).to eq :keep_size
     end
   end
 
   context "when aiming for the minimal size" do
     let(:target) { :min }
 
-    it "requires it to be between 256KiB and 8MiB, despite the alignment" do
+    it "requires it to be between 256KiB and 8MiB" do
       expect(grub_part.min).to eq 256.KiB
       expect(grub_part.max).to eq 8.MiB
-      expect(grub_part.align).to eq :keep_size
     end
   end
 end
@@ -135,20 +133,18 @@ RSpec.shared_examples "proposed PReP partition" do
   context "when aiming for the recommended size" do
     let(:target) { :desired }
 
-    it "requires it to be between 1MiB and 8MiB, despite the alignment" do
+    it "requires it to be between 1MiB and 8MiB" do
       expect(prep_part.min).to eq 1.MiB
       expect(prep_part.max).to eq 8.MiB
-      expect(prep_part.align).to eq :keep_size
     end
   end
 
   context "when aiming for the minimal size" do
     let(:target) { :min }
 
-    it "requires it to be between 256KiB and 8MiB, despite the alignment" do
+    it "requires it to be between 256KiB and 8MiB" do
       expect(prep_part.min).to eq 256.KiB
       expect(prep_part.max).to eq 8.MiB
-      expect(prep_part.align).to eq :keep_size
     end
   end
 end

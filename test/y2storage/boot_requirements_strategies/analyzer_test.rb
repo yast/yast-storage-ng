@@ -46,6 +46,69 @@ RSpec.shared_examples "boot disk in devicegraph" do
     end
   end
 
+  context "if a partition over a Dasd device is configured as '/' in the devicegraph" do
+    let(:scenario) { "dasd_50GiB" }
+
+    before do
+      partition = Y2Storage::Partition.find_by_name(fake_devicegraph, "/dev/sda1")
+      partition.filesystem.mount_point = "/"
+    end
+
+    it "returns a Dasd object" do
+      expect(analyzer.boot_disk).to be_a Y2Storage::Dasd
+    end
+
+    it "returns the dasd device containing the '/' partition" do
+      expect(analyzer.boot_disk.name).to eq "/dev/sda"
+    end
+  end
+
+  context "if a partition over a Multipath device is configured as '/' in the devicegraph" do
+    let(:scenario) { "empty-dasd-and-multipath.xml" }
+
+    let(:multipath_name) { "/dev/mapper/36005076305ffc73a00000000000013b4" }
+
+    before do
+      device = Y2Storage::BlkDevice.find_by_name(fake_devicegraph, multipath_name)
+      part = device.partition_table.create_partition("/dev/#{multipath_name}-1",
+        Y2Storage::Region.create(2048, 1048576, 512),
+        Y2Storage::PartitionType::PRIMARY)
+      fs = part.create_filesystem(Y2Storage::Filesystems::Type::EXT4)
+      fs.mount_point = "/"
+    end
+
+    it "returns a Multipath object" do
+      expect(analyzer.boot_disk).to be_a Y2Storage::Multipath
+    end
+
+    it "returns the Multipath device containing the '/' partition" do
+      expect(analyzer.boot_disk.name).to eq multipath_name
+    end
+  end
+
+  context "if a partition over a BIOS RAID is configured as '/' in the devicegraph" do
+    let(:scenario) { "empty-dm_raids.xml" }
+
+    let(:raid_name) { "/dev/mapper/isw_ddgdcbibhd_test1" }
+
+    before do
+      device = Y2Storage::BlkDevice.find_by_name(fake_devicegraph, raid_name)
+      part = device.partition_table.create_partition("/dev/#{raid_name}-1",
+        Y2Storage::Region.create(2048, 1048576, 512),
+        Y2Storage::PartitionType::PRIMARY)
+      fs = part.create_filesystem(Y2Storage::Filesystems::Type::EXT4)
+      fs.mount_point = "/"
+    end
+
+    it "returns a BIOS RAID" do
+      expect(analyzer.boot_disk.is?(:bios_raid)).to eq(true)
+    end
+
+    it "returns the BIOS RAID containing the '/' partition" do
+      expect(analyzer.boot_disk.name).to eq raid_name
+    end
+  end
+
   context "if a LVM LV is configured as '/' in the devicegraph" do
     let(:scenario) { "complex-lvm-encrypt" }
 
@@ -77,6 +140,25 @@ describe Y2Storage::BootRequirementsStrategies::Analyzer do
 
       expect(planned_devs.map(&:mount_point)).to eq ["/boot", "/"]
       expect(devicegraph.actiongraph(from: initial_graph)).to be_empty
+    end
+
+    context "when there is a root" do
+      let(:scenario) { "mixed_disks" }
+
+      it "stores the root filesystem" do
+        analyzer = described_class.new(devicegraph, planned_devs, boot_name)
+        expect(analyzer.root_filesystem).to be_a(Y2Storage::Filesystems::Base)
+        expect(analyzer.root_filesystem.mount_point).to eq("/")
+      end
+    end
+
+    context "when there is no root" do
+      let(:scenario) { "empty_hard_disk_50GiB" }
+
+      it "does not store a filesystem" do
+        analyzer = described_class.new(devicegraph, planned_devs, boot_name)
+        expect(analyzer.root_filesystem).to be_nil
+      end
     end
   end
 
@@ -173,6 +255,95 @@ describe Y2Storage::BootRequirementsStrategies::Analyzer do
 
       it "returns false" do
         expect(analyzer.root_in_lvm?).to eq false
+      end
+    end
+  end
+
+  describe "#root_in_software_raid?" do
+    subject(:analyzer) { described_class.new(devicegraph, planned_devs, boot_name) }
+
+    context "if '/' is a planned software raid" do
+      let(:planned_root) { planned_md(mount_point: "/") }
+
+      it "returns true" do
+        expect(analyzer.root_in_software_raid?).to eq true
+      end
+    end
+
+    context "if '/' is a planned partition" do
+      let(:planned_root) { planned_partition(mount_point: "/") }
+
+      it "returns false" do
+        expect(analyzer.root_in_software_raid?).to eq false
+      end
+    end
+
+    context "if '/' is a planned logical volume" do
+      let(:planned_root) { planned_lv(mount_point: "/") }
+
+      it "returns false" do
+        expect(analyzer.root_in_software_raid?).to eq false
+      end
+    end
+
+    context "if '/' is a software raid from the devicegraph" do
+      let(:planned_devs) { [] }
+      let(:scenario) { "md2-devicegraph.xml" }
+
+      before do
+        md = Y2Storage::Md.find_by_name(fake_devicegraph, "/dev/md0")
+        md.remove_descendants
+        fs = md.create_filesystem(Y2Storage::Filesystems::Type::EXT4)
+        fs.mount_point = "/"
+      end
+
+      it "returns true" do
+        expect(analyzer.root_in_software_raid?).to eq true
+      end
+    end
+
+    context "if '/' is a partition over a software raid from the devicegraph" do
+      let(:planned_devs) { [] }
+      let(:scenario) { "md2-devicegraph.xml" }
+
+      before do
+        md = Y2Storage::Md.find_by_name(fake_devicegraph, "/dev/md0")
+        part = md.partition_table.create_partition("/dev/md0-1",
+          Y2Storage::Region.create(2048, 1048576, 512),
+          Y2Storage::PartitionType::PRIMARY)
+        fs = part.create_filesystem(Y2Storage::Filesystems::Type::EXT4)
+        fs.mount_point = "/"
+      end
+
+      it "returns true" do
+        expect(analyzer.root_in_software_raid?).to eq true
+      end
+    end
+
+    context "if '/' is a partition over a disk from the devicegraph" do
+      let(:planned_devs) { [] }
+      let(:scenario) { "mixed_disks" }
+
+      it "returns false" do
+        expect(analyzer.root_in_software_raid?).to eq false
+      end
+    end
+
+    context "if '/' is a logical volume from the devicegraph" do
+      let(:planned_devs) { [] }
+      let(:scenario) { "complex-lvm-encrypt" }
+
+      it "returns false" do
+        expect(analyzer.root_in_software_raid?).to eq false
+      end
+    end
+
+    context "if no device or planned device is configured as '/'" do
+      let(:planned_devs) { [] }
+      let(:scenario) { "double-windows-pc" }
+
+      it "returns false" do
+        expect(analyzer.root_in_software_raid?).to eq false
       end
     end
   end

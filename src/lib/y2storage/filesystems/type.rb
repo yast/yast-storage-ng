@@ -120,9 +120,11 @@ module Y2Storage
 
       LEGACY_HOME_FILESYSTEMS = [:reiserfs]
 
+      ZIPL_FILESYSTEMS = [:ext2, :ext3, :ext4, :xfs]
+
       private_constant :PROPERTIES, :ROOT_FILESYSTEMS, :HOME_FILESYSTEMS,
         :COMMON_FSTAB_OPTIONS, :EXT_FSTAB_OPTIONS, :LEGACY_ROOT_FILESYSTEMS,
-        :LEGACY_HOME_FILESYSTEMS
+        :LEGACY_HOME_FILESYSTEMS, :ZIPL_FILESYSTEMS
 
       # Allowed filesystems for root
       #
@@ -150,6 +152,20 @@ module Y2Storage
       # @return [Array<Filesystems::Type>]
       def self.legacy_home_filesystems
         LEGACY_HOME_FILESYSTEMS.map { |f| find(f) }
+      end
+
+      # Allowed filesystems for zipl boot partition
+      #
+      # EXT2 is the preferred type used by default when the proposal
+      # proposes a new zipl partition.
+      #
+      # @note See page 13 in following link
+      #   https://share.confex.com/share/123/webprogram/Handout/\
+      #   Session15694/SHARE_Bootloader_Ihno_PittsPPT_0.09.pdf
+      #
+      # @return [Array<Filesystems::Type>]
+      def self.zipl_filesystems
+        ZIPL_FILESYSTEMS.map { |f| find(f) }
       end
 
       # Check if filesystem is usable as root (mountpoint "/") filesystem.

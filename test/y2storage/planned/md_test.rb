@@ -104,4 +104,55 @@ describe Y2Storage::Planned::Md do
       end
     end
   end
+
+  # Only basic cases are tested here. More exhaustive tests can be found in tests
+  # for Y2Storage::MatchVolumeSpec
+  describe "match_volume?" do
+    let(:volume) { Y2Storage::VolumeSpecification.new({}) }
+
+    before do
+      planned_md.mount_point = mount_point
+      planned_md.filesystem_type = filesystem_type
+
+      volume.mount_point = volume_mount_point
+      volume.partition_id = volume_partition_id
+      volume.fs_types = volume_fs_types
+      volume.min_size = volume_min_size
+    end
+
+    let(:volume_mount_point) { "/boot" }
+    let(:volume_partition_id) { nil }
+    let(:volume_fs_types) { [Y2Storage::Filesystems::Type::EXT2] }
+    let(:volume_min_size) { Y2Storage::DiskSize.zero }
+
+    context "when the planned MD has the same values" do
+      let(:mount_point) { volume_mount_point }
+      let(:filesystem_type) { volume_fs_types.first }
+
+      context "and the size is excluded for matching" do
+        let(:exclude) { :size }
+
+        it "returns true" do
+          expect(planned_md.match_volume?(volume, exclude: exclude)).to eq(true)
+        end
+
+        context "but the volume requires a specific partition id" do
+          let(:volume_partition_id) { Y2Storage::PartitionId::ESP }
+
+          it "returns false" do
+            expect(planned_md.match_volume?(volume, exclude: exclude)).to eq(false)
+          end
+        end
+      end
+    end
+
+    context "when the planned MD does not have the same values" do
+      let(:mount_point) { "/boot/efi" }
+      let(:filesystem_type) { Y2Storage::Filesystems::Type::VFAT }
+
+      it "returns false" do
+        expect(planned_md.match_volume?(volume)).to eq(false)
+      end
+    end
+  end
 end

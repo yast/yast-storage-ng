@@ -21,6 +21,7 @@
 
 require "y2storage/storage_class_wrapper"
 require "y2storage/partitionable"
+require "y2storage/disk_device"
 require "y2storage/multi_disk_device"
 
 module Y2Storage
@@ -29,6 +30,7 @@ module Y2Storage
   # This is a wrapper for Storage::DmRaid
   class DmRaid < Partitionable
     wrap_class Storage::DmRaid
+    include DiskDevice
     include MultiDiskDevice
 
     # @!method rotational?
@@ -70,7 +72,11 @@ module Y2Storage
   protected
 
     def types_for_is
-      super << :dm_raid
+      types = super
+      types << :dm_raid
+      types << :raid
+      types << :bios_raid
+      types
     end
   end
 end

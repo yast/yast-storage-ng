@@ -439,4 +439,43 @@ describe Y2Storage::Partition do
       end
     end
   end
+
+  # Only basic cases are tested here. More exhaustive tests can be found in tests
+  # for Y2Storage::MatchVolumeSpec
+  describe "#match_volume?" do
+    let(:scenario) { "windows-linux-free-pc" }
+
+    subject(:partition) { Y2Storage::Partition.find_by_name(fake_devicegraph, "/dev/sda2") }
+
+    let(:volume) { Y2Storage::VolumeSpecification.new({}) }
+
+    before do
+      volume.mount_point = volume_mount_point
+      volume.partition_id = volume_partition_id
+      volume.fs_types = volume_fs_types
+      volume.min_size = volume_min_size
+    end
+
+    context "when the partition has the same values than the volume" do
+      let(:volume_mount_point) { "swap" }
+      let(:volume_partition_id) { Y2Storage::PartitionId::SWAP }
+      let(:volume_fs_types) { [Y2Storage::Filesystems::Type::SWAP] }
+      let(:volume_min_size) { Y2Storage::DiskSize.GiB(2) }
+
+      it "returns true" do
+        expect(partition.match_volume?(volume)).to eq(true)
+      end
+    end
+
+    context "when the partition has different values than the volume" do
+      let(:volume_mount_point) { "/boot" }
+      let(:volume_partition_id) { Y2Storage::PartitionId::ESP }
+      let(:volume_fs_types) { [Y2Storage::Filesystems::Type::VFAT] }
+      let(:volume_min_size) { Y2Storage::DiskSize.GiB(3) }
+
+      it "returns false" do
+        expect(partition.match_volume?(volume)).to eq(false)
+      end
+    end
+  end
 end

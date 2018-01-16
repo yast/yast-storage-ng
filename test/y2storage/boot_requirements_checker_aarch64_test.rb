@@ -46,7 +46,9 @@ describe Y2Storage::BootRequirementsChecker do
       allow(storage_arch).to receive(:efiboot?).and_return(efiboot)
       allow(dev_sda).to receive(:mbr_gap).and_return mbr_gap_size
       allow(dev_sda).to receive(:efi_partitions).and_return efi_partitions
+      allow(dev_sda).to receive(:partitions).and_return(efi_partitions)
       allow(dev_sdb).to receive(:efi_partitions).and_return other_efi_partitions
+      allow(dev_sdb).to receive(:partitions).and_return(other_efi_partitions)
     end
 
     include_context "plain UEFI"

@@ -23,6 +23,7 @@ require "y2storage/storage_class_wrapper"
 require "y2storage/partitionable"
 require "y2storage/free_disk_space"
 require "y2storage/data_transport"
+require "y2storage/disk_device"
 
 module Y2Storage
   # A physical disk device
@@ -30,6 +31,7 @@ module Y2Storage
   # This is a wrapper for Storage::Disk
   class Disk < Partitionable
     wrap_class Storage::Disk
+    include DiskDevice
 
     # @!method rotational?
     #   @return [Boolean] whether this is a rotational device

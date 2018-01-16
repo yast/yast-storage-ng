@@ -29,12 +29,21 @@ require "y2partitioner/widgets/overview"
 describe Y2Partitioner::Widgets::OverviewTreePager do
   before do
     devicegraph_stub(scenario)
-    subject.init
+    Yast::ProductFeatures.Import(control_file_content)
+
+    allow(Yast2::Popup).to receive(:show).and_return(:yes)
+  end
+
+  let(:control_file_content) do
+    file_path = File.join(DATA_PATH, "control_files", control_file)
+    Yast::XML.XMLToYCPFile(file_path)
   end
 
   subject { described_class.new("hostname") }
 
   let(:scenario) { "lvm-two-vgs.yml" }
+
+  let(:control_file) { "caasp.xml" }
 
   include_examples "CWM::Pager"
 
@@ -169,6 +178,64 @@ describe Y2Partitioner::Widgets::OverviewTreePager do
       it "disk pager has not Software RAID pages" do
         md_pages = disks_pages.select { |p| p.is_a?(Y2Partitioner::Widgets::Pages::MdRaid) }
         expect(md_pages).to be_empty
+      end
+    end
+  end
+
+  describe "#validate" do
+    before do
+      allow(Y2Storage::SetupChecker).to receive(:new).and_return(checker)
+      allow(checker).to receive(:valid?).and_return(valid_setup)
+
+      allow(Y2Partitioner::SetupErrorsPresenter).to receive(:new).and_return(presenter)
+      allow(presenter).to receive(:to_html).and_return("html representation")
+
+      allow(Yast2::Popup).to receive(:show).and_return(user_input)
+    end
+
+    let(:checker) { instance_double(Y2Storage::SetupChecker) }
+
+    let(:presenter) { instance_double(Y2Partitioner::SetupErrorsPresenter) }
+
+    let(:valid_setup) { nil }
+
+    let(:user_input) { nil }
+
+    context "when the current setup is not valid" do
+      let(:valid_setup) { false }
+
+      it "shows an error popup" do
+        expect(Yast2::Popup).to receive(:show)
+        subject.validate
+      end
+
+      context "and the user accepts to continue" do
+        let(:user_input) { :yes }
+
+        it "returns true" do
+          expect(subject.validate).to eq(true)
+        end
+      end
+
+      context "and the user declines to continue" do
+        let(:user_input) { :no }
+
+        it "returns false" do
+          expect(subject.validate).to eq(false)
+        end
+      end
+    end
+
+    context "when the current setup is valid" do
+      let(:valid_setup) { true }
+
+      it "does not show an error popup" do
+        expect(Yast2::Popup).to_not receive(:show)
+        subject.validate
+      end
+
+      it "returns true" do
+        expect(subject.validate).to eq(true)
       end
     end
   end

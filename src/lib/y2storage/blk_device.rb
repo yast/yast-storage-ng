@@ -23,6 +23,7 @@ require "y2storage/storage_class_wrapper"
 require "y2storage/device"
 require "y2storage/hwinfo_reader"
 require "y2storage/comparable_by_name"
+require "y2storage/match_volume_spec"
 
 module Y2Storage
   # Base class for most devices having a device name, udev path and udev ids.
@@ -33,6 +34,7 @@ module Y2Storage
       downcast_to: ["Partitionable", "Partition", "Encryption", "LvmLv"]
 
     include ComparableByName
+    include MatchVolumeSpec
 
     # @!method self.all(devicegraph)
     #   @param devicegraph [Devicegraph]
@@ -408,6 +410,20 @@ module Y2Storage
     def recoverable_size
       return DiskSize.zero unless resize_info.resize_ok?
       size - resize_info.min_size
+    end
+
+  protected
+
+    # Values for volume specification matching
+    #
+    # @see MatchVolumeSpec
+    def volume_match_values
+      {
+        mount_point:  filesystem_mountpoint,
+        size:         size,
+        fs_type:      filesystem_type,
+        partition_id: nil
+      }
     end
   end
 end

@@ -736,7 +736,7 @@ module Y2Partitioner
       end
 
       def label
-        _("File system &ID:")
+        _("Partition &ID:")
       end
 
       def items

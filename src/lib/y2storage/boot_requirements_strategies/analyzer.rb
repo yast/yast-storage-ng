@@ -1,5 +1,3 @@
-#!/usr/bin/env ruby
-#
 # encoding: utf-8
 
 # Copyright (c) [2015] SUSE LLC
@@ -32,6 +30,13 @@ module Y2Storage
     # information (regarding calculation of boot requirements) about the
     # expected final system.
     class Analyzer
+      # Devices that are already planned to be added to the starting devicegraph.
+      # @return [Array<Planned::Device>]
+      attr_reader :planned_devices
+
+      # @return [Filesystems::Base, nil] nil if there is not filesystem for root
+      attr_reader :root_filesystem
+
       # Constructor
       #
       # @param devicegraph     [Devicegraph] starting situation.
@@ -92,6 +97,22 @@ module Y2Storage
         end
       end
 
+      # Whether the root (/) filesystem is over a Software RAID
+      #
+      # @return [Boolean] true if the root filesystem is going to be in a
+      #   Software RAID. False if the root filesystem is unknown (not in the
+      #   planned devices or in the devicegraph) or is not placed over a Software
+      #   RAID.
+      def root_in_software_raid?
+        if root_planned_dev
+          root_planned_dev.is_a?(Planned::Md)
+        elsif root_filesystem
+          root_filesystem.ancestors.any? { |dev| dev.is?(:software_raid) }
+        else
+          false
+        end
+      end
+
       # Whether the root (/) filesystem is going to be in an encrypted device
       #
       # @return [Boolean] true if the root filesystem is going to be in an
@@ -142,6 +163,10 @@ module Y2Storage
       # @param path [String] mount point to check for
       # @return [Boolean]
       def free_mountpoint?(path)
+        # FIXME: This method takes into account all mount points, even for filesystems over a
+        # logical volume, software raid or a directly formatted disk. That check could produce
+        # false possitives due to the presence of a mount point is not enough
+        # (e.g., /boot/efi over a logical volume is not valid for booting).
         cleanpath = Pathname.new(path).cleanpath
         return false if planned_devices.any? do |dev|
           dev.mount_point && Pathname.new(dev.mount_point).cleanpath == cleanpath
@@ -169,10 +194,8 @@ module Y2Storage
     protected
 
       attr_reader :devicegraph
-      attr_reader :planned_devices
       attr_reader :boot_disk_name
       attr_reader :root_planned_dev
-      attr_reader :root_filesystem
 
       def boot_ptable_type
         return nil unless boot_disk
@@ -184,6 +207,9 @@ module Y2Storage
 
       # TODO: handle planned LV (not needed so far)
       def boot_disk_from_planned_dev
+        # FIXME: This method is only able to find the boot disk when the planned
+        # root is over a partition. This could not work properly in autoyast when
+        # root is planned over logical volumes or software raids.
         return nil unless root_planned_dev
         return nil unless root_planned_dev.respond_to?(:disk)
 
@@ -191,8 +217,11 @@ module Y2Storage
       end
 
       def boot_disk_from_devicegraph
+        # FIXME: In case root filesystem is over a multidevice (vg, software raid),
+        # the first disk is considered the boot disk. This could not work properly
+        # for some scenarios.
         return nil unless root_filesystem
-        root_filesystem.ancestors.find { |d| d.is?(:disk) }
+        root_filesystem.ancestors.find { |d| d.is?(:disk_device) }
       end
 
       def planned_partitions_with_id(id)

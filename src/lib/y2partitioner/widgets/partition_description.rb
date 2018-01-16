@@ -59,8 +59,8 @@ module Y2Partitioner
           device_encrypted,
           device_udev_by_path.join(Yast::HTML.Newline),
           device_udev_by_id.join(Yast::HTML.Newline),
-          # TRANSLATORS: acronym for Filesystem Identifier
-          format(_("FS ID: %s"), "TODO")
+          # TRANSLATORS: Partition Identifier, where %s is replaced by a value like Linux, swap, etc.
+          format(_("Partition ID: %s"), "TODO")
         ]
       end
     end

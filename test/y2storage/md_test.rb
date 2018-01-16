@@ -242,4 +242,30 @@ describe Y2Storage::Md do
       end
     end
   end
+
+  describe "#is?" do
+    it "returns true for values whose symbol is :md" do
+      expect(subject.is?(:md)).to eq true
+      expect(subject.is?("md")).to eq true
+    end
+
+    it "returns true for values whose symbol is :raid" do
+      expect(subject.is?(:raid)).to eq true
+      expect(subject.is?("raid")).to eq true
+    end
+
+    it "returns true for values whose symbol is :software_raid" do
+      expect(subject.is?(:software_raid)).to eq true
+      expect(subject.is?("software_raid")).to eq true
+    end
+
+    it "returns false for values whose symbol is :bios_raid" do
+      expect(subject.is?(:bios_raid)).to eq false
+      expect(subject.is?("bios_raid")).to eq false
+    end
+
+    it "returns false for different device names like :disk" do
+      expect(subject.is?(:disk)).to eq false
+    end
+  end
 end

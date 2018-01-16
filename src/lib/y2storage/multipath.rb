@@ -21,6 +21,7 @@
 
 require "y2storage/storage_class_wrapper"
 require "y2storage/partitionable"
+require "y2storage/disk_device"
 require "y2storage/multi_disk_device"
 
 module Y2Storage
@@ -29,6 +30,7 @@ module Y2Storage
   # This is a wrapper for Storage::Multipath
   class Multipath < Partitionable
     wrap_class Storage::Multipath
+    include DiskDevice
     include MultiDiskDevice
 
     # @!method rotational?

@@ -33,23 +33,30 @@ RSpec.shared_context "boot requirements" do
 
   let(:storage_arch) { instance_double("::Storage::Arch") }
   let(:devicegraph) { double("Y2Storage::Devicegraph") }
-  let(:dev_sda) { double("Y2Storage::Disk", name: "/dev/sda") }
+  let(:dev_sda) { double("Y2Storage::Disk", name: "/dev/sda", partition_table: boot_partition_table) }
   let(:dev_sdb) { double("Y2Storage::Disk", name: "/dev/sdb") }
 
   let(:boot_disk) { dev_sda }
+  let(:boot_partition_table) { instance_double(Y2Storage::PartitionTables::Base) }
+  let(:root_filesystem) { instance_double(Y2Storage::Filesystems::Base) }
+
   let(:analyzer) do
     double(
       "Y2Storage::BootRequirementsStrategies::Analyzer",
       boot_disk:               boot_disk,
+      root_filesystem:         root_filesystem,
       root_in_lvm?:            use_lvm,
+      root_in_software_raid?:  use_raid,
       encrypted_root?:         use_encryption,
       btrfs_root?:             use_btrfs,
       planned_prep_partitions: planned_prep_partitions,
-      planned_grub_partitions: planned_grub_partitions
+      planned_grub_partitions: planned_grub_partitions,
+      planned_devices:         planned_grub_partitions + planned_prep_partitions
     )
   end
 
   let(:use_lvm) { false }
+  let(:use_raid) { false }
   let(:use_encryption) { false }
   let(:use_btrfs) { true }
   let(:boot_ptable_type) { :msdos }
