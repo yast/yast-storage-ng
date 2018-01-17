@@ -259,20 +259,20 @@ module Y2Storage
 
     # Aligns the end of a region, leaving the start untouched.
     #
-    # FIXME: This is a temporary method since, in theory, libstorage-ng should
-    # provide this functionality, but it's buggy right now.
-    #
     # @param region [Region] original region to align
     # @param align_type [AlignType]
     # @return [Region] a copy of region with the same start but the end aligned
     #   according to align_type
     def align_region_end(region, align_type)
+      # Currently, there is no way to use PartitionTable#align without
+      # enforcing the alignment of the start. Despite what the ALIGN_END name
+      # may suggest, that policy alters both start and end. So the following
+      # line is not enough to implement this method.
       # partition_table.align(region, AlignPolicy::ALIGN_END, align_type)
 
-      # This whole method could be implemented just by the commented line above.
-      # But there is a bug in libstorage-ng that causes it to alter the start of
-      # the region, even with the policy ALIGN_END.
-      # So here it comes the workaround
+      # This could be turned into a simple call to PartitionTable#align in the
+      # future if a KEEP_START_ALIGN_END (or similar) policy is provided by
+      # libstorage-ng in the future.
       if region.end_aligned?(align_grain(align_type))
         Region.create(region.start, region.length, region.block_size)
       else
