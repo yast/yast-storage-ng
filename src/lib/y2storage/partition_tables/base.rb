@@ -22,6 +22,7 @@
 require "y2storage/storage_class_wrapper"
 require "y2storage/device"
 require "y2storage/partition_tables/type"
+require "y2storage/region"
 
 module Y2Storage
   module PartitionTables
@@ -90,12 +91,13 @@ module Y2Storage
       #   @return [Boolean] whether an extended partition exists in the table
       storage_forward :has_extended?, to: :has_extended
 
-      # @!method unused_partition_slots(align_policy = AlignPolicy::KEEP_END)
+      # @!method unused_partition_slots(policy = AlignPolicy::KEEP_END, align_type = AlignType::OPTIMAL)
+      #
       #   Slots that could be used to create new partitions following the
       #   given align policy.
       #
-      #   @param align_policy [AlignPolicy] policy to consider while looking for
-      #     slots
+      #   @param policy [AlignPolicy] policy to consider while looking for slots
+      #   @param align_type [AlignType] type of alignment to use
       #   @return [Array<PartitionTables::PartitionSlot>]
       storage_forward :unused_partition_slots, as: "PartitionTables::PartitionSlot"
 
@@ -145,10 +147,12 @@ module Y2Storage
       # Unused slot that contains a region
       #
       # @param region [Region]
+      # @param align_policy [AlignPolicy] policy used to detect the slot
+      # @param align_type [AlignType] type used to detect the slot
       # @return [PartitionTables::PartitionSlot, nil] nil when region is not
       #   inside to any unused slot.
-      def unused_slot_for(region)
-        unused_partition_slots.detect { |s| region.inside?(s.region) }
+      def unused_slot_for(region, align_policy: AlignPolicy::KEEP_END, align_type: AlignType::OPTIMAL)
+        unused_partition_slots(align_policy, align_type).detect { |s| region.inside?(s.region) }
       end
 
       # Whether the partition table contains the maximum number of primary partitions
@@ -224,6 +228,36 @@ module Y2Storage
       def supported_partition_ids
         PartitionId.all.find_all do |id|
           partition_id_supported?(id) && id != PartitionId::UNKNOWN
+        end
+      end
+
+      # Aligns the end of a region, leaving the start untouched.
+      #
+      # The argument max_end can be used to specify the block that limits the
+      # partition slot in which the region is located, typically the end of the
+      # disk or the start of the next already existing partition.
+      #
+      # The alignment is skipped if the region ends at the block specified by
+      # max_end, which prevents the creation of useless gaps.
+      #
+      # On the other hand, if the region ends before max_end it means that
+      # leaving some space between the region and that limit is intented, so
+      # alignment is performed to ensure that remaining space starts in an
+      # aligned block
+      #
+      # @raise [Storage::AlignError] if the region is too small to be aligned
+      #
+      # @param region [Region] original region to align
+      # @param align_type [AlignType]
+      # @param max_end [Integer, nil] see description, nil to always align
+      # @return [Region] a copy of region with the same start but the end either
+      #   equal to max_end or aligned according to align_type
+      def align_end(region, align_type = AlignType::OPTIMAL, max_end: nil)
+        if region.end == max_end
+          # Nothing to change
+          region.dup
+        else
+          align(region, AlignPolicy::KEEP_START_ALIGN_END, align_type)
         end
       end
 

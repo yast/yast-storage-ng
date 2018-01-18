@@ -15,7 +15,7 @@ module Y2Partitioner
         def initialize(controller)
           textdomain "storage"
           @controller = controller
-          @slots = controller.unused_slots
+          @slots = controller.unused_optimal_slots
         end
 
         # @macro seeAbstractWidget

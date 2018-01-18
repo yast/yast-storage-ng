@@ -157,6 +157,11 @@ module Y2Storage
       new(Storage::Region.new(start, length, block_size.to_i))
     end
 
+    # @return [Region]
+    def dup
+      self.class.create(start, length, block_size)
+    end
+
     # Whether the first block of the region is aligned according to
     # the given grain
     #
