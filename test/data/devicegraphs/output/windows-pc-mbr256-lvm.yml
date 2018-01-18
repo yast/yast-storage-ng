@@ -20,6 +20,10 @@
         id: linux
         file_system: ext4
         mount_point: "/boot"
+        fstab_options:
+          - data=ordered
+          - acl
+          - user_xattr
 
     - partition:
         size: 43009 MiB
