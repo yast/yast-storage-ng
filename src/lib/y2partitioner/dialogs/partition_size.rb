@@ -173,6 +173,7 @@ module Y2Partitioner
 
         # @macro seeAbstractWidget
         def validate
+          return true unless enabled?
           v = value
           return true unless v.nil? || v < min_size || v > max_size
 
@@ -255,6 +256,8 @@ module Y2Partitioner
 
         # @macro seeAbstractWidget
         def validate
+          return true unless enabled?
+
           start_block, end_block = query_widgets
           # starting block must be in a region,
           # ending block must be in the same region
