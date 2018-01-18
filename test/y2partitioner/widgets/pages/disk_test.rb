@@ -114,7 +114,7 @@ describe Y2Partitioner::Widgets::Pages::Disk do
       let(:widgets) { Yast::CWM.widgets_in_contents([subject]) }
 
       it "shows the description of the disk" do
-        description = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::DiskDescription) }
+        description = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::DiskDeviceDescription) }
         expect(description).to_not be_nil
       end
     end

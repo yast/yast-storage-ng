@@ -30,7 +30,7 @@ require "y2partitioner/widgets/blk_device_edit_button"
 require "y2partitioner/widgets/disk_expert_menu_button"
 require "y2partitioner/widgets/configurable_blk_devices_table"
 require "y2partitioner/widgets/disk_bar_graph"
-require "y2partitioner/widgets/disk_description"
+require "y2partitioner/widgets/disk_device_description"
 require "y2partitioner/widgets/used_devices_tab"
 
 module Y2Partitioner
@@ -137,7 +137,7 @@ module Y2Partitioner
         # @macro seeCustomWidget
         def contents
           # Page wants a WidgetTerm, not an AbstractWidget
-          @contents ||= VBox(DiskDescription.new(@disk))
+          @contents ||= VBox(DiskDeviceDescription.new(@disk))
         end
       end
 

@@ -1,3 +1,25 @@
+#!/usr/bin/env rspec
+# encoding: utf-8
+
+# Copyright (c) [2017] SUSE LLC
+#
+# All Rights Reserved.
+#
+# This program is free software; you can redistribute it and/or modify it
+# under the terms of version 2 of the GNU General Public License as published
+# by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+# more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, contact SUSE LLC.
+#
+# To contact SUSE LLC about this file by physical or electronic mail, you may
+# find current contact information at www.suse.com.
+
 require_relative "../../test_helper"
 
 require "cwm/rspec"
@@ -8,18 +30,44 @@ describe Y2Partitioner::Widgets::Pages::LvmVg do
 
   subject { described_class.new(lvm_vg, pager) }
 
-  let(:device_graph) { Y2Partitioner::DeviceGraphs.instance.current }
+  let(:current_graph) { Y2Partitioner::DeviceGraphs.instance.current }
 
-  let(:lvm_vg) { device_graph.lvm_vgs.first }
+  let(:lvm_vg) { current_graph.lvm_vgs.first }
 
   let(:pager) { double("Pager") }
 
   include_examples "CWM::Page"
 
+  describe "#contents" do
+    let(:widgets) { Yast::CWM.widgets_in_contents([subject]) }
+
+    it "shows a vg tab" do
+      expect(Y2Partitioner::Widgets::Pages::LvmVgTab).to receive(:new)
+      subject.contents
+    end
+
+    it "shows a lvs tab" do
+      expect(Y2Partitioner::Widgets::Pages::LvmLvTab).to receive(:new)
+      subject.contents
+    end
+
+    it "shows a pvs tab" do
+      expect(Y2Partitioner::Widgets::Pages::LvmPvTab).to receive(:new)
+      subject.contents
+    end
+  end
+
   describe Y2Partitioner::Widgets::Pages::LvmVgTab do
     subject { described_class.new(lvm_vg) }
 
     include_examples "CWM::Tab"
+
+    let(:widgets) { Yast::CWM.widgets_in_contents([subject]) }
+
+    it "shows the description of the vg" do
+      description = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::LvmVgDescription) }
+      expect(description).to_not be_nil
+    end
   end
 
   describe Y2Partitioner::Widgets::Pages::LvmLvTab do

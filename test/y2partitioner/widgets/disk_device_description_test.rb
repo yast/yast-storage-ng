@@ -1,7 +1,7 @@
 #!/usr/bin/env rspec
 # encoding: utf-8
 
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2018] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -23,16 +23,16 @@
 require_relative "../test_helper"
 
 require "cwm/rspec"
-require "y2partitioner/widgets/partition_description"
+require "y2partitioner/widgets/disk_device_description"
 
-describe Y2Partitioner::Widgets::PartitionDescription do
+describe Y2Partitioner::Widgets::DiskDeviceDescription do
   before { devicegraph_stub("mixed_disks.yml") }
 
   let(:current_graph) { Y2Partitioner::DeviceGraphs.instance.current }
 
-  let(:partition) { current_graph.partitions.first }
+  let(:disk) { current_graph.disks.first }
 
-  subject { described_class.new(partition) }
+  subject { described_class.new(disk) }
 
   include_examples "CWM::RichText"
 

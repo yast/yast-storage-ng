@@ -26,9 +26,11 @@ require "cwm/rspec"
 require "y2partitioner/widgets/pages"
 
 describe Y2Partitioner::Widgets::Pages::Partition do
-  before { devicegraph_stub("one-empty-disk.yml") }
+  before { devicegraph_stub("mixed_disks.yml") }
 
-  let(:partition) { instance_double(Y2Storage::Partition, sid: 1, name: "/dev/hdz1", basename: "hdz1") }
+  let(:current_graph) { Y2Partitioner::DeviceGraphs.instance.current }
+
+  let(:partition) { current_graph.partitions.first }
 
   subject { described_class.new(partition) }
 
@@ -36,6 +38,11 @@ describe Y2Partitioner::Widgets::Pages::Partition do
 
   describe "#contents" do
     let(:widgets) { Yast::CWM.widgets_in_contents([subject]) }
+
+    it "shows the description of the partition" do
+      description = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::PartitionDescription) }
+      expect(description).to_not be_nil
+    end
 
     it "shows a button for editing the partition" do
       button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::BlkDeviceEditButton) }
