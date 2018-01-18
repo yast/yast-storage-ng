@@ -154,18 +154,16 @@ module Y2Partitioner
         return "" unless device.encrypted?
 
         if Yast::UI.GetDisplayInfo["HasIconSupport"]
-          icon_path = Icons.small_icon(Icons::ENCRYPTED)
-          cell(icon(icon_path))
+          cell(small_icon(Icons::ENCRYPTED))
         else
           "E"
         end
       end
 
-      def type_value(_device)
-        # TODO: add PartitionType#to_human_string to yast2-storage-ng.
-        # TODO: also type for disks. Old one: https://github.com/yast/yast-storage/blob/master/src/modules/StorageFields.rb#L517
-        #   for disk, lets add it to partitioner, unless someone else need it
-        "TODO"
+      def type_value(device)
+        icon = type_icon(device)
+        label = type_label(device)
+        cell(icon, label)
       end
 
       def filesystem_type_value(device)
@@ -196,6 +194,96 @@ module Y2Partitioner
         return "" unless device.respond_to?(:region)
         return "" if device.region.empty?
         device.region.end
+      end
+
+      DEVICE_ICONS = {
+        disk:      Icons::HD,
+        dasd:      Icons::HD,
+        multipath: Icons::MULTIPATH,
+        partition: Icons::HD_PART,
+        raid:      Icons::RAID,
+        lvm_vg:    Icons::LVM,
+        lvm_lv:    Icons::LVM_LV
+      }
+
+      # Table icon for the device
+      #
+      # @see DEVICE_ICONS
+      #
+      # @param device [Y2Storage::BlkDevice]
+      # @return [Yast::Term] icon
+      def type_icon(device)
+        return type_icon(device.plain_blk_device) if device.is?(:lvm_pv)
+
+        type = DEVICE_ICONS.keys.find { |k| device.is?(k) }
+        icon = type.nil? ? Icons::DEFAULT_DEVICE : DEVICE_ICONS[type]
+
+        small_icon(icon)
+      end
+
+      DEVICE_LABELS = {
+        disk:          _("DISK"),
+        dasd:          _("DISK"),
+        multipath:     _("MULTIPATH"),
+        bios_raid:     _("BIOS RAID"),
+        software_raid: _("MD RAID"),
+        partition:     _("PARTITION"),
+        lvm_pv:        _("PV"),
+        lvm_vg:        _("LVM"),
+        lvm_lv:        _("LV")
+      }
+
+      # Label for the device type (e.g., LVM, MD RAID)
+      #
+      # @param device [Y2Storage::BlkDevice]
+      # @return [String]
+      def type_label(device)
+        return default_type_label(device) unless device.is_a?(Y2Storage::BlkDevice)
+
+        if device.is?(:partition)
+          partition_type_label(device)
+        else
+          blk_device_type_label(device)
+        end
+      end
+
+      # Default type label for the device
+      #
+      # @see DEVICE_LABELS
+      #
+      # @param device [Y2Storage::BlkDevice]
+      # @return [String]
+      def default_type_label(device)
+        type = DEVICE_LABELS.keys.find { |k| device.is?(k) }
+        return "" if type.nil?
+
+        DEVICE_LABELS[type]
+      end
+
+      # Type label when the device is a partition
+      #
+      # @param device [Y2Storage::Partition]
+      # @return [String]
+      def partition_type_label(device)
+        device.id.to_human_string
+      end
+
+      # Type label when the device is not a partition
+      #
+      # @param device [Y2Storage::BlkDevice]
+      # @return [String]
+      def blk_device_type_label(device)
+        data = [device.vendor, device.model].compact
+        data.empty? ? default_type_label(device) : data.join("-")
+      end
+
+      # Small icon to show in tables
+      #
+      # @param icon [String] relative path
+      # @return [Yast::Term] icon
+      def small_icon(icon)
+        icon_path = Icons.small_icon(icon)
+        icon(icon_path)
       end
     end
   end
