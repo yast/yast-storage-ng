@@ -74,7 +74,9 @@ module Y2Storage
       def propose
         raise UnexpectedCallError if proposed?
         @proposed = true
-        calculate_proposal
+        result = calculate_proposal
+        log.info("Proposed devicegraph:\n\n#{devices.to_str}\n")
+        result
       end
 
       # Checks whether the proposal has already being calculated
