@@ -85,7 +85,7 @@ module Y2Partitioner
       #
       # @return [Boolean]
       def swap_partition?
-        partition.id.is?(:swap)
+        partition.id.is?(:swap) || partition.formatted_as?(:swap)
       end
 
       # Disk size in use
@@ -314,7 +314,7 @@ module Y2Partitioner
 
         # @param v [Y2Storage::DiskSize]
         def value=(v)
-          super(v.human_floor)
+          super(v.to_human_string)
         end
       end
     end
