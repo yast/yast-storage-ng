@@ -55,12 +55,12 @@ The specs are based on current version of expert partitioner for TW. The goal is
         * device path
         * device id
       * where 'Hard Disk' section contains the following disk info
-        * *(pending) vendor*
-        * *(pending) model*
-        * *(pending) number of cylinders*
-        * *(pending) cylinder size*
-        * *(pending) bus*
-        * *(pending) sector size*
+        * vendor
+        * model
+        * number of cylinders (replaced by number of sectors)
+        * cylinder size (not apply anymore)
+        * bus
+        * sector size
         * disk label
     * *(pending) shows a button for 'Health Test (SMART)'*
   * and tab 'Partitions' is selected
