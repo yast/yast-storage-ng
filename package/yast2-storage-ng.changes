@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Thu Jan 19 12:10:29 UTC 2018 - jlopez@suse.com
+
+- Fix TODOs labels in partitioner (bsc#1058652).
+- 4.0.73
+
+-------------------------------------------------------------------
 Fri Jan 19 11:31:14 UTC 2018 - jreidinger@suse.com
 
 - Fix subtracting arrays of devices (fixes multipath wires
