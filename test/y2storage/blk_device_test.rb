@@ -608,6 +608,118 @@ describe Y2Storage::BlkDevice do
     end
   end
 
+  describe "#vendor" do
+    let(:device_name) { "/dev/sda" }
+
+    before do
+      allow(Y2Storage::HWInfoReader.instance).to receive(:for_device)
+        .with(device.name)
+        .and_return(hwinfo)
+    end
+
+    context "when hardware info is available" do
+      let(:hwinfo) { OpenStruct.new(info) }
+
+      context "and there is info about the vendor" do
+        let(:info) { { vendor: vendor_name } }
+
+        let(:vendor_name) { "vendor-name" }
+
+        it "returns the vendor name" do
+          expect(device.vendor).to eq(vendor_name)
+        end
+      end
+
+      context "and there is no info about the vendor" do
+        let(:info) { { bus: "" } }
+
+        it "returns nil" do
+          expect(device.vendor).to be_nil
+        end
+      end
+    end
+
+    context "when hardware info is not available" do
+      let(:hwinfo) { nil }
+
+      it "returns nil" do
+        expect(device.vendor).to be_nil
+      end
+    end
+  end
+
+  describe "#model" do
+    let(:device_name) { "/dev/sda" }
+
+    before do
+      allow(Y2Storage::HWInfoReader.instance).to receive(:for_device)
+        .with(device.name)
+        .and_return(hwinfo)
+    end
+
+    context "when hardware info is available" do
+      let(:hwinfo) { OpenStruct.new(info) }
+
+      context "and there is info about the model" do
+        let(:info) { { model: device_model } }
+
+        let(:device_model) { "device-model" }
+
+        it "returns the device model" do
+          expect(device.model).to eq(device_model)
+        end
+      end
+
+      context "and there is no info about the model" do
+        let(:info) { { bus: "" } }
+
+        it "returns nil" do
+          expect(device.model).to be_nil
+        end
+      end
+    end
+  end
+
+  describe "#bus" do
+    let(:device_name) { "/dev/sda" }
+
+    before do
+      allow(Y2Storage::HWInfoReader.instance).to receive(:for_device)
+        .with(device.name)
+        .and_return(hwinfo)
+    end
+
+    context "when hardware info is available" do
+      let(:hwinfo) { OpenStruct.new(info) }
+
+      context "and there is info about the bus" do
+        let(:info) { { bus: device_bus } }
+
+        let(:device_bus) { "device-bus" }
+
+        it "returns the device bus" do
+          expect(device.bus).to eq(device_bus)
+        end
+      end
+
+      context "and there is no info about the bus" do
+        let(:info) { { model: "device-model" } }
+
+        it "returns nil" do
+          expect(device.bus).to be_nil
+        end
+      end
+    end
+
+    context "when hardware info is not available" do
+      let(:hwinfo) { nil }
+
+      it "returns nil" do
+        expect(device.bus).to be_nil
+      end
+    end
+  end
+
   describe ".sorted_by_name" do
     let(:scenario) { "sorting/disks_and_dasds1" }
 
