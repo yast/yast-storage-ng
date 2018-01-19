@@ -1,7 +1,7 @@
 #!/usr/bin/env rspec
 # encoding: utf-8
 
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2018] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -20,12 +20,12 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require_relative "../../test_helper"
+require_relative "../test_helper"
 
 require "cwm/rspec"
-require "y2partitioner/widgets/pages/lvm_lv"
+require "y2partitioner/widgets/lvm_lv_description"
 
-describe Y2Partitioner::Widgets::Pages::LvmLv do
+describe Y2Partitioner::Widgets::LvmLvDescription do
   before { devicegraph_stub("lvm-two-vgs.yml") }
 
   let(:current_graph) { Y2Partitioner::DeviceGraphs.instance.current }
@@ -34,29 +34,11 @@ describe Y2Partitioner::Widgets::Pages::LvmLv do
 
   subject { described_class.new(lvm_lv) }
 
-  include_examples "CWM::Page"
+  include_examples "CWM::RichText"
 
-  describe "#contents" do
-    let(:widgets) { Yast::CWM.widgets_in_contents([subject]) }
-
-    it "shows the description of the lv" do
-      description = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::LvmLvDescription) }
-      expect(description).to_not be_nil
-    end
-
-    it "shows a button to edit a vg or lv" do
-      button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::LvmEditButton) }
-      expect(button).to_not be_nil
-    end
-
-    it "shows a resize button" do
-      button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::DeviceResizeButton) }
-      expect(button).to_not be_nil
-    end
-
-    it "shows a delete button" do
-      button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::DeviceDeleteButton) }
-      expect(button).to_not be_nil
+  describe "#init" do
+    it "runs without failure" do
+      expect { subject.init }.to_not raise_error
     end
   end
 end

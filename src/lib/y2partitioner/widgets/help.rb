@@ -25,6 +25,8 @@ module Y2Partitioner
         cyl_size:         N_("<b>Cylinder Size</b> shows the size of the\ncylinders " \
           "of the hard disk."),
 
+        sectors:          N_("<b>Number of Sectors</b> shows how many sectors the hard disk has."),
+
         sector_size:      N_("<b>Sector Size</b> shows the size of the\nsectors of the hard disk."),
 
         device:           N_("<b>Device</b> shows the kernel name of the\ndevice."),
@@ -49,7 +51,7 @@ module Y2Partitioner
         format:           N_("<b>Format</b> shows some flags: <tt>F</tt>\nmeans the device " \
               "is selected to be formatted."),
 
-        fs_id:            N_("<b>FS ID</b> shows the file system id."),
+        partition_id:     N_("<b>Partition ID</b> shows the partition id."),
 
         fs_type:          N_("<b>FS Type</b> shows the file system type."),
 

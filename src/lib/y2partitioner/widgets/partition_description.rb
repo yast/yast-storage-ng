@@ -1,67 +1,57 @@
-require "cwm/widget"
+# encoding: utf-8
 
-Yast.import "HTML"
+# Copyright (c) [2017] SUSE LLC
+#
+# All Rights Reserved.
+#
+# This program is free software; you can redistribute it and/or modify it
+# under the terms of version 2 of the GNU General Public License as published
+# by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+# more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, contact SUSE LLC.
+#
+# To contact SUSE LLC about this file by physical or electronic mail, you may
+# find current contact information at www.suse.com.
 
-require "y2partitioner/widgets/blk_device_attributes"
-require "y2partitioner/widgets/help"
+require "y2partitioner/widgets/blk_device_description"
 
 module Y2Partitioner
-  # CWM widgets for partitioner
   module Widgets
-    # Widget that is richtext filled with description of partition passed in constructor
-    class PartitionDescription < CWM::RichText
-      include Yast::I18n
-      include Help
-
-      # @param partition [Y2Storage::Partition] to describe
-      def initialize(partition)
-        textdomain "storage"
-        @partition = partition
+    # Richtext filled with the description of a partition
+    #
+    # The partition is given during initialization (see {BlkDeviceDescription}).
+    class PartitionDescription < BlkDeviceDescription
+      # Attributes for describing a partition
+      #
+      # @note Same description than a general block device, but including information
+      #   about the partition id.
+      #
+      # @return [Array<String>]
+      def blk_device_attributes
+        super << partition_id
       end
 
-      # inits widget content
-      def init
-        self.value = partition_text
+      # Information about the partition id
+      #
+      # @return [String]
+      def partition_id
+        # TRANSLATORS: Partition Identifier, where %s is replaced by the partition id (e.g., SWAP)
+        format(_("Partition ID: %s"), device.id.to_human_string)
       end
 
-      HELP_FIELDS = [:device, :size, :encrypted, :udev_path, :udev_id, :fs_id, :fs_type,
-                     :mount_point, :label].freeze
-      # @macro seeAbstractWidget
-      def help
-        header = _(
-          "<p>This view shows detailed information about the\nselected partition.</p>" \
-          "<p>The overview contains:</p>" \
-        )
-        fields = HELP_FIELDS.map { |f| helptext_for(f) }.join("\n")
-        header + fields
-      end
-
-    private
-
-      attr_reader :partition
-      alias_method :blk_device, :partition
-
-      include BlkDeviceAttributes
-
-      def partition_text
-        # TODO: consider using e.g. erb for this kind of output
-        # TRANSLATORS: heading for section about device
-        output = Yast::HTML.Heading(_("Device:"))
-        output << Yast::HTML.List(device_attributes_list)
-        # TRANSLATORS: heading for section about Filesystem on device
-        output << fs_text
-      end
-
-      def device_attributes_list
-        [
-          device_name,
-          device_size,
-          device_encrypted,
-          device_udev_by_path.join(Yast::HTML.Newline),
-          device_udev_by_id.join(Yast::HTML.Newline),
-          # TRANSLATORS: Partition Identifier, where %s is replaced by a value like Linux, swap, etc.
-          format(_("Partition ID: %s"), "TODO")
-        ]
+      # Help fields for a partition
+      #
+      # @note Same fields than a general block device, but including the partition id.
+      #
+      # @return [Array<Symbol>]
+      def blk_device_help_fields
+        super << :partition_id
       end
     end
   end

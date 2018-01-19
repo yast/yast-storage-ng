@@ -400,6 +400,36 @@ module Y2Storage
       Y2Storage::HWInfoReader.instance.for_device(name)
     end
 
+    # Device vendor
+    #
+    # @see #hwinfo
+    #
+    # @return [String, nil] nil if vendor is unknown
+    def vendor
+      return nil if hwinfo.nil?
+      hwinfo.vendor
+    end
+
+    # Device model
+    #
+    # @see #hwinfo
+    #
+    # @return [String, nil] nil if model is unknown
+    def model
+      return nil if hwinfo.nil?
+      hwinfo.model
+    end
+
+    # Device bus (IDE, SATA, etc)
+    #
+    # @see #hwinfo
+    #
+    # @return [String, nil] nil if bus is unknown
+    def bus
+      return nil if hwinfo.nil?
+      hwinfo.bus
+    end
+
     # Size of the space that could be theoretically reclaimed by shrinking the
     # device
     #

@@ -23,21 +23,35 @@ require "yast/i18n"
 
 module Y2Partitioner
   module Widgets
-    # shared helpers to display info about Y2Storage::LvmLv attributes
+    # Shared helpers to display information about logical volume attributes
+    #
+    # Requirements:
+    #   #lvm_lv [Y2Storage::LvmLv] a logical volume instance.
     module LvmLvAttributes
       extend Yast::I18n
 
+      # Sets textdomain
       def included(_target)
         textdomain "storage"
       end
 
+      # Information about stripes of the logical volume
+      #
+      # @return [String]
+      def device_stripes
+        # TRANSLATORS: logical volume stripes information, where %s is replaces by
+        # the stripes info
+        format(_("Stripes: %s"), stripes_info(lvm_lv))
+      end
+
+      # @return [String]
       def stripes_info(lvm_lv)
         if lvm_lv.stripes <= 1
           lvm_lv.stripes.to_i
         else
           format(
-            # TRANSLATORS: first %s is number of LVM stripes
-            # and the second one is for size of stripe
+            # TRANSLATORS: first %s is the number of LVM stripes and the second one is
+            # the stripe size
             _("%s (%s)"),
             lvm_lv.stripes.to_s,
             lvm_lv.stripes_size.to_human_string

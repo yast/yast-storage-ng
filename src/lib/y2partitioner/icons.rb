@@ -7,8 +7,10 @@ module Y2Partitioner
   module Icons
     # icon
     ALL = "yast-disk.png".freeze
+
     # icon
     HD = "yast-disk.png".freeze
+
     # icon
     HD_PART = "yast-partitioning.png".freeze
 
@@ -25,6 +27,9 @@ module Y2Partitioner
 
     # icon
     DM = "yast-device-mapper.png".freeze
+
+    # icon
+    MULTIPATH = DM
 
     # icon
     NFS = "yast-nfs.png".freeze
@@ -49,6 +54,9 @@ module Y2Partitioner
 
     # icon
     ENCRYPTED = "yast-encrypted.png".freeze
+
+    # Default device icon
+    DEFAULT_DEVICE = "yast-hdd-controller-kernel-module.png".freeze
 
     # path to small icons, fits nicely in table
     SMALL_ICONS_PATH = (Yast::Directory.icondir + "22x22/apps/").freeze

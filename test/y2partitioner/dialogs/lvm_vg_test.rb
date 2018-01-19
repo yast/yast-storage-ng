@@ -269,7 +269,7 @@ describe Y2Partitioner::Dialogs::LvmVg do
     end
 
     def row_match?(row, regexp)
-      row.any? { |column| column.match?(regexp) }
+      row.any? { |column| column.respond_to?(:match?) && column.match?(regexp) }
     end
 
     def rows_match?(rows, *args)

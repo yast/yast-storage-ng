@@ -26,15 +26,31 @@ require "cwm/rspec"
 require "y2partitioner/widgets/pages"
 
 describe Y2Partitioner::Widgets::Pages::MdRaid do
-  before { devicegraph_stub("one-empty-disk.yml") }
+  before { devicegraph_stub("md_raid.xml") }
+
+  let(:current_graph) { Y2Partitioner::DeviceGraphs.instance.current }
 
   let(:pager) { double("Pager") }
 
-  let(:md) { instance_double(Y2Storage::Md, sid: 1, name: "mymd", basename: "md", devices: []) }
+  let(:md) { current_graph.md_raids.first }
 
   subject { described_class.new(md, pager) }
 
   include_examples "CWM::Page"
+
+  describe "#contents" do
+    let(:widgets) { Yast::CWM.widgets_in_contents([subject]) }
+
+    it "shows a MD tab" do
+      expect(Y2Partitioner::Widgets::Pages::MdTab).to receive(:new)
+      subject.contents
+    end
+
+    it "shows a used devices tab" do
+      expect(Y2Partitioner::Widgets::UsedDevicesTab).to receive(:new)
+      subject.contents
+    end
+  end
 
   describe Y2Partitioner::Widgets::Pages::MdTab do
     subject { described_class.new(md) }
@@ -43,6 +59,11 @@ describe Y2Partitioner::Widgets::Pages::MdRaid do
 
     describe "#contents" do
       let(:widgets) { Yast::CWM.widgets_in_contents([subject]) }
+
+      it "shows the description of the MD RAID" do
+        description = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::MdDescription) }
+        expect(description).to_not be_nil
+      end
 
       it "shows a button to edit the raid" do
         button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::BlkDeviceEditButton) }
