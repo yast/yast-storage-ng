@@ -43,8 +43,8 @@ module Y2Storage
     #  @note devices are equal if they have the same {#sid storage id}.
     #  @see sid
     #
-    #  @param device [device]
-    #  @return [boolean] false if compared to different class
+    #  @param other [Device]
+    #  @return [Boolean] false if compared to different class
     def ==(other)
       return false if self.class != other.class
 
@@ -54,8 +54,8 @@ module Y2Storage
     #  compare two devices.
     #  @see ==
     #
-    #  @param device [device]
-    #  @return [boolean] true if compared to different class
+    #  @param other [Device]
+    #  @return [Boolean] true if compared to different class
     def !=(other)
       !(self == other)
     end
