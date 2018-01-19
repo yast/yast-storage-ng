@@ -62,8 +62,9 @@ module Y2Storage
 
     alias_method :eql?, :==
 
-    # redefine hash method to return same result for same devices indenpendently
-    # found
+    # redefine hash method to return same result for same devices independently
+    # found. It is needed e.g. for array subtraction in ruby2.5
+    # see (bsc#1076766)
     def hash
       sid.hash
     end
