@@ -124,8 +124,8 @@ module Y2Storage
       #   Aligns the region according to align policy and align type.
       #
       #   @param region [Region] region to align
-      #   @param align_policy [AlignPolicy] policy to consider while aligning
-      #   @param align_type [AlignType]
+      #   @param policy [AlignPolicy] policy to consider while aligning
+      #   @param type [AlignType]
       #
       #   @return [Region] always returns a new object
       storage_forward :align, as: "Region"
