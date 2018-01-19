@@ -224,7 +224,7 @@ module Y2Partitioner
         #
         # @return [Y2Partition::DiskSize]
         def min_size
-          resize_info.min_size
+          [partition.aligned_min_size, partition.size].min
         end
 
         # Max possible size

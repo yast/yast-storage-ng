@@ -178,8 +178,16 @@ module Y2Storage
     # @param grain [DiskSize]
     # @return [Boolean]
     def end_aligned?(grain)
-      overhead = (block_size * self.end + block_size) % grain
-      overhead.zero?
+      end_overhead(grain).zero?
+    end
+
+    # Distance between the end of the region and the latest aligned block,
+    # according to the given grain. Zero if the end of the block is aligned.
+    #
+    # @param grain [DiskSize]
+    # @return [DiskSize]
+    def end_overhead(grain)
+      (block_size * self.end + block_size) % grain
     end
   end
 end
