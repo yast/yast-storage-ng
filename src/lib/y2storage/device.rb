@@ -36,15 +36,32 @@ module Y2Storage
     wrap_class Storage::Device,
       downcast_to: ["BlkDevice", "Mountable", "PartitionTables::Base", "LvmPv", "LvmVg"]
 
-    # @!method ==(device)
-    #   Compare two devices.
-    #   @note Devices are equal if they have the same {#sid storage id}.
-    #   @see sid
+
+    storage_forward :storage_eql, to: :==
+    protected :storage_eql
+
+    #  compare two devices.
+    #  @note devices are equal if they have the same {#sid storage id}.
+    #  @see sid
     #
-    #   @param device [Device]
-    #   @return [Boolean]
-    storage_forward :==
-    storage_forward :!=
+    #  @param device [device]
+    #  @return [boolean] false if compared to different class
+    def ==(other)
+      return false if self.class != other.class
+
+      self.storage_eql(other)
+    end
+
+    #  compare two devices.
+    #  @see ==
+    #
+    #  @param device [device]
+    #  @return [boolean] true if compared to different class
+    def !=(other)
+      !(self == other)
+    end
+
+    alias_method :eql?, :==
 
     # @!method sid
     #   @note This value is unique by device.
