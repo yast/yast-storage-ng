@@ -159,24 +159,30 @@ module Y2Storage
     # Resizes the partition by moving its end, taking alignment and resizing
     # limits into account.
     #
-    # This method never moves the partition start. If possible, the new end
-    # will always be aligned.
-    #
-    # The new end will always be within the min and max provided by
-    # #{#resize_info}, even if the requested size is bigger or smaller than
-    # those limits or if that means giving up on alignment.
+    # This method never moves the partition start.
     #
     # It does nothing if resizing is not possible (see {ResizeInfo#resize_ok?}).
     #
+    # If the requested size is greater or equal than the max provided by
+    # {#resize_info}, the end will be adjusted to reach exactly that max size.
+    # See {PartitionTables::Base#align_end} for the rationale.
+    #
+    # In any other case, the new end will always be within the min and max
+    # provided by #{#resize_info} (even if the requested size is smaller than
+    # that min). The end will be aligned according to align_type if possible.
+    #
     # @param new_size [DiskSize] temptative new size of the partition, take into
     #   account that the result may differ a bit due to alignment or limits
-    # @param align_type [AlignType] type of alignment
+    # @param align_type [AlignType, nil] type of alignment. Nil to avoid alignment.
     def resize(new_size, align_type: AlignType::OPTIMAL)
       log.info "Trying to resize #{name} (#{size}) to #{new_size} (align: #{align_type})"
       return unless can_resize?
 
+      initial_region = region.dup
       max = resize_info.max_size
-      min = resize_info.min_size
+      min = align_type.nil? ? resize_info.min_size : aligned_min_size(align_type)
+      min = [min, size].min
+
       self.size =
         if new_size > max
           max
@@ -187,10 +193,8 @@ module Y2Storage
         end
       log.info "Partition #{name} size initially set to #{size}"
 
-      # NOTE: maybe it also makes sense to skip aligning if the new region ends
-      # at the end of the disk
       return if align_type.nil?
-      self.region = aligned_region(align_type)
+      self.region = aligned_region(align_type, initial_region)
       log.info "Partition #{name} finally adjusted to #{size}"
     end
 
@@ -224,6 +228,22 @@ module Y2Storage
       self.id = fallback_id
     end
 
+    # Minimal size the partition could have while keeping its end aligned,
+    # according to {#resize_info} and {#align_grain}
+    #
+    # @param align_type [AlignType, nil] see #align_grain
+    def aligned_min_size(align_type = nil)
+      min = resize_info.min_size
+
+      length = min.to_i / region.block_size.to_i
+      min_region = Region.create(region.start, length, region.block_size)
+      grain = align_grain(align_type)
+      overhead = min_region.end_overhead(grain)
+
+      min += grain - overhead unless overhead.zero?
+      min
+    end
+
   protected
 
     # Values for volume specification matching
@@ -238,68 +258,25 @@ module Y2Storage
     end
 
     # Region resulting from aligning and applying limits to the current
-    # partition region.
-    #
-    # It may be the original region if a new region couldn't be calculated (i.e.
-    # it's not possible to honor alignment and limits at the same time).
-    #
-    # @see #resize
+    # partition region during the {#resize} operation.
     #
     # @param align_type [AlignType] type of alignment
-    def aligned_region(align_type)
-      new_region = align_region_end(region, align_type)
-      fix_region_end(new_region, align_type)
+    # @param fallback [Region] region to return if aligning is not possible
+    # @return [Region]
+    def aligned_region(align_type, fallback)
+      max_length = resize_info.max_size.to_i / region.block_size.to_i
+      max_end = region.start + max_length - 1
+      new_region =
+        begin
+          partition_table.align_end(region, align_type, max_end: max_end)
+        rescue Storage::AlignError
+          nil
+        end
 
-      if new_region.size > resize_info.max_size || new_region.size < resize_info.min_size
-        region
+      if new_region.nil? || new_region.size < resize_info.min_size
+        fallback
       else
         new_region
-      end
-    end
-
-    # Aligns the end of a region, leaving the start untouched.
-    #
-    # FIXME: This is a temporary method since, in theory, libstorage-ng should
-    # provide this functionality, but it's buggy right now.
-    #
-    # @param region [Region] original region to align
-    # @param align_type [AlignType]
-    # @return [Region] a copy of region with the same start but the end aligned
-    #   according to align_type
-    def align_region_end(region, align_type)
-      # partition_table.align(region, AlignPolicy::ALIGN_END, align_type)
-
-      # This whole method could be implemented just by the commented line above.
-      # But there is a bug in libstorage-ng that causes it to alter the start of
-      # the region, even with the policy ALIGN_END.
-      # So here it comes the workaround
-      if region.end_aligned?(align_grain(align_type))
-        Region.create(region.start, region.length, region.block_size)
-      else
-        region_end = partition_table.align(region, AlignPolicy::ALIGN_END, align_type).end
-        Region.create(region.start, region_end - region.start + 1, region.block_size)
-      end
-    end
-
-    # Ensures the end of the given region is within the resizing limits of the
-    # partition and keeps the same alignment.
-    #
-    # @note This modifies the region parameter
-    #
-    # @param region [Region] region to adjust, can be modified
-    # @param align_type [AlignType]
-    def fix_region_end(region, align_type)
-      block_size = region.block_size.to_i
-      length     = region.length
-
-      min_blks   = resize_info.min_size.to_i / block_size
-      max_blks   = resize_info.max_size.to_i / block_size
-      grain_blks = align_grain(align_type).to_i / block_size
-
-      if length < min_blks
-        region.adjust_length(grain_blks * ((min_blks.to_f - length) / grain_blks).ceil)
-      elsif length > max_blks
-        region.adjust_length(grain_blks * ((max_blks.to_f - length) / grain_blks).floor)
       end
     end
   end

@@ -85,7 +85,7 @@ module Y2Partitioner
       #
       # @return [Boolean]
       def swap_partition?
-        partition.id.is?(:swap)
+        partition.id.is?(:swap) || partition.formatted_as?(:swap)
       end
 
       # Disk size in use
@@ -224,7 +224,7 @@ module Y2Partitioner
         #
         # @return [Y2Partition::DiskSize]
         def min_size
-          resize_info.min_size
+          [partition.aligned_min_size, partition.size].min
         end
 
         # Max possible size
@@ -314,7 +314,7 @@ module Y2Partitioner
 
         # @param v [Y2Storage::DiskSize]
         def value=(v)
-          super(v.human_floor)
+          super(v.to_human_string)
         end
       end
     end

@@ -46,17 +46,17 @@ describe Y2Partitioner::Actions::Controllers::Partition do
     end
   end
 
-  describe "#unused_slots" do
+  describe "#unused_optimal_slots" do
     let(:disk_name) { "/dev/sdb" }
 
     it "returns a list of PartitionSlot" do
-      slots = subject.unused_slots
+      slots = subject.unused_optimal_slots
       expect(slots).to be_a(Array)
       expect(slots).to all(be_a(Y2Storage::PartitionTables::PartitionSlot))
     end
 
-    it "returns the unused slots for the currently editing disk" do
-      expect(subject.unused_slots.inspect)
+    it "returns the unused optimally aligned slots for the currently editing disk" do
+      expect(subject.unused_optimal_slots.inspect)
         .to eq(subject.disk.partition_table.unused_partition_slots.inspect)
     end
   end
@@ -79,6 +79,18 @@ describe Y2Partitioner::Actions::Controllers::Partition do
       expect(subject.partition).to be_nil
       subject.create_partition
       expect(subject.partition).to eq(subject.disk.partitions.first)
+    end
+
+    describe "alignment" do
+      let(:scenario) { "dasd1.xml" }
+      let(:disk_name) { "/dev/dasda" }
+
+      before do
+        allow(subject).to receive(:region).and_return(subject.unused_slots.first.region)
+      end
+
+      # TODO: Test new arguments
+      # End if disk in DASD? end of disk in GPT?
     end
   end
 
@@ -244,7 +256,7 @@ describe Y2Partitioner::Actions::Controllers::Partition do
     let(:disk_name) { "/dev/sda" }
 
     before do
-      allow(subject).to receive(:unused_slots).and_return(slots)
+      allow(subject).to receive(:unused_optimal_slots).and_return(slots)
     end
 
     context "when there is not free space in the currently editing disk" do

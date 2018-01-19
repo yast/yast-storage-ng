@@ -24,6 +24,15 @@ require "y2storage/storage_enum_wrapper"
 module Y2Storage
   # Class to represent all the possible align policies implemented by libstorage
   #
+  #   * AlignPolicy::ALIGN_START_AND_END to align both start and end
+  #   * AlignPolicy::ALIGN_END is a deprecated equivalent to ALIGN_START_AND_END
+  #   * AlignPolicy::ALIGN_START_KEEP_END to align the start and keep the end
+  #   * AlignPolicy::KEEP_END is a deprecated equivalent to ALIGN_START_KEEP_END
+  #   * AlignPolicy::ALIGN_START_KEEP_SIZE to align the start and keep the exact size
+  #   * AlignPolicy::KEEP_SIZE is a deprecated equivalent to ALIGN_START_KEEP_SIZE
+  #   * AlignPolicy::KEEP_START_ALIGN_END to align only the end, leaving the
+  #     start untouched
+  #
   # This is a wrapper for the Storage::AlignPolicy enum
   class AlignPolicy
     include StorageEnumWrapper

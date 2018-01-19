@@ -20,9 +20,11 @@ module Y2Partitioner
         textdomain "storage"
         @disk_name = controller.disk_name
         @controller = controller
+        # FIXME: the available regions should be filtered based on controller.type
         @regions = controller.unused_slots.map(&:region)
+        @optimal_regions = controller.unused_optimal_slots.map(&:region)
 
-        raise ArgumentError, "No region to make a partition in" if @regions.empty?
+        raise ArgumentError, "No region to make a partition in" if @optimal_regions.empty?
       end
 
       # @macro seeDialog
@@ -32,7 +34,7 @@ module Y2Partitioner
 
       # @macro seeDialog
       def contents
-        HVSquash(SizeWidget.new(@controller, @regions))
+        HVSquash(SizeWidget.new(@controller, @regions, @optimal_regions))
       end
 
       # return finish for extended partition, as it can set only type and its size
@@ -49,11 +51,15 @@ module Y2Partitioner
         #   a controller collecting data for a partition to be created
         # @param regions [Array<Y2Storage::Region>]
         #   regions available to create a partition in
-        def initialize(controller, regions)
+        # @param optimal_regions [Array<Y2Storage::Region>]
+        #   regions with an optimally aligned start available to create
+        #   a partition in
+        def initialize(controller, regions, optimal_regions)
           textdomain "storage"
           @controller = controller
           @regions = regions
-          @largest_region = @regions.max_by(&:size)
+          @optimal_regions = optimal_regions
+          @largest_region = @optimal_regions.max_by(&:size)
         end
 
         # @macro seeAbstractWidget
@@ -74,8 +80,8 @@ module Y2Partitioner
         def widgets
           @widgets ||= [
             MaxSizeDummy.new(@largest_region),
-            CustomSizeInput.new(@controller, @regions),
-            CustomRegion.new(@controller, @regions)
+            CustomSizeInput.new(@controller, @optimal_regions),
+            CustomRegion.new(@controller, @regions, @largest_region)
           ]
         end
 
@@ -92,6 +98,21 @@ module Y2Partitioner
           w.store
           @controller.region = w.region
           @controller.size_choice = value
+        end
+
+        # @macro seeAbstractWidget
+        def help
+          # helptext
+          _(
+            "<p>Choose the size for the new partition.</p>\n" \
+            "<p>If a size is specified (any of the two first options in the form),\n" \
+            "the start and end of the partition will be aligned to ensure optimal\n" \
+            "performance and to minimize gaps. That may result in a slightly\n" \
+            "smaller partition.</p>\n" \
+            "<p>If a custom region is specified, the start and end will be honored\n" \
+            "as closely as possible, with no performance optimizations. This is the\n" \
+            "best option to create very small partitions.</p>"
+          )
         end
       end
 
@@ -125,7 +146,7 @@ module Y2Partitioner
           @regions = regions
           largest_region = @regions.max_by(&:size)
           @max_size = largest_region.size
-          @min_size = largest_region.block_size
+          @min_size = controller.optimal_grain
         end
 
         # Forward to controller
@@ -173,6 +194,7 @@ module Y2Partitioner
 
         # @macro seeAbstractWidget
         def validate
+          return true unless enabled?
           v = value
           return true unless v.nil? || v < min_size || v > max_size
 
@@ -211,11 +233,14 @@ module Y2Partitioner
         #   a controller collecting data for a partition to be created
         # @param regions [Array<Y2Storage::Region>]
         #   regions available to create a partition in
-        def initialize(controller, regions)
+        # @param default_region [Y2Storage::Region]
+        #   region suggested initially if there is none, used to suggest an
+        #   optimally aligned region (i.e. one not included in regions)
+        def initialize(controller, regions, default_region)
           textdomain "storage"
           @controller = controller
           @regions = regions
-          @region = @controller.region || @regions.max_by(&:size)
+          @region = @controller.region || default_region
         end
 
         # @macro seeCustomWidget
@@ -255,14 +280,14 @@ module Y2Partitioner
 
         # @macro seeAbstractWidget
         def validate
+          return true unless enabled?
+
           start_block, end_block = query_widgets
-          # starting block must be in a region,
-          # ending block must be in the same region
-          parent = @regions.find { |r| r.cover?(start_block) }
-          return true if parent && parent.cover?(end_block)
-          # TODO: a better description why
-          # error popup
-          Yast::Popup.Error(_("The region entered is invalid."))
+          error = @controller.error_for_custom_region(start_block, end_block)
+
+          return true unless error
+
+          Yast::Popup.Error(error)
           Yast::UI.SetFocus(Id(:start_block))
           false
         end
