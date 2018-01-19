@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Fri Jan 19 09:41:52 UTC 2018 - ancor@suse.com
+
+- Correctly open the expert partitioner when called from the
+  Kubic/CaaSP summary screen (bsc#1076732)
+- 4.0.70
+
+-------------------------------------------------------------------
 Mon Jan 15 14:22:32 UTC 2018 - jlopez@suse.com
 
 - Added sanity checks for partitioning setup.
