@@ -129,7 +129,7 @@ module Y2Partitioner
       # @return [String]
       def device_sectors
         # TRANSLATORS: Number of sectors in the device, where %s is replaced by a number
-        format(_("Number of Sectors: %s"), blk_device.region.length)
+        format(_("Number of Sectors: %i"), blk_device.region.length)
       end
 
       # Information about the device sector size

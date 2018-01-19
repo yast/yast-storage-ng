@@ -222,15 +222,14 @@ module Y2Partitioner
       end
 
       DEVICE_LABELS = {
-        disk:          _("DISK"),
-        dasd:          _("DISK"),
-        multipath:     _("MULTIPATH"),
-        bios_raid:     _("BIOS RAID"),
-        software_raid: _("MD RAID"),
-        partition:     _("PARTITION"),
-        lvm_pv:        _("PV"),
-        lvm_vg:        _("LVM"),
-        lvm_lv:        _("LV")
+        disk:          N_("Disk"),
+        dasd:          N_("Disk"),
+        multipath:     N_("Multipath"),
+        bios_raid:     N_("BIOS RAID"),
+        software_raid: N_("MD RAID"),
+        lvm_pv:        N_("PV"),
+        lvm_vg:        N_("LVM"),
+        lvm_lv:        N_("LV")
       }
 
       # Label for the device type (e.g., LVM, MD RAID)
@@ -257,7 +256,7 @@ module Y2Partitioner
         type = DEVICE_LABELS.keys.find { |k| device.is?(k) }
         return "" if type.nil?
 
-        DEVICE_LABELS[type]
+        _(DEVICE_LABELS[type])
       end
 
       # Type label when the device is a partition

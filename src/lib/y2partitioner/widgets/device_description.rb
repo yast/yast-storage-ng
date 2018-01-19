@@ -63,7 +63,7 @@ module Y2Partitioner
       # @return [String]
       def help_header
         _(
-          "<p>This view shows detailed information about the\nselected device.</p>" \
+          "<p>This view shows detailed information about the selected device.</p>\n" \
           "<p>The overview contains:</p>"
         )
       end
