@@ -243,6 +243,20 @@ describe Y2Storage::Partition do
       end
     end
 
+    RSpec.shared_examples "keep original size" do
+      it "does not modify the partition" do
+        initial_size = partition.size
+        initial_end = partition.end
+        initial_start = partition.start
+
+        partition.resize(new_size, align_type: align_type)
+
+        expect(partition.size).to eq initial_size
+        expect(partition.end).to eq initial_end
+        expect(partition.start).to eq initial_start
+      end
+    end
+
     # A couple of shortcuts
     let(:optimal) { Y2Storage::AlignType::OPTIMAL }
     let(:required) { Y2Storage::AlignType::REQUIRED }
@@ -257,7 +271,6 @@ describe Y2Storage::Partition do
         include_examples "start not modified"
       end
 
-      # TODO: there is a bug in libstorage-ng
       context "and align_type is set to OPTIMAL" do
         let(:align_type) { optimal }
 
@@ -365,12 +378,9 @@ describe Y2Storage::Partition do
         let(:align_type) { optimal }
 
         context "and is possible to align whithin the resizing limits (min & max)" do
-          it "resizes the partition to the maximum aligned size" do
+          it "sets the size of the partition to the max" do
             partition.resize(new_size, align_type: align_type)
-
-            expect(partition.size).to be < max
-            expect(max - partition.size).to be < partition.partition_table.align_grain
-            expect(partition.end_aligned?).to eq true
+            expect(partition.size).to eq max
           end
         end
 
@@ -416,10 +426,7 @@ describe Y2Storage::Partition do
         context "and is impossible to honor both the alignment and the resizing limits" do
           let(:min) { max - 700.KiB }
 
-          it "sets the size of the partition to the min" do
-            partition.resize(new_size, align_type: align_type)
-            expect(partition.size).to eq min
-          end
+          include_examples "keep original size"
         end
       end
     end
@@ -430,12 +437,9 @@ describe Y2Storage::Partition do
       # Corner case, there is no single aligned point between min and max
       context "but those limits make alignment impossible" do
         let(:min) { max - 700.KiB }
+        let(:align_type) { optimal }
 
-        it "resizes the partition to the requested size with no alignment" do
-          partition.resize(new_size, align_type: optimal)
-          expect(partition.size).to eq new_size
-          expect(partition.end_aligned?(optimal)).to eq false
-        end
+        include_examples "keep original size"
       end
     end
   end

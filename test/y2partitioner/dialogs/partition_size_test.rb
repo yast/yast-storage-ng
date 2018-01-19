@@ -15,8 +15,13 @@ describe "Partition Size widgets" do
   end
   let(:region) { Y2Storage::Region.create(2000, 1000, Y2Storage::DiskSize.new(1500)) }
   let(:slot) { double("PartitionSlot", region: region) }
-  before { allow(controller).to receive(:unused_slots).and_return [slot] }
+  before do
+    allow(controller).to receive(:unused_slots).and_return [slot]
+    allow(controller).to receive(:unused_optimal_slots).and_return [slot]
+    allow(controller).to receive(:optimal_grain).and_return Y2Storage::DiskSize.MiB(1)
+  end
   let(:regions) { [region] }
+  let(:optimal_regions) { [region] }
 
   describe Y2Partitioner::Dialogs::PartitionSize do
     subject { described_class.new(controller) }
@@ -29,7 +34,7 @@ describe "Partition Size widgets" do
   end
 
   describe Y2Partitioner::Dialogs::PartitionSize::SizeWidget do
-    subject { described_class.new(controller, regions) }
+    subject { described_class.new(controller, regions, optimal_regions) }
 
     include_examples "CWM::CustomWidget"
   end
@@ -53,7 +58,9 @@ describe "Partition Size widgets" do
     describe "#validate" do
       before do
         allow(subject).to receive(:value).and_return size
+        allow(subject).to receive(:enabled?).and_return enabled
       end
+      let(:enabled) { true }
 
       context "when the entered size is too big" do
         let(:size) { 2.TiB }
@@ -66,6 +73,14 @@ describe "Partition Size widgets" do
           expect(Yast::Popup).to receive(:Error)
           expect(Yast::UI).to receive(:SetFocus)
           subject.validate
+        end
+
+        context "but the widget is disabled" do
+          let(:enabled) { false }
+
+          it "returns true" do
+            expect(subject.validate).to eq true
+          end
         end
       end
 
@@ -81,6 +96,14 @@ describe "Partition Size widgets" do
           expect(Yast::UI).to receive(:SetFocus)
           subject.validate
         end
+
+        context "but the widget is disabled" do
+          let(:enabled) { false }
+
+          it "returns true" do
+            expect(subject.validate).to eq true
+          end
+        end
       end
 
       context "when the entered value is not a correct size" do
@@ -94,6 +117,14 @@ describe "Partition Size widgets" do
           expect(Yast::Popup).to receive(:Error)
           expect(Yast::UI).to receive(:SetFocus)
           subject.validate
+        end
+
+        context "but the widget is disabled" do
+          let(:enabled) { false }
+
+          it "returns true" do
+            expect(subject.validate).to eq true
+          end
         end
       end
 
@@ -112,7 +143,7 @@ describe "Partition Size widgets" do
       allow(subject).to receive(:query_widgets).and_return [2200, 2500]
     end
 
-    subject { described_class.new(controller, regions) }
+    subject { described_class.new(controller, regions, region) }
 
     include_examples "CWM::CustomWidget"
 

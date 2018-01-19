@@ -120,8 +120,8 @@ describe Y2Partitioner::Dialogs::PartitionResize do
           allow(partition).to receive(:filesystem).and_return(filesystem)
         end
 
-        let(:filesystem) { instance_double(Y2Storage::Filesystems::Base, detect_space_info: space_info) }
-
+        let(:ext3) { Y2Storage::Filesystems::Type::EXT3 }
+        let(:filesystem) { instance_double("Filesystem", detect_space_info: space_info, type: ext3) }
         let(:space_info) { instance_double(Y2Storage::SpaceInfo, used: 10.GiB) }
 
         it "shows the used size" do
@@ -179,11 +179,10 @@ describe Y2Partitioner::Dialogs::PartitionResize do
           context "and the max size causes a not end-aligned partition" do
             let(:max_size) { not_aligned_max_size }
 
-            it "updates the partition with the max aligned size" do
+            it "updates the partition with the max size" do
               subject.store
-              expect(partition.size).to eq adjusted_size
-              expect(partition.end_aligned?).to eq(true)
-              expect(partition.size).to be <= max_size
+              expect(partition.size).to eq max_size
+              expect(partition.end_aligned?).to eq(false)
             end
           end
         end
