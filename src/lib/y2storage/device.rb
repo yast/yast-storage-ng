@@ -36,7 +36,6 @@ module Y2Storage
     wrap_class Storage::Device,
       downcast_to: ["BlkDevice", "Mountable", "PartitionTables::Base", "LvmPv", "LvmVg"]
 
-
     storage_forward :storage_eql, to: :==
     protected :storage_eql
 
@@ -49,7 +48,7 @@ module Y2Storage
     def ==(other)
       return false if self.class != other.class
 
-      self.storage_eql(other)
+      storage_eql(other)
     end
 
     #  compare two devices.

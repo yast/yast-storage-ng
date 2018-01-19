@@ -113,12 +113,12 @@ describe Y2Storage::Device do
   describe "#eql?" do
     it "allows correct array subtracting" do
       arr1 = [
-       Y2Storage::Partition.find_by_name(fake_devicegraph, "/dev/sda1"),
-       Y2Storage::Partition.find_by_name(fake_devicegraph, "/dev/sda2"),
+        Y2Storage::Partition.find_by_name(fake_devicegraph, "/dev/sda1"),
+        Y2Storage::Partition.find_by_name(fake_devicegraph, "/dev/sda2")
       ]
       arr2 = [
-       Y2Storage::Partition.find_by_name(fake_devicegraph, "/dev/sda1"),
-       Y2Storage::Partition.find_by_name(fake_devicegraph, "/dev/sde1"),
+        Y2Storage::Partition.find_by_name(fake_devicegraph, "/dev/sda1"),
+        Y2Storage::Partition.find_by_name(fake_devicegraph, "/dev/sde1")
       ]
 
       expect(arr1 - arr2).to eq([Y2Storage::Partition.find_by_name(fake_devicegraph, "/dev/sda2")])
