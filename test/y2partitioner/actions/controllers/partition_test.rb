@@ -55,7 +55,7 @@ describe Y2Partitioner::Actions::Controllers::Partition do
       expect(slots).to all(be_a(Y2Storage::PartitionTables::PartitionSlot))
     end
 
-    it "returns the unused slots for the currently editing disk" do
+    it "returns the unused optimally aligned slots for the currently editing disk" do
       expect(subject.unused_optimal_slots.inspect)
         .to eq(subject.disk.partition_table.unused_partition_slots.inspect)
     end
