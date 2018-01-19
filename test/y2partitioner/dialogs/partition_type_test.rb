@@ -5,7 +5,10 @@ require "y2partitioner/dialogs/partition_type"
 
 describe Y2Partitioner::Dialogs::PartitionType do
   let(:controller) do
-    double("PartitionController", unused_slots: slots, disk_name: "/dev/sda", wizard_title: "")
+    double(
+      "PartitionController",
+      unused_slots: slots, unused_optimal_slots: slots, disk_name: "/dev/sda", wizard_title: ""
+    )
   end
   let(:slots) { [] }
 
@@ -18,7 +21,11 @@ describe Y2Partitioner::Dialogs::PartitionType do
 end
 
 describe Y2Partitioner::Dialogs::PartitionType::TypeChoice do
-  let(:controller) { double("PartitionController", unused_slots: slots, disk_name: "/dev/sda") }
+  let(:controller) do
+    double(
+      "PartitionController", unused_slots: slots, unused_optimal_slots: slots, disk_name: "/dev/sda"
+    )
+  end
   let(:slots) { [double("Slot", :"possible?" => true)] }
 
   subject { described_class.new(controller) }
