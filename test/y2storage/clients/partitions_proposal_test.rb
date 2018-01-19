@@ -215,9 +215,7 @@ describe Y2Storage::Clients::PartitionsProposal do
   end
 
   describe "#ask_user" do
-    context "when 'chosen_id' is equal to the description id" do
-      let(:param) { { "chosen_id" => subject.description["id"] } }
-
+    RSpec.shared_context "run expert partitioner" do
       before do
         allow(Y2Partitioner::Dialogs::Main).to receive(:new).and_return(expert_dialog)
         allow(expert_dialog).to receive(:run).and_return(result)
@@ -273,6 +271,19 @@ describe Y2Storage::Clients::PartitionsProposal do
           expect(result["workflow_sequence"]).to eq :again
         end
       end
+    end
+
+    context "when 'chosen_id' is equal to the description id" do
+      let(:param) { { "chosen_id" => subject.description["id"] } }
+
+      include_context "run expert partitioner"
+    end
+
+    # Used by yast-caasp
+    context "when called with empty params" do
+      let(:param) { {} }
+
+      include_context "run expert partitioner"
     end
 
     context "when 'chosen_id' is an actions presenter event" do

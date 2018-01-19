@@ -66,7 +66,9 @@ module Y2Storage
       def ask_user(param)
         event = param["chosen_id"]
 
-        if event == description["id"]
+        # Also run the expert partitioner as default option if no id was
+        # specified by the caller (bsc#1076732)
+        if event == description["id"] || event.nil?
           result = expert_partitioner
           result = { next: :again, back: :back, abort: :finish }[result]
         elsif actions_presenter.can_handle?(event)
