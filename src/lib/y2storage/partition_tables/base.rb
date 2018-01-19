@@ -91,15 +91,17 @@ module Y2Storage
       #   @return [Boolean] whether an extended partition exists in the table
       storage_forward :has_extended?, to: :has_extended
 
-      # @!method unused_partition_slots(policy = AlignPolicy::KEEP_END, align_type = AlignType::OPTIMAL)
+      # rubocop: disable Metrics/LineLength
+      # @!method unused_partition_slots(policy = AlignPolicy::ALIGN_START_KEEP_END, type = AlignType::OPTIMAL)
       #
       #   Slots that could be used to create new partitions following the
       #   given align policy.
       #
       #   @param policy [AlignPolicy] policy to consider while looking for slots
-      #   @param align_type [AlignType] type of alignment to use
+      #   @param type [AlignType] type of alignment to use
       #   @return [Array<PartitionTables::PartitionSlot>]
       storage_forward :unused_partition_slots, as: "PartitionTables::PartitionSlot"
+      # rubocop: enable all
 
       # @!method partition_boot_flag_supported?
       #   @return [Boolean] whether the partitions in the table can have the
@@ -118,8 +120,8 @@ module Y2Storage
       #   @return [Boolean] whether a partition can have this partition id.
       storage_forward :partition_id_supported?
 
-      # @!method align(region, align_policy = AlignPolicy::ALIGN_END, align_type = AlignType::OPTIMAL)
-      #   Align the region according to align policy and align type.
+      # @!method align(region, policy = AlignPolicy::ALIGN_START_AND_END, type = AlignType::OPTIMAL)
+      #   Aligns the region according to align policy and align type.
       #
       #   @param region [Region] region to align
       #   @param align_policy [AlignPolicy] policy to consider while aligning
@@ -151,7 +153,9 @@ module Y2Storage
       # @param align_type [AlignType] type used to detect the slot
       # @return [PartitionTables::PartitionSlot, nil] nil when region is not
       #   inside to any unused slot.
-      def unused_slot_for(region, align_policy: AlignPolicy::KEEP_END, align_type: AlignType::OPTIMAL)
+      def unused_slot_for(
+        region, align_policy: AlignPolicy::ALIGN_START_KEEP_END, align_type: AlignType::OPTIMAL
+      )
         unused_partition_slots(align_policy, align_type).detect { |s| region.inside?(s.region) }
       end
 

@@ -92,7 +92,7 @@ module Y2Partitioner
         def unused_slots
           # Caching seems to be important for the current dialogs to work
           @unused_slots ||= disk.ensure_partition_table.unused_partition_slots(
-            Y2Storage::AlignPolicy::KEEP_END, Y2Storage::AlignType::REQUIRED
+            Y2Storage::AlignPolicy::ALIGN_START_KEEP_END, Y2Storage::AlignType::REQUIRED
           )
         end
 
