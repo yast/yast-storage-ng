@@ -232,7 +232,7 @@ module Y2Partitioner
           # previous name if the given one is duplicated. Instead of that, the logic to
           # generate the volume group name has been duplicated here due to its simplicity.
           name = File.join("/dev", vg_name)
-          Y2Storage::BlkDevice.all(working_graph).map(&:name).include?(name)
+          !working_graph.find_by_name(name).nil?
         end
 
         # Error message to show when the given volume group name is duplicated

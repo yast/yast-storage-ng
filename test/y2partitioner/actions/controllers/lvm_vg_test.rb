@@ -154,6 +154,17 @@ describe Y2Partitioner::Actions::Controllers::LvmVg do
       end
     end
 
+    # Regression test
+    context "when there is other volume group with the same name" do
+      let(:value) { "vg0" }
+
+      it "contains a message for duplicated vg name" do
+        errors = controller.vg_name_errors
+        expect(errors).to_not be_empty
+        expect(errors).to include(/another entry in the \/dev/)
+      end
+    end
+
     context "when the vg name only contains alphanumeric characters, " \
             " \".\", \"_\", \"-\" and \"+\" and it is not duplicated" do
       let(:value) { "vg.n_a-me+" }
