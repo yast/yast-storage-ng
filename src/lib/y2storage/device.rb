@@ -62,6 +62,12 @@ module Y2Storage
 
     alias_method :eql?, :==
 
+    # redefine hash method to return same result for same devices indenpendently
+    # found
+    def hash
+      sid.hash
+    end
+
     # @!method sid
     #   @note This value is unique by device.
     #

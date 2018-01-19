@@ -110,13 +110,24 @@ describe Y2Storage::Device do
     end
   end
 
-  describe "#eql?" do
-    it "returns true for same devices that is idependently found" do
+  describe "#hash" do
+    it "returns same result for same devices that are independently found" do
       expect(
-        Y2Storage::Partition.find_by_name(fake_devicegraph, "/dev/sda1")
+        Y2Storage::Partition.find_by_name(fake_devicegraph, "/dev/sda1").hash
       ).to(eq(
-             Y2Storage::Partition.find_by_name(fake_devicegraph, "/dev/sda1")
+             Y2Storage::Partition.find_by_name(fake_devicegraph, "/dev/sda1").hash
       ))
+
+    end
+  end
+
+  describe "#eql?" do
+    it "returns true for same devices that are independently found" do
+      expect(
+        Y2Storage::Partition.find_by_name(fake_devicegraph, "/dev/sda1").eql?(
+          Y2Storage::Partition.find_by_name(fake_devicegraph, "/dev/sda1")
+        )
+      ).to eq true
     end
 
     it "allows correct array subtracting" do
