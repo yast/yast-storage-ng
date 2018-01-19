@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Fri Jan 19 11:31:14 UTC 2018 - jreidinger@suse.com
+
+- Fix subtracting arrays of devices (fixes multipath wires
+  detection for bsc#1076766)
+- 4.0.72
+
+-------------------------------------------------------------------
 Fri Jan 19 09:50:54 UTC 2018 - ancor@suse.com
 
 - Partitioner: when creating partitions they are now aligned to

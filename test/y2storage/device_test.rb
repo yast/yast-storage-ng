@@ -109,4 +109,42 @@ describe Y2Storage::Device do
       end
     end
   end
+
+  describe "#hash" do
+    it "returns same result for same devices that are independently found" do
+      expect(
+        Y2Storage::Partition.find_by_name(fake_devicegraph, "/dev/sda1").hash
+      ).to(eq(
+             Y2Storage::Partition.find_by_name(fake_devicegraph, "/dev/sda1").hash
+      ))
+
+    end
+  end
+
+  describe "#eql?" do
+    it "returns true for same devices that are independently found" do
+      expect(
+        Y2Storage::Partition.find_by_name(fake_devicegraph, "/dev/sda1").eql?(
+          Y2Storage::Partition.find_by_name(fake_devicegraph, "/dev/sda1")
+        )
+      ).to eq true
+    end
+
+    it "allows correct array subtracting" do
+      arr1 = [
+        Y2Storage::Partition.find_by_name(fake_devicegraph, "/dev/sda1"),
+        Y2Storage::Partition.find_by_name(fake_devicegraph, "/dev/sda2")
+      ]
+      arr2 = [
+        Y2Storage::Partition.find_by_name(fake_devicegraph, "/dev/sda1"),
+        Y2Storage::Partition.find_by_name(fake_devicegraph, "/dev/sde1")
+      ]
+
+      expect(arr1 - arr2).to eq([Y2Storage::Partition.find_by_name(fake_devicegraph, "/dev/sda2")])
+    end
+
+    it "returns false if compared different classes" do
+      expect(Y2Storage::Partition.find_by_name(fake_devicegraph, "/dev/sda1").eql?(nil)).to eq false
+    end
+  end
 end

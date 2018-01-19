@@ -36,15 +36,38 @@ module Y2Storage
     wrap_class Storage::Device,
       downcast_to: ["BlkDevice", "Mountable", "PartitionTables::Base", "LvmPv", "LvmVg"]
 
-    # @!method ==(device)
-    #   Compare two devices.
-    #   @note Devices are equal if they have the same {#sid storage id}.
-    #   @see sid
+    storage_forward :storage_eql, to: :==
+    protected :storage_eql
+
+    #  compare two devices.
+    #  @note devices are equal if they have the same {#sid storage id}.
+    #  @see sid
     #
-    #   @param device [Device]
-    #   @return [Boolean]
-    storage_forward :==
-    storage_forward :!=
+    #  @param other [Device]
+    #  @return [Boolean] false if compared to different class
+    def ==(other)
+      return false if self.class != other.class
+
+      storage_eql(other)
+    end
+
+    #  compare two devices.
+    #  @see ==
+    #
+    #  @param other [Device]
+    #  @return [Boolean] true if compared to different class
+    def !=(other)
+      !(self == other)
+    end
+
+    alias_method :eql?, :==
+
+    # redefine hash method to return same result for same devices independently
+    # found. It is needed e.g. for array subtraction in ruby2.5
+    # see (bsc#1076766)
+    def hash
+      sid.hash
+    end
 
     # @!method sid
     #   @note This value is unique by device.
