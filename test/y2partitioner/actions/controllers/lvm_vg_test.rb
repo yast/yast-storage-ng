@@ -21,19 +21,12 @@
 # find current contact information at www.suse.com.
 
 require_relative "../../test_helper"
+
 require "y2partitioner/device_graphs"
 require "y2partitioner/actions/controllers/lvm_vg"
 
 describe Y2Partitioner::Actions::Controllers::LvmVg do
   using Y2Storage::Refinements::SizeCasts
-
-  before do
-    devicegraph_stub("complex-lvm-encrypt.yml")
-  end
-
-  subject(:controller) { described_class.new }
-
-  let(:current_graph) { Y2Partitioner::DeviceGraphs.instance.current }
 
   def dev(name)
     result = Y2Storage::BlkDevice.find_by_name(current_graph, name)
@@ -41,21 +34,74 @@ describe Y2Partitioner::Actions::Controllers::LvmVg do
     result
   end
 
+  before do
+    devicegraph_stub("complex-lvm-encrypt.yml")
+  end
+
+  let(:current_graph) { Y2Partitioner::DeviceGraphs.instance.current }
+
+  subject(:controller) { described_class.new(vg: vg) }
+
+  let(:vg) { nil }
+
   describe "#initialize" do
-    it "sets vg name equal to \"\" as default value" do
-      expect(controller.vg_name).to eq("")
+    context "when no volume group is given" do
+      let(:vg) { nil }
+
+      it "sets vg name equal to \"\" as default value" do
+        expect(controller.vg_name).to eq("")
+      end
+
+      it "sets extent size equal to 4 MiB as default value" do
+        expect(controller.extent_size).to eq(4.MiB)
+      end
+
+      it "creates a new vg" do
+        previous_vgs = current_graph.lvm_vgs
+        described_class.new
+        current_vgs = current_graph.lvm_vgs
+
+        expect(current_vgs.size).to eq(previous_vgs.size + 1)
+      end
     end
 
-    it "sets extent size equal to 4 MiB as default value" do
-      expect(controller.extent_size).to eq(4.MiB)
+    context "when a volume group is given" do
+      let(:vg) { Y2Storage::LvmVg.find_by_vg_name(current_graph, "vg0") }
+
+      it "does not create a volume group" do
+        previous_vgs = current_graph.lvm_vgs
+        described_class.new(vg: vg)
+
+        expect(current_graph.lvm_vgs).to eq(previous_vgs)
+      end
+
+      it "sets the given volume group" do
+        expect(controller.vg).to eq(vg)
+      end
+    end
+  end
+
+  describe "#wizard_title" do
+    context "when a new volume group is being created" do
+      let(:vg) { nil }
+
+      it "returns a string containing the title for adding a volume group" do
+        expect(controller.wizard_title).to be_a(String)
+        expect(controller.wizard_title).to eq("Add Volume Group")
+      end
     end
 
-    it "creates a new vg" do
-      previous_vgs = current_graph.lvm_vgs
-      described_class.new
-      current_vgs = current_graph.lvm_vgs
+    context "when a volume group is being resized" do
+      let(:vg) { Y2Storage::LvmVg.find_by_vg_name(current_graph, "vg0") }
 
-      expect(current_vgs.size).to eq(previous_vgs.size + 1)
+      it "returns a string containing the title for resizing a volume group" do
+        expect(controller.wizard_title).to be_a(String)
+        expect(controller.wizard_title).to include("Resize Volume Group")
+      end
+
+      it "contains the name of the volume group" do
+        expect(controller.wizard_title).to include(vg.name)
+      end
     end
   end
 
@@ -86,6 +132,27 @@ describe Y2Partitioner::Actions::Controllers::LvmVg do
     it "returns the size of the vg" do
       expect(controller.vg).to receive(:size).and_return Y2Storage::DiskSize.new(1254)
       expect(controller.vg_size).to eq Y2Storage::DiskSize.new(1254)
+    end
+  end
+
+  describe "#vg_size" do
+    let(:vg) { Y2Storage::LvmVg.create(current_graph, "new-vg") }
+
+    context "when the volume group has no logical volumes" do
+      it "returns zero size" do
+        expect(controller.lvs_size).to eq(Y2Storage::DiskSize.zero)
+      end
+    end
+
+    context "when the volume group has logical volumes" do
+      before do
+        vg.create_lvm_lv("lv1", 7.GiB)
+        vg.create_lvm_lv("lv1", 3.GiB)
+      end
+
+      it "returns the sum of sizes of the logical volumes" do
+        expect(controller.lvs_size).to eq(10.GiB)
+      end
     end
   end
 
@@ -364,6 +431,39 @@ describe Y2Partitioner::Actions::Controllers::LvmVg do
 
     it "does not include the encryption devices used by the vg" do
       expect(controller.devices_in_vg).to_not include cr_sdc
+    end
+  end
+
+  describe "#committed_devices" do
+    before do
+      sda2.remove_descendants
+      controller.vg.add_lvm_pv(sda2)
+    end
+
+    let(:sda2) { dev("/dev/sda2") }
+
+    context "when the volume group is not probed" do
+      let(:vg) { Y2Storage::LvmVg.create(current_graph, "new-vg") }
+
+      it "returns an empty list" do
+        expect(controller.committed_devices).to be_empty
+      end
+    end
+
+    context "when the volume group is probed" do
+      let(:vg) { Y2Storage::LvmVg.find_by_vg_name(current_graph, "vg0") }
+
+      it "returns a list of devices" do
+        expect(controller.committed_devices).to all(be_a(Y2Storage::BlkDevice))
+      end
+
+      it "contains all committed devices" do
+        expect(controller.committed_devices.map(&:name)).to contain_exactly("/dev/sdd", "/dev/sde1")
+      end
+
+      it "does not include uncommitted devices" do
+        expect(controller.committed_devices.map(&:name)).to_not include("/dev/sda2")
+      end
     end
   end
 
