@@ -21,11 +21,11 @@
 # find current contact information at www.suse.com.
 
 require_relative "../test_helper"
-require "y2partitioner/actions/resize_partition"
-require "y2partitioner/dialogs/partition_resize"
+require "y2partitioner/actions/resize_blk_device"
+require "y2partitioner/dialogs/blk_device_resize"
 require "y2partitioner/device_graphs"
 
-describe Y2Partitioner::Actions::ResizePartition do
+describe Y2Partitioner::Actions::ResizeBlkDevice do
   using Y2Storage::Refinements::SizeCasts
 
   before do
@@ -76,7 +76,7 @@ describe Y2Partitioner::Actions::ResizePartition do
 
       context "and the user goes forward in the dialog" do
         before do
-          allow(Y2Partitioner::Dialogs::PartitionResize).to receive(:run).and_return(:next)
+          allow(Y2Partitioner::Dialogs::BlkDeviceResize).to receive(:run).and_return(:next)
         end
 
         it "returns :finish" do
@@ -86,7 +86,7 @@ describe Y2Partitioner::Actions::ResizePartition do
 
       context "and the user aborts the process" do
         before do
-          allow(Y2Partitioner::Dialogs::PartitionResize).to receive(:run).and_return(:abort)
+          allow(Y2Partitioner::Dialogs::BlkDeviceResize).to receive(:run).and_return(:abort)
         end
 
         it "returns :abort" do

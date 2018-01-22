@@ -21,7 +21,7 @@
 
 require "yast"
 require "y2partitioner/widgets/device_button"
-require "y2partitioner/actions/resize_partition"
+require "y2partitioner/actions/resize_blk_device"
 require "y2partitioner/actions/resize_md"
 
 Yast.import "Popup"
@@ -61,13 +61,13 @@ module Y2Partitioner
 
       # Returns the proper Actions class to perform the resize action
       #
-      # @see Actions::ResizePartition
+      # @see Actions::ResizeBlkDevice
       # @see Actions::ResizeMd
       #
       # @return [Object] action for resizing the device
       def actions_class
         if device.is?(:partition)
-          Actions::ResizePartition
+          Actions::ResizeBlkDevice
         elsif device.is?(:md)
           Actions::ResizeMd
         end

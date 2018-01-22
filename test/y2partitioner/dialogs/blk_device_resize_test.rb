@@ -25,9 +25,9 @@ require_relative "../test_helper"
 require "yast"
 require "cwm/rspec"
 require "y2storage"
-require "y2partitioner/dialogs/partition_resize"
+require "y2partitioner/dialogs/blk_device_resize"
 
-describe Y2Partitioner::Dialogs::PartitionResize do
+describe Y2Partitioner::Dialogs::BlkDeviceResize do
   using Y2Storage::Refinements::SizeCasts
 
   before do
@@ -73,7 +73,7 @@ describe Y2Partitioner::Dialogs::PartitionResize do
 
     it "contains a widget for selecting the new size" do
       widget = subject.contents.nested_find do |w|
-        w.is_a?(Y2Partitioner::Dialogs::PartitionResize::SizeSelector)
+        w.is_a?(Y2Partitioner::Dialogs::BlkDeviceResize::SizeSelector)
       end
       expect(widget).to_not be_nil
     end
@@ -132,7 +132,7 @@ describe Y2Partitioner::Dialogs::PartitionResize do
     end
   end
 
-  describe Y2Partitioner::Dialogs::PartitionResize::SizeSelector do
+  describe Y2Partitioner::Dialogs::BlkDeviceResize::SizeSelector do
     subject(:widget) { described_class.new(partition) }
 
     before do
@@ -370,13 +370,13 @@ describe Y2Partitioner::Dialogs::PartitionResize do
     end
   end
 
-  describe Y2Partitioner::Dialogs::PartitionResize::FixedSizeWidget do
+  describe Y2Partitioner::Dialogs::BlkDeviceResize::FixedSizeWidget do
     subject(:widget) { described_class.new(1.GiB) }
 
     include_examples "CWM::AbstractWidget"
   end
 
-  describe Y2Partitioner::Dialogs::PartitionResize::CustomSizeWidget do
+  describe Y2Partitioner::Dialogs::BlkDeviceResize::CustomSizeWidget do
     subject(:widget) { described_class.new(10.MiB, 100.GiB, 5.GiB) }
 
     include_examples "CWM::AbstractWidget"

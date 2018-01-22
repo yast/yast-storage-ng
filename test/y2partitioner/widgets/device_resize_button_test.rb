@@ -98,7 +98,7 @@ describe Y2Partitioner::Widgets::DeviceResizeButton do
 
       context "and the device is a partition" do
         before do
-          allow_any_instance_of(Y2Partitioner::Actions::ResizePartition).to receive(:run)
+          allow_any_instance_of(Y2Partitioner::Actions::ResizeBlkDevice).to receive(:run)
             .and_return(action_result)
 
           allow_any_instance_of(Y2Storage::Partition).to receive(:detect_resize_info)
@@ -112,7 +112,7 @@ describe Y2Partitioner::Widgets::DeviceResizeButton do
         let(:device_name) { "/dev/sda1" }
 
         it "performs the action for deleting a partition" do
-          expect_any_instance_of(Y2Partitioner::Actions::ResizePartition).to receive(:run)
+          expect_any_instance_of(Y2Partitioner::Actions::ResizeBlkDevice).to receive(:run)
           subject.handle
         end
 
