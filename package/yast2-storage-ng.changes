@@ -2,7 +2,7 @@
 Mon Jan 22 13:11:32 UTC 2018 - igonzalezsosa@suse.com
 
 - Consider all free spaces when deciding which partitions
-  distribution is better (bsc#1077051) 
+  distribution is better (bsc#1077051).
 
 -------------------------------------------------------------------
 Thu Jan 19 12:10:29 UTC 2018 - jlopez@suse.com
