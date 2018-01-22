@@ -151,6 +151,8 @@ module Y2Storage
       #
       # @param filesystem [Filesystems::BlkFilesystem]
       def setup_fstab_options(filesystem)
+        return unless filesystem
+        return unless filesystem_type
         filesystem.fstab_options = fstab_options || filesystem_type.default_fstab_options
       end
 
@@ -180,8 +182,10 @@ module Y2Storage
           format!(device)
         else
           filesystem = final_device!(device).filesystem
-          setup_fstab_options(filesystem)
-          assign_mountpoint(filesystem)
+          if filesystem
+            setup_fstab_options(filesystem)
+            assign_mountpoint(filesystem)
+          end
         end
       end
 
