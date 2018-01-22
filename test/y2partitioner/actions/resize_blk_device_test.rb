@@ -33,16 +33,9 @@ describe Y2Partitioner::Actions::ResizeBlkDevice do
     allow(Yast::Wizard).to receive(:CloseDialog)
 
     devicegraph_stub(scenario)
-    allow(partition).to receive(:detect_resize_info).and_return(resize_info)
   end
 
-  subject(:action) { described_class.new(partition) }
-
-  let(:scenario) { "mixed_disks.yml" }
-
   let(:current_graph) { Y2Partitioner::DeviceGraphs.instance.current }
-
-  let(:partition) { Y2Storage::Partition.find_by_name(current_graph, "/dev/sda1") }
 
   let(:resize_info) do
     instance_double(Y2Storage::ResizeInfo,
@@ -50,47 +43,105 @@ describe Y2Partitioner::Actions::ResizeBlkDevice do
       min_size:   min_size,
       max_size:   max_size)
   end
-
   let(:can_resize) { nil }
-
   let(:min_size) { 100.KiB }
-
   let(:max_size) { 1.GiB }
 
-  describe "#run" do
-    context "when the partition cannot be resized" do
-      let(:can_resize) { false }
+  context "when executed on a partition" do
+    let(:scenario) { "mixed_disks.yml" }
+    let(:partition) { Y2Storage::Partition.find_by_name(current_graph, "/dev/sda1") }
 
-      it "shows an error popup" do
-        expect(Yast::Popup).to receive(:Error)
-        action.run
-      end
-
-      it "returns :back" do
-        expect(action.run).to eq(:back)
-      end
+    before do
+      allow(partition).to receive(:detect_resize_info).and_return(resize_info)
     end
 
-    context "when the partition can be resized" do
-      let(:can_resize) { true }
+    subject(:action) { described_class.new(partition) }
 
-      context "and the user goes forward in the dialog" do
-        before do
-          allow(Y2Partitioner::Dialogs::BlkDeviceResize).to receive(:run).and_return(:next)
+    describe "#run" do
+      context "when the partition cannot be resized" do
+        let(:can_resize) { false }
+
+        it "shows an error popup" do
+          expect(Yast::Popup).to receive(:Error)
+          action.run
         end
 
-        it "returns :finish" do
-          expect(action.run).to eq(:finish)
+        it "returns :back" do
+          expect(action.run).to eq(:back)
         end
       end
 
-      context "and the user aborts the process" do
-        before do
-          allow(Y2Partitioner::Dialogs::BlkDeviceResize).to receive(:run).and_return(:abort)
+      context "when the partition can be resized" do
+        let(:can_resize) { true }
+
+        context "and the user goes forward in the dialog" do
+          before do
+            allow(Y2Partitioner::Dialogs::BlkDeviceResize).to receive(:run).and_return(:next)
+          end
+
+          it "returns :finish" do
+            expect(action.run).to eq(:finish)
+          end
         end
 
-        it "returns :abort" do
-          expect(action.run).to eq(:abort)
+        context "and the user aborts the process" do
+          before do
+            allow(Y2Partitioner::Dialogs::BlkDeviceResize).to receive(:run).and_return(:abort)
+          end
+
+          it "returns :abort" do
+            expect(action.run).to eq(:abort)
+          end
+        end
+      end
+    end
+  end
+
+  context "when executed on an LVM logical volume" do
+    let(:scenario) { "complex-lvm-encrypt" }
+    let(:lv) { current_graph.find_by_name("/dev/vg1/lv1") }
+
+    before do
+      allow(lv).to receive(:detect_resize_info).and_return(resize_info)
+    end
+
+    subject(:action) { described_class.new(lv) }
+
+    describe "#run" do
+      context "when the volume cannot be resized" do
+        let(:can_resize) { false }
+
+        it "shows an error popup" do
+          expect(Yast::Popup).to receive(:Error)
+          action.run
+        end
+
+        it "returns :back" do
+          expect(action.run).to eq(:back)
+        end
+      end
+
+      context "when the volume can be resized" do
+        let(:can_resize) { true }
+
+        context "and the user goes forward in the dialog" do
+          before do
+            allow(Y2Partitioner::Dialogs::BlkDeviceResize).to receive(:run).and_return(:next)
+          end
+
+          it "returns :finish" do
+            expect(action.run).to eq(:finish)
+          end
+        end
+
+        context "and the user aborts the process" do
+          before do
+            allow(Y2Partitioner::Dialogs::BlkDeviceResize).to receive(:run).and_return(:abort)
+          end
+
+          it "returns :abort" do
+            expect(action.run).to eq(:abort)
+          end
         end
       end
     end

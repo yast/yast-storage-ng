@@ -10,11 +10,11 @@ Yast.import "Popup"
 
 module Y2Partitioner
   module Dialogs
-    # Dialog to set new partition size
+    # Dialog to set the new size for a partition or LVM LV
     class BlkDeviceResize < CWM::Dialog
       # Constructor
       #
-      # @param device [Y2Storage::Partition] device to resize
+      # @param device [Y2Storage::Partition, Y2Storage::LvmLv] device to resize
       def initialize(device)
         textdomain "storage"
 
@@ -24,8 +24,9 @@ module Y2Partitioner
 
       # @macro seeDialog
       def title
-        # TRANSLATORS: dialog title, where %{name} is the name of a partition (e.g., /dev/sda1)
-        format(_("Resize Partition %{name}"), name: device.name)
+        # TRANSLATORS: dialog title, where %{name} is the name of a partition
+        # (e.g. /dev/sda1) or LVM logical volume (e.g. /dev/system/home)
+        format(_("Resize %{name}"), name: device.name)
       end
 
       # @macro seeDialog
@@ -55,7 +56,7 @@ module Y2Partitioner
 
     private
 
-      # @return [Y2Storage::Partition]
+      # @return [Y2Storage::Partition, Y2Storage::LvmLv]
       attr_reader :device
 
       # @return [Y2Storage::SpaceInfo]
@@ -85,7 +86,8 @@ module Y2Partitioner
       #
       # @return [Boolean]
       def swap?
-        device.id.is?(:swap) || device.formatted_as?(:swap)
+        return true if device.is?(:partition) && device.id.is?(:swap)
+        device.formatted_as?(:swap)
       end
 
       # Disk size in use
@@ -112,16 +114,16 @@ module Y2Partitioner
       # Widget for current size
       def current_size_info
         size = device.size.to_human_string
-        # TRANSLATORS: label for current size of the partition, where %{size} is
-        # replaced by a size (e.g., 5.5 GiB)
+        # TRANSLATORS: label for current size of the partition or LVM logical volume,
+        # where %{size} is replaced by a size (e.g., 5.5 GiB)
         Left(Label(format("Current size: %{size}", size: size)))
       end
 
       # Widget for used size
       def used_size_info
         size = used_size.to_human_string
-        # TRANSLATORS: label for currently used size of the partition, where %{size} is
-        # replaced by a size (e.g., 5.5 GiB)
+        # TRANSLATORS: label for currently used size of the partition or LVM volume,
+        # where %{size} is replaced by a size (e.g., 5.5 GiB)
         Left(Label(format("Currently used: %{size}", size: size)))
       end
     end
@@ -133,7 +135,7 @@ module Y2Partitioner
       class SizeSelector < Widgets::ControllerRadioButtons
         # Constructor
         #
-        # @param device [Y2Storage::Partition]
+        # @param device [Y2Storage::Partition, Y2Storage::LvmLv]
         def initialize(device)
           textdomain "storage"
 
@@ -210,7 +212,7 @@ module Y2Partitioner
 
       private
 
-        # @return [Y2Storage::Partition]
+        # @return [Y2Storage::Partition, Y2Storage::LvmLv]
         attr_reader :device
 
         # Resize information of the device to be resized
@@ -224,7 +226,13 @@ module Y2Partitioner
         #
         # @return [Y2Storage::DiskSize]
         def min_size
-          [device.aligned_min_size, device.size].min
+          min =
+            if device.respond_to?(:aligned_min_size)
+              device.aligned_min_size
+            else
+              resize_info.min_size
+            end
+          [min, device.size].min
         end
 
         # Max possible size

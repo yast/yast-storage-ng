@@ -50,7 +50,7 @@ module Y2Partitioner
       #
       # @return [Boolean] true if the device supports resizing; false otherwise.
       def device_validation
-        return true if device.is?(:partition, :md)
+        return true if device.is?(:partition, :md, :lvm_lv)
 
         Yast::Popup.Error(
           _("Hard disks, BIOS RAIDs and multipath\n"\
@@ -66,10 +66,10 @@ module Y2Partitioner
       #
       # @return [Object] action for resizing the device
       def actions_class
-        if device.is?(:partition)
-          Actions::ResizeBlkDevice
-        elsif device.is?(:md)
+        if device.is?(:md)
           Actions::ResizeMd
+        else
+          Actions::ResizeBlkDevice
         end
       end
     end

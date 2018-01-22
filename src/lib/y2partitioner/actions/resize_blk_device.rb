@@ -28,13 +28,13 @@ Yast.import "Popup"
 
 module Y2Partitioner
   module Actions
-    # Action for resizing a partition
+    # Action for resizing a partition or an LVM logical volume
     class ResizeBlkDevice
       include Yast::I18n
 
       # Constructor
       #
-      # @param device [Y2Storage::Partition]
+      # @param device [Y2Storage::Partition, Y2Storage::LvmLv]
       def initialize(device)
         textdomain "storage"
 
@@ -55,7 +55,7 @@ module Y2Partitioner
 
     private
 
-      # @return [Y2Storage::Partition] device to resize
+      # @return [Y2Storage::Partition, Y2Storage::LvmLv] device to resize
       attr_reader :device
 
       # Resize information of the device to be resized

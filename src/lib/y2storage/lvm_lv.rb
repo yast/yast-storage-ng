@@ -55,6 +55,37 @@ module Y2Storage
     #   @return [Array<Disk>] all the logical volumes in the given devicegraph
     storage_class_forward :all, as: "LvmLv"
 
+    # Resizes the volume, taking resizing limits and extent size into account.
+    #
+    # It does nothing if resizing is not possible (see {ResizeInfo#resize_ok?}).
+    # Otherwise, it sets the size of the LV based on the requested size.
+    #
+    # If the requested size is out of the min/max limits provided by
+    # {#resize_info}, the end will be adjusted to the corresponding limit.
+    #
+    # If the requested size is between the limits, the size will be set to the
+    # closest valid (i.e. divisible by the extent size) value, rounding down if
+    # needed.
+    #
+    # @param new_size [DiskSize] temptative new size of the volume, take into
+    #   account that the result may be slightly smaller after rounding it down
+    #   based on the extent size
+    def resize(new_size)
+      log.info "Trying to resize #{name} (#{size}) to #{new_size}"
+      return unless can_resize?
+
+      # The sizes in resize_info are already rounded to the extent size
+      self.size =
+        if new_size > resize_info.max_size
+          resize_info.max_size
+        elsif new_size < resize_info.min_size
+          resize_info.min_size
+        else
+          new_size
+        end
+      log.info "Size of #{name} set to #{size}"
+    end
+
   protected
 
     def types_for_is

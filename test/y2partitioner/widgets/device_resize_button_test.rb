@@ -74,7 +74,7 @@ describe Y2Partitioner::Widgets::DeviceResizeButton do
 
         let(:device_name) { "/dev/md/md0" }
 
-        it "performs the action for deleting a MD RAID" do
+        it "performs the action for resizing a MD RAID" do
           expect_any_instance_of(Y2Partitioner::Actions::ResizeMd).to receive(:run)
           subject.handle
         end
@@ -111,7 +111,44 @@ describe Y2Partitioner::Widgets::DeviceResizeButton do
 
         let(:device_name) { "/dev/sda1" }
 
-        it "performs the action for deleting a partition" do
+        it "performs the action for resizing a partition" do
+          expect_any_instance_of(Y2Partitioner::Actions::ResizeBlkDevice).to receive(:run)
+          subject.handle
+        end
+
+        context "and resize action is correctly performed" do
+          let(:action_result) { :finish }
+
+          it "returns :redraw" do
+            expect(subject.handle).to eq(:redraw)
+          end
+        end
+
+        context "and resize action is not correctly performed" do
+          let(:action_result) { :back }
+
+          it "returns nil" do
+            expect(subject.handle).to be_nil
+          end
+        end
+      end
+
+      context "and the device is an LVM volume group" do
+        before do
+          allow_any_instance_of(Y2Partitioner::Actions::ResizeBlkDevice).to receive(:run)
+            .and_return(action_result)
+
+          allow_any_instance_of(Y2Storage::LvmLv).to receive(:detect_resize_info)
+            .and_return(nil)
+        end
+
+        let(:action_result) { nil }
+
+        let(:scenario) { "complex-lvm-encrypt" }
+
+        let(:device_name) { "/dev/vg1/lv2" }
+
+        it "performs the action for resizing a logical volume" do
           expect_any_instance_of(Y2Partitioner::Actions::ResizeBlkDevice).to receive(:run)
           subject.handle
         end
