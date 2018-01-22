@@ -114,7 +114,10 @@ module Y2Storage
     #
     # @return [Array<VolumeSpecification>]
     def product_volumes
-      ProposalSettings.new_for_current_product.volumes.select { |v| mandatory?(v) }
+      # ProposalSettings#volumes is initialized to nil when using old settings format
+      # because this attribute does not exist with old format
+      volumes = ProposalSettings.new_for_current_product.volumes || []
+      volumes.select { |v| mandatory?(v) }
     end
 
     # Whether a volume is mandatory, that is, the volume is proposed to be created
