@@ -97,7 +97,14 @@ module Y2Storage
         DiskSize.sum(spaces.map(&:unused) + unassigned_spaces.map(&:disk_size))
       end
 
-      # Number of gaps (unused disk portions) introduced by the distribution
+      # Number of gaps (unused disk portions)
+      #
+      # In the past, a free disk space which was not used at all was not considered
+      # a gap. Now the reasons of such a decision are not clear, so all free disk spaces
+      # are counted as gaps.
+      #
+      # Check https://github.com/yast/yast-storage-ng/blob/c2c164ae6148649f72a29c623dd2eae107bd4083/src/lib/y2storage/planned/partitions_distribution.rb#L91 for further details.
+      #
       # @return [Integer]
       def gaps_count
         spaces.reject { |s| s.unused.zero? }.size + unassigned_spaces.size
