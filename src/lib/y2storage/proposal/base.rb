@@ -75,6 +75,7 @@ module Y2Storage
         raise UnexpectedCallError if proposed?
         @proposed = true
         result = calculate_proposal
+        return result if devices.nil? || devices.empty?
         log.info("Proposed devicegraph:\n\n#{devices.to_str}\n")
         result
       end

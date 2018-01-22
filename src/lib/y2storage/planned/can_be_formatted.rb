@@ -152,8 +152,11 @@ module Y2Storage
       # @param filesystem [Filesystems::BlkFilesystem]
       def setup_fstab_options(filesystem)
         return unless filesystem
-        return unless filesystem_type
-        filesystem.fstab_options = fstab_options || filesystem_type.default_fstab_options
+        if fstab_options
+          filesystem.fstab_options = fstab_options
+        elsif filesystem_type
+          filesystem.fstab_options = filesystem_type.default_fstab_options
+        end
       end
 
       # Creates subvolumes in the previously created filesystem that is placed
