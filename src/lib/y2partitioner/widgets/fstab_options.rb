@@ -5,7 +5,7 @@ require "y2storage"
 module Y2Partitioner
   module Widgets
     # The fstab options are mostly checkboxes and combo boxes that share some
-    # common methods, so this is a mixin for that share code.
+    # common methods, so this is a mixin for that shared code.
     module FstabCommon
       def initialize(controller)
         textdomain "storage"
@@ -21,9 +21,9 @@ module Y2Partitioner
         init_regexp if self.class.const_defined?("REGEXP")
       end
 
-      # No all the fstab options are supported by all the filesystem so each
-      # widget are able to check if the current filesystem is supported
-      # explicitely or checking if the values it is responsable of are
+      # No all the fstab options are supported by all the filesystems so each
+      # widget is able to check if the current filesystem is supported
+      # explicitely or checking if the values it is responsable for are
       # supported by the filesystem.
       def supported_by_filesystem?
         return false if filesystem.nil?
@@ -74,7 +74,7 @@ module Y2Partitioner
       end
     end
 
-    # Push button that launch a dialog for set the fstab options
+    # Push button that launch a dialog to set the fstab options
     class FstabOptionsButton < CWM::PushButton
       include FstabCommon
 
@@ -401,8 +401,8 @@ module Y2Partitioner
     # A input field that allows to set other options that are not handled by
     # specific widgets
     #
-    # TODO: FIXME: Pending implementation, currently it is only draw, all the options
-    # that it is responsable of should be defined, removing them if not set or
+    # TODO: FIXME: Pending implementation, currently it is only drawing; all the options
+    # that it is responsible for should be defined, removing them if not set or
     # supported by the current filesystem.
     class ArbitraryOptions < CWM::InputField
       def initialize(controller)
