@@ -79,7 +79,7 @@ module Y2Partitioner
       include FstabCommon
 
       def label
-        _("Fstab options...")
+        _("Fstab Options...")
       end
 
       def handle
