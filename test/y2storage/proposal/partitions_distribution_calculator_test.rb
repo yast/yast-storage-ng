@@ -149,9 +149,10 @@ describe Y2Storage::Proposal::PartitionsDistributionCalculator do
     end
 
     context "when there are several free spaces" do
-      let(:scenario) { "spaces_5_6_8_10" }
+      let(:scenario) { "spaces_5_3" }
 
       context "if the sum of all spaces is not big enough" do
+        let(:scenario) { "spaces_5_6_8_10" }
         let(:vol3) { planned_vol(mount_point: "/3", type: :ext4, min: 30.GiB, max: 30.GiB) }
 
         it "returns no distribution (nil)" do
@@ -160,13 +161,14 @@ describe Y2Storage::Proposal::PartitionsDistributionCalculator do
       end
 
       context "if only one distribution ensures that not gaps will be introduced" do
-        let(:vol3) { planned_vol(mount_point: "/3", type: :ext4, min: 3.GiB, max: 3.GiB) }
+        let(:vol3) { planned_vol(mount_point: "/3", type: :ext4, min: 3.GiB, max: 5.GiB - 1.MiB) }
+
+        before { vol1.max = 2.GiB }
 
         it "returns that best distribution" do
           expect(distribution.gaps_count).to eq 0
-          spaces = distribution.spaces
-          expect(spaces.size).to eq 1
-          expect(distribution.spaces_total_size).to eq 8.GiB
+          expect(distribution.gaps_total_size).to eq(Y2Storage::DiskSize.zero)
+          expect(spaces.size).to eq(2)
         end
       end
 
@@ -182,40 +184,29 @@ describe Y2Storage::Proposal::PartitionsDistributionCalculator do
       context "if there are several distributions that wouldn't introduce gaps" do
         let(:vol3) { planned_vol(mount_point: "/3", type: :ext4, min: 3.GiB, max: 3.GiB) }
 
-        context "and one of them results in a bigger installation" do
-          let(:vol3) { planned_vol(mount_point: "/3", type: :ext4, min: 3.GiB, max: 4.GiB) }
-
+        context "but one has better distributed weights (lower #weight_space_deviation)" do
           it "returns that best distribution" do
-            # The expected distribution is: everything in the 10 GiB space
-            expect(distribution.spaces.size).to eq 1
-            expect(distribution.spaces_total_size).to eq 10.GiB
+            # The expected distribution is: vol1 and vol3 to the first space
+            grouping = distribution.spaces.map(&:partitions)
+            expect(grouping).to eq [[vol1, vol3], [vol2]]
           end
         end
 
-        context "and several ones would result in an equally big installation" do
-          context "but one has better distributed weights (lower #weight_space_deviation)" do
-            let(:scenario) { "spaces_5_3" }
-
-            it "returns that best distribution" do
-              # The expected distribution is: vol1 and vol3 to the first space
-              grouping = distribution.spaces.map(&:partitions)
-              expect(grouping).to eq [[vol1, vol3], [vol2]]
-            end
+        context "with an equivalent distribution of weights (#weight_space_deviation)" do
+          let(:vol1) do
+            planned_vol(mount_point: "/1", type: :ext4, min: 1.GiB, max: 1.GiB, weight: 0)
           end
 
-          context "with an equivalent distribution of weights (#weight_space_deviation)" do
-            let(:scenario) { "spaces_5_5_10" }
-            before do
-              vol1.min = 3.GiB
-              vol2.max = 2.GiB
-            end
-            let(:vol3) { planned_vol(mount_point: "/3", type: :ext4, min: 5.GiB, max: 5.GiB, weight: 2) }
+          let(:vol2) do
+            planned_vol(mount_point: "/2", type: :ext4, min: 2.GiB, max: 2.GiB, weight: 0)
+          end
 
-            it "returns the distribution in which the new partitions are more grouped" do
-              # The expected distribution is: everything in the 10 GiB space
-              expect(distribution.spaces.size).to eq 1
-              expect(distribution.spaces_total_size).to eq 10.GiB
-            end
+          let(:volumes) { [vol1, vol2] }
+
+          it "returns the distribution in which the new partitions are more grouped" do
+            # The expected distribution is: everything in the 3 GiB space
+            expect(distribution.spaces.size).to eq 1
+            expect(distribution.gaps_total_size).to eq(5119.MiB)
           end
         end
 
@@ -254,7 +245,6 @@ describe Y2Storage::Proposal::PartitionsDistributionCalculator do
           end
 
           context "and there is no extended partition" do
-            let(:scenario) { "spaces_5_3" }
             let(:space5) { distribution.spaces.detect { |s| s.disk_size == 5.GiB } }
             let(:space3) { distribution.spaces.detect { |s| s.disk_size == (3.GiB - 1.MiB) } }
 

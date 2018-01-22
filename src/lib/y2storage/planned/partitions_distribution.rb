@@ -36,6 +36,9 @@ module Y2Storage
       # @return [Array<AssignedSpace>]
       attr_reader :spaces
 
+      # @return [Array<AssignedSpace>]
+      attr_reader :unassigned_spaces
+
       # Constructor. Raises an exception when trying to create an invalid
       # distribution.
       #
@@ -44,10 +47,16 @@ module Y2Storage
       #
       # @param partitions_by_disk_space [Hash{FreeDiskSpace => Array<Planned::Partition>}]
       def initialize(partitions_by_disk_space)
-        @spaces = partitions_by_disk_space.map do |disk_space, partitions|
+        unassigned, assigned =
+          partitions_by_disk_space.partition { |_k, v| v.empty? }.map(&:to_h)
+
+        @spaces = assigned.map do |disk_space, partitions|
           assigned_space(disk_space, partitions)
         end
         @spaces.freeze
+
+        @unassigned_spaces = unassigned.keys
+
         spaces_by_disk.each do |disk, spaces|
           disk.as_not_empty do
             set_num_logical_for(spaces, disk.partition_table)
@@ -85,13 +94,21 @@ module Y2Storage
       # Space wasted by the distribution
       # @return [DiskSize]
       def gaps_total_size
-        DiskSize.sum(spaces.map(&:unused))
+        DiskSize.sum(spaces.map(&:unused) + unassigned_spaces.map(&:disk_size))
       end
 
-      # Number of gaps (unused disk portions) introduced by the distribution
+      # Number of gaps (unused disk portions)
+      #
+      # In the past, a free disk space which was not used at all was not considered
+      # a gap. Now the reasons of such a decision are not clear, so all free disk spaces
+      # are counted as gaps.
+      #
+      # Check https://github.com/yast/yast-storage-ng/blob/c2c164ae6148649f72a29c623dd2eae107bd4083/src/lib/y2storage/planned/partitions_distribution.rb#L91
+      # for further details.
+      #
       # @return [Integer]
       def gaps_count
-        spaces.reject { |s| s.unused.zero? }.size
+        spaces.reject { |s| s.unused.zero? }.size + unassigned_spaces.size
       end
 
       # Total space available for the planned partitions
@@ -130,9 +147,6 @@ module Y2Storage
 
           # The fewer physical volumes the better
           [:partitions_count, :smaller],
-
-          # The bigger installation the better
-          [:spaces_total_size, :bigger],
 
           # We want the partitions with biggest weight to be placed in the spaces
           # in which there is more extra space to be distributed

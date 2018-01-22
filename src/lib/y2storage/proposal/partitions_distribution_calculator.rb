@@ -65,6 +65,8 @@ module Y2Storage
 
         log.info "Calculate all the possible distributions of planned partitions into spaces"
         dist_hashes = distribution_hashes(disk_spaces_by_part)
+        add_unused_spaces(dist_hashes, spaces)
+
         candidates = distributions_from_hashes(dist_hashes)
 
         if lvm_helper.missing_space > DiskSize.zero
@@ -295,6 +297,18 @@ module Y2Storage
         result = candidates.sort { |a, b| a.better_than(b) }.first
         log.info "best_for result: #{result}"
         result
+      end
+
+      # Add unused spaces to a distributions hash
+      #
+      # @param dist_hashes [Array<Hash{FreeDiskSpace => <Planned::Partition>}>]
+      #   Distribution hashes
+      # @param spaces      [Array<FreeDiskSpace>] Free spaces
+      # @return [Array<Hash{FreeDiskSpace => <Planned::Partition>}>]
+      #   Distribution hashes considering all free disk spaces.
+      def add_unused_spaces(dist_hashes, spaces)
+        spaces_hash = Hash[spaces.product([[]])]
+        dist_hashes.map! { |d| spaces_hash.merge(d) }
       end
     end
   end

@@ -132,24 +132,29 @@ describe Y2Storage::GuidedProposal do
 
       it "creates the needed partitions in the multipath device" do
         proposal.propose
-        multipath = proposal.devices.multipaths.first
-        expect(multipath.partitions).to contain_exactly(
-          an_object_having_attributes(id: Y2Storage::PartitionId::BIOS_BOOT),
+
+        multipath0, multipath1 = proposal.devices.multipaths
+        expect(multipath0.partitions).to contain_exactly(
           an_object_having_attributes(filesystem_mountpoint: "/"),
-          an_object_having_attributes(filesystem_mountpoint: "/home"),
-          an_object_having_attributes(filesystem_mountpoint: "swap")
+          an_object_having_attributes(filesystem_mountpoint: "/home")
+        )
+        expect(multipath1.partitions).to contain_exactly(
+          an_object_having_attributes(filesystem_mountpoint: "swap"),
+          an_object_having_attributes(id: Y2Storage::PartitionId::BIOS_BOOT)
         )
       end
 
       it "creates the needed partitions with correct device names" do
         proposal.propose
-        multipath = proposal.devices.multipaths.first
-        multipath_name = multipath.name
-        expect(multipath.partitions.map(&:name)).to contain_exactly(
-          "#{multipath_name}-part1",
-          "#{multipath_name}-part2",
-          "#{multipath_name}-part3",
-          "#{multipath_name}-part4"
+        multipath0, multipath1 = proposal.devices.multipaths
+        expect(multipath0.partitions.map(&:name)).to contain_exactly(
+          "#{multipath0.name}-part1",
+          "#{multipath0.name}-part2"
+        )
+
+        expect(multipath1.partitions.map(&:name)).to contain_exactly(
+          "#{multipath1.name}-part1",
+          "#{multipath1.name}-part2"
         )
       end
     end
@@ -176,13 +181,14 @@ describe Y2Storage::GuidedProposal do
 
       it "creates the needed partitions with correct device names" do
         proposal.propose
-        # note: potentially order dependent; thera are two raids defined
-        raid = proposal.devices.dm_raids.last
-        raid_name = raid.name
-        expect(raid.partitions.map(&:name)).to contain_exactly(
-          "#{raid_name}-part1",
-          "#{raid_name}-part2",
-          "#{raid_name}-part3"
+        # note: potentially order dependent; there are two raids defined
+        raid0, raid1 = proposal.devices.dm_raids
+        expect(raid0.partitions.map(&:name)).to contain_exactly(
+          "#{raid0.name}-part1",
+          "#{raid0.name}-part2"
+        )
+        expect(raid1.partitions.map(&:name)).to contain_exactly(
+          "#{raid1.name}-part1"
         )
       end
     end
