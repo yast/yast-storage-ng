@@ -103,7 +103,8 @@ module Y2Storage
       # a gap. Now the reasons of such a decision are not clear, so all free disk spaces
       # are counted as gaps.
       #
-      # Check https://github.com/yast/yast-storage-ng/blob/c2c164ae6148649f72a29c623dd2eae107bd4083/src/lib/y2storage/planned/partitions_distribution.rb#L91 for further details.
+      # Check https://github.com/yast/yast-storage-ng/blob/c2c164ae6148649f72a29c623dd2eae107bd4083/src/lib/y2storage/planned/partitions_distribution.rb#L91
+      # for further details.
       #
       # @return [Integer]
       def gaps_count

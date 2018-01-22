@@ -136,7 +136,7 @@ describe Y2Storage::GuidedProposal do
         multipath0, multipath1 = proposal.devices.multipaths
         expect(multipath0.partitions).to contain_exactly(
           an_object_having_attributes(filesystem_mountpoint: "/"),
-          an_object_having_attributes(filesystem_mountpoint: "/home"),
+          an_object_having_attributes(filesystem_mountpoint: "/home")
         )
         expect(multipath1.partitions).to contain_exactly(
           an_object_having_attributes(filesystem_mountpoint: "swap"),
@@ -149,12 +149,12 @@ describe Y2Storage::GuidedProposal do
         multipath0, multipath1 = proposal.devices.multipaths
         expect(multipath0.partitions.map(&:name)).to contain_exactly(
           "#{multipath0.name}-part1",
-          "#{multipath0.name}-part2",
+          "#{multipath0.name}-part2"
         )
 
         expect(multipath1.partitions.map(&:name)).to contain_exactly(
           "#{multipath1.name}-part1",
-          "#{multipath1.name}-part2",
+          "#{multipath1.name}-part2"
         )
       end
     end
@@ -185,7 +185,7 @@ describe Y2Storage::GuidedProposal do
         raid0, raid1 = proposal.devices.dm_raids
         expect(raid0.partitions.map(&:name)).to contain_exactly(
           "#{raid0.name}-part1",
-          "#{raid0.name}-part2",
+          "#{raid0.name}-part2"
         )
         expect(raid1.partitions.map(&:name)).to contain_exactly(
           "#{raid1.name}-part1"
