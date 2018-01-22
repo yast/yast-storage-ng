@@ -1,7 +1,28 @@
+# encoding: utf-8
+
+# Copyright (c) [2017] SUSE LLC
+#
+# All Rights Reserved.
+#
+# This program is free software; you can redistribute it and/or modify it
+# under the terms of version 2 of the GNU General Public License as published
+# by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+# more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, contact SUSE LLC.
+#
+# To contact SUSE LLC about this file by physical or electronic mail, you may
+# find current contact information at www.suse.com.
+
 require "yast"
 require "cwm/dialog"
 require "cwm/common_widgets"
-require "y2partitioner/widgets/devices_selection"
+require "y2partitioner/widgets/lvm_vg_devices_selector"
 
 Yast.import "Popup"
 
@@ -19,7 +40,7 @@ module Y2Partitioner
 
       # @macro seeDialog
       def title
-        _("Add Volume Group")
+        controller.wizard_title
       end
 
       # @macro seeDialog
@@ -27,7 +48,7 @@ module Y2Partitioner
         VBox(
           Left(HVSquash(NameWidget.new(controller))),
           Left(HVSquash(ExtentSizeWidget.new(controller))),
-          DevicesWidget.new(controller)
+          Widgets::LvmVgDevicesSelector.new(controller)
         )
       end
 
@@ -157,74 +178,6 @@ module Y2Partitioner
           # First error is showed
           Yast::Popup.Error(errors.first)
           false
-        end
-      end
-
-      # Widget making possible to add and remove physical volumes to the volume group
-      class DevicesWidget < Widgets::DevicesSelection
-        # Constructor
-        #
-        # @param controller [Actions::Controllers::LvmVg]
-        def initialize(controller)
-          @controller = controller
-          super()
-        end
-
-        # @see Widgets::DevicesSelection#selected
-        def selected
-          controller.devices_in_vg
-        end
-
-        # @see Widgets::DevicesSelection#selected_size
-        def selected_size
-          controller.vg_size
-        end
-
-        # @see Widgets::DevicesSelection#unselected
-        def unselected
-          controller.available_devices
-        end
-
-        # @see Widgets::DevicesSelection#select
-        def select(sids)
-          find_by_sid(unselected, sids).each do |device|
-            controller.add_device(device)
-          end
-        end
-
-        # @see Widgets::DevicesSelection#unselect
-        def unselect(sids)
-          find_by_sid(selected, sids).each do |device|
-            controller.remove_device(device)
-          end
-        end
-
-        # Validates that at least one physical volume was added to the volume group
-        # @macro seeAbstractWidget
-        #
-        # @note An error popup is shown when no physical volume was added.
-        #
-        # @return [Boolean]
-        def validate
-          return true if controller.devices_in_vg.size > 0
-
-          Yast::Popup.Error(_("Select at least one device."))
-          false
-        end
-
-      private
-
-        # @return [Actions::Controllers::LvmVg]
-        attr_reader :controller
-
-        # Finds devices by sid
-        #
-        # @param devices [Array<Y2Storage::BlkDevice>]
-        # @param sids [Array<Integer>]
-        #
-        # @return [Array<Y2Storage::BlkDevice>]
-        def find_by_sid(devices, sids)
-          devices.select { |d| sids.include?(d.sid) }
         end
       end
     end
