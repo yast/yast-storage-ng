@@ -60,9 +60,10 @@ module Y2Partitioner
 
       # @see Widgets::DevicesSelection#unselect
       #
-      # @note Committed physical volumes cannot be unselected, see {#validate_unselect}.
+      # @note Committed physical volumes cannot be unselected,
+      #   see {#check_for_committed_devices}.
       def unselect(sids)
-        validate_unselect(sids)
+        check_for_committed_devices(sids)
         sids -= controller.committed_devices.map(&:sid)
 
         find_by_sid(selected, sids).each do |device|
@@ -117,19 +118,15 @@ module Y2Partitioner
         false
       end
 
-      # Validates that unselected phyical volumes can be removed
-      #
-      # @note A physical volume cannot be removed if it is already committed. An error
-      #   popup is shown when a committed physical volume is tried to be removed.
+      # Checks whether committed devices have been selected for removing, showing an error
+      # popup is that case
       #
       # @see Actions::Controllers::LvmVg#committed_devices
       #
       # @param sids [Array<Integer>]
-      # @return [Boolean]
-      def validate_unselect(sids)
+      def check_for_committed_devices(sids)
         committed_devices = controller.committed_devices.select { |d| sids.include?(d.sid) }
-
-        return true if committed_devices.empty?
+        return if committed_devices.empty?
 
         error_message = if committed_devices.size > 1
           _("Physical volumes %s cannot be removed because they already exist on disk")
@@ -138,8 +135,6 @@ module Y2Partitioner
         end
 
         Yast::Popup.Error(format(error_message, committed_devices.map(&:name).join(", ")))
-
-        false
       end
 
       # Finds devices by sid

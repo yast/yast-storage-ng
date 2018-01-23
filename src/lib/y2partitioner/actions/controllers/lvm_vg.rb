@@ -73,11 +73,11 @@ module Y2Partitioner
         def wizard_title
           case action
           when :add
-            # TRANSLATORS: dialog title when creating a logical volume
+            # TRANSLATORS: dialog title when creating an LVM volume group
             _("Add Volume Group")
           when :resize
-            # TRANSLATORS: dialog title when resizing a logical volume, where %s is replaced
-            # by a device name (e.g., /dev/md0)
+            # TRANSLATORS: dialog title when resizing an LVM volume group, where %s is replaced
+            # by a device name (e.g., /dev/vg0)
             _("Resize Volume Group %s") % vg.name
           end
         end
@@ -102,7 +102,7 @@ module Y2Partitioner
         #
         # @return [Y2Storage::DiskSize]
         def lvs_size
-          vg.lvm_lvs.map(&:size).inject(Y2Storage::DiskSize.zero, :+)
+          Y2Storage::DiskSize.sum(vg.lvm_lvs.map(&:size))
         end
 
         # Applies given values (i.e., volume group name and extent size) to the

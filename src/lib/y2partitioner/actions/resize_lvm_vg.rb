@@ -26,7 +26,7 @@ require "y2partitioner/dialogs/lvm_vg_resize"
 
 module Y2Partitioner
   module Actions
-    # Action for resizing a new LVM volume group
+    # Action for resizing an LVM volume group
     class ResizeLvmVg < TransactionWizard
       # Constructor
       #

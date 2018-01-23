@@ -170,7 +170,7 @@ describe Y2Partitioner::Widgets::DeviceResizeButton do
         end
       end
 
-      context "and the device is a LVM volume group" do
+      context "and the device is an LVM volume group" do
         before do
           allow_any_instance_of(Y2Partitioner::Actions::ResizeLvmVg).to receive(:run)
             .and_return(action_result)
@@ -182,7 +182,7 @@ describe Y2Partitioner::Widgets::DeviceResizeButton do
 
         let(:scenario) { "lvm-two-vgs.yml" }
 
-        it "performs the action for resizing a partition" do
+        it "performs the action for resizing a volume group" do
           expect_any_instance_of(Y2Partitioner::Actions::ResizeLvmVg).to receive(:run)
           subject.handle
         end
