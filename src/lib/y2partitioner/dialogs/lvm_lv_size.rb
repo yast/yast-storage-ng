@@ -23,6 +23,7 @@ require "yast"
 require "y2storage"
 require "cwm"
 require "y2partitioner/widgets/controller_radio_buttons"
+require "y2partitioner/size_parser"
 
 Yast.import "Popup"
 
@@ -130,6 +131,8 @@ module Y2Partitioner
 
       # Enter a human readable size
       class CustomSizeInput < CWM::InputField
+        include SizeParser
+
         # @param initial [Y2Storage::DiskSize]
         # @param min [Y2Storage::DiskSize]
         # @param max [Y2Storage::DiskSize]
@@ -167,9 +170,7 @@ module Y2Partitioner
 
         # @return [Y2Storage::DiskSize,nil]
         def value
-          Y2Storage::DiskSize.from_human_string(super)
-        rescue TypeError
-          nil
+          parse_user_size(super)
         end
 
         alias_method :size, :value

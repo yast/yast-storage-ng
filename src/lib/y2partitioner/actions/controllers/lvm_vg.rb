@@ -22,6 +22,7 @@
 require "yast"
 require "y2storage"
 require "y2partitioner/device_graphs"
+require "y2partitioner/size_parser"
 
 module Y2Partitioner
   module Actions
@@ -30,6 +31,7 @@ module Y2Partitioner
       # takes care of updating the devicegraph when needed
       class LvmVg
         include Yast::I18n
+        include SizeParser
 
         # @return [String] given volume group name
         attr_accessor :vg_name
@@ -60,12 +62,12 @@ module Y2Partitioner
         end
 
         # Stores the given extent size
-        # @note The value is internally stored as DiskSize (see {to_size}) when it can
-        #   be parsed; nil otherwise.
+        # @note The value is internally stored as DiskSize when it can be parsed;
+        #   nil otherwise.
         #
         # @param value [String]
         def extent_size=(value)
-          @extent_size = to_size(value)
+          @extent_size = parse_user_size(value)
         end
 
         # Effective size of the resulting LVM volume group
@@ -344,19 +346,6 @@ module Y2Partitioner
         # @return [Boolean] true if it is formatted; false otherwise
         def formatted?(device)
           !device.filesystem.nil?
-        end
-
-        # Converts a string to DiskSize, returning nil if the conversion
-        # it is not possible
-        #
-        # @see Y2Storage::DiskSize#from_human_string
-        #
-        # @return [Y2Storage::DiskSize, nil]
-        def to_size(value)
-          return nil if value.nil?
-          Y2Storage::DiskSize.from_human_string(value)
-        rescue TypeError
-          nil
         end
       end
     end
