@@ -113,7 +113,7 @@ module Y2Storage
 
     # Calculates the proposal
     #
-    # @raise [NoDiskSpaceError] if there is no enough space to perform the installation
+    # @raise [Error, NoDiskSpaceError] if there is no enough space to perform the installation
     def calculate_proposal
       settings.freeze
 
@@ -143,7 +143,7 @@ module Y2Storage
         end
       end
 
-      raise exception
+      raise exception || NoDiskSpaceError.new("No usable disks detected")
     end
 
     # @return [Array<Planned::Device>]
