@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Mon Jan 22 15:55:46 UTC 2018 - ancor@suse.com
+
+- Partitioner: button to resize LVM logical volumes now works as
+  expected (part of fate#31896).
+- 4.0.74
+
+-------------------------------------------------------------------
 Mon Jan 22 13:11:32 UTC 2018 - igonzalezsosa@suse.com
 
 - Consider all free spaces when deciding which partitions

@@ -21,31 +21,31 @@
 
 require "yast"
 require "yast/i18n"
-require "y2partitioner/dialogs/partition_resize"
+require "y2partitioner/dialogs/blk_device_resize"
 require "y2partitioner/ui_state"
 
 Yast.import "Popup"
 
 module Y2Partitioner
   module Actions
-    # Action for resizing a partition
-    class ResizePartition
+    # Action for resizing a partition or an LVM logical volume
+    class ResizeBlkDevice
       include Yast::I18n
 
       # Constructor
       #
-      # @param partition [Y2Storage::Partition]
-      def initialize(partition)
+      # @param device [Y2Storage::Partition, Y2Storage::LvmLv]
+      def initialize(device)
         textdomain "storage"
 
-        @partition = partition
-        UIState.instance.select_row(partition)
+        @device = device
+        UIState.instance.select_row(device)
       end
 
-      # Checks whether it is possible to resize the partition, and if so,
+      # Checks whether it is possible to resize the device, and if so,
       # the action is performed.
       #
-      # @note An error popup is shown when the partition cannot be resized.
+      # @note An error popup is shown when the device cannot be resized.
       #
       # @return [Symbol, nil]
       def run
@@ -55,21 +55,21 @@ module Y2Partitioner
 
     private
 
-      # @return [Y2Storage::Partition] partition to resize
-      attr_reader :partition
+      # @return [Y2Storage::Partition, Y2Storage::LvmLv] device to resize
+      attr_reader :device
 
-      # Resize information of the partition to be resized
+      # Resize information of the device to be resized
       #
       # @return [Y2Storage::ResizeInfo]
       def resize_info
-        partition.resize_info
+        device.resize_info
       end
 
-      # Runs the dialog to resize the partition
+      # Runs the dialog to resize the device
       #
       # @return [Symbol] :finish if the dialog returns :next; dialog result otherwise.
       def resize
-        result = Dialogs::PartitionResize.run(partition)
+        result = Dialogs::BlkDeviceResize.run(device)
 
         result == :next ? :finish : result
       end
@@ -88,7 +88,7 @@ module Y2Partitioner
 
         Yast::Popup.Error(
           # TRANSLATORS: an error popup message
-          _("This partition cannot be resized.")
+          _("This device cannot be resized.")
         )
 
         false
