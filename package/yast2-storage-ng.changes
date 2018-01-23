@@ -1,4 +1,9 @@
 -------------------------------------------------------------------
+Tue Jan 23 10:09:51 UTC 2018 - snwint@suse.com
+
+- fix proposal dialog error when there are no disks (bsc#1057430)
+
+-------------------------------------------------------------------
 Mon Jan 22 19:33:46 UTC 2018 - jlopez@suse.com
 
 - Avoid partitioning checks error when using old settings format.
