@@ -517,11 +517,17 @@ module Y2Partitioner
       VALUES = ["codepage="].freeze
       DEFAULT = "".freeze
 
+      def init
+        i = filesystem.fstab_options.index { |o| o =~ REGEXP }
+
+        self.value = i ? filesystem.fstab_options[i].gsub(REGEXP, "") : DEFAULT
+      end
+
       def store
         # The options can only be modified using BlkDevice#fstab_options=
         filesystem.fstab_options = filesystem.fstab_options.reject { |o| o =~ REGEXP }
 
-        return if value && !value.empty?
+        return if value.nil? || value.empty?
         filesystem.fstab_options = filesystem.fstab_options + ["codepage=#{value}"]
       end
 
