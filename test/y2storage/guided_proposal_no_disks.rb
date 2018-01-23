@@ -23,9 +23,6 @@
 require_relative "spec_helper"
 require "y2storage"
 
-# stop rspec warning
-RSpec::Expectations.configuration.on_potential_false_positives = :nothing
-
 describe Y2Storage::GuidedProposal do
   # Regression test (bsc#1057430)
   describe ".initial" do
