@@ -257,5 +257,14 @@ describe Y2Storage::SetupChecker do
         expect(subject.product_errors).to be_empty
       end
     end
+
+    # Regression test
+    context "when old settings format is used" do
+      let(:product_volumes) { nil }
+
+      it "returns an empty list" do
+        expect(subject.product_errors).to be_empty
+      end
+    end
   end
 end
