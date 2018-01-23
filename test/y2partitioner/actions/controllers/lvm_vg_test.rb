@@ -67,6 +67,13 @@ describe Y2Partitioner::Actions::Controllers::LvmVg do
       end
     end
 
+    context "when the International System units are used" do
+      it "considers them as base 2 units" do
+        controller.extent_size = "4 mb"
+        expect(controller.extent_size).to eq(4.MiB)
+      end
+    end
+
     context "with an incorrect size representation" do
       it "sets nil" do
         controller.extent_size = "1 bad size"
