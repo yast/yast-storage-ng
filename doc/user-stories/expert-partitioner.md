@@ -124,7 +124,7 @@ The specs are based on current version of expert partitioner for TW. The goal is
     * the same than in the "disk view"
 
 ### When 'Resize' is selected
-* *(pending) and selected partition is extended*
+* and selected partition is extended
   * shows an error popup
 * and selected partition is not extended
   * shows a dialog with the following fields
@@ -583,7 +583,7 @@ The specs are based on current version of expert partitioner for TW. The goal is
     * shows the general view of the VG (same than selecting the VG in the tree view)
   * and a LV is selected in the table
     * shows dialog to edit the LV
-* *(pending) and action 'Resize' is selected*
+* and action 'Resize' is selected
   * and a VG is selected in the table
     * shows dialog to resize the VG
   * and a LV is selected in the table
@@ -627,7 +627,7 @@ The specs are based on current version of expert partitioner for TW. The goal is
       * avoids to continue
     * creates the VG
 
-#### *(pending) When 'Resize' is selected (over a VG)*
+#### When 'Resize' is selected (over a VG)
 * same dialog than 'Add' + 'Volume Group' (see above)
 * 'Volume Group Name' is not shown
 * 'Physical Extend Size' is not shown
@@ -657,7 +657,7 @@ The specs are based on current version of expert partitioner for TW. The goal is
       * *(pending) and selected LV is a thin pool*
         * shows an error popup
         * does not allow to edit the LV
-    * *(pending) and action 'Resize' is selected*
+    * and action 'Resize' is selected
       * shows popup dialog to resize the current selected LV in the table
     * and action 'Delete' is selected
       * shows a confirm popup to delete the selected LV
@@ -720,7 +720,7 @@ The specs are based on current version of expert partitioner for TW. The goal is
         * avoids to continue
     * continues to the wizard step select LV role
 
-#### *(pending) When 'resize' is selected*
+#### When 'resize' is selected
 * shows a popup dialog with three options
   * Maximum Size
   * Minimum Size
@@ -747,7 +747,7 @@ The specs are based on current version of expert partitioner for TW. The goal is
 * shows the actions: 'Edit', 'Resize' and 'Delete'
   * and action 'Edit' is selected
     * the same than in the "VG view"
-  * *(pending) and action 'Resize' is selected*
+  * and action 'Resize' is selected
     * the same than in the "VG view"
   * and action 'Delete' is selected
     * the same than in the "VG view"

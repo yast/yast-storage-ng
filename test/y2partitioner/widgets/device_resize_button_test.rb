@@ -133,7 +133,7 @@ describe Y2Partitioner::Widgets::DeviceResizeButton do
         end
       end
 
-      context "and the device is an LVM volume group" do
+      context "and the device is an LVM logical volume" do
         before do
           allow_any_instance_of(Y2Partitioner::Actions::ResizeBlkDevice).to receive(:run)
             .and_return(action_result)
@@ -150,6 +150,40 @@ describe Y2Partitioner::Widgets::DeviceResizeButton do
 
         it "performs the action for resizing a logical volume" do
           expect_any_instance_of(Y2Partitioner::Actions::ResizeBlkDevice).to receive(:run)
+          subject.handle
+        end
+
+        context "and resize action is correctly performed" do
+          let(:action_result) { :finish }
+
+          it "returns :redraw" do
+            expect(subject.handle).to eq(:redraw)
+          end
+        end
+
+        context "and resize action is not correctly performed" do
+          let(:action_result) { :back }
+
+          it "returns nil" do
+            expect(subject.handle).to be_nil
+          end
+        end
+      end
+
+      context "and the device is an LVM volume group" do
+        before do
+          allow_any_instance_of(Y2Partitioner::Actions::ResizeLvmVg).to receive(:run)
+            .and_return(action_result)
+        end
+
+        let(:device) { Y2Storage::LvmVg.find_by_vg_name(current_graph, "vg0") }
+
+        let(:action_result) { nil }
+
+        let(:scenario) { "lvm-two-vgs.yml" }
+
+        it "performs the action for resizing a volume group" do
+          expect_any_instance_of(Y2Partitioner::Actions::ResizeLvmVg).to receive(:run)
           subject.handle
         end
 

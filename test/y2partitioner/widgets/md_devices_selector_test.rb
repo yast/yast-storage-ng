@@ -21,56 +21,20 @@
 # find current contact information at www.suse.com.
 
 require_relative "../test_helper"
+require_relative "#{TEST_PATH}/support/devices_selector_context"
 
-require "yast"
 require "cwm/rspec"
-require "y2storage"
 require "y2partitioner/widgets/md_devices_selector"
 require "y2partitioner/actions/controllers/md"
 
-Yast.import "UI"
-
 describe Y2Partitioner::Widgets::MdDevicesSelector do
-  def dev(name)
-    Y2Storage::BlkDevice.find_by_name(current_graph, name)
-  end
-
-  def row_match?(row, regexp)
-    row.any? { |column| column.match?(regexp) }
-  end
-
-  # Checks whether the rows match the expression, taking the order of both sets
-  # into account
-  def rows_match?(rows, *args)
-    return false if rows.size != args.size
-
-    args.each.with_index.all? do |arg, idx|
-      row_match?(rows[idx], arg)
-    end
-  end
+  include_context "devices selector"
 
   let(:controller) { Y2Partitioner::Actions::Controllers::Md.new }
 
-  let(:current_graph) { Y2Partitioner::DeviceGraphs.instance.current }
-
   subject(:widget) { described_class.new(controller) }
 
-  let(:unselected_table) do
-    widget.contents.nested_find { |i| i.is_a?(CWM::Table) && i.widget_id == "unselected" }
-  end
-  let(:selected_table) do
-    widget.contents.nested_find { |i| i.is_a?(CWM::Table) && i.widget_id == "selected" }
-  end
-
   before do
-    devicegraph_stub("lvm-two-vgs.yml")
-
-    # Ensure Yast::UI.Glyph and Yast::UI.GetDisplayInfo return something,
-    # which is currently not guaranteed with the dummy UI used in the tests
-    # (no ncurses or Qt).
-    allow(Yast::UI).to receive(:Glyph).and_return ""
-    allow(Yast::UI).to receive(:GetDisplayInfo).and_return("HasIconSupport" => false)
-
     devicegraph_stub("complex-lvm-encrypt.yml")
 
     controller.add_device(dev("/dev/sde3"))

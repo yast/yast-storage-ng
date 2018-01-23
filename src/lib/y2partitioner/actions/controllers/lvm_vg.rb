@@ -27,8 +27,8 @@ require "y2partitioner/size_parser"
 module Y2Partitioner
   module Actions
     module Controllers
-      # This class stores information about an LVM volume group being created and
-      # takes care of updating the devicegraph when needed
+      # This class stores information about an LVM volume group being created or
+      # modified and takes care of updating the devicegraph when needed.
       class LvmVg
         include Yast::I18n
         include SizeParser
@@ -39,7 +39,7 @@ module Y2Partitioner
         # @return [Y2Storage::DiskSize] given extent size
         attr_reader :extent_size
 
-        # @return [Y2Storage::LvmVg] new created volume group
+        # @return [Y2Storage::LvmVg] volume group to work over
         attr_reader :vg
 
         DEFAULT_VG_NAME = "".freeze
@@ -53,12 +53,33 @@ module Y2Partitioner
 
         # Constructor
         #
-        # @note This will create a new LVM volume group in the devicegraph right away.
-        # @see #initialize_values
-        def initialize
+        # @note When the volume group is not given, a new LvmVg object will be created in
+        #   the devicegraph right away.
+        #
+        # @see #initialize_action
+        #
+        # @param vg [Y2Storage::LvmVg] a volume group to be modified
+        def initialize(vg: nil)
           textdomain "storage"
 
-          initialize_values
+          initialize_action(vg)
+        end
+
+        # Title to display in the dialogs during the process
+        #
+        # @note The returned title depends on the action to perform (see {#initialize_action})
+        #
+        # @return [String]
+        def wizard_title
+          case action
+          when :add
+            # TRANSLATORS: dialog title when creating an LVM volume group
+            _("Add Volume Group")
+          when :resize
+            # TRANSLATORS: dialog title when resizing an LVM volume group, where %s is replaced
+            # by a device name (e.g., /dev/vg0)
+            _("Resize Volume Group %s") % vg.name
+          end
         end
 
         # Stores the given extent size
@@ -75,6 +96,13 @@ module Y2Partitioner
         # @return [Y2Storage::DiskSize]
         def vg_size
           vg.size
+        end
+
+        # Size of the logical volumes belonging to the current volume group
+        #
+        # @return [Y2Storage::DiskSize]
+        def lvs_size
+          Y2Storage::DiskSize.sum(vg.lvm_lvs.map(&:size))
         end
 
         # Applies given values (i.e., volume group name and extent size) to the
@@ -132,6 +160,15 @@ module Y2Partitioner
           vg.lvm_pvs.map(&:plain_blk_device)
         end
 
+        # Devices used by committed physical volumes of the current volume group
+        #
+        # @return [Array<Y2Storage::BlkDevice>]
+        def committed_devices
+          return [] unless probed_vg?
+
+          probed_vg.lvm_pvs.map(&:plain_blk_device)
+        end
+
         # Adds a device as physical volume of the volume group
         #
         # It removes any previous children (like filesystems) from the device and
@@ -172,6 +209,43 @@ module Y2Partitioner
 
       private
 
+        # Current action to perform
+        # @return [Symbol] :add, :resize
+        attr_reader :action
+
+        # Set the action to perform and initialize necessary data
+        def initialize_action(vg)
+          detect_action(vg)
+
+          case action
+          when :add
+            initialize_for_add
+          when :resize
+            initialize_for_resize(vg)
+          end
+        end
+
+        # Detects current action
+        #
+        # @note When no volume group is given, the action is set to :add. Otherwise,
+        #   the action is set to :resize.
+        def detect_action(vg)
+          # A volume group is given when it is going to be resized
+          @action = vg.nil? ? :add : :resize
+        end
+
+        # Initializes internal values for add action
+        def initialize_for_add
+          @vg = create_vg
+          @extent_size = DEFAULT_EXTENT_SIZE
+          @vg_name = DEFAULT_VG_NAME
+        end
+
+        # Initializes internal values for resize action
+        def initialize_for_resize(vg)
+          @vg = vg
+        end
+
         # Current devicegraph
         #
         # @return [Y2Storage::Devicegraph]
@@ -179,14 +253,28 @@ module Y2Partitioner
           DeviceGraphs.instance.current
         end
 
-        # Sets initial values
+        # Creates a new volume group
         #
-        # @note A default volume group name and extent size is assigned, and a new volume
-        # group is created.
-        def initialize_values
-          @vg_name = DEFAULT_VG_NAME
-          @extent_size = DEFAULT_EXTENT_SIZE
-          @vg = Y2Storage::LvmVg.create(working_graph, vg_name)
+        # @return [Y2Storage::LvmVg]
+        def create_vg
+          Y2Storage::LvmVg.create(working_graph, "")
+        end
+
+        # Probed version of the current volume group
+        #
+        # @note It returns nil if the volume group does not exist in probed devicegraph.
+        #
+        # @return [Y2Storage::LvmVg, nil]
+        def probed_vg
+          system = Y2Partitioner::DeviceGraphs.instance.system
+          system.find_device(vg.sid)
+        end
+
+        # Whether the current volume group exists in the probed devicegraph
+        #
+        # @return [Boolean] true if the volume group exists in probed; false otherwise.
+        def probed_vg?
+          !probed_vg.nil?
         end
 
         # Checks whether the given volume group name is empty
@@ -232,7 +320,7 @@ module Y2Partitioner
           # previous name if the given one is duplicated. Instead of that, the logic to
           # generate the volume group name has been duplicated here due to its simplicity.
           name = File.join("/dev", vg_name)
-          Y2Storage::BlkDevice.all(working_graph).map(&:name).include?(name)
+          !working_graph.find_by_name(name).nil?
         end
 
         # Error message to show when the given volume group name is duplicated
