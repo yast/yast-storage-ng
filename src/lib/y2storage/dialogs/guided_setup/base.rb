@@ -109,12 +109,9 @@ module Y2Storage
           nil
         end
 
+        # FIXME: it should include help of each setup
         def help_text
-          _(
-            "<p>\n" \
-            "TODO: this dialog is just temporary. " \
-            "Hopefully it will end up including help of each setup.</p>"
-          )
+          ""
         end
 
         # Helper to get widget value
