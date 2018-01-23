@@ -1,4 +1,12 @@
 -------------------------------------------------------------------
+Tue Jan 23 13:01:39 UTC 2018 - ancor@suse.com
+
+- Partitioner: consider all sizes entered by the user as base of 2
+  despite the units not being consistent with the International
+  System. Thus, 1KB (which in the IS actually means 1000 bytes)
+  becomes equivalent to 1KiB (which is 1024 bytes).
+
+-------------------------------------------------------------------
 Tue Jan 23 10:09:51 UTC 2018 - snwint@suse.com
 
 - fix proposal dialog error when there are no disks (bsc#1057430)

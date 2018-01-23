@@ -5,6 +5,7 @@ require "cwm/custom_widget"
 require "cwm/common_widgets"
 require "y2partitioner/widgets/controller_radio_buttons"
 require "y2partitioner/device_graphs"
+require "y2partitioner/size_parser"
 
 Yast.import "Popup"
 
@@ -274,6 +275,8 @@ module Y2Partitioner
     class BlkDeviceResize
       # Widget to enter a human readable size
       class CustomSizeWidget < CWM::InputField
+        include SizeParser
+
         # @return [Y2Storage::DiskSize]
         attr_reader :min_size
 
@@ -313,9 +316,7 @@ module Y2Partitioner
 
         # @return [Y2Storage::DiskSize, nil] nil if the given size is not human readable.
         def value
-          Y2Storage::DiskSize.from_human_string(super)
-        rescue TypeError
-          nil
+          parse_user_size(super)
         end
 
         alias_method :size, :value

@@ -109,15 +109,15 @@ describe Y2Partitioner::Dialogs::LvmLvSize do
   describe Y2Partitioner::Dialogs::LvmLvSize::CustomSizeInput do
     subject(:widget) { described_class.new(5.GiB, 1.GiB, 10.GiB) }
 
-    before do
-      allow(widget).to receive(:value).and_return(value)
-    end
-
-    let(:value) { nil }
-
     include_examples "CWM::AbstractWidget"
 
     describe "#validate" do
+      before do
+        allow(widget).to receive(:value).and_return(value)
+      end
+
+      let(:value) { nil }
+
       context "when given value in not a valid size" do
         let(:value) { nil }
 
@@ -167,6 +167,65 @@ describe Y2Partitioner::Dialogs::LvmLvSize do
         it "does not show an error popup" do
           expect(Yast::Popup).to_not receive(:Error)
           widget.validate
+        end
+      end
+    end
+
+    describe "#value" do
+      before do
+        allow(Yast::UI).to receive(:QueryWidget).with(Id(widget.widget_id), :Value)
+          .and_return entered
+      end
+
+      context "when a valid size is entered" do
+        let(:entered) { "10 GiB" }
+
+        it "returns the corresponding DiskSize object" do
+          expect(widget.value).to eq 10.GiB
+        end
+      end
+
+      context "when no units are specified" do
+        let(:entered) { "10" }
+
+        it "returns a DiskSize object" do
+          expect(widget.value).to be_a Y2Storage::DiskSize
+        end
+
+        it "considers the units to be bytes" do
+          expect(widget.value.to_i).to eq 10
+        end
+      end
+
+      context "when International System units are used" do
+        let(:entered) { "10gb" }
+
+        it "considers them as base 2 units" do
+          expect(widget.value).to eq 10.GiB
+        end
+      end
+
+      context "when the units are only partially specified" do
+        let(:entered) { "10g" }
+
+        it "considers them as base 2 units" do
+          expect(widget.value).to eq 10.GiB
+        end
+      end
+
+      context "when nothing is entered" do
+        let(:entered) { "" }
+
+        it "returns nil" do
+          expect(widget.value).to be_nil
+        end
+      end
+
+      context "when an invalid string is entered" do
+        let(:entered) { "a big chunk" }
+
+        it "returns nil" do
+          expect(widget.value).to be_nil
         end
       end
     end
