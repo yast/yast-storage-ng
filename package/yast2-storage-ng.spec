@@ -16,7 +16,7 @@
 #
 
 Name:		yast2-storage-ng
-Version:        4.0.74
+Version:        4.0.75
 Release:	0
 BuildArch:	noarch
 
