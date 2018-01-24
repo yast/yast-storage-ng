@@ -83,6 +83,10 @@ module Y2Storage
     # @return [String]
     def mountpoint=(path)
       to_storage_value.add_mountpoint(path.to_s)
+      if fstab_options && !fstab_options.empty?
+        mp = to_storage_value.mountpoint # storage::Mountpoint, not string!
+        mp.mount_options = mp.mount_options.to_a + fstab_options
+      end
       mountpoint
     end
 
