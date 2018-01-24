@@ -184,7 +184,7 @@ module Y2Partitioner
           Yast::UI.ChangeWidget(Id(:mount_device), :Enabled, true)
 
           if filesystem.mountpoint.nil? || filesystem.mountpoint.empty?
-            Yast::UI.ChangeWidget(Id(:no_mount_device), :Value, true)
+            Yast::UI.ChangeWidget(Id(:dont_mount_device), :Value, true)
             @mount_point_widget.disable
             @fstab_options_widget.disable
           else
@@ -195,7 +195,7 @@ module Y2Partitioner
         else
           Yast::UI.ChangeWidget(Id(:mount_device), :Enabled, false)
 
-          Yast::UI.ChangeWidget(Id(:no_mount_device), :Value, true)
+          Yast::UI.ChangeWidget(Id(:dont_mount_device), :Value, true)
           @mount_point_widget.disable
           @fstab_options_widget.disable
         end
@@ -219,7 +219,7 @@ module Y2Partitioner
                       Left(@fstab_options_widget)
                     )
                   ),
-                  Left(RadioButton(Id(:no_mount_device), Opt(:notify), _("Do not mount device")))
+                  Left(RadioButton(Id(:dont_mount_device), Opt(:notify), _("Do not mount device")))
                 )
               ),
               HBox(Left(@btrfs_subvolumes_widget))
@@ -235,8 +235,8 @@ module Y2Partitioner
         case event["ID"]
         when :mount_device
           mount_device
-        when :no_mount_device
-          no_mount_device
+        when :dont_mount_device
+          dont_mount_device
         when @mount_point_widget.widget_id
           mount_point_change
         else
@@ -255,7 +255,7 @@ module Y2Partitioner
         @mount_point_widget.enable
       end
 
-      def no_mount_device
+      def dont_mount_device
         @controller.mount_point = ""
         @fstab_options_widget.disable
         @mount_point_widget.disable
