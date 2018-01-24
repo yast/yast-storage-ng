@@ -81,6 +81,13 @@ describe Y2Storage::AutoinstProfile::PartitionSection do
           expect(section_for("dasdb2").subvolumes).to eq([])
         end
       end
+
+      context "and subvolumes_prefix is empty" do
+        it "ignores snapshots" do
+          paths = section_for("sdi1").subvolumes.map(&:path)
+          expect(paths).to_not include(".snapshots")
+        end
+      end
     end
 
     context "if the partition contains a filesystem" do

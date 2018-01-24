@@ -308,10 +308,9 @@ module Y2Storage
 
         @subvolumes_prefix = fs.subvolumes_prefix
 
-        snapshots_root = File.join(@subvolumes_prefix.to_s, ".snapshots")
         valid_subvolumes = fs.btrfs_subvolumes.reject do |subvol|
           subvol.path.empty? || subvol.path == @subvolumes_prefix ||
-            subvol.path.start_with?(snapshots_root)
+            subvol.path.start_with?(fs.snapshots_root)
         end
 
         @subvolumes = valid_subvolumes.map do |subvol|
