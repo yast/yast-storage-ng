@@ -34,6 +34,7 @@ module Y2Storage
 
       wrap_enum "FsType"
 
+      # See "man mount" for all those options.
       COMMON_FSTAB_OPTIONS = ["async", "atime", "noatime", "user", "nouser",
                               "auto", "noauto", "ro", "rw", "defaults"].freeze
       EXT_FSTAB_OPTIONS = ["dev", "nodev", "usrquota", "grpquota", "acl",
@@ -344,11 +345,7 @@ module Y2Storage
         fstab_options.map do |opt|
           next opt unless opt.start_with?("iocharset")
           iocharset = lang_typical_encoding
-          if iocharset == "utf8"
-            "utf8=true"
-          else
-            "iocharset=" + iocharset
-          end
+          "iocharset=" + iocharset
         end
       end
 

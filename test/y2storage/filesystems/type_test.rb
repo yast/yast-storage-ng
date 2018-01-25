@@ -166,7 +166,7 @@ describe Y2Storage::Filesystems::Type do
       it "vfat has the correct fstab options for a utf8 locale" do
         Yast::Encoding.SetUtf8Lang(true)
         Yast::Encoding.SetEncLang("de_DE")
-        expect(described_class::VFAT.default_fstab_options).to eq ["utf8=true"]
+        expect(described_class::VFAT.default_fstab_options).to eq ["iocharset=utf8"]
       end
 
       it "vfat has the correct fstab options for a non-utf8 cs_CZ locale" do
