@@ -38,7 +38,7 @@ module Y2Storage
       COMMON_FSTAB_OPTIONS = ["async", "atime", "noatime", "user", "nouser",
                               "auto", "noauto", "ro", "rw", "defaults"].freeze
       EXT_FSTAB_OPTIONS = ["dev", "nodev", "usrquota", "grpquota", "acl",
-                           "noacl"].freeze
+                           "noacl", "user_xattr", "nouser_xattr"].freeze
       JOURNAL_OPTIONS = ["data=ordered"].freeze
       ACL_OPTIONS = ["acl", "user_xattr"].freeze
 
