@@ -324,9 +324,18 @@ module Y2Storage
       #
       # @return [Boolean] true if snapshots are present
       def snapshots?
-        snapshots_root = File.join(subvolumes_prefix, ".snapshots")
         snapshots_subvolume = btrfs_subvolumes.any? { |s| s.path == snapshots_root }
         snapshots_subvolume || configure_snapper
+      end
+
+      # @return [String] Snapshots root subvolume name
+      SNAPSHOTS_ROOT_SUBVOL_NAME = ".snapshots".freeze
+
+      # Determines the snapshots root subvolume
+      #
+      # @return [String] Snapshots root subvolume
+      def snapshots_root
+        @snapshots_root ||= Pathname.new(subvolumes_prefix).join(SNAPSHOTS_ROOT_SUBVOL_NAME).to_s
       end
 
     protected
