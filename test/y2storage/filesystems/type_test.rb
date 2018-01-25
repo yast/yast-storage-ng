@@ -23,6 +23,8 @@
 require_relative "../spec_helper"
 require "y2storage"
 
+Yast.import "Encoding"
+
 describe Y2Storage::Filesystems::Type do
   describe "#to_human_string" do
     it "returns the description of the type" do
@@ -102,6 +104,82 @@ describe Y2Storage::Filesystems::Type do
         Y2Storage::Filesystems::Type.legacy_home_filesystems.each do |filesystem|
           expect(filesystem.legacy_home?).to eq(true)
         end
+      end
+    end
+  end
+
+  describe "#iocharset and #codepage" do
+    it "return the correct values in a utf8 locale" do
+      Yast::Encoding.SetUtf8Lang(true)
+      Yast::Encoding.SetEncLang("cs_CZ")
+      expect(described_class::VFAT.iocharset).to eq "utf8"
+      expect(described_class::VFAT.codepage).to eq "437"
+    end
+
+    it "return the correct values in a legacy cs_CZ locale" do
+      Yast::Encoding.SetUtf8Lang(false)
+      Yast::Encoding.SetEncLang("cs_CZ")
+
+      expect(described_class::VFAT.iocharset).to eq "iso8859-2"
+      expect(described_class::VFAT.codepage).to eq "852"
+    end
+
+    it "return the correct values in a legacy de_DE locale" do
+      Yast::Encoding.SetUtf8Lang(false)
+      Yast::Encoding.SetEncLang("de_DE")
+      expect(described_class::VFAT.iocharset).to eq "iso8859-15"
+      expect(described_class::VFAT.codepage).to eq "437"
+    end
+
+    it "return the correct values in a utf8 ja_JP locale" do
+      Yast::Encoding.SetUtf8Lang(true)
+      Yast::Encoding.SetEncLang("ja_JP")
+      expect(described_class::VFAT.iocharset).to eq "utf8"
+      expect(described_class::VFAT.codepage).to eq "932"
+    end
+  end
+
+  describe "#default_fstab_options" do
+    context "for locale-independent filesystem types" do
+      it "ext2 has the correct fstab options" do
+        expect(described_class::EXT2.default_fstab_options).to eq ["acl", "user_xattr"]
+      end
+
+      it "ext3 has the correct fstab options" do
+        expect(described_class::EXT3.default_fstab_options).to eq ["data=ordered", "acl", "user_xattr"]
+      end
+
+      it "ext4 has the correct fstab options" do
+        expect(described_class::EXT4.default_fstab_options).to eq ["data=ordered", "acl", "user_xattr"]
+      end
+
+      it "xfs has the correct fstab options" do
+        expect(described_class::XFS.default_fstab_options).to eq []
+      end
+
+      it "ntfs has the correct fstab options" do
+        expect(described_class::NTFS.default_fstab_options).to eq ["fmask=133", "dmask=022"]
+      end
+    end
+
+    context "for locale-dependent filesystem types" do
+      it "vfat has the correct fstab options for a utf8 locale" do
+        Yast::Encoding.SetUtf8Lang(true)
+        Yast::Encoding.SetEncLang("de_DE")
+        expect(described_class::VFAT.default_fstab_options).to eq ["iocharset=utf8"]
+      end
+
+      it "vfat has the correct fstab options for a non-utf8 cs_CZ locale" do
+        Yast::Encoding.SetUtf8Lang(false)
+        Yast::Encoding.SetEncLang("cs_CZ")
+        expect(described_class::VFAT.default_fstab_options).to eq ["iocharset=iso8859-2", "codepage=852"]
+      end
+
+      it "vfat has the correct fstab options for a non-utf8 de_DE locale" do
+        Yast::Encoding.SetUtf8Lang(false)
+        Yast::Encoding.SetEncLang("de_DE")
+        # "codepage=437" is default and thus omitted
+        expect(described_class::VFAT.default_fstab_options).to eq ["iocharset=iso8859-15"]
       end
     end
   end

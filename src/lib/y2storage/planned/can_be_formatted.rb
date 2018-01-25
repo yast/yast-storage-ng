@@ -142,8 +142,21 @@ module Y2Storage
         filesystem.label = label if label
         filesystem.uuid = uuid if uuid
         filesystem.mkfs_options = mkfs_options if mkfs_options
-        filesystem.fstab_options = fstab_options if fstab_options
         filesystem.mount_by = mount_by if mount_by
+        setup_fstab_options(filesystem)
+      end
+
+      # Set the fstab options, either those that were explicitly set, or the
+      # defaults for this filesystem type
+      #
+      # @param filesystem [Filesystems::BlkFilesystem]
+      def setup_fstab_options(filesystem)
+        return unless filesystem
+        if fstab_options
+          filesystem.fstab_options = fstab_options
+        elsif filesystem_type
+          filesystem.fstab_options = filesystem_type.default_fstab_options
+        end
       end
 
       # Creates subvolumes in the previously created filesystem that is placed
@@ -172,7 +185,10 @@ module Y2Storage
           format!(device)
         else
           filesystem = final_device!(device).filesystem
-          assign_mountpoint(filesystem)
+          if filesystem
+            setup_fstab_options(filesystem)
+            assign_mountpoint(filesystem)
+          end
         end
       end
 

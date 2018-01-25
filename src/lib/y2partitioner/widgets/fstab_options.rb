@@ -3,9 +3,12 @@ require "cwm"
 require "y2storage"
 
 module Y2Partitioner
+  # Partitioner widgets
   module Widgets
+    include Yast::Logger
+
     # The fstab options are mostly checkboxes and combo boxes that share some
-    # common methods, so this is a mixin for that share code.
+    # common methods, so this is a mixin for that shared code.
     module FstabCommon
       def initialize(controller)
         textdomain "storage"
@@ -21,9 +24,9 @@ module Y2Partitioner
         init_regexp if self.class.const_defined?("REGEXP")
       end
 
-      # No all the fstab options are supported by all the filesystem so each
-      # widget are able to check if the current filesystem is supported
-      # explicitely or checking if the values it is responsable of are
+      # Not all the fstab options are supported by all the filesystems so each
+      # widget is able to check if the current filesystem is supported
+      # explicitely or checking if the values it is responsible for are
       # supported by the filesystem.
       def supported_by_filesystem?
         return false if filesystem.nil?
@@ -31,10 +34,12 @@ module Y2Partitioner
         if self.class.const_defined?("SUPPORTED_FILESYSTEMS")
           self.class::SUPPORTED_FILESYSTEMS
             .include?(filesystem.type.to_sym)
-        else
+        elsif self.class.const_defined?("VALUES")
           self.class::VALUES.all? do |v|
             filesystem.type.supported_fstab_options.include?(v)
           end
+        else
+          false
         end
       end
 
@@ -54,10 +59,17 @@ module Y2Partitioner
         [Left(widget), VSpacing(1)]
       end
 
-      def delete_from_fstab!(option)
+      def delete_fstab_option!(option)
         # The options can only be modified using BlkDevice#fstab_options=
         filesystem.fstab_options = filesystem.fstab_options.reject { |o| o =~ option }
       end
+
+      def add_fstab_options(*options)
+        # The options can only be modified using BlkDevice#fstab_options=
+        filesystem.fstab_options = filesystem.fstab_options + options
+      end
+
+      alias_method :add_fstab_option, :add_fstab_options
 
     private
 
@@ -74,16 +86,18 @@ module Y2Partitioner
       end
     end
 
-    # Push button that launch a dialog for set the fstab options
+    # Push button that launch a dialog to set the fstab options
     class FstabOptionsButton < CWM::PushButton
       include FstabCommon
 
       def label
-        _("Fstab options...")
+        _("Fstab Options...")
       end
 
       def handle
+        log.info("fstab_options before dialog: #{filesystem.fstab_options}")
         Dialogs::FstabOptions.new(@controller).run
+        log.info("fstab_options after dialog: #{filesystem.fstab_options}")
 
         nil
       end
@@ -129,8 +143,8 @@ module Y2Partitioner
           VSpacing(1),
           Left(GeneralOptions.new(@controller)),
           Left(FilesystemsOptions.new(@controller)),
+          Left(AclOptions.new(@controller)),
           * ui_term_with_vspace(JournalOptions.new(@controller)),
-          * ui_term_with_vspace(AclOptions.new(@controller)),
           Left(ArbitraryOptions.new(@controller))
         )
       end
@@ -236,18 +250,13 @@ module Y2Partitioner
     class FstabCheckBox < CWM::CheckBox
       include FstabCommon
 
-      # FIXME: It is common to almost all regexp widgets not only for checkboxes
       def init
         self.value = filesystem.fstab_options.include?(checked_value)
       end
 
-      # FIXME: It is common to almost all regexp widgets not only for checkboxes
       def store
-        delete_from_fstab!(Regexp.union(options))
-
-        return unless value
-        # The options can only be modified using BlkDevice#fstab_options=
-        filesystem.fstab_options = filesystem.fstab_options + [checked_value]
+        delete_fstab_option!(Regexp.union(options))
+        add_fstab_option(checked_value) if value
       end
 
     private
@@ -335,31 +344,147 @@ module Y2Partitioner
       end
 
       def store
-        delete_from_fstab!(Regexp.union(VALUES))
+        delete_fstab_option!(Regexp.union(VALUES))
+        add_fstab_options("usrquota", "grpquota") if value
+      end
+    end
 
-        return unless value
-        # The options can only be modified using BlkDevice#fstab_options=
-        filesystem.fstab_options = filesystem.fstab_options + ["usrquota", "grpquota"]
+    # A group of options related to ACLs (access control lists)
+    class AclOptions < CWM::CustomWidget
+      include FstabCommon
+
+      def contents
+        return Empty() unless widgets.any?(&:supported_by_filesystem?)
+
+        VBox(* widgets.map { |w| to_ui_term(w) }, VSpacing(1))
+      end
+
+      def widgets
+        [
+          Acl.new(@controller),
+          UserXattr.new(@controller)
+        ]
+      end
+    end
+
+    # CheckBox to enable access control lists (acl)
+    class Acl < FstabCheckBox
+      include FstabCommon
+
+      VALUES = ["acl", "noacl"].freeze
+
+      def label
+        _("&Access Control Lists (ACL)")
+      end
+
+      def help
+        _("<p><b>Access Control Lists (acl):</b>\n" \
+          "Enable POSIX access control lists and thus more fine-grained " \
+          "user permissions on the file system. See also man 5 acl.\n")
+      end
+    end
+
+    # CheckBox to enable extended user attributes (xattr)
+    class UserXattr < FstabCheckBox
+      include FstabCommon
+
+      VALUES = ["user_xattr", "nouser_xattr"].freeze
+
+      def label
+        _("&Extended User Attributes")
+      end
+
+      def help
+        _("<p><b>Extended User Attributes (user_xattr):</b>\n" \
+          "Enable extended attributes (name:value pairs) on files and directories.\n" \
+          "This is an extension to ACLs. See also man 7 xattr.\n")
+      end
+    end
+
+    # Generic ComboBox for fstab options.
+    #
+    # This uses some constants that each derived class should define:
+    #
+    # REGEXP [Regex] The regular expression describing the fstab option.
+    # If it ends with "=", the value will be appended to it.
+    #
+    # ITEMS [Array<String>] The items to choose from.
+    # The first one is used as the default (initial) value.
+    #
+    class FstabComboBox < CWM::ComboBox
+      include FstabCommon
+
+      # Set the combo box value to the current value matching REGEXP.
+      def init
+        i = filesystem.fstab_options.index { |o| o =~ self.class::REGEXP }
+        self.value = i ? filesystem.fstab_options[i].gsub(self.class::REGEXP, "") : default_value
+      end
+
+      # Convert REGEXP to the option string. This is a very basic
+      # implementation that just removes a "^" if the regexp contains it.
+      # For anything more sophisticated, reimplement this.
+      #
+      # @return [String]
+      def option_str
+        self.class::REGEXP.source.delete("^")
+      end
+
+      # Overriding FstabCommon::supported_by_filesystem? to make use of the
+      # REGEXP and to avoid having to duplicate it in VALUES
+      def supported_by_filesystem?
+        return false if filesystem.nil?
+        filesystem.type.supported_fstab_options.any? { |opt| opt =~ self.class::REGEXP }
+      end
+
+      # The default value for the option.
+      #
+      # @return [String]
+      def default_value
+        items.first.first
+      end
+
+      # Store the current value in the fstab_options.
+      # If the value is nil or empty, it will only remove the old value.
+      #
+      # If option_str (i.e. normally REGEXP) ends with "=", the value is
+      # appended to it, otherwise only the value is used.
+      # "codepage=" -> "codepage=value"
+      # "foo" -> "value"
+      def store
+        delete_fstab_option!(self.class::REGEXP)
+        return if value.nil? || value.empty?
+
+        opt = option_str
+        if opt.end_with?("=")
+          opt += value
+        else
+          opt = value
+        end
+        add_fstab_option(opt)
+      end
+
+      # Convert ITEMS to the format expected by the underlying
+      # CWM::ComboBox.
+      def items
+        self.class::ITEMS.map { |val| [val, val] }
+      end
+
+      # Widget options
+      def opt
+        %i(editable hstretch)
       end
     end
 
     # ComboBox to specify the journal mode to use by the filesystem
-    class JournalOptions < CWM::ComboBox
-      include FstabCommon
-
+    class JournalOptions < FstabComboBox
       REGEXP = /^data=/
-      VALUES = ["data="].freeze
-      DEFAULT = "journal".freeze
 
       def label
         _("Data &Journaling Mode")
       end
 
-      def store
-        delete_from_fstab!(REGEXP)
-
-        # The options can only be modified using BlkDevice#fstab_options=
-        filesystem.fstab_options = filesystem.fstab_options + ["data=#{value}"]
+      def default_value
+        "ordered"
       end
 
       def items
@@ -381,28 +506,11 @@ module Y2Partitioner
       end
     end
 
-    # Custom widget that allows to enable ACL and the use of extended
-    # attributes
-    #
-    # TODO: FIXME: Pending implementation, currently it is only draw
-    class AclOptions < CWM::CustomWidget
-      include FstabCommon
-
-      VALUES = ["acl", "eua"].freeze
-
-      def contents
-        VBox(
-          Left(CheckBox(Id("opt_acl"), Opt(:disabled), _("&Access Control Lists (ACL)"), false)),
-          Left(CheckBox(Id("opt_eua"), Opt(:disabled), _("&Extended User Attributes"), false))
-        )
-      end
-    end
-
     # A input field that allows to set other options that are not handled by
     # specific widgets
     #
-    # TODO: FIXME: Pending implementation, currently it is only draw, all the options
-    # that it is responsable of should be defined, removing them if not set or
+    # TODO: FIXME: Pending implementation, currently it is only drawing; all the options
+    # that it is responsible for should be defined, removing them if not set or
     # supported by the current filesystem.
     class ArbitraryOptions < CWM::InputField
       def initialize(controller)
@@ -450,10 +558,8 @@ module Y2Partitioner
       end
 
       def store
-        delete_from_fstab!(REGEXP)
-
-        # The options can only be modified using BlkDevice#fstab_options=
-        filesystem.fstab_options = filesystem.fstab_options + ["pri=#{value}"]
+        delete_fstab_option!(REGEXP)
+        add_fstab_option("pri=#{value}") if value
       end
 
       def help
@@ -463,29 +569,22 @@ module Y2Partitioner
     end
 
     # VFAT IOCharset
-    class IOCharset < CWM::ComboBox
-      include FstabCommon
-
-      SUPPORTED_FILESYSTEMS = ["vfat"].freeze
+    class IOCharset < FstabComboBox
       REGEXP = /^iocharset=/
-      DEFAULT = "".freeze
-      AVAILABLE_VALUES = [
+      ITEMS = [
         "", "iso8859-1", "iso8859-15", "iso8859-2", "iso8859-5", "iso8859-7",
         "iso8859-9", "utf8", "koi8-r", "euc-jp", "sjis", "gb2312", "big5",
         "euc-kr"
       ].freeze
 
-      def init
-        i = filesystem.fstab_options.index { |o| o =~ REGEXP }
-
-        self.value = i ? filesystem.fstab_options[i].gsub(REGEXP, "") : DEFAULT
+      def store
+        delete_fstab_option!(/^utf8=.*/)
+        super
       end
 
-      def store
-        delete_from_fstab!(/^iocharset=/)
-
-        # The options can only be modified using BlkDevice#fstab_options=
-        filesystem.fstab_options = filesystem.fstab_options + ["iocharset=#{value}"]
+      def default_value
+        iocharset = filesystem.type.iocharset
+        ITEMS.include?(iocharset) ? iocharset : ITEMS.first
       end
 
       def label
@@ -496,33 +595,16 @@ module Y2Partitioner
         _("<p><b>Charset for File Names:</b>\nSet the charset used for display " \
         "of file names in Windows partitions.</p>\n")
       end
-
-      def opt
-        %i(editable hstretch)
-      end
-
-      def items
-        AVAILABLE_VALUES.map do |ch|
-          [ch, ch]
-        end
-      end
     end
 
     # VFAT Codepage
-    class Codepage < CWM::ComboBox
-      include FstabCommon
-
-      CODEPAGES = ["", "437", "852", "932", "936", "949", "950"].freeze
+    class Codepage < FstabComboBox
       REGEXP = /^codepage=/
-      VALUES = ["codepage="].freeze
-      DEFAULT = "".freeze
+      ITEMS = ["", "437", "852", "932", "936", "949", "950"].freeze
 
-      def store
-        # The options can only be modified using BlkDevice#fstab_options=
-        filesystem.fstab_options = filesystem.fstab_options.reject { |o| o =~ REGEXP }
-
-        return if value && !value.empty?
-        filesystem.fstab_options = filesystem.fstab_options + ["codepage=#{value}"]
+      def default_value
+        cp = filesystem.type.codepage
+        ITEMS.include?(cp) ? cp : ITEMS.first
       end
 
       def label
@@ -532,14 +614,6 @@ module Y2Partitioner
       def help
         _("<p><b>Codepage for Short FAT Names:</b>\nThis codepage is used for " \
         "converting to shortname characters on FAT file systems.</p>\n")
-      end
-
-      def opt
-        %i(editable hstretch)
-      end
-
-      def items
-        CODEPAGES.map { |ch| [ch, ch] }
       end
     end
   end

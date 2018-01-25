@@ -22,6 +22,8 @@
 require "y2storage/storage_enum_wrapper"
 require "y2storage/partition_id"
 
+Yast.import "Encoding"
+
 module Y2Storage
   module Filesystems
     # Class to represent all the possible filesystem types
@@ -32,16 +34,33 @@ module Y2Storage
 
       wrap_enum "FsType"
 
+      # See "man mount" for all those options.
       COMMON_FSTAB_OPTIONS = ["async", "atime", "noatime", "user", "nouser",
                               "auto", "noauto", "ro", "rw", "defaults"].freeze
       EXT_FSTAB_OPTIONS = ["dev", "nodev", "usrquota", "grpquota", "acl",
-                           "noacl"].freeze
+                           "noacl", "user_xattr", "nouser_xattr"].freeze
+      JOURNAL_OPTIONS = ["data=ordered"].freeze
+      ACL_OPTIONS = ["acl", "user_xattr"].freeze
+
+      # For "iocharset" and "codepage" the value will be added on demand.
+      #
+      # Not doing it here to avoid always doing complicated locale lookups even
+      # if not needed because in many cases no such filesystem is used.
+      IOCHARSET_OPTIONS = ["iocharset="].freeze
+      CODEPAGE_OPTIONS = ["codepage="].freeze
+      DEFAULT_CODEPAGE = "437".freeze
 
       # Hash with the properties of several filesystem types.
+      #
       # Keys are the symbols representing the types and values are hashes that
-      # can contain `:name` for human string, `:fstab_options` for a list of
-      # supported /etc/fstab options and `:default_partition_id` for the partition
-      # id that fits better with the corresponding filesystem type.
+      # can contain:
+      # - `:name` for human string
+      # - `:fstab_options` for a list of supported /etc/fstab options
+      # - `:default_fstab_options` for the default /etc/fstab options
+      #   (do not include "defaults" here!)
+      # - `:default_partition_id` for the partition id that fits better with
+      #   the corresponding filesystem type.
+      #
       # Not all combinations of filesystem types and properties are represented,
       # default values are used for missing information.
       PROPERTIES = {
@@ -50,16 +69,19 @@ module Y2Storage
           name:          "BtrFS"
         },
         ext2:     {
-          fstab_options: COMMON_FSTAB_OPTIONS + EXT_FSTAB_OPTIONS,
-          name:          "Ext2"
+          fstab_options:         COMMON_FSTAB_OPTIONS + EXT_FSTAB_OPTIONS,
+          default_fstab_options: ACL_OPTIONS,
+          name:                  "Ext2"
         },
         ext3:     {
-          fstab_options: COMMON_FSTAB_OPTIONS + EXT_FSTAB_OPTIONS + ["data="],
-          name:          "Ext3"
+          fstab_options:         COMMON_FSTAB_OPTIONS + EXT_FSTAB_OPTIONS + ["data="],
+          default_fstab_options: JOURNAL_OPTIONS + ACL_OPTIONS,
+          name:                  "Ext3"
         },
         ext4:     {
-          fstab_options: COMMON_FSTAB_OPTIONS + EXT_FSTAB_OPTIONS + ["data="],
-          name:          "Ext4"
+          fstab_options:         COMMON_FSTAB_OPTIONS + EXT_FSTAB_OPTIONS + ["data="],
+          default_fstab_options: JOURNAL_OPTIONS + ACL_OPTIONS,
+          name:                  "Ext4"
         },
         hfs:      {
           name: "MacHFS"
@@ -69,9 +91,6 @@ module Y2Storage
         },
         jfs:      {
           name: "JFS"
-        },
-        msdos:    {
-          name: "FAT"
         },
         nfs:      {
           name: "NFS"
@@ -83,7 +102,8 @@ module Y2Storage
           name: "NilFS"
         },
         ntfs:     {
-          name: "NTFS"
+          default_fstab_options: ["fmask=133", "dmask=022"],
+          name:                  "NTFS"
         },
         reiserfs: {
           name: "ReiserFS"
@@ -94,9 +114,10 @@ module Y2Storage
           name:                 "Swap"
         },
         vfat:     {
-          fstab_options:        COMMON_FSTAB_OPTIONS + ["dev", "nodev", "iocharset=", "codepage="],
-          default_partition_id: PartitionId::DOS32,
-          name:                 "FAT"
+          fstab_options:         COMMON_FSTAB_OPTIONS + ["dev", "nodev", "iocharset=", "codepage="],
+          default_fstab_options: IOCHARSET_OPTIONS + CODEPAGE_OPTIONS,
+          default_partition_id:  PartitionId::DOS32,
+          name:                  "FAT"
         },
         xfs:      {
           fstab_options: COMMON_FSTAB_OPTIONS + ["usrquota", "grpquota"],
@@ -112,6 +133,22 @@ module Y2Storage
         }
       }
 
+      # Typical encodings for some languages used in a non-utf8 8 bit locale
+      # environment. This is mostly relevant for FAT filesystems.
+      LANG_ENCODINGS = {
+        "el" => "iso8859-7",
+        "hu" => "iso8859-2",
+        "cs" => "iso8859-2",
+        "hr" => "iso8859-2",
+        "sl" => "iso8859-2",
+        "sk" => "iso8859-2",
+        "en" => "iso8859-1",
+        "tr" => "iso8859-9",
+        "lt" => "iso8859-13",
+        "bg" => "iso8859-5",
+        "ru" => "iso8859-5"
+      }.freeze
+
       ROOT_FILESYSTEMS = [:ext2, :ext3, :ext4, :btrfs, :xfs]
 
       HOME_FILESYSTEMS = [:ext2, :ext3, :ext4, :btrfs, :xfs]
@@ -124,7 +161,8 @@ module Y2Storage
 
       private_constant :PROPERTIES, :ROOT_FILESYSTEMS, :HOME_FILESYSTEMS,
         :COMMON_FSTAB_OPTIONS, :EXT_FSTAB_OPTIONS, :LEGACY_ROOT_FILESYSTEMS,
-        :LEGACY_HOME_FILESYSTEMS, :ZIPL_FILESYSTEMS
+        :LEGACY_HOME_FILESYSTEMS, :ZIPL_FILESYSTEMS, :JOURNAL_OPTIONS,
+        :ACL_OPTIONS, :IOCHARSET_OPTIONS, :CODEPAGE_OPTIONS, :LANG_ENCODINGS
 
       # Allowed filesystems for root
       #
@@ -245,6 +283,26 @@ module Y2Storage
         properties[:fstab_options] || default
       end
 
+      # Default fstab options for filesystems of this type. These are used if
+      # the user does not explicitly select anything else in the partitioner
+      # for this filesystem.
+      #
+      # Notice that this will never include "defaults" which is only a
+      # placeholder for that field in /etc/fstab if there are no options. The
+      # EtcFstab class will handle that on its own. It also does not make any
+      # sense to include "defaults" if any other option is present.
+      #
+      # @return [Array<String>]
+      def default_fstab_options
+        properties = PROPERTIES[to_sym]
+        fallback = []
+        return fallback unless properties
+        opt = properties[:default_fstab_options] || fallback
+        opt = patch_codepage(opt)
+        opt = patch_iocharset(opt)
+        opt
+      end
+
       # Best fitting partition id for this filesystem type
       #
       # @note: Take into account that the default partition id can be inappropriate for some
@@ -258,6 +316,67 @@ module Y2Storage
         return default unless properties
         properties[:default_partition_id] || default
       end
+
+      # Add the required codepage number according to the current locale to
+      # fstab options if it contains a codepage specification.
+      #
+      # @param fstab_options [Array<String>]
+      # @return [Array<String>] changed fstab options
+      #
+      def patch_codepage(fstab_options)
+        fstab_options.map do |opt|
+          next opt unless opt.start_with?("codepage")
+          cp = codepage
+          if cp == "437" # Default according to "man mount"
+            nil
+          else
+            "codepage=" + cp
+          end
+        end.compact
+      end
+
+      # Add the required iocharset value according to the current locale to
+      # fstab options if it contains a iocharset specification.
+      #
+      # @param fstab_options [Array<String>]
+      # @return [Array<String>] changed fstab options
+      #
+      def patch_iocharset(fstab_options)
+        fstab_options.map do |opt|
+          next opt unless opt.start_with?("iocharset")
+          iocharset = lang_typical_encoding
+          "iocharset=" + iocharset
+        end
+      end
+
+      # Return the codepage for FAT filesystems. This is used to convert
+      # between long filenames and their short (8+3) equivalent.
+      #
+      # See also "man mount".
+      #
+      # @return [String]
+      #
+      def codepage
+        encoding = lang_typical_encoding
+        cp = Yast::Encoding.GetCodePage(encoding)
+        cp.empty? ? DEFAULT_CODEPAGE : cp
+      end
+
+      # Get the encoding that is typical for the current language environment
+      # as stored in the Encoding module (where it can be set by the
+      # installation workflow). In most cases, this is "utf8". Older FAT
+      # filesystems might still use one of the legacy encodings (iso8859-x).
+      #
+      # @return [String]
+      #
+      def lang_typical_encoding
+        return "utf8" if Yast::Encoding.GetUtf8Lang
+        lang = Yast::Encoding.GetEncLang # e.g. "de_DE.iso8859-15"
+        lang = lang.downcase[0, 2] # need only the language part
+        LANG_ENCODINGS[lang] || "iso8859-15"
+      end
+
+      alias_method :iocharset, :lang_typical_encoding
     end
   end
 end

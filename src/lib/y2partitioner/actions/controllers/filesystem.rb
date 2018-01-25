@@ -35,6 +35,8 @@ module Y2Partitioner
       # dialogs can always work directly on a BlkFilesystem object correctly
       # placed in the devicegraph.
       class Filesystem
+        include Yast::Logger
+
         # @return [Symbol] Role chosen be the user for the device
         attr_accessor :role
 
@@ -235,10 +237,16 @@ module Y2Partitioner
         # @param mount_point [String] new mount point
         def mount_point=(mount_point)
           return if filesystem.nil? || filesystem.mount_point == mount_point
+          no_old_mount_point = filesystem.mount_point.nil? || filesystem.mount_point.empty?
 
           before_set_mount_point
           filesystem.mount_point = mount_point
           after_set_mount_point
+
+          if no_old_mount_point && filesystem.fstab_options.empty?
+            filesystem.fstab_options = filesystem.type.default_fstab_options
+            log.info("Setting default fstab_options: #{filesystem.fstab_options}")
+          end
         end
 
         # Applies last changes to the block device at the end of the wizard, which
@@ -327,6 +335,7 @@ module Y2Partitioner
 
         def create_filesystem(type)
           blk_device.create_blk_filesystem(type)
+          filesystem.fstab_options = type.default_fstab_options
 
           if btrfs?
             default_path = Y2Storage::Filesystems::Btrfs.default_btrfs_subvolume_path

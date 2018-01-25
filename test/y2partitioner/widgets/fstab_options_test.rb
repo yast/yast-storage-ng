@@ -46,6 +46,8 @@ describe Y2Partitioner::Widgets do
     allow(filesystem).to receive(:fstab_options=)
     allow(filesystem).to receive(:label=)
     allow(filesystem).to receive(:mount_by=)
+    allow(filesystem.type).to receive(:codepage).and_return("437")
+    allow(filesystem.type).to receive(:iocharset).and_return("utf8")
   end
 
   subject { described_class.new(controller) }

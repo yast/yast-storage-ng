@@ -21,6 +21,7 @@
 # find current contact information at www.suse.com.
 
 RSpec.shared_context "proposal" do
+  include Yast::Logger
   using Y2Storage::Refinements::SizeCasts
 
   before do
@@ -100,6 +101,9 @@ RSpec.shared_context "proposal" do
     file_name.concat("-enc") if encrypt
     file_name.concat("-lvm") if lvm
     file_name.concat("-sep-home") if separate_home
-    Y2Storage::Devicegraph.new_from_file(output_file_for(file_name))
+    full_path = output_file_for(file_name)
+    devicegraph = Y2Storage::Devicegraph.new_from_file(full_path)
+    log.info("Expected devicegraph from file\n#{full_path}:\n\n#{devicegraph.to_str}\n")
+    devicegraph
   end
 end
