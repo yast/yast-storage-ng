@@ -84,8 +84,15 @@ module Y2Storage
     def mountpoint=(path)
       to_storage_value.add_mountpoint(path.to_s)
       if fstab_options && !fstab_options.empty?
-        mp = to_storage_value.mountpoint # storage::Mountpoint, not string!
-        mp.mount_options = mp.mount_options.to_a + fstab_options
+        mp = to_storage_value.mount_point # storage::Mountpoint, not string!
+
+        # Append Mountable.fstab_options to the Mountpoint.mount_options.
+        # We can't just assign a Ruby string array because the SWIG bindings
+        # expect a std:vector<std::string> and won't automatically convert a
+        # Ruby array to it.
+        fstab_options.each do |opt|
+          mp.mount_options << opt unless fstab_options.include?(opt)
+        end
       end
       mountpoint
     end
