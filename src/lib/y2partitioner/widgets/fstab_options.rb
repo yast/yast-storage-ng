@@ -362,7 +362,7 @@ module Y2Partitioner
       def widgets
         [
           Acl.new(@controller),
-          User_xattr.new(@controller)
+          UserXattr.new(@controller)
         ]
       end
     end
@@ -385,7 +385,7 @@ module Y2Partitioner
     end
 
     # CheckBox to enable extended user attributes (xattr)
-    class User_xattr < FstabCheckBox
+    class UserXattr < FstabCheckBox
       include FstabCommon
 
       VALUES = ["user_xattr", "nouser_xattr"].freeze
