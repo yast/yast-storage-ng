@@ -143,8 +143,8 @@ module Y2Partitioner
           VSpacing(1),
           Left(GeneralOptions.new(@controller)),
           Left(FilesystemsOptions.new(@controller)),
+          Left(AclOptions.new(@controller)),
           * ui_term_with_vspace(JournalOptions.new(@controller)),
-          * ui_term_with_vspace(AclOptions.new(@controller)),
           Left(ArbitraryOptions.new(@controller))
         )
       end
@@ -250,12 +250,10 @@ module Y2Partitioner
     class FstabCheckBox < CWM::CheckBox
       include FstabCommon
 
-      # FIXME: It is common to almost all regexp widgets not only for checkboxes
       def init
         self.value = filesystem.fstab_options.include?(checked_value)
       end
 
-      # FIXME: It is common to almost all regexp widgets not only for checkboxes
       def store
         delete_fstab_option!(Regexp.union(options))
         add_fstab_option(checked_value) if value
@@ -348,6 +346,58 @@ module Y2Partitioner
       def store
         delete_fstab_option!(Regexp.union(VALUES))
         add_fstab_options("usrquota", "grpquota") if value
+      end
+    end
+
+    # A group of options related to ACLs (access control lists)
+    class AclOptions < CWM::CustomWidget
+      include FstabCommon
+
+      def contents
+        return Empty() unless widgets.any?(&:supported_by_filesystem?)
+
+        VBox(* widgets.map { |w| to_ui_term(w) }, VSpacing(1))
+      end
+
+      def widgets
+        [
+          Acl.new(@controller),
+          User_xattr.new(@controller)
+        ]
+      end
+    end
+
+    # CheckBox to enable access control lists (acl)
+    class Acl < FstabCheckBox
+      include FstabCommon
+
+      VALUES = ["acl", "noacl"].freeze
+
+      def label
+        _("&Access Control Lists (ACL)")
+      end
+
+      def help
+        _("<p><b>Access Control Lists (acl):</b>\n" \
+          "Enable POSIX access control lists and thus more fine-grained " \
+          "user permissions on the file system. See also man 5 acl.\n")
+      end
+    end
+
+    # CheckBox to enable extended user attributes (xattr)
+    class User_xattr < FstabCheckBox
+      include FstabCommon
+
+      VALUES = ["user_xattr", "nouser_xattr"].freeze
+
+      def label
+        _("&Extended User Attributes")
+      end
+
+      def help
+        _("<p><b>Extended User Attributes (user_xattr):</b>\n" \
+          "Enable extended attributes (name:value pairs) on files and directories.\n" \
+          "This is an extension to ACLs. See also man 7 xattr.\n")
       end
     end
 
@@ -453,23 +503,6 @@ module Y2Partitioner
         "<tt>ordered</tt> -- All data is forced directly out to the main file system\n" \
         "prior to its metadata being committed to the journal. Medium performance impact.<br>\n" \
         "<tt>writeback</tt> -- Data ordering is not preserved. No performance impact.</p>\n")
-      end
-    end
-
-    # Custom widget that allows to enable ACL and the use of extended
-    # attributes
-    #
-    # TODO: FIXME: Pending implementation, currently it is only draw
-    class AclOptions < CWM::CustomWidget
-      include FstabCommon
-
-      VALUES = ["acl", "eua"].freeze
-
-      def contents
-        VBox(
-          Left(CheckBox(Id("opt_acl"), Opt(:disabled), _("&Access Control Lists (ACL)"), false)),
-          Left(CheckBox(Id("opt_eua"), Opt(:disabled), _("&Extended User Attributes"), false))
-        )
       end
     end
 
