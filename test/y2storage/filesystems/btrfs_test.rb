@@ -693,7 +693,7 @@ describe Y2Storage::Filesystems::Btrfs do
       allow(subject).to receive(:subvolumes_prefix).and_return(subvolumes_prefix)
     end
 
-    context "when a subvolume for snapshots exist" do
+    context "when a subvolume for snapshots exists" do
       let(:subvolumes) do
         [
           instance_double(Y2Storage::BtrfsSubvolume, path: "@"),
@@ -706,7 +706,7 @@ describe Y2Storage::Filesystems::Btrfs do
       end
     end
 
-    context "when no subvolume for snapshots exist" do
+    context "when no subvolume for snapshots exists" do
       let(:subvolumes) do
         [
           instance_double(Y2Storage::BtrfsSubvolume, path: "@"),
@@ -732,7 +732,7 @@ describe Y2Storage::Filesystems::Btrfs do
     context "when subvolume prefix is empty" do
       let(:subvolumes_prefix) { "" }
 
-      context "and a subvolume for snapshots exist" do
+      context "and a subvolume for snapshots exists" do
         let(:subvolumes) do
           [
             instance_double(Y2Storage::BtrfsSubvolume, path: ""),
