@@ -59,6 +59,7 @@ module Y2Storage
       # Constructor.
       #
       def initialize(name: nil)
+        super()
         initialize_can_be_formatted
         initialize_can_be_mounted
         initialize_can_be_encrypted

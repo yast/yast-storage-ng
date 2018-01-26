@@ -23,6 +23,7 @@
 
 require "yast"
 require "y2storage/blk_device"
+require "securerandom"
 
 module Y2Storage
   module Planned
@@ -43,6 +44,15 @@ module Y2Storage
       # @return [String] device name of an existing device to reuse for this
       #   purpose. As a result, some of the others attributes could be ignored.
       attr_accessor :reuse
+
+      # @return [String] planned device identifier. Planned devices are cloned/modified
+      #   when calculating the proposal. This identifier allows to identify if two planned
+      #   devices are related.
+      attr_reader :source_id
+
+      def initialize
+        @source_id = SecureRandom.uuid
+      end
 
       def to_s
         attrs = self.class.to_string_attrs.map do |attr|

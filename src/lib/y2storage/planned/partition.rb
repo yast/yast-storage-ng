@@ -65,6 +65,7 @@ module Y2Storage
       # @param mount_point [string] See {#mount_point}
       # @param filesystem_type [Filesystems::Type] See {#filesystem_type}
       def initialize(mount_point, filesystem_type = nil)
+        super()
         initialize_has_size
         initialize_can_be_formatted
         initialize_can_be_mounted
