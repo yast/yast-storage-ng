@@ -72,7 +72,7 @@ module Y2Storage
         vgs_to_reuse = planned_vgs.select(&:reuse?)
         reuse_vgs(vgs_to_reuse, creator_result.devicegraph)
 
-        creator_result.devicegraph
+        creator_result
       end
 
     protected
@@ -89,10 +89,14 @@ module Y2Storage
       def best_distribution(planned_partitions, disk_names)
         disks = original_graph.disk_devices.select { |d| disk_names.include?(d.name) }
         spaces = disks.map(&:free_spaces).flatten
+
         # TODO: the calculator should not enforce the usage of LvmHelper
         calculator = Proposal::PartitionsDistributionCalculator.new(Proposal::LvmHelper.new([]))
+        dist = calculator.best_distribution(planned_partitions, spaces)
+        return dist if dist
 
-        calculator.best_distribution(planned_partitions, spaces)
+        # Second try with more flexible planned partitions
+        calculator.best_distribution(flexible_partitions(planned_partitions), spaces)
       end
 
     private
@@ -158,6 +162,16 @@ module Y2Storage
           md_creator = Proposal::MdCreator.new(result.devicegraph)
           devices = previous_result.created_names { |d| d.raid_name == md.name }
           result.merge(md_creator.create_md(md, devices))
+        end
+      end
+
+      # @return [Hash<Planned::Partition => Planned::Partition>]
+      def flexible_partitions(partitions)
+        partitions.map do |part|
+          new_part = part.clone
+          new_part.weight = part.min_size.to_i
+          new_part.min_size = DiskSize.B(1)
+          new_part
         end
       end
     end

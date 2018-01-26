@@ -249,7 +249,20 @@ module Y2Storage
     # @return [Devicegraph] Copy of devicegraph containing the planned devices
     def create_devices(devicegraph, planned_devices, disk_names)
       devices_creator = Proposal::AutoinstDevicesCreator.new(devicegraph)
-      devices_creator.populated_devicegraph(planned_devices, disk_names)
+      result = devices_creator.populated_devicegraph(planned_devices, disk_names)
+      add_reduced_devices_issues(planned_devices, result)
+      result.devicegraph
+    end
+
+    def add_reduced_devices_issues(initial_planned_devices, result)
+      result.devices_map.each do |dev, planned|
+        real_device = BlkDevice.find_by_name(result.devicegraph, dev)
+        initial_device = initial_planned_devices.find { |d| d.source_id == planned.source_id }
+        next if !initial_device.respond_to?(:min_size) || real_device.nil?
+
+        diff = initial_device.min_size.to_i - real_device.size.to_i
+        issues_list.add(:shrinked_planned_device, initial_device, real_device) if diff > 0
+      end
     end
 
     # Returns the product's proposal settings for a given set of disks
