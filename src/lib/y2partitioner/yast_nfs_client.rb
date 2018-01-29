@@ -45,8 +45,6 @@ module Y2Partitioner
     PACKAGE = "yast2-nfs-client".freeze
     private_constant :PACKAGE
 
-    @client_configured = false
-
     # Whether the client at yast2-nfs-client has read the related system
     # configuration.
     #
@@ -64,6 +62,16 @@ module Y2Partitioner
     def self.mark_client_configured
       @client_configured = true
     end
+
+    # Resets the information checked by {.client_configured?}
+    #
+    # This is a public class method for testing purposes
+    def self.reset
+      @client_configured = false
+    end
+
+    # Initialize class attributes used by .client_configured?
+    reset
 
     # Generates user interface from yast2-nfs-client, populated with the NFS
     # information from the current devicegraph
