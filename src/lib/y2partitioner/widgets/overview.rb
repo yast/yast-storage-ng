@@ -210,7 +210,8 @@ module Y2Partitioner
       end
 
       def nfs_items
-        item_for("nfs", _("NFS"), icon: Icons::NFS)
+        page = Pages::NfsMounts.new(self)
+        CWM::PagerTreeItem.new(page, icon: Icons::NFS)
       end
 
       def btrfs_items

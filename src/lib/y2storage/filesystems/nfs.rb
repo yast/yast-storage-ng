@@ -21,6 +21,7 @@
 
 require "y2storage/storage_class_wrapper"
 require "y2storage/filesystems/base"
+require "y2storage/filesystems/legacy_nfs"
 
 module Y2Storage
   module Filesystems
@@ -63,6 +64,29 @@ module Y2Storage
       # @return [Boolean]
       def in_network?
         return true
+      end
+
+      # Whether the remote share is currently accessible
+      #
+      # @return [Boolean]
+      def reachable?
+        # This tries to temporarily mount the filesystem if needed and raises an
+        # Storage::Exception if that fails
+        detect_space_info
+        true
+      rescue Storage::Exception
+        false
+      end
+
+      # Representation of this NFS mount in the hash-based format used before
+      # storage-ng (based on the so-called TargetMap)
+      #
+      # This method is useful to re-use code that still uses the old format in
+      # other parts of YaST (like yast2-nfs-client).
+      #
+      # @return [Hash]
+      def to_legacy_hash
+        LegacyNfs.new_from_nfs(self).to_hash
       end
 
     protected
