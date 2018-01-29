@@ -56,7 +56,7 @@ module Y2Partitioner
       @client_configured
     end
 
-    # Mark the client configuration as already read.
+    # Marks the client configuration as already read.
     #
     # @see .client_configured?
     def self.mark_client_configured
@@ -111,9 +111,9 @@ module Y2Partitioner
 
     # Name of the package containing the YaST client
     #
-    # @return [String]
+    # @return [String] a frozen string
     def package_name
-      PACKAGE.dup
+      PACKAGE
     end
 
   protected

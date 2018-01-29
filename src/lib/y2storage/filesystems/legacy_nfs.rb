@@ -112,7 +112,7 @@ module Y2Storage
       #   will be used
       # @return [Nfs] the new device
       def create_nfs_device(devicegraph = nil)
-        graph = check_devicegraph(devicegraph)
+        graph = check_devicegraph_argument(devicegraph)
 
         # TODO: libstorage-ng does not distinguish different NFS versions
         dev = Nfs.create(graph, server, path)
@@ -129,7 +129,7 @@ module Y2Storage
       # @param devicegraph [Devicegraph, nil] if nil, the default devicegraph
       #   will be used
       def update_nfs_device(devicegraph = nil)
-        graph = check_devicegraph(devicegraph)
+        graph = check_devicegraph_argument(devicegraph)
 
         nfs = find_nfs_device(graph)
         nfs.mountpoint = mountpoint
@@ -148,7 +148,7 @@ module Y2Storage
       #   will be used
       # @return [Nfs, nil] found device or nil if no device matches
       def find_nfs_device(devicegraph = nil)
-        graph = check_devicegraph(devicegraph)
+        graph = check_devicegraph_argument(devicegraph)
 
         old = nil
         if share_changed?
@@ -218,12 +218,11 @@ module Y2Storage
 
       # Ensures there is a devicegraph to work with, raising an exception
       # otherwise
-      def check_devicegraph(devicegraph)
+      def check_devicegraph_argument(devicegraph)
         result = devicegraph || default_devicegraph
-        if result.nil?
-          raise ArgumentError, "No devicegraph (provided or default) for the operation"
-        end
-        result
+        return result if result
+
+        raise ArgumentError, "No devicegraph (provided or default) for the operation"
       end
     end
   end
