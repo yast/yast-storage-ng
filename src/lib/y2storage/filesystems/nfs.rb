@@ -41,6 +41,13 @@ module Y2Storage
       #   @return [String]
       storage_forward :path
 
+      # @!method self.create(devicegraph, server, path)
+      #   @param devicegraph [Devicegraph]
+      #   @param server [String]
+      #   @param path [String]
+      #   @return [Nfs]
+      storage_class_forward :create, as: "Filesystems::Nfs"
+
       # @!method self.all(devicegraph)
       #   @param devicegraph [Devicegraph]
       #   @return [Array<Nfs>] all the NFS mounts in the given devicegraph
