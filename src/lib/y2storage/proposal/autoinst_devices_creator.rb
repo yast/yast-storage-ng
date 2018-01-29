@@ -123,10 +123,24 @@ module Y2Storage
       def set_up_lvm(vgs, previous_result)
         log.info "BEGIN: set_up_lvm: vgs=#{vgs.inspect} previous_result=#{previous_result.inspect}"
         vgs.reduce(previous_result) do |result, vg|
-          lvm_creator = Proposal::LvmCreator.new(result.devicegraph)
           pvs = previous_result.created_names { |d| d.pv_for?(vg.volume_group_name) }
-          result.merge(lvm_creator.create_volumes(vg, pvs))
+          result.merge(create_logical_volumes(previous_result.devicegraph, vg, pvs))
         end
+      end
+
+      # Create volume group in the given devicegraph
+      #
+      # @param devicegraph [Devicegraph]                    Starting devicegraph
+      # @param vg          [Planned::LvmVg]                 Volume group
+      # @param pvs         [Planned::Partition,Planned::Md] List of physical volumes
+      # @return            [Proposal::CreatorResult] Result containing the specified volume group
+      def create_logical_volumes(devicegraph, vg, pvs)
+        lvm_creator = Proposal::LvmCreator.new(devicegraph)
+        lvm_creator.create_volumes(vg, pvs)
+      rescue RuntimeError
+        new_vg = vg.clone
+        new_vg.lvs = flexible_partitions(vg.lvs)
+        lvm_creator.create_volumes(new_vg, pvs)
       end
 
       # Reuses partitions or logical volumes for the given devicegraph

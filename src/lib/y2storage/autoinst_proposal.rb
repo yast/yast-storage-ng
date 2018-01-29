@@ -92,7 +92,9 @@ module Y2Storage
         add_partition_tables(devicegraph, drives)
         @planned_devices.concat(boot_devices(devicegraph, @planned_devices))
 
-        create_devices(devicegraph, @planned_devices, drives.disk_names)
+        result = create_devices(devicegraph, @planned_devices, drives.disk_names)
+        add_reduced_devices_issues(@planned_devices, result)
+        result.devicegraph
       else
         log.info "No partitions were specified. Falling back to guided setup planning."
         propose_guided_devicegraph(devicegraph, drives)
@@ -238,7 +240,8 @@ module Y2Storage
       guided_settings = proposal_settings_for_disks(drives)
       guided_planner = Proposal::DevicesPlanner.new(guided_settings, devicegraph)
       @planned_devices = guided_planner.planned_devices(target)
-      create_devices(devicegraph, @planned_devices, drives.disk_names)
+      result = create_devices(devicegraph, @planned_devices, drives.disk_names)
+      result.devicegraph
     end
 
     # Creates planned devices on a given devicegraph
@@ -249,15 +252,20 @@ module Y2Storage
     # @return [Devicegraph] Copy of devicegraph containing the planned devices
     def create_devices(devicegraph, planned_devices, disk_names)
       devices_creator = Proposal::AutoinstDevicesCreator.new(devicegraph)
-      result = devices_creator.populated_devicegraph(planned_devices, disk_names)
-      add_reduced_devices_issues(planned_devices, result)
-      result.devicegraph
+      devices_creator.populated_devicegraph(planned_devices, disk_names)
     end
 
+    # Add shrinked devices to the issues list
+    #
+    # @param initial_planned_devices [Array<Planned::Device>] Planned devices
+    # @param result [Proposal::CreatorResult] Result after creating the planned devices
     def add_reduced_devices_issues(initial_planned_devices, result)
+      devices_to_check = initial_planned_devices.select { |p| p.is_a?(Planned::Partition) }
+      devices_to_check += initial_planned_devices.select { |p| p.is_a?(Planned::LvmVg) }.map(&:lvs).flatten
+
       result.devices_map.each do |dev, planned|
         real_device = BlkDevice.find_by_name(result.devicegraph, dev)
-        initial_device = initial_planned_devices.find { |d| d.source_id == planned.source_id }
+        initial_device = devices_to_check.find { |d| d.source_id == planned.source_id }
         next if !initial_device.respond_to?(:min_size) || real_device.nil?
 
         diff = initial_device.min_size.to_i - real_device.size.to_i

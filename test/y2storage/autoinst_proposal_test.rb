@@ -682,6 +682,35 @@ describe Y2Storage::AutoinstProposal do
           expect(issue).to_not be_nil
         end
       end
+
+      context "when there is not enough space" do
+        let(:root_spec) do
+          { "mount" => "/", "filesystem" => "btrfs", "lv_name" => "root", "size" => "300GiB" }
+        end
+
+        let(:home_spec) do
+          { "mount" => "/home", "filesystem" => "ext4", "lv_name" => "home", "size" => "300GiB" }
+        end
+
+        let(:lvs) { [root_spec, home_spec] }
+
+        it "reduces logical volumes proportionally" do
+          proposal.propose
+          devicegraph = proposal.devices
+          expect(devicegraph.lvm_lvs).to contain_exactly(
+            an_object_having_attributes("lv_name" => "root", "size" => 250.GiB),
+            an_object_having_attributes("lv_name" => "home", "size" => 250.GiB - 4.MiB)
+          )
+        end
+
+        it "adds an issue for each reduced logical volume" do
+          proposal.propose
+          issues = issues_list.select do |i|
+            i.is_a?(Y2Storage::AutoinstIssues::ShrinkedPlannedDevice)
+          end
+          expect(issues.size).to eq(2)
+        end
+      end
     end
 
     describe "RAID" do
