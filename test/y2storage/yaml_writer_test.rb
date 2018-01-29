@@ -130,7 +130,7 @@ describe Y2Storage::YamlWriter do
 
   end
 
-  it "produces yaml of a simple lvm setup" do
+  xit "produces yaml of a simple lvm setup" do
 
     sda = Y2Storage::Disk.create(staging, "/dev/sda")
     sda.size = 1 * Storage.TiB
