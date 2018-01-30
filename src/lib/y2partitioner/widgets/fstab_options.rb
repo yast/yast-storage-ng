@@ -384,7 +384,7 @@ module Y2Partitioner
       end
     end
 
-    # CheckBox to enable extended user attributes (xattr)
+    # CheckBox to enable extended user attributes (user_xattr)
     class UserXattr < FstabCheckBox
       include FstabCommon
 
