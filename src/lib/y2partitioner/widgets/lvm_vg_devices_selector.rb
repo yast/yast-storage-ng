@@ -136,13 +136,13 @@ module Y2Partitioner
           # %{pvs} is replaced by device names (e.g., /dev/sda1, /dev/sda2) and %{vg} is
           # replaced by the volume group name (e.g., system)
           _("Removing physical volumes %{pvs} from the volume group %{vg}\n" \
-            "is not supported because the physical volume is already in use")
+            "is not supported because the physical volumes may be already in use")
         else
           # TRANSLATORS: Error message when a physical volume cannot be removed, where
           # %{pvs} is replaced by device name (e.g., /dev/sda1) and %{vg} is replaced
           # by the volume group name (e.g., system)
           _("Removing the physical volume %{pvs} from the volume group %{vg}\n" \
-            "is not supported because the physical volume is already in use")
+            "is not supported because the physical volume may be already in use")
         end
 
         pvs = committed_devices.map(&:name).join(", ")
