@@ -30,20 +30,34 @@ describe Y2Storage::Proposal::AutoinstCreatorResult do
   subject(:result) { described_class.new(creator_result, planned_devices) }
 
   let(:planned_part1) { planned_partition(min_size: 5.GiB) }
+  let(:planned_vg1) do
+    Y2Storage::Planned::LvmVg.new(volume_group_name: "system", lvs: [planned_lv1])
+  end
+  let(:planned_lv1) { planned_lv(min_size: 10.GiB) }
 
   let(:shrinked_part1) do
     instance_double(
-      Y2Storage::Planned::Partition, planned_id: planned_part1.planned_id,
-                                     min_size:   Y2Storage::DiskSize.B(1)
+      Y2Storage::Planned::Partition,
+      planned_id: planned_part1.planned_id,
+      min_size:   Y2Storage::DiskSize.B(1)
+    )
+  end
+
+  let(:shrinked_lv1) do
+    instance_double(
+      Y2Storage::Planned::LvmLv, planned_id: planned_lv1.planned_id,
+                                 min_size:   Y2Storage::DiskSize.B(1)
     )
   end
 
   let(:real_part1) { instance_double(Y2Storage::Partition, size: 2.GiB) }
-  let(:planned_devices) { [planned_part1] }
+  let(:real_lv1) { instance_double(Y2Storage::LvmLv, size: 5.GiB) }
+  let(:planned_devices) { [planned_part1, planned_vg1] }
 
   let(:devices_map) do
     {
-      "/dev/sda1" => shrinked_part1
+      "/dev/sda1"        => shrinked_part1,
+      "/dev/system/root" => shrinked_lv1
     }
   end
 
@@ -57,7 +71,8 @@ describe Y2Storage::Proposal::AutoinstCreatorResult do
 
   let(:blk_devices_map) do
     {
-      "/dev/sda1" => real_part1
+      "/dev/sda1"        => real_part1,
+      "/dev/system/root" => real_lv1
     }
   end
 
@@ -99,32 +114,6 @@ describe Y2Storage::Proposal::AutoinstCreatorResult do
   end
 
   describe "#shrinked_lvs" do
-    let(:planned_vg1) do
-      Y2Storage::Planned::LvmVg.new(volume_group_name: "system", lvs: [planned_lv1])
-    end
-    let(:planned_lv1) { planned_lv(min_size: 10.GiB) }
-    let(:real_lv1) { instance_double(Y2Storage::LvmLv, size: 5.GiB) }
-    let(:planned_devices) { [planned_vg1] }
-
-    let(:devices_map) do
-      {
-        "/dev/system/root" => shrinked_lv1
-      }
-    end
-
-    let(:blk_devices_map) do
-      {
-        "/dev/system/root" => real_lv1
-      }
-    end
-
-    let(:shrinked_lv1) do
-      instance_double(
-        Y2Storage::Planned::LvmLv, planned_id: planned_lv1.planned_id,
-                                   min_size:   Y2Storage::DiskSize.B(1)
-      )
-    end
-
     it "returns a list of DeviceShrinkage objects (one for each shrinked LV)" do
       shrinked_lvs = result.shrinked_lvs
       expect(shrinked_lvs).to be_a(Array)
@@ -144,21 +133,29 @@ describe Y2Storage::Proposal::AutoinstCreatorResult do
   end
 
   describe "#missing_space" do
-    context "when no partition or LV was shrinked" do
-      it "returns DiskSize.zero"
-    end
-
     context "when some partition was shrinked" do
-      it "returns the difference between the planned and the final sizes"
+      let(:planned_devices) { [planned_part1, planned_vg1] }
+
+      it "returns the missing space ignoring the logical volumes" do
+        expect(result.missing_space).to eq(3.GiB)
+      end
     end
 
     context "when no partition was shrinked" do
       context "but some LVs were shrinked" do
-        it "returns the difference between the planned and the final sizes"
+        let(:planned_devices) { [planned_vg1] }
+
+        it "returns missing space for logical volumes" do
+          expect(result.missing_space).to eq(5.GiB)
+        end
       end
 
       context "and no LVs were shrinked" do
-        it "returns DiskSize.zero"
+        let(:planned_devices) { [] }
+
+        it "returns DiskSize.zero" do
+          expect(result.missing_space).to eq(Y2Storage::DiskSize.zero)
+        end
       end
     end
   end
