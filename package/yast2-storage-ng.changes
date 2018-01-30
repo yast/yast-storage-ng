@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Tue Jan 30 11:24:28 UTC 2018 - jlopez@suse.com
+
+- Partitioner: improve error message when trying to remove an used
+  physical volume.
+
+-------------------------------------------------------------------
 Thu Jan 25 16:00:29 UTC 2018 - shundhammer@suse.com
 
 - Add default mount options for /etc/fstab for ext2/3/4 and vfat
