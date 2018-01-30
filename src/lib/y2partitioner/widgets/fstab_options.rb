@@ -315,7 +315,7 @@ module Y2Partitioner
       VALUES = ["user", "nouser"].freeze
 
       def label
-        _("Mountable by user")
+        _("Mountable by User")
       end
 
       def help
