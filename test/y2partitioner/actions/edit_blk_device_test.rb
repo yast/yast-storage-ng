@@ -25,11 +25,20 @@ require "y2partitioner/actions/controllers"
 require "y2partitioner/actions/edit_blk_device"
 
 describe Y2Partitioner::Actions::EditBlkDevice do
-  describe "#initialize" do
-    before { devicegraph_stub(scenario) }
+  before do
+    allow(Yast::Wizard).to receive(:OpenNextBackDialog)
+    allow(Yast::Wizard).to receive(:CloseDialog)
 
-    let(:scenario) { "complex-lvm-encrypt.yml" }
-    let(:device) { Y2Storage::BlkDevice.find_by_name(fake_devicegraph, dev_name) }
+    devicegraph_stub(scenario)
+  end
+
+  let(:scenario) { "complex-lvm-encrypt.yml" }
+
+  let(:current_graph) { Y2Partitioner::DeviceGraphs.instance.current }
+
+  let(:device) { Y2Storage::BlkDevice.find_by_name(current_graph, dev_name) }
+
+  describe "#initialize" do
     let(:controller_class) { Y2Partitioner::Actions::Controllers::Filesystem }
 
     context "if working on a partition" do
@@ -56,7 +65,7 @@ describe Y2Partitioner::Actions::EditBlkDevice do
     end
 
     context "if working on an MD array" do
-      before { Y2Storage::Md.create(fake_devicegraph, "/dev/md0") }
+      before { Y2Storage::Md.create(current_graph, "/dev/md0") }
 
       let(:dev_name) { "/dev/md0" }
 
@@ -65,11 +74,15 @@ describe Y2Partitioner::Actions::EditBlkDevice do
         described_class.new(device)
       end
     end
+  end
+
+  describe "#run" do
+    subject(:sequence) { described_class.new(device) }
 
     context "if called on an extended partition" do
       let(:scenario) { "mixed_disks.yml" }
+
       let(:dev_name) { "/dev/sdb4" }
-      subject(:sequence) { described_class.new(device) }
 
       it "shows an error popup" do
         expect(Yast::Popup).to receive(:Error)
@@ -77,8 +90,55 @@ describe Y2Partitioner::Actions::EditBlkDevice do
       end
 
       it "quits returning :back" do
-        allow(Yast::Popup).to receive(:Error)
         expect(sequence.run).to eq :back
+      end
+    end
+
+    context "if called on an LVM thin pool" do
+      let(:scenario) { "lvm-two-vgs.yml" }
+
+      before do
+        vg = Y2Storage::LvmVg.find_by_vg_name(current_graph, "vg1")
+        create_thin_provisioning(vg)
+      end
+
+      let(:dev_name) { "/dev/vg1/pool1" }
+
+      it "shows an error popup" do
+        expect(Yast::Popup).to receive(:Error)
+        sequence.run
+      end
+
+      it "quits returning :back" do
+        expect(sequence.run).to eq :back
+      end
+    end
+
+    context "if called on a device that can be edited" do
+      let(:scenario) { "lvm-two-vgs.yml" }
+
+      let(:dev_name) { "/dev/vg1/lv1" }
+
+      context "if the user goes forward through all the dialogs" do
+        before do
+          allow(Y2Partitioner::Dialogs::PartitionRole).to receive(:run).and_return :next
+          allow(Y2Partitioner::Dialogs::FormatAndMount).to receive(:run).and_return :next
+        end
+
+        it "returns :finish" do
+          expect(sequence.run).to eq(:finish)
+        end
+      end
+
+      context "if the user aborts the process at some point" do
+        before do
+          allow(Y2Partitioner::Dialogs::PartitionRole).to receive(:run).and_return :next
+          allow(Y2Partitioner::Dialogs::FormatAndMount).to receive(:run).and_return :abort
+        end
+
+        it "returns :abort" do
+          expect(sequence.run).to eq(:abort)
+        end
       end
     end
   end

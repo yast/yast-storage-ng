@@ -82,13 +82,53 @@ module Y2Partitioner
         end
       end
 
+      # Extended partitions and LVM thin pools cannot be edited
+      #
+      # @note An error popup is shown when the edit action cannot be performed.
+      #
+      # @return [Boolean] true if the edit action can be performed; false otherwise.
       def run?
-        if blk_device.is?(:partition) && blk_device.type.is?(:extended)
-          Yast::Popup.Error(_("An extended partition cannot be edited"))
-          false
-        else
-          true
-        end
+        errors = []
+        errors << extended_partition_error
+        errors << lvm_thin_pool_error
+        errors = errors.compact
+
+        return true if errors.empty?
+
+        Yast::Popup.Error(errors.first)
+        false
+      end
+
+      # Error message if trying to edit an extended partition
+      #
+      # @return [String, nil] nil if the device is not an extended partition.
+      def extended_partition_error
+        return nil unless extended_partition?
+
+        _("An extended partition cannot be edited")
+      end
+
+      # Error message is trying to edit an LVM thin pool
+      #
+      # @return [String, nil] nil if the device is not a thin pool.
+      def lvm_thin_pool_error
+        return nil unless lvm_thin_pool?
+
+        format(_("The volume %{name} is a thin pool.\nIt cannot be edited."), name: blk_device.name)
+      end
+
+      # Whether the device is an extended partition
+      #
+      # @return [Boolean]
+      def extended_partition?
+        blk_device.is?(:partition) && blk_device.type.is?(:extended)
+      end
+
+      # Whether the device is an LVM thin pool
+      #
+      # @return [Boolean]
+      def lvm_thin_pool?
+        blk_device.is?(:lvm_lv) && blk_device.lv_type.is?(:thin_pool)
       end
     end
   end
