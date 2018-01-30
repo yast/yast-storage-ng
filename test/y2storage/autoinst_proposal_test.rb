@@ -706,9 +706,9 @@ describe Y2Storage::AutoinstProposal do
         it "adds an issue for each reduced logical volume" do
           proposal.propose
           issues = issues_list.select do |i|
-            i.is_a?(Y2Storage::AutoinstIssues::ShrinkedPlannedDevice)
+            i.is_a?(Y2Storage::AutoinstIssues::ShrinkedPlannedDevices)
           end
-          expect(issues.size).to eq(2)
+          expect(issues.size).to eq(1)
         end
       end
     end
@@ -1063,9 +1063,9 @@ describe Y2Storage::AutoinstProposal do
       it "adds an issue for each reduced partition" do
         proposal.propose
         issues = issues_list.select do |i|
-          i.is_a?(Y2Storage::AutoinstIssues::ShrinkedPlannedDevice)
+          i.is_a?(Y2Storage::AutoinstIssues::ShrinkedPlannedDevices)
         end
-        expect(issues.size).to eq(3)
+        expect(issues.size).to eq(1)
       end
     end
   end

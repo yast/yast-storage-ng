@@ -26,6 +26,7 @@ require "y2storage/proposal/partitions_distribution_calculator"
 require "y2storage/proposal/lvm_helper"
 require "y2storage/proposal/partition_creator"
 require "y2storage/proposal/md_creator"
+require "y2storage/proposal/autoinst_creator_result"
 require "y2storage/exceptions"
 
 module Y2Storage

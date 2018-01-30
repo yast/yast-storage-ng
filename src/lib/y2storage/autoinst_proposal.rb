@@ -93,7 +93,7 @@ module Y2Storage
         @planned_devices.concat(boot_devices(devicegraph, @planned_devices))
 
         result = create_devices(devicegraph, @planned_devices, drives.disk_names)
-        add_reduced_devices_issues(@planned_devices, result)
+        add_reduced_devices_issues(result)
         result.devicegraph
       else
         log.info "No partitions were specified. Falling back to guided setup planning."
@@ -259,17 +259,14 @@ module Y2Storage
     #
     # @param initial_planned_devices [Array<Planned::Device>] Planned devices
     # @param result [Proposal::CreatorResult] Result after creating the planned devices
-    def add_reduced_devices_issues(initial_planned_devices, result)
-      devices_to_check = initial_planned_devices.select { |p| p.is_a?(Planned::Partition) }
-      devices_to_check += initial_planned_devices.select { |p| p.is_a?(Planned::LvmVg) }.map(&:lvs).flatten
+    def add_reduced_devices_issues(result)
+      if !result.shrinked_partitions.empty?
+        issues_list.add(:shrinked_planned_devices, result.shrinked_partitions)
+      end
 
-      result.devices_map.each do |dev, planned|
-        real_device = BlkDevice.find_by_name(result.devicegraph, dev)
-        initial_device = devices_to_check.find { |d| d.source_id == planned.source_id }
-        next if !initial_device.respond_to?(:min_size) || real_device.nil?
-
-        diff = initial_device.min_size.to_i - real_device.size.to_i
-        issues_list.add(:shrinked_planned_device, initial_device, real_device) if diff > 0
+      # rubocop:disable Style/GuardClause
+      if !result.shrinked_lvs.empty?
+        issues_list.add(:shrinked_planned_devices, result.shrinked_lvs)
       end
     end
 
