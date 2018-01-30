@@ -654,7 +654,7 @@ The specs are based on current version of expert partitioner for TW. The goal is
       * shows dialog to edit the current selected LV in the table
       * same dialog than partition edition (see above)
       * 'File System Id' is not shown
-      * *(pending) and selected LV is a thin pool*
+      * and selected LV is a thin pool
         * shows an error popup
         * does not allow to edit the LV
     * and action 'Resize' is selected
@@ -680,10 +680,7 @@ The specs are based on current version of expert partitioner for TW. The goal is
       * 'File System Id' is not shown
     * set encrypt password (optional)
       * same wizard step than in partition creation (see above)
-* *(pending) and the row selected is a thin pool lv*
-  * sets 'Type' to 'Thin Volume'
-  * sets 'Used Pool' to the selected thin pool
-* *(pending) and only it is possible to add a thin pool lv*
+* and only it is possible to add a thin pool lv
   * sets 'Type' to 'Thin Pool'
 
 ##### When we are in the wizard step to select the LV name and type
