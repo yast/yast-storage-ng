@@ -31,7 +31,7 @@ describe Y2Storage::Proposal::AutoinstDevicesCreator do
   let(:filesystem_type) { Y2Storage::Filesystems::Type::EXT4 }
   let(:mount_by_type) { Y2Storage::Filesystems::MountByType::PATH }
   let(:new_part) do
-    Y2Storage::Planned::Partition.new("/home", Y2Storage::Filesystems::Type::EXT4).tap do |part|
+    Y2Storage::Planned::Partition.new("/home", filesystem_type).tap do |part|
       part.fstab_options = ["ro", "acl"]
       part.mkfs_options = "-b 2048"
       part.mount_by = mount_by_type
@@ -51,6 +51,11 @@ describe Y2Storage::Proposal::AutoinstDevicesCreator do
   end
 
   describe "#populated_devicegraph" do
+    it "returns AutoinstCreatorResult object" do
+      result = creator.populated_devicegraph([new_part, reusable_part], "/dev/sda")
+      expect(result).to be_a(Y2Storage::Proposal::AutoinstCreatorResult)
+    end
+
     it "creates new partitions" do
       result = creator.populated_devicegraph([new_part, reusable_part], "/dev/sda")
       devicegraph = result.devicegraph
@@ -85,6 +90,26 @@ describe Y2Storage::Proposal::AutoinstDevicesCreator do
       devicegraph = result.devicegraph
       sdb = devicegraph.disks.find { |d| d.name == "/dev/sdb" }
       expect(sdb.partitions).to be_empty
+    end
+
+    context "when a partition is too big" do
+      let(:new_part) do
+        Y2Storage::Planned::Partition.new("/home", filesystem_type).tap do |part|
+          part.min_size = 250.GiB
+        end
+      end
+
+      it "shrinks the partition to make it fit into the disk" do
+        result = creator.populated_devicegraph([new_part], "/dev/sda")
+        devicegraph = result.devicegraph
+        home = devicegraph.partitions.find { |p| p.filesystem_mountpoint == "/home" }
+        expect(home.size).to eq(228.GiB - 1.MiB)
+      end
+
+      it "registers which devices were shrinked" do
+        result = creator.populated_devicegraph([new_part], "/dev/sda")
+        expect(result.shrinked_partitions.map(&:planned)).to eq([new_part])
+      end
     end
 
     describe "using LVM" do
@@ -125,6 +150,11 @@ describe Y2Storage::Proposal::AutoinstDevicesCreator do
           vg = devicegraph.lvm_vgs.first
           lv = vg.lvm_lvs.first
           expect(lv.size).to eq(vg.size)
+        end
+
+        it "registers which devices were shrinked" do
+          result = creator.populated_devicegraph([pv, vg], ["/dev/sda"])
+          expect(result.shrinked_lvs.map(&:planned)).to eq([lv_root])
         end
       end
     end
