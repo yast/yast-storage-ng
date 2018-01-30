@@ -257,7 +257,6 @@ module Y2Storage
 
     # Add shrinked devices to the issues list
     #
-    # @param initial_planned_devices [Array<Planned::Device>] Planned devices
     # @param result [Proposal::CreatorResult] Result after creating the planned devices
     def add_reduced_devices_issues(result)
       if !result.shrinked_partitions.empty?

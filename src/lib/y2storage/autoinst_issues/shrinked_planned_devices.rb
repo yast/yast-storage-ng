@@ -34,8 +34,8 @@ module Y2Storage
       #   information about shrinking devices.
       attr_reader :device_shrinkages
 
-      # @param [Array<device_shrinkages_info>] List of objects containing information about
-      #   shrinking devices.
+      # @param device_shrinkages [Array<device_shrinkages_info>] List of objects containing
+      #   information about shrinking devices.
       def initialize(device_shrinkages)
         @device_shrinkages = device_shrinkages
       end
@@ -91,7 +91,7 @@ module Y2Storage
       # If a mountpoint is defined, it will be preferred as identifier. Otherwise, the device
       # name will be used.
       #
-      # @param [Y2Storage::Partition, Y2Storage::LvmLv] Partition or logical volume
+      # @param device [Y2Storage::Partition, Y2Storage::LvmLv] Partition or logical volume
       # @return [String] Device identifier
       def device_identifier(device)
         if device.filesystem_mountpoint && !device.filesystem_mountpoint.empty?

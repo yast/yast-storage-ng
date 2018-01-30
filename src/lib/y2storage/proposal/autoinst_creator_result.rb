@@ -103,7 +103,7 @@ module Y2Storage
       #
       # Any device which has not been shrinked will be filtered out.
       #
-      # @param [Array<Y2Storage::Planned::Partition>,Array<Y2Storage::Planned::LvmLv>]
+      # @param collection [Array<Y2Storage::Planned::Partition>,Array<Y2Storage::Planned::LvmLv>]
       # @return [Array<Y2Storage::DeviceShrinkage>]
       def shrinked_devices(collection)
         collection.each_with_object([]) do |device, all|
