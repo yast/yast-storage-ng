@@ -92,13 +92,16 @@ module Y2Partitioner
           @table ||= LvmDevicesTable.new(devices, @pager)
         end
 
-        # Returns all vgs and their lvs
+        # Returns all volume groups and their logical volumes, including thin pools
+        # and thin volumes
+        #
+        # @see Y2Storage::LvmVg#all_lvm_lvs
         #
         # @return [Array<Y2Storage::LvmVg, Y2Storage::LvmLv>]
         def devices
           device_graph.lvm_vgs.reduce([]) do |devices, vg|
             devices << vg
-            devices.concat(vg.lvm_lvs)
+            devices.concat(vg.all_lvm_lvs)
           end
         end
 

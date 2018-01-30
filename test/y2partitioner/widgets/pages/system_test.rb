@@ -131,14 +131,24 @@ describe Y2Partitioner::Widgets::Pages::System do
       end
     end
 
-    context "when there are Volume Groups and their logical volumes" do
+    context "when there are Volume Groups" do
       let(:scenario) { "lvm-two-vgs.yml" }
 
-      it "contains all Volume Groups" do
+      before do
+        vg = Y2Storage::LvmVg.find_by_vg_name(current_graph, "vg0")
+        create_thin_provisioning(vg)
+      end
+
+      it "contains all Volume Groups and their logical volumes (including thin volumes)" do
         expect(items).to include(
           "/dev/vg0",
           "/dev/vg0/lv1",
           "/dev/vg0/lv2",
+          "/dev/vg0/pool1",
+          "/dev/vg0/thin1",
+          "/dev/vg0/thin2",
+          "/dev/vg0/pool2",
+          "/dev/vg0/thin3",
           "/dev/vg1",
           "/dev/vg1/lv1"
         )
