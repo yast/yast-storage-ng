@@ -27,24 +27,24 @@ describe Y2Partitioner::Dialogs::BtrfsSubvolumes do
     context "when the result is accepted" do
       let(:result) { :ok }
 
-      it "keeps the devicegraph with all its changes" do
+      it "stores the new devicegraph with all its changes" do
         previous_graph = Y2Partitioner::DeviceGraphs.instance.current
         subject.run
         current_graph = Y2Partitioner::DeviceGraphs.instance.current
 
-        expect(current_graph.object_id).to eq(previous_graph.object_id)
+        expect(current_graph.object_id).to_not eq(previous_graph.object_id)
       end
     end
 
     context "when the result is not accepted" do
       let(:result) { :cancel }
 
-      it "restores the initial devicegraph" do
+      it "keeps the initial devicegraph" do
         previous_graph = Y2Partitioner::DeviceGraphs.instance.current
         subject.run
         current_graph = Y2Partitioner::DeviceGraphs.instance.current
 
-        expect(current_graph.object_id).not_to eq(previous_graph.object_id)
+        expect(current_graph.object_id).to eq(previous_graph.object_id)
         expect(current_graph).to eq(previous_graph)
       end
     end
