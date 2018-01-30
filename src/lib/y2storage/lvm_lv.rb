@@ -38,10 +38,21 @@ module Y2Storage
     #   @return [LvmVg] volume group the LV belongs to
     storage_forward :lvm_vg, as: "LvmVg"
 
-    # @!attribute stripes
+    # @!method lv_type
+    #   @return [LvType] type of the logical volume
+    storage_forward :lv_type, as: "LvType"
+
+    # @!method stripes
     #   Number of stripes. 0 if the LV is not striped
     #   @return [Integer]
     storage_forward :stripes
+
+    # @!method stripes=(num_stripes)
+    #   Set the number of stripes. The size of the LV must be a multiple of
+    #   the number of stripes and the stripe size. Thin LVs cannot be striped.
+    #
+    #   @param num_stripes [Integer]
+    #   @raise [Exception]
     storage_forward :stripes=
 
     # @!attribute stripe_size
@@ -49,6 +60,38 @@ module Y2Storage
     #   @return [DiskSize]
     storage_forward :stripe_size, as: "DiskSize"
     storage_forward :stripe_size=
+
+    # @!method max_size_for_lvm_lv(lv_type)
+    #   Returns the max size for a new logical volume of type lv_type. The size
+    #   may be limited by other parameters (e.g. the filesystem on it).
+    #
+    #   The max size for thin logical volumes is in general theoretic (max size
+    #   that can be represented)
+    #
+    #   @param lv_type [LvType]
+    #   @return [DiskSize]
+    storage_forward :max_size_for_lvm_lv, as: "DiskSize"
+
+    # @!method lvm_lvs
+    #   Returs the thin volumes over a thin pool, so it only makes sense to be
+    #   called over a thin pool volume. For thin and normal logical volumes it
+    #   returns an empty list.
+    #
+    #   @return [Array<LvmLv>] logical volumes in the thin pool, in no particular order
+    storage_forward :lvm_lvs, as: "LvmLv"
+
+    # @!method create_lvm_lv(lv_name, lv_type, size)
+    #   Creates a logical volume with name lv_name and type lv_type in the thin pool.
+    #   Only supported lv_type is THIN.
+    #
+    #   @param lv_name [String] name of the new volume (see {LvmLv#lv_name})
+    #   @param lv_type [LvType] type of the new volume
+    #   @param size [DiskSize] size of the new volume
+    #
+    #   @raise Exception
+    #
+    #   @return [LvmLv]
+    storage_forward :create_lvm_lv, as: "LvmLv"
 
     # @!method self.all(devicegraph)
     #   @param devicegraph [Devicegraph]
