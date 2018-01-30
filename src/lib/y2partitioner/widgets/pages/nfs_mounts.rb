@@ -49,8 +49,12 @@ module Y2Partitioner
 
         # @macro seeCustomWidget
         def contents
+          # The CWM machinery calls #contents several times on each page switch,
+          # so some caching is required
+          return @contents if @contents
+
           icon = Icons.small_icon(Icons::NFS)
-          VBox(
+          @contents = VBox(
             Left(
               HBox(
                 Image(icon, ""),
@@ -60,6 +64,13 @@ module Y2Partitioner
             ),
             nfs_client.init_ui || fallback_ui
           )
+        end
+
+        # @macro seeAbstractWidget
+        def store
+          # Invalidate the cache when abandoning the page, so the content gets
+          # refreshed (but only calculated once) everytime the NFS page is visited
+          @contents = nil
         end
 
         # @macro seeAbstractWidget
