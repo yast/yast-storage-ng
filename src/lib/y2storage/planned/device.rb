@@ -48,10 +48,10 @@ module Y2Storage
       # @return [String] planned device identifier. Planned devices are cloned/modified
       #   when calculating the proposal. This identifier allows to identify if two planned
       #   devices are related.
-      attr_reader :source_id
+      attr_reader :planned_id
 
       def initialize
-        @source_id = SecureRandom.uuid
+        @planned_id = SecureRandom.uuid
       end
 
       def to_s

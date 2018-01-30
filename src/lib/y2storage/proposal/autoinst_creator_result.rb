@@ -72,11 +72,11 @@ module Y2Storage
         Y2Storage::DiskSize.sum(diffs)
       end
 
-      # Using the source_id of a planned device, find the corresponding one in the devicegraph
+      # Using the planned_id of a planned device, find the corresponding one in the devicegraph
       #
-      # @param source_id [String] Planned device source_id
-      def real_device_by_source_id(source_id)
-        name, _planned = devices_map.find { |_n, d| d.source_id == source_id }
+      # @param planned_id [String] Planned device planned_id
+      def real_device_by_planned_id(planned_id)
+        name, _planned = devices_map.find { |_n, d| d.planned_id == planned_id }
         return nil unless name
         Y2Storage::BlkDevice.find_by_name(devicegraph, name)
       end
@@ -107,7 +107,7 @@ module Y2Storage
       # @return [Array<Y2Storage::DeviceShrinkage>]
       def shrinked_devices(collection)
         collection.each_with_object([]) do |device, all|
-          real_device = real_device_by_source_id(device.source_id)
+          real_device = real_device_by_planned_id(device.planned_id)
           next if real_device.nil? || real_device.size.to_i >= device.min_size.to_i
           all << DeviceShrinkage.new(device, real_device)
         end

@@ -33,8 +33,8 @@ describe Y2Storage::Proposal::AutoinstCreatorResult do
 
   let(:shrinked_part1) do
     instance_double(
-      Y2Storage::Planned::Partition, source_id: planned_part1.source_id,
-      min_size: Y2Storage::DiskSize.B(1)
+      Y2Storage::Planned::Partition, planned_id: planned_part1.planned_id,
+                                     min_size:   Y2Storage::DiskSize.B(1)
     )
   end
 
@@ -48,7 +48,7 @@ describe Y2Storage::Proposal::AutoinstCreatorResult do
   end
 
   let(:devicegraph) do
-    instance_double(Y2Storage::Devicegraph) 
+    instance_double(Y2Storage::Devicegraph)
   end
 
   let(:creator_result) do
@@ -62,19 +62,19 @@ describe Y2Storage::Proposal::AutoinstCreatorResult do
   end
 
   before do
-    allow(Y2Storage::BlkDevice).to receive(:find_by_name) do |devicegraph, name|
+    allow(Y2Storage::BlkDevice).to receive(:find_by_name) do |_devicegraph, name|
       blk_devices_map[name]
     end
   end
 
-  describe "#real_device_by_source_id" do
+  describe "#real_device_by_planned_id" do
     it "returns the real device for a given planned device" do
-      expect(result.real_device_by_source_id(planned_part1.source_id)).to eq(real_part1)
+      expect(result.real_device_by_planned_id(planned_part1.planned_id)).to eq(real_part1)
     end
 
     context "when planned device does not exist" do
       it "returns nil" do
-        expect(result.real_device_by_source_id("dummy-id")).to be_nil
+        expect(result.real_device_by_planned_id("dummy-id")).to be_nil
       end
     end
   end
@@ -112,7 +112,6 @@ describe Y2Storage::Proposal::AutoinstCreatorResult do
       }
     end
 
-
     let(:blk_devices_map) do
       {
         "/dev/system/root" => real_lv1
@@ -121,8 +120,8 @@ describe Y2Storage::Proposal::AutoinstCreatorResult do
 
     let(:shrinked_lv1) do
       instance_double(
-        Y2Storage::Planned::LvmLv, source_id: planned_lv1.source_id,
-        min_size: Y2Storage::DiskSize.B(1)
+        Y2Storage::Planned::LvmLv, planned_id: planned_lv1.planned_id,
+                                   min_size:   Y2Storage::DiskSize.B(1)
       )
     end
 
