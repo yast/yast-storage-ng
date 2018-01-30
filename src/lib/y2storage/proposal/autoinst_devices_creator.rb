@@ -139,7 +139,8 @@ module Y2Storage
       def create_logical_volumes(devicegraph, vg, pvs)
         lvm_creator = Proposal::LvmCreator.new(devicegraph)
         lvm_creator.create_volumes(vg, pvs)
-      rescue RuntimeError
+      rescue NoDiskSpaceError
+        lvm_creator = Proposal::LvmCreator.new(devicegraph)
         new_vg = vg.clone
         new_vg.lvs = flexible_partitions(vg.lvs)
         lvm_creator.create_volumes(new_vg, pvs)

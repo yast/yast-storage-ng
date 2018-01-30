@@ -91,7 +91,7 @@ describe Y2Storage::Proposal::AutoinstDevicesCreator do
       let(:scenario) { "empty_hard_disk_50GiB" }
       let(:filesystem_type) { Y2Storage::Filesystems::Type::EXT4 }
 
-      let(:pv) { planned_partition(lvm_volume_group_name: "vg0") }
+      let(:pv) { planned_partition(lvm_volume_group_name: "vg0", min_size: 5.GiB) }
 
       let(:lv_root) { planned_lv(mount_point: "/", logical_volume_name: "lv_root") }
 
@@ -112,6 +112,20 @@ describe Y2Storage::Proposal::AutoinstDevicesCreator do
         lv = devicegraph.lvm_lvs.first
         expect(lv.lv_name).to eq("lv_root")
         expect(lv.lvm_vg.vg_name).to eq("vg0")
+      end
+
+      context "when logical volume is too big" do
+        let(:lv_root) do
+          planned_lv(mount_point: "/", logical_volume_name: "lv_root", min_size: 10.GiB)
+        end
+
+        it "shrinks the logical volume to make it fit into the volume group" do
+          result = creator.populated_devicegraph([pv, vg], ["/dev/sda"])
+          devicegraph = result.devicegraph
+          vg = devicegraph.lvm_vgs.first
+          lv = vg.lvm_lvs.first
+          expect(lv.size).to eq(vg.size)
+        end
       end
     end
 
