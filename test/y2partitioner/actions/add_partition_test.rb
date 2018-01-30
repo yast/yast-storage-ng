@@ -26,6 +26,14 @@ require "y2partitioner/actions/add_partition"
 require "y2partitioner/dialogs"
 
 describe Y2Partitioner::Actions::AddPartition do
+  # Defined as method instead of let clause because using let it points to the
+  # current devicegraph at the moment to call #current_graph for first time, but
+  # after a transaction, the current devicegraph could change. The tests need to
+  # always access to the current devicegraph, even after a transaction.
+  def current_graph
+    Y2Partitioner::DeviceGraphs.instance.current
+  end
+
   before do
     devicegraph_stub(scenario)
 
@@ -36,8 +44,6 @@ describe Y2Partitioner::Actions::AddPartition do
   subject(:action) { described_class.new(disk) }
 
   let(:disk) { Y2Storage::Disk.find_by_name(current_graph, disk_name) }
-
-  let(:current_graph) { Y2Partitioner::DeviceGraphs.instance.current }
 
   describe "#run" do
     context "if it is not possible to create a new partition on the disk" do
@@ -105,7 +111,7 @@ describe Y2Partitioner::Actions::AddPartition do
 
       context "when the confirm popup is not accepted" do
         before do
-          expect(Yast::Popup).to receive(:YesNo).and_return(false)
+          allow(Yast::Popup).to receive(:YesNo).and_return(false)
         end
 
         it "quits returning :back" do
@@ -122,15 +128,19 @@ describe Y2Partitioner::Actions::AddPartition do
 
       context "when the confirm popup is accepted" do
         before do
-          expect(Yast::Popup).to receive(:YesNo).and_return(true)
+          allow(Yast::Popup).to receive(:YesNo).and_return(true)
+
+          allow(Y2Partitioner::Actions::Controllers::Partition).to receive(:new).with(disk_name)
+            .and_return(controller)
           # Only to finish
           allow(Y2Partitioner::Dialogs::PartitionType).to receive(:run).and_return(:abort)
         end
 
+        let(:controller) { Y2Partitioner::Actions::Controllers::Partition.new(disk_name) }
+
         it "removes the filesystem" do
+          expect(controller).to receive(:delete_filesystem)
           action.run
-          disk = Y2Storage::Disk.find_by_name(current_graph, disk_name)
-          expect(disk.filesystem).to be_nil
         end
       end
     end

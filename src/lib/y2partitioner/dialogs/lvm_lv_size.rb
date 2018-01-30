@@ -90,7 +90,7 @@ module Y2Partitioner
 
         # @macro seeAbstractWidget
         def init
-          self.value = (@controller.size_choice ||= :max_size)
+          self.value = @controller.size_choice
           # trigger disabling the other subwidgets
           handle("ID" => value)
         end
@@ -210,6 +210,13 @@ module Y2Partitioner
           )
         end
 
+        # Disables widgets related to stripes values when the selected lv type is thin volume
+        #
+        # @see #disable_widgets
+        def init
+          disable_widgets if @controller.lv_type.is?(:thin)
+        end
+
         def store
           @controller.stripes_number = stripes_number_widget.value
           @controller.stripes_size = stripes_size_widget.value
@@ -217,12 +224,23 @@ module Y2Partitioner
 
       private
 
+        # Widget to select stripes number
+        #
+        # @return [StripesNumberSelector]
         def stripes_number_widget
           @stripes_number_widget ||= StripesNumberSelector.new(@controller)
         end
 
+        # Widget to select stripes size
+        #
+        # @return [StripesSizeSelector]
         def stripes_size_widget
           @stripes_size_widget ||= StripesSizeSelector.new(@controller)
+        end
+
+        def disable_widgets
+          stripes_number_widget.disable
+          stripes_size_widget.disable
         end
       end
 

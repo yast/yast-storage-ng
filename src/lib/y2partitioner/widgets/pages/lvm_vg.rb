@@ -142,7 +142,10 @@ module Y2Partitioner
 
       private
 
-        # Returns a table with all logical volumes of a volume group
+        # Returns a table with all logical volumes of a volume group, including
+        # thin pools and thin volumes
+        #
+        # @see #devices
         #
         # @return [LvmDevicesTable]
         def table
@@ -152,8 +155,14 @@ module Y2Partitioner
           @table
         end
 
+        # Returns all logical volumes of a volume group, including thin pools
+        # and thin volumes
+        #
+        # @see Y2Storage::LvmVg#all_lvm_lvs
+        #
+        # @return [Array<Y2Storage::LvmLv>]
         def devices
-          @lvm_vg.lvm_lvs
+          @lvm_vg.all_lvm_lvs
         end
       end
 

@@ -32,7 +32,7 @@ describe Y2Partitioner::Widgets::Pages::LvmVg do
 
   let(:current_graph) { Y2Partitioner::DeviceGraphs.instance.current }
 
-  let(:lvm_vg) { current_graph.lvm_vgs.first }
+  let(:lvm_vg) { Y2Storage::LvmVg.find_by_vg_name(current_graph, "vg0") }
 
   let(:pager) { double("Pager") }
 
@@ -78,15 +78,26 @@ describe Y2Partitioner::Widgets::Pages::LvmVg do
     describe "#contents" do
       let(:widgets) { Yast::CWM.widgets_in_contents([subject]) }
 
-      it "shows a table with the lvs of a vg" do
-        table = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::LvmDevicesTable) }
+      let(:table) { widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::LvmDevicesTable) } }
 
+      let(:items) { table.items.map { |i| i[1] } }
+
+      before do
+        create_thin_provisioning(lvm_vg)
+      end
+
+      it "shows a table with the lvs of a vg (including thin volumes)" do
         expect(table).to_not be_nil
 
-        devices = lvm_vg.lvm_lvs.map(&:name)
-        items = table.items.map { |i| i[1] }
-
-        expect(items.sort).to eq(devices.sort)
+        expect(items).to contain_exactly(
+          "/dev/vg0/lv1",
+          "/dev/vg0/lv2",
+          "/dev/vg0/pool1",
+          "/dev/vg0/thin1",
+          "/dev/vg0/thin2",
+          "/dev/vg0/pool2",
+          "/dev/vg0/thin3"
+        )
       end
 
       it "shows a menu button to create a new lv" do

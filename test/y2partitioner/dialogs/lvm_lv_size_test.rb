@@ -49,6 +49,17 @@ describe Y2Partitioner::Dialogs::LvmLvSize do
 
     include_examples "CWM::CustomWidget"
 
+    describe "#init" do
+      before do
+        controller.size_choice = :custom
+      end
+
+      it "sets the controller value" do
+        expect(subject).to receive(:value=).with(:custom)
+        subject.init
+      end
+    end
+
     describe "#store" do
       before do
         allow(widget).to receive(:value).and_return(value)
@@ -235,6 +246,64 @@ describe Y2Partitioner::Dialogs::LvmLvSize do
     subject(:widget) { described_class.new(controller) }
 
     include_examples "CWM::CustomWidget"
+
+    describe "#init" do
+      before do
+        allow(controller).to receive(:lv_type).and_return(lv_type)
+      end
+
+      let(:widgets) { Yast::CWM.widgets_in_contents([subject]) }
+
+      let(:stripes_number_widget) do
+        widgets.detect { |w| w.is_a?(Y2Partitioner::Dialogs::LvmLvSize::StripesNumberSelector) }
+      end
+
+      let(:stripes_size_widget) do
+        widgets.detect { |w| w.is_a?(Y2Partitioner::Dialogs::LvmLvSize::StripesSizeSelector) }
+      end
+
+      context "when a normal volume is being created" do
+        let(:lv_type) { Y2Storage::LvType::NORMAL }
+
+        it "does not disable the widget for stripes number" do
+          expect(stripes_number_widget).to_not receive(:disable)
+          subject.init
+        end
+
+        it "does not disable the widget for stripes size" do
+          expect(stripes_size_widget).to_not receive(:disable)
+          subject.init
+        end
+      end
+
+      context "when a thin pool is being created" do
+        let(:lv_type) { Y2Storage::LvType::THIN_POOL }
+
+        it "does not disable the widget for stripes number" do
+          expect(stripes_number_widget).to_not receive(:disable)
+          subject.init
+        end
+
+        it "does not disable the widget for stripes size" do
+          expect(stripes_size_widget).to_not receive(:disable)
+          subject.init
+        end
+      end
+
+      context "when a thin volume is being created" do
+        let(:lv_type) { Y2Storage::LvType::THIN }
+
+        it "disables the widget for stripes number" do
+          expect(stripes_number_widget).to receive(:disable)
+          subject.init
+        end
+
+        it "disables the widget for stripes size" do
+          expect(stripes_size_widget).to receive(:disable)
+          subject.init
+        end
+      end
+    end
 
     describe "#store" do
       before do

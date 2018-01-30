@@ -31,7 +31,7 @@ require "y2partitioner/dialogs/format_and_mount"
 describe Y2Partitioner::Actions::AddLvmLv do
   using Y2Storage::Refinements::SizeCasts
 
-  # Defined as method instead of let clause because using let, it points to the
+  # Defined as method instead of let clause because using let it points to the
   # current devicegraph at the moment to call #current_size for first time, but
   # after a transaction, the current devicegraph could change. The tests need to
   # always access to the current devicegraph, even after a transaction.
@@ -63,27 +63,64 @@ describe Y2Partitioner::Actions::AddLvmLv do
     context "if there is no free space in the vg" do
       before do
         allow(controller).to receive(:free_extents).and_return 0
-        allow(Yast::Popup).to receive(:Error)
       end
 
-      it "shows an error popup" do
-        expect(Yast::Popup).to receive(:Error)
+      context "and there is no thin pool in the vg" do
+        it "shows an error popup" do
+          expect(Yast::Popup).to receive(:Error)
+          sequence.run
+        end
+
+        it "quits returning :back" do
+          expect(sequence.run).to eq :back
+        end
+      end
+
+      context "and there is some thin pool in the vg" do
+        before do
+          create_thin_provisioning(vg)
+
+          # only to finish
+          allow(Y2Partitioner::Dialogs::LvmLvInfo).to receive(:run).and_return :abort
+        end
+
+        it "does not shows an error popup" do
+          expect(Yast::Popup).to_not receive(:Error)
+          sequence.run
+        end
+
+        it "shows the first wizard step" do
+          expect(Y2Partitioner::Dialogs::LvmLvInfo).to receive(:run)
+          sequence.run
+        end
+      end
+    end
+
+    context "if there were previous size and stripes data (e.g., going back)" do
+      before do
+        controller.lv_type = Y2Storage::LvType::NORMAL
+        controller.size = 10.GiB
+        controller.size_choice = :custom_size
+        controller.stripes_number = 10
+        controller.stripes_size = 10.KiB
+
+        allow(Y2Partitioner::Dialogs::LvmLvInfo).to receive(:run).and_return :next
+        allow(Y2Partitioner::Dialogs::LvmLvSize).to receive(:run).and_return :abort
+      end
+
+      it "restores default size and stripes data" do
         sequence.run
-      end
-
-      it "quits returning :back" do
-        expect(sequence.run).to eq :back
-      end
-
-      it "does not create any lv device in the devicegraph" do
-        sequence.run
-        lvs = Y2Storage::LvmLv.all(current_graph)
-        expect(lvs.size).to eq 0
+        expect(controller.size).to be_nil
+        expect(controller.size_choice).to eq(:max_size)
+        expect(controller.stripes_number).to be_nil
+        expect(controller.stripes_size).to be_nil
       end
     end
 
     context "if the user goes forward through all the dialogs" do
       before do
+        allow(controller).to receive(:size).and_return(1.GiB)
+
         allow(Y2Partitioner::Dialogs::LvmLvInfo).to receive(:run).and_return :next
         allow(Y2Partitioner::Dialogs::LvmLvSize).to receive(:run).and_return :next
         allow(Y2Partitioner::Dialogs::PartitionRole).to receive(:run).and_return :next
@@ -107,6 +144,8 @@ describe Y2Partitioner::Actions::AddLvmLv do
 
     context "if the user aborts the process at some point" do
       before do
+        allow(controller).to receive(:size).and_return(1.GiB)
+
         allow(Y2Partitioner::Dialogs::LvmLvInfo).to receive(:run).and_return :next
         allow(Y2Partitioner::Dialogs::LvmLvSize).to receive(:run).and_return :next
         allow(Y2Partitioner::Dialogs::PartitionRole).to receive(:run).and_return :next
@@ -121,6 +160,28 @@ describe Y2Partitioner::Actions::AddLvmLv do
         sequence.run
         lvs = Y2Storage::LvmLv.all(current_graph)
         expect(lvs.size).to eq 0
+      end
+    end
+
+    context "if the user selects thin pool option" do
+      before do
+        allow(controller).to receive(:size).and_return(1.GiB)
+        allow(controller).to receive(:lv_type).and_return(Y2Storage::LvType::THIN_POOL)
+
+        allow(Y2Partitioner::Dialogs::LvmLvInfo).to receive(:run).and_return :next
+        allow(Y2Partitioner::Dialogs::LvmLvSize).to receive(:run).and_return :next
+        allow(Y2Partitioner::Dialogs::PartitionRole).to receive(:run).and_return :next
+        allow(Y2Partitioner::Dialogs::FormatAndMount).to receive(:run).and_return :next
+      end
+
+      it "the step to select partition role is not shown" do
+        expect(Y2Partitioner::Dialogs::PartitionRole).to_not receive(:run)
+        sequence.run
+      end
+
+      it "the step to select format and mount options is not shown" do
+        expect(Y2Partitioner::Dialogs::FormatAndMount).to_not receive(:run)
+        sequence.run
       end
     end
   end

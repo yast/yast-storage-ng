@@ -24,9 +24,15 @@ require_relative "spec_helper"
 require "y2storage"
 
 describe Y2Storage::LvmVg do
+  using Y2Storage::Refinements::SizeCasts
+
   before do
     fake_scenario("complex-lvm-encrypt")
   end
+
+  subject(:vg) { Y2Storage::LvmVg.find_by_vg_name(fake_devicegraph, vg_name) }
+
+  let(:vg_name) { "vg0" }
 
   describe "#name" do
     it "returns string starting with /dev and containing vg_name" do
@@ -40,6 +46,78 @@ describe Y2Storage::LvmVg do
     it "returns all the volume groups sorted by name" do
       devices = Y2Storage::LvmVg.sorted_by_name(fake_devicegraph)
       expect(devices.map(&:basename)).to eq ["vg0", "vg1"]
+    end
+  end
+
+  describe "lvm_lvs" do
+    before do
+      create_thin_provisioning(vg)
+    end
+
+    it "includes all normal volumes" do
+      expect(vg.lvm_lvs.map(&:lv_name)).to include("lv1", "lv2")
+    end
+
+    it "includes all thin pools" do
+      expect(vg.lvm_lvs.map(&:lv_name)).to include("pool1", "pool2")
+    end
+
+    it "does not include thin volumes" do
+      expect(vg.lvm_lvs.map(&:lv_name)).to_not include("thin1", "thin2", "thin3")
+    end
+  end
+
+  describe "all_lvm_lvs" do
+    before do
+      create_thin_provisioning(vg)
+    end
+
+    it "includes all normal volumes" do
+      expect(vg.all_lvm_lvs.map(&:lv_name)).to include("lv1", "lv2")
+    end
+
+    it "includes all thin pools" do
+      expect(vg.all_lvm_lvs.map(&:lv_name)).to include("pool1", "pool2")
+    end
+
+    it "includes all thin volumes" do
+      expect(vg.all_lvm_lvs.map(&:lv_name)).to include("thin1", "thin2", "thin3")
+    end
+  end
+
+  describe "thin_pool_lvm_lvs" do
+    before do
+      create_thin_provisioning(vg)
+    end
+
+    it "includes all thin pools" do
+      expect(vg.thin_pool_lvm_lvs.map(&:lv_name)).to include("pool1", "pool2")
+    end
+
+    it "does not include normal volumes" do
+      expect(vg.thin_pool_lvm_lvs.map(&:lv_name)).to_not include("lv1", "lv2")
+    end
+
+    it "does not include thin volumes" do
+      expect(vg.thin_pool_lvm_lvs.map(&:lv_name)).to_not include("thin1", "thin2", "thin3")
+    end
+  end
+
+  describe "thin_lvm_lvs" do
+    before do
+      create_thin_provisioning(vg)
+    end
+
+    it "includes all thin volumes" do
+      expect(vg.thin_lvm_lvs.map(&:lv_name)).to include("thin1", "thin2", "thin3")
+    end
+
+    it "does not include normal volumes" do
+      expect(vg.thin_lvm_lvs.map(&:lv_name)).to_not include("lv1", "lv2")
+    end
+
+    it "does not include thin pools" do
+      expect(vg.thin_lvm_lvs.map(&:lv_name)).to_not include("pool1", "pool2")
     end
   end
 end

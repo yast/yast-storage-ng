@@ -99,13 +99,19 @@ module Y2Storage
     storage_forward :remove_lvm_pv
 
     # @!method lvm_lvs
-    #   @return [Array<LvmLv>] logical volumes in the VG, in no particular order
+    #   Returns the logical volumes in the VG, in no particular order.
+    #
+    #   @note Thin volumes are actually created over a thin pool volume. This method
+    #     includes all thin pools but not their thin volumes.
+    #
+    #   @return [Array<LvmLv>]
     storage_forward :lvm_lvs, as: "LvmLv"
 
-    # @!method create_lvm_lv(lv_name, size)
-    #   Creates a logical volume in the volume group.
+    # @!method create_lvm_lv(lv_name, lv_type, size)
+    #   Creates a logical volume with name lv_name and type lv_type in the volume group.
     #
-    #   @param lv_name [String] name of the new volume. See {LvmLv#lv_name}
+    #   @param lv_name [String] name of the new volume (see {LvmLv#lv_name})
+    #   @param lv_type [LvType] type of the new volume
     #   @param size [DiskSize] size of the new volume
     #   @return [LvmLv]
     storage_forward :create_lvm_lv, as: "LvmLv"
@@ -116,6 +122,22 @@ module Y2Storage
     #
     #   @param lvm_lv [LvmLv] volume to delete
     storage_forward :delete_lvm_lv
+
+    # @!method max_size_for_lvm_lv(lv_type)
+    #   Returns the max size for a new logical volume of type lv_type. The size may
+    #   be limited by other parameters  (e.g. the filesystem on it). The max size also
+    #   depends on parameters like the chunk size for thin pools.
+    #
+    #   @param lv_type [LvType]
+    #   @return [DiskSize]
+    storage_forward :max_size_for_lvm_lv, as: "DiskSize"
+
+    # @!method overcommitted?
+    #   Checks whether the volume group is overcommitted. If it is, StorageManager#commit
+    #   will most likely fail.
+    #
+    #   @return [Boolean]
+    storage_forward :overcommitted?
 
     # @!method self.create(devicegraph, vg_name)
     #   @param devicegraph [Devicegraph]
@@ -153,6 +175,31 @@ module Y2Storage
     # @return [String]
     def name
       "/dev/#{vg_name}"
+    end
+
+    # Returns all logical volumes in the volume group,
+    # including thin volumes (see #lvm_lvs)
+    #
+    # @return [Array<LvmLv>]
+    def all_lvm_lvs
+      lvm_lvs.reduce([]) do |lvs, lv|
+        lvs << lv
+        lvs.concat(lv.lvm_lvs)
+      end
+    end
+
+    # Returns all thin pools in the volume group
+    #
+    # @return [Array<LvmLv>]
+    def thin_pool_lvm_lvs
+      lvm_lvs.select { |l| l.lv_type.is?(:thin_pool) }
+    end
+
+    # Returns all thin volumes in the volume group
+    #
+    # @return [Array<LvmLv>]
+    def thin_lvm_lvs
+      thin_pool_lvm_lvs.map(&:lvm_lvs).flatten
     end
 
     alias_method :basename, :vg_name

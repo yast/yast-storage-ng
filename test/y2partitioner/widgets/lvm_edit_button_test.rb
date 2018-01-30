@@ -75,13 +75,34 @@ describe Y2Partitioner::Widgets::LvmEditButton do
     context "when the current device is a lv" do
       let(:device) { lv }
 
+      before do
+        allow(Y2Partitioner::Actions::EditBlkDevice).to receive(:new).and_return(edit_action)
+        allow(edit_action).to receive(:run).and_return(action_result)
+      end
+
+      let(:edit_action) { instance_double(Y2Partitioner::Actions::EditBlkDevice) }
+
+      let(:action_result) { nil }
+
       it "opens the workflow for editing the lv" do
         expect(Y2Partitioner::Actions::EditBlkDevice).to receive(:new).with(lv)
         button.handle
       end
 
-      it "returns :redraw" do
-        expect(button.handle).to eq :redraw
+      context "and the workflow finishes correctly" do
+        let(:action_result) { :finish }
+
+        it "returns :redraw" do
+          expect(button.handle).to eq :redraw
+        end
+      end
+
+      context "and the workflow does not finish correctly" do
+        let(:action_result) { :back }
+
+        it "returns nil" do
+          expect(button.handle).to be_nil
+        end
       end
     end
   end

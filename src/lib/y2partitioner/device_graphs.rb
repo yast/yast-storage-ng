@@ -14,25 +14,28 @@ module Y2Partitioner
       @current = initial.dup
     end
 
-    # Makes a copy of the `current` devicegraph and run a block which could
-    # modify it.
+    # Makes a copy of the `current` devicegraph and runs a block with the copy.
     #
-    # If the block fails or raises an exception then `current` is restored
-    # to the `copy`.
+    # If the block fails or raises an exception, then the original devicegraph is restored.
+    # Otherwise, the modified copy of the devicegraph becomes the `current` devicegraph.
     #
-    # And finally if an exception is not raised then the result of the block
-    # call is returned.
+    # Finally, if an exception is not raised, then the result of the block call is returned.
+    #
+    # @note It is important to keep the original devicegraph when the transaction is aborted.
+    #   In that cases, the interface could not be refreshed, and it continues using the original
+    #   devicegraph.
     #
     # @yieldreturn [Boolean]
     # @return What the block returned
     def transaction(&block)
-      old_dg = current.dup
+      initial_graph = current
+      self.current = initial_graph.dup
       begin
         res = block.call
 
-        self.current = old_dg if !res
+        self.current = initial_graph if !res
       rescue
-        self.current = old_dg
+        self.current = initial_graph
         raise
       end
 

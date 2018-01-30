@@ -229,7 +229,9 @@ module Y2Partitioner
         software_raid: N_("MD RAID"),
         lvm_pv:        N_("PV"),
         lvm_vg:        N_("LVM"),
-        lvm_lv:        N_("LV")
+        lvm_lv:        N_("LV"),
+        thin_pool:     N_("Thin Pool"),
+        thin:          N_("Thin LV")
       }
 
       # Label for the device type (e.g., LVM, MD RAID)
@@ -241,6 +243,8 @@ module Y2Partitioner
 
         if device.is?(:partition)
           partition_type_label(device)
+        elsif device.is?(:lvm_lv)
+          lvm_lv_type_label(device)
         else
           blk_device_type_label(device)
         end
@@ -265,6 +269,20 @@ module Y2Partitioner
       # @return [String]
       def partition_type_label(device)
         device.id.to_human_string
+      end
+
+      # Type label when the device is a LVM logical volume
+      #
+      # @note Different label is shown depending on the logical volume type
+      #   (i.e., normal, thin pool or thin volume).
+      #
+      # @param device [Y2Storage::LvmLv]
+      # @return [String]
+      def lvm_lv_type_label(device)
+        return blk_device_type_label(device) if device.lv_type.is?(:normal)
+
+        type = device.lv_type.to_sym
+        _(DEVICE_LABELS[type]) || ""
       end
 
       # Type label when the device is not a partition

@@ -37,14 +37,17 @@ module Y2Partitioner
         @controller = Controllers::LvmLv.new(vg)
       end
 
-      # Wizard step to indicate properties for a new logical volume,
-      # i.e., the name and type.
+      # Wizard step to indicate properties for a new logical volume (i.e., the name and type)
       #
-      # @note Given values are stored into the controller.
+      # @note Given values are stored into the controller. The values for size and stripes
+      # are reset because that values depend on the selection in this step.
+      #
       # @see Controllers::LvmLv
       # @see Dialogs::LvmLvInfo.run
       def name_and_type
-        Dialogs::LvmLvInfo.run(controller)
+        result = Dialogs::LvmLvInfo.run(controller)
+        controller.reset_size_and_stripes if result == :next
+        result
       end
 
       # Wizard step to indicate the size and stripes data (number and size)
@@ -53,18 +56,21 @@ module Y2Partitioner
       # @note Given values are stored into the controller and then a new
       #   logical volume is created with those values. When a previous logical
       #   volume exists (e.g, when going back in the wizard), that volume is
-      #   deleted before creating a new one.
+      #   deleted before creating a new one. Also note that this is the last
+      #   wizard step when the new volume is a thin pool.
       #
       # @see Controllers::LvmLv
       # @see Dialogs::LvmLvSize.run
       def size
         controller.delete_lv
+
         result = Dialogs::LvmLvSize.run(controller)
-        if result == :next
-          controller.create_lv
-          title = controller.wizard_title
-          self.fs_controller = Controllers::Filesystem.new(controller.lv, title)
-        end
+        return result if result != :next
+
+        controller.create_lv
+        return :finish unless controller.lv_can_be_formatted?
+
+        self.fs_controller = Controllers::Filesystem.new(controller.lv, controller.wizard_title)
         result
       end
 
@@ -91,13 +97,20 @@ module Y2Partitioner
 
       # @see TransactionWizard
       def run?
-        return true if controller.free_extents > 0
+        return true if lv_can_be_added?
 
         Yast::Popup.Error(
           # TRANSLATORS: %s is a volume group name (e.g. "system")
           _("No free space left in the volume group \"%s\".") % vg_name
         )
         false
+      end
+
+      # Whether a new logical volume can be added (thin or not)
+      #
+      # @return [Boolean]
+      def lv_can_be_added?
+        controller.lv_can_be_added? || controller.thin_lv_can_be_added?
       end
     end
   end

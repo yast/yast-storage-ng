@@ -29,7 +29,8 @@ Yast.import "Popup"
 module Y2Partitioner
   module Dialogs
     # Form to enter the basic information about a logical volume to be created,
-    # line the name and type
+    # like the name and type
+    #
     # Part of {Actions::AddLvmLv}.
     class LvmLvInfo < CWM::Dialog
       # @param controller [Actions::Controllers::LvmLv]
@@ -53,7 +54,7 @@ module Y2Partitioner
               NameWidget.new(@controller)
             ),
             VSpacing(),
-            TypeWidget.new(@controller)
+            LvTypeSelector.new(@controller)
           )
         )
       end
@@ -85,37 +86,21 @@ module Y2Partitioner
         end
 
         # @macro seeAbstractWidget
+        # @see Actions::Controllers::LvmLv#name_errors
         def validate
-          error_message = nil
+          errors = @controller.name_errors(value)
+          return true if errors.empty?
 
-          if value.nil? || value.empty?
-            error_message = _("Enter a name for the logical volume.")
-          end
-
-          error_message ||= @controller.error_for_lv_name(value)
-
-          if !error_message && @controller.lv_name_in_use?(value)
-            error_message =
-              _(
-                "A logical volume named \"%{lv_name}\" already exists\n" \
-                "in volume group \"%{vg_name}\"."
-              ) % { lv_name: value, vg_name: @controller.vg_name }
-          end
-
-          if error_message
-            Yast::Popup.Error(error_message)
-            Yast::UI.SetFocus(Id(widget_id))
-            false
-          else
-            true
-          end
+          Yast::Popup.Error(errors.first)
+          Yast::UI.SetFocus(Id(widget_id))
+          false
         end
       end
 
-      # Choose the type of the new logical volume (normal, thin or thin pool)
-      # @note When the selected type is :thin, it also allows to select the
-      #   used thin pool (see {ThinPoolSelector}).
-      class TypeWidget < Widgets::ControllerRadioButtons
+      # Widget to select the type of the new logical volume (normal, thin or thin pool)
+      #
+      # When the selected type is :thin, it also allows to select a thin pool (see {ThinPoolSelector}).
+      class LvTypeSelector < Widgets::ControllerRadioButtons
         # @param controller [Actions::Controllers::LvmLv]
         #   a controller collecting data for a LV to be created
         def initialize(controller)
@@ -131,9 +116,9 @@ module Y2Partitioner
         # @see Widgets::ControllerRadioButtons
         def items
           [
-            [:normal, _("Normal Volume")],
-            [:thin_pool, _("Thin Pool")],
-            [:thin, _("Thin Volume")]
+            [NORMAL_VOLUME_OPTION, _("Normal Volume")],
+            [THIN_POOL_OPTION, _("Thin Pool")],
+            [THIN_VOLUME_OPTION, _("Thin Volume")]
           ]
         end
 
@@ -147,21 +132,61 @@ module Y2Partitioner
         end
 
         # @macro seeAbstractWidget
+        # Sets the current lv type and disables widgets that cannot be selected
+        #
+        # @see Actions::Controllers::LvmLv#lv_type
+        # @see #disable_options
         def init
-          self.value = (@controller.type_choice ||= :normal)
-          # trigger disabling the other subwidgets
+          self.value = @controller.lv_type.to_sym
+          disable_options
+
+          # trigger unselecting the other radio buttons
           handle("ID" => value)
         end
 
         # @macro seeAbstractWidget
+        # Stores the selected lv type
+        #
+        # @note The thin pool is also set when the selected type is thin volume.
         def store
-          @controller.type_choice = value
-          @controller.thin_pool = value == :thin ? current_widget.value : nil
+          @controller.lv_type = selected_lv_type
+          @controller.thin_pool = current_widget.value if selected_lv_type.is?(:thin)
+        end
+
+      private
+
+        NORMAL_VOLUME_OPTION = Y2Storage::LvType::NORMAL.to_sym.freeze
+        THIN_POOL_OPTION = Y2Storage::LvType::THIN_POOL.to_sym.freeze
+        THIN_VOLUME_OPTION = Y2Storage::LvType::THIN.to_sym.freeze
+
+        # Currently selected lv type (normal, pool or thin)
+        #
+        # @return [Y2Storage::LvType]
+        def selected_lv_type
+          Y2Storage::LvType.find(value)
+        end
+
+        # Disables options that cannot be selected
+        #
+        # Option for thin volumes is disabled when there is no available pool.
+        # Options for normal or pool volumes are disabled when there is no room
+        # for a new logical volume.
+        def disable_options
+          disable_option(THIN_VOLUME_OPTION) unless @controller.thin_lv_can_be_added?
+
+          if !@controller.lv_can_be_added?
+            disable_option(NORMAL_VOLUME_OPTION)
+            disable_option(THIN_POOL_OPTION)
+          end
+        end
+
+        # Disables an specific widget
+        def disable_option(option)
+          Yast::UI.ChangeWidget(Id(option), :Enabled, false)
         end
       end
 
-      # Selector for used thin pool
-      # TODO
+      # Widget to select a thin pool
       class ThinPoolSelector < CWM::ComboBox
         # @param controller [Actions::Controllers::LvmLv]
         #   a controller collecting data for a LV to be created
@@ -177,11 +202,23 @@ module Y2Partitioner
 
         # @macro seeAbstractWidget
         def init
+          return if @controller.thin_pool.nil?
           self.value = @controller.thin_pool
         end
 
         def items
-          []
+          @controller.available_thin_pools.map { |p| [p.sid, p.lv_name] }
+        end
+
+        # @return [Y2Storage::LvmLv, nil]
+        def value
+          @controller.available_thin_pools.find { |p| p.sid == super }
+        end
+
+        # @param v [Y2Storage::LvmLv, nil]
+        def value=(v)
+          sid = v.nil? ? nil : v.sid
+          super(sid)
         end
       end
     end

@@ -190,7 +190,7 @@ module Y2Partitioner
 
       def lvm_vg_items(vg)
         page = Pages::LvmVg.new(vg, self)
-        children = vg.lvm_lvs.sort_by(&:lv_name).map { |l| lvm_lv_items(l) }
+        children = vg.all_lvm_lvs.sort_by(&:lv_name).map { |l| lvm_lv_items(l) }
         CWM::PagerTreeItem.new(page, children: children)
       end
 
