@@ -105,6 +105,7 @@ module Y2Partitioner
       def extended_partition_error
         return nil unless extended_partition?
 
+        # TRANSLATORS: Error message when trying to edit an extented partition
         _("An extended partition cannot be edited")
       end
 
@@ -114,6 +115,8 @@ module Y2Partitioner
       def lvm_thin_pool_error
         return nil unless lvm_thin_pool?
 
+        # TRANSLATORS: Error message when trying to edit an LVM thin pool. %{name} is
+        # replaced by a logical volume name (e.g., /dev/system/lv1)
         format(_("The volume %{name} is a thin pool.\nIt cannot be edited."), name: blk_device.name)
       end
 

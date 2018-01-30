@@ -295,6 +295,7 @@ module Y2Partitioner
         def empty_name_error(name)
           return nil if name && !name.empty?
 
+          # TRANSLATORS: Error message when there is no name for the new logical volume
           _("Enter a name for the logical volume.")
         end
 
@@ -304,6 +305,7 @@ module Y2Partitioner
         def name_size_error(name)
           return nil if name.nil? || name.size <= 128
 
+          # TRANSLATORS: Error message when the name of the logical volume is too long
           _("The name for the logical volume is longer than 128 characters.")
         end
 
@@ -313,6 +315,8 @@ module Y2Partitioner
         def name_chars_error(name)
           return nil if name.nil? || name.each_char.all? { |c| ALLOWED_CHARS.include?(c) }
 
+          # TRANSLATORS: Error message when the name of the logical volume contains
+          # illegal characters
           _("The name for the logical volume contains illegal characters.\n" \
              "Allowed are alphanumeric characters, \".\", \"_\", \"-\" and \"+\".")
         end
@@ -324,6 +328,10 @@ module Y2Partitioner
         # @return [String, nil] nil if the name is not used
         def used_name_error(name)
           return nil if name.nil? || !lv_name_in_use?(name)
+
+          # TRANSLATORS: Error message when the name of the volume group is already used.
+          # %{lv_name} is replaced by a logical volume name (e.g., lv1) and %{vg_name} is
+          # replaced by a volume group name (e.g., system)
           format(
             _("A logical volume named \"%{lv_name}\" already exists\n" \
               "in volume group \"%{vg_name}\"."),
