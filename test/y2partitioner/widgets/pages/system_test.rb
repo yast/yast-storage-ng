@@ -162,5 +162,13 @@ describe Y2Partitioner::Widgets::Pages::System do
         )
       end
     end
+
+    context "when there are NFS mounts" do
+      let(:scenario) { "nfs1.xml" }
+
+      it "contains all NFS mounts, represented by their share string" do
+        expect(items).to include("srv:/home/a", "srv2:/home/b")
+      end
+    end
   end
 end

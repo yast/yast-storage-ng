@@ -77,6 +77,7 @@ module Y2Partitioner
       end
 
       def filesystem(device)
+        return device if device.is?(:filesystem)
         return nil unless device.respond_to?(:filesystem)
         device.filesystem
       end
@@ -140,6 +141,10 @@ module Y2Partitioner
       end
 
       def size_value(device)
+        # TODO: displaying properly the size of NFS devices may imply some
+        # inspection and caching. For the time being let's print nothing for
+        # such devices without a direct and straightforward #size method.
+        return "" unless device.respond_to?(:size)
         device.size.to_human_string
       end
 
@@ -176,7 +181,9 @@ module Y2Partitioner
 
       def filesystem_label_value(device)
         fs = filesystem(device)
-        fs.nil? ? "" : fs.label
+        # fs may be nil or a file system not supporting labels, like NFS
+        return "" unless fs.respond_to?(:label)
+        fs.label
       end
 
       def mount_point_value(device)
@@ -200,6 +207,7 @@ module Y2Partitioner
         disk:      Icons::HD,
         dasd:      Icons::HD,
         multipath: Icons::MULTIPATH,
+        nfs:       Icons::NFS,
         partition: Icons::HD_PART,
         raid:      Icons::RAID,
         lvm_vg:    Icons::LVM,
@@ -225,6 +233,7 @@ module Y2Partitioner
         disk:          N_("Disk"),
         dasd:          N_("Disk"),
         multipath:     N_("Multipath"),
+        nfs:           N_("NFS"),
         bios_raid:     N_("BIOS RAID"),
         software_raid: N_("MD RAID"),
         lvm_pv:        N_("PV"),

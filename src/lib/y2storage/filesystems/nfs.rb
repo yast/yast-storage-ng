@@ -89,6 +89,16 @@ module Y2Storage
         LegacyNfs.new_from_nfs(self).to_hash
       end
 
+      # String representing the remote NFS share in the most common format (the
+      # "server:/path/in/server" one used in /etc/fstab)
+      #
+      # @return [String]
+      def share
+        "#{server}:#{path}"
+      end
+
+      alias_method :name, :share
+
     protected
 
       def types_for_is

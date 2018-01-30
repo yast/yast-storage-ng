@@ -103,7 +103,13 @@ module Y2Partitioner
       # Obtains the page associated to a specific device
       # @return [CWM::Page, nil]
       def device_page(device)
-        @pages.find { |p| p.respond_to?(:device) && p.device.sid == device.sid }
+        if device.is?(:nfs)
+          # NFS is a special case because NFS devices don't have individual
+          # pages, all NFS devices are managed directly in the NFS list
+          @pages.find { |p| p.is_a?(Pages::NfsMounts) }
+        else
+          @pages.find { |p| p.respond_to?(:device) && p.device.sid == device.sid }
+        end
       end
 
       # @macro seeAbstractWidget

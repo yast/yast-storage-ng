@@ -64,9 +64,10 @@ module Y2Partitioner
         #
         # @return [Array<Y2Storage::Device>]
         def devices
-          disk_devices + software_raids + lvm_vgs
+          disk_devices + software_raids + lvm_vgs + nfs_devices
         end
 
+        # @return [Array<Y2Storage::Device>]
         def disk_devices
           device_graph.disk_devices.reduce([]) do |devices, disk|
             devices << disk
@@ -87,8 +88,14 @@ module Y2Partitioner
           end
         end
 
+        # @return [Array<Y2Storage::Device>]
         def software_raids
           device_graph.software_raids
+        end
+
+        # @return [Array<Y2Storage::Device>]
+        def nfs_devices
+          device_graph.nfs_mounts
         end
 
         def device_graph

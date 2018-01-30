@@ -70,6 +70,17 @@ describe Y2Partitioner::Widgets::OverviewTreePager do
         expect(page).to be_nil
       end
     end
+
+    context "when the device is NFS" do
+      let(:scenario) { "nfs1.xml" }
+      let(:device) { current_graph.nfs_mounts.first }
+
+      it "returns the general NFS page" do
+        page = subject.device_page(device)
+        expect(page).to be_a(CWM::Page)
+        expect(page).to be_a(Y2Partitioner::Widgets::Pages::NfsMounts)
+      end
+    end
   end
 
   describe "#contents" do
