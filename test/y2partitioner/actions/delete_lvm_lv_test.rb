@@ -32,43 +32,80 @@ describe Y2Partitioner::Actions::DeleteLvmLv do
 
   subject { described_class.new(device) }
 
-  let(:device) { Y2Storage::BlkDevice.find_by_name(device_graph, device_name) }
+  let(:device) { Y2Storage::BlkDevice.find_by_name(current_graph, device_name) }
 
-  let(:device_graph) { Y2Partitioner::DeviceGraphs.instance.current }
+  let(:current_graph) { Y2Partitioner::DeviceGraphs.instance.current }
 
   describe "#run" do
     before do
-      allow(Yast::Popup).to receive(:YesNo).and_return(accept)
-    end
+      vg = Y2Storage::LvmVg.find_by_vg_name(current_graph, "vg1")
+      create_thin_provisioning(vg)
 
-    let(:device_name) { "/dev/vg1/lv1" }
+      allow(Yast::Popup).to receive(:YesNo).and_return(accept)
+      allow(subject).to receive(:confirm_recursive_delete).and_return(accept)
+    end
 
     let(:accept) { nil }
 
-    it "shows a confirm message" do
-      expect(Yast::Popup).to receive(:YesNo)
-      subject.run
+    context "when the logical volume is not an used thin pool" do
+      let(:device_name) { "/dev/vg1/lv1" }
+
+      it "shows a confirmation message with the device name" do
+        expect(Yast::Popup).to receive(:YesNo) do |string|
+          expect(string).to include(device_name)
+        end
+        subject.run
+      end
+    end
+
+    context "when the logical volume is an used thin pool" do
+      let(:device_name) { "/dev/vg1/pool1" }
+
+      it "shows a detailed confirmation message including all the thin volumes over the pool" do
+        lvs = device.lvm_lvs.map(&:name)
+
+        expect(subject).to receive(:confirm_recursive_delete)
+          .with(array_including(*lvs), anything, anything, /pool1/)
+          .and_call_original
+
+        subject.run
+      end
     end
 
     context "when the confirm message is not accepted" do
       let(:accept) { false }
 
+      let(:device_name) { "/dev/vg1/lv1" }
+
       it "does not delete the logical volume" do
         subject.run
-        expect(Y2Storage::BlkDevice.find_by_name(device_graph, device_name)).to_not be_nil
+        expect(device.exists_in_devicegraph?(current_graph)).to eq(true)
       end
 
       it "returns :back" do
         expect(subject.run).to eq(:back)
+      end
+
+      context "and the logical volume is an used thin pool" do
+        let(:device_name) { "/dev/vg1/pool1" }
+
+        it "does not delete the thin volumes over the thin pool" do
+          thin_volumes = device.lvm_lvs
+          subject.run
+
+          expect(thin_volumes.all? { |v| v.exists_in_devicegraph?(current_graph) }).to eq(true)
+        end
       end
     end
 
     context "when the confirm message is accepted" do
       let(:accept) { true }
 
+      let(:device_name) { "/dev/vg1/lv1" }
+
       it "deletes the logical volume" do
         subject.run
-        expect(Y2Storage::BlkDevice.find_by_name(device_graph, device_name)).to be_nil
+        expect(Y2Storage::BlkDevice.find_by_name(current_graph, device_name)).to be_nil
       end
 
       it "refresh btrfs subvolumes shadowing" do
@@ -78,6 +115,18 @@ describe Y2Partitioner::Actions::DeleteLvmLv do
 
       it "returns :finish" do
         expect(subject.run).to eq(:finish)
+      end
+
+      context "and the logical volume is an used thin pool" do
+        let(:device_name) { "/dev/vg1/pool1" }
+
+        it "deletes all thin volumes over the thin pool" do
+          lv_names = device.lvm_lvs.map(&:name)
+          subject.run
+
+          lvs = lv_names.map { |n| current_graph.find_by_name(n) }.compact
+          expect(lvs).to be_empty
+        end
       end
     end
   end
