@@ -28,6 +28,7 @@ module Y2Partitioner
 
         # @macro seeCustomWidget
         def contents
+          invalidate_cached_content
           return @contents if @contents
 
           icon = Icons.small_icon(Icons::ALL)
@@ -46,7 +47,20 @@ module Y2Partitioner
 
       private
 
+        # @return [String]
         attr_reader :hostname
+
+        # @return [CWM::TreePager]
+        attr_reader :pager
+
+        # Invalidates cached content if needed according to
+        # {OverviewTreePager#invalidated_views}
+        def invalidate_cached_content
+          return unless pager.invalidated_pages.delete(:system)
+
+          @contents = nil
+          @table = nil
+        end
 
         # The table contains all storage devices, including Software RAIDs and LVM Vgs
         #

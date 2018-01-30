@@ -71,8 +71,19 @@ module Y2Partitioner
         textdomain "storage"
 
         @hostname = hostname
+        @invalidated_pages = []
         super(OverviewTree.new(items))
       end
+
+      # Pages whose cached content should be considered outdated
+      #
+      # This is a hack introduced because the NFS page works in a completely
+      # different way in which triggering a full redraw every time something
+      # changes is not an option. This way, the NFS page can invalidate the
+      # cached contents of other pages supporting this mechanism.
+      #
+      # @return [Array<Symbol>] only :system supported so far
+      attr_accessor :invalidated_pages
 
       # @see http://www.rubydoc.info/github/yast/yast-yast2/CWM%2FTree:items
       def items

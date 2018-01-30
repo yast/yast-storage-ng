@@ -10,7 +10,7 @@ describe Y2Partitioner::Widgets::Pages::System do
 
   subject { described_class.new("hostname", pager) }
 
-  let(:pager) { double("OverviewTreePager") }
+  let(:pager) { double("OverviewTreePager", invalidated_pages: []) }
 
   let(:scenario) { "mixed_disks.yml" }
 
@@ -19,11 +19,21 @@ describe Y2Partitioner::Widgets::Pages::System do
   include_examples "CWM::Page"
 
   describe "#contents" do
+    # Widget with the list of devices
+    def find_table(widgets)
+      widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::BlkDevicesTable) }
+    end
+
+    # Names from the devices in the list
+    def row_names(table)
+      table.items.map { |i| i[1] }
+    end
+
     let(:widgets) { Yast::CWM.widgets_in_contents([subject]) }
 
-    let(:table) { widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::BlkDevicesTable) } }
+    let(:table) { find_table(widgets) }
 
-    let(:items) { table.items.map { |i| i[1] } }
+    let(:items) { row_names(table) }
 
     context "when there are disks" do
       let(:scenario) { "mixed_disks.yml" }
@@ -168,6 +178,39 @@ describe Y2Partitioner::Widgets::Pages::System do
 
       it "contains all NFS mounts, represented by their share string" do
         expect(items).to include("srv:/home/a", "srv2:/home/b")
+      end
+    end
+
+    describe "caching" do
+      let(:scenario) { "empty_hard_disk_15GiB" }
+      let(:pager) { Y2Partitioner::Widgets::OverviewTreePager.new("hostname") }
+      let(:nfs_page) { Y2Partitioner::Widgets::Pages::NfsMounts.new(pager) }
+
+      # Device names from the table
+      def rows
+        widgets = Yast::CWM.widgets_in_contents([subject])
+        table = find_table(widgets)
+        row_names(table)
+      end
+
+      it "caches the table content between calls" do
+        expect(rows).to eq ["/dev/sda"]
+        Y2Storage::Filesystems::Nfs.create(current_graph, "new", "/device")
+        # The new device is not included
+        expect(rows).to eq ["/dev/sda"]
+      end
+
+      it "refreshes the cached content if the NFS page was visited" do
+        expect(rows).to eq ["/dev/sda"]
+        Y2Storage::Filesystems::Nfs.create(current_graph, "new", "/device")
+        expect(rows).to eq ["/dev/sda"]
+        # Leave the NFS page
+        nfs_page.store
+        # Now the device is there
+        expect(rows).to eq ["/dev/sda", "new:/device"]
+        Y2Storage::Filesystems::Nfs.create(current_graph, "another", "/device")
+        # Still cached
+        expect(rows).to eq ["/dev/sda", "new:/device"]
       end
     end
   end

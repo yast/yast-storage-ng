@@ -71,6 +71,10 @@ module Y2Partitioner
           # Invalidate the cache when abandoning the page, so the content gets
           # refreshed (but only calculated once) everytime the NFS page is visited
           @contents = nil
+
+          # Invalidate also the cached content of other pages listing NFS
+          # devices, even if that breaks encapsulation a bit
+          pager.invalidated_pages << :system unless pager.invalidated_pages.include?(:system)
         end
 
         # @macro seeAbstractWidget
