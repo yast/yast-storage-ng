@@ -72,7 +72,9 @@ module Y2Storage
         vgs_to_reuse = planned_vgs.select(&:reuse?)
         reuse_vgs(vgs_to_reuse, creator_result.devicegraph)
 
-        creator_result
+        Y2Storage::Proposal::AutoinstCreatorResult.new(
+          creator_result, parts_to_create + mds_to_create + planned_vgs
+        )
       end
 
     protected
