@@ -37,20 +37,7 @@ describe Y2Partitioner::Actions::Controllers::LvmLv do
 
   before do
     devicegraph_stub("lvm-two-vgs.yml")
-
-    allow(controller).to receive(:lv_name).and_return(lv_name)
-    allow(controller).to receive(:size).and_return(size)
-    allow(controller).to receive(:stripes_number).and_return(stripes_number)
-    allow(controller).to receive(:stripes_size).and_return(stripes_size)
   end
-
-  let(:lv_name) { nil }
-
-  let(:size) { nil }
-
-  let(:stripes_number) { nil }
-
-  let(:stripes_size) { nil }
 
   describe "#vg" do
     it "returns a Y2Storage::LvmVg" do
@@ -63,7 +50,17 @@ describe Y2Partitioner::Actions::Controllers::LvmLv do
   end
 
   describe "#create_lv" do
+    before do
+      allow(controller).to receive(:lv_name).and_return(lv_name)
+      allow(controller).to receive(:lv_type).and_return(lv_type)
+      allow(controller).to receive(:size).and_return(size)
+      allow(controller).to receive(:stripes_number).and_return(stripes_number)
+      allow(controller).to receive(:stripes_size).and_return(stripes_size)
+    end
+
     let(:lv_name) { "lv3" }
+
+    let(:lv_type) { Y2Storage::LvType::THIN_POOL }
 
     let(:size) { 3.GiB }
 
@@ -71,7 +68,7 @@ describe Y2Partitioner::Actions::Controllers::LvmLv do
 
     let(:stripes_size) { 16.KiB }
 
-    it "creates a new lv in the editing vg" do
+    it "creates a new lv in the current vg" do
       expect(controller.vg.lvm_lvs.size).to eq(2)
       controller.create_lv
       expect(controller.vg.lvm_lvs.size).to eq(3)
@@ -84,6 +81,7 @@ describe Y2Partitioner::Actions::Controllers::LvmLv do
       lv = controller.vg.lvm_lvs.find { |l| l.lv_name == lv_name }
 
       expect(lv.lv_name).to eq(lv_name)
+      expect(lv.lv_type).to eq(lv_type)
       expect(lv.size).to eq(size)
       expect(lv.stripes).to eq(stripes_number)
       expect(lv.stripe_size).to eq(stripes_size)
@@ -106,6 +104,24 @@ describe Y2Partitioner::Actions::Controllers::LvmLv do
 
       controller.create_lv
     end
+
+    context "when the stored lv type is thin" do
+      let(:lv_type) { Y2Storage::LvType::THIN }
+
+      before do
+        create_thin_provisioning(vg)
+
+        allow(controller).to receive(:thin_pool).and_return(thin_pool)
+      end
+
+      let(:thin_pool) { Y2Storage::BlkDevice.find_by_name(current_graph, "/dev/vg0/pool1") }
+
+      it "creates a thin volume over the indicated thin pool" do
+        expect(thin_pool.lvm_lvs.size).to eq(2)
+        controller.create_lv
+        expect(thin_pool.lvm_lvs.size).to eq(3)
+      end
+    end
   end
 
   describe "#delete_lv" do
@@ -118,6 +134,11 @@ describe Y2Partitioner::Actions::Controllers::LvmLv do
     end
 
     context "when a lv has been created" do
+      before do
+        allow(controller).to receive(:lv_name).and_return(lv_name)
+        allow(controller).to receive(:size).and_return(size)
+      end
+
       let(:lv_name) { "lv3" }
 
       let(:size) { 1.GiB }
@@ -136,6 +157,209 @@ describe Y2Partitioner::Actions::Controllers::LvmLv do
         expect(controller.lv).to_not be_nil
         controller.delete_lv
         expect(controller.lv).to be_nil
+      end
+    end
+  end
+
+  describe "#lv_type" do
+    context "if no lv type was previously set" do
+      before do
+        allow(controller).to receive(:vg).and_return(vg)
+        allow(vg).to receive(:number_of_free_extents).and_return(free_extents)
+      end
+
+      context "and there is no availabe space in the volume group" do
+        let(:free_extents) { 0 }
+
+        context "and there is no available pool in the volume group" do
+          it "returns normal type" do
+            expect(controller.lv_type).to eq(Y2Storage::LvType::NORMAL)
+          end
+        end
+
+        context "and there are available pools in the volume group" do
+          before do
+            create_thin_provisioning(vg)
+          end
+
+          it "returns thin type" do
+            expect(controller.lv_type).to eq(Y2Storage::LvType::THIN)
+          end
+        end
+      end
+
+      context "and there is free availabe space in the volume group" do
+        let(:free_extents) { 10 }
+
+        it "returns normal type" do
+          expect(controller.lv_type).to eq(Y2Storage::LvType::NORMAL)
+        end
+      end
+    end
+
+    context "if lv type was previously set" do
+      before do
+        controller.lv_type = Y2Storage::LvType::THIN_POOL
+      end
+
+      it "returns that value" do
+        expect(controller.lv_type).to eq(Y2Storage::LvType::THIN_POOL)
+      end
+    end
+  end
+
+  describe "#reset_size_and_stripes" do
+    before do
+      controller.stripes_number = 10
+      controller.stripes_size = 16.KiB
+    end
+
+    it "sets stripes number to nil" do
+      expect(controller.stripes_number).to_not be_nil
+      controller.reset_size_and_stripes
+      expect(controller.stripes_number).to be_nil
+    end
+
+    it "sets stripes size to nil" do
+      expect(controller.stripes_size).to_not be_nil
+      controller.reset_size_and_stripes
+      expect(controller.stripes_size).to be_nil
+    end
+
+    context "if the lv type is set to thin" do
+      before do
+        controller.lv_type = Y2Storage::LvType::THIN
+      end
+
+      it "sets size to 2 GiB" do
+        controller.reset_size_and_stripes
+        expect(controller.size).to eq(2.GiB)
+      end
+
+      it "sets size choice to custom size" do
+        controller.reset_size_and_stripes
+        expect(controller.size_choice).to eq(:custom_size)
+      end
+    end
+
+    context "if the lv type is not set to thin" do
+      before do
+        controller.lv_type = Y2Storage::LvType::THIN_POOL
+      end
+
+      it "sets size to nil" do
+        controller.reset_size_and_stripes
+        expect(controller.size).to be_nil
+      end
+
+      it "sets size choice to max size" do
+        controller.reset_size_and_stripes
+        expect(controller.size_choice).to eq(:max_size)
+      end
+    end
+  end
+
+  describe "#lv_can_be_formatted?" do
+    before do
+      allow(controller).to receive(:lv).and_return(lv)
+    end
+
+    context "if there is no lv" do
+      let(:lv) { nil }
+
+      it "returns false" do
+        expect(controller.lv).to be_nil
+        expect(controller.lv_can_be_formatted?).to eq(false)
+      end
+    end
+
+    context "if the lv is a normal volume" do
+      let(:lv) { instance_double(Y2Storage::LvmLv, lv_type: Y2Storage::LvType::NORMAL) }
+
+      it "returns true" do
+        expect(controller.lv_can_be_formatted?).to eq(true)
+      end
+    end
+
+    context "if the lv is a thin pool" do
+      let(:lv) { instance_double(Y2Storage::LvmLv, lv_type: Y2Storage::LvType::THIN_POOL) }
+
+      it "returns false" do
+        expect(controller.lv_can_be_formatted?).to eq(false)
+      end
+    end
+
+    context "if the lv is a thin volume" do
+      let(:lv) { instance_double(Y2Storage::LvmLv, lv_type: Y2Storage::LvType::THIN) }
+
+      it "returns true" do
+        expect(controller.lv_can_be_formatted?).to eq(true)
+      end
+    end
+  end
+
+  describe "#lv_can_be_added?" do
+    before do
+      allow(controller).to receive(:vg).and_return(vg)
+      allow(vg).to receive(:number_of_free_extents).and_return(free_extents)
+    end
+
+    context "if there is free space" do
+      let(:free_extents) { 10 }
+
+      it "returns true" do
+        expect(controller.lv_can_be_added?).to eq(true)
+      end
+    end
+
+    context "if there is no free space" do
+      let(:free_extents) { 0 }
+
+      it "returns false" do
+        expect(controller.lv_can_be_added?).to eq(false)
+      end
+    end
+  end
+
+  describe "#thin_lv_can_be_added?" do
+    context "if there is no thin pool in the volume group" do
+      it "returns false" do
+        expect(controller.thin_lv_can_be_added?).to eq(false)
+      end
+    end
+
+    context "if there are thin pools in the volume group" do
+      before do
+        create_thin_provisioning(vg)
+      end
+
+      it "returns true" do
+        expect(controller.thin_lv_can_be_added?).to eq(true)
+      end
+    end
+  end
+
+  describe "#available_thin_pools" do
+    context "if there is no thin pool in the volume group" do
+      it "returns an empty list" do
+        expect(controller.available_thin_pools).to be_empty
+      end
+    end
+
+    context "if there are thin pools in the volume group" do
+      before do
+        create_thin_provisioning(vg)
+      end
+
+      it "returns a list of logical volumes" do
+        expect(controller.available_thin_pools).to all(be_a(Y2Storage::LvmLv))
+      end
+
+      it "contains all thin pools" do
+        expect(controller.available_thin_pools.map(&:name)).to contain_exactly(
+          "/dev/vg0/pool1",
+          "/dev/vg0/pool2"
+        )
       end
     end
   end
@@ -159,11 +383,41 @@ describe Y2Partitioner::Actions::Controllers::LvmLv do
   end
 
   describe "#max_size" do
-    it "returns the availabe space of the editing vg" do
-      allow(controller).to receive(:vg).and_return(vg)
-      allow(vg).to receive(:available_space).and_return(10.GiB)
+    before do
+      allow(controller).to receive(:lv_type).and_return(lv_type)
+    end
 
-      expect(controller.max_size).to eq(10.GiB)
+    context "if the stored lv type is not thin" do
+      let(:lv_type) { Y2Storage::LvType::NORMAL }
+
+      before do
+        allow(controller).to receive(:vg).and_return(vg)
+        allow(vg).to receive(:max_size_for_lvm_lv).and_return(max_size)
+      end
+
+      let(:max_size) { 10.GiB }
+
+      it "returns the max size for the given lv type in the current vg" do
+        expect(controller.max_size).to eq(max_size)
+      end
+    end
+
+    context "if the stored lv type is thin" do
+      let(:lv_type) { Y2Storage::LvType::THIN }
+
+      before do
+        allow(controller).to receive(:thin_pool).and_return(thin_pool)
+        allow(thin_pool).to receive(:max_size_for_lvm_lv)
+          .with(Y2Storage::LvType::THIN).and_return(max_size)
+      end
+
+      let(:thin_pool) { instance_double(Y2Storage::LvmLv) }
+
+      let(:max_size) { 100.GiB }
+
+      it "returns the max size for a thin volume in the given thin pool" do
+        expect(controller.max_size).to eq(max_size)
+      end
     end
   end
 
@@ -230,48 +484,46 @@ describe Y2Partitioner::Actions::Controllers::LvmLv do
     end
   end
 
-  describe "#error_for_lv_name" do
-    let(:errors) { controller.error_for_lv_name(name) }
+  describe "#name_errors" do
+    let(:errors) { controller.name_errors(name) }
 
     context "when the name is valid" do
       let(:name) { "vg0" }
 
-      it "returns nil" do
-        expect(errors).to be_nil
+      it "returns an empty list" do
+        expect(errors).to be_empty
+      end
+    end
+
+    context "when the name is not given" do
+      let(:name) { "" }
+
+      it "contains an error for empty name" do
+        expect(errors).to include(/Enter a name/)
       end
     end
 
     context "when the name is too long" do
       let(:name) { "a" * 129 }
 
-      it "returns a string with the proper error message" do
-        expect(errors).to include "is longer"
+      it "contains an error for too long name" do
+        expect(errors).to include(/is longer/)
       end
     end
 
     context "when the name has unallowed characters" do
       let(:name) { "vg$0" }
 
-      it "returns a string with the proper error message" do
-        expect(errors).to include "illegal characters"
+      it "contains an error for illegal characters" do
+        expect(errors).to include(/illegal characters/)
       end
     end
-  end
 
-  describe "#lv_name_in_use?" do
-    context "when already exists a lv with that name in the editing vg" do
+    context "when already exists a lv with that name in the current vg" do
       let(:name) { "lv1" }
 
-      it "returns true" do
-        expect(controller.lv_name_in_use?(name)).to be(true)
-      end
-    end
-
-    context "when already exists a lv with that name in the editing vg" do
-      let(:name) { "lv10" }
-
-      it "returns false" do
-        expect(controller.lv_name_in_use?(name)).to be(false)
+      it "contains an error for used name" do
+        expect(errors).to include(/already exists/)
       end
     end
   end

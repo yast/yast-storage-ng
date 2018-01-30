@@ -58,7 +58,7 @@ module Y2Partitioner
       #
       # @return [Booelan]
       def software_raid?
-        device.is?(:md) && device.software_defined?
+        device.is?(:software_raid)
       end
 
       # If pager is known, jumps to the disk device page

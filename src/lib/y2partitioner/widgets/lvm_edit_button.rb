@@ -38,16 +38,17 @@ module Y2Partitioner
 
       # When a vg is edited, go directly to that vg entry in the tree view.
       # When a lv is edited, start the proper wizard.
+      #
       # @see DeviceButton#actions
       def actions
-        case device
+        actions_result = case device
         when Y2Storage::LvmVg
           edit_vg
         when Y2Storage::LvmLv
           edit_lv
         end
 
-        :redraw
+        result(actions_result)
       end
 
       # If pager is known, jumps to the vg page
@@ -56,6 +57,7 @@ module Y2Partitioner
 
         page = pager.device_page(device)
         UIState.instance.go_to_tree_node(page)
+        :finish
       end
 
       # Opens workflow to edit the lv
