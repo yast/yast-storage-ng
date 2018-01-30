@@ -97,6 +97,7 @@ module Y2Partitioner
       def selected_devices_validation
         return true if controller.devices_in_vg.size > 0
 
+        # TRANSLATORS: Error message when no device is selected
         Yast::Popup.Error(_("Select at least one device."))
         false
       end
@@ -110,6 +111,8 @@ module Y2Partitioner
         return true if controller.vg_size >= controller.lvs_size
 
         Yast::Popup.Error(
+          # TRANSLATORS: Error message when the resulting volume group size is not
+          # enough. %s is replaced by a size (e.g., 4 GiB).
           format(
             _("The volume group size cannot be less than %s."), controller.lvs_size
           )
@@ -129,12 +132,23 @@ module Y2Partitioner
         return if committed_devices.empty?
 
         error_message = if committed_devices.size > 1
-          _("Physical volumes %s cannot be removed because they already exist on disk")
+          # TRANSLATORS: Error message when several physical volumes cannot be removed, where
+          # %{pvs} is replaced by device names (e.g., /dev/sda1, /dev/sda2) and %{vg} is
+          # replaced by the volume group name (e.g., system)
+          _("Removing physical volumes %{pvs} from the volume group %{vg}\n" \
+            "is not supported because the physical volumes may be already in use")
         else
-          _("Physical volume %s cannot be removed because it already exists on disk")
+          # TRANSLATORS: Error message when a physical volume cannot be removed, where
+          # %{pvs} is replaced by device name (e.g., /dev/sda1) and %{vg} is replaced
+          # by the volume group name (e.g., system)
+          _("Removing the physical volume %{pvs} from the volume group %{vg}\n" \
+            "is not supported because the physical volume may be already in use")
         end
 
-        Yast::Popup.Error(format(error_message, committed_devices.map(&:name).join(", ")))
+        pvs = committed_devices.map(&:name).join(", ")
+        vg = controller.vg.vg_name
+
+        Yast::Popup.Error(format(error_message, pvs: pvs, vg: vg))
       end
 
       # Finds devices by sid
