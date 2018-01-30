@@ -121,7 +121,7 @@ module Y2Partitioner
         # should be restored after setting the lv type.
         def reset_size_and_stripes
           @size = default_size
-          @size_choice = default_size_choise
+          @size_choice = default_size_choice
           @stripes_number = nil
           @stripes_size = nil
         end
@@ -260,7 +260,7 @@ module Y2Partitioner
         # returns max size.
         #
         # @return [Symbol] :max_size, :custom_size
-        def default_size_choise
+        def default_size_choice
           lv_type.is?(:thin) ? :custom_size : :max_size
         end
 

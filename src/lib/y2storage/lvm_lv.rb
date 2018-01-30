@@ -48,11 +48,12 @@ module Y2Storage
     storage_forward :stripes
 
     # @!method stripes=(num_stripes)
-    #   Set the number of stripes. The size of the LV must be a multiple of
+    #   Sets the number of stripes. The size of the LV must be a multiple of
     #   the number of stripes and the stripe size. Thin LVs cannot be striped.
     #
     #   @param num_stripes [Integer]
-    #   @raise [Exception]
+    #   @raise [Storage::Exception] if the number of stripes is invalid
+    #     (i.e., bigger than 128)
     storage_forward :stripes=
 
     # @!attribute stripe_size
@@ -88,7 +89,7 @@ module Y2Storage
     #   @param lv_type [LvType] type of the new volume
     #   @param size [DiskSize] size of the new volume
     #
-    #   @raise Exception
+    #   @raise [Storage::Exception]
     #
     #   @return [LvmLv]
     storage_forward :create_lvm_lv, as: "LvmLv"

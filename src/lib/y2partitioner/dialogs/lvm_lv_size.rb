@@ -210,7 +210,7 @@ module Y2Partitioner
           )
         end
 
-        # Disables widgets ralated to stripes values when the selected lv type is thin volume
+        # Disables widgets related to stripes values when the selected lv type is thin volume
         #
         # @see #disable_widgets
         def init

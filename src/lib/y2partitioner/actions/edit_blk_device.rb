@@ -88,14 +88,10 @@ module Y2Partitioner
       #
       # @return [Boolean] true if the edit action can be performed; false otherwise.
       def run?
-        errors = []
-        errors << extended_partition_error
-        errors << lvm_thin_pool_error
-        errors = errors.compact
+        error = extended_partition_error || lvm_thin_pool_error
+        return true unless error
 
-        return true if errors.empty?
-
-        Yast::Popup.Error(errors.first)
+        Yast::Popup.Error(error)
         false
       end
 

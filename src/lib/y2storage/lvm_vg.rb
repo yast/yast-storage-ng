@@ -133,7 +133,7 @@ module Y2Storage
     storage_forward :max_size_for_lvm_lv, as: "DiskSize"
 
     # @!method overcommitted?
-    #   Checks whether the volume group is overcommitted. If it is, Storage#commit
+    #   Checks whether the volume group is overcommitted. If it is, StorageManager#commit
     #   will most likely fail.
     #
     #   @return [Boolean]
