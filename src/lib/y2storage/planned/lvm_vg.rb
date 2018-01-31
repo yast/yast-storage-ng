@@ -76,6 +76,7 @@ module Y2Storage
       # @param lvs               [Array<Planned::LvmLv>] List of planned logical volumes
       # @param pvs               [Array<String>] Name of partitions to be used as physical volumes
       def initialize(volume_group_name: nil, lvs: [], pvs: [])
+        super()
         initialize_has_size
         @volume_group_name = volume_group_name
         @lvs = lvs

@@ -31,7 +31,7 @@ describe Y2Storage::Proposal::AutoinstDevicesCreator do
   let(:filesystem_type) { Y2Storage::Filesystems::Type::EXT4 }
   let(:mount_by_type) { Y2Storage::Filesystems::MountByType::PATH }
   let(:new_part) do
-    Y2Storage::Planned::Partition.new("/home", Y2Storage::Filesystems::Type::EXT4).tap do |part|
+    Y2Storage::Planned::Partition.new("/home", filesystem_type).tap do |part|
       part.fstab_options = ["ro", "acl"]
       part.mkfs_options = "-b 2048"
       part.mount_by = mount_by_type
@@ -51,8 +51,14 @@ describe Y2Storage::Proposal::AutoinstDevicesCreator do
   end
 
   describe "#populated_devicegraph" do
+    it "returns AutoinstCreatorResult object" do
+      result = creator.populated_devicegraph([new_part, reusable_part], "/dev/sda")
+      expect(result).to be_a(Y2Storage::Proposal::AutoinstCreatorResult)
+    end
+
     it "creates new partitions" do
-      devicegraph = creator.populated_devicegraph([new_part, reusable_part], "/dev/sda")
+      result = creator.populated_devicegraph([new_part, reusable_part], "/dev/sda")
+      devicegraph = result.devicegraph
       _win, _swap, _root, home = devicegraph.partitions
       expect(home).to have_attributes(
         filesystem_type:       filesystem_type,
@@ -61,7 +67,8 @@ describe Y2Storage::Proposal::AutoinstDevicesCreator do
     end
 
     it "sets filesystem options" do
-      devicegraph = creator.populated_devicegraph([new_part, reusable_part], "/dev/sda")
+      result = creator.populated_devicegraph([new_part, reusable_part], "/dev/sda")
+      devicegraph = result.devicegraph
       home = devicegraph.partitions.last
       fs = home.filesystem
       expect(fs.mkfs_options).to eq("-b 2048")
@@ -70,7 +77,8 @@ describe Y2Storage::Proposal::AutoinstDevicesCreator do
     end
 
     it "reuses partitions" do
-      devicegraph = creator.populated_devicegraph([new_part, reusable_part], "/dev/sda")
+      result = creator.populated_devicegraph([new_part, reusable_part], "/dev/sda")
+      devicegraph = result.devicegraph
       root = devicegraph.partitions.find { |p| p.filesystem_mountpoint == "/" }
       expect(root).to have_attributes(
         filesystem_label: "root"
@@ -78,23 +86,45 @@ describe Y2Storage::Proposal::AutoinstDevicesCreator do
     end
 
     it "ignores other disks" do
-      devicegraph = creator.populated_devicegraph([new_part, reusable_part], "/dev/sda")
+      result = creator.populated_devicegraph([new_part, reusable_part], "/dev/sda")
+      devicegraph = result.devicegraph
       sdb = devicegraph.disks.find { |d| d.name == "/dev/sdb" }
       expect(sdb.partitions).to be_empty
+    end
+
+    context "when a partition is too big" do
+      let(:new_part) do
+        Y2Storage::Planned::Partition.new("/home", filesystem_type).tap do |part|
+          part.min_size = 250.GiB
+        end
+      end
+
+      it "shrinks the partition to make it fit into the disk" do
+        result = creator.populated_devicegraph([new_part], "/dev/sda")
+        devicegraph = result.devicegraph
+        home = devicegraph.partitions.find { |p| p.filesystem_mountpoint == "/home" }
+        expect(home.size).to eq(228.GiB - 1.MiB)
+      end
+
+      it "registers which devices were shrinked" do
+        result = creator.populated_devicegraph([new_part], "/dev/sda")
+        expect(result.shrinked_partitions.map(&:planned)).to eq([new_part])
+      end
     end
 
     describe "using LVM" do
       let(:scenario) { "empty_hard_disk_50GiB" }
       let(:filesystem_type) { Y2Storage::Filesystems::Type::EXT4 }
 
-      let(:pv) { planned_partition(lvm_volume_group_name: "vg0") }
+      let(:pv) { planned_partition(lvm_volume_group_name: "vg0", min_size: 5.GiB) }
 
       let(:lv_root) { planned_lv(mount_point: "/", logical_volume_name: "lv_root") }
 
       let(:vg) { planned_vg(volume_group_name: "vg0", lvs: [lv_root]) }
 
       it "adds volume groups" do
-        devicegraph = creator.populated_devicegraph([pv, vg], ["/dev/sda"])
+        result = creator.populated_devicegraph([pv, vg], ["/dev/sda"])
+        devicegraph = result.devicegraph
         vg = devicegraph.lvm_vgs.first
         expect(vg.lvm_pvs.map(&:blk_device).map(&:name)).to eq(["/dev/sda1"])
         expect(vg.vg_name).to eq("vg0")
@@ -102,10 +132,30 @@ describe Y2Storage::Proposal::AutoinstDevicesCreator do
       end
 
       it "adds logical volumes" do
-        devicegraph = creator.populated_devicegraph([pv, vg], ["/dev/sda"])
+        result = creator.populated_devicegraph([pv, vg], ["/dev/sda"])
+        devicegraph = result.devicegraph
         lv = devicegraph.lvm_lvs.first
         expect(lv.lv_name).to eq("lv_root")
         expect(lv.lvm_vg.vg_name).to eq("vg0")
+      end
+
+      context "when logical volume is too big" do
+        let(:lv_root) do
+          planned_lv(mount_point: "/", logical_volume_name: "lv_root", min_size: 10.GiB)
+        end
+
+        it "shrinks the logical volume to make it fit into the volume group" do
+          result = creator.populated_devicegraph([pv, vg], ["/dev/sda"])
+          devicegraph = result.devicegraph
+          vg = devicegraph.lvm_vgs.first
+          lv = vg.lvm_lvs.first
+          expect(lv.size).to eq(vg.size)
+        end
+
+        it "registers which devices were shrinked" do
+          result = creator.populated_devicegraph([pv, vg], ["/dev/sda"])
+          expect(result.shrinked_lvs.map(&:planned)).to eq([lv_root])
+        end
       end
     end
 
@@ -152,7 +202,8 @@ describe Y2Storage::Proposal::AutoinstDevicesCreator do
       end
 
       it "assigns sizes to each partition to resize" do
-        devicegraph = creator.populated_devicegraph([home, root], "/dev/sda")
+        result = creator.populated_devicegraph([home, root], "/dev/sda")
+        devicegraph = result.devicegraph
 
         root = devicegraph.partitions.find { |p| p.filesystem_mountpoint == "/" }
         expect(root.size).to eq(200.GiB)
@@ -205,7 +256,8 @@ describe Y2Storage::Proposal::AutoinstDevicesCreator do
       end
 
       it "assigns sizes to each partition to resize" do
-        devicegraph = creator.populated_devicegraph([pv, vg], ["/dev/sda"])
+        result = creator.populated_devicegraph([pv, vg], ["/dev/sda"])
+        devicegraph = result.devicegraph
 
         root = devicegraph.lvm_lvs.find { |p| p.filesystem_mountpoint == "/" }
         expect(root.size).to eq(1.GiB)

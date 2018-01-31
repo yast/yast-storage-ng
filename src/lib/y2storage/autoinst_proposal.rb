@@ -46,6 +46,9 @@ module Y2Storage
     # @return [AutoinstIssues::List] List of found AutoYaST issues
     attr_reader :issues_list
 
+    # @return [DiskSize] Missing space for the originally planned devices
+    attr_reader :missing_space
+
     # Constructor
     #
     # @param partitioning [Array<Hash>] Partitioning schema from an AutoYaST profile
@@ -92,7 +95,10 @@ module Y2Storage
         add_partition_tables(devicegraph, drives)
         @planned_devices.concat(boot_devices(devicegraph, @planned_devices))
 
-        create_devices(devicegraph, @planned_devices, drives.disk_names)
+        result = create_devices(devicegraph, @planned_devices, drives.disk_names)
+        add_reduced_devices_issues(result)
+        @missing_space = result.missing_space
+        result.devicegraph
       else
         log.info "No partitions were specified. Falling back to guided setup planning."
         propose_guided_devicegraph(devicegraph, drives)
@@ -238,7 +244,8 @@ module Y2Storage
       guided_settings = proposal_settings_for_disks(drives)
       guided_planner = Proposal::DevicesPlanner.new(guided_settings, devicegraph)
       @planned_devices = guided_planner.planned_devices(target)
-      create_devices(devicegraph, @planned_devices, drives.disk_names)
+      result = create_devices(devicegraph, @planned_devices, drives.disk_names)
+      result.devicegraph
     end
 
     # Creates planned devices on a given devicegraph
@@ -250,6 +257,20 @@ module Y2Storage
     def create_devices(devicegraph, planned_devices, disk_names)
       devices_creator = Proposal::AutoinstDevicesCreator.new(devicegraph)
       devices_creator.populated_devicegraph(planned_devices, disk_names)
+    end
+
+    # Add shrinked devices to the issues list
+    #
+    # @param result [Proposal::CreatorResult] Result after creating the planned devices
+    def add_reduced_devices_issues(result)
+      if !result.shrinked_partitions.empty?
+        issues_list.add(:shrinked_planned_devices, result.shrinked_partitions)
+      end
+
+      # rubocop:disable Style/GuardClause
+      if !result.shrinked_lvs.empty?
+        issues_list.add(:shrinked_planned_devices, result.shrinked_lvs)
+      end
     end
 
     # Returns the product's proposal settings for a given set of disks

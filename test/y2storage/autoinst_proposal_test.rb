@@ -682,6 +682,35 @@ describe Y2Storage::AutoinstProposal do
           expect(issue).to_not be_nil
         end
       end
+
+      context "when there is not enough space" do
+        let(:root_spec) do
+          { "mount" => "/", "filesystem" => "btrfs", "lv_name" => "root", "size" => "300GiB" }
+        end
+
+        let(:home_spec) do
+          { "mount" => "/home", "filesystem" => "ext4", "lv_name" => "home", "size" => "300GiB" }
+        end
+
+        let(:lvs) { [root_spec, home_spec] }
+
+        it "reduces logical volumes proportionally" do
+          proposal.propose
+          devicegraph = proposal.devices
+          expect(devicegraph.lvm_lvs).to contain_exactly(
+            an_object_having_attributes("lv_name" => "root", "size" => 250.GiB),
+            an_object_having_attributes("lv_name" => "home", "size" => 250.GiB - 4.MiB)
+          )
+        end
+
+        it "adds an issue for each reduced logical volume" do
+          proposal.propose
+          issues = issues_list.select do |i|
+            i.is_a?(Y2Storage::AutoinstIssues::ShrinkedPlannedDevices)
+          end
+          expect(issues.size).to eq(1)
+        end
+      end
     end
 
     describe "RAID" do
@@ -1001,6 +1030,48 @@ describe Y2Storage::AutoinstProposal do
             expect(disk.partition_table.type).to eq(Y2Storage::PartitionTables::Type::MSDOS)
           end
         end
+      end
+    end
+
+    context "when there is not enough space" do
+      let(:partitioning) do
+        [{ "device" => "/dev/sda", "use" => "1,3", "partitions" => [root, home, var] }]
+      end
+
+      let(:root) { ROOT_PART.merge("size" => "150GiB", "create" => true) }
+
+      let(:home) do
+        { "filesystem" => :xfs, "mount" => "/home", "size" => "350GiB", "create" => true }
+      end
+
+      let(:var) do
+        { "filesystem" => :xfs, "mount" => "/var", "size" => "150GiB", "create" => true }
+      end
+
+      it "reduces partitions proportionally" do
+        proposal.propose
+        devicegraph = proposal.devices
+        home_dev, _swap, root_dev, var_dev = devicegraph.partitions.sort_by { |p| p.region.start }
+
+        expect(home_dev).to have_attributes(filesystem_mountpoint: "/home", size: 250.GiB)
+        expect(root_dev).to have_attributes(filesystem_mountpoint: "/")
+        expect(var_dev).to have_attributes(filesystem_mountpoint: "/var")
+        expect(root_dev.size).to eq(var_dev.size + 1.MiB)
+        expect(root_dev.size + var_dev.size).to eq(248.GiB - 1.MiB)
+      end
+
+      it "adds an issue for each reduced partition" do
+        proposal.propose
+        issues = issues_list.select do |i|
+          i.is_a?(Y2Storage::AutoinstIssues::ShrinkedPlannedDevices)
+        end
+        expect(issues.size).to eq(1)
+      end
+
+      it "sets missing space" do
+        proposal.propose
+        # shrinked devices: home, -100 GiB; root and var, -26 GiB each one.
+        expect(proposal.missing_space).to eq(152.GiB + 1.MiB)
       end
     end
   end

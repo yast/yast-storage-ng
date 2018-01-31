@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Wed Jan 31 11:53:57 UTC 2018 - igonzalezsosa@suse.com
+
+- AutoYaST: try to shrink new partitions/logical volumes
+  proportionally when there is not enough space (bsc#1078418).
+- 4.0.80
+
+-------------------------------------------------------------------
 Wed Jan 31 09:25:07 UTC 2018 - ancor@suse.com
 
 - Partitioner: initial support for NFS (part of fate#318196)
