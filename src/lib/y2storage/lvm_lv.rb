@@ -99,6 +99,20 @@ module Y2Storage
     #   @return [Array<Disk>] all the logical volumes in the given devicegraph
     storage_class_forward :all, as: "LvmLv"
 
+    # Whether the thin pool is overcommitted
+    #
+    # @note Overcommitting means that a thin pool has not enough size to cover
+    #   all thin volumes created over the thin pool. In consequence, this method
+    #   only makes sense for thin pools. For other logical volumes it always
+    #   returns false.
+    #
+    # @return [Boolean] true if the thin pool is overcommitted; false otherwise.
+    def overcommitted?
+      return false unless lv_type.is?(:thin_pool)
+
+      size < DiskSize.sum(lvm_lvs.map(&:size))
+    end
+
     # Resizes the volume, taking resizing limits and extent size into account.
     #
     # It does nothing if resizing is not possible (see {ResizeInfo#resize_ok?}).

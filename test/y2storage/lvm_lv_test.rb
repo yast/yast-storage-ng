@@ -30,15 +30,68 @@ describe Y2Storage::LvmLv do
     fake_scenario("complex-lvm-encrypt")
   end
 
-  describe "#resize" do
-    subject(:lv) { fake_devicegraph.find_by_name("/dev/vg0/lv1") }
+  subject(:lv) { fake_devicegraph.find_by_name(device_name) }
 
+  describe "#overcommitted?" do
+    before do
+      vg = Y2Storage::LvmVg.find_by_vg_name(fake_devicegraph, "vg1")
+      pool = vg.create_lvm_lv("pool", Y2Storage::LvType::THIN_POOL, pool_size)
+      pool.create_lvm_lv("thin", Y2Storage::LvType::THIN, thin_size)
+    end
+
+    let(:pool_size) { 1.GiB }
+    let(:thin_size) { 1.GiB }
+
+    context "if the volume is a normal logical volume" do
+      let(:device_name) { "/dev/vg0/lv1" }
+
+      it "returns false" do
+        expect(subject.overcommitted?).to eq(false)
+      end
+    end
+
+    context "if the volume is a thin logical volume" do
+      let(:device_name) { "/dev/vg1/thin" }
+
+      it "returns false" do
+        expect(subject.overcommitted?).to eq(false)
+      end
+    end
+
+    context "if the volume is a thin pool" do
+      let(:device_name) { "/dev/vg1/pool" }
+
+      context "and the pool is not overcommitted" do
+        let(:pool_size) { 1.GiB }
+
+        let(:thin_size) { 500.MiB }
+
+        it "returns false" do
+          expect(subject.overcommitted?).to eq(false)
+        end
+      end
+
+      context "and the pool is overcommitted" do
+        let(:pool_size) { 1.GiB }
+
+        let(:thin_size) { 2.GiB }
+
+        it "returns true" do
+          expect(subject.overcommitted?).to eq(true)
+        end
+      end
+    end
+  end
+
+  describe "#resize" do
     before { allow(lv).to receive(:detect_resize_info).and_return resize_info }
 
     let(:resize_info) { double(Y2Storage::ResizeInfo, resize_ok?: ok, min_size: min, max_size: max) }
     let(:ok) { true }
     let(:min) { 1.GiB }
     let(:max) { 5.GiB }
+
+    let(:device_name) { "/dev/vg0/lv1" }
 
     context "if the volume cannot be resized" do
       let(:ok) { false }

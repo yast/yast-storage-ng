@@ -114,9 +114,9 @@ module Yast
       def create_thin_provisioning(vg)
         pool1 = vg.create_lvm_lv("pool1", Y2Storage::LvType::THIN_POOL, Y2Storage::DiskSize.GiB(1))
         pool2 = vg.create_lvm_lv("pool2", Y2Storage::LvType::THIN_POOL, Y2Storage::DiskSize.GiB(1))
-        pool1.create_lvm_lv("thin1", Y2Storage::LvType::THIN_POOL, Y2Storage::DiskSize.GiB(2))
-        pool1.create_lvm_lv("thin2", Y2Storage::LvType::THIN_POOL, Y2Storage::DiskSize.GiB(2))
-        pool2.create_lvm_lv("thin3", Y2Storage::LvType::THIN_POOL, Y2Storage::DiskSize.GiB(2))
+        pool1.create_lvm_lv("thin1", Y2Storage::LvType::THIN, Y2Storage::DiskSize.GiB(2))
+        pool1.create_lvm_lv("thin2", Y2Storage::LvType::THIN, Y2Storage::DiskSize.GiB(2))
+        pool2.create_lvm_lv("thin3", Y2Storage::LvType::THIN, Y2Storage::DiskSize.GiB(2))
       end
 
       def space_dist(vols_by_space)
