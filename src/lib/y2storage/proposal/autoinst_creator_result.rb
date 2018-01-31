@@ -51,14 +51,14 @@ module Y2Storage
 
       # Return a list containing information about shrinked partitions
       #
-      # @see DeviceShrinkage
+      # @return [Array<DeviceShrinkage>] Partitions shrinkage details
       def shrinked_partitions
         @shrinked_partitions ||= shrinked_devices(planned_partitions)
       end
 
       # Return a list containing information about shrinked logical volumes
       #
-      # @see DeviceShrinkage
+      # @return [Array<DeviceShrinkage>] Logical volumes shrinkage details
       def shrinked_lvs
         @shrinked_lvs ||= shrinked_devices(planned_lvs)
       end
@@ -75,6 +75,8 @@ module Y2Storage
       # Using the planned_id of a planned device, find the corresponding one in the devicegraph
       #
       # @param planned_id [String] Planned device planned_id
+      # @return [Y2Storage::BlkDevice] Device in the devicegraph which corresponds to the
+      #   planned device identified by planned_id
       def real_device_by_planned_id(planned_id)
         name, _planned = devices_map.find { |_n, d| d.planned_id == planned_id }
         return nil unless name
