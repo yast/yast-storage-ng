@@ -99,6 +99,7 @@ describe Y2Partitioner::Widgets do
   end
 
   describe Y2Partitioner::Widgets::ArbitraryOptions do
+    subject { described_class.new(controller, nil) }
     include_examples "CWM::InputField"
   end
 
