@@ -133,11 +133,13 @@ describe Y2Partitioner::Dialogs::BlkDeviceResize do
   end
 
   describe Y2Partitioner::Dialogs::BlkDeviceResize::SizeSelector do
-    subject(:widget) { described_class.new(partition) }
+    subject(:widget) { described_class.new(device) }
+
+    let(:device) { partition }
 
     before do
+      allow(device).to receive(:detect_resize_info).and_return resize_info
       allow(subject).to receive(:current_widget).and_return(current_widget)
-      allow(partition).to receive(:detect_resize_info).and_return resize_info
     end
 
     let(:max_size_widget) { subject.widgets[0] }
@@ -171,8 +173,8 @@ describe Y2Partitioner::Dialogs::BlkDeviceResize do
 
             it "updates the partition with the max size" do
               subject.store
-              expect(partition.size).to eq max_size
-              expect(partition.end_aligned?).to eq(true)
+              expect(device.size).to eq max_size
+              expect(device.end_aligned?).to eq(true)
             end
           end
 
@@ -181,8 +183,8 @@ describe Y2Partitioner::Dialogs::BlkDeviceResize do
 
             it "updates the partition with the max size" do
               subject.store
-              expect(partition.size).to eq max_size
-              expect(partition.end_aligned?).to eq(false)
+              expect(device.size).to eq max_size
+              expect(device.end_aligned?).to eq(false)
             end
           end
         end
@@ -219,8 +221,8 @@ describe Y2Partitioner::Dialogs::BlkDeviceResize do
 
             it "updates the partition with the min size" do
               subject.store
-              expect(partition.size).to eq min_size
-              expect(partition.end_aligned?).to eq(true)
+              expect(device.size).to eq min_size
+              expect(device.end_aligned?).to eq(true)
             end
           end
 
@@ -229,9 +231,9 @@ describe Y2Partitioner::Dialogs::BlkDeviceResize do
 
             it "updates the partition with the min aligned size" do
               subject.store
-              expect(partition.size).to eq adjusted_size
-              expect(partition.end_aligned?).to eq(true)
-              expect(partition.size).to be >= min_size
+              expect(device.size).to eq adjusted_size
+              expect(device.end_aligned?).to eq(true)
+              expect(device.size).to be >= min_size
             end
           end
         end
@@ -272,8 +274,8 @@ describe Y2Partitioner::Dialogs::BlkDeviceResize do
 
             it "updates the partition with the entered size" do
               subject.store
-              expect(partition.size).to eq aligned_size
-              expect(partition.end_aligned?).to eq(true)
+              expect(device.size).to eq aligned_size
+              expect(device.end_aligned?).to eq(true)
             end
           end
 
@@ -282,8 +284,8 @@ describe Y2Partitioner::Dialogs::BlkDeviceResize do
 
             it "updates the partition with the closest valid aligned size" do
               subject.store
-              expect(partition.size).to eq adjusted_size
-              expect(partition.end_aligned?).to eq(true)
+              expect(device.size).to eq adjusted_size
+              expect(device.end_aligned?).to eq(true)
               expect(adjusted_size).to be <= max_size
               expect(adjusted_size).to be >= min_size
             end
@@ -301,7 +303,7 @@ describe Y2Partitioner::Dialogs::BlkDeviceResize do
           include_examples "custom sizes"
         end
 
-        context "when the partition table requires end-alignment (DASD)" do
+        context "when the device table requires end-alignment (DASD)" do
           let(:scenario) { "dasd_50GiB.yml" }
 
           let(:aligned_size) { 204864.KiB }
@@ -310,6 +312,66 @@ describe Y2Partitioner::Dialogs::BlkDeviceResize do
           let(:adjusted_size) { 204768.KiB }
 
           include_examples "custom sizes"
+        end
+      end
+
+      context "when the device is an LVM thin pool" do
+        let(:scenario) { "lvm-two-vgs.yml" }
+
+        let(:device) do
+          # Create a thin pool
+          vg = Y2Storage::LvmVg.find_by_vg_name(current_graph, "vg1")
+          vg.create_lvm_lv("pool", Y2Storage::LvType::THIN_POOL, 1.GiB)
+        end
+
+        before do
+          allow(current_widget).to receive(:size).and_return(custom_size)
+
+          # Create a thin volume over the pool
+          device.create_lvm_lv("thin", Y2Storage::LvType::THIN, thin_size)
+        end
+
+        let(:current_widget) { custom_size_widget }
+
+        context "and it is overcommitted after resizing" do
+          let(:thin_size) { 2.GiB }
+
+          let(:custom_size) { 1.GiB }
+
+          it "shows a warning message" do
+            expect(Yast::Popup).to receive(:Warning)
+            subject.store
+          end
+        end
+
+        context "and it is not overcommitted after resizing" do
+          let(:thin_size) { 2.GiB }
+
+          let(:custom_size) { 3.GiB }
+
+          it "does not show a warning message" do
+            expect(Yast::Popup).to_not receive(:Warning)
+            subject.store
+          end
+        end
+      end
+
+      context "when the device is not an LVM thin pool" do
+        let(:scenario) { "lvm-two-vgs.yml" }
+
+        let(:device) { Y2Storage::BlkDevice.find_by_name(current_graph, "/dev/vg1/lv1") }
+
+        before do
+          allow(current_widget).to receive(:size).and_return(custom_size)
+        end
+
+        let(:current_widget) { custom_size_widget }
+
+        let(:custom_size) { 3.GiB }
+
+        it "does not show a warning message" do
+          expect(Yast::Popup).to_not receive(:Warning)
+          subject.store
         end
       end
     end

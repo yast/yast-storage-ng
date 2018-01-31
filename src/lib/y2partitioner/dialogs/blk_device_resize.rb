@@ -179,6 +179,7 @@ module Y2Partitioner
         # Updates the device with the new size
         def store
           device.resize(current_widget.size)
+          show_warnings
         end
 
         # @macro seeAbstractWidget
@@ -248,6 +249,39 @@ module Y2Partitioner
         # @return [Y2Storage::DiskSize]
         def current_size
           device.size
+        end
+
+        # Shows warning messages after setting the new size
+        #
+        # @see #overcommitted_thin_pool_warning
+        def show_warnings
+          overcommitted_thin_pool_warning
+        end
+
+        # Warning when the resizing device is an LVM thin pool and it is overcommitted
+        def overcommitted_thin_pool_warning
+          return unless overcommitted_thin_pool?
+
+          total_thin_size = Y2Storage::DiskSize.sum(device.lvm_lvs.map(&:size))
+
+          Yast::Popup.Warning(
+            format(
+              _("The LVM thin pool %{name} is overcomitted "\
+                "(needs %{total_thin_size} and only has %{size}).\n" \
+                "It might not have enough space for some LVM thin volumes."),
+              name:            device.name,
+              size:            device.size.to_human_string,
+              total_thin_size: total_thin_size.to_human_string
+            )
+          )
+        end
+
+        # Whether the device is an overcommitted thin pool
+        #
+        # @return [Boolean]
+        def overcommitted_thin_pool?
+          return false unless device.is?(:lvm_lv)
+          device.overcommitted?
         end
       end
     end
