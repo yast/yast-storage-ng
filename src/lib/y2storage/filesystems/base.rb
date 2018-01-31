@@ -45,6 +45,8 @@ module Y2Storage
       #   Since both operations are expensive, caching this value is advised if
       #   it is needed repeatedly.
       #
+      #   @raise [Storage::Exception] if the mentioned temporary mount operation fails
+      #
       #   @return [SpaceInfo]
       storage_forward :detect_space_info, as: "SpaceInfo"
 

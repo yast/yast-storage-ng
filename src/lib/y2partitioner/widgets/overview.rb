@@ -71,8 +71,19 @@ module Y2Partitioner
         textdomain "storage"
 
         @hostname = hostname
+        @invalidated_pages = []
         super(OverviewTree.new(items))
       end
+
+      # Pages whose cached content should be considered outdated
+      #
+      # This is a hack introduced because the NFS page works in a completely
+      # different way in which triggering a full redraw every time something
+      # changes is not an option. This way, the NFS page can invalidate the
+      # cached contents of other pages supporting this mechanism.
+      #
+      # @return [Array<Symbol>] only :system supported so far
+      attr_accessor :invalidated_pages
 
       # @see http://www.rubydoc.info/github/yast/yast-yast2/CWM%2FTree:items
       def items
@@ -103,7 +114,13 @@ module Y2Partitioner
       # Obtains the page associated to a specific device
       # @return [CWM::Page, nil]
       def device_page(device)
-        @pages.find { |p| p.respond_to?(:device) && p.device.sid == device.sid }
+        if device.is?(:nfs)
+          # NFS is a special case because NFS devices don't have individual
+          # pages, all NFS devices are managed directly in the NFS list
+          @pages.find { |p| p.is_a?(Pages::NfsMounts) }
+        else
+          @pages.find { |p| p.respond_to?(:device) && p.device.sid == device.sid }
+        end
       end
 
       # @macro seeAbstractWidget
@@ -145,7 +162,6 @@ module Y2Partitioner
           device_mapper_items,
           nfs_items,
           btrfs_items,
-          tmpfs_items,
           unused_items
         ]
         CWM::PagerTreeItem.new(page, children: children, icon: Icons::ALL)
@@ -210,16 +226,13 @@ module Y2Partitioner
       end
 
       def nfs_items
-        item_for("nfs", _("NFS"), icon: Icons::NFS)
+        page = Pages::NfsMounts.new(self)
+        CWM::PagerTreeItem.new(page, icon: Icons::NFS)
       end
 
       def btrfs_items
         page = Pages::Btrfs.new(self)
         CWM::PagerTreeItem.new(page, icon: Icons::BTRFS)
-      end
-
-      def tmpfs_items
-        item_for("tmpfs", _("tmpfs"), icon: Icons::NFS)
       end
 
       def unused_items

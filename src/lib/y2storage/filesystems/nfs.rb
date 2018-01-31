@@ -21,6 +21,7 @@
 
 require "y2storage/storage_class_wrapper"
 require "y2storage/filesystems/base"
+require "y2storage/filesystems/legacy_nfs"
 
 module Y2Storage
   module Filesystems
@@ -41,6 +42,13 @@ module Y2Storage
       #   @return [String]
       storage_forward :path
 
+      # @!method self.create(devicegraph, server, path)
+      #   @param devicegraph [Devicegraph]
+      #   @param server [String]
+      #   @param path [String]
+      #   @return [Nfs]
+      storage_class_forward :create, as: "Filesystems::Nfs"
+
       # @!method self.all(devicegraph)
       #   @param devicegraph [Devicegraph]
       #   @return [Array<Nfs>] all the NFS mounts in the given devicegraph
@@ -57,6 +65,39 @@ module Y2Storage
       def in_network?
         return true
       end
+
+      # Whether the remote share is currently accessible
+      #
+      # @return [Boolean]
+      def reachable?
+        # This tries to temporarily mount the filesystem if needed and raises an
+        # Storage::Exception if that fails
+        detect_space_info
+        true
+      rescue Storage::Exception
+        false
+      end
+
+      # Representation of this NFS mount in the hash-based format used before
+      # storage-ng (based on the so-called TargetMap)
+      #
+      # This method is useful to re-use code that still uses the old format in
+      # other parts of YaST (like yast2-nfs-client).
+      #
+      # @return [Hash]
+      def to_legacy_hash
+        LegacyNfs.new_from_nfs(self).to_hash
+      end
+
+      # String representing the remote NFS share in the most common format (the
+      # "server:/path/in/server" one used in /etc/fstab)
+      #
+      # @return [String]
+      def share
+        "#{server}:#{path}"
+      end
+
+      alias_method :name, :share
 
     protected
 

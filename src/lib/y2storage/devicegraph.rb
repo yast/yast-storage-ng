@@ -387,6 +387,16 @@ module Y2Storage
       remove_with_dependants(subvol)
     end
 
+    # Removes an NFS mount and all its descendants
+    #
+    # @param nfs [Filesystems::Nfs]
+    #
+    # @raise [ArgumentError] if the NFS filesystem does not exist in the devicegraph
+    def remove_nfs(nfs)
+      raise(ArgumentError, "Incorrect device #{nfs.inspect}") unless nfs && nfs.is?(:nfs)
+      remove_with_dependants(nfs)
+    end
+
     # String to represent the whole devicegraph, useful for comparison in
     # the tests.
     #

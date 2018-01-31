@@ -146,6 +146,9 @@ module Y2Storage
     #   devicegraph), this operation can be expensive. Thus, consider using
     #   {#resize_info} or any other caching mechanism.
     #
+    #   @raise [Storage::Exception] if something goes wrong during the detection
+    #     (e.g. it fails to temporarily mount the corresponding filesystem)
+    #
     #   @see can_resize?
     #
     #   @return [ResizeInfo]

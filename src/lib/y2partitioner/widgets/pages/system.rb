@@ -28,6 +28,7 @@ module Y2Partitioner
 
         # @macro seeCustomWidget
         def contents
+          invalidate_cached_content
           return @contents if @contents
 
           icon = Icons.small_icon(Icons::ALL)
@@ -46,7 +47,20 @@ module Y2Partitioner
 
       private
 
+        # @return [String]
         attr_reader :hostname
+
+        # @return [CWM::TreePager]
+        attr_reader :pager
+
+        # Invalidates cached content if needed according to
+        # {OverviewTreePager#invalidated_views}
+        def invalidate_cached_content
+          return unless pager.invalidated_pages.delete(:system)
+
+          @contents = nil
+          @table = nil
+        end
 
         # The table contains all storage devices, including Software RAIDs and LVM Vgs
         #
@@ -64,9 +78,10 @@ module Y2Partitioner
         #
         # @return [Array<Y2Storage::Device>]
         def devices
-          disk_devices + software_raids + lvm_vgs
+          disk_devices + software_raids + lvm_vgs + nfs_devices
         end
 
+        # @return [Array<Y2Storage::Device>]
         def disk_devices
           device_graph.disk_devices.reduce([]) do |devices, disk|
             devices << disk
@@ -87,8 +102,14 @@ module Y2Partitioner
           end
         end
 
+        # @return [Array<Y2Storage::Device>]
         def software_raids
           device_graph.software_raids
+        end
+
+        # @return [Array<Y2Storage::Device>]
+        def nfs_devices
+          device_graph.nfs_mounts
         end
 
         def device_graph
