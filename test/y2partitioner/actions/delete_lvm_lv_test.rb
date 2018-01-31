@@ -47,7 +47,7 @@ describe Y2Partitioner::Actions::DeleteLvmLv do
 
     let(:accept) { nil }
 
-    context "when the logical volume is not an used thin pool" do
+    context "when the logical volume is not a used thin pool" do
       let(:device_name) { "/dev/vg1/lv1" }
 
       it "shows a confirmation message with the device name" do
@@ -58,7 +58,7 @@ describe Y2Partitioner::Actions::DeleteLvmLv do
       end
     end
 
-    context "when the logical volume is an used thin pool" do
+    context "when the logical volume is a used thin pool" do
       let(:device_name) { "/dev/vg1/pool1" }
 
       it "shows a detailed confirmation message including all the thin volumes over the pool" do
@@ -86,7 +86,7 @@ describe Y2Partitioner::Actions::DeleteLvmLv do
         expect(subject.run).to eq(:back)
       end
 
-      context "and the logical volume is an used thin pool" do
+      context "and the logical volume is a used thin pool" do
         let(:device_name) { "/dev/vg1/pool1" }
 
         it "does not delete the thin volumes over the thin pool" do
@@ -117,7 +117,7 @@ describe Y2Partitioner::Actions::DeleteLvmLv do
         expect(subject.run).to eq(:finish)
       end
 
-      context "and the logical volume is an used thin pool" do
+      context "and the logical volume is a used thin pool" do
         let(:device_name) { "/dev/vg1/pool1" }
 
         it "deletes all thin volumes over the thin pool" do
