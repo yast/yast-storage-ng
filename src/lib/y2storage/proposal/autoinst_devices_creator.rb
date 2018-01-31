@@ -34,11 +34,34 @@ module Y2Storage
     # Class to create and reuse devices during the AutoYaST proposal, based
     # on the information contained in the profile.
     #
+    # ## Comparison with the guided proposal
+    #
     # This class receives a devicegraph in which the previous devices have
     # already been deleted or resized according to the AutoYaST profile. This
     # is different from the guided setup equivalent step, in which the minimal
     # amount of existing devices are deleted/resized on demand while trying to
     # allocate the planned devices.
+    #
+    # ## Reducing planned devices when there is not enough space
+    #
+    # Another key difference with the guided proposal is that, when there is
+    # not enough space (for partitions or logical volumes), it will do a second
+    # attempt reducing all planned devices proportionally. In order to do so,
+    # it will remove the min_size limit (setting it to just 1 byte) and,
+    # additionally, it will set a proportional weight for every partition (see
+    # {#flexible_devices}).
+    #
+    # Although this approach may not produce the optimal results, it is less
+    # intrusive and easier to maintain than other alternatives. Bear in mind
+    # that AutoYaST does not expect complex scenarios (like multiple disks with
+    # several gaps), so the result should be good enough.
+    #
+    # If we were aiming for the optimal devices distribution, we should look at
+    # {Y2Storage::Planned::PartitionsDistribution#assigned_space} and follow
+    # the same approach (reducing min_size and setting a proportional weight)
+    # when it is not possible to place the devices in the given free space. But
+    # we would also need to do further changes, like skipping some checks when
+    # running in this flexible mode.
     class AutoinstDevicesCreator
       include Yast::Logger
 
@@ -99,7 +122,7 @@ module Y2Storage
         return dist if dist
 
         # Second try with more flexible planned partitions
-        calculator.best_distribution(flexible_partitions(planned_partitions), spaces)
+        calculator.best_distribution(flexible_devices(planned_partitions), spaces)
       end
 
     private
@@ -143,7 +166,7 @@ module Y2Storage
       rescue RuntimeError
         lvm_creator = Proposal::LvmCreator.new(devicegraph)
         new_vg = vg.clone
-        new_vg.lvs = flexible_partitions(vg.lvs)
+        new_vg.lvs = flexible_devices(vg.lvs)
         lvm_creator.create_volumes(new_vg, pvs)
       end
 
@@ -183,13 +206,17 @@ module Y2Storage
         end
       end
 
+      # Return a new planned devices with flexible limits
+      #
+      # The min_size is removed and a proportional weight is set for every device.
+      #
       # @return [Hash<Planned::Partition => Planned::Partition>]
-      def flexible_partitions(partitions)
-        partitions.map do |part|
-          new_part = part.clone
-          new_part.weight = part.min_size.to_i
-          new_part.min_size = DiskSize.B(1)
-          new_part
+      def flexible_devices(devices)
+        devices.map do |device|
+          new_device = device.clone
+          new_device.weight = device.min_size.to_i
+          new_device.min_size = DiskSize.B(1)
+          new_device
         end
       end
     end
