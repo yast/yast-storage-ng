@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Wed Jan 31 16:06:25 UTC 2018 - shundhammer@suse.com
+
+- Handle arbitrary mount options for /etc/fstab properly
+  (bsc#1066076)
+- 4.0.82
+
+-------------------------------------------------------------------
 Wed Jan 31 14:53:57 UTC 2018 - jlopez@suse.com
 
 - Partitioner: list all LVM thin volumes to delete when an LVM thin
@@ -525,7 +532,7 @@ Wed Nov  1 09:11:23 UTC 2017 - jlopez@suse.com
 Wed Nov  1 08:23:17 UTC 2017 - igonzalezsosa@suse.com
 
 - AutoYaST: do not crash when an unknown key is used in a
-  skip list (bsc#1065670). 
+  skip list (bsc#1065670).
 - 4.0.16
 
 -------------------------------------------------------------------
