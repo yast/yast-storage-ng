@@ -586,7 +586,7 @@ module Y2Partitioner
       # when a user put additional blanks between them, e.g. "foo, bar" or
       # "foo , bar".
       def clean_whitespace(str)
-        str.gsub(/\s+,\s+/, ",")
+        str.gsub(/\s*,\s*/, ",")
       end
 
       def keep_only_options_handled_in_other_widgets
