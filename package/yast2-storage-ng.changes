@@ -1,7 +1,7 @@
 -------------------------------------------------------------------
 Wed Jan 31 09:25:07 UTC 2018 - ancor@suse.com
 
-- Partitioner: initial support for NFS
+- Partitioner: initial support for NFS (part of fate#318196)
 - Partitioner: removed useless tmpfs option
 - 4.0.79
 
