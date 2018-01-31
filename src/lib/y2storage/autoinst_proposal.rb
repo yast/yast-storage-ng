@@ -46,6 +46,9 @@ module Y2Storage
     # @return [AutoinstIssues::List] List of found AutoYaST issues
     attr_reader :issues_list
 
+    # @return [DiskSize] Missing space for the originally planned devices
+    attr_reader :missing_space
+
     # Constructor
     #
     # @param partitioning [Array<Hash>] Partitioning schema from an AutoYaST profile
@@ -94,6 +97,7 @@ module Y2Storage
 
         result = create_devices(devicegraph, @planned_devices, drives.disk_names)
         add_reduced_devices_issues(result)
+        @missing_space = result.missing_space
         result.devicegraph
       else
         log.info "No partitions were specified. Falling back to guided setup planning."

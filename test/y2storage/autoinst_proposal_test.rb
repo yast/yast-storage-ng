@@ -1067,6 +1067,12 @@ describe Y2Storage::AutoinstProposal do
         end
         expect(issues.size).to eq(1)
       end
+
+      it "sets missing space" do
+        proposal.propose
+        # shrinked devices: home, -100 GiB; root and var, -26 GiB each one.
+        expect(proposal.missing_space).to eq(152.GiB + 1.MiB)
+      end
     end
   end
 
