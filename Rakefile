@@ -24,5 +24,5 @@ Rake::Task["package"].prerequisites.delete("check:changelog")
 
 Yast::Tasks.configuration do |conf|
   conf.skip_license_check << /.*/
-  conf.documentation_minimal = 83
+  conf.documentation_minimal = 85
 end
