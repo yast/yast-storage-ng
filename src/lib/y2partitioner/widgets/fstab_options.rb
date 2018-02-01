@@ -361,7 +361,7 @@ module Y2Partitioner
       def help
         _("<p><b>Enable Quota Support:</b>\n" \
           "The file system is mounted with user quotas enabled.\n" \
-          "Default is false.</p>\n")
+          "Default is false.</p>")
       end
 
       def init
