@@ -66,7 +66,10 @@ module Y2Partitioner
 
       def add_fstab_options(*options)
         # The options can only be modified using BlkDevice#fstab_options=
-        filesystem.fstab_options = filesystem.fstab_options + options
+        # so we can't just append options with << or push
+        new_options = filesystem.fstab_options
+        options.each { |opt| new_options << opt }
+        filesystem.fstab_options = new_options
       end
 
       alias_method :add_fstab_option, :add_fstab_options
@@ -117,6 +120,9 @@ module Y2Partitioner
       end
 
       def init
+        @contents = nil
+        @values = nil
+        @regexps = nil
         disable if !supported_by_filesystem?
       end
 
@@ -136,17 +142,36 @@ module Y2Partitioner
       end
 
       def contents
-        VBox(
-          Left(MountBy.new(@controller)),
-          VSpacing(1),
-          Left(VolumeLabel.new(@controller)),
-          VSpacing(1),
-          Left(GeneralOptions.new(@controller)),
-          Left(FilesystemsOptions.new(@controller)),
-          Left(AclOptions.new(@controller)),
-          * ui_term_with_vspace(JournalOptions.new(@controller)),
-          Left(ArbitraryOptions.new(@controller))
-        )
+        @contents ||=
+          VBox(
+            Left(MountBy.new(@controller)),
+            VSpacing(1),
+            Left(VolumeLabel.new(@controller)),
+            VSpacing(1),
+            Left(GeneralOptions.new(@controller)),
+            Left(FilesystemsOptions.new(@controller)),
+            Left(AclOptions.new(@controller)),
+            * ui_term_with_vspace(JournalOptions.new(@controller)),
+            Left(ArbitraryOptions.new(@controller, self))
+          )
+      end
+
+      # Return an array of all VALUES of all widgets in this tree.
+      # @return [Array<String>]
+      def values
+        @values ||= widgets.each_with_object([]) do |widget, values|
+          next unless widget.class.const_defined?("VALUES")
+          values.concat(widget.class::VALUES)
+        end.uniq
+      end
+
+      # Return an array of all REGEXPs of all widgets in this tree.
+      # @return [Array<Regexp>]
+      def regexps
+        @regexps ||= widgets.each_with_object([]) do |widget, regexps|
+          next unless widget.class.const_defined?("REGEXP")
+          regexps << widget.class::REGEXP
+        end.uniq
       end
 
     private
@@ -315,7 +340,7 @@ module Y2Partitioner
       VALUES = ["user", "nouser"].freeze
 
       def label
-        _("Mountable by user")
+        _("Mountable by User")
       end
 
       def help
@@ -335,8 +360,8 @@ module Y2Partitioner
 
       def help
         _("<p><b>Enable Quota Support:</b>\n" \
-        "The file system is mounted with user quotas enabled.\n" \
-        "Default is false.</p>\n")
+          "The file system is mounted with user quotas enabled.\n" \
+          "Default is false.</p>")
       end
 
       def init
@@ -384,7 +409,7 @@ module Y2Partitioner
       end
     end
 
-    # CheckBox to enable extended user attributes (xattr)
+    # CheckBox to enable extended user attributes (user_xattr)
     class UserXattr < FstabCheckBox
       include FstabCommon
 
@@ -506,23 +531,93 @@ module Y2Partitioner
       end
     end
 
-    # A input field that allows to set other options that are not handled by
-    # specific widgets
+    # An input field that allows to set other options that are not handled by
+    # specific widgets.
     #
-    # TODO: FIXME: Pending implementation, currently it is only drawing; all the options
-    # that it is responsible for should be defined, removing them if not set or
-    # supported by the current filesystem.
     class ArbitraryOptions < CWM::InputField
-      def initialize(controller)
+      include FstabCommon
+
+      def initialize(controller, parent_widget)
         @controller = controller
+        @parent_widget = parent_widget
+        @other_values = nil
+        @other_regexps = nil
       end
 
       def opt
-        %i(hstretch disabled)
+        %i(hstretch)
       end
 
       def label
         _("Arbitrary Option &Value")
+      end
+
+      def init
+        self.value = unhandled_options(filesystem.fstab_options).join(",")
+      end
+
+      def store
+        keep_only_options_handled_in_other_widgets
+        return unless value
+        options = clean_whitespace(value).split(",")
+        # Intentionally NOT filtering out only unhandled options: When the user
+        # adds anything here that also has a corresponding checkbox or combo
+        # box in this same dialog, the value here will win, and when entering
+        # this dialog again the dedicated widget will take the value from
+        # there, and it will be filtered out in this arbitrary options widget.
+        #
+        # So, when a user insists in adding "noauto,user" here, it is applied
+        # correctly, but when entering the dialog again, the checkboxes pick up
+        # those values and they won't show up in this field anymore.
+        add_fstab_options(*options)
+      end
+
+      def help
+        _("<p><b>Arbitrary Option Value:</b> " \
+          "Enter any other mount options here, separated with commas. " \
+          "Notice that this does not do any checking, so be careful " \
+          "what you enter here!</p>")
+      end
+
+    private
+
+      # Clean whitespace. We need to preserve whitespace that might possibly be
+      # intentional within a mount option, but we want graceful error handling
+      # when a user put additional blanks between them, e.g. "foo, bar" or
+      # "foo , bar".
+      def clean_whitespace(str)
+        str.gsub(/\s*,\s*/, ",")
+      end
+
+      def keep_only_options_handled_in_other_widgets
+        filesystem.fstab_options = filesystem.fstab_options.select do |opt|
+          handled_in_other_widget?(opt)
+        end
+      end
+
+      def unhandled_options(options)
+        options.reject do |opt|
+          handled_in_other_widget?(opt)
+        end
+      end
+
+      def handled_in_other_widget?(opt)
+        return true if other_values.include?(opt)
+        other_regexps.any? { |r| opt =~ r }
+      end
+
+      # Return all values that are handled by other widgets in this widget tree.
+      # @return [Array<String>]
+      def other_values
+        return [] unless @parent_widget && @parent_widget.respond_to?(:values)
+        @other_values ||= @parent_widget.values
+      end
+
+      # Return all regexps that are handled by other widgets in this widget tree.
+      # @return [Array<Regexp>]
+      def other_regexps
+        return [] unless @parent_widget && @parent_widget.respond_to?(:regexps)
+        @other_regexps ||= @parent_widget.regexps
       end
     end
 

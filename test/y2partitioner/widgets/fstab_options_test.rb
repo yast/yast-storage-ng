@@ -99,7 +99,63 @@ describe Y2Partitioner::Widgets do
   end
 
   describe Y2Partitioner::Widgets::ArbitraryOptions do
+    let(:handled_values)  { ["ro", "rw", "auto", "noauto", "user", "nouser"] }
+    let(:handled_regexps) { [/^iocharset=/, /^codepage=/] }
+    let(:options_widget)  { double("FstabOptions", values:  handled_values, regexps: handled_regexps) }
+
+    subject { described_class.new(controller, options_widget) }
     include_examples "CWM::InputField"
+
+    it "picks up values handled in other widgets" do
+      expect(subject.send(:other_values)).to eq handled_values
+    end
+
+    it "picks up regexps handled in other widgets" do
+      expect(subject.send(:other_regexps)).to eq handled_regexps
+    end
+
+    describe "#handled_in_other_widget?" do
+      it "detects simple values that are already handled in other widgets" do
+        expect(subject.send(:handled_in_other_widget?, "auto")).to be true
+        expect(subject.send(:handled_in_other_widget?, "ro")).to be true
+        expect(subject.send(:handled_in_other_widget?, "nouser")).to be true
+      end
+
+      it "detects regexps that are already handled in other widgets" do
+        expect(subject.send(:handled_in_other_widget?, "iocharset=none")).to be true
+        expect(subject.send(:handled_in_other_widget?, "codepage=42")).to be true
+      end
+
+      it "detects values that are not already handled in other widgets" do
+        expect(subject.send(:handled_in_other_widget?, "foo")).to be false
+        expect(subject.send(:handled_in_other_widget?, "bar")).to be false
+        expect(subject.send(:handled_in_other_widget?, "ook=yikes")).to be false
+        expect(subject.send(:handled_in_other_widget?, "somecodepage=42")).to be false
+      end
+    end
+
+    describe "#unhandled_options" do
+      it "filters out values that are handled in other widgets" do
+        expect(subject.send(:unhandled_options, [])).to eq []
+        expect(subject.send(:unhandled_options, handled_values)).to eq []
+        expect(subject.send(:unhandled_options, handled_values + ["foo", "bar"])).to eq ["foo", "bar"]
+        expect(subject.send(:unhandled_options, ["foo", "bar"])).to eq ["foo", "bar"]
+      end
+    end
+
+    describe "#clean_whitespace" do
+      it "does not modify strings without any whitespace" do
+        expect(subject.send(:clean_whitespace, "aaa,bbb,ccc")).to eq "aaa,bbb,ccc"
+      end
+
+      it "removes whitespace around commas" do
+        expect(subject.send(:clean_whitespace, "aaa, bbb , ccc")).to eq "aaa,bbb,ccc"
+      end
+
+      it "leaves internal whitespace alone" do
+        expect(subject.send(:clean_whitespace, "aa a, bb  b , ccc")).to eq "aa a,bb  b,ccc"
+      end
+    end
   end
 
   describe Y2Partitioner::Widgets::FilesystemsOptions do
