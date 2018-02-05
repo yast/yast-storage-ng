@@ -157,6 +157,49 @@ describe Y2Storage::Proposal::AutoinstDevicesCreator do
           expect(result.shrinked_lvs.map(&:planned)).to eq([lv_root])
         end
       end
+
+      context "reusing a partition as physical volume" do
+        let(:scenario) { "windows-linux-free-pc" }
+        let(:pv) do
+          planned_partition(
+            lvm_volume_group_name: "vg0", reuse: "/dev/sda3"
+          )
+        end
+
+        it "adds the physical volume to the volume group" do
+          result = creator.populated_devicegraph([pv, vg], ["/dev/sda"])
+          devicegraph = result.devicegraph
+          vg = devicegraph.lvm_vgs.first
+          pv = vg.lvm_pvs.first
+          expect(pv).to_not be_nil
+          expect(pv.blk_device.name).to eq("/dev/sda3")
+        end
+      end
+    end
+
+    describe "using RAID" do
+      context "reusing a partition as a RAID member" do
+        let(:part1) do
+          planned_partition(disk: "/dev/sda", raid_name: "/dev/md0", reuse: "/dev/sda3")
+        end
+
+        let(:part2) do
+          planned_partition(
+            disk: "/dev/sdb", raid_name: "/dev/md0", min_size: 20.GiB, max_size: 20.GiB
+          )
+        end
+
+        let(:md0) do
+          planned_md(name: "/dev/md0", mount_point: "/")
+        end
+
+        it "adds the partition as a RAID member" do
+          result = creator.populated_devicegraph([part1, part2, md0], ["/dev/sda", "/dev/sdb"])
+          devicegraph = result.devicegraph
+          md = devicegraph.md_raids.first
+          expect(md.devices.size).to eq(2)
+        end
+      end
     end
 
     describe "resizing partitions" do
