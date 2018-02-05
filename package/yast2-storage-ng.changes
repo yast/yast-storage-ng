@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Mon Feb  5 15:26:35 UTC 2018 - ancor@suse.com
+
+- Added a new 'disk' client, alias for 'partitioner' (bsc#1078900).
+- 4.0.83
+
+-------------------------------------------------------------------
 Wed Jan 31 16:06:25 UTC 2018 - shundhammer@suse.com
 
 - Handle arbitrary mount options for /etc/fstab properly
