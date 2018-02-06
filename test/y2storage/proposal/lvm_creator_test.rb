@@ -127,6 +127,17 @@ describe Y2Storage::Proposal::LvmCreator do
         expect(pv_names.sort).to eq ["/dev/sda1", "/dev/sda2", "/dev/sda3"]
       end
 
+      context "when a physical volume is already part of the volume group" do
+        let(:pv_partitions) { ["/dev/sda2"] }
+
+        it "does not add it again" do
+          devicegraph = creator.create_volumes(vg, pv_partitions).devicegraph
+          reused_vg = devicegraph.lvm_vgs.detect { |vg| vg.vg_name == "vg0" }
+          pv_names = reused_vg.lvm_pvs.map { |pv| pv.blk_device.name }
+          expect(pv_names.sort).to eq ["/dev/sda2"]
+        end
+      end
+
       it "creates a new logical volume for each planned volume" do
         devicegraph = creator.create_volumes(vg, pv_partitions).devicegraph
         reused_vg = devicegraph.lvm_vgs.first
