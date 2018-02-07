@@ -43,6 +43,8 @@ describe Y2Partitioner::Widgets::LvmVgDevicesSelector do
   before do
     devicegraph_stub("complex-lvm-encrypt.yml")
 
+    allow_any_instance_of(Y2Storage::BlkDevice).to receive(:hwinfo).and_return(nil)
+
     controller.add_device(dev("/dev/sdc"))
     controller.add_device(dev("/dev/sda2"))
   end

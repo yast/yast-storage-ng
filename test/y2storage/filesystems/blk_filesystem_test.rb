@@ -50,6 +50,97 @@ describe Y2Storage::Filesystems::BlkFilesystem do
     end
   end
 
+  describe "#mount_path" do
+    context "when filesystem has no mount point" do
+      let(:dev_name) { "/dev/sdb3" }
+
+      it "returns nil" do
+        expect(filesystem.mount_path).to be_nil
+      end
+    end
+
+    context "when filesystem has a mount point" do
+      let(:dev_name) { "/dev/sda2" }
+
+      it "returns the mount point path" do
+        expect(filesystem.mount_path).to eq("/")
+      end
+    end
+  end
+
+  describe "#mount_path=" do
+    context "when filesystem has no mount point" do
+      let(:dev_name) { "/dev/sdb3" }
+
+      it "creates a new mount point with the given path" do
+        expect(filesystem.mount_point).to be_nil
+
+        filesystem.mount_path = "/foo"
+
+        expect(filesystem.mount_point).to_not be_nil
+        expect(filesystem.mount_point.path).to eq("/foo")
+      end
+    end
+
+    context "when filesystem has a mount point" do
+      let(:dev_name) { "/dev/sda2" }
+
+      it "updates the mount point path" do
+        mount_point = filesystem.mount_point
+        filesystem.mount_path = "/foo"
+
+        expect(filesystem.mount_point.sid).to eq(mount_point.sid)
+        expect(filesystem.mount_point.path).to eq("/foo")
+      end
+    end
+  end
+
+  describe "#mount_by" do
+    context "when filesystem has no mount point" do
+      let(:dev_name) { "/dev/sdb3" }
+
+      it "returns nil" do
+        expect(filesystem.mount_by).to be_nil
+      end
+    end
+
+    context "when filesystem has a mount point" do
+      let(:dev_name) { "/dev/sda2" }
+
+      before do
+        filesystem.mount_point.mount_by = Y2Storage::Filesystems::MountByType::ID
+      end
+
+      it "returns the mount by of the mount point" do
+        expect(filesystem.mount_by).to eq(Y2Storage::Filesystems::MountByType::ID)
+      end
+    end
+  end
+
+  describe "#mount_options" do
+    context "when filesystem has no mount point" do
+      let(:dev_name) { "/dev/sdb3" }
+
+      it "returns an empty list" do
+        expect(filesystem.mount_options).to be_empty
+      end
+    end
+
+    context "when filesystem has a mount point" do
+      let(:dev_name) { "/dev/sda2" }
+
+      before do
+        filesystem.mount_point.mount_options = mount_options
+      end
+
+      let(:mount_options) { ["rw", "minorversion=1"] }
+
+      it "returns the mount options of the mount point" do
+        expect(filesystem.mount_options).to eq(mount_options)
+      end
+    end
+  end
+
   describe "#persistent?" do
     context "for not mounted filesystem" do
       let(:dev_name) { "/dev/sdb3" }
@@ -59,7 +150,7 @@ describe Y2Storage::Filesystems::BlkFilesystem do
       end
 
       context "after adding a mount point" do
-        before { filesystem.mount_point = "/mnt/test" }
+        before { filesystem.mount_path = "/mnt/test" }
 
         it "returns true" do
           expect(filesystem.persistent?).to eq true

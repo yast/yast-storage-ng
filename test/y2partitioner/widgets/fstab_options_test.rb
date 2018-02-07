@@ -1,7 +1,30 @@
+#!/usr/bin/env rspec
+# encoding: utf-8
+
+# Copyright (c) [2017] SUSE LLC
+#
+# All Rights Reserved.
+#
+# This program is free software; you can redistribute it and/or modify it
+# under the terms of version 2 of the GNU General Public License as published
+# by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+# more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, contact SUSE LLC.
+#
+# To contact SUSE LLC about this file by physical or electronic mail, you may
+# find current contact information at www.suse.com.
+
 require_relative "../test_helper"
 
 require "cwm/rspec"
 require "y2partitioner/widgets/fstab_options"
+require "y2partitioner/actions/controllers/filesystem"
 
 RSpec.shared_examples "CWM::AbstractWidget#init#store" do
   describe "#init" do
@@ -36,19 +59,20 @@ RSpec.shared_examples "FstabCheckBox" do
 end
 
 describe Y2Partitioner::Widgets do
-  let(:controller) { double("FilesystemController", filesystem: filesystem) }
-  let(:fs_type) { double("Type", supported_fstab_options: [], to_sym: :type) }
-  let(:filesystem) do
-    double("BlkFilesystem", fstab_options: [], type: fs_type, label: nil, mount_by: nil)
+  before do
+    devicegraph_stub("mixed_disks.yml")
+
+    allow(device.filesystem.type).to receive(:codepage).and_return("437")
+    allow(device.filesystem.type).to receive(:iocharset).and_return("utf8")
   end
 
-  before do
-    allow(filesystem).to receive(:fstab_options=)
-    allow(filesystem).to receive(:label=)
-    allow(filesystem).to receive(:mount_by=)
-    allow(filesystem.type).to receive(:codepage).and_return("437")
-    allow(filesystem.type).to receive(:iocharset).and_return("utf8")
+  let(:current_graph) { Y2Partitioner::DeviceGraphs.instance.current }
+
+  let(:controller) do
+    Y2Partitioner::Actions::Controllers::Filesystem.new(device, "")
   end
+
+  let(:device) { Y2Storage::Partition.find_by_name(current_graph, "/dev/sdb2") }
 
   subject { described_class.new(controller) }
 
@@ -57,10 +81,18 @@ describe Y2Partitioner::Widgets do
   end
 
   describe Y2Partitioner::Widgets::VolumeLabel do
+    before do
+      allow(subject).to receive(:value).and_return("linux")
+    end
+
     include_examples "CWM::InputField"
   end
 
   describe Y2Partitioner::Widgets::MountBy do
+    before do
+      allow(subject).to receive(:value).and_return(:uuid)
+    end
+
     include_examples "CWM::CustomWidget"
     include_examples "CWM::AbstractWidget#init#store"
   end

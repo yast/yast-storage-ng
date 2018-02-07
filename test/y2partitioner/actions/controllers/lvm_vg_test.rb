@@ -318,7 +318,6 @@ describe Y2Partitioner::Actions::Controllers::LvmVg do
     it "includes devices with unmounted filesystem" do
       sdb = dev("/dev/sdb")
       sdb.create_filesystem(Y2Storage::Filesystems::Type::EXT3)
-      sdb.filesystem.mount_point = nil
 
       expect(controller.available_devices.map(&:name)).to include("/dev/sdb")
     end
@@ -331,7 +330,7 @@ describe Y2Partitioner::Actions::Controllers::LvmVg do
     it "excludes devices with mounted filesystem" do
       sdb = dev("/dev/sdb")
       sdb.create_filesystem(Y2Storage::Filesystems::Type::EXT3)
-      sdb.filesystem.mount_point = "/mnt"
+      sdb.filesystem.mount_path = "/mnt"
 
       expect(controller.available_devices.map(&:name)).to_not include("/dev/sdb")
     end
@@ -379,9 +378,9 @@ describe Y2Partitioner::Actions::Controllers::LvmVg do
       expect(controller.available_devices.map(&:name)).to include("/dev/sda2", "/dev/sde3")
 
       sda2 = dev("/dev/sda2")
-      sda2.filesystem.mountpoint = "/var"
+      sda2.filesystem.mount_path = "/var"
       sde3 = dev("/dev/sde3")
-      sde3.filesystem.mountpoint = "swap"
+      sde3.filesystem.mount_path = "swap"
 
       expect(controller.available_devices.map(&:name)).to_not include("/dev/sda2", "/dev/sde3")
     end

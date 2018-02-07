@@ -1,3 +1,25 @@
+#!/usr/bin/env rspec
+# encoding: utf-8
+
+# Copyright (c) [2017] SUSE LLC
+#
+# All Rights Reserved.
+#
+# This program is free software; you can redistribute it and/or modify it
+# under the terms of version 2 of the GNU General Public License as published
+# by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+# more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, contact SUSE LLC.
+#
+# To contact SUSE LLC about this file by physical or electronic mail, you may
+# find current contact information at www.suse.com.
+
 require_relative "../test_helper"
 
 require "cwm/rspec"
@@ -55,14 +77,14 @@ describe Y2Partitioner::Widgets::BtrfsSubvolumesAddButton do
       end
 
       it "creates a new subvolume with correct mount point" do
-        mountpoint = File.join(filesystem.mountpoint, "foo")
+        mountpoint = File.join(filesystem.mount_path, "foo")
 
         subvolumes = filesystem.btrfs_subvolumes
-        expect(subvolumes.map(&:mountpoint)).to_not include(mountpoint)
+        expect(subvolumes.map(&:mount_path)).to_not include(mountpoint)
 
         subject.handle
 
-        expect(filesystem.btrfs_subvolumes.map(&:mountpoint)).to include(mountpoint)
+        expect(filesystem.btrfs_subvolumes.map(&:mount_path)).to include(mountpoint)
       end
 
       it "refreshes the table" do

@@ -51,7 +51,7 @@ RSpec.shared_examples "boot disk in devicegraph" do
 
     before do
       partition = Y2Storage::Partition.find_by_name(fake_devicegraph, "/dev/sda1")
-      partition.filesystem.mount_point = "/"
+      partition.filesystem.mount_path = "/"
     end
 
     it "returns a Dasd object" do
@@ -74,7 +74,7 @@ RSpec.shared_examples "boot disk in devicegraph" do
         Y2Storage::Region.create(2048, 1048576, 512),
         Y2Storage::PartitionType::PRIMARY)
       fs = part.create_filesystem(Y2Storage::Filesystems::Type::EXT4)
-      fs.mount_point = "/"
+      fs.mount_path = "/"
     end
 
     it "returns a Multipath object" do
@@ -97,7 +97,7 @@ RSpec.shared_examples "boot disk in devicegraph" do
         Y2Storage::Region.create(2048, 1048576, 512),
         Y2Storage::PartitionType::PRIMARY)
       fs = part.create_filesystem(Y2Storage::Filesystems::Type::EXT4)
-      fs.mount_point = "/"
+      fs.mount_path = "/"
     end
 
     it "returns a BIOS RAID" do
@@ -148,7 +148,7 @@ describe Y2Storage::BootRequirementsStrategies::Analyzer do
       it "stores the root filesystem" do
         analyzer = described_class.new(devicegraph, planned_devs, boot_name)
         expect(analyzer.root_filesystem).to be_a(Y2Storage::Filesystems::Base)
-        expect(analyzer.root_filesystem.mount_point).to eq("/")
+        expect(analyzer.root_filesystem.mount_path).to eq("/")
       end
     end
 
@@ -294,7 +294,7 @@ describe Y2Storage::BootRequirementsStrategies::Analyzer do
         md = Y2Storage::Md.find_by_name(fake_devicegraph, "/dev/md0")
         md.remove_descendants
         fs = md.create_filesystem(Y2Storage::Filesystems::Type::EXT4)
-        fs.mount_point = "/"
+        fs.mount_path = "/"
       end
 
       it "returns true" do
@@ -312,7 +312,7 @@ describe Y2Storage::BootRequirementsStrategies::Analyzer do
           Y2Storage::Region.create(2048, 1048576, 512),
           Y2Storage::PartitionType::PRIMARY)
         fs = part.create_filesystem(Y2Storage::Filesystems::Type::EXT4)
-        fs.mount_point = "/"
+        fs.mount_path = "/"
       end
 
       it "returns true" do
