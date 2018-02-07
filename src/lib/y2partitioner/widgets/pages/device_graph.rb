@@ -26,7 +26,7 @@ require "y2partitioner/widgets/device_graph_with_buttons"
 module Y2Partitioner
   module Widgets
     module Pages
-      # A page for displaying de device graphs (both current and system) in
+      # A page for displaying the device graphs (both current and system) in
       # interfaces supporting the Graph widget (Qt). Don't use in NCurses.
       class DeviceGraph < CWM::Page
         include Yast::I18n
@@ -77,6 +77,7 @@ module Y2Partitioner
         # Tab displaying the current devicegraph with a brief explanation
         def current_tab
           DeviceGraphTab.new(
+            # TRANSLATORS: label for a tab
             _("Planned Devices"),
             DeviceGraphs.instance.current,
             # TRANSLATORS: keep lines relatively short. Use \n if needed
@@ -91,6 +92,7 @@ module Y2Partitioner
         # Tab displaying the system devicegraph with a brief explanation
         def system_tab
           DeviceGraphTab.new(
+            # TRANSLATORS: label for a tab
             _("Current System Devices"),
             DeviceGraphs.instance.system,
             # TRANSLATORS: keep lines relatively short. Use \n if needed
