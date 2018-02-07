@@ -26,6 +26,7 @@ require "y2partitioner/dialogs/btrfs_subvolumes"
 require "y2partitioner/widgets/fstab_options"
 require "y2storage/mountable"
 require "y2storage/btrfs_subvolume"
+require "y2partitioner/widgets/mkfs_optiondata"
 
 Yast.import "Popup"
 
@@ -377,7 +378,10 @@ module Y2Partitioner
           @snapper_checkbox.refresh
         else
           show(@options_button)
-          @controller.format_options_supported? ? @options_button.enable : @options_button.disable
+          has_options =
+            @controller.format_options_supported? &&
+            !MkfsOptiondata.options_for(@controller.filesystem).empty?
+          has_options ? @options_button.enable : @options_button.disable
         end
       end
     end
@@ -388,6 +392,10 @@ module Y2Partitioner
       # @param controller [Actions::Controllers::Filesystem]
       def initialize(controller)
         @controller = controller
+      end
+
+      def filesystem
+        @controller.filesystem
       end
 
       # @macro seeAbstractWidget
@@ -401,8 +409,15 @@ module Y2Partitioner
 
       # @macro seeAbstractWidget
       def handle
-        Yast::Popup.Error("Not yet implemented") # Dialogs::FormatOptions.new(@options).run
-
+        log.info(
+          "format options before: [#{filesystem.type}] " \
+          "mkfs='#{filesystem.mkfs_options}', tune='#{filesystem.tune_options}'"
+        )
+        Dialogs::MkfsOptions.new(@controller).run
+        log.info(
+          "format options after: [#{filesystem.type}] " \
+          "mkfs='#{filesystem.mkfs_options}', tune='#{filesystem.tune_options}'"
+        )
         nil
       end
     end
