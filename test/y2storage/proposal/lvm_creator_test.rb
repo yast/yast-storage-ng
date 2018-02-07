@@ -62,6 +62,17 @@ describe Y2Storage::Proposal::LvmCreator do
         expect(pv_names.sort).to eq pv_partitions.sort
       end
 
+      context "when a partition used as physical volume contains a filesystem" do
+        let(:scenario) { "windows-linux-free-pc" }
+
+        it "removes the filesystem" do
+          devicegraph = creator.create_volumes(vg, pv_partitions).devicegraph
+          reused_vg = devicegraph.lvm_vgs.detect { |vg| vg.vg_name == "system" }
+          pv_names = reused_vg.lvm_pvs.map { |pv| pv.blk_device.name }
+          expect(pv_names.sort).to eq pv_partitions.sort
+        end
+      end
+
       it "creates a new logical volume for each planned volume" do
         devicegraph = creator.create_volumes(vg, pv_partitions).devicegraph
         new_vg = devicegraph.lvm_vgs.detect { |vg| vg.vg_name == "system" }
@@ -125,6 +136,17 @@ describe Y2Storage::Proposal::LvmCreator do
         reused_vg = devicegraph.lvm_vgs.detect { |vg| vg.vg_name == "vg0" }
         pv_names = reused_vg.lvm_pvs.map { |pv| pv.blk_device.name }
         expect(pv_names.sort).to eq ["/dev/sda1", "/dev/sda2", "/dev/sda3"]
+      end
+
+      context "when a physical volume is already part of the volume group" do
+        let(:pv_partitions) { ["/dev/sda2"] }
+
+        it "does not add it again" do
+          devicegraph = creator.create_volumes(vg, pv_partitions).devicegraph
+          reused_vg = devicegraph.lvm_vgs.detect { |vg| vg.vg_name == "vg0" }
+          pv_names = reused_vg.lvm_pvs.map { |pv| pv.blk_device.name }
+          expect(pv_names.sort).to eq ["/dev/sda2"]
+        end
       end
 
       it "creates a new logical volume for each planned volume" do

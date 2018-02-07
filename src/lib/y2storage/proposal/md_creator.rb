@@ -58,6 +58,7 @@ module Y2Storage
           device = Y2Storage::BlkDevice.find_by_name(new_graph, dev_name)
           device.encryption || device
         end
+        devices.map(&:remove_descendants)
         planned_md.add_devices(md, devices)
 
         planned_md.format!(md)

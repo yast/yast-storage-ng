@@ -87,12 +87,12 @@ module Y2Storage
         # Process planned MD arrays
         planned_mds = planned_devices.select { |d| d.is_a?(Planned::Md) }
         mds_to_reuse, mds_to_create = planned_mds.partition(&:reuse?)
-        creator_result.merge!(create_mds(mds_to_create, creator_result))
+        creator_result.merge!(create_mds(mds_to_create, creator_result, parts_to_reuse))
         mds_to_reuse.each { |i| i.reuse!(creator_result.devicegraph) }
 
         # Process planned volume groups
         planned_vgs = planned_devices.select { |d| d.is_a?(Planned::LvmVg) }
-        creator_result.merge!(set_up_lvm(planned_vgs, creator_result))
+        creator_result.merge!(set_up_lvm(planned_vgs, creator_result, parts_to_reuse))
         vgs_to_reuse = planned_vgs.select(&:reuse?)
         reuse_vgs(vgs_to_reuse, creator_result.devicegraph)
 
@@ -143,13 +143,15 @@ module Y2Storage
 
       # Creates volume groups in the given devicegraph
       #
-      # @param vgs             [Array<Planned::LvmVg>]   List of planned volume groups to add
-      # @param previous_result [Proposal::CreatorResult] Starting point
+      # @param vgs             [Array<Planned::LvmVg>]     List of planned volume groups to add
+      # @param previous_result [Proposal::CreatorResult]   Starting point
+      # @param parts_to_reuse  [Array<Planned::Partition>] List of partitions to reuse
       # @return                [Proposal::CreatorResult] Result containing the specified volume groups
-      def set_up_lvm(vgs, previous_result)
+      def set_up_lvm(vgs, previous_result, parts_to_reuse)
         log.info "BEGIN: set_up_lvm: vgs=#{vgs.inspect} previous_result=#{previous_result.inspect}"
         vgs.reduce(previous_result) do |result, vg|
           pvs = previous_result.created_names { |d| d.pv_for?(vg.volume_group_name) }
+          pvs += parts_to_reuse.select { |d| d.pv_for?(vg.volume_group_name) }.map(&:reuse)
           result.merge(create_logical_volumes(previous_result.devicegraph, vg, pvs))
         end
       end
@@ -195,13 +197,15 @@ module Y2Storage
 
       # Creates MD RAID devices in the given devicegraph
       #
-      # @param mds             [Array<Planned::Md>]      List of planned MD arrays to create
-      # @param previous_result [Proposal::CreatorResult] Starting point
+      # @param mds             [Array<Planned::Md>]        List of planned MD arrays to create
+      # @param previous_result [Proposal::CreatorResult]   Starting point
+      # @param parts_to_reuse  [Array<Planned::Partition>] List of partitions to reuse
       # @return                [Proposal::CreatorResult] Result containing the specified MD RAIDs
-      def create_mds(mds, previous_result)
+      def create_mds(mds, previous_result, parts_to_reuse)
         mds.reduce(previous_result) do |result, md|
           md_creator = Proposal::MdCreator.new(result.devicegraph)
           devices = previous_result.created_names { |d| d.raid_name == md.name }
+          devices += parts_to_reuse.select { |d| d.raid_name == md.name }.map(&:reuse)
           result.merge(md_creator.create_md(md, devices))
         end
       end
