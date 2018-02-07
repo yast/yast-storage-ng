@@ -34,7 +34,7 @@ module Y2Storage
     include Yast::Logger
     include StorageClassWrapper
     wrap_class Storage::Device,
-      downcast_to: ["BlkDevice", "Mountable", "PartitionTables::Base", "LvmPv", "LvmVg"]
+      downcast_to: ["BlkDevice", "Mountable", "MountPoint", "PartitionTables::Base", "LvmPv", "LvmVg"]
 
     storage_forward :storage_eql, to: :==
     protected :storage_eql
