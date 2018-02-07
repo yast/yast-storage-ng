@@ -248,7 +248,7 @@ describe Y2Storage::FakeDeviceFactory do
 
     expect(encryption.password).to eq "s3cr3t"
     expect(encryption.name).to eq "/dev/mapper/cr_root"
-    expect(encryption.filesystem.mountpoints.first).to eq "/"
+    expect(encryption.filesystem.mount_point.path).to eq "/"
 
   end
 
@@ -306,7 +306,7 @@ describe Y2Storage::FakeDeviceFactory do
     expect(root_lv.has_filesystem).to be true
     expect(encryption.has_filesystem).to be false
 
-    expect(root_fs.mountpoints.first).to eq "/"
+    expect(root_fs.mount_point.path).to eq "/"
     expect(encryption.password).to eq "s3cr3t"
     expect(encryption.name).to eq "/dev/mapper/cr_sda1"
 
@@ -366,7 +366,7 @@ describe Y2Storage::FakeDeviceFactory do
     expect(root_lv.has_filesystem).to be false
     expect(encryption.has_filesystem).to be true
 
-    expect(root_fs.mountpoints.first).to eq "/"
+    expect(root_fs.mount_point.path).to eq "/"
     expect(encryption.password).to eq "s3cr3t"
     expect(encryption.name).to eq "/dev/mapper/cr_root"
 
@@ -399,7 +399,7 @@ describe Y2Storage::FakeDeviceFactory do
     expect(disk.has_partition_table).to be false
 
     fs = disk.filesystem
-    expect(fs.mountpoints.first).to eq "/data"
+    expect(fs.mount_point.path).to eq "/data"
     expect(fs.label).to eq "backup"
     expect(fs.uuid).to eq "4711-abcd-0815"
   end
@@ -436,7 +436,7 @@ describe Y2Storage::FakeDeviceFactory do
     encryption = disk.encryption
     fs = encryption.filesystem
 
-    expect(fs.mountpoints.first).to eq "/data"
+    expect(fs.mount_point.path).to eq "/data"
     expect(fs.label).to eq "backup"
   end
 

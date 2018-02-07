@@ -469,14 +469,26 @@ module Y2Storage
     end
 
     def assign_file_system_params(file_system, fs_param)
-      ["mount_point", "label", "uuid", "fstab_options", "mkfs_options"].each do |param|
+      ["label", "uuid", "mkfs_options"].each do |param|
         value = fs_param[param]
         file_system.public_send(:"#{param}=", value) if value
       end
 
+      add_mount_point(file_system, fs_param)
+    end
+
+    def add_mount_point(filesystem, fs_param)
+      mount_path = fs_param["mount_point"]
+      return if mount_path.nil? || mount_path.empty?
+
+      mount_point = filesystem.create_mount_point(mount_path)
+
+      mount_options = fs_param["fstab_options"]
+      mount_point.mount_options = mount_options unless mount_options.nil?
+
       if fs_param["mount_by"]
-        file_system.mount_by = fetch(
-          Filesystems::MountByType, fs_param["mount_by"], "mount by name schema", file_system
+        mount_point.mount_by = fetch(
+          Filesystems::MountByType, fs_param["mount_by"], "mount by name schema", mount_point
         )
       end
     end

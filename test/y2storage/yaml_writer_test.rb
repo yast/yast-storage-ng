@@ -75,14 +75,14 @@ describe Y2Storage::YamlWriter do
     sda1.id = Y2Storage::PartitionId::SWAP
 
     swap = sda1.create_filesystem(Y2Storage::Filesystems::Type::SWAP)
-    swap.mount_point = "swap"
+    swap.create_mount_point("swap")
 
     sda2 = gpt.create_partition("/dev/sda2", Y2Storage::Region.create(1050624, 33554432, 512),
       Y2Storage::PartitionType::PRIMARY)
 
     ext4 = sda2.create_filesystem(Y2Storage::Filesystems::Type::EXT4)
-    ext4.mount_point = "/"
-    ext4.fstab_options = ["acl", "user_xattr"]
+    ext4.create_mount_point("/")
+    ext4.mount_point.mount_options = ["acl", "user_xattr"]
 
     # rubocop:disable Style/StringLiterals
 
@@ -184,7 +184,7 @@ describe Y2Storage::YamlWriter do
     sda1.id = Y2Storage::PartitionId::SWAP
 
     swap = sda1.create_filesystem(Y2Storage::Filesystems::Type::SWAP)
-    swap.mount_point = "swap"
+    swap.create_mount_point("swap")
 
     sda2 = gpt.create_partition("/dev/sda2", Y2Storage::Region.create(1050624, 33554432, 512),
       Y2Storage::PartitionType::PRIMARY)
@@ -193,8 +193,8 @@ describe Y2Storage::YamlWriter do
     encryption.password = "vry!s3cret"
 
     ext4 = encryption.create_filesystem(Y2Storage::Filesystems::Type::EXT4)
-    ext4.mount_point = "/"
-    ext4.fstab_options = ["acl", "user_xattr"]
+    ext4.create_mount_point("/")
+    ext4.mount_point.mount_options = ["acl", "user_xattr"]
 
     # rubocop:disable Style/StringLiterals
 
@@ -266,7 +266,7 @@ describe Y2Storage::YamlWriter do
 
     lvm_lv = lvm_vg.create_lvm_lv("root", 16 * Storage.GiB)
     fs = lvm_lv.create_filesystem(Y2Storage::Filesystems::Type::EXT4)
-    fs.mount_point = "/"
+    fs.create_mount_point("/")
 
     # rubocop:disable Style/StringLiterals
 
@@ -337,7 +337,7 @@ describe Y2Storage::YamlWriter do
     encryption.password = "s3cr3t"
 
     fs = encryption.create_filesystem(Y2Storage::Filesystems::Type::XFS)
-    fs.mount_point = "/"
+    fs.create_mount_point("/")
 
     # rubocop:disable Style/StringLiterals
 
@@ -393,7 +393,7 @@ describe Y2Storage::YamlWriter do
     disk.size = 256 * Storage.GiB
 
     fs = disk.create_filesystem(Y2Storage::Filesystems::Type::XFS)
-    fs.mount_point = "/data"
+    fs.create_mount_point("/data")
 
     # rubocop:disable Style/StringLiterals
 
@@ -426,7 +426,7 @@ describe Y2Storage::YamlWriter do
     encryption.password = "s3cr3t"
 
     fs = encryption.create_filesystem(Y2Storage::Filesystems::Type::XFS)
-    fs.mount_point = "/data"
+    fs.create_mount_point("/data")
 
     # rubocop:disable Style/StringLiterals
 
