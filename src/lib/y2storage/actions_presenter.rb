@@ -63,6 +63,13 @@ module Y2Storage
       [toggle_subvolumes_event]
     end
 
+    # Checks whether the list of actions if empty
+    #
+    # @return [Boolean] true if there are no actions to show
+    def empty?
+      actiongraph.nil? || actiongraph.empty?
+    end
+
   protected
 
     attr_reader :actiongraph

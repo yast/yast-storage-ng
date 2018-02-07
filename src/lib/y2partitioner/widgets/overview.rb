@@ -92,7 +92,7 @@ module Y2Partitioner
         [
           system_items,
           *graph_items,
-          item_for("summary", _("Installation Summary"), icon: Icons::SUMMARY)
+          summary_item,
           # TODO: Bring this back to life - disabled for now (bsc#1078849)
           # item_for("settings", _("Settings"), icon: Icons::SETTINGS)
         ]
@@ -266,6 +266,11 @@ module Y2Partitioner
         # mount_item = item_for("mountgraph", _("Mount Graph"), icon: Icons::GRAPH)
         # [dev_item, mount_item]
         [dev_item]
+      end
+
+      # @return [CWM::PagerTreeItem]
+      def summary_item
+        CWM::PagerTreeItem.new(Pages::Summary.new, icon: Icons::SUMMARY)
       end
 
       # @return [CWM::PagerTreeItem]
