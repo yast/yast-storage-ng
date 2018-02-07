@@ -97,6 +97,10 @@ describe Y2Partitioner::Widgets::OverviewTreePager do
 
     let(:disks_pages) { disks_pager.pages - [disks_pager.page] }
 
+    let(:device_graph_page) do
+      overview_tree.items.find { |i| i.page.is_a?(Y2Partitioner::Widgets::Pages::DeviceGraph) }
+    end
+
     it "has a OverviewTree widget" do
       expect(overview_tree).to_not be_nil
     end
@@ -104,6 +108,11 @@ describe Y2Partitioner::Widgets::OverviewTreePager do
     it "has a pager for the disk devices" do
       expect(disks_pager).to_not be_nil
     end
+
+    before do
+      allow(Yast::UI).to receive(:HasSpecialWidget).with(:Graph).and_return graph_available
+    end
+    let(:graph_available) { true }
 
     context "when there are disk, dasd or multipath devices" do
       let(:scenario) { "empty-dasd-and-multipath.xml" }
@@ -189,6 +198,22 @@ describe Y2Partitioner::Widgets::OverviewTreePager do
       it "disk pager has not Software RAID pages" do
         md_pages = disks_pages.select { |p| p.is_a?(Y2Partitioner::Widgets::Pages::MdRaid) }
         expect(md_pages).to be_empty
+      end
+    end
+
+    context "when the UI supports the Graph widget (Qt)" do
+      let(:graph_available) { true }
+
+      it "includes the 'Device Graph' page" do
+        expect(device_graph_page).to_not be_nil
+      end
+    end
+
+    context "when the UI does not support the Graph widget (ncurses)" do
+      let(:graph_available) { false }
+
+      it "does not include the 'Device Graph' page" do
+        expect(device_graph_page).to be_nil
       end
     end
   end

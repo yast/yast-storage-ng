@@ -30,6 +30,8 @@ require "y2partitioner/widgets/pages"
 require "y2partitioner/setup_errors_presenter"
 require "y2storage/setup_checker"
 
+Yast.import "UI"
+
 module Y2Partitioner
   module Widgets
     # A dummy page for prototyping
@@ -89,10 +91,7 @@ module Y2Partitioner
       def items
         [
           system_items,
-          # TODO: only if there is graph support UI.HasSpecialWidget(:Graph)
-          item_for("devicegraph", _("Device Graph"), icon: Icons::GRAPH),
-          # TODO: only if there is graph support UI.HasSpecialWidget(:Graph)
-          item_for("mountgraph", _("Mount Graph"), icon: Icons::GRAPH),
+          *graph_items,
           item_for("summary", _("Installation Summary"), icon: Icons::SUMMARY),
           item_for("settings", _("Settings"), icon: Icons::SETTINGS)
         ]
@@ -146,12 +145,14 @@ module Y2Partitioner
 
     private
 
+      # @return [String]
       attr_reader :hostname
 
       def device_graph
         DeviceGraphs.instance.current
       end
 
+      # @return [CWM::PagerTreeItem]
       def system_items
         page = Pages::System.new(hostname, self)
         children = [
@@ -167,6 +168,7 @@ module Y2Partitioner
         CWM::PagerTreeItem.new(page, children: children, icon: Icons::ALL)
       end
 
+      # @return [CWM::PagerTreeItem]
       def disks_items
         devices = device_graph.disk_devices
         page = Pages::Disks.new(devices, self)
@@ -174,17 +176,20 @@ module Y2Partitioner
         CWM::PagerTreeItem.new(page, children: children, icon: Icons::HD)
       end
 
+      # @return [CWM::PagerTreeItem]
       def disk_items(disk)
         page = Pages::Disk.new(disk, self)
         children = disk.partitions.sort_by(&:number).map { |p| partition_items(p) }
         CWM::PagerTreeItem.new(page, children: children)
       end
 
+      # @return [CWM::PagerTreeItem]
       def partition_items(partition)
         page = Pages::Partition.new(partition)
         CWM::PagerTreeItem.new(page)
       end
 
+      # @return [CWM::PagerTreeItem]
       def raids_items
         devices = device_graph.software_raids
         page = Pages::MdRaids.new(self)
@@ -192,11 +197,13 @@ module Y2Partitioner
         CWM::PagerTreeItem.new(page, children: children, icon: Icons::RAID)
       end
 
+      # @return [CWM::PagerTreeItem]
       def raid_items(md)
         page = Pages::MdRaid.new(md, self)
         CWM::PagerTreeItem.new(page)
       end
 
+      # @return [CWM::PagerTreeItem]
       def lvm_items
         devices = device_graph.lvm_vgs
         page = Pages::Lvm.new(self)
@@ -204,41 +211,60 @@ module Y2Partitioner
         CWM::PagerTreeItem.new(page, children: children, icon: Icons::LVM)
       end
 
+      # @return [CWM::PagerTreeItem]
       def lvm_vg_items(vg)
         page = Pages::LvmVg.new(vg, self)
         children = vg.all_lvm_lvs.sort_by(&:lv_name).map { |l| lvm_lv_items(l) }
         CWM::PagerTreeItem.new(page, children: children)
       end
 
+      # @return [CWM::PagerTreeItem]
       def lvm_lv_items(lv)
         page = Pages::LvmLv.new(lv)
         CWM::PagerTreeItem.new(page)
       end
 
+      # @return [CWM::PagerTreeItem]
       def crypt_files_items
         # TODO: real subtree
         item_for("loop", _("Crypt Files"), icon: Icons::LOOP, subtree: [])
       end
 
+      # @return [CWM::PagerTreeItem]
       def device_mapper_items
         # TODO: real subtree
         item_for("dm", _("Device Mapper"), icon: Icons::DM, subtree: [])
       end
 
+      # @return [CWM::PagerTreeItem]
       def nfs_items
         page = Pages::NfsMounts.new(self)
         CWM::PagerTreeItem.new(page, icon: Icons::NFS)
       end
 
+      # @return [CWM::PagerTreeItem]
       def btrfs_items
         page = Pages::Btrfs.new(self)
         CWM::PagerTreeItem.new(page, icon: Icons::BTRFS)
       end
 
+      # @return [CWM::PagerTreeItem]
       def unused_items
         item_for("unused", _("Unused Devices"), icon: Icons::UNUSED)
       end
 
+      # @return [Array<CWM::PagerTreeItem>]
+      def graph_items
+        return [] unless Yast::UI.HasSpecialWidget(:Graph)
+
+        page = Pages::DeviceGraph.new(self)
+        dev_item = CWM::PagerTreeItem.new(page, icon: Icons::GRAPH)
+        mount_item = item_for("mountgraph", _("Mount Graph"), icon: Icons::GRAPH)
+
+        [dev_item, mount_item]
+      end
+
+      # @return [CWM::PagerTreeItem]
       def item_for(id, label, widget: nil, icon: nil, subtree: [])
         text = id.to_s.split(":", 2)[1] || id.to_s
         widget ||= Heading(text)
