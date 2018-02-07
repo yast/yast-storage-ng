@@ -28,13 +28,11 @@ module Y2Partitioner
   module Dialogs
     # Popup dialog to configure subvolumes and options for a btrfs filesystem
     class BtrfsSubvolumes < Popup
-      attr_reader :filesystem
-
       # @param filesystem [Y2Storage::Filesystems::BlkFilesystem] a btrfs filesystem
       def initialize(filesystem)
         textdomain "storage"
 
-        @filesystem = filesystem
+        @fs_sid = filesystem.sid
       end
 
       def title
@@ -58,6 +56,12 @@ module Y2Partitioner
           result == :ok
         end
         result
+      end
+
+      # The dialog runs a transaction, so it is necessary to ensure that
+      # the filesystem belonging to the current devicegraph is used
+      def filesystem
+        DeviceGraphs.instance.current.find_device(@fs_sid)
       end
     end
   end
