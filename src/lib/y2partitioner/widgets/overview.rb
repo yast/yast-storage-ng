@@ -92,8 +92,9 @@ module Y2Partitioner
         [
           system_items,
           *graph_items,
-          item_for("summary", _("Installation Summary"), icon: Icons::SUMMARY),
-          item_for("settings", _("Settings"), icon: Icons::SETTINGS)
+          item_for("summary", _("Installation Summary"), icon: Icons::SUMMARY)
+          # TODO: Bring this back to life - disabled for now (bsc#1078849)
+          # item_for("settings", _("Settings"), icon: Icons::SETTINGS)
         ]
       end
 
@@ -159,11 +160,13 @@ module Y2Partitioner
           disks_items,
           raids_items,
           lvm_items,
-          crypt_files_items,
-          device_mapper_items,
+          # TODO: Bring this back to life - disabled for now (bsc#1078849)
+          # crypt_files_items,
+          # device_mapper_items,
           nfs_items,
-          btrfs_items,
-          unused_items
+          btrfs_items
+          # TODO: Bring this back to life - disabled for now (bsc#1078849)
+          # unused_items
         ]
         CWM::PagerTreeItem.new(page, children: children, icon: Icons::ALL)
       end
@@ -259,9 +262,10 @@ module Y2Partitioner
 
         page = Pages::DeviceGraph.new(self)
         dev_item = CWM::PagerTreeItem.new(page, icon: Icons::GRAPH)
-        mount_item = item_for("mountgraph", _("Mount Graph"), icon: Icons::GRAPH)
-
-        [dev_item, mount_item]
+        # TODO: Bring this back to life - disabled for now (bsc#1078849)
+        # mount_item = item_for("mountgraph", _("Mount Graph"), icon: Icons::GRAPH)
+        # [dev_item, mount_item]
+        [dev_item]
       end
 
       # @return [CWM::PagerTreeItem]
