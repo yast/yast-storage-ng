@@ -23,7 +23,6 @@ require "y2storage/storage_class_wrapper"
 require "y2storage/filesystems/blk_filesystem"
 require "y2storage/btrfs_subvolume"
 require "y2storage/subvol_specification"
-require "pathname"
 
 Yast.import "ProductFeatures"
 
@@ -132,7 +131,8 @@ module Y2Storage
       def create_btrfs_subvolume(path, nocow)
         subvolume = default_btrfs_subvolume.create_btrfs_subvolume(path)
         subvolume.nocow = nocow
-        subvolume.mountpoint = btrfs_subvolume_mount_point(path)
+        subvolume_mount_path = btrfs_subvolume_mount_point(path)
+        subvolume.create_mount_point(subvolume_mount_path) unless subvolume_mount_path.nil?
         subvolume
       end
 
@@ -180,7 +180,7 @@ module Y2Storage
       # point will be nil.
       #
       # @example
-      #   filesystem.mount_point # => "/foo"
+      #   filesystem.mount_path # => "/foo"
       #
       #   filesystem.btrfs_subvolume_mount_point("bar") # => "/foo/bar"
       #   filesystem.btrfs_subvolume_mount_point("@/bar") # => "/foo/bar"
@@ -189,11 +189,8 @@ module Y2Storage
       #
       # @return [String, nil] nil whether the filesystem is not mounted
       def btrfs_subvolume_mount_point(subvolume_path)
-        Btrfs.btrfs_subvolume_mount_point(mount_point, path_without_prefix(subvolume_path))
+        Btrfs.btrfs_subvolume_mount_point(mount_path, path_without_prefix(subvolume_path))
       end
-
-      # @return [Pathname] Object that represents the root path
-      ROOT_PATH = Pathname.new("/")
 
       # Returns a subvolume path generated from a default subvolume path and
       # the a subvolume path
@@ -211,7 +208,7 @@ module Y2Storage
         return nil if default_subvolume_path.nil? || subvolume_path.nil?
         path = Pathname(File.join(default_subvolume_path, subvolume_path))
         return path.to_s unless path.absolute?
-        path.relative_path_from(ROOT_PATH).to_s
+        path.relative_path_from(MountPoint::ROOT_PATH).to_s
       end
 
       # Returns a subvolume mount point generated from a filesystem mount point and a
@@ -220,15 +217,15 @@ module Y2Storage
       # @example
       #   Btrfs.btrfs_subvolume_mount_point("/foo", "bar") # => "/foo/bar"
       #
-      # @param fs_mount_point [String] a filesystem mount point
+      # @param fs_mount_path [String] a filesystem mount path
       # @param subvolume_path [String] a subvolume path
       #
-      # @return [String, nil] nil whether the filesystem mount point or the subvolume
-      #   is not valid
-      def self.btrfs_subvolume_mount_point(fs_mount_point, subvolume_path)
-        return nil if fs_mount_point.nil? || fs_mount_point.empty?
+      # @return [String, nil] nil whether the filesystem mount path or the subvolume
+      #   path is not valid
+      def self.btrfs_subvolume_mount_point(fs_mount_path, subvolume_path)
+        return nil if fs_mount_path.nil?
         return nil if subvolume_path.nil?
-        File.join(fs_mount_point, subvolume_path)
+        File.join(fs_mount_path, subvolume_path)
       end
 
       # The path that a new default btrfs subvolume should have
@@ -302,8 +299,8 @@ module Y2Storage
       # @param devicegraph [Devicegraph]
       def restore_unshadowed_subvolumes(devicegraph)
         auto_deleted_subvolumes.each do |spec|
-          mount_point = btrfs_subvolume_mount_point(spec.path)
-          next if BtrfsSubvolume.shadowed?(devicegraph, mount_point)
+          mount_path = btrfs_subvolume_mount_point(spec.path)
+          next if BtrfsSubvolume.shadowed?(devicegraph, mount_path)
           unshadow_btrfs_subvolume(spec.path)
         end
       end

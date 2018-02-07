@@ -21,6 +21,7 @@
 
 require "y2storage/storage_class_wrapper"
 require "y2storage/mountable"
+require "y2storage/filesystems/type"
 
 module Y2Storage
   module Filesystems
@@ -36,6 +37,10 @@ module Y2Storage
       #   @param devicegraph [Devicegraph]
       #   @return [Array<Filesystems::Base>] all the filesystems in the given devicegraph
       storage_class_forward :all, as: "Filesystems::Base"
+
+      # @!method type
+      #   @return [Filesystems::Type]
+      storage_forward :type, as: "Filesystems::Type"
 
       # @!method detect_space_info
       #   Information about the free space on a device.

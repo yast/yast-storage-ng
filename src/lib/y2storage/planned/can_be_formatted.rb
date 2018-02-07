@@ -79,7 +79,6 @@ module Y2Storage
 
         final_device.remove_descendants
         filesystem = final_device.create_blk_filesystem(filesystem_type)
-        assign_mountpoint(filesystem)
         setup_filesystem(filesystem)
         btrfs_setup(filesystem)
 
@@ -142,20 +141,27 @@ module Y2Storage
         filesystem.label = label if label
         filesystem.uuid = uuid if uuid
         filesystem.mkfs_options = mkfs_options if mkfs_options
-        filesystem.mount_by = mount_by if mount_by
-        setup_fstab_options(filesystem)
+        setup_mount_point(filesystem)
+      end
+
+      def setup_mount_point(filesystem)
+        assign_mountpoint(filesystem)
+        return if filesystem.mount_point.nil?
+
+        filesystem.mount_point.mount_by = mount_by if mount_by
+        setup_fstab_options(filesystem.mount_point)
       end
 
       # Set the fstab options, either those that were explicitly set, or the
       # defaults for this filesystem type
       #
-      # @param filesystem [Filesystems::BlkFilesystem]
-      def setup_fstab_options(filesystem)
-        return unless filesystem
+      # @param mount_point [MountPoint]
+      def setup_fstab_options(mount_point)
+        return unless mount_point
         if fstab_options
-          filesystem.fstab_options = fstab_options
+          mount_point.mount_options = fstab_options
         elsif filesystem_type
-          filesystem.fstab_options = filesystem_type.default_fstab_options
+          mount_point.mount_options = filesystem_type.default_fstab_options
         end
       end
 
@@ -186,16 +192,18 @@ module Y2Storage
         else
           filesystem = final_device!(device).filesystem
           if filesystem
-            setup_fstab_options(filesystem)
             assign_mountpoint(filesystem)
+            setup_fstab_options(filesystem.mount_point)
           end
         end
       end
 
+      # @param filesystem [Filesystems::Base]
       def assign_mountpoint(filesystem)
-        filesystem.mountpoint = mount_point if mount_point && !mount_point.empty?
+        filesystem.mount_path = mount_point if mount_point && !mount_point.empty?
       end
 
+      # @param device [Planned::Device]
       def mount_point_for(device)
         return nil unless device.respond_to?(:mount_point)
         return nil if device.mount_point.nil? || device.mount_point.empty?

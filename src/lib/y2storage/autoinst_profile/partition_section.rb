@@ -295,11 +295,12 @@ module Y2Storage
 
       # @param fs [Filesystem::BlkFilesystem]
       def init_mount_options(fs)
-        if fs.mountpoint && !fs.mountpoint.empty?
-          @mount = fs.mountpoint
-          @mountby = fs.mount_by.to_sym
+        if !fs.mount_point.nil?
+          @mount = fs.mount_point.path
+          @mountby = fs.mount_point.mount_by.to_sym
+          mount_options = fs.mount_point.mount_options
+          @fstab_options = mount_options unless mount_options.empty?
         end
-        @fstab_options = fs.fstab_options unless fs.fstab_options.empty?
       end
 
       # @param fs [Filesystem::BlkFilesystem] Filesystem to add subvolumes if required

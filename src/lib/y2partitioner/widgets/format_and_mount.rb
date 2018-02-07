@@ -1,3 +1,24 @@
+# encoding: utf-8
+
+# Copyright (c) [2017] SUSE LLC
+#
+# All Rights Reserved.
+#
+# This program is free software; you can redistribute it and/or modify it
+# under the terms of version 2 of the GNU General Public License as published
+# by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+# more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, contact SUSE LLC.
+#
+# To contact SUSE LLC about this file by physical or electronic mail, you may
+# find current contact information at www.suse.com.
+
 require "yast"
 require "y2storage"
 require "cwm"
@@ -183,7 +204,7 @@ module Y2Partitioner
         if filesystem
           Yast::UI.ChangeWidget(Id(:mount_device), :Enabled, true)
 
-          if filesystem.mountpoint.nil? || filesystem.mountpoint.empty?
+          if filesystem.mount_path.nil? || filesystem.mount_path.empty?
             Yast::UI.ChangeWidget(Id(:dont_mount_device), :Value, true)
             @mount_point_widget.disable
             @fstab_options_widget.disable
@@ -250,25 +271,28 @@ module Y2Partitioner
     private
 
       def mount_device
-        @controller.mount_point = @mount_point_widget.value.to_s
-        @fstab_options_widget.enable
         @mount_point_widget.enable
+        mount_point_change
       end
 
       def dont_mount_device
-        @controller.mount_point = ""
+        @controller.remove_mount_point
         @fstab_options_widget.disable
         @mount_point_widget.disable
       end
 
       def mount_point_change
-        mount_point = @mount_point_widget.value.to_s
-        @controller.mount_point = mount_point
-        if mount_point.nil? || mount_point.empty?
+        if mount_path.empty?
+          @controller.remove_mount_point
           @fstab_options_widget.disable
         else
+          @controller.create_or_update_mount_point(mount_path)
           @fstab_options_widget.enable
         end
+      end
+
+      def mount_path
+        @mount_point_widget.value.to_s
       end
     end
 
@@ -425,7 +449,7 @@ module Y2Partitioner
 
       # Synchronize the widget with the information from the controller
       def refresh
-        self.value = @controller.mount_point
+        self.value = @controller.mount_path
       end
 
       def label
@@ -483,12 +507,12 @@ module Y2Partitioner
       # @return [Boolean] true if mount point does not shadow a subvolume
       def subvolumes_shadowing_validation
         subvolumes = mounted_devices.select { |d| d.is?(:btrfs_subvolume) && !d.can_be_auto_deleted? }
-        subvolumes_mount_points = subvolumes.map(&:mount_point).compact.select { |m| !m.empty? }
+        subvolumes_mount_paths = subvolumes.map(&:mount_path).compact.select { |m| !m.empty? }
 
-        subvolumes_mount_points.each do |mount_point|
-          next unless Y2Storage::BtrfsSubvolume.shadowing?(value, mount_point)
+        subvolumes_mount_paths.each do |mount_path|
+          next unless Y2Storage::BtrfsSubvolume.shadowing?(value, mount_path)
           Yast::Popup.Error(
-            format(_("The Btrfs subvolume mounted at %s is shadowed."), mount_point)
+            format(_("The Btrfs subvolume mounted at %s is shadowed."), mount_path)
           )
           return false
         end
@@ -504,8 +528,8 @@ module Y2Partitioner
         return false if value == "swap"
 
         devices = mounted_devices.reject { |d| d.is?(:btrfs_subvolume) }
-        mount_points = devices.map(&:mount_point)
-        mount_points.include?(value)
+        mount_paths = devices.map(&:mount_path)
+        mount_paths.include?(value)
       end
 
       # Returns the devices that are currently mounted in the system
@@ -517,7 +541,7 @@ module Y2Partitioner
       def mounted_devices
         fs_sids = filesystem_devices.map(&:sid)
         devices = Y2Storage::Mountable.all(device_graph)
-        devices = devices.select { |d| !d.mount_point.nil? && !d.mount_point.empty? }
+        devices = devices.select { |d| !d.mount_path.nil? && !d.mount_path.empty? }
         devices.reject { |d| fs_sids.include?(d.sid) }
       end
 

@@ -419,14 +419,13 @@ module Y2Partitioner
           true
         end
 
-        # Checks whether a device is mounted
+        # Checks whether a device has mount point
         #
         # @return [Boolean] true if it is mounted; false otherwise
         def mounted?(device)
           return false unless formatted?(device)
 
-          mount_point = device.filesystem.mount_point
-          mount_point && !mount_point.empty?
+          !device.filesystem.mount_point.nil?
         end
 
         # Checks whether a device is formatted

@@ -52,7 +52,7 @@ module Y2Storage
         @root_planned_dev = planned_devices.find do |dev|
           dev.respond_to?(:mount_point) && dev.mount_point == "/"
         end
-        @root_filesystem = devicegraph.filesystems.find { |fs| fs.mountpoint == "/" }
+        @root_filesystem = devicegraph.filesystems.find { |fs| fs.mount_path == "/" }
       end
 
       # Disk in which the system will look for the bootloader.
@@ -172,7 +172,7 @@ module Y2Storage
           dev.mount_point && Pathname.new(dev.mount_point).cleanpath == cleanpath
         end
         return false if devicegraph.filesystems.any? do |fs|
-          fs.mount_point && Pathname.new(fs.mount_point).cleanpath == cleanpath
+          fs.mount_path && Pathname.new(fs.mount_path).cleanpath == cleanpath
         end
         true
       end

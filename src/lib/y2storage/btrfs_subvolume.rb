@@ -108,48 +108,48 @@ module Y2Storage
     #
     # @return [Array<Mountable>] shadowers
     def shadowers(devicegraph)
-      shadowers = BtrfsSubvolume.shadowers(devicegraph, mount_point)
+      shadowers = BtrfsSubvolume.shadowers(devicegraph, mount_path)
       shadowers.reject { |s| s.sid == sid || s.sid == btrfs.sid }
     end
 
-    # Checks whether a mount point is shadowing another mount point
+    # Checks whether a mount path is shadowing another mount path
     #
-    # @note The existence of devices with that mount points is not checked.
+    # @note The existence of devices with that mount paths is not checked.
     #
-    # @param mount_point [String]
-    # @param other_mount_point [String]
+    # @param mount_path [String]
+    # @param other_mount_path [String]
     #
-    # @return [Boolean] true if other_mount_point is shadowed by mount_point
-    def self.shadowing?(mount_point, other_mount_point)
-      return false if mount_point.nil? || other_mount_point.nil?
-      return false if mount_point.empty? || other_mount_point.empty?
+    # @return [Boolean] true if other_mount_path is shadowed by mount_path
+    def self.shadowing?(mount_path, other_mount_path)
+      return false if mount_path.nil? || other_mount_path.nil?
+      return false if mount_path.empty? || other_mount_path.empty?
       # Just checking with start_with? is not sufficient:
       # "/bootinger/schlonz".start_with?("/boot") -> true
       # So append "/" to make sure only complete subpaths are compared:
       # "/bootinger/schlonz/".start_with?("/boot/") -> false
       # "/boot/schlonz/".start_with?("/boot/") -> true
-      check_path = "#{other_mount_point}/"
-      check_path.start_with?("#{mount_point}/")
+      check_path = "#{other_mount_path}/"
+      check_path.start_with?("#{mount_path}/")
     end
 
-    # Checks whether a mount point is currently shadowed by any other mount point
+    # Checks whether a mount path is currently shadowed by any other mount path
     #
     # @param devicegraph [Devicegraph]
-    # @param mount_point [String] mount point to check
+    # @param mount_path [String] mount point to check
     #
     # @return [Boolean]
-    def self.shadowed?(devicegraph, mount_point)
-      !shadowers(devicegraph, mount_point).empty?
+    def self.shadowed?(devicegraph, mount_path)
+      !shadowers(devicegraph, mount_path).empty?
     end
 
     # Returns the current shadowers for a specific mount point
     #
     # @param devicegraph [Devicegraph]
-    # @param mount_point [String] mount point
+    # @param mount_path [String]
     #
     # @return [Array<Mountable>] shadowers
-    def self.shadowers(devicegraph, mount_point)
-      Mountable.all(devicegraph).select { |m| shadowing?(m.mount_point, mount_point) }
+    def self.shadowers(devicegraph, mount_path)
+      Mountable.all(devicegraph).select { |m| shadowing?(m.mount_path, mount_path) }
     end
 
   protected

@@ -1,3 +1,24 @@
+# encoding: utf-8
+
+# Copyright (c) [2017] SUSE LLC
+#
+# All Rights Reserved.
+#
+# This program is free software; you can redistribute it and/or modify it
+# under the terms of version 2 of the GNU General Public License as published
+# by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+# more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, contact SUSE LLC.
+#
+# To contact SUSE LLC about this file by physical or electronic mail, you may
+# find current contact information at www.suse.com.
+
 require "yast"
 require "cwm"
 require "y2storage"
@@ -14,10 +35,6 @@ module Y2Partitioner
         textdomain "storage"
 
         @controller = controller
-      end
-
-      def filesystem
-        @controller.filesystem
       end
 
       def init
@@ -60,29 +77,40 @@ module Y2Partitioner
       end
 
       def delete_fstab_option!(option)
-        # The options can only be modified using BlkDevice#fstab_options=
-        filesystem.fstab_options = filesystem.fstab_options.reject { |o| o =~ option }
+        # The options can only be modified using MountPoint#mount_options=
+        mount_point.mount_options = mount_point.mount_options.reject { |o| o =~ option }
       end
 
       def add_fstab_options(*options)
-        # The options can only be modified using BlkDevice#fstab_options=
-        # so we can't just append options with << or push
-        new_options = filesystem.fstab_options
-        options.each { |opt| new_options << opt }
-        filesystem.fstab_options = new_options
+        # The options can only be modified using MountPoint#mount_options=
+        mount_point.mount_options = mount_point.mount_options + options
       end
 
       alias_method :add_fstab_option, :add_fstab_options
 
     private
 
+      # Currently editing filesystem
+      #
+      # @return [Y2Storage::Filesystems::Base]
+      def filesystem
+        @controller.filesystem
+      end
+
+      # Mount point of the current filesystem
+      #
+      # @return [Y2Storage::MountPoint]
+      def mount_point
+        filesystem.mount_point
+      end
+
       # Common regexp checkbox widgets init.
       def init_regexp
-        i = filesystem.fstab_options.index { |o| o =~ self.class::REGEXP }
+        i = mount_point.mount_options.index { |o| o =~ self.class::REGEXP }
 
         self.value =
           if i
-            filesystem.fstab_options[i].gsub(self.class::REGEXP, "")
+            mount_point.mount_options[i].gsub(self.class::REGEXP, "")
           else
             self.class::DEFAULT
           end
@@ -98,9 +126,9 @@ module Y2Partitioner
       end
 
       def handle
-        log.info("fstab_options before dialog: #{filesystem.fstab_options}")
+        log.info("fstab_options before dialog: #{mount_point.mount_options}")
         Dialogs::FstabOptions.new(@controller).run
-        log.info("fstab_options after dialog: #{filesystem.fstab_options}")
+        log.info("fstab_options after dialog: #{mount_point.mount_options}")
 
         nil
       end
@@ -208,11 +236,11 @@ module Y2Partitioner
       end
 
       def store
-        filesystem.mount_by = selected_mount_by
+        mount_point.mount_by = selected_mount_by
       end
 
       def init
-        value = filesystem.mount_by ? filesystem.mount_by.to_sym : :uuid
+        value = mount_point.mount_by ? mount_point.mount_by.to_sym : :uuid
         Yast::UI.ChangeWidget(Id(:mt_group), :Value, value)
       end
 
@@ -239,9 +267,7 @@ module Y2Partitioner
       end
 
       def selected_mount_by
-        Y2Storage::Filesystems::MountByType.all.detect do |fs|
-          fs.to_sym == value
-        end
+        Y2Storage::Filesystems::MountByType.find(value)
       end
 
       def value
@@ -276,7 +302,7 @@ module Y2Partitioner
       include FstabCommon
 
       def init
-        self.value = filesystem.fstab_options.include?(checked_value)
+        self.value = mount_point.mount_options.include?(checked_value)
       end
 
       def store
@@ -365,7 +391,7 @@ module Y2Partitioner
       end
 
       def init
-        self.value = filesystem.fstab_options.any? { |o| VALUES.include?(o) }
+        self.value = mount_point.mount_options.any? { |o| VALUES.include?(o) }
       end
 
       def store
@@ -441,8 +467,8 @@ module Y2Partitioner
 
       # Set the combo box value to the current value matching REGEXP.
       def init
-        i = filesystem.fstab_options.index { |o| o =~ self.class::REGEXP }
-        self.value = i ? filesystem.fstab_options[i].gsub(self.class::REGEXP, "") : default_value
+        i = mount_point.mount_options.index { |o| o =~ self.class::REGEXP }
+        self.value = i ? mount_point.mount_options[i].gsub(self.class::REGEXP, "") : default_value
       end
 
       # Convert REGEXP to the option string. This is a very basic
@@ -553,7 +579,7 @@ module Y2Partitioner
       end
 
       def init
-        self.value = unhandled_options(filesystem.fstab_options).join(",")
+        self.value = unhandled_options(mount_point.mount_options).join(",")
       end
 
       def store
@@ -590,7 +616,7 @@ module Y2Partitioner
       end
 
       def keep_only_options_handled_in_other_widgets
-        filesystem.fstab_options = filesystem.fstab_options.select do |opt|
+        mount_point.mount_options = mount_point.mount_options.select do |opt|
           handled_in_other_widget?(opt)
         end
       end

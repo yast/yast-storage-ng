@@ -303,6 +303,8 @@ module Y2Storage
         opt
       end
 
+      alias_method :default_mount_options, :default_fstab_options
+
       # Best fitting partition id for this filesystem type
       #
       # @note: Take into account that the default partition id can be inappropriate for some

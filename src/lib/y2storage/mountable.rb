@@ -21,6 +21,7 @@
 
 require "y2storage/storage_class_wrapper"
 require "y2storage/device"
+require "y2storage/mount_point"
 
 module Y2Storage
   # Abstract class to represent something that can be mounted, like a filesystem
@@ -30,106 +31,86 @@ module Y2Storage
   class Mountable < Device
     wrap_class Storage::Mountable, downcast_to: ["Filesystems::Base", "BtrfsSubvolume"]
 
-    # @!method type
-    #   @return [Filesystems::Type]
-    storage_forward :type, as: "Filesystems::Type"
-
-    # @!attribute mount_by
-    #   @return [Filesystems::MountByType]
-    storage_forward :mount_by, as: "Filesystems::MountByType"
-    storage_forward :mount_by=
-
-    # @!method fstab_options
-    #   Options to use in /etc/fstab for a newly created filesystem.
-    #
-    #   @note This returns an array based on the underlying SWIG vector,
-    #   modifying the returned object will have no effect in the Mountable
-    #   object. Use #fstab_options= to actually change the value. See examples.
-    #
-    #   @example This will not modify the options
-    #     mountable.fstab_options << "ro"
-    #     mountable.fstab_options # "ro" was not added
-    #
-    #   @example This will work as expected
-    #     mountable.fstab_options = mountable.fstab_options + ["ro"]
-    #     mountable.fstab_options # "ro" was added
-    #
-    #   @see fstab_options=
-    #
-    #   @return [Array<String>]
-    storage_forward :fstab_options
-
     # @!method self.all(devicegraph)
     #   @param devicegraph [Devicegraph]
     #   @return [Array<Mountable>] all mountable devices in the devicegraph
     storage_class_forward :all, as: "Mountable"
 
+    # @!method create_mount_point(path)
+    #   @param path [String]
+    #   @return [MountPoint]
+    storage_forward :create_mount_point, as: "MountPoint"
+
+    # @!method mount_point
+    #   @return [MountPoint]
+    storage_forward :mount_point, as: "MountPoint", check_with: :has_mount_point
+
     # Directory in which the device should be mounted
     #
-    # @note This will be shortly implemented directly in libstorage-ng
+    # @see MountPoint#path
     #
-    # @return [String]
-    def mountpoint
-      to_storage_value.mountpoints.to_a.first
+    # @return [String, nil] nil if it has no mount point
+    def mount_path
+      return nil if mount_point.nil?
+
+      mount_point.path
     end
 
-    alias_method :mount_point, :mountpoint
-
-    # Sets the directory in which the device should be mounted
+    # Sets the mount point path
     #
-    # @note This will be shortly implemented directly in libstorage-ng
+    # @note A new mount point is created if it does not exist, see {#create_mount_point}
     #
     # @param path [String]
-    # @return [String]
-    def mountpoint=(path)
-      to_storage_value.add_mountpoint(path.to_s)
-      if fstab_options && !fstab_options.empty?
-        mp = to_storage_value.mount_point # storage::Mountpoint, not string!
-
-        # Append Mountable.fstab_options to the Mountpoint.mount_options.
-        # We can't just assign a Ruby string array because the SWIG bindings
-        # expect a std:vector<std::string> and won't automatically convert a
-        # Ruby array to it.
-        fstab_options.each do |opt|
-          mp.mount_options << opt unless fstab_options.include?(opt)
-        end
-      end
-      mountpoint
+    def mount_path=(path)
+      mp = mount_point || create_mount_point("")
+      mp.path = path
     end
 
-    alias_method :mount_point=, :mountpoint=
+    # Mount by method
+    #
+    # @see MountPoint#mount_by
+    #
+    # @return [Filesystems::MountByType, nil] nil if it has no mount point
+    def mount_by
+      return nil if mount_point.nil?
+
+      mount_point.mount_by
+    end
+
+    # Mount options
+    #
+    # @see MountPoint#mount_options
+    #
+    # @return [Array<String>] empty if it has no mount point
+    def mount_options
+      return [] if mount_point.nil?
+
+      mount_point.mount_options
+    end
+
+    # FIXME
+    def remove_mount_point(devicegraph)
+      return if mount_point.nil?
+
+      devicegraph.remove_mount_point(mount_point)
+    end
 
     # Is the mount persistent?
     #
     # @return [Boolean] true if the mount point is saved to /etc/fstab
     #   (and will be mounted at boot again), false otherwise
     def persistent?
-      # TODO: this implementation needs to be adapted after adding the Y2Storage
-      # wrapper for Storage::MountPoint
-      to_storage_value.has_mount_point && to_storage_value.mount_point.in_etc_fstab?
-    end
+      return false if mount_point.nil?
 
-    # Sets the options to use in /etc/fstab for a newly created filesystem.
-    #
-    # @param new_options [Array<String>]
-    # @return [Array<String>]
-    def fstab_options=(new_options)
-      # A direct assignation of a regular Ruby collection (like Array) will not
-      # work because Storage::Mountable#fstab_options= expects an argument with
-      # a very specific SWIG type (std::list)
-      to_storage_value.fstab_options.clear
-      new_options.each { |opt| to_storage_value.fstab_options << opt } if new_options
-      fstab_options
+      mount_point.in_etc_fstab?
     end
 
     # Checks whether the device is mounted as root
+    #
     # @return [Boolean]
     def root?
-      mount_point == ROOT_PATH
+      return false if mount_point.nil?
+      mount_point.root?
     end
-
-    ROOT_PATH = "/".freeze
-
-    SWAP_PATH = "swap".freeze
   end
 end

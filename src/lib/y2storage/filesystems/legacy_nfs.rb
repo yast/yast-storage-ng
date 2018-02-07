@@ -116,8 +116,10 @@ module Y2Storage
 
         # TODO: libstorage-ng does not distinguish different NFS versions
         dev = Nfs.create(graph, server, path)
-        dev.mountpoint = mountpoint
-        dev.fstab_options = fstopt == "defaults" ? [] : fstopt.split(/[\s,]+/)
+        if mountpoint && !mountpoint.empty?
+          dev.mount_path = mountpoint
+          dev.mount_point.mount_options = fstopt == "defaults" ? [] : fstopt.split(/[\s,]+/)
+        end
         dev
       end
 
@@ -132,8 +134,13 @@ module Y2Storage
         graph = check_devicegraph_argument(devicegraph)
 
         nfs = find_nfs_device(graph)
-        nfs.mountpoint = mountpoint
-        nfs.fstab_options = fstopt.split(/[\s,]+/)
+
+        if mountpoint.nil? || mountpoint.empty?
+          nfs.remove_mount_point(devicegraph) unless nfs.mount_point.nil?
+        else
+          nfs.mount_path = mountpoint
+          nfs.mount_point.mount_options = fstopt.split(/[\s,]+/)
+        end
       end
 
       # Finds the equivalent {Nfs} object in the devicegraph
@@ -191,8 +198,9 @@ module Y2Storage
       def initialize_from_nfs(nfs)
         @server     = nfs.server
         @path       = nfs.path
-        @mountpoint = nfs.mountpoint
-        @fstopt     = nfs.fstab_options.empty? ? "defaults" : nfs.fstab_options.join(",")
+        @mountpoint = nfs.mount_path
+        mount_options = nfs.mount_point.nil? ? [] : nfs.mount_point.mount_options
+        @fstopt = mount_options.empty? ? "defaults" : mount_options.join(",")
       end
 
       # String representing the remote NFS share, as specified in fstab
