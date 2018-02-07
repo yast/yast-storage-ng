@@ -104,8 +104,8 @@ module Y2Storage
         partitions = part_names.map { |n| BlkDevice.find_by_name(devicegraph, n) }
         used_devices = volume_group.lvm_pvs.map(&:plain_blk_device)
         partitions.each do |partition|
+          next if used_devices.include?(partition) # already a PV for this VG
           device = partition.encryption || partition
-          next if used_devices.include?(device) # already a PV for this VG
           device.remove_descendants
           volume_group.add_lvm_pv(device)
         end
