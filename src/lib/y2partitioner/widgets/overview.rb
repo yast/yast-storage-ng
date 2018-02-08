@@ -34,18 +34,6 @@ Yast.import "UI"
 
 module Y2Partitioner
   module Widgets
-    # A dummy page for prototyping
-    # FIXME: remove it when no longer needed
-    class GenericPage < CWM::Page
-      attr_reader :label, :contents
-
-      def initialize(id, label, contents)
-        self.widget_id = id
-        @label = label
-        @contents = contents
-      end
-    end
-
     # A tree that is told what its items are.
     # We need a tree whose items include Pages that point to the OverviewTreePager.
     class OverviewTree < CWM::Tree
@@ -228,18 +216,6 @@ module Y2Partitioner
       end
 
       # @return [CWM::PagerTreeItem]
-      def crypt_files_items
-        # TODO: real subtree
-        item_for("loop", _("Crypt Files"), icon: Icons::LOOP, subtree: [])
-      end
-
-      # @return [CWM::PagerTreeItem]
-      def device_mapper_items
-        # TODO: real subtree
-        item_for("dm", _("Device Mapper"), icon: Icons::DM, subtree: [])
-      end
-
-      # @return [CWM::PagerTreeItem]
       def nfs_items
         page = Pages::NfsMounts.new(self)
         CWM::PagerTreeItem.new(page, icon: Icons::NFS)
@@ -249,11 +225,6 @@ module Y2Partitioner
       def btrfs_items
         page = Pages::Btrfs.new(self)
         CWM::PagerTreeItem.new(page, icon: Icons::BTRFS)
-      end
-
-      # @return [CWM::PagerTreeItem]
-      def unused_items
-        item_for("unused", _("Unused Devices"), icon: Icons::UNUSED)
       end
 
       # @return [Array<CWM::PagerTreeItem>]
@@ -271,20 +242,6 @@ module Y2Partitioner
       # @return [CWM::PagerTreeItem]
       def summary_item
         CWM::PagerTreeItem.new(Pages::Summary.new, icon: Icons::SUMMARY)
-      end
-
-      # @return [CWM::PagerTreeItem]
-      def item_for(id, label, widget: nil, icon: nil, subtree: [])
-        text = id.to_s.split(":", 2)[1] || id.to_s
-        widget ||= Heading(text)
-        contents = VBox(widget)
-        page = GenericPage.new(id, label, contents)
-        CWM::PagerTreeItem.new(page,
-          icon: icon, open: open?(id), children: subtree)
-      end
-
-      def open?(id)
-        id == "all"
       end
     end
   end
