@@ -239,7 +239,10 @@ module Y2Partitioner
         # @param path [String]
         # @param options [Hash] options for the mount point (e.g., { mount_by: :uuid } )
         def create_mount_point(path, options = {})
-          return if filesystem.nil? || !mount_point.nil?
+          # A mount point cannot be created if there is no filesystem
+          return if filesystem.nil?
+          # A mount is not created if there is already a mount point
+          return unless mount_point.nil?
 
           options[:mount_options] ||= filesystem.type.default_mount_options
 
@@ -418,6 +421,10 @@ module Y2Partitioner
           restore_mount_point(mount_path, mount_by: mount_by)
         end
 
+        # Sets options to the current mount point
+        #
+        # @param options [Hash] options for the mount point, e.g.,
+        #   { mount_by: :uuid, mount_options: ["ro"] }
         def apply_mount_point_options(options)
           return if mount_point.nil?
 

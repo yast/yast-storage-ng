@@ -90,7 +90,7 @@ module Y2Partitioner
 
     private
 
-      # Currently editing filesystem
+      # Filesystem currently being edited
       #
       # @return [Y2Storage::Filesystems::Base]
       def filesystem

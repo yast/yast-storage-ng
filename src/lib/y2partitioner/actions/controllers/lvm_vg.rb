@@ -419,7 +419,7 @@ module Y2Partitioner
           true
         end
 
-        # Checks whether a device has mount point
+        # Checks whether a device has a mount point
         #
         # @return [Boolean] true if it is mounted; false otherwise
         def mounted?(device)

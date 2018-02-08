@@ -204,7 +204,7 @@ module Y2Partitioner
         if filesystem
           Yast::UI.ChangeWidget(Id(:mount_device), :Enabled, true)
 
-          if filesystem.mount_path.nil? || filesystem.mount_path.empty?
+          if filesystem.mount_point.nil?
             Yast::UI.ChangeWidget(Id(:dont_mount_device), :Value, true)
             @mount_point_widget.disable
             @fstab_options_widget.disable
@@ -291,6 +291,9 @@ module Y2Partitioner
         end
       end
 
+      # Value given for the mount point
+      #
+      # @return [String]
       def mount_path
         @mount_point_widget.value.to_s
       end
@@ -541,7 +544,7 @@ module Y2Partitioner
       def mounted_devices
         fs_sids = filesystem_devices.map(&:sid)
         devices = Y2Storage::Mountable.all(device_graph)
-        devices = devices.select { |d| !d.mount_path.nil? && !d.mount_path.empty? }
+        devices = devices.select { |d| !d.mount_point.nil? }
         devices.reject { |d| fs_sids.include?(d.sid) }
       end
 
