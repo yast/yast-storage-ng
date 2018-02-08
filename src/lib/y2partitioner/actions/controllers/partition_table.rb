@@ -49,33 +49,34 @@ module Y2Partitioner
         # @return [String]
         attr_reader :disk_name
 
-        # The disk we are working on
-        # @return [Y2Storage::Disk] or [Y2Storage::Dasd]
-        attr_reader :disk
-
         # @param [String] disk_name
         def initialize(disk_name)
           textdomain "storage"
 
           @disk_name = disk_name
-          @disk = find_disk(disk_name)
-          log.error("Can't find disk #{@disk_name}") if @disk.nil?
+          log.error("Can't find disk #{@disk_name}") if disk.nil?
           @type = possible_partition_table_types.first
+        end
+
+        # The disk we are working on
+        # @return [Y2Storage::Disk] or [Y2Storage::Dasd]
+        def disk
+          DeviceGraphs.instance.current.find_by_name(disk_name)
         end
 
         # Create the disk partition table in the devicegraph.
         def create_partition_table
-          return if @type.nil? || @disk.nil?
+          return if type.nil? || disk.nil?
 
-          @disk.remove_descendants
-          @disk.create_partition_table(@type)
-          UIState.instance.select_row(@disk)
+          disk.remove_descendants
+          disk.create_partition_table(type)
+          UIState.instance.select_row(disk)
         end
 
         # Return the partition table types that are supported by this disk.
         def possible_partition_table_types
-          return [] if @disk.nil?
-          @disk.possible_partition_table_types
+          return [] if disk.nil?
+          disk.possible_partition_table_types
         end
 
         # Check if a partition table can be created on this disk.
@@ -93,15 +94,6 @@ module Y2Partitioner
         def wizard_title
           # TRANSLATORS: dialog title. %s is a device name like /dev/sda
           _("Create New Partition Table on %s") % disk_name
-        end
-
-      private
-
-        # Find the disk or dasd
-        # @return [Y2Storage::BlkDevice]
-        def find_disk(name)
-          dg = DeviceGraphs.instance.current
-          Y2Storage::BlkDevice.find_by_name(dg, name)
         end
       end
     end

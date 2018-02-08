@@ -27,6 +27,12 @@ require "y2partitioner/dialogs"
 module Y2Partitioner
   module Actions
     # Action for creating a new partition table
+    #
+    # TODO: simplify the code for this. Using transactions, several steps and a
+    # separate controller is clearly overkill for such an straighforward action.
+    #
+    # It's error prone (as proved by bug#1078721) and produces some surprising
+    # visual glitches, like a completely empty wizard step (in the DASD case).
     class CreatePartitionTable < TransactionWizard
       attr_reader :controller
 
@@ -50,6 +56,8 @@ module Y2Partitioner
         }
       end
 
+      skip_stack :select_type
+
       # Open a dialog to let the user select the partition table type
       # if there is more than one to select from.
       def select_type
@@ -66,7 +74,7 @@ module Y2Partitioner
         msg += _("This will delete all existing partitions on that device\n" \
                  "and all devices (LVM volume groups, RAIDs etc.)\n" \
                  "that use any of those partitions!")
-        Yast::Popup.YesNo(msg) ? :next : :abort
+        Yast::Popup.YesNo(msg) ? :next : :back
       end
 
       # Commit the action (creating a new partition table) to the staging
