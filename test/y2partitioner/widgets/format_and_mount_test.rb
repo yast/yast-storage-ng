@@ -309,7 +309,6 @@ describe Y2Partitioner::Widgets do
       before do
         allow(Y2Partitioner::Widgets::FormatOptionsButton).to receive(:new).and_return options_button
         allow(Y2Partitioner::Widgets::Snapshots).to receive(:new).and_return snapshots_checkbox
-        allow(Y2Partitioner::Widgets::MkfsOptiondata).to receive(:options_for).and_return [{}]
         allow(controller).to receive(:snapshots_supported?).and_return snapshots_supported
         allow(controller).to receive(:format_options_supported?).and_return options_supported
       end
