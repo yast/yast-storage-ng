@@ -236,8 +236,8 @@ module Y2Partitioner
         #   if the filesystem doesn't exist yet, like changing the list of
         #   subvolumes if the new or old mount point is "/".
         #
-        # @param mount_point [String]
-        # @param options [Hash] options for the mount point (e.g., {mount_by: :uuid})
+        # @param path [String]
+        # @param options [Hash] options for the mount point (e.g., { mount_by: :uuid } )
         def create_mount_point(path, options = {})
           return if filesystem.nil? || !mount_point.nil?
 
@@ -251,8 +251,8 @@ module Y2Partitioner
 
         # Updates the current filesystem mount point
         #
-        # @param mount_point [String]
-        # @param options [Hash] options for the mount point (e.g., {mount_by: :uuid})
+        # @param path [String]
+        # @param options [Hash] options for the mount point (e.g., { mount_by: :uuid })
         def update_mount_point(path, options = {})
           return if mount_point.nil?
           return if mount_point.path == path && (options.nil? || options.empty?)
@@ -266,8 +266,8 @@ module Y2Partitioner
         # Creates a mount point if the filesystem has no mount point. Otherwise, the
         # mount point is updated.
         #
-        # @param mount_point [String]
-        # @param options [Hash] options for the mount point (e.g., {mount_by: :uuid})
+        # @param path [String]
+        # @param options [Hash] options for the mount point (e.g., { mount_by: :uuid })
         def create_or_update_mount_point(path, options = {})
           return if filesystem.nil?
 
