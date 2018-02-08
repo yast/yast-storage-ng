@@ -178,16 +178,14 @@ module Y2Storage
         end
       end
 
-      # Find a disk using its name or a udev link
-      #
-      # First it tries using the kernel name (eg. /dev/sda1) and, if it fails,
-      # it tries again using udev links.
+      # Find a disk using any possible name
       #
       # @return [Disk,nil] Usable disk or nil if none is found
+      # @see [Y2Storage::Devicegraph#find_by_any_name]
       def find_disk(devicegraph, device_name)
-        devicegraph.disk_devices.find do |device|
-          device.name == device_name || device.udev_full_all.include?(device_name)
-        end
+        device = devicegraph.find_by_any_name(device_name)
+        return nil unless device
+        ([device] + device.ancestors).find { |d| d.is?(:disk_device) }
       end
     end
   end

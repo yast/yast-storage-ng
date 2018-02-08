@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Thu Feb  8 10:15:18 UTC 2018 - igonzalezsosa@suse.com
+
+- AutoYaST: support additional names in the drive/device element
+  (bsc#1077277).
+- 4.0.87
+
+-------------------------------------------------------------------
 Wed Feb  7 16:47:58 UTC 2018 - shundhammer@suse.com
 
 - Disabled empty pages in partitioner for the time being

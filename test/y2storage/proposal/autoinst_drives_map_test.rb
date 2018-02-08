@@ -45,6 +45,10 @@ describe Y2Storage::Proposal::AutoinstDrivesMap do
 
   describe ".new" do
     context "when a device does not exist" do
+      before do
+        allow(fake_devicegraph).to receive(:find_by_any_name).and_return(nil)
+      end
+
       let(:partitioning_array) do
         [{ "device" => "/dev/sdx", "use" => "all" }]
       end
@@ -80,18 +84,8 @@ describe Y2Storage::Proposal::AutoinstDrivesMap do
     context "when a disk udev link is used" do
       let(:udev_link) { "/dev/disk/by-label/root" }
 
-      let(:disk) do
-        instance_double(Y2Storage::Disk, name: "/dev/sda", udev_full_all: [udev_link])
-      end
-
       let(:partitioning_array) do
         [{ "device" => udev_link }]
-      end
-
-      before do
-        allow(fake_devicegraph).to receive(:disk_devices)
-          .and_return([disk])
-        allow(disk).to receive(:udev_full_all).and_return([udev_link])
       end
 
       it "uses its kernel name" do
