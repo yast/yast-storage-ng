@@ -34,7 +34,7 @@ describe Y2Storage::GuidedProposal do
     let(:scenario) { "empty_hard_disk_50GiB" }
 
     def root_filesystem
-      subject.devices.filesystems.detect { |f| f.mount_point == "/" }
+      subject.devices.filesystems.detect { |f| f.mount_path == "/" }
     end
 
     context "when root filesystem is BtrFS" do

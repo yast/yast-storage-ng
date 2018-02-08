@@ -350,9 +350,13 @@ module Y2Storage
         "file_system" => file_system.type.to_s
       }
 
-      content["mount_point"] = file_system.mountpoint unless file_system.mountpoint.nil?
       content["label"] = file_system.label unless file_system.label.empty?
-      content["fstab_options"] = file_system.fstab_options unless file_system.fstab_options.empty?
+
+      if file_system.mount_point
+        content["mount_point"] = file_system.mount_point.path
+        mount_options = file_system.mount_point.mount_options
+        content["fstab_options"] = mount_options unless mount_options.empty?
+      end
 
       content
     end

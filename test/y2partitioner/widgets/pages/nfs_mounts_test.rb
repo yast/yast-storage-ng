@@ -267,12 +267,16 @@ describe Y2Partitioner::Widgets::Pages::NfsMounts do
           list_after = device_graph.nfs_mounts
 
           expect(list_after.size).to eq(list_before.size + 1)
-          expect(list_after).to include(
-            an_object_having_attributes(
-              server: "srv", path: "/home/b", mountpoint: "/mnt/b",
-              fstab_options: ["rw", "minorversion=1"]
-            )
-          )
+
+          new_nfs = list_after.find do |nfs|
+            nfs.server == "srv" &&
+              nfs.path == "/home/b" &&
+              nfs.mount_point &&
+              nfs.mount_point.path == "/mnt/b" &&
+              nfs.mount_point.mount_options == ["rw", "minorversion=1"]
+          end
+
+          expect(new_nfs).to_not be_nil
         end
       end
 
@@ -296,12 +300,16 @@ describe Y2Partitioner::Widgets::Pages::NfsMounts do
             list_after = device_graph.nfs_mounts
 
             expect(list_after.size).to eq(list_before.size + 1)
-            expect(list_after).to include(
-              an_object_having_attributes(
-                server: "srv", path: "/home/b", mountpoint: "/mnt/b",
-                fstab_options: ["rw", "minorversion=1"]
-              )
-            )
+
+            new_nfs = list_after.find do |nfs|
+              nfs.server == "srv" &&
+                nfs.path == "/home/b" &&
+                nfs.mount_point &&
+                nfs.mount_point.path == "/mnt/b" &&
+                nfs.mount_point.mount_options == ["rw", "minorversion=1"]
+            end
+
+            expect(new_nfs).to_not be_nil
           end
         end
 

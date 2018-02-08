@@ -116,9 +116,9 @@ describe Y2Partitioner::Actions::Controllers::Md do
       expect(controller.available_devices.map(&:name)).to include("/dev/sda2", "/dev/sde3")
 
       sda2 = dev("/dev/sda2")
-      sda2.filesystem.mountpoint = "/var"
+      sda2.filesystem.mount_path = "/var"
       sde3 = dev("/dev/sde3")
-      sde3.filesystem.mountpoint = "swap"
+      sde3.filesystem.mount_path = "swap"
 
       expect(controller.available_devices.map(&:name)).to_not include("/dev/sda2", "/dev/sde3")
     end

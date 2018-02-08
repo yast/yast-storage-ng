@@ -27,6 +27,13 @@ require "y2storage/subvol_specification"
 
 Yast.import "Mode"
 
+# TODO: This class is too long. Please, consider refactoring.
+# The code could be splitted in two kind of groups: one for actions
+# related to mount point options and another group for actions related
+# to filesystem options.
+
+# rubocop:disable ClassLength
+
 module Y2Partitioner
   module Actions
     module Controllers
@@ -91,8 +98,7 @@ module Y2Partitioner
 
         # Type of the current filesystem
         #
-        # @return [Y2Storage::Filesystems::Type, nil] nil if there is no
-        #   filesystem
+        # @return [Y2Storage::Filesystems::Type, nil] nil if there is no filesystem
         def filesystem_type
           filesystem ? filesystem.type : nil
         end
@@ -116,9 +122,18 @@ module Y2Partitioner
 
         # Mount point of the current filesystem
         #
-        # @return [string, nil] nil if there is no filesystem
+        # @return [MountPoint, nil] nil if there is no filesystem
         def mount_point
-          filesystem ? filesystem.mountpoint : nil
+          return nil if filesystem.nil?
+          filesystem.mount_point
+        end
+
+        # Path of the mount point for the current filesystem
+        #
+        # @return [String, nil] nil if the filesystem has no mount point
+        def mount_path
+          return nil if mount_point.nil?
+          mount_point.path
         end
 
         # Partition id of the block device if it is a partition
@@ -137,65 +152,49 @@ module Y2Partitioner
           delete_filesystem
           @encrypt = false
 
-          fs_type = mount_point = mount_by = nil
+          self.partition_id = role_values[:partition_id]
 
-          case role
-          when :swap
-            part_id = Y2Storage::PartitionId::SWAP
-            fs_type = Y2Storage::Filesystems::Type::SWAP
-            mount_point = "swap"
-            mount_by = Y2Storage::Filesystems::MountByType::DEVICE
-          when :efi_boot
-            part_id = Y2Storage::PartitionId::ESP
-            fs_type = Y2Storage::Filesystems::Type::VFAT
-            mount_point = "/boot/efi"
-          when :raw
-            part_id = Y2Storage::PartitionId::LVM
-          else
-            part_id = DEFAULT_PARTITION_ID
-            fs_type = (role == :system) ? DEFAULT_FS : DEFAULT_HOME_FS
-          end
+          fs_type = role_values[:filesystem_type]
+          mount_path = role_values[:mount_path]
+          mount_by = role_values[:mount_by]
 
-          self.partition_id = part_id
-
-          return unless fs_type
+          return if fs_type.nil?
 
           create_filesystem(fs_type)
-          assign_fs_attrs(mount_by: mount_by)
-          self.mount_point = mount_point
+          create_mount_point(mount_path, mount_by: mount_by) unless mount_path.nil?
         end
 
         # Creates a new filesystem on top of the block device, removing the
         # previous one if any, as a result of the user choosing the option in the
         # UI to format the device.
         #
-        # Some information from the previous filesystem (like the mountpoint or
+        # Some information from the previous filesystem (like the mount point or
         # the label) is kept in the new filesystem if it makes sense.
         #
-        # @param type of the new filesystem
+        # @param type [Symbol] e.g., :ext4, :btrfs, :xfs
         def new_filesystem(type)
           # Make sure type has the correct... well, type :-)
           type = Y2Storage::Filesystems::Type.new(type)
 
           # It's kind of expected that these attributes are preserved when
           # changing the filesystem type, with the exceptions below
-          mount_point = current_value_for(:mount_point)
+          mount_path = current_value_for(:mount_point)
           mount_by = current_value_for(:mount_by)
           label = current_value_for(:label)
 
           if type.is?(:swap)
-            mount_point = "swap"
-          elsif mount_point == "swap"
-            mount_point = ""
+            mount_path = "swap"
+          elsif mount_path == "swap"
+            mount_path = nil
           end
 
           @backup_graph = working_graph.dup if filesystem && !new?(filesystem)
 
           delete_filesystem
-          create_filesystem(type)
-          assign_fs_attrs(mount_by: mount_by, label: label)
+          create_filesystem(type, label: label)
           self.partition_id = filesystem.type.default_partition_id
-          self.mount_point = mount_point
+
+          create_mount_point(mount_path, mount_by: mount_by) unless mount_path.nil?
         end
 
         # Makes the changes related to the option "do not format" in the UI, which
@@ -228,25 +227,87 @@ module Y2Partitioner
           blk_device.adapted_id = partition_id
         end
 
-        # Sets the mount point of the filesystem if there is one
+        # Creates a mount point for the current filesystem
         #
-        # Take into account that modifying the mount point can have side effects
-        # if the filesystem doesn't exist yet, like changing the list of
-        # subvolumes if the new or old mount point is "/".
+        # @note The new mount point is created with default mount options if no mount
+        #   options are given (see {Y2Storage::Filesystems::Type#default_mount_options}).
         #
-        # @param mount_point [String] new mount point
-        def mount_point=(mount_point)
-          return if filesystem.nil? || filesystem.mount_point == mount_point
-          no_old_mount_point = filesystem.mount_point.nil? || filesystem.mount_point.empty?
+        #   Take into account that modifying the mount point can have side effects
+        #   if the filesystem doesn't exist yet, like changing the list of
+        #   subvolumes if the new or old mount point is "/".
+        #
+        # @param path [String]
+        # @param options [Hash] options for the mount point (e.g., { mount_by: :uuid } )
+        def create_mount_point(path, options = {})
+          # A mount point cannot be created if there is no filesystem
+          return if filesystem.nil?
+          # A mount is not created if there is already a mount point
+          return unless mount_point.nil?
 
-          before_set_mount_point
-          filesystem.mount_point = mount_point
-          after_set_mount_point
+          options[:mount_options] ||= filesystem.type.default_mount_options
 
-          if no_old_mount_point && filesystem.fstab_options.empty?
-            filesystem.fstab_options = filesystem.type.default_fstab_options
-            log.info("Setting default fstab_options: #{filesystem.fstab_options}")
+          before_change_mount_point
+          filesystem.create_mount_point(path)
+          apply_mount_point_options(options)
+          after_change_mount_point
+        end
+
+        # Updates the current filesystem mount point
+        #
+        # @param path [String]
+        # @param options [Hash] options for the mount point (e.g., { mount_by: :uuid })
+        def update_mount_point(path, options = {})
+          return if mount_point.nil?
+          return if mount_point.path == path && (options.nil? || options.empty?)
+
+          before_change_mount_point
+          mount_point.path = path
+          apply_mount_point_options(options)
+          after_change_mount_point
+        end
+
+        # Creates a mount point if the filesystem has no mount point. Otherwise, the
+        # mount point is updated.
+        #
+        # @param path [String]
+        # @param options [Hash] options for the mount point (e.g., { mount_by: :uuid })
+        def create_or_update_mount_point(path, options = {})
+          return if filesystem.nil?
+
+          if mount_point.nil?
+            create_mount_point(path, options)
+          else
+            update_mount_point(path, options)
           end
+        end
+
+        # Removes the filesystem mount point
+        def remove_mount_point
+          return if mount_point.nil?
+
+          before_change_mount_point
+          filesystem.remove_mount_point
+          after_change_mount_point
+        end
+
+        # Removes the current mount point (if there is one) and creates a new
+        # mount point for the filesystem.
+        #
+        # @param path [String]
+        # @param options [Hash] options for the mount point (e.g., { mount_by: :uuid })
+        def restore_mount_point(path, options = {})
+          return if filesystem.nil?
+
+          before_change_mount_point
+
+          filesystem.remove_mount_point if mount_point
+
+          if path && !path.empty?
+            filesystem.create_mount_point(path)
+            apply_mount_point_options(options)
+          end
+
+          after_change_mount_point
         end
 
         # Applies last changes to the block device at the end of the wizard, which
@@ -331,11 +392,14 @@ module Y2Partitioner
 
         def delete_filesystem
           blk_device.remove_descendants
+          # Shadowing control of btrfs subvolumes might be needed if the deleted
+          # filesystem had mount point
+          Y2Storage::Filesystems::Btrfs.refresh_subvolumes_shadowing(working_graph)
         end
 
-        def create_filesystem(type)
+        def create_filesystem(type, label: nil)
           blk_device.create_blk_filesystem(type)
-          filesystem.fstab_options = type.default_fstab_options
+          filesystem.label = label unless label.nil?
 
           if btrfs?
             default_path = Y2Storage::Filesystems::Btrfs.default_btrfs_subvolume_path
@@ -344,21 +408,28 @@ module Y2Partitioner
         end
 
         def restore_filesystem
+          mount_path = filesystem.mount_path
           mount_by = filesystem.mount_by
-          mount_point = filesystem.mount_point
           label = filesystem.label
 
           @backup_graph.copy(working_graph)
           @backup_graph = nil
           @encrypt = blk_device.encrypted?
 
-          assign_fs_attrs(mount_by: mount_by, label: label)
-          self.mount_point = mount_point
+          filesystem.label = label if label
+
+          restore_mount_point(mount_path, mount_by: mount_by)
         end
 
-        def assign_fs_attrs(attrs = {})
-          attrs.each_pair do |attr, value|
-            filesystem.send(:"#{attr}=", value) unless value.nil?
+        # Sets options to the current mount point
+        #
+        # @param options [Hash] options for the mount point, e.g.,
+        #   { mount_by: :uuid, mount_options: ["ro"] }
+        def apply_mount_point_options(options)
+          return if mount_point.nil?
+
+          options.each_pair do |attr, value|
+            mount_point.send(:"#{attr}=", value) unless value.nil?
           end
         end
 
@@ -369,19 +440,50 @@ module Y2Partitioner
           when :mount_by
             filesystem.mount_by
           when :mount_point
-            filesystem.mount_point
+            filesystem.mount_path
           when :label
             # Copying the label from the filesystem in the disk looks unexpected
             new?(filesystem) ? filesystem.label : nil
           end
         end
 
-        def before_set_mount_point
+        # Values to apply for the selected role
+        #
+        # @return [Hash]
+        def role_values
+          fs_type = mount_path = mount_by = nil
+
+          case role
+          when :swap
+            part_id = Y2Storage::PartitionId::SWAP
+            fs_type = Y2Storage::Filesystems::Type::SWAP
+            mount_path = "swap"
+            mount_by = Y2Storage::Filesystems::MountByType::DEVICE
+          when :efi_boot
+            part_id = Y2Storage::PartitionId::ESP
+            fs_type = Y2Storage::Filesystems::Type::VFAT
+            mount_path = "/boot/efi"
+          when :raw
+            part_id = Y2Storage::PartitionId::LVM
+          else
+            part_id = DEFAULT_PARTITION_ID
+            fs_type = (role == :system) ? DEFAULT_FS : DEFAULT_HOME_FS
+          end
+
+          {
+            filesystem_type: fs_type,
+            partition_id:    part_id,
+            mount_path:      mount_path,
+            mount_by:        mount_by
+          }
+        end
+
+        def before_change_mount_point
           # When the filesystem is btrfs, the not probed subvolumes are deleted.
           delete_not_probed_subvolumes if btrfs?
         end
 
-        def after_set_mount_point
+        def after_change_mount_point
           # When the filesystem is btrfs and root, default proposed subvolumes are added
           # in case they are not been probed.
           add_proposed_subvolumes if btrfs? && root?
@@ -426,7 +528,12 @@ module Y2Partitioner
         # @note Top level and default subvolumes are not taken into account (see {#subvolumes}).
         def update_mount_points
           subvolumes.each do |subvolume|
-            subvolume.mount_point = filesystem.btrfs_subvolume_mount_point(subvolume.path)
+            new_mount_point = filesystem.btrfs_subvolume_mount_point(subvolume.path)
+            if new_mount_point.nil?
+              subvolume.remove_mount_point if subvolume.mount_point
+            else
+              subvolume.mount_path = new_mount_point
+            end
           end
         end
 
@@ -448,3 +555,5 @@ module Y2Partitioner
     end
   end
 end
+
+# rubocop:enable ClassLength

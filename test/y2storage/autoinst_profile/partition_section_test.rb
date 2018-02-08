@@ -206,7 +206,7 @@ describe Y2Storage::AutoinstProfile::PartitionSection do
         # allow(dev.filesystem).to(receive(:y)) because you can get different
         # Ruby wrapper objects for the same C++ filesystem. So let's simply
         # assign the values instead of intercepting the query calls.
-        dev.filesystem.mountpoint = mountpoint if mountpoint
+        dev.filesystem.mount_path = mountpoint if mountpoint
       end
 
       # Weird legacy behavior

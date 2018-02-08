@@ -159,8 +159,20 @@ describe Y2Partitioner::Actions::Controllers::Filesystem do
 
   describe "#mount_point" do
     context "when the currently editing device has a filesystem" do
-      it "returns the filesystem mount point" do
-        expect(subject.mount_point).to eq(device.filesystem.mount_point)
+      context "and the filesystem has a mount point" do
+        let(:dev_name) { "/dev/sda2" }
+
+        it "returns the filesystem mount point" do
+          expect(subject.mount_point).to eq(device.filesystem.mount_point)
+        end
+      end
+
+      context "and the filesystem has no mount point" do
+        let(:dev_name) { "/dev/sdb3" }
+
+        it "returns nil" do
+          expect(subject.mount_point).to be_nil
+        end
       end
     end
 
@@ -172,6 +184,37 @@ describe Y2Partitioner::Actions::Controllers::Filesystem do
 
       it "returns nil" do
         expect(subject.mount_point).to be_nil
+      end
+    end
+  end
+
+  describe "#mount_path" do
+    context "when the currently editing device has a filesystem" do
+      context "and the filesystem has a mount point" do
+        let(:dev_name) { "/dev/sda2" }
+
+        it "returns the path of the filesystem mount point" do
+          expect(subject.mount_path).to eq("/")
+        end
+      end
+
+      context "and the filesystem has no mount point" do
+        let(:dev_name) { "/dev/sdb3" }
+
+        it "returns nil" do
+          expect(subject.mount_path).to be_nil
+        end
+      end
+    end
+
+    context "when the currently editing device has not a filesystem" do
+      before do
+        allow(device).to receive(:filesystem).and_return(nil)
+        allow(subject).to receive(:blk_device).and_return(device)
+      end
+
+      it "returns nil" do
+        expect(subject.mount_path).to be_nil
       end
     end
   end
@@ -261,12 +304,13 @@ describe Y2Partitioner::Actions::Controllers::Filesystem do
 
       it "sets mount point to 'swap'" do
         subject.apply_role
-        expect(subject.filesystem.mount_point).to eq("swap")
+        expect(subject.filesystem.mount_point.path).to eq("swap")
       end
 
       it "sets mount by to 'device'" do
         subject.apply_role
-        expect(subject.filesystem.mount_by).to eq(Y2Storage::Filesystems::MountByType::DEVICE)
+        expect(subject.filesystem.mount_point.mount_by)
+          .to eq(Y2Storage::Filesystems::MountByType::DEVICE)
       end
     end
 
@@ -285,7 +329,7 @@ describe Y2Partitioner::Actions::Controllers::Filesystem do
 
       it "sets mount point to '/boot/efi'" do
         subject.apply_role
-        expect(subject.filesystem.mount_point).to eq("/boot/efi")
+        expect(subject.filesystem.mount_point.path).to eq("/boot/efi")
       end
     end
 
@@ -362,15 +406,15 @@ describe Y2Partitioner::Actions::Controllers::Filesystem do
 
       it "sets mount point to swap" do
         subject.new_filesystem(type)
-        expect(subject.blk_device.filesystem.mount_point).to eq("swap")
+        expect(subject.blk_device.filesystem.mount_point.path).to eq("swap")
       end
     end
 
     context "when the currently editing device has already a filesystem" do
       before do
-        device.filesystem.mount_point = mount_point
-        device.filesystem.mount_by = mount_by
         device.filesystem.label = label
+        device.filesystem.mount_path = mount_point
+        device.filesystem.mount_point.mount_by = mount_by
       end
 
       let(:mount_point) { "/foo" }
@@ -379,12 +423,12 @@ describe Y2Partitioner::Actions::Controllers::Filesystem do
 
       it "preserves the mount point" do
         subject.new_filesystem(type)
-        expect(subject.blk_device.filesystem.mount_point).to eq(mount_point)
+        expect(subject.blk_device.filesystem.mount_point.path).to eq(mount_point)
       end
 
       it "preserves the mount by property" do
         subject.new_filesystem(type)
-        expect(subject.blk_device.filesystem.mount_by).to eq(mount_by)
+        expect(subject.blk_device.filesystem.mount_point.mount_by).to eq(mount_by)
       end
 
       it "sets the proper partition id" do
@@ -501,114 +545,394 @@ describe Y2Partitioner::Actions::Controllers::Filesystem do
     end
   end
 
-  describe "#mount_point=" do
-    let(:mount_point) { nil }
+  RSpec.shared_context "mount point actions" do
+    let(:mount_path) { "/foo" }
+    let(:mount_point_options) { { mount_by: mount_by_id, mount_options: mount_options } }
+    let(:mount_by_id) { Y2Storage::Filesystems::MountByType::ID }
+    let(:mount_options) { ["rw", "minorversion=1"] }
+    let(:filesystem) { subject.filesystem }
+  end
 
-    context "when the currently editing devices has no filesystem" do
+  RSpec.shared_examples "btrfs subvolumes check" do
+    let(:filesystem) { subject.filesystem }
+
+    it "does not delete the probed subvolumes" do
+      subvolumes = filesystem.btrfs_subvolumes
+      subject.public_send(testing_method, mount_path, mount_point_options)
+
+      expect(filesystem.btrfs_subvolumes).to include(*subvolumes)
+    end
+
+    it "updates the subvolumes mount points" do
+      subject.public_send(testing_method, mount_path, mount_point_options)
+      mount_points = filesystem.btrfs_subvolumes.map(&:mount_path).compact
+      expect(mount_points).to all(start_with(mount_path))
+    end
+
+    it "does not change the mount point for special subvolumes" do
+      subject.public_send(testing_method, mount_path, mount_point_options)
+      expect(filesystem.top_level_btrfs_subvolume.mount_path.to_s).to be_empty
+      expect(filesystem.default_btrfs_subvolume.mount_path.to_s).to be_empty
+    end
+
+    it "refreshes btrfs subvolumes shadowing" do
+      expect(Y2Storage::Filesystems::Btrfs).to receive(:refresh_subvolumes_shadowing)
+      subject.public_send(testing_method, mount_path, mount_point_options)
+    end
+
+    context "and it has 'not probed' subvolumes" do
+      let(:path) { "@/bar" }
+
       before do
-        device.remove_descendants
+        filesystem.create_btrfs_subvolume(path, false)
       end
 
+      it "deletes the not probed subvolumes" do
+        subject.public_send(testing_method, mount_path, mount_point_options)
+        expect(filesystem.find_btrfs_subvolume_by_path(path)).to be_nil
+      end
+    end
+
+    context "and the new mount point is root" do
+      let(:mount_path) { "/" }
+
+      before do
+        # Make sure there is no other mount points
+        all_filesystems = Y2Storage::MountPoint.all(devicegraph).map(&:filesystem)
+        other_filesystems = all_filesystems - [filesystem]
+        other_filesystems.each(&:remove_descendants)
+      end
+
+      it "adds the proposed subvolumes that do not exist" do
+        specs = Y2Storage::SubvolSpecification.fallback_list
+        arch_specs = Y2Storage::SubvolSpecification.for_current_arch(specs)
+        paths = arch_specs.map { |s| filesystem.btrfs_subvolume_path(s.path) }
+
+        subject.public_send(testing_method, mount_path, mount_point_options)
+
+        expect(paths.any? { |p| filesystem.find_btrfs_subvolume_by_path(p).nil? }).to be(false)
+      end
+    end
+
+    context "and the new mount point is not root" do
+      let(:mount_path) { "/foo" }
+
+      it "does not add new subvolumes" do
+        paths = filesystem.btrfs_subvolumes.map(&:path)
+        subject.public_send(testing_method, mount_path, mount_point_options)
+
+        expect(filesystem.btrfs_subvolumes.map(&:path) - paths).to be_empty
+      end
+    end
+  end
+
+  RSpec.shared_examples "does nothing" do
+    it "does nothing" do
+      devicegraph = Y2Partitioner::DeviceGraphs.instance.current.dup
+      subject.public_send(testing_method, mount_path, mount_point_options)
+
+      expect(devicegraph).to eq(Y2Partitioner::DeviceGraphs.instance.current)
+    end
+  end
+
+  describe "#create_mount_point" do
+    include_context "mount point actions"
+
+    let(:testing_method) { :create_mount_point }
+
+    context "when the currently editing device has no filesystem" do
+      let(:dev_name) { "/dev/sdb7" }
+
+      include_examples "does nothing"
+    end
+
+    context "when the currently editing device has filesystem" do
+      let(:dev_name) { "/dev/sdb7" }
+
+      before do
+        device.create_filesystem(fs_type)
+      end
+
+      let(:fs_type) { Y2Storage::Filesystems::Type::EXT4 }
+
+      context "and the filesystem already has a mount point" do
+        before do
+          device.filesystem.create_mount_point("/bar")
+        end
+
+        include_examples "does nothing"
+      end
+
+      context "and the filesystem has no a mount point" do
+        it "creates a mount point for the filesystem with the given values" do
+          subject.create_mount_point(mount_path, mount_point_options)
+
+          expect(filesystem.mount_point).to_not be_nil
+          expect(filesystem.mount_point.path).to eq(mount_path)
+          expect(filesystem.mount_point.mount_by).to eq(mount_by_id)
+          expect(filesystem.mount_point.mount_options).to eq(mount_options)
+        end
+
+        context "and no mount options are given" do
+          let(:mount_options) { nil }
+
+          it "creates a mount point with default mount options" do
+            subject.create_mount_point(mount_path, mount_point_options)
+
+            expect(filesystem.mount_point.mount_options).to_not be_empty
+            expect(filesystem.mount_point.mount_options).to eq(fs_type.default_mount_options)
+          end
+        end
+
+        context "and the filesystem is btrfs" do
+          let(:fs_type) { Y2Storage::Filesystems::Type::BTRFS }
+
+          include_examples "btrfs subvolumes check"
+        end
+      end
+    end
+  end
+
+  describe "#update_mount_point" do
+    include_context "mount point actions"
+
+    let(:testing_method) { :update_mount_point }
+
+    context "when the currently editing device has no filesystem" do
+      let(:dev_name) { "/dev/sdb7" }
+
+      include_examples "does nothing"
+    end
+
+    context "when the currently editing device has filesystem" do
+      let(:dev_name) { "/dev/sdb7" }
+
+      before do
+        device.create_filesystem(fs_type)
+      end
+
+      let(:fs_type) { Y2Storage::Filesystems::Type::EXT4 }
+
+      context "and the filesystem has no mount point" do
+        include_examples "does nothing"
+      end
+
+      context "and the filesystem has a mount point" do
+        before do
+          device.filesystem.create_mount_point(fs_mount_path)
+        end
+
+        context "and the filesystem mount point path is equal to the given path" do
+          let(:fs_mount_path) { mount_path }
+
+          let(:mount_path) { "/bar" }
+
+          context "and no mount point options are given" do
+            let(:mount_point_options) { nil }
+
+            include_examples "does nothing"
+          end
+
+          context "and mount point options are given" do
+            it "updates the filesystem mount point options" do
+              mount_point_sid = filesystem.mount_point.sid
+
+              subject.update_mount_point(mount_path, mount_point_options)
+
+              expect(filesystem.mount_point.sid).to eq(mount_point_sid)
+              expect(filesystem.mount_point.mount_by).to eq(mount_by_id)
+              expect(filesystem.mount_point.mount_options).to eq(mount_options)
+            end
+
+            it "does not change the mount path" do
+              path = filesystem.mount_point.path
+              subject.update_mount_point(mount_path, mount_point_options)
+
+              expect(filesystem.mount_point.path).to eq(path)
+            end
+          end
+        end
+
+        context "and the filesystem mount point path is not equal to the given path" do
+          let(:fs_mount_path) { "/foo" }
+
+          let(:mount_path) { "/bar" }
+
+          it "updates the filesystem mount point path" do
+            mount_point_sid = filesystem.mount_point.sid
+            subject.update_mount_point(mount_path, mount_point_options)
+
+            expect(filesystem.mount_point.sid).to eq(mount_point_sid)
+            expect(filesystem.mount_point.path).to eq(mount_path)
+          end
+
+          context "and the filesystem is btrfs" do
+            let(:fs_type) { Y2Storage::Filesystems::Type::BTRFS }
+
+            include_examples "btrfs subvolumes check"
+          end
+        end
+      end
+    end
+  end
+
+  describe "#create_or_update_mount_point" do
+    include_context "mount point actions"
+
+    let(:testing_method) { :create_or_update_mount_point }
+
+    context "when the currently editing device has no filesystem" do
+      let(:dev_name) { "/dev/sdb7" }
+
+      include_examples "does nothing"
+    end
+
+    context "when the currently editing device has filesystem" do
+      let(:dev_name) { "/dev/sdb7" }
+
+      before do
+        device.create_filesystem(Y2Storage::Filesystems::Type::EXT4)
+      end
+
+      context "and the filesystem has no mount point" do
+        it "creates a new mount point" do
+          expect(subject).to receive(:create_mount_point).with(mount_path, mount_point_options)
+          subject.create_or_update_mount_point(mount_path, mount_point_options)
+        end
+      end
+
+      context "and the filesystem already has a mount point" do
+        before do
+          device.filesystem.create_mount_point("/foo")
+        end
+
+        it "updates the filesystem mount point" do
+          expect(subject).to receive(:update_mount_point).with(mount_path, mount_point_options)
+          subject.create_or_update_mount_point(mount_path, mount_point_options)
+        end
+      end
+    end
+  end
+
+  describe "#remove_mount_point" do
+    RSpec.shared_examples "does not remove" do
       it "does nothing" do
         devicegraph = Y2Partitioner::DeviceGraphs.instance.current.dup
-        subject.mount_point = mount_point
+        subject.remove_mount_point
 
         expect(devicegraph).to eq(Y2Partitioner::DeviceGraphs.instance.current)
       end
     end
 
-    context "when the currently editing devices has filesystem" do
-      let(:filesystem) { subject.filesystem }
+    context "when the currently editing device has no filesystem" do
+      let(:dev_name) { "/dev/sdb7" }
 
-      context "and tries to set the same mount point" do
-        let(:mount_point) { device.filesystem.mount_point }
+      include_examples "does not remove"
+    end
 
-        it "does nothing" do
-          devicegraph = Y2Partitioner::DeviceGraphs.instance.current.dup
-          subject.mount_point = mount_point
+    context "when the currently editing device has filesystem" do
+      let(:dev_name) { "/dev/sdb7" }
 
-          expect(devicegraph).to eq(Y2Partitioner::DeviceGraphs.instance.current)
-        end
+      before do
+        device.create_filesystem(Y2Storage::Filesystems::Type::EXT4)
       end
 
-      context "and tries to set a different mount point" do
-        let(:mount_point) { "/foo" }
+      context "and the filesystem has no mount point" do
+        include_examples "does not remove"
+      end
 
-        it "changes the filesystem mount point" do
-          subject.mount_point = mount_point
-          expect(filesystem.mount_point).to eq(mount_point)
+      context "and the filesystem already has a mount point" do
+        before do
+          device.filesystem.create_mount_point("/foo")
         end
 
-        context "and the filesystem is Btrfs" do
-          let(:dev_name) { "/dev/sda2" }
+        it "removes the filesystem mount point" do
+          subject.remove_mount_point
+          expect(subject.filesystem.mount_point).to be_nil
+        end
 
-          it "does not delete the probed subvolumes" do
-            subvolumes = filesystem.btrfs_subvolumes
-            subject.mount_point = mount_point
+        it "refreshes btrfs subvolumes shadowing" do
+          expect(Y2Storage::Filesystems::Btrfs).to receive(:refresh_subvolumes_shadowing)
+          subject.remove_mount_point
+        end
+      end
+    end
+  end
 
-            expect(filesystem.btrfs_subvolumes).to include(*subvolumes)
+  describe "#restore_mount_point" do
+    include_context "mount point actions"
+
+    let(:testing_method) { :restore_mount_point }
+
+    context "when the currently editing device has no filesystem" do
+      let(:dev_name) { "/dev/sdb7" }
+
+      include_examples "does nothing"
+    end
+
+    context "when the currently editing device has filesystem" do
+      let(:dev_name) { "/dev/sdb7" }
+
+      before do
+        device.create_filesystem(fs_type)
+      end
+
+      let(:fs_type) { Y2Storage::Filesystems::Type::EXT4 }
+
+      context "and the filesystem has a mount point" do
+        before do
+          device.filesystem.create_mount_point("/foo")
+        end
+
+        it "removes the filesystem mount point" do
+          mount_point_sid = filesystem.mount_point.sid
+          subject.restore_mount_point(mount_path, mount_point_options)
+          expect(devicegraph.find_device(mount_point_sid)).to be_nil
+        end
+
+        context "and the given mount path is empty" do
+          let(:mount_path) { "" }
+
+          it "does not create a new mount point" do
+            subject.restore_mount_point(mount_path, mount_point_options)
+            expect(filesystem.mount_point).to be_nil
+          end
+        end
+
+        context "and the given mount path is nil" do
+          let(:mount_path) { nil }
+
+          it "does not create a new mount point" do
+            subject.restore_mount_point(mount_path, mount_point_options)
+            expect(filesystem.mount_point).to be_nil
+          end
+        end
+
+        context "and a mount path is given" do
+          let(:mount_path) { "/foo" }
+
+          it "creates a mount point for the filesystem with the given values" do
+            subject.restore_mount_point(mount_path, mount_point_options)
+
+            expect(filesystem.mount_point).to_not be_nil
+            expect(filesystem.mount_point.path).to eq(mount_path)
+            expect(filesystem.mount_point.mount_by).to eq(mount_by_id)
+            expect(filesystem.mount_point.mount_options).to eq(mount_options)
           end
 
-          it "updates the subvolumes mount points" do
-            subject.mount_point = mount_point
-            mount_points = filesystem.btrfs_subvolumes.map(&:mount_point).compact
-            expect(mount_points).to all(start_with(mount_point))
-          end
+          context "when no mount options are given" do
+            let(:mount_options) { nil }
 
-          it "does not change mount point for special subvolumes" do
-            subject.mount_point = mount_point
-            expect(filesystem.top_level_btrfs_subvolume.mount_point.to_s).to be_empty
-            expect(filesystem.default_btrfs_subvolume.mount_point.to_s).to be_empty
-          end
-
-          it "refresh btrfs subvolumes shadowing" do
-            expect(Y2Storage::Filesystems::Btrfs).to receive(:refresh_subvolumes_shadowing)
-            subject.mount_point = mount_point
-          end
-
-          context "and it has 'not probed' subvolumes" do
-            let(:dev_name) { "/dev/sdb3" }
-            let(:path) { "@/bar" }
-
-            before do
-              filesystem.create_btrfs_subvolume(path, false)
+            it "does not set default mount options" do
+              subject.restore_mount_point(mount_path, mount_point_options)
+              expect(filesystem.mount_point.mount_options).to_not eq(fs_type.default_mount_options)
             end
-
-            it "deletes the not probed subvolumes" do
-              subject.mount_point = mount_point
-              expect(filesystem.find_btrfs_subvolume_by_path(path)).to be_nil
-            end
           end
 
-          context "and the new mount point is root" do
-            let(:mount_point) { "/" }
+          context "and the filesystem is btrfs" do
+            let(:fs_type) { Y2Storage::Filesystems::Type::BTRFS }
 
-            before do
-              device.filesystem.mount_point = "/no_root"
-            end
-
-            it "adds the proposed subvolumes for the current arch that do not exist" do
-              specs = Y2Storage::SubvolSpecification.fallback_list
-              arch_specs = Y2Storage::SubvolSpecification.for_current_arch(specs)
-              paths = arch_specs.map { |s| filesystem.btrfs_subvolume_path(s.path) }
-
-              expect(paths.any? { |p| filesystem.find_btrfs_subvolume_by_path(p).nil? }).to be(true)
-
-              subject.mount_point = mount_point
-
-              expect(paths.any? { |p| filesystem.find_btrfs_subvolume_by_path(p).nil? }).to be(false)
-            end
-          end
-
-          context "and the new mount point is not root" do
-            let(:mount_point) { "/foo" }
-
-            it "does not add new subvolumes" do
-              paths = filesystem.btrfs_subvolumes.map(&:path)
-              subject.mount_point = mount_point
-
-              expect(filesystem.btrfs_subvolumes.map(&:path)).to eq(paths)
-            end
+            include_examples "btrfs subvolumes check"
           end
         end
       end
@@ -811,7 +1135,7 @@ describe Y2Partitioner::Actions::Controllers::Filesystem do
         before do
           device.remove_descendants
           device.create_filesystem(Y2Storage::Filesystems::Type::BTRFS)
-          device.filesystem.mountpoint = mntpnt
+          device.filesystem.mount_path = mntpnt
         end
 
         context "if is going to be mounted as root" do
@@ -859,7 +1183,7 @@ describe Y2Partitioner::Actions::Controllers::Filesystem do
         before do
           device.remove_descendants
           device.create_filesystem(Y2Storage::Filesystems::Type::EXT4)
-          device.filesystem.mountpoint = mntpnt
+          device.filesystem.mount_path = mntpnt
         end
 
         context "if is going to be mounted as root" do

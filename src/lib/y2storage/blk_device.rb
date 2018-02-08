@@ -356,7 +356,7 @@ module Y2Storage
     # @return [String, nil]
     def filesystem_mountpoint
       return nil unless blk_filesystem
-      blk_filesystem.mountpoint
+      blk_filesystem.mount_path
     end
 
     # Non encrypted version of this device

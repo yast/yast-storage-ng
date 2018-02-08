@@ -47,13 +47,13 @@ module Y2Storage
       # Whether the device will be mounted as root
       # @return [Boolean]
       def root?
-        mount_point == Mountable::ROOT_PATH
+        mount_point == MountPoint::ROOT_PATH.to_s
       end
 
       # Whether the device will be mounted as swap
       # @return [Boolean]
       def swap?
-        mount_point == Mountable::SWAP_PATH
+        mount_point == MountPoint::SWAP_PATH.to_s
       end
     end
   end

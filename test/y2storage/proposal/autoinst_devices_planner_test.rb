@@ -58,6 +58,9 @@ describe Y2Storage::Proposal::AutoinstDevicesPlanner do
       .and_return(boot_checker)
     fake_scenario(scenario)
 
+    # Do not read from running system
+    allow(Yast::ProductFeatures).to receive(:GetSection).with("partitioning").and_return(nil)
+
     allow(Yast::Arch).to receive(:x86_64).and_return(architecture == :x86_64)
     allow(Yast::Arch).to receive(:i386).and_return(architecture == :i386)
     allow(Yast::Arch).to receive(:ppc).and_return(architecture == :ppc)

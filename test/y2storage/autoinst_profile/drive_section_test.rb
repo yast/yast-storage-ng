@@ -126,7 +126,7 @@ describe Y2Storage::AutoinstProfile::DriveSection do
           # assign the values instead of intercepting the query calls.
           sdd1 = dev.partitions.find { |i| i.name == "/dev/sdd1" }
           sdd1.boot = true if bootable
-          sdd1.filesystem.mountpoint = mountpoint if mountpoint
+          sdd1.filesystem.mount_path = mountpoint if mountpoint
         end
 
         let(:dev) { device("sdd") }
@@ -255,7 +255,7 @@ describe Y2Storage::AutoinstProfile::DriveSection do
         # SWIG makes very hard to use proper mocking. See comment above.
         win = dev.partitions.sort_by(&:number).first
         win.boot = true if bootable
-        win.filesystem.mountpoint = mountpoint if mountpoint
+        win.filesystem.mount_path = mountpoint if mountpoint
       end
 
       let(:mountpoint) { nil }

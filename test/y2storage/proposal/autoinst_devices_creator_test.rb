@@ -72,8 +72,8 @@ describe Y2Storage::Proposal::AutoinstDevicesCreator do
       home = devicegraph.partitions.last
       fs = home.filesystem
       expect(fs.mkfs_options).to eq("-b 2048")
-      expect(fs.fstab_options).to eq(["ro", "acl"])
-      expect(fs.mount_by).to eq(mount_by_type)
+      expect(fs.mount_point.mount_options).to eq(["ro", "acl"])
+      expect(fs.mount_point.mount_by).to eq(mount_by_type)
     end
 
     it "reuses partitions" do

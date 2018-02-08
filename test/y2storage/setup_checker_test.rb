@@ -40,7 +40,7 @@ describe Y2Storage::SetupChecker do
       Y2Storage::PartitionType::PRIMARY)
     root.size = 15.GiB
     fs = root.create_filesystem(Y2Storage::Filesystems::Type::EXT4)
-    fs.mount_point = "/"
+    fs.mount_path = "/"
   end
 
   subject { described_class.new(fake_devicegraph) }

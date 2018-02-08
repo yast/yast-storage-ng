@@ -250,7 +250,7 @@ module Y2Storage
     # @param mountpoint [String] mountpoint of the filesystem (e.g. "/").
     # @return [Boolean]
     def filesystem_in_network?(mountpoint)
-      filesystem = filesystems.find { |i| i.mountpoint == mountpoint }
+      filesystem = filesystems.find { |i| i.mount_path == mountpoint }
       return false if filesystem.nil?
       filesystem.in_network?
     end

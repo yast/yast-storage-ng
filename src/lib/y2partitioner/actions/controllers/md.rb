@@ -249,8 +249,7 @@ module Y2Partitioner
           return false if partition.md
           return true if partition.filesystem.nil?
 
-          mount = partition.filesystem.mountpoint
-          mount.nil? || mount.empty?
+          partition.filesystem.mount_point.nil?
         end
 
         def min_chunk_size
