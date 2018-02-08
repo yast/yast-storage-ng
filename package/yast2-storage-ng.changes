@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Thu Feb  8 10:47:53 UTC 2018 - ancor@suse.com
+
+- Partitioner: fixed 'Installation Summary' section (part of
+  fate#318196).
+- 4.0.88
+
+-------------------------------------------------------------------
 Thu Feb  8 10:15:18 UTC 2018 - igonzalezsosa@suse.com
 
 - AutoYaST: support additional names in the drive/device element
