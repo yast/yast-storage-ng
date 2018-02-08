@@ -309,7 +309,7 @@ module Y2Partitioner
       #
       def get(filesystem)
         # current filesystem settings
-        fs_str = filesystem.send program + "_options"
+        fs_str = filesystem.send(program + "_options")
 
         value = default
 
@@ -330,7 +330,7 @@ module Y2Partitioner
       #
       def set(filesystem, val)
         # current filesystem settings
-        fs_str = filesystem.send program + "_options"
+        fs_str = filesystem.send(program + "_options")
 
         # remove the currently set option value
         fs_str.gsub!(/(^|\s+)#{Regexp.escape(option_str)}[^-]*/, "")
@@ -345,7 +345,7 @@ module Y2Partitioner
         fs_str.strip!
 
         # store new option args
-        filesystem.send program + "_options=", fs_str
+        filesystem.send(program + "_options=", fs_str)
       end
 
       # Validate option value.
@@ -358,7 +358,7 @@ module Y2Partitioner
       # @return [Boolean]
       #
       def validate?(val)
-        return true unless validate && error
+        return true unless validate && @value[:error]
         validate[val]
       end
 
@@ -398,12 +398,26 @@ module Y2Partitioner
 
       # Make option hash entries readable via methods.
       #
+      # Note this intentionally returns nil if there's neither a method nor
+      # a hash key.
+      #
       # @param foo [Symbol]
       #
       # @return [Object]
       #
       def method_missing(foo)
         @value[foo]
+      end
+
+      # Make class interface consistent.
+      #
+      # @param foo [Symbol]
+      # @param _all [Boolean]
+      #
+      # @return [Boolean]
+      #
+      def respond_to_missing?(foo, _all)
+        @value.key?(foo)
       end
 
       # Return true if option value is a boolean value.

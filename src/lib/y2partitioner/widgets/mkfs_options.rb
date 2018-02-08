@@ -82,7 +82,7 @@ module Y2Partitioner
       end
     end
 
-    # Class for selecting mkfs and tine2fs options for {Y2Storage::Filesystems}.
+    # Class for selecting mkfs and tune2fs options for {Y2Storage::Filesystems}.
     class MkfsOptions < CWM::CustomWidget
       # @param controller [Actions::Controllers::Filesystem]
       def initialize(controller)

@@ -26,7 +26,6 @@ require "y2partitioner/dialogs/btrfs_subvolumes"
 require "y2partitioner/widgets/fstab_options"
 require "y2storage/mountable"
 require "y2storage/btrfs_subvolume"
-require "y2partitioner/widgets/mkfs_optiondata"
 
 Yast.import "Popup"
 
@@ -378,10 +377,7 @@ module Y2Partitioner
           @snapper_checkbox.refresh
         else
           show(@options_button)
-          has_options =
-            @controller.format_options_supported? &&
-            !MkfsOptiondata.options_for(@controller.filesystem).empty?
-          has_options ? @options_button.enable : @options_button.disable
+          @controller.format_options_supported? ? @options_button.enable : @options_button.disable
         end
       end
     end
