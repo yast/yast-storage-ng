@@ -41,6 +41,10 @@ module Y2Storage
     #   @return [MountPoint]
     storage_forward :create_mount_point, as: "MountPoint"
 
+    # @!method remove_mount_point
+    #   @raise [Storage::Exception] if the mountable has no mount point
+    storage_forward :remove_mount_point
+
     # @!method mount_point
     #   @return [MountPoint]
     storage_forward :mount_point, as: "MountPoint", check_with: :has_mount_point
@@ -86,13 +90,6 @@ module Y2Storage
       return [] if mount_point.nil?
 
       mount_point.mount_options
-    end
-
-    # FIXME
-    def remove_mount_point(devicegraph)
-      return if mount_point.nil?
-
-      devicegraph.remove_mount_point(mount_point)
     end
 
     # Is the mount persistent?

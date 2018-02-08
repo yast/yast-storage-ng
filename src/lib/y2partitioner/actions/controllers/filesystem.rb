@@ -283,23 +283,21 @@ module Y2Partitioner
           return if mount_point.nil?
 
           before_change_mount_point
-          # FIXME
-          filesystem.remove_mount_point(working_graph)
+          filesystem.remove_mount_point
           after_change_mount_point
         end
 
         # Removes the current mount point (if there is one) and creates a new
         # mount point for the filesystem.
         #
-        # @param mount_point [String]
-        # @param options [Hash] options for the mount point (e.g., {mount_by: :uuid})
+        # @param path [String]
+        # @param options [Hash] options for the mount point (e.g., { mount_by: :uuid })
         def restore_mount_point(path, options = {})
           return if filesystem.nil?
 
           before_change_mount_point
 
-          # FIXME
-          filesystem.remove_mount_point(working_graph) if mount_point
+          filesystem.remove_mount_point if mount_point
 
           if path && !path.empty?
             filesystem.create_mount_point(path)
@@ -525,7 +523,7 @@ module Y2Partitioner
           subvolumes.each do |subvolume|
             new_mount_point = filesystem.btrfs_subvolume_mount_point(subvolume.path)
             if new_mount_point.nil?
-              subvolume.remove_mount_point(working_graph)
+              subvolume.remove_mount_point if subvolume.mount_point
             else
               subvolume.mount_path = new_mount_point
             end

@@ -136,7 +136,7 @@ module Y2Storage
         nfs = find_nfs_device(graph)
 
         if mountpoint.nil? || mountpoint.empty?
-          nfs.remove_mount_point(devicegraph) unless nfs.mount_point.nil?
+          nfs.remove_mount_point unless nfs.mount_point.nil?
         else
           nfs.mount_path = mountpoint
           nfs.mount_point.mount_options = fstopt.split(/[\s,]+/)

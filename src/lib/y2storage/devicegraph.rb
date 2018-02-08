@@ -397,20 +397,6 @@ module Y2Storage
       remove_with_dependants(nfs)
     end
 
-    # FIXME
-    # Removes an MountPoint and all its descendants
-    #
-    # @param mount_point [MountPoint]
-    #
-    # @raise [ArgumentError] if the MountPoint does not exist in the devicegraph
-    def remove_mount_point(mount_point)
-      if mount_point.nil? || !mount_point.is?(:mount_point)
-        raise(ArgumentError, "Incorrect device #{mount_point.inspect}")
-      end
-
-      remove_with_dependants(mount_point)
-    end
-
     # String to represent the whole devicegraph, useful for comparison in
     # the tests.
     #
