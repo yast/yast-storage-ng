@@ -185,7 +185,7 @@ module Y2Storage
       def find_disk(devicegraph, device_name)
         device = devicegraph.find_by_any_name(device_name)
         return nil unless device
-        device.ancestors.last || device
+        ([device] + device.ancestors).find { |d| d.is?(:disk_device) }
       end
     end
   end
