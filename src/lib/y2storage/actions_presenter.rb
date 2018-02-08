@@ -63,7 +63,7 @@ module Y2Storage
       [toggle_subvolumes_event]
     end
 
-    # Checks whether the list of actions if empty
+    # Checks whether the list of actions is empty
     #
     # @return [Boolean] true if there are no actions to show
     def empty?
