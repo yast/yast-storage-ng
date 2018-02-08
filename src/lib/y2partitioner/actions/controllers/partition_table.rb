@@ -58,8 +58,8 @@ module Y2Partitioner
           @type = possible_partition_table_types.first
         end
 
-        # The disk we are working on
-        # @return [Y2Storage::Disk] or [Y2Storage::Dasd]
+        # The disk (or similar device) we are working on
+        # @return [Y2Storage::Partitionable]
         def disk
           DeviceGraphs.instance.current.find_by_name(disk_name)
         end
