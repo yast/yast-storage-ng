@@ -41,12 +41,6 @@ module Y2Storage
         _("Saving file system configuration...")
       end
 
-      # Modes in which the client should run
-      # @return [Array<Symbol>]
-      def modes
-        [:installation, :update, :autoinst, :autoupg, :live_installation]
-      end
-
       # Performs the final actions in the target system
       def write
         return unless multipath?
