@@ -1,4 +1,12 @@
 -------------------------------------------------------------------
+Fri Feb  9 00:51:22 UTC 2018 - ancor@suse.com
+
+- Enable multipathd in the target system at the end of installation
+  if there are multipath devices (bsc#1076183).
+- Updated required version of libstorage-ng-ruby (bsc#1079541).
+- 4.0.91
+
+-------------------------------------------------------------------
 Thu Feb  8 16:48:20 UTC 2018 - jlopez@suse.com
 
 - Add class MountPoint (needed for bsc#1076305 and bsc#1066763).
