@@ -32,49 +32,9 @@ describe Y2Partitioner::Actions::EditBlkDevice do
     devicegraph_stub(scenario)
   end
 
-  let(:scenario) { "complex-lvm-encrypt.yml" }
-
   let(:current_graph) { Y2Partitioner::DeviceGraphs.instance.current }
 
   let(:device) { Y2Storage::BlkDevice.find_by_name(current_graph, dev_name) }
-
-  describe "#initialize" do
-    let(:controller_class) { Y2Partitioner::Actions::Controllers::Filesystem }
-
-    context "if working on a partition" do
-      let(:dev_name) { "/dev/sda1" }
-
-      it "includes the partition device name in the title passed to the controller" do
-        expect(controller_class).to receive(:new).with(device, /dev\/sda1/)
-        described_class.new(device)
-      end
-    end
-
-    context "if working on a logical volume" do
-      let(:dev_name) { "/dev/vg0/lv1" }
-
-      it "includes the VG device name and the LV name in the title passed to the controller" do
-        expect(controller_class).to receive(:new) do |dev, title|
-          expect(dev).to eq device
-          expect(title).to include "/dev/vg0"
-          expect(title).to include "lv1"
-          expect(title).to_not include "/dev/vg0/lv1"
-        end
-        described_class.new(device)
-      end
-    end
-
-    context "if working on an MD array" do
-      before { Y2Storage::Md.create(current_graph, "/dev/md0") }
-
-      let(:dev_name) { "/dev/md0" }
-
-      it "includes the RAID device name in the title passed to the controller" do
-        expect(controller_class).to receive(:new).with(device, /dev\/md0/)
-        described_class.new(device)
-      end
-    end
-  end
 
   describe "#run" do
     subject(:sequence) { described_class.new(device) }
@@ -115,15 +75,55 @@ describe Y2Partitioner::Actions::EditBlkDevice do
     end
 
     context "if called on a device that can be edited" do
-      let(:scenario) { "lvm-two-vgs.yml" }
+      before do
+        # Only to finish
+        allow(Y2Partitioner::Dialogs::FormatAndMount).to receive(:run).and_return :abort
+      end
 
-      let(:dev_name) { "/dev/vg1/lv1" }
+      let(:scenario) { "complex-lvm-encrypt.yml" }
+
+      let(:controller_class) { Y2Partitioner::Actions::Controllers::Filesystem }
+
+      context "and the device is a partition" do
+        let(:dev_name) { "/dev/sda1" }
+
+        it "includes the partition device name in the title passed to the controller" do
+          expect(controller_class).to receive(:new).with(device, /dev\/sda1/)
+          sequence.run
+        end
+      end
+
+      context "and the device is a logical volume" do
+        let(:dev_name) { "/dev/vg0/lv1" }
+
+        it "includes the VG device name and the LV name in the title passed to the controller" do
+          expect(controller_class).to receive(:new) do |dev, title|
+            expect(dev).to eq device
+            expect(title).to include "/dev/vg0"
+            expect(title).to include "lv1"
+            expect(title).to_not include "/dev/vg0/lv1"
+          end
+          sequence.run
+        end
+      end
+
+      context "and the device is an MD array" do
+        before { Y2Storage::Md.create(current_graph, "/dev/md0") }
+
+        let(:dev_name) { "/dev/md0" }
+
+        it "includes the RAID device name in the title passed to the controller" do
+          expect(controller_class).to receive(:new).with(device, /dev\/md0/)
+          sequence.run
+        end
+      end
 
       context "if the user goes forward through all the dialogs" do
         before do
-          allow(Y2Partitioner::Dialogs::PartitionRole).to receive(:run).and_return :next
           allow(Y2Partitioner::Dialogs::FormatAndMount).to receive(:run).and_return :next
         end
+
+        let(:dev_name) { "/dev/vg0/lv1" }
 
         it "returns :finish" do
           expect(sequence.run).to eq(:finish)
@@ -132,9 +132,10 @@ describe Y2Partitioner::Actions::EditBlkDevice do
 
       context "if the user aborts the process at some point" do
         before do
-          allow(Y2Partitioner::Dialogs::PartitionRole).to receive(:run).and_return :next
           allow(Y2Partitioner::Dialogs::FormatAndMount).to receive(:run).and_return :abort
         end
+
+        let(:dev_name) { "/dev/vg0/lv1" }
 
         it "returns :abort" do
           expect(sequence.run).to eq(:abort)

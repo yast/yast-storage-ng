@@ -37,7 +37,7 @@ describe Y2Partitioner::Actions::ResizeLvmVg do
 
   let(:vg) { Y2Storage::LvmVg.find_by_vg_name(current_graph, "vg0") }
 
-  subject { described_class.new(vg: vg) }
+  subject { described_class.new(vg) }
 
   describe "#run" do
     context "if the user goes forward through the dialog" do
