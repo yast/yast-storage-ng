@@ -34,7 +34,7 @@ module Y2Partitioner
       def initialize(lvm_vg)
         super()
 
-        @controller = Controllers::LvmVg.new(vg: lvm_vg)
+        @device_sid = lvm_vg.sid
       end
 
       # Runs the dialog for resizing the volume group
@@ -49,6 +49,12 @@ module Y2Partitioner
 
       # @return [Controllers::LvmVg]
       attr_reader :controller
+
+      # @see TransactionWizard
+      def init_transaction
+        # The controller object must be created within the transaction
+        @controller = Controllers::LvmVg.new(vg: device)
+      end
 
       # @see TransactionWizard
       def sequence_hash

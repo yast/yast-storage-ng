@@ -37,7 +37,7 @@ module Y2Partitioner
       def initialize(md)
         super()
 
-        @controller = Controllers::Md.new(md: md)
+        @device_sid = md.sid
       end
 
       # Calls the dialog for resizing the MD RAID
@@ -52,6 +52,12 @@ module Y2Partitioner
 
       # @return [Controllers::Md]
       attr_reader :controller
+
+      # @see TransactionWizard
+      def init_transaction
+        # The controller object must be created within the transaction
+        @controller = Controllers::Md.new(md: device)
+      end
 
       # @see TransactionWizard
       def sequence_hash
