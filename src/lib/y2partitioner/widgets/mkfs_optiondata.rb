@@ -329,6 +329,8 @@ module Y2Partitioner
       # @return [nil]
       #
       def set(filesystem, val)
+        return if val.nil?
+
         # current filesystem settings
         fs_str = filesystem.send(program + "_options")
 
@@ -353,12 +355,12 @@ module Y2Partitioner
       # This calls the validation function if there is one defined _and_ an
       # error message exists. Else it just returns true.
       #
-      # @param val [String, Boolean]
+      # @param val [String, Boolean, NilClass]
       #
       # @return [Boolean]
       #
       def validate?(val)
-        return true unless validate && @value[:error]
+        return true if val.nil? || !validate || !@value[:error]
         validate[val]
       end
 
@@ -396,6 +398,19 @@ module Y2Partitioner
 
     private
 
+      # Allowed keys in {ALL_OPTIONS}.
+      #
+      # @param foo [Symbol]
+      #
+      # @return [Boolean]
+      #
+      def good_key?(foo)
+        [
+          :default, :error, :fs, :help, :label, :mkfs_option,
+          :tune_option, :validate, :values, :widget
+        ].include?(foo)
+      end
+
       # Make option hash entries readable via methods.
       #
       # Note this intentionally returns nil if there's neither a method nor
@@ -406,7 +421,11 @@ module Y2Partitioner
       # @return [Object]
       #
       def method_missing(foo)
-        @value[foo]
+        if good_key?(foo)
+          @value[foo]
+        else
+          super
+        end
       end
 
       # Make class interface consistent.
@@ -417,7 +436,7 @@ module Y2Partitioner
       # @return [Boolean]
       #
       def respond_to_missing?(foo, _all)
-        @value.key?(foo)
+        good_key?(foo)
       end
 
       # Return true if option value is a boolean value.
@@ -452,7 +471,7 @@ module Y2Partitioner
       class << self
         # Get list of options suitable for a specific file system.
         #
-        # The list can be empty.
+        # The returned list can be empty.
         #
         # @param filesystem [Y2Storage::Filesystems]
         #
@@ -461,6 +480,14 @@ module Y2Partitioner
         def options_for(filesystem)
           fs = filesystem.type.to_sym
           all_options.find_all { |x| x[:fs].include?(fs) }.map { |x| MkfsOptiondata.new(x) }
+        end
+
+        # Get list of all options.
+        #
+        # @return [Array<MkfsOptiondata>]
+        #
+        def all
+          all_options.map { |x| MkfsOptiondata.new(x) }
         end
 
       private
