@@ -5,15 +5,15 @@
     partition_table: gpt
     partitions:
     - partition:
-        size: 15358 MiB (15.00 GiB)
+        size: 1 MiB
         name: "/dev/sda1"
+        type: primary
+        id: bios_boot
+    - partition:
+        size: 15726575.5 KiB (15.00 GiB)
+        name: "/dev/sda2"
         id: linux
         file_system: btrfs
         mount_point: "/"
         btrfs:
           default_subvolume: "@"
-    - partition:
-        size: 1007.5 KiB (0.98 MiB)
-        name: "/dev/sda2"
-        type: primary
-        id: bios_boot

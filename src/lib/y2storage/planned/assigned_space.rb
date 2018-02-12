@@ -190,7 +190,11 @@ module Y2Storage
       # Sorts the planned partitions in the most convenient way in order to
       # create real partitions for them.
       def sort_partitions!
-        @partitions = partitions_sorted_by_attr(:disk, :max_start_offset)
+        # Initially this was sorting by :disk and :max_start_offset. But
+        # since the partitions are already assigned to a given space, using
+        # :disk makes very little sense. And it was causing undesired effects
+        # (see bsc#1073680 and bsc#1076851).
+        @partitions = partitions_sorted_by_attr(:max_start_offset)
         last = enforced_last
         return unless last
 

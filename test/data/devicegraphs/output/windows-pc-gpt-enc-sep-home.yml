@@ -13,20 +13,20 @@
         label: windows
 
     - partition:
-        size: 40.00 GiB
+        size: 1.00 MiB
         name: "/dev/sda3"
+        id: bios_boot
+
+    - partition:
+        size: 40.00 GiB
+        name: "/dev/sda4"
         id: linux
         file_system: btrfs
         mount_point: "/"
         encryption:
           type: luks
-          name: "/dev/mapper/cr_sda3"
+          name: "/dev/mapper/cr_sda4"
           password: '12345678'
-
-    - partition:
-        size: 1.00 MiB
-        name: "/dev/sda4"
-        id: bios_boot
 
     - partition:
         size: 2.00 GiB

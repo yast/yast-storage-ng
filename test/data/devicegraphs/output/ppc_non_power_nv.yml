@@ -5,17 +5,17 @@
     partition_table: gpt
     partitions:
     - partition:
-        size: 40 GiB
+        size: 1 MiB
         name: "/dev/sda1"
+        type: primary
+        id: prep
+    - partition:
+        size: 40 GiB
+        name: "/dev/sda2"
         type: primary
         id: linux
         file_system: btrfs
         mount_point: "/"
-    - partition:
-        size: 1 MiB
-        name: "/dev/sda2"
-        type: primary
-        id: prep
     - partition:
         size: 2 GiB
         name: "/dev/sda3"
