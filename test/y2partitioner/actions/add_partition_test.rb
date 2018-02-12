@@ -46,6 +46,30 @@ describe Y2Partitioner::Actions::AddPartition do
   let(:disk) { Y2Storage::Disk.find_by_name(current_graph, disk_name) }
 
   describe "#run" do
+    let(:scenario) { "lvm-two-vgs.yml" }
+
+    let(:disk_name) { "/dev/sda" }
+
+    # Regression test
+    it "uses the device belonging to the current devicegraph" do
+      # Only to finish
+      allow(subject).to receive(:run?).and_return(false)
+
+      initial_graph = current_graph
+
+      expect(Y2Partitioner::Actions::Controllers::Partition).to receive(:new) do |disk_name|
+        # Modifies used device
+        disk = Y2Storage::BlkDevice.find_by_name(current_graph, disk_name)
+        disk.remove_descendants
+
+        # Initial device is not modified
+        initial_disk = Y2Storage::BlkDevice.find_by_name(initial_graph, disk_name)
+        expect(initial_disk.descendants).to_not be_empty
+      end
+
+      subject.run
+    end
+
     context "if it is not possible to create a new partition on the disk" do
       let(:scenario) { "lvm-two-vgs.yml" }
 

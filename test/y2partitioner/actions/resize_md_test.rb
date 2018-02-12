@@ -40,6 +40,30 @@ describe Y2Partitioner::Actions::ResizeMd do
 
     let(:devicegraph) { Y2Partitioner::DeviceGraphs.instance.current }
 
+    let(:scenario) { "md_raid.xml" }
+
+    let(:md) { devicegraph.md_raids.first }
+
+    # Regression test
+    it "uses the device belonging to the current devicegraph" do
+      # Only to finish
+      allow(subject).to receive(:run?).and_return(false)
+
+      initial_graph = devicegraph
+
+      expect(Y2Partitioner::Actions::Controllers::Md).to receive(:new) do |params|
+        # Modifies used device
+        md = params[:md]
+        md.remove_descendants
+
+        # Initial device is not modified
+        initial_md = initial_graph.find_device(md.sid)
+        expect(initial_md.descendants).to_not be_empty
+      end
+
+      subject.run
+    end
+
     context "if the MD RAID already exists on the disk" do
       let(:scenario) { "md_raid.xml" }
 

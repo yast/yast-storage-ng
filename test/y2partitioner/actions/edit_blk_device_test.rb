@@ -39,6 +39,29 @@ describe Y2Partitioner::Actions::EditBlkDevice do
   describe "#run" do
     subject(:sequence) { described_class.new(device) }
 
+    let(:scenario) { "complex-lvm-encrypt.yml" }
+
+    let(:dev_name) { "/dev/sda1" }
+
+    # Regression test
+    it "uses the device belonging to the current devicegraph" do
+      # Only to finish
+      allow(subject).to receive(:run?).and_return(false)
+
+      initial_graph = current_graph
+
+      expect(Y2Partitioner::Actions::Controllers::Filesystem).to receive(:new) do |device, _title|
+        # Modifies used device
+        device.remove_descendants
+
+        # Initial device is not modified
+        initial_device = initial_graph.find_device(device.sid)
+        expect(initial_device.descendants).to_not be_empty
+      end
+
+      subject.run
+    end
+
     context "if called on an extended partition" do
       let(:scenario) { "mixed_disks.yml" }
 

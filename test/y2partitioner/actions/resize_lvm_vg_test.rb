@@ -40,6 +40,26 @@ describe Y2Partitioner::Actions::ResizeLvmVg do
   subject { described_class.new(vg) }
 
   describe "#run" do
+    # Regression test
+    it "uses the device belonging to the current devicegraph" do
+      # Only to finish
+      allow(subject).to receive(:run?).and_return(false)
+
+      initial_graph = current_graph
+
+      expect(Y2Partitioner::Actions::Controllers::LvmVg).to receive(:new) do |params|
+        # Modifies used device
+        vg = params[:vg]
+        vg.vg_name = "foo"
+
+        # Initial device is not modified
+        initial_vg = initial_graph.find_device(vg.sid)
+        expect(initial_vg.vg_name).to_not eq("foo")
+      end
+
+      subject.run
+    end
+
     context "if the user goes forward through the dialog" do
       before do
         allow(Y2Partitioner::Dialogs::LvmVgResize).to receive(:run).and_return :next
