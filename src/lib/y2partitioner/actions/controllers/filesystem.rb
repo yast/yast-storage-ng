@@ -22,6 +22,7 @@
 require "yast"
 require "y2storage"
 require "y2partitioner/device_graphs"
+require "y2partitioner/widgets/mkfs_optiondata"
 require "y2storage/filesystems/btrfs"
 require "y2storage/subvol_specification"
 
@@ -330,7 +331,7 @@ module Y2Partitioner
         #
         # @return [Boolean]
         def format_options_supported?
-          to_be_formatted? && !filesystem.type.is?(:btrfs)
+          to_be_formatted? && !Widgets::MkfsOptiondata.options_for(filesystem).empty?
         end
 
         # Whether is possible to set the snapshots configuration for the current

@@ -390,6 +390,10 @@ module Y2Partitioner
         @controller = controller
       end
 
+      def filesystem
+        @controller.filesystem
+      end
+
       # @macro seeAbstractWidget
       def opt
         %i(hstretch notify)
@@ -401,8 +405,15 @@ module Y2Partitioner
 
       # @macro seeAbstractWidget
       def handle
-        Yast::Popup.Error("Not yet implemented") # Dialogs::FormatOptions.new(@options).run
-
+        log.info(
+          "format options before: [#{filesystem.type}] " \
+          "mkfs='#{filesystem.mkfs_options}', tune='#{filesystem.tune_options}'"
+        )
+        Dialogs::MkfsOptions.new(@controller).run
+        log.info(
+          "format options after: [#{filesystem.type}] " \
+          "mkfs='#{filesystem.mkfs_options}', tune='#{filesystem.tune_options}'"
+        )
         nil
       end
     end
