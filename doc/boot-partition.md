@@ -10,7 +10,7 @@ Boot Partition Layout / Restrictions For Storage Proposal
 
 ### Relevant bugs during SLE15 beta phase
 
-- In [bsc#107685](https://bugzilla.suse.com/show_bug.cgi?id=1076851) and
+- In [bsc#1068772](https://bugzilla.suse.com/show_bug.cgi?id=1068772) and
   [bsc#1076851](https://bugzilla.suse.com/show_bug.cgi?id=1076851) it has been
   pointed that the PReP partition likely MUST be the first partition in the
   disk.
