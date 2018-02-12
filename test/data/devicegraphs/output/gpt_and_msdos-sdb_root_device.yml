@@ -25,15 +25,15 @@
         label:        data
 
     - partition:
-        size:         40 GiB
+        size:         1 MiB
         name:         /dev/sdb2
-        file_system:  btrfs
-        mount_point:  "/"
+        id:           bios_boot
 
     - partition:
-        size:         1 MiB
+        size:         40 GiB
         name:         /dev/sdb3
-        id:           bios_boot
+        file_system:  btrfs
+        mount_point:  "/"
 
     - partition:
         size:         2 GiB

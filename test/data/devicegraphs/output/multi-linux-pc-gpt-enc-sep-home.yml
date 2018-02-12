@@ -32,20 +32,20 @@
         label:        shared_home
 
     - partition:
-        size:         40 GiB
+        size:         1 MiB
         name:         /dev/sda5
+        id:           bios_boot
+
+    - partition:
+        size:         40 GiB
+        name:         /dev/sda6
         id:           linux
         file_system:  btrfs
         mount_point:  "/"
         encryption:
           type: luks
-          name: "/dev/mapper/cr_sda5"
+          name: "/dev/mapper/cr_sda6"
           password: '12345678'
-
-    - partition:
-        size:         1 MiB
-        name:         /dev/sda6
-        id:           bios_boot
 
     - partition:
         size:         2 GiB

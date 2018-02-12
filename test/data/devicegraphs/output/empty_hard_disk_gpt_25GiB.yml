@@ -6,14 +6,14 @@
     partitions:
 
     - partition:
-        size:         23549 MiB
+        size:         1 MiB
         name:         /dev/sda1
+        id:           bios_boot
+    - partition:
+        size:         23549 MiB
+        name:         /dev/sda2
         file_system:  btrfs
         mount_point:  "/"
-    - partition:
-        size:         1 MiB
-        name:         /dev/sda2
-        id:           bios_boot
     - partition:
         size:         2098159.5 KiB
         name:         /dev/sda3

@@ -89,5 +89,25 @@ describe Y2Storage::GuidedProposal do
         end
       end
     end
+
+    # Regression test for bug#1076851 which proposed /boot at the beginning of
+    # disk (instead of PReP)
+    context "using the whole disk with LVM" do
+      let(:scenario) { "bug_1076851.xml" }
+      let(:ppc_power_nv) { false }
+      let(:lvm) { true }
+      before do
+        settings.linux_delete_mode = :all
+        settings.other_delete_mode = :all
+      end
+
+      it "proposes PReP at the beginning of the disk" do
+        proposal.propose
+        sda1 = proposal.devices.find_by_name("/dev/sda1")
+        expect(sda1.id).to eq Y2Storage::PartitionId::PREP
+        expect(sda1.region.start).to eq 2048
+        expect(sda1.filesystem).to be_nil
+      end
+    end
   end
 end
