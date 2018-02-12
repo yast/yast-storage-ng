@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Mon Feb 12 13:13:35 UTC 2018 - ancor@suse.com
+
+- More reasonable location in the disk for the partitions proposed
+  to make the system bootable (bsc#1073680 and bsc#1076851).
+
+-------------------------------------------------------------------
 Fri Feb  9 19:05:17 UTC 2018 - jlopez@suse.com
 
 - Partitioner: fix issues using transactions (bsc#1079880 and
