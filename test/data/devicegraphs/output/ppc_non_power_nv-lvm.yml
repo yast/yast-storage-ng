@@ -5,8 +5,13 @@
     partition_table: gpt
     partitions:
     - partition:
-        size: 200 MiB
+        size: 1 MiB
         name: "/dev/sda1"
+        type: primary
+        id: prep
+    - partition:
+        size: 200 MiB
+        name: "/dev/sda2"
         type: primary
         id: linux
         file_system: ext4
@@ -15,11 +20,6 @@
           - data=ordered
           - acl
           - user_xattr
-    - partition:
-        size: 1 MiB
-        name: "/dev/sda2"
-        type: primary
-        id: prep
     - partition:
         size: 43009 MiB (42.00 GiB)
         name: "/dev/sda3"

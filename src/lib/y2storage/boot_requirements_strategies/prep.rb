@@ -29,7 +29,10 @@ module Y2Storage
       # @see Base#needed_partitions
       def needed_partitions(target)
         planned_partitions = super
-        planned_partitions << prep_partition(target) if prep_partition_needed? && prep_partition_missing?
+        if prep_partition_needed? && prep_partition_missing?
+          # Use unshift so PReP goes first (bsc#1076851)
+          planned_partitions.unshift(prep_partition(target))
+        end
         planned_partitions
       end
 
