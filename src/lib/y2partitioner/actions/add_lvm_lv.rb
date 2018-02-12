@@ -34,7 +34,8 @@ module Y2Partitioner
       # @param vg [Y2Storage::LvmVg]
       def initialize(vg)
         super()
-        @controller = Controllers::LvmLv.new(vg)
+
+        @device_sid = vg.sid
       end
 
       # Wizard step to indicate properties for a new logical volume (i.e., the name and type)
@@ -78,6 +79,12 @@ module Y2Partitioner
 
       # @return [Controllers::LvmLv]
       attr_reader :controller
+
+      # @see TransactionWizard
+      def init_transaction
+        # The controller object must be created within the transaction
+        @controller = Controllers::LvmLv.new(device)
+      end
 
       # @see TransactionWizard
       def sequence_hash

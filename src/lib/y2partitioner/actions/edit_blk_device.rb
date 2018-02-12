@@ -35,8 +35,7 @@ module Y2Partitioner
         textdomain "storage"
 
         super()
-        @blk_device = blk_device
-        @fs_controller = Controllers::Filesystem.new(blk_device, title)
+        @device_sid = blk_device.sid
       end
 
       def format_options
@@ -55,7 +54,13 @@ module Y2Partitioner
 
     protected
 
-      attr_reader :fs_controller, :blk_device
+      attr_reader :fs_controller
+
+      # @see TransactionWizard
+      def init_transaction
+        # The controller object must be created within the transaction
+        @fs_controller = Controllers::Filesystem.new(device, title)
+      end
 
       # @see TransactionWizard
       def sequence_hash
@@ -68,17 +73,17 @@ module Y2Partitioner
       end
 
       def title
-        if blk_device.is?(:md)
+        if device.is?(:md)
           # TRANSLATORS: dialog title. %s is a device name like /dev/md0
-          _("Edit RAID %s") % blk_device.name
-        elsif blk_device.is?(:lvm_lv)
-          msg_args = { lv_name: blk_device.lv_name, vg: blk_device.lvm_vg.name }
+          _("Edit RAID %s") % device.name
+        elsif device.is?(:lvm_lv)
+          msg_args = { lv_name: device.lv_name, vg: device.lvm_vg.name }
           # TRANSLATORS: dialog title. %{lv_name} is an LVM LV name (e.g.'root'),
           # %{vg} is the device name of an LVM VG (e.g. '/dev/system').
           _("Edit Logical Volume %{lv_name} on %{vg}") % msg_args
         else
           # TRANSLATORS: dialog title. %s is a device name like /dev/sda1
-          _("Edit Partition %s") % blk_device.name
+          _("Edit Partition %s") % device.name
         end
       end
 
@@ -113,21 +118,21 @@ module Y2Partitioner
 
         # TRANSLATORS: Error message when trying to edit an LVM thin pool. %{name} is
         # replaced by a logical volume name (e.g., /dev/system/lv1)
-        format(_("The volume %{name} is a thin pool.\nIt cannot be edited."), name: blk_device.name)
+        format(_("The volume %{name} is a thin pool.\nIt cannot be edited."), name: device.name)
       end
 
       # Whether the device is an extended partition
       #
       # @return [Boolean]
       def extended_partition?
-        blk_device.is?(:partition) && blk_device.type.is?(:extended)
+        device.is?(:partition) && device.type.is?(:extended)
       end
 
       # Whether the device is an LVM thin pool
       #
       # @return [Boolean]
       def lvm_thin_pool?
-        blk_device.is?(:lvm_lv) && blk_device.lv_type.is?(:thin_pool)
+        device.is?(:lvm_lv) && device.lv_type.is?(:thin_pool)
       end
     end
   end

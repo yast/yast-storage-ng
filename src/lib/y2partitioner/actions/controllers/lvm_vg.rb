@@ -23,6 +23,7 @@ require "yast"
 require "y2storage"
 require "y2partitioner/device_graphs"
 require "y2partitioner/size_parser"
+require "y2partitioner/ui_state"
 
 module Y2Partitioner
   module Actions
@@ -213,16 +214,21 @@ module Y2Partitioner
         # @return [Symbol] :add, :resize
         attr_reader :action
 
-        # Set the action to perform and initialize necessary data
-        def initialize_action(vg)
-          detect_action(vg)
+        # Sets the action to perform and initializes necessary data
+        #
+        # @param current_vg [Y2Storage::LvmVg, nil] nil if the volume group is
+        #   going to be created.
+        def initialize_action(current_vg)
+          detect_action(current_vg)
 
           case action
           when :add
             initialize_for_add
           when :resize
-            initialize_for_resize(vg)
+            initialize_for_resize(current_vg)
           end
+
+          UIState.instance.select_row(vg) unless vg.nil?
         end
 
         # Detects current action

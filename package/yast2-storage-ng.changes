@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Fri Feb  9 19:05:17 UTC 2018 - jlopez@suse.com
+
+- Partitioner: fix issues using transactions (bsc#1079880 and
+  bsc#1079573).
+- 4.0.92
+
+-------------------------------------------------------------------
 Fri Feb  9 00:51:22 UTC 2018 - ancor@suse.com
 
 - Enable multipathd in the target system at the end of installation

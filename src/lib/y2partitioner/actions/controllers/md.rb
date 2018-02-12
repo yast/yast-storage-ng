@@ -243,13 +243,30 @@ module Y2Partitioner
           md
         end
 
+        # Whether the partition is available to be used in a MD RAID
+        #
+        # @note A partition is available if it is valid to be used in a MD RAID and
+        #   it is not formatted or not mounted.
+        #
+        # @return [Boolean] true if can be used for a MD RAID; false otherwise.
         def available?(partition)
-          return false unless partition.id.is?(:linux_system)
-          return false if partition.lvm_pv
-          return false if partition.md
-          return true if partition.filesystem.nil?
+          return false unless valid_for_md?(partition)
 
-          partition.filesystem.mount_point.nil?
+          partition.filesystem.nil? || partition.filesystem.mount_point.nil?
+        end
+
+        # Whether the partition is valid to be used in a MD RAID
+        #
+        # @note A partition is valid to be used in a MD RAID if it is not extended,
+        #   it is alinux system partition and it is not being used by LVM or other
+        #   MD RAID.
+        #
+        # @return [Boolean] true if it is valid; false otherwise.
+        def valid_for_md?(partition)
+          partition.id.is?(:linux_system) &&
+            !partition.type.is?(:extended) &&
+            partition.lvm_pv.nil? &&
+            partition.md.nil?
         end
 
         def min_chunk_size

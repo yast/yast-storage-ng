@@ -60,6 +60,25 @@ describe Y2Partitioner::Actions::AddLvmLv do
 
     let(:controller) { Y2Partitioner::Actions::Controllers::LvmLv.new(vg) }
 
+    # Regression test
+    it "uses the device belonging to the current devicegraph" do
+      # Only to finish
+      allow(subject).to receive(:run?).and_return(false)
+
+      initial_graph = current_graph
+
+      expect(Y2Partitioner::Actions::Controllers::LvmLv).to receive(:new) do |vg|
+        # Modifies used device
+        vg.vg_name = "foo"
+
+        # Initial device is not modified
+        initial_vg = initial_graph.find_device(vg.sid)
+        expect(initial_vg.vg_name).to_not eq("foo")
+      end
+
+      subject.run
+    end
+
     context "if there is no free space in the vg" do
       before do
         allow(controller).to receive(:free_extents).and_return 0

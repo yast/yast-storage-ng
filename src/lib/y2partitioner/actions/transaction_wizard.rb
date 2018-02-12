@@ -60,6 +60,13 @@ module Y2Partitioner
 
     protected
 
+      # Sid of the current device
+      #
+      # To be set, if needed, by each subclass
+      #
+      # @return [Integer, nil]
+      attr_reader :device_sid
+
       # Specification of the steps of the sequence.
       #
       # To be defined by each subclass.
@@ -91,6 +98,15 @@ module Y2Partitioner
       # @return [Boolean]
       def run?
         true
+      end
+
+      # Current device
+      #
+      # @return [Y2Storage::Device, nil]
+      def device
+        return nil if device_sid.nil?
+
+        Y2Partitioner::DeviceGraphs.instance.current.find_device(device_sid)
       end
     end
   end

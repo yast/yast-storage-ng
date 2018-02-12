@@ -141,6 +141,14 @@ describe Y2Partitioner::Actions::Controllers::Md do
       new_md.add_device(sda3)
       expect(controller.available_devices).to_not include sda3
     end
+
+    context "when there are extended partitions" do
+      let(:scenario) { "lvm-two-vgs.yml" }
+
+      it "excludes extended partitions" do
+        expect(controller.available_devices.map(&:name)).to_not include("/dev/sda3")
+      end
+    end
   end
 
   describe "#devices_in_md" do

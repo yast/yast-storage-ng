@@ -36,7 +36,7 @@ module Y2Partitioner
         textdomain "storage"
 
         super()
-        @part_controller = Controllers::Partition.new(disk.name)
+        @device_sid = disk.sid
       end
 
       # Removes the filesystem when the device is directly formatted
@@ -65,6 +65,12 @@ module Y2Partitioner
 
       # @return [Controllers::Partition]
       attr_reader :part_controller
+
+      # @see TransactionWizard
+      def init_transaction
+        # The controller object must be created within the transaction
+        @part_controller = Controllers::Partition.new(device.name)
+      end
 
       # @see TransactionWizard
       def sequence_hash
