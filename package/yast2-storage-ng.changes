@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Mon Feb 12 14:17:15 UTC 2018 - snwint@suse.com
+
+- add format options dialog (bsc#1077868)
+- 4.0.93
+
+-------------------------------------------------------------------
 Mon Feb 12 13:13:35 UTC 2018 - ancor@suse.com
 
 - More reasonable location in the disk for the partitions proposed
