@@ -101,7 +101,10 @@ module Y2Storage
       end
 
       def suitable_efi_partitions(device)
-        device.partitions.select { |p| p.match_volume?(efi_volume, exclude: :mount_point) }
+        device.partitions.select do |partition|
+          partition.match_volume?(efi_volume, exclude: :mount_point) &&
+            partition.id == PartitionId::ESP
+        end
       end
 
       def biggest_partition(partitions)
