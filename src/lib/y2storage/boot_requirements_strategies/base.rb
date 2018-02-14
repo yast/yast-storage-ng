@@ -140,6 +140,7 @@ module Y2Storage
 
       # Whether there is no partition that matches the volume
       #
+      # @param volume [VolumeSpecification]
       # @return [Boolean] true if there is no partition; false otherwise.
       def missing_partition_for?(volume)
         Partition.all(devicegraph).none? { |p| p.match_volume?(volume) }

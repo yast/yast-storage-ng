@@ -65,7 +65,6 @@ module Y2Storage
         @efi_volume.mount_point = "/boot/efi"
         @efi_volume.fs_types = [Filesystems::Type::VFAT]
         @efi_volume.fs_type = Filesystems::Type::VFAT
-        @efi_volume.partition_id = PartitionId::ESP
         @efi_volume.min_size = MIN_SIZE
         @efi_volume.desired_size = DESIRED_SIZE
         @efi_volume.max_size = MAX_SIZE
@@ -75,11 +74,16 @@ module Y2Storage
       # @return [Planned::Partition]
       def efi_partition(target)
         planned_partition = create_planned_partition(efi_volume, target)
+
+        # Partition is planned with a specific id (although it is not strictly required)
+        planned_partition.partition_id = PartitionId::ESP
+
         if reusable_efi
           planned_partition.reuse = reusable_efi.name
         else
           planned_partition.max_start_offset = DiskSize.TiB(2)
         end
+
         planned_partition
       end
 
