@@ -73,7 +73,6 @@ module Y2Storage
     # All boot warnings detected in the setup, for example, when size of a /boot/efi partition
     # is out of borders.
     #
-    # @raise Error if {fatal_errors} is not empty
     # @see SetupError
     #
     # @return [Array<SetupError>]
