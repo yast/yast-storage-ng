@@ -124,7 +124,7 @@ module Y2Partitioner
 
         errors = SetupErrorsPresenter.new(setup_checker).to_html
 
-        if setup_checker.fatal_errors.empty?
+        if setup_checker.errors.empty? # so only warnings there
           # FIXME: improve Yast2::Popup to allow some text before the buttons
           errors += _("Do you want to continue?")
 

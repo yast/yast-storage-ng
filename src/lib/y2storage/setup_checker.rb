@@ -55,24 +55,24 @@ module Y2Storage
     #
     # @return [Boolean]
     def valid?
-      fatal_errors.empty? && errors.empty?
+      errors.empty? && warnings.empty?
     end
 
     # Whether the system contain fatal errors preventing to continue
     #
     # @return [Array<SetupError>]
-    def fatal_errors
-      boot_requirements_checker.fatal_errors
+    def errors
+      boot_requirements_checker.errors
     end
 
-    # All storage errors detected in the setup, for example, when a /boot/efi partition
-    # is missing in a UEFI system, or a valid partition for root is missing.
+    # All storage warnings detected in the setup, for example, when a /boot/efi partition
+    # is missing in a UEFI system, or missing separate /boot.
     #
     # @see SetupError
     #
     # @return [Array<SetupError>]
-    def errors
-      boot_errors + product_errors
+    def warnings
+      boot_warnings + product_warnings
     end
 
     # All boot errors detected in the setup
@@ -80,18 +80,18 @@ module Y2Storage
     # @return [Array<SetupError>]
     #
     # @see BootRequirementsChecker#errors
-    def boot_errors
-      @boot_errors ||= boot_requirements_checker.errors
+    def boot_warnings
+      @boot_warnings ||= boot_requirements_checker.warnings
     end
 
-    # All product errors detected in the setup
+    # All product warnings detected in the setup
     #
     # This checks that all mandatory volumes specified in control file are present
     # in the system.
     #
     # @return [Array<SetupError>]
-    def product_errors
-      @product_errors ||= missing_product_volumes.map { |v| SetupError.new(missing_volume: v) }
+    def product_warnings
+      @product_warnings ||= missing_product_volumes.map { |v| SetupError.new(missing_volume: v) }
     end
 
   private

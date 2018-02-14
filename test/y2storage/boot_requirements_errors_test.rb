@@ -29,14 +29,18 @@ describe Y2Storage::BootRequirementsChecker do
 
   include_context "boot requirements"
 
+  let(:architecture) { :x86_64 }
+
   describe "#valid?" do
-    let(:architecture) { :x86 }
+    let(:errors) { [] }
+    let(:warnings) { [] }
 
     before do
       allow(checker).to receive(:errors).and_return(errors)
+      allow(checker).to receive(:warnings).and_return(warnings)
     end
 
-    context "when there are setup errors" do
+    context "when there are errors" do
       let(:errors) { [instance_double(Y2Storage::SetupError)] }
 
       it "returns false" do
@@ -44,8 +48,17 @@ describe Y2Storage::BootRequirementsChecker do
       end
     end
 
-    context "when there are no setup errors" do
+    context "when there are warnings" do
+      let(:warnings) { [instance_double(Y2Storage::SetupError)] }
+
+      it "returns false" do
+        expect(checker.valid?).to eq(false)
+      end
+    end
+
+    context "when there are no errors neither warnings" do
       let(:errors) { [] }
+      let(:warnings) { [] }
 
       it "returns true" do
         expect(checker.valid?).to eq(true)
@@ -56,50 +69,50 @@ describe Y2Storage::BootRequirementsChecker do
   describe "#errors" do
     RSpec.shared_examples "missing boot partition" do
       it "contains an error for missing boot partition" do
-        expect(checker.errors.size).to eq(1)
-        expect(checker.errors).to all(be_a(Y2Storage::SetupError))
+        expect(checker.warnings.size).to eq(1)
+        expect(checker.warnings).to all(be_a(Y2Storage::SetupError))
 
-        missing_volume = checker.errors.first.missing_volume
+        missing_volume = checker.warnings.first.missing_volume
         expect(missing_volume).to eq(boot_volume)
       end
     end
 
     RSpec.shared_examples "missing prep partition" do
       it "contains an error for missing PReP partition" do
-        expect(checker.errors.size).to eq(1)
-        expect(checker.errors).to all(be_a(Y2Storage::SetupError))
+        expect(checker.warnings.size).to eq(1)
+        expect(checker.warnings).to all(be_a(Y2Storage::SetupError))
 
-        missing_volume = checker.errors.first.missing_volume
+        missing_volume = checker.warnings.first.missing_volume
         expect(missing_volume).to eq(prep_volume)
       end
     end
 
     RSpec.shared_examples "missing zipl partition" do
-      it "contains an fata; error for missing ZIPL partition" do
-        expect(checker.fatal_errors.size).to eq(1)
-        expect(checker.fatal_errors).to all(be_a(Y2Storage::SetupError))
+      it "contains an error for missing ZIPL partition" do
+        expect(checker.warnings.size).to eq(1)
+        expect(checker.warnings).to all(be_a(Y2Storage::SetupError))
 
-        missing_volume = checker.fatal_errors.first.missing_volume
+        missing_volume = checker.warnings.first.missing_volume
         expect(missing_volume).to eq(zipl_volume)
       end
     end
 
     RSpec.shared_examples "unknown boot disk" do
       it "contains an fatal error for unknown boot disk" do
-        expect(checker.fatal_errors.size).to eq(1)
-        expect(checker.fatal_errors).to all(be_a(Y2Storage::SetupError))
+        expect(checker.errors.size).to eq(1)
+        expect(checker.errors).to all(be_a(Y2Storage::SetupError))
 
-        message = checker.fatal_errors.first.message
+        message = checker.errors.first.message
         expect(message).to match(/no device mounted to '\/'/)
       end
     end
 
     RSpec.shared_examples "unsupported boot disk" do
       it "contains an error for unsupported boot disk" do
-        expect(checker.errors.size).to eq(1)
-        expect(checker.errors).to all(be_a(Y2Storage::SetupError))
+        expect(checker.warnings.size).to eq(1)
+        expect(checker.warnings).to all(be_a(Y2Storage::SetupError))
 
-        message = checker.errors.first.message
+        message = checker.warnings.first.message
         expect(message).to match(/is not supported/)
       end
     end
@@ -114,7 +127,7 @@ describe Y2Storage::BootRequirementsChecker do
         let(:partitions) { [boot_partition] }
 
         it "does not contain errors" do
-          expect(checker.errors).to be_empty
+          expect(checker.warnings).to be_empty
         end
       end
     end
@@ -124,10 +137,10 @@ describe Y2Storage::BootRequirementsChecker do
         let(:partitions) { [boot_partition, grub_partition] }
 
         it "contains an error for the efi partition" do
-          expect(checker.errors.size).to eq(1)
-          expect(checker.errors).to all(be_a(Y2Storage::SetupError))
+          expect(checker.warnings.size).to eq(1)
+          expect(checker.warnings).to all(be_a(Y2Storage::SetupError))
 
-          missing_volume = checker.errors.first.missing_volume
+          missing_volume = checker.warnings.first.missing_volume
           expect(missing_volume).to eq(efi_volume)
         end
       end
@@ -136,7 +149,7 @@ describe Y2Storage::BootRequirementsChecker do
         let(:partitions) { [boot_partition, efi_partition] }
 
         it "does not contain errors" do
-          expect(checker.errors).to be_empty
+          expect(checker.warnings).to be_empty
         end
       end
     end
@@ -151,7 +164,7 @@ describe Y2Storage::BootRequirementsChecker do
         let(:partitions) { [zipl_partition] }
 
         it "does not contain errors" do
-          expect(checker.errors).to be_empty
+          expect(checker.warnings).to be_empty
         end
       end
     end
@@ -161,7 +174,7 @@ describe Y2Storage::BootRequirementsChecker do
         let(:mbr_gap_size) { 260.KiB }
 
         it "does not contain errors" do
-          expect(checker.errors).to be_empty
+          expect(checker.warnings).to be_empty
         end
       end
 
@@ -186,7 +199,7 @@ describe Y2Storage::BootRequirementsChecker do
         let(:partitions) { [boot_partition, prep_partition] }
 
         it "does not contain errors" do
-          expect(checker.errors).to be_empty
+          expect(checker.warnings).to be_empty
         end
       end
     end
@@ -272,10 +285,10 @@ describe Y2Storage::BootRequirementsChecker do
           let(:boot_partition_table) { nil }
 
           it "contains an fatal error for unknown partition table" do
-            expect(checker.fatal_errors.size).to eq(1)
-            expect(checker.fatal_errors).to all(be_a(Y2Storage::SetupError))
+            expect(checker.errors.size).to eq(1)
+            expect(checker.errors).to all(be_a(Y2Storage::SetupError))
 
-            message = checker.fatal_errors.first.message
+            message = checker.errors.first.message
             expect(message).to match(/partition table/)
           end
         end
@@ -287,10 +300,10 @@ describe Y2Storage::BootRequirementsChecker do
             let(:partitions) { [boot_partition] }
 
             it "contains an error for missing grub partition" do
-              expect(checker.errors.size).to eq(1)
-              expect(checker.errors).to all(be_a(Y2Storage::SetupError))
+              expect(checker.warnings.size).to eq(1)
+              expect(checker.warnings).to all(be_a(Y2Storage::SetupError))
 
-              missing_volume = checker.errors.first.missing_volume
+              missing_volume = checker.warnings.first.missing_volume
               expect(missing_volume).to eq(grub_volume)
             end
           end
@@ -299,7 +312,7 @@ describe Y2Storage::BootRequirementsChecker do
             let(:partitions) { [boot_partition, grub_partition] }
 
             it "does not contain errors" do
-              expect(checker.errors).to be_empty
+              expect(checker.warnings).to be_empty
             end
           end
         end
@@ -323,7 +336,7 @@ describe Y2Storage::BootRequirementsChecker do
               let(:use_btrfs) { true }
 
               it "does not contain errors" do
-                expect(checker.errors).to be_empty
+                expect(checker.warnings).to be_empty
               end
             end
 
@@ -332,10 +345,10 @@ describe Y2Storage::BootRequirementsChecker do
               let(:use_btrfs) { true }
 
               it "contains an error for small MBR gap" do
-                expect(checker.errors.size).to eq(1)
-                expect(checker.errors).to all(be_a(Y2Storage::SetupError))
+                expect(checker.warnings.size).to eq(1)
+                expect(checker.warnings).to all(be_a(Y2Storage::SetupError))
 
-                message = checker.errors.first.message
+                message = checker.warnings.first.message
                 expect(message).to match(/gap size is not enough/)
               end
             end
@@ -348,7 +361,7 @@ describe Y2Storage::BootRequirementsChecker do
               let(:use_lvm) { false }
 
               it "does not contain errors" do
-                expect(checker.errors).to be_empty
+                expect(checker.warnings).to be_empty
               end
             end
 
@@ -410,7 +423,7 @@ describe Y2Storage::BootRequirementsChecker do
             let(:partitions) { [boot_partition, prep_partition] }
 
             it "does not contain errors" do
-              expect(checker.errors).to be_empty
+              expect(checker.warnings).to be_empty
             end
           end
         end
@@ -439,7 +452,7 @@ describe Y2Storage::BootRequirementsChecker do
           let(:use_lvm) { false }
 
           it "does not contain errors" do
-            expect(checker.errors).to be_empty
+            expect(checker.warnings).to be_empty
           end
         end
 

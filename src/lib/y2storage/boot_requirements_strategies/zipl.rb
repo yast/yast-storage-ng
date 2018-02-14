@@ -31,27 +31,16 @@ module Y2Storage
         zipl_partition_missing? ? [zipl_partition(target)] : []
       end
 
-      # Boot errors in the current setup
+      # Boot warnings in the current setup
       #
       # @return [Array<SetupError>]
-      def errors
-        errors = super
+      def warnings
+        res = super
 
         if !supported_boot_disk?
-          errors << unsupported_boot_disk_error
+          res << unsupported_boot_disk_error
         elsif missing_partition_for?(zipl_volume)
-          errors << SetupError.new(missing_volume: zipl_volume)
-        end
-
-        errors
-      end
-
-      def fatal_errors
-        res = super
-        return res unless res.empty?
-
-        if missing_partition_for?(minimal_zipl_volume)
-          res << SetupError.new(missing_volume: minimal_zipl_volume)
+          res << SetupError.new(missing_volume: zipl_volume)
         end
 
         res
@@ -85,16 +74,6 @@ module Y2Storage
         @zipl_volume.desired_size = DiskSize.MiB(200)
         @zipl_volume.max_size = DiskSize.GiB(1)
         @zipl_volume
-      end
-
-      # Minimal zipl requirement for which we are sure we cannot boot
-      # @return [VolumeSpecification]
-      def minimal_zipl_volume
-        res = VolumeSpecification.new({})
-        res.mount_point = "/boot/zipl"
-        res.fs_types = Filesystems::Type.zipl_filesystems
-
-        res
       end
 
       # @return [Planned::Partition]

@@ -37,22 +37,22 @@ module Y2Storage
         planned_partitions
       end
 
-      # Boot errors in the current setup
+      # Boot warnings in the current setup
       #
       # @return [Array<SetupError>]
-      def errors
-        errors = super
+      def warnings
+        res = super
 
         if boot_ptable_type?(:gpt)
-          errors += errors_on_gpt
+          res.concat(errors_on_gpt)
         else
-          errors += errors_on_msdos
+          res.concat(errors_on_msdos)
         end
 
-        errors
+        res
       end
 
-      def fatal_errors
+      def errors
         res = super
 
         if boot_partition_table_missing?

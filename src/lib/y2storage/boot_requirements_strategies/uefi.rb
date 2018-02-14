@@ -37,16 +37,16 @@ module Y2Storage
       # Boot errors in the current setup
       #
       # @return [Array<SetupError>]
-      def errors
-        errors = super
+      def warnings
+        res = super
 
         # missing EFI does not need to be fatal e.g. when boot from network.
         # User just have to not select grub2-efi bootloader.
         if missing_partition_for?(efi_volume)
-          errors << SetupError.new(missing_volume: efi_volume)
+          res << SetupError.new(missing_volume: efi_volume)
         end
 
-        errors
+        res
       end
 
     protected

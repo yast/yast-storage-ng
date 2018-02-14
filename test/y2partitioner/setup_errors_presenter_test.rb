@@ -31,9 +31,9 @@ describe Y2Partitioner::SetupErrorsPresenter do
 
   before do
     Y2Storage::StorageManager.create_test_instance
-    allow(setup_checker).to receive(:boot_errors).and_return(boot_errors)
-    allow(setup_checker).to receive(:product_errors).and_return(product_errors)
-    allow(setup_checker).to receive(:fatal_errors).and_return(fatal_errors)
+    allow(setup_checker).to receive(:boot_warnings).and_return(boot_errors)
+    allow(setup_checker).to receive(:product_warnings).and_return(product_errors)
+    allow(setup_checker).to receive(:errors).and_return(fatal_errors)
   end
 
   subject { described_class.new(setup_checker) }

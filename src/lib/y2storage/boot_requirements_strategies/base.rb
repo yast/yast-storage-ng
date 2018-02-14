@@ -68,17 +68,14 @@ module Y2Storage
         planned_partitions
       end
 
-      # All boot errors detected in the setup, for example, when a /boot/efi partition
-      # is missing in a UEFI system
+      # All boot warnings detected in the setup, for example, when required partition is too small
       #
       # @note This method should be overloaded for derived classes.
       #
       # @see SetupError
       #
       # @return [Array<SetupError>]
-      def errors
-        raise Error, "There are fatal errors, so cannot detect soft errors." unless fatal_errors.empty?
-
+      def warnings
         []
       end
 
@@ -90,7 +87,7 @@ module Y2Storage
       # @see SetupError
       #
       # @return [Array<SetupError>]
-      def fatal_errors
+      def errors
         res = []
         if root_filesystem_missing?
           error_message = _("There is no device mounted to '/'")

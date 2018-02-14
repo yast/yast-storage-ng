@@ -47,8 +47,8 @@ describe Y2Storage::SetupChecker do
 
   before do
     allow(Y2Storage::BootRequirementsChecker).to receive(:new).and_return(boot_checker)
-    allow(boot_checker).to receive(:errors).and_return(boot_errors)
-    allow(boot_checker).to receive(:fatal_errors).and_return(fatal_errors)
+    allow(boot_checker).to receive(:warnings).and_return(boot_warnings)
+    allow(boot_checker).to receive(:errors).and_return(fatal_errors)
 
     allow(Y2Storage::ProposalSettings).to receive(:new_for_current_product).and_return(settings)
     allow(settings).to receive(:volumes).and_return(product_volumes)
@@ -58,7 +58,7 @@ describe Y2Storage::SetupChecker do
 
   let(:settings) { instance_double(Y2Storage::ProposalSettings) }
 
-  let(:boot_errors) { [] }
+  let(:boot_warnings) { [] }
 
   let(:fatal_errors) { [] }
 
@@ -101,7 +101,7 @@ describe Y2Storage::SetupChecker do
   describe "#valid?" do
     context "when some mandatory product volume is not present in the system" do
       let(:product_volumes) { [root_volume, home_volume] }
-      let(:boot_errors) { [] }
+      let(:boot_warnings) { [] }
 
       it "returns false" do
         expect(subject.valid?).to eq(false)
@@ -110,7 +110,7 @@ describe Y2Storage::SetupChecker do
 
     context "when there is some boot error" do
       let(:product_volumes) { [] }
-      let(:boot_errors) { [boot_error] }
+      let(:boot_warnings) { [boot_error] }
 
       it "returns false" do
         expect(subject.valid?).to eq(false)
@@ -127,7 +127,7 @@ describe Y2Storage::SetupChecker do
 
     context "when all mandatory product volumes are present in the system and there is no boot error" do
       let(:product_volumes) { [root_volume, home_volume] }
-      let(:boot_errors) { [] }
+      let(:boot_warnings) { [] }
 
       before do
         create_root
@@ -139,24 +139,24 @@ describe Y2Storage::SetupChecker do
     end
   end
 
-  describe "#errors" do
+  describe "#warnings" do
     let(:boot_error1) { instance_double(Y2Storage::SetupError) }
     let(:boot_error2) { instance_double(Y2Storage::SetupError) }
-    let(:boot_errors) { [boot_error1, boot_error2] }
+    let(:boot_warnings) { [boot_error1, boot_error2] }
 
     let(:product_volumes) { [root_volume, swap_volume, home_volume] }
 
-    it "includes all boot errors" do
-      expect(subject.errors).to include(boot_error1, boot_error2)
+    it "includes all boot warnings" do
+      expect(subject.warnings).to include(boot_error1, boot_error2)
     end
 
     it "does not include an error for optional product volumes" do
-      expect(subject.errors).to_not include(an_object_having_attributes(missing_volume: home_volume))
+      expect(subject.warnings).to_not include(an_object_having_attributes(missing_volume: home_volume))
     end
 
     it "includes an error for each mandatory product volume not present in the system" do
-      expect(subject.errors).to include(an_object_having_attributes(missing_volume: root_volume))
-      expect(subject.errors).to include(an_object_having_attributes(missing_volume: swap_volume))
+      expect(subject.warnings).to include(an_object_having_attributes(missing_volume: root_volume))
+      expect(subject.warnings).to include(an_object_having_attributes(missing_volume: swap_volume))
     end
 
     context "when a mandatory product volume is present in the system" do
@@ -165,12 +165,12 @@ describe Y2Storage::SetupChecker do
       end
 
       it "does not include an error for that volume" do
-        expect(subject.errors).to_not include(an_object_having_attributes(missing_volume: root_volume))
+        expect(subject.warnings).to_not include(an_object_having_attributes(missing_volume: root_volume))
       end
     end
 
     context "when there is no boot error and all mandatory product volumes are present in the system" do
-      let(:boot_errors) { [] }
+      let(:boot_warnings) { [] }
       let(:product_volumes) { [root_volume, home_volume] }
 
       before do
@@ -178,54 +178,54 @@ describe Y2Storage::SetupChecker do
       end
 
       it "returns an empty list" do
-        expect(subject.errors).to be_empty
+        expect(subject.warnings).to be_empty
       end
     end
   end
 
-  describe "#boot_errors" do
+  describe "#boot_warnings" do
     let(:boot_error1) { instance_double(Y2Storage::SetupError) }
     let(:boot_error2) { instance_double(Y2Storage::SetupError) }
-    let(:boot_errors) { [boot_error1, boot_error2] }
+    let(:boot_warnings) { [boot_error1, boot_error2] }
 
     let(:product_volumes) { [root_volume, swap_volume, home_volume] }
 
     it "includes all boot errors" do
-      expect(subject.boot_errors).to contain_exactly(boot_error1, boot_error2)
+      expect(subject.boot_warnings).to contain_exactly(boot_error1, boot_error2)
     end
 
     context "when there is no boot error" do
-      let(:boot_errors) { [] }
+      let(:boot_warnings) { [] }
 
       it "returns an empty list" do
-        expect(subject.boot_errors).to be_empty
+        expect(subject.boot_warnings).to be_empty
       end
     end
   end
 
-  describe "#product_errors" do
+  describe "#product_warnings" do
     let(:boot_error1) { instance_double(Y2Storage::SetupError) }
     let(:boot_error2) { instance_double(Y2Storage::SetupError) }
-    let(:boot_errors) { [boot_error1, boot_error2] }
+    let(:boot_warnings) { [boot_error1, boot_error2] }
 
     let(:product_volumes) { [root_volume, swap_volume, home_volume] }
 
     it "returns a list of setup errors" do
-      expect(subject.product_errors).to all(be_a(Y2Storage::SetupError))
+      expect(subject.product_warnings).to all(be_a(Y2Storage::SetupError))
     end
 
     it "does not include boot errors" do
-      expect(subject.product_errors).to_not include(boot_error1, boot_error2)
+      expect(subject.product_warnings).to_not include(boot_error1, boot_error2)
     end
 
     it "does not include an error for optional product volumes" do
-      expect(subject.product_errors)
+      expect(subject.product_warnings)
         .to_not include(an_object_having_attributes(missing_volume: home_volume))
     end
 
     it "includes an error for each mandatory product volume not present in the system" do
-      expect(subject.product_errors).to include(an_object_having_attributes(missing_volume: root_volume))
-      expect(subject.product_errors).to include(an_object_having_attributes(missing_volume: swap_volume))
+      expect(subject.product_warnings).to include(an_object_having_attributes(missing_volume: root_volume))
+      expect(subject.product_warnings).to include(an_object_having_attributes(missing_volume: swap_volume))
     end
 
     context "when a mandatory product volume is present in the system" do
@@ -234,7 +234,7 @@ describe Y2Storage::SetupChecker do
       end
 
       it "does not include an error for that volume" do
-        expect(subject.product_errors)
+        expect(subject.product_warnings)
           .to_not include(an_object_having_attributes(missing_volume: root_volume))
       end
     end
@@ -247,7 +247,7 @@ describe Y2Storage::SetupChecker do
       end
 
       it "returns an empty list" do
-        expect(subject.product_errors).to be_empty
+        expect(subject.product_warnings).to be_empty
       end
     end
 
@@ -256,7 +256,7 @@ describe Y2Storage::SetupChecker do
       let(:product_volumes) { nil }
 
       it "returns an empty list" do
-        expect(subject.product_errors).to be_empty
+        expect(subject.product_warnings).to be_empty
       end
     end
   end

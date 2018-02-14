@@ -222,7 +222,7 @@ describe Y2Partitioner::Widgets::OverviewTreePager do
     before do
       allow(Y2Storage::SetupChecker).to receive(:new).and_return(checker)
       allow(checker).to receive(:valid?).and_return(valid_setup)
-      allow(checker).to receive(:fatal_errors).and_return(fatal_errors)
+      allow(checker).to receive(:errors).and_return(fatal_errors)
 
       allow(Y2Partitioner::SetupErrorsPresenter).to receive(:new).and_return(presenter)
       allow(presenter).to receive(:to_html).and_return("html representation")

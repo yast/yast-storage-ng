@@ -67,18 +67,18 @@ module Y2Storage
     #
     # @return [Boolean]
     def valid?
-      errors.empty?
+      errors.empty? && warnings.empty?
     end
 
-    # All boot errors detected in the setup, for example, when size of a /boot/efi partition
+    # All boot warnings detected in the setup, for example, when size of a /boot/efi partition
     # is out of borders.
     #
     # @raise Error if {fatal_errors} is not empty
     # @see SetupError
     #
     # @return [Array<SetupError>]
-    def errors
-      strategy.errors
+    def warnings
+      strategy.warnings
     end
 
     # All fatal boot errors detected in the setup, for example, when a /boot/efi partition
@@ -87,8 +87,8 @@ module Y2Storage
     # @see SetupError
     #
     # @return [Array<SetupError>]
-    def fatal_errors
-      strategy.fatal_errors
+    def errors
+      strategy.errors
     end
 
   protected
