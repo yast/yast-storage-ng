@@ -77,7 +77,27 @@ module Y2Storage
       #
       # @return [Array<SetupError>]
       def errors
+        raise Error, "There are fatal errors, so cannot detect soft errors." unless fatal_errors.empty?
+
         []
+      end
+
+      # All fatal boot errors detected in the setup, for example, when a / partition
+      # is missing
+      #
+      # @note This method can be overloaded for derived classes.
+      #
+      # @see SetupError
+      #
+      # @return [Array<SetupError>]
+      def fatal_errors
+        res = []
+        if root_filesystem_missing?
+          error_message = _("There is no device mounted to '/'")
+          res << SetupError.new(message: error_message)
+        end
+
+        res
       end
 
     protected

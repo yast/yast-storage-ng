@@ -75,22 +75,22 @@ describe Y2Storage::BootRequirementsChecker do
     end
 
     RSpec.shared_examples "missing zipl partition" do
-      it "contains an error for missing ZIPL partition" do
-        expect(checker.errors.size).to eq(1)
-        expect(checker.errors).to all(be_a(Y2Storage::SetupError))
+      it "contains an fata; error for missing ZIPL partition" do
+        expect(checker.fatal_errors.size).to eq(1)
+        expect(checker.fatal_errors).to all(be_a(Y2Storage::SetupError))
 
-        missing_volume = checker.errors.first.missing_volume
+        missing_volume = checker.fatal_errors.first.missing_volume
         expect(missing_volume).to eq(zipl_volume)
       end
     end
 
     RSpec.shared_examples "unknown boot disk" do
-      it "contains an error for unknown boot disk" do
-        expect(checker.errors.size).to eq(1)
-        expect(checker.errors).to all(be_a(Y2Storage::SetupError))
+      it "contains an fatal error for unknown boot disk" do
+        expect(checker.fatal_errors.size).to eq(1)
+        expect(checker.fatal_errors).to all(be_a(Y2Storage::SetupError))
 
-        message = checker.errors.first.message
-        expect(message).to match(/there is no '\/'/)
+        message = checker.fatal_errors.first.message
+        expect(message).to match(/no device mounted to '\/'/)
       end
     end
 
@@ -209,6 +209,9 @@ describe Y2Storage::BootRequirementsChecker do
       allow_any_instance_of(Y2Storage::BootRequirementsStrategies::ZIPL)
         .to receive(:zipl_volume).and_return(zipl_volume)
 
+      allow_any_instance_of(Y2Storage::BootRequirementsStrategies::ZIPL)
+        .to receive(:minimal_zipl_volume).and_return(zipl_volume)
+
       allow(Y2Storage::Partition).to receive(:all).and_return partitions
 
       allow(boot_partition).to receive(:match_volume?).with(anything).and_return(false)
@@ -268,11 +271,11 @@ describe Y2Storage::BootRequirementsChecker do
         context "when boot device has no partition table" do
           let(:boot_partition_table) { nil }
 
-          it "contains an error for unknown partition table" do
-            expect(checker.errors.size).to eq(1)
-            expect(checker.errors).to all(be_a(Y2Storage::SetupError))
+          it "contains an fatal error for unknown partition table" do
+            expect(checker.fatal_errors.size).to eq(1)
+            expect(checker.fatal_errors).to all(be_a(Y2Storage::SetupError))
 
-            message = checker.errors.first.message
+            message = checker.fatal_errors.first.message
             expect(message).to match(/partition table/)
           end
         end
@@ -462,6 +465,7 @@ describe Y2Storage::BootRequirementsChecker do
       let(:architecture) { :s390 }
       let(:efiboot) { false }
       let(:use_lvm) { false }
+      let(:partitions) { [zipl_partition] }
 
       before do
         allow(dev_sda).to receive(:is?).with(:dasd).and_return(dasd)

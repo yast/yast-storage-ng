@@ -43,17 +43,23 @@ module Y2Storage
       def errors
         errors = super
 
-        if root_filesystem_missing?
-          errors << unknown_boot_disk_error
-        elsif boot_partition_table_missing?
-          errors << unknown_boot_partition_table_error
-        elsif boot_ptable_type?(:gpt)
+        if boot_ptable_type?(:gpt)
           errors += errors_on_gpt
         else
           errors += errors_on_msdos
         end
 
         errors
+      end
+
+      def fatal_errors
+        res = super
+
+        if boot_partition_table_missing?
+          res << unknown_boot_partition_table_error
+        end
+
+        res
       end
 
     protected
@@ -177,8 +183,7 @@ module Y2Storage
       def unknown_boot_partition_table_error
         # TRANSLATORS: error message
         error_message = _(
-          "Boot requirements cannot be determined because " \
-          "boot disk has not partition table"
+          "Boot disk is without partition table"
         )
         SetupError.new(message: error_message)
       end

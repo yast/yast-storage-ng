@@ -48,6 +48,7 @@ describe Y2Storage::SetupChecker do
   before do
     allow(Y2Storage::BootRequirementsChecker).to receive(:new).and_return(boot_checker)
     allow(boot_checker).to receive(:errors).and_return(boot_errors)
+    allow(boot_checker).to receive(:fatal_errors).and_return(fatal_errors)
 
     allow(Y2Storage::ProposalSettings).to receive(:new_for_current_product).and_return(settings)
     allow(settings).to receive(:volumes).and_return(product_volumes)
@@ -58,6 +59,8 @@ describe Y2Storage::SetupChecker do
   let(:settings) { instance_double(Y2Storage::ProposalSettings) }
 
   let(:boot_errors) { [] }
+
+  let(:fatal_errors) { [] }
 
   let(:product_volumes) { [] }
 
@@ -114,6 +117,14 @@ describe Y2Storage::SetupChecker do
       end
     end
 
+    context "when there is a fatal error" do
+      let(:fatal_errors) { [boot_error] }
+
+      it "returns false" do
+        expect(subject.valid?).to eq(false)
+      end
+    end
+
     context "when all mandatory product volumes are present in the system and there is no boot error" do
       let(:product_volumes) { [root_volume, home_volume] }
       let(:boot_errors) { [] }
@@ -124,24 +135,6 @@ describe Y2Storage::SetupChecker do
 
       it "returns true" do
         expect(subject.valid?).to eq(true)
-      end
-    end
-  end
-
-  describe "#bootable?" do
-    context "when there is some boot error" do
-      let(:boot_errors) { [boot_error] }
-
-      it "returns false" do
-        expect(subject.bootable?).to eq(false)
-      end
-    end
-
-    context "when there is no boot error" do
-      let(:boot_errors) { [] }
-
-      it "returns true" do
-        expect(subject.bootable?).to eq(true)
       end
     end
   end

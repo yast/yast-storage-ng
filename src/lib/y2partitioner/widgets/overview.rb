@@ -123,13 +123,20 @@ module Y2Partitioner
         return true if setup_checker.valid?
 
         errors = SetupErrorsPresenter.new(setup_checker).to_html
-        # FIXME: improve Yast2::Popup to allow some text before the buttons
-        errors += _("Do you want to continue?")
 
-        result = Yast2::Popup.show(errors,
-          headline: :error, richtext: true, buttons: :yes_no, focus: :no)
+        if setup_checker.fatal_errors.empty?
+          # FIXME: improve Yast2::Popup to allow some text before the buttons
+          errors += _("Do you want to continue?")
 
-        result == :yes
+          result = Yast2::Popup.show(errors,
+            headline: :error, richtext: true, buttons: :yes_no, focus: :no)
+
+          result == :yes
+        else
+          result = Yast2::Popup.show(errors,
+            headline: :error, richtext: true, buttons: :ok)
+          false
+        end
       end
 
     private

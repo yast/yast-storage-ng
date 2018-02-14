@@ -70,14 +70,25 @@ module Y2Storage
       errors.empty?
     end
 
-    # All boot errors detected in the setup, for example, when a /boot/efi partition
-    # is missing in a UEFI system
+    # All boot errors detected in the setup, for example, when size of a /boot/efi partition
+    # is out of borders.
     #
+    # @raise Error if {fatal_errors} is not empty
     # @see SetupError
     #
     # @return [Array<SetupError>]
     def errors
       strategy.errors
+    end
+
+    # All fatal boot errors detected in the setup, for example, when a /boot/efi partition
+    # is missing in a UEFI system
+    #
+    # @see SetupError
+    #
+    # @return [Array<SetupError>]
+    def fatal_errors
+      strategy.fatal_errors
     end
 
   protected

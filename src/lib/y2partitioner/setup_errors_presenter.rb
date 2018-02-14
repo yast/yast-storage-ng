@@ -44,6 +44,9 @@ module Y2Partitioner
     #
     # @return [String]
     def to_html
+      fatal_errors = fatal_errors_html
+      return fatal_errors if fatal_errors
+
       errors = [boot_errors_html, product_errors_html].compact
       return "" if errors.empty?
 
@@ -73,6 +76,17 @@ module Y2Partitioner
       errors = setup_checker.product_errors
       # TRANSLATORS
       header = _("The system could not work properly because the following errors were found:\n")
+
+      errors_html(header, errors)
+    end
+
+    # HTML representation for fatal booting errors
+    #
+    # @return [String, nil] nil if there is no product error
+    def fatal_errors_html
+      errors = setup_checker.fatal_errors
+      # TRANSLATORS
+      header = _("The system cannot be installed because the following errors were found:\n")
 
       errors_html(header, errors)
     end

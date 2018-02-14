@@ -55,14 +55,14 @@ module Y2Storage
     #
     # @return [Boolean]
     def valid?
-      errors.empty?
+      fatal_errors.empty? && errors.empty?
     end
 
-    # Whether the system would be bootable using current setup
+    # Whether the system contain fatal errors preventing to continue
     #
-    # @return[Boolean] true if the system is bootable; false otherwise.
-    def bootable?
-      boot_errors.empty?
+    # @return [Array<SetupError>]
+    def fatal_errors
+      boot_requirements_checker.fatal_errors
     end
 
     # All storage errors detected in the setup, for example, when a /boot/efi partition
@@ -81,7 +81,7 @@ module Y2Storage
     #
     # @see BootRequirementsChecker#errors
     def boot_errors
-      @boot_errors ||= BootRequirementsChecker.new(devicegraph).errors
+      @boot_errors ||= boot_requirements_checker.errors
     end
 
     # All product errors detected in the setup
@@ -137,6 +137,10 @@ module Y2Storage
     # @return [Boolean] true if the volume is missing; false otherwise.
     def missing?(volume)
       BlkDevice.all(devicegraph).none? { |d| d.match_volume?(volume) }
+    end
+
+    def boot_requirements_checker
+      @boot_requirements_checker ||= BootRequirementsChecker.new(devicegraph)
     end
   end
 end

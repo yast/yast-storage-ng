@@ -42,16 +42,12 @@ module Y2Storage
       def errors
         errors = super
 
-        if root_filesystem_missing?
-          errors << unknown_boot_disk_error
-        else
-          if prep_partition_needed? && missing_partition_for?(prep_volume)
-            errors << SetupError.new(missing_volume: prep_volume)
-          end
+        if prep_partition_needed? && missing_partition_for?(prep_volume)
+          errors << SetupError.new(missing_volume: prep_volume)
+        end
 
-          if boot_partition_needed? && missing_partition_for?(boot_volume)
-            errors << SetupError.new(missing_volume: boot_volume)
-          end
+        if boot_partition_needed? && missing_partition_for?(boot_volume)
+          errors << SetupError.new(missing_volume: boot_volume)
         end
 
         errors
@@ -60,6 +56,9 @@ module Y2Storage
     protected
 
       def boot_partition_needed?
+        # FIXME: I (JR) think this is needed only for powernv where firmware have
+        #        to load grub2 configuration and kernel itself. For prep case
+        #        grub2 loads it itself.
         root_in_lvm? || root_in_software_raid? || encrypted_root?
       end
 

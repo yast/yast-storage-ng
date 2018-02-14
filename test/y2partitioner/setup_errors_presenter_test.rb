@@ -33,11 +33,14 @@ describe Y2Partitioner::SetupErrorsPresenter do
     Y2Storage::StorageManager.create_test_instance
     allow(setup_checker).to receive(:boot_errors).and_return(boot_errors)
     allow(setup_checker).to receive(:product_errors).and_return(product_errors)
+    allow(setup_checker).to receive(:fatal_errors).and_return(fatal_errors)
   end
 
   subject { described_class.new(setup_checker) }
 
   let(:boot_errors) { [] }
+
+  let(:fatal_errors) { [] }
 
   let(:product_errors) { [] }
 
@@ -48,6 +51,14 @@ describe Y2Partitioner::SetupErrorsPresenter do
 
       it "returns an empty string" do
         expect(subject.to_html).to be_empty
+      end
+    end
+
+    context "when there are fatal errors" do
+      let(:fatal_errors) { [instance_double(Y2Storage::SetupError, message: "fatal error 1")] }
+
+      it "contains messages only for fatal errors" do
+        expect(subject.to_html).to match(/fatal error 1/)
       end
     end
 
