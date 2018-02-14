@@ -224,8 +224,12 @@ describe Y2Storage::SetupChecker do
     end
 
     it "includes an error for each mandatory product volume not present in the system" do
-      expect(subject.product_warnings).to include(an_object_having_attributes(missing_volume: root_volume))
-      expect(subject.product_warnings).to include(an_object_having_attributes(missing_volume: swap_volume))
+      expect(subject.product_warnings).to include(
+        an_object_having_attributes(missing_volume: root_volume)
+      )
+      expect(subject.product_warnings).to include(
+        an_object_having_attributes(missing_volume: swap_volume)
+      )
     end
 
     context "when a mandatory product volume is present in the system" do

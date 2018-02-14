@@ -133,7 +133,7 @@ module Y2Partitioner
 
           result == :yes
         else
-          result = Yast2::Popup.show(errors,
+          Yast2::Popup.show(errors,
             headline: :error, richtext: true, buttons: :ok)
           false
         end
