@@ -2,123 +2,31 @@
 [//]: # (document was automatically created using 'rake doc:bootspecs')
 
 # Y2Storage::BootRequirementsChecker
-## needed partitions in an aarch64 system
-- with a partitions-based proposal
-	- if there are no EFI partitions
-		- **requires only a new /boot/efi partition**
-	- if there is already an EFI partition
-		- and it does not have enough size
-			- **requires only a new /boot/efi partition**
-		- and it has enough size
-			- **only requires to use the existing EFI partition**
-- with a LVM-based proposal
-	- if there are no EFI partitions
-		- **requires only a new /boot/efi partition**
-	- if there is already an EFI partition
-		- and it does not have enough size
-			- **requires only a new /boot/efi partition**
-		- and it has enough size
-			- **only requires to use the existing EFI partition**
-- with an encrypted proposal
-	- if there are no EFI partitions
-		- **requires only a new /boot/efi partition**
-	- if there is already an EFI partition
-		- and it does not have enough size
-			- **requires only a new /boot/efi partition**
-		- and it has enough size
-			- **only requires to use the existing EFI partition**
-
-## needed partitions in a PPC64 system
-- in a non-PowerNV system (KVM/LPAR)
-	- with a partitions-based proposal
-		- if there are no PReP partitions in the target disk
-			- **requires only a PReP partition**
-		- if there is already a PReP partition in the disk
-			- **does not require any particular volume**
-	- with a LVM-based proposal
-		- if there are no PReP partitions in the target disk
-			- **requires /boot and PReP partitions**
-		- if there is already a PReP partition in the disk
-			- **requires only a /boot partition**
-	- with an encrypted proposal
-		- if there are no PReP partitions in the target disk
-			- **requires /boot and PReP partitions**
-		- if there is already a PReP partition in the disk
-			- **requires only a /boot partition**
-- in bare metal (PowerNV)
-	- with a partitions-based proposal
-		- **does not require any particular volume**
-	- with a LVM-based proposal
-		- **requires only a /boot partition**
-	- with an encrypted proposal
-		- **requires only a /boot partition**
-- when proposing a boot partition
-	- **requires /boot to be a non-encrypted ext4 partition in the booting disk**
-	- when aiming for the recommended size
-		- **requires /boot to be at least 200 MiB large**
-	- when aiming for the minimal size
-		- **requires /boot to be at least 100 MiB large**
-- when proposing a PReP partition
-	- **requires it to be a non-encrypted partition**
-	- **requires it to be bootable (ms-dos partition table)**
-	- when aiming for the recommended size
-		- **requires it to be between 1MiB and 8MiB, despite the alignment**
-	- when aiming for the minimal size
-		- **requires it to be between 256KiB and 8MiB, despite the alignment**
-
-## needed partitions in a S/390 system
-- trying to install in a zfcp disk
-	- with a partitions-based proposal
-		- **requires only a /boot/zipl partition**
-	- with a LVM-based proposal
-		- **requires only a /boot/zipl partition**
-	- with an encrypted proposal
-		- **requires only a /boot/zipl partition**
-- trying to install in a FBA DASD disk
-	- **raises an error**
-- trying to install in a (E)CKD DASD disk
-	- if the disk is formatted as LDL
-		- **raises an error**
-	- if the disk is formatted as CDL
-		- with a partitions-based proposal
-			- **requires only a /boot/zipl partition**
-		- with a LVM-based proposal
-			- **requires only a /boot/zipl partition**
-		- with an encrypted proposal
-			- **requires only a /boot/zipl partition**
-- when proposing a /boot/zipl partition
-	- **requires /boot/zipl to be ext2 with at least 100 MiB**
-	- **requires /boot/zipl to be a non-encrypted partition in the boot disk**
-	- when aiming for the recommended size
-		- **requires /boot/zipl to be at least 200 MiB large**
-	- when aiming for the minimal size
-		- **requires /boot/zipl to be at least 100 MiB large**
-
 ## needed partitions in a x86 system
 - using UEFI
 	- with a partitions-based proposal
 		- if there are no EFI partitions
 			- **requires only a new /boot/efi partition**
 		- if there is already an EFI partition
-			- and it does not have enough size
+			- and it is not a suitable EFI partition (not enough size, invalid filesystem)
 				- **requires only a new /boot/efi partition**
-			- and it has enough size
+			- and it is a suitable EFI partition (enough size, valid filesystem)
 				- **only requires to use the existing EFI partition**
 	- with a LVM-based proposal
 		- if there are no EFI partitions
 			- **requires only a new /boot/efi partition**
 		- if there is already an EFI partition
-			- and it does not have enough size
+			- and it is not a suitable EFI partition (not enough size, invalid filesystem)
 				- **requires only a new /boot/efi partition**
-			- and it has enough size
+			- and it is a suitable EFI partition (enough size, valid filesystem)
 				- **only requires to use the existing EFI partition**
 	- with an encrypted proposal
 		- if there are no EFI partitions
 			- **requires only a new /boot/efi partition**
 		- if there is already an EFI partition
-			- and it does not have enough size
+			- and it is not a suitable EFI partition (not enough size, invalid filesystem)
 				- **requires only a new /boot/efi partition**
-			- and it has enough size
+			- and it is a suitable EFI partition (enough size, valid filesystem)
 				- **only requires to use the existing EFI partition**
 - not using UEFI (legacy PC)
 	- with GPT partition table
@@ -171,9 +79,9 @@
 		- **requires it to have the correct id**
 		- **requires it to be a non-encrypted partition**
 		- when aiming for the recommended size
-			- **requires it to be between 1 and 8MiB, despite the alignment**
+			- **requires it to be between 1 and 8MiB**
 		- when aiming for the minimal size
-			- **requires it to be between 256KiB and 8MiB, despite the alignment**
+			- **requires it to be between 256KiB and 8MiB**
 	- when proposing an new EFI partition
 		- **requires /boot/efi to be a non-encrypted vfat partition**
 		- **requires /boot/efi to be close enough to the beginning of disk**
@@ -181,3 +89,95 @@
 			- **requires /boot/efi to be exactly 500 MiB large**
 		- when aiming for the minimal size
 			- **requires /boot/efi to be between 33 MiB and 500 MiB large**
+
+## needed partitions in a PPC64 system
+- in a non-PowerNV system (KVM/LPAR)
+	- with a partitions-based proposal
+		- if there are no PReP partitions in the target disk
+			- **requires only a PReP partition**
+		- if there is already a PReP partition in the disk
+			- **does not require any particular volume**
+	- with a LVM-based proposal
+		- if there are no PReP partitions in the target disk
+			- **requires only a PReP partition**
+		- if there is already a PReP partition in the disk
+			- **does not require any particular volume**
+	- with an encrypted proposal
+		- if there are no PReP partitions in the target disk
+			- **requires only a PReP partition**
+		- if there is already a PReP partition in the disk
+			- **does not require any particular volume**
+- in bare metal (PowerNV)
+	- with a partitions-based proposal
+		- **does not require any particular volume**
+	- with a LVM-based proposal
+		- **requires only a /boot partition**
+	- with an encrypted proposal
+		- **requires only a /boot partition**
+- when proposing a boot partition
+	- **requires /boot to be a non-encrypted ext4 partition in the booting disk**
+	- when aiming for the recommended size
+		- **requires /boot to be at least 200 MiB large**
+	- when aiming for the minimal size
+		- **requires /boot to be at least 100 MiB large**
+- when proposing a PReP partition
+	- **requires it to be a non-encrypted partition**
+	- **requires it to be bootable (ms-dos partition table)**
+	- when aiming for the recommended size
+		- **requires it to be between 1MiB and 8MiB**
+	- when aiming for the minimal size
+		- **requires it to be between 256KiB and 8MiB**
+
+## needed partitions in a S/390 system
+- trying to install in a zfcp disk
+	- with a partitions-based proposal
+		- **requires only a /boot/zipl partition**
+	- with a LVM-based proposal
+		- **requires only a /boot/zipl partition**
+	- with an encrypted proposal
+		- **requires only a /boot/zipl partition**
+- trying to install in a FBA DASD disk
+	- **raises an error**
+- trying to install in a (E)CKD DASD disk
+	- if the disk is formatted as LDL
+		- **raises an error**
+	- if the disk is formatted as CDL
+		- with a partitions-based proposal
+			- **requires only a /boot/zipl partition**
+		- with a LVM-based proposal
+			- **requires only a /boot/zipl partition**
+		- with an encrypted proposal
+			- **requires only a /boot/zipl partition**
+- when proposing a /boot/zipl partition
+	- **requires /boot/zipl to be ext2 with at least 100 MiB**
+	- **requires /boot/zipl to be a non-encrypted partition in the boot disk**
+	- when aiming for the recommended size
+		- **requires /boot/zipl to be at least 200 MiB large**
+	- when aiming for the minimal size
+		- **requires /boot/zipl to be at least 100 MiB large**
+
+## needed partitions in an aarch64 system
+- with a partitions-based proposal
+	- if there are no EFI partitions
+		- **requires only a new /boot/efi partition**
+	- if there is already an EFI partition
+		- and it is not a suitable EFI partition (not enough size, invalid filesystem)
+			- **requires only a new /boot/efi partition**
+		- and it is a suitable EFI partition (enough size, valid filesystem)
+			- **only requires to use the existing EFI partition**
+- with a LVM-based proposal
+	- if there are no EFI partitions
+		- **requires only a new /boot/efi partition**
+	- if there is already an EFI partition
+		- and it is not a suitable EFI partition (not enough size, invalid filesystem)
+			- **requires only a new /boot/efi partition**
+		- and it is a suitable EFI partition (enough size, valid filesystem)
+			- **only requires to use the existing EFI partition**
+- with an encrypted proposal
+	- if there are no EFI partitions
+		- **requires only a new /boot/efi partition**
+	- if there is already an EFI partition
+		- and it is not a suitable EFI partition (not enough size, invalid filesystem)
+			- **requires only a new /boot/efi partition**
+		- and it is a suitable EFI partition (enough size, valid filesystem)
+			- **only requires to use the existing EFI partition**
