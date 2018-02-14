@@ -60,6 +60,9 @@ module Y2Storage
     protected
 
       def boot_partition_needed?
+        # Boot partition is not required for non-PowerNV systems (bsc#1078707)
+        return false unless arch.ppc_power_nv?
+
         root_in_lvm? || root_in_software_raid? || encrypted_root?
       end
 
