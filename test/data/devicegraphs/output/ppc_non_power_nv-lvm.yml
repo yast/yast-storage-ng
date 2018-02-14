@@ -10,19 +10,8 @@
         type: primary
         id: prep
     - partition:
-        size: 200 MiB
-        name: "/dev/sda2"
-        type: primary
-        id: linux
-        file_system: ext4
-        mount_point: "/boot"
-        fstab_options:
-          - data=ordered
-          - acl
-          - user_xattr
-    - partition:
         size: 43009 MiB (42.00 GiB)
-        name: "/dev/sda3"
+        name: "/dev/sda2"
         type: primary
         id: lvm
 - lvm_vg:
@@ -40,4 +29,4 @@
         mount_point: swap
     lvm_pvs:
     - lvm_pv:
-        blk_device: "/dev/sda3"
+        blk_device: "/dev/sda2"
