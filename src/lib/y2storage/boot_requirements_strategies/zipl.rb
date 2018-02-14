@@ -50,7 +50,7 @@ module Y2Storage
         res = super
         return res unless res.empty?
 
-        if missing_partition_for?(zipl_volume)
+        if missing_partition_for?(minimal_zipl_volume)
           res << SetupError.new(missing_volume: minimal_zipl_volume)
         end
 
