@@ -44,7 +44,7 @@ module Y2Partitioner
     #
     # @return [String]
     def to_html
-      errors_html || warnings_html || nil
+      errors_html || warnings_html || ""
     end
 
   private
