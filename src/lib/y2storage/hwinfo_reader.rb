@@ -33,8 +33,9 @@ module Y2Storage
   #
   # @example Get information for "/dev/sda"
   #   hwinfo = HWInfo.instance.for_device(name)
-  #   hwinfo.driver #=> ["ahci", "sd"]
-  #   hwinfo.device_file #=> "/dev/sda"
+  #   hwinfo.driver      #=> ["ahci", "sd"]
+  #   hwinfo.device_file #=> ["/dev/sda"]
+  #   hwinfo.bus         #=> "IDE"
   #
   # @example Cleaning the cache
   #   HWInfo.instance.reset
@@ -87,7 +88,7 @@ module Y2Storage
       lines.each_slice(2).each_with_object({}) do |(header, body), data|
         details = data_from_body(body)
         details.bus = header[BUS_REGEXP, 1]
-        data[details.device_file] = details
+        details.device_file.each { |n| data[n] = details }
       end
     end
 
@@ -104,14 +105,46 @@ module Y2Storage
         key, value = line.split(":", 2)
         next if value.nil?
         key = key.downcase.tr(" ", "_").tr("()/", "")
-        value = value.tr("\"()", "").strip
-        parsed_value = MULTI_VALUED.include?(key) ? parse_multi(value) : parse_single(value)
+        parsed_value = parse(key, value)
         data.public_send("#{key}=", parsed_value)
       end
     end
 
+    # Parse a given value
+    #
+    # If a property needs special handling, a "parse_key_PROPERTY_NAME" can
+    # be implemented and it will be used to parse the value (see #parse_key_device_file
+    # as example).
+    #
+    # Otherwise, #parse_single or #parse_multi will be used.
+    #
+    # @param key   [String] Property name
+    # @param value [String] Value to parse
+    # @return [String,Array<String>] Parsed value(s)
+    def parse(key, value)
+      value = value.tr("\"()", "").strip
+
+      handling_meth = "parse_key_#{key}"
+      return send(handling_meth, value) if respond_to?(handling_meth, true)
+
+      MULTI_VALUED.include?(key) ? parse_multi(value) : parse_single(value)
+    end
+
+    # Parse the device_file key
+    #
+    # The device_file can contain up to two different values. See hwinfo sources
+    # for further details:
+    # https://github.com/openSUSE/hwinfo/blob/b3b2757b3633cde7f49c30757b9664defc773c86/src/hd/hdp.c#L468
+    #
+    # @param [String] value
+    # @return [Array<String>] array containing all values
+    def parse_key_device_file(value)
+      value.split(" ")
+    end
+
     # Sanitizes a single-value property
     #
+    # @param value [String] Value to parse
     # @return [String] sanitized value
     def parse_single(value)
       value.strip
@@ -119,6 +152,7 @@ module Y2Storage
 
     # Sanitizes a multi-value property
     #
+    # @param value [String] Value to parse
     # @return [Array<String>] array containing all values
     def parse_multi(value)
       value.split(",").map(&:strip)
