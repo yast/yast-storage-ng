@@ -51,7 +51,10 @@ module Y2Storage
 
     protected
 
-      MIN_SIZE = DiskSize.MiB(33).freeze
+      # Looks like 256MiB is the minimum size for FAT32 in 4K Native drives
+      # (4-KiB-per-sector), according to
+      # https://wiki.archlinux.org/index.php/EFI_System_Partition
+      MIN_SIZE = DiskSize.MiB(256).freeze
       DESIRED_SIZE = DiskSize.MiB(500).freeze
       MAX_SIZE = DiskSize.MiB(500).freeze
 

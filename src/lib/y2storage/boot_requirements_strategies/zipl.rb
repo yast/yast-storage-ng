@@ -72,7 +72,7 @@ module Y2Storage
         @zipl_volume.fs_type = Filesystems::Type.zipl_filesystems.first
         @zipl_volume.min_size = DiskSize.MiB(100)
         @zipl_volume.desired_size = DiskSize.MiB(200)
-        @zipl_volume.max_size = DiskSize.GiB(1)
+        @zipl_volume.max_size = DiskSize.MiB(500)
         @zipl_volume
       end
 

@@ -139,8 +139,10 @@ module Y2Storage
         return @grub_volume unless @grub_volume.nil?
 
         @grub_volume = VolumeSpecification.new({})
-        @grub_volume.min_size = DiskSize.KiB(256)
-        @grub_volume.desired_size = DiskSize.MiB(1)
+        # Grub2 with all the modules we could possibly use (LVM, LUKS, etc.)
+        # is slightly bigger than 1MiB
+        @grub_volume.min_size = DiskSize.MiB(2)
+        @grub_volume.desired_size = DiskSize.MiB(4)
         @grub_volume.max_size = DiskSize.MiB(8)
         # Only required on GPT
         @grub_volume.partition_id = PartitionId::BIOS_BOOT

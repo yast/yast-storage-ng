@@ -66,8 +66,11 @@ RSpec.shared_examples "proposed GRUB partition" do
   context "when aiming for the recommended size" do
     let(:target) { :desired }
 
-    it "requires it to be between 1 and 8MiB" do
-      expect(grub_part.min).to eq 1.MiB
+    it "requires it to be at least 4 MiB (Grub2 stages 1+2, needed Grub modules and extra space)" do
+      expect(grub_part.min).to eq 4.MiB
+    end
+
+    it "requires it to be at most 8 MiB (anything bigger would mean wasting space)" do
       expect(grub_part.max).to eq 8.MiB
     end
   end
@@ -75,8 +78,11 @@ RSpec.shared_examples "proposed GRUB partition" do
   context "when aiming for the minimal size" do
     let(:target) { :min }
 
-    it "requires it to be between 256KiB and 8MiB" do
-      expect(grub_part.min).to eq 256.KiB
+    it "requires it to be at least 2 MiB (Grub2 stages 1+2 and needed Grub modules)" do
+      expect(grub_part.min).to eq 2.MiB
+    end
+
+    it "requires it to be at most 8 MiB (anything bigger would mean wasting space)" do
       expect(grub_part.max).to eq 8.MiB
     end
   end
@@ -100,7 +106,7 @@ RSpec.shared_examples "proposed EFI partition" do
   context "when aiming for the recommended size" do
     let(:target) { :desired }
 
-    it "requires /boot/efi to be exactly 500 MiB large" do
+    it "requires /boot/efi to be exactly 500 MiB large (enough for several operating systems)" do
       expect(efi_part.min_size).to eq 500.MiB
       expect(efi_part.max_size).to eq 500.MiB
     end
@@ -109,9 +115,12 @@ RSpec.shared_examples "proposed EFI partition" do
   context "when aiming for the minimal size" do
     let(:target) { :min }
 
-    it "requires /boot/efi to be between 33 MiB and 500 MiB large" do
-      expect(efi_part.min_size).to eq 33.MiB
-      expect(efi_part.max_size).to eq 500.MiB
+    it "requires it to be at least 256 MiB (min size for FAT32 in drives with 4-KiB-per-sector)" do
+      expect(efi_part.min).to eq 256.MiB
+    end
+
+    it "requires it to be at most 500 MiB (enough space for several operating systems)" do
+      expect(efi_part.max).to eq 500.MiB
     end
   end
 end
@@ -130,11 +139,18 @@ RSpec.shared_examples "proposed PReP partition" do
     expect(prep_part.bootable).to eq true
   end
 
+  it "requires no particular position for it in the disk (since there is no evidence of such so far)" do
+    expect(prep_part.max_start_offset).to be_nil
+  end
+
   context "when aiming for the recommended size" do
     let(:target) { :desired }
 
-    it "requires it to be between 1MiB and 8MiB" do
-      expect(prep_part.min).to eq 1.MiB
+    it "requires it to be at least 4 MiB (Grub2 stages 1+2, needed Grub modules and extra space)" do
+      expect(prep_part.min).to eq 4.MiB
+    end
+
+    it "requires it to be at most 8 MiB (since it will be mapped to RAM)" do
       expect(prep_part.max).to eq 8.MiB
     end
   end
@@ -142,8 +158,11 @@ RSpec.shared_examples "proposed PReP partition" do
   context "when aiming for the minimal size" do
     let(:target) { :min }
 
-    it "requires it to be between 256KiB and 8MiB" do
-      expect(prep_part.min).to eq 256.KiB
+    it "requires it to be at least 2 MiB (Grub2 stages 1+2 and needed Grub modules)" do
+      expect(prep_part.min).to eq 2.MiB
+    end
+
+    it "requires it to be at most 8 MiB (since it will be mapped to RAM)" do
       expect(prep_part.max).to eq 8.MiB
     end
   end
@@ -167,16 +186,24 @@ RSpec.shared_examples "proposed /boot/zipl partition" do
   context "when aiming for the recommended size" do
     let(:target) { :desired }
 
-    it "requires /boot/zipl to be at least 200 MiB large" do
+    it "requires /boot/zipl to be at least 200 MiB large (FIXME: why?)" do
       expect(zipl_part.min_size).to eq 200.MiB
+    end
+
+    it "requires /boot/zipl to be at most 500 MiB large (FIXME: why?)" do
+      expect(zipl_part.max_size).to eq 500.MiB
     end
   end
 
   context "when aiming for the minimal size" do
     let(:target) { :min }
 
-    it "requires /boot/zipl to be at least 100 MiB large" do
+    it "requires /boot/zipl to be at least 100 MiB large (FIXME: why?)" do
       expect(zipl_part.min_size).to eq 100.MiB
+    end
+
+    it "requires /boot/zipl to be at most 500 MiB large (FIXME: why?)" do
+      expect(zipl_part.max_size).to eq 500.MiB
     end
   end
 end
