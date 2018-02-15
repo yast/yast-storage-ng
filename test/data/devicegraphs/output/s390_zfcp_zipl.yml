@@ -5,7 +5,7 @@
     partition_table: gpt
     partitions:
     - partition:
-        size: 200 MiB
+        size: 500 MiB
         name: "/dev/sda1"
         id: linux
         file_system: ext2

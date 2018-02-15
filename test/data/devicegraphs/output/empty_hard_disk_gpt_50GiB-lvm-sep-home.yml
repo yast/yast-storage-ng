@@ -6,12 +6,12 @@
     partitions:
 
     - partition:
-        size: 1 MiB
+        size: 8 MiB
         name: /dev/sda1
         id:   bios_boot
 
     - partition:
-        size: 52426735.5 KiB
+        size: unlimited
         name: /dev/sda2
         id:   lvm
 
@@ -29,12 +29,12 @@
     lvm_lvs:
     - lvm_lv:
         lv_name:      home
-        size:         23344 MiB
+        size:         23340 MiB
         file_system:  xfs
         mount_point:  "/home"
     - lvm_lv:
         lv_name:      root
-        size:         25804 MiB
+        size:         25800 MiB
         file_system:  btrfs
         mount_point:  "/"
     - lvm_lv:

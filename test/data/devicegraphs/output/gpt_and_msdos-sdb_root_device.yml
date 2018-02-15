@@ -25,7 +25,7 @@
         label:        data
 
     - partition:
-        size:         1 MiB
+        size:         8 MiB
         name:         /dev/sdb2
         id:           bios_boot
 
@@ -43,7 +43,7 @@
         mount_point:  swap
 
     - partition:
-        size:         966785007.5 KiB
+        size:         unlimited
         name:         /dev/sdb5
         file_system:  xfs
         mount_point:  "/home"

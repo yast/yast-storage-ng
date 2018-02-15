@@ -6,11 +6,11 @@
     partitions:
 
     - partition:
-        size:         1 MiB
+        size:         8 MiB
         name:         /dev/sda1
         id:           bios_boot
     - partition:
-        size:         15565 MiB (15.20 GiB)
+        size:         15561 MiB (15.20 GiB)
         name:         /dev/sda2
         file_system:  btrfs
         mount_point:  "/"
@@ -21,7 +21,10 @@
         file_system:  swap
         mount_point:  swap
     - partition:
-        size:         8176623.5 KiB (7.80 GiB)
+        size:         unlimited
         name:         /dev/sda4
         file_system:  xfs
         mount_point:  "/home"
+    # The final 16.5 KiB are reserved by GPT
+    - free:
+        size: 16.5 KiB

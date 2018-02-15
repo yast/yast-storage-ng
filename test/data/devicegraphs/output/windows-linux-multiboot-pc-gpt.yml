@@ -18,7 +18,7 @@
         mount_point: swap
         label: swap
     - partition:
-        size: 1 MiB
+        size: 8 MiB
         name: "/dev/sda3"
         id: bios_boot
     - partition:

@@ -5,11 +5,11 @@
     partition_table: gpt
     partitions:
     - partition:
-        size: 1 MiB
+        size: 8 MiB
         name: "/dev/sda1"
         id: bios_boot
     - partition:
-        size: 52426735.5 KiB (50.00 GiB)
+        size: unlimited
         name: "/dev/sda2"
         id: lvm
     # Reserved by GPT
@@ -20,7 +20,7 @@
     lvm_lvs:
     - lvm_lv:
         lv_name: root
-        size: 30716 MiB (30.00 GiB)
+        size: 30708 MiB
         file_system: ext4
         mount_point: "/"
         fstab_options:

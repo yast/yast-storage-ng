@@ -5,7 +5,7 @@
     partition_table: gpt
     partitions:
     - partition:
-        size: 1 MiB
+        size: 8 MiB
         name: "/dev/sda1"
         type: primary
         id: prep

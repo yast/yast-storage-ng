@@ -6,14 +6,18 @@
     partitions:
 
     - partition:
-        size: 1 MiB
+        size: 8 MiB
         name: /dev/sda1
         id:   bios_boot
 
     - partition:
-        size: 26212335.5 KiB
+        size: unlimited
         name: /dev/sda2
         id:   lvm
+
+    # The final 16.5 KiB are reserved by GPT
+    - free:
+        size: 16.5 KiB
 
 - lvm_vg:
     vg_name: system
@@ -25,7 +29,7 @@
     lvm_lvs:
     - lvm_lv:
         lv_name:      root
-        size:         23548 MiB
+        size:         23540 MiB
         file_system:  btrfs
         mount_point:  "/"
     - lvm_lv:
