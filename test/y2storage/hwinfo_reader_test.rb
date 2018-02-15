@@ -46,6 +46,11 @@ describe Y2Storage::HWInfoReader do
                     geometry_logical: "CHS 121601/255/63")
     end
 
+    it "supports alternative devices names" do
+      data = reader.for_device("/dev/sg1")
+      expect(data.device_file).to eq(["/dev/sdb", "/dev/sg1"])
+    end
+
     it "retrieves hardware information from hwinfo" do
       expect(Yast::Execute).to receive(:on_target!)
         .with("/usr/sbin/hwinfo", "--disk", "--listmd", stdout: :capture)

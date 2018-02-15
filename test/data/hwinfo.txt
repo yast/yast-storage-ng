@@ -51,3 +51,25 @@
   Config Status: cfg=no, avail=yes, need=no, active=unknown
   Attached to: #12 (RAID bus controller)
 
+28: SCSI 100.1: 10600 Disk
+  [Created at block.245]
+  Unique ID: uI_Q.As_GZyB3Rt2
+  SysFS ID: /class/block/sdb
+  SysFS BusID: 1:0:0:1
+  SysFS Device Link: /devices/platform/host1/session1/target1:0:0/1:0:0:1
+  Hardware Class: disk
+  Model: "QNAP iSCSI Storage"
+  Vendor: "QNAP"
+  Device: "iSCSI Storage"
+  Revision: "4.0"
+  Serial ID: "97d7f392-8b3a-4c65-9c6e-296b318d5dbc"
+  Driver: "sd"
+  Driver Modules: "sd_mod"
+  Device File: /dev/sdb (/dev/sg1)
+  Device Files: /dev/sdb, /dev/disk/by-id/scsi-1QNAP, /dev/disk/by-id/scsi-3600140597d7f392d8b3ad4c65d9c6ed2, /dev/disk/by-id/scsi-SQNAP_iSCSI_Storage_97d7f392-8b3a-4c65-9c6e-296b318d5dbc, /dev/disk/by-id/wwn-0x600140597d7f392d8b3ad4c65d9c6ed2, /dev/disk/by-path/ip-10.160.6.193:3260-iscsi-iqn.2004-04.com.qnap:ts-112:iscsi.sbd.dd5178-lun-1
+  Device Number: block 8:16-8:31 (char 21:1)
+  Geometry (Logical): CHS 1011/34/61
+  Size: 2097152 sectors a 512 bytes
+  Capacity: 1 GB (1073741824 bytes)
+  Config Status: cfg=new, avail=yes, need=no, active=unknown
+
