@@ -1,7 +1,7 @@
 Boot Partition Layout / Restrictions For Storage Proposal
 =========================================================
 
-[Revision 2018-02-12]
+[Revision 2018-02-15]
 
 #### Notes:
 
@@ -11,11 +11,10 @@ Boot Partition Layout / Restrictions For Storage Proposal
 ### Relevant bugs during SLE15 beta phase
 
 - In [bsc#1068772](https://bugzilla.suse.com/show_bug.cgi?id=1068772) and
-  [bsc#1076851](https://bugzilla.suse.com/show_bug.cgi?id=1076851) it has been
-  pointed that the PReP partition likely MUST be the first partition in the
-  disk.
+  [bsc#1076851](https://bugzilla.suse.com/show_bug.cgi?id=1076851) the
+  requirements for the PReP partition (position and size) have been discussed.
 - In [bsc#1073680](https://bugzilla.suse.com/show_bug.cgi?id=1073680) the
-  reporter points that `/boot/efi` should be also the first partition in the
+  reporter points that `/boot/efi` should be the first partition in the
   disk to please some buggy EFI implementations.
 - At the time of writing, there is nothing implemented in the proposal to ensure
   a given partition is located at the beginning of its disk.
