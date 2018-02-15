@@ -44,10 +44,7 @@ module Y2Partitioner
     #
     # @return [String]
     def to_html
-      errors = [boot_errors_html, product_errors_html].compact
-      return "" if errors.empty?
-
-      errors.join(Yast::HTML.Newline)
+      errors_html || warnings_html || ""
     end
 
   private
@@ -55,26 +52,50 @@ module Y2Partitioner
     # @return [SetupChecker] checker for the current setup
     attr_reader :setup_checker
 
-    # HTML representation for boot errors
+    # HTML representation for boot warnings
     #
-    # @return [String, nil] nil if there is no boot error
-    def boot_errors_html
-      errors = setup_checker.boot_errors
+    # @return [String, nil] nil if there is no boot warning
+    def warnings_html
+      warnings = [boot_warnings_html, product_warnings_html].compact
+      return nil if warnings.empty?
+
+      warnings.join(Yast::HTML.Newline)
+    end
+
+    # HTML representation for boot warnings
+    #
+    # @return [String, nil] nil if there is no boot warning
+    def boot_warnings_html
+      warnings = setup_checker.boot_warnings
       # TRANSLATORS
       header = _("The system might not be able to boot:\n")
 
-      errors_html(header, errors)
+      create_html(header, warnings)
     end
 
-    # HTML representation for mandatory product errors
+    # HTML representation for mandatory product warnings
     #
-    # @return [String, nil] nil if there is no product error
-    def product_errors_html
-      errors = setup_checker.product_errors
+    # @return [String, nil] nil if there is no product warning
+    def product_warnings_html
+      warnings = setup_checker.product_warnings
       # TRANSLATORS
-      header = _("The system could not work properly because the following errors were found:\n")
+      header = _(
+        "The system could not work properly because the following product " \
+          "requirements were not fulfilled:\n"
+      )
 
-      errors_html(header, errors)
+      create_html(header, warnings)
+    end
+
+    # HTML representation for fatal booting errors
+    #
+    # @return [String, nil] nil if there is no error
+    def errors_html
+      errors = setup_checker.errors
+      # TRANSLATORS
+      header = _("The system cannot be installed because the following errors were found:\n")
+
+      create_html(header, errors)
     end
 
     # HTML representation for a set of errors
@@ -85,7 +106,7 @@ module Y2Partitioner
     # @param errors [Array<SetupError>] list of errors
     #
     # @return [String, nil] nil if there is no error
-    def errors_html(header, errors)
+    def create_html(header, errors)
       return nil if errors.empty?
 
       error_messages = errors.map(&:message)

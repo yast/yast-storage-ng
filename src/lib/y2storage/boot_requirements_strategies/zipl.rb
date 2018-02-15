@@ -31,21 +31,19 @@ module Y2Storage
         zipl_partition_missing? ? [zipl_partition(target)] : []
       end
 
-      # Boot errors in the current setup
+      # Boot warnings in the current setup
       #
       # @return [Array<SetupError>]
-      def errors
-        errors = super
+      def warnings
+        res = super
 
-        if root_filesystem_missing?
-          errors << unknown_boot_disk_error
-        elsif !supported_boot_disk?
-          errors << unsupported_boot_disk_error
+        if !supported_boot_disk?
+          res << unsupported_boot_disk_error
         elsif missing_partition_for?(zipl_volume)
-          errors << SetupError.new(missing_volume: zipl_volume)
+          res << SetupError.new(missing_volume: zipl_volume)
         end
 
-        errors
+        res
       end
 
     protected

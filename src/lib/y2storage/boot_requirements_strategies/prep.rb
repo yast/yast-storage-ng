@@ -36,25 +36,21 @@ module Y2Storage
         planned_partitions
       end
 
-      # Boot errors in the current setup
+      # Boot warnings in the current setup
       #
       # @return [Array<SetupError>]
-      def errors
-        errors = super
+      def warnings
+        res = super
 
-        if root_filesystem_missing?
-          errors << unknown_boot_disk_error
-        else
-          if prep_partition_needed? && missing_partition_for?(prep_volume)
-            errors << SetupError.new(missing_volume: prep_volume)
-          end
-
-          if boot_partition_needed? && missing_partition_for?(boot_volume)
-            errors << SetupError.new(missing_volume: boot_volume)
-          end
+        if prep_partition_needed? && missing_partition_for?(prep_volume)
+          res << SetupError.new(missing_volume: prep_volume)
         end
 
-        errors
+        if boot_partition_needed? && missing_partition_for?(boot_volume)
+          res << SetupError.new(missing_volume: boot_volume)
+        end
+
+        res
       end
 
     protected

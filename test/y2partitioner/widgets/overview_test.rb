@@ -222,6 +222,7 @@ describe Y2Partitioner::Widgets::OverviewTreePager do
     before do
       allow(Y2Storage::SetupChecker).to receive(:new).and_return(checker)
       allow(checker).to receive(:valid?).and_return(valid_setup)
+      allow(checker).to receive(:errors).and_return(fatal_errors)
 
       allow(Y2Partitioner::SetupErrorsPresenter).to receive(:new).and_return(presenter)
       allow(presenter).to receive(:to_html).and_return("html representation")
@@ -237,27 +238,46 @@ describe Y2Partitioner::Widgets::OverviewTreePager do
 
     let(:user_input) { nil }
 
+    let(:fatal_errors) { [] }
+
     context "when the current setup is not valid" do
-      let(:valid_setup) { false }
+      context "and when errors are fatal" do
+        let(:valid_setup) { false }
+        let(:fatal_errors) { [double] }
 
-      it "shows an error popup" do
-        expect(Yast2::Popup).to receive(:show)
-        subject.validate
-      end
+        it "shows an error popup" do
+          expect(Yast2::Popup).to receive(:show)
+          subject.validate
+        end
 
-      context "and the user accepts to continue" do
-        let(:user_input) { :yes }
-
-        it "returns true" do
-          expect(subject.validate).to eq(true)
+        it "prevents continuing" do
+          expect(Yast2::Popup).to receive(:show)
+          expect(subject.validate).to eq(false)
         end
       end
 
-      context "and the user declines to continue" do
-        let(:user_input) { :no }
+      context "and errors are no fatal" do
+        let(:valid_setup) { false }
 
-        it "returns false" do
-          expect(subject.validate).to eq(false)
+        it "shows an error popup" do
+          expect(Yast2::Popup).to receive(:show)
+          subject.validate
+        end
+
+        context "and the user accepts to continue" do
+          let(:user_input) { :yes }
+
+          it "returns true" do
+            expect(subject.validate).to eq(true)
+          end
+        end
+
+        context "and the user declines to continue" do
+          let(:user_input) { :no }
+
+          it "returns false" do
+            expect(subject.validate).to eq(false)
+          end
         end
       end
     end
