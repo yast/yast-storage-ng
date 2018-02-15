@@ -44,19 +44,23 @@ module Y2Partitioner
     #
     # @return [String]
     def to_html
-      errors = errors_html
-      return errors if errors
-
-      warnings = [boot_warnings_html, product_warnings_html].compact
-      return "" if warnings.empty?
-
-      warnings.join(Yast::HTML.Newline)
+      errors_html || warnings_html || nil
     end
 
   private
 
     # @return [SetupChecker] checker for the current setup
     attr_reader :setup_checker
+
+    # HTML representation for boot warnings
+    #
+    # @return [String, nil] nil if there is no boot warning
+    def warnings_html
+      warnings = [boot_warnings_html, product_warnings_html].compact
+      return nil if warnings.empty?
+
+      warnings.join(Yast::HTML.Newline)
+    end
 
     # HTML representation for boot warnings
     #
@@ -75,7 +79,7 @@ module Y2Partitioner
     def product_warnings_html
       warnings = setup_checker.product_warnings
       # TRANSLATORS
-      header = _("The system could not work properly because the following warnings were found:\n")
+      header = _("The system could not work properly because the following product requirements were not fulfilled:\n")
 
       create_html(header, warnings)
     end

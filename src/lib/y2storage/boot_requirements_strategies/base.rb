@@ -90,7 +90,7 @@ module Y2Storage
       def errors
         res = []
         if root_filesystem_missing?
-          error_message = _("There is no device mounted to '/'")
+          error_message = _("There is no device mounted at '/'")
           res << SetupError.new(message: error_message)
         end
 

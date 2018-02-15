@@ -52,8 +52,13 @@ module Y2Storage
         res
       end
 
+      # Boot errors in the current setup
+      #
+      # @return [Array<SetupError>]
       def errors
         res = super
+        # other checks is useless if we have base fatal error
+        return res unless res.empty?
 
         if boot_partition_table_missing?
           res << unknown_boot_partition_table_error
@@ -183,7 +188,8 @@ module Y2Storage
       def unknown_boot_partition_table_error
         # TRANSLATORS: error message
         error_message = _(
-          "Boot disk is without partition table"
+          "Boot disk is without partition table and we does not support " \
+            "booting from it. You can fix it by creating partition table on disk."
         )
         SetupError.new(message: error_message)
       end

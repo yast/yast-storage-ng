@@ -40,8 +40,8 @@ module Y2Storage
       def warnings
         res = super
 
-        # missing EFI does not need to be fatal e.g. when boot from network.
-        # User just have to not select grub2-efi bootloader.
+        # Missing EFI does not need to be a fatal (e.g. when boot from network).
+        # User just has to not select grub2-efi bootloader.
         if missing_partition_for?(efi_volume)
           res << SetupError.new(missing_volume: efi_volume)
         end

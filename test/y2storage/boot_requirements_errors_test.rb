@@ -222,9 +222,6 @@ describe Y2Storage::BootRequirementsChecker do
       allow_any_instance_of(Y2Storage::BootRequirementsStrategies::ZIPL)
         .to receive(:zipl_volume).and_return(zipl_volume)
 
-      allow_any_instance_of(Y2Storage::BootRequirementsStrategies::ZIPL)
-        .to receive(:minimal_zipl_volume).and_return(zipl_volume)
-
       allow(Y2Storage::Partition).to receive(:all).and_return partitions
 
       allow(boot_partition).to receive(:match_volume?).with(anything).and_return(false)
@@ -284,7 +281,7 @@ describe Y2Storage::BootRequirementsChecker do
         context "when boot device has no partition table" do
           let(:boot_partition_table) { nil }
 
-          it "contains an fatal error for unknown partition table" do
+          it "contains a fatal error for unknown partition table" do
             expect(checker.errors.size).to eq(1)
             expect(checker.errors).to all(be_a(Y2Storage::SetupError))
 

@@ -66,7 +66,7 @@ module Y2Storage
     end
 
     # All storage warnings detected in the setup, for example, when a /boot/efi partition
-    # is missing in a UEFI system, or missing separate /boot.
+    # is missing in a UEFI system, or a required product volume (e.g., swap) is missing.
     #
     # @see SetupError
     #
@@ -139,6 +139,8 @@ module Y2Storage
       BlkDevice.all(devicegraph).none? { |d| d.match_volume?(volume) }
     end
 
+    # @return [BootRequirementsChecker] shortcut for boot requirements checker
+    # with given device graph
     def boot_requirements_checker
       @boot_requirements_checker ||= BootRequirementsChecker.new(devicegraph)
     end
