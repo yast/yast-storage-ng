@@ -1,4 +1,12 @@
 -------------------------------------------------------------------
+Thu Feb 15 12:33:23 UTC 2018 - jreidinger@suse.com
+
+- Split detection of problematic boot scenarios into erros and
+  warnings. With warnings user can continue, but not with errors.
+  (bsc#1074475)
+- 4.0.95
+
+-------------------------------------------------------------------
 Wed Feb 14 09:39:42 UTC 2018 - jlopez@suse.com
 
 - PowerPC: do not require /boot partition for non-PowerNV
