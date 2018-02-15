@@ -236,6 +236,7 @@ module Y2Storage
     def probe_from_xml(xml_file)
       storage.probed.load(xml_file)
       storage.probed.copy(storage.staging)
+      storage.probed.copy(storage.system)
       probed_performed
     end
 
