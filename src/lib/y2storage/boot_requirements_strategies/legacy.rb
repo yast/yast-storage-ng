@@ -188,8 +188,8 @@ module Y2Storage
       def unknown_boot_partition_table_error
         # TRANSLATORS: error message
         error_message = _(
-          "Boot disk is without partition table and we does not support " \
-            "booting from it. You can fix it by creating partition table on disk."
+          "Boot disk has no partition table and it is not possible to boot from it." \
+          "You can fix it by creating a partition table on the boot disk."
         )
         SetupError.new(message: error_message)
       end
