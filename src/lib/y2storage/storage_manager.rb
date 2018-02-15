@@ -225,6 +225,7 @@ module Y2Storage
 
       fake_graph.to_storage_value.copy(storage.probed)
       fake_graph.to_storage_value.copy(storage.staging)
+      fake_graph.to_storage_value.copy(storage.system)
 
       probed_performed
     ensure
