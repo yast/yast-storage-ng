@@ -1,0 +1,124 @@
+#!/usr/bin/env ruby
+# encoding: utf-8
+
+# Copyright (c) [2018] SUSE LLC
+#
+# All Rights Reserved.
+#
+# This program is free software; you can redistribute it and/or modify it
+# under the terms of version 2 of the GNU General Public License as published
+# by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+# more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, contact SUSE LLC.
+#
+# To contact SUSE LLC about this file by physical or electronic mail, you may
+# find current contact information at www.suse.com.
+
+require "getoptlong"
+require "yast"
+require "y2storage"
+
+opts = GetoptLong.new(
+  ["--help",      GetoptLong::NO_ARGUMENT],
+  ["--from-xml",  GetoptLong::NO_ARGUMENT],
+  ["--to-xml",    GetoptLong::NO_ARGUMENT],
+  ["--xml",       GetoptLong::NO_ARGUMENT],
+  ["--from-yaml", GetoptLong::NO_ARGUMENT],
+  ["--to-yaml",   GetoptLong::NO_ARGUMENT],
+  ["--yaml",      GetoptLong::NO_ARGUMENT]
+)
+
+usage = <<XXX
+devicegraph_conv.rb [OPTIONS] FROM TO
+
+Read device graph in either XML or YAML format and write as XML or YAML.
+
+If FROM or TO are missing or "-", reads/writes from/to console.
+
+File formats are auto-detected as much as possible. But use the options below
+to force any format.
+
+Options:
+  --from-xml          Read XML data.
+  --from-yaml         Read YAML data.
+  --xml, --to-xml     Write XML data.
+  --yaml, --to-yaml   Write YAML data.
+  --help              Write this text.
+XXX
+
+# true = yaml, false = xml, nil = don't know (yet)
+opt_from_yaml = nil
+opt_to_yaml = nil
+
+begin
+  opts.each do |opt|
+    case opt
+    when "--help"
+      puts usage
+      exit 0
+    when "--xml", "--to-xml"
+      opt_to_yaml = false
+    when "--from-xml"
+      opt_from_yaml = false
+    when "--yaml", "--to-yaml"
+      opt_to_yaml = true
+    when "--from-yaml"
+      opt_from_yaml = true
+    end
+  end
+rescue
+  abort usage
+end
+
+src = ARGV[0]
+dst = ARGV[1]
+
+src = nil if src == "-"
+dst = nil if dst == "-"
+
+opt_from_yaml = false if src && src.match(/\.xml$/i)
+opt_from_yaml = true if src && src.match(/\.ya?ml$/i)
+opt_to_yaml = false if dst && dst.match(/\.xml$/i)
+opt_to_yaml = true if dst && dst.match(/\.ya?ml$/i)
+
+storage = Storage::Storage.new(Storage::Environment.new(true))
+dg = Y2Storage::Devicegraph.new(storage.create_devicegraph("xxx"))
+
+# rubocop:disable Lint/HandleExceptions
+if opt_from_yaml != false
+  begin
+    tried = true
+    Y2Storage::FakeDeviceFactory.load_yaml_file(dg, src || STDIN)
+    got_it = true
+    opt_to_yaml = false if opt_to_yaml.nil?
+  rescue
+  end
+end
+
+# watch out: we can't read two times from STDIN
+if !got_it && (!tried || src)
+  begin
+    dg.load(src || "-")
+    got_it = true
+    opt_to_yaml = true if opt_to_yaml.nil?
+  rescue
+  end
+end
+# rubocop:enable Lint/HandleExceptions
+
+if !got_it
+  puts "invalid input format"
+  exit 1
+end
+
+if opt_to_yaml
+  Y2Storage::YamlWriter.write(dg, dst || STDOUT)
+else
+  dg.save(dst || "-")
+end
