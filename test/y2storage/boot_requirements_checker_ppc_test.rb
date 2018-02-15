@@ -46,80 +46,43 @@ describe Y2Storage::BootRequirementsChecker do
 
     let(:prep_partition) { partition_double("/dev/sda1") }
 
+    RSpec.shared_examples "PReP partition" do
+      context "if there are no PReP partitions in the target disk" do
+        let(:prep_partitions) { [] }
+
+        it "requires only a PReP partition" do
+          expect(checker.needed_partitions).to contain_exactly(
+            an_object_having_attributes(mount_point: nil, partition_id: prep_id)
+          )
+        end
+      end
+
+      context "if there is already a PReP partition in the disk" do
+        let(:prep_partitions) { [prep_partition] }
+
+        it "does not require any particular volume" do
+          expect(checker.needed_partitions).to be_empty
+        end
+      end
+    end
+
     context "in a non-PowerNV system (KVM/LPAR)" do
       let(:power_nv) { false }
 
       context "with a partitions-based proposal" do
         let(:use_lvm) { false }
-
-        context "if there are no PReP partitions in the target disk" do
-          let(:prep_partitions) { [] }
-
-          it "requires only a PReP partition" do
-            expect(checker.needed_partitions).to contain_exactly(
-              an_object_having_attributes(mount_point: nil, partition_id: prep_id)
-            )
-          end
-        end
-
-        context "if there is already a PReP partition in the disk" do
-          let(:prep_partitions) { [prep_partition] }
-
-          it "does not require any particular volume" do
-            expect(checker.needed_partitions).to be_empty
-          end
-        end
+        include_examples "PReP partition"
       end
 
       context "with a LVM-based proposal" do
         let(:use_lvm) { true }
-
-        context "if there are no PReP partitions in the target disk" do
-          let(:prep_partitions) { [] }
-
-          it "requires /boot and PReP partitions" do
-            expect(checker.needed_partitions).to contain_exactly(
-              an_object_having_attributes(mount_point: "/boot"),
-              an_object_having_attributes(mount_point: nil, partition_id: prep_id)
-            )
-          end
-        end
-
-        context "if there is already a PReP partition in the disk" do
-          let(:prep_partitions) { [prep_partition] }
-
-          it "requires only a /boot partition" do
-            expect(checker.needed_partitions).to contain_exactly(
-              an_object_having_attributes(mount_point: "/boot")
-            )
-          end
-        end
+        include_examples "PReP partition"
       end
 
       context "with an encrypted proposal" do
         let(:use_lvm) { false }
         let(:use_encryption) { true }
-
-        context "if there are no PReP partitions in the target disk" do
-          let(:prep_partitions) { [] }
-
-          it "requires /boot and PReP partitions" do
-            expect(checker.needed_partitions).to contain_exactly(
-              an_object_having_attributes(mount_point: "/boot"),
-              an_object_having_attributes(mount_point: nil, partition_id: prep_id)
-            )
-          end
-        end
-
-        context "if there is already a PReP partition in the disk" do
-          let(:prep_partitions) { [prep_partition] }
-
-          it "requires only a /boot partition" do
-            expect(checker.needed_partitions).to contain_exactly(
-              an_object_having_attributes(mount_point: "/boot")
-            )
-          end
-        end
+        include_examples "PReP partition"
       end
     end
 

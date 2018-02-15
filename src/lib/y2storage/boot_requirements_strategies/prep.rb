@@ -60,6 +60,12 @@ module Y2Storage
     protected
 
       def boot_partition_needed?
+        # PowerNV uses it's own firmware instead of Grub stage 1, but other
+        # PPC systems use regular Grub. Just use the default logic for those.
+        return super unless arch.ppc_power_nv?
+
+        # We cannot ensure the mentioned firmware can handle technologies like
+        # LVM, MD or LUKS, so propose a separate /boot partition for those cases
         root_in_lvm? || root_in_software_raid? || encrypted_root?
       end
 

@@ -1,4 +1,13 @@
 -------------------------------------------------------------------
+Wed Feb 14 09:39:42 UTC 2018 - jlopez@suse.com
+
+- PowerPC: do not require /boot partition for non-PowerNV
+  (bsc#1070139).
+- Partitioner: do not enforce partition id for /boot/efi
+  (bsc#1078707).
+- 4.0.94
+
+-------------------------------------------------------------------
 Mon Feb 12 14:17:15 UTC 2018 - snwint@suse.com
 
 - add format options dialog (bsc#1077868)

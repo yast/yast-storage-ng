@@ -28,7 +28,7 @@ module Y2Storage
     #   The exclude param can be used to avoid some of those matches.
     #
     # @param volume [VolumeSpecification]
-    # @param exclude [Symbol] :mount_point, :size, :fs_type, :partition_id
+    # @param exclude [Array<Symbol>, Symbol] :mount_point, :size, :fs_type, :partition_id
     #
     # @return [Boolean] whether matches the volume; false otherwise.
     def match_volume?(volume, exclude: [])
