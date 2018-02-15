@@ -49,15 +49,13 @@ describe Y2Storage::GuidedProposal do
       let(:ppc_power_nv) { false }
       let(:expected_scenario) { "ppc_non_power_nv" }
 
-      context "if requires a PReP partition" do
+      context "using plain partitions" do
         let(:lvm) { false }
-
         include_examples "proposed layout"
       end
 
-      context "if requires /boot and PReP partitions" do
+      context "not using plain partitions" do
         let(:lvm) { true }
-
         include_examples "proposed layout"
       end
     end

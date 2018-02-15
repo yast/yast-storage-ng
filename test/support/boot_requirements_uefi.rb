@@ -41,6 +41,7 @@ RSpec.shared_context "plain UEFI" do
 
       before do
         allow(efi_partition).to receive(:match_volume?).and_return(match)
+        allow(efi_partition).to receive(:id).and_return(Y2Storage::PartitionId::ESP)
       end
 
       context "and it is not a suitable EFI partition (not enough size, invalid filesystem)" do

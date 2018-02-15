@@ -86,6 +86,7 @@ describe Y2Storage::BootRequirementsChecker do
 
             before do
               allow(efi_partition).to receive(:match_volume?).and_return(true)
+              allow(efi_partition).to receive(:id).and_return(Y2Storage::PartitionId::ESP)
             end
 
             it "proposes to use the existing EFI partition" do

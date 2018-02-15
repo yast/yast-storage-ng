@@ -184,18 +184,13 @@ describe Y2Storage::BootRequirementsChecker do
       end
     end
 
-    RSpec.shared_examples "PPC non-PowerNV" do
+    RSpec.shared_examples "PReP partition" do
       context "and there is no a PReP partition in the system" do
         let(:partitions) { [boot_partition] }
         include_examples "missing prep partition"
       end
 
-      context "and there is no a /boot partition in the system" do
-        let(:partitions) { [prep_partition] }
-        include_examples "missing boot partition"
-      end
-
-      context "and there is a PReP and a /boot partitions in the system" do
+      context "and there is a PReP partition in the system" do
         let(:partitions) { [boot_partition, prep_partition] }
 
         it "does not contain errors" do
@@ -411,34 +406,23 @@ describe Y2Storage::BootRequirementsChecker do
         context "with a partitions-based proposal" do
           let(:use_lvm) { false }
 
-          context "and there is no a PReP partition in the system" do
-            let(:partitions) { [boot_partition] }
-            include_examples "missing prep partition"
-          end
-
-          context "and there is a PReP partition in the system" do
-            let(:partitions) { [boot_partition, prep_partition] }
-
-            it "does not contain errors" do
-              expect(checker.warnings).to be_empty
-            end
-          end
+          include_examples "PReP partition"
         end
 
         context "with a LVM-based proposal" do
           let(:use_lvm) { true }
-          include_examples "PPC non-PowerNV"
+          include_examples "PReP partition"
         end
 
         context "with a Software RAID proposal" do
           let(:use_raid) { true }
-          include_examples "PPC non-PowerNV"
+          include_examples "PReP partition"
         end
 
         context "with an encrypted proposal" do
           let(:use_lvm) { false }
           let(:use_encryption) { true }
-          include_examples "PPC non-PowerNV"
+          include_examples "PReP partition"
         end
       end
 
