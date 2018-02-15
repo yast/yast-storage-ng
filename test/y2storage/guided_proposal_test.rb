@@ -99,6 +99,20 @@ describe Y2Storage::GuidedProposal do
   describe "#propose" do
     subject(:proposal) { described_class.new(settings: settings) }
 
+    context "when in the same scenario than bsc#1078691" do
+      let(:scenario) { "bug_1078691.xml" }
+      let(:settings_format) { :ng }
+      let(:control_file) { "bug_1078691.xml" }
+      let(:windows_partitions) { {} }
+
+      it "includes a partition for '/'" do
+        settings.candidate_devices = ["/dev/sda"]
+        proposal.propose
+        filesystems = proposal.devices.filesystems
+        expect(filesystems.map(&:mountpoint)).to include "/"
+      end
+    end
+
     context "when forced to create a small partition" do
       let(:scenario) { "empty_hard_disk_gpt_25GiB" }
       let(:windows_partitions) { {} }
