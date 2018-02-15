@@ -51,7 +51,8 @@ RSpec.shared_context "boot requirements" do
       btrfs_root?:             use_btrfs,
       planned_prep_partitions: planned_prep_partitions,
       planned_grub_partitions: planned_grub_partitions,
-      planned_devices:         planned_grub_partitions + planned_prep_partitions
+      planned_devices:         planned_grub_partitions + planned_prep_partitions,
+      max_planned_weight:      0.0
     )
   end
 

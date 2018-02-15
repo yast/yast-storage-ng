@@ -5,11 +5,11 @@
     partition_table: gpt
     partitions:
     - partition:
-        size: 1 MiB
+        size: 8 MiB
         name: "/dev/sda1"
         id: bios_boot
     - partition:
-        size: 34813 MiB (34.00 GiB)
+        size: 34806 MiB (34.00 GiB)
         name: "/dev/sda2"
         id: linux
         file_system: ext4
@@ -19,7 +19,7 @@
           - acl
           - user_xattr
     - partition:
-        size: 16778223.5 KiB (16.00 GiB)
+        size: unlimited
         name: "/dev/sda3"
         id: swap
         file_system: swap

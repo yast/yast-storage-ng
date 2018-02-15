@@ -9,14 +9,14 @@
     partition_table: gpt
     partitions:
     - partition:
-        size: 36172783.5 KiB (34.50 GiB)
+        size: 36171759.5 KiB (34.50 GiB)
         name: "/dev/sda1"
         type: primary
         id: windows_basic_data
         file_system: ntfs
         label: windows
     - partition:
-        size: 1 MiB
+        size: 2 MiB
         name: "/dev/sda2"
         type: primary
         id: bios_boot

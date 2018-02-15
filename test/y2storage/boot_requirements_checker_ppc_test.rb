@@ -50,17 +50,21 @@ describe Y2Storage::BootRequirementsChecker do
       context "if there are no PReP partitions in the target disk" do
         let(:prep_partitions) { [] }
 
-        it "requires only a PReP partition" do
+        it "requires only a PReP partition (to allocate Grub2)" do
           expect(checker.needed_partitions).to contain_exactly(
             an_object_having_attributes(mount_point: nil, partition_id: prep_id)
           )
+        end
+
+        it "does not require a separate /boot partition (Grub2 can handle this setup)" do
+          expect(checker.needed_partitions.map(&:mount_point)).to_not include "/boot"
         end
       end
 
       context "if there is already a PReP partition in the disk" do
         let(:prep_partitions) { [prep_partition] }
 
-        it "does not require any particular volume" do
+        it "does not require any partition (PReP will be reused and Grub2 can handle this setup)" do
           expect(checker.needed_partitions).to be_empty
         end
       end
@@ -93,7 +97,7 @@ describe Y2Storage::BootRequirementsChecker do
       context "with a partitions-based proposal" do
         let(:use_lvm) { false }
 
-        it "does not require any particular volume" do
+        it "does not require any booting partition (no Grub stage1, PPC firmware parses grub2.cfg)" do
           expect(checker.needed_partitions).to be_empty
         end
       end
@@ -101,7 +105,13 @@ describe Y2Storage::BootRequirementsChecker do
       context "with a LVM-based proposal" do
         let(:use_lvm) { true }
 
-        it "requires only a /boot partition" do
+        it "does not require a PReP partition (no Grub stage1, PPC firmware parses grub2.cfg)" do
+          expect(checker.needed_partitions).to_not include(
+            an_object_having_attributes(mount_point: nil, partition_id: prep_id)
+          )
+        end
+
+        it "requires only a /boot partition (for the PPC firmware to load the kernel)" do
           expect(checker.needed_partitions).to contain_exactly(
             an_object_having_attributes(mount_point: "/boot")
           )
@@ -112,7 +122,13 @@ describe Y2Storage::BootRequirementsChecker do
         let(:use_lvm) { false }
         let(:use_encryption) { true }
 
-        it "requires only a /boot partition" do
+        it "does not require a PReP partition (no Grub stage1, PPC firmware parses grub2.cfg)" do
+          expect(checker.needed_partitions).to_not include(
+            an_object_having_attributes(mount_point: nil, partition_id: prep_id)
+          )
+        end
+
+        it "requires only a /boot partition (for the PPC firmware to load the kernel)" do
           expect(checker.needed_partitions).to contain_exactly(
             an_object_having_attributes(mount_point: "/boot")
           )

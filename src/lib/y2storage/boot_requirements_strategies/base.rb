@@ -152,6 +152,7 @@ module Y2Storage
         planned_partition.min_size = target == :min ? volume.min_size : volume.desired_size
         planned_partition.max_size = volume.max_size
         planned_partition.partition_id = volume.partition_id
+        planned_partition.weight = analyzer.max_planned_weight || 0.0
         planned_partition
       end
 

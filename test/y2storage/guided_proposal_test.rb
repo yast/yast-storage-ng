@@ -126,6 +126,11 @@ describe Y2Storage::GuidedProposal do
       let(:separate_home) { true }
       let(:lvm) { false }
 
+      before do
+        # Focus on multipath devices
+        settings.candidate_devices = fake_devicegraph.multipaths.map(&:name)
+      end
+
       it "does not fail to make a proposal" do
         expect { proposal.propose }.to_not raise_error
       end

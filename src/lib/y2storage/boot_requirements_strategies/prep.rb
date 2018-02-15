@@ -84,8 +84,10 @@ module Y2Storage
         @prep_volume = VolumeSpecification.new({})
         # So far we are always using msdos partition ids
         @prep_volume.partition_id = PartitionId::PREP
-        @prep_volume.min_size = DiskSize.KiB(256)
-        @prep_volume.desired_size = DiskSize.MiB(1)
+        # Grub2 with all the modules we could possibly use (LVM, LUKS, etc.)
+        # is slightly bigger than 1MiB
+        @prep_volume.min_size = DiskSize.MiB(2)
+        @prep_volume.desired_size = DiskSize.MiB(4)
         @prep_volume.max_size = DiskSize.MiB(8)
         # TODO: We have been told that PReP must be one of the first 4
         # partitions, ideally the first one. But we have not found any

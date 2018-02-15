@@ -17,11 +17,11 @@
         file_system: swap
         mount_point: swap
     - partition:
-        size: 1 MiB
+        size: 2 MiB
         name: "/dev/sda3"
         id: bios_boot
     - partition:
-        size: 8562671.5 KiB (8.17 GiB)
+        size: unlimited
         name: "/dev/sda4"
         id: linux
         file_system: xfs

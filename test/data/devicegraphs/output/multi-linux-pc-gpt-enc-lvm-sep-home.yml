@@ -32,12 +32,12 @@
         label:        shared_home
 
     - partition:
-        size:         1 MiB
+        size:         8 MiB
         name:         /dev/sda5
         id:           bios_boot
 
     - partition:
-        size:         629143535.5 KiB
+        size:         unlimited
         name:         /dev/sda6
         id: lvm
         encryption:
@@ -67,7 +67,7 @@
 
     - lvm_lv:
         lv_name: home
-        size: 571384 MiB
+        size: 571376 MiB
         file_system: xfs
         mount_point: "/home"
 

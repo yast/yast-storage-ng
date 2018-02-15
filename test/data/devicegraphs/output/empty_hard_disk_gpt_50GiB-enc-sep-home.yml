@@ -6,11 +6,11 @@
     partitions:
 
     - partition:
-        size:         1 MiB
+        size:         8 MiB
         name:         /dev/sda1
         id:           bios_boot
     - partition:
-        size:         25805 MiB (25.20 GiB)
+        size:         25802 MiB (25.20 GiB)
         name:         /dev/sda2
         file_system:  btrfs
         mount_point:  "/"
@@ -29,7 +29,7 @@
           name: "/dev/mapper/cr_sda3"
           password: '12345678'
     - partition:
-        size:         23905263.5 KiB (22.80 GiB)
+        size:         unlimited
         name:         /dev/sda4
         file_system:  xfs
         mount_point:  "/home"
@@ -37,3 +37,5 @@
           type: luks
           name: "/dev/mapper/cr_sda4"
           password: '12345678'
+    - free:
+        size: 16.5 KiB

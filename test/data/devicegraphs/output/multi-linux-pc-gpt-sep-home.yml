@@ -32,7 +32,7 @@
         label:        shared_home
 
     - partition:
-        size:         1 MiB
+        size:         8 MiB
         name:         /dev/sda5
         id:           bios_boot
 
@@ -44,7 +44,7 @@
         mount_point:  "/"
 
     - partition:
-        size:         587200495.5 KiB
+        size:         unlimited
         name:         /dev/sda7
         id:           linux
         file_system:  xfs

@@ -18,11 +18,11 @@
         mount_point: swap
         label: swap
     - partition:
-        size: 1 MiB
+        size: 8 MiB
         name: "/dev/sda3"
         id: bios_boot
     - partition:
-        size: 260044783.5 KiB
+        size: unlimited
         name: "/dev/sda4"
         id: lvm
         encryption:
@@ -52,7 +52,7 @@
 
     - lvm_lv:
         lv_name: home
-        size: 210936 MiB
+        size: 210928 MiB
         file_system: xfs
         mount_point: "/home"
 

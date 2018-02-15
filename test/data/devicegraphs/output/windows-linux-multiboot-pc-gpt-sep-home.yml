@@ -19,7 +19,7 @@
         mount_point: swap
         label: swap
     - partition:
-        size: 1 MiB
+        size: 8 MiB
         name: "/dev/sda3"
         id: bios_boot
     - partition:
@@ -30,7 +30,7 @@
         file_system: btrfs
         mount_point: "/"
     - partition:
-        size: 218101743.5 KiB
+        size: unlimited
         name: "/dev/sda5"
         id: linux
         file_system: xfs
