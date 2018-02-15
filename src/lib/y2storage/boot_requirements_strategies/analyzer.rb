@@ -191,6 +191,15 @@ module Y2Storage
         planned_partitions_with_id(PartitionId::BIOS_BOOT)
       end
 
+      # Max weight from all the devices that were planned in advance
+      #
+      # @see #planned_devices
+      #
+      # @return [Float]
+      def max_planned_weight
+        @max_planned_weight ||= planned_devices.map { |dev| planned_weight(dev) }.compact.max
+      end
+
     protected
 
       attr_reader :devicegraph
@@ -228,6 +237,13 @@ module Y2Storage
         planned_devices.select do |dev|
           dev.is_a?(Planned::Partition) && dev.partition_id == id
         end
+      end
+
+      # Weight of a planned device, nil if none or not supported
+      #
+      # @return [Float, nil]
+      def planned_weight(device)
+        device.respond_to?(:weight) ? device.weight : nil
       end
     end
   end
