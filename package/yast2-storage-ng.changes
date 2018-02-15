@@ -1,4 +1,12 @@
 -------------------------------------------------------------------
+Thu Feb 15 16:16:19 UTC 2018 - ancor@suse.com
+
+- Adjusted the suggested and minimum sizes of all the booting
+  partitions, both in the storage proposal and in the Partitioner
+  validations (bsc#1076851 and fate#318196).
+- 4.0.97
+
+-------------------------------------------------------------------
 Thu Feb 15 13:01:41 UTC 2018 - igonzalezsosa@suse.com
 
 - Fix hwinfo parsing to support more than one device_file property
