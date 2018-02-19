@@ -497,6 +497,9 @@ module Y2Partitioner
           else
             part_id = DEFAULT_PARTITION_ID
             fs_type = (role == :system) ? DEFAULT_FS : DEFAULT_HOME_FS
+            # Behavior of the old SingleMountPointProposal (behavior introduced
+            # back in 2005 with unknown rationale)
+            mount_path = mount_paths.first unless Yast::Mode.normal
           end
 
           {
