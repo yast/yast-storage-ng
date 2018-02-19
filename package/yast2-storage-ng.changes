@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Mon Feb 19 18:08:01 UTC 2018 - shundhammer@suse.com
+
+- Special handling for mount options for / and /boot/*
+  (bsc#1080731, bsc#1061867, bsc#1077859)
+- 4.0.99
+
+-------------------------------------------------------------------
 Mon Feb 19 14:19:30 UTC 2018 - jreidinger@suse.com
 
 - Ensure that there is always selected item in table, if it is not
