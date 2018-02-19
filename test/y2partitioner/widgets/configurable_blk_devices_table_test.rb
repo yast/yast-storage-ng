@@ -49,7 +49,10 @@ describe Y2Partitioner::Widgets::ConfigurableBlkDevicesTable do
       it "selects any valid device in table" do
         Y2Partitioner::UIState.instance.select_row("999999999")
 
-        expect(subject).to receive(:value=)
+        expect(subject).to receive(:value=) do |value|
+          sid = value[/.*:(.*)/, 1].to_i # c&p from code
+          expect(devices.map(&:sid)).to include(sid)
+        end
 
         subject.init
       end
