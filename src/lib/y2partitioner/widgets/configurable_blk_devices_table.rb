@@ -50,7 +50,10 @@ module Y2Partitioner
       # @macro seeAbstractWidget
       def init
         initial_sid = UIState.instance.row_sid
-        self.value = row_id(initial_sid) if initial_sid
+
+        # if we do not have valid sid, then pick first available device.
+        # Reason is to allow e.g. chain of delete like described in bsc#1076318
+        self.value = row_id(valid_sid?(initial_sid) ? initial_sid : devices.first)
       end
 
       # Jumps to the page associated to the selected device
