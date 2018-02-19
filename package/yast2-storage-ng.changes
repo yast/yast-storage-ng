@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Mon Feb 19 14:19:30 UTC 2018 - jreidinger@suse.com
+
+- Ensure that there is always selected item in table, if it is not
+  empty (bsc#1076318)
+- 4.0.98
+
+-------------------------------------------------------------------
 Thu Feb 15 16:16:19 UTC 2018 - ancor@suse.com
 
 - Adjusted the suggested and minimum sizes of all the booting

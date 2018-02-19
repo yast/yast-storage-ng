@@ -33,6 +33,42 @@ describe Y2Partitioner::Widgets::ConfigurableBlkDevicesTable do
     end
   end
 
+  describe "#init" do
+    context "UIState contain sid of device in table" do
+      it "sets value to row with the device" do
+        valid_sid = devices.last.sid
+        Y2Partitioner::UIState.instance.select_row(valid_sid)
+
+        expect(subject).to receive(:value=).with(subject.send(:row_id, valid_sid))
+
+        subject.init
+      end
+    end
+
+    context "UIState contain sid that is not in table" do
+      it "selects any valid device in table" do
+        Y2Partitioner::UIState.instance.select_row("999999999")
+
+        expect(subject).to receive(:value=) do |value|
+          sid = value[/.*:(.*)/, 1].to_i # c&p from code
+          expect(devices.map(&:sid)).to include(sid)
+        end
+
+        subject.init
+      end
+    end
+
+    context "table does not contain any device" do
+      let(:devices) { [] }
+
+      it "do nothing" do
+        expect(subject).to_not receive(:value=)
+
+        subject.init
+      end
+    end
+  end
+
   describe "#handle" do
     before do
       allow(subject).to receive(:selected_device).and_return(device)

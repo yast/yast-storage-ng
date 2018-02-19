@@ -54,6 +54,18 @@ module Y2Partitioner
         change_items(items)
       end
 
+    protected
+
+      # Returns true if given sid or device is available in table
+      # @param device [Y2Storage::Device, Integer] sid or device object
+      def valid_sid?(device)
+        return false if device.nil?
+
+        sid = device.respond_to?(:sid) ? device.sid : device.to_i
+
+        devices.any? { |d| d.sid == sid }
+      end
+
     private
 
       # TRANSLATORS: "F" stands for Format flag. Keep it short, ideally a single letter.
