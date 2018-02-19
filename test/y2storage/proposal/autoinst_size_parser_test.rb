@@ -29,7 +29,7 @@ describe Y2Storage::Proposal::AutoinstSizeParser do
   subject(:parser) { described_class.new(settings) }
 
   let(:settings) do
-    instance_double(Y2Storage::ProposalSettings, volumes: volumes)
+    instance_double(Y2Storage::ProposalSettings, volumes: volumes, format: :ng)
   end
 
   let(:volumes) do
