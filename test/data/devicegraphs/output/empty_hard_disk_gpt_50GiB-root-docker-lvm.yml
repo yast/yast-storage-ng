@@ -24,7 +24,6 @@
         file_system: ext4
         mount_point: "/"
         fstab_options:
-          - data=ordered
           - acl
           - user_xattr
     - lvm_lv:
