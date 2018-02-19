@@ -49,6 +49,8 @@ module Y2Partitioner
 
       # @macro seeAbstractWidget
       def init
+        return if devices.empty? # do nothing if there is nothing in table
+
         initial_sid = UIState.instance.row_sid
 
         # if we do not have valid sid, then pick first available device.
