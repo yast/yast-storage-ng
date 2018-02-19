@@ -182,5 +182,53 @@ describe Y2Storage::Filesystems::Type do
         expect(described_class::VFAT.default_fstab_options).to eq ["iocharset=iso8859-15"]
       end
     end
+
+    context "for special paths" do
+      context "for root filesystems" do
+        it "ext2 has the correct fstab options" do
+          expect(described_class::EXT2.default_fstab_options("/")).to eq ["acl", "user_xattr"]
+        end
+
+        it "ext3 has the correct fstab options" do
+          expect(described_class::EXT3.default_fstab_options("/")).to eq ["acl", "user_xattr"]
+        end
+
+        it "ext4 has the correct fstab options" do
+          expect(described_class::EXT4.default_fstab_options("/")).to eq ["acl", "user_xattr"]
+        end
+      end
+
+      context "for /boot or /boot/**" do
+        it "vfat has the correct fstab options for a utf8 locale" do
+          Yast::Encoding.SetUtf8Lang(true)
+          Yast::Encoding.SetEncLang("de_DE")
+          expect(described_class::VFAT.default_fstab_options("/boot")).to eq []
+          expect(described_class::VFAT.default_fstab_options("/boot/efi")).to eq []
+          expect(described_class::VFAT.default_fstab_options("/boot/whatever")).to eq []
+        end
+
+        it "vfat has the correct fstab options for a non-utf8 de_DE locale" do
+          Yast::Encoding.SetUtf8Lang(false)
+          Yast::Encoding.SetEncLang("de_DE")
+          # "codepage=437" is default and thus omitted
+          expect(described_class::VFAT.default_fstab_options("/boot/efi")).to eq ["iocharset=iso8859-15"]
+        end
+      end
+
+      context "for /bootme" do
+        it "vfat has the correct fstab options for a utf8 locale" do
+          Yast::Encoding.SetUtf8Lang(true)
+          Yast::Encoding.SetEncLang("de_DE")
+          expect(described_class::VFAT.default_fstab_options("/bootme")).to eq ["iocharset=utf8"]
+        end
+
+        it "vfat has the correct fstab options for a non-utf8 de_DE locale" do
+          Yast::Encoding.SetUtf8Lang(false)
+          Yast::Encoding.SetEncLang("de_DE")
+          # "codepage=437" is default and thus omitted
+          expect(described_class::VFAT.default_fstab_options("/bootme")).to eq ["iocharset=iso8859-15"]
+        end
+      end
+    end
   end
 end

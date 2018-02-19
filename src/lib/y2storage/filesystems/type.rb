@@ -292,18 +292,73 @@ module Y2Storage
       # EtcFstab class will handle that on its own. It also does not make any
       # sense to include "defaults" if any other option is present.
       #
+      # If a mount path is specified, special handling is applied for some
+      # paths ("/", "/boot*").
+      #
+      # @param mount_path [String] (optional) path where this filesystem will be mounted
+      #
       # @return [Array<String>]
-      def default_fstab_options
+      def default_fstab_options(mount_path = "")
         properties = PROPERTIES[to_sym]
         fallback = []
         return fallback unless properties
         opt = properties[:default_fstab_options] || fallback
         opt = patch_codepage(opt)
         opt = patch_iocharset(opt)
+        opt = special_path_fstab_options(opt, mount_path)
         opt
       end
 
       alias_method :default_mount_options, :default_fstab_options
+
+      # Modify mount options based on some special paths.
+      #
+      # @param opt [Array<String>] mount options
+      # @param mount_path [String] path where this filesystem will be mounted
+      #
+      # @return [Array<String>] changed fstab options
+      #
+      def special_path_fstab_options(opt, mount_path = "")
+        if mount_path.nil?
+          opt
+        elsif mount_path == "/"
+          root_fstab_options(opt)
+        elsif mount_path == "/boot" || mount_path.start_with?("/boot/")
+          boot_fstab_options(opt)
+        else
+          opt
+        end
+      end
+
+      # Modify fstab options for the root filesystem.
+      #
+      # @param opt [Array<String>] fstab options
+      # @return [Array<String>] changed fstab options
+      #
+      def root_fstab_options(opt)
+        case to_sym
+        when :ext3, :ext4
+          # journal options tend to break remounting root rw (bsc#1077859)
+          opt.reject { |o| o.start_with?("data=") }
+        else
+          opt
+        end
+      end
+
+      # Modify fstab options for /boot*
+      #
+      # @param opt [Array<String>] fstab options
+      # @return [Array<String>] changed fstab options
+      #
+      def boot_fstab_options(opt)
+        case to_sym
+        when :vfat
+          # "iocharset=utf8" breaks VFAT case insensitivity (bsc#1080731)
+          opt.reject { |o| o == "iocharset=utf8" }
+        else
+          opt
+        end
+      end
 
       # Best fitting partition id for this filesystem type
       #
