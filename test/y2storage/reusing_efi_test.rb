@@ -159,7 +159,7 @@ describe Y2Storage::BootRequirementsChecker do
     end
 
     context "and it has a proper size" do
-      let(:size) { 33.MiB }
+      let(:size) { 300.MiB }
 
       context "and the id is ESP (FIXME: should we check content?)" do
         let(:partition_id) { Y2Storage::PartitionId::ESP }
