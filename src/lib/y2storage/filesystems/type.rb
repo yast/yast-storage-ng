@@ -298,7 +298,7 @@ module Y2Storage
       # @param mount_path [String] (optional) path where this filesystem will be mounted
       #
       # @return [Array<String>]
-      def default_fstab_options(mount_path = "")
+      def default_fstab_options(mount_path = nil)
         properties = PROPERTIES[to_sym]
         fallback = []
         return fallback unless properties
@@ -318,7 +318,7 @@ module Y2Storage
       #
       # @return [Array<String>] changed fstab options
       #
-      def special_path_fstab_options(opt, mount_path = "")
+      def special_path_fstab_options(opt, mount_path = nil)
         if mount_path.nil?
           opt
         elsif mount_path == "/"
