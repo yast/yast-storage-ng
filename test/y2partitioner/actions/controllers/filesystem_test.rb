@@ -1245,7 +1245,34 @@ describe Y2Partitioner::Actions::Controllers::Filesystem do
     let(:additional_mountpoints) { ["/home", "/srv", "/tmp", "/usr/local"] }
 
     context "if no mount points are assigned so far" do
-      let(:scenario) { "windows-pc" }
+      let(:scenario) { "windows-linux-multiboot-pc" }
+      before do
+        devicegraph.filesystems.each do |fs|
+          fs.remove_mount_point unless fs.mount_point.nil?
+        end
+      end
+
+      RSpec.shared_examples "always included" do
+        it "includes the additional mount points" do
+          expect(controller.mount_paths).to include(*additional_mountpoints)
+        end
+
+        context "if the filesystem is of type SWAP" do
+          let(:dev_name) { "/dev/sda2" }
+
+          it "includes 'swap' as the first element of the list" do
+            expect(controller.mount_paths.first).to eq "swap"
+          end
+        end
+
+        context "if the filesystem is not of type SWAP" do
+          let(:dev_name) { "/dev/sda1" }
+
+          it "does not include 'swap'" do
+            expect(controller.mount_paths).to_not include("swap")
+          end
+        end
+      end
 
       context "during installation" do
         let(:installation) { true }
@@ -1266,9 +1293,7 @@ describe Y2Partitioner::Actions::Controllers::Filesystem do
             expect(controller.mount_paths).to_not include("/boot/efi")
           end
 
-          it "includes the additional mount points" do
-            expect(controller.mount_paths).to include(*additional_mountpoints)
-          end
+          include_examples "always included"
         end
 
         context "in a non-s390 system" do
@@ -1289,9 +1314,7 @@ describe Y2Partitioner::Actions::Controllers::Filesystem do
               expect(controller.mount_paths).to_not include("/boot/zipl")
             end
 
-            it "includes the additional mount points" do
-              expect(controller.mount_paths).to include(*additional_mountpoints)
-            end
+            include_examples "always included"
           end
 
           context "with no EFI" do
@@ -1310,9 +1333,7 @@ describe Y2Partitioner::Actions::Controllers::Filesystem do
               expect(controller.mount_paths).to_not include("/boot/zipl")
             end
 
-            it "includes the additional mount points" do
-              expect(controller.mount_paths).to include(*additional_mountpoints)
-            end
+            include_examples "always included"
           end
         end
       end
@@ -1336,9 +1357,7 @@ describe Y2Partitioner::Actions::Controllers::Filesystem do
             expect(controller.mount_paths).to_not include("/boot/efi")
           end
 
-          it "contains only the additional mount points" do
-            expect(controller.mount_paths).to contain_exactly(*additional_mountpoints)
-          end
+          include_examples "always included"
         end
 
         context "if it's not a s390 system" do
@@ -1359,9 +1378,7 @@ describe Y2Partitioner::Actions::Controllers::Filesystem do
               expect(controller.mount_paths).to_not include("/boot/efi")
             end
 
-            it "contains only the additional mount points" do
-              expect(controller.mount_paths).to contain_exactly(*additional_mountpoints)
-            end
+            include_examples "always included"
           end
 
           context "with no EFI" do
@@ -1379,9 +1396,7 @@ describe Y2Partitioner::Actions::Controllers::Filesystem do
               expect(controller.mount_paths).to_not include("/boot/efi")
             end
 
-            it "contains only the additional mount points" do
-              expect(controller.mount_paths).to contain_exactly(*additional_mountpoints)
-            end
+            include_examples "always included"
           end
         end
       end
@@ -1389,16 +1404,22 @@ describe Y2Partitioner::Actions::Controllers::Filesystem do
 
     context "if some mount points are already taken" do
       let(:scenario) { "mixed_disks" }
-      # Let's enforce the presence of /
+      # Let's enforce the temptative presence of /
       let(:installation) { true }
-      # These two are not much relevant, / and /home should be there in any
-      # combination
+      # Let's enforce the temptative presence of swap
+      let(:dev_name) { "/dev/sdb1" }
+      # These two are not much relevant; swap, /home and / should be there in
+      # any combination
       let(:s390) { false }
       let(:efi) { false }
 
-      it "does not include the already mounted paths" do
+      it "does not include the already mounted regular paths" do
         expect(controller.mount_paths).to_not include("/")
         expect(controller.mount_paths).to_not include("/home")
+      end
+
+      it "includes 'swap' despite it being already used" do
+        expect(controller.mount_paths).to include("swap")
       end
     end
   end

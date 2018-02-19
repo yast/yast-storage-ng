@@ -387,7 +387,9 @@ module Y2Partitioner
         #
         # @return [Array<String>]
         def mount_paths
-          all_mount_paths - mounted_paths
+          mount_paths = all_mount_paths - mounted_paths
+          mount_paths.unshift("swap") if filesystem && filesystem.type.is?(:swap)
+          mount_paths
         end
 
         # All paths used by the preexisting subvolumes (those that will not be
