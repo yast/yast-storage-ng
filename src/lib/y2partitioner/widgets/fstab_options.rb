@@ -104,6 +104,14 @@ module Y2Partitioner
         filesystem.mount_point
       end
 
+      # Mount path of the current filesystem
+      #
+      # @return [String]
+      def mount_path
+        return nil if filesystem.mount_point.nil?
+        filesystem.mount_point.path
+      end
+
       # Common regexp checkbox widgets init.
       def init_regexp
         i = mount_point.mount_options.index { |o| o =~ self.class::REGEXP }
@@ -484,7 +492,15 @@ module Y2Partitioner
       # REGEXP and to avoid having to duplicate it in VALUES
       def supported_by_filesystem?
         return false if filesystem.nil?
+        return false unless supported_by_mount_path?
         filesystem.type.supported_fstab_options.any? { |opt| opt =~ self.class::REGEXP }
+      end
+
+      # Check if this mount option is supported by the current mount path.
+      # For /boot/* or the root filesystem some options might not be supported.
+      # @return [Boolean]
+      def supported_by_mount_path?
+        true
       end
 
       # The default value for the option.
@@ -544,6 +560,12 @@ module Y2Partitioner
           ["ordered", _("ordered")],
           ["writeback", _("writeback")]
         ]
+      end
+
+      def supported_by_mount_path?
+        # journal options tend to break remounting root rw (bsc#1077859).
+        # See also root_fstab_options() in lib/y2storage/filesystems/type.rb
+        mount_path != "/"
       end
 
       def help
@@ -706,6 +728,14 @@ module Y2Partitioner
       def default_value
         iocharset = filesystem.type.iocharset
         ITEMS.include?(iocharset) ? iocharset : ITEMS.first
+      end
+
+      def supported_by_mount_path?
+        return false if mount_path.nil?
+
+        # "iocharset=utf8" breaks VFAT case insensitivity (bsc#1080731).
+        # See also boot_fstab_options() in lib/y2storage/filesystems/type.rb
+        mount_path != "/boot" && !mount_path.start_with?("/boot/")
       end
 
       def label
