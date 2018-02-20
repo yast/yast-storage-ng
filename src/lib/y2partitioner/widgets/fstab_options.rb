@@ -240,7 +240,7 @@ module Y2Partitioner
       include FstabCommon
 
       def label
-        _("Mount in /etc/fstab by")
+        _("Mount in /etc/fstab By")
       end
 
       def store
@@ -739,7 +739,7 @@ module Y2Partitioner
       end
 
       def label
-        _("Char&set for file names")
+        _("Char&set for File Names")
       end
 
       def help
@@ -759,7 +759,7 @@ module Y2Partitioner
       end
 
       def label
-        _("Code&page for short FAT names")
+        _("Code&page for Short FAT Names")
       end
 
       def help
