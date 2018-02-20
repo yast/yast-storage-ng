@@ -490,6 +490,8 @@ module Y2Partitioner
 
       # Overriding FstabCommon::supported_by_filesystem? to make use of the
       # REGEXP and to avoid having to duplicate it in VALUES
+      #
+      # @return [Boolean]
       def supported_by_filesystem?
         return false if filesystem.nil?
         return false unless supported_by_mount_path?
@@ -498,6 +500,7 @@ module Y2Partitioner
 
       # Check if this mount option is supported by the current mount path.
       # For /boot/* or the root filesystem some options might not be supported.
+      #
       # @return [Boolean]
       def supported_by_mount_path?
         true
