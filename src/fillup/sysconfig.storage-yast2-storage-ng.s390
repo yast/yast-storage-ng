@@ -1,0 +1,5 @@
+## Path: System/Yast2/Storage
+
+## Type: string(id,path,device,uuid,label)
+# Default mount-by method.
+DEVICE_NAMES="path"

@@ -41,6 +41,7 @@ BuildRequires:  yast2-xml
 BuildRequires:	yast2 >= 4.0.24
 BuildRequires:	rubygem(yast-rake)
 BuildRequires:	rubygem(rspec)
+PreReq:         %fillup_prereq
 
 Obsoletes:	yast2-storage
 
@@ -62,11 +63,19 @@ rake test:unit
 %install
 rake install DESTDIR="%{buildroot}"
 
+%post
+%ifarch s390 s390x
+%{fillup_only -ans storage %{name}.s390}
+%else
+%{fillup_only -ans storage %{name}.default}
+%endif
+
 %files
 %defattr(-,root,root)
 %{yast_dir}/clients/*.rb
 %{yast_dir}/lib
 %{yast_desktopdir}/*.desktop
+%{yast_fillupdir}/*
 
 # agents-scr
 %{yast_scrconfdir}/*.scr
