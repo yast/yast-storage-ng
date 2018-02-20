@@ -101,12 +101,28 @@ describe Y2Partitioner::Widgets::OverviewTreePager do
       overview_tree.items.find { |i| i.page.is_a?(Y2Partitioner::Widgets::Pages::DeviceGraph) }
     end
 
+    let(:summary_page) do
+      overview_tree.items.find { |i| i.page.is_a?(Y2Partitioner::Widgets::Pages::Summary) }
+    end
+
+    let(:settings_page) do
+      overview_tree.items.find { |i| i.page.is_a?(Y2Partitioner::Widgets::Pages::Settings) }
+    end
+
     it "has a OverviewTree widget" do
       expect(overview_tree).to_not be_nil
     end
 
     it "has a pager for the disk devices" do
       expect(disks_pager).to_not be_nil
+    end
+
+    it "includes a 'Summary' page" do
+      expect(summary_page).to_not be_nil
+    end
+
+    it "includes a 'Settings' page" do
+      expect(settings_page).to_not be_nil
     end
 
     before do

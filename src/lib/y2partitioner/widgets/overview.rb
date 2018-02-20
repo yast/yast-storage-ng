@@ -81,6 +81,7 @@ module Y2Partitioner
           system_items,
           *graph_items,
           summary_item,
+          settings_item
           # TODO: Bring this back to life - disabled for now (bsc#1078849)
           # item_for("settings", _("Settings"), icon: Icons::SETTINGS)
         ]
@@ -249,6 +250,11 @@ module Y2Partitioner
       # @return [CWM::PagerTreeItem]
       def summary_item
         CWM::PagerTreeItem.new(Pages::Summary.new, icon: Icons::SUMMARY)
+      end
+
+      # @return [CWM::PagerTreeItem]
+      def settings_item
+        CWM::PagerTreeItem.new(Pages::Settings.new, icon: Icons::SETTINGS)
       end
     end
   end
