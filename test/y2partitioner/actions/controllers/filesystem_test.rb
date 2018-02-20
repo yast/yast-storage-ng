@@ -291,6 +291,14 @@ describe Y2Partitioner::Actions::Controllers::Filesystem do
       expect(subject.encrypt).to eq(false)
     end
 
+    RSpec.shared_examples "default_mount_by" do
+      it "sets mount by to the default value" do
+        subject.apply_role
+        expect(subject.filesystem.mount_point.mount_by)
+          .to eq(Y2Storage::StorageManager.instance.default_mount_by)
+      end
+    end
+
     context "when selected role is :swap" do
       let(:role) { :swap }
 
@@ -309,11 +317,7 @@ describe Y2Partitioner::Actions::Controllers::Filesystem do
         expect(subject.filesystem.mount_point.path).to eq("swap")
       end
 
-      it "sets mount by to 'device'" do
-        subject.apply_role
-        expect(subject.filesystem.mount_point.mount_by)
-          .to eq(Y2Storage::Filesystems::MountByType::DEVICE)
-      end
+      include_examples "default_mount_by"
     end
 
     context "when selected role is :efi_boot" do
@@ -333,6 +337,8 @@ describe Y2Partitioner::Actions::Controllers::Filesystem do
         subject.apply_role
         expect(subject.filesystem.mount_point.path).to eq("/boot/efi")
       end
+
+      include_examples "default_mount_by"
     end
 
     context "when selected role is :raw" do
