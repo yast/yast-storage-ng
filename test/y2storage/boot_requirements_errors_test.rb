@@ -257,6 +257,21 @@ describe Y2Storage::BootRequirementsChecker do
 
     let(:zipl_partition) { partition_double("/dev/sda1") }
 
+    let(:efiboot) { true }
+
+    it "contains an error when there is /boot that is not big enough" do
+      allow(devicegraph).to receive(:filesystems).
+        and_return([double(
+          mount_point: "/boot",
+          blk_devices: [double(size: Y2Storage::DiskSize.MiB(50))]
+        )])
+      expect(checker.errors.size).to eq(1)
+      expect(checker.errors).to all(be_a(Y2Storage::SetupError))
+
+      message = checker.errors.first.message
+      expect(message).to match(/too small/)
+    end
+
     context "in a x86 system" do
       let(:architecture) { :x86 }
 

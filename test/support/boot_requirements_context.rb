@@ -79,5 +79,7 @@ RSpec.shared_context "boot requirements" do
     allow(analyzer).to receive(:boot_ptable_type?) { |type| type == boot_ptable_type }
     # Assume the needed partitions are not already planned in advance
     allow(analyzer).to receive(:free_mountpoint?).and_return true
+
+    allow(devicegraph).to receive(:filesystems).and_return([])
   end
 end
