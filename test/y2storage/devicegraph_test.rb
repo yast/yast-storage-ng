@@ -473,7 +473,7 @@ describe Y2Storage::Devicegraph do
         expect(graph.disk_devices).to all(be_a(Y2Storage::Device))
       end
 
-      it "includes all disks and DASDs sorted by name" do
+      it "includes all partitionable disks and DASDs sorted by name" do
         expect(graph.disk_devices.map(&:name)).to eq [
           "/dev/dasda", "/dev/dasdb", "/dev/nvme0n1", "/dev/sda", "/dev/sdb",
           "/dev/sdc", "/dev/sdd", "/dev/sdf", "/dev/sdh", "/dev/sdi", "/dev/sdaa"
@@ -535,6 +535,27 @@ describe Y2Storage::Devicegraph do
 
       it "does not include individual disks and DASDs from the MD RAID" do
         expect(graph.disk_devices.map(&:name)).to_not include("/dev/sdb", "/dev/sdc")
+      end
+    end
+
+    context "if there are several kind of DASDs" do
+      let(:scenario) { "kinds-of-dasd.xml" }
+
+      it "returns a sorted array of devices" do
+        devices = graph.disk_devices
+        expect(devices).to be_an Array
+        expect(devices).to all(be_a(Y2Storage::Device))
+        expect(devices).to all(satisfy { |dev| less_than_next?(dev, devices) })
+      end
+
+      it "includes all disks and DASDs that can hold a partition table" do
+        expect(graph.disk_devices.map(&:name)).to include(
+          "/dev/sda", "/dev/dasda", "/dev/dasdc", "/dev/dasdd", "/dev/dasde"
+        )
+      end
+
+      it "does not include unformatted DASDs" do
+        expect(graph.disk_devices.map(&:name)).to_not include("/dev/dasdb")
       end
     end
   end
