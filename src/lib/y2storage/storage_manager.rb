@@ -28,6 +28,7 @@ require "y2storage/devicegraph"
 require "y2storage/disk_analyzer"
 require "y2storage/callbacks"
 require "y2storage/hwinfo_reader"
+require "y2storage/sysconfig_storage"
 require "yast2/fs_snapshot"
 
 Yast.import "Mode"
@@ -82,10 +83,30 @@ module Y2Storage
     # @param storage_environment [::Storage::Environment]
     def initialize(storage_environment)
       @storage = Storage::Storage.new(storage_environment)
+      apply_storage_defaults
+
       @probed = false
       reset_probed
       reset_staging
       reset_staging_revision
+    end
+
+    # Default value for mount_by option
+    #
+    # @note This value is initialized with the value from {SysconfigStorage}.
+    #
+    # @see #apply_storage_defaults
+    #
+    # @return [Filesystems::MountByType]
+    def default_mount_by
+      Filesystems::MountByType.new(@storage.default_mount_by)
+    end
+
+    # Sets the default mount_by value
+    #
+    # @param mount_by [Filesystems::MountByType]
+    def default_mount_by=(mount_by)
+      @storage.default_mount_by = mount_by.to_storage_value
     end
 
     # Whether probing has been done
@@ -249,6 +270,13 @@ module Y2Storage
     #
     # @return [Integer]
     attr_reader :staging_revision_after_probing
+
+    # Sets default values for Storage object
+    #
+    # @see SysconfigStorage
+    def apply_storage_defaults
+      self.default_mount_by = SysconfigStorage.instance.default_mount_by
+    end
 
     # Sets the devicegraph as the staging one, updating all the associated
     # information like #staging_revision
