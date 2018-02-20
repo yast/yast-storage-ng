@@ -161,7 +161,7 @@ module Y2Storage
         if fstab_options
           mount_point.mount_options = fstab_options
         elsif filesystem_type
-          mount_point.mount_options = filesystem_type.default_fstab_options
+          mount_point.mount_options = filesystem_type.default_fstab_options(mount_point.path)
         end
       end
 

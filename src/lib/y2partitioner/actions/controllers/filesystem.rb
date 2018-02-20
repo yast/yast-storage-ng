@@ -245,7 +245,7 @@ module Y2Partitioner
           # A mount is not created if there is already a mount point
           return unless mount_point.nil?
 
-          options[:mount_options] ||= filesystem.type.default_mount_options
+          options[:mount_options] ||= filesystem.type.default_mount_options(path)
 
           before_change_mount_point
           filesystem.create_mount_point(path)
