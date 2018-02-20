@@ -142,6 +142,21 @@ describe Y2Partitioner::Actions::Controllers::Md do
       expect(controller.available_devices).to_not include sda3
     end
 
+    # At the moment of writing, only partitions are included, but in the
+    # foreseable future other block devices will be added. To be in the safe
+    # side, make sure DASDs are not (see BlkDevice#usable_as_blk_device?).
+    it "does not include DASDs" do
+      dasda = Y2Storage::Dasd.create(current_graph, "/dev/dasda")
+      dasda.type = Y2Storage::DasdType::ECKD
+      dasda.format = Y2Storage::DasdFormat::CDL
+
+      dasdb = Y2Storage::Dasd.create(current_graph, "/dev/dasdb")
+      dasdb.type = Y2Storage::DasdType::FBA
+
+      expect(controller.available_devices).to_not include dasda
+      expect(controller.available_devices).to_not include dasdb
+    end
+
     context "when there are extended partitions" do
       let(:scenario) { "lvm-two-vgs.yml" }
 
