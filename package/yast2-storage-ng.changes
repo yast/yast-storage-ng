@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Tue Feb 20 16:43:31 UTC 2018 - shundhammer@suse.com
+
+- Special handling for mount options for / and /boot/*
+  in the partitioner (bsc#1080731)
+- 4.0.101
+
+-------------------------------------------------------------------
 Tue Feb 20 09:43:12 UTC 2018 - ancor@suse.com
 
 - Partitioner: bring back traditional list of mount points for both
