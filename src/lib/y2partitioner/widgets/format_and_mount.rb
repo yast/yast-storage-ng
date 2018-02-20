@@ -268,6 +268,25 @@ module Y2Partitioner
         nil
       end
 
+      # It is necessary to prevent an empty filesystem label when the option mount_by is set
+      # to label by default (see {Y2Storage::StorageManager#default_mount_by}). The label is
+      # validated when the user gives one value (by editing the fstab options), but the user
+      # could mount a device without entering in that dialog for the mount options.
+      #
+      # Here only the presence of a label is checked. The correctness of the label is checked
+      # when the label is entered (see {Dialogs::FstabOptions}).
+      #
+      # @return [Boolean] true if the label is not required or it is required and given; false
+      #   otherwise.
+      def validate
+        return true if !formatted? || !mounted? || !mounted_by_label? || !empty_label?
+
+        # TRANSLATORS: Error message when a device should be mounted by label but no label
+        # is given.
+        Yast::Popup.Error(_("Provide a volume label to mount by label."))
+        false
+      end
+
     private
 
       def mount_device
@@ -296,6 +315,34 @@ module Y2Partitioner
       # @return [String]
       def mount_path
         @mount_point_widget.value.to_s
+      end
+
+      # Whether the device has a filesystem
+      #
+      # @return [Boolean] true if it has a filesystem; false otherwise.
+      def formatted?
+        !@controller.filesystem.nil?
+      end
+
+      # Whether the device has a mount point
+      #
+      # @return [Boolean] true if it has a mount point; false otherwise.
+      def mounted?
+        !@controller.mount_point.nil?
+      end
+
+      # Whether the device is set to be mounted by label
+      #
+      # @return [Boolean] true if it is set to mount by label; false otherwise.
+      def mounted_by_label?
+        mounted? && @controller.mount_point.mount_by.is?(:label)
+      end
+
+      # Whether the filesystem has a label
+      #
+      # @return [Boolean] true if it has a label; false otherwise.
+      def empty_label?
+        !formatted? || @controller.filesystem.label.empty?
       end
     end
 

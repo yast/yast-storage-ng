@@ -42,20 +42,20 @@ RSpec.shared_examples "CWM::AbstractWidget#init#store" do
   end
 end
 
-RSpec.shared_examples "CWM::InputField" do
+RSpec.shared_examples "InputField" do
   include_examples "CWM::AbstractWidget"
   include_examples "CWM::ValueBasedWidget"
   include_examples "CWM::AbstractWidget#init#store"
 end
 
-RSpec.shared_examples "CWM::CheckBox" do
+RSpec.shared_examples "CheckBox" do
   include_examples "CWM::AbstractWidget"
   include_examples "CWM::ValueBasedWidget"
   include_examples "CWM::AbstractWidget#init#store"
 end
 
 RSpec.shared_examples "FstabCheckBox" do
-  include_examples "CWM::CheckBox"
+  include_examples "CheckBox"
 end
 
 describe Y2Partitioner::Widgets do
@@ -82,10 +82,79 @@ describe Y2Partitioner::Widgets do
 
   describe Y2Partitioner::Widgets::VolumeLabel do
     before do
-      allow(subject).to receive(:value).and_return("linux")
+      allow(subject).to receive(:value).and_return(label)
+      allow(parent_widget).to receive(:widgets).and_return(widgets)
+      allow(mount_by_widget).to receive(:value).and_return(mount_by)
     end
 
-    include_examples "CWM::InputField"
+    let(:parent_widget) { Y2Partitioner::Widgets::FstabOptions.new(controller) }
+
+    let(:widgets) { [mount_by_widget] }
+
+    let(:mount_by_widget) { Y2Partitioner::Widgets::MountBy.new(controller) }
+
+    let(:label) { "" }
+
+    let(:mount_by) { :uuid }
+
+    subject { described_class.new(controller, parent_widget) }
+
+    include_examples "InputField"
+
+    describe "#validate" do
+      RSpec.shared_examples "given_label" do
+        context "and a label is given" do
+          context "and there is already a filesystem with the given label" do
+            let(:label) { "root" }
+
+            it "shows an popup error" do
+              expect(Yast::Popup).to receive(:Error)
+              subject.validate
+            end
+
+            it "returns false" do
+              expect(subject.validate).to eq(false)
+            end
+          end
+
+          context "and there is no a filesystem with the given label" do
+            let(:label) { "foo" }
+
+            it "returns true" do
+              expect(subject.validate).to eq(true)
+            end
+          end
+        end
+      end
+
+      context "when the device is not mounted by label" do
+        let(:mount_by) { :uuid }
+
+        context "and a label is not given" do
+          let(:label) { "" }
+
+          it "returns true" do
+            expect(subject.validate).to eq(true)
+          end
+        end
+
+        include_examples "given_label"
+      end
+
+      context "when the device is mounted by label" do
+        let(:mount_by) { :label }
+
+        context "and a label is not given" do
+          let(:label) { "" }
+
+          it "returns false" do
+            expect(subject.validate).to eq(false)
+          end
+        end
+
+        include_examples "given_label"
+      end
+    end
   end
 
   describe Y2Partitioner::Widgets::MountBy do
@@ -118,7 +187,7 @@ describe Y2Partitioner::Widgets do
   end
 
   describe Y2Partitioner::Widgets::Quota do
-    include_examples "CWM::CheckBox"
+    include_examples "CheckBox"
   end
 
   describe Y2Partitioner::Widgets::JournalOptions do
@@ -136,7 +205,7 @@ describe Y2Partitioner::Widgets do
     let(:options_widget)  { double("FstabOptions", values:  handled_values, regexps: handled_regexps) }
 
     subject { described_class.new(controller, options_widget) }
-    include_examples "CWM::InputField"
+    include_examples "InputField"
 
     it "picks up values handled in other widgets" do
       expect(subject.send(:other_values)).to eq handled_values
@@ -195,7 +264,7 @@ describe Y2Partitioner::Widgets do
   end
 
   describe Y2Partitioner::Widgets::SwapPriority do
-    include_examples "CWM::InputField"
+    include_examples "InputField"
   end
 
   describe Y2Partitioner::Widgets::IOCharset do
