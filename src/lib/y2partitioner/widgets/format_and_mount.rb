@@ -612,6 +612,17 @@ module Y2Partitioner
         self.value = @controller.encrypt
       end
 
+      # validates if it can be encrypted
+      def validate
+        return true unless value
+
+        # size number is from bsc1065071#c5
+        return true if @controller.blk_device.size > ::Y2Storage::DiskSize.MiB(2)
+
+        ::Yast::Popup.Error(_("For encryption partition have to be bigger then 2 MiB."))
+        false
+      end
+
       # @macro seeAbstractWidget
       def handle(event)
         @controller.encrypt = value if event["ID"] == widget_id
