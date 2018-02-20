@@ -26,12 +26,12 @@ Source:		%{name}-%{version}.tar.bz2
 # Yast2::FsSnapshots.configure_on_install=
 Requires:	yast2 >= 4.0.24
 Requires:	yast2-ruby-bindings
-# BlkDevice#usable_as_blk_device? and Partitionable#usable_as_partitionable?
-Requires:	libstorage-ng-ruby >= 3.3.160
+# Storage::MountPoint#possible_mount_bys
+Requires:	libstorage-ng-ruby >= 3.3.166
 
 BuildRequires:	update-desktop-files
-# BlkDevice#usable_as_blk_device? and Partitionable#usable_as_partitionable?
-BuildRequires:	libstorage-ng-ruby >= 3.3.160
+# Storage::MountPoint#possible_mount_bys
+BuildRequires:	libstorage-ng-ruby >= 3.3.166
 BuildRequires:	yast2-ruby-bindings
 BuildRequires:	yast2-devtools
 # yast2-xml dependency is added by yast2 but ignored in the
