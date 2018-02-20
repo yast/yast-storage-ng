@@ -164,6 +164,33 @@ describe Y2Partitioner::Widgets do
 
     include_examples "CWM::CustomWidget"
     include_examples "CWM::AbstractWidget#init#store"
+
+    describe "#init" do
+      before do
+        allow(Yast::UI).to receive(:ChangeWidget).and_call_original
+        allow(controller).to receive(:mount_point).and_return(mount_point)
+        allow(mount_point).to receive(:possible_mount_bys).and_return(possible_mount_bys)
+      end
+
+      let(:mount_point) { controller.filesystem.mount_point }
+
+      let(:possible_mount_bys) do
+        Y2Storage::Filesystems::MountByType.all - not_possible_mount_bys
+      end
+
+      let(:not_possible_mount_bys) do
+        [
+          Y2Storage::Filesystems::MountByType::LABEL,
+          Y2Storage::Filesystems::MountByType::ID
+        ]
+      end
+
+      it "disables not possible mount bys" do
+        expect(Yast::UI).to receive(:ChangeWidget).once.with(Id(:label), :Enabled, false)
+        expect(Yast::UI).to receive(:ChangeWidget).once.with(Id(:id), :Enabled, false)
+        subject.init
+      end
+    end
   end
 
   describe Y2Partitioner::Widgets::GeneralOptions do
