@@ -27,6 +27,7 @@ require "y2storage/filesystems/btrfs"
 require "y2storage/subvol_specification"
 
 Yast.import "Mode"
+Yast.import "Stage"
 
 # TODO: This class is too long. Please, consider refactoring.
 # The code could be splitted in two kind of groups: one for actions
@@ -373,6 +374,35 @@ module Y2Partitioner
           filesystem.configure_snapper
         end
 
+        # Paths that are mounted in the current device graph, excluding
+        # subvolumes
+        #
+        # @return [Array<String>]
+        def mounted_paths
+          devices = mounted_devices.reject { |d| d.is?(:btrfs_subvolume) }
+          devices.map(&:mount_path)
+        end
+
+        # Sorted list of the default mount paths to offer to the user
+        #
+        # @return [Array<String>]
+        def mount_paths
+          mount_paths = all_mount_paths - mounted_paths
+          mount_paths.unshift("swap") if filesystem && filesystem.type.is?(:swap)
+          mount_paths
+        end
+
+        # All paths used by the preexisting subvolumes (those that will not be
+        # automatically deleted if they are shadowed)
+        #
+        # @return [Array<String>]
+        def subvolumes_mount_paths
+          subvolumes = mounted_devices.select do |dev|
+            dev.is?(:btrfs_subvolume) && !dev.can_be_auto_deleted?
+          end
+          subvolumes.map(&:mount_path).compact.select { |m| !m.empty? }
+        end
+
       private
 
         def working_graph
@@ -469,6 +499,9 @@ module Y2Partitioner
           else
             part_id = DEFAULT_PARTITION_ID
             fs_type = (role == :system) ? DEFAULT_FS : DEFAULT_HOME_FS
+            # Behavior of the old SingleMountPointProposal (behavior introduced
+            # back in 2005 with unknown rationale)
+            mount_path = mount_paths.first unless Yast::Mode.normal
           end
 
           {
@@ -509,8 +542,7 @@ module Y2Partitioner
         #
         # @return [Y2Storage::BtrfsSubvolume, nil]
         def find_not_probed_subvolume
-          device_graph = DeviceGraphs.instance.system
-          subvolumes.detect { |s| !s.exists_in_devicegraph?(device_graph) }
+          subvolumes.detect { |s| !s.exists_in_devicegraph?(system_graph) }
         end
 
         # A proposed subvolume is added only when it does not exist in the filesystem and it
@@ -551,6 +583,85 @@ module Y2Partitioner
 
         def root?
           filesystem.root?
+        end
+
+        # This implements the code that used to live in
+        # Yast::Filesystems::SuggestMPoints (whatever the rationle behind those
+        # mount paths was back then) with the only exception mentioned in
+        # {#booting_paths}
+        #
+        # @return [Array<String>]
+        def all_mount_paths
+          @all_mount_paths ||=
+            if Yast::Stage.initial
+              %w(/ /home /var /opt) + booting_paths + non_system_paths
+            else
+              ["/home"] + non_system_paths
+            end
+        end
+
+        # Mount paths suggested for the boot-related partitions.
+        #
+        # This is somehow similar to the old Yast::Partitions::BootMount but
+        # with an important difference - it returns a list instead of a single
+        # path. yast-storage used to consider there was only a single "boot"
+        # partition, with /boot/efi and /boot/zipl being considered some kind
+        # of alternative to /boot.
+        #
+        # @see #mount_paths
+        #
+        # @return [Array<String>]
+        def booting_paths
+          paths = ["/boot"]
+          paths << "/boot/efi" if arch.efiboot?
+          paths << "/boot/zipl" if arch.s390?
+          paths
+        end
+
+        # @see #mount_paths
+        #
+        # @return [Array<String>]
+        def non_system_paths
+          ["/srv", "/tmp", "/usr/local"]
+        end
+
+        # Devices that are currently mounted in the system, except those
+        # associated to the current filesystem.
+        #
+        # @see #filesystem_devices
+        #
+        # @return [Array<Y2Storage::Mountable>]
+        def mounted_devices
+          fs_sids = filesystem_devices.map(&:sid)
+          devices = Y2Storage::Mountable.all(working_graph)
+          devices = devices.select { |d| !d.mount_point.nil? }
+          devices.reject { |d| fs_sids.include?(d.sid) }
+        end
+
+        # Returns the devices associated to the current filesystem.
+        #
+        # @note The devices associated to the filesystem are the filesystem itself and its
+        #   subvolumes in case of a btrfs filesystem.
+        #
+        # @return [Array<Y2Storage::Mountable>]
+        def filesystem_devices
+          fs = filesystem
+          return [] if fs.nil?
+
+          devices = [fs]
+          devices += filesystem_subvolumes if fs.is?(:btrfs)
+          devices
+        end
+
+        # Subvolumes to take into account
+        # @return [Array[Y2Storage::BtrfsSubvolume]]
+        def filesystem_subvolumes
+          filesystem.btrfs_subvolumes.select { |s| !s.top_level? && !s.default_btrfs_subvolume? }
+        end
+
+        # @return [Storage::Arch]
+        def arch
+          Y2Storage::StorageManager.instance.arch
         end
       end
     end

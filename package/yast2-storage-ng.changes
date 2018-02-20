@@ -1,4 +1,14 @@
 -------------------------------------------------------------------
+Tue Feb 20 09:43:12 UTC 2018 - ancor@suse.com
+
+- Partitioner: bring back traditional list of mount points for both
+  installation and installed system (bsc#1076167 and bsc#1081200).
+- Partitioner: bring back traditional behavior of the "Operating
+  System" and "Data" roles during installation (bsc#1078975 and
+  bsc#1073854).
+- 4.0.100
+
+-------------------------------------------------------------------
 Mon Feb 19 18:08:01 UTC 2018 - shundhammer@suse.com
 
 - Special handling for mount options for / and /boot/*

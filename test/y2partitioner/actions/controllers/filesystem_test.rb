@@ -25,8 +25,10 @@ require "y2partitioner/actions/controllers/filesystem"
 
 describe Y2Partitioner::Actions::Controllers::Filesystem do
   before do
-    devicegraph_stub("mixed_disks_btrfs.yml")
+    devicegraph_stub(scenario)
   end
+
+  let(:scenario) { "mixed_disks_btrfs" }
 
   subject(:controller) { described_class.new(device, "The title") }
 
@@ -1225,6 +1227,199 @@ describe Y2Partitioner::Actions::Controllers::Filesystem do
             end
           end
         end
+      end
+    end
+  end
+
+  describe "#mount_paths" do
+    let(:storage_arch) { instance_double("::Storage::Arch") }
+
+    before do
+      allow(Y2Storage::StorageManager.instance.storage).to receive(:arch).and_return(storage_arch)
+      allow(storage_arch).to receive(:s390?).and_return s390
+      allow(storage_arch).to receive(:efiboot?).and_return efi
+      allow(Yast::Stage).to receive(:initial).and_return installation
+    end
+
+    let(:system_mountpoints) { ["/", "/var", "/opt"] }
+    let(:additional_mountpoints) { ["/home", "/srv", "/tmp", "/usr/local"] }
+
+    context "if no mount points are assigned so far" do
+      let(:scenario) { "windows-linux-multiboot-pc" }
+      before do
+        devicegraph.filesystems.each do |fs|
+          fs.remove_mount_point unless fs.mount_point.nil?
+        end
+      end
+
+      RSpec.shared_examples "always included" do
+        it "includes the additional mount points" do
+          expect(controller.mount_paths).to include(*additional_mountpoints)
+        end
+
+        context "if the filesystem is of type SWAP" do
+          let(:dev_name) { "/dev/sda2" }
+
+          it "includes 'swap' as the first element of the list" do
+            expect(controller.mount_paths.first).to eq "swap"
+          end
+        end
+
+        context "if the filesystem is not of type SWAP" do
+          let(:dev_name) { "/dev/sda1" }
+
+          it "does not include 'swap'" do
+            expect(controller.mount_paths).to_not include("swap")
+          end
+        end
+      end
+
+      context "during installation" do
+        let(:installation) { true }
+
+        context "in a s390 system" do
+          let(:s390) { true }
+          let(:efi) { false }
+
+          it "includes the system mount points" do
+            expect(controller.mount_paths).to include(*system_mountpoints)
+          end
+
+          it "includes /boot and /boot/zipl" do
+            expect(controller.mount_paths).to include("/boot", "/boot/zipl")
+          end
+
+          it "does not include /boot/efi" do
+            expect(controller.mount_paths).to_not include("/boot/efi")
+          end
+
+          include_examples "always included"
+        end
+
+        context "in a non-s390 system" do
+          let(:s390) { false }
+
+          context "with EFI boot" do
+            let(:efi) { true }
+
+            it "includes the system mount points" do
+              expect(controller.mount_paths).to include(*system_mountpoints)
+            end
+
+            it "includes /boot and /boot/efi" do
+              expect(controller.mount_paths).to include("/boot", "/boot/efi")
+            end
+
+            it "does not include /boot/zipl" do
+              expect(controller.mount_paths).to_not include("/boot/zipl")
+            end
+
+            include_examples "always included"
+          end
+
+          context "with no EFI" do
+            let(:efi) { false }
+
+            it "includes the system mount points" do
+              expect(controller.mount_paths).to include(*system_mountpoints)
+            end
+
+            it "includes /boot" do
+              expect(controller.mount_paths).to include("/boot")
+            end
+
+            it "does not include /boot/zipl or /boot/efi" do
+              expect(controller.mount_paths).to_not include("/boot/efi")
+              expect(controller.mount_paths).to_not include("/boot/zipl")
+            end
+
+            include_examples "always included"
+          end
+        end
+      end
+
+      context "in an installed system" do
+        let(:installation) { false }
+
+        context "if it's a s390 system" do
+          let(:s390) { true }
+          let(:efi) { false }
+
+          it "does not include the system mount points" do
+            system_mountpoints.each do |mp|
+              expect(controller.mount_paths).to_not include mp
+            end
+          end
+
+          it "does not include /boot, /boot/efi or /boot/zipl" do
+            expect(controller.mount_paths).to_not include("/boot")
+            expect(controller.mount_paths).to_not include("/boot/zipl")
+            expect(controller.mount_paths).to_not include("/boot/efi")
+          end
+
+          include_examples "always included"
+        end
+
+        context "if it's not a s390 system" do
+          let(:s390) { false }
+
+          context "with EFI boot" do
+            let(:efi) { true }
+
+            it "does not include the system mount points" do
+              system_mountpoints.each do |mp|
+                expect(controller.mount_paths).to_not include mp
+              end
+            end
+
+            it "does not include /boot, /boot/efi or /boot/zipl" do
+              expect(controller.mount_paths).to_not include("/boot")
+              expect(controller.mount_paths).to_not include("/boot/zipl")
+              expect(controller.mount_paths).to_not include("/boot/efi")
+            end
+
+            include_examples "always included"
+          end
+
+          context "with no EFI" do
+            let(:efi) { false }
+
+            it "does not include the system mount points" do
+              system_mountpoints.each do |mp|
+                expect(controller.mount_paths).to_not include mp
+              end
+            end
+
+            it "does not include /boot, /boot/efi or /boot/zipl" do
+              expect(controller.mount_paths).to_not include("/boot")
+              expect(controller.mount_paths).to_not include("/boot/zipl")
+              expect(controller.mount_paths).to_not include("/boot/efi")
+            end
+
+            include_examples "always included"
+          end
+        end
+      end
+    end
+
+    context "if some mount points are already taken" do
+      let(:scenario) { "mixed_disks" }
+      # Let's enforce the temptative presence of /
+      let(:installation) { true }
+      # Let's enforce the temptative presence of swap
+      let(:dev_name) { "/dev/sdb1" }
+      # These two are not much relevant; swap, /home and / should be there in
+      # any combination
+      let(:s390) { false }
+      let(:efi) { false }
+
+      it "does not include the already mounted regular paths" do
+        expect(controller.mount_paths).to_not include("/")
+        expect(controller.mount_paths).to_not include("/home")
+      end
+
+      it "includes 'swap' despite it being already used" do
+        expect(controller.mount_paths).to include("swap")
       end
     end
   end

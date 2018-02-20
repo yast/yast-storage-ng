@@ -448,8 +448,6 @@ module Y2Partitioner
 
     # MountPoint selector
     class MountPoint < CWM::ComboBox
-      SUGGESTED_MOUNT_POINTS = %w(/ /home /var /opt /srv /tmp).freeze
-
       # Constructor
       # @param controller [Actions::Controllers::Filesystem]
       def initialize(controller)
@@ -476,7 +474,7 @@ module Y2Partitioner
       end
 
       def items
-        SUGGESTED_MOUNT_POINTS.map { |mp| [mp, mp] }
+        controller.mount_paths.map { |mp| [mp, mp] }
       end
 
       # The following condintions are checked:
@@ -490,6 +488,9 @@ module Y2Partitioner
       end
 
     private
+
+      # @return [Actions::Controllers::Filesystem]
+      attr_reader :controller
 
       # Validates not empty mount point
       # An error popup is shown when an empty mount point is entered.
@@ -520,10 +521,7 @@ module Y2Partitioner
       #
       # @return [Boolean] true if mount point does not shadow a subvolume
       def subvolumes_shadowing_validation
-        subvolumes = mounted_devices.select { |d| d.is?(:btrfs_subvolume) && !d.can_be_auto_deleted? }
-        subvolumes_mount_paths = subvolumes.map(&:mount_path).compact.select { |m| !m.empty? }
-
-        subvolumes_mount_paths.each do |mount_path|
+        controller.subvolumes_mount_paths.each do |mount_path|
           next unless Y2Storage::BtrfsSubvolume.shadowing?(value, mount_path)
           Yast::Popup.Error(
             format(_("The Btrfs subvolume mounted at %s is shadowed."), mount_path)
@@ -541,51 +539,7 @@ module Y2Partitioner
         # same time.
         return false if value == "swap"
 
-        devices = mounted_devices.reject { |d| d.is?(:btrfs_subvolume) }
-        mount_paths = devices.map(&:mount_path)
-        mount_paths.include?(value)
-      end
-
-      # Returns the devices that are currently mounted in the system
-      # It prevents to return the devices associated to the current filesystem.
-      #
-      # @see #filesystem_devices
-      #
-      # @return [Array<Y2Storage::Mountable>]
-      def mounted_devices
-        fs_sids = filesystem_devices.map(&:sid)
-        devices = Y2Storage::Mountable.all(device_graph)
-        devices = devices.select { |d| !d.mount_point.nil? }
-        devices.reject { |d| fs_sids.include?(d.sid) }
-      end
-
-      # Returns the devices associated to the current filesystem.
-      #
-      # @note The devices associated to the filesystem are the filesystem itself and its
-      #   subvolumes in case of a btrfs filesystem.
-      #
-      # @return [Array<Y2Storage::Mountable>]
-      def filesystem_devices
-        fs = filesystem
-        return [] if fs.nil?
-
-        devices = [fs]
-        devices += filesystem_subvolumes if fs.is?(:btrfs)
-        devices
-      end
-
-      # Subvolumes to take into account
-      # @return [Array[Y2Storage::BtrfsSubvolume]]
-      def filesystem_subvolumes
-        filesystem.btrfs_subvolumes.select { |s| !s.top_level? && !s.default_btrfs_subvolume? }
-      end
-
-      def device_graph
-        DeviceGraphs.instance.current
-      end
-
-      def filesystem
-        @controller.filesystem
+        controller.mounted_paths.include?(value)
       end
     end
 
