@@ -41,22 +41,53 @@ end
 describe Y2Partitioner::Widgets::Pages::Settings::MountBySelector do
   include_examples "CWM::ComboBox"
 
-  describe "#store" do
+  describe "#handle" do
     before do
       allow(subject).to receive(:value).and_return(value)
+      allow(subject).to receive(:widget_id).and_return(widget_id)
+
+      Y2Storage::StorageManager.instance.default_mount_by = mount_by_label
+      Y2Storage::SysconfigStorage.instance.default_mount_by = mount_by_label
     end
 
-    let(:value) { Y2Storage::Filesystems::MountByType::ID }
+    let(:value) { mount_by_id }
 
-    it "updates the default mount by value" do
-      expect(Y2Storage::StorageManager.instance.default_mount_by.to_sym).to_not eq(value)
-      subject.store
-      expect(Y2Storage::StorageManager.instance.default_mount_by).to eq(value)
+    let(:widget_id) { "a_widget_id" }
+
+    let(:mount_by_id) { Y2Storage::Filesystems::MountByType::ID }
+
+    let(:mount_by_label) { Y2Storage::Filesystems::MountByType::LABEL }
+
+    context "when a mount_by is selected" do
+      let(:events) { {"ID" => widget_id} }
+
+      it "updates the default value for mount_by" do
+        expect(Y2Storage::StorageManager.instance.default_mount_by).to_not eq(value)
+        subject.handle(events)
+        expect(Y2Storage::StorageManager.instance.default_mount_by).to eq(value)
+      end
+
+      it "saves the selected value into the config file" do
+        expect(Y2Storage::SysconfigStorage.instance.default_mount_by).to_not eq(value)
+        subject.handle(events)
+        expect(Y2Storage::SysconfigStorage.instance.default_mount_by).to eq(value)
+      end
     end
 
-    it "saves the selected value into the config file" do
-      expect(Y2Storage::SysconfigStorage.instance).to receive(:default_mount_by=).with(value)
-      subject.store
+    context "when other widget has changed" do
+      let(:events) { {"ID" => "other_widget_id"} }
+
+      it "does not update the default value for mount_by" do
+        expect(Y2Storage::StorageManager.instance.default_mount_by.to_sym).to_not eq(value)
+        subject.handle(events)
+        expect(Y2Storage::StorageManager.instance.default_mount_by).to_not eq(value)
+      end
+
+      it "does not save the selected value into the config file" do
+        expect(Y2Storage::SysconfigStorage.instance.default_mount_by).to_not eq(value)
+        subject.handle(events)
+        expect(Y2Storage::SysconfigStorage.instance.default_mount_by).to_not eq(value)
+      end
     end
   end
 end

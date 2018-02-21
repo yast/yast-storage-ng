@@ -79,7 +79,6 @@ module Y2Partitioner
             self.value = Y2Storage::StorageManager.instance.default_mount_by.to_s
           end
 
-          # FIXME: disable not allowed options
           def items
             [
               [Y2Storage::Filesystems::MountByType::DEVICE.to_s, _("Device Name")],
@@ -95,10 +94,22 @@ module Y2Partitioner
             Y2Storage::Filesystems::MountByType.find(super)
           end
 
-          # Immediately saves the value into the config file (see {Y2Storage::SysconfigStorage})
-          def store
+          def opt
+            [:notify]
+          end
+
+          # @macro seeAbstractWidget
+          # Stores the given mount_by and immediately saves it into the sysconfig file
+          #
+          # @note #store is not used to save the values because we need to register the
+          #   change just after selecting the value.
+          def handle(event)
+            return unless event["ID"] == widget_id
+
             Y2Storage::StorageManager.instance.default_mount_by = value
-            Y2Storage::SysconfigStorage.instance.default_mount_by = value
+            Y2Storage::StorageManager.instance.update_sysconfig
+
+            nil
           end
         end
       end
