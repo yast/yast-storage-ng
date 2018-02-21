@@ -109,6 +109,11 @@ module Y2Storage
       @storage.default_mount_by = mount_by.to_storage_value
     end
 
+    # Updates sysconfig values
+    def update_sysconfig
+      SysconfigStorage.instance.default_mount_by = default_mount_by
+    end
+
     # Whether probing has been done
     # @return [Boolean]
     def probed?
