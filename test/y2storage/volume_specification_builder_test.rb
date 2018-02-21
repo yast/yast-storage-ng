@@ -30,55 +30,16 @@ describe Y2Storage::VolumeSpecificationBuilder do
   subject(:builder) { described_class.new(settings) }
 
   let(:settings) do
-    instance_double(Y2Storage::ProposalSettings, volumes: volumes, format: format)
+    instance_double(Y2Storage::ProposalSettings, volumes: volumes)
   end
 
   let(:volumes) { [home_spec] }
   let(:home_spec) { Y2Storage::VolumeSpecification.new("mount_point" => "/home") }
-  let(:format) { :ng }
 
   describe "#for" do
     context "when a volume specification for the given mount point exist" do
       it "returns the existing specification" do
         expect(builder.for("/home")).to eq(home_spec)
-      end
-    end
-
-    context "legacy mode" do
-      let(:format) { :legacy }
-      let(:volumes) { nil }
-
-      let(:settings) do
-        instance_double(
-          Y2Storage::ProposalSettings,
-          format:               :legacy,
-          root_filesystem_type: Y2Storage::Filesystems::Type::BTRFS,
-          home_filesystem_type: Y2Storage::Filesystems::Type::XFS
-        )
-      end
-
-      context "when mount point is /" do
-        it "returns a / volume specification" do
-          expect(builder.for("/")).to have_attributes(
-            fs_types: Y2Storage::Filesystems::Type.home_filesystems,
-            fs_type:  Y2Storage::Filesystems::Type::BTRFS
-          )
-        end
-      end
-
-      context "when mount point is /home" do
-        it "returns a /home volume specification" do
-          expect(builder.for("/home")).to have_attributes(
-            fs_types: Y2Storage::Filesystems::Type.home_filesystems,
-            fs_type:  Y2Storage::Filesystems::Type::XFS
-          )
-        end
-      end
-
-      context "when mount point is not / nor /home" do
-        it "returns nil" do
-          expect(builder.for("/other")).to be_nil
-        end
       end
     end
 

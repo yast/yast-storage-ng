@@ -67,37 +67,8 @@ module Y2Storage
     # @return [VolumeSpecification,nil] Volume specification if found; otherwise,
     #   it returns nil.
     def proposal_spec(mount_point)
-      case proposal_settings.format
-      when :ng
-        ng_proposal_spec(mount_point)
-      when :legacy
-        legacy_proposal_spec(mount_point)
-      end
-    end
-
-    # Return a volume spec from proposal settings for the given mount point when using ng settings
-    #
-    # @param mount_point [String] Volume mount point
-    # @return [VolumeSpecification,nil] Volume specification if found; otherwise,
-    #   it returns nil.
-    def ng_proposal_spec(mount_point)
       return nil if proposal_settings.volumes.nil?
       proposal_settings.volumes.find { |v| v.mount_point == mount_point }
-    end
-
-    # Return a volume spec from proposal settings for the given mount point when using legacy
-    # settings
-    #
-    # @param mount_point [String] Volume mount point
-    # @return [VolumeSpecification,nil] Volume specification if found; otherwise,
-    #   it returns nil.
-    def legacy_proposal_spec(mount_point)
-      case mount_point
-      when "/"
-        legacy_for_root
-      when "/home"
-        legacy_for_home
-      end
     end
 
     # Return a volume spec fallback
@@ -199,28 +170,6 @@ module Y2Storage
         v.fs_type = Filesystems::Type::SWAP
         v.min_size = DiskSize.MiB(512)
         v.max_size = DiskSize.GiB(2)
-      end
-    end
-
-    # Volume specification for root when using legacy settings
-    #
-    # @return [VolumeSpecification]
-    def legacy_for_root
-      VolumeSpecification.new({}).tap do |v|
-        v.mount_point = "/"
-        v.fs_types = Filesystems::Type.root_filesystems
-        v.fs_type = proposal_settings.root_filesystem_type
-      end
-    end
-
-    # Volume specification for /home when using legacy settings
-    #
-    # @return [VolumeSpecification]
-    def legacy_for_home
-      VolumeSpecification.new({}).tap do |v|
-        v.mount_point = "/home"
-        v.fs_types = Filesystems::Type.home_filesystems
-        v.fs_type = proposal_settings.home_filesystem_type
       end
     end
   end
