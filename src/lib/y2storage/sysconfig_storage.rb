@@ -105,6 +105,7 @@ module Y2Storage
     # @param value [String]
     def write(key, value)
       Yast::SCR.Write(path("#{SYSCONFIG_PATH}.#{key}"), value)
+      Yast::SCR.Write(path(SYSCONFIG_PATH), nil)
     end
   end
 end
