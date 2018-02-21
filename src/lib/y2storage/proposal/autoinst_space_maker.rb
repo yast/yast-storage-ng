@@ -221,13 +221,17 @@ module Y2Storage
       # @param sid_map         [Hash<String,Integer>]      device name to sid map
       #
       # @see sid_map
+      # rubocop:disable Style/MultilineBlockChain
       def adjust_reuse_values(devicegraph, planned_devices, sid_map)
-        planned_devices.select { |d| d.is_a?(Y2Storage::Planned::Partition) && d.reuse_name }.each do |device|
+        planned_devices.select do |d|
+          d.is_a?(Y2Storage::Planned::Partition) && d.reuse_name
+        end.each do |device|
           sid = sid_map[device.reuse_name]
           partition = partition_by_sid(devicegraph, sid)
           device.reuse_name = partition.name
         end
       end
+      # rubocop:enable all
     end
   end
 end

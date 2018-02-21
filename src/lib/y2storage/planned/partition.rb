@@ -77,7 +77,10 @@ module Y2Storage
       end
 
       def self.to_string_attrs
-        [:mount_point, :reuse_name, :reuse_sid, :min_size, :max_size, :disk, :max_start_offset, :subvolumes]
+        [
+          :mount_point, :reuse_name, :reuse_sid, :min_size, :max_size,
+          :disk, :max_start_offset, :subvolumes
+        ]
       end
 
     protected

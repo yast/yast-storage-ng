@@ -79,7 +79,8 @@ module Y2Storage
           end
 
         if max_size != device.size && max_size != DiskSize.unlimited
-          log.warn "Resizing #{reuse_name} to #{max_size} was not possible. Using #{device.size} instead."
+          log.warn "Resizing #{reuse_name} to #{max_size} was not possible. " \
+            "Using #{device.size} instead."
         end
       end
     end
