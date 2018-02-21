@@ -40,8 +40,10 @@ describe Y2Storage::GuidedProposal do
 
   describe "#propose" do
     before do
-      allow_any_instance_of(Y2Storage::Dasd).to receive(:type).and_return(type)
-      allow_any_instance_of(Y2Storage::Dasd).to receive(:format).and_return(format)
+      fake_devicegraph.dasds.each do |dasd|
+        dasd.type = type
+        dasd.format = format
+      end
     end
 
     let(:type) { Y2Storage::DasdType::UNKNOWN }

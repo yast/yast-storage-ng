@@ -188,7 +188,7 @@ module Y2Storage
         device.mount_point = section.mount
         device.label = section.label
         device.uuid = section.uuid
-        device.filesystem_type = section.type_for_filesystem
+        device.filesystem_type = filesystem_for(section)
         device.mount_by = section.type_for_mountby
         device.mkfs_options = section.mkfs_options
         device.fstab_options = section.fstab_options
@@ -439,6 +439,26 @@ module Y2Storage
       # @see AutoinstSizeParser
       def parse_size(section, min, max)
         AutoinstSizeParser.new(proposal_settings).parse(section.size, section.mount, min, max)
+      end
+
+      # Return the filesystem type for a given section
+      #
+      # @param section [AutoinstProfile::PartitionSection]
+      # @return [Filesystems::Type] Filesystem type
+      def filesystem_for(section)
+        return section.type_for_filesystem if section.type_for_filesystem
+        return nil unless section.mount
+        default_filesystem_for(section)
+      end
+
+      # Return the default filesystem type for a given section
+      #
+      # @param section [AutoinstProfile::PartitionSection]
+      # @return [Filesystems::Type] Filesystem type
+      def default_filesystem_for(section)
+        spec = VolumeSpecificationBuilder.new(proposal_settings).for(section.mount)
+        return spec.fs_type if spec && spec.fs_type
+        section.mount == "swap" ? Filesystems::Type::SWAP : Filesystems::Type::BTRFS
       end
     end
   end

@@ -51,29 +51,13 @@ module Y2Storage
 
     protected
 
-      # Looks like 256MiB is the minimum size for FAT32 in 4K Native drives
-      # (4-KiB-per-sector), according to
-      # https://wiki.archlinux.org/index.php/EFI_System_Partition
-      MIN_SIZE = DiskSize.MiB(256).freeze
-      DESIRED_SIZE = DiskSize.MiB(500).freeze
-      MAX_SIZE = DiskSize.MiB(500).freeze
-
       def efi_missing?
         free_mountpoint?("/boot/efi")
       end
 
       # @return [VolumeSpecification]
       def efi_volume
-        return @efi_volume unless @efi_volume.nil?
-
-        @efi_volume = VolumeSpecification.new({})
-        @efi_volume.mount_point = "/boot/efi"
-        @efi_volume.fs_types = [Filesystems::Type::VFAT]
-        @efi_volume.fs_type = Filesystems::Type::VFAT
-        @efi_volume.min_size = MIN_SIZE
-        @efi_volume.desired_size = DESIRED_SIZE
-        @efi_volume.max_size = MAX_SIZE
-        @efi_volume
+        @efi_volume ||= volume_specification_for("/boot/efi")
       end
 
       # @return [Planned::Partition]

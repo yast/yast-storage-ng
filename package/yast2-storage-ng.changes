@@ -1,4 +1,26 @@
 -------------------------------------------------------------------
+Wed Feb 21 12:29:02 UTC 2018 - ancor@suse.com
+
+- Do not take into account unformatted DASDs as a possible target
+  for installation (bsc#1071798).
+- Partitioner: do not show unformatted DASDs, since they cannot
+  be partitioned or used in any other way.
+
+-------------------------------------------------------------------
+Wed Feb 21 08:46:02 UTC 2018 - igonzalezsosa@suse.com
+
+- AutoYaST: guess which filesystem type should be used for a given
+  partition/logical volume when it is not specified in the profile
+  (bsc#1075203).
+
+-------------------------------------------------------------------
+Tue Feb 20 16:43:31 UTC 2018 - shundhammer@suse.com
+
+- Special handling for mount options for / and /boot/*
+  in the partitioner (bsc#1080731)
+- 4.0.101
+
+-------------------------------------------------------------------
 Tue Feb 20 09:43:12 UTC 2018 - ancor@suse.com
 
 - Partitioner: bring back traditional list of mount points for both

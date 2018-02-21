@@ -44,6 +44,11 @@ describe Y2Storage::GuidedProposal do
     context "when settings are not passed" do
       let(:current_settings) { nil }
 
+      before do
+        allow(Y2Storage::ProposalSettings).to receive(:new_for_current_product)
+          .and_call_original
+      end
+
       it "creates initial proposal settings based on the product (control.xml)" do
         expect(Y2Storage::ProposalSettings).to receive(:new_for_current_product)
           .and_call_original
@@ -92,6 +97,21 @@ describe Y2Storage::GuidedProposal do
         result = described_class.initial(settings: settings)
         expect(result).to be_a Y2Storage::GuidedProposal
         expect(result.devices).to be_a Y2Storage::Devicegraph
+      end
+    end
+
+    # Regression test for bsc#1071798
+    context "with only an unformatted ECKD DASD" do
+      let(:scenario) { "unformatted-eckd-dasd" }
+
+      it "does not rise an exception" do
+        expect { described_class.initial(settings: settings) }.to_not raise_error
+      end
+
+      it "generates a failed proposal" do
+        result = described_class.initial(settings: settings)
+        expect(result).to be_a Y2Storage::GuidedProposal
+        expect(result.failed?).to eq true
       end
     end
   end

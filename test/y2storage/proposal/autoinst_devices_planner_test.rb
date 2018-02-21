@@ -217,7 +217,7 @@ describe Y2Storage::Proposal::AutoinstDevicesPlanner do
         end
 
         let(:settings) do
-          instance_double(Y2Storage::ProposalSettings, volumes: volumes)
+          instance_double(Y2Storage::ProposalSettings, volumes: volumes, format: :ng)
         end
 
         let(:volumes) { [] }
@@ -292,11 +292,18 @@ describe Y2Storage::Proposal::AutoinstDevicesPlanner do
 
     context "specifying filesystem options" do
       let(:partitioning_array) do
-        [{ "device" => "/dev/sda", "use" => "all", "partitions" => [root_spec, home_spec] }]
+        [
+          { "device" => "/dev/sda", "use" => "all",
+           "partitions" => [root_spec, home_spec, swap_spec] }
+        ]
       end
 
       let(:home_spec) do
         { "mount" => "/home", "filesystem" => "xfs", "mountby" => :uuid }
+      end
+
+      let(:swap_spec) do
+        { "mount" => "swap" }
       end
 
       it "sets the filesystem" do
@@ -305,6 +312,44 @@ describe Y2Storage::Proposal::AutoinstDevicesPlanner do
         home = devices.find { |d| d.mount_point == "/home" }
         expect(root.filesystem_type).to eq(Y2Storage::Filesystems::Type::EXT4)
         expect(home.filesystem_type).to eq(Y2Storage::Filesystems::Type::XFS)
+      end
+
+      context "when filesystem type is not specified" do
+        let(:volspec_builder) do
+          instance_double(Y2Storage::VolumeSpecificationBuilder, for: volspec)
+        end
+        let(:home_spec) { { "mount" => "/srv" } }
+        let(:volspec) { Y2Storage::VolumeSpecification.new("fs_type" => "ext4") }
+
+        before do
+          allow(Y2Storage::VolumeSpecificationBuilder).to receive(:new)
+            .and_return(volspec_builder)
+        end
+
+        it "sets to the default type for the given mount point" do
+          expect(volspec_builder).to receive(:for).with("/srv").and_return(volspec)
+          devices = planner.planned_devices(drives_map)
+          srv = devices.find { |d| d.mount_point == "/srv" }
+          expect(srv.filesystem_type).to eq(volspec.fs_type)
+        end
+
+        context "and no default is defined" do
+          let(:volspec) { Y2Storage::VolumeSpecification.new({}) }
+
+          it "sets filesystem to btrfs" do
+            devices = planner.planned_devices(drives_map)
+            srv = devices.find { |d| d.mount_point == "/srv" }
+            expect(srv.filesystem_type).to eq(Y2Storage::Filesystems::Type::BTRFS)
+          end
+
+          context "and is a swap filesystem" do
+            it "sets filesystem to swap" do
+              devices = planner.planned_devices(drives_map)
+              swap = devices.find { |d| d.mount_point == "swap" }
+              expect(swap.filesystem_type).to eq(Y2Storage::Filesystems::Type::SWAP)
+            end
+          end
+        end
       end
 
       it "sets the mountby properties" do

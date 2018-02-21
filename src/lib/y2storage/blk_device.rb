@@ -89,6 +89,17 @@ module Y2Storage
     #   @return [String]
     storage_forward :sysfs_path
 
+    # @!method usable_as_blk_device?
+    #   Checks whether the device is in general usable as a block device.
+    #
+    #   This is not the case for some DASDs. For more information, see
+    #   https://github.com/openSUSE/libstorage-ng/blob/master/doc/dasd.md
+    #
+    #   This does not consider if the block device is already in use.
+    #
+    #   @return [Boolean]
+    storage_forward :usable_as_blk_device?
+
     # Position of the first block of the region
     #
     # @return [Integer]

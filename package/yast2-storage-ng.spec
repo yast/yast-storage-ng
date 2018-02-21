@@ -16,7 +16,7 @@
 #
 
 Name:		yast2-storage-ng
-Version:        4.0.100
+Version:        4.0.101
 Release:	0
 BuildArch:	noarch
 
@@ -26,12 +26,12 @@ Source:		%{name}-%{version}.tar.bz2
 # Yast2::FsSnapshots.configure_on_install=
 Requires:	yast2 >= 4.0.24
 Requires:	yast2-ruby-bindings
-# Storage::GraphvizFlags_DISPLAYNAME
-Requires:	libstorage-ng-ruby >= 3.3.148
+# BlkDevice#usable_as_blk_device? and Partitionable#usable_as_partitionable?
+Requires:	libstorage-ng-ruby >= 3.3.160
 
 BuildRequires:	update-desktop-files
-# Storage::GraphvizFlags_DISPLAYNAME
-BuildRequires:	libstorage-ng-ruby >= 3.3.148
+# BlkDevice#usable_as_blk_device? and Partitionable#usable_as_partitionable?
+BuildRequires:	libstorage-ng-ruby >= 3.3.160
 BuildRequires:	yast2-ruby-bindings
 BuildRequires:	yast2-devtools
 # yast2-xml dependency is added by yast2 but ignored in the

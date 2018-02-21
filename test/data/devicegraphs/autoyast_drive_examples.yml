@@ -2,6 +2,8 @@
 - dasd:
     name: /dev/dasda
     size: 50 GiB
+    type: eckd
+    format: cdl
 
 - disk:
     name: /dev/sda
@@ -30,6 +32,8 @@
 - dasd:
     name: /dev/dasdb
     size: 10 GiB
+    type: eckd
+    format: cdl
     partition_table:  dasd
     partitions:
 

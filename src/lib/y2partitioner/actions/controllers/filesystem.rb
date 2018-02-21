@@ -459,9 +459,23 @@ module Y2Partitioner
         def apply_mount_point_options(options)
           return if mount_point.nil?
 
+          # FIXME: Simplify this. This generic anonymous hash might contain
+          # anything; it's very similar to the old target map that left
+          # everybody guessing what it contained.  If we need a helper class to
+          # store some old values for the mount point object, let's create
+          # one. But probably it's just those two fields mentioned above that
+          # need to be taken into account, and for this that "options" hash is
+          # not only complete overkill, it also wraps the wrapper class into
+          # another layer of indirection.
+          # See RFC 1925 section 6a (and section 3).
           options.each_pair do |attr, value|
             mount_point.send(:"#{attr}=", value) unless value.nil?
           end
+
+          # Special handling for some mount paths ("/", "/boot/*")
+          opt = options[:mount_options] || []
+          opt = filesystem.type.special_path_fstab_options(opt, mount_point.path)
+          mount_point.mount_options = opt
         end
 
         def current_value_for(attribute)

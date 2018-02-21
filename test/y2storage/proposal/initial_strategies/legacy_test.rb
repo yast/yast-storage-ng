@@ -38,6 +38,8 @@ describe Y2Storage::Proposal::InitialStrategies::Legacy do
     subject(:proposal) { described_class.new.initial_proposal(settings: current_settings) }
 
     before do
+      allow(Y2Storage::ProposalSettings).to receive(:new_for_current_product)
+        .and_call_original
       settings.root_filesystem_type = root_filesystem
       settings.use_snapshots = snapshots
       settings.root_base_size = root_base_size

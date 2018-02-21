@@ -60,8 +60,25 @@ module Y2Storage
 
     def types_for_is
       types = super
-      types << :disk_device unless multipath_wire? || bios_raid_disk?
+      types << :disk_device if disk_device?
       types
+    end
+
+    # Whether this device can be in general treated like a disk for YaST
+    # purposes
+    #
+    # @see Devicegraph::disk_devices
+    #
+    # @return [Boolean]
+    def disk_device?
+      # If we cannot create partitions on it, this doesn't look like a disk
+      return false if respond_to?(:usable_as_partitionable?) && !usable_as_partitionable?
+      # If this is the wire of a multipath, we better don't fiddle with it
+      return false if multipath_wire?
+      # Same applies if this is part of a BIOS RAID
+      return false if bios_raid_disk?
+
+      true
     end
   end
 end

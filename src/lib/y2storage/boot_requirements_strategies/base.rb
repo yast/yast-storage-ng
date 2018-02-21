@@ -28,6 +28,7 @@ require "y2storage/boot_requirements_strategies/analyzer"
 require "y2storage/exceptions"
 require "y2storage/volume_specification"
 require "y2storage/setup_error"
+require "y2storage/volume_specification_builder"
 
 module Y2Storage
   module BootRequirementsStrategies
@@ -138,16 +139,12 @@ module Y2Storage
 
       # @return [VolumeSpecification]
       def boot_volume
-        return @boot_volume unless @boot_volume.nil?
+        @boot_volume ||= volume_specification_for("/boot")
+      end
 
-        @boot_volume = VolumeSpecification.new({})
-        @boot_volume.mount_point = "/boot"
-        @boot_volume.fs_types = Filesystems::Type.root_filesystems
-        @boot_volume.fs_type = Filesystems::Type::EXT4
-        @boot_volume.min_size = DiskSize.MiB(100)
-        @boot_volume.desired_size = DiskSize.MiB(200)
-        @boot_volume.max_size = DiskSize.MiB(500)
-        @boot_volume
+      # @return [VolumeSpecification,nil]
+      def volume_specification_for(mount_point)
+        VolumeSpecificationBuilder.new.for(mount_point)
       end
 
       # @return [Planned::Partition]

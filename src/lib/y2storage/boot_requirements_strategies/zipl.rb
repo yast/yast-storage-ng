@@ -64,16 +64,7 @@ module Y2Storage
 
       # @return [VolumeSpecification]
       def zipl_volume
-        return @zipl_volume unless @zipl_volume.nil?
-
-        @zipl_volume = VolumeSpecification.new({})
-        @zipl_volume.mount_point = "/boot/zipl"
-        @zipl_volume.fs_types = Filesystems::Type.zipl_filesystems
-        @zipl_volume.fs_type = Filesystems::Type.zipl_filesystems.first
-        @zipl_volume.min_size = DiskSize.MiB(100)
-        @zipl_volume.desired_size = DiskSize.MiB(200)
-        @zipl_volume.max_size = DiskSize.MiB(500)
-        @zipl_volume
+        @zipl_volume ||= volume_specification_for("/boot/zipl")
       end
 
       # @return [Planned::Partition]

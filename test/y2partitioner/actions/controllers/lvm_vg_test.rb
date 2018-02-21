@@ -403,6 +403,18 @@ describe Y2Partitioner::Actions::Controllers::LvmVg do
       new_md.add_device(sda3)
       expect(controller.available_devices).to_not include sda3
     end
+
+    it "excludes DASDs" do
+      dasda = Y2Storage::Dasd.create(current_graph, "/dev/dasda")
+      dasda.type = Y2Storage::DasdType::ECKD
+      dasda.format = Y2Storage::DasdFormat::CDL
+
+      dasdb = Y2Storage::Dasd.create(current_graph, "/dev/dasdb")
+      dasdb.type = Y2Storage::DasdType::FBA
+
+      expect(controller.available_devices.map(&:name)).to_not include(dasda.name)
+      expect(controller.available_devices.map(&:name)).to_not include(dasdb.name)
+    end
   end
 
   describe "#devices_in_vg" do
