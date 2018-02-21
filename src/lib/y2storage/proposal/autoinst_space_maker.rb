@@ -144,7 +144,7 @@ module Y2Storage
         parts_to_delete.map(&:sid).each do |sid|
           partition = partition_by_sid(devicegraph, sid)
           next unless partition
-          partition_killer.delete(partition.name)
+          partition_killer.delete_by_sid(partition.sid)
         end
       end
 

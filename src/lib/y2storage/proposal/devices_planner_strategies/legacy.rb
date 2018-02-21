@@ -103,6 +103,7 @@ module Y2Storage
           reuse = reusable_swap(max_size)
           if reuse
             part.reuse_name = reuse.name
+            log.info "planned to reuse swap #{reuse.name}"
           else
             part.min_size = min_size
             part.max_size = max_size
