@@ -53,7 +53,7 @@ module Y2Storage
     # a fallback.
     #
     # @param mount_point [String] Volume mount point
-    # @return [VolumeSpecification] Volume specification;, nil if the
+    # @return [VolumeSpecification] Volume specification; nil if the
     #   specification was not found and no fallback could be proposed.
     def for(mount_point)
       proposal_spec(mount_point) || fallback_spec(mount_point)
