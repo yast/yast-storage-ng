@@ -59,7 +59,7 @@ describe Y2Partitioner::Widgets::Pages::Settings::MountBySelector do
     let(:mount_by_label) { Y2Storage::Filesystems::MountByType::LABEL }
 
     context "when a mount_by is selected" do
-      let(:events) { {"ID" => widget_id} }
+      let(:events) { { "ID" => widget_id } }
 
       it "updates the default value for mount_by" do
         expect(Y2Storage::StorageManager.instance.default_mount_by).to_not eq(value)
@@ -75,7 +75,7 @@ describe Y2Partitioner::Widgets::Pages::Settings::MountBySelector do
     end
 
     context "when other widget has changed" do
-      let(:events) { {"ID" => "other_widget_id"} }
+      let(:events) { { "ID" => "other_widget_id" } }
 
       it "does not update the default value for mount_by" do
         expect(Y2Storage::StorageManager.instance.default_mount_by.to_sym).to_not eq(value)
