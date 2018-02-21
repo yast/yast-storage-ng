@@ -616,6 +616,8 @@ module Y2Partitioner
       def validate
         return true unless value
 
+        # FIXME: have generic check when new partition is created if it is valid
+        # like e.g. if fs fits to partition, and others
         # size number is from bsc1065071#c5
         return true if @controller.blk_device.size > ::Y2Storage::DiskSize.MiB(2)
 

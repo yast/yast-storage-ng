@@ -122,10 +122,13 @@ module Y2Storage
       end
 
       def too_small_boot?
+        # for other partitions it is not needed as packager check disk usage, but /boot is special
+        # as it contain initrd that is generated and also bootloader code.
         filesystem = devicegraph.filesystems.find { |f| f.mount_point == "/boot" }
         return false unless filesystem
 
         available_size = filesystem.blk_devices.map(&:size).reduce(:+)
+        # FIXME: it does not count fs size and other and it is just hard coded.
         return available_size < DiskSize.MiB(100) # for number see below minimal size for boot volume
       end
 
