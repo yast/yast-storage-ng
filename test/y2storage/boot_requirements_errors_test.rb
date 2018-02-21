@@ -260,8 +260,8 @@ describe Y2Storage::BootRequirementsChecker do
     let(:efiboot) { true }
 
     it "contains an error when there is /boot that is not big enough" do
-      allow(devicegraph).to receive(:filesystems).
-        and_return([double(
+      allow(devicegraph).to receive(:filesystems)
+        .and_return([double(
           mount_point: "/boot",
           blk_devices: [double(size: Y2Storage::DiskSize.MiB(50))]
         )])
