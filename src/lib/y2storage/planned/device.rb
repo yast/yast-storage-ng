@@ -45,6 +45,12 @@ module Y2Storage
       #   purpose. As a result, some of the others attributes could be ignored.
       attr_accessor :reuse_name
 
+      # @return [Integer] storage id of an existing device to reuse for this
+      #   purpose. As a result, some of the others attributes could be ignored.
+      #
+      # @note This attribute is preferred over {reuse_name}.
+      attr_accessor :reuse_sid
+
       # @return [String] planned device identifier. Planned devices are cloned/modified
       #   when calculating the proposal. This identifier allows to identify if two planned
       #   devices are related.
@@ -68,7 +74,7 @@ module Y2Storage
       end
 
       def self.to_string_attrs
-        [:reuse_name]
+        [:reuse_name, :reuse_sid]
       end
 
       # Returns the (possibly processed) device to be used for the planned
@@ -90,18 +96,25 @@ module Y2Storage
 
       # Whether this planned device is expected to reuse an existing one
       def reuse?
-        !(reuse_name.nil? || reuse_name.empty?)
+        !(reuse_name.nil? || reuse_name.empty?) || !reuse_sid.nil?
       end
 
     protected
 
       def reuse_device!(dev)
-        log.info "Reusing #{reuse_name} (#{dev.inspect}) for #{self}"
+        log.info "Reusing sid #{reuse_sid} (#{reuse_name}) (#{dev.inspect}) for #{self}"
       end
 
       def device_to_reuse(devicegraph)
         return nil unless reuse?
-        BlkDevice.find_by_name(devicegraph, reuse_name)
+        x = devicegraph.find_device(reuse_sid) if reuse_sid
+        x ||= BlkDevice.find_by_name(devicegraph, reuse_name)
+        if x
+          log.info "reused: sid #{x.sid} (#{x.name})"
+        else
+          log.info "reused device not found: sid #{reuse_sid} (#{reuse_name})"
+        end
+        x
       end
 
       def internal_state
