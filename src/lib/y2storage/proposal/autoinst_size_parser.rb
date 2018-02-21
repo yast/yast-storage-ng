@@ -20,7 +20,7 @@
 # find current contact information at www.suse.com.
 
 require "y2storage/proposal/autoinst_size"
-require "y2storage/volume_specification"
+require "y2storage/volume_specification_builder"
 
 module Y2Storage
   module Proposal
@@ -111,8 +111,7 @@ module Y2Storage
 
       # @return [nil,Array<DiskSize>]
       def auto_sizes_for(mount_point)
-        spec = volume_spec_for(mount_point)
-
+        spec = VolumeSpecificationBuilder.new(proposal_settings).for(mount_point)
         return nil if spec.nil?
 
         AutoinstSize.new(
@@ -121,32 +120,6 @@ module Y2Storage
           max:    spec.max_size,
           weight: spec.weight
         )
-      end
-
-      # @return [VolumeSpecification,nil]
-      def volume_spec_for(mount_point)
-        volume_spec =
-          if proposal_settings.volumes.nil? || proposal_settings.volumes.empty?
-            nil
-          else
-            proposal_settings.volumes.find { |v| v.mount_point == mount_point }
-          end
-
-        volume_spec || fallback_volume_spec(mount_point)
-      end
-
-      DEFAULT_SIZES = {
-        "swap" => {
-          "min_size" => "512MB",
-          "max_size" => "2GB"
-        }
-      }.freeze
-
-      # @return [VolumeSpecification,nil]
-      def fallback_volume_spec(mount_point)
-        features = DEFAULT_SIZES.fetch(mount_point, {})
-        return nil if features.empty?
-        Y2Storage::VolumeSpecification.new(features)
       end
     end
   end

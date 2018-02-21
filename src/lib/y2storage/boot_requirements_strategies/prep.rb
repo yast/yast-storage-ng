@@ -79,20 +79,7 @@ module Y2Storage
 
       # @return [VolumeSpecification]
       def prep_volume
-        return @prep_volume unless @prep_volume.nil?
-
-        @prep_volume = VolumeSpecification.new({})
-        # So far we are always using msdos partition ids
-        @prep_volume.partition_id = PartitionId::PREP
-        # Grub2 with all the modules we could possibly use (LVM, LUKS, etc.)
-        # is slightly bigger than 1MiB
-        @prep_volume.min_size = DiskSize.MiB(2)
-        @prep_volume.desired_size = DiskSize.MiB(4)
-        @prep_volume.max_size = DiskSize.MiB(8)
-        # TODO: We have been told that PReP must be one of the first 4
-        # partitions, ideally the first one. But we have not found any
-        # rationale/evidence. Not implementing that for the time being
-        @prep_volume
+        @prep_volume ||= volume_specification_for("prep")
       end
 
       # @return [Planned::Partition]

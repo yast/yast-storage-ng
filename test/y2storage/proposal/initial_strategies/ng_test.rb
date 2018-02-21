@@ -123,6 +123,11 @@ describe Y2Storage::Proposal::InitialStrategies::Ng do
     context "when settings are not passed" do
       let(:settings) { nil }
 
+      before do
+        allow(Y2Storage::ProposalSettings).to receive(:new_for_current_product)
+          .and_call_original
+      end
+
       it "creates initial proposal settings based on the product (control.xml)" do
         expect(Y2Storage::ProposalSettings).to receive(:new_for_current_product)
           .and_call_original
