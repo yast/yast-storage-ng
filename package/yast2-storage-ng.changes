@@ -1,5 +1,5 @@
 -------------------------------------------------------------------
-Tue Feb 20 17:38:16 UTC 2018 - jlopez@suse.com
+Tue Feb 21 14:35:16 UTC 2018 - jlopez@suse.com
 
 - Use sysconfig storage file to read the default value for mount_by
    (bsc#1081198).
