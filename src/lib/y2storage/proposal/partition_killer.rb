@@ -32,7 +32,7 @@ module Y2Storage
       # Initialize.
       #
       # The optional parameter "disks" can be used to restrict the scope of the
-      # collateral actions (see {#delete})
+      # collateral actions (see {#delete_by_sid})
       #
       # @param devicegraph [Devicegraph]
       # @param disks [Array<String>] list of kernel-style device names
@@ -44,7 +44,7 @@ module Y2Storage
       # Deletes a given partition and other partitions that, as a consequence,
       # are not longer useful.
       #
-      # @param device_name [Integer] device sid of the partition
+      # @param device_sid [Integer] device sid of the partition
       # @return [Array<Integer>] device sids of all the deleted partitions
       def delete_by_sid(device_sid)
         partition = find_partition(device_sid)
