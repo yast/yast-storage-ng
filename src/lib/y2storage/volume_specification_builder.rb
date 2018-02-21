@@ -77,7 +77,7 @@ module Y2Storage
     # @return [VolumeSpecification,nil] Volume specification if a suitable fallback
     #   is defined; nil otherwise.
     def fallback_spec(mount_point)
-      name = mount_point.delete_prefix("/").tr("/", "_")
+      name = mount_point.sub(/\A\//, "").tr("/", "_")
       meth = "fallback_for_#{name}"
       return send(meth) if respond_to?(meth, true)
     end
