@@ -58,7 +58,7 @@ module Y2Storage
       # Builds a new instance based on a real VG
       #
       # The new instance represents the intention to reuse the real VG, so the
-      # #reuse method will be set accordingly. On the other hand, it copies
+      # #reuse_name method will be set accordingly. On the other hand, it copies
       # information from the real VG to make sure it is available even if the
       # real_vg object disappears.
       #
@@ -92,7 +92,7 @@ module Y2Storage
         @total_size = real_vg.total_size
         @pvs = real_vg.lvm_pvs.map { |v| v.blk_device.name }
         @lvs = real_vg.lvm_lvs.map { |v| LvmLv.from_real_lv(v) }
-        self.reuse = real_vg.vg_name
+        self.reuse_name = real_vg.vg_name
       end
 
       # Returns the size of each extent
@@ -119,14 +119,14 @@ module Y2Storage
       end
 
       def self.to_string_attrs
-        [:reuse, :volume_group_name]
+        [:reuse_name, :volume_group_name]
       end
 
     protected
 
       def device_to_reuse(devicegraph)
         return nil unless reuse?
-        Y2Storage::LvmVg.find_by_vg_name(devicegraph, reuse)
+        Y2Storage::LvmVg.find_by_vg_name(devicegraph, reuse_name)
       end
     end
   end

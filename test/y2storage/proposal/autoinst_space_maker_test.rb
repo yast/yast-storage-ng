@@ -40,10 +40,10 @@ describe Y2Storage::Proposal::AutoinstSpaceMaker do
     Y2Storage::Proposal::AutoinstDrivesMap.new(fake_devicegraph, partitioning, issues_list)
   end
   let(:planned_partition) do
-    Y2Storage::Planned::Partition.new("/").tap { |p| p.reuse = "/dev/sda8" }
+    Y2Storage::Planned::Partition.new("/").tap { |p| p.reuse_name = "/dev/sda8" }
   end
   let(:planned_vg) do
-    Y2Storage::Planned::LvmVg.new(volume_group_name: "vg0").tap { |p| p.reuse = "vg0" }
+    Y2Storage::Planned::LvmVg.new(volume_group_name: "vg0").tap { |p| p.reuse_name = "vg0" }
   end
   let(:issues_list) do
     Y2Storage::AutoinstIssues::List
@@ -73,7 +73,7 @@ describe Y2Storage::Proposal::AutoinstSpaceMaker do
           devicegraph = subject.cleaned_devicegraph(fake_devicegraph, drives_map, planned_devices)
           expect(devicegraph.partitions).to contain_exactly(
             an_object_having_attributes("name" => "/dev/sda3"),
-            an_object_having_attributes("name" => planned_partition.reuse)
+            an_object_having_attributes("name" => planned_partition.reuse_name)
           )
         end
       end
@@ -120,7 +120,7 @@ describe Y2Storage::Proposal::AutoinstSpaceMaker do
             an_object_having_attributes("name" => "/dev/sda1"),
             an_object_having_attributes("name" => "/dev/sda2"),
             an_object_having_attributes("name" => "/dev/sda3"),
-            an_object_having_attributes("name" => planned_partition.reuse)
+            an_object_having_attributes("name" => planned_partition.reuse_name)
           )
         end
       end
@@ -164,7 +164,7 @@ describe Y2Storage::Proposal::AutoinstSpaceMaker do
           expect(devicegraph.partitions).to contain_exactly(
             an_object_having_attributes("name" => "/dev/sda1"),
             an_object_having_attributes("name" => "/dev/sda3"),
-            an_object_having_attributes("name" => planned_partition.reuse)
+            an_object_having_attributes("name" => planned_partition.reuse_name)
           )
         end
       end
@@ -240,7 +240,7 @@ describe Y2Storage::Proposal::AutoinstSpaceMaker do
         let(:scenario) { "lvm-two-vgs" }
         let(:planned_devices) { [planned_partition] }
         let(:planned_partition) do
-          Y2Storage::Planned::Partition.new("/").tap { |p| p.reuse = "/dev/sda1" }
+          Y2Storage::Planned::Partition.new("/").tap { |p| p.reuse_name = "/dev/sda1" }
         end
 
         it "does not remove the partition table" do

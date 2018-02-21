@@ -572,7 +572,7 @@ describe Y2Storage::Proposal::DevicesPlannerStrategies::Ng do
                       class:               Y2Storage::Planned::LvmLv,
                       encryption_password: nil,
                       logical_volume_name: "swap",
-                      reuse:               nil
+                      reuse_name:          nil
                     )
                   )
                 end
@@ -588,7 +588,7 @@ describe Y2Storage::Proposal::DevicesPlannerStrategies::Ng do
                       class:               Y2Storage::Planned::LvmLv,
                       encryption_password: nil,
                       logical_volume_name: "swap",
-                      reuse:               nil
+                      reuse_name:          nil
                     )
                   )
                 end
@@ -603,7 +603,7 @@ describe Y2Storage::Proposal::DevicesPlannerStrategies::Ng do
 
                 it "plans a volume to reuse the existing swap and no new swap" do
                   expect(planned_swap).to contain_exactly(
-                    an_object_having_attributes(reuse: "/dev/sdaX")
+                    an_object_having_attributes(reuse_name: "/dev/sdaX")
                   )
                 end
               end
@@ -613,7 +613,7 @@ describe Y2Storage::Proposal::DevicesPlannerStrategies::Ng do
 
                 it "plans a brand new swap volume and no swap reusing" do
                   expect(planned_swap).to contain_exactly(
-                    an_object_having_attributes(reuse: nil)
+                    an_object_having_attributes(reuse_name: nil)
                   )
                 end
               end
@@ -625,7 +625,7 @@ describe Y2Storage::Proposal::DevicesPlannerStrategies::Ng do
             let(:lvm) { false }
 
             it "plans a brand new swap volume and no swap reusing" do
-              expect(planned_swap).to contain_exactly(an_object_having_attributes(reuse: nil))
+              expect(planned_swap).to contain_exactly(an_object_having_attributes(reuse_name: nil))
             end
           end
 
@@ -634,7 +634,7 @@ describe Y2Storage::Proposal::DevicesPlannerStrategies::Ng do
             let(:lvm) { false }
 
             it "plans a brand new swap volume and no swap reusing" do
-              expect(planned_swap).to contain_exactly(an_object_having_attributes(reuse: nil))
+              expect(planned_swap).to contain_exactly(an_object_having_attributes(reuse_name: nil))
             end
           end
         end

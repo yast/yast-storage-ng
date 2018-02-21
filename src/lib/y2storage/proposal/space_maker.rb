@@ -76,11 +76,11 @@ module Y2Storage
 
         # Partitions that should not be deleted
         keep = lvm_helper.partitions_in_vg
-        # Let's filter out partitions with some value in #reuse
+        # Let's filter out partitions with some value in #reuse_name
         partitions = planned_partitions.dup
-        partitions.select(&:reuse).each do |part|
-          log.info "No need to find a fit for this partition, it will reuse #{part.reuse}: #{part}"
-          keep << part.reuse
+        partitions.select(&:reuse_name).each do |part|
+          log.info "No need to find a fit for this partition, it will reuse #{part.reuse_name}: #{part}"
+          keep << part.reuse_name
           partitions.delete(part)
         end
 

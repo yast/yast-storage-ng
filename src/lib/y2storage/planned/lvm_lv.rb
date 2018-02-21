@@ -48,7 +48,7 @@ module Y2Storage
       # Builds a new object based on a real LvmLv one
       #
       # The new instance represents the intention to reuse the real LV, so the
-      # #reuse method will be set accordingly. On the other hand, it copies
+      # #reuse_name method will be set accordingly. On the other hand, it copies
       # information from the real LV to make sure it is available even if the
       # real object disappears.
       #
@@ -90,7 +90,7 @@ module Y2Storage
       # @param real_lv [Y2Storage::LvmLv] Logical volume to get the values from
       def initialize_from_real_lv(real_lv)
         @logical_volume_name = real_lv.lv_name
-        self.reuse = real_lv.lv_name
+        self.reuse_name = real_lv.lv_name
       end
 
       # Returns the size for the logical volume in a given volume group
@@ -108,7 +108,7 @@ module Y2Storage
       end
 
       def self.to_string_attrs
-        [:mount_point, :reuse, :min_size, :max_size, :logical_volume_name, :subvolumes]
+        [:mount_point, :reuse_name, :min_size, :max_size, :logical_volume_name, :subvolumes]
       end
 
     protected

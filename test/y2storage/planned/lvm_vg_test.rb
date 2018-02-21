@@ -51,7 +51,7 @@ describe Y2Storage::Planned::LvmVg do
     end
 
     it "sets reuse" do
-      expect(planned_vg.reuse).to eq(vg0.vg_name)
+      expect(planned_vg.reuse_name).to eq(vg0.vg_name)
     end
 
     it "sets pvs" do
@@ -71,7 +71,7 @@ describe Y2Storage::Planned::LvmVg do
 
   describe "#reuse!" do
     before do
-      lvm_vg.reuse = name
+      lvm_vg.reuse_name = name
     end
 
     it "finds the device to reuse" do

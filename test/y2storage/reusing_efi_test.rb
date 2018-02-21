@@ -60,7 +60,7 @@ describe Y2Storage::BootRequirementsChecker do
   RSpec.shared_examples "not_reuse_efi" do
     it "does not reuse the partition" do
       expect(checker.needed_partitions).to contain_exactly(
-        an_object_having_attributes(mount_point: "/boot/efi", reuse: nil)
+        an_object_having_attributes(mount_point: "/boot/efi", reuse_name: nil)
       )
     end
   end
@@ -68,7 +68,7 @@ describe Y2Storage::BootRequirementsChecker do
   RSpec.shared_examples "reuse_efi" do
     it "reuses the existing EFI partition" do
       expect(checker.needed_partitions).to contain_exactly(
-        an_object_having_attributes(mount_point: "/boot/efi", reuse: "/dev/sda1")
+        an_object_having_attributes(mount_point: "/boot/efi", reuse_name: "/dev/sda1")
       )
     end
   end

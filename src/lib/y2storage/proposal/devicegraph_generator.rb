@@ -152,7 +152,7 @@ module Y2Storage
         deleted_swaps = deleted_partitions.select do |part|
           part.id.is?(:swap) && part.formatted_as?(:swap)
         end
-        new_swap_volumes = planned_partitions.select { |vol| !vol.reuse && vol.mount_point == "swap" }
+        new_swap_volumes = planned_partitions.select { |vol| !vol.reuse_name && vol.mount_point == "swap" }
 
         new_swap_volumes.each_with_index do |swap_volume, idx|
           deleted_swap = deleted_swaps[idx]

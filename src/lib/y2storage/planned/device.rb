@@ -43,7 +43,7 @@ module Y2Storage
 
       # @return [String] device name of an existing device to reuse for this
       #   purpose. As a result, some of the others attributes could be ignored.
-      attr_accessor :reuse
+      attr_accessor :reuse_name
 
       # @return [String] planned device identifier. Planned devices are cloned/modified
       #   when calculating the proposal. This identifier allows to identify if two planned
@@ -68,7 +68,7 @@ module Y2Storage
       end
 
       def self.to_string_attrs
-        [:reuse]
+        [:reuse_name]
       end
 
       # Returns the (possibly processed) device to be used for the planned
@@ -90,18 +90,18 @@ module Y2Storage
 
       # Whether this planned device is expected to reuse an existing one
       def reuse?
-        !(reuse.nil? || reuse.empty?)
+        !(reuse_name.nil? || reuse_name.empty?)
       end
 
     protected
 
       def reuse_device!(dev)
-        log.info "Reusing #{reuse} (#{dev.inspect}) for #{self}"
+        log.info "Reusing #{reuse_name} (#{dev.inspect}) for #{self}"
       end
 
       def device_to_reuse(devicegraph)
         return nil unless reuse?
-        BlkDevice.find_by_name(devicegraph, reuse)
+        BlkDevice.find_by_name(devicegraph, reuse_name)
       end
 
       def internal_state

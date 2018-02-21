@@ -77,7 +77,7 @@ describe Y2Storage::Proposal::AutoinstDevicesPlanner do
         it "reuses the partition with that number" do
           devices = planner.planned_devices(drives_map)
           root = devices.find { |d| d.mount_point == "/" }
-          expect(root.reuse).to eq("/dev/sda3")
+          expect(root.reuse_name).to eq("/dev/sda3")
         end
       end
 
@@ -89,7 +89,7 @@ describe Y2Storage::Proposal::AutoinstDevicesPlanner do
         it "reuses the partition with that label" do
           devices = planner.planned_devices(drives_map)
           root = devices.find { |d| d.mount_point == "/" }
-          expect(root.reuse).to eq("/dev/sda3")
+          expect(root.reuse_name).to eq("/dev/sda3")
         end
       end
 
@@ -101,7 +101,7 @@ describe Y2Storage::Proposal::AutoinstDevicesPlanner do
         it "adds a new partition" do
           devices = planner.planned_devices(drives_map)
           root = devices.find { |d| d.mount_point == "/" }
-          expect(root.reuse).to be_nil
+          expect(root.reuse_name).to be_nil
         end
 
         it "registers an issue" do
@@ -120,7 +120,7 @@ describe Y2Storage::Proposal::AutoinstDevicesPlanner do
         it "adds a new partition" do
           devices = planner.planned_devices(drives_map)
           root = devices.find { |d| d.mount_point == "/" }
-          expect(root.reuse).to be_nil
+          expect(root.reuse_name).to be_nil
         end
 
         it "registers an issue" do
@@ -540,13 +540,13 @@ describe Y2Storage::Proposal::AutoinstDevicesPlanner do
         expect(vg).to be_a(Y2Storage::Planned::LvmVg)
         expect(vg).to have_attributes(
           "volume_group_name" => lvm_group,
-          "reuse"             => nil
+          "reuse_name"        => nil
         )
         expect(vg.lvs).to contain_exactly(
           an_object_having_attributes(
             "logical_volume_name" => "root",
             "mount_point"         => "/",
-            "reuse"               => nil,
+            "reuse_name"          => nil,
             "min_size"            => 20.GiB,
             "max_size"            => 20.GiB,
             "label"               => "rootfs"
@@ -640,19 +640,19 @@ describe Y2Storage::Proposal::AutoinstDevicesPlanner do
             }
           end
 
-          it "sets the reuse attribute of the volume group" do
+          it "sets the reuse_name attribute of the volume group" do
             _pv, vg = planner.planned_devices(drives_map)
-            expect(vg.reuse).to eq(lvm_group)
+            expect(vg.reuse_name).to eq(lvm_group)
             expect(vg.make_space_policy).to eq(:remove)
           end
 
-          it "sets the reuse attribute of logical volumes" do
+          it "sets the reuse_name attribute of logical volumes" do
             _pv, vg = planner.planned_devices(drives_map)
-            expect(vg.reuse).to eq(lvm_group)
+            expect(vg.reuse_name).to eq(lvm_group)
             expect(vg.lvs).to contain_exactly(
               an_object_having_attributes(
                 "logical_volume_name" => "lv1",
-                "reuse"               => "/dev/vg0/lv1"
+                "reuse_name"          => "/dev/vg0/lv1"
               )
             )
           end
@@ -666,13 +666,13 @@ describe Y2Storage::Proposal::AutoinstDevicesPlanner do
             }
           end
 
-          it "sets the reuse attribute of logical volumes" do
+          it "sets the reuse_name attribute of logical volumes" do
             _pv, vg = planner.planned_devices(drives_map)
-            expect(vg.reuse).to eq(lvm_group)
+            expect(vg.reuse_name).to eq(lvm_group)
             expect(vg.lvs).to contain_exactly(
               an_object_having_attributes(
                 "logical_volume_name" => "lv2",
-                "reuse"               => "/dev/vg0/lv2"
+                "reuse_name"          => "/dev/vg0/lv2"
               )
             )
           end
@@ -688,11 +688,11 @@ describe Y2Storage::Proposal::AutoinstDevicesPlanner do
 
           it "adds a new logical volume" do
             _pv, vg = planner.planned_devices(drives_map)
-            expect(vg.reuse).to be_nil
+            expect(vg.reuse_name).to be_nil
             expect(vg.lvs).to contain_exactly(
               an_object_having_attributes(
                 "logical_volume_name" => "new_lv",
-                "reuse"               => nil
+                "reuse_name"          => nil
               )
             )
           end
@@ -714,10 +714,10 @@ describe Y2Storage::Proposal::AutoinstDevicesPlanner do
 
           it "adds a new logical volume" do
             _pv, vg = planner.planned_devices(drives_map)
-            expect(vg.reuse).to be_nil
+            expect(vg.reuse_name).to be_nil
             expect(vg.lvs).to contain_exactly(
               an_object_having_attributes(
-                "reuse" => nil
+                "reuse_name" => nil
               )
             )
           end
@@ -768,11 +768,11 @@ describe Y2Storage::Proposal::AutoinstDevicesPlanner do
           }
         end
 
-        it "sets the reuse attribute of the volume group" do
+        it "sets the reuse_name attribute of the volume group" do
           _pv, vg = planner.planned_devices(drives_map)
           expect(vg).to have_attributes(
             "volume_group_name" => lvm_group,
-            "reuse"             => lvm_group,
+            "reuse_name"        => lvm_group,
             "make_space_policy" => :keep
           )
         end
@@ -789,7 +789,7 @@ describe Y2Storage::Proposal::AutoinstDevicesPlanner do
             _pv, vg = planner.planned_devices(drives_map)
             expect(vg).to have_attributes(
               "volume_group_name" => "dummy",
-              "reuse"             => nil,
+              "reuse_name"        => nil,
               "make_space_policy" => :keep
             )
           end
@@ -814,12 +814,12 @@ describe Y2Storage::Proposal::AutoinstDevicesPlanner do
           }
         end
 
-        it "does not set the reuse attribute of the logical volume" do
+        it "does not set the reuse_name attribute of the logical volume" do
           _pv, vg = planner.planned_devices(drives_map)
           expect(vg.lvs).to contain_exactly(
             an_object_having_attributes(
               "logical_volume_name" => "lv2",
-              "reuse"               => nil
+              "reuse_name"          => nil
             )
           )
         end

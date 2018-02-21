@@ -151,7 +151,7 @@ module Y2Storage
         log.info "BEGIN: set_up_lvm: vgs=#{vgs.inspect} previous_result=#{previous_result.inspect}"
         vgs.reduce(previous_result) do |result, vg|
           pvs = previous_result.created_names { |d| d.pv_for?(vg.volume_group_name) }
-          pvs += parts_to_reuse.select { |d| d.pv_for?(vg.volume_group_name) }.map(&:reuse)
+          pvs += parts_to_reuse.select { |d| d.pv_for?(vg.volume_group_name) }.map(&:reuse_name)
           result.merge(create_logical_volumes(previous_result.devicegraph, vg, pvs))
         end
       end
@@ -205,7 +205,7 @@ module Y2Storage
         mds.reduce(previous_result) do |result, md|
           md_creator = Proposal::MdCreator.new(result.devicegraph)
           devices = previous_result.created_names { |d| d.raid_name == md.name }
-          devices += parts_to_reuse.select { |d| d.raid_name == md.name }.map(&:reuse)
+          devices += parts_to_reuse.select { |d| d.raid_name == md.name }.map(&:reuse_name)
           result.merge(md_creator.create_md(md, devices))
         end
       end
