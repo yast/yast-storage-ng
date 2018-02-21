@@ -1,4 +1,12 @@
 -------------------------------------------------------------------
+Wed Feb 21 12:29:02 UTC 2018 - ancor@suse.com
+
+- Do not take into account unformatted DASDs as a possible target
+  for installation (bsc#1071798).
+- Partitioner: do not show unformatted DASDs, since they cannot
+  be partitioned or used in any other way.
+
+-------------------------------------------------------------------
 Wed Feb 21 08:46:02 UTC 2018 - igonzalezsosa@suse.com
 
 - AutoYaST: guess which filesystem type should be used for a given

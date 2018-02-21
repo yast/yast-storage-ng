@@ -83,6 +83,18 @@ module Y2Storage
     #     in no particular order
     storage_class_forward :all, as: "Partitionable"
 
+    # @!method usable_as_partitionable?
+    #   Checks whether the device is in general usable as a real Partitionable
+    #   object (i.e. whether it can hold a partition table).
+    #
+    #   This is not the case for some DASDs. For more information, see
+    #   https://github.com/openSUSE/libstorage-ng/blob/master/doc/dasd.md
+    #
+    #   This does not consider if the block device is already in use.
+    #
+    #   @return [Boolean]
+    storage_forward :usable_as_partitionable?
+
     # Partitions in the device
     #
     # @return [Array<Partition>]
