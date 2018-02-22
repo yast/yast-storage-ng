@@ -50,7 +50,7 @@ module Y2Partitioner
 
         # @macro seeAbstractWidget
         def init
-          self.value = @controller.default_partition_table_type
+          self.value = @controller.default_partition_table_type.to_s
         end
 
         # @macro seeAbstractWidget
