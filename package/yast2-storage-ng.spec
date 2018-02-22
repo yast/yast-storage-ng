@@ -1,7 +1,7 @@
 #
 # spec file for package yast2-storage-ng
 #
-# Copyright (c) 2015 SUSE LLC.
+# Copyright (c) 2018 SUSE LLC.
 #
 # All modifications and additions to the file contributed by third parties
 # remain the property of their copyright owners, unless otherwise agreed
@@ -16,7 +16,7 @@
 #
 
 Name:		yast2-storage-ng
-Version:        4.0.107
+Version:        4.0.108
 Release:	0
 BuildArch:	noarch
 
@@ -26,12 +26,12 @@ Source:		%{name}-%{version}.tar.bz2
 # Yast2::FsSnapshots.configure_on_install=
 Requires:	yast2 >= 4.0.24
 Requires:	yast2-ruby-bindings
-# Storage::MountPoint#possible_mount_bys
-Requires:	libstorage-ng-ruby >= 3.3.166
+# Storage::probe(const ProbeCallbacks*)
+Requires:	libstorage-ng-ruby >= 3.3.171
 
 BuildRequires:	update-desktop-files
-# Storage::MountPoint#possible_mount_bys
-BuildRequires:	libstorage-ng-ruby >= 3.3.166
+# Storage::probe(const ProbeCallbacks*)
+BuildRequires:	libstorage-ng-ruby >= 3.3.171
 BuildRequires:	yast2-ruby-bindings
 BuildRequires:	yast2-devtools
 # yast2-xml dependency is added by yast2 but ignored in the

@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Thu Feb 22 19:28:22 CET 2018 - aschnell@suse.com
+
+- adapted to callback improvements in libstorage-ng (bsc#1070459
+  and many others)
+- 4.0.108
+
+-------------------------------------------------------------------
 Thu Feb 22 17:12:46 UTC 2018 - shundhammer@suse.com
 
 - Added missing textdomain calls (bsc#1081454)

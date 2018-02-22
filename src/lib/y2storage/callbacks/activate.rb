@@ -2,7 +2,7 @@
 #
 # encoding: utf-8
 
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2017-2018] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -56,6 +56,13 @@ module Y2Storage
         password = activate ? dialog.encryption_password : ""
 
         Storage::PairBoolString.new(activate, password)
+      end
+
+      def message(_message)
+      end
+
+      def error(_message, _what)
+        false
       end
     end
   end
