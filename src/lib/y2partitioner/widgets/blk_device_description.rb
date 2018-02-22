@@ -47,6 +47,8 @@ module Y2Partitioner
       #
       # @return [String]
       def blk_device_description
+        textdomain "storage"
+
         # TRANSLATORS: heading for the section about a block device
         output = Yast::HTML.Heading(_("Device:"))
         output << Yast::HTML.List(blk_device_attributes)

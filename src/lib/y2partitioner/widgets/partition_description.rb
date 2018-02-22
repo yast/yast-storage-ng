@@ -41,6 +41,8 @@ module Y2Partitioner
       #
       # @return [String]
       def partition_id
+        textdomain "storage"
+
         # TRANSLATORS: Partition Identifier, where %s is replaced by the partition id (e.g., SWAP)
         format(_("Partition ID: %s"), device.id.to_human_string)
       end

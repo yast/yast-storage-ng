@@ -32,6 +32,8 @@ module Y2Partitioner
     # Button for editing a block device
     class BlkDeviceEditButton < DeviceButton
       def label
+        textdomain "storage"
+
         # TRANSLATORS: button label for editing a block device
         _("Edit...")
       end

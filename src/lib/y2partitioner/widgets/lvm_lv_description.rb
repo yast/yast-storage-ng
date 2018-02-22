@@ -58,6 +58,8 @@ module Y2Partitioner
       #
       # @return [String]
       def lvm_lv_description
+        textdomain "storage"
+
         output = Yast::HTML.Heading(_("LVM:"))
         output << Yast::HTML.List(lvm_lv_attributes)
       end

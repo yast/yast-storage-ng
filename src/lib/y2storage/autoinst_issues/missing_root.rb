@@ -40,6 +40,8 @@ module Y2Storage
       # @return [String] Error message
       # @see Issue#message
       def message
+        textdomain "storage"
+
         _("No root partition (/) was found.")
       end
     end

@@ -69,6 +69,7 @@ module Y2Partitioner
       # @return [Boolean] true whether there are available devices; false otherwise.
       def run?
         return true if controller.available_devices.size > 0
+        textdomain "storage"
 
         Yast::Popup.Error(
           _("There are not enough suitable unused devices to create a volume group.\n") + "\n" +

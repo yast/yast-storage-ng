@@ -42,6 +42,8 @@ module Y2Partitioner
       #
       # @return [String]
       def raid_description
+        textdomain "storage"
+
         # TRANSLATORS: heading for section about RAID details
         output = Yast::HTML.Heading(_("RAID:"))
         output << Yast::HTML.List(raid_attributes)

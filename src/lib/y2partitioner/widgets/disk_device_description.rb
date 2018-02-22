@@ -42,6 +42,8 @@ module Y2Partitioner
       #
       # @return [String]
       def disk_description
+        textdomain "storage"
+
         # TRANSLATORS: heading for section about a disk device
         output = Yast::HTML.Heading(_("Hard Disk:"))
         output << Yast::HTML.List(disk_attributes)

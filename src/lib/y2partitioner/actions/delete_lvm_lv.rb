@@ -54,6 +54,8 @@ module Y2Partitioner
 
       # Confirmation when the device is not a LVM thin pool, or the pool is not used yet
       def confirm_for_lv
+        textdomain "storage"
+
         Yast::Popup.YesNo(
           # TRANSLATORS: Confirmation message when a LVM logical volume is going to be deleted,
           # where %{name} is replaced by the name of the logical volume (e.g., /dev/system/lv1)

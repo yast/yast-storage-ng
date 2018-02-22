@@ -36,6 +36,7 @@ module Y2Partitioner
       # @param md [Y2Storage::Md]
       def initialize(md)
         super()
+        textdomain "storage"
 
         @device_sid = md.sid
       end

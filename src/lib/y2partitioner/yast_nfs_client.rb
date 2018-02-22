@@ -82,6 +82,7 @@ module Y2Partitioner
     # @return [Yast::Term, nil] a term defining the UI, nil if the client is
     #   not available and was not installed
     def init_ui
+      textdomain "storage"
       return nil unless try_to_ensure_client
 
       configure_client

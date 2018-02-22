@@ -56,6 +56,8 @@ module Y2Partitioner
       # @see DeleteDevice#confirm_recursive_delete
       # @see DeleteDevice#lvm_vg
       def confirm_for_used_by_lvm
+        textdomain "storage"
+
         confirm_recursive_delete(
           dependent_devices,
           _("Confirm Deleting Partition Used by LVM"),

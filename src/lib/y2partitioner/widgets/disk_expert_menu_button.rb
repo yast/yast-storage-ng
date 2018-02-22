@@ -34,6 +34,8 @@ module Y2Partitioner
       end
 
       def label
+        textdomain "storage"
+
         # Translators: Expert menu for disks in the partitioner.
         _("&Expert...")
       end

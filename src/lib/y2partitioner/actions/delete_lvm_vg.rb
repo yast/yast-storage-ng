@@ -50,6 +50,8 @@ module Y2Partitioner
       # @see DeleteDevice#dependent_devices
       # @see DeleteDevice#confirm_recursive_delete
       def confirm_for_used
+        textdomain "storage"
+
         confirm_recursive_delete(
           dependent_devices,
           _("Confirm Deleting of Volume Group"),

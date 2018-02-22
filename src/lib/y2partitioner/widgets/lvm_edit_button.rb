@@ -31,6 +31,8 @@ module Y2Partitioner
     class LvmEditButton < DeviceButton
       # @macro seeAbstractWidget
       def label
+        textdomain "storage"
+
         _("Edit...")
       end
 

@@ -38,6 +38,8 @@ module Y2Storage
       # @return [String] Error message
       # @see Issue#message
       def message
+        textdomain "storage"
+
         _("Not enough disk space")
       end
     end

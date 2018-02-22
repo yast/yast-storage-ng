@@ -33,6 +33,8 @@ module Y2Partitioner
     class DeviceDeleteButton < DeviceButton
       # @macro seeAbstractWidget
       def label
+        textdomain "storage"
+
         # TRANSLATORS: label for button to delete a device
         _("Delete...")
       end

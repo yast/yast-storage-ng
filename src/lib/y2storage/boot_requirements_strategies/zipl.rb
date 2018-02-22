@@ -78,6 +78,8 @@ module Y2Storage
       #
       # @return [SetupError]
       def unsupported_boot_disk_error
+        textdomain "storage"
+
         # TRANSLATORS: error message
         error_message = _(
           "Looks like the system is going to be installed on a FBA " \

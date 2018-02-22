@@ -70,6 +70,7 @@ module Y2Partitioner
       # @see TransactionWizard
       def run?
         return true unless md_controller.available_devices.size < 2
+        textdomain "storage"
 
         Yast::Popup.Error(
           _("There are not enough suitable unused devices to create a RAID.")

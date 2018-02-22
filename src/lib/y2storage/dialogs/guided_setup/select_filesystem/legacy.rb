@@ -91,6 +91,8 @@ module Y2Storage
           end
 
           def initialize_widgets
+            textdomain "storage"
+
             widget_update(:root_filesystem, settings.root_filesystem_type.to_sym)
             widget_update(:snapshots, settings.use_snapshots)
             widget_update(:home_filesystem, settings.home_filesystem_type.to_sym)
