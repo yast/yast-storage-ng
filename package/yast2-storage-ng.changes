@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Thu Feb 22 11:41:45 UTC 2018 - snwint@suse.com
+
+- ensure partition name changes during the proposal process are taken
+  properly into account (bsc#1078691)
+- 4.0.103
+
+-------------------------------------------------------------------
 Tue Feb 21 14:35:16 UTC 2018 - jlopez@suse.com
 
 - Use sysconfig storage file to read the default value for mount_by
