@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Thu Feb 22 17:12:46 UTC 2018 - shundhammer@suse.com
+
+- Added missing textdomain calls (bsc#1081454)
+- 4.0.107
+
+-------------------------------------------------------------------
 Thu Feb 22 16:59:52 UTC 2018 - igonzalezsosa@suse.com
 
 - AutoYaST: fix support to create multiple volume groups
@@ -167,7 +173,7 @@ Thu Feb  8 10:15:18 UTC 2018 - igonzalezsosa@suse.com
 Wed Feb  7 16:47:58 UTC 2018 - shundhammer@suse.com
 
 - Disabled empty pages in partitioner for the time being
-  (bsc#1078849) 
+  (bsc#1078849)
 - 4.0.86
 
 -------------------------------------------------------------------
@@ -176,7 +182,7 @@ Wed Feb  7 10:57:26 UTC 2018 - igonzalezsosa@suse.com
 - AutoYaST: support reuse of already existing partitions as LVM
   physical volumes or MD RAIDs (bsc#1077277).
 - 4.0.85
-  
+
 -------------------------------------------------------------------
 Wed Feb  7 00:18:34 UTC 2018 - ancor@suse.com
 
