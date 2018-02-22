@@ -30,6 +30,8 @@ module Y2Partitioner
     class DeleteMd < DeleteDevice
       # Confirmation message before performing the delete action
       def confirm
+        textdomain "storage"
+
         if used_by_lvm?
           confirm_for_used_by_lvm
         else
@@ -51,8 +53,6 @@ module Y2Partitioner
       # @see DeleteDevice#confirm_recursive_delete
       # @see DeleteDevice#lvm_vg
       def confirm_for_used_by_lvm
-        textdomain "storage"
-
         confirm_recursive_delete(
           dependent_devices,
           _("Confirm Deleting RAID Used by LVM"),
