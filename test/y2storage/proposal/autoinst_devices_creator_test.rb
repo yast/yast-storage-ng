@@ -175,6 +175,19 @@ describe Y2Storage::Proposal::AutoinstDevicesCreator do
           expect(pv.blk_device.name).to eq("/dev/sda3")
         end
       end
+
+      context "when creating more than one volume group" do
+        let(:pv1) { planned_partition(lvm_volume_group_name: "vg1", min_size: 5.GiB) }
+
+        let(:lv_srv) { planned_lv(mount_point: "/srv", logical_volume_name: "lv_srv") }
+        let(:vg1) { planned_vg(volume_group_name: "vg1", lvs: [lv_root]) }
+
+        it "creates all volume groups" do
+          result = creator.populated_devicegraph([pv, pv1, vg, vg1], ["/dev/sda"])
+          lvm_vgs = result.devicegraph.lvm_vgs
+          expect(lvm_vgs.size).to eq(2)
+        end
+      end
     end
 
     describe "using RAID" do
