@@ -34,7 +34,13 @@ module Y2Storage
     storage_forward :size, as: "DiskSize"
 
     # @!method used
-    #   @return [DiskSize] used size of the device
+    #   @return [DiskSize] used space of the device
     storage_forward :used, as: "DiskSize"
+
+    # gets free space info. Basically it is total size minus used size
+    # @return [DiskSize] free space of the device
+    def free
+      size - used
+    end
   end
 end

@@ -96,7 +96,8 @@ module Y2Storage
         end
 
         if too_small_boot?
-          error_message = _("The device mounted at '/boot' is too small to contain a kernel.")
+          error_message = 
+            _("The device mounted at '/boot' does not have enough space to contain a kernel.")
           res << SetupError.new(message: error_message)
         end
 
@@ -128,9 +129,8 @@ module Y2Storage
         filesystem = devicegraph.filesystems.find { |f| f.mount_path == "/boot" }
         return false unless filesystem
 
-        available_size = filesystem.blk_devices.map(&:size).reduce(:+)
         # FIXME: it does not count fs size and other and it is just hard coded.
-        available_size < boot_volume.min_size
+        filesystem.detect_space_info.free < boot_volume.min_size
       end
 
       def boot_partition_missing?

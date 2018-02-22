@@ -263,7 +263,7 @@ describe Y2Storage::BootRequirementsChecker do
       allow(devicegraph).to receive(:filesystems)
         .and_return([double(
           mount_path: "/boot",
-          blk_devices: [double(size: Y2Storage::DiskSize.MiB(50))]
+          detect_space_info: double(free: Y2Storage::DiskSize.MiB(50))
         )])
       expect(checker.errors.size).to eq(1)
       expect(checker.errors).to all(be_a(Y2Storage::SetupError))

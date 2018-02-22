@@ -214,7 +214,7 @@ describe Y2Partitioner::Widgets do
         allow(subject).to receive(:value).and_return(true)
       end
 
-      context "encrypt is not selected" do
+      context "encrypt is not checked" do
         it "returns true" do
           allow(subject).to receive(:value).and_return(false)
 
@@ -222,13 +222,13 @@ describe Y2Partitioner::Widgets do
         end
       end
 
-      context "partition is bigger then 2MiB" do
+      context "encrypt is checked and the partition is bigger then 2MiB" do
         it "returns true" do
           expect(subject.validate).to eq true
         end
       end
 
-      context "partition is equal or smaller then 2MiB" do
+      context "encrypt is checked and the partition is equal or smaller then 2MiB" do
         before do
           expect(controller).to receive(:blk_device)
             .and_return(double(size: Y2Storage::DiskSize.MiB(1)))
@@ -239,7 +239,7 @@ describe Y2Partitioner::Widgets do
           expect(subject.validate).to eq false
         end
 
-        it "shows error popup" do
+        it "shows an error popup" do
           expect(Yast::Popup).to receive(:Error)
 
           subject.validate
