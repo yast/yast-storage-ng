@@ -38,12 +38,23 @@ module Y2Storage
     # Those templates clases inherit from this and implement most of the
     # functionality and properties by composition, including several of the
     # mixins defined in the {Planned} namespace.
+    #
+    # FIXME: having separate setters for reuse_name and reuse_sid is dangerous
+    # and makes some parts of the code cumbersome.
+    # We need to fix this class to ensure they are in sync but adapting the mocks in
+    # the test cases was too much work.
     class Device
       include Yast::Logger
 
       # @return [String] device name of an existing device to reuse for this
       #   purpose. As a result, some of the others attributes could be ignored.
-      attr_accessor :reuse
+      attr_accessor :reuse_name
+
+      # @return [Integer] storage id of an existing device to reuse for this
+      #   purpose. As a result, some of the others attributes could be ignored.
+      #
+      # @note This attribute is preferred over {reuse_name}.
+      attr_accessor :reuse_sid
 
       # @return [String] planned device identifier. Planned devices are cloned/modified
       #   when calculating the proposal. This identifier allows to identify if two planned
@@ -68,7 +79,7 @@ module Y2Storage
       end
 
       def self.to_string_attrs
-        [:reuse]
+        [:reuse_name, :reuse_sid]
       end
 
       # Returns the (possibly processed) device to be used for the planned
@@ -90,18 +101,25 @@ module Y2Storage
 
       # Whether this planned device is expected to reuse an existing one
       def reuse?
-        !(reuse.nil? || reuse.empty?)
+        !(reuse_name.nil? || reuse_name.empty?) || !reuse_sid.nil?
       end
 
     protected
 
       def reuse_device!(dev)
-        log.info "Reusing #{reuse} (#{dev.inspect}) for #{self}"
+        log.info "Reusing sid #{reuse_sid} (#{reuse_name}) (#{dev.inspect}) for #{self}"
       end
 
       def device_to_reuse(devicegraph)
         return nil unless reuse?
-        BlkDevice.find_by_name(devicegraph, reuse)
+        x = devicegraph.find_device(reuse_sid) if reuse_sid
+        x ||= BlkDevice.find_by_name(devicegraph, reuse_name)
+        if x
+          log.info "reused: sid #{x.sid} (#{x.name})"
+        else
+          log.info "reused device not found: sid #{reuse_sid} (#{reuse_name})"
+        end
+        x
       end
 
       def internal_state

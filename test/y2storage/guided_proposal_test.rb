@@ -249,7 +249,7 @@ describe Y2Storage::GuidedProposal do
       let(:all_volumes) do
         [
           planned_vol(mount_point: "/", type: :ext4, min: 500.MiB, max: 500.MiB),
-          planned_vol(mount_point: "swap", reuse: "/dev/sda3"),
+          planned_vol(mount_point: "swap", reuse_name: "/dev/sda3"),
           planned_vol(mount_point: "swap", type: :swap, min: 500.MiB, max: 500.MiB),
           planned_vol(mount_point: "swap", type: :swap, min: 500.MiB, max: 500.MiB),
           planned_vol(mount_point: "swap", type: :swap, min: 500.MiB, max: 500.MiB)

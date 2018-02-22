@@ -76,7 +76,7 @@ describe Y2Storage::BootRequirementsChecker do
 
             it "requires a new GRUB partition" do
               expect(checker.needed_partitions).to contain_exactly(
-                an_object_having_attributes(partition_id: bios_boot_id, reuse: nil)
+                an_object_having_attributes(partition_id: bios_boot_id, reuse_name: nil)
               )
             end
           end
@@ -98,7 +98,7 @@ describe Y2Storage::BootRequirementsChecker do
 
             it "requires a new GRUB partition" do
               expect(checker.needed_partitions).to contain_exactly(
-                an_object_having_attributes(partition_id: bios_boot_id, reuse: nil)
+                an_object_having_attributes(partition_id: bios_boot_id, reuse_name: nil)
               )
             end
           end
@@ -121,7 +121,7 @@ describe Y2Storage::BootRequirementsChecker do
 
             it "requires a new GRUB partition" do
               expect(checker.needed_partitions).to contain_exactly(
-                an_object_having_attributes(partition_id: bios_boot_id, reuse: nil)
+                an_object_having_attributes(partition_id: bios_boot_id, reuse_name: nil)
               )
             end
           end

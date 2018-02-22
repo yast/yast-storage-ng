@@ -276,7 +276,7 @@ module Y2Storage
 
         return unless vg.make_space_policy == :keep || vg.lvs.any?(&:reuse?)
         vg_to_reuse = find_vg_to_reuse(devicegraph, vg, drive)
-        vg.reuse = vg_to_reuse.vg_name if vg_to_reuse
+        vg.reuse_name = vg_to_reuse.vg_name if vg_to_reuse
       end
 
       # Set 'reusing' attributes for a MD RAID
@@ -297,7 +297,7 @@ module Y2Storage
       # @param name    [String] Name of the device to reuse
       # @param section [AutoinstProfile::PartitionSection] AutoYaST specification
       def add_device_reuse(device, name, section)
-        device.reuse = name
+        device.reuse_name = name
         device.reformat = !!section.format
         device.resize = !!section.resize if device.respond_to?(:resize=)
       end

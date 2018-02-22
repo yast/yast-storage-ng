@@ -95,7 +95,7 @@ module Y2Storage
       end
 
       def self.to_string_attrs
-        [:mount_point, :reuse, :name, :lvm_volume_group_name, :subvolumes]
+        [:mount_point, :reuse_name, :name, :lvm_volume_group_name, :subvolumes]
       end
 
     protected

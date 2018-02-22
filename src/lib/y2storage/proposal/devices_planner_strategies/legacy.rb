@@ -102,7 +102,8 @@ module Y2Storage
           # to never reuse partitions as-is.
           reuse = reusable_swap(max_size)
           if reuse
-            part.reuse = reuse.name
+            part.reuse_name = reuse.name
+            log.info "planned to reuse swap #{reuse.name}"
           else
             part.min_size = min_size
             part.max_size = max_size
