@@ -37,6 +37,8 @@ module Y2Storage
       # @param device_shrinkages [Array<device_shrinkages_info>] List of objects containing
       #   information about shrinking devices.
       def initialize(device_shrinkages)
+        textdomain "storage"
+
         @device_shrinkages = device_shrinkages
       end
 

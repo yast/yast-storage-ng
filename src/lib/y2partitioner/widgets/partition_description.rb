@@ -27,6 +27,11 @@ module Y2Partitioner
     #
     # The partition is given during initialization (see {BlkDeviceDescription}).
     class PartitionDescription < BlkDeviceDescription
+      def initialize(*args)
+        super
+        textdomain "storage"
+      end
+
       # Attributes for describing a partition
       #
       # @note Same description than a general block device, but including information

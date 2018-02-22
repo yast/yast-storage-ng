@@ -29,6 +29,11 @@ module Y2Partitioner
     #
     # @see DeleteDevice
     class DeleteDisk < DeleteDevice
+      def initialize(*args)
+        super
+        textdomain "storage"
+      end
+
       # Checks whether there is any partition for deleting
       #
       # @note An error popup is shown when there is no partition.

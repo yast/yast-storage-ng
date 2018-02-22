@@ -32,6 +32,11 @@ module Y2Partitioner
 
       include LvmLvAttributes
 
+      def initialize(*args)
+        super
+        textdomain "storage"
+      end
+
       # @see #blk_device_description
       # @see #lvm_lv_description
       # @see #filesystem_description

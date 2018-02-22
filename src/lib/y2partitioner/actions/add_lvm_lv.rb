@@ -34,6 +34,7 @@ module Y2Partitioner
       # @param vg [Y2Storage::LvmVg]
       def initialize(vg)
         super()
+        textdomain "storage"
 
         @device_sid = vg.sid
       end

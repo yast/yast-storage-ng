@@ -28,6 +28,11 @@ module Y2Partitioner
     #
     # @see DeleteDevice
     class DeleteMd < DeleteDevice
+      def initialize(*args)
+        super
+        textdomain "storage"
+      end
+
       # Confirmation message before performing the delete action
       def confirm
         if used_by_lvm?

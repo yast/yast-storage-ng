@@ -28,6 +28,11 @@ module Y2Partitioner
   module Actions
     # Action for creating a new LVM volume group
     class AddLvmVg < TransactionWizard
+      def initialize(*args)
+        super
+        textdomain "storage"
+      end
+
       # Runs the dialog for creating the volume group and applies
       # the given values to new created volume group.
       #

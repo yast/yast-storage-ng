@@ -45,6 +45,10 @@ module Y2Partitioner
     PACKAGE = "yast2-nfs-client".freeze
     private_constant :PACKAGE
 
+    def initialize
+      textdomain "storage"
+    end
+
     # Whether the client at yast2-nfs-client has read the related system
     # configuration.
     #

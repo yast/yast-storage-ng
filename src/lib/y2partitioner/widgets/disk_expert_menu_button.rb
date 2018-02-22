@@ -29,6 +29,7 @@ module Y2Partitioner
       include Yast::Logger
 
       def initialize(disk: nil)
+        textdomain "storage"
         @disk = disk
         self.handle_all_events = true
       end

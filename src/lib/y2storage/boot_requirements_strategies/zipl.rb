@@ -25,6 +25,11 @@ module Y2Storage
   module BootRequirementsStrategies
     # Strategy to calculate boot requirements in systems using ZIPL
     class ZIPL < Base
+      def initialize(*args)
+        super
+        textdomain "storage"
+      end
+
       # @see Base#needed_partitions
       def needed_partitions(target)
         raise Error, "Impossible to boot system from the chosen disk" unless supported_boot_disk?

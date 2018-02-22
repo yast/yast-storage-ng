@@ -30,6 +30,8 @@ module Y2Storage
     class NoDisk < Issue
       # @param section [#parent,#section_name] Section where it was detected (see {AutoinstProfile})
       def initialize(section)
+        textdomain "storage"
+
         @section = section
       end
 

@@ -27,6 +27,11 @@ module Y2Partitioner
     #
     # The disk device is given during initialization (see {BlkDeviceDescription}).
     class DiskDeviceDescription < BlkDeviceDescription
+      def initialize(*args)
+        super
+        textdomain "storage"
+      end
+
       # @see #blk_device_description
       # @see #disk_description
       #

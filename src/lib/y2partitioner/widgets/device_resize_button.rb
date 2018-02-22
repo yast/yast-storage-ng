@@ -31,6 +31,11 @@ module Y2Partitioner
   module Widgets
     # Button for resizing a device
     class DeviceResizeButton < DeviceButton
+      def initialize(*args)
+        super
+        textdomain "storage"
+      end
+
       # @macro seeAbstractWidget
       def label
         # TRANSLATORS: label for button for resizing a device

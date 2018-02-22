@@ -27,6 +27,11 @@ module Y2Storage
     #
     # This is a fatal error because the installation is not possible.
     class MissingRoot < Issue
+      def initialize(*args)
+        super
+        textdomain "storage"
+      end
+
       # Return problem severity
       #
       # @return [Symbol] :fatal
