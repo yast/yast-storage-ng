@@ -78,6 +78,50 @@ describe Y2Storage::StorageManager do
       expect(second).to equal initial
       expect(described_class.instance).to equal initial
     end
+
+    before do
+      allow(Y2Storage::SysconfigStorage.instance).to receive(:default_mount_by)
+        .and_return(mount_by_label)
+    end
+
+    let(:mount_by_label) { Y2Storage::Filesystems::MountByType::LABEL }
+
+    it "initializes #default_mount_by with the value at sysconfig file" do
+      expect(manager.default_mount_by).to eq(mount_by_label)
+    end
+  end
+
+  describe "#default_mount_by" do
+    it "returns a MountByType value" do
+      expect(manager.default_mount_by).to be_a(Y2Storage::Filesystems::MountByType)
+    end
+  end
+
+  describe "#default_mount_by=" do
+    it "updates the default mount_by value" do
+      mount_by_id = Y2Storage::Filesystems::MountByType::ID
+
+      expect(manager.default_mount_by).to_not eq(mount_by_id)
+      manager.default_mount_by = mount_by_id
+      expect(manager.default_mount_by).to eq(mount_by_id)
+    end
+  end
+
+  describe "#update_sysconfig" do
+    it "stores current default mount_by into sysconfig file" do
+      mount_by_label = Y2Storage::Filesystems::MountByType::LABEL
+      mount_by_id = Y2Storage::Filesystems::MountByType::ID
+
+      sysconfig = Y2Storage::SysconfigStorage.instance
+      sysconfig.default_mount_by = mount_by_label
+
+      manager.default_mount_by = mount_by_id
+
+      expect(sysconfig.default_mount_by).to_not eq(mount_by_id)
+      manager.update_sysconfig
+      expect(sysconfig.default_mount_by).to eq(mount_by_id)
+      expect(sysconfig.device_names).to eq("id")
+    end
   end
 
   describe "#staging=" do

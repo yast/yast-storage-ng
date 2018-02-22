@@ -51,6 +51,77 @@ describe Y2Partitioner::Widgets do
     subject { described_class.new(controller, parent) }
 
     include_examples "CWM::CustomWidget"
+
+    describe "#validate" do
+      context "when the device is not formatted" do
+        before do
+          blk_device.delete_filesystem
+        end
+
+        it "returns true" do
+          expect(subject.validate).to eq(true)
+        end
+      end
+
+      context "when the device is formatted" do
+        context "and it is not mounted" do
+          it "returns true" do
+            expect(subject.validate).to eq(true)
+          end
+        end
+
+        context "and it is mounted" do
+          before do
+            blk_device.filesystem.create_mount_point("/")
+          end
+
+          let(:filesystem) { blk_device.filesystem }
+
+          let(:mount_point) { filesystem.mount_point }
+
+          context "and it is not mounted by label" do
+            before do
+              mount_point.mount_by = Y2Storage::Filesystems::MountByType::UUID
+            end
+
+            it "returns true" do
+              expect(subject.validate).to eq(true)
+            end
+          end
+
+          context "and it is mounted by label" do
+            before do
+              mount_point.mount_by = Y2Storage::Filesystems::MountByType::LABEL
+            end
+
+            context "and the filesystem has no label" do
+              before do
+                filesystem.label = ""
+              end
+
+              it "shows an error popup" do
+                expect(Yast::Popup).to receive(:Error)
+                subject.validate
+              end
+
+              it "returns false" do
+                expect(subject.validate).to eq(false)
+              end
+            end
+
+            context "and the filesystem has a label" do
+              before do
+                filesystem.label = "foo"
+              end
+
+              it "returns true" do
+                expect(subject.validate).to eq(true)
+              end
+            end
+          end
+        end
+      end
+    end
   end
 
   describe Y2Partitioner::Widgets::FstabOptionsButton do

@@ -34,7 +34,7 @@ describe Y2Partitioner::Actions::Controllers::PartitionTable do
 
     describe "#new" do
       it "has an initial type" do
-        expect(subject.type).to eq Y2Storage::PartitionTables::Type::MSDOS
+        expect(subject.type).to be_a(Y2Storage::PartitionTables::Type)
       end
     end
 

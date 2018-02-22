@@ -23,6 +23,8 @@ require "yast"
 require "cwm"
 require "y2storage"
 
+Yast.import "Popup"
+
 module Y2Partitioner
   # Partitioner widgets
   module Widgets
@@ -31,6 +33,7 @@ module Y2Partitioner
     # The fstab options are mostly checkboxes and combo boxes that share some
     # common methods, so this is a mixin for that shared code.
     module FstabCommon
+      # @param controller [Y2Partitioner::Actions::Controllers:Filesystem]
       def initialize(controller)
         textdomain "storage"
 
@@ -90,6 +93,13 @@ module Y2Partitioner
 
     private
 
+      # Current devicegraph
+      #
+      # @return [Y2Storage::Devicegraph]
+      def working_graph
+        DeviceGraphs.instance.current
+      end
+
       # Filesystem currently being edited
       #
       # @return [Y2Storage::Filesystems::Base]
@@ -101,7 +111,7 @@ module Y2Partitioner
       #
       # @return [Y2Storage::MountPoint]
       def mount_point
-        filesystem.mount_point
+        @controller.mount_point
       end
 
       # Mount path of the current filesystem
@@ -182,7 +192,7 @@ module Y2Partitioner
           VBox(
             Left(MountBy.new(@controller)),
             VSpacing(1),
-            Left(VolumeLabel.new(@controller)),
+            Left(VolumeLabel.new(@controller, self)),
             VSpacing(1),
             Left(GeneralOptions.new(@controller)),
             Left(FilesystemsOptions.new(@controller)),
@@ -210,8 +220,6 @@ module Y2Partitioner
         end.uniq
       end
 
-    private
-
       def widgets
         Yast::CWM.widgets_in_contents([self])
       end
@@ -220,6 +228,16 @@ module Y2Partitioner
     # Input field to set the partition Label
     class VolumeLabel < CWM::InputField
       include FstabCommon
+
+      # Constructor
+      #
+      # @param controller [Actions::Controllers:Filesystem]
+      # @param parent_widget [Widgets::FstabOptions]
+      def initialize(controller, parent_widget)
+        super(controller)
+
+        @parent_widget = parent_widget
+      end
 
       def label
         _("Volume &Label")
@@ -231,6 +249,80 @@ module Y2Partitioner
 
       def init
         self.value = filesystem.label
+      end
+
+      # Validates uniqueness of the given label. The presence of the label is also
+      # checked when the filesystem is set to be mounted by label.
+      #
+      # @note An error popup message is presented when it is needed.
+      #
+      # @return [Boolean]
+      def validate
+        presence_validation && uniqueness_validation
+      end
+
+    private
+
+      # @return [Widgets::FstabOptions]
+      attr_reader :parent_widget
+
+      # Checks whether a label is given when the filesystem is mounted by label
+      #
+      # @note An error popup is presented when the filesystem is mounted by label
+      #   but a label is not given.
+      #
+      # @return [Boolean]
+      def presence_validation
+        return true unless mounted_by_label?
+        return true unless value.empty?
+
+        # TRANSLATORS: Error messagge when the label is not given.
+        Yast::Popup.Error(_("Provide a volume label to mount by label."))
+        focus
+
+        false
+      end
+
+      # Checks whether a filesystem already exists with the given label
+      #
+      # @note An error popup is presented when other filesystem has the given label.
+      #
+      # @return [Boolean]
+      def uniqueness_validation
+        return true unless duplicated_label?
+
+        # TRANSLATORS: Error message when the given label is already in use.
+        Yast::Popup.Error(_("This volumem label is already in use. Select a different one."))
+        focus
+
+        false
+      end
+
+      # Whether the mount by label option is selected
+      #
+      # @return [Boolean] true if mount by label is selected; false otherwise.
+      def mounted_by_label?
+        mount_by_widget.value == :label
+      end
+
+      # Whether the given label is duplicated
+      #
+      # @return [Boolean] true if the label is duplicated; false otherwise.
+      def duplicated_label?
+        return false if value.empty?
+        working_graph.filesystems.any? { |f| f.sid != filesystem.sid && f.label == value }
+      end
+
+      # Widget to select the mount by option
+      #
+      # @return [MountBy]
+      def mount_by_widget
+        parent_widget.widgets.find { |w| w.is_a?(Y2Partitioner::Widgets::MountBy) }
+      end
+
+      # Sets the focus into this widget
+      def focus
+        Yast::UI.SetFocus(Id(widget_id))
       end
     end
 
@@ -248,8 +340,8 @@ module Y2Partitioner
       end
 
       def init
-        value = mount_point.mount_by ? mount_point.mount_by.to_sym : :uuid
-        Yast::UI.ChangeWidget(Id(:mt_group), :Value, value)
+        select_default_mount_by
+        disable_not_possible_mount_bys
       end
 
       def contents
@@ -280,6 +372,17 @@ module Y2Partitioner
 
       def value
         Yast::UI.QueryWidget(Id(:mt_group), :Value)
+      end
+
+    private
+
+      def select_default_mount_by
+        Yast::UI.ChangeWidget(Id(:mt_group), :Value, mount_point.mount_by.to_sym)
+      end
+
+      def disable_not_possible_mount_bys
+        not_possible_mount_bys = Y2Storage::Filesystems::MountByType.all - mount_point.possible_mount_bys
+        not_possible_mount_bys.each { |m| Yast::UI.ChangeWidget(Id(m.to_sym), :Enabled, false) }
       end
     end
 
