@@ -52,30 +52,7 @@ module Y2Storage
         res
       end
 
-      # Boot errors in the current setup
-      #
-      # @return [Array<SetupError>]
-      def errors
-        res = super
-        # other checks is useless if we have base fatal error
-        return res unless res.empty?
-
-        if boot_partition_table_missing?
-          res << unknown_boot_partition_table_error
-        end
-
-        res
-      end
-
     protected
-
-      # Whether the boot disk has not partition table
-      #
-      # @return [Boolean] true if boot disk does not have partition table;
-      #   false otherwise.
-      def boot_partition_table_missing?
-        boot_disk.partition_table.nil?
-      end
 
       # Whether the MBR gap is big enough
       #

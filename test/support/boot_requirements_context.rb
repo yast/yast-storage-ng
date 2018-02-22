@@ -29,57 +29,22 @@ RSpec.shared_context "boot requirements" do
     volumes.find { |p| p.mount_point == mount_point }
   end
 
-  subject(:checker) { described_class.new(devicegraph) }
+  subject(:checker) { described_class.new(fake_devicegraph) }
 
-  let(:storage_arch) { instance_double("::Storage::Arch") }
-  let(:devicegraph) { double("Y2Storage::Devicegraph") }
-  let(:dev_sda) { double("Y2Storage::Disk", name: "/dev/sda", partition_table: boot_partition_table) }
-  let(:dev_sdb) { double("Y2Storage::Disk", name: "/dev/sdb") }
-
-  let(:boot_disk) { dev_sda }
-  let(:boot_partition_table) { instance_double(Y2Storage::PartitionTables::Base) }
-  let(:root_filesystem) { instance_double(Y2Storage::Filesystems::Base) }
-
-  let(:analyzer) do
-    double(
-      "Y2Storage::BootRequirementsStrategies::Analyzer",
-      boot_disk:               boot_disk,
-      root_filesystem:         root_filesystem,
-      root_in_lvm?:            use_lvm,
-      root_in_software_raid?:  use_raid,
-      encrypted_root?:         use_encryption,
-      btrfs_root?:             use_btrfs,
-      planned_prep_partitions: planned_prep_partitions,
-      planned_grub_partitions: planned_grub_partitions,
-      planned_devices:         planned_grub_partitions + planned_prep_partitions,
-      max_planned_weight:      0.0
-    )
-  end
-
-  let(:use_lvm) { false }
-  let(:use_raid) { false }
-  let(:use_encryption) { false }
-  let(:use_btrfs) { true }
-  let(:boot_ptable_type) { :msdos }
-  # Assume the needed partitions are not already planned in advance
-  let(:planned_prep_partitions) { [] }
-  let(:planned_grub_partitions) { [] }
+  let(:power_nv) { false }
+  let(:efiboot) { false }
 
   before do
-    Y2Storage::StorageManager.create_test_instance
+    fake_scenario(scenario)
+
+    storage_arch = double("::Storage::Arch")
     allow(Y2Storage::StorageManager.instance).to receive(:arch).and_return(storage_arch)
-    allow(Y2Storage::BootRequirementsStrategies::Analyzer).to receive(:new).and_return(analyzer)
+
 
     allow(storage_arch).to receive(:x86?).and_return(architecture == :x86)
     allow(storage_arch).to receive(:ppc?).and_return(architecture == :ppc)
     allow(storage_arch).to receive(:s390?).and_return(architecture == :s390)
-
-    allow(devicegraph).to receive(:disk_devices).and_return [dev_sda, dev_sdb]
-
-    allow(analyzer).to receive(:boot_ptable_type?) { |type| type == boot_ptable_type }
-    # Assume the needed partitions are not already planned in advance
-    allow(analyzer).to receive(:free_mountpoint?).and_return true
-
-    allow(devicegraph).to receive(:filesystems).and_return([])
+    allow(storage_arch).to receive(:efiboot?).and_return(efiboot)
+    allow(storage_arch).to receive(:ppc_power_nv?).and_return(power_nv)
   end
 end
