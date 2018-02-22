@@ -93,11 +93,34 @@ module Y2Partitioner
       #
       # @return [Boolean] true if the edit action can be performed; false otherwise.
       def run?
-        error = extended_partition_error || lvm_thin_pool_error
-        return true unless error
+        return true if errors.empty?
 
-        Yast::Popup.Error(error)
+        # Only first error is shown
+        Yast::Popup.Error(errors.first)
+
         false
+      end
+
+      # Errors when trying to edit a device
+      #
+      # @return [Array<Strings>]
+      def errors
+        [used_device_error, extended_partition_error, lvm_thin_pool_error].compact
+      end
+
+      # Error when trying to edit an used device
+      #
+      # @note A device is being used when it forms part of an LVM or MD RAID.
+      #
+      # @return [String, nil] nil if the device is not being used.
+      def used_device_error
+        return nil unless device.part_of_lvm_or_md?
+
+        format(
+          _("The device %{name} is in use. It cannot be\n" \
+            "edited. To edit %{name}, make sure it is not used."),
+          name: device.name
+        )
       end
 
       # Error message if trying to edit an extended partition
