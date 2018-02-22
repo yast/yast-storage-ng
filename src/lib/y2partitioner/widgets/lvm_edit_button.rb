@@ -36,8 +36,6 @@ module Y2Partitioner
 
       # @macro seeAbstractWidget
       def label
-        textdomain "storage"
-
         _("Edit...")
       end
 
