@@ -58,13 +58,6 @@ module Y2Partitioner
       # @return [Y2Storage::Partition, Y2Storage::LvmLv] device to resize
       attr_reader :device
 
-      # Resize information of the device to be resized
-      #
-      # @return [Y2Storage::ResizeInfo]
-      def resize_info
-        device.resize_info
-      end
-
       # Runs the dialog to resize the device
       #
       # @return [Symbol] :finish if the dialog returns :next; dialog result otherwise.
@@ -80,18 +73,47 @@ module Y2Partitioner
       #
       # @return [Boolean] true if the resize action can be performed; false otherwise.
       def validate
-        return true if resize_info.resize_ok?
+        return true if errors.empty?
 
-        # TODO: Distinguish the reason why it is not possible to resize, for example:
-        # * partition used by commited LVM or MD RAID
-        # * extended partition with committed logical partitions
-
-        Yast::Popup.Error(
-          # TRANSLATORS: an error popup message
-          _("This device cannot be resized.")
-        )
+        # Only first error is shown
+        Yast::Popup.Error(errors.first)
 
         false
+      end
+
+      # Errors when trying to resize a device
+      #
+      # @return [Array<Strings>]
+      def errors
+        [used_device_error, cannot_be_resized_error].compact
+      end
+
+      # Error when trying to resize an used device
+      #
+      # @note A device is being used when it forms part of an LVM or MD RAID.
+      #
+      # @return [String, nil] nil if the device is not being used.
+      def used_device_error
+        return nil unless device.part_of_lvm_or_md?
+
+        format(
+          _("The device %{name} is in use. It cannot be\n" \
+            "resized. To resize %{name}, make sure it is not used."),
+          name: device.name
+        )
+      end
+
+      # Error when the device cannot be resized
+      #
+      # TODO: Distinguish the reason why it is not possible to resize, for example:
+      # * extended partition with committed logical partitions
+      #
+      # @return [String, nil] nil if the device can be resized.
+      def cannot_be_resized_error
+        return nil if device.resize_info.resize_ok?
+
+        # TRANSLATORS: a generic error message when a device cannot be resized.
+        _("This device cannot be resized.")
       end
     end
   end
