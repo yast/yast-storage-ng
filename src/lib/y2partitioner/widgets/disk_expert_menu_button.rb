@@ -29,13 +29,12 @@ module Y2Partitioner
       include Yast::Logger
 
       def initialize(disk: nil)
+        textdomain "storage"
         @disk = disk
         self.handle_all_events = true
       end
 
       def label
-        textdomain "storage"
-
         # Translators: Expert menu for disks in the partitioner.
         _("&Expert...")
       end

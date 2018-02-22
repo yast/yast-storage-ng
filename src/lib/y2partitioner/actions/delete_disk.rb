@@ -29,14 +29,17 @@ module Y2Partitioner
     #
     # @see DeleteDevice
     class DeleteDisk < DeleteDevice
+      def initialize(*args)
+        super
+        textdomain "storage"
+      end
+
       # Checks whether there is any partition for deleting
       #
       # @note An error popup is shown when there is no partition.
       #
       # @return [Boolean]
       def validate
-        textdomain "storage"
-
         partition_table = device.partition_table
         if partition_table.nil? || partition_table.partitions.empty?
           Yast::Popup.Error(_("There are no partitions to delete on this disk"))

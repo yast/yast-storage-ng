@@ -27,10 +27,13 @@ module Y2Partitioner
   module Widgets
     # Button for opening the workflow to add a logical volume to a volume group
     class LvmLvAddButton < DeviceButton
+      def initialize(*args)
+        super
+        textdomain "storage"
+      end
+
       # @macro seeAbstractWidget
       def label
-        textdomain "storage"
-
         # TRANSLATORS: button label to add a logical volume
         _("Add...")
       end

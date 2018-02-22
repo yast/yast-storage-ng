@@ -28,6 +28,11 @@ module Y2Partitioner
     #
     # @see DeleteDevice
     class DeleteLvmVg < DeleteDevice
+      def initialize(*args)
+        super
+        textdomain "storage"
+      end
+
       # Confirmation message before performing the delete action
       def confirm
         if device.lvm_lvs.empty?
@@ -50,8 +55,6 @@ module Y2Partitioner
       # @see DeleteDevice#dependent_devices
       # @see DeleteDevice#confirm_recursive_delete
       def confirm_for_used
-        textdomain "storage"
-
         confirm_recursive_delete(
           dependent_devices,
           _("Confirm Deleting of Volume Group"),

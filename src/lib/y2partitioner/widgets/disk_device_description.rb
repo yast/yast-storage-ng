@@ -27,6 +27,11 @@ module Y2Partitioner
     #
     # The disk device is given during initialization (see {BlkDeviceDescription}).
     class DiskDeviceDescription < BlkDeviceDescription
+      def initialize(*args)
+        super
+        textdomain "storage"
+      end
+
       # @see #blk_device_description
       # @see #disk_description
       #
@@ -42,8 +47,6 @@ module Y2Partitioner
       #
       # @return [String]
       def disk_description
-        textdomain "storage"
-
         # TRANSLATORS: heading for section about a disk device
         output = Yast::HTML.Heading(_("Hard Disk:"))
         output << Yast::HTML.List(disk_attributes)

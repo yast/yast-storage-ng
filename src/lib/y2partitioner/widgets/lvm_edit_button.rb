@@ -29,6 +29,11 @@ module Y2Partitioner
   module Widgets
     # Button for editing a volume group or logical volume
     class LvmEditButton < DeviceButton
+      def initialize(*args)
+        super
+        textdomain "storage"
+      end
+
       # @macro seeAbstractWidget
       def label
         textdomain "storage"

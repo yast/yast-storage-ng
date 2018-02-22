@@ -34,6 +34,11 @@ module Y2Partitioner
     class AddMd < TransactionWizard
       include NewBlkDevice
 
+      def initialize(*args)
+        super
+        textdomain "storage"
+      end
+
       def devices
         result = Dialogs::Md.run(md_controller)
         md_controller.apply_default_options if result == :next
@@ -70,7 +75,6 @@ module Y2Partitioner
       # @see TransactionWizard
       def run?
         return true unless md_controller.available_devices.size < 2
-        textdomain "storage"
 
         Yast::Popup.Error(
           _("There are not enough suitable unused devices to create a RAID.")

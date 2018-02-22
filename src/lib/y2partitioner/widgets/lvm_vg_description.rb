@@ -27,6 +27,11 @@ module Y2Partitioner
     #
     # The volume group is given during initialization (see {DeviceDescription}).
     class LvmVgDescription < DeviceDescription
+      def initialize(*args)
+        super
+        textdomain "storage"
+      end
+
       # A volume group description is composed by the header "Device" and a list
       # of attributes
       #
@@ -34,8 +39,6 @@ module Y2Partitioner
       #
       # @return [String]
       def device_description
-        textdomain "storage"
-
         output = Yast::HTML.Heading(_("Device:"))
         output << Yast::HTML.List(device_attributes)
         output << lvm_vg_description

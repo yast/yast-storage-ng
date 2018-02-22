@@ -45,6 +45,10 @@ module Y2Partitioner
     PACKAGE = "yast2-nfs-client".freeze
     private_constant :PACKAGE
 
+    def initialize
+      textdomain "storage"
+    end
+
     # Whether the client at yast2-nfs-client has read the related system
     # configuration.
     #
@@ -82,7 +86,6 @@ module Y2Partitioner
     # @return [Yast::Term, nil] a term defining the UI, nil if the client is
     #   not available and was not installed
     def init_ui
-      textdomain "storage"
       return nil unless try_to_ensure_client
 
       configure_client

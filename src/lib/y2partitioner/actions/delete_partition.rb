@@ -29,6 +29,11 @@ module Y2Partitioner
     #
     # @see DeleteDevice
     class DeletePartition < DeleteDevice
+      def initialize(*args)
+        super
+        textdomain "storage"
+      end
+
       # Confirmation message before performing the delete action
       def confirm
         if used_by_lvm?
@@ -56,8 +61,6 @@ module Y2Partitioner
       # @see DeleteDevice#confirm_recursive_delete
       # @see DeleteDevice#lvm_vg
       def confirm_for_used_by_lvm
-        textdomain "storage"
-
         confirm_recursive_delete(
           dependent_devices,
           _("Confirm Deleting Partition Used by LVM"),

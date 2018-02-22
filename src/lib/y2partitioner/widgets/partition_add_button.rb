@@ -27,11 +27,14 @@ module Y2Partitioner
   module Widgets
     # Button for adding a partition
     class PartitionAddButton < DeviceButton
+      def initialize(*args)
+        super
+        textdomain "storage"
+      end
+
       # @macro seeAbstractWidget
       # The label depends on the page where the button is used
       def label
-        textdomain "storage"
-
         # TRANSLATORS: label for button to add a partition
         disks_page? ? _("Add Partition...") : _("Add...")
       end

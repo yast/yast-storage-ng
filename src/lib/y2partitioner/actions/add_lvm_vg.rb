@@ -28,6 +28,11 @@ module Y2Partitioner
   module Actions
     # Action for creating a new LVM volume group
     class AddLvmVg < TransactionWizard
+      def initialize(*args)
+        super
+        textdomain "storage"
+      end
+
       # Runs the dialog for creating the volume group and applies
       # the given values to new created volume group.
       #
@@ -69,7 +74,6 @@ module Y2Partitioner
       # @return [Boolean] true whether there are available devices; false otherwise.
       def run?
         return true if controller.available_devices.size > 0
-        textdomain "storage"
 
         Yast::Popup.Error(
           _("There are not enough suitable unused devices to create a volume group.\n") + "\n" +

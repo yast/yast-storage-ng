@@ -27,6 +27,11 @@ module Y2Storage
     #
     # This is a fatal error because the installation is not possible.
     class MissingRoot < Issue
+      def initialize(*args)
+        super
+        textdomain "storage"
+      end
+
       # Return problem severity
       #
       # @return [Symbol] :fatal
@@ -40,8 +45,6 @@ module Y2Storage
       # @return [String] Error message
       # @see Issue#message
       def message
-        textdomain "storage"
-
         _("No root partition (/) was found.")
       end
     end

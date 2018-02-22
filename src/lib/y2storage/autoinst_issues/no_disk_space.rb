@@ -25,6 +25,11 @@ module Y2Storage
   module AutoinstIssues
     # There is no enough disk space to build the storage proposal
     class NoDiskSpace < Issue
+      def initialize(*args)
+        super
+        textdomain "storage"
+      end
+
       # Fatal problem
       #
       # @return [Symbol] :fatal
@@ -38,8 +43,6 @@ module Y2Storage
       # @return [String] Error message
       # @see Issue#message
       def message
-        textdomain "storage"
-
         _("Not enough disk space")
       end
     end

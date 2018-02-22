@@ -27,6 +27,11 @@ module Y2Partitioner
     #
     # The MD RAID is given during initialization (see {BlkDeviceDescription}).
     class MdDescription < BlkDeviceDescription
+      def initialize(*args)
+        super
+        textdomain "storage"
+      end
+
       # @see #blk_device_description
       # @see #raid_description
       # @see #filesystem_description
@@ -42,8 +47,6 @@ module Y2Partitioner
       #
       # @return [String]
       def raid_description
-        textdomain "storage"
-
         # TRANSLATORS: heading for section about RAID details
         output = Yast::HTML.Heading(_("RAID:"))
         output << Yast::HTML.List(raid_attributes)

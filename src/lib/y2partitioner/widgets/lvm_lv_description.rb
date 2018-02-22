@@ -32,6 +32,11 @@ module Y2Partitioner
 
       include LvmLvAttributes
 
+      def initialize(*args)
+        super
+        textdomain "storage"
+      end
+
       # @see #blk_device_description
       # @see #lvm_lv_description
       # @see #filesystem_description
@@ -58,8 +63,6 @@ module Y2Partitioner
       #
       # @return [String]
       def lvm_lv_description
-        textdomain "storage"
-
         output = Yast::HTML.Heading(_("LVM:"))
         output << Yast::HTML.List(lvm_lv_attributes)
       end

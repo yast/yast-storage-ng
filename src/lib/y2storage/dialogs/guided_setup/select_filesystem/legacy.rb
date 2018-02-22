@@ -33,6 +33,11 @@ module Y2Storage
         # support only a separate home volume.
         # See also SelectFilesystem::Ng.
         class Legacy < Base
+          def initialize(*args)
+            super
+            textdomain "storage"
+          end
+
           def root_filesystem_handler
             filesystem = Filesystems::Type.find(widget_value(:root_filesystem))
             widget_update(:snapshots, filesystem.is?(:btrfs), attr: :Enabled)
@@ -91,8 +96,6 @@ module Y2Storage
           end
 
           def initialize_widgets
-            textdomain "storage"
-
             widget_update(:root_filesystem, settings.root_filesystem_type.to_sym)
             widget_update(:snapshots, settings.use_snapshots)
             widget_update(:home_filesystem, settings.home_filesystem_type.to_sym)
