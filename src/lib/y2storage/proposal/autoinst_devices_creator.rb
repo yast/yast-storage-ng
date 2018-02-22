@@ -152,7 +152,7 @@ module Y2Storage
         vgs.reduce(previous_result) do |result, vg|
           pvs = previous_result.created_names { |d| d.pv_for?(vg.volume_group_name) }
           pvs += parts_to_reuse.select { |d| d.pv_for?(vg.volume_group_name) }.map(&:reuse_name)
-          result.merge(create_logical_volumes(previous_result.devicegraph, vg, pvs))
+          result.merge(create_logical_volumes(result.devicegraph, vg, pvs))
         end
       end
 
