@@ -377,15 +377,12 @@ module Y2Partitioner
     private
 
       def select_default_mount_by
-        # Mount point has always a value for mount_by. By default, MountPoint#mount_by
-        # backwards to the Storage#default_mount_by value, taking into account
-        # special cases (e.g., LVM LVs or NFS).
         Yast::UI.ChangeWidget(Id(:mt_group), :Value, mount_point.mount_by.to_sym)
       end
 
       def disable_not_possible_mount_bys
         not_possible_mount_bys = Y2Storage::Filesystems::MountByType.all - mount_point.possible_mount_bys
-        not_possible_mount_bys.map { |m| Yast::UI.ChangeWidget(Id(m.to_sym), :Enabled, false) }
+        not_possible_mount_bys.each { |m| Yast::UI.ChangeWidget(Id(m.to_sym), :Enabled, false) }
       end
     end
 

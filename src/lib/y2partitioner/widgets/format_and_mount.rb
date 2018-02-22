@@ -269,9 +269,9 @@ module Y2Partitioner
       end
 
       # It is necessary to prevent an empty filesystem label when the option mount_by is set
-      # to label by default (see {Y2Storage::StorageManager#default_mount_by}). The label is
-      # validated when the user gives one value (by editing the fstab options), but the user
-      # could mount a device without entering in that dialog for the mount options.
+      # to label by default. The label value is validated when the user gives one value
+      # (by editing the fstab options), but the user could mount a device without entering
+      # in that dialog for the mount options.
       #
       # Here only the presence of a label is checked. The correctness of the label is checked
       # when the label is entered (see {Dialogs::FstabOptions}).
