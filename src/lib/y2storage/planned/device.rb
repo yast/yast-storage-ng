@@ -38,6 +38,11 @@ module Y2Storage
     # Those templates clases inherit from this and implement most of the
     # functionality and properties by composition, including several of the
     # mixins defined in the {Planned} namespace.
+    #
+    # FIXME: having separate setters for reuse_name and reuse_sid is dangerous
+    # and makes some parts of the code cumbersome.
+    # We need to fix this class to ensure they are in sync but adapting the mocks in
+    # the test cases was too much work.
     class Device
       include Yast::Logger
 
