@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Thu Feb 22 12:51:48 UTC 2018 - shundhammer@suse.com
+
+- Added missing ptable type conversion (fate#323457)
+- 4.0.105
+
+-------------------------------------------------------------------
 Thu Feb 22 12:02:57 UTC 2018 - shundhammer@suse.com
 
 - Changed default partition table from MSDOS to GPT (fate#323457)
