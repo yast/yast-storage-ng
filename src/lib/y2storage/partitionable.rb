@@ -210,7 +210,7 @@ module Y2Storage
       end
     end
 
-    # Executes the given block in a context in which the device always have a
+    # Executes the given block in a context in which the device always has a
     # partition table if possible, creating a temporary frozen one if needed.
     #
     # This allows any code to work under the assumption that a given device
@@ -252,7 +252,7 @@ module Y2Storage
     #
     # This method is needed because YaST criteria does not necessarily match
     # the one followed by Storage::Disk#default_partition_table_type (which
-    # defaults to MBR partition tables in many cases)
+    # defaults to GPT partition tables in many cases)
     #
     # @return [PartitionTables::Type]
     def preferred_ptable_type

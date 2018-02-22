@@ -79,6 +79,12 @@ module Y2Partitioner
           disk.possible_partition_table_types
         end
 
+        # Return the default partition table types for this disk.
+        def default_partition_table_type
+          return nil if disk.nil?
+          disk.preferred_ptable_type || possible_partition_table_types.first
+        end
+
         # Check if a partition table can be created on this disk.
         def can_create_partition_table?
           possible_partition_table_types.size > 0

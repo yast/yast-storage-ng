@@ -34,7 +34,7 @@ describe Y2Partitioner::Actions::Controllers::PartitionTable do
 
     describe "#new" do
       it "has an initial type" do
-        expect(subject.type).to be_a(Y2Storage::PartitionTables::Type)
+        expect(subject.type).to be_a Y2Storage::PartitionTables::Type
       end
     end
 
@@ -60,6 +60,12 @@ describe Y2Partitioner::Actions::Controllers::PartitionTable do
         expect(types.size).to be == 2
         expect(types).to include Y2Storage::PartitionTables::Type::MSDOS
         expect(types).to include Y2Storage::PartitionTables::Type::GPT
+      end
+    end
+
+    describe "#default_partition_table_type" do
+      it "returns type GPT" do
+        expect(subject.default_partition_table_type).to eq Y2Storage::PartitionTables::Type::GPT
       end
     end
 
@@ -117,6 +123,12 @@ describe Y2Partitioner::Actions::Controllers::PartitionTable do
     describe "#possible_partition_table_types" do
       it "returns only type DASD" do
         expect(subject.possible_partition_table_types).to eq [Y2Storage::PartitionTables::Type::DASD]
+      end
+    end
+
+    describe "#default_partition_table_type" do
+      it "returns type DASD" do
+        expect(subject.default_partition_table_type).to eq Y2Storage::PartitionTables::Type::DASD
       end
     end
 
