@@ -63,6 +63,12 @@ describe Y2Partitioner::Actions::Controllers::PartitionTable do
       end
     end
 
+    describe "#default_partition_table_type" do
+      it "returns type GPT" do
+        expect(subject.default_partition_table_type).to eq Y2Storage::PartitionTables::Type::GPT
+      end
+    end
+
     describe "#can_create_partition_table?" do
       it "detects that it can create a partition table" do
         expect(subject.can_create_partition_table?).to eq true
@@ -117,6 +123,12 @@ describe Y2Partitioner::Actions::Controllers::PartitionTable do
     describe "#possible_partition_table_types" do
       it "returns only type DASD" do
         expect(subject.possible_partition_table_types).to eq [Y2Storage::PartitionTables::Type::DASD]
+      end
+    end
+
+    describe "#default_partition_table_type" do
+      it "returns type DASD" do
+        expect(subject.default_partition_table_type).to eq Y2Storage::PartitionTables::Type::DASD
       end
     end
 

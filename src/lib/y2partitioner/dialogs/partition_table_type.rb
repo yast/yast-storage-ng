@@ -50,16 +50,12 @@ module Y2Partitioner
 
         # @macro seeAbstractWidget
         def init
-          set_default
+          self.value = @controller.default_partition_table_type
         end
 
         # @macro seeAbstractWidget
         def store
           @controller.type = Y2Storage::PartitionTables::Type.new(value)
-        end
-
-        def set_default
-          self.value = @supported_types.first
         end
       end
 
