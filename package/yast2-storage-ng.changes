@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Thu Feb 22 16:59:52 UTC 2018 - igonzalezsosa@suse.com
+
+- AutoYaST: fix support to create multiple volume groups
+  (bsc#1081633).
+- 4.0.106
+
+-------------------------------------------------------------------
 Thu Feb 22 12:51:48 UTC 2018 - shundhammer@suse.com
 
 - Added missing ptable type conversion (fate#323457)
