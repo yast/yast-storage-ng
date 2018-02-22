@@ -80,13 +80,8 @@ module Y2Partitioner
           end
 
           def items
-            [
-              [Y2Storage::Filesystems::MountByType::DEVICE.to_s, _("Device Name")],
-              [Y2Storage::Filesystems::MountByType::ID.to_s,     _("Device ID")],
-              [Y2Storage::Filesystems::MountByType::LABEL.to_s,  _("Volume Label")],
-              [Y2Storage::Filesystems::MountByType::PATH.to_s,   _("Device Path")],
-              [Y2Storage::Filesystems::MountByType::UUID.to_s,   _("UUID")]
-            ]
+            sorted_mount_bys = Y2Storage::Filesystems::MountByType.all.sort_by(&:to_human_string)
+            sorted_mount_bys.map { |m| [m.to_s, m.to_human_string] }
           end
 
           # @return [Y2Storage::Filesystems::MountByType]
