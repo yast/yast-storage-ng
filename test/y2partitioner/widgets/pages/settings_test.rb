@@ -46,8 +46,9 @@ describe Y2Partitioner::Widgets::Pages::Settings::MountBySelector do
       allow(subject).to receive(:value).and_return(value)
       allow(subject).to receive(:widget_id).and_return(widget_id)
 
+      allow(Yast::SCR).to receive(:Write)
+
       Y2Storage::StorageManager.instance.default_mount_by = mount_by_label
-      Y2Storage::SysconfigStorage.instance.default_mount_by = mount_by_label
     end
 
     let(:value) { mount_by_id }
@@ -68,9 +69,12 @@ describe Y2Partitioner::Widgets::Pages::Settings::MountBySelector do
       end
 
       it "saves the selected value into the config file" do
-        expect(Y2Storage::SysconfigStorage.instance.default_mount_by).to_not eq(value)
+        expect(Yast::SCR).to receive(:Write) do |path, value|
+          expect(path.to_s).to match(/storage/)
+          expect(value).to eq("id")
+        end
+
         subject.handle(events)
-        expect(Y2Storage::SysconfigStorage.instance.default_mount_by).to eq(value)
       end
     end
 
@@ -84,9 +88,8 @@ describe Y2Partitioner::Widgets::Pages::Settings::MountBySelector do
       end
 
       it "does not save the selected value into the config file" do
-        expect(Y2Storage::SysconfigStorage.instance.default_mount_by).to_not eq(value)
+        expect(Yast::SCR).to_not receive(:Write)
         subject.handle(events)
-        expect(Y2Storage::SysconfigStorage.instance.default_mount_by).to_not eq(value)
       end
     end
   end
