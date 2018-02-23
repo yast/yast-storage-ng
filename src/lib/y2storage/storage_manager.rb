@@ -154,8 +154,9 @@ module Y2Storage
     # only performed when the instance is not for testing.
     #
     # @raise [Exception] if error during probing
-    def probe
-      @storage.probe
+    def probe(callbacks = nil)
+      probe_callbacks = callbacks || Callbacks::Probe.new
+      @storage.probe(probe_callbacks)
       probed_performed
     end
 
