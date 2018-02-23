@@ -125,20 +125,6 @@ describe Y2Storage::BootRequirementsChecker do
       end
     end
 
-    RSpec.shared_examples "boot partition" do
-      context "and there is no /boot partition in the system" do
-        # we want to test real scenarios which does not work well with shared examples
-        # include_examples "missing boot partition"
-      end
-
-      context "and there is a /boot partition in the system" do
-        # we want to test real scenarios which does not work well with shared examples
-        xit "does not contain errors" do
-          expect(checker.warnings).to be_empty
-        end
-      end
-    end
-
     RSpec.shared_examples "efi partition" do
       context "when there is no /boot/efi partition in the system" do
         let(:scenario) { "trivial" }
@@ -154,11 +140,8 @@ describe Y2Storage::BootRequirementsChecker do
 
       context "when there is a /boot/efi partition in the system" do
         let(:scenario) { "efi" }
-        let(:partitions) { [boot_partition, efi_partition] }
 
-        it "does not contain errors" do
-          expect(checker.warnings).to be_empty
-        end
+        include_examples("no errors")
       end
     end
 
@@ -316,8 +299,6 @@ describe Y2Storage::BootRequirementsChecker do
     context "in a PPC64 system" do
       let(:architecture) { :ppc }
       let(:efiboot) { false }
-      let(:prep_id) { Y2Storage::PartitionId::PREP }
-
       let(:power_nv) { false }
 
       context "when there is no root" do
@@ -353,7 +334,7 @@ describe Y2Storage::BootRequirementsChecker do
           end
         end
 
-        # sorry, but I won't write it in xml and yaml does not support it
+        # TODO: sorry, but I won't write it in xml and yaml does not support it
         # scenario generator would be great
         xcontext "with a Software RAID proposal" do
           context "there is a PReP partition" do
@@ -403,12 +384,33 @@ describe Y2Storage::BootRequirementsChecker do
           end
         end
 
-        context "with a Software RAID proposal" do
-          include_examples "boot partition"
+        # TODO: support raid in YaML
+        xcontext "with a Software RAID proposal" do
+          context "and there is no /boot partition in the system" do
+            let(:scenario) { "trivial_raid" }
+
+            include_examples "missing boot partition"
+          end
+
+          context "and there is a /boot partition in the system" do
+            let(:scenario) { "raid_with_boot" }
+
+            include_examples "no errors"
+          end
         end
 
         context "with an encrypted proposal" do
-          include_examples "boot partition"
+          context "and there is no /boot partition in the system" do
+            let(:scenario) { "trivial_encrypted" }
+
+            include_examples "missing boot partition"
+          end
+
+          context "and there is a /boot partition in the system" do
+            let(:scenario) { "raid_with_boot" }
+
+            include_examples "no errors"
+          end
         end
       end
     end
