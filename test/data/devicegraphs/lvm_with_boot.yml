@@ -9,6 +9,7 @@
         size:         500 MiB
         name:         /dev/sda1
         mount_point:  /boot
+        file_system:  ext2
 
     - partition:
         size:         unlimited

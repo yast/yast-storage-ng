@@ -407,7 +407,7 @@ describe Y2Storage::BootRequirementsChecker do
           end
 
           context "and there is a /boot partition in the system" do
-            let(:scenario) { "raid_with_boot" }
+            let(:scenario) { "encrypted_with_boot" }
 
             include_examples "no errors"
           end
