@@ -27,31 +27,14 @@ require_relative "#{TEST_PATH}/support/boot_requirements_uefi"
 require "y2storage"
 
 describe Y2Storage::BootRequirementsChecker do
-  # TODO: make it work
-  xdescribe "#needed_partitions in an aarch64 system" do
-    using Y2Storage::Refinements::SizeCasts
+  include_context "boot requirements"
 
-    include_context "boot requirements"
+  let(:architecture) { :aarch64 }
+  let(:architecture) { :aarch64 }
+  # it's always UEFI
+  let(:efiboot) { true }
 
-    let(:architecture) { :aarch64 }
-    let(:efi_partitions) { [] }
-    let(:other_efi_partitions) { [] }
-    let(:use_lvm) { false }
-    let(:sda_part_table) { pt_msdos }
-    let(:mbr_gap_size) { Y2Storage::DiskSize.zero }
-
-    # it's always UEFI
-    let(:efiboot) { true }
-
-    before do
-      allow(dev_sda).to receive(:mbr_gap).and_return mbr_gap_size
-      allow(dev_sda).to receive(:efi_partitions).and_return efi_partitions
-      allow(dev_sda).to receive(:partitions).and_return(efi_partitions)
-      allow(dev_sdb).to receive(:efi_partitions).and_return other_efi_partitions
-      allow(dev_sdb).to receive(:partitions).and_return(other_efi_partitions)
-    end
-
-    include_context "plain UEFI"
-
+  describe "#needed_partitions in an aarch64 system" do
+    include_examples "plain UEFI"
   end
 end

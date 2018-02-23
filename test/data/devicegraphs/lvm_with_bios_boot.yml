@@ -2,14 +2,13 @@
 - disk:
     name: /dev/sda
     size: 200 GiB
-    partition_table:  ms-dos
+    partition_table:  gpt
     partitions:
 
     - partition:
-        size:         500 MiB
+        size:         8 MiB
         name:         /dev/sda1
-        mount_point:  /boot
-        file_system:  ext2
+        id:           bios_boot
 
     - partition:
         size:         unlimited
