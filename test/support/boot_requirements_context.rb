@@ -40,7 +40,6 @@ RSpec.shared_context "boot requirements" do
     storage_arch = double("::Storage::Arch")
     allow(Y2Storage::StorageManager.instance).to receive(:arch).and_return(storage_arch)
 
-
     allow(storage_arch).to receive(:x86?).and_return(architecture == :x86)
     allow(storage_arch).to receive(:ppc?).and_return(architecture == :ppc)
     allow(storage_arch).to receive(:s390?).and_return(architecture == :s390)

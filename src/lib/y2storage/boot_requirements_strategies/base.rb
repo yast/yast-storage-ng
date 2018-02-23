@@ -96,7 +96,7 @@ module Y2Storage
         end
 
         if too_small_boot?
-          error_message = 
+          error_message =
             _("The device mounted at '/boot' does not have enough space to contain a kernel.")
           res << SetupError.new(message: error_message)
         end
