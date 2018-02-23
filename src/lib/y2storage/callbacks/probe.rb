@@ -1,6 +1,8 @@
+#!/usr/bin/env ruby
+#
 # encoding: utf-8
 
-# Copyright (c) [2017-2018] SUSE LLC
+# Copyright (c) 2018 SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -19,6 +21,26 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "y2storage/callbacks/activate"
-require "y2storage/callbacks/probe"
-require "y2storage/callbacks/commit"
+require "storage"
+
+module Y2Storage
+  module Callbacks
+    # class to implement callbacks used during probe
+    class Probe < Storage::ProbeCallbacks
+      include Yast::Logger
+      include Yast::I18n
+
+      def initialize
+        textdomain "storage"
+        super
+      end
+
+      def message(_message)
+      end
+
+      def error(_message, _what)
+        false
+      end
+    end
+  end
+end
