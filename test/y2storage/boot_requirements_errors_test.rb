@@ -399,9 +399,7 @@ describe Y2Storage::BootRequirementsChecker do
           context "and there is a /boot partition in the system" do
             let(:scenario) { "lvm_with_boot" }
 
-            it "does not contain errors" do
-              include_examples "no errors"
-            end
+            include_examples "no errors"
           end
         end
 
