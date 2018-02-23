@@ -583,7 +583,7 @@ describe Y2Storage::BlkDevice do
   end
 
   describe "#part_of_lvm_or_md?" do
-    context "for a device not used in an LVM neither a MD RAID" do
+    context "for a device not used in an LVM or in a MD RAID" do
       let(:scenario) { "mixed_disks" }
       let(:device_name) { "/dev/sda1" }
 

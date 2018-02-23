@@ -322,7 +322,7 @@ module Y2Storage
 
     # Whether the device forms part of an LVM or MD RAID
     #
-    # @return [Boolean] true if it forms part of an LVM or MD RAID; false otherwise.
+    # @return [Boolean]
     def part_of_lvm_or_md?
       !lvm_pv.nil? || !md.nil?
     end

@@ -96,9 +96,8 @@ module Y2Partitioner
       def used_device_error
         return nil unless device.part_of_lvm_or_md?
 
-        # TRANSLATORS: Error message when trying to resize an used device. %{name} is
-        # replaced by the device name (e.g., /dev/sda1).
         format(
+          # TRANSLATORS: %{name} is replaced by a device name (e.g., /dev/sda1).
           _("The device %{name} is in use. It cannot be\n" \
             "resized. To resize %{name}, make sure it is not used."),
           name: device.name
@@ -114,7 +113,6 @@ module Y2Partitioner
       def cannot_be_resized_error
         return nil if device.resize_info.resize_ok?
 
-        # TRANSLATORS: a generic error message when a device cannot be resized.
         _("This device cannot be resized.")
       end
     end
