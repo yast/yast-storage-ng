@@ -21,7 +21,6 @@
 # find current contact information at www.suse.com.
 
 require_relative "spec_helper"
-require_relative "#{TEST_PATH}/support/proposed_partitions_examples"
 require_relative "#{TEST_PATH}/support/boot_requirements_context"
 require "y2storage"
 
@@ -135,17 +134,6 @@ describe Y2Storage::BootRequirementsChecker do
           end
         end
       end
-    end
-
-    context "when proposing a /boot/zipl partition" do
-      let(:zipl_part) { find_vol("/boot/zipl", checker.needed_partitions(target)) }
-      # Default values to ensure the partition is proposed
-      let(:dasd) { false }
-      let(:type) { Y2Storage::DasdType::UNKNOWN }
-      let(:format) { Y2Storage::DasdFormat::NONE }
-      let(:use_lvm) { false }
-
-      include_examples "proposed /boot/zipl partition"
     end
   end
 end

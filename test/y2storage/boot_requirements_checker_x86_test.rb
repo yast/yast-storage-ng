@@ -21,7 +21,6 @@
 # find current contact information at www.suse.com.
 
 require_relative "spec_helper"
-require_relative "#{TEST_PATH}/support/proposed_partitions_examples"
 require_relative "#{TEST_PATH}/support/boot_requirements_context"
 require_relative "#{TEST_PATH}/support/boot_requirements_uefi"
 require "y2storage"
@@ -170,36 +169,6 @@ describe Y2Storage::BootRequirementsChecker do
             end
           end
         end
-      end
-
-      context "when proposing a boot partition" do
-        let(:boot_part) { find_vol("/boot", checker.needed_partitions(target)) }
-        # Default values to ensure proposal of boot
-        let(:efiboot) { false }
-        let(:use_lvm) { true }
-        let(:sda_part_table) { pt_msdos }
-        let(:mbr_gap_size) { 256.KiB }
-
-        include_examples "proposed boot partition"
-      end
-
-      context "when proposing an new GRUB partition" do
-        let(:grub_part) { find_vol(nil, checker.needed_partitions(target)) }
-        # Default values to ensure a GRUB partition
-        let(:boot_ptable_type) { :gpt }
-        let(:efiboot) { false }
-        let(:grub_partitions) { [] }
-
-        include_examples "proposed GRUB partition"
-      end
-
-      context "when proposing an new EFI partition" do
-        let(:efi_part) { find_vol("/boot/efi", checker.needed_partitions(target)) }
-        # Default values to ensure proposal of EFI partition
-        let(:efiboot) { true }
-        let(:efi_partitions) { [] }
-
-        include_examples "proposed EFI partition"
       end
     end
   end

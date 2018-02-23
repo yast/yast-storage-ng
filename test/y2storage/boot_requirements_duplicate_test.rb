@@ -21,7 +21,6 @@
 # find current contact information at www.suse.com.
 
 require_relative "spec_helper"
-require_relative "#{TEST_PATH}/support/proposed_partitions_examples"
 require_relative "#{TEST_PATH}/support/boot_requirements_context"
 require "y2storage"
 
