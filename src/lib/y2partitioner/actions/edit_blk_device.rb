@@ -116,6 +116,8 @@ module Y2Partitioner
       def used_device_error
         return nil unless device.part_of_lvm_or_md?
 
+        # TRANSLATORS: Error message when trying to edit an used device. %{name} is
+        # replaced by the device name (e.g., /dev/sda1).
         format(
           _("The device %{name} is in use. It cannot be\n" \
             "edited. To edit %{name}, make sure it is not used."),
