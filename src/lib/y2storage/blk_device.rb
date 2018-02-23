@@ -320,6 +320,13 @@ module Y2Storage
       descendants.detect { |dev| dev.is?(:md) && dev.devices.include?(self) }
     end
 
+    # Whether the device forms part of an LVM or MD RAID
+    #
+    # @return [Boolean]
+    def part_of_lvm_or_md?
+      !lvm_pv.nil? || !md.nil?
+    end
+
     # Label of the filesystem, if any
     # @return [String, nil]
     def filesystem_label
