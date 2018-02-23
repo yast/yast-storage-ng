@@ -19,7 +19,6 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "yast"
 require "y2storage/callbacks/libstorage_callback"
 
 module Y2Storage
