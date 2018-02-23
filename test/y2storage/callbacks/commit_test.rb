@@ -21,25 +21,11 @@
 # find current contact information at www.suse.com.
 
 require_relative "../spec_helper"
+require_relative "callbacks_examples"
 require "y2storage/callbacks/commit"
 
 describe Y2Storage::Callbacks::Commit do
   subject(:callbacks) { described_class.new }
 
-  describe "#error" do
-    it "displays the error to the user" do
-      expect(Yast::Report).to receive(:ErrorAnyQuestion) do |_headline, message|
-        expect(message).to include "the message"
-        expect(message).to include "the what"
-      end
-      callbacks.error("the message", "the what")
-    end
-
-    it "asks the user whether to continue and returns the answer" do
-      allow(Yast::Report).to receive(:ErrorAnyQuestion).and_return(false, false, true)
-      expect(callbacks.error("", "yes?")).to eq false
-      expect(callbacks.error("", "please")).to eq false
-      expect(callbacks.error("", "pretty please")).to eq true
-    end
-  end
+  include_examples "libstorage callbacks"
 end

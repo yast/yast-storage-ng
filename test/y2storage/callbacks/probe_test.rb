@@ -1,5 +1,4 @@
-#!/usr/bin/env ruby
-#
+#!/usr/bin/env rspec
 # encoding: utf-8
 
 # Copyright (c) [2017] SUSE LLC
@@ -21,14 +20,12 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "yast"
-require "y2storage/callbacks/libstorage_callback"
+require_relative "../spec_helper"
+require_relative "callbacks_examples"
+require "y2storage/callbacks/probe"
 
-module Y2Storage
-  module Callbacks
-    # Class to implement callbacks used during libstorage-ng commit
-    class Commit < Storage::CommitCallbacks
-      include LibstorageCallback
-    end
-  end
+describe Y2Storage::Callbacks::Probe do
+  subject(:callbacks) { described_class.new }
+
+  include_examples "libstorage callbacks"
 end

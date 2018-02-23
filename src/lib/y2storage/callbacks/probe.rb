@@ -1,5 +1,3 @@
-#!/usr/bin/env ruby
-#
 # encoding: utf-8
 
 # Copyright (c) 2018 SUSE LLC
@@ -21,26 +19,14 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "storage"
+require "yast"
+require "y2storage/callbacks/libstorage_callback"
 
 module Y2Storage
   module Callbacks
-    # class to implement callbacks used during probe
+    # Class to implement callbacks used during libstorage-ng probe
     class Probe < Storage::ProbeCallbacks
-      include Yast::Logger
-      include Yast::I18n
-
-      def initialize
-        textdomain "storage"
-        super
-      end
-
-      def message(_message)
-      end
-
-      def error(_message, _what)
-        false
-      end
+      include LibstorageCallback
     end
   end
 end

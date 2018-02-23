@@ -1,5 +1,4 @@
-#!/usr/bin/env ruby
-#
+#!/usr/bin/env rspec
 # encoding: utf-8
 
 # Copyright (c) [2017] SUSE LLC
@@ -21,14 +20,21 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "yast"
-require "y2storage/callbacks/libstorage_callback"
+RSpec.shared_examples "libstorage callbacks" do
+  describe "#error" do
+    it "displays the error to the user" do
+      expect(Yast::Report).to receive(:ErrorAnyQuestion) do |_headline, message|
+        expect(message).to include "the message"
+        expect(message).to include "the what"
+      end
+      subject.error("the message", "the what")
+    end
 
-module Y2Storage
-  module Callbacks
-    # Class to implement callbacks used during libstorage-ng commit
-    class Commit < Storage::CommitCallbacks
-      include LibstorageCallback
+    it "asks the user whether to continue and returns the answer" do
+      allow(Yast::Report).to receive(:ErrorAnyQuestion).and_return(false, false, true)
+      expect(subject.error("", "yes?")).to eq false
+      expect(subject.error("", "please")).to eq false
+      expect(subject.error("", "pretty please")).to eq true
     end
   end
 end
