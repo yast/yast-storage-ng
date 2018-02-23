@@ -33,6 +33,7 @@ RSpec.shared_context "boot requirements" do
 
   let(:power_nv) { false }
   let(:efiboot) { false }
+  let(:scenario) { "trivial" }
 
   before do
     fake_scenario(scenario)
