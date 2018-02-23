@@ -68,7 +68,7 @@ module Y2Storage
         planned_partition.partition_id = PartitionId::ESP
 
         if reusable_efi
-          planned_partition.reuse = reusable_efi.name
+          planned_partition.reuse_name = reusable_efi.name
         else
           planned_partition.max_start_offset = DiskSize.TiB(2)
         end

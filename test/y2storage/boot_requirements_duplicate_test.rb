@@ -91,7 +91,7 @@ describe Y2Storage::BootRequirementsChecker do
 
             it "proposes to use the existing EFI partition" do
               expect(checker.needed_partitions).to contain_exactly(
-                an_object_having_attributes(mount_point: "/boot/efi", reuse: "/dev/sda1")
+                an_object_having_attributes(mount_point: "/boot/efi", reuse_name: "/dev/sda1")
               )
             end
           end

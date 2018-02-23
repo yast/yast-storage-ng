@@ -29,8 +29,56 @@ module Y2Storage
     # This is a wrapper for the Storage::MountByType enum
     class MountByType
       include StorageEnumWrapper
+      include Yast::I18n
+      extend Yast::I18n
 
       wrap_enum "MountByType"
+
+      # Hash with the properties for each mount by type.
+      #
+      # Keys are the symbols representing the types and values are hashes that
+      # can contain:
+      # - `:name` for human string
+      PROPERTIES = {
+        device: {
+          name: N_("Device Name")
+        },
+        id:     {
+          name: N_("Device ID")
+        },
+        label:  {
+          name: N_("Volume Label")
+        },
+        path:   {
+          name: N_("Device Path")
+        },
+        uuid:   {
+          name: N_("UUID")
+        }
+      }.freeze
+
+      # Human readable text for a mount by
+      #
+      # @note A default value is returned in case there is no a name
+      #   defined for the mount by type. The value is translated.
+      #
+      # @return [String]
+      def to_human_string
+        textdomain "storage"
+
+        name.nil? ? to_s : _(name)
+      end
+
+    private
+
+      # Name of the mount by type, if defined
+      #
+      # @return [String, nil] nil if the name is not defined.
+      def name
+        return nil if PROPERTIES[to_sym].nil?
+
+        PROPERTIES[to_sym][:name]
+      end
     end
   end
 end

@@ -27,6 +27,11 @@ module Y2Partitioner
     #
     # The MD RAID is given during initialization (see {BlkDeviceDescription}).
     class MdDescription < BlkDeviceDescription
+      def initialize(*args)
+        super
+        textdomain "storage"
+      end
+
       # @see #blk_device_description
       # @see #raid_description
       # @see #filesystem_description

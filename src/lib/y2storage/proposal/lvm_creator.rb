@@ -79,7 +79,7 @@ module Y2Storage
       # @param devicegraph [Devicegraph]    Devicegraph to find the real volume group
       # @return [LvmVg] Volume group to be reused
       def find_vg(planned_vg, devicegraph)
-        devicegraph.lvm_vgs.find { |vg| vg.vg_name == planned_vg.reuse }
+        devicegraph.lvm_vgs.find { |vg| vg.vg_name == planned_vg.reuse_name }
       end
 
       # Create a volume group in a devicegraph
@@ -130,7 +130,7 @@ module Y2Storage
         when :needed
           make_space_until_fit(volume_group, planned_vg.lvs)
         when :remove
-          lvs_to_keep = planned_vg.lvs.select(&:reuse?).map(&:reuse)
+          lvs_to_keep = planned_vg.lvs.select(&:reuse?).map(&:reuse_name)
           remove_logical_volumes(volume_group, lvs_to_keep)
         end
       end

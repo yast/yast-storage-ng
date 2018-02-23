@@ -29,7 +29,7 @@ RSpec.shared_context "plain UEFI" do
 
       it "requires only a new /boot/efi partition" do
         expect(checker.needed_partitions).to contain_exactly(
-          an_object_having_attributes(mount_point: "/boot/efi", reuse: nil)
+          an_object_having_attributes(mount_point: "/boot/efi", reuse_name: nil)
         )
       end
     end
@@ -49,7 +49,7 @@ RSpec.shared_context "plain UEFI" do
 
         it "requires only a new /boot/efi partition" do
           expect(checker.needed_partitions).to contain_exactly(
-            an_object_having_attributes(mount_point: "/boot/efi", reuse: nil)
+            an_object_having_attributes(mount_point: "/boot/efi", reuse_name: nil)
           )
         end
       end
@@ -59,7 +59,7 @@ RSpec.shared_context "plain UEFI" do
 
         it "only requires to use the existing EFI partition" do
           expect(checker.needed_partitions).to contain_exactly(
-            an_object_having_attributes(mount_point: "/boot/efi", reuse: "/dev/sda1")
+            an_object_having_attributes(mount_point: "/boot/efi", reuse_name: "/dev/sda1")
           )
         end
       end

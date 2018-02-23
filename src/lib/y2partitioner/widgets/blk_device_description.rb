@@ -32,6 +32,11 @@ module Y2Partitioner
 
       include BlkDeviceAttributes
 
+      def initialize(*args)
+        super
+        textdomain "storage"
+      end
+
       # @see #blk_device_description
       # @see #filesystem_description
       #

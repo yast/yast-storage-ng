@@ -16,7 +16,7 @@
 #
 
 Name:		yast2-storage-ng
-Version:        4.0.102
+Version:        4.0.108
 Release:	0
 BuildArch:	noarch
 
@@ -26,12 +26,12 @@ Source:		%{name}-%{version}.tar.bz2
 # Yast2::FsSnapshots.configure_on_install=
 Requires:	yast2 >= 4.0.24
 Requires:	yast2-ruby-bindings
-# BlkDevice#usable_as_blk_device? and Partitionable#usable_as_partitionable?
-Requires:	libstorage-ng-ruby >= 3.3.160
+# Storage::MountPoint#possible_mount_bys
+Requires:	libstorage-ng-ruby >= 3.3.166
 
 BuildRequires:	update-desktop-files
-# BlkDevice#usable_as_blk_device? and Partitionable#usable_as_partitionable?
-BuildRequires:	libstorage-ng-ruby >= 3.3.160
+# Storage::MountPoint#possible_mount_bys
+BuildRequires:	libstorage-ng-ruby >= 3.3.166
 BuildRequires:	yast2-ruby-bindings
 BuildRequires:	yast2-devtools
 # yast2-xml dependency is added by yast2 but ignored in the
@@ -41,6 +41,7 @@ BuildRequires:  yast2-xml
 BuildRequires:	yast2 >= 4.0.24
 BuildRequires:	rubygem(yast-rake)
 BuildRequires:	rubygem(rspec)
+PreReq:         %fillup_prereq
 
 Obsoletes:	yast2-storage
 
@@ -62,11 +63,19 @@ rake test:unit
 %install
 rake install DESTDIR="%{buildroot}"
 
+%post
+%ifarch s390 s390x
+%{fillup_only -ans storage %{name}.s390}
+%else
+%{fillup_only -ans storage %{name}.default}
+%endif
+
 %files
 %defattr(-,root,root)
 %{yast_dir}/clients/*.rb
 %{yast_dir}/lib
 %{yast_desktopdir}/*.desktop
+%{yast_fillupdir}/*
 
 # agents-scr
 %{yast_scrconfdir}/*.scr

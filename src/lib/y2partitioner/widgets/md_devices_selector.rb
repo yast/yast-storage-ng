@@ -29,6 +29,8 @@ module Y2Partitioner
     # Widget making possible to add and remove partitions to a MD RAID
     class MdDevicesSelector < DevicesSelection
       def initialize(controller)
+        textdomain "storage"
+
         @controller = controller
         super()
       end
@@ -73,7 +75,6 @@ module Y2Partitioner
       # @macro seeAbstractWidget
       def validate
         return true if controller.devices_in_md.size >= controller.min_devices
-
         error_args = { raid_level: controller.md_level.to_human_string, min: controller.min_devices }
         Yast::Popup.Error(
           # TRANSLATORS: raid_level is a RAID level (e.g. RAID10); min is a number

@@ -104,6 +104,13 @@ module Y2Storage
     #   Set the mount-by method to the global default, see Storage::get_default_mount_by()
     storage_forward :set_default_mount_by, to: :default_mount_by=
 
+    # @!method possible_mount_bys
+    #   Returns the possible mount-by methods for the mount point.
+    #   LABEL is included even if the filesystem label is not set.
+    #
+    #   @return [Array<Filesystems::MountByType>]
+    storage_forward :possible_mount_bys, as: "Filesystems::MountByType"
+
     # @!method set_default_mount_options
     #   Sets the mount options to the default mount options. So far the
     #   default mount options only contain the subvol for btrfs subvolumes.

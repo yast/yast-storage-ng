@@ -144,7 +144,7 @@ module Y2Storage
         parts_to_delete.map(&:sid).each do |sid|
           partition = partition_by_sid(devicegraph, sid)
           next unless partition
-          partition_killer.delete(partition.name)
+          partition_killer.delete_by_sid(partition.sid)
         end
       end
 
@@ -181,15 +181,15 @@ module Y2Storage
       # @param planned_devices [Array<Planned::Partition>] set of partitions
       # @return [Hash<String,Array<String>>] disk name to list of reused partitions map
       def find_reused_partitions(devicegraph, planned_devices)
-        reused_devices = planned_devices.select(&:reuse).each_with_object([]) do |device, all|
+        reused_devices = planned_devices.select(&:reuse_name).each_with_object([]) do |device, all|
           case device
           when Y2Storage::Planned::Partition
-            all << devicegraph.partitions.find { |p| device.reuse == p.name }
+            all << devicegraph.partitions.find { |p| device.reuse_name == p.name }
           when Y2Storage::Planned::LvmVg
-            vg = devicegraph.lvm_vgs.find { |v| File.join("/dev", device.reuse) == v.name }
+            vg = devicegraph.lvm_vgs.find { |v| File.join("/dev", device.reuse_name) == v.name }
             all.concat(vg.lvm_pvs)
           when Y2Storage::Planned::Md
-            all << devicegraph.md_raids.find { |r| device.reuse == r.name }
+            all << devicegraph.md_raids.find { |r| device.reuse_name == r.name }
           end
         end
 
@@ -210,10 +210,10 @@ module Y2Storage
       # Adjust reuse values
       #
       # When using logical partitions (ms-dos), removing a partition might cause the rest of
-      # logical partitions numbers to shift. In such a situation, 'reuse' properties of planned
+      # logical partitions numbers to shift. In such a situation, 'reuse_name' properties of planned
       # devices will break (they might point to a non-existent device).
       #
-      # This method takes care of setting the correct value for every 'reuse' property (thus
+      # This method takes care of setting the correct value for every 'reuse_name' property (thus
       # planned_devices are modified).
       #
       # @param devicegraph     [Devicegraph]               devicegraph
@@ -221,13 +221,17 @@ module Y2Storage
       # @param sid_map         [Hash<String,Integer>]      device name to sid map
       #
       # @see sid_map
+      # rubocop:disable Style/MultilineBlockChain
       def adjust_reuse_values(devicegraph, planned_devices, sid_map)
-        planned_devices.select { |d| d.is_a?(Y2Storage::Planned::Partition) && d.reuse }.each do |device|
-          sid = sid_map[device.reuse]
+        planned_devices.select do |d|
+          d.is_a?(Y2Storage::Planned::Partition) && d.reuse_name
+        end.each do |device|
+          sid = sid_map[device.reuse_name]
           partition = partition_by_sid(devicegraph, sid)
-          device.reuse = partition.name
+          device.reuse_name = partition.name
         end
       end
+      # rubocop:enable all
     end
   end
 end

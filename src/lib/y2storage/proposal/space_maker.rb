@@ -48,7 +48,7 @@ module Y2Storage
       def initialize(disk_analyzer, settings)
         @disk_analyzer = disk_analyzer
         @settings = settings
-        @deleted_names = []
+        @deleted_sids = []
       end
 
       # Performs all the operations needed to free enough space to accomodate
@@ -74,15 +74,24 @@ module Y2Storage
         @new_graph = original_graph.duplicate
         @dist_calculator = PartitionsDistributionCalculator.new(lvm_helper)
 
+        # update storage ids of reused volumes in planned volumes list
+        planned_partitions.select(&:reuse?).each do |part|
+          p = @original_graph.find_by_name(part.reuse_name)
+          part.reuse_sid = p.sid if p
+        end
+
         # Partitions that should not be deleted
         keep = lvm_helper.partitions_in_vg
-        # Let's filter out partitions with some value in #reuse
+        # Let's filter out partitions with some value in #reuse_name
         partitions = planned_partitions.dup
-        partitions.select(&:reuse).each do |part|
-          log.info "No need to find a fit for this partition, it will reuse #{part.reuse}: #{part}"
-          keep << part.reuse
+        partitions.select(&:reuse?).each do |part|
+          log.info "No need to find a fit for this partition, it will reuse #{part.reuse_name}: #{part}"
+          keep << part.reuse_name
           partitions.delete(part)
         end
+
+        # map device names to storage ids, as names may change during space making
+        keep = keep.map { |x| @original_graph.find_by_name(x) }.compact.map(&:sid)
 
         # To make sure we are not freeing space in useless places first
         # restrict the operations to disks with particular disk
@@ -152,7 +161,7 @@ module Y2Storage
       #
       # @return [Array<Partition>]
       def deleted_partitions
-        original_graph.partitions.select { |p| @deleted_names.include?(p.name) }
+        original_graph.partitions.select { |p| @deleted_sids.include?(p.sid) }
       end
 
       # @return [Hash{String => Array<Planned::Partition>}]
@@ -379,9 +388,9 @@ module Y2Storage
       def delete_candidates!(devicegraph, type, keep = [], disk = nil)
         partition_killer = PartitionKiller.new(devicegraph, candidate_disk_names)
 
-        deletion_candidate_partitions(devicegraph, type, disk).each do |part_name|
-          if keep.include?(part_name)
-            log.info "Skipped deletion of #{part_name}"
+        deletion_candidate_partitions(devicegraph, type, disk).each do |part_sid|
+          if keep.include?(part_sid)
+            log.info "Skipped deletion of sid #{part_sid}"
             next
           end
 
@@ -389,10 +398,10 @@ module Y2Storage
           # included in the keep array. In practice it doesn't matter because
           # PVs and extended partitions are never marked to be reused as a
           # planned partition.
-          names = partition_killer.delete(part_name)
-          next if names.empty?
+          sids = partition_killer.delete_by_sid(part_sid)
+          next if sids.empty?
 
-          @deleted_names.concat(names)
+          @deleted_sids.concat(sids)
           # Stop deleting if the passed condition is met
           break if block_given? && yield
         end
@@ -413,17 +422,19 @@ module Y2Storage
       # @return [Array<String>] partition names sorted by disk and by position
       #     inside the disk (partitions at the end are presented first)
       def deletion_candidate_partitions(devicegraph, type, disk = nil)
-        names = []
+        sids = []
+        names = []	# only for logging
         disks_for(devicegraph, disk).each do |dsk|
           partitions = devicegraph.partitions.select { |p| p.partitionable.name == dsk.name }
           partitions.delete_if { |part| part.type.is?(:extended) }
           filter_partitions_by_type!(partitions, type, dsk.name)
           partitions = partitions.sort_by { |part| part.region.start }.reverse
+          sids += partitions.map(&:sid)
           names += partitions.map(&:name)
         end
 
         log.info "Deletion candidates (#{type}): #{names}"
-        names
+        sids
       end
 
       def filter_partitions_by_type!(partitions, type, disk)

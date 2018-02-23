@@ -57,7 +57,7 @@ describe Y2Storage::Proposal::DevicesPlannerStrategies::Legacy do
         let(:swap_partitions) { [] }
 
         it "includes a brand new swap volume and no swap reusing" do
-          expect(swap_volumes).to contain_exactly(an_object_having_attributes(reuse: nil))
+          expect(swap_volumes).to contain_exactly(an_object_having_attributes(reuse_name: nil))
         end
       end
 
@@ -65,7 +65,7 @@ describe Y2Storage::Proposal::DevicesPlannerStrategies::Legacy do
         let(:swap_partitions) { [partition_double("/dev/sdaX", 1.GiB)] }
 
         it "includes a brand new swap volume and no swap reusing" do
-          expect(swap_volumes).to contain_exactly(an_object_having_attributes(reuse: nil))
+          expect(swap_volumes).to contain_exactly(an_object_having_attributes(reuse_name: nil))
         end
       end
 
@@ -76,7 +76,7 @@ describe Y2Storage::Proposal::DevicesPlannerStrategies::Legacy do
           before { settings.use_lvm = true }
 
           it "includes a brand new swap volume and no swap reusing" do
-            expect(swap_volumes).to contain_exactly(an_object_having_attributes(reuse: nil))
+            expect(swap_volumes).to contain_exactly(an_object_having_attributes(reuse_name: nil))
           end
         end
 
@@ -84,7 +84,7 @@ describe Y2Storage::Proposal::DevicesPlannerStrategies::Legacy do
           context "without encryption" do
             it "includes a volume to reuse the existing swap and no new swap" do
               expect(swap_volumes).to contain_exactly(
-                an_object_having_attributes(reuse: "/dev/sdaX")
+                an_object_having_attributes(reuse_name: "/dev/sdaX")
               )
             end
           end
@@ -94,7 +94,7 @@ describe Y2Storage::Proposal::DevicesPlannerStrategies::Legacy do
 
             it "includes a brand new swap volume and no swap reusing" do
               expect(swap_volumes).to contain_exactly(
-                an_object_having_attributes(reuse: nil)
+                an_object_having_attributes(reuse_name: nil)
               )
             end
           end

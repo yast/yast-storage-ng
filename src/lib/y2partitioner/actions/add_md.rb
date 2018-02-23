@@ -34,6 +34,11 @@ module Y2Partitioner
     class AddMd < TransactionWizard
       include NewBlkDevice
 
+      def initialize(*args)
+        super
+        textdomain "storage"
+      end
+
       def devices
         result = Dialogs::Md.run(md_controller)
         md_controller.apply_default_options if result == :next

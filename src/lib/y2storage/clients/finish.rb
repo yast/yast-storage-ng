@@ -43,10 +43,25 @@ module Y2Storage
 
       # Performs the final actions in the target system
       def write
+        enable_multipath
+        update_sysconfig
+        true
+      end
+
+      # Enables multipathd in the targed system, if it is required.
+      def enable_multipath
         return unless multipath?
 
         log.info "Enabling multipathd in the target system"
         Yast::Service.Enable("multipathd")
+      end
+
+      # Updates sysconfig file (/etc/sysconfig/storage) with current values
+      # at StorageManager.
+      #
+      # @note This updates the sysconfig file in the target system.
+      def update_sysconfig
+        StorageManager.instance.update_sysconfig
       end
 
       # Checks whether multipath will be used in the target system

@@ -503,7 +503,6 @@ module Y2Partitioner
             part_id = Y2Storage::PartitionId::SWAP
             fs_type = Y2Storage::Filesystems::Type::SWAP
             mount_path = "swap"
-            mount_by = Y2Storage::Filesystems::MountByType::DEVICE
           when :efi_boot
             part_id = Y2Storage::PartitionId::ESP
             fs_type = Y2Storage::Filesystems::Type::VFAT

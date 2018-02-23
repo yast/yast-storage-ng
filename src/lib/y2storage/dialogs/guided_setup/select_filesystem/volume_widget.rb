@@ -38,6 +38,8 @@ module Y2Storage
           # @param settings [ProposalSettings] see {#settings}
           # @param index [Integer] see {#index}
           def initialize(settings, index)
+            textdomain "storage"
+
             @settings = settings
             @index = index
             @volume = settings.volumes[index]

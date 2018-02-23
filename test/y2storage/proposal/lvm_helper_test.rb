@@ -264,7 +264,7 @@ describe Y2Storage::Proposal::LvmHelper do
 
       it "reuses the given volume group" do
         expect(lvm_creator).to receive(:create_volumes) do |lvm_vg, _pv_partitions|
-          expect(lvm_vg.reuse).to eq(reused_vg.vg_name)
+          expect(lvm_vg.reuse_name).to eq(reused_vg.vg_name)
         end.and_return creator_result
         helper.create_volumes(fake_devicegraph, pv_partitions)
       end

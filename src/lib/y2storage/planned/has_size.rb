@@ -56,7 +56,7 @@ module Y2Storage
 
       def min_size
         # No need to provide space for reused volumes
-        (respond_to?(:reuse) && reuse) ? DiskSize.zero : @min_size
+        (respond_to?(:reuse_name) && reuse_name) ? DiskSize.zero : @min_size
       end
 
       alias_method :min, :min_size

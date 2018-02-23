@@ -30,6 +30,8 @@ module Y2Storage
     include Yast::I18n
 
     def initialize(actiongraph)
+      textdomain "storage"
+
       @actiongraph = actiongraph
       @collapsed_subvolumes = true
     end

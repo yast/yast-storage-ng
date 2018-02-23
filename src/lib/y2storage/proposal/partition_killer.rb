@@ -32,7 +32,7 @@ module Y2Storage
       # Initialize.
       #
       # The optional parameter "disks" can be used to restrict the scope of the
-      # collateral actions (see {#delete})
+      # collateral actions (see {#delete_by_sid})
       #
       # @param devicegraph [Devicegraph]
       # @param disks [Array<String>] list of kernel-style device names
@@ -44,10 +44,10 @@ module Y2Storage
       # Deletes a given partition and other partitions that, as a consequence,
       # are not longer useful.
       #
-      # @param device_name [String] device name of the partition
-      # @return [Array<String>] device names of all the deleted partitions
-      def delete(device_name)
-        partition = find_partition(device_name)
+      # @param device_sid [Integer] device sid of the partition
+      # @return [Array<Integer>] device sids of all the deleted partitions
+      def delete_by_sid(device_sid)
+        partition = find_partition(device_sid)
         return [] unless partition
 
         if lvm_vg?(partition)
@@ -61,8 +61,8 @@ module Y2Storage
 
       attr_reader :devicegraph, :disks
 
-      def find_partition(name)
-        devicegraph.partitions.detect { |part| part.name == name }
+      def find_partition(sid)
+        devicegraph.partitions.detect { |part| part.sid == sid }
       end
 
       # Deletes a given partition from its corresponding partition table.
@@ -70,15 +70,15 @@ module Y2Storage
       # now empty extended partition
       #
       # @param partition [Partition]
-      # @return [Array<String>] device names of all the deleted partitions
+      # @return [Array<Integer>] device sids of all the deleted partitions
       def delete_partition(partition)
         log.info("Deleting partition #{partition.name} in device graph")
         if last_logical?(partition)
           log.info("It's the last logical one, so deleting the extended")
           delete_extended(partition.partition_table)
         else
-          result = [partition.name]
-          partition.partition_table.delete_partition(partition.name)
+          result = [partition.sid]
+          partition.partition_table.delete_partition(partition)
           result
         end
       end
@@ -86,16 +86,16 @@ module Y2Storage
       # Deletes the extended partition and all the logical ones
       #
       # @param partition_table [PartitionTable]
-      # @return [Array<String>] device names of all the deleted partitions
+      # @return [Array<Integer>] device sids of all the deleted partitions
       def delete_extended(partition_table)
         partitions = partition_table.partitions
         extended = partitions.detect { |part| part.type.is?(:extended) }
         logical_parts = partitions.select { |part| part.type.is?(:logical) }
 
         # This will delete the extended and all the logicals
-        names = [extended.name] + logical_parts.map(&:name)
-        partition_table.delete_partition(extended.name)
-        names
+        sids = [extended.sid] + logical_parts.map(&:sid)
+        partition_table.delete_partition(extended)
+        sids
       end
 
       # Checks whether the partition is the only logical one in the
@@ -120,13 +120,13 @@ module Y2Storage
       #
       # @param partition [Partition] A partition that is acting as
       #   LVM physical volume
-      # @return [Array<String>] device names of all the deleted partitions
+      # @return [Array<Integer>] device sids of all the deleted partitions
       def delete_lvm_partitions(partition)
         log.info "Deleting #{partition.name}, which is part of an LVM volume group"
         vg = partition.lvm_pv.lvm_vg
         partitions_to_delete = vg.lvm_pvs.map(&:plain_blk_device).select { |dev| dev.is?(:partition) }
         partitions_to_delete.select! { |p| disks.include?(p.partitionable.name) } if disks
-        target_partitions = partitions_to_delete.map { |p| find_partition(p.name) }.compact
+        target_partitions = partitions_to_delete.map { |p| find_partition(p.sid) }.compact
         log.info "These LVM partitions will be deleted: #{target_partitions.map(&:name)}"
         target_partitions.map { |p| delete_partition(p) }
       end

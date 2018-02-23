@@ -654,7 +654,7 @@ describe Y2Storage::Proposal::SpaceMaker do
 
       it "doesn't delete partitions marked to be reused" do
         vol1 = planned_vol(mount_point: "/1", type: :ext4, min: 100.GiB)
-        vol2 = planned_vol(mount_point: "/2", reuse: "/dev/sda6")
+        vol2 = planned_vol(mount_point: "/2", reuse_name: "/dev/sda6")
         volumes = [vol1, vol2]
         sda6 = probed_partition("/dev/sda6")
 
@@ -665,7 +665,7 @@ describe Y2Storage::Proposal::SpaceMaker do
 
       it "raises an Error exception if deleting is not enough" do
         vol1 = planned_vol(mount_point: "/1", type: :ext4, min: 980.GiB)
-        vol2 = planned_vol(mount_point: "/2", reuse: "/dev/sda2")
+        vol2 = planned_vol(mount_point: "/2", reuse_name: "/dev/sda2")
         volumes = [vol1, vol2]
 
         expect { maker.provide_space(fake_devicegraph, volumes, lvm_helper) }
@@ -675,9 +675,9 @@ describe Y2Storage::Proposal::SpaceMaker do
       it "deletes extended partitions when deleting all its logical children" do
         volumes = [
           planned_vol(mount_point: "/1", type: :ext4, min: 800.GiB),
-          planned_vol(mount_point: "/2", reuse: "/dev/sda1"),
-          planned_vol(mount_point: "/2", reuse: "/dev/sda2"),
-          planned_vol(mount_point: "/2", reuse: "/dev/sda3")
+          planned_vol(mount_point: "/2", reuse_name: "/dev/sda1"),
+          planned_vol(mount_point: "/2", reuse_name: "/dev/sda2"),
+          planned_vol(mount_point: "/2", reuse_name: "/dev/sda3")
         ]
 
         result = maker.provide_space(fake_devicegraph, volumes, lvm_helper)
@@ -698,10 +698,10 @@ describe Y2Storage::Proposal::SpaceMaker do
       it "does not delete the extended partition if some logical one is to be reused" do
         volumes = [
           planned_vol(mount_point: "/1", type: :ext4, min: 400.GiB),
-          planned_vol(mount_point: "/2", reuse: "/dev/sda1"),
-          planned_vol(mount_point: "/3", reuse: "/dev/sda2"),
-          planned_vol(mount_point: "/4", reuse: "/dev/sda3"),
-          planned_vol(mount_point: "/5", reuse: "/dev/sda6")
+          planned_vol(mount_point: "/2", reuse_name: "/dev/sda1"),
+          planned_vol(mount_point: "/3", reuse_name: "/dev/sda2"),
+          planned_vol(mount_point: "/4", reuse_name: "/dev/sda3"),
+          planned_vol(mount_point: "/5", reuse_name: "/dev/sda6")
         ]
 
         expect { maker.provide_space(fake_devicegraph, volumes, lvm_helper) }
@@ -715,8 +715,8 @@ describe Y2Storage::Proposal::SpaceMaker do
         [
           planned_vol(mount_point: "/1", type: :ext4, min: 60.GiB),
           planned_vol(mount_point: "/2", type: :ext4, min: 300.GiB),
-          planned_vol(mount_point: "/3", reuse: "/dev/sda6"),
-          planned_vol(mount_point: "/4", reuse: "/dev/sda2")
+          planned_vol(mount_point: "/3", reuse_name: "/dev/sda6"),
+          planned_vol(mount_point: "/4", reuse_name: "/dev/sda2")
         ]
       end
 

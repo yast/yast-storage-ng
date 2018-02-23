@@ -29,6 +29,11 @@ module Y2Storage
       GRUB_SIZE = DiskSize.KiB(256)
       GRUBENV_SIZE = DiskSize.KiB(1)
 
+      def initialize(*args)
+        super
+        textdomain "storage"
+      end
+
       # @see Base#needed_partitions
       def needed_partitions(target)
         raise Error if grub_in_mbr? && mbr_gap && !valid_mbr_gap?

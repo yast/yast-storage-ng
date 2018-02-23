@@ -27,6 +27,11 @@ module Y2Partitioner
     #
     # The volume group is given during initialization (see {DeviceDescription}).
     class LvmVgDescription < DeviceDescription
+      def initialize(*args)
+        super
+        textdomain "storage"
+      end
+
       # A volume group description is composed by the header "Device" and a list
       # of attributes
       #

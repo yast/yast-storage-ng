@@ -29,7 +29,7 @@ describe Y2Storage::Proposal::LvmCreator do
 
   before do
     fake_scenario(scenario)
-    vg.reuse = reused_vg.vg_name if reused_vg
+    vg.reuse_name = reused_vg.vg_name if reused_vg
   end
 
   describe "#create_volumes" do
@@ -122,7 +122,7 @@ describe Y2Storage::Proposal::LvmCreator do
       let(:reused_vg) { fake_devicegraph.lvm_vgs.first }
 
       before do
-        vg.reuse = reused_vg.vg_name
+        vg.reuse_name = reused_vg.vg_name
       end
 
       it "creates no additional volume group" do
@@ -203,7 +203,7 @@ describe Y2Storage::Proposal::LvmCreator do
         context "and some LV should be reused" do
           before do
             reused_lv = vg.lvs.first
-            reused_lv.reuse = "/dev/vg0/lv1"
+            reused_lv.reuse_name = "/dev/vg0/lv1"
           end
 
           it "deletes all existing LVs but the reusable one" do

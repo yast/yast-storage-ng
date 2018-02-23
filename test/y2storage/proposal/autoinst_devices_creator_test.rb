@@ -40,7 +40,7 @@ describe Y2Storage::Proposal::AutoinstDevicesCreator do
   let(:scenario) { "windows-linux-free-pc" }
   let(:reusable_part) do
     Y2Storage::Planned::Partition.new("/", filesystem_type).tap do |part|
-      part.reuse = "/dev/sda3"
+      part.reuse_name = "/dev/sda3"
     end
   end
 
@@ -162,7 +162,7 @@ describe Y2Storage::Proposal::AutoinstDevicesCreator do
         let(:scenario) { "windows-linux-free-pc" }
         let(:pv) do
           planned_partition(
-            lvm_volume_group_name: "vg0", reuse: "/dev/sda3"
+            lvm_volume_group_name: "vg0", reuse_name: "/dev/sda3"
           )
         end
 
@@ -175,12 +175,25 @@ describe Y2Storage::Proposal::AutoinstDevicesCreator do
           expect(pv.blk_device.name).to eq("/dev/sda3")
         end
       end
+
+      context "when creating more than one volume group" do
+        let(:pv1) { planned_partition(lvm_volume_group_name: "vg1", min_size: 5.GiB) }
+
+        let(:lv_srv) { planned_lv(mount_point: "/srv", logical_volume_name: "lv_srv") }
+        let(:vg1) { planned_vg(volume_group_name: "vg1", lvs: [lv_root]) }
+
+        it "creates all volume groups" do
+          result = creator.populated_devicegraph([pv, pv1, vg, vg1], ["/dev/sda"])
+          lvm_vgs = result.devicegraph.lvm_vgs
+          expect(lvm_vgs.size).to eq(2)
+        end
+      end
     end
 
     describe "using RAID" do
       context "reusing a partition as a RAID member" do
         let(:part1) do
-          planned_partition(disk: "/dev/sda", raid_name: "/dev/md0", reuse: "/dev/sda3")
+          planned_partition(disk: "/dev/sda", raid_name: "/dev/md0", reuse_name: "/dev/sda3")
         end
 
         let(:part2) do
@@ -205,7 +218,7 @@ describe Y2Storage::Proposal::AutoinstDevicesCreator do
     describe "resizing partitions" do
       let(:root) do
         Y2Storage::Planned::Partition.new("/", filesystem_type).tap do |part|
-          part.reuse = "/dev/sda1"
+          part.reuse_name = "/dev/sda1"
           part.resize = true
           part.max_size = 200.GiB
         end
@@ -213,7 +226,7 @@ describe Y2Storage::Proposal::AutoinstDevicesCreator do
 
       let(:home) do
         Y2Storage::Planned::Partition.new("/home", filesystem_type).tap do |part|
-          part.reuse = "/dev/sda2"
+          part.reuse_name = "/dev/sda2"
           part.resize = true
           part.size = 52.GiB
         end
@@ -259,18 +272,18 @@ describe Y2Storage::Proposal::AutoinstDevicesCreator do
     describe "resizing logical volumes" do
       let(:scenario) { "lvm-two-vgs" }
 
-      let(:pv) { planned_partition(reuse: "/dev/sda7") }
+      let(:pv) { planned_partition(reuse_name: "/dev/sda7") }
 
       let(:vg) do
-        planned_vg(reuse: "vg0", lvs: [root, home], pvs: [pv])
+        planned_vg(reuse_name: "vg0", lvs: [root, home], pvs: [pv])
       end
 
       let(:root) do
-        planned_lv(mount_point: "/", reuse: "/dev/vg0/lv1", resize: true, max_size: 1.GiB)
+        planned_lv(mount_point: "/", reuse_name: "/dev/vg0/lv1", resize: true, max_size: 1.GiB)
       end
 
       let(:home) do
-        planned_lv(mount_point: "/home", reuse: "/dev/vg0/lv2", resize: true, max_size: 3.GiB)
+        planned_lv(mount_point: "/home", reuse_name: "/dev/vg0/lv2", resize: true, max_size: 3.GiB)
       end
 
       let(:resize_info) do
