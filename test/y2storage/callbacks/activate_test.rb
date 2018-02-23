@@ -21,10 +21,13 @@
 # find current contact information at www.suse.com.
 
 require_relative "../spec_helper"
+require_relative "callbacks_examples"
 require "y2storage/callbacks/activate"
 
 describe Y2Storage::Callbacks::Activate do
   subject { described_class.new }
+
+  include_examples "libstorage callbacks"
 
   describe "#luks" do
     let(:dialog) { instance_double(Y2Storage::Dialogs::Callbacks::ActivateLuks) }

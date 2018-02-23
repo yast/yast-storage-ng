@@ -1,4 +1,12 @@
 -------------------------------------------------------------------
+Fri Feb 23 14:11:10 UTC 2018 - ancor@suse.com
+
+- Better handling of errors during hardware probing (bsc#1070459,
+  bsc#1079228, bsc#1079817, bsc#1063059, bsc#1080554, bsc#1076776,
+  bsc#1070459 and some others).
+- 4.0.109
+
+-------------------------------------------------------------------
 Fri Feb 23 13:42:46 UTC 2018 - jlopez@suse.com
 
 - Avoid to write files in tests (SCR.Write) (fate#323457).

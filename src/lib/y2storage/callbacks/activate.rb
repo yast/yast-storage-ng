@@ -1,5 +1,3 @@
-#!/usr/bin/env ruby
-#
 # encoding: utf-8
 
 # Copyright (c) [2017-2018] SUSE LLC
@@ -21,15 +19,17 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "storage"
+require "yast"
 require "y2storage/dialogs/callbacks/activate_luks"
+require "y2storage/callbacks/libstorage_callback"
 
 Yast.import "Popup"
 
 module Y2Storage
   module Callbacks
-    # class to implement callbacks used during activate
+    # Class to implement callbacks used during libstorage-ng activation
     class Activate < Storage::ActivateCallbacks
+      include LibstorageCallback
       include Yast::Logger
       include Yast::I18n
 
@@ -56,13 +56,6 @@ module Y2Storage
         password = activate ? dialog.encryption_password : ""
 
         Storage::PairBoolString.new(activate, password)
-      end
-
-      def message(_message)
-      end
-
-      def error(_message, _what)
-        false
       end
     end
   end
