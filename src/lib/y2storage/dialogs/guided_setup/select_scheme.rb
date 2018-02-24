@@ -23,7 +23,6 @@ require "yast"
 require "y2storage"
 require "y2storage/dialogs/guided_setup/base"
 
-Yast.import "InstExtensionImage"
 Yast.import "Popup"
 
 module Y2Storage
@@ -33,6 +32,7 @@ module Y2Storage
       class SelectScheme < Base
         def initialize(*params)
           textdomain "storage"
+          @passwd_checker = EncryptPasswordChecker.new
           super
         end
 
@@ -47,8 +47,11 @@ module Y2Storage
 
       protected
 
+        # @return [EncryptPasswordChecker]
+        attr_reader :passwd_checker
+
         def close_dialog
-          unload_cracklib
+          passwd_checker.tear_down
           super
         end
 
@@ -97,21 +100,10 @@ module Y2Storage
 
       private
 
-        PASS_MIN_SIZE = 5
-
-        PASS_ALLOWED_CHARS =
-          "0123456789" \
-          "abcdefghijklmnopqrstuvwxyz" \
-          "ABCDEFGHIJKLMNOPQRSTUVWXYZ" \
-          "#* ,.;:._-+=!$%&/|?{[()]}@^\\<>"
-
-        CRACKLIB_PACKAGE = "cracklib-dict-full.rpm"
-
-        attr_reader :cracklib_loaded
-        alias_method :cracklib_loaded?, :cracklib_loaded
-
         def valid?
-          using_encryption? ? valid_password? : true
+          return true unless using_encryption?
+
+          valid_password? && good_password?
         end
 
         def using_encryption?
@@ -119,50 +111,21 @@ module Y2Storage
         end
 
         def valid_password?
-          !password_blank? && password_match? &&
-            password_correct? && password_strong?
-        end
+          msg = passwd_checker.error_msg(
+            widget_value(:password), widget_value(:repeat_password)
+          )
+          return true if msg.nil?
 
-        def password_blank?
-          return false unless widget_value(:password).empty?
-          Yast::Report.Warning(_("A password is needed"))
-          true
-        end
-
-        def password_match?
-          return true if widget_value(:password) == widget_value(:repeat_password)
-          Yast::Report.Warning(_("Password does not match"))
+          Yast::Report.Warning(msg)
           false
         end
 
-        def password_correct?
-          correct = password_min_size? && password_allowed_chars?
-
-          if !correct
-            messages = [
-              _("The password must have at least %d characters.") % PASS_MIN_SIZE,
-              _("The password may only contain the following characters:\n" \
-                "0..9, a..z, A..Z, and any of \"@#* ,.;:._-+=!$%&/|?{[()]}^\\<>\".")
-            ]
-            Yast::Report.Warning(messages.join("\n"))
-          end
-
-          correct
-        end
-
-        # Password is considered strong when cracklib returns an empty message.
         # User has the last word to decide whether to use a weak password.
-        def password_strong?
-          message = cracklib_message
-          return true if message.empty?
+        def good_password?
+          message = passwd_checker.warning_msg(widget_value(:password))
+          return true if message.nil?
 
-          popup_text = [
-            _("The password is too simple:"),
-            message,
-            "\n",
-            _("Really use this password?")
-          ].join("\n")
-
+          popup_text = message + "\n\n" + _("Really use this password?")
           Yast::Popup.AnyQuestion(
             "",
             popup_text,
@@ -170,43 +133,6 @@ module Y2Storage
             Yast::Label.NoButton,
             :focus_yes
           )
-        end
-
-        def password_min_size?
-          password.size >= PASS_MIN_SIZE
-        end
-
-        def password_allowed_chars?
-          password.split(//).all? { |c| PASS_ALLOWED_CHARS.include?(c) }
-        end
-
-        # Checks password strength using cracklib.
-        # @return[String] crack lib message, empty ("") if successful or
-        # cracklib cannot be loaded.
-        def cracklib_message
-          load_cracklib
-          return "" unless cracklib_loaded?
-          Yast::SCR.Execute(Yast::Path.new(".crack"), password)
-        end
-
-        def load_cracklib
-          return true if cracklib_loaded?
-          message = "Loading to memory package #{CRACKLIB_PACKAGE}"
-          loaded = Yast::InstExtensionImage.LoadExtension(CRACKLIB_PACKAGE, message)
-          log.warn("WARNING: Failed to load cracklib. Please check logs.") unless loaded
-          @cracklib_loaded = loaded
-        end
-
-        def unload_cracklib
-          return false unless cracklib_loaded?
-          message = "Removing from memory package #{CRACKLIB_PACKAGE}"
-          unloaded = Yast::InstExtensionImage.UnLoadExtension(CRACKLIB_PACKAGE, message)
-          log.warn("Warning: Failed to remove cracklib. Please check logs.") unless unloaded
-          @cracklib_loaded = !unloaded
-        end
-
-        def password
-          widget_value(:password)
         end
       end
     end
