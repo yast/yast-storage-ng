@@ -31,7 +31,7 @@ module Y2Storage
     include Yast::I18n
 
     # Minimum allowed size of the password
-    MIN_SIZE = 5
+    MIN_SIZE = 8
 
     # Set of characters accepted as part of the password
     ALLOWED_CHARS =

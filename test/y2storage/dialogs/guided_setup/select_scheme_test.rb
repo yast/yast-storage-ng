@@ -165,7 +165,7 @@ describe Y2Storage::Dialogs::GuidedSetup::SelectScheme do
           allow(Yast::Popup).to receive(:AnyQuestion).and_return(password_accepted)
         end
 
-        let(:password) { "123456" }
+        let(:password) { "12345678" }
         let(:password_accepted) { false }
 
         it "shows an error message" do
