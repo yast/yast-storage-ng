@@ -236,15 +236,13 @@ describe Y2Storage::BootRequirementsChecker do
             end
 
             context "in a plain btrfs setup" do
-              let(:scenario) { "dos_btrfs_no_gap" }
+              let(:scenario) { "dos_btrfs" }
 
-              it "does not contain errors" do
-                expect(checker.warnings).to be_empty
-              end
+              include_examples "no errors"
             end
 
             context "in a not plain btrfs setup" do
-              let(:scenario) { "dos_btrfs_lvm_no_gap" }
+              let(:scenario) { "dos_lvm" }
 
               it "contains an error for small MBR gap" do
                 expect(checker.warnings.size).to eq(1)
@@ -257,8 +255,13 @@ describe Y2Storage::BootRequirementsChecker do
           end
 
           context "if the MBR gap is big enough to embed Grub" do
+            before do
+              # it have to be set here, as mbr_gap in yml set only minimal size and not real one
+              allow(checker.send(:strategy).boot_disk).to receive(:mbr_gap).and_return(256.KiB)
+            end
+
             context "in a partitions-based setup" do
-              let(:scenario) { "dos_btrfs_with_gap" }
+              let(:scenario) { "dos_btrfs" }
 
               include_examples "no errors"
             end
