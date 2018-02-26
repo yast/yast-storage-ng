@@ -189,6 +189,7 @@ module Y2Partitioner
           # in case the device is removed from the volume group during this
           # execution of the partitioner.
           device.adapted_id = Y2Storage::PartitionId::LVM if device.is?(:partition)
+          device = device.encryption if device.encryption
           device.remove_descendants
           vg.add_lvm_pv(device)
         end
@@ -205,6 +206,7 @@ module Y2Partitioner
           end
 
           # TODO: restore status and descendants of the device when it makes sense
+          device = device.encryption if device.encryption
           vg.remove_lvm_pv(device)
         end
 

@@ -516,10 +516,10 @@ describe Y2Partitioner::Actions::Controllers::LvmVg do
       expect(sda2.filesystem).to be_nil
     end
 
-    it "removes the previous encryption from the device" do
+    it "keeps the previous encryption from the device" do
       expect(sda4.encrypted?).to eq(true)
       controller.add_device(sda4)
-      expect(sda4.encrypted?).to eq(false)
+      expect(sda4.encrypted?).to eq(true)
     end
 
     it "sets the partition identifier to LVM" do
@@ -548,6 +548,12 @@ describe Y2Partitioner::Actions::Controllers::LvmVg do
     it "does not remove any other device from vg physical volumes" do
       controller.remove_device(sda2)
       expect(controller.devices_in_vg).to include sdc
+    end
+
+    it "keeps the previous encryption from the device" do
+      expect(sdc.encrypted?).to eq(true)
+      controller.remove_device(sdc)
+      expect(sdc.encrypted?).to eq(true)
     end
 
     it "makes the device available" do
