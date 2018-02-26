@@ -108,19 +108,20 @@ describe Y2Storage::StorageManager do
   end
 
   describe "#update_sysconfig" do
+    before do
+      allow(Yast::SCR).to receive(:Write)
+    end
+
     it "stores current default mount_by into sysconfig file" do
       mount_by_label = Y2Storage::Filesystems::MountByType::LABEL
-      mount_by_id = Y2Storage::Filesystems::MountByType::ID
+      manager.default_mount_by = mount_by_label
 
-      sysconfig = Y2Storage::SysconfigStorage.instance
-      sysconfig.default_mount_by = mount_by_label
+      expect(Yast::SCR).to receive(:Write) do |path, value|
+        expect(path.to_s).to match(/storage/)
+        expect(value).to eq("label")
+      end
 
-      manager.default_mount_by = mount_by_id
-
-      expect(sysconfig.default_mount_by).to_not eq(mount_by_id)
       manager.update_sysconfig
-      expect(sysconfig.default_mount_by).to eq(mount_by_id)
-      expect(sysconfig.device_names).to eq("id")
     end
   end
 

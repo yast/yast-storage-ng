@@ -33,7 +33,7 @@ describe Y2Storage::SysconfigStorage do
     allow(Yast::SCR).to receive(:Read) { |p| expect(p.to_s).to match(/storage.DEVICE_NAMES/) }
       .and_return(value)
 
-    allow(Yast::SCR).to receive(:Write).and_call_original
+    allow(Yast::SCR).to receive(:Write)
   end
 
   let(:value) { nil }

@@ -22,9 +22,9 @@
 
 require_relative "../spec_helper"
 require_relative "callbacks_examples"
-require "y2storage/callbacks/commit"
+require "y2storage/callbacks/probe"
 
-describe Y2Storage::Callbacks::Commit do
+describe Y2Storage::Callbacks::Probe do
   subject(:callbacks) { described_class.new }
 
   include_examples "libstorage callbacks"

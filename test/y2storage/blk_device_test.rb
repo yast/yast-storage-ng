@@ -582,6 +582,71 @@ describe Y2Storage::BlkDevice do
     end
   end
 
+  describe "#part_of_lvm_or_md?" do
+    context "for a device not used in an LVM or in a MD RAID" do
+      let(:scenario) { "mixed_disks" }
+      let(:device_name) { "/dev/sda1" }
+
+      it "returns false" do
+        expect(device.part_of_lvm_or_md?).to eq(false)
+      end
+    end
+
+    context "for a device directly used in an LVM" do
+      let(:scenario) { "complex-lvm-encrypt" }
+      let(:device_name) { "/dev/sde2" }
+
+      it "returns true" do
+        expect(device.part_of_lvm_or_md?).to eq(true)
+      end
+    end
+
+    context "for an encrypted device directly used in an LVM" do
+      let(:scenario) { "complex-lvm-encrypt" }
+      let(:device_name) { "/dev/sde1" }
+
+      it "returns true" do
+        expect(device.part_of_lvm_or_md?).to eq(true)
+      end
+    end
+
+    context "for a device not directly used in an LVM" do
+      let(:scenario) { "complex-lvm-encrypt" }
+      let(:device_name) { "/dev/sde" }
+
+      it "returns false" do
+        expect(device.part_of_lvm_or_md?).to eq(false)
+      end
+    end
+
+    context "for a device directly used in an MD RAID" do
+      let(:scenario) { "subvolumes-and-empty-md.xml" }
+      let(:device_name) { "/dev/sda4" }
+
+      it "returns true" do
+        expect(device.part_of_lvm_or_md?).to eq(true)
+      end
+    end
+
+    context "for an encrypted device directly used in an MD RAID" do
+      let(:scenario) { "subvolumes-and-empty-md.xml" }
+      let(:device_name) { "/dev/sda5" }
+
+      it "returns true" do
+        expect(device.part_of_lvm_or_md?).to eq(true)
+      end
+    end
+
+    context "for a device not directly used in an MD RAID" do
+      let(:scenario) { "subvolumes-and-empty-md.xml" }
+      let(:device_name) { "/dev/sda" }
+
+      it "returns false" do
+        expect(device.part_of_lvm_or_md?).to eq(false)
+      end
+    end
+  end
+
   describe "#hwinfo" do
     let(:device_name) { "/dev/sda" }
 

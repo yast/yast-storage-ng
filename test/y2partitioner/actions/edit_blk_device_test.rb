@@ -37,6 +37,17 @@ describe Y2Partitioner::Actions::EditBlkDevice do
   let(:device) { Y2Storage::BlkDevice.find_by_name(current_graph, dev_name) }
 
   describe "#run" do
+    RSpec.shared_examples "edit_error" do
+      it "shows an error popup" do
+        expect(Yast::Popup).to receive(:Error)
+        sequence.run
+      end
+
+      it "quits returning :back" do
+        expect(sequence.run).to eq :back
+      end
+    end
+
     subject(:sequence) { described_class.new(device) }
 
     let(:scenario) { "complex-lvm-encrypt.yml" }
@@ -62,19 +73,25 @@ describe Y2Partitioner::Actions::EditBlkDevice do
       subject.run
     end
 
+    context "if called on a device that holds an LVM" do
+      let(:scenario) { "lvm-two-vgs.yml" }
+      let(:dev_name) { "/dev/sda7" }
+
+      include_examples "edit_error"
+    end
+
+    context "if called on a device that holds a MD RAID" do
+      let(:scenario) { "md_raid.xml" }
+      let(:dev_name) { "/dev/sda1" }
+
+      include_examples "edit_error"
+    end
+
     context "if called on an extended partition" do
       let(:scenario) { "mixed_disks.yml" }
-
       let(:dev_name) { "/dev/sdb4" }
 
-      it "shows an error popup" do
-        expect(Yast::Popup).to receive(:Error)
-        sequence.run
-      end
-
-      it "quits returning :back" do
-        expect(sequence.run).to eq :back
-      end
+      include_examples "edit_error"
     end
 
     context "if called on an LVM thin pool" do
@@ -87,14 +104,7 @@ describe Y2Partitioner::Actions::EditBlkDevice do
 
       let(:dev_name) { "/dev/vg1/pool1" }
 
-      it "shows an error popup" do
-        expect(Yast::Popup).to receive(:Error)
-        sequence.run
-      end
-
-      it "quits returning :back" do
-        expect(sequence.run).to eq :back
-      end
+      include_examples "edit_error"
     end
 
     context "if called on a device that can be edited" do

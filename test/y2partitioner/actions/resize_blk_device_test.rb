@@ -47,9 +47,37 @@ describe Y2Partitioner::Actions::ResizeBlkDevice do
   let(:min_size) { 100.KiB }
   let(:max_size) { 1.GiB }
 
+  RSpec.shared_examples "resize_error" do
+    it "shows an error popup" do
+      expect(Yast::Popup).to receive(:Error)
+      action.run
+    end
+
+    it "quits returning :back" do
+      expect(action.run).to eq :back
+    end
+  end
+
+  RSpec.shared_examples "partition_holds_lvm" do
+    context "and the partition holds an LVM" do
+      let(:scenario) { "lvm-two-vgs.yml" }
+      let(:dev_name) { "/dev/sda7" }
+
+      include_examples "resize_error"
+    end
+  end
+
+  RSpec.shared_examples "partition_holds_md" do
+    context "and the partition holds a MD RAID" do
+      let(:scenario) { "md_raid.xml" }
+      let(:dev_name) { "/dev/sda1" }
+
+      include_examples "resize_error"
+    end
+  end
+
   context "when executed on a partition" do
-    let(:scenario) { "mixed_disks.yml" }
-    let(:partition) { Y2Storage::Partition.find_by_name(current_graph, "/dev/sda1") }
+    let(:partition) { Y2Storage::Partition.find_by_name(current_graph, dev_name) }
 
     before do
       allow(partition).to receive(:detect_resize_info).and_return(resize_info)
@@ -61,38 +89,49 @@ describe Y2Partitioner::Actions::ResizeBlkDevice do
       context "when the partition cannot be resized" do
         let(:can_resize) { false }
 
-        it "shows an error popup" do
-          expect(Yast::Popup).to receive(:Error)
-          action.run
+        context "and the partition does not hold an LVM neither a MD RAID" do
+          let(:scenario) { "mixed_disks.yml" }
+          let(:dev_name) { "/dev/sda1" }
+
+          include_examples "resize_error"
         end
 
-        it "returns :back" do
-          expect(action.run).to eq(:back)
-        end
+        include_examples "partition_holds_lvm"
+
+        include_examples "partition_holds_md"
       end
 
       context "when the partition can be resized" do
         let(:can_resize) { true }
 
-        context "and the user goes forward in the dialog" do
-          before do
-            allow(Y2Partitioner::Dialogs::BlkDeviceResize).to receive(:run).and_return(:next)
+        context "and the partition does not hold an LVM neither a MD RAID" do
+          let(:scenario) { "mixed_disks.yml" }
+          let(:dev_name) { "/dev/sda1" }
+
+          context "and the user goes forward in the dialog" do
+            before do
+              allow(Y2Partitioner::Dialogs::BlkDeviceResize).to receive(:run).and_return(:next)
+            end
+
+            it "returns :finish" do
+              expect(action.run).to eq(:finish)
+            end
           end
 
-          it "returns :finish" do
-            expect(action.run).to eq(:finish)
+          context "and the user aborts the process" do
+            before do
+              allow(Y2Partitioner::Dialogs::BlkDeviceResize).to receive(:run).and_return(:abort)
+            end
+
+            it "returns :abort" do
+              expect(action.run).to eq(:abort)
+            end
           end
         end
 
-        context "and the user aborts the process" do
-          before do
-            allow(Y2Partitioner::Dialogs::BlkDeviceResize).to receive(:run).and_return(:abort)
-          end
+        include_examples "partition_holds_lvm"
 
-          it "returns :abort" do
-            expect(action.run).to eq(:abort)
-          end
-        end
+        include_examples "partition_holds_md"
       end
     end
   end
