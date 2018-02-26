@@ -21,19 +21,25 @@
 # find current contact information at www.suse.com.
 
 require_relative "spec_helper"
+require_relative "#{TEST_PATH}/support/proposed_partitions_examples"
 require_relative "#{TEST_PATH}/support/boot_requirements_context"
 require "y2storage"
 
 describe Y2Storage::BootRequirementsChecker do
-  # TODO: make scenarios for testing s390
-  xdescribe "#needed_partitions in a S/390 system" do
+  describe "#needed_partitions in a S/390 system" do
     using Y2Storage::Refinements::SizeCasts
 
     include_context "boot requirements"
 
     let(:architecture) { :s390 }
     let(:use_lvm) { false }
-    let(:efiboot) { false }
+
+    before do
+      allow(storage_arch).to receive(:efiboot?).and_return(false)
+      allow(dev_sda).to receive(:is?).with(:dasd).and_return(dasd)
+      allow(dev_sda).to receive(:type).and_return(type)
+      allow(dev_sda).to receive(:format).and_return(format)
+    end
 
     context "trying to install in a zfcp disk" do
       let(:dasd) { false }
@@ -134,6 +140,17 @@ describe Y2Storage::BootRequirementsChecker do
           end
         end
       end
+    end
+
+    context "when proposing a /boot/zipl partition" do
+      let(:zipl_part) { find_vol("/boot/zipl", checker.needed_partitions(target)) }
+      # Default values to ensure the partition is proposed
+      let(:dasd) { false }
+      let(:type) { Y2Storage::DasdType::UNKNOWN }
+      let(:format) { Y2Storage::DasdFormat::NONE }
+      let(:use_lvm) { false }
+
+      include_examples "proposed /boot/zipl partition"
     end
   end
 end

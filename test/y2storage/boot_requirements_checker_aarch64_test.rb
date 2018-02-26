@@ -21,19 +21,37 @@
 # find current contact information at www.suse.com.
 
 require_relative "spec_helper"
+require_relative "#{TEST_PATH}/support/proposed_partitions_examples"
 require_relative "#{TEST_PATH}/support/boot_requirements_context"
 require_relative "#{TEST_PATH}/support/boot_requirements_uefi"
 require "y2storage"
 
 describe Y2Storage::BootRequirementsChecker do
-  include_context "boot requirements"
-
-  let(:architecture) { :aarch64 }
-  let(:architecture) { :aarch64 }
-  # it's always UEFI
-  let(:efiboot) { true }
-
   describe "#needed_partitions in an aarch64 system" do
-    include_examples "plain UEFI"
+    using Y2Storage::Refinements::SizeCasts
+
+    include_context "boot requirements"
+
+    let(:architecture) { :aarch64 }
+    let(:efi_partitions) { [] }
+    let(:other_efi_partitions) { [] }
+    let(:use_lvm) { false }
+    let(:sda_part_table) { pt_msdos }
+    let(:mbr_gap_size) { Y2Storage::DiskSize.zero }
+
+    # it's always UEFI
+    let(:efiboot) { true }
+
+    before do
+      allow(storage_arch).to receive(:efiboot?).and_return(efiboot)
+      allow(dev_sda).to receive(:mbr_gap).and_return mbr_gap_size
+      allow(dev_sda).to receive(:efi_partitions).and_return efi_partitions
+      allow(dev_sda).to receive(:partitions).and_return(efi_partitions)
+      allow(dev_sdb).to receive(:efi_partitions).and_return other_efi_partitions
+      allow(dev_sdb).to receive(:partitions).and_return(other_efi_partitions)
+    end
+
+    include_context "plain UEFI"
+
   end
 end
