@@ -160,26 +160,6 @@ describe Y2Storage::BootRequirementsChecker do
       end
     end
 
-    RSpec.shared_examples "MBR gap" do
-      context "if the MBR gap has additional space for grubenv" do
-        it "does not contain errors" do
-          allow(checker.send(:strategy).boot_disk).to receive(:mbr_gap).and_return(260.KiB)
-          expect(checker.warnings).to be_empty
-        end
-      end
-
-      context "if the MBR gap has no additional space" do
-        before do
-          allow(checker.send(:strategy).boot_disk).to receive(:mbr_gap).and_return(256.KiB)
-        end
-
-        xit "it contains error if there is no separate /boot" do
-          # how to mock it as shared example? we need real scenario
-          # and for that shared examples does not look well.
-        end
-      end
-    end
-
     let(:efiboot) { false }
 
     context "/boot is too small" do
@@ -267,27 +247,68 @@ describe Y2Storage::BootRequirementsChecker do
             context "in a partitions-based setup" do
               let(:scenario) { "dos_btrfs_with_gap" }
 
-              it "does not contain errors" do
-                expect(checker.warnings).to be_empty
-              end
+              include_examples "no errors"
             end
 
             context "in a LVM-based setup" do
               # examples define own gap
-              let(:scenario) { "dos_btrfs_lvm_no_gap" }
+              let(:scenario) { "dos_lvm" }
 
-              include_examples "MBR gap"
+              context "if the MBR gap has additional space for grubenv" do
+                before do
+                  allow(checker.send(:strategy).boot_disk).to receive(:mbr_gap).and_return(260.KiB)
+                end
+
+                include_examples "no errors"
+              end
+
+              context "if the MBR gap has no additional space" do
+                before do
+                  allow(checker.send(:strategy).boot_disk).to receive(:mbr_gap).and_return(256.KiB)
+                end
+
+                context "if there is no separate /boot" do
+                  include_examples "missing boot partition"
+                end
+
+                context "if there is separate /boot" do
+                  let(:scenario) { "dos_lvm_boot_partition" }
+
+                  include_examples "no errors"
+                end
+              end
             end
 
-            context "in a Software RAID setup" do
-              let(:use_raid) { true }
-              include_examples "MBR gap"
+            xcontext "in a Software RAID setup" do
             end
 
             context "in an encrypted setup" do
-              let(:use_lvm) { false }
-              let(:use_encryption) { true }
-              include_examples "MBR gap"
+              let(:scenario) { "dos_encrypted" }
+
+              context "if the MBR gap has additional space for grubenv" do
+                before do
+                  allow(checker.send(:strategy).boot_disk).to receive(:mbr_gap).and_return(260.KiB)
+                end
+
+                include_examples "no errors"
+              end
+
+              context "if the MBR gap has no additional space" do
+                before do
+                  allow(checker.send(:strategy).boot_disk).to receive(:mbr_gap).and_return(256.KiB)
+                end
+
+                context "if there is no separate /boot" do
+                  include_examples "missing boot partition"
+                end
+
+                context "if there is separate /boot" do
+                  let(:scenario) { "dos_encrypted_boot_partition" }
+
+                  include_examples "no errors"
+                end
+              end
+
             end
           end
         end
