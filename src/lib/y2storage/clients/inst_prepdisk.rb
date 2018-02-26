@@ -45,25 +45,34 @@ module Y2Storage
 
         log.info("BEGIN of inst_prepdisk")
         Yast::SlideShow.MoveToStage("disk")
-        commit
-        log.info("END of inst_prepdisk")
-        :next
+        if commit
+          log.info("END of inst_prepdisk")
+          :next
+        else
+          log.info("ABORTED inst_prepdisk")
+          :abort
+        end
       end
 
     protected
 
       # Commits the actions to disk
+      #
+      # @return [Boolean] true if everything went fine, false if the user
+      #   decided to abort
       def commit
         manager.probed.save(Yast::Directory.logdir + "/inst-probed_devicegraph.xml")
         manager.staging.save(Yast::Directory.logdir + "/inst-staging_devicegraph.xml")
 
         manager.rootprefix = Yast::Installation.destdir
-        manager.commit(force_rw: true)
+        return false unless manager.commit(force_rw: true)
 
         mount_in_target("/dev", "devtmpfs", "-t devtmpfs")
         mount_in_target("/proc", "proc", "-t proc")
         mount_in_target("/sys", "sysfs", "-t sysfs")
         mount_in_target(EFIVARS_PATH, "efivarfs", "-t efivarfs") if File.exist?(EFIVARS_PATH)
+
+        true
       end
 
       def mount_in_target(path, device, options)

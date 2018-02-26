@@ -32,7 +32,7 @@ describe Y2Storage::Clients::InstPrepdisk do
     before do
       Y2Storage::StorageManager.create_test_instance
       Y2Storage::StorageManager.instance.probe
-      allow(storage_manager).to receive(:commit)
+      allow(storage_manager).to receive(:commit).and_return committed
       allow(Yast::Installation).to receive(:destdir).and_return "/dest"
       allow(Yast::SCR).to receive(:Execute).and_return(true)
       allow(Yast::Mode).to receive(:update).and_return(mode == :update)
@@ -40,6 +40,7 @@ describe Y2Storage::Clients::InstPrepdisk do
     end
 
     let(:storage_manager) { Y2Storage::StorageManager.instance }
+    let(:committed) { true }
 
     context "in installation mode" do
       let(:mode) { :installation }
@@ -62,6 +63,18 @@ describe Y2Storage::Clients::InstPrepdisk do
       it "saves staging devicegraph to a xml log file" do
         expect(storage_manager.staging).to receive(:save).with(/.*staging.*.xml/)
         client.run
+      end
+
+      it "returns :next if everything goes fine" do
+        expect(client.run).to eq :next
+      end
+
+      context "if libstorage-ng fails and the user decides to abort" do
+        let(:committed) { false }
+
+        it "returns :abort" do
+          expect(client.run).to eq :abort
+        end
       end
     end
 
