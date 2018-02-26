@@ -293,13 +293,13 @@ describe Y2Partitioner::Widgets do
         end
       end
 
-      context "encrypt is checked and the partition is bigger then 2MiB" do
+      context "encrypt is checked and the partition is bigger than 2MiB" do
         it "returns true" do
           expect(subject.validate).to eq true
         end
       end
 
-      context "encrypt is checked and the partition is equal or smaller then 2MiB" do
+      context "encrypt is checked and the partition is equal or smaller than 2MiB" do
         before do
           expect(controller).to receive(:blk_device)
             .and_return(double(size: Y2Storage::DiskSize.MiB(1)))
