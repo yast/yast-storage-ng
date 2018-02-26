@@ -27,7 +27,10 @@ require "y2storage/callbacks/activate"
 describe Y2Storage::Callbacks::Activate do
   subject { described_class.new }
 
-  include_examples "libstorage callbacks"
+  describe "#error" do
+    include_examples "general #error examples"
+    include_examples "default #error true examples"
+  end
 
   describe "#luks" do
     let(:dialog) { instance_double(Y2Storage::Dialogs::Callbacks::ActivateLuks) }

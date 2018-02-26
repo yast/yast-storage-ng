@@ -20,21 +20,37 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-RSpec.shared_examples "libstorage callbacks" do
-  describe "#error" do
-    it "displays the error to the user" do
-      expect(Yast::Report).to receive(:ErrorAnyQuestion) do |_headline, message|
-        expect(message).to include "the message"
-        expect(message).to include "the what"
-      end
-      subject.error("the message", "the what")
+RSpec.shared_examples "general #error examples" do
+  it "displays the error to the user" do
+    expect(Yast::Report).to receive(:ErrorAnyQuestion) do |_headline, message|
+      expect(message).to include "the message"
+      expect(message).to include "the what"
     end
+    subject.error("the message", "the what")
+  end
 
-    it "asks the user whether to continue and returns the answer" do
-      allow(Yast::Report).to receive(:ErrorAnyQuestion).and_return(false, false, true)
-      expect(subject.error("", "yes?")).to eq false
-      expect(subject.error("", "please")).to eq false
-      expect(subject.error("", "pretty please")).to eq true
+  it "asks the user whether to continue and returns the answer" do
+    allow(Yast::Report).to receive(:ErrorAnyQuestion).and_return(false, false, true)
+    expect(subject.error("", "yes?")).to eq false
+    expect(subject.error("", "please")).to eq false
+    expect(subject.error("", "pretty please")).to eq true
+  end
+end
+
+RSpec.shared_examples "default #error true examples" do
+  it "defaults to true" do
+    expect(Yast::Report).to receive(:ErrorAnyQuestion) do |*args|
+      expect(args[4]).to_not eq :focus_no
     end
+    subject.error("msg", "what")
+  end
+end
+
+RSpec.shared_examples "default #error false examples" do
+  it "defaults to false" do
+    expect(Yast::Report).to receive(:ErrorAnyQuestion) do |*args|
+      expect(args[4]).to eq :focus_no
+    end
+    subject.error("msg", "what")
   end
 end

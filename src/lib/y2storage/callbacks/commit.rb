@@ -28,6 +28,13 @@ module Y2Storage
     # Class to implement callbacks used during libstorage-ng commit
     class Commit < Storage::CommitCallbacks
       include LibstorageCallback
+
+      # @see LibstorageCallback#error
+      #
+      # @return [Boolean]
+      def default_answer_to_error
+        false
+      end
     end
   end
 end

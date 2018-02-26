@@ -27,5 +27,9 @@ require "y2storage/callbacks/commit"
 describe Y2Storage::Callbacks::Commit do
   subject(:callbacks) { described_class.new }
 
-  include_examples "libstorage callbacks"
+  describe "#error" do
+    include_examples "general #error examples"
+    include_examples "default #error false examples"
+  end
+
 end
