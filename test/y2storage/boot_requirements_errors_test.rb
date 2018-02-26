@@ -113,8 +113,8 @@ describe Y2Storage::BootRequirementsChecker do
         expect(checker.warnings.size).to eq(1)
         expect(checker.warnings).to all(be_a(Y2Storage::SetupError))
 
-        missing_volume = checker.warnings.first.missing_volume
-        expect(missing_volume).to eq(zipl_volume)
+        msg = checker.warnings.first.message
+        expect(msg).to match(/Missing device for \/boot\/zipl/)
       end
     end
 
@@ -478,23 +478,28 @@ describe Y2Storage::BootRequirementsChecker do
       end
 
       xcontext "using a FBA DASD disk as boot disk" do
-        let(:dasd) { true }
-        let(:type) { Y2Storage::DasdType::FBA }
+        let(:scenario) { "fba" }
         include_examples "unsupported boot disk"
       end
 
-      xcontext "using a (E)CKD DASD disk as boot disk" do
-        let(:dasd) { true }
-        let(:type) { Y2Storage::DasdType::ECKD }
-
+      context "using a (E)CKD DASD disk as boot disk" do
         context "if the disk is formatted as LDL" do
-          let(:format) { Y2Storage::DasdFormat::LDL }
+          let(:scenario) { "ldl" }
+
           include_examples "unsupported boot disk"
         end
 
         context "if the disk is formatted as CDL" do
-          let(:format) { Y2Storage::DasdFormat::CDL }
-          include_examples "zipl partition"
+          context "and there is no /boot/zipl partition in the system" do
+            let(:scenario) { "no_zipl" }
+            include_examples "missing zipl partition"
+          end
+
+          context "and there is a /boot/zipl partition in the system" do
+            let(:scenario) { "zipl" }
+
+            include_examples "no errors"
+          end
         end
       end
     end

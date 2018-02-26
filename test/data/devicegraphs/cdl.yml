@@ -5,7 +5,6 @@
     partition_table:  dasd
     type:             eckd
     format:           cdl
-
     partitions:
 
     - partition:

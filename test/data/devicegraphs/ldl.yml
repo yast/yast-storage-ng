@@ -4,8 +4,7 @@
     size:             1 TiB
     partition_table:  dasd
     type:             eckd
-    format:           cdl
-
+    format:           ldl
     partitions:
 
     - partition:
