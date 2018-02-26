@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Mon Feb 26 16:11:12 UTC 2018 - shundhammer@suse.com
+
+- Use format(), not Ruby variable expansion for translated messages
+  (bsc#1081454)
+- 4.0.113
+
+-------------------------------------------------------------------
 Mon Feb 26 14:54:59 UTC 2018 - ancor@suse.com
 
 - Partitioner: ensure a valid password is provided when encrypting
