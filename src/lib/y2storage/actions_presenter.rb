@@ -103,11 +103,11 @@ module Y2Storage
 
       event = toggle_subvolumes_event
       if collapsed_subvolumes?
-        # TRANSLATORS: %d is the amount of actions. Do not change href
-        [_("%d subvolume actions (<a href=\"#{event}\">see details</a>)") % actions.size]
+        # TRANSLATORS: %d is the amount of actions, %s an URL
+        [format(_("%d subvolume actions (<a href=\"%s\">see details</a>)"), actions.size, event)]
       else
-        # TRANSLATORS: %d is the amount of actions. Do not change href
-        header = _("%d subvolume actions (<a href=\"#{event}\">hide details</a>)") % actions.size
+        # TRANSLATORS: %d is the amount of actions, %s an URL
+        header = format(_("%d subvolume actions (<a href=\"%s\">hide details</a>)"), actions.size, event)
         list = html_list(actions_to_items(actions))
         [header, list]
       end
