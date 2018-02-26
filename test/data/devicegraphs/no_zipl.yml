@@ -1,0 +1,15 @@
+---
+- dasd:
+    name:             /dev/dasda
+    size:             1 TiB
+    partition_table:  dasd
+    type:             eckd
+    format:           cdl
+    partitions:
+
+    - partition:
+        size:         unlimited
+        name:         /dev/dasda1
+        file_system:  btrfs
+        label:        root
+        mount_point:  "/"

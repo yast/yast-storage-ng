@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Fri Feb 23 14:57:51 UTC 2018 - jreidinger@suse.com
+
+- Do not allow to encrypt too small partition (bsc#1065071)
+- Check size for separate /boot
+- 4.0.111
+
+-------------------------------------------------------------------
 Fri Feb 23 14:50:46 UTC 2018 - jlopez@suse.com
 
 - Partitioner: prevent to modify devices used in LVM or MD RAID

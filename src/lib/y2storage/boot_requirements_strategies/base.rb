@@ -95,6 +95,12 @@ module Y2Storage
           res << SetupError.new(message: error_message)
         end
 
+        if too_small_boot?
+          error_message =
+            _("The device mounted at '/boot' does not have enough space to contain a kernel.")
+          res << SetupError.new(message: error_message)
+        end
+
         res
       end
 
@@ -115,6 +121,16 @@ module Y2Storage
 
       def boot_partition_needed?
         false
+      end
+
+      def too_small_boot?
+        # for other partitions it is not needed as packager check disk usage, but /boot is special
+        # as it contain initrd that is generated and also bootloader code.
+        filesystem = devicegraph.filesystems.find { |f| f.mount_path == "/boot" }
+        return false unless filesystem
+
+        # FIXME: it does not count fs size and other and it is just hard coded.
+        filesystem.detect_space_info.free < boot_volume.min_size
       end
 
       def boot_partition_missing?

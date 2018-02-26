@@ -275,6 +275,50 @@ describe Y2Partitioner::Widgets do
     include_examples "CWM::ComboBox"
   end
 
+  describe Y2Partitioner::Widgets::EncryptBlkDevice do
+    subject { described_class.new(controller) }
+
+    include_examples "CWM::CheckBox"
+
+    describe "#validate" do
+      before do
+        allow(subject).to receive(:value).and_return(true)
+      end
+
+      context "encrypt is not checked" do
+        it "returns true" do
+          allow(subject).to receive(:value).and_return(false)
+
+          expect(subject.validate).to eq true
+        end
+      end
+
+      context "encrypt is checked and the partition is bigger than 2MiB" do
+        it "returns true" do
+          expect(subject.validate).to eq true
+        end
+      end
+
+      context "encrypt is checked and the partition is equal or smaller than 2MiB" do
+        before do
+          expect(controller).to receive(:blk_device)
+            .and_return(double(size: Y2Storage::DiskSize.MiB(1)))
+          allow(Yast::Popup).to receive(:Error)
+        end
+
+        it "returns false" do
+          expect(subject.validate).to eq false
+        end
+
+        it "shows an error popup" do
+          expect(Yast::Popup).to receive(:Error)
+
+          subject.validate
+        end
+      end
+    end
+  end
+
   describe Y2Partitioner::Widgets::PartitionId do
     subject(:widget) { described_class.new(controller) }
 
