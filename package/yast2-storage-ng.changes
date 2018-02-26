@@ -1,4 +1,13 @@
 -------------------------------------------------------------------
+Mon Feb 26 14:54:59 UTC 2018 - ancor@suse.com
+
+- Partitioner: ensure a valid password is provided when encrypting
+  a device (bsc#1065079).
+- Increase to 8 characters the minimum size to consider an
+  encryption password to be valid (same limit than yast2-storage).
+- 4.0.112
+
+-------------------------------------------------------------------
 Fri Feb 23 14:57:51 UTC 2018 - jreidinger@suse.com
 
 - Do not allow to encrypt too small partition (bsc#1065071)
