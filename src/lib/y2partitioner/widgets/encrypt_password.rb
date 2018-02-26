@@ -15,9 +15,9 @@ module Y2Partitioner
       end
 
       # @macro seeAbstractWidget
-      def helptext
+      def help
         # help text for cryptofs
-        helptext = _(
+        _(
           "<p>\n" \
             "You will need to enter your encryption password.\n" \
           "</p>\n" \
@@ -27,8 +27,6 @@ module Y2Partitioner
             "file system is not accessed during update.\n" \
           "</p>\n"
         )
-
-        helptext
       end
 
       # @macro seeAbstractWidget
