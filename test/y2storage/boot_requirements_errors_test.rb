@@ -186,7 +186,7 @@ describe Y2Storage::BootRequirementsChecker do
       let(:scenario) { "small_boot" }
 
       before do
-        allow_any_instance_of(Y2Storage::Mountable).to receive(:detect_space_info)
+        allow_any_instance_of(Y2Storage::Filesystems::BlkFilesystem).to receive(:detect_space_info)
           .and_return(double(free: Y2Storage::DiskSize.MiB(1)))
       end
 
@@ -195,7 +195,7 @@ describe Y2Storage::BootRequirementsChecker do
         expect(checker.errors).to all(be_a(Y2Storage::SetupError))
 
         message = checker.errors.first.message
-        expect(message).to match(/too small/)
+        expect(message).to match(/does not have enough space/)
       end
     end
 
@@ -237,6 +237,11 @@ describe Y2Storage::BootRequirementsChecker do
 
         context "with a MS-DOS partition table" do
           context "with a too small MBR gap" do
+            before do
+              # it have to be set here, as mbr_gap in yml set only minimal size and not real one
+              allow(checker.send(:strategy).boot_disk).to receive(:mbr_gap).and_return(0.KiB)
+            end
+
             context "in a plain btrfs setup" do
               let(:scenario) { "dos_btrfs_no_gap" }
 

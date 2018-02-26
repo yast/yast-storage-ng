@@ -48,7 +48,7 @@ describe Y2Storage::BootRequirementsChecker do
       context "with GPT partition table" do
         context "in a partitions-based proposal" do
           context "if there is no GRUB partition" do
-            let(:scenario) { "trivial" }
+            let(:scenario) { "missing_bios_boot" }
 
             it "requires a new GRUB partition" do
               expect(checker.needed_partitions).to contain_exactly(
@@ -58,7 +58,7 @@ describe Y2Storage::BootRequirementsChecker do
           end
 
           context "if there is already a GRUB partition" do
-            let(:scenario) { "missing_bios_boot" }
+            let(:scenario) { "trivial" }
 
             it "does not require any particular volume" do
               expect(checker.needed_partitions).to be_empty
@@ -119,6 +119,11 @@ describe Y2Storage::BootRequirementsChecker do
 
           context "in a LVM-based proposal" do
             context "if the MBR gap has additional space for grubenv" do
+              before do
+                # it have to be set here, as mbr_gap in yml set only minimal size and not real one
+                allow(checker.send(:strategy).boot_disk).to receive(:mbr_gap).and_return(260.KiB)
+              end
+
               let(:scenario) { "dos_btrfs_lvm_enough_gap" }
 
               it "does not require any particular volume" do
@@ -127,6 +132,11 @@ describe Y2Storage::BootRequirementsChecker do
             end
 
             context "if the MBR gap has no additional space" do
+              before do
+                # it have to be set here, as mbr_gap in yml set only minimal size and not real one
+                allow(checker.send(:strategy).boot_disk).to receive(:mbr_gap).and_return(256.KiB)
+              end
+
               let(:scenario) { "dos_btrfs_lvm_min_gap" }
 
               it "requires only a /boot partition" do
@@ -139,6 +149,11 @@ describe Y2Storage::BootRequirementsChecker do
         end
 
         context "with too small MBR gap" do
+          before do
+            # it have to be set here, as mbr_gap in yml set only minimal size and not real one
+            allow(checker.send(:strategy).boot_disk).to receive(:mbr_gap).and_return(0.KiB)
+          end
+
           context "in a partitions-based proposal" do
             context "if proposing root (/) as Btrfs" do
               let(:scenario) { "dos_btrfs_no_gap" }

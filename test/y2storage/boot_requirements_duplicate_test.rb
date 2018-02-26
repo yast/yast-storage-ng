@@ -43,8 +43,9 @@ describe Y2Storage::BootRequirementsChecker do
         subject(:checker) do
           described_class.new(
             fake_devicegraph,
-            planned_devices:
-              [Y2Storage::Planned::Partition.new("/boot/efi", Y2Storage::Filesystems::Type::VFAT)]
+            planned_devices: [
+              Y2Storage::Planned::Partition.new("/boot/efi", Y2Storage::Filesystems::Type::VFAT)
+            ]
           )
         end
 
@@ -97,8 +98,9 @@ describe Y2Storage::BootRequirementsChecker do
         subject(:checker) do
           described_class.new(
             fake_devicegraph,
-            planned_devices:
-              [Y2Storage::Planned::Partition.new("/boot", Y2Storage::Filesystems::Type::EXT2)]
+            planned_devices: [
+              Y2Storage::Planned::Partition.new("/boot", Y2Storage::Filesystems::Type::EXT2)
+            ]
           )
         end
 
@@ -135,7 +137,7 @@ describe Y2Storage::BootRequirementsChecker do
         subject(:checker) do
           planned_partition = Y2Storage::Planned::Partition.new(nil)
           planned_partition.partition_id = Y2Storage::PartitionId::PREP
-          planned_partition.size = 8.MiB
+          planned_partition.min_size = 8.MiB
           described_class.new(
             fake_devicegraph,
             planned_devices: [planned_partition]
@@ -174,11 +176,11 @@ describe Y2Storage::BootRequirementsChecker do
         subject(:checker) do
           described_class.new(
             fake_devicegraph,
-            planned_devices:
-              [Y2Storage::Planned::Partition.new("/boot/zipl", Y2Storage::Filesystems::Type::EXT2)]
+            planned_devices: [
+              Y2Storage::Planned::Partition.new("/boot/zipl", Y2Storage::Filesystems::Type::EXT2)
+            ]
           )
         end
-
 
         it "does not propose another /boot/zipl" do
           expect(checker.needed_partitions).to be_empty
@@ -212,7 +214,7 @@ describe Y2Storage::BootRequirementsChecker do
         subject(:checker) do
           planned_partition = Y2Storage::Planned::Partition.new(nil)
           planned_partition.partition_id = Y2Storage::PartitionId::BIOS_BOOT
-          planned_partition.size = 8.MiB
+          planned_partition.min_size = 8.MiB
           described_class.new(
             fake_devicegraph,
             planned_devices: [planned_partition]
