@@ -130,12 +130,22 @@ module Y2Storage
 
     # Activate devices like multipath, MD and DM RAID, LVM and LUKS. It is not
     # required to have probed the system to call this function. On the other
-    # hand after calling this function the system should be probed.
+    # hand, after calling this function the system should be probed.
     #
-    # @raise [Exception] if error during activation
+    # With the default callbacks, every question about activating a given
+    # technology is forwarded to the user using pop up dialogs. In addition,
+    # the user is asked whether to continue on errors reported by libstorage-ng.
+    #
+    # @param callbacks [Callbacks::Activate]
+    # @return [Boolean] whether activation was successfull, false if
+    #   libstorage-ng found a problem and the corresponding callback returned
+    #   false (i.e. it was decided to abort due to the error)
     def activate(callbacks = nil)
       activate_callbacks = callbacks || Callbacks::Activate.new
       @storage.activate(activate_callbacks)
+      true
+    rescue Storage::Exception
+      false
     end
 
     # Deactivate devices like multipath, MD and DM RAID, LVM and LUKS. It is
@@ -153,11 +163,24 @@ module Y2Storage
     # Invalidates the probed and staging devicegraph. Real probing is
     # only performed when the instance is not for testing.
     #
-    # @raise [Exception] if error during probing
+    # With the default callbacks, the user is asked whether to continue on
+    # each error reported by libstorage-ng.
+    #
+    # If this method returns false, #staging and #probed could be in bad state
+    # (or not be there at all) so they should not be trusted in the subsequent
+    # code.
+    #
+    # @param callbacks [Callbacks::Activate]
+    # @return [Boolean] whether probing was successfull, false if libstorage-ng
+    #   found a problem and the corresponding callback returned false (i.e. it
+    #   was decided to abort due to the error)
     def probe(callbacks = nil)
       probe_callbacks = callbacks || Callbacks::Probe.new
       @storage.probe(probe_callbacks)
       probed_performed
+      true
+    rescue Storage::Exception
+      false
     end
 
     # Probed devicegraph
@@ -231,6 +254,12 @@ module Y2Storage
     # staging devicegraph.
     #
     # Beware: this method can cause data loss
+    #
+    # The user is asked whether to continue on each error reported by
+    # libstorage-ng.
+    #
+    # @return [Boolean] whether commit was successfull, false if libstorage-ng
+    #   found a problem and it was decided to abort due to that
     def commit(force_rw: false)
       # Tell FsSnapshot whether Snapper should be configured later
       Yast2::FsSnapshot.configure_on_install = configure_snapper?
@@ -243,6 +272,8 @@ module Y2Storage
 
       storage.commit(commit_options, callbacks)
       @committed = true
+    rescue Storage::Exception
+      false
     end
 
     # Probes from a yml file instead of doing real probing

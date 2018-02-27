@@ -301,6 +301,20 @@ describe Y2Storage::StorageManager do
       manager.commit(force_rw: true)
     end
 
+    it "returns true if everything goes fine" do
+      expect(manager.commit).to eq true
+    end
+
+    context "if libstorage-ng fails and the user decides to abort" do
+      before do
+        allow(manager.storage).to receive(:commit).and_raise Storage::Exception
+      end
+
+      it "returns false" do
+        expect(manager.commit).to eq false
+      end
+    end
+
     context "during installation" do
       let(:mode) { :installation }
       let(:staging) { double("Y2Storage::Devicegraph", filesystems: filesystems, to_xml: "xml") }
@@ -421,6 +435,20 @@ describe Y2Storage::StorageManager do
       manager.probe
       expect(manager.proposal).to be_nil
     end
+
+    it "returns true if everything goes fine" do
+      expect(manager.probe).to eq true
+    end
+
+    context "if libstorage-ng fails and the user decides to abort" do
+      before do
+        allow(manager.storage).to receive(:probe).and_raise Storage::Exception
+      end
+
+      it "returns false" do
+        expect(manager.probe).to eq false
+      end
+    end
   end
 
   describe "#probe_from_yaml" do
@@ -529,6 +557,20 @@ describe Y2Storage::StorageManager do
       it "starts libstorage-ng activation using given callbacks" do
         expect(manager.storage).to receive(:activate).with(custom_callbacks)
         manager.activate(custom_callbacks)
+      end
+    end
+
+    it "returns true if everything goes fine" do
+      expect(manager.activate).to eq true
+    end
+
+    context "if libstorage-ng fails and the user decides to abort" do
+      before do
+        allow(manager.storage).to receive(:activate).and_raise Storage::Exception
+      end
+
+      it "returns false" do
+        expect(manager.activate).to eq false
       end
     end
   end

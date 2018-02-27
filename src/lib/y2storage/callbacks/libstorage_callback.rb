@@ -25,6 +25,7 @@ require "yast"
 Yast.import "Report"
 Yast.import "Popup"
 Yast.import "Label"
+Yast.import "Mode"
 
 module Y2Storage
   module Callbacks
@@ -64,12 +65,30 @@ module Y2Storage
         log.info "Error details. Message: #{message}. What: #{what}."
 
         question = _("Continue despite the error?")
+        focus = default_answer_to_error ? :focus_yes : :focus_no
         result = Yast::Report.ErrorAnyQuestion(
           Yast::Popup.NoHeadline, "#{message}\n\n#{what}\n\n#{question}",
-          Yast::Label.ContinueButton, Yast::Label.AbortButton, :focus_no
+          Yast::Label.ContinueButton, abort_button_label, focus
         )
         log.info "User answer: #{result}"
         result
+      end
+
+      # Label for the abort button displayed by {#error}
+      #
+      # @return [String]
+      def abort_button_label
+        Yast::Mode.installation ? Yast::Label.AbortInstallationButton : Yast::Label.AbortButton
+      end
+
+      # Default result for {#error}
+      #
+      # This is specially relevant in AutoYaST, since it will be the chosen
+      # answer if the timeout for the question is reached.
+      #
+      # @return [Boolean]
+      def default_answer_to_error
+        true
       end
     end
   end
