@@ -292,7 +292,7 @@ module Y2Partitioner
         return true unless duplicated_label?
 
         # TRANSLATORS: Error message when the given label is already in use.
-        Yast::Popup.Error(_("This volumem label is already in use. Select a different one."))
+        Yast::Popup.Error(_("This volume label is already in use. Select a different one."))
         focus
 
         false
