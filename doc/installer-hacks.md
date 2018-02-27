@@ -65,19 +65,10 @@ equivalent, the old code is simply deleted, not commented.
 
 ## Changes in yast2-installation
 
-* Commented the code that searches for floppy drives during system analysis.
-
-* Commented the code that searches for autoinst.xml in a floppy disk.
-
 * Commented the check for destructive disk operations. As a result, when the
   users confirm they want the installation to actually start, the displayed
   popup will not contain the sentence explaining that some partitions will be
   deleted o formatted.
-
-* No more usage of StorageController, the module that loads additional drivers
-  for technologies like RAID or multipath. As soon as we introduce support for
-  such technologies we will need an object-oriented replacement. Or maybe it's
-  not needed anymore if udev does that job now.
 
 * Commented the code used to remember across executions (self-update) that the
   user canceled multipath activation.
