@@ -77,29 +77,46 @@ describe Y2Storage::Callbacks::Activate do
   end
 
   describe "#multipath" do
-    before do
-      allow(Yast::Popup).to receive(:YesNo).and_return answer
-    end
-    let(:answer) { true }
+    context "if libstorage-ng found no multipath in the system" do
+      let(:mp_detected) { false }
 
-    it "asks the user whether to activate multipath" do
-      expect(Yast::Popup).to receive(:YesNo).once
-      subject.multipath
-    end
+      it "does not ask the user" do
+        expect(Yast::Popup).to_not receive(:YesNo)
+        subject.multipath(mp_detected)
+      end
 
-    context "if the user accepts" do
-      let(:answer) { true }
-
-      it "returns true" do
-        expect(subject.multipath).to eq true
+      it "returns false" do
+        expect(subject.multipath(mp_detected)).to eq false
       end
     end
 
-    context "if the user rejects" do
-      let(:answer) { false }
+    context "if libstorage-ng detected a multipath setup the system" do
+      let(:mp_detected) { true }
 
-      it "returns false" do
-        expect(subject.multipath).to eq false
+      before do
+        allow(Yast::Popup).to receive(:YesNo).and_return answer
+      end
+      let(:answer) { true }
+
+      it "asks the user whether to activate multipath" do
+        expect(Yast::Popup).to receive(:YesNo).once
+        subject.multipath(mp_detected)
+      end
+
+      context "if the user accepts" do
+        let(:answer) { true }
+
+        it "returns true" do
+          expect(subject.multipath(mp_detected)).to eq true
+        end
+      end
+
+      context "if the user rejects" do
+        let(:answer) { false }
+
+        it "returns false" do
+          expect(subject.multipath(mp_detected)).to eq false
+        end
       end
     end
   end

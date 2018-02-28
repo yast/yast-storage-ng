@@ -16,7 +16,7 @@
 #
 
 Name:		yast2-storage-ng
-Version:        4.0.115
+Version:        4.0.117
 Release:	0
 BuildArch:	noarch
 
@@ -26,12 +26,12 @@ Source:		%{name}-%{version}.tar.bz2
 # Yast2::FsSnapshots.configure_on_install=
 Requires:	yast2 >= 4.0.24
 Requires:	yast2-ruby-bindings
-# Storage::probe(const ProbeCallbacks*)
-Requires:	libstorage-ng-ruby >= 3.3.171
+# ActivateCallbacks::multipath signature
+Requires:	libstorage-ng-ruby >= 3.3.181
 
 BuildRequires:	update-desktop-files
-# Storage::probe(const ProbeCallbacks*)
-BuildRequires:	libstorage-ng-ruby >= 3.3.171
+# ActivateCallbacks::multipath signature
+BuildRequires:	libstorage-ng-ruby >= 3.3.181
 BuildRequires:	yast2-ruby-bindings
 BuildRequires:	yast2-devtools
 # yast2-xml dependency is added by yast2 but ignored in the

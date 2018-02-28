@@ -38,7 +38,17 @@ module Y2Storage
         super
       end
 
-      def multipath
+      # Decides whether multipath should be activated
+      #
+      # The argument indicates whether libstorage-ng detected a multipath setup
+      # in the system. Beware such detection is not reliable (see bsc#1082542).
+      #
+      # @param looks_like_real_multipath [Boolean] true if the system seems to
+      #   contain a Multipath
+      # @return [Boolean]
+      def multipath(looks_like_real_multipath)
+        return false unless looks_like_real_multipath
+
         Yast::Popup.YesNo(
           _(
             "The system seems to have multipath hardware.\n"\
