@@ -25,7 +25,8 @@ require "y2storage/hwinfo_reader"
 
 describe Y2Storage::HWInfoReader do
   let(:reader) { described_class.instance }
-  let(:hwinfo_output) { File.read(File.join(DATA_PATH, "hwinfo.txt")) }
+  let(:hwinfo_output) { File.read(File.join(DATA_PATH, hwinfo_file)) }
+  let(:hwinfo_file) { "hwinfo.txt" }
 
   before do
     allow(Yast::Execute).to receive(:on_target!)
@@ -65,6 +66,30 @@ describe Y2Storage::HWInfoReader do
         .once
       reader.for_device("/dev/sda")
       reader.for_device("/dev/sda")
+    end
+
+    it "returns nil for non-existing device names" do
+      data = reader.for_device("/dev/nothing")
+      expect(data).to be_nil
+    end
+
+    context "when the system contains some zfcp multipath device" do
+      let(:hwinfo_file) { "hwinfo_bug1982536.txt" }
+
+      # Regression test for bug#1982536
+      it "does not raise any exception" do
+        expect { reader.for_device("/dev/sda") }.to_not raise_error
+      end
+
+      it "returns hardware information for the given device" do
+        data = reader.for_device("/dev/sda")
+        expect(data).to be_a(OpenStruct)
+        expect(data.to_h)
+          .to include(bus:              "SCSI",
+                      driver_modules:   ["zfcp", "sd_mod"],
+                      driver:           ["zfcp", "sd"],
+                      geometry_logical: "CHS 20480/64/32")
+      end
     end
   end
 

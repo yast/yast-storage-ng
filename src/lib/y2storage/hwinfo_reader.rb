@@ -87,6 +87,8 @@ module Y2Storage
 
       lines.each_slice(2).each_with_object({}) do |(header, body), data|
         details = data_from_body(body)
+        next if details.device_file.nil?
+
         details.bus = header[BUS_REGEXP, 1]
         details.device_file.each { |n| data[n] = details }
       end
