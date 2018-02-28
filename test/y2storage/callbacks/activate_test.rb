@@ -84,14 +84,14 @@ describe Y2Storage::Callbacks::Activate do
 
     it "asks the user whether to activate multipath" do
       expect(Yast::Popup).to receive(:YesNo).once
-      subject.multipath
+      subject.multipath(true)
     end
 
     context "if the user accepts" do
       let(:answer) { true }
 
       it "returns true" do
-        expect(subject.multipath).to eq true
+        expect(subject.multipath(true)).to eq true
       end
     end
 
@@ -99,7 +99,7 @@ describe Y2Storage::Callbacks::Activate do
       let(:answer) { false }
 
       it "returns false" do
-        expect(subject.multipath).to eq false
+        expect(subject.multipath(true)).to eq false
       end
     end
   end
