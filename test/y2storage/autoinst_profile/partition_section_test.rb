@@ -44,21 +44,33 @@ describe Y2Storage::AutoinstProfile::PartitionSection do
       expect(section_for("dasdb1")).to be_a Y2Storage::AutoinstProfile::PartitionSection
     end
 
-    it "correctly initializes #partition_nr" do
-      expect(section_for("dasdb1").partition_nr).to eq 1
-      expect(section_for("sdc3").partition_nr).to eq 3
+    context "given a partition" do
+      it "correctly initializes #partition_nr" do
+        expect(section_for("dasdb1").partition_nr).to eq 1
+        expect(section_for("sdc3").partition_nr).to eq 3
+      end
+
+      it "initializes #partition_type to 'primary' for primary partitions" do
+        expect(section_for("sdd3").partition_type).to eq "primary"
+      end
+
+      it "initializes #partition_type to nil for logical partitions" do
+        expect(section_for("sdd4").partition_type).to be_nil
+      end
+
+      it "initializes #size to the exact device size in bytes" do
+        expect(section_for("sdb1").size).to eq Y2Storage::DiskSize.GiB(780).to_i.to_s
+      end
+
+      it "initializes the #lvm_group" do
+        expect(section_for("sdj1").lvm_group).to eq("vg0")
+      end
     end
 
-    it "initializes #partition_type to 'primary' for primary partitions" do
-      expect(section_for("sdd3").partition_type).to eq "primary"
-    end
-
-    it "initializes #partition_type to nil for logical partitions" do
-      expect(section_for("sdd4").partition_type).to be_nil
-    end
-
-    it "initializes #size to the exact device size in bytes" do
-      expect(section_for("sdb1").size).to eq Y2Storage::DiskSize.GiB(780).to_i.to_s
+    context "given a logical volume" do
+      it "initializes the #lv_name" do
+        expect(section_for("vg0/lv1").lv_name).to eq("lv1")
+      end
     end
 
     context "when filesystem is btrfs" do

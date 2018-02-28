@@ -35,6 +35,10 @@ describe Y2Storage::AutoinstProfile::DriveSection do
     Y2Storage::BlkDevice.find_by_name(fake_devicegraph, "/dev/#{name}")
   end
 
+  def lvm_vg(name)
+    fake_devicegraph.lvm_vgs.find { |v| v.vg_name == name }
+  end
+
   describe ".new_from_hashes" do
     context "when type is not specified" do
       let(:root) { { "mount" => "/" } }
@@ -91,8 +95,21 @@ describe Y2Storage::AutoinstProfile::DriveSection do
       expect(described_class.new_from_storage(device("sda"))).to eq nil
     end
 
+    it "returns nil for a volume group with no logical volumes" do
+      expect(described_class.new_from_storage(lvm_vg("empty_vg"))).to eq nil
+    end
+
     it "returns nil for a disk or DASD with no exportable partitions" do
       expect(described_class.new_from_storage(device("sdb"))).to eq nil
+    end
+
+    it "returns a DriveSection object for a disk or DASD with exportable partitions" do
+      expect(described_class.new_from_storage(device("dasdb"))).to be_a described_class
+      expect(described_class.new_from_storage(device("sdc"))).to be_a described_class
+    end
+
+    it "returns a DriveSection object for a volume group with logical volumes" do
+      expect(described_class.new_from_storage(lvm_vg("vg0"))).to be_a described_class
     end
 
     it "returns a DriveSection object for a disk or DASD with exportable partitions" do
@@ -201,6 +218,41 @@ describe Y2Storage::AutoinstProfile::DriveSection do
       context "when snapshots are not enabled for any filesystem" do
         it "initializes 'enable_snapshots' to false" do
           section = described_class.new_from_storage(device("sdh"))
+          expect(section.enable_snapshots).to eq(false)
+        end
+      end
+    end
+
+    context "given a volume group" do
+      it "initializes #type to :CT_LVM for LVM volume groups" do
+        expect(described_class.new_from_storage(lvm_vg("vg0")).type).to eq :CT_LVM
+      end
+
+      it "initializes the list of logical volumes" do
+        vg = described_class.new_from_storage(lvm_vg("vg0"))
+        expect(vg.partitions).to contain_exactly(
+          an_object_having_attributes(lv_name: "lv1")
+        )
+      end
+
+      it "initializes #pesize to the VG extent size" do
+        expect(described_class.new_from_storage(lvm_vg("vg0")).pesize).to eq "4 MiB"
+      end
+
+      it "does not initializes 'use'" do
+        expect(described_class.new_from_storage(lvm_vg("vg0")).use).to be_nil
+      end
+
+      context "when snapshots are enabled for some filesystem" do
+        it "initializes 'enable_snapshots' to true" do
+          section = described_class.new_from_storage(lvm_vg("vg0"))
+          expect(section.enable_snapshots).to eq(true)
+        end
+      end
+
+      context "when snapshots are not enabled for any filesystem" do
+        it "initializes 'enable_snapshots' to false" do
+          section = described_class.new_from_storage(lvm_vg("vg1"))
           expect(section.enable_snapshots).to eq(false)
         end
       end

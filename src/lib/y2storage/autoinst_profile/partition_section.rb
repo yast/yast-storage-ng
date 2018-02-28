@@ -167,7 +167,7 @@ module Y2Storage
       def self.new_from_storage(device)
         result = new
         # So far, only real partitions are supported
-        result.init_from_partition(device)
+        result.init_from_device(device)
         result
       end
 
@@ -229,22 +229,25 @@ module Y2Storage
       # the implementation of this class for details.
       #
       # @param partition [Partition]
-      def init_from_partition(partition)
-        @create = !NO_CREATE_IDS.include?(partition.id)
-        @partition_nr = partition.number
-        @partition_type = "primary" if partition.type.is?(:primary)
-        @partition_id = partition_id_from(partition)
+      def init_from_device(device)
+        @create = true
         @resize = false
 
-        init_encryption_fields(partition)
-        init_filesystem_fields(partition)
+        if device.is_a?(LvmLv)
+          init_lv_fields(device)
+        else
+          init_partition_fields(device)
+        end
+
+        init_encryption_fields(device)
+        init_filesystem_fields(device)
 
         # NOTE: The old AutoYaST exporter does not report the real size here.
         # It intentionally reports one cylinder less. Cylinders is an obsolete
         # unit (that equals to 8225280 bytes in my experiments).
         # According to the comments there, that was done due to bnc#415005 and
         # bnc#262535.
-        @size = partition.size.to_i.to_s if create
+        @size = device.size.to_i.to_s if create
       end
 
       def to_hashes
@@ -272,6 +275,18 @@ module Y2Storage
         id.to_i_legacy
       end
 
+      def init_partition_fields(partition)
+        @create = !NO_CREATE_IDS.include?(partition.id)
+        @partition_nr = partition.number
+        @partition_type = "primary" if partition.type.is?(:primary)
+        @partition_id = partition_id_from(partition)
+        @lvm_group = partition.lvm_pv.lvm_vg.basename if partition.lvm_pv && partition.lvm_pv.lvm_vg
+      end
+
+      def init_lv_fields(lv)
+        @lv_name = lv.basename
+      end
+
       def init_encryption_fields(partition)
         return unless partition.encrypted?
 
@@ -285,7 +300,7 @@ module Y2Storage
         fs = partition.filesystem
         return unless fs
 
-        @format = true unless NO_FORMAT_IDS.include?(partition.id)
+        @format = true if partition.respond_to?(:id) && !NO_FORMAT_IDS.include?(partition.id)
         @filesystem = fs.type.to_sym
         @label = fs.label unless fs.label.empty?
         @mkfs_options = fs.mkfs_options unless fs.mkfs_options.empty?

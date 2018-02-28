@@ -137,39 +137,21 @@ module Y2Storage
       def self.new_from_storage(device)
         result = new
         # So far, only disks (and DASD) are supported
-        initialized = result.init_from_disk(device)
+        initialized = result.init_from_device(device)
         initialized ? result : nil
       end
 
       # Method used by {.new_from_storage} to populate the attributes when
-      # cloning a disk device.
+      # cloning a disk or DASD device.
       #
       # As usual, it keeps the behavior of the old clone functionality, check
       # the implementation of this class for details.
       #
-      # @param disk [Y2Storage::Disk, Y2Storage::Dasd] Disk
-      def init_from_disk(disk)
-        return false if disk.partitions.empty?
-
-        @type = :CT_DISK
-        @device = Yast::Arch.s390 ? disk.udev_full_paths.first : disk.name
-        @disklabel = disk.partition_table.type.to_s
-
-        @partitions = partitions_from_disk(disk)
-        return false if @partitions.empty?
-
-        @enable_snapshots = enabled_snapshots?(disk)
-        @partitions.each { |i| i.create = false } if reuse_partitions?(disk)
-
-        # Same logic followed by the old exporter
-        @use =
-          if disk.partitions.any? { |i| windows?(i) }
-            @partitions.map(&:partition_nr)
-          else
-            "all"
-          end
-
-        true
+      # @param device [BlkDevice] a block device that can be cloned into a
+      #   <drive> section, like a disk, a DASD or an LVM volume group.
+      # @return [Boolean] if attributes were successfully read; false otherwise.
+      def init_from_device(device)
+        device.is_a?(LvmVg) ? init_from_vg(device) : init_from_disk(device)
       end
 
       # Device name to be used for the real MD device
@@ -204,15 +186,74 @@ module Y2Storage
 
     protected
 
+      # Method used by {.new_from_storage} to populate the attributes when
+      # cloning a disk or DASD device.
+      #
+      # As usual, it keeps the behavior of the old clone functionality, check
+      # the implementation of this class for details.
+      #
+      # @param disk [Y2Storage::Disk, Y2Storage::Dasd] Disk
+      def init_from_disk(disk)
+        return false if disk.partitions.empty?
+
+        @type = :CT_DISK
+        @device = Yast::Arch.s390 ? disk.udev_full_paths.first : disk.name
+        @disklabel = disk.partition_table.type.to_s
+
+        @partitions = partitions_from_disk(disk)
+        return false if @partitions.empty?
+
+        @enable_snapshots = enabled_snapshots?(disk.partitions.map(&:filesystem))
+        @partitions.each { |i| i.create = false } if reuse_partitions?(disk)
+
+        # Same logic followed by the old exporter
+        @use =
+          if disk.partitions.any? { |i| windows?(i) }
+            @partitions.map(&:partition_nr)
+          else
+            "all"
+          end
+
+        true
+      end
+
+      # Method used by {.new_from_storage} to populate the attributes when
+      # cloning a volume group.
+      #
+      # As usual, it keeps the behavior of the old clone functionality, check
+      # the implementation of this class for details.
+      #
+      # @param vg [Y2Storage::LvmVg] Volume group
+      def init_from_vg(vg)
+        return false if vg.lvm_lvs.empty?
+
+        @type = :CT_LVM
+        @device = vg.name
+
+        @partitions = partitions_from_vg(vg)
+        return false if @partitions.empty?
+
+        @enable_snapshots = enabled_snapshots?(vg.lvm_lvs.map(&:filesystem))
+        @pesize = vg.extent_size.to_s
+        true
+      end
+
       def partitions_from_hash(hash)
         return [] unless hash["partitions"]
         hash["partitions"].map { |part| PartitionSection.new_from_hashes(part, self) }
       end
 
       def partitions_from_disk(disk)
-        disk.partitions.sort_by(&:number).each_with_object([]) do |storage_partition, result|
-          next if skip_partition?(storage_partition)
+        collection = disk.partitions.reject { |p| skip_partition?(p) }
+        partitions_from_collection(collection.sort_by(&:number))
+      end
 
+      def partitions_from_vg(vg)
+        partitions_from_collection(vg.lvm_lvs)
+      end
+
+      def partitions_from_collection(collection)
+        collection.each_with_object([]) do |storage_partition, result|
           partition = PartitionSection.new_from_storage(storage_partition)
           next unless partition
           result << partition
@@ -304,15 +345,14 @@ module Y2Storage
         use.split(",").select { |n| n =~ /\d+/ }.map(&:to_i)
       end
 
-      # Determine whether snapshots are enabled for the current drive
+      # Determine whether snapshots are enabled
       #
       # Currently AutoYaST does not support enabling/disabling snapshots
-      # for a partition but for the whole disk.
+      # for a partition but for the whole disk/volume group.
       #
-      # @param disk [Y2Storage::Disk, Y2Storage::Dasd] Disk
+      # @param disk [Array<Y2Storage::Filesystem>] Filesystems to evaluate
       # @return [Boolean] true if snapshots are enabled
-      def enabled_snapshots?(disk)
-        filesystems = disk.partitions.map(&:filesystem)
+      def enabled_snapshots?(filesystems)
         filesystems.any? { |f| f.respond_to?(:snapshots?) && f.snapshots? }
       end
     end
