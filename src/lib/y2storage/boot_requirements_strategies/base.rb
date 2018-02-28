@@ -129,8 +129,8 @@ module Y2Storage
         filesystem = devicegraph.filesystems.find { |f| f.mount_path == "/boot" }
         return false unless filesystem
 
-        # FIXME: it does not count fs size and other and it is just hard coded.
-        filesystem.detect_space_info.free < boot_volume.min_size
+        # it is not 100% exact for new fs, but good estimation
+        filesystem.space_info.free < boot_volume.min_size
       end
 
       def boot_partition_missing?
