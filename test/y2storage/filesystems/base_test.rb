@@ -32,13 +32,13 @@ describe Y2Storage::Filesystems::Base do
   let(:blk_device) { Y2Storage::BlkDevice.find_by_name(fake_devicegraph, "/dev/sda2") }
   subject(:filesystem) { blk_device.blk_filesystem }
 
-  describe "#space_info" do
+  describe "#free_space" do
     context "#detect_space_info succeed" do
-      it "return result of #detect_space_info" do
-        fake_space = double
+      it "return #detect_space_info#free" do
+        fake_space = double(free: Y2Storage::DiskSize.MiB(5))
         allow(filesystem).to receive(:detect_space_info).and_return(fake_space)
 
-        expect(filesystem.space_info).to eq fake_space
+        expect(filesystem.free_space).to eq Y2Storage::DiskSize.MiB(5)
       end
     end
 
@@ -48,36 +48,31 @@ describe Y2Storage::Filesystems::Base do
       end
 
       context "it is block filesystem" do
-        it "returns ManualSpaceInfo with size of blk device" do
-          expect(filesystem.space_info.size).to eq blk_device.size
-        end
-
         context "detect_resize_info succeed" do
-          it "returns ManualSpaceInfo with used equal to minimal resize" do
+          it "returns size minus minimum resize size" do
             size = Y2Storage::DiskSize.MiB(10)
             allow(filesystem).to receive(:detect_resize_info).and_return(double(min_size: size))
 
-            expect(filesystem.space_info.used).to eq size
+            expect(filesystem.free_space).to eq(blk_device.size - size)
           end
         end
 
         context "detect_resize_info failed" do
-          it "returns ManualSpaceInfo with used equal to zero" do
+          it "returns zero" do
             size = Y2Storage::DiskSize.MiB(0)
             allow(filesystem).to receive(:detect_resize_info).and_raise(Storage::Exception, "Error")
 
-            expect(filesystem.space_info.used).to eq size
+            expect(filesystem.free_space).to eq size
           end
         end
       end
 
       context "it is not block filesystem" do
-        it "returns ManualSpaceInfo with size and used equal to zero" do
+        it "returns zero" do
           allow(filesystem).to receive(:is?).and_return(false)
 
           size = Y2Storage::DiskSize.MiB(0)
-          expect(filesystem.space_info.used).to eq size
-          expect(filesystem.space_info.size).to eq size
+          expect(filesystem.free_space).to eq size
         end
       end
     end

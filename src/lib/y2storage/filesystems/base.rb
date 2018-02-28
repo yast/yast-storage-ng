@@ -21,7 +21,6 @@
 
 require "y2storage/storage_class_wrapper"
 require "y2storage/mountable"
-require "y2storage/manual_space_info"
 require "y2storage/filesystems/type"
 
 module Y2Storage
@@ -56,26 +55,20 @@ module Y2Storage
       #   @return [SpaceInfo]
       storage_forward :detect_space_info, as: "SpaceInfo"
 
-      # smarted space info including caching and handling not probed devices.
-      #   @return [SpaceInfo]
-      def space_info
-        return @space_info if @space_info
+      # smart detection of free space
+      # it try to use detect_space_info and cache it. But if it failed, it try
+      # to compute it from detect_resize_info. If it failed or filesystem is
+      # not block filesystem, then it return zero size.
+      #
+      # @return [DiskSize]
+      def free_space
+        return @free_space if @free_space
 
         begin
-          @space_info = detect_space_info
+          @free_space = detect_space_info.free
         rescue Storage::Exception
           # ok, we do not know it, so we try to detect ourself
-          if is?(:blk_filesystem)
-            size = blk_devices.map(&:size).reduce(:+)
-            begin
-              used = detect_resize_info.min_size
-            rescue Storage::Exception
-              used = DiskSize.new(0)
-            end
-            @space_info = ManualSpaceInfo.new(size, used)
-          else
-            @space_info = ManualSpaceInfo.new(DiskSize.new(0), DiskSize.new(0))
-          end
+          @free_space = detect_free_space
         end
       end
 
@@ -88,6 +81,17 @@ module Y2Storage
 
       def types_for_is
         super << :filesystem
+      end
+
+      FREE_SPACE_FALLBACK = DiskSize.new(0)
+      def detect_free_space
+        return FREE_SPACE_FALLBACK unless is?(:blk_filesystem)
+
+        size = blk_devices.map(&:size).reduce(:+)
+        used = detect_resize_info.min_size
+        size - used
+      rescue Storage::Exception
+        return FREE_SPACE_FALLBACK
       end
     end
   end

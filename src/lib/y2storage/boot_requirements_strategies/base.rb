@@ -130,7 +130,7 @@ module Y2Storage
         return false unless filesystem
 
         # it is not 100% exact for new fs, but good estimation
-        filesystem.space_info.free < boot_volume.min_size
+        filesystem.free_space < boot_volume.min_size
       end
 
       def boot_partition_missing?
