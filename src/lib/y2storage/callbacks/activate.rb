@@ -38,7 +38,8 @@ module Y2Storage
         super
       end
 
-      def multipath
+      def multipath(looks_like_real_multipath)
+        return false if !looks_like_real_multipath
         Yast::Popup.YesNo(
           _(
             "The system seems to have multipath hardware.\n"\
