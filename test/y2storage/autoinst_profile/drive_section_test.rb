@@ -244,7 +244,7 @@ describe Y2Storage::AutoinstProfile::DriveSection do
       end
 
       it "initializes #pesize to the VG extent size" do
-        expect(described_class.new_from_storage(lvm_vg("vg0")).pesize).to eq "4 MiB"
+        expect(described_class.new_from_storage(lvm_vg("vg0")).pesize).to eq "4194304"
       end
 
       it "does not initializes 'use'" do

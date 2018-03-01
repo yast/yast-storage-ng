@@ -142,7 +142,7 @@ module Y2Storage
       end
 
       # Method used by {.new_from_storage} to populate the attributes when
-      # cloning a disk or DASD device.
+      # cloning a device.
       #
       # As usual, it keeps the behavior of the old clone functionality, check
       # the implementation of this class for details.
@@ -151,11 +151,10 @@ module Y2Storage
       #   <drive> section, like a disk, a DASD or an LVM volume group.
       # @return [Boolean] if attributes were successfully read; false otherwise.
       def init_from_device(device)
-        case device
-        when LvmVg
-          init_from_vg(device)
-        when Md
+        if device.is?(:md)
           init_from_md(device)
+        elsif device.is?(:lvm_vg)
+          init_from_vg(device)
         else
           init_from_disk(device)
         end
@@ -200,6 +199,7 @@ module Y2Storage
       # the implementation of this class for details.
       #
       # @param disk [Y2Storage::Disk, Y2Storage::Dasd] Disk
+      # @return [Boolean]
       def init_from_disk(disk)
         return false if disk.partitions.empty?
 
@@ -227,31 +227,29 @@ module Y2Storage
       # Method used by {.new_from_storage} to populate the attributes when
       # cloning a volume group.
       #
-      # As usual, it keeps the behavior of the old clone functionality, check
-      # the implementation of this class for details.
-      #
       # @param vg [Y2Storage::LvmVg] Volume group
+      # @return [Boolean]
       def init_from_vg(vg)
         return false if vg.lvm_lvs.empty?
 
         @type = :CT_LVM
         @device = vg.name
 
-        @partitions = partitions_from_vg(vg)
+        @partitions = partitions_from_collection(vg.lvm_lvs)
         return false if @partitions.empty?
 
         @enable_snapshots = enabled_snapshots?(vg.lvm_lvs.map(&:filesystem))
-        @pesize = vg.extent_size.to_s
+        @pesize = vg.extent_size.to_i.to_s
         true
       end
 
       # Method used by {.new_from_storage} to populate the attributes when
       # cloning a MD RAID.
       #
-      # As usual, it keeps the behavior of the old clone functionality, check
-      # the implementation of this class for details.
+      # AutoYaST does not support multiple partitions on a MD RAID.
       #
       # @param vg [Y2Storage::Md] RAID
+      # @return [Boolean]
       def init_from_md(md)
         @type = :CT_MD
         @device = "/dev/md"
@@ -268,10 +266,6 @@ module Y2Storage
       def partitions_from_disk(disk)
         collection = disk.partitions.reject { |p| skip_partition?(p) }
         partitions_from_collection(collection.sort_by(&:number))
-      end
-
-      def partitions_from_vg(vg)
-        partitions_from_collection(vg.lvm_lvs)
       end
 
       def partitions_from_collection(collection)
