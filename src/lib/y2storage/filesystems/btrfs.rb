@@ -80,6 +80,20 @@ module Y2Storage
         true
       end
 
+      # Convert path to canonical form.
+      #
+      # That is, a single slash between elements. No final slash except for "/".
+      #
+      # @param path [String] subvolume path
+      #
+      # @return [String] sanitized subvolume path
+      #
+      def canonical_subvolume_name(path)
+        path = path.squeeze("/")
+        path = path.chomp("/") if path != "/"
+        path
+      end
+
       # Check if a subvolume can be created.
       #
       # It can always be created if we're going to create the whole file
@@ -106,7 +120,8 @@ module Y2Storage
       # @return [Array<BtrfsSubvolume>]
       #
       def subvolume_descendants(path)
-        path += "/"
+        path = canonical_subvolume_name(path)
+        path += "/" unless path.end_with?("/")
         btrfs_subvolumes.find_all { |sv| sv.path.start_with?(path) }
       end
 
@@ -149,7 +164,9 @@ module Y2Storage
         devicegraph.remove_btrfs_subvolume(subvolume)
       end
 
-      # Create a new btrfs subvolume for the filesystem
+      # Creates a new btrfs subvolume for the filesystem
+      #
+      # If the subvolume already exists, returns it.
       #
       # @note The subvolume mount point is generated from the filesystem mount point
       # and the subvolume path.
@@ -162,6 +179,8 @@ module Y2Storage
       # @return [BtrfsSubvolume, nil] new subvolume
       #
       def create_btrfs_subvolume(path, nocow)
+        path = canonical_subvolume_name(path)
+
         subvolume = find_btrfs_subvolume_by_path(path)
         return subvolume if subvolume
 
@@ -453,7 +472,7 @@ module Y2Storage
       #
       # @return [BtrfsSubvolume] parent subvolume
       #
-      def best_match(path)
+      def suitable_parent_subvolume(path)
         while path.include?("/")
           path = path.gsub(/\/[^\/]*$/, "")
           subvolume = find_btrfs_subvolume_by_path(path)
@@ -514,7 +533,7 @@ module Y2Storage
       # @return [BtrfsSubvolume] new subvolume
       #
       def create_btrfs_subvolume_nochecks(path, nocow)
-        parent_subvolume = best_match(path)
+        parent_subvolume = suitable_parent_subvolume(path)
 
         log.info "creating subvolume #{path} at #{parent_subvolume.path}"
 
