@@ -47,7 +47,7 @@ describe Y2Storage::Filesystems::Base do
         allow(filesystem).to receive(:detect_space_info).and_raise(Storage::Exception, "error")
       end
 
-      context "it is block filesystem" do
+      context "it is on block devices" do
         context "detect_resize_info succeed" do
           it "returns size minus minimum resize size" do
             size = Y2Storage::DiskSize.MiB(10)
@@ -59,20 +59,20 @@ describe Y2Storage::Filesystems::Base do
 
         context "detect_resize_info failed" do
           it "returns zero" do
-            size = Y2Storage::DiskSize.MiB(0)
             allow(filesystem).to receive(:detect_resize_info).and_raise(Storage::Exception, "Error")
 
-            expect(filesystem.free_space).to eq size
+            expect(filesystem.free_space).to be_zero
           end
         end
       end
 
-      context "it is not block filesystem" do
-        it "returns zero" do
-          allow(filesystem).to receive(:is?).and_return(false)
+      context "it is not on block device" do
+        let(:scenario) { "nfs1.xml" }
+        subject(:filesystem) { fake_devicegraph.filesystems.find { |f| f.mount_path == "/test1" } }
 
-          size = Y2Storage::DiskSize.MiB(0)
-          expect(filesystem.free_space).to eq size
+        it "returns zero" do
+
+          expect(filesystem.free_space).to be_zero
         end
       end
     end
