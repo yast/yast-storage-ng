@@ -1,3 +1,8 @@
+Thu Mar  1 15:20:35 UTC 2018 - shundhammer@suse.com
+
+- Use default swap priority, not 42 (bsc#1066077)
+- 4.0.120
+
 -------------------------------------------------------------------
 Thu Mar  1 14:48:34 UTC 2018 - jreidinger@suse.com
 
