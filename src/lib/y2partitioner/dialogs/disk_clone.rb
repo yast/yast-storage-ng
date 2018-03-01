@@ -21,11 +21,10 @@
 
 require "yast"
 require "cwm"
+require "yast2/popup"
 require "y2partitioner/dialogs/popup"
 require "y2partitioner/device_graphs"
 require "y2partitioner/confirm_recursive_delete"
-
-Yast.import "Popup"
 
 module Y2Partitioner
   module Dialogs
@@ -88,7 +87,7 @@ module Y2Partitioner
         def validate
           return confirm? if selected_devices?
 
-          Yast::Popup.Error(_("Select a target disk for creating a clone"))
+          Yast2::Popup.show(_("Select a target disk for creating a clone"), headline: :error)
           false
         end
 

@@ -50,6 +50,7 @@ describe Y2Partitioner::Dialogs::DiskClone do
 
     before do
       allow(subject).to receive(:value).and_return(selected_devices)
+      allow(Yast2::Popup).to receive(:show)
     end
 
     let(:selected_devices) { [] }
@@ -65,7 +66,7 @@ describe Y2Partitioner::Dialogs::DiskClone do
         let(:selected_devices) { [] }
 
         it "shows an error popup" do
-          expect(Yast::Popup).to receive(:Error)
+          expect(Yast2::Popup).to receive(:show)
           subject.validate
         end
 

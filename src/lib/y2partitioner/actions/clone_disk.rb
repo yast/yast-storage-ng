@@ -21,10 +21,9 @@
 
 require "yast"
 require "yast/i18n"
+require "yast2/popup"
 require "y2partitioner/dialogs/disk_clone"
 require "y2partitioner/actions/controllers/disk_device"
-
-Yast.import "Popup"
 
 module Y2Partitioner
   module Actions
@@ -78,7 +77,7 @@ module Y2Partitioner
         error = partition_table_error || suitable_devices_error
         return true if error.nil?
 
-        Yast::Popup.Error(error)
+        Yast2::Popup.show(error, headline: :error)
 
         false
       end

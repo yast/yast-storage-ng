@@ -37,9 +37,13 @@ describe Y2Partitioner::Actions::CloneDisk do
   let(:current_graph) { Y2Partitioner::DeviceGraphs.instance.current }
 
   describe "#run" do
+    before do
+      allow(Yast2::Popup).to receive(:show)
+    end
+
     RSpec.shared_examples "validation_error" do
       it "shows an error popup" do
-        expect(Yast::Popup).to receive(:Error)
+        expect(Yast2::Popup).to receive(:show)
         subject.run
       end
 
