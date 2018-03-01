@@ -36,6 +36,24 @@ describe Y2Partitioner::Actions::Controllers::DiskDevice do
 
   let(:scenario) { "mixed_disks_clone.yml" }
 
+  describe "#initialize" do
+    context "when the given device is a disk device" do
+      let(:device_name) { "/dev/sda" }
+
+      it "does not raise an exception" do
+        expect { described_class.new(device) }.to_not raise_error
+      end
+    end
+
+    context "when the given device is not a disk device" do
+      let(:device_name) { "/dev/sda1" }
+
+      it "raises an exception" do
+        expect { described_class.new(device) }.to raise_error(TypeError)
+      end
+    end
+  end
+
   describe "#partition_table?" do
     context "when the current device has no partition table" do
       let(:device_name) { "/dev/sdd" }

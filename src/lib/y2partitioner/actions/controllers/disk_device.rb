@@ -34,8 +34,7 @@ module Y2Partitioner
       class DiskDevice
         # Current disk device
         #
-        # @return [Y2Storage::BlkDevice] it should be a disk device,
-        #   (i.e., device#is?(:disk_device) #=> true).
+        # @return [Y2Storage::BlkDevice] a disk device
         attr_reader :device
 
         # @return [Array<Y2Storage::Partitionable>]
@@ -43,9 +42,13 @@ module Y2Partitioner
 
         # Constructor
         #
-        # @param device [Y2Storage::BlkDevice] it should be a disk device,
+        # @raise [TypeError] if device is not a disk device.
+        #
+        # @param device [Y2Storage::BlkDevice] it has to be a disk device,
         #   (i.e., device#is?(:disk_device) #=> true).
         def initialize(device)
+          raise(TypeError, "param device has to be a disk device") unless device.is?(:disk_device)
+
           @device = device
           @selected_devices_for_cloning = []
         end
