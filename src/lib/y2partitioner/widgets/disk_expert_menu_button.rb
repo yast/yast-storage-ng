@@ -74,13 +74,13 @@ module Y2Partitioner
 
       # @see Y2Partitioner::Actions::CreatePartitionTable
       def create_partition_table
-        log.info("User selected 'create new partition table' for #{@disk.name}")
+        log.info("User selected 'create new partition table' for #{@disk.inspect}")
         Actions::CreatePartitionTable.new(@disk.name).run
       end
 
       # @see Y2Partitioner::Actions::CloneDisk
       def clone_disk
-        log.info("User selected 'clone this disk' for #{@disk.name}")
+        log.info("User selected 'clone this disk' for #{@disk.inspect}")
         Actions::CloneDisk.new(@disk).run
       end
     end

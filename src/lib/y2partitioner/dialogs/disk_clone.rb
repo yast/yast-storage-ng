@@ -141,7 +141,7 @@ module Y2Partitioner
         #
         # @return [Boolean]
         def selected_devices?
-          !selected_devices.empty?
+          selected_devices.any?
         end
 
         # All selected devices
