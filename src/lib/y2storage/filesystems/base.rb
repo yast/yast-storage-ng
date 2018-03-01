@@ -45,15 +45,34 @@ module Y2Storage
       # @!method detect_space_info
       #   Information about the free space on a device.
       #
-      #   If the filesystem already exists on the disk (i.e., in the probed
+      #   The filesystem has to exists on the disk (i.e., in the probed
       #   devicegraph), this will mount it and then call the "df" command.
       #   Since both operations are expensive, caching this value is advised if
       #   it is needed repeatedly.
       #
-      #   @raise [Storage::Exception] if the mentioned temporary mount operation fails
+      #   @raise [Storage::Exception] if the filesystem couldn't be mounted
+      #     (e.g. it does not exist in the system or mount command failed)
       #
       #   @return [SpaceInfo]
       storage_forward :detect_space_info, as: "SpaceInfo"
+
+      # Smart detection of free space
+      #
+      # It tries to use detect_space_info and caches it. But if it fails, it tries
+      # to compute it from resize_info. If it fails again or filesystem is
+      # not a block filesystem, then it returns zero size.
+      #
+      # @return [DiskSize]
+      def free_space
+        return @free_space if @free_space
+
+        begin
+          @free_space = detect_space_info.free
+        rescue Storage::Exception
+          # ok, we do not know it, so we try to detect ourself
+          @free_space = compute_free_space
+        end
+      end
 
       #   @return [Boolean]
       def in_network?
@@ -64,6 +83,20 @@ module Y2Storage
 
       def types_for_is
         super << :filesystem
+      end
+
+      FREE_SPACE_FALLBACK = DiskSize.zero
+      def compute_free_space
+        # e.g. nfs where blk_devices cannot be queried
+        return FREE_SPACE_FALLBACK unless respond_to?(:blk_devices)
+
+        size = blk_devices.map(&:size).reduce(:+)
+        used = resize_info.min_size
+        size - used
+      rescue Storage::Exception
+        # it is questionable if this is correct behavior when resize_info failed,
+        # but there is high chance we can't use it with libstorage, so better act like zero device.
+        FREE_SPACE_FALLBACK
       end
     end
   end
