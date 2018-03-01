@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Thu Mar  1 14:48:34 UTC 2018 - jreidinger@suse.com
+
+- Do not crash for separate /boot which does not exists yet
+  (bsc#1078774
+- 4.0.119
+
+-------------------------------------------------------------------
 Thu Mar  1 08:17:01 UTC 2018 - jlopez@suse.com
 
 - Partitioner: allow to clone a disk (part of fate#318196).
