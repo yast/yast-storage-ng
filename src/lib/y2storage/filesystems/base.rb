@@ -95,8 +95,8 @@ module Y2Storage
         size - used
       rescue Storage::Exception
         # it is questionable if this is correct behavior when resize_info failed,
-        # but there is high chance we can use it with libstorage, so better act like zero device.
-        return FREE_SPACE_FALLBACK
+        # but there is high chance we can't use it with libstorage, so better act like zero device.
+        FREE_SPACE_FALLBACK
       end
     end
   end
