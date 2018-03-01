@@ -62,10 +62,8 @@ describe Y2Partitioner::Actions::DeleteLvmLv do
       let(:device_name) { "/dev/vg1/pool1" }
 
       it "shows a detailed confirmation message including all the thin volumes over the pool" do
-        lvs = device.lvm_lvs.map(&:name)
-
         expect(subject).to receive(:confirm_recursive_delete)
-          .with(array_including(*lvs), anything, anything, /pool1/)
+          .with(device, anything, anything, /pool1/)
           .and_call_original
 
         subject.run
