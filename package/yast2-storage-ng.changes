@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Fri Mar  2 13:52:37 UTC 2018 - igonzalezsosa@suse.com
+
+- AutoYaST: support to export LVM volume group and MD RAIDs
+  (bsc#1081331).
+
+-------------------------------------------------------------------
 Fri Mar  2 11:59:29 UTC 2018 - ancor@suse.com
 
 - New PReP partitions proposed by the Guided Setup are now always
