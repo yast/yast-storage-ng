@@ -800,7 +800,7 @@ module Y2Partitioner
 
       VALUES = ["pri="].freeze
       REGEXP  = /^pri=/
-      DEFAULT = "42".freeze
+      DEFAULT = "".freeze
 
       def label
         _("Swap &Priority")
@@ -808,7 +808,7 @@ module Y2Partitioner
 
       def store
         delete_fstab_option!(REGEXP)
-        add_fstab_option("pri=#{value}") if value
+        add_fstab_option("pri=#{value}") if value && !value.empty?
       end
 
       def help
