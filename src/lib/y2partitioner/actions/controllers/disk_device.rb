@@ -77,14 +77,14 @@ module Y2Partitioner
           @suitable_devices ||= working_graph.disk_devices.select { |d| suitable_for_cloning?(d) }
         end
 
-        # Clones the current device into the given device
+        # Clones the current device into the target device
         #
-        # @note Given device is wiped before cloning into it.
+        # @note Target device is wiped before cloning into it.
         #
-        # @param device [Y2Storage::Partitionable]
-        def clone_to_device(device)
-          wipe_device(device)
-          clone_partition_table(device)
+        # @param target_device [Y2Storage::Partitionable]
+        def clone_to_device(target_device)
+          wipe_device(target_device)
+          clone_partition_table(target_device)
         end
 
       private
@@ -96,101 +96,102 @@ module Y2Partitioner
           DeviceGraphs.instance.current
         end
 
-        # Whether the current device can be cloned into the given device
+        # Whether the current device can be cloned into the target device
         #
-        # @note A given device is suitable for cloning if it has enough size, it supports
+        # @note A target device is suitable for cloning if it has enough size, it supports
         #   the partition table type of the the current device, and it has the same
         #   topology than the current device. Also note that in a running system, a device
         #   holding mount points cannot be used as device for cloning. Self cloning is
         #   also avoided.
         #
-        # @param device [Y2Storage::Partitionable] device where to clone
+        # @param target_device [Y2Storage::Partitionable] device where to clone
         # @return [Boolean]
-        def suitable_for_cloning?(device)
-          return false if self_cloning?(device)
+        def suitable_for_cloning?(target_device)
+          return false if self_cloning?(target_device)
 
           suitable =
-            enough_size_for_cloning?(device) &&
-            support_partition_table_type?(device) &&
-            same_topology?(device)
+            enough_size_for_cloning?(target_device) &&
+            support_partition_table_type?(target_device) &&
+            same_topology?(target_device)
 
-          Yast::Mode.installation ? suitable : suitable && !mount_points?(device)
+          Yast::Mode.installation ? suitable : suitable && !mount_points?(target_device)
         end
 
         # Whether it is trying a self cloning
         #
         # @note A device cannot be self cloned.
         #
-        # @param device [Y2Storage::Partitionable] device where to clone
+        # @param target_device [Y2Storage::Partitionable] device where to clone
         # @return [Boolean]
-        def self_cloning?(device)
-          device.sid == self.device.sid
+        def self_cloning?(target_device)
+          target_device.sid == device.sid
         end
 
-        # Whether the given device has enough size for the cloning
+        # Whether the target device has enough size for the cloning
         #
-        # @param device [Y2Storage::Partitionable] device where to clone
+        # @param target_device [Y2Storage::Partitionable] device where to clone
         # @return [Boolean]
-        def enough_size_for_cloning?(device)
-          device.size >= self.device.size
+        def enough_size_for_cloning?(target_device)
+          target_device.size >= device.size
         end
 
-        # Whether the given device supports the partition table type of the current device
+        # Whether the target device supports the partition table type of the current device
         #
-        # @param device [Y2Storage::Partitionable] device where to clone
+        # @param target_device [Y2Storage::Partitionable] device where to clone
         # @return [Boolean]
-        def support_partition_table_type?(device)
-          device.possible_partition_table_types.include?(self.device.partition_table.type)
+        def support_partition_table_type?(target_device)
+          target_device.possible_partition_table_types.include?(device.partition_table.type)
         end
 
-        # Whether the given device has the same topology than the current device
+        # Whether the target device has the same topology than the current device
         #
-        # @param device [Y2Storage::Partitionable] device where to clone
+        # @param target_device [Y2Storage::Partitionable] device where to clone
         # @return [Boolean]
-        def same_topology?(device)
-          device.topology == self.device.topology
+        def same_topology?(target_device)
+          target_device.topology == device.topology
         end
 
-        # Whether the given device holds mount points
+        # Whether the target device holds mount points
         #
-        # @note If something mounted depends on the given device, that device cannot be
+        # @note If something mounted depends on the target device, that device cannot be
         #   used for cloning. Firstly, mount points should be removed.
         #
-        # @param device [Y2Storage::Partitionable] device where to clone
+        # @param target_device [Y2Storage::Partitionable] device where to clone
         # @return [Boolean]
-        def mount_points?(device)
-          device.descendants.any? { |d| d.is?(:mount_point) }
+        def mount_points?(target_device)
+          target_device.descendants.any? { |d| d.is?(:mount_point) }
         end
 
-        # Wipes the given device
+        # Wipes the target device
         #
         # @note All its descendats are removed.
         #
-        # @param device [Y2Storage::BlkDevice]
-        def wipe_device(device)
-          device.remove_descendants
+        # @param target_device [Y2Storage::BlkDevice]
+        def wipe_device(target_device)
+          target_device.remove_descendants
         end
 
-        # Clones the partition table of the current device into the given device
+        # Clones the partition table of the current device into the target device
         #
-        # @note All partitions of the current device are cloned into the given
+        # @note All partitions of the current device are cloned into the target
         #   device, see {#clone_partition}.
         #
-        # @param device [Y2Storage::Partitionable] device where to clone
-        def clone_partition_table(device)
-          device.create_partition_table(self.device.partition_table.type)
-          sorted_partitions = self.device.partitions.sort_by(&:name)
-          sorted_partitions.each { |p| clone_partition(device, p) }
+        # @param target_device [Y2Storage::Partitionable] device where to clone
+        def clone_partition_table(target_device)
+          target_device.create_partition_table(device.partition_table.type)
+          sorted_partitions = device.partitions.sort_by(&:name)
+          sorted_partitions.each { |p| clone_partition(target_device, p) }
         end
 
-        # Clones a partition into the given device
+        # Clones a partition into the target device
         #
         # @note Cloned partition will have a region and partition id equal to the given
-        #   partition. Note that lucks, filesystems or other stuff are not cloned.
-        #   Correspondence between partition names and regions is also keeped.
-        def clone_partition(device, partition)
-          name = device.partition_table.unused_partition_slots.first.name
-          new_partition = device.partition_table.create_partition(name, partition.region, partition.type)
+        #   partition. Note that LUKS, filesystems and other stuff are not cloned.
+        #   Correspondence between partition names and regions is also kept.
+        def clone_partition(target_device, partition)
+          name = target_device.partition_table.unused_partition_slots.first.name
+          partition_table = target_device.partition_table
+          new_partition = partition_table.create_partition(name, partition.region, partition.type)
           new_partition.id = partition.id
         end
       end
