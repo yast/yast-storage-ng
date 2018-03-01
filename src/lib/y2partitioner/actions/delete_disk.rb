@@ -53,11 +53,10 @@ module Y2Partitioner
       #
       # It shows all partitions (and dependent devices) that will be deleted.
       #
-      # @see DeleteDevice#dependent_devices
       # @see DeleteDevice#confirm_recursive_delete
       def confirm
         confirm_recursive_delete(
-          dependent_devices,
+          device,
           _("Confirm Deleting of All Partitions"),
           # TRANSLATORS: name is the name of the disk to be deleted (e.g., /dev/sda)
           format(_("The disk \"%{name}\" contains at least one partition.\n" \

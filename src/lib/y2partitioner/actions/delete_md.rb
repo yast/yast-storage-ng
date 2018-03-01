@@ -52,12 +52,11 @@ module Y2Partitioner
 
       # Confirmation when the device belongs to a volume group
       #
-      # @see DeleteDevice#dependent_devices
       # @see DeleteDevice#confirm_recursive_delete
       # @see DeleteDevice#lvm_vg
       def confirm_for_used_by_lvm
         confirm_recursive_delete(
-          dependent_devices,
+          device,
           _("Confirm Deleting RAID Used by LVM"),
           # TRANSLATORS: name is the name of the volume group that the md raid
           #   belongs to (e.g., /dev/system)

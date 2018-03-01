@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Thu Mar  1 08:17:01 UTC 2018 - jlopez@suse.com
+
+- Partitioner: allow to clone a disk (part of fate#318196).
+- 4.0.118
+
+-------------------------------------------------------------------
 Wed Feb 28 15:39:15 UTC 2018 - ancor@suse.com
 
 - More reliable parsing for the hwinfo output (bsc#1082536).

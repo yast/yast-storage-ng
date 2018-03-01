@@ -21,6 +21,7 @@
 
 require "yast"
 require "y2partitioner/actions/create_partition_table"
+require "y2partitioner/actions/clone_disk"
 
 module Y2Partitioner
   module Widgets
@@ -28,6 +29,10 @@ module Y2Partitioner
     class DiskExpertMenuButton < CWM::MenuButton
       include Yast::Logger
 
+      # Constructor
+      #
+      # @param disk [Y2Storage::BlkDevice] a disk device,
+      #   (i.e., disk#is?(:disk_device) #=> true)
       def initialize(disk: nil)
         textdomain "storage"
         @disk = disk
@@ -43,19 +48,23 @@ module Y2Partitioner
       #
       # @return [Array<[Symbol, String]>]
       def items
-        [[:create_partition_table, _("Create New Partition &Table...")]]
+        [
+          [:create_partition_table, _("Create New Partition &Table")],
+          [:clone_disk, _("Clone this Disk")]
+        ]
       end
 
       # Event handler for the expert menu
       #
       # @param event [Hash] UI event
-      # @return [:redraw, nil] :redraw when the action is performed;
-      #   nil otherwise.
+      # @return [:redraw, nil] :redraw when the action is performed; nil otherwise.
       def handle(event)
         id = event["ID"]
         result = case id
         when :create_partition_table
           create_partition_table
+        when :clone_disk
+          clone_disk
         end
 
         result == :finish ? :redraw : nil
@@ -63,9 +72,16 @@ module Y2Partitioner
 
     private
 
+      # @see Y2Partitioner::Actions::CreatePartitionTable
       def create_partition_table
-        log.info("User selected 'create new partition table' for #{@disk.name}")
+        log.info("User selected 'create new partition table' for #{@disk.inspect}")
         Actions::CreatePartitionTable.new(@disk.name).run
+      end
+
+      # @see Y2Partitioner::Actions::CloneDisk
+      def clone_disk
+        log.info("User selected 'clone this disk' for #{@disk.inspect}")
+        Actions::CloneDisk.new(@disk).run
       end
     end
   end
