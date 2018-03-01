@@ -233,12 +233,7 @@ module Y2Storage
         @create = true
         @resize = false
 
-        if device.is_a?(LvmLv)
-          init_lv_fields(device)
-        else
-          init_partition_fields(device)
-        end
-
+        init_fields_by_type(device)
         init_encryption_fields(device)
         init_filesystem_fields(device)
 
@@ -247,7 +242,7 @@ module Y2Storage
         # unit (that equals to 8225280 bytes in my experiments).
         # According to the comments there, that was done due to bnc#415005 and
         # bnc#262535.
-        @size = device.size.to_i.to_s if create
+        @size = device.size.to_i.to_s if create && !device.is?(:md)
       end
 
       def to_hashes
@@ -275,6 +270,16 @@ module Y2Storage
         id.to_i_legacy
       end
 
+      def init_fields_by_type(device)
+        if device.is?(:lvm_lv)
+          init_lv_fields(device)
+        elsif device.is?(:md)
+          init_md_fields(device)
+        else
+          init_partition_fields(device)
+        end
+      end
+
       def init_partition_fields(partition)
         @create = !NO_CREATE_IDS.include?(partition.id)
         @partition_nr = partition.number
@@ -285,6 +290,11 @@ module Y2Storage
 
       def init_lv_fields(lv)
         @lv_name = lv.basename
+      end
+
+      def init_md_fields(md)
+        @partition_nr = md.number if md.numeric?
+        @raid_options = RaidOptionsSection.new_from_storage(md)
       end
 
       def init_encryption_fields(partition)

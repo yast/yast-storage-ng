@@ -114,7 +114,7 @@ describe Y2Storage::AutoinstProfile::RaidOptionsSection do
     subject(:raid_options) { described_class.new_from_storage(md) }
 
     it "initializes chunk_size" do
-      expect(raid_options.chunk_size).to eq(1.MB)
+      expect(raid_options.chunk_size).to eq("1000000")
     end
 
     it "initializes parity_algorithm" do

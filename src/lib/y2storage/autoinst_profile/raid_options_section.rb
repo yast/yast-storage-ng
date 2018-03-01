@@ -87,9 +87,9 @@ module Y2Storage
       #
       # @param md [Md] RAID device
       def init_from_raid(md)
-        @raid_name = md.name
+        @raid_name = md.name unless md.numeric?
         @raid_type = md.md_level.to_s
-        @chunk_size = md.chunk_size
+        @chunk_size = md.chunk_size.to_i.to_s
         @parity_algorithm = md.md_parity.to_s
       end
     end

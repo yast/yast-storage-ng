@@ -83,7 +83,7 @@ module Y2Storage
       def self.new_from_storage(devicegraph)
         result = new
         # TODO: consider also NFS and TMPFS
-        devices = devicegraph.lvm_vgs + devicegraph.disk_devices
+        devices = devicegraph.md_raids + devicegraph.lvm_vgs + devicegraph.disk_devices
         result.drives = devices.each_with_object([]) do |dev, array|
           drive = DriveSection.new_from_storage(dev)
           array << drive if drive

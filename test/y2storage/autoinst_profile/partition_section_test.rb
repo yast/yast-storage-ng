@@ -25,6 +25,8 @@ require_relative "#{TEST_PATH}/support/autoinst_profile_sections_examples"
 require "y2storage"
 
 describe Y2Storage::AutoinstProfile::PartitionSection do
+  using Y2Storage::Refinements::SizeCasts
+
   subject(:section) { described_class.new }
 
   before { fake_scenario("autoyast_drive_examples") }
@@ -70,6 +72,63 @@ describe Y2Storage::AutoinstProfile::PartitionSection do
     context "given a logical volume" do
       it "initializes the #lv_name" do
         expect(section_for("vg0/lv1").lv_name).to eq("lv1")
+      end
+    end
+
+    context "given an MD RAID" do
+      let(:raid_options) { instance_double(Y2Storage::AutoinstProfile::RaidOptionsSection) }
+
+      let(:md) do
+        instance_double(
+          Y2Storage::Md,
+          numeric?:   numeric?,
+          number:     0,
+          encrypted?: false,
+          filesystem: filesystem
+        )
+      end
+
+      let(:filesystem) do
+        instance_double(
+          Y2Storage::Filesystems::Btrfs,
+          type:                       Y2Storage::Filesystems::Type::BTRFS,
+          label:                      "",
+          mkfs_options:               "",
+          supports_btrfs_subvolumes?: false,
+          mount_point:                nil
+        )
+      end
+
+      let(:numeric?) { true }
+
+      before do
+        allow(md).to receive(:is?) { |t| t == :md }
+        allow(Y2Storage::AutoinstProfile::RaidOptionsSection).to receive(:new_from_storage)
+          .and_return(raid_options)
+      end
+
+      it "initializes #raid_options" do
+        expect(Y2Storage::AutoinstProfile::RaidOptionsSection).to receive(:new_from_storage)
+          .with(md).and_return(raid_options)
+        expect(described_class.new_from_storage(md).raid_options).to eq(raid_options)
+      end
+
+      context "when it is not a named RAID" do
+        let(:numeric?) { true }
+
+        it "initializes #partition_nr to the RAID number" do
+          section = described_class.new_from_storage(md)
+          expect(section.partition_nr).to eq(md.number)
+        end
+      end
+
+      context "when it is a named RAID" do
+        let(:numeric?) { false }
+
+        it "does not initialize #partition_nr" do
+          section = described_class.new_from_storage(md)
+          expect(section.partition_nr).to be_nil
+        end
       end
     end
 

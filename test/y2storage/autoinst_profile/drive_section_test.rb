@@ -223,8 +223,16 @@ describe Y2Storage::AutoinstProfile::DriveSection do
       end
     end
 
+    context "given a MD RAID" do
+      before { fake_scenario("md2-devicegraph.xml") }
+
+      it "initializes #type to :CT_MD" do
+        expect(described_class.new_from_storage(device("md0")).type).to eq :CT_MD
+      end
+    end
+
     context "given a volume group" do
-      it "initializes #type to :CT_LVM for LVM volume groups" do
+      it "initializes #type to :CT_LVM" do
         expect(described_class.new_from_storage(lvm_vg("vg0")).type).to eq :CT_LVM
       end
 

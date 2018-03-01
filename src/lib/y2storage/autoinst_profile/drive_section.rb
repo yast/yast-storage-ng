@@ -151,7 +151,14 @@ module Y2Storage
       #   <drive> section, like a disk, a DASD or an LVM volume group.
       # @return [Boolean] if attributes were successfully read; false otherwise.
       def init_from_device(device)
-        device.is_a?(LvmVg) ? init_from_vg(device) : init_from_disk(device)
+        case device
+        when LvmVg
+          init_from_vg(device)
+        when Md
+          init_from_md(device)
+        else
+          init_from_disk(device)
+        end
       end
 
       # Device name to be used for the real MD device
@@ -235,6 +242,21 @@ module Y2Storage
 
         @enable_snapshots = enabled_snapshots?(vg.lvm_lvs.map(&:filesystem))
         @pesize = vg.extent_size.to_s
+        true
+      end
+
+      # Method used by {.new_from_storage} to populate the attributes when
+      # cloning a MD RAID.
+      #
+      # As usual, it keeps the behavior of the old clone functionality, check
+      # the implementation of this class for details.
+      #
+      # @param vg [Y2Storage::Md] RAID
+      def init_from_md(md)
+        @type = :CT_MD
+        @device = "/dev/md"
+        @partitions = partitions_from_collection([md])
+        @enable_snapshots = enabled_snapshots?([md.filesystem])
         true
       end
 
