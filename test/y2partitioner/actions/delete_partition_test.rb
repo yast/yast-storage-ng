@@ -60,10 +60,8 @@ describe Y2Partitioner::Actions::DeletePartition do
       let(:device_name) { "/dev/sda5" }
 
       it "shows a specific confirm message for LVM" do
-        devices = ["/dev/vg1", "/dev/vg1/lv1"]
-
         expect(subject).to receive(:confirm_recursive_delete)
-          .with(array_including(*devices), /LVM/, anything, anything)
+          .with(device, /LVM/, anything, anything)
           .and_call_original
 
         subject.run
@@ -76,10 +74,8 @@ describe Y2Partitioner::Actions::DeletePartition do
       let(:device_name) { "/dev/sda1" }
 
       it "shows a specific confirm message for Md Raid" do
-        devices = ["/dev/md/md0"]
-
         expect(subject).to receive(:confirm_recursive_delete)
-          .with(array_including(*devices), /RAID/, anything, anything)
+          .with(device, /RAID/, anything, anything)
           .and_call_original
 
         subject.run

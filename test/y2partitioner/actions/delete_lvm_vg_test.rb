@@ -51,10 +51,8 @@ describe Y2Partitioner::Actions::DeleteLvmVg do
 
     context "when deleting a volume group with LVs" do
       it "shows a detailed confirmation message including all the LVs and the VG name" do
-        lvs = device.lvm_lvs.map(&:name)
-
         expect(action).to receive(:confirm_recursive_delete)
-          .with(array_including(*lvs), anything, anything, /vg1/)
+          .with(device, anything, anything, /vg1/)
           .and_call_original
 
         action.run

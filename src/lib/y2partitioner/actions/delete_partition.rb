@@ -57,12 +57,11 @@ module Y2Partitioner
 
       # Confirmation when the partition belongs to a volume group
       #
-      # @see DeleteDevice#dependent_devices
       # @see DeleteDevice#confirm_recursive_delete
       # @see DeleteDevice#lvm_vg
       def confirm_for_used_by_lvm
         confirm_recursive_delete(
-          dependent_devices,
+          device,
           _("Confirm Deleting Partition Used by LVM"),
           # TRANSLATORS: name is the name of the volume group that the partition
           #   belongs to (e.g., /dev/system)
@@ -78,12 +77,11 @@ module Y2Partitioner
 
       # Confirmation when the partition belongs to a md raid
       #
-      # @see DeleteDevice#dependent_devices
       # @see DeleteDevice#confirm_recursive_delete
       # @see DeleteDevice#md
       def confirm_for_used_by_md
         confirm_recursive_delete(
-          dependent_devices,
+          device,
           _("Confirm Deleting Partition Used by RAID"),
           # TRANSLATORS: name is the name of the partition to be deleted (e.g., /dev/sda1)
           format(_("The selected partition belongs to RAID \"%{name}\".\n" \

@@ -62,11 +62,9 @@ describe Y2Partitioner::Actions::DeleteDisk do
     context "when the device has partitions" do
       let(:device_name) { "/dev/sda" }
 
-      it "shows a confirm message with all partitions" do
-        partitions = ["/dev/sda1", "/dev/sda2"]
-
+      it "shows a confirm message" do
         expect(subject).to receive(:confirm_recursive_delete)
-          .with(array_including(*partitions), anything, anything, anything)
+          .with(device, anything, anything, anything)
           .and_call_original
 
         subject.run

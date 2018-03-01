@@ -68,11 +68,10 @@ module Y2Partitioner
 
       # Confirmation when the device is a LVM thin pool and there is any thin volume over it
       #
-      # @see DeleteDevice#dependent_devices
       # @see DeleteDevice#confirm_recursive_delete
       def confirm_for_used_pool
         confirm_recursive_delete(
-          dependent_devices,
+          device,
           _("Confirm Deleting of LVM Thin Pool"),
           # TRANSLATORS: Confirmation message when a LVM thin pool is going to be deleted,
           # where %{name} is replaced by the name of the thin pool (e.g., /dev/system/pool)

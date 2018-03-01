@@ -63,10 +63,8 @@ describe Y2Partitioner::Actions::DeleteMd do
       end
 
       it "shows a specific confirm message for LVM" do
-        devices = ["/dev/vg0", "/dev/vg0/lv1"]
-
         expect(subject).to receive(:confirm_recursive_delete)
-          .with(array_including(*devices), /LVM/, anything, anything)
+          .with(device, /LVM/, anything, anything)
           .and_call_original
 
         subject.run

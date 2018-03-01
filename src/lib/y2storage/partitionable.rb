@@ -46,7 +46,7 @@ module Y2Storage
     #   @return [Array<PartitionTables::Type>]
     storage_forward :possible_partition_table_types, as: "PartitionTables::Type"
 
-    # @!method possible_partition_table_type
+    # @!method default_partition_table_type
     #   Default partition table type as reported by libstorage
     #   @see #preferred_ptable_type
     #

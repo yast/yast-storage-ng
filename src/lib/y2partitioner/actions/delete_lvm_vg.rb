@@ -52,11 +52,10 @@ module Y2Partitioner
 
       # Confirmation when the device contains logical volumes
       #
-      # @see DeleteDevice#dependent_devices
       # @see DeleteDevice#confirm_recursive_delete
       def confirm_for_used
         confirm_recursive_delete(
-          dependent_devices,
+          device,
           _("Confirm Deleting of Volume Group"),
           # TRANSLATORS: %s is the name of the volume group (e.g. "system")
           format(_("The volume group \"%s\" contains at least one logical volume.\n" \
