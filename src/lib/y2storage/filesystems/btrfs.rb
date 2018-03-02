@@ -82,16 +82,14 @@ module Y2Storage
 
       # Convert path to canonical form.
       #
-      # That is, a single slash between elements. No final slash except for "/".
+      # That is, a single slash between elements. No leading or final slashes.
       #
       # @param path [String] subvolume path
       #
       # @return [String] sanitized subvolume path
       #
       def canonical_subvolume_name(path)
-        path = path.squeeze("/")
-        path = path.chomp("/") if path != "/"
-        path
+        path.squeeze("/").chomp("/").sub(/^\//, "")
       end
 
       # Check if a subvolume can be created.
@@ -121,8 +119,8 @@ module Y2Storage
       #
       def subvolume_descendants(path)
         path = canonical_subvolume_name(path)
-        path += "/" unless path.end_with?("/")
-        btrfs_subvolumes.find_all { |sv| sv.path.start_with?(path) }
+        path += "/" unless path.empty?
+        btrfs_subvolumes.find_all { |sv| sv.path.start_with?(path) && sv.path != path }
       end
 
       # Returns the default subvolume, creating it when necessary

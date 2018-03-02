@@ -253,9 +253,12 @@ describe Y2Storage::Filesystems::Btrfs do
 
   describe "#canonical_subvolume_name" do
     it "converts subvolume name into the canonical form" do
-      expect(filesystem.canonical_subvolume_name("@/foo")).to eq "@/foo"
-      expect(filesystem.canonical_subvolume_name("@/foo/////bar//")).to eq "@/foo/bar"
-      expect(filesystem.canonical_subvolume_name("/")).to eq "/"
+      expect(filesystem.canonical_subvolume_name("foo")).to eq "foo"
+      expect(filesystem.canonical_subvolume_name("/foo")).to eq "foo"
+      expect(filesystem.canonical_subvolume_name("foo/bar")).to eq "foo/bar"
+      expect(filesystem.canonical_subvolume_name("foo//bar////xxx//")).to eq "foo/bar/xxx"
+      expect(filesystem.canonical_subvolume_name("///")).to eq ""
+      expect(filesystem.canonical_subvolume_name("/")).to eq ""
       expect(filesystem.canonical_subvolume_name("")).to eq ""
     end
   end
