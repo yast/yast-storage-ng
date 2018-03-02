@@ -107,5 +107,17 @@ describe Y2Storage::GuidedProposal do
         expect(sda1.filesystem).to be_nil
       end
     end
+
+    # Regression test for bug#1082468 which proposed PReP as a logical partition
+    context "with plenty of space in the extended partition" do
+      let(:scenario) { "multi-linux-pc" }
+      let(:ppc_power_nv) { false }
+
+      it "ensures the new PReP is a primary partition" do
+        proposal.propose
+        prep = proposal.devices.disks.first.prep_partitions.first
+        expect(prep.type).to eq Y2Storage::PartitionType::PRIMARY
+      end
+    end
   end
 end

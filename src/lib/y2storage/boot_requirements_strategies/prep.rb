@@ -86,6 +86,9 @@ module Y2Storage
       def prep_partition(target)
         planned_partition = create_planned_partition(prep_volume, target)
         planned_partition.bootable = true
+        # The PReP partition cannot be logical (see bsc#1082468 and
+        # information in /doc and the RSpec tests)
+        planned_partition.primary = true
         planned_partition
       end
 

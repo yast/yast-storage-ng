@@ -135,8 +135,14 @@ RSpec.shared_examples "proposed PReP partition" do
     expect(prep_part.encrypt?).to eq false
   end
 
-  it "requires it to be bootable (ms-dos partition table)" do
+  it "requires it to be bootable (ms-dos partition table) for some firmwares to find it" do
     expect(prep_part.bootable).to eq true
+  end
+
+  # For more information, see the "Relevant Bugs during SLE15 beta phase"
+  # in doc/boot-partition.md
+  it "requires it to be primary since some firmwares cannot find logical partitions" do
+    expect(prep_part.primary).to eq true
   end
 
   it "requires no particular position for it in the disk (since there is no evidence of such so far)" do
