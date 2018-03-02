@@ -64,8 +64,24 @@ describe Y2Storage::AutoinstProfile::PartitionSection do
         expect(section_for("sdb1").size).to eq Y2Storage::DiskSize.GiB(780).to_i.to_s
       end
 
-      it "initializes the #lvm_group" do
-        expect(section_for("sdj1").lvm_group).to eq("vg0")
+      context "when the partition belongs to a LVM volume group" do
+        it "initializes the #lvm_group" do
+          expect(section_for("sdj1").lvm_group).to eq("vg0")
+        end
+      end
+
+      context "when the partition belongs to an MD RAID" do
+        let(:dev) { device("sdb1") }
+        let(:md) { instance_double(Y2Storage::Md, name: "/dev/md0") }
+
+        before do
+          allow(dev).to receive(:md).and_return(md)
+        end
+
+        it "initializes #raid_name" do
+          section = described_class.new_from_storage(dev)
+          expect(section.raid_name).to eq(md.name)
+        end
       end
     end
 

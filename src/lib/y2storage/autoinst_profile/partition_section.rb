@@ -286,6 +286,7 @@ module Y2Storage
         @partition_type = "primary" if partition.type.is?(:primary)
         @partition_id = partition_id_from(partition)
         @lvm_group = partition.lvm_pv.lvm_vg.basename if partition.lvm_pv && partition.lvm_pv.lvm_vg
+        @raid_name = partition.md.name if partition.md
       end
 
       def init_lv_fields(lv)
