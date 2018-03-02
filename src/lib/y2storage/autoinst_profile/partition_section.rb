@@ -162,7 +162,7 @@ module Y2Storage
       # @see PartitioningSection.new_from_storage for more details
       #
       # @param device [BlkDevice] a block device that can be cloned into a
-      #   <partition> section, like a partition or an LVM logical volume.
+      #   <partition> section, like a partition, an LVM logical volume or an MD RAID.
       # @return [PartitionSection]
       def self.new_from_storage(device)
         result = new
@@ -228,7 +228,8 @@ module Y2Storage
       # As usual, it keeps the behavior of the old clone functionality, check
       # the implementation of this class for details.
       #
-      # @param partition [Partition]
+      # @param device [BlkDevice] a block device that can be cloned into a
+      #   <partition> section, like a partition, an LVM logical volume or an MD RAID.
       def init_from_device(device)
         @create = true
         @resize = false

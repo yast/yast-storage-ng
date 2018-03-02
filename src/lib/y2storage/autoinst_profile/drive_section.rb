@@ -248,7 +248,7 @@ module Y2Storage
       #
       # AutoYaST does not support multiple partitions on a MD RAID.
       #
-      # @param vg [Y2Storage::Md] RAID
+      # @param md [Y2Storage::Md] RAID
       # @return [Boolean]
       def init_from_md(md)
         @type = :CT_MD
@@ -366,7 +366,7 @@ module Y2Storage
       # Currently AutoYaST does not support enabling/disabling snapshots
       # for a partition but for the whole disk/volume group.
       #
-      # @param disk [Array<Y2Storage::Filesystem>] Filesystems to evaluate
+      # @param filesystems [Array<Y2Storage::Filesystem>] Filesystems to evaluate
       # @return [Boolean] true if snapshots are enabled
       def enabled_snapshots?(filesystems)
         filesystems.any? { |f| f.respond_to?(:snapshots?) && f.snapshots? }
