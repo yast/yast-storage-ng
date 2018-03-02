@@ -230,28 +230,28 @@ describe Y2Storage::Filesystems::Btrfs do
     end
 
     context "when the filesystem already exists" do
-      let(:result) {}
-
       before do
         allow(filesystem).to receive(:exists_in_probed?) .and_return(true)
       end
 
-      it "can not insert a subvolume into an existing hierarchy" do
-        filesystem.create_btrfs_subvolume(path2, nocow)
-        result = filesystem.create_btrfs_subvolume(path3, nocow)
-        expect(result).to be_nil
-        expect(filesystem.btrfs_subvolumes.map(&:path)).to_not include(path3)
-      end
+      context "and the subvolume does not fit in the existing hierarchy" do
+        before do
+          filesystem.create_btrfs_subvolume(path2, nocow)
+        end
 
-      it "and returns nil" do
-        expect(result).to be_nil
+        it "can not create a subvolume" do
+          filesystem.create_btrfs_subvolume(path3, nocow)
+          expect(filesystem.btrfs_subvolumes.map(&:path)).to_not include(path3)
+        end
+
+        it "and returns nil" do
+          expect(filesystem.create_btrfs_subvolume(path3, nocow)).to be_nil
+        end
       end
     end
   end
 
   describe "#canonical_subvolume_name" do
-    let(:devicegraph) { Y2Storage::StorageManager.instance.staging }
-
     it "converts subvolume name into the canonical form" do
       expect(filesystem.canonical_subvolume_name("@/foo")).to eq "@/foo"
       expect(filesystem.canonical_subvolume_name("@/foo/////bar//")).to eq "@/foo/bar"
