@@ -101,13 +101,16 @@ describe Y2Storage::AutoinstProfile::RaidOptionsSection do
   end
 
   describe ".new_from_storage" do
+    let(:numeric?) { false }
+
     let(:md) do
       instance_double(
         Y2Storage::Md,
         chunk_size: 1.MB,
         md_parity:  Y2Storage::MdParity::LEFT_ASYMMETRIC,
         md_level:   Y2Storage::MdLevel::RAID0,
-        name:       "/dev/md0"
+        name:       "/dev/md0",
+        numeric?:   numeric?
       )
     end
 
@@ -129,8 +132,20 @@ describe Y2Storage::AutoinstProfile::RaidOptionsSection do
       skip ".new_from_storage is not fully implemented yet"
     end
 
-    it "initializes raid_name" do
-      expect(raid_options.raid_name).to eq("/dev/md0")
+    context "when it is a named RAID" do
+      let(:numeric?) { false }
+
+      it "initializes raid_name" do
+        expect(raid_options.raid_name).to eq("/dev/md0")
+      end
+    end
+
+    context "when it is not a named RAID" do
+      let(:numeric?) { true }
+
+      it "does not initialize raid_name" do
+        expect(raid_options.raid_name).to be_nil
+      end
     end
   end
 end
