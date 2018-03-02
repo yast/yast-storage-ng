@@ -383,3 +383,65 @@
                 path: ".snapshots"
             - subvolume:
                 path: ".snapshots/1/snapshot"
+
+# LVM
+- disk:
+    size: 120.00 GiB
+    name: "/dev/sdj"
+    partition_table: msdos
+    partitions:
+
+    - partition:
+        size: 40.00 GiB
+        name: "/dev/sdj1"
+        type: primary
+        id: lvm
+    - partition:
+        size: 40.00 GiB
+        name: "/dev/sdj2"
+        type: primary
+        id: lvm
+    - partition:
+        size: 40.00 GiB
+        name: "/dev/sdj3"
+        type: primary
+        id: lvm
+
+- lvm_vg:
+    vg_name: vg0
+    extent_size: 4 MiB
+    lvm_pvs:
+      - lvm_pv:
+          blk_device: /dev/sdj1
+    lvm_lvs:
+      - lvm_lv:
+          size:         unlimited
+          lv_name:      lv1
+          file_system:  btrfs
+          mount_point:  /
+          btrfs:
+              default_subvolume: ""
+              subvolumes:
+                - subvolume:
+                    path: ".snapshots"
+                - subvolume:
+                    path: ".snapshots/1/snapshot"
+
+- lvm_vg:
+    vg_name: vg1
+    lvm_pvs:
+      - lvm_pv:
+          blk_device: /dev/sdj2
+    lvm_lvs:
+      - lvm_lv:
+          size:         unlimited
+          lv_name:      lv1
+          file_system:  btrfs
+          mount_point:  /
+    extent_size: 4 MiB
+
+- lvm_vg:
+    vg_name: empty_vg
+    lvm_pvs:
+      - lvm_pv:
+          blk_device: /dev/sdj3

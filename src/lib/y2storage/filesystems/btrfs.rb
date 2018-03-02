@@ -371,7 +371,7 @@ module Y2Storage
       #
       # @return [String] Default subvolume name
       def subvolumes_prefix
-        children = top_level_btrfs_subvolume.children
+        children = top_level_btrfs_subvolume.children.reject { |s| snapper_path?(s.path) }
         children.size == 1 ? children.first.path : ""
       end
 
@@ -540,6 +540,19 @@ module Y2Storage
         subvolume_mount_path = btrfs_subvolume_mount_point(path)
         subvolume.create_mount_point(subvolume_mount_path) unless subvolume_mount_path.nil?
         subvolume
+      end
+
+      # Determines whether a subvolume path is reserved for snapper
+      #
+      # There is some kind of egg and chicken problem: we should know the
+      # #subvolumes_prefix in order to get the right path but we need to filter
+      # snapshots in order to get the #subvolumes prefix. So we are assuming
+      # that finding SNAPSHOTS_ROOT_SUBVOL_NAME in the first or the second
+      # component of the path should be enough.
+      #
+      # @return [Boolean]
+      def snapper_path?(path)
+        path.split("/")[0..1].include?(SNAPSHOTS_ROOT_SUBVOL_NAME)
       end
     end
   end

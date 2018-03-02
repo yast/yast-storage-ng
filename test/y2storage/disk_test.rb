@@ -502,7 +502,7 @@ describe Y2Storage::Disk do
     it "includes all disks in the devicegraph and nothing else" do
       disks = Y2Storage::Disk.all(fake_devicegraph)
       expect(disks.map(&:basename)).to contain_exactly(
-        "sda", "sdb", "sdc", "sdd", "sdaa", "sdf", "nvme0n1", "sdh", "sdi"
+        "sda", "sdb", "sdc", "sdd", "sdaa", "sdf", "nvme0n1", "sdh", "sdi", "sdj"
       )
     end
   end

@@ -793,6 +793,14 @@ describe Y2Storage::Filesystems::Btrfs do
         expect(subject.subvolumes_prefix).to eq("")
       end
     end
+
+    context "when only snapshots exist" do
+      let(:dev_name) { "/dev/sde1" }
+
+      it "returns an empty string" do
+        expect(subject.subvolumes_prefix).to eq("")
+      end
+    end
   end
 
   describe "#snapshots?" do

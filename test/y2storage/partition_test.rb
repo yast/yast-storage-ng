@@ -44,7 +44,7 @@ describe Y2Storage::Partition do
         "sdb1", "sdb2", "dasdb1", "dasdb2", "dasdb3", "sdc1", "sdc2", "sdc3", "sdd1",
         "sdd2", "sdd3", "sdd4", "sdd5", "sdd6", "sdaa1", "sdaa2", "sdaa3", "sdf1", "sdf2",
         "sdf5", "sdf6", "sdf7", "sdf8", "sdf9", "sdf10", "sdf11", "sdh1", "sdh2", "sdh3",
-        "sdi1", "nvme0n1p1", "nvme0n1p2", "nvme0n1p3", "nvme0n1p4"
+        "sdi1", "sdj1", "sdj2", "sdj3", "nvme0n1p1", "nvme0n1p2", "nvme0n1p3", "nvme0n1p4"
       )
     end
   end
@@ -62,7 +62,7 @@ describe Y2Storage::Partition do
         "dasdb1", "dasdb2", "dasdb3", "nvme0n1p1", "nvme0n1p2", "nvme0n1p3", "nvme0n1p4",
         "sdb1", "sdb2", "sdc1", "sdc2", "sdc3", "sdd1", "sdd2", "sdd3", "sdd4", "sdd5",
         "sdd6", "sdf1", "sdf2", "sdf5", "sdf6", "sdf7", "sdf8", "sdf9", "sdf10", "sdf11",
-        "sdh1", "sdh2", "sdh3", "sdi1", "sdaa1", "sdaa2", "sdaa3"
+        "sdh1", "sdh2", "sdh3", "sdi1", "sdj1", "sdj2", "sdj3", "sdaa1", "sdaa2", "sdaa3"
       ]
     end
 
@@ -80,7 +80,7 @@ describe Y2Storage::Partition do
           "dasdb1", "dasdb2", "dasdb3", "nvme0n1p1", "nvme0n1p2", "nvme0n1p3", "nvme0n1p4",
           "sdb1", "sdb2", "sdc1", "sdc2", "sdc3", "sdd1", "sdd2", "sdd3", "sdd4", "sdd5",
           "sdd6", "sdf1", "sdf2", "sdf5", "sdf6", "sdf7", "sdf8", "sdf9", "sdf10", "sdf11",
-          "sdh1", "sdh2", "sdh3", "sdi1", "sdaa1", "sdaa2", "sdaa3"
+          "sdh1", "sdh2", "sdh3", "sdi1", "sdj1", "sdj2", "sdj3", "sdaa1", "sdaa2", "sdaa3"
         ]
       end
     end

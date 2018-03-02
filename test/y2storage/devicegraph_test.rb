@@ -476,7 +476,7 @@ describe Y2Storage::Devicegraph do
       it "includes all partitionable disks and DASDs sorted by name" do
         expect(graph.disk_devices.map(&:name)).to eq [
           "/dev/dasda", "/dev/dasdb", "/dev/nvme0n1", "/dev/sda", "/dev/sdb",
-          "/dev/sdc", "/dev/sdd", "/dev/sdf", "/dev/sdh", "/dev/sdi", "/dev/sdaa"
+          "/dev/sdc", "/dev/sdd", "/dev/sdf", "/dev/sdh", "/dev/sdi", "/dev/sdj", "/dev/sdaa"
         ]
       end
     end
