@@ -50,7 +50,7 @@ describe Y2Storage::SubvolSpecification do
 
     it "returns a new SubvolSpecification with path and copy_on_write from real subvolume" do
       subvol_spec = Y2Storage::SubvolSpecification.create_from_btrfs_subvolume(subvolume)
-      expect(subvol_spec.path).to eq("/tmp")
+      expect(subvol_spec.path).to eq("tmp")
       expect(subvol_spec.copy_on_write).to eq(false)
     end
   end

@@ -185,9 +185,8 @@ module Y2Partitioner
         #
         # @see Y2Storage::Filesystems::Btrfs#btrfs_subvolume_path
         def fix_path
+          self.value = filesystem.canonical_subvolume_name(value)
           return if value.empty?
-
-          self.value = value.sub(/^\/*/, "")
 
           default_subvolume_path = filesystem.default_btrfs_subvolume.path
           prefix = default_subvolume_path.empty? ? "" : default_subvolume_path + "/"
