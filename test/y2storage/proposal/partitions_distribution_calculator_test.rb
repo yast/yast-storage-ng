@@ -79,6 +79,14 @@ describe Y2Storage::Proposal::PartitionsDistributionCalculator do
           space = distribution.spaces.first
           expect(space.num_logical).to eq space.partitions.size
         end
+
+        context "if any of the planned partitions must be primary" do
+          before { vol3.primary = true }
+
+          it "returns no distribution (nil)" do
+            expect(distribution).to be_nil
+          end
+        end
       end
     end
 
@@ -102,6 +110,11 @@ describe Y2Storage::Proposal::PartitionsDistributionCalculator do
           expect(spaces.first.partitions).to contain_exactly(vol1, vol2, vol3)
         end
 
+        it "keeps the order of the planned partitions" do
+          space = distribution.spaces.first
+          expect(space.partitions).to eq [vol1, vol2, vol3]
+        end
+
         context "and there is no extended partition" do
           it "does not set the partition type" do
             space = distribution.spaces.first
@@ -111,6 +124,34 @@ describe Y2Storage::Proposal::PartitionsDistributionCalculator do
           it "plans the surplus partitions as logical" do
             space = distribution.spaces.first
             expect(space.num_logical).to eq 2
+          end
+
+          it "keeps the order of the planned partitions" do
+            space = distribution.spaces.first
+            expect(space.partitions).to eq [vol1, vol2, vol3]
+          end
+
+          context "if some planned partition must be primary" do
+            context "and it is in the area assigned to primary partitions" do
+              before { vol1.primary = true }
+
+              it "returns a valid distribution" do
+                expect(distribution).to_not be_nil
+              end
+
+              it "keeps the order of the planned partitions" do
+                space = distribution.spaces.first
+                expect(space.partitions).to eq [vol1, vol2, vol3]
+              end
+            end
+
+            context "and it is in the area assigned to logical partitions" do
+              before { vol2.primary = true }
+
+              it "returns no distribution (nil)" do
+                expect(distribution).to be_nil
+              end
+            end
           end
         end
 
@@ -142,6 +183,20 @@ describe Y2Storage::Proposal::PartitionsDistributionCalculator do
             it "plans no logical partitions" do
               space = distribution.spaces.first
               expect(space.num_logical).to eq 0
+            end
+
+            it "keeps the order of the planned partitions" do
+              space = distribution.spaces.first
+              expect(space.partitions).to eq [vol1, vol2]
+            end
+
+            context "even if the last partition is compulsorily primary" do
+              before { vol2.primary = true }
+
+              it "keeps the order of the planned partitions" do
+                space = distribution.spaces.first
+                expect(space.partitions).to eq [vol1, vol2]
+              end
             end
           end
         end
