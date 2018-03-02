@@ -1,3 +1,10 @@
+-------------------------------------------------------------------
+Fri Mar  2 10:28:49 UTC 2018 - snwint@suse.com
+
+- ensure proper hierarchy when creating btrfs subvolumes (bsc#1078732)
+- 4.0.121
+
+-------------------------------------------------------------------
 Thu Mar  1 15:20:35 UTC 2018 - shundhammer@suse.com
 
 - Use default swap priority, not 42 (bsc#1066077)

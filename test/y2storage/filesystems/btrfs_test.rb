@@ -194,25 +194,135 @@ describe Y2Storage::Filesystems::Btrfs do
   describe "#create_btrfs_subvolume" do
     let(:devicegraph) { Y2Storage::StorageManager.instance.staging }
 
-    let(:path) { "@/foo" }
+    let(:path1) { "@/foo" }
+    let(:path2) { "@/foo/bar/baz" }
+    let(:path3) { "@/foo/bar" }
     let(:nocow) { true }
 
     it "creates a new subvolume" do
-      expect(filesystem.btrfs_subvolumes.map(&:path)).to_not include(path)
-      filesystem.create_btrfs_subvolume(path, nocow)
-      expect(filesystem.btrfs_subvolumes.map(&:path)).to include(path)
+      expect(filesystem.btrfs_subvolumes.map(&:path)).to_not include(path1)
+      filesystem.create_btrfs_subvolume(path1, nocow)
+      expect(filesystem.btrfs_subvolumes.map(&:path)).to include(path1)
     end
 
     it "returns the new created subvolume" do
-      subvolume = filesystem.create_btrfs_subvolume(path, nocow)
+      subvolume = filesystem.create_btrfs_subvolume(path1, nocow)
       expect(subvolume).to be_a(Y2Storage::BtrfsSubvolume)
-      expect(subvolume.path).to eq(path)
+      expect(subvolume.path).to eq(path1)
       expect(subvolume.nocow?).to eq(nocow)
     end
 
     it "creates the subvolume with the correct mount point" do
-      subvolume = filesystem.create_btrfs_subvolume(path, nocow)
-      expect(subvolume.mount_path).to eq("/foo")
+      subvolume = filesystem.create_btrfs_subvolume(path1, nocow)
+      expect(subvolume.mount_path).to eq(path1.delete("@"))
+    end
+
+    context "when the filesystem is going to be formatted" do
+      before do
+        allow(filesystem).to receive(:exists_in_probed?) .and_return(false)
+      end
+
+      it "can insert a subvolume into an existing hierarchy" do
+        filesystem.create_btrfs_subvolume(path2, nocow)
+        filesystem.create_btrfs_subvolume(path3, nocow)
+        expect(filesystem.btrfs_subvolumes.map(&:path)).to include(path3)
+      end
+    end
+
+    context "when the filesystem already exists" do
+      before do
+        allow(filesystem).to receive(:exists_in_probed?) .and_return(true)
+      end
+
+      context "and the subvolume does not fit in the existing hierarchy" do
+        before do
+          filesystem.create_btrfs_subvolume(path2, nocow)
+        end
+
+        it "can not create a subvolume" do
+          filesystem.create_btrfs_subvolume(path3, nocow)
+          expect(filesystem.btrfs_subvolumes.map(&:path)).to_not include(path3)
+        end
+
+        it "and returns nil" do
+          expect(filesystem.create_btrfs_subvolume(path3, nocow)).to be_nil
+        end
+      end
+    end
+  end
+
+  describe "#canonical_subvolume_name" do
+    it "converts subvolume name into the canonical form" do
+      expect(filesystem.canonical_subvolume_name("foo")).to eq "foo"
+      expect(filesystem.canonical_subvolume_name("/foo")).to eq "foo"
+      expect(filesystem.canonical_subvolume_name("foo/bar")).to eq "foo/bar"
+      expect(filesystem.canonical_subvolume_name("foo//bar////xxx//")).to eq "foo/bar/xxx"
+      expect(filesystem.canonical_subvolume_name("///")).to eq ""
+      expect(filesystem.canonical_subvolume_name("/")).to eq ""
+      expect(filesystem.canonical_subvolume_name("")).to eq ""
+    end
+  end
+
+  describe "#subvolume_descendants" do
+    let(:devicegraph) { Y2Storage::StorageManager.instance.staging }
+
+    let(:path1) { "@/foo" }
+    let(:path2) { "@/foo/bar" }
+
+    it "returns a list of descendant subvolumes" do
+      filesystem.create_btrfs_subvolume(path1, false)
+      filesystem.create_btrfs_subvolume(path2, false)
+      subvolumes = filesystem.subvolume_descendants(path1)
+      expect(subvolumes).to be_a Array
+      expect(subvolumes).to all(be_a(Y2Storage::BtrfsSubvolume))
+      expect(subvolumes.first.path).to eq path2
+    end
+  end
+
+  describe "#subvolume_can_be_created?" do
+    let(:devicegraph) { Y2Storage::StorageManager.instance.staging }
+
+    let(:path1) { "@/foo" }
+    let(:path2) { "@/foo/bar" }
+
+    context "when the filesystem is going to be formatted" do
+      before do
+        allow(filesystem).to receive(:exists_in_probed?) .and_return(false)
+      end
+
+      context "and a subvolume must be inserted into an existing hierarchy" do
+        it "returns true" do
+          filesystem.create_btrfs_subvolume(path2, false)
+          expect(filesystem.subvolume_can_be_created?(path1)).to be(true)
+        end
+      end
+
+      context "and a subvolume must not be inserted into an existing hierarchy" do
+        it "returns true" do
+          filesystem.create_btrfs_subvolume(path1, false)
+          expect(filesystem.subvolume_can_be_created?(path2)).to be(true)
+        end
+      end
+    end
+
+    context "when the filesystem already exists" do
+      before do
+        allow(filesystem).to receive(:exists_in_probed?) .and_return(true)
+      end
+
+      context "and a subvolume must be inserted into an existing hierarchy" do
+        it "returns false" do
+          filesystem.create_btrfs_subvolume(path2, false)
+          expect(filesystem.subvolume_can_be_created?(path1)).to be(false)
+        end
+      end
+
+      context "and a subvolume must not be inserted into an existing hierarchy" do
+        it "returns true" do
+          filesystem.create_btrfs_subvolume(path1, false)
+          expect(filesystem.subvolume_can_be_created?(path2)).to be(true)
+        end
+      end
     end
   end
 

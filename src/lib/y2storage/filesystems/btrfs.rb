@@ -80,6 +80,49 @@ module Y2Storage
         true
       end
 
+      # Convert path to canonical form.
+      #
+      # That is, a single slash between elements. No leading or final slashes.
+      #
+      # @param path [String] subvolume path
+      #
+      # @return [String] sanitized subvolume path
+      #
+      def canonical_subvolume_name(path)
+        path.squeeze("/").chomp("/").sub(/^\//, "")
+      end
+
+      # Check if a subvolume can be created.
+      #
+      # It can always be created if we're going to create the whole file
+      # system anyway.
+      #
+      # If the file system exists already there must at least be nothing
+      # else below path.
+      #
+      # @param path [String] subvolume path
+      #
+      # @return [Boolean]
+      #
+      def subvolume_can_be_created?(path)
+        return true unless exists_in_probed?
+        !subvolume_descendants_exist?(path)
+      end
+
+      # List of subvolumes hierarchically below path
+      #
+      # That is, subvolumes starting with path.
+      #
+      # @param path [String] subvolume path
+      #
+      # @return [Array<BtrfsSubvolume>]
+      #
+      def subvolume_descendants(path)
+        path = canonical_subvolume_name(path)
+        path += "/" unless path.empty?
+        btrfs_subvolumes.find_all { |sv| sv.path.start_with?(path) && sv.path != path }
+      end
+
       # Returns the default subvolume, creating it when necessary
       #
       # If a specific default subvolume path is requested, returns a subvolume with
@@ -121,6 +164,8 @@ module Y2Storage
 
       # Creates a new btrfs subvolume for the filesystem
       #
+      # If the subvolume already exists, returns it.
+      #
       # @note The subvolume mount point is generated from the filesystem mount point
       # and the subvolume path.
       #
@@ -128,12 +173,25 @@ module Y2Storage
       #
       # @param path [string] absolute subvolume path
       # @param nocow [Boolean] no copy on write property
+      #
+      # @return [BtrfsSubvolume, nil] new subvolume
+      #
       def create_btrfs_subvolume(path, nocow)
-        subvolume = default_btrfs_subvolume.create_btrfs_subvolume(path)
-        subvolume.nocow = nocow
-        subvolume_mount_path = btrfs_subvolume_mount_point(path)
-        subvolume.create_mount_point(subvolume_mount_path) unless subvolume_mount_path.nil?
-        subvolume
+        path = canonical_subvolume_name(path)
+
+        subvolume = find_btrfs_subvolume_by_path(path)
+        return subvolume if subvolume
+
+        if !subvolume_can_be_created?(path)
+          log.error "cannot create subvolume #{path}"
+          return
+        end
+
+        if subvolume_descendants_exist?(path)
+          create_btrfs_subvolume_full_rebuild(path, nocow)
+        else
+          create_btrfs_subvolume_nochecks(path, nocow)
+        end
       end
 
       # Adds btrfs subvolumes defined from a list of specs
@@ -390,6 +448,98 @@ module Y2Storage
 
       def types_for_is
         super << :btrfs
+      end
+
+    private
+
+      # Check for existing descendants of a subvolume path.
+      #
+      # @param path [String] subvolume path
+      #
+      # @return [Boolean]
+      #
+      def subvolume_descendants_exist?(path)
+        !subvolume_descendants(path).empty?
+      end
+
+      # Find the most suitable parent for a new subvolume
+      #
+      # That is, the one with the longest path that is part of path.
+      #
+      # @param path [String] subvolume path
+      #
+      # @return [BtrfsSubvolume] parent subvolume
+      #
+      def suitable_parent_subvolume(path)
+        while path.include?("/")
+          path = path.gsub(/\/[^\/]*$/, "")
+          subvolume = find_btrfs_subvolume_by_path(path)
+          return subvolume if subvolume
+        end
+
+        top_level_btrfs_subvolume
+      end
+
+      # Create a new btrfs subvolume for the filesystem
+      #
+      # This method must be used if the new subvolume does not fit into the
+      # existing subvolume hierarchy.
+      #
+      # It will remove all subvolumes but the top level one and then rebuild
+      # them from scratch including the new subvolume.
+      #
+      # @see #create_btrfs_subvolume
+      #
+      # @param path [string] absolute subvolume path
+      # @param nocow [Boolean] no copy on write property
+      #
+      # @return [BtrfsSubvolume] new subvolume
+      #
+      def create_btrfs_subvolume_full_rebuild(path, nocow)
+        log.info "subvolume hierarchy mismatch - recreate all"
+
+        subvolumes = btrfs_subvolumes.map { |x| x.top_level? ? nil : [x.path, x.nocow?] }.compact
+        subvolumes.push([path, nocow])
+
+        default_subvolume = default_btrfs_subvolume.path
+        top_level_btrfs_subvolume.set_default_btrfs_subvolume
+
+        log.info "recreating subvolumes #{subvolumes}, default #{default_subvolume}"
+
+        top_level_btrfs_subvolume.remove_descendants
+
+        # sort: shortest path first
+        subvolumes.sort! { |x, y| x[0] <=> y[0] }
+        subvolumes.each { |x| create_btrfs_subvolume_nochecks(*x) }
+
+        subvolume = find_btrfs_subvolume_by_path(default_subvolume)
+        subvolume.set_default_btrfs_subvolume if subvolume
+
+        find_btrfs_subvolume_by_path(path)
+      end
+
+      # Create a new btrfs subvolume for the filesystem
+      #
+      # @see #create_btrfs_subvolume
+      #
+      # This method does not verify if the subvolume can be added to the
+      # existing subvolume hierarchy. Use {create_btrfs_subvolume} instead.
+      #
+      # @param path [string] absolute subvolume path
+      # @param nocow [Boolean] no copy on write property
+      #
+      # @return [BtrfsSubvolume] new subvolume
+      #
+      def create_btrfs_subvolume_nochecks(path, nocow)
+        parent_subvolume = suitable_parent_subvolume(path)
+
+        log.info "creating subvolume #{path} at #{parent_subvolume.path}"
+
+        subvolume = parent_subvolume.create_btrfs_subvolume(path)
+        subvolume.nocow = nocow
+        subvolume_mount_path = btrfs_subvolume_mount_point(path)
+        subvolume.create_mount_point(subvolume_mount_path) unless subvolume_mount_path.nil?
+        subvolume
       end
     end
   end

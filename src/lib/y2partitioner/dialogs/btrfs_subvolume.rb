@@ -125,7 +125,7 @@ module Y2Partitioner
         def validate
           fix_path
 
-          valid = content_validation && uniqueness_validation
+          valid = content_validation && uniqueness_validation && hierarchy_validation
           return true if valid
 
           focus
@@ -160,6 +160,24 @@ module Y2Partitioner
           false
         end
 
+        # Validate proper hierarchy
+        # An error popup is shown when entered path is part of an already existing path.
+        #
+        # @return [Boolean] true if path is part of an already existing path
+        def hierarchy_validation
+          return true if filesystem.subvolume_can_be_created?(value)
+
+          msg = format(_("Cannot create subvolume %s."), value)
+
+          sv = filesystem.subvolume_descendants(value).first
+          if sv
+            msg << "\n" << format(_("Delete subvolume %s first."), sv.path)
+          end
+
+          Yast::Popup.Error(msg)
+          false
+        end
+
         # Updates #value by prefixing path with default subvolume path if it is necessary
         #
         # Path should be a relative path. Starting slashes are removed. A popup message is
@@ -167,9 +185,8 @@ module Y2Partitioner
         #
         # @see Y2Storage::Filesystems::Btrfs#btrfs_subvolume_path
         def fix_path
+          self.value = filesystem.canonical_subvolume_name(value)
           return if value.empty?
-
-          self.value = value.sub(/^\/*/, "")
 
           default_subvolume_path = filesystem.default_btrfs_subvolume.path
           prefix = default_subvolume_path.empty? ? "" : default_subvolume_path + "/"
