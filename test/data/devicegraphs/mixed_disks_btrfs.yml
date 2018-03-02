@@ -177,3 +177,25 @@
             - subvolume:
                 path: "@/var/lib/pgsql"
                 nocow: true
+
+- disk:
+    name: /dev/sde
+    size: 200 GiB
+    partition_table:  ms-dos
+    partitions:
+
+    - partition:
+        size:         unlimited
+        name:         /dev/sde1
+        mount_point:  /
+        label:        root
+        file_system:  btrfs
+        btrfs:
+            default_subvolume: ""
+            subvolumes:
+            - subvolume:
+                path: ".snapshots"
+                nocow: false
+            - subvolume:
+                path: ".snapshots/1/snapshot"
+                nocow: false
