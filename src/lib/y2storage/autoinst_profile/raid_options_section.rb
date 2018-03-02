@@ -89,7 +89,8 @@ module Y2Storage
       def init_from_raid(md)
         @raid_name = md.name unless md.numeric?
         @raid_type = md.md_level.to_s
-        @chunk_size = md.chunk_size.to_i.to_s
+        # A number will be interpreted as KB, so we explicitly set the unit.
+        @chunk_size = "#{md.chunk_size.to_i.to_s}B"
         @parity_algorithm = md.md_parity.to_s
       end
     end
