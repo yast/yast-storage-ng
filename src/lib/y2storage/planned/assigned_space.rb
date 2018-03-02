@@ -81,6 +81,7 @@ module Y2Storage
       #  - the chances of having 2 volumes with max_start_offset in the same
       #    free space are very low
       def valid?
+        return false unless primary_partitions_fit?
         return true if usable_size >= DiskSize.sum(partitions.map(&:min), rounding: align_grain)
         # At first sight, there is no enough space, but maybe enforcing some
         # order...
@@ -185,6 +186,18 @@ module Y2Storage
       # @return [Boolean]
       def require_end_alignment?
         disk_space.require_end_alignment?
+      end
+
+      # Whether the planned partitions that must be primary are indeed being to
+      # be created as primary partitions.
+      #
+      # @see Planned::Partition#primary
+      #
+      # @return [Boolean]
+      def primary_partitions_fit?
+        # We always create the logical partitions at the end of the space
+        logical_parts = partitions.last(num_logical)
+        logical_parts.none?(&:primary)
       end
 
       # Sorts the planned partitions in the most convenient way in order to

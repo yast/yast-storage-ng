@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Fri Mar  2 11:59:29 UTC 2018 - ancor@suse.com
+
+- New PReP partitions proposed by the Guided Setup are now always
+  primary (bsc#1082468).
+- 4.0.122
+
+-------------------------------------------------------------------
 Fri Mar  2 10:28:49 UTC 2018 - snwint@suse.com
 
 - ensure proper hierarchy when creating btrfs subvolumes (bsc#1078732)

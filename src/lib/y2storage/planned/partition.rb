@@ -56,6 +56,9 @@ module Y2Storage
       #   flag but is not needed in our grub2 setup.
       attr_accessor :bootable
 
+      # @return [Boolean] whether the partition must be primary
+      attr_accessor :primary
+
       # @return [String] name of the MD array to which this partition should
       #   be added
       attr_accessor :raid_name
@@ -74,6 +77,7 @@ module Y2Storage
 
         @mount_point = mount_point
         @filesystem_type = filesystem_type
+        @primary = false
       end
 
       def self.to_string_attrs

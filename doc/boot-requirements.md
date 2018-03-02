@@ -97,19 +97,19 @@
 - in a non-PowerNV system (KVM/LPAR)
 	- with a partitions-based proposal
 		- if there are no PReP partitions in the target disk
-			- **requires only a PReP partition (to allocate Grub2)**
+			- **requires only a new PReP partition (to allocate Grub2)**
 			- **does not require a separate /boot partition (Grub2 can handle this setup)**
 		- if there is already a PReP partition in the disk
 			- **does not require any partition (PReP will be reused and Grub2 can handle this setup)**
 	- with a LVM-based proposal
 		- if there are no PReP partitions in the target disk
-			- **requires only a PReP partition (to allocate Grub2)**
+			- **requires only a new PReP partition (to allocate Grub2)**
 			- **does not require a separate /boot partition (Grub2 can handle this setup)**
 		- if there is already a PReP partition in the disk
 			- **does not require any partition (PReP will be reused and Grub2 can handle this setup)**
 	- with an encrypted proposal
 		- if there are no PReP partitions in the target disk
-			- **requires only a PReP partition (to allocate Grub2)**
+			- **requires only a new PReP partition (to allocate Grub2)**
 			- **does not require a separate /boot partition (Grub2 can handle this setup)**
 		- if there is already a PReP partition in the disk
 			- **does not require any partition (PReP will be reused and Grub2 can handle this setup)**
@@ -130,7 +130,8 @@
 		- **requires /boot to be at least 100 MiB large**
 - when proposing a PReP partition
 	- **requires it to be a non-encrypted partition**
-	- **requires it to be bootable (ms-dos partition table)**
+	- **requires it to be bootable (ms-dos partition table) for some firmwares to find it**
+	- **requires it to be primary since some firmwares cannot find logical partitions**
 	- **requires no particular position for it in the disk (since there is no evidence of such so far)**
 	- when aiming for the recommended size
 		- **requires it to be at least 4 MiB (Grub2 stages 1+2, needed Grub modules and extra space)**

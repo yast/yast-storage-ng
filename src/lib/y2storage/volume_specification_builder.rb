@@ -156,7 +156,6 @@ module Y2Storage
         v.min_size = DiskSize.MiB(2)
         v.desired_size = DiskSize.MiB(4)
         v.max_size = DiskSize.MiB(8)
-        # So far we are always using msdos partition ids
         v.partition_id = PartitionId::PREP
       end
     end

@@ -1,7 +1,7 @@
 Boot Partition Layout / Restrictions For Storage Proposal
 =========================================================
 
-[Revision 2018-02-15]
+[Revision 2018-03-02]
 
 #### Notes:
 
@@ -10,8 +10,12 @@ Boot Partition Layout / Restrictions For Storage Proposal
 
 ### Relevant bugs during SLE15 beta phase
 
+- [bsc#1082468](https://bugzilla.suse.com/show_bug.cgi?id=1082468) is an example
+  of yast2-bootloader failing to configure a logical PReP. PReP must be primary
+  so it can have the 'boot' flag and can be found by firmwares not understanding
+  the structure of extended partitions.
 - In [bsc#1068772](https://bugzilla.suse.com/show_bug.cgi?id=1068772) and
-  [bsc#1076851](https://bugzilla.suse.com/show_bug.cgi?id=1076851) the
+  [bsc#1076851](https://bugzilla.suse.com/show_bug.cgi?id=1076851) other
   requirements for the PReP partition (position and size) have been discussed.
 - In [bsc#1073680](https://bugzilla.suse.com/show_bug.cgi?id=1073680) the
   reporter points that `/boot/efi` should be the first partition in the

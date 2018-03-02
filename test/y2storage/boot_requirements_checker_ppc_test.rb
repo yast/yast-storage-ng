@@ -50,7 +50,7 @@ describe Y2Storage::BootRequirementsChecker do
       context "if there are no PReP partitions in the target disk" do
         let(:prep_partitions) { [] }
 
-        it "requires only a PReP partition (to allocate Grub2)" do
+        it "requires only a new PReP partition (to allocate Grub2)" do
           expect(checker.needed_partitions).to contain_exactly(
             an_object_having_attributes(mount_point: nil, partition_id: prep_id)
           )
