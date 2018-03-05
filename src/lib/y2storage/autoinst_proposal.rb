@@ -93,7 +93,6 @@ module Y2Storage
 
         devicegraph = clean_graph(devicegraph, drives, @planned_devices)
         add_partition_tables(devicegraph, drives)
-        @planned_devices.concat(boot_devices(devicegraph, @planned_devices))
 
         result = create_devices(devicegraph, @planned_devices, drives.disk_names)
         add_reduced_devices_issues(result)
@@ -250,13 +249,28 @@ module Y2Storage
 
     # Creates planned devices on a given devicegraph
     #
+    # If adding boot devices makes impossible to create the rest of devices,
+    # it will try again without them. In such a case, it will register an
+    # issue.
+    #
+    # As a side effect, it updates the planned devices list if needed.
+    #
     # @param devicegraph     [Devicegraph]            Starting point
     # @param planned_devices [Array<Planned::Device>] Devices to add
     # @param disk_names      [Array<String>]          Names of the disks to consider
     # @return [Devicegraph] Copy of devicegraph containing the planned devices
     def create_devices(devicegraph, planned_devices, disk_names)
+      boot_parts = boot_devices(devicegraph, @planned_devices)
       devices_creator = Proposal::AutoinstDevicesCreator.new(devicegraph)
-      devices_creator.populated_devicegraph(planned_devices, disk_names)
+      begin
+        result = devices_creator.populated_devicegraph(planned_devices + boot_parts, disk_names)
+        @planned_devices.concat(boot_parts)
+      rescue Y2Storage::NoDiskSpaceError
+        raise if boot_parts.empty?
+        result = devices_creator.populated_devicegraph(planned_devices, disk_names)
+        issues_list.add(:could_not_create_boot)
+      end
+      result
     end
 
     # Add shrinked devices to the issues list
