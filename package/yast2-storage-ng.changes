@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Mon Mar  5 15:18:00 UTC 2018 - jreidinger@suse.com
+
+- Add specialized warning when /boot/efi is on software RAID
+  (bsc#1081578)
+- 4.0.123
+
+-------------------------------------------------------------------
 Fri Mar  2 13:52:37 UTC 2018 - igonzalezsosa@suse.com
 
 - AutoYaST: support to export LVM volume group and MD RAIDs
