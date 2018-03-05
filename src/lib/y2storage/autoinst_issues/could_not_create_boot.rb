@@ -32,7 +32,7 @@ module Y2Storage
 
       # Fatal problem
       #
-      # @return [Symbol] :warning
+      # @return [Symbol] :warn
       # @see Issue#severity
       def severity
         :warn
