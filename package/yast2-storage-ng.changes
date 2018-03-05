@@ -1,4 +1,12 @@
 -------------------------------------------------------------------
+Mon Mar  5 15:47:29 UTC 2018 - jlopez@suse.com
+
+- Guided proposal uses preferred partition table type when
+  possible (e.g., all partitions are deleted).
+- Part of fate#318196.
+- 4.0.124
+
+-------------------------------------------------------------------
 Mon Mar  5 15:18:00 UTC 2018 - jreidinger@suse.com
 
 - Add specialized warning when /boot/efi is on software RAID
@@ -6,6 +14,8 @@ Mon Mar  5 15:18:00 UTC 2018 - jreidinger@suse.com
 - 4.0.123
 
 -------------------------------------------------------------------
+
+>>>>>>> Update version and changelog
 Mon Mar  5 12:42:49 UTC 2018 - igonzalezsosa@suse.com
 
 - AutoYaST: do not stop installation when there is not enough
