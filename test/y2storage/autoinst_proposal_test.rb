@@ -34,6 +34,10 @@ describe Y2Storage::AutoinstProposal do
   let(:partitioning) { [] }
   let(:issues_list) { Y2Storage::AutoinstIssues::List.new }
 
+  before do
+    allow(Yast::Mode).to receive(:auto).and_return(true)
+  end
+
   describe "#propose" do
     using Y2Storage::Refinements::SizeCasts
 

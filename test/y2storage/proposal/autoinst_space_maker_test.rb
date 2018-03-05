@@ -49,7 +49,10 @@ describe Y2Storage::Proposal::AutoinstSpaceMaker do
     Y2Storage::AutoinstIssues::List
   end
 
-  before { fake_scenario(scenario) }
+  before do
+    allow(Yast::Mode).to receive(:auto).and_return(true)
+    fake_scenario(scenario)
+  end
 
   describe "#cleaned_devicegraph" do
     context "when 'use' key is set to 'all'" do

@@ -21,7 +21,10 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
+require "yast"
 require "storage"
+
+Yast.import "Mode"
 
 module Y2Storage
   module Proposal
@@ -67,20 +70,30 @@ module Y2Storage
 
       # Deletes a given partition from its corresponding partition table.
       # If the partition was the only remaining logical one, it also deletes the
-      # now empty extended partition
+      # now empty extended partition. The partition table is also deleted when
+      # the last partition is deleted. In case of AutoYaST, deletion of the partition
+      # table is avoided because AutoYaST uses its own logic to reuse partition tables.
       #
       # @param partition [Partition]
       # @return [Array<Integer>] device sids of all the deleted partitions
       def delete_partition(partition)
         log.info("Deleting partition #{partition.name} in device graph")
+
+        device = partition.partitionable
+
         if last_logical?(partition)
           log.info("It's the last logical one, so deleting the extended")
-          delete_extended(partition.partition_table)
+          result = delete_extended(partition.partition_table)
         else
           result = [partition.sid]
           partition.partition_table.delete_partition(partition)
-          result
         end
+
+        # AutoYaST has its own logic to reuse partition tables.
+        return result if Yast::Mode.auto
+
+        device.delete_partition_table if device.partitions.empty?
+        result
       end
 
       # Deletes the extended partition and all the logical ones
