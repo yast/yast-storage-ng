@@ -263,8 +263,8 @@ module Y2Storage
       boot_parts = boot_devices(devicegraph, @planned_devices)
       devices_creator = Proposal::AutoinstDevicesCreator.new(devicegraph)
       begin
-        result = devices_creator.populated_devicegraph(planned_devices + boot_parts, disk_names)
-        @planned_devices.concat(boot_parts)
+        result = devices_creator.populated_devicegraph(boot_parts + planned_devices, disk_names)
+        @planned_devices.unshift(*boot_parts)
       rescue Y2Storage::NoDiskSpaceError
         raise if boot_parts.empty?
         result = devices_creator.populated_devicegraph(planned_devices, disk_names)
