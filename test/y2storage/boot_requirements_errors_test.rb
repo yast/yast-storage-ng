@@ -207,7 +207,7 @@ describe Y2Storage::BootRequirementsChecker do
             expect(checker.warnings).to all(be_a(Y2Storage::SetupError))
 
             message = checker.warnings.first.message
-            expect(message).to match(/\/boot\/efi.*MD RAID/)
+            expect(message).to match(/\/boot\/efi.*software RAID/)
           end
         end
       end
