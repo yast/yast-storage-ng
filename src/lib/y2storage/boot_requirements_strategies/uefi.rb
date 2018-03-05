@@ -39,10 +39,16 @@ module Y2Storage
       # @return [Array<SetupError>]
       def warnings
         res = super
+        textdomain "storage"
 
+        # EFI in RAID can work, but it is not much reliable. see bsc#1081578#c9
+        if efi_in_md_raid1?
+          msg = _("/boot/efi is inside MD RAID. In general it is discouraged to use this setup,
+            but it can work.")
+          res << SetupError.new(message: msg)
         # Missing EFI does not need to be a fatal (e.g. when boot from network).
         # User just has to not select grub2-efi bootloader.
-        if missing_partition_for?(efi_volume)
+        elsif missing_partition_for?(efi_volume)
           res << SetupError.new(missing_volume: efi_volume)
         end
 
@@ -50,6 +56,16 @@ module Y2Storage
       end
 
     protected
+
+      def efi_in_md_raid1?
+        filesystem = devicegraph.filesystems.find { |f| f.mount_path == "/boot/efi" }
+        return false unless filesystem
+
+        raid = filesystem.ancestors.find { |dev| dev.is?(:software_raid) }
+        return false unless raid
+
+        return raid.md_level.is?(:raid1)
+      end
 
       def efi_missing?
         free_mountpoint?("/boot/efi")

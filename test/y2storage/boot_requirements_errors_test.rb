@@ -198,6 +198,18 @@ describe Y2Storage::BootRequirementsChecker do
       context "using UEFI" do
         let(:efiboot) { true }
         include_examples "efi partition"
+
+        context "/boot/efi lays on md raid level 1" do
+          let(:scenario) { "raid_efi.xml" }
+
+          it "contains warning" do
+            expect(checker.warnings.size).to eq(1)
+            expect(checker.warnings).to all(be_a(Y2Storage::SetupError))
+
+            message = checker.warnings.first.message
+            expect(message).to match(/\/boot\/efi.*MD RAID/)
+          end
+        end
       end
 
       context "not using UEFI (legacy PC)" do
