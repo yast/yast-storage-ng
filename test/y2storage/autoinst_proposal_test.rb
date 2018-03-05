@@ -148,6 +148,29 @@ describe Y2Storage::AutoinstProposal do
         [{ "device" => "/dev/sda", "use" => "free", "partitions" => [root] }]
       end
 
+      context "when boot partition does not fit" do
+        let(:scenario) { "windows-pc-gpt" }
+
+        let(:root) do
+          { "mount" => "/", "partition_nr" => 1, "create" => false }
+        end
+
+        it "does not create the boot partition" do
+          proposal.propose
+          devicegraph = proposal.devices
+          expect(devicegraph.partitions.size).to eq(2)
+        end
+
+        it "registers an issue" do
+          expect(proposal.issues_list).to be_empty
+          proposal.propose
+          issue = proposal.issues_list.find do |i|
+            i.is_a?(Y2Storage::AutoinstIssues::CouldNotCreateBoot)
+          end
+          expect(issue).to_not be_nil
+        end
+      end
+
       context "when an existing partition_nr is specified" do
         let(:root) do
           { "mount" => "/", "partition_nr" => 3, "create" => false }
