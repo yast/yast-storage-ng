@@ -48,8 +48,8 @@ module Y2Storage
         # EFI in RAID can work, but it is not much reliable. see bsc#1081578#c9
         if efi_in_md_raid1?
           msg = _(
-            "/boot/efi is in a software RAID. That setup is not guaranteed to boot.\n" \
-            "Proceed only if you know the implications."
+            "/boot/efi is in a software RAID. That setup is not guaranteed \n" \
+            "to boot in all cases. Proceed only if you know the implications."
           )
           res << SetupError.new(message: msg)
         # Missing EFI does not need to be a fatal (e.g. when boot from network).
