@@ -27,6 +27,11 @@ module Y2Storage
   module BootRequirementsStrategies
     # Strategy to calculate boot requirements in UEFI systems
     class UEFI < Base
+      def initialize(*args)
+        textdomain "storage"
+        super
+      end
+
       # @see Base#needed_partitions
       def needed_partitions(target)
         planned_partitions = super
@@ -40,9 +45,16 @@ module Y2Storage
       def warnings
         res = super
 
+        # EFI in RAID can work, but it is not much reliable. see bsc#1081578#c9
+        if efi_in_md_raid1?
+          msg = _(
+            "/boot/efi is in a software RAID. That setup is not guaranteed \n" \
+            "to boot in all cases. Proceed only if you know the implications."
+          )
+          res << SetupError.new(message: msg)
         # Missing EFI does not need to be a fatal (e.g. when boot from network).
         # User just has to not select grub2-efi bootloader.
-        if missing_partition_for?(efi_volume)
+        elsif missing_partition_for?(efi_volume)
           res << SetupError.new(missing_volume: efi_volume)
         end
 
@@ -50,6 +62,16 @@ module Y2Storage
       end
 
     protected
+
+      def efi_in_md_raid1?
+        filesystem = devicegraph.filesystems.find { |f| f.mount_path == "/boot/efi" }
+        return false unless filesystem
+
+        raid = filesystem.ancestors.find { |dev| dev.is?(:software_raid) }
+        return false unless raid
+
+        return raid.md_level.is?(:raid1)
+      end
 
       def efi_missing?
         free_mountpoint?("/boot/efi")
