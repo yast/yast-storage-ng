@@ -14,8 +14,6 @@ Mon Mar  5 15:18:00 UTC 2018 - jreidinger@suse.com
 - 4.0.123
 
 -------------------------------------------------------------------
-
->>>>>>> Update version and changelog
 Mon Mar  5 12:42:49 UTC 2018 - igonzalezsosa@suse.com
 
 - AutoYaST: do not stop installation when there is not enough
