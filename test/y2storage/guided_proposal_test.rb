@@ -230,8 +230,11 @@ describe Y2Storage::GuidedProposal do
       end
 
       it "cleanups the disks before creating partitions" do
+        bios_boot = Y2Storage::PartitionId::BIOS_BOOT
+
         proposal.propose
         expect(proposal.devices.partitions).to contain_exactly(
+          an_object_having_attributes(filesystem_mountpoint: nil, id: bios_boot),
           an_object_having_attributes(filesystem_mountpoint: "/"),
           an_object_having_attributes(filesystem_mountpoint: "swap")
         )
@@ -411,6 +414,58 @@ describe Y2Storage::GuidedProposal do
 
           expect(bios_boot).to be_empty
         end
+      end
+    end
+
+    context "when there are devices with empty partition table" do
+      let(:scenario) { "empty_disks" }
+
+      before do
+        settings.candidate_devices = candidate_devices
+      end
+
+      context "and some of them are candidate devices" do
+        let(:candidate_devices) { ["/dev/sda", "/dev/sdb", "/dev/sdc"] }
+
+        it "deletes the partition table on candidate devices with empty partition table" do
+          proposal.propose
+          sdb = proposal.devices.find_by_name("/dev/sdb")
+          sdc = proposal.devices.find_by_name("/dev/sdc")
+
+          expect(sdb.partition_table).to be_nil
+          expect(sdc.partition_table).to be_nil
+        end
+      end
+
+      context "and some of them are not candidate devices" do
+        let(:candidate_devices) { ["/dev/sda", "/dev/sdb"] }
+
+        it "does not delete the partition table on not candidate devices" do
+          proposal.propose
+          sdc = proposal.devices.find_by_name("/dev/sdc")
+
+          expect(sdc.partition_table).to_not be_nil
+        end
+      end
+    end
+
+    context "when all partitions are deleted from a disk" do
+      let(:scenario) { "empty_disks" }
+
+      before do
+        settings.windows_delete_mode = :all
+        settings.linux_delete_mode = :all
+        settings.other_delete_mode = :all
+
+        settings.candidate_devices = ["/dev/sda"]
+      end
+
+      it "deletes the initial partition table" do
+        initial_partition_table = fake_devicegraph.find_by_name("/dev/sda").partition_table
+        proposal.propose
+        current_partition_table = proposal.devices.find_by_name("/dev/sda").partition_table
+
+        expect(current_partition_table.sid).to_not eq(initial_partition_table.sid)
       end
     end
   end

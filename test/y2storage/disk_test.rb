@@ -40,7 +40,6 @@ describe Y2Storage::Disk do
   end
 
   describe "#free_spaces" do
-
     context "in a disk with no partition table, no PV and no filesystem" do
       let(:disk_name) { "/dev/sde" }
 
@@ -486,6 +485,30 @@ describe Y2Storage::Disk do
           expect(disk.swap_partitions).to all(be_a(Y2Storage::Partition))
           expect(disk.swap_partitions).to contain_exactly(an_object_having_attributes(name: "/dev/sdb1"))
         end
+      end
+    end
+  end
+
+  describe "#delete_partition_table" do
+    context "when the device has a partition table" do
+      let(:scenario) { "mixed_disks" }
+
+      let(:disk_name) { "/dev/sda" }
+
+      it "deletes the partition table" do
+        expect(disk.partition_table).to_not be_nil
+        disk.delete_partition_table
+        expect(disk.partition_table).to be_nil
+      end
+    end
+
+    context "when the device has not a partition table" do
+      let(:scenario) { "empty_hard_disk_15GiB" }
+
+      let(:disk_name) { "/dev/sda" }
+
+      it "does not fail" do
+        expect { disk.delete_partition_table }.to_not raise_error
       end
     end
   end

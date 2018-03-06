@@ -262,9 +262,18 @@ module Y2Storage
     # Returns the partition table, creating an empty one if needed.
     # @see #preferred_ptable_type
     #
-    # @return [PartitionTable]
+    # @return [PartitionTables::Base]
     def ensure_partition_table
       partition_table || create_partition_table(preferred_ptable_type)
+    end
+
+    # Deletes the partition table
+    #
+    # @note All dependent devices will be deleted (MD RAIDs, LVM, etc).
+    def delete_partition_table
+      return unless partition_table
+
+      remove_descendants
     end
 
   protected

@@ -134,6 +134,7 @@ describe Y2Storage::GuidedProposal do
 
     context "in a PC with an empty partition table" do
       let(:scenario) { "empty_hard_disk_mbr_50GiB" }
+      let(:expected_scenario) { "empty_hard_disk_gpt_50GiB" }
 
       include_examples "all proposed layouts"
     end

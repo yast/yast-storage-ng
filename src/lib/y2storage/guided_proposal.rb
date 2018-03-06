@@ -167,9 +167,42 @@ module Y2Storage
     end
 
     # Copy of #initial_devicegraph without all the partitions that must be wiped out
-    # according to the settings
+    # according to the settings. Empty partition tables are deleted from candidate
+    # devices.
+    #
+    # @return [Y2Storage::Devicegraph]
     def clean_graph
-      @clean_graph ||= space_maker.delete_unwanted_partitions(initial_devicegraph)
+      return @clean_graph if @clean_graph
+
+      new_devicegraph = initial_devicegraph.dup
+
+      # TODO: remember the list of affected devices so we can restore their partition tables at
+      # the end of the process for those devices that were not used (as soon as libstorage-ng
+      # allows us to copy sub-graphs).
+      remove_empty_partition_tables(new_devicegraph)
+      @clean_graph = space_maker.delete_unwanted_partitions(new_devicegraph)
+    end
+
+    # Removes partition tables from candidate devices with empty partition table
+    #
+    # @note The devicegraph is modified.
+    #
+    # @param devicegraph [Y2Storage::Devicegraph]
+    # @return [Array<Integer>] sid of devices where partition table was deleted from
+    def remove_empty_partition_tables(devicegraph)
+      devices = candidate_devices_with_empty_partition_table(devicegraph)
+      devices.each(&:delete_partition_table)
+      devices.map(&:sid)
+    end
+
+    # All candidate devices with an empty partition table
+    #
+    # @param devicegraph [Y2Storage::Devicegraph]
+    # @return [Array<Y2Storage::BlkDevice>]
+    def candidate_devices_with_empty_partition_table(devicegraph)
+      device_names = populated_settings.candidate_devices
+      devices = device_names.map { |n| devicegraph.find_by_name(n) }
+      devices.select { |d| d.partition_table && d.partitions.empty? }
     end
 
     # Copy of the original settings including some calculated and necessary
