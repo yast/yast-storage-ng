@@ -130,7 +130,7 @@ module Y2Partitioner
           errors += _("Do you want to continue?")
 
           result = Yast2::Popup.show(errors,
-            headline: :error, richtext: true, buttons: :yes_no, focus: :no)
+            headline: :warning, richtext: true, buttons: :yes_no, focus: :no)
 
           result == :yes
         else
