@@ -7,7 +7,7 @@
     partition_table: dasd
     partitions:
     - partition:
-        size: 511968 KiB (499.97 MiB)
+        size: 300 MiB
         name: "/dev/sda1"
         id: linux
         file_system: ext2
@@ -16,7 +16,7 @@
           - acl
           - user_xattr
     - partition:
-        size: 23605152 KiB (22.51 GiB)
+        size: 23809920 KiB (22.71 GiB)
         name: "/dev/sda2"
         id: lvm
 - lvm_vg:
@@ -24,12 +24,12 @@
     lvm_lvs:
     - lvm_lv:
         lv_name: home
-        size: 6456 MiB
+        size: 6576 MiB
         file_system: xfs
         mount_point: "/home"
     - lvm_lv:
         lv_name: root
-        size: 14544 MiB (14.20 GiB)
+        size: 14624 MiB (14.20 GiB)
         file_system: btrfs
         mount_point: "/"
     - lvm_lv:

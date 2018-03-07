@@ -82,7 +82,7 @@ describe Y2Storage::VolumeSpecificationBuilder do
             fs_type:      Y2Storage::Filesystems::Type.zipl_filesystems.first,
             min_size:     100.MiB,
             desired_size: 200.MiB,
-            max_size:     500.MiB
+            max_size:     300.MiB
           )
         end
       end
