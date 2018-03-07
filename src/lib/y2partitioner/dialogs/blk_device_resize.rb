@@ -117,7 +117,7 @@ module Y2Partitioner
         size = device.size.to_human_string
         # TRANSLATORS: label for current size of the partition or LVM logical volume,
         # where %{size} is replaced by a size (e.g., 5.5 GiB)
-        Left(Label(format("Current size: %{size}", size: size)))
+        Left(Label(format(_("Current size: %{size}"), size: size)))
       end
 
       # Widget for used size
@@ -125,7 +125,7 @@ module Y2Partitioner
         size = used_size.to_human_string
         # TRANSLATORS: label for currently used size of the partition or LVM volume,
         # where %{size} is replaced by a size (e.g., 5.5 GiB)
-        Left(Label(format("Currently used: %{size}", size: size)))
+        Left(Label(format(_("Currently used: %{size}"), size: size)))
       end
     end
 
