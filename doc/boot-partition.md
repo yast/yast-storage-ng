@@ -1,7 +1,7 @@
 Boot Partition Layout / Restrictions For Storage Proposal
 =========================================================
 
-[Revision 2018-03-02]
+[Revision 2018-03-07]
 
 #### Notes:
 
@@ -22,6 +22,9 @@ Boot Partition Layout / Restrictions For Storage Proposal
   disk to please some buggy EFI implementations.
 - At the time of writing, there is nothing implemented in the proposal to ensure
   a given partition is located at the beginning of its disk.
+- [bsc#1070265](https://bugzilla.suse.com/show_bug.cgi?id=1070265) offered some
+  extra information about the s390 boot requirements, specially when
+  `/boot/zipl` can be omitted.
 
 ### Grub2 and disk abstractions
 
