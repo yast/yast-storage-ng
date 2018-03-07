@@ -317,7 +317,11 @@ module Y2Partitioner
       # @return [Boolean] true if the label is duplicated; false otherwise.
       def duplicated_label?
         return false if value.empty?
-        working_graph.filesystems.any? { |f| f.sid != filesystem.sid && f.label == value }
+        working_graph.filesystems.any? do |fs|
+          next false if fs.sid == filesystem.sid
+          next false unless fs.respond_to?(:label) # NFS doesn't support labels
+          fs.label == value
+        end
       end
 
       # Widget to select the mount by option
