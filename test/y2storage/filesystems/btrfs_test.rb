@@ -864,4 +864,28 @@ describe Y2Storage::Filesystems::Btrfs do
       end
     end
   end
+
+  describe "#copy_mount_by_to_subvolumes" do
+    let(:subvol_mount_points) { filesystem.btrfs_subvolumes.reject { |s| s.mount_point.nil? } }
+    let(:subvol_mount_bys) { subvol_mount_points.map { |m| m.mount_by.to_sym } }
+    let(:btrfs_mount_by) { filesystem.mount_by.to_sym }
+
+    it "starts with both the btrfs and all subvolumes mounted by label" do
+      expect(btrfs_mount_by).to eq :label
+      expect(subvol_mount_bys).to all(eq :label)
+    end
+
+    it "changing only the btrfs mount_by does not affect the subvolumes" do
+      filesystem.mount_point.mount_by = Y2Storage::Filesystems::MountByType::UUID
+      expect(btrfs_mount_by).to eq :uuid
+      expect(subvol_mount_bys).to all(eq :label)
+    end
+
+    it "copy_mount_by_to_subvolumes copies the modified btrfs mount_by to all subvolumes" do
+      filesystem.mount_point.mount_by = Y2Storage::Filesystems::MountByType::UUID
+      filesystem.copy_mount_by_to_subvolumes
+      expect(btrfs_mount_by).to eq :uuid
+      expect(subvol_mount_bys).to all(eq :uuid)
+    end
+  end
 end
