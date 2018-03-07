@@ -158,21 +158,6 @@ describe Y2Storage::BootRequirementsChecker do
       end
     end
 
-    RSpec.shared_examples "zipl partition" do
-      context "and there is no /boot/zipl partition in the system" do
-        let(:partitions) { [grub_partition] }
-        include_examples "missing zipl partition"
-      end
-
-      context "and there is a /boot/zipl partition in the system" do
-        let(:partitions) { [zipl_partition] }
-
-        it "does not contain errors" do
-          expect(checker.warnings).to be_empty
-        end
-      end
-    end
-
     let(:efiboot) { false }
 
     context "/boot is too small" do
@@ -472,46 +457,166 @@ describe Y2Storage::BootRequirementsChecker do
     context "in a S/390 system" do
       let(:architecture) { :s390 }
       let(:efiboot) { false }
+      let(:scenario) { "several-dasds" }
+
+      def format_dev(name, type, path)
+        fs = fake_devicegraph.find_by_name(name).create_filesystem(type)
+        fs.mount_path = path
+      end
+
+      def format_zipl(name)
+        format_dev(name, Y2Storage::Filesystems::Type::EXT4, "/boot/zipl")
+      end
+
+      RSpec.shared_examples "zipl needed if missing" do
+        context "and there is a /boot/zipl partition" do
+          before { format_zipl("/dev/dasdc2") }
+
+          include_examples "no errors"
+        end
+
+        context "and there is no /boot/zipl partition" do
+          include_examples "missing zipl partition"
+        end
+      end
+
+      RSpec.shared_examples "zipl not needed" do
+        context "and there is a /boot/zipl partition" do
+          before { format_zipl("/dev/dasdc2") }
+
+          include_examples "no errors"
+        end
+
+        context "and there is no /boot/zipl partition" do
+          include_examples "no errors"
+        end
+      end
+
+      RSpec.shared_examples "zipl separate boot" do
+        context "and /boot uses a non-readable filesystem type (e.g. btrfs)" do
+          let(:boot_type) { Y2Storage::Filesystems::Type::BTRFS }
+
+          include_examples "zipl needed if missing"
+        end
+
+        context "with /boot formatted in a readable filesystem type (XFS or extX)" do
+          let(:boot_type) { Y2Storage::Filesystems::Type::XFS }
+
+          include_examples "zipl not needed"
+        end
+      end
+
+      RSpec.shared_examples "zipl not accessible root" do
+        context "and / uses a non-readable filesystem type (e.g. btrfs)" do
+          let(:root_type) { Y2Storage::Filesystems::Type::BTRFS }
+
+          include_examples "zipl needed if missing"
+        end
+
+        context "and / is formatted in a readable filesystem type (XFS or extX)" do
+          let(:root_type) { Y2Storage::Filesystems::Type::EXT4 }
+
+          include_examples "zipl needed if missing"
+        end
+      end
 
       context "when there is no root" do
-        let(:scenario) { "false-swaps" }
-
         include_examples "unknown boot disk"
       end
 
-      # TODO: find coresponding xml files for it
-      # and ideally from real usage
-      xcontext "using a zfcp disk as boot disk" do
-        let(:dasd) { false }
-        let(:type) { Y2Storage::DasdType::UNKNOWN }
-        let(:format) { Y2Storage::DasdFormat::NONE }
+      context "if / is in a plain partition" do
+        before { format_dev(root_name, root_type, "/") }
 
-        include_examples "zipl partition"
-      end
+        let(:root_name) { "/dev/dasdc3" }
+        let(:root_type) { Y2Storage::Filesystems::Type::EXT4 }
 
-      xcontext "using a FBA DASD disk as boot disk" do
-        let(:scenario) { "fba" }
-        include_examples "unsupported boot disk"
-      end
-
-      context "using a (E)CKD DASD disk as boot disk" do
-        context "if the disk is formatted as LDL" do
-          let(:scenario) { "ldl" }
+        context "in a (E)CKD DASD disk formatted as LDL" do
+          let(:root_name) { "/dev/dasda1" }
 
           include_examples "unsupported boot disk"
         end
 
-        context "if the disk is formatted as CDL" do
-          context "and there is no /boot/zipl partition in the system" do
-            let(:scenario) { "no_zipl" }
-            include_examples "missing zipl partition"
+        context "and there is a separate /boot partition" do
+          before { format_dev("/dev/dasdc1", boot_type, "/boot") }
+
+          include_examples "zipl separate boot"
+        end
+
+        context "if there is no separate /boot partition" do
+          context "and / uses a non-readable filesystem type (e.g. btrfs)" do
+            let(:root_type) { Y2Storage::Filesystems::Type::BTRFS }
+
+            include_examples "zipl needed if missing"
           end
 
-          context "and there is a /boot/zipl partition in the system" do
-            let(:scenario) { "zipl" }
+          context "and / is formatted in a readable filesystem type (XFS or extX)" do
+            let(:root_type) { Y2Storage::Filesystems::Type::XFS }
 
-            include_examples "no errors"
+            include_examples "zipl not needed"
           end
+        end
+      end
+
+      context "and / is in a encrypted partition" do
+        before do
+          enc = fake_devicegraph.find_by_name(root_name).create_encryption("enc")
+          format_dev(enc.name, root_type, "/")
+        end
+
+        let(:root_name) { "/dev/dasdc3" }
+        let(:root_type) { Y2Storage::Filesystems::Type::EXT4 }
+
+        context "in a (E)CKD DASD disk formatted as LDL" do
+          let(:root_name) { "/dev/dasda1" }
+
+          include_examples "unsupported boot disk"
+        end
+
+        context "and there is a separate /boot partition" do
+          before { format_dev("/dev/dasdc1", boot_type, "/boot") }
+
+          include_examples "zipl separate boot"
+        end
+
+        context "if there is no separate /boot partition" do
+          include_examples "zipl not accessible root"
+        end
+      end
+
+      context "and / is in an LVM logical volume" do
+        before { format_dev("/dev/vg0/lv1", root_type, "/") }
+        let(:root_type) { Y2Storage::Filesystems::Type::EXT4 }
+
+        context "and there is a separate /boot partition" do
+          before { format_dev("/dev/dasdc1", boot_type, "/boot") }
+
+          include_examples "zipl separate boot"
+        end
+
+        context "if there is no separate /boot partition" do
+          include_examples "zipl not accessible root"
+        end
+      end
+
+      context "and / is in an MD RAID" do
+        before do
+          md = Y2Storage::Md.create(fake_devicegraph, "/dev/md0")
+          md.md_level = Y2Storage::MdLevel::RAID0
+          md.add_device(fake_devicegraph.find_by_name("/dev/dasdc3"))
+          md.add_device(fake_devicegraph.find_by_name("/dev/dasdd2"))
+          format_dev(md.name, root_type, "/")
+        end
+
+        let(:root_type) { Y2Storage::Filesystems::Type::EXT4 }
+
+        context "and there is a separate /boot partition" do
+          before { format_dev("/dev/dasdc1", boot_type, "/boot") }
+
+          include_examples "zipl separate boot"
+        end
+
+        context "if there is no separate /boot partition" do
+          include_examples "zipl not accessible root"
         end
       end
     end

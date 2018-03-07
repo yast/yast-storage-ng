@@ -43,8 +43,9 @@ module Y2Storage
       extend Forwardable
 
       def_delegators :@analyzer,
-        :root_filesystem, :boot_disk, :root_in_lvm?, :root_in_software_raid?,
-        :encrypted_root?, :btrfs_root?, :boot_ptable_type?, :free_mountpoint?
+        :root_filesystem, :boot_disk, :boot_ptable_type?, :free_mountpoint?,
+        :root_in_lvm?, :root_in_software_raid?, :encrypted_root?, :btrfs_root?,
+        :boot_in_lvm?, :boot_in_software_raid?, :encrypted_boot?, :boot_filesystem_type
 
       # Constructor
       #

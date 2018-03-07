@@ -108,6 +108,34 @@ module Y2Storage
         encrypted?(device_for_root)
       end
 
+      # Whether the filesystem containing /boot is going to be in a LVM logical volume
+      #
+      # @return [Boolean] true if the filesystem where /boot resides is going to
+      #   be in an LVM logical volume. False if such filesystem is unknown (not
+      #   in the planned devices or in the devicegraph) or is not placed in an LVM.
+      def boot_in_lvm?
+        in_lvm?(device_for_boot)
+      end
+
+      # Whether the filesystem containing /boot is over a Software RAID
+      #
+      # @return [Boolean] true if the filesystem where /boot resides is going to
+      #   be in a Software RAID. False if such filesystem is unknown (not in the
+      #   planned devices or in the devicegraph) or is not placed over a
+      #   Software RAID.
+      def boot_in_software_raid?
+        in_software_raid?(device_for_boot)
+      end
+
+      # Whether the filesystem containing /boot is going to be in an encrypted device
+      #
+      # @return [Boolean] true if the filesystem where /boot resides is going to
+      #   be in an encrypted device. False if such filesystem is unknown (not in
+      #   the planned devices or in the devicegraph) or is not encrypted.
+      def encrypted_boot?
+        encrypted?(device_for_boot)
+      end
+
       # Whether the root (/) filesystem is going to be Btrfs
       #
       # @return [Boolean] true if the root filesystem is going to be Btrfs.
@@ -116,6 +144,14 @@ module Y2Storage
       def btrfs_root?
         type = filesystem_type(device_for_root)
         type ? type.is?(:btrfs) : false
+      end
+
+      # Type of the filesystem (planned or from the devicegraph) containing /boot
+      #
+      # @return [Filesystems::Type, nil] nil if there is no place for /boot either
+      #   in the planned devices or in the devicegraph
+      def boot_filesystem_type
+        filesystem_type(device_for_boot)
       end
 
       # Whether the partition table of the disk used for booting matches the
@@ -199,6 +235,20 @@ module Y2Storage
         root_planned_dev || root_filesystem || nil
       end
 
+      # Device (planned or from the devicegraph) containing the "/" path
+      #
+      # It can be a device directly mounted there or the root device if
+      # "/boot" is not a separate mount point.
+      #
+      # @see #planned_devices
+      # @see #devicegraph
+      #
+      # @return [Filesystems::Base, Planned::Device, nil] nil if there is no
+      #   filesystem or plan for anything containing "/boot"
+      def device_for_boot
+        boot_planned_dev || boot_filesystem || root_planned_dev || root_filesystem || nil
+      end
+
       def boot_ptable_type
         return nil unless boot_disk
         return boot_disk.partition_table.type unless boot_disk.partition_table.nil?
@@ -266,6 +316,20 @@ module Y2Storage
       # @return [Float, nil]
       def planned_weight(device)
         device.respond_to?(:weight) ? device.weight : nil
+      end
+
+      # Planned device for a separate /boot
+      #
+      # @return [Planned::Device, nil] nil if no separate /boot is planned
+      def boot_planned_dev
+        @boot_planned_dev ||= planned_for_mountpoint("/boot")
+      end
+
+      # Filesystem mounted at /boot
+      #
+      # @return [Filesystems::Base, nil] nil if there is no separate filesystem for /boot
+      def boot_filesystem
+        @boot_filesystem ||= filesystem_for_mountpoint("/boot")
       end
 
       # Filesystem type used for the device

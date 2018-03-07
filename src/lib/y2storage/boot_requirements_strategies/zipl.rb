@@ -33,7 +33,11 @@ module Y2Storage
       # @see Base#needed_partitions
       def needed_partitions(target)
         raise Error, "Impossible to boot system from the chosen disk" unless supported_boot_disk?
-        zipl_partition_missing? ? [zipl_partition(target)] : []
+        if zipl_partition_needed? && zipl_partition_missing?
+          [zipl_partition(target)]
+        else
+          []
+        end
       end
 
       # Boot warnings in the current setup
@@ -44,7 +48,7 @@ module Y2Storage
 
         if !supported_boot_disk?
           res << unsupported_boot_disk_error
-        elsif missing_partition_for?(zipl_volume)
+        elsif zipl_partition_needed? && missing_partition_for?(zipl_volume)
           res << SetupError.new(missing_volume: zipl_volume)
         end
 
@@ -55,16 +59,34 @@ module Y2Storage
 
       def supported_boot_disk?
         return false unless boot_disk
-        if boot_disk.is?(:dasd)
-          return false if boot_disk.type.is?(:fba)
-          return false if boot_disk.format.is?(:ldl)
-          # TODO: DIAG disks (whatever they are) are not supported either
-        end
+        return false if boot_disk.is?(:dasd) && boot_disk.format.is?(:ldl)
+        # TODO: DIAG disks (whatever they are) are not supported either
+
         true
       end
 
       def zipl_partition_missing?
         free_mountpoint?("/boot/zipl")
+      end
+
+      # Whether a separate /boot/zipl partition is needed to boot the planned
+      # setup
+      #
+      # @return [Boolean]
+      def zipl_partition_needed?
+        # We cannot ensure the s390 firmware can handle technologies like LVM,
+        # MD or LUKS, so propose a separate /boot/zipl partition for those cases
+        if boot_in_lvm? || boot_in_software_raid? || encrypted_boot?
+          return true
+        end
+
+        # In theory, this is never called if there is no / filesystem (planned or
+        # current). But let's stay safe and return false right away.
+        return false if boot_filesystem_type.nil?
+
+        # The s390 firmware can find the kernel if the partition holding it uses
+        # one of the supported filesystem types
+        !boot_filesystem_type.zipl_ok?
       end
 
       # @return [VolumeSpecification]
@@ -85,8 +107,8 @@ module Y2Storage
       def unsupported_boot_disk_error
         # TRANSLATORS: error message
         error_message = _(
-          "Looks like the system is going to be installed on a FBA " \
-          "or LDL device. Booting from such device is not supported."
+          "Looks like the system is going to be installed on an LDL device.\n" \
+          "Booting from such device is not supported."
         )
         SetupError.new(message: error_message)
       end
