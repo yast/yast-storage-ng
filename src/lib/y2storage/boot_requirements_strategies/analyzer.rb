@@ -204,10 +204,15 @@ module Y2Storage
         @max_planned_weight ||= planned_devices.map { |dev| planned_weight(dev) }.compact.max
       end
 
-      # Whether there is /boot/efi filesystem in a software raid
+      # Method to detect the specific situation in which /boot/efi is located
+      # in a mirror software raid.
+      #
+      # This setup can be used to ensure the system can boot from any of the
+      # disks in the RAID, but it's not fully reliable.
+      # See bsc#1081578 and the related FATE#322485 and FATE#314829.
       #
       # @return [Boolean] false if there is no /boot/efi or it's not located in
-      #   an MD RAID
+      #   an MD mirror RAID
       def efi_in_md_raid1?
         filesystem = filesystem_for_mountpoint("/boot/efi")
         return false unless filesystem

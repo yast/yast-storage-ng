@@ -45,7 +45,12 @@ module Y2Storage
       def warnings
         res = super
 
-        # EFI in RAID can work, but it is not much reliable. see bsc#1081578#c9
+        # EFI in RAID can work, but it is not much reliable.
+        # See bsc#1081578#c9, FATE#322485, FATE#314829
+        # - RAID metadata must be somewhere where it will not interfere with UEFI reading
+        #   the disk. libstorage-ng currently uses "mdadm --metadata=1.0" which is OK
+        # - The partition boot flag must be on
+        # - The partition RAID flag must be on (but setting it resets the boot flag)
         if analyzer.efi_in_md_raid1?
           msg = _(
             "/boot/efi is in a software RAID. That setup is not guaranteed \n" \
