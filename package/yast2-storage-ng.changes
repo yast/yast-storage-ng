@@ -1,4 +1,14 @@
 -------------------------------------------------------------------
+Wed Mar  7 15:01:47 UTC 2018 - ancor@suse.com
+
+- Better control on whether a separate /boot/zipl is needed in
+  S/390 systems, both in the Guided Setup and the Partitioner.
+- Do not longer report FBA DASDs to be unsupported devices for
+  booting (they are indeed supported).
+- Part of bsc#1070265.
+- 4.0.126
+
+-------------------------------------------------------------------
 Wed Mar  7 11:39:52 UTC 2018 - snwint@suse.com
 
 - fix translations in blk_device_resize.rb (bsc#1081598)
