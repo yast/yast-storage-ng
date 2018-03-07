@@ -536,6 +536,17 @@ describe Y2Storage::BootRequirementsChecker do
           include_examples "unsupported boot disk"
         end
 
+        context "in the implicit partition table of an FBA device" do
+          let(:root_name) { "/dev/dasdb1" }
+
+          # Regression test for bug#1070265. It wrongly claimed booting
+          # from FBA DASDs was not supported
+          it "contains no error about unsupported disk" do
+            expect(checker.warnings).to be_empty
+            expect(checker.errors).to be_empty
+          end
+        end
+
         context "and there is a separate /boot partition" do
           before { format_dev("/dev/dasdc1", boot_type, "/boot") }
 
