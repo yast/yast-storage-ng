@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Wed Mar  7 11:39:52 UTC 2018 - snwint@suse.com
+
+- fix translations in blk_device_resize.rb (bsc#1081598)
+- 4.0.125
+
+-------------------------------------------------------------------
 Mon Mar  5 15:47:29 UTC 2018 - jlopez@suse.com
 
 - Guided proposal uses preferred partition table type when
