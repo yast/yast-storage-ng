@@ -41,12 +41,10 @@ describe Y2Storage::GuidedProposal do
   describe "#propose" do
     before do
       fake_devicegraph.dasds.each do |dasd|
-        dasd.type = type
         dasd.format = format
       end
     end
 
-    let(:type) { Y2Storage::DasdType::UNKNOWN }
     let(:format) { Y2Storage::DasdFormat::NONE }
 
     context "with a zfcp disk" do
@@ -58,7 +56,6 @@ describe Y2Storage::GuidedProposal do
 
     context "with a FBA DASD disk" do
       let(:scenario) { "empty_dasd_50GiB" }
-      let(:type) { Y2Storage::DasdType::FBA }
 
       it "fails to make a proposal" do
         expect { proposal.propose }.to raise_error Y2Storage::Error
@@ -68,8 +65,6 @@ describe Y2Storage::GuidedProposal do
     context "with a (E)CKD DASD disk" do
       let(:scenario) { "empty_dasd_50GiB" }
       let(:expected_scenario) { "s390_dasd_zipl" }
-
-      let(:type) { Y2Storage::DasdType::ECKD }
 
       context "formated as LDL" do
         let(:format) { Y2Storage::DasdFormat::LDL }
