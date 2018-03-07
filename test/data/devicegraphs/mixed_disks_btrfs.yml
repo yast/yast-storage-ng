@@ -20,6 +20,7 @@
         name:         /dev/sda2
         mount_point:  /
         label:        root
+        mount_by:     label
         file_system:  btrfs
         btrfs:
             default_subvolume: "@"
