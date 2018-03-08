@@ -96,6 +96,47 @@ describe Y2Storage::GuidedProposal do
           subject.propose
           expect(subvolumes.map(&:path)).not_to include("@/opt")
         end
+
+        context "using the ng settings format with a @/home subvolume" do
+          let(:settings_format) { :ng }
+          let(:control_file) { "volumes_ng/control.SLE-like.xml" }
+
+          context "and no separate home" do
+            let(:separate_home) { false }
+
+            it "proposes the @/home subvolume" do
+              subject.propose
+              expect(subvolumes.detect { |s| s.path == "@/home" }).to_not be_nil
+            end
+
+            it "does not modify the list of subvolumes in the settings" do
+              root_spec = settings.volumes.find { |v| v.mount_point == "/" }
+              pre_list = root_spec.subvolumes.dup
+              subject.propose
+              expect(root_spec.subvolumes).to eq pre_list
+            end
+          end
+
+          context "and a separate home" do
+            let(:separate_home) { true }
+
+            it "does not propose the @/home subvolume" do
+              subject.propose
+              expect(subvolumes.detect { |s| s.path == "@/home" }).to be_nil
+            end
+
+            # Regression test for bsc#1084213 and bsc#1084261, the shadowed
+            # @/home subvolume was not being removed only from the planned
+            # device, but also from the original settings. So subsequent
+            # attempts with the same ProposalSettings object were wrong.
+            it "does not modify the list of subvolumes in the settings" do
+              root_spec = settings.volumes.find { |v| v.mount_point == "/" }
+              pre_list = root_spec.subvolumes.dup
+              subject.propose
+              expect(root_spec.subvolumes).to eq pre_list
+            end
+          end
+        end
       end
 
       context "and there are not planned subvolumes" do
@@ -138,12 +179,21 @@ describe Y2Storage::GuidedProposal do
         end
       end
 
-      context "when there is seperate home" do
+      context "when there is separate home" do
         let(:separate_home) { true }
 
         it "does not propose a subvolume for home" do
           subject.propose
           expect(subvolumes.detect { |s| s.path == "@/home" }).to be_nil
+        end
+
+        # Regression test for bsc#1084213 and bsc#1084261 when legacy format is
+        # used for the settings. See details above, in the corresponding test
+        # with NG settings.
+        it "does not modify the list of subvolumes in the settings" do
+          pre_list = settings.subvolumes.dup
+          subject.propose
+          expect(settings.subvolumes).to eq pre_list
         end
       end
 

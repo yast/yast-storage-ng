@@ -82,7 +82,14 @@ RSpec.shared_context "proposal" do
     settings
   end
 
-  let(:ng_settings) { Y2Storage::ProposalSettings.new_for_current_product }
+  let(:ng_settings) do
+    settings = Y2Storage::ProposalSettings.new_for_current_product
+    home = settings.volumes.find { |v| v.mount_point == "/home" }
+    home.proposed = separate_home if home
+    settings.lvm = lvm
+    settings.encryption_password = encrypt ? "12345678" : nil
+    settings
+  end
 
   let(:control_file) { nil }
 

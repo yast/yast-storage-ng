@@ -117,6 +117,7 @@ describe Y2Storage::Proposal::InitialStrategies::Ng do
     let(:swap_settings) { volume_settings(proposal.settings, "swap") }
 
     let(:lvm) { false }
+    let(:separate_home) { true }
 
     let(:root_proposed_configurable) { false }
 
