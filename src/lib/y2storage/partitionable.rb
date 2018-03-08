@@ -276,6 +276,17 @@ module Y2Storage
       remove_descendants
     end
 
+    # Whether the device contains an implicit partition table
+    #
+    # @see Y2Storage::PartitionTables::ImplicitPt
+    #
+    # @return [Boolean]
+    def implicit_partition_table?
+      return false unless partition_table
+
+      partition_table.type.is?(:implicit)
+    end
+
   protected
 
     # Find partitions that have a given (set of) partition id(s).

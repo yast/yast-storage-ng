@@ -24,13 +24,15 @@ require_relative "spec_helper"
 require "y2storage"
 
 describe Y2Storage::Dasd do
-
   before do
     fake_scenario(scenario)
   end
 
+  subject { Y2Storage::Dasd.find_by_name(fake_devicegraph, device_name) }
+
   let(:scenario) { "empty_dasd_50GiB" }
-  subject { Y2Storage::Dasd.find_by_name(fake_devicegraph, "/dev/sda") }
+
+  let(:device_name) { "/dev/sda" }
 
   describe "#usb?" do
     it "returns false" do
@@ -56,6 +58,38 @@ describe Y2Storage::Dasd do
     it "includes all dasds in the devicegraph and nothing else" do
       dasds = Y2Storage::Dasd.all(fake_devicegraph)
       expect(dasds.map(&:basename)).to contain_exactly("dasda", "dasdb")
+    end
+  end
+
+  describe "#implicit_partition_table?" do
+    context "if the device has no partition table" do
+      let(:scenario) { "empty_dasd_50GiB" }
+
+      let(:device_name) { "/dev/sda" }
+
+      it "returns false" do
+        expect(subject.implicit_partition_table?).to eq(false)
+      end
+    end
+
+    context "if the device has a partition table" do
+      let(:scenario) { "several-dasds" }
+
+      context "and the partition table is not implicit" do
+        let(:device_name) { "/dev/dasdc" }
+
+        it "returns false" do
+          expect(subject.implicit_partition_table?).to eq(false)
+        end
+      end
+
+      context "and the partition table is implicit" do
+        let(:device_name) { "/dev/dasda" }
+
+        it "returns true" do
+          expect(subject.implicit_partition_table?).to eq(true)
+        end
+      end
     end
   end
 
