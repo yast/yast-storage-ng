@@ -23,6 +23,7 @@ require "y2storage/storage_class_wrapper"
 require "y2storage/device"
 require "y2storage/partition_tables/type"
 require "y2storage/region"
+require "y2storage/free_disk_space"
 
 module Y2Storage
   module PartitionTables
@@ -268,6 +269,17 @@ module Y2Storage
         else
           align(region, AlignPolicy::KEEP_START_ALIGN_END, align_type)
         end
+      end
+
+      # Free spaces in the partition table
+      #
+      # @note There is a free space for each unused slot.
+      #
+      # @see FreeDiskSpace
+      #
+      # @return [Array<Y2Storage::FreeDiskSpace>]
+      def free_spaces
+        unused_partition_slots.map { |s| FreeDiskSpace.new(partitionable, s.region) }
       end
 
     protected
