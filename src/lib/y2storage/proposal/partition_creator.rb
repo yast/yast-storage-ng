@@ -148,7 +148,7 @@ module Y2Storage
         ptable = free_space.disk.ensure_partition_table
 
         if ptable.type.is?(:implicit)
-          use_implicit_partition(ptable)
+          reuse_implicit_partition(ptable)
         elsif primary
           create_primary_partition(planned_partition, free_space)
         elsif !ptable.has_extended?
@@ -160,21 +160,22 @@ module Y2Storage
         end
       end
 
-      # Use the single partition of an implicit partition table instead of creating a new one
+      # Reuses the single partition of an implicit partition table instead of creating a new one
       #
       # @raise [Y2Storage::NoMorePartitionSlotError] if the single implicit partition is
       #   already in use.
       #
       # @param ptable [Y2Storage::PartitionTables::ImplicitPt]
       # @return [Y2Storage::Partition] single implicit partition
-      def use_implicit_partition(ptable)
+      def reuse_implicit_partition(ptable)
         partition = ptable.partition
         return partition unless implicit_partition_in_use?(partition)
 
-        raise NoMorePartitionSlotError
+        raise NoMorePartitionSlotError, "Trying to reuse a not empty implicit partition"
       end
 
-      # Whether a single implicit partition is in use (has filesystem)
+      # Whether a single implicit partition is in use (has filesystem, is an LVM PV, or is
+      # part of a software RAID)
       #
       # @param partition [Y2Storage::Partition] single implicit partition
       # @return [Boolean]

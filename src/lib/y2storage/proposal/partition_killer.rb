@@ -74,7 +74,8 @@ module Y2Storage
       #   now empty extended partition. The partition table is also deleted when
       #   the last partition is deleted. In case of AutoYaST, deletion of the partition
       #   table is avoided because AutoYaST uses its own logic to reuse partition tables.
-      #   In case of a sigle implicit parition, the partition is not deleted, but only wiped.
+      #   In case of a single implicit partition, the partition is not deleted, but only
+      #   wiped (leaving the partition empty).
       #
       # @param partition [Partition]
       # @return [Array<Integer>] device sids of all the deleted partitions
@@ -101,7 +102,7 @@ module Y2Storage
         deleted_partitions
       end
 
-      # Removes the filesystem from the implicit partition
+      # Removes all descendants from the implicit partition
       #
       # @param partition [Y2Storage::Partition] implicit partition
       def wipe_implicit_partition(partition)

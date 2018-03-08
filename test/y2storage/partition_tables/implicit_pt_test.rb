@@ -79,8 +79,8 @@ describe Y2Storage::PartitionTables::ImplicitPt do
         expect(subject.free_spaces.first.region).to eq(partition.region)
       end
 
-      it "returns a free space marked as implicit" do
-        expect(subject.free_spaces.first.in_implicit_partition_table?).to eq(true)
+      it "returns a free space belonging to a reused partition" do
+        expect(subject.free_spaces.first.reused_partition?).to eq(true)
       end
     end
   end

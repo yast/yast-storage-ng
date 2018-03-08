@@ -37,7 +37,6 @@ module Y2Storage
 
       # Single partition of an implicit partition table
       #
-      #
       # @note The kernel creates a partition on some DASDs even though no
       #   partition table exists on-disk. This situation is represented in
       #   libstorage-ng by an implicit partition table having one partition.
@@ -50,10 +49,11 @@ module Y2Storage
         partitions.first
       end
 
-      # Free spaces in the inplicit partition table
+      # Free spaces in the implicit partition table
       #
       # @note The single partition cannot be removed. The whole partition is
-      #   considered as freespace when it is not in use (has not filesystem).
+      #   considered as free space when it is not in use (has no filesystem,
+      #   is not an LVM PV, and is not part of a software RAID).
       #
       # @see FreeDiskSpace
       #

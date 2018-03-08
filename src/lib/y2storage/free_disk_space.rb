@@ -26,9 +26,9 @@ require "storage"
 require "y2storage/disk_size"
 
 module Y2Storage
-  #
   # Helper class to keep information about free disk space together.
-  #
+  # That objects can represent an unpartitioned chunk (maybe within
+  # and extended partition) or the space of a partition to be reused.
   class FreeDiskSpace
     # @!attribute disk
     #   @return [DiskSize]
@@ -50,11 +50,11 @@ module Y2Storage
       @region = Y2Storage::Region.new(region)
     end
 
-    # Whether this free space belongs to an implicit partition table
+    # Whether the region belongs to a partition that is going to be reused
     #
     # @return [Boolean]
-    def in_implicit_partition_table?
-      disk.implicit_partition_table?
+    def reused_partition?
+      disk.partitions.map(&:region).include?(region)
     end
 
     # Return the name of the disk this slot is on.

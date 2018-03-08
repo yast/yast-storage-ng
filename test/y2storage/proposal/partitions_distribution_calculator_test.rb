@@ -362,7 +362,7 @@ describe Y2Storage::Proposal::PartitionsDistributionCalculator do
         end
       end
 
-      context "if there are free spaces that belong to an implicit partition table" do
+      context "if there are free spaces that belong to a reused partition" do
         let(:scenario) { "several-dasds" }
 
         let(:vol1) { planned_vol(mount_point: "/1", type: :ext4, min: 1.GiB, max: 1.GiB, weight: 1) }
@@ -370,17 +370,17 @@ describe Y2Storage::Proposal::PartitionsDistributionCalculator do
         let(:vol3) { planned_vol(mount_point: "/3", type: :ext4, min: 1.GiB, max: 1.GiB, weight: 1) }
         let(:volumes) { [vol1, vol2, vol3] }
 
-        it "only assigns one partition to the free space of an implicit partition table" do
-          spaces_in_implitic = distribution.spaces.select do |space|
-            space.disk_space.in_implicit_partition_table?
+        it "only assigns one partition to the free space of a reused partition" do
+          spaces_in_reused = distribution.spaces.select do |space|
+            space.disk_space.reused_partition?
           end
 
-          spaces_in_implitic.each { |s| expect(s.partitions.size).to eq(1) }
+          spaces_in_reused.each { |s| expect(s.partitions.size).to eq(1) }
         end
       end
     end
 
-    context "when the only free space belongs to an implicit partition table" do
+    context "when the only free space belongs to a reused partition" do
       let(:scenario) { "several-dasds" }
 
       let(:device) { fake_devicegraph.find_by_name(device_name) }

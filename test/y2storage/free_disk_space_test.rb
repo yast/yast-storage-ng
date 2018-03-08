@@ -32,20 +32,8 @@ describe Y2Storage::FreeDiskSpace do
 
   let(:device) { fake_devicegraph.find_by_name(device_name) }
 
-  describe "#in_implicit_partition_table?" do
-    context "if the region does not belong to any partition table" do
-      let(:scenario) { "empty_hard_disk_15GiB" }
-
-      let(:device_name) { "/dev/sda" }
-
-      let(:region) { device.region }
-
-      it "returns false" do
-        expect(subject.in_implicit_partition_table?).to eq(false)
-      end
-    end
-
-    context "if the region does not belong to an implicit partition table" do
+  describe "#reused_partition?" do
+    context "if the region belongs to an unused slot" do
       let(:scenario) { "mixed_disks" }
 
       let(:device_name) { "/dev/sda" }
@@ -53,11 +41,11 @@ describe Y2Storage::FreeDiskSpace do
       let(:region) { device.partition_table.unused_partition_slots.first.region }
 
       it "returns false" do
-        expect(subject.in_implicit_partition_table?).to eq(false)
+        expect(subject.reused_partition?).to eq(false)
       end
     end
 
-    context "if the region belongs to an implicit partition table" do
+    context "if the region belongs to a partition" do
       let(:scenario) { "several-dasds" }
 
       let(:device_name) { "/dev/dasda" }
@@ -65,7 +53,7 @@ describe Y2Storage::FreeDiskSpace do
       let(:region) { device.partition_table.partition.region }
 
       it "returns true" do
-        expect(subject.in_implicit_partition_table?).to eq(true)
+        expect(subject.reused_partition?).to eq(true)
       end
     end
   end

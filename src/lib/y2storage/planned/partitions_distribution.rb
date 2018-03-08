@@ -349,7 +349,7 @@ module Y2Storage
         primary_spaces = spaces.select { |s| s.partition_type == :primary }
 
         if ptable.type.is?(:implicit)
-          num_partitions(primary_spaces) > ptable.max_primary
+          num_partitions(spaces) > ptable.max_primary
         elsif !ptable.extended_possible?
           num_primary = ptable.num_primary + num_partitions(primary_spaces)
           num_primary > ptable.max_primary
