@@ -867,25 +867,37 @@ describe Y2Storage::Filesystems::Btrfs do
 
   describe "#copy_mount_by_to_subvolumes" do
     let(:subvol_mount_points) { filesystem.btrfs_subvolumes.reject { |s| s.mount_point.nil? } }
-    let(:subvol_mount_bys) { subvol_mount_points.map { |m| m.mount_by.to_sym } }
-    let(:btrfs_mount_by) { filesystem.mount_by.to_sym }
 
-    it "starts with both the btrfs and all subvolumes mounted by label" do
+    # Need some real methods here to avoid 'let' blocks being cached between
+    # the 'before' block and the 'it' block. Notice that 'let!' does NOT
+    # prevent that in this case: It would only reevaluate the block between
+    # different examples, not between the 'before' block and the 'it' block
+    # within the same example.
+    def subvol_mount_bys
+      subvol_mount_points.map { |m| m.mount_by.to_sym }
+    end
+
+    def btrfs_mount_by
+      filesystem.mount_by.to_sym
+    end
+
+    before do
+      # Assert the correct starting conditions
       expect(btrfs_mount_by).to eq :label
       expect(subvol_mount_bys).to all(eq :label)
     end
 
-    it "changing only the btrfs mount_by does not affect the subvolumes" do
-      filesystem.mount_point.mount_by = Y2Storage::Filesystems::MountByType::UUID
-      expect(btrfs_mount_by).to eq :uuid
-      expect(subvol_mount_bys).to all(eq :label)
-    end
-
-    it "copy_mount_by_to_subvolumes copies the modified btrfs mount_by to all subvolumes" do
+    it "copies the btrfs mount_by value to all subvolumes" do
       filesystem.mount_point.mount_by = Y2Storage::Filesystems::MountByType::UUID
       filesystem.copy_mount_by_to_subvolumes
       expect(btrfs_mount_by).to eq :uuid
       expect(subvol_mount_bys).to all(eq :uuid)
+    end
+
+    it "not using it keeps the previous mount_by value for all subvolumes" do
+      filesystem.mount_point.mount_by = Y2Storage::Filesystems::MountByType::UUID
+      expect(btrfs_mount_by).to eq :uuid
+      expect(subvol_mount_bys).to all(eq :label)
     end
   end
 end
