@@ -50,6 +50,13 @@ module Y2Storage
       @region = Y2Storage::Region.new(region)
     end
 
+    # Whether this free space belongs to an implicit parition table
+    #
+    # @return [Boolean]
+    def in_implicit_partition_table?
+      disk.implicit_partition_table?
+    end
+
     # Return the name of the disk this slot is on.
     #
     # @return [String] disk_name
