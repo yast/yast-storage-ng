@@ -81,6 +81,7 @@ module Y2Storage
       #  - the chances of having 2 volumes with max_start_offset in the same
       #    free space are very low
       def valid?
+        return false if too_many_partitions?
         return false unless primary_partitions_fit?
         return true if usable_size >= DiskSize.sum(partitions.map(&:min), rounding: align_grain)
         # At first sight, there is no enough space, but maybe enforcing some
@@ -186,6 +187,20 @@ module Y2Storage
       # @return [Boolean]
       def require_end_alignment?
         disk_space.require_end_alignment?
+      end
+
+      # Whether there are too many partitions to allocate in this space
+      #
+      # @note A disk space holded by an implicit partition table cannot
+      #   allocate more than one partition.
+      #
+      # @see Y2Storage::PartitionTables::ImplicitPt
+      #
+      # @return [Boolean]
+      def too_many_partitions?
+        return false unless disk_space.in_implicit_partition_table?
+
+        partitions.size > disk.partition_table.max_primary
       end
 
       # Whether the planned partitions that must be primary are indeed being to

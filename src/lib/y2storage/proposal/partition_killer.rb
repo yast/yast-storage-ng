@@ -69,10 +69,12 @@ module Y2Storage
       end
 
       # Deletes a given partition from its corresponding partition table.
-      # If the partition was the only remaining logical one, it also deletes the
-      # now empty extended partition. The partition table is also deleted when
-      # the last partition is deleted. In case of AutoYaST, deletion of the partition
-      # table is avoided because AutoYaST uses its own logic to reuse partition tables.
+      #
+      # @note If the partition was the only remaining logical one, it also deletes the
+      #   now empty extended partition. The partition table is also deleted when
+      #   the last partition is deleted. In case of AutoYaST, deletion of the partition
+      #   table is avoided because AutoYaST uses its own logic to reuse partition tables.
+      #   In case of a sigle implicit parition, the partition is not deleted, but only wiped.
       #
       # @param partition [Partition]
       # @return [Array<Integer>] device sids of all the deleted partitions
@@ -81,19 +83,29 @@ module Y2Storage
 
         device = partition.partitionable
 
-        if last_logical?(partition)
+        if device.implicit_partition_table?
+          deleted_partitions = [partition.sid]
+          wipe_implicit_partition(partition)
+        elsif last_logical?(partition)
           log.info("It's the last logical one, so deleting the extended")
-          result = delete_extended(partition.partition_table)
+          deleted_partitions = delete_extended(device.partition_table)
         else
-          result = [partition.sid]
+          deleted_partitions = [partition.sid]
           partition.partition_table.delete_partition(partition)
         end
 
         # AutoYaST has its own logic to reuse partition tables.
-        return result if Yast::Mode.auto
+        return deleted_partitions if Yast::Mode.auto
 
         device.delete_partition_table if device.partitions.empty?
-        result
+        deleted_partitions
+      end
+
+      # Removes the filesystem from the implicit partition
+      #
+      # @param partition [Y2Storage::Partition] implicit partition
+      def wipe_implicit_partition(partition)
+        partition.remove_descendants
       end
 
       # Deletes the extended partition and all the logical ones

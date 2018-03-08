@@ -147,7 +147,9 @@ module Y2Storage
         log.info "Creating partition for #{planned_partition.mount_point} with #{planned_partition.size}"
         ptable = free_space.disk.ensure_partition_table
 
-        if primary
+        if ptable.type.is?(:implicit)
+          use_implicit_partition(ptable)
+        elsif primary
           create_primary_partition(planned_partition, free_space)
         elsif !ptable.has_extended?
           create_extended_partition(free_space)
@@ -156,6 +158,28 @@ module Y2Storage
         else
           create_logical_partition(planned_partition, free_space)
         end
+      end
+
+      # Use the single partition of an implicit partition table instead of creating a new one
+      #
+      # @raise [Y2Storage::NoMorePartitionSlotError] if the single implicit partition is
+      #   already in use.
+      #
+      # @param ptable [Y2Storage::PartitionTables::ImplicitPt]
+      # @return [Y2Storage::Partition] single implicit partition
+      def use_implicit_partition(ptable)
+        partition = ptable.partition
+        return partition unless implicit_partition_in_use?(partition)
+
+        raise NoMorePartitionSlotError
+      end
+
+      # Whether a single implicit partition is in use (has filesystem)
+      #
+      # @param [Y2Storage::Partition] single implicit partition
+      # @return [Boolean]
+      def implicit_partition_in_use?(partition)
+        partition.has_children?
       end
 
       # Creates a primary partition

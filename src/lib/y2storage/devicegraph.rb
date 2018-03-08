@@ -343,8 +343,8 @@ module Y2Storage
     end
 
     # @return [Array<FreeDiskSpace>]
-    def free_disk_spaces
-      disks.reduce([]) { |sum, disk| sum + disk.free_spaces }
+    def free_spaces
+      disk_devices.reduce([]) { |sum, disk| sum + disk.free_spaces }
     end
 
     # Removes a Md raid and all its descendants

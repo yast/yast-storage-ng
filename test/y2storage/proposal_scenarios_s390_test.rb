@@ -56,23 +56,49 @@ describe Y2Storage::GuidedProposal do
     end
 
     context "with a FBA DASD disk" do
-      let(:lvm) { false }
-      let(:separate_home) { true }
-
-      context "with implicit partition" do
+      context "with implicit partition table" do
         let(:scenario) { "empty_dasd_fba" }
-        let(:expected_scenario) { "empty_dasd_fba_gpt" }
 
-        # FIXME: looks like we will need to change this, since in recent
-        # conversations it has being pointed that modifying the implicit
-        # partition is risky. But for the time being...
-        it "proposes the expected layout (implicit partition table replaced by GPT)" do
-          proposal.propose
-          expect(proposal.devices.to_str).to eq expected.to_str
+        let(:settings_format) { :ng }
+
+        let(:control_file) { "volumes_ng/control.SLE-like.xml" }
+
+        context "when tries to create only one partition" do
+          def only_propose_root(settings)
+            settings.volumes.each do |volume|
+              volume.proposed = false if volume.mount_point != "/"
+            end
+          end
+
+          let(:root_volume) { settings.volumes.find { |v| v.mount_point == "/" } }
+
+          before do
+            only_propose_root(settings)
+            root_volume.fs_type = Y2Storage::Filesystems::Type::EXT3
+          end
+
+          it "proposes the expected layout" do
+            proposal.propose
+            partitions = proposal.devices.partitions
+
+            expect(partitions.size).to eq(1)
+            expect(partitions.first.filesystem.type.is?(:ext3)).to eq(true)
+            expect(partitions.first.filesystem.mount_point.path).to eq("/")
+          end
+        end
+
+        context "when tries to create several partitions" do
+          it "fails to make a proposal" do
+            expect { proposal.propose }.to raise_error Y2Storage::Error
+          end
         end
       end
 
       context "with an empty GPT partition table" do
+        let(:lvm) { false }
+
+        let(:separate_home) { true }
+
         let(:scenario) { "empty_dasd_fba_gpt" }
 
         it "proposes the expected layout" do
