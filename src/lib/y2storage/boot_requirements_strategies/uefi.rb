@@ -45,8 +45,13 @@ module Y2Storage
       def warnings
         res = super
 
-        # EFI in RAID can work, but it is not much reliable. see bsc#1081578#c9
-        if efi_in_md_raid1?
+        # EFI in RAID can work, but it is not much reliable.
+        # See bsc#1081578#c9, FATE#322485, FATE#314829
+        # - RAID metadata must be somewhere where it will not interfere with UEFI reading
+        #   the disk. libstorage-ng currently uses "mdadm --metadata=1.0" which is OK
+        # - The partition boot flag must be on
+        # - The partition RAID flag must be on (but setting it resets the boot flag)
+        if analyzer.efi_in_md_raid1?
           msg = _(
             "/boot/efi is in a software RAID. That setup is not guaranteed \n" \
             "to boot in all cases. Proceed only if you know the implications."
@@ -62,16 +67,6 @@ module Y2Storage
       end
 
     protected
-
-      def efi_in_md_raid1?
-        filesystem = devicegraph.filesystems.find { |f| f.mount_path == "/boot/efi" }
-        return false unless filesystem
-
-        raid = filesystem.ancestors.find { |dev| dev.is?(:software_raid) }
-        return false unless raid
-
-        return raid.md_level.is?(:raid1)
-      end
 
       def efi_missing?
         free_mountpoint?("/boot/efi")

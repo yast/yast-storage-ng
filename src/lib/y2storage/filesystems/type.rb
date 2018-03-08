@@ -245,6 +245,14 @@ module Y2Storage
         return Type.home_filesystems.include?(self)
       end
 
+      # Checks whether this type is usable for /home/zipl, i.e. whether the
+      # filesytem type is recognized by the s390 firmware.
+      #
+      # @return [Boolean]
+      def zipl_ok?
+        Type.zipl_filesystems.include?(self)
+      end
+
       # Check if filesystem was usable as home (mountpoint "/home") filesystem.
       #
       # return [Boolean]

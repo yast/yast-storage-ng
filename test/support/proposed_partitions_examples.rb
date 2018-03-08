@@ -179,37 +179,33 @@ RSpec.shared_examples "proposed /boot/zipl partition" do
 
   let(:target) { nil }
 
-  it "requires /boot/zipl to be ext2 with at least 100 MiB" do
-    expect(zipl_part.filesystem_type.is?(:ext2)).to eq true
-  end
-
-  it "requires /boot/zipl to be a non-encrypted partition in the boot disk" do
+  it "proposes /boot/zipl to be a non-encrypted partition in the boot disk" do
     expect(zipl_part.disk).to eq boot_disk.name
     expect(zipl_part).to be_a Y2Storage::Planned::Partition
     expect(zipl_part.encrypt?).to eq false
   end
 
-  context "when aiming for the recommended size" do
+  it "proposes /boot/zipl to be formated as ext2" do
+    expect(zipl_part.filesystem_type.is?(:ext2)).to eq true
+  end
+
+  it "proposes /boot/zipl to be at most 300 MiB (anything bigger would mean wasting space)" do
+    expect(zipl_part.max_size).to eq 300.MiB
+  end
+
+  context "when aiming for the recommended size (first proposal attempt)" do
     let(:target) { :desired }
 
-    it "requires /boot/zipl to be at least 200 MiB large (FIXME: why?)" do
+    it "requires /boot/zipl to be at least 200 MiB (Grub2, one kernel+initrd and extra space)" do
       expect(zipl_part.min_size).to eq 200.MiB
-    end
-
-    it "requires /boot/zipl to be at most 500 MiB large (FIXME: why?)" do
-      expect(zipl_part.max_size).to eq 500.MiB
     end
   end
 
   context "when aiming for the minimal size" do
     let(:target) { :min }
 
-    it "requires /boot/zipl to be at least 100 MiB large (FIXME: why?)" do
+    it "requires /boot/zipl to be at least 100 MiB (Grub2 and one kernel+initrd)" do
       expect(zipl_part.min_size).to eq 100.MiB
-    end
-
-    it "requires /boot/zipl to be at most 500 MiB large (FIXME: why?)" do
-      expect(zipl_part.max_size).to eq 500.MiB
     end
   end
 end

@@ -41,7 +41,6 @@ describe Y2Storage::GuidedProposal do
   describe "#propose" do
     before do
       fake_devicegraph.dasds.each do |dasd|
-        dasd.type = type
         dasd.format = format
       end
     end
@@ -57,19 +56,35 @@ describe Y2Storage::GuidedProposal do
     end
 
     context "with a FBA DASD disk" do
-      let(:scenario) { "empty_dasd_50GiB" }
-      let(:type) { Y2Storage::DasdType::FBA }
+      let(:lvm) { false }
+      let(:separate_home) { true }
 
-      it "fails to make a proposal" do
-        expect { proposal.propose }.to raise_error Y2Storage::Error
+      context "with implicit partition" do
+        let(:scenario) { "empty_dasd_fba" }
+        let(:expected_scenario) { "empty_dasd_fba_gpt" }
+
+        # FIXME: looks like we will need to change this, since in recent
+        # conversations it has being pointed that modifying the implicit
+        # partition is risky. But for the time being...
+        it "proposes the expected layout (implicit partition table replaced by GPT)" do
+          proposal.propose
+          expect(proposal.devices.to_str).to eq expected.to_str
+        end
+      end
+
+      context "with an empty GPT partition table" do
+        let(:scenario) { "empty_dasd_fba_gpt" }
+
+        it "proposes the expected layout" do
+          proposal.propose
+          expect(proposal.devices.to_str).to eq expected.to_str
+        end
       end
     end
 
     context "with a (E)CKD DASD disk" do
       let(:scenario) { "empty_dasd_50GiB" }
       let(:expected_scenario) { "s390_dasd_zipl" }
-
-      let(:type) { Y2Storage::DasdType::ECKD }
 
       context "formated as LDL" do
         let(:format) { Y2Storage::DasdFormat::LDL }

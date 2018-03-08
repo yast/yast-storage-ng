@@ -48,7 +48,11 @@ RSpec.shared_context "boot requirements" do
       root_in_lvm?:            use_lvm,
       root_in_software_raid?:  use_raid,
       encrypted_root?:         use_encryption,
+      boot_in_lvm?:            use_lvm,
+      boot_in_software_raid?:  use_raid,
+      encrypted_boot?:         use_encryption,
       btrfs_root?:             use_btrfs,
+      boot_filesystem_type:    boot_fs,
       planned_prep_partitions: planned_prep_partitions,
       planned_grub_partitions: planned_grub_partitions,
       planned_devices:         planned_grub_partitions + planned_prep_partitions,
@@ -60,6 +64,9 @@ RSpec.shared_context "boot requirements" do
   let(:use_raid) { false }
   let(:use_encryption) { false }
   let(:use_btrfs) { true }
+  let(:boot_fs) do
+    use_btrfs ? Y2Storage::Filesystems::Type::BTRFS : Y2Storage::Filesystems::Type::EXT4
+  end
   let(:boot_ptable_type) { :msdos }
   # Assume the needed partitions are not already planned in advance
   let(:planned_prep_partitions) { [] }

@@ -140,36 +140,6 @@
 		- **requires it to be at least 2 MiB (Grub2 stages 1+2 and needed Grub modules)**
 		- **requires it to be at most 8 MiB (since it will be mapped to RAM)**
 
-## needed partitions in a S/390 system
-- trying to install in a zfcp disk
-	- with a partitions-based proposal
-		- **requires only a /boot/zipl partition**
-	- with a LVM-based proposal
-		- **requires only a /boot/zipl partition**
-	- with an encrypted proposal
-		- **requires only a /boot/zipl partition**
-- trying to install in a FBA DASD disk
-	- **raises an error**
-- trying to install in a (E)CKD DASD disk
-	- if the disk is formatted as LDL
-		- **raises an error**
-	- if the disk is formatted as CDL
-		- with a partitions-based proposal
-			- **requires only a /boot/zipl partition**
-		- with a LVM-based proposal
-			- **requires only a /boot/zipl partition**
-		- with an encrypted proposal
-			- **requires only a /boot/zipl partition**
-- when proposing a /boot/zipl partition
-	- **requires /boot/zipl to be ext2 with at least 100 MiB**
-	- **requires /boot/zipl to be a non-encrypted partition in the boot disk**
-	- when aiming for the recommended size
-		- **requires /boot/zipl to be at least 200 MiB large (FIXME: why?)**
-		- **requires /boot/zipl to be at most 500 MiB large (FIXME: why?)**
-	- when aiming for the minimal size
-		- **requires /boot/zipl to be at least 100 MiB large (FIXME: why?)**
-		- **requires /boot/zipl to be at most 500 MiB large (FIXME: why?)**
-
 ## needed partitions in an aarch64 system
 - with a partitions-based proposal
 	- if there are no EFI partitions
@@ -195,3 +165,46 @@
 			- **requires only a new /boot/efi partition**
 		- and it is a suitable EFI partition (enough size, valid filesystem)
 			- **only requires to use the existing EFI partition**
+
+## needed partitions in a S/390 system
+- trying to install in a FBA DASD disk
+	- with a partitions-based proposal
+		- not using Btrfs (i.e. /boot is within a XFS or ext2/3/4 partition)
+			- **does not require additional partitions (the firmware can find the kernel)**
+		- using Btrfs (i.e. /boot is not in XFS or ext2/3/4)
+			- **requires only a separate /boot/zipl partition (to allocate Grub2)**
+	- with a LVM-based proposal
+		- **requires only a /boot/zipl partition (to allocate Grub2)**
+	- with an encrypted proposal
+		- **requires only a /boot/zipl partition (to allocate Grub2)**
+- trying to install in a zfcp disk (no DASD)
+	- with a partitions-based proposal
+		- not using Btrfs (i.e. /boot is within a XFS or ext2/3/4 partition)
+			- **does not require additional partitions (the firmware can find the kernel)**
+		- using Btrfs (i.e. /boot is not in XFS or ext2/3/4)
+			- **requires only a separate /boot/zipl partition (to allocate Grub2)**
+	- with a LVM-based proposal
+		- **requires only a /boot/zipl partition (to allocate Grub2)**
+	- with an encrypted proposal
+		- **requires only a /boot/zipl partition (to allocate Grub2)**
+- trying to install in a (E)CKD DASD disk
+	- if the disk is formatted as LDL
+		- **raises an error (no proposal possible in such disk) - FIXME: why?**
+	- if the disk is formatted as CDL
+		- with a partitions-based proposal
+			- not using Btrfs (i.e. /boot is within a XFS or ext2/3/4 partition)
+				- **does not require additional partitions (the firmware can find the kernel)**
+			- using Btrfs (i.e. /boot is not in XFS or ext2/3/4)
+				- **requires only a separate /boot/zipl partition (to allocate Grub2)**
+		- with a LVM-based proposal
+			- **requires only a /boot/zipl partition (to allocate Grub2)**
+		- with an encrypted proposal
+			- **requires only a /boot/zipl partition (to allocate Grub2)**
+- when proposing a /boot/zipl partition
+	- **proposes /boot/zipl to be a non-encrypted partition in the boot disk**
+	- **proposes /boot/zipl to be formated as ext2**
+	- **proposes /boot/zipl to be at most 300 MiB (anything bigger would mean wasting space)**
+	- when aiming for the recommended size (first proposal attempt)
+		- **requires /boot/zipl to be at least 200 MiB (Grub2, one kernel+initrd and extra space)**
+	- when aiming for the minimal size
+		- **requires /boot/zipl to be at least 100 MiB (Grub2 and one kernel+initrd)**

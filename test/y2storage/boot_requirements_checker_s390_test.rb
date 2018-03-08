@@ -41,25 +41,33 @@ describe Y2Storage::BootRequirementsChecker do
       allow(dev_sda).to receive(:format).and_return(format)
     end
 
-    context "trying to install in a zfcp disk" do
-      let(:dasd) { false }
-      let(:type) { Y2Storage::DasdType::UNKNOWN }
-      let(:format) { Y2Storage::DasdFormat::NONE }
-
+    RSpec.shared_context "supported device" do
       context "with a partitions-based proposal" do
         let(:use_lvm) { false }
 
-        it "requires only a /boot/zipl partition" do
-          expect(checker.needed_partitions).to contain_exactly(
-            an_object_having_attributes(mount_point: "/boot/zipl")
-          )
+        context "not using Btrfs (i.e. /boot is within a XFS or ext2/3/4 partition)" do
+          let(:use_btrfs) { false }
+
+          it "does not require additional partitions (the firmware can find the kernel)" do
+            expect(checker.needed_partitions).to be_empty
+          end
+        end
+
+        context "using Btrfs (i.e. /boot is not in XFS or ext2/3/4)" do
+          let(:use_btrfs) { true }
+
+          it "requires only a separate /boot/zipl partition (to allocate Grub2)" do
+            expect(checker.needed_partitions).to contain_exactly(
+              an_object_having_attributes(mount_point: "/boot/zipl")
+            )
+          end
         end
       end
 
       context "with a LVM-based proposal" do
         let(:use_lvm) { true }
 
-        it "requires only a /boot/zipl partition" do
+        it "requires only a /boot/zipl partition (to allocate Grub2)" do
           expect(checker.needed_partitions).to contain_exactly(
             an_object_having_attributes(mount_point: "/boot/zipl")
           )
@@ -70,7 +78,7 @@ describe Y2Storage::BootRequirementsChecker do
         let(:use_lvm) { false }
         let(:use_encryption) { true }
 
-        it "requires only a /boot/zipl partition" do
+        it "requires only a /boot/zipl partition (to allocate Grub2)" do
           expect(checker.needed_partitions).to contain_exactly(
             an_object_having_attributes(mount_point: "/boot/zipl")
           )
@@ -81,14 +89,18 @@ describe Y2Storage::BootRequirementsChecker do
     context "trying to install in a FBA DASD disk" do
       let(:dasd) { true }
       let(:type) { Y2Storage::DasdType::FBA }
-      # Format and LVM are irrelevant
+      # Format does not apply to FBA
       let(:format) { Y2Storage::DasdFormat::NONE }
-      let(:use_lvm) { false }
 
-      it "raises an error" do
-        expect { checker.needed_partitions }
-          .to raise_error Y2Storage::BootRequirementsChecker::Error
-      end
+      include_context "supported device"
+    end
+
+    context "trying to install in a zfcp disk (no DASD)" do
+      let(:dasd) { false }
+      let(:type) { Y2Storage::DasdType::UNKNOWN }
+      let(:format) { Y2Storage::DasdFormat::NONE }
+
+      include_context "supported device"
     end
 
     context "trying to install in a (E)CKD DASD disk" do
@@ -100,7 +112,7 @@ describe Y2Storage::BootRequirementsChecker do
         # LVM is irrelevant
         let(:use_lvm) { false }
 
-        it "raises an error" do
+        it "raises an error (no proposal possible in such disk) - FIXME: why?" do
           expect { checker.needed_partitions }
             .to raise_error Y2Storage::BootRequirementsChecker::Error
         end
@@ -109,36 +121,7 @@ describe Y2Storage::BootRequirementsChecker do
       context "if the disk is formatted as CDL" do
         let(:format) { Y2Storage::DasdFormat::CDL }
 
-        context "with a partitions-based proposal" do
-          let(:use_lvm) { false }
-
-          it "requires only a /boot/zipl partition" do
-            expect(checker.needed_partitions).to contain_exactly(
-              an_object_having_attributes(mount_point: "/boot/zipl")
-            )
-          end
-        end
-
-        context "with a LVM-based proposal" do
-          let(:use_lvm) { true }
-
-          it "requires only a /boot/zipl partition" do
-            expect(checker.needed_partitions).to contain_exactly(
-              an_object_having_attributes(mount_point: "/boot/zipl")
-            )
-          end
-        end
-
-        context "with an encrypted proposal" do
-          let(:use_lvm) { false }
-          let(:use_encryption) { true }
-
-          it "requires only a /boot/zipl partition" do
-            expect(checker.needed_partitions).to contain_exactly(
-              an_object_having_attributes(mount_point: "/boot/zipl")
-            )
-          end
-        end
+        include_context "supported device"
       end
     end
 

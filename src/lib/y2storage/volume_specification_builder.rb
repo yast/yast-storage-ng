@@ -122,9 +122,10 @@ module Y2Storage
         v.mount_point = "/boot/zipl"
         v.fs_types = Filesystems::Type.zipl_filesystems
         v.fs_type = Filesystems::Type.zipl_filesystems.first
+        # This partition needs to host Grub2 + one kernel + one initrd
         v.min_size = DiskSize.MiB(100)
         v.desired_size = DiskSize.MiB(200)
-        v.max_size = DiskSize.MiB(500)
+        v.max_size = DiskSize.MiB(300)
       end
     end
 

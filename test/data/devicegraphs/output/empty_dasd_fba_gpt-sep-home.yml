@@ -1,27 +1,42 @@
 ---
-- disk:
-    name: "/dev/sda"
+- dasd:
+    name: /dev/dasda
+    type: fba
     size: 50 GiB
     partition_table: gpt
     partitions:
+
     - partition:
         size: 300 MiB
-        name: "/dev/sda1"
+        name: /dev/dasda1
         id: linux
         file_system: ext2
-        mount_point: "/boot/zipl"
+        mount_point: /boot/zipl
         fstab_options:
           - acl
           - user_xattr
+
     - partition:
-        size: 40 GiB
-        name: "/dev/sda2"
+        size: 25685 MiB
+        name: /dev/dasda2
         id: linux
         file_system: btrfs
         mount_point: "/"
+
     - partition:
         size: 2 GiB
-        name: "/dev/sda3"
+        name: /dev/dasda3
         id: swap
         file_system: swap
         mount_point: swap
+
+    - partition:
+        size: unlimited
+        name: /dev/dasda4
+        id: linux
+        file_system: xfs
+        mount_point: /home
+
+    # The final 16.5 KiB are reserved by GPT
+    - free:
+        size: 16.5 KiB
