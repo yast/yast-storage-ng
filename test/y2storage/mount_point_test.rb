@@ -52,4 +52,34 @@ describe Y2Storage::MountPoint do
       expect(mount_point.mount_options).to_not include("ro")
     end
   end
+
+  describe "#mount_by" do
+    context "for non-btrfs" do
+      let(:dev_name) { "/dev/sdb5" } # XFS /home
+      subject { blk_device.blk_filesystem.mount_point }
+
+      before do
+        subject.mount_by = Y2Storage::Filesystems::MountByType::ID
+      end
+
+      it "returns the correct mount_by" do
+        expect(subject.mount_by.to_sym).to eq :id
+      end
+    end
+
+    context "for btrfs" do
+      let(:dev_name) { "/dev/sda2" } # Btrfs /, mount_by: label
+      let(:btrfs) { blk_device.blk_filesystem }
+
+      it "returns the correct mount_by mode" do
+        expect(btrfs.mount_point.mount_by.to_sym).to eq :label
+      end
+
+      it "subvolumes inherit the mount_by mode from the parent btrfs" do
+        # Don't use the first two subvolumes: They don't have a mount point.
+        # One is the toplevel subvolume, one is the default subvolume.
+        expect(btrfs.btrfs_subvolumes.last.mount_point.mount_by.to_sym).to eq :label
+      end
+    end
+  end
 end

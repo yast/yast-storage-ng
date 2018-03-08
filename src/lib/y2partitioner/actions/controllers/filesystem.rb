@@ -403,6 +403,13 @@ module Y2Partitioner
           subvolumes.map(&:mount_path).compact.select { |m| !m.empty? }
         end
 
+        # Check if the filesystem is a btrfs.
+        #
+        # @return [Boolean]
+        def btrfs?
+          filesystem.supports_btrfs_subvolumes?
+        end
+
       private
 
         def working_graph
@@ -588,10 +595,6 @@ module Y2Partitioner
           filesystem.btrfs_subvolumes.select do |subvolume|
             !subvolume.top_level? && !subvolume.default_btrfs_subvolume?
           end
-        end
-
-        def btrfs?
-          filesystem.supports_btrfs_subvolumes?
         end
 
         def root?

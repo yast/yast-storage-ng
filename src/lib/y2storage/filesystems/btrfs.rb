@@ -393,6 +393,23 @@ module Y2Storage
         @snapshots_root ||= Pathname.new(subvolumes_prefix).join(SNAPSHOTS_ROOT_SUBVOL_NAME).to_s
       end
 
+      # Copy the mount_by mode from this btrfs to all subvolumes (that have a
+      # mount point).
+      #
+      # @return [Filesystems::MountByType, nil]
+      #
+      def copy_mount_by_to_subvolumes
+        return nil if mount_point.nil?
+
+        mount_by = mount_point.mount_by
+        log.info "copying mount_by #{mount_by} to all subvolumes"
+        btrfs_subvolumes.each do |subvol|
+          next if subvol.mount_point.nil?
+          subvol.mount_point.mount_by = mount_by
+        end
+        mount_by
+      end
+
     protected
 
       # Removes a subvolume

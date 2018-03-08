@@ -40,7 +40,7 @@ describe Y2Storage::BtrfsSubvolume do
 
   describe ".shadowing?" do
 
-    context "when a mount point is shadowing to other mount point" do
+    context "when a mount point is shadowing another mount point" do
       let(:mount_point) { "/foo" }
       let(:other_mount_point) { "/foo/bar" }
 
@@ -49,7 +49,7 @@ describe Y2Storage::BtrfsSubvolume do
       end
     end
 
-    context "when a mount point is not shadowing to other mount point" do
+    context "when a mount point is not shadowing another mount point" do
       let(:mount_point) { "/foo" }
       let(:other_mount_point) { "/foobar" }
 

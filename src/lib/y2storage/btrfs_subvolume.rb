@@ -77,6 +77,24 @@ module Y2Storage
       to_storage_value.public_send(:default_btrfs_subvolume=)
     end
 
+    # Create a mount point with the same mount_by as the parent Btrfs.
+    #
+    # @param path [String]
+    # @return [MountPoint]
+    def create_mount_point(path)
+      super
+      copy_mount_by_from_filesystem
+      mount_point
+    end
+
+    # Copy the parent filesystem's mount_by from the parent filesystem.
+    #
+    # @return [Filesystems::MountByType, nil]
+    def copy_mount_by_from_filesystem
+      return nil if mount_point.nil? || filesystem.mount_point.nil?
+      mount_point.mount_by = filesystem.mount_point.mount_by
+    end
+
     # Whether the subvolume can be auto deleted, for example when a proposed
     # subvolume is shadowed
     #

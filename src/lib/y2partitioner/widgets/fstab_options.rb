@@ -107,6 +107,13 @@ module Y2Partitioner
         @controller.filesystem
       end
 
+      # Check if the underlying filesystem is a btrfs.
+      #
+      # @return [Boolean]
+      def btrfs?
+        @controller.btrfs?
+      end
+
       # Mount point of the current filesystem
       #
       # @return [Y2Storage::MountPoint]
@@ -310,7 +317,11 @@ module Y2Partitioner
       # @return [Boolean] true if the label is duplicated; false otherwise.
       def duplicated_label?
         return false if value.empty?
-        working_graph.filesystems.any? { |f| f.sid != filesystem.sid && f.label == value }
+        working_graph.filesystems.any? do |fs|
+          next false if fs.sid == filesystem.sid
+          next false unless fs.respond_to?(:label) # NFS doesn't support labels
+          fs.label == value
+        end
       end
 
       # Widget to select the mount by option
@@ -337,6 +348,10 @@ module Y2Partitioner
 
       def store
         mount_point.mount_by = selected_mount_by
+        filesystem.copy_mount_by_to_subvolumes if btrfs?
+        # TODO: If some day we get more a more sophisticated UI for editing
+        # subvolumes, don't always simply overwrite the subvolumes' mount_by
+        # with whatever is set here - ask the user if this is desired.
       end
 
       def init
