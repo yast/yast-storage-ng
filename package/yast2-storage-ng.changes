@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Wed Mar  7 16:41:08 UTC 2018 - shundhammer@suse.com
+
+- Make sure subvolumes use the same mount_by as their parent btrfs
+  (bsc#1080408)
+- 4.0.127
+
+-------------------------------------------------------------------
 Wed Mar  7 15:01:47 UTC 2018 - ancor@suse.com
 
 - Better control on whether a separate /boot/zipl is needed in
