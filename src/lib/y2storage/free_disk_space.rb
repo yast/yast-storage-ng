@@ -50,7 +50,7 @@ module Y2Storage
       @region = Y2Storage::Region.new(region)
     end
 
-    # Whether this free space belongs to an implicit parition table
+    # Whether this free space belongs to an implicit partition table
     #
     # @return [Boolean]
     def in_implicit_partition_table?

@@ -176,7 +176,7 @@ module Y2Storage
 
       # Whether a single implicit partition is in use (has filesystem)
       #
-      # @param [Y2Storage::Partition] single implicit partition
+      # @param partition [Y2Storage::Partition] single implicit partition
       # @return [Boolean]
       def implicit_partition_in_use?(partition)
         partition.has_children?
