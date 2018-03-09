@@ -39,8 +39,12 @@ module Y2Storage
       # @return [String] UUID to enforce in the filesystem
       attr_accessor :uuid
 
-      # @return [Array<SubvolSpecification>] Btrfs subvolume specifications
-      attr_accessor :subvolumes
+      # Btrfs subvolume specifications.
+      #
+      # @see #subvolumes= which doesn't work exactly as the standard Ruby setter
+      #
+      # @return [Array<SubvolSpecification>]
+      attr_reader :subvolumes
 
       # @return [String] Parent for all Btrfs subvolumes (typically "@")
       attr_accessor :default_subvolume
@@ -58,6 +62,29 @@ module Y2Storage
         @subvolumes = []
         @reformat = false
         @snapshots = false
+      end
+
+      # Setter for #subvolumes which always create a local copy of the passed array
+      #
+      # When assigning the list of subvolumes, this method automatically creates
+      # a copy of the original list to avoid the situation in which modifying
+      # the subvolumes of a planned device ends up modifying the original source
+      # of such list (bsc#1084213 and bsc#1084261).
+      #
+      # Take into account this is not a deep copy. Only the collection is
+      # duplicated, the contained objects are still shared.
+      #
+      # @example
+      #   planned.subvolumes = my_list
+      #   my_list << a_new_one
+      #   # planned.subvolumes doesn't contain a_new_one now. This is not the
+      #   # most common ruby behavior.
+      #   my_list.first.path = "changed" # This change affects planned.subvolumes
+      #   # because the object is also in that collection (not a deep copy).
+      #
+      # @param list [Array<SubvolSpecification>]
+      def subvolumes=(list)
+        @subvolumes = list.dup
       end
 
       # Creates a filesystem for the planned device on the specified real
