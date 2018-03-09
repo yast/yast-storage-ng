@@ -186,11 +186,18 @@ module Y2Storage
       # @param mount_point [MountPoint]
       def setup_fstab_options(mount_point)
         return unless mount_point
-        if fstab_options
-          mount_point.mount_options = fstab_options
-        elsif filesystem_type
-          mount_point.mount_options = filesystem_type.default_fstab_options(mount_point.path)
-        end
+
+        options =
+          if fstab_options
+            fstab_options
+          elsif filesystem_type
+            filesystem_type.default_fstab_options(mount_point.path)
+          else
+            []
+          end
+
+        options.unshift("ro") if read_only # allow 'ro' to be overriden with 'rw'
+        mount_point.mount_options = options unless options.empty?
       end
 
       # Creates subvolumes in the previously created filesystem that is placed
