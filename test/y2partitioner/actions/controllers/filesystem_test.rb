@@ -612,8 +612,8 @@ describe Y2Partitioner::Actions::Controllers::Filesystem do
       end
 
       it "adds the proposed subvolumes that do not exist" do
-        specs = Y2Storage::SubvolSpecification.fallback_list
-        arch_specs = Y2Storage::SubvolSpecification.for_current_arch(specs)
+        spec = Y2Storage::VolumeSpecification.for(mount_path)
+        arch_specs = Y2Storage::SubvolSpecification.for_current_arch(spec.subvolumes)
         paths = arch_specs.map { |s| filesystem.btrfs_subvolume_path(s.path) }
 
         subject.public_send(testing_method, mount_path, mount_point_options)

@@ -570,10 +570,8 @@ module Y2Partitioner
         #
         # @see Y2Storage::Filesystems::Btrfs#add_btrfs_subvolumes
         def add_proposed_subvolumes
-          specs = Y2Storage::SubvolSpecification.from_control_file
-          specs = Y2Storage::SubvolSpecification.fallback_list if specs.nil? || specs.empty?
-
-          filesystem.add_btrfs_subvolumes(specs)
+          spec = Y2Storage::VolumeSpecification.for(mount_point.path)
+          filesystem.add_btrfs_subvolumes(spec.subvolumes)
         end
 
         # Updates subvolumes mount point

@@ -155,6 +155,7 @@ module Y2Storage
     def create_btrfs_subvolume(filesystem)
       subvolume_path = filesystem.btrfs_subvolume_path(path)
       subvolume = filesystem.create_btrfs_subvolume(subvolume_path, !copy_on_write)
+      return if subvolume.nil?
       subvolume.can_be_auto_deleted = true
       subvolume
     end
