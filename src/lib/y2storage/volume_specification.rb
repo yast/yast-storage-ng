@@ -22,6 +22,7 @@
 require "yast"
 require "y2storage/partitioning_features"
 require "y2storage/subvol_specification"
+require "y2storage/volume_specification"
 
 module Y2Storage
   # Helper class to represent a volume specification as defined in control.xml
@@ -121,6 +122,19 @@ module Y2Storage
     alias_method :adjust_by_ram_configurable?, :adjust_by_ram_configurable
     alias_method :snapshots?, :snapshots
     alias_method :snapshots_configurable?, :snapshots_configurable
+
+    class << self
+      # Returns the volume specification for the given mount point
+      #
+      # This is a convenience method to avoid other classes having to know about
+      # {VolumeSpecificationBuilder}.
+      #
+      # @param mount_point [String] Volume's mount point
+      # @return [VolumeSpecification,nil] Volume specification or nil if not found
+      def for(mount_point)
+        VolumeSpecificationBuilder.new.for(mount_point)
+      end
+    end
 
     # Constructor
     # @param volume_features [Hash] features for a volume

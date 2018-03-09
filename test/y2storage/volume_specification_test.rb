@@ -28,6 +28,31 @@ describe Y2Storage::VolumeSpecification do
 
   subject(:volume) { described_class.new(volume_features) }
 
+  describe ".for" do
+    let(:spec_builder) { instance_double(Y2Storage::VolumeSpecificationBuilder, for: volume_spec) }
+
+    before do
+      allow(Y2Storage::VolumeSpecificationBuilder).to receive(:new)
+        .and_return(spec_builder)
+    end
+
+    context "when a specification is defined for the given mount point" do
+      let(:volume_spec) { instance_double(Y2Storage::VolumeSpecification) }
+
+      it "returns the volume specification" do
+        expect(described_class.for("/")).to eq(volume_spec)
+      end
+    end
+
+    context "when no specification is defined for the given mount point" do
+      let(:volume_spec) { nil }
+
+      it "returns nil" do
+        expect(described_class.for("/")).to be_nil
+      end
+    end
+  end
+
   describe "#initialize" do
     let(:volume_features) do
       {
