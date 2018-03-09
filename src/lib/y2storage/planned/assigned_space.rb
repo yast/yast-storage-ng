@@ -81,6 +81,7 @@ module Y2Storage
       #  - the chances of having 2 volumes with max_start_offset in the same
       #    free space are very low
       def valid?
+        return false if wrong_usage_of_reused_partition?
         return false unless primary_partitions_fit?
         return true if usable_size >= DiskSize.sum(partitions.map(&:min), rounding: align_grain)
         # At first sight, there is no enough space, but maybe enforcing some
@@ -186,6 +187,16 @@ module Y2Storage
       # @return [Boolean]
       def require_end_alignment?
         disk_space.require_end_alignment?
+      end
+
+      # Whether there are too many partitions to allocate in a space that
+      # belongs to a reused partition
+      #
+      # @return [Boolean] false if the space is not a reused partition
+      def wrong_usage_of_reused_partition?
+        return false unless disk_space.reused_partition?
+
+        partitions.size > 1
       end
 
       # Whether the planned partitions that must be primary are indeed being to

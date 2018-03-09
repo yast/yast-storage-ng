@@ -140,4 +140,35 @@ describe Y2Storage::PartitionTables::Base do
       end
     end
   end
+
+  describe "#free_spaces" do
+    subject { device.partition_table }
+
+    let(:device) { fake_devicegraph.find_by_name(device_name) }
+
+    context "if there are no unused slots" do
+      let(:scenario) { "trivial_lvm" }
+
+      let(:device_name) { "/dev/sda" }
+
+      it "returns an empty list" do
+        expect(subject.free_spaces).to be_empty
+      end
+    end
+
+    context "if there are unused slots" do
+      let(:scenario) { "spaces_5_3" }
+
+      let(:device_name) { "/dev/sda" }
+
+      it "returns a free space for each unused slot" do
+        expect(subject.free_spaces).to_not be_empty
+
+        free_spaces_regions = subject.free_spaces.map(&:region)
+        unused_slots_regions = subject.unused_partition_slots.map(&:region)
+
+        expect(free_spaces_regions).to contain_exactly(*unused_slots_regions)
+      end
+    end
+  end
 end

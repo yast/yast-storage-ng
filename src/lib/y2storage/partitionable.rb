@@ -205,9 +205,7 @@ module Y2Storage
       # Device in use, but with no partition table
       return [] if partition_table.nil?
 
-      partition_table.unused_partition_slots.map do |slot|
-        FreeDiskSpace.new(self, slot.region)
-      end
+      partition_table.free_spaces
     end
 
     # Executes the given block in a context in which the device always has a
@@ -274,6 +272,17 @@ module Y2Storage
       return unless partition_table
 
       remove_descendants
+    end
+
+    # Whether the device contains an implicit partition table
+    #
+    # @see Y2Storage::PartitionTables::ImplicitPt
+    #
+    # @return [Boolean]
+    def implicit_partition_table?
+      return false unless partition_table
+
+      partition_table.type.is?(:implicit)
     end
 
   protected

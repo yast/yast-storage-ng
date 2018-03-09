@@ -468,6 +468,22 @@ describe Y2Storage::GuidedProposal do
         expect(current_partition_table.sid).to_not eq(initial_partition_table.sid)
       end
     end
+
+    context "when installing on a device with implicit partition table" do
+      let(:architecture) { :s390 }
+
+      let(:scenario) { "several-dasds" }
+
+      before do
+        settings.candidate_devices = ["/dev/dasdb"]
+      end
+
+      context "and it is required to create more than one partition" do
+        it "cannot create a valid proposal" do
+          expect { proposal.propose }.to raise_error(Y2Storage::Error)
+        end
+      end
+    end
   end
 
   describe "#failed?" do

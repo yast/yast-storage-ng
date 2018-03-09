@@ -41,7 +41,7 @@ describe Y2Storage::Proposal::PartitionsDistributionCalculator do
     let(:vol1) { planned_vol(mount_point: "/1", type: :ext4, min: 1.GiB, max: 3.GiB, weight: 1) }
     let(:vol2) { planned_vol(mount_point: "/2", type: :ext4, min: 2.GiB, max: 3.GiB, weight: 1) }
     let(:volumes) { [vol1, vol2, vol3] }
-    let(:spaces) { fake_devicegraph.free_disk_spaces }
+    let(:spaces) { fake_devicegraph.free_spaces }
 
     subject(:distribution) { calculator.best_distribution(volumes, spaces) }
 
@@ -359,6 +359,49 @@ describe Y2Storage::Proposal::PartitionsDistributionCalculator do
               end
             end
           end
+        end
+      end
+
+      context "if there are free spaces that belong to a reused partition" do
+        let(:scenario) { "several-dasds" }
+
+        let(:vol1) { planned_vol(mount_point: "/1", type: :ext4, min: 1.GiB, max: 1.GiB, weight: 1) }
+        let(:vol2) { planned_vol(mount_point: "/2", type: :ext4, min: 1.GiB, max: 1.GiB, weight: 1) }
+        let(:vol3) { planned_vol(mount_point: "/3", type: :ext4, min: 1.GiB, max: 1.GiB, weight: 1) }
+        let(:volumes) { [vol1, vol2, vol3] }
+
+        it "only assigns one partition to the free space of a reused partition" do
+          spaces_in_reused = distribution.spaces.select do |space|
+            space.disk_space.reused_partition?
+          end
+
+          spaces_in_reused.each { |s| expect(s.partitions.size).to eq(1) }
+        end
+      end
+    end
+
+    context "when the only free space belongs to a reused partition" do
+      let(:scenario) { "several-dasds" }
+
+      let(:device) { fake_devicegraph.find_by_name(device_name) }
+
+      let(:device_name) { "/dev/dasda" }
+
+      let(:spaces) { device.free_spaces }
+
+      context "and only one volume needs to be created" do
+        let(:volumes) { [vol1] }
+
+        it "allocates the volume in the available space" do
+          expect(distribution.spaces.first.partitions).to contain_exactly(vol1)
+        end
+      end
+
+      context "and several volumes needs to be created" do
+        let(:volumes) { [vol1, vol2] }
+
+        it "returns no distribution (nil)" do
+          expect(distribution).to be_nil
         end
       end
     end

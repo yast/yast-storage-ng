@@ -731,7 +731,7 @@ describe Y2Storage::Proposal::SpaceMaker do
       it "only makes space for non reused volumes" do
         result = maker.provide_space(fake_devicegraph, volumes, lvm_helper)
         devgraph = result[:devicegraph]
-        freed_space = devgraph.free_disk_spaces.map(&:disk_size).reduce(Y2Storage::DiskSize.zero, :+)
+        freed_space = devgraph.free_spaces.map(&:disk_size).reduce(Y2Storage::DiskSize.zero, :+)
         # Extra MiB for rounding issues
         expect(freed_space).to eq(360.GiB + 1.MiB)
       end
@@ -790,6 +790,44 @@ describe Y2Storage::Proposal::SpaceMaker do
           sdb_space = distribution.spaces.detect { |i| i.disk_name == "/dev/sdb" }
           # Default action: delete linux partitions at /dev/sdb and allocate volumes there
           expect(sdb_space.partitions).to include vol3
+        end
+      end
+    end
+
+    context "when deleting a partition from an implicit partition table" do
+      let(:scenario) { "several-dasds" }
+
+      let(:volumes) { [planned_vol(mount_point: "/1", type: :ext4, min: 2.GiB)] }
+
+      let(:dasda) { fake_devicegraph.find_by_name("/dev/dasda") }
+
+      let(:partition) { dasda.partition_table.partition }
+
+      before do
+        settings.candidate_devices = ["/dev/dasda"]
+      end
+
+      it "does not remove the partitition" do
+        original_partition = partition
+        result = maker.provide_space(fake_devicegraph, volumes, lvm_helper)
+        partitions = result[:devicegraph].partitions
+
+        expect(partitions.map(&:sid)).to include original_partition.sid
+      end
+
+      context "if the partition is not empty" do
+        before do
+          partition.create_filesystem(Y2Storage::Filesystems::Type::EXT3)
+        end
+
+        it "wipes the partition" do
+          expect(partition.has_children?).to eq(true)
+
+          result = maker.provide_space(fake_devicegraph, volumes, lvm_helper)
+          dasda = result[:devicegraph].find_by_name("/dev/dasda")
+          partition = dasda.partition_table.partition
+
+          expect(partition.has_children?).to eq(false)
         end
       end
     end

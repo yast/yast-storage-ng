@@ -40,7 +40,7 @@ describe Y2Storage::Proposal::PartitionCreator do
     let(:root_vol) { planned_vol(mount_point: "/", type: :ext4, min: 1.GiB) }
     let(:home_vol) { planned_vol(mount_point: "/home", type: :ext4, min: 1.GiB) }
     let(:swap_vol) { planned_vol(mount_point: "swap", type: :swap, min: 1.GiB) }
-    let(:disk_spaces) { fake_devicegraph.free_disk_spaces }
+    let(:disk_spaces) { fake_devicegraph.free_spaces }
 
     subject(:creator) { described_class.new(fake_devicegraph) }
 
@@ -162,7 +162,7 @@ describe Y2Storage::Proposal::PartitionCreator do
 
         it "fills the whole space if possible" do
           result = creator.create_partitions(distribution)
-          expect(result.devicegraph.free_disk_spaces).to be_empty
+          expect(result.devicegraph.free_spaces).to be_empty
         end
 
         context "if it's necessary to enforce a partition order" do
@@ -170,7 +170,7 @@ describe Y2Storage::Proposal::PartitionCreator do
 
           it "fills the whole space if possible" do
             result = creator.create_partitions(distribution)
-            expect(result.devicegraph.free_disk_spaces).to be_empty
+            expect(result.devicegraph.free_spaces).to be_empty
           end
 
           it "places the required volume at the end" do
@@ -413,6 +413,80 @@ describe Y2Storage::Proposal::PartitionCreator do
             result = creator.create_partitions(distribution)
             partition = result.devicegraph.partitions.first
             expect(partition.legacy_boot?).to eq false
+          end
+        end
+      end
+
+      context "with an implicit partition table" do
+        let(:scenario) { "several-dasds" }
+
+        let(:dasda) { fake_devicegraph.find_by_name("/dev/dasda") }
+
+        let(:distribution) { space_dist(dasda.free_spaces.first => [vol]) }
+
+        it "keeps the existing implicit partition table" do
+          old_table = dasda.partition_table
+
+          result = creator.create_partitions(distribution)
+          dasda = result.devicegraph.find_by_name("/dev/dasda")
+          new_table = dasda.partition_table
+
+          expect(new_table).to eq(old_table)
+        end
+
+        it "keeps the existing single partition" do
+          old_partition = dasda.partition_table.partition
+
+          result = creator.create_partitions(distribution)
+          dasda = result.devicegraph.find_by_name("/dev/dasda")
+          new_partition = dasda.partition_table.partition
+
+          expect(new_partition.sid).to eq(old_partition.sid)
+        end
+
+        it "does not change the partition id" do
+          result = creator.create_partitions(distribution)
+          dasda = result.devicegraph.find_by_name("/dev/dasda")
+          partition = dasda.partition_table.partition
+
+          expect(partition.id).to_not eq(vol.partition_id)
+        end
+
+        context "if the partition is bootable" do
+          let(:bootable) { true }
+
+          it "does not set the boot flag" do
+            result = creator.create_partitions(distribution)
+            dasda = result.devicegraph.find_by_name("/dev/dasda")
+            partition = dasda.partition_table.partition
+
+            expect(partition.boot?).to eq(false)
+          end
+
+          it "does not set the legacy boot flag" do
+            result = creator.create_partitions(distribution)
+            dasda = result.devicegraph.find_by_name("/dev/dasda")
+            partition = dasda.partition_table.partition
+
+            expect(partition.legacy_boot?).to eq(false)
+          end
+        end
+
+        context "if the partition is not bootable" do
+          it "does not set the boot flag" do
+            result = creator.create_partitions(distribution)
+            dasda = result.devicegraph.find_by_name("/dev/dasda")
+            partition = dasda.partition_table.partition
+
+            expect(partition.boot?).to eq(false)
+          end
+
+          it "does not set the legacy boot flag" do
+            result = creator.create_partitions(distribution)
+            dasda = result.devicegraph.find_by_name("/dev/dasda")
+            partition = dasda.partition_table.partition
+
+            expect(partition.legacy_boot?).to eq(false)
           end
         end
       end
