@@ -1,4 +1,12 @@
 -------------------------------------------------------------------
+Fri Mar  9 09:36:27 UTC 2018 - ancor@suse.com
+
+- Shadowed subvolumes that are ignored in the first proposal
+  attempt are not longer omitted in subsequent ones (#bsc#1084213
+  and bsc#1084261).
+- 4.0.129
+
+-------------------------------------------------------------------
 Thu Mar  8 14:35:20 UTC 2018 - jlopez@suse.com
 
 - Make proposal to work with implicit partition tables (s390).
