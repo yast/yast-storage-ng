@@ -482,6 +482,7 @@ module Y2Partitioner
           # Special handling for some mount paths ("/", "/boot/*")
           opt = options[:mount_options] || []
           opt = filesystem.type.special_path_fstab_options(opt, mount_point.path)
+          opt.push("ro") if read_only?(mount_point.path)
           mount_point.mount_options = opt
         end
 
@@ -571,6 +572,7 @@ module Y2Partitioner
         # @see Y2Storage::Filesystems::Btrfs#add_btrfs_subvolumes
         def add_proposed_subvolumes
           spec = Y2Storage::VolumeSpecification.for(mount_point.path)
+          return unless spec && spec.subvolumes
           filesystem.add_btrfs_subvolumes(spec.subvolumes)
         end
 
@@ -676,6 +678,15 @@ module Y2Partitioner
         # @return [Storage::Arch]
         def arch
           Y2Storage::StorageManager.instance.arch
+        end
+
+        # Determines whether a file system should be read-only by default
+        #
+        # @param path [String] Mount point path
+        # @return [Boolean]
+        def read_only?(path)
+          spec = Y2Storage::VolumeSpecification.for(path)
+          spec && spec.btrfs_read_only
         end
       end
     end

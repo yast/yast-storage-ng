@@ -620,6 +620,22 @@ describe Y2Partitioner::Actions::Controllers::Filesystem do
 
         expect(paths.any? { |p| filesystem.find_btrfs_subvolume_by_path(p).nil? }).to be(false)
       end
+
+      context "but no subvolumes are defined" do
+        let(:root_spec) do
+          instance_double(Y2Storage::VolumeSpecification, subvolumes: nil, btrfs_read_only: false)
+        end
+
+        before do
+          allow(Y2Storage::VolumeSpecification).to receive(:for).with(mount_path)
+            .and_return(root_spec)
+        end
+
+        it "does not add any subvolume" do
+          subject.public_send(testing_method, mount_path, mount_point_options)
+          expect(filesystem.btrfs_subvolumes.size).to eq(1)
+        end
+      end
     end
 
     context "and the new mount point is not root" do
