@@ -125,6 +125,7 @@ module Y2Storage
           planned_device.default_subvolume = volume.btrfs_default_subvolume || ""
           planned_device.subvolumes = volume.subvolumes
           planned_device.snapshots = volume.snapshots
+          planned_device.read_only = volume.btrfs_read_only
 
           adjust_btrfs_sizes(planned_device, volume) if planned_device.snapshots?
         end

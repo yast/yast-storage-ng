@@ -109,6 +109,9 @@ module Y2Storage
     # @return [String] default btrfs subvolume path
     attr_accessor :btrfs_default_subvolume
 
+    # @return [Boolean] whether the volume should be mounted as read-only
+    attr_accessor :btrfs_read_only
+
     # @return [Numeric] order to disable volumes if needed to make the initial proposal
     attr_accessor :disable_order
 
@@ -194,6 +197,7 @@ module Y2Storage
       snapshots:                  :boolean,
       snapshots_configurable:     :boolean,
       btrfs_default_subvolume:    :string,
+      btrfs_read_only:            :boolean,
       desired_size:               :size,
       min_size:                   :size,
       max_size:                   :size,
