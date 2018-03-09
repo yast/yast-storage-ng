@@ -26,6 +26,9 @@ require "y2partitioner/actions/controllers/filesystem"
 describe Y2Partitioner::Actions::Controllers::Filesystem do
   before do
     devicegraph_stub(scenario)
+    allow(Y2Storage::VolumeSpecification).to receive(:for).and_call_original
+    allow(Y2Storage::VolumeSpecification).to receive(:for).with("/")
+      .and_return(volume_spec)
   end
 
   let(:scenario) { "mixed_disks_btrfs" }
@@ -37,6 +40,14 @@ describe Y2Partitioner::Actions::Controllers::Filesystem do
   let(:devicegraph) { Y2Partitioner::DeviceGraphs.instance.current }
 
   let(:dev_name) { "/dev/sda2" }
+
+  let(:volume_spec) do
+    instance_double(
+      Y2Storage::VolumeSpecification, subvolumes: subvolumes, btrfs_read_only: false
+    )
+  end
+
+  let(:subvolumes) { Y2Storage::SubvolSpecification.fallback_list }
 
   describe "#blk_device" do
     it "returns a Y2Storage::BlkDevice" do
@@ -612,8 +623,7 @@ describe Y2Partitioner::Actions::Controllers::Filesystem do
       end
 
       it "adds the proposed subvolumes that do not exist" do
-        spec = Y2Storage::VolumeSpecification.for(mount_path)
-        arch_specs = Y2Storage::SubvolSpecification.for_current_arch(spec.subvolumes)
+        arch_specs = Y2Storage::SubvolSpecification.for_current_arch(subvolumes)
         paths = arch_specs.map { |s| filesystem.btrfs_subvolume_path(s.path) }
 
         subject.public_send(testing_method, mount_path, mount_point_options)
