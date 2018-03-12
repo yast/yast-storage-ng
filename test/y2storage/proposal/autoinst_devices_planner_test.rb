@@ -65,6 +65,7 @@ describe Y2Storage::Proposal::AutoinstDevicesPlanner do
     allow(Yast::Arch).to receive(:i386).and_return(architecture == :i386)
     allow(Yast::Arch).to receive(:ppc).and_return(architecture == :ppc)
     allow(Yast::Arch).to receive(:s390).and_return(architecture == :s390)
+    Y2Storage::VolumeSpecification.clear_cache
   end
 
   describe "#planned_devices" do

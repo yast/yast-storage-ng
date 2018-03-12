@@ -111,7 +111,7 @@ module Y2Storage
 
       # @return [nil,Array<DiskSize>]
       def auto_sizes_for(mount_point)
-        spec = VolumeSpecificationBuilder.new(proposal_settings).for(mount_point)
+        spec = VolumeSpecification.for(mount_point, proposal_settings: proposal_settings)
         return nil if spec.nil?
 
         AutoinstSize.new(

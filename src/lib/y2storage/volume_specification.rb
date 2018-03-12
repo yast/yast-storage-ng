@@ -127,13 +127,16 @@ module Y2Storage
       # Returns the volume specification for the given mount point
       #
       # This method keeps a cache of already calculated volume specifications.
-      # Call {.clear_cache} method in order to clear it.
+      # Call {.clear_cache} method in order to clear it. Beware that the cache
+      # does not take into account that different proposal settings are being
+      # used.
       #
-      # @param mount_point [String] Volume's mount point
+      # @param mount_point       [String] Volume's mount point
+      # @param proposal_settings [ProposalSettings] Proposal settings
       # @return [VolumeSpecification,nil] Volume specification or nil if not found
-      def for(mount_point)
+      def for(mount_point, proposal_settings: nil)
         clear_cache unless @cache
-        @cache[mount_point] ||= VolumeSpecificationBuilder.new.for(mount_point)
+        @cache[mount_point] ||= VolumeSpecificationBuilder.new(proposal_settings).for(mount_point)
       end
 
       # Clear volume specifications cache

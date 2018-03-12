@@ -32,7 +32,6 @@ describe Y2Storage::VolumeSpecification do
     let(:spec_builder) { instance_double(Y2Storage::VolumeSpecificationBuilder, for: volume_spec) }
     let(:volume_spec) { instance_double(Y2Storage::VolumeSpecification) }
 
-
     before do
       allow(Y2Storage::VolumeSpecificationBuilder).to receive(:new)
         .and_return(spec_builder)
