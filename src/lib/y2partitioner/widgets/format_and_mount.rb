@@ -71,7 +71,6 @@ module Y2Partitioner
 
           @encrypt_widget.enable
           @filesystem_widget.enable
-          @partition_id.disable
         else
           Yast::UI.ChangeWidget(Id(:no_format_device), :Value, true)
 
@@ -79,7 +78,6 @@ module Y2Partitioner
           # on the encryption value
           controller.filesystem ? @encrypt_widget.disable : @encrypt_widget.enable
           @filesystem_widget.disable
-          @partition_id.enable
         end
       end
 
