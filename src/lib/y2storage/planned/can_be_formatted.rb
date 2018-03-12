@@ -27,6 +27,7 @@ module Y2Storage
   module Planned
     # Mixin for planned devices that can have an associated block filesystem.
     # @see Planned::Device
+    # rubocop:disable Metrics/ModuleLength
     module CanBeFormatted
       # @return [Filesystems::Type] the type of filesystem this device should
       #   get, like Filesystems::Type::BTRFS or Filesystems::Type::SWAP. A value of
@@ -186,7 +187,14 @@ module Y2Storage
       # @param mount_point [MountPoint]
       def setup_fstab_options(mount_point)
         return unless mount_point
+        options = fstab_options_for(mount_point)
+        mount_point.mount_options = options unless options.empty?
+      end
 
+      # Returns fstab options for the given mount point
+      #
+      # @param mount_point [MountPoint]
+      def fstab_options_for(mount_point)
         options =
           if fstab_options
             fstab_options
@@ -195,9 +203,8 @@ module Y2Storage
           else
             []
           end
-
-        options.unshift("ro") if read_only # allow 'ro' to be overriden with 'rw'
-        mount_point.mount_options = options unless options.empty?
+        options.unshift("ro") if read_only
+        options
       end
 
       # Creates subvolumes in the previously created filesystem that is placed

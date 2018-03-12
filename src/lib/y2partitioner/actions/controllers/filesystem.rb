@@ -481,9 +481,7 @@ module Y2Partitioner
 
           # Special handling for some mount paths ("/", "/boot/*")
           opt = options[:mount_options] || []
-          opt = filesystem.type.special_path_fstab_options(opt, mount_point.path)
-          opt.push("ro") if read_only?(mount_point.path)
-          mount_point.mount_options = opt
+          mount_point.mount_options = add_special_mount_options_for(mount_point.path, opt)
         end
 
         def current_value_for(attribute)
@@ -687,6 +685,17 @@ module Y2Partitioner
         def read_only?(path)
           spec = Y2Storage::VolumeSpecification.for(path)
           spec && spec.btrfs_read_only
+        end
+
+        # Adds special mount options for a given path
+        #
+        # @param path          [String] Mount point path
+        # @param mount_options [Array<String>] Original set of options
+        # @return [Array<String>] Mount options including special ones
+        def add_special_mount_options_for(path, mount_options)
+          opt = filesystem.type.special_path_fstab_options(mount_options, path)
+          opt.push("ro") if read_only?(path)
+          opt
         end
       end
     end
