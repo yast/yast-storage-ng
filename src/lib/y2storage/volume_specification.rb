@@ -122,6 +122,7 @@ module Y2Storage
     alias_method :adjust_by_ram_configurable?, :adjust_by_ram_configurable
     alias_method :snapshots?, :snapshots
     alias_method :snapshots_configurable?, :snapshots_configurable
+    alias_method :btrfs_read_only?, :btrfs_read_only
 
     class << self
       # Returns the volume specification for the given mount point

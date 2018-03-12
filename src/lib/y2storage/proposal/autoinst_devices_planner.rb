@@ -463,7 +463,7 @@ module Y2Storage
         section.mount == "swap" ? Filesystems::Type::SWAP : Filesystems::Type::BTRFS
       end
 
-      # Determines whether the filesystem for the given mount point should be read-only
+      # Determine whether the filesystem for the given mount point should be read-only
       #
       # @param mount_point [String] Filesystem mount point
       # @return [Boolean] true if it should be read-only; false otherwise.

@@ -62,6 +62,18 @@ describe Y2Storage::VolumeSpecification do
     end
   end
 
+  describe "#clear_cache" do
+    before do
+      described_class.for("/")
+    end
+
+    it "clears the cache and forces to build the specification again when required" do
+      described_class.clear_cache
+      expect(Y2Storage::VolumeSpecificationBuilder).to receive(:new).and_call_original
+      described_class.for("/")
+    end
+  end
+
   describe "#initialize" do
     let(:volume_features) do
       {

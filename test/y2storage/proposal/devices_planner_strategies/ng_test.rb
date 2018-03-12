@@ -644,12 +644,7 @@ describe Y2Storage::Proposal::DevicesPlannerStrategies::Ng do
       end
 
       context "and the volume is set as read only" do
-        let(:volume_spec) do
-          volume.merge(
-            "btrfs_read_only" => true
-          )
-        end
-
+        let(:volume_spec) { volume.merge("btrfs_read_only" => true) }
         let(:volumes) { [volume_spec] }
 
         context "and it is a btrfs filesystem" do
@@ -670,7 +665,13 @@ describe Y2Storage::Proposal::DevicesPlannerStrategies::Ng do
       end
 
       context "and the volume is not set as read only" do
-        it "is not set as read only"
+        let(:volume_spec) { volume.merge("btrfs_read_only" => false) }
+        let(:fs_type) { :btrfs }
+        let(:volumes) { [volume_spec] }
+
+        it "is not set as read only" do
+          expect(planned_device.read_only).to eq(false)
+        end
       end
     end
   end

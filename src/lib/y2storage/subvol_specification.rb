@@ -151,7 +151,9 @@ module Y2Storage
     # @note The new subvolume is set as 'can be auto deleted'.
     #
     # @param filesystem [Filesystems::Btrfs]
-    # @return [BtrfsSubvolume]
+    # @return [BtrfsSubvolume,nil] New BtrfsSubvolume; nil if the subvolume could not
+    #   be created.
+    # @see FileSystems::Btrfs#create_btrfs_subvolume
     def create_btrfs_subvolume(filesystem)
       subvolume_path = filesystem.btrfs_subvolume_path(path)
       subvolume = filesystem.create_btrfs_subvolume(subvolume_path, !copy_on_write)
