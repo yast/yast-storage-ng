@@ -203,7 +203,7 @@ module Y2Storage
           else
             []
           end
-        options.unshift("ro") if read_only
+        options.push("ro") if read_only && !options.include?("rw")
         options
       end
 

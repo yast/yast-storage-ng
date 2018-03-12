@@ -44,10 +44,12 @@ describe Y2Storage::Planned::CanBeFormatted do
     let(:filesystem_type) { Y2Storage::Filesystems::Type::BTRFS }
     let(:blk_device) { Y2Storage::BlkDevice.find_by_name(fake_devicegraph, device_name) }
     let(:device_name) { "/dev/sda2" }
+    let(:mount_point) { "/" }
 
     before do
       fake_scenario("windows-linux-free-pc")
       planned.filesystem_type = filesystem_type
+      planned.mount_point = mount_point
     end
 
     it "creates a filesystem of the given type" do
@@ -61,6 +63,28 @@ describe Y2Storage::Planned::CanBeFormatted do
       it "does not format the device" do
         planned.format!(blk_device)
         expect(blk_device.filesystem.type).to eq(Y2Storage::Filesystems::Type::SWAP)
+      end
+    end
+
+    context "when filesystem is set as read-only" do
+      before do
+        planned.read_only = true
+      end
+
+      it "sets the 'ro' option" do
+        planned.format!(blk_device)
+        expect(blk_device.filesystem.mount_options).to include("ro")
+      end
+
+      context "but fstab options include the 'rw' flag" do
+        before do
+          planned.fstab_options = ["rw"]
+        end
+
+        it "does not set the 'ro' option" do
+          planned.format!(blk_device)
+          expect(blk_device.filesystem.mount_options).to_not include("ro")
+        end
       end
     end
   end
