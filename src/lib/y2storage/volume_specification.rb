@@ -126,13 +126,19 @@ module Y2Storage
     class << self
       # Returns the volume specification for the given mount point
       #
-      # This is a convenience method to avoid other classes having to know about
-      # {VolumeSpecificationBuilder}.
+      # This method keeps a cache of already calculated volume specifications.
+      # Call {.clear_cache} method in order to clear it.
       #
       # @param mount_point [String] Volume's mount point
       # @return [VolumeSpecification,nil] Volume specification or nil if not found
       def for(mount_point)
-        VolumeSpecificationBuilder.new.for(mount_point)
+        clear_cache unless @cache
+        @cache[mount_point] ||= VolumeSpecificationBuilder.new.for(mount_point)
+      end
+
+      # Clear volume specifications cache
+      def clear_cache
+        @cache = {}
       end
     end
 
