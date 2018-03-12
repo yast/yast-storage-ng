@@ -22,6 +22,7 @@
 require "y2storage/filesystems/type"
 require "y2storage/partition_id"
 require "y2storage/proposal_settings"
+require "y2storage/subvol_specification"
 
 module Y2Storage
   # This class is able to provide a volume specification for a given mount point.
@@ -78,6 +79,7 @@ module Y2Storage
     #   is defined; nil otherwise.
     def fallback_spec(mount_point)
       name = mount_point.sub(/\A\//, "").tr("/", "_")
+      name = "root" if name.empty?
       meth = "fallback_for_#{name}"
       return send(meth) if respond_to?(meth, true)
     end
@@ -170,6 +172,18 @@ module Y2Storage
         v.fs_type = Filesystems::Type::SWAP
         v.min_size = DiskSize.MiB(512)
         v.max_size = DiskSize.GiB(2)
+      end
+    end
+
+    # Volume specification fallback for root (/)
+    #
+    # @return [VolumeSpecification]
+    def fallback_for_root
+      VolumeSpecification.new({}).tap do |v|
+        v.mount_point = "/"
+        v.fs_types = Filesystems::Type.root_filesystems
+        v.fs_type = Filesystems::Type::BTRFS
+        v.subvolumes = SubvolSpecification.fallback_list
       end
     end
   end

@@ -119,6 +119,24 @@ describe Y2Storage::VolumeSpecificationBuilder do
           )
         end
       end
+
+      context "when is root partition" do
+        let(:subvol) { instance_double(Y2Storage::SubvolSpecification) }
+
+        before do
+          allow(Y2Storage::SubvolSpecification).to receive(:fallback_list)
+            .and_return([subvol])
+        end
+
+        it "returns a root partition specification" do
+          expect(builder.for("/")).to have_attributes(
+            mount_point: "/",
+            fs_types:    Y2Storage::Filesystems::Type.root_filesystems,
+            fs_type:     Y2Storage::Filesystems::Type::BTRFS,
+            subvolumes:  [subvol]
+          )
+        end
+      end
     end
   end
 end
