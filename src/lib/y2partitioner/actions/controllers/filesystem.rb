@@ -537,11 +537,10 @@ module Y2Partitioner
         end
 
         def after_change_mount_point
-          # When the filesystem is btrfs and root, default proposed subvolumes are added
-          # in case they are not been probed.
-          add_proposed_subvolumes if btrfs? && root?
-          # When the filesystem is btrfs, the mount point of the resulting subvolumes is updated.
-          update_mount_points if btrfs?
+          if btrfs?
+            add_proposed_subvolumes
+            update_mount_points
+          end
           # Shadowing control of btrfs subvolumes is always performed.
           Y2Storage::Filesystems::Btrfs.refresh_subvolumes_shadowing(working_graph)
         end
