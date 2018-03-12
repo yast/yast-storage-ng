@@ -138,6 +138,7 @@ module Y2Partitioner
                   @partition_id
                 )
               ),
+              VSpacing(1),
               Left(@encrypt_widget)
             )
           )
@@ -241,7 +242,8 @@ module Y2Partitioner
                   Left(RadioButton(Id(:dont_mount_device), Opt(:notify), _("Do not mount device")))
                 )
               ),
-              HBox(Left(@btrfs_subvolumes_widget))
+              VSpacing(1),
+              Left(@btrfs_subvolumes_widget)
             )
           )
         )
@@ -730,7 +732,7 @@ module Y2Partitioner
       # @macro seeAbstractWidget
       def contents
         if @selector
-          HBox(HSpacing(4), Left(@selector))
+          VBox(VSpacing(1), Left(@selector))
         else
           Empty()
         end
