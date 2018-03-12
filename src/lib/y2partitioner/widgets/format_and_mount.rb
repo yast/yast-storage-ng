@@ -71,7 +71,6 @@ module Y2Partitioner
 
           @encrypt_widget.enable
           @filesystem_widget.enable
-          @partition_id.disable
         else
           Yast::UI.ChangeWidget(Id(:no_format_device), :Value, true)
 
@@ -79,7 +78,6 @@ module Y2Partitioner
           # on the encryption value
           controller.filesystem ? @encrypt_widget.disable : @encrypt_widget.enable
           @filesystem_widget.disable
-          @partition_id.enable
         end
       end
 
@@ -140,6 +138,7 @@ module Y2Partitioner
                   @partition_id
                 )
               ),
+              VSpacing(1),
               Left(@encrypt_widget)
             )
           )
@@ -243,7 +242,8 @@ module Y2Partitioner
                   Left(RadioButton(Id(:dont_mount_device), Opt(:notify), _("Do not mount device")))
                 )
               ),
-              HBox(Left(@btrfs_subvolumes_widget))
+              VSpacing(1),
+              Left(@btrfs_subvolumes_widget)
             )
           )
         )
@@ -732,7 +732,7 @@ module Y2Partitioner
       # @macro seeAbstractWidget
       def contents
         if @selector
-          HBox(HSpacing(4), Left(@selector))
+          VBox(VSpacing(1), Left(@selector))
         else
           Empty()
         end

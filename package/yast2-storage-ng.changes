@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Mon Mar 12 08:50:40 UTC 2018 - jlopez@suse.com
+
+- Partitioner: always allow to edit the partition id (bsc#1077868).
+- 4.0.130
+
+-------------------------------------------------------------------
 Fri Mar  9 09:36:27 UTC 2018 - ancor@suse.com
 
 - Shadowed subvolumes that are ignored in the first proposal
