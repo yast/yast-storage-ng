@@ -683,7 +683,7 @@ module Y2Partitioner
         # @return [Boolean]
         def read_only?(path)
           spec = Y2Storage::VolumeSpecification.for(path)
-          spec && spec.btrfs_read_only
+          spec && spec.btrfs_read_only?
         end
 
         # Adds special mount options for a given path

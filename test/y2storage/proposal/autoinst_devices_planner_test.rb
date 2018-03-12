@@ -510,7 +510,7 @@ describe Y2Storage::Proposal::AutoinstDevicesPlanner do
 
       context "when root volume is supposed to be read-only" do
         let(:root_volume_spec) do
-          instance_double(Y2Storage::VolumeSpecification, btrfs_read_only: true)
+          instance_double(Y2Storage::VolumeSpecification, btrfs_read_only?: true)
         end
 
         before do

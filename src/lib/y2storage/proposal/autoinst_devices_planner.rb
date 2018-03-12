@@ -470,7 +470,7 @@ module Y2Storage
       def read_only?(mount_point)
         return false unless mount_point
         spec = VolumeSpecification.for(mount_point)
-        !!spec && spec.btrfs_read_only
+        !!spec && spec.btrfs_read_only?
       end
     end
   end

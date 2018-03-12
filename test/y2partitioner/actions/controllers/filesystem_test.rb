@@ -43,7 +43,7 @@ describe Y2Partitioner::Actions::Controllers::Filesystem do
 
   let(:volume_spec) do
     instance_double(
-      Y2Storage::VolumeSpecification, subvolumes: subvolumes, btrfs_read_only: false
+      Y2Storage::VolumeSpecification, subvolumes: subvolumes, btrfs_read_only?: false
     )
   end
 
@@ -617,7 +617,7 @@ describe Y2Partitioner::Actions::Controllers::Filesystem do
       let(:subvolumes) { Y2Storage::SubvolSpecification.fallback_list }
       let(:volume_spec) do
         instance_double(
-          Y2Storage::VolumeSpecification, subvolumes: subvolumes, btrfs_read_only: false
+          Y2Storage::VolumeSpecification, subvolumes: subvolumes, btrfs_read_only?: false
         )
       end
 
