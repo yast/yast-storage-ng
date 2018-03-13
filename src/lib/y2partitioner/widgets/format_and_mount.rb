@@ -300,7 +300,7 @@ module Y2Partitioner
       def validate_system_mount_points
         return true unless Yast::Mode.installation
         return true if to_be_formatted?
-        return true if !mounted?
+        return true unless mounted?
         return true unless ["/", "/usr", "/boot"].include?(mount_path)
         warn_unformatted_system_mount_points
       end
@@ -319,7 +319,7 @@ module Y2Partitioner
         ) +
           # continued popup text
           _(
-            "- if this is an existing ReiserFS partition\n" \
+            "- if this is an existing Btrfs partition\n" \
             "- if this partition already contains a Linux distribution that will be\n" \
             "overwritten\n" \
             "- if this partition does not yet contain a file system\n"
@@ -334,14 +334,8 @@ module Y2Partitioner
           _(
             "If you decide to format the partition, all data on it will be lost.\n" \
             "\n" \
-            "Really keep the partition unformatted?\n"
+            "Really skip formatting the partition?\n"
           )
-        # FIXME: Keeping the message from old yast-storage and just replacing
-        # ReiserFS with Btrfs after the translation because of the late release
-        # state to avoid breaking existing translations. After the SLE-15
-        # release, replace it in the text to avoid possible problems with the
-        # translations.
-        message.gsub!("ReiserFS", "Btrfs")
         Yast::Popup.YesNo(message)
       end
 
