@@ -65,6 +65,7 @@ describe Y2Storage::Proposal::AutoinstDevicesPlanner do
     allow(Yast::Arch).to receive(:i386).and_return(architecture == :i386)
     allow(Yast::Arch).to receive(:ppc).and_return(architecture == :ppc)
     allow(Yast::Arch).to receive(:s390).and_return(architecture == :s390)
+    Y2Storage::VolumeSpecification.clear_cache
   end
 
   describe "#planned_devices" do
@@ -504,6 +505,22 @@ describe Y2Storage::Proposal::AutoinstDevicesPlanner do
 
         it "does not enable snapshots for other filesystems in the drive" do
           expect(home.snapshots?).to eq false
+        end
+      end
+
+      context "when root volume is supposed to be read-only" do
+        let(:root_volume_spec) do
+          instance_double(Y2Storage::VolumeSpecification, btrfs_read_only?: true)
+        end
+
+        before do
+          allow(Y2Storage::VolumeSpecification).to receive(:for).and_return(nil)
+          allow(Y2Storage::VolumeSpecification).to receive(:for).with("/")
+            .and_return(root_volume_spec)
+        end
+
+        it "sets root partition as read-only" do
+          expect(root.read_only).to eq(true)
         end
       end
     end

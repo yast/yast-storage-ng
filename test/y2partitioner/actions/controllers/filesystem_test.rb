@@ -26,6 +26,9 @@ require "y2partitioner/actions/controllers/filesystem"
 describe Y2Partitioner::Actions::Controllers::Filesystem do
   before do
     devicegraph_stub(scenario)
+    allow(Y2Storage::VolumeSpecification).to receive(:for).and_call_original
+    allow(Y2Storage::VolumeSpecification).to receive(:for).with("/")
+      .and_return(volume_spec)
   end
 
   let(:scenario) { "mixed_disks_btrfs" }
@@ -37,6 +40,14 @@ describe Y2Partitioner::Actions::Controllers::Filesystem do
   let(:devicegraph) { Y2Partitioner::DeviceGraphs.instance.current }
 
   let(:dev_name) { "/dev/sda2" }
+
+  let(:volume_spec) do
+    instance_double(
+      Y2Storage::VolumeSpecification, subvolumes: subvolumes, btrfs_read_only?: false
+    )
+  end
+
+  let(:subvolumes) { Y2Storage::SubvolSpecification.fallback_list }
 
   describe "#blk_device" do
     it "returns a Y2Storage::BlkDevice" do
@@ -601,35 +612,47 @@ describe Y2Partitioner::Actions::Controllers::Filesystem do
       end
     end
 
-    context "and the new mount point is root" do
-      let(:mount_path) { "/" }
+    describe "subvolumes handling" do
+      let(:mount_path) { "/foo" }
+      let(:subvolumes) { Y2Storage::SubvolSpecification.fallback_list }
+      let(:volume_spec) do
+        instance_double(
+          Y2Storage::VolumeSpecification, subvolumes: subvolumes, btrfs_read_only?: false
+        )
+      end
 
       before do
-        # Make sure there is no other mount points
-        all_filesystems = Y2Storage::MountPoint.all(devicegraph).map(&:filesystem)
-        other_filesystems = all_filesystems - [filesystem]
-        other_filesystems.each(&:remove_descendants)
+        allow(Y2Storage::VolumeSpecification).to receive(:for).with(mount_path)
+          .and_return(volume_spec)
       end
 
-      it "adds the proposed subvolumes that do not exist" do
-        specs = Y2Storage::SubvolSpecification.fallback_list
-        arch_specs = Y2Storage::SubvolSpecification.for_current_arch(specs)
-        paths = arch_specs.map { |s| filesystem.btrfs_subvolume_path(s.path) }
+      context "and there are subvolumes defined for the given mount point" do
+        before do
+          # Make sure there is no other mount points
+          all_filesystems = Y2Storage::MountPoint.all(devicegraph).map(&:filesystem)
+          other_filesystems = all_filesystems - [filesystem]
+          other_filesystems.each(&:remove_descendants)
+        end
 
-        subject.public_send(testing_method, mount_path, mount_point_options)
+        it "adds the proposed subvolumes that do not exist" do
+          arch_specs = Y2Storage::SubvolSpecification.for_current_arch(subvolumes)
+          paths = arch_specs.map { |s| filesystem.btrfs_subvolume_path(s.path) }
 
-        expect(paths.any? { |p| filesystem.find_btrfs_subvolume_by_path(p).nil? }).to be(false)
+          subject.public_send(testing_method, mount_path, mount_point_options)
+
+          expect(paths.any? { |p| filesystem.find_btrfs_subvolume_by_path(p).nil? }).to be(false)
+        end
       end
-    end
 
-    context "and the new mount point is not root" do
-      let(:mount_path) { "/foo" }
+      context "and there are no subvolumes defined for the given mount point" do
+        let(:subvolumes) { nil }
 
-      it "does not add new subvolumes" do
-        paths = filesystem.btrfs_subvolumes.map(&:path)
-        subject.public_send(testing_method, mount_path, mount_point_options)
+        it "does not add any subvolume" do
+          paths = filesystem.btrfs_subvolumes.map(&:path)
+          subject.public_send(testing_method, mount_path, mount_point_options)
 
-        expect(filesystem.btrfs_subvolumes.map(&:path) - paths).to be_empty
+          expect(filesystem.btrfs_subvolumes.map(&:path) - paths).to be_empty
+        end
       end
     end
   end

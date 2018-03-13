@@ -56,15 +56,16 @@ describe Y2Storage::Proposal::DevicesPlannerStrategies::Ng do
 
   let(:volume) do
     {
-      "proposed"      => proposed,
-      "mount_point"   => mount_point,
-      "fs_type"       => fs_type,
-      "desired_size"  => desired_size.to_s,
-      "min_size"      => min_size.to_s,
-      "max_size"      => max_size.to_s,
-      "weight"        => weight,
-      "max_size_lvm"  => max_size_lvm.to_s,
-      "adjust_by_ram" => adjust_by_ram
+      "proposed"        => proposed,
+      "mount_point"     => mount_point,
+      "fs_type"         => fs_type,
+      "desired_size"    => desired_size.to_s,
+      "min_size"        => min_size.to_s,
+      "max_size"        => max_size.to_s,
+      "weight"          => weight,
+      "max_size_lvm"    => max_size_lvm.to_s,
+      "adjust_by_ram"   => adjust_by_ram,
+      "btrfs_read_only" => btrfs_read_only
     }
   end
 
@@ -87,6 +88,8 @@ describe Y2Storage::Proposal::DevicesPlannerStrategies::Ng do
   let(:max_size_lvm) { nil }
 
   let(:adjust_by_ram) { nil }
+
+  let(:btrfs_read_only) { false }
 
   describe "#planned_devices" do
     let(:target) { :desired }
@@ -637,6 +640,37 @@ describe Y2Storage::Proposal::DevicesPlannerStrategies::Ng do
               expect(planned_swap).to contain_exactly(an_object_having_attributes(reuse_name: nil))
             end
           end
+        end
+      end
+
+      context "and the volume is set as read only" do
+        let(:volume_spec) { volume.merge("btrfs_read_only" => true) }
+        let(:volumes) { [volume_spec] }
+
+        context "and it is a btrfs filesystem" do
+          let(:fs_type) { :btrfs }
+
+          it "is set as read only" do
+            expect(planned_device.read_only).to eq(true)
+          end
+        end
+
+        context "but it is not a btrfs filesystem" do
+          let(:fs_type) { :ext4 }
+
+          it "is not set as read only" do
+            expect(planned_device.read_only).to eq(false)
+          end
+        end
+      end
+
+      context "and the volume is not set as read only" do
+        let(:volume_spec) { volume.merge("btrfs_read_only" => false) }
+        let(:fs_type) { :btrfs }
+        let(:volumes) { [volume_spec] }
+
+        it "is not set as read only" do
+          expect(planned_device.read_only).to eq(false)
         end
       end
     end

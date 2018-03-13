@@ -481,8 +481,7 @@ module Y2Partitioner
 
           # Special handling for some mount paths ("/", "/boot/*")
           opt = options[:mount_options] || []
-          opt = filesystem.type.special_path_fstab_options(opt, mount_point.path)
-          mount_point.mount_options = opt
+          mount_point.mount_options = add_special_mount_options_for(mount_point.path, opt)
         end
 
         def current_value_for(attribute)
@@ -538,11 +537,10 @@ module Y2Partitioner
         end
 
         def after_change_mount_point
-          # When the filesystem is btrfs and root, default proposed subvolumes are added
-          # in case they are not been probed.
-          add_proposed_subvolumes if btrfs? && root?
-          # When the filesystem is btrfs, the mount point of the resulting subvolumes is updated.
-          update_mount_points if btrfs?
+          if btrfs?
+            add_proposed_subvolumes
+            update_mount_points
+          end
           # Shadowing control of btrfs subvolumes is always performed.
           Y2Storage::Filesystems::Btrfs.refresh_subvolumes_shadowing(working_graph)
         end
@@ -570,10 +568,9 @@ module Y2Partitioner
         #
         # @see Y2Storage::Filesystems::Btrfs#add_btrfs_subvolumes
         def add_proposed_subvolumes
-          specs = Y2Storage::SubvolSpecification.from_control_file
-          specs = Y2Storage::SubvolSpecification.fallback_list if specs.nil? || specs.empty?
-
-          filesystem.add_btrfs_subvolumes(specs)
+          spec = Y2Storage::VolumeSpecification.for(mount_point.path)
+          return unless spec && spec.subvolumes
+          filesystem.add_btrfs_subvolumes(spec.subvolumes)
         end
 
         # Updates subvolumes mount point
@@ -678,6 +675,26 @@ module Y2Partitioner
         # @return [Storage::Arch]
         def arch
           Y2Storage::StorageManager.instance.arch
+        end
+
+        # Determines whether a file system should be read-only by default
+        #
+        # @param path [String] Mount point path
+        # @return [Boolean]
+        def read_only?(path)
+          spec = Y2Storage::VolumeSpecification.for(path)
+          spec && spec.btrfs_read_only?
+        end
+
+        # Adds special mount options for a given path
+        #
+        # @param path          [String] Mount point path
+        # @param mount_options [Array<String>] Original set of options
+        # @return [Array<String>] Mount options including special ones
+        def add_special_mount_options_for(path, mount_options)
+          opt = filesystem.type.special_path_fstab_options(mount_options, path)
+          opt.push("ro") if read_only?(path)
+          opt
         end
       end
     end

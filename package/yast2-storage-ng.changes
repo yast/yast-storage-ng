@@ -1,4 +1,12 @@
 -------------------------------------------------------------------
+Mon Mar 12 11:35:55 UTC 2018 - igonzalezsosa@suse.com
+
+- Add a new btrfs_read_only property to force the root filesystem
+  to be read-only (bsc#1079000)
+- Honor the subvolumes list for the root filesystem (bsc#1077866)
+- 4.0.131
+
+-------------------------------------------------------------------
 Mon Mar 12 08:50:40 UTC 2018 - jlopez@suse.com
 
 - Partitioner: always allow to edit the partition id (bsc#1077868).

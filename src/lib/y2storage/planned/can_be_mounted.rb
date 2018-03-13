@@ -40,8 +40,12 @@ module Y2Storage
       # @return [Array<String>]
       attr_accessor :fstab_options
 
+      # @return [Boolean]
+      attr_accessor :read_only
+
       # Initializations of the mixin, to be called from the class constructor.
       def initialize_can_be_mounted
+        @read_only = false
       end
 
       # Whether the device will be mounted as root

@@ -27,6 +27,7 @@ require "y2storage/boot_requirements_checker"
 require "y2storage/subvol_specification"
 require "y2storage/proposal_settings"
 require "y2storage/proposal/autoinst_size_parser"
+require "y2storage/volume_specification"
 
 module Y2Storage
   module Proposal
@@ -192,6 +193,7 @@ module Y2Storage
         device.mount_by = section.type_for_mountby
         device.mkfs_options = section.mkfs_options
         device.fstab_options = section.fstab_options
+        device.read_only = read_only?(section.mount)
       end
 
       # Set device attributes related to snapshots
@@ -456,9 +458,19 @@ module Y2Storage
       # @param section [AutoinstProfile::PartitionSection]
       # @return [Filesystems::Type] Filesystem type
       def default_filesystem_for(section)
-        spec = VolumeSpecificationBuilder.new(proposal_settings).for(section.mount)
+        spec = VolumeSpecification.for(section.mount)
         return spec.fs_type if spec && spec.fs_type
         section.mount == "swap" ? Filesystems::Type::SWAP : Filesystems::Type::BTRFS
+      end
+
+      # Determine whether the filesystem for the given mount point should be read-only
+      #
+      # @param mount_point [String] Filesystem mount point
+      # @return [Boolean] true if it should be read-only; false otherwise.
+      def read_only?(mount_point)
+        return false unless mount_point
+        spec = VolumeSpecification.for(mount_point)
+        !!spec && spec.btrfs_read_only?
       end
     end
   end

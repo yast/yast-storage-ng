@@ -22,6 +22,7 @@
 require "yast"
 require "y2storage/partitioning_features"
 require "y2storage/subvol_specification"
+require "y2storage/volume_specification"
 
 module Y2Storage
   # Helper class to represent a volume specification as defined in control.xml
@@ -109,6 +110,9 @@ module Y2Storage
     # @return [String] default btrfs subvolume path
     attr_accessor :btrfs_default_subvolume
 
+    # @return [Boolean] whether the volume should be mounted as read-only
+    attr_accessor :btrfs_read_only
+
     # @return [Numeric] order to disable volumes if needed to make the initial proposal
     attr_accessor :disable_order
 
@@ -118,6 +122,29 @@ module Y2Storage
     alias_method :adjust_by_ram_configurable?, :adjust_by_ram_configurable
     alias_method :snapshots?, :snapshots
     alias_method :snapshots_configurable?, :snapshots_configurable
+    alias_method :btrfs_read_only?, :btrfs_read_only
+
+    class << self
+      # Returns the volume specification for the given mount point
+      #
+      # This method keeps a cache of already calculated volume specifications.
+      # Call {.clear_cache} method in order to clear it. Beware that the cache
+      # does not take into account that different proposal settings are being
+      # used.
+      #
+      # @param mount_point       [String] Volume's mount point
+      # @param proposal_settings [ProposalSettings] Proposal settings
+      # @return [VolumeSpecification,nil] Volume specification or nil if not found
+      def for(mount_point, proposal_settings: nil)
+        clear_cache unless @cache
+        @cache[mount_point] ||= VolumeSpecificationBuilder.new(proposal_settings).for(mount_point)
+      end
+
+      # Clear volume specifications cache
+      def clear_cache
+        @cache = {}
+      end
+    end
 
     # Constructor
     # @param volume_features [Hash] features for a volume
@@ -194,6 +221,7 @@ module Y2Storage
       snapshots:                  :boolean,
       snapshots_configurable:     :boolean,
       btrfs_default_subvolume:    :string,
+      btrfs_read_only:            :boolean,
       desired_size:               :size,
       min_size:                   :size,
       max_size:                   :size,

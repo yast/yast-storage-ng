@@ -43,6 +43,10 @@ describe Y2Storage::Proposal::AutoinstSizeParser do
   MIN = Y2Storage::DiskSize.parse("512MB").freeze
   MAX = Y2Storage::DiskSize.parse("2GB").freeze
 
+  before do
+    Y2Storage::VolumeSpecification.clear_cache
+  end
+
   describe "#parse" do
     context "when size is empty" do
       it "sets min_value to the given minimal value" do
@@ -81,7 +85,7 @@ describe Y2Storage::Proposal::AutoinstSizeParser do
         let(:volumes) { [] }
 
         it "returns nil" do
-          expect(parser.parse("auto", "/", MIN, MAX)).to be_nil
+          expect(parser.parse("auto", "/srv", MIN, MAX)).to be_nil
         end
 
         context "and mount point is 'swap'" do
@@ -97,7 +101,7 @@ describe Y2Storage::Proposal::AutoinstSizeParser do
         let(:subvolumes) { [] }
 
         it "sets min and max values to nil" do
-          expect(parser.parse("auto", "/", MIN, MAX)).to be_nil
+          expect(parser.parse("auto", "/srv", MIN, MAX)).to be_nil
         end
       end
     end

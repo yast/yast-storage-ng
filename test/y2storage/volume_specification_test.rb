@@ -28,6 +28,52 @@ describe Y2Storage::VolumeSpecification do
 
   subject(:volume) { described_class.new(volume_features) }
 
+  describe ".for" do
+    let(:spec_builder) { instance_double(Y2Storage::VolumeSpecificationBuilder, for: volume_spec) }
+    let(:volume_spec) { instance_double(Y2Storage::VolumeSpecification) }
+
+    before do
+      allow(Y2Storage::VolumeSpecificationBuilder).to receive(:new)
+        .and_return(spec_builder)
+      described_class.clear_cache
+    end
+
+    it "returns the volume specification" do
+      expect(described_class.for("/")).to eq(volume_spec)
+    end
+
+    context "when no specification is defined for the given mount point" do
+      let(:volume_spec) { nil }
+
+      it "returns nil" do
+        expect(described_class.for("/")).to be_nil
+      end
+    end
+
+    context "when a volume specification was already calculated" do
+      before do
+        described_class.for("/")
+      end
+
+      it "retrieves the value from the internal cache" do
+        expect(Y2Storage::VolumeSpecificationBuilder).to_not receive(:new)
+        described_class.for("/")
+      end
+    end
+  end
+
+  describe "#clear_cache" do
+    before do
+      described_class.for("/")
+    end
+
+    it "clears the cache and forces to build the specification again when required" do
+      described_class.clear_cache
+      expect(Y2Storage::VolumeSpecificationBuilder).to receive(:new).and_call_original
+      described_class.for("/")
+    end
+  end
+
   describe "#initialize" do
     let(:volume_features) do
       {
