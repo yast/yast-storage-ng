@@ -268,6 +268,12 @@ module Y2Partitioner
         nil
       end
 
+      def validate
+        validate_system_mount_points && validate_mount_by_label
+      end
+
+    private
+
       # It is necessary to prevent an empty filesystem label when the option mount_by is set
       # to label by default. The label value is validated when the user gives one value
       # (by editing the fstab options), but the user could mount a device without entering
@@ -278,7 +284,7 @@ module Y2Partitioner
       #
       # @return [Boolean] true if the label is not required or it is required and given; false
       #   otherwise.
-      def validate
+      def validate_mount_by_label
         return true if !formatted? || !mounted? || !mounted_by_label? || !empty_label?
 
         # TRANSLATORS: Error message when a device should be mounted by label but no label
@@ -287,7 +293,57 @@ module Y2Partitioner
         false
       end
 
-    private
+      # Check if a system mount point is reused without formatting the
+      # partition during installation and warn the user if it is.
+      #
+      # @return [Boolean] true if okay, false if not
+      def validate_system_mount_points
+        return true unless Yast::Mode.installation
+        return true if to_be_formatted?
+        return true if !mounted?
+        return true unless ["/", "/usr", "/boot"].include?(mount_path)
+        warn_unformatted_system_mount_points
+      end
+
+      # Post a warning about reusing unformatted system mount points.
+      #
+      # @return [Boolean] true if the user wants to continue
+      def warn_unformatted_system_mount_points
+        log.info("warn_unformatted_system_mount_points")
+        # Translators: popup text
+        message = _(
+          "\n" \
+          "You chose to install onto an existing partition that will not be\n" \
+          "formatted. YaST cannot guarantee your installation will succeed,\n" \
+          "particularly in any of the following cases:\n"
+        ) +
+          # continued popup text
+          _(
+            "- if this is an existing ReiserFS partition\n" \
+            "- if this partition already contains a Linux distribution that will be\n" \
+            "overwritten\n" \
+            "- if this partition does not yet contain a file system\n"
+          ) +
+          # continued popup text
+          _(
+            "If in doubt, better go back and mark this partition for\n" \
+            "formatting, especially if it is assigned to one of the standard mount points\n" \
+            "like /, /boot, /opt or /var.\n"
+          ) +
+          # continued popup text
+          _(
+            "If you decide to format the partition, all data on it will be lost.\n" \
+            "\n" \
+            "Really keep the partition unformatted?\n"
+          )
+        # FIXME: Keeping the message from old yast-storage and just replacing
+        # ReiserFS with Btrfs after the translation because of the late release
+        # state to avoid breaking existing translations. After the SLE-15
+        # release, replace it in the text to avoid possible problems with the
+        # translations.
+        message.gsub!("ReiserFS", "Btrfs")
+        Yast::Popup.YesNo(message)
+      end
 
       def mount_device
         @mount_point_widget.enable
@@ -322,6 +378,13 @@ module Y2Partitioner
       # @return [Boolean] true if it has a filesystem; false otherwise.
       def formatted?
         !@controller.filesystem.nil?
+      end
+
+      # Whether the device will be formatted
+      #
+      # @return [Boolean] true if will be formatted; false otherwise
+      def to_be_formatted?
+        @controller.to_be_formatted?
       end
 
       # Whether the device has a mount point
