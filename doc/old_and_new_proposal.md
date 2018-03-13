@@ -72,8 +72,6 @@ The `partitioning` section of `control.xml` goes beyond the configuration of
 the proposal's behavior. It also contains some options to influence other
 aspect of YaST, mainly the installer.
 
-  * `root_subvolume_read_only`
-    Whether the installer should set readonly for `/` at the end of installation.
   * `proposal_settings_editable`
     Whether the user can change the proposal settings in the UI.
   * `expert_partitioner_warning`
@@ -556,8 +554,6 @@ proposal to:
     <windows_delete_mode config:type="symbol">all</windows_delete_mode>
     <linux_delete_mode config:type="symbol">all</linux_delete_mode>
     <other_delete_mode config:type="symbol">all</other_delete_mode>
-    <!-- Make '/' volume read-only -->
-    <root_subvolume_read_only config:type="boolean">true</root_subvolume_read_only>
     <!-- Don't allow the user to use the Guided Setup -->
     <proposal_settings_editable config:type="boolean">false</proposal_settings_editable>
   </proposal>
@@ -580,6 +576,9 @@ proposal to:
       <proposed_configurable config:type="boolean">false</proposed_configurable>
 
       <btrfs_default_subvolume>@</btrfs_default_subvolume>
+
+      <!-- Make '/' volume read-only -->
+      <btrfs_read_only config:type="boolean">true</btrfs_read_only>
 
       <subvolumes config:type="list">
         <!--
@@ -683,8 +682,6 @@ following options.
     Specifies the predefined size of the LVM volume group if `lvm_vg_strategy` is `use_vg_size`.
   * `proposal_settings_editable`
     If `false`, the user is not allowed to change the proposal settings.
-  * `root_subvolume_read_only`
-    If `true`, the "/"-volume is set read-only (mainly for CaaSP).
 
 ### The `volumes` subsection
 
@@ -771,6 +768,11 @@ options.
     Equivalent to the previous option that used to apply only to "/".
   * `btrfs_default_subvolume`
     Same than before.
+  * `btrfs_read_only`
+    Whether the root subvolume should be mounted read-only in /etc/fstab and
+    its 'ro' Btrfs property should be set to _true_. This works only for Btrfs
+    root filesystems. If another root filesystem type is chosen, this property
+    is ignored. Its default value is _false_.
 
 And finally there is an option that deserves a slightly more detailed
 explanation.
