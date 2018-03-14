@@ -35,49 +35,6 @@ When finished, this module will contain essentially three parts:
       for details about the wrapper classes.
     * Additional YaST-specific functionality.
 
-This module is entirely unsupported.
-
-## Trying on Running System
-
-If you are brave enough to install this module in a (open)SUSE system, despite
-the facts that **is not supported and can produce data loss**, you can perform
-the following steps (as root):
-
-```bash
-# Repository for Tumbleweed/Factory, adjust this line if using other distribution
-zypper ar -f http://download.opensuse.org/repositories/YaST:/storage-ng/openSUSE_Tumbleweed/ libstorage-ng
-zypper ref
-rpm -e --nodeps libstorage7 libstorage-ruby libstorage-python libstorage-devel libstorage-testsuite
-# There might be reported file conflicts between yast2-storage-ng and yast2-storage,
-# it should be OK to ignore them.
-zypper in yast2-storage-ng
-```
-
-Once the package is installed, the YaST Partitioner can be invoked running
-`yast2 partitioner` or `yast2 storage`.
-
-It is also possible to run it with a device graph from a file via
-`yast2 partitioner_testing <path to file>`. Supported formats are
-the [yast2-storage-ng yml
-format](https://github.com/yast/yast-storage-ng/blob/master/doc/fake-devicegraphs-yaml-format.md)
-and the [libstorage xml format](https://github.com/openSUSE/libstorage-ng).
-
-## Trying the installation process
-
-There are test ISO images [available in the build
-service](http://download.opensuse.org/repositories/YaST:/storage-ng/images/iso/)
-that can be used to perform an openSUSE Tumbleweed installation using this
-module instead of the original yast2-storage. Once again, take into account this
-**is not supported and can produce data loss**.
-
-The installation process is the same than a regular openSUSE system. The
-following things must be taken into account:
-
-* Not all scenarios work at this point in time (see Status below).
-* Some user interfaces can be slightly different.
-* The ISO image includes a relatively small selection of software, so choosing
-  Gnome or KDE Plasma in the "computer role" screen may not work as expected.
-
 ## Status
 
 Check the [status](doc/status.md) of already implemented and still missing
