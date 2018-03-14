@@ -82,13 +82,8 @@ equivalent, the old code is simply deleted, not commented.
 
 ## Changes in yast2-bootloader
 
-* Disabled some unit tests dealing with non-supported features (see below).
-
-* Various code dealing with RAID, alternative device names and crypt devices
-  disabled. All marked with "# storage-ng".
-
-* Code dealing with BIOS-ID changed to blindly assume common values. Original
-  code commented and marked with "storage-ng".
+* Code dealing with BIOS-ID changed to assume that boot disk is one which
+  have /boot partition.
 
 ## Changes in autoyast2
 
