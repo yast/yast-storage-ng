@@ -138,7 +138,6 @@ textdomain="control"
         <proposal>
             <lvm config:type="boolean">false</lvm>
             <proposal_settings_editable config:type="boolean">false</proposal_settings_editable>
-            <root_subvolume_read_only config:type="boolean">true</root_subvolume_read_only>
         </proposal>
 
         <volumes config:type="list">
@@ -160,6 +159,9 @@ textdomain="control"
 
                 <!-- the default subvolume "@" was requested by product management -->
                 <btrfs_default_subvolume>@</btrfs_default_subvolume>
+
+                <!-- root filesystem should be read-only -->
+                <btrfs_read_only config:type="boolean">true</btrfs_read_only>
 
                 <!-- Subvolumes to be created for a Btrfs root file system -->
                 <!-- copy_on_write is true by default -->
