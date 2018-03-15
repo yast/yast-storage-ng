@@ -34,7 +34,36 @@ module Y2Partitioner
         textdomain "storage"
       end
 
-      # Confirmation message before performing the delete action
+    private
+
+      # Deletes the indicated partition (see {DeleteDevice#device})
+      def delete
+        log.info "deleting partition #{device}"
+        disk_device = device.partitionable
+        disk_device.partition_table.delete_partition(device)
+        UIState.instance.select_row(disk_device)
+      end
+
+      # @see DeleteDevice#errors
+      def errors
+        errors = super + [implicit_partition_table_error]
+        errors.compact
+      end
+
+      # Error when the device contains an implicit partition table
+      #
+      # @return [String, nil] nil if the device does not contain an implicit
+      #   partition table.
+      def implicit_partition_table_error
+        return nil if !device.implicit_partition_table?
+
+        _("This partition cannot be deleted. Implicit partition table\n" \
+          "must have one partition.")
+      end
+
+      # @see DeleteDevices#confirm
+      #
+      # @return [Boolean]
       def confirm
         if used_by_lvm?
           confirm_for_used_by_lvm
@@ -45,20 +74,12 @@ module Y2Partitioner
         end
       end
 
-      # Deletes the indicated partition (see {DeleteDevice#device})
-      def delete
-        log.info "deleting partition #{device}"
-        disk_device = device.partitionable
-        disk_device.partition_table.delete_partition(device)
-        UIState.instance.select_row(disk_device)
-      end
-
-    private
-
       # Confirmation when the partition belongs to a volume group
       #
-      # @see DeleteDevice#confirm_recursive_delete
+      # @see ConfirmRecursiveDelete#confirm_recursive_delete
       # @see DeleteDevice#lvm_vg
+      #
+      # @return [Boolean]
       def confirm_for_used_by_lvm
         confirm_recursive_delete(
           device,
@@ -77,8 +98,10 @@ module Y2Partitioner
 
       # Confirmation when the partition belongs to a md raid
       #
-      # @see DeleteDevice#confirm_recursive_delete
+      # @see ConfirmRecursiveDelete#confirm_recursive_delete
       # @see DeleteDevice#md
+      #
+      # @return [Boolean]
       def confirm_for_used_by_md
         confirm_recursive_delete(
           device,

@@ -21,13 +21,11 @@
 
 require "yast"
 require "yast/i18n"
+require "yast2/popup"
 require "y2partitioner/device_graphs"
 require "y2partitioner/confirm_recursive_delete"
 require "y2storage/filesystems/btrfs"
 require "abstract_method"
-
-Yast.import "Popup"
-Yast.import "HTML"
 
 module Y2Partitioner
   module Actions
@@ -82,17 +80,36 @@ module Y2Partitioner
 
       # Validations before performing the delete action
       #
+      # @note The action can be performed is there are no errors (see #errors).
+      #   Only the first error is shown.
+      #
       # @return [Boolean]
       def validate
-        true
+        current_errors = errors
+        return true if current_errors.empty?
+
+        Yast2::Popup.show(current_errors.first, headline: :error)
+        false
       end
 
-      # Confirmation message before performing the delete action
+      # List of errors that avoid to delete the device
+      #
+      # @note Derived classes should overload this method.
+      #
+      # @return [Array<String>]
+      def errors
+        []
+      end
+
+      # Confirmation before performing the delete action
+      #
+      # @return [Boolean]
       def confirm
-        Yast::Popup.YesNo(
-          # TRANSLATORS %s is the name of the device to be deleted (e.g., /dev/sda1)
-          format(_("Really delete %s?"), device.name)
-        )
+        # TRANSLATORS %s is the name of the device to be deleted (e.g., /dev/sda1)
+        message = format(_("Really delete %s?"), device.name)
+
+        result = Yast2::Popup.show(message, buttons: :yes_no)
+        result == :yes
       end
 
       # Checks whether the device is used as physical volume
