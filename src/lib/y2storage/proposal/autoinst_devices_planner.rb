@@ -92,22 +92,23 @@ module Y2Storage
       # @return [Array<Planned::Partition>] List of planned partitions
       def planned_for_disk(disk, drive)
         result = []
-        drive.partitions.each_with_index do |partition_section|
+        drive.partitions.each_with_index do |section|
           # TODO: fix Planned::Partition.initialize
           partition = Y2Storage::Planned::Partition.new(nil, nil)
 
-          next unless assign_size_to_partition(disk, partition, partition_section)
+          next unless assign_size_to_partition(disk, partition, section)
 
           # TODO: partition.bootable is not in the AutoYaST profile. Check if
           # there's some logic to set it in the old code.
 
           partition.disk = disk.name
-          partition.partition_id = partition_section.id_for_partition
-          partition.lvm_volume_group_name = partition_section.lvm_group
-          partition.raid_name = partition_section.raid_name
+          partition.partition_id = section.id_for_partition
+          partition.lvm_volume_group_name = section.lvm_group
+          partition.raid_name = section.raid_name
+          partition.primary = section.partition_type == "primary" if section.partition_type
 
-          device_config(partition, partition_section, drive)
-          add_partition_reuse(partition, partition_section) if partition_section.create == false
+          device_config(partition, section, drive)
+          add_partition_reuse(partition, section) if section.create == false
 
           result << partition
         end
