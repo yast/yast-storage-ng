@@ -111,8 +111,7 @@ module Y2Partitioner
       # @return [String, nil] nil if the filesystem can be resized.
       def fstype_resize_support_error
         return nil unless device.formatted?
-        fs = device.blk_filesystem
-        return nil if fs.supports_grow? || fs.supports_shrink?
+        return nil if device.blk_filesystem.supports_resize?
 
         _("This filesystem type cannot be resized.")
       end
