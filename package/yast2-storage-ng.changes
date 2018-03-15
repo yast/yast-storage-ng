@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Thu Mar 15 15:29:56 UTC 2018 - jreidinger@suse.com
+
+- Warn if user creates too big prep partition which firmware can
+  have problem to load (bsc#1081979)
+- 4.0.134
+
+-------------------------------------------------------------------
 Thu Mar 15 09:57:41 UTC 2018 - jlopez@suse.com
 
 - Partitioner: do not allow to remove implicit partitions.
