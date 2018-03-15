@@ -52,13 +52,7 @@ module Y2Storage
         res = super
 
         if prep_partition_needed?
-          if missing_partition_for?(prep_volume)
-            res << SetupError.new(missing_volume: prep_volume)
-          elsif prep_too_big?
-            msg = _("PReP partition is too big. " \
-             "Some firmwares can refuse to load it and prevent booting.")
-            res << SetupError.new(message: msg)
-          end
+          res.concat(prep_warnings)
         end
 
         if boot_partition_needed? && missing_partition_for?(boot_volume)
@@ -69,6 +63,21 @@ module Y2Storage
       end
 
     protected
+
+      # PReP partition is needed, so return any warning related to it.
+      def prep_warnings
+        res = []
+
+        if missing_partition_for?(prep_volume)
+          res << SetupError.new(missing_volume: prep_volume)
+        elsif prep_too_big?
+          msg = _("PReP partition is too big. " \
+           "Some firmwares can refuse to load it and prevent booting.")
+          res << SetupError.new(message: msg)
+        end
+
+        res
+      end
 
       def boot_partition_needed?
         # PowerNV uses it's own firmware instead of Grub stage 1, but other
