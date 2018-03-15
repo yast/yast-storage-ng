@@ -78,12 +78,12 @@ describe Y2Partitioner::Widgets::DeviceDeleteButton do
         expect(subject.handle).to be_nil
       end
 
-      context "and the device is a disk" do
-        let(:device_type) { :disk }
+      context "and the device is a disk device" do
+        let(:device_type) { :disk_device }
 
-        let(:action_class) { Y2Partitioner::Actions::DeleteDisk }
+        let(:action_class) { Y2Partitioner::Actions::DeleteDiskDevice }
 
-        it "performs the action for deleting a disk" do
+        it "performs the action for deleting a disk device" do
           expect(action_class).to receive(:new).with(device).and_return(action)
           expect(action).to receive(:run)
           subject.handle
