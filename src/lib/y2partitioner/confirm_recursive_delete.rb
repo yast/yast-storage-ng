@@ -21,6 +21,8 @@
 
 require "yast"
 
+Yast.import "HTML"
+
 module Y2Partitioner
   # Mixin for confimation when recursive deletion is performed
   module ConfirmRecursiveDelete

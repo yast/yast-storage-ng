@@ -23,11 +23,11 @@
 require_relative "../test_helper"
 
 require "cwm/rspec"
-require "y2partitioner/actions/delete_disk"
+require "y2partitioner/actions/delete_disk_device"
 
-describe Y2Partitioner::Actions::DeleteDisk do
+describe Y2Partitioner::Actions::DeleteDiskDevice do
   before do
-    devicegraph_stub("mixed_disks_btrfs.yml")
+    devicegraph_stub(scenario)
   end
 
   let(:device) { Y2Storage::BlkDevice.find_by_name(device_graph, device_name) }
@@ -38,9 +38,11 @@ describe Y2Partitioner::Actions::DeleteDisk do
 
   describe "#run" do
     before do
-      # allow(Yast::Popup).to receive(:YesNo).and_return(accept)
+      allow(Yast2::Popup).to receive(:show)
       allow(Yast::UI).to receive(:UserInput).and_return(accept)
     end
+
+    let(:scenario) { "mixed_disks_btrfs.yml" }
 
     let(:device_name) { "/dev/sda" }
 
@@ -50,7 +52,7 @@ describe Y2Partitioner::Actions::DeleteDisk do
       let(:device_name) { "/dev/sdc" }
 
       it "shows an error message" do
-        expect(Yast::Popup).to receive(:Error)
+        expect(Yast2::Popup).to receive(:show)
         subject.run
       end
 
@@ -59,7 +61,22 @@ describe Y2Partitioner::Actions::DeleteDisk do
       end
     end
 
-    context "when the device has partitions" do
+    context "when the device has an implicit partition table" do
+      let(:scenario) { "several-dasds" }
+
+      let(:device_name) { "/dev/dasda" }
+
+      it "shows an error message" do
+        expect(Yast2::Popup).to receive(:show)
+        subject.run
+      end
+
+      it "returns :back" do
+        expect(subject.run).to eq(:back)
+      end
+    end
+
+    context "when the device has partitions and the partition table is not implicit" do
       let(:device_name) { "/dev/sda" }
 
       it "shows a confirm message" do

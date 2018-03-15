@@ -38,7 +38,7 @@ describe Y2Partitioner::Actions::DeletePartition do
 
   describe "#run" do
     before do
-      allow(Yast::Popup).to receive(:YesNo).and_return(accept)
+      allow(Yast2::Popup).to receive(:show).and_return(accept)
     end
 
     let(:scenario) { "lvm-two-vgs.yml" }
@@ -51,8 +51,23 @@ describe Y2Partitioner::Actions::DeletePartition do
       let(:device_name) { "/dev/sda2" }
 
       it "shows a confirm message" do
-        expect(Yast::Popup).to receive(:YesNo)
+        expect(Yast2::Popup).to receive(:show)
         subject.run
+      end
+    end
+
+    context "when deleting a partition from an implicit partition table" do
+      let(:scenario) { "several-dasds" }
+
+      let(:device_name) { "/dev/dasda1" }
+
+      it "shows an error message" do
+        expect(Yast2::Popup).to receive(:show)
+        subject.run
+      end
+
+      it "returns :back" do
+        expect(subject.run).to eq(:back)
       end
     end
 
@@ -83,7 +98,7 @@ describe Y2Partitioner::Actions::DeletePartition do
     end
 
     context "when the confirm message is not accepted" do
-      let(:accept) { false }
+      let(:accept) { :no }
 
       it "does not delete the partition" do
         subject.run
@@ -96,7 +111,7 @@ describe Y2Partitioner::Actions::DeletePartition do
     end
 
     context "when the confirm message is accepted" do
-      let(:accept) { true }
+      let(:accept) { :yes }
 
       it "deletes the partition" do
         subject.run

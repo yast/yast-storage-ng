@@ -38,7 +38,7 @@ describe Y2Partitioner::Actions::DeleteMd do
 
   describe "#run" do
     before do
-      allow(Yast::Popup).to receive(:YesNo).and_return(accept)
+      allow(Yast2::Popup).to receive(:show).and_return(accept)
     end
 
     let(:device_name) { "/dev/md/md0" }
@@ -47,7 +47,7 @@ describe Y2Partitioner::Actions::DeleteMd do
 
     context "when deleting a regular md raid" do
       it "shows a confirm message" do
-        expect(Yast::Popup).to receive(:YesNo)
+        expect(Yast2::Popup).to receive(:show)
         subject.run
       end
     end
@@ -72,7 +72,7 @@ describe Y2Partitioner::Actions::DeleteMd do
     end
 
     context "when the confirm message is not accepted" do
-      let(:accept) { false }
+      let(:accept) { :no }
 
       it "does not delete the md raid" do
         subject.run
@@ -85,7 +85,7 @@ describe Y2Partitioner::Actions::DeleteMd do
     end
 
     context "when the confirm message is accepted" do
-      let(:accept) { true }
+      let(:accept) { :yes }
 
       it "deletes the md raid" do
         subject.run

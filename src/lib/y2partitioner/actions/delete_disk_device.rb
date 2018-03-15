@@ -28,32 +28,56 @@ module Y2Partitioner
     # Action for deleting a disk device
     #
     # @see DeleteDevice
-    class DeleteDisk < DeleteDevice
+    class DeleteDiskDevice < DeleteDevice
       def initialize(*args)
         super
         textdomain "storage"
       end
 
-      # Checks whether there is any partition for deleting
-      #
-      # @note An error popup is shown when there is no partition.
-      #
-      # @return [Boolean]
-      def validate
-        partition_table = device.partition_table
-        if partition_table.nil? || partition_table.partitions.empty?
-          Yast::Popup.Error(_("There are no partitions to delete on this disk"))
-          return false
-        end
+    private
 
-        true
+      # Deletes all partitions of a disk device (see {DeleteDevice#device})
+      def delete
+        log.info "deleting partitions from #{device}"
+        device.partition_table.delete_all_partitions unless device.partition_table.nil?
+        UIState.instance.select_row(device)
       end
 
-      # Confirmation message before performing the delete action
+      # @see DeleteDevice#errors
+      def errors
+        errors = super + [
+          empty_partition_table_error,
+          implicit_partition_table_error
+        ]
+
+        errors.compact
+      end
+
+      # Error when there is no partition for deleting
       #
-      # It shows all partitions (and dependent devices) that will be deleted.
+      # @return [String, nil] nil if the partition table is not empty
+      def empty_partition_table_error
+        return nil unless device.partitions.empty?
+
+        _("There are no partitions to delete on this disk")
+      end
+
+      # Error when the device contains an implicit partitition table
       #
-      # @see DeleteDevice#confirm_recursive_delete
+      # @return [String, nil] nil if the device has no implicit partition table
+      def implicit_partition_table_error
+        return nil if !device.implicit_partition_table?
+
+        _("This device only contains an implicit partition that cannot be deleted.")
+      end
+
+      # Confirmation before performing the delete action
+      #
+      # @note It shows all partitions (and dependent devices) that will be deleted.
+      #
+      # @see ConfirmRecursiveDelete#confirm_recursive_delete
+      #
+      # @return [Boolean]
       def confirm
         confirm_recursive_delete(
           device,
@@ -64,13 +88,6 @@ module Y2Partitioner
           # TRANSLATORS: name is the name of the disk to be deleted (e.g., /dev/sda)
           format(_("Really delete all partitions on \"%{name}\"?"), name: device.name)
         )
-      end
-
-      # Deletes all partitions of a disk device (see {DeleteDevice#device})
-      def delete
-        log.info "deleting partitions for #{device}"
-        device.partition_table.delete_all_partitions unless device.partition_table.nil?
-        UIState.instance.select_row(device)
       end
     end
   end

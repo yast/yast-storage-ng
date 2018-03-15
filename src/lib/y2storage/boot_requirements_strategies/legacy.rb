@@ -141,7 +141,7 @@ module Y2Storage
         errors
       end
 
-      # Boor errors when partition table is msdos
+      # Boot errors when partition table is msdos
       #
       # @return [Array<SetupError>]
       def errors_on_msdos

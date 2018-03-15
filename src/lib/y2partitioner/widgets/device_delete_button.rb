@@ -21,7 +21,7 @@
 
 require "yast"
 require "y2partitioner/widgets/device_button"
-require "y2partitioner/actions/delete_disk"
+require "y2partitioner/actions/delete_disk_device"
 require "y2partitioner/actions/delete_partition"
 require "y2partitioner/actions/delete_lvm_vg"
 require "y2partitioner/actions/delete_lvm_lv"
@@ -47,7 +47,7 @@ module Y2Partitioner
       # Returns the proper Actions class to perform the delete action
       #
       # @see Actions::DeleteDevice
-      # @see Actions::DeleteDisk
+      # @see Actions::DeleteDiskDevice
       # @see Actions::DeletePartition
       # @see Actions::DeleteLvmVg
       # @see Actions::DeleteLvmLv
@@ -55,8 +55,8 @@ module Y2Partitioner
       #
       # @return [Actions::DeleteDevice]
       def actions_class
-        if device.is?(:disk)
-          Actions::DeleteDisk
+        if device.is?(:disk_device)
+          Actions::DeleteDiskDevice
         elsif device.is?(:partition)
           Actions::DeletePartition
         elsif device.is?(:lvm_vg)

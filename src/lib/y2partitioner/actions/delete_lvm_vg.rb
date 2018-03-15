@@ -33,7 +33,17 @@ module Y2Partitioner
         textdomain "storage"
       end
 
-      # Confirmation message before performing the delete action
+    private
+
+      # Deletes the indicated LVM volume group (see {DeleteDevice#device})
+      def delete
+        log.info "deleting vg #{device}"
+        device_graph.remove_lvm_vg(device)
+      end
+
+      # Confirmation before performing the delete action
+      #
+      # @return [Boolean]
       def confirm
         if device.lvm_lvs.empty?
           super
@@ -42,17 +52,11 @@ module Y2Partitioner
         end
       end
 
-      # Deletes the indicated LVM volume group (see {DeleteDevice#device})
-      def delete
-        log.info "deleting vg #{device}"
-        device_graph.remove_lvm_vg(device)
-      end
-
-    private
-
       # Confirmation when the device contains logical volumes
       #
-      # @see DeleteDevice#confirm_recursive_delete
+      # @see ConfirmRecursiveDelete#confirm_recursive_delete
+      #
+      # @return [Boolean]
       def confirm_for_used
         confirm_recursive_delete(
           device,

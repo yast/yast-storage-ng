@@ -244,6 +244,15 @@ module Y2Storage
       min
     end
 
+    # Whether it is an implicit partition
+    #
+    # @see Y2Storage::PartitionTables::ImplicitPt
+    #
+    # @return [Boolean]
+    def implicit?
+      partition_table.type.is?(:implicit)
+    end
+
   protected
 
     # Values for volume specification matching

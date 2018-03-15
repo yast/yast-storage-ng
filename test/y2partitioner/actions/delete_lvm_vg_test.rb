@@ -42,7 +42,7 @@ describe Y2Partitioner::Actions::DeleteLvmVg do
       before { device.remove_descendants }
 
       it "shows a confirmation message with the device name" do
-        expect(Yast::Popup).to receive(:YesNo) do |string|
+        expect(Yast2::Popup).to receive(:show) do |string, _anything|
           expect(string).to include device_name
         end
         action.run
