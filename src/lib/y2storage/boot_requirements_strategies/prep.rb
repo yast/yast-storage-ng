@@ -26,6 +26,15 @@ module Y2Storage
   module BootRequirementsStrategies
     # Strategy to calculate boot requirements in systems using PReP
     class PReP < Base
+      # Maximum size for which we are sure firmware can load prep
+      # see https://bugzilla.suse.com/show_bug.cgi?id=1081979
+      MAX_PREP_SIZE = DiskSize.MiB(8)
+
+      def initialize(*args)
+        super
+        textdomain "storage"
+      end
+
       # @see Base#needed_partitions
       def needed_partitions(target)
         planned_partitions = super
@@ -42,8 +51,14 @@ module Y2Storage
       def warnings
         res = super
 
-        if prep_partition_needed? && missing_partition_for?(prep_volume)
-          res << SetupError.new(missing_volume: prep_volume)
+        if prep_partition_needed?
+          if missing_partition_for?(prep_volume)
+            res << SetupError.new(missing_volume: prep_volume)
+          elsif prep_too_big?
+            msg = _("PReP partition is too big. " \
+             "Some firmwares can refuse to load it and prevent booting.")
+            res << SetupError.new(message: msg)
+          end
         end
 
         if boot_partition_needed? && missing_partition_for?(boot_volume)
@@ -75,6 +90,13 @@ module Y2Storage
         # whoever created it is in control of the details
         current_devices = analyzer.planned_devices + boot_disk.partitions
         current_devices.none? { |d| d.match_volume?(prep_volume) }
+      end
+
+      # detect if any prep partition is too big.
+      def prep_too_big?
+        analyzer.prep_partitions.any? do |partition|
+          partition.size > MAX_PREP_SIZE
+        end
       end
 
       # @return [VolumeSpecification]
