@@ -58,6 +58,14 @@ module Y2Storage
       storage_forward :uuid
       storage_forward :uuid=
 
+      # @!method supports_shrink?
+      #   @return [Boolean] whether the filesystem supports shrinking
+      storage_forward :supports_shrink?, to: :supports_shrink
+
+      # @!method supports_grow?
+      #   @return [Boolean] whether the filesystem supports growing
+      storage_forward :supports_grow?, to: :supports_grow
+
       # @!attribute mkfs_options
       #   Options to use when calling mkfs during devicegraph commit (if the
       #   filesystem needs to be created in the system).
@@ -109,6 +117,14 @@ module Y2Storage
       def in_network?
         disks = ancestors.find_all { |d| d.is?(:disk) }
         disks.any?(&:in_network?)
+      end
+
+      # Check if this filesystem type supports any kind of resize at all,
+      # either shrinking or growing.
+      #
+      # @return [Boolean]
+      def supports_resize?
+        supports_shrink? || supports_grow?
       end
 
     protected

@@ -85,7 +85,9 @@ module Y2Partitioner
       #
       # @return [Array<Strings>]
       def errors
-        [used_device_error, cannot_be_resized_error].compact
+        [used_device_error,
+         fstype_resize_support_error,
+         cannot_be_resized_error].compact
       end
 
       # Error when trying to resize an used device
@@ -102,6 +104,16 @@ module Y2Partitioner
             "resized. To resize %{name}, make sure it is not used."),
           name: device.name
         )
+      end
+
+      # Error when the filesystem type cannot be resized
+      #
+      # @return [String, nil] nil if the filesystem can be resized.
+      def fstype_resize_support_error
+        return nil unless device.formatted?
+        return nil if device.blk_filesystem.supports_resize?
+
+        _("This filesystem type cannot be resized.")
       end
 
       # Error when the device cannot be resized

@@ -30,22 +30,77 @@ describe Y2Storage::Filesystems::BlkFilesystem do
   end
   let(:scenario) { "mixed_disks_btrfs" }
   let(:blk_device) { Y2Storage::BlkDevice.find_by_name(fake_devicegraph, dev_name) }
+  let(:btrfs_part) { "/dev/sdb2" }
+  let(:xfs_part)   { "/dev/sdb5" }
+  let(:ntfs_part)  { "/dev/sda1" }
   subject(:filesystem) { blk_device.blk_filesystem }
 
   describe "#supports_btrfs_subvolumes?" do
     context "for a Btrfs filesystem" do
-      let(:dev_name) { "/dev/sdb2" }
+      let(:dev_name) { btrfs_part }
 
       it "returns true" do
         expect(filesystem.supports_btrfs_subvolumes?).to eq true
       end
     end
 
-    context "for a no-Btrfs filesystem" do
-      let(:dev_name) { "/dev/sdb5" }
+    context "for a non-Btrfs filesystem" do
+      let(:dev_name) { xfs_part }
 
       it "returns false" do
         expect(filesystem.supports_btrfs_subvolumes?).to eq false
+      end
+    end
+  end
+
+  describe "#supports_grow?" do
+    context "for a Btrfs filesystem" do
+      let(:dev_name) { btrfs_part }
+
+      it "returns true" do
+        expect(filesystem.supports_grow?).to eq true
+      end
+    end
+
+    context "for an XFS filesystem" do
+      let(:dev_name) { xfs_part }
+
+      it "returns false" do
+        expect(filesystem.supports_grow?).to eq true
+      end
+    end
+
+    context "for an NTFS filesystem" do
+      let(:dev_name) { ntfs_part }
+
+      it "returns true" do
+        expect(filesystem.supports_grow?).to eq true
+      end
+    end
+  end
+
+  describe "#supports_shrink?" do
+    context "for a Btrfs filesystem" do
+      let(:dev_name) { btrfs_part }
+
+      it "returns true" do
+        expect(filesystem.supports_shrink?).to eq true
+      end
+    end
+
+    context "for an XFS filesystem" do
+      let(:dev_name) { xfs_part }
+
+      it "returns true" do
+        expect(filesystem.supports_shrink?).to eq false
+      end
+    end
+
+    context "for an NTFS filesystem" do
+      let(:dev_name) { ntfs_part }
+
+      it "returns true" do
+        expect(filesystem.supports_shrink?).to eq true
       end
     end
   end
