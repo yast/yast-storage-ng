@@ -483,7 +483,7 @@ describe Y2Storage::Partition do
     end
   end
 
-  describe "#implicit_partition_table?" do
+  describe "#implicit?" do
     subject { fake_devicegraph.find_by_name(device_name) }
 
     let(:scenario) { "several-dasds" }
@@ -492,7 +492,7 @@ describe Y2Storage::Partition do
       let(:device_name) { "/dev/dasda1" }
 
       it "returns true" do
-        expect(subject.implicit_partition_table?).to eq(true)
+        expect(subject.implicit?).to eq(true)
       end
     end
 
@@ -500,7 +500,7 @@ describe Y2Storage::Partition do
       let(:device_name) { "/dev/dasdc1" }
 
       it "returns false" do
-        expect(subject.implicit_partition_table?).to eq(false)
+        expect(subject.implicit?).to eq(false)
       end
     end
   end

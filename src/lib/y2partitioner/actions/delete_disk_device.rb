@@ -68,8 +68,7 @@ module Y2Partitioner
       def implicit_partition_table_error
         return nil if !device.implicit_partition_table?
 
-        _("This device cannot be deleted because an implicit partition table\n" \
-          "must have one partition.")
+        _("This device only contains an implicit partition that cannot be deleted.")
       end
 
       # Confirmation before performing the delete action

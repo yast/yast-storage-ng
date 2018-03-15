@@ -46,19 +46,17 @@ module Y2Partitioner
 
       # @see DeleteDevice#errors
       def errors
-        errors = super + [implicit_partition_table_error]
+        errors = super + [implicit_partition_error]
         errors.compact
       end
 
-      # Error when the device contains an implicit partition table
+      # Error when the partition is implicit
       #
-      # @return [String, nil] nil if the device does not contain an implicit
-      #   partition table.
-      def implicit_partition_table_error
-        return nil if !device.implicit_partition_table?
+      # @return [String, nil] nil if the partition is not implicit
+      def implicit_partition_error
+        return nil if !device.implicit?
 
-        _("This partition cannot be deleted. Implicit partition table\n" \
-          "must have one partition.")
+        _("This is an implicit partition and cannot be deleted.")
       end
 
       # @see DeleteDevices#confirm

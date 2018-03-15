@@ -244,12 +244,12 @@ module Y2Storage
       min
     end
 
-    # Whether the partition belongs to an implicit partition table
+    # Whether it is an implicit partition
     #
     # @see Y2Storage::PartitionTables::ImplicitPt
     #
     # @return [Boolean]
-    def implicit_partition_table?
+    def implicit?
       partition_table.type.is?(:implicit)
     end
 
