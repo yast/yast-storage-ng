@@ -41,8 +41,8 @@ describe Y2Partitioner::Actions::DeleteLvmLv do
       vg = Y2Storage::LvmVg.find_by_vg_name(current_graph, "vg1")
       create_thin_provisioning(vg)
 
-      allow(Yast::Popup).to receive(:YesNo).and_return(accept)
-      allow(subject).to receive(:confirm_recursive_delete).and_return(accept)
+      allow(Yast2::Popup).to receive(:show).and_return(accept)
+      allow(subject).to receive(:confirm_recursive_delete).and_return(accept == :yes)
     end
 
     let(:accept) { nil }
@@ -51,7 +51,7 @@ describe Y2Partitioner::Actions::DeleteLvmLv do
       let(:device_name) { "/dev/vg1/lv1" }
 
       it "shows a confirmation message with the device name" do
-        expect(Yast::Popup).to receive(:YesNo) do |string|
+        expect(Yast2::Popup).to receive(:show) do |string, _anything|
           expect(string).to include(device_name)
         end
         subject.run
@@ -71,7 +71,7 @@ describe Y2Partitioner::Actions::DeleteLvmLv do
     end
 
     context "when the confirm message is not accepted" do
-      let(:accept) { false }
+      let(:accept) { :no }
 
       let(:device_name) { "/dev/vg1/lv1" }
 
@@ -97,7 +97,7 @@ describe Y2Partitioner::Actions::DeleteLvmLv do
     end
 
     context "when the confirm message is accepted" do
-      let(:accept) { true }
+      let(:accept) { :yes }
 
       let(:device_name) { "/dev/vg1/lv1" }
 

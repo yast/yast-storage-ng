@@ -33,7 +33,17 @@ module Y2Partitioner
         textdomain "storage"
       end
 
-      # Confirmation message before performing the delete action
+    private
+
+      # Deletes the indicated md raid (see {DeleteDevice#device})
+      def delete
+        log.info "deleting md raid #{device}"
+        device_graph.remove_md(device)
+      end
+
+      # Confirmation before performing the delete action
+      #
+      # @return [Boolean]
       def confirm
         if used_by_lvm?
           confirm_for_used_by_lvm
@@ -42,18 +52,12 @@ module Y2Partitioner
         end
       end
 
-      # Deletes the indicated md raid (see {DeleteDevice#device})
-      def delete
-        log.info "deleting md raid #{device}"
-        device_graph.remove_md(device)
-      end
-
-    private
-
       # Confirmation when the device belongs to a volume group
       #
-      # @see DeleteDevice#confirm_recursive_delete
+      # @see ConfirmRecursiveDelete#confirm_recursive_delete
       # @see DeleteDevice#lvm_vg
+      #
+      # @return [Boolean]
       def confirm_for_used_by_lvm
         confirm_recursive_delete(
           device,
