@@ -482,4 +482,26 @@ describe Y2Storage::Partition do
       end
     end
   end
+
+  describe "#implicit_partition_table?" do
+    subject { fake_devicegraph.find_by_name(device_name) }
+
+    let(:scenario) { "several-dasds" }
+
+    context "when the partition belongs to an implicit partition table" do
+      let(:device_name) { "/dev/dasda1" }
+
+      it "returns true" do
+        expect(subject.implicit_partition_table?).to eq(true)
+      end
+    end
+
+    context "when the partition does not belong to an implicit partition table" do
+      let(:device_name) { "/dev/dasdc1" }
+
+      it "returns false" do
+        expect(subject.implicit_partition_table?).to eq(false)
+      end
+    end
+  end
 end
