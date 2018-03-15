@@ -58,6 +58,14 @@ module Y2Storage
       storage_forward :uuid
       storage_forward :uuid=
 
+      # @!method supports_shrink?
+      #   @return [Boolean] whether the filesystem supports shrinking
+      storage_forward :supports_shrink?, to: :supports_shrink
+
+      # @!method supports_grow?
+      #   @return [Boolean] whether the filesystem supports shrinking
+      storage_forward :supports_grow?, to: :supports_grow
+
       # @!attribute mkfs_options
       #   Options to use when calling mkfs during devicegraph commit (if the
       #   filesystem needs to be created in the system).
