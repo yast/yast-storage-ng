@@ -191,6 +191,7 @@
     <Ext4>
       <sid>56</sid>
       <uuid>4d2e6fde-d105-4f15-b8e1-4173badc8c66</uuid>
+      <label>root</label>
     </Ext4>
     <MountPoint>
       <sid>57</sid>

@@ -99,6 +99,11 @@ module Y2Storage
 
       alias_method :name, :share
 
+      # @see Filesystems::Base#match_fstab_spec?
+      def match_fstab_spec?(spec)
+        spec.chomp("/") == share.chomp("/")
+      end
+
     protected
 
       def types_for_is

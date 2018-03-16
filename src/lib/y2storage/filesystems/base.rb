@@ -74,9 +74,28 @@ module Y2Storage
         end
       end
 
-      #   @return [Boolean]
+      # @return [Boolean]
       def in_network?
         return false
+      end
+
+      # Whether the current filesystem matches with a given fstab spec
+      #
+      # Most formats supported in the first column of /etc/fstab are recognized.
+      # E.g. the string can be a kernel name, an udev name, an NFS specification
+      # or a string starting with "UUID=" or "LABEL=".
+      #
+      # This method doesn't match by PARTUUID or PARTLABEL.
+      #
+      # Take into account that libstorage-ng discards during probing all the
+      # udev names not considered reliable or stable enough. This method only
+      # checks by the udev names recognized by libstorage-ng (not discarded).
+      #
+      # @param spec [String] content of the first column of an /etc/fstab entry
+      # @return [Boolean]
+      def match_fstab_spec?(spec)
+        log.warn "Method of the base abstract class used to check #{spec}"
+        false
       end
 
     protected

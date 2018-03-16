@@ -69,6 +69,24 @@ module Y2Storage
         name.nil? ? to_s : _(name)
       end
 
+      # Type corresponding to the given fstab spec
+      #
+      # @param spec [String] content of the first column of an /etc/fstab entry
+      # @return [MountByType, nil] nil if the string doesn't match any known format
+      def self.from_fstab_spec(spec)
+        if spec.start_with?("UUID=", "/dev/disk/by-uuid/")
+          UUID
+        elsif spec.start_with?("LABEL=", "/dev/disk/by-label/")
+          LABEL
+        elsif spec.start_with?("/dev/disk/by-id/")
+          ID
+        elsif spec.start_with?("/dev/disk/by-path/")
+          PATH
+        elsif spec.start_with?("/dev/")
+          DEVICE
+        end
+      end
+
     private
 
       # Name of the mount by type, if defined
