@@ -277,10 +277,10 @@ module Y2Storage
       # @return [Array<Planned::LvmLv] New list of planned logical volumes with adjusted sizes
       def planned_lvs_in_vg(lvs, vg)
         lvs.map do |lv|
-          next lv unless lv.percent_size
-          adjusted_lv = lv.clone
-          adjusted_lv.max = adjusted_lv.min = lv.size_in(vg)
-          adjusted_lv
+          new_lv = lv.clone
+          next new_lv unless new_lv.percent_size
+          new_lv.max = new_lv.min = lv.size_in(vg)
+          new_lv
         end
       end
     end
