@@ -115,8 +115,8 @@ module Y2Storage
       end
 
       # Select all prep partitions that are too big.
-      def prep_too_big?
-        analyzer.prep_partitions.select do |partition|
+      def too_big_preps
+        analyzer.graph_prep_partitions.select do |partition|
           partition.size > MAX_PREP_SIZE
         end
       end

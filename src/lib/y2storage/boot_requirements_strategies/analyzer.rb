@@ -223,9 +223,11 @@ module Y2Storage
         return raid.md_level.is?(:raid1)
       end
 
-      # Method to return all prep partitions - newly created and also reused.
+      # Method to return all prep partitions - newly created and also reused from graph.
       # It is useful to do checks on top of that partitions
-      def prep_partitions
+      # @note to get all prep partition, from graph and planned use
+      #   `graph_prep_partitions + planned_prep_partitions`
+      def graph_prep_partitions
         devicegraph.partitions.select do |partition|
           partition.id.is?(:prep)
         end
