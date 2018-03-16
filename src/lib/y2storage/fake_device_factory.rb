@@ -270,8 +270,8 @@ module Y2Storage
 
       log.info("#{__method__}( #{args} )")
       name = args["name"] || "/dev/sda"
-      size = args["size"] || DiskSize.zero
-      raise ArgumentError, "\"size\" missing for disk #{name}" if size.zero?
+      size = args["size"]
+      raise ArgumentError, "\"size\" missing for disk #{name}" if size.nil?
       raise ArgumentError, "Duplicate disk name #{name}" if @disks.include?(name)
       @disks << name
       block_size = args["block_size"] if args["block_size"]
@@ -432,6 +432,8 @@ module Y2Storage
 
       # align partition if specified
       region = disk.topology.align(region, align) if align
+
+      raise Error, "Trying to create a zero-size partition" if region.empty?
 
       partition = ptable.create_partition(part_name, region, type)
       partition.id = id
