@@ -51,9 +51,7 @@ module Y2Storage
       def warnings
         res = super
 
-        if prep_partition_needed?
-          res.concat(prep_warnings)
-        end
+        res.concat(prep_warnings) if prep_partition_needed?
 
         if boot_partition_needed? && missing_partition_for?(boot_volume)
           res << SetupError.new(missing_volume: boot_volume)
@@ -80,15 +78,17 @@ module Y2Storage
 
       def big_prep_warning(big_partitions)
         # TRANSLATORS: %s is single or list of partitions that are too big.
-        msg = format(
-          n_("Following PReP partition is too big: %s. ",
-            "Following PReP partitions are too big: %s.",
-            big_partitions.size
-          ),
-          big_partitions.map(&:name).join(", ")
-        )
+        msg =
+          format(
+            n_(
+              "Following PReP partition is too big: %s. ",
+              "Following PReP partitions are too big: %s.",
+              big_partitions.size
+            ),
+            big_partitions.map(&:name).join(", ")
+          )
         # TRANSLATORS: %s is human readable partition size like 8 MiB.
-        msg += format(_("Some firmwares can refuse to load PReP partition " \
+        msg + format(_("Some firmwares can refuse to load PReP partition " \
           "that is bigger %s and thus prevent booting."), MAX_PREP_SIZE)
       end
 
