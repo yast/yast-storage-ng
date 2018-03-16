@@ -89,7 +89,7 @@ module Y2Storage
           )
         # TRANSLATORS: %s is human readable partition size like 8 MiB.
         msg + format(_("Some firmwares can fail to load PReP partitions " \
-          "bigger %s and thus prevent booting."), MAX_PREP_SIZE)
+          "bigger than %s and thus prevent booting."), MAX_PREP_SIZE)
       end
 
       def boot_partition_needed?
