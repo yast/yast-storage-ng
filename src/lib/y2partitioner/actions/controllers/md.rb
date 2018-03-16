@@ -248,6 +248,7 @@ module Y2Partitioner
         # @note A partition is available if it is valid to be used in a MD RAID and
         #   it is not formatted or not mounted.
         #
+        # @param partition [Y2Storage::Partition]
         # @return [Boolean] true if can be used for a MD RAID; false otherwise.
         def available?(partition)
           return false unless valid_for_md?(partition)
@@ -261,6 +262,7 @@ module Y2Partitioner
         #   it is alinux system partition and it is not being used by LVM or other
         #   MD RAID.
         #
+        # @param partition [Y2Storage::Partition]
         # @return [Boolean] true if it is valid; false otherwise.
         def valid_for_md?(partition)
           partition.id.is?(:linux_system) &&

@@ -322,6 +322,32 @@ describe Y2Partitioner::Actions::Controllers::LvmVg do
       expect(controller.available_devices.map(&:name)).to include("/dev/sdb")
     end
 
+    # A device is unused when fulfill the previous tested conditions:
+    # - has no partitions
+    # - formated but not mounted
+    # - not used as PV
+    it "includes unused disks" do
+      expect(controller.available_devices.map(&:name)).to include("/dev/sdb")
+    end
+
+    it "includes unused Multipaths" do
+      Y2Storage::Multipath.create(current_graph, "/dev/mapper/mp1", 10.GiB)
+      expect(controller.available_devices.map(&:name)).to include("/dev/mapper/mp1")
+    end
+
+    it "includes unused MD Raids" do
+      sdb = dev("/dev/sdb")
+      md = Y2Storage::Md.create(current_graph, "/dev/md0")
+      md.add_device(sdb)
+
+      expect(controller.available_devices.map(&:name)).to include("/dev/md0")
+    end
+
+    it "includes unused DM Raids" do
+      Y2Storage::DmRaid.create(current_graph, "/dev/mapper/dm1", 10.GiB)
+      expect(controller.available_devices.map(&:name)).to include("/dev/mapper/dm1")
+    end
+
     it "excludes devices with partitions" do
       partitioned_disks = ["/dev/sda", "/dev/sde", "/dev/sdf"]
       expect(controller.available_devices.map(&:name)).to_not include(*partitioned_disks)
@@ -339,30 +365,21 @@ describe Y2Partitioner::Actions::Controllers::LvmVg do
       expect(controller.available_devices.map(&:name)).to_not include("/dev/sdd")
     end
 
-    # A device is unused when fulfill the previous tested conditions:
-    # - has not partitions
-    # - formated but not mounted
-    # - not used as PV
-    it "includes unused disks" do
-      expect(controller.available_devices.map(&:name)).to include("/dev/sdb")
+    it "excludes DASDs" do
+      dasda = Y2Storage::Dasd.create(current_graph, "/dev/dasda", 10.GiB)
+      dasda.type = Y2Storage::DasdType::ECKD
+      dasda.format = Y2Storage::DasdFormat::CDL
+
+      dasdb = Y2Storage::Dasd.create(current_graph, "/dev/dasdb")
+      dasdb.type = Y2Storage::DasdType::FBA
+
+      expect(controller.available_devices.map(&:name)).to_not include(dasda.name)
+      expect(controller.available_devices.map(&:name)).to_not include(dasdb.name)
     end
 
-    it "includes unused Multipaths" do
-      Y2Storage::Multipath.create(current_graph, "/dev/mapper/mp1")
-      expect(controller.available_devices.map(&:name)).to include("/dev/mapper/mp1")
-    end
-
-    it "includes unused MD Raids" do
-      sdb = dev("/dev/sdb")
-      md = Y2Storage::Md.create(current_graph, "/dev/md0")
-      md.add_device(sdb)
-
-      expect(controller.available_devices.map(&:name)).to include("/dev/md0")
-    end
-
-    it "includes unused DM Raids" do
-      Y2Storage::DmRaid.create(current_graph, "/dev/mapper/dm1")
-      expect(controller.available_devices.map(&:name)).to include("/dev/mapper/dm1")
+    it "excludes zero-size devices" do
+      Y2Storage::Disk.create(current_graph, "/dev/sde", 0)
+      expect(controller.available_devices.map(&:name)).to_not include("/dev/sde")
     end
 
     it "includes partitions with a linux system ID (linux, LVM, RAID, swap)" do
@@ -402,18 +419,6 @@ describe Y2Partitioner::Actions::Controllers::LvmVg do
       new_md = Y2Storage::Md.create(current_graph, "/dev/md0")
       new_md.add_device(sda3)
       expect(controller.available_devices).to_not include sda3
-    end
-
-    it "excludes DASDs" do
-      dasda = Y2Storage::Dasd.create(current_graph, "/dev/dasda")
-      dasda.type = Y2Storage::DasdType::ECKD
-      dasda.format = Y2Storage::DasdFormat::CDL
-
-      dasdb = Y2Storage::Dasd.create(current_graph, "/dev/dasdb")
-      dasdb.type = Y2Storage::DasdType::FBA
-
-      expect(controller.available_devices.map(&:name)).to_not include(dasda.name)
-      expect(controller.available_devices.map(&:name)).to_not include(dasdb.name)
     end
   end
 
