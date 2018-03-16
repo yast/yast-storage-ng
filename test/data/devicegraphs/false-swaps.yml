@@ -19,7 +19,7 @@
 
     # Wrong id
     - partition:
-        size:         3
+        size:         3 KiB
         name:         /dev/sda3
         id:           swap
         file_system:  ext4
