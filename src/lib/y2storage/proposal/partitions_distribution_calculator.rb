@@ -34,8 +34,6 @@ module Y2Storage
     class PartitionsDistributionCalculator
       include Yast::Logger
 
-      FREE_SPACE_MIN_SIZE = DiskSize.MiB(30)
-
       def initialize(lvm_helper)
         @lvm_helper = lvm_helper
       end
@@ -176,9 +174,12 @@ module Y2Storage
         end
       end
 
+      # Returns the sum of available spaces
+      #
+      # @param free_spaces [Array<FreeDiskSpace>] List of free disk spaces
+      # @return [DiskSize] Available disk space
       def available_space(free_spaces)
-        spaces = free_spaces.select { |sp| sp.disk_size >= FREE_SPACE_MIN_SIZE }
-        spaces.reduce(DiskSize.zero) { |sum, space| sum + space.disk_size }
+        DiskSize.sum(free_spaces.map(&:disk_size))
       end
 
       # For each planned partition, it returns a list of the disk spaces

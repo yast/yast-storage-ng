@@ -3,6 +3,9 @@ Fri Mar 16 10:06:25 UTC 2018 - igonzalezsosa@suse.com
 
 - AutoYaST: fixed space distribution on LVM volume groups when
   using percentages (bsc#1079369).
+- AutoYaST: do not ignore free spaces smaller than 30MiB
+  (bsc#1085627).
+- 4.0.136
 
 -------------------------------------------------------------------
 Thu Mar 15 16:29:56 UTC 2018 - jreidinger@suse.com
