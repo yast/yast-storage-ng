@@ -512,10 +512,6 @@ describe Y2Storage::Devicegraph do
     context "if there are BIOS RAIDs" do
       let(:scenario) { "empty-dm_raids.xml" }
 
-      before do
-        Y2Storage::MdMember.create(graph, "/dev/md0")
-      end
-
       it "returns a sorted array of devices" do
         devices = graph.disk_devices
         expect(devices).to be_an Array
@@ -525,7 +521,7 @@ describe Y2Storage::Devicegraph do
 
       it "includes all BIOS RAIDs" do
         expect(graph.disk_devices.map(&:name)).to include(
-          "/dev/mapper/isw_ddgdcbibhd_test1", "/dev/mapper/isw_ddgdcbibhd_test2", "/dev/md0"
+          "/dev/mapper/isw_ddgdcbibhd_test1", "/dev/mapper/isw_ddgdcbibhd_test2"
         )
       end
 
@@ -556,6 +552,15 @@ describe Y2Storage::Devicegraph do
 
       it "does not include unformatted DASDs" do
         expect(graph.disk_devices.map(&:name)).to_not include("/dev/dasdb")
+      end
+    end
+
+    context "if there are zero-size devices" do
+      let(:scenario) { "zero-size_disk" }
+
+      it "does not include zero-size devices" do
+        expect(graph.disks).to include(an_object_having_attributes(name: "/dev/sda"))
+        expect(graph.disk_devices).to_not include(an_object_having_attributes(name: "/dev/sda"))
       end
     end
   end
