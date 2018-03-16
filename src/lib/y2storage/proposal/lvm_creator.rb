@@ -179,8 +179,9 @@ module Y2Storage
       # @return [Hash{String => Planned::LvmLv}] planned LVs indexed by the
       #   device name of the real LV devices that were created
       def create_logical_volumes(volume_group, planned_lvs)
+        adjusted_lvs = planned_lvs_in_vg(planned_lvs, volume_group)
         vg_size = volume_group.available_space
-        lvs = Planned::LvmLv.distribute_space(planned_lvs, vg_size, rounding: volume_group.extent_size)
+        lvs = Planned::LvmLv.distribute_space(adjusted_lvs, vg_size, rounding: volume_group.extent_size)
         lvs.reject(&:reuse?).each_with_object({}) do |planned_lv, hash|
           lv = create_logical_volume(volume_group, planned_lv)
           hash[lv.name] = planned_lv
@@ -263,6 +264,23 @@ module Y2Storage
           root.lvm_vgs.any? { |vg| vg.vg_name == name }
         else
           root.lvm_lvs.any? { |lv| lv.lv_name == name }
+        end
+      end
+
+      # Returns a list of planned logical volumes adjusting the size
+      #
+      # All logical volumes which sizes are specified as a percentage will get
+      # their minimal and maximal sizes adjusted.
+      #
+      # @param lvs [Array<Planned::LvmLv>] List of planned logical volumes
+      # @param vg  [Planned::LvmVg]        Volume group to place logical volumes on
+      # @return [Array<Planned::LvmLv] New list of planned logical volumes with adjusted sizes
+      def planned_lvs_in_vg(lvs, vg)
+        lvs.map do |lv|
+          next lv unless lv.percent_size
+          adjusted_lv = lv.clone
+          adjusted_lv.max = adjusted_lv.min = lv.size_in(vg)
+          adjusted_lv
         end
       end
     end

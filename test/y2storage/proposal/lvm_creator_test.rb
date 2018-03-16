@@ -300,7 +300,7 @@ describe Y2Storage::Proposal::LvmCreator do
 
       before do
         volumes.first.percent_size = 50
-        volumes.last.percent_size = 10
+        volumes.last.weight = 1
       end
 
       it "creates partitions matching the volume sizes" do
@@ -309,7 +309,7 @@ describe Y2Storage::Proposal::LvmCreator do
 
         expect(lvs).to contain_exactly(
           an_object_having_attributes(lv_name: "one", size: 15.GiB),
-          an_object_having_attributes(lv_name: "two", size: 3.GiB)
+          an_object_having_attributes(lv_name: "two", size: 15.GiB - 4.MiB)
         )
       end
     end
