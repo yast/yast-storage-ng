@@ -127,6 +127,21 @@ module Y2Storage
         supports_shrink? || supports_grow?
       end
 
+      # @see Filesystems::Base#match_fstab_spec?
+      def match_fstab_spec?(spec)
+        if /^UUID=(.*)/ =~ spec
+          return !Regexp.last_match(1).empty? && uuid == Regexp.last_match(1)
+        end
+
+        if /^LABEL=(.*)/ =~ spec
+          return !Regexp.last_match(1).empty? && label == Regexp.last_match(1)
+        end
+
+        plain_blk_devices.any? do |dev|
+          dev.name == spec || dev.udev_full_all.include?(spec)
+        end
+      end
+
     protected
 
       def types_for_is

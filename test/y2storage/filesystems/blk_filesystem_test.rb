@@ -269,4 +269,74 @@ describe Y2Storage::Filesystems::BlkFilesystem do
       end
     end
   end
+
+  describe "#match_fstab_spec?" do
+    let(:scenario) { "md-imsm1-devicegraph.xml" }
+    let(:dev_name) { "/dev/sda2" }
+
+    it "returns true for the correct kernel device name" do
+      expect(filesystem.match_fstab_spec?("/dev/sda2")).to eq true
+    end
+
+    it "returns false for any other kernel device name" do
+      expect(filesystem.match_fstab_spec?("/dev/sda")).to eq false
+    end
+
+    it "returns false for any NFS spec" do
+      expect(filesystem.match_fstab_spec?("server:/path")).to eq false
+    end
+
+    it "returns true for the correct label using LABEL=" do
+      expect(filesystem.match_fstab_spec?("LABEL=root")).to eq true
+    end
+
+    it "returns false for the wrong label using LABEL=" do
+      expect(filesystem.match_fstab_spec?("LABEL=no_label")).to eq false
+    end
+
+    it "always returns false 'LABEL=' (blank label)" do
+      fs_with_no_label = fake_devicegraph.find_by_name("/dev/sda1").filesystem
+      expect(filesystem.match_fstab_spec?("LABEL=")).to eq false
+      expect(fs_with_no_label.match_fstab_spec?("LABEL=")).to eq false
+    end
+
+    it "returns true for the correct UUID using UUID=" do
+      expect(filesystem.match_fstab_spec?("UUID=4d2e6fde-d105-4f15-b8e1-4173badc8c66")).to eq true
+    end
+
+    it "returns false for the wrong UUID using UUID=" do
+      another_uuid = fake_devicegraph.find_by_name("/dev/sda1").filesystem.uuid
+      expect(filesystem.match_fstab_spec?("UUID=#{another_uuid}")).to eq false
+    end
+
+    it "returns true for the right UUID udev name" do
+      expect(filesystem.match_fstab_spec?("/dev/disk/by-uuid/4d2e6fde-d105-4f15-b8e1-4173badc8c66"))
+        .to eq true
+    end
+
+    it "returns false for a wrong UUID udev name" do
+      another_uuid = fake_devicegraph.find_by_name("/dev/sda1").filesystem.uuid
+      expect(filesystem.match_fstab_spec?("/dev/disk/by-uuid/#{another_uuid}")).to eq false
+    end
+
+    it "returns true for the right label udev name" do
+      expect(filesystem.match_fstab_spec?("/dev/disk/by-label/root")).to eq true
+    end
+
+    it "returns false for a wrong label udev name" do
+      expect(filesystem.match_fstab_spec?("/dev/disk/by-label/whatever")).to eq false
+    end
+
+    it "returns true for any correct udev name" do
+      filesystem.blk_devices.first.udev_full_all.each do |name|
+        expect(filesystem.match_fstab_spec?(name)).to eq true
+      end
+    end
+
+    it "returns false for any udev name corresponding to another device" do
+      fake_devicegraph.find_by_name("/dev/sda1").udev_full_all.each do |name|
+        expect(filesystem.match_fstab_spec?(name)).to eq false
+      end
+    end
+  end
 end

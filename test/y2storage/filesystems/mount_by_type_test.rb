@@ -36,4 +36,44 @@ describe Y2Storage::Filesystems::MountByType do
       expect(described_class::LABEL.to_human_string).to eq("label")
     end
   end
+
+  describe ".from_fstab_spec" do
+    it "returns nil for an empty string" do
+      expect(described_class.from_fstab_spec("")).to be_nil
+    end
+
+    it "returns nil for a wrong entry" do
+      expect(described_class.from_fstab_spec("wrong")).to be_nil
+    end
+
+    it "returns UUID for an entry starting with UUID=" do
+      expect(described_class.from_fstab_spec("UUID=2f61fdb9-f82a-4052-8610-1eb090b82098"))
+        .to eq Y2Storage::Filesystems::MountByType::UUID
+    end
+
+    it "returns LABEL for an entry starting with LABEL=" do
+      expect(described_class.from_fstab_spec("LABEL=root"))
+        .to eq Y2Storage::Filesystems::MountByType::LABEL
+    end
+
+    it "returns ID for udev ids" do
+      expect(described_class.from_fstab_spec("/dev/disk/by-id/dm-name-system-swap"))
+        .to eq Y2Storage::Filesystems::MountByType::ID
+    end
+
+    it "returns UUID for udev UUIDs" do
+      expect(described_class.from_fstab_spec("/dev/disk/by-uuid/2f61fdb9-f82a"))
+        .to eq Y2Storage::Filesystems::MountByType::UUID
+    end
+
+    it "returns PATH for udev paths" do
+      expect(described_class.from_fstab_spec("/dev/disk/by-path/pci-0000:00:1f.2-ata-1"))
+        .to eq Y2Storage::Filesystems::MountByType::PATH
+    end
+
+    it "returns DEVICE for kernel device names" do
+      expect(described_class.from_fstab_spec("/dev/sda"))
+        .to eq Y2Storage::Filesystems::MountByType::DEVICE
+    end
+  end
 end
