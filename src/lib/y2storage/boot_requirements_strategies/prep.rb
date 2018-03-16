@@ -67,16 +67,29 @@ module Y2Storage
       # PReP partition is needed, so return any warning related to it.
       def prep_warnings
         res = []
+        big_preps = too_big_preps
 
         if missing_partition_for?(prep_volume)
           res << SetupError.new(missing_volume: prep_volume)
-        elsif prep_too_big?
-          msg = _("PReP partition is too big. " \
-           "Some firmwares can refuse to load it and prevent booting.")
-          res << SetupError.new(message: msg)
+        elsif !big_preps.empty?
+          res << SetupError.new(message: big_prep_warning(big_preps))
         end
 
         res
+      end
+
+      def big_prep_warning(big_partitions)
+        # TRANSLATORS: %s is single or list of partitions that are too big.
+        msg = format(
+          n_("Following PReP partition is too big: %s. ",
+            "Following PReP partitions are too big: %s.",
+            big_partitions.size
+          ),
+          big_partitions.map(&:name).join(", ")
+        )
+        # TRANSLATORS: %s is human readable partition size like 8 MiB.
+        msg += format(_("Some firmwares can refuse to load PReP partition " \
+          "that is bigger %s and thus prevent booting."), MAX_PREP_SIZE)
       end
 
       def boot_partition_needed?
@@ -101,9 +114,9 @@ module Y2Storage
         current_devices.none? { |d| d.match_volume?(prep_volume) }
       end
 
-      # detect if any prep partition is too big.
+      # Select all prep partitions that are too big.
       def prep_too_big?
-        analyzer.prep_partitions.any? do |partition|
+        analyzer.prep_partitions.select do |partition|
           partition.size > MAX_PREP_SIZE
         end
       end
