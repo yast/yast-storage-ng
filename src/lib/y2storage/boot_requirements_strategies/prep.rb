@@ -81,8 +81,8 @@ module Y2Storage
         msg =
           format(
             n_(
-              "Following PReP partition is too big: %s. ",
-              "Following PReP partitions are too big: %s.",
+              "The following PReP partition is too big: %s. ",
+              "The following PReP partitions are too big: %s.",
               big_partitions.size
             ),
             big_partitions.map(&:name).join(", ")
