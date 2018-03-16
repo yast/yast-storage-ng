@@ -156,7 +156,8 @@ RSpec.shared_examples "proposed PReP partition" do
       expect(prep_part.min).to eq 4.MiB
     end
 
-    it "requires it to be at most 8 MiB (since it will be mapped to RAM)" do
+    # https://bugzilla.suse.com/show_bug.cgi?id=1081979
+    it "requires it to be at most 8 MiB (some firmwares will fail to load bigger ones)" do
       expect(prep_part.max).to eq 8.MiB
     end
   end
@@ -168,7 +169,8 @@ RSpec.shared_examples "proposed PReP partition" do
       expect(prep_part.min).to eq 2.MiB
     end
 
-    it "requires it to be at most 8 MiB (since it will be mapped to RAM)" do
+    # https://bugzilla.suse.com/show_bug.cgi?id=1081979
+    it "requires it to be at most 8 MiB (some firmwares will fail to load bigger ones)" do
       expect(prep_part.max).to eq 8.MiB
     end
   end

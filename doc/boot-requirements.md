@@ -135,10 +135,10 @@
 	- **requires no particular position for it in the disk (since there is no evidence of such so far)**
 	- when aiming for the recommended size
 		- **requires it to be at least 4 MiB (Grub2 stages 1+2, needed Grub modules and extra space)**
-		- **requires it to be at most 8 MiB (since it will be mapped to RAM)**
+		- **requires it to be at most 8 MiB (some firmwares will fail to load bigger ones)**
 	- when aiming for the minimal size
 		- **requires it to be at least 2 MiB (Grub2 stages 1+2 and needed Grub modules)**
-		- **requires it to be at most 8 MiB (since it will be mapped to RAM)**
+		- **requires it to be at most 8 MiB (some firmwares will fail to load bigger ones)**
 
 ## needed partitions in an aarch64 system
 - with a partitions-based proposal
@@ -208,3 +208,5 @@
 		- **requires /boot/zipl to be at least 200 MiB (Grub2, one kernel+initrd and extra space)**
 	- when aiming for the minimal size
 		- **requires /boot/zipl to be at least 100 MiB (Grub2 and one kernel+initrd)**
+
+
