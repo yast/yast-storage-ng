@@ -57,6 +57,7 @@ module Y2Storage
     storage_forward :block_size=
 
     # @!method end
+    #   @raise [Storage::Exception] if the region is empty
     #   @return [Integer] position of the last sector of the region
     storage_forward :end
 
@@ -141,7 +142,11 @@ module Y2Storage
     end
 
     def show_range
-      "#{start} - #{self.end}"
+      if empty?
+        "#{start} - unknown"
+      else
+        "#{start} - #{self.end}"
+      end
     end
 
     alias_method :to_s, :inspect
