@@ -26,6 +26,15 @@ module Y2Storage
   module BootRequirementsStrategies
     # Strategy to calculate boot requirements in systems using PReP
     class PReP < Base
+      # Maximum size for which we are sure firmware can load prep
+      # see https://bugzilla.suse.com/show_bug.cgi?id=1081979
+      MAX_PREP_SIZE = DiskSize.MiB(8)
+
+      def initialize(*args)
+        super
+        textdomain "storage"
+      end
+
       # @see Base#needed_partitions
       def needed_partitions(target)
         planned_partitions = super
@@ -42,9 +51,7 @@ module Y2Storage
       def warnings
         res = super
 
-        if prep_partition_needed? && missing_partition_for?(prep_volume)
-          res << SetupError.new(missing_volume: prep_volume)
-        end
+        res.concat(prep_warnings) if prep_partition_needed?
 
         if boot_partition_needed? && missing_partition_for?(boot_volume)
           res << SetupError.new(missing_volume: boot_volume)
@@ -54,6 +61,36 @@ module Y2Storage
       end
 
     protected
+
+      # PReP partition is needed, so return any warning related to it.
+      def prep_warnings
+        res = []
+        big_preps = too_big_preps
+
+        if missing_partition_for?(prep_volume)
+          res << SetupError.new(missing_volume: prep_volume)
+        elsif !big_preps.empty?
+          res << SetupError.new(message: big_prep_warning(big_preps))
+        end
+
+        res
+      end
+
+      def big_prep_warning(big_partitions)
+        # TRANSLATORS: %s is single or list of partitions that are too big.
+        msg =
+          format(
+            n_(
+              "The following PReP partition is too big: %s. ",
+              "The following PReP partitions are too big: %s.",
+              big_partitions.size
+            ),
+            big_partitions.map(&:name).join(", ")
+          )
+        # TRANSLATORS: %s is human readable partition size like 8 MiB.
+        msg + format(_("Some firmwares can fail to load PReP partitions " \
+          "bigger than %s and thus prevent booting."), MAX_PREP_SIZE)
+      end
 
       def boot_partition_needed?
         # PowerNV uses it's own firmware instead of Grub stage 1, but other
@@ -75,6 +112,13 @@ module Y2Storage
         # whoever created it is in control of the details
         current_devices = analyzer.planned_devices + boot_disk.partitions
         current_devices.none? { |d| d.match_volume?(prep_volume) }
+      end
+
+      # Select all prep partitions that are too big.
+      def too_big_preps
+        analyzer.graph_prep_partitions.select do |partition|
+          partition.size > MAX_PREP_SIZE
+        end
       end
 
       # @return [VolumeSpecification]

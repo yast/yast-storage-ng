@@ -355,6 +355,18 @@ describe Y2Storage::BootRequirementsChecker do
             include_examples "no errors"
           end
 
+          context "there is too big PReP partition" do
+            let(:scenario) { "prep_big" }
+
+            it "contains a warning for too big PReP partition" do
+              expect(checker.warnings.size).to eq(1)
+              expect(checker.warnings).to all(be_a(Y2Storage::SetupError))
+
+              message = checker.warnings.first.message
+              expect(message).to match(/partition is too big/)
+            end
+          end
+
           context "PReP partition missing" do
             let(:scenario) { "trivial" }
             include_examples "missing prep partition"
