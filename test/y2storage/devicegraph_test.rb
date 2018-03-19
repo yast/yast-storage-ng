@@ -509,7 +509,7 @@ describe Y2Storage::Devicegraph do
       end
     end
 
-    context "if there are BIOS RAIDs" do
+    context "if there are DM RAIDs" do
       let(:scenario) { "empty-dm_raids.xml" }
 
       it "returns a sorted array of devices" do
@@ -519,18 +519,44 @@ describe Y2Storage::Devicegraph do
         expect(devices).to all(satisfy { |dev| less_than_next?(dev, devices) })
       end
 
-      it "includes all BIOS RAIDs" do
+      it "includes all DM RAIDs" do
         expect(graph.disk_devices.map(&:name)).to include(
           "/dev/mapper/isw_ddgdcbibhd_test1", "/dev/mapper/isw_ddgdcbibhd_test2"
         )
       end
 
-      it "includes all disks and DASDs that are not part of an MD RAID" do
+      it "includes all disks and DASDs that are not part of a DM RAID" do
         expect(graph.disk_devices.map(&:name)).to include("/dev/sda")
       end
 
-      it "does not include individual disks and DASDs from the MD RAID" do
+      it "does not include individual disks or DASDs from the DM RAID" do
         expect(graph.disk_devices.map(&:name)).to_not include("/dev/sdb", "/dev/sdc")
+      end
+    end
+
+    context "if there are MD Member RAIDs" do
+      let(:scenario) { "md-imsm1-devicegraph.xml" }
+
+      it "returns a sorted array of devices" do
+        devices = graph.disk_devices
+        expect(devices).to be_an Array
+        expect(devices).to all(be_a(Y2Storage::Device))
+        expect(devices).to all(satisfy { |dev| less_than_next?(dev, devices) })
+      end
+
+      it "includes all MD Member RAIDs" do
+        expect(graph.disk_devices.map(&:name)).to include(
+          "/dev/md/a", "/dev/md/b"
+        )
+      end
+
+      it "includes all disks and DASDs that are not part of a MD Member RAID" do
+        expect(graph.disk_devices.map(&:name)).to include("/dev/sda")
+      end
+
+      it "does not include individual disks or DASDs from the MD Member RAID" do
+        expect(graph.disk_devices.map(&:name))
+          .to_not include("/dev/sdb", "/dev/sdc", "/dev/sdd")
       end
     end
 
