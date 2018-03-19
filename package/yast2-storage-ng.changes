@@ -1,4 +1,12 @@
 -------------------------------------------------------------------
+Mon Mar 19 07:47:13 UTC 2018 - jlopez@suse.com
+
+- Fix issues with zero-size devices (bsc#1083887).
+- Proposal: do not use zero-size devices.
+- Partitioner: completely hide zero-size devices.
+- 4.0.138
+
+-------------------------------------------------------------------
 Fri Mar 16 16:44:51 UTC 2018 - ancor@suse.com
 
 - Added methods to deal with /etc/fstab specs (part of bsc#1071454)

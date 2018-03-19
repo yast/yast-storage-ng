@@ -109,6 +109,8 @@ module Y2Storage
 
     # Position of the last block of the region
     #
+    # @raise [Storage::Exception] if the region is empty
+    #
     # @return [Integer]
     def end
       region.end

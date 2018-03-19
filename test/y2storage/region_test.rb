@@ -26,7 +26,9 @@ require "y2storage"
 describe Y2Storage::Region do
   using Y2Storage::Refinements::SizeCasts
 
-  subject(:region) { Y2Storage::Region.create(100, 1000, 1.KiB) }
+  subject(:region) { Y2Storage::Region.create(100, length, 1.KiB) }
+
+  let(:length) { 1000 }
 
   describe "#==" do
     context "if both regions has a different block size" do
@@ -102,6 +104,19 @@ describe Y2Storage::Region do
     it "produces an informative String" do
       expect(subject.inspect)
         .to eq "<Region range: 100 - 1099, block_size: 1 KiB>"
+    end
+
+    context "when the region is empty" do
+      let(:length) { 0 }
+
+      it "does not fail" do
+        expect { subject.inspect }.to_not raise_error
+      end
+
+      it "produces an informative String with unknown end" do
+        expect(subject.inspect)
+          .to eq("<Region range: 100 - unknown, block_size: 1 KiB>")
+      end
     end
   end
 

@@ -145,13 +145,13 @@ module Y2Partitioner
         # @return [Array<Y2Storage::BlkDevice>]
         def available_devices
           devices =
-            working_graph.disks +
-            working_graph.multipaths +
-            working_graph.dm_raids +
+            working_graph.disk_devices +
             working_graph.md_raids +
             working_graph.partitions
 
-          devices.flatten.compact.select { |d| available?(d) }
+          devices.reject! { |d| d.is?(:dasd) }
+
+          devices.select { |d| available?(d) }
         end
 
         # Devices that are already used as physical volume by the volume group

@@ -484,6 +484,15 @@ describe Y2Storage::GuidedProposal do
         end
       end
     end
+
+    # Regression test for bsc#1083887
+    context "when installing on a zero-size device" do
+      let(:scenario) { "zero-size_disk" }
+
+      it "cannot create a valid proposal" do
+        expect { proposal.propose }.to raise_error(Y2Storage::Error)
+      end
+    end
   end
 
   describe "#failed?" do

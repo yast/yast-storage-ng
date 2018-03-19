@@ -72,12 +72,19 @@ module Y2Storage
     # @return [Array<Hash>]
     def yaml_device_tree(devicegraph)
       yaml = []
-      devicegraph.disk_devices.each { |device| yaml << yaml_disk_device(device) }
+      top_level_devices(devicegraph).each { |device| yaml << yaml_disk_device(device) }
       devicegraph.lvm_vgs.each { |lvm_vg| yaml << yaml_lvm_vg(lvm_vg) }
       yaml
     end
 
   private
+
+    # Top level devices that will be converted to yaml format
+    #
+    # @return [Array<Y2Storage::Device>]
+    def top_level_devices(devicegraph)
+      devicegraph.disks + devicegraph.dasds
+    end
 
     # Return the YAML counterpart of a disk device
     #

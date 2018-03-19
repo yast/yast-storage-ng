@@ -25,6 +25,8 @@ require "storage"
 require "y2storage"
 
 describe Y2Storage::AutoinstProposal do
+  using Y2Storage::Refinements::SizeCasts
+
   subject(:proposal) do
     described_class.new(
       partitioning: partitioning, devicegraph: fake_devicegraph, issues_list: issues_list
@@ -524,7 +526,14 @@ describe Y2Storage::AutoinstProposal do
         end
       end
 
-      let(:planned_root) { planned_partition(mount_point: "/", type: :ext4) }
+      let(:planned_root) do
+        planned_partition(
+          mount_point: "/",
+          type:        :ext4,
+          size:        5.GiB,
+          min_size:    5.GiB
+        )
+      end
 
       let(:planner) do
         instance_double(Y2Storage::Proposal::DevicesPlanner, planned_devices: [planned_root])

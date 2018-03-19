@@ -73,6 +73,8 @@ module Y2Storage
     def disk_device?
       # If we cannot create partitions on it, this doesn't look like a disk
       return false if respond_to?(:usable_as_partitionable?) && !usable_as_partitionable?
+      # If this is a zero-size device, we cannot use it
+      return false if size.zero?
       # If this is the wire of a multipath, we better don't fiddle with it
       return false if multipath_wire?
       # Same applies if this is part of a BIOS RAID

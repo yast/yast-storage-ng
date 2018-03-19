@@ -193,7 +193,7 @@ module Y2Storage
     #
     # @param devicegraph [Devicegraph]       Starting point
     # @param drives      [AutoinstDrivesMap] Devices map from an AutoYaST profile
-    # @return [Devicegraph] Proposed devicegraph using the guidede proposal approach
+    # @return [Devicegraph] Proposed devicegraph using the guided proposal approach
     #
     # @raise [Error] No suitable devicegraph was found
     # @see proposed_guided_devicegraph
