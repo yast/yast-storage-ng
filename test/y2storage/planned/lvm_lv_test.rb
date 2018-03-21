@@ -133,4 +133,19 @@ describe Y2Storage::Planned::LvmLv do
       end
     end
   end
+
+  describe "#add_thin_lv" do
+    subject(:lvm_lv) { planned_lv(lv_type: Y2Storage::LvType::THIN_POOL) }
+    let(:thin_lv) { planned_lv(lv_type: Y2Storage::LvType::THIN) }
+
+    it "adds a thin lv to the thin pool lv" do
+      lvm_lv.add_thin_lv(thin_lv)
+      expect(lvm_lv.thin_lvs).to include(thin_lv)
+    end
+
+    it "points the thin lv the its pool" do
+      lvm_lv.add_thin_lv(thin_lv)
+      expect(thin_lv.thin_pool).to eq(lvm_lv)
+    end
+  end
 end

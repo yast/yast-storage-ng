@@ -45,6 +45,15 @@ module Y2Storage
       #   this LV
       attr_accessor :percent_size
 
+      # @return [LvType] Logical volume type
+      attr_accessor :lv_type
+
+      # @return [Array<LvmLv>] List of thin logical volumes (when LvType::THIN_POOL)
+      attr_reader :thin_lvs
+
+      # @return [LvmLv] Thin pool where the logical volumes belongs to (when LvType::THIN)
+      attr_accessor :thin_pool
+
       # Builds a new object based on a real LvmLv one
       #
       # The new instance represents the intention to reuse the real LV, so the
@@ -73,6 +82,8 @@ module Y2Storage
 
         @mount_point = mount_point
         @filesystem_type = filesystem_type
+        @lv_type = LvType::NORMAL
+        @thin_lvs = []
 
         return unless @mount_point && @mount_point.start_with?("/")
 
@@ -105,6 +116,12 @@ module Y2Storage
       def size_in(volume_group)
         return size unless percent_size
         (volume_group.size * percent_size / 100).ceil(volume_group.extent_size)
+      end
+
+      # It adds a logical volume as a thin pool
+      def add_thin_lv(lv)
+        lv.thin_pool = self
+        thin_lvs << lv
       end
 
       def self.to_string_attrs
