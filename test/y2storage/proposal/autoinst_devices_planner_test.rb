@@ -841,6 +841,60 @@ describe Y2Storage::Proposal::AutoinstDevicesPlanner do
           )
         end
       end
+
+      context "using a thin pool" do
+        let(:vg) do
+          {
+            "device" => "/dev/#{lvm_group}", "partitions" => [pool_spec, root_spec, home_spec],
+            "type" => :CT_LVM, "keep_unknown_lv" => true
+          }
+        end
+
+        let(:pool_spec) do
+          { "create" => true, "pool" => true, "lv_name" => "pool0", "size" => "20G" }
+        end
+
+        let(:root_spec) do
+          {
+            "create" => true, "mount" => "/", "filesystem" => "ext4", "lv_name" => "root",
+            "size" => "10G", "used_pool" => "pool0"
+          }
+        end
+
+        let(:home_spec) do
+          {
+            "create" => true, "mount" => "/home", "filesystem" => "ext4", "lv_name" => "home",
+            "size" => "10G", "used_pool" => "pool0"
+          }
+        end
+
+        it "sets lv_type and thin pool name" do
+          _pv, vg = planner.planned_devices(drives_map)
+          pool = vg.lvs.find { |v| v.logical_volume_name == "pool0" }
+
+          expect(pool.lv_type).to eq(Y2Storage::LvType::THIN_POOL)
+          expect(pool.thin_lvs).to include(
+            an_object_having_attributes(
+              "logical_volume_name" => "root",
+              "lv_type" => Y2Storage::LvType::THIN
+            ),
+            an_object_having_attributes(
+              "logical_volume_name" => "home",
+              "lv_type" => Y2Storage::LvType::THIN
+            )
+          )
+        end
+
+        context "when the thin pool is not defined" do
+          let(:pool_spec) do
+            { "create" => true, "pool" => true, "lv_name" => "pool1", "size" => "20G" }
+          end
+
+          it "raises an exception" do
+            expect { planner.planned_devices(drives_map) }.to raise_error(StandardError)
+          end
+        end
+      end
     end
   end
 end

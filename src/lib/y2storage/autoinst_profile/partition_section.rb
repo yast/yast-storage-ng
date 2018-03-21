@@ -72,7 +72,9 @@ module Y2Storage
           { name: :mkfs_options },
           { name: :fstab_options, xml_name: :fstopt },
           { name: :subvolumes_prefix },
-          { name: :resize }
+          { name: :resize },
+          { name: :pool },
+          { name: :used_pool }
         ]
       end
 

@@ -125,11 +125,14 @@ module Y2Storage
           # TODO: fix Planned::LvmLv.initialize
           lv = Y2Storage::Planned::LvmLv.new(nil, nil)
           lv.logical_volume_name = lv_section.lv_name
+          lv.lv_type = lv_type_for(lv_section)
           device_config(lv, lv_section, drive)
+          add_to_thin_pool(lv, vg, lv_section) if lv_section.used_pool
           add_lv_reuse(lv, vg.volume_group_name, lv_section) if lv_section.create == false
 
           next unless assign_size_to_lv(vg, lv, lv_section)
-          lvs << lv
+
+          lvs << lv unless lv.lv_type == LvType::THIN
         end
 
         add_vg_reuse(vg, drive)
@@ -445,12 +448,42 @@ module Y2Storage
 
       # Return the filesystem type for a given section
       #
-      # @param section [AutoinstProfile::PartitionSection]
+      # @param section [AutoinstProfile::PartitionSection] AutoYaST specification
       # @return [Filesystems::Type] Filesystem type
       def filesystem_for(section)
         return section.type_for_filesystem if section.type_for_filesystem
         return nil unless section.mount
         default_filesystem_for(section)
+      end
+
+      # Return the logical volume type for a given section
+      #
+      # @param section [AutoinstProfile::PartitionSection] AutoYaST specification
+      # @return [LvType] Logical volume type
+      def lv_type_for(section)
+        if section.pool
+          LvType::THIN_POOL
+        elsif section.used_pool
+          LvType::THIN
+        else
+          LvType::NORMAL
+        end
+      end
+
+      # Add a logical volume to a thin pool
+      #
+      # @param lv [Planned::LvmLv] Planned logical volume
+      # @param vg [Planned::LvmVg] Planned volume group
+      # @param section [AutoinstProfile::PartitionSection] AutoYaST specification
+      # @return [Planned::LvmLv,nil] Logical volume as thin pool; nil if no logical volume
+      #   with the given name was found.
+      #
+      # @raise StandardError
+      def add_to_thin_pool(lv, vg, section)
+        thin_pool = vg.lvs.find { |v| v.logical_volume_name == section.used_pool }
+        # FIXME: raise a proper error
+        raise StandardError if thin_pool.nil?
+        thin_pool.add_thin_lv(lv)
       end
 
       # Return the default filesystem type for a given section
