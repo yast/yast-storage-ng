@@ -747,6 +747,38 @@ describe Y2Storage::AutoinstProposal do
           expect(issues.size).to eq(1)
         end
       end
+
+      context "when using a thin pool" do
+        let(:root_spec) do
+          {
+            "mount" => "/", "filesystem" => "btrfs", "lv_name" => "root", "size" => "100GB",
+            "used_pool" => "pool0"
+          }
+        end
+
+        let(:pool_spec) do
+          { "lv_name" => "pool0", "size" => "500GiB", "pool" => true }
+        end
+
+        let(:lvs) { [pool_spec, root_spec] }
+
+        it "creates thin pool and thin volumes" do
+          proposal.propose
+          devicegraph = proposal.devices
+          expect(devicegraph.lvm_lvs).to contain_exactly(
+            an_object_having_attributes("lv_name" => "root"),
+            an_object_having_attributes("lv_name" => "pool0", "size" => 500.GiB - 4.MiB)
+          )
+        end
+
+        it "does not register an issue about missing root partition" do
+          proposal.propose
+          issue = issues_list.find do |i|
+            i.is_a?(Y2Storage::AutoinstIssues::MissingRoot)
+          end
+          expect(issue).to be_nil
+        end
+      end
     end
 
     describe "RAID" do
