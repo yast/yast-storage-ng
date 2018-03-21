@@ -313,5 +313,35 @@ describe Y2Storage::Proposal::LvmCreator do
         )
       end
     end
+
+    context "when using a thin pool" do
+      let(:planned_root) do
+        planned_lv(
+          mount_point: "/", type: :ext4, logical_volume_name: "root", min: 5.GiB,
+          lv_type: Y2Storage::LvType::THIN
+        )
+      end
+
+      let(:planned_pool) do
+        planned_lv(
+          logical_volume_name: "pool0", min: 18.GiB, lv_type: Y2Storage::LvType::THIN_POOL
+        )
+      end
+
+      let(:volumes) { [planned_pool] }
+
+      before do
+        planned_pool.add_thin_lv(planned_root)
+      end
+
+      it "creates thin logical volumes on top of the pool" do
+        devicegraph = creator.create_volumes(vg, pv_partitions).devicegraph
+        pool = devicegraph.lvm_lvs.find { |lv| lv.lv_name == "pool0" }
+        expect(pool.lv_type).to eq(Y2Storage::LvType::THIN_POOL)
+        expect(pool.lvm_lvs).to contain_exactly(
+          an_object_having_attributes(lv_name: "root", lv_type: Y2Storage::LvType::THIN)
+        )
+      end
+    end
   end
 end
