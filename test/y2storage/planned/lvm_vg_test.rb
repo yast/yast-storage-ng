@@ -79,4 +79,18 @@ describe Y2Storage::Planned::LvmVg do
       lvm_vg.reuse!(fake_devicegraph)
     end
   end
+
+  describe "#all_lvs" do
+    subject(:lvm_lv) { planned_lv(lv_type: Y2Storage::LvType::THIN_POOL) }
+    let(:thin_lv) { planned_lv(lv_type: Y2Storage::LvType::THIN) }
+
+    before do
+      lvm_lv.add_thin_lv(thin_lv)
+      lvm_vg.lvs << lvm_lv
+    end
+
+    it "returns all logical volumes even those included in thin pools" do
+      expect(lvm_vg.all_lvs).to eq([lvm_lv, thin_lv])
+    end
+  end
 end
