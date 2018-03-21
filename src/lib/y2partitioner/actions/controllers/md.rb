@@ -23,6 +23,7 @@ require "yast"
 require "y2storage"
 require "y2partitioner/device_graphs"
 require "y2partitioner/ui_state"
+require "y2partitioner/blk_device_restorer"
 
 module Y2Partitioner
   module Actions
@@ -90,9 +91,6 @@ module Y2Partitioner
             raise ArgumentError, "The device #{device} is already part of the Md #{md}"
           end
 
-          # TODO: save the current status and descendants of the device,
-          # in case the device is removed from the RAID during this execution of
-          # the partitioner.
           device.adapted_id = Y2Storage::PartitionId::RAID if device.is?(:partition)
           device.remove_descendants
           md.push_device(device)
@@ -108,8 +106,8 @@ module Y2Partitioner
             raise ArgumentError, "The device #{device} is not part of the Md #{md}"
           end
 
-          # TODO: restore status and descendants of the device when it makes sense
           md.remove_device(device)
+          BlkDeviceRestorer.new(device).restore_from_checkpoint
         end
 
         # Modifies the position of some devices in the MD RAID, moving them one
