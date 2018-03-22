@@ -38,6 +38,8 @@ module Y2Storage
     # previously obtained from the AutoYaST profile. This is completely different
     # to the guided proposal equivalent ({DevicesPlanner}), which generates the
     # planned devices based on the proposal settings and its own logic.
+    #
+    # rubocop:disable ClassLength
     class AutoinstDevicesPlanner
       include Yast::Logger
 
@@ -121,22 +123,10 @@ module Y2Storage
       def planned_for_vg(drive)
         vg = Y2Storage::Planned::LvmVg.new(volume_group_name: File.basename(drive.device))
 
-        pools, regular = drive.partitions.partition { |p| p.pool }
+        pools, regular = drive.partitions.partition(&:pool)
         (pools + regular).each_with_object(vg.lvs) do |lv_section, lvs|
-          # TODO: fix Planned::LvmLv.initialize
-          lv = Y2Storage::Planned::LvmLv.new(nil, nil)
-          lv.logical_volume_name = lv_section.lv_name
-          lv.lv_type = lv_type_for(lv_section)
-          lv.stripe_size = DiskSize.KiB(lv_section.stripe_size.to_i) if lv_section.stripe_size
-          lv.stripes = lv_section.stripes
-          device_config(lv, lv_section, drive)
-          if lv_section.used_pool
-            next unless add_to_thin_pool(lv, vg, lv_section)
-          end
-          add_lv_reuse(lv, vg.volume_group_name, lv_section) if lv_section.create == false
-
-          next unless assign_size_to_lv(vg, lv, lv_section)
-
+          lv = planned_for_lv(drive, vg, lv_section)
+          next if lv.nil?
           lvs << lv unless lv.lv_type == LvType::THIN
         end
 
@@ -148,6 +138,26 @@ module Y2Storage
         end
         add_vg_reuse(vg, drive)
         vg
+      end
+
+      # Returns a planned volume group according to an AutoYaST specification
+      #
+      # @param drive [AutoinstProfile::PartitionSection] partition section describing
+      #   the logical volume
+      # @return [Planned::LvmLv] Planned logical volume
+      def planned_for_lv(drive, vg, section)
+        # TODO: fix Planned::LvmLv.initialize
+        lv = Y2Storage::Planned::LvmLv.new(nil, nil)
+        lv.logical_volume_name = section.lv_name
+        lv.lv_type = lv_type_for(section)
+        lv.stripe_size = DiskSize.KiB(section.stripe_size.to_i) if section.stripe_size
+        lv.stripes = section.stripes
+        device_config(lv, section, drive)
+        if section.used_pool
+          return nil unless add_to_thin_pool(lv, vg, section)
+        end
+        add_lv_reuse(lv, vg.volume_group_name, section) if section.create == false
+        assign_size_to_lv(vg, lv, section) ? lv : nil
       end
 
       # Returns a MD array according to an AutoYaST specification

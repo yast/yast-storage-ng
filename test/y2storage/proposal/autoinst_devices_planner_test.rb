@@ -878,11 +878,11 @@ describe Y2Storage::Proposal::AutoinstDevicesPlanner do
           expect(pool.thin_lvs).to include(
             an_object_having_attributes(
               "logical_volume_name" => "root",
-              "lv_type" => Y2Storage::LvType::THIN
+              "lv_type"             => Y2Storage::LvType::THIN
             ),
             an_object_having_attributes(
               "logical_volume_name" => "home",
-              "lv_type" => Y2Storage::LvType::THIN
+              "lv_type"             => Y2Storage::LvType::THIN
             )
           )
         end

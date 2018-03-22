@@ -171,7 +171,7 @@ module Y2Storage
       # @return [DiskSize]
       def size_in_percentage(container)
         extent_size = container.is?(:lvm_lv) ? container.lvm_vg.extent_size : container.extent_size
-        (container.size * percent_size  / 100).floor(extent_size)
+        (container.size * percent_size / 100).floor(extent_size)
       end
 
       # Returns the size for the logical volume in a given thin pool
