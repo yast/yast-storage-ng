@@ -130,21 +130,21 @@ module Y2Storage
           lvs << lv unless lv.lv_type == LvType::THIN
         end
 
-        thin_pools = vg.lvs.select { |v| v.lv_type == LvType::THIN_POOL }
-        thin_pools_to_reuse = thin_pools.select { |v| v.thin_lvs.any?(&:reuse?) }
-        thin_pools_to_reuse.each do |lv|
-          lv_to_reuse = devicegraph.lvm_lvs.find { |v| v.lv_name == lv.logical_volume_name }
-          lv.reuse_name = lv_to_reuse.name
-        end
+        vg.thin_pool_lvs.each { |v| add_thin_pool_lv_reuse(v, drive) }
         add_vg_reuse(vg, drive)
         vg
       end
 
-      # Returns a planned volume group according to an AutoYaST specification
+      # Returns a planned logical volume according to an AutoYaST specification
       #
-      # @param drive [AutoinstProfile::PartitionSection] partition section describing
+      # @param drive [AutoinstProfile::DriveSection] drive section describing
+      #   the volume group
+      # @param vg [Planned::LvmVg] Planned volume group where the logical volume will
+      #   be included
+      # @param section [AutoinstProfile::PartitionSection] partition section describing
       #   the logical volume
-      # @return [Planned::LvmLv] Planned logical volume
+      # @return [Planned::LvmLv,nil] Planned logical volume; nil if it could not be
+      #   planned
       def planned_for_lv(drive, vg, section)
         # TODO: fix Planned::LvmLv.initialize
         lv = Y2Storage::Planned::LvmLv.new(nil, nil)
@@ -287,6 +287,7 @@ module Y2Storage
         lv.logical_volume_name ||= lv_to_reuse.lv_name
         lv.filesystem_type ||= lv_to_reuse.filesystem_type
         add_device_reuse(lv, lv_to_reuse.name, section)
+        add_device_reuse(lv.thin_pool, vg_name, section) if lv.thin_pool
       end
 
       # Set 'reusing' attributes for a volume group
@@ -303,6 +304,21 @@ module Y2Storage
         return unless vg.make_space_policy == :keep || vg.all_lvs.any?(&:reuse?)
         vg_to_reuse = find_vg_to_reuse(devicegraph, vg, drive)
         vg.reuse_name = vg_to_reuse.vg_name if vg_to_reuse
+      end
+
+      # Set 'reusing' attributes for a thin pool logical volume
+      #
+      # This method modifies the argument setting the values related to reusing
+      # a thin logical volume (reuse_name). A thin logical volume will be planned
+      # to be reused if any if its logical volumes will be reused.
+      #
+      # @param lv   [Planned::LvmLv] Thin logical volume
+      # @param drive [AutoinstProfile::DriveSection] drive section describing
+      #   the volume group
+      def add_thin_pool_lv_reuse(lv, drive)
+        return unless lv.thin_lvs.any?(&:reuse?)
+        lv_to_reuse = devicegraph.lvm_lvs.find { |v| lv.logical_volume_name == v.lv_name }
+        lv.reuse_name = lv_to_reuse.name
       end
 
       # Set 'reusing' attributes for a MD RAID
@@ -356,11 +372,14 @@ module Y2Storage
           return
         end
 
+        parent = part_section.used_pool ? find_thin_pool_lv(vg, part_section) : vg
+        return if parent.nil?
+
         device =
           if part_section.lv_name
-            vg.all_lvm_lvs.find { |v| v.lv_name == part_section.lv_name }
+            parent.lvm_lvs.find { |v| v.lv_name == part_section.lv_name }
           elsif part_section.label
-            vg.all_lvm_lvs.find { |v| v.filesystem_label == part_section.label }
+            parent.lvm_lvs.find { |v| v.filesystem_label == part_section.label }
           else
             issues_list.add(:missing_reuse_info, part_section)
             :missing_info
@@ -378,6 +397,15 @@ module Y2Storage
         device = devicegraph.lvm_vgs.find { |v| v.vg_name == vg.volume_group_name }
         issues_list.add(:missing_reusable_device, drive) unless device
         device
+      end
+
+      # @param vg [LvmVg]   Logical volume group
+      # @param part_section [AutoinstProfile::PartitionSection] LV specification from AutoYaST
+      def find_thin_pool_lv(vg, part_section)
+        lv = vg.lvm_lvs.find { |v| v.lv_name == part_section.used_pool }
+        return lv if lv
+        issues_list.add(:thin_pool_not_found, part_section)
+        nil
       end
 
       # @return [DiskSize] Minimal partition size
@@ -499,7 +527,7 @@ module Y2Storage
       # @return [Boolean] True if it was successfully added; false otherwise.
       #   with the given name was found.
       def add_to_thin_pool(lv, vg, section)
-        thin_pool = vg.lvs.find { |v| v.logical_volume_name == section.used_pool }
+        thin_pool = vg.thin_pool_lvs.find { |v| v.logical_volume_name == section.used_pool }
         if thin_pool.nil?
           issues_list.add(:thin_pool_not_found, section)
           return false

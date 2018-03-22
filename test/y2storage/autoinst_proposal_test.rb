@@ -787,6 +787,7 @@ describe Y2Storage::AutoinstProposal do
       context "when reusing a thin pool" do
         let(:scenario) { "trivial_lvm" }
         let(:vg_name) { "vg0" }
+        let(:existing_pool_name) { "pool0" }
 
         let(:lvm_pv) do
           { "create" => false, "partition_nr" => 1, "lvm_group" => vg_name, "size" => "max" }
@@ -805,7 +806,7 @@ describe Y2Storage::AutoinstProposal do
 
         before do
           vg.remove_descendants
-          thin_pool_lv = vg.create_lvm_lv("pool0", Y2Storage::LvType::THIN_POOL, 200.GiB)
+          thin_pool_lv = vg.create_lvm_lv(existing_pool_name, Y2Storage::LvType::THIN_POOL, 200.GiB)
           thin_lv = thin_pool_lv.create_lvm_lv("root", Y2Storage::LvType::THIN, 150.GiB)
           thin_lv.create_filesystem(Y2Storage::Filesystems::Type::EXT4)
         end
@@ -820,6 +821,7 @@ describe Y2Storage::AutoinstProposal do
             devicegraph = proposal.devices
             pool = devicegraph.lvm_lvs.find { |v| v.lv_name == "pool0" }
             root_lv = pool.lvm_lvs.first
+            # keep the same filesystem type
             expect(root_lv.filesystem_type).to eq(Y2Storage::Filesystems::Type::EXT4)
           end
         end
@@ -835,6 +837,30 @@ describe Y2Storage::AutoinstProposal do
             pool = devicegraph.lvm_lvs.find { |v| v.lv_name == "pool0" }
             root_lv = pool.lvm_lvs.first
             expect(root_lv.filesystem_type).to eq(Y2Storage::Filesystems::Type::EXT4)
+          end
+        end
+
+        context "and the thin pool does not exist" do
+          let(:existing_pool_name) { "pool1" }
+
+          let(:pool_spec) do
+            { "lv_name" => "pool0", "size" => "200GiB", "pool" => true }
+          end
+
+          it "creates a new thin logical volume" do
+            proposal.propose
+            devicegraph = proposal.devices
+            pool = devicegraph.lvm_lvs.find { |v| v.lv_name == "pool0" }
+            root_lv = pool.lvm_lvs.first
+            expect(root_lv.filesystem_type).to eq(Y2Storage::Filesystems::Type::BTRFS)
+          end
+
+          it "registers an issue" do
+            proposal.propose
+            issue = issues_list.find do |i|
+              i.is_a?(Y2Storage::AutoinstIssues::ThinPoolNotFound)
+            end
+            expect(issue).to_not be_nil
           end
         end
       end
