@@ -30,6 +30,7 @@ module Y2Partitioner
   module Actions
     # Action for resizing a partition or an LVM logical volume
     class ResizeBlkDevice
+      include Yast::Logger
       include Yast::I18n
 
       # Constructor
@@ -77,7 +78,6 @@ module Y2Partitioner
 
         # Only first error is shown
         Yast::Popup.Error(errors.first)
-
         false
       end
 
@@ -90,7 +90,7 @@ module Y2Partitioner
          cannot_be_resized_error].compact
       end
 
-      # Error when trying to resize an used device
+      # Error when trying to resize a used device
       #
       # @note A device is being used when it forms part of an LVM or MD RAID.
       #
@@ -117,15 +117,16 @@ module Y2Partitioner
       end
 
       # Error when the device cannot be resized
-      #
-      # TODO: Distinguish the reason why it is not possible to resize, for example:
-      # * extended partition with committed logical partitions
+      # This might be a multi-line message reporting more than one reason.
       #
       # @return [String, nil] nil if the device can be resized.
       def cannot_be_resized_error
         return nil if device.resize_info.resize_ok?
 
-        _("This device cannot be resized.")
+        log.warn("Can't resize #{device.name}: #{device.resize_info.reasons}")
+        msg_lines = [_("This device cannot be resized:"), ""]
+        msg_lines.concat(device.resize_info.reason_texts)
+        msg_lines.join("\n")
       end
     end
   end
