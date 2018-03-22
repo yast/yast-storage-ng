@@ -56,7 +56,7 @@ module Y2Storage
         RB_RESIZE_NOT_SUPPORTED_FOR_LVM_LV_TYPE: N_("Resizing of this type of LVM logical volumes is not supported."),
         RB_NO_SPACE_IN_LVM_VG:                   N_("No space left in the LVM volume group."),
         RB_MIN_SIZE_FOR_LVM_LV:                  N_("The LVM logical volume already has the minimum possible size."),
-        RB_MAX_SIZE_FOR_LVM_LV_THIN:             N_("The LVM thin logical volume already has the masimum size.")
+        RB_MAX_SIZE_FOR_LVM_LV_THIN:             N_("The LVM thin logical volume already has the maximum size.")
       }.freeze
     # rubocop:enable Metrics/LineLength
 
