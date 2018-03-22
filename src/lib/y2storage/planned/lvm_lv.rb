@@ -121,6 +121,19 @@ module Y2Storage
         size
       end
 
+      # Returns the real size for the logical volume in a given volume group/thin pool
+      #
+      # When dealing with thin pools, some space is reserved for metadata. This method
+      # returns an adjusted planned size taking the available space for the given
+      # lv_type into account.
+      #
+      # @param volume_group [LvmVg,LvmLv] Volume group or thin pool where the
+      #   logical volume will be placed
+      # @return [DiskSize]
+      def real_size_in(container)
+        [size_in(container), container.max_size_for_lvm_lv(lv_type)].min
+      end
+
       # It adds a logical volume as a thin pool
       def add_thin_lv(lv)
         lv.thin_pool = self
@@ -151,8 +164,8 @@ module Y2Storage
       #   be placed
       # @return [DiskSize]
       def size_in_percentage(container)
-        extent_size = container.is?(:lvm_lv) ? container.lvm_vg.extent_size : container_extent_size
-        (container.size * percent_size  / 100).ceil(extent_size)
+        extent_size = container.is?(:lvm_lv) ? container.lvm_vg.extent_size : container.extent_size
+        (container.size * percent_size  / 100).floor(extent_size)
       end
 
       # Returns the size for the logical volume in a given thin pool
@@ -160,8 +173,8 @@ module Y2Storage
       # @param volume_group [LvmVg,LvmLv] Volume group or thin pool where the logical volume will
       #   be placed
       # @return [DiskSize]
-      def size_in_thin_pool(volume_group)
-        max == DiskSize.unlimited ? volume_group.size : max
+      def size_in_thin_pool(container)
+        max == DiskSize.unlimited ? container.size : max
       end
     end
   end

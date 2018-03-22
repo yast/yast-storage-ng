@@ -206,4 +206,37 @@ describe Y2Storage::Planned::LvmLv do
       expect(thin_lv.thin_pool).to eq(lvm_lv)
     end
   end
+
+  describe "#real_size_in" do
+    subject(:lvm_lv) { planned_lv(lv_type: Y2Storage::LvType::THIN_POOL, size: 30.GiB) }
+
+    before do
+      allow(volume_group).to receive(:max_size_for_lvm_lv).with(lvm_lv.lv_type)
+        .and_return(available_size)
+    end
+
+    context "when the available space is smaller than the planned size" do
+      let(:available_size) { 20.GiB }
+
+      it "returns the available size" do
+        expect(lvm_lv.real_size_in(volume_group)).to eq(available_size)
+      end
+    end
+
+    context "when the available space is greater than the planned size" do
+      let(:available_size) { 40.GiB }
+
+      it "returns the planned size" do
+        expect(lvm_lv.real_size_in(volume_group)).to eq(lvm_lv.size)
+      end
+    end
+
+    context "when available and planned sizes are equal" do
+      let(:available_size) { 30.GiB }
+
+      it "returns the planned size" do
+        expect(lvm_lv.real_size_in(volume_group)).to eq(lvm_lv.size)
+      end
+    end
+  end
 end
