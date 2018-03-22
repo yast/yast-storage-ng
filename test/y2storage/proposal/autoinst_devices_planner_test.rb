@@ -893,7 +893,7 @@ describe Y2Storage::Proposal::AutoinstDevicesPlanner do
           end
 
           it "raises an exception" do
-            expect { planner.planned_devices(drives_map) }.to raise_error(StandardError)
+            expect { planner.planned_devices(drives_map) }.to raise_error(ThinPoolNotFound)
           end
         end
       end

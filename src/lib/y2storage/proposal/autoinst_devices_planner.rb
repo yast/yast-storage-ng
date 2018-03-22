@@ -484,8 +484,7 @@ module Y2Storage
       # @raise StandardError
       def add_to_thin_pool(lv, vg, section)
         thin_pool = vg.lvs.find { |v| v.logical_volume_name == section.used_pool }
-        # FIXME: raise a proper error
-        raise StandardError if thin_pool.nil?
+        raise ThinPoolNotFound.new(section.used_pool) if thin_pool.nil?
         thin_pool.add_thin_lv(lv)
       end
 

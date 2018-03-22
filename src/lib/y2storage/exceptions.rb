@@ -40,4 +40,13 @@ module Y2Storage
   # A device was not found
   class DeviceNotFoundError < Error
   end
+  # A LVM Thin Pool was not found
+  class ThinPoolNotFound < Error
+    # @return [String] Thin pool name
+    attr_reader :name
+
+    def initialize(name)
+      @name = name
+    end
+  end
 end
