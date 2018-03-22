@@ -130,7 +130,7 @@ module Y2Storage
         when :needed
           make_space_until_fit(volume_group, planned_vg.lvs)
         when :remove
-          lvs_to_keep = planned_vg.lvs.select(&:reuse?).map(&:reuse_name)
+          lvs_to_keep = planned_vg.all_lvs.select(&:reuse?).map(&:reuse_name)
           remove_logical_volumes(volume_group, lvs_to_keep)
         end
       end
@@ -165,7 +165,7 @@ module Y2Storage
       # @param volume_group [LvmVg]         volume group to remove logical volumes from
       # @param lvs_to_keep  [Array<String>] name of logical volumes to keep
       def remove_logical_volumes(volume_group, lvs_to_keep)
-        lvs_to_remove = volume_group.lvm_lvs.reject { |v| lvs_to_keep.include?(v.name) }
+        lvs_to_remove = volume_group.all_lvm_lvs.reject { |v| lvs_to_keep.include?(v.name) }
         lvs_to_remove.each { |v| volume_group.delete_lvm_lv(v) }
       end
 

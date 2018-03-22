@@ -35,6 +35,7 @@ describe Y2Storage::AutoinstProposal do
 
   let(:partitioning) { [] }
   let(:issues_list) { Y2Storage::AutoinstIssues::List.new }
+  let(:vg_name) { "system" }
 
   before do
     allow(Yast::Mode).to receive(:auto).and_return(true)
@@ -596,12 +597,12 @@ describe Y2Storage::AutoinstProposal do
       let(:partitioning) do
         [
           { "device" => "/dev/sda", "use" => "all", "partitions" => [lvm_pv] },
-          { "device" => "/dev/system", "partitions" => lvs, "type" => :CT_LVM }
+          { "device" => "/dev/#{vg_name}", "partitions" => lvs, "type" => :CT_LVM }
         ]
       end
 
       let(:lvm_pv) do
-        { "create" => true, "lvm_group" => "system", "size" => "max" }
+        { "create" => true, "lvm_group" => vg_name, "size" => "max" }
       end
 
       let(:root_spec) do
@@ -615,7 +616,7 @@ describe Y2Storage::AutoinstProposal do
         devicegraph = proposal.devices
         expect(devicegraph.lvm_vgs).to contain_exactly(
           an_object_having_attributes(
-            "vg_name" => "system"
+            "vg_name" => vg_name
           )
         )
       end
@@ -654,7 +655,7 @@ describe Y2Storage::AutoinstProposal do
           { "mount" => "/", "filesystem" => "btrfs", "lv_name" => "root", "size" => "1G" }
         end
         let(:root_fs) do
-          Y2Storage::LvmLv.find_by_name(proposal.devices, "/dev/system/root").filesystem
+          Y2Storage::LvmLv.find_by_name(proposal.devices, "/dev/#{vg_name}/root").filesystem
         end
 
         it "creates Btrfs subvolumes" do
@@ -673,7 +674,7 @@ describe Y2Storage::AutoinstProposal do
             [
               { "device" => "/dev/sda", "use" => "all", "partitions" => [lvm_pv] },
               {
-                "device" => "/dev/system", "partitions" => [root_spec],
+                "device" => "/dev/#{vg_name}", "partitions" => [root_spec],
                 "type" => :CT_LVM, "enable_snapshots" => false
               }
             ]
@@ -692,7 +693,7 @@ describe Y2Storage::AutoinstProposal do
                 "device" => "/dev/sda", "use" => "all",
                 "partitions" => [lvm_pv], "enable_snapshots" => false
               },
-              { "device" => "/dev/system", "partitions" => [root_spec], "type" => :CT_LVM }
+              { "device" => "/dev/#{vg_name}", "partitions" => [root_spec], "type" => :CT_LVM }
             ]
           end
 
@@ -780,6 +781,61 @@ describe Y2Storage::AutoinstProposal do
             i.is_a?(Y2Storage::AutoinstIssues::MissingRoot)
           end
           expect(issue).to be_nil
+        end
+      end
+
+      context "when reusing a thin pool" do
+        let(:scenario) { "trivial_lvm" }
+        let(:vg_name) { "vg0" }
+
+        let(:lvm_pv) do
+          { "create" => false, "partition_nr" => 1, "lvm_group" => vg_name, "size" => "max" }
+        end
+
+        let(:root_spec) do
+          {
+            "mount" => "/", "filesystem" => "btrfs", "lv_name" => "root", "size" => "150GB",
+            "create" => false, "used_pool" => "pool0", "format" => false
+          }
+        end
+
+        let(:lvs) { [pool_spec, root_spec] }
+
+        let(:vg) { fake_devicegraph.lvm_vgs.first }
+
+        before do
+          vg.remove_descendants
+          thin_pool_lv = vg.create_lvm_lv("pool0", Y2Storage::LvType::THIN_POOL, 200.GiB)
+          thin_lv = thin_pool_lv.create_lvm_lv("root", Y2Storage::LvType::THIN, 150.GiB)
+          thin_lv.create_filesystem(Y2Storage::Filesystems::Type::EXT4)
+        end
+
+        context "and the thin pool is marked to be reused" do
+          let(:pool_spec) do
+            { "lv_name" => "pool0", "size" => "200GiB", "pool" => true, "create" => false }
+          end
+
+          it "reuses thin pool and thin volumes" do
+            proposal.propose
+            devicegraph = proposal.devices
+            pool = devicegraph.lvm_lvs.find { |v| v.lv_name == "pool0" }
+            root_lv = pool.lvm_lvs.first
+            expect(root_lv.filesystem_type).to eq(Y2Storage::Filesystems::Type::EXT4)
+          end
+        end
+
+        context "and the thin pool is not marked to be reused" do
+          let(:pool_spec) do
+            { "lv_name" => "pool0", "size" => "200GiB", "pool" => true }
+          end
+
+          it "reuses thin pool and thin volumes" do
+            proposal.propose
+            devicegraph = proposal.devices
+            pool = devicegraph.lvm_lvs.find { |v| v.lv_name == "pool0" }
+            root_lv = pool.lvm_lvs.first
+            expect(root_lv.filesystem_type).to eq(Y2Storage::Filesystems::Type::EXT4)
+          end
         end
       end
     end
@@ -891,13 +947,13 @@ describe Y2Storage::AutoinstProposal do
           { "device" => "/dev/sda", "use" => "all", "partitions" => [raid_spec] },
           { "device" => "/dev/sdb", "use" => "all", "partitions" => [raid_spec] },
           { "device" => "/dev/md", "partitions" => [md_spec] },
-          { "device" => "/dev/system", "partitions" => [root_spec, home_spec], "type" => :CT_LVM }
+          { "device" => "/dev/#{vg_name}", "partitions" => [root_spec, home_spec], "type" => :CT_LVM }
         ]
       end
 
       let(:md_spec) do
         {
-          "partition_nr" => 1, "raid_options" => raid_options, "lvm_group" => "system"
+          "partition_nr" => 1, "raid_options" => raid_options, "lvm_group" => vg_name
         }
       end
 
@@ -927,7 +983,7 @@ describe Y2Storage::AutoinstProposal do
           )
         )
         raid = devicegraph.md_raids.first
-        expect(raid.lvm_pv.lvm_vg.vg_name).to eq("system")
+        expect(raid.lvm_pv.lvm_vg.vg_name).to eq(vg_name)
       end
 
       it "creates requested volume groups on top of the RAID device" do
@@ -935,7 +991,7 @@ describe Y2Storage::AutoinstProposal do
         devicegraph = proposal.devices
         expect(devicegraph.lvm_vgs).to contain_exactly(
           an_object_having_attributes(
-            "vg_name" => "system"
+            "vg_name" => vg_name
           )
         )
         vg = devicegraph.lvm_vgs.first.lvm_pvs.first

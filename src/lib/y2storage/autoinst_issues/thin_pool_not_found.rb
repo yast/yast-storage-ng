@@ -23,10 +23,9 @@ require "y2storage/autoinst_issues/issue"
 
 module Y2Storage
   module AutoinstIssues
-    # Represents an AutoYaST situation where no suitable disk was found.
+    # Represents an AutoYaST situation where a thin pool was not found.
     #
-    # This is a fatal error because AutoYaST needs to determine which disks will be used
-    # during installation.
+    # This is a fatal error.
     class ThinPoolNotFound < Issue
       # @param section [#parent,#section_name] Section where it was detected (see {AutoinstProfile})
       def initialize(section)

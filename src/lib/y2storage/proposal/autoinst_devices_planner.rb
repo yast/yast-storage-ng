@@ -140,6 +140,12 @@ module Y2Storage
           lvs << lv unless lv.lv_type == LvType::THIN
         end
 
+        thin_pools = vg.lvs.select { |v| v.lv_type == LvType::THIN_POOL }
+        thin_pools_to_reuse = thin_pools.select { |v| v.thin_lvs.any?(&:reuse?) }
+        thin_pools_to_reuse.each do |lv|
+          lv_to_reuse = devicegraph.lvm_lvs.find { |v| v.lv_name == lv.logical_volume_name }
+          lv.reuse_name = lv_to_reuse.name
+        end
         add_vg_reuse(vg, drive)
         vg
       end
@@ -284,7 +290,7 @@ module Y2Storage
       def add_vg_reuse(vg, drive)
         vg.make_space_policy = drive.keep_unknown_lv ? :keep : :remove
 
-        return unless vg.make_space_policy == :keep || vg.lvs.any?(&:reuse?)
+        return unless vg.make_space_policy == :keep || vg.all_lvs.any?(&:reuse?)
         vg_to_reuse = find_vg_to_reuse(devicegraph, vg, drive)
         vg.reuse_name = vg_to_reuse.vg_name if vg_to_reuse
       end
@@ -342,9 +348,9 @@ module Y2Storage
 
         device =
           if part_section.lv_name
-            vg.lvm_lvs.find { |v| v.lv_name == part_section.lv_name }
+            vg.all_lvm_lvs.find { |v| v.lv_name == part_section.lv_name }
           elsif part_section.label
-            vg.lvm_lvs.find { |v| v.filesystem_label == part_section.label }
+            vg.all_lvm_lvs.find { |v| v.filesystem_label == part_section.label }
           else
             issues_list.add(:missing_reuse_info, part_section)
             :missing_info
