@@ -845,7 +845,7 @@ describe Y2Storage::Proposal::AutoinstDevicesPlanner do
       context "using a thin pool" do
         let(:vg) do
           {
-            "device" => "/dev/#{lvm_group}", "partitions" => [pool_spec, root_spec, home_spec],
+            "device" => "/dev/#{lvm_group}", "partitions" => [root_spec, home_spec, pool_spec],
             "type" => :CT_LVM, "keep_unknown_lv" => true
           }
         end

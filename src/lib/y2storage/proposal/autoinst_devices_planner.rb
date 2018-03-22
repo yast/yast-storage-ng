@@ -121,7 +121,8 @@ module Y2Storage
       def planned_for_vg(drive)
         vg = Y2Storage::Planned::LvmVg.new(volume_group_name: File.basename(drive.device))
 
-        drive.partitions.each_with_object(vg.lvs) do |lv_section, lvs|
+        pools, regular = drive.partitions.partition { |p| p.pool }
+        (pools + regular).each_with_object(vg.lvs) do |lv_section, lvs|
           # TODO: fix Planned::LvmLv.initialize
           lv = Y2Storage::Planned::LvmLv.new(nil, nil)
           lv.logical_volume_name = lv_section.lv_name
