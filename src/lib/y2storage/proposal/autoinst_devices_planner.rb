@@ -130,7 +130,9 @@ module Y2Storage
           lv.stripe_size = DiskSize.KiB(lv_section.stripe_size.to_i) if lv_section.stripe_size
           lv.stripes = lv_section.stripes
           device_config(lv, lv_section, drive)
-          add_to_thin_pool(lv, vg, lv_section) if lv_section.used_pool
+          if lv_section.used_pool
+            next unless add_to_thin_pool(lv, vg, lv_section)
+          end
           add_lv_reuse(lv, vg.volume_group_name, lv_section) if lv_section.create == false
 
           next unless assign_size_to_lv(vg, lv, lv_section)
@@ -478,13 +480,14 @@ module Y2Storage
       # @param lv [Planned::LvmLv] Planned logical volume
       # @param vg [Planned::LvmVg] Planned volume group
       # @param section [AutoinstProfile::PartitionSection] AutoYaST specification
-      # @return [Planned::LvmLv,nil] Logical volume as thin pool; nil if no logical volume
+      # @return [Boolean] True if it was successfully added; false otherwise.
       #   with the given name was found.
-      #
-      # @raise StandardError
       def add_to_thin_pool(lv, vg, section)
         thin_pool = vg.lvs.find { |v| v.logical_volume_name == section.used_pool }
-        raise ThinPoolNotFound.new(section.used_pool) if thin_pool.nil?
+        if thin_pool.nil?
+          issues_list.add(:thin_pool_not_found, section)
+          return false
+        end
         thin_pool.add_thin_lv(lv)
       end
 

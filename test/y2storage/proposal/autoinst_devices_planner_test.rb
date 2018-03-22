@@ -892,8 +892,10 @@ describe Y2Storage::Proposal::AutoinstDevicesPlanner do
             { "create" => true, "pool" => true, "lv_name" => "pool1", "size" => "20G" }
           end
 
-          it "raises an exception" do
-            expect { planner.planned_devices(drives_map) }.to raise_error(ThinPoolNotFound)
+          it "registers an issue" do
+            planner.planned_devices(drives_map)
+            issue = issues_list.find { |i| i.is_a?(Y2Storage::AutoinstIssues::ThinPoolNotFound) }
+            expect(issue).to_not be_nil
           end
         end
       end
