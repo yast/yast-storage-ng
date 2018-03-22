@@ -104,18 +104,21 @@ module Y2Storage
         self.reuse_name = real_lv.lv_name
       end
 
-      # Returns the size for the logical volume in a given volume group
+      # Returns the size for the logical volume in a given volume group/thin pool
       #
-      # It returns the planned size (Planned::LvmLv#size) unless a
-      # percentage has been specified. In that case, it will use the volume
-      # group size and Planned::LvmLv#percent_size to calculate the
-      # desired size.
+      # * If size is specified as a percentage, it calculates the size using
+      #   the container size as reference.
+      # * If it is a thin volume, it returns max size. If it is unlimited,
+      #   the thin pool size will be returned.
+      # * Otherwise, the planned size (Planned::LvmLv#size) is returned.
       #
-      # @param volume_group [LvmVg] Volume group where the logical volume will be placed
+      # @param volume_group [LvmVg,LvmLv] Volume group or thin pool where the
+      #   logical volume will be placed
       # @return [DiskSize]
-      def size_in(volume_group)
-        return size unless percent_size
-        (volume_group.size * percent_size / 100).ceil(volume_group.extent_size)
+      def size_in(container)
+        return size_in_percentage(container) if percent_size
+        return size_in_thin_pool(container) if lv_type == LvType::THIN
+        size
       end
 
       # It adds a logical volume as a thin pool
@@ -140,6 +143,25 @@ module Y2Storage
           fs_type:      filesystem_type,
           partition_id: nil
         }
+      end
+
+      # Returns the size for the LV in a given volume group/thin pool when specified as percentage
+      #
+      # @param volume_group [LvmVg,LvmLv] Volume group or thin pool where the logical volume will
+      #   be placed
+      # @return [DiskSize]
+      def size_in_percentage(container)
+        extent_size = container.is?(:lvm_lv) ? container.lvm_vg.extent_size : container_extent_size
+        (container.size * percent_size  / 100).ceil(extent_size)
+      end
+
+      # Returns the size for the logical volume in a given thin pool
+      #
+      # @param volume_group [LvmVg,LvmLv] Volume group or thin pool where the logical volume will
+      #   be placed
+      # @return [DiskSize]
+      def size_in_thin_pool(volume_group)
+        max == DiskSize.unlimited ? volume_group.size : max
       end
     end
   end

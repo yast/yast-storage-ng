@@ -32,7 +32,7 @@ describe Y2Storage::Planned::LvmLv do
   let(:mount_point) { "/" }
 
   let(:volume_group) do
-    instance_double(Y2Storage::LvmVg, size: 30.GiB, extent_size: 4.MiB)
+    instance_double(Y2Storage::LvmVg, size: 30.GiB, extent_size: 4.MiB, is?: false)
   end
 
   describe "#initialize" do
@@ -75,12 +75,70 @@ describe Y2Storage::Planned::LvmLv do
     end
 
     context "when size is a percentage" do
+      let(:container) { volume_group }
+
       before do
         lvm_lv.percent_size = 50
+        allow(container).to receive(:is?).with(:lvm_lv).and_return(lvm_lv?)
       end
 
-      it "returns the size based on the volume group size" do
-        expect(lvm_lv.size_in(volume_group)).to eq(15.GiB)
+      context "and the logical volume is on top of a volume group" do
+        let(:lvm_lv?) { false }
+
+        it "returns the size based on the volume group size" do
+          expect(lvm_lv.size_in(container)).to eq(15.GiB)
+        end
+      end
+
+      context "and the logical volume is on top of a thin pool" do
+        let(:lvm_lv?) { true }
+
+        let(:container) do
+          instance_double(
+            Y2Storage::LvmLv, lv_type: Y2Storage::LvType::THIN_POOL, size: 10.GiB,
+            lvm_vg: volume_group
+          )
+        end
+
+        it "returns the size based on the thin pool size" do
+          expect(lvm_lv.size_in(container)).to eq(5.GiB)
+        end
+      end
+    end
+
+    context "when it is a thin logical volume" do
+      let(:thin_pool) do
+        instance_double(Y2Storage::LvmLv, lv_type: Y2Storage::LvType::THIN_POOL, size: 30.GiB)
+      end
+
+      let(:lvm_lv) do
+        planned_lv(lv_type: Y2Storage::LvType::THIN, thin_pool: thin_pool, max: lv_size)
+      end
+
+      context "and max size is limited" do
+        let(:lv_size) { 5.GiB }
+
+        it "returns max size" do
+          expect(lvm_lv.size_in(thin_pool)).to eq(lvm_lv.max)
+        end
+      end
+
+      context "and max size is not limited" do
+        let(:lv_size) { Y2Storage::DiskSize.unlimited }
+
+        it "returns thin pool size" do
+          expect(lvm_lv.size_in(thin_pool)).to eq(thin_pool.size)
+        end
+      end
+
+      context "when size is a percentage" do
+        before do
+          lvm_lv.percent_size = 50
+        end
+
+        it "returns the size based on the thin pool size" do
+          expect(lvm_lv.size_in(volume_group)).to eq(15.GiB)
+        end
       end
     end
   end
