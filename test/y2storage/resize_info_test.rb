@@ -85,4 +85,11 @@ describe Y2Storage::ResizeInfo do
       expect(no_msg).to be_empty
     end
   end
+
+  describe "#REASON_TEXTS" do
+    it "has only messages for reasons known to libstorage" do
+      orphans = described_class::REASON_TEXTS.keys - subject.libstorage_resize_blockers
+      expect(orphans).to be_empty
+    end
+  end
 end
