@@ -308,8 +308,8 @@ describe Y2Storage::Proposal::LvmCreator do
         lvs = devicegraph.lvm_lvs.select { |lv| lv.lvm_vg.vg_name == "system" }
 
         expect(lvs).to contain_exactly(
-          an_object_having_attributes(lv_name: "one", size: 15.GiB),
-          an_object_having_attributes(lv_name: "two", size: 15.GiB - 4.MiB)
+          an_object_having_attributes(lv_name: "one", size: 15.GiB - 4.MiB),
+          an_object_having_attributes(lv_name: "two", size: 15.GiB)
         )
       end
     end

@@ -767,8 +767,11 @@ describe Y2Storage::AutoinstProposal do
           devicegraph = proposal.devices
           expect(devicegraph.lvm_lvs).to contain_exactly(
             an_object_having_attributes("lv_name" => "root"),
-            an_object_having_attributes("lv_name" => "pool0", "size" => 500.GiB - 4.MiB)
+            an_object_having_attributes("lv_name" => "pool0")
           )
+          pool = devicegraph.lvm_lvs.find { |v| v.lv_name == "pool0" }
+          # around 260MiB are used for metadata
+          expect(pool.size).to eq(500.GiB - 260.MiB)
         end
 
         it "does not register an issue about missing root partition" do
