@@ -39,7 +39,8 @@ describe Y2Storage::Planned::CanBeResized do
   let(:resize_ok) { true }
 
   let(:resize_info) do
-    instance_double(Y2Storage::ResizeInfo, min_size: 5.GiB, max_size: 9.GiB, resize_ok?: resize_ok)
+    instance_double(Y2Storage::ResizeInfo, min_size: 5.GiB, max_size: 9.GiB, resize_ok?: resize_ok,
+      reasons: 0, reason_texts: [])
   end
 
   before do

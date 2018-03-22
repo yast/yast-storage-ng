@@ -89,7 +89,10 @@ describe Y2Storage::Device do
 
   describe "#can_resize?" do
     subject(:device) { Y2Storage::Partition.find_by_name(fake_devicegraph, "/dev/sda1") }
-    let(:resize_info) { double(Y2Storage::ResizeInfo, resize_ok?: resize_ok) }
+    let(:resize_info) do
+      double(Y2Storage::ResizeInfo, resize_ok?: resize_ok,
+        reasons: 0, reason_texts: [])
+    end
 
     before { allow(device).to receive(:detect_resize_info).and_return resize_info }
 
