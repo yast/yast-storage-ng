@@ -547,7 +547,7 @@ describe Y2Storage::Proposal::AutoinstDevicesPlanner do
       let(:root_spec) do
         {
           "mount" => "/", "filesystem" => "ext4", "lv_name" => "root", "size" => "20G",
-          "label" => "rootfs"
+          "label" => "rootfs", "stripes" => 2, "stripe_size" => 4
         }
       end
 
@@ -566,7 +566,9 @@ describe Y2Storage::Proposal::AutoinstDevicesPlanner do
             "reuse_name"          => nil,
             "min_size"            => 20.GiB,
             "max_size"            => 20.GiB,
-            "label"               => "rootfs"
+            "label"               => "rootfs",
+            "stripes"             => 2,
+            "stripe_size"         => 4.KiB
           )
         )
       end

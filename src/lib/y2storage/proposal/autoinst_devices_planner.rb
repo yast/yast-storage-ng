@@ -127,6 +127,8 @@ module Y2Storage
           lv = Y2Storage::Planned::LvmLv.new(nil, nil)
           lv.logical_volume_name = lv_section.lv_name
           lv.lv_type = lv_type_for(lv_section)
+          lv.stripe_size = DiskSize.KiB(lv_section.stripe_size.to_i) if lv_section.stripe_size
+          lv.stripes = lv_section.stripes
           device_config(lv, lv_section, drive)
           add_to_thin_pool(lv, vg, lv_section) if lv_section.used_pool
           add_lv_reuse(lv, vg.volume_group_name, lv_section) if lv_section.create == false

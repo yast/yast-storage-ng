@@ -38,7 +38,10 @@ describe Y2Storage::Proposal::LvmCreator do
     let(:scenario) { "lvm-new-pvs" }
     let(:volumes) do
       [
-        planned_lv(mount_point: "/1", type: :ext4, logical_volume_name: "one", min: 10.GiB),
+        planned_lv(
+          mount_point: "/1", type: :ext4, logical_volume_name: "one", min: 10.GiB,
+          stripe_size: 8.KiB, stripes: 4
+        ),
         planned_lv(mount_point: "/2", type: :ext4, logical_volume_name: "two", min: 5.GiB)
       ]
     end
@@ -80,7 +83,9 @@ describe Y2Storage::Proposal::LvmCreator do
           an_object_having_attributes(
             filesystem_mountpoint: "/1",
             lv_name:               "one",
-            filesystem_type:       ext4
+            filesystem_type:       ext4,
+            stripe_size:           8.KiB,
+            stripes:               4
           ),
           an_object_having_attributes(
             filesystem_mountpoint: "/2",

@@ -54,6 +54,12 @@ module Y2Storage
       # @return [LvmLv] Thin pool where the logical volumes belongs to (when LvType::THIN)
       attr_accessor :thin_pool
 
+      # @return [DiskSize] Stripe size
+      attr_accessor :stripe_size
+
+      # @return [Integer] Number of stripes
+      attr_accessor :stripes
+
       # Builds a new object based on a real LvmLv one
       #
       # The new instance represents the intention to reuse the real LV, so the

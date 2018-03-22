@@ -208,6 +208,7 @@ module Y2Storage
           end
         new_lv = parent.create_lvm_lv(unique_name, planned_lv.lv_type, planned_lv.real_size_in(parent))
         planned_lv.format!(new_lv)
+        add_stripes_config(new_lv, planned_lv)
         new_lv
       end
 
@@ -289,6 +290,15 @@ module Y2Storage
           new_lv.max = new_lv.min = lv.size_in(vg)
           new_lv
         end
+      end
+
+      # Helper method to set stripes attributes
+      #
+      # @param lv         [LvmLv] Logical volume
+      # @param planned_lv [LvmLv] Planned logical volume
+      def add_stripes_config(lv, planned_lv)
+        lv.stripes = planned_lv.stripes if planned_lv.stripes
+        lv.stripe_size = planned_lv.stripe_size if planned_lv.stripe_size
       end
     end
   end

@@ -74,7 +74,9 @@ module Y2Storage
           { name: :subvolumes_prefix },
           { name: :resize },
           { name: :pool },
-          { name: :used_pool }
+          { name: :used_pool },
+          { name: :stripes },
+          { name: :stripe_size, xml_name: :stripesize }
         ]
       end
 
