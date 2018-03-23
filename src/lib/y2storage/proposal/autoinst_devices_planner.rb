@@ -308,8 +308,8 @@ module Y2Storage
       # Set 'reusing' attributes for a thin pool logical volume
       #
       # This method modifies the argument setting the values related to reusing
-      # a thin logical volume (reuse_name). A thin logical volume will be planned
-      # to be reused if any if its logical volumes will be reused.
+      # a thin logical volume (reuse_name). A thin pool will be planned to be
+      # reused if any of its logical volumes will be reused.
       #
       # @param lv   [Planned::LvmLv] Thin logical volume
       def add_thin_pool_lv_reuse(lv, _drive)
@@ -525,7 +525,6 @@ module Y2Storage
       # @param vg [Planned::LvmVg] Planned volume group
       # @param section [AutoinstProfile::PartitionSection] AutoYaST specification
       # @return [Boolean] True if it was successfully added; false otherwise.
-      #   with the given name was found.
       def add_to_thin_pool(lv, vg, section)
         thin_pool = vg.thin_pool_lvs.find { |v| v.logical_volume_name == section.used_pool }
         if thin_pool.nil?

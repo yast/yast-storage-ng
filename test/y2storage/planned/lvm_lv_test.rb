@@ -82,7 +82,7 @@ describe Y2Storage::Planned::LvmLv do
         allow(container).to receive(:is?).with(:lvm_lv).and_return(lvm_lv?)
       end
 
-      context "and the logical volume is on top of a volume group" do
+      context "and the logical volume is not a thin volume" do
         let(:lvm_lv?) { false }
 
         it "returns the size based on the volume group size" do
@@ -90,7 +90,7 @@ describe Y2Storage::Planned::LvmLv do
         end
       end
 
-      context "and the logical volume is on top of a thin pool" do
+      context "and the logical volume is a thin volume" do
         let(:lvm_lv?) { true }
 
         let(:container) do
@@ -128,16 +128,6 @@ describe Y2Storage::Planned::LvmLv do
 
         it "returns thin pool size" do
           expect(lvm_lv.size_in(thin_pool)).to eq(thin_pool.size)
-        end
-      end
-
-      context "when size is a percentage" do
-        before do
-          lvm_lv.percent_size = 50
-        end
-
-        it "returns the size based on the thin pool size" do
-          expect(lvm_lv.size_in(volume_group)).to eq(15.GiB)
         end
       end
     end
@@ -201,9 +191,15 @@ describe Y2Storage::Planned::LvmLv do
       expect(lvm_lv.thin_lvs).to include(thin_lv)
     end
 
-    it "points the thin lv the its pool" do
+    it "points the thin lv to its pool" do
       lvm_lv.add_thin_lv(thin_lv)
       expect(thin_lv.thin_pool).to eq(lvm_lv)
+    end
+
+    context "when the argument is not a thin logical volume" do
+      it "raises an ArgumentError exception" do
+        expect { lvm_lv.add_thin_lv(lvm_lv) }.to raise_error(ArgumentError)
+      end
     end
   end
 
