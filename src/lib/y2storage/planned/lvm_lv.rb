@@ -118,7 +118,7 @@ module Y2Storage
       #   the thin pool size will be returned.
       # * Otherwise, the planned size (Planned::LvmLv#size) is returned.
       #
-      # @param volume_group [LvmVg,LvmLv] Volume group or thin pool where the
+      # @param container [LvmVg,LvmLv] Volume group or thin pool where the
       #   logical volume will be placed
       # @return [DiskSize]
       def size_in(container)
@@ -133,7 +133,7 @@ module Y2Storage
       # returns an adjusted planned size taking the available space for the given
       # lv_type into account.
       #
-      # @param volume_group [LvmVg,LvmLv] Volume group or thin pool where the
+      # @param container [LvmVg,LvmLv] Volume group or thin pool where the
       #   logical volume will be placed
       # @return [DiskSize]
       def real_size_in(container)
@@ -166,7 +166,7 @@ module Y2Storage
 
       # Returns the size for the LV in a given volume group/thin pool when specified as percentage
       #
-      # @param volume_group [LvmVg,LvmLv] Volume group or thin pool where the logical volume will
+      # @param container [LvmVg,LvmLv] Volume group or thin pool where the logical volume will
       #   be placed
       # @return [DiskSize]
       def size_in_percentage(container)
@@ -176,7 +176,7 @@ module Y2Storage
 
       # Returns the size for the logical volume in a given thin pool
       #
-      # @param volume_group [LvmVg,LvmLv] Volume group or thin pool where the logical volume will
+      # @param container [LvmVg,LvmLv] Volume group or thin pool where the logical volume will
       #   be placed
       # @return [DiskSize]
       def size_in_thin_pool(container)
