@@ -23,8 +23,8 @@ BuildArch:	noarch
 BuildRoot:	%{_tmppath}/%{name}-%{version}-build
 Source:		%{name}-%{version}.tar.bz2
 
-# Yast2::FsSnapshots.configure_on_install=
-Requires:	yast2 >= 4.0.24
+# Yast::Popup.ErrorAnyQuestion fixed
+Requires:	yast2 >= 4.0.60
 Requires:	yast2-ruby-bindings
 # ResizeInfo::reasons() and RB_ enum
 Requires:	libstorage-ng-ruby >= 3.3.198
@@ -37,8 +37,8 @@ BuildRequires:	yast2-devtools
 # yast2-xml dependency is added by yast2 but ignored in the
 # openSUSE:Factory project config
 BuildRequires:  yast2-xml
-# CWM::Pager#current_page
-BuildRequires:	yast2 >= 4.0.24
+# Yast::Popup.ErrorAnyQuestion fixed
+BuildRequires:	yast2 >= 4.0.60
 BuildRequires:	rubygem(yast-rake)
 BuildRequires:	rubygem(rspec)
 PreReq:         %fillup_prereq
