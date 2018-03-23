@@ -547,7 +547,7 @@ describe Y2Storage::Proposal::AutoinstDevicesPlanner do
       let(:root_spec) do
         {
           "mount" => "/", "filesystem" => "ext4", "lv_name" => "root", "size" => "20G",
-          "label" => "rootfs"
+          "label" => "rootfs", "stripes" => 2, "stripe_size" => 4
         }
       end
 
@@ -566,7 +566,9 @@ describe Y2Storage::Proposal::AutoinstDevicesPlanner do
             "reuse_name"          => nil,
             "min_size"            => 20.GiB,
             "max_size"            => 20.GiB,
-            "label"               => "rootfs"
+            "label"               => "rootfs",
+            "stripes"             => 2,
+            "stripe_size"         => 4.KiB
           )
         )
       end
@@ -839,6 +841,62 @@ describe Y2Storage::Proposal::AutoinstDevicesPlanner do
               "reuse_name"          => nil
             )
           )
+        end
+      end
+
+      context "using a thin pool" do
+        let(:vg) do
+          {
+            "device" => "/dev/#{lvm_group}", "partitions" => [root_spec, home_spec, pool_spec],
+            "type" => :CT_LVM, "keep_unknown_lv" => true
+          }
+        end
+
+        let(:pool_spec) do
+          { "create" => true, "pool" => true, "lv_name" => "pool0", "size" => "20G" }
+        end
+
+        let(:root_spec) do
+          {
+            "create" => true, "mount" => "/", "filesystem" => "ext4", "lv_name" => "root",
+            "size" => "10G", "used_pool" => "pool0"
+          }
+        end
+
+        let(:home_spec) do
+          {
+            "create" => true, "mount" => "/home", "filesystem" => "ext4", "lv_name" => "home",
+            "size" => "10G", "used_pool" => "pool0"
+          }
+        end
+
+        it "sets lv_type and thin pool name" do
+          _pv, vg = planner.planned_devices(drives_map)
+          pool = vg.lvs.find { |v| v.logical_volume_name == "pool0" }
+
+          expect(pool.lv_type).to eq(Y2Storage::LvType::THIN_POOL)
+          expect(pool.thin_lvs).to include(
+            an_object_having_attributes(
+              "logical_volume_name" => "root",
+              "lv_type"             => Y2Storage::LvType::THIN
+            ),
+            an_object_having_attributes(
+              "logical_volume_name" => "home",
+              "lv_type"             => Y2Storage::LvType::THIN
+            )
+          )
+        end
+
+        context "when the thin pool is not defined" do
+          let(:pool_spec) do
+            { "create" => true, "pool" => true, "lv_name" => "pool1", "size" => "20G" }
+          end
+
+          it "registers an issue" do
+            planner.planned_devices(drives_map)
+            issue = issues_list.find { |i| i.is_a?(Y2Storage::AutoinstIssues::ThinPoolNotFound) }
+            expect(issue).to_not be_nil
+          end
         end
       end
     end

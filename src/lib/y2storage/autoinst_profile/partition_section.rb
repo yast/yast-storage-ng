@@ -72,7 +72,11 @@ module Y2Storage
           { name: :mkfs_options },
           { name: :fstab_options, xml_name: :fstopt },
           { name: :subvolumes_prefix },
-          { name: :resize }
+          { name: :resize },
+          { name: :pool },
+          { name: :used_pool },
+          { name: :stripes },
+          { name: :stripe_size, xml_name: :stripesize }
         ]
       end
 
@@ -292,6 +296,11 @@ module Y2Storage
 
       def init_lv_fields(lv)
         @lv_name = lv.basename
+        @stripes = lv.stripes
+        @stripe_size = lv.stripe_size.to_i / DiskSize.KiB(1).to_i
+        @pool = lv.lv_type == LvType::THIN_POOL
+        parent = lv.parents.first
+        @used_pool = parent.lv_name if lv.lv_type == LvType::THIN && parent.is?(:lvm_lv)
       end
 
       def init_md_fields(md)

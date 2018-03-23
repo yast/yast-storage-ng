@@ -191,7 +191,7 @@ module Y2Storage
       def reuse_vgs(reused_vgs, devicegraph)
         reused_vgs.each do |vg|
           vg.reuse!(devicegraph)
-          reuse_devices(vg.lvs.select(&:reuse?), devicegraph)
+          reuse_devices(vg.all_lvs.select(&:reuse?), devicegraph)
         end
       end
 

@@ -118,6 +118,22 @@ module Y2Storage
         @total_size ||= DiskSize.zero
       end
 
+      # Return all logical volumes in the volume group
+      #
+      # It includes thin provisioned logical volumes.
+      #
+      # @return [Array<Planned::LvmLv>] List of logical volumes
+      def all_lvs
+        lvs + lvs.map(&:thin_lvs).flatten
+      end
+
+      # Return thin pool logical volumes
+      #
+      # @return [Array<Planned::LvmLv] List of thin pool logical volumes
+      def thin_pool_lvs
+        lvs.select { |v| v.lv_type == LvType::THIN_POOL }
+      end
+
       def self.to_string_attrs
         [:reuse_name, :volume_group_name]
       end

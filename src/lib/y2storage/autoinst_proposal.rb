@@ -173,7 +173,7 @@ module Y2Storage
         if dev.respond_to?(:mount_point)
           all << dev
         elsif dev.is_a?(Planned::LvmVg)
-          all.concat(dev.lvs)
+          all.concat(dev.all_lvs)
         end
       end
     end

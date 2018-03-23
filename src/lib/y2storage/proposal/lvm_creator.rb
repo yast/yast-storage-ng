@@ -130,7 +130,7 @@ module Y2Storage
         when :needed
           make_space_until_fit(volume_group, planned_vg.lvs)
         when :remove
-          lvs_to_keep = planned_vg.lvs.select(&:reuse?).map(&:reuse_name)
+          lvs_to_keep = planned_vg.all_lvs.select(&:reuse?).map(&:reuse_name)
           remove_logical_volumes(volume_group, lvs_to_keep)
         end
       end
@@ -165,7 +165,7 @@ module Y2Storage
       # @param volume_group [LvmVg]         volume group to remove logical volumes from
       # @param lvs_to_keep  [Array<String>] name of logical volumes to keep
       def remove_logical_volumes(volume_group, lvs_to_keep)
-        lvs_to_remove = volume_group.lvm_lvs.reject { |v| lvs_to_keep.include?(v.name) }
+        lvs_to_remove = volume_group.all_lvm_lvs.reject { |v| lvs_to_keep.include?(v.name) }
         lvs_to_remove.each { |v| volume_group.delete_lvm_lv(v) }
       end
 
@@ -182,9 +182,10 @@ module Y2Storage
         adjusted_lvs = planned_lvs_in_vg(planned_lvs, volume_group)
         vg_size = volume_group.available_space
         lvs = Planned::LvmLv.distribute_space(adjusted_lvs, vg_size, rounding: volume_group.extent_size)
-        lvs.reject(&:reuse?).each_with_object({}) do |planned_lv, hash|
-          lv = create_logical_volume(volume_group, planned_lv)
-          hash[lv.name] = planned_lv
+        all_lvs = lvs + lvs.map(&:thin_lvs).flatten
+        all_lvs.reject(&:reuse?).each_with_object({}) do |planned_lv, devices_map|
+          new_lv = create_logical_volume(volume_group, planned_lv)
+          devices_map[new_lv.name] = planned_lv
         end
       end
 
@@ -195,13 +196,20 @@ module Y2Storage
       # @param volume_group [LvmVg] Volume group
       # @param planned_lv   [Planned::LvmLv] Planned logical volume to be used as reference
       #   for the new one
-      # @return [LvmLv] created LV device
+      # @return [LvmLv] Recently created logical volume
       def create_logical_volume(volume_group, planned_lv)
         name = planned_lv.logical_volume_name || DEFAULT_LV_NAME
-        name = available_name(name, volume_group)
-        lv = volume_group.create_lvm_lv(name, planned_lv.size_in(volume_group))
-        planned_lv.format!(lv)
-        lv
+        unique_name = available_name(name, volume_group)
+        parent =
+          if planned_lv.thin_pool
+            volume_group.lvm_lvs.find { |v| v.lv_name == planned_lv.thin_pool.logical_volume_name }
+          else
+            volume_group
+          end
+        new_lv = parent.create_lvm_lv(unique_name, planned_lv.lv_type, planned_lv.real_size_in(parent))
+        planned_lv.format!(new_lv)
+        add_stripes_config(new_lv, planned_lv)
+        new_lv
       end
 
       # Best logical volume to delete next while trying to make space for the
@@ -282,6 +290,15 @@ module Y2Storage
           new_lv.max = new_lv.min = lv.size_in(vg)
           new_lv
         end
+      end
+
+      # Helper method to set stripes attributes
+      #
+      # @param lv         [LvmLv] Logical volume
+      # @param planned_lv [LvmLv] Planned logical volume
+      def add_stripes_config(lv, planned_lv)
+        lv.stripes = planned_lv.stripes if planned_lv.stripes
+        lv.stripe_size = planned_lv.stripe_size if planned_lv.stripe_size
       end
     end
   end

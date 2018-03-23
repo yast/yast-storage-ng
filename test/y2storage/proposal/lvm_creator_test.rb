@@ -38,7 +38,10 @@ describe Y2Storage::Proposal::LvmCreator do
     let(:scenario) { "lvm-new-pvs" }
     let(:volumes) do
       [
-        planned_lv(mount_point: "/1", type: :ext4, logical_volume_name: "one", min: 10.GiB),
+        planned_lv(
+          mount_point: "/1", type: :ext4, logical_volume_name: "one", min: 10.GiB,
+          stripe_size: 8.KiB, stripes: 4
+        ),
         planned_lv(mount_point: "/2", type: :ext4, logical_volume_name: "two", min: 5.GiB)
       ]
     end
@@ -80,7 +83,9 @@ describe Y2Storage::Proposal::LvmCreator do
           an_object_having_attributes(
             filesystem_mountpoint: "/1",
             lv_name:               "one",
-            filesystem_type:       ext4
+            filesystem_type:       ext4,
+            stripe_size:           8.KiB,
+            stripes:               4
           ),
           an_object_having_attributes(
             filesystem_mountpoint: "/2",
@@ -308,8 +313,38 @@ describe Y2Storage::Proposal::LvmCreator do
         lvs = devicegraph.lvm_lvs.select { |lv| lv.lvm_vg.vg_name == "system" }
 
         expect(lvs).to contain_exactly(
-          an_object_having_attributes(lv_name: "one", size: 15.GiB),
-          an_object_having_attributes(lv_name: "two", size: 15.GiB - 4.MiB)
+          an_object_having_attributes(lv_name: "one", size: 15.GiB - 4.MiB),
+          an_object_having_attributes(lv_name: "two", size: 15.GiB)
+        )
+      end
+    end
+
+    context "when using a thin pool" do
+      let(:planned_root) do
+        planned_lv(
+          mount_point: "/", type: :ext4, logical_volume_name: "root", min: 5.GiB,
+          lv_type: Y2Storage::LvType::THIN
+        )
+      end
+
+      let(:planned_pool) do
+        planned_lv(
+          logical_volume_name: "pool0", min: 18.GiB, lv_type: Y2Storage::LvType::THIN_POOL
+        )
+      end
+
+      let(:volumes) { [planned_pool] }
+
+      before do
+        planned_pool.add_thin_lv(planned_root)
+      end
+
+      it "creates thin logical volumes on top of the pool" do
+        devicegraph = creator.create_volumes(vg, pv_partitions).devicegraph
+        pool = devicegraph.lvm_lvs.find { |lv| lv.lv_name == "pool0" }
+        expect(pool.lv_type).to eq(Y2Storage::LvType::THIN_POOL)
+        expect(pool.lvm_lvs).to contain_exactly(
+          an_object_having_attributes(lv_name: "root", lv_type: Y2Storage::LvType::THIN)
         )
       end
     end

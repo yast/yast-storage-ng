@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Fri Mar 23 06:33:21 UTC 2018 - igonzalezsosa@suse.com
+
+- AutoYaST: add support for LVM thin pools (bsc#1086596).
+- AutoYaST: add support for stripes/stripesize elements.
+- 4.0.139
+
+-------------------------------------------------------------------
 Mon Mar 19 07:47:13 UTC 2018 - jlopez@suse.com
 
 - Fix issues with zero-size devices (bsc#1083887).
