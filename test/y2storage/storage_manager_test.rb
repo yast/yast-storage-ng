@@ -23,15 +23,6 @@
 require_relative "spec_helper"
 require "y2storage"
 
-def devicegraph_from(file_name)
-  storage = Y2Storage::StorageManager.instance.storage
-  st_graph = Storage::Devicegraph.new(storage)
-  graph = Y2Storage::Devicegraph.new(st_graph)
-  yaml_file = input_file_for(file_name)
-  Y2Storage::FakeDeviceFactory.load_yaml_file(graph, yaml_file)
-  graph
-end
-
 describe Y2Storage::StorageManager do
 
   subject(:manager) { described_class.instance }
@@ -447,6 +438,43 @@ describe Y2Storage::StorageManager do
 
       it "returns false" do
         expect(manager.probe).to eq false
+      end
+    end
+
+    context "if the probed devicegraph needs to be sanitized" do
+      let(:st_probed) { devicegraph_from("lvm-errors1-devicegraph.xml").to_storage_value }
+
+      before do
+        allow(Y2Storage::Callbacks::Sanitize).to receive(:new).and_return(callbacks)
+      end
+
+      let(:callbacks) { instance_double(Y2Storage::Callbacks::Sanitize, sanitize?: sanitize) }
+
+      context "and the user decides to abort" do
+        let(:sanitize) { false }
+
+        it "returns false" do
+          expect(manager.probe).to eq(false)
+        end
+      end
+
+      context "and the user devices to continue" do
+        let(:sanitize) { true }
+
+        it "returns true" do
+          expect(manager.probe).to eq(true)
+        end
+
+        it "sanitizes the raw probed devicegraph" do
+          manager.probe
+          expect(manager.probed.disks).to_not be_empty
+          expect(manager.probed.lvm_vgs).to be_empty
+        end
+
+        it "copies sanitized probed into staging" do
+          manager.probe
+          expect(manager.staging).to eq(manager.probed)
+        end
       end
     end
   end
