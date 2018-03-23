@@ -86,8 +86,39 @@ describe Y2Storage::AutoinstProfile::PartitionSection do
     end
 
     context "given a logical volume" do
+      let(:vg) { fake_devicegraph.lvm_vgs.first }
+
+      before do
+        fake_scenario("lvm-striped-lvs")
+        # FIXME: add support to the fake factory for LVM thin pools
+        thin_pool_lv = vg.create_lvm_lv("pool0", Y2Storage::LvType::THIN_POOL, 20.GiB)
+        thin_lv = thin_pool_lv.create_lvm_lv("data", Y2Storage::LvType::THIN, 20.GiB)
+        thin_lv.create_filesystem(Y2Storage::Filesystems::Type::EXT4)
+      end
+
       it "initializes the #lv_name" do
         expect(section_for("vg0/lv1").lv_name).to eq("lv1")
+      end
+
+      it "initializes stripes related properties" do
+        expect(section_for("vg0/lv1").stripes).to eq(2)
+        expect(section_for("vg0/lv1").stripe_size).to eq(4)
+      end
+
+      it "initializes pool to false" do
+        expect(section_for("vg0/lv1").pool).to eq(false)
+      end
+
+      context "and it is a thin pool" do
+        it "initializes pool to true" do
+          expect(section_for("vg0/pool0").pool).to eq(true)
+        end
+      end
+
+      context "and it is a thin volume" do
+        it "initializes used_pool with the pool's name" do
+          expect(section_for("vg0/data").used_pool).to eq("pool0")
+        end
       end
     end
 

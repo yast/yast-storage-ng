@@ -805,6 +805,7 @@ describe Y2Storage::AutoinstProposal do
         let(:vg) { fake_devicegraph.lvm_vgs.first }
 
         before do
+          # FIXME: add support to the fake factory for LVM thin pools
           vg.remove_descendants
           thin_pool_lv = vg.create_lvm_lv(existing_pool_name, Y2Storage::LvType::THIN_POOL, 200.GiB)
           thin_lv = thin_pool_lv.create_lvm_lv("root", Y2Storage::LvType::THIN, 150.GiB)

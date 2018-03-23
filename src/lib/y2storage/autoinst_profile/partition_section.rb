@@ -296,6 +296,11 @@ module Y2Storage
 
       def init_lv_fields(lv)
         @lv_name = lv.basename
+        @stripes = lv.stripes
+        @stripe_size = lv.stripe_size.to_i / DiskSize.KiB(1).to_i
+        @pool = lv.lv_type == LvType::THIN_POOL
+        parent = lv.parents.first
+        @used_pool = parent.lv_name if lv.lv_type == LvType::THIN && parent.is?(:lvm_lv)
       end
 
       def init_md_fields(md)
