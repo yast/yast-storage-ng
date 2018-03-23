@@ -118,7 +118,7 @@ describe Y2Storage::Clients::InstDiskProposal do
         before do
           allow(proposal_dialog).to receive(:proposal).and_return new_proposal
           allow(proposal_dialog).to receive(:devicegraph)
-          allow(new_devicegraph).to receive(:copy)
+          allow(new_devicegraph).to receive(:safe_copy)
         end
 
         it "stores the proposal in the storage manager" do
@@ -127,7 +127,7 @@ describe Y2Storage::Clients::InstDiskProposal do
         end
 
         it "copies the proposal devicegraph to the staging devicegraph" do
-          expect(new_devicegraph).to receive(:copy).with(storage_manager.staging)
+          expect(new_devicegraph).to receive(:safe_copy).with(storage_manager.staging)
 
           client.run
         end
@@ -148,7 +148,7 @@ describe Y2Storage::Clients::InstDiskProposal do
         before do
           allow(proposal_dialog).to receive(:proposal).and_return nil
           allow(proposal_dialog).to receive(:devicegraph).and_return new_devicegraph
-          allow(new_devicegraph).to receive(:copy)
+          allow(new_devicegraph).to receive(:safe_copy)
         end
 
         it "sets the proposal to nil in the storage manager" do
@@ -157,7 +157,7 @@ describe Y2Storage::Clients::InstDiskProposal do
         end
 
         it "copies the forced devicegraph to the staging devicegraph" do
-          expect(new_devicegraph).to receive(:copy).with(storage_manager.staging)
+          expect(new_devicegraph).to receive(:safe_copy).with(storage_manager.staging)
 
           client.run
         end

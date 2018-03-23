@@ -30,6 +30,46 @@ describe Y2Storage::Devicegraph do
     next_dev.nil? || device.compare_by_name(next_dev) < 0
   end
 
+  describe "#safe_copy" do
+    before do
+      fake_scenario("mixed_disks")
+    end
+
+    subject { fake_devicegraph }
+
+    context "when it tries to copy into itself" do
+      let(:other_devicegraph) { subject }
+
+      it "does not perform the copy" do
+        expect(subject).to_not receive(:copy)
+        subject.safe_copy(other_devicegraph)
+      end
+
+      it "returns false" do
+        expect(subject.safe_copy(other_devicegraph)).to eq(false)
+      end
+    end
+
+    context "when it tries to copy into another devicegraph" do
+      let(:other_devicegraph) do
+        devicegraph = subject.dup
+        disk = devicegraph.find_by_name("/dev/sda")
+        disk.delete_partition_table
+        devicegraph
+      end
+
+      it "copies the content into the given devicegraph" do
+        expect(subject).to_not eq(other_devicegraph)
+        subject.safe_copy(other_devicegraph)
+        expect(subject).to eq(other_devicegraph)
+      end
+
+      it "returns true" do
+        expect(subject.safe_copy(other_devicegraph)).to eq(true)
+      end
+    end
+  end
+
   describe "#actiongraph" do
     def with_sda2_deleted(initial_graph)
       graph = initial_graph.dup

@@ -320,8 +320,7 @@ module Y2Storage
     #
     # @param [Devicegraph] devicegraph to copy
     def copy_to_staging(devicegraph)
-      # Never try to copy staging into itself. Bug#1069671
-      devicegraph.copy(staging) unless staging.equal?(devicegraph)
+      devicegraph.safe_copy(staging)
       staging_changed
     end
 
