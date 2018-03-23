@@ -105,7 +105,7 @@ module Y2Storage
       # @return [Boolean]
       #
       def subvolume_can_be_created?(path)
-        return true unless exists_in_probed?
+        return true unless exists_in_raw_probed?
         !subvolume_descendants_exist?(path)
       end
 

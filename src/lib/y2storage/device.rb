@@ -33,6 +33,7 @@ module Y2Storage
   class Device
     include Yast::Logger
     include StorageClassWrapper
+
     wrap_class Storage::Device,
       downcast_to: ["BlkDevice", "Mountable", "MountPoint", "PartitionTables::Base", "LvmPv", "LvmVg"]
 
@@ -120,12 +121,17 @@ module Y2Storage
     #   @return [Boolean]
     storage_forward :exists_in_devicegraph?
 
-    # @!method exists_in_probed?
-    #   Check whether the device exists in the probed devicegraph.
+    # @!method exists_in_raw_probed?
+    #   Check whether the device exists in the raw probed devicegraph
+    #
+    #   @note From storage-ng point of view, probed devicegraph is a
+    #       sanitized version of the devicegraph probed by libstorage-ng.
+    #
+    #   @see StorageManager#raw_probed
     #   @see exists_in_devicegraph?
     #
     #   @return [Boolean]
-    storage_forward :exists_in_probed?
+    storage_forward :exists_in_raw_probed?, to: :exists_in_probed?
 
     # @!method exists_in_staging?
     #   Check whether the device exists in the staging devicegraph.
