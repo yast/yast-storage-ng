@@ -126,8 +126,8 @@ module Y2Storage
         pools, regular = drive.partitions.partition(&:pool)
         (pools + regular).each_with_object(vg.lvs) do |lv_section, lvs|
           lv = planned_for_lv(drive, vg, lv_section)
-          next if lv.nil?
-          lvs << lv unless lv.lv_type == LvType::THIN
+          next if lv.nil? || lv.lv_type == LvType::THIN
+          lvs << lv
         end
 
         vg.thin_pool_lvs.each { |v| add_thin_pool_lv_reuse(v, drive) }
@@ -150,8 +150,7 @@ module Y2Storage
         lv = Y2Storage::Planned::LvmLv.new(nil, nil)
         lv.logical_volume_name = section.lv_name
         lv.lv_type = lv_type_for(section)
-        lv.stripe_size = DiskSize.KiB(section.stripe_size.to_i) if section.stripe_size
-        lv.stripes = section.stripes
+        add_stripes(lv, section)
         device_config(lv, section, drive)
         if section.used_pool
           return nil unless add_to_thin_pool(lv, vg, section)
@@ -558,6 +557,16 @@ module Y2Storage
         return false unless mount_point
         spec = VolumeSpecification.for(mount_point)
         !!spec && spec.btrfs_read_only?
+      end
+
+      # Sets stripes related attributes
+      #
+      # @param lv      [Planned::LvmLv] Planned logical volume
+      # @param section [AutoinstProfile::PartitionSection] partition section describing
+      #   the logical volume
+      def add_stripes(lv, section)
+        lv.stripe_size = DiskSize.KiB(section.stripe_size.to_i) if section.stripe_size
+        lv.stripes = section.stripes
       end
     end
   end
