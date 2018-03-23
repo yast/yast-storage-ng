@@ -21,4 +21,5 @@
 
 require "y2storage/callbacks/activate"
 require "y2storage/callbacks/probe"
+require "y2storage/callbacks/sanitize"
 require "y2storage/callbacks/commit"
