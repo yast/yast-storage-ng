@@ -44,7 +44,7 @@ module Y2Storage
       # It offers the user the possibility to sanitize the devicegraph.
       #
       # @param errors [Array<String>] Errors detected in probed devicegraph.
-      # @return [Boolean] true if the user decides to sanitize de devicegraph.
+      # @return [Boolean] true if the user decides to sanitize the devicegraph.
       def sanitize?(errors)
         log.info "probed devicegraph contains errors, asking the user whether to sanitize it"
         log.info "Errors details: #{errors}"
