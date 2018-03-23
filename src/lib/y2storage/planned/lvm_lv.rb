@@ -144,7 +144,7 @@ module Y2Storage
       #
       # To be used when lv_type is LvType::THIN_POOL
       #
-      # @param [Planned::LvmLv] Planned logical volume
+      # @param lv [Planned::LvmLv] Planned logical volume
       def add_thin_lv(lv)
         raise ArgumentError unless lv.lv_type == LvType::THIN
         lv.thin_pool = self
@@ -181,7 +181,7 @@ module Y2Storage
 
       # Returns the size for the logical volume in a given thin pool
       #
-      # @param container [LvmVg,LvmLv] Volume group or thin pool where the logical volume will
+      # @param thin_pool [LvmVg,LvmLv] Volume group or thin pool where the logical volume will
       #   be placed
       # @return [DiskSize]
       def size_in_thin_pool(thin_pool)
