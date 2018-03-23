@@ -313,9 +313,7 @@ module Y2Storage
       # to be reused if any if its logical volumes will be reused.
       #
       # @param lv   [Planned::LvmLv] Thin logical volume
-      # @param drive [AutoinstProfile::DriveSection] drive section describing
-      #   the volume group
-      def add_thin_pool_lv_reuse(lv, drive)
+      def add_thin_pool_lv_reuse(lv, _drive)
         return unless lv.thin_lvs.any?(&:reuse?)
         lv_to_reuse = devicegraph.lvm_lvs.find { |v| lv.logical_volume_name == v.lv_name }
         lv.reuse_name = lv_to_reuse.name
@@ -365,14 +363,8 @@ module Y2Storage
       # @param devicegraph [Devicegraph] Devicegraph to search for the logical volume to reuse
       # @param vg_name     [String]      Volume group name to search for the logical volume to reuse
       # @param part_section   [AutoinstProfile::PartitionSection] LV specification from AutoYaST
-      def find_lv_to_reuse(devicegraph, vg_name, part_section)
-        vg = devicegraph.lvm_vgs.find { |v| v.vg_name == vg_name }
-        if vg.nil?
-          issues_list.add(:missing_reusable_device, part_section)
-          return
-        end
-
-        parent = part_section.used_pool ? find_thin_pool_lv(vg, part_section) : vg
+      def find_lv_to_reuse(_devicegraph, vg_name, part_section)
+        parent = find_lv_parent(devicegraph, vg_name, part_section)
         return if parent.nil?
 
         device =
@@ -387,6 +379,19 @@ module Y2Storage
 
         issues_list.add(:missing_reusable_device, part_section) unless device
         :missing_info == device ? nil : device
+      end
+
+      # @param devicegraph [Devicegraph] Devicegraph to search for the logical volume to reuse
+      # @param vg_name     [String]      Volume group name to search for the logical volume
+      # @param part_section   [AutoinstProfile::PartitionSection] LV specification from AutoYaST
+      def find_lv_parent(devicegraph, vg_name, part_section)
+        vg = devicegraph.lvm_vgs.find { |v| v.vg_name == vg_name }
+        if vg.nil?
+          issues_list.add(:missing_reusable_device, part_section)
+          return
+        end
+
+        part_section.used_pool ? find_thin_pool_lv(vg, part_section) : vg
       end
 
       # @param devicegraph [Devicegraph] Devicegraph to search for the volume group to reuse
