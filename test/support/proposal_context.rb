@@ -61,7 +61,8 @@ RSpec.shared_context "proposal" do
   let(:disk_analyzer) { Y2Storage::DiskAnalyzer.new(fake_devicegraph) }
   let(:storage_arch) { instance_double("::Storage::Arch") }
   let(:resize_info) do
-    instance_double("Y2Storage::ResizeInfo", resize_ok?: true, min_size: 40.GiB, max_size: 800.GiB)
+    instance_double("Y2Storage::ResizeInfo", resize_ok?: true, min_size: 40.GiB, max_size: 800.GiB,
+      reasons: 0, reason_texts: [])
   end
 
   let(:settings_format) { :legacy }

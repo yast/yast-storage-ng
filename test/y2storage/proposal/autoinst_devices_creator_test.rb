@@ -241,13 +241,15 @@ describe Y2Storage::Proposal::AutoinstDevicesCreator do
 
       let(:info_sda1) do
         instance_double(
-          Y2Storage::ResizeInfo, min_size: 1.GiB, max_size: 250.GiB, resize_ok?: true
+          Y2Storage::ResizeInfo, min_size: 1.GiB, max_size: 250.GiB, resize_ok?: true,
+          reasons: 0, reason_texts: []
         )
       end
 
       let(:info_sda2) do
         instance_double(
-          Y2Storage::ResizeInfo, min_size: 1.GiB, max_size: 52.GiB, resize_ok?: true
+          Y2Storage::ResizeInfo, min_size: 1.GiB, max_size: 52.GiB, resize_ok?: true,
+          reasons: 0, reason_texts: []
         )
       end
 
@@ -295,13 +297,15 @@ describe Y2Storage::Proposal::AutoinstDevicesCreator do
 
       let(:info_lv1) do
         instance_double(
-          Y2Storage::ResizeInfo, min_size: 1.GiB, max_size: 250.GiB, resize_ok?: true
+          Y2Storage::ResizeInfo, min_size: 1.GiB, max_size: 250.GiB, resize_ok?: true,
+          reasons: 0, reason_texts: []
         )
       end
 
       let(:info_lv2) do
         instance_double(
-          Y2Storage::ResizeInfo, min_size: 1.GiB, max_size: 52.GiB, resize_ok?: true
+          Y2Storage::ResizeInfo, min_size: 1.GiB, max_size: 52.GiB, resize_ok?: true,
+          reasons: 0, reason_texts: []
         )
       end
 

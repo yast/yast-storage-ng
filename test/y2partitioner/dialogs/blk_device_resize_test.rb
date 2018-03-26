@@ -53,9 +53,11 @@ describe Y2Partitioner::Dialogs::BlkDeviceResize do
 
   let(:resize_info) do
     instance_double(Y2Storage::ResizeInfo,
-      resize_ok?: true,
-      min_size:   10.MiB,
-      max_size:   100.GiB)
+      resize_ok?:   true,
+      min_size:     10.MiB,
+      max_size:     100.GiB,
+      reasons:      0,
+      reason_texts: ["Unspecified"])
   end
 
   subject { described_class.new(partition) }
@@ -154,9 +156,11 @@ describe Y2Partitioner::Dialogs::BlkDeviceResize do
 
     let(:resize_info) do
       instance_double(Y2Storage::ResizeInfo,
-        resize_ok?: true,
-        min_size:   min_size,
-        max_size:   max_size)
+        resize_ok?:   true,
+        min_size:     min_size,
+        max_size:     max_size,
+        reasons:      0,
+        reason_texts: ["Unspecified"])
     end
 
     let(:current_widget) { max_size_widget }

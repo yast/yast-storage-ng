@@ -197,7 +197,11 @@ describe Y2Storage::Partition do
 
     before { allow(partition).to receive(:detect_resize_info).and_return resize_info }
 
-    let(:resize_info) { double(Y2Storage::ResizeInfo, resize_ok?: ok, min_size: min, max_size: max) }
+    let(:resize_info) do
+      double(Y2Storage::ResizeInfo, resize_ok?: ok,
+        min_size: min, max_size: max,
+        reasons: 0, reason_texts: [])
+    end
     let(:ok) { true }
     let(:min) { 2.GiB }
     let(:max) { 5.GiB }

@@ -258,7 +258,8 @@ describe Y2Storage::AutoinstProposal do
       let(:resize_ok) { true }
       let(:resize_info) do
         instance_double(
-          Y2Storage::ResizeInfo, min_size: 512.MiB, max_size: 245.GiB, resize_ok?: resize_ok
+          Y2Storage::ResizeInfo, min_size: 512.MiB, max_size: 245.GiB, resize_ok?: resize_ok,
+            reasons: 0, reason_texts: []
         )
       end
 
@@ -426,7 +427,8 @@ describe Y2Storage::AutoinstProposal do
 
       let(:resize_info) do
         instance_double(
-          Y2Storage::ResizeInfo, min_size: 512.MiB, max_size: 2.GiB, resize_ok?: true
+          Y2Storage::ResizeInfo, min_size: 512.MiB, max_size: 2.GiB, resize_ok?: true,
+            reasons: 0, reason_texts: []
         )
       end
 
