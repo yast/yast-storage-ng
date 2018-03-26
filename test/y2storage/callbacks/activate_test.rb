@@ -77,16 +77,61 @@ describe Y2Storage::Callbacks::Activate do
   end
 
   describe "#multipath" do
+    before do
+      allow(ENV).to receive(:[]) do |key|
+        env_vars[key]
+      end
+      allow(ENV).to receive(:keys).and_return env_vars.keys
+    end
+
     context "if libstorage-ng found no multipath in the system" do
       let(:mp_detected) { false }
 
-      it "does not ask the user" do
-        expect(Yast::Popup).to_not receive(:YesNo)
-        subject.multipath(mp_detected)
+      context "and LIBSTORAGE_MULTIPATH_AUTOSTART was activated on boot" do
+        let(:env_vars) do
+          {
+            # Upcase one has precedence
+            "LIBSTORAGE_MULTIPATH_AUTOSTART" => "on",
+            "libstorage_multipath_autostart" => "no"
+          }
+        end
+
+        it "does not ask the user" do
+          expect(Yast::Popup).to_not receive(:YesNo)
+          subject.multipath(mp_detected)
+        end
+
+        it "returns true" do
+          expect(subject.multipath(mp_detected)).to eq true
+        end
       end
 
-      it "returns false" do
-        expect(subject.multipath(mp_detected)).to eq false
+      context "and LIBSTORAGE_MULTIPATH_AUTOSTART was deactivated on boot" do
+        let(:env_vars) do
+          { "LIBSTORAGE_MULTIPATH_AUTOSTART" => "off" }
+        end
+
+        it "does not ask the user" do
+          expect(Yast::Popup).to_not receive(:YesNo)
+          subject.multipath(mp_detected)
+        end
+
+        it "returns false" do
+          expect(subject.multipath(mp_detected)).to eq false
+        end
+      end
+
+      context "and LIBSTORAGE_MULTIPATH_AUTOSTART was not specified on boot" do
+        let(:env_vars) { {} }
+
+        it "does not ask the user" do
+          expect(Yast::Popup).to_not receive(:YesNo)
+          subject.multipath(mp_detected)
+        end
+
+        it "returns false" do
+          expect(subject.multipath(mp_detected)).to eq false
+        end
       end
     end
 
@@ -98,25 +143,56 @@ describe Y2Storage::Callbacks::Activate do
       end
       let(:answer) { true }
 
-      it "asks the user whether to activate multipath" do
-        expect(Yast::Popup).to receive(:YesNo).once
-        subject.multipath(mp_detected)
+      RSpec.shared_examples "ask user about multipath" do
+        it "asks the user whether to activate multipath" do
+          expect(Yast::Popup).to receive(:YesNo).once
+          subject.multipath(mp_detected)
+        end
+
+        context "if the user accepts" do
+          let(:answer) { true }
+
+          it "returns true" do
+            expect(subject.multipath(mp_detected)).to eq true
+          end
+        end
+
+        context "if the user rejects" do
+          let(:answer) { false }
+
+          it "returns false" do
+            expect(subject.multipath(mp_detected)).to eq false
+          end
+        end
       end
 
-      context "if the user accepts" do
-        let(:answer) { true }
+      context "and LIBSTORAGE_MULTIPATH_AUTOSTART was activated on boot" do
+        let(:env_vars) do
+          { "LIBSTORAGE_MULTIPATH_AUTOSTART" => "1" }
+        end
+
+        it "does not ask the user" do
+          expect(Yast::Popup).to_not receive(:YesNo)
+          subject.multipath(mp_detected)
+        end
 
         it "returns true" do
           expect(subject.multipath(mp_detected)).to eq true
         end
       end
 
-      context "if the user rejects" do
-        let(:answer) { false }
-
-        it "returns false" do
-          expect(subject.multipath(mp_detected)).to eq false
+      context "and LIBSTORAGE_MULTIPATH_AUTOSTART was deactivated on boot" do
+        let(:env_vars) do
+          { "LIBSTORAGE_MULTIPATH_AUTOSTART" => "off" }
         end
+
+        include_examples "ask user about multipath"
+      end
+
+      context "and LIBSTORAGE_MULTIPATH_AUTOSTART was not specified on boot" do
+        let(:env_vars) { {} }
+
+        include_examples "ask user about multipath"
       end
     end
   end
