@@ -22,6 +22,7 @@
 require "yast"
 require "y2storage"
 require "y2partitioner/device_graphs"
+require "y2partitioner/blk_device_restorer"
 require "y2partitioner/widgets/mkfs_optiondata"
 require "y2storage/filesystems/btrfs"
 require "y2storage/subvol_specification"
@@ -78,6 +79,7 @@ module Y2Partitioner
           @blk_device_name = device.name
           @encrypt = blk_device.encrypted?
           @wizard_title = wizard_title
+          @restorer = BlkDeviceRestorer.new(blk_device)
         end
 
         # Plain block device being modified, i.e. device where the filesystem is
@@ -190,8 +192,6 @@ module Y2Partitioner
             mount_path = nil
           end
 
-          @backup_graph = working_graph.dup if filesystem && !new?(filesystem)
-
           delete_filesystem
           create_filesystem(type, label: label)
           self.partition_id = filesystem.type.default_partition_id
@@ -212,7 +212,7 @@ module Y2Partitioner
           return if filesystem.nil?
           return unless new?(filesystem)
 
-          if @backup_graph
+          if @restorer.can_restore_from_system?
             restore_filesystem
           else
             delete_filesystem
@@ -298,7 +298,12 @@ module Y2Partitioner
         # @param path [String]
         # @param options [Hash] options for the mount point (e.g., { mount_by: :uuid })
         def restore_mount_point(path, options = {})
-          return if filesystem.nil?
+          if filesystem.nil?
+            # No chance to restore the mount point, let's unshadow its
+            # potentially shadowed subvolumes
+            Y2Storage::Filesystems::Btrfs.refresh_subvolumes_shadowing(working_graph)
+            return
+          end
 
           before_change_mount_point
 
@@ -325,6 +330,8 @@ module Y2Partitioner
           elsif blk_device.encrypted? && !encrypt
             blk_device.remove_encryption
           end
+        ensure
+          @restorer.update_checkpoint
         end
 
         # Whether is possible to define the generic format options for the current
@@ -448,13 +455,9 @@ module Y2Partitioner
         def restore_filesystem
           mount_path = filesystem.mount_path
           mount_by = filesystem.mount_by
-          label = filesystem.label
 
-          @backup_graph.copy(working_graph)
-          @backup_graph = nil
+          @restorer.restore_from_system
           @encrypt = blk_device.encrypted?
-
-          filesystem.label = label if label
 
           restore_mount_point(mount_path, mount_by: mount_by)
         end
@@ -537,7 +540,7 @@ module Y2Partitioner
         end
 
         def after_change_mount_point
-          if btrfs?
+          if btrfs? && mount_point
             add_proposed_subvolumes
             update_mount_points
           end

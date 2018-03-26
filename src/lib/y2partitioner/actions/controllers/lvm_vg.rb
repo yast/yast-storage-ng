@@ -24,6 +24,7 @@ require "y2storage"
 require "y2partitioner/device_graphs"
 require "y2partitioner/size_parser"
 require "y2partitioner/ui_state"
+require "y2partitioner/blk_device_restorer"
 
 module Y2Partitioner
   module Actions
@@ -185,9 +186,6 @@ module Y2Partitioner
               "The device #{device} is already a physical volume of the volume group #{vg_name}"
           end
 
-          # TODO: save the current status and descendants of the device,
-          # in case the device is removed from the volume group during this
-          # execution of the partitioner.
           device.adapted_id = Y2Storage::PartitionId::LVM if device.is?(:partition)
           device = device.encryption if device.encryption
           device.remove_descendants
@@ -205,9 +203,9 @@ module Y2Partitioner
               "The device #{device} is not used as physical volumen by the volume group #{vg_name}"
           end
 
-          # TODO: restore status and descendants of the device when it makes sense
           device = device.encryption if device.encryption
           vg.remove_lvm_pv(device)
+          BlkDeviceRestorer.new(device.plain_device).restore_from_checkpoint
         end
 
       private

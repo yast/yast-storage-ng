@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Mon Mar 26 09:02:11 UTC 2018 - ancor@suse.com
+
+- Partitioner: fixed an error that was causing filesystems to be
+  deleted in some combination of actions (part of fate#318196).
+
+-------------------------------------------------------------------
 Fri Mar 23 06:33:21 UTC 2018 - igonzalezsosa@suse.com
 
 - AutoYaST: add support for LVM thin pools (bsc#1086596).
