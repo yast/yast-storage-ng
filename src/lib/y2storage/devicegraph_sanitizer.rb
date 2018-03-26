@@ -126,13 +126,32 @@ module Y2Storage
     def error_for_lvm_vg(vg)
       return nil unless missing_pvs?(vg)
 
-      message = format(
-        # TRANSLATORS: %{name} is the name of a LVM Volume Group (e.g., /dev/vg1)
-        _("The volume group %{name} is incomplete because some physical volumes are missing"),
-        name: vg.name
-      )
+      Error.new(vg, error_message_for_lvm_vg(vg))
+    end
 
-      Error.new(vg, message)
+    # Error message for an incomplete LVM VG (missing PVs)
+    #
+    # @param vg [Y2Storage::LvmVg]
+    # @return [String]
+    def error_message_for_lvm_vg(vg)
+      if Yast::Mode.installation
+        # TRANSLATORS: %{name} is the name of an LVM Volume Group (e.g., /dev/vg1)
+        format(
+          _("The volume group %{name} is incomplete because some physical volumes are missing.\n" \
+            "If you continue, the volume group will be deleted later as part of the installation\n" \
+            "process. Moreover, incomplete volume groups are ignored by the partitioning proposal\n" \
+            "and are not visible in the Expert Partitioner."),
+          name: vg.name
+        )
+      else
+        # TRANSLATORS: %{name} is the name of an LVM Volume Group (e.g., /dev/vg1)
+        format(
+          _("The volume group %{name} is incomplete because some physical volumes are missing.\n" \
+            "Incomplete volume groups are not visible in the Partitioner and will be deleted at the\n" \
+            "final step, when all the changes are performed in the system."),
+          name: vg.name
+        )
+      end
     end
 
     # Checks whether an LVM VG has missing PVs

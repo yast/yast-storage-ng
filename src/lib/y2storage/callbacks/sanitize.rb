@@ -50,11 +50,10 @@ module Y2Storage
         log.info "Errors details: #{errors}"
 
         header = _("The following errors were detected in the system:")
-        error_messages = errors.join("\n")
-        details = _("If you continue, those devices will be deleted.")
+        error_messages = errors.join("\n\n")
         confirm = _("Do you want to continue?")
 
-        message = "#{header}\n\n#{error_messages}\n\n#{details}\n#{confirm}"
+        message = "#{header}\n\n#{error_messages}\n\n#{confirm}"
 
         result = Yast::Report.ErrorAnyQuestion(
           Yast::Popup.NoHeadline,
