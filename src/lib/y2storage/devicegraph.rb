@@ -130,7 +130,7 @@ module Y2Storage
 
     # Copies the devicegraph into another one, but avoiding to copy into itself
     #
-    # @retrun[Boolean] true if the devicegraph was copied; false otherwise.
+    # @return[Boolean] true if the devicegraph was copied; false otherwise.
     def safe_copy(devicegraph)
       # Never try to copy into itself. Bug#1069671
       return false if devicegraph.equal?(self)

@@ -23,10 +23,12 @@ require "yast"
 require "yast/i18n"
 require "y2storage/devicegraph"
 
+Yast.import "Mode"
+
 module Y2Storage
   # Class to sanitize a devicegraph
   #
-  # A devicegraph can contain certain errors, for example, a LVM VG with missing PVs.
+  # A devicegraph can contain certain errors, for example, an LVM VG with missing PVs.
   # This class fix wrong devices (typically by removing them).
   #
   # @example
@@ -89,7 +91,7 @@ module Y2Storage
       devicegraph
     end
 
-    # Fixes an error with a LVM VG in a given devicegraph
+    # Fixes an error with an LVM VG in a given devicegraph
     #
     # @note The given devicegraph is modified.
     #
@@ -117,7 +119,7 @@ module Y2Storage
       devicegraph.lvm_vgs.map { |v| error_for_lvm_vg(v) }.compact
     end
 
-    # Error with a LVM VGs
+    # Error with an LVM VGs
     #
     # @param vg [Y2Storage::LvmVg] vg to check
     # @return [DevicegraphSanitizer::Error, nil] nil if the LVM VG is correct
@@ -133,7 +135,7 @@ module Y2Storage
       Error.new(vg, message)
     end
 
-    # Checks whether a LVM VG has missing PVs
+    # Checks whether an LVM VG has missing PVs
     #
     # @param vg [Y2Storage::LvmVg]
     # @return [Boolean]

@@ -84,7 +84,7 @@ module Y2Partitioner
 
       # Updates the value of {#actions}
       #
-      # @note Actions are obtained from the raw probed devicegraph
+      # @note Actions are calculated with the raw probed devicegraph as starting point
       #   (see {Y2Storage::StorageManager#raw_probed}).
       def calculate_actions
         actiongraph = current_graph.actiongraph

@@ -398,16 +398,18 @@ module Y2Storage
 
     # Sanitizes the raw probed devicegraph
     #
-    # @note The raw probed devicegraph can contain some errors (e.g., incomplete LVM VGs).
-    #   This method tries to fix all errors from raw probed.
+    # The raw probed devicegraph can contain some errors (e.g., incomplete LVM VGs).
+    # This method tries to fix all errors from raw probed.
     #
-    #   With the default callbacks, the user is asked whether to sanitize the raw probed
-    #   devicegraph when it contains some errors.
+    # With the default callbacks, the user is asked whether to sanitize the raw probed
+    # devicegraph when it contains some errors.
     #
-    #   The raw probed devicegraph remains untouched, and the new sanitized one is internally
-    #   saved and copied into the staging devicegraph.
+    # The raw probed devicegraph remains untouched, and the new sanitized one is internally
+    # saved and copied into the staging devicegraph.
     #
-    # @raise [Y2Storage::Error] if the raw probed cannot be sanitized
+    # @raise [Y2Storage::Error] if the user decides to not sanitize. In that case, the
+    #   probed and staging devicegraphs also remain untouched, but they are useless
+    #   for proposal/partitioner.
     #
     # @param callbacks [Y2Storage::Callbacks::Sanitize]
     def sanitize_probed(callbacks = nil)
