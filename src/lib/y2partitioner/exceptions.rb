@@ -1,6 +1,6 @@
 # encoding: utf-8
 
-# Copyright (c) [2017-2018] SUSE LLC
+# Copyright (c) [2018] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -19,7 +19,11 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "y2storage/callbacks/activate"
-require "y2storage/callbacks/probe"
-require "y2storage/callbacks/sanitize"
-require "y2storage/callbacks/commit"
+module Y2Partitioner
+  # Base class for Y2Partitioner exceptions
+  class Error < RuntimeError
+  end
+  # Abort is forced
+  class ForcedAbortError < Error
+  end
+end

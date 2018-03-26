@@ -219,7 +219,7 @@ describe Y2Storage::Filesystems::Btrfs do
 
     context "when the filesystem is going to be formatted" do
       before do
-        allow(filesystem).to receive(:exists_in_probed?) .and_return(false)
+        allow(filesystem).to receive(:exists_in_raw_probed?).and_return(false)
       end
 
       it "can insert a subvolume into an existing hierarchy" do
@@ -231,7 +231,7 @@ describe Y2Storage::Filesystems::Btrfs do
 
     context "when the filesystem already exists" do
       before do
-        allow(filesystem).to receive(:exists_in_probed?) .and_return(true)
+        allow(filesystem).to receive(:exists_in_raw_probed?).and_return(true)
       end
 
       context "and the subvolume does not fit in the existing hierarchy" do
@@ -287,7 +287,7 @@ describe Y2Storage::Filesystems::Btrfs do
 
     context "when the filesystem is going to be formatted" do
       before do
-        allow(filesystem).to receive(:exists_in_probed?) .and_return(false)
+        allow(filesystem).to receive(:exists_in_raw_probed?).and_return(false)
       end
 
       context "and a subvolume must be inserted into an existing hierarchy" do
@@ -307,7 +307,7 @@ describe Y2Storage::Filesystems::Btrfs do
 
     context "when the filesystem already exists" do
       before do
-        allow(filesystem).to receive(:exists_in_probed?) .and_return(true)
+        allow(filesystem).to receive(:exists_in_raw_probed?).and_return(true)
       end
 
       context "and a subvolume must be inserted into an existing hierarchy" do

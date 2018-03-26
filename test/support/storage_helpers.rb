@@ -65,6 +65,22 @@ module Yast
         Y2Storage::StorageManager.instance.probed
       end
 
+      def devicegraph_from(file_name)
+        storage = Y2Storage::StorageManager.instance.storage
+        st_graph = Storage::Devicegraph.new(storage)
+        graph = Y2Storage::Devicegraph.new(st_graph)
+
+        if file_name.end_with?(".xml")
+          input = input_file_for(file_name, suffix: nil)
+          st_graph.load(input)
+        else
+          input = input_file_for(file_name)
+          Y2Storage::FakeDeviceFactory.load_yaml_file(graph, input)
+        end
+
+        graph
+      end
+
       def partition_double(name = "", disk_size = Y2Storage::DiskSize.MiB(10))
         instance_double("Y2Storage::Partition", name: name, size: disk_size)
       end

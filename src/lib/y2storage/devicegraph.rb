@@ -128,6 +128,17 @@ module Y2Storage
     end
     alias_method :duplicate, :dup
 
+    # Copies the devicegraph into another one, but avoiding to copy into itself
+    #
+    # @return[Boolean] true if the devicegraph was copied; false otherwise.
+    def safe_copy(devicegraph)
+      # Never try to copy into itself. Bug#1069671
+      return false if devicegraph.equal?(self)
+
+      copy(devicegraph)
+      true
+    end
+
     # Set of actions needed to get this devicegraph
     #
     # By default the starting point is the probed devicegraph

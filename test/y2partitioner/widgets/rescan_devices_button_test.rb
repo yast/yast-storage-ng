@@ -46,7 +46,7 @@ describe Y2Partitioner::Widgets::RescanDevicesButton do
       end
 
       it "probes again" do
-        expect(manager).to receive(:probe)
+        expect(manager).to receive(:probe).and_return(true)
         subject.handle
       end
 
@@ -57,6 +57,16 @@ describe Y2Partitioner::Widgets::RescanDevicesButton do
 
       it "returns :redraw" do
         expect(subject.handle).to eq(:redraw)
+      end
+
+      context "and the probing could not be correctly performed" do
+        before do
+          allow(manager).to receive(:probe).and_return(false)
+        end
+
+        it "raises an exception" do
+          expect { subject.handle }.to raise_error(Y2Partitioner::ForcedAbortError)
+        end
       end
     end
   end
