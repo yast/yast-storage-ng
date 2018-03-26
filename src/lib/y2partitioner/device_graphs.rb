@@ -73,6 +73,9 @@ module Y2Partitioner
     # so it can be restored later.
     #
     # @see BlkDeviceRestorer#update_checkpoint
+    #
+    # @param device [Y2Storage::Device] index, i.e. device to which the
+    #   checkpoint is associated
     def update_checkpoint(device)
       @checkpoints[device.sid] = current.dup
     end

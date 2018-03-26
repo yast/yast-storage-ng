@@ -28,8 +28,9 @@ module Y2Partitioner
   #
   # This is used by the Partitioner to implement the "Do Not Format" option
   # (it restores the filesystem in the system devicegraph) and to implement
-  # removing devices from a new MD or LVM (it restores the filesystem that was
-  # associated to the device when it was initially added to the MD or LVM).
+  # removing devices from the in-memory representation of an MD or LVM (it
+  # restores the filesystem that was associated to the device when it was
+  # initially added to the MD or LVM).
   class BlkDeviceRestorer
     # Target device
     #
@@ -65,7 +66,9 @@ module Y2Partitioner
     # makes sense.
     #
     # If no checkpoint has been defined, this is equivalent to
-    # {#restore_from_system}.
+    # {#restore_from_system}. That is, if there is no checkpoint, it
+    # restores from the system device or does nothing if the device is not in
+    # the system devicegraph either.
     #
     # This restores the relevant attributes, the encryption device if any and
     # the filesystem if any, but not the mount point. Any possible previous
