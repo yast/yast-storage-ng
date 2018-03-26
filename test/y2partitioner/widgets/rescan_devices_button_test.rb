@@ -59,7 +59,7 @@ describe Y2Partitioner::Widgets::RescanDevicesButton do
         expect(subject.handle).to eq(:redraw)
       end
 
-      context "and the user aborts instead of sanitizing the devicegraph" do
+      context "and the probing could not be correctly performed" do
         before do
           allow(manager).to receive(:probe).and_return(false)
         end

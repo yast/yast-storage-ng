@@ -73,8 +73,9 @@ module Y2Partitioner
       #
       # @note A message is shown during the reprobing action.
       #
-      # @raise [Y2Partitioner::ForcedAbortError] When the probed devicegraph contains errors
-      #   and the user decices to not sanitize
+      # @raise [Y2Partitioner::ForcedAbortError] When there is an error during probing
+      #   and the user decides to abort, or probed devicegraph contains errors and the
+      #   user decides to not sanitize.
       def reprobe
         Yast::Popup.Feedback("", _("Rescanning disks...")) do
           probe_performed = Y2Storage::StorageManager.instance.probe
