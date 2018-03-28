@@ -1,13 +1,34 @@
-require "y2storage"
+# encoding: utf-8
+
+# Copyright (c) [2017] SUSE LLC
+#
+# All Rights Reserved.
+#
+# This program is free software; you can redistribute it and/or modify it
+# under the terms of version 2 of the GNU General Public License as published
+# by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+# more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, contact SUSE LLC.
+#
+# To contact SUSE LLC about this file by physical or electronic mail, you may
+# find current contact information at www.suse.com.
+
 require "yast"
+require "yast2/popup"
 require "cwm/dialog"
 require "cwm/custom_widget"
 require "cwm/common_widgets"
+require "y2storage"
 require "y2partitioner/widgets/controller_radio_buttons"
 require "y2partitioner/device_graphs"
 require "y2partitioner/size_parser"
-
-Yast.import "Popup"
+require "y2partitioner/filesystem_errors"
 
 module Y2Partitioner
   module Dialogs
@@ -134,6 +155,8 @@ module Y2Partitioner
       #
       # @note The device is updated with the selected size.
       class SizeSelector < Widgets::ControllerRadioButtons
+        include FilesystemErrors
+
         # Constructor
         #
         # @param device [Y2Storage::Partition, Y2Storage::LvmLv]
@@ -179,7 +202,7 @@ module Y2Partitioner
         # Updates the device with the new size
         def store
           device.resize(current_widget.size)
-          show_warnings
+          show_result_warnings
         end
 
         # @macro seeAbstractWidget
@@ -188,28 +211,35 @@ module Y2Partitioner
         end
 
         # @macro seeAbstractWidget
-        # Whether the indicated value is valid. It must be a disk size
-        # between min and max possible sizes.
+        # Whether the given size is valid. It must be a size between the
+        # min and max possible sizes.
         #
         # @note An error popup is shown when the given size is not valid.
+        #   A warning popup is shown if there are some warnings.
         #
-        # @return [Boolean] true if the given size is valid; false otherwise.
+        # @see #errors
+        # @see #validation_warnings
+        #
+        # @return [Boolean] true if the given size is valid and the user
+        #   decides to continue despite of the warnings; false otherwise.
         def validate
-          v = current_widget.size
-          return true unless v.nil? || v < min_size || v > max_size
+          current_errors = errors
+          current_warnings = validation_warnings
 
-          min_s = min_size.human_ceil
-          max_s = max_size.human_floor
-          Yast::Popup.Error(
-            format(
-              # TRANSLATORS: error popup message, where %{min} and %{max} are replaced by sizes.
-              _("The size entered is invalid. Enter a size between %{min} and %{max}."),
-              min: min_s,
-              max: max_s
-            )
-          )
+          return true if current_errors.empty? && current_warnings.empty?
+
           Yast::UI.SetFocus(Id(widgets.last.widget_id))
-          false
+
+          if current_errors.any?
+            message = current_errors.join("\n\n")
+            Yast2::Popup.show(message, headline: :error)
+            false
+          else
+            message = current_warnings
+            message << _("Do you want to continue with the current setup?")
+            message = message.join("\n\n")
+            Yast2::Popup.show(message, headline: :warning, buttons: :yes_no) == :yes
+          end
         end
 
       private
@@ -251,28 +281,83 @@ module Y2Partitioner
           device.size
         end
 
+        # Errors detected in the given size
+        #
+        # @see #size_limits_error
+        #
+        # @return [Array<String>]
+        def errors
+          [size_limits_error].compact
+        end
+
+        # Error when the given size is not between the allowed min and max values
+        #
+        # @return [String, nil] nil if the size is valid.
+        def size_limits_error
+          v = current_widget.size
+          return nil if v && v >= min_size && v <= max_size
+
+          min_s = min_size.human_ceil
+          max_s = max_size.human_floor
+
+          format(
+            # TRANSLATORS: error popup message, where %{min} and %{max} are replaced by sizes.
+            _("The size entered is invalid. Enter a size between %{min} and %{max}."),
+            min: min_s,
+            max: max_s
+          )
+        end
+
+        # Warnings detected in the given size
+        #
+        # @see FilesysteValidation
+        #
+        # @return [Array<String>]
+        def validation_warnings
+          filesystem_errors(device.filesystem, new_size: current_widget.size)
+        end
+
         # Shows warning messages after setting the new size
         #
+        # @note A popup is shown with the warnings.
+        #
+        # @see #result_warnings
+        def show_result_warnings
+          warnings = result_warnings
+          return if warnings.empty?
+
+          message = warnings.join("\n\n")
+
+          Yast2::Popup.show(message, headline: :warning)
+        end
+
+        # Warnings after saving the given new size
+        #
         # @see #overcommitted_thin_pool_warning
-        def show_warnings
-          overcommitted_thin_pool_warning
+        #
+        # @return [Array<String>]
+        def result_warnings
+          [overcommitted_thin_pool_warning].compact
         end
 
         # Warning when the resizing device is an LVM thin pool and it is overcommitted
+        #
+        # @see #overcommitted_thin_pool?
+        #
+        # @return [String, nil] nil if the device is not a thin pool or it is not
+        #   overcommitted.
         def overcommitted_thin_pool_warning
-          return unless overcommitted_thin_pool?
+          return nil unless overcommitted_thin_pool?
 
           total_thin_size = Y2Storage::DiskSize.sum(device.lvm_lvs.map(&:size))
 
-          Yast::Popup.Warning(
-            format(
-              _("The LVM thin pool %{name} is overcomitted "\
-                "(needs %{total_thin_size} and only has %{size}).\n" \
-                "It might not have enough space for some LVM thin volumes."),
-              name:            device.name,
-              size:            device.size.to_human_string,
-              total_thin_size: total_thin_size.to_human_string
-            )
+          format(
+            _("The LVM thin pool %{name} is overcomitted "\
+              "(needs %{total_thin_size} and only has %{size}).\n" \
+              "It might not have enough space for some LVM thin volumes."),
+            name:            device.name,
+            size:            device.size.to_human_string,
+            total_thin_size: total_thin_size.to_human_string
           )
         end
 

@@ -471,28 +471,81 @@ describe Y2Partitioner::Widgets::MdDevicesSelector do
   end
 
   describe "#validate" do
-    context "if there are enough devices in the MD array" do
-      it "shows no pop-up" do
-        expect(Yast::Popup).to_not receive(:Error)
+    before do
+      allow(subject).to receive(:filesystem_errors).and_return(warnings)
+      allow(Yast2::Popup).to receive(:show)
+        .with(anything, hash_including(headline: :warning)).and_return(accept)
+    end
+
+    let(:warnings) { [] }
+
+    let(:accept) { nil }
+
+    context "if there are not enough devices in the MD array" do
+      before do
+        controller.remove_device(dev("/dev/sda3"))
+      end
+
+      let(:warnings) { ["warning1"] }
+
+      it "shows an error pop-up" do
+        expect(Yast2::Popup).to receive(:show).with(anything, hash_including(headline: :error))
         widget.validate
       end
 
-      it "returns true" do
-        expect(widget.validate).to eq true
-      end
-    end
-
-    context "if there are not enough devices in the MD array" do
-      before { controller.remove_device(dev("/dev/sda3")) }
-
-      it "shows an error pop-up" do
-        expect(Yast::Popup).to receive(:Error)
+      it "does not show warnings" do
+        expect(Yast2::Popup).to_not receive(:show).with(anything, hash_including(headline: :warning))
         widget.validate
       end
 
       it "returns false" do
-        allow(Yast::Popup).to receive(:Error)
-        expect(widget.validate).to eq false
+        allow(Yast2::Popup).to receive(:show)
+        expect(widget.validate).to eq(false)
+      end
+    end
+
+    context "if there are enough devices in the MD array" do
+      it "does not show an error pop-up" do
+        expect(Yast2::Popup).to_not receive(:show).with(anything, hash_including(headline: :error))
+        widget.validate
+      end
+
+      context "and there are no warnings" do
+        let(:warnings) { [] }
+
+        it "does not show a warning popup" do
+          expect(Yast2::Popup).to_not receive(:show)
+          subject.validate
+        end
+
+        it "returns true" do
+          expect(subject.validate).to eq(true)
+        end
+      end
+
+      context "and there are warnings" do
+        let(:warnings) { ["warning1", "warning2"] }
+
+        it "shows a warning popup" do
+          expect(Yast2::Popup).to receive(:show).with(anything, hash_including(headline: :warning))
+          subject.validate
+        end
+
+        context "and the user accepts" do
+          let(:accept) { :yes }
+
+          it "returns true" do
+            expect(subject.validate).to eq(true)
+          end
+        end
+
+        context "and the user declines" do
+          let(:accept) { :no }
+
+          it "returns false" do
+            expect(subject.validate).to eq(false)
+          end
+        end
       end
     end
   end
