@@ -538,4 +538,45 @@ describe Y2Storage::VolumeSpecification do
       end
     end
   end
+
+  describe "#min_size_with_snapshots" do
+    context "if snapshots size is indicated" do
+      let(:volume_features) do
+        {
+          "min_size"             => "10 GiB",
+          "snapshots_size"       => "2 GiB",
+          "snapshots_percentage" => 200
+        }
+      end
+
+      it "returns min size increased by snapshots size" do
+        expect(volume.min_size_with_snapshots).to eq(12.GiB)
+      end
+    end
+
+    context "if snapshots percentage is indicated" do
+      let(:volume_features) do
+        {
+          "min_size"             => "10 GiB",
+          "snapshots_percentage" => 200
+        }
+      end
+
+      it "returns min size increased by the snapshots percentage" do
+        expect(volume.min_size_with_snapshots).to eq(30.GiB)
+      end
+    end
+
+    context "if neither snapshots size nor snapshots percentage is indicated" do
+      let(:volume_features) do
+        {
+          "min_size" => "10 GiB"
+        }
+      end
+
+      it "returns the min size" do
+        expect(volume.min_size_with_snapshots).to eq(10.GiB)
+      end
+    end
+  end
 end
