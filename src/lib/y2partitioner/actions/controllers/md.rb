@@ -64,6 +64,11 @@ module Y2Partitioner
           working_graph.find_device(@md_sid)
         end
 
+        # Removes the filesystem
+        def delete_filesystem
+          md.delete_filesystem
+        end
+
         # Partitions that can be selected to become part of the MD array
         #
         # @return [Array<Y2Storage::Partition>]

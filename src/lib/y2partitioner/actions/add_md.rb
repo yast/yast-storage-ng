@@ -40,6 +40,8 @@ module Y2Partitioner
       end
 
       def devices
+        # Delete possible filesystem when going back
+        md_controller.delete_filesystem
         result = Dialogs::Md.run(md_controller)
         md_controller.apply_default_options if result == :next
         result
