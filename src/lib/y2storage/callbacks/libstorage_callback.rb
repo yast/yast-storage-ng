@@ -121,11 +121,16 @@ module Y2Storage
       #
       # @return [String]
       def duplicated_pv_description
-        result = _(
-          "The same LVM physical volume was found in several devices.\n" \
+        result = _("The same LVM physical volume was found in several devices.\n")
+        # The user already tried LIBSTORAGE_MULTIPATH_AUTOSTART (and is not
+        # using AutoYaST), there is nothing else we can advise.
+        return result.chomp if forced_multipath? && !Yast::Mode.auto
+
+        result << _(
           "Maybe there are multipath devices in the system but multipath support\n" \
           "was not enabled.\n\n"
         )
+
         if Yast::Mode.auto
           result << _(
             "Use 'start_multipath' in the AutoYaST profile to enable multipath."
@@ -138,6 +143,27 @@ module Y2Storage
           )
         end
         result
+      end
+
+      # Whether the activation of multipath has been forced via the
+      # LIBSTORAGE_MULTIPATH_AUTOSTART boot parameter
+      #
+      # See https://en.opensuse.org/SDB:Linuxrc for details and see
+      # bsc#1082542 for an example of scenario in which this is needed.
+      #
+      # @return [Boolean]
+      def forced_multipath?
+        # Sort the keys to have a deterministic behavior and to prefer
+        # all-uppercase over the other variants, then do a case insensitive
+        # search
+        key = ENV.keys.sort.find { |k| k.match(/\ALIBSTORAGE_MULTIPATH_AUTOSTART\z/i) }
+        return false unless key
+
+        log.debug "Found key about forcing multipath: #{key.inspect}"
+        value = ENV[key]
+        # Similar to what linuxrc does, also consider the flag activated if the
+        # variable is used with no value or with "1"
+        value.casecmp?("on") || value.empty? || value == "1"
       end
     end
   end

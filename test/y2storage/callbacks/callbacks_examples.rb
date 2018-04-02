@@ -64,13 +64,31 @@ eos
 
     context "in a normal installation" do
       let(:auto) { false }
+      before { mock_env(env_vars) }
 
-      it "displays a tip about LIBSTORAGE_MULTIPATH_AUTOSTART" do
-        expect(Yast::Report).to receive(:yesno_popup) do |message|
-          expect(message).to include "the message"
-          expect(message).to include "LIBSTORAGE_MULTIPATH_AUTOSTART=ON"
+      context "if LIBSTORAGE_MULTIPATH_AUTOSTART was not used" do
+        let(:env_vars) { {} }
+
+        it "displays a tip about LIBSTORAGE_MULTIPATH_AUTOSTART" do
+          expect(Yast::Report).to receive(:yesno_popup) do |message|
+            expect(message).to include "the message"
+            expect(message).to include "LIBSTORAGE_MULTIPATH_AUTOSTART=ON"
+          end
+          subject.error("the message", what)
         end
-        subject.error("the message", what)
+      end
+
+      context "if LIBSTORAGE_MULTIPATH_AUTOSTART was used" do
+        let(:env_vars) { { "LIBSTORAGE_MULTIPATH_AUTOSTART" => "on" } }
+
+        it "displays an error with no tip about the solution" do
+          expect(Yast::Report).to receive(:yesno_popup) do |message|
+            expect(message).to include "the message"
+            expect(message).to_not include "LIBSTORAGE_MULTIPATH_AUTOSTART"
+            expect(message).to_not include "start_multipath"
+          end
+          subject.error("the message", what)
+        end
       end
     end
 
