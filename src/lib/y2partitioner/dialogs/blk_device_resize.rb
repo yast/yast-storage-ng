@@ -220,8 +220,9 @@ module Y2Partitioner
         # @see #errors
         # @see #validation_warnings
         #
-        # @return [Boolean] true if the given size is valid and the user
-        #   decides to continue despite of the warnings; false otherwise.
+        # @return [Boolean] true if there are no errors in the given size and
+        #   the user decides to continue despite of the warnings (if any);
+        #   false otherwise.
         def validate
           current_errors = errors
           current_warnings = validation_warnings
@@ -310,7 +311,7 @@ module Y2Partitioner
 
         # Warnings detected in the given size
         #
-        # @see FilesysteValidation
+        # @see FilesystemValidation
         #
         # @return [Array<String>]
         def validation_warnings

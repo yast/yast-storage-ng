@@ -66,7 +66,7 @@ module Y2Partitioner
       format(
         _("Your %{name} device is very small for snapshots.\n" \
           "We recommend to increase the size of the %{name} device\n" \
-          "to %{min_size} or more or to disable snapshots."),
+          "to at least %{min_size} or to disable snapshots."),
         name:     filesystem.root? ? _("root") : filesystem.mount_path,
         min_size: min_size_for_snapshots(filesystem).to_human_string
       )

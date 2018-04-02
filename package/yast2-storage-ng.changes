@@ -1,7 +1,7 @@
 -------------------------------------------------------------------
 Mon Apr  2 11:53:31 UTC 2018 - jlopez@suse.com
 
-- Partitioner: add check for min size when using snapshots
+- Partitioner: add check for minimum size when using snapshots
   (bsc#1085131).
 - 4.0.144
 

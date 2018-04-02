@@ -68,14 +68,14 @@ describe Y2Partitioner::FilesystemErrors do
     let(:partition) { fake_devicegraph.find_by_name("/dev/sda1") }
 
     shared_examples "no snapshots error" do
-      it "does not contain 'small device for snapshots' error" do
+      it "does not contain 'small for snapshots' error" do
         expect(checker.filesystem_errors(filesystem, new_size: new_size))
           .to_not include(/small for snapshots/)
       end
     end
 
     shared_examples "snapshots error" do
-      it "contains 'small device for snapshots' error" do
+      it "contains 'small for snapshots' error" do
         expect(checker.filesystem_errors(filesystem, new_size: new_size))
           .to include(/small for snapshots/)
       end
