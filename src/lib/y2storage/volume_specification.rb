@@ -203,6 +203,23 @@ module Y2Storage
       mount_point && mount_point == "swap"
     end
 
+    # Min size taking into account snapshots requirements
+    #
+    # @note If there are no special size requirements for snapshots, the
+    #   min size is returned.
+    #
+    # @return [Y2Storage::DiskSize]
+    def min_size_with_snapshots
+      if snapshots_size > DiskSize.zero
+        min_size + snapshots_size
+      elsif snapshots_percentage > 0
+        multiplicator = 1.0 + snapshots_percentage / 100.0
+        min_size * multiplicator
+      else
+        min_size
+      end
+    end
+
   private
 
     FEATURES = {

@@ -343,7 +343,7 @@ describe Y2Partitioner::Dialogs::BlkDeviceResize do
           let(:custom_size) { 1.GiB }
 
           it "shows a warning message" do
-            expect(Yast::Popup).to receive(:Warning)
+            expect(Yast2::Popup).to receive(:show)
             subject.store
           end
         end
@@ -354,7 +354,7 @@ describe Y2Partitioner::Dialogs::BlkDeviceResize do
           let(:custom_size) { 3.GiB }
 
           it "does not show a warning message" do
-            expect(Yast::Popup).to_not receive(:Warning)
+            expect(Yast2::Popup).to_not receive(:show)
             subject.store
           end
         end
@@ -374,7 +374,7 @@ describe Y2Partitioner::Dialogs::BlkDeviceResize do
         let(:custom_size) { 3.GiB }
 
         it "does not show a warning message" do
-          expect(Yast::Popup).to_not receive(:Warning)
+          expect(Yast2::Popup).to_not receive(:show)
           subject.store
         end
       end
@@ -385,52 +385,94 @@ describe Y2Partitioner::Dialogs::BlkDeviceResize do
 
       before do
         allow(current_widget).to receive(:size).and_return(custom_size)
+        allow(Yast2::Popup).to receive(:show)
+      end
+
+      shared_examples "error" do
+        before do
+          allow(subject).to receive(:validation_warnings).and_return(["a warning"])
+        end
+
+        it "shows an error popup" do
+          expect(Yast2::Popup).to receive(:show).with(anything, hash_including(headline: :error))
+          subject.validate
+        end
+
+        it "does not show a warning popup" do
+          expect(Yast2::Popup).to_not receive(:show).with(anything, hash_including(headline: :warning))
+          subject.validate
+        end
+
+        it "returns false" do
+          expect(subject.validate).to eq(false)
+        end
       end
 
       context "when the given value is less than the min possible size" do
         let(:custom_size) { 5.MiB }
 
-        it "shows an error popup" do
-          expect(Yast::Popup).to receive(:Error)
-          subject.validate
-        end
-
-        it "returns false" do
-          expect(subject.validate).to eq(false)
-        end
+        include_examples "error"
       end
 
       context "when the given value is bigger than the max possible size" do
         let(:custom_size) { 101.GiB }
 
-        it "shows an error popup" do
-          expect(Yast::Popup).to receive(:Error)
-          subject.validate
-        end
-
-        it "returns false" do
-          expect(subject.validate).to eq(false)
-        end
+        include_examples "error"
       end
 
       context "when the given value is not a valid size" do
         let(:custom_size) { nil }
 
-        it "shows an error popup" do
-          expect(Yast::Popup).to receive(:Error)
-          subject.validate
-        end
-
-        it "returns false" do
-          expect(subject.validate).to eq(false)
-        end
+        include_examples "error"
       end
 
       context "when the given value is bigger than min and less than max" do
         let(:custom_size) { 10.GiB }
 
-        it "returns true" do
-          expect(subject.validate).to eq(true)
+        before do
+          allow(subject).to receive(:filesystem_errors).and_return(warnings)
+          allow(Yast2::Popup).to receive(:show)
+            .with(anything, hash_including(headline: :warning)).and_return(accept)
+        end
+
+        let(:accept) { nil }
+
+        context "and there are no warnings" do
+          let(:warnings) { [] }
+
+          it "does not show a warning popup" do
+            expect(Yast2::Popup).to_not receive(:show)
+            subject.validate
+          end
+
+          it "returns true" do
+            expect(subject.validate).to eq(true)
+          end
+        end
+
+        context "and there are warnings" do
+          let(:warnings) { ["warning1", "warning2"] }
+
+          it "shows a warning popup" do
+            expect(Yast2::Popup).to receive(:show).with(anything, hash_including(headline: :warning))
+            subject.validate
+          end
+
+          context "and the user accepts" do
+            let(:accept) { :yes }
+
+            it "returns true" do
+              expect(subject.validate).to eq(true)
+            end
+          end
+
+          context "and the user declines" do
+            let(:accept) { :no }
+
+            it "returns false" do
+              expect(subject.validate).to eq(false)
+            end
+          end
         end
       end
     end

@@ -97,6 +97,18 @@ describe Y2Partitioner::Actions::Controllers::Md do
     end
   end
 
+  describe "#delete_filesystem" do
+    before do
+      controller.md.create_filesystem(Y2Storage::Filesystems::Type::EXT4)
+    end
+
+    it "removes the filesystem" do
+      expect(controller.md.filesystem).to_not be_nil
+      controller.delete_filesystem
+      expect(controller.md.filesystem).to be_nil
+    end
+  end
+
   describe "#available_devices" do
     it "returns an array of partitions" do
       expect(controller.available_devices).to be_an Array

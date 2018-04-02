@@ -20,14 +20,19 @@
 # find current contact information at www.suse.com.
 
 require "yast"
+require "yast2/popup"
 require "y2partitioner/widgets/devices_selection"
-
-Yast.import "Popup"
+require "y2partitioner/filesystem_errors"
 
 module Y2Partitioner
   module Widgets
     # Widget making possible to add and remove partitions to a MD RAID
     class MdDevicesSelector < DevicesSelection
+      include FilesystemErrors
+
+      # Constructor
+      #
+      # @param controller [Y2Partitioner::Actions::Controllers::Md]
       def initialize(controller)
         textdomain "storage"
 
@@ -64,23 +69,33 @@ module Y2Partitioner
         end
       end
 
-      # Validates the number of devices.
-      #
-      # In fact, the devices are added and removed immediately as soon as
-      # the user interacts with the widget, so this validation is only used to
-      # prevent the user from reaching the next step in the wizard if the MD
-      # array is not valid, not to prevent the information to be stored in
-      # the Md object.
-      #
       # @macro seeAbstractWidget
+      # Whether the MD RAID is valid
+      #
+      # @note An error popup is shown when there are some errors in the
+      #   MD RAID. A warning popup is shown if there are some warnings.
+      #
+      # @see #errors
+      # @see #warnings
+      #
+      # @return [Boolean] true if there are no errors or the user
+      #   decides to continue despite of the warnings; false otherwise.
       def validate
-        return true if controller.devices_in_md.size >= controller.min_devices
-        error_args = { raid_level: controller.md_level.to_human_string, min: controller.min_devices }
-        Yast::Popup.Error(
-          # TRANSLATORS: raid_level is a RAID level (e.g. RAID10); min is a number
-          _("For %{raid_level}, select at least %{min} devices.") % error_args
-        )
-        false
+        current_errors = errors
+        current_warnings = warnings
+
+        return true if current_errors.empty? && current_warnings.empty?
+
+        if current_errors.any?
+          message = current_errors.join("\n\n")
+          Yast2::Popup.show(message, headline: :error)
+          false
+        else
+          message = current_warnings
+          message << _("Do you want to continue with the current setup?")
+          message = message.join("\n\n")
+          Yast2::Popup.show(message, headline: :warning, buttons: :yes_no) == :yes
+        end
       end
 
       # @macro seeAbstractWidget
@@ -110,7 +125,42 @@ module Y2Partitioner
 
     private
 
+      # @return [Y2Partitioner::Actions::Controllers::Md]
       attr_reader :controller
+
+      # Errors detected in the MD RAID (e.g., it has not enough devices)
+      #
+      # @see #number_of_devices_error
+      #
+      # @return [Array<String>]
+      def errors
+        [number_of_devices_error].compact
+      end
+
+      # Error when the MD RAID does not contain the minumum number of devices
+      # (according to the raid type).
+      #
+      # @return [String, nil] nil if the MD RAID contains at least the min number
+      #   of required devices.
+      def number_of_devices_error
+        return nil if controller.devices_in_md.size >= controller.min_devices
+
+        format(
+          # TRANSLATORS: %{raid_level} is a RAID level (e.g., RAID10) and %{min} is a number
+          _("For %{raid_level}, select at least %{min} devices."),
+          raid_level: controller.md_level.to_human_string,
+          min:        controller.min_devices
+        )
+      end
+
+      # Warnings detected in the MD RAID
+      #
+      # @see FilesystemErrors
+      #
+      # @return [Array<String>]
+      def warnings
+        filesystem_errors(controller.md.filesystem)
+      end
 
       # Content at the right of the two lists of devices, used to display the
       # ordering buttons.
