@@ -77,12 +77,7 @@ describe Y2Storage::Callbacks::Activate do
   end
 
   describe "#multipath" do
-    before do
-      allow(ENV).to receive(:[]) do |key|
-        env_vars[key]
-      end
-      allow(ENV).to receive(:keys).and_return env_vars.keys
-    end
+    before { mock_env(env_vars) }
 
     context "if libstorage-ng found no multipath in the system" do
       let(:mp_detected) { false }

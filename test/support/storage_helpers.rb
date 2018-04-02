@@ -147,6 +147,16 @@ module Yast
       def shuffle(array)
         array.shuffle(random: Random.new(12345))
       end
+
+      # Simple helper to mock the environment variables
+      #
+      # @param hash [Hash] mocked environment variables and their values
+      def mock_env(hash)
+        allow(ENV).to receive(:[]) do |key|
+          hash[key]
+        end
+        allow(ENV).to receive(:keys).and_return hash.keys
+      end
     end
   end
 end

@@ -64,12 +64,18 @@ module Y2Storage
         log.info "libstorage-ng reported an error, asking the user whether to continue"
         log.info "Error details. Message: #{message}. What: #{what}."
 
+        desc = error_description(what)
+        hint = _("Click below to see more details (English only).")
         question = _("Continue despite the error?")
-        focus = default_answer_to_error ? :focus_yes : :focus_no
-        result = Yast::Report.ErrorAnyQuestion(
-          Yast::Popup.NoHeadline, "#{message}\n\n#{what}\n\n#{question}",
-          Yast::Label.ContinueButton, abort_button_label, focus
+        msg = "#{message}\n\n#{desc}\n\n#{hint}\n\n#{question}"
+
+        buttons = { yes: Yast::Label.ContinueButton, no: abort_button_label }
+        focus = default_answer_to_error ? :yes : :no
+
+        result = Yast::Report.yesno_popup(
+          msg, details: what, focus: focus, buttons: buttons
         )
+
         log.info "User answer: #{result}"
         result
       end
@@ -89,6 +95,75 @@ module Y2Storage
       # @return [Boolean]
       def default_answer_to_error
         true
+      end
+
+      # Human-readable description of the problem reported by libstorage-ng,
+      # hopefully with some hint on how to resolve it or continue.
+      #
+      # A generic message is returned if no concrete problem can be identified.
+      #
+      # @see #error
+      #
+      # @param what [String] details coming from libstorage-ng
+      # @return [String]
+      def error_description(what)
+        if what.match?(/WARNING: PV .* was already found on .*/i)
+          duplicated_pv_description
+        else
+          _("Unexpected situation found in the system.")
+        end
+      end
+
+      # Human-readable description to use if the LVM tools report that the same
+      # PV is found more than once.
+      #
+      # @see #error_description
+      #
+      # @return [String]
+      def duplicated_pv_description
+        result = _("The same LVM physical volume was found in several devices.\n")
+        # The user already tried LIBSTORAGE_MULTIPATH_AUTOSTART (and is not
+        # using AutoYaST), there is nothing else we can advise.
+        return result.chomp if forced_multipath? && !Yast::Mode.auto
+
+        result << _(
+          "Maybe there are multipath devices in the system but multipath support\n" \
+          "was not enabled.\n\n"
+        )
+
+        if Yast::Mode.auto
+          result << _(
+            "Use 'start_multipath' in the AutoYaST profile to enable multipath."
+          )
+        else
+          result << _(
+            "If YaST didn't offer the opportunity to enable multipath in a previous step,\n" \
+            "try the 'LIBSTORAGE_MULTIPATH_AUTOSTART=ON' boot parameter.\n" \
+            "More information at https://en.opensuse.org/SDB:Linuxrc"
+          )
+        end
+        result
+      end
+
+      # Whether the activation of multipath has been forced via the
+      # LIBSTORAGE_MULTIPATH_AUTOSTART boot parameter
+      #
+      # See https://en.opensuse.org/SDB:Linuxrc for details and see
+      # bsc#1082542 for an example of scenario in which this is needed.
+      #
+      # @return [Boolean]
+      def forced_multipath?
+        # Sort the keys to have a deterministic behavior and to prefer
+        # all-uppercase over the other variants, then do a case insensitive
+        # search
+        key = ENV.keys.sort.find { |k| k.match(/\ALIBSTORAGE_MULTIPATH_AUTOSTART\z/i) }
+        return false unless key
+
+        log.debug "Found key about forcing multipath: #{key.inspect}"
+        value = ENV[key]
+        # Similar to what linuxrc does, also consider the flag activated if the
+        # variable is used with no value or with "1"
+        value.casecmp?("on") || value.empty? || value == "1"
       end
     end
   end
