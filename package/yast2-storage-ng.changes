@@ -1,4 +1,9 @@
 -------------------------------------------------------------------
+Mon Apr  2 09:53:31 UTC 2018 - jlopez@suse.com
+
+- Use correct probe mode in unit tests (fate#318196).
+
+-------------------------------------------------------------------
 Mon Mar 26 14:54:45 UTC 2018 - ancor@suse.com
 
 - Honor the LIBSTORAGE_MULTIPATH_AUTOSTART environment variable
