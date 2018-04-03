@@ -54,7 +54,7 @@ module Y2Partitioner
             # the stripe size
             _("%s (%s)"),
             lvm_lv.stripes.to_s,
-            lvm_lv.stripes_size.to_human_string
+            lvm_lv.stripe_size.to_human_string
           )
         end
       end

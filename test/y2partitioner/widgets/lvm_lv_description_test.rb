@@ -40,5 +40,13 @@ describe Y2Partitioner::Widgets::LvmLvDescription do
     it "runs without failure" do
       expect { subject.init }.to_not raise_error
     end
+
+    context "when using a striped LVM" do
+      before { devicegraph_stub("lvm-striped-lvs.yml") }
+
+      it "runs without failure" do
+        expect { subject.init }.to_not raise_error
+      end
+    end
   end
 end
