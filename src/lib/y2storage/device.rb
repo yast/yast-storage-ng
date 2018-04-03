@@ -20,8 +20,8 @@
 # find current contact information at www.suse.com.
 
 require "yast"
-require "y2storage/storage_class_wrapper"
 require "yaml"
+require "y2storage/storage_class_wrapper"
 
 module Y2Storage
   # An abstract base class of storage devices and a vertex in the Devicegraph.
@@ -125,7 +125,7 @@ module Y2Storage
     #   Check whether the device exists in the raw probed devicegraph
     #
     #   @note From storage-ng point of view, probed devicegraph is a
-    #       sanitized version of the devicegraph probed by libstorage-ng.
+    #     sanitized version of the devicegraph probed by libstorage-ng.
     #
     #   @see StorageManager#raw_probed
     #   @see exists_in_devicegraph?
@@ -192,6 +192,20 @@ module Y2Storage
     #   @return [boolean] true if the first argument should appear first in a
     #       sorted list (less than)
     storage_class_forward :compare_by_name
+
+    # Check whether the device exists in the probed devicegraph
+    #
+    # @note This is slightly different from Storage::Device#exists_in_probed?, which
+    #   checks using the raw probed devicegraph.
+    #
+    # @see StorageManager#raw_probed
+    # @see exists_in_raw_probed?
+    # @see exists_in_devicegraph?
+    #
+    # @return [Boolean]
+    def exists_in_probed?
+      exists_in_devicegraph?(StorageManager.instance.probed)
+    end
 
     # Ancestors in the devicegraph in no particular order, not including the
     # device itself.

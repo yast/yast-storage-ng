@@ -25,8 +25,11 @@ require "y2storage"
 
 describe Y2Storage::Device do
   before do
-    fake_scenario("complex-lvm-encrypt")
+    allow_any_instance_of(Y2Storage::Callbacks::Sanitize).to receive(:sanitize?).and_return(true)
+    fake_scenario(scenario)
   end
+
+  let(:scenario) { "complex-lvm-encrypt" }
 
   describe "#ancestors" do
     subject(:device) { Y2Storage::LvmLv.find_by_name(fake_devicegraph, "/dev/vg0/lv1").blk_filesystem }
@@ -148,6 +151,47 @@ describe Y2Storage::Device do
 
     it "returns false if compared different classes" do
       expect(Y2Storage::Partition.find_by_name(fake_devicegraph, "/dev/sda1").eql?(nil)).to eq false
+    end
+  end
+
+  describe "#exists_in_probed?" do
+    let(:scenario) { "lvm-errors1-devicegraph.xml" }
+
+    subject(:device) { devicegraph.find_by_name(device_name) }
+
+    context "if the device exists in probed devicegraph" do
+      let(:devicegraph) { Y2Storage::StorageManager.instance.raw_probed }
+
+      let(:device_name) { "/dev/sdb1" }
+
+      it "returns true" do
+        expect(device.exists_in_probed?).to eq(true)
+      end
+    end
+
+    context "if the device does not exist in probed devicegraph" do
+      let(:devicegraph) { Y2Storage::StorageManager.instance.staging }
+
+      let(:device_name) { "/dev/md1" }
+
+      before do
+        Y2Storage::Md.create(devicegraph, device_name)
+      end
+
+      it "returns false" do
+        expect(device.exists_in_probed?).to eq(false)
+      end
+    end
+
+    context "if the device exists in raw probed but not in probed" do
+      let(:devicegraph) { Y2Storage::StorageManager.instance.raw_probed }
+
+      let(:device_name) { "/dev/test1" }
+
+      it "returns false" do
+        expect(device.exists_in_raw_probed?).to eq(true)
+        expect(device.exists_in_probed?).to eq(false)
+      end
     end
   end
 end
