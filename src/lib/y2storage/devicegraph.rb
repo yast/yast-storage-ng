@@ -341,7 +341,7 @@ module Y2Storage
         return nil
       end
 
-      probed = StorageManager.instance.probed
+      probed = StorageManager.instance.raw_probed
       found = BlkDevice.find_by_any_name(probed, name)
       if found.nil?
         log.info "Device #{name} not found via system lookup"

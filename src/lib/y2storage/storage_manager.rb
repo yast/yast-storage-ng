@@ -197,12 +197,26 @@ module Y2Storage
     #   some errors (e.g., incomplete LVM VGs). This probed devicegraph
     #   is the result of sanitizing the initial raw probed.
     #
+    # @see #raw_probed
+    #
     # @return [Devicegraph]
     def probed
       return @probed_graph if @probed_graph
 
       probe unless probed?
       @probed_graph
+    end
+
+    # Probed devicegraph returned by libstorage-ng (without sanitizing)
+    #
+    # @see #probed
+    #
+    # @return [Devicegraph]
+    def raw_probed
+      @raw_probed_graph ||= begin
+        probe unless probed?
+        Devicegraph.new(storage.probed)
+      end
     end
 
     # Staging devicegraph
@@ -327,16 +341,6 @@ module Y2Storage
     #
     # @return [Integer]
     attr_reader :staging_revision_after_probing
-
-    # Probed devicegraph returned by libstorage-ng (without sanitizing)
-    #
-    # @return [Devicegraph]
-    def raw_probed
-      @raw_probed_graph ||= begin
-        probe unless probed?
-        Devicegraph.new(storage.probed)
-      end
-    end
 
     # Sets default values for Storage object
     #
