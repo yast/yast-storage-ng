@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Tue Apr  3 13:26:50 UTC 2018 - jlopez@suse.com
+
+- Recover method #exists_in_probed? (bsc#1087818).
+- 4.0.146
+
+-------------------------------------------------------------------
 Tue Apr  3 11:40:35 UTC 2018 - igonzalezsosa@suse.com
 
 - Partitioner: do not crash when a striped logical volume is
