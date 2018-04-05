@@ -52,7 +52,9 @@ module Y2Storage
           log.info "Proposal dialog: return :next with #{proposal} and #{devicegraph}"
           super
         else
-          Yast::Report.Error(_("Cannot continue"))
+          msg = _("Cannot continue without a valid storage setup.") + "\n"
+          msg += _("Please use \"Guided Setup\" or \"Expert Partitioner\".")
+          Yast::Report.Error(msg)
         end
       end
 
