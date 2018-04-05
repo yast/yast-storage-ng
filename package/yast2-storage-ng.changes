@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Thu Apr  5 15:30:57 UTC 2018 - shundhammer@suse.com
+
+- Better error handling if no storage proposal is possible
+  (bsc#1064677)
+- 4.0.147
+
+-------------------------------------------------------------------
 Tue Apr  3 13:26:50 UTC 2018 - jlopez@suse.com
 
 - Recover method #exists_in_probed? (bsc#1087818).
