@@ -472,8 +472,8 @@ module Y2Storage
       # With the default callbacks, the user is asked whether to retry or abort
       # when lock cannot be acquired.
       #
-      # @raise [Error] if the requested mode is incompatible with the already
-      #   created instance (i.e., current instance is ro but rw is requested).
+      # @raise [AccessModeError] if the requested mode is incompatible with the
+      #   already created instance (i.e., current instance is ro but rw is requested).
       #
       # @param mode [Symbol, nil] :ro, :rw. If nil, a default mode is used, see
       #   {.default_storage_mode}.
@@ -507,8 +507,8 @@ module Y2Storage
       # @see .create_test_instance if you just need to create an instance that
       #   ensures not real hardware probing, even calling to #probe.
       #
-      # @raise [Error] if the requested mode is incompatible with the already
-      #   created instance (i.e., current instance is ro but rw is requested).
+      # @raise [AccessModeError] if the requested mode is incompatible with the
+      #   already created instance (i.e., current instance is ro but rw is requested).
       #
       # @raise [Storage::LockException] if the storage lock cannot be acquired and
       #   the user decides to abort.
@@ -525,7 +525,8 @@ module Y2Storage
 
         if @instance
           return @instance if valid_instance?(mode)
-          raise Error, "Unexpected storage mode: current is #{@instance.mode}, requested is #{mode}"
+          raise AccessModeError,
+            "Unexpected storage mode: current is #{@instance.mode}, requested is #{mode}"
         else
           read_only = mode == :ro
           create_instance(Storage::Environment.new(read_only), callbacks)

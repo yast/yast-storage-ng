@@ -38,4 +38,7 @@ module Y2Storage
   # A device was not found
   class DeviceNotFoundError < Error
   end
+  # Requested access mode is incompatible with current mode
+  class AccessModeError < Error
+  end
 end

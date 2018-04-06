@@ -122,7 +122,7 @@ describe Y2Storage::StorageManager do
         end
 
         it "raises an error" do
-          expect { described_class.setup(mode: mode) }.to raise_error(Y2Storage::Error)
+          expect { described_class.setup(mode: mode) }.to raise_error(Y2Storage::AccessModeError)
         end
       end
     end
