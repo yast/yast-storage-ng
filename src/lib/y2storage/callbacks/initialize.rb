@@ -21,8 +21,8 @@
 
 require "yast"
 require "yast/i18n"
-require "yast2/popup"
 
+Yast.import "Report"
 Yast.import "Mode"
 Yast.import "Label"
 
@@ -73,11 +73,11 @@ module Y2Storage
 
         buttons = { yes: _("Retry"), no: abort_button_label }
 
-        answer = Yast2::Popup.show(message, headline: headline, buttons: buttons)
+        answer = Yast::Report.yesno_popup(message, headline: headline, buttons: buttons)
 
         log.info "User answer: #{answer}"
 
-        answer == :yes
+        answer
       end
 
     private

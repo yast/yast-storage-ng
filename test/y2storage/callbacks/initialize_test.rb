@@ -30,14 +30,14 @@ describe Y2Storage::Callbacks::Initialize do
 
   describe "#retry?" do
     it "displays the lock error message" do
-      expect(Yast2::Popup).to receive(:show) do |message|
+      expect(Yast::Report).to receive(:yesno_popup) do |message|
         expect(message).to match(/storage subsystem is locked/)
       end
       subject.retry?
     end
 
     it "asks the user whether to retry and returns the answer" do
-      allow(Yast2::Popup).to receive(:show).and_return(:yes, :yes, :no)
+      allow(Yast::Report).to receive(:yesno_popup).and_return(true, true, false)
       expect(subject.retry?).to eq(true)
       expect(subject.retry?).to eq(true)
       expect(subject.retry?).to eq(false)
