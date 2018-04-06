@@ -490,7 +490,7 @@ module Y2Storage
         mode ||= default_storage_mode
         Y2Storage::StorageManager.instance(mode: mode, callbacks: callbacks)
         true
-      rescue Storage::LockException
+      rescue Yast::AbortException
         false
       end
 
@@ -510,7 +510,7 @@ module Y2Storage
       # @raise [AccessModeError] if the requested mode is incompatible with the
       #   already created instance (i.e., current instance is ro but rw is requested).
       #
-      # @raise [Storage::LockException] if the storage lock cannot be acquired and
+      # @raise [Yast::AbortException] if the storage lock cannot be acquired and
       #   the user decides to abort.
       #
       # @param mode [Symbol, nil] :ro, :rw. If nil, a default mode is used, see
@@ -544,7 +544,7 @@ module Y2Storage
       # With the default callbacks, the user is asked whether to retry or abort
       # when lock cannot be acquired.
       #
-      # @raise [Storage::LockException] if lock cannot be acquired and the user
+      # @raise [Yast::AbortException] if lock cannot be acquired and the user
       #   decides to abort.
       #   Several process can access in read-only mode at the same time, but only
       #   one process can access in read-write mode. If a process is accessing in
@@ -560,7 +560,7 @@ module Y2Storage
         log.info "Creating Storage object"
         @instance = new(environment)
       rescue Storage::LockException => error
-        raise error unless retry_create_instance?(error, callbacks)
+        raise Yast::AbortException unless retry_create_instance?(error, callbacks)
         retry
       end
 

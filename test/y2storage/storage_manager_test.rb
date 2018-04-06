@@ -212,8 +212,8 @@ describe Y2Storage::StorageManager do
               .and_return(false)
           end
 
-          it "raises a lock exception" do
-            expect { subject }.to raise_error(Storage::LockException)
+          it "raises an abort exception" do
+            expect { subject }.to raise_error(Yast::AbortException)
           end
         end
       end
@@ -348,8 +348,8 @@ describe Y2Storage::StorageManager do
       context "and the user decides to abort" do
         let(:retry_answers) { [false] }
 
-        it "raises a lock exception" do
-          expect { described_class.create_instance }.to raise_error(Storage::LockException)
+        it "raises an abort exception" do
+          expect { described_class.create_instance }.to raise_error(Yast::AbortException)
         end
       end
 
@@ -358,7 +358,7 @@ describe Y2Storage::StorageManager do
 
         it "retries the creation of the instance" do
           expect(described_class).to receive(:new).exactly(3).times.and_call_original
-          expect { described_class.create_instance }.to raise_error(Storage::LockException)
+          expect { described_class.create_instance }.to raise_error(Yast::AbortException)
         end
       end
     end
