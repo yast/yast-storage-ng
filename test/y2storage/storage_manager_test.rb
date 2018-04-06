@@ -40,8 +40,16 @@ describe Y2Storage::StorageManager do
       end
 
       context "and storage system is not locked" do
+        before do
+          # Mocking #new because it is not possible to create a lock without root privileges
+          allow(Storage::Storage).to receive(:new).and_return(storage)
+          allow(storage).to receive(:default_mount_by=)
+        end
+
+        let(:storage) { instance_double(Storage::Storage) }
+
         it "creates a new storage instance" do
-          expect(Storage::Storage).to receive(:new).and_call_original
+          expect(Storage::Storage).to receive(:new)
           described_class.setup
         end
 
@@ -107,7 +115,7 @@ describe Y2Storage::StorageManager do
         let(:mode) { :rw }
 
         before do
-          # To properly test it, the enviroment should be created with another
+          # To properly test it, the environment should be created with another
           # probe mode, but for that, root privileges are required. So, here we
           # simply mock #test_instance?
           allow(described_class).to receive(:test_instance?).and_return(false)
@@ -260,7 +268,7 @@ describe Y2Storage::StorageManager do
         let(:mode) { :rw }
 
         before do
-          # To properly test it, the enviroment should be created with another
+          # To properly test it, the environment should be created with another
           # probe mode, but for that, root privileges are required. So, here we
           # simply mock #test_instance?
           allow(described_class).to receive(:test_instance?).and_return(false)
@@ -308,6 +316,14 @@ describe Y2Storage::StorageManager do
     end
 
     context "if the storage system is not locked" do
+      before do
+        # Mocking #new because it is not possible to create a lock without root privileges
+        allow(Storage::Storage).to receive(:new).and_return(storage)
+        allow(storage).to receive(:default_mount_by=)
+      end
+
+      let(:storage) { instance_double(Storage::Storage) }
+
       it "creates a new storage instance" do
         initial_instance = described_class.instance
         new_instance = described_class.create_instance
@@ -322,7 +338,6 @@ describe Y2Storage::StorageManager do
         allow(Storage::Storage).to receive(:new).and_raise(lock_error)
 
         allow(Y2Storage::Callbacks::Initialize).to receive(:new).and_return(callbacks)
-
         allow(callbacks).to receive(:retry?).and_return(*retry_answers)
       end
 
