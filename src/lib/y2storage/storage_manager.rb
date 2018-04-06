@@ -482,6 +482,11 @@ module Y2Storage
       # @return [Boolean] true if the storage instance was correctly created for
       #   the given mode; false otherwise.
       def setup(mode: nil, callbacks: nil)
+        # In case of mode is not given, it is necessary to initialize it with the
+        # default mode due to {.instance} without mode returns the current storage
+        # instance. In some cases, the current instance might not be valid for the
+        # default mode (e.g., current is read-only but {.setup} is called without
+        # mode during installation).
         mode ||= default_storage_mode
         Y2Storage::StorageManager.instance(mode: mode, callbacks: callbacks)
         true
