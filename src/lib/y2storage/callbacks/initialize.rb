@@ -50,22 +50,24 @@ module Y2Storage
       def retry?
         log.info "Storage subsystem is locked by process #{locker_pid}, asking to user whether to retry"
 
-        if locker_name
-          message = format(
-            # TRANSLATORS: %{name} is replaced by the name of a process (e.g., yast2)
-            # and %{pid} by the pid of a process (e.g., 5032).
-            _("The storage subsystem is locked by the application \"%{name}\" (%{pid})."),
-            name: locker_name,
-            pid:  locker_pid
-          )
-        else
-          message = _("The storage subsystem is locked by an unknown application.")
-        end
-
-        message << "\n"
-        message << _("You must quit that application before you can continue.")
-        message << "\n\n"
-        message << _("Would you like to abort or try again?")
+        message =
+          if locker_name
+            format(
+              # TRANSLATORS: %{name} is replaced by the name of a process (e.g., yast2)
+              # and %{pid} by the pid of a process (e.g., 5032).
+              _("The storage subsystem is locked by the application \"%{name}\" (%{pid}).\n" \
+                "You must quit that application before you can continue.\n\n" \
+                "Would you like to abort or try again?"),
+              name: locker_name,
+              pid:  locker_pid
+            )
+          else
+            _(
+              "The storage subsystem is locked by an unknown application.\n" \
+              "You must quit that application before you can continue.\n\n" \
+              "Would you like to abort or try again?"
+            )
+          end
 
         headline = _("Accessing the storage subsystem failed")
 
