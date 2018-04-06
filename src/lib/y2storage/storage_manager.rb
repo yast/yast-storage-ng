@@ -595,7 +595,7 @@ module Y2Storage
       #
       # @return [Symbol] :ro, :rw
       def default_storage_mode
-        Yast::Mode.installation || Yast::Mode.autoinst ? :rw : :ro
+        Yast::Mode.installation ? :rw : :ro
       end
 
       # Checks whether the current instance can be used for the requested access mode
