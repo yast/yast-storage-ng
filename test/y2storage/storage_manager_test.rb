@@ -24,12 +24,328 @@ require_relative "spec_helper"
 require "y2storage"
 
 describe Y2Storage::StorageManager do
-
   subject(:manager) { described_class.instance }
 
   describe ".new" do
     it "cannot be used directly" do
       expect { described_class.new }.to raise_error(/private method/)
+    end
+  end
+
+  describe ".setup" do
+    context "if the storage instance is not created yet" do
+      before do
+        described_class.create_test_instance
+        described_class.instance_variable_set(:@instance, nil)
+      end
+
+      context "and storage system is not locked" do
+        it "creates a new storage instance" do
+          expect(Storage::Storage).to receive(:new).and_call_original
+          described_class.setup
+        end
+
+        it "returns true" do
+          expect(described_class.setup).to eq(true)
+        end
+      end
+
+      context "and storage system is locked" do
+        before do
+          allow(Storage::Storage).to receive(:new).and_raise(lock_error)
+        end
+
+        let(:lock_error) { Storage::LockException.new(0) }
+
+        context "and the user decides to abort" do
+          before do
+            allow_any_instance_of(Y2Storage::Callbacks::Initialize).to receive(:retry?)
+              .and_return(false)
+          end
+
+          it "does not create a new storage instance" do
+            described_class.setup
+            expect(described_class.instance_variable_get(:@instance)).to be_nil
+          end
+
+          it "returns false" do
+            expect(described_class.setup).to eq(false)
+          end
+        end
+      end
+    end
+
+    context "if the storage instance is already created" do
+      before do
+        described_class.create_instance(environment)
+      end
+
+      let(:environment) do
+        Storage::Environment.new(read_only, Storage::ProbeMode_NONE, Storage::TargetMode_DIRECT)
+      end
+
+      context "and it can be reused for the requested access mode" do
+        let(:read_only) { false }
+
+        let(:mode) { :ro }
+
+        it "does not modify the current storage instance" do
+          initial_instance = described_class.instance
+          described_class.setup(mode: mode)
+
+          expect(described_class.instance).to equal(initial_instance)
+        end
+
+        it "returns true" do
+          expect(described_class.setup(mode: mode)).to eq(true)
+        end
+      end
+
+      context "and it cannot be reused for the requested access mode" do
+        let(:read_only) { true }
+
+        let(:mode) { :rw }
+
+        before do
+          # To properly test it, the enviroment should be created with another
+          # probe mode, but for that, root privileges are required. So, here we
+          # simply mock #test_instance?
+          allow(described_class).to receive(:test_instance?).and_return(false)
+        end
+
+        it "raises an error" do
+          expect { described_class.setup(mode: mode) }.to raise_error(Y2Storage::Error)
+        end
+      end
+    end
+  end
+
+  describe ".instance" do
+    before do
+      allow(Yast::Mode).to receive(:installation).and_return(installation)
+    end
+
+    subject { described_class.instance(mode: mode) }
+
+    let(:installation) { false }
+
+    let(:mode) { :ro }
+
+    context "if the storage instance is not created yet" do
+      before do
+        described_class.create_test_instance
+        described_class.instance_variable_set(:@instance, nil)
+      end
+
+      context "and storage system is not locked" do
+        before do
+          allow_any_instance_of(described_class).to receive(:default_mount_by=)
+        end
+
+        shared_examples "creates read-only instance" do
+          it "creates a new read-only storage instance" do
+            expect(Storage::Storage).to receive(:new) do |environment|
+              expect(environment.read_only?).to eq(true)
+            end
+
+            subject
+          end
+        end
+
+        shared_examples "creates read-write instance" do
+          it "creates a new read-write storage instance" do
+            expect(Storage::Storage).to receive(:new) do |environment|
+              expect(environment.read_only?).to eq(false)
+            end
+
+            subject
+          end
+        end
+
+        context "and no specific access mode is requested" do
+          let(:mode) { nil }
+
+          context "and it is running during installation" do
+            let(:installation) { true }
+
+            include_examples "creates read-write instance"
+          end
+
+          context "and it is not running during installation" do
+            let(:installation) { false }
+
+            include_examples "creates read-only instance"
+          end
+        end
+
+        context "and read-only mode is requested" do
+          let(:mode) { :ro }
+
+          include_examples "creates read-only instance"
+        end
+
+        context "and read-write mode is requested" do
+          let(:mode) { :rw }
+
+          include_examples "creates read-write instance"
+        end
+      end
+
+      context "and storage system is locked" do
+        before do
+          allow(Storage::Storage).to receive(:new).and_raise(lock_error)
+        end
+
+        let(:lock_error) { Storage::LockException.new(0) }
+
+        context "and the user decides to abort" do
+          before do
+            allow_any_instance_of(Y2Storage::Callbacks::Initialize).to receive(:retry?)
+              .and_return(false)
+          end
+
+          it "raises a lock exception" do
+            expect { subject }.to raise_error(Storage::LockException)
+          end
+        end
+      end
+    end
+
+    context "if the storage instance is already created" do
+      before do
+        described_class.create_instance(environment)
+      end
+
+      let(:environment) do
+        Storage::Environment.new(read_only, Storage::ProbeMode_NONE, Storage::TargetMode_DIRECT)
+      end
+
+      let(:read_only) { true }
+
+      shared_examples "get current instance" do
+        it "returns the current storage instance" do
+          initial_instance = described_class.instance
+          expect(subject).to equal(initial_instance)
+        end
+      end
+
+      it "does not try to create a new storage instance" do
+        expect(Storage::Storage).to_not receive(:new)
+        subject
+      end
+
+      context "and no specific access mode is requested" do
+        let(:mode) { nil }
+
+        include_examples "get current instance"
+      end
+
+      context "and read-only access mode is requested" do
+        let(:mode) { :ro }
+
+        context "and the current instance is read-only" do
+          let(:read_only) { true }
+
+          include_examples "get current instance"
+        end
+
+        context "and the current instance is read-write" do
+          let(:read_only) { false }
+
+          include_examples "get current instance"
+        end
+      end
+
+      context "and read-write access mode is requested" do
+        let(:mode) { :rw }
+
+        before do
+          # To properly test it, the enviroment should be created with another
+          # probe mode, but for that, root privileges are required. So, here we
+          # simply mock #test_instance?
+          allow(described_class).to receive(:test_instance?).and_return(false)
+        end
+
+        context "and the current instance is read-only" do
+          let(:read_only) { true }
+
+          it "raises an error" do
+            expect { subject }.to raise_error(Y2Storage::Error)
+          end
+        end
+
+        context "and the current instance is read-write" do
+          let(:read_only) { false }
+
+          include_examples "get current instance"
+        end
+      end
+    end
+
+    it "returns the singleton object in subsequent calls" do
+      initial = described_class.create_test_instance
+      second = described_class.instance
+      # Note using equal to ensure is actually the same object (same object_id)
+      expect(second).to equal initial
+      expect(described_class.instance).to equal initial
+    end
+
+    before do
+      allow(Y2Storage::SysconfigStorage.instance).to receive(:default_mount_by)
+        .and_return(mount_by_label)
+    end
+
+    let(:mount_by_label) { Y2Storage::Filesystems::MountByType::LABEL }
+
+    it "initializes #default_mount_by with the value at sysconfig file" do
+      expect(manager.default_mount_by).to eq(mount_by_label)
+    end
+  end
+
+  describe ".create_instance" do
+    before do
+      described_class.create_test_instance
+    end
+
+    context "if the storage system is not locked" do
+      it "creates a new storage instance" do
+        initial_instance = described_class.instance
+        new_instance = described_class.create_instance
+
+        expect(new_instance).to_not be_nil
+        expect(new_instance).to_not equal(initial_instance)
+      end
+    end
+
+    context "if storage system is locked" do
+      before do
+        allow(Storage::Storage).to receive(:new).and_raise(lock_error)
+
+        allow(Y2Storage::Callbacks::Initialize).to receive(:new).and_return(callbacks)
+
+        allow(callbacks).to receive(:retry?).and_return(*retry_answers)
+      end
+
+      let(:lock_error) { Storage::LockException.new(0) }
+
+      let(:callbacks) { instance_double(Y2Storage::Callbacks::Initialize) }
+
+      context "and the user decides to abort" do
+        let(:retry_answers) { [false] }
+
+        it "raises a lock exception" do
+          expect { described_class.create_instance }.to raise_error(Storage::LockException)
+        end
+      end
+
+      context "and the user decides to retry" do
+        let(:retry_answers) { [true, true, false] }
+
+        it "retries the creation of the instance" do
+          expect(described_class).to receive(:new).exactly(3).times.and_call_original
+          expect { described_class.create_instance }.to raise_error(Storage::LockException)
+        end
+      end
     end
   end
 
@@ -58,27 +374,6 @@ describe Y2Storage::StorageManager do
     it "initializes #staging_revision" do
       manager = described_class.create_test_instance
       expect(manager.staging_revision).to be_zero
-    end
-  end
-
-  describe ".instance" do
-    it "returns the singleton object in subsequent calls" do
-      initial = described_class.create_test_instance
-      second = described_class.instance
-      # Note using equal to ensure is actually the same object (same object_id)
-      expect(second).to equal initial
-      expect(described_class.instance).to equal initial
-    end
-
-    before do
-      allow(Y2Storage::SysconfigStorage.instance).to receive(:default_mount_by)
-        .and_return(mount_by_label)
-    end
-
-    let(:mount_by_label) { Y2Storage::Filesystems::MountByType::LABEL }
-
-    it "initializes #default_mount_by with the value at sysconfig file" do
-      expect(manager.default_mount_by).to eq(mount_by_label)
     end
   end
 
@@ -638,6 +933,34 @@ describe Y2Storage::StorageManager do
         it "returns false" do
           expect(manager.committed?).to eq false
         end
+      end
+    end
+  end
+
+  describe "#mode" do
+    subject { described_class.instance }
+
+    before do
+      described_class.create_instance(environment)
+    end
+
+    let(:environment) do
+      Storage::Environment.new(read_only, Storage::ProbeMode_NONE, Storage::TargetMode_DIRECT)
+    end
+
+    context "when the instance is created as read-only" do
+      let(:read_only) { true }
+
+      it "returns :ro" do
+        expect(subject.mode).to eq(:ro)
+      end
+    end
+
+    context "when the instance is created as read-write" do
+      let(:read_only) { false }
+
+      it "returns :rw" do
+        expect(subject.mode).to eq(:rw)
       end
     end
   end

@@ -1,5 +1,3 @@
-#!/usr/bin/env ruby
-#
 # encoding: utf-8
 
 # Copyright (c) [2015,2017] SUSE LLC
@@ -332,6 +330,15 @@ module Y2Storage
       sanitize_probed
     end
 
+    # Access mode in which the storage system was initialized (read-only or read-write)
+    #
+    # @see StorageManager.setup
+    #
+    # @return [Symbol] :ro, :rw
+    def mode
+      environment.read_only? ? :ro : :rw
+    end
+
   private
 
     # Value of #staging_revision right after executing the latest libstorage
@@ -460,20 +467,64 @@ module Y2Storage
 
     # Class methods
     class << self
+      # Initializes storage with a specific access mode (read-only or read-write)
+      #
+      # With the default callbacks, the user is asked whether to retry or abort
+      # when lock cannot be acquired.
+      #
+      # @raise [Error] if the requested mode is incompatible with the already
+      #   created instance (i.e., current instance is ro but rw is requested).
+      #
+      # @param mode [Symbol, nil] :ro, :rw. If nil, a default mode is used, see
+      #   {.default_storage_mode}.
+      # @param callbacks [Callbacks::Initialize, nil]
+      #
+      # @return [Boolean] true if the storage instance was correctly created for
+      #   the given mode; false otherwise.
+      def setup(mode: nil, callbacks: nil)
+        mode ||= default_storage_mode
+        Y2Storage::StorageManager.instance(mode: mode, callbacks: callbacks)
+        true
+      rescue Storage::LockException
+        false
+      end
+
       # Returns the singleton instance.
       #
       # In the first call, it will create a libstorage instance (using common
       # defaults) if there isn't one yet.
+      #
+      # With the default callbacks, the user is asked whether to retry or abort
+      # when lock cannot be acquired.
       #
       # @see .create_instance if you need special parameters for creating the
       #   libstorage instance.
       # @see .create_test_instance if you just need to create an instance that
       #   ensures not real hardware probing, even calling to #probe.
       #
+      # @raise [Error] if the requested mode is incompatible with the already
+      #   created instance (i.e., current instance is ro but rw is requested).
+      #
+      # @raise [Storage::LockException] if the storage lock cannot be acquired and
+      #   the user decides to abort.
+      #
+      # @param mode [Symbol, nil] :ro, :rw. If nil, a default mode is used, see
+      #   {.default_storage_mode}.
+      # @param callbacks [Callbacks::Initialize, nil]
+      #
       # @return [StorageManager]
-      def instance
-        create_instance unless @instance
-        @instance
+      def instance(mode: nil, callbacks: nil)
+        return @instance if @instance && mode.nil?
+
+        mode ||= default_storage_mode
+
+        if @instance
+          return @instance if valid_instance?(mode)
+          raise Error, "Unexpected storage mode: current is #{@instance.mode}, requested is #{mode}"
+        else
+          read_only = mode == :ro
+          create_instance(Storage::Environment.new(read_only), callbacks)
+        end
       end
 
       # Creates the singleton instance with a customized libstorage object.
@@ -483,13 +534,28 @@ module Y2Storage
       #
       # If no Storage::Environment is provided, it uses a default one that
       # allows hardware probing.
+
+      # With the default callbacks, the user is asked whether to retry or abort
+      # when lock cannot be acquired.
+      #
+      # @raise [Storage::LockException] if lock cannot be acquired and the user
+      #   decides to abort.
+      #   Several process can access in read-only mode at the same time, but only
+      #   one process can access in read-write mode. If a process is accessing in
+      #   read-write mode, no other process can create a new instance.
+      #
+      # @param environment [Storage::Environment, nil]
+      # @param callbacks [Callbacks::Initialize, nil]
       #
       # @return [StorageManager] singleton instance
-      def create_instance(storage_environment = nil)
-        storage_environment ||= ::Storage::Environment.new(true)
+      def create_instance(environment = nil, callbacks = nil)
+        environment ||= Storage::Environment.new(true)
         create_logger
-        log.info("Creating Storage object")
-        @instance = new(storage_environment)
+        log.info "Creating Storage object"
+        @instance = new(environment)
+      rescue Storage::LockException => error
+        raise error unless retry_create_instance?(error, callbacks)
+        retry
       end
 
       # Creates the singleton instance for testing.
@@ -515,6 +581,54 @@ module Y2Storage
         # garbage collector from cleaning too much
         @logger = StorageLogger.new
         ::Storage.logger = @logger
+      end
+
+      # Default access mode (read-only or read-write)
+      #
+      # @note During installation, access mode should be read-write.
+      #
+      # @return [Symbol] :ro, :rw
+      def default_storage_mode
+        Yast::Mode.installation || Yast::Mode.autoinst ? :rw : :ro
+      end
+
+      # Checks whether the current instance can be used for the requested access mode
+      #
+      # A read-write instance can be always used independendly of the requested mode.
+      # In case of a read-only instance, it is only valid if requested mode is read-only.
+      #
+      # @note The instance is always considered as valid when it is created for
+      #   testing purposes.
+      #
+      # @param requested_mode [Symbol] :ro, :rw
+      # @return [Boolean]
+      def valid_instance?(requested_mode)
+        return false unless @instance
+        return true if test_instance?
+
+        @instance.mode == :rw || requested_mode == :ro
+      end
+
+      # Whether the current instance is for testing
+      #
+      # @return [Boolean]
+      def test_instance?
+        @instance.environment.probe_mode == Storage::ProbeMode_NONE
+      end
+
+      # Whether the user decides to retry the creation of the instance
+      #
+      # It is used when intitial creation could not be done due to lock errors.
+      #
+      # @see create_instance
+      #
+      # @param error [Storage::LockException]
+      # @param callbacks [Callbacks::Initialize]
+      #
+      # @return [Boolean] true if the user decides to retry.
+      def retry_create_instance?(error, callbacks)
+        callbacks ||= Callbacks::Initialize.new(error)
+        callbacks.retry?
       end
     end
 
