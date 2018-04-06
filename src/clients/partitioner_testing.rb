@@ -5,6 +5,11 @@ require "yast"
 require "y2partitioner/clients/main"
 require "y2storage"
 
+# Uncomment next line and run the file with root privileges to test system lock
+# exit unless Y2Storage::StorageManager.setup(mode: :rw)
+
+Y2Storage::StorageManager.create_test_instance
+
 arg = Yast::WFM.Args.first
 case arg
 when /.ya?ml$/
