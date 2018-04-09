@@ -23,7 +23,7 @@ describe Y2Partitioner::Clients::Main do
         expect(subject.run).to be_nil
       end
 
-      it "does not run the client" do
+      it "does not run the dialog" do
         expect(Y2Partitioner::Dialogs::Main).to_not receive(:new)
         subject.run
       end
