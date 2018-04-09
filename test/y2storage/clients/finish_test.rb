@@ -30,6 +30,9 @@ describe Y2Storage::Clients::Finish do
     before do
       allow(Yast::WFM).to receive(:Args).with(no_args).and_return(args)
       allow(Yast::WFM).to receive(:Args) { |n| n.nil? ? args : args[n] }
+
+      allow(Yast::SCR).to receive(:Read)
+      allow(Yast::SCR).to receive(:Write)
     end
 
     context "Info" do
@@ -52,17 +55,16 @@ describe Y2Storage::Clients::Finish do
 
       it "updates sysconfig file" do
         mount_by_id = Y2Storage::Filesystems::MountByType::ID
-        mount_by_label = Y2Storage::Filesystems::MountByType::LABEL
-
-        sysconfig = Y2Storage::SysconfigStorage.instance
-        sysconfig.default_mount_by = mount_by_label
 
         manager = Y2Storage::StorageManager.instance
         manager.default_mount_by = mount_by_id
 
-        expect(sysconfig.default_mount_by).to_not eq(mount_by_id)
+        expect(Yast::SCR).to receive(:Write) do |path, value|
+          expect(path.to_s).to match(/DEVICE_NAMES/)
+          expect(value).to eq("id")
+        end
+
         client.run
-        expect(sysconfig.default_mount_by).to eq(mount_by_id)
       end
 
       context "if Multipath is used in the target system" do
