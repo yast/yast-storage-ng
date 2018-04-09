@@ -71,9 +71,10 @@ module Y2Storage
 
         headline = _("Accessing the storage subsystem failed")
 
-        buttons = { yes: _("Retry"), no: abort_button_label }
-
-        answer = Yast::Report.yesno_popup(message, headline: headline, buttons: buttons)
+        answer = Yast::Report.yesno_popup(message,
+          headline: headline,
+          buttons:  buttons,
+          focus:    focus_button)
 
         log.info "User answer: #{answer}"
 
@@ -107,6 +108,22 @@ module Y2Storage
       # @return [String]
       def abort_button_label
         Yast::Mode.installation ? Yast::Label.AbortInstallationButton : Yast::Label.AbortButton
+      end
+
+      # Buttons to retry or abort
+      #
+      # @return [Hash<Symbol, String>]
+      def buttons
+        { yes: _("Retry"), no: abort_button_label }
+      end
+
+      # Button with focus by default
+      #
+      # @note For AutoYaST, default must be :no to avoid constantly retry.
+      #
+      # @return [Symbol] :yes, :no
+      def focus_button
+        Yast::Mode.auto ? :no : :yes
       end
     end
   end
