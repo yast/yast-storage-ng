@@ -68,7 +68,7 @@ describe Y2Storage::Proposal::InitialStrategies::Ng do
       "snapshots"                  => true,
       "snapshots_configurable"     => true,
       "snapshots_size"             => root_snapshots_size.to_s,
-      "disable_order"              => nil
+      "disable_order"              => root_disable_order
     }
   end
 
@@ -120,6 +120,7 @@ describe Y2Storage::Proposal::InitialStrategies::Ng do
     let(:separate_home) { true }
 
     let(:root_proposed_configurable) { false }
+    let(:root_disable_order) { nil }
 
     context "when settings are not passed" do
       let(:settings) { nil }
@@ -186,12 +187,28 @@ describe Y2Storage::Proposal::InitialStrategies::Ng do
       let(:root_max_size) { Y2Storage::DiskSize.unlimited }
       let(:root_snapshots_size) { 5.GiB }
 
-      it "makes a valid proposal deactivating snapshots" do
-        expect(proposal.failed?).to be(false)
+      context "and disable_order is nil" do
+        let(:root_disable_order) { nil }
 
-        expect(root_settings.adjust_by_ram?).to be(false)
-        expect(root_settings.snapshots?).to be(false)
-        expect(root_settings.proposed?).to be(true)
+        it "does not deactivate snapshots" do
+          expect(proposal.failed?).to eq true
+
+          expect(root_settings.adjust_by_ram?).to eq true
+          expect(root_settings.snapshots?).to eq true
+          expect(root_settings.proposed?).to eq true
+        end
+      end
+
+      context "and disable_order is defined" do
+        let(:root_disable_order) { 1 }
+
+        it "makes a valid proposal deactivating snapshots" do
+          expect(proposal.failed?).to be(false)
+
+          expect(root_settings.adjust_by_ram?).to be(false)
+          expect(root_settings.snapshots?).to be(false)
+          expect(root_settings.proposed?).to be(true)
+        end
       end
     end
 
@@ -282,6 +299,10 @@ describe Y2Storage::Proposal::InitialStrategies::Ng do
       let(:home_snapshots_size) { 5.GiB }
       let(:home_disable_order) { 2 }
 
+      it "deactivates snapshots in all possible volumes" do
+        expect(home_settings.snapshots).to eq false
+      end
+
       it "disables all possible volumes" do
         expect(swap_settings.proposed?).to be(false)
         expect(home_settings.proposed?).to be(false)
@@ -289,6 +310,10 @@ describe Y2Storage::Proposal::InitialStrategies::Ng do
 
       it "does not disable volumes without disable order" do
         expect(root_settings.proposed?).to be(true)
+      end
+
+      it "does not deactivate snapshots in volumes without disable order" do
+        expect(root_settings.snapshots).to eq true
       end
 
       it "does not make a valid proposal" do
