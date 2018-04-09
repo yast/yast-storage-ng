@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Mon Apr  9 09:14:12 UTC 2018 - ancor@suse.com
+
+- Force UTF-8 encoding for (most) strings coming from libstorage-ng
+  (bsc#1088067).
+- 4.0.148
+
+-------------------------------------------------------------------
 Thu Apr  5 15:30:57 UTC 2018 - shundhammer@suse.com
 
 - Better error handling if no storage proposal is possible
