@@ -297,9 +297,7 @@ module Y2Storage
       def processed_storage_result(result, class_name)
         result = result.to_a if result.class.name.start_with?("Storage::Vector")
 
-        return result unless class_name
-
-        wrapper_class = class_for(class_name)
+        wrapper_class = class_for(class_name) if class_name
         if result.is_a?(Array)
           result.map { |o| object_for(wrapper_class, o) }
         else
@@ -308,7 +306,11 @@ module Y2Storage
       end
 
       def object_for(wrapper_class, storage_object)
-        if wrapper_class.respond_to?(:downcasted_new)
+        if storage_object.is_a?(String)
+          storage_object.force_encoding("UTF-8")
+        elsif wrapper_class.nil?
+          storage_object
+        elsif wrapper_class.respond_to?(:downcasted_new)
           wrapper_class.downcasted_new(storage_object)
         else
           wrapper_class.new(storage_object)
