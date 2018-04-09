@@ -306,6 +306,8 @@ module Y2Storage
       end
 
       def object_for(wrapper_class, storage_object)
+        # As workaround for bsc1088067, force encoding like the old
+        # yast-storage did
         if storage_object.is_a?(String)
           storage_object.force_encoding("UTF-8")
         elsif wrapper_class.nil?
