@@ -69,7 +69,7 @@ module Y2Storage
             )
           end
 
-        headline = _("Accessing the storage subsystem failed")
+        headline = _("Accessing the Storage Subsystem Failed")
 
         answer = Yast::Report.yesno_popup(message,
           headline: headline,
