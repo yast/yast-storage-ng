@@ -16,7 +16,7 @@
 #
 
 Name:		yast2-storage-ng
-Version:        4.0.148
+Version:        4.0.149
 Release:	0
 BuildArch:	noarch
 
@@ -25,7 +25,8 @@ Source:		%{name}-%{version}.tar.bz2
 
 # Yast::Report.yesno_popup
 Requires:	yast2 >= 4.0.61
-Requires:	yast2-ruby-bindings
+# for AbortException and handle direct abort
+Requires:	yast2-ruby-bindings >= 4.0.6
 # ResizeInfo::reasons() and RB_ enum
 Requires:	libstorage-ng-ruby >= 3.3.198
 
@@ -39,6 +40,8 @@ BuildRequires:	yast2-devtools
 BuildRequires:  yast2-xml
 # Yast::Report.yesno_popup
 BuildRequires:	yast2 >= 4.0.61
+# for AbortException and handle direct abort
+BuildRequires:	yast2-ruby-bindings >= 4.0.6
 BuildRequires:	rubygem(yast-rake)
 BuildRequires:	rubygem(rspec)
 PreReq:         %fillup_prereq

@@ -1,4 +1,12 @@
 -------------------------------------------------------------------
+Mon Apr  9 10:14:12 UTC 2018 - jlopez@suse.com
+
+- Add system lock to avoid several processes using the storage
+  stack when a process is already using it with read-write access.
+- Part of fate#318196.
+- 4.0.149
+
+-------------------------------------------------------------------
 Mon Apr  9 09:14:12 UTC 2018 - ancor@suse.com
 
 - Force UTF-8 encoding for (most) strings coming from libstorage-ng

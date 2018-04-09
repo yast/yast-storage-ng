@@ -35,9 +35,16 @@ module Y2Partitioner
       extend Yast::Logger
 
       # Run the client
+      #
+      # It tries to initialize the storage object with read-write access mode.
+      #
+      # @see Y2Storage::StorageManager.setup
+      #
       # @param allow_commit [Boolean] can we pass the point of no return
       def self.run(allow_commit: true)
         textdomain "storage"
+
+        return nil unless Y2Storage::StorageManager.setup(mode: :rw)
 
         smanager = Y2Storage::StorageManager.instance
         dialog = Dialogs::Main.new

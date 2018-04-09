@@ -19,6 +19,7 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
+require "y2storage/callbacks/initialize"
 require "y2storage/callbacks/activate"
 require "y2storage/callbacks/probe"
 require "y2storage/callbacks/sanitize"

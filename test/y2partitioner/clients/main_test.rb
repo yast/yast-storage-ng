@@ -14,7 +14,22 @@ describe Y2Partitioner::Clients::Main do
       Y2Storage::StorageManager.create_test_instance
     end
 
-    describe "when committing is allowed" do
+    context "when storage system cannot be initialized as read-write" do
+      before do
+        allow(Y2Storage::StorageManager).to receive(:setup).with(mode: :rw).and_return(false)
+      end
+
+      it "returns nil" do
+        expect(subject.run).to be_nil
+      end
+
+      it "does not run the dialog" do
+        expect(Y2Partitioner::Dialogs::Main).to_not receive(:new)
+        subject.run
+      end
+    end
+
+    context "when committing is allowed" do
       it "asks, and commits when confirmed" do
         smanager = Y2Storage::StorageManager.instance
 
@@ -27,7 +42,7 @@ describe Y2Partitioner::Clients::Main do
       end
     end
 
-    describe "when commitig is disallowed" do
+    context "when commitig is disallowed" do
       it "tells so, and does not commit" do
         smanager = Y2Storage::StorageManager.instance
 
