@@ -26,6 +26,10 @@ require "y2storage"
 describe Y2Storage::StorageManager do
   subject(:manager) { described_class.instance }
 
+  before do
+    described_class.create_test_instance
+  end
+
   describe ".new" do
     it "cannot be used directly" do
       expect { described_class.new }.to raise_error(/private method/)
@@ -301,6 +305,7 @@ describe Y2Storage::StorageManager do
     before do
       allow(Y2Storage::SysconfigStorage.instance).to receive(:default_mount_by)
         .and_return(mount_by_label)
+      described_class.create_test_instance
     end
 
     let(:mount_by_label) { Y2Storage::Filesystems::MountByType::LABEL }
@@ -311,10 +316,6 @@ describe Y2Storage::StorageManager do
   end
 
   describe ".create_instance" do
-    before do
-      described_class.create_test_instance
-    end
-
     context "if the storage system is not locked" do
       before do
         # Mocking #new because it is not possible to create a lock without root privileges
@@ -432,7 +433,6 @@ describe Y2Storage::StorageManager do
     let(:proposal) { double("Y2Storage::GuidedProposal", devices: old_graph) }
 
     before do
-      described_class.create_test_instance
       manager.proposal = proposal
     end
 
@@ -486,10 +486,6 @@ describe Y2Storage::StorageManager do
     let(:new_graph) { devicegraph_from("gpt_and_msdos") }
     let(:proposal) { double("Y2Storage::GuidedProposal", devices: new_graph) }
 
-    before do
-      described_class.create_test_instance
-    end
-
     it "copies the proposal result to staging" do
       manager.proposal = proposal
       expect(Y2Storage::Disk.all(manager.staging).size).to eq 6
@@ -511,10 +507,6 @@ describe Y2Storage::StorageManager do
     let(:new_graph) { devicegraph_from("gpt_and_msdos") }
     let(:proposal) { double("Y2Storage::GuidedProposal", devices: new_graph) }
 
-    before do
-      described_class.create_test_instance
-    end
-
     it "returns false initially" do
       expect(manager.staging_changed?).to eq false
     end
@@ -531,10 +523,6 @@ describe Y2Storage::StorageManager do
   end
 
   describe "#rootprefix=" do
-    before do
-      described_class.create_test_instance
-    end
-
     it "updates the rootprefix value in the instance" do
       manager.rootprefix = "something"
       expect(manager.rootprefix).to eq "something"
@@ -548,10 +536,6 @@ describe Y2Storage::StorageManager do
   end
 
   describe "#prepend_rootprefix" do
-    before do
-      described_class.create_test_instance
-    end
-
     it "returns the same string if a prefix is not set for libstorage" do
       expect(manager.prepend_rootprefix("/absolute/path")).to eq "/absolute/path"
     end
@@ -574,7 +558,6 @@ describe Y2Storage::StorageManager do
 
   describe "#commit" do
     before do
-      described_class.create_test_instance
       allow(manager.storage).to receive(:calculate_actiongraph)
       allow(manager.storage).to receive(:commit)
       allow(Yast::Mode).to receive(:installation).and_return(mode == :installation)
