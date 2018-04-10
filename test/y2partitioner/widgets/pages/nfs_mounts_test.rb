@@ -28,6 +28,8 @@ require "y2partitioner/widgets/pages"
 describe Y2Partitioner::Widgets::Pages::NfsMounts do
   before do
     devicegraph_stub("nfs1.xml")
+    # Workaround. Will not be needed as soon as the xml format includes MountPoint#mount_type
+    device_graph.filesystems.each { |fs| fs.mount_point.mount_type = Y2Storage::Filesystems::Type::NFS }
   end
 
   let(:device_graph) { Y2Partitioner::DeviceGraphs.instance.current }
@@ -368,6 +370,45 @@ describe Y2Partitioner::Widgets::Pages::NfsMounts do
           expect(list_after).to_not include(
             an_object_having_attributes(server: "srv", path: "/home/a")
           )
+        end
+      end
+    end
+
+    context "when the event is triggered by the 'edit' button" do
+      let(:event) do
+        { "EventType" => "WidgetEvent", "EventReason" => "Activated", "ID" => :editbut }
+      end
+
+      it "notifies the event to the YaST client" do
+        expect(Yast::WFM).to receive(:CallFunction)
+          .with(client_name, ["HandleEvent", "widget_id" => :editbut])
+        nfs_page.handle(event)
+      end
+
+      context "and the legacy NFSv4 options are modified" do
+        before do
+          allow(Yast::WFM).to receive(:CallFunction).and_return client_result
+          # Simulate a legacy nfs4 entry
+          nfs_object.mount_point.mount_type = Y2Storage::Filesystems::Type::NFS4
+        end
+
+        let(:nfs_object) { device_graph.nfs_mounts.find { |nfs| nfs.path == "/home/a" } }
+
+        let(:client_result) do
+          {
+            "device" => "srv:/home/a", "fstopt" => "nfsvers=4", "mount" => "/test1",
+            "vfstype" => "nfs"
+          }
+        end
+
+        it "edits the NFS mount in the current devicegraph" do
+          expect(nfs_object.mount_point.mount_type.to_sym).to eq :nfs4
+          expect(nfs_object.mount_point.mount_options).to be_empty
+
+          nfs_page.handle(event)
+
+          expect(nfs_object.mount_point.mount_type.to_sym).to eq :nfs
+          expect(nfs_object.mount_point.mount_options).to eq ["nfsvers=4"]
         end
       end
     end
