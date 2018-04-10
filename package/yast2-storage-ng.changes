@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Tue Apr 10 10:59:32 UTC 2018 - jlopez@suse.com
+
+- Update dependency with libstorage-ng (ensure lock system).
+- Part of fate#318196.
+- 4.0.151
+
+-------------------------------------------------------------------
 Mon Apr  9 19:44:44 UTC 2018 - ancor@suse.com
 
 - Fixed the disable_order property of control.xml. Now it affects

@@ -16,7 +16,7 @@
 #
 
 Name:		yast2-storage-ng
-Version:        4.0.150
+Version:        4.0.151
 Release:	0
 BuildArch:	noarch
 
@@ -27,12 +27,12 @@ Source:		%{name}-%{version}.tar.bz2
 Requires:	yast2 >= 4.0.61
 # for AbortException and handle direct abort
 Requires:	yast2-ruby-bindings >= 4.0.6
-# ResizeInfo::reasons() and RB_ enum
-Requires:	libstorage-ng-ruby >= 3.3.198
+# System lock
+Requires:	libstorage-ng-ruby >= 3.3.204
 
 BuildRequires:	update-desktop-files
-# ResizeInfo::reasons() and RB_ enum
-BuildRequires:	libstorage-ng-ruby >= 3.3.198
+# System lock
+BuildRequires:	libstorage-ng-ruby >= 3.3.204
 BuildRequires:	yast2-ruby-bindings
 BuildRequires:	yast2-devtools
 # yast2-xml dependency is added by yast2 but ignored in the
