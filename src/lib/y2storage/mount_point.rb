@@ -116,6 +116,14 @@ module Y2Storage
     #   default mount options only contain the subvol for btrfs subvolumes.
     storage_forward :set_default_mount_options, to: :default_mount_options=
 
+    # @!attribute mount_type
+    #   Filesystem type used to mount the device, as specified in fstab and/or
+    #   in the mount command.
+    #
+    #   @return [Filesystems::Type]
+    storage_forward :mount_type, as: "Filesystems::Type"
+    storage_forward :mount_type=
+
     # @!method in_etc_fstab?
     #   Whether the mount point is present (probed devicegraph) or
     #   will be present (staging devicegraph) in /etc/fstab

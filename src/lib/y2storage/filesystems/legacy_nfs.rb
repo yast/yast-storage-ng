@@ -21,6 +21,7 @@
 
 require "yast"
 require "y2storage/filesystems/nfs"
+require "y2storage/filesystems/type"
 
 module Y2Storage
   module Filesystems
@@ -67,6 +68,10 @@ module Y2Storage
       # @return [String]
       attr_reader :fstopt
 
+      # Filesystem type used in fstab
+      # @return [Type] possible values are Type::NFS and Type::NFS4
+      attr_reader :fs_type
+
       # Creates a new object from a hash with the legacy fields used in
       # TargetMap-based code.
       #
@@ -95,9 +100,8 @@ module Y2Storage
           "device"  => share_string(server, path),
           "mount"   => mountpoint,
           "fstopt"  => fstopt,
-          # TODO: libstorage-ng does not distinguish different NFS versions, so
-          # for the time being, always use :nfs here
-          "used_fs" => :nfs
+          "used_fs" => fs_type.to_sym,
+          "vfstype" => fs_type.to_sym
         }
         hash["old_device"] = share_string(old_server, old_path) if share_changed?
         hash
@@ -114,7 +118,6 @@ module Y2Storage
       def create_nfs_device(devicegraph = nil)
         graph = check_devicegraph_argument(devicegraph)
 
-        # TODO: libstorage-ng does not distinguish different NFS versions
         dev = Nfs.create(graph, server, path)
         if mountpoint && !mountpoint.empty?
           dev.mount_path = mountpoint
@@ -139,6 +142,7 @@ module Y2Storage
           nfs.remove_mount_point unless nfs.mount_point.nil?
         else
           nfs.mount_path = mountpoint
+          nfs.mount_point.mount_type = fs_type
           nfs.mount_point.mount_options = fstopt.split(/[\s,]+/)
         end
       end
@@ -188,6 +192,8 @@ module Y2Storage
         @server, @path = split_share(attributes["device"])
         @mountpoint = attributes["mount"]
         @fstopt = attributes["fstopt"]
+        vfstype = attributes.fetch("vfstype", :nfs)
+        @fs_type = Type.find(vfstype)
 
         old_share = attributes["old_device"]
         return if old_share.nil? || old_share.empty?
@@ -201,6 +207,7 @@ module Y2Storage
         @mountpoint = nfs.mount_path
         mount_options = nfs.mount_point.nil? ? [] : nfs.mount_point.mount_options
         @fstopt = mount_options.empty? ? "defaults" : mount_options.join(",")
+        @fs_type = nfs.mount_point ? nfs.mount_point.mount_type : Type::NFS
       end
 
       # String representing the remote NFS share, as specified in fstab
