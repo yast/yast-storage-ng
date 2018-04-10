@@ -27,12 +27,12 @@ Source:		%{name}-%{version}.tar.bz2
 Requires:	yast2 >= 4.0.61
 # for AbortException and handle direct abort
 Requires:	yast2-ruby-bindings >= 4.0.6
-# System lock
-Requires:	libstorage-ng-ruby >= 3.3.204
+# Setter and getter for MountPoint#mount_type
+Requires:	libstorage-ng-ruby >= 3.3.209
 
 BuildRequires:	update-desktop-files
-# System lock
-BuildRequires:	libstorage-ng-ruby >= 3.3.204
+# Setter and getter for MountPoint#mount_type
+BuildRequires:	libstorage-ng-ruby >= 3.3.209
 BuildRequires:	yast2-ruby-bindings
 BuildRequires:	yast2-devtools
 # yast2-xml dependency is added by yast2 but ignored in the
