@@ -100,8 +100,10 @@ module Y2Storage
           "device"  => share_string(server, path),
           "mount"   => mountpoint,
           "fstopt"  => fstopt,
-          "used_fs" => fs_type.to_sym,
-          "vfstype" => fs_type.to_sym
+          # Weird enough, yast2-nfs-client provides this value in the field
+          # "vfstype" (see #initialize_from_hash), but it expects to get it in
+          # the "used_fs" one. Asymmetry for the win!
+          "used_fs" => fs_type.to_sym
         }
         hash["old_device"] = share_string(old_server, old_path) if share_changed?
         hash
@@ -205,9 +207,14 @@ module Y2Storage
         @server     = nfs.server
         @path       = nfs.path
         @mountpoint = nfs.mount_path
-        mount_options = nfs.mount_point.nil? ? [] : nfs.mount_point.mount_options
+        if nfs.mount_point
+          mount_options = nfs.mount_point.mount_options
+          @fs_type = nfs.mount_point.mount_type
+        else
+          mount_options = []
+          @fs_type = Type::NFS
+        end
         @fstopt = mount_options.empty? ? "defaults" : mount_options.join(",")
-        @fs_type = nfs.mount_point ? nfs.mount_point.mount_type : Type::NFS
       end
 
       # String representing the remote NFS share, as specified in fstab
