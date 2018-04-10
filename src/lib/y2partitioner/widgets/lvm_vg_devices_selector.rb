@@ -38,6 +38,26 @@ module Y2Partitioner
         super()
       end
 
+      def help
+        help_available_pvs + help_selected_pvs
+      end
+
+      def help_available_pvs
+        _("<p><b>Available Devices:</b> " \
+          "A list of available LVM physical volumes. " \
+          "If this list is empty, you need to create partitions " \
+          "as \"Raw Volume (unformatted)\" with partition ID \"Linux LVM\"" \
+          "in the \"Hard Disks\" view of the partitioner." \
+          "</p>")
+      end
+
+      def help_selected_pvs
+        _("<p><b>Selected Devices:</b> " \
+          "The physical volumes to create this volume group from. " \
+          "If needed, you can always add more physical volumes later." \
+          "</p>")
+      end
+
       # @see Widgets::DevicesSelection#selected
       def selected
         controller.devices_in_vg
