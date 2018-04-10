@@ -400,6 +400,14 @@ describe Y2Storage::StorageManager do
   end
 
   describe "#default_mount_by=" do
+    before do
+      allow(Yast::SCR).to receive(:Read) do |path|
+        expect(path.to_s).to match(/DEVICE_NAMES/)
+      end.and_return("uuid")
+
+      described_class.create_test_instance
+    end
+
     it "updates the default mount_by value" do
       mount_by_id = Y2Storage::Filesystems::MountByType::ID
 
