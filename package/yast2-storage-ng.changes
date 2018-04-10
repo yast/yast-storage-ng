@@ -1,4 +1,12 @@
 -------------------------------------------------------------------
+Mon Apr  9 19:44:44 UTC 2018 - ancor@suse.com
+
+- Fixed the disable_order property of control.xml. Now it affects
+  all the configurable aspects of the volume, as documented
+  (related to bsc#1078495).
+- 4.0.150
+
+-------------------------------------------------------------------
 Mon Apr  9 10:14:12 UTC 2018 - jlopez@suse.com
 
 - Add system lock to avoid several processes using the storage

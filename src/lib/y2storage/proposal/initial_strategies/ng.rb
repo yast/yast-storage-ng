@@ -107,25 +107,26 @@ module Y2Storage
 
         # Returns the first volume (according to disable_order) whose settings could be modified.
         #
-        # @note Volumes without disable order are left to the end.
+        # @note Volumes without disable order are never altered.
         #
         # @param settings [ProposalSettings]
         # @return [VolumeSpecification, nil]
         def first_configurable_volume(settings)
-          volumes = settings.volumes.select { |v| configurable_volume?(v) }
-          with_disable_order, without_disable_order = volumes.partition { |v| !v.disable_order.nil? }
-
-          (with_disable_order.sort_by(&:disable_order) + without_disable_order).first
+          settings.volumes.select { |v| configurable_volume?(v) }.sort_by(&:disable_order).first
         end
 
         # A volume is configurable if it is proposed and its settings can be modified.
         # That is, #adjust_by_ram, #snapshots or #proposed are true and some of them
         # could be change to false.
         #
+        # @note A volume is considered configurable if it has disable order. Otherwise,
+        #   only the user is allowed to manually disable the volume or any of its features
+        #   (e.g. snapshots) using the UI.
+        #
         # @param volume [VolumeSpecification]
         # @return [Boolean]
         def configurable_volume?(volume)
-          volume.proposed? && (
+          volume.proposed? && !volume.disable_order.nil? && (
             proposed_active_and_configurable?(volume) ||
             adjust_by_ram_active_and_configurable?(volume) ||
             snapshots_active_and_configurable?(volume))
@@ -133,13 +134,10 @@ module Y2Storage
 
         # Whether the volume is proposed and it could be configured
         #
-        # @note A volume is considered configurable if it has disable order. Otherwise,
-        #   only the user is allowed to manually disable the volume using the UI.
-        #
         # @param volume [VolumeSpecification]
         # @return [Boolean]
         def proposed_active_and_configurable?(volume)
-          active_and_configurable?(volume, :proposed) && !volume.disable_order.nil?
+          active_and_configurable?(volume, :proposed)
         end
 
         # Whether the volume has adjust_by_ram to true and it could be configured
