@@ -75,6 +75,11 @@ module Y2Partitioner
             _("Default Mount by")
           end
 
+          def help
+            _("<p><b>Default Mount by:</b> This is the method " \
+              "how newly created filesystems are mounted.</p>")
+          end
+
           def init
             self.value = Y2Storage::StorageManager.instance.default_mount_by.to_s
           end
