@@ -1,4 +1,12 @@
 -------------------------------------------------------------------
+Tue Apr 10 16:21:04 UTC 2018 - ancor@suse.com
+
+- Partitioner: make possible for the embedded yast2-nfs-client to
+  access the vfstype field of fstab, so it can detect and correct
+  legacy NFS entries (bsc#1088426).
+- 4.0.152
+
+-------------------------------------------------------------------
 Tue Apr 10 10:59:32 UTC 2018 - jlopez@suse.com
 
 - Update dependency with libstorage-ng (ensure lock system).
