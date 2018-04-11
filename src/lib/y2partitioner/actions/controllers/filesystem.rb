@@ -241,9 +241,9 @@ module Y2Partitioner
         # @param path [String]
         # @param options [Hash] options for the mount point (e.g., { mount_by: :uuid } )
         def create_mount_point(path, options = {})
-          # A mount point cannot be created if there is no filesystem
+          # The mount point cannot be created if there is no filesystem
           return if filesystem.nil?
-          # A mount is not created if there is already a mount point
+          # The mount point is not created if there is already a mount point
           return unless mount_point.nil?
 
           options[:mount_options] ||= filesystem.type.default_mount_options(path)
@@ -445,11 +445,6 @@ module Y2Partitioner
         def create_filesystem(type, label: nil)
           blk_device.create_blk_filesystem(type)
           filesystem.label = label unless label.nil?
-
-          if btrfs?
-            default_path = Y2Storage::Filesystems::Btrfs.default_btrfs_subvolume_path
-            filesystem.ensure_default_btrfs_subvolume(path: default_path)
-          end
         end
 
         def restore_filesystem
@@ -559,21 +554,27 @@ module Y2Partitioner
 
         # Finds first not probed subvolume
         #
-        # @note Top level and default subvolumes are not taken into account (see {#subvolumes}).
+        # @note Top level subvolume is not taken into account.
         #
         # @return [Y2Storage::BtrfsSubvolume, nil]
         def find_not_probed_subvolume
-          subvolumes.detect { |s| !s.exists_in_devicegraph?(system_graph) }
+          filesystem.btrfs_subvolumes.detect do |subvolume|
+            !subvolume.top_level? && !subvolume.exists_in_devicegraph?(system_graph)
+          end
         end
 
+        # The default subvolume is created first and then the proposed subvolumes are added.
+        #
         # A proposed subvolume is added only when it does not exist in the filesystem and it
-        # makes sense for the current architecture
+        # makes sense for the current architecture.
         #
         # @see Y2Storage::Filesystems::Btrfs#add_btrfs_subvolumes
         def add_proposed_subvolumes
           spec = Y2Storage::VolumeSpecification.for(mount_point.path)
-          return unless spec && spec.subvolumes
-          filesystem.add_btrfs_subvolumes(spec.subvolumes)
+          return unless spec
+
+          filesystem.ensure_default_btrfs_subvolume(path: spec.btrfs_default_subvolume)
+          filesystem.add_btrfs_subvolumes(spec.subvolumes) if spec.subvolumes
         end
 
         # Updates subvolumes mount point

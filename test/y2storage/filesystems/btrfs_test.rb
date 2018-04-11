@@ -174,14 +174,40 @@ describe Y2Storage::Filesystems::Btrfs do
       let(:path) { "@/home" }
 
       it "deletes the subvolume" do
-        expect(filesystem.btrfs_subvolumes.map(&:path)).to include(path)
+        expect(filesystem.btrfs_subvolumes).to include(an_object_having_attributes(path: path))
         filesystem.delete_btrfs_subvolume(devicegraph, path)
-        expect(filesystem.btrfs_subvolumes.map(&:path)).to_not include(path)
+        expect(filesystem.btrfs_subvolumes).to_not include(an_object_having_attributes(path: path))
       end
     end
 
     context "when the filesystem has not a subvolume with the indicated path" do
       let(:path) { "@/foo" }
+
+      it "does not delete any subvolume" do
+        subvolumes_before = filesystem.btrfs_subvolumes
+        filesystem.delete_btrfs_subvolume(devicegraph, path)
+        expect(filesystem.btrfs_subvolumes).to eq(subvolumes_before)
+      end
+    end
+
+    context "when the default subvolume path is given" do
+      let(:path) { "@" }
+
+      it "removes the default subvolume" do
+        filesystem.delete_btrfs_subvolume(devicegraph, path)
+
+        expect(filesystem.btrfs_subvolumes).to_not include(an_object_having_attributes(path: "@"))
+      end
+
+      it "sets top level subvolume as default subvolume" do
+        filesystem.delete_btrfs_subvolume(devicegraph, path)
+
+        expect(filesystem.top_level_btrfs_subvolume).to eq(filesystem.default_btrfs_subvolume)
+      end
+    end
+
+    context "when the top level subvolume path is given" do
+      let(:path) { "" }
 
       it "does not delete any subvolume" do
         subvolumes_before = filesystem.btrfs_subvolumes
@@ -510,35 +536,6 @@ describe Y2Storage::Filesystems::Btrfs do
 
       it "returns the subvolume mount point for the indicated path" do
         expect(described_class.btrfs_subvolume_mount_point(mount_path, path)).to eq("/foo/bar")
-      end
-    end
-  end
-
-  describe ".default_btrfs_subvolume_path" do
-    before do
-      allow(Yast::ProductFeatures).to receive(:GetSection).with("partitioning").and_return(section)
-      allow(section).to receive(:key?).with("btrfs_default_subvolume").and_return(has_key)
-      allow(Yast::ProductFeatures).to receive(:GetStringFeature)
-        .with("partitioning", "btrfs_default_subvolume").and_return(default_subvolume)
-    end
-
-    let(:section) { double("section") }
-
-    let(:default_subvolume) { "@" }
-
-    context "when default btrfs subvolume is not specified in control.xml" do
-      let(:has_key) { false }
-
-      it "returns nil" do
-        expect(described_class.default_btrfs_subvolume_path).to eq(nil)
-      end
-    end
-
-    context "when default btrfs subvolume is specified in control.xml" do
-      let(:has_key) { true }
-
-      it "returns the specified default subvolume path" do
-        expect(described_class.default_btrfs_subvolume_path).to eq(default_subvolume)
       end
     end
   end

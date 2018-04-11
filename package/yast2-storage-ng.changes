@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Tue Apr 10 16:24:16 UTC 2018 - jlopez@suse.com
+
+- Partitioner: fix creation of default BTRFS subvolume
+  (bsc#1087918 and bsc#1087763).
+- 4.0.153
+
+-------------------------------------------------------------------
 Tue Apr 10 16:21:04 UTC 2018 - ancor@suse.com
 
 - Partitioner: make possible for the embedded yast2-nfs-client to

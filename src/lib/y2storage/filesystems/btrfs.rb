@@ -153,13 +153,20 @@ module Y2Storage
 
       # Deletes a btrfs subvolume that belongs to the filesystem
       #
+      # @note The filesystem must have a default subvolume. When the default subvolume is deleted,
+      #   the top level subvolume is set as the new default subvolume. Moreover, the top level
+      #   subvolume cannot be deleted.
+      #
       # @param devicegraph [Devicegraph]
       # @param path [String] path of subvolume to delete
       def delete_btrfs_subvolume(devicegraph, path)
         subvolume = find_btrfs_subvolume_by_path(path)
-        return if subvolume.nil?
+        return if subvolume.nil? || subvolume.top_level?
+
+        deleted_default = subvolume.default_btrfs_subvolume?
 
         devicegraph.remove_btrfs_subvolume(subvolume)
+        top_level_btrfs_subvolume.set_default_btrfs_subvolume if deleted_default
       end
 
       # Creates a new btrfs subvolume for the filesystem
@@ -284,22 +291,6 @@ module Y2Storage
         return nil if fs_mount_path.nil?
         return nil if subvolume_path.nil?
         File.join(fs_mount_path, subvolume_path)
-      end
-
-      # The path that a new default btrfs subvolume should have
-      #
-      # TODO: The logic for obtaining a default subvolume path should be in the
-      #   Y2Storage::SubvolSpecification class. In case that control file does not
-      #   have a default path, it should fall back to a hard coded value.
-      #
-      # @return [String, nil] nil if default subvolume is not specified in control.xml
-      def self.default_btrfs_subvolume_path
-        section = "partitioning"
-        feature = "btrfs_default_subvolume"
-
-        return nil unless Yast::ProductFeatures.GetSection(section).key?(feature)
-
-        Yast::ProductFeatures.GetStringFeature(section, feature)
       end
 
       # Subvolumes that have been automatically deleted without user
