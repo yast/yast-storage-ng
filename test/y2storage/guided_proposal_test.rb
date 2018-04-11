@@ -493,6 +493,45 @@ describe Y2Storage::GuidedProposal do
         expect { proposal.propose }.to raise_error(Y2Storage::Error)
       end
     end
+
+    # Regression test for bsc#1088483
+    context "when keeping some existing logical partitions and creating new ones" do
+      let(:scenario) { "bug_1088483" }
+      let(:settings_format) { :ng }
+      let(:separate_home) { true }
+
+      let(:control_file_content) do
+        { "partitioning" => { "proposal" => {}, "volumes" => volumes } }
+      end
+
+      let(:volumes) do
+        [
+          {
+            "mount_point" => "/", "fs_type" => "xfs", "weight" => 60,
+            "desired_size" => "20GiB", "max_size" => "40GiB"
+          },
+          { "mount_point" => "/home", "fs_type" => "xfs", "weight" => 40, "desired_size" => "10GiB" },
+          # This should reuse the existing logical swap
+          { "mount_point" => "swap", "fs_type" => "swap", "desired_size" => "3GiB" }
+        ]
+      end
+
+      before do
+        settings.candidate_devices = ["/dev/sda"]
+      end
+
+      it "does not overcommit the extended partition" do
+        proposal.propose
+        extended = proposal.devices.find_by_name("/dev/sda4")
+        logical = extended.children
+        logical_sum = Y2Storage::DiskSize.sum(logical.map(&:size))
+        # The overhead of the last logical partition (previously existing) is
+        # smaller (only 64KiB) because we do not enforce end alignment
+        # before it
+        logical_overhead = 1.MiB * logical.size - 960.KiB
+        expect(logical_sum + logical_overhead).to eq extended.size
+      end
+    end
   end
 
   describe "#failed?" do
