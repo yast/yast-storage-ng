@@ -293,22 +293,6 @@ module Y2Storage
         File.join(fs_mount_path, subvolume_path)
       end
 
-      # The path that a new default btrfs subvolume should have
-      #
-      # TODO: The logic for obtaining a default subvolume path should be in the
-      #   Y2Storage::SubvolSpecification class. In case that control file does not
-      #   have a default path, it should fall back to a hard coded value.
-      #
-      # @return [String, nil] nil if default subvolume is not specified in control.xml
-      def self.default_btrfs_subvolume_path
-        section = "partitioning"
-        feature = "btrfs_default_subvolume"
-
-        return nil unless Yast::ProductFeatures.GetSection(section).key?(feature)
-
-        Yast::ProductFeatures.GetStringFeature(section, feature)
-      end
-
       # Subvolumes that have been automatically deleted without user
       # intervention to avoid shadowing.
       #
