@@ -174,14 +174,40 @@ describe Y2Storage::Filesystems::Btrfs do
       let(:path) { "@/home" }
 
       it "deletes the subvolume" do
-        expect(filesystem.btrfs_subvolumes.map(&:path)).to include(path)
+        expect(filesystem.btrfs_subvolumes).to include(an_object_having_attributes(path: path))
         filesystem.delete_btrfs_subvolume(devicegraph, path)
-        expect(filesystem.btrfs_subvolumes.map(&:path)).to_not include(path)
+        expect(filesystem.btrfs_subvolumes).to_not include(an_object_having_attributes(path: path))
       end
     end
 
     context "when the filesystem has not a subvolume with the indicated path" do
       let(:path) { "@/foo" }
+
+      it "does not delete any subvolume" do
+        subvolumes_before = filesystem.btrfs_subvolumes
+        filesystem.delete_btrfs_subvolume(devicegraph, path)
+        expect(filesystem.btrfs_subvolumes).to eq(subvolumes_before)
+      end
+    end
+
+    context "when the default subvolume path is given" do
+      let(:path) { "@" }
+
+      it "removes the default subvolume" do
+        filesystem.delete_btrfs_subvolume(devicegraph, path)
+
+        expect(filesystem.btrfs_subvolumes).to_not include(an_object_having_attributes(path: "@"))
+      end
+
+      it "sets top level subvolume as default subvolume" do
+        filesystem.delete_btrfs_subvolume(devicegraph, path)
+
+        expect(filesystem.top_level_btrfs_subvolume).to eq(filesystem.default_btrfs_subvolume)
+      end
+    end
+
+    context "when the top level subvolume path is given" do
+      let(:path) { "" }
 
       it "does not delete any subvolume" do
         subvolumes_before = filesystem.btrfs_subvolumes

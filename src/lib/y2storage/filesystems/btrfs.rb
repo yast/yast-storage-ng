@@ -153,13 +153,20 @@ module Y2Storage
 
       # Deletes a btrfs subvolume that belongs to the filesystem
       #
+      # @note The filesystem must have a default subvolume. When the default subvolume is deleted,
+      #   the top level subvolume is set as the new default subvolume. Moreover, the top level
+      #   subvolume cannot be deleted.
+      #
       # @param devicegraph [Devicegraph]
       # @param path [String] path of subvolume to delete
       def delete_btrfs_subvolume(devicegraph, path)
         subvolume = find_btrfs_subvolume_by_path(path)
-        return if subvolume.nil?
+        return if subvolume.nil? || subvolume.top_level?
+
+        deleted_default = subvolume.default_btrfs_subvolume?
 
         devicegraph.remove_btrfs_subvolume(subvolume)
+        top_level_btrfs_subvolume.set_default_btrfs_subvolume if deleted_default
       end
 
       # Creates a new btrfs subvolume for the filesystem
