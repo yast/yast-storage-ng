@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Fri Apr 13 12:31:04 UTC 2018 - igonzalezsosa@suse.com
+
+- AutoYaST: support partition_type when set to "primary"
+ (bsc#1081506).
+- 4.0.155
+
+-------------------------------------------------------------------
 Fri Apr 13 10:56:19 UTC 2018 - ancor@suse.com
 
 - More informative message displayed when the proposal failed with
