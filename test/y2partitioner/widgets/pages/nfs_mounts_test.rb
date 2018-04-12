@@ -28,8 +28,6 @@ require "y2partitioner/widgets/pages"
 describe Y2Partitioner::Widgets::Pages::NfsMounts do
   before do
     devicegraph_stub("nfs1.xml")
-    # Workaround. Will not be needed as soon as the xml format includes MountPoint#mount_type
-    device_graph.filesystems.each { |fs| fs.mount_point.mount_type = Y2Storage::Filesystems::Type::NFS }
   end
 
   let(:device_graph) { Y2Partitioner::DeviceGraphs.instance.current }
