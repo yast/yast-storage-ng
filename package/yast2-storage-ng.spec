@@ -31,8 +31,8 @@ Requires:	yast2-ruby-bindings >= 4.0.6
 Requires:	libstorage-ng-ruby >= 3.3.209
 
 BuildRequires:	update-desktop-files
-# Setter and getter for MountPoint#mount_type
-BuildRequires:	libstorage-ng-ruby >= 3.3.209
+# MountPoint#mount_type in the XML format
+BuildRequires:	libstorage-ng-ruby >= 3.3.210
 BuildRequires:	yast2-ruby-bindings
 BuildRequires:	yast2-devtools
 # yast2-xml dependency is added by yast2 but ignored in the

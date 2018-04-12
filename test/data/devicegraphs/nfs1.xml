@@ -11,6 +11,7 @@
       <sid>43</sid>
       <path>/test1</path>
       <mount-by>device</mount-by>
+      <mount-type>nfs</mount-type>
       <active>false</active>
       <in-etc-fstab>true</in-etc-fstab>
       <freq>0</freq>
@@ -29,6 +30,7 @@
       <sid>45</sid>
       <path>/test2</path>
       <mount-by>device</mount-by>
+      <mount-type>nfs</mount-type>
       <mount-options>rw,relatime,vers=3,rsize=65536,wsize=65536</mount-options>
       <active>true</active>
       <in-etc-fstab>false</in-etc-fstab>
