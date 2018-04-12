@@ -48,6 +48,15 @@ module Y2Partitioner
           _("Chunk Size")
         end
 
+        def help
+          _("<p><b>Chunk Size:</b> " \
+            "It is the smallest \"atomic\" mass of data that can be written to the devices. " \
+            "A reasonable chunk size for RAID 5 is 128 kB. " \
+            "For RAID 0, 32 kB is a good starting point. " \
+            "For RAID 1, the chunk size does not affect the array very much." \
+            "</p>")
+        end
+
         # @macro seeAbstractWidget
         def opt
           %i(hstretch notify)
@@ -79,6 +88,14 @@ module Y2Partitioner
 
         def label
           _("Parity Algorithm")
+        end
+
+        def help
+          _("<p><b>Parity Algorithm:</b> " \
+            "The parity algorithm to use with RAID 5/6. " \
+            "Left-symmetric is the one that offers maximum performance " \
+            "on typical disks with rotating platters." \
+            "</p>")
         end
 
         # @macro seeAbstractWidget

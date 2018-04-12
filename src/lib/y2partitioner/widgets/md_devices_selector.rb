@@ -40,6 +40,10 @@ module Y2Partitioner
         super()
       end
 
+      def help
+        help_available + help_selected
+      end
+
       # @see Widgets::DevicesSelection#selected
       def selected
         controller.devices_in_md
@@ -127,6 +131,25 @@ module Y2Partitioner
 
       # @return [Y2Partitioner::Actions::Controllers::Md]
       attr_reader :controller
+
+      def help_available
+        _("<p><b>Available Devices:</b> " \
+          "Unused disks and partitions that can be used for a RAID. " \
+          "A disk can be used if it does not contain any partitions " \
+          "and no filesystem directly on the disk. " \
+          "A partition can be used if it is not mounted. " \
+          "It is recommended to use partition ID \"Linux RAID\" " \
+          "for those partitions." \
+          "</p>")
+      end
+
+      def help_selected
+        _("<p><b>Selected Devices:</b> " \
+          "The disks and partitions that are used for the RAID. " \
+          "Different RAID levels have different requirements " \
+          "for the minimum number of devices. " \
+          "</p>")
+      end
 
       # Errors detected in the MD RAID (e.g., it has not enough devices)
       #
