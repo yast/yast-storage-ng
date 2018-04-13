@@ -34,7 +34,7 @@ module Y2Storage
     class PartitionsDistributionCalculator
       include Yast::Logger
 
-      def initialize(lvm_helper)
+      def initialize(lvm_helper = nil)
         @lvm_helper = lvm_helper
       end
 
@@ -43,7 +43,7 @@ module Y2Storage
       # If it's necessary to provide LVM space (according to lvm_helper),
       # the result will include one or several extra planned partitions to host
       # the LVM physical volumes that need to be created in order to reach
-      # that size (within the max limites provided by lvm_helper).
+      # that size (within the max limits provided by lvm_helper).
       #
       # @param partitions [Array<Planned::Partition>]
       # @param spaces [Array<FreeDiskSpace>]
@@ -67,7 +67,7 @@ module Y2Storage
 
         candidates = distributions_from_hashes(dist_hashes)
 
-        if lvm_helper.missing_space > DiskSize.zero
+        if lvm?
           log.info "Calculate LVM posibilities for the #{candidates.size} candidate distributions"
           pv_calculator = PhysVolCalculator.new(spaces, lvm_helper)
           candidates.map! { |dist| pv_calculator.add_physical_volumes(dist) }
@@ -104,8 +104,10 @@ module Y2Storage
         max_logical = max_logical(disk, planned_partitions)
         needed += Planned::AssignedSpace.overhead_of_logical(disk) * max_logical
 
-        pvs_to_create = free_spaces.size + 1
-        needed += lvm_space_to_make(pvs_to_create)
+        if lvm?
+          pvs_to_create = free_spaces.size + 1
+          needed += lvm_space_to_make(pvs_to_create)
+        end
 
         # The exact amount of available free space is hard to predict.
         #
@@ -125,16 +127,27 @@ module Y2Storage
 
     protected
 
+      # @return [Proposal::LvmHelper, nil] nil if LVM is not involved
       attr_reader :lvm_helper
+
+      # Whether LVM should be taken into account
+      #
+      # @return [Boolean]
+      def lvm?
+        !!(lvm_helper && lvm_helper.missing_space > DiskSize.zero)
+      end
 
       # Checks whether there is any chance of producing a valid
       # PartitionsDistribution to accomodate the planned partitions and the
       # missing LVM part in the free spaces
       def impossible?(planned_partitions, free_spaces)
-        # Let's assume the best possible case - if we need to create a PV it
-        # will be only one
-        pvs_to_create = 1
-        needed = DiskSize.sum(planned_partitions.map(&:min)) + lvm_space_to_make(pvs_to_create)
+        needed = DiskSize.sum(planned_partitions.map(&:min))
+        if lvm?
+          # Let's assume the best possible case - if we need to create a PV it
+          # will be only one
+          pvs_to_create = 1
+          needed += lvm_space_to_make(pvs_to_create)
+        end
         needed > available_space(free_spaces)
       end
 
@@ -148,7 +161,7 @@ module Y2Storage
       #     exact number of PVs until you calculate the space distribution)
       # @return [DiskSize]
       def lvm_space_to_make(new_pvs)
-        return DiskSize.zero if lvm_helper.missing_space.zero?
+        return DiskSize.zero unless lvm?
         lvm_helper.missing_space + lvm_helper.useless_pv_space * new_pvs
       end
 
