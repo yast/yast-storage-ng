@@ -113,7 +113,18 @@ module Y2Storage
         content = if devicegraph
           @actions_presenter.to_html
         else
-          Yast::HTML.Para(Yast::HTML.Colorize(_("No proposal possible."), "red"))
+          Yast::HTML.Para(
+            _(
+              "It was not possible to automatically propose a partitioning layout " \
+              "based on the current settings."
+            )
+          ) +
+            Yast::HTML.Para(
+              _(
+                "Please, use \"Guided Setup\" to adjust the proposal settings or " \
+                "\"Expert Partitioner\" to create a custom layout."
+              )
+            )
         end
 
         RichText(Id(:summary), content)
