@@ -26,8 +26,15 @@ require "y2storage"
 
 describe Y2Storage::Proposal::PartitionsDistributionCalculator do
   let(:lvm_volumes) { [] }
-  let(:lvm_helper) { Y2Storage::Proposal::LvmHelper.new(lvm_volumes, encryption_password: enc_password) }
+  let(:settings) { Y2Storage::ProposalSettings.new }
   let(:enc_password) { nil }
+  let(:lvm_vg_strategy) { :use_needed }
+  let(:lvm_helper) { Y2Storage::Proposal::LvmHelper.new(lvm_volumes, settings) }
+
+  before do
+    settings.encryption_password = enc_password
+    settings.lvm_vg_strategy = lvm_vg_strategy
+  end
 
   subject(:calculator) { described_class.new(lvm_helper) }
 

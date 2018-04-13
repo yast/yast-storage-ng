@@ -44,18 +44,28 @@ module Y2Storage
       USELESS_PV_SPACE = DiskSize.MiB(1)
       private_constant :USELESS_PV_SPACE
 
-      # @!attribute encryption_password
-      #   @return [String, nil] password used to encrypt the newly created
-      #   physical volumes. If is nil, the PVs will not be encrypted.
-      secret_attr :encryption_password
-
       # Constructor
       #
       # @param planned_lvs [Array<Planned::LvmLv>] volumes to allocate in LVM
-      # @param encryption_password [String, nil] see {#encryption_password}
-      def initialize(planned_lvs, encryption_password: nil)
+      # @param settings [ProposalSettings]
+      def initialize(planned_lvs, settings)
         @planned_lvs = planned_lvs
-        self.encryption_password = encryption_password
+        @settings = settings
+      end
+
+      # @return [String, nil] password used to encrypt the newly created
+      #   physical volumes. If is nil, the PVs will not be encrypted.
+      def encryption_password
+        settings.encryption_password
+      end
+
+      # Strategy to calculate the proposed volume group
+      #
+      # @see ProposalSettings#lvm_vg_strategy
+      #
+      # @return [Symbol]
+      def vg_strategy
+        settings.lvm_vg_strategy
       end
 
       # Returns a copy of the original devicegraph in which all the logical
@@ -218,6 +228,9 @@ module Y2Storage
     protected
 
       attr_reader :planned_lvs
+
+      # @return [ProposalSettings]
+      attr_reader :settings
 
       def substract_reused_vg_size(size)
         vg_size = volume_group.total_size
