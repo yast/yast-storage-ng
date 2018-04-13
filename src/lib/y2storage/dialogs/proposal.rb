@@ -119,12 +119,12 @@ module Y2Storage
               "based on the current settings."
             )
           ) +
-          Yast::HTML.Para(
-            _(
-              "Please, use \"Guided Setup\" to adjust the proposal settings or " \
-              "\"Expert Partitioner\" to create a custom layout."
+            Yast::HTML.Para(
+              _(
+                "Please, use \"Guided Setup\" to adjust the proposal settings or " \
+                "\"Expert Partitioner\" to create a custom layout."
+              )
             )
-          )
         end
 
         RichText(Id(:summary), content)
