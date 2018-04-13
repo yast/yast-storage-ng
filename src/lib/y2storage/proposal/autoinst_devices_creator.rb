@@ -134,8 +134,10 @@ module Y2Storage
       # @return [PartitionCreatorResult]
       def create_partitions(new_partitions, disk_names)
         log.info "Partitions to create: #{new_partitions}"
+        primary, non_primary = new_partitions.partition(&:primary)
+        parts_to_create = primary + non_primary
 
-        dist = best_distribution(new_partitions, disk_names)
+        dist = best_distribution(parts_to_create, disk_names)
         raise NoDiskSpaceError, "Could not find a valid partitioning distribution" if dist.nil?
         part_creator = Proposal::PartitionCreator.new(original_graph)
         part_creator.create_partitions(dist)
