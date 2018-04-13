@@ -137,7 +137,7 @@ describe Y2Storage::Dialogs::Proposal do
         it "displays an error message" do
           # We don't break the event loop, so there is a second call to UserInput
           expect(Yast::Wizard).to receive(:SetContents) do |_title, content|
-            expect(content.to_s).to include "No proposal possible"
+            expect(content.to_s).to include "not possible to automatically propose"
           end
           dialog.run
         end

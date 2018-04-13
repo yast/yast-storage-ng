@@ -134,9 +134,9 @@ module Y2Storage
           "preformatted_proposal" => nil,
           "links"                 => [],
           "language_changed"      => false,
-          "warning"               => _("No proposal possible"),
+          "warning"               => _("No proposal possible with the current settings"),
           "warning_level"         => :blocker,
-          "label_proposal"        => [_("No proposal possible")]
+          "label_proposal"        => [_("No proposal possible with the current settings")]
         }
       end
 
