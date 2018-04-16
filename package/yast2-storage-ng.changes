@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Tue Apr 17 12:01:08 UTC 2018 - shundhammer@suse.com
+
+- Added missing help texts in the partitioner (bsc#1079591) 
+- 4.0.157
+
+-------------------------------------------------------------------
 Fri Apr 13 12:33:25 UTC 2018 - jlopez@suse.com
 
 - Added support for settings 'expert_partitioner_warning' and
