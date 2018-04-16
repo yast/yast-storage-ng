@@ -32,7 +32,10 @@ module Y2Partitioner
     # The entry point for starting partitioner on its own. Use probed and staging device graphs.
     class Main
       extend Yast::I18n
-      extend Yast::Logger
+
+      def initialize
+        textdomain "storage"
+      end
 
       # Run the client
       #
@@ -42,8 +45,6 @@ module Y2Partitioner
       #
       # @param allow_commit [Boolean] can we pass the point of no return
       def self.run(allow_commit: true)
-        textdomain "storage"
-
         return nil unless Y2Storage::StorageManager.setup(mode: :rw)
 
         smanager = Y2Storage::StorageManager.instance
@@ -58,15 +59,15 @@ module Y2Partitioner
         end
       end
 
-      # Ask whether to proceed with changing the disks;
-      # or inform that we will not do it.
+      # Ask whether to proceed with changing the disks; or inform that we will not do it.
+      #
       # @return [Boolean] proceed
       def self.should_commit?(allow_commit)
         if allow_commit
-          q = "Modify the disks and potentially destroy your data?"
+          q = _("Modify the disks and potentially destroy your data?")
           Yast::Popup.ContinueCancel(q)
         else
-          m = "Nothing gets written, because the device graph is fake."
+          m = _("Nothing gets written, because the device graph is fake.")
           Yast::Popup.Message(m)
           false
         end
