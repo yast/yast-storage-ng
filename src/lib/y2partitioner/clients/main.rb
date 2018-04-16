@@ -33,9 +33,7 @@ module Y2Partitioner
     class Main
       extend Yast::I18n
 
-      def initialize
-        textdomain "storage"
-      end
+      textdomain "storage"
 
       # Run the client
       #
