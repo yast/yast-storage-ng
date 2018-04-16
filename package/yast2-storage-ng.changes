@@ -1,4 +1,9 @@
 -------------------------------------------------------------------
+Mon Apr 16 10:54:10 UTC 2018 - jlopez@suse.com
+
+- Add missing translation (bsc#1086892).
+
+-------------------------------------------------------------------
 Fri Apr 13 12:31:04 UTC 2018 - igonzalezsosa@suse.com
 
 - AutoYaST: support partition_type when set to "primary"
