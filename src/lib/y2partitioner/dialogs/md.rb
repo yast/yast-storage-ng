@@ -196,7 +196,7 @@ module Y2Partitioner
 
         def raid6_help
           _("<b>RAID 6:</b>" \
-            "This is similar to RAID 5, but with even more reduncany. " \
+            "This is similar to RAID 5, but with even more redundancy. " \
             "This requires at least four disks. " \
             "If two out of four disks fail simultaneously, no data are lost.")
         end
