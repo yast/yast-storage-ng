@@ -92,6 +92,31 @@ describe Y2Storage::Proposal::AutoinstDevicesCreator do
       expect(sdb.partitions).to be_empty
     end
 
+    context "when primary partitions are wanted" do
+      let(:primary) do
+        planned_partition(
+          mount_point: "/home", filesystem_type: filesystem_type, max_size: 5.GiB, weight: 1,
+          primary: true
+        )
+      end
+
+      let(:non_primary) do
+        planned_partition(
+          mount_point: "/", filesystem_type: filesystem_type, max_size: 5.GiB, weight: 1
+        )
+      end
+
+      it "places them first" do
+        result = creator.populated_devicegraph([non_primary, primary], "/dev/sdb")
+        devicegraph = result.devicegraph
+        sdb = Y2Storage::Disk.find_by_name(devicegraph, "/dev/sdb")
+        expect(sdb.partitions).to include(
+          an_object_having_attributes(name: "/dev/sdb2", filesystem_mountpoint: "/"),
+          an_object_having_attributes(name: "/dev/sdb1", filesystem_mountpoint: "/home")
+        )
+      end
+    end
+
     context "when a partition is too big" do
       let(:new_part) do
         Y2Storage::Planned::Partition.new("/home", filesystem_type).tap do |part|

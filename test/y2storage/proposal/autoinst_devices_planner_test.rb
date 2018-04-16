@@ -133,6 +133,42 @@ describe Y2Storage::Proposal::AutoinstDevicesPlanner do
       end
     end
 
+    context "specifying partition type" do
+      let(:root_spec) do
+        { "mount" => "/", "size" => size, "partition_type" => "primary" }
+      end
+
+      context "when partition_type is set to 'primary'" do
+        let(:root_spec) { { "mount" => "/", "size" => "max", "partition_type" => "primary" } }
+
+        it "sets the planned device as 'primary'" do
+          devices = planner.planned_devices(drives_map)
+          root = devices.find { |d| d.mount_point == "/" }
+          expect(root.primary).to eq(true)
+        end
+      end
+
+      context "when partition_type is set to other value" do
+        let(:root_spec) { { "mount" => "/", "size" => "max", "partition_type" => "logical" } }
+
+        it "sets planned device as not 'primary'" do
+          devices = planner.planned_devices(drives_map)
+          root = devices.find { |d| d.mount_point == "/" }
+          expect(root.primary).to eq(false)
+        end
+      end
+
+      context "when partition_type is not set" do
+        let(:root_spec) { { "mount" => "/", "size" => "max" } }
+
+        it "does not set 'primary'" do
+          devices = planner.planned_devices(drives_map)
+          root = devices.find { |d| d.mount_point == "/" }
+          expect(root.primary).to eq(false)
+        end
+      end
+    end
+
     context "specifying size" do
       using Y2Storage::Refinements::SizeCasts
 
