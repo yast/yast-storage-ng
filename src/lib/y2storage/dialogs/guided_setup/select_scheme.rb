@@ -45,6 +45,15 @@ module Y2Storage
           Yast::UI.SetFocus(Id(:password))
         end
 
+        # This dialog is skipped when the settings are not editable
+        #
+        # @see GuidedSetup#allowed?
+        #
+        # @return [Boolean]
+        def skip?
+          !guided_setup.allowed?
+        end
+
       protected
 
         # @return [EncryptPasswordChecker]

@@ -40,8 +40,29 @@ describe Y2Storage::Dialogs::GuidedSetup::SelectScheme do
 
   subject { described_class.new(guided_setup) }
 
-  describe "#run" do
+  describe "skip?" do
+    before do
+      allow(Y2Storage::Dialogs::GuidedSetup).to receive(:allowed?).and_return(allowed)
+    end
 
+    context "when the Guided Setup is not allowed" do
+      let(:allowed) { false }
+
+      it "returns true" do
+        expect(subject.skip?).to eq(true)
+      end
+    end
+
+    context "when the Guided Setup is allowed" do
+      let(:allowed) { true }
+
+      it "returns false" do
+        expect(subject.skip?).to eq(false)
+      end
+    end
+  end
+
+  describe "#run" do
     let(:password) { "" }
     let(:repeat_password) { password }
 

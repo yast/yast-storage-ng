@@ -30,7 +30,12 @@ Yast.import "Report"
 describe Y2Storage::Dialogs::Proposal do
   include Yast::UIShortcuts
 
-  subject(:dialog) { Y2Storage::Dialogs::Proposal.new(proposal, devicegraph0) }
+  subject(:dialog) do
+    Y2Storage::Dialogs::Proposal.new(proposal, devicegraph0,
+      excluded_buttons: excluded_buttons)
+  end
+
+  let(:excluded_buttons) { [] }
 
   describe "#run" do
     let(:devicegraph0) { double("Storage::Devicegraph", actiongraph: actiongraph0) }
@@ -85,8 +90,80 @@ describe Y2Storage::Dialogs::Proposal do
       end
     end
 
+    let(:proposal) { double("Y2Storage::GuidedProposal", proposed?: proposed) }
+
+    let(:proposed) { true }
+
+    shared_examples "partitioner from proposal" do
+      context "and the button for partitioner from proposal is not excluded" do
+        let(:excluded_buttons) { [] }
+
+        it "displays an option to run the partitioner from the current devicegraph" do
+          expect(Yast::Wizard).to receive(:SetContents) do |_title, content|
+            expect(menu_button_item_with_id(:expert_from_proposal, content)).to_not be_nil
+          end
+          dialog.run
+        end
+      end
+
+      context "and the button for partitioner from proposal is excluded" do
+        let(:excluded_buttons) { [:expert_from_proposal] }
+
+        it "does not display an option to run the partitioner from the current devicegraph" do
+          expect(Yast::Wizard).to receive(:SetContents) do |_title, content|
+            expect(menu_button_item_with_id(:expert_from_proposal, content)).to be_nil
+          end
+          dialog.run
+        end
+      end
+    end
+
+    context "when Guided Setup button is not excluded" do
+      let(:excluded_buttons) { [] }
+
+      it "displays the button to run the Guided Setup" do
+        expect(Yast::Wizard).to receive(:SetContents) do |_title, content|
+          expect(nested_id_term(:guided, content)).to_not be_nil
+        end
+        dialog.run
+      end
+    end
+
+    context "when Guided Setup button is excluded" do
+      let(:excluded_buttons) { [:guided] }
+
+      it "does not display the button to run the Guided Setup" do
+        expect(Yast::Wizard).to receive(:SetContents) do |_title, content|
+          expect(nested_id_term(:guided, content)).to be_nil
+        end
+        dialog.run
+      end
+    end
+
+    context "when the button for partitioner from probed is not excluded" do
+      let(:excluded_buttons) { [] }
+
+      it "displays an option to run the partitioner from the probed devicegraph" do
+        expect(Yast::Wizard).to receive(:SetContents) do |_title, content|
+          expect(menu_button_item_with_id(:expert_from_probed, content)).to_not be_nil
+        end
+        dialog.run
+      end
+    end
+
+    context "when the button for partitioner from probed is excluded" do
+      let(:excluded_buttons) { [:expert_from_probed] }
+
+      it "does not display an option to run the partitioner from the probed devicegraph" do
+        expect(Yast::Wizard).to receive(:SetContents) do |_title, content|
+          expect(menu_button_item_with_id(:expert_from_probed, content)).to be_nil
+        end
+        dialog.run
+      end
+    end
+
     context "when a pristine proposal is provided" do
-      let(:proposal) { double("Y2Storage::GuidedProposal", proposed?: false) }
+      let(:proposed) { false }
 
       it "calculates the proposed devicegraph" do
         allow(proposal).to receive(:devices).and_return devicegraph1
@@ -118,12 +195,7 @@ describe Y2Storage::Dialogs::Proposal do
           expect(dialog.devicegraph).to eq devicegraph1
         end
 
-        it "displays an option to run the partitioner from the current devicegraph" do
-          expect(Yast::Wizard).to receive(:SetContents) do |_title, content|
-            expect(menu_button_item_with_id(:expert_from_proposal, content)).to_not be_nil
-          end
-          dialog.run
-        end
+        include_examples "partitioner from proposal"
       end
 
       context "if the proposal fails" do
@@ -164,7 +236,7 @@ describe Y2Storage::Dialogs::Proposal do
     end
 
     context "when an already calculated proposal is provided" do
-      let(:proposal) { double("Y2Storage::GuidedProposal", proposed?: true) }
+      let(:proposed) { true }
 
       it "does not re-calculate the proposed devicegraph" do
         expect(proposal).to_not receive(:propose)
@@ -188,12 +260,7 @@ describe Y2Storage::Dialogs::Proposal do
         expect(dialog.devicegraph).to eq devicegraph0
       end
 
-      it "displays an option to run the partitioner from the current devicegraph" do
-        expect(Yast::Wizard).to receive(:SetContents) do |_title, content|
-          expect(menu_button_item_with_id(:expert_from_proposal, content)).to_not be_nil
-        end
-        dialog.run
-      end
+      include_examples "partitioner from proposal"
     end
 
     context "when no proposal is provided" do
@@ -216,12 +283,7 @@ describe Y2Storage::Dialogs::Proposal do
         expect(dialog.devicegraph).to eq devicegraph0
       end
 
-      it "displays an option to run the partitioner from the current devicegraph" do
-        expect(Yast::Wizard).to receive(:SetContents) do |_title, content|
-          expect(menu_button_item_with_id(:expert_from_proposal, content)).to_not be_nil
-        end
-        dialog.run
-      end
+      include_examples "partitioner from proposal"
     end
 
     context "when an actions presenter event happens" do
@@ -246,8 +308,6 @@ describe Y2Storage::Dialogs::Proposal do
     end
 
     context "when the user decides to run the expert partitioner from the proposed devicegraph" do
-      let(:proposal) { double("Y2Storage::GuidedProposal", proposed?: true) }
-
       before do
         allow(Yast::UI).to receive(:UserInput).and_return(:expert_from_proposal)
       end
@@ -258,8 +318,6 @@ describe Y2Storage::Dialogs::Proposal do
     end
 
     context "when the user decides to run the expert partitioner from the probed devicegraph" do
-      let(:proposal) { double("Y2Storage::GuidedProposal", proposed?: true) }
-
       before do
         allow(Yast::UI).to receive(:UserInput).and_return(:expert_from_probed)
       end

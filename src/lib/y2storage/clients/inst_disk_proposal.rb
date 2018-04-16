@@ -51,7 +51,7 @@ module Y2Storage
         log.info("BEGIN of inst_disk_proposal")
 
         until [:back, :next, :abort].include?(@result)
-          dialog = Dialogs::Proposal.new(@proposal, @devicegraph)
+          dialog = Dialogs::Proposal.new(@proposal, @devicegraph, excluded_buttons: excluded_buttons)
           @result = dialog.run
           @proposal = dialog.proposal
           @devicegraph = dialog.devicegraph
@@ -154,6 +154,35 @@ module Y2Storage
       def new_proposal(settings)
         probed = storage_manager.probed
         GuidedProposal.new(settings: settings, devicegraph: probed, disk_analyzer: probed_analyzer)
+      end
+
+      # Buttons to be excluded in the proposal dialog
+      #
+      # @return [Array<Symbol>]
+      def excluded_buttons
+        excluded = []
+        excluded << :guided unless show_guided_setup?
+        excluded
+      end
+
+      # Whether it is possible to use the Guided Setup
+      #
+      # @note Even when the "proposal_settings_editable" from control file is set to not allow
+      #   to edit the proposal settings, the button for the Guided Setup can be still offered
+      #   to allow to select in which disks to install (two first steps of the Guided Setup).
+      #
+      # @see Dialogs::GuidedSetup.allowed?
+      #
+      # @return [Boolean]
+      def show_guided_setup?
+        Dialogs::GuidedSetup.allowed? || several_candidate_disks?
+      end
+
+      # Whether there are more than one candidate disks
+      #
+      # @return [Boolean]
+      def several_candidate_disks?
+        probed_analyzer.candidate_disks.size > 1
       end
     end
   end

@@ -20,9 +20,9 @@
 # find current contact information at www.novell.com.
 
 require "yast"
+require "ui/installation_dialog"
 require "y2storage"
 require "y2storage/actions_presenter"
-require "ui/installation_dialog"
 
 Yast.import "HTML"
 
@@ -34,7 +34,12 @@ module Y2Storage
       attr_reader :proposal
       attr_reader :devicegraph
 
-      def initialize(proposal, devicegraph)
+      # Constructor
+      #
+      # @param proposal [GuidedProposal]
+      # @param devicegraph [Devicegraph]
+      # @param excluded_buttons [Array<Symbol>] id of buttons that should not be shown
+      def initialize(proposal, devicegraph, excluded_buttons: [])
         log.info "Proposal dialog: start with #{proposal.inspect}"
 
         super()
@@ -42,6 +47,8 @@ module Y2Storage
 
         @proposal = proposal
         @devicegraph = devicegraph
+        @excluded_buttons = excluded_buttons
+
         propose! if proposal && !proposal.proposed?
         actiongraph = @devicegraph ? @devicegraph.actiongraph : nil
         @actions_presenter = ActionsPresenter.new(actiongraph)
@@ -79,9 +86,14 @@ module Y2Storage
 
     protected
 
+      # @return [GuidedProposal]
       attr_writer :proposal
-      # Desired devicegraph
+
+      # @return [Devicegraph] Desired devicegraph
       attr_writer :devicegraph
+
+      # @return [Array<Symbol>] id of buttons that should not be shown
+      attr_reader :excluded_buttons
 
       # Calculates the desired devicegraph using the storage proposal.
       # Sets the devicegraph to nil if something went wrong
@@ -134,12 +146,35 @@ module Y2Storage
         _("Suggested Partitioning")
       end
 
-      def expert_partitioner
+      # Button to open the Guided Setup
+      #
+      # @note This button might not be shown (see {#excluded_buttons}).
+      #
+      # @return [Yast::UI::Term]
+      def guided_setup_button
+        return Empty() if excluded_buttons.include?(:guided)
+
+        PushButton(Id(:guided), _("&Guided Setup"))
+      end
+
+      # Button to open the Partitioner
+      #
+      # @note This button might not be shown (see {#excluded_buttons}).
+      #
+      # @return [Yast::UI::Term]
+      def expert_partitioner_button
         items = []
-        if devicegraph
+
+        if !excluded_buttons.include?(:expert_from_proposal) && devicegraph
           items << Item(Id(:expert_from_proposal), _("Start with &Current Proposal"))
         end
-        items << Item(Id(:expert_from_probed), _("Start with Existing &Partitions"))
+
+        if !excluded_buttons.include?(:expert_from_probed)
+          items << Item(Id(:expert_from_probed), _("Start with Existing &Partitions"))
+        end
+
+        return Empty() if items.empty?
+
         MenuButton(_("&Expert Partitioner"), items)
       end
 
@@ -148,8 +183,8 @@ module Y2Storage
           2, 1,
           VBox(
             MinHeight(8, summary),
-            PushButton(Id(:guided), _("&Guided Setup")),
-            expert_partitioner
+            guided_setup_button,
+            expert_partitioner_button
           )
         )
       end

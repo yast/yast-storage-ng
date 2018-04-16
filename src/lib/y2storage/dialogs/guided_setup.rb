@@ -26,6 +26,7 @@ require "y2storage/dialogs/guided_setup/select_disks"
 require "y2storage/dialogs/guided_setup/select_root_disk"
 require "y2storage/dialogs/guided_setup/select_scheme"
 require "y2storage/dialogs/guided_setup/select_filesystem"
+require "y2storage/partitioning_features"
 
 Yast.import "Sequencer"
 
@@ -35,6 +36,29 @@ module Y2Storage
     #
     # Calculates the proposal settings to be used in the next proposal attempt.
     class GuidedSetup
+      extend PartitioningFeatures
+
+      class << self
+        # Whether it is allowed to use the Guided Setup
+        #
+        # @return [Boolean]
+        def allowed?
+          settings_editable?
+        end
+
+      private
+
+        # Whether the proposal settings are set as editable in the control file
+        #
+        # @see PartitioningFeatures#feature
+        #
+        # @return [Boolean]
+        def settings_editable?
+          editable = feature(:proposal, :proposal_settings_editable)
+          editable.nil? ? true : editable
+        end
+      end
+
       # Settings specified by the user
       attr_reader :settings
       # Disk analyzer to recover disks info
@@ -64,6 +88,15 @@ module Y2Storage
         }
 
         Yast::Sequencer.Run(aliases, sequence)
+      end
+
+      # Whether is is allowed to use the Guided Setup
+      #
+      # @see GuidedSetup.allowed?
+      #
+      # @return [Boolean]
+      def allowed?
+        GuidedSetup.allowed?
       end
 
     private
