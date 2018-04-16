@@ -381,6 +381,7 @@ describe Y2Storage::Clients::InstDiskProposal do
       end
     end
 
+    # TODO: Too much mocking in these tests (think about rewrite them).
     context "processing the expert partitioner result" do
       before do
         allow(Y2Storage::Dialogs::Proposal).to receive(:new).and_return(proposal_dialog)
@@ -412,23 +413,24 @@ describe Y2Storage::Clients::InstDiskProposal do
         let(:result) { :back }
 
         before do
-          allow(storage_manager).to receive(:staging_changed?).and_return change
+          allow(storage_manager).to receive(:staging_changed?).and_return(false)
+          allow(storage_manager).to receive(:staging_revision).and_return(*staging_revisions)
         end
 
-        context "and the staging devicegraph is not a direct copy of probed" do
-          let(:change) { true }
+        context "and the system was not reprobed" do
+          let(:staging_revisions) { [1, 1] }
 
           it "opens a new proposal dialog again with the same values" do
             expect(Y2Storage::Dialogs::Proposal).to receive(:new).once.ordered
               .and_return(proposal_dialog)
             expect(Y2Storage::Dialogs::Proposal).to receive(:new).once.ordered
-              .with(proposal, devicegraph).and_return(second_proposal_dialog)
+              .with(proposal, devicegraph, anything).and_return(second_proposal_dialog)
             client.run
           end
         end
 
-        context "and the staging devicegraph is a direct copy of probed" do
-          let(:change) { false }
+        context "and the system was reprobed" do
+          let(:staging_revisions) { [1, 2] }
 
           before do
             allow(Y2Storage::GuidedProposal).to receive(:initial)

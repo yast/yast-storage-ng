@@ -42,6 +42,9 @@ module Y2Storage
       def initialize
         @devicegraph = storage_manager.staging
         @proposal = storage_manager.proposal
+        # Save staging revision to check later if the system was reprobed
+        @initial_staging_revision = storage_manager.staging_revision
+
         return if @proposal || storage_manager.staging_changed?
         # If the staging devicegraph has never been set, try to make an initial proposal
         create_initial_proposal
@@ -111,9 +114,8 @@ module Y2Storage
           @proposal = nil
           @devicegraph = dialog.device_graph
         when :back
-          # Try to create a proposal when staging has been reseted to probed
-          # (i.e., after rescannig devices)
-          create_initial_proposal unless storage_manager.staging_changed?
+          # Try to create a proposal when the system was reprobed (bsc#1088960)
+          create_initial_proposal if reprobed?
         end
       end
 
@@ -137,6 +139,14 @@ module Y2Storage
 
       def probed_analyzer
         storage_manager.probed_disk_analyzer
+      end
+
+      # Checks whether the system was reprobed
+      #
+      # @return [Boolean]
+      def reprobed?
+        !storage_manager.staging_changed? &&
+          @initial_staging_revision != storage_manager.staging_revision
       end
 
       # When it is not possible a proposal using current settings, some attempts
