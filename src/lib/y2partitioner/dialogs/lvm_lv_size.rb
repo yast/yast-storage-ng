@@ -153,7 +153,7 @@ module Y2Partitioner
           _("<p><b>Size:</b> The size of this logical volume. " \
             "Many filesystem types (e.g., Btrfs, XFS, Ext2/3/4) " \
             "can be enlarged later if needed." \
-            "<p>")
+            "</p>")
         end
 
         # @macro seeAbstractWidget
