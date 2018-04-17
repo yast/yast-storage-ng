@@ -1,4 +1,13 @@
 -------------------------------------------------------------------
+Fri Apr 13 12:33:25 UTC 2018 - jlopez@suse.com
+
+- Added support for settings 'expert_partitioner_warning' and
+  'proposal_settings_editable' (bsc#1087486).
+- Fix bug going back in Partitioner: only re-calculate proposal
+  when the system was re-probed (bsc#1088960).
+- 4.0.156
+
+-------------------------------------------------------------------
 Fri Apr 13 12:31:04 UTC 2018 - igonzalezsosa@suse.com
 
 - AutoYaST: support partition_type when set to "primary"

@@ -50,25 +50,6 @@ module Y2Storage
       def retry?
         log.info "Storage subsystem is locked by process #{locker_pid}, asking to user whether to retry"
 
-        message =
-          if locker_name
-            format(
-              # TRANSLATORS: %{name} is replaced by the name of a process (e.g., yast2)
-              # and %{pid} by the pid of a process (e.g., 5032).
-              _("The storage subsystem is locked by the application \"%{name}\" (%{pid}).\n" \
-                "You must quit that application before you can continue.\n\n" \
-                "Would you like to abort or try again?"),
-              name: locker_name,
-              pid:  locker_pid
-            )
-          else
-            _(
-              "The storage subsystem is locked by an unknown application.\n" \
-              "You must quit that application before you can continue.\n\n" \
-              "Would you like to abort or try again?"
-            )
-          end
-
         headline = _("Accessing the Storage Subsystem Failed")
 
         answer = Yast::Report.yesno_popup(message,
@@ -103,6 +84,36 @@ module Y2Storage
         full_path.split("/").last
       end
 
+      # Message for the retry callback
+      #
+      # @return [String]
+      def message
+        if locker_name
+          format(
+            # TRANSLATORS: %{name} is replaced by the name of a process (e.g., yast2)
+            # and %{pid} by the pid of a process (e.g., 5032).
+            _("The storage subsystem is locked by the application \"%{name}\" (%{pid}).\n" \
+              "You must quit that application before you can continue.\n\n" \
+              "Would you like to abort or try again?"),
+            name: locker_name,
+            pid:  locker_pid
+          )
+        else
+          _(
+            "The storage subsystem is locked by an unknown application.\n" \
+            "You must quit that application before you can continue.\n\n" \
+            "Would you like to abort or try again?"
+          )
+        end
+      end
+
+      # Label for the retry button displayed by {#retry?}
+      #
+      # @return [String]
+      def retry_button_label
+        Yast::Label.RetryButton
+      end
+
       # Label for the abort button displayed by {#retry?}
       #
       # @return [String]
@@ -114,7 +125,7 @@ module Y2Storage
       #
       # @return [Hash<Symbol, String>]
       def buttons
-        { yes: _("Retry"), no: abort_button_label }
+        { yes: retry_button_label, no: abort_button_label }
       end
 
       # Button with focus by default

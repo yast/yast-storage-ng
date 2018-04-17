@@ -193,9 +193,8 @@ Most settings are grouped into two subsections of the `partitioning` section:
     A list of `volume` elements holding specific settings for each volume that should be created. Note
     that you really must add one section for each volume. There are no defaults.
 
-Besides these, there are two further elements:
-  * (**FIXME - not done**) `expert_partitioner_warning` *(boolean, default: `false`)*
-  * (**FIXME - not done**) `use_separate_multipath_module` *(boolean, default: `false`)*
+Besides these, there is another element:
+  * `expert_partitioner_warning` *(boolean, default: `false`)*
 
 #### Global settings in `proposal` section
 
@@ -206,7 +205,7 @@ Besides these, there are two further elements:
   * `other_delete_mode` *(`none`, `ondemand`, `all`, default: `ondemand`)*
   * (**FIXME - not done, it's always `use_needed`**) `lvm_vg_strategy` *(`use_available`, `use_needed`, `use_vg_size`, default: `use_needed`)*
   * (**FIXME - not done**)`lvm_vg_size` *(disksize, default: `0 B`)*
-
+  * `proposal_settings_editable` *(boolean, default: `true`)*
 
 #### Volume-specific settings in `volume` sections
 
@@ -635,11 +634,7 @@ distributes the space".
 The new `partitioning` section contains
   * `expert_partitioner_warning`
     If `true`, an extra warning pop-up is
-    displayed if the user enters the expert partitioner during installation.
-  * `use_separate_multipath_module`
-    If `true`, the multipath client from the yast2-multipath package is used to
-    setup a multipath config.
-    If `false`, the multipath setup is done by yast-storage-ng.
+    displayed if the user enters the expert partitioner.
 
 In addition to that, there are two new subsections: `proposal` and `volumes`.
 

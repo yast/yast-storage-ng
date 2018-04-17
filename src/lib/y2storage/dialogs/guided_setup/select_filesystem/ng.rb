@@ -30,15 +30,21 @@ module Y2Storage
       module SelectFilesystem
         # This is the more advanced version for the NG-style proposal settings
         # that support more than just a separate home volume.
-        # See also {SelectFilesystem::Legacy}.
         #
+        # See also {SelectFilesystem::Legacy}.
         class Ng < Base
           def handle_event(event)
             volume_widgets.each { |w| w.handle(event) }
           end
 
+          # This dialog is skipped when the settings are not editable or there is
+          # nothing to edit
+          #
+          # @see GuidedSetup#allowed?
+          #
+          # @return [Boolean]
           def skip?
-            settings.volumes.none?(&:configurable?)
+            !guided_setup.allowed? || settings.volumes.none?(&:configurable?)
           end
 
         protected

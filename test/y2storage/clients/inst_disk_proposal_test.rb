@@ -42,6 +42,36 @@ describe Y2Storage::Clients::InstDiskProposal do
     let(:initial_proposal) { double("Y2Storage::GuidedProposal", devices: initial_devicegraph) }
     let(:initial_devicegraph) { double("Y2Storage::Devicegraph") }
 
+    context "when the Guided Setup can be shown" do
+      before do
+        allow(Y2Storage::Dialogs::GuidedSetup).to receive(:can_be_shown?).and_return(true)
+
+        allow(proposal_dialog).to receive(:run).and_return(:abort)
+      end
+
+      it "opens the proposal dialog without excluding the Guided Setup button" do
+        expect(Y2Storage::Dialogs::Proposal).to receive(:new)
+          .with(anything, anything, excluded_buttons: []).and_return(proposal_dialog)
+
+        client.run
+      end
+    end
+
+    context "when the Guided Setup cannot be shown" do
+      before do
+        allow(Y2Storage::Dialogs::GuidedSetup).to receive(:can_be_shown?).and_return(false)
+
+        allow(proposal_dialog).to receive(:run).and_return(:abort)
+      end
+
+      it "opens the proposal dialog excluding the Guided Setup button" do
+        expect(Y2Storage::Dialogs::Proposal).to receive(:new)
+          .with(anything, anything, excluded_buttons: [:guided]).and_return(proposal_dialog)
+
+        client.run
+      end
+    end
+
     context "when running the client for the first time" do
       before do
         allow(storage_manager).to receive(:proposal).and_return nil
@@ -82,7 +112,7 @@ describe Y2Storage::Clients::InstDiskProposal do
 
       it "opens the proposal dialog with the accepted proposal" do
         expect(Y2Storage::Dialogs::Proposal).to receive(:new)
-          .with(previous_proposal, storage_manager.staging).and_return(proposal_dialog)
+          .with(previous_proposal, storage_manager.staging, anything).and_return(proposal_dialog)
 
         expect(proposal_dialog).to receive(:run).and_return :abort
         client.run
@@ -97,7 +127,7 @@ describe Y2Storage::Clients::InstDiskProposal do
 
       it "opens the proposal dialog with no proposal" do
         expect(Y2Storage::Dialogs::Proposal).to receive(:new)
-          .with(nil, storage_manager.staging).and_return(proposal_dialog)
+          .with(nil, storage_manager.staging, anything).and_return(proposal_dialog)
 
         expect(proposal_dialog).to receive(:run).and_return :abort
         client.run
@@ -301,7 +331,7 @@ describe Y2Storage::Clients::InstDiskProposal do
           expect(Y2Storage::Dialogs::Proposal).to receive(:new).once.ordered
             .and_return(proposal_dialog)
           expect(Y2Storage::Dialogs::Proposal).to receive(:new).once.ordered
-            .with(proposal, devicegraph).and_return(second_proposal_dialog)
+            .with(proposal, devicegraph, anything).and_return(second_proposal_dialog)
           client.run
         end
       end
@@ -330,6 +360,7 @@ describe Y2Storage::Clients::InstDiskProposal do
       end
     end
 
+    # TODO: Too much mocking in these tests (think about rewrite them).
     context "processing the expert partitioner result" do
       before do
         allow(Y2Storage::Dialogs::Proposal).to receive(:new).and_return(proposal_dialog)
@@ -361,23 +392,24 @@ describe Y2Storage::Clients::InstDiskProposal do
         let(:result) { :back }
 
         before do
-          allow(storage_manager).to receive(:staging_changed?).and_return change
+          allow(storage_manager).to receive(:staging_changed?).and_return(false)
+          allow(storage_manager).to receive(:staging_revision).and_return(*staging_revisions)
         end
 
-        context "and the staging devicegraph is not a direct copy of probed" do
-          let(:change) { true }
+        context "and the system was not reprobed" do
+          let(:staging_revisions) { [1, 1] }
 
           it "opens a new proposal dialog again with the same values" do
             expect(Y2Storage::Dialogs::Proposal).to receive(:new).once.ordered
               .and_return(proposal_dialog)
             expect(Y2Storage::Dialogs::Proposal).to receive(:new).once.ordered
-              .with(proposal, devicegraph).and_return(second_proposal_dialog)
+              .with(proposal, devicegraph, anything).and_return(second_proposal_dialog)
             client.run
           end
         end
 
-        context "and the staging devicegraph is a direct copy of probed" do
-          let(:change) { false }
+        context "and the system was reprobed" do
+          let(:staging_revisions) { [1, 2] }
 
           before do
             allow(Y2Storage::GuidedProposal).to receive(:initial)
@@ -391,7 +423,7 @@ describe Y2Storage::Clients::InstDiskProposal do
             expect(Y2Storage::Dialogs::Proposal).to receive(:new).once.ordered
               .and_return(proposal_dialog)
             expect(Y2Storage::Dialogs::Proposal).to receive(:new).once.ordered
-              .with(new_proposal, new_devicegraph).and_return(second_proposal_dialog)
+              .with(new_proposal, new_devicegraph, anything).and_return(second_proposal_dialog)
             client.run
           end
         end
@@ -410,7 +442,7 @@ describe Y2Storage::Clients::InstDiskProposal do
           expect(Y2Storage::Dialogs::Proposal).to receive(:new).once.ordered
             .and_return(proposal_dialog)
           expect(Y2Storage::Dialogs::Proposal).to receive(:new).once.ordered
-            .with(nil, new_devicegraph)
+            .with(nil, new_devicegraph, anything)
             .and_return(second_proposal_dialog)
           client.run
         end
