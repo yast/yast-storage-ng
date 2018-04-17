@@ -149,6 +149,14 @@ module Y2Partitioner
         end
 
         # @macro seeAbstractWidget
+        def help
+          _("<p><b>Size:</b> The size of this logical volume. " \
+            "Many filesystem types (e.g., Btrfs, XFS, Ext2/3/4) " \
+            "can be enlarged later if needed." \
+            "</p>")
+        end
+
+        # @macro seeAbstractWidget
         def init
           self.value = initial || max
         end
@@ -208,6 +216,12 @@ module Y2Partitioner
               stripes_size_widget
             )
           )
+        end
+
+        # @macro seeAbstractWidget
+        def help
+          _("<p><b>Stripes:</b> How to distribute data of this logical volume "\
+            "over different physical volumes for better performance.</p>")
         end
 
         # Disables widgets related to stripes values when the selected lv type is thin volume

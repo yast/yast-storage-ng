@@ -79,6 +79,14 @@ module Y2Partitioner
         end
 
         # @macro seeAbstractWidget
+        def help
+          # TRANSLATORS: help text
+          _("<p><b>Volume Group Name:</b> The name of the volume group. " \
+            "Do not start this with \"/dev/\"; this is automatically added." \
+            "</p>")
+        end
+
+        # @macro seeAbstractWidget
         def init
           self.value = controller.vg_name
           focus
@@ -145,6 +153,16 @@ module Y2Partitioner
         def label
           # TRANSLATORS: field to enter the extent size of a new volume group
           _("Physical Extent Size")
+        end
+
+        # @macro seeAbstractWidget
+        def help
+          # TRANSLATORS: help text
+          _("<p><b>Physical Extent Size:</b> " \
+            "The smallest size unit used for volumes. " \
+            "This cannot be changed after creating the volume group. " \
+            "You can resize a logical volume only in multiples of this size." \
+            "</p>")
         end
 
         # @macro seeAbstractWidget

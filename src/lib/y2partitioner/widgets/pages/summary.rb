@@ -23,6 +23,8 @@ require "yast"
 require "y2partitioner/icons"
 require "y2partitioner/widgets/summary_text"
 
+Yast.import "Mode"
+
 module Y2Partitioner
   module Widgets
     module Pages
@@ -38,6 +40,27 @@ module Y2Partitioner
         # @macro seeAbstractWidget
         def label
           _("Installation Summary")
+        end
+
+        # @macro seeAbstractWidget
+        def help
+          Yast::Mode.installation ? help_installation : help_installed_system
+        end
+
+        def help_installation
+          _("<p><b>Installation Summary:</b> " \
+            "This shows the actions that will be performed " \
+            "when you confirm the installation. " \
+            "Until then, nothing is changed on your system." \
+            "</p>")
+        end
+
+        def help_installed_system
+          _("<p><b>Installation Summary:</b> " \
+            "This shows the actions that will be performed " \
+            "when you finish the partitioner. " \
+            "So far, nothing has been changed yet on your system." \
+            "</p>")
         end
 
         # @macro seeCustomWidget

@@ -66,6 +66,16 @@ module Y2Partitioner
           )
         end
 
+        def help
+          # Translators: Help text for the list of NFS mounts
+          _("<p><b>Server:</b> Host name or IP address of the NFS server.</p>" \
+            "<p><b>Remote Directory:</b> The directory on the NFS server.</p>" \
+            "<p><b>Mount Point:</b> The path in the local filesystem where " \
+            "the directory is mounted.</p>" \
+            "<p><b>NFS Type:</b> The filesystem type; typically \"nfs\".</p>" \
+            "<p><b>Options:</b> Mount options. See also \"man 5 nfs\".</p>")
+        end
+
         # @macro seeAbstractWidget
         def store
           # Invalidate the cache when abandoning the page, so the content gets

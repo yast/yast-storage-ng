@@ -142,6 +142,17 @@ module Y2Partitioner
           ]
         end
 
+        def help
+          # TRANSLATORS: Help text heading
+          "<p><b>" + _("RAID Type:") + "</b><ul><li>" +
+            [raid0_help,
+             raid1_help,
+             raid5_help,
+             raid6_help,
+             raid10_help].join("</li><li>") +
+            "</li></ul></p>"
+        end
+
       private
 
         attr_reader :controller
@@ -155,6 +166,46 @@ module Y2Partitioner
 
         def label
           _("RAID Type")
+        end
+
+        def raid0_help
+          _("<b>RAID 0:</b> " \
+            "This level increases your disk performance. " \
+            "There is <b>NO</b> redundancy in this mode. " \
+            "If one of the drives crashes, data recovery will not be possible.")
+        end
+
+        def raid1_help
+          _("<b>RAID 1:</b> " \
+            "This mode has the best redundancy. " \
+            "It can be used with two or more disks. " \
+            "This mode maintains an exact copy of all data on all disks. " \
+            "As long as at least one disk is still working, no data are lost. "  \
+            "The partitions used for this type of RAID should have " \
+            "approximately the same size.")
+        end
+
+        def raid5_help
+          _("<b>RAID 5:</b>" \
+            "This mode combines management of a larger number of disks " \
+            "and still maintains some redundancy. " \
+            "This mode can be used on three disks or more. " \
+            "If one disk fails, all data are still intact. " \
+            "If two disks fail simultaneously, all data are lost.")
+        end
+
+        def raid6_help
+          _("<b>RAID 6:</b>" \
+            "This is similar to RAID 5, but with even more redundancy. " \
+            "This requires at least four disks. " \
+            "If two out of four disks fail simultaneously, no data are lost.")
+        end
+
+        def raid10_help
+          _("<b>RAID 10:</b>" \
+            "This combines RAID 0 (striping) and RAID 1 (mirroring) " \
+            "for improved performance while still maintaining redundancy " \
+            "and thus crash recovery.")
         end
       end
 
@@ -172,6 +223,14 @@ module Y2Partitioner
 
         def label
           _("Raid &Name (optional)")
+        end
+
+        def help
+          _("<p><b>Raid Name: </b> " \
+            "A meaningful name for the RAID. This is optional. " \
+            "If a name is provided, the device is available as " \
+            "<tt>/dev/md/&lt;name&gt;</tt>." \
+            "</p>")
         end
 
         # @macro seeAbstractWidget

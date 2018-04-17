@@ -45,6 +45,11 @@ module Y2Partitioner
           _("Device Graph")
         end
 
+        def help
+          tab_help(current_tab_label, current_tab_description) +
+            tab_help(system_tab_label, system_tab_description)
+        end
+
         # @macro seeCustomWidget
         def contents
           return @contents if @contents
@@ -77,31 +82,51 @@ module Y2Partitioner
         # Tab displaying the current devicegraph with a brief explanation
         def current_tab
           DeviceGraphTab.new(
-            # TRANSLATORS: label for a tab
-            _("Planned Devices"),
+            current_tab_label,
             DeviceGraphs.instance.current,
-            # TRANSLATORS: keep lines relatively short. Use \n if needed
-            _(
-              "Final result that will be committed to the system.\n" \
-              "This graph is updated on every user action."
-            ),
+            current_tab_description,
             pager
           )
+        end
+
+        def current_tab_label
+          # TRANSLATORS: label for a tab
+          _("Planned Devices")
+        end
+
+        def current_tab_description
+          # TRANSLATORS: keep lines relatively short. Use \n if needed
+          _("Final result that will be committed to the system.\n" \
+            "This graph is updated on every user action.")
         end
 
         # Tab displaying the system devicegraph with a brief explanation
         def system_tab
           DeviceGraphTab.new(
-            # TRANSLATORS: label for a tab
-            _("Current System Devices"),
+            system_tab_label,
             DeviceGraphs.instance.system,
-            # TRANSLATORS: keep lines relatively short. Use \n if needed
-            _(
-              "Layout of the current system, before any of the scheduled changes.\n" \
-              "This graph is created at startup. Updated if devices are rescanned."
-            ),
+            system_tab_description,
             pager
           )
+        end
+
+        def system_tab_label
+          # TRANSLATORS: label for a tab
+          _("Current System Devices")
+        end
+
+        def system_tab_description
+          # TRANSLATORS: keep lines relatively short. Use \n if needed
+          _("Layout of the current system, before any of the scheduled changes.\n" \
+            "This graph is created at startup. Updated if devices are rescanned.")
+        end
+
+        # Help text for a tab
+        # @param tab_label [String]
+        # @param tab_description [String]
+        #
+        def tab_help(tab_label, tab_description)
+          "<p><b>" + tab_label + ":</b> " + tab_description + "</p>"
         end
       end
 

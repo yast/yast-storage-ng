@@ -75,6 +75,14 @@ module Y2Partitioner
         end
 
         # @macro seeAbstractWidget
+        def help
+          _("<p><b>Name:</b> A name to identify this logical volume. " \
+            "Do not start this with \"/dev/&lt;vg-name&gt;/\"; " \
+            "this is automatically added." \
+            "</p>")
+        end
+
+        # @macro seeAbstractWidget
         def init
           self.value = @controller.lv_name
           Yast::UI.SetFocus(Id(widget_id))
@@ -111,6 +119,11 @@ module Y2Partitioner
         # @macro seeAbstractWidget
         def label
           _("Type")
+        end
+
+        # @macro seeAbstractWidget
+        def help
+          _("<p><b>Type:</b> How to reserve disk space for the logical volume.</p>")
         end
 
         # @see Widgets::ControllerRadioButtons
