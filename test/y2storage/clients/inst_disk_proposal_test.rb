@@ -42,9 +42,9 @@ describe Y2Storage::Clients::InstDiskProposal do
     let(:initial_proposal) { double("Y2Storage::GuidedProposal", devices: initial_devicegraph) }
     let(:initial_devicegraph) { double("Y2Storage::Devicegraph") }
 
-    context "when the Guided Setup is allowed" do
+    context "when the Guided Setup can be shown" do
       before do
-        allow(Y2Storage::Dialogs::GuidedSetup).to receive(:allowed?).and_return(true)
+        allow(Y2Storage::Dialogs::GuidedSetup).to receive(:can_be_shown?).and_return(true)
 
         allow(proposal_dialog).to receive(:run).and_return(:abort)
       end
@@ -57,39 +57,18 @@ describe Y2Storage::Clients::InstDiskProposal do
       end
     end
 
-    context "when the Guided Setup is not allowed" do
+    context "when the Guided Setup cannot be shown" do
       before do
-        allow(Y2Storage::Dialogs::GuidedSetup).to receive(:allowed?).and_return(false)
-
-        allow_any_instance_of(Y2Storage::DiskAnalyzer).to receive(:candidate_disks)
-          .and_return(candidate_disks)
+        allow(Y2Storage::Dialogs::GuidedSetup).to receive(:can_be_shown?).and_return(false)
 
         allow(proposal_dialog).to receive(:run).and_return(:abort)
       end
 
-      let(:disk1) { instance_double(Y2Storage::Disk) }
-      let(:disk2) { instance_double(Y2Storage::Disk) }
+      it "opens the proposal dialog excluding the Guided Setup button" do
+        expect(Y2Storage::Dialogs::Proposal).to receive(:new)
+          .with(anything, anything, excluded_buttons: [:guided]).and_return(proposal_dialog)
 
-      context "and there are several candidate disks" do
-        let(:candidate_disks) { [disk1, disk2] }
-
-        it "opens the proposal dialog without excluding the Guided Setup button" do
-          expect(Y2Storage::Dialogs::Proposal).to receive(:new)
-            .with(anything, anything, excluded_buttons: []).and_return(proposal_dialog)
-
-          client.run
-        end
-      end
-
-      context "and there are not more than one candidate disks" do
-        let(:candidate_disks) { [disk1] }
-
-        it "opens the proposal dialog excluding the Guided Setup button" do
-          expect(Y2Storage::Dialogs::Proposal).to receive(:new)
-            .with(anything, anything, excluded_buttons: [:guided]).and_return(proposal_dialog)
-
-          client.run
-        end
+        client.run
       end
     end
 

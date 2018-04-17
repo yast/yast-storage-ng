@@ -175,24 +175,13 @@ module Y2Storage
         excluded
       end
 
-      # Whether it is possible to use the Guided Setup
+      # Whether it is possible to show the Guided Setup
       #
-      # @note Even when the "proposal_settings_editable" from control file is set to not allow
-      #   to edit the proposal settings, the button for the Guided Setup can be still offered
-      #   to allow to select in which disks to install (two first steps of the Guided Setup).
-      #
-      # @see Dialogs::GuidedSetup.allowed?
+      # @see Dialogs::GuidedSetup.can_be_shown?
       #
       # @return [Boolean]
       def show_guided_setup?
-        Dialogs::GuidedSetup.allowed? || several_candidate_disks?
-      end
-
-      # Whether there are more than one candidate disks
-      #
-      # @return [Boolean]
-      def several_candidate_disks?
-        probed_analyzer.candidate_disks.size > 1
+        Dialogs::GuidedSetup.can_be_shown?(probed_analyzer)
       end
     end
   end

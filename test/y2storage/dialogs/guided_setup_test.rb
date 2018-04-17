@@ -24,7 +24,6 @@ require_relative "../spec_helper"
 require "y2storage/dialogs/guided_setup"
 
 describe Y2Storage::Dialogs::GuidedSetup do
-
   def allow_dialog(dialog, action, &block)
     allow_any_instance_of(dialog).to receive(action), &block
   end
@@ -84,6 +83,74 @@ describe Y2Storage::Dialogs::GuidedSetup do
 
   let(:settings) { Y2Storage::ProposalSettings.new_for_current_product }
   let(:analyzer) { instance_double(Y2Storage::DiskAnalyzer) }
+
+  before do
+    allow(Yast::ProductFeatures).to receive(:GetSection).with("partitioning")
+      .and_return(partitioning_section)
+  end
+
+  let(:partitioning_section) do
+    {
+      "proposal" => { "proposal_settings_editable" => settings_editable }
+    }
+  end
+
+  let(:settings_editable) { true }
+
+  describe ".allowed?" do
+    context "when the proposal settings are editable" do
+      let(:settings_editable) { true }
+
+      it "returns true" do
+        expect(described_class.allowed?).to eq(true)
+      end
+    end
+
+    context "when the proposal settings are not editable" do
+      let(:settings_editable) { false }
+
+      it "returns false" do
+        expect(described_class.allowed?).to eq(false)
+      end
+    end
+  end
+
+  describe ".can_be_shown?" do
+    context "when the proposal settings are editable" do
+      let(:settings_editable) { true }
+
+      it "returns true" do
+        expect(described_class.can_be_shown?(analyzer)).to eq(true)
+      end
+    end
+
+    context "when the proposal settings are not editable" do
+      let(:settings_editable) { false }
+
+      before do
+        allow(analyzer).to receive(:candidate_disks).and_return(candidate_disks)
+      end
+
+      let(:disk1) { instance_double(Y2Storage::Disk) }
+      let(:disk2) { instance_double(Y2Storage::Disk) }
+
+      context "and there are several candidate disks" do
+        let(:candidate_disks) { [disk1, disk2] }
+
+        it "returns true" do
+          expect(described_class.can_be_shown?(analyzer)).to eq(true)
+        end
+      end
+
+      context "and there are not more than one candidate disks" do
+        let(:candidate_disks) { [disk1] }
+
+        it "returns false" do
+          expect(described_class.can_be_shown?(analyzer)).to eq(false)
+        end
+      end
+    end
+  end
 
   describe "#run" do
     before do

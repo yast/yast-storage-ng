@@ -39,11 +39,23 @@ module Y2Storage
       extend PartitioningFeatures
 
       class << self
-        # Whether it is allowed to use the Guided Setup
+        # Whether is is allowed to use the Guided Setup
         #
         # @return [Boolean]
         def allowed?
           settings_editable?
+        end
+
+        # Whether the Guided Setup can be shown
+        #
+        # @note Even when the "proposal_settings_editable" from control file is set to not allow
+        #   to edit the proposal settings, the Guided Setup can still be used to select in which
+        #   disks to install (two first steps of the Guided Setup).
+        #
+        # @param disk_analyzer [DiskAnalyzer]
+        # @return [Boolean]
+        def can_be_shown?(disk_analyzer)
+          allowed? || disk_analyzer.candidate_disks.size > 1
         end
 
       private
