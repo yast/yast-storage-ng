@@ -187,9 +187,8 @@ module Y2Storage
       #
       # @return [Boolean]
       def inside_extended?
-        return @inside_extended if @inside_extended_memoized
+        return @inside_extended unless @inside_extended.nil?
 
-        @inside_extended_memoized = true
         @inside_extended =
           if extended_partition
             extended_partition.region.start <= space_start && extended_partition.region.end > space_start
@@ -224,9 +223,7 @@ module Y2Storage
       #
       # @return [Boolean]
       def require_end_alignment?
-        return @require_end_alignment if @require_end_alignment_memoized
-
-        @require_end_alignment_memoized = true
+        return @require_end_alignment unless @require_end_alignment.nil?
         @require_end_alignment = disk_space.require_end_alignment?
       end
 
