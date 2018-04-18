@@ -147,6 +147,9 @@ module Y2Storage
       # @param disk [#topology]
       # @return [DiskSize]
       def self.overhead_of_logical(disk)
+        # In fact, the EBR only takes one block. But since we always propose
+        # aligned partitions, that block causes the start of the partition to be
+        # moved a whole align grain.
         disk.as_not_empty { disk.partition_table.align_grain }
       end
 
