@@ -30,3 +30,4 @@ module Y2Storage
 end
 
 require "y2storage/proposal/phys_vol_strategies/use_needed"
+require "y2storage/proposal/phys_vol_strategies/use_available"

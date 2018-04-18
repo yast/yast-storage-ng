@@ -31,7 +31,8 @@ module Y2Storage
       include Yast::Logger
 
       STRATEGIES = {
-        use_needed: PhysVolStrategies::UseNeeded
+        use_needed:    PhysVolStrategies::UseNeeded,
+        use_available: PhysVolStrategies::UseAvailable
       }
 
       # Initialize.
