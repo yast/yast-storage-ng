@@ -734,8 +734,8 @@ describe Y2Storage::Proposal::SpaceMaker do
         result = maker.provide_space(fake_devicegraph, volumes, lvm_helper)
         devgraph = result[:devicegraph]
         freed_space = devgraph.free_spaces.map(&:disk_size).reduce(Y2Storage::DiskSize.zero, :+)
-        # Extra MiB for rounding issues
-        expect(freed_space).to eq(360.GiB + 1.MiB)
+        # Extra 960 KiB for rounding issues related to the EBR
+        expect(freed_space).to eq(360.GiB + 960.KiB)
       end
     end
 
