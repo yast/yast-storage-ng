@@ -94,7 +94,7 @@ module Y2Storage
       # Space wasted by the distribution
       # @return [DiskSize]
       def gaps_total_size
-        DiskSize.sum(spaces.map(&:unused) + unassigned_spaces.map(&:disk_size))
+        @gaps_total_size ||= DiskSize.sum(spaces.map(&:unused) + unassigned_spaces.map(&:disk_size))
       end
 
       # Number of gaps (unused disk portions)
@@ -108,25 +108,25 @@ module Y2Storage
       #
       # @return [Integer]
       def gaps_count
-        spaces.reject { |s| s.unused.zero? }.size + unassigned_spaces.size
+        @gaps_count ||= spaces.reject { |s| s.unused.zero? }.size + unassigned_spaces.size
       end
 
       # Total space available for the planned partitions
       # @return [DiskSize]
       def spaces_total_size
-        DiskSize.sum(spaces.map(&:disk_size))
+        @spaces_total_size ||= DiskSize.sum(spaces.map(&:disk_size))
       end
 
       # Number of assigned spaces in the distribution
       # @return [Integer]
       def spaces_count
-        spaces.count
+        @spaces_count ||= spaces.count
       end
 
       # Total number of planned partitions included in the distribution
       # @return [Integer]
       def partitions_count
-        spaces.map { |sp| sp.partitions.size }.reduce(0, :+)
+        @partitions_count ||= spaces.map { |sp| sp.partitions.size }.reduce(0, :+)
       end
 
       # Comparison method used to sort distributions based on how good are
@@ -182,24 +182,7 @@ module Y2Storage
       # @see #better_than
       # @return [Float] a number between 0.0 and 1.0
       def weight_space_deviation
-        total_extra_size = spaces.map(&:usable_extra_size).reduce(:+)
-        total_weight = spaces.map(&:total_weight).reduce(:+)
-
-        # Edge case #1:
-        # No partition looks interested in growing, so we are fine whatever
-        # the extra sizes are
-        return 0.0 if total_weight.zero?
-        # Edge case #2:
-        # All the spaces are fully packet since the beginning, so no chance for
-        # any partition to grow
-        return 1.0 if total_extra_size.zero?
-
-        diffs = spaces.map do |space|
-          normalized_size = space.usable_extra_size.to_i.to_f / total_extra_size.to_i
-          normalized_weight = space.total_weight.to_f / total_weight
-          (normalized_size - normalized_weight).abs
-        end
-        diffs.reduce(:+)
+        @weight_space_deviation ||= calculate_weight_space_deviation
       end
 
       def to_s
@@ -218,8 +201,7 @@ module Y2Storage
       # @see #better_than
       # @return [String]
       def comparable_string
-        spaces_strings = spaces.map { |space| space_comparable_string(space) }
-        spaces_strings.sort.join
+        @comparable_string ||= spaces.map { |space| space_comparable_string(space) }.sort.join
       end
 
       # Number of logical partitions that will be allocated in a newly created
@@ -256,7 +238,7 @@ module Y2Storage
       #
       # @return [Hash{Disk => Array<AssignedSpace>]
       def spaces_by_disk
-        spaces.each_with_object({}) do |space, hash|
+        @spaces_by_disk ||= spaces.each_with_object({}) do |space, hash|
           hash[space.disk] ||= []
           hash[space.disk] << space
         end
@@ -404,6 +386,28 @@ module Y2Storage
       def room_for_logical?(assigned_space, num)
         overhead = assigned_space.overhead_of_logical
         assigned_space.extra_size >= overhead * num
+      end
+
+      # @see #weight_space_deviation
+      def calculate_weight_space_deviation
+        total_extra_size = spaces.map(&:usable_extra_size).reduce(:+)
+        total_weight = spaces.map(&:total_weight).reduce(:+)
+
+        # Edge case #1:
+        # No partition looks interested in growing, so we are fine whatever
+        # the extra sizes are
+        return 0.0 if total_weight.zero?
+        # Edge case #2:
+        # All the spaces are fully packet since the beginning, so no chance for
+        # any partition to grow
+        return 1.0 if total_extra_size.zero?
+
+        diffs = spaces.map do |space|
+          normalized_size = space.usable_extra_size.to_i.to_f / total_extra_size.to_i
+          normalized_weight = space.total_weight.to_f / total_weight
+          (normalized_size - normalized_weight).abs
+        end
+        diffs.reduce(:+)
       end
     end
   end
