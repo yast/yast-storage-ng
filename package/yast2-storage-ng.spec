@@ -27,12 +27,12 @@ Source:		%{name}-%{version}.tar.bz2
 Requires:	yast2 >= 4.0.61
 # for AbortException and handle direct abort
 Requires:	yast2-ruby-bindings >= 4.0.6
-# Setter and getter for MountPoint#mount_type
-Requires:	libstorage-ng-ruby >= 3.3.209
+# Proper handling of EBR in PartitionTable#unused_partition_slots
+Requires:	libstorage-ng-ruby >= 3.3.215
 
 BuildRequires:	update-desktop-files
-# MountPoint#mount_type in the XML format
-BuildRequires:	libstorage-ng-ruby >= 3.3.210
+# Proper handling of EBR in PartitionTable#unused_partition_slots
+BuildRequires:	libstorage-ng-ruby >= 3.3.215
 BuildRequires:	yast2-ruby-bindings
 BuildRequires:	yast2-devtools
 # yast2-xml dependency is added by yast2 but ignored in the

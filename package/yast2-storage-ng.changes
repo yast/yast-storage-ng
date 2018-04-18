@@ -1,4 +1,12 @@
 -------------------------------------------------------------------
+Wed Apr 18 10:37:17 UTC 2018 - ancor@suse.com
+
+- Updated libstorage-ng dependency to ensure slots on extended
+  partitions are handled correctly and added regression unit test
+  about it (bsc#1088483).
+- Significant speed improvements in the proposal code.
+
+-------------------------------------------------------------------
 Tue Apr 17 12:01:08 UTC 2018 - shundhammer@suse.com
 
 - Added missing help texts in the partitioner (bsc#1079591) 

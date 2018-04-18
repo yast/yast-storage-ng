@@ -28,16 +28,12 @@ module Y2Storage
   module Planned
     # Each one of the spaces contained in a PartitionsDistribution
     class AssignedSpace
-      extend Forwardable
-
       # @return [FreeDiskSpace]
       attr_reader :disk_space
       # @return [Array<Planned::Partition>]
       attr_reader :partitions
       # Number of logical partitions that must be created in the space
       attr_accessor :num_logical
-
-      def_delegators :@disk_space, :disk_name, :disk_size, :region, :disk
 
       def initialize(disk_space, planned_partitions)
         @disk_space  = disk_space
@@ -57,8 +53,9 @@ module Y2Storage
 
         @partition_type_calculated = true
         disk.as_not_empty do
-          @partition_type = if disk.partition_table.extended_possible?
-            if disk.partition_table.has_extended?
+          table = disk.partition_table
+          @partition_type = if table.extended_possible?
+            if table.has_extended?
               inside_extended? ? :logical : :primary
             end
           else
@@ -147,6 +144,9 @@ module Y2Storage
       # @param disk [#topology]
       # @return [DiskSize]
       def self.overhead_of_logical(disk)
+        # In fact, the EBR only takes one block. But since we always propose
+        # aligned partitions, that block causes the start of the partition to be
+        # moved a whole align grain.
         disk.as_not_empty { disk.partition_table.align_grain }
       end
 
@@ -154,11 +154,31 @@ module Y2Storage
       #
       # @return [DiskSize]
       def overhead_of_logical
-        AssignedSpace.overhead_of_logical(disk)
+        @overhead_of_logical ||= AssignedSpace.overhead_of_logical(disk)
       end
 
       def to_s
         "#<AssignedSpace disk_space=#{disk_space}, partitions=#{partitions}>"
+      end
+
+      # @return [Partitionable] Device in which the space is located
+      def disk
+        @disk ||= @disk_space.disk
+      end
+
+      # @return [String] Name of the device in which the space is located
+      def disk_name
+        @disk_name ||= @disk_space.disk_name
+      end
+
+      # @return [Region] Region defining the space in the device
+      def region
+        @region ||= @disk_space.region
+      end
+
+      # @return [DiskSize] Size of the space
+      def disk_size
+        @disk_size ||= @disk_space.disk_size
       end
 
     protected
@@ -167,10 +187,27 @@ module Y2Storage
       #
       # @return [Boolean]
       def inside_extended?
-        space_start = disk_space.region.start
-        extended = disk.partitions.detect { |p| p.type.is?(:extended) }
-        return false unless extended
-        extended.region.start <= space_start && extended.region.end > space_start
+        return @inside_extended unless @inside_extended.nil?
+
+        @inside_extended =
+          if extended_partition
+            extended_partition.region.start <= space_start && extended_partition.region.end > space_start
+          else
+            false
+          end
+      end
+
+      # @return [Integer] Start of the space
+      def space_start
+        @space_start ||= region.start
+      end
+
+      # @return [Partition, nil] Extended partition in the disk, if any
+      def extended_partition
+        return @extended_partition if @extended_partition_memoized
+
+        @extended_partition_memoized = true
+        @extended_partition = disk.partitions.detect { |p| p.type.is?(:extended) }
       end
 
       # Grain for alignment
@@ -178,7 +215,7 @@ module Y2Storage
       #
       # @return [DiskSize]
       def align_grain
-        disk_space.align_grain
+        @align_grain ||= disk_space.align_grain
       end
 
       # Whether the partitions should be end-aligned.
@@ -186,7 +223,8 @@ module Y2Storage
       #
       # @return [Boolean]
       def require_end_alignment?
-        disk_space.require_end_alignment?
+        return @require_end_alignment unless @require_end_alignment.nil?
+        @require_end_alignment = disk_space.require_end_alignment?
       end
 
       # Whether there are too many partitions to allocate in a space that
