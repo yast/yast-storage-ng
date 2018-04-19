@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Thu Apr 19 13:52:34 UTC 2018 - igonzalezsosa@suse.com
+
+- Fix some translations issues in the Expert Partitioner
+  (bsc#1081571).
+
+-------------------------------------------------------------------
 Wed Apr 18 10:37:17 UTC 2018 - ancor@suse.com
 
 - Updated libstorage-ng dependency to ensure slots on extended
