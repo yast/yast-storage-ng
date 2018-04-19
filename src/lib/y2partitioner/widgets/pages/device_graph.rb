@@ -42,7 +42,7 @@ module Y2Partitioner
 
         # @macro seeAbstractWidget
         def label
-          _("Device Graph")
+          _("Device Graphs")
         end
 
         def help
