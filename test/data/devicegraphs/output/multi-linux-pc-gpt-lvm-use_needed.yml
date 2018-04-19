@@ -37,13 +37,12 @@
         id:           bios_boot
 
     - partition:
-        size:         unlimited
+        size:         43009 MiB
         name:         /dev/sda6
         id: lvm
-        encryption:
-          type: luks
-          name: /dev/mapper/cr_sda6
-          password: "12345678"
+
+    - free:
+        size: unlimited
 
 - lvm_vg:
     vg_name: system
@@ -63,4 +62,4 @@
 
     lvm_pvs:
     - lvm_pv:
-        blk_device: "/dev/mapper/cr_sda6"
+        blk_device: "/dev/sda6"

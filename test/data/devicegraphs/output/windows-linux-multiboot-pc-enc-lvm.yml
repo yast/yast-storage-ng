@@ -20,7 +20,7 @@
         mount_point: swap
         label: swap
     - partition:
-        size: 43011 MiB
+        size: unlimited
         name: "/dev/sda3"
         type: primary
         id: lvm
@@ -28,8 +28,6 @@
           type: luks
           name: /dev/mapper/cr_sda3
           password: "12345678"
-    - free:
-        size: unlimited
 
 - lvm_vg:
     vg_name: system

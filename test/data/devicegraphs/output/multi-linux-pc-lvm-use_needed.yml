@@ -44,10 +44,13 @@
         label: shared_home
 
     - partition:
-        size: unlimited
+        size: 43009 MiB
         name: "/dev/sda6"
         type: logical
         id: lvm
+
+    - free:
+        size: unlimited
 
 - lvm_vg:
     vg_name: system

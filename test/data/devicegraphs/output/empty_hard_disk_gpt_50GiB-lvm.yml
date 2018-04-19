@@ -11,7 +11,7 @@
         id:   bios_boot
 
     - partition:
-        size: 43009 MiB
+        size: unlimited
         name: /dev/sda2
         id:   lvm
 

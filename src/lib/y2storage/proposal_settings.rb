@@ -323,8 +323,7 @@ module Y2Storage
       self.windows_delete_mode ||= :ondemand
       self.linux_delete_mode   ||= :ondemand
       self.other_delete_mode   ||= :ondemand
-      # TODO: once other strategies are available, change default value (:use_available)
-      self.lvm_vg_strategy     ||= :use_needed
+      self.lvm_vg_strategy     ||= :use_available
       self.volumes             ||= []
     end
 
@@ -346,8 +345,7 @@ module Y2Storage
     def apply_legacy_defaults
       apply_default_legacy_sizes
       self.use_lvm                   ||= false
-      # TODO: once other strategies are available, change default value (:use_available)
-      self.lvm_vg_strategy           ||= :use_needed
+      self.lvm_vg_strategy           ||= :use_available
       self.encryption_password       ||= nil
       self.root_filesystem_type      ||= Y2Storage::Filesystems::Type::BTRFS
       self.use_snapshots             ||= true

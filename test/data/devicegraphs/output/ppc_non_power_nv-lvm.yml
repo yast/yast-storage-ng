@@ -10,7 +10,7 @@
         type: primary
         id: prep
     - partition:
-        size: 43009 MiB (42.00 GiB)
+        size: unlimited
         name: "/dev/sda2"
         type: primary
         id: lvm

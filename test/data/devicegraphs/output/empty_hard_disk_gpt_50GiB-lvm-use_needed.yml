@@ -11,20 +11,16 @@
         id:   bios_boot
 
     - partition:
-        size: unlimited
+        size: 43009 MiB
         name: /dev/sda2
         id:   lvm
-        encryption:
-          type: luks
-          name: /dev/mapper/cr_sda2
-          password: "12345678"
 
 - lvm_vg:
     vg_name: system
 
     lvm_pvs:
     - lvm_pv:
-        blk_device: "/dev/mapper/cr_sda2"
+        blk_device: "/dev/sda2"
 
     lvm_lvs:
     - lvm_lv:

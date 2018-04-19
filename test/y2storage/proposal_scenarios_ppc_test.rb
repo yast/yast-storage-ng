@@ -58,6 +58,12 @@ describe Y2Storage::GuidedProposal do
         let(:lvm) { true }
         include_examples "proposed layout"
       end
+
+      context "using LVM with the use_needed lvm_vg_strategy" do
+        include_context "use_needed"
+        let(:lvm) { true }
+        include_examples "proposed layout"
+      end
     end
 
     # Regression test for bug#1067670 in which no proposal was provided
