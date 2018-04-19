@@ -1,4 +1,14 @@
 -------------------------------------------------------------------
+Fri Apr 20 09:39:44 UTC 2018 - ancor@suse.com
+
+- Implemented the use_available LVM strategy for the proposal
+  (part of fate#318196).
+- Make use_available the new default LVM strategy, so the system
+  behavior is closer to the old yast-storage.
+- Speed improvements in the use_needed LVM strategy.
+- 4.0.159
+
+-------------------------------------------------------------------
 Fri Apr 20 08:49:29 UTC 2018 - jlopez@suse.com
 
 - Partitioner: add missing warning and summary of changes when
