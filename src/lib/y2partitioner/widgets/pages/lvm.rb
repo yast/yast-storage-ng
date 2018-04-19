@@ -50,12 +50,12 @@ module Y2Partitioner
         #
         # @return [String]
         def self.label
-          _("Volume Management")
+          N_("Volume Management")
         end
 
         # @macro seeAbstractWidget
         def label
-          self.class.label
+          _(self.class.label)
         end
 
         # @macro seeCustomWidget

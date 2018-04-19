@@ -27,11 +27,14 @@ module Y2Partitioner
   # information that needs to be rememberd across UI redraws to give the user a
   # sense of continuity.
   class UIState
+    include Yast::I18n
+
     # Constructor
     #
     # Called through {.create_instance}, starts with a blank situation (which
     # means default for each widget will be honored).
     def initialize
+      textdomain "storage"
       @candidate_nodes = []
     end
 
@@ -131,11 +134,11 @@ module Y2Partitioner
       if device.is?(:partition)
         [device.sid, device.partitionable.sid]
       elsif device.is?(:md)
-        [device.sid, Widgets::Pages::MdRaids.label]
+        [device.sid, _(Widgets::Pages::MdRaids.label)]
       elsif device.is?(:lvm_lv)
         [device.sid, device.lvm_vg.sid]
       elsif device.is?(:lvm_vg)
-        [device.sid, Widgets::Pages::Lvm.label]
+        [device.sid, _(Widgets::Pages::Lvm.label)]
       else
         [device.sid]
       end
