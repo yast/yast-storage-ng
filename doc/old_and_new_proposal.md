@@ -203,7 +203,7 @@ Besides these, there is another element:
   * `windows_delete_mode` *(`none`, `ondemand`, `all`, default: `ondemand`)*
   * `linux_delete_mode` *(`none`, `ondemand`, `all`, default: `ondemand`)*
   * `other_delete_mode` *(`none`, `ondemand`, `all`, default: `ondemand`)*
-  * (**FIXME - not done, it's always `use_needed`**) `lvm_vg_strategy` *(`use_available`, `use_needed`, `use_vg_size`, default: `use_needed`)*
+  * (**FIXME - `use_vg_size` is not done yet**) `lvm_vg_strategy` *(`use_available`, `use_needed`, `use_vg_size`, default: `use_available`)*
   * (**FIXME - not done**)`lvm_vg_size` *(disksize, default: `0 B`)*
   * `proposal_settings_editable` *(boolean, default: `true`)*
 
