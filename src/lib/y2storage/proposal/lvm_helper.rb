@@ -54,7 +54,7 @@ module Y2Storage
       end
 
       # @return [String, nil] password used to encrypt the newly created
-      #   physical volumes. If is nil, the PVs will not be encrypted.
+      #   physical volumes. If nil, the PVs will not be encrypted.
       def encryption_password
         settings.encryption_password
       end

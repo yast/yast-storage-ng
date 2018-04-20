@@ -1,5 +1,3 @@
-#!/usr/bin/env ruby
-#
 # encoding: utf-8
 
 # Copyright (c) [2015-2018] SUSE LLC
@@ -21,6 +19,7 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
+require "yast"
 require "y2storage/disk_size"
 require "y2storage/planned"
 
@@ -90,6 +89,7 @@ module Y2Storage
         # returns an optimistic estimation.
         #
         # @param space [FreeDiskSpace]
+        # @return [DiskSize]
         def estimated_available_size(space)
           assigned_space = initial_distribution.space_at(space)
           return space.disk_size unless assigned_space
@@ -101,6 +101,9 @@ module Y2Storage
 
         # Useful LVM space provided by all the physical volumes in a given
         # distribution
+        #
+        # @param distribution [Planned::PartitionsDistribution]
+        # @return [DiskSize]
         def potential_lvm_size(distribution)
           total = DiskSize.zero
           distribution.spaces.each do |space|
@@ -168,9 +171,11 @@ module Y2Storage
 
         # Adjust the weights of all the planned partitions in the distribution that
         # were created to represent a LVM physical volume.
+        #
+        # @param distribution [Planned::PartitionsDistribution]
         def adjust_weights(distribution)
           distribution.spaces.each do |space|
-            pv_partition = space.partitions.detect(&:lvm_pv?)
+            pv_partition = new_pv_at(space)
             next unless pv_partition
 
             other_partitions = space.partitions.reject { |v| v == pv_partition }

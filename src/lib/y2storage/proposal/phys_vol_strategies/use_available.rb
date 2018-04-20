@@ -1,5 +1,3 @@
-#!/usr/bin/env ruby
-#
 # encoding: utf-8
 
 # Copyright (c) [2018] SUSE LLC
@@ -38,11 +36,9 @@ module Y2Storage
         #   assigned spaces come first, because if they succeed there is no
         #   point in checking any other combination
         def space_combinations
-          [true, false].repeated_permutation(useful_spaces.size).map do |yes_no|
-            yes_no.each_with_object([]).with_index do |(value, array), idx|
-              array << useful_spaces[idx] if value
-            end
-          end.sort_by(&:size).reverse
+          useful_spaces.size.downto(1).each_with_object([]) do |size, result|
+            result.concat(useful_spaces.combination(size).to_a)
+          end
         end
 
         # Returns a new PartitionsDistribution created by adding physical
