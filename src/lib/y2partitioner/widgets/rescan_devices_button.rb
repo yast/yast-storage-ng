@@ -43,11 +43,13 @@ module Y2Partitioner
       end
 
       # Shows a confirm message before reprobing
+      #
+      # @return [Symbol, nil] :reprobe, to indicate that the system was reprobed
       def handle
         return nil unless continue?
 
         reprobe
-        :redraw
+        :reprobe
       end
 
     private

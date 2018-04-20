@@ -21,12 +21,11 @@
 
 require "yast"
 require "cwm/dialog"
-require "yast2/popup"
 require "y2partitioner/device_graphs"
 require "y2partitioner/ui_state"
 require "y2partitioner/widgets/overview"
 require "y2partitioner/exceptions"
-require "y2storage/partitioning_features"
+require "y2partitioner/dialogs/summary"
 
 Yast.import "Label"
 Yast.import "Mode"
@@ -37,13 +36,22 @@ module Y2Partitioner
   module Dialogs
     # Main entry point to Partitioner showing tree pager with all content
     class Main < CWM::Dialog
-      include Y2Storage::PartitioningFeatures
-
       # @return [Y2Storage::Devicegraph] device graph with all changes done in dialog
       attr_reader :device_graph
 
-      def initialize
+      # Constructor
+      #
+      # @param system [Y2Storage::Devicegraph] system graph (devices on disk)
+      # @param initial [Y2Storage::Devicegraph] starting point (initial device graph
+      #   to display)
+      def initialize(system, initial)
         textdomain "storage"
+
+        # Initial graph is saved to know if something has changed at the end.
+        @initial_graph = initial
+
+        UIState.create_instance
+        DeviceGraphs.create_instance(system, initial)
       end
 
       def title
@@ -68,36 +76,108 @@ module Y2Partitioner
       end
 
       def next_button
-        Yast::Mode.installation ? Yast::Label.AcceptButton : Yast::Label.FinishButton
+        Yast::Mode.installation ? Yast::Label.AcceptButton : next_label_for_installed_system
       end
 
       # Runs the dialog
       #
-      # @param system [Y2Storage::Devicegraph] system graph used to detect if something
-      #   is going to be formatted.
-      # @param initial [Y2Storage::Devicegraph] device graph to display.
+      # @note When running in an installed system, a last step is shown with the summary of
+      #   changes, see {#need_summary?} and {#run_summary}.
       #
-      # @return [Symbol] result of the dialog.
-      def run(system, initial)
-        UIState.create_instance
-        DeviceGraphs.create_instance(system, initial)
-
-        return :back unless run_partitioner?
-
+      # @return [Symbol] result of the dialog
+      def run
         result = nil
 
         loop do
-          result = super()
+          result = super
+
+          if result == :next && need_summary?
+            result = run_summary
+          end
+
+          @initial_graph = current_graph if result == :reprobe
+
           break unless continue_running?(result)
         end
 
-        @device_graph = DeviceGraphs.instance.current
+        @device_graph = current_graph
         result
       rescue Y2Partitioner::ForcedAbortError
         :abort
       end
 
     protected
+
+      # @return [Y2Storage::Devicegraph]
+      attr_reader :initial_graph
+
+      # Checks whether the dialog should be rendered again
+      #
+      # @return [Boolean]
+      def continue_running?(result)
+        if result == :redraw
+          true
+        elsif result == :reprobe
+          true
+        elsif result == :abort && Yast::Mode.installation
+          !Yast::Popup.ConfirmAbort(:painless)
+        else
+          false
+        end
+      end
+
+      # Whether it is needed to show the summary of changes as last step
+      #
+      # The summary is only shown in an installed system and when the user has done
+      # any change.
+      #
+      # @return [Boolean]
+      def need_summary?
+        !Yast::Mode.installation && system_edited?
+      end
+
+      # Runs the summary dialog
+      #
+      # When the user goes back, the Partitioner dialog should be redrawn.
+      #
+      # @return [Symbol] dialog result
+      def run_summary
+        summary_result = Dialogs::Summary.run
+        summary_result == :back ? :redraw : summary_result
+      end
+
+      # Whether the system has been edited
+      #
+      # The system is considered as edited when the user has modified the devices
+      # or the Partitioner settings.
+      #
+      # @return [Boolean]
+      def system_edited?
+        partitioner_settings_edited? || devices_edited?
+      end
+
+      # TODO: There is a PBI to add the settings modifications to the summary.
+      #
+      # Whether the Partitioner settings were modified by the user
+      #
+      # @return [Boolean]
+      def partitioner_settings_edited?
+        false
+      end
+
+      # Whether the devices were modified by the user
+      #
+      # @return [Boolean]
+      def devices_edited?
+        current_graph != initial_graph
+      end
+
+      # Current devicegraph with all the modifications
+      #
+      # @return [Y2Storage::Devicegraph]
+      def current_graph
+        DeviceGraphs.instance.current
+      end
 
       # Hostname of the current system.
       #
@@ -109,53 +189,13 @@ module Y2Partitioner
         @hostname ||= Yast::Hostname.CurrentHostname
       end
 
-      # Whether the Partitioner should be run
+      # Label for next button when running in an installed system
       #
-      # @note Before running the partitioner a warning can be show. In that case,
-      #   the Partitioner should only be run if the user accepts the warning.
+      # The label is "Next" when there are changes or "Finish" otherwise.
       #
-      # @return [Boolean]
-      def run_partitioner?
-        !show_partitioner_warning? || partitioner_warning == :continue
-      end
-
-      # Checks whether the dialog should be rendered again
-      #
-      # @return [Boolean]
-      def continue_running?(result)
-        if result == :redraw
-          true
-        elsif result == :abort && Yast::Mode.installation
-          !Yast::Popup.ConfirmAbort(:painless)
-        else
-          false
-        end
-      end
-
-      # Whether the Partitioner warning should be shown
-      #
-      # @note This option is configured in the control file,
-      #   see {Y2Storage::PartitioningFeatures#feature}.
-      #
-      # @return [Boolean]
-      def show_partitioner_warning?
-        show_warning = feature(:expert_partitioner_warning)
-        show_warning.nil? ? false : show_warning
-      end
-
-      # Popup to alert the user about the usage of the Partitioner
-      #
-      # @return [Symbol] user's answer (:yes, :no)
-      def partitioner_warning
-        # Warning popup about using the expert partitioner
-        message = _(
-          "This is for experts only.\n" \
-          "You might lose support if you use this!\n\n" \
-          "Please refer to the manual to make sure your custom\n" \
-          "partitioning meets the requirements of this product."
-        )
-
-        Yast2::Popup.show(message, headline: :warning, buttons: :continue_cancel, focus: :cancel)
+      # @return [String]
+      def next_label_for_installed_system
+        system_edited? ? Yast::Label.NextButton : Yast::Label.FinishButton
       end
     end
   end
