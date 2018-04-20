@@ -22,10 +22,13 @@
 # find current contact information at www.suse.com.
 
 require "yast"
+require "yast/i18n"
+require "yast2/popup"
 require "y2storage"
 require "y2storage/dialogs/proposal"
 require "y2storage/dialogs/guided_setup"
 require "y2partitioner/dialogs/main"
+require "y2storage/partitioning_features"
 
 module Y2Storage
   module Clients
@@ -36,10 +39,14 @@ module Y2Storage
     #  Y2Partitioner::Dialogs::Main to manually calculate a devicegraph
     class InstDiskProposal
       include Yast
+      include Yast::I18n
       include Yast::Logger
       include InstDialogMixin
+      include PartitioningFeatures
 
       def initialize
+        textdomain "storage"
+
         @devicegraph = storage_manager.staging
         @proposal = storage_manager.proposal
         # Save staging revision to check later if the system was reprobed
@@ -100,19 +107,25 @@ module Y2Storage
       end
 
       def expert_partitioner(initial_graph)
-        return unless initial_graph
+        return unless initial_graph && run_partitioner?
 
-        dialog = Y2Partitioner::Dialogs::Main.new
-        result = without_title_on_left do
-          dialog.run(storage_manager.probed, initial_graph)
-        end
+        dialog = Y2Partitioner::Dialogs::Main.new(storage_manager.probed, initial_graph)
+        dialog_result = without_title_on_left { dialog.run }
 
-        case result
+        actions_after_partitioner(dialog.device_graph, dialog_result)
+      end
+
+      # Actions to perform after running the Partitioner
+      #
+      # @param devicegraph [Devicegraph] devicegraph with all changes
+      # @param dialog_result [Symbol] result of the Partitioner dialog
+      def actions_after_partitioner(devicegraph, dialog_result)
+        case dialog_result
         when :abort
           @result = :abort
         when :next
           @proposal = nil
-          @devicegraph = dialog.device_graph
+          @devicegraph = devicegraph
         when :back
           # Try to create a proposal when the system was reprobed (bsc#1088960)
           create_initial_proposal if reprobed?
@@ -182,6 +195,42 @@ module Y2Storage
       # @return [Boolean]
       def show_guided_setup?
         Dialogs::GuidedSetup.can_be_shown?(probed_analyzer)
+      end
+
+      # Whether to run the Partitioner
+      #
+      # @note Before running the partitioner a warning could be shown. In that case,
+      #   the Partitioner only should be run if the user accepts the warning.
+      #
+      # @return [Boolean]
+      def run_partitioner?
+        !partitioner_warning? || partitioner_warning == :continue
+      end
+
+      # Whether the Partitioner warning should be shown
+      #
+      # @note This option is configured in the control file,
+      #   see {Y2Storage::PartitioningFeatures#feature}. In case this setting is not
+      #   indicated in the control file, default value is set to false.
+      #
+      # @return [Boolean]
+      def partitioner_warning?
+        show_warning = feature(:expert_partitioner_warning)
+        show_warning.nil? ? false : show_warning
+      end
+
+      # Popup to alert the user about using the Partitioner
+      #
+      # @return [Symbol] user's answer (:continue, :cancel)
+      def partitioner_warning
+        message = _(
+          "This is for experts only.\n" \
+          "You might lose support if you use this!\n\n" \
+          "Please refer to the manual to make sure your custom\n" \
+          "partitioning meets the requirements of this product."
+        )
+
+        Yast2::Popup.show(message, headline: :warning, buttons: :continue_cancel, focus: :cancel)
       end
     end
   end
