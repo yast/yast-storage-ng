@@ -29,12 +29,16 @@ describe Y2Storage::Proposal::LvmHelper do
 
   before do
     fake_scenario(scenario)
+    settings.encryption_password = enc_password
+    settings.lvm_vg_strategy = lvm_vg_strategy
   end
 
-  subject(:helper) { described_class.new(volumes_list, encryption_password: enc_password) }
+  subject(:helper) { described_class.new(volumes_list, settings) }
   let(:volumes_list) { volumes }
   let(:volumes) { [] }
+  let(:settings) { Y2Storage::ProposalSettings.new }
   let(:enc_password) { nil }
+  let(:lvm_vg_strategy) { :use_needed }
 
   describe "#missing_space" do
     let(:scenario) { "lvm-big-pe" }

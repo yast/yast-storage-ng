@@ -26,8 +26,15 @@ require "y2storage"
 
 describe Y2Storage::Proposal::PartitionsDistributionCalculator do
   let(:lvm_volumes) { [] }
-  let(:lvm_helper) { Y2Storage::Proposal::LvmHelper.new(lvm_volumes, encryption_password: enc_password) }
+  let(:settings) { Y2Storage::ProposalSettings.new }
   let(:enc_password) { nil }
+  let(:lvm_vg_strategy) { :use_needed }
+  let(:lvm_helper) { Y2Storage::Proposal::LvmHelper.new(lvm_volumes, settings) }
+
+  before do
+    settings.encryption_password = enc_password
+    settings.lvm_vg_strategy = lvm_vg_strategy
+  end
 
   subject(:calculator) { described_class.new(lvm_helper) }
 
@@ -44,6 +51,11 @@ describe Y2Storage::Proposal::PartitionsDistributionCalculator do
     let(:spaces) { fake_devicegraph.free_spaces }
 
     subject(:distribution) { calculator.best_distribution(volumes, spaces) }
+
+    let(:pv_vols) do
+      volumes = distribution.spaces.map(&:partitions)
+      volumes.map { |vols| vols.select(&:lvm_pv?) }.flatten
+    end
 
     context "when the only available space is in an extended partition" do
       let(:scenario) { "space_22_extended" }
@@ -451,18 +463,54 @@ describe Y2Storage::Proposal::PartitionsDistributionCalculator do
       end
     end
 
-    context "when asking for extra LVM space" do
+    RSpec.shared_examples "configuration of PVs" do
+      context "if encryption is being used" do
+        let(:enc_password) { "DontLookAtMe" }
+
+        it "sets #encrypted_password for all the PVs" do
+          expect(pv_vols.map(&:encryption_password)).to all(eq "DontLookAtMe")
+        end
+      end
+
+      context "if there are other volumes in the same space" do
+        # Let's enforce the creation of more PVs to ensure there is one space
+        # with one PV and one planned volume
+        let(:lvm_size) { 18.GiB }
+        let(:space) do
+          distribution.spaces.detect do |space|
+            space.partitions.size > 1 && space.partitions.any?(&:lvm_pv?)
+          end
+        end
+
+        it "sets the weight of the PV according to the other volumes" do
+          pv_vol = space.partitions.detect(&:lvm_pv?)
+          total_weight = space.total_weight
+          expect(pv_vol.weight).to eq(total_weight / 2.0)
+        end
+      end
+
+      context "if the PV is alone in the disk space" do
+        let(:space) do
+          distribution.spaces.detect do |space|
+            space.partitions.size == 1 && space.partitions.first.lvm_pv?
+          end
+        end
+
+        it "sets the weight of the PV to one" do
+          pv_vol = space.partitions.first
+          expect(pv_vol.weight).to eq 1
+        end
+      end
+    end
+
+    context "when asking for extra LVM space with the :use_needed strategy" do
+      let(:lvm_vg_strategy) { :use_needed }
       let(:scenario) { "spaces_5_6_8_10" }
 
       let(:vol3) { planned_vol(mount_point: "/3", type: :ext4, min: 1.GiB, max: 30.GiB, weight: 2) }
       let(:lvm_volumes) { [lvm_vol] }
       let(:lvm_vol) { planned_lv(min: lvm_size, max: lvm_max) }
       let(:lvm_max) { Y2Storage::DiskSize.unlimited }
-
-      let(:pv_vols) do
-        volumes = distribution.spaces.map(&:partitions)
-        volumes.map { |vols| vols.select(&:lvm_pv?) }.flatten
-      end
 
       context "if the sum of all the spaces is not big enough" do
         let(:lvm_size) { 30.GiB }
@@ -472,7 +520,7 @@ describe Y2Storage::Proposal::PartitionsDistributionCalculator do
         end
       end
 
-      context "if only one space can host all the LVM space" do
+      context "if all the needed LVM space can be hosted in a single place" do
         let(:lvm_size) { 9.GiB }
 
         it "adds one PV in that space" do
@@ -492,17 +540,14 @@ describe Y2Storage::Proposal::PartitionsDistributionCalculator do
         let(:lvm_size) { 11.GiB }
         let(:lvm_max) { 20.GiB }
 
-        it "sets min_disk_size for all PVs to sum lvm_size" do
+        include_examples "configuration of PVs"
+
+        it "sets min_size for all PVs to sum lvm_size" do
           useful_min_sizes = pv_vols.map { |v| lvm_helper.useful_pv_space(v.min_size) }
           expect(useful_min_sizes.reduce(:+)).to eq lvm_size
         end
 
-        it "sets min_disk_size for all PVs to sum lvm_size" do
-          useful_min_sizes = pv_vols.map { |v| lvm_helper.useful_pv_space(v.min_size) }
-          expect(useful_min_sizes.reduce(:+)).to eq lvm_size
-        end
-
-        it "sets max_disk_size for all PVs to sum lvm_max" do
+        it "sets max_size for all PVs to sum lvm_max" do
           useful_max_sizes = pv_vols.map { |v| lvm_helper.useful_pv_space(v.max_size) }
           expect(useful_max_sizes.reduce(:+)).to eq lvm_max
         end
@@ -512,36 +557,6 @@ describe Y2Storage::Proposal::PartitionsDistributionCalculator do
 
           it "sets #encrypted_password for all the PVs" do
             expect(pv_vols.map(&:encryption_password)).to all(eq "DontLookAtMe")
-          end
-        end
-
-        context "if there are other volumes in the same space" do
-          # Let's enforce the creation of more PVs to ensure there is one space
-          # with one PV and one planned volume
-          let(:lvm_size) { 18.GiB }
-          let(:space) do
-            distribution.spaces.detect do |space|
-              space.partitions.size > 1 && space.partitions.any?(&:lvm_pv?)
-            end
-          end
-
-          it "sets the weight of the PV according to the other volumes" do
-            pv_vol = space.partitions.detect(&:lvm_pv?)
-            total_weight = space.total_weight
-            expect(pv_vol.weight).to eq(total_weight / 2.0)
-          end
-        end
-
-        context "if the PV is alone in the disk space" do
-          let(:space) do
-            distribution.spaces.detect do |space|
-              space.partitions.size == 1 && space.partitions.first.lvm_pv?
-            end
-          end
-
-          it "sets the weight of the PV to one" do
-            pv_vol = space.partitions.first
-            expect(pv_vol.weight).to eq 1
           end
         end
       end
@@ -560,6 +575,77 @@ describe Y2Storage::Proposal::PartitionsDistributionCalculator do
           expect(distribution.gaps_total_size).to be <= (4.GiB - 9.MiB)
           expect(distribution.gaps_count).to eq 1
         end
+      end
+    end
+
+    context "when asking for extra LVM space with the :use_available strategy" do
+      let(:lvm_vg_strategy) { :use_available }
+      let(:scenario) { "spaces_5_6_8_10" }
+
+      let(:vol3) { planned_vol(mount_point: "/3", type: :ext4, min: 1.GiB, max: 30.GiB, weight: 2) }
+      let(:lvm_volumes) { [lvm_vol] }
+      let(:lvm_vol) { planned_lv(min: lvm_size, max: lvm_max) }
+      let(:lvm_max) { Y2Storage::DiskSize.unlimited }
+
+      let(:assigned_spaces) { distribution.spaces.sort_by(&:disk_size) }
+
+      context "if the sum of all the spaces is not big enough" do
+        let(:lvm_size) { 30.GiB }
+
+        it "returns no distribution (nil)" do
+          expect(distribution).to be_nil
+        end
+      end
+
+      context "if all the needed LVM space can be hosted in a single place" do
+        let(:lvm_size) { 9.GiB }
+
+        it "adds PVs in all the usable spaces" do
+          with_pv = assigned_spaces.map { |sp| sp.partitions.any?(&:lvm_pv?) }
+          expect(with_pv).to eq [false, true, true, true]
+        end
+      end
+
+      context "if no single space is big enough" do
+        let(:lvm_size) { 11.GiB }
+
+        it "adds PVs in all the usable spaces" do
+          with_pv = assigned_spaces.map { |sp| sp.partitions.any?(&:lvm_pv?) }
+          expect(with_pv).to eq [false, true, true, true]
+        end
+      end
+
+      context "when creating PVs" do
+        let(:lvm_size) { 11.GiB }
+        let(:lvm_max) { 20.GiB }
+
+        include_examples "configuration of PVs"
+
+        it "sets min_size for all PVs to be as big as needed" do
+          useful_min_sizes = pv_vols.map { |v| lvm_helper.useful_pv_space(v.min_size) }
+          expect(useful_min_sizes.reduce(:+)).to be >= lvm_size
+        end
+
+        it "sets max_size for all PVs to be unlimited" do
+          expect(pv_vols.map(&:max_size)).to all(be_unlimited)
+        end
+      end
+    end
+
+    context "when asking for extra LVM space with an unknown LVM strategy" do
+      before do
+        # A wrong strategy cannot even be assigned to settings. So to enforce
+        # the unsupported situation we have to mock the value
+        allow(settings).to receive(:lvm_vg_strategy).and_return :use_noodle
+      end
+
+      let(:scenario) { "spaces_5_6_8_10" }
+      let(:vol3) { planned_vol(mount_point: "/3", type: :ext4, min: 1.GiB, max: 30.GiB, weight: 2) }
+      let(:lvm_volumes) { [lvm_vol] }
+      let(:lvm_vol) { planned_lv(min: 1.GiB, max: 2.GiB) }
+
+      it "raises an exception" do
+        expect { distribution }.to raise_error ArgumentError
       end
     end
   end

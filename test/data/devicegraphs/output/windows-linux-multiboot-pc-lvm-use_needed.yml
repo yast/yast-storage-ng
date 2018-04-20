@@ -20,10 +20,12 @@
         mount_point: swap
         label: swap
     - partition:
-        size: unlimited
+        size: 43009 MiB
         name: "/dev/sda3"
         type: primary
         id: lvm
+    - free:
+        size: unlimited
 
 - lvm_vg:
     vg_name: system

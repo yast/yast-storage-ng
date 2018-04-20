@@ -39,6 +39,7 @@ describe Y2Storage::GuidedProposal do
       let(:scenario) { "empty_hard_disk_50GiB" }
       let(:expected_scenario) { "empty_hard_disk_gpt_50GiB" }
       include_examples "all proposed layouts"
+      include_examples "additional use_needed layouts"
     end
 
     context "in a windows-only PC with MBR partition table" do
@@ -81,12 +82,14 @@ describe Y2Storage::GuidedProposal do
     context "in a windows/linux multiboot PC with MBR partition table" do
       let(:scenario) { "windows-linux-multiboot-pc" }
       include_examples "all proposed layouts"
+      include_examples "additional use_needed layouts"
     end
 
     context "in a linux multiboot PC with MBR partition table" do
       let(:scenario) { "multi-linux-pc" }
       let(:windows_partitions) { {} }
       include_examples "all proposed layouts"
+      include_examples "additional use_needed layouts"
     end
 
     context "in a windows/linux multiboot PC with pre-existing LVM and MBR partition table" do
@@ -117,6 +120,7 @@ describe Y2Storage::GuidedProposal do
       let(:scenario) { "windows-linux-multiboot-pc-gpt" }
 
       include_examples "all proposed layouts"
+      include_examples "additional use_needed layouts"
     end
 
     context "in a linux multiboot PC with GPT partition table" do
@@ -124,6 +128,7 @@ describe Y2Storage::GuidedProposal do
       let(:windows_partitions) { {} }
 
       include_examples "all proposed layouts"
+      include_examples "additional use_needed layouts"
     end
 
     context "in a windows/linux multiboot PC with pre-existing LVM and GPT partition table" do

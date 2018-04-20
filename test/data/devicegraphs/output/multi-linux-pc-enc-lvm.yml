@@ -44,7 +44,7 @@
         label: shared_home
 
     - partition:
-        size: 43011 MiB
+        size: unlimited
         name: "/dev/sda6"
         type: logical
         id: lvm
@@ -52,9 +52,6 @@
           type: luks
           name: /dev/mapper/cr_sda6
           password: "12345678"
-
-    - free:
-        size: unlimited
 
 - lvm_vg:
     vg_name: system

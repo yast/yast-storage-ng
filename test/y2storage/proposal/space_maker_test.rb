@@ -162,7 +162,7 @@ describe Y2Storage::Proposal::SpaceMaker do
     using Y2Storage::Refinements::SizeCasts
 
     let(:volumes) { [vol1] }
-    let(:lvm_helper) { Y2Storage::Proposal::LvmHelper.new([]) }
+    let(:lvm_helper) { Y2Storage::Proposal::LvmHelper.new([], settings) }
 
     context "if the only disk is not big enough" do
       let(:scenario) { "empty_hard_disk_mbr_50GiB" }

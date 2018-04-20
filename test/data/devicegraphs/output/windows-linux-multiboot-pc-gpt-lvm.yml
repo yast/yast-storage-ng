@@ -22,11 +22,9 @@
         name: "/dev/sda3"
         id: bios_boot
     - partition:
-        size: 43009 MiB
+        size: unlimited
         name: "/dev/sda4"
         id: lvm
-    - free:
-        size: unlimited
 
 - lvm_vg:
     vg_name: system

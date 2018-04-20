@@ -71,6 +71,7 @@ RSpec.shared_context "proposal" do
 
   let(:separate_home) { false }
   let(:lvm) { false }
+  let(:lvm_strategy) { nil }
   let(:encrypt) { false }
   let(:test_with_subvolumes) { false }
   let(:legacy_settings) do
@@ -88,6 +89,9 @@ RSpec.shared_context "proposal" do
     home = settings.volumes.find { |v| v.mount_point == "/home" }
     home.proposed = separate_home if home
     settings.lvm = lvm
+    if lvm && lvm_strategy
+      settings.lvm_vg_strategy = lvm_strategy
+    end
     settings.encryption_password = encrypt ? "12345678" : nil
     settings
   end
@@ -107,7 +111,10 @@ RSpec.shared_context "proposal" do
   let(:expected) do
     file_name = expected_scenario
     file_name.concat("-enc") if encrypt
-    file_name.concat("-lvm") if lvm
+    if lvm
+      file_name.concat("-lvm")
+      file_name.concat("-#{lvm_strategy}") if lvm_strategy
+    end
     file_name.concat("-sep-home") if separate_home
     full_path = output_file_for(file_name)
     devicegraph = Y2Storage::Devicegraph.new_from_file(full_path)

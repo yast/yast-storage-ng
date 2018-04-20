@@ -56,7 +56,7 @@ module Y2Storage
 
         partitions, lvm_lvs = planned_devices.partition { |v| v.is_a?(Planned::Partition) }
 
-        lvm_helper = LvmHelper.new(lvm_lvs, encryption_password: settings.encryption_password)
+        lvm_helper = LvmHelper.new(lvm_lvs, settings)
         space_result = provide_space(partitions, initial_graph, lvm_helper, space_maker)
 
         refine_planned_partitions!(partitions, space_result[:deleted_partitions])

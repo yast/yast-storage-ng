@@ -102,3 +102,45 @@ RSpec.shared_examples "all proposed layouts" do
   include_examples "partition-based proposed layouts"
   include_examples "Encrypted partition-based proposed layouts"
 end
+
+RSpec.shared_context "use_needed" do
+  let(:settings_format) { :ng }
+  let(:control_file_content) do
+    { "partitioning" => { "proposal" => {}, "volumes" => ng_volumes } }
+  end
+  let(:ng_volumes) { [legacy_style_root, legacy_style_swap] }
+
+  let(:legacy_style_root) do
+    {
+      "mount_point" => "/", "fs_type" => "btrfs", "subvolumes" => [], "weight" => 70,
+      "desired_size" => "12 GiB", "min_size" => "12 GiB", "max_size" => "40 GiB"
+    }
+  end
+
+  let(:legacy_style_swap) do
+    {
+      "mount_point" => "swap", "fs_type" => "swap", "weight" => 30,
+      "desired_size" => "2 GiB", "min_size" => "2 GiB", "max_size" => "2 GiB"
+    }
+  end
+
+  let(:lvm_strategy) { :use_needed }
+end
+
+RSpec.shared_examples "additional use_needed layouts" do
+  context "with the use_needed lvm_vg_strategy" do
+    include_context "use_needed"
+
+    let(:lvm) { true }
+
+    context "using plain LVM" do
+      let(:encrypt) { false }
+      include_examples "proposed layout"
+    end
+
+    context "using Encrypted LVM" do
+      let(:encrypt) { true }
+      include_examples "proposed layout"
+    end
+  end
+end

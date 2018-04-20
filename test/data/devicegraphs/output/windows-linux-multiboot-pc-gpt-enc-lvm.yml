@@ -22,15 +22,13 @@
         name: "/dev/sda3"
         id: bios_boot
     - partition:
-        size: 43011 MiB
+        size: unlimited
         name: "/dev/sda4"
         id: lvm
         encryption:
           type: luks
           name: /dev/mapper/cr_sda4
           password: "12345678"
-    - free:
-        size: unlimited
 
 - lvm_vg:
     vg_name: system
