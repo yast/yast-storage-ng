@@ -1,4 +1,12 @@
 -------------------------------------------------------------------
+Fri Apr 20 08:49:29 UTC 2018 - jlopez@suse.com
+
+- Partitioner: add missing warning and summary of changes when
+  running in an installed system (part of fate#318196 and related
+  to bsc#1086892).
+- 4.0.158
+
+-------------------------------------------------------------------
 Thu Apr 19 13:52:34 UTC 2018 - igonzalezsosa@suse.com
 
 - Fix some translations issues in the Expert Partitioner
