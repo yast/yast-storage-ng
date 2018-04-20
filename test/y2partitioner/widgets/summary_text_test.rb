@@ -217,4 +217,26 @@ describe Y2Partitioner::Widgets::SummaryText do
       end
     end
   end
+
+  describe "#help" do
+    before do
+      allow(Yast::Mode).to receive(:installation).and_return install
+    end
+
+    context "during installation" do
+      let(:install) { true }
+
+      it "shows a specific help message for installation" do
+        expect(subject.help).to match(/confirm the installation/)
+      end
+    end
+
+    context "in an installed system" do
+      let(:install) { false }
+
+      it "shows a specific help message for a running system" do
+        expect(subject.help).to match(/finish the partitioner/)
+      end
+    end
+  end
 end
