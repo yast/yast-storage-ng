@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Fri Apr 20 20:27:15 UTC 2018 - igonzalezsosa@suse.com
+
+- AutoYaST: properly handle empty proposals (bsc#1090390).
+- 4.0.160
+
+-------------------------------------------------------------------
 Fri Apr 20 09:39:44 UTC 2018 - ancor@suse.com
 
 - Implemented the use_available LVM strategy for the proposal
