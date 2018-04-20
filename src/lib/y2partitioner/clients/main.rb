@@ -107,6 +107,7 @@ module Y2Partitioner
 
       # Popup when commit is forbidden (e.g., when the client is used for manual testing)
       def forbidden_commit_warning
+        # TRANSLATORS: this comment is only for testing purposes. Do not care too much.
         message = _("Nothing gets written because commit is not allowed.")
 
         Yast2::Popup.show(message)
