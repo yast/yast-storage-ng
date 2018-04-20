@@ -19,57 +19,97 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
+require "yast"
+require "yast/i18n"
+require "yast2/popup"
 require "cwm/tree_pager"
-require "y2partitioner/device_graphs"
 require "y2partitioner/dialogs/main"
 require "y2storage"
-
-Yast.import "Popup"
 
 module Y2Partitioner
   # YaST "clients" are the CLI entry points
   module Clients
     # The entry point for starting partitioner on its own. Use probed and staging device graphs.
     class Main
-      extend Yast::I18n
-      extend Yast::Logger
+      include Yast::I18n
+      include Yast::Logger
 
-      # Run the client
-      #
-      # It tries to initialize the storage object with read-write access mode.
-      #
-      # @see Y2Storage::StorageManager.setup
-      #
-      # @param allow_commit [Boolean] can we pass the point of no return
-      def self.run(allow_commit: true)
+      def initialize
         textdomain "storage"
-
-        return nil unless Y2Storage::StorageManager.setup(mode: :rw)
-
-        smanager = Y2Storage::StorageManager.instance
-        dialog = Dialogs::Main.new
-        res = dialog.run(smanager.probed, smanager.staging)
-
-        # Running system: presenting "Expert Partitioner: Summary" step now
-        # ep-main.rb SummaryDialog
-        if res == :next && should_commit?(allow_commit)
-          smanager.staging = dialog.device_graph
-          smanager.commit
-        end
       end
 
-      # Ask whether to proceed with changing the disks;
-      # or inform that we will not do it.
-      # @return [Boolean] proceed
-      def self.should_commit?(allow_commit)
-        if allow_commit
-          q = "Modify the disks and potentially destroy your data?"
-          Yast::Popup.ContinueCancel(q)
-        else
-          m = "Nothing gets written, because the device graph is fake."
-          Yast::Popup.Message(m)
-          false
-        end
+      # Runs the client
+      #
+      # @see #run_partitioner?
+      #
+      # @param allow_commit [Boolean] whether the changes can be stored on disk
+      def run(allow_commit: true)
+        return nil if !run_partitioner? || partitioner_dialog.run != :next
+
+        allow_commit ? commit : forbidden_commit_warning
+      end
+
+    private
+
+      # Whether to run the Partitioner
+      #
+      # A warning message is always shown before starting. The partitioner is
+      # run only if the user accepts the warning. The storage stack needs to be
+      # initialized in read-write access mode.
+      #
+      # @return [Boolean]
+      def run_partitioner?
+        start_partitioner_warning == :yes &&
+          setup_storage_manager
+      end
+
+      # Tries to initialize the storage stack
+      #
+      # @return [Boolean] true if storage was initialized in rw mode;
+      #   false otherwise.
+      def setup_storage_manager
+        Y2Storage::StorageManager.setup(mode: :rw)
+      end
+
+      # @return [Y2Storage::StorageManager]
+      def storage_manager
+        Y2Storage::StorageManager.instance
+      end
+
+      # Saves on disk all changes performed by the user
+      def commit
+        storage_manager.staging = partitioner_dialog.device_graph
+        storage_manager.commit
+      end
+
+      # Partitioner dialog is initalized with the probed and staging devicegraphs
+      #
+      # @return [Dialogs::Main]
+      def partitioner_dialog
+        Dialogs::Main.new(storage_manager.probed, storage_manager.staging)
+      end
+
+      # Popup to alert the user about using the Partitioner
+      #
+      # @return [Symbol] user's answer (:yes, :no)
+      def start_partitioner_warning
+        message = _(
+          "Only use this program if you are familiar with partitioning hard disks.\n\n" \
+          "Never partition disks that may, in any way, be in use\n" \
+          "(mounted, swap, etc.) unless you know exactly what you are\n" \
+          "doing. Otherwise, the partitioning table will not be forwarded to the\n" \
+          "kernel, which will most likely lead to data loss.\n\n" \
+          "To continue despite this warning, click Yes."
+        )
+
+        Yast2::Popup.show(message, headline: :warning, buttons: :yes_no)
+      end
+
+      # Popup when commit is forbidden (e.g., when the client is used for manual testing)
+      def forbidden_commit_warning
+        message = _("Nothing gets written because commit is not allowed.")
+
+        Yast2::Popup.show(message)
       end
     end
   end
