@@ -27,7 +27,9 @@ describe Y2Storage::Clients::PartitionsProposal do
   subject { described_class.new }
 
   before do
+    Y2Storage::StorageManager.create_test_instance
     Y2Storage::StorageManager.instance.probe_from_yaml(input_file_for("empty_hard_disk_gpt_50GiB"))
+
     # To generate a new PartitionsProposal.actions_presenter for each test
     described_class.staging_revision = 0
   end

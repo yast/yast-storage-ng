@@ -59,6 +59,11 @@ module Y2Partitioner
         nil
       end
 
+      # @macro seeAbstractWidget
+      def help
+        Yast::Mode.installation ? help_installation : help_installed_system
+      end
+
     private
 
       # Object to manage the list of actions
@@ -139,6 +144,28 @@ module Y2Partitioner
         else
           Yast::HTML.Heading(_("<p>Packages to install:</p>")) + Yast::HTML.List(packages)
         end
+      end
+
+      # Help during installation
+      #
+      # @return [String]
+      def help_installation
+        _("<p><b>Installation Summary:</b> " \
+          "This shows the actions that will be performed " \
+          "when you confirm the installation. " \
+          "Until then, nothing is changed on your system." \
+          "</p>")
+      end
+
+      # Help in an installed system
+      #
+      # @return [String]
+      def help_installed_system
+        _("<p><b>Installation Summary:</b> " \
+          "This shows the actions that will be performed " \
+          "when you finish the partitioner. " \
+          "So far, nothing has been changed yet on your system." \
+          "</p>")
       end
     end
   end

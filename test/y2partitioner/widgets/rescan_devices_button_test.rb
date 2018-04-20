@@ -55,8 +55,8 @@ describe Y2Partitioner::Widgets::RescanDevicesButton do
         subject.handle
       end
 
-      it "returns :redraw" do
-        expect(subject.handle).to eq(:redraw)
+      it "returns :reprobe" do
+        expect(subject.handle).to eq(:reprobe)
       end
 
       context "and the probing could not be correctly performed" do

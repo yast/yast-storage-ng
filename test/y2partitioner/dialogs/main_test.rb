@@ -26,82 +26,181 @@ require "cwm/rspec"
 require "y2partitioner/dialogs/main"
 
 describe Y2Partitioner::Dialogs::Main do
-  before { devicegraph_stub("one-empty-disk.yml") }
+  before do
+    fake_scenario("one-empty-disk")
 
-  subject { described_class.new }
+    allow(Yast::Mode).to receive(:installation).and_return(installation)
+  end
+
+  let(:installation) { true }
+
+  let(:system_graph) { Y2Storage::StorageManager.instance.probed }
+
+  let(:initial_graph) { Y2Storage::StorageManager.instance.staging }
+
+  subject { described_class.new(system_graph, initial_graph) }
 
   include_examples "CWM::Dialog"
 
   describe "#run" do
     before do
-      allow(Yast::ProductFeatures).to receive(:GetSection).with("partitioning")
-        .and_return(partitioning_section)
+      allow_any_instance_of(CWM::Dialog).to receive(:run).and_return(dialog_result)
 
-      allow_any_instance_of(CWM::Dialog).to receive(:run).and_return(:next)
+      allow(Y2Partitioner::DeviceGraphs).to receive(:instance).and_return(device_graphs)
+      allow(device_graphs).to receive(:current).and_return(new_graph)
     end
 
-    let(:partitioning_section) { { "expert_partitioner_warning" => warning } }
+    let(:device_graphs) { instance_double(Y2Partitioner::DeviceGraphs) }
 
-    let(:system_graph) { Y2Partitioner::DeviceGraphs.instance.system }
+    let(:new_graph) { nil }
 
-    let(:current_graph) { Y2Partitioner::DeviceGraphs.instance.current }
+    let(:dialog_result) { nil }
 
-    context "when the settings does not contain 'expert_partitioner_warning'" do
-      let(:warning) { false }
-
-      it "does not show the partitioner warning" do
-        expect(Yast2::Popup).to_not receive(:show)
-
-        subject.run(system_graph, current_graph)
+    shared_examples "actions when accepts" do
+      it "does not show a summary dialog" do
+        expect(Y2Partitioner::Dialogs::Summary).to_not receive(:run)
+        subject.run
       end
 
-      it "returns the result of the dialog" do
-        expect(subject.run(system_graph, current_graph)).to eq(:next)
-      end
-    end
-
-    context "when the settings are configured to not show the partitioner warning" do
-      let(:warning) { false }
-
-      it "does not show the partitioner warning" do
-        expect(Yast2::Popup).to_not receive(:show)
-
-        subject.run(system_graph, current_graph)
+      it "saves the devicegraph" do
+        expect(subject.device_graph).to be_nil
+        subject.run
+        expect(subject.device_graph).to eq(new_graph)
       end
 
-      it "returns the result of the dialog" do
-        expect(subject.run(system_graph, current_graph)).to eq(:next)
+      it "return :next" do
+        expect(subject.run).to eq(:next)
       end
     end
 
-    context "when the settings are configured to show the partitioner warning" do
-      let(:warning) { true }
+    context "when running during installation" do
+      let(:installation) { true }
+
+      context "and there are no changes" do
+        let(:new_graph) { initial_graph }
+
+        context "and the user accepts the dialog (next)" do
+          let(:dialog_result) { :next }
+
+          include_examples "actions when accepts"
+        end
+
+        # TODO: Not implement yet because the current behaviour must be revised
+        context "and the user goes back"
+
+        # TODO: Not implement yet because the current behaviour must be revised
+        context "and the user aborts"
+      end
+
+      context "and there are changes" do
+        let(:storage) { Y2Storage::StorageManager.instance.storage }
+        let(:new_graph) { Y2Storage::Devicegraph.new(storage.create_devicegraph("fake")) }
+
+        context "and the user accepts the dialog (next)" do
+          let(:dialog_result) { :next }
+
+          include_examples "actions when accepts"
+        end
+
+        # TODO: Not implement yet because the current behaviour must be revised
+        context "and the user goes back"
+
+        # TODO: Not implement yet because the current behaviour must be revised
+        context "and the user aborts"
+      end
+    end
+
+    context "when running in an installed system" do
+      let(:installation) { false }
+
+      context "and there are no changes" do
+        let(:new_graph) { initial_graph }
+
+        context "and the user accepts the dialog (next)" do
+          let(:dialog_result) { :next }
+
+          include_examples "actions when accepts"
+        end
+
+        # TODO: Not implement yet because the current behaviour must be revised
+        context "and the user aborts"
+      end
+
+      context "and there are changes" do
+        let(:storage) { Y2Storage::StorageManager.instance.storage }
+        let(:new_graph) { Y2Storage::Devicegraph.new(storage.create_devicegraph("fake")) }
+
+        before do
+          allow(Y2Partitioner::Dialogs::Summary).to receive(:run).and_return(summary_result)
+        end
+
+        let(:summary_result) { nil }
+
+        context "and the user accepts the dialog (next)" do
+          let(:dialog_result) { :next }
+
+          it "shows a summary dialog" do
+            expect(Y2Partitioner::Dialogs::Summary).to receive(:run)
+            subject.run
+          end
+
+          context "and the user accepts the summary dialog (next)" do
+            let(:summary_result) { :next }
+
+            it "saves the devicegraph" do
+              expect(subject.device_graph).to be_nil
+              subject.run
+              expect(subject.device_graph).to eq(new_graph)
+            end
+
+            it "return :next" do
+              expect(subject.run).to eq(:next)
+            end
+          end
+
+          # TODO: Not implement yet because the current behaviour must be revised
+          context "and the user aborts"
+        end
+
+        # TODO: Not implement yet because the current behaviour must be revised
+        context "and the user aborts"
+      end
+    end
+  end
+
+  context "#next_button" do
+    context "when running during installation" do
+      let(:installation) { true }
+
+      it "returns 'Accept' label" do
+        expect(subject.next_button).to eq(Yast::Label.AcceptButton)
+      end
+    end
+
+    context "when running in an installed system" do
+      let(:installation) { false }
 
       before do
-        allow(Yast2::Popup).to receive(:show).and_return(answer)
+        allow(Y2Partitioner::DeviceGraphs).to receive(:instance).and_return(device_graphs)
+        allow(device_graphs).to receive(:current).and_return(new_graph)
       end
 
-      let(:answer) { nil }
+      let(:device_graphs) { instance_double(Y2Partitioner::DeviceGraphs) }
 
-      it "shows the partitioner warning" do
-        expect(Yast2::Popup).to receive(:show)
+      context "and there are no changes" do
+        let(:new_graph) { initial_graph }
 
-        subject.run(system_graph, current_graph)
-      end
-
-      context "and the user continues" do
-        let(:answer) { :continue }
-
-        it "returns the result of the dialog" do
-          expect(subject.run(system_graph, current_graph)).to eq(:next)
+        it "returns 'Finish' label" do
+          expect(subject.next_button).to eq(Yast::Label.FinishButton)
         end
       end
 
-      context "and the user cancels" do
-        let(:answer) { :cancel }
+      context "and there are changes" do
+        let(:storage) { Y2Storage::StorageManager.instance.storage }
+        let(:new_graph) { Y2Storage::Devicegraph.new(storage.create_devicegraph("fake")) }
 
-        it "returns :back" do
-          expect(subject.run(system_graph, current_graph)).to eq(:back)
+        it "returns 'Next' label" do
+          expect(subject.next_button).to eq(Yast::Label.NextButton)
         end
       end
     end

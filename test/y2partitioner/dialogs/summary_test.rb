@@ -1,6 +1,7 @@
+#!/usr/bin/env rspec
 # encoding: utf-8
 
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2018] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -19,7 +20,25 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "yast"
-require "y2partitioner/clients/main"
+require_relative "../test_helper"
 
-Y2Partitioner::Clients::Main.new.run
+require "cwm/rspec"
+require "y2partitioner/dialogs/summary"
+
+describe Y2Partitioner::Dialogs::Summary do
+  before { devicegraph_stub("one-empty-disk.yml") }
+
+  subject { described_class.new }
+
+  include_examples "CWM::Dialog"
+
+  describe "#contents" do
+    it "contains a widget with the summary of actions to perform" do
+      widget = subject.contents.nested_find do |i|
+        i.is_a?(Y2Partitioner::Widgets::SummaryText)
+      end
+
+      expect(widget).to_not be_nil
+    end
+  end
+end

@@ -170,10 +170,10 @@ module Y2Storage
       end
 
       def expert_partitioner
-        dialog = Y2Partitioner::Dialogs::Main.new
         probed = storage_manager.probed
         staging = storage_manager.staging
-        result = without_title_on_left { dialog.run(probed, staging) }
+        dialog = Y2Partitioner::Dialogs::Main.new(probed, staging)
+        result = without_title_on_left { dialog.run }
         storage_manager.staging = dialog.device_graph if result == :next
         result
       end

@@ -1,6 +1,6 @@
 # encoding: utf-8
 
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2018] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -20,6 +20,33 @@
 # find current contact information at www.suse.com.
 
 require "yast"
-require "y2partitioner/clients/main"
+require "yast/i18n"
+require "cwm/dialog"
+require "y2partitioner/widgets/summary_text"
 
-Y2Partitioner::Clients::Main.new.run
+Yast.import "Label"
+
+module Y2Partitioner
+  module Dialogs
+    # Dialog to show the summary of changes performed by the user
+    class Summary < CWM::Dialog
+      include Yast::I18n
+
+      def initialize
+        textdomain "storage"
+      end
+
+      def title
+        _("Expert Partitioner: Summary")
+      end
+
+      def contents
+        @contents ||= VBox(Widgets::SummaryText.new)
+      end
+
+      def next_button
+        Yast::Label.FinishButton
+      end
+    end
+  end
+end

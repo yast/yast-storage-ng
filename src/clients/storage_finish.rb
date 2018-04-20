@@ -14,10 +14,10 @@
 # more details.
 #
 # You should have received a copy of the GNU General Public License along
-# with this program; if not, contact Novell, Inc.
+# with this program; if not, contact SUSE LLC.
 #
-# To contact Novell about this file by physical or electronic mail, you may
-# find current contact information at www.novell.com.
+# To contact SUSE LLC about this file by physical or electronic mail, you may
+# find current contact information at www.suse.com.
 
 require "yast"
 require "y2storage/clients/finish"

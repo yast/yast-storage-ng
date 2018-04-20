@@ -37,10 +37,15 @@ describe Y2Storage::Clients::InstDiskProposal do
       allow(proposal_dialog).to receive(:proposal)
       allow(proposal_dialog).to receive(:devicegraph)
       allow(Y2Storage::GuidedProposal).to receive(:initial).and_return(initial_proposal)
+
+      allow(Yast::ProductFeatures).to receive(:GetSection).with("partitioning")
+        .and_return(partitioning_section)
     end
 
     let(:initial_proposal) { double("Y2Storage::GuidedProposal", devices: initial_devicegraph) }
     let(:initial_devicegraph) { double("Y2Storage::Devicegraph") }
+
+    let(:partitioning_section) { {} }
 
     context "when the Guided Setup can be shown" do
       before do
@@ -253,10 +258,28 @@ describe Y2Storage::Clients::InstDiskProposal do
 
       before do
         allow(Y2Partitioner::Dialogs::Main).to receive(:new).and_return partitioner
-
+        allow(partitioner).to receive(:run)
+        allow(partitioner).to receive(:device_graph)
         allow(Y2Storage::Dialogs::Proposal).to receive(:new).and_return(proposal_dialog)
+
         # First open the partitioner, then force quit to end the test
         allow(proposal_dialog).to receive(:run).and_return(action, :abort)
+      end
+
+      shared_examples "not open partitioner" do
+        it "does not open the partitioner" do
+          expect(partitioner).to_not receive(:run)
+
+          client.run
+        end
+      end
+
+      shared_examples "not show warning" do
+        it "does not show a warning" do
+          expect(Yast2::Popup).to_not receive(:show)
+
+          client.run
+        end
       end
 
       context "if received :expert_from_proposal from the proposal dialog" do
@@ -269,28 +292,127 @@ describe Y2Storage::Clients::InstDiskProposal do
         context "if there is a proposed devicegraph" do
           let(:proposed_graph) { double("Y2Storage::Devicegraph") }
 
-          it "opens the partitioner with the proposed devicegraph as starting point" do
-            expect(partitioner).to receive(:run).with(storage_manager.probed, proposed_graph)
-            client.run
+          shared_examples "open partitioner with devicegraph" do
+            it "opens the partitioner with the proposed devicegraph as starting point" do
+              expect(Y2Partitioner::Dialogs::Main).to receive(:new)
+                .with(storage_manager.probed, proposed_graph).and_return(partitioner)
+
+              expect(partitioner).to receive(:run)
+
+              client.run
+            end
+          end
+
+          context "and the settings does not contain 'expert_partitioner_warning'" do
+            let(:partitioning_section) { {} }
+
+            include_examples "not show warning"
+
+            include_examples "open partitioner with devicegraph"
+          end
+
+          context "and the settings are configured to not show the partitioner warning" do
+            let(:partitioning_section) { { "expert_partitioner_warning" => false } }
+
+            include_examples "not show warning"
+
+            include_examples "open partitioner with devicegraph"
+          end
+
+          context "and the settings are configured to show the partitioner warning" do
+            let(:partitioning_section) { { "expert_partitioner_warning" => true } }
+
+            before do
+              allow(Yast2::Popup).to receive(:show).and_return(answer)
+            end
+
+            let(:answer) { nil }
+
+            it "shows the partitioner warning" do
+              expect(Yast2::Popup).to receive(:show)
+
+              client.run
+            end
+
+            context "and the user continues" do
+              let(:answer) { :continue }
+
+              include_examples "open partitioner with devicegraph"
+            end
+
+            context "and the user cancels" do
+              let(:answer) { :cancel }
+
+              include_examples "not open partitioner"
+            end
           end
         end
 
         context "if no devicegraph has been proposed" do
           let(:proposed_graph) { nil }
 
-          it "does not open the partitioner" do
-            expect(partitioner).to_not receive(:run)
-            client.run
-          end
+          include_examples "not show warning"
+
+          include_examples "not open partitioner"
         end
       end
 
       context "if received :expert_from_probed from the proposal dialog" do
         let(:action) { :expert_from_probed }
 
-        it "opens the partitioner with the probed devicegraph as starting point" do
-          expect(partitioner).to receive(:run).with(storage_manager.probed, storage_manager.probed)
-          client.run
+        shared_examples "open partitioner with probed devicegraph" do
+          it "opens the partitioner with the probed devicegraph as starting point" do
+            expect(Y2Partitioner::Dialogs::Main).to receive(:new)
+              .with(storage_manager.probed, storage_manager.probed).and_return(partitioner)
+
+            expect(partitioner).to receive(:run)
+
+            client.run
+          end
+        end
+
+        context "and the settings does not contain 'expert_partitioner_warning'" do
+          let(:partitioning_section) { {} }
+
+          include_examples "not show warning"
+
+          include_examples "open partitioner with probed devicegraph"
+        end
+
+        context "and the settings are configured to not show the partitioner warning" do
+          let(:partitioning_section) { { "expert_partitioner_warning" => false } }
+
+          include_examples "not show warning"
+
+          include_examples "open partitioner with probed devicegraph"
+        end
+
+        context "and the settings are configured to show the partitioner warning" do
+          let(:partitioning_section) { { "expert_partitioner_warning" => true } }
+
+          before do
+            allow(Yast2::Popup).to receive(:show).and_return(answer)
+          end
+
+          let(:answer) { nil }
+
+          it "shows the partitioner warning" do
+            expect(Yast2::Popup).to receive(:show)
+
+            client.run
+          end
+
+          context "and the user continues" do
+            let(:answer) { :continue }
+
+            include_examples "open partitioner with probed devicegraph"
+          end
+
+          context "and the user cancels" do
+            let(:answer) { :cancel }
+
+            include_examples "not open partitioner"
+          end
         end
       end
     end
@@ -370,12 +492,14 @@ describe Y2Storage::Clients::InstDiskProposal do
 
         allow(Y2Partitioner::Dialogs::Main).to receive(:new).and_return(expert_dialog)
         allow(expert_dialog).to receive(:run).and_return(result)
+        allow(expert_dialog).to receive(:device_graph).and_return(new_devicegraph)
 
         # Just to quit
         allow(second_proposal_dialog).to receive(:run).and_return :abort
       end
 
       let(:devicegraph) { double("Y2Storage::Devicegraph") }
+      let(:new_devicegraph) { double("Y2Storage::Devicegraph") }
       let(:proposal) { double("Y2Storage::GuidedProposal") }
       let(:expert_dialog) { double("Y2Partitioner::Dialogs::Main") }
       let(:second_proposal_dialog) { double("Y2Storage::Dialogs::Proposal").as_null_object }
@@ -431,12 +555,6 @@ describe Y2Storage::Clients::InstDiskProposal do
 
       context "if the expert partitioner returns :next" do
         let(:result) { :next }
-
-        before do
-          allow(expert_dialog).to receive(:device_graph).and_return(new_devicegraph)
-        end
-
-        let(:new_devicegraph) { double("Y2Storage::Devicegraph") }
 
         it "opens a new proposal dialog with a new devicegraph and without any proposal" do
           expect(Y2Storage::Dialogs::Proposal).to receive(:new).once.ordered
