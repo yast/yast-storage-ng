@@ -32,7 +32,12 @@ module Y2Partitioner
     extend Yast::I18n
     textdomain "storage"
 
-    # Constructor
+    # Constructor, to be used internally by the class
+    #
+    # @param id [Symbol] id of the role
+    # @param name [String] string marked for translation, see {#name}
+    # @param part_id [Symbol] used to initialize {#partition_id}
+    # @param fs_type [Symbol, nil] used to initialize {#filesystem_type}
     def initialize(id, name, part_id, fs_type)
       @id = id
       @name = name
@@ -58,7 +63,7 @@ module Y2Partitioner
     # Finds a role by its id
     #
     # @param id [Symbol, nil]
-    # @return [FilesystemRole, nil] nil if such nil does not exist
+    # @return [FilesystemRole, nil] nil if such role id does not exist
     def self.find(id)
       ALL.find { |role| role.id == id }
     end
