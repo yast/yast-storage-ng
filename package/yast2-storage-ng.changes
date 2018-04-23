@@ -1,4 +1,12 @@
 -------------------------------------------------------------------
+Mon Apr 23 13:10:15 UTC 2018 - ancor@suse.com
+
+- Partitioner: use the correct default value for 'Enable Snapshots'
+  when the 'Operating System' role is chosen for a new device
+  (bsc#1084491).
+- 4.0.162
+
+-------------------------------------------------------------------
 Mon Apr 23 10:27:04 UTC 2018 - jlopez@suse.com
 
 - Make the package to be architecture dependant to correctly check

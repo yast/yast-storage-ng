@@ -1,5 +1,6 @@
 require "y2storage"
 require "yast"
+require "y2partitioner/filesystem_role"
 require "cwm/dialog"
 require "cwm/common_widgets"
 require "cwm/custom_widget"
@@ -55,23 +56,17 @@ module Y2Partitioner
         end
 
         def items
-          [
-            [:system, _("Operating System")],
-            [:data, _("Data and ISV Applications")],
-            [:swap, _("Swap")],
-            [:efi_boot, _("EFI Boot Partition")],
-            [:raw, _("Raw Volume (unformatted)")]
-          ]
+          FilesystemRole.all.map { |role| [role.id, role.name] }
         end
 
         # @macro seeAbstractWidget
         def init
-          self.value = @controller.role || :data
+          self.value = @controller.role_id || :data
         end
 
         # @macro seeAbstractWidget
         def store
-          @controller.role = value
+          @controller.role_id = value
         end
       end
     end
