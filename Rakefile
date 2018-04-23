@@ -16,8 +16,8 @@
 #  To contact SUSE about this file by physical or electronic mail,
 #  you may find current contact information at www.suse.com
 
-# rest of yast is branched, but storage-ng still submitting to GA
-ENV["YAST_SUBMIT"] = "sle15"
+# rest of yast is branched, but storage-ng still submitting to sle15 GA
+ENV["YAST_SUBMIT"] = "sle15" if ENV["YAST_SUBMIT"] == "sle_latest"
 
 require "yast/rake"
 
