@@ -372,19 +372,155 @@ describe Y2Partitioner::Actions::Controllers::Filesystem do
     context "when selected role is :system" do
       let(:role) { :system }
 
+      before do
+        allow(Yast::Mode).to receive(:installation).and_return installation
+        allow(Yast::Mode).to receive(:normal).and_return !installation
+        allow(Yast::Stage).to receive(:initial).and_return installation
+      end
+      let(:installation) { false }
+
       it "sets partition_id to LINUX" do
         subject.apply_role
         expect(subject.partition_id).to eq(Y2Storage::PartitionId::LINUX)
       end
 
-      it "creates a BTRFS filesystem" do
-        subject.apply_role
-        expect(subject.filesystem.type).to eq(Y2Storage::Filesystems::Type::BTRFS)
+      context "in an installed system" do
+        let(:installation) { false }
+
+        it "creates a BTRFS filesystem" do
+          subject.apply_role
+          expect(subject.filesystem.type).to eq(Y2Storage::Filesystems::Type::BTRFS)
+        end
+
+        it "does not set a mount point" do
+          subject.apply_role
+          expect(subject.filesystem.mount_point).to be_nil
+        end
       end
 
-      it "does not set a mount point" do
-        subject.apply_role
-        expect(subject.filesystem.mount_point).to be_nil
+      context "during installation" do
+        let(:installation) { true }
+
+        # Simulate the creation of a new root device
+        let(:scenario) { "empty_hard_disk_gpt_50GiB" }
+        let(:dev_name) { "/dev/sda1" }
+        let(:device) { create_partition(partition_size) }
+        let(:partition_size) { Y2Storage::DiskSize.GiB(25) }
+
+        def create_partition(size)
+          disk = devicegraph.find_by_name("/dev/sda")
+          disk.partition_table.create_partition(
+            dev_name,
+            Y2Storage::Region.create(0, size.to_i / 512, 512),
+            Y2Storage::PartitionType::PRIMARY
+          )
+        end
+
+        before do
+          allow(volume_spec).to receive(:snapshots).and_return snapshots
+          allow(volume_spec).to receive(:snapshots_configurable).and_return configurable
+          allow(volume_spec).to receive(:min_size_with_snapshots).and_return snapshots_size
+        end
+        let(:snapshots) { false }
+        let(:configurable) { false }
+        let(:snapshots_size) { partition_size }
+
+        it "creates a BTRFS filesystem" do
+          subject.apply_role
+          expect(subject.filesystem.type).to eq(Y2Storage::Filesystems::Type::BTRFS)
+        end
+
+        it "sets mount point to '/'" do
+          subject.apply_role
+          expect(subject.filesystem.mount_path).to eq "/"
+        end
+
+        RSpec.shared_examples "snapper enabled" do
+          it "enables Snapper" do
+            subject.apply_role
+            expect(subject.filesystem.configure_snapper).to eq true
+          end
+        end
+
+        RSpec.shared_examples "snapper disabled" do
+          it "does not enable Snapper" do
+            subject.apply_role
+            expect(subject.filesystem.configure_snapper).to eq false
+          end
+        end
+
+        RSpec.shared_examples "no snapshots" do
+          context "if root is smaller than the size needed for snapshots" do
+            let(:snapshots_size) { partition_size * 2 }
+            include_examples "snapper disabled"
+          end
+
+          context "if root has the exact size needed for snapshots" do
+            let(:snapshots_size) { partition_size }
+            include_examples "snapper disabled"
+          end
+
+          context "if root is bigger than the size needed for snapshots" do
+            let(:snapshots_size) { partition_size / 2 }
+            include_examples "snapper disabled"
+          end
+        end
+
+        context "if snapshots for root are disabled by default" do
+          let(:snapshots) { false }
+
+          context "and they can be enabled by the user" do
+            let(:configurable) { true }
+            include_examples "no snapshots"
+          end
+
+          context "and they cannot be enabled by the user" do
+            let(:configurable) { false }
+            include_examples "no snapshots"
+          end
+        end
+
+        context "if snapshots for root are enabled by default" do
+          let(:snapshots) { true }
+
+          context "but they can be disabled by the user" do
+            let(:configurable) { true }
+
+            context "if root is smaller than the size needed for snapshots" do
+              let(:snapshots_size) { partition_size * 2 }
+              include_examples "snapper disabled"
+            end
+
+            context "if root has the exact size needed for snapshots" do
+              let(:snapshots_size) { partition_size }
+              include_examples "snapper enabled"
+            end
+
+            context "if root is bigger than the size needed for snapshots" do
+              let(:snapshots_size) { partition_size / 2 }
+              include_examples "snapper enabled"
+            end
+          end
+
+          context "and they are mandatory" do
+            let(:configurable) { false }
+
+            context "if root is smaller than the size needed for snapshots" do
+              let(:snapshots_size) { partition_size * 2 }
+              include_examples "snapper enabled"
+            end
+
+            context "if root has the exact size needed for snapshots" do
+              let(:snapshots_size) { partition_size }
+              include_examples "snapper enabled"
+            end
+
+            context "if root is bigger than the size needed for snapshots" do
+              let(:snapshots_size) { partition_size / 2 }
+              include_examples "snapper enabled"
+            end
+          end
+        end
       end
     end
 
