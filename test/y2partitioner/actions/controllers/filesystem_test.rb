@@ -293,7 +293,7 @@ describe Y2Partitioner::Actions::Controllers::Filesystem do
 
   describe "#apply_role" do
     before do
-      subject.role = role
+      subject.role_id = role
     end
 
     let(:role) { nil }

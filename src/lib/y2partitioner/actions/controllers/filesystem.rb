@@ -24,6 +24,7 @@ require "y2storage"
 require "y2partitioner/device_graphs"
 require "y2partitioner/blk_device_restorer"
 require "y2partitioner/widgets/mkfs_optiondata"
+require "y2partitioner/filesystem_role"
 require "y2storage/filesystems/btrfs"
 require "y2storage/subvol_specification"
 
@@ -47,8 +48,8 @@ module Y2Partitioner
       class Filesystem
         include Yast::Logger
 
-        # @return [Symbol] Role chosen be the user for the device
-        attr_accessor :role
+        # @return [FilesystemRole] Role chosen by the user for the device
+        attr_reader :role
 
         # @return [Boolean] Whether the user wants to encrypt the device
         attr_accessor :encrypt
@@ -66,13 +67,6 @@ module Y2Partitioner
         # @return [String]
         attr_reader :wizard_title
 
-        # Type for the role "system"
-        DEFAULT_FS = Y2Storage::Filesystems::Type::BTRFS
-        # Type for the role "data"
-        DEFAULT_HOME_FS = Y2Storage::Filesystems::Type::XFS
-        DEFAULT_PARTITION_ID = Y2Storage::PartitionId::LINUX
-        private_constant :DEFAULT_FS, :DEFAULT_HOME_FS, :DEFAULT_PARTITION_ID
-
         # @param device [Y2Storage::BlkDevice] see {#blk_device)
         # @param wizard_title [String]
         def initialize(device, wizard_title)
@@ -80,6 +74,24 @@ module Y2Partitioner
           @encrypt = blk_device.encrypted?
           @wizard_title = wizard_title
           @restorer = BlkDeviceRestorer.new(blk_device)
+        end
+
+        # Sets the id of the role to be used in subsequent operations
+        #
+        # @see #role
+        #
+        # @param id [Symbol]
+        def role_id=(id)
+          @role = FilesystemRole.find(id)
+        end
+
+        # Id of the current chosen role, nil if no role is selected
+        #
+        # @see #role
+        #
+        # @return [Symbol, nil]
+        def role_id
+          @role ? role.id : nil
         end
 
         # Plain block device being modified, i.e. device where the filesystem is
@@ -156,16 +168,16 @@ module Y2Partitioner
           delete_filesystem
           @encrypt = false
 
-          self.partition_id = role_values[:partition_id]
+          return if role.nil?
+          self.partition_id = role.partition_id
 
-          fs_type = role_values[:filesystem_type]
-          mount_path = role_values[:mount_path]
-          mount_by = role_values[:mount_by]
-
+          fs_type = role.filesystem_type
+          mount_path = role.mount_path(mount_paths)
           return if fs_type.nil?
 
           create_filesystem(fs_type)
-          create_mount_point(mount_path, mount_by: mount_by) unless mount_path.nil?
+          create_mount_point(mount_path) if mount_path
+          filesystem.configure_snapper = role.snapper?(blk_device) if snapshots_supported?
         end
 
         # Creates a new filesystem on top of the block device, removing the
@@ -494,39 +506,6 @@ module Y2Partitioner
             # Copying the label from the filesystem in the disk looks unexpected
             new?(filesystem) ? filesystem.label : nil
           end
-        end
-
-        # Values to apply for the selected role
-        #
-        # @return [Hash]
-        def role_values
-          fs_type = mount_path = mount_by = nil
-
-          case role
-          when :swap
-            part_id = Y2Storage::PartitionId::SWAP
-            fs_type = Y2Storage::Filesystems::Type::SWAP
-            mount_path = "swap"
-          when :efi_boot
-            part_id = Y2Storage::PartitionId::ESP
-            fs_type = Y2Storage::Filesystems::Type::VFAT
-            mount_path = "/boot/efi"
-          when :raw
-            part_id = Y2Storage::PartitionId::LVM
-          else
-            part_id = DEFAULT_PARTITION_ID
-            fs_type = (role == :system) ? DEFAULT_FS : DEFAULT_HOME_FS
-            # Behavior of the old SingleMountPointProposal (behavior introduced
-            # back in 2005 with unknown rationale)
-            mount_path = mount_paths.first unless Yast::Mode.normal
-          end
-
-          {
-            filesystem_type: fs_type,
-            partition_id:    part_id,
-            mount_path:      mount_path,
-            mount_by:        mount_by
-          }
         end
 
         def before_change_mount_point
