@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Mon Apr 23 10:27:04 UTC 2018 - jlopez@suse.com
+
+- Make the package to be architecture dependant to correctly check
+  the current architecture (bsc#1081198).
+- 4.0.161
+
+-------------------------------------------------------------------
 Fri Apr 20 20:27:15 UTC 2018 - igonzalezsosa@suse.com
 
 - AutoYaST: properly handle empty proposals (bsc#1090390).
