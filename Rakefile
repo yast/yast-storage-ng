@@ -16,6 +16,9 @@
 #  To contact SUSE about this file by physical or electronic mail,
 #  you may find current contact information at www.suse.com
 
+# rest of yast is branched, but storage-ng still submitting to GA
+ENV["YAST_SUBMIT"] = "sle15"
+
 require "yast/rake"
 
 # Checking for bug/fate numbers in the changelog does not make sense at this
