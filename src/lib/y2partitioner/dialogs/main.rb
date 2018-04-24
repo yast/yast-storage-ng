@@ -67,7 +67,7 @@ module Y2Partitioner
       end
 
       def skip_store_for
-        [:redraw]
+        [:redraw, :reprobe]
       end
 
       def back_button
