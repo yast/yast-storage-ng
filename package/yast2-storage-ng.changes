@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Tue Apr 24 09:15:14 UTC 2018 - jlopez@suse.com
+
+- Partitioner: do not validate setup just after rescanning
+  (related to bsc#1086892).
+- 4.0.163
+
+-------------------------------------------------------------------
 Mon Apr 23 13:10:15 UTC 2018 - ancor@suse.com
 
 - Partitioner: use the correct default value for 'Enable Snapshots'
