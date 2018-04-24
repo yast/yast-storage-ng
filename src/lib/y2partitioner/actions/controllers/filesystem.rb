@@ -467,6 +467,7 @@ module Y2Partitioner
           @encrypt = blk_device.encrypted?
 
           restore_mount_point(mount_path, mount_by: mount_by)
+          blk_device.update_etc_status
         end
 
         # Sets options to the current mount point
