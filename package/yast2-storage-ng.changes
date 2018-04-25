@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Wed Apr 25 16:07:46 UTC 2018 - jlopez@suse.com
+
+- Partitioner: fix bug after confirming changes in a running system
+  (related to bsc#1086892).
+- 4.0.164
+
+-------------------------------------------------------------------
 Tue Apr 24 09:15:14 UTC 2018 - jlopez@suse.com
 
 - Partitioner: do not validate setup just after rescanning

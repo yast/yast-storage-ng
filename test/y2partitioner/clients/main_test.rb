@@ -83,11 +83,14 @@ describe Y2Partitioner::Clients::Main do
         let(:storage_setup) { true }
 
         before do
-          allow(Y2Partitioner::Dialogs::Main).to receive(:new).and_return(partitioner_dialog)
+          allow(Y2Partitioner::Dialogs::Main).to receive(:new)
+            .and_return(partitioner_dialog, other_partitioner_dialog)
           allow(partitioner_dialog).to receive(:run).and_return(partitioner_result)
         end
 
         let(:partitioner_dialog) { instance_double(Y2Partitioner::Dialogs::Main) }
+
+        let(:other_partitioner_dialog) { instance_double(Y2Partitioner::Dialogs::Main) }
 
         let(:partitioner_result) { nil }
 
@@ -112,7 +115,7 @@ describe Y2Partitioner::Clients::Main do
             let(:allow_commit) { true }
 
             it "commits the changes" do
-              expect(storage_manager).to receive(:"staging=")
+              expect(storage_manager).to receive(:"staging=").with(device_graph)
               # this also blocks the real #commit call
               expect(storage_manager).to receive(:commit)
 

@@ -86,7 +86,7 @@ module Y2Partitioner
       #
       # @return [Dialogs::Main]
       def partitioner_dialog
-        Dialogs::Main.new(storage_manager.probed, storage_manager.staging)
+        @partitioner_dialog ||= Dialogs::Main.new(storage_manager.probed, storage_manager.staging)
       end
 
       # Popup to alert the user about using the Partitioner
