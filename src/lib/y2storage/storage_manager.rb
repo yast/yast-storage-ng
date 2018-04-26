@@ -339,6 +339,29 @@ module Y2Storage
       environment.read_only? ? :ro : :rw
     end
 
+    # Whether there is any device in the system that may be used to install a
+    # system.
+    #
+    # This method does not check sizes or any other property of the devices.
+    # It performs a very simple check and returns true if there is any device
+    # of one of the acceptable types (basically disks or DASDs).
+    #
+    # It will never trigger a hardware probing. The method works even if
+    # such probing has not been performed yet.
+    #
+    # @return [Boolean]
+    def devices_for_installation?
+      if probed?
+        !probed.empty?
+      else
+        begin
+          Storage.light_probe
+        rescue Storage::Exception
+          false
+        end
+      end
+    end
+
   private
 
     # Value of #staging_revision right after executing the latest libstorage
