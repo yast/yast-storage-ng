@@ -410,7 +410,7 @@
         <block-size>512</block-size>
       </region>
       <dm-table-name>cr_sda5</dm-table-name>
-      <in-etc-crypttab>true</in-etc-crypttab>
+      <in-etc-crypttab>false</in-etc-crypttab>
       <uuid></uuid>
     </Luks>
     <Md>
@@ -426,6 +426,7 @@
         <optimal-io-size>1048576</optimal-io-size>
       </topology>
       <range>256</range>
+      <in-etc-mdadm>false</in-etc-mdadm>
       <md-level>RAID0</md-level>
     </Md>
   </Devices>

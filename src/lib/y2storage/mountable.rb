@@ -36,14 +36,11 @@ module Y2Storage
     #   @return [Array<Mountable>] all mountable devices in the devicegraph
     storage_class_forward :all, as: "Mountable"
 
-    # @!method create_mount_point(path)
-    #   @param path [String]
-    #   @return [MountPoint]
-    storage_forward :create_mount_point, as: "MountPoint"
+    storage_forward :storage_create_mount_point, to: :create_mount_point, as: "MountPoint"
+    private :storage_create_mount_point
 
-    # @!method remove_mount_point
-    #   @raise [Storage::Exception] if the mountable has no mount point
-    storage_forward :remove_mount_point
+    storage_forward :storage_remove_mount_point, to: :remove_mount_point
+    private :storage_create_mount_point
 
     # @!method mount_point
     #   @return [MountPoint]
@@ -108,6 +105,24 @@ module Y2Storage
     def root?
       return false if mount_point.nil?
       mount_point.root?
+    end
+
+    # Creates a mount point object for the device
+    #
+    # @param path [String]
+    # @return [MountPoint]
+    def create_mount_point(path)
+      mp = storage_create_mount_point(path)
+      update_etc_status
+      mp
+    end
+
+    # Removes the mount point object associated to the device
+    #
+    # @raise [Storage::Exception] if the mountable has no mount point
+    def remove_mount_point
+      storage_remove_mount_point
+      update_etc_status
     end
   end
 end

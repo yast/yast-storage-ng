@@ -107,10 +107,18 @@ module Y2Storage
     #   @return [Boolean] whether the MD RAID is included in /etc/mdadm.conf
     storage_forward :in_etc_mdadm?
 
-    # @!method in_etc_mdadm=(value)
-    #   @see #in_etc_mdadm?
-    #   @param value [Boolean]
-    storage_forward :in_etc_mdadm=
+    # The setter is intentionally hidden to avoid interferences with the
+    # #update_etc_status mechanism. If we decide to expose the setter, it would
+    # make sense to implement it like this:
+    #
+    #   def in_etc_mdadm=(value)
+    #     self.etc_status_autoset = false
+    #     self.storage_in_etc_mdadm = value
+    #     update_parents_etc_status
+    #     value
+    #   end
+    storage_forward :storage_in_etc_mdadm=, to: :in_etc_mdadm=
+    private :storage_in_etc_mdadm=
 
     # @!method minimal_number_of_devices
     #   Minimal number of devices required by the RAID.
@@ -274,6 +282,12 @@ module Y2Storage
       self.name = "/dev/md/#{new_name}"
     end
 
+    # @see Device#in_etc?
+    # @see #in_etc_mdadm?
+    def in_etc?
+      in_etc_mdadm?
+    end
+
   protected
 
     # Holders connecting the MD Raid to its component block devices in the
@@ -298,6 +312,11 @@ module Y2Storage
       types << :raid if software_defined?
       types << :software_raid if software_defined?
       types
+    end
+
+    # @see Device#update_etc_attributes
+    def assign_etc_attribute(value)
+      self.storage_in_etc_mdadm = value
     end
   end
 end

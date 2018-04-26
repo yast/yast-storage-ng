@@ -45,6 +45,14 @@ module Y2Storage
     #   @return [Array<Encryption>] all the encryption devices in the given devicegraph
     storage_class_forward :all, as: "Encryption"
 
+    # @!method in_etc_crypttab?
+    #   @return [Boolean] whether the device is included in /etc/crypttab
+    storage_forward :in_etc_crypttab?
+
+    # The setter is intentionally hidden. See similar comment for Md#in_etc_mdadm
+    storage_forward :storage_in_etc_crypttab=, to: :in_etc_crypttab=
+    private :storage_in_etc_crypttab=
+
     # @see BlkDevice#plain_device
     def plain_device
       blk_device
@@ -65,10 +73,21 @@ module Y2Storage
       "cr_#{device.basename}"
     end
 
+    # @see Device#in_etc?
+    # @see #in_etc_crypttab?
+    def in_etc?
+      in_etc_crypttab?
+    end
+
   protected
 
     def types_for_is
       super << :encryption
+    end
+
+    # @see Device#update_etc_attributes
+    def assign_etc_attribute(value)
+      self.storage_in_etc_crypttab = value
     end
   end
 end
