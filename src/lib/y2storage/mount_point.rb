@@ -36,13 +36,6 @@ module Y2Storage
     # @return [Pathname] Object that represents the swap path
     SWAP_PATH = Pathname.new("swap").freeze
 
-    # @!method self.create(devicegraph, path)
-    #   @param devicegraph [Devicegraph]
-    #   @param path [String]
-    #
-    #   @return [MountPoint]
-    storage_class_forward :create, as: "MountPoint"
-
     # @!method self.all(devicegraph)
     #   @param devicegraph [Devicegraph]
     #
