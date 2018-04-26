@@ -113,6 +113,9 @@ module Y2Storage
     # @return [MountPoint]
     def create_mount_point(path)
       mp = storage_create_mount_point(path)
+      # Trigger the calculations associated to the path (passno, etc.)
+      mp.path = path
+      # Recalculate etc status for the parent devices
       update_etc_status
       mp
     end

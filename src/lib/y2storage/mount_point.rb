@@ -36,6 +36,11 @@ module Y2Storage
     # @return [Pathname] Object that represents the swap path
     SWAP_PATH = Pathname.new("swap").freeze
 
+    # @return [Symbol] Filesystem types which should use 1 in the fs_passno
+    #   field when mounted as root
+    TYPES_WITH_PASSNO_ONE = [:ext2, :ext3, :ext4, :jfs].freeze
+    private_constant :TYPES_WITH_PASSNO_ONE
+
     # @!method self.all(devicegraph)
     #   @param devicegraph [Devicegraph]
     #
@@ -53,10 +58,26 @@ module Y2Storage
     #   @return [String]
     storage_forward :path
 
-    # @!method path=(path)
-    #   @param path [String]
-    #   @raise [Storage::InvalidMountPointPath] if trying to set an invalid path
-    storage_forward :path=
+    storage_forward :storage_path=, to: :path=
+    private :storage_path=
+
+    # Sets the value for {#path} and ensures {#passno} has a value consistent
+    # with the new path
+    #
+    # @param path [String]
+    # @raise [Storage::InvalidMountPointPath] if trying to set an invalid path
+    def path=(path)
+      self.storage_path = path
+
+      if passno_must_be_one?
+        to_storage_value.passno = 1
+      elsif passno == 1
+        # passno should only be set to 1 if really needed
+        to_storage_value.passno = 0
+      end
+
+      path
+    end
 
     # @!attribute mount_by
     #   @return [Filesystems::MountByType]
@@ -136,6 +157,22 @@ module Y2Storage
     #   @return [Filesystems::Base]
     storage_forward :filesystem, as: "Filesystems::Base"
 
+    # @!method passno
+    #   Value for the fs_passno field for fstab(5). The passno field is used by
+    #   the fsck(8) program to determine the order in which filesystem checks
+    #   are done at reboot time.
+    #
+    #   @return [Integer]
+    storage_forward :passno
+
+    # @!method freq
+    #   Value for the fs_freq field for fstab(5). The freq field is used by the
+    #   dump(8) command to determine which filesystems need to be dumped. The
+    #   field is likely obsolete.
+    #
+    #   @return [Integer]
+    storage_forward :freq
+
     # Whether the mount point is root
     #
     # @return [Boolean]
@@ -153,6 +190,16 @@ module Y2Storage
 
     def types_for_is
       super << :mount_point
+    end
+
+    # Whether {#passno} should be set to 1 for this mount point
+    #
+    # @return [Boolean]
+    def passno_must_be_one?
+      return false unless root?
+      return false unless mountable && mountable.is?(:filesystem)
+
+      filesystem.type.is?(*TYPES_WITH_PASSNO_ONE)
     end
   end
 end
