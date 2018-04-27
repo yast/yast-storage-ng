@@ -352,7 +352,7 @@ module Y2Storage
     # @return [Boolean]
     def devices_for_installation?
       if probed?
-        !probed.empty?
+        !probed.disk_devices.empty?
       else
         begin
           Storage.light_probe
