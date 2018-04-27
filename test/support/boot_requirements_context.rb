@@ -82,6 +82,7 @@ RSpec.shared_context "boot requirements" do
     allow(storage_arch).to receive(:s390?).and_return(architecture == :s390)
 
     allow(devicegraph).to receive(:disk_devices).and_return [dev_sda, dev_sdb]
+    allow(devicegraph).to receive(:nfs_mounts).and_return []
 
     allow(analyzer).to receive(:boot_ptable_type?) { |type| type == boot_ptable_type }
     # Assume the needed partitions are not already planned in advance
