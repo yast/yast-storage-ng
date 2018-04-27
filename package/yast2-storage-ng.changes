@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Fri Apr 27 12:22:37 UTC 2018 - jreidinger@suse.com
+
+- add method to check if system has any disk device (bsc#1090753)
+- 4.0.168
+
+-------------------------------------------------------------------
 Fri Apr 27 11:15:20 UTC 2018 - ancor@suse.com
 
 - Set fs_passno to 1 for ext2/3/4 root filesystems (bsc#1078703).
