@@ -160,9 +160,8 @@ module Y2Storage
     #   @return [ResizeInfo]
     storage_forward :detect_resize_info, as: "ResizeInfo"
 
-    # @!method remove_descendants
-    #   Remove device descendants in the devicegraph it belongs to.
-    storage_forward :remove_descendants
+    storage_forward :storage_remove_descendants, to: :remove_descendants
+    private :storage_remove_descendants
 
     # @!attribute userdata
     #   Collection of free-form text fields to be stored in the devicegraph
@@ -329,6 +328,42 @@ module Y2Storage
       (types.map(&:to_sym) & types_for_is).any?
     end
 
+    # Whether there is (or there will be) an entry for this device in the
+    # relevant /etc file, to make the device available during system boot.
+    #
+    # For most kind of devices, this method makes no sense and returns always
+    # false. But some kinds of devices need to be listed in a configuration file
+    # (/etc/crypttab for encryption devices, /etc/fstab for filesystems,
+    # /etc/mdadm.conf for MD RAIDs, etc.) in order to be automatically
+    # recognized by the system. In those cases, the corresponding Device subclass
+    # will redefine this method to check the attribute corresponding to the
+    # relevant configuration file.
+    #
+    # @return [Boolean]
+    def in_etc?
+      false
+    end
+
+    # Updates the relevant attributes that are relevant for {#in_etc?} and
+    # triggers the corresponding mechanism in the parent objects so the changes
+    # are propagated.
+    #
+    # This method is used to ensure the consistency of {#in_etc?} and should be
+    # triggered by any operation that is expected to produce relevant changes
+    # in that regard. At the moment of writing, it's triggered whenever a new
+    # mount point is created or removed, to make sure all the filesystems of the
+    # system are available on boot.
+    def update_etc_status
+      update_etc_attributes
+      update_parents_etc_status
+    end
+
+    # Removes device descendants in the devicegraph
+    def remove_descendants
+      storage_remove_descendants
+      update_etc_status
+    end
+
   protected
 
     # Stores any object in the userdata of the device.
@@ -371,6 +406,43 @@ module Y2Storage
       serialized = userdata[key.to_s]
       return nil if serialized.nil?
       YAML.load(serialized)
+    end
+
+    # Generic mechanism to update the concrete attribute checked by {#in_etc?}
+    def update_etc_attributes
+      # Do something only for subclasses defining #assign_etc_attribute
+      return unless respond_to?(:assign_etc_attribute, true)
+
+      if descendants.any?(&:in_etc?)
+        # Enable the autoset flag only if the attribute was false before our update
+        self.etc_status_autoset = !in_etc?
+        assign_etc_attribute(true)
+      # We only set the attribute to false if we did set it to true
+      elsif etc_status_autoset?
+        self.etc_status_autoset = false
+        assign_etc_attribute(false)
+      end
+    end
+
+    # Triggers recalculation of {#in_etc?} for all parent objects
+    def update_parents_etc_status
+      parents.each(&:update_etc_status)
+    end
+
+    # Whether {#in_etc?} was set to true by {#update_etc_attributes}.
+    #
+    # @note This relies on the userdata mechanism, see {#userdata_value}.
+    #
+    # @return [Boolean]
+    def etc_status_autoset?
+      userdata_value(:etc_status_autoset) || false
+    end
+
+    # Stores the information for {#etc_status_autoset?}
+    #
+    # @param value [Boolean]
+    def etc_status_autoset=(value)
+      save_userdata(:etc_status_autoset, value)
     end
 
     def types_for_is

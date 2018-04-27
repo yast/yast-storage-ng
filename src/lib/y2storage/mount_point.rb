@@ -143,11 +143,17 @@ module Y2Storage
     #   @return [Filesystems::Base]
     storage_forward :filesystem, as: "Filesystems::Base"
 
-    # Wheter the mount point is root
+    # Whether the mount point is root
     #
     # @return [Boolean]
     def root?
       path == ROOT_PATH.to_s
+    end
+
+    # @see Device#in_etc?
+    # @see #in_etc_fstab
+    def in_etc?
+      in_etc_fstab?
     end
 
   protected

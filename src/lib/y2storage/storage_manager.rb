@@ -666,6 +666,10 @@ module Y2Storage
     class StorageLogger < ::Storage::Logger
       # rubocop:disable Metrics/ParameterLists
       def write(level, component, filename, line, function, content)
+        # libstorage pretent that it use same logging as y2_logger but y2_logger support also
+        # parameter expansion via printf, so we need double escaping to prevent this expansion
+        # (bsc#1091062)
+        content = content.gsub(/%/, "%%")
         Yast.y2_logger(level, component, filename, line, function, content)
       end
       # rubocop:enable Metrics/ParameterLists
