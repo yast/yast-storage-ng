@@ -40,7 +40,7 @@ module Y2Storage
     private :storage_create_mount_point
 
     storage_forward :storage_remove_mount_point, to: :remove_mount_point
-    private :storage_create_mount_point
+    private :storage_remove_mount_point
 
     # @!method mount_point
     #   @return [MountPoint]
