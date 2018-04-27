@@ -82,4 +82,107 @@ describe Y2Storage::MountPoint do
       end
     end
   end
+
+  describe "#passno" do
+    let(:scenario) { "empty_hard_disk_50GiB" }
+
+    let(:dev_name) { "/dev/sda" }
+    let(:filesystem) { blk_device.create_filesystem(fs_type) }
+    subject(:mount_point) { filesystem.create_mount_point(path) }
+
+    context "for an ext4 filesystem" do
+      let(:fs_type) { Y2Storage::Filesystems::Type::EXT4 }
+
+      context "mounted at /" do
+        let(:path) { "/" }
+
+        it "is set to 1" do
+          expect(mount_point.passno).to eq 1
+        end
+
+        context "and later reassigned to another path" do
+          it "is set to 0" do
+            mount_point.path = "/var"
+            expect(mount_point.passno).to eq 0
+          end
+        end
+      end
+
+      context "mounted at a non-root location" do
+        let(:path) { "/home" }
+
+        it "is set to 0" do
+          expect(mount_point.passno).to eq 0
+        end
+      end
+    end
+
+    context "for an xfs filesystem" do
+      let(:fs_type) { Y2Storage::Filesystems::Type::XFS }
+
+      context "mounted at /" do
+        let(:path) { "/" }
+
+        it "is set to 0" do
+          expect(mount_point.passno).to eq 0
+        end
+      end
+
+      context "mounted at a non-root location" do
+        let(:path) { "/home" }
+
+        it "is set to 0" do
+          expect(mount_point.passno).to eq 0
+        end
+      end
+    end
+
+    context "for an BTRFS filesystem" do
+      let(:fs_type) { Y2Storage::Filesystems::Type::BTRFS }
+      let(:specs) do
+        [Y2Storage::SubvolSpecification.new("foo"), Y2Storage::SubvolSpecification.new("bar")]
+      end
+
+      RSpec.shared_examples "passno 0 with subvolumes" do
+        it "is set to 0 for the filesystem and all its subvolumes" do
+          expect(mount_point.passno).to eq 0
+
+          filesystem.add_btrfs_subvolumes(specs)
+          mount_points = filesystem.btrfs_subvolumes.map(&:mount_point).compact
+          expect(mount_points.size).to eq specs.size
+          expect(mount_points.map(&:passno)).to all(eq(0))
+        end
+      end
+
+      context "mounted at /" do
+        let(:path) { "/" }
+        include_examples "passno 0 with subvolumes"
+      end
+
+      context "mounted at a non-root location" do
+        let(:path) { "/home" }
+        include_examples "passno 0 with subvolumes"
+      end
+    end
+
+    context "for an NFS filesystem" do
+      let(:filesystem) { Y2Storage::Filesystems::Nfs.create(fake_devicegraph, "server", path) }
+
+      context "mounted at /" do
+        let(:path) { "/" }
+
+        it "is set to 0" do
+          expect(mount_point.passno).to eq 0
+        end
+      end
+
+      context "mounted at a non-root location" do
+        let(:path) { "/home" }
+
+        it "is set to 0" do
+          expect(mount_point.passno).to eq 0
+        end
+      end
+    end
+  end
 end

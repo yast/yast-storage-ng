@@ -40,7 +40,7 @@ module Y2Storage
     private :storage_create_mount_point
 
     storage_forward :storage_remove_mount_point, to: :remove_mount_point
-    private :storage_create_mount_point
+    private :storage_remove_mount_point
 
     # @!method mount_point
     #   @return [MountPoint]
@@ -113,6 +113,9 @@ module Y2Storage
     # @return [MountPoint]
     def create_mount_point(path)
       mp = storage_create_mount_point(path)
+      # Trigger the calculations associated to the path (passno, etc.)
+      mp.path = path
+      # Recalculate etc status for the parent devices
       update_etc_status
       mp
     end
