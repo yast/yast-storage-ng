@@ -970,4 +970,27 @@ describe Y2Storage::StorageManager do
       end
     end
   end
+
+  describe "#devices_for_installation?" do
+    context "system is already probed" do
+      before { fake_scenario("gpt_and_msdos") }
+      it "returns true if there is any diskk device" do
+        expect(subject.devices_for_installation?).to eq true
+      end
+    end
+
+    context "system is not yet probed" do
+      it "returns result of libstorage method light_probe" do
+        expect(::Storage).to receive(:light_probe).and_return true
+
+        expect(subject.devices_for_installation?).to eq true
+      end
+
+      it "returns false if libstorage raise exception" do
+        expect(::Storage).to receive(:light_probe).and_raise(::Storage::Exception)
+
+        expect(subject.devices_for_installation?).to eq false
+      end
+    end
+  end
 end
