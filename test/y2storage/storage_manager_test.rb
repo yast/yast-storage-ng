@@ -974,8 +974,14 @@ describe Y2Storage::StorageManager do
   describe "#devices_for_installation?" do
     context "system is already probed" do
       before { fake_scenario("gpt_and_msdos") }
-      it "returns true if there is any diskk device" do
+      it "returns true if there is any disk device" do
         expect(subject.devices_for_installation?).to eq true
+      end
+
+      it "returns false if there is no local disk device" do
+        fake_scenario("nfs1.xml")
+
+        expect(subject.devices_for_installation?).to eq false
       end
     end
 
