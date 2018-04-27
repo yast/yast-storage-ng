@@ -643,5 +643,38 @@ describe Y2Storage::BootRequirementsChecker do
         end
       end
     end
+
+    context "using NFS for the root filesystem" do
+      before do
+        fs = Y2Storage::Filesystems::Nfs.create(fake_devicegraph, "server", "/path")
+        fs.create_mount_point("/")
+      end
+
+      context "in a diskless system" do
+        let(:scenario) { "nfs1.xml" }
+
+        # Regression test for bug#1090752
+        it "does not crash" do
+          expect { checker.warnings }.to_not raise_error
+          expect { checker.errors }.to_not raise_error
+        end
+
+        it "returns no warnings or errors" do
+          expect(checker.warnings).to be_empty
+          expect(checker.errors).to be_empty
+        end
+      end
+
+      context "in a system with local disks" do
+        let(:scenario) { "empty_hard_disk_50GiB" }
+
+        # This used to consider the local disk as the one to boot from, so it
+        # reported wrong errors assuming "/" was going to be there.
+        it "returns no warnings or errors" do
+          expect(checker.warnings).to be_empty
+          expect(checker.errors).to be_empty
+        end
+      end
+    end
   end
 end

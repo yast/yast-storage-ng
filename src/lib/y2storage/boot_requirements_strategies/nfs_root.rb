@@ -1,6 +1,6 @@
 # encoding: utf-8
 
-# Copyright (c) [2015] SUSE LLC
+# Copyright (c) [2018] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -19,8 +19,17 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "y2storage/boot_requirements_strategies/legacy"
-require "y2storage/boot_requirements_strategies/uefi"
-require "y2storage/boot_requirements_strategies/prep"
-require "y2storage/boot_requirements_strategies/zipl"
-require "y2storage/boot_requirements_strategies/nfs_root"
+require "y2storage/boot_requirements_strategies/base"
+
+module Y2Storage
+  module BootRequirementsStrategies
+    # Strategy to calculate the boot requirements for a system in which the root
+    # filesystem is an NFS share.
+    #
+    # This actually checks nothing on top of the basic checks of the base class,
+    # users installing on top of NFS are supposed to know what they are doing and
+    # are on their own.
+    class NfsRoot < Base
+    end
+  end
+end
