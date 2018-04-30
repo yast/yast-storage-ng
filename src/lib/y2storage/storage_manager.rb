@@ -35,6 +35,9 @@ require "yast2/fs_snapshot"
 Yast.import "Mode"
 Yast.import "Stage"
 
+# FIXME
+# rubocop:disable ClassLength
+
 module Y2Storage
   # Singleton class to provide access to the libstorage Storage object and
   # to store related state information.
@@ -692,3 +695,5 @@ module Y2Storage
     end
   end
 end
+
+# rubocop:enable ClassLength
