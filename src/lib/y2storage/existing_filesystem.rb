@@ -1,5 +1,3 @@
-#!/usr/bin/env ruby
-#
 # encoding: utf-8
 
 # Copyright (c) [2015] SUSE LLC
@@ -23,6 +21,7 @@
 
 require "yast"
 require "fileutils"
+require "y2storage/fstab"
 
 Yast.import "OSRelease"
 
@@ -40,36 +39,44 @@ module Y2Storage
       @filesystem = filesystem
       @root = root
       @mount_point = mount_point
-      @installation_medium = nil
-      @release_name = nil
+      @processed = false
     end
 
     def device
-      @filesystem.blk_devices.to_a.first
+      filesystem.blk_devices.first
     end
 
     def installation_medium?
-      return @installation_medium if @installation_medium
-      set_attributes!
+      set_attributes unless processed?
       @installation_medium
     end
 
     def release_name
-      return @release_name if @release_name
-      set_attributes!
+      set_attributes unless processed?
       @release_name
+    end
+
+    def fstab
+      set_attributes unless processed?
+      @fstab
     end
 
   protected
 
-    def set_attributes!
+    attr_reader :processed
+    alias_method :processed?, :processed
+
+    def set_attributes
       mount
       @installation_medium = check_installation_medium
       @release_name = read_release_name
+      @fstab = read_fstab
       umount
     rescue RuntimeError => ex # FIXME: rescue ::Storage::Exception when SWIG bindings are fixed
       log.error("CAUGHT exception: #{ex} for #{device.name}")
       nil
+    ensure
+      @processed = true
     end
 
     # Mount the device.
@@ -78,7 +85,7 @@ module Y2Storage
     #
     def mount
       # FIXME: use libstorage function when available
-      cmd = "/usr/bin/mount #{device.name} #{@mount_point} >/dev/null 2>&1"
+      cmd = "/usr/bin/mount -o ro #{device.name} #{@mount_point} >/dev/null 2>&1"
       log.debug("Trying to mount #{device.name}: #{cmd}")
       raise "mount failed for #{device.name}" unless system(cmd)
     end
@@ -89,7 +96,7 @@ module Y2Storage
     #
     def umount
       # FIXME: use libstorage function when available
-      cmd = "/usr/bin/umount #{@mount_point}"
+      cmd = "/usr/bin/umount -R #{@mount_point}"
       log.debug("Unmounting: #{cmd}")
       raise "umount failed for #{@mount_point}" unless system(cmd)
     end
@@ -115,6 +122,16 @@ module Y2Storage
     def read_release_name
       release_name = Yast::OSRelease.ReleaseName(@mount_point)
       release_name.empty? ? nil : release_name
+    end
+
+    # Tries to read a fstab file
+    #
+    # @return [Fstab, nil] nil if the filesystem does not contain a fstab file
+    def read_fstab
+      fstab_path = File.join(@mount_point, "etc", "fstab")
+      return nil unless File.exist?(fstab_path)
+
+      Fstab.new(fstab_path, filesystem)
     end
   end
 end

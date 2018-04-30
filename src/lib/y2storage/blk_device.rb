@@ -475,5 +475,9 @@ module Y2Storage
         partition_id: nil
       }
     end
+
+    def types_for_is
+      super << :blk_device
+    end
   end
 end

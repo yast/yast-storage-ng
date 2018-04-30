@@ -1,0 +1,64 @@
+# encoding: utf-8
+
+# Copyright (c) [2018] SUSE LLC
+#
+# All Rights Reserved.
+#
+# This program is free software; you can redistribute it and/or modify it
+# under the terms of version 2 of the GNU General Public License as published
+# by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+# more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, contact SUSE LLC.
+#
+# To contact SUSE LLC about this file by physical or electronic mail, you may
+# find current contact information at www.suse.com.
+
+require "y2storage"
+
+module Y2Storage
+  # Class to represent a fstab file
+  class Fstab
+    FSTAB_PATH = "/etc/fstab"
+    private_constant :FSTAB_PATH
+
+    # @return [Filesystems::Base]
+    attr_reader :filesystem
+
+    # @return [Array<SimpleEtcFstabEntry>]
+    attr_reader :entries
+
+    # Constructor
+    #
+    # @param path [String]
+    # @param filesystem [Filesystems::Base]
+    def initialize(path = FSTAB_PATH, filesystem = nil)
+      @path = path
+      @filesystem = filesystem
+      @entries = StorageManager.fstab_entries(path)
+    end
+
+    # Fstab entries that represent a filesystem
+    #
+    # Entries for BTRFS subvolumes are discarded.
+    #
+    # @return [Array<SimpleEtcFstabEntry>]
+    def filesystem_entries
+      entries.reject(&:subvolume?)
+    end
+
+    # Device where the filesystem is allocated
+    #
+    # @return [BlkDevice, nil] nil if there is no filesystem or the filesystem is NFS.
+    def device
+      return nil unless filesystem && filesystem.respond_to?(:blk_devices)
+
+      filesystem.blk_devices.first
+    end
+  end
+end

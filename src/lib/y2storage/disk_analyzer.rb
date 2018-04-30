@@ -105,6 +105,13 @@ module Y2Storage
       data_for(*disks, :linux_systems) { |d| find_linux_systems(d) }
     end
 
+    # All fstabs found in the system
+    #
+    # @return [Array<Fstab>]
+    def fstabs
+      @fstabs ||= find_fstabs
+    end
+
     # Disks that are suitable for installing Linux.
     #
     # @return [Array<Disk>] candidate disks
@@ -207,8 +214,32 @@ module Y2Storage
       filesystems = linux_partitions(disk).map(&:filesystem)
       filesystems << disk.filesystem
       filesystems.compact!
-      return [] if filesystems.empty?
       filesystems.map { |f| release_name(f) }.compact
+    end
+
+    # Finds fstab files in all filesystems
+    #
+    # @see #suitable_root_filesystems
+    #
+    # @return [Array<Fstab>]
+    def find_fstabs
+      suitable_root_filesystems.map { |f| fstab(f) }.compact
+    end
+
+    # Filesystems that could contain a Linux installation
+    #
+    # @return [Array<Filesystems::Base>]
+    def suitable_root_filesystems
+      devicegraph.filesystems.select { |f| f.type.root_ok? }
+    end
+
+    # Fstab in the filesystem
+    #
+    # @param filesystem [Filesystems::Base]
+    # @return [Fstab, nil] nil if the filesystem does not contain a fstab file
+    def fstab(filesystem)
+      fs = ExistingFilesystem.new(filesystem)
+      fs.fstab
     end
 
     def release_name(filesystem)

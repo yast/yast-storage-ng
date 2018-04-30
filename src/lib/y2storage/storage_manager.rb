@@ -29,6 +29,7 @@ require "y2storage/dump_manager"
 require "y2storage/callbacks"
 require "y2storage/hwinfo_reader"
 require "y2storage/sysconfig_storage"
+require "y2storage/simple_etc_fstab_entry"
 require "yast2/fs_snapshot"
 
 Yast.import "Mode"
@@ -596,6 +597,18 @@ module Y2Storage
       # @return [StorageManager] singleton instance
       def create_test_instance
         create_instance(test_environment)
+      end
+
+      # Reads a fstab file and returns its entries
+      #
+      # @param path [String] path to the fstab file to read
+      # @return [Array<SimpleEtcFstabEntry>]
+      def fstab_entries(path)
+        entries = Storage.read_simple_etc_fstab(path)
+        entries.map { |e| SimpleEtcFstabEntry.new(e) }
+      rescue Storage::Exception
+        log.warn("Not possible to read the fstab file: #{path}")
+        []
       end
 
       # Make sure only .instance can be used to create objects
