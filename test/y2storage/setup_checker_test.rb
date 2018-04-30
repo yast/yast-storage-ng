@@ -243,6 +243,18 @@ describe Y2Storage::SetupChecker do
       end
     end
 
+    context "when a mandatory product volume is mounted as NFS" do
+      before do
+        fs = Y2Storage::Filesystems::Nfs.create(fake_devicegraph, "server", "/path")
+        fs.mount_path = "/"
+      end
+
+      it "does not include an error for that volume" do
+        expect(subject.product_warnings)
+          .to_not include(an_object_having_attributes(missing_volume: root_volume))
+      end
+    end
+
     context "when all mandatory product volumes are present in the system" do
       let(:product_volumes) { [root_volume, home_volume] }
 
