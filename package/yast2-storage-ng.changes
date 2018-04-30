@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Fri May  4 14:46:31 UTC 2018 - jlopez@suse.com
+
+- Partitioner: added option to import mount points (part of
+  fate#318196 and bsc#1083851).
+- 4.0.174
+
+-------------------------------------------------------------------
 Fri May  4 10:46:31 UTC 2018 - igonzalezsosa@suse.com
 
 - AutoYaST: handle <subvolumes_prefix/> and <subvolumes> empty
