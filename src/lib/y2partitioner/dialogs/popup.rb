@@ -26,6 +26,22 @@ module Y2Partitioner
   module Dialogs
     # Adapt CWM dialog to allow popup dialogs
     class Popup < CWM::Dialog
+      DEFAULT_MIN_WIDTH = 50
+      private_constant :DEFAULT_MIN_WIDTH
+
+      DEFAULT_MIN_HEIGHT = 18
+      private_constant :DEFAULT_MIN_HEIGHT
+
+      # @!method min_width=(value)
+      #   Sets the popup min width
+      #   @param value [Integer]
+      attr_writer :min_width
+
+      # @!method min_height=(value)
+      #   Sets the popup min height
+      #   @param value [Integer]
+      attr_writer :min_height
+
       def wizard_create_dialog(&block)
         Yast::UI.OpenDialog(layout)
         block.call
@@ -43,15 +59,39 @@ module Y2Partitioner
           Left(Heading(Id(:title), title)),
           VStretch(),
           VSpacing(1),
-          MinSize(50, 18, ReplacePoint(Id(:contents), Empty())),
+          MinSize(min_width, min_height, ReplacePoint(Id(:contents), Empty())),
           VSpacing(1),
           VStretch(),
           ButtonBox(
             PushButton(Id(:help), Opt(:helpButton), Yast::Label.HelpButton),
-            PushButton(Id(:ok), Opt(:default), Yast::Label.OKButton),
-            PushButton(Id(:cancel), Yast::Label.CancelButton)
+            PushButton(Id(:ok), Opt(:default), ok_button_label),
+            PushButton(Id(:cancel), cancel_button_label)
           )
         )
+      end
+
+    private
+
+      # Popup min width
+      #
+      # @return [Integer]
+      def min_width
+        @min_width || DEFAULT_MIN_WIDTH
+      end
+
+      # Popup min height
+      #
+      # @return [Integer]
+      def min_height
+        @min_height || DEFAULT_MIN_HEIGHT
+      end
+
+      def ok_button_label
+        Yast::Label.OKButton
+      end
+
+      def cancel_button_label
+        Yast::Label.CancelButton
       end
     end
   end
