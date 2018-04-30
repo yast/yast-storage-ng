@@ -20,6 +20,7 @@
 # find current contact information at www.suse.com.
 
 require "yast"
+require "pathname"
 require "y2storage/blk_device"
 require "y2storage/setup_error"
 require "y2storage/boot_requirements_checker"
@@ -136,7 +137,22 @@ module Y2Storage
     # @param volume [VolumeSpecification]
     # @return [Boolean] true if the volume is missing; false otherwise.
     def missing?(volume)
+      # Users mounting system volumes as NFS are supposed to know what they are doing
+      return false if nfs?(volume)
+
       BlkDevice.all(devicegraph).none? { |d| d.match_volume?(volume) }
+    end
+
+    # Whether a volume is present in the current setup as an NFS mount
+    #
+    # @param volume [VolumeSpecification]
+    # @return [Boolean]
+    def nfs?(volume)
+      return false unless volume.mount_point
+      vol_path = Pathname.new(volume.mount_point).cleanpath
+      devicegraph.nfs_mounts.any? do |nfs|
+        nfs.mount_point && Pathname.new(nfs.mount_path).cleanpath == vol_path
+      end
     end
 
     # @return [BootRequirementsChecker] shortcut for boot requirements checker

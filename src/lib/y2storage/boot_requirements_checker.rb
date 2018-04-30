@@ -112,7 +112,9 @@ module Y2Storage
       return @strategy unless @strategy.nil?
 
       klass =
-        if arch.efiboot?
+        if nfs_root?
+          BootRequirementsStrategies::NfsRoot
+        elsif arch.efiboot?
           BootRequirementsStrategies::UEFI
         elsif arch.s390?
           BootRequirementsStrategies::ZIPL
@@ -123,6 +125,13 @@ module Y2Storage
           BootRequirementsStrategies::Legacy
         end
       @strategy = klass.new(devicegraph, planned_devices, boot_disk_name)
+    end
+
+    # Whether the root filesystem is NFS
+    #
+    # @return [Boolean]
+    def nfs_root?
+      devicegraph.nfs_mounts.any? { |i| i.mount_point && i.mount_point.root? }
     end
   end
 end
