@@ -26,16 +26,53 @@ module Y2Partitioner
   # {Y2Storage::Devicegraph}.
   # FIXME: the spelling is different
   class DeviceGraphs
+    class << self
+      def instance
+        create_instance(nil, nil) unless @instance
+        @instance
+      end
+
+      # Creates the singleton instance with customized devicegraphs. To
+      # be used during the initialization of the partitioner.
+      def create_instance(system, initial)
+        @instance = new(system: system, initial: initial)
+      end
+
+      # Make sure only .instance and .create_instance can be used to
+      # create objects
+      private :new, :allocate
+    end
+
     # Devicegraph representing the system
-    attr_accessor :system
+    attr_reader :system
     # Working Devicegraph, to be modified during the partitioner execution
     attr_accessor :current
 
+    attr_reader :disk_analyzer
+
     def initialize(system: nil, initial: nil)
-      @system = system || Y2Storage::StorageManager.instance.probed
-      initial ||= Y2Storage::StorageManager.instance.staging
+      @system = system || storage_manager.probed
+      initial ||= storage_manager.staging
       @current = initial.dup
       @checkpoints = {}
+    end
+
+    # Disk analyzer for the system devicegraph
+    #
+    # @note In case system and probed devicegraphs are equal, the probed disk analyzer
+    #   is used, even when both devicegraphs are not exactly the same object. Otherwise,
+    #   a new disk analyzer is created.
+    #
+    # @return [Y2Storage::DiskAnalyzer]
+    def disk_analyzer
+      return @disk_analyzer if @disk_analyzer
+
+      @disk_analyzer =
+        if system == storage_manager.probed
+          storage_manager.probed_disk_analyzer
+        else
+          Y2Storage::DiskAnalyzer.new(system)
+        end
     end
 
     # Makes a copy of the `current` devicegraph and runs a block with the copy.
@@ -90,21 +127,10 @@ module Y2Partitioner
       @checkpoints[device.sid]
     end
 
-    class << self
-      def instance
-        create_instance(nil, nil) unless @instance
-        @instance
-      end
+  private
 
-      # Creates the singleton instance with customized devicegraphs. To
-      # be used during the initialization of the partitioner.
-      def create_instance(system, initial)
-        @instance = new(system: system, initial: initial)
-      end
-
-      # Make sure only .instance and .create_instance can be used to
-      # create objects
-      private :new, :allocate
+    def storage_manager
+      Y2Storage::StorageManager.instance
     end
   end
 end
