@@ -71,8 +71,8 @@ module Y2Partitioner
         return unless pager
 
         page = pager.device_page(device)
-        UIState.instance.go_to_tree_node(page)
-        :redraw
+        # Using pager#handler several refreshes are avoided
+        pager.handle("ID" => page.widget_id)
       end
 
       # Returns the proper Actions class for editing

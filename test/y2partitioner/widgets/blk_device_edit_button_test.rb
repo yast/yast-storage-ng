@@ -73,19 +73,16 @@ end
 RSpec.shared_examples "go to device page" do
   before do
     allow(pager).to receive(:device_page).with(device).and_return(page)
+    allow(pager).to receive(:handle)
   end
 
   let(:pager) { instance_double(Y2Partitioner::Widgets::OverviewTreePager) }
 
-  let(:page) { double("page", label: "disk_page") }
+  let(:page) { double("page", label: "disk_page", widget_id: "widget_id") }
 
   it "jumps to the disk page" do
-    expect(Y2Partitioner::UIState.instance).to receive(:go_to_tree_node).with(page)
+    expect(pager).to receive(:handle).with("ID" => page.widget_id)
     button.handle
-  end
-
-  it "returns :redraw" do
-    expect(button.handle).to eq :redraw
   end
 end
 
