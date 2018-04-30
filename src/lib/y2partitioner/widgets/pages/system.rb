@@ -1,7 +1,32 @@
+# encoding: utf-8
+
+# Copyright (c) [2017] SUSE LLC
+#
+# All Rights Reserved.
+#
+# This program is free software; you can redistribute it and/or modify it
+# under the terms of version 2 of the GNU General Public License as published
+# by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+# more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, contact SUSE LLC.
+#
+# To contact SUSE LLC about this file by physical or electronic mail, you may
+# find current contact information at www.suse.com.
+
+require "yast"
 require "cwm/tree_pager"
 require "y2partitioner/icons"
 require "y2partitioner/widgets/configurable_blk_devices_table"
 require "y2partitioner/widgets/rescan_devices_button"
+require "y2partitioner/widgets/import_mount_points_button"
+
+Yast.import "Mode"
 
 module Y2Partitioner
   module Widgets
@@ -31,17 +56,10 @@ module Y2Partitioner
           invalidate_cached_content
           return @contents if @contents
 
-          icon = Icons.small_icon(Icons::ALL)
           @contents = VBox(
-            Left(
-              HBox(
-                Image(icon, ""),
-                # TRANSLATORS: Heading. String followed by the hostname
-                Heading(format(_("Available Storage on %s"), hostname))
-              )
-            ),
+            Left(header),
             table,
-            HBox(RescanDevicesButton.new)
+            HBox(*buttons)
           )
         end
 
@@ -62,6 +80,19 @@ module Y2Partitioner
           @table = nil
         end
 
+        # Page header
+        #
+        # @return [Yast::UI::Term]
+        def header
+          icon = Icons.small_icon(Icons::ALL)
+
+          HBox(
+            Image(icon, ""),
+            # TRANSLATORS: Heading. String followed by the hostname
+            Heading(format(_("Available Storage on %s"), hostname))
+          )
+        end
+
         # The table contains all storage devices, including Software RAIDs and LVM Vgs
         #
         # @return [ConfigurableBlkDevicesTable]
@@ -70,6 +101,29 @@ module Y2Partitioner
           @table = ConfigurableBlkDevicesTable.new(devices, @pager)
           @table.remove_columns(:start, :end)
           @table
+        end
+
+        # Page buttons
+        #
+        # @return [Array<Yast::UI::Term>]
+        def buttons
+          buttons = [rescan_devices_button]
+          buttons << import_mount_points_button if Yast::Mode.installation
+          buttons
+        end
+
+        # Button for rescanning devices
+        #
+        # @return [RescanDevicesButton]
+        def rescan_devices_button
+          RescanDevicesButton.new
+        end
+
+        # Button for importing mount points
+        #
+        # @return [ImportMountPointsButton]
+        def import_mount_points_button
+          ImportMountPointsButton.new
         end
 
         # Returns all storage devices
