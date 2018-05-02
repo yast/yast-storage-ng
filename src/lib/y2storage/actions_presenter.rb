@@ -21,6 +21,7 @@
 
 require "yast"
 require "y2storage"
+require "y2storage/dump_manager"
 
 Yast.import "HTML"
 
@@ -97,6 +98,14 @@ module Y2Storage
         file.puts
         file.puts(to_s)
       end
+    end
+
+    # Dump the actions to a plain text file.
+    #
+    # @param file_base_name [String] File base name to use.
+    #   Leave this empty to use a generated name.
+    def dump(file_base_name = nil)
+      DumpManager.dump(self, file_base_name)
     end
 
   protected
