@@ -55,16 +55,6 @@ describe Y2Storage::Clients::InstPrepdisk do
         client.run
       end
 
-      it "saves probed devicegraph to a xml log file" do
-        expect(storage_manager.probed).to receive(:save).with(/.*probed.*.xml/)
-        client.run
-      end
-
-      it "saves staging devicegraph to a xml log file" do
-        expect(storage_manager.staging).to receive(:save).with(/.*staging.*.xml/)
-        client.run
-      end
-
       it "returns :next if everything goes fine" do
         expect(client.run).to eq :next
       end

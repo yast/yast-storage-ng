@@ -25,6 +25,7 @@ require "y2storage/fake_device_factory"
 require "y2storage/devicegraph"
 require "y2storage/devicegraph_sanitizer"
 require "y2storage/disk_analyzer"
+require "y2storage/dump_manager"
 require "y2storage/callbacks"
 require "y2storage/hwinfo_reader"
 require "y2storage/sysconfig_storage"
@@ -183,6 +184,7 @@ module Y2Storage
       @storage.probe(probe_callbacks)
       probed_performed
       sanitize_probed(sanitize_callbacks)
+      DumpManager.dump(@probed_graph)
       true
     rescue Storage::Exception, Error
       false
@@ -299,6 +301,7 @@ module Y2Storage
 
       # Save committed devicegraph into logs
       log.info("Committed devicegraph\n#{staging.to_xml}")
+      DumpManager.dump(staging, "committed")
 
       storage.commit(commit_options, callbacks)
       @committed = true

@@ -24,6 +24,7 @@
 require "yast"
 require "y2storage"
 require "y2storage/actions_presenter"
+require "y2storage/dump_manager"
 require "installation/proposal_client"
 require "y2partitioner/dialogs/main"
 
@@ -114,6 +115,8 @@ module Y2Storage
           staging = storage_manager.staging
           actiongraph = staging ? staging.actiongraph : nil
           self.actions_presenter = ActionsPresenter.new(actiongraph)
+          Y2Storage::DumpManager.dump(staging)
+          Y2Storage::DumpManager.dump(actions_presenter)
         end
       end
 
