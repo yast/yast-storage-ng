@@ -338,5 +338,31 @@ describe Y2Storage::Filesystems::BlkFilesystem do
         expect(filesystem.match_fstab_spec?(name)).to eq false
       end
     end
+
+    context "when the device is encrypted" do
+      let(:scenario) { "encrypted_partition.xml" }
+
+      let(:dev_name) { "/dev/mapper/cr_sda1" }
+
+      it "returns true for the correct kernel name of the encryption device" do
+        expect(filesystem.match_fstab_spec?("/dev/mapper/cr_sda1")).to eq(true)
+      end
+
+      it "returns true for any correct udev name of the encryption device" do
+        filesystem.blk_devices.first.udev_full_all.each do |name|
+          expect(filesystem.match_fstab_spec?(name)).to eq(true)
+        end
+      end
+
+      it "returns false for the kernel name of the plain device" do
+        expect(filesystem.match_fstab_spec?("/dev/sda1")).to eq(false)
+      end
+
+      it "returns false for any udev name of the plain device" do
+        filesystem.plain_blk_devices.first.udev_full_all.each do |name|
+          expect(filesystem.match_fstab_spec?(name)).to eq(false)
+        end
+      end
+    end
   end
 end
