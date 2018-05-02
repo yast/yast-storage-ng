@@ -85,11 +85,13 @@ module Y2Storage
     # vs. installed system), and the directories are cleared (installation) or
     # rotated (installed system) for each program invocation.
     #
-    # @param dump_obj[Y2Storage::Devicegraph|Y2Storage::ActionsPresenter]
-    # @param file_base_name [String|nil] File base name to use.
+    # @param dump_obj [Y2Storage::Devicegraph, Y2Storage::ActionsPresenter]
+    # @param file_base_name [String, nil] File base name to use.
     #
-    # @return file base name with numeric prefix actually used
+    # @return [String] file base name with numeric prefix actually used
     #   ("01-probed", "02-staging", ...)
+    #
+    # @raise [ArgumentError] for unknown types to dump
     #
     def dump(dump_obj, file_base_name = nil)
       return nil if dump_obj.nil?
@@ -107,7 +109,7 @@ module Y2Storage
     end
 
     # Class method for dumping (for convenience).
-    # See Y2Storage::DumpManager.dump
+    # @see Y2Storage::DumpManager#dump
     def self.dump(dump_obj, file_base_name = nil)
       instance.dump(dump_obj, file_base_name)
     end
@@ -121,9 +123,9 @@ module Y2Storage
     # depending on type.
     #
     # @param devicegraph [Y2Storage::Devicegraph] devicegraph to dump
-    # @param file_base_name [String|nil] File base name to use.
+    # @param file_base_name [String, nil] File base name to use.
     #
-    # @return file base name with numeric prefix actually used
+    # @return [String] file base name with numeric prefix actually used
     #   ("01-probed", "02-staging", ...)
     #
     def dump_devicegraph(devicegraph, file_base_name = nil)
@@ -138,9 +140,9 @@ module Y2Storage
     # the devicegraph.
     #
     # @param actions_presenter [ActionsPresenter]
-    # @param file_base_name [String|nil] File base name to use.
+    # @param file_base_name [String, nil] File base name to use.
     #
-    # @return file base name with numeric prefix actually used
+    # @return [String] file base name with numeric prefix actually used
     #
     def dump_actions(actions_presenter, file_base_name = nil)
       file_base_name ||= "actions"
@@ -164,7 +166,7 @@ module Y2Storage
     #
     # @return [Boolean]
     def installation?
-      Yast::Mode.installation || Yast::Mode.auto || Yast::Mode.update
+      Yast::Mode.installation || Yast::Mode.update
     end
 
     # Return a suitable name for the devicegraph dump directory
@@ -250,7 +252,7 @@ module Y2Storage
     # @param file_base_name [String]
     # @param block [Block] code block that does the actual dumping
     #
-    # @return file base name with numeric prefix actually used
+    # @return [String] file base name with numeric prefix actually used
     #
     def dump_internal(dump_obj, file_base_name, &block)
       return nil if dump_obj.nil?
