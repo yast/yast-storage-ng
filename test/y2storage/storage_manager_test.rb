@@ -405,7 +405,7 @@ describe Y2Storage::StorageManager do
       ]
     end
 
-    it "return a list of fstab entries" do
+    it "returns a list of fstab entries" do
       expect(described_class.fstab_entries("/etc/fstab")).to all(be_a(Y2Storage::SimpleEtcFstabEntry))
     end
 

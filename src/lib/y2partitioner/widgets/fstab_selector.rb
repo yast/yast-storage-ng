@@ -30,7 +30,7 @@ module Y2Partitioner
     # Widget to select a fstab file used to import mount points
     #
     # It shows information about the fstab entries and allows to switch between
-    # the list of ftabs files detected in the whole the system.
+    # the list of ftabs files detected in the whole system.
     class FstabSelector < CWM::CustomWidget
       # Constructor
       #
@@ -41,7 +41,6 @@ module Y2Partitioner
         self.handle_all_events = true
 
         @controller = controller
-        @fstabs = controller.fstabs
       end
 
       # Selects the first fstab by default
@@ -170,7 +169,7 @@ module Y2Partitioner
           super(id: "fstab_area", widget: fstab_content)
         end
 
-        # Refresh the widget with the content of the current selected fstab file
+        # Refreshes the widget with the content of the current selected fstab file
         def refresh
           replace(fstab_content)
         end
@@ -213,7 +212,7 @@ module Y2Partitioner
         # @return [Y2Storage::Fstab]
         attr_reader :fstab
 
-        # Label to show where is the fstab file located
+        # Label to show where the fstab file is located
         #
         # @return [Yast::UI::Term]
         def title
