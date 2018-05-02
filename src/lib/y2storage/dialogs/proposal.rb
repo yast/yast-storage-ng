@@ -23,6 +23,7 @@ require "yast"
 require "ui/installation_dialog"
 require "y2storage"
 require "y2storage/actions_presenter"
+require "y2storage/dump_manager"
 
 Yast.import "HTML"
 
@@ -52,6 +53,9 @@ module Y2Storage
         propose! if proposal && !proposal.proposed?
         actiongraph = @devicegraph ? @devicegraph.actiongraph : nil
         @actions_presenter = ActionsPresenter.new(actiongraph)
+
+        DumpManager.dump(devicegraph, "proposal")
+        DumpManager.dump(@actions_presenter)
       end
 
       def next_handler
