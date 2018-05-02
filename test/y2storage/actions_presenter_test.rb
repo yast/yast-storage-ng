@@ -93,7 +93,7 @@ describe Y2Storage::ActionsPresenter do
           .to include "<ul><li><b>delete device action</b></li><li>create device action</li>"
       end
 
-      context "when there are not subvolume actions" do
+      context "when there are no subvolume actions" do
         let(:compound_actions) { [ca_create_device, ca_delete_device] }
 
         it "does not include subvolumes line" do
@@ -123,6 +123,55 @@ describe Y2Storage::ActionsPresenter do
           end
         end
       end
+    end
+  end
+
+  describe "#to_s" do
+    context "with nothing to do" do
+      it "Shows a reasonable text" do
+        expect(subject.to_s).to eq "Nothing to do"
+      end
+    end
+
+    context "with a create and a delete action" do
+      let(:compound_actions) { [ca_create_device, ca_delete_device] }
+
+      it "Shows the right messages in the right order" do
+        lines = subject.to_s.split("\n")
+        expect(lines).to eq ["delete device action", "create device action"]
+      end
+    end
+
+    context "with subvolume actions" do
+      let(:compound_actions) do
+        [ca_create_device, ca_create_subvol, ca_delete_device, ca_delete_subvol]
+      end
+
+      it "Shows the right messages in the right order" do
+        lines = subject.to_s.split("\n")
+        expect(lines[0]).to eq "delete device action"
+        expect(lines[1]).to eq "create device action"
+        expect(lines[2]).to eq ""
+        expect(lines[3]).to eq "delete subvolume action"
+        expect(lines[4]).to eq "create subvolume action"
+      end
+    end
+  end
+
+  describe "#save" do
+    let(:compound_actions) { [ca_create_device, ca_delete_device] }
+    let(:filename) { "/tmp/saved_actions.txt" }
+
+    before { FileUtils.remove(filename) if File.exist?(filename) }
+    after { FileUtils.remove(filename) }
+
+    it "Saves the actions in a plain text file" do
+      subject.save(filename)
+      lines = File.read(filename).split("\n")
+      expect(lines[0]).to start_with(Time.now.year.to_s)
+      expect(lines[1]).to eq ""
+      expect(lines[2]).to eq "delete device action"
+      expect(lines[3]).to eq "create device action"
     end
   end
 

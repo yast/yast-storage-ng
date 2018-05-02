@@ -22,6 +22,7 @@
 require "yast"
 require "y2storage/storage_manager"
 require "y2storage/disk_analyzer"
+require "y2storage/dump_manager"
 require "y2storage/exceptions"
 require "abstract_method"
 
@@ -77,6 +78,7 @@ module Y2Storage
         result = calculate_proposal
         return result if devices.nil? || devices.empty?
         log.info("Proposed devicegraph:\n\n#{devices.to_str}\n")
+        DumpManager.dump(devices, "proposed")
         result
       end
 

@@ -58,9 +58,13 @@ module Y2Storage
     def write(devicegraph, yaml_file)
       device_tree = yaml_device_tree(devicegraph)
       if yaml_file.respond_to?(:write)
+        # No timestamp if it's not a file
         yaml_file.write(device_tree.to_yaml)
       else
-        File.open(yaml_file, "w") { |file| file.write(device_tree.to_yaml) }
+        File.open(yaml_file, "w") do |file|
+          write_timestamp(file)
+          file.write(device_tree.to_yaml)
+        end
       end
     end
 
@@ -78,6 +82,14 @@ module Y2Storage
     end
 
   private
+
+    # Write a human-readable timestamp to a file.
+    #
+    # @param file [File]
+    def write_timestamp(file)
+      return unless file.respond_to?(:puts)
+      file.puts("# #{Time.now}")
+    end
 
     # Top level devices that will be converted to yaml format
     #

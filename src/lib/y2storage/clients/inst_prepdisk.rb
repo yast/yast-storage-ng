@@ -61,9 +61,6 @@ module Y2Storage
       # @return [Boolean] true if everything went fine, false if the user
       #   decided to abort
       def commit
-        manager.probed.save(Yast::Directory.logdir + "/inst-probed_devicegraph.xml")
-        manager.staging.save(Yast::Directory.logdir + "/inst-staging_devicegraph.xml")
-
         manager.rootprefix = Yast::Installation.destdir
         return false unless manager.commit(force_rw: true)
 

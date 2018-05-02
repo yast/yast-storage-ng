@@ -22,6 +22,7 @@
 require "yast"
 require "cwm"
 require "y2storage/actions_presenter"
+require "y2storage/dump_manager"
 require "y2partitioner/device_graphs"
 
 Yast.import "HTML"
@@ -94,6 +95,9 @@ module Y2Partitioner
       def calculate_actions
         actiongraph = current_graph.actiongraph
         @actions = Y2Storage::ActionsPresenter.new(actiongraph)
+        Y2Storage::DumpManager.dump(current_graph, "partitioner")
+        Y2Storage::DumpManager.dump(@actions)
+        @actions
       end
 
       # Updates the value of {#packages}
