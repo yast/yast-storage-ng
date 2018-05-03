@@ -221,20 +221,34 @@ describe Y2Partitioner::Widgets::FstabSelector do
 
   describe "#validate" do
     before do
-      allow(Yast2::Popup).to receive(:show)
+      allow(Yast2::Popup).to receive(:show).and_return(accept)
     end
+
+    let(:accept) { nil }
 
     context "when some mount point of the selected fstab cannot be imported" do
       let(:selected_fstab) { fstab3 }
 
-      it "shows an error" do
+      it "shows an error popup" do
         expect(Yast2::Popup).to receive(:show)
 
         subject.validate
       end
 
-      it "returns false" do
-        expect(subject.validate).to eq(false)
+      context "and the user accepts" do
+        let(:accept) { :yes }
+
+        it "returns true" do
+          expect(subject.validate).to eq(true)
+        end
+      end
+
+      context "and the user does not accept" do
+        let(:accept) { :no }
+
+        it "returns false" do
+          expect(subject.validate).to eq(false)
+        end
       end
     end
 

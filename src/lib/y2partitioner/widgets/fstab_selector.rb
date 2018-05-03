@@ -67,11 +67,9 @@ module Y2Partitioner
         errors = controller.selected_fstab_errors
         return true if errors.empty?
 
-        message = errors.join("\n\n")
+        message = errors.append(_("Do you want to continue?")).join("\n\n")
 
-        Yast2::Popup.show(message, headline: :error)
-
-        false
+        Yast2::Popup.show(message, headline: :warning, buttons: :yes_no) == :yes
       end
 
       def handle(event)

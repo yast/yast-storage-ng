@@ -87,11 +87,11 @@ module Y2Partitioner
 
         # Errors in the selected fstab
         #
-        # @see #missing_devices_error
+        # @see #not_importable_entries_error
         #
         # @return [Array<String>]
         def selected_fstab_errors
-          [missing_devices_error].compact
+          [not_importable_entries_error].compact
         end
 
         # Imports mount points from the selected fstab
@@ -99,7 +99,7 @@ module Y2Partitioner
         # Before importing, the current devicegraph is reset to the system one.
         def import_mount_points
           reset_current_graph
-          selected_fstab.filesystem_entries.each { |e| import_mount_point(e) }
+          importable_entries.each { |e| import_mount_point(e) }
         end
 
       private
@@ -125,20 +125,73 @@ module Y2Partitioner
           DeviceGraphs.instance.disk_analyzer
         end
 
-        # Error when some devices in the selected fstab are missing in the current devicegraph
+        # Error when some entries in the selected fstab cannot be imported
         #
-        # @return [String, nil] nil if all devices are found
-        def missing_devices_error
-          return nil unless missing_devices?
+        # An entry cannot be imported when the device is not found or it is used
+        # by other device (e.g., used by LVM or MD RAID).
+        #
+        # @return [String, nil] nil if all entries can be imported
+        def not_importable_entries_error
+          entries = not_importable_entries
+          return nil if entries.empty?
 
-          _("Some required devices cannot be found in the system.")
+          mount_points = entries.map(&:mount_point).join("\n")
+
+          format(_("The following mount points cannot be imported:\n%{mount_points}"),
+            mount_points: mount_points)
         end
 
-        # Whether any device in the selected fstab is missing in the system devicegraph
+        # Entries in the current selected fstab that can be imported
         #
+        # @see #can_be_imported?
+        #
+        # @return[Array<Y2Storage::SimpleEtcFstabEntry>]
+        def importable_entries
+          selected_fstab.filesystem_entries.select { |e| can_be_imported?(e) }
+        end
+
+        # Entries in the current selected fstab that cannot be imported
+        #
+        # @see #can_be_imported?
+        #
+        # @return[Array<Y2Storage::SimpleEtcFstabEntry>]
+        def not_importable_entries
+          selected_fstab.filesystem_entries - importable_entries
+        end
+
+        # Whether a fstab entry can be imported
+        #
+        # An entry can be imported when the device is known and it is not used
+        # by other device (e.g., used by LVM or MD RAID) or it is a known NFS.
+        #
+        # @param entry [Y2Storage::SimpleEtcFstabEntry]
         # @return [Boolean]
-        def missing_devices?
-          selected_fstab.filesystem_entries.any? { |e| e.device(system_graph).nil? }
+        def can_be_imported?(entry)
+          device = entry.device(system_graph)
+          return false unless device
+
+          !device.is?(:blk_device) || can_be_formatted?(device)
+        end
+
+        # Whether a device can be formatted
+        #
+        # A device can be formatted if it is already formatted or it is not used by
+        # another device (e.g., LVM or MD RAID).
+        #
+        # @param device [Y2Storage::BlkDevice]
+        # @return [Boolean]
+        def can_be_formatted?(device)
+          unused?(device) ||
+            device.formatted? ||
+            (device.encrypted? && unused?(device.encryption))
+        end
+
+        # Whether the device has not been used yet
+        #
+        # @param device [Y2Storage::BlkDevice]
+        # @return [Boolean]
+        def unused?(device)
+          device.descendants.empty?
         end
 
         # Initializes current devicegraph with system

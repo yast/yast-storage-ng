@@ -33,6 +33,21 @@ describe Y2Partitioner::Actions::Controllers::Fstabs do
     Y2Partitioner::DeviceGraphs.instance.current
   end
 
+  def use_device(device_name)
+    device = system_graph.find_by_name(device_name)
+    device.remove_descendants
+    vg = Y2Storage::LvmVg.create(system_graph, "vg0")
+    vg.add_lvm_pv(device)
+  end
+
+  def encrypt_and_use_device(device_name)
+    device = system_graph.find_by_name(device_name)
+    device.remove_descendants
+    encryption = device.create_encryption("cr_device")
+    vg = Y2Storage::LvmVg.create(system_graph, "vg0")
+    vg.add_lvm_pv(encryption)
+  end
+
   before do
     devicegraph_stub(scenario)
 
@@ -142,30 +157,54 @@ describe Y2Partitioner::Actions::Controllers::Fstabs do
     end
   end
 
-  describe "selected_fstab_errors" do
+  describe "#selected_fstab_errors" do
     let(:selected_fstab) { fstab1 }
 
     before do
       allow(fstab1).to receive(:filesystem_entries).and_return(entries)
     end
 
-    let(:entry1) { fstab_entry("/dev/sda2", "/", ext3, [], 0, 0) }
-    let(:entry2) { fstab_entry("/dev/unknown", "/", ext3, [], 0, 0) }
+    let(:entries) { [entry1, entry2] }
 
-    context "when the device is unknown for some entry" do
-      let(:entries) { [entry1, entry2] }
-
-      it "contains a missing devices error" do
+    shared_examples "unavailable entries error" do
+      it "contains an unavailable entries error" do
         expect(subject.selected_fstab_errors).to_not be_empty
-        expect(subject.selected_fstab_errors).to include(/devices cannot be found/)
+        expect(subject.selected_fstab_errors).to include(/cannot be imported/)
+        expect(subject.selected_fstab_errors).to include(/\/error/)
       end
     end
 
-    context "when the device is known for all entries" do
-      let(:entries) { [entry1] }
+    context "when the device is unknown for some entry" do
+      let(:entry1) { fstab_entry("/dev/sda2", "/", ext3, [], 0, 0) }
+      let(:entry2) { fstab_entry("/dev/unknown", "/error", ext3, [], 0, 0) }
 
-      it "does not contain errors" do
-        expect(subject.selected_fstab_errors).to be_empty
+      include_examples "unavailable entries error"
+    end
+
+    context "when the device is known for all entries" do
+      let(:entry1) { fstab_entry("/dev/sda2", "/", ext3, [], 0, 0) }
+      let(:entry2) { fstab_entry("/dev/sdb1", "/error", ext3, [], 0, 0) }
+
+      context "and some device is used by other device" do
+        before do
+          use_device("/dev/sdb1")
+        end
+
+        include_examples "unavailable entries error"
+      end
+
+      context "and some encrypted device is used by other device" do
+        before do
+          encrypt_and_use_device("/dev/sdb1")
+        end
+
+        include_examples "unavailable entries error"
+      end
+
+      context "and neither a device nor an encrypted device is used by other device" do
+        it "does not contain errors" do
+          expect(subject.selected_fstab_errors).to be_empty
+        end
       end
     end
   end
@@ -185,17 +224,20 @@ describe Y2Partitioner::Actions::Controllers::Fstabs do
 
     before do
       allow(selected_fstab).to receive(:entries).and_return(entries)
+
+      use_device("/dev/sdb1")
     end
 
     let(:entries) do
       [
         fstab_entry("/dev/sda2", "/foo", ext3, ["rw"], 0, 0),
         fstab_entry("/dev/sdb2", "/bar", ext4, ["ro"], 0, 0),
+        fstab_entry("/dev/sdb1", "/", ext4, ["ro"], 0, 0),
         fstab_entry("UUID=unknown", "/foobar", "", [], 0, 0)
       ]
     end
 
-    it "imports mount point and mount options for all known devices" do
+    it "imports mount point and mount options for entries with available devices" do
       subject.import_mount_points
 
       sda2 = current_graph.find_by_name("/dev/sda2")
@@ -232,7 +274,9 @@ describe Y2Partitioner::Actions::Controllers::Fstabs do
     end
 
     context "when the fstab contains a NFS entry" do
-      let(:scenario) { "nfs1.xml" }
+      before do
+        Y2Storage::Filesystems::Nfs.create(system_graph, "srv", "/home/a")
+      end
 
       let(:entries) do
         [
@@ -243,7 +287,8 @@ describe Y2Partitioner::Actions::Controllers::Fstabs do
       it "imports mount point and mount options for the NFS entry" do
         subject.import_mount_points
 
-        nfs = current_graph.filesystems.find { |f| f.name == "srv:/home/a" }
+        nfs = Y2Storage::Filesystems::Nfs.find_by_server_and_path(current_graph, "srv", "/home/a")
+
         expect(nfs.mount_path).to eq("/foo")
         expect(nfs.mount_options).to eq(["rw"])
       end
