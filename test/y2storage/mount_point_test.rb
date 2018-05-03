@@ -101,9 +101,9 @@ describe Y2Storage::MountPoint do
         end
 
         context "and later reassigned to another path" do
-          it "is set to 0" do
+          it "is set to 2" do
             mount_point.path = "/var"
-            expect(mount_point.passno).to eq 0
+            expect(mount_point.passno).to eq 2
           end
         end
       end
@@ -111,8 +111,8 @@ describe Y2Storage::MountPoint do
       context "mounted at a non-root location" do
         let(:path) { "/home" }
 
-        it "is set to 0" do
-          expect(mount_point.passno).to eq 0
+        it "is set to 2" do
+          expect(mount_point.passno).to eq 2
         end
       end
     end
