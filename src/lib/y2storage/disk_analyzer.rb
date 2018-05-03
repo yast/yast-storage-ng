@@ -107,6 +107,12 @@ module Y2Storage
 
     # All fstabs found in the system
     #
+    # FIXME: this method is not using the {#data_for} caching mechanism. The reason
+    # is because fstab information needs to be stored by filesystem, but {#data_for}
+    # saves information by disk. As a consequence, this method could mount a device
+    # that was already mounted previously to read some information on it, for
+    # example the {#installed_systems}.
+    #
     # @return [Array<Fstab>]
     def fstabs
       @fstabs ||= find_fstabs
