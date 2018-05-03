@@ -149,9 +149,8 @@ module Y2Storage
     # @return [Boolean]
     def nfs?(volume)
       return false unless volume.mount_point
-      vol_path = Pathname.new(volume.mount_point).cleanpath
       devicegraph.nfs_mounts.any? do |nfs|
-        nfs.mount_point && Pathname.new(nfs.mount_path).cleanpath == vol_path
+        nfs.mount_point && nfs.mount_point.path?(volume.mount_point)
       end
     end
 

@@ -186,6 +186,17 @@ module Y2Storage
       in_etc_fstab?
     end
 
+    # Whether the given path is equivalent to {#path}
+    #
+    # This method is more robust than a simple string comparison, since it takes
+    # into account trailing slashes and similar potential problems.
+    #
+    # @param other_path [String, Pathname]
+    # @return [Boolean]
+    def path?(other_path)
+      Pathname.new(other_path).cleanpath == Pathname.new(path).cleanpath
+    end
+
   protected
 
     def types_for_is

@@ -320,9 +320,8 @@ module Y2Storage
       # @return [Filesystems::Base, nil] nil if there is no filesystem to be
       #   mounted there
       def filesystem_for_mountpoint(path)
-        cleanpath = Pathname.new(path).cleanpath
         devicegraph.filesystems.find do |fs|
-          fs.mount_path && Pathname.new(fs.mount_path).cleanpath == cleanpath
+          fs.mount_point && fs.mount_point.path?(path)
         end
       end
 
