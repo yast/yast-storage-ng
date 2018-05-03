@@ -36,10 +36,10 @@ module Y2Storage
     # @return [Pathname] Object that represents the swap path
     SWAP_PATH = Pathname.new("swap").freeze
 
-    # @return [Symbol] Filesystem types which should use 1 in the fs_passno
-    #   field when mounted as root
-    TYPES_WITH_PASSNO_ONE = [:ext2, :ext3, :ext4, :jfs].freeze
-    private_constant :TYPES_WITH_PASSNO_ONE
+    # @return [Symbol] Filesystem types which should use some value
+    #   (other than 0) in the fs_passno field
+    TYPES_WITH_PASSNO = [:ext2, :ext3, :ext4, :jfs].freeze
+    private_constant :TYPES_WITH_PASSNO
 
     # @!method self.all(devicegraph)
     #   @param devicegraph [Devicegraph]
@@ -69,12 +69,12 @@ module Y2Storage
     def path=(path)
       self.storage_path = path
 
-      if passno_must_be_one?
-        to_storage_value.passno = 1
-      elsif passno == 1
-        # passno should only be set to 1 if really needed
-        to_storage_value.passno = 0
-      end
+      to_storage_value.passno =
+        if passno_must_be_set?
+          root? ? 1 : 2
+        else
+          0
+        end
 
       path
     end
@@ -203,14 +203,13 @@ module Y2Storage
       super << :mount_point
     end
 
-    # Whether {#passno} should be set to 1 for this mount point
+    # Whether a non-zero {#passno} makes sense for this mount point
     #
     # @return [Boolean]
-    def passno_must_be_one?
-      return false unless root?
+    def passno_must_be_set?
       return false unless mountable && mountable.is?(:filesystem)
 
-      filesystem.type.is?(*TYPES_WITH_PASSNO_ONE)
+      filesystem.type.is?(*TYPES_WITH_PASSNO)
     end
   end
 end
