@@ -246,17 +246,24 @@ module Y2Storage
       def add_subvolumes_attrs(device, section)
         return unless device.btrfs?
 
-        subvol_specs = section.subvolumes
         mount = device.mount_point
+        spec = VolumeSpecification.for(mount)
 
-        if subvol_specs.nil? && mount == "/"
-          @default_subvolumes_used = true
-          subvol_specs = proposal_settings.subvolumes
-        end
+        defaults =
+          if spec
+            { default_subvolume: spec.btrfs_default_subvolume, subvolumes: spec.subvolumes }
+          else
+            {}
+          end
 
-        device.default_subvolume = section.subvolumes_prefix ||
-          proposal_settings.legacy_btrfs_default_subvolume
-        device.subvolumes = subvol_specs
+        subvol_specs = section.subvolumes
+        @default_subvolumes_used = true if subvol_specs.nil? && mount == "/"
+
+        default_subvolume = section.subvolumes_prefix || defaults[:default_subvolume]
+        subvolumes = section.subvolumes || defaults[:subvolumes]
+
+        device.default_subvolume = default_subvolume if default_subvolume
+        device.subvolumes = subvolumes if subvolumes
       end
 
       # Set 'reusing' attributes for a partition
