@@ -537,7 +537,7 @@ describe Y2Storage::Proposal::AutoinstDevicesPlanner do
         end
 
         context "and there is no default" do
-          it "does not set the default_subvolume" do
+          it "sets the default_subvolume to nil" do
             expect(home.default_subvolume).to be_nil
           end
         end
