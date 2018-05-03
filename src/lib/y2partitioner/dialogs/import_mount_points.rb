@@ -26,17 +26,12 @@ module Y2Partitioner
   module Dialogs
     # Dialog for selecting a fstab to import mount points
     class ImportMountPoints < Popup
-      # This popup is slighly wider than the default popup
-      MIN_WIDTH = 70
-      private_constant :MIN_WIDTH
-
       # Constructor
       #
       # @param controller [Actions::Controllers::Fstabs]
       def initialize(controller)
         textdomain "storage"
 
-        self.min_width = MIN_WIDTH
         @controller = controller
       end
 
@@ -63,6 +58,11 @@ module Y2Partitioner
       # @return [Widgets::FstabSelector]
       def fstab_selector
         Widgets::FstabSelector.new(controller)
+      end
+
+      # This popup is slighly wider than the default popup
+      def min_width
+        70
       end
     end
   end

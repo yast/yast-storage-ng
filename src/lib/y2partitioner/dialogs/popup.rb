@@ -26,22 +26,6 @@ module Y2Partitioner
   module Dialogs
     # Adapt CWM dialog to allow popup dialogs
     class Popup < CWM::Dialog
-      DEFAULT_MIN_WIDTH = 50
-      private_constant :DEFAULT_MIN_WIDTH
-
-      DEFAULT_MIN_HEIGHT = 18
-      private_constant :DEFAULT_MIN_HEIGHT
-
-      # @!method min_width=(value)
-      #   Sets the popup min width
-      #   @param value [Integer]
-      attr_writer :min_width
-
-      # @!method min_height=(value)
-      #   Sets the popup min height
-      #   @param value [Integer]
-      attr_writer :min_height
-
       def wizard_create_dialog(&block)
         Yast::UI.OpenDialog(layout)
         block.call
@@ -76,14 +60,14 @@ module Y2Partitioner
       #
       # @return [Integer]
       def min_width
-        @min_width || DEFAULT_MIN_WIDTH
+        50
       end
 
       # Popup min height
       #
       # @return [Integer]
       def min_height
-        @min_height || DEFAULT_MIN_HEIGHT
+        18
       end
 
       def ok_button_label
