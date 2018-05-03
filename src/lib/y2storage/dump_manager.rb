@@ -22,7 +22,6 @@
 require "singleton"
 require "fileutils"
 require "yast"
-require "rspec/mocks"
 require "y2storage/devicegraph"
 require "y2storage/actions_presenter"
 require "y2storage/storage_manager"
@@ -100,8 +99,7 @@ module Y2Storage
         dump_devicegraph(dump_obj, file_base_name)
       elsif dump_obj.is_a?(Y2Storage::ActionsPresenter)
         dump_actions(dump_obj, file_base_name)
-      elsif dump_obj.is_a?(RSpec::Mocks::InstanceVerifyingDouble) ||
-          dump_obj.is_a?(RSpec::Mocks::Double)
+      elsif mocked_object?(dump_obj)
         log.warn("Not dumping #{dump_obj.class}")
       else
         raise ArgumentError, "Unsupported type to dump: #{dump_obj.class}"
@@ -324,6 +322,17 @@ module Y2Storage
     # @return [Boolean]
     def running_as_root?
       Process.euid == 0
+    end
+
+    # Check if an object is some kind of rspec mocked object
+    # (double or instance_double)
+    #
+    # @return [Boolean]
+    def mocked_object?(obj)
+      return false unless defined?(RSpec::Mocks::Double)
+      return true if obj.is_a?(RSpec::Mocks::Double)
+      return false unless defined?(RSpec::Mocks::InstanceVerifyingDouble)
+      obj.is_a?(RSpec::Mocks::InstanceVerifyingDouble)
     end
   end
 end
