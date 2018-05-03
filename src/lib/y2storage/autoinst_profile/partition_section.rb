@@ -156,6 +156,7 @@ module Y2Storage
         if hash["raid_options"]
           @raid_options = RaidOptionsSection.new_from_hashes(hash["raid_options"], self)
         end
+        @subvolumes_prefix = hash["subvolumes_prefix"]
         @subvolumes = subvolumes_from_hashes(hash["subvolumes"]) if hash["subvolumes"]
         @fstab_options = hash["fstopt"].split(",").map(&:strip) if hash["fstopt"]
       end

@@ -384,6 +384,15 @@ describe Y2Storage::AutoinstProfile::PartitionSection do
       expect(section.label).to be_nil
     end
 
+    context "when #subvolumes_prefix is set to an empty string" do
+      let(:hash) { { "filesystem" => :btrfs, "subvolumes_prefix" => "" } }
+
+      it "initializes #subvolumes_prefix to an empty string" do
+        section = described_class.new_from_hashes(hash)
+        expect(section.subvolumes_prefix).to eq("")
+      end
+    end
+
     context "when subvolumes are not present in the hash" do
       it "initializes #subvolumes to nil" do
         section = described_class.new_from_hashes(hash)
