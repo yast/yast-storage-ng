@@ -19,11 +19,14 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
+require "yast"
 require "y2storage"
 
 module Y2Storage
   # Class to represent a fstab file
   class Fstab
+    include Yast::Logger
+
     FSTAB_PATH = "/etc/fstab"
     private_constant :FSTAB_PATH
 
@@ -40,7 +43,7 @@ module Y2Storage
     def initialize(path = FSTAB_PATH, filesystem = nil)
       @path = path
       @filesystem = filesystem
-      @entries = StorageManager.fstab_entries(path)
+      @entries = read_entries
     end
 
     # Fstab entries that represent a filesystem
@@ -59,6 +62,22 @@ module Y2Storage
       return nil unless filesystem && filesystem.respond_to?(:blk_devices)
 
       filesystem.blk_devices.first
+    end
+
+  private
+
+    # @return [String]
+    attr_reader :path
+
+    # Reads a fstab file and returns its entries
+    #
+    # @return [Array<SimpleEtcFstabEntry>]
+    def read_entries
+      entries = Storage.read_simple_etc_fstab(path)
+      entries.map { |e| SimpleEtcFstabEntry.new(e) }
+    rescue Storage::Exception
+      log.warn("Not possible to read the fstab file: #{path}")
+      []
     end
   end
 end

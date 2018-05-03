@@ -393,33 +393,6 @@ describe Y2Storage::StorageManager do
     end
   end
 
-  describe ".fstab_entries" do
-    before do
-      allow(Storage).to receive(:read_simple_etc_fstab).and_return(storage_entries)
-    end
-
-    let(:storage_entries) do
-      [
-        instance_double(Storage::SimpleEtcFstabEntry),
-        instance_double(Storage::SimpleEtcFstabEntry)
-      ]
-    end
-
-    it "returns a list of fstab entries" do
-      expect(described_class.fstab_entries("/etc/fstab")).to all(be_a(Y2Storage::SimpleEtcFstabEntry))
-    end
-
-    context "when there is some problem reading the entries" do
-      before do
-        allow(Storage).to receive(:read_simple_etc_fstab).and_raise(Storage::Exception)
-      end
-
-      it "returns an empty list" do
-        expect(described_class.fstab_entries("/etc/fstab")).to be_empty
-      end
-    end
-  end
-
   describe "#default_mount_by" do
     it "returns a MountByType value" do
       expect(manager.default_mount_by).to be_a(Y2Storage::Filesystems::MountByType)

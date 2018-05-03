@@ -27,7 +27,7 @@ describe Y2Storage::Fstab do
   before do
     fake_scenario(scenario)
 
-    allow(Y2Storage::StorageManager).to receive(:fstab_entries).and_return(fstab_entries)
+    allow(Storage).to receive(:read_simple_etc_fstab).and_return(storage_entries)
   end
 
   let(:swap) { Y2Storage::Filesystems::Type::SWAP }
@@ -42,6 +42,8 @@ describe Y2Storage::Fstab do
     ]
   end
 
+  let(:storage_entries) { fstab_entries.map(&:to_storage_value) }
+
   let(:path) { "" }
 
   let(:filesystem) { nil }
@@ -52,7 +54,17 @@ describe Y2Storage::Fstab do
 
   describe "#initialize" do
     it "reads and sets the fstab entries" do
-      expect(subject.entries).to eq(fstab_entries)
+      expect(subject.entries.map(&:to_storage_value)).to eq(storage_entries)
+    end
+
+    context "when there is some problem reading the entries" do
+      before do
+        allow(Storage).to receive(:read_simple_etc_fstab).and_raise(Storage::Exception)
+      end
+
+      it "sets an empty list of entries" do
+        expect(subject.entries).to be_empty
+      end
     end
   end
 
