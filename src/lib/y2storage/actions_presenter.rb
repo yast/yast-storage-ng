@@ -21,6 +21,7 @@
 
 require "yast"
 require "y2storage"
+require "y2storage/dump_manager"
 
 Yast.import "HTML"
 
@@ -72,6 +73,41 @@ module Y2Storage
       actiongraph.nil? || actiongraph.empty?
     end
 
+    # Plain text representation
+    #
+    # @return [String] multi-line text
+    def to_s
+      lines = actions_to_text(general_actions)
+      subvolume_lines = actions_to_text(subvolume_actions)
+
+      if !subvolume_lines.empty?
+        lines << ""
+        lines.append(subvolume_lines)
+      end
+
+      return "Nothing to do" if lines.empty?
+      lines.join("\n")
+    end
+
+    # Save the actions to a plain text file
+    #
+    # @param filename [String]
+    def save(filename)
+      File.open(filename, "w") do |file|
+        file.puts(Time.now.to_s)
+        file.puts
+        file.puts(to_s)
+      end
+    end
+
+    # Dump the actions to a plain text file.
+    #
+    # @param file_base_name [String] File base name to use.
+    #   Leave this empty to use a generated name.
+    def dump(file_base_name = nil)
+      DumpManager.dump(self, file_base_name)
+    end
+
   protected
 
     attr_reader :actiongraph
@@ -92,13 +128,11 @@ module Y2Storage
     end
 
     def general_actions_items
-      actions = sort_actions(general_actions)
-      actions_to_items(actions)
+      actions_to_items(general_actions)
     end
 
     def subvolume_actions_items
-      actions = sort_actions(subvolume_actions)
-
+      actions = subvolume_actions
       return [] if actions.empty?
 
       event = toggle_subvolumes_event
@@ -115,12 +149,14 @@ module Y2Storage
 
     def general_actions
       return [] if actiongraph.nil?
-      actiongraph.compound_actions.select { |a| !a.device_is?(:btrfs_subvolume) }
+      actions = actiongraph.compound_actions.select { |a| !a.device_is?(:btrfs_subvolume) }
+      sort_actions(actions)
     end
 
     def subvolume_actions
       return [] if actiongraph.nil?
-      actiongraph.compound_actions.select { |a| a.device_is?(:btrfs_subvolume) }
+      actions = actiongraph.compound_actions.select { |a| a.device_is?(:btrfs_subvolume) }
+      sort_actions(actions)
     end
 
     def sort_actions(actions)
@@ -134,6 +170,10 @@ module Y2Storage
 
     def action_to_item(action)
       action.delete? ? Yast::HTML.Bold(action.sentence) : action.sentence
+    end
+
+    def actions_to_text(actions)
+      actions.map(&:sentence)
     end
 
     def html_list(items)

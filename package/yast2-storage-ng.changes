@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Wed May  2 12:55:09 UTC 2018 - shundhammer@suse.com
+
+- Dump devicegraph and actions to separate human readable files
+  (part of fate#318196)
+- 4.0.170
+
+-------------------------------------------------------------------
 Fri Apr 27 15:23:05 UTC 2018 - ancor@suse.com
 
 - Partitioner: fixed checks when the root filesystem is NFS

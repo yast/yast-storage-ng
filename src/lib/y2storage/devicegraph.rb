@@ -24,6 +24,7 @@ require "tempfile"
 require "y2storage/actiongraph"
 require "y2storage/blk_device"
 require "y2storage/disk"
+require "y2storage/dump_manager"
 require "y2storage/fake_device_factory"
 require "y2storage/filesystems/base"
 require "y2storage/filesystems/blk_filesystem"
@@ -436,6 +437,15 @@ module Y2Storage
       # Do not wait for garbage collector and delete the file right away
       file.close
       file.unlink
+    end
+
+    # Dump the devicegraph to both XML and YAML.
+    #
+    # @param file_base_name [String] File base name to use.
+    #   Leave this empty to use a generated name ("01-staging-01",
+    #   "02-staging", ...).
+    def dump(file_base_name = nil)
+      DumpManager.dump(self, file_base_name)
     end
 
   private
