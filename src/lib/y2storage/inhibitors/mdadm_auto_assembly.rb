@@ -30,7 +30,7 @@ module Y2Storage
       log.info "set udev ANACONDA property"
 
       begin
-        Yast::Execute.locally!("/sbin/udevadm", "control", "--propertyx=ANACONDA=yes")
+        Yast::Execute.locally!("/sbin/udevadm", "control", "--property=ANACONDA=yes")
       rescue Cheetah::ExecutionFailed => e
         log.error "disabling mdadm auto assembly failed #{e.message}"
       end
