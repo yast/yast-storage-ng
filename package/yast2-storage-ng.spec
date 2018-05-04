@@ -29,7 +29,7 @@ Requires:	yast2-ruby-bindings >= 4.0.6
 # function light_probe
 Requires:	libstorage-ng-ruby >= 3.3.254
 # communicate with udisks
-Requires:	rubygem(dbus)
+Requires:	rubygem(ruby-dbus)
 
 BuildRequires:	update-desktop-files
 # function light_probe
