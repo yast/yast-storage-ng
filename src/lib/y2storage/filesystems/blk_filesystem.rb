@@ -137,7 +137,7 @@ module Y2Storage
           return !Regexp.last_match(1).empty? && label == Regexp.last_match(1)
         end
 
-        plain_blk_devices.any? do |dev|
+        blk_devices.any? do |dev|
           dev.name == spec || dev.udev_full_all.include?(spec)
         end
       end

@@ -35,6 +35,33 @@ describe Y2Partitioner::Widgets::Pages::System do
 
     let(:items) { row_names(table) }
 
+    it "contains a button for rescanning devices" do
+      button = widgets.find { |w| w.is_a?(Y2Partitioner::Widgets::RescanDevicesButton) }
+      expect(button).to_not be_nil
+    end
+
+    context "when it is running in installation mode" do
+      before do
+        allow(Yast::Mode).to receive(:installation).and_return(true)
+      end
+
+      it "contains a button for importing mount points" do
+        button = widgets.find { |w| w.is_a?(Y2Partitioner::Widgets::ImportMountPointsButton) }
+        expect(button).to_not be_nil
+      end
+    end
+
+    context "when it is not running in installation mode" do
+      before do
+        allow(Yast::Mode).to receive(:installation).and_return(false)
+      end
+
+      it "does not contain a button for importing mount points" do
+        button = widgets.find { |w| w.is_a?(Y2Partitioner::Widgets::ImportMountPointsButton) }
+        expect(button).to be_nil
+      end
+    end
+
     context "when there are disks" do
       let(:scenario) { "mixed_disks.yml" }
 
