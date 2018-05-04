@@ -24,6 +24,7 @@ require "yast/i18n"
 require "yast2/popup"
 require "cwm/tree_pager"
 require "y2partitioner/dialogs/main"
+require "y2storage/inhibitors"
 require "y2storage"
 
 module Y2Partitioner
@@ -44,9 +45,16 @@ module Y2Partitioner
       #
       # @param allow_commit [Boolean] whether the changes can be stored on disk
       def run(allow_commit: true)
-        return nil if !run_partitioner? || partitioner_dialog.run != :next
+        return nil if !run_partitioner?
 
-        allow_commit ? commit : forbidden_commit_warning
+        inhibitors = Y2Storage::Inhibitors.new
+        inhibitors.inhibit
+
+        if partitioner_dialog.run == :next
+          allow_commit ? commit : forbidden_commit_warning
+        end
+
+        inhibitors.uninhibit
       end
 
     private

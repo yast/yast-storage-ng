@@ -3,6 +3,7 @@ Fri May 04 15:06:41 CEST 2018 - aschnell@suse.com
 
 - provide function to disable MD auto assembly (bsc#1090690)
 - provide function to inhibit udisks from doing mounts
+- use these two functions when running expert partitioner
 - 4.0.173
 
 -------------------------------------------------------------------
