@@ -32,9 +32,7 @@ module Y2Storage
       log.info "inhibit udisks"
       begin
         @dbus_cookie = dbus_object.Inhibit().first
-      rescue Errno::ENOENT => e
-        log.error "inhibit udisks failed #{e.message}"
-      rescue DBus::Error => e
+      rescue Errno::ENOENT, DBus::Error => e
         log.error "inhibit udisks failed #{e.message}"
       end
     end
@@ -45,9 +43,7 @@ module Y2Storage
       begin
         dbus_object.Uninhibit(@dbus_cookie)
         @dbus_cookie = nil
-      rescue Errno::ENOENT => e
-        log.error "uninhibit udisks failed #{e.message}"
-      rescue DBus::Error => e
+      rescue Errno::ENOENT, DBus::Error => e
         log.error "uninhibit udisks failed #{e.message}"
       end
     end
