@@ -47,14 +47,15 @@ module Y2Partitioner
       def run(allow_commit: true)
         return nil if !run_partitioner?
 
-        inhibitors = Y2Storage::Inhibitors.new
-        inhibitors.inhibit
+        begin
+          inhibitors = Y2Storage::Inhibitors.new
+          inhibitors.inhibit
 
-        if partitioner_dialog.run == :next
+          return nil if partitioner_dialog.run != :next
           allow_commit ? commit : forbidden_commit_warning
+        ensure
+          inhibitors.uninhibit
         end
-
-        inhibitors.uninhibit
       end
 
     private
