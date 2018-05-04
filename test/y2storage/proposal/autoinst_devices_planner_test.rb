@@ -588,6 +588,17 @@ describe Y2Storage::Proposal::AutoinstDevicesPlanner do
           expect(root.read_only).to eq(true)
         end
       end
+
+      context "when subvolumes are disabled" do
+        let(:root_spec) do
+          { "mount" => "/", "filesystem" => "btrfs", "create_subvolumes" => false,
+            "subvolumes" => subvolumes }
+        end
+
+        it "does not plan any subvolume" do
+          expect(root.subvolumes).to eq([])
+        end
+      end
     end
 
     context "using LVM" do

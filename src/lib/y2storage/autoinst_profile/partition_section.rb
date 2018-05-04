@@ -72,6 +72,7 @@ module Y2Storage
           { name: :mkfs_options },
           { name: :fstab_options, xml_name: :fstopt },
           { name: :subvolumes_prefix },
+          { name: :create_subvolumes },
           { name: :resize },
           { name: :pool },
           { name: :used_pool },
@@ -156,8 +157,11 @@ module Y2Storage
         if hash["raid_options"]
           @raid_options = RaidOptionsSection.new_from_hashes(hash["raid_options"], self)
         end
+
         @subvolumes_prefix = hash["subvolumes_prefix"]
+        @create_subvolumes = hash.fetch("create_subvolumes", true)
         @subvolumes = subvolumes_from_hashes(hash["subvolumes"]) if hash["subvolumes"]
+
         @fstab_options = hash["fstopt"].split(",").map(&:strip) if hash["fstopt"]
       end
 
@@ -254,7 +258,10 @@ module Y2Storage
       def to_hashes
         hash = super
         hash["fstopt"] = fstab_options.join(",") if fstab_options && !fstab_options.empty?
-        hash["subvolumes"] = subvolumes_to_hashes if subvolumes
+        if subvolumes
+          hash["create_subvolumes"] = !subvolumes.empty?
+          hash["subvolumes"] = subvolumes_to_hashes
+        end
         hash
       end
 

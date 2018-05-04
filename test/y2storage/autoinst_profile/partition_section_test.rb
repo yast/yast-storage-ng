@@ -393,16 +393,16 @@ describe Y2Storage::AutoinstProfile::PartitionSection do
       end
     end
 
-    context "when subvolumes are not present in the hash" do
-      it "initializes #subvolumes to nil" do
+    context "when #create_subvolumes is not set" do
+      it "initializes #create_subvolumes to true" do
         section = described_class.new_from_hashes(hash)
-        expect(section.subvolumes).to be_nil
+        expect(section.create_subvolumes).to eq(true)
       end
     end
 
-    context "when subvolumes are present in the hash but value is nil" do
-      it "initializes #subvolumes to an empty array" do
-        section = described_class.new_from_hashes(hash.merge("subvolumes" => nil))
+    context "when subvolumes are not present in the hash" do
+      it "initializes #subvolumes to nil" do
+        section = described_class.new_from_hashes(hash)
         expect(section.subvolumes).to be_nil
       end
     end
@@ -507,9 +507,19 @@ describe Y2Storage::AutoinstProfile::PartitionSection do
       expect(section.to_hashes).to eq({})
     end
 
-    it "does not export #subvolumes if nil" do
-      section.subvolumes = nil
-      expect(section.to_hashes.keys).to_not include "subvolumes"
+    context "when subvolumes are not supported" do
+      before do
+        section.filesystem = :btrfs
+        section.subvolumes = nil
+      end
+
+      it "does not export #subvolumes" do
+        expect(section.to_hashes.keys).to_not include "subvolumes"
+      end
+
+      it "does not export #create_subvolumes" do
+        expect(section.to_hashes.keys).to_not include "subvolumes"
+      end
     end
 
     context "when some subvolume exist" do
@@ -525,6 +535,10 @@ describe Y2Storage::AutoinstProfile::PartitionSection do
         )
       end
 
+      it "exports create_subvolumes as true" do
+        expect(section.to_hashes["create_subvolumes"]).to eq(true)
+      end
+
       context "when a default subvolume was specified" do
         before do
           section.subvolumes_prefix = "@"
@@ -535,6 +549,16 @@ describe Y2Storage::AutoinstProfile::PartitionSection do
             [{ "path" => "var/log", "copy_on_write" => true }]
           )
         end
+      end
+    end
+
+    context "when there are not subvolumes" do
+      before do
+        section.subvolumes = []
+      end
+
+      it "exports create_subvolumes as false" do
+        expect(section.to_hashes["create_subvolumes"]).to eq(false)
       end
     end
 

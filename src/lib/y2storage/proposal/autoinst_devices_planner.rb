@@ -248,7 +248,13 @@ module Y2Storage
         defaults = subvolume_attrs_for(device.mount_point)
 
         device.default_subvolume = section.subvolumes_prefix || defaults[:subvolumes_prefix]
-        device.subvolumes = section.subvolumes || defaults[:subvolumes] || []
+
+        device.subvolumes =
+          if section.create_subvolumes
+            section.subvolumes || defaults[:subvolumes] || []
+          else
+            []
+          end
       end
 
       # Return the default subvolume attributes for a given mount point
