@@ -539,6 +539,16 @@ describe Y2Storage::AutoinstProfile::PartitionSection do
         expect(section.to_hashes["create_subvolumes"]).to eq(true)
       end
 
+      context "when there is no default subvolume" do
+        before do
+          section.subvolumes_prefix = ""
+        end
+
+        it "exports the default subvolume as an empty string" do
+          expect(section.to_hashes["subvolumes_prefix"]).to eq("")
+        end
+      end
+
       context "when a default subvolume was specified" do
         before do
           section.subvolumes_prefix = "@"
@@ -549,6 +559,11 @@ describe Y2Storage::AutoinstProfile::PartitionSection do
             [{ "path" => "var/log", "copy_on_write" => true }]
           )
         end
+
+        it "exports default btrfs subvolume name" do
+          expect(section.to_hashes["subvolumes_prefix"]).to eq("@")
+        end
+
       end
     end
 
@@ -560,11 +575,6 @@ describe Y2Storage::AutoinstProfile::PartitionSection do
       it "exports create_subvolumes as false" do
         expect(section.to_hashes["create_subvolumes"]).to eq(false)
       end
-    end
-
-    it "exports default btrfs subvolume name" do
-      section.subvolumes_prefix = "@"
-      expect(section.to_hashes["subvolumes_prefix"]).to eq("@")
     end
 
     it "does not export fstab options if it is empty" do

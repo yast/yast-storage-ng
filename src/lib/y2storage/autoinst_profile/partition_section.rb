@@ -261,6 +261,7 @@ module Y2Storage
         if subvolumes
           hash["create_subvolumes"] = !subvolumes.empty?
           hash["subvolumes"] = subvolumes_to_hashes
+          hash["subvolumes_prefix"] = subvolumes_prefix
         end
         hash
       end
