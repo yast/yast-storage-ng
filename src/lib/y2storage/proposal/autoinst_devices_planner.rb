@@ -58,7 +58,6 @@ module Y2Storage
       # @return [Array<Planned::Device>] List of planned devices
       def planned_devices(drives_map)
         result = []
-        @default_subvolumes_used = false
 
         drives_map.each_pair do |disk_name, drive_section|
           case drive_section.type
@@ -246,17 +245,26 @@ module Y2Storage
       def add_subvolumes_attrs(device, section)
         return unless device.btrfs?
 
-        subvol_specs = section.subvolumes
-        mount = device.mount_point
+        defaults = subvolume_attrs_for(device.mount_point)
 
-        if subvol_specs.nil? && mount == "/"
-          @default_subvolumes_used = true
-          subvol_specs = proposal_settings.subvolumes
-        end
+        device.default_subvolume = section.subvolumes_prefix || defaults[:subvolumes_prefix]
 
-        device.default_subvolume = section.subvolumes_prefix ||
-          proposal_settings.legacy_btrfs_default_subvolume
-        device.subvolumes = subvol_specs
+        device.subvolumes =
+          if section.create_subvolumes
+            section.subvolumes || defaults[:subvolumes] || []
+          else
+            []
+          end
+      end
+
+      # Return the default subvolume attributes for a given mount point
+      #
+      # @param mount [String] Mount point
+      # @return [Hash]
+      def subvolume_attrs_for(mount)
+        spec = VolumeSpecification.for(mount)
+        return {} if spec.nil?
+        { subvolumes_prefix: spec.btrfs_default_subvolume, subvolumes: spec.subvolumes }
       end
 
       # Set 'reusing' attributes for a partition
@@ -470,17 +478,10 @@ module Y2Storage
         planned_devices.each do |device|
           next unless device.respond_to?(:subvolumes)
 
-          subvols_added =
-            device.respond_to?(:mount_point) && device.mount_point == "/" && @default_subvolumes_used
-
           device.shadowed_subvolumes(planned_devices).each do |subvol|
-            if subvols_added
-              log.info "Default subvolume #{subvol} would be shadowed. Removing it."
-            else
-              # TODO: this should be reported to the user, but first we need to
-              # decide how error reporting will be handled in AutoinstProposal
-              log.warn "Subvolume #{subvol} from the profile would be shadowed. Removing it."
-            end
+            # TODO: this should be reported to the user when the shadowed
+            # subvolumes was specified in the profile.
+            log.info "Subvolume #{subvol} would be shadowed. Removing it."
             device.subvolumes.delete(subvol)
           end
         end
