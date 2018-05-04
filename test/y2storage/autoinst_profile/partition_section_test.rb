@@ -518,7 +518,7 @@ describe Y2Storage::AutoinstProfile::PartitionSection do
       end
 
       it "does not export #create_subvolumes" do
-        expect(section.to_hashes.keys).to_not include "subvolumes"
+        expect(section.to_hashes.keys).to_not include "create_subvolumes"
       end
     end
 

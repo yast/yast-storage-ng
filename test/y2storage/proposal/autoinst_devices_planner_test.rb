@@ -521,7 +521,7 @@ describe Y2Storage::Proposal::AutoinstDevicesPlanner do
         end
       end
 
-      context "when a subvolumes prefix is specified" do
+      context "when a subvolume prefix is specified" do
         let(:root_spec) { { "mount" => "/", "filesystem" => "btrfs", "subvolumes_prefix" => "#" } }
 
         it "sets the default_subvolume name" do
@@ -529,7 +529,7 @@ describe Y2Storage::Proposal::AutoinstDevicesPlanner do
         end
       end
 
-      context "when subvolumes prefix is not specified" do
+      context "when subvolume prefix is not specified" do
         let(:root_spec) { { "mount" => "/", "filesystem" => "btrfs" } }
 
         it "sets the default_subvolume to the default" do
