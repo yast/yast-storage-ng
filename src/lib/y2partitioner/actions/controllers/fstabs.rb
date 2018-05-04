@@ -137,6 +137,8 @@ module Y2Partitioner
 
           mount_points = entries.map(&:mount_point).join("\n")
 
+          # TRANSLATORS: %{mount_points} is replaced by a list of mount points, please
+          # do not modify it.
           format(_("The following mount points cannot be imported:\n%{mount_points}"),
             mount_points: mount_points)
         end
@@ -162,7 +164,8 @@ module Y2Partitioner
         # Whether a fstab entry can be imported
         #
         # An entry can be imported when the device is known and it is not used
-        # by other device (e.g., used by LVM or MD RAID) or it is a known NFS.
+        # by other device (e.g., used by LVM or MD RAID), or it is a known NFS.
+        # Moreover, the entry must have a known filesystem type.
         #
         # @param entry [Y2Storage::SimpleEtcFstabEntry]
         # @return [Boolean]
@@ -170,7 +173,21 @@ module Y2Partitioner
           device = entry.device(system_graph)
           return false unless device
 
-          !device.is?(:blk_device) || can_be_formatted?(device)
+          # Checks whether the device is actually a filesystem (i.e., NFS)
+          return true if device.is?(:filesystem)
+
+          known_fs_type?(entry) && can_be_formatted?(device)
+        end
+
+        # Whether a fstab entry has a known filesystem type
+        #
+        # In case the fstab entry contains "auto" or "none" in the third
+        # field (fs_vfstype), the filesystem type cannot be determined.
+        #
+        # @param entry [Y2Storage::SimpleEtcFstabEntry]
+        # @return [Boolean]
+        def known_fs_type?(entry)
+          !entry.fs_type.is?(:auto) && !entry.fs_type.is?(:unknown)
         end
 
         # Whether a device can be formatted

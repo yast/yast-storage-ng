@@ -166,8 +166,8 @@ describe Y2Partitioner::Actions::Controllers::Fstabs do
 
     let(:entries) { [entry1, entry2] }
 
-    shared_examples "unavailable entries error" do
-      it "contains an unavailable entries error" do
+    shared_examples "not importable entries error" do
+      it "contains a not importable entries error" do
         expect(subject.selected_fstab_errors).to_not be_empty
         expect(subject.selected_fstab_errors).to include(/cannot be imported/)
         expect(subject.selected_fstab_errors).to include(/\/error/)
@@ -178,10 +178,28 @@ describe Y2Partitioner::Actions::Controllers::Fstabs do
       let(:entry1) { fstab_entry("/dev/sda2", "/", ext3, [], 0, 0) }
       let(:entry2) { fstab_entry("/dev/unknown", "/error", ext3, [], 0, 0) }
 
-      include_examples "unavailable entries error"
+      include_examples "not importable entries error"
     end
 
-    context "when the device is known for all entries" do
+    context "when the filesystem type is 'auto' for some entry" do
+      let(:auto) { Y2Storage::Filesystems::Type::AUTO }
+
+      let(:entry1) { fstab_entry("/dev/sda2", "/", ext3, [], 0, 0) }
+      let(:entry2) { fstab_entry("/dev/sdb1", "/error", auto, [], 0, 0) }
+
+      include_examples "not importable entries error"
+    end
+
+    context "when the filesystem type is unknown for some entry" do
+      let(:unknown) { Y2Storage::Filesystems::Type::UNKNOWN }
+
+      let(:entry1) { fstab_entry("/dev/sda2", "/", ext3, [], 0, 0) }
+      let(:entry2) { fstab_entry("/dev/sdb1", "/error", unknown, [], 0, 0) }
+
+      include_examples "not importable entries error"
+    end
+
+    context "when the device and the filesystem type are known for all entries" do
       let(:entry1) { fstab_entry("/dev/sda2", "/", ext3, [], 0, 0) }
       let(:entry2) { fstab_entry("/dev/sdb1", "/error", ext3, [], 0, 0) }
 
@@ -190,7 +208,7 @@ describe Y2Partitioner::Actions::Controllers::Fstabs do
           use_device("/dev/sdb1")
         end
 
-        include_examples "unavailable entries error"
+        include_examples "not importable entries error"
       end
 
       context "and some encrypted device is used by other device" do
@@ -198,7 +216,7 @@ describe Y2Partitioner::Actions::Controllers::Fstabs do
           encrypt_and_use_device("/dev/sdb1")
         end
 
-        include_examples "unavailable entries error"
+        include_examples "not importable entries error"
       end
 
       context "and neither a device nor an encrypted device is used by other device" do
