@@ -54,7 +54,6 @@ module Y2Storage
         actiongraph = @devicegraph ? @devicegraph.actiongraph : nil
         @actions_presenter = ActionsPresenter.new(actiongraph)
 
-        DumpManager.dump(devicegraph, "proposal")
         DumpManager.dump(@actions_presenter)
       end
 
