@@ -1,5 +1,5 @@
 -------------------------------------------------------------------
-Fri May 04 15:06:41 CEST 2018 - aschnell@suse.com
+Fri May 04 18:06:41 CEST 2018 - aschnell@suse.com
 
 - provide function to disable MD auto assembly (bsc#1090690)
 - provide function to inhibit udisks from doing mounts
