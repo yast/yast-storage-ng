@@ -45,6 +45,8 @@ BuildRequires:	yast2 >= 4.0.61
 BuildRequires:	yast2-ruby-bindings >= 4.0.6
 BuildRequires:	rubygem(yast-rake)
 BuildRequires:	rubygem(rspec)
+# communicate with udisks
+BuildRequires:	rubygem(ruby-dbus)
 PreReq:         %fillup_prereq
 
 Obsoletes:	yast2-storage
