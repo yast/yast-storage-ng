@@ -25,6 +25,7 @@ require "y2partitioner/icons"
 require "y2partitioner/widgets/configurable_blk_devices_table"
 require "y2partitioner/widgets/rescan_devices_button"
 require "y2partitioner/widgets/import_mount_points_button"
+require "y2partitioner/widgets/configure"
 
 Yast.import "Mode"
 
@@ -109,6 +110,8 @@ module Y2Partitioner
         def buttons
           buttons = [rescan_devices_button]
           buttons << import_mount_points_button if Yast::Mode.installation
+          buttons << HStretch()
+          buttons << Configure.new
           buttons
         end
 
