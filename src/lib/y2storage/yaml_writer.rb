@@ -32,6 +32,13 @@ module Y2Storage
   class YamlWriter
     include Yast::Logger
 
+    # @return [Boolean] whether to record passwords (default: true)
+    attr_accessor :record_passwords
+
+    def initialize
+      @record_passwords = true
+    end
+
     class << self
       #
       # Write all devices from the specified devicegraph to a YAML file.
@@ -43,9 +50,11 @@ module Y2Storage
       #
       # @param devicegraph [Devicegraph]
       # @param yaml_file [String | IO]
+      # @param record_passwords [Boolean] enable recording passwords
       #
-      def write(devicegraph, yaml_file)
+      def write(devicegraph, yaml_file, record_passwords: true)
         writer = YamlWriter.new
+        writer.record_passwords = record_passwords
         writer.write(devicegraph, yaml_file)
       end
     end
@@ -392,7 +401,9 @@ module Y2Storage
       }
 
       content["name"] = encryption.name
-      content["password"] = encryption.password unless encryption.password.empty?
+      if !encryption.password.empty?
+        content["password"] = @record_passwords ? encryption.password : "***"
+      end
 
       { "encryption" => content }
     end
