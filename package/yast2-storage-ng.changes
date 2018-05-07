@@ -4,6 +4,20 @@ Fri May 04 15:06:41 CEST 2018 - aschnell@suse.com
 - provide function to disable MD auto assembly (bsc#1090690)
 - provide function to inhibit udisks from doing mounts
 - use these two functions when running expert partitioner
+- 4.0175
+
+-------------------------------------------------------------------
+Fri May  4 14:46:31 UTC 2018 - jlopez@suse.com
+
+- Partitioner: added option to import mount points (part of
+  fate#318196 and bsc#1083851).
+- 4.0.174
+
+-------------------------------------------------------------------
+Fri May  4 10:46:31 UTC 2018 - igonzalezsosa@suse.com
+
+- AutoYaST: handle <subvolumes_prefix/> and <subvolumes> empty
+  values properly (bsc#1076337, bsc#1090095 and bsc#10916
 - 4.0.173
 
 -------------------------------------------------------------------

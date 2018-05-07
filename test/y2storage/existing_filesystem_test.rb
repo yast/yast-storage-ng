@@ -65,8 +65,8 @@ describe Y2Storage::ExistingFilesystem do
 
   let(:root) { "" }
   let(:mount_point) { "" }
-  let(:mount_cmd) { Regexp.new("mount #{device.name}") }
-  let(:umount_cmd) { Regexp.new("umount") }
+  let(:mount_cmd) { Regexp.new("mount -o ro #{device.name}") }
+  let(:umount_cmd) { Regexp.new("umount -R") }
 
   let(:filesystem) { instance_double(Storage::BlkFilesystem, blk_devices: [device]) }
   let(:device) { instance_double(Storage::BlkDevice, name: "/dev/sda") }
@@ -137,6 +137,33 @@ describe Y2Storage::ExistingFilesystem do
 
       it "returns nil" do
         expect(subject.release_name).to be_nil
+      end
+    end
+  end
+
+  describe "#fstab" do
+    let(:tested_method) { :fstab }
+
+    include_examples "Mount and umount actions"
+
+    context "when the fstab file does not exist" do
+      before do
+        allow(File).to receive(:exist?).and_return(false)
+      end
+
+      it "returns nil" do
+        expect(subject.fstab).to be_nil
+      end
+    end
+
+    context "when the fstab file exists" do
+      before do
+        allow(File).to receive(:exist?).and_return(true)
+        allow(subject).to receive(:check_installation_medium).and_return true
+      end
+
+      it "returns the fstab" do
+        expect(subject.fstab).to be_a(Y2Storage::Fstab)
       end
     end
   end

@@ -432,11 +432,24 @@ describe Y2Storage::Proposal::AutoinstDevicesPlanner do
       let(:home_spec) { { "mount" => "/home", "filesystem" => "btrfs" } }
       let(:root_spec) { { "mount" => "/", "filesystem" => "btrfs", "subvolumes" => subvolumes } }
       let(:snapshots) { false }
-      let(:subvolumes) { nil }
 
       let(:devices) { planner.planned_devices(drives_map) }
       let(:root) { devices.find { |d| d.mount_point == "/" } }
       let(:home) { devices.find { |d| d.mount_point == "/home" } }
+
+      let(:subvolumes) { nil }
+      let(:root_volume_spec) do
+        Y2Storage::VolumeSpecification.new(
+          "mount_point" => "/", "subvolumes" => subvolumes, "btrfs_default_subvolume" => "@"
+        )
+      end
+
+      before do
+        allow(Y2Storage::VolumeSpecification).to receive(:for).with("/")
+          .and_return(root_volume_spec)
+        allow(Y2Storage::VolumeSpecification).to receive(:for).with("/home")
+          .and_return(nil)
+      end
 
       context "when the profile contains a list of subvolumes" do
         let(:subvolumes) { ["var", { "path" => "srv", "copy_on_write" => false }, "home"] }
@@ -508,6 +521,28 @@ describe Y2Storage::Proposal::AutoinstDevicesPlanner do
         end
       end
 
+      context "when a subvolume prefix is specified" do
+        let(:root_spec) { { "mount" => "/", "filesystem" => "btrfs", "subvolumes_prefix" => "#" } }
+
+        it "sets the default_subvolume name" do
+          expect(root.default_subvolume).to eq("#")
+        end
+      end
+
+      context "when subvolume prefix is not specified" do
+        let(:root_spec) { { "mount" => "/", "filesystem" => "btrfs" } }
+
+        it "sets the default_subvolume to the default" do
+          expect(root.default_subvolume).to eq("@")
+        end
+
+        context "and there is no default" do
+          it "sets the default_subvolume to nil" do
+            expect(home.default_subvolume).to be_nil
+          end
+        end
+      end
+
       context "when the usage of snapshots is not specified" do
         let(:snapshots) { nil }
 
@@ -546,17 +581,22 @@ describe Y2Storage::Proposal::AutoinstDevicesPlanner do
 
       context "when root volume is supposed to be read-only" do
         let(:root_volume_spec) do
-          instance_double(Y2Storage::VolumeSpecification, btrfs_read_only?: true)
-        end
-
-        before do
-          allow(Y2Storage::VolumeSpecification).to receive(:for).and_return(nil)
-          allow(Y2Storage::VolumeSpecification).to receive(:for).with("/")
-            .and_return(root_volume_spec)
+          Y2Storage::VolumeSpecification.new("mount_point" => "/", "btrfs_read_only" => true)
         end
 
         it "sets root partition as read-only" do
           expect(root.read_only).to eq(true)
+        end
+      end
+
+      context "when subvolumes are disabled" do
+        let(:root_spec) do
+          { "mount" => "/", "filesystem" => "btrfs", "create_subvolumes" => false,
+            "subvolumes" => subvolumes }
+        end
+
+        it "does not plan any subvolume" do
+          expect(root.subvolumes).to eq([])
         end
       end
     end

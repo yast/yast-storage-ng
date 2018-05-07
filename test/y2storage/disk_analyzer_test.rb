@@ -114,6 +114,18 @@ describe Y2Storage::DiskAnalyzer do
     end
   end
 
+  describe "#fstabs" do
+    before do
+      allow_any_instance_of(Y2Storage::ExistingFilesystem).to receive(:fstab)
+    end
+
+    it "tries to read a fstab file for each suitable root filesystem" do
+      expect(Y2Storage::ExistingFilesystem).to receive(:new).exactly(5).times.and_call_original
+
+      analyzer.fstabs
+    end
+  end
+
   describe "#candidate_disks" do
     it "relies on Devicegraph#disk_devices" do
       expect(fake_devicegraph).to receive(:disk_devices).at_least(:once).and_call_original

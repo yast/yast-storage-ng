@@ -28,6 +28,8 @@ require "y2partitioner/device_graphs"
 module Yast
   module RSpec
     # RSpec extension to add YaST Storage specific helpers
+    #
+    # rubocop:disable Metrics/ModuleLength
     module StorageHelpers
       def input_file_for(name, suffix: "yml")
         if suffix
@@ -157,6 +159,19 @@ module Yast
         end
         allow(ENV).to receive(:keys).and_return hash.keys
       end
+
+      def fstab_entry(*values)
+        storage_entry = instance_double(Storage::SimpleEtcFstabEntry,
+          device:        values[0],
+          mount_point:   values[1],
+          fs_type:       values[2].to_i,
+          mount_options: values[3],
+          fs_freq:       values[4],
+          fs_passno:     values[5])
+
+        Y2Storage::SimpleEtcFstabEntry.new(storage_entry)
+      end
     end
+    # rubocop:enable all
   end
 end
