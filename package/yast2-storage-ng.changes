@@ -1,4 +1,12 @@
 -------------------------------------------------------------------
+Mon May  7 16:39:49 UTC 2018 - shundhammer@suse.com
+
+- Dump devicegraphs and actions in better strategic places
+  (part of fate#318196)
+- Make sure not to write LUKS passwords to YAML dump files
+- 4.0.176
+
+-------------------------------------------------------------------
 Fri May 04 18:06:41 CEST 2018 - aschnell@suse.com
 
 - provide function to disable MD auto assembly (bsc#1090690)
