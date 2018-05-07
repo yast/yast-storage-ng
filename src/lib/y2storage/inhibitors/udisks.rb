@@ -23,7 +23,7 @@ require "dbus"
 
 module Y2Storage
   # class to inhibit udisks from doing mounts
-  class UdisksInhibitor
+  class Udisks
     include Yast::Logger
 
     @dbus_cookie = nil
@@ -38,7 +38,7 @@ module Y2Storage
     end
 
     def uninhibit
-      return if !@dbus_object
+      return if !@dbus_cookie
       log.info "uninhibit udisks"
       begin
         dbus_object.Uninhibit(@dbus_cookie)
@@ -55,8 +55,7 @@ module Y2Storage
       service = system_bus.service("org.freedesktop.UDisks")
       dbus_object = service.object("/org/freedesktop/UDisks")
       dbus_object.default_iface = "org.freedesktop.UDisks"
-      dbus_object.introspect
-      dbus_object
+      return dbus_object
     end
   end
 end

@@ -20,7 +20,7 @@
 # find current contact information at www.suse.com.
 
 require "y2storage/inhibitors/mdadm_auto_assembly"
-require "y2storage/inhibitors/udisks_inhibitor"
+require "y2storage/inhibitors/udisks"
 
 module Y2Storage
   # class to inhibit various storage subsystem to automatically do things,
@@ -33,13 +33,13 @@ module Y2Storage
       log.info "inhibit"
 
       @mdadm_auto_assembly.inhibit
-      @udisks_inhibitor.inhibit
+      @udisks.inhibit
     end
 
     def uninhibit
       log.info "uninhibit"
 
-      @udisks_inhibitor.uninhibit
+      @udisks.uninhibit
       @mdadm_auto_assembly.uninhibit
     end
 
@@ -47,7 +47,7 @@ module Y2Storage
 
     def initialize
       @mdadm_auto_assembly = Y2Storage::MdadmAutoAssembly.new
-      @udisks_inhibitor = Y2Storage::UdisksInhibitor.new
+      @udisks = Y2Storage::Udisks.new
     end
   end
 end
