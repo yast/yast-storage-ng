@@ -19,9 +19,13 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
+require "yast"
 require "y2partitioner/device_graphs"
 require "y2partitioner/exceptions"
 require "y2storage/storage_manager"
+
+Yast.import "Stage"
+Yast.import "Popup"
 
 module Y2Partitioner
   module Widgets
@@ -29,7 +33,8 @@ module Y2Partitioner
     module Reprobe
     private
 
-      # Reprobes and updates devicegraphs for the partitioner.
+      # Reprobes and updates devicegraphs for the partitioner. During
+      # installation, a reactivation is performed before reprobing.
       #
       # @note A message is shown during the reprobing action.
       #
@@ -39,13 +44,30 @@ module Y2Partitioner
       def reprobe
         textdomain "storage"
         Yast::Popup.Feedback("", _("Rescanning disks...")) do
-          probe_performed = Y2Storage::StorageManager.instance.probe
-          raise Y2Partitioner::ForcedAbortError unless probe_performed
+          raise Y2Partitioner::ForcedAbortError unless activate_and_probe?
 
-          probed = Y2Storage::StorageManager.instance.probed
-          staging = Y2Storage::StorageManager.instance.staging
+          probed = storage_manager.probed
+          staging = storage_manager.staging
           DeviceGraphs.create_instance(probed, staging)
         end
+      end
+
+      # @return [Y2Storage::StorageManager]
+      def storage_manager
+        Y2Storage::StorageManager.instance
+      end
+
+      # Performs storage reactivation (if needed) and reprobing
+      #
+      # @note Activation is only done during installation, never in an already
+      #   installed system
+      #
+      # @return [Boolean] false if something went wrong
+      def activate_and_probe?
+        success = true
+        success &&= storage_manager.activate if Yast::Stage.initial
+        success &&= storage_manager.probe
+        success
       end
     end
   end
