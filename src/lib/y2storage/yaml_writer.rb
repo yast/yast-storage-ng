@@ -470,12 +470,28 @@ module Y2Storage
     end
 
     # Return all unsupported devices in a devicegraph. Right now this is
-    # limited to block devices.
+    # limited to block devices and non-block-filesystem filesystems like NFS.
     #
     # @param devicegraph [Devicegraph]
     # @return [Array<Device>]
     def unsupported_devices(devicegraph)
+      unsupported_blk_devices(devicegraph) + non_blk_filesystem_filesystems(devicegraph)
+    end
+
+    # Return all unsupported block devices in a devicegraph.
+    #
+    # @param devicegraph [Devicegraph]
+    # @return [Array<Device>]
+    def unsupported_blk_devices(devicegraph)
       BlkDevice.all(devicegraph).reject { |d| supported_blk_device?(d) }
+    end
+
+    # Return all unsupported filesystems in a devicegraph.
+    #
+    # @param devicegraph [Devicegraph]
+    # @return [Array<Device>]
+    def non_blk_filesystem_filesystems(devicegraph)
+      devicegraph.filesystems.reject { |fs| fs.is?(:blk_filesystem) }
     end
 
     # Check if a block device is supported by the YAML writer.

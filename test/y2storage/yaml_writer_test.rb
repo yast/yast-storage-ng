@@ -477,6 +477,8 @@ describe Y2Storage::YamlWriter do
     context "when the devicegraph contains objects not yet supported in YAML" do
       before do
         fake_scenario(scenario)
+        fs = Y2Storage::Filesystems::Nfs.create(fake_devicegraph, "server", "/path")
+        fs.create_mount_point("/nfs_mount")
       end
       let(:scenario) { "empty-dm_raids.xml" }
 
@@ -489,6 +491,10 @@ describe Y2Storage::YamlWriter do
           - unsupported_device:
               type: Y2Storage::DmRaid
               name: "/dev/mapper/isw_ddgdcbibhd_test2"
+              support: unsupported in YAML - check XML
+          - unsupported_device:
+              type: Y2Storage::Filesystems::Nfs
+              name: server:/path
               support: unsupported in YAML - check XML)
       end
 
@@ -506,7 +512,7 @@ describe Y2Storage::YamlWriter do
       end
 
       it "generates the expected yaml content" do
-        described_class.write(staging, io)
+        described_class.write(fake_devicegraph, io)
         expect(plain_content(relevant_part(io.string))).to eq(plain_content(expected_result))
       end
     end
