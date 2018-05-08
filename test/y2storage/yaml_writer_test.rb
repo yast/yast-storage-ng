@@ -474,6 +474,43 @@ describe Y2Storage::YamlWriter do
       end
     end
 
+    context "when the devicegraph contains objects not yet supported in YAML" do
+      before do
+        fake_scenario(scenario)
+      end
+      let(:scenario) { "empty-dm_raids.xml" }
+
+      let(:expected_result) do
+        # Without the irrelevant leading 44 lines
+        %(- unsupported_device:
+              type: Y2Storage::DmRaid
+              name: "/dev/mapper/isw_ddgdcbibhd_test1"
+              support: unsupported in YAML - check XML
+          - unsupported_device:
+              type: Y2Storage::DmRaid
+              name: "/dev/mapper/isw_ddgdcbibhd_test2"
+              support: unsupported in YAML - check XML)
+      end
+
+      # Select the relevant part of the YAML for this test:
+      # Everything from the first line with "-unsupported_device:" on.
+      #
+      # @param yaml [String]
+      # @return [String]
+      def relevant_part(yaml)
+        lines = yaml.split("\n")
+        start_line = lines.index("- unsupported_device:")
+        return "" if start_line.nil?
+        lines.shift(start_line)
+        lines.join("\n")
+      end
+
+      it "generates the expected yaml content" do
+        described_class.write(staging, io)
+        expect(plain_content(relevant_part(io.string))).to eq(plain_content(expected_result))
+      end
+    end
+
     context "when recording passords is disabled" do
       before do
         disk = Y2Storage::Disk.create(staging, "/dev/sda")
