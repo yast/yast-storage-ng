@@ -473,5 +473,40 @@ describe Y2Storage::YamlWriter do
         expect(plain_content(io.string)).to eq(plain_content(expected_result))
       end
     end
+
+    context "when recording passords is disabled" do
+      before do
+        disk = Y2Storage::Disk.create(staging, "/dev/sda")
+        disk.size = 256 * Storage.GiB
+
+        encryption = disk.create_encryption("cr_data")
+        encryption.password = "s3cr3t"
+
+        fs = encryption.create_filesystem(Y2Storage::Filesystems::Type::XFS)
+        fs.create_mount_point("/data")
+      end
+
+      let(:expected_result) do
+        %(---
+          - disk:
+              name: "/dev/sda"
+              size: 256 GiB
+              block_size: 0.5 KiB
+              io_size: 0 B
+              min_grain: 1 MiB
+              align_ofs: 0 B
+              file_system: xfs
+              mount_point: "/data"
+              encryption:
+                type: luks
+                name: "/dev/mapper/cr_data"
+                password: "***")
+      end
+
+      it "generates the expected yaml content" do
+        described_class.write(staging, io, record_passwords: false)
+        expect(plain_content(io.string)).to eq(plain_content(expected_result))
+      end
+    end
   end
 end

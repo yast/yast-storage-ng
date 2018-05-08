@@ -130,7 +130,7 @@ module Y2Storage
       file_base_name ||= devicegraph_dump_name(devicegraph)
       dump_internal(devicegraph, file_base_name) do |file_base_path|
         devicegraph.save(file_base_path + ".xml")
-        YamlWriter.write(devicegraph, file_base_path + ".yml")
+        YamlWriter.write(devicegraph, file_base_path + ".yml", record_passwords: false)
       end
     end
 

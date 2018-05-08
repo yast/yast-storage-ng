@@ -25,6 +25,7 @@ require "yast"
 require "yast/i18n"
 require "yast2/popup"
 require "y2storage"
+require "y2storage/dump_manager"
 require "y2storage/dialogs/proposal"
 require "y2storage/dialogs/guided_setup"
 require "y2partitioner/dialogs/main"
@@ -126,6 +127,7 @@ module Y2Storage
         when :next
           @proposal = nil
           @devicegraph = devicegraph
+          DumpManager.dump(devicegraph, "partitioner")
         when :back
           # Try to create a proposal when the system was reprobed (bsc#1088960)
           create_initial_proposal if reprobed?
