@@ -40,6 +40,11 @@ describe Y2Partitioner::Widgets::Pages::System do
       expect(button).to_not be_nil
     end
 
+    it "contains a widget for configuring storage technologies" do
+      button = widgets.find { |w| w.is_a?(Y2Partitioner::Widgets::Configure) }
+      expect(button).to_not be_nil
+    end
+
     context "when it is running in installation mode" do
       before do
         allow(Yast::Mode).to receive(:installation).and_return(true)

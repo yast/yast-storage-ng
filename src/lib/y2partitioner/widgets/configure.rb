@@ -20,6 +20,7 @@
 # find current contact information at www.suse.com.
 
 require "yast"
+require "cwm"
 require "y2partitioner/widgets/reprobe"
 
 Yast.import "Stage"
