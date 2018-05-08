@@ -87,6 +87,7 @@ module Y2Storage
       yaml = []
       top_level_devices(devicegraph).each { |device| yaml << yaml_disk_device(device) }
       devicegraph.lvm_vgs.each { |lvm_vg| yaml << yaml_lvm_vg(lvm_vg) }
+      unsupported_devices(devicegraph).each { |device| yaml << yaml_unsupported_device(device) }
       yaml
     end
 
@@ -439,6 +440,55 @@ module Y2Storage
       content = { "path" => subvol.path }
       content["nocow"] = "true" if subvol.nocow?
       { "subvolume" => content }
+    end
+
+    # Return YAML for any unsupported objects in a devicegraph.
+    # Right now this is limited to block devices; this might change in the
+    # future.
+    #
+    # @param devicegraph [Devicegraph]
+    # @return [Hash]
+    def yaml_unsupported(devicegraph)
+      content = []
+      unsupported_devices(devicegraph).each { |device| content << yaml_unsupported_device(device) }
+      return nil if content.empty?
+
+      { "unsupported" => content }
+    end
+
+    # Return YAML for one unsupported device.
+    #
+    # @param  device [Device]
+    # @return [Hash]
+    def yaml_unsupported_device(device)
+      content = {}
+      content["type"] = device.class.to_s
+      content["name"] = device.name
+      content["support"] = "unsupported in YAML - check XML"
+
+      { "unsupported_device" => content }
+    end
+
+    # Return all unsupported devices in a devicegraph. Right now this is
+    # limited to block devices.
+    #
+    # @param devicegraph [Devicegraph]
+    # @return [Array<Device>]
+    def unsupported_devices(devicegraph)
+      BlkDevice.all(devicegraph).reject { |d| supported_blk_device?(d) }
+    end
+
+    # Check if a block device is supported by the YAML writer.
+    #
+    # @param blk_device [BlkDevice]
+    # @return [Boolean]
+    def supported_blk_device?(blk_device)
+      # See class hierarchy in libstorage-ng BlkDevice autodocs
+      #
+      # NOTICE: We can't simply only handle devicegraph toplevel objects since
+      # some of the unsupported ones (e.g. RAIDs) don't have a bracketing
+      # toplevel object, unlike LVM with VGs.
+      blk_device.is?(:disk, :dasd, :encryption, :lvm_lv, :partition)
     end
   end
 end
