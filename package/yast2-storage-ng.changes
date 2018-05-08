@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Wed May  9 08:21:50 UTC 2018 - igonzalezsosa@suse.com
+
+- AutoYaST: do not crash when size is set to 'auto' for a partition
+  without a mount point (bsc#1092414).
+- 4.0.178
+
+-------------------------------------------------------------------
 Tue May  8 15:34:19 UTC 2018 - shundhammer@suse.com
 
 - Add note to YAML files for devices not supported in YAML
