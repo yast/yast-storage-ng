@@ -52,7 +52,7 @@ module Y2Partitioner
       #
       # @return [Yast::WidgetTerm]
       def contents
-        @contents ||= actions.empty? ? Empty() : MenuButton(opt, label, items)
+        @contents ||= actions.empty? ? Empty() : MenuButton(Opt(*opt), label, items)
       end
 
       # Event handler for the configuration menu
@@ -80,9 +80,9 @@ module Y2Partitioner
         end
       end
 
-      # @return [Yast::WidgetTerm]
+      # @return [Array<Symbol>]
       def opt
-        Opt(:key_F7)
+        [:key_F7]
       end
 
       # Localized label for the menu button
@@ -94,6 +94,9 @@ module Y2Partitioner
       end
 
       # @macro seeCustomWidget
+      #
+      # Redefined in this class because the base implementation at CWM::CustomWidget
+      # does not search for ids into the items of a MenuButton.
       def ids_in_contents
         actions.map(&:id)
       end
