@@ -69,4 +69,23 @@ describe Y2Partitioner::DeviceGraphs do
       end
     end
   end
+
+  describe "#devices_edited?" do
+    context "when no devices have been modified in the current graph" do
+      it "returns false" do
+        expect(subject.devices_edited?).to eq(false)
+      end
+    end
+
+    context "when some devices have been modified in the current graph" do
+      before do
+        sda2 = subject.current.find_by_name("/dev/sda2")
+        sda2.delete_filesystem
+      end
+
+      it "returns true" do
+        expect(subject.devices_edited?).to eq(true)
+      end
+    end
+  end
 end
