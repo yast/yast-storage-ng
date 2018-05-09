@@ -442,20 +442,6 @@ module Y2Storage
       { "subvolume" => content }
     end
 
-    # Return YAML for any unsupported objects in a devicegraph.
-    # Right now this is limited to block devices; this might change in the
-    # future.
-    #
-    # @param devicegraph [Devicegraph]
-    # @return [Hash]
-    def yaml_unsupported(devicegraph)
-      content = []
-      unsupported_devices(devicegraph).each { |device| content << yaml_unsupported_device(device) }
-      return nil if content.empty?
-
-      { "unsupported" => content }
-    end
-
     # Return YAML for one unsupported device.
     #
     # @param  device [Device]
