@@ -87,6 +87,7 @@ module Y2Storage
       yaml = []
       top_level_devices(devicegraph).each { |device| yaml << yaml_disk_device(device) }
       devicegraph.lvm_vgs.each { |lvm_vg| yaml << yaml_lvm_vg(lvm_vg) }
+      unsupported_devices(devicegraph).each { |device| yaml << yaml_unsupported_device(device) }
       yaml
     end
 
@@ -439,6 +440,57 @@ module Y2Storage
       content = { "path" => subvol.path }
       content["nocow"] = "true" if subvol.nocow?
       { "subvolume" => content }
+    end
+
+    # Return YAML for one unsupported device.
+    #
+    # @param device [Device]
+    # @return [Hash]
+    def yaml_unsupported_device(device)
+      content = {}
+      content["type"] = device.class.to_s
+      content["name"] = device.name if device.respond_to?(:name)
+      content["support"] = "unsupported in YAML - check XML"
+
+      { "unsupported_device" => content }
+    end
+
+    # Return all unsupported devices in a devicegraph. Right now this is
+    # limited to block devices and non-block-filesystem filesystems like NFS.
+    #
+    # @param devicegraph [Devicegraph]
+    # @return [Array<Device>]
+    def unsupported_devices(devicegraph)
+      unsupported_blk_devices(devicegraph) + non_blk_filesystem_filesystems(devicegraph)
+    end
+
+    # Return all unsupported block devices in a devicegraph.
+    #
+    # @param devicegraph [Devicegraph]
+    # @return [Array<Device>]
+    def unsupported_blk_devices(devicegraph)
+      BlkDevice.all(devicegraph).reject { |d| supported_blk_device?(d) }
+    end
+
+    # Return all unsupported filesystems in a devicegraph.
+    #
+    # @param devicegraph [Devicegraph]
+    # @return [Array<Device>]
+    def non_blk_filesystem_filesystems(devicegraph)
+      devicegraph.filesystems.reject { |fs| fs.is?(:blk_filesystem) }
+    end
+
+    # Check if a block device is supported by the YAML writer.
+    #
+    # @param blk_device [BlkDevice]
+    # @return [Boolean]
+    def supported_blk_device?(blk_device)
+      # See class hierarchy in libstorage-ng BlkDevice autodocs
+      #
+      # NOTICE: We can't simply only handle devicegraph toplevel objects since
+      # some of the unsupported ones (e.g. RAIDs) don't have a bracketing
+      # toplevel object, unlike LVM with VGs.
+      blk_device.is?(:disk, :dasd, :encryption, :lvm_lv, :partition)
     end
   end
 end
