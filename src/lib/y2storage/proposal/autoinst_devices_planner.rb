@@ -262,6 +262,7 @@ module Y2Storage
       # @param mount [String] Mount point
       # @return [Hash]
       def subvolume_attrs_for(mount)
+        return {} if mount.nil?
         spec = VolumeSpecification.for(mount)
         return {} if spec.nil?
         { subvolumes_prefix: spec.btrfs_default_subvolume, subvolumes: spec.subvolumes }

@@ -100,9 +100,15 @@ describe Y2Storage::Proposal::AutoinstSizeParser do
       context "and there are no volumes defined in the control file" do
         let(:subvolumes) { [] }
 
-        it "sets min and max values to nil" do
+        it "returns nil" do
           expect(parser.parse("auto", "/srv", MIN, MAX)).to be_nil
         end
+      end
+    end
+
+    context "when size is nil" do
+      it "returns nil" do
+        expect(parser.parse("auto", nil, MIN, MAX)).to be_nil
       end
     end
   end
