@@ -444,12 +444,12 @@ module Y2Storage
 
     # Return YAML for one unsupported device.
     #
-    # @param  device [Device]
+    # @param device [Device]
     # @return [Hash]
     def yaml_unsupported_device(device)
       content = {}
       content["type"] = device.class.to_s
-      content["name"] = device.name
+      content["name"] = device.name if device.respond_to?(:name)
       content["support"] = "unsupported in YAML - check XML"
 
       { "unsupported_device" => content }
