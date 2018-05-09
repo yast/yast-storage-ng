@@ -20,8 +20,9 @@
 # find current contact information at www.suse.com.
 
 require "yast"
-require "y2storage"
 require "cwm"
+require "y2storage"
+require "y2partitioner/dialogs/base"
 require "y2partitioner/widgets/controller_radio_buttons"
 require "y2partitioner/size_parser"
 
@@ -31,7 +32,7 @@ module Y2Partitioner
   module Dialogs
     # Determine the size of a logical volume to be created and its number of stripes.
     # Part of {Actions::AddLvmLv}.
-    class LvmLvSize < CWM::Dialog
+    class LvmLvSize < Base
       # @param controller [Actions::Controllers::LvmLv]
       #   a LV controller, collecting data for a logical volume to be created
       def initialize(controller)

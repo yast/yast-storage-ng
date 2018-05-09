@@ -20,8 +20,9 @@
 # find current contact information at www.suse.com.
 
 require "yast"
-require "y2storage"
 require "cwm"
+require "y2storage"
+require "y2partitioner/dialogs/base"
 require "y2partitioner/widgets/controller_radio_buttons"
 
 Yast.import "Popup"
@@ -32,7 +33,7 @@ module Y2Partitioner
     # like the name and type
     #
     # Part of {Actions::AddLvmLv}.
-    class LvmLvInfo < CWM::Dialog
+    class LvmLvInfo < Base
       # @param controller [Actions::Controllers::LvmLv]
       #   a LV controller, collecting data for a logical volume to be created
       def initialize(controller)

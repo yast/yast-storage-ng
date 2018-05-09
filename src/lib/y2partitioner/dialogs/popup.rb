@@ -20,12 +20,12 @@
 # find current contact information at www.suse.com.
 
 require "yast"
-require "cwm/dialog"
+require "y2partitioner/dialogs/base"
 
 module Y2Partitioner
   module Dialogs
     # Adapt CWM dialog to allow popup dialogs
-    class Popup < CWM::Dialog
+    class Popup < Base
       def wizard_create_dialog(&block)
         Yast::UI.OpenDialog(layout)
         block.call

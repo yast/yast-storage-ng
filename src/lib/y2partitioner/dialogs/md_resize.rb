@@ -20,13 +20,13 @@
 # find current contact information at www.suse.com.
 
 require "yast"
-require "cwm/dialog"
+require "y2partitioner/dialogs/base"
 require "y2partitioner/widgets/md_devices_selector"
 
 module Y2Partitioner
   module Dialogs
     # Dialog for resizing a MD RAID
-    class MdResize < CWM::Dialog
+    class MdResize < Base
       # Constructor
       #
       # @param controller [Actions::Controllers::Md]

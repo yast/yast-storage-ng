@@ -19,40 +19,18 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "yast"
-require "y2partitioner/dialogs/base"
-require "y2partitioner/widgets/lvm_vg_devices_selector"
-
-Yast.import "Popup"
+require "cwm/dialog"
 
 module Y2Partitioner
   module Dialogs
-    # Form to set the devices of a volume group
-    class LvmVgResize < Base
-      # Constructor
-      #
-      # @param controller [Actions::Controllers::LvmVg]
-      def initialize(controller)
-        textdomain "storage"
-        @controller = controller
+    # In general, no dialog in the Expert Partitioner should show "abort" button,
+    # so all dialogs can use this base class to label abort button as "Cancel".
+    #
+    # Only main dialog shows the abort button (in a running system).
+    class Base < CWM::Dialog
+      def abort_button
+        Yast::Label.CancelButton
       end
-
-      # @macro seeDialog
-      def title
-        controller.wizard_title
-      end
-
-      # @macro seeDialog
-      def contents
-        VBox(
-          Widgets::LvmVgDevicesSelector.new(controller)
-        )
-      end
-
-    private
-
-      # @return [Actions::Controllers::LvmVg]
-      attr_reader :controller
     end
   end
 end

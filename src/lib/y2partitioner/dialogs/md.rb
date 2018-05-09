@@ -20,8 +20,8 @@
 # find current contact information at www.suse.com.
 
 require "yast"
-require "cwm/dialog"
 require "cwm/common_widgets"
+require "y2partitioner/dialogs/base"
 require "y2partitioner/widgets/md_devices_selector"
 
 # Work around YARD inability to link across repos/gems:
@@ -40,7 +40,7 @@ module Y2Partitioner
   module Dialogs
     # Form to set the type, name and devices of an MD RAID to be created
     # Part of {Actions::AddMd}.
-    class Md < CWM::Dialog
+    class Md < Base
       def initialize(controller)
         textdomain "storage"
         @controller = controller

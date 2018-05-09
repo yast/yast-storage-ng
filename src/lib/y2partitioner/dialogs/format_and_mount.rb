@@ -21,6 +21,7 @@
 
 require "yast"
 require "yast2/popup"
+require "y2partitioner/dialogs/base"
 require "y2partitioner/widgets/format_and_mount"
 require "y2partitioner/filesystem_errors"
 
@@ -29,7 +30,7 @@ module Y2Partitioner
     # Which filesystem (and options) to use and where to mount it (with options).
     # Part of {Actions::AddPartition} and {Actions::EditBlkDevice}.
     # Formerly MiniWorkflowStepFormatMount
-    class FormatAndMount < CWM::Dialog
+    class FormatAndMount < Base
       # @param controller [Actions::Controllers::Filesystem]
       def initialize(controller)
         textdomain "storage"
