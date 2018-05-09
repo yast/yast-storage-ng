@@ -202,15 +202,15 @@ module Y2Partitioner
             "Calling iSCSI configuration cancels all current changes.\n" \
             "Really call iSCSI configuration?"
           ),
-          fcoe: N_(
+          fcoe:  N_(
             "Calling FCoE configuration cancels all current changes.\n" \
             "Really call FCoE configuration?"
           ),
-          dasd: N_(
+          dasd:  N_(
             "Calling DASD configuration cancels all current changes.\n" \
             "Really call DASD configuration?"
           ),
-          fzcp: N_(
+          fzcp:  N_(
             "Calling zFCP configuration cancels all current changes.\n" \
             "Really call zFCP configuration?"
           ),
