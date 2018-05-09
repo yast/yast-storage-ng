@@ -422,15 +422,16 @@ describe Y2Storage::Proposal::AutoinstDevicesPlanner do
       end
     end
 
-    context "using Btrfs for root" do
+    context "using Btrfs" do
       let(:partitioning_array) do
         [{
           "device" => "/dev/sda", "use" => "all",
-          "enable_snapshots" => snapshots, "partitions" => [root_spec, home_spec]
+          "enable_snapshots" => snapshots, "partitions" => partitions
         }]
       end
       let(:home_spec) { { "mount" => "/home", "filesystem" => "btrfs" } }
       let(:root_spec) { { "mount" => "/", "filesystem" => "btrfs", "subvolumes" => subvolumes } }
+      let(:partitions) { [root_spec, home_spec] }
       let(:snapshots) { false }
 
       let(:devices) { planner.planned_devices(drives_map) }
@@ -597,6 +598,16 @@ describe Y2Storage::Proposal::AutoinstDevicesPlanner do
 
         it "does not plan any subvolume" do
           expect(root.subvolumes).to eq([])
+        end
+      end
+
+      context "when no mount point is defined" do
+        let(:partitions) { [root_spec, not_mounted_spec] }
+        let(:not_mounted_spec) { { "mount" => nil, "filesystem" => "btrfs" } }
+        let(:not_mounted) { devices.find { |d| d.mount_point.nil? } }
+
+        it "does not plan any subvolume" do
+          expect(not_mounted.subvolumes).to eq([])
         end
       end
     end

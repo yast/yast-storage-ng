@@ -50,7 +50,8 @@ module Y2Storage
       # @param mount_point [String] Mount point
       # @param min         [DiskSize] Minimal size
       # @param max         [DiskSize] Maximal size
-      # @return [AutoinstSize] Object containing information about size
+      # @return [AutoinstSize,nil] Object containing information about size; nil if size
+      #   specification is "auto" and no predefined values were found.
       #
       # @see AutoinstSize
       def parse(size_spec, mount_point, min, max)
@@ -111,6 +112,7 @@ module Y2Storage
 
       # @return [nil,Array<DiskSize>]
       def auto_sizes_for(mount_point)
+        return nil if mount_point.nil?
         spec = VolumeSpecification.for(mount_point, proposal_settings: proposal_settings)
         return nil if spec.nil?
 
