@@ -26,6 +26,7 @@ require "y2partitioner/ui_state"
 require "y2partitioner/widgets/overview"
 require "y2partitioner/exceptions"
 require "y2partitioner/dialogs/summary"
+require "y2partitioner/actions/quit_partitioner"
 
 Yast.import "Label"
 Yast.import "Mode"
@@ -47,9 +48,6 @@ module Y2Partitioner
       def initialize(system, initial)
         textdomain "storage"
 
-        # Initial graph is saved to know if something has changed at the end.
-        @initial_graph = initial
-
         UIState.create_instance
         DeviceGraphs.create_instance(system, initial)
       end
@@ -67,7 +65,7 @@ module Y2Partitioner
       end
 
       def skip_store_for
-        [:redraw, :reprobe]
+        [:redraw]
       end
 
       def back_button
@@ -77,6 +75,24 @@ module Y2Partitioner
 
       def next_button
         Yast::Mode.installation ? Yast::Label.AcceptButton : next_label_for_installed_system
+      end
+
+      def abort_button
+        Yast::Mode.installation ? Yast::Label.CancelButton : Yast::Label.AbortButton
+      end
+
+      # @see Actions::QuitPartitioner#quit?
+      #
+      # @return [Boolean] it aborts if returns true
+      def abort_handler
+        Actions::QuitPartitioner.new.quit?
+      end
+
+      # @see Actions::QuitPartitioner#quit?
+      #
+      # @return [Boolean] it goes back if returns true
+      def back_handler
+        Actions::QuitPartitioner.new.quit?
       end
 
       # Runs the dialog
@@ -95,35 +111,34 @@ module Y2Partitioner
             result = run_summary
           end
 
-          @initial_graph = current_graph if result == :reprobe
-
           break unless continue_running?(result)
         end
 
         @device_graph = current_graph
-        result
+        dialog_result(result)
       rescue Y2Partitioner::ForcedAbortError
         :abort
       end
 
     protected
 
-      # @return [Y2Storage::Devicegraph]
-      attr_reader :initial_graph
-
       # Checks whether the dialog should be rendered again
       #
       # @return [Boolean]
       def continue_running?(result)
-        if result == :redraw
-          true
-        elsif result == :reprobe
-          true
-        elsif result == :abort && Yast::Mode.installation
-          !Yast::Popup.ConfirmAbort(:painless)
-        else
-          false
-        end
+        result == :redraw
+      end
+
+      # Result of the dialog
+      #
+      # During installation, abort means going back.
+      #
+      # @param result [Symbol] original result (e.g., :next, :back, :abort)
+      # @return [Symbol]
+      def dialog_result(result)
+        return result unless Yast::Mode.installation
+
+        result == :abort ? :back : result
       end
 
       # Whether it is needed to show the summary of changes as last step
@@ -146,30 +161,13 @@ module Y2Partitioner
         summary_result == :back ? :redraw : summary_result
       end
 
-      # Whether the system has been edited
+      # Whether the system has been edited (devices or settings)
       #
-      # The system is considered as edited when the user has modified the devices
-      # or the Partitioner settings.
+      # TODO: add check for modifications in Partitioner settings
       #
       # @return [Boolean]
       def system_edited?
-        partitioner_settings_edited? || devices_edited?
-      end
-
-      # TODO: There is a PBI to add the settings modifications to the summary.
-      #
-      # Whether the Partitioner settings were modified by the user
-      #
-      # @return [Boolean]
-      def partitioner_settings_edited?
-        false
-      end
-
-      # Whether the devices were modified by the user
-      #
-      # @return [Boolean]
-      def devices_edited?
-        current_graph != initial_graph
+        DeviceGraphs.instance.devices_edited?
       end
 
       # Current devicegraph with all the modifications
