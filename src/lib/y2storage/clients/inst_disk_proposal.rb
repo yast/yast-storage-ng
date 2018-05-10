@@ -51,7 +51,7 @@ module Y2Storage
         @devicegraph = storage_manager.staging
         @proposal = storage_manager.proposal
         # Save staging revision to check later if the system was reprobed
-        @initial_staging_revision = storage_manager.staging_revision
+        save_staging_revision
 
         return if @proposal || storage_manager.staging_changed?
         # If the staging devicegraph has never been set, try to make an initial proposal
@@ -84,6 +84,9 @@ module Y2Storage
       end
 
     private
+
+      # @return [Integer]
+      attr_reader :initial_staging_revision
 
       def save_to_storage_manager
         if @proposal
@@ -161,7 +164,7 @@ module Y2Storage
       # @return [Boolean]
       def reprobed?
         !storage_manager.staging_changed? &&
-          @initial_staging_revision != storage_manager.staging_revision
+          initial_staging_revision != storage_manager.staging_revision
       end
 
       # When it is not possible a proposal using current settings, some attempts
@@ -171,6 +174,17 @@ module Y2Storage
       def create_initial_proposal
         @proposal = GuidedProposal.initial(settings: new_settings)
         @devicegraph = @proposal.devices
+        # The new proposal could be created because the system was reprobed.
+        # The initial staging revision needs to be updated to avoid to create
+        # a new proposal if the system was not reprobed again.
+        save_staging_revision
+      end
+
+      # Saves the current staging revision as initial revision
+      #
+      # This value is useful to detect if the system was reprobed
+      def save_staging_revision
+        @initial_staging_revision = storage_manager.staging_revision
       end
 
       # A new storage proposal using probed and its disk analyzer. Used to
