@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Fri May 11 10:31:10 UTC 2018 - jlopez@suse.com
+
+- Partitioner: fix buttons to abort and to go back
+  (part of fate#318196).
+- 4.0.179
+
+-------------------------------------------------------------------
 Fri May 11 10:08:24 UTC 2018 - jlopez@suse.com
 
 - Partitioner: allow to select only valid parity algorithms when
