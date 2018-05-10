@@ -23,6 +23,7 @@ require "yast"
 require "yast/i18n"
 require "cwm/dialog"
 require "y2partitioner/widgets/summary_text"
+require "y2partitioner/actions/quit_partitioner"
 
 Yast.import "Label"
 
@@ -46,6 +47,13 @@ module Y2Partitioner
 
       def next_button
         Yast::Label.FinishButton
+      end
+
+      # @see Actions::QuitPartitioner#quit?
+      #
+      # @return [Boolean] it aborts if returns true
+      def abort_handler
+        Actions::QuitPartitioner.new.quit?
       end
     end
   end

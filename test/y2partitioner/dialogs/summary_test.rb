@@ -41,4 +41,39 @@ describe Y2Partitioner::Dialogs::Summary do
       expect(widget).to_not be_nil
     end
   end
+
+  describe "#abort_handler" do
+    before do
+      devicegraphs = Y2Partitioner::DeviceGraphs.instance
+      allow(devicegraphs).to receive(:devices_edited?).and_return(true)
+
+      allow(Y2Partitioner::DeviceGraphs).to receive(:instance).and_return(devicegraphs)
+
+      allow(Yast2::Popup).to receive(:show).and_return(accept)
+    end
+
+    let(:accept) { nil }
+
+    it "shows a confirmation popup" do
+      expect(Yast2::Popup).to receive(:show)
+
+      subject.abort_handler
+    end
+
+    context "and the user accepts" do
+      let(:accept) { :yes }
+
+      it "aborts (returns true)" do
+        expect(subject.abort_handler).to eq(true)
+      end
+    end
+
+    context "and the user does not accept" do
+      let(:accept) { :no }
+
+      it "does not abort (returns false)" do
+        expect(subject.abort_handler).to eq(false)
+      end
+    end
+  end
 end
