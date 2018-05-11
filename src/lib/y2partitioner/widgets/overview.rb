@@ -29,8 +29,11 @@ require "y2partitioner/ui_state"
 require "y2partitioner/widgets/pages"
 require "y2partitioner/setup_errors_presenter"
 require "y2storage/setup_checker"
+require "y2storage/used_storage_features"
 
 Yast.import "UI"
+Yast.import "PackageSystem"
+Yast.import "Mode"
 
 module Y2Partitioner
   module Widgets
@@ -113,13 +116,21 @@ module Y2Partitioner
       end
 
       # @macro seeAbstractWidget
+      #
+      # @return [Boolean]
+      def validate
+        valid_setup? && packages_installed?
+      end
+
+    private
+
       # Checks whether the current setup is valid, that is, it contains necessary
       # devices for booting (e.g., /boot/efi) and for the system runs properly (e.g., /).
       #
       # @see Y2Storage::SetupChecker
       #
       # @return [Boolean]
-      def validate
+      def valid_setup?
         setup_checker = Y2Storage::SetupChecker.new(device_graph)
         return true if setup_checker.valid?
 
@@ -140,7 +151,19 @@ module Y2Partitioner
         end
       end
 
-    private
+      # Checks whether the needed packages are installed
+      #
+      # As a side effect, it will ask the user to install missing packages.
+      #
+      # @see Y2Storage::UsedStorageFeatures
+      #
+      # @return [Boolean]
+      def packages_installed?
+        return true if Yast::Mode.installation
+        used_features = Y2Storage::UsedStorageFeatures.new(device_graph)
+        used_features.collect_features
+        Yast::PackageSystem.CheckAndInstallPackages(used_features.feature_packages)
+      end
 
       # @return [String]
       attr_reader :hostname
