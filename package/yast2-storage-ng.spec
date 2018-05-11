@@ -22,8 +22,8 @@ Release:	0
 BuildRoot:	%{_tmppath}/%{name}-%{version}-build
 Source:		%{name}-%{version}.tar.bz2
 
-# Yast::Report.yesno_popup
-Requires:	yast2 >= 4.0.61
+# CWM::Dialog#abort_handler
+Requires:	yast2 >= 4.0.73
 # for AbortException and handle direct abort
 Requires:	yast2-ruby-bindings >= 4.0.6
 # function light_probe
@@ -39,8 +39,8 @@ BuildRequires:	yast2-devtools
 # yast2-xml dependency is added by yast2 but ignored in the
 # openSUSE:Factory project config
 BuildRequires:  yast2-xml
-# Yast::Report.yesno_popup
-BuildRequires:	yast2 >= 4.0.61
+# CWM::Dialog#abort_handler
+BuildRequires:	yast2 >= 4.0.73
 # for AbortException and handle direct abort
 BuildRequires:	yast2-ruby-bindings >= 4.0.6
 BuildRequires:	rubygem(yast-rake)

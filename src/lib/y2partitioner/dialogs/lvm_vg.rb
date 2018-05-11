@@ -20,8 +20,8 @@
 # find current contact information at www.suse.com.
 
 require "yast"
-require "cwm/dialog"
 require "cwm/common_widgets"
+require "y2partitioner/dialogs/base"
 require "y2partitioner/widgets/lvm_vg_devices_selector"
 
 Yast.import "Popup"
@@ -29,7 +29,7 @@ Yast.import "Popup"
 module Y2Partitioner
   module Dialogs
     # Form to set the name, extent size and devices of a volume group
-    class LvmVg < CWM::Dialog
+    class LvmVg < Base
       # Constructor
       #
       # @param controller [Actions::Controllers::LvmVg]

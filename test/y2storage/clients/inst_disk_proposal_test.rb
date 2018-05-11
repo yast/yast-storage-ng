@@ -533,7 +533,7 @@ describe Y2Storage::Clients::InstDiskProposal do
         end
 
         context "and the system was reprobed" do
-          let(:staging_revisions) { [1, 2] }
+          let(:staging_revisions) { [1, 1, 2] }
 
           before do
             allow(Y2Storage::GuidedProposal).to receive(:initial)

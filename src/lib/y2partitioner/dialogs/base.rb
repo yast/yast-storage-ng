@@ -19,41 +19,17 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "yast"
-require "yast/i18n"
 require "cwm/dialog"
-require "y2partitioner/widgets/summary_text"
-require "y2partitioner/actions/quit_partitioner"
-
-Yast.import "Label"
 
 module Y2Partitioner
   module Dialogs
-    # Dialog to show the summary of changes performed by the user
-    class Summary < CWM::Dialog
-      include Yast::I18n
-
-      def initialize
-        textdomain "storage"
-      end
-
-      def title
-        _("Expert Partitioner: Summary")
-      end
-
-      def contents
-        @contents ||= VBox(Widgets::SummaryText.new)
-      end
-
-      def next_button
-        Yast::Label.FinishButton
-      end
-
-      # @see Actions::QuitPartitioner#quit?
-      #
-      # @return [Boolean] it aborts if returns true
-      def abort_handler
-        Actions::QuitPartitioner.new.quit?
+    # In general, no dialog in the Expert Partitioner should show "abort" button,
+    # so all dialogs can use this base class to label abort button as "Cancel".
+    #
+    # Only main dialog shows the abort button (in a running system).
+    class Base < CWM::Dialog
+      def abort_button
+        Yast::Label.CancelButton
       end
     end
   end

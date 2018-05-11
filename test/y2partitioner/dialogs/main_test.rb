@@ -27,16 +27,23 @@ require "y2partitioner/dialogs/main"
 
 describe Y2Partitioner::Dialogs::Main do
   before do
-    fake_scenario("one-empty-disk")
+    devicegraph_stub("empty_hard_disk_50GiB")
 
     allow(Yast::Mode).to receive(:installation).and_return(installation)
+
+    devicegraphs = Y2Partitioner::DeviceGraphs.instance
+    allow(devicegraphs).to receive(:devices_edited?).and_return(devices_edited)
+
+    allow(Y2Partitioner::DeviceGraphs).to receive(:instance).and_return(devicegraphs)
   end
 
   let(:installation) { true }
 
-  let(:system_graph) { Y2Storage::StorageManager.instance.probed }
+  let(:devices_edited) { false }
 
-  let(:initial_graph) { Y2Storage::StorageManager.instance.staging }
+  let(:system_graph) { Y2Partitioner::DeviceGraphs.instance.system }
+
+  let(:initial_graph) { Y2Partitioner::DeviceGraphs.instance.current }
 
   subject { described_class.new(system_graph, initial_graph) }
 
@@ -45,14 +52,7 @@ describe Y2Partitioner::Dialogs::Main do
   describe "#run" do
     before do
       allow_any_instance_of(CWM::Dialog).to receive(:run).and_return(dialog_result)
-
-      allow(Y2Partitioner::DeviceGraphs).to receive(:instance).and_return(device_graphs)
-      allow(device_graphs).to receive(:current).and_return(new_graph)
     end
-
-    let(:device_graphs) { instance_double(Y2Partitioner::DeviceGraphs) }
-
-    let(:new_graph) { nil }
 
     let(:dialog_result) { nil }
 
@@ -62,10 +62,10 @@ describe Y2Partitioner::Dialogs::Main do
         subject.run
       end
 
-      it "saves the devicegraph" do
+      it "stores the current devicegraph" do
         expect(subject.device_graph).to be_nil
         subject.run
-        expect(subject.device_graph).to eq(new_graph)
+        expect(subject.device_graph).to eq(Y2Partitioner::DeviceGraphs.instance.current)
       end
 
       it "return :next" do
@@ -76,59 +76,66 @@ describe Y2Partitioner::Dialogs::Main do
     context "when running during installation" do
       let(:installation) { true }
 
+      context "and the user goes back" do
+        let(:dialog_result) { :back }
+
+        it "returns :back" do
+          expect(subject.run).to eq(:back)
+        end
+      end
+
+      context "and the user cancels" do
+        let(:dialog_result) { :abort }
+
+        it "returns :back" do
+          expect(subject.run).to eq(:back)
+        end
+      end
+
       context "and there are no changes" do
-        let(:new_graph) { initial_graph }
+        let(:devices_edited) { false }
 
         context "and the user accepts the dialog (next)" do
           let(:dialog_result) { :next }
 
           include_examples "actions when accepts"
         end
-
-        # TODO: Not implement yet because the current behaviour must be revised
-        context "and the user goes back"
-
-        # TODO: Not implement yet because the current behaviour must be revised
-        context "and the user aborts"
       end
 
       context "and there are changes" do
-        let(:storage) { Y2Storage::StorageManager.instance.storage }
-        let(:new_graph) { Y2Storage::Devicegraph.new(storage.create_devicegraph("fake")) }
+        let(:devices_edited) { true }
 
         context "and the user accepts the dialog (next)" do
           let(:dialog_result) { :next }
 
           include_examples "actions when accepts"
         end
-
-        # TODO: Not implement yet because the current behaviour must be revised
-        context "and the user goes back"
-
-        # TODO: Not implement yet because the current behaviour must be revised
-        context "and the user aborts"
       end
     end
 
     context "when running in an installed system" do
       let(:installation) { false }
 
+      context "and the user aborts" do
+        let(:dialog_result) { :abort }
+
+        it "returns :abort" do
+          expect(subject.run).to eq(:abort)
+        end
+      end
+
       context "and there are no changes" do
-        let(:new_graph) { initial_graph }
+        let(:devices_edited) { false }
 
         context "and the user accepts the dialog (next)" do
           let(:dialog_result) { :next }
 
           include_examples "actions when accepts"
         end
-
-        # TODO: Not implement yet because the current behaviour must be revised
-        context "and the user aborts"
       end
 
       context "and there are changes" do
-        let(:storage) { Y2Storage::StorageManager.instance.storage }
-        let(:new_graph) { Y2Storage::Devicegraph.new(storage.create_devicegraph("fake")) }
+        let(:devices_edited) { true }
 
         before do
           allow(Y2Partitioner::Dialogs::Summary).to receive(:run).and_return(summary_result)
@@ -150,25 +157,37 @@ describe Y2Partitioner::Dialogs::Main do
             it "saves the devicegraph" do
               expect(subject.device_graph).to be_nil
               subject.run
-              expect(subject.device_graph).to eq(new_graph)
+              expect(subject.device_graph).to eq(Y2Partitioner::DeviceGraphs.instance.current)
             end
 
             it "return :next" do
               expect(subject.run).to eq(:next)
             end
           end
-
-          # TODO: Not implement yet because the current behaviour must be revised
-          context "and the user aborts"
         end
-
-        # TODO: Not implement yet because the current behaviour must be revised
-        context "and the user aborts"
       end
     end
   end
 
-  context "#next_button" do
+  describe "#abort_button" do
+    context "when running during installation" do
+      let(:installation) { true }
+
+      it "returns 'Cancel' label" do
+        expect(subject.abort_button).to eq(Yast::Label.CancelButton)
+      end
+    end
+
+    context "when running in an installed system" do
+      let(:installation) { false }
+
+      it "returns 'Abort' label" do
+        expect(subject.abort_button).to eq(Yast::Label.AbortButton)
+      end
+    end
+  end
+
+  describe "#next_button" do
     context "when running during installation" do
       let(:installation) { true }
 
@@ -180,15 +199,8 @@ describe Y2Partitioner::Dialogs::Main do
     context "when running in an installed system" do
       let(:installation) { false }
 
-      before do
-        allow(Y2Partitioner::DeviceGraphs).to receive(:instance).and_return(device_graphs)
-        allow(device_graphs).to receive(:current).and_return(new_graph)
-      end
-
-      let(:device_graphs) { instance_double(Y2Partitioner::DeviceGraphs) }
-
       context "and there are no changes" do
-        let(:new_graph) { initial_graph }
+        let(:devices_edited) { false }
 
         it "returns 'Finish' label" do
           expect(subject.next_button).to eq(Yast::Label.FinishButton)
@@ -196,13 +208,72 @@ describe Y2Partitioner::Dialogs::Main do
       end
 
       context "and there are changes" do
-        let(:storage) { Y2Storage::StorageManager.instance.storage }
-        let(:new_graph) { Y2Storage::Devicegraph.new(storage.create_devicegraph("fake")) }
+        let(:devices_edited) { true }
 
         it "returns 'Next' label" do
           expect(subject.next_button).to eq(Yast::Label.NextButton)
         end
       end
     end
+  end
+
+  shared_examples "quiting partitioner" do
+    context "when there are no changes" do
+      let(:devices_edited) { false }
+
+      it "does not show a confirmation popup" do
+        expect(Yast2::Popup).to_not receive(:show)
+
+        subject.send(tested_method)
+      end
+
+      it "aborts (returns true)" do
+        expect(subject.send(tested_method)).to eq(true)
+      end
+    end
+
+    context "when there are changes" do
+      let(:devices_edited) { true }
+
+      before do
+        allow(Yast2::Popup).to receive(:show).and_return(accept)
+      end
+
+      let(:accept) { nil }
+
+      it "shows a confirmation popup" do
+        expect(Yast2::Popup).to receive(:show)
+
+        subject.send(tested_method)
+      end
+
+      context "and the user accepts" do
+        let(:accept) { :yes }
+
+        it "aborts (returns true)" do
+          expect(subject.send(tested_method)).to eq(true)
+        end
+      end
+
+      context "and the user does not accept" do
+        let(:accept) { :no }
+
+        it "does not abort (returns false)" do
+          expect(subject.send(tested_method)).to eq(false)
+        end
+      end
+    end
+  end
+
+  describe "#abort_handler" do
+    let(:tested_method) { :abort_handler }
+
+    include_examples "quiting partitioner"
+  end
+
+  describe "#back_handler" do
+    let(:tested_method) { :back_handler }
+
+    include_examples "quiting partitioner"
   end
 end

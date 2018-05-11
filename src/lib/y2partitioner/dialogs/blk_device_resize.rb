@@ -21,10 +21,10 @@
 
 require "yast"
 require "yast2/popup"
-require "cwm/dialog"
 require "cwm/custom_widget"
 require "cwm/common_widgets"
 require "y2storage"
+require "y2partitioner/dialogs/base"
 require "y2partitioner/widgets/controller_radio_buttons"
 require "y2partitioner/device_graphs"
 require "y2partitioner/size_parser"
@@ -33,7 +33,7 @@ require "y2partitioner/filesystem_errors"
 module Y2Partitioner
   module Dialogs
     # Dialog to set the new size for a partition or LVM LV
-    class BlkDeviceResize < CWM::Dialog
+    class BlkDeviceResize < Base
       # Constructor
       #
       # @param device [Y2Storage::Partition, Y2Storage::LvmLv] device to resize

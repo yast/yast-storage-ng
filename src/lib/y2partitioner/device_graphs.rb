@@ -44,16 +44,31 @@ module Y2Partitioner
     end
 
     # Devicegraph representing the system
+    #
+    # @return [Y2Storage::Devicegraph]
     attr_reader :system
+
+    # Devicegraph representing the initial state
+    #
+    # @note The initial state is useful to known if something has been modified.
+    #
+    # @return [Y2Storage::Devicegraph]
+    attr_reader :initial
+
     # Working Devicegraph, to be modified during the partitioner execution
+    #
+    # @return [Y2Storage::Devicegraph]
     attr_accessor :current
 
+    # Disk analyzer for the system graph
+    #
+    # @return [Y2Storage::DiskAnalyzer]
     attr_reader :disk_analyzer
 
     def initialize(system: nil, initial: nil)
       @system = system || storage_manager.probed
-      initial ||= storage_manager.staging
-      @current = initial.dup
+      @initial = initial || storage_manager.staging
+      @current = @initial.dup
       @checkpoints = {}
     end
 
@@ -125,6 +140,13 @@ module Y2Partitioner
     # @return [Y2Storage::Devicegraph]
     def checkpoint(device)
       @checkpoints[device.sid]
+    end
+
+    # Whether initial devices have been modified
+    #
+    # @return [Boolean]
+    def devices_edited?
+      current != initial
     end
 
   private
