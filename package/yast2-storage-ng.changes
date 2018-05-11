@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Fri May 11 10:08:24 UTC 2018 - jlopez@suse.com
+
+- Partitioner: allow to select only valid parity algorithms when
+  creating a new MD RAID (bsc#1090182).
+
+-------------------------------------------------------------------
 Fri May 11 07:36:18 UTC 2018 - ancor@suse.com
 
 - Partitioner: "Configure..." button allowing to execute the

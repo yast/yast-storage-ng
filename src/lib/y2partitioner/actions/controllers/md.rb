@@ -156,6 +156,15 @@ module Y2Partitioner
           md.size
         end
 
+        # Allowed partity algorithms
+        #
+        # Allowed parities depends on the RAID type and the number of devices in the Md RAID
+        #
+        # @return [Array<Y2Storage::MdParity>]
+        def md_parities
+          md.allowed_md_parities
+        end
+
         # Sets the name of the Md device
         #
         # Unlike {Y2Storage::Md#md_name=}, setting the value to nil or empty will
@@ -200,11 +209,12 @@ module Y2Partitioner
 
         # Whether is possible to set the parity configuration for the current Md device
         #
-        # @note Parity algorithm only makes sense for Raid5, Raid6 and Raid10.
+        # @note Parity algorithm only makes sense for Raid5, Raid6 and Raid10, see
+        #   {Y2Storage::Md#allowed_md_parities}
         #
         # @return [Boolean]
         def parity_supported?
-          [:raid5, :raid6, :raid10].include?(md.md_level.to_sym)
+          md.allowed_md_parities.any?
         end
 
         # Minimal number of devices required for the Md object.
