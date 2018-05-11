@@ -26,9 +26,9 @@ require "y2partitioner/device_graphs"
 
 module Y2Partitioner
   module Actions
-    # Action when quiting the Expert Partitioner
+    # Action when quitting the Expert Partitioner without committing the changes
     #
-    # Before quiting the Expert Partitioner, some checks must be performed.
+    # Before quitting the Expert Partitioner, some checks must be performed.
     # For example, it is necessary to check whether some devices or settings
     # have been modified, and in such case, notify the user about it.
     class QuitPartitioner
@@ -70,7 +70,7 @@ module Y2Partitioner
         DeviceGraphs.instance.devices_edited?
       end
 
-      # Confirmation popup before quiting the Expert Partitioner
+      # Confirmation popup before quitting the Expert Partitioner
       #
       # @return [:symbol] :yes, :no
       def confirmation
