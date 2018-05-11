@@ -169,6 +169,7 @@ module Y2Partitioner
         # @param id [Symbol] see {#id}
         # @param label [String] string marked for translation to be used by {#label}
         # @param icon [String] see {#icon}
+        # @param client [String] see {#client}
         # @param pkgs [Array<String>] see {#pkgs}
         def initialize(id, label, icon, client, pkgs)
           textdomain "storage"
@@ -245,10 +246,10 @@ module Y2Partitioner
         # @return [Symbol] identifier for the action
         attr_reader :id
 
-        # @return [Symbol] identifier for the action
+        # @return [String] name of the icon to display next to the label
         attr_reader :icon
 
-        # @return [String] name of the icon to display next to the label
+        # @return [Symbol] name of the YaST client implementing the action
         attr_reader :client
 
         # @return [Array<String>] name of the packages needed to run the action
