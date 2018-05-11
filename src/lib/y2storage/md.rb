@@ -84,10 +84,22 @@ module Y2Storage
     storage_forward :md_level=
 
     # @!attribute md_parity
-    #   Parity of the MD RAID.
+    #   Parity of the MD RAID, only meaningful for RAID5, RAID6 and RAID10.
+    #
+    #   @note Setting the parity is only meaningful for RAID5, RAID6 and RAID10
+    #       and for MD RAIDs not created on disk yet.
+    #
     #   @return [MdParity]
     storage_forward :md_parity, as: "MdParity"
     storage_forward :md_parity=
+
+    # @!method allowed_md_parities
+    #   Get the allowed parities for the MD RAID. Only meaningful for
+    #   RAID5, RAID6 and RAID10. So far depends on the MD RAID level and
+    #   the number of devices.
+    #
+    #   @return [Array<MdParity>]
+    storage_forward :allowed_md_parities, as: "MdParity"
 
     # @!attribute chunk_size
     #   Chunk size of the MD RAID.
