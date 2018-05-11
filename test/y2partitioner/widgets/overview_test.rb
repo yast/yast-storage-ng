@@ -247,7 +247,7 @@ describe Y2Partitioner::Widgets::OverviewTreePager do
       allow(Y2Storage::UsedStorageFeatures).to receive(:new).and_return(used_features)
       allow(used_features).to receive(:feature_packages).and_return(["xfsprogs"])
       allow(Yast::PackageSystem).to receive(:CheckAndInstallPackages)
-        .and_return(true)
+        .and_return(installed_packages)
       allow(Yast::Mode).to receive(:installation).and_return(installation)
     end
 
@@ -263,7 +263,7 @@ describe Y2Partitioner::Widgets::OverviewTreePager do
 
     let(:used_features) { Y2Storage::UsedStorageFeatures.new(current_graph) }
 
-    let(:installed_packages) { false }
+    let(:installed_packages) { true }
 
     let(:installation) { false }
 
@@ -309,6 +309,14 @@ describe Y2Partitioner::Widgets::OverviewTreePager do
             subject.validate
           end
 
+          context "but the user refuses to install them " do
+            let(:installed_packages) { false }
+
+            it "returns false" do
+              expect(subject.validate).to eq(false)
+            end
+          end
+
           context "but running on installation" do
             let(:installation) { true }
 
@@ -350,6 +358,14 @@ describe Y2Partitioner::Widgets::OverviewTreePager do
         expect(Yast::PackageSystem).to receive(:CheckAndInstallPackages)
           .with(["xfsprogs"])
         subject.validate
+      end
+
+      context "but the user refuses to install them " do
+        let(:installed_packages) { false }
+
+        it "returns false" do
+          expect(subject.validate).to eq(false)
+        end
       end
 
       context "but running on installation" do
