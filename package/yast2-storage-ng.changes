@@ -2,8 +2,9 @@
 Fri May 11 10:31:10 UTC 2018 - jlopez@suse.com
 
 - Partitioner: fix buttons to abort and to go back
-  (part of fate#318196).
-- 4.0.179
+  (part of fate#318196 and related to bsc#1075443).
+- Partitioner: fixed detection of reprobed system to avoid
+  unnecessary proposal re-calculation.
 
 -------------------------------------------------------------------
 Fri May 11 10:08:24 UTC 2018 - jlopez@suse.com
