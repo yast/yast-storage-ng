@@ -104,7 +104,7 @@ module Y2Partitioner
         end
 
         def items
-          @controller.md_parities.map { |p| [p.to_s, Y2Storage::MdParity.find(p).to_human_string] }
+          @controller.md_parities.map { |p| [p.to_s, p.to_human_string] }
         end
 
         # @macro seeAbstractWidget
