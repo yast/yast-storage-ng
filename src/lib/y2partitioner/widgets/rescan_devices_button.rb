@@ -21,9 +21,7 @@
 
 require "yast"
 require "cwm/widget"
-require "y2partitioner/device_graphs"
-require "y2partitioner/exceptions"
-require "y2storage/storage_manager"
+require "y2partitioner/widgets/reprobe"
 
 Yast.import "Popup"
 Yast.import "Mode"
@@ -32,6 +30,8 @@ module Y2Partitioner
   module Widgets
     # Button for rescanning system devices
     class RescanDevicesButton < CWM::PushButton
+      include Reprobe
+
       def initialize
         textdomain "storage"
       end
@@ -68,24 +68,6 @@ module Y2Partitioner
         else
           _("Re-scanning the storage devices will invalidate all the previous\n" \
             "changes with no possibility to withdraw.")
-        end
-      end
-
-      # Reprobes and updates devicegraphs for the partitioner.
-      #
-      # @note A message is shown during the reprobing action.
-      #
-      # @raise [Y2Partitioner::ForcedAbortError] When there is an error during probing
-      #   and the user decides to abort, or probed devicegraph contains errors and the
-      #   user decides to not sanitize.
-      def reprobe
-        Yast::Popup.Feedback("", _("Rescanning disks...")) do
-          probe_performed = Y2Storage::StorageManager.instance.probe
-          raise Y2Partitioner::ForcedAbortError unless probe_performed
-
-          probed = Y2Storage::StorageManager.instance.probed
-          staging = Y2Storage::StorageManager.instance.staging
-          DeviceGraphs.create_instance(probed, staging)
         end
       end
     end
