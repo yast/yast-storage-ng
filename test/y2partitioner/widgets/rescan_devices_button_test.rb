@@ -2,7 +2,7 @@ require_relative "../test_helper"
 
 require "cwm/rspec"
 require "y2partitioner/widgets/rescan_devices_button"
-require_relative "reprobe"
+require_relative "#{TEST_PATH}/support/partitioner_reprobe_examples"
 
 describe Y2Partitioner::Widgets::RescanDevicesButton do
   before do

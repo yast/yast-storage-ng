@@ -24,7 +24,7 @@ require_relative "../test_helper"
 
 require "cwm/rspec"
 require "y2partitioner/widgets/configure"
-require_relative "reprobe"
+require_relative "#{TEST_PATH}/support/partitioner_reprobe_examples"
 
 describe Y2Partitioner::Widgets::Configure do
   subject(:widget) { described_class.new }
