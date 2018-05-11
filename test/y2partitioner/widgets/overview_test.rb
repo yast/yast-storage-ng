@@ -45,11 +45,11 @@ describe Y2Partitioner::Widgets::OverviewTreePager do
 
   let(:control_file) { "caasp.xml" }
 
+  let(:current_graph) { Y2Partitioner::DeviceGraphs.instance.current }
+
   include_examples "CWM::Pager"
 
   describe "#device_page" do
-    let(:current_graph) { Y2Partitioner::DeviceGraphs.instance.current }
-
     let(:vg) { Y2Storage::LvmVg.find_by_vg_name(current_graph, "vg0") }
 
     context "when there is a page associated to the requested device" do
@@ -244,6 +244,11 @@ describe Y2Partitioner::Widgets::OverviewTreePager do
       allow(presenter).to receive(:to_html).and_return("html representation")
 
       allow(Yast2::Popup).to receive(:show).and_return(user_input)
+      allow(Y2Storage::UsedStorageFeatures).to receive(:new).and_return(used_features)
+      allow(used_features).to receive(:feature_packages).and_return(["xfsprogs"])
+      allow(Yast::PackageSystem).to receive(:CheckAndInstallPackages)
+        .and_return(installed_packages)
+      allow(Yast::Mode).to receive(:installation).and_return(installation)
     end
 
     let(:checker) { instance_double(Y2Storage::SetupChecker) }
@@ -255,6 +260,12 @@ describe Y2Partitioner::Widgets::OverviewTreePager do
     let(:user_input) { nil }
 
     let(:fatal_errors) { [] }
+
+    let(:used_features) { Y2Storage::UsedStorageFeatures.new(current_graph) }
+
+    let(:installed_packages) { true }
+
+    let(:installation) { false }
 
     context "when the current setup is not valid" do
       context "and when errors are fatal" do
@@ -269,6 +280,11 @@ describe Y2Partitioner::Widgets::OverviewTreePager do
         it "prevents continuing" do
           expect(Yast2::Popup).to receive(:show)
           expect(subject.validate).to eq(false)
+        end
+
+        it "does not check for missing packages" do
+          expect(Yast::PackageSystem).to_not receive(:CheckAndInstallPackages)
+          subject.validate
         end
       end
 
@@ -286,6 +302,29 @@ describe Y2Partitioner::Widgets::OverviewTreePager do
           it "returns true" do
             expect(subject.validate).to eq(true)
           end
+
+          it "checks for needed packages" do
+            expect(Yast::PackageSystem).to receive(:CheckAndInstallPackages)
+              .with(["xfsprogs"])
+            subject.validate
+          end
+
+          context "but the user refuses to install them " do
+            let(:installed_packages) { false }
+
+            it "returns false" do
+              expect(subject.validate).to eq(false)
+            end
+          end
+
+          context "but running on installation" do
+            let(:installation) { true }
+
+            it "does not check for missing packages" do
+              expect(Yast::PackageSystem).to_not receive(:CheckAndInstallPackages)
+              subject.validate
+            end
+          end
         end
 
         context "and the user declines to continue" do
@@ -293,6 +332,11 @@ describe Y2Partitioner::Widgets::OverviewTreePager do
 
           it "returns false" do
             expect(subject.validate).to eq(false)
+          end
+
+          it "does not check for missing packages" do
+            expect(Yast::PackageSystem).to_not receive(:CheckAndInstallPackages)
+            subject.validate
           end
         end
       end
@@ -308,6 +352,29 @@ describe Y2Partitioner::Widgets::OverviewTreePager do
 
       it "returns true" do
         expect(subject.validate).to eq(true)
+      end
+
+      it "checks for needed packages" do
+        expect(Yast::PackageSystem).to receive(:CheckAndInstallPackages)
+          .with(["xfsprogs"])
+        subject.validate
+      end
+
+      context "but the user refuses to install them " do
+        let(:installed_packages) { false }
+
+        it "returns false" do
+          expect(subject.validate).to eq(false)
+        end
+      end
+
+      context "but running on installation" do
+        let(:installation) { true }
+
+        it "does not check for missing packages" do
+          expect(Yast::PackageSystem).to_not receive(:CheckAndInstallPackages)
+          subject.validate
+        end
       end
     end
   end
