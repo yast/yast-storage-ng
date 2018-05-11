@@ -37,8 +37,8 @@ RSpec.shared_examples "reprobing" do
     subject.handle(*handle_args)
   end
 
-  it "returns :reprobe" do
-    expect(subject.handle(*handle_args)).to eq(:reprobe)
+  it "returns :redraw" do
+    expect(subject.handle(*handle_args)).to eq(:redraw)
   end
 
   context "and the probing could not be correctly performed" do

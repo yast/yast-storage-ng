@@ -58,7 +58,7 @@ module Y2Partitioner
       # Event handler for the configuration menu
       #
       # @param event [Hash] UI event
-      # @return [:reprobe, nil] :reprobe when some configuration client was
+      # @return [:redraw, nil] :redraw when some configuration client was
       #   executed; nil otherwise.
       def handle(event)
         action = Action.find(event["ID"])
@@ -68,7 +68,7 @@ module Y2Partitioner
 
         Yast::WFM.call(action.client)
         reprobe
-        :reprobe
+        :redraw
       end
 
     private
