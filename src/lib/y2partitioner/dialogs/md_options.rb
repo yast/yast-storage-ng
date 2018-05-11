@@ -104,7 +104,7 @@ module Y2Partitioner
         end
 
         def items
-          PARITIES.map { |p| [p.to_s, Y2Storage::MdParity.find(p).to_human_string] }
+          @controller.md_parities.map { |p| [p.to_s, Y2Storage::MdParity.find(p).to_human_string] }
         end
 
         # @macro seeAbstractWidget
@@ -116,10 +116,6 @@ module Y2Partitioner
         def store
           @controller.md_parity = Y2Storage::MdParity.find(value)
         end
-
-        PARITIES = [:default, :near_2, :offset_2, :far_2, :near_3, :offset_3, :far_3].freeze
-
-        private_constant :PARITIES
       end
     end
   end

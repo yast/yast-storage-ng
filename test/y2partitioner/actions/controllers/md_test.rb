@@ -648,6 +648,14 @@ describe Y2Partitioner::Actions::Controllers::Md do
     end
   end
 
+  describe "#md_parities" do
+    it "returns the allowed parity algorithms for the Md device" do
+      md = controller.md
+      md.md_level = Y2Storage::MdLevel::RAID10
+      expect(controller.md_parities).to eq(md.allowed_md_parities)
+    end
+  end
+
   describe "#wizard_title" do
     subject(:controller) { described_class.new(md: md) }
 
