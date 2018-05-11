@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Fri May 11 07:36:18 UTC 2018 - ancor@suse.com
+
+- Partitioner: "Configure..." button allowing to execute the
+  YaST clients for iSCI, FCoE, DASD, zFCP and XPRAM (bsc#1090753).
+
+-------------------------------------------------------------------
 Wed May  9 08:21:50 UTC 2018 - igonzalezsosa@suse.com
 
 - AutoYaST: do not crash when size is set to 'auto' for a partition
