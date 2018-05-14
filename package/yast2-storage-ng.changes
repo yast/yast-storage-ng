@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Mon May 14 16:43:05 UTC 2018 - ancor@suse.com
+
+- Expose the active flag of the MountPoint class (needed for the
+  definitive fix for bsc#1064437 in modern distributions).
+- 4.0.180
+
+-------------------------------------------------------------------
 Fri May 11 14:05:49 UTC 2018 - igonzalezsosa@suse.com
 
 - Partitioner: check whether required packages are installed
