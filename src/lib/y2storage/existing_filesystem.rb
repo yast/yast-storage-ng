@@ -26,10 +26,8 @@ require "y2storage/fstab"
 Yast.import "OSRelease"
 
 module Y2Storage
-  #
   # Class representing a filesystem in the system and providing
   # convenience methods to inspect its content
-  #
   class ExistingFilesystem
     include Yast::Logger
 
@@ -44,11 +42,6 @@ module Y2Storage
 
     def device
       filesystem.blk_devices.first
-    end
-
-    def installation_medium?
-      set_attributes unless processed?
-      @installation_medium
     end
 
     def release_name
@@ -68,7 +61,6 @@ module Y2Storage
 
     def set_attributes
       mount
-      @installation_medium = check_installation_medium
       @release_name = read_release_name
       @fstab = read_fstab
       umount
@@ -99,24 +91,6 @@ module Y2Storage
       cmd = "/usr/bin/umount -R #{@mount_point}"
       log.debug("Unmounting: #{cmd}")
       raise "umount failed for #{@mount_point}" unless system(cmd)
-    end
-
-    # Check if the filesystem mounted at 'mount_point' is an installation medium.
-    #
-    # @return [Boolean] 'true' if it is an installation medium, 'false' if not.
-    def check_installation_medium
-      control_file = "control.xml"
-      instsys_control_file = File.join(@root, control_file)
-      current_control_file = File.join(@mount_point, control_file)
-
-      return false unless File.exist?(current_control_file)
-
-      if !File.exist?(instsys_control_file)
-        log.error("ERROR: Check file #{instsys_control_file} does not exist in inst-sys")
-        return false
-      end
-
-      FileUtils.identical?(instsys_control_file, current_control_file)
     end
 
     def read_release_name

@@ -30,6 +30,8 @@ Requires:	yast2-ruby-bindings >= 4.0.6
 Requires:	libstorage-ng-ruby >= 3.3.254
 # communicate with udisks
 Requires:	rubygem(ruby-dbus)
+# Y2Packager::Repository
+Requires:	yast2-packager >= 3.3.7
 
 BuildRequires:	update-desktop-files
 # function light_probe
@@ -47,6 +49,8 @@ BuildRequires:	rubygem(yast-rake)
 BuildRequires:	rubygem(rspec)
 # communicate with udisks
 BuildRequires:	rubygem(ruby-dbus)
+# Y2Packager::Repository
+BuildRequires:	yast2-packager >= 3.3.7
 PreReq:         %fillup_prereq
 
 Obsoletes:	yast2-storage
