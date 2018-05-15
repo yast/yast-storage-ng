@@ -21,6 +21,7 @@
 
 require "yast"
 require "y2storage/proposal/initial_strategies/base"
+require "y2storage/proposal/settings_adjustment"
 
 module Y2Storage
   module Proposal
@@ -55,54 +56,84 @@ module Y2Storage
           # Try proposal with initial settings
           current_settings = settings || ProposalSettings.new_for_current_product
           log.info("Trying proposal with initial settings: #{current_settings}")
-          proposal = try_proposal(Yast.deep_copy(current_settings), devicegraph, disk_analyzer)
+          proposal = try_proposal(Yast.deep_copy(current_settings), devicegraph, disk_analyzer, nil)
 
           loop do
-            volume = first_configurable_volume(current_settings)
+            volume = first_configurable_volume(proposal.settings)
 
             return proposal if !proposal.failed? || volume.nil?
 
-            proposal = try_without_adjust_by_ram(proposal, current_settings, volume,
-              devicegraph, disk_analyzer)
+            proposal = try_without_adjust_by_ram(proposal, volume, devicegraph, disk_analyzer)
 
-            proposal = try_without_snapshots(proposal, current_settings, volume,
-              devicegraph, disk_analyzer)
+            proposal = try_without_snapshots(proposal, volume, devicegraph, disk_analyzer)
 
-            proposal = try_without_proposed(proposal, current_settings, volume,
-              devicegraph, disk_analyzer)
+            proposal = try_without_proposed(proposal, volume, devicegraph, disk_analyzer)
           end
         end
 
       private
 
+        # @see Base#try_proposal
+        #
+        # In addition to the base behavior, this adds an extra argument to keep
+        # track of the adjustments done to the settings on every attempt.
+        #
+        # @param settings [ProposalSettings] see {Base#try_proposal}
+        # @param devicegraph [Devicegraph] see {Base#try_proposal}
+        # @param disk_analyzer [DiskAnalyzer] see {Base#try_proposal}
+        # @param adjustment [SettingsAdjustment, nil] adjustment performed so
+        #   far to the initial settings, nil for the initial attempt
+        #
+        # @return [GuidedProposal]
+        def try_proposal(settings, devicegraph, disk_analyzer, adjustment)
+          proposal = super(settings, devicegraph, disk_analyzer)
+          proposal.auto_settings_adjustment = adjustment || SettingsAdjustment.new
+          proposal
+        end
+
         # Try proposal again after disabling 'adjust_by_ram'
-        def try_without_adjust_by_ram(proposal, current_settings, volume, devicegraph, disk_analyzer)
+        def try_without_adjust_by_ram(proposal, volume, devicegraph, disk_analyzer)
           if proposal.failed? && adjust_by_ram_active_and_configurable?(volume)
-            volume.adjust_by_ram = false
-            log.info("Trying proposal after disabling 'adjust_by_ram' for '#{volume.mount_point}'")
-            proposal = try_proposal(Yast.deep_copy(current_settings), devicegraph, disk_analyzer)
+            proposal = retry_proposal(proposal, volume, :adjust_by_ram, devicegraph, disk_analyzer)
           end
           proposal
         end
 
         # Try proposal again after disabling 'snapshots'
-        def try_without_snapshots(proposal, current_settings, volume, devicegraph, disk_analyzer)
+        def try_without_snapshots(proposal, volume, devicegraph, disk_analyzer)
           if proposal.failed? && snapshots_active_and_configurable?(volume)
-            volume.snapshots = false
-            log.info("Trying proposal after disabling 'snapshots' for '#{volume.mount_point}'")
-            proposal = try_proposal(Yast.deep_copy(current_settings), devicegraph, disk_analyzer)
+            proposal = retry_proposal(proposal, volume, :snapshots, devicegraph, disk_analyzer)
           end
           proposal
         end
 
         # Try proposal again after disabling the volume
-        def try_without_proposed(proposal, current_settings, volume, devicegraph, disk_analyzer)
+        def try_without_proposed(proposal, volume, devicegraph, disk_analyzer)
           if proposal.failed? && proposed_active_and_configurable?(volume)
-            volume.proposed = false
-            log.info("Trying proposal after disabling '#{volume.mount_point}'")
-            proposal = try_proposal(Yast.deep_copy(current_settings), devicegraph, disk_analyzer)
+            proposal = retry_proposal(proposal, volume, :proposed, devicegraph, disk_analyzer)
           end
           proposal
+        end
+
+        # Tries a new proposal based on the previous one after having adapted
+        # one of the volumes of the settings
+        #
+        # @note This reuses and modifies the settings from the previous
+        #   proposal, that should be fine since the new proposal is aimed to
+        #   replace the previous one.
+        #
+        # @param proposal [GuidedProposal] initial proposal, its settings will
+        #   be adapted and reused (i.e. they will be modified)
+        # @param volume [VolumeSpecification] it must be one of the volumes from
+        #   the settings of the initial proposal
+        # @param attr [Symbol] name of the attribute to disable in the volume
+        # @param devicegraph [Devicegraph] see {#try_proposal}
+        # @param disk_analyzer [DiskAnalyzer] see {#try_proposal}
+        def retry_proposal(proposal, volume, attr, devicegraph, disk_analyzer)
+          volume.send(:"#{attr}=", false)
+          adjustment = proposal.auto_settings_adjustment.add_volume_attr(volume, attr, false)
+          log.info("Trying proposal after disabling '#{attr}' for '#{volume.mount_point}'")
+          try_proposal(proposal.settings, devicegraph, disk_analyzer, adjustment)
         end
 
         # Returns the first volume (according to disable_order) whose settings could be modified.

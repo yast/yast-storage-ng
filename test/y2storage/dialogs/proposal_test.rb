@@ -90,7 +90,9 @@ describe Y2Storage::Dialogs::Proposal do
       end
     end
 
-    let(:proposal) { double("Y2Storage::GuidedProposal", proposed?: proposed) }
+    let(:proposal) do
+      double("Y2Storage::GuidedProposal", proposed?: proposed, auto_settings_adjustment: nil)
+    end
 
     let(:proposed) { true }
 
@@ -209,7 +211,7 @@ describe Y2Storage::Dialogs::Proposal do
         it "displays an error message" do
           # We don't break the event loop, so there is a second call to UserInput
           expect(Yast::Wizard).to receive(:SetContents) do |_title, content|
-            expect(content.to_s).to include "not possible to automatically propose"
+            expect(content.to_s).to include "Guided Setup was not able to propose"
           end
           dialog.run
         end
