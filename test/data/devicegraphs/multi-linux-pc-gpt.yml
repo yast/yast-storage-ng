@@ -10,7 +10,6 @@
         name:         /dev/sda1
         id:           swap
         file_system:  swap
-        mount_point:  swap
         label:        swap
 
     - partition:
@@ -35,5 +34,4 @@
         size:         unlimited
         name:         /dev/sda5
         file_system:  xfs
-        mount_point:  /data
         label:        data

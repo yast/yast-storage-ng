@@ -10,7 +10,6 @@
         name:         /dev/sda1
         id:           swap
         file_system:  swap
-        mount_point:  swap
         label:        swap
 
     - partition:

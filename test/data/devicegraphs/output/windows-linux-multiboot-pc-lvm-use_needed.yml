@@ -17,7 +17,6 @@
         type: primary
         id: swap
         file_system: swap
-        mount_point: swap
         label: swap
     - partition:
         size: 43009 MiB

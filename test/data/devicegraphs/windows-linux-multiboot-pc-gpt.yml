@@ -17,12 +17,10 @@
         name:         /dev/sda2
         id:           swap
         file_system:  swap
-        mount_point:  swap
         label:        swap
 
     - partition:
         size:         unlimited
         name:         /dev/sda3
         file_system:  ext4
-        mount_point:  /
         label:        root

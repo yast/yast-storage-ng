@@ -10,7 +10,6 @@
         name:         /dev/sda1
         id:           swap
         file_system:  swap
-        mount_point:  swap
         label:        swap
 
     - partition:
@@ -42,5 +41,4 @@
         name:         /dev/sda6
         type:         logical
         file_system:  xfs
-        mount_point:  /data
         label:        data
