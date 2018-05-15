@@ -145,6 +145,20 @@ module Y2Storage
     #   @return [Boolean]
     storage_forward :in_etc_fstab?
 
+    # @!method active?
+    # 	Whether the mount point is mounted (probed devicegraph) or
+    # 	should be mounted (staging devicegraph)
+    #
+    # 	@return [Boolean]
+    storage_forward :active?
+
+    # @!method active=(value)
+    #
+    # 	Sets the {#active?} flag
+    #
+    # 	@param value [Boolean]
+    storage_forward :active=
+
     # @!method mountable
     #   Gets the mountable of the mount point (filesystem, BTRFS subvolume, etc)
     #
