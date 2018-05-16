@@ -49,8 +49,6 @@ BuildRequires:	rubygem(yast-rake)
 BuildRequires:	rubygem(rspec)
 # communicate with udisks
 BuildRequires:	rubygem(ruby-dbus)
-# Y2Packager::Repository
-BuildRequires:	yast2-packager >= 3.3.7
 PreReq:         %fillup_prereq
 
 Obsoletes:	yast2-storage

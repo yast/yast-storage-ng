@@ -147,6 +147,12 @@ describe Y2Storage::DiskAnalyzer do
 
     let(:candidate_disks) { analyzer.candidate_disks.map(&:name) }
 
+    before do
+      allow(Y2Packager::Repository).to receive(:all).and_return(repositories)
+    end
+
+    let(:repositories) { [] }
+
     it "returns a list with all disk devices" do
       expect(candidate_disks).to contain_exactly("/dev/sda", "/dev/sdb", "/dev/sdc")
     end
@@ -336,10 +342,6 @@ describe Y2Storage::DiskAnalyzer do
     end
 
     context "when there are installation repositories" do
-      before do
-        allow(Y2Packager::Repository).to receive(:all).and_return(repositories)
-      end
-
       let(:repositories) { [repository] }
 
       let(:repository) { instance_double(Y2Packager::Repository, local?: true, url: repository_url) }
