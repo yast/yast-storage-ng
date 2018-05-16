@@ -383,6 +383,8 @@ module Y2Storage
       @repositories_devices = local_repositories.map { |r| repository_devices(r) }.flatten
     end
 
+    # TODO: This method should be moved to Y2Packager::Repository class
+    #
     # Device names indicated in the URI of an installation repository
     #
     # For example:
