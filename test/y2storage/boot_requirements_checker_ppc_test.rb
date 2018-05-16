@@ -47,7 +47,7 @@ describe Y2Storage::BootRequirementsChecker do
     let(:prep_partition) { partition_double("/dev/sda1") }
 
     RSpec.shared_examples "PReP partition" do
-      context "if there are no PReP partitions in the target disk" do
+      context "if there are no suitable PReP partitions in the target disk" do
         let(:prep_partitions) { [] }
 
         it "requires only a new PReP partition (to allocate Grub2)" do
@@ -61,7 +61,7 @@ describe Y2Storage::BootRequirementsChecker do
         end
       end
 
-      context "if there is already a PReP partition in the disk" do
+      context "if there is already a suitable PReP partition in the disk" do
         let(:prep_partitions) { [prep_partition] }
 
         it "does not require any partition (PReP will be reused and Grub2 can handle this setup)" do
