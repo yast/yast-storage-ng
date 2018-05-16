@@ -251,6 +251,7 @@ module Y2Partitioner
         attr_reader :widget_id
 
         def initialize(devices, widget_id)
+          textdomain "storage"
           @devices = devices
           @widget_id = widget_id.to_s
         end
