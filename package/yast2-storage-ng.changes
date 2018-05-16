@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Wed May 16 10:59:27 UTC 2018 - igonzalezsosa@suse.com
+
+- Partitioner: fix several translation issues (bsc#1081837 and
+  bsc#1081601).
+
+-------------------------------------------------------------------
 Mon May 14 16:43:05 UTC 2018 - ancor@suse.com
 
 - Expose the active flag of the MountPoint class (needed for the
