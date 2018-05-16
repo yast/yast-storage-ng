@@ -59,12 +59,14 @@ describe Y2Storage::MatchVolumeSpec do
       volume.partition_id = volume_partition_id
       volume.fs_types = volume_fs_types
       volume.min_size = volume_min_size
+      volume.max_size_limit = volume_max_size_limit
     end
 
     let(:volume_mount_point) { "swap" }
     let(:volume_partition_id) { Y2Storage::PartitionId::SWAP }
     let(:volume_fs_types) { [Y2Storage::Filesystems::Type::SWAP, Y2Storage::Filesystems::Type::VFAT] }
     let(:volume_min_size) { Y2Storage::DiskSize.GiB(1) }
+    let(:volume_max_size_limit) { Y2Storage::DiskSize.GiB(10) }
 
     context "when it has the same values than the volume" do
       let(:mount_point) { volume_mount_point }
@@ -93,8 +95,20 @@ describe Y2Storage::MatchVolumeSpec do
       context "and the size is bigger than volume min size" do
         let(:size) { volume_min_size + 1.GiB }
 
-        it "returns true" do
-          expect(matcher.match_volume?(volume)).to eq(true)
+        context "and the size is smaller than the volume max size limit" do
+          let(:size) { volume_min_size + 1.GiB }
+
+          it "returns true" do
+            expect(matcher.match_volume?(volume)).to eq(true)
+          end
+        end
+
+        context "and the size is bigger than the volume max size limit" do
+          let(:size) { volume_max_size_limit + 1.GiB }
+
+          it "returns false" do
+            expect(matcher.match_volume?(volume)).to eq(false)
+          end
         end
       end
 

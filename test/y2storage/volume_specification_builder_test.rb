@@ -101,10 +101,11 @@ describe Y2Storage::VolumeSpecificationBuilder do
       context "when is a prep partition" do
         it "returns a prep partition volume specification" do
           expect(builder.for("prep")).to have_attributes(
-            min_size:     2.MiB,
-            desired_size: 4.MiB,
-            max_size:     8.MiB,
-            partition_id: Y2Storage::PartitionId::PREP
+            min_size:       2.MiB,
+            desired_size:   4.MiB,
+            max_size:       8.MiB,
+            max_size_limit: 8.MiB,
+            partition_id:   Y2Storage::PartitionId::PREP
           )
         end
       end
