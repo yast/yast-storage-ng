@@ -10,7 +10,6 @@
         type: primary
         id: swap
         file_system: swap
-        mount_point: swap
         label: swap
     - partition:
         size: 60.00 GiB

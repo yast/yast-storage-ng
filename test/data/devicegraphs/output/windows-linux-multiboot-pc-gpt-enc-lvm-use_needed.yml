@@ -15,7 +15,6 @@
         name: "/dev/sda2"
         id: swap
         file_system: swap
-        mount_point: swap
         label: swap
     - partition:
         size: 8 MiB

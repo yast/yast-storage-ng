@@ -16,7 +16,7 @@
 #
 
 Name:		yast2-storage-ng
-Version:        4.0.181
+Version:        4.0.182
 Release:	0
 
 BuildRoot:	%{_tmppath}/%{name}-%{version}-build
@@ -30,6 +30,8 @@ Requires:	yast2-ruby-bindings >= 4.0.6
 Requires:	libstorage-ng-ruby >= 3.3.254
 # communicate with udisks
 Requires:	rubygem(ruby-dbus)
+# Y2Packager::Repository
+Requires:	yast2-packager >= 3.3.7
 
 BuildRequires:	update-desktop-files
 # function light_probe

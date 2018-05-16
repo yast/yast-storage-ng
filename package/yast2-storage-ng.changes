@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Wed May 16 14:10:01 UTC 2018 - jlopez@suse.com
+
+- Fixed detection of candidate disks for installation
+  (bsc#1091047).
+- 4.0.182
+
+-------------------------------------------------------------------
 Wed May 16 13:12:11 UTC 2018 - snwint@suse.com
 
 - don't reuse prep partitions larger than 8 MiB (bsc#1090019)

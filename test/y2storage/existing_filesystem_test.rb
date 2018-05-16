@@ -81,40 +81,6 @@ describe Y2Storage::ExistingFilesystem do
     end
   end
 
-  describe "#installation_medium?" do
-    let(:tested_method) { :installation_medium? }
-
-    include_examples "Mount and umount actions"
-
-    context "when it is an installation medium" do
-      let(:root) { File.join(DATA_PATH, "control_files/root") }
-
-      context "with the same control file than inst-sys" do
-        let(:mount_point) { root }
-
-        it "returns true" do
-          expect(subject.installation_medium?).to eq(true)
-        end
-      end
-
-      context "with different control file than inst-sys" do
-        let(:mount_point) { File.join(DATA_PATH, "control_files/root/mnt1") }
-
-        it "returns false" do
-          expect(subject.installation_medium?).to eq(false)
-        end
-      end
-    end
-
-    context "when it is not an installation medium" do
-      let(:mount_point) { File.join(DATA_PATH, "control_files/root/mnt2") }
-
-      it "returns false" do
-        expect(subject.installation_medium?).to eq(false)
-      end
-    end
-  end
-
   describe "#release_name" do
     let(:tested_method) { :release_name }
 
