@@ -83,6 +83,7 @@ describe Y2Storage::VolumeSpecification do
         "desired_size"               => desired_size,
         "min_size"                   => min_size,
         "max_size"                   => max_size,
+        "max_size_limit"             => max_size_limit,
         "max_size_lvm"               => max_size_lvm,
         "weight"                     => weight,
         "adjust_by_ram"              => adjust_by_ram,
@@ -102,6 +103,7 @@ describe Y2Storage::VolumeSpecification do
     let(:desired_size) { "5 GiB" }
     let(:min_size) { "3 GiB" }
     let(:max_size) { "15 GiB" }
+    let(:max_size_limit) { "1 TiB" }
     let(:max_size_lvm) { "10 GiB" }
     let(:weight) { 20 }
     let(:adjust_by_ram) { true }
@@ -120,6 +122,7 @@ describe Y2Storage::VolumeSpecification do
       expect(subject.desired_size).to eq(5.GiB)
       expect(subject.min_size).to eq(3.GiB)
       expect(subject.max_size).to eq(15.GiB)
+      expect(subject.max_size_limit).to eq(1.TiB)
       expect(subject.max_size_lvm).to eq(10.GiB)
       expect(subject.weight).to eq(20)
       expect(subject.adjust_by_ram).to eq(true)
@@ -167,6 +170,14 @@ describe Y2Storage::VolumeSpecification do
 
       it "sets 'max_size' to unlimited by default" do
         expect(subject.max_size).to eq(Y2Storage::DiskSize.unlimited)
+      end
+    end
+
+    context "when 'max_size_limit' is not indicated" do
+      let(:max_size_limit) { nil }
+
+      it "sets 'max_size_limit' to unlimited by default" do
+        expect(subject.max_size_limit).to eq(Y2Storage::DiskSize.unlimited)
       end
     end
 
