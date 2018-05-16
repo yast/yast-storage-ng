@@ -157,6 +157,28 @@ describe Y2Storage::DiskAnalyzer do
       expect(candidate_disks).to contain_exactly("/dev/sda", "/dev/sdb", "/dev/sdc")
     end
 
+    context "when there are non-usb candidate devices" do
+      before do
+        allow(devicegraph).to receive(:disk_devices).and_return([sda, sdb, sdc])
+        allow(sda).to receive(:usb?).and_return(true)
+      end
+
+      it "does not include the usb candidate devices" do
+        expect(candidate_disks).to_not include("/dev/sda")
+      end
+    end
+
+    context "when there are no non-usb candidate devices" do
+      before do
+        allow(devicegraph).to receive(:disk_devices).and_return([sda])
+        allow(sda).to receive(:usb?).and_return(true)
+      end
+
+      it "includes the usb candidate devices" do
+        expect(candidate_disks).to include("/dev/sda")
+      end
+    end
+
     context "when a disk device is directly formatted" do
       before do
         format_device(sdb)
