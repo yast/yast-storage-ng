@@ -157,6 +157,8 @@ module Y2Storage
         v.min_size = DiskSize.MiB(2)
         v.desired_size = DiskSize.MiB(4)
         v.max_size = DiskSize.MiB(8)
+        # Maximum size firmware can handle (bsc#1081979)
+        v.max_size_limit = DiskSize.MiB(8)
         v.partition_id = PartitionId::PREP
       end
     end
