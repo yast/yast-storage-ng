@@ -77,7 +77,7 @@ module Y2Storage
     # @return [Boolean]
     def match_size?(volume)
       return false if volume_match_values[:size].nil?
-      volume_match_values[:size] >= volume.min_size
+      volume_match_values[:size].between?(volume.min_size, volume.max_size_limit)
     end
 
     # Whether the fileystem type matches the volume filesystem type

@@ -56,6 +56,9 @@ module Y2Storage
     # @return [DiskSize] maximum size to assign to the volume
     attr_accessor :max_size
 
+    # @return [DiskSize] technical size limit; a volume larger than this is not usable
+    attr_accessor :max_size_limit
+
     # @return [DiskSize] when LVM is used, this option can be used to override
     #   the value at max_size
     attr_accessor :max_size_lvm
@@ -242,6 +245,7 @@ module Y2Storage
       desired_size:               :size,
       min_size:                   :size,
       max_size:                   :size,
+      max_size_limit:             :size,
       max_size_lvm:               :size,
       snapshots_size:             :size,
       snapshots_percentage:       :integer,
@@ -256,6 +260,7 @@ module Y2Storage
       @desired_size               = DiskSize.zero
       @min_size                   = DiskSize.zero
       @max_size                   = DiskSize.unlimited
+      @max_size_limit             = DiskSize.unlimited
       @max_size_lvm               = DiskSize.zero
       @weight                     = 0
       @adjust_by_ram              = false
