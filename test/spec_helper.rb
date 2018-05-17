@@ -26,6 +26,21 @@ ENV["Y2DIR"] = SRC_PATH
 # (some tests check the output which is marked for translation)
 ENV["LC_ALL"] = "en_US.UTF-8"
 
+LIBS_TO_SKIP = ["y2packager/repository"]
+
+# Hack to avoid to require some files
+#
+# This is here to avoid a cyclic dependency with yast-installation at build time.
+# Storage-ng does not include a BuildRequires for yast-installation, so the require
+# for files defined by that package must be avoided.
+module Kernel
+  alias_method :old_require, :require
+
+  def require(path)
+    old_require(path) unless LIBS_TO_SKIP.include?(path)
+  end
+end
+
 require "yast"
 require "yast/rspec"
 
@@ -52,6 +67,14 @@ require_relative "support/storage_helpers"
 
 RSpec.configure do |c|
   c.include Yast::RSpec::StorageHelpers
+
+  # Y2Packager is not loaded in tests to avoid cyclic dependencies with
+  # yast-installation package at build time. Here, all usage of Y2Packager
+  # is mocked.
+  c.before do
+    stub_const("Y2Packager::Repository", double("Y2Packager::Repository"))
+    allow(Y2Packager::Repository).to receive(:all).and_return([])
+  end
 
   # Some tests use ProposalSettings#new_for_current_product to initialize
   # the settings. That method sets some default values when there is not
