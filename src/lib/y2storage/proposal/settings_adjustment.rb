@@ -45,7 +45,9 @@ module Y2Storage
       #
       # @param volume [VolumeSpecification] concrete volume that was configured
       # @param attribute [Symbol] attribute of the volume that was adjusted
-      # @param value [Object] value set for the attribute
+      # @param value [Object] value set for the attribute. Note that in the
+      #   current implementation this is ignored (see note in the class
+      #   description).
       #
       # @return [SettingsAdjustment]
       def add_volume_attr(volume, attribute, value)
@@ -94,24 +96,28 @@ module Y2Storage
         if attrs.include?(:proposed)
           # TRANSLATORS: %s is a mount point like "/home"
           _("do not propose a separate %s") % mount_point
-        elsif attrs.include?(:snapshots) && attrs.include?(:adjust_by_ram)
+        elsif attrs.sort == [:adjust_by_ram, :snapshots]
           # TRANSLATORS: %s is a mount point like "/home"
-          _("disabled snapshots and RAM-based size adjustments for %s") % mount_point
-        elsif attrs.include?(:snapshots)
+          _("disable snapshots and RAM-based size adjustments for %s") % mount_point
+        elsif attrs == [:snapshots]
           # TRANSLATORS: %s is a mount point like "/home"
-          _("disabled snapshots for %s") % mount_point
-        else
+          _("do not enable snapshots for %s") % mount_point
+        elsif attrs == [:adjust_by_ram]
           # TRANSLATORS: %s is a mount point like "/home"
           _("do not adjust size of %s based on RAM size") % mount_point
+        else
+          raise "Unknown volume adjustment"
         end
       end
 
       # @see #volume_description
       def swap_description(attrs)
         if attrs.include?(:proposed)
-          _("do not propose a separate swap")
+          _("do not propose swap")
+        elsif attrs == [:adjust_by_ram]
+          _("do not enlarge swap to RAM size")
         else
-          _("do not enlarge swap to RAM size for suspend")
+          raise "Unknown adjustment for swap"
         end
       end
 

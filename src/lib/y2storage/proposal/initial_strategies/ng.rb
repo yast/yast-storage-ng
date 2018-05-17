@@ -130,7 +130,7 @@ module Y2Storage
         # @param devicegraph [Devicegraph] see {#try_proposal}
         # @param disk_analyzer [DiskAnalyzer] see {#try_proposal}
         def retry_proposal(proposal, volume, attr, devicegraph, disk_analyzer)
-          volume.send(:"#{attr}=", false)
+          volume.public_send(:"#{attr}=", false)
           adjustment = proposal.auto_settings_adjustment.add_volume_attr(volume, attr, false)
           log.info("Trying proposal after disabling '#{attr}' for '#{volume.mount_point}'")
           try_proposal(proposal.settings, devicegraph, disk_analyzer, adjustment)

@@ -235,7 +235,7 @@ describe Y2Storage::Proposal::InitialStrategies::Ng do
           expect(adj).to be_a Y2Storage::Proposal::SettingsAdjustment
           expect(adj).to_not be_empty
           expect(adj.descriptions.size).to eq 1
-          expect(adj.descriptions.first).to include "disabled snapshots"
+          expect(adj.descriptions.first).to include "disable snapshots"
         end
       end
     end
@@ -307,7 +307,7 @@ describe Y2Storage::Proposal::InitialStrategies::Ng do
           expect(adj).to be_a Y2Storage::Proposal::SettingsAdjustment
           expect(adj).to_not be_empty
           expect(adj.descriptions).to contain_exactly(
-            /do not propose a separate \/home/, /do not propose a separate swap/
+            /do not propose a separate \/home/, /do not propose swap/
           )
         end
       end
@@ -379,7 +379,7 @@ describe Y2Storage::Proposal::InitialStrategies::Ng do
         expect(adj).to be_a Y2Storage::Proposal::SettingsAdjustment
         expect(adj).to_not be_empty
         expect(adj.descriptions).to contain_exactly(
-          /do not propose a separate \/home/, /do not propose a separate swap/
+          /do not propose a separate \/home/, /do not propose swap/
         )
       end
     end
