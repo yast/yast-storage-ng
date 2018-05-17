@@ -36,7 +36,6 @@ module Y2Storage
   # MD Members can be used as generic MD RAIDs.
   class MdMember < Md
     wrap_class Storage::MdMember
-    include DiskDevice
     include MultiDiskDevice
 
     # @!method self.create(devicegraph, name)
@@ -70,11 +69,7 @@ module Y2Storage
   protected
 
     def types_for_is
-      types = super
-      types << :md_member
-      types << :raid
-      types << :bios_raid
-      types
+      super << :md_member
     end
   end
 end

@@ -19,10 +19,12 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
+require "yast"
 require "y2storage/storage_class_wrapper"
 require "y2storage/partitionable"
 require "y2storage/md_level"
 require "y2storage/md_parity"
+require "y2storage/storage_env"
 
 module Y2Storage
   # A MD RAID
@@ -33,6 +35,7 @@ module Y2Storage
   #   see {MdContainer} and {MdMember} subclasses.
   class Md < Partitionable
     wrap_class Storage::Md, downcast_to: ["MdMember", "MdContainer"]
+    include DiskDevice
 
     # @!method self.create(devicegraph, name)
     #   @param devicegraph [Devicegraph]
@@ -170,10 +173,15 @@ module Y2Storage
     # All RAID classes should define this method, see {DmRaid#software_defined?},
     # {MdContainer#software_defined?} and {MdMember#software_defined?}.
     #
-    # @note MD RAIDS are considered defined by sofware.
+    # @note By default, MD RAIDS are considered software defined.
     #
     # @return [Boolean] true
     def software_defined?
+      # TODO: Improve check. Right now, the MD is considered as not software
+      # defined when the ENV variable "LIBSTORAGE_MDPART" is set and the MD
+      # is probed.
+      return false if exists_in_probed? && StorageEnv.instance.forced_bios_raid?
+
       true
     end
 
@@ -313,16 +321,25 @@ module Y2Storage
       to_storage_value.in_holders.to_a.map { |h| Storage.to_md_user(h) }
     end
 
+    # All Md devices are Software RAIDs, but MdMember derived class represents
+    # BIOS RAIDs. Class MdContainer is also derived from Md, but objects of this
+    # class are considered neither Software nor BIOS RAIDs.
+    #
+    # Moreover, in some special cases, Md devices can be considered BIOS RAIDs,
+    # for example, when the LIBSTORAGE_MDPART boot parameter is set during the
+    # installation.
     def types_for_is
       types = super
       types << :md
-      # All Software RAIDs are Md devices, but MdMember derived class represents
-      # BIOS RAIDs. Class MdContainer is also derived from Md, but objects of this
-      # class are not be considered neither Software nor BIOS RAIDs.
-      # To properly exclude MdContainer as :raid device, here only Software RAIDs
-      # are considered to be raid type.
-      types << :raid if software_defined?
-      types << :software_raid if software_defined?
+      types << :raid
+
+      if software_defined?
+        types.delete(:disk_device)
+        types << :software_raid
+      else
+        types << :bios_raid
+      end
+
       types
     end
 

@@ -25,8 +25,10 @@ require "y2storage"
 
 describe Y2Storage::MdMember do
   before do
-    fake_scenario("mixed_disks")
+    fake_scenario(scenario)
   end
+
+  let(:scenario) { "mixed_disks" }
 
   let(:devicegraph) { fake_devicegraph }
 
@@ -58,6 +60,15 @@ describe Y2Storage::MdMember do
   end
 
   describe "#is?" do
+    let(:scenario) { "md-imsm1-devicegraph.xml" }
+
+    subject { devicegraph.md_member_raids.first }
+
+    it "returns true for values whose symbol is :disk_device" do
+      expect(subject.is?(:disk_device)).to eq true
+      expect(subject.is?("disk_device")).to eq true
+    end
+
     it "returns true for values whose symbol is :md_member" do
       expect(subject.is?(:md_member)).to eq true
       expect(subject.is?("md_member")).to eq true
