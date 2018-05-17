@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Thu May 17 13:32:37 UTC 2018 - jlopez@suse.com
+
+- Allow to consider MD RAIDs as BIOS RAIDs by using the env
+  variable LIBSTORAGE_MDPART (bsc#1092417).
+
+-------------------------------------------------------------------
 Thu May 17 08:53:17 UTC 2018 - jlopez@suse.com
 
 - Fixed tests to avoid to require files provided by
