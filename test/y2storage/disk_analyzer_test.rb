@@ -366,7 +366,7 @@ describe Y2Storage::DiskAnalyzer do
     context "when there are installation repositories" do
       let(:repositories) { [repository] }
 
-      let(:repository) { instance_double(Y2Packager::Repository, local?: true, url: repository_url) }
+      let(:repository) { double(Y2Packager::Repository, local?: true, url: repository_url) }
 
       let(:repository_url) { "" }
 
@@ -422,11 +422,11 @@ describe Y2Storage::DiskAnalyzer do
         let(:repositories) { [repository1, repository2] }
 
         let(:repository1) do
-          instance_double(Y2Packager::Repository, local?: true, url: "dvd:/?devices=/dev/sda1")
+          double(Y2Packager::Repository, local?: true, url: "dvd:/?devices=/dev/sda1")
         end
 
         let(:repository2) do
-          instance_double(Y2Packager::Repository, local?: true, url: "hd:/?device=/dev/sdc")
+          double(Y2Packager::Repository, local?: true, url: "hd:/?device=/dev/sdc")
         end
 
         it "does not include disk devices from all repositories" do
