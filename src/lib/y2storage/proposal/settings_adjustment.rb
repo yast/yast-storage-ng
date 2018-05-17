@@ -46,11 +46,15 @@ module Y2Storage
       # @param volume [VolumeSpecification] concrete volume that was configured
       # @param attribute [Symbol] attribute of the volume that was adjusted
       # @param value [Object] value set for the attribute. Note that in the
-      #   current implementation this is ignored (see note in the class
-      #   description).
+      #   current implementation this is ignored and only false is accepted
+      #   (see note in the class description).
       #
       # @return [SettingsAdjustment]
       def add_volume_attr(volume, attribute, value)
+        if value != false
+          raise ArgumentError, "So far, only disabling some attributes is supported"
+        end
+
         log.debug "Adjustments: add volume #{volume.mount_point} with #{attribute} == #{value}"
         result = dup
         result.volumes[volume.mount_point] ||= []
@@ -106,7 +110,7 @@ module Y2Storage
           # TRANSLATORS: %s is a mount point like "/home"
           _("do not adjust size of %s based on RAM size") % mount_point
         else
-          raise "Unknown volume adjustment"
+          raise "Unknown volume adjustment: #{attrs.inspect}"
         end
       end
 
@@ -117,7 +121,7 @@ module Y2Storage
         elsif attrs == [:adjust_by_ram]
           _("do not enlarge swap to RAM size")
         else
-          raise "Unknown adjustment for swap"
+          raise "Unknown adjustment for swap: #{attrs.inspect}"
         end
       end
 
