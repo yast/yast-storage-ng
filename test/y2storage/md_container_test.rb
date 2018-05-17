@@ -57,6 +57,11 @@ describe Y2Storage::MdContainer do
       expect(subject.is?("md_container")).to eq true
     end
 
+    it "returns true for values whose symbol is :disk_device" do
+      expect(subject.is?(:disk_device)).to eq false
+      expect(subject.is?("disk_device")).to eq false
+    end
+
     it "returns false for values whose symbol is :raid" do
       expect(subject.is?(:raid)).to eq false
       expect(subject.is?("raid")).to eq false

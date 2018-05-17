@@ -244,6 +244,30 @@ describe Y2Storage::Md do
   end
 
   describe "#is?" do
+    context "when the MD is software defined" do
+      before do
+        # FIXME: make use of new logic instead of mocking :software_defined?
+        allow(subject).to receive(:software_defined?).and_return(true)
+      end
+
+      it "returns false for values whose symbol is :disk_device" do
+        expect(subject.is?(:disk_device)).to eq false
+        expect(subject.is?("disk_device")).to eq false
+      end
+    end
+
+    context "when the MD is not software defined" do
+      before do
+        # FIXME: make use of new logic instead of mocking :software_defined?
+        allow(subject).to receive(:software_defined?).and_return(false)
+      end
+
+      it "returns true for values whose symbol is :disk_device" do
+        expect(subject.is?(:disk_device)).to eq true
+        expect(subject.is?("disk_device")).to eq true
+      end
+    end
+
     it "returns true for values whose symbol is :md" do
       expect(subject.is?(:md)).to eq true
       expect(subject.is?("md")).to eq true
