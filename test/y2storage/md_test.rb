@@ -218,8 +218,37 @@ describe Y2Storage::Md do
   end
 
   describe "#software_defined?" do
-    context "if the RAID is a MD (Software RAID)" do
-      subject(:md) { Y2Storage::Md.create(fake_devicegraph, "/dev/md10") }
+    before do
+      mock_env(env_vars)
+    end
+
+    let(:env_vars) { {} }
+
+    context "when the MD RAID is probed" do
+      context "and LIBSTORAGE_MDPART was not activated on boot" do
+        let(:env_vars) { { "LIBSTORAGE_MDPART" => "no" } }
+
+        it "returns true" do
+          expect(md.software_defined?).to eq(true)
+        end
+      end
+
+      context "and LIBSTORAGE_MDPART was activated on boot" do
+        let(:env_vars) { { "LIBSTORAGE_MDPART" => "1" } }
+
+        it "returns false" do
+          expect(md.software_defined?).to eq(false)
+        end
+      end
+    end
+
+    context "when the MD RAID is not probed" do
+      let(:devicegraph) { Y2Storage::StorageManager.instance.staging }
+
+      subject(:md) { Y2Storage::Md.create(devicegraph, "/dev/md10") }
+
+      # Even when the env variable is set
+      let(:env_vars) { { "LIBSTORAGE_MDPART" => "1" } }
 
       it "returns true" do
         expect(md.software_defined?).to eq(true)
@@ -246,7 +275,6 @@ describe Y2Storage::Md do
   describe "#is?" do
     context "when the MD is software defined" do
       before do
-        # FIXME: make use of new logic instead of mocking :software_defined?
         allow(subject).to receive(:software_defined?).and_return(true)
       end
 
@@ -258,7 +286,6 @@ describe Y2Storage::Md do
 
     context "when the MD is not software defined" do
       before do
-        # FIXME: make use of new logic instead of mocking :software_defined?
         allow(subject).to receive(:software_defined?).and_return(false)
       end
 

@@ -19,10 +19,12 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
+require "yast"
 require "y2storage/storage_class_wrapper"
 require "y2storage/partitionable"
 require "y2storage/md_level"
 require "y2storage/md_parity"
+require "y2storage/storage_env"
 
 module Y2Storage
   # A MD RAID
@@ -171,11 +173,15 @@ module Y2Storage
     # All RAID classes should define this method, see {DmRaid#software_defined?},
     # {MdContainer#software_defined?} and {MdMember#software_defined?}.
     #
-    # @note MD RAIDS are considered defined by sofware.
+    # @note By default, MD RAIDS are considered software defined.
     #
     # @return [Boolean] true
     def software_defined?
-      # This should indeed check for that ENV variable
+      # TODO: Improve check. Right now, the MD is considered as not software
+      # defined when the ENV variable "LIBSTORAGE_MDPART" is set and the MD
+      # is probed.
+      return false if exists_in_probed? && StorageEnv.instance.forced_bios_raid?
+
       true
     end
 
