@@ -64,8 +64,17 @@ module Y2Storage
 
   protected
 
+    # Objects of this class are not considered RAIDs at all
     def types_for_is
-      super << :md_container
+      types = super
+
+      types.delete(:disk_device)
+      types.delete(:raid)
+      types.delete(:bios_raid)
+      types.delete(:software_raid)
+
+      types << :md_container
+      types
     end
   end
 end

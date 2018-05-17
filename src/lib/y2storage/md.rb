@@ -33,6 +33,7 @@ module Y2Storage
   #   see {MdContainer} and {MdMember} subclasses.
   class Md < Partitionable
     wrap_class Storage::Md, downcast_to: ["MdMember", "MdContainer"]
+    include DiskDevice
 
     # @!method self.create(devicegraph, name)
     #   @param devicegraph [Devicegraph]
@@ -174,6 +175,7 @@ module Y2Storage
     #
     # @return [Boolean] true
     def software_defined?
+      # This should indeed check for that ENV variable
       true
     end
 
@@ -316,13 +318,15 @@ module Y2Storage
     def types_for_is
       types = super
       types << :md
-      # All Software RAIDs are Md devices, but MdMember derived class represents
-      # BIOS RAIDs. Class MdContainer is also derived from Md, but objects of this
-      # class are not be considered neither Software nor BIOS RAIDs.
-      # To properly exclude MdContainer as :raid device, here only Software RAIDs
-      # are considered to be raid type.
-      types << :raid if software_defined?
-      types << :software_raid if software_defined?
+      types << :raid
+
+      if software_defined?
+        types.delete(:disk_device)
+        types << :software_raid
+      else
+        types << :bios_raid
+      end
+
       types
     end
 
