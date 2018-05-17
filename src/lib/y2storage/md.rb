@@ -321,6 +321,13 @@ module Y2Storage
       to_storage_value.in_holders.to_a.map { |h| Storage.to_md_user(h) }
     end
 
+    # All Md devices are Software RAIDs, but MdMember derived class represents
+    # BIOS RAIDs. Class MdContainer is also derived from Md, but objects of this
+    # class are considered neither Software nor BIOS RAIDs.
+    #
+    # Moreover, in some special cases, Md devices can be considered BIOS RAIDs,
+    # for example, when the LIBSTORAGE_MDPART boot parameter is set during the
+    # installation.
     def types_for_is
       types = super
       types << :md
