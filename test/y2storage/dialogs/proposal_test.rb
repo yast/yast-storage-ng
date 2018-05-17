@@ -91,8 +91,9 @@ describe Y2Storage::Dialogs::Proposal do
     end
 
     let(:proposal) do
-      double("Y2Storage::GuidedProposal", proposed?: proposed, auto_settings_adjustment: nil)
+      double("Y2Storage::GuidedProposal", proposed?: proposed, auto_settings_adjustment: adjustment)
     end
+    let(:adjustment) { nil }
 
     let(:proposed) { true }
 
@@ -187,6 +188,13 @@ describe Y2Storage::Dialogs::Proposal do
           dialog.run
         end
 
+        it "displays an explanation about user-driven Guided Setup" do
+          expect(Yast::Wizard).to receive(:SetContents) do |_title, content|
+            expect(content.to_s).to include "Guided Setup with the settings provided by the user"
+          end
+          dialog.run
+        end
+
         it "sets #proposal to the provided proposal" do
           dialog.run
           expect(dialog.proposal).to eq proposal
@@ -208,7 +216,7 @@ describe Y2Storage::Dialogs::Proposal do
           allow(Yast::UI).to receive(:UserInput).once.and_return :abort
         end
 
-        it "displays an error message" do
+        it "displays an error message about failed Guided Setup" do
           # We don't break the event loop, so there is a second call to UserInput
           expect(Yast::Wizard).to receive(:SetContents) do |_title, content|
             expect(content.to_s).to include "Guided Setup was not able to propose"
@@ -250,6 +258,106 @@ describe Y2Storage::Dialogs::Proposal do
           expect(content.to_s).to include presenter_content0
         end
         dialog.run
+      end
+
+      context "if it's an initial proposal with the default settings" do
+        let(:adjustment) { Y2Storage::Proposal::SettingsAdjustment.new }
+
+        context "and there is a resulting devicegraph" do
+          it "displays an explanation about initial proposal with default settings" do
+            expect(Yast::Wizard).to receive(:SetContents) do |_title, content|
+              expect(content.to_s).to include "proposed with the default Guided Setup settings"
+            end
+            dialog.run
+          end
+        end
+
+        context "and there is no resulting devicegraph" do
+          let(:devicegraph0) { nil }
+
+          it "displays an error about using default settings" do
+            # In this case, we just want to inspect the dialog content and then quit
+            allow(Yast::UI).to receive(:UserInput).once.and_return :abort
+
+            expect(Yast::Wizard).to receive(:SetContents) do |_title, content|
+              expect(content.to_s).to include(
+                "not possible to propose", "default Guided Setup settings"
+              )
+            end
+            dialog.run
+          end
+        end
+      end
+
+      context "if it's an initial proposal with some adjusted settings" do
+        let(:adjustment) do
+          vol = double("Y2Storage::VolumeSpecification", mount_point: "/")
+          adj = Y2Storage::Proposal::SettingsAdjustment.new
+          adj.add_volume_attr(vol, :adjust_by_ram, false)
+        end
+
+        context "and there is a resulting devicegraph" do
+          it "displays an explanation about success with adjusted settings" do
+            expect(Yast::Wizard).to receive(:SetContents) do |_title, content|
+              expect(content.to_s).to include(
+                "proposed after adjusting the Guided Setup settings",
+                "do not adjust size of /"
+              )
+            end
+            dialog.run
+          end
+        end
+
+        context "and there is no resulting devicegraph" do
+          let(:devicegraph0) { nil }
+
+          it "displays an error about failure with adjusted settings" do
+            # In this case, we just want to inspect the dialog content and then quit
+            allow(Yast::UI).to receive(:UserInput).once.and_return :abort
+
+            expect(Yast::Wizard).to receive(:SetContents) do |_title, content|
+              expect(content.to_s).to include(
+                "not possible to propose",
+                "after adjusting the Guided Setup settings",
+                "do not adjust size of /"
+              )
+            end
+            dialog.run
+          end
+        end
+      end
+
+      context "if it's a proposal created via Guided Setup" do
+        let(:adjustment) { nil }
+
+        context "and there is a resulting devicegraph" do
+          it "displays an message about successful user-driven Guided Setup" do
+            expect(Yast::Wizard).to receive(:SetContents) do |_title, content|
+              expect(content.to_s).to include(
+                "proposed by the Guided Setup",
+                "settings provided by the user"
+              )
+            end
+            dialog.run
+          end
+        end
+
+        context "and there is no resulting devicegraph" do
+          let(:devicegraph0) { nil }
+
+          it "displays an error about failure with user-provided settings" do
+            # In this case, we just want to inspect the dialog content and then quit
+            allow(Yast::UI).to receive(:UserInput).once.and_return :abort
+
+            expect(Yast::Wizard).to receive(:SetContents) do |_title, content|
+              expect(content.to_s).to include(
+                "not able to propose",
+                "using the provided settings"
+              )
+            end
+            dialog.run
+          end
+        end
       end
 
       it "sets #proposal to the provided proposal" do
