@@ -83,7 +83,7 @@ module Y2Storage
       def handle_event(input)
         if @actions_presenter.can_handle?(input)
           @actions_presenter.update_status(input)
-          Yast::UI.ChangeWidget(Id(:summary), :Value, @actions_presenter.to_html)
+          Yast::UI.ChangeWidget(Id(:summary), :Value, actions_html)
         end
       end
 
@@ -125,24 +125,90 @@ module Y2Storage
       def summary
         # TODO: if there is a proposal, use the meaningful description with
         # hyperlinks instead of just delegating the summary to libstorage
-        content = if devicegraph
-          @actions_presenter.to_html
-        else
-          Yast::HTML.Para(
-            _(
-              "It was not possible to automatically propose a partitioning layout " \
-              "based on the current settings."
-            )
-          ) +
-            Yast::HTML.Para(
-              _(
-                "Please, use \"Guided Setup\" to adjust the proposal settings or " \
-                "\"Expert Partitioner\" to create a custom layout."
-              )
-            )
-        end
+        content = devicegraph ? actions_html : failure_html
 
         RichText(Id(:summary), content)
+      end
+
+      # Text for the summary in cases in which a devicegraph was properly
+      # calculated
+      #
+      # @see #summary
+      #
+      # @return [String] HTML-formatted text
+      def actions_html
+        # Reuse the exact string "Changes to partitioning" from the partitioner
+        actions_source_html + _("<p>Changes to partitioning:</p>") + @actions_presenter.to_html
+      end
+
+      # @see #actions_html
+      def actions_source_html
+        return actions_source_for_partitioner unless proposal
+        return actions_source_for_guided_setup unless settings_adjustment
+        return actions_source_for_default_settings if settings_adjustment.empty?
+
+        para(_("Initial layout proposed after adjusting the Guided Setup settings:")) +
+          list(settings_adjustment.descriptions)
+      end
+
+      # @see #actions_source_html
+      def actions_source_for_partitioner
+        para(_("Layout configured manually using the Expert Partitioner."))
+      end
+
+      # @see #actions_source_html
+      def actions_source_for_guided_setup
+        para(_("Layout proposed by the Guided Setup with the settings provided by the user."))
+      end
+
+      # @see #actions_source_html
+      def actions_source_for_default_settings
+        para(_("Initial layout proposed with the default Guided Setup settings."))
+      end
+
+      # Text for the summary in cases in which it was not possible to propose
+      # a devicegraph
+      #
+      # @see #summary
+      #
+      # @return [String] HTML-formatted text
+      def failure_html
+        failure_source_html + para(
+          _(
+            "Please, use \"Guided Setup\" to adjust the proposal settings or " \
+            "\"Expert Partitioner\" to create a custom layout."
+          )
+        )
+      end
+
+      # @see #failure_html
+      def failure_source_html
+        if settings_adjustment
+          # Just in case the initial proposal is configured to never adjust any
+          # setting automatically
+          if settings_adjustment.empty?
+            para(
+              _(
+                "It was not possible to propose an initial partitioning layout " \
+                "based on the default Guided Setup settings."
+              )
+            )
+          else
+            para(
+              _(
+                "It was not possible to propose an initial partitioning layout " \
+                "even after adjusting the Guided Setup settings:"
+              )
+            ) + list(settings_adjustment.descriptions)
+          end
+        else
+          para(
+            _(
+              "The Guided Setup was not able to propose a layout using the " \
+              "provided settings."
+            )
+          )
+        end
       end
 
       def dialog_title
@@ -198,6 +264,20 @@ module Y2Storage
           "Your hard disks have been checked. The partition setup\n" \
           "displayed is proposed for your hard drive.</p>"
         )
+      end
+
+      def settings_adjustment
+        proposal ? proposal.auto_settings_adjustment : nil
+      end
+
+      # Shortcut for Yast::HTML.Para
+      def para(string)
+        Yast::HTML.Para(string)
+      end
+
+      # Shortcut for Yast::HTML.List
+      def list(items)
+        Yast::HTML.List(items)
       end
     end
   end

@@ -135,6 +135,12 @@ describe Y2Storage::Proposal::InitialStrategies::Ng do
           .and_call_original
         proposal
       end
+
+      it "creates an empty SettingsAdjustment object" do
+        adj = proposal.auto_settings_adjustment
+        expect(adj).to be_a Y2Storage::Proposal::SettingsAdjustment
+        expect(adj).to be_empty
+      end
     end
 
     context "when it is possible to create a proposal using current settings" do
@@ -151,6 +157,12 @@ describe Y2Storage::Proposal::InitialStrategies::Ng do
         expect(root_settings.adjust_by_ram?).to be(true)
         expect(root_settings.snapshots?).to be(true)
         expect(root_settings.proposed?).to be(true)
+      end
+
+      it "creates an empty SettingsAdjustment object" do
+        adj = proposal.auto_settings_adjustment
+        expect(adj).to be_a Y2Storage::Proposal::SettingsAdjustment
+        expect(adj).to be_empty
       end
     end
 
@@ -176,6 +188,14 @@ describe Y2Storage::Proposal::InitialStrategies::Ng do
 
         expect(swap_settings.adjust_by_ram?).to be(false)
         expect(swap_settings.proposed?).to be(true)
+      end
+
+      it "creates an SettingsAdjustment about deactivating adjust_by_ram" do
+        adj = proposal.auto_settings_adjustment
+        expect(adj).to be_a Y2Storage::Proposal::SettingsAdjustment
+        expect(adj).to_not be_empty
+        expect(adj.descriptions.size).to eq 1
+        expect(adj.descriptions.first).to include "do not enlarge swap"
       end
     end
 
@@ -209,6 +229,14 @@ describe Y2Storage::Proposal::InitialStrategies::Ng do
           expect(root_settings.snapshots?).to be(false)
           expect(root_settings.proposed?).to be(true)
         end
+
+        it "creates an SettingsAdjustment about deactivating snapshots" do
+          adj = proposal.auto_settings_adjustment
+          expect(adj).to be_a Y2Storage::Proposal::SettingsAdjustment
+          expect(adj).to_not be_empty
+          expect(adj.descriptions.size).to eq 1
+          expect(adj.descriptions.first).to include "disable snapshots"
+        end
       end
     end
 
@@ -236,6 +264,14 @@ describe Y2Storage::Proposal::InitialStrategies::Ng do
         expect(home_settings.adjust_by_ram?).to be(false)
         expect(home_settings.snapshots?).to be(false)
         expect(home_settings.proposed?).to be(false)
+      end
+
+      it "creates an SettingsAdjustment about deactivating the volume" do
+        adj = proposal.auto_settings_adjustment
+        expect(adj).to be_a Y2Storage::Proposal::SettingsAdjustment
+        expect(adj).to_not be_empty
+        expect(adj.descriptions.size).to eq 1
+        expect(adj.descriptions.first).to include "do not propose a separate /home"
       end
     end
 
@@ -265,6 +301,15 @@ describe Y2Storage::Proposal::InitialStrategies::Ng do
           expect(swap_settings.proposed?).to be(false)
           expect(home_settings.proposed?).to be(false)
         end
+
+        it "creates an SettingsAdjustment with entries for each disabled volume" do
+          adj = proposal.auto_settings_adjustment
+          expect(adj).to be_a Y2Storage::Proposal::SettingsAdjustment
+          expect(adj).to_not be_empty
+          expect(adj.descriptions).to contain_exactly(
+            /do not propose a separate \/home/, /do not propose swap/
+          )
+        end
       end
 
       context "and disable_order implies to deactivate big volumes first" do
@@ -275,6 +320,15 @@ describe Y2Storage::Proposal::InitialStrategies::Ng do
           expect(root_settings.proposed?).to be(true)
           expect(swap_settings.proposed?).to be(true)
           expect(home_settings.proposed?).to be(false)
+        end
+
+        it "creates an SettingsAdjustment with entries for each adjusted volume" do
+          adj = proposal.auto_settings_adjustment
+          expect(adj).to be_a Y2Storage::Proposal::SettingsAdjustment
+          expect(adj).to_not be_empty
+          expect(adj.descriptions).to contain_exactly(
+            /do not propose a separate \/home/, /do not enlarge swap/
+          )
         end
       end
     end
@@ -318,6 +372,15 @@ describe Y2Storage::Proposal::InitialStrategies::Ng do
 
       it "does not make a valid proposal" do
         expect(proposal.failed?).to be(true)
+      end
+
+      it "creates an SettingsAdjustment with entries for each adjusted volume" do
+        adj = proposal.auto_settings_adjustment
+        expect(adj).to be_a Y2Storage::Proposal::SettingsAdjustment
+        expect(adj).to_not be_empty
+        expect(adj.descriptions).to contain_exactly(
+          /do not propose a separate \/home/, /do not propose swap/
+        )
       end
     end
   end
