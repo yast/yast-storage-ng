@@ -231,4 +231,27 @@ describe Y2Storage::Filesystems::Type do
       end
     end
   end
+
+  describe "label_valid_chars" do
+    it "contains alphanumeric characters" do
+      chars = Y2Storage::Filesystems::Type::EXT2.label_valid_chars
+      expect(chars).to match(/ABCDEFG/)
+      expect(chars).to match(/xyz/)
+      expect(chars).to match(/789/)
+    end
+
+    it "contains some non-alphanumeric characters" do
+      chars = Y2Storage::Filesystems::Type::EXT2.label_valid_chars
+      expect(chars).to include("-")
+      expect(chars).to include("_")
+      expect(chars).to include(".")
+    end
+
+    it "does not contain any whitespace" do
+      chars = Y2Storage::Filesystems::Type::EXT2.label_valid_chars
+      expect(chars).not_to include(" ")
+      expect(chars).not_to include("\t")
+      expect(chars).not_to include("\n")
+    end
+  end
 end
