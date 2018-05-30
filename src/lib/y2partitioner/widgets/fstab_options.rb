@@ -256,6 +256,8 @@ module Y2Partitioner
 
       def init
         self.value = filesystem.label
+        Yast::UI.ChangeWidget(Id(widget_id), :ValidChars, valid_chars)
+        Yast::UI.ChangeWidget(Id(widget_id), :InputMaxLength, input_max_length)
       end
 
       # Validates uniqueness of the given label. The presence of the label is also
@@ -334,6 +336,21 @@ module Y2Partitioner
       # Sets the focus into this widget
       def focus
         Yast::UI.SetFocus(Id(widget_id))
+      end
+
+      # Return the valid characters for this input field
+      #
+      # @return [String]
+      def valid_chars
+        filesystem.type.label_valid_chars
+      end
+
+      # Return the maximum length of the input (the number of characters) for
+      # this input field
+      #
+      # @return [Integer]
+      def input_max_length
+        filesystem.max_labelsize
       end
     end
 
