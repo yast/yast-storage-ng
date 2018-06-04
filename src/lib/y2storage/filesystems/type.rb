@@ -50,6 +50,12 @@ module Y2Storage
       CODEPAGE_OPTIONS = ["codepage="].freeze
       DEFAULT_CODEPAGE = "437".freeze
 
+      # Base for valid characters (as a string): "ABC...XYZabc...xyz012..89"
+      ALPHANUM = ["A".."Z", "a".."z", "0".."9"].flat_map(&:to_a).join.freeze
+
+      # Fallback for valid characters for a volume label
+      LABEL_VALID_CHARS = ALPHANUM + "-_."
+
       # Hash with the properties of several filesystem types.
       #
       # Keys are the symbols representing the types and values are hashes that
@@ -60,6 +66,8 @@ module Y2Storage
       #   (do not include "defaults" here!)
       # - `:default_partition_id` for the partition id that fits better with
       #   the corresponding filesystem type.
+      # - `:label_valid_chars` (optional) for a string (not a regexp!) containing
+      #   the valid characters for the filesystem label. Fallback: LABEL_VALID_CHARS
       #
       # Not all combinations of filesystem types and properties are represented,
       # default values are used for missing information.
@@ -380,6 +388,16 @@ module Y2Storage
         default = PartitionId::LINUX
         return default unless properties
         properties[:default_partition_id] || default
+      end
+
+      # Valid characters for labels for this filesystem type
+      #
+      # @return [String]
+      def label_valid_chars
+        properties = PROPERTIES[to_sym]
+        default = LABEL_VALID_CHARS
+        return default unless properties
+        properties[:label_valid_chars] || default
       end
 
       # Add the required codepage number according to the current locale to
