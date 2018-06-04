@@ -25,6 +25,7 @@ require "yast2/popup"
 require "y2partitioner/dialogs/partition_move"
 require "y2partitioner/device_graphs"
 require "y2partitioner/ui_state"
+require "y2partitioner/exceptions"
 
 module Y2Partitioner
   module Actions
@@ -104,6 +105,7 @@ module Y2Partitioner
       def device_type_error
         return nil if partition.is?(:partition)
 
+        # FIXME: This message is copied from old partitioner, but it could be improved.
         _("Hard disks, BIOS RAIDs and multipath\n" \
           "devices cannot be moved.")
       end
@@ -123,6 +125,7 @@ module Y2Partitioner
       def existing_partition_error
         return nil unless partition.exists_in_devicegraph?(DeviceGraphs.instance.system)
 
+        # FIXME: This message is copied from old partitioner, but it could be improved.
         format(
           # TRANSLATORS: error message where %{name} is replaced by a partition name (e.g. /dev/sda1)
           _("The partition %{name} is already created on disk\n" \
@@ -136,6 +139,8 @@ module Y2Partitioner
       # @return [String, nil] nil when there is any adjacent free space
       def no_space_error
         return nil unless possible_movement.nil?
+
+        # FIXME: This message is copied from old partitioner, but it could be improved.
 
         # TRANSLATORS: error message where %{name} is replaced by a partition name (e.g. /dev/sda1)
         format(_("No space to move partition %{name}"), name: partition.name)
@@ -169,21 +174,32 @@ module Y2Partitioner
 
       # Moves the partition to the selected direction
       #
+      # @note "Move forward" means to move the partition towards the beginning of the disk.
+      #   Otherwise, "move backward" means to move towards the end of the disk.
+      #
       # @see #moves_forward, #moves_backward
       def move_partition
         movement == :forward ? move_forward : move_backward
       end
 
       # Moves the patition by placing it at the beginning of the previous adjacent free space
+      #
+      # @raise [Y2Partitioner::Error] if there is no previous adjacent free space
       def move_forward
-        return unless previous_adjacent_unused_slot
+        if !previous_adjacent_unused_slot
+          raise Error, "Partition #{partition.name} cannot be moved forward"
+        end
 
         partition.region.start = previous_adjacent_unused_slot.region.start
       end
 
       # Moves the patition by placing it at the end of the next adjacent free space
+      #
+      # @raise [Y2Partitioner::Error] if there is no next adjacent free space
       def move_backward
-        return unless next_adjacent_unused_slot
+        if !next_adjacent_unused_slot
+          raise Error, "Partition #{partition.name} cannot be moved backward"
+        end
 
         partition.region.start += next_adjacent_unused_slot.region.length
       end
@@ -218,7 +234,7 @@ module Y2Partitioner
       #
       # @return [Y2Storage::PartitionTables::PartitionSlot, nil] nil if there is no previous free space.
       def previous_unused_slot
-        unused_slots(partition.type).select { |s| s.region.start < partition.region.start }.last
+        unused_slots(partition.type).reverse_each.find { |s| s.region.start < partition.region.start }
       end
 
       # Next free space, not necessary adjacent to the partition
@@ -229,7 +245,7 @@ module Y2Partitioner
       #
       # @return [Y2Storage::PartitionTables::PartitionSlot, nil] nil if there is no next free space.
       def next_unused_slot
-        unused_slots(partition.type).select { |s| s.region.start > partition.region.start }.first
+        unused_slots(partition.type).find { |s| s.region.start > partition.region.start }
       end
 
       # Partition placed before the partition to move
@@ -240,7 +256,7 @@ module Y2Partitioner
       #
       # @return [Y2Storage::Partition, nil] nil if there is no partition before.
       def previous_partition
-        partitions(partition.type).select { |p| p.region.start < partition.region.start }.last
+        partitions(partition.type).reverse_each.find { |p| p.region.start < partition.region.start }
       end
 
       # Partition placed after the partition to move
@@ -251,7 +267,7 @@ module Y2Partitioner
       #
       # @return [Y2Storage::Partition, nil] nil if there is no partition after.
       def next_partition
-        partitions(partition.type).select { |p| p.region.start > partition.region.start }.first
+        partitions(partition.type).find { |p| p.region.start > partition.region.start }
       end
 
       # All free spaces in the partition table of the partition to move.
@@ -294,8 +310,8 @@ module Y2Partitioner
       #
       #   For example:
       #
-      #   * start alinged but end not aligned -> moves forward -> start aligned but end not aligned
-      #   * start alinged but end not aligned -> moves backward -> start not aligned but end aligned
+      #   * start aligned but end not aligned -> moves forward -> start aligned but end not aligned
+      #   * start aligned but end not aligned -> moves backward -> start not aligned but end aligned
       #
       #   * start not aligned but end aligned -> moves forward -> start aligned but end not aligned
       #   * start not aligned but end aligned -> moves backward -> start not aligned but end aligned

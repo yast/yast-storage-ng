@@ -49,6 +49,9 @@ module Y2Partitioner
       end
 
       # Layout is different to the default Popup layout
+      #
+      # This dialog is pretty similar to a basic popup (Yast2::Popup), but in this case it
+      # could contain a widget to select the movement direction (forward or backward).
       def layout
         VBox(
           MarginBox(
@@ -76,7 +79,9 @@ module Y2Partitioner
 
     private
 
-      # Only shows ok and cancel buttons (help is excluded)
+      # Only shows ok and cancel buttons
+      #
+      # This dialog has not help button in old Partitioner.
       def buttons
         [ok_button, cancel_button]
       end
@@ -116,6 +121,8 @@ module Y2Partitioner
           self.value = "forward"
         end
 
+        # CWM::RadioButtons expects string as item id, but the selected item is stored
+        # as symbol into the dialog attribute.
         def store
           dialog.selected_movement = value.to_sym
         end
