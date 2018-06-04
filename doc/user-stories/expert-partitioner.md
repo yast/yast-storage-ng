@@ -23,7 +23,7 @@ The specs are based on current version of expert partitioner for TW. The goal is
           * shows an error popup
         * and the partition is not extended
           * shows the edition dialog for that partition
-    * *(pending) and action 'Move' is selected*
+    * and action 'Move' is selected
       * and the current selected row in the table is a disk
         * shows an error popup
       * and the current selected row in the table is a partition
@@ -76,7 +76,7 @@ The specs are based on current version of expert partitioner for TW. The goal is
               * asks for confirmation
               * removes existing partition table
               * creates a new partition table into the disk
-          * *(pending) and 'Clone this Disk' is selected*
+          * and 'Clone this Disk' is selected
             * shows a popup dialog to select the disk where to clone
             * and 'Ok' is selected
               * shows a popup to confirm partitions deleting
@@ -88,7 +88,7 @@ The specs are based on current version of expert partitioner for TW. The goal is
           * shows an error popup
         * and the partition is not extended
           * shows dialog to edit the current selected partition in the table
-      * *(pending) and action 'Move' is selected*
+      * and action 'Move' is selected
         * and it is possible to move the partition (forward or backward)
           * shows a confirm popup to move the partition
           * moves the partition
@@ -116,7 +116,7 @@ The specs are based on current version of expert partitioner for TW. The goal is
 * shows the actions: 'Edit', 'Move', 'Resize' and 'Delete'
   * and action 'Edit' is selected
     * the same than in the "disk view"
-  * *(pending) and action 'Move' is selected*
+  * and action 'Move' is selected
     * the same than in the "disk view"
   * and action 'Resize' is selected
     * the same than in the "disk view"
@@ -271,7 +271,7 @@ The specs are based on current version of expert partitioner for TW. The goal is
 * and 'File system' is EXT2
   * shows 'Options' button
   * and 'Options' is selected
-    * *(pending) shows a dialog with the fields*
+    * shows a dialog with the fields
       * Stride Length in blocks: none
       * Block size in bytes: auto (default), 1024, 2048, 4096
       * Bytes per inode: auto (default), 1024, 2048, 4096, 8192, 16384, 32768
@@ -281,7 +281,7 @@ The specs are based on current version of expert partitioner for TW. The goal is
 * and 'File system' is EXT3
   * shows 'Options' button
   * and 'Options' is selected
-    * *(pending) shows a dialog with the fields*
+    * shows a dialog with the fields
       * Stride Length in blocks: none
       * Block size in bytes: auto (default), 1024, 2048, 4096
       * Bytes per inode: auto (default), 1024, 2048, 4096, 8192, 16384, 32768
@@ -293,7 +293,7 @@ The specs are based on current version of expert partitioner for TW. The goal is
 * and 'File system' is EXT4
   * shows 'Options' button
   * and 'Options' is selected
-    * *(pending) shows a dialog with the fields*
+    * shows a dialog with the fields
       * Stride Length in blocks: none
       * Block size in bytes: auto (default), 1024, 2048, 4096
       * Bytes per inode: auto (default), 1024, 2048, 4096, 8192, 16384, 32768
@@ -306,7 +306,7 @@ The specs are based on current version of expert partitioner for TW. The goal is
 * and 'File system' is FAT
   * shows 'Options' button
   * and 'Options' is selected
-    * *(pending) shows a dialog with the fields*
+    * shows a dialog with the fields
       * Number of FATs: auto (default), 1, 2
       * FAT size: auto (default), 12 bit, 16 bit, 32 bit
       * Root dir entries: auto
@@ -314,14 +314,14 @@ The specs are based on current version of expert partitioner for TW. The goal is
 * and 'File system' is XFS
   * shows 'Options' button
   * and 'Options' is selected
-    * *(pending) shows a dialog with the fields*
+    * shows a dialog with the fields
       * Block size in bytes: auto (default), 1024, 2048, 4096
       * Inode size: auto (default), 256, 512, 1024, 2048
       * Percentage of inode space: auto (default), 5, 10, ..., 95, 100
       * Inode aligned: auto (default), true, false
   * sets 'File system Id' to 0x83 Linux
 * and 'File system' is Swap
-  * *(pending) shows 'Options' button as disabled*
+  * shows 'Options' button as disabled
   * sets 'Mount point' to Swap
   * sets 'File system Id' to 0x82 Linux swap
 
@@ -343,7 +343,7 @@ The specs are based on current version of expert partitioner for TW. The goal is
 ##### When 'Mount partition' is selected
 * allows to select 'Mount point'
   * where options are: /, /home, /var, /opt, /boot, /srv, /tmp, /usr/local
-  * *(pending) first free value is taken by default*
+  * first free value is taken by default
 * allows to enter a 'Mount point' manually
 * and a 'Mount point' is indicated
   * shows the button 'Fstab options'
@@ -370,8 +370,8 @@ The specs are based on current version of expert partitioner for TW. The goal is
     * Mountable by user: false
     * Do not mount at system start-up: false
     * Enable quota support: false
-    * *(pending) Access control lists (ACL): true*
-    * *(pending) Extended user attributes: true*
+    * Access control lists (ACL): true
+    * Extended user attributes: true
     * Arbitrary option value:
 * and 'File system' is EXT3 or EXT4
   * shows a dialog with the following fields
@@ -383,8 +383,8 @@ The specs are based on current version of expert partitioner for TW. The goal is
     * Do not mount at system start-up: false
     * Enable quota support: false
     * Data journaling mode: journal, ordered (default), writeback
-    * *(pending) Access control lists (ACL): true*
-    * *(pending) Extended user attributes: true*
+    * Access control lists (ACL): true
+    * Extended user attributes: true
     * Arbitrary option value:
 * and 'File system' is FAT
   * shows a dialog with the following fields

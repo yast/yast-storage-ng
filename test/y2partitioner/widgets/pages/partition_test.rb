@@ -49,6 +49,11 @@ describe Y2Partitioner::Widgets::Pages::Partition do
       expect(button).to_not be_nil
     end
 
+    it "shows a button for moving the partition" do
+      button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::PartitionMoveButton) }
+      expect(button).to_not be_nil
+    end
+
     it "shows a button for resizing the partition" do
       button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::DeviceResizeButton) }
       expect(button).to_not be_nil
