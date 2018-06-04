@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Mon Jun  4 15:13:54 UTC 2018 - jlopez@suse.com
+
+- Partitioner: allow to move partitions (part of fate#318196).
+- 4.0.184
+
+-------------------------------------------------------------------
 Thu May 17 13:49:57 UTC 2018 - ancor@suse.com
 
 - Added to the installer a detailed description about the origin of
