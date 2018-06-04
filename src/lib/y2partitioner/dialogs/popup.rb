@@ -46,11 +46,7 @@ module Y2Partitioner
           MinSize(min_width, min_height, ReplacePoint(Id(:contents), Empty())),
           VSpacing(1),
           VStretch(),
-          ButtonBox(
-            PushButton(Id(:help), Opt(:helpButton), Yast::Label.HelpButton),
-            PushButton(Id(:ok), Opt(:default), ok_button_label),
-            PushButton(Id(:cancel), cancel_button_label)
-          )
+          ButtonBox(*buttons)
         )
       end
 
@@ -76,6 +72,22 @@ module Y2Partitioner
 
       def cancel_button_label
         Yast::Label.CancelButton
+      end
+
+      def buttons
+        [help_button, ok_button, cancel_button]
+      end
+
+      def help_button
+        PushButton(Id(:help), Opt(:helpButton), Yast::Label.HelpButton)
+      end
+
+      def ok_button
+        PushButton(Id(:ok), Opt(:default), ok_button_label)
+      end
+
+      def cancel_button
+        PushButton(Id(:cancel), cancel_button_label)
       end
     end
   end
