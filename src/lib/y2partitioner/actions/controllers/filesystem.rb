@@ -342,8 +342,11 @@ module Y2Partitioner
             name = Y2Storage::Encryption.dm_name_for(blk_device)
             enc = blk_device.create_encryption(name)
 
+            # FIXME: extract this to its own method. Also, pay attention to the hardcoded value for
+            # password_file, which for now is here only to test until a final decision about how to do it
+            # better will be taken.
             if random_password
-              enc.password_file = "/dev/urandom" # FIXME
+              enc.password_file = "/dev/urandom"
             else
               enc.password = encrypt_password
             end
