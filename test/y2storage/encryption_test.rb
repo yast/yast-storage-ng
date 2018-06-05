@@ -25,65 +25,94 @@ require "y2storage"
 
 describe Y2Storage::Encryption do
   describe ".dm_name_for" do
-    # Helper method to find a partition by number
-    def partition(disk, number)
-      disk.partitions.find { |part| part.number == number }
-    end
-
-    # Helper method to check for collisions in the DeviceMapper names
-    def expect_no_dm_duplicates
-      all_dm_names = devicegraph.blk_devices.map(&:dm_table_name).reject(&:empty?).sort
-      uniq_dm_names = all_dm_names.uniq
-      expect(all_dm_names).to eq uniq_dm_names
-    end
-
-    before { fake_scenario("trivial_lvm_and_other_partitions") }
+    before { fake_scenario(scenario) }
 
     let(:devicegraph) { Y2Storage::StorageManager.instance.staging }
-    let(:sda) { devicegraph.find_by_name("/dev/sda") }
 
-    context "when the numbers assigned to partitions change" do
-      # Helper method to delete a given partition from a disk
-      def delete_partition(disk, number)
-        disk.partition_table.delete_partition(partition(disk, number))
+    context "when generating a name for a partition" do
+      let(:blk_device) { devicegraph.find_by_name("/dev/sda2") }
+
+      context "if some udev id is known for the partition" do
+        # Use the XML format, which includes support for ids
+        let(:scenario) { "encrypted_partition.xml" }
+
+        it "generates a name based on the partition udev id" do
+          result = described_class.dm_name_for(blk_device)
+          expect(result).to match(/^cr_ata-VBOX_HARDDISK_VB777f5d67-56603f01-part2/)
+        end
       end
 
-      # Helper method to create a partition with an encryption device,
-      # using Encryption.dm_name_for to calculate the name of the latter.
-      def create_encrypted_partition(disk, slot_index)
-        slot = disk.partition_table.unused_partition_slots[slot_index]
-        region = Y2Storage::Region.create(slot.region.start, 8192, slot.region.block_size)
-        part = disk.partition_table.create_partition(
-          slot.name, region, Y2Storage::PartitionType::PRIMARY
-        )
-        enc_name = Y2Storage::Encryption.dm_name_for(part)
-        part.create_encryption(enc_name)
+      context "if no udev id is recognized for the partition" do
+        let(:scenario) { "trivial_lvm_and_other_partitions" }
+
+        it "generates a name based on the partition name" do
+          result = described_class.dm_name_for(blk_device)
+          expect(result).to match(/^cr_sda2/)
+        end
+      end
+    end
+
+    context "when generating a name for a logical volume" do
+      let(:scenario) { "trivial_lvm_and_other_partitions" }
+      let(:blk_device) { devicegraph.find_by_name("/dev/vg0/lv1") }
+
+      it "generates a name based on the volume DeviceMapper name" do
+        result = described_class.dm_name_for(blk_device)
+        expect(result).to match(/^cr_vg0-lv1/)
+      end
+    end
+
+    context "when generating a name for a whole disk" do
+      let(:blk_device) { devicegraph.find_by_name("/dev/sda") }
+
+      context "if some udev id is known for the disk" do
+        # Use the XML format, which includes support for ids
+        let(:scenario) { "encrypted_partition.xml" }
+
+        it "generates a name based on the disk udev id" do
+          result = described_class.dm_name_for(blk_device)
+          expect(result).to match(/^cr_ata-VBOX_HARDDISK_VB777f5d67-56603f01/)
+        end
       end
 
-      before do
-        # Let's free some slots at the beginning of the disk
-        delete_partition(sda, 1)
-        delete_partition(sda, 2)
+      context "if no udev id is recognized for the disk" do
+        let(:scenario) { "trivial_lvm_and_other_partitions" }
+
+        it "generates a name based on the disk name" do
+          result = described_class.dm_name_for(blk_device)
+          expect(result).to match(/^cr_sda/)
+        end
+      end
+    end
+
+    context "when the generated name is already taken" do
+      let(:scenario) { "trivial_lvm_and_other_partitions" }
+      let(:blk_device) { devicegraph.find_by_name("/dev/sda2") }
+
+      context "if some udev id is known for the partition" do
+        # Use the XML format, which includes support for ids
+        let(:scenario) { "encrypted_partition.xml" }
+
+        it "generates a name based on the partition udev id" do
+          result = described_class.dm_name_for(blk_device)
+          expect(result).to match(/^cr_ata-VBOX_HARDDISK_VB777f5d67-56603f01-part2/)
+        end
       end
 
-      # Regression test for bsc#1094157
-      it "does not generate redundant DeviceMapper names" do
-        # Generate encryption devices for two new partitions sda1 and sda2
-        # at the beginning of the disk
-        create_encrypted_partition(sda, 0)
-        create_encrypted_partition(sda, 0)
-        # Remove the first new partition so the current sda2 becomes sda1
-        delete_partition(sda, 1)
-        # Add a new sda2
-        create_encrypted_partition(sda, 1)
+      context "if no udev id is recognized for the partition" do
 
-        expect_no_dm_duplicates
+        it "generates a name based on the partition name" do
+          result = described_class.dm_name_for(blk_device)
+          expect(result).to match(/^cr_sda2/)
+        end
       end
     end
 
     context "when the candidate name is already taken" do
-      let(:sda2) { partition(sda, 2) }
-      let(:sda3) { partition(sda, 3) }
+      let(:scenario) { "trivial_lvm_and_other_partitions" }
+      let(:sda2) { devicegraph.find_by_name("/dev/sda2") }
+      let(:sda3) { devicegraph.find_by_name("/dev/sda3") }
+      let(:lv1)  { devicegraph.find_by_name("/dev/vg0/lv1") }
 
       before do
         # Ensure the first option for the name is already taken
@@ -91,9 +120,21 @@ describe Y2Storage::Encryption do
         sda3.encryption.dm_table_name = enc_name
       end
 
-      it "does not generate redundant DeviceMapper names" do
-        sda2.create_encryption(Y2Storage::Encryption.dm_name_for(sda2))
-        expect_no_dm_duplicates
+      it "adds a number-based suffix" do
+        result = described_class.dm_name_for(sda2)
+        expect(result).to match(/^cr_sda2_2/)
+      end
+
+      context "and the version with suffix is also taken" do
+        before do
+          # Ensure the second option is taken as well
+          lv1.dm_table_name = Y2Storage::Encryption.dm_name_for(sda2)
+        end
+
+        it "increases the number in the suffix as much as needed" do
+          result = described_class.dm_name_for(sda2)
+          expect(result).to match(/^cr_sda2_3/)
+        end
       end
     end
   end

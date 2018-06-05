@@ -408,6 +408,30 @@ describe Y2Storage::FakeDeviceFactory do
       end
     end
 
+    context "when yaml contains an encrypted device with no device name" do
+      let(:input) do
+        %(---
+          - disk:
+              name: "/dev/sdb"
+              size: 512 GiB
+              file_system: ext4
+              mount_point: "/data"
+              label: "backup"
+              encryption:
+                  type: "luks"
+        )
+      end
+
+      it "generates a proper device name" do
+        described_class.load_yaml_file(staging, io)
+
+        disk = Storage.to_disk(Storage::BlkDevice.find_by_name(staging, "/dev/sdb"))
+
+        expect(disk.has_encryption).to be true
+        expect(disk.encryption.name).to eq "/dev/mapper/cr_sdb"
+      end
+    end
+
     context "when yaml contains a zero-size disk" do
       before do
         Y2Storage::StorageManager.create_test_instance
