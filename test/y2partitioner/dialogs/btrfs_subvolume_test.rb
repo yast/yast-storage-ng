@@ -1,3 +1,25 @@
+#!/usr/bin/env rspec
+# encoding: utf-8
+
+# Copyright (c) [2017] SUSE LLC
+#
+# All Rights Reserved.
+#
+# This program is free software; you can redistribute it and/or modify it
+# under the terms of version 2 of the GNU General Public License as published
+# by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+# more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, contact SUSE LLC.
+#
+# To contact SUSE LLC about this file by physical or electronic mail, you may
+# find current contact information at www.suse.com.
+
 require_relative "../test_helper"
 
 require "cwm/rspec"
@@ -68,8 +90,8 @@ describe Y2Partitioner::Dialogs::BtrfsSubvolume do
       end
 
       context "when a path is entered" do
-        context "and the default subvolume is the top level one" do
-          let(:dev_name) { "/dev/sdb3" }
+        context "and the filesystem has not a specific subvolumes prefix" do
+          let(:dev_name) { "/dev/sdd1" }
 
           context "and the entered path is an absolute path" do
             let(:value) { "///foo" }
@@ -81,13 +103,17 @@ describe Y2Partitioner::Dialogs::BtrfsSubvolume do
           end
         end
 
-        context "and the path does not start with default subvolume path" do
-          let(:value) { "///foo" }
+        context "and the filesystem has a specific subvolumes prefix" do
+          let(:dev_name) { "/dev/sda2" }
 
-          it "removes extra slashes and prepend the default subvolume path" do
-            expect(subject).to receive(:value=).with("foo").ordered
-            expect(subject).to receive(:value=).with(/^@\/.*/).ordered
-            subject.validate
+          context "and the path does not start with the subvolumes prefix" do
+            let(:value) { "///foo" }
+
+            it "removes extra slashes and prepend the subvolumes prefix" do
+              expect(subject).to receive(:value=).with("foo").ordered
+              expect(subject).to receive(:value=).with(/^@\/.*/).ordered
+              subject.validate
+            end
           end
         end
 

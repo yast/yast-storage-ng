@@ -412,41 +412,40 @@ describe Y2Storage::Filesystems::Btrfs do
   end
 
   describe "#btrfs_subvolume_path" do
-    context "when the path is correct for the filesystem" do
-      let(:path) { "@/foo" }
+    context "when the subvolumes prefix is not empty" do
+      context "and the path starts with the subvolumes prefix" do
+        let(:path) { "@/foo" }
 
-      it "returns the path" do
-        expect(filesystem.btrfs_subvolume_path(path)).to eq(path)
+        it "returns the path" do
+          expect(filesystem.btrfs_subvolume_path(path)).to eq(path)
+        end
+      end
+
+      context "and the path is an absolute path" do
+        let(:path) { "/foo" }
+
+        it "returns a fixed path starting with the subvolumes prefix" do
+          expect(filesystem.btrfs_subvolume_path(path)).to eq("@/foo")
+        end
+      end
+
+      context "and the path is a relative path" do
+        let(:path) { "foo" }
+
+        it "returns a fixed path starting with the subvolumes prefix" do
+          expect(filesystem.btrfs_subvolume_path(path)).to eq("@/foo")
+        end
       end
     end
 
-    context "when the path is an absolute path" do
-      let(:path) { "/foo" }
-
-      it "returns a fixed path with the correct prefix for the filesystem" do
-        expect(filesystem.btrfs_subvolume_path(path)).to eq("@/foo")
-      end
-    end
-
-    context "when the path is a relative path" do
-      let(:path) { "foo" }
-
-      it "returns a fixed path with the correct prefix for the filesystem" do
-        expect(filesystem.btrfs_subvolume_path(path)).to eq("@/foo")
-      end
-    end
-
-    context "when the prefix for the filesystem is empty" do
-      let(:default_subvolume) do
-        instance_double(Y2Storage::BtrfsSubvolume, path: "")
-      end
-
+    context "when the subvolumes prefix is empty" do
       before do
-        allow(filesystem).to receive(:default_btrfs_subvolume)
-          .and_return(default_subvolume)
+        # The prefix is empty if there is no a single top parent subvolume
+        # under the top level one.
+        filesystem.top_level_btrfs_subvolume.create_btrfs_subvolume("@@")
       end
 
-      context "when the path is an absolute path" do
+      context "and the path is an absolute path" do
         let(:path) { "/foo" }
 
         it "returns a fixed relative path without any prefix" do
@@ -454,10 +453,10 @@ describe Y2Storage::Filesystems::Btrfs do
         end
       end
 
-      context "when the path is a relative path" do
+      context "and the path is a relative path" do
         let(:path) { "foo" }
 
-        it "returns a fixed relative path without any prefix" do
+        it "returns the path" do
           expect(filesystem.btrfs_subvolume_path(path)).to eq("foo")
         end
       end
@@ -775,27 +774,66 @@ describe Y2Storage::Filesystems::Btrfs do
   end
 
   describe "#subvolumes_prefix" do
-    context "when a default subvolume name is set to '@'" do
+    context "when there are no subvolumes" do
       let(:dev_name) { "/dev/sda2" }
 
-      it "returns the default subvolume name '@'" do
-        expect(subject.subvolumes_prefix).to eq("@")
+      before do
+        filesystem.delete_btrfs_subvolume(devicegraph, "@")
+      end
+
+      it "returns an empty string" do
+        expect(filesystem.subvolumes_prefix).to eq("")
       end
     end
 
-    context "when default subvolume name is not set" do
-      let(:dev_name) { "/dev/sdd1" }
+    context "when there is only a single parent subvolume" do
+      context "and the subvolume is for snapshots" do
+        let(:dev_name) { "/dev/sde1" }
 
-      it "returns an empty string" do
-        expect(subject.subvolumes_prefix).to eq("")
+        it "returns an empty string" do
+          expect(filesystem.subvolumes_prefix).to eq("")
+        end
+      end
+
+      context "and the subvolume is not for snapshots" do
+        let(:dev_name) { "/dev/sda2" }
+
+        it "returns the parent subvolume path" do
+          expect(filesystem.subvolumes_prefix).to eq("@")
+        end
+
+        context "and the subvolume is not the default subvolume" do
+          before do
+            subvolume = filesystem.find_btrfs_subvolume_by_path("@/home")
+            subvolume.set_default_btrfs_subvolume
+          end
+
+          it "returns the parent subvolume path" do
+            expect(filesystem.subvolumes_prefix).to eq("@")
+          end
+        end
       end
     end
 
-    context "when only snapshots exist" do
-      let(:dev_name) { "/dev/sde1" }
+    context "when there are several subvolumes at first level" do
+      context "and there is only one subvolume that is not for snapshots" do
+        let(:dev_name) { "/dev/sde1" }
 
-      it "returns an empty string" do
-        expect(subject.subvolumes_prefix).to eq("")
+        before do
+          filesystem.top_level_btrfs_subvolume.create_btrfs_subvolume("@")
+        end
+
+        it "returns the no snapshot subvolume path" do
+          expect(subject.subvolumes_prefix).to eq("@")
+        end
+      end
+
+      context "and there are several subvolumes that are not for snapshots" do
+        let(:dev_name) { "/dev/sdd1" }
+
+        it "returns an empty string" do
+          expect(subject.subvolumes_prefix).to eq("")
+        end
       end
     end
   end

@@ -222,11 +222,11 @@ module Y2Storage
 
       # Returns a subvolume path for the filesystem
       #
-      # The subvolume path is generated from the default subvolume path and
-      # the relative version of path (without default subvolume prefix).
+      # The subvolume path is generated from the subvolumes prefix and the relative version
+      # of the subvolume path (without the subvolumes prefix).
       #
       # @example
-      #   filesystem.default_btrfs_subvolume.path # => "@"
+      #   filesystem.subvolumes_prefix # => "@"
       #
       #   filesystem.btrfs_subvolume_path("foo") # => "@/foo"
       #   filesystem.btrfs_subvolume_path("@/foo") # => "@/foo"
@@ -235,7 +235,7 @@ module Y2Storage
       #
       # @return [String] subvolume path for the filesystem
       def btrfs_subvolume_path(subvolume_path)
-        Btrfs.btrfs_subvolume_path(default_btrfs_subvolume.path, path_without_prefix(subvolume_path))
+        Btrfs.btrfs_subvolume_path(subvolumes_prefix, path_without_prefix(subvolume_path))
       end
 
       # Returns a subvolume mount point for the filesystem
@@ -265,13 +265,13 @@ module Y2Storage
       # @example
       #   Btrfs.btrfs_subvolume_path("@", "foo") # => "@/foo"
       #
-      # @param default_subvolume_path [String] a default subvolume path
+      # @param subvolumes_prefix [String] prefix for the subvolumes
       # @param subvolume_path [String] a subvolume path
       #
       # @return [String, nil] nil whether any path is not valid
-      def self.btrfs_subvolume_path(default_subvolume_path, subvolume_path)
-        return nil if default_subvolume_path.nil? || subvolume_path.nil?
-        path = Pathname(File.join(default_subvolume_path, subvolume_path))
+      def self.btrfs_subvolume_path(subvolumes_prefix, subvolume_path)
+        return nil if subvolumes_prefix.nil? || subvolume_path.nil?
+        path = Pathname(File.join(subvolumes_prefix, subvolume_path))
         return path.to_s unless path.absolute?
         path.relative_path_from(MountPoint::ROOT_PATH).to_s
       end
@@ -451,7 +451,7 @@ module Y2Storage
       end
 
       def path_without_prefix(subvolume_path)
-        subvolume_path.gsub(default_btrfs_subvolume.path, "")
+        subvolume_path.gsub(subvolumes_prefix, "")
       end
 
       def types_for_is
