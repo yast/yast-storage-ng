@@ -30,6 +30,8 @@ module Y2Partitioner
   module Dialogs
     # Popup dialog to create a btrfs subvolume
     class BtrfsSubvolume < Popup
+      include Yast::Logger
+
       attr_reader :filesystem
       attr_reader :form
 
@@ -186,11 +188,15 @@ module Y2Partitioner
         # @see Y2Storage::Filesystems::Btrfs#subvolumes_prefix
         # @see Y2Storage::Filesystems::Btrfs#btrfs_subvolume_path
         def fix_path
+          log.info "Fixing BTRFS subvolume path: #{value}"
+
           self.value = filesystem.canonical_subvolume_name(value)
           return if value.empty?
 
           prefix = filesystem.subvolumes_prefix
           prefix << "/" unless prefix.empty?
+
+          log.info "Adding BTRFS subvolumes prefix: #{prefix}"
 
           return value if value.start_with?(prefix)
 
