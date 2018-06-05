@@ -74,6 +74,12 @@ module Y2Partitioner
         Yast::UI.QueryWidget(Id(:pw2), :Value)
       end
 
+      # Checks if is allowed to use random passwords
+      #
+      # NOTE: for now, only Swap filesystem allows this kind of encryption method because its content is
+      # not needed after a shutdown and can be reinitialized on boot-up. For other filesystems does not
+      # make sense since data will be lost.
+      #
       # @return [Boolean]
       def random_password_allowed?
         @random_password_allowed ||= @controller.filesystem_type.to_sym == :swap
