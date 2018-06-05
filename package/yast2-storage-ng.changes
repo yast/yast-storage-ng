@@ -1,7 +1,7 @@
 -------------------------------------------------------------------
 Tue Jun  5 10:24:23 UTC 2018 - shundhammer@suse.com
 
-- Partitioner: Handle limitations vor volume labels (bsc#1084867)
+- Partitioner: Handle limitations for volume labels (bsc#1084867)
 - 4.0.185
 
 -------------------------------------------------------------------
