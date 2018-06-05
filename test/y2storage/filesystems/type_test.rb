@@ -232,7 +232,7 @@ describe Y2Storage::Filesystems::Type do
     end
   end
 
-  describe "label_valid_chars" do
+  describe "#label_valid_chars" do
     it "contains alphanumeric characters" do
       chars = Y2Storage::Filesystems::Type::EXT2.label_valid_chars
       expect(chars).to match(/ABCDEFG/)
