@@ -87,15 +87,15 @@ module Y2Storage
     #
     # @return [String]
     def password_file
-      @password_file
+      @password_file || "/dev/urandom"
     end
 
     # Sets the absolute path to a file containing the encryption password
     #
     # @param filename [String] absolute path to the file
     def password_file=(filename)
-      log.error("Not implemented yet: assigning #{filename} as file for the password in crypttab")
       # @password_file = filename
+      log.error("Not implemented yet: assigning #{filename} as file for the password in crypttab")
     end
 
   protected

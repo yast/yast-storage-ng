@@ -29,11 +29,14 @@ describe Y2Partitioner::Widgets::EncryptPassword do
 
   include_examples "CWM::AbstractWidget"
 
-  let(:controller) { double("FilesystemController", blk_device_name: "/dev/sda1", filesystem_type: filesystem_type ) }
   let(:pw1) { "password1" }
   let(:pw2) { "password2" }
   let(:password_checker) { Y2Storage::EncryptPasswordChecker.new }
   let(:filesystem_type) { Y2Storage::Filesystems::Type::VFAT }
+
+  let(:controller) do
+    double("FilesystemController", blk_device_name: "/dev/sda1", filesystem_type: filesystem_type)
+  end
 
   before do
     allow(Y2Storage::EncryptPasswordChecker).to receive(:new).and_return(password_checker)
@@ -99,17 +102,17 @@ describe Y2Partitioner::Widgets::EncryptPassword do
 
       context "and random password was selected" do
         it "does not check password if random password is selected" do
-           allow(Yast::UI).to receive(:QueryWidget).with(Id(:pwd_type), :Value).and_return(:random_pwd)
-           expect(password_checker).to_not receive(:error_msg)
-           widget.validate
+          allow(Yast::UI).to receive(:QueryWidget).with(Id(:pwd_type), :Value).and_return(:random_pwd)
+          expect(password_checker).to_not receive(:error_msg)
+          widget.validate
         end
       end
 
       context "and password is given" do
         it "checkes password if random IS NOT selected" do
-           allow(Yast::UI).to receive(:QueryWidget).with(Id(:pwd_type), :Value).and_return(:manual_pwd)
-           expect(password_checker).to receive(:error_msg)
-           widget.validate
+          allow(Yast::UI).to receive(:QueryWidget).with(Id(:pwd_type), :Value).and_return(:manual_pwd)
+          expect(password_checker).to receive(:error_msg)
+          widget.validate
         end
       end
     end
@@ -167,7 +170,7 @@ describe Y2Partitioner::Widgets::EncryptPassword do
       let(:filesystem_type) { Y2Storage::Filesystems::Type::SWAP }
 
       it "contains information about random password option" do
-        expect(widget.help).to include('auto-generate', 'random')
+        expect(widget.help).to include("auto-generate", "random")
       end
     end
   end

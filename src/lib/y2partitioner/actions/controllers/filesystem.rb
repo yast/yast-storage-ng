@@ -343,7 +343,7 @@ module Y2Partitioner
             enc = blk_device.create_encryption(name)
 
             if random_password
-              enc.password_file = '/dev/urandom' # FIXME
+              enc.password_file = "/dev/urandom" # FIXME
             else
               enc.password = encrypt_password
             end

@@ -99,9 +99,13 @@ module Y2Partitioner
           RadioButtonGroup(
             Id(:pwd_type),
             VBox(
-              Left(RadioButton(Id(:manual_pwd), _("Ask for password on boot to mount the swap"), true)),
+              Left(
+                RadioButton(Id(:manual_pwd), _("Ask for password on boot to mount the swap"), true)
+              ),
               password_fields,
-              Left(RadioButton(Id(:random_pwd), _("Auto-generate a new &random password on every boot"))),
+              Left(
+                RadioButton(Id(:random_pwd), _("Auto-generate a new &random password on every boot"))
+              )
             )
           )
         )
@@ -143,11 +147,11 @@ module Y2Partitioner
             "</p>\n"
           )
         else
-        _(
-          "<p>\n" \
-            "You will need to enter your encryption password.\n" \
-          "</p>\n"
-        )
+          _(
+            "<p>\n" \
+              "You will need to enter your encryption password.\n" \
+            "</p>\n"
+          )
         end
       end
 
