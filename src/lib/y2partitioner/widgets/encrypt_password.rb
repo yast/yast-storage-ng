@@ -142,7 +142,7 @@ module Y2Partitioner
         if random_password_allowed?
           _(
             "<p>\n" \
-              "You will need to enter your encryption password or allow to system\n" \
+              "You will need to enter your encryption password or allow system to\n" \
               "auto-generate a new random password on every boot.\n" \
             "</p>\n"
           )
