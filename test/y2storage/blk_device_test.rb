@@ -876,4 +876,142 @@ describe Y2Storage::BlkDevice do
       end
     end
   end
+
+  describe "#encrypt" do
+    let(:device_name) { "/dev/sdb" }
+
+    RSpec.shared_examples "given encryption name" do
+      it "creates an encryption device with the given name and no #auto_dm_name?" do
+        expect(enc).to be_a Y2Storage::Encryption
+        expect(enc.blk_device).to eq device
+        expect(enc.dm_table_name).to eq "cr_manual"
+        expect(enc.name).to eq "/dev/mapper/cr_manual"
+        expect(enc.auto_dm_name?).to eq false
+      end
+    end
+
+    RSpec.shared_examples "auto-generated encryption name" do
+      it "creates an encryption device with an auto-generated name and #auto_dm_name?" do
+        expect(Y2Storage::Encryption).to receive(:dm_name_for).with(device).and_return "cr_auto"
+
+        expect(enc).to be_a Y2Storage::Encryption
+        expect(enc.blk_device).to eq device
+        expect(enc.dm_table_name).to eq "cr_auto"
+        expect(enc.name).to eq "/dev/mapper/cr_auto"
+        expect(enc.auto_dm_name?).to eq true
+      end
+    end
+
+    RSpec.shared_examples "given password" do
+      it "sets the correct password for the encrypted device" do
+        expect(enc.password).to eq "123123"
+      end
+    end
+
+    RSpec.shared_examples "no password" do
+      it "sets no password for the encrypted device" do
+        expect(enc.password).to eq ""
+      end
+    end
+
+    context "when a name and a password are provided" do
+      let(:enc) { device.encrypt(dm_name: "cr_manual", password: "123123") }
+
+      include_examples "given encryption name"
+      include_examples "given password"
+    end
+
+    context "when called with no arguments" do
+      let(:enc) { device.encrypt }
+
+      include_examples "auto-generated encryption name"
+      include_examples "no password"
+    end
+
+    context "when a name is provided with no password" do
+      let(:enc) { device.encrypt(dm_name: "cr_manual") }
+
+      include_examples "given encryption name"
+      include_examples "no password"
+    end
+
+    context "when a password is provided with no name" do
+      let(:enc) { device.encrypt(password: "123123") }
+
+      include_examples "auto-generated encryption name"
+      include_examples "given password"
+    end
+
+    context "auto-generated names" do
+      # Helper method to check for collisions in the DeviceMapper names
+      def expect_no_dm_duplicates
+        all_dm_names = devicegraph.blk_devices.map(&:dm_table_name).reject(&:empty?).sort
+        uniq_dm_names = all_dm_names.uniq
+        expect(all_dm_names).to eq uniq_dm_names
+      end
+
+      # Helper method to find a partition by number
+      def partition(disk, number)
+        disk.partitions.find { |part| part.number == number }
+      end
+
+      # Helper method to delete a given partition from a disk
+      def delete_partition(disk, number)
+        disk.partition_table.delete_partition(partition(disk, number))
+      end
+
+      # Helper method to create a partition with an encryption device,
+      # using #encrypt with auto-generated name.
+      def create_encrypted_partition(disk, slot_index)
+        slot = disk.partition_table.unused_partition_slots[slot_index]
+        region = Y2Storage::Region.create(slot.region.start, 8192, slot.region.block_size)
+        part = disk.partition_table.create_partition(
+          slot.name, region, Y2Storage::PartitionType::PRIMARY
+        )
+        part.encrypt
+      end
+
+      let(:scenario) { "trivial_lvm_and_other_partitions" }
+      let(:devicegraph) { Y2Storage::StorageManager.instance.staging }
+      let(:sda) { devicegraph.find_by_name("/dev/sda") }
+
+      context "when the numbers assigned to partitions change" do
+        before do
+          # Let's free some slots at the beginning of the disk
+          delete_partition(sda, 1)
+          delete_partition(sda, 2)
+        end
+
+        # Regression test for bsc#1094157
+        it "does not generate redundant DeviceMapper names" do
+          # Generate encryption devices for two new partitions sda1 and sda2
+          # at the beginning of the disk
+          create_encrypted_partition(sda, 0)
+          create_encrypted_partition(sda, 0)
+          # Remove the first new partition so the current sda2 becomes sda1
+          delete_partition(sda, 1)
+          # Add a new sda2
+          create_encrypted_partition(sda, 1)
+
+          expect_no_dm_duplicates
+        end
+      end
+
+      context "when the candidate name is already taken" do
+        let(:sda2) { partition(sda, 2) }
+        let(:sda3) { partition(sda, 3) }
+
+        before do
+          # Ensure the first option for the name is already taken
+          enc_name = Y2Storage::Encryption.dm_name_for(sda2)
+          sda3.encryption.dm_table_name = enc_name
+        end
+
+        it "does not generate redundant DeviceMapper names" do
+          sda2.encrypt
+          expect_no_dm_duplicates
+        end
+      end
+    end
+  end
 end

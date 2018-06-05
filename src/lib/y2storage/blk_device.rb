@@ -256,6 +256,24 @@ module Y2Storage
       !encryption.nil?
     end
 
+    # Creates a new encryption object on top of the device using
+    # {#create_encryption}
+    #
+    # If the new DeviceMapper name is not passed, this method will generate a
+    # default name that will be updated by subsequent calls to
+    # {Encryption#update_dm_names}.
+    #
+    # @param dm_name [String, nil] DeviceMapper table name of the new device
+    # @param password [String, nil] password of the new device
+    # @return [Encryption]
+    def encrypt(dm_name: nil, password: nil)
+      enc = create_encryption(dm_name || "")
+      enc.auto_dm_name = !dm_name
+      enc.password = password if password
+      Encryption.update_dm_names(devicegraph)
+      enc
+    end
+
     # Filesystem placed in the device, either directly or through an encryption
     # layer.
     #
