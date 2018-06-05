@@ -104,7 +104,7 @@ describe Y2Storage::BtrfsSubvolume do
       let(:subvolume_path) { "@/tmp" }
 
       it "returns false" do
-        expect(subject.shadowed?(devicegraph)).to be(false)
+        expect(subject.shadowed?).to eq false
       end
     end
 
@@ -112,7 +112,7 @@ describe Y2Storage::BtrfsSubvolume do
       let(:subvolume_path) { "@/home" }
 
       it "returns true" do
-        expect(subject.shadowed?(devicegraph)).to be(true)
+        expect(subject.shadowed?).to eq true
       end
     end
   end
@@ -124,7 +124,7 @@ describe Y2Storage::BtrfsSubvolume do
       let(:subvolume_path) { "@/tmp" }
 
       it "returns an empty list" do
-        expect(subject.shadowers(devicegraph)).to be_empty
+        expect(subject.shadowers).to be_empty
       end
     end
 
@@ -132,17 +132,17 @@ describe Y2Storage::BtrfsSubvolume do
       let(:subvolume_path) { "@/home" }
 
       it "returns a list of shadowers" do
-        result = subject.shadowers(devicegraph)
+        result = subject.shadowers
         expect(result).to_not be_empty
         expect(result).to all(be_a(Y2Storage::Mountable))
       end
 
       it "the result does not include the subvolume itself" do
-        expect(subject.shadowers(devicegraph).map(&:sid)).to_not include(subject.sid)
+        expect(subject.shadowers.map(&:sid)).to_not include(subject.sid)
       end
 
       it "the result does not include the subvolume filesystem" do
-        expect(subject.shadowers(devicegraph).map(&:sid)).to_not include(filesystem.sid)
+        expect(subject.shadowers.map(&:sid)).to_not include(filesystem.sid)
       end
     end
   end

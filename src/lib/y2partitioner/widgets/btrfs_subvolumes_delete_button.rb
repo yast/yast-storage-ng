@@ -22,7 +22,6 @@
 require "yast"
 require "cwm"
 require "y2partitioner/widgets/btrfs_subvolumes_table"
-require "y2partitioner/device_graphs"
 
 Yast.import "Popup"
 
@@ -73,8 +72,7 @@ module Y2Partitioner
     private
 
       def delete_subvolume(subvolume)
-        device_graph = DeviceGraphs.instance.current
-        filesystem.delete_btrfs_subvolume(device_graph, subvolume.path)
+        filesystem.delete_btrfs_subvolume(subvolume.path)
       end
 
       def filesystem
