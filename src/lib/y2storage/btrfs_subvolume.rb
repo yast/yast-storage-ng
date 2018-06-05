@@ -111,21 +111,17 @@ module Y2Storage
 
     # Checks whether the subvolume is shadowed by any other mount point in the system
     #
-    # @param devicegraph [Devicegraph]
-    #
     # @return [Boolean] true if the subvolume is shadowed
-    def shadowed?(devicegraph)
-      !shadowers(devicegraph).empty?
+    def shadowed?
+      !shadowers.empty?
     end
 
     # Returns the devices that shadow the subvolume
     #
     # It prevents to return the subvolume itself or its filesystem as shadower.
     #
-    # @param devicegraph [Devicegraph]
-    #
     # @return [Array<Mountable>] shadowers
-    def shadowers(devicegraph)
+    def shadowers
       shadowers = BtrfsSubvolume.shadowers(devicegraph, mount_path)
       shadowers.reject { |s| s.sid == sid || s.sid == btrfs.sid }
     end

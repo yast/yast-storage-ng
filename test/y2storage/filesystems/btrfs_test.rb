@@ -175,7 +175,7 @@ describe Y2Storage::Filesystems::Btrfs do
 
       it "deletes the subvolume" do
         expect(filesystem.btrfs_subvolumes).to include(an_object_having_attributes(path: path))
-        filesystem.delete_btrfs_subvolume(devicegraph, path)
+        filesystem.delete_btrfs_subvolume(path)
         expect(filesystem.btrfs_subvolumes).to_not include(an_object_having_attributes(path: path))
       end
     end
@@ -185,7 +185,7 @@ describe Y2Storage::Filesystems::Btrfs do
 
       it "does not delete any subvolume" do
         subvolumes_before = filesystem.btrfs_subvolumes
-        filesystem.delete_btrfs_subvolume(devicegraph, path)
+        filesystem.delete_btrfs_subvolume(path)
         expect(filesystem.btrfs_subvolumes).to eq(subvolumes_before)
       end
     end
@@ -194,13 +194,13 @@ describe Y2Storage::Filesystems::Btrfs do
       let(:path) { "@" }
 
       it "removes the default subvolume" do
-        filesystem.delete_btrfs_subvolume(devicegraph, path)
+        filesystem.delete_btrfs_subvolume(path)
 
         expect(filesystem.btrfs_subvolumes).to_not include(an_object_having_attributes(path: "@"))
       end
 
       it "sets top level subvolume as default subvolume" do
-        filesystem.delete_btrfs_subvolume(devicegraph, path)
+        filesystem.delete_btrfs_subvolume(path)
 
         expect(filesystem.top_level_btrfs_subvolume).to eq(filesystem.default_btrfs_subvolume)
       end
@@ -211,7 +211,7 @@ describe Y2Storage::Filesystems::Btrfs do
 
       it "does not delete any subvolume" do
         subvolumes_before = filesystem.btrfs_subvolumes
-        filesystem.delete_btrfs_subvolume(devicegraph, path)
+        filesystem.delete_btrfs_subvolume(path)
         expect(filesystem.btrfs_subvolumes).to eq(subvolumes_before)
       end
     end
@@ -655,7 +655,7 @@ describe Y2Storage::Filesystems::Btrfs do
 
       it "does not remove any subvolume" do
         subvolumes = filesystem.btrfs_subvolumes
-        filesystem.remove_shadowed_subvolumes(devicegraph)
+        filesystem.remove_shadowed_subvolumes
         expect(filesystem.btrfs_subvolumes).to eq(subvolumes)
       end
     end
@@ -669,13 +669,13 @@ describe Y2Storage::Filesystems::Btrfs do
 
         it "removes the subvolume" do
           expect(filesystem.find_btrfs_subvolume_by_path(subvolume_path)).to_not be(nil)
-          filesystem.remove_shadowed_subvolumes(devicegraph)
+          filesystem.remove_shadowed_subvolumes
           expect(filesystem.find_btrfs_subvolume_by_path(subvolume_path)).to be(nil)
         end
 
         it "adds the subvolume to the list of auto deleted subvolumes" do
           expect(filesystem.auto_deleted_subvolumes).to be_empty
-          filesystem.remove_shadowed_subvolumes(devicegraph)
+          filesystem.remove_shadowed_subvolumes
           expect(filesystem.auto_deleted_subvolumes).to include(
             an_object_having_attributes(path: subvolume_path)
           )
@@ -687,13 +687,13 @@ describe Y2Storage::Filesystems::Btrfs do
 
         it "does not remove the subvolume" do
           expect(filesystem.find_btrfs_subvolume_by_path(subvolume_path)).to_not be(nil)
-          filesystem.remove_shadowed_subvolumes(devicegraph)
+          filesystem.remove_shadowed_subvolumes
           expect(filesystem.find_btrfs_subvolume_by_path(subvolume_path)).to_not be(nil)
         end
 
         it "does not add the subvolume to the list of auto deleted subvolumes" do
           expect(filesystem.auto_deleted_subvolumes).to be_empty
-          filesystem.remove_shadowed_subvolumes(devicegraph)
+          filesystem.remove_shadowed_subvolumes
           expect(filesystem.auto_deleted_subvolumes).to be_empty
         end
       end
@@ -715,7 +715,7 @@ describe Y2Storage::Filesystems::Btrfs do
 
       it "does not add subvolumes" do
         subvolumes = filesystem.btrfs_subvolumes
-        filesystem.restore_unshadowed_subvolumes(devicegraph)
+        filesystem.restore_unshadowed_subvolumes
         expect(filesystem.btrfs_subvolumes).to eq(subvolumes)
       end
     end
@@ -730,7 +730,7 @@ describe Y2Storage::Filesystems::Btrfs do
 
         it "adds the subvolume to the filesystem" do
           expect(filesystem.find_btrfs_subvolume_by_path(subvolume_path)).to be(nil)
-          filesystem.restore_unshadowed_subvolumes(devicegraph)
+          filesystem.restore_unshadowed_subvolumes
           expect(filesystem.find_btrfs_subvolume_by_path(subvolume_path)).to_not be(nil)
         end
 
@@ -739,7 +739,7 @@ describe Y2Storage::Filesystems::Btrfs do
             an_object_having_attributes(path: subvolume_path)
           )
 
-          filesystem.restore_unshadowed_subvolumes(devicegraph)
+          filesystem.restore_unshadowed_subvolumes
 
           expect(filesystem.auto_deleted_subvolumes).to_not include(
             an_object_having_attributes(path: subvolume_path)
@@ -753,7 +753,7 @@ describe Y2Storage::Filesystems::Btrfs do
 
         it "does not add the subvolume to the filesystem" do
           expect(filesystem.find_btrfs_subvolume_by_path(subvolume_path)).to be(nil)
-          filesystem.restore_unshadowed_subvolumes(devicegraph)
+          filesystem.restore_unshadowed_subvolumes
           expect(filesystem.find_btrfs_subvolume_by_path(subvolume_path)).to be(nil)
 
         end
@@ -763,7 +763,7 @@ describe Y2Storage::Filesystems::Btrfs do
             an_object_having_attributes(path: subvolume_path)
           )
 
-          filesystem.restore_unshadowed_subvolumes(devicegraph)
+          filesystem.restore_unshadowed_subvolumes
 
           expect(filesystem.auto_deleted_subvolumes).to include(
             an_object_having_attributes(path: subvolume_path)
@@ -778,7 +778,7 @@ describe Y2Storage::Filesystems::Btrfs do
       let(:dev_name) { "/dev/sda2" }
 
       before do
-        filesystem.delete_btrfs_subvolume(devicegraph, "@")
+        filesystem.delete_btrfs_subvolume("@")
       end
 
       it "returns an empty string" do

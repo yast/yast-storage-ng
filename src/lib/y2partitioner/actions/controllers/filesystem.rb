@@ -526,7 +526,7 @@ module Y2Partitioner
           loop do
             subvolume = find_not_probed_subvolume
             return if subvolume.nil?
-            filesystem.delete_btrfs_subvolume(working_graph, subvolume.path)
+            filesystem.delete_btrfs_subvolume(subvolume.path)
           end
         end
 

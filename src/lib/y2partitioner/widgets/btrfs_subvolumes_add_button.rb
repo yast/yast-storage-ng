@@ -58,7 +58,7 @@ module Y2Partitioner
 
           form = subvolume_dialog.form
           subvol = add_subvolume(form.path, form.nocow)
-          if subvol.shadowed?(working_graph)
+          if subvol.shadowed?
             Yast::Popup.Error(format(_("Mount point %s is shadowed."), subvol.mount_path))
             delete_subvolume(subvol)
           else
@@ -77,7 +77,7 @@ module Y2Partitioner
       end
 
       def delete_subvolume(subvolume)
-        filesystem.delete_btrfs_subvolume(working_graph, subvolume.path)
+        filesystem.delete_btrfs_subvolume(subvolume.path)
       end
 
       def filesystem
