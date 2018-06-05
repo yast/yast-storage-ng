@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Tue Jun  5 13:39:26 UTC 2018 - jlopez@suse.com
+
+- Partitioner: fixed error when creating new BTRFS subvolumes in
+  an installed system (bsc#1067510).
+- 4.0.186
+
+-------------------------------------------------------------------
 Tue Jun  5 10:24:23 UTC 2018 - shundhammer@suse.com
 
 - Partitioner: Handle limitations for volume labels (bsc#1084867)
