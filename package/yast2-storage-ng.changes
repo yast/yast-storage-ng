@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Tue Jun  5 10:24:23 UTC 2018 - shundhammer@suse.com
+
+- Partitioner: Handle limitations vor volume labels (bsc#1084867)
+- 4.0.185
+
+-------------------------------------------------------------------
 Mon Jun  4 15:13:54 UTC 2018 - jlopez@suse.com
 
 - Partitioner: allow to move partitions (part of fate#318196).
