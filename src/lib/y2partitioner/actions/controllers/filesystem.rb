@@ -57,6 +57,9 @@ module Y2Partitioner
         # @return [String] Password for the encryption device
         attr_accessor :encrypt_password
 
+        # @return [Boolean] Whether the device should use a random password every boot
+        attr_accessor :random_password
+
         # Name of the plain device
         #
         # @see #blk_device
@@ -338,7 +341,15 @@ module Y2Partitioner
           if to_be_encrypted?
             name = Y2Storage::Encryption.dm_name_for(blk_device)
             enc = blk_device.create_encryption(name)
-            enc.password = encrypt_password
+
+            # FIXME: extract this to its own method. Also, pay attention to the hardcoded value for
+            # password_file, which for now is here only to test until a final decision about how to do it
+            # better will be taken.
+            if random_password
+              enc.password_file = "/dev/urandom"
+            else
+              enc.password = encrypt_password
+            end
           elsif blk_device.encrypted? && !encrypt
             blk_device.remove_encryption
           end

@@ -27,6 +27,8 @@ module Y2Storage
   #
   # This is a wrapper for Storage::Encryption
   class Encryption < BlkDevice
+    include Yast::Logger
+
     wrap_class Storage::Encryption
 
     # @!method blk_device
@@ -77,6 +79,23 @@ module Y2Storage
     # @see #in_etc_crypttab?
     def in_etc?
       in_etc_crypttab?
+    end
+
+    # Returns the absolute path to a file containing the encryption password
+    #
+    # To be used as a third field in the crypttab file
+    #
+    # @return [String]
+    def password_file
+      @password_file || "/dev/urandom"
+    end
+
+    # Sets the absolute path to a file containing the encryption password
+    #
+    # @param filename [String] absolute path to the file
+    def password_file=(filename)
+      # @password_file = filename
+      log.error("Not implemented yet: assigning #{filename} as file for the password in crypttab")
     end
 
   protected
