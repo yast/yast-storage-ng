@@ -30,6 +30,8 @@ module Y2Partitioner
   module Dialogs
     # Popup dialog to create a btrfs subvolume
     class BtrfsSubvolume < Popup
+      include Yast::Logger
+
       attr_reader :filesystem
       attr_reader :form
 
@@ -178,18 +180,23 @@ module Y2Partitioner
           false
         end
 
-        # Updates #value by prefixing path with default subvolume path if it is necessary
+        # Updates #value by adding the subvolumes prefix
         #
         # Path should be a relative path. Starting slashes are removed. A popup message is
-        # presented when the default subvolume path is going to be added.
+        # presented when the subvolumes prefix is going to be added.
         #
+        # @see Y2Storage::Filesystems::Btrfs#subvolumes_prefix
         # @see Y2Storage::Filesystems::Btrfs#btrfs_subvolume_path
         def fix_path
+          log.info "Fixing BTRFS subvolume path: #{value}"
+
           self.value = filesystem.canonical_subvolume_name(value)
           return if value.empty?
 
-          default_subvolume_path = filesystem.default_btrfs_subvolume.path
-          prefix = default_subvolume_path.empty? ? "" : default_subvolume_path + "/"
+          prefix = filesystem.subvolumes_prefix
+          prefix << "/" unless prefix.empty?
+
+          log.info "Adding BTRFS subvolumes prefix: #{prefix}"
 
           return value if value.start_with?(prefix)
 
