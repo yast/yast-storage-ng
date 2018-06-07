@@ -58,6 +58,10 @@ module Y2Storage
     #   @raise [Storage::Exception] if the devicegraph provided as first
     #     argument is not the probed one
     #
+    #   @raise [DeviceNotFoundByName] if no device is found
+    #
+    #   @raise [DeviceHasWrongType]
+    #
     #   @param devicegraph [Devicegraph] the probed devicegraph
     #   @param name [String] any kind of device name
     #   @return [BlkDevice] nil if there is no such block device
