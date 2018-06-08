@@ -37,6 +37,10 @@ describe Y2Storage::DumpManager do
     kill_dump_dirs
   end
 
+  before do
+    allow(Y2Storage::DumpManager.instance).to receive(:dump).and_call_original
+  end
+
   subject { described_class.instance }
   let(:probed) { Y2Storage::StorageManager.instance.probed }
   let(:staging) { Y2Storage::StorageManager.instance.staging }

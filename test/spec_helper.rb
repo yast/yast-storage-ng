@@ -74,6 +74,7 @@ RSpec.configure do |c|
   c.before do
     stub_const("Y2Packager::Repository", double("Y2Packager::Repository"))
     allow(Y2Packager::Repository).to receive(:all).and_return([])
+    allow(Y2Storage::DumpManager.instance).to receive(:dump)
   end
 
   # Some tests use ProposalSettings#new_for_current_product to initialize
