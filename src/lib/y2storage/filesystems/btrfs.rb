@@ -360,8 +360,12 @@ module Y2Storage
       # it lives under the #top_level_btrfs_subvolume. Otherwise, an empty
       # string will be taken as the default subvolume name.
       #
+      # If the filesystem does not exists yet, consider the default Btrfs subvolume
+      # (#default_btrfs_subvolume) path as the prefix.
+      #
       # @return [String] Default subvolume name
       def subvolumes_prefix
+        return default_btrfs_subvolume.path unless exists_in_probed?
         children = top_level_btrfs_subvolume.children.reject { |s| snapper_path?(s.path) }
         children.size == 1 ? children.first.path : ""
       end

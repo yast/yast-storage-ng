@@ -171,6 +171,16 @@ module Yast
 
         Y2Storage::SimpleEtcFstabEntry.new(storage_entry)
       end
+
+      def crypttab_entry(*values)
+        storage_entry = instance_double(Storage::SimpleEtcCrypttabEntry,
+          name:          values[0],
+          device:        values[1],
+          password:      values[2],
+          crypt_options: values[3])
+
+        Y2Storage::SimpleEtcCrypttabEntry.new(storage_entry)
+      end
     end
     # rubocop:enable all
   end
