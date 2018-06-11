@@ -21,6 +21,7 @@
 
 require "y2storage/storage_class_wrapper"
 require "y2storage/blk_device"
+require "y2storage/crypttab"
 
 module Y2Storage
   # An encryption layer on a block device
@@ -53,24 +54,61 @@ module Y2Storage
     storage_forward :storage_in_etc_crypttab=, to: :in_etc_crypttab=
     private :storage_in_etc_crypttab=
 
+    class << self
+      # DeviceMapper name to use for the encrypted version of the given device.
+      #
+      # FIXME: with the current implementation (using the device kernel name
+      # instead of UUID or something similar), the DeviceMapper for an encrypted
+      # /dev/sda5 would be "cr_sda5", which implies a quite high risk of
+      # collision with existing DeviceMapper names.
+      #
+      # Revisit this after improving libstorage-ng capabilities about
+      # alternative names and DeviceMapper.
+      #
+      # @return [String]
+      def dm_name_for(device)
+        "cr_#{device.basename}"
+      end
+
+      # Updates encryption names according to the values indicated in a crypttab file
+      #
+      # For each entry in the crypttab file, it finds the corresponding device and updates
+      # its encryption name with the value indicated in its crypttab entry. The device is
+      # not modified at all if it is not encrypted.
+      #
+      # @param devicegraph [Devicegraph]
+      # @param crypttab_path [String] path to a crypttab file
+      def use_crypttab_names(devicegraph, crypttab_path)
+        crypttab = Crypttab.new(crypttab_path)
+
+        assign_crypttab_names(devicegraph, crypttab)
+      end
+
+    private
+
+      # Sets the crypttab names according to the values indicated in a crypttab file
+      #
+      # @param devicegraph [Devicegraph]
+      # @param crypttab [Crypttab]
+      def assign_crypttab_names(devicegraph, crypttab)
+        crypttab.entries.each { |e| assign_crypttab_name(devicegraph, e) }
+      end
+
+      # Sets the crypttab name according to the value indicated in a crypttab entry
+      #
+      # @param devicegraph [Devicegraph]
+      # @param entry [SimpleEtcCrypttabEntry]
+      def assign_crypttab_name(devicegraph, entry)
+        device = entry.find_device(devicegraph)
+        return unless device && device.encrypted?
+
+        device.encryption.dm_table_name = entry.name
+      end
+    end
+
     # @see BlkDevice#plain_device
     def plain_device
       blk_device
-    end
-
-    # DeviceMapper name to use for the encrypted version of the given device.
-    #
-    # FIXME: with the current implementation (using the device kernel name
-    # instead of UUID or something similar), the DeviceMapper for an encrypted
-    # /dev/sda5 would be "cr_sda5", which implies a quite high risk of
-    # collision with existing DeviceMapper names.
-    #
-    # Revisit this after improving libstorage-ng capabilities about
-    # alternative names and DeviceMapper.
-    #
-    # @return [String]
-    def self.dm_name_for(device)
-      "cr_#{device.basename}"
     end
 
     # @see Device#in_etc?

@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Thu Jun  7 16:13:18 UTC 2018 - jlopez@suse.com
+
+- Added method to update encryption names according to a crypttab
+  file (needed for bsc#1094963).
+- 4.0.187
+
+-------------------------------------------------------------------
 Tue Jun  5 13:39:26 UTC 2018 - jlopez@suse.com
 
 - Partitioner: fixed error when creating new BTRFS subvolumes in
