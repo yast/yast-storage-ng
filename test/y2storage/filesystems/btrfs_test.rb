@@ -774,6 +774,12 @@ describe Y2Storage::Filesystems::Btrfs do
   end
 
   describe "#subvolumes_prefix" do
+    let(:exists?) { true }
+
+    before do
+      allow(filesystem).to receive(:exists_in_raw_probed?).and_return(exists?)
+    end
+
     context "when there are no subvolumes" do
       let(:dev_name) { "/dev/sda2" }
 
@@ -811,6 +817,21 @@ describe Y2Storage::Filesystems::Btrfs do
           it "returns the parent subvolume path" do
             expect(filesystem.subvolumes_prefix).to eq("@")
           end
+        end
+      end
+
+      context "when the filesystem does not exist yet" do
+        let(:exists?) { false }
+        let(:default_subvolume) do
+          instance_double(Y2Storage::BtrfsSubvolume, path: "@@")
+        end
+
+        before do
+          allow(filesystem).to receive(:default_btrfs_subvolume).and_return(default_subvolume)
+        end
+
+        it "returns the default subvolume path" do
+          expect(filesystem.subvolumes_prefix).to eq("@@")
         end
       end
     end
