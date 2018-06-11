@@ -517,7 +517,7 @@ describe Y2Storage::YamlWriter do
       end
     end
 
-    context "when recording passords is disabled" do
+    context "when recording passwords is disabled" do
       before do
         disk = Y2Storage::Disk.create(staging, "/dev/sda")
         disk.size = 256 * Storage.GiB
