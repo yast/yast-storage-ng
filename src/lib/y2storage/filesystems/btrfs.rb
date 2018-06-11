@@ -365,7 +365,7 @@ module Y2Storage
       #
       # @return [String] Default subvolume name
       def subvolumes_prefix
-        return default_btrfs_subvolume.path unless exists_in_raw_probed?
+        return default_btrfs_subvolume.path unless exists_in_probed?
         children = top_level_btrfs_subvolume.children.reject { |s| snapper_path?(s.path) }
         children.size == 1 ? children.first.path : ""
       end

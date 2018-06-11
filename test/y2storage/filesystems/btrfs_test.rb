@@ -777,7 +777,7 @@ describe Y2Storage::Filesystems::Btrfs do
     let(:exists?) { true }
 
     before do
-      allow(filesystem).to receive(:exists_in_raw_probed?).and_return(exists?)
+      allow(filesystem).to receive(:exists_in_probed?).and_return(exists?)
     end
 
     context "when there are no subvolumes" do
