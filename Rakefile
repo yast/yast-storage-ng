@@ -18,8 +18,6 @@
 
 require "yast/rake"
 
-Yast::Tasks.submit_to :sle15
-
 # Checking for bug/fate numbers in the changelog does not make sense at this
 # stage of the development
 Rake::Task["package"].prerequisites.delete("check:changelog")

@@ -548,8 +548,7 @@ module Y2Storage
       raise ArgumentError, "Unsupported encryption type #{type_name}" unless type_name == "luks"
 
       blk_parent = BlkDevice.find_by_name(@devicegraph, parent)
-      encryption = blk_parent.create_encryption(name)
-      encryption.password = password unless password.nil?
+      encryption = blk_parent.encrypt(dm_name: name, password: password)
       if @file_system_data.key?(parent)
         # Notify create_file_system that this partition is encrypted
         @file_system_data[parent]["encryption"] = encryption.name
@@ -558,19 +557,28 @@ module Y2Storage
     end
 
     def encryption_name(name, parent)
+      return nil if name.nil? || name.empty?
+      if name.include?("/")
+        processed_encryption_name(name, parent)
+      else
+        name
+      end
+    end
+
+    # DeviceMapper name for a given DeviceMapper full path
+    def processed_encryption_name(name, parent)
+      valid_name = false
       result = nil
 
-      if name.include?("/")
-        if name.start_with?("/dev/mapper/")
-          result = name.split("/").last
-        else
-          raise ArgumentError, "Unexpected \"name\" value for encryption on #{parent}: #{name}"
-        end
-      else
-        result = name
+      if name.start_with?("/dev/mapper/")
+        result = name.split("/").last
+        valid_name = !result.nil? && !result.empty?
       end
 
-      raise ArgumentError, "\"name\" missing for encryption on #{parent}" if result.nil? || result.empty?
+      if !valid_name
+        raise ArgumentError, "Unexpected \"name\" value for encryption on #{parent}: #{name}"
+      end
+
       result
     end
 

@@ -157,9 +157,8 @@ module Y2Storage
       #   the top level subvolume is set as the new default subvolume. Moreover, the top level
       #   subvolume cannot be deleted.
       #
-      # @param devicegraph [Devicegraph]
       # @param path [String] path of subvolume to delete
-      def delete_btrfs_subvolume(devicegraph, path)
+      def delete_btrfs_subvolume(path)
         subvolume = find_btrfs_subvolume_by_path(path)
         return if subvolume.nil? || subvolume.top_level?
 
@@ -326,27 +325,23 @@ module Y2Storage
         return if filesystems.empty?
 
         filesystems.each do |filesystem|
-          filesystem.remove_shadowed_subvolumes(devicegraph)
-          filesystem.restore_unshadowed_subvolumes(devicegraph)
+          filesystem.remove_shadowed_subvolumes
+          filesystem.restore_unshadowed_subvolumes
         end
       end
 
       # Removes current shadowed subvolumes
       # Only subvolumes that "can be auto deleted" will be removed.
-      #
-      # @param devicegraph [Devicegraph]
-      def remove_shadowed_subvolumes(devicegraph)
+      def remove_shadowed_subvolumes
         subvolumes = btrfs_subvolumes.select(&:can_be_auto_deleted?)
         subvolumes.each do |subvolume|
-          next unless subvolume.shadowed?(devicegraph)
-          shadow_btrfs_subvolume(devicegraph, subvolume.path)
+          next unless subvolume.shadowed?
+          shadow_btrfs_subvolume(subvolume.path)
         end
       end
 
       # Creates subvolumes that were previously removed because they were shadowed
-      #
-      # @param devicegraph [Devicegraph]
-      def restore_unshadowed_subvolumes(devicegraph)
+      def restore_unshadowed_subvolumes
         auto_deleted_subvolumes.each do |spec|
           mount_path = btrfs_subvolume_mount_point(spec.path)
           next if BtrfsSubvolume.shadowed?(devicegraph, mount_path)
@@ -406,14 +401,13 @@ module Y2Storage
       # Removes a subvolume
       # The subvolume is cached into {auto_deleted_subvolumes} list
       #
-      # @param devicegraph [Devicegraph]
       # @param path [String] subvolume path
-      def shadow_btrfs_subvolume(devicegraph, path)
+      def shadow_btrfs_subvolume(path)
         subvolume = find_btrfs_subvolume_by_path(path)
         return false if subvolume.nil?
 
         add_auto_deleted_subvolume(subvolume.path, subvolume.nocow?)
-        delete_btrfs_subvolume(devicegraph, subvolume.path)
+        delete_btrfs_subvolume(subvolume.path)
         true
       end
 
