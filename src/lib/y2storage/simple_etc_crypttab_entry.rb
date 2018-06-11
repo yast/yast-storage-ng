@@ -34,7 +34,8 @@ module Y2Storage
     storage_forward :name
 
     # @!method device
-    #   @return [String] path to the underlying block device
+    #   @return [String] path to the underlying block device or a
+    #     specification of a block device via "UUID="
     storage_forward :device
 
     # @!method password
@@ -45,67 +46,18 @@ module Y2Storage
     #   @return [Array<String>]
     storage_forward :crypt_options
 
-    # Device for the crypttab entry
+    # Plain device for the crypttab entry
+    #
+    # @note It always returns the underlying block device, even when the encryption
+    #   device is indicated by its UUID.
+    #
+    # TODO: Right now the device only is found when it is indicated by any udev
+    #   name, see {Devicegraph#find_by_any_name), but it is not possible to find
+    #   it when the crypttab entry contains an UUID (or label).
     #
     # @param devicegraph [Devicegraph]
     # @return [BlkDevice, nil] nil if the device is not found
     def find_device(devicegraph)
-      if device_by_uuid?
-        find_device_by_uuid(devicegraph)
-      elsif device_by_label?
-        find_device_by_label(devicegraph)
-      else
-        find_device_by_name(devicegraph)
-      end
-    end
-
-  private
-
-    # Whether the crypttab device is indicated by UUID
-    #
-    # The second field in the crypttab entry contains something
-    # like "UUID=1212345454-34343".
-    #
-    # @return [Boolean]
-    def device_by_uuid?
-      /^UUID=(.*)/.match?(device)
-    end
-
-    # Whether the crypttab device is indicated by LABEL
-    #
-    # The second field in the crypttab entry contains something
-    # like "LABEL=device_label".
-    #
-    # @return [Boolean]
-    def device_by_label?
-      /^LABEL=(.*)/.match?(device)
-    end
-
-    # TODO: using old storage the crypttab should not contain an entry with an
-    # encryption device indicated by UUID. For SLE15-SP1 this should be supported.
-    #
-    # Try to find the device when it was indicated by UUID
-    #
-    # @return [BlkDevice, nil] nil if the device is not found
-    def find_device_by_uuid(_devicegraph)
-      nil
-    end
-
-    # TODO: using old storage the crypttab should not contain an entry with an
-    # encryption device indicated by LABEL. For SLE15-SP1 this should be supported.
-    #
-    # Try to find the device when it was indicated by LABEL
-    #
-    # @return [BlkDevice, nil] nil if the device is not found
-    def find_device_by_label(_devicegraph)
-      nil
-    end
-
-    # Try to find the device when it was indicaded by an udev name
-    #
-    # @param devicegraph [Devicegraph]
-    # @return [BlkDevice, nil] nil if the device is not found
-    def find_device_by_name(devicegraph)
       devicegraph.find_by_any_name(device)
     end
   end

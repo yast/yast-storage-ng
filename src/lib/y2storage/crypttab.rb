@@ -20,7 +20,8 @@
 # find current contact information at www.suse.com.
 
 require "yast"
-require "y2storage"
+require "storage"
+require "y2storage/simple_etc_crypttab_entry"
 
 module Y2Storage
   # Class to represent a crypttab file
@@ -53,7 +54,7 @@ module Y2Storage
       entries = Storage.read_simple_etc_crypttab(path)
       entries.map { |e| SimpleEtcCrypttabEntry.new(e) }
     rescue Storage::Exception
-      log.warn("Not possible to read the crypttab file: #{path}")
+      log.error("Not possible to read the crypttab file: #{path}")
       []
     end
   end
