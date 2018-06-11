@@ -54,6 +54,65 @@ module Y2Storage
     storage_forward :storage_in_etc_crypttab=, to: :in_etc_crypttab=
     private :storage_in_etc_crypttab=
 
+    # @see BlkDevice#plain_device
+    def plain_device
+      blk_device
+    end
+
+    # @see Device#in_etc?
+    # @see #in_etc_crypttab?
+    def in_etc?
+      in_etc_crypttab?
+    end
+
+    # Low level setter to enforce a value for {#dm_table_name} without
+    # updating {#auto_dm_name?}
+    #
+    # @see #dm_table_name=
+    alias_method :assign_dm_table_name, :dm_table_name=
+
+    # Overloaded setter for {#dm_table_name} with ensures a consistent value for
+    # #{auto_dm_name?} to make sure names set via the setter are not
+    # auto-adjusted later.
+    #
+    # @see #assign_dm_table_name
+    #
+    # @param name [String]
+    def dm_table_name=(name)
+      self.auto_dm_name = false
+      super
+    end
+
+    # Whether {#dm_table_name} was automatically set by YaST.
+    #
+    # @note This relies on the userdata mechanism, see {#userdata_value}.
+    #
+    # @return [Boolean] false if the name was explicitly set via the overloaded
+    #   setter or in general if the origin is unknown
+    def auto_dm_name?
+      !!userdata_value(:auto_dm_name)
+    end
+
+    # Enforces de value for {#auto_dm_name?}
+    #
+    # @note This relies on the userdata mechanism, see {#userdata_value}.
+    #
+    # @param value [Boolean]
+    def auto_dm_name=(value)
+      save_userdata(:auto_dm_name, value)
+    end
+
+  protected
+
+    def types_for_is
+      super << :encryption
+    end
+
+    # @see Device#update_etc_attributes
+    def assign_etc_attribute(value)
+      self.storage_in_etc_crypttab = value
+    end
+
     class << self
       # Updates the DeviceMapper name for all encryption devices in the device
       # that have a name automatically set by YaST.
@@ -163,65 +222,6 @@ module Y2Storage
         previous_num = previous.empty? ? 1 : previous.split("_").last.to_i
         "_#{previous_num + 1}"
       end
-    end
-
-    # @see BlkDevice#plain_device
-    def plain_device
-      blk_device
-    end
-
-    # @see Device#in_etc?
-    # @see #in_etc_crypttab?
-    def in_etc?
-      in_etc_crypttab?
-    end
-
-    # Low level setter to enforce a value for {#dm_table_name} without
-    # updating {#auto_dm_name?}
-    #
-    # @see #dm_table_name=
-    alias_method :assign_dm_table_name, :dm_table_name=
-
-    # Overloaded setter for {#dm_table_name} with ensures a consistent value for
-    # #{auto_dm_name?} to make sure names set via the setter are not
-    # auto-adjusted later.
-    #
-    # @see #assign_dm_table_name
-    #
-    # @param name [String]
-    def dm_table_name=(name)
-      self.auto_dm_name = false
-      super
-    end
-
-    # Whether {#dm_table_name} was automatically set by YaST.
-    #
-    # @note This relies on the userdata mechanism, see {#userdata_value}.
-    #
-    # @return [Boolean] false if the name was explicitly set via the overloaded
-    #   setter or in general if the origin is unknown
-    def auto_dm_name?
-      !!userdata_value(:auto_dm_name)
-    end
-
-    # Enforces de value for {#auto_dm_name?}
-    #
-    # @note This relies on the userdata mechanism, see {#userdata_value}.
-    #
-    # @param value [Boolean]
-    def auto_dm_name=(value)
-      save_userdata(:auto_dm_name, value)
-    end
-
-  protected
-
-    def types_for_is
-      super << :encryption
-    end
-
-    # @see Device#update_etc_attributes
-    def assign_etc_attribute(value)
-      self.storage_in_etc_crypttab = value
     end
   end
 end
