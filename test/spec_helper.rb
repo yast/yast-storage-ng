@@ -53,8 +53,9 @@ if ENV["COVERAGE"]
   # track all ruby files under src
   SimpleCov.track_files("#{SRC_PATH}/lib/**/*.rb")
 
-  # use coveralls for on-line code coverage reporting at Travis CI
-  if ENV["TRAVIS"]
+  # use coveralls for on-line code coverage reporting at Travis CI,
+  # coverage in parallel tests is handled directly by the "test:unit" task
+  if ENV["TRAVIS"] && !ENV["PARALLEL_TEST_GROUPS"]
     require "coveralls"
     SimpleCov.formatter = SimpleCov::Formatter::MultiFormatter[
       SimpleCov::Formatter::HTMLFormatter,
