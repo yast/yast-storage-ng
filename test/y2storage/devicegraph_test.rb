@@ -824,4 +824,40 @@ describe Y2Storage::Devicegraph do
       expect(list).to_not include vg1
     end
   end
+
+  describe "#inspect" do
+    context "when some devices are not supported by YamlWriter" do
+      before do
+        fake_scenario("empty-dm_raids.xml")
+        fs = Y2Storage::Filesystems::Nfs.create(fake_devicegraph, "server", "/path")
+        fs.create_mount_point("/nfs_mount")
+      end
+
+      it "includes warnings about the ommitted information" do
+        expect(fake_devicegraph.inspect).to include(
+          "[\"unsupported_device\", [[\"name\", \"/dev/mapper/isw_ddgdcbibhd_test1\"]"
+        )
+        expect(fake_devicegraph.inspect).to include(
+          "[\"unsupported_device\", [[\"name\", \"server:/path\"]"
+        )
+      end
+    end
+
+    context "when the devicegraph contains encrypted devices" do
+      subject(:devicegraph) { Y2Storage::StorageManager.instance.staging }
+
+      before do
+        Y2Storage::StorageManager.create_test_instance
+        disk = Y2Storage::Disk.create(devicegraph, "/dev/sda")
+        disk.size = Y2Storage::DiskSize.GiB(10)
+        encryption = disk.create_encryption("cr_data")
+        encryption.password = "s3cr3t"
+      end
+
+      it "does not include the encryption password" do
+        expect(devicegraph.inspect).to include "/dev/mapper/cr_data"
+        expect(devicegraph.inspect).to_not include "s3cr3t"
+      end
+    end
+  end
 end

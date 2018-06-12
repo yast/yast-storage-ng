@@ -38,8 +38,7 @@ describe Y2Storage::Planned::CanBeEncrypted do
   describe "#final_device!" do
     let(:planned) { EncryptableDevice.new(password) }
     # TODO: test also #encrypted? => true
-    let(:plain_device) { instance_double("Y2Storage::BlkDevice", basename: "sda1", encrypted?: false) }
-    let(:luks) { instance_double("Storage::Encryption") }
+    let(:plain_device) { instance_double("Y2Storage::BlkDevice", encrypted?: false) }
 
     context "if the planned device has not encryption password" do
       let(:password) { nil }
@@ -50,7 +49,7 @@ describe Y2Storage::Planned::CanBeEncrypted do
       end
 
       it "does not encrypt the device" do
-        expect(plain_device).not_to receive(:create_encryption)
+        expect(plain_device).not_to receive(:encrypt)
         planned.final_device!(plain_device)
       end
     end
@@ -58,23 +57,8 @@ describe Y2Storage::Planned::CanBeEncrypted do
     context "if volume has encryption password" do
       let(:password) { "12345678" }
 
-      before do
-        allow(plain_device).to receive(:create_encryption).and_return(luks)
-        allow(luks).to receive(:password=)
-      end
-
-      it "encrypts the device" do
-        expect(plain_device).to receive(:create_encryption)
-        planned.final_device!(plain_device)
-      end
-
-      it "generates encrypted device name based on the plain device name" do
-        expect(plain_device).to receive(:create_encryption).with("cr_sda1")
-        planned.final_device!(plain_device)
-      end
-
-      it "sets the right password to the encrypted device" do
-        expect(luks).to receive(:password=).with(password)
+      it "encrypts the device with the right password and a default name" do
+        expect(plain_device).to receive(:encrypt).with(password: password)
         planned.final_device!(plain_device)
       end
     end

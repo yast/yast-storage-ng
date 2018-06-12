@@ -67,8 +67,7 @@ module Y2Storage
       def final_device!(plain_device)
         result = super
         if create_encryption?
-          result = result.create_encryption(Encryption.dm_name_for(result))
-          result.password = encryption_password
+          result = result.encrypt(password: encryption_password)
           log.info "Device encrypted. Returning the new device #{result.inspect}"
         else
           log.info "No need to encrypt. Returning the existing device #{result.inspect}"
