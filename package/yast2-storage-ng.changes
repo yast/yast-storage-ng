@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Tue Jun 12 13:11:07 UTC 2018 - lslezak@suse.cz
+
+- Use parallel_tests to speed up running the unit tests
+  (bsc#1094875), active only in SLE15-SP1/Leap-15.1
+
+-------------------------------------------------------------------
 Tue Jun 12 08:40:48 UTC 2018 - ancor@suse.com
 
 - Better auto-generated names for encryption devices:

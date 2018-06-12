@@ -47,6 +47,10 @@ BuildRequires:	yast2 >= 4.0.73
 BuildRequires:	yast2-ruby-bindings >= 4.0.6
 BuildRequires:	rubygem(yast-rake)
 BuildRequires:	rubygem(rspec)
+# speed up the tests in SLE15-SP1+
+%if 0%{?sle_version} >= 150100
+BuildRequires:	rubygem(parallel_tests)
+%endif
 # communicate with udisks
 BuildRequires:	rubygem(ruby-dbus)
 PreReq:         %fillup_prereq
