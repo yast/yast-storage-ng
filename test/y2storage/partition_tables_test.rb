@@ -171,4 +171,46 @@ describe Y2Storage::PartitionTables::Base do
       end
     end
   end
+
+  describe "#delete_partition" do
+    let(:scenario) { "logical_encrypted" }
+    let(:sda5) { fake_devicegraph.find_by_name("/dev/sda5") }
+    subject(:ptable) { fake_devicegraph.find_by_name("/dev/sda").partition_table }
+
+    before do
+      sda7 = fake_devicegraph.find_by_name("/dev/sda7")
+      sda7.encrypt
+
+      sda8 = fake_devicegraph.find_by_name("/dev/sda8")
+      sda8.encrypt(dm_name: "cr_sda8")
+    end
+
+    it "refreshes the auto-generated names of Encryption devices" do
+      sda7 = fake_devicegraph.find_by_name("/dev/sda7")
+      expect(sda7.encryption.name).to eq "/dev/mapper/cr_sda7"
+
+      ptable.delete_partition(sda5)
+
+      expect(sda7.name).to eq "/dev/sda6"
+      expect(sda7.encryption.name).to eq "/dev/mapper/cr_sda6_2"
+    end
+
+    it "does not refresh the names of pre-existing Encryption devices" do
+      sda6 = fake_devicegraph.find_by_name("/dev/sda6")
+
+      ptable.delete_partition(sda5)
+
+      expect(sda6.name).to eq "/dev/sda5"
+      expect(sda6.encryption.name).to eq "/dev/mapper/cr_sda6"
+    end
+
+    it "does not refresh names set explicitly for Encryption devices" do
+      sda8 = fake_devicegraph.find_by_name("/dev/sda8")
+
+      ptable.delete_partition(sda5)
+
+      expect(sda8.name).to eq "/dev/sda7"
+      expect(sda8.encryption.name).to eq "/dev/mapper/cr_sda8"
+    end
+  end
 end

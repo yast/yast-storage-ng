@@ -193,7 +193,7 @@ module Y2Storage
         partitions << yaml_partition(partition)
 
         # adjust end pointers
-        partition_end = (partition.region.end + 1) * partition.region.block_size.to_i
+        partition_end = next_start(partition.region) * partition.region.block_size.to_i
         partition_end_max = [partition_end_max, partition_end].max
 
         # if we're inside an extended partition, remember its end for later
@@ -213,12 +213,27 @@ module Y2Storage
 
       # see if there's space left at the end of the device
       # show also negative sizes so we know we've overstepped
-      gap = (device.region.end + 1) * device.region.block_size.to_i - partition_end_max
+      gap = next_start(device.region) * device.region.block_size.to_i - partition_end_max
       partitions << yaml_free_slot(DiskSize.B(partition_end_max), DiskSize.B(gap)) if gap != 0
 
       partitions
     end
     # rubocop:enable all
+
+    # Start of the region or gap that comes right after the given region
+    #
+    # This method avoids the Storage exception raised when accessing Region#end
+    # in case of zero sized regions.
+    #
+    # @param region [Region]
+    # @return [Integer]
+    def next_start(region)
+      if region.length.zero?
+        region.start
+      else
+        region.end + 1
+      end
+    end
 
     # Partitions sorted by position in the disk device and by type
     #

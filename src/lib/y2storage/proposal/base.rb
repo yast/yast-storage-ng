@@ -91,7 +91,7 @@ module Y2Storage
         @proposed = true
         result = calculate_proposal
         return result if devices.nil? || devices.empty?
-        log.info("Proposed devicegraph:\n\n#{devices.to_str}\n")
+        log.info("Proposed devicegraph:\n\n#{devices.inspect}\n")
         DumpManager.dump(devices, "proposed")
         result
       end
