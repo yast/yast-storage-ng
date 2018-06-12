@@ -336,9 +336,7 @@ module Y2Partitioner
           return unless can_change_encrypt?
 
           if to_be_encrypted?
-            name = Y2Storage::Encryption.dm_name_for(blk_device)
-            enc = blk_device.create_encryption(name)
-            enc.password = encrypt_password
+            blk_device.encrypt(password: encrypt_password)
           elsif blk_device.encrypted? && !encrypt
             blk_device.remove_encryption
           end
@@ -528,7 +526,7 @@ module Y2Partitioner
           loop do
             subvolume = find_not_probed_subvolume
             return if subvolume.nil?
-            filesystem.delete_btrfs_subvolume(working_graph, subvolume.path)
+            filesystem.delete_btrfs_subvolume(subvolume.path)
           end
         end
 

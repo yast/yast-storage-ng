@@ -24,6 +24,7 @@ require "y2storage/device"
 require "y2storage/partition_tables/type"
 require "y2storage/region"
 require "y2storage/free_disk_space"
+require "y2storage/encryption"
 
 module Y2Storage
   module PartitionTables
@@ -43,26 +44,35 @@ module Y2Storage
       #   @return [PartitionTables::Type]
       storage_forward :type, as: "PartitionTables::Type"
 
-      # @!method create_partition(name, region, type)
-      #   Creates a new partition.
-      #
-      #   @raise [Storage::DifferentBlockSizes] if the region don't fit the
-      #     device
-      #   @raise [Storage::Exception] if it's impossible to create the partition
-      #     for any other reason. @see Partition.create
-      #
-      #   @param [String] name of the device, kernel-style (e.g. "/dev/sda1")
-      #   @param [Region] region to be used by the new partition
-      #   @param [PartitionType] type of the new partition
-      #   @return [Partition]
-      storage_forward :create_partition, as: "Partition"
+      storage_forward :storage_create_partition, to: :create_partition, as: "Partition"
 
-      # @!method delete_partition(partition)
-      #    Deletes the given partition in the partition table and all its
-      #    descendants.
+      # Creates a new partition.
       #
-      #    @param partition [Partition]
-      storage_forward :delete_partition
+      # @raise [Storage::DifferentBlockSizes] if the region don't fit the
+      #   device
+      # @raise [Storage::Exception] if it's impossible to create the partition
+      #   for any other reason. @see Partition.create
+      #
+      # @param [String] name of the device, kernel-style (e.g. "/dev/sda1")
+      # @param [Region] region to be used by the new partition
+      # @param [PartitionType] type of the new partition
+      # @return [Partition]
+      def create_partition(name, region, type, *extra_args)
+        result = storage_create_partition(name, region, type, *extra_args)
+        Encryption.update_dm_names(devicegraph)
+        result
+      end
+
+      storage_forward :storage_delete_partition, to: :delete_partition
+
+      # Deletes the given partition in the partition table and all its
+      # descendants.
+      #
+      # @param partition [Partition]
+      def delete_partition(partition, *extra_args)
+        storage_delete_partition(partition, *extra_args)
+        Encryption.update_dm_names(devicegraph)
+      end
 
       # @!method partitions
       #   All the partitions, in no particular order

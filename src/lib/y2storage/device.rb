@@ -173,6 +173,12 @@ module Y2Storage
     storage_forward :userdata=
     protected :userdata, :userdata=
 
+    # @!method devicegraph
+    # 	Devicegraph to which the device is associated
+    #
+    #   @return [Devicegraph]
+    storage_forward :devicegraph, as: "Devicegraph"
+
     # @!method self.compare_by_name(lhs, rhs)
     #   Compare two devices by their name, used for sorting sets of
     #   block devices and/or LVM VGs.
