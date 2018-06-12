@@ -2,3 +2,4 @@ coverage/
 .yardoc/
 doc/autodocs
 *.pot
+tmp/parallel_runtime_rspec.log
