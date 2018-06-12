@@ -122,6 +122,11 @@ module Y2Storage
       # since some devices (like partitions) use to change their names over
       # time.
       #
+      # Note that names automatically set by libstorage-ng itself (typically of
+      # the form cr-auto-$NUM) are not marked as auto-generated and, thus, are
+      # not modified by this method. Modifying such names can confuse
+      # libstorage-ng.
+      #
       # @param devicegraph [Devicegraph]
       def update_dm_names(devicegraph)
         encryptions = all(devicegraph).select(&:auto_dm_name?).sort_by(&:sid)
@@ -135,7 +140,6 @@ module Y2Storage
         encryptions.each do |enc|
           dm_name = dm_name_for(enc.blk_device)
           enc.assign_dm_table_name(dm_name)
-          # enc.name = "/dev/mapper/#{dm_name}"
         end
       end
 
@@ -218,6 +222,7 @@ module Y2Storage
       # @see #dm_name_for
       #
       # @param previous [String] previous value of the suffix
+      # @return [String]
       def next_dm_name_suffix(previous)
         previous_num = previous.empty? ? 1 : previous.split("_").last.to_i
         "_#{previous_num + 1}"

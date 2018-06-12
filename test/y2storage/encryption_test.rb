@@ -39,13 +39,13 @@ describe Y2Storage::Encryption do
 
     let(:device) { devicegraph.find_by_name(device_name) }
 
-    let(:fstab_entries) do
+    let(:crypttab_entries) do
       [
         crypttab_entry("luks1", device_name, "password", [])
       ]
     end
 
-    let(:storage_entries) { fstab_entries.map(&:to_storage_value) }
+    let(:storage_entries) { crypttab_entries.map(&:to_storage_value) }
 
     context "when a device indicated in a crypttab entry is an encrypted device" do
       let(:device_name) { "/dev/sda4" }
