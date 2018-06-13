@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Wed Jun 13 13:56:14 UTC 2018 - snwint@suse.com
+
+- allow for numbers > 32 bit in region dialog (bsc#1065258)
+- 4.0.191
+
+-------------------------------------------------------------------
 Tue Jun 12 16:18:40 UTC 2018 - igonzalezsosa@suse.com
 
 - Fix 'Arbitrary Option Value' translation (bsc#1081605).
