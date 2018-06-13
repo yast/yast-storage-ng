@@ -267,36 +267,39 @@ module Y2Partitioner
 
         # @macro seeCustomWidget
         def contents
-          min_block = @regions.map(&:start).min
-          # FIXME: libyui widget overflow :-(
-          max_block = @regions.map(&:end).max
-
-          int_field = lambda do |id, label, val|
-            MinWidth(
-              10,
-              IntField(Id(id), label, min_block, max_block, val)
-            )
-          end
+          # we can't use IntField() since it overflows :-(
           VBox(
             Id(widget_id),
-            int_field.call(:start_block, _("Start Block"), region.start),
-            int_field.call(:end_block, _("End Block"), region.end)
+            MinWidth(10, InputField(Id(:start_block), _("Start Block"))),
+            MinWidth(10, InputField(Id(:end_block), _("End Block")))
           )
         end
 
         # UI::QueryWidget both ids in one step
         def query_widgets
           [
-            Yast::UI.QueryWidget(Id(:start_block), :Value),
-            Yast::UI.QueryWidget(Id(:end_block), :Value)
+            Yast::UI.QueryWidget(Id(:start_block), :Value).to_i,
+            Yast::UI.QueryWidget(Id(:end_block), :Value).to_i
           ]
+        end
+
+        # @macro seeAbstractWidget
+        def init
+          valid_chars = ("0".."9").reduce(:+)
+          start_block = @region.start
+          end_block = @region.end
+
+          Yast::UI.ChangeWidget(Id(:start_block), :ValidChars, valid_chars)
+          Yast::UI.ChangeWidget(Id(:start_block), :Value, start_block.to_s)
+          Yast::UI.ChangeWidget(Id(:end_block), :ValidChars, valid_chars)
+          Yast::UI.ChangeWidget(Id(:end_block), :Value, end_block.to_s)
         end
 
         # @macro seeAbstractWidget
         def store
           start_block, end_block = query_widgets
           len = end_block - start_block + 1
-          bsize = @regions.first.block_size # where does this come from?
+          bsize = @region.block_size
           @region = Y2Storage::Region.create(start_block, len, bsize)
         end
 
