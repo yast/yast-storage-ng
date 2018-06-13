@@ -724,6 +724,7 @@ module Y2Partitioner
       include FstabCommon
 
       def initialize(controller, parent_widget)
+        textdomain "storage"
         @controller = controller
         @parent_widget = parent_widget
         @other_values = nil
