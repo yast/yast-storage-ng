@@ -42,6 +42,11 @@ module Y2Storage
       # user with information about every single step. Libstorage-ng is
       # already writing that information to the YaST logs.
       #
+      # @param message [String] message text (in the ASCII-8BIT encoding!,
+      #   see https://sourceforge.net/p/swig/feature-requests/89/,
+      #   it is recommended to force it to the UTF-8 encoding before
+      #   doing anything with the string to avoid the Encoding::CompatibilityError
+      #   exception!)
       # See Storage::Callbacks#message in libstorage-ng
       def message(message); end
 
@@ -57,11 +62,16 @@ module Y2Storage
       # See Storage::Callbacks#error in libstorage-ng
       #
       # @param message [String] error title coming from libstorage-ng
-      # @param what [String] details coming from libstorage-ng
+      #   (in the ASCII-8BIT encoding! see https://sourceforge.net/p/swig/feature-requests/89/)
+      # @param what [String] details coming from libstorage-ng (in the ASCII-8BIT encoding!)
       # @return [Boolean] true will make libstorage-ng ignore the error, false
       #   will result in a libstorage-ng exception
       def error(message, what)
         textdomain "storage"
+        # force the UTF-8 encoding to avoid Encoding::CompatibilityError exception (bsc#1096758)
+        message.force_encoding("UTF-8")
+        what.force_encoding("UTF-8")
+
         log.info "libstorage-ng reported an error, asking the user whether to continue"
         log.info "Error details. Message: #{message}. What: #{what}."
 
