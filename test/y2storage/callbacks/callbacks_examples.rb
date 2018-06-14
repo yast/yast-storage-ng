@@ -29,6 +29,19 @@ RSpec.shared_examples "general #error examples" do
     subject.error("the message", "the what")
   end
 
+  # SWIG returns ASCII-8BIT encoded strings even if they contain UTF-8 characters
+  # see https://sourceforge.net/p/swig/feature-requests/89/
+  it "handles ASCII-8BIT encoded messages with UTF-8 characters" do
+    expect(Yast::Report).to receive(:yesno_popup) do |message, options|
+      expect(message).to include "🍺"
+      expect(options[:details]).to include "🍻"
+    end
+    subject.error(
+      "testing UTF-8 message: 🍺".force_encoding("ASCII-8BIT"),
+      "details: 🍻".force_encoding("ASCII-8BIT")
+    )
+  end
+
   context "with an unknown error" do
     let(:what) { "Some error\nexit code:\n 2." }
 
