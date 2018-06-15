@@ -1,4 +1,12 @@
 -------------------------------------------------------------------
+Fri Jun 15 14:00:54 UTC 2018 - ancor@suse.com
+
+- Partitioner: honor default subvolumes when importing the root
+  mount point (related to bsc#1078359, bsc#1083851 and fate#318196)
+- Partitioner: honor default snapshots configuration when importing
+  the root mount point (bsc#966637)
+
+-------------------------------------------------------------------
 Wed Jun 13 13:56:14 UTC 2018 - snwint@suse.com
 
 - allow for numbers > 32 bit in region dialog (bsc#1065258)
