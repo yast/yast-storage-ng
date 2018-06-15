@@ -22,6 +22,7 @@
 require "yast"
 require "yast/i18n"
 require "y2partitioner/device_graphs"
+require "y2storage"
 
 module Y2Partitioner
   module Actions
@@ -100,6 +101,7 @@ module Y2Partitioner
         def import_mount_points
           reset_current_graph
           importable_entries.each { |e| import_mount_point(e) }
+          Y2Storage::Filesystems::Btrfs.refresh_subvolumes_shadowing(current_graph)
         end
 
       private
@@ -227,15 +229,13 @@ module Y2Partitioner
           device = entry.device(current_graph)
           return unless device
 
-          filesystem =
-            if device.is?(:blk_device)
-              format_device(device, entry.fs_type)
-            else
-              device
-            end
-
-          filesystem.mount_path = entry.mount_point
-          filesystem.mount_point.mount_options = entry.mount_options if entry.mount_options.any?
+          if device.is?(:blk_device)
+            filesystem = format_device(device, entry.fs_type)
+            create_mount_point(filesystem, entry)
+            setup_blk_filesystem(filesystem)
+          else
+            create_mount_point(device, entry)
+          end
         end
 
         # Formats the device indicated in the fstab entry
@@ -247,6 +247,27 @@ module Y2Partitioner
         def format_device(device, fs_type)
           device.delete_filesystem
           device.create_filesystem(fs_type)
+        end
+
+        # Creates the #{Y2Storage::MountPoint} object based on the imported
+        # fstab entry.
+        #
+        # @param filesystem [Y2Storage::Filesystems::Base]
+        # @param entry [Y2Storage::SimpleEtcFstabEntry]
+        def create_mount_point(filesystem, entry)
+          filesystem.mount_path = entry.mount_point
+          filesystem.mount_point.mount_options = entry.mount_options if entry.mount_options.any?
+        end
+
+        # Performs any additional final step needed for the new block
+        # filesystem (Btrfs stuff, so far)
+        #
+        # @param filesystem [Y2Storage::Filesystems::BlkFilesystem]
+        def setup_blk_filesystem(filesystem)
+          if filesystem.can_configure_snapper?
+            filesystem.configure_snapper = filesystem.default_configure_snapper?
+          end
+          filesystem.setup_default_btrfs_subvolumes if filesystem.supports_btrfs_subvolumes?
         end
       end
     end

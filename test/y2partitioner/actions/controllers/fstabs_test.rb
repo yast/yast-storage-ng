@@ -71,6 +71,8 @@ describe Y2Partitioner::Actions::Controllers::Fstabs do
 
   let(:ext4) { Y2Storage::Filesystems::Type::EXT4 }
 
+  let(:btrfs) { Y2Storage::Filesystems::Type::BTRFS }
+
   subject { described_class.new }
 
   let(:scenario) { "mixed_disks.yml" }
@@ -275,6 +277,92 @@ describe Y2Partitioner::Actions::Controllers::Fstabs do
 
       sdb2 = current_graph.find_by_name("/dev/sdb2")
       expect(sdb2.filesystem.type).to eq(ext4)
+    end
+
+    context "when the imported root is Btrfs" do
+      using Y2Storage::Refinements::SizeCasts
+
+      let(:entries) do
+        [
+          fstab_entry("/dev/sda2", "/home", ext3, ["rw"], 0, 0),
+          fstab_entry("/dev/sdb2", "/", btrfs, ["defaults"], 1, 1),
+          fstab_entry("/dev/sda1", "/var", ext4, ["defaults"], 0, 0)
+        ]
+      end
+
+      let(:root_vol) do
+        Y2Storage::VolumeSpecification.new(
+          "btrfs_default_subvolume" => "@@",
+          "snapshots_configurable"  => true,
+          "snapshots"               => snapshots,
+          "subvolumes"              => [
+            "srv", { "path" => "var", "copy_on_write" => false }, "home", "tmp"
+          ]
+        )
+      end
+      let(:snapshots) { true }
+
+      before do
+        allow(Y2Storage::VolumeSpecification).to receive(:for).with("/").and_return root_vol
+        allow(root_vol).to receive(:min_size_with_snapshots).and_return min_snapshots
+      end
+      let(:min_snapshots) { 20.GiB }
+
+      let(:root_filesystem) { current_graph.find_by_name("/dev/sdb2").filesystem }
+      let(:subvol_mount_points) { root_filesystem.btrfs_subvolumes.map(&:mount_path).compact }
+
+      it "creates the default subvolumes" do
+        subject.import_mount_points
+        expect(subvol_mount_points).to contain_exactly("/srv", "/tmp")
+        expect(root_filesystem.default_btrfs_subvolume.path).to eq "@@"
+      end
+
+      it "does not create shadowed subvolumes" do
+        subject.import_mount_points
+        expect(subvol_mount_points).to_not include("/home", "/var")
+      end
+
+      context "if snapshots must be enabled by default" do
+        let(:snapshots) { true }
+
+        context "and the device is big enough" do
+          let(:min_snapshots) { 20.GiB }
+
+          it "sets #configure_snapper to true" do
+            subject.import_mount_points
+            expect(root_filesystem.configure_snapper).to eq true
+          end
+        end
+
+        context "but the device is too small" do
+          let(:min_snapshots) { 80.GiB }
+
+          it "sets #configure_snapper to false" do
+            subject.import_mount_points
+            expect(root_filesystem.configure_snapper).to eq false
+          end
+        end
+      end
+
+      context "if snapshots must be disabled by default" do
+        let(:snapshots) { false }
+
+        context "and the device is big enough" do
+          it "sets #configure_snapper to false" do
+            subject.import_mount_points
+            expect(root_filesystem.configure_snapper).to eq false
+          end
+        end
+
+        context "and the device is too small" do
+          let(:root_dev) { "/dev/sdb1" }
+
+          it "sets #configure_snapper to false" do
+            subject.import_mount_points
+            expect(root_filesystem.configure_snapper).to eq false
+          end
+        end
+      end
     end
 
     it "does not modify other devices" do
