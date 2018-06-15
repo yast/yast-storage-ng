@@ -400,6 +400,34 @@ module Y2Storage
         mount_by
       end
 
+      # Default value for #configure_snapper, according to system configuration
+      #
+      # @return [Boolean]
+      def default_configure_snapper?
+        return false unless volume_specification
+
+        # FIXME: this is not ready for multi-device Btrfs (blk_devices.first)
+        volume_specification.snapper_for_device?(blk_devices.first)
+      end
+
+      # Creates the default subvolumes setup for a newly created filesystem,
+      # according to the volumes specification.
+      #
+      # The default subvolume is created first and then the proposed subvolumes are added.
+      #
+      # A proposed subvolume is added only when it does not exist in the filesystem and it
+      # makes sense for the current architecture.
+      #
+      # @see #ensure_default_btrfs_subvolume
+      # @see #add_btrfs_subvolumes
+      def setup_default_btrfs_subvolumes
+        spec = volume_specification
+        return unless spec
+
+        ensure_default_btrfs_subvolume(path: spec.btrfs_default_subvolume)
+        add_btrfs_subvolumes(spec.subvolumes) if spec.subvolumes
+      end
+
     protected
 
       # Removes a subvolume

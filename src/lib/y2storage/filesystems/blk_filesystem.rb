@@ -142,6 +142,26 @@ module Y2Storage
         end
       end
 
+      # Whether it makes sense modify the attribute about snapper configuration
+      #
+      # @see Y2Storage::Filesystems::Btrfs.configure_snapper
+      #
+      # @return [Boolean]
+      def can_configure_snapper?
+        root? && respond_to?(:configure_snapper=)
+      end
+
+      # Volume specification that applies for this filesystem
+      #
+      # @see Y2Storage::VolumeSpecification.for
+      #
+      # @return [Y2Storage::VolumeSpecification, nil] nil if no specification
+      #   matches the filesystem
+      def volume_specification
+        return nil unless mount_point
+        Y2Storage::VolumeSpecification.for(mount_point.path)
+      end
+
     protected
 
       def types_for_is
