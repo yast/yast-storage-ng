@@ -227,6 +227,7 @@ module Y2Storage
     # this specification to a given block device
     #
     # @param device [Y2Storage::BlkDevice]
+    # @return [Boolean]
     def snapper_for_device?(device)
       if snapshots
         if snapshots_configurable # maybe check also disable_order
