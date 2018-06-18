@@ -115,30 +115,8 @@ module Y2Partitioner
     # @param device [Y2Storage::BlkDevice] device being created and formatted
     # @return [Boolean]
     def snapper?(device)
-      return false if id != :system || device.filesystem_mountpoint.nil?
-
-      spec = Y2Storage::VolumeSpecification.for(device.filesystem_mountpoint)
-      return false unless spec
-
-      snapper_for_spec?(spec, device)
-    end
-
-  protected
-
-    # @see #snapper?
-    #
-    # @param spec [Y2Storage::VolumeSpecification]
-    # @param device [Y2Storage::BlkDevice]
-    def snapper_for_spec?(spec, device)
-      if spec.snapshots
-        if spec.snapshots_configurable # maybe check also disable_order
-          device.size >= spec.min_size_with_snapshots
-        else
-          true
-        end
-      else
-        false
-      end
+      return false if id != :system || device.filesystem.nil?
+      device.filesystem.default_configure_snapper?
     end
   end
 end
