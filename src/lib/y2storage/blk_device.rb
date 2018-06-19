@@ -79,6 +79,12 @@ module Y2Storage
     storage_forward :size, as: "DiskSize"
     storage_forward :size=
 
+    # @!method active?
+    #   Checks whether the device is active (LV, Encryption, etc)
+    #
+    #   @return [Boolean]
+    storage_forward :active?
+
     # @!method sysfs_name
     #   @return [String] e.g. "sda2" or "dm-1"
     storage_forward :sysfs_name
