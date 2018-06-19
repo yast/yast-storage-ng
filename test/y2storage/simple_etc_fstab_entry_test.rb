@@ -80,37 +80,59 @@ describe Y2Storage::SimpleEtcFstabEntry do
   end
 
   describe "#device" do
-    context "when the filesystem for the entry is found in system" do
-      context "and it is a block filesystem" do
-        let(:device) { "/dev/sda2" }
+    context "when the fstab entry contains a block device spec" do
+      let(:scenario) { "encrypted_partition.xml" }
 
-        it "returns the device of the filesystem" do
-          expect(subject.device(devicegraph).name).to eq("/dev/sda2")
+      context "and the block device is found in the system" do
+        let(:device) { "/dev/disk/by-id/ata-VBOX_HARDDISK_VB777f5d67-56603f01-part1" }
+
+        it "returns the block device" do
+          device = subject.device(devicegraph)
+
+          expect(device.is?(:blk_device)).to eq(true)
+          expect(device.name).to eq("/dev/sda1")
         end
       end
 
-      context "and it is a NFS" do
-        let(:scenario) { "nfs1.xml" }
+      context "and the block device is not found in the system" do
+        let(:device) { "/dev/disk/by-id/does-not-exist" }
 
-        let(:device) { "srv:/home/a" }
-
-        it "returns the NFS" do
-          expect(subject.device(devicegraph).name).to eq("srv:/home/a")
+        it "returns nil" do
+          expect(subject.device(devicegraph)).to be_nil
         end
       end
     end
 
-    context "when the filesystem for the entry is not found in system" do
-      context "but the device can be found" do
-        let(:device) { "/dev/sdc" }
+    context "when the fstab entry contains a filesystem spec" do
+      context "and the filesystem is found in the system" do
+        context "and the filesystem is a NFS" do
+          let(:scenario) { "nfs1.xml" }
+          let(:device) { "srv:/home/a" }
 
-        it "returns the device" do
-          expect(subject.device(devicegraph).name).to eq("/dev/sdc")
+          it "returns the NFS" do
+            device = subject.device(devicegraph)
+
+            expect(device.is?(:nfs)).to eq(true)
+            expect(device.name).to eq("srv:/home/a")
+          end
+        end
+
+        context "and the filesystem is a block filesystem" do
+          let(:scenario) { "swaps" }
+          let(:device) { "UUID=11111111-1111-1111-1111-11111111" }
+
+          it "returns the underlying block device" do
+            device = subject.device(devicegraph)
+
+            expect(device.is?(:blk_device)).to eq(true)
+            expect(device.name).to eq("/dev/sda1")
+          end
         end
       end
 
-      context "and the device cannot be found" do
-        let(:device) { "/dev/sdc1" }
+      context "and the filesystem is not found in the system" do
+        let(:scenario) { "swaps" }
+        let(:device) { "UUID=does-not-exist" }
 
         it "returns nil" do
           expect(subject.device(devicegraph)).to be_nil

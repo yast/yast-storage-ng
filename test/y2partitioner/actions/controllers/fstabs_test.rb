@@ -40,10 +40,14 @@ describe Y2Partitioner::Actions::Controllers::Fstabs do
     vg.add_lvm_pv(device)
   end
 
-  def encrypt_and_use_device(device_name)
+  def encrypt_device(device_name)
     device = system_graph.find_by_name(device_name)
     device.remove_descendants
-    encryption = device.create_encryption("cr_device")
+    device.create_encryption("cr_device")
+  end
+
+  def encrypt_and_use_device(device_name)
+    encryption = encrypt_device(device_name)
     vg = Y2Storage::LvmVg.create(system_graph, "vg0")
     vg.add_lvm_pv(encryption)
   end
@@ -55,17 +59,24 @@ describe Y2Partitioner::Actions::Controllers::Fstabs do
       .and_return(disk_analyzer)
 
     subject.selected_fstab = selected_fstab
+    subject.format_system_volumes = format_system_volumes
   end
 
-  let(:disk_analyzer) { instance_double(Y2Storage::DiskAnalyzer, fstabs: fstabs) }
+  let(:disk_analyzer) do
+    instance_double(Y2Storage::DiskAnalyzer, fstabs: fstabs, crypttabs: crypttabs)
+  end
 
   let(:fstabs) { [fstab1, fstab2, fstab3] }
+
+  let(:crypttabs) { [] }
 
   let(:fstab1) { instance_double(Y2Storage::Fstab) }
   let(:fstab2) { instance_double(Y2Storage::Fstab) }
   let(:fstab3) { instance_double(Y2Storage::Fstab) }
 
   let(:selected_fstab) { nil }
+
+  let(:format_system_volumes) { true }
 
   let(:ext3) { Y2Storage::Filesystems::Type::EXT3 }
 
@@ -164,66 +175,98 @@ describe Y2Partitioner::Actions::Controllers::Fstabs do
 
     before do
       allow(fstab1).to receive(:filesystem_entries).and_return(entries)
+      allow(fstab1).to receive(:filesystem).and_return(filesystem)
+
+      allow(crypttab).to receive(:entries).and_return(crypttab_entries)
+      allow(crypttab).to receive(:filesystem).and_return(filesystem)
+
+      encrypt_device("/dev/sda1")
     end
 
+    let(:filesystem) { current_graph.filesystems.first }
+
     let(:entries) { [entry1, entry2] }
+
+    let(:entry1) { fstab_entry(entry1_device, "/", entry1_fs, [], 0, 0) }
+    let(:entry2) { fstab_entry(entry2_device, "/data", ext3, [], 0, 0) }
+
+    let(:entry1_fs) { ext3 }
+
+    let(:crypttabs) { [crypttab] }
+
+    let(:crypttab) { instance_double(Y2Storage::Crypttab) }
+
+    let(:crypttab_entries) do
+      [
+        crypttab_entry("luks1", "/dev/sda1", "", [])
+      ]
+    end
 
     shared_examples "not importable entries error" do
       it "contains a not importable entries error" do
         expect(subject.selected_fstab_errors).to_not be_empty
         expect(subject.selected_fstab_errors).to include(/cannot be imported/)
-        expect(subject.selected_fstab_errors).to include(/\/error/)
       end
     end
 
-    context "when the device is unknown for some entry" do
-      let(:entry1) { fstab_entry("/dev/sda2", "/", ext3, [], 0, 0) }
-      let(:entry2) { fstab_entry("/dev/unknown", "/error", ext3, [], 0, 0) }
+    context "when the device is unknown for some fstab entry" do
+      let(:entry1_device) { "/dev/mapper/luks2" } # unknown
+      let(:entry2_device) { "/dev/sdb1" }
 
       include_examples "not importable entries error"
     end
 
-    context "when the filesystem type is 'auto' for some entry" do
-      let(:auto) { Y2Storage::Filesystems::Type::AUTO }
+    context "when the device is known for all fstab entries" do
+      let(:entry1_device) { "/dev/mapper/luks1" } # needs crypttab file to find it
+      let(:entry2_device) { "/dev/sdb1" }
 
-      let(:entry1) { fstab_entry("/dev/sda2", "/", ext3, [], 0, 0) }
-      let(:entry2) { fstab_entry("/dev/sdb1", "/error", auto, [], 0, 0) }
-
-      include_examples "not importable entries error"
-    end
-
-    context "when the filesystem type is unknown for some entry" do
-      let(:unknown) { Y2Storage::Filesystems::Type::UNKNOWN }
-
-      let(:entry1) { fstab_entry("/dev/sda2", "/", ext3, [], 0, 0) }
-      let(:entry2) { fstab_entry("/dev/sdb1", "/error", unknown, [], 0, 0) }
-
-      include_examples "not importable entries error"
-    end
-
-    context "when the device and the filesystem type are known for all entries" do
-      let(:entry1) { fstab_entry("/dev/sda2", "/", ext3, [], 0, 0) }
-      let(:entry2) { fstab_entry("/dev/sdb1", "/error", ext3, [], 0, 0) }
-
-      context "and some device is used by other device" do
+      context "and some fstab device is used by other device" do
         before do
-          use_device("/dev/sdb1")
+          use_device(entry2_device)
         end
 
         include_examples "not importable entries error"
       end
 
-      context "and some encrypted device is used by other device" do
+      context "and some fstab encrypted device is not active" do
         before do
-          encrypt_and_use_device("/dev/sdb1")
+          allow_any_instance_of(Y2Storage::Encryption).to receive(:active?).and_return(false)
         end
 
         include_examples "not importable entries error"
       end
 
-      context "and neither a device nor an encrypted device is used by other device" do
-        it "does not contain errors" do
-          expect(subject.selected_fstab_errors).to be_empty
+      context "and no fstab device is used by other device and all fstab encryptions are active" do
+        context "and no fstab device needs to be formatted" do
+          let(:format_system_volumes) { false }
+
+          it "does not contain errors" do
+            expect(subject.selected_fstab_errors).to be_empty
+          end
+        end
+
+        context "and some fstab device needs to be formatted" do
+          let(:format_system_volumes) { true }
+
+          context "and the filesystem type is 'auto' for that fstab entry" do
+            let(:entry1_fs) { Y2Storage::Filesystems::Type::AUTO }
+
+            include_examples "not importable entries error"
+          end
+
+          context "and the filesystem type is unknown for that fstab entry" do
+            let(:entry1_fs) { Y2Storage::Filesystems::Type::UNKNOWN }
+
+            include_examples "not importable entries error"
+          end
+
+          context "and the filesystem type is known for that fstab entry" do
+            let(:entry1_fs) { ext3 }
+
+            it "does not contain errors" do
+              expect(subject.selected_fstab_errors).to be_empty
+            end
+          end
         end
       end
     end
@@ -232,51 +275,151 @@ describe Y2Partitioner::Actions::Controllers::Fstabs do
   describe "#import_mount_points" do
     let(:selected_fstab) { Y2Storage::Fstab.new }
 
+    before do
+      allow(selected_fstab).to receive(:entries).and_return(entries)
+    end
+
+    let(:entries) do
+      [
+        fstab_entry(entry_device, entry_mount_point, entry_fs, entry_mount_options, 0, 0)
+      ]
+    end
+
+    let(:entry_device) { "/dev/sda2" }
+
+    let(:entry_mount_point) { "/" }
+
+    let(:entry_fs) { ext3 }
+
+    let(:entry_mount_options) { ["rw"] }
+
+    def device
+      current_graph.find_by_name(entry_device)
+    end
+
+    shared_examples "import data" do
+      it "imports mount point and mount options from the fstab entry" do
+        subject.import_mount_points
+
+        expect(device.filesystem.mount_path).to eq(entry_mount_point)
+        expect(device.filesystem.mount_options).to eq(entry_mount_options)
+      end
+    end
+
+    shared_examples "format device" do
+      context "and the fstab device is already formatted" do
+        it "does not format the device" do
+          filesystem_before = device.filesystem.dup
+          subject.import_mount_points
+
+          expect(device.filesystem.type).to_not eq(entry_device)
+          expect(device.filesystem).to eq(filesystem_before)
+        end
+      end
+
+      context "and the fstab device is not formatted yet" do
+        before do
+          device = system_graph.find_by_name(entry_device)
+          device.delete_filesystem
+        end
+
+        it "formats the device with the filesystem type indicated in the fstab entry" do
+          subject.import_mount_points
+          expect(device.filesystem.type).to eq(entry_fs)
+        end
+      end
+    end
+
     it "discards all current changes" do
       allow(selected_fstab).to receive(:entries).and_return([])
 
-      current_graph.filesystems.first.mount_path = "/foo"
+      device.filesystem.mount_path = "/foo"
 
       expect(current_graph).to_not eq(system_graph)
       subject.import_mount_points
       expect(current_graph).to eq(system_graph)
     end
 
-    before do
-      allow(selected_fstab).to receive(:entries).and_return(entries)
+    context "when a fstab entry contains a not active encryption device" do
+      before do
+        encryption = encrypt_device("/dev/sda2")
+        encryption.create_filesystem(ext3)
+        encryption.filesystem.mount_path = "/home"
 
-      use_device("/dev/sdb1")
+        allow_any_instance_of(Y2Storage::Encryption).to receive(:active?).and_return(false)
+      end
+
+      let(:entry_device) { "/dev/mapper/cr_device" }
+
+      it "does not import the mount point" do
+        subject.import_mount_points
+
+        expect(device.filesystem.mount_path).to_not eq(entry_mount_point)
+        expect(device.filesystem.mount_options).to_not eq(entry_mount_options)
+      end
     end
 
-    let(:entries) do
-      [
-        fstab_entry("/dev/sda2", "/foo", ext3, ["rw"], 0, 0),
-        fstab_entry("/dev/sdb2", "/bar", ext4, ["ro"], 0, 0),
-        fstab_entry("/dev/sdb1", "/", ext4, ["ro"], 0, 0),
-        fstab_entry("UUID=unknown", "/foobar", "", [], 0, 0)
-      ]
+    context "when a fstab entry contains an used device (e.g. LVM PV)" do
+      before do
+        use_device(entry_device)
+      end
+
+      it "does not import the mount point" do
+        subject.import_mount_points
+
+        expect(device.filesystem).to be_nil
+      end
     end
 
-    it "imports mount point and mount options for entries with available devices" do
-      subject.import_mount_points
+    context "when a fstab entry contains a system mount point" do
+      let(:entry_mount_point) { "/opt" }
 
-      sda2 = current_graph.find_by_name("/dev/sda2")
-      expect(sda2.filesystem.mount_path).to eq("/foo")
-      expect(sda2.filesystem.mount_options).to eq(["rw"])
+      include_examples "import data"
 
-      sdb2 = current_graph.find_by_name("/dev/sdb2")
-      expect(sdb2.filesystem.mount_path).to eq("/bar")
-      expect(sdb2.filesystem.mount_options).to eq(["ro"])
+      context "and the option for formatting system volumes was selected" do
+        let(:format_system_volumes) { true }
+
+        it "formats the device with the filesystem type indicated in the fstab entry" do
+          subject.import_mount_points
+
+          expect(device.filesystem.type).to eq(entry_fs)
+        end
+      end
+
+      context "and the option for formatting system volumes was not selected" do
+        let(:format_system_volumes) { false }
+
+        include_examples "format device"
+      end
     end
 
-    it "formats the devices with the filesystem type indicated in the fstab" do
-      subject.import_mount_points
+    context "when the fstab entry does not contain a system mount point" do
+      let(:entry_mount_point) { "/home" }
 
-      sda2 = current_graph.find_by_name("/dev/sda2")
-      expect(sda2.filesystem.type).to eq(ext3)
+      include_examples "import data"
 
-      sdb2 = current_graph.find_by_name("/dev/sdb2")
-      expect(sdb2.filesystem.type).to eq(ext4)
+      include_examples "format device"
+    end
+
+    context "when the fstab contains a NFS entry" do
+      before do
+        Y2Storage::Filesystems::Nfs.create(system_graph, "srv", "/home/a")
+      end
+
+      let(:entries) do
+        [
+          fstab_entry("srv:/home/a", "/home", "", ["rw"], 0, 0)
+        ]
+      end
+
+      it "imports mount point and mount options for the NFS entry" do
+        subject.import_mount_points
+
+        nfs = Y2Storage::Filesystems::Nfs.find_by_server_and_path(current_graph, "srv", "/home/a")
+
+        expect(nfs.mount_path).to eq("/home")
+        expect(nfs.mount_options).to eq(["rw"])
+      end
     end
 
     context "when the imported root is Btrfs" do
@@ -362,41 +505,6 @@ describe Y2Partitioner::Actions::Controllers::Fstabs do
             expect(root_filesystem.configure_snapper).to eq false
           end
         end
-      end
-    end
-
-    it "does not modify other devices" do
-      devices_before = current_graph.partitions.select do |device|
-        !["/dev/sda2", "/dev/sdb2"].include?(device.name)
-      end
-
-      subject.import_mount_points
-
-      devices = current_graph.partitions.select do |device|
-        !["/dev/sda2", "/dev/sdb2"].include?(device.name)
-      end
-
-      expect(devices).to eq(devices_before)
-    end
-
-    context "when the fstab contains a NFS entry" do
-      before do
-        Y2Storage::Filesystems::Nfs.create(system_graph, "srv", "/home/a")
-      end
-
-      let(:entries) do
-        [
-          fstab_entry("srv:/home/a", "/foo", "", ["rw"], 0, 0)
-        ]
-      end
-
-      it "imports mount point and mount options for the NFS entry" do
-        subject.import_mount_points
-
-        nfs = Y2Storage::Filesystems::Nfs.find_by_server_and_path(current_graph, "srv", "/home/a")
-
-        expect(nfs.mount_path).to eq("/foo")
-        expect(nfs.mount_options).to eq(["rw"])
       end
     end
   end

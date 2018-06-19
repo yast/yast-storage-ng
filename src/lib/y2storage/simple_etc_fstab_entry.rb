@@ -72,6 +72,9 @@ module Y2Storage
     #
     # @note When the filesystem is NFS, the filesystem is considered as the entry device.
     #
+    # @note When the entry refers to an encryption device, it returs the encryption device
+    # and not the underlying device.
+    #
     # @param devicegraph [Devicegraph]
     # @return [BlkDevice, Filesystems::Nfs, nil]
     def device(devicegraph)
@@ -95,7 +98,7 @@ module Y2Storage
     def find_device(devicegraph)
       return nil if start_with_uuid? || start_with_label?
 
-      devicegraph.find_by_name(fstab_device)
+      devicegraph.find_by_any_name(fstab_device)
     end
 
     def start_with_uuid?

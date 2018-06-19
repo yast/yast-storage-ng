@@ -21,6 +21,7 @@
 
 require "yast"
 require "yast/i18n"
+require "y2storage/storage_manager"
 require "y2partitioner/device_graphs"
 require "y2storage"
 
@@ -35,6 +36,13 @@ module Y2Partitioner
 
         # @return [Y2Storage::Fstab] fstab file selected to import mount points
         attr_accessor :selected_fstab
+
+        # @return [Boolean] whether the system volumes must be formatted
+        #
+        # @note A volume is considered as "system volume" when it is mounted in certain
+        #   specific mount point like /, /usr, etc. See {#system_mount_points}.
+        attr_accessor :format_system_volumes
+        alias_method :format_system_volumes?, :format_system_volumes
 
         # Constructor
         def initialize
@@ -106,6 +114,11 @@ module Y2Partitioner
 
       private
 
+        # System mount points are taken from old code, see
+        # https://github.com/yast/yast-storage/blob/master_old/src/modules/FileSystems.rb#L438
+        SYSTEM_MOUNT_POINTS = ["/", "/usr", "/var", "/opt", "/boot"].freeze
+        private_constant :SYSTEM_MOUNT_POINTS
+
         # System devicegraph
         #
         # @return [Y2Storage::Devicegraph]
@@ -125,6 +138,13 @@ module Y2Partitioner
         # @return [Y2Storage::DiskAnalyzer]
         def disk_analyzer
           DeviceGraphs.instance.disk_analyzer
+        end
+
+        # Current system architecture
+        #
+        # @return [Storage::Arch]
+        def arch
+          @arch ||= Y2Storage::StorageManager.instance.arch
         end
 
         # Error when some entries in the selected fstab cannot be imported
@@ -167,18 +187,59 @@ module Y2Partitioner
         #
         # An entry can be imported when the device is known and it is not used
         # by other device (e.g., used by LVM or MD RAID), or it is a known NFS.
-        # Moreover, the entry must have a known filesystem type.
+        # Moreover, in case the device must be formatted, the entry also must
+        # indicate a known filesystem type.
         #
         # @param entry [Y2Storage::SimpleEtcFstabEntry]
         # @return [Boolean]
         def can_be_imported?(entry)
-          device = entry.device(system_graph)
+          device = entry_device(entry, system_graph)
           return false unless device
 
-          # Checks whether the device is actually a filesystem (i.e., NFS)
-          return true if device.is?(:filesystem)
+          return true unless must_be_formatted?(device, entry.mount_point)
 
           known_fs_type?(entry) && can_be_formatted?(device)
+        end
+
+        # Whether the device must be formatted in order to import the mount point
+        #
+        # A device must be formatted when it is not currently formatted or it is a device
+        # that should be mounted over a system mount point (see #{system_mount_points}).
+        # For this last case, the option to format system volumes should be selected
+        # (see {#format_system_volumes?}).
+        #
+        # @param device [Y2Storage::BlkDevice, Y2Storage::Filesystems::Base]
+        # @param mount_point [String] mount point of fstab entry
+        #
+        # @return [Boolean]
+        def must_be_formatted?(device, mount_point)
+          # In case the device is a filesystem (i.e., NFS), the device should not be formatted.
+          return false if device.is?(:filesystem)
+
+          !device.formatted? ||
+            (system_mount_point?(mount_point) && format_system_volumes?)
+        end
+
+        # Whether the mount point is included in the list of system mount points
+        #
+        # @param mount_point [String] mount point of fstab entry
+        # @return [Boolean]
+        def system_mount_point?(mount_point)
+          system_mount_points.include?(mount_point)
+        end
+
+        # Mount points considered as system mount points
+        #
+        # The list of system mount points are taken from old code, see
+        # https://github.com/yast/yast-storage/blob/master_old/src/modules/FileSystems.rb#L438
+        #
+        # @return [Array<String>]
+        def system_mount_points
+          return @system_mount_points if @system_mount_points
+
+          @system_mount_points = SYSTEM_MOUNT_POINTS.dup
+          @system_mount_points << "/boot/zipl" if arch.s390?
+          @system_mount_points
         end
 
         # Whether a fstab entry has a known filesystem type
@@ -195,14 +256,15 @@ module Y2Partitioner
         # Whether a device can be formatted
         #
         # A device can be formatted if it is already formatted or it is not used by
-        # another device (e.g., LVM or MD RAID).
+        # another device (e.g., LVM or MD RAID). Moreover, in case of a encryption
+        # device, the device must be active.
         #
         # @param device [Y2Storage::BlkDevice]
         # @return [Boolean]
         def can_be_formatted?(device)
-          unused?(device) ||
-            device.formatted? ||
-            (device.encrypted? && unused?(device.encryption))
+          return false if device.is?(:encryption) && !device.active?
+
+          unused?(device) || device.formatted?
         end
 
         # Whether the device has not been used yet
@@ -220,21 +282,22 @@ module Y2Partitioner
 
         # Imports the mount point of a fstab entry
         #
-        # The device in the fstab entry (first field) is formatted using the fileystem type
-        # indicated in the entry. In case the device is not a block device (e.g., NFS), the
-        # device is not formatted and only the mount point and mount options are assigned.
+        # When the device needs to be formatted (see {#must_be_formatted?}), the filesystem type
+        # indicated in the entry is used. In case the device is not a block device (e.g., NFS),
+        # the device is not formatted and only the mount point and mount options are assigned.
         #
         # @param entry [Y2Storage::SimpleEtcFstabEntry]
         def import_mount_point(entry)
-          device = entry.device(current_graph)
+          device = entry_device(entry, current_graph)
           return unless device
 
-          if device.is?(:blk_device)
+          if must_be_formatted?(device, entry.mount_point)
             filesystem = format_device(device, entry.fs_type)
             create_mount_point(filesystem, entry)
             setup_blk_filesystem(filesystem)
           else
-            create_mount_point(device, entry)
+            filesystem = device.is?(:filesystem) ? device : device.filesystem
+            create_mount_point(filesystem, entry)
           end
         end
 
@@ -267,7 +330,55 @@ module Y2Partitioner
           if filesystem.can_configure_snapper?
             filesystem.configure_snapper = filesystem.default_configure_snapper?
           end
+
           filesystem.setup_default_btrfs_subvolumes if filesystem.supports_btrfs_subvolumes?
+        end
+
+        # Device indicated in the fstab entry
+        #
+        # When the device name in the fstab entry corresponds to a encryption device, the device
+        # could not be found by that fstab name. In general, the encryptions might be probed with
+        # a different name, so before searching for the device, the devicegraph is modified to
+        # set the encryption names from the crypttab file. That changes are made in a temporary
+        # devicegraph, so the original one is never altered.
+        #
+        # @see #devicegraph_with_fixed_encryptions
+        #
+        # @param entry [Y2Storage::SimpleEtcFstabEntry]
+        # @param devicegraph [Y2Storage::Devicegraph]
+        #
+        # @return [Y2Storage::BlkDevice, Y2Storage::Filesystems::Nfs, nil] nil if the device is
+        #   not found in the devicegraph.
+        def entry_device(entry, devicegraph)
+          device = entry.device(devicegraph_with_fixed_encryptions(devicegraph))
+          device ? devicegraph.find_device(device.sid) : nil
+        end
+
+        # Duplicates the given devicegraph and modifies it by setting the encryption names
+        # from the crypttab file
+        #
+        # @see #crypttab
+        #
+        # @param devicegraph [Y2Storage::Devicegraph]
+        # @return [Y2Storage::Devicegraph]
+        def devicegraph_with_fixed_encryptions(devicegraph)
+          fixed_devicegraph = devicegraph.dup
+
+          return fixed_devicegraph unless crypttab
+
+          Y2Storage::Encryption.use_crypttab_names(fixed_devicegraph, crypttab)
+          fixed_devicegraph
+        end
+
+        # Selects the crypttab contained in the same filesystem than the selected fstab
+        #
+        # @return [Y2Storage::Crypttab, nil] nil if the filesystem does not contain
+        #   a crypttab file.
+        def crypttab
+          return @crypttab if @crypttab_found
+
+          @crypttab_found = true
+          @crypttab = disk_analyzer.crypttabs.find { |c| c.filesystem == selected_fstab.filesystem }
         end
       end
     end

@@ -41,7 +41,15 @@ module Y2Partitioner
 
       # @see #fstab_selector
       def contents
-        @contents ||= VBox(fstab_selector)
+        @contents ||= MarginBox(
+          1,
+          0.5,
+          VBox(
+            fstab_selector,
+            VSpacing(1),
+            Left(format_widget)
+          )
+        )
       end
 
       def ok_button_label
@@ -60,9 +68,41 @@ module Y2Partitioner
         Widgets::FstabSelector.new(controller)
       end
 
+      # Widget to select whether to format system volumes when importing mount points
+      #
+      # @return [FormatWidget]
+      def format_widget
+        FormatWidget.new(controller)
+      end
+
       # This popup is slighly wider than the default popup
       def min_width
         70
+      end
+
+      # Checkbox to select whether to format system volumes
+      class FormatWidget < CWM::CheckBox
+        # @return [Actions::Controllers::Fstabs]
+        attr_reader :controller
+
+        # Constructor
+        #
+        # @param controller [Actions::Controllers::Fstabs]
+        def initialize(controller)
+          @controller = controller
+        end
+
+        def label
+          _("Format System Volumes")
+        end
+
+        def store
+          controller.format_system_volumes = value
+        end
+
+        def init
+          self.value = true
+        end
       end
     end
   end

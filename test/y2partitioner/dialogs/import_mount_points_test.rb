@@ -47,5 +47,19 @@ describe Y2Partitioner::Dialogs::ImportMountPoints do
 
       expect(widget).to_not be_nil
     end
+
+    it "contains a widget for selecting to format system devices" do
+      widget = subject.contents.nested_find do |w|
+        w.is_a?(Y2Partitioner::Dialogs::ImportMountPoints::FormatWidget)
+      end
+
+      expect(widget).to_not be_nil
+    end
+  end
+
+  describe Y2Partitioner::Dialogs::ImportMountPoints::FormatWidget do
+    subject { Y2Partitioner::Dialogs::ImportMountPoints::FormatWidget.new(controller) }
+
+    include_examples "CWM::CheckBox"
   end
 end
