@@ -21,9 +21,10 @@
 
 require "yast"
 require "yast/i18n"
-require "y2storage/storage_manager"
 require "y2partitioner/device_graphs"
 require "y2storage"
+
+Yast.import "Arch"
 
 module Y2Partitioner
   module Actions
@@ -140,13 +141,6 @@ module Y2Partitioner
           DeviceGraphs.instance.disk_analyzer
         end
 
-        # Current system architecture
-        #
-        # @return [Storage::Arch]
-        def arch
-          @arch ||= Y2Storage::StorageManager.instance.arch
-        end
-
         # Error when some entries in the selected fstab cannot be imported
         #
         # An entry cannot be imported when the device is not found or it is used
@@ -238,7 +232,7 @@ module Y2Partitioner
           return @system_mount_points if @system_mount_points
 
           @system_mount_points = SYSTEM_MOUNT_POINTS.dup
-          @system_mount_points << "/boot/zipl" if arch.s390?
+          @system_mount_points << "/boot/zipl" if Yast::Arch.s390
           @system_mount_points
         end
 
@@ -375,10 +369,7 @@ module Y2Partitioner
         # @return [Y2Storage::Crypttab, nil] nil if the filesystem does not contain
         #   a crypttab file.
         def crypttab
-          return @crypttab if @crypttab_found
-
-          @crypttab_found = true
-          @crypttab = disk_analyzer.crypttabs.find { |c| c.filesystem == selected_fstab.filesystem }
+          disk_analyzer.crypttabs.find { |c| c.filesystem == selected_fstab.filesystem }
         end
       end
     end

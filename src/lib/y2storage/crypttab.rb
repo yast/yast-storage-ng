@@ -31,7 +31,7 @@ module Y2Storage
     CRYPTTAB_PATH = "/etc/crypttab"
     private_constant :CRYPTTAB_PATH
 
-    # @return [Filesystems::Base]
+    # @return [Filesystems::Base] filesystem to which the crypttab file belongs to
     attr_reader :filesystem
 
     # @return [Array<SimpleEtcCrypttabEntry>]
@@ -40,7 +40,7 @@ module Y2Storage
     # Constructor
     #
     # @param path [String] path to crypttab file
-    # @param filesystem [Filesystems::Base] filesystem to which the crypttab file belongs to
+    # @param filesystem [Filesystems::Base]
     def initialize(path = CRYPTTAB_PATH, filesystem = nil)
       @path = path
       @filesystem = filesystem

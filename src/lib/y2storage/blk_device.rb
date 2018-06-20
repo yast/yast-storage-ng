@@ -80,7 +80,12 @@ module Y2Storage
     storage_forward :size=
 
     # @!method active?
-    #   Checks whether the device is active (LV, Encryption, etc)
+    #   Checks whether the device is active
+    #
+    #   Some devices must be activated to access to them. For example: Multipath, LVM VGs,
+    #   Encryption devices or RAIDs. During the probing phase, those devices are activated,
+    #   asking to the user when it is required (e.g., to ask for the encryption password).
+    #   This method indicates whether the device was actually activated during the probing.
     #
     #   @return [Boolean]
     storage_forward :active?
