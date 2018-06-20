@@ -401,6 +401,82 @@ describe Y2Partitioner::Actions::Controllers::Fstabs do
       include_examples "format device"
     end
 
+    context "when a second fstab is selected" do
+      let(:fstabs) { [fstab1, fstab2] }
+
+      let(:crypttabs) { [crypttab1, crypttab2] }
+
+      before do
+        allow(fstab1).to receive(:filesystem_entries).and_return(fstab1_entries)
+        allow(fstab1).to receive(:filesystem).and_return(fstab1_filesystem)
+
+        allow(fstab2).to receive(:filesystem_entries).and_return(fstab2_entries)
+        allow(fstab2).to receive(:filesystem).and_return(fstab2_filesystem)
+
+        allow(crypttab1).to receive(:entries).and_return(crypttab1_entries)
+        allow(crypttab1).to receive(:filesystem).and_return(crypttab1_filesystem)
+
+        allow(crypttab2).to receive(:entries).and_return(crypttab2_entries)
+        allow(crypttab2).to receive(:filesystem).and_return(crypttab2_filesystem)
+
+        encrypt_device("/dev/sda1")
+      end
+
+      let(:fstab1) { instance_double(Y2Storage::Fstab) }
+      let(:fstab2) { instance_double(Y2Storage::Fstab) }
+      let(:crypttab1) { instance_double(Y2Storage::Crypttab) }
+      let(:crypttab2) { instance_double(Y2Storage::Crypttab) }
+
+      let(:fstab1_filesystem) { current_graph.find_by_name("/dev/sdb2").filesystem }
+      let(:fstab2_filesystem) { current_graph.find_by_name("/dev/sdb3").filesystem }
+
+      let(:crypttab1_filesystem) { fstab1_filesystem }
+      let(:crypttab2_filesystem) { fstab2_filesystem }
+
+      let(:fstab1_entries) do
+        [
+          fstab_entry("/dev/mapper/luks1", "/", ext3, [], 0, 0)
+        ]
+      end
+
+      let(:fstab2_entries) do
+        [
+          fstab_entry("/dev/mapper/luks2", "/home", ext3, [], 0, 0)
+        ]
+      end
+
+      let(:crypttab1_entries) do
+        [
+          crypttab_entry("luks1", "/dev/sda1", "", [])
+        ]
+      end
+
+      let(:crypttab2_entries) do
+        [
+          crypttab_entry("luks2", "/dev/sda1", "", [])
+        ]
+      end
+
+      def sda1
+        current_graph.find_by_name("/dev/sda1")
+      end
+
+      let(:selected_fstab) { fstab1 }
+
+      it "uses the proper crypttab to import the mount points" do
+        subject.import_mount_points
+        # Uses crypttab1 to find the device (luks1) and import the mount point
+        expect(sda1.filesystem.mount_path).to eq("/")
+
+        # Changes the fstab
+        subject.selected_fstab = fstab2
+
+        subject.import_mount_points
+        # Uses crypttab2 to find the device (luks2) and import the mount point
+        expect(sda1.filesystem.mount_path).to eq("/home")
+      end
+    end
+
     context "when the fstab contains a NFS entry" do
       before do
         Y2Storage::Filesystems::Nfs.create(system_graph, "srv", "/home/a")
