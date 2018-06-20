@@ -167,9 +167,9 @@ module Y2Storage
       # not modified at all if it is not encrypted.
       #
       # @param devicegraph [Devicegraph]
-      # @param crypttab_path [String] path to a crypttab file
-      def use_crypttab_names(devicegraph, crypttab_path)
-        crypttab = Crypttab.new(crypttab_path)
+      # @param crypttab [Crypttab, String] Crypttab object or path to a crypttab file
+      def use_crypttab_names(devicegraph, crypttab)
+        crypttab = Crypttab.new(crypttab) if crypttab.is_a?(String)
 
         assign_crypttab_names(devicegraph, crypttab)
       end

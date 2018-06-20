@@ -31,8 +31,14 @@ module Y2Storage
   class ExistingFilesystem
     include Yast::Logger
 
+    # @return [Filesystems::Base]
     attr_reader :filesystem
 
+    # Constructor
+    #
+    # @param filesystem [Filesystems::Base]
+    # @param root [String]
+    # @param mount_point [String]
     def initialize(filesystem, root = "/", mount_point = "/mnt")
       @filesystem = filesystem
       @root = root
@@ -40,22 +46,40 @@ module Y2Storage
       @processed = false
     end
 
+    # Device to which the filesystem belongs to
+    #
+    # @return [BlkDevice]
     def device
       filesystem.blk_devices.first
     end
 
+    # Reads the release name from the filesystem
+    #
+    # @return [String, nil] nil if the release name cannot be read
     def release_name
       set_attributes unless processed?
       @release_name
     end
 
+    # Reads the fstab file from the filesystem
+    #
+    # @return [Fstab, nil] nil if the fstab file cannot be read
     def fstab
       set_attributes unless processed?
       @fstab
     end
 
+    # Read the crypttab file from the filesystem
+    #
+    # @return [Crypttab, nil] nil if the crypttab file cannot be read
+    def crypttab
+      set_attributes unless processed?
+      @crypttab
+    end
+
   protected
 
+    # @return [Boolean] if the filesystem was already mounted to read all the relevant info
     attr_reader :processed
     alias_method :processed?, :processed
 
@@ -63,6 +87,7 @@ module Y2Storage
       mount
       @release_name = read_release_name
       @fstab = read_fstab
+      @crypttab = read_crypttab
       umount
     rescue RuntimeError => ex # FIXME: rescue ::Storage::Exception when SWIG bindings are fixed
       log.error("CAUGHT exception: #{ex} for #{device.name}")
@@ -93,6 +118,9 @@ module Y2Storage
       raise "umount failed for #{@mount_point}" unless system(cmd)
     end
 
+    # Tries to read the release name
+    #
+    # @return [String, nil] nil if the filesystem does not contain a release name
     def read_release_name
       release_name = Yast::OSRelease.ReleaseName(@mount_point)
       release_name.empty? ? nil : release_name
@@ -106,6 +134,16 @@ module Y2Storage
       return nil unless File.exist?(fstab_path)
 
       Fstab.new(fstab_path, filesystem)
+    end
+
+    # Tries to read a crypttab file
+    #
+    # @return [Crypttab, nil] nil if the filesystem does not contain a crypttab file
+    def read_crypttab
+      crypttab_path = File.join(@mount_point, "etc", "crypttab")
+      return nil unless File.exist?(crypttab_path)
+
+      Crypttab.new(crypttab_path, filesystem)
     end
   end
 end

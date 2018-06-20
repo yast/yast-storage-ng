@@ -37,7 +37,7 @@ describe Y2Storage::Crypttab do
   describe "#initialize" do
     let(:crypttab_name) { "crypttab" }
 
-    it "reads and sets the fstab entries" do
+    it "reads and sets the crypptab entries" do
       entries = subject.entries
 
       expect(entries.size).to eq(3)

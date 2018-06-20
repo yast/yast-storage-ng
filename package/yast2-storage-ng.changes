@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Tue Jun 19 15:25:36 UTC 2018 - jlopez@suse.com
+
+- Partitioner: add checkbox to format system volumes when importing
+  mount points (bsc#1078359 and bsc#1094924).
+- 4.0.193
+
+-------------------------------------------------------------------
 Fri Jun 15 14:12:53 UTC 2018 - ancor@suse.com
 
 - Partitioner: honor default subvolumes when importing the root

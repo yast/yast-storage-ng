@@ -45,7 +45,27 @@ describe Y2Storage::Encryption do
       ]
     end
 
+    let(:device_name) { "/dev/sda1" }
+
     let(:storage_entries) { crypttab_entries.map(&:to_storage_value) }
+
+    context "when a path to a crypttab file is given" do
+      it "tries to read the crypttab file" do
+        expect(Y2Storage::Crypttab).to receive(:new).and_call_original
+
+        described_class.use_crypttab_names(devicegraph, "/etc/crypttab")
+      end
+    end
+
+    context "when a crypttab object is given" do
+      it "uses the crypttab object and does not try to read a new one" do
+        crypttab = Y2Storage::Crypttab.new
+
+        expect(Y2Storage::Crypttab).to_not receive(:new)
+
+        described_class.use_crypttab_names(devicegraph, crypttab)
+      end
+    end
 
     context "when a device indicated in a crypttab entry is an encrypted device" do
       let(:device_name) { "/dev/sda4" }
