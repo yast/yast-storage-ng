@@ -223,6 +223,23 @@ module Y2Storage
       end
     end
 
+    # Whether snapper configuration should be activated by default when applying
+    # this specification to a given block device
+    #
+    # @param device [Y2Storage::BlkDevice]
+    # @return [Boolean]
+    def snapper_for_device?(device)
+      if snapshots
+        if snapshots_configurable # maybe check also disable_order
+          device.size >= min_size_with_snapshots
+        else
+          true
+        end
+      else
+        false
+      end
+    end
+
   private
 
     FEATURES = {

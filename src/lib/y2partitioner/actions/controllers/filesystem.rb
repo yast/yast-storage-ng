@@ -361,7 +361,7 @@ module Y2Partitioner
         def snapshots_supported?
           return false unless Yast::Mode.installation
           return false unless to_be_formatted?
-          filesystem.root? && filesystem.respond_to?(:configure_snapper=)
+          filesystem.can_configure_snapper?
         end
 
         # Whether is possible to set the partition id for the block device
@@ -514,7 +514,7 @@ module Y2Partitioner
 
         def after_change_mount_point
           if btrfs? && mount_point
-            add_proposed_subvolumes
+            filesystem.setup_default_btrfs_subvolumes
             update_mount_points
           end
           # Shadowing control of btrfs subvolumes is always performed.
@@ -539,20 +539,6 @@ module Y2Partitioner
           filesystem.btrfs_subvolumes.detect do |subvolume|
             !subvolume.top_level? && !subvolume.exists_in_devicegraph?(system_graph)
           end
-        end
-
-        # The default subvolume is created first and then the proposed subvolumes are added.
-        #
-        # A proposed subvolume is added only when it does not exist in the filesystem and it
-        # makes sense for the current architecture.
-        #
-        # @see Y2Storage::Filesystems::Btrfs#add_btrfs_subvolumes
-        def add_proposed_subvolumes
-          spec = Y2Storage::VolumeSpecification.for(mount_point.path)
-          return unless spec
-
-          filesystem.ensure_default_btrfs_subvolume(path: spec.btrfs_default_subvolume)
-          filesystem.add_btrfs_subvolumes(spec.subvolumes) if spec.subvolumes
         end
 
         # Updates subvolumes mount point
