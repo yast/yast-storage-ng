@@ -391,12 +391,13 @@ describe Y2Storage::Devicegraph do
 
       it "does not perform a system lookup" do
         expect(Y2Storage::BlkDevice).to_not receive(:find_by_any_name)
+        devicegraph.find_by_any_name("/dev/sda1")
       end
     end
 
     context "if there is LvmVg with given name" do
       it "returns that device" do
-        blk_device = devicegraph.find_by_name("/dev/vg0")
+        blk_device = devicegraph.find_by_any_name("/dev/vg0")
 
         expect(blk_device).to_not be_nil
         expect(blk_device.name).to eq "/dev/vg0"
@@ -404,6 +405,7 @@ describe Y2Storage::Devicegraph do
 
       it "does not perform a system lookup" do
         expect(Y2Storage::BlkDevice).to_not receive(:find_by_any_name)
+        devicegraph.find_by_any_name("/dev/vg0")
       end
     end
 
@@ -417,6 +419,7 @@ describe Y2Storage::Devicegraph do
 
       it "does not perform a system lookup" do
         expect(Y2Storage::BlkDevice).to_not receive(:find_by_any_name)
+        devicegraph.find_by_any_name("/dev/mapper/cr_vg1_lv2")
       end
     end
 
@@ -430,6 +433,7 @@ describe Y2Storage::Devicegraph do
 
       it "does not perform a system lookup" do
         expect(Y2Storage::BlkDevice).to_not receive(:find_by_any_name)
+        devicegraph.find_by_any_name("/dev/disk/by-label/root")
       end
     end
 
@@ -501,6 +505,7 @@ describe Y2Storage::Devicegraph do
 
         it "does not perform a system lookup" do
           expect(Y2Storage::BlkDevice).to_not receive(:find_by_any_name)
+          devicegraph.find_by_any_name(name)
         end
       end
     end

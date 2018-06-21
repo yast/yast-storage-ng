@@ -116,7 +116,24 @@ module Y2Storage
     #
     # @return [Array<Fstab>]
     def fstabs
-      @fstabs ||= find_fstabs
+      return @fstabs if @fstabs
+      save_config_files
+      @fstabs
+    end
+
+    # All crypttabs found in the system
+    #
+    # FIXME: this method is not using the {#data_for} caching mechanism. The reason
+    # is because crypttab information needs to be stored by filesystem, but {#data_for}
+    # saves information by disk. As a consequence, this method could mount a device
+    # that was already mounted previously to read some information on it, for
+    # example the {#installed_systems}.
+    #
+    # @return [Array<Crypttab>]
+    def crypttabs
+      return @crypttabs if @crypttabs
+      save_config_files
+      @crypttabs
     end
 
     # Disks that are suitable for installing Linux.
@@ -224,13 +241,31 @@ module Y2Storage
       filesystems.map { |f| release_name(f) }.compact
     end
 
-    # Finds fstab files in all filesystems
+    # Saves all found fstab and crypttab files
+    def save_config_files
+      @fstabs, @crypttabs = find_config_files
+    end
+
+    # Finds fstab and crypttab files in all suitable filesystems for root
     #
     # @see #suitable_root_filesystems
     #
-    # @return [Array<Fstab>]
-    def find_fstabs
-      suitable_root_filesystems.map { |f| fstab(f) }.compact
+    # @return [Array<Array<Fstab>, Array<Crypttab>>]
+    def find_config_files
+      fstabs = []
+      crypttabs = []
+
+      suitable_root_filesystems.each do |filesystem|
+        fs = ExistingFilesystem.new(filesystem)
+
+        fstabs << fs.fstab
+        crypttabs << fs.crypttab
+      end
+
+      fstabs.compact!
+      crypttabs.compact!
+
+      [fstabs, crypttabs]
     end
 
     # Filesystems that could contain a Linux installation
@@ -238,15 +273,6 @@ module Y2Storage
     # @return [Array<Filesystems::Base>]
     def suitable_root_filesystems
       devicegraph.filesystems.select { |f| f.type.root_ok? }
-    end
-
-    # Fstab in the filesystem
-    #
-    # @param filesystem [Filesystems::Base]
-    # @return [Fstab, nil] nil if the filesystem does not contain a fstab file
-    def fstab(filesystem)
-      fs = ExistingFilesystem.new(filesystem)
-      fs.fstab
     end
 
     def release_name(filesystem)

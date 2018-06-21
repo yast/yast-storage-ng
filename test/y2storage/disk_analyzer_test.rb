@@ -117,12 +117,52 @@ describe Y2Storage::DiskAnalyzer do
   describe "#fstabs" do
     before do
       allow_any_instance_of(Y2Storage::ExistingFilesystem).to receive(:fstab)
+        .and_return(Y2Storage::Fstab.new)
+    end
+
+    it "returns a list with all found fstab files" do
+      fstabs = analyzer.fstabs
+
+      expect(fstabs).to be_a(Array)
+      expect(fstabs).to all(be_a(Y2Storage::Fstab))
     end
 
     it "tries to read a fstab file for each suitable root filesystem" do
       expect(Y2Storage::ExistingFilesystem).to receive(:new).exactly(5).times.and_call_original
 
       analyzer.fstabs
+    end
+
+    it "does not try to read fstab files again in subsequent calls" do
+      analyzer.fstabs
+      expect(Y2Storage::ExistingFilesystem).to_not receive(:new)
+      analyzer.fstabs
+    end
+  end
+
+  describe "#crypttabs" do
+    before do
+      allow_any_instance_of(Y2Storage::ExistingFilesystem).to receive(:crypttab)
+        .and_return(Y2Storage::Crypttab.new)
+    end
+
+    it "returns a list with all found crypttab files" do
+      crypttabs = analyzer.crypttabs
+
+      expect(crypttabs).to be_a(Array)
+      expect(crypttabs).to all(be_a(Y2Storage::Crypttab))
+    end
+
+    it "tries to read a crypttab file for each suitable root filesystem" do
+      expect(Y2Storage::ExistingFilesystem).to receive(:new).exactly(5).times.and_call_original
+
+      analyzer.crypttabs
+    end
+
+    it "does not try to read crypttab files again in subsequent calls" do
+      analyzer.crypttabs
+      expect(Y2Storage::ExistingFilesystem).to_not receive(:new)
+      analyzer.crypttabs
     end
   end
 

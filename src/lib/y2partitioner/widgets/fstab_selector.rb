@@ -195,13 +195,9 @@ module Y2Partitioner
         end
 
         def contents
-          @contents ||= MarginBox(
-            1,
-            0.5,
-            VBox(
-              Left(title),
-              table
-            )
+          @contents ||= VBox(
+            Left(title),
+            table
           )
         end
 

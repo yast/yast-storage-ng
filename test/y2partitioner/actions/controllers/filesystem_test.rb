@@ -29,6 +29,7 @@ describe Y2Partitioner::Actions::Controllers::Filesystem do
     allow(Y2Storage::VolumeSpecification).to receive(:for).and_call_original
     allow(Y2Storage::VolumeSpecification).to receive(:for).with("/")
       .and_return(volume_spec)
+    allow(volume_spec).to receive(:subvolumes).and_return subvolumes
   end
 
   let(:scenario) { "mixed_disks_btrfs" }
@@ -42,10 +43,10 @@ describe Y2Partitioner::Actions::Controllers::Filesystem do
   let(:dev_name) { "/dev/sda2" }
 
   let(:volume_spec) do
-    instance_double(Y2Storage::VolumeSpecification,
-      btrfs_default_subvolume: default_subvolume,
-      subvolumes:              subvolumes,
-      btrfs_read_only?:        false)
+    Y2Storage::VolumeSpecification.new(
+      "btrfs_default_subvolume" => default_subvolume,
+      "btrfs_read_only"         => false
+    )
   end
 
   let(:default_subvolume) { "" }
