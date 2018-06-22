@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Fri Jun 22 12:23:51 CEST 2018 - aschnell@suse.com
+
+- mask systemd mount and swap units while expert partitioner is
+  running (bsc#1073633)
+- 4.0.194
+
+-------------------------------------------------------------------
 Tue Jun 19 15:25:36 UTC 2018 - jlopez@suse.com
 
 - Partitioner: add checkbox to format system volumes when importing
