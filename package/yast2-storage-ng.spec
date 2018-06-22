@@ -90,7 +90,7 @@ rake install DESTDIR="%{buildroot}"
 %{yast_dir}/lib
 %{yast_desktopdir}/*.desktop
 %{yast_fillupdir}/*
-%{yast_ybindir}/mask-systemd-units
+%{yast_ybindir}/*
 
 # agents-scr
 %{yast_scrconfdir}/*.scr
