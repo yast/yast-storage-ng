@@ -28,22 +28,16 @@ module Y2Storage
 
     def inhibit
       log.info "mask systemd units"
-
-      begin
-        Yast::Execute.locally!("/usr/lib/YaST2/bin/mask-systemd-units", "--mask")
-      rescue Cheetah::ExecutionFailed => e
-        log.error "masking systemd units failed #{e.message}"
-      end
+      Yast::Execute.locally!("/usr/lib/YaST2/bin/mask-systemd-units", "--mask")
+    rescue Cheetah::ExecutionFailed => e
+      log.error "masking systemd units failed #{e.message}"
     end
 
     def uninhibit
       log.info "unmask systemd units"
-
-      begin
-        Yast::Execute.locally!("/usr/lib/YaST2/bin/mask-systemd-units", "--unmask")
-      rescue Cheetah::ExecutionFailed => e
-        log.error "unmasking systemd units failed #{e.message}"
-      end
+      Yast::Execute.locally!("/usr/lib/YaST2/bin/mask-systemd-units", "--unmask")
+    rescue Cheetah::ExecutionFailed => e
+      log.error "unmasking systemd units failed #{e.message}"
     end
   end
 end
