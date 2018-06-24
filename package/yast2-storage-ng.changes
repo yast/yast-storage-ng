@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Sun Jun 24 08:14:13 UTC 2018 - antoine.belvire@opensuse.org
+
+- Clean spec file, add URL tag (boo#1097956).
+- 4.0.194
+
+-------------------------------------------------------------------
 Tue Jun 19 15:25:36 UTC 2018 - jlopez@suse.com
 
 - Partitioner: add checkbox to format system volumes when importing
