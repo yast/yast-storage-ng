@@ -16,7 +16,7 @@
 #
 
 Name:		yast2-storage-ng
-Version:        4.0.193
+Version:        4.0.194
 Release:	0
 
 BuildRoot:	%{_tmppath}/%{name}-%{version}-build
@@ -32,6 +32,8 @@ Requires:	libstorage-ng-ruby >= 3.3.310
 Requires:	rubygem(ruby-dbus)
 # Y2Packager::Repository
 Requires:	yast2-packager >= 3.3.7
+# findutils for xargs
+Requires:	findutils
 
 BuildRequires:	update-desktop-files
 # BlkDevice#active?
@@ -88,6 +90,7 @@ rake install DESTDIR="%{buildroot}"
 %{yast_dir}/lib
 %{yast_desktopdir}/*.desktop
 %{yast_fillupdir}/*
+%{yast_ybindir}/*
 
 # agents-scr
 %{yast_scrconfdir}/*.scr
