@@ -19,39 +19,25 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "y2storage/inhibitors/mdadm_auto_assembly"
-require "y2storage/inhibitors/udisks"
-require "y2storage/inhibitors/systemd_units"
+require "yast2/execute"
 
 module Y2Storage
-  # class to inhibit various storage subsystem to automatically do things,
-  # e.g. mount file systems or assemble RAIDs, that interfere with the
-  # operation of YaST
-  class Inhibitors
+  # class to inhibit systemd mount and swap units
+  class SystemdUnits
     include Yast::Logger
 
     def inhibit
-      log.info "inhibit"
-
-      @mdadm_auto_assembly.inhibit
-      @udisks.inhibit
-      @systemd_units.inhibit
+      log.info "mask systemd units"
+      Yast::Execute.locally!("/usr/lib/YaST2/bin/mask-systemd-units", "--mask")
+    rescue Cheetah::ExecutionFailed => e
+      log.error "masking systemd units failed #{e.message}"
     end
 
     def uninhibit
-      log.info "uninhibit"
-
-      @systemd_units.uninhibit
-      @udisks.uninhibit
-      @mdadm_auto_assembly.uninhibit
-    end
-
-  private
-
-    def initialize
-      @mdadm_auto_assembly = Y2Storage::MdadmAutoAssembly.new
-      @udisks = Y2Storage::Udisks.new
-      @systemd_units = Y2Storage::SystemdUnits.new
+      log.info "unmask systemd units"
+      Yast::Execute.locally!("/usr/lib/YaST2/bin/mask-systemd-units", "--unmask")
+    rescue Cheetah::ExecutionFailed => e
+      log.error "unmasking systemd units failed #{e.message}"
     end
   end
 end
