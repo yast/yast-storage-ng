@@ -12,6 +12,7 @@ X-SuSE-YaST-AutoInst=
 X-SuSE-YaST-Geometry=
 X-SuSE-YaST-SortKey=
 X-SuSE-YaST-AutoInstResource=
+X-SuSE-YaST-Keywords=storage,disk,system
 
 Icon=yast-disk
 Exec=xdg-su -c "/sbin/yast2 partitioner"

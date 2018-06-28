@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Thu Jun 28 16:04:56 CEST 2018 - schubi@suse.de
+
+- Added additional searchkeys to desktop file (fate#321043).
+- 4.0.195
+
+-------------------------------------------------------------------
 Fri Jun 22 12:23:51 CEST 2018 - aschnell@suse.com
 
 - mask systemd mount and swap units while expert partitioner is
