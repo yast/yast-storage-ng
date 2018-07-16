@@ -244,6 +244,31 @@ describe Y2Storage::AutoinstProposal do
           )
         end
       end
+
+      context "when the reused partition is in a DASD" do
+        let(:scenario) { "dasd_50GiB" }
+
+        let(:root) do
+          { "mount" => "/", "partition_nr" => 1, "create" => false }
+        end
+
+        # Regression test for bug#1098594:
+        # the partitions are on an Dasd (not a Disk), so when the code did
+        #   partition.disk
+        # it returned nil and produced an exception afterwards
+        it "does not crash" do
+          expect { proposal.propose }.to_not raise_error
+        end
+
+        it "reuses the partition with the given partition number" do
+          proposal.propose
+          reused_part = proposal.devices.partitions.find { |p| p.name == "/dev/sda1" }
+          expect(reused_part).to have_attributes(
+            filesystem_type:       Y2Storage::Filesystems::Type::EXT2,
+            filesystem_mountpoint: "/"
+          )
+        end
+      end
     end
 
     describe "resizing partitions" do
@@ -966,6 +991,69 @@ describe Y2Storage::AutoinstProposal do
               "md_level" => Y2Storage::MdLevel::RAID0
             )
           )
+        end
+      end
+
+      # Regression test for bug#1098594
+      context "installing in a BIOS-defined MD RAID" do
+        let(:scenario) { "bug_1098594.xml" }
+
+        let(:partitioning) do
+          [
+            {
+              "device" => "/dev/md/Volume0_0", "use" => "3,4,9",
+              "partitions" => [efi_spec, root_spec, swap_spec]
+            }
+          ]
+        end
+
+        let(:efi_spec) do
+          {
+            "mount" => "/boot/efi", "create" => false, "partition_nr" => 3, "format" => true,
+            "filesystem" => "vfat", "mountby" => "uuid", "fstopt" => "umask=0002,utf8=true"
+          }
+        end
+
+        let(:root_spec) do
+          {
+            "mount" => "/", "create" => false, "partition_nr" => 4, "format" => true,
+            "filesystem" => "xfs", "mountby" => "uuid"
+          }
+        end
+
+        let(:swap_spec) do
+          {
+            "mount" => "swap", "create" => false, "partition_nr" => 9, "format" => true,
+            "filesystem" => "swap", "mountby" => "device", "fstopt" => "defaults"
+          }
+        end
+
+        # bug#1098594, the partitions are on an Md (not a real disk), so when the code did
+        #   partition.disk
+        # it returned nil and produced an exception afterwards
+        it "does not crash" do
+          expect { proposal.propose }.to_not raise_error
+        end
+
+        it "formats the partitions of the RAID as requested" do
+          proposal.propose
+          devicegraph = proposal.devices
+
+          expect(devicegraph.raids).to contain_exactly(
+            an_object_having_attributes("name" => "/dev/md/Volume0_0")
+          )
+
+          part3 = devicegraph.find_by_name("/dev/md/Volume0_0p3")
+          expect(part3.filesystem.mount_path).to eq "/boot/efi"
+          expect(part3.filesystem.type).to eq Y2Storage::Filesystems::Type::VFAT
+
+          part4 = devicegraph.find_by_name("/dev/md/Volume0_0p4")
+          expect(part4.filesystem.mount_path).to eq "/"
+          expect(part4.filesystem.type).to eq Y2Storage::Filesystems::Type::XFS
+
+          part9 = devicegraph.find_by_name("/dev/md/Volume0_0p9")
+          expect(part9.filesystem.mount_path).to eq "swap"
+          expect(part9.filesystem.type).to eq Y2Storage::Filesystems::Type::SWAP
         end
       end
     end
