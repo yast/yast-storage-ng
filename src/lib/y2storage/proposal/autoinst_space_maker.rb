@@ -169,7 +169,7 @@ module Y2Storage
       # @return [Hash<String,Array<String>>] disk name to list of reused partitions map
       def reused_partitions_by_disk(devicegraph, planned_devices)
         find_reused_partitions(devicegraph, planned_devices).each_with_object({}) do |part, map|
-          disk_name = part.disk.name
+          disk_name = part.partitionable.name
           map[disk_name] ||= []
           map[disk_name] << part.name
         end
