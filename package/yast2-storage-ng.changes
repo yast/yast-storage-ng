@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Mon Jul 16 16:26:28 UTC 2018 - ancor@suse.com
+
+- AutoYaST: do not crash when reusing partitions on non-disk
+  devices like DASD or BIOS RAID (bsc#1098594).
+- 4.0.196
+
+-------------------------------------------------------------------
 Thu Jun 28 16:04:56 CEST 2018 - schubi@suse.de
 
 - Added additional searchkeys to desktop file (fate#321043).
