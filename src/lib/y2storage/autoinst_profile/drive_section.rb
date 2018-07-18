@@ -151,7 +151,7 @@ module Y2Storage
       #   <drive> section, like a disk, a DASD or an LVM volume group.
       # @return [Boolean] if attributes were successfully read; false otherwise.
       def init_from_device(device)
-        if device.is?(:md)
+        if device.is?(:software_raid)
           init_from_md(device)
         elsif device.is?(:lvm_vg)
           init_from_vg(device)

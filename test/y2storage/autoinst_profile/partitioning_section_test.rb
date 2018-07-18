@@ -65,7 +65,7 @@ describe Y2Storage::AutoinstProfile::PartitioningSection do
     describe "using doubles for the devicegraph and the subsections" do
       let(:devicegraph) do
         instance_double(
-          Y2Storage::Devicegraph, disk_devices: disks, lvm_vgs: [vg], md_raids: [md]
+          Y2Storage::Devicegraph, disk_devices: disks, lvm_vgs: [vg], software_raids: [md]
         )
       end
       let(:disks) { [disk, dasd] }
