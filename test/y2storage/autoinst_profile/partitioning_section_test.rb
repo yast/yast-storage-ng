@@ -62,42 +62,61 @@ describe Y2Storage::AutoinstProfile::PartitioningSection do
   end
 
   describe ".new_from_storage" do
-    let(:devicegraph) do
-      instance_double(
-        Y2Storage::Devicegraph, disk_devices: disks, lvm_vgs: [vg], md_raids: [md]
-      )
-    end
-    let(:disks) { [disk, dasd] }
-    let(:disk) { instance_double(Y2Storage::Disk) }
-    let(:dasd) { instance_double(Y2Storage::Dasd) }
-    let(:vg) { instance_double(Y2Storage::LvmVg) }
-    let(:md) { instance_double(Y2Storage::Md) }
+    describe "using doubles for the devicegraph and the subsections" do
+      let(:devicegraph) do
+        instance_double(
+          Y2Storage::Devicegraph, disk_devices: disks, lvm_vgs: [vg], software_raids: [md]
+        )
+      end
+      let(:disks) { [disk, dasd] }
+      let(:disk) { instance_double(Y2Storage::Disk) }
+      let(:dasd) { instance_double(Y2Storage::Dasd) }
+      let(:vg) { instance_double(Y2Storage::LvmVg) }
+      let(:md) { instance_double(Y2Storage::Md) }
 
-    before do
-      allow(Y2Storage::AutoinstProfile::DriveSection).to receive(:new_from_storage)
-        .with(disk).and_return(disk_section)
-      allow(Y2Storage::AutoinstProfile::DriveSection).to receive(:new_from_storage)
-        .with(dasd).and_return(dasd_section)
-      allow(Y2Storage::AutoinstProfile::DriveSection).to receive(:new_from_storage)
-        .with(vg).and_return(vg_section)
-      allow(Y2Storage::AutoinstProfile::DriveSection).to receive(:new_from_storage)
-        .with(md).and_return(md_section)
+      before do
+        allow(Y2Storage::AutoinstProfile::DriveSection).to receive(:new_from_storage)
+          .with(disk).and_return(disk_section)
+        allow(Y2Storage::AutoinstProfile::DriveSection).to receive(:new_from_storage)
+          .with(dasd).and_return(dasd_section)
+        allow(Y2Storage::AutoinstProfile::DriveSection).to receive(:new_from_storage)
+          .with(vg).and_return(vg_section)
+        allow(Y2Storage::AutoinstProfile::DriveSection).to receive(:new_from_storage)
+          .with(md).and_return(md_section)
+      end
+
+      it "returns a new PartitioningSection object" do
+        expect(described_class.new_from_storage(devicegraph)).to be_a(described_class)
+      end
+
+      it "creates an entry in #drives for every relevant VG, disk and DASD" do
+        section = described_class.new_from_storage(devicegraph)
+        expect(section.drives).to eq([md_section, vg_section, disk_section, dasd_section])
+      end
+
+      it "ignores irrelevant drives" do
+        allow(Y2Storage::AutoinstProfile::DriveSection).to receive(:new_from_storage)
+          .with(disk).and_return(nil)
+        section = described_class.new_from_storage(devicegraph)
+        expect(section.drives).to eq([md_section, vg_section, dasd_section])
+      end
     end
 
-    it "returns a new PartitioningSection object" do
-      expect(described_class.new_from_storage(devicegraph)).to be_a(described_class)
-    end
+    # Regression test for bug#1098594, BIOS RAIDs were exported as
+    # software-defined ones
+    context "with a BIOS MD RAID in the system" do
+      before do
+        fake_scenario("bug_1098594.xml")
+      end
 
-    it "creates an entry in #drives for every relevant VG, disk and DASD" do
-      section = described_class.new_from_storage(devicegraph)
-      expect(section.drives).to eq([md_section, vg_section, disk_section, dasd_section])
-    end
+      it "creates only one entry in #drives, of type CT_DISK, for the BIOS RAID" do
+        section = described_class.new_from_storage(fake_devicegraph)
+        expect(section.drives.size).to eq 1
 
-    it "ignores irrelevant drives" do
-      allow(Y2Storage::AutoinstProfile::DriveSection).to receive(:new_from_storage)
-        .with(disk).and_return(nil)
-      section = described_class.new_from_storage(devicegraph)
-      expect(section.drives).to eq([md_section, vg_section, dasd_section])
+        drive = section.drives.first
+        expect(drive.device).to eq "/dev/md/Volume0_0"
+        expect(drive.type).to eq :CT_DISK
+      end
     end
   end
 
