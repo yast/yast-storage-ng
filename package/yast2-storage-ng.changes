@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Wed Jul 18 11:38:39 UTC 2018 - ancor@suse.com
+
+- AutoYaST: export BIOS RAID devices correctly (bsc#1098594).
+- 4.0.197
+
+-------------------------------------------------------------------
 Mon Jul 16 16:26:28 UTC 2018 - ancor@suse.com
 
 - AutoYaST: do not crash when reusing partitions on non-disk
