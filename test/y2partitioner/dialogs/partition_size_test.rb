@@ -31,26 +31,70 @@ describe "Partition Size widgets" do
 
   let(:controller) do
     pt = Y2Partitioner::Actions::Controllers::Partition.new(disk)
-    pt.region = region
     pt.custom_size = Y2Storage::DiskSize.MiB(1)
+    pt.type = partition_type
     pt
   end
   let(:disk) { "/dev/sda" }
-  let(:region) { Y2Storage::Region.create(2000, 1000, Y2Storage::DiskSize.new(1500)) }
-  let(:slot) { double("PartitionSlot", region: region) }
-  let(:regions) { [region] }
-  let(:optimal_regions) { [region] }
+
+  let(:region_prim1) { Y2Storage::Region.create(2000, 1000, Y2Storage::DiskSize.new(1500)) }
+  let(:region_log) { Y2Storage::Region.create(3001, 1000, Y2Storage::DiskSize.new(1500)) }
+  let(:region_prim2) { Y2Storage::Region.create(4001, 1000, Y2Storage::DiskSize.new(1500)) }
+  let(:slot_prim1) { double("PartitionSlot", region: region_prim1) }
+  let(:slot_log) { double("PartitionSlot", region: region_log) }
+  let(:slot_prim2) { double("PartitionSlot", region: region_prim2) }
+
+  let(:partition_type) { Y2Storage::PartitionType::LOGICAL }
+  let(:regions) { [region_log] }
+  let(:optimal_regions) { [region_log] }
+
+  before do
+    allow(slot_prim1).to receive(:possible?) do |type|
+      type != Y2Storage::PartitionType::LOGICAL
+    end
+    allow(slot_prim2).to receive(:possible?) do |type|
+      type != Y2Storage::PartitionType::LOGICAL
+    end
+    allow(slot_log).to receive(:possible?) do |type|
+      type == Y2Storage::PartitionType::LOGICAL
+    end
+  end
 
   describe Y2Partitioner::Dialogs::PartitionSize do
-    subject { described_class.new(controller) }
+    subject(:dialog) { described_class.new(controller) }
 
     before do
       allow(Y2Partitioner::Dialogs::PartitionSize::SizeWidget)
         .to receive(:new).and_return(term(:Empty))
-      allow(controller).to receive(:unused_slots).and_return [slot]
-      allow(controller).to receive(:unused_optimal_slots).and_return [slot]
+      allow(controller).to receive(:unused_slots).and_return [slot_prim1, slot_log, slot_prim2]
+      allow(controller).to receive(:unused_optimal_slots).and_return [slot_prim1, slot_log, slot_prim2]
     end
+
     include_examples "CWM::Dialog"
+
+    describe "#content" do
+      context "when creating a primary partition" do
+        let(:partition_type) { Y2Storage::PartitionType::PRIMARY }
+
+        it "offers only the regions of the primary slots" do
+          expect(Y2Partitioner::Dialogs::PartitionSize::SizeWidget).to receive(:new)
+            .with(controller, [region_prim1, region_prim2], [region_prim1, region_prim2])
+
+          dialog.contents
+        end
+      end
+
+      context "when creating a logical partition" do
+        let(:partition_type) { Y2Storage::PartitionType::LOGICAL }
+
+        it "offers only the region of the logical slot" do
+          expect(Y2Partitioner::Dialogs::PartitionSize::SizeWidget).to receive(:new)
+            .with(controller, [region_log], [region_log])
+
+          dialog.contents
+        end
+      end
+    end
   end
 
   describe Y2Partitioner::Dialogs::PartitionSize::SizeWidget do
@@ -170,7 +214,7 @@ describe "Partition Size widgets" do
     let(:entered_start) { 2200 }
     let(:entered_end) { 2500 }
 
-    subject { described_class.new(controller, regions, region) }
+    subject { described_class.new(controller, regions, region_log) }
 
     include_examples "CWM::CustomWidget"
 
