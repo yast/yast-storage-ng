@@ -42,9 +42,9 @@ module Y2Partitioner
         textdomain "storage"
         @disk_name = controller.disk_name
         @controller = controller
-        # FIXME: the available regions should be filtered based on controller.type
-        @regions = controller.unused_slots.map(&:region)
-        @optimal_regions = controller.unused_optimal_slots.map(&:region)
+        type = controller.type
+        @regions = controller.unused_slots.select { |s| s.possible?(type) }.map(&:region)
+        @optimal_regions = controller.unused_optimal_slots.select { |s| s.possible?(type) }.map(&:region)
 
         raise ArgumentError, "No region to make a partition in" if @optimal_regions.empty?
       end
