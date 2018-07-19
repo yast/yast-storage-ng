@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Wed Jul 18 19:00:11 UTC 2018 - ancor@suse.com
+
+- Partitioner: when creating a partition, use only regions of
+  the selected type: primary, logical or extended (bsc#1097634).
+- 4.0.198
+
+-------------------------------------------------------------------
 Wed Jul 18 11:38:39 UTC 2018 - ancor@suse.com
 
 - AutoYaST: export BIOS RAID devices correctly (bsc#1098594).
