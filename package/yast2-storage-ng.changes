@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Mon Jul 23 13:55:03 UTC 2018 - snwint@suse.com
+
+- document XEN guest setup for testing (bsc#1085134)
+- 4.0.199
+
+-------------------------------------------------------------------
 Wed Jul 18 19:00:11 UTC 2018 - ancor@suse.com
 
 - Partitioner: when creating a partition, use only regions of
