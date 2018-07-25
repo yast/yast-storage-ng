@@ -31,8 +31,8 @@ module Y2Partitioner
 
         device:           N_("<b>Device</b> shows the kernel name of the\ndevice."),
 
-        disk_label:       N_("<b>Disk Label</b> shows the partition table\ntype of the disk, " \
-              "e.g <tt>MSDOS</tt> or <tt>GPT</tt>."),
+        disk_label:       N_("<b>Partition Table</b> shows the partition table\ntype of the disk, " \
+              "e.g <tt>MS-DOS</tt> or <tt>GPT</tt>."),
 
         encrypted:        N_("<b>Encrypted</b> shows whether the device is\nencrypted."),
 

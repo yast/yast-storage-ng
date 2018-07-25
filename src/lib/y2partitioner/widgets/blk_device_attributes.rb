@@ -150,7 +150,7 @@ module Y2Partitioner
 
         # TRANSLATORS: partition table type information, where %s is replaced by
         # a partition table type (e.g., GPT, MS-DOS)
-        format(_("Disk Label: %s"), label)
+        format(_("Partition Table: %s"), label)
       end
 
       # Information about the filesystem type
