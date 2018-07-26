@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Thu Jul 26 11:16:27 UTC 2018 - snwint@suse.com
+
+- make bsc#1098594 regression test work on s390
+- 4.0.200
+
+-------------------------------------------------------------------
 Mon Jul 23 13:55:03 UTC 2018 - snwint@suse.com
 
 - document XEN guest setup for testing (bsc#1085134)
