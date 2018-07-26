@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Wed Jul 25 21:41:48 CEST 2018 - aschnell@suse.com
+
+- use "Partition Table" instead of "Disk Label" in expert
+  partitioner (bsc#1070570)
+- 4.1.0
+
+-------------------------------------------------------------------
 Mon Jul 23 13:55:03 UTC 2018 - snwint@suse.com
 
 - document XEN guest setup for testing (bsc#1085134)
