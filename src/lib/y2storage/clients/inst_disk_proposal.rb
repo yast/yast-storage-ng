@@ -60,6 +60,7 @@ module Y2Storage
 
       def run
         log.info("BEGIN of inst_disk_proposal")
+        @manual_changed = false
 
         until [:back, :next, :abort].include?(@result)
           dialog = Dialogs::Proposal.new(@proposal, @devicegraph, excluded_buttons: excluded_buttons)
@@ -71,11 +72,13 @@ module Y2Storage
           when :next
             save_to_storage_manager
           when :guided
-            guided_setup
+            guided_setup if overwrite_manual_settings?
           when :expert_from_proposal
             expert_partitioner(@devicegraph)
+            @manual_changed = true if @result != :abort
           when :expert_from_probed
             expert_partitioner(storage_manager.probed)
+            @manual_changed = true if @result != :abort
           end
         end
 
@@ -87,6 +90,18 @@ module Y2Storage
 
       # @return [Integer]
       attr_reader :initial_staging_revision
+
+      # The user has changed partition settings.
+      # Asking if these changes can be overwritten.
+      def overwrite_manual_settings?
+        return true unless @manual_changed
+        ret = Popup.YesNo(_(
+          "Computing this proposal will overwrite manual changes \ndone so far. Continue with computing proposal?"
+                                 ))
+        log.info "overwrite_manual_settings? return #{ret}"
+        @manual_changed = false if ret # reset for next change
+        ret
+      end
 
       def save_to_storage_manager
         if @proposal
