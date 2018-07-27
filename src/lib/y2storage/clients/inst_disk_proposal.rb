@@ -96,8 +96,8 @@ module Y2Storage
       def overwrite_manual_settings?
         return true unless @manual_changed
         ret = Popup.YesNo(_(
-          "Computing this proposal will overwrite manual changes \ndone so far. Continue with computing proposal?"
-                                 ))
+                            "Computing this proposal will overwrite manual changes \ndone so far. Continue with computing proposal?"
+        ))
         log.info "overwrite_manual_settings? return #{ret}"
         @manual_changed = false if ret # reset for next change
         ret
