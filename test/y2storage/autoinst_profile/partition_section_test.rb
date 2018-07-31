@@ -131,7 +131,8 @@ describe Y2Storage::AutoinstProfile::PartitionSection do
           numeric?:   numeric?,
           number:     0,
           encrypted?: false,
-          filesystem: filesystem
+          filesystem: filesystem,
+          lvm_pv:     lvm_pv
         )
       end
 
@@ -147,6 +148,7 @@ describe Y2Storage::AutoinstProfile::PartitionSection do
       end
 
       let(:numeric?) { true }
+      let(:lvm_pv) { nil }
 
       before do
         allow(md).to receive(:is?) { |t| t == :md }
@@ -175,6 +177,30 @@ describe Y2Storage::AutoinstProfile::PartitionSection do
         it "does not initialize #partition_nr" do
           section = described_class.new_from_storage(md)
           expect(section.partition_nr).to be_nil
+        end
+      end
+
+      context "when it is used as an LVM physical volume" do
+        let(:lvm_vg) { instance_double(Y2Storage::LvmVg, basename: "vg0") }
+        let(:lvm_pv) do
+          instance_double(
+            Y2Storage::LvmPv,
+            lvm_vg: lvm_vg
+          )
+        end
+
+        it "initializes #lvm_group" do
+          section = described_class.new_from_storage(md)
+          expect(section.lvm_group).to eq("vg0")
+        end
+
+        context "but it does not belong to any volume group" do
+          let(:lvm_vg) { nil }
+
+          it "does not initialize #lvm_group" do
+            section = described_class.new_from_storage(md)
+            expect(section.lvm_group).to be_nil
+          end
         end
       end
     end
