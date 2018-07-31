@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Thu Jul 26 11:16:27 UTC 2018 - snwint@suse.com
+
+- make bsc#1098594 regression test work on s390
+- 4.1.1
+
+-------------------------------------------------------------------
 Wed Jul 25 21:41:48 CEST 2018 - aschnell@suse.com
 
 - use "Partition Table" instead of "Disk Label" in expert

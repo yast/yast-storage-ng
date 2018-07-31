@@ -204,7 +204,10 @@ module Y2Storage
         return false if disk.partitions.empty?
 
         @type = :CT_DISK
+        # s390 prefers udev by-path device names (bsc#591603)
         @device = Yast::Arch.s390 ? disk.udev_full_paths.first : disk.name
+        # if disk.udev_full_paths.first is nil go for disk.name anyway
+        @device ||= disk.name
         @disklabel = disk.partition_table.type.to_s
 
         @partitions = partitions_from_disk(disk)
