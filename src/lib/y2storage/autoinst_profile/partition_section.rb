@@ -315,6 +315,7 @@ module Y2Storage
       def init_md_fields(md)
         @partition_nr = md.number if md.numeric?
         @raid_options = RaidOptionsSection.new_from_storage(md)
+        @lvm_group = md.lvm_pv.lvm_vg.basename if md.lvm_pv && md.lvm_pv.lvm_vg
       end
 
       def init_encryption_fields(partition)
