@@ -299,7 +299,7 @@ module Y2Storage
         @partition_nr = partition.number
         @partition_type = "primary" if partition.type.is?(:primary)
         @partition_id = partition_id_from(partition)
-        @lvm_group = partition.lvm_pv.lvm_vg.basename if partition.lvm_pv && partition.lvm_pv.lvm_vg
+        @lvm_group = lvm_group_name(partition)
         @raid_name = partition.md.name if partition.md
       end
 
@@ -315,6 +315,7 @@ module Y2Storage
       def init_md_fields(md)
         @partition_nr = md.number if md.numeric?
         @raid_options = RaidOptionsSection.new_from_storage(md)
+        @lvm_group = lvm_group_name(md)
       end
 
       def init_encryption_fields(partition)
@@ -408,6 +409,16 @@ module Y2Storage
       def subvolumes_from_hashes(hashes)
         subvolumes = SubvolSpecification.list_from_control_xml(hashes)
         subvolumes.reject { |s| s.path == "@" }
+      end
+
+      # Returns the volume group associated to a given device
+      #
+      # @param device [Y2Storage::Partition,Y2Storage::Md] Partition or MD RAID device.
+      # @return [String,nil] Volume group; nil if it is not used as a physical volume or does
+      #   not belong to any volume group.
+      def lvm_group_name(device)
+        return nil if device.lvm_pv.nil? || device.lvm_pv.lvm_vg.nil?
+        device.lvm_pv.lvm_vg.basename
       end
     end
   end
