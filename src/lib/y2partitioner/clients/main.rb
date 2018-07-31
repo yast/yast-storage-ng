@@ -51,8 +51,10 @@ module Y2Partitioner
           inhibitors = Y2Storage::Inhibitors.new
           inhibitors.inhibit
 
-          return nil if partitioner_dialog.run != :next
-          allow_commit ? commit : forbidden_commit_warning
+          catch :user_abort do
+            return nil if partitioner_dialog.run != :next
+            allow_commit ? commit : forbidden_commit_warning
+          end
         ensure
           inhibitors.uninhibit
         end
