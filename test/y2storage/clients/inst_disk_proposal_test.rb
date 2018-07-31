@@ -510,6 +510,10 @@ describe Y2Storage::Clients::InstDiskProposal do
         it "aborts" do
           expect(client.run).to eq :abort
         end
+        it "recognize that the user has NOT changed settings" do
+          client.run
+          expect(client.manual_changed).to eq(false)
+        end
       end
 
       context "if the expert partitioner returns :back" do
@@ -563,6 +567,15 @@ describe Y2Storage::Clients::InstDiskProposal do
             .with(nil, new_devicegraph, anything)
             .and_return(second_proposal_dialog)
           client.run
+        end
+        it "recognize that the user has changed settings" do
+          allow(Y2Storage::Dialogs::Proposal).to receive(:new).once
+            .and_return(proposal_dialog)
+          allow(Y2Storage::Dialogs::Proposal).to receive(:new).once
+            .with(nil, new_devicegraph, anything)
+            .and_return(second_proposal_dialog)
+          client.run
+          expect(client.manual_changed).to eq(true)
         end
       end
     end

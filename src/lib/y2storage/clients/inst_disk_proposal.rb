@@ -45,6 +45,8 @@ module Y2Storage
       include InstDialogMixin
       include PartitioningFeatures
 
+      attr_reader :manual_changed # Settings has been changed by user
+
       def initialize
         textdomain "storage"
 
