@@ -74,13 +74,11 @@ module Y2Storage
           when :next
             save_to_storage_manager
           when :guided
-            guided_setup if overwrite_manual_settings?
+            guided_setup
           when :expert_from_proposal
             expert_partitioner(@devicegraph)
-            @manual_changed = true if @result != :abort
           when :expert_from_probed
             expert_partitioner(storage_manager.probed)
-            @manual_changed = true if @result != :abort
           end
         end
 
@@ -98,7 +96,8 @@ module Y2Storage
       def overwrite_manual_settings?
         return true unless @manual_changed
         ret = Popup.YesNo(_(
-                            "Computing this proposal will overwrite manual changes \ndone so far. Continue with computing proposal?"
+                            "Computing this proposal will overwrite manual changes \n"\
+                            "done so far. Continue with computing proposal?"
         ))
         log.info "overwrite_manual_settings? return #{ret}"
         @manual_changed = false if ret # reset for next change
@@ -117,6 +116,7 @@ module Y2Storage
       end
 
       def guided_setup
+        return unless overwrite_manual_settings?
         settings = @proposal ? @proposal.settings : new_settings
         dialog = Dialogs::GuidedSetup.new(settings, probed_analyzer)
         case dialog.run
@@ -134,6 +134,7 @@ module Y2Storage
         dialog_result = without_title_on_left { dialog.run }
 
         actions_after_partitioner(dialog.device_graph, dialog_result)
+        @manual_changed = true if @result != :abort
       end
 
       # Actions to perform after running the Partitioner
