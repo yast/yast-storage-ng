@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Tue Jul 31 11:03:42 CEST 2018 - schubi@suse.de
+
+- Warning if overwriting manually edited settings (bsc#1055756)
+- 4.0.201
+
+-------------------------------------------------------------------
 Thu Jul 26 11:16:27 UTC 2018 - snwint@suse.com
 
 - make bsc#1098594 regression test work on s390
