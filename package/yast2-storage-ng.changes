@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Tue Jul 31 15:03:42 UTC 2018 - schubi@suse.de
+
+- Warning if overwriting manually edited settings (bsc#1055756)
+- 4.0.202
+
+-------------------------------------------------------------------
 Tue Jul 31 13:44:39 UTC 2018 - igonzalezsosa@suse.com
 
 - AutoYaST: export volume group name (lvm_group) when a MD RAID
