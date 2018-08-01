@@ -94,7 +94,7 @@ module Y2Storage
       # The user has changed partition settings.
       # Asking if these changes can be overwritten.
       def overwrite_manual_settings?
-        return true unless @manual_changed
+        return true unless manual_changed
         ret = Popup.YesNo(_(
                             "Computing this proposal will overwrite manual changes \n"\
                             "done so far. Continue with computing proposal?"
