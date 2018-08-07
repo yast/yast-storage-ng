@@ -69,7 +69,6 @@ module Y2Partitioner
             table,
             Left(
               HBox(
-                # TODO: Add move button ?
                 PartitionAddButton.new(pager: pager, table: table),
                 BlkDeviceEditButton.new(pager: pager, table: table),
                 PartitionMoveButton.new(pager: pager, table: table),
