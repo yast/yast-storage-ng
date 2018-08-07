@@ -810,7 +810,11 @@ describe Y2Storage::Devicegraph do
   end
 
   describe "#blk_devices" do
-    before { fake_scenario("complex-lvm-encrypt") }
+    before do
+      fake_scenario("complex-lvm-encrypt")
+      Y2Storage::StrayBlkDevice.create(fake_devicegraph, "/dev/xvda3")
+    end
+
     subject(:list) { fake_devicegraph.blk_devices }
 
     it "returns a sorted array of block devices" do
@@ -820,13 +824,38 @@ describe Y2Storage::Devicegraph do
     end
 
     it "finds all the devices" do
-      expect(list.size).to eq 24
+      expect(list.size).to eq 25
     end
 
     it "does not include other devices like volume groups" do
       expect(fake_devicegraph.lvm_vgs).to_not be_empty
       vg1 = fake_devicegraph.lvm_vgs.first
       expect(list).to_not include vg1
+    end
+  end
+
+  describe "#stray_blk_devices" do
+    before do
+      fake_scenario("mixed_disks")
+    end
+
+    subject(:devicegraph) { fake_devicegraph }
+
+    context "when there are virtual partitions" do
+      before do
+        Y2Storage::StrayBlkDevice.create(devicegraph, "/dev/xvda3")
+        Y2Storage::StrayBlkDevice.create(devicegraph, "/dev/xvda1")
+      end
+
+      it "returns all virtual partitions sorted by name" do
+        expect(devicegraph.stray_blk_devices.map(&:name)).to eq ["/dev/xvda1", "/dev/xvda3"]
+      end
+    end
+
+    context "when there are no virtual partitions" do
+      it "does not include any device" do
+        expect(devicegraph.stray_blk_devices).to be_empty
+      end
     end
   end
 
