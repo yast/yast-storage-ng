@@ -91,9 +91,9 @@ module Y2Partitioner
         #
         # @return [Array<Y2Storage::BlkDevice>]
         def devices
-          disks.reduce([]) do |devices, disk|
+          disks.each_with_object([]) do |disk, devices|
             devices << disk
-            devices.concat(disk.partitions)
+            devices.concat(disk.partitions) if disk.respond_to?(:partitions)
           end
         end
       end

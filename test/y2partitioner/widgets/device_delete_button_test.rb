@@ -137,6 +137,19 @@ describe Y2Partitioner::Widgets::DeviceDeleteButton do
           subject.handle
         end
       end
+
+      context "and the device is a stray device (Xen virtual partition)" do
+        let(:device_type) { :stray_blk_device }
+
+        it "shows a warning message" do
+          expect(Yast::Popup).to receive(:Warning)
+          subject.handle
+        end
+
+        it "returns nil" do
+          expect(subject.handle).to be(nil)
+        end
+      end
     end
   end
 end

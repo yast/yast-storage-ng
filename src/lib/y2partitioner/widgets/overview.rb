@@ -192,9 +192,12 @@ module Y2Partitioner
 
       # @return [CWM::PagerTreeItem]
       def disks_items
-        devices = device_graph.disk_devices
+        devices = device_graph.disk_devices + device_graph.stray_blk_devices
+
         page = Pages::Disks.new(devices, self)
-        children = devices.map { |d| disk_items(d) }
+        children = devices.map do |dev|
+          dev.is?(:stray_blk_device) ? stray_blk_device_item(dev) : disk_items(dev)
+        end
         CWM::PagerTreeItem.new(page, children: children, icon: Icons::HD)
       end
 
@@ -208,6 +211,12 @@ module Y2Partitioner
       # @return [CWM::PagerTreeItem]
       def partition_items(partition)
         page = Pages::Partition.new(partition)
+        CWM::PagerTreeItem.new(page)
+      end
+
+      # @return [CWM::PagerTreeItem]
+      def stray_blk_device_item(device)
+        page = Pages::StrayBlkDevice.new(device)
         CWM::PagerTreeItem.new(page)
       end
 

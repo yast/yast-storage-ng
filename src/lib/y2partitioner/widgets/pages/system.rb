@@ -140,9 +140,12 @@ module Y2Partitioner
 
         # @return [Array<Y2Storage::Device>]
         def disk_devices
-          device_graph.disk_devices.reduce([]) do |devices, disk|
+          # Since XEN virtual partitions are listed at the end of the "Hard
+          # Disks" section, let's do the same in the general storage table
+          all = device_graph.disk_devices + device_graph.stray_blk_devices
+          all.each_with_object([]) do |disk, devices|
             devices << disk
-            devices.concat(disk.partitions)
+            devices.concat(disk.partitions) if disk.respond_to?(:partitions)
           end
         end
 
