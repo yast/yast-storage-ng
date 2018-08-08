@@ -114,6 +114,15 @@ module Y2Partitioner
         end
       end
 
+      def skippable?
+        case type_choice.items.size
+        when 0, 1
+          true
+        else
+          false
+        end
+      end
+
     private
 
       def type_choice

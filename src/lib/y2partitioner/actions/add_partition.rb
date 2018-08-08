@@ -70,6 +70,8 @@ module Y2Partitioner
       def init_transaction
         # The controller object must be created within the transaction
         @part_controller = Controllers::Partition.new(device.name)
+
+        skip_skippables
       end
 
       # @see TransactionWizard
@@ -174,6 +176,10 @@ module Y2Partitioner
             name: disk_name
           )
         )
+      end
+
+      def skip_skippables
+         self.class.skip_stack(:type) if Dialogs::PartitionType.new(part_controller).skippable?
       end
     end
   end
