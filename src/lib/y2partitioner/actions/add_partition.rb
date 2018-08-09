@@ -71,7 +71,7 @@ module Y2Partitioner
         # The controller object must be created within the transaction
         @part_controller = Controllers::Partition.new(device.name)
 
-        skip_skippables
+        skip_dialogs
       end
 
       # @see TransactionWizard
@@ -178,8 +178,9 @@ module Y2Partitioner
         )
       end
 
-      def skip_skippables
-         self.class.skip_stack(:type) if Dialogs::PartitionType.new(part_controller).skippable?
+      # Add to the skip stack dialogs that can be skipped when going back
+      def skip_dialogs
+        self.class.skip_stack(:type) if Dialogs::PartitionType.new(part_controller).skippable?
       end
     end
   end

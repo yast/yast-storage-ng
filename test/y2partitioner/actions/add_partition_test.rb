@@ -50,10 +50,16 @@ describe Y2Partitioner::Actions::AddPartition do
 
     let(:disk_name) { "/dev/sda" }
 
+    before do
+      allow_any_instance_of(Y2Partitioner::Dialogs::PartitionType)
+        .to receive(:skippable?).and_return(true)
+    end
+
     # Regression test
     it "uses the device belonging to the current devicegraph" do
       # Only to finish
       allow(subject).to receive(:run?).and_return(false)
+      allow(subject).to receive(:skip_dialogs)
 
       initial_graph = current_graph
 
@@ -249,6 +255,28 @@ describe Y2Partitioner::Actions::AddPartition do
         action.run
         partitions_after = Y2Storage::Disk.find_by_name(current_graph, disk_name).partitions
         expect(partitions_after).to eq(partitions_before)
+      end
+    end
+
+    context "if some dialog is skipped and then the user goes back" do
+      let(:scenario) { "empty_hard_disk_50GiB.yml" }
+
+      let(:disk_name) { "/dev/sda" }
+
+      before do
+        allow(Y2Partitioner::Dialogs::PartitionType).to receive(:run).and_return(:next)
+        allow(Y2Partitioner::Dialogs::PartitionSize).to receive(:run).and_return(:back)
+        allow_any_instance_of(Y2Partitioner::Dialogs::PartitionType)
+          .to receive(:skippable?).and_return(true)
+      end
+
+      it "does not run again skipped dialogs" do
+        expect(Y2Partitioner::Dialogs::PartitionType).to receive(:run).once.and_return(:next)
+        action.run
+      end
+
+      it "returns :back" do
+        expect(action.run).to eq :back
       end
     end
   end
