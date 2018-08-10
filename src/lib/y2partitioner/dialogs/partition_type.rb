@@ -36,7 +36,7 @@ module Y2Partitioner
         def initialize(controller)
           textdomain "storage"
           @controller = controller
-          @slots = controller.unused_optimal_slots
+          @available_types = controller.available_partition_types.map(&:to_s)
         end
 
         # @macro seeAbstractWidget
@@ -51,10 +51,6 @@ module Y2Partitioner
         end
 
         def items
-          available_types = Y2Storage::PartitionType.all.map do |ty|
-            [ty.to_s, !@slots.find { |s| s.possible?(ty) }.nil?]
-          end.to_h
-
           [
             # radio button text
             ["primary", _("&Primary Partition")],
@@ -62,7 +58,7 @@ module Y2Partitioner
             ["extended", _("&Extended Partition")],
             # radio button text
             ["logical", _("&Logical Partition")]
-          ].find_all { |t, _l| available_types[t] }
+          ].select { |t, _l| @available_types.include?(t) }
         end
 
         # @macro seeAbstractWidget
@@ -73,8 +69,7 @@ module Y2Partitioner
         # @macro seeAbstractWidget
         def init
           # Pick the first one available
-          default_pt = Y2Storage::PartitionType.new(items.first.first)
-          self.value = (@controller.type ||= default_pt).to_s
+          self.value = (@controller.type || @available_types.first).to_s
         end
 
         # @macro seeAbstractWidget
@@ -99,28 +94,6 @@ module Y2Partitioner
       # @macro seeDialog
       def contents
         HVSquash(type_choice)
-      end
-
-      # Overwrite run. If there is only one type of partition, just select it
-      def run
-        case type_choice.items.size
-        when 0
-          raise "No partition type possible"
-        when 1
-          @controller.type = Y2Storage::PartitionType.new(type_choice.items.first.first)
-          :next
-        else
-          super
-        end
-      end
-
-      def skippable?
-        case type_choice.items.size
-        when 0, 1
-          true
-        else
-          false
-        end
       end
 
     private

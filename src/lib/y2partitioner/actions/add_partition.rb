@@ -46,7 +46,17 @@ module Y2Partitioner
       end
 
       def type
-        Dialogs::PartitionType.run(part_controller)
+        case available_types.size
+        when 0
+          raise "No partition type possible"
+        when 1
+          part_controller.type = available_types.first
+          :next
+        else
+          # Only run the dialog if more than one partition type is available
+          # (bsc#1075443)
+          Dialogs::PartitionType.run(part_controller)
+        end
       end
 
       def size
@@ -71,7 +81,9 @@ module Y2Partitioner
         # The controller object must be created within the transaction
         @part_controller = Controllers::Partition.new(device.name)
 
-        skip_dialogs
+        # Once the controller is created we know which steps can be skipped
+        # when going back
+        skip_steps
       end
 
       # @see TransactionWizard
@@ -83,8 +95,6 @@ module Y2Partitioner
           "size"              => { next: new_blk_device_step1, finish: :finish }
         }.merge(new_blk_device_steps)
       end
-
-      skip_stack :delete_filesystem
 
       def disk_name
         part_controller.disk_name
@@ -178,9 +188,18 @@ module Y2Partitioner
         )
       end
 
-      # Add to the skip stack dialogs that can be skipped when going back
-      def skip_dialogs
-        self.class.skip_stack(:type) if Dialogs::PartitionType.new(part_controller).skippable?
+      # Convenience method for returning the device available partition types
+      #
+      # @return [Array<Y2Storage::PartitionType>]
+      def available_types
+        part_controller.available_partition_types
+      end
+
+      # Convenience method for setting the steps that have to be skipped when
+      # going back
+      def skip_steps
+        self.class.skip_stack :delete_filesystem
+        self.class.skip_stack :type if available_types.size < 2
       end
     end
   end
