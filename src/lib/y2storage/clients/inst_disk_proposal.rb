@@ -45,8 +45,6 @@ module Y2Storage
       include InstDialogMixin
       include PartitioningFeatures
 
-      attr_reader :manual_changed # Settings has been changed by user
-
       def initialize
         textdomain "storage"
 
@@ -62,7 +60,6 @@ module Y2Storage
 
       def run
         log.info("BEGIN of inst_disk_proposal")
-        @manual_changed = false
 
         until [:back, :next, :abort].include?(@result)
           dialog = Dialogs::Proposal.new(@proposal, @devicegraph, excluded_buttons: excluded_buttons)
@@ -91,16 +88,14 @@ module Y2Storage
       # @return [Integer]
       attr_reader :initial_staging_revision
 
-      # The user has changed partition settings.
+      # The user has changed partition settings using the Expert Partitioner.
       # Asking if these changes can be overwritten.
       def overwrite_manual_settings?
-        return true unless manual_changed
         ret = Popup.YesNo(_(
                             "Computing this proposal will overwrite manual changes \n"\
                             "done so far. Continue with computing proposal?"
         ))
         log.info "overwrite_manual_settings? return #{ret}"
-        @manual_changed = false if ret # reset for next change
         ret
       end
 
@@ -116,7 +111,8 @@ module Y2Storage
       end
 
       def guided_setup
-        return unless overwrite_manual_settings?
+        return if manual_partitioning? && !overwrite_manual_settings?
+
         settings = @proposal ? @proposal.settings : new_settings
         dialog = Dialogs::GuidedSetup.new(settings, probed_analyzer)
         case dialog.run
@@ -134,7 +130,6 @@ module Y2Storage
         dialog_result = without_title_on_left { dialog.run }
 
         actions_after_partitioner(dialog.device_graph, dialog_result)
-        @manual_changed = true if @result != :abort
       end
 
       # Actions to perform after running the Partitioner
@@ -265,6 +260,13 @@ module Y2Storage
         )
 
         Yast2::Popup.show(message, headline: :warning, buttons: :continue_cancel, focus: :cancel)
+      end
+
+      # Whether the current devicegraph was configured using the Expert Partitioner
+      #
+      # @return [Boolean] false if staging was calculated using a proposal
+      def manual_partitioning?
+        @proposal.nil?
       end
     end
   end
