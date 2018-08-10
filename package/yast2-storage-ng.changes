@@ -1,4 +1,18 @@
 -------------------------------------------------------------------
+Fri Aug 10 11:56:40 UTC 2018 - ancor@suse.com
+
+- Fixed the warning about overwriting a manually edited partition
+  layout. Now it works even after going back and forth in the
+  installer steps (bsc#1055756).
+- 4.1.4
+
+-------------------------------------------------------------------
+Thu Aug  9 15:43:17 UTC 2018 - ancor@suse.com
+
+- Partitioner: display Xen virtual partitions and allow to format
+  and mount them (bsc#1085134).
+
+-------------------------------------------------------------------
 Tue Jul 31 15:03:42 UTC 2018 - schubi@suse.de
 
 - Warning if overwriting manually edited settings (bsc#1055756)

@@ -176,6 +176,14 @@ module Y2Storage
       Disk.sorted_by_name(self)
     end
 
+    # All the stray block devices (basically XEN virtual partitions) in the
+    # devicegraph, sorted by name
+    #
+    # @return [Array<StrayBlkDevice>]
+    def stray_blk_devices
+      StrayBlkDevice.sorted_by_name(self)
+    end
+
     # All the multipath devices in the devicegraph, sorted by name
     #
     # @return [Array<Multipath>]

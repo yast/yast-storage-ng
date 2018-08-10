@@ -92,6 +92,28 @@ describe Y2Partitioner::Actions::AddPartition do
       end
     end
 
+    context "if called for a StrayBlkDevice (Xen virtual partition)" do
+      let(:scenario) { "xen-partitions.xml" }
+
+      let(:disk) { Y2Storage::BlkDevice.find_by_name(current_graph, "/dev/xvda1") }
+
+      it "shows an error popup" do
+        expect(Yast::Popup).to receive(:Error)
+        action.run
+      end
+
+      it "quits returning :back" do
+        expect(action.run).to eq(:back)
+      end
+
+      it "does not create any partition" do
+        partitions_before = current_graph.partitions
+        action.run
+        partitions_after = current_graph.partitions
+        expect(partitions_after).to eq(partitions_before)
+      end
+    end
+
     context "if the disk is in use" do
       let(:scenario) { "empty_hard_disk_50GiB.yml" }
 
