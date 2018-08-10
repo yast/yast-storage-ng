@@ -26,13 +26,10 @@ require "cwm/rspec"
 require "y2partitioner/widgets/pages"
 
 describe Y2Partitioner::Widgets::Pages::Disks do
-  before do
-    devicegraph_stub("mixed_disks_btrfs.yml")
-  end
+  before { devicegraph_stub(scenario) }
+  let(:scenario) { "mixed_disks_btrfs.yml" }
 
   let(:device_graph) { Y2Partitioner::DeviceGraphs.instance.current }
-
-  let(:devices) { (device_graph.disks + device_graph.disks.map(&:partitions)).flatten.compact }
 
   subject { described_class.new(disks, pager) }
 
@@ -44,16 +41,33 @@ describe Y2Partitioner::Widgets::Pages::Disks do
 
   describe "#contents" do
     let(:widgets) { Yast::CWM.widgets_in_contents([subject]) }
+    let(:table) { widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::BlkDevicesTable) } }
+    let(:disks_and_parts) do
+      (device_graph.disks + device_graph.disks.map(&:partitions)).flatten.compact
+    end
 
     it "shows a table with the disk devices and their partitions" do
-      table = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::BlkDevicesTable) }
-
       expect(table).to_not be_nil
 
-      devices_name = devices.map(&:name)
+      devices_name = disks_and_parts.map(&:name)
       items_name = table.items.map { |i| i[1] }
 
       expect(items_name.sort).to eq(devices_name.sort)
+    end
+
+    # This test is here to ensure we don't try to access the partitions within a
+    # StrayBlkDevice or something similar
+    context "when some of the devices to show are Xen virtual partitions" do
+      let(:scenario) { "xen-disks-and-partitions.xml" }
+      let(:disks) { device_graph.disks + device_graph.stray_blk_devices }
+
+      it "shows a table with the disk devices, their partitions and the Xen virtual partitions" do
+        devices = disks_and_parts + device_graph.stray_blk_devices
+        devices_name = devices.map(&:name)
+        items_name = table.items.map { |i| i[1] }
+
+        expect(items_name.sort).to eq(devices_name.sort)
+      end
     end
 
     it "shows a partition add button" do

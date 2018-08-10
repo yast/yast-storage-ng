@@ -16,7 +16,7 @@
 #
 
 Name:		yast2-storage-ng
-Version:	4.1.3
+Version:	4.1.4
 Release:	0
 
 BuildRoot:	%{_tmppath}/%{name}-%{version}-build
@@ -26,8 +26,8 @@ Source:		%{name}-%{version}.tar.bz2
 Requires:	yast2 >= 4.0.73
 # for AbortException and handle direct abort
 Requires:	yast2-ruby-bindings >= 4.0.6
-# BlkDevice#active?
-Requires:	libstorage-ng-ruby >= 3.3.310
+# Storage::StrayBlkDevice (in the SLE15-SP1 branch)
+Requires:	libstorage-ng-ruby >= 4.1.5
 # communicate with udisks
 Requires:	rubygem(ruby-dbus)
 # Y2Packager::Repository
@@ -36,8 +36,8 @@ Requires:	yast2-packager >= 3.3.7
 Requires:	findutils
 
 BuildRequires:	update-desktop-files
-# BlkDevice#active?
-BuildRequires:	libstorage-ng-ruby >= 3.3.310
+# Storage::StrayBlkDevice (in the SLE15-SP1 branch)
+BuildRequires:	libstorage-ng-ruby >= 4.1.5
 BuildRequires:	yast2-ruby-bindings
 BuildRequires:	yast2-devtools
 # yast2-xml dependency is added by yast2 but ignored in the

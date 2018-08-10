@@ -219,6 +219,19 @@ describe Y2Storage::DiskAnalyzer do
       end
     end
 
+    context "when there are some stray block devices (Xen virtual partitions)" do
+      let(:scenario) { "xen-disks-and-partitions.xml" }
+
+      it "includes the Xen devices representing disks" do
+        expect(candidate_disks).to include("/dev/xvdc")
+      end
+
+      it "does not include the Xen devices representing partitions" do
+        expect(candidate_disks).to_not include("/dev/xvda1")
+        expect(candidate_disks).to_not include("/dev/xvda2")
+      end
+    end
+
     context "when a disk device is directly formatted" do
       before do
         format_device(sdb)

@@ -94,7 +94,21 @@ module Y2Partitioner
       #
       # @return [Boolean]
       def run?
-        not_used_validation && not_formatted_validation && available_space_validation
+        partitionable_validation && not_used_validation &&
+          not_formatted_validation && available_space_validation
+      end
+
+      # Checks whether the device can contain partitions, which is not true
+      # for StrayBlkDevice objects (they are listed as disks but they are not).
+      #
+      # @return [Boolean] true if device can be partitioned, false otherwise
+      def partitionable_validation
+        if part_controller.disk.respond_to?(:partitions)
+          true
+        else
+          impossible_partition_popup
+          false
+        end
       end
 
       # Checks whether the device is not used
@@ -146,6 +160,13 @@ module Y2Partitioner
         return true if part_controller.disk_formatted?
         return true if part_controller.new_partition_possible?
 
+        impossible_partition_popup
+        false
+      end
+
+      # Displays a popup telling the user it's not possible to create a
+      # partition
+      def impossible_partition_popup
         Yast::Popup.Error(
           format(
             # TRANSLATORS: %{name} is a device name (e.g. "/dev/sda")
@@ -153,8 +174,6 @@ module Y2Partitioner
             name: disk_name
           )
         )
-
-        false
       end
     end
   end

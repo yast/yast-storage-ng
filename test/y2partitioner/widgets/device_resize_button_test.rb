@@ -204,10 +204,25 @@ describe Y2Partitioner::Widgets::DeviceResizeButton do
         end
       end
 
-      context "and resize action is not supported for the device" do
+      context "and resize action is not supported for the device (disk)" do
         let(:scenario) { "mixed_disks.yml" }
 
         let(:device_name) { "/dev/sda" }
+
+        it "shows an error popup" do
+          expect(Yast::Popup).to receive(:Error)
+          subject.handle
+        end
+
+        it "returns nil" do
+          expect(subject.handle).to be_nil
+        end
+      end
+
+      context "and resize action is not supported for the device (Xen virtual partition)" do
+        let(:scenario) { "xen-partitions.xml" }
+
+        let(:device_name) { "/dev/xvda2" }
 
         it "shows an error popup" do
           expect(Yast::Popup).to receive(:Error)
