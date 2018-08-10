@@ -28,6 +28,7 @@ describe Y2Storage::Clients::InstDiskProposal do
 
   describe "#run" do
     let(:proposal_dialog) { double("Y2Storage::Dialogs::Proposal") }
+    let(:guided_dialog) { double("Y2Storage::Dialogs::GuidedSetup") }
     let(:storage_manager) { Y2Storage::StorageManager.instance }
 
     before do
@@ -253,6 +254,70 @@ describe Y2Storage::Clients::InstDiskProposal do
       end
     end
 
+    describe "if the guided setup button is pressed in the proposal dialog" do
+      before do
+        allow(Y2Storage::Dialogs::Proposal).to receive(:new).and_return(proposal_dialog)
+        # First try to open the guided setup, then force quit to end the test
+        allow(proposal_dialog).to receive(:run).and_return(:guided, :abort)
+
+        allow(initial_proposal).to receive(:settings).and_return proposal_settings
+      end
+
+      let(:proposal_settings) { double("Y2Storage::ProposalSettings") }
+
+      context "when the staging devicegraph has been manually set" do
+        before { allow(proposal_dialog).to receive(:proposal).and_return nil }
+
+        it "ask the user for confirmation" do
+          expect(Yast::Popup).to receive(:YesNo)
+          client.run
+        end
+
+        context "and the user confirms to continue" do
+          before { allow(Yast::Popup).to receive(:YesNo).and_return true }
+
+          it "opens the guided setup dialog" do
+            expect(Y2Storage::Dialogs::GuidedSetup).to receive(:new).and_return(guided_dialog)
+            expect(guided_dialog).to receive(:run)
+
+            client.run
+          end
+        end
+
+        context "and the user denies the confirmation" do
+          before { allow(Yast::Popup).to receive(:YesNo).and_return false }
+
+          it "does not open the guided setup dialog" do
+            expect(Y2Storage::Dialogs::GuidedSetup).to_not receive(:new)
+
+            client.run
+          end
+        end
+      end
+
+      context "when the staging devicegraph has been set by a proposal" do
+        before do
+          allow(proposal_dialog).to receive(:proposal).and_return initial_proposal
+
+          allow(Y2Storage::Dialogs::GuidedSetup).to receive(:new).and_return(guided_dialog)
+        end
+
+        it "does not ask the user for confirmation" do
+          allow(guided_dialog).to receive(:run)
+
+          expect(Yast::Popup).to_not receive(:YesNo)
+          client.run
+        end
+
+        it "opens the guided setup dialog" do
+          expect(Y2Storage::Dialogs::GuidedSetup).to receive(:new)
+          expect(guided_dialog).to receive(:run)
+
+          client.run
+        end
+      end
+    end
+
     describe "calling the expert partitioner" do
       let(:partitioner) { double("Y2Partitioner::Dialogs::Main") }
 
@@ -418,7 +483,6 @@ describe Y2Storage::Clients::InstDiskProposal do
     end
 
     context "processing the guided setup result" do
-      let(:guided_dialog) { double("Y2Storage::Dialogs::GuidedSetup") }
       let(:devicegraph) { double("Y2Storage::Devicegraph") }
       let(:settings) { double("Storage::ProposalSettings") }
       let(:proposal) { double("Y2Storage::GuidedProposal", devices: devicegraph, settings: settings) }
@@ -429,6 +493,9 @@ describe Y2Storage::Clients::InstDiskProposal do
         allow(Y2Storage::Dialogs::GuidedSetup).to receive(:new).and_return(guided_dialog)
         # Just to quit
         allow(second_proposal_dialog).to receive(:run).and_return :abort
+
+        # Just to make sure the popup about overwriting a manual setup is not raised
+        allow(proposal_dialog).to receive(:proposal).and_return(proposal)
       end
 
       context "if the guided setup returns :abort" do
@@ -444,7 +511,6 @@ describe Y2Storage::Clients::InstDiskProposal do
 
       context "if the guided setup returns :back" do
         before do
-          allow(proposal_dialog).to receive(:proposal).and_return(proposal)
           allow(proposal_dialog).to receive(:devicegraph).and_return(devicegraph)
           allow(guided_dialog).to receive(:run).and_return :back
         end
@@ -510,10 +576,6 @@ describe Y2Storage::Clients::InstDiskProposal do
         it "aborts" do
           expect(client.run).to eq :abort
         end
-        it "recognizes that the user has NOT changed settings" do
-          client.run
-          expect(client.manual_changed).to eq(false)
-        end
       end
 
       context "if the expert partitioner returns :back" do
@@ -567,15 +629,6 @@ describe Y2Storage::Clients::InstDiskProposal do
             .with(nil, new_devicegraph, anything)
             .and_return(second_proposal_dialog)
           client.run
-        end
-        it "recognizes that the user has changed settings" do
-          allow(Y2Storage::Dialogs::Proposal).to receive(:new).once
-            .and_return(proposal_dialog)
-          allow(Y2Storage::Dialogs::Proposal).to receive(:new).once
-            .with(nil, new_devicegraph, anything)
-            .and_return(second_proposal_dialog)
-          client.run
-          expect(client.manual_changed).to eq(true)
         end
       end
     end
