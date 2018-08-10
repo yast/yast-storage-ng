@@ -251,6 +251,7 @@ module Y2Partitioner
         lvm_pv:        N_("PV"),
         lvm_vg:        N_("LVM"),
         lvm_lv:        N_("LV"),
+        stray:         N_("Xen"),
         thin_pool:     N_("Thin Pool"),
         thin:          N_("Thin LV")
       }

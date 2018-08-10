@@ -52,11 +52,12 @@ module Y2Partitioner
         partition? || software_raid? ? super : go_to_disk_page
       end
 
-      # Whether the device is a partition
+      # Whether the device is a partition or an equivalent device (in terms of
+      # editing/formatting it).
       #
       # @return [Booelan]
       def partition?
-        device.is?(:partition)
+        device.is?(:partition) || device.is?(:stray_blk_device)
       end
 
       # Whether the device is a software raid

@@ -165,6 +165,28 @@ describe Y2Partitioner::Widgets::OverviewTreePager do
       end
     end
 
+    context "when there Xen devices representing disks and virtual partitions" do
+      let(:scenario) { "xen-disks-and-partitions.xml" }
+
+      it "disks pager has a page for each Xen disk" do
+        page = disks_pages.find { |p| p.device.name == "/dev/xvdc" }
+        expect(page).to_not be_nil
+      end
+
+      it "disks pager has a page for each Xen virtual partition" do
+        page = disks_pages.find { |p| p.device.name == "/dev/xvda1" }
+        expect(page).to_not be_nil
+
+        page = disks_pages.find { |p| p.device.name == "/dev/xvda2" }
+        expect(page).to_not be_nil
+      end
+
+      it "disks pager does not include an extra device to group Xen virtual partitions" do
+        page = disks_pages.find { |p| p.device.name == "/dev/xvda" }
+        expect(page).to be_nil
+      end
+    end
+
     context "when there are BIOS RAIDs" do
       let(:scenario) { "md-imsm1-devicegraph.xml" }
 
