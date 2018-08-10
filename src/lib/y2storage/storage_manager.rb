@@ -203,7 +203,7 @@ module Y2Storage
     def probed
       return @probed_graph if @probed_graph
 
-      probe unless probed?
+      probe || throw(:user_abort) unless probed?
       @probed_graph
     end
 
@@ -228,7 +228,7 @@ module Y2Storage
     # @return [Devicegraph]
     def staging
       @staging_graph ||= begin
-        probe unless probed?
+        probe || throw(:user_abort) unless probed?
         Devicegraph.new(storage.staging)
       end
     end
