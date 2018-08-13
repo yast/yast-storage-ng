@@ -71,6 +71,7 @@ module Y2Partitioner
             Left(
               HBox(
                 Image(icon, ""),
+                # TRANSLATORS: Heading. String followed by device name of hard disk
                 Heading(format(_("Hard Disk: %s"), disk.name))
               )
             ),

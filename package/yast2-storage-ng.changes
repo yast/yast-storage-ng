@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Mon Aug 13 14:44:32 UTC 2018 - ancor@suse.com
+
+- Partitioner: fixed some strings that contained mistakes about
+  format and/or internationalization.
+
+-------------------------------------------------------------------
 Fri Aug 10 11:56:40 UTC 2018 - ancor@suse.com
 
 - Fixed the warning about overwriting a manually edited partition

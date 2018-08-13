@@ -57,7 +57,9 @@ module Y2Partitioner
             Left(
               HBox(
                 Image(icon, ""),
-                Heading(device.name)
+                # TRANSLATORS: Heading for a generic storage device
+                # TRANSLATORS: String followed by name of the storage device
+                Heading(format(_("Device: %s"), device.name))
               )
             ),
             BlkDeviceDescription.new(device),
