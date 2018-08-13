@@ -64,7 +64,7 @@ module Y2Partitioner
               HBox(
                 Image(icon, ""),
                 # TRANSLATORS: Heading. String followed by name of partition
-                Heading(format(_("Partition: "), @partition.name))
+                Heading(format(_("Partition: %s"), @partition.name))
               )
             ),
             PartitionDescription.new(@partition),

@@ -62,8 +62,8 @@ module Y2Partitioner
             Left(
               HBox(
                 Image(icon, ""),
-                # TRANSLATORS: Heading. String followed by name of partition
-                Heading(_("Hard Disks "))
+                # TRANSLATORS: Heading
+                Heading(_("Hard Disks"))
               )
             ),
             table,
