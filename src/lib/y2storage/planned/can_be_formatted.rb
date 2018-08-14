@@ -177,7 +177,6 @@ module Y2Storage
         assign_mount_point(filesystem)
         return if filesystem.mount_point.nil?
 
-        filesystem.mount_point.mount_by = mount_by if mount_by
         setup_fstab_options(filesystem.mount_point)
       end
 
@@ -242,7 +241,10 @@ module Y2Storage
 
       # @param filesystem [Filesystems::Base]
       def assign_mount_point(filesystem)
-        filesystem.mount_path = mount_point if mount_point && !mount_point.empty?
+        if mount_point && !mount_point.empty?
+          filesystem.mount_path = mount_point
+          filesystem.mount_point.mount_by = mount_by if mount_by
+        end
       end
 
       # @param device [Planned::Device]
