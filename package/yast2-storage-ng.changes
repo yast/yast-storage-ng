@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Tue Aug 14 11:43:19 UTC 2018 - igonzalezsosa@suse.com
+
+- AutoYaST: set the 'mount by' option when reusing partitions
+  (bsc#1104774).
+- 4.0.205
+
+-------------------------------------------------------------------
 Fri Aug 10 11:56:40 UTC 2018 - ancor@suse.com
 
 - Fixed the warning about overwriting a manually edited partition
