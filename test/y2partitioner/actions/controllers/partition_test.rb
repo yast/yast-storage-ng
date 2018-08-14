@@ -283,4 +283,20 @@ describe Y2Partitioner::Actions::Controllers::Partition do
       end
     end
   end
+
+  describe "#available_partition_types" do
+    let(:scenario) { "spaces_5_3_extended.yml" }
+    let(:disk_name) { "/dev/sda" }
+
+    it "returns a list of Y2Storage::PartitionType" do
+      partition_types = subject.available_partition_types
+      expect(partition_types).to be_a(Array)
+      expect(partition_types).to be_all(Y2Storage::PartitionType)
+    end
+
+    it "returns the possible partition types for the unused optimally aligned slots" do
+      partition_types = subject.available_partition_types
+      expect(partition_types.first).to eq(Y2Storage::PartitionType::LOGICAL)
+    end
+  end
 end

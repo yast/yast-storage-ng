@@ -39,6 +39,7 @@ describe Y2Partitioner::Actions::AddPartition do
 
     allow(Yast::Wizard).to receive(:OpenNextBackDialog)
     allow(Yast::Wizard).to receive(:CloseDialog)
+    allow(subject).to receive(:skip_steps)
   end
 
   subject(:action) { described_class.new(disk) }
@@ -180,9 +181,11 @@ describe Y2Partitioner::Actions::AddPartition do
             .and_return(controller)
           # Only to finish
           allow(Y2Partitioner::Dialogs::PartitionType).to receive(:run).and_return(:abort)
+          allow(controller).to receive(:available_partition_types).and_return(available_types)
         end
 
         let(:controller) { Y2Partitioner::Actions::Controllers::Partition.new(disk_name) }
+        let(:available_types) { Y2Storage::PartitionType.all }
 
         it "removes the filesystem" do
           expect(controller).to receive(:delete_filesystem)
@@ -249,6 +252,65 @@ describe Y2Partitioner::Actions::AddPartition do
         action.run
         partitions_after = Y2Storage::Disk.find_by_name(current_graph, disk_name).partitions
         expect(partitions_after).to eq(partitions_before)
+      end
+    end
+
+    context "if some dialog is skipped and then the user goes back" do
+      let(:scenario) { "empty_hard_disk_50GiB.yml" }
+      let(:disk_name) { "/dev/sda" }
+      let(:available_types) { [Y2Storage::PartitionType.new("primary")] }
+      let(:controller) { Y2Partitioner::Actions::Controllers::Partition.new(disk_name) }
+
+      before do
+        allow(controller).to receive(:available_partition_types).and_return(available_types)
+        allow(subject).to receive(:type).and_return(:next)
+        allow(Y2Partitioner::Dialogs::PartitionSize).to receive(:run).and_return(:back)
+        allow(Y2Partitioner::Actions::Controllers::Partition).to receive(:new).with(disk_name)
+          .and_return(controller)
+        allow(subject).to receive(:skip_steps).and_call_original
+      end
+
+      it "does not run again skipped dialogs" do
+        expect(subject).to receive(:type).once.and_return(:next)
+        action.run
+      end
+
+      it "returns :back" do
+        expect(action.run).to eq :back
+      end
+    end
+  end
+
+  describe "#type" do
+    let(:scenario) { "empty_hard_disk_50GiB.yml" }
+    let(:disk_name) { "/dev/sda" }
+    let(:controller) { Y2Partitioner::Actions::Controllers::Partition.new(disk_name) }
+    let(:available_types) { Y2Storage::PartitionType.all }
+
+    before do
+      allow(controller).to receive(:available_partition_types).and_return(available_types)
+      subject.instance_variable_set(:@part_controller, controller)
+    end
+
+    context "when there is no partition types available" do
+      let(:available_types) { [] }
+      it "raises an error" do
+        expect { subject.type }.to raise_error("No partition type possible")
+      end
+    end
+
+    context "when there is only one partition type available" do
+      let(:available_types) { [Y2Storage::PartitionType.new("extended")] }
+      it "uses it as the type for the new partition" do
+        expect(controller).to receive(:type=).with(available_types.first)
+        subject.type
+      end
+    end
+
+    context "when there is more than one partition type available" do
+      it "runs the dialogs for choising the partition type" do
+        expect(Y2Partitioner::Dialogs::PartitionType).to receive(:run)
+        subject.type
       end
     end
   end

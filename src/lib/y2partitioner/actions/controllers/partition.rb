@@ -158,6 +158,16 @@ module Y2Partitioner
           unused_optimal_slots.any?(&:available?)
         end
 
+        # Available partition types for new partitions according to
+        # the available unused slots
+        #
+        # @return [Array<Y2Storage::PartitionType>]
+        def available_partition_types
+          Y2Storage::PartitionType.all.select do |partition_type|
+            unused_optimal_slots.any? { |s| s.possible?(partition_type) }
+          end
+        end
+
         # Title to display in the dialogs during the process
         # @return [String]
         def wizard_title

@@ -45,10 +45,11 @@ end
 describe Y2Partitioner::Dialogs::PartitionType::TypeChoice do
   let(:controller) do
     double(
-      "PartitionController", unused_slots: slots, unused_optimal_slots: slots, disk_name: "/dev/sda"
+      "PartitionController",
+      available_partition_types: Y2Storage::PartitionType.all,
+      disk_name:                 "/dev/sda"
     )
   end
-  let(:slots) { [double("Slot", :"possible?" => true)] }
 
   subject { described_class.new(controller) }
 
