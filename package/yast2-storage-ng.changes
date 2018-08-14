@@ -1,5 +1,5 @@
 -------------------------------------------------------------------
-Tue Aug 14 11:43:19 UTC 2018 - igonzalezsosa@suse.com
+Tue Aug 14 13:58:03 UTC 2018 - igonzalezsosa@suse.com
 
 - AutoYaST: set the 'mount by' option when reusing partitions
   (bsc#1104774).
