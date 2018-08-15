@@ -92,6 +92,10 @@ module Y2Storage
         }
       end
 
+      def failed?
+        @failed
+      end
+
     private
 
       attr_reader :failed
@@ -163,13 +167,22 @@ module Y2Storage
 
       def ensure_proposed
         if storage_manager.proposal.nil?
-          storage_manager.proposal = GuidedProposal.initial
+          guided_proposal
         elsif !storage_manager.proposal.proposed?
           storage_manager.proposal.propose
         end
       rescue Y2Storage::Error
         @failed = true
         log.error("generating proposal failed")
+      end
+
+      # Make a guided proposal.
+      # @raise [Y2Storage::Error] if proposal failed
+      def guided_proposal
+        proposal = GuidedProposal.initial
+        raise Y2Storage::Error, "Guided proposal failed" if proposal.failed?
+        @failed = false
+        storage_manager.proposal = proposal
       end
 
       def expert_partitioner
