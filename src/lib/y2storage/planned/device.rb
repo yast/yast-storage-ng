@@ -78,6 +78,11 @@ module Y2Storage
         other.class == self.class && other.internal_state == internal_state
       end
 
+      # Attributes to display in {#to_s}
+      #
+      # This method is expected to be redefined in the subclasses
+      #
+      # @return [Array<Symbol>]
       def self.to_string_attrs
         [:reuse_name, :reuse_sid]
       end
