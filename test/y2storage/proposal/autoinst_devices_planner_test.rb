@@ -131,6 +131,75 @@ describe Y2Storage::Proposal::AutoinstDevicesPlanner do
           expect(issue).to_not be_nil
         end
       end
+
+      context "when formating but not mounting a partition" do
+        let(:root_spec) do
+          { "create" => false, "format" => true, "filesystem" => fs, "partition_nr" => 3 }
+        end
+
+        context "if the file system type is specified" do
+          let(:fs) { "xfs" }
+
+          it "plans the specified filesystem type" do
+            devices = planner.planned_devices(drives_map)
+            planned = devices.find { |d| d.reuse_name == "/dev/sda3" }
+            expect(planned.reformat?).to eq true
+            expect(planned.filesystem_type).to eq Y2Storage::Filesystems::Type::XFS
+          end
+        end
+
+        context "if the file system type is not specified" do
+          let(:fs) { nil }
+
+          it "keeps the previous file system type of the partition" do
+            devices = planner.planned_devices(drives_map)
+            planned = devices.find { |d| d.reuse_name == "/dev/sda3" }
+            expect(planned.reformat?).to eq true
+            expect(planned.filesystem_type).to eq Y2Storage::Filesystems::Type::EXT4
+          end
+        end
+      end
+    end
+
+    context "when formatting but not mounting a Xen virtual partitions" do
+      let(:scenario) { "xen-partitions.xml" }
+
+      let(:partitioning_array) do
+        [{ "device" => "/dev/xvda", "use" => "all", "partitions" => part_section }]
+      end
+
+      context "if the file system type is specified" do
+        let(:part_section) { [{ "partition_nr" => 2, "format" => true, "filesystem" => "ext2" }] }
+
+        it "plans the specified filesystem type" do
+          devices = planner.planned_devices(drives_map)
+          planned = devices.find { |d| d.reuse_name == "/dev/xvda2" }
+          expect(planned.reformat?).to eq true
+          expect(planned.filesystem_type).to eq Y2Storage::Filesystems::Type::EXT2
+        end
+      end
+
+      context "if the file system type is not specified and there is a previous file system" do
+        let(:part_section) { [{ "partition_nr" => 2, "format" => true }] }
+
+        it "reuses the previous file system type" do
+          devices = planner.planned_devices(drives_map)
+          planned = devices.find { |d| d.reuse_name == "/dev/xvda2" }
+          expect(planned.reformat?).to eq true
+          expect(planned.filesystem_type).to eq Y2Storage::Filesystems::Type::XFS
+        end
+      end
+
+      context "if the file system type is not specified and there is no previous file system" do
+        let(:part_section) { [{ "partition_nr" => 1, "format" => true }] }
+
+        it "plans no filesystem type" do
+          devices = planner.planned_devices(drives_map)
+          planned = devices.find { |d| d.reuse_name == "/dev/xvda1" }
+          expect(planned.reformat?).to eq true
+          expect(planned.filesystem_type).to be_nil
+        end
+      end
     end
 
     context "specifying partition type" do
