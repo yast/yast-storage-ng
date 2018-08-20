@@ -130,7 +130,7 @@ module Y2Storage
       # @return [Array<Planned::StrayBlkDevice>] List of planned devicess
       def planned_for_stray_devices(drive)
         result = []
-        drive.partitions.each_with_index do |section|
+        drive.partitions.each do |section|
           name = drive.device + section.partition_nr.to_s
           stray = Y2Storage::Planned::StrayBlkDevice.new
           device_config(stray, section, drive)
