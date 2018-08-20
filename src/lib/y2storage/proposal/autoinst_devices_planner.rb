@@ -63,7 +63,13 @@ module Y2Storage
           case drive_section.type
           when :CT_DISK
             disk = BlkDevice.find_by_name(devicegraph, disk_name)
-            result.concat(planned_for_disk(disk, drive_section))
+            planned_devs =
+              if disk
+                planned_for_disk(disk, drive_section)
+              else
+                planned_for_stray_devices(drive_section)
+              end
+            result.concat(planned_devs)
           when :CT_LVM
             result << planned_for_vg(drive_section)
           when :CT_MD
@@ -110,6 +116,40 @@ module Y2Storage
           add_partition_reuse(partition, section) if section.create == false
 
           result << partition
+        end
+
+        result
+      end
+
+      # Returns an array of planned Xen partitions according to a <drive>
+      # section which groups virtual partitions with a similar name (e.g. a
+      # "/dev/xvda" section describing "/dev/xvda1" and "/dev/xvda2").
+      #
+      # @param drive [AutoinstProfile::DriveSection] drive section describing
+      #   a set of stray block devices (Xen virtual partitions)
+      # @return [Array<Planned::StrayBlkDevice>] List of planned devices
+      def planned_for_stray_devices(drive)
+        result = []
+        drive.partitions.each do |section|
+          # Since this drive section was included in the drives map, we can be
+          # sure that all partitions include a valid partition_nr
+          # (see {AutoinstDrivesMap#stray_devices_group?}).
+          name = drive.device + section.partition_nr.to_s
+          stray = Y2Storage::Planned::StrayBlkDevice.new
+          device_config(stray, section, drive)
+
+          # Just for symmetry respect partitions, try to infer the filesystem
+          # type if it's omitted in the profile for devices that are going to be
+          # re-formatted but not mounted, so there is no reasonable way to infer
+          # the appropiate filesystem type based on the mount path (bsc#1060637).
+          if stray.filesystem_type.nil?
+            device_to_use = devicegraph.stray_blk_devices.find { |d| d.name == name }
+            stray.filesystem_type = device_to_use.filesystem_type if device_to_use
+          end
+
+          add_device_reuse(stray, name, section)
+
+          result << stray
         end
 
         result
