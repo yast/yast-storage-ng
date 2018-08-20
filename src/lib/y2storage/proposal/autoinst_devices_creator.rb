@@ -22,8 +22,6 @@
 # find current contact information at www.suse.com.
 
 require "y2storage/proposal/partitions_distribution_calculator"
-# TODO: fix distribution calculator to don't require this
-require "y2storage/proposal/lvm_helper"
 require "y2storage/proposal/partition_creator"
 require "y2storage/proposal/md_creator"
 require "y2storage/proposal/autoinst_creator_result"
@@ -83,6 +81,9 @@ module Y2Storage
         parts_to_reuse, parts_to_create = planned_partitions.partition(&:reuse?)
         creator_result = create_partitions(parts_to_create, disk_names)
         reuse_devices(parts_to_reuse, creator_result.devicegraph)
+
+        # Process planned stray block devices (Xen virtual partitions)
+        process_stray_devs(planned_devices, creator_result.devicegraph)
 
         # Process planned MD arrays
         planned_mds = planned_devices.select { |d| d.is_a?(Planned::Md) }
@@ -223,6 +224,16 @@ module Y2Storage
           new_device.min_size = DiskSize.B(1)
           new_device
         end
+      end
+
+      # Formats and/or mounts the stray block devices (Xen virtual partitions)
+      #
+      # @param planned_devices [Array<Planned::Device>] all planned devices
+      # @param devicegraph [Devicegraph] devicegraph containing the Xen
+      #   partitions to be processed. It will be modified.
+      def process_stray_devs(planned_devices, devicegraph)
+        planned_stray_devs = planned_devices.select { |d| d.is_a?(Planned::StrayBlkDevice) }
+        planned_stray_devs.each { |d| d.reuse!(devicegraph) }
       end
     end
   end

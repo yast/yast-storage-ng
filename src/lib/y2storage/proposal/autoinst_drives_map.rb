@@ -137,12 +137,13 @@ module Y2Storage
         fixed_drives.each do |drive|
           disk = find_disk(devicegraph, drive.device)
 
-          if disk.nil?
+          if disk
+            @drives[disk.name] = drive
+          elsif stray_devices_group?(drive, devicegraph)
+            @drives[drive.device] = drive
+          else
             issues_list.add(:no_disk, drive)
-            next
           end
-
-          @drives[disk.name] = drive
         end
 
         flexible_drives.each do |drive|
@@ -186,6 +187,67 @@ module Y2Storage
         device = devicegraph.find_by_any_name(device_name)
         return nil unless device
         ([device] + device.ancestors).find { |d| d.is?(:disk_device) }
+      end
+
+      # Whether the given <drive> section represents a set of Xen virtual
+      # partitions
+      #
+      # FIXME: this is a very simplistic approach implemented as bugfix for
+      # bsc#1085134. A <drive> section is only considered to represent a set of
+      # virtual partitions if ALL its partitions contain an explicit
+      # partition_nr that matches with the name of a stray block device. If any
+      # of the <partition> subsections does not include partition_nr or does not
+      # match with an existing device, the whole drive is discarded.
+      #
+      # NOTE: in the future the AutoYaST profile will hopefully allow a more
+      # flexible usage of disks. Then Xen virtual partitions could be
+      # represented as disks in the profile (which matches reality way better),
+      # and there will be no need to improve this method much further.
+      #
+      # See below for an example of an AutoYaST profile for a system with
+      # the virtual partitions /dev/xvda1, /dev/xvda2 and /dev/xvdb1. That
+      # example includes two devices /dev/xvda and /dev/xvdb that really do
+      # not exist in the system.
+      #
+      # So this method checks if the given <drive> section contains a set of
+      # <partition> subsections that correspond to existing Xen virtual
+      # partitions (stray block devices) in the system.
+      #
+      # @example AutoYaST profile for Xen virtual partitions
+      #   <drive>
+      #     <device>/dev/xvda</device>
+      #     <partition>
+      #       <partition_nr>1</partition_nr>
+      #       ...information about /dev/xvda1...
+      #     </partition>
+      #     <partition>
+      #       <partition_nr>2</partition_nr>
+      #       ...information about /dev/xvda2...
+      #     </partition>
+      #   </drive>
+      #
+      #   <drive>
+      #     <device>/dev/xvdb</device>
+      #     <partition>
+      #       <partition_nr>1</partition_nr>
+      #       ...information about /dev/xvdb1...
+      #     </partition>
+      #   </drive>
+      #
+      # @param drive  [AutoinstProfile::DriveSection] AutoYaST drive specification
+      # @param devicegraph [Devicegraph] Devicegraph
+      # @return [Boolean] false if there are no partition sections or they do
+      #   not correspond to stray devices
+      def stray_devices_group?(drive, devicegraph)
+        return false if drive.partitions.empty?
+
+        devices = devicegraph.stray_blk_devices
+        drive.partitions.all? do |partition|
+          next false if partition.partition_nr.nil?
+
+          name = drive.device + partition.partition_nr.to_s
+          devices.any? { |dev| dev.name == name }
+        end
       end
     end
   end

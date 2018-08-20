@@ -20,6 +20,7 @@
 # find current contact information at www.suse.com.
 
 require "y2storage/planned/partition"
+require "y2storage/planned/stray_blk_device"
 require "y2storage/planned/lvm_lv"
 require "y2storage/planned/lvm_vg"
 require "y2storage/planned/md"
