@@ -192,6 +192,18 @@ module Y2Storage
       # Whether the given <drive> section represents a set of Xen virtual
       # partitions
       #
+      # FIXME: this is a very simplistic approach implemented as bugfix for
+      # bsc#1085134. A <drive> section is only considered to represent a set of
+      # virtual partitions if ALL its partitions contain an explicit
+      # partition_nr that matches with the name of a stray block device. If any
+      # of the <partition> subsections does not include partition_nr or does not
+      # match with an existing device, the whole drive is discarded.
+      #
+      # NOTE: in the future the AutoYaST profile will hopefully allow a more
+      # flexible usage of disks. Then Xen virtual partitions could be
+      # represented as disks in the profile (which matches reality way better),
+      # and there will be no need to improve this method much further.
+      #
       # See below for an example of an AutoYaST profile for a system with
       # the virtual partitions /dev/xvda1, /dev/xvda2 and /dev/xvdb1. That
       # example includes two devices /dev/xvda and /dev/xvdb that really do

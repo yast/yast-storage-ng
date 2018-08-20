@@ -127,10 +127,13 @@ module Y2Storage
       #
       # @param drive [AutoinstProfile::DriveSection] drive section describing
       #   a set of stray block devices (Xen virtual partitions)
-      # @return [Array<Planned::StrayBlkDevice>] List of planned devicess
+      # @return [Array<Planned::StrayBlkDevice>] List of planned devices
       def planned_for_stray_devices(drive)
         result = []
         drive.partitions.each do |section|
+          # Since this drive section was included in the drives map, we can be
+          # sure that all partitions include a valid partition_nr
+          # (see {AutoinstDrivesMap#stray_devices_group?}).
           name = drive.device + section.partition_nr.to_s
           stray = Y2Storage::Planned::StrayBlkDevice.new
           device_config(stray, section, drive)
