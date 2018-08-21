@@ -95,7 +95,7 @@ rake install DESTDIR="%{buildroot}"
 # agents-scr
 %{yast_scrconfdir}/*.scr
 
-%doc COPYING
+%license COPYING
 %doc README.md
 %doc CONTRIBUTING.md
 
