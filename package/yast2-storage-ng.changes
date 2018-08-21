@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Mon Aug 20 15:26:02 UTC 2018 - shundhammer@suse.com
+
+- Fixed crash in the Kubic proposal when insufficient disk space
+  (bsc#1099762)
+- 4.0.207
+
+-------------------------------------------------------------------
 Fri Aug 17 08:47:53 UTC 2018 - ancor@suse.com
 
 - AutoYaST: recognize Xen virtual partitions in the profile when
