@@ -60,7 +60,7 @@ PreReq:         %fillup_prereq
 Obsoletes:	yast2-storage
 
 Group:		System/YaST
-License:	GPL-2.0 or GPL-3.0
+License:	GPL-2.0-only or GPL-3.0-only
 Summary:	YaST2 - Storage Configuration
 
 %description
