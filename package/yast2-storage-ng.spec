@@ -77,6 +77,11 @@ rake test:unit
 %install
 rake install DESTDIR="%{buildroot}"
 
+# Remove the license from the /usr/share/doc/packages directory,
+# it is also included in the /usr/share/licenses directory by using
+# the %license tag.
+rm -f $RPM_BUILD_ROOT/%{yast_docdir}/COPYING
+
 %post
 %ifarch s390 s390x
 %{fillup_only -ans storage %{name}.s390}
@@ -95,7 +100,7 @@ rake install DESTDIR="%{buildroot}"
 # agents-scr
 %{yast_scrconfdir}/*.scr
 
-%doc COPYING
+%license COPYING
 %doc README.md
 %doc CONTRIBUTING.md
 
