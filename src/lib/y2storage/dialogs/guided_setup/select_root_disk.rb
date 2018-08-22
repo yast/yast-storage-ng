@@ -55,8 +55,7 @@ module Y2Storage
             VBox(
               root_selection_widget,
               VSpacing(1),
-              windows_action_widget,
-              VSpacing(1),
+              *(activate_windows_actions? ? [windows_action_widget, VSpacing(1)] : [Empty()]),
               linux_delete_mode_widget,
               VSpacing(1),
               other_delete_mode_widget
@@ -143,8 +142,7 @@ module Y2Storage
           widget = settings.root_device || :any_disk
           widget_update(widget, true)
 
-          widget_update(:windows_action, windows_action)
-          widget_update(:windows_action, activate_windows_actions?, attr: :Enabled)
+          widget_update(:windows_action, windows_action) if activate_windows_actions?
 
           widget_update(:linux_delete_mode, settings.linux_delete_mode)
           widget_update(:linux_delete_mode, activate_linux_delete_mode?, attr: :Enabled)
@@ -160,6 +158,12 @@ module Y2Storage
           settings.linux_delete_mode = widget_value(:linux_delete_mode)
           settings.other_delete_mode = widget_value(:other_delete_mode)
 
+          update_windows_settings if activate_windows_actions?
+        end
+
+      private
+
+        def update_windows_settings
           case widget_value(:windows_action)
           when :not_modify
             settings.resize_windows = false
@@ -175,8 +179,6 @@ module Y2Storage
             settings.windows_delete_mode = :all
           end
         end
-
-      private
 
         def candidate_disks
           return @candidate_disks if @candidate_disks

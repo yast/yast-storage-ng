@@ -67,7 +67,7 @@ describe Y2Storage::Dialogs::GuidedSetup::SelectRootDisk do
     let(:candidate_disks) { all_disks }
 
     before do
-      select_widget(:windows_action, :not_modify)
+      select_widget(:windows_action, :not_modify) unless windows_partitions.empty?
       select_widget(:linux_delete_mode, :all)
       select_widget(:other_delete_mode, :all)
     end
@@ -125,18 +125,102 @@ describe Y2Storage::Dialogs::GuidedSetup::SelectRootDisk do
     context "when no disk has a Windows system" do
       let(:windows_partitions) { [] }
 
-      it "disables windows actions" do
-        expect_disable(:windows_action)
-        subject.run
+      it "does not show the windows actions" do
+        widget = term_with_id(/windows_action/, subject.send(:dialog_content))
+        expect(widget).to be_nil
       end
     end
 
     context "when some disk has a Windows system" do
       let(:windows_partitions) { [partition_double("sda1")] }
 
-      it "enables windows actions" do
-        expect_enable(:windows_action)
-        subject.run
+      it "shows the windows actions" do
+        widget = term_with_id(/windows_action/, subject.send(:dialog_content))
+        expect(widget).to_not be_nil
+      end
+
+      context "when settings.windows_delete_mode is set to :all" do
+        let(:windows_partitions) { [partition_double("sda1")] }
+        before { settings.windows_delete_mode = :all }
+
+        it "sets the Windows action to :always_remove" do
+          expect_select(:windows_action, :always_remove)
+          subject.run
+        end
+      end
+
+      context "when settings.windows_delete_mode is set to :ondemand" do
+        let(:windows_partitions) { [partition_double("sda1")] }
+        before { settings.windows_delete_mode = :ondemand }
+
+        it "sets the Windows action to :remove" do
+          expect_select(:windows_action, :remove)
+          subject.run
+        end
+      end
+
+      context "when settings.windows_delete_mode is set to :none" do
+        let(:windows_partitions) { [partition_double("sda1")] }
+        before { settings.windows_delete_mode = :none }
+
+        context "and resizing is allowed" do
+          before { settings.resize_windows = true }
+
+          it "sets the Windows action to :resize" do
+            expect_select(:windows_action, :resize)
+            subject.run
+          end
+        end
+
+        context "and resizing is not allowed" do
+          before { settings.resize_windows = false }
+
+          it "sets the Windows action to :not_modify" do
+            expect_select(:windows_action, :not_modify)
+            subject.run
+          end
+        end
+      end
+
+      context "updating settings regarding Windows" do
+        context "if :not_modify is selected for Windows action" do
+          before { select_widget(:windows_action, :not_modify) }
+
+          it "updates the settings according" do
+            subject.run
+            expect(settings.windows_delete_mode).to eq :none
+            expect(settings.resize_windows).to eq false
+          end
+        end
+
+        context "if :resize is selected for Windows action" do
+          before { select_widget(:windows_action, :resize) }
+
+          it "updates the settings according" do
+            subject.run
+            expect(settings.windows_delete_mode).to eq :none
+            expect(settings.resize_windows).to eq true
+          end
+        end
+
+        context "if :remove is selected for Windows action" do
+          before { select_widget(:windows_action, :remove) }
+
+          it "updates the settings according" do
+            subject.run
+            expect(settings.windows_delete_mode).to eq :ondemand
+            expect(settings.resize_windows).to eq true
+          end
+        end
+
+        context "if :always_remove is selected for Windows action" do
+          before { select_widget(:windows_action, :always_remove) }
+
+          it "updates the settings according" do
+            subject.run
+            expect(settings.windows_delete_mode).to eq :all
+          end
+        end
       end
     end
 
@@ -202,87 +286,6 @@ describe Y2Storage::Dialogs::GuidedSetup::SelectRootDisk do
       settings.other_delete_mode = :all
       expect_select(:other_delete_mode, :all)
       subject.run
-    end
-
-    context "when settings.windows_delete_mode is set to :all" do
-      before { settings.windows_delete_mode = :all }
-
-      it "sets the Windows action to :always_remove" do
-        expect_select(:windows_action, :always_remove)
-        subject.run
-      end
-    end
-
-    context "when settings.windows_delete_mode is set to :ondemand" do
-      before { settings.windows_delete_mode = :ondemand }
-
-      it "sets the Windows action to :remove" do
-        expect_select(:windows_action, :remove)
-        subject.run
-      end
-    end
-
-    context "when settings.windows_delete_mode is set to :none" do
-      before { settings.windows_delete_mode = :none }
-
-      context "and resizing is allowed" do
-        before { settings.resize_windows = true }
-
-        it "sets the Windows action to :resize" do
-          expect_select(:windows_action, :resize)
-          subject.run
-        end
-      end
-
-      context "and resizing is not allowed" do
-        before { settings.resize_windows = false }
-
-        it "sets the Windows action to :not_modify" do
-          expect_select(:windows_action, :not_modify)
-          subject.run
-        end
-      end
-    end
-
-    context "updating settings regarding Windows" do
-      context "if :not_modify is selected for Windows action" do
-        before { select_widget(:windows_action, :not_modify) }
-
-        it "updates the settings according" do
-          subject.run
-          expect(settings.windows_delete_mode).to eq :none
-          expect(settings.resize_windows).to eq false
-        end
-      end
-
-      context "if :resize is selected for Windows action" do
-        before { select_widget(:windows_action, :resize) }
-
-        it "updates the settings according" do
-          subject.run
-          expect(settings.windows_delete_mode).to eq :none
-          expect(settings.resize_windows).to eq true
-        end
-      end
-
-      context "if :remove is selected for Windows action" do
-        before { select_widget(:windows_action, :remove) }
-
-        it "updates the settings according" do
-          subject.run
-          expect(settings.windows_delete_mode).to eq :ondemand
-          expect(settings.resize_windows).to eq true
-        end
-      end
-
-      context "if :always_remove is selected for Windows action" do
-        before { select_widget(:windows_action, :always_remove) }
-
-        it "updates the settings according" do
-          subject.run
-          expect(settings.windows_delete_mode).to eq :all
-        end
-      end
     end
 
     describe "updating settings regarding linux partitions" do

@@ -31,6 +31,13 @@ Yast.import "Report"
 RSpec.shared_context "guided setup requirements" do
   include Yast::UIShortcuts
 
+  def term_with_id(regexp, content)
+    content.nested_find do |nested|
+      next unless nested.is_a?(Yast::Term)
+      nested.params.any? { |i| i.is_a?(Yast::Term) && i.value == :id && regexp.match?(i.params.first) }
+    end
+  end
+
   def expect_select(id, value = true)
     expect(Yast::UI).to receive(:ChangeWidget).once.with(Id(id), :Value, value)
   end
