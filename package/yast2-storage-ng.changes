@@ -1,4 +1,9 @@
 -------------------------------------------------------------------
+Wed Aug 22 16:56:53 CEST 2018 - schubi@suse.de
+
+- Switched license in spec file from SPDX2 to SPDX3 format.
+
+-------------------------------------------------------------------
 Wed Aug 22 13:01:37 CEST 2018 - schubi@suse.de
 
 - Changed dir of COPYING file.
