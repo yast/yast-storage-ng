@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Wed Aug 22 21:45:06 UTC 2018 - knut.anderssen@suse.com
+
+- Partitioner: Hide the "what to do" selector for windows
+  partitions if there are no windows partitions (bsc#1055646)
+- 4.1.9
+
+-------------------------------------------------------------------
 Wed Aug 22 16:56:53 CEST 2018 - schubi@suse.de
 
 - Switched license in spec file from SPDX2 to SPDX3 format.
