@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Fri Aug 24 12:43:32 UTC 2018 - mvidner@suse.com
+
+- RAID attributes: include "Active: Yes/No" (bsc#1090010)
+- 4.0.208
+
+-------------------------------------------------------------------
 Mon Aug 20 15:26:02 UTC 2018 - shundhammer@suse.com
 
 - Fixed crash in the Kubic proposal when insufficient disk space
