@@ -874,6 +874,9 @@ describe Y2Partitioner::Actions::Controllers::Filesystem do
 
     context "and there are subvolumes defined for the given mount point" do
       let(:subvolumes) { Y2Storage::SubvolSpecification.fallback_list }
+      # The default subvolume must be consistent with the list of subvolumes.
+      # The fallback list contains "@" and expects it to be the default.
+      let(:default_subvolume) { "@" }
 
       before do
         # Make sure there is no other mount points
@@ -935,7 +938,7 @@ describe Y2Partitioner::Actions::Controllers::Filesystem do
         include_examples "does nothing"
       end
 
-      context "and the filesystem has no a mount point" do
+      context "and the filesystem has no previous mount point" do
         before do
           device.filesystem.remove_mount_point
         end
