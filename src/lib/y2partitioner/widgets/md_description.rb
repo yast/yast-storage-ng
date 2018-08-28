@@ -57,10 +57,20 @@ module Y2Partitioner
       # @return [Array<String>]
       def raid_attributes
         [
+          raid_active,
           raid_type,
           raid_chunk_size,
           raid_parity
         ]
+      end
+
+      # Information about MD RAID being (in)active
+      #
+      # @return [String]
+      def raid_active
+        # TRANSLATORS: RAID being active (assembled), where %s is replaced by
+        # 'Yes' when the device is active or by 'No' otherwise
+        format(_("Active: %s"), blk_device.active? ? _("Yes") : _("No"))
       end
 
       # Information about MD RAID type
