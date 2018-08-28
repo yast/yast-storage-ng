@@ -40,6 +40,12 @@ Open questions:
 - is bcache device partitionable?
 - can it be used for raid or LVM?
 
+### Separate View for BCache
+
+Having own view for bache like it is already done for LVM and RAID where it
+allows to set multiple bache devices via wizard that assign to that device
+backing device and cache.
+
 ## Format and Mount Whole Disk and Partitionable MD RAID
 
 In libstorage-ng is possible to format and mount whole disks without any
