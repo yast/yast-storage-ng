@@ -30,6 +30,16 @@ general allows to create software hybrid disks. Where is rotational disk
 persistent and fast one like SSD used as cache for it. Slow device can be whole
 disk or only partition. Fast device can be also disk or partition.
 
+How it works? Bcache has backing and caching devices. It is grouped in sets 
+( multiple backing and single cache but maybe in future multiple caches will 
+be possible ) and this set is then registered to bcache device like bcache0
+which can be formatted and mounted.
+
+Open questions:
+
+- is bcache device partitionable?
+- can it be used for raid or LVM?
+
 ## Format and Mount Whole Disk and Partitionable MD RAID
 
 In libstorage-ng is possible to format and mount whole disks without any
