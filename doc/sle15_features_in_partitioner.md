@@ -17,9 +17,9 @@ any partition.
 ### Smarter Solution
 
 When thinking about it, we came to idea that we can have checkbox to show all
-devices and when user pick partition or disk that is not ready to be used as 
+devices and when user pick partition or disk that is not ready to be used as
 RAID then adapt it. Advantage is that it should reduce number of clicks when
-creating arrays or LVMs. Disadvantage is that error checking will become much 
+creating arrays or LVMs. Disadvantage is that error checking will become much
 more complex, more combination that creates problems and also tricky execution
 on running system.
 
@@ -30,8 +30,8 @@ general allows to create software hybrid disks. Where is rotational disk
 persistent and fast one like SSD used as cache for it. Slow device can be whole
 disk or only partition. Fast device can be also disk or partition.
 
-How it works? Bcache has backing and caching devices. It is grouped in sets 
-( multiple backing and single cache but maybe in future multiple caches will 
+How it works? Bcache has backing and caching devices. It is grouped in sets
+( multiple backing and single cache but maybe in future multiple caches will
 be possible ) and this set is then registered to bcache device like bcache0
 which can be formatted and mounted.
 
@@ -50,7 +50,7 @@ backing device and cache.
 
 In libstorage-ng is possible to format and mount whole disks without any
 partitions. Also it is possible to have partitions on md RAIDs. This basically
-means that RAID device and disk devices is almost identical. Only difference 
+means that RAID device and disk devices is almost identical. Only difference
 is that RAID device can be created.
 
 So ideas are how to bring it together. Here is the first proposal:
@@ -76,7 +76,6 @@ So ideas are how to bring it together. Here is the first proposal:
   * "Overview" has three buttons to modify the MD (Edit, Resize, Delete)
   * This actions can be performed in the general "RAIDs view" (similar to Disks).
 
-
 ### Option 2
 
 * Rename "Hard Disks" section as "Devices"
@@ -84,11 +83,14 @@ So ideas are how to bring it together. Here is the first proposal:
 
 #### Disks view (new "Devices" section)
 
+* Add "Add RAID" button
 * Redefine "Edit" button:
   * It should open the dialog to format and set mount point if the selected device can be formatted.
+* Add "Partitions" button
+  * This button goes to the "Partitions" tab of a specific device (similar to current "Edit" button when used with a Disk).
 
 #### Disk view (when we are in one specific device)
 
 * When selected device is a MD RAID
-	* Add "Used Devices" tab
-	* "Overview" tab should show "Device", "RAID" and "File System" sections
+  * Add "Used Devices" tab
+  * "Overview" tab should show "Device", "RAID" and "File System" sections
