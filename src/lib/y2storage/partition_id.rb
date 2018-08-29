@@ -44,6 +44,7 @@ module Y2Storage
       DOS32.to_i              => N_("DOS32"),
       ESP.to_i                => N_("EFI System Partition"),
       EXTENDED.to_i           => N_("Extended"),
+      IRST.to_i               => N_("Intel Rapid Start"),
       LINUX.to_i              => N_("Linux Native"),
       LVM.to_i                => N_("Linux LVM"),
       MICROSOFT_RESERVED.to_i => N_("Microsoft Reserved Partition"),
