@@ -1,7 +1,6 @@
-# SLE15 Features in Partitioner
+# Expert Partioner: SLE-15-SP1 features
 
-This document tries to capture possibilities how to allow in partitioner
-capabilities that has libstorage-ng in SLE15 and how in the end it is done.
+This document is intended to present and discuss some new features that need to be added to the Expert Partitioner. Some of such features are already supported by libstorage-ng but they are not included in the Expert Partitioner yet. The final goal of this document is to decide the best way to add these new features to the Expert Partitioner.
 
 ## The problem (the current UI)
 
@@ -60,87 +59,102 @@ with some rough ideas.
  At the end of the document there is a summary of other features we want to
  contemplate for future releases (SLE-15-SP1, SLE-16... who knows?).
 
-## Full Disks Usage in LVM and RAID
+## Feature 1: Use whole disks to create LVM and RAID
 
-Partioner in SLE15 GA allows to use in LVM and software RAID only partitions
-with propoer types. But libstorage-ng allows to use also whole disk as part of
-LVM or RAID.
+In SLE-15-GA, the Expert Partitioner only allows to select plain partitions when creating a LVM Volume Group or a Software RAID. Moreover, only unused partitions with a specific partition id could be selected. But libstorage-ng also allows to create LVM Volume Groups and Software RAIDs based on whole disks. The Expert Partitioner should be able to do it too.
 
-### Simple Solution
+### Proposal 1: Simple Solution
 
-Adds as possible device when creating LVM or RAID also disks that do not have
-any partition.
+when creating a LVM Volume Group or Software RAID, it should also offer all unused and unpartitioned disks as candidate devices. This would not require any UI change, it is only a matter of offering more candidate devices.
 
-### Smarter Solution
+### Proposal 2: Smarter Solution
 
-When thinking about it, we came to idea that we can have checkbox to show all
-devices and when user pick partition or disk that is not ready to be used as
-RAID then adapt it. Advantage is that it should reduce number of clicks when
-creating arrays or LVMs. Disadvantage is that error checking will become much
-more complex, more combination that creates problems and also tricky execution
-on running system.
+By default it works as "Simple Solution" describes, but it also adds a checkbox to show all devices, even such devices that are not prepared to be used (e.g., a partition already mounted). If any of these "unprepared" device is selected, a warning should be presented to inform about the actions that will be performed (i.e., remove existing fs, partitions, etc) before use that device for the LVM Volume Group/Software RAID creation.
 
-## BCache
+The advantage is that it should reduce the number of clicks when creating LVM Volume Groups or Software RAIDs. But as disadvantage, the checking for not prepared devices could be tricky and also complex combinations could appear (yet more difficult in already installed systems).
 
-Completelly new feature in libstorage-ng that need to be in SLE15 SP1. BCache in
-general allows to create software hybrid disks. Where is rotational disk
-persistent and fast one like SSD used as cache for it. Slow device can be whole
-disk or only partition. Fast device can be also disk or partition.
+## Feature 2: BCache support
 
-How it works? Bcache has backing and caching devices. It is grouped in sets
+This feature is completely new for both: libstorage-ng and the Expert Partitioner.
+
+BCache technology allows to create software hybrid disks. The idea is to use big rotational disks as persistent storage (backing devices) and then to use a fast (e.g., SSD) device as cache (caching devices) for it. Backing and caching devices could be whole disks or even partitions.
+
+### Research
+
+How it works? BCache has backing and caching devices. It is grouped in sets
 ( multiple backing and single cache but maybe in future multiple caches will
 be possible ) and this set is then registered to bcache device like bcache0
 which can be formatted and mounted.
 
-Open questions:
+At the end of [this document](https://bcache.evilpiepirate.org/) there is an example. It seems that there is a `/dev/bcacheX` device for each backing device (no sets of backing devices). And a caching device can be use as cache for several backing devices.
 
-- is bcache device partitionable?
-- can it be used for raid or LVM?
+For example:
 
-### Separate View for BCache
+```
+make-bcache -B /dev/sdc /dev/sdd -C /dev/sda2
+```
 
-Having own view for bache like it is already done for LVM and RAID where it
-allows to set multiple bache devices via wizard that assign to that device
-backing device and cache.
+* creates `/dev/bcache0` for backing device `/dev/sdd`
+* creates `/dev/bcache1` for backing device `/dev/sdc`
+* attaches `/dev/sda2` as cache for `/dev/sdd`
+* attaches `/dev/sda2` as cache for `/dev/sdc`
 
-## Format and Mount Whole Disk and Partitionable MD RAID
+Also, it seems that the caching device can be a set of devices, but according to documentation this feature is not supported yet: "Cache devices are managed as sets; multiple caches per set isn't supported yet but will allow for mirroring of metadata and dirty data in the future."
 
-In libstorage-ng is possible to format and mount whole disks without any
-partitions. Also it is possible to have partitions on md RAIDs. This basically
-means that RAID device and disk devices is almost identical. Only difference
-is that RAID device can be created.
+### Open questions
 
-So ideas are how to bring it together. Here is the first proposal:
+* Could backing devices be grouped in a set (i.e., /dev/bcacheX for several backing devices)?
+* Could a caching (or set) be attached to several backing devices at the same time?
+* Could a caching device belongs to several sets at the same time?
+* Is BCache device partitionable?
+* Could a BCache be used for LVM Volume Group or Software RAID creation?
 
-### Option 1
+### Proposal: A separate section for BCache
+
+The Expert Partitioner would have a new BCache section (similar to current "Volume Management" or "RAID" ones). It would allow to set multiple BCache devices via wizard that assigns to that device
+backing devices and caching devices. See [mockup](mockups/bcache.jpg).
+
+## Feature 3: Format/mount/encrypt whole disks, Partitionable Software RAIDs
+
+Right now the Expert Partitioner allows to format/mount/encrypt Software RAIDs but they cannot be partitioned. And for Disks is just the opposite situation. Disks can be partitioned but they cannot be formatted/mounted/encrypted.
+
+This feature is about adding what is missing in each case. So the Expert Partitioner should allow to format/mount/encrypt whole disks and also it should allow to add partitions to Software RAIDs. All these features are already supported by libstorage-ng.
+
+At the end, Software RAIDs and Disk devices should be almost identical. The only one difference
+is that Software RAIDs can be created by the user.
+
+### Proposal 1: add missing buttons everywhere
 
 #### Disks view (named as "Hard Disks")
 
 * Redefine "Edit" button:
-  * It should open the dialog to format and set mount point if the selected device can be formatted.
+  * Right now, when "Edit" is used over a Disk, it simply goes to the Partitions view of the disk to edit its partitions.
+  * Instead of that, it should open the dialog to format and set mount point if the selected device can be formatted.
 
 #### RAIDs view
 
-* Wizard lauched by "Add RAID" button should not allow to format/set mount point
+* The wizard launched by "Add RAID" button should not allow to format/set mount point.
 * Add button "Add Partition" (similar to Disks view)
 
 #### RAID view (when we are in one specific RAID)
 
-* Add "Partitions" tab (now it has "Overview" and "Used Devices" tabs)
+* Add a "Partitions" tab (now it has "Overview" and "Used Devices" tabs)
   * Add "Add", "Edit", "Move", "Resize", "Delete" buttons that act over a partition (similar to "Partitions" tab in "Disk view").
   * Add "Expert" button that allows to "Create Partition Table" and "Clone Disk" (similar to Disks).
 * Remove buttons from "Overview" tab
   * "Overview" has three buttons to modify the MD (Edit, Resize, Delete)
   * This actions can be performed in the general "RAIDs view" (similar to Disks).
 
-### Option 2
+### Proposal 2: merge "Hard Disks" and "RAID" sections
+
+Disk devices and Software RAIDs are pretty the same. So the idea is to merge both sections. See [mockup](mockups/merge_raids_section.pdf).
 
 * Rename "Hard Disks" section as "Devices"
 * Remove section "RAID"
 
 #### Disks view (new "Devices" section)
 
-* Add "Add RAID" button
+* Add a "Add RAID" button
 * Redefine "Edit" button:
   * It should open the dialog to format and set mount point if the selected device can be formatted.
 * Add "Partitions" button
@@ -149,7 +163,7 @@ So ideas are how to bring it together. Here is the first proposal:
 #### Disk view (when we are in one specific device)
 
 * When selected device is a MD RAID
-  * Add "Used Devices" tab
+  * Add a "Used Devices" tab
   * "Overview" tab should show "Device", "RAID" and "File System" sections
 
 ## More features for the future
