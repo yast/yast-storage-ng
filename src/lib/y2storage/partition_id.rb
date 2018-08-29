@@ -52,8 +52,8 @@ module Y2Storage
       PREP.to_i               => N_("PReP Boot Partition"),
       RAID.to_i               => N_("Linux RAID"),
       SWAP.to_i               => N_("Linux Swap"),
-      UNKNOWN.to_i            => N_("Unknown")
-      WINDOWS_BASIC_DATA.to_i => N_("Windows Data Partition"),
+      UNKNOWN.to_i            => N_("Unknown"),
+      WINDOWS_BASIC_DATA.to_i => N_("Windows Data Partition")
     }.freeze
     private_constant :TRANSLATIONS
 
