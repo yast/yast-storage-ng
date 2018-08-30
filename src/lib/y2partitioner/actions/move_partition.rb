@@ -49,7 +49,8 @@ module Y2Partitioner
       # Checks whether it is possible to move the partition, and if so, the action is performed.
       #
       # @note An error popup is shown when the partition cannot be moved. In case the partition
-      #   can be moved, a dialog is presented to select whether to move forward or backward.
+      #   can be moved, a dialog is presented to select whether to move towards the beginning or
+      #   the end.
       #
       # @return [Symbol] :finish if the action is performed; :back or dialog result otherwise.
       def run
@@ -67,7 +68,7 @@ module Y2Partitioner
       # @return [Y2Storage::BlkDevice]
       attr_reader :partition
 
-      # @return [Symbol] :forward, :backward
+      # @return [Symbol] :beginning, :end
       attr_reader :movement
 
       # Checks whether the partition can be moved
@@ -146,7 +147,8 @@ module Y2Partitioner
         format(_("No space to move partition %{name}"), name: partition.name)
       end
 
-      # Shows a dialog to ask to the user how to move the partition (forward or backward)
+      # Shows a dialog to ask to the user how to move the partition
+      # (towards the beginning or the end)
       #
       # @note The user selection is saved, see {#movement}.
       #
@@ -161,33 +163,30 @@ module Y2Partitioner
 
       # Possible direction in which the partition could be moved
       #
-      # @return [Symbol] :forward, :backward, or :both
+      # @return [Symbol] :beginning, :end, or :both
       def possible_movement
         if previous_adjacent_unused_slot && next_adjacent_unused_slot
           :both
         elsif previous_adjacent_unused_slot
-          :forward
+          :beginning
         elsif next_adjacent_unused_slot
-          :backward
+          :end
         end
       end
 
       # Moves the partition to the selected direction
       #
-      # @note "Move forward" means to move the partition towards the beginning of the disk.
-      #   Otherwise, "move backward" means to move towards the end of the disk.
-      #
-      # @see #moves_forward, #moves_backward
+      # @see #move_to_beginning, #move_to_end
       def move_partition
-        movement == :forward ? move_forward : move_backward
+        movement == :beginning ? move_to_beginning : move_to_end
       end
 
       # Moves the patition by placing it at the beginning of the previous adjacent free space
       #
       # @raise [Y2Partitioner::Error] if there is no previous adjacent free space
-      def move_forward
+      def move_to_beginning
         if !previous_adjacent_unused_slot
-          raise Error, "Partition #{partition.name} cannot be moved forward"
+          raise Error, "Partition #{partition.name} cannot be moved towards the beginning"
         end
 
         partition.region.start = previous_adjacent_unused_slot.region.start
@@ -196,9 +195,9 @@ module Y2Partitioner
       # Moves the patition by placing it at the end of the next adjacent free space
       #
       # @raise [Y2Partitioner::Error] if there is no next adjacent free space
-      def move_backward
+      def move_to_end
         if !next_adjacent_unused_slot
-          raise Error, "Partition #{partition.name} cannot be moved backward"
+          raise Error, "Partition #{partition.name} cannot be moved towards the end"
         end
 
         partition.region.start += next_adjacent_unused_slot.region.length
@@ -310,14 +309,14 @@ module Y2Partitioner
       #
       #   For example:
       #
-      #   * start aligned but end not aligned -> moves forward -> start aligned but end not aligned
-      #   * start aligned but end not aligned -> moves backward -> start not aligned but end aligned
+      #   * start aligned but end not aligned -> towards beginning -> start aligned but end not aligned
+      #   * start aligned but end not aligned -> towards  end      -> start not aligned but end aligned
       #
-      #   * start not aligned but end aligned -> moves forward -> start aligned but end not aligned
-      #   * start not aligned but end aligned -> moves backward -> start not aligned but end aligned
+      #   * start not aligned but end aligned -> towards beginning -> start aligned but end not aligned
+      #   * start not aligned but end aligned -> towards end       -> start not aligned but end aligned
       #
-      #   * start and end aligned -> moves forward -> start and end aligned
-      #   * start and end aligned -> moves backward -> start and end aligned
+      #   * start and end aligned             -> towards beginning -> start and end aligned
+      #   * start and end aligned             -> towards end       -> start and end aligned
       #
       # @return [Array<Y2Storage::PartitionTables::PartitionSlot>]
       def aligned_unused_slots

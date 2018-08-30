@@ -30,10 +30,10 @@ module Y2Partitioner
       # @return [Y2Storage::Partition]
       attr_reader :partition
 
-      # @return [Symbol] :forward, :backward, :both
+      # @return [Symbol] :beginning, :end, :both
       attr_reader :possible_movement
 
-      # @return [Symbol] :forward, :backward
+      # @return [Symbol] :beginning, :end
       attr_accessor :selected_movement
 
       # Constructor
@@ -51,7 +51,7 @@ module Y2Partitioner
       # Layout is different to the default Popup layout
       #
       # This dialog is pretty similar to a basic popup (Yast2::Popup), but in this case it
-      # could contain a widget to select the movement direction (forward or backward).
+      # could contain a widget to select the movement direction (beginning or end).
       def layout
         VBox(
           MarginBox(
@@ -68,12 +68,12 @@ module Y2Partitioner
         case possible_movement
         when :both
           VBox(DirectionSelector.new(self))
-        when :backward
+        when :beginning
           # TRANSLATORS: %{name} is replaced by a partition name (e.g. /dev/sda1)
-          VBox(Label(format(_("Move partition %{name} backward?"), name: partition.name)))
-        when :forward
+          VBox(Label(format(_("Move partition %{name} towards the beginning?"), name: partition.name)))
+        when :end
           # TRANSLATORS: %{name} is replaced by a partition name (e.g. /dev/sda1)
-          VBox(Label(format(_("Move partition %{name} forward?"), name: partition.name)))
+          VBox(Label(format(_("Move partition %{name} towards the end?"), name: partition.name)))
         end
       end
 
@@ -87,7 +87,7 @@ module Y2Partitioner
       end
 
       # Widget to select in which direction to move the partition when it is possible to
-      # move forward and backward
+      # move towards the beginning and the end
       class DirectionSelector < CWM::RadioButtons
         # @return [Y2Storage::Partition]
         attr_reader :partition
@@ -112,13 +112,13 @@ module Y2Partitioner
 
         def items
           [
-            ["forward", _("Forward")],
-            ["backward", _("Backward")]
+            ["beginning", _("Towards the beginning")],
+            ["end", _("Towards the end")]
           ]
         end
 
         def init
-          self.value = "forward"
+          self.value = "beginning"
         end
 
         # CWM::RadioButtons expects string as item id, but the selected item is stored

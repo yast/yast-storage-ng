@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Thu Aug 30 07:41:35 UTC 2018 - jlopez@suse.com
+
+- Improved wording when moving partitions (bsc#1099599).
+- 4.1.12
+
+-------------------------------------------------------------------
 Wed Aug 29 14:30:59 UTC 2018 - jreidinger@suse.com
 
 - Add support for Intel Rapid Start technology partitions
