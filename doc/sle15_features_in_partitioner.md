@@ -52,9 +52,9 @@ possible for SLE-15-SP1. Each of them is presented in this document together
 with some rough ideas.
 
  * Use full disks (in addition to partitions) to create LVM VGs and RAIDs.
- * BCache
  * Allow to format/mount/encrypt a full disk (just like we do with partitions).
  * Handle partitions within a RAID.
+ * BCache
 
  At the end of the document there is a summary of other features we want to
  contemplate for future releases (SLE-15-SP1, SLE-16... who knows?).
@@ -63,17 +63,167 @@ with some rough ideas.
 
 In SLE-15-GA, the Expert Partitioner only allows to select plain partitions when creating a LVM Volume Group or a Software RAID. Moreover, only unused partitions with a specific partition id could be selected. But libstorage-ng also allows to create LVM Volume Groups and Software RAIDs based on whole disks. The Expert Partitioner should be able to do it too.
 
-### Proposal 1: Simple Solution
+### Solution to implement
 
-when creating a LVM Volume Group or Software RAID, it should also offer all unused and unpartitioned disks as candidate devices. This would not require any UI change, it is only a matter of offering more candidate devices.
+When creating/resizing a Software RAID, the list of "Available Devices"
+will include partitions belonging to a disk and with the appropriate partition
+ids (as always) and also those hard disks that contain no partitions. In
+both cases, the devices must not be "in use", i.e. assigned to a mount point
+or being part of an LVM or RAID setup.
 
-### Proposal 2: Smarter Solution
+When creating/resizing an LVM Volume Group, the list of "Available Devices"
+will include partitions with the appropriate partition ids (including partitions
+that belong to disks and to RAIDs) and also hard disks and RAIDs. Hard disks and
+RAIDs will only be displayed if they contain no partitions. In both cases, the
+devices must not be "in use", as defined above.
 
-By default it works as "Simple Solution" describes, but it also adds a checkbox to show all devices, even such devices that are not prepared to be used (e.g., a partition already mounted). If any of these "unprepared" device is selected, a warning should be presented to inform about the actions that will be performed (i.e., remove existing fs, partitions, etc) before use that device for the LVM Volume Group/Software RAID creation.
+This solution requires almost no UI changes and is consistent with the historical
+approach of offering as available only those devices that can be added safely.
+Even if, in some cases, that implies the user must prepare the device in advance
+using other sections of the partitioner (deleting it from any other LVM/RAID,
+deassigning the mount point, etc.).
+
+### Alternative solution
+
+A modification of the previous UI was also discussed but postponed so far.
+By default it works as the selected solution, but it also adds a checkbox to show all devices, even such devices that are not prepared to be used (e.g., a partition already mounted). If any of these "unprepared" device is selected, a warning should be presented to inform about the actions that will be performed (i.e., remove existing fs, partitions, etc) before use that device for the LVM Volume Group/Software RAID creation.
 
 The advantage is that it should reduce the number of clicks when creating LVM Volume Groups or Software RAIDs. But as disadvantage, the checking for not prepared devices could be tricky and also complex combinations could appear (yet more difficult in already installed systems).
 
-## Feature 2: BCache support
+## Features 2 and 3: Format/mount/encrypt whole disks, Partitionable Software RAIDs
+
+Right now the Expert Partitioner allows to format/mount/encrypt Software RAIDs but they cannot be partitioned. And for Disks is just the opposite situation. Disks can be partitioned but they cannot be formatted/mounted/encrypted.
+
+This feature is about adding what is missing in each case. So the Expert Partitioner should allow to format/mount/encrypt whole disks and also it should allow to add partitions to Software RAIDs. All these features are already supported by libstorage-ng.
+
+At the end, Software RAIDs and Disk devices should be almost identical. The only one difference
+is that Software RAIDs can be created by the user.
+
+### Selected solution
+
+The idea is to keep the traditional layout of the partitioner while being more
+precise when offering buttons to act on the devices. Displaying all the buttons
+that apply to a given device while hiding any button that makes no sense, even
+if that means dinamically changing the set of buttons everytime a new element
+is selected in a table. In addition, generic labels that may lead to different
+screens (like "edit" and "resize") should be avoided. Different actions will
+always be identified by different labels.
+
+#### "Hard Disks" view 
+
+When a disk is selected in the list, the following buttons will be displayed.
+
+  * "Edit": to open the wizard to format/mount/encrypt the device (instead of
+    the historical behavior of opening the "Partitions" tab for the disk).
+  * "Add Partition"
+
+When a partition is selected in the list, show these buttons.
+
+  * "Edit"
+  * "Move"
+  * "Resize"
+  * "Delete"
+
+In both cases, all the mentioned buttons must be enabled. If some action is not
+possible, an explanatory error message must be displayed. Some examples of such
+situations may be a disk that cannot be edited because it already contain
+partitions, or a partition that cannot be resized because it's part of a RAID.
+
+#### Disk view (for an specific disk)
+
+The "Overview" tab should contain the following buttons: "Edit", "New
+Partition Table" and "Clone this Disk".
+
+The "Partitions" tab should contain the following buttons: "Add", "Edit",
+"Move", "Resize", "Delete", "Delete All".
+
+The Overview tab will be the default one to open when the disk is selected in
+the left tree or double-clicked in a table. This is a big change compared to the
+historic behavior (that always opened the disk view directly in the "Partitions"
+tab), so it may be reconsidered in the future.
+
+#### RAIDs view
+
+The table will list MD RAIDs and its corresponding partitions, in a similar way
+to what is done in the Disks view.
+
+The button "Add RAID" will be always present, but the corresponding wizard will
+not include the final steps to format/mount/encrypt the newly created device.
+
+When a RAID is selected in the table, it will show the following buttons
+(in addition to "Add RAID", that is always there).
+
+  * "Edit": to open the wizard to format/mount/encrypt the device.
+  * "Add Partition"
+  * "Delete"
+
+When a partition is selected, it will show the same buttons than in the Disks
+section, in addition to "Add RAID".
+
+#### RAID view (when we are in one specific RAID)
+
+The "Overview" tab must show the following buttons: "Edit", "Delete",
+"New Partition Table" and "Clone Disk".
+
+The "Used Devices" must show a button called "Change" equivalent to the current
+"Resize".
+
+A new "Partitions" tab must be added. That tab is equivalent to the one described
+for the the disk view.
+
+#### Volume Management view
+
+As always, the table will list volume groups and its corresponding logical volumes.
+
+The button "Add Volume Group" will be always present.
+
+When an VG is selected in the table, it will show the following buttons
+(in addition to "Add Volume Group", that is always there).
+
+  * "Add Logical Volume"
+  * "Delete"
+
+When a LV is selected in the table, it will show the next buttons next to "Add
+Volume Group".
+
+  * "Edit"
+  * "Resize"
+  * "Delete"
+
+#### Volume group view
+
+The "Overview" tab must show only the "Delete" button.
+
+The "Logical Volumes" tab remains the same.
+
+The "Physical Volumes" tab must show a button called "Change" equivalent to
+the current "Resize" (i.e. to add/remove physical volumes).
+
+### Alternative solution - merge "Hard Disks" and "RAID" sections
+
+It was also considered to merge disks and RAIDs in a common branch of the tree,
+since they are pretty much the same and support similar operations. The idea has
+been discarded for the short term, but it's presented for completeness in
+[this mockup](mockups/merge_raids_section.pdf).
+
+* Rename "Hard Disks" section as "Devices"
+* Remove section "RAID"
+
+#### Disks view (new "Devices" section)
+
+* Add a "Add RAID" button
+* Redefine "Edit" button:
+  * It should open the dialog to format and set mount point if the selected device can be formatted.
+* Add "Partitions" button
+  * This button goes to the "Partitions" tab of a specific device (similar to current "Edit" button when used with a Disk).
+
+#### Disk view (when we are in one specific device)
+
+* When selected device is a MD RAID
+  * Add a "Used Devices" tab
+  * "Overview" tab should show "Device", "RAID" and "File System" sections
+
+## Feature 4: BCache support
 
 This feature is completely new for both: libstorage-ng and the Expert Partitioner.
 
@@ -114,57 +264,6 @@ Also, it seems that the caching device can be a set of devices, but according to
 The Expert Partitioner would have a new BCache section (similar to current "Volume Management" or "RAID" ones). It would allow to set multiple BCache devices via wizard that assigns to that device
 backing devices and caching devices. See [mockup](mockups/bcache.jpg).
 
-## Feature 3: Format/mount/encrypt whole disks, Partitionable Software RAIDs
-
-Right now the Expert Partitioner allows to format/mount/encrypt Software RAIDs but they cannot be partitioned. And for Disks is just the opposite situation. Disks can be partitioned but they cannot be formatted/mounted/encrypted.
-
-This feature is about adding what is missing in each case. So the Expert Partitioner should allow to format/mount/encrypt whole disks and also it should allow to add partitions to Software RAIDs. All these features are already supported by libstorage-ng.
-
-At the end, Software RAIDs and Disk devices should be almost identical. The only one difference
-is that Software RAIDs can be created by the user.
-
-### Proposal 1: add missing buttons everywhere
-
-#### Disks view (named as "Hard Disks")
-
-* Redefine "Edit" button:
-  * Right now, when "Edit" is used over a Disk, it simply goes to the Partitions view of the disk to edit its partitions.
-  * Instead of that, it should open the dialog to format and set mount point if the selected device can be formatted.
-
-#### RAIDs view
-
-* The wizard launched by "Add RAID" button should not allow to format/set mount point.
-* Add button "Add Partition" (similar to Disks view)
-
-#### RAID view (when we are in one specific RAID)
-
-* Add a "Partitions" tab (now it has "Overview" and "Used Devices" tabs)
-  * Add "Add", "Edit", "Move", "Resize", "Delete" buttons that act over a partition (similar to "Partitions" tab in "Disk view").
-  * Add "Expert" button that allows to "Create Partition Table" and "Clone Disk" (similar to Disks).
-* Remove buttons from "Overview" tab
-  * "Overview" has three buttons to modify the MD (Edit, Resize, Delete)
-  * This actions can be performed in the general "RAIDs view" (similar to Disks).
-
-### Proposal 2: merge "Hard Disks" and "RAID" sections
-
-Disk devices and Software RAIDs are pretty the same. So the idea is to merge both sections. See [mockup](mockups/merge_raids_section.pdf).
-
-* Rename "Hard Disks" section as "Devices"
-* Remove section "RAID"
-
-#### Disks view (new "Devices" section)
-
-* Add a "Add RAID" button
-* Redefine "Edit" button:
-  * It should open the dialog to format and set mount point if the selected device can be formatted.
-* Add "Partitions" button
-  * This button goes to the "Partitions" tab of a specific device (similar to current "Edit" button when used with a Disk).
-
-#### Disk view (when we are in one specific device)
-
-* When selected device is a MD RAID
-  * Add a "Used Devices" tab
-  * "Overview" tab should show "Device", "RAID" and "File System" sections
 
 ## More features for the future
 
