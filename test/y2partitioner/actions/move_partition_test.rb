@@ -144,7 +144,7 @@ describe Y2Partitioner::Actions::MovePartition do
           # Former /dev/sdb2
           let(:device_name) { "/dev/sdb1" }
 
-          it "asks to the user whether to move forward or backward" do
+          it "asks to the user whether to move towards the beginning or the end" do
             expect(Y2Partitioner::Dialogs::PartitionMove).to receive(:new).with(partition, :both)
             subject.run
           end
@@ -156,8 +156,8 @@ describe Y2Partitioner::Actions::MovePartition do
           # Former /dev/sdb2
           let(:device_name) { "/dev/sdb1" }
 
-          it "asks to the user whether to move forward" do
-            expect(Y2Partitioner::Dialogs::PartitionMove).to receive(:new).with(partition, :forward)
+          it "asks to the user whether to move towards the beginning" do
+            expect(Y2Partitioner::Dialogs::PartitionMove).to receive(:new).with(partition, :beginning)
             subject.run
           end
         end
@@ -167,8 +167,8 @@ describe Y2Partitioner::Actions::MovePartition do
 
           let(:device_name) { "/dev/sdb2" }
 
-          it "asks to the user whether to move backward" do
-            expect(Y2Partitioner::Dialogs::PartitionMove).to receive(:new).with(partition, :backward)
+          it "asks to the user whether to move towards the end" do
+            expect(Y2Partitioner::Dialogs::PartitionMove).to receive(:new).with(partition, :end)
             subject.run
           end
         end
@@ -181,7 +181,7 @@ describe Y2Partitioner::Actions::MovePartition do
           # Former /dev/sdb6
           let(:device_name) { "/dev/sdb5" }
 
-          it "asks to the user whether to move forward or backward" do
+          it "asks to the user whether to move towards the beginning or the end" do
             expect(Y2Partitioner::Dialogs::PartitionMove).to receive(:new).with(partition, :both)
             subject.run
           end
@@ -193,8 +193,8 @@ describe Y2Partitioner::Actions::MovePartition do
           # Former /dev/sdb6
           let(:device_name) { "/dev/sdb5" }
 
-          it "asks to the user whether to move forward" do
-            expect(Y2Partitioner::Dialogs::PartitionMove).to receive(:new).with(partition, :forward)
+          it "asks to the user whether to move towards the beginning" do
+            expect(Y2Partitioner::Dialogs::PartitionMove).to receive(:new).with(partition, :beginning)
             subject.run
           end
         end
@@ -205,8 +205,8 @@ describe Y2Partitioner::Actions::MovePartition do
 
           let(:device_name) { "/dev/sdb5" }
 
-          it "asks to the user whether to move backward" do
-            expect(Y2Partitioner::Dialogs::PartitionMove).to receive(:new).with(partition, :backward)
+          it "asks to the user whether to move towards the end" do
+            expect(Y2Partitioner::Dialogs::PartitionMove).to receive(:new).with(partition, :end)
             subject.run
           end
         end
@@ -240,7 +240,7 @@ describe Y2Partitioner::Actions::MovePartition do
 
         let(:move_dialog_result) { :ok }
 
-        let(:selected_movement) { :forward }
+        let(:selected_movement) { :beginning }
 
         it "moves the partition" do
           initial_region = partition.region.dup
@@ -253,8 +253,8 @@ describe Y2Partitioner::Actions::MovePartition do
           expect(subject.run).to eq(:finish)
         end
 
-        context "and the partition is moved forward" do
-          let(:selected_movement) { :forward }
+        context "and the partition is moved towards the beginning" do
+          let(:selected_movement) { :beginning }
 
           it "places the partition at the beginning of the previous adjacent free space" do
             ptable = partition.partition_table
@@ -275,8 +275,8 @@ describe Y2Partitioner::Actions::MovePartition do
           end
         end
 
-        context "and the partition is moved backward" do
-          let(:selected_movement) { :backward }
+        context "and the partition is moved towards the end" do
+          let(:selected_movement) { :end }
 
           it "places the partition at the end of the next adjacent free space" do
             ptable = partition.partition_table

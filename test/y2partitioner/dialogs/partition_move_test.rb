@@ -45,7 +45,7 @@ describe Y2Partitioner::Dialogs::PartitionMove do
   include_examples "CWM::Dialog"
 
   describe "#contents" do
-    context "when the partition can be moved forward and backward" do
+    context "when the partition can be moved towards the beginning and the end" do
       let(:possible_movement) { :both }
 
       it "contains a widget for selecting the movement direction" do
@@ -56,24 +56,26 @@ describe Y2Partitioner::Dialogs::PartitionMove do
       end
     end
 
-    context "when the partition can be moved forward" do
-      let(:possible_movement) { :forward }
+    context "when the partition can be moved towards the beginning" do
+      let(:possible_movement) { :beginning }
 
-      it "contains a label for asking whether to move forward" do
+      it "contains a label for asking whether to move towards the beginning" do
         widget = subject.contents.nested_find do |i|
-          i.is_a?(Yast::Term) && i.value == :Label && i.params.first.match?(/forward\?/)
+          i.is_a?(Yast::Term) && i.value == :Label &&
+            i.params.first.match?(/towards the beginning\?/)
         end
 
         expect(widget).to_not be_nil
       end
     end
 
-    context "when the partition can be moved backward" do
-      let(:possible_movement) { :backward }
+    context "when the partition can be moved towards the end" do
+      let(:possible_movement) { :end }
 
-      it "contains a label for asking whether to move backward" do
+      it "contains a label for asking whether to move towards the end" do
         widget = subject.contents.nested_find do |i|
-          i.is_a?(Yast::Term) && i.value == :Label && i.params.first.match?(/backward\?/)
+          i.is_a?(Yast::Term) && i.value == :Label &&
+            i.params.first.match?(/towards the end\?/)
         end
 
         expect(widget).to_not be_nil
