@@ -110,13 +110,13 @@ describe Y2Partitioner::Actions::Controllers::Md do
   end
 
   describe "#available_devices" do
-    it "returns an array of partitions" do
+    it "returns an array of block devices" do
       expect(controller.available_devices).to be_an Array
-      expect(controller.available_devices).to all be_a(Y2Storage::Partition)
+      expect(controller.available_devices).to all be_a(Y2Storage::BlkDevice)
     end
 
     it "returns partitions with a linux system ID (linux, LVM, RAID, swap)" do
-      devices = controller.available_devices
+      devices = controller.available_devices.select { |d| d.is?(:partition) }
       expect(devices.map(&:name)).to eq ["/dev/sda2", "/dev/sda3", "/dev/sda4", "/dev/sde3"]
     end
 
@@ -154,9 +154,44 @@ describe Y2Partitioner::Actions::Controllers::Md do
       expect(controller.available_devices).to_not include sda3
     end
 
-    # At the moment of writing, only partitions are included, but in the
-    # foreseable future other block devices will be added. To be in the safe
-    # side, make sure DASDs are not (see BlkDevice#usable_as_blk_device?).
+    it "includes disks with no partition tables" do
+      expect(controller.available_devices.map(&:name)).to include "/dev/sdb"
+    end
+
+    it "includes disks with empty partition tables" do
+      sdb = dev("/dev/sdb")
+      sdb.create_partition_table(Y2Storage::PartitionTables::Type::GPT)
+
+      expect(controller.available_devices.map(&:name)).to include "/dev/sdb"
+    end
+
+    it "excludes disks with partitions" do
+      expect(controller.available_devices.map(&:name)).to_not include "/dev/sdf"
+    end
+
+    it "excludes disks with a mount point" do
+      expect(controller.available_devices.map(&:name)).to include "/dev/sdb"
+
+      sdb = dev("/dev/sdb")
+      sdb.create_filesystem(Y2Storage::Filesystems::Type::EXT3)
+      sdb.filesystem.mount_path = "/var"
+
+      expect(controller.available_devices.map(&:name)).to_not include "/dev/sdb"
+    end
+
+    it "excludes disks that are part of an LVM" do
+      expect(controller.available_devices.map(&:name)).to_not include "/dev/sdg"
+    end
+
+    it "excludes disks that are part of another MD Raid" do
+      sdb = dev("/dev/sdb")
+      expect(controller.available_devices).to include sdb
+
+      new_md = Y2Storage::Md.create(current_graph, "/dev/md0")
+      new_md.add_device(sdb)
+      expect(controller.available_devices).to_not include sdb
+    end
+
     it "does not include DASDs" do
       dasda = Y2Storage::Dasd.create(current_graph, "/dev/dasda")
       dasda.type = Y2Storage::DasdType::ECKD
@@ -167,6 +202,39 @@ describe Y2Partitioner::Actions::Controllers::Md do
 
       expect(controller.available_devices).to_not include dasda
       expect(controller.available_devices).to_not include dasdb
+    end
+
+    context "in a multipath scenario" do
+      let(:scenario) { "empty-dasd-and-multipath.xml" }
+
+      it "returns an array of block devices" do
+        expect(controller.available_devices).to be_an Array
+        expect(controller.available_devices).to all be_a(Y2Storage::BlkDevice)
+      end
+
+      it "include multipath devices with no partition table or an empty one" do
+        devices = controller.available_devices
+        expect(devices.map(&:name)).to include(
+          "/dev/mapper/36005076305ffc73a00000000000013b4",
+          "/dev/mapper/36005076305ffc73a00000000000013b5"
+        )
+      end
+
+      it "excludes disks that are part of a multipath device" do
+        devices = controller.available_devices
+        expect(devices.map(&:name)).to_not include("/dev/sda", "/dev/sdc", "/dev/sdb", "/dev/sdd")
+      end
+
+      it "excludes multipath devices with a mount point" do
+        dev_name = "/dev/mapper/36005076305ffc73a00000000000013b5"
+        expect(controller.available_devices.map(&:name)).to include dev_name
+
+        mp = dev(dev_name)
+        mp.create_filesystem(Y2Storage::Filesystems::Type::EXT3)
+        mp.filesystem.mount_path = "/var"
+
+        expect(controller.available_devices.map(&:name)).to_not include dev_name
+      end
     end
 
     context "when there are extended partitions" do

@@ -80,7 +80,12 @@ module Y2Partitioner
         # @return [Array<Y2Storage::PartitionTables::PartitionSlot>]
         def unused_optimal_slots
           # Caching seems to be important for the current dialogs to work
-          @unused_optimal_slots ||= disk.ensure_partition_table.unused_partition_slots
+          @unused_optimal_slots ||=
+            if disk.can_have_ptable?
+              disk.ensure_partition_table.unused_partition_slots
+            else
+              []
+            end
         end
 
         # All available slots to create the partition, honoring just the
@@ -91,9 +96,14 @@ module Y2Partitioner
         # @return [Array<Y2Storage::PartitionTables::PartitionSlot>]
         def unused_slots
           # Caching seems to be important for the current dialogs to work
-          @unused_slots ||= disk.ensure_partition_table.unused_partition_slots(
-            Y2Storage::AlignPolicy::ALIGN_START_KEEP_END, Y2Storage::AlignType::REQUIRED
-          )
+          @unused_slots ||=
+            if disk.can_have_ptable?
+              disk.ensure_partition_table.unused_partition_slots(
+                Y2Storage::AlignPolicy::ALIGN_START_KEEP_END, Y2Storage::AlignType::REQUIRED
+              )
+            else
+              []
+            end
         end
 
         # Grain to use in order to keep the optimal alignment

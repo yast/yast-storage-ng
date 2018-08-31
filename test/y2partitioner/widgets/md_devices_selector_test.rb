@@ -47,7 +47,7 @@ describe Y2Partitioner::Widgets::MdDevicesSelector do
     describe "#contents" do
       it "displays all the unselected devices in the corresponding table" do
         items = unselected_table.items
-        expect(rows_match?(items, "^/dev/sda2$", "^/dev/sda4$")).to eq true
+        expect(rows_match?(items, "^/dev/sda2$", "^/dev/sda4$", "^/dev/sdb$", "^/dev/sdc$")).to eq true
       end
 
       it "displays all the selected devices in the corresponding table and order" do
@@ -69,7 +69,7 @@ describe Y2Partitioner::Widgets::MdDevicesSelector do
       it "adds all the available devices at the end of the MD array" do
         widget.handle(event)
         expect(controller.devices_in_md.map(&:name)).to contain_exactly(
-          "/dev/sde3", "/dev/sda3", "/dev/sda2", "/dev/sda4"
+          "/dev/sde3", "/dev/sda3", "/dev/sda2", "/dev/sda4", "/dev/sdb", "/dev/sdc"
         )
       end
     end
@@ -79,8 +79,8 @@ describe Y2Partitioner::Widgets::MdDevicesSelector do
 
       it "displays all the selected devices in the corresponding table" do
         items = selected_table.items
-        expect(items.size).to eq 4
-        names = ["/dev/sde3$", "/dev/sda3$", "/dev/sda2$", "/dev/sda4$"]
+        expect(items.size).to eq 6
+        names = ["/dev/sde3$", "/dev/sda3$", "/dev/sda2$", "/dev/sda4$", "/dev/sdb$", "/dev/sdc$"]
         expect(rows_match?(items, *names)).to eq true
       end
 
@@ -105,7 +105,8 @@ describe Y2Partitioner::Widgets::MdDevicesSelector do
         it "does not alter the controller lists (no changes)" do
           widget.handle(event)
           expect(controller.devices_in_md.map(&:name)).to eq ["/dev/sde3", "/dev/sda3"]
-          expect(controller.available_devices.map(&:name)).to eq ["/dev/sda2", "/dev/sda4"]
+          expect(controller.available_devices.map(&:name))
+            .to contain_exactly("/dev/sda2", "/dev/sda4", "/dev/sdb", "/dev/sdc")
         end
       end
 
@@ -119,7 +120,7 @@ describe Y2Partitioner::Widgets::MdDevicesSelector do
 
         it "displays all the available devices in the corresponding table and order" do
           items = unselected_table.items
-          expect(rows_match?(items, "/dev/sda2$", "/dev/sda4$")).to eq true
+          expect(rows_match?(items, "/dev/sda2$", "/dev/sda4$", "/dev/sdb$", "/dev/sdc$")).to eq true
         end
       end
     end
@@ -137,7 +138,7 @@ describe Y2Partitioner::Widgets::MdDevicesSelector do
 
         it "causes the device to not be longer available" do
           widget.handle(event)
-          expect(controller.available_devices.map(&:name)).to contain_exactly("/dev/sda4")
+          expect(controller.available_devices.map(&:name)).to_not include("/dev/sda2")
         end
       end
 
@@ -152,8 +153,8 @@ describe Y2Partitioner::Widgets::MdDevicesSelector do
 
         it "displays all the available devices in the corresponding table" do
           items = unselected_table.items
-          expect(items.size).to eq 1
-          expect(rows_match?(items, "/dev/sda4$")).to eq true
+          expect(items.size).to eq 3
+          expect(rows_match?(items, "/dev/sda4$", "/dev/sdb", "/dev/sdc")).to eq true
         end
       end
     end
@@ -171,7 +172,7 @@ describe Y2Partitioner::Widgets::MdDevicesSelector do
       it "makes all devices available" do
         widget.handle(event)
         expect(controller.available_devices.map(&:name)).to contain_exactly(
-          "/dev/sda2", "/dev/sda3", "/dev/sda4", "/dev/sde3"
+          "/dev/sda2", "/dev/sda3", "/dev/sda4", "/dev/sdb", "/dev/sdc", "/dev/sde3"
         )
       end
     end
@@ -186,8 +187,8 @@ describe Y2Partitioner::Widgets::MdDevicesSelector do
 
       it "displays all the available devices in the corresponding table and order" do
         items = unselected_table.items
-        expect(items.size).to eq 4
-        names = ["/dev/sda2$", "/dev/sda3$", "/dev/sda4$", "/dev/sde3$"]
+        expect(items.size).to eq 6
+        names = ["/dev/sda2$", "/dev/sda3$", "/dev/sda4$", "/dev/sdb$", "/dev/sdc$", "/dev/sde3$"]
         expect(rows_match?(items, *names)).to eq true
       end
     end
@@ -207,7 +208,8 @@ describe Y2Partitioner::Widgets::MdDevicesSelector do
         it "does not alter the controller lists (no changes)" do
           widget.handle(event)
           expect(controller.devices_in_md.map(&:name)).to eq ["/dev/sde3", "/dev/sda3"]
-          expect(controller.available_devices.map(&:name)).to eq ["/dev/sda2", "/dev/sda4"]
+          expect(controller.available_devices.map(&:name))
+            .to contain_exactly("/dev/sda2", "/dev/sda4", "/dev/sdb", "/dev/sdc")
         end
       end
 
@@ -221,7 +223,7 @@ describe Y2Partitioner::Widgets::MdDevicesSelector do
 
         it "displays all the available devices in the corresponding table and order" do
           items = unselected_table.items
-          expect(rows_match?(items, "/dev/sda2$", "/dev/sda4$")).to eq true
+          expect(rows_match?(items, "/dev/sda2$", "/dev/sda4$", "/dev/sdb$", "/dev/sdc$")).to eq true
         end
       end
     end
@@ -238,7 +240,7 @@ describe Y2Partitioner::Widgets::MdDevicesSelector do
         it "makes the device available" do
           widget.handle(event)
           expect(controller.available_devices.map(&:name)).to contain_exactly(
-            "/dev/sda2", "/dev/sda3", "/dev/sda4"
+            "/dev/sda2", "/dev/sda3", "/dev/sda4", "/dev/sdb", "/dev/sdc"
           )
         end
       end
@@ -281,7 +283,8 @@ describe Y2Partitioner::Widgets::MdDevicesSelector do
             expect(controller.devices_in_md.map(&:name)).to eq [
               "/dev/sde3", "/dev/sda3", "/dev/sda2", "/dev/sda4"
             ]
-            expect(controller.available_devices).to be_empty
+            expect(controller.available_devices.map(&:name))
+              .to contain_exactly("/dev/sdb", "/dev/sdc")
           end
         end
 
@@ -332,7 +335,8 @@ describe Y2Partitioner::Widgets::MdDevicesSelector do
             expect(controller.devices_in_md.map(&:name)).to eq [
               "/dev/sde3", "/dev/sda3", "/dev/sda2", "/dev/sda4"
             ]
-            expect(controller.available_devices).to be_empty
+            expect(controller.available_devices.map(&:name))
+              .to contain_exactly("/dev/sdb", "/dev/sdc")
           end
         end
 
@@ -381,7 +385,8 @@ describe Y2Partitioner::Widgets::MdDevicesSelector do
             expect(controller.devices_in_md.map(&:name)).to eq [
               "/dev/sde3", "/dev/sda3", "/dev/sda2", "/dev/sda4"
             ]
-            expect(controller.available_devices).to be_empty
+            expect(controller.available_devices.map(&:name))
+              .to contain_exactly("/dev/sdb", "/dev/sdc")
           end
         end
 
@@ -432,7 +437,8 @@ describe Y2Partitioner::Widgets::MdDevicesSelector do
             expect(controller.devices_in_md.map(&:name)).to eq [
               "/dev/sde3", "/dev/sda3", "/dev/sda2", "/dev/sda4"
             ]
-            expect(controller.available_devices).to be_empty
+            expect(controller.available_devices.map(&:name))
+              .to contain_exactly("/dev/sdb", "/dev/sdc")
           end
         end
 

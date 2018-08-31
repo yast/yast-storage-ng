@@ -95,6 +95,32 @@ module Y2Storage
     #   @return [Boolean]
     storage_forward :usable_as_partitionable?
 
+    # Whether it is possible for the device to have a partition table right now
+    #
+    # Note this is different from {#usable_as_partitionable?}. Instead of
+    # checking whether is possible to have a partition table in general, based
+    # on the nature of the device, {#can_have_partition_table?} checks whether
+    # the partition table makes sense based on the current usage of the device.
+    # For example, devices being used directly as LVM PV or as members of an MD
+    # RAID cannot have partitions unless they are previously removed from the
+    # LVM/RAID.
+    #
+    # @return [Boolean] true if the device has a partition table or its possible
+    #   to add one
+    def can_have_partition_table?
+      return false unless usable_as_partitionable?
+      partition_table? || descendants.empty?
+    end
+
+    alias_method :can_have_ptable?, :can_have_partition_table?
+
+    # Whether the device contains a partition table
+    #
+    # @return [Boolean]
+    def partition_table?
+      !partition_table.nil?
+    end
+
     # Partitions in the device
     #
     # @return [Array<Partition>]

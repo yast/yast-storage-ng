@@ -59,6 +59,70 @@ describe Y2Partitioner::Actions::Controllers::Partition do
       expect(subject.unused_optimal_slots.inspect)
         .to eq(subject.disk.partition_table.unused_partition_slots.inspect)
     end
+
+    context "for a disk with no partition table" do
+      before do
+        current_graph.find_by_name(disk_name).delete_partition_table
+      end
+
+      context "that is not in use" do
+        it "returns a list with just one element (whole disk)" do
+          slots = subject.unused_optimal_slots
+          expect(slots).to be_a(Array)
+          expect(slots.size).to eq 1
+        end
+      end
+
+      context "that is part of a RAID" do
+        before do
+          md = Y2Storage::Md.create(current_graph, "/dev/md0")
+          md.add_device(current_graph.find_by_name(disk_name))
+        end
+
+        it "returns an empty list" do
+          slots = subject.unused_optimal_slots
+          expect(slots).to be_a(Array)
+          expect(slots).to be_empty
+        end
+      end
+    end
+  end
+
+  describe "#unused_slots" do
+    let(:disk_name) { "/dev/sdb" }
+
+    it "returns a list of PartitionSlot" do
+      slots = subject.unused_slots
+      expect(slots).to be_a(Array)
+      expect(slots).to all(be_a(Y2Storage::PartitionTables::PartitionSlot))
+    end
+
+    context "for a disk with no partition table" do
+      before do
+        current_graph.find_by_name(disk_name).delete_partition_table
+      end
+
+      context "that is not in use" do
+        it "returns a list with just one element (whole disk)" do
+          slots = subject.unused_slots
+          expect(slots).to be_a(Array)
+          expect(slots.size).to eq 1
+        end
+      end
+
+      context "that is part of a RAID" do
+        before do
+          md = Y2Storage::Md.create(current_graph, "/dev/md0")
+          md.add_device(current_graph.find_by_name(disk_name))
+        end
+
+        it "returns an empty list" do
+          slots = subject.unused_slots
+          expect(slots).to be_a(Array)
+          expect(slots).to be_empty
+        end
+      end
+    end
   end
 
   describe "#create_partition" do
