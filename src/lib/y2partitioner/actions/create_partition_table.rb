@@ -20,74 +20,72 @@
 # find current contact information at www.suse.com.
 
 require "yast"
-require "y2partitioner/actions/transaction_wizard"
-require "y2partitioner/actions/controllers"
+require "y2partitioner/device_graphs"
 require "y2partitioner/dialogs"
+
+Yast.import "Label"
 
 module Y2Partitioner
   module Actions
     # Action for creating a new partition table
-    #
-    # TODO: simplify the code for this. Using transactions, several steps and a
-    # separate controller is clearly overkill for such an straighforward action.
-    #
-    # It's error prone (as proved by bug#1078721) and produces some surprising
-    # visual glitches, like a completely empty wizard step (in the DASD case).
-    class CreatePartitionTable < TransactionWizard
-      attr_reader :controller
+    class CreatePartitionTable
+      include Yast::I18n
+      include Yast::Logger
+      include ConfirmRecursiveDelete
 
-      # @param disk_name [String]
-      def initialize(disk_name)
+      # @param disk [Y2Storage::Partitionable]
+      def initialize(disk)
         textdomain "storage"
+        @disk = disk
+      end
 
-        super()
-        @controller = Controllers::PartitionTable.new(disk_name)
+      # Checks whether the action can be performed, displays a confirmation
+      # popup and, if everything goes fine so far, performs the action.
+      #
+      # @return [Symbol]
+      def run
+        return :back unless validate && confirm
+
+        perform_action
+        :finish
       end
 
     protected
 
-      # @see TransactionWizard
-      def sequence_hash
-        {
-          "ws_start"    => "select_type",
-          "select_type" => { next: "confirm" },
-          "confirm"     => { next: "commit" },
-          "commit"      => { finish: :finish }
-        }
+      # @return [Y2Storage::Partitionable]
+      attr_reader :disk
+
+      # Device name of the partitionable device
+      # @return [String]
+      def disk_name
+        disk.name
       end
 
-      skip_stack :select_type
+      # Creates the new partition table, asking the user for the type if needed
+      #
+      # Does nothing if the user cancels the action when asked for the type
+      def perform_action
+        type = possible_types.size > 1 ? selected_type : default_type
+        return if type.nil?
 
-      # Open a dialog to let the user select the partition table type
-      # if there is more than one to select from.
-      def select_type
-        return :next unless controller.multiple_types?
-        Dialogs::PartitionTableType.run(controller)
+        create_partition_table(type)
       end
 
-      # Ask the user for confirmation message before creating the partition
-      # table.
-      def confirm
-        # TRANSLATORS %s is the disk device name ("/dev/sda" or similar)
-        msg = _("Really create a new partition table on %s?") % disk_name
-        msg += "\n\n"
-        msg += _("This will delete all existing partitions on that device\n" \
-                 "and all devices (LVM volume groups, RAIDs etc.)\n" \
-                 "that use any of those partitions!")
-        Yast::Popup.YesNo(msg) ? :next : :back
+      # Creates the new partition table
+      #
+      # @param type [Y2Storage::PartitionTables::Type]
+      def create_partition_table(type)
+        disk.remove_descendants
+        disk.create_partition_table(type)
+        Y2Storage::Filesystems::Btrfs.refresh_subvolumes_shadowing(device_graph)
       end
 
-      # Commit the action (creating a new partition table) to the staging
-      # devicegraph. This does not open a dialog.
-      def commit
-        log.info("Commit creating a new #{controller.type} partition table on #{disk_name}")
-        controller.create_partition_table
-        :finish
-      end
-
-      # @see TransactionWizard
-      def run?
-        return true if controller.can_create_partition_table?
+      # Checks if a partition table can be created on the disk, displaying an
+      # informative popup if it's not possible.
+      #
+      # @return [Boolean]
+      def validate
+        return true if possible_types.size > 0
 
         Yast::Popup.Error(
           # TRANSLATORS: %s is a device name (e.g. "/dev/sda")
@@ -96,10 +94,95 @@ module Y2Partitioner
         false
       end
 
-      # Return the device name of the disk
-      # @return [String]
-      def disk_name
-        controller.disk_name
+      # If the operation have destructive consequences, ask for confirmation
+      # to the user.
+      #
+      # @return [Boolean] true if the action is safe or the user confirmed
+      #   to accept the consequences
+      def confirm
+        return true if safe?
+
+        if disk.filesystem
+          confirm_with_filesystem
+        else
+          confirm_with_nested_devices
+        end
+      end
+
+      # Whether performing the action can be considered non-destructive
+      #
+      # @return [Boolean] true if the disk is completely empty and unused or if
+      #   it only contains an empty partition table
+      def safe?
+        desc = disk.descendants.size
+        return true if desc.zero?
+        return false if desc > 1
+
+        disk.partition_table? || disk.encrypted?
+      end
+
+      # @see #confirm
+      def confirm_with_nested_devices
+        confirm_recursive_delete(
+          disk,
+          _("Confirm Deleting of Current Devices"),
+          _("If you proceed, the following devices will be deleted:"),
+          # TRANSLATORS %s is the disk device name ("/dev/sda" or similar)
+          _("Really create a new partition table on %s") % disk_name
+        )
+      end
+
+      # @see ConfirmRecursiveDelete#recursive_delete_yes_label
+      def recursive_delete_yes_label
+        Yast::Label.YesButton
+      end
+
+      # @see ConfirmRecursiveDelete#recursive_delete_no_label
+      def recursive_delete_no_label
+        Yast::Label.NoButton
+      end
+
+      # @see #confirm
+      def confirm_with_filesystem
+        fs = disk.filesystem.type.to_human
+        # TRANSLATORS: the first %s is replaced by the type of the filesystem
+        # (for example, "Btrfs" or "Ext2"), the second one by the disk device name
+        # ("/dev/sda" or similar).
+        msg = format(
+          _(
+            "This will delete the %s file system from the device\n\n" \
+            "Really create a new partition table on %s?"
+          ),
+          fs, disk_name
+        )
+        result = Yast2::Popup.show(msg, buttons: :yes_no)
+        result == :yes
+      end
+
+      def selected_type
+        dialog = Dialogs::PartitionTableType.new(disk, possible_types, default_type)
+
+        return nil unless dialog.run == :next
+        dialog.selected_type
+      end
+
+      # Partition table types that are supported by this disk
+      #
+      # @return [Array<Y2Storage::PartitionTables::Type>]
+      def possible_types
+        @possible_types ||= disk.possible_partition_table_types
+      end
+
+      # Return the default partition table types for this disk.
+      def default_type
+        @default_type ||= disk.preferred_ptable_type || possible_types.first
+      end
+
+      # Current devicegraph
+      #
+      # @return [Y2Storage::Devicegraph]
+      def device_graph
+        DeviceGraphs.instance.current
       end
     end
   end

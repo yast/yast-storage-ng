@@ -45,7 +45,7 @@ describe Y2Partitioner::Widgets::DiskExpertMenuButton do
 
     before do
       allow(Y2Partitioner::Actions::CreatePartitionTable).to receive(:new)
-        .with(disk.name).and_return(create_partition_table_action)
+        .with(disk).and_return(create_partition_table_action)
 
       allow(Y2Partitioner::Actions::CloneDisk).to receive(:new)
         .with(disk).and_return(clone_disk_action)
