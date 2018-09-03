@@ -24,6 +24,8 @@ require "cwm/table"
 require "y2partitioner/icons"
 require "y2partitioner/widgets/help"
 
+Yast.import "Mode"
+
 module Y2Partitioner
   module Widgets
     # Abstract class to unify the definition of table widgets used to
@@ -200,7 +202,12 @@ module Y2Partitioner
 
       def mount_point_value(device)
         fs = filesystem(device)
-        fs.nil? ? "" : fs.mount_path
+        res = fs.nil? ? "" : fs.mount_path
+        if fs && Yast::Mode.normal
+          res += "(*)" if fs.mount_point && !fs.mount_point.active?
+        end
+
+        res
       end
 
       def start_value(device)

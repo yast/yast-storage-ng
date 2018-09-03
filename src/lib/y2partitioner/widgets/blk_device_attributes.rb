@@ -175,6 +175,8 @@ module Y2Partitioner
         return res unless blk_device.blk_filesystem.mount_point
         # TRANSLATORS: note appended to mount point if mount point is not now mounted
         res += _(" (not mounted)") unless blk_device.blk_filesystem.mount_point.active?
+
+        res
       end
 
       # Information about the filesystem label
