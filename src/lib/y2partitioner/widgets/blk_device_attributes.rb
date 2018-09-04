@@ -168,7 +168,21 @@ module Y2Partitioner
       # @return [String]
       def device_filesystem_mount_point
         # TRANSLATORS: Mount point information, where %s is replaced by a mount point
-        format(_("Mount Point: %s"), blk_device.filesystem_mountpoint || "")
+        res = format(_("Mount Point: %s"), blk_device.filesystem_mountpoint || "")
+        # TRANSLATORS: note appended to mount point if mount point is not now mounted
+        res += _(" (not mounted)") if mount_point_inactive?
+
+        res
+      end
+
+      def mount_point_inactive?
+        fs = blk_device.blk_filesystem
+        return false unless fs
+
+        mp = fs.mount_point
+        return false unless mp
+
+        !mp.active?
       end
 
       # Information about the filesystem label

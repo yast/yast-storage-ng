@@ -27,9 +27,21 @@ describe Y2Partitioner::Widgets::ConfigurableBlkDevicesTable do
   end
 
   describe "#items" do
+    let(:devices) { device_graph.partitions }
+
     it "returns array of arrays" do
       expect(subject.items).to be_a(::Array)
       expect(subject.items.first).to be_a(::Array)
+    end
+
+    it "adds asterisk to mount point when not mounted" do
+      allow_any_instance_of(Y2Storage::MountPoint).to receive(:active?).and_return(false)
+
+      items = subject.items
+      puts items.inspect
+      expect(subject.items.any? { |i| i.any? { |inner| inner =~ / */ } }).to(
+        eq(true), "Missing items with asterisk: #{items.inspect}"
+      )
     end
   end
 
