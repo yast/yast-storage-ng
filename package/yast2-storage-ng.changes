@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Tue Sep  4 11:45:19 UTC 2018 - jreidinger@suse.com
+
+- Add asterisk to mount points that is not active and also write it
+  to description (FATE#318196)
+- 4.1.13
+
+-------------------------------------------------------------------
 Thu Aug 30 07:41:35 UTC 2018 - jlopez@suse.com
 
 - Improved wording when moving partitions (bsc#1099599).
