@@ -176,7 +176,13 @@ module Y2Partitioner
       end
 
       def mount_point_inactive?
-        blk_device.blk_filesystem&.mount_point&.active? == false
+        fs = blk_device.blk_filesystem
+        return false unless fs
+
+        mp = fs.mount_point
+        return false unless mp
+
+        !mp.active?
       end
 
       # Information about the filesystem label
