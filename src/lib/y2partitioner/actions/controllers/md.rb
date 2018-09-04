@@ -297,7 +297,7 @@ module Y2Partitioner
         # @param device [Y2Storage::BlkDevice]
         # @return [Boolean] true if can be used for a MD RAID; false otherwise.
         def available?(device)
-          return false if device.lvm_pv || device.md
+          return false unless device.component_of.empty?
 
           device.filesystem.nil? || device.filesystem.mount_point.nil?
         end
