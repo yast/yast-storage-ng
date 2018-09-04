@@ -39,7 +39,7 @@ describe Y2Partitioner::Widgets::ConfigurableBlkDevicesTable do
 
       items = subject.items
       puts items.inspect
-      expect(subject.items.any? { |i| i.any? { |inner| inner =~ /\(*\)/ } }).to(
+      expect(subject.items.any? { |i| i.any? { |inner| inner =~ / */ } }).to(
         eq(true), "Missing items with asterisk: #{items.inspect}"
       )
     end

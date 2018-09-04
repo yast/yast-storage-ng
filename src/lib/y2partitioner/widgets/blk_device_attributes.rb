@@ -22,7 +22,6 @@
 require "yast/i18n"
 
 Yast.import "HTML"
-Yast.import "Mode"
 
 module Y2Partitioner
   module Widgets
@@ -170,13 +169,14 @@ module Y2Partitioner
       def device_filesystem_mount_point
         # TRANSLATORS: Mount point information, where %s is replaced by a mount point
         res = format(_("Mount Point: %s"), blk_device.filesystem_mountpoint || "")
-        return res unless Yast::Mode.normal
-        return res unless blk_device.blk_filesystem
-        return res unless blk_device.blk_filesystem.mount_point
         # TRANSLATORS: note appended to mount point if mount point is not now mounted
-        res += _(" (not mounted)") unless blk_device.blk_filesystem.mount_point.active?
+        res += _(" (not mounted)") if mount_point_inactive?
 
         res
+      end
+
+      def mount_point_inactive?
+        blk_device.blk_filesystem&.mount_point&.active? == false
       end
 
       # Information about the filesystem label
