@@ -30,7 +30,7 @@ describe Y2Partitioner::Widgets::PartitionDescription do
 
   let(:current_graph) { Y2Partitioner::DeviceGraphs.instance.current }
 
-  let(:partition) { current_graph.partitions.first }
+  let(:partition) { current_graph.partitions.find { |p| p.name == "/dev/sdb2" } }
 
   subject { described_class.new(partition) }
 
@@ -39,6 +39,21 @@ describe Y2Partitioner::Widgets::PartitionDescription do
   describe "#init" do
     it "runs without failure" do
       expect { subject.init }.to_not raise_error
+    end
+  end
+
+  describe "#value" do
+    it "contains (not mounted) beside mount point if it is not mounted" do
+      allow(partition).to receive(:blk_filesystem)
+        .and_return(double(
+          type:        Y2Storage::Filesystems::Type::EXT4,
+          mount_point: double(active?: false),
+          mount_path:  "/"
+        ).as_null_object)
+
+      expect(subject).to receive(:value=).with(/\(not mounted\)/)
+
+      subject.init
     end
   end
 end
