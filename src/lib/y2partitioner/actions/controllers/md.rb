@@ -69,11 +69,13 @@ module Y2Partitioner
           md.delete_filesystem
         end
 
-        # Partitions that can be selected to become part of the MD array
+        # Devices that can be selected to become part of the MD array
         #
-        # @return [Array<Y2Storage::Partition>]
+        # @return [Array<Y2Storage::BlkDevice>]
         def available_devices
-          working_graph.partitions.select { |part| available?(part) }
+          # StrayBlkDevice not offered. They are used for very concrete
+          # use cases in which RAID makes probably no sense.
+          (available_disks + available_partitions).sort { |a, b| a.compare_by_name(b) }
         end
 
         # Partitions that are already part of the MD array, sorted by position
@@ -95,6 +97,11 @@ module Y2Partitioner
           if md.devices.include?(device)
             raise ArgumentError, "The device #{device} is already part of the Md #{md}"
           end
+
+          # When adding a whole disk (or other partitionable device) we need to
+          # ensure the partition table will be not affected (i.e. restored) if
+          # the users change their mind during the process.
+          BlkDeviceRestorer.new(device).update_checkpoint if device.respond_to?(:partition_table)
 
           device.adapted_id = Y2Storage::PartitionId::RAID if device.is?(:partition)
           device.remove_descendants
@@ -256,17 +263,19 @@ module Y2Partitioner
           md
         end
 
-        # Whether the partition is available to be used in a MD RAID
+        # Partitions to be offered as "Available Devices" in the UI
         #
-        # @note A partition is available if it is valid to be used in a MD RAID and
-        #   it is not formatted or not mounted.
-        #
-        # @param partition [Y2Storage::Partition]
-        # @return [Boolean] true if can be used for a MD RAID; false otherwise.
-        def available?(partition)
-          return false unless valid_for_md?(partition)
+        # @return [Array<Y2Storage::Partition]
+        def available_partitions
+          working_graph.partitions.select { |d| valid_for_md?(d) && available?(d) }
+        end
 
-          partition.filesystem.nil? || partition.filesystem.mount_point.nil?
+        # Disk-like devices to be offered as "Available Devices" in the UI
+        #
+        # @return [Array<Y2Storage::BlkDevice]
+        def available_disks
+          disks = working_graph.disk_devices.select { |i| i.is?(:disk, :multipath) }
+          disks.select { |d| d.partitions.empty? && available?(d) }
         end
 
         # Whether the partition is valid to be used in a MD RAID
@@ -278,10 +287,23 @@ module Y2Partitioner
         # @param partition [Y2Storage::Partition]
         # @return [Boolean] true if it is valid; false otherwise.
         def valid_for_md?(partition)
-          partition.id.is?(:linux_system) &&
-            !partition.type.is?(:extended) &&
-            partition.lvm_pv.nil? &&
-            partition.md.nil?
+          partition.id.is?(:linux_system) && !partition.type.is?(:extended)
+        end
+
+        # Whether the device is available to be used in a MD RAID
+        #
+        # A device is available if it is not already used by a RAID or
+        # used as physical volume or assigned to a mount point.
+        #
+        # @note This method does not check if the device is suitable (correct
+        # type, etc.), only if it's not already in use.
+        #
+        # @param device [Y2Storage::BlkDevice]
+        # @return [Boolean] true if can be used for a MD RAID; false otherwise.
+        def available?(device)
+          return false unless device.component_of.empty?
+
+          device.filesystem.nil? || device.filesystem.mount_point.nil?
         end
 
         def min_chunk_size

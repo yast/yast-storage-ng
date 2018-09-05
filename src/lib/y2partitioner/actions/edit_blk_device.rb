@@ -114,13 +114,17 @@ module Y2Partitioner
       #
       # @return [String, nil] nil if the device is not being used.
       def used_device_error
-        return nil unless device.part_of_lvm_or_md?
+        using_devs = device.component_of_names
+        return nil if using_devs.empty?
 
         format(
           # TRANSLATORS: %{name} is replaced by a device name (e.g., /dev/sda1).
-          _("The device %{name} is in use. It cannot be\n" \
-            "edited. To edit %{name}, make sure it is not used."),
-          name: device.name
+          # and %{users} is replaced by a comma-separated list of name devices
+          # (devices using the first one).
+          _("The device %{name} is in use (%{users}).\n" \
+            "It cannot be edited.\n" \
+            "To edit %{name}, make sure it is not used."),
+          name: device.name, users: using_devs.join(", ")
         )
       end
 

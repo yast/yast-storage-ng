@@ -1,7 +1,7 @@
 #!/usr/bin/env rspec
 # encoding: utf-8
 
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2017-18] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -26,34 +26,37 @@ require "cwm/rspec"
 require "y2partitioner/actions/create_partition_table"
 
 describe Y2Partitioner::Actions::CreatePartitionTable do
-  let(:select_dialog) { Y2Partitioner::Dialogs::PartitionTableType }
+  # Declare some shortcuts
+  let(:dialog_class) { Y2Partitioner::Dialogs::PartitionTableType }
+  let(:type_gpt) { Y2Storage::PartitionTables::Type::GPT }
+  let(:type_msdos) { Y2Storage::PartitionTables::Type::MSDOS }
+  let(:type_dasd) { Y2Storage::PartitionTables::Type::DASD }
 
-  context "With a PC with 2 disks with some partitions" do
+  before { devicegraph_stub(scenario) }
+  subject(:action) { described_class.new(disk) }
+  let(:current_graph) { Y2Partitioner::DeviceGraphs.instance.current }
+  let(:disk) { current_graph.find_by_name(disk_name) }
+
+  describe "#run" do
     before do
-      devicegraph_stub("mixed_disks_btrfs.yml")
+      allow(action).to receive(:confirm_recursive_delete).and_return confirmed
     end
+    let(:confirmed) { false }
 
-    subject(:action) { described_class.new(disk_name) }
-    let(:disk) { Y2Partitioner::DeviceGraphs.instance.current.find_by_name(disk_name) }
-
-    let(:disk_name) { "/dev/sdb" }
-    let(:original_partitions) do
-      ["/dev/sdb1", "/dev/sdb2", "/dev/sdb3", "/dev/sdb4", "/dev/sdb5", "/dev/sdb6", "/dev/sdb7"]
-    end
-
-    describe "#run" do
-      before do
-        allow(select_dialog).to receive(:run).and_return dialog_result
+    context "for a disk with some partitions" do
+      let(:scenario) { "mixed_disks_btrfs.yml" }
+      let(:disk_name) { "/dev/sdb" }
+      let(:original_partitions) do
+        ["/dev/sdb1", "/dev/sdb2", "/dev/sdb3", "/dev/sdb4", "/dev/sdb5", "/dev/sdb6", "/dev/sdb7"]
       end
-      let(:dialog_result) { :back }
 
-      it "displays a dialog to select the partition table type" do
-        expect(select_dialog).to receive(:run).and_return dialog_result
+      it "shows a confirmation dialog" do
+        expect(action).to receive(:confirm_recursive_delete).with(disk, any_args)
         action.run
       end
 
-      context "if the user goes back in the type selection" do
-        let(:dialog_result) { :back }
+      context "if the user rejects the confirmation" do
+        let(:confirmed) { false }
 
         it "leaves the disk untouched" do
           action.run
@@ -65,30 +68,55 @@ describe Y2Partitioner::Actions::CreatePartitionTable do
         end
       end
 
-      context "if the user proceeds beyond the type selection" do
-        let(:dialog_result) { :next }
+      context "if the user confirms" do
+        let(:confirmed) { true }
 
         before do
-          allow(Yast::Popup).to receive(:YesNo).and_return confirmed
+          allow(dialog_class).to receive(:new).and_return dialog
         end
-        let(:confirmed) { false }
+        let(:dialog) { dialog_class.new(disk, [type_gpt, type_msdos], type_gpt) }
 
-        it "shows a confirmation dialog" do
-          expect(Yast::Popup).to receive(:YesNo)
+        it "displays a dialog to select the partition table type" do
+          expect(dialog_class).to receive(:new).with(disk, [type_gpt, type_msdos], type_gpt)
+          expect(dialog).to receive(:run)
           action.run
         end
 
-        context "and the user confirms" do
-          let(:confirmed) { true }
+        context "if the user goes back in the type selection" do
+          before { allow(dialog).to receive(:run).and_return :back }
 
-          before { action.controller.type = type }
+          it "leaves the disk untouched" do
+            action.run
+            expect(disk.partitions.map(&:name).sort).to eq original_partitions
+          end
+
+          it "returns :finish" do
+            expect(action.run).to eq :finish
+          end
+        end
+
+        context "if the user cancels the type selection" do
+          before { allow(dialog).to receive(:run).and_return :abort }
+
+          it "leaves the disk untouched" do
+            action.run
+            expect(disk.partitions.map(&:name).sort).to eq original_partitions
+          end
+
+          it "returns :finish" do
+            expect(action.run).to eq :finish
+          end
+        end
+
+        context "if the user selects a type" do
+          before { allow(dialog).to receive(:run).and_return :next }
 
           context "and the user selected GPT" do
-            let(:type) { Y2Storage::PartitionTables::Type::GPT }
+            before { allow(dialog).to receive(:selected_type).and_return type_gpt }
 
             it "replaces the previous partition table with a new empty GPT" do
               action.run
-              expect(disk.partition_table.type).to eq type
+              expect(disk.partition_table.type).to eq type_gpt
               expect(disk.partitions).to be_empty
             end
 
@@ -98,11 +126,11 @@ describe Y2Partitioner::Actions::CreatePartitionTable do
           end
 
           context "and the user did selected MSDOS" do
-            let(:type) { Y2Storage::PartitionTables::Type::MSDOS }
+            before { allow(dialog).to receive(:selected_type).and_return type_msdos }
 
             it "replaces the previous partition table with a new empty MSDOS one" do
               action.run
-              expect(disk.partition_table.type).to eq type
+              expect(disk.partition_table.type).to eq type_msdos
               expect(disk.partitions).to be_empty
             end
 
@@ -111,76 +139,79 @@ describe Y2Partitioner::Actions::CreatePartitionTable do
             end
           end
         end
-
-        context "and the user rejects" do
-          let(:confirmed) { false }
-
-          it "leaves the disk untouched" do
-            action.run
-            expect(disk.partitions.map(&:name).sort).to eq original_partitions
-          end
-
-          it "returns :back" do
-            expect(action.run).to eq :back
-          end
-        end
       end
     end
 
-    describe "#run?" do
-      context "With an existing disk" do
-        let(:disk_name) { "/dev/sda" }
-        it "Reports that it can run the workflow" do
-          expect(Yast::Popup).not_to receive(:Error)
-          expect(subject.controller.disk).not_to be_nil
-          expect(subject.send(:run?)).to be true
-        end
-      end
-
-      context "With a nonexistent disk" do
-        let(:disk_name) { "/dev/doesnotexist" }
-        it "Reports that it can't run the workflow" do
-          expect(Yast::Popup).to receive(:Error)
-          expect(subject.send(:run?)).to be false
-        end
-      end
-    end
-  end
-
-  context "With a S/390 DASD with one partition" do
-    before do
-      devicegraph_stub("dasd_50GiB.yml")
-    end
-
-    subject(:action) { described_class.new(disk_name) }
-    let(:dasd) { Y2Partitioner::DeviceGraphs.instance.current.find_by_name(disk_name) }
-
-    let(:disk_name) { "/dev/sda" }
-    let(:original_partitions) { ["/dev/sda1"] }
-
-    describe "#run" do
-      before do
-        allow(Yast::Popup).to receive(:YesNo).and_return confirmed
-      end
-      let(:confirmed) { false }
-
-      it "does not display a dialog to select the partition table type" do
-        expect(select_dialog).to_not receive(:run)
-        action.run
-      end
+    context "With a S/390 DASD with one partition" do
+      let(:scenario) { "dasd_50GiB.yml" }
+      let(:disk_name) { "/dev/sda" }
+      let(:original_partitions) { ["/dev/sda1"] }
 
       it "shows a confirmation dialog" do
-        expect(Yast::Popup).to receive(:YesNo)
+        expect(action).to receive(:confirm_recursive_delete).with(disk, any_args)
         action.run
+      end
+
+      context "if the user rejects the confirmation" do
+        let(:confirmed) { false }
+
+        it "leaves the DASD untouched" do
+          action.run
+          expect(disk.partitions.map(&:name).sort).to eq original_partitions
+        end
+
+        it "returns :back" do
+          expect(action.run).to eq :back
+        end
       end
 
       context "if the user confirms" do
         let(:confirmed) { true }
 
-        it "replaces the previous partition table with a new empty GPT one" do
+        it "does not display a dialog to select the partition table type" do
+          expect(dialog_class).to_not receive(:run)
           action.run
-          expect(dasd.partition_table.type).to eq Y2Storage::PartitionTables::Type::DASD
-          expect(dasd.partitions).to be_empty
+        end
+
+        it "replaces the previous partition table with a new empty DASD one" do
+          action.run
+          expect(disk.partition_table.type).to eq type_dasd
+          expect(disk.partitions).to be_empty
+        end
+
+        it "returns :finish" do
+          expect(action.run).to eq :finish
+        end
+      end
+    end
+
+    context "for an unused disk with no partitions" do
+      let(:scenario) { "mixed_disks_btrfs.yml" }
+      let(:disk_name) { "/dev/sdc" }
+
+      before { allow(dialog_class).to receive(:new).and_return dialog }
+      let(:dialog) { dialog_class.new(disk, [type_gpt, type_msdos], type_gpt) }
+
+      it "does not display any confirmation dialog" do
+        allow(dialog).to receive(:run)
+
+        expect(action).to_not receive(:confirm_recursive_delete)
+        action.run
+      end
+
+      it "displays a dialog to select the partition table type" do
+        expect(dialog_class).to receive(:new).with(disk, [type_gpt, type_msdos], type_gpt)
+        expect(dialog).to receive(:run)
+        action.run
+      end
+
+      context "if the user goes back in the type selection" do
+        before { allow(dialog).to receive(:run).and_return :back }
+
+        it "leaves the disk untouched" do
+          ptable_sid = disk.partition_table.sid
+          action.run
+          expect(disk.partition_table.sid).to eq ptable_sid
         end
 
         it "returns :finish" do
@@ -188,17 +219,218 @@ describe Y2Partitioner::Actions::CreatePartitionTable do
         end
       end
 
-      context "if the user rejects" do
+      context "if the user cancels the type selection" do
+        before { allow(dialog).to receive(:run).and_return :abort }
+
+        it "leaves the disk untouched" do
+          ptable_sid = disk.partition_table.sid
+          action.run
+          expect(disk.partition_table.sid).to eq ptable_sid
+        end
+
+        it "returns :finish" do
+          expect(action.run).to eq :finish
+        end
+      end
+
+      context "if the user selects a type" do
+        before { allow(dialog).to receive(:run).and_return :next }
+
+        context "and the user selected GPT" do
+          before { allow(dialog).to receive(:selected_type).and_return type_gpt }
+
+          it "replaces the previous partition table with a new empty GPT" do
+            ptable_sid = disk.partition_table.sid
+            action.run
+            expect(disk.partition_table.type).to eq type_gpt
+            expect(disk.partition_table.sid).to_not eq ptable_sid
+          end
+
+          it "returns :finish" do
+            expect(action.run).to eq :finish
+          end
+        end
+
+        context "and the user did selected MSDOS" do
+          before { allow(dialog).to receive(:selected_type).and_return type_msdos }
+
+          it "replaces the previous partition table with a new empty MSDOS one" do
+            ptable_sid = disk.partition_table.sid
+            action.run
+            expect(disk.partition_table.type).to eq type_msdos
+            expect(disk.partition_table.sid).to_not eq ptable_sid
+          end
+
+          it "returns :finish" do
+            expect(action.run).to eq :finish
+          end
+        end
+      end
+    end
+
+    context "for a disk that is part of a RAID" do
+      let(:scenario) { "mixed_disks_btrfs.yml" }
+      let(:disk_name) { "/dev/sdc" }
+      let(:new_md) { Y2Storage::Md.create(current_graph, "/dev/md0") }
+
+      before do
+        disk.remove_descendants
+        new_md.add_device(disk)
+
+        allow(dialog_class).to receive(:new).and_return dialog
+      end
+
+      let(:dialog) { dialog_class.new(disk, [type_gpt, type_msdos], type_gpt) }
+
+      it "shows a confirmation dialog" do
+        expect(action).to receive(:confirm_recursive_delete).with(disk, any_args)
+        action.run
+      end
+
+      context "if the user rejects the confirmation" do
         let(:confirmed) { false }
 
         it "leaves the disk untouched" do
           action.run
-          expect(dasd.partitions.map(&:name).sort).to eq original_partitions
+          expect(disk.partition_table?).to eq false
+          expect(disk.md).to eq new_md
         end
 
         it "returns :back" do
           expect(action.run).to eq :back
         end
+      end
+
+      context "if the user confirms" do
+        let(:confirmed) { true }
+
+        before do
+          allow(dialog_class).to receive(:new).and_return dialog
+        end
+        let(:dialog) { dialog_class.new(disk, [type_gpt, type_msdos], type_gpt) }
+
+        it "displays a dialog to select the partition table type" do
+          expect(dialog_class).to receive(:new).with(disk, [type_gpt, type_msdos], type_gpt)
+          expect(dialog).to receive(:run)
+          action.run
+        end
+
+        context "if the user goes back in the type selection" do
+          before { allow(dialog).to receive(:run).and_return :back }
+
+          it "leaves the disk untouched" do
+            action.run
+            expect(disk.partition_table?).to eq false
+            expect(disk.md).to eq new_md
+          end
+
+          it "returns :finish" do
+            expect(action.run).to eq :finish
+          end
+        end
+
+        context "if the user selects a type" do
+          before do
+            allow(dialog).to receive(:run).and_return :next
+            allow(dialog).to receive(:selected_type).and_return type_gpt
+          end
+
+          it "deletes the MD RAID" do
+            action.run
+            expect(disk.md).to be_nil
+          end
+
+          it "adds a new partition table to the disk" do
+            action.run
+            expect(disk.partition_table.type).to eq type_gpt
+          end
+
+          it "returns :finish" do
+            expect(action.run).to eq :finish
+          end
+        end
+      end
+    end
+
+    context "for a directly formatted device" do
+      let(:scenario) { "multipath-formatted.xml" }
+      let(:disk_name) { "/dev/mapper/0QEMU_QEMU_HARDDISK_mpath1" }
+
+      before do
+        allow(Yast2::Popup).to receive(:show).and_return popup_result
+        allow(dialog_class).to receive(:new).and_return dialog
+      end
+
+      let(:popup_result) { :no }
+      let(:dialog) { dialog_class.new(disk, [type_gpt, type_msdos], type_gpt) }
+
+      it "shows a confirmation dialog regarding data on the filesystem" do
+        expect(Yast2::Popup).to receive(:show).with(/Ext4/i, buttons: :yes_no)
+        action.run
+      end
+
+      context "if the user rejects the confirmation" do
+        let(:popup_result) { :no }
+
+        it "leaves the device untouched" do
+          fs_id = disk.filesystem.sid
+          action.run
+          expect(disk.partition_table?).to eq false
+          expect(disk.filesystem.sid).to eq fs_id
+        end
+
+        it "returns :back" do
+          expect(action.run).to eq :back
+        end
+      end
+
+      context "if the user confirms and selects a type" do
+        let(:popup_result) { :yes }
+
+        before do
+          allow(dialog).to receive(:run).and_return :next
+          allow(dialog).to receive(:selected_type).and_return type_gpt
+        end
+
+        it "deletes the filesystem" do
+          action.run
+          expect(disk.filesystem).to be_nil
+        end
+
+        it "adds a new partition table to the disk" do
+          action.run
+          expect(disk.partition_table.type).to eq type_gpt
+        end
+
+        it "returns :finish" do
+          expect(action.run).to eq :finish
+        end
+      end
+    end
+
+    context "for an unformatted ECKD DASD (it cannot have partition table)" do
+      let(:scenario) { "unformatted-eckd-dasd" }
+      let(:disk_name) { "/dev/dasda" }
+
+      before { allow(Yast::Popup).to receive(:Error) }
+
+      it "does not display any confirmation dialog" do
+        expect(action).to_not receive(:confirm_recursive_delete)
+        action.run
+      end
+
+      it "does not display any dialog to select the partition table type" do
+        expect(dialog_class).to_not receive(:new)
+        action.run
+      end
+
+      it "displays an error popup" do
+        expect(Yast::Popup).to receive(:Error)
+        action.run
+      end
+
+      it "returns :back" do
+        expect(action.run).to eq :back
       end
     end
   end

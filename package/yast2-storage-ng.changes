@@ -1,4 +1,14 @@
 -------------------------------------------------------------------
+Wed Sep  5 14:41:15 UTC 2018 - ancor@suse.com
+
+- Partitioner: allow to add full disks and multipath devices (with
+  no partition table) to MD RAID arrays (fate#318196).
+- Partitioner: improved checks and workflow for "Create New
+  Partition Table"
+- More informative message when a device is in use.
+- 4.1.14
+
+-------------------------------------------------------------------
 Tue Sep  4 11:45:19 UTC 2018 - jreidinger@suse.com
 
 - Add asterisk to mount points that is not active and also write it

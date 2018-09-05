@@ -23,14 +23,14 @@ require "y2storage"
 require "y2partitioner/device_graphs"
 
 module Y2Partitioner
-  # Class that makes possible to restore the filesystem that was associated to
-  # a given block device in a previous point in time.
+  # Class that makes possible to restore the filesystem or partition table
+  # that was associated to a given block device in a previous point in time.
   #
   # This is used by the Partitioner to implement the "Do Not Format" option
   # (it restores the filesystem in the system devicegraph) and to implement
   # removing devices from the in-memory representation of an MD or LVM (it
-  # restores the filesystem that was associated to the device when it was
-  # initially added to the MD or LVM).
+  # restores the filesystem or the empty partition table that was associated
+  # to the device when it was initially added to the MD or LVM).
   class BlkDeviceRestorer
     # Target device
     #
@@ -108,8 +108,17 @@ module Y2Partitioner
     def can_restore_device?(dev)
       return false if dev.nil?
       return true if dev.descendants.empty?
+      can_restore_descendants?(dev)
+    end
+
+    # @see #can_restore_device?
+    #
+    # @param dev [Y2Storage::BlkDevice, nil] source device
+    # @return [Boolean]
+    def can_restore_descendants?(dev)
       return true if dev.filesystem
-      dev.descendants.size == 1 && dev.encrypted?
+      return true if dev.descendants.size == 1 && dev.encrypted?
+      dev.respond_to?(:partition_table?) && dev.partition_table?
     end
 
     # Restores a given source device into {#device}
@@ -131,6 +140,8 @@ module Y2Partitioner
     def restore_children(source)
       if source.encrypted?
         restore_encryption_and_descendants(source)
+      elsif source.respond_to?(:partition_table?) && source.partition_table?
+        restore_partition_table(source)
       else
         restore_filesystem_and_descendants(source)
       end
@@ -148,6 +159,12 @@ module Y2Partitioner
       filesystem = source.filesystem.to_storage_value
       copy_device(filesystem)
       copy_subvolumes(filesystem)
+    end
+
+    # @param source [Y2Storage::Partitionable]
+    def restore_partition_table(source)
+      ptable = source.partition_table.to_storage_value
+      copy_device(ptable)
     end
 
     # Recursively copy all the subvolumes of the source device to the current

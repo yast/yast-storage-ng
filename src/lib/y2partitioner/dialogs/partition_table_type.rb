@@ -21,6 +21,7 @@
 
 require "yast"
 require "cwm/common_widgets"
+require "y2storage"
 require "y2partitioner/dialogs/base"
 
 module Y2Partitioner
@@ -30,12 +31,16 @@ module Y2Partitioner
     class PartitionTableType < Base
       # Choose partition table type
       class TypeChoice < CWM::RadioButtons
-        # @param controller [Actions::Controllers::PartitionTable]
-        def initialize(controller)
+        # Constructor
+        #
+        # @param possible_types [Array<Y2Storage::PartitionTables::Type>]
+        # @param default_type [Y2Storage::PartitionTables::Type]
+        def initialize(possible_types, default_type)
           textdomain "storage"
+          super()
 
-          @controller = controller
-          @supported_types = controller.possible_partition_table_types.map(&:to_s)
+          @supported_types = possible_types.map(&:to_s)
+          @default_type = default_type.to_s
           log.info("Supported partition table types: #{@supported_types}")
         end
 
@@ -47,7 +52,7 @@ module Y2Partitioner
         # @macro seeAbstractWidget
         def help
           # helptext
-          _("<p>Choose the partition table type for the new partition.</p>")
+          _("<p>Choose the type of the new partition table.</p>")
         end
 
         def items
@@ -71,37 +76,38 @@ module Y2Partitioner
 
         # @macro seeAbstractWidget
         def init
-          self.value = @controller.default_partition_table_type.to_s
-        end
-
-        # @macro seeAbstractWidget
-        def store
-          @controller.type = Y2Storage::PartitionTables::Type.new(value)
+          self.value = @default_type
         end
       end
 
-      # @param controller [Actions::Controllers::Partition]
-      #   partition controller collecting data for a partition to be created
-      def initialize(controller)
-        @disk_name = controller.disk_name
-        @controller = controller
+      # Constructor
+      #
+      # @param disk [Y2Storage::Partitionable]
+      # @param possible_types [Array<Y2Storage::PartitionTables::Type>]
+      # @param default_type [Y2Storage::PartitionTables::Type]
+      def initialize(disk, possible_types, default_type)
         textdomain "storage"
+
+        @disk = disk
+        @type_choice = TypeChoice.new(possible_types, default_type)
       end
 
       # @macro seeDialog
       def title
-        @controller.wizard_title
+        # TRANSLATORS: %s is a device name like /dev/sda
+        format("Create New Partition Table on %s", @disk.name)
       end
 
       # @macro seeDialog
       def contents
-        HVSquash(type_choice)
+        HVSquash(@type_choice)
       end
 
-    private
-
-      def type_choice
-        @type_choice ||= TypeChoice.new(@controller)
+      # Partition type selected by the user
+      #
+      # @return [Y2Storage::PartitionTables::Type]
+      def selected_type
+        Y2Storage::PartitionTables::Type.new(@type_choice.value)
       end
     end
   end

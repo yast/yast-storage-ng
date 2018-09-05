@@ -26,6 +26,8 @@ Yast.import "HTML"
 module Y2Partitioner
   # Mixin for confimation when recursive deletion is performed
   module ConfirmRecursiveDelete
+    include Yast::UIShortcuts
+
   private
 
     # Helpful method to show a descriptive confirm message with all affected devices
@@ -37,11 +39,11 @@ module Y2Partitioner
     # @return [Boolean]
     def confirm_recursive_delete(devices, headline, label_before, label_after)
       button_box = ButtonBox(
-        PushButton(Id(:yes), Opt(:okButton), Yast::Label.DeleteButton),
+        PushButton(Id(:yes), Opt(:okButton), recursive_delete_yes_label),
         PushButton(
           Id(:no_button),
           Opt(:default, :cancelButton),
-          Yast::Label.CancelButton
+          recursive_delete_no_label
         )
       )
 
@@ -85,6 +87,20 @@ module Y2Partitioner
       Yast::UI.CloseDialog
 
       ret == :yes
+    end
+
+    # Label of the button to confirm in {#confirm_recursive_delete}
+    #
+    # @return [String]
+    def recursive_delete_yes_label
+      Yast::Label.DeleteButton
+    end
+
+    # Label of the button to cancel in {#confirm_recursive_delete}
+    #
+    # @return [String]
+    def recursive_delete_no_label
+      Yast::Label.CancelButton
     end
 
     # All devices holded by the devices to delete

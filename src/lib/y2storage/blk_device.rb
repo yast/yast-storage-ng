@@ -351,11 +351,51 @@ module Y2Storage
       descendants.detect { |dev| dev.is?(:md) && dev.devices.include?(self) }
     end
 
+    # DM arrays defined on top of the device
+    #
+    # @return [Array<DmRaid>] empty if the device is not used by any DM RAID
+    #   device
+    def dm_raids
+      children.select { |dev| dev.is?(:dm_raid) }
+    end
+
+    # Multipath device defined on top of the device
+    #
+    # @return [Multipath, nil] nil if the device is not part of any multipath
+    def multipath
+      children.find { |dev| dev.is?(:multipath) }
+    end
+
     # Whether the device forms part of an LVM or MD RAID
     #
     # @return [Boolean]
     def part_of_lvm_or_md?
       !lvm_pv.nil? || !md.nil?
+    end
+
+    # Devices built on top of this device, to be used mainly by the Partitioner
+    # to display which devices are using this one as its base.
+    #
+    # This does not include all the descendants, but only those multi-device
+    # devices for which this is one of the components. For example, it will
+    # include any LVM VG for which this device is one of its physical volumes
+    # (directly or through an encryption) or any RAID having this device as
+    # one of its members.
+    #
+    # @return [Array<Device>] a collection of MD RAIDs, DM RAIDs, volume groups
+    #   and multipath devices
+    def component_of
+      vg = lvm_pv ? lvm_pv.lvm_vg : nil
+      (dm_raids + [vg] + [md] + [multipath]).compact
+    end
+
+    # Equivalent of {#component_of} in which each device is represented by a
+    # string.
+    #
+    # @return [Array<String>]
+    def component_of_names
+      # So far, all the possible elements on the array respond to #name
+      component_of.map(&:name)
     end
 
     # Label of the filesystem, if any
