@@ -114,7 +114,7 @@ module Y2Partitioner
       #
       # @return [String, nil] nil if the device is not being used.
       def used_device_error
-        using_devs = device.str_component_of
+        using_devs = device.component_of_names
         return nil if using_devs.empty?
 
         format(

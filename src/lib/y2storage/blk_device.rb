@@ -393,7 +393,7 @@ module Y2Storage
     # string.
     #
     # @return [Array<String>]
-    def str_component_of
+    def component_of_names
       # So far, all the possible elements on the array respond to #name
       component_of.map(&:name)
     end
