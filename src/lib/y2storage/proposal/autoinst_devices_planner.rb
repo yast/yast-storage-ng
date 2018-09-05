@@ -316,7 +316,7 @@ module Y2Storage
       # @param partition [Planned::Partition] Planned partition
       # @param section   [AutoinstProfile::PartitionSection] AutoYaST specification
       def add_partition_reuse(partition, section)
-        partition_to_reuse = find_partition_to_reuse(section)
+        partition_to_reuse = find_partition_to_reuse(partition, section)
         return unless partition_to_reuse
         partition.filesystem_type ||= partition_to_reuse.filesystem_type
         add_device_reuse(partition, partition_to_reuse.name, section)
@@ -391,14 +391,16 @@ module Y2Storage
         device.resize = !!section.resize if device.respond_to?(:resize=)
       end
 
+      # @param partition    [Planned::Partition] Planned partition
       # @param part_section [AutoinstProfile::PartitionSection] Partition specification
       #   from AutoYaST
-      def find_partition_to_reuse(part_section)
+      def find_partition_to_reuse(partition, part_section)
+        disk = devicegraph.find_by_name(partition.disk)
         device =
           if part_section.partition_nr
-            devicegraph.partitions.find { |i| i.number == part_section.partition_nr && i.disk.name == part_section.parent.device }
+            disk.partitions.find { |i| i.number == part_section.partition_nr }
           elsif part_section.label
-            devicegraph.partitions.find { |i| i.filesystem_label == part_section.label }
+            disk.partitions.find { |i| i.filesystem_label == part_section.label }
           else
             issues_list.add(:missing_reuse_info, part_section)
             nil
