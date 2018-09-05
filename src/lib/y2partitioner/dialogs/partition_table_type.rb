@@ -94,7 +94,8 @@ module Y2Partitioner
 
       # @macro seeDialog
       def title
-        _("Create New Partition Table on %s") % @disk.name
+        # TRANSLATORS: %s is a device name like /dev/sda
+        format("Create New Partition Table on %s", @disk.name)
       end
 
       # @macro seeDialog

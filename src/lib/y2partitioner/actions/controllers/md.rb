@@ -98,7 +98,11 @@ module Y2Partitioner
             raise ArgumentError, "The device #{device} is already part of the Md #{md}"
           end
 
+          # When adding a whole disk (or other partitionable device) we need to
+          # ensure the partition table will be not affected (i.e. restored) if
+          # the users change their mind during the process.
           BlkDeviceRestorer.new(device).update_checkpoint if device.respond_to?(:partition_table)
+
           device.adapted_id = Y2Storage::PartitionId::RAID if device.is?(:partition)
           device.remove_descendants
           md.push_device(device)
