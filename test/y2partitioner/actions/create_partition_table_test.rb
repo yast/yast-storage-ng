@@ -352,6 +352,62 @@ describe Y2Partitioner::Actions::CreatePartitionTable do
       end
     end
 
+    context "for a directly formatted device" do
+      let(:scenario) { "multipath-formatted.xml" }
+      let(:disk_name) { "/dev/mapper/0QEMU_QEMU_HARDDISK_mpath1" }
+
+      before do
+        allow(Yast2::Popup).to receive(:show).and_return popup_result
+        allow(dialog_class).to receive(:new).and_return dialog
+      end
+
+      let(:popup_result) { :no }
+      let(:dialog) { dialog_class.new(disk, [type_gpt, type_msdos], type_gpt) }
+
+      it "shows a confirmation dialog regarding data on the filesystem" do
+        expect(Yast2::Popup).to receive(:show).with(/Ext4/i, buttons: :yes_no)
+        action.run
+      end
+
+      context "if the user rejects the confirmation" do
+        let(:popup_result) { :no }
+
+        it "leaves the device untouched" do
+          fs_id = disk.filesystem.sid
+          action.run
+          expect(disk.partition_table?).to eq false
+          expect(disk.filesystem.sid).to eq fs_id
+        end
+
+        it "returns :back" do
+          expect(action.run).to eq :back
+        end
+      end
+
+      context "if the user confirms and selects a type" do
+        let(:popup_result) { :yes }
+
+        before do
+          allow(dialog).to receive(:run).and_return :next
+          allow(dialog).to receive(:selected_type).and_return type_gpt
+        end
+
+        it "deletes the filesystem" do
+          action.run
+          expect(disk.filesystem).to be_nil
+        end
+
+        it "adds a new partition table to the disk" do
+          action.run
+          expect(disk.partition_table.type).to eq type_gpt
+        end
+
+        it "returns :finish" do
+          expect(action.run).to eq :finish
+        end
+      end
+    end
+
     context "for an unformatted ECKD DASD (it cannot have partition table)" do
       let(:scenario) { "unformatted-eckd-dasd" }
       let(:disk_name) { "/dev/dasda" }
