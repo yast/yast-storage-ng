@@ -109,10 +109,14 @@ module Y2Partitioner
         end
       end
 
-      # Whether performing the action can be considered non-destructive
+      # Whether performing the action can be considered non-destructive, from
+      # the point of view of this action
       #
-      # @return [Boolean] true if the disk is completely empty and unused or if
-      #   it only contains an empty partition table
+      # Destroying an unused partition table or an unused encryption layer is
+      # considered to be non-destructive in that regard.
+      #
+      # @return [Boolean] true if the disk (that may be encrypted) is completely
+      #   empty and unused or if it only contains an empty partition table
       def safe?
         desc = disk.descendants.size
         return true if desc.zero?
@@ -150,7 +154,7 @@ module Y2Partitioner
         # ("/dev/sda" or similar).
         msg = format(
           _(
-            "This will delete the %s file system from the device\n\n" \
+            "This will delete all data from the %s file system in the device.\n\n" \
             "Really create a new partition table on %s?"
           ),
           fs, disk_name

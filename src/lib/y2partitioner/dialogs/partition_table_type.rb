@@ -52,7 +52,7 @@ module Y2Partitioner
         # @macro seeAbstractWidget
         def help
           # helptext
-          _("<p>Choose the type for the new partition table.</p>")
+          _("<p>Choose the type of the new partition table.</p>")
         end
 
         def items
