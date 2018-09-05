@@ -396,7 +396,7 @@ module Y2Storage
       def find_partition_to_reuse(part_section)
         device =
           if part_section.partition_nr
-            devicegraph.partitions.find { |i| i.number == part_section.partition_nr }
+            devicegraph.partitions.find { |i| i.number == part_section.partition_nr && i.disk.name == part_section.parent.device }
           elsif part_section.label
             devicegraph.partitions.find { |i| i.filesystem_label == part_section.label }
           else
