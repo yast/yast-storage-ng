@@ -1,5 +1,5 @@
 -------------------------------------------------------------------
-Tue Sep  4 11:45:19 UTC 2018 - jreidinger@suse.com
+Thu Sep  6 11:45:19 UTC 2018 - jreidinger@suse.com
 
 - Add asterisk to mount points that is not active and also write it
   to description (FATE#318196)
