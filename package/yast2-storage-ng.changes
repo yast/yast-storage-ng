@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Wed Sep  5 21:23:54 UTC 2018 - lorenz@math.tu-berlin.de
+
+- When trying to reuse a partition, AutoYaST will consider only
+  those partitions from the right disk (bsc#1106774).
+- 4.0.209
+
+-------------------------------------------------------------------
 Tue Aug 28 13:27:53 UTC 2018 - ancor@suse.com
 
 - Fixed a wrong unit test.
