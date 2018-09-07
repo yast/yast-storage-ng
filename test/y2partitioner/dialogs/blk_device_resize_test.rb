@@ -26,16 +26,19 @@ require "yast"
 require "cwm/rspec"
 require "y2storage"
 require "y2partitioner/dialogs/blk_device_resize"
+require "y2partitioner/actions/controllers/blk_device"
 
 describe Y2Partitioner::Dialogs::BlkDeviceResize do
   using Y2Storage::Refinements::SizeCasts
 
   before do
     devicegraph_stub(scenario)
+
     allow(partition).to receive(:detect_resize_info).and_return resize_info
   end
 
   let(:current_graph) { Y2Partitioner::DeviceGraphs.instance.current }
+
   let(:scenario) { "mixed_disks" }
 
   # Creates a new partition
@@ -45,8 +48,7 @@ describe Y2Partitioner::Dialogs::BlkDeviceResize do
       sdc.partition_table.create_partition("/dev/sdc1", Y2Storage::Region.create(2048, 1048576, 512),
         Y2Storage::PartitionType::PRIMARY)
     else
-      # DASD case, just take the first partition. That should be enough for
-      # these tests
+      # DASD case, just take the first partition. That should be enough for these tests
       current_graph.partitions.first
     end
   end
@@ -60,7 +62,11 @@ describe Y2Partitioner::Dialogs::BlkDeviceResize do
       reason_texts: ["Unspecified"])
   end
 
-  subject { described_class.new(partition) }
+  subject { described_class.new(controller) }
+
+  let(:controller) { Y2Partitioner::Actions::Controllers::BlkDevice.new(device) }
+
+  let(:device) { partition }
 
   include_examples "CWM::Dialog"
 
@@ -129,6 +135,243 @@ describe Y2Partitioner::Dialogs::BlkDeviceResize do
         it "shows the used size" do
           label = find_label(subject.contents, "Currently used")
           expect(label).to_not be_nil
+        end
+      end
+    end
+  end
+
+  describe "#next_handler" do
+    let(:device) { current_graph.find_by_name(device_name) }
+
+    let(:device_name) { "/dev/sda2" }
+
+    def create_partition(disk_name)
+      disk = current_graph.find_by_name(disk_name)
+      slot = disk.partition_table.unused_partition_slots.first
+      part = disk.partition_table.create_partition(
+        slot.name,
+        slot.region,
+        Y2Storage::PartitionType::PRIMARY
+      )
+      part.create_filesystem(Y2Storage::Filesystems::Type::EXT4)
+    end
+
+    shared_examples "do not unmount" do
+      it "does not ask for unmounting the device" do
+        expect(Yast2::Popup).to_not receive(:show).with(/try to unmount/, anything)
+
+        subject.next_handler
+      end
+
+      it "returns true" do
+        expect(subject.next_handler).to eq(true)
+      end
+    end
+
+    context "when the device does not exist in the system" do
+      before do
+        create_partition("/dev/sdc")
+      end
+
+      let(:device_name) { "/dev/sdc1" }
+
+      include_examples "do not unmount"
+    end
+
+    context "when the device exists in the system" do
+      before do
+        allow(device).to receive(:detect_resize_info).and_return resize_info
+      end
+
+      let(:ext3) { Y2Storage::Filesystems::Type::EXT3 }
+      let(:filesystem) { instance_double("Filesystem", detect_space_info: space_info, type: ext3) }
+      let(:space_info) { instance_double(Y2Storage::SpaceInfo, used: 10.GiB) }
+
+      context "and it is not formatted in the system" do
+        let(:device_name) { "/dev/sdb7" }
+
+        before do
+          allow(device).to receive(:filesystem).and_return(filesystem)
+        end
+
+        include_examples "do not unmount"
+      end
+
+      context "and it is formatted in the system" do
+        let(:device_name) { "/dev/sdb2" }
+
+        context "but the current filesystem does not match to the existing filesystem" do
+          before do
+            allow(device).to receive(:filesystem).and_return(filesystem)
+            allow(filesystem).to receive(:sid).and_return(-1)
+          end
+
+          include_examples "do not unmount"
+        end
+
+        context "and the current filesystem matches to the existing filesystem" do
+          before do
+            system_devicegraph = Y2Storage::StorageManager.instance.system
+            part = system_devicegraph.find_by_name(device_name)
+            part.mount_point.active = mounted
+          end
+
+          context "but it is not mounted in the system" do
+            let(:mounted) { false }
+
+            include_examples "do not unmount"
+          end
+
+          context "and it is mounted in the system" do
+            let(:mounted) { true }
+
+            before do
+              allow_any_instance_of(Y2Storage::Filesystems::BlkFilesystem)
+                .to receive(:supports_mounted_shrink?).and_return(mounted_shrink)
+
+              allow_any_instance_of(Y2Storage::Filesystems::BlkFilesystem)
+                .to receive(:supports_mounted_grow?).and_return(mounted_grow)
+
+              allow(subject).to receive(:size_selector).and_return(size_selector)
+            end
+
+            let(:mounted_shrink) { true }
+
+            let(:mounted_grow) { true }
+
+            let(:size_selector) do
+              instance_double(Y2Partitioner::Dialogs::BlkDeviceResize::SizeSelector,
+                current_widget: size_widget)
+            end
+
+            let(:size_widget) { double("size widget", size: selected_size) }
+
+            shared_examples "do unmount" do
+              before do
+                allow(Yast2::Popup).to receive(:show).with(/try to unmount/, anything)
+                  .and_return(*unmount_answer)
+              end
+
+              let(:unmount_answer) { [:cancel] }
+
+              it "asks for unmounting the device" do
+                expect(Yast2::Popup).to receive(:show).with(/try to unmount/, anything)
+
+                subject.next_handler
+              end
+
+              context "and the user decides to cancel" do
+                let(:unmount_answer) { [:cancel] }
+
+                it "returns false" do
+                  expect(subject.next_handler).to eq(false)
+                end
+              end
+
+              context "and the user decides to continue" do
+                let(:unmount_answer) { [:continue] }
+
+                it "returns true" do
+                  expect(subject.next_handler).to eq(true)
+                end
+              end
+
+              context "and the user decides to unmount" do
+                let(:unmount_answer) { [:unmount, :cancel] }
+
+                context "and the partition can not be unmounted" do
+                  before do
+                    allow_any_instance_of(Y2Storage::MountPoint).to receive(:immediate_deactivate)
+                      .and_raise(Storage::Exception, "fail to unmount")
+                  end
+
+                  it "shows an error message" do
+                    expect(Yast2::Popup).to receive(:show).with(/could not be unmounted/, anything)
+
+                    subject.next_handler
+                  end
+
+                  it "asks for trying to unmount again" do
+                    expect(Yast2::Popup).to receive(:show).with(/could not be unmounted/, anything)
+                    expect(Yast2::Popup).to receive(:show).with(/try to unmount/, anything).twice
+
+                    subject.next_handler
+                  end
+                end
+
+                context "and the partition can be unmounted" do
+                  before do
+                    allow_any_instance_of(Y2Storage::MountPoint).to receive(:immediate_deactivate)
+                  end
+
+                  it "returns true" do
+                    expect(subject.next_handler).to eq(true)
+                  end
+                end
+              end
+            end
+
+            context "and the device is going to be shrinked" do
+              let(:selected_size) { 30.GiB } # current size is 60 GiB
+
+              context "and the device supports to shrink being mounted" do
+                let(:mounted_shrink) { true }
+
+                include_examples "do not unmount"
+              end
+
+              context "and the device does not support to shrink being mounted" do
+                let(:mounted_shrink) { false }
+
+                it "shows a specific note for shrinking the device" do
+                  expect(Yast2::Popup).to receive(:show)
+                    .with(/not possible to shrink/, anything)
+
+                  subject.next_handler
+                end
+
+                include_examples "do unmount"
+              end
+            end
+
+            context "and the device is going to be extended" do
+              let(:selected_size) { 60.1.GiB } # current size is 60 GiB
+
+              context "and the device supports to extend being mounted" do
+                let(:mounted_grow) { true }
+
+                context "and the device is going to be extended less than 1 GiB" do
+                  include_examples "do not unmount"
+                end
+
+                context "and the device is going to be extended more than 1 GiB" do
+                  let(:selected_size) { 62.GiB } # current size is 60 GiB
+
+                  it "shows a specific note for extending the device too much" do
+                    expect(Yast2::Popup).to receive(:show)
+                      .with(/may be quite slow/, anything)
+
+                    subject.next_handler
+                  end
+
+                  include_examples "do unmount"
+                end
+              end
+
+              context "and the device does not support to extend being mounted" do
+                let(:mounted_grow) { false }
+
+                it "shows a specific note for extending the device" do
+                  expect(Yast2::Popup).to receive(:show)
+                    .with(/not possible to extend/, anything)
+
+                  subject.next_handler
+                end
+
+                include_examples "do unmount"
+              end
+            end
+          end
         end
       end
     end
