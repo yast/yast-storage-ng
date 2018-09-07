@@ -287,7 +287,9 @@ module Y2Partitioner
         # @param partition [Y2Storage::Partition]
         # @return [Boolean] true if it is valid; false otherwise.
         def valid_for_md?(partition)
-          partition.id.is?(:linux_system) && !partition.type.is?(:extended)
+          partition.id.is?(:linux_system) &&
+            !partition.type.is?(:extended) &&
+            !partition.partitionable.is?(:raid)
         end
 
         # Whether the device is available to be used in a MD RAID

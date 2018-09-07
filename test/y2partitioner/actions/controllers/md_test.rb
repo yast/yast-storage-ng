@@ -244,6 +244,36 @@ describe Y2Partitioner::Actions::Controllers::Md do
         expect(controller.available_devices.map(&:name)).to_not include("/dev/sda3")
       end
     end
+
+    def create_raid_partition(dev)
+      pt = dev.partition_table
+      slot = pt.unused_partition_slots.first
+      part = pt.create_partition(slot.name, slot.region, Y2Storage::PartitionType::PRIMARY)
+      part.id = Y2Storage::PartitionId::RAID
+      part
+    end
+
+    context "with a partitioned DM RAID" do
+      let(:scenario) { "empty-dm_raids.xml" }
+      let(:dm) { dev("/dev/mapper/isw_ddgdcbibhd_test1") }
+
+      before { create_raid_partition(dm) }
+
+      it "excludes partitions from DM RAIDs" do
+        expect(controller.available_devices).to_not include dm.partitions.first
+      end
+    end
+
+    context "with a partitioned MD RAID" do
+      let(:scenario) { "md-imsm1-devicegraph.xml" }
+      let(:other_raid) { dev("/dev/md/b") }
+
+      before { create_raid_partition(other_raid) }
+
+      it "excludes partitions from other MD RAIDs" do
+        expect(controller.available_devices).to_not include other_raid.partitions.first
+      end
+    end
   end
 
   describe "#devices_in_md" do
