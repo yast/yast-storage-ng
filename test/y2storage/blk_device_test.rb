@@ -112,6 +112,37 @@ describe Y2Storage::BlkDevice do
     end
   end
 
+  describe "#mount_point" do
+    let(:scenario) { "mixed_disks" }
+
+    context "when the device is not formatted" do
+      let(:device_name) { "/dev/sdb7" }
+
+      it "returns nil" do
+        expect(device.mount_point).to be_nil
+      end
+    end
+
+    context "when the device is formatted" do
+      context "and the filesystem does not have mount point" do
+        let(:device_name) { "/dev/sda2" }
+
+        it "returns nil" do
+          expect(device.mount_point).to be_nil
+        end
+      end
+
+      context "and the filesystem has mount point" do
+        let(:device_name) { "/dev/sdb2" }
+
+        it "returns the fielesystem mount point" do
+          expect(device.mount_point).to be_a(Y2Storage::MountPoint)
+          expect(device.mount_point.path).to eq("/")
+        end
+      end
+    end
+  end
+
   describe "#plain_device" do
     context "for a non encrypted device" do
       let(:device_name) { "/dev/sda2" }
