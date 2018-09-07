@@ -17,9 +17,10 @@ RAIDs are always built by combining partitions. A RAID cannot be partitioned.
 Each RAIDs is always used directly in a similar way to a partition (that is,
 to be formatted/mounted, encrypted, etc.).
 
-LVM VGs (volume groups) are always built by combining partitions. Then they can be
-divided into LVM LVs (logical volumes). Each LVM LV is always used directly like
-partitions and/or RAIDs.
+LVM VGs (volume groups) can be built by combining partitions, MD RAIDs
+and disks (so they are kind of an nice exception in terms of flexibility).
+Then they can be divided into LVM LVs (logical volumes). Each LVM LV is
+always used directly like partitions and/or RAIDs.
 
 As such, in the old UI, the purpose of some buttons with generic labels like "Edit"
 and "Resize" is defined based on the device they act upon. Since only one
@@ -51,7 +52,7 @@ So we have broken all that into a list of 4 concrete things we need to make
 possible for SLE-15-SP1. Each of them is presented in this document together
 with some rough ideas.
 
- * Use full disks (in addition to partitions) to create LVM VGs and RAIDs.
+ * Use full disks (in addition to partitions) to create MD RAIDs.
  * Allow to format/mount/encrypt a full disk (just like we do with partitions).
  * Handle partitions within a RAID.
  * BCache
@@ -59,9 +60,13 @@ with some rough ideas.
  At the end of the document there is a summary of other features we want to
  contemplate for future releases (SLE-15-SP1, SLE-16... who knows?).
 
-## Feature 1: Use whole disks to create LVM and RAID
+## Feature 1: Use whole disks to create MD RAID
 
-In SLE-15-GA, the Expert Partitioner only allows to select plain partitions when creating a LVM Volume Group or a Software RAID. Moreover, only unused partitions with a specific partition id could be selected. But libstorage-ng also allows to create LVM Volume Groups and Software RAIDs based on whole disks. The Expert Partitioner should be able to do it too.
+In SLE-15-GA, the Expert Partitioner only allows to select plain partitions
+when creating a Software RAID. Moreover, only unused partitions with a
+specific partition id could be selected. But libstorage-ng also allows to
+create Software RAIDs based on whole disks. The Expert Partitioner should be
+able to do it too.
 
 ### Solution to implement
 
@@ -71,17 +76,25 @@ ids (as always) and also those hard disks that contain no partitions. In
 both cases, the devices must not be "in use", i.e. assigned to a mount point
 or being part of an LVM or RAID setup.
 
-When creating/resizing an LVM Volume Group, the list of "Available Devices"
-will include partitions with the appropriate partition ids (including partitions
-that belong to disks and to RAIDs) and also hard disks and RAIDs. Hard disks and
-RAIDs will only be displayed if they contain no partitions. In both cases, the
-devices must not be "in use", as defined above.
+Although it can change in the future, in principle the list of available
+devices for MD RAID will EXCLUDE any other RAID device (no matter if defined
+via software or BIOS) and the corresponding partitions on such devices.
+
+When creating/resizing an LVM Volume Group, the current list of "Available
+Devices" already includes partitions with the appropriate partition ids,
+all MD RAIDs (since they are currently basically equivalent to partitions)
+and those hard disks and BIOS-defined RAIDs which contain no partitions.
+In all cases the devices must not be "in use", as defined above.
+
+As soon as support for partitions in software MD RAIDs is added (see below),
+partitions belonging to such MD RAIDs will also be offered here and MD RAIDs
+containing partitions will be excluded.
 
 This solution requires almost no UI changes and is consistent with the historical
 approach of offering as available only those devices that can be added safely.
 Even if, in some cases, that implies the user must prepare the device in advance
 using other sections of the partitioner (deleting it from any other LVM/RAID,
-deassigning the mount point, etc.).
+deassigning the mount point, adjusting the partition id, etc.).
 
 ### Alternative solution
 
@@ -198,6 +211,38 @@ The "Logical Volumes" tab remains the same.
 
 The "Physical Volumes" tab must show a button called "Change" equivalent to
 the current "Resize" (i.e. to add/remove physical volumes).
+
+### Possible variant for the selected solution
+
+In the solution described above there are quite some buttons with labels like
+"Add", "Add Partition", "Add Logical Volume", etc. And there is also a "Delete
+All" button in the list of partitions, alongside the usually present "Delete"
+button.
+
+On the other hand, in the current SLE-15 Partitioner the "Delete" button can be
+used on a disk to delete all its partitions. In the described solution there is
+no such button. There is just a "Delete All" in the corresponding list of
+partitions, which is more obvious and consistent but implies more "clicks".
+The problem is that just another button like "Delete Partitions" (or similar)
+would not fit into some views. For example, when an MD RAID is selected in a
+table, there are already quite some buttons.
+
+So a possible modification of the described selected solutions would be to use
+menu buttons for most (or even all) "Add" and "Delete" options. That should
+result in shorter groups of buttons that make possible to have access to
+more actions directly from the list
+
+For example, the buttons offered in case a RAID is selected in the list of
+RAIDs would change from this set described in the previous section...
+
+![Plain buttons for RAID](mockups/buttons_raid.png)
+
+to this other layout where the "Add" and "Delete" menu buttons are used to group
+actions and offer an extra "Delete All Partitions" option (maybe even creating a
+new partition table could be offered inside the "Add" button).
+
+![Menu buttons for RAID](mockups/menu_buttons_raid.png)
+
 
 ### Alternative solution - merge "Hard Disks" and "RAID" sections
 
