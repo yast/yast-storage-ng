@@ -188,7 +188,7 @@ describe Y2Partitioner::Actions::ResizeBlkDevice do
 
                 it "shows a specific note for unmounting NTFS" do
                   expect(Yast2::Popup).to receive(:show)
-                    .with(/check whether a NTFS/, anything)
+                    .with(/check whether an NTFS/, anything)
                     .and_return(:cancel)
 
                   subject.run

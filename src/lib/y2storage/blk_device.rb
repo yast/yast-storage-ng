@@ -320,7 +320,7 @@ module Y2Storage
     # Mount point of the filesystem
     #
     # @return [Y2Storage::MountPoint, nil] nil if the device is not formatted or its
-    #   filesystem has not mount point.
+    #   filesystem has no mount point.
     def mount_point
       return nil unless formatted?
 

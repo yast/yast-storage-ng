@@ -221,7 +221,7 @@ module Y2Partitioner
 
         message = format(
           # TRANSLATORS: Text for the dialog for trying to unmount a device. It is used
-          # when a device is tried to be resized by growing it more than 1 GiB.
+          # when a device is tried to be resized by extending it too much.
           _("You are extending a mounted filesystem by %{gibs} Gigabyte.\n" \
             "This may be quite slow and can take hours. You might possibly want \n" \
             "to consider umounting the filesystem, which will increase speed of \n" \
@@ -250,7 +250,7 @@ module Y2Partitioner
 
       # Whether the device is going to be growed more than 50 GiB
       #
-      # @note Threshold to consider a big growing is defined in the old code, but there is
+      # @note Threshold to consider a big growing is defined in the old code, but there is not
       #   any kind of explanation:
       #   https://github.com/yast/yast-storage/blob/SLE-12-SP4/src/include/partitioning/ep-dialogs.rb#L1229
       #

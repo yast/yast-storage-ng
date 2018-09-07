@@ -148,7 +148,7 @@ module Y2Partitioner
         return true unless need_try_unmount?
 
         # TRANSLATORS: Note added to the dialog for trying to unmount a device
-        note = _("It is not possible to check whether a NTFS\ncan be resized while it is mounted.")
+        note = _("It is not possible to check whether an NTFS\ncan be resized while it is mounted.")
 
         immediate_unmount(controller.committed_device, note: note, allow_continue: false)
       end

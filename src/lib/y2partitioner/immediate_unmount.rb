@@ -154,7 +154,7 @@ module Y2Partitioner
           _("You can try to unmount it now, continue without unmounting or cancel.\n" \
             "In case you decide to continue, the file system will be automatically \n" \
             "unmounted when all changes are applied. Note that automatic unmount \n" \
-            "could fail and, for this reason, it is recommendable to try to unmount now.\n" \
+            "could fail and, for this reason, it is recommended to try to unmount now.\n" \
             "Click Cancel unless you know exactly what you are doing.")
         else
           # TRANSLATORS: Actions explanation when continue is not allowed.
