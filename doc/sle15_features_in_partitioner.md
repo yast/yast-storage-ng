@@ -78,7 +78,11 @@ or being part of an LVM or RAID setup.
 
 Although it can change in the future, in principle the list of available
 devices for MD RAID will EXCLUDE any other RAID device (no matter if defined
-via software or BIOS) and the corresponding partitions on such devices.
+via software or BIOS) and the corresponding partitions on such devices. The main
+reason is that nesting RAIDs (and RAID technologies) can result into
+complications, not only for booting the operating system but also for any
+configuration task that can be affected by RAID auto-assembling. An MD RAID of
+level 10 can be defined to get the benefit of nested RAIDs without the hassle.
 
 When creating/resizing an LVM Volume Group, the current list of "Available
 Devices" already includes partitions with the appropriate partition ids,
@@ -243,6 +247,10 @@ new partition table could be offered inside the "Add" button).
 
 ![Menu buttons for RAID](mockups/menu_buttons_raid.png)
 
+The main reason to not implement the menu buttons in the first prototype is to
+keep the interface as explicit as possible (with all the options visible at
+first sight) and to do a bigger effort in keeping the number of options for each
+device on the lists under control.
 
 ### Alternative solution - merge "Hard Disks" and "RAID" sections
 
@@ -277,7 +285,7 @@ BCache technology allows to create software hybrid disks. The idea is to use big
 ### Research
 
 How it works? BCache has backing and caching devices. Single BCache device contain single backing device and
-set of caching devices ( although set is not yet supported and it is not recommended as it use only as RAID1 so better use real md RAID as caching device))
+set of caching devices (although set is not yet supported and it is not recommended as it use only as RAID1 so better use real md RAID as caching device))
 BCache device looks like bcache0 which can be formatted to have fs or contain partition table. Partition table on bcache that has partition as backing device is not supported.
 
 As source for backing device or caching device can be any unformatted disk, partition, LVM LV, MD Raid or any other block device.
