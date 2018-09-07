@@ -231,38 +231,24 @@ BCache technology allows to create software hybrid disks. The idea is to use big
 
 ### Research
 
-How it works? BCache has backing and caching devices. It is grouped in sets
-( multiple backing and single cache but maybe in future multiple caches will
-be possible ) and this set is then registered to bcache device like bcache0
-which can be formatted and mounted.
+How it works? BCache has backing and caching devices. Single BCache device contain single backing device and
+set of caching devices ( although set is not yet supported and it is not recommended as it use only as RAID1 so better use real md RAID as caching device))
+BCache device looks like bcache0 which can be formatted to have fs or contain partition table. Partition table on bcache that has partition as backing device is not supported.
 
-At the end of [this document](https://bcache.evilpiepirate.org/) there is an example. It seems that there is a `/dev/bcacheX` device for each backing device (no sets of backing devices). And a caching device can be use as cache for several backing devices.
+As source for backing device or caching device can be any unformatted disk, partition, LVM LV, MD Raid or any other block device.
 
-For example:
+### FAQ
 
-```
-make-bcache -B /dev/sdc /dev/sdd -C /dev/sda2
-```
-
-* creates `/dev/bcache0` for backing device `/dev/sdd`
-* creates `/dev/bcache1` for backing device `/dev/sdc`
-* attaches `/dev/sda2` as cache for `/dev/sdd`
-* attaches `/dev/sda2` as cache for `/dev/sdc`
-
-Also, it seems that the caching device can be a set of devices, but according to documentation this feature is not supported yet: "Cache devices are managed as sets; multiple caches per set isn't supported yet but will allow for mirroring of metadata and dirty data in the future."
-
-### Open questions
-
-* Could backing devices be grouped in a set (i.e., /dev/bcacheX for several backing devices)?
-* Could a caching (or set) be attached to several backing devices at the same time?
-* Could a caching device belongs to several sets at the same time?
-* Is BCache device partitionable?
-* Could a BCache be used for LVM Volume Group or Software RAID creation?
+* Could backing devices be grouped in a set (i.e., /dev/bcacheX for several backing devices)? no
+* Could a caching (or set) be attached to several backing devices at the same time? yes
+* Could a caching device belongs to several sets at the same time? sets not supported and not suggested to use.
+* Is BCache device partitionable? yes, but only if backing device is not partition.
+* Could a BCache be used for LVM as physical volume or Software RAID creation? yes.
 
 ### Proposal: A separate section for BCache
 
-The Expert Partitioner would have a new BCache section (similar to current "Volume Management" or "RAID" ones). It would allow to set multiple BCache devices via wizard that assigns to that device
-backing devices and caching devices. See [mockup](mockups/bcache.jpg).
+The Expert Partitioner would have a new BCache section (similar to current "Volume Management" or "RAID" ones). It would allow to create bcache and also format fs or create partition table on it.
+See [mockup](mockups/bcache main screen.svg) and [add mockup](mockups/Add Bcache.svg).
 
 
 ## More features for the future
