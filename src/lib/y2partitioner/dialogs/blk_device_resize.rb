@@ -191,7 +191,7 @@ module Y2Partitioner
       # @return [Boolean] true if the device supports mounted shrinking or the device was
       #   correctly unmounted or user decides to continue; false if user cancels.
       def try_unmount_for_shrinking
-        return true unless shrinking? && controller.need_unmount_for_shrinking?
+        return true unless shrinking? && controller.unmount_for_shrinking?
 
         # TRANSLATORS: Note added to the dialog for trying to unmount a device
         note = _("It is not possible to shrink the file system while it is mounted.")
@@ -204,7 +204,7 @@ module Y2Partitioner
       # @return [Boolean] true if the device supports mounted growing or the device was
       #   correctly unmounted or user decides to continue; false if user cancels.
       def try_unmount_for_growing
-        return true unless growing? && controller.need_unmount_for_growing?
+        return true unless growing? && controller.unmount_for_growing?
 
         # TRANSLATORS: Note added to the dialog for trying to unmount a device
         note = _("It is not possible to extend the file system while it is mounted.")

@@ -28,6 +28,10 @@ module Y2Partitioner
     module Controllers
       # This class offers helper methods to perform actions over a block device,
       # for example, to check if its filesystem exists on disk, it is mounted, etc.
+      #
+      # @note Several methods in this class use the term "committed" to refer to the
+      #   device in the system. For example, committed_device would be the real device
+      #   as it is currently in the system (its version in memory could be different).
       class BlkDevice
         # Block device
         #
@@ -41,7 +45,8 @@ module Y2Partitioner
         # @param device [Y2Storage::BlkDevice] it has to be a block device,
         #   (i.e., device#is?(:blk_device) #=> true).
         def initialize(device)
-          raise(TypeError, "param device has to be a block device") unless device.is?(:blk_device)
+          wrong_param = !device.respond_to?(:is?) || !device.is?(:blk_device)
+          raise(TypeError, "param device has to be a block device") if wrong_param
 
           @device = device
         end
@@ -111,7 +116,7 @@ module Y2Partitioner
         #   it does not support mounted shrink.
         #
         # @return [Boolean]
-        def need_unmount_for_shrinking?
+        def unmount_for_shrinking?
           return false unless mounted_committed_filesystem?
 
           !committed_filesystem.supports_mounted_shrink?
@@ -123,7 +128,7 @@ module Y2Partitioner
         #   it does not support mounted grow.
         #
         # @return [Boolean]
-        def need_unmount_for_growing?
+        def unmount_for_growing?
           return false unless mounted_committed_filesystem?
 
           !committed_filesystem.supports_mounted_grow?

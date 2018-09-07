@@ -349,8 +349,8 @@ describe Y2Partitioner::Actions::Controllers::BlkDevice do
     end
   end
 
-  describe "#need_unmount_for_shrinking?" do
-    let(:described_method) { :need_unmount_for_shrinking? }
+  describe "#unmount_for_shrinking?" do
+    let(:described_method) { :unmount_for_shrinking? }
 
     include_examples "checks mounted committed filesystem"
 
@@ -363,7 +363,7 @@ describe Y2Partitioner::Actions::Controllers::BlkDevice do
       end
 
       it "returns true" do
-        expect(controller.need_unmount_for_shrinking?).to eq(true)
+        expect(controller.unmount_for_shrinking?).to eq(true)
       end
     end
 
@@ -376,13 +376,13 @@ describe Y2Partitioner::Actions::Controllers::BlkDevice do
       end
 
       it "returns false" do
-        expect(controller.need_unmount_for_shrinking?).to eq(false)
+        expect(controller.unmount_for_shrinking?).to eq(false)
       end
     end
   end
 
-  describe "#need_unmount_for_growing?" do
-    let(:described_method) { :need_unmount_for_growing? }
+  describe "#unmount_for_growing?" do
+    let(:described_method) { :unmount_for_growing? }
 
     include_examples "checks mounted committed filesystem"
 
@@ -395,7 +395,7 @@ describe Y2Partitioner::Actions::Controllers::BlkDevice do
       end
 
       it "returns true" do
-        expect(controller.need_unmount_for_growing?).to eq(true)
+        expect(controller.unmount_for_growing?).to eq(true)
       end
     end
 
@@ -408,7 +408,7 @@ describe Y2Partitioner::Actions::Controllers::BlkDevice do
       end
 
       it "returns false" do
-        expect(controller.need_unmount_for_growing?).to eq(false)
+        expect(controller.unmount_for_growing?).to eq(false)
       end
     end
   end
