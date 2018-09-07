@@ -159,6 +159,16 @@ module Y2Storage
     # 	@param value [Boolean]
     storage_forward :active=
 
+    # @!method immediate_deactivate
+    #   Immediately deactivates (unmount) the mount point object. In
+    #   contrast to {#active=} this function acts immediately and does
+    #   not require calling to commit.
+    #
+    #   @note The mount point object must exist in the probed devicegraph.
+    #
+    #   @raise [Storage::Exception] when it cannot be unmounted.
+    storage_forward :immediate_deactivate
+
     # @!method mountable
     #   Gets the mountable of the mount point (filesystem, BTRFS subvolume, etc)
     #
