@@ -248,11 +248,15 @@ module Y2Partitioner
         selected_size > device.size
       end
 
-      # Whether the device is going to be growed more than 1 GiB
+      # Whether the device is going to be growed more than 50 GiB
+      #
+      # @note Threshold to consider a big growing is defined in the old code, but there is
+      #   any kind of explanation:
+      #   https://github.com/yast/yast-storage/blob/SLE-12-SP4/src/include/partitioning/ep-dialogs.rb#L1229
       #
       # @return [Boolean]
       def big_growing?
-        growing? && growing_size > Y2Storage::DiskSize.GiB(1)
+        growing? && growing_size > Y2Storage::DiskSize.GiB(50)
       end
 
       # How much the device is going to be growed

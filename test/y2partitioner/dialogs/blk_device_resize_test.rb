@@ -335,17 +335,17 @@ describe Y2Partitioner::Dialogs::BlkDeviceResize do
             end
 
             context "and the device is going to be extended" do
-              let(:selected_size) { 60.1.GiB } # current size is 60 GiB
+              let(:selected_size) { 65.GiB } # current size is 60 GiB
 
               context "and the device supports to extend being mounted" do
                 let(:mounted_grow) { true }
 
-                context "and the device is going to be extended less than 1 GiB" do
+                context "and the device is going to be extended less than 50 GiB" do
                   include_examples "do not unmount"
                 end
 
-                context "and the device is going to be extended more than 1 GiB" do
-                  let(:selected_size) { 62.GiB } # current size is 60 GiB
+                context "and the device is going to be extended more than 50 GiB" do
+                  let(:selected_size) { 150.GiB } # current size is 60 GiB
 
                   it "shows a specific note for extending the device too much" do
                     expect(Yast2::Popup).to receive(:show)
