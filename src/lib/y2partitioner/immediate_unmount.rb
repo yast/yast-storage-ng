@@ -23,6 +23,8 @@ require "yast"
 require "yast/i18n"
 require "yast2/popup"
 
+Yast.import "Mode"
+
 module Y2Partitioner
   # Mixin that offers a dialog to immediate unmount a block device
   #
@@ -40,6 +42,10 @@ module Y2Partitioner
     #
     # @return [Boolean]
     def immediate_unmount(device, full_message: nil, note: nil, allow_continue: true)
+      # This check is here to avoid changes in installer behaviour for GA. The dialog for immediate
+      # unmounting will be only shown in normal mode. This check can be removed for SP1.
+      return true unless Yast::Mode.normal
+
       Unmounter.new(device, full_message, note, allow_continue).unmount
     end
 
