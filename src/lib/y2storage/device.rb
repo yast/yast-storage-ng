@@ -35,7 +35,8 @@ module Y2Storage
     include StorageClassWrapper
 
     wrap_class Storage::Device,
-      downcast_to: ["BlkDevice", "Mountable", "MountPoint", "PartitionTables::Base", "LvmPv", "LvmVg"]
+      downcast_to: ["BlkDevice", "BcacheCset", "Mountable", "MountPoint", "PartitionTables::Base",
+                    "LvmPv", "LvmVg"]
 
     storage_forward :storage_eql, to: :==
     protected :storage_eql

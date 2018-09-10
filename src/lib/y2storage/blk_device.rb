@@ -31,7 +31,7 @@ module Y2Storage
   # This is a wrapper for Storage::BlkDevice
   class BlkDevice < Device
     wrap_class Storage::BlkDevice,
-      downcast_to: ["Partitionable", "Partition", "Encryption", "LvmLv", "StrayBlkDevice"]
+      downcast_to: ["Bcache", "Partitionable", "Partition", "Encryption", "LvmLv", "StrayBlkDevice"]
 
     include ComparableByName
     include MatchVolumeSpec
