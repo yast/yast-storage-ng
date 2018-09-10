@@ -119,16 +119,10 @@ module Y2Partitioner
       def message
         return full_message unless full_message.nil?
 
-        format(
-          # TRANSLATORS: Generic message when trying to unmount a device. %{path} is replaced
-          # by a mount point path (e.g., /home), %{note} is replaced by a specefic note to clarify
-          # the action and %{options_message} is replaced by an explanation about possible actions
-          # to peform in the dialog.
-          _("The file system is currently mounted on %{mount_point}.%{note}\n\n%{options_message}"),
-          mount_point:     mount_point,
-          note:            note_message,
-          options_message: options_message
-        )
+        # TRANSLATORS: Generic message when trying to unmount a device. %1 is replaced
+        # by a mount point path (e.g., /home).
+        Yast::Builtins.sformat(_("The file system is currently mounted on %1."), mount_point) +
+          note_message + "\n\n" + options_message
       end
 
       # Mount point path of the device to unmount
@@ -152,9 +146,6 @@ module Y2Partitioner
         if allow_continue
           # TRANSLATORS: Actions explanation when continue is allowed.
           _("You can try to unmount it now, continue without unmounting or cancel.\n" \
-            "In case you decide to continue, the file system will be automatically \n" \
-            "unmounted when all changes are applied. Note that automatic unmount \n" \
-            "could fail and, for this reason, it is recommended to try to unmount now.\n" \
             "Click Cancel unless you know exactly what you are doing.")
         else
           # TRANSLATORS: Actions explanation when continue is not allowed.

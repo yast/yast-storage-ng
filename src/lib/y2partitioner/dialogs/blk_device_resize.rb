@@ -219,17 +219,23 @@ module Y2Partitioner
       def try_unmount_for_big_growing
         return true unless big_growing? && controller.mounted_committed_filesystem?
 
-        message = format(
+        message = Yast::Builtins.sformat(
           # TRANSLATORS: Text for the dialog for trying to unmount a device. It is used
-          # when a device is tried to be resized by extending it too much.
-          _("You are extending a mounted filesystem by %{gibs} Gigabyte.\n" \
+          # when a device is tried to be resized by extending it too much. %1 is replaced
+          # by a number that represents the amount of GiB to extend (e.g., 56).
+          _(
+            "You are extending a mounted filesystem by %1 Gigabyte. \n" \
             "This may be quite slow and can take hours. You might possibly want \n" \
             "to consider umounting the filesystem, which will increase speed of \n" \
-            "resize task a lot.\n\n" \
-            "You can try to unmount it now, continue without unmounting or cancel.\n" \
-            "Click Cancel unless you know exactly what you are doing."),
-          gibs: growing_size.to_i / Y2Storage::DiskSize.GiB(1).to_i
+            "resize task a lot."
+          ),
+          growing_size.to_i / Y2Storage::DiskSize.GiB(1).to_i
         )
+
+        message += "\n\n" +
+          # TRANSLATORS: Actions explanation when trying to unmount
+          _("You can try to unmount it now, continue without unmounting or cancel.\n" \
+            "Click Cancel unless you know exactly what you are doing.")
 
         immediate_unmount(controller.committed_device, full_message: message, allow_continue: true)
       end
