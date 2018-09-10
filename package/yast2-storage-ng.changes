@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Fri Sep  7 15:24:41 UTC 2018 - ancor@suse.com
+
+- Partitioner: do not offer partitions of other RAIDs as available
+  devices to create MD RAID arrays (fate#318196).
+- 4.1.15
+
+-------------------------------------------------------------------
 Wed Sep  5 14:41:15 UTC 2018 - ancor@suse.com
 
 - Partitioner: allow to add full disks and multipath devices (with

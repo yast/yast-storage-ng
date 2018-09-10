@@ -280,14 +280,20 @@ module Y2Partitioner
 
         # Whether the partition is valid to be used in a MD RAID
         #
-        # @note A partition is valid to be used in a MD RAID if it is not extended,
-        #   it is alinux system partition and it is not being used by LVM or other
-        #   MD RAID.
+        # @note An available partition (see {#available?}) is valid to be used
+        #   in a MD RAID if it is not a based on another RAID, it is not
+        #   extended and it is a linux system partition.
+        #
+        # The reasons to filter RAID partitions out (basically possible
+        # complications with booting and/or auto-assembling) are explained in
+        # doc/sle15_features_in_partitioner.md.
         #
         # @param partition [Y2Storage::Partition]
         # @return [Boolean] true if it is valid; false otherwise.
         def valid_for_md?(partition)
-          partition.id.is?(:linux_system) && !partition.type.is?(:extended)
+          partition.id.is?(:linux_system) &&
+            !partition.type.is?(:extended) &&
+            !partition.partitionable.is?(:raid)
         end
 
         # Whether the device is available to be used in a MD RAID
