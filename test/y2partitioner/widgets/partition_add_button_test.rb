@@ -31,24 +31,22 @@ describe Y2Partitioner::Widgets::PartitionAddButton do
   let(:device) { nil }
 
   let(:pager) do
-    instance_double(Y2Partitioner::Widgets::OverviewTreePager, current_page: current_page)
+    instance_double(Y2Partitioner::Widgets::OverviewTreePager)
   end
-
-  let(:current_page) { nil }
 
   include_examples "CWM::PushButton"
 
   describe "#label" do
-    context "when used in a disks page" do
-      let(:current_page) { Y2Partitioner::Widgets::Pages::Disks.new(nil, nil) }
+    context "when instantiated without the :short argument" do
+      subject { described_class.new(device: device, pager: pager) }
 
       it "returns \"Add Partition\"" do
         expect(subject.label).to include("Add Partition")
       end
     end
 
-    context "when used in other pages" do
-      let(:current_page) { Y2Partitioner::Widgets::Pages::MdRaids.new(nil) }
+    context "when instantiated with a true :short argument" do
+      subject { described_class.new(device: device, pager: pager, short: true) }
 
       it "returns \"Add\"" do
         expect(subject.label).to include("Add")

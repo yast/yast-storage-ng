@@ -62,7 +62,7 @@ module Y2Partitioner
           table,
           Left(
             HBox(
-              PartitionAddButton.new(device: device),
+              PartitionAddButton.new(device: device, short: true),
               BlkDeviceEditButton.new(pager: @pager, table: table),
               PartitionMoveButton.new(pager: @pager, table: table),
               DeviceResizeButton.new(pager: @pager, table: table),
