@@ -525,5 +525,215 @@ describe Y2Storage::FakeDeviceFactory do
         expect { described_class.load_yaml_file(staging, io) }.to raise_error(err)
       end
     end
+
+    context "when yaml contains a filesystem directly on the Software RAID" do
+      let(:input) do
+        %(---
+          - disk:
+              name: "/dev/sda"
+              size: 10 GiB
+              partition_table: msdos
+              partitions:
+              - partition:
+                  size: 5 GiB
+                  name: "/dev/sda1"
+                  type: primary
+                  id: raid
+              - partition:
+                  size: 5 GiB
+                  name: "/dev/sda2"
+                  type: primary
+                  id: raid
+          - disk:
+              name: "/dev/sdb"
+              size: 10 GiB
+              block_size: 0.5 KiB
+          - md:
+              name: "/dev/md0"
+              md_level: raid1
+              md_parity: first
+              chunk_size: 16 KiB
+              file_system: ext4
+              mount_point: "/data"
+              label: "backup"
+              uuid: 4711-abcd-0815
+              md_devices:
+              - md_device:
+                  blk_device: /dev/sda1
+              - md_device:
+                  blk_device: /dev/sdb
+        )
+      end
+
+      it "creates the expected devicegraph" do
+        described_class.load_yaml_file(staging, io)
+
+        md = Storage.to_md(Storage::BlkDevice.find_by_name(staging, "/dev/md0"))
+
+        expect(md.name).to eq("/dev/md0")
+        expect(md.md_level).to eq(Y2Storage::MdLevel::RAID1.to_i)
+        expect(md.md_parity).to eq(Y2Storage::MdParity::FIRST.to_i)
+        expect(md.chunk_size).to eq(16 * Storage.KiB)
+
+        expect(md.devices).to_not be_nil
+        expect(md.devices.to_a.size).to eq(2)
+        expect(md.devices.to_a.map(&:name)).to contain_exactly("/dev/sda1", "/dev/sdb")
+
+        expect(md.has_filesystem).to eq(true)
+        expect(md.has_partition_table).to eq(false)
+
+        fs = md.filesystem
+        expect(fs.mount_point.path).to eq("/data")
+        expect(fs.label).to eq("backup")
+        expect(fs.uuid).to eq("4711-abcd-0815")
+      end
+    end
+
+    context "when yaml contains an encrypted filesystem directly on the Software RAID" do
+      let(:input) do
+        %(---
+          - disk:
+              name: "/dev/sda"
+              size: 10 GiB
+              partition_table: msdos
+              partitions:
+              - partition:
+                  size: 5 GiB
+                  name: "/dev/sda1"
+                  type: primary
+                  id: raid
+              - partition:
+                  size: 5 GiB
+                  name: "/dev/sda2"
+                  type: primary
+                  id: raid
+          - md:
+              name: "/dev/md0"
+              file_system: ext4
+              mount_point: "/data"
+              label: "backup"
+              encryption:
+                  type: "luks"
+                  name: "/dev/mapper/cr_data"
+                  password: "s3cr3t"
+              md_devices:
+              - md_device:
+                  blk_device: /dev/sda1
+              - md_device:
+                  blk_device: /dev/sda2
+        )
+      end
+
+      it "creates the expected devicegraph" do
+        described_class.load_yaml_file(staging, io)
+
+        md = Storage.to_md(Storage::BlkDevice.find_by_name(staging, "/dev/md0"))
+
+        expect(md.has_encryption).to eq(true)
+        expect(md.has_filesystem).to eq(false)
+        expect(md.has_partition_table).to eq(false)
+
+        encryption = md.encryption
+        fs = encryption.filesystem
+
+        expect(fs.mount_point.path).to eq("/data")
+        expect(fs.label).to eq("backup")
+      end
+    end
+
+    context "when yaml contains a Software RAID with partitions setup" do
+      let(:input) do
+        %(---
+          - disk:
+              name: "/dev/sda"
+              size: 10 GiB
+              partition_table: msdos
+              partitions:
+              - partition:
+                  size: 5 GiB
+                  name: "/dev/sda1"
+                  type: primary
+                  id: raid
+              - partition:
+                  size: 5 GiB
+                  name: "/dev/sda2"
+                  type: primary
+                  id: raid
+          - md:
+              name: "/dev/md0"
+              partition_table: gpt
+              partitions:
+              - partition:
+                  size: 2 GiB
+                  name: "/dev/md0-part1"
+                  type: primary
+              - partition:
+                  size: 3 GiB
+                  name: "/dev/md0-part2"
+                  type: primary
+              md_devices:
+              - md_device:
+                  blk_device: /dev/sda1
+              - md_device:
+                  blk_device: /dev/sda2
+        )
+      end
+
+      it "creates the expected devicegraph" do
+        described_class.load_yaml_file(staging, io)
+
+        md = Storage.to_md(Storage::BlkDevice.find_by_name(staging, "/dev/md0"))
+
+        expect(md.has_filesystem).to eq(false)
+        expect(md.has_partition_table).to eq(true)
+
+        expect(md.partition_table.type).to eq(Storage::PtType_GPT)
+        expect(md.partition_table.partitions.to_a.size).to eq(2)
+        expect(md.partition_table.partitions.to_a.map(&:name))
+          .to contain_exactly("/dev/md0-part1", "/dev/md0-part2")
+
+        part1 = Storage.to_partition(Storage::BlkDevice.find_by_name(staging, "/dev/md0-part1"))
+        expect(part1.size).to eq(2 * Storage.GiB)
+
+        part2 = Storage.to_partition(Storage::BlkDevice.find_by_name(staging, "/dev/md0-part2"))
+        expect(part2.size).to eq(3 * Storage.GiB)
+      end
+    end
+
+    context "when yaml contains both, a filesystem and a partition table on the Software RAID" do
+      let(:input) do
+        %(---
+          - disk:
+              name: "/dev/sda"
+              size: 10 GiB
+              partition_table: msdos
+              partitions:
+              - partition:
+                  size: 5 GiB
+                  name: "/dev/sda1"
+                  type: primary
+                  id: raid
+              - partition:
+                  size: 5 GiB
+                  name: "/dev/sda2"
+                  type: primary
+                  id: raid
+          - md:
+              name: "/dev/md0"
+              file_system: ext4
+              partition_table: msdos
+              md_devices:
+              - md_device:
+                  blk_device: /dev/sda1
+              - md_device:
+                  blk_device: /dev/sda2
+        )
+      end
+
+      it "cannot create a devicegraph" do
+        err = Y2Storage::AbstractDeviceFactory::HierarchyError
+        expect { described_class.load_yaml_file(staging, io) }.to raise_error(err)
+      end
+    end
   end
 end
