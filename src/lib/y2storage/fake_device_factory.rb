@@ -35,7 +35,7 @@ module Y2Storage
   #
   class FakeDeviceFactory < AbstractDeviceFactory
     # Valid toplevel products of this factory
-    VALID_TOPLEVEL  = ["dasd", "disk", "lvm_vg"]
+    VALID_TOPLEVEL  = ["dasd", "disk", "md", "lvm_vg"]
 
     # Valid hierarchy within the products of this factory.
     # This indicates the permitted children types for each parent.
@@ -43,6 +43,9 @@ module Y2Storage
       {
         "dasd"       => ["partition_table", "partitions", "file_system", "encryption"],
         "disk"       => ["partition_table", "partitions", "file_system", "encryption"],
+        "md"         => ["md_devices", "partition_table", "partitions", "file_system", "encryption"],
+        "md_devices" => ["md_device"],
+        "md_device"  => [],
         "partitions" => ["partition", "free"],
         "partition"  => ["file_system", "encryption", "btrfs"],
         "encryption" => ["file_system"],
@@ -70,6 +73,8 @@ module Y2Storage
         "disk"            => [
           "name", "size", "block_size", "io_size", "min_grain", "align_ofs", "mbr_gap"
         ].concat(FILE_SYSTEM_PARAM),
+        "md"              => ["name", "md_level", "md_parity", "chunk_size"].concat(FILE_SYSTEM_PARAM),
+        "md_device"       => ["blk_device"],
         "partition_table" => [],
         "partitions"      => [],
         "partition"       => [
@@ -99,7 +104,13 @@ module Y2Storage
         # reported if both are specified: It's either a partiton table or a
         # file system, not both.
         #
-        "file_system" => ["encryption", "partition_table"]
+        # file_system depends on md_devices because the devices must be added to
+        # the MD before formatting it.
+        "file_system"     => ["encryption", "partition_table", "md_devices"],
+
+        # partition_table depends on "md_devices" because the devices must be added
+        # to the MD before creating partitions on it.
+        "partition_table" => ["md_devices"]
       }
 
     class << self
@@ -171,7 +182,7 @@ module Y2Storage
     def fixup_param(name, param)
       log.info("Fixing up #{param} for #{name}")
       ["size", "start", "block_size", "io_size", "min_grain", "align_ofs",
-       "mbr_gap", "extent_size", "stripe_size"].each do |key|
+       "mbr_gap", "extent_size", "stripe_size", "chunk_size"].each do |key|
         param[key] = DiskSize.new(param[key]) if param.key?(key)
       end
       param
@@ -188,7 +199,6 @@ module Y2Storage
       DEPENDENCIES
     end
 
-    #
     # Factory methods
     #
     # The AbstractDeviceFactory base class will collect all methods starting
@@ -250,6 +260,59 @@ module Y2Storage
       new_partitionable(Disk, args).name
     end
 
+    # Factory method to create a Software RAID (Md)
+    #
+    # @param _parent [nil] (Mds are toplevel)
+    # @param args [Hash] RAID parameters:
+    #   * :name [String] RAID name (e.g., /dev/md0)
+    #   * :md_level [String] "raid0", "raid1", etc
+    #   * :chunk_size [DiskSize]
+    #
+    # @return [String] name of the new Software RAID (e.g., /dev/md0)
+    def create_md(_parent, args)
+      args = md_args(args)
+
+      md = Md.create(devicegraph, args["name"])
+      md.md_level = args["md_level"]
+      md.md_parity = args["md_parity"] unless args["md_parity"].nil?
+      md.chunk_size = args["chunk_size"] unless args["chunk_size"].nil?
+
+      save_filesystem_attributes(md, args)
+      md.name
+    end
+
+    # Prepares Md values
+    #
+    # @param args [Hash]
+    # @return [Hash]
+    def md_args(args)
+      args = args.dup
+
+      args["name"] ||= Md.find_free_numeric_name(devicegraph)
+
+      args["md_level"] = if args["md_level"]
+        Y2Storage::MdLevel.find(args["md_level"])
+      else
+        Y2Storage::MdLevel::RAID0
+      end
+
+      args["md_parity"] = Y2Storage::MdParity.find(args["md_parity"]) if args["md_parity"]
+
+      args
+    end
+
+    # Factory method to add a block device to a Software RAID
+    #
+    # @param parent [Md] Software RAID
+    # @param args [Hash] block device parameters:
+    #   * :blk_device [String] block device used by the Software RAID
+    def create_md_device(parent, args)
+      md = Md.find_by_name(devicegraph, parent)
+      md_device = BlkDevice.find_by_name(devicegraph, args["blk_device"])
+
+      md.add_device(md_device)
+    end
+
     # Method to create a partitionable.
     # @see #create_dasd
     # @see #create_disk
@@ -287,23 +350,26 @@ module Y2Storage
       # range (number of partitions that the kernel can handle) used to be
       # 16 for scsi and 64 for ide. Now it's 256 for most of them.
       disk.range = args["range"] || 256
-      file_system_directly_on_disk(disk, args) if args.keys.any? { |x| FILE_SYSTEM_PARAM.include?(x) }
+
+      save_filesystem_attributes(disk, args)
       disk
     end
     # rubocop:enable all
 
-    # Create a filesystem directly on a disk.
+    # Saves all attributes related to the filesystem when the device is directly formatted
     #
-    # @param disk [Disk]
-    # @param args [Hash] disk and filesystem parameters
-    def file_system_directly_on_disk(disk, args)
+    # @param device [BlkDevice]
+    # @param args [Hash] device and filesystem parameters
+    def save_filesystem_attributes(device, args)
+      return unless args.keys.any? { |x| FILE_SYSTEM_PARAM.include?(x) }
+
       # No use trying to check for disk.has_partition_table here and throwing
       # an error in that case: The AbstractDeviceFactory base class will
       # already have caused a Storage::WrongNumberOfChildren exception and
       # convert that into a better readable HierarchyError. When we get here,
       # that error already happened.
-      log.info("Creating filesystem directly on disk #{args}")
-      file_system_data_picker(disk.name, args)
+      log.info("Creating filesystem directly on device #{args}")
+      file_system_data_picker(device.name, args)
     end
 
     # Modifies topology settings of the disk according to factory arguments

@@ -26,9 +26,12 @@ require "storage"
 require "y2storage"
 
 module Y2Storage
-  #
   # Class to write storage device trees to YAML files.
   #
+  # FIXME: This class exceeds the maximum allowed length (250 lines of code).
+  # Reconsider improve it.
+  #
+  # rubocop:disable Metrics/ClassLength
   class YamlWriter
     include Yast::Logger
 
@@ -86,6 +89,7 @@ module Y2Storage
     def yaml_device_tree(devicegraph)
       yaml = []
       top_level_devices(devicegraph).each { |device| yaml << yaml_disk_device(device) }
+      devicegraph.software_raids.each { |s| yaml << yaml_software_raid(s) }
       devicegraph.lvm_vgs.each { |lvm_vg| yaml << yaml_lvm_vg(lvm_vg) }
       unsupported_devices(devicegraph).each { |device| yaml << yaml_unsupported_device(device) }
       yaml
@@ -115,20 +119,22 @@ module Y2Storage
     def yaml_disk_device(device)
       content = basic_disk_device_attributes(device)
       content.merge!(dasd_additional_attributes(device)) if device.is?(:dasd)
-      if device.partition_table
-        ptable = device.partition_table
-        content["partition_table"] = ptable.type.to_s
-        if ptable.type.is?(:msdos)
-          content["mbr_gap"] = ptable.minimal_mbr_gap.to_s
-        end
-        partitions = yaml_disk_device_partitions(device)
-        content["partitions"] = partitions unless partitions.empty?
-      else
-        content.merge!(yaml_filesystem_and_encryption(device))
-      end
+      content.merge!(yaml_blk_device_attributes(device))
 
       device = device.is?(:dasd) ? "dasd" : "disk"
       { device => content }
+    end
+
+    # Basic attributes of a block device
+    #
+    # @param device [Y2Storage::BlkDevice]
+    # @return [Hash{String => Object}]
+    def yaml_blk_device_attributes(device)
+      if device.partition_table
+        yaml_partition_table(device)
+      else
+        yaml_filesystem_and_encryption(device)
+      end
     end
 
     # Basic attributes used to represent a disk device
@@ -154,6 +160,75 @@ module Y2Storage
       content = {}
       content["type"] = device.type.to_s unless device.type.is?(:unknown)
       content["format"] = device.format.to_s unless device.format.is?(:none)
+      content
+    end
+
+    # Returns the YAML counterpart of a Y2Storage::Md
+    #
+    # @note Md objects can represent BIOS RAIDs by using the subclass MdMember and
+    #   MdContainer. This method is inteded to only export Md Software RAIDs.
+    #
+    # @param md [Y2Storage::Md]
+    # @return [Hash]
+    def yaml_software_raid(md)
+      content = basic_md_attributes(md)
+      content.merge!(yaml_blk_device_attributes(md))
+
+      md_devices = yaml_md_devices(md)
+
+      content["md_devices"] = md_devices unless md_devices.empty?
+
+      { "md" => content }
+    end
+
+    # Basic attributes used to represent a Md
+    #
+    # @param md [Y2Storage::Md]
+    # @return [Hash]
+    def basic_md_attributes(md)
+      {
+        "name"       => md.name,
+        "md_level"   => md.md_level.to_s,
+        "md_parity"  => md.md_parity.to_s,
+        "chunk_size" => md.chunk_size.to_s
+      }
+    end
+
+    # Returns a YAML representation of the devices used by a Md
+    #
+    # @param md [Y2Storage::Md]
+    # @return [Array<Hash>]
+    def yaml_md_devices(md)
+      devices = md.devices.sort_by(&:name)
+      devices.map { |d| yaml_md_device(d) }
+    end
+
+    # Returns the YAML counterpart of a device used by a Md
+    #
+    # @param device [Y2Storage::BlkDevice]
+    # @return [Hash]
+    def yaml_md_device(device)
+      content = {
+        "blk_device" => device.name
+      }
+
+      { "md_device" => content }
+    end
+
+    # Returns the YAML counterpart of the partition table of a device
+    # @param device [Y2Storage::BlkDevice]
+    # @return [Hash]
+    def yaml_partition_table(device)
+      content = {}
+
+      ptable = device.partition_table
+      content["partition_table"] = ptable.type.to_s
+      if ptable.type.is?(:msdos)
+        content["mbr_gap"] = ptable.minimal_mbr_gap.to_s
+      end
+      partitions = yaml_disk_device_partitions(device)
+      content["partitions"] = partitions unless partitions.empty?
+
       content
     end
 
@@ -505,7 +580,8 @@ module Y2Storage
       # NOTICE: We can't simply only handle devicegraph toplevel objects since
       # some of the unsupported ones (e.g. RAIDs) don't have a bracketing
       # toplevel object, unlike LVM with VGs.
-      blk_device.is?(:disk, :dasd, :encryption, :lvm_lv, :partition)
+      blk_device.is?(:disk, :dasd, :software_raid, :encryption, :lvm_lv, :partition)
     end
   end
+  # rubocop:enable all
 end
