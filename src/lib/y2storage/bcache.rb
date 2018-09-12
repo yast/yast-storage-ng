@@ -26,7 +26,7 @@ module Y2Storage
   # A Bcache device
   #
   # This is a wrapper for Storage::Bcache
-  class Bcache < BlkDevice
+  class Bcache < Partitionable
     wrap_class Storage::Bcache
 
     # @!method bcache_cset
