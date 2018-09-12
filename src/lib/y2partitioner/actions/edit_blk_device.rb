@@ -88,7 +88,7 @@ module Y2Partitioner
       #
       # @return [Array<Strings>]
       def errors
-        [used_device_error, extended_partition_error, lvm_thin_pool_error].compact
+        [used_device_error, partitions_error, extended_partition_error, lvm_thin_pool_error].compact
       end
 
       # Error when trying to edit an used device
@@ -101,13 +101,28 @@ module Y2Partitioner
         return nil if using_devs.empty?
 
         format(
-          # TRANSLATORS: %{name} is replaced by a device name (e.g., /dev/sda1).
+          # TRANSLATORS: %{name} is replaced by a device name (e.g., /dev/sda1)
           # and %{users} is replaced by a comma-separated list of name devices
           # (devices using the first one).
           _("The device %{name} is in use (%{users}).\n" \
             "It cannot be edited.\n" \
             "To edit %{name}, make sure it is not used."),
           name: device.name, users: using_devs.join(", ")
+        )
+      end
+
+      # Error when trying to edit a device that contains partitions
+      #
+      # @return [String, nil] nil if the device is not being used.
+      def partitions_error
+        return nil unless device.respond_to?(:partitions) && !device.partitions.empty?
+
+        format(
+          # TRANSLATORS: %{name} is replaced by a device name (e.g., /dev/sda1).
+          _("The device %{name} contains partitions.\n" \
+            "It cannot be edited directly.\n" \
+            "To edit %{name}, first delete all its partitions."),
+          name: device.name
         )
       end
 
