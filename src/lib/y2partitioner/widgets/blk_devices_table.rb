@@ -221,6 +221,7 @@ module Y2Partitioner
       end
 
       DEVICE_ICONS = {
+        bcache:    Icons::HD, # TODO: have own icon for bcache
         disk:      Icons::HD,
         dasd:      Icons::HD,
         multipath: Icons::MULTIPATH,
@@ -247,6 +248,7 @@ module Y2Partitioner
       end
 
       DEVICE_LABELS = {
+        bcache:        N_("Bcache"),
         disk:          N_("Disk"),
         dasd:          N_("Disk"),
         multipath:     N_("Multipath"),
@@ -272,6 +274,9 @@ module Y2Partitioner
           partition_type_label(device)
         elsif device.is?(:lvm_lv)
           lvm_lv_type_label(device)
+        # bcache has as vendor Disk, but we want to write bcache as type here
+        elsif device.is?(:bcache)
+          default_type_label(device)
         else
           blk_device_type_label(device)
         end

@@ -58,7 +58,7 @@ module Y2Partitioner
               HBox(
                 Image(icon, ""),
                 # TRANSLATORS: Heading
-                Heading(_("Bcaches"))
+                Heading(_("Bcache"))
               )
             ),
             table,
