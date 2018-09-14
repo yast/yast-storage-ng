@@ -21,27 +21,29 @@
 
 require "yast"
 require "y2partitioner/actions/transaction_wizard"
-require "y2partitioner/actions/new_blk_device"
-require "y2partitioner/actions/controllers"
-require "y2partitioner/dialogs"
+require "y2partitioner/actions/controllers/add_partition"
+require "y2partitioner/actions/controllers/filesystem"
+require "y2partitioner/actions/filesystem_steps"
+require "y2partitioner/dialogs/partition_type"
+require "y2partitioner/dialogs/partition_size"
 
 module Y2Partitioner
   module Actions
     # formerly EpCreatePartition, DlgCreatePartition
     class AddPartition < TransactionWizard
-      include NewBlkDevice
+      include FilesystemSteps
 
-      # @param disk [Y2Storage::BlkDevice]
-      def initialize(disk)
+      # @param device [Y2Storage::BlkDevice]
+      def initialize(device)
         textdomain "storage"
 
         super()
-        @device_sid = disk.sid
+        @device_sid = device.sid
       end
 
       # Removes the filesystem when the device is directly formatted
       def delete_filesystem
-        part_controller.delete_filesystem if part_controller.disk_formatted?
+        controller.delete_filesystem if controller.device_formatted?
         :next
       end
 
@@ -50,22 +52,22 @@ module Y2Partitioner
         when 0
           raise "No partition type possible"
         when 1
-          part_controller.type = available_types.first
+          controller.type = available_types.first
           :next
         else
           # Only run the dialog if more than one partition type is available
           # (bsc#1075443)
-          Dialogs::PartitionType.run(part_controller)
+          Dialogs::PartitionType.run(controller)
         end
       end
 
       def size
-        part_controller.delete_partition
-        result = Dialogs::PartitionSize.run(part_controller)
-        part_controller.create_partition if [:next, :finish].include?(result)
+        controller.delete_partition
+        result = Dialogs::PartitionSize.run(controller)
+        controller.create_partition if [:next, :finish].include?(result)
         if result == :next
-          part = part_controller.partition
-          title = part_controller.wizard_title
+          part = controller.partition
+          title = controller.wizard_title
           self.fs_controller = Controllers::Filesystem.new(part, title)
         end
         result
@@ -74,12 +76,12 @@ module Y2Partitioner
     protected
 
       # @return [Controllers::Partition]
-      attr_reader :part_controller
+      attr_reader :controller
 
       # @see TransactionWizard
       def init_transaction
         # The controller object must be created within the transaction
-        @part_controller = Controllers::Partition.new(device.name)
+        @controller = Controllers::AddPartition.new(device.name)
 
         # Once the controller is created we know which steps can be skipped
         # when going back
@@ -92,12 +94,12 @@ module Y2Partitioner
           "ws_start"          => "delete_filesystem",
           "delete_filesystem" => { next: "type" },
           "type"              => { next: "size" },
-          "size"              => { next: new_blk_device_step1, finish: :finish }
-        }.merge(new_blk_device_steps)
+          "size"              => { next: first_filesystem_step, finish: :finish }
+        }.merge(filesystem_steps)
       end
 
-      def disk_name
-        part_controller.disk_name
+      def device_name
+        controller.device_name
       end
 
       # @see TransactionWizard
@@ -115,7 +117,7 @@ module Y2Partitioner
       #
       # @return [Boolean] true if device can be partitioned, false otherwise
       def partitionable_validation
-        if part_controller.disk.respond_to?(:partitions)
+        if controller.device.respond_to?(:partitions)
           true
         else
           impossible_partition_popup
@@ -125,14 +127,14 @@ module Y2Partitioner
 
       # Checks whether the device is not used
       #
-      # @see Controllers::Partition#disk_used?
+      # @see Controllers::Partition#device_used?
       #
       # @return [Boolean] true if device is not used; false otherwise.
       def not_used_validation
-        return true unless part_controller.disk_used?
+        return true unless controller.device_used?
 
         Yast::Popup.Error(
-          _("The disk is in use and cannot be modified.")
+          _("The device is in use and cannot be modified.")
         )
 
         false
@@ -140,7 +142,7 @@ module Y2Partitioner
 
       # Checks whether the device is not formatted
       #
-      # @see Controllers::Partition#disk_formatted?
+      # @see Controllers::Partition#device_formatted?
       #
       # @note A confirm popup to delete the filesystem is shown when the device
       #   is directly formatted.
@@ -148,14 +150,14 @@ module Y2Partitioner
       # @return [Boolean] true if device is not formatted or confirm popup is
       #   accepted; false otherwise.
       def not_formatted_validation
-        return true unless part_controller.disk_formatted?
+        return true unless controller.device_formatted?
 
         Yast::Popup.YesNo(
           # TRANSLATORS: %{name} is a device name (e.g. "/dev/sda")
           format(
             _("The device %{name} is directly formatted.\n"\
               "Remove the filesystem on %{name}?"),
-            name: disk_name
+            name: device_name
           )
         )
       end
@@ -169,8 +171,8 @@ module Y2Partitioner
       #
       # @return [Boolean]
       def available_space_validation
-        return true if part_controller.disk_formatted?
-        return true if part_controller.new_partition_possible?
+        return true if controller.device_formatted?
+        return true if controller.new_partition_possible?
 
         impossible_partition_popup
         false
@@ -183,7 +185,7 @@ module Y2Partitioner
           format(
             # TRANSLATORS: %{name} is a device name (e.g. "/dev/sda")
             _("It is not possible to create a partition on %{name}."),
-            name: disk_name
+            name: device_name
           )
         )
       end
@@ -192,7 +194,7 @@ module Y2Partitioner
       #
       # @return [Array<Y2Storage::PartitionType>]
       def available_types
-        part_controller.available_partition_types
+        controller.available_partition_types
       end
 
       # Convenience method for setting the steps that have to be skipped when

@@ -58,7 +58,7 @@ describe Y2Partitioner::Actions::AddPartition do
 
       initial_graph = current_graph
 
-      expect(Y2Partitioner::Actions::Controllers::Partition).to receive(:new) do |disk_name|
+      expect(Y2Partitioner::Actions::Controllers::AddPartition).to receive(:new) do |disk_name|
         # Modifies used device
         disk = Y2Storage::BlkDevice.find_by_name(current_graph, disk_name)
         disk.remove_descendants
@@ -177,14 +177,14 @@ describe Y2Partitioner::Actions::AddPartition do
         before do
           allow(Yast::Popup).to receive(:YesNo).and_return(true)
 
-          allow(Y2Partitioner::Actions::Controllers::Partition).to receive(:new).with(disk_name)
+          allow(Y2Partitioner::Actions::Controllers::AddPartition).to receive(:new).with(disk_name)
             .and_return(controller)
           # Only to finish
           allow(Y2Partitioner::Dialogs::PartitionType).to receive(:run).and_return(:abort)
           allow(controller).to receive(:available_partition_types).and_return(available_types)
         end
 
-        let(:controller) { Y2Partitioner::Actions::Controllers::Partition.new(disk_name) }
+        let(:controller) { Y2Partitioner::Actions::Controllers::AddPartition.new(disk_name) }
         let(:available_types) { Y2Storage::PartitionType.all }
 
         it "removes the filesystem" do
@@ -200,7 +200,7 @@ describe Y2Partitioner::Actions::AddPartition do
       let(:disk_name) { "/dev/sda" }
 
       before do
-        allow(Y2Partitioner::Actions::Controllers::Partition).to receive(:new).with(disk_name)
+        allow(Y2Partitioner::Actions::Controllers::AddPartition).to receive(:new).with(disk_name)
           .and_return(controller)
 
         allow(controller).to receive(:region).and_return(region)
@@ -216,7 +216,7 @@ describe Y2Partitioner::Actions::AddPartition do
 
       let(:type) { Y2Storage::PartitionType::PRIMARY }
 
-      let(:controller) { Y2Partitioner::Actions::Controllers::Partition.new(disk_name) }
+      let(:controller) { Y2Partitioner::Actions::Controllers::AddPartition.new(disk_name) }
 
       it "returns :finish" do
         expect(action.run).to eq(:finish)
@@ -259,13 +259,13 @@ describe Y2Partitioner::Actions::AddPartition do
       let(:scenario) { "empty_hard_disk_50GiB.yml" }
       let(:disk_name) { "/dev/sda" }
       let(:available_types) { [Y2Storage::PartitionType.new("primary")] }
-      let(:controller) { Y2Partitioner::Actions::Controllers::Partition.new(disk_name) }
+      let(:controller) { Y2Partitioner::Actions::Controllers::AddPartition.new(disk_name) }
 
       before do
         allow(controller).to receive(:available_partition_types).and_return(available_types)
         allow(subject).to receive(:type).and_return(:next)
         allow(Y2Partitioner::Dialogs::PartitionSize).to receive(:run).and_return(:back)
-        allow(Y2Partitioner::Actions::Controllers::Partition).to receive(:new).with(disk_name)
+        allow(Y2Partitioner::Actions::Controllers::AddPartition).to receive(:new).with(disk_name)
           .and_return(controller)
         allow(subject).to receive(:skip_steps).and_call_original
       end
@@ -284,12 +284,12 @@ describe Y2Partitioner::Actions::AddPartition do
   describe "#type" do
     let(:scenario) { "empty_hard_disk_50GiB.yml" }
     let(:disk_name) { "/dev/sda" }
-    let(:controller) { Y2Partitioner::Actions::Controllers::Partition.new(disk_name) }
+    let(:controller) { Y2Partitioner::Actions::Controllers::AddPartition.new(disk_name) }
     let(:available_types) { Y2Storage::PartitionType.all }
 
     before do
       allow(controller).to receive(:available_partition_types).and_return(available_types)
-      subject.instance_variable_set(:@part_controller, controller)
+      subject.instance_variable_set(:@controller, controller)
     end
 
     context "when there is no partition types available" do

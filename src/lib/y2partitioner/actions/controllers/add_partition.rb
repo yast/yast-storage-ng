@@ -30,7 +30,7 @@ module Y2Partitioner
       # This class stores information about a future partition so that information
       # can be shared across the different dialogs of the process. It also takes
       # care of updating the devicegraph when needed.
-      class Partition
+      class AddPartition
         include Yast::I18n
 
         # @return [Y2Storage::PartitionType]
@@ -57,19 +57,19 @@ module Y2Partitioner
 
         # Name of the device being partitioned
         # @return [String]
-        attr_reader :disk_name
+        attr_reader :device_name
 
-        def initialize(disk_name)
+        def initialize(device_name)
           textdomain "storage"
 
-          @disk_name = disk_name
+          @device_name = device_name
         end
 
         # Device being partitioned
         # @return [Y2Storage::BlkDevice]
-        def disk
+        def device
           dg = DeviceGraphs.instance.current
-          Y2Storage::BlkDevice.find_by_name(dg, disk_name)
+          Y2Storage::BlkDevice.find_by_name(dg, device_name)
         end
 
         # Available slots to create the partition in which the start is aligned
@@ -81,8 +81,8 @@ module Y2Partitioner
         def unused_optimal_slots
           # Caching seems to be important for the current dialogs to work
           @unused_optimal_slots ||=
-            if disk.can_have_ptable?
-              disk.ensure_partition_table.unused_partition_slots
+            if device.can_have_ptable?
+              device.ensure_partition_table.unused_partition_slots
             else
               []
             end
@@ -97,8 +97,8 @@ module Y2Partitioner
         def unused_slots
           # Caching seems to be important for the current dialogs to work
           @unused_slots ||=
-            if disk.can_have_ptable?
-              disk.ensure_partition_table.unused_partition_slots(
+            if device.can_have_ptable?
+              device.ensure_partition_table.unused_partition_slots(
                 Y2Storage::AlignPolicy::ALIGN_START_KEEP_END, Y2Storage::AlignType::REQUIRED
               )
             else
@@ -110,58 +110,61 @@ module Y2Partitioner
         #
         # @return [Y2Storage::DiskSize]
         def optimal_grain
-          disk.ensure_partition_table.align_grain
+          device.ensure_partition_table.align_grain
         end
 
         # Grain to use in order to keep the required alignment
         #
         # @return [Y2Storage::DiskSize]
         def required_grain
-          disk.ensure_partition_table.align_grain(Y2Storage::AlignType::REQUIRED)
+          device.ensure_partition_table.align_grain(Y2Storage::AlignType::REQUIRED)
         end
 
-        # Creates the partition in the disk according to the controller
+        # Creates the partition in the device according to the controller
         # attributes (#type, #region, etc.)
         def create_partition
-          ptable = disk.ensure_partition_table
+          ptable = device.ensure_partition_table
           slot = slot_for(region)
           aligned = align(region, slot, ptable)
           @partition = ptable.create_partition(slot.name, aligned, type)
           UIState.instance.select_row(@partition)
         end
 
-        # Removes the previously created partition from the disk
+        # Removes the previously created partition from the device
         def delete_partition
           return if @partition.nil?
 
-          ptable = disk.ensure_partition_table
+          ptable = device.ensure_partition_table
           ptable.delete_partition(@partition)
           @partition = nil
         end
 
-        # Removes the filesystem when the disk is directly formatted
+        # Removes the filesystem when the device is directly formatted
+        #
+        # Cached values must be reset (e.g., available s)
         def delete_filesystem
-          disk.delete_filesystem
+          device.delete_filesystem
+          reset
         end
 
-        # Whether the disk is in use
+        # Whether the device is in use
         #
-        # @note A disk is in use when it is used as physical volume or
+        # @note A device is in use when it is used as physical volume or
         #   belongs to a MD RAID.
         #
         # @return [Boolean]
-        def disk_used?
-          disk.partition_table.nil? && disk.descendants.any? { |d| d.is?(:lvm_pv, :md) }
+        def device_used?
+          device.partition_table.nil? && device.descendants.any? { |d| d.is?(:lvm_pv, :md) }
         end
 
-        # Whether the disk is formatted
+        # Whether the device is formatted
         #
         # @return [Boolean]
-        def disk_formatted?
-          disk.formatted?
+        def device_formatted?
+          device.formatted?
         end
 
-        # Whether is possible to create any new partition in the disk
+        # Whether is possible to create any new partition in the device
         #
         # @return [Boolean]
         def new_partition_possible?
@@ -182,7 +185,7 @@ module Y2Partitioner
         # @return [String]
         def wizard_title
           # TRANSLATORS: dialog title. %s is a device name like /dev/sda
-          _("Add Partition on %s") % disk_name
+          _("Add Partition on %s") % device_name
         end
 
         # Error to display to the user if the blocks selected to define a
@@ -224,6 +227,15 @@ module Y2Partitioner
 
       protected
 
+        # Resets cached values
+        #
+        # It is required when the device usage has changed (i.e., initially the
+        # device was directly formatted).
+        def reset
+          @unused_slots = nil
+          @unused_optimal_slots = nil
+        end
+
         # Partition slot containing the given region
         #
         # @param region [Y2Storage::Region] region for the new partition
@@ -241,7 +253,7 @@ module Y2Partitioner
         #     be aligned according to OPTIMAL and this method:
         #     * Leaves region.end untouched if it's equal to the end of the
         #       slot, because that means the user wants to use the whole space
-        #       until the next "barrier" (the end of the disk or the start of an
+        #       until the next "barrier" (the end of the device or the start of an
         #       existing partition) with no gap.
         #     * Aligns region.end to OPTIMAL if it's smaller then the end of the
         #       slot, because that means the user wants to leave some space and
@@ -300,7 +312,7 @@ module Y2Partitioner
         # @return [Boolean]
         def alignable_custom_region?(start_blk, end_blk)
           region = Y2Storage::Region.create(start_blk, end_blk - start_blk + 1, block_size)
-          disk.ensure_partition_table.align(
+          device.ensure_partition_table.align(
             region, Y2Storage::AlignPolicy::ALIGN_START_AND_END, Y2Storage::AlignType::REQUIRED
           )
           true
