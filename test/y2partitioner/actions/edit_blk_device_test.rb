@@ -21,7 +21,6 @@
 # find current contact information at www.suse.com.
 
 require_relative "../test_helper"
-require "y2partitioner/actions/controllers"
 require "y2partitioner/actions/edit_blk_device"
 
 describe Y2Partitioner::Actions::EditBlkDevice do
