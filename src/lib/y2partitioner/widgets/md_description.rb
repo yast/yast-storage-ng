@@ -60,7 +60,8 @@ module Y2Partitioner
           raid_active,
           raid_type,
           raid_chunk_size,
-          raid_parity
+          raid_parity,
+          device_label
         ]
       end
 
@@ -109,7 +110,7 @@ module Y2Partitioner
         blk_device_help_fields + raid_help_fields + filesystem_help_fields
       end
 
-      RAID_HELP_FIELDS = [:raid_type, :chunk_size, :parity_algorithm].freeze
+      RAID_HELP_FIELDS = [:raid_type, :chunk_size, :parity_algorithm, :disk_label].freeze
 
       # Help fields for a MD RAID
       #
