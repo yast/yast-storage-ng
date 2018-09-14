@@ -39,9 +39,9 @@ module Y2Partitioner
       # Deletes the indicated partition (see {DeleteDevice#device})
       def delete
         log.info "deleting partition #{device}"
-        disk_device = device.partitionable
-        disk_device.partition_table.delete_partition(device)
-        UIState.instance.select_row(disk_device)
+        parent_device = device.partitionable
+        parent_device.partition_table.delete_partition(device)
+        UIState.instance.select_row(parent_device)
       end
 
       # @see DeleteDevice#errors
