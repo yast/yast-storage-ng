@@ -289,7 +289,7 @@ describe Y2Storage::Disk do
     end
 
     context "when the disk belongs to a Software RAID" do
-      let(:scenario) { "md_raid.xml" }
+      let(:scenario) { "md_raid" }
 
       let(:disk_name) { "/dev/sda" }
 

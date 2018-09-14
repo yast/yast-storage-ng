@@ -40,7 +40,7 @@ describe Y2Partitioner::Actions::EditMdDevices do
 
     let(:devicegraph) { Y2Partitioner::DeviceGraphs.instance.current }
 
-    let(:scenario) { "md_raid.xml" }
+    let(:scenario) { "md_raid" }
 
     let(:md) { devicegraph.md_raids.first }
 
@@ -65,7 +65,7 @@ describe Y2Partitioner::Actions::EditMdDevices do
     end
 
     context "if the MD RAID already exists on the disk" do
-      let(:scenario) { "md_raid.xml" }
+      let(:scenario) { "md_raid" }
 
       let(:md) { devicegraph.md_raids.first }
 

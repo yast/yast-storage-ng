@@ -5,7 +5,7 @@ require "y2partitioner/widgets/md_raids_table"
 
 describe Y2Partitioner::Widgets::MdRaidsTable do
   before do
-    devicegraph_stub("md2-devicegraph.xml")
+    devicegraph_stub("md2-devicegraph")
   end
 
   let(:device_graph) { Y2Partitioner::DeviceGraphs.instance.current }

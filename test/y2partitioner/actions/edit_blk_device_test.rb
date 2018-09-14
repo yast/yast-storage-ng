@@ -80,7 +80,7 @@ describe Y2Partitioner::Actions::EditBlkDevice do
     end
 
     context "if called on a device that holds a MD RAID" do
-      let(:scenario) { "md_raid.xml" }
+      let(:scenario) { "md_raid" }
       let(:dev_name) { "/dev/sda1" }
 
       include_examples "edit_error"

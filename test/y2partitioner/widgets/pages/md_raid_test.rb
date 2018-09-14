@@ -26,7 +26,7 @@ require "cwm/rspec"
 require "y2partitioner/widgets/pages"
 
 describe Y2Partitioner::Widgets::Pages::MdRaid do
-  before { devicegraph_stub("md_raid.xml") }
+  before { devicegraph_stub("md_raid") }
 
   let(:current_graph) { Y2Partitioner::DeviceGraphs.instance.current }
 

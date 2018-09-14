@@ -84,7 +84,7 @@ describe Y2Partitioner::Actions::DeletePartition do
     end
 
     context "when deleting a partition used by MD Raid" do
-      let(:scenario) { "md_raid.xml" }
+      let(:scenario) { "md_raid" }
 
       let(:device_name) { "/dev/sda1" }
 

@@ -256,7 +256,7 @@ describe Y2Partitioner::Actions::Controllers::AddPartition do
     end
 
     context "when the device has a partition table" do
-      let(:scenario) { "md_raid.xml" }
+      let(:scenario) { "md_raid" }
 
       let(:device_name) { "/dev/sda" }
 

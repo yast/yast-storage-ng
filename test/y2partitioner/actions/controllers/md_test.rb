@@ -54,7 +54,7 @@ describe Y2Partitioner::Actions::Controllers::Md do
     end
 
     context "when a Md device is given" do
-      let(:scenario) { "md_raid.xml" }
+      let(:scenario) { "md_raid" }
 
       let(:md) { current_graph.md_raids.first }
 
@@ -85,7 +85,7 @@ describe Y2Partitioner::Actions::Controllers::Md do
     end
 
     context "when the controller is created with a Md device" do
-      let(:scenario) { "md_raid.xml" }
+      let(:scenario) { "md_raid" }
 
       let(:md) { current_graph.md_raids.first }
 

@@ -31,7 +31,7 @@ RSpec.shared_examples "edit device" do
   end
 
   context "and the device is a Software RAID" do
-    let(:scenario) { "md_raid.xml" }
+    let(:scenario) { "md_raid" }
     let(:device_name) { "/dev/md/md0" }
     include_examples "run edit action"
   end
