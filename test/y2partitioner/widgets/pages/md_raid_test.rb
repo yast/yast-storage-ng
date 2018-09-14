@@ -50,6 +50,11 @@ describe Y2Partitioner::Widgets::Pages::MdRaid do
       expect(Y2Partitioner::Widgets::UsedDevicesTab).to receive(:new)
       subject.contents
     end
+
+    it "shows a partitions tab" do
+      expect(Y2Partitioner::Widgets::PartitionsTab).to receive(:new)
+      subject.contents
+    end
   end
 
   describe Y2Partitioner::Widgets::Pages::MdTab do
@@ -70,13 +75,33 @@ describe Y2Partitioner::Widgets::Pages::MdRaid do
         expect(button).to_not be_nil
       end
 
-      it "shows a button to resize the raid" do
-        button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::DeviceResizeButton) }
+      it "shows a button to delete the raid" do
+        button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::DeviceDeleteButton) }
         expect(button).to_not be_nil
       end
 
-      it "shows a button to delete the raid" do
-        button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::DeviceDeleteButton) }
+      it "shows a button for creating a new partition table" do
+        button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::PartitionTableAddButton) }
+        expect(button).to_not be_nil
+      end
+
+      it "shows a button for cloning the partitions" do
+        button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::PartitionTableCloneButton) }
+        expect(button).to_not be_nil
+      end
+    end
+  end
+
+  describe Y2Partitioner::Widgets::Pages::MdDevicesTab do
+    subject { described_class.new(md, pager) }
+
+    include_examples "CWM::Tab"
+
+    describe "#contents" do
+      let(:widgets) { Yast::CWM.widgets_in_contents([subject]) }
+
+      it "shows a button to edit the used devices" do
+        button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::UsedDevicesEditButton) }
         expect(button).to_not be_nil
       end
     end
