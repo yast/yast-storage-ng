@@ -25,8 +25,8 @@ require "y2partitioner/widgets/md_devices_selector"
 
 module Y2Partitioner
   module Dialogs
-    # Dialog for resizing a MD RAID
-    class MdResize < Base
+    # Dialog for editing the devices of a Software RAID
+    class MdEditDevices < Base
       # Constructor
       #
       # @param controller [Actions::Controllers::Md]

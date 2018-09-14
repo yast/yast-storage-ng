@@ -22,15 +22,15 @@
 require "yast"
 require "y2partitioner/actions/transaction_wizard"
 require "y2partitioner/actions/controllers/md"
-require "y2partitioner/dialogs/md_resize"
+require "y2partitioner/dialogs/md_edit_devices"
 require "y2partitioner/device_graphs"
 
 Yast.import "Popup"
 
 module Y2Partitioner
   module Actions
-    # Action for resizing a MD RAID
-    class ResizeMd < TransactionWizard
+    # Action for editing the devices of a Software RAID
+    class EditMdDevices < TransactionWizard
       # Constructor
       #
       # @param md [Y2Storage::Md]
@@ -41,11 +41,11 @@ module Y2Partitioner
         @device_sid = md.sid
       end
 
-      # Calls the dialog for resizing the MD RAID
+      # Calls the dialog for editing the devices
       #
       # @return [Symbol] :finish if the dialog returns :next; dialog result otherwise.
       def resize
-        result = Dialogs::MdResize.run(controller)
+        result = Dialogs::MdEditDevices.run(controller)
         result == :next ? :finish : result
       end
 
@@ -84,8 +84,9 @@ module Y2Partitioner
         Yast::Popup.Error(
           # TRANSLATORS: error popup, %{name} is replaced by device name (e.g., /dev/md1)
           format(
-            _("The RAID %{name} is already created on disk. It cannot be\n" \
-              "resized. To resize %{name}, remove it and create it again."),
+            _("The RAID %{name} is already created on disk and its used devices\n" \
+              "cannot be modified. To modify the used devices, remove the RAID\n" \
+              "and create it again."),
             name: controller.md.name
           )
         )

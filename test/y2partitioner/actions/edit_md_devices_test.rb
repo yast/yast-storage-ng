@@ -22,10 +22,10 @@
 
 require_relative "../test_helper"
 require "y2partitioner/device_graphs"
-require "y2partitioner/actions/resize_md"
-require "y2partitioner/dialogs/md_resize"
+require "y2partitioner/actions/edit_md_devices"
+require "y2partitioner/dialogs/md_edit_devices"
 
-describe Y2Partitioner::Actions::ResizeMd do
+describe Y2Partitioner::Actions::EditMdDevices do
   before do
     allow(Yast::Wizard).to receive(:OpenNextBackDialog)
     allow(Yast::Wizard).to receive(:CloseDialog)
@@ -107,7 +107,7 @@ describe Y2Partitioner::Actions::ResizeMd do
 
       context "and the user goes forward in the dialog" do
         before do
-          allow(Y2Partitioner::Dialogs::MdResize).to receive(:run).and_return :next
+          allow(Y2Partitioner::Dialogs::MdEditDevices).to receive(:run).and_return :next
         end
 
         it "returns :finish" do
@@ -117,7 +117,7 @@ describe Y2Partitioner::Actions::ResizeMd do
 
       context "and the user aborts the process" do
         before do
-          allow(Y2Partitioner::Dialogs::MdResize).to receive(:run).and_return :abort
+          allow(Y2Partitioner::Dialogs::MdEditDevices).to receive(:run).and_return :abort
         end
 
         it "returns :abort" do
