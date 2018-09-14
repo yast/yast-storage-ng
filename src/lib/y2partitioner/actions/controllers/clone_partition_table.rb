@@ -28,10 +28,9 @@ Yast.import "Mode"
 module Y2Partitioner
   module Actions
     module Controllers
-      # This class stores needed information to perform certain actions over a disk device,
-      # for example, the disks over which to clone the device. It also takes care of
-      # updating the devicegraph when needed.
-      class DiskDevice
+      # This class stores needed information to clone the partition table of a device
+      # over another device. It also takes care of updating the devicegraph when needed.
+      class ClonePartitionTable
         # Current disk device
         #
         # @return [Y2Storage::BlkDevice] a disk device
@@ -42,12 +41,13 @@ module Y2Partitioner
 
         # Constructor
         #
-        # @raise [TypeError] if device is not a disk device.
+        # @raise [TypeError] when the device cannot have partitions.
         #
-        # @param device [Y2Storage::BlkDevice] it has to be a disk device,
-        #   (i.e., device#is?(:disk_device) #=> true).
+        # @param device [Y2Storage::BlkDevice] a disk device or a Software RAID.
         def initialize(device)
-          raise(TypeError, "param device has to be a disk device") unless device.is?(:disk_device)
+          if !can_be_partitioned?(device)
+            raise(TypeError, "param device has to be a partitionable device")
+          end
 
           @device = device
           @selected_devices_for_cloning = []
@@ -67,14 +67,13 @@ module Y2Partitioner
           !suitable_devices_for_cloning.empty?
         end
 
-        # Suitable devices where to clone the current device
+        # Suitable devices where to clone the partition table of the current device
         #
-        # @note MD RAID can be partitioned, but only disk devices are taking into account
-        #   as possible devices where to clone.
+        # @see suitable_for_cloning?
         #
         # @return [Array<Y2Storage::Partitionable>]
         def suitable_devices_for_cloning
-          @suitable_devices ||= working_graph.disk_devices.select { |d| suitable_for_cloning?(d) }
+          @suitable_devices ||= working_graph.blk_devices.select { |d| suitable_for_cloning?(d) }
         end
 
         # Clones the current device into the target device
@@ -96,25 +95,43 @@ module Y2Partitioner
           DeviceGraphs.instance.current
         end
 
+        # Whether the device can have partitions
+        #
+        # @return [Boolean]
+        def can_be_partitioned?(device)
+          device.is_a?(Y2Storage::Partitionable)
+        end
+
         # Whether the current device can be cloned into the target device
         #
-        # @note A target device is suitable for cloning if it has enough size, it supports
-        #   the partition table type of the the current device, and it has the same
-        #   topology than the current device. Also note that in a running system, a device
-        #   holding mount points cannot be used as device for cloning. Self cloning is
-        #   also avoided.
+        # @note A target device is suitable for cloning the partition table if the current partition
+        #   table and its partitions can be created over it, see {#suitable_for_partitions?}.Also note
+        #   that in a running system, a device holding mount points cannot be used as device for cloning
+        #   the partition table. Self cloning is also avoided.
         #
-        # @param target_device [Y2Storage::Partitionable] device where to clone
+        # @param target_device [Y2Storage::Partitionable] device where to clone the partition table.
         # @return [Boolean]
         def suitable_for_cloning?(target_device)
           return false if self_cloning?(target_device)
 
-          suitable =
+          suitable = suitable_for_partitions?(target_device)
+
+          Yast::Mode.installation ? suitable : suitable && !mount_points?(target_device)
+        end
+
+        # Whether the partition table and its partitions can be created into the target device
+        #
+        # @note A target device is suitable for cloning the partition table if if can have
+        #   a partition table, it has enough size, it supports the partition table type of
+        #   the the current device, and it has the same topology than the current device.
+        #
+        # @param target_device [Y2Storage::Partitionable] device where to clone the partition table.
+        # @return [Boolean]
+        def suitable_for_partitions?(target_device)
+          can_be_partitioned?(target_device) &&
             enough_size_for_cloning?(target_device) &&
             support_partition_table_type?(target_device) &&
             same_topology?(target_device)
-
-          Yast::Mode.installation ? suitable : suitable && !mount_points?(target_device)
         end
 
         # Whether it is trying a self cloning

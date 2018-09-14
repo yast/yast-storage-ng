@@ -22,16 +22,16 @@
 require "yast"
 require "yast/i18n"
 require "yast2/popup"
-require "y2partitioner/dialogs/disk_clone"
-require "y2partitioner/actions/controllers/disk_device"
+require "y2partitioner/dialogs/partition_table_clone"
+require "y2partitioner/actions/controllers/clone_partition_table"
 
 module Y2Partitioner
   module Actions
-    # Action for cloning a disk
+    # Action for cloning a device
     #
-    # To clone a disk means to copy the partition table and its partitions. Filesystems,
+    # To clone a device means to copy the partition table and its partitions. Filesystems,
     # encryptions, LVM or MD RAID over the partitions are not copied.
-    class CloneDisk
+    class ClonePartitionTable
       include Yast::I18n
 
       # Constructor
@@ -40,36 +40,36 @@ module Y2Partitioner
       def initialize(device)
         textdomain "storage"
 
-        @controller = Controllers::DiskDevice.new(device)
+        @controller = Controllers::ClonePartitionTable.new(device)
       end
 
       # Checks whether it is possible to clone the device, and if so, the action is performed.
       #
       # @note An error popup is shown when the device cannot be cloned. In case the device
-      #   can be cloned, a dialog is presented to select over which disks to clone. Selected
-      #   disks are stored into the controller, see
-      #   {Controllers::DiskDevice#selected_devices_for_cloning}).
+      #   can be cloned, a dialog is presented to select over which devices to clone. Selected
+      #   devices are stored into the controller, see
+      #   {Controllers::ClonePartitionTable#selected_devices_for_cloning}).
       #
       # @return [Symbol] :finish if the action is performed; :back or dialog result otherwise.
       def run
         return :back unless validate
 
-        result = Dialogs::DiskClone.run(controller)
+        result = Dialogs::PartitionTableClone.run(controller)
         return result if result != :ok
 
-        clone_disk
+        clone_partition_table
         :finish
       end
 
     private
 
-      # @return [Controllers::DiskDevice]
+      # @return [Controllers::ClonePartitionTable]
       attr_reader :controller
 
       # Checks whether the clone action can be performed
       #
-      # @note A disk can be cloned if it has a partition table and there are other
-      #   suitable disks where to clone it. In case the disk cannot be cloned, an
+      # @note A device can be cloned if it has a partition table and there are other
+      #   suitable devices where to clone it. In case the device cannot be cloned, an
       #   error message is shown.
       #
       # @return [Boolean] true if the clone action can be performed; false otherwise.
@@ -82,31 +82,31 @@ module Y2Partitioner
         false
       end
 
-      # Error message when the disk has no partition table
+      # Error message when the device has no partition table
       #
-      # @return [String, nil] nil if the disk has partition table.
+      # @return [String, nil] nil if the device has partition table.
       def partition_table_error
         return nil if controller.partition_table?
 
-        _("There are no partitions on this disk, but a clonable\n" \
-          "disk must have at least one partition.\n" \
-          "Create partitions before cloning the disk.")
+        _("There are no partitions on this device, but a clonable\n" \
+          "device must have at least one partition.\n" \
+          "Create partitions before cloning the device.")
       end
 
-      # Error message when there are no suitable devices where to clone the disk
+      # Error message when there are no suitable devices where to clone the device
       #
       # @return [String, nil] nil if there are suitable devices.
       def suitable_devices_error
         return nil if controller.suitable_devices_for_cloning?
 
-        _("This disk cannot be cloned. There are no suitable\n" \
-          "disks that could have the same partitioning layout.")
+        _("This device cannot be cloned. There are no suitable\n" \
+          "devices that could have the same partitioning layout.")
       end
 
-      # Performs the cloning over the selected disks
+      # Performs the cloning over the selected devices
       #
-      # @see Controllers::DiskDevice#clone_to_device
-      def clone_disk
+      # @see Controllers::ClonePartitionTable#clone_to_device
+      def clone_partition_table
         controller.selected_devices_for_cloning.each { |d| controller.clone_to_device(d) }
       end
     end

@@ -29,13 +29,13 @@ require "y2partitioner/confirm_recursive_delete"
 module Y2Partitioner
   module Dialogs
     # Dialog for cloning a device
-    class DiskClone < Popup
-      # @return [Actions::Controllers::DiskDevice]
+    class PartitionTableClone < Popup
+      # @return [Actions::Controllers::ClonePartitionTable]
       attr_reader :controller
 
       # Constructor
       #
-      # @param controller [Actions::Controllers::DiskDevice]
+      # @param controller [Actions::Controllers::ClonePartitionTable]
       def initialize(controller)
         textdomain "storage"
 
@@ -60,7 +60,7 @@ module Y2Partitioner
 
         # Constructor
         #
-        # @param controller [Actions::Controllers::DiskDevice]
+        # @param controller [Actions::Controllers::ClonePartitionTable]
         def initialize(controller)
           textdomain "storage"
 
@@ -120,7 +120,7 @@ module Y2Partitioner
 
       private
 
-        # @return [Actions::Controllers::DiskDevice]
+        # @return [Actions::Controllers::ClonePartitionTable]
         attr_reader :controller
 
         # Current devicegraph
