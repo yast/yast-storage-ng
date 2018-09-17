@@ -23,7 +23,7 @@ require "y2partitioner/widgets/blk_device_description"
 
 module Y2Partitioner
   module Widgets
-    # Richtext filled with the description of a disk device
+    # Richtext filled with the description of a disk devices
     #
     # The disk device is given during initialization (see {BlkDeviceDescription}).
     class DiskDeviceDescription < BlkDeviceDescription

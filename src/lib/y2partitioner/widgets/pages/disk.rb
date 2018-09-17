@@ -23,6 +23,7 @@ require "cwm/widget"
 require "cwm/tree_pager"
 require "y2partitioner/icons"
 require "y2partitioner/device_graphs"
+require "y2partitioner/widgets/bcache_device_description"
 require "y2partitioner/widgets/partition_add_button"
 require "y2partitioner/widgets/blk_device_edit_button"
 require "y2partitioner/widgets/partition_move_button"
@@ -139,7 +140,18 @@ module Y2Partitioner
         # @macro seeCustomWidget
         def contents
           # Page wants a WidgetTerm, not an AbstractWidget
-          @contents ||= VBox(DiskDeviceDescription.new(@disk))
+          @contents ||= VBox(description)
+        end
+
+      private
+
+        def description
+          case @disk
+          when Y2Storage::Bcache
+            BcacheDeviceDescription.new(@disk)
+          else
+            DiskDeviceDescription.new(@disk)
+          end
         end
       end
 
