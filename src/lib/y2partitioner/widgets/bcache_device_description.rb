@@ -43,12 +43,20 @@ module Y2Partitioner
       def bcache_description
         output = Yast::HTML.Heading(_("Bcache Devices:"))
         output << Yast::HTML.List([
-          format(_("Backing device: %s"), device.blk_device.name.to_s),
-          format(_("Caching UUID: %s"), device.bcache_cset ? device.bcache_cset.uuid : ""),
-          format(_("Caching device: %s"),
-            device.bcache_cset ? device.bcache_cset.blk_devices.map(&:name).join(",") : ""
-          )
-        ])
+                                    format(_("Backing device: %s"), device.blk_device.name.to_s),
+                                    format(_("Caching UUID: %s"), uuid),
+                                    format(_("Caching device: %s"), caching_device)
+                                  ])
+      end
+
+    private
+
+      def uuid
+        device.bcache_cset ? device.bcache_cset.uuid : ""
+      end
+
+      def caching_device
+        device.bcache_cset ? device.bcache_cset.blk_devices.map(&:name).join(",") : ""
       end
     end
   end
