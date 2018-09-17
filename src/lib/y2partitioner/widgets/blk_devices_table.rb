@@ -274,9 +274,6 @@ module Y2Partitioner
           partition_type_label(device)
         elsif device.is?(:lvm_lv)
           lvm_lv_type_label(device)
-        # bcache has as vendor Disk, but we want to write bcache as type here
-        elsif device.is?(:bcache)
-          default_type_label(device)
         else
           blk_device_type_label(device)
         end
@@ -323,6 +320,8 @@ module Y2Partitioner
       # @return [String]
       def blk_device_type_label(device)
         data = [device.vendor, device.model].compact
+        # bcache has as vendor Disk, but we want to write bcache as type here
+        data = "" if device.is?(:bcache)
         data.empty? ? default_type_label(device) : data.join("-")
       end
 
