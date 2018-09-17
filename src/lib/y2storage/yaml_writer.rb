@@ -187,10 +187,13 @@ module Y2Storage
     # @return [Hash]
     def basic_md_attributes(md)
       {
-        "name"       => md.name,
-        "md_level"   => md.md_level.to_s,
-        "md_parity"  => md.md_parity.to_s,
-        "chunk_size" => md.chunk_size.to_s
+        "name"         => md.name,
+        "md_level"     => md.md_level.to_s,
+        "md_parity"    => md.md_parity.to_s,
+        "chunk_size"   => md.chunk_size.to_s,
+        "md_uuid"      => md.uuid,
+        "in_etc_mdadm" => md.in_etc_mdadm?,
+        "metadata"     => md.metadata
       }
     end
 

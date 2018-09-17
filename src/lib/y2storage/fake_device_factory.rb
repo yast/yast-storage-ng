@@ -73,7 +73,9 @@ module Y2Storage
         "disk"            => [
           "name", "size", "block_size", "io_size", "min_grain", "align_ofs", "mbr_gap"
         ].concat(FILE_SYSTEM_PARAM),
-        "md"              => ["name", "md_level", "md_parity", "chunk_size"].concat(FILE_SYSTEM_PARAM),
+        "md"              => [
+          "name", "md_level", "md_parity", "chunk_size", "md_uuid", "in_etc_mdadm", "metadata"
+        ].concat(FILE_SYSTEM_PARAM),
         "md_device"       => ["blk_device"],
         "partition_table" => [],
         "partitions"      => [],
@@ -267,38 +269,99 @@ module Y2Storage
     #   * :name [String] RAID name (e.g., /dev/md0)
     #   * :md_level [String] "raid0", "raid1", etc
     #   * :chunk_size [DiskSize]
+    #   * :md_uuid [String]
+    #   * :in_etc_mdadm [Boolean]
+    #   * :metadata [String]
     #
     # @return [String] name of the new Software RAID (e.g., /dev/md0)
     def create_md(_parent, args)
-      args = md_args(args)
-
-      md = Md.create(devicegraph, args["name"])
-      md.md_level = args["md_level"]
-      md.md_parity = args["md_parity"] unless args["md_parity"].nil?
-      md.chunk_size = args["chunk_size"] unless args["chunk_size"].nil?
+      name = args["name"] || Md.find_free_numeric_name(devicegraph)
+      md = Md.create(devicegraph, name)
+      add_md_attributes(md, args)
 
       save_filesystem_attributes(md, args)
       md.name
     end
 
-    # Prepares Md values
+    # Sets attributes values to the recently created Software RAID
     #
-    # @param args [Hash]
-    # @return [Hash]
-    def md_args(args)
-      args = args.dup
+    # @param md [Y2Stroage::Md]
+    # @param args [Hash] RAID parameters:
+    def add_md_attributes(md, args)
+      add_md_level(md, args["md_level"])
+      add_md_parity(md, args["md_parity"])
+      add_md_chunk_size(md, args["chunk_size"])
+      add_md_uuid(md, args["md_uuid"])
+      add_md_in_etc_mdamd(md, args["in_etc_mdadm"])
+      add_md_metadata(md, args["metadata"])
+    end
 
-      args["name"] ||= Md.find_free_numeric_name(devicegraph)
+    # Sets the MD RAID level (RAID0 by defaul)
+    #
+    # @param md [Y2Stroage::Md]
+    # @param level [String, nil]
+    def add_md_level(md, level)
+      level = Y2Storage::MdLevel.find(level) unless level.nil?
+      level ||= Y2Storage::MdLevel::RAID0
 
-      args["md_level"] = if args["md_level"]
-        Y2Storage::MdLevel.find(args["md_level"])
-      else
-        Y2Storage::MdLevel::RAID0
-      end
+      md.md_level = level
+    end
 
-      args["md_parity"] = Y2Storage::MdParity.find(args["md_parity"]) if args["md_parity"]
+    # Sets the MD RAID parity algorithm
+    #
+    # @param md [Y2Stroage::Md]
+    # @param parity [String, nil]
+    def add_md_parity(md, parity)
+      return if parity.nil?
 
-      args
+      parity = Y2Storage::MdParity.find(parity)
+      md.md_parity = parity
+    end
+
+    # Sets the MD RAID chunk size
+    #
+    # @param md [Y2Stroage::Md]
+    # @param chunk_size [Y2Storage::DiskSize, nil]
+    def add_md_chunk_size(md, chunk_size)
+      return if chunk_size.nil?
+
+      md.chunk_size = chunk_size
+    end
+
+    # Sets the MD RAID uuid
+    #
+    # @note Public Md API (wrapper) does not allow to set this value because
+    #   this value should only be probed.
+    #
+    # @param md [Y2Stroage::Md]
+    # @param uuid [String, nil]
+    def add_md_uuid(md, uuid)
+      return if uuid.nil?
+
+      md.to_storage_value.uuid = uuid
+    end
+
+    # Sets the MD RAID "in_etc_mdadm" value
+    #
+    # @param md [Y2Stroage::Md]
+    # @param in_etc_mdadm [Boolean, nil]
+    def add_md_in_etc_mdamd(md, in_etc_mdadm)
+      return if in_etc_mdadm.nil?
+
+      md.to_storage_value.in_etc_mdadm = in_etc_mdadm
+    end
+
+    # Sets the MD RAID metadata
+    #
+    # @note Public Md API (wrapper) does not allow to set this value because
+    #   this value should only be probed.
+    #
+    # @param md [Y2Stroage::Md]
+    # @param metadata [String, nil]
+    def add_md_metadata(md, metadata)
+      return if metadata.nil?
+
+      md.to_storage_value.metadata = metadata
     end
 
     # Factory method to add a block device to a Software RAID
