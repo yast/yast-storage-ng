@@ -75,15 +75,20 @@ module Y2Storage
       # @param planned_devices [Array<Planned::Device>] Devices to create/reuse
       # @param disk_names [Array<String>] Disks to consider
       # @return [Devicegraph] New devicegraph in which all the planned devices have been allocated
+      # rubocop:disable Metrics/AbcSize
       def populated_devicegraph(planned_devices, disk_names)
         # Process planned partitions
+        log.info "planned devices = #{planned_devices.inspect}"
+        log.info "disk names = #{disk_names.inspect}"
+
         planned_partitions = planned_devices.select { |d| d.is_a?(Planned::Partition) }
         parts_to_reuse, parts_to_create = planned_partitions.partition(&:reuse?)
         creator_result = create_partitions(parts_to_create, disk_names)
         reuse_devices(parts_to_reuse, creator_result.devicegraph)
 
         # Process planned stray block devices (Xen virtual partitions)
-        process_stray_devs(planned_devices, creator_result.devicegraph)
+        # Add them to reuse list so they can be considered for lvm later on
+        parts_to_reuse += process_stray_devs(planned_devices, creator_result.devicegraph)
 
         # Process planned MD arrays
         planned_mds = planned_devices.select { |d| d.is_a?(Planned::Md) }
@@ -101,6 +106,7 @@ module Y2Storage
           creator_result, parts_to_create + mds_to_create + planned_vgs
         )
       end
+    # rubocop:enable Metrics/AbcSize
 
     protected
 
@@ -150,7 +156,10 @@ module Y2Storage
       # @param parts_to_reuse  [Array<Planned::Partition>] List of partitions to reuse
       # @return                [Proposal::CreatorResult] Result containing the specified volume groups
       def set_up_lvm(vgs, previous_result, parts_to_reuse)
-        log.info "BEGIN: set_up_lvm: vgs=#{vgs.inspect} previous_result=#{previous_result.inspect}"
+        # log separately to be more readable
+        log.info "BEGIN: set_up_lvm: vgs=#{vgs.inspect}"
+        log.info "BEGIN: set_up_lvm: previous_result=#{previous_result.inspect}"
+        log.info "BEGIN: set_up_lvm: parts_to_reuse=#{parts_to_reuse.inspect}"
         vgs.reduce(previous_result) do |result, vg|
           pvs = previous_result.created_names { |d| d.pv_for?(vg.volume_group_name) }
           pvs += parts_to_reuse.select { |d| d.pv_for?(vg.volume_group_name) }.map(&:reuse_name)
@@ -229,11 +238,15 @@ module Y2Storage
       # Formats and/or mounts the stray block devices (Xen virtual partitions)
       #
       # @param planned_devices [Array<Planned::Device>] all planned devices
-      # @param devicegraph [Devicegraph] devicegraph containing the Xen
+      # @param devicegraph     [Devicegraph] devicegraph containing the Xen
       #   partitions to be processed. It will be modified.
+      # @return                [Array<Planned::StrayBlkDevice>] all stray block
+      #   devices
       def process_stray_devs(planned_devices, devicegraph)
         planned_stray_devs = planned_devices.select { |d| d.is_a?(Planned::StrayBlkDevice) }
         planned_stray_devs.each { |d| d.reuse!(devicegraph) }
+
+        planned_stray_devs
       end
     end
   end
