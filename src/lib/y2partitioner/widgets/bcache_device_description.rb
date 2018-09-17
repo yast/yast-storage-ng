@@ -40,6 +40,8 @@ module Y2Partitioner
         super + bcache_description
       end
 
+      # Specialized description for devices at backend of bcache
+      # @return [String]
       def bcache_description
         output = Yast::HTML.Heading(_("Bcache Devices:"))
         output << Yast::HTML.List([
