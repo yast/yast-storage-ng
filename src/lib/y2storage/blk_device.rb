@@ -217,6 +217,24 @@ module Y2Storage
     storage_forward :create_blk_filesystem, as: "Filesystems::BlkFilesystem", raise_errors: true
     alias_method :create_filesystem, :create_blk_filesystem
 
+    # @!method create_bcache
+    #   Creates backing device build on current block device.
+    #
+    #   If the blk device has children, the children will become children of
+    #   the encryption device.
+    #
+    #   @return [Bcache]
+    storage_forward :create_bcache, as: "Bcache", raise_errors: true
+
+
+    # @!method create_bcache_cset
+    #   Creates caching set build on current block device.
+    #
+    #   Blk device have to not contain any children.
+    #
+    #   @return [BcacheCset]
+    storage_forward :create_bcache_cset, as: "Bcache", raise_errors: true
+
     # @!method create_encryption(dm_name)
     #   Creates a new encryption object on top of the device.
     #
@@ -366,6 +384,20 @@ module Y2Storage
       children.find { |dev| dev.is?(:multipath) }
     end
 
+    # Bcache device defined on top of the device
+    #
+    # @return [Bcache, nil] nil if the device is not part of any bcache
+    def bcache
+      children.find { |dev| dev.is?(:bcache) }
+    end
+
+    # Bcache caching set device defined on top of the device
+    #
+    # @return [BcacheCset, nil] nil if the device is not used as bcache caching set
+    def direct_bcache_cset
+      children.select { |dev| dev.is?(:bcache_cset) && dev.blk_devices.include?(self) }.first
+    end
+
     # Whether the device forms part of an LVM or MD RAID
     #
     # @return [Boolean]
@@ -382,11 +414,11 @@ module Y2Storage
     # (directly or through an encryption) or any RAID having this device as
     # one of its members.
     #
-    # @return [Array<Device>] a collection of MD RAIDs, DM RAIDs, volume groups
-    #   and multipath devices
+    # @return [Array<Device>] a collection of MD RAIDs, DM RAIDs, volume groups,
+    #   multipath, bcaches and bcache_cset devices
     def component_of
       vg = lvm_pv ? lvm_pv.lvm_vg : nil
-      (dm_raids + [vg] + [md] + [multipath]).compact
+      (dm_raids + [vg] + [md] + [multipath] + [bcache] + [direct_bcache_cset]).compact
     end
 
     # Equivalent of {#component_of} in which each device is represented by a
