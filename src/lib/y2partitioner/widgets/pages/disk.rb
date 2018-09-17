@@ -38,7 +38,7 @@ require "y2partitioner/widgets/used_devices_tab"
 module Y2Partitioner
   module Widgets
     module Pages
-      # Page for a disk device (Disk, Dasd, BIOS RAID or Multipath).
+      # Page for a disk device (Disk, Dasd, BIOS RAID, Multipath or Bcache).
       #
       # This page contains a {DiskTab} and a {PartitionsTab}. In case of Multipath
       # or BIOS RAID, it also contains a {UsedDevicesTab}.
@@ -50,7 +50,7 @@ module Y2Partitioner
         # Constructor
         #
         # @param disk [Y2Storage::Disk, Y2Storage::Dasd, Y2Storage::DmRaid,
-        #              Y2Storage::MdMember, Y2Storage::Multipath]
+        #              Y2Storage::MdMember, Y2Storage::Multipath, Y2Storage::Bcache]
         # @param pager [CWM::TreePager]
         def initialize(disk, pager)
           textdomain "storage"

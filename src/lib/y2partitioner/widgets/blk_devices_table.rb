@@ -221,7 +221,7 @@ module Y2Partitioner
       end
 
       DEVICE_ICONS = {
-        bcache:    Icons::HD, # TODO: have own icon for bcache
+        bcache:    Icons::BCACHE,
         disk:      Icons::HD,
         dasd:      Icons::HD,
         multipath: Icons::MULTIPATH,

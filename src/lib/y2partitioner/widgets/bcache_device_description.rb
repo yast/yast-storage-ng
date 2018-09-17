@@ -1,6 +1,6 @@
 # encoding: utf-8
 
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2018] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -23,7 +23,7 @@ require "y2partitioner/widgets/disk_device_description"
 
 module Y2Partitioner
   module Widgets
-    # Richtext filled with the description of a bcache devices
+    # Richtext filled with the description of a bcache device
     #
     # The bcache device is given during initialization (see {BlkDeviceDescription}).
     class BcacheDeviceDescription < DiskDeviceDescription
@@ -45,9 +45,9 @@ module Y2Partitioner
       def bcache_description
         output = Yast::HTML.Heading(_("Bcache Devices:"))
         output << Yast::HTML.List([
-                                    format(_("Backing device: %s"), device.blk_device.name.to_s),
+                                    format(_("Backing Device: %s"), backing_device),
                                     format(_("Caching UUID: %s"), uuid),
-                                    format(_("Caching device: %s"), caching_device)
+                                    format(_("Caching Device: %s"), caching_device)
                                   ])
       end
 
@@ -59,6 +59,12 @@ module Y2Partitioner
 
       def caching_device
         device.bcache_cset ? device.bcache_cset.blk_devices.map(&:name).join(",") : ""
+      end
+
+      def backing_device
+        return "" unless device.blk_device
+
+        device.blk_device.name
       end
     end
   end

@@ -43,7 +43,7 @@ module Y2Storage
 
     # @!method self.all(devicegraph)
     #   @param devicegraph [Devicegraph]
-    #   @return [Array<BcacheCset>] all the bcachescsets in the given devicegraph,
+    #   @return [Array<BcacheCset>] all the bcache_csets in the given devicegraph,
     #     in no particular order
     storage_class_forward :all, as: "BcacheCset"
 

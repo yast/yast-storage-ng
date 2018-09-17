@@ -174,10 +174,10 @@ module Y2Partitioner
 
         # @return [Array<Y2Storage::Device>]
         def bcache_devices
-          all = device_graph.bcaches
+          all = device_graph.bcache_devices
           all.each_with_object([]) do |bcache, devices|
             devices << bcache
-            devices.concat(bcache.partitions) if bcache.respond_to?(:partitions)
+            devices.concat(bcache.partitions)
           end
         end
 

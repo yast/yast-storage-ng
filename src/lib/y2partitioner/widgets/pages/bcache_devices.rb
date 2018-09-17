@@ -1,6 +1,6 @@
 # encoding: utf-8
 
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2018] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -27,24 +27,24 @@ require "y2partitioner/device_graphs"
 module Y2Partitioner
   module Widgets
     module Pages
-      # A Page for bcaches and its partitions. It contains a {ConfigurableBlkDevicesTable}
-      class Bcaches < CWM::Page
+      # A Page for bcache devices and its partitions. It contains a {ConfigurableBlkDevicesTable}
+      class BcacheDevices < CWM::Page
         include Yast::I18n
 
         # Constructor
         #
-        # @param bcaches [Array<Y2Storage::Bcache>]
+        # @param bcache_devices [Array<Y2Storage::Bcache>]
         # @param pager [CWM::TreePager]
-        def initialize(bcaches, pager)
+        def initialize(bcache_devices, pager)
           textdomain "storage"
 
-          @bcaches = bcaches
+          @bcache_devices = bcache_devices
           @pager = pager
         end
 
         # @macro seeAbstractWidget
         def label
-          _("Bcaches")
+          _("Bcache")
         end
 
         # @macro seeCustomWidget
@@ -52,7 +52,7 @@ module Y2Partitioner
           return @contents if @contents
 
           table = ConfigurableBlkDevicesTable.new(devices, @pager)
-          icon = Icons.small_icon(Icons::HD) # TODO: icon for bcache
+          icon = Icons.small_icon(Icons::BCACHE)
           @contents = VBox(
             Left(
               HBox(
@@ -73,18 +73,18 @@ module Y2Partitioner
       private
 
         # @return [Array<Y2Storage::BlkDevice>]
-        attr_reader :bcaches
+        attr_reader :bcache_devices
 
         # @return [CWM::TreePager]
         attr_reader :pager
 
-        # Returns all bcaches and their partitions
+        # Returns all bcache devices and their partitions
         #
         # @return [Array<Y2Storage::BlkDevice>]
         def devices
-          bcaches.each_with_object([]) do |bcache, devices|
+          bcache_devices.each_with_object([]) do |bcache, devices|
             devices << bcache
-            devices.concat(bcache.partitions) if bcache.respond_to?(:partitions)
+            devices.concat(bcache.partitions)
           end
         end
       end

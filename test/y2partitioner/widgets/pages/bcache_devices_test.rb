@@ -1,7 +1,7 @@
 #!/usr/bin/env rspec
 # encoding: utf-8
 
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2018] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -25,15 +25,15 @@ require_relative "../../test_helper"
 require "cwm/rspec"
 require "y2partitioner/widgets/pages"
 
-describe Y2Partitioner::Widgets::Pages::Bcaches do
+describe Y2Partitioner::Widgets::Pages::BcacheDevices do
   before { devicegraph_stub(scenario) }
   let(:scenario) { "bcache1.xml" }
 
   let(:device_graph) { Y2Partitioner::DeviceGraphs.instance.current }
 
-  subject { described_class.new(bcaches, pager) }
+  subject { described_class.new(bcache_devices, pager) }
 
-  let(:bcaches) { device_graph.bcaches }
+  let(:bcache_devices) { device_graph.bcache_devices }
 
   let(:pager) { double("OverviewTreePager") }
 
@@ -42,16 +42,14 @@ describe Y2Partitioner::Widgets::Pages::Bcaches do
   describe "#contents" do
     let(:widgets) { Yast::CWM.widgets_in_contents([subject]) }
     let(:table) { widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::BlkDevicesTable) } }
-    let(:bcaches_and_parts) do
-      device_graph.bcaches
-      # TODO: partitions does not work
-      # (device_graph.bcaches + device_graph.bcaches.map(&:partitions)).flatten.compact
+    let(:bcache_devices_and_parts) do
+      (device_graph.bcache_devices + device_graph.bcache_devices.map(&:partitions)).flatten.compact
     end
 
     it "shows a table with the bcache devices and their partitions" do
       expect(table).to_not be_nil
 
-      devices_name = bcaches_and_parts.map(&:name)
+      devices_name = bcache_devices_and_parts.map(&:name)
       items_name = table.items.map { |i| i[1] }
 
       expect(items_name.sort).to eq(devices_name.sort)

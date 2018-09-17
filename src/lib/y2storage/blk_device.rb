@@ -415,7 +415,7 @@ module Y2Storage
     # one of its members.
     #
     # @return [Array<Device>] a collection of MD RAIDs, DM RAIDs, volume groups,
-    #   multipath, bcaches and bcache_cset devices
+    #   multipath, bcache and bcache_cset devices
     def component_of
       vg = lvm_pv ? lvm_pv.lvm_vg : nil
       (dm_raids + [vg] + [md] + [multipath] + [bcache] + [direct_bcache_cset]).compact

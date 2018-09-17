@@ -23,6 +23,7 @@ require "pp"
 require "tempfile"
 require "y2storage/actiongraph"
 require "y2storage/bcache"
+require "y2storage/bcache_cset"
 require "y2storage/blk_device"
 require "y2storage/disk"
 require "y2storage/dump_manager"
@@ -286,8 +287,14 @@ module Y2Storage
       Filesystems::Nfs.all(self)
     end
 
-    def bcaches
+    # @return [Array<Bcache>]
+    def bcache_devices
       Bcache.all(self)
+    end
+
+    # @return [Array<BcacheCset>]
+    def bcache_csets
+      BcachCset.all(self)
     end
 
     # All the LVM volume groups in the devicegraph, sorted by name
