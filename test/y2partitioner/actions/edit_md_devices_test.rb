@@ -36,6 +36,8 @@ describe Y2Partitioner::Actions::EditMdDevices do
   describe "#run" do
     before do
       devicegraph_stub(scenario)
+
+      allow(Yast2::Popup).to receive(:show)
     end
 
     let(:devicegraph) { Y2Partitioner::DeviceGraphs.instance.current }
@@ -70,7 +72,8 @@ describe Y2Partitioner::Actions::EditMdDevices do
       let(:md) { devicegraph.md_raids.first }
 
       it "shows an error" do
-        expect(Yast::Popup).to receive(:Error)
+        expect(Yast2::Popup).to receive(:show).with(/already created/, anything)
+
         action.run
       end
 
@@ -91,7 +94,7 @@ describe Y2Partitioner::Actions::EditMdDevices do
       let(:md) { devicegraph.md_raids.first }
 
       it "shows an error" do
-        expect(Yast::Popup).to receive(:Error)
+        expect(Yast2::Popup).to receive(:show).with(/is in use/, anything)
         action.run
       end
 
@@ -100,7 +103,29 @@ describe Y2Partitioner::Actions::EditMdDevices do
       end
     end
 
-    context "if the MD RAID is being created and does not belong to a volume group" do
+    context "if the MD RAID contains partitions" do
+      let(:scenario) { "lvm-two-vgs.yml" }
+
+      before do
+        md = Y2Storage::Md.create(devicegraph, "/dev/md0")
+        pt = md.create_partition_table(Y2Storage::PartitionTables::Type::GPT)
+        pt.create_partition("/dev/md0p1", Y2Storage::Region.create(2048, 1048576, 512),
+          Y2Storage::PartitionType::PRIMARY)
+      end
+
+      let(:md) { devicegraph.find_by_name("/dev/md0") }
+
+      it "shows an error" do
+        expect(Yast2::Popup).to receive(:show).with(/is partitioned/, anything)
+        action.run
+      end
+
+      it "quits returning :back" do
+        expect(action.run).to eq :back
+      end
+    end
+
+    context "if it is possible to edit the devices of the MD RAID" do
       let(:scenario) { "lvm-two-vgs.yml" }
 
       let(:md) { Y2Storage::Md.create(devicegraph, "/dev/md0") }

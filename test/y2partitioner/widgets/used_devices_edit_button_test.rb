@@ -28,7 +28,11 @@ require "y2partitioner/widgets/used_devices_edit_button"
 describe Y2Partitioner::Widgets::UsedDevicesEditButton do
   before do
     devicegraph_stub(scenario)
+
+    allow(Y2Partitioner::Actions::EditMdDevices).to receive(:new).and_return(action)
   end
+
+  let(:action) { instance_double(Y2Partitioner::Actions::EditMdDevices, run: :finish) }
 
   subject(:button) { described_class.new(device: device) }
 
@@ -54,12 +58,6 @@ describe Y2Partitioner::Widgets::UsedDevicesEditButton do
     end
 
     context "when the device is a Software RAID" do
-      before do
-        allow(Y2Partitioner::Actions::EditMdDevices).to receive(:new).and_return(action)
-      end
-
-      let(:action) { instance_double(Y2Partitioner::Actions::EditMdDevices, run: :finish) }
-
       it "calls the action to edit the used devices" do
         expect(Y2Partitioner::Actions::EditMdDevices).to receive(:new).with(device)
 

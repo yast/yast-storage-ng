@@ -20,6 +20,7 @@
 # find current contact information at www.suse.com.
 
 require "yast"
+require "yast2/popup"
 require "y2partitioner/actions/transaction_wizard"
 require "y2partitioner/actions/controllers/md"
 require "y2partitioner/dialogs/md_edit_devices"
@@ -68,62 +69,91 @@ module Y2Partitioner
         }
       end
 
+      # Whether it is possible to edit the used devices for a MD RAID
+      #
+      # @note An error popup is shown when the devices cannot be edited: the MD RAID
+      #   already exists on disk (see {#committed?}), the MD RAID belongs to a volume
+      #   group (see {#used?}) or the MD RAID contains partitions (see {#partitioned?}).
+      #
       # @see TransactionWizard
+      #
+      # @return [Boolean]
       def run?
-        not_committed_validation && not_used_validation
-      end
+        errors = [
+          committed_error,
+          used_error,
+          partitioned_error
+        ].compact
 
-      # Checks whether the MD RAID does not exist on disk (see {#committed?})
-      #
-      # @note An error popup is shown when the MD RAID exists on disk.
-      #
-      # @return [Boolean] true if the device is not committed; false otherwise.
-      def not_committed_validation
-        return true unless committed?
+        return true unless errors.any?
 
-        Yast::Popup.Error(
-          # TRANSLATORS: error popup, %{name} is replaced by device name (e.g., /dev/md1)
-          format(
-            _("The RAID %{name} is already created on disk and its used devices\n" \
-              "cannot be modified. To modify the used devices, remove the RAID\n" \
-              "and create it again."),
-            name: controller.md.name
-          )
-        )
-
+        Yast2::Popup.show(errors.first, headline: :error)
         false
       end
 
-      # Checks whether the MD RAID is not used as LVM physical volume (see {#used?})
+      # Error the MD RAID exists on disk (see {#committed?})
       #
-      # @note An error popup is shown when the MD RAID belongs to a volume group.
-      #
-      # @return [Boolean] true if the device does not belong to a volume group;
-      #   false otherwise.
-      def not_used_validation
-        return true unless used?
+      # @return [String, nil] nil if the MD RAID does not exists on disk yet.
+      def committed_error
+        return nil unless committed?
 
-        Yast::Popup.Error(
-          # TRANSLATORS: error popup, %{name} is replaced by device name (e.g., /dev/md1)
-          format(
-            _("The RAID %{name} is in use. It cannot be\n" \
-              "resized. To resize %{name}, make sure it is not used."),
-            name: controller.md.name
-          )
+        # TRANSLATORS: error message, %{name} is replaced by a device name (e.g., /dev/md1)
+        format(
+          _("The RAID %{name} is already created on disk and its used devices\n" \
+            "cannot be modified. To modify the used devices, remove the RAID\n" \
+            "and create it again."),
+          name: controller.md.name
         )
-
-        false
       end
 
-      # @return [Boolean] true if the MD RAID is already created on disk; false otherwise
+      # Error when the MD RAID is used as LVM physical volume (see {#used?})
+      #
+      # @return [String, nil] nil if the MD RAID is not in use.
+      def used_error
+        return nil unless used?
+
+        # TRANSLATORS: error message, %{name} is replaced by a device name (e.g., /dev/md1)
+        format(
+          _("The RAID %{name} is in use. To modify the used devices,\n" \
+            "make sure %{name} is not used."),
+          name: controller.md.name
+        )
+      end
+
+      # Error when the MD RAID contains partitions
+      #
+      # @return [String, nil] nil if the MD RAID has no partitions.
+      def partitioned_error
+        return nil unless partitioned?
+
+        # TRANSLATORS: error message, %{name} is replaced by a device name (e.g., /dev/md1)
+        format(
+          _("The RAID %{name} is partitioned. To modify the used devices,\n" \
+            "make sure %{name} has no partitions."),
+          name: controller.md.name
+        )
+      end
+
+      # Whether the MD RAID is already created on disk
+      #
+      # @return [Boolean]
       def committed?
         system = Y2Partitioner::DeviceGraphs.instance.system
         controller.md.exists_in_devicegraph?(system)
       end
 
-      # @return [Boolean] true if the MD RAID belongs to a volume group; false otherwise
+      # Whether the MD RAID belongs to a volume group
+      #
+      # @return [Boolean]
       def used?
         controller.md.descendants.any? { |d| d.is?(:lvm_vg) }
+      end
+
+      # Whether the MD RAID contains partitions
+      #
+      # @return [Boolean]
+      def partitioned?
+        controller.md.partitions.any?
       end
     end
   end
