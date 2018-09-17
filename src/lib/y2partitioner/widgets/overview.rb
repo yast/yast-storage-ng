@@ -239,8 +239,8 @@ module Y2Partitioner
       def bcaches_items
         devices = device_graph.bcaches
         page = Pages::Bcaches.new(devices, self)
-        # children = devices.map { |v| bcaches_items(v) }
-        CWM::PagerTreeItem.new(page, children: [], icon: Icons::LVM) # TODO: new nice icon
+        children = devices.map { |v| disk_items(v) }
+        CWM::PagerTreeItem.new(page, children: children, icon: Icons::LVM) # TODO: new nice icon
       end
 
       # @return [CWM::PagerTreeItem]
