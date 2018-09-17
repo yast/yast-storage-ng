@@ -77,9 +77,13 @@ module Y2Partitioner
       def missing_partition_table_error
         return nil if device.partition_table?
 
-        # TRANSLATORS: Error when trying to delete partitions from a device that does not contain
-        # a partition table. %{name} is replaced by the name of the device (e.g. "/dev/sda").
-        format(_("The device %{name} does not contain a partition table."), name: device.name)
+        format(
+          # TRANSLATORS: Error when trying to delete partitions from a device that does not contain
+          # a partition table. %{name} is replaced by the name of the device (e.g. "/dev/sda").
+          _("The device %{name} does not contain a partition table, so\n" \
+            "no partition can be deleted"),
+          name: device.name
+        )
       end
 
       # Error when the device has a partition table with no partitions
