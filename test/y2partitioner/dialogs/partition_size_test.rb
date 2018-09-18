@@ -30,7 +30,7 @@ describe "Partition Size widgets" do
   using Y2Storage::Refinements::SizeCasts
 
   let(:controller) do
-    pt = Y2Partitioner::Actions::Controllers::Partition.new(disk)
+    pt = Y2Partitioner::Actions::Controllers::AddPartition.new(disk)
     pt.custom_size = Y2Storage::DiskSize.MiB(1)
     pt.type = partition_type
     pt

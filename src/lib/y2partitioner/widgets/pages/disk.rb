@@ -20,19 +20,13 @@
 # find current contact information at www.suse.com.
 
 require "cwm/widget"
-require "cwm/tree_pager"
 require "y2partitioner/icons"
-require "y2partitioner/device_graphs"
-require "y2partitioner/widgets/partition_add_button"
-require "y2partitioner/widgets/blk_device_edit_button"
-require "y2partitioner/widgets/partition_move_button"
-require "y2partitioner/widgets/device_resize_button"
-require "y2partitioner/widgets/device_delete_button"
-require "y2partitioner/widgets/disk_expert_menu_button"
-require "y2partitioner/widgets/configurable_blk_devices_table"
-require "y2partitioner/widgets/disk_bar_graph"
 require "y2partitioner/widgets/disk_device_description"
 require "y2partitioner/widgets/used_devices_tab"
+require "y2partitioner/widgets/partitions_tab"
+require "y2partitioner/widgets/blk_device_edit_button"
+require "y2partitioner/widgets/partition_table_add_button"
+require "y2partitioner/widgets/partition_table_clone_button"
 
 module Y2Partitioner
   module Widgets
@@ -90,11 +84,11 @@ module Y2Partitioner
         # @return [Tabs]
         def tabs
           tabs = [
-            DiskTab.new(disk),
+            DiskTab.new(disk, initial: true),
             PartitionsTab.new(disk, @pager)
           ]
 
-          tabs << UsedDevicesTab.new(used_devices, @pager) if need_used_devices_tab?
+          tabs << UsedDevicesTab.new(used_devices, @pager) if used_devices_tab?
 
           Tabs.new(*tabs)
         end
@@ -102,7 +96,7 @@ module Y2Partitioner
         # Whether a extra tab for used devices is necessary
         #
         # @return [Boolean]
-        def need_used_devices_tab?
+        def used_devices_tab?
           disk.is?(:multipath, :dm_raid, :md)
         end
 
@@ -125,10 +119,11 @@ module Y2Partitioner
         # Constructor
         #
         # @param disk [Y2Storage::BlkDevice]
-        def initialize(disk)
+        def initialize(disk, initial: false)
           textdomain "storage"
 
           @disk = disk
+          @initial = initial
         end
 
         # @macro seeAbstractWidget
@@ -139,58 +134,16 @@ module Y2Partitioner
         # @macro seeCustomWidget
         def contents
           # Page wants a WidgetTerm, not an AbstractWidget
-          @contents ||= VBox(DiskDeviceDescription.new(@disk))
-        end
-      end
-
-      # A Tab for disk device partitions
-      class PartitionsTab < CWM::Tab
-        attr_reader :disk
-
-        # Constructor
-        #
-        # @param disk [Y2Storage::BlkDevice]
-        # @param pager [CWM::TreePager]
-        def initialize(disk, pager)
-          textdomain "storage"
-
-          @disk = disk
-          @pager = pager
-        end
-
-        def initial
-          true
-        end
-
-        # @macro seeAbstractWidget
-        def label
-          _("&Partitions")
-        end
-
-        # @macro seeCustomWidget
-        def contents
-          table = ConfigurableBlkDevicesTable.new(devices, @pager)
           @contents ||= VBox(
-            DiskBarGraph.new(disk),
-            table,
+            DiskDeviceDescription.new(@disk),
             Left(
               HBox(
-                PartitionAddButton.new(device: disk),
-                BlkDeviceEditButton.new(pager: @pager, table: table),
-                PartitionMoveButton.new(pager: @pager, table: table),
-                DeviceResizeButton.new(pager: @pager, table: table),
-                DeviceDeleteButton.new(pager: @pager, table: table),
-                HStretch(),
-                DiskExpertMenuButton.new(disk: disk)
+                BlkDeviceEditButton.new(device: @disk),
+                PartitionTableAddButton.new(device: @disk),
+                PartitionTableCloneButton.new(device: @disk)
               )
             )
           )
-        end
-
-      private
-
-        def devices
-          disk.partitions
         end
       end
     end

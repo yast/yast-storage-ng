@@ -32,7 +32,7 @@ module Y2Partitioner
     class PartitionType < Base
       # Choose partition type: primary/extended/logical.
       class TypeChoice < CWM::RadioButtons
-        # @param controller [Actions::Controllers::Partition]
+        # @param controller [Actions::Controllers::AddPartition]
         def initialize(controller)
           textdomain "storage"
           @controller = controller
@@ -78,12 +78,12 @@ module Y2Partitioner
         end
       end
 
-      # @param controller [Actions::Controllers::Partition]
+      # @param controller [Actions::Controllers::AddPartition]
       #   partition controller collecting data for a partition to be created
       def initialize(controller)
-        @disk_name = controller.disk_name
-        @controller = controller
         textdomain "storage"
+
+        @controller = controller
       end
 
       # @macro seeDialog

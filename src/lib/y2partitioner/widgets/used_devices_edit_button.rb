@@ -1,6 +1,6 @@
 # encoding: utf-8
 
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2018] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -20,32 +20,36 @@
 # find current contact information at www.suse.com.
 
 require "yast"
-require "y2partitioner/actions/edit_blk_device"
 require "y2partitioner/widgets/device_button"
+require "y2partitioner/actions/edit_md_devices"
 
 Yast.import "Popup"
 
 module Y2Partitioner
   module Widgets
-    # Button for editing a block device
-    class BlkDeviceEditButton < DeviceButton
+    # Button for editing the used devices (e.g., by a Software RAID)
+    class UsedDevicesEditButton < DeviceButton
       def initialize(*args)
         super
         textdomain "storage"
       end
 
+      # @macro seeAbstractWidget
       def label
-        # TRANSLATORS: button label for editing a block device
-        _("Edit...")
+        # TRANSLATORS: label for button to edit used devices
+        _("Change...")
       end
 
     private
 
-      # Returns the proper Actions class for editing
+      # Returns the proper Actions class to edit the used devices
       #
-      # @see Actions::EditBlkDevice
+      # @see DeviceButton#actions
+      # @see Actions::EditMdDevices
       def actions_class
-        Actions::EditBlkDevice
+        return nil unless device.is?(:software_raid)
+
+        Actions::EditMdDevices
       end
     end
   end

@@ -12,7 +12,7 @@ describe Y2Partitioner::Widgets::Pages::MdRaids do
 
   let(:current_graph) { Y2Partitioner::DeviceGraphs.instance.current }
 
-  let(:scenario) { "md_raid.xml" }
+  let(:scenario) { "md_raid" }
 
   include_examples "CWM::Page"
 
@@ -50,7 +50,7 @@ describe Y2Partitioner::Widgets::Pages::MdRaids do
     end
 
     context "when there are Software RAIDs" do
-      let(:scenario) { "md_raid.xml" }
+      let(:scenario) { "md_raid" }
 
       before do
         Y2Storage::Md.create(current_graph, "/dev/md1")

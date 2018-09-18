@@ -62,40 +62,6 @@ describe Y2Partitioner::Widgets::DeviceResizeButton do
 
       let(:device) { Y2Storage::BlkDevice.find_by_name(current_graph, device_name) }
 
-      context "and the device is a MD RAID" do
-        before do
-          allow_any_instance_of(Y2Partitioner::Actions::ResizeMd).to receive(:run)
-            .and_return(action_result)
-        end
-
-        let(:action_result) { nil }
-
-        let(:scenario) { "md_raid.xml" }
-
-        let(:device_name) { "/dev/md/md0" }
-
-        it "performs the action for resizing a MD RAID" do
-          expect_any_instance_of(Y2Partitioner::Actions::ResizeMd).to receive(:run)
-          subject.handle
-        end
-
-        context "and resize action is correctly performed" do
-          let(:action_result) { :finish }
-
-          it "returns :redraw" do
-            expect(subject.handle).to eq(:redraw)
-          end
-        end
-
-        context "and resize action is not correctly performed" do
-          let(:action_result) { :back }
-
-          it "returns nil" do
-            expect(subject.handle).to be_nil
-          end
-        end
-      end
-
       context "and the device is a partition" do
         before do
           allow_any_instance_of(Y2Partitioner::Actions::ResizeBlkDevice).to receive(:run)
@@ -208,6 +174,21 @@ describe Y2Partitioner::Widgets::DeviceResizeButton do
         let(:scenario) { "mixed_disks.yml" }
 
         let(:device_name) { "/dev/sda" }
+
+        it "shows an error popup" do
+          expect(Yast::Popup).to receive(:Error)
+          subject.handle
+        end
+
+        it "returns nil" do
+          expect(subject.handle).to be_nil
+        end
+      end
+
+      context "and resize action is not supported for the device (Md)" do
+        let(:scenario) { "formatted_md.yml" }
+
+        let(:device_name) { "/dev/md0" }
 
         it "shows an error popup" do
           expect(Yast::Popup).to receive(:Error)

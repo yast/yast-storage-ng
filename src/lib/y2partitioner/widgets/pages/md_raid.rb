@@ -26,14 +26,17 @@ require "y2partitioner/device_graphs"
 require "y2partitioner/widgets/md_description"
 require "y2partitioner/widgets/configurable_blk_devices_table"
 require "y2partitioner/widgets/blk_device_edit_button"
-require "y2partitioner/widgets/used_devices_tab"
-require "y2partitioner/widgets/device_resize_button"
 require "y2partitioner/widgets/device_delete_button"
+require "y2partitioner/widgets/partition_table_add_button"
+require "y2partitioner/widgets/partition_table_clone_button"
+require "y2partitioner/widgets/used_devices_tab"
+require "y2partitioner/widgets/used_devices_edit_button"
+require "y2partitioner/widgets/partitions_tab"
 
 module Y2Partitioner
   module Widgets
     module Pages
-      # A Page for a md raid device: contains {MdTab} and {UsedDevicesTab}
+      # A Page for a md raid device: contains {MdTab}, {PartitionsTab} and {MdDevicesTab}
       class MdRaid < CWM::Page
         # Constructor
         #
@@ -68,25 +71,25 @@ module Y2Partitioner
               )
             ),
             Tabs.new(
-              MdTab.new(@md),
-              UsedDevicesTab.new(@md.devices, @pager)
+              MdTab.new(@md, initial: true),
+              MdDevicesTab.new(@md, @pager),
+              PartitionsTab.new(@md, @pager)
             )
           )
         end
       end
 
-      # A Tab for a Md raid description
+      # A Tab for a Software RAID description
       class MdTab < CWM::Tab
         # Constructor
         #
         # @param md [Y2Storage::Md]
-        def initialize(md)
+        # @param initial [Boolean] if it is the initial tab
+        def initialize(md, initial: false)
           textdomain "storage"
-          @md = md
-        end
 
-        def initial
-          true
+          @md = md
+          @initial = initial
         end
 
         # @macro seeAbstractWidget
@@ -103,11 +106,40 @@ module Y2Partitioner
               Left(
                 HBox(
                   BlkDeviceEditButton.new(device: @md),
-                  DeviceResizeButton.new(device: @md),
-                  DeviceDeleteButton.new(device: @md)
+                  DeviceDeleteButton.new(device: @md),
+                  PartitionTableAddButton.new(device: @md),
+                  PartitionTableCloneButton.new(device: @md)
                 )
               )
             )
+        end
+      end
+
+      # A Tab for the devices used by a Software RAID
+      class MdDevicesTab < UsedDevicesTab
+        # Constructor
+        #
+        # @param md [Y2Storage::Md]
+        # @param pager [CWM::TreePager]
+        # @param initial [Boolean] if it is the initial tab
+        def initialize(md, pager, initial: false)
+          textdomain "storage"
+
+          super(md.devices, pager)
+          @md = md
+          @initial = initial
+        end
+
+        # @macro seeCustomWidget
+        def contents
+          @contents ||= VBox(
+            table,
+            Left(
+              HBox(
+                UsedDevicesEditButton.new(device: @md)
+              )
+            )
+          )
         end
       end
     end

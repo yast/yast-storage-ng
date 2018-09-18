@@ -21,15 +21,17 @@
 
 require "yast"
 require "y2partitioner/actions/transaction_wizard"
-require "y2partitioner/actions/new_blk_device"
-require "y2partitioner/actions/controllers"
-require "y2partitioner/dialogs"
+require "y2partitioner/actions/controllers/lvm_lv"
+require "y2partitioner/actions/controllers/filesystem"
+require "y2partitioner/actions/filesystem_steps"
+require "y2partitioner/dialogs/lvm_lv_info"
+require "y2partitioner/dialogs/lvm_lv_size"
 
 module Y2Partitioner
   module Actions
     # Wizard to add a new LVM logical volume
     class AddLvmLv < TransactionWizard
-      include NewBlkDevice
+      include FilesystemSteps
 
       # @param vg [Y2Storage::LvmVg]
       def initialize(vg)
@@ -92,8 +94,8 @@ module Y2Partitioner
         {
           "ws_start"      => "name_and_type",
           "name_and_type" => { next: "size" },
-          "size"          => { next: new_blk_device_step1, finish: :finish }
-        }.merge(new_blk_device_steps)
+          "size"          => { next: first_filesystem_step, finish: :finish }
+        }.merge(filesystem_steps)
       end
 
       # Name of the volume group

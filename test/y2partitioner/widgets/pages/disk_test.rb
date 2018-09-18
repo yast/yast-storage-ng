@@ -52,7 +52,7 @@ describe Y2Partitioner::Widgets::Pages::Disk do
       end
 
       it "shows a partitions tab" do
-        expect(Y2Partitioner::Widgets::Pages::PartitionsTab).to receive(:new)
+        expect(Y2Partitioner::Widgets::PartitionsTab).to receive(:new)
         subject.contents
       end
 
@@ -73,7 +73,7 @@ describe Y2Partitioner::Widgets::Pages::Disk do
       end
 
       it "shows a partitions tab" do
-        expect(Y2Partitioner::Widgets::Pages::PartitionsTab).to receive(:new)
+        expect(Y2Partitioner::Widgets::PartitionsTab).to receive(:new)
         subject.contents
       end
 
@@ -94,7 +94,7 @@ describe Y2Partitioner::Widgets::Pages::Disk do
       end
 
       it "shows a partitions tab" do
-        expect(Y2Partitioner::Widgets::Pages::PartitionsTab).to receive(:new)
+        expect(Y2Partitioner::Widgets::PartitionsTab).to receive(:new)
         subject.contents
       end
 
@@ -117,44 +117,19 @@ describe Y2Partitioner::Widgets::Pages::Disk do
         description = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::DiskDeviceDescription) }
         expect(description).to_not be_nil
       end
-    end
-  end
 
-  describe Y2Partitioner::Widgets::Pages::PartitionsTab do
-    subject { described_class.new(disk, pager) }
-
-    include_examples "CWM::Tab"
-
-    describe "#contents" do
-      let(:widgets) { Yast::CWM.widgets_in_contents([subject]) }
-
-      it "shows a button for adding a new partition" do
-        button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::PartitionAddButton) }
-        expect(button).to_not be_nil
-      end
-
-      it "shows a button for editing a device" do
+      it "shows a button for editing the device" do
         button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::BlkDeviceEditButton) }
         expect(button).to_not be_nil
       end
 
-      it "shows a button for moving a partition" do
-        button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::PartitionMoveButton) }
+      it "shows a button for creating a new partition table" do
+        button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::PartitionTableAddButton) }
         expect(button).to_not be_nil
       end
 
-      it "shows a button for resizing a partition" do
-        button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::DeviceResizeButton) }
-        expect(button).to_not be_nil
-      end
-
-      it "shows a button for deleting a device" do
-        button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::DeviceDeleteButton) }
-        expect(button).to_not be_nil
-      end
-
-      it "shows the expert button" do
-        button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::DiskExpertMenuButton) }
+      it "shows a button for cloning the partitions" do
+        button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::PartitionTableCloneButton) }
         expect(button).to_not be_nil
       end
     end

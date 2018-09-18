@@ -24,8 +24,6 @@ require_relative "../test_helper"
 require "y2partitioner/device_graphs"
 require "y2partitioner/actions/add_md"
 require "y2partitioner/dialogs/md"
-require "y2partitioner/dialogs/partition_role"
-require "y2partitioner/dialogs/format_and_mount"
 
 describe Y2Partitioner::Actions::AddMd do
   before do
@@ -65,8 +63,6 @@ describe Y2Partitioner::Actions::AddMd do
         before do
           allow(Y2Partitioner::Dialogs::Md).to receive(:run).and_return :next
           allow(Y2Partitioner::Dialogs::MdOptions).to receive(:run).and_return :next
-          allow(Y2Partitioner::Dialogs::PartitionRole).to receive(:run).and_return :next
-          allow(Y2Partitioner::Dialogs::FormatAndMount).to receive(:run).and_return :next
         end
 
         it "returns :finish" do
@@ -87,9 +83,7 @@ describe Y2Partitioner::Actions::AddMd do
       context "if the user aborts the process at some point" do
         before do
           allow(Y2Partitioner::Dialogs::Md).to receive(:run).and_return :next
-          allow(Y2Partitioner::Dialogs::MdOptions).to receive(:run).and_return :next
-          allow(Y2Partitioner::Dialogs::PartitionRole).to receive(:run).and_return :next
-          allow(Y2Partitioner::Dialogs::FormatAndMount).to receive(:run).and_return :abort
+          allow(Y2Partitioner::Dialogs::MdOptions).to receive(:run).and_return :abort
         end
 
         it "returns :abort" do

@@ -21,7 +21,6 @@
 # find current contact information at www.suse.com.
 
 require_relative "../test_helper"
-require "y2partitioner/actions/controllers"
 require "y2partitioner/actions/edit_blk_device"
 
 describe Y2Partitioner::Actions::EditBlkDevice do
@@ -81,7 +80,7 @@ describe Y2Partitioner::Actions::EditBlkDevice do
     end
 
     context "if called on a device that holds a MD RAID" do
-      let(:scenario) { "md_raid.xml" }
+      let(:scenario) { "md_raid" }
       let(:dev_name) { "/dev/sda1" }
 
       include_examples "edit_error"

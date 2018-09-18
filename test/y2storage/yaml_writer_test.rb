@@ -592,6 +592,9 @@ describe Y2Storage::YamlWriter do
               md_level: raid0
               md_parity: default
               chunk_size: 16 KiB
+              md_uuid: 111-222-333
+              in_etc_mdadm: true
+              metadata: '1.0'
               file_system: ext4
               label: data
               mount_point: "/data"
@@ -648,6 +651,9 @@ describe Y2Storage::YamlWriter do
               md_level: raid0
               md_parity: default
               chunk_size: 16 KiB
+              md_uuid: ''
+              in_etc_mdadm: true
+              metadata: ''
               partition_table: msdos
               mbr_gap: 1 MiB
               partitions:

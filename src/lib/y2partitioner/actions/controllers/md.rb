@@ -47,8 +47,8 @@ module Y2Partitioner
         def initialize(md: nil)
           textdomain "storage"
 
-          # A MD RAID is given when it is going to be resized
-          @action = md.nil? ? :add : :resize
+          # A MD RAID is given to modify its used devices
+          @action = md.nil? ? :add : :edit_devices
 
           md ||= new_md
 
@@ -62,11 +62,6 @@ module Y2Partitioner
         # @return [Y2Storage::Md]
         def md
           working_graph.find_device(@md_sid)
-        end
-
-        # Removes the filesystem
-        def delete_filesystem
-          md.delete_filesystem
         end
 
         # Devices that can be selected to become part of the MD array
@@ -197,10 +192,10 @@ module Y2Partitioner
             # TRANSLATORS: dialog title when creating a MD RAID.
             # %s is a device name like /dev/md0
             _("Add RAID %s") % md.name
-          when :resize
-            # TRANSLATORS: dialog title when resizing a MD RAID.
-            # %s is a device name like /dev/md0
-            _("Resize RAID %s") % md.name
+          when :edit_devices
+            # TRANSLATORS: dialog title when editing the devices of a Software RAID.
+            # %s is a device name (e.g., /dev/md0)
+            _("Edit devices of RAID %s") % md.name
           end
         end
 

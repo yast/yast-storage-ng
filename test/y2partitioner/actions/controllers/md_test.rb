@@ -54,7 +54,7 @@ describe Y2Partitioner::Actions::Controllers::Md do
     end
 
     context "when a Md device is given" do
-      let(:scenario) { "md_raid.xml" }
+      let(:scenario) { "md_raid" }
 
       let(:md) { current_graph.md_raids.first }
 
@@ -85,7 +85,7 @@ describe Y2Partitioner::Actions::Controllers::Md do
     end
 
     context "when the controller is created with a Md device" do
-      let(:scenario) { "md_raid.xml" }
+      let(:scenario) { "md_raid" }
 
       let(:md) { current_graph.md_raids.first }
 
@@ -94,18 +94,6 @@ describe Y2Partitioner::Actions::Controllers::Md do
       it "returns the given Md device" do
         expect(controller.md).to eq(md)
       end
-    end
-  end
-
-  describe "#delete_filesystem" do
-    before do
-      controller.md.create_filesystem(Y2Storage::Filesystems::Type::EXT4)
-    end
-
-    it "removes the filesystem" do
-      expect(controller.md.filesystem).to_not be_nil
-      controller.delete_filesystem
-      expect(controller.md.filesystem).to be_nil
     end
   end
 
@@ -786,7 +774,7 @@ describe Y2Partitioner::Actions::Controllers::Md do
 
       it "returns a string containing the title for resizing a Md device" do
         expect(controller.wizard_title).to be_a(String)
-        expect(controller.wizard_title).to include("Resize RAID")
+        expect(controller.wizard_title).to include("Edit devices of RAID")
       end
     end
   end

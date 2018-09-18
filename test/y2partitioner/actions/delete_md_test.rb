@@ -27,7 +27,7 @@ require "y2partitioner/actions/delete_md"
 
 describe Y2Partitioner::Actions::DeleteMd do
   before do
-    devicegraph_stub("md_raid.xml")
+    devicegraph_stub("md_raid")
   end
 
   subject { described_class.new(device) }

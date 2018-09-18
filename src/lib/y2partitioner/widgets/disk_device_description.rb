@@ -37,7 +37,7 @@ module Y2Partitioner
       #
       # @return [String]
       def device_description
-        blk_device_description + disk_description
+        blk_device_description + disk_description + filesystem_description
       end
 
       # Richtext description of a disk device

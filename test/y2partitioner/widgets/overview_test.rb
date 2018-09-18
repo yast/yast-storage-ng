@@ -231,7 +231,7 @@ describe Y2Partitioner::Widgets::OverviewTreePager do
     end
 
     context "when there are Software RAIDs" do
-      let(:scenario) { "md_raid.xml" }
+      let(:scenario) { "md_raid" }
 
       it "disk pager has not Software RAID pages" do
         md_pages = disks_pages.select { |p| p.is_a?(Y2Partitioner::Widgets::Pages::MdRaid) }

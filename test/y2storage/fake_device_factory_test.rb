@@ -553,6 +553,9 @@ describe Y2Storage::FakeDeviceFactory do
               md_level: raid1
               md_parity: first
               chunk_size: 16 KiB
+              md_uuid: 111-222-333
+              in_etc_mdadm: true
+              metadata: "1.0"
               file_system: ext4
               mount_point: "/data"
               label: "backup"
@@ -574,6 +577,9 @@ describe Y2Storage::FakeDeviceFactory do
         expect(md.md_level).to eq(Y2Storage::MdLevel::RAID1.to_i)
         expect(md.md_parity).to eq(Y2Storage::MdParity::FIRST.to_i)
         expect(md.chunk_size).to eq(16 * Storage.KiB)
+        expect(md.uuid).to eq("111-222-333")
+        expect(md.in_etc_mdadm?).to eq(true)
+        expect(md.metadata).to eq("1.0")
 
         expect(md.devices).to_not be_nil
         expect(md.devices.to_a.size).to eq(2)

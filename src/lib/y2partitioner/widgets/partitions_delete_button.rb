@@ -1,7 +1,6 @@
-#!/usr/bin/env rspec
 # encoding: utf-8
 
-# Copyright (c) [2018] SUSE LLC
+# Copyright (c) [2017] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -20,25 +19,33 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require_relative "../test_helper"
+require "yast"
+require "y2partitioner/widgets/device_button"
+require "y2partitioner/actions/delete_partitions"
 
-require "cwm/rspec"
-require "y2partitioner/widgets/md_description"
+module Y2Partitioner
+  module Widgets
+    # Button for deleting all partitions
+    class PartitionsDeleteButton < DeviceButton
+      def initialize(*args)
+        super
+        textdomain "storage"
+      end
 
-describe Y2Partitioner::Widgets::MdDescription do
-  before { devicegraph_stub("md_raid") }
+      # @macro seeAbstractWidget
+      def label
+        # TRANSLATORS: label for button to delete all partitions
+        _("Delete All...")
+      end
 
-  let(:current_graph) { Y2Partitioner::DeviceGraphs.instance.current }
+    private
 
-  let(:md) { current_graph.md_raids.first }
-
-  subject { described_class.new(md) }
-
-  include_examples "CWM::RichText"
-
-  describe "#init" do
-    it "runs without failure" do
-      expect { subject.init }.to_not raise_error
+      # Returns the proper Actions class to perform the delete action
+      #
+      # @return [Actions::DeletePartitions]
+      def actions_class
+        Actions::DeletePartitions
+      end
     end
   end
 end
