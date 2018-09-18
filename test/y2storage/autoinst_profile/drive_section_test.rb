@@ -224,7 +224,7 @@ describe Y2Storage::AutoinstProfile::DriveSection do
     end
 
     context "given a MD RAID" do
-      before { fake_scenario("md2-devicegraph") }
+      before { fake_scenario("nested_md_raids") }
 
       it "initializes #type to :CT_MD" do
         expect(described_class.new_from_storage(device("md0")).type).to eq :CT_MD

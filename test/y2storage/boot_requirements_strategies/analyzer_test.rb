@@ -288,7 +288,7 @@ describe Y2Storage::BootRequirementsStrategies::Analyzer do
 
     context "if '/' is a software raid from the devicegraph" do
       let(:planned_devs) { [] }
-      let(:scenario) { "md2-devicegraph" }
+      let(:scenario) { "nested_md_raids" }
 
       before do
         md = Y2Storage::Md.find_by_name(fake_devicegraph, "/dev/md0")
@@ -304,7 +304,7 @@ describe Y2Storage::BootRequirementsStrategies::Analyzer do
 
     context "if '/' is a partition over a software raid from the devicegraph" do
       let(:planned_devs) { [] }
-      let(:scenario) { "md2-devicegraph" }
+      let(:scenario) { "nested_md_raids" }
 
       before do
         md = Y2Storage::Md.find_by_name(fake_devicegraph, "/dev/md0")

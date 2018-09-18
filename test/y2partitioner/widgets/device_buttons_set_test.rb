@@ -24,10 +24,11 @@ require_relative "../test_helper"
 
 require "cwm/rspec"
 require "y2partitioner/widgets/device_buttons_set"
+require "y2partitioner/widgets/overview"
 
 describe Y2Partitioner::Widgets::DeviceButtonsSet do
   before do
-    devicegraph_stub("md2-devicegraph.xml")
+    devicegraph_stub("nested_md_raids")
   end
 
   let(:device_graph) { Y2Partitioner::DeviceGraphs.instance.current }

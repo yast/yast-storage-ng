@@ -17,7 +17,7 @@ describe Y2Partitioner::Widgets::Pages::MdRaids do
   include_examples "CWM::Page"
 
   describe "#contents" do
-    let(:scenario) { "md2-devicegraph.xml" }
+    let(:scenario) { "nested_md_raids" }
 
     let(:widgets) { Yast::CWM.widgets_in_contents([subject]) }
 
@@ -68,7 +68,7 @@ describe Y2Partitioner::Widgets::Pages::MdRaids do
     end
 
     context "when there are partitioned software RAIDs" do
-      let(:scenario) { "md2-devicegraph.xml" }
+      let(:scenario) { "nested_md_raids" }
 
       it "contains all software RAIDs and its partitions" do
         expect(items).to include("/dev/md0", "/dev/md0p1", "/dev/md0p2", "/dev/md1", "/dev/md2")
