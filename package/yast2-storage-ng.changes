@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Tue Sep 18 13:00:29 UTC 2018 - jlopez@suse.com
+
+- AutoYaST: Allow to use whole disk as PV by indicating a partition
+  with number 0 (bsc#1107298).
+- 4.0.211
+
+-------------------------------------------------------------------
 Thu Sep  6 11:45:19 UTC 2018 - jreidinger@suse.com
 
 - Add asterisk to mount points that is not active and also write it
