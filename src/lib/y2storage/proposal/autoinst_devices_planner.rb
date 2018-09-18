@@ -89,14 +89,58 @@ module Y2Storage
       # @return [AutoinstIssues::List] List of AutoYaST issues to register them
       attr_reader :issues_list
 
+      # Returns an array of planned partitions for a given disk or the disk
+      # itself if there are no partitions planned
+      #
+      # @param disk [Disk,Dasd] Disk to place the partitions on
+      # @param drive [AutoinstProfile::DriveSection] drive section describing
+      #   the layout for the disk
+      # @return [Array<Planned::Partition, Planned::StrayBlkDevice>] List of planned partitions or disks
+      def planned_for_disk(disk, drive)
+        # partition 0: use the entire device
+        partition_zero = drive.partitions.find { |p| p.partition_nr == 0 }
+        result = if partition_zero
+          planned_for_full_disk(drive, partition_zero)
+        else
+          planned_for_partitions(disk, drive)
+        end
+
+        result
+      end
+
+      # Returns disk to be used without partitions.
+      #
+      # @note This is not quite what #planned_for_stray_devices is for:
+      #   #planned_for_full_disk creates a single entry for the full disk while
+      #   #planned_for_stray_devices creates full disk entries for each
+      #   partition.
+      #
+      # @param drive [AutoinstProfile::DriveSection] drive section describing
+      #   the layout for the disk
+      # @param part [AutoinstProfile::PartitionSection] partition section with
+      #   elements to apply to the full disk
+      # @return [Array<Planned::StrayBlkDevice>] List containing planned disk
+      #
+      # @note The part argument is used when we emulate the sle12 behavior to
+      #   have partition 0 mean the full disk.
+      def planned_for_full_disk(drive, part)
+        planned = Y2Storage::Planned::StrayBlkDevice.new
+        device_config(planned, part, drive)
+        planned.lvm_volume_group_name = part.lvm_group
+        add_device_reuse(planned, drive.device, part)
+
+        [planned]
+      end
+
       # Returns an array of planned partitions for a given disk
       #
       # @param disk [Disk,Dasd] Disk to place the partitions on
       # @param drive [AutoinstProfile::DriveSection] drive section describing
       #   the layout for the disk
       # @return [Array<Planned::Partition>] List of planned partitions
-      def planned_for_disk(disk, drive)
+      def planned_for_partitions(disk, drive)
         result = []
+
         drive.partitions.each_with_index do |section|
           # TODO: fix Planned::Partition.initialize
           partition = Y2Storage::Planned::Partition.new(nil, nil)

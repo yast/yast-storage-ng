@@ -34,6 +34,7 @@ module Y2Storage
       include Planned::CanBeFormatted
       include Planned::CanBeMounted
       include Planned::CanBeEncrypted
+      include Planned::CanBePv
       include MatchVolumeSpec
 
       # Constructor.
@@ -42,6 +43,7 @@ module Y2Storage
         initialize_can_be_formatted
         initialize_can_be_mounted
         initialize_can_be_encrypted
+        initialize_can_be_pv
       end
 
       # @see Device.to_string_attrs
