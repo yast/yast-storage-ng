@@ -742,6 +742,50 @@ describe Y2Storage::BlkDevice do
         expect(device.component_of.first.name).to eq "/dev/mapper/0QEMU_QEMU_HARDDISK_mpath1"
       end
     end
+
+    context "for a disk that is used as backing device for a bcache" do
+      let(:scenario) { "bcache1.xml" }
+      let(:device_name) { "/dev/vdc" }
+
+      it "returns an array with the bcache device" do
+        expect(device.component_of.size).to eq 1
+        expect(device.component_of.first).to be_a Y2Storage::Bcache
+        expect(device.component_of.first.name).to eq "/dev/bcache0"
+      end
+    end
+
+    context "for a disk that is used as caching device for  a bcache" do
+      let(:scenario) { "bcache1.xml" }
+      let(:device_name) { "/dev/vdb" }
+
+      it "returns an array with the bcache cset device" do
+        expect(device.component_of.size).to eq 1
+        expect(device.component_of.first).to be_a Y2Storage::BcacheCset
+        expect(device.component_of.first.uuid).to eq "acb129b8-b55e-45bb-aa99-41a6f0a0ef07"
+      end
+    end
+  end
+
+  describe "#component_of_names" do
+    context "component has name" do
+      let(:scenario) { "bcache1.xml" }
+      let(:device_name) { "/dev/vdc" }
+
+      it "returns name for that component" do
+        expect(device.component_of_names.size).to eq 1
+        expect(device.component_of_names.first).to eq "/dev/bcache0"
+      end
+    end
+
+    context "component has uuid" do
+      let(:scenario) { "bcache1.xml" }
+      let(:device_name) { "/dev/vdb" }
+
+      it "returns uuid for that component" do
+        expect(device.component_of_names.size).to eq 1
+        expect(device.component_of_names.first).to eq "acb129b8-b55e-45bb-aa99-41a6f0a0ef07"
+      end
+    end
   end
 
   describe "#hwinfo" do
