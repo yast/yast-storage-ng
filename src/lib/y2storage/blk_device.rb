@@ -226,7 +226,6 @@ module Y2Storage
     #   @return [Bcache]
     storage_forward :create_bcache, as: "Bcache", raise_errors: true
 
-
     # @!method create_bcache_cset
     #   Creates caching set build on current block device.
     #
