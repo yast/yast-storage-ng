@@ -39,14 +39,14 @@ describe Y2Storage::Bcache do
     end
 
     it "returns backing device for bcache" do
-      expect(subject.blk_device.basename).to eq "sdb1"
+      expect(subject.blk_device.basename).to eq "vdc"
     end
   end
 
   describe "#bcache_cset" do
     it "returns associated BcacheCset" do
       expect(subject.bcache_cset).to be_a Y2Storage::BcacheCset
-      expect(subject.bcache_cset.blk_devices.map(&:basename)).to contain_exactly("sdc")
+      expect(subject.bcache_cset.blk_devices.map(&:basename)).to contain_exactly("vdb")
     end
   end
 
@@ -85,7 +85,7 @@ describe Y2Storage::Bcache do
     it "includes all bcaches in the devicegraph and nothing else" do
       bcaches = Y2Storage::Bcache.all(fake_devicegraph)
       expect(bcaches.map(&:basename)).to contain_exactly(
-        "bcache0", "bcache1"
+        "bcache0", "bcache1", "bcache2"
       )
     end
   end

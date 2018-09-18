@@ -40,13 +40,13 @@ describe Y2Storage::BcacheCset do
     end
 
     it "returns caching device for bcache" do
-      expect(subject.blk_devices.map(&:basename)).to eq(["sdc"])
+      expect(subject.blk_devices.map(&:basename)).to eq(["vdb"])
     end
   end
 
   describe "#uuid" do
     it "returns uui string" do
-      expect(subject.uuid).to eq "43ff1dbc-ea5d-4a91-9f79-18c7dba83659"
+      expect(subject.uuid).to eq "acb129b8-b55e-45bb-aa99-41a6f0a0ef07"
     end
   end
 
