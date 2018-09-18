@@ -551,5 +551,135 @@ describe Y2Storage::YamlWriter do
         expect(plain_content(io.string)).to eq(plain_content(expected_result))
       end
     end
+
+    context "when the devicegraph contains a filesystem directly on a Software RAID" do
+      before do
+        fake_scenario("formatted_md")
+      end
+
+      let(:expected_result) do
+        %(---
+          - disk:
+              name: "/dev/sda"
+              size: 500 GiB
+              block_size: 0.5 KiB
+              io_size: 0 B
+              min_grain: 1 MiB
+              align_ofs: 0 B
+              partition_table: msdos
+              mbr_gap: 1 MiB
+              partitions:
+              - free:
+                  size: 1 MiB
+                  start: 0 B
+              - partition:
+                  size: 10 GiB
+                  start: 1 MiB
+                  name: "/dev/sda1"
+                  type: primary
+                  id: linux
+              - partition:
+                  size: 10 GiB
+                  start: 10241 MiB (10.00 GiB)
+                  name: "/dev/sda2"
+                  type: primary
+                  id: linux
+              - free:
+                  size: 491519 MiB (480.00 GiB)
+                  start: 20481 MiB (20.00 GiB)
+          - md:
+              name: "/dev/md0"
+              md_level: raid0
+              md_parity: default
+              chunk_size: 16 KiB
+              md_uuid: 111-222-333
+              in_etc_mdadm: true
+              metadata: '1.0'
+              file_system: ext4
+              label: data
+              mount_point: "/data"
+              md_devices:
+              - md_device:
+                  blk_device: "/dev/sda1"
+              - md_device:
+                  blk_device: "/dev/sda2")
+      end
+
+      it "generates the expected yaml content" do
+        described_class.write(fake_devicegraph, io)
+        expect(plain_content(io.string)).to eq(plain_content(expected_result))
+      end
+    end
+
+    context "when the devicegraph contains a Software RAID with partitions" do
+      before do
+        fake_scenario("partitioned_md")
+      end
+
+      let(:expected_result) do
+        %(---
+          - disk:
+              name: "/dev/sda"
+              size: 500 GiB
+              block_size: 0.5 KiB
+              io_size: 0 B
+              min_grain: 1 MiB
+              align_ofs: 0 B
+              partition_table: msdos
+              mbr_gap: 1 MiB
+              partitions:
+              - free:
+                  size: 1 MiB
+                  start: 0 B
+              - partition:
+                  size: 10 GiB
+                  start: 1 MiB
+                  name: "/dev/sda1"
+                  type: primary
+                  id: linux
+              - partition:
+                  size: 10 GiB
+                  start: 10241 MiB (10.00 GiB)
+                  name: "/dev/sda2"
+                  type: primary
+                  id: linux
+              - free:
+                  size: 491519 MiB (480.00 GiB)
+                  start: 20481 MiB (20.00 GiB)
+          - md:
+              name: "/dev/md0"
+              md_level: raid0
+              md_parity: default
+              chunk_size: 16 KiB
+              md_uuid: ''
+              in_etc_mdadm: true
+              metadata: ''
+              partition_table: msdos
+              mbr_gap: 1 MiB
+              partitions:
+              - free:
+                  size: 1 MiB
+                  start: 0 B
+              - partition:
+                  size: 1 GiB
+                  start: 1 MiB
+                  name: "/dev/md0part1"
+                  type: primary
+                  id: linux
+              - free:
+                  size: 19659744 KiB (18.75 GiB)
+                  start: 1025 MiB (1.00 GiB)
+              md_devices:
+              - md_device:
+                  blk_device: "/dev/sda1"
+              - md_device:
+                  blk_device: "/dev/sda2")
+      end
+
+      it "generates the expected yaml content" do
+        described_class.write(fake_devicegraph, io)
+        expect(plain_content(io.string)).to eq(plain_content(expected_result))
+      end
+    end
   end
 end

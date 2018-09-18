@@ -24,12 +24,13 @@ require_relative "../test_helper"
 
 require "cwm/rspec"
 require "y2partitioner/dialogs/partition_type"
+require "y2partitioner/actions/controllers/add_partition"
 
 describe Y2Partitioner::Dialogs::PartitionType do
   let(:controller) do
-    double(
-      "PartitionController",
-      unused_slots: slots, unused_optimal_slots: slots, disk_name: "/dev/sda", wizard_title: ""
+    instance_double(
+      Y2Partitioner::Actions::Controllers::AddPartition,
+      unused_slots: slots, unused_optimal_slots: slots, device_name: "/dev/sda", wizard_title: ""
     )
   end
   let(:slots) { [] }
@@ -45,9 +46,9 @@ end
 describe Y2Partitioner::Dialogs::PartitionType::TypeChoice do
   let(:controller) do
     double(
-      "PartitionController",
+      Y2Partitioner::Actions::Controllers::AddPartition,
       available_partition_types: Y2Storage::PartitionType.all,
-      disk_name:                 "/dev/sda"
+      device_name:               "/dev/sda"
     )
   end
 

@@ -71,7 +71,7 @@ describe Y2Partitioner::Actions::ResizeBlkDevice do
 
   RSpec.shared_examples "partition_holds_md" do
     context "and the partition holds a MD RAID" do
-      let(:scenario) { "md_raid.xml" }
+      let(:scenario) { "md_raid" }
       let(:dev_name) { "/dev/sda1" }
 
       include_examples "resize_error"

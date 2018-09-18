@@ -185,7 +185,7 @@ describe Y2Storage::BootRequirementsChecker do
         include_examples "efi partition"
 
         context "/boot/efi lays on md raid level 1" do
-          let(:scenario) { "raid_efi.xml" }
+          let(:scenario) { "raid_efi" }
 
           it "contains warning" do
             expect(checker.warnings.size).to eq(1)

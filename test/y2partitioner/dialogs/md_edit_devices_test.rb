@@ -25,10 +25,10 @@ require_relative "../test_helper"
 require "yast"
 require "cwm/rspec"
 require "y2storage"
-require "y2partitioner/dialogs/md_resize"
+require "y2partitioner/dialogs/md_edit_devices"
 require "y2partitioner/actions/controllers/md"
 
-describe Y2Partitioner::Dialogs::MdResize do
+describe Y2Partitioner::Dialogs::MdEditDevices do
   before do
     Y2Storage::StorageManager.create_test_instance
   end

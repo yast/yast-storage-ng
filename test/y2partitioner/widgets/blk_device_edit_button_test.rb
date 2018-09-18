@@ -1,3 +1,23 @@
+# encoding: utf-8
+# Copyright (c) [2017] SUSE LLC
+#
+# All Rights Reserved.
+#
+# This program is free software; you can redistribute it and/or modify it
+# under the terms of version 2 of the GNU General Public License as published
+# by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+# more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, contact SUSE LLC.
+#
+# To contact SUSE LLC about this file by physical or electronic mail, you may
+# find current contact information at www.suse.com.
+
 require_relative "../test_helper"
 
 require "cwm/rspec"
@@ -11,7 +31,7 @@ RSpec.shared_examples "edit device" do
   end
 
   context "and the device is a Software RAID" do
-    let(:scenario) { "md_raid.xml" }
+    let(:scenario) { "md_raid" }
     let(:device_name) { "/dev/md/md0" }
     include_examples "run edit action"
   end
@@ -19,31 +39,31 @@ RSpec.shared_examples "edit device" do
   context "and the device is a disk" do
     let(:scenario) { "mixed_disks.yml" }
     let(:device_name) { "/dev/sda" }
-    include_examples "go to device page"
+    include_examples "run edit action"
   end
 
   context "and the device is a dasd" do
     let(:scenario) { "dasd_50GiB.yml" }
     let(:device_name) { "/dev/sda" }
-    include_examples "go to device page"
+    include_examples "run edit action"
   end
 
   context "and the device is a multipath" do
     let(:scenario) { "empty-dasd-and-multipath.xml" }
     let(:device_name) { "/dev/mapper/36005076305ffc73a00000000000013b4" }
-    include_examples "go to device page"
+    include_examples "run edit action"
   end
 
   context "and the device is a DM RAID" do
     let(:scenario) { "empty-dm_raids.xml" }
     let(:device_name) { "/dev/mapper/isw_ddgdcbibhd_test1" }
-    include_examples "go to device page"
+    include_examples "run edit action"
   end
 
   context "and the device is a BIOS MD RAID" do
     let(:scenario) { "md-imsm1-devicegraph.xml" }
     let(:device_name) { "/dev/md/b" }
-    include_examples "go to device page"
+    include_examples "run edit action"
   end
 end
 
@@ -70,6 +90,8 @@ RSpec.shared_examples "run edit action" do
   end
 end
 
+# NOTE: Not used anymore, but still here only in case some new case where edit means
+# to skip to the device page.
 RSpec.shared_examples "go to device page" do
   before do
     allow(pager).to receive(:device_page).with(device).and_return(page)

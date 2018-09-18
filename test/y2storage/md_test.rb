@@ -62,7 +62,7 @@ describe Y2Storage::Md do
 
   describe "#md_name" do
     context "for a numeric RAID" do
-      let(:scenario) { "md2-devicegraph.xml" }
+      let(:scenario) { "md2-devicegraph" }
       let(:md_name) { "/dev/md0" }
 
       it "returns nil" do

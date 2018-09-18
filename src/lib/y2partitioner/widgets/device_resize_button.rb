@@ -22,7 +22,6 @@
 require "yast"
 require "y2partitioner/widgets/device_button"
 require "y2partitioner/actions/resize_blk_device"
-require "y2partitioner/actions/resize_md"
 require "y2partitioner/actions/resize_lvm_vg"
 
 Yast.import "Popup"
@@ -56,7 +55,7 @@ module Y2Partitioner
       #
       # @return [Boolean] true if the device supports resizing; false otherwise.
       def device_validation
-        return true if device.is?(:partition, :md, :lvm_vg, :lvm_lv)
+        return true if device.is?(:partition, :lvm_vg, :lvm_lv)
 
         Yast::Popup.Error(
           _("Hard disks, BIOS RAIDs and multipath\n"\
@@ -68,14 +67,11 @@ module Y2Partitioner
       # Returns the proper Actions class to perform the resize action
       #
       # @see Actions::ResizeBlkDevice
-      # @see Actions::ResizeMd
       # @see Actions::ResizeLvmVg
       #
       # @return [Object] action for resizing the device
       def actions_class
-        if device.is?(:md)
-          Actions::ResizeMd
-        elsif device.is?(:lvm_vg)
+        if device.is?(:lvm_vg)
           Actions::ResizeLvmVg
         else
           Actions::ResizeBlkDevice

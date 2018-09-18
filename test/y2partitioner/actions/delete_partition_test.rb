@@ -84,7 +84,7 @@ describe Y2Partitioner::Actions::DeletePartition do
     end
 
     context "when deleting a partition used by MD Raid" do
-      let(:scenario) { "md_raid.xml" }
+      let(:scenario) { "md_raid" }
 
       let(:device_name) { "/dev/sda1" }
 
@@ -118,7 +118,7 @@ describe Y2Partitioner::Actions::DeletePartition do
         expect(Y2Storage::BlkDevice.find_by_name(device_graph, device_name)).to be_nil
       end
 
-      it "refresh btrfs subvolumes shadowing" do
+      it "refreshes btrfs subvolumes shadowing" do
         expect(Y2Storage::Filesystems::Btrfs).to receive(:refresh_subvolumes_shadowing)
         subject.run
       end

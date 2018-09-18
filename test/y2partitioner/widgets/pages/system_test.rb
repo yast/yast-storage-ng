@@ -153,7 +153,7 @@ describe Y2Partitioner::Widgets::Pages::System do
     end
 
     context "when there are Software RAIDs" do
-      let(:scenario) { "md_raid.xml" }
+      let(:scenario) { "md_raid" }
 
       before do
         Y2Storage::Md.create(current_graph, "/dev/md1")

@@ -645,7 +645,7 @@ describe Y2Storage::Devicegraph do
     subject(:devicegraph) { Y2Storage::StorageManager.instance.staging }
 
     before do
-      fake_scenario("md_raid.xml")
+      fake_scenario("md_raid")
 
       # Create a Vg over the md raid
       md = Y2Storage::Md.find_by_name(devicegraph, md_name)

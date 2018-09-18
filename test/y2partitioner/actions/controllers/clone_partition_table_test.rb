@@ -21,9 +21,9 @@
 # find current contact information at www.suse.com.
 
 require_relative "../../test_helper"
-require "y2partitioner/actions/controllers/disk_device"
+require "y2partitioner/actions/controllers/clone_partition_table"
 
-describe Y2Partitioner::Actions::Controllers::DiskDevice do
+describe Y2Partitioner::Actions::Controllers::ClonePartitionTable do
   before do
     devicegraph_stub(scenario)
   end
@@ -37,7 +37,7 @@ describe Y2Partitioner::Actions::Controllers::DiskDevice do
   let(:scenario) { "mixed_disks_clone.yml" }
 
   describe "#initialize" do
-    context "when the given device is a disk device" do
+    context "when the given device is a partitionable device" do
       let(:device_name) { "/dev/sda" }
 
       it "does not raise an exception" do
@@ -45,7 +45,7 @@ describe Y2Partitioner::Actions::Controllers::DiskDevice do
       end
     end
 
-    context "when the given device is not a disk device" do
+    context "when the given device is not a partitionable device" do
       let(:device_name) { "/dev/sda1" }
 
       it "raises an exception" do

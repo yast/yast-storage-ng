@@ -1045,7 +1045,7 @@ describe Y2Storage::AutoinstProposal do
       end
 
       context "reusing a RAID" do
-        let(:scenario) { "md_raid.xml" }
+        let(:scenario) { "md_raid" }
         let(:md_device) { "/dev/md/md0" }
 
         let(:partitioning) do

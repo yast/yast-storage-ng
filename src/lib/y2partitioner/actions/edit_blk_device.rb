@@ -21,8 +21,8 @@
 
 require "yast"
 require "y2partitioner/actions/transaction_wizard"
-require "y2partitioner/actions/controllers"
-require "y2partitioner/dialogs"
+require "y2partitioner/actions/controllers/filesystem"
+require "y2partitioner/actions/filesystem_steps"
 
 Yast.import "Popup"
 
@@ -30,26 +30,14 @@ module Y2Partitioner
   module Actions
     # BlkDevice edition
     class EditBlkDevice < TransactionWizard
+      include FilesystemSteps
+
       # @param blk_device [Y2Storage::BlkDevice]
       def initialize(blk_device)
         textdomain "storage"
 
         super()
         @device_sid = blk_device.sid
-      end
-
-      def format_options
-        Dialogs::FormatAndMount.run(fs_controller)
-      end
-
-      def password
-        return :next unless fs_controller.to_be_encrypted?
-        Dialogs::EncryptPassword.run(fs_controller)
-      end
-
-      def commit
-        fs_controller.finish
-        :finish
       end
 
     protected
@@ -64,12 +52,7 @@ module Y2Partitioner
 
       # @see TransactionWizard
       def sequence_hash
-        {
-          "ws_start"       => "format_options",
-          "format_options" => { next: "password" },
-          "password"       => { next: "commit" },
-          "commit"         => { finish: :finish }
-        }
+        { "ws_start" => "format_options" }.merge(filesystem_steps)
       end
 
       def title

@@ -23,17 +23,17 @@
 require_relative "../test_helper"
 
 require "cwm/rspec"
-require "y2partitioner/dialogs/disk_clone"
-require "y2partitioner/actions/controllers/disk_device"
+require "y2partitioner/dialogs/partition_table_clone"
+require "y2partitioner/actions/controllers/clone_partition_table"
 
-describe Y2Partitioner::Dialogs::DiskClone do
+describe Y2Partitioner::Dialogs::PartitionTableClone do
   before do
     devicegraph_stub(scenario)
   end
 
   subject { described_class.new(controller) }
 
-  let(:controller) { Y2Partitioner::Actions::Controllers::DiskDevice.new(device) }
+  let(:controller) { Y2Partitioner::Actions::Controllers::ClonePartitionTable.new(device) }
 
   let(:device) { current_graph.find_by_name(device_name) }
 
@@ -45,7 +45,7 @@ describe Y2Partitioner::Dialogs::DiskClone do
 
   include_examples "CWM::Dialog"
 
-  describe Y2Partitioner::Dialogs::DiskClone::DevicesSelector do
+  describe Y2Partitioner::Dialogs::PartitionTableClone::DevicesSelector do
     subject(:widget) { described_class.new(controller) }
 
     before do

@@ -23,9 +23,9 @@
 require_relative "../test_helper"
 
 require "cwm/rspec"
-require "y2partitioner/actions/clone_disk"
+require "y2partitioner/actions/clone_partition_table"
 
-describe Y2Partitioner::Actions::CloneDisk do
+describe Y2Partitioner::Actions::ClonePartitionTable do
   before do
     devicegraph_stub(scenario)
   end
@@ -85,13 +85,13 @@ describe Y2Partitioner::Actions::CloneDisk do
         let(:device_name) { "/dev/sda" }
 
         before do
-          allow(Y2Partitioner::Dialogs::DiskClone).to receive(:run).and_return(result)
+          allow(Y2Partitioner::Dialogs::PartitionTableClone).to receive(:run).and_return(result)
         end
 
         let(:result) { :ok }
 
         it "opens the dialog for cloning the device" do
-          expect(Y2Partitioner::Dialogs::DiskClone).to receive(:run)
+          expect(Y2Partitioner::Dialogs::PartitionTableClone).to receive(:run)
           subject.run
         end
 
@@ -107,7 +107,7 @@ describe Y2Partitioner::Actions::CloneDisk do
           let(:result) { :ok }
 
           before do
-            allow_any_instance_of(Y2Partitioner::Actions::Controllers::DiskDevice)
+            allow_any_instance_of(Y2Partitioner::Actions::Controllers::ClonePartitionTable)
               .to receive(:selected_devices_for_cloning).and_return(selected_devices)
           end
 
@@ -118,7 +118,7 @@ describe Y2Partitioner::Actions::CloneDisk do
           let(:sdc) { current_graph.find_by_name("/dev/sdc") }
 
           # More exhaustive tests for cloning can be found in the tests for
-          # Y2Partitioner::Actions::Controllers::DiskDevice
+          # Y2Partitioner::Actions::Controllers::ClonePartitionTable
           it "clones the device into selected devices" do
             expect(sdb.partitions.size).to_not eq(device.partitions.size)
             expect(sdc.partitions).to be_empty
