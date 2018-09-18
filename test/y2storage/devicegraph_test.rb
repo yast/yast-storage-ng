@@ -834,6 +834,52 @@ describe Y2Storage::Devicegraph do
     end
   end
 
+  describe "#bcache_devices" do
+    before do
+      fake_scenario("bcache1.xml")
+    end
+
+    subject(:list) { fake_devicegraph.bcache_devices }
+
+    it "returns an array of bcache devices" do
+      expect(list).to be_a Array
+      expect(list).to all(be_a(Y2Storage::Bcache))
+    end
+
+    it "finds all the devices" do
+      expect(list.size).to eq(3), "found devices: #{list.inspect}"
+    end
+
+    it "does not include other devices like volume groups" do
+      expect(fake_devicegraph.lvm_vgs).to_not be_empty
+      vg1 = fake_devicegraph.lvm_vgs.first
+      expect(list).to_not include vg1
+    end
+  end
+
+  describe "#bcache_csets" do
+    before do
+      fake_scenario("bcache1.xml")
+    end
+
+    subject(:list) { fake_devicegraph.bcache_csets }
+
+    it "returns an array of bcache csets" do
+      expect(list).to be_a Array
+      expect(list).to all(be_a(Y2Storage::BcacheCset))
+    end
+
+    it "finds all the devices" do
+      expect(list.size).to eq 1
+    end
+
+    it "does not include other devices like volume groups" do
+      expect(fake_devicegraph.lvm_vgs).to_not be_empty
+      vg1 = fake_devicegraph.lvm_vgs.first
+      expect(list).to_not include vg1
+    end
+  end
+
   describe "#stray_blk_devices" do
     before do
       fake_scenario("mixed_disks")

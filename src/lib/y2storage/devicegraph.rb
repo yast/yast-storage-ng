@@ -294,7 +294,7 @@ module Y2Storage
 
     # @return [Array<BcacheCset>]
     def bcache_csets
-      BcachCset.all(self)
+      BcacheCset.all(self)
     end
 
     # All the LVM volume groups in the devicegraph, sorted by name

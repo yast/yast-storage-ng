@@ -213,6 +213,15 @@ describe Y2Partitioner::Widgets::Pages::System do
       end
     end
 
+    context "when there are bcache devices" do
+      let(:scenario) { "bcache1.xml" }
+
+      it "contains all bcache devices" do
+        expect(items).to include("/dev/bcache0" ,"/dev/bcache1", "/dev/bcache2")
+      end
+    end
+
+
     describe "caching" do
       let(:scenario) { "empty_hard_disk_15GiB" }
       let(:pager) { Y2Partitioner::Widgets::OverviewTreePager.new("hostname") }
