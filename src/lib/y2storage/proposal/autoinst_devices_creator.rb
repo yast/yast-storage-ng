@@ -74,17 +74,17 @@ module Y2Storage
       #
       # @param planned_devices [Array<Planned::Device>] Devices to create/reuse
       # @param disk_names [Array<String>] Disks to consider
-      # @return [Devicegraph] New devicegraph in which all the planned devices have been allocated
-      # rubocop:disable Metrics/AbcSize
+      #
+      # @return [AutoinstCreatorResult] Result with new devicegraph in which all the
+      #   planned devices have been allocated
       def populated_devicegraph(planned_devices, disk_names)
         # Process planned partitions
         log.info "planned devices = #{planned_devices.inspect}"
         log.info "disk names = #{disk_names.inspect}"
 
-        planned_partitions = planned_devices.select { |d| d.is_a?(Planned::Partition) }
-        parts_to_reuse, parts_to_create = planned_partitions.partition(&:reuse?)
-        creator_result = create_partitions(parts_to_create, disk_names)
-        reuse_devices(parts_to_reuse, creator_result.devicegraph)
+        # Process planned partitions
+        parts_to_create, parts_to_reuse, creator_result =
+          process_partitions(planned_devices, disk_names)
 
         # Process planned stray block devices (Xen virtual partitions)
         planned_stray_devs = process_stray_devs(planned_devices, creator_result.devicegraph)
@@ -97,23 +97,18 @@ module Y2Storage
         # a better solution (maybe by creating a Planned::PV ?).
         devs_to_reuse = parts_to_reuse + planned_stray_devs
 
-        # Process planned MD arrays
-        planned_mds = planned_devices.select { |d| d.is_a?(Planned::Md) }
-        mds_to_reuse, mds_to_create = planned_mds.partition(&:reuse?)
-        creator_result.merge!(create_mds(mds_to_create, creator_result, devs_to_reuse))
-        mds_to_reuse.each { |i| i.reuse!(creator_result.devicegraph) }
+        # Process planned Mds
+        mds_to_create, _mds_to_reuse, creator_result =
+          process_mds(planned_devices, devs_to_reuse, creator_result)
 
-        # Process planned volume groups
-        planned_vgs = planned_devices.select { |d| d.is_a?(Planned::LvmVg) }
-        creator_result.merge!(set_up_lvm(planned_vgs, creator_result, devs_to_reuse))
-        vgs_to_reuse = planned_vgs.select(&:reuse?)
-        reuse_vgs(vgs_to_reuse, creator_result.devicegraph)
+        # Process planned Vgs
+        planned_vgs, creator_result =
+          process_vgs(planned_devices, devs_to_reuse, creator_result)
 
         Y2Storage::Proposal::AutoinstCreatorResult.new(
           creator_result, parts_to_create + mds_to_create + planned_vgs
         )
       end
-    # rubocop:enable Metrics/AbcSize
 
     protected
 
@@ -139,6 +134,67 @@ module Y2Storage
       end
 
     private
+
+      # Process planned partitions
+      #
+      # @param planned_devices [Array<Planned::Device>] Devices to create/reuse
+      # @param disk_names [Array<String>] Disks to consider
+      #
+      # @return [Array<Array<Planned::Partition>, Array<Planned::Partition>, CreatorResult>]
+      def process_partitions(planned_devices, disk_names)
+        planned_partitions = planned_devices.select { |d| d.is_a?(Planned::Partition) }
+        parts_to_reuse, parts_to_create = planned_partitions.partition(&:reuse?)
+        creator_result = create_partitions(parts_to_create, disk_names)
+        reuse_devices(parts_to_reuse, creator_result.devicegraph)
+
+        [parts_to_create, parts_to_reuse, creator_result]
+      end
+
+      # Process planned Mds
+      #
+      # @param planned_devices [Array<Planned::Device>] Devices to create/reuse
+      # @param devs_to_reuse [Array<Planned::Device>] Devices to reuse
+      # @param creator_result [CreatorResult] partial result
+      #
+      # @return [Array<Array<Planned::Md>, Array<Planned::Md>, CreatorResult>]
+      def process_mds(planned_devices, devs_to_reuse, creator_result)
+        planned_mds = planned_devices.select { |d| d.is_a?(Planned::Md) }
+        mds_to_reuse, mds_to_create = planned_mds.partition(&:reuse?)
+        creator_result.merge!(create_mds(mds_to_create, creator_result, devs_to_reuse))
+        mds_to_reuse.each { |i| i.reuse!(creator_result.devicegraph) }
+
+        [mds_to_create, mds_to_reuse, creator_result]
+      end
+
+      # Process planned Vgs
+      #
+      # @param planned_devices [Array<Planned::Device>] Devices to create/reuse
+      # @param devs_to_reuse [Array<Planned::Device>] Devices to reuse
+      # @param creator_result [CreatorResult] partial result
+      #
+      # @return [Array<Array<Planned::Md>, Array<Planned::Md>, CreatorResult>]
+      def process_vgs(planned_devices, devs_to_reuse, creator_result)
+        planned_vgs = planned_devices.select { |d| d.is_a?(Planned::LvmVg) }
+        creator_result.merge!(set_up_lvm(planned_vgs, creator_result, devs_to_reuse))
+        vgs_to_reuse = planned_vgs.select(&:reuse?)
+        reuse_vgs(vgs_to_reuse, creator_result.devicegraph)
+
+        [planned_vgs, creator_result]
+      end
+
+      # Formats and/or mounts the stray block devices (Xen virtual partitions)
+      #
+      # @param planned_devices [Array<Planned::Device>] all planned devices
+      # @param devicegraph     [Devicegraph] devicegraph containing the Xen
+      #   partitions to be processed. It will be modified.
+      # @return                [Array<Planned::StrayBlkDevice>] all stray block
+      #   devices
+      def process_stray_devs(planned_devices, devicegraph)
+        planned_stray_devs = planned_devices.select { |d| d.is_a?(Planned::StrayBlkDevice) }
+        planned_stray_devs.each { |d| d.reuse!(devicegraph) }
+
+        planned_stray_devs
+      end
 
       # Creates planned partitions in the given devicegraph
       #
@@ -218,7 +274,6 @@ module Y2Storage
       #
       # @param mds             [Array<Planned::Md>]        List of planned MD arrays to create
       # @param previous_result [Proposal::CreatorResult]   Starting point
-      # @param parts_to_reuse  [Array<Planned::Partition>] List of partitions to reuse
       # @param devs_to_reuse   [Array<Planned::Partition, Planned::StrayBlkDevice>] List of devices
       #   to reuse.
       # @return                [Proposal::CreatorResult] Result containing the specified MD RAIDs
@@ -243,20 +298,6 @@ module Y2Storage
           new_device.min_size = DiskSize.B(1)
           new_device
         end
-      end
-
-      # Formats and/or mounts the stray block devices (Xen virtual partitions)
-      #
-      # @param planned_devices [Array<Planned::Device>] all planned devices
-      # @param devicegraph     [Devicegraph] devicegraph containing the Xen
-      #   partitions to be processed. It will be modified.
-      # @return                [Array<Planned::StrayBlkDevice>] all stray block
-      #   devices
-      def process_stray_devs(planned_devices, devicegraph)
-        planned_stray_devs = planned_devices.select { |d| d.is_a?(Planned::StrayBlkDevice) }
-        planned_stray_devs.each { |d| d.reuse!(devicegraph) }
-
-        planned_stray_devs
       end
     end
   end
