@@ -124,6 +124,9 @@ module Y2Storage
       # @note The part argument is used when we emulate the sle12 behavior to
       #   have partition 0 mean the full disk.
       def planned_for_full_disk(drive, part)
+        # FIXME: When a disk device is used as PV (indicated as partition with number 0
+        # in the autoyast profile), a Stray Block Device is planned for it. Think about
+        # a better solution (maybe by creating a Planned::PV ?).
         planned = Y2Storage::Planned::StrayBlkDevice.new
         device_config(planned, part, drive)
         planned.lvm_volume_group_name = part.lvm_group
