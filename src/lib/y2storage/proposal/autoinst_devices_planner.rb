@@ -123,9 +123,8 @@ module Y2Storage
       #
       # @note The part argument is used when we emulate the sle12 behavior to
       #   have partition 0 mean the full disk.
-      def planned_for_full_disk(drive, part = nil)
+      def planned_for_full_disk(drive, part)
         planned = Y2Storage::Planned::StrayBlkDevice.new
-        part ||= Y2Storage::AutoinstProfile::PartitionSection.new
         device_config(planned, part, drive)
         planned.lvm_volume_group_name = part.lvm_group
         add_device_reuse(planned, drive.device, part)
