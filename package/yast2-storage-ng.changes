@@ -2,7 +2,6 @@
 Tue Sep 18 11:43:13 UTC 2018 - jreidinger@suse.com
 
 - Add read-only support for Bcache (fate#325346)
-- 4.1.16
 
 -------------------------------------------------------------------
 Fri Sep  7 15:24:41 UTC 2018 - ancor@suse.com
