@@ -217,10 +217,9 @@ describe Y2Partitioner::Widgets::Pages::System do
       let(:scenario) { "bcache1.xml" }
 
       it "contains all bcache devices" do
-        expect(items).to include("/dev/bcache0" ,"/dev/bcache1", "/dev/bcache2")
+        expect(items).to include("/dev/bcache0", "/dev/bcache1", "/dev/bcache2")
       end
     end
-
 
     describe "caching" do
       let(:scenario) { "empty_hard_disk_15GiB" }
