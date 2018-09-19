@@ -27,10 +27,12 @@ require "y2partitioner/actions/delete_md"
 
 describe Y2Partitioner::Actions::DeleteMd do
   before do
-    devicegraph_stub("md_raid")
+    devicegraph_stub(scenario)
   end
 
   subject { described_class.new(device) }
+
+  let(:scenario) { "md_raid" }
 
   let(:device) { Y2Storage::BlkDevice.find_by_name(device_graph, device_name) }
 
@@ -65,6 +67,19 @@ describe Y2Partitioner::Actions::DeleteMd do
       it "shows a specific confirm message for LVM" do
         expect(subject).to receive(:confirm_recursive_delete)
           .with(device, /LVM/, anything, anything)
+          .and_call_original
+
+        subject.run
+      end
+    end
+
+    context "when deleting a partitioned md raid" do
+      let(:scenario) { "nested_md_raids" }
+      let(:device_name) { "/dev/md0" }
+
+      it "shows a specific confirm message for partitions" do
+        expect(subject).to receive(:confirm_recursive_delete)
+          .with(device, /partitions/, anything, anything)
           .and_call_original
 
         subject.run
