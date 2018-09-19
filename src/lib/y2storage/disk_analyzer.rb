@@ -210,6 +210,10 @@ module Y2Storage
 
       log.info("#{partition.name} is a windows partition") if is_win
       is_win
+
+    rescue Storage::Exception
+      log.warn("#{partition.name} content info cannot be detected")
+      false
     end
 
     # Obtain release names of installed systems in a disk.

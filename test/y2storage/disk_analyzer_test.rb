@@ -35,21 +35,32 @@ describe Y2Storage::DiskAnalyzer do
 
   describe "#windows_partitions" do
     context "in a PC" do
-      before do
-        allow(Yast::Arch).to receive(:x86_64).and_return true
-        allow_any_instance_of(::Storage::BlkFilesystem).to receive(:detect_content_info)
-          .and_return(content_info)
-      end
-      let(:content_info) { double("::Storage::ContentInfo", windows?: true) }
-
-      it "returns an empty array for disks with no Windows" do
-        expect(analyzer.windows_partitions("/dev/sdb").empty?).to eq(true)
+      context "for disks with no Windows" do
+        it "returns an empty array" do
+          expect(analyzer.windows_partitions("/dev/sdb").empty?).to eq(true)
+        end
       end
 
-      it "returns an array of partitions for disks with some Windows" do
-        expect(analyzer.windows_partitions("/dev/sda")).to be_a Array
-        expect(analyzer.windows_partitions("/dev/sda").size).to eq 1
-        expect(analyzer.windows_partitions("/dev/sda").first).to be_a Y2Storage::Partition
+      context "for disks with some Windows" do
+        let(:scenario) { "windows-pc-gpt" }
+
+        before do
+          # A bit ugly mock, but what we want to achieve is to simulate that one of available
+          # windows partitions cannot be properly detected due an Storage exception (bsc#1101979).
+          allow_any_instance_of(::Storage::BlkFilesystem).to receive(:detect_content_info) do |fs|
+            raise ::Storage::Exception if fs.label == "recovery"
+
+            double("::Storage::ContentInfo", windows?: true)
+          end
+        end
+
+        it "returns an array of detected Windows partitions" do
+          expect(analyzer.windows_partitions("/dev/sda")).to match_array([Y2Storage::Partition])
+        end
+
+        it "does not include partitions with undetectable content info" do
+          expect(analyzer.windows_partitions("/dev/sda").map(&:name)).to_not include("/dev/sda2")
+        end
       end
     end
 
