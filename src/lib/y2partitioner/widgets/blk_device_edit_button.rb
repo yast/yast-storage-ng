@@ -20,8 +20,10 @@
 # find current contact information at www.suse.com.
 
 require "yast"
+require "cwm"
 require "y2partitioner/actions/edit_blk_device"
 require "y2partitioner/widgets/device_button"
+require "y2partitioner/ui_state"
 
 Yast.import "Popup"
 
@@ -40,6 +42,39 @@ module Y2Partitioner
       end
 
     private
+
+      # @see DeviceButton#actions
+      # When the device is a disk, dasd, multipath or bios raid, edit means
+      # to jump to the tree page of that device. For partition or software
+      # raid, the editing workflow to select mount and format options is shown.
+      def actions
+        UIState.instance.select_row(device.sid)
+        partition? || software_raid? ? super : go_to_disk_page
+      end
+
+      # Whether the device is a partition or an equivalent device (in terms of
+      # editing/formatting it).
+      #
+      # @return [Booelan]
+      def partition?
+        device.is?(:partition) || device.is?(:stray_blk_device)
+      end
+
+      # Whether the device is a software raid
+      #
+      # @return [Booelan]
+      def software_raid?
+        device.is?(:software_raid)
+      end
+
+      # If pager is known, jumps to the disk device page
+      def go_to_disk_page
+        return unless pager
+
+        page = pager.device_page(device)
+        # Using pager#handler several refreshes are avoided
+        pager.handle("ID" => page.widget_id)
+      end
 
       # Returns the proper Actions class for editing
       #
