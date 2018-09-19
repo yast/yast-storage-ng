@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Wed Sep 19 14:28:22 UTC 2018 - dgonzalez@suse.com
+
+- Do not crash when a partition content info cannot be
+  detected (bsc#1101979).
+- 4.1.18
+
+-------------------------------------------------------------------
 Wed Sep 19 11:43:13 UTC 2018 - jreidinger@suse.com
 
 - Add read-only support for Bcache (fate#325346)
