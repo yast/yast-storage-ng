@@ -217,12 +217,13 @@ module Y2Storage
     storage_forward :create_blk_filesystem, as: "Filesystems::BlkFilesystem", raise_errors: true
     alias_method :create_filesystem, :create_blk_filesystem
 
-    # @!method create_bcache
-    #   Creates backing device build on current block device.
+    # @!method create_bcache(name)
+    #   Creates backing device build on current block device with given name.
     #
     #   If the blk device has children, the children will become children of
-    #   the encryption device.
+    #   the bcache device.
     #
+    #   @param name [String] name of bcache device
     #   @return [Bcache]
     storage_forward :create_bcache, as: "Bcache", raise_errors: true
 
@@ -231,6 +232,7 @@ module Y2Storage
     #
     #   Blk device have to not contain any children.
     #
+    #   @raise [Storage::WrongNumberOfChildren] if there is any children
     #   @return [BcacheCset]
     storage_forward :create_bcache_cset, as: "Bcache", raise_errors: true
 
@@ -383,7 +385,8 @@ module Y2Storage
       children.find { |dev| dev.is?(:multipath) }
     end
 
-    # Bcache device defined on top of the device
+    # Bcache device defined on top of the device, i.e. a Bcache device that uses
+    # this one as backing device
     #
     # @return [Bcache, nil] nil if the device is not part of any bcache
     def bcache
@@ -393,8 +396,8 @@ module Y2Storage
     # Bcache caching set device defined on top of the device
     #
     # @return [BcacheCset, nil] nil if the device is not used as bcache caching set
-    def direct_bcache_cset
-      children.select { |dev| dev.is?(:bcache_cset) && dev.blk_devices.include?(self) }.first
+    def bcache_cset
+      children.select { |dev| dev.is?(:bcache_cset) }.first
     end
 
     # Whether the device forms part of an LVM or MD RAID
@@ -417,7 +420,7 @@ module Y2Storage
     #   multipath, bcache and bcache_cset devices
     def component_of
       vg = lvm_pv ? lvm_pv.lvm_vg : nil
-      (dm_raids + [vg] + [md] + [multipath] + [bcache] + [direct_bcache_cset]).compact
+      (dm_raids + [vg] + [md] + [multipath] + [bcache] + [bcache_cset]).compact
     end
 
     # Equivalent of {#component_of} in which each device is represented by a
@@ -432,7 +435,7 @@ module Y2Storage
         elsif dev.respond_to?(:uuid)
           dev.uuid
         else
-          raise "Unknown tyoe if device #{dev.inspect}"
+          raise "Unexpected type of device #{dev.inspect}"
         end
       end
     end

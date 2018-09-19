@@ -51,8 +51,8 @@ module Y2Storage
 
     # @!method self.find_by_name(devicegraph, name)
     #   @param devicegraph [Devicegraph]
-    #   @param name [String] kernel-style device name (e.g. "/dev/sda")
-    #   @return [Bcache] nil if there is no such disk
+    #   @param name [String] kernel-style device name (e.g. "/dev/bcache0")
+    #   @return [Bcache] nil if there is no such device
     storage_class_forward :find_by_name, as: "Bcache"
 
     def inspect
