@@ -52,7 +52,7 @@ describe Y2Storage::BcacheCset do
 
   describe "#display_name" do
     it "returns user friendly name" do
-      expect(subject.display_name).to eq "Cache Set for /dev/bcache0, /dev/bcache1, /dev/bcache2"
+      expect(subject.display_name).to eq "Cache set (bcache0, bcache1, bcache2)"
     end
   end
 

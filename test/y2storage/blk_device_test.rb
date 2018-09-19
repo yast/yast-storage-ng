@@ -784,7 +784,7 @@ describe Y2Storage::BlkDevice do
       it "returns display name for that component" do
         expect(device.component_of_names.size).to eq 1
         expect(device.component_of_names.first).to(
-          eq("Cache Set for /dev/bcache0, /dev/bcache1, /dev/bcache2")
+          eq("Cache set (bcache0, bcache1, bcache2)")
         )
       end
     end

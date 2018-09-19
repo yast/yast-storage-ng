@@ -33,8 +33,8 @@ module Y2Storage
     #   @return [Array<BlkDevice>] returns a list of devices used as caching ones in this set
     storage_forward :blk_devices, as: "BlkDevice"
 
-    # @!method blk_devices
-    #   @return [Array<BlkDevice>] returns a list of devices used as caching ones in this set
+    # @!method bcaches
+    #   @return [Array<Bcache>] returns a list of bcaches that use this caching set
     storage_forward :bcaches, as: "Bcache"
 
     # @!method uuid
@@ -56,9 +56,14 @@ module Y2Storage
       "<BcacheCset #{uuid} #{blk_devices.inspect}>"
     end
 
+    # Gets user friendly name for caching set. It is translated and ready to show to user.
     def display_name
       textdomain "storage"
-      format(_("Cache Set for %s"), bcaches.map(&:name).sort.join(", "))
+      devices = bcaches.map(&:basename).sort.join(", ")
+      # TRANSLATORS: status when cache set is not attached to any bcache
+      devices = _("not attached") if devices.empty?
+      # TRANSLATORS: %s contain list of devices for which cache act as cache.
+      format(_("Cache set (%s)"), devices)
     end
 
   protected
