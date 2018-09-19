@@ -50,6 +50,12 @@ describe Y2Storage::BcacheCset do
     end
   end
 
+  describe "#display_name" do
+    it "returns user friendly name" do
+      expect(subject.display_name).to eq "Cache Set for /dev/bcache0, /dev/bcache1, /dev/bcache2"
+    end
+  end
+
   describe ".all" do
     it "returns a list of Y2Storage::BcacheCset objects" do
       bcaches = Y2Storage::BcacheCset.all(fake_devicegraph)

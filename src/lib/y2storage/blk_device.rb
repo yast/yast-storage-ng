@@ -390,14 +390,16 @@ module Y2Storage
     #
     # @return [Bcache, nil] nil if the device is not part of any bcache
     def bcache
-      children.find { |dev| dev.is?(:bcache) }
+      descendants.detect { |dev| dev.is?(:bcache) && dev.blk_device.plain_device == plain_device }
     end
 
     # Bcache caching set device defined on top of the device
     #
     # @return [BcacheCset, nil] nil if the device is not used as bcache caching set
     def bcache_cset
-      children.select { |dev| dev.is?(:bcache_cset) }.first
+      descendants.detect do |dev|
+        dev.is?(:bcache_cset) && dev.blk_devices.any? { |b| b.plain_device == plain_device }
+      end
     end
 
     # Whether the device forms part of an LVM or MD RAID
@@ -432,8 +434,8 @@ module Y2Storage
       component_of.map do |dev|
         if dev.respond_to?(:name)
           dev.name
-        elsif dev.respond_to?(:uuid)
-          dev.uuid
+        elsif dev.respond_to?(:display_name)
+          dev.display_name
         else
           raise "Unexpected type of device #{dev.inspect}"
         end

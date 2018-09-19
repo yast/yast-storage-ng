@@ -26,11 +26,16 @@ module Y2Storage
   #
   # This is a wrapper for Storage::BcacheCset
   class BcacheCset < Device
+    include Yast::I18n
     wrap_class Storage::BcacheCset
 
     # @!method blk_devices
     #   @return [Array<BlkDevice>] returns a list of devices used as caching ones in this set
     storage_forward :blk_devices, as: "BlkDevice"
+
+    # @!method blk_devices
+    #   @return [Array<BlkDevice>] returns a list of devices used as caching ones in this set
+    storage_forward :bcaches, as: "Bcache"
 
     # @!method uuid
     #   @return [String] returns an UUID of set
@@ -49,6 +54,11 @@ module Y2Storage
 
     def inspect
       "<BcacheCset #{uuid} #{blk_devices.inspect}>"
+    end
+
+    def display_name
+      textdomain "storage"
+      format(_("Cache Set for %s"), bcaches.map(&:name).sort.join(", "))
     end
 
   protected

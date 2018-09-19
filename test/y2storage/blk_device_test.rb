@@ -777,13 +777,15 @@ describe Y2Storage::BlkDevice do
       end
     end
 
-    context "component has uuid" do
+    context "component has display name" do
       let(:scenario) { "bcache1.xml" }
       let(:device_name) { "/dev/vdb" }
 
-      it "returns uuid for that component" do
+      it "returns display name for that component" do
         expect(device.component_of_names.size).to eq 1
-        expect(device.component_of_names.first).to eq "acb129b8-b55e-45bb-aa99-41a6f0a0ef07"
+        expect(device.component_of_names.first).to(
+          eq("Cache Set for /dev/bcache0, /dev/bcache1, /dev/bcache2")
+        )
       end
     end
   end
