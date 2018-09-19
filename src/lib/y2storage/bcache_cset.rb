@@ -61,7 +61,8 @@ module Y2Storage
       textdomain "storage"
       devices = bcaches.map(&:basename).sort.join(", ")
       # TRANSLATORS: status when cache set is not attached to any bcache
-      devices = _("not attached") if devices.empty?
+      return _("Cache set (not attached)") if devices.empty?
+
       # TRANSLATORS: %s contain list of devices for which cache act as cache.
       format(_("Cache set (%s)"), devices)
     end
