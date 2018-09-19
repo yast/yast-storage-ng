@@ -72,7 +72,9 @@ describe Y2Partitioner::Widgets::PartitionsTab do
       expect(button).to_not be_nil
     end
 
-    it "shows a button for deleting all partitions" do
+    # FIXME: the button was temporarily removed to keep changes low while
+    # we decide on the best way to show all the possible options
+    xit "shows a button for deleting all partitions" do
       button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::PartitionsDeleteButton) }
       expect(button).to_not be_nil
     end

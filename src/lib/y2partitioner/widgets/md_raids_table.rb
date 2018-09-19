@@ -31,7 +31,7 @@ module Y2Partitioner
       # @param devices [Array<Y2Storage::Md>] devices to display
       # @param pager [CWM::Pager] table have feature, that double click change content of pager
       #   if someone do not need this feature, make it only optional
-      def initialize(devices, pager)
+      def initialize(devices, pager, buttons_set = nil)
         textdomain "storage"
 
         super
@@ -51,14 +51,24 @@ module Y2Partitioner
         _("Chunk Size")
       end
 
+      # Content of the "RAID Type" cell in the table for the given device
+      #
+      # @param device [Y2Storage::Device]
+      # @return [String]
       def raid_type_value(device)
-        device.md_level.to_human_string
+        device.respond_to?(:md_level) ? device.md_level.to_human_string : ""
       end
 
+      # Content of the "Chunk Size" cell in the table for the given device
+      #
+      # According to mdadm(8): chunk size "is only meaningful for RAID0, RAID4,
+      # RAID5, RAID6, and RAID10".
+      #
+      # @param device [Y2Storage::Device]
+      # @return [String]
       def chunk_size_value(device)
-        # according to mdadm(8): chunk size "is only meaningful for RAID0, RAID4,
-        # RAID5, RAID6, and RAID10"
-        device.chunk_size.zero? ? "" : device.chunk_size.to_human_string
+        return "" if !device.respond_to?(:chunk_size) || device.chunk_size.zero?
+        device.chunk_size.to_human_string
       end
     end
   end

@@ -27,16 +27,24 @@ module Y2Partitioner
   module Widgets
     # Button for adding a partition
     class PartitionAddButton < DeviceButton
-      def initialize(*args)
-        super
+      # Constructor
+      # @param pager [CWM::TreePager]
+      # @param table [Y2Partitioner::Widgets::ConfigurableBlkDevicesTable]
+      # @param device [Y2Storage::Device]
+      # @param short [Boolean] whether to display a short "Add" label
+      def initialize(pager: nil, table: nil, device: nil, short: false)
+        super(pager: pager, table: table, device: device)
+        @short_label = short
         textdomain "storage"
       end
 
       # @macro seeAbstractWidget
-      # The label depends on the page where the button is used
+      #
+      # The label depends on the page where the button is used, which is
+      # indicated using the :short flag in the constructor
       def label
         # TRANSLATORS: label for button to add a partition
-        disks_page? ? _("Add Partition...") : _("Add...")
+        @short_label ? _("Add...") : _("Add Partition...")
       end
 
     private
@@ -60,14 +68,6 @@ module Y2Partitioner
       # @see Actions::AddPartition
       def actions_class
         Actions::AddPartition
-      end
-
-      # Whether the button is used in a disks page (see {Pages::Disks})
-      #
-      # @return [Boolean]
-      def disks_page?
-        return false if pager.nil?
-        pager.current_page.is_a?(Pages::Disks)
       end
     end
   end

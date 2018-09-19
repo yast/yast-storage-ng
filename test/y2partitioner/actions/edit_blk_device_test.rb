@@ -86,6 +86,13 @@ describe Y2Partitioner::Actions::EditBlkDevice do
       include_examples "edit_error"
     end
 
+    context "if called on a device that holds partitions" do
+      let(:scenario) { "mixed_disks" }
+      let(:dev_name) { "/dev/sdb" }
+
+      include_examples "edit_error"
+    end
+
     context "if called on an extended partition" do
       let(:scenario) { "mixed_disks.yml" }
       let(:dev_name) { "/dev/sdb4" }

@@ -39,7 +39,7 @@ module Y2Partitioner
       # @macro seeAbstractWidget
       def label
         # TRANSLATORS: label for button to delete a device
-        _("Delete...")
+        _("Delete")
       end
 
     private

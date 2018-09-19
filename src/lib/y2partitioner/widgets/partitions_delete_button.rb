@@ -35,7 +35,7 @@ module Y2Partitioner
       # @macro seeAbstractWidget
       def label
         # TRANSLATORS: label for button to delete all partitions
-        _("Delete All...")
+        _("Delete All")
       end
 
     private

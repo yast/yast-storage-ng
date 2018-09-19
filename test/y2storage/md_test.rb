@@ -30,7 +30,7 @@ describe Y2Storage::Md do
     fake_scenario(scenario)
   end
 
-  let(:scenario) { "md2-devicegraph.xml" }
+  let(:scenario) { "nested_md_raids" }
   let(:md_name) { "/dev/md0" }
   subject(:md) { Y2Storage::Md.find_by_name(fake_devicegraph, md_name) }
 
@@ -62,7 +62,7 @@ describe Y2Storage::Md do
 
   describe "#md_name" do
     context "for a numeric RAID" do
-      let(:scenario) { "md2-devicegraph" }
+      let(:scenario) { "nested_md_raids" }
       let(:md_name) { "/dev/md0" }
 
       it "returns nil" do
@@ -186,7 +186,7 @@ describe Y2Storage::Md do
   describe "#inspect" do
 
     it "inspects a MD object" do
-      expect(md.inspect).to eq "<Md /dev/md0 32767 MiB (32.00 GiB) raid0>"
+      expect(md.inspect).to eq "<Md /dev/md0 15875 MiB (15.50 GiB) raid0>"
     end
 
   end

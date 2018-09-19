@@ -17,9 +17,12 @@ describe Y2Partitioner::Widgets::Pages::MdRaids do
   include_examples "CWM::Page"
 
   describe "#contents" do
+    let(:scenario) { "nested_md_raids" }
+
     let(:widgets) { Yast::CWM.widgets_in_contents([subject]) }
 
     let(:table) { widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::BlkDevicesTable) } }
+    let(:buttons_set) { widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::DeviceButtonsSet) } }
 
     let(:items) { table.items.map { |i| i[1] } }
 
@@ -28,25 +31,25 @@ describe Y2Partitioner::Widgets::Pages::MdRaids do
       expect(button).to_not be_nil
     end
 
-    it "shows a button to edit a raid" do
-      button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::BlkDeviceEditButton) }
-      expect(button).to_not be_nil
+    it "shows a set of buttons to manage the selected device" do
+      expect(buttons_set).to_not be_nil
     end
 
-    it "shows a button to resize a raid" do
-      button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::DeviceResizeButton) }
-      expect(button).to_not be_nil
-    end
-
-    it "shows a button to delete a raid" do
-      button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::DeviceDeleteButton) }
-      expect(button).to_not be_nil
-    end
-
-    # TODO: reader/writer for Mds
-    it "shows a table with the raids" do
-      table = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::BlkDevicesTable) }
+    it "shows a table with the RAIDs and their partitions" do
       expect(table).to_not be_nil
+
+      raids = current_graph.software_raids
+      parts = raids.map(&:partitions).flatten.compact
+      devices_name = (raids + parts).map(&:name)
+      items_name = table.items.map { |i| i[1] }
+
+      expect(items_name.sort).to eq(devices_name.sort)
+    end
+
+    it "associates the table and the set of buttons" do
+      # Inspecting the value of #buttons_set may not be fully correct but is the
+      # most straightforward and clear way of implementing this check
+      expect(table.send(:buttons_set)).to eq buttons_set
     end
 
     context "when there are Software RAIDs" do
@@ -61,6 +64,14 @@ describe Y2Partitioner::Widgets::Pages::MdRaids do
           "/dev/md/md0",
           "/dev/md1"
         )
+      end
+    end
+
+    context "when there are partitioned software RAIDs" do
+      let(:scenario) { "nested_md_raids" }
+
+      it "contains all software RAIDs and its partitions" do
+        expect(items).to include("/dev/md0", "/dev/md0p1", "/dev/md0p2", "/dev/md1", "/dev/md2")
       end
     end
 
