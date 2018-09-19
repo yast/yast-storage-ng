@@ -30,7 +30,7 @@ describe Y2Partitioner::Widgets::BcacheDeviceDescription do
 
   let(:current_graph) { Y2Partitioner::DeviceGraphs.instance.current }
 
-  let(:bcache) { current_graph.bcache_devices.first }
+  let(:bcache) { current_graph.bcaches.first }
 
   subject { described_class.new(bcache) }
 

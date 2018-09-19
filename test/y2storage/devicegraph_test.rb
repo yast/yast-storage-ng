@@ -834,12 +834,12 @@ describe Y2Storage::Devicegraph do
     end
   end
 
-  describe "#bcache_devices" do
+  describe "#bcaches" do
     before do
       fake_scenario("bcache1.xml")
     end
 
-    subject(:list) { fake_devicegraph.bcache_devices }
+    subject(:list) { fake_devicegraph.bcaches }
 
     it "returns an array of bcache devices" do
       expect(list).to be_a Array

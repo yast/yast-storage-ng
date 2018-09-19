@@ -135,7 +135,7 @@ module Y2Partitioner
         #
         # @return [Array<Y2Storage::Device>]
         def devices
-          disk_devices + software_raids + lvm_vgs + nfs_devices + bcache_devices
+          disk_devices + software_raids + lvm_vgs + nfs_devices + bcaches
         end
 
         # @return [Array<Y2Storage::Device>]
@@ -173,8 +173,8 @@ module Y2Partitioner
         end
 
         # @return [Array<Y2Storage::Device>]
-        def bcache_devices
-          all = device_graph.bcache_devices
+        def bcaches
+          all = device_graph.bcaches
           all.each_with_object([]) do |bcache, devices|
             devices << bcache
             devices.concat(bcache.partitions)

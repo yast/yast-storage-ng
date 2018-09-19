@@ -288,7 +288,7 @@ module Y2Storage
     end
 
     # @return [Array<Bcache>]
-    def bcache_devices
+    def bcaches
       Bcache.all(self)
     end
 

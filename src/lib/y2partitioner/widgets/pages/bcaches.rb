@@ -28,17 +28,17 @@ module Y2Partitioner
   module Widgets
     module Pages
       # A Page for bcache devices and its partitions. It contains a {ConfigurableBlkDevicesTable}
-      class BcacheDevices < CWM::Page
+      class Bcaches < CWM::Page
         include Yast::I18n
 
         # Constructor
         #
-        # @param bcache_devices [Array<Y2Storage::Bcache>]
+        # @param bcaches [Array<Y2Storage::Bcache>]
         # @param pager [CWM::TreePager]
-        def initialize(bcache_devices, pager)
+        def initialize(bcaches, pager)
           textdomain "storage"
 
-          @bcache_devices = bcache_devices
+          @bcaches = bcaches
           @pager = pager
         end
 
@@ -73,7 +73,7 @@ module Y2Partitioner
       private
 
         # @return [Array<Y2Storage::BlkDevice>]
-        attr_reader :bcache_devices
+        attr_reader :bcaches
 
         # @return [CWM::TreePager]
         attr_reader :pager
@@ -82,7 +82,7 @@ module Y2Partitioner
         #
         # @return [Array<Y2Storage::BlkDevice>]
         def devices
-          bcache_devices.each_with_object([]) do |bcache, devices|
+          bcaches.each_with_object([]) do |bcache, devices|
             devices << bcache
             devices.concat(bcache.partitions)
           end
