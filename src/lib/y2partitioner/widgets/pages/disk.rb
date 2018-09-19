@@ -85,8 +85,8 @@ module Y2Partitioner
         # @return [Tabs]
         def tabs
           tabs = [
-            DiskTab.new(disk, initial: true),
-            PartitionsTab.new(disk, @pager)
+            DiskTab.new(disk),
+            PartitionsTab.new(disk, @pager, initial: true)
           ]
 
           tabs << UsedDevicesTab.new(used_devices, @pager) if used_devices_tab?
@@ -139,7 +139,6 @@ module Y2Partitioner
             description,
             Left(
               HBox(
-                BlkDeviceEditButton.new(device: @disk),
                 PartitionTableAddButton.new(device: @disk),
                 PartitionTableCloneButton.new(device: @disk)
               )

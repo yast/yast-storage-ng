@@ -16,6 +16,7 @@ describe Y2Partitioner::Widgets::ConfigurableBlkDevicesTable do
   let(:devices) { device_graph.disks }
 
   let(:pager) { instance_double(Y2Partitioner::Widgets::OverviewTreePager) }
+  let(:buttons_set) { instance_double(Y2Partitioner::Widgets::DeviceButtonsSet) }
 
   # FIXME: default tests check that all column headers are strings, but they also can be a Yast::Term
   # include_examples "CWM::Table"
@@ -45,18 +46,32 @@ describe Y2Partitioner::Widgets::ConfigurableBlkDevicesTable do
   end
 
   describe "#init" do
-    context "UIState contain sid of device in table" do
+    before do
+      allow(Yast::UI).to receive(:QueryWidget).with(anything, :SelectedItems).and_return []
+    end
+
+    context "if UIState contains the sid of a device in table" do
+      let(:device) { devices.last }
+
+      before { Y2Partitioner::UIState.instance.select_row(device.sid) }
+
       it "sets value to row with the device" do
-        valid_sid = devices.last.sid
-        Y2Partitioner::UIState.instance.select_row(valid_sid)
-
-        expect(subject).to receive(:value=).with(subject.send(:row_id, valid_sid))
-
+        expect(subject).to receive(:value=).with(subject.send(:row_id, device.sid))
         subject.init
+      end
+
+      context "if the table is associated to a buttons set" do
+        subject { described_class.new(devices, pager, buttons_set) }
+
+        it "initializes the buttons set according to the device" do
+          expect(subject).to receive(:selected_device).and_return(device)
+          expect(buttons_set).to receive(:device=).with device
+          subject.init
+        end
       end
     end
 
-    context "UIState contain sid that is not in table" do
+    context "if UIState contains a sid that is not in the table" do
       it "selects any valid device in table" do
         Y2Partitioner::UIState.instance.select_row("999999999")
 
@@ -81,39 +96,108 @@ describe Y2Partitioner::Widgets::ConfigurableBlkDevicesTable do
   end
 
   describe "#handle" do
+    subject { described_class.new(devices, pager, set) }
+
     before do
       allow(subject).to receive(:selected_device).and_return(device)
       allow(pager).to receive(:device_page).with(device).and_return(page)
     end
 
     let(:device) { nil }
-
+    let(:set) { nil }
     let(:page) { nil }
 
-    context "when there is no selected device" do
-      it "returns nil" do
-        expect(subject.handle).to be_nil
+    context "when the event is Activated (double click)" do
+      let(:event) { { "EventReason" => "Activated" } }
+
+      context "when there is no selected device" do
+        it "returns nil" do
+          expect(subject.handle(event)).to be_nil
+        end
+      end
+
+      context "when there is no page associated to the selected device" do
+        let(:device) { Y2Storage::LvmPv.all(device_graph).first }
+
+        let(:page) { nil }
+
+        it "returns nil" do
+          expect(subject.handle(event)).to be_nil
+        end
+      end
+
+      context "when there is a page associated to the selected device" do
+        let(:device) { Y2Storage::Disk.all(device_graph).first }
+
+        let(:page) { instance_double(Y2Partitioner::Widgets::Pages::Disk, widget_id: "disk_page_id") }
+
+        it "goes to the device page" do
+          expect(pager).to receive(:handle).with("ID" => "disk_page_id")
+          subject.handle(event)
+        end
       end
     end
 
-    context "when there is no page associated to the selected device" do
-      let(:device) { Y2Storage::LvmPv.all(device_graph).first }
+    context "when the event is SelectionChanged (single click)" do
+      let(:event) { { "EventReason" => "SelectionChanged" } }
 
-      let(:page) { nil }
+      context "when there is a buttons set associated to the table" do
+        let(:set) { buttons_set }
 
-      it "returns nil" do
-        expect(subject.handle).to be_nil
+        context "and there is no selected device" do
+          let(:device) { nil }
+
+          it "does not try to update the buttons set" do
+            expect(buttons_set).to_not receive(:device=)
+            subject.handle(event)
+          end
+
+          it "returns nil" do
+            expect(subject.handle(event)).to be_nil
+          end
+        end
+
+        context "and some device is selected" do
+          let(:device) { Y2Storage::Disk.all(device_graph).first }
+
+          it "updates the buttons set according to the device" do
+            expect(buttons_set).to receive(:device=).with(device)
+            subject.handle(event)
+          end
+
+          it "returns nil" do
+            allow(buttons_set).to receive(:device=)
+            expect(subject.handle(event)).to be_nil
+          end
+        end
       end
-    end
 
-    context "when there is a page associated to the selected device" do
-      let(:device) { Y2Storage::Disk.all(device_graph).first }
+      context "when there is no buttons set associated to the table" do
+        context "and there is no selected device" do
+          let(:device) { nil }
 
-      let(:page) { instance_double(Y2Partitioner::Widgets::Pages::Disk, widget_id: "disk_page_id") }
+          it "does not try to update the buttons set" do
+            expect(buttons_set).to_not receive(:device=)
+            subject.handle(event)
+          end
 
-      it "goes to the device page" do
-        expect(pager).to receive(:handle).with("ID" => "disk_page_id")
-        subject.handle
+          it "returns nil" do
+            expect(subject.handle(event)).to be_nil
+          end
+        end
+
+        context "and some device is selected" do
+          let(:device) { Y2Storage::Disk.all(device_graph).first }
+
+          it "does not try to update the buttons set" do
+            expect(buttons_set).to_not receive(:device=)
+            subject.handle(event)
+          end
+
+          it "returns nil" do
+            expect(subject.handle(event)).to be_nil
+          end
+        end
       end
     end
   end

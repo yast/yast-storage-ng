@@ -24,9 +24,7 @@ require "y2partitioner/icons"
 require "y2partitioner/device_graphs"
 require "y2partitioner/widgets/md_raids_table"
 require "y2partitioner/widgets/md_add_button"
-require "y2partitioner/widgets/blk_device_edit_button"
-require "y2partitioner/widgets/device_resize_button"
-require "y2partitioner/widgets/device_delete_button"
+require "y2partitioner/widgets/device_buttons_set"
 
 module Y2Partitioner
   module Widgets
@@ -64,6 +62,8 @@ module Y2Partitioner
           return @contents if @contents
 
           icon = Icons.small_icon(Icons::RAID)
+          device_buttons = DeviceButtonsSet.new(@pager)
+          table = MdRaidsTable.new(devices, @pager, device_buttons)
           @contents = VBox(
             Left(
               HBox(
@@ -76,9 +76,7 @@ module Y2Partitioner
             Left(
               HBox(
                 MdAddButton.new,
-                BlkDeviceEditButton.new(table: table),
-                DeviceResizeButton.new(pager: @pager, table: table),
-                DeviceDeleteButton.new(pager: @pager, table: table)
+                device_buttons
               )
             )
           )
@@ -86,19 +84,15 @@ module Y2Partitioner
 
       private
 
-        # Table with all Software RAIDs
-        #
-        # @return [MdRaidsTable]
-        def table
-          @table ||= MdRaidsTable.new(devices, @pager)
-        end
-
         # Returns all Software RAIDs
         #
         # @return [Array<Y2Storage::Md>]
         def devices
           devicegraph = DeviceGraphs.instance.current
-          devicegraph.software_raids
+          devicegraph.software_raids.each_with_object([]) do |raid, devices|
+            devices << raid
+            devices.concat(raid.partitions)
+          end
         end
       end
     end

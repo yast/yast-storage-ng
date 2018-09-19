@@ -232,7 +232,8 @@ module Y2Partitioner
       # @return [CWM::PagerTreeItem]
       def raid_items(md)
         page = Pages::MdRaid.new(md, self)
-        CWM::PagerTreeItem.new(page)
+        children = md.partitions.sort_by(&:number).map { |p| partition_items(p) }
+        CWM::PagerTreeItem.new(page, children: children)
       end
 
       # @return [CWM::PagerTreeItem]

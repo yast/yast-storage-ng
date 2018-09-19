@@ -164,7 +164,10 @@ module Y2Partitioner
 
         # @return [Array<Y2Storage::Device>]
         def software_raids
-          device_graph.software_raids
+          device_graph.software_raids.reduce([]) do |devices, raid|
+            devices << raid
+            devices.concat(raid.partitions)
+          end
         end
 
         # @return [Array<Y2Storage::Device>]
