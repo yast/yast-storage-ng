@@ -54,6 +54,7 @@ module Y2Partitioner
       # Content of the "RAID Type" cell in the table for the given device
       #
       # @param device [Y2Storage::Device]
+      # @return [String]
       def raid_type_value(device)
         device.respond_to?(:md_level) ? device.md_level.to_human_string : ""
       end
@@ -64,6 +65,7 @@ module Y2Partitioner
       # RAID5, RAID6, and RAID10".
       #
       # @param device [Y2Storage::Device]
+      # @return [String]
       def chunk_size_value(device)
         return "" if !device.respond_to?(:chunk_size) || device.chunk_size.zero?
         device.chunk_size.to_human_string

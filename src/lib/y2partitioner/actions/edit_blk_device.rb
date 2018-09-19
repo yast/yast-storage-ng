@@ -113,7 +113,7 @@ module Y2Partitioner
 
       # Error when trying to edit a device that contains partitions
       #
-      # @return [String, nil] nil if the device is not being used.
+      # @return [String, nil] nil if the device has no partitions
       def partitions_error
         return nil unless device.respond_to?(:partitions) && !device.partitions.empty?
 
