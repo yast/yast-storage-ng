@@ -179,6 +179,7 @@ module Y2Partitioner
           disks_items,
           raids_items,
           lvm_items,
+          bcache_items,
           # TODO: Bring this back to life - disabled for now (bsc#1078849)
           # crypt_files_items,
           # device_mapper_items,
@@ -233,6 +234,14 @@ module Y2Partitioner
         page = Pages::MdRaid.new(md, self)
         children = md.partitions.sort_by(&:number).map { |p| partition_items(p) }
         CWM::PagerTreeItem.new(page, children: children)
+      end
+
+      # @return [CWM::PagerTreeItem]
+      def bcache_items
+        devices = device_graph.bcaches
+        page = Pages::Bcaches.new(devices, self)
+        children = devices.map { |v| disk_items(v) }
+        CWM::PagerTreeItem.new(page, children: children, icon: Icons::BCACHE)
       end
 
       # @return [CWM::PagerTreeItem]

@@ -221,6 +221,7 @@ module Y2Partitioner
       end
 
       DEVICE_ICONS = {
+        bcache:    Icons::BCACHE,
         disk:      Icons::HD,
         dasd:      Icons::HD,
         multipath: Icons::MULTIPATH,
@@ -247,6 +248,7 @@ module Y2Partitioner
       end
 
       DEVICE_LABELS = {
+        bcache:        N_("Bcache"),
         disk:          N_("Disk"),
         dasd:          N_("Disk"),
         multipath:     N_("Multipath"),
@@ -318,6 +320,8 @@ module Y2Partitioner
       # @return [String]
       def blk_device_type_label(device)
         data = [device.vendor, device.model].compact
+        # bcache has as vendor Disk, but we want to write bcache as type here
+        data = "" if device.is?(:bcache)
         data.empty? ? default_type_label(device) : data.join("-")
       end
 

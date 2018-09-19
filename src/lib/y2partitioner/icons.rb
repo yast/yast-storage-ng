@@ -58,6 +58,9 @@ module Y2Partitioner
     # Default device icon
     DEFAULT_DEVICE = "yast-hdd-controller-kernel-module.png".freeze
 
+    # icon
+    BCACHE = HD
+
     # path to small icons, fits nicely in table
     SMALL_ICONS_PATH = (Yast::Directory.icondir + "22x22/apps/").freeze
 

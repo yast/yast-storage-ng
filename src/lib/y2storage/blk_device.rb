@@ -217,6 +217,25 @@ module Y2Storage
     storage_forward :create_blk_filesystem, as: "Filesystems::BlkFilesystem", raise_errors: true
     alias_method :create_filesystem, :create_blk_filesystem
 
+    # @!method create_bcache(name)
+    #   Creates backing device build on current block device with given name.
+    #
+    #   If the blk device has children, the children will become children of
+    #   the bcache device.
+    #
+    #   @param name [String] name of bcache device
+    #   @return [Bcache]
+    storage_forward :create_bcache, as: "Bcache", raise_errors: true
+
+    # @!method create_bcache_cset
+    #   Creates caching set build on current block device.
+    #
+    #   Blk device have to not contain any children.
+    #
+    #   @raise [Storage::WrongNumberOfChildren] if there is any children
+    #   @return [BcacheCset]
+    storage_forward :create_bcache_cset, as: "Bcache", raise_errors: true
+
     # @!method create_encryption(dm_name)
     #   Creates a new encryption object on top of the device.
     #
@@ -366,6 +385,23 @@ module Y2Storage
       children.find { |dev| dev.is?(:multipath) }
     end
 
+    # Bcache device defined on top of the device, i.e. a Bcache device that uses
+    # this one as backing device
+    #
+    # @return [Bcache, nil] nil if the device is not part of any bcache
+    def bcache
+      descendants.detect { |dev| dev.is?(:bcache) && dev.blk_device.plain_device == plain_device }
+    end
+
+    # Bcache caching set device defined on top of the device
+    #
+    # @return [BcacheCset, nil] nil if the device is not used as bcache caching set
+    def bcache_cset
+      descendants.detect do |dev|
+        dev.is?(:bcache_cset) && dev.blk_devices.any? { |b| b.plain_device == plain_device }
+      end
+    end
+
     # Whether the device forms part of an LVM or MD RAID
     #
     # @return [Boolean]
@@ -382,11 +418,11 @@ module Y2Storage
     # (directly or through an encryption) or any RAID having this device as
     # one of its members.
     #
-    # @return [Array<Device>] a collection of MD RAIDs, DM RAIDs, volume groups
-    #   and multipath devices
+    # @return [Array<Device>] a collection of MD RAIDs, DM RAIDs, volume groups,
+    #   multipath, bcache and bcache_cset devices
     def component_of
       vg = lvm_pv ? lvm_pv.lvm_vg : nil
-      (dm_raids + [vg] + [md] + [multipath]).compact
+      (dm_raids + [vg] + [md] + [multipath] + [bcache] + [bcache_cset]).compact
     end
 
     # Equivalent of {#component_of} in which each device is represented by a
@@ -395,7 +431,15 @@ module Y2Storage
     # @return [Array<String>]
     def component_of_names
       # So far, all the possible elements on the array respond to #name
-      component_of.map(&:name)
+      component_of.map do |dev|
+        if dev.respond_to?(:name)
+          dev.name
+        elsif dev.respond_to?(:display_name)
+          dev.display_name
+        else
+          raise "Unexpected type of device #{dev.inspect}"
+        end
+      end
     end
 
     # Label of the filesystem, if any

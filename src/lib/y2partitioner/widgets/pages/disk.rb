@@ -21,6 +21,7 @@
 
 require "cwm/widget"
 require "y2partitioner/icons"
+require "y2partitioner/widgets/bcache_device_description"
 require "y2partitioner/widgets/disk_device_description"
 require "y2partitioner/widgets/used_devices_tab"
 require "y2partitioner/widgets/partitions_tab"
@@ -31,7 +32,7 @@ require "y2partitioner/widgets/partition_table_clone_button"
 module Y2Partitioner
   module Widgets
     module Pages
-      # Page for a disk device (Disk, Dasd, BIOS RAID or Multipath).
+      # Page for a disk device (Disk, Dasd, BIOS RAID, Multipath or Bcache).
       #
       # This page contains a {DiskTab} and a {PartitionsTab}. In case of Multipath
       # or BIOS RAID, it also contains a {UsedDevicesTab}.
@@ -43,7 +44,7 @@ module Y2Partitioner
         # Constructor
         #
         # @param disk [Y2Storage::Disk, Y2Storage::Dasd, Y2Storage::DmRaid,
-        #              Y2Storage::MdMember, Y2Storage::Multipath]
+        #              Y2Storage::MdMember, Y2Storage::Multipath, Y2Storage::Bcache]
         # @param pager [CWM::TreePager]
         def initialize(disk, pager)
           textdomain "storage"
@@ -135,7 +136,7 @@ module Y2Partitioner
         def contents
           # Page wants a WidgetTerm, not an AbstractWidget
           @contents ||= VBox(
-            DiskDeviceDescription.new(@disk),
+            description,
             Left(
               HBox(
                 PartitionTableAddButton.new(device: @disk),
@@ -143,6 +144,17 @@ module Y2Partitioner
               )
             )
           )
+        end
+
+      private
+
+        def description
+          case @disk
+          when Y2Storage::Bcache
+            BcacheDeviceDescription.new(@disk)
+          else
+            DiskDeviceDescription.new(@disk)
+          end
         end
       end
     end
