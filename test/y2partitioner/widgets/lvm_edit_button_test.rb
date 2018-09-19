@@ -24,6 +24,7 @@ require_relative "../test_helper"
 
 require "cwm/rspec"
 require "y2partitioner/widgets/lvm_edit_button"
+require "y2partitioner/widgets/overview"
 
 describe Y2Partitioner::Widgets::LvmEditButton do
   before do
