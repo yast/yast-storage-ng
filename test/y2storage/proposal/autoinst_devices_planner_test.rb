@@ -54,8 +54,8 @@ describe Y2Storage::Proposal::AutoinstDevicesPlanner do
   let(:lvm_group) { "vg0" }
 
   before do
-    allow(Y2Storage::BootRequirementsChecker).to receive(:new)
-      .and_return(boot_checker)
+    allow(Y2Storage::BootRequirementsChecker).to receive(:new).and_return(boot_checker)
+
     fake_scenario(scenario)
 
     # Do not read from running system
@@ -733,6 +733,28 @@ describe Y2Storage::Proposal::AutoinstDevicesPlanner do
             "stripe_size"         => 4.KiB
           )
         )
+      end
+
+      context "when the PV is a partition with number 0" do
+        let(:pv) do
+          { "create" => false, "lvm_group" => lvm_group, "partition_nr" => 0 }
+        end
+
+        it "uses the whole disk device as PV" do
+          pv, vg = planner.planned_devices(drives_map)
+
+          expect(pv).to be_a(Y2Storage::Planned::StrayBlkDevice)
+          expect(vg).to be_a(Y2Storage::Planned::LvmVg)
+
+          expect(vg).to have_attributes(
+            "volume_group_name" => lvm_group,
+            "reuse_name"        => nil
+          )
+
+          expect(pv).to have_attributes(
+            "reuse_name" => "/dev/sda"
+          )
+        end
       end
 
       context "specifying size" do
