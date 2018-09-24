@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Mon Sep 24 08:16:49 UTC 2018 - snwint@suse.com
+
+- AutoYaST: Allow to use whole disk as PV by indicating a partition
+  with number 0 (bsc#1107298).
+- 4.1.19
+
+-------------------------------------------------------------------
 Wed Sep 19 14:28:22 UTC 2018 - dgonzalez@suse.com
 
 - Do not crash when a partition content info cannot be
