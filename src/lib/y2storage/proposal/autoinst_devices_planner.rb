@@ -23,11 +23,7 @@
 
 require "y2storage/disk"
 require "y2storage/disk_size"
-require "y2storage/boot_requirements_checker"
-require "y2storage/subvol_specification"
-require "y2storage/proposal_settings"
 require "y2storage/proposal/autoinst_size_parser"
-require "y2storage/volume_specification"
 
 module Y2Storage
   module Proposal
@@ -42,6 +38,7 @@ module Y2Storage
     # rubocop:disable ClassLength
     class AutoinstDevicesPlanner
       include Yast::Logger
+      include Y2Storage::Proposal::AutoinstPlanner
 
       # Constructor
       #
@@ -273,88 +270,6 @@ module Y2Storage
         string =~ /\D/ ? DiskSize.parse(string) : DiskSize.KB(string.to_i)
       end
 
-      # Set all the common attributes that are shared by any device defined by
-      # a <partition> section of AutoYaST (i.e. a LV, MD or partition).
-      #
-      # @param device  [Planned::Device] Planned device
-      # @param partition_section [AutoinstProfile::PartitionSection] AutoYaST
-      #   specification of the concrete device
-      # @param drive_section [AutoinstProfile::DriveSection] AutoYaST drive
-      #   section containing the partition one
-      def device_config(device, partition_section, drive_section)
-        add_common_device_attrs(device, partition_section)
-        add_snapshots(device, drive_section)
-        add_subvolumes_attrs(device, partition_section)
-      end
-
-      # Set common devices attributes
-      #
-      # This method modifies the first argument setting crypt_key, crypt_fs,
-      # mount, label, uuid and filesystem.
-      #
-      # @param device  [Planned::Device] Planned device
-      # @param section [AutoinstProfile::PartitionSection] AutoYaST specification
-      def add_common_device_attrs(device, section)
-        device.encryption_password = section.crypt_key if section.crypt_fs
-        device.mount_point = section.mount
-        device.label = section.label
-        device.uuid = section.uuid
-        device.filesystem_type = filesystem_for(section)
-        device.mount_by = section.type_for_mountby
-        device.mkfs_options = section.mkfs_options
-        device.fstab_options = section.fstab_options
-        device.read_only = read_only?(section.mount)
-      end
-
-      # Set device attributes related to snapshots
-      #
-      # This method modifies the first argument
-      #
-      # @param device  [Planned::Device] Planned device
-      # @param drive_section [AutoinstProfile::DriveSection] AutoYaST specification
-      def add_snapshots(device, drive_section)
-        return unless device.respond_to?(:root?) && device.root?
-
-        # Always try to enable snapshots if possible
-        snapshots = true
-        snapshots = false if drive_section.enable_snapshots == false
-
-        device.snapshots = snapshots
-      end
-
-      # Set devices attributes related to Btrfs subvolumes
-      #
-      # This method modifies the first argument setting default_subvolume and
-      # subvolumes.
-      #
-      # @param device  [Planned::Device] Planned device
-      # @param section [AutoinstProfile::PartitionSection] AutoYaST specification
-      def add_subvolumes_attrs(device, section)
-        return unless device.btrfs?
-
-        defaults = subvolume_attrs_for(device.mount_point)
-
-        device.default_subvolume = section.subvolumes_prefix || defaults[:subvolumes_prefix]
-
-        device.subvolumes =
-          if section.create_subvolumes
-            section.subvolumes || defaults[:subvolumes] || []
-          else
-            []
-          end
-      end
-
-      # Return the default subvolume attributes for a given mount point
-      #
-      # @param mount [String] Mount point
-      # @return [Hash]
-      def subvolume_attrs_for(mount)
-        return {} if mount.nil?
-        spec = VolumeSpecification.for(mount)
-        return {} if spec.nil?
-        { subvolumes_prefix: spec.btrfs_default_subvolume, subvolumes: spec.subvolumes }
-      end
-
       # Set 'reusing' attributes for a partition
       #
       # This method modifies the first argument setting the values related to
@@ -369,22 +284,6 @@ module Y2Storage
         add_device_reuse(partition, partition_to_reuse.name, section)
       end
 
-      # Set 'reusing' attributes for a logical volume
-      #
-      # This method modifies the first argument setting the values related to
-      # reusing a logical volume (reuse and format).
-      #
-      # @param lv      [Planned::LvmLv] Planned logical volume
-      # @param vg_name [String]         Volume group name to search for the logical volume to reuse
-      # @param section [AutoinstProfile::PartitionSection] AutoYaST specification
-      def add_lv_reuse(lv, vg_name, section)
-        lv_to_reuse = find_lv_to_reuse(vg_name, section)
-        return unless lv_to_reuse
-        lv.logical_volume_name ||= lv_to_reuse.lv_name
-        lv.filesystem_type ||= lv_to_reuse.filesystem_type
-        add_device_reuse(lv, lv_to_reuse.name, section)
-        add_device_reuse(lv.thin_pool, vg_name, section) if lv.thin_pool
-      end
 
       # Set 'reusing' attributes for a volume group
       #
@@ -427,15 +326,6 @@ module Y2Storage
           return
         end
         add_device_reuse(md, md_to_reuse.name, section)
-      end
-
-      # @param device  [Planned::Partition,Planned::LvmLV] Planned device
-      # @param name    [String] Name of the device to reuse
-      # @param section [AutoinstProfile::PartitionSection] AutoYaST specification
-      def add_device_reuse(device, name, section)
-        device.reuse_name = name
-        device.reformat = !!section.format
-        device.resize = !!section.resize if device.respond_to?(:resize=)
       end
 
       # @param partition    [Planned::Partition] Planned partition
@@ -553,17 +443,6 @@ module Y2Storage
 
         true
       end
-
-      # Instance of {ProposalSettings} based on the current product.
-      #
-      # Used to ensure consistency between the guided proposal and the AutoYaST
-      # one when default values are used.
-      #
-      # @return [ProposalSettings]
-      def proposal_settings
-        @proposal_settings ||= ProposalSettings.new_for_current_product
-      end
-
       def remove_shadowed_subvols(planned_devices)
         planned_devices.each do |device|
           next unless device.respond_to?(:subvolumes)
@@ -576,27 +455,6 @@ module Y2Storage
           end
         end
       end
-
-      # Parse the 'size' element
-      #
-      # @param section [AutoinstProfile::PartitionSection]
-      # @param min     [DiskSize] Minimal size
-      # @param max     [DiskSize] Maximal size
-      # @see AutoinstSizeParser
-      def parse_size(section, min, max)
-        AutoinstSizeParser.new(proposal_settings).parse(section.size, section.mount, min, max)
-      end
-
-      # Return the filesystem type for a given section
-      #
-      # @param section [AutoinstProfile::PartitionSection] AutoYaST specification
-      # @return [Filesystems::Type] Filesystem type
-      def filesystem_for(section)
-        return section.type_for_filesystem if section.type_for_filesystem
-        return nil unless section.mount
-        default_filesystem_for(section)
-      end
-
       # Return the logical volume type for a given section
       #
       # @param section [AutoinstProfile::PartitionSection] AutoYaST specification
@@ -624,26 +482,6 @@ module Y2Storage
           return false
         end
         thin_pool.add_thin_lv(lv)
-      end
-
-      # Return the default filesystem type for a given section
-      #
-      # @param section [AutoinstProfile::PartitionSection]
-      # @return [Filesystems::Type] Filesystem type
-      def default_filesystem_for(section)
-        spec = VolumeSpecification.for(section.mount)
-        return spec.fs_type if spec && spec.fs_type
-        section.mount == "swap" ? Filesystems::Type::SWAP : Filesystems::Type::BTRFS
-      end
-
-      # Determine whether the filesystem for the given mount point should be read-only
-      #
-      # @param mount_point [String] Filesystem mount point
-      # @return [Boolean] true if it should be read-only; false otherwise.
-      def read_only?(mount_point)
-        return false unless mount_point
-        spec = VolumeSpecification.for(mount_point)
-        !!spec && spec.btrfs_read_only?
       end
 
       # Sets stripes related attributes
