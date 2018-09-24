@@ -201,6 +201,22 @@ describe Y2Storage::Proposal::AutoinstDevicesCreator do
         end
       end
 
+      context "reusing a disk device as physical volume" do
+        let(:scenario) { "windows-linux-free-pc" }
+        let(:pv) do
+          planned_stray_blk_device(lvm_volume_group_name: "vg0", reuse_name: "/dev/sda")
+        end
+
+        it "adds the whole disk device as physical volume to the volume group" do
+          result = creator.populated_devicegraph([pv, vg], ["/dev/sda"])
+          devicegraph = result.devicegraph
+          vg = devicegraph.lvm_vgs.first
+          pv = vg.lvm_pvs.first
+          expect(pv).to_not be_nil
+          expect(pv.blk_device.name).to eq("/dev/sda")
+        end
+      end
+
       context "when creating more than one volume group" do
         let(:pv1) { planned_partition(lvm_volume_group_name: "vg1", min_size: 5.GiB) }
 

@@ -1,4 +1,13 @@
 -------------------------------------------------------------------
+Mon Sep 24 11:17:52 UTC 2018 - snwint@suse.com
+
+- AutoYaST: Allow to use whole disk as PV by indicating a partition
+  with number 0 (bsc#1107298).
+- When trying to reuse a partition, AutoYaST will consider only
+  those partitions from the right disk (bsc#1106774).
+- 4.1.19
+
+-------------------------------------------------------------------
 Wed Sep 19 14:28:22 UTC 2018 - dgonzalez@suse.com
 
 - Do not crash when a partition content info cannot be
