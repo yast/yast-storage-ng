@@ -492,6 +492,47 @@ describe Y2Storage::AutoinstProposal do
       end
     end
 
+    # Regression test for bsc#1107298
+    context "when partition_nr=0 is used to specify a whole disk as PV" do
+      let(:partitioning) do
+        [
+          { "device" => "/dev/sda", "initialize" => true, "disklabel" => "msdos",
+            "partitions" => [
+              "create" => true, "filesystem" => :ext4, "format" => true,
+              "mount" => "/boot", "size" => "1G"
+            ]
+          },
+          { "device" => "/dev/sdb", "initialize" => true, "disklabel" => "msdos",
+            "partitions" => [
+              # Undocumented feature: use a single partition with number zero
+              # and create=false as a way to associate the device to an LVM VG
+              "partition_nr" => 0, "create" => false,
+              "format" => true, "lvm_group" => "foo_vg", "size" => "max",
+              "mountby" => :device, "partition_id" => 142
+            ]
+          },
+          { "device" => "/dev/foo_vg", "type" => :CT_LVM,
+            "initialize" => true, "disklabel" => "msdos",
+            "partitions" => [
+              "create" => true, "format" => true, "lvm_name" => "bar_lv",
+              "filesystem" => :ext4, "mount" => "/"
+            ]
+          }
+        ]
+      end
+
+      it "creates the expected LVM setup" do
+        proposal.propose
+        devicegraph = proposal.devices
+
+        sdb = devicegraph.find_by_name("/dev/sdb")
+        expect(sdb.partition_table).to be_nil
+
+        pv = sdb.lvm_pv
+        expect(pv.lvm_vg.name).to eq "/dev/foo_vg"
+      end
+    end
+
     describe "skipping a disk" do
       let(:skip_list) do
         [{ "skip_key" => "name", "skip_value" => skip_device }]
