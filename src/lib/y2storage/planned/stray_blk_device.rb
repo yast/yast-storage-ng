@@ -29,11 +29,16 @@ module Y2Storage
     # Specification for a Y2Storage::StrayBlkDevice object to be processed
     # during the AutoYaST proposals
     #
+    # FIXME: When a disk device is used as PV (indicated as partition with number 0
+    # in the autoyast profile), a Stray Block Device is planned for it. Think about
+    # a better solution (maybe by creating a Planned::PV ?).
+    #
     # @see Device
     class StrayBlkDevice < Device
       include Planned::CanBeFormatted
       include Planned::CanBeMounted
       include Planned::CanBeEncrypted
+      include Planned::CanBePv
       include MatchVolumeSpec
 
       # Constructor.
@@ -42,6 +47,7 @@ module Y2Storage
         initialize_can_be_formatted
         initialize_can_be_mounted
         initialize_can_be_encrypted
+        initialize_can_be_pv
       end
 
       # @see Device.to_string_attrs
