@@ -53,7 +53,7 @@ module Y2Storage
     storage_class_forward :all, as: "BcacheCset"
 
     def inspect
-      "<BcacheCset #{uuid} #{blk_devices.inspect}>"
+      "<BcacheCset uuid:#{uuid} #{blk_devices.inspect}>"
     end
 
     # Gets user friendly name for caching set. It is translated and ready to show to user.

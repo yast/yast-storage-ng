@@ -33,6 +33,11 @@ module Y2Storage
     #   @return [BcacheCset, nil] returns associated bcache cset
     storage_forward :bcache_cset, as: "BcacheCset", check_with: :has_bcache_cset
 
+    # @!method attach_bcache_cset(set)
+    #   @param set [BcacheCset] set to attach
+    #   @raise if attaching failed
+    storage_forward :attach_bcache_cset
+
     # @!method blk_device
     #   @return [BlkDevice] returns a backing device for cache
     storage_forward :blk_device, as: "BlkDevice"
@@ -54,6 +59,12 @@ module Y2Storage
     #   @param name [String] kernel-style device name (e.g. "/dev/bcache0")
     #   @return [Bcache] nil if there is no such device
     storage_class_forward :find_by_name, as: "Bcache"
+
+    # @!method self.find_free_name(devicegraph)
+    #   Returns available free name for bcache device.
+    #   @param devicegraph [Devicegraph] in which search for free name
+    #   @return [String] full path to new bcache device like "/dev/bcache3"
+    storage_class_forward :find_free_name
 
     def inspect
       "<Bcache #{name} #{bcache_cset.inspect} -> #{blk_device}>"

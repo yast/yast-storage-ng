@@ -93,6 +93,7 @@ module Y2Storage
     # @!method find_device(device)
     #   Find a device by its {Device#sid sid}
     #
+    #   @param device [Integer] sid of device
     #   @return [Device]
     storage_forward :find_device, as: "Device"
 

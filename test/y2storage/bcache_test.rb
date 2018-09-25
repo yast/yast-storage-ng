@@ -50,6 +50,25 @@ describe Y2Storage::Bcache do
     end
   end
 
+  describe "#attach_bcache_cset" do
+    it "attach set to bcache device" do
+      new_bcache = described_class.create(fake_devicegraph, "/dev/bcache99")
+      cset = fake_devicegraph.bcache_csets.first
+
+      expect(new_bcache.bcache_cset).to eq nil
+      new_bcache.attach_bcache_cset(cset)
+      expect(new_bcache.bcache_cset).to eq cset
+    end
+  end
+
+  describe ".find_free_name" do
+    it "returns bcache name that is not yet used" do
+      expect(fake_devicegraph.bcaches.map(&:name)).to_not(
+        include(described_class.find_free_name(fake_devicegraph))
+      )
+    end
+  end
+
   describe "#is?" do
 
     it "returns true for values whose symbol is :bcache" do
