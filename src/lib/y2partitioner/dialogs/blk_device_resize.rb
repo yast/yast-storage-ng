@@ -26,21 +26,25 @@ require "cwm/common_widgets"
 require "y2storage"
 require "y2partitioner/dialogs/base"
 require "y2partitioner/widgets/controller_radio_buttons"
-require "y2partitioner/device_graphs"
 require "y2partitioner/size_parser"
 require "y2partitioner/filesystem_errors"
+require "y2partitioner/immediate_unmount"
 
 module Y2Partitioner
   module Dialogs
     # Dialog to set the new size for a partition or LVM LV
     class BlkDeviceResize < Base
+      include ImmediateUnmount
+
       # Constructor
       #
-      # @param device [Y2Storage::Partition, Y2Storage::LvmLv] device to resize
-      def initialize(device)
+      # @param controller [Y2Partitioner::Actions::Controllers::BlkDevice] controller for a block device
+      def initialize(controller)
         textdomain "storage"
 
-        @device = device
+        @controller = controller
+        @device = controller.device
+
         detect_space_info
       end
 
@@ -55,19 +59,10 @@ module Y2Partitioner
       def contents
         HVSquash(
           VBox(
-            SizeSelector.new(device),
+            size_selector,
             size_info
           )
         )
-      end
-
-      # @macro seeDialog
-      def run
-        res = super
-
-        # TODO: check mount
-
-        res
       end
 
       # @macro seeDialog
@@ -76,16 +71,29 @@ module Y2Partitioner
         true
       end
 
+      # Handler for "next" button
+      #
+      # It shows a dialog to immediate unmount the device when it is required.
+      #
+      # @return [Boolean] true when it is not required to ask for unmounting or the user
+      #   devices to continue; false when the user cancels.
+      def next_handler
+        try_unmount
+      end
+
     private
 
       # @return [Y2Storage::Partition, Y2Storage::LvmLv]
       attr_reader :device
 
+      # @return [Y2Partitioner::Actions::Controllers::BlkDevice] controller for a block device
+      attr_reader :controller
+
       # @return [Y2Storage::SpaceInfo]
       attr_reader :space_info
 
       def detect_space_info
-        return unless formatted? && committed_device? && !swap?
+        return unless formatted? && controller.committed_device? && !swap?
         @space_info = device.filesystem.detect_space_info
       end
 
@@ -94,14 +102,6 @@ module Y2Partitioner
       # @return [Boolean]
       def formatted?
         device.formatted?
-      end
-
-      # Whether the device exists on the system
-      #
-      # @return [Boolean] true if the device exists on disk; false otherwise.
-      def committed_device?
-        system = DeviceGraphs.instance.system
-        device.exists_in_devicegraph?(system)
       end
 
       # Whether the device is for swap
@@ -121,6 +121,20 @@ module Y2Partitioner
       def used_size
         return nil if space_info.nil?
         space_info.used
+      end
+
+      # Currently selected disk size
+      #
+      # @return [Y2Storage::DiskSize]
+      def selected_size
+        size_selector.current_widget.size
+      end
+
+      # Widget to select the new size
+      #
+      # @return [SizeSelector]
+      def size_selector
+        @size_selector ||= SizeSelector.new(device)
       end
 
       # Widgets to show size info of the device (current and used sizes)
@@ -147,6 +161,115 @@ module Y2Partitioner
         # TRANSLATORS: label for currently used size of the partition or LVM volume,
         # where %{size} is replaced by a size (e.g., 5.5 GiB)
         Left(Label(format(_("Currently used: %{size}"), size: size)))
+      end
+
+      # Tries to unmount the device, if it is required.
+      #
+      # It asks the user for immediate unmounting the device, see {#immediate_unmount}.
+      #
+      # @return [Boolean] true if it is not required to unmount or the device was correctly
+      #   unmounted or the user decides to continue; false when the user cancels.
+      def try_unmount
+        return true unless try_unmount?
+
+        try_unmount_for_shrinking &&
+          try_unmount_for_growing &&
+          try_unmount_for_big_growing
+      end
+
+      # Whether to try immediate unmount (i.e., when the current filesystem exists on the
+      # system and it is mounted)
+      #
+      # @return [Boolean]
+      def try_unmount?
+        controller.committed_current_filesystem? &&
+          controller.mounted_committed_filesystem?
+      end
+
+      # Tries to unmount when shrinking the device
+      #
+      # @return [Boolean] true if the device supports mounted shrinking or the device was
+      #   correctly unmounted or user decides to continue; false if user cancels.
+      def try_unmount_for_shrinking
+        return true unless shrinking? && controller.unmount_for_shrinking?
+
+        # TRANSLATORS: Note added to the dialog for trying to unmount a device
+        note = _("It is not possible to shrink the file system while it is mounted.")
+
+        immediate_unmount(controller.committed_device, note: note)
+      end
+
+      # Tries to unmount when growing the device
+      #
+      # @return [Boolean] true if the device supports mounted growing or the device was
+      #   correctly unmounted or user decides to continue; false if user cancels.
+      def try_unmount_for_growing
+        return true unless growing? && controller.unmount_for_growing?
+
+        # TRANSLATORS: Note added to the dialog for trying to unmount a device
+        note = _("It is not possible to extend the file system while it is mounted.")
+
+        immediate_unmount(controller.committed_device, note: note)
+      end
+
+      # Tries to unmount when performing big growing
+      #
+      # @return [Boolean] true if the device was correctly unmounted or user decides to
+      #   continue; false if user cancels.
+      def try_unmount_for_big_growing
+        return true unless big_growing? && controller.mounted_committed_filesystem?
+
+        message = Yast::Builtins.sformat(
+          # TRANSLATORS: Text for the dialog for trying to unmount a device. It is used
+          # when a device is tried to be resized by extending it too much. %1 is replaced
+          # by a number that represents the amount of GiB to extend (e.g., 56).
+          _(
+            "You are extending a mounted filesystem by %1 Gigabyte. \n" \
+            "This may be quite slow and can take hours. You might possibly want \n" \
+            "to consider umounting the filesystem, which will increase speed of \n" \
+            "resize task a lot."
+          ),
+          growing_size.to_i / Y2Storage::DiskSize.GiB(1).to_i
+        )
+
+        message += "\n\n" +
+          # TRANSLATORS: Actions explanation when trying to unmount
+          _("You can try to unmount it now, continue without unmounting or cancel.\n" \
+            "Click Cancel unless you know exactly what you are doing.")
+
+        immediate_unmount(controller.committed_device, full_message: message, allow_continue: true)
+      end
+
+      # Whether the device is going to be shrinked
+      #
+      # @return [Boolean]
+      def shrinking?
+        selected_size < device.size
+      end
+
+      # Whether the device is going to be growed
+      #
+      # @return [Boolean]
+      def growing?
+        selected_size > device.size
+      end
+
+      # Whether the device is going to be growed more than 50 GiB
+      #
+      # @note Threshold to consider a big growing is defined in the old code, but there is not
+      #   any kind of explanation:
+      #   https://github.com/yast/yast-storage/blob/SLE-12-SP4/src/include/partitioning/ep-dialogs.rb#L1229
+      #
+      # @return [Boolean]
+      def big_growing?
+        growing? && growing_size > Y2Storage::DiskSize.GiB(50)
+      end
+
+      # How much the device is going to be growed
+      #
+      # @return [Y2Storage::DiskSize]
+      def growing_size
+        selected_size - device.size
       end
     end
 

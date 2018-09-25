@@ -24,6 +24,8 @@ require "yast/i18n"
 require "yast2/popup"
 require "y2partitioner/device_graphs"
 require "y2partitioner/confirm_recursive_delete"
+require "y2partitioner/immediate_unmount"
+require "y2partitioner/actions/controllers/blk_device"
 require "y2storage/filesystems/btrfs"
 require "abstract_method"
 
@@ -35,6 +37,7 @@ module Y2Partitioner
       include Yast::I18n
       include Yast::UIShortcuts
       include ConfirmRecursiveDelete
+      include ImmediateUnmount
 
       # Constructor
       # @param device [Y2Storage::Device]
@@ -44,8 +47,8 @@ module Y2Partitioner
         @device = device
       end
 
-      # Checks whether delete action can be performed and if so,
-      # a confirmation popup is shown.
+      # Checks whether delete action can be performed and if so, a confirmation popup is shown.
+      # It only asks for unmounting the device it is currently mounted in the system.
       #
       # @note Delete action and refresh for shadowing of BtrFS subvolumes
       #   are only performed when user confirms.
@@ -54,7 +57,7 @@ module Y2Partitioner
       #
       # @return [Symbol, nil]
       def run
-        return :back unless validate && confirm
+        return :back unless validate && try_unmount && confirm
         delete
         Y2Storage::Filesystems::Btrfs.refresh_subvolumes_shadowing(device_graph)
 
@@ -146,6 +149,41 @@ module Y2Partitioner
       # @return [Y2Storage::Md, nil] nil if the device does not belong to a md raid
       def md
         device.md
+      end
+
+      # Controller for a block device
+      #
+      # @return [Y2Partitioner::Actions::Controllers::BlkDevice, nil] nil when the device
+      #   is not a block device.
+      def controller
+        return nil unless device.is?(:blk_device)
+
+        @controller ||= Controllers::BlkDevice.new(device)
+      end
+
+      # Tries to unmount the device, if it is required.
+      #
+      # It asks the user for immediate unmount the device, see {#immediate_unmount}.
+      #
+      # @return [Boolean] true if it is not required to unmount or the device was correctly
+      #   unmounted or the user decided to continue without unmounting; false when user cancels.
+      def try_unmount
+        return true unless need_try_unmount?
+
+        # TRANSLATORS: Note added to the dialog for trying to unmount a device
+        note = _("It cannot be deleted while mounted.")
+
+        immediate_unmount(controller.committed_device, note: note)
+      end
+
+      # Whether it is necessary to try unmount (i.e., when deleting a mounted block device that
+      # exists on the system)
+      #
+      # @return [Boolean]
+      def need_try_unmount?
+        return false unless device.is?(:blk_device)
+
+        controller.mounted_committed_filesystem?
       end
     end
   end

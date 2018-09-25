@@ -54,8 +54,8 @@ describe Y2Storage::Proposal::AutoinstDevicesPlanner do
   let(:lvm_group) { "vg0" }
 
   before do
-    allow(Y2Storage::BootRequirementsChecker).to receive(:new)
-      .and_return(boot_checker)
+    allow(Y2Storage::BootRequirementsChecker).to receive(:new).and_return(boot_checker)
+
     fake_scenario(scenario)
 
     # Do not read from running system
@@ -71,14 +71,20 @@ describe Y2Storage::Proposal::AutoinstDevicesPlanner do
   describe "#planned_devices" do
     context "reusing partitions" do
       context "when a partition number is specified" do
+        let(:scenario) { "autoyast_drive_examples" }
+
+        let(:partitioning_array) do
+          [{ "device" => "/dev/sdb", "partitions" => [root_spec] }]
+        end
+
         let(:root_spec) do
-          { "create" => false, "mount" => "/", "filesystem" => "ext4", "partition_nr" => 3 }
+          { "create" => false, "mount" => "/", "filesystem" => "ext4", "partition_nr" => 2 }
         end
 
         it "reuses the partition with that number" do
           devices = planner.planned_devices(drives_map)
           root = devices.find { |d| d.mount_point == "/" }
-          expect(root.reuse_name).to eq("/dev/sda3")
+          expect(root.reuse_name).to eq("/dev/sdb2")
         end
       end
 
@@ -727,6 +733,28 @@ describe Y2Storage::Proposal::AutoinstDevicesPlanner do
             "stripe_size"         => 4.KiB
           )
         )
+      end
+
+      context "when the PV is a partition with number 0" do
+        let(:pv) do
+          { "create" => false, "lvm_group" => lvm_group, "partition_nr" => 0 }
+        end
+
+        it "uses the whole disk device as PV" do
+          pv, vg = planner.planned_devices(drives_map)
+
+          expect(pv).to be_a(Y2Storage::Planned::StrayBlkDevice)
+          expect(vg).to be_a(Y2Storage::Planned::LvmVg)
+
+          expect(vg).to have_attributes(
+            "volume_group_name" => lvm_group,
+            "reuse_name"        => nil
+          )
+
+          expect(pv).to have_attributes(
+            "reuse_name" => "/dev/sda"
+          )
+        end
       end
 
       context "specifying size" do

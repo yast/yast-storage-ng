@@ -89,7 +89,11 @@ module Y2Storage
         # @return [Array] list containing devices with an adjusted value
         #     for Planned::HasSize#size
         def distribute_space(devices, space_size, rounding: nil, align_grain: nil, end_alignment: false)
-          raise RuntimeError if space_size < DiskSize.sum(devices.map(&:min))
+          needed_size = DiskSize.sum(devices.map(&:min))
+          if space_size < needed_size
+            log.error "not enough space: needed #{needed_size}, available #{space_size}"
+            raise RuntimeError
+          end
 
           rounding ||= align_grain
           rounding ||= DiskSize.new(1)

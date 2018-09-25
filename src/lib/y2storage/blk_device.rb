@@ -336,6 +336,16 @@ module Y2Storage
       remove_descendants
     end
 
+    # Mount point of the filesystem
+    #
+    # @return [Y2Storage::MountPoint, nil] nil if the device is not formatted or its
+    #   filesystem has no mount point.
+    def mount_point
+      return nil unless formatted?
+
+      filesystem.mount_point
+    end
+
     # LVM physical volume defined on top of the device, either directly or
     # through an encryption layer.
     #

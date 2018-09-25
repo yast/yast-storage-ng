@@ -1,4 +1,24 @@
 -------------------------------------------------------------------
+Fri Sep 19 13:19:58 UTC 2018 - jlopez@suse.com
+
+- Partitioner: ask for unmounting when deleting a device.
+- Partitioner: ask for unmounting when resizing a device.
+- Part of fate#318196
+- 4.1.19
+
+-------------------------------------------------------------------
+Tue Sep 18 13:00:29 UTC 2018 - jlopez@suse.com
+
+- AutoYaST: Allow to use whole disk as PV by indicating a partition
+  with number 0 (bsc#1107298).
+
+-------------------------------------------------------------------
+Wed Sep  5 21:23:54 UTC 2018 - lorenz@math.tu-berlin.de
+
+- When trying to reuse a partition, AutoYaST will consider only
+  those partitions from the right disk (bsc#1106774).
+
+-------------------------------------------------------------------
 Wed Sep 19 14:28:22 UTC 2018 - dgonzalez@suse.com
 
 - Do not crash when a partition content info cannot be
