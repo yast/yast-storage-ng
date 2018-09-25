@@ -19,6 +19,7 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
+require "y2storage/planned/disk"
 require "y2storage/planned/partition"
 require "y2storage/planned/stray_blk_device"
 require "y2storage/planned/lvm_lv"

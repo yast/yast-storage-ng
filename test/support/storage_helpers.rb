@@ -117,6 +117,11 @@ module Yast
         add_planned_attributes(device, attrs)
       end
 
+      def planned_disk(attrs = {})
+        disk = Y2Storage::Planned::Disk.new
+        add_planned_attributes(disk, attrs)
+      end
+
       def add_planned_attributes(device, attrs)
         attrs = attrs.dup
 
