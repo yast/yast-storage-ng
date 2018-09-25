@@ -23,6 +23,8 @@ require "yast"
 require "yast/i18n"
 require "y2partitioner/dialogs/blk_device_resize"
 require "y2partitioner/ui_state"
+require "y2partitioner/immediate_unmount"
+require "y2partitioner/actions/controllers/blk_device"
 
 Yast.import "Popup"
 
@@ -32,6 +34,7 @@ module Y2Partitioner
     class ResizeBlkDevice
       include Yast::Logger
       include Yast::I18n
+      include ImmediateUnmount
 
       # Constructor
       #
@@ -40,17 +43,20 @@ module Y2Partitioner
         textdomain "storage"
 
         @device = device
+        @controller = Controllers::BlkDevice.new(device)
+
         UIState.instance.select_row(device)
       end
 
-      # Checks whether it is possible to resize the device, and if so,
-      # the action is performed.
+      # Checks whether it is possible to resize the device, and if so, the action is performed.
+      # It also checks whether the device needs to be unmounted before resizing (e.g., NTFS).
+      # When unmounted device is required, it offers the option for unmounting it.
       #
       # @note An error popup is shown when the device cannot be resized.
       #
       # @return [Symbol, nil]
       def run
-        return :back unless validate
+        return :back unless try_unmount && validate
         resize
       end
 
@@ -59,11 +65,14 @@ module Y2Partitioner
       # @return [Y2Storage::Partition, Y2Storage::LvmLv] device to resize
       attr_reader :device
 
+      # @return [Y2Partitioner::Actions::Controllers::BlkDevice] controller for a block device
+      attr_reader :controller
+
       # Runs the dialog to resize the device
       #
       # @return [Symbol] :finish if the dialog returns :next; dialog result otherwise.
       def resize
-        result = Dialogs::BlkDeviceResize.run(device)
+        result = Dialogs::BlkDeviceResize.run(controller)
 
         result == :next ? :finish : result
       end
@@ -131,6 +140,33 @@ module Y2Partitioner
         msg_lines = [_("This device cannot be resized:"), ""]
         msg_lines.concat(device.resize_info.reason_texts)
         msg_lines.join("\n")
+      end
+
+      # Tries to unmount the device, if it is required.
+      #
+      # It asks the user for immediate unmount the device, see {#immediate_unmount}.
+      #
+      # @return [Boolean] true if it is not required to unmount or the device was correctly
+      #   unmounted; false when user cancels.
+      def try_unmount
+        return true unless need_try_unmount?
+
+        # TRANSLATORS: Note added to the dialog for trying to unmount a device
+        note = _("It is not possible to check whether a NTFS\ncan be resized while it is mounted.")
+
+        immediate_unmount(controller.committed_device, note: note, allow_continue: false)
+      end
+
+      # Whether it is necessary to try unmount
+      #
+      # Unmount is needed when the current filesystem is NTFS, it exists on disk and it is mounted.
+      # NTFS tools require the filesystem be unmounted.
+      #
+      # @return [Boolean]
+      def need_try_unmount?
+        controller.committed_current_filesystem? &&
+          controller.mounted_committed_filesystem? &&
+          controller.committed_filesystem.type.is?(:ntfs)
       end
     end
   end

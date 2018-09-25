@@ -112,6 +112,11 @@ module Yast
         add_planned_attributes(md, attrs)
       end
 
+      def planned_stray_blk_device(attrs = {})
+        device = Y2Storage::Planned::StrayBlkDevice.new
+        add_planned_attributes(device, attrs)
+      end
+
       def add_planned_attributes(device, attrs)
         attrs = attrs.dup
 
