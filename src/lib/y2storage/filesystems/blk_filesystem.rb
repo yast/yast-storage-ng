@@ -62,9 +62,17 @@ module Y2Storage
       #   @return [Boolean] whether the filesystem supports shrinking
       storage_forward :supports_shrink?, to: :supports_shrink
 
+      # @!method supports_mounted_shrink?
+      #   @return [Boolean] whether the filesystem supports shrinking while being mounted
+      storage_forward :supports_mounted_shrink?, to: :supports_mounted_shrink
+
       # @!method supports_grow?
       #   @return [Boolean] whether the filesystem supports growing
       storage_forward :supports_grow?, to: :supports_grow
+
+      # @!method supports_mounted_grow?
+      #   @return [Boolean] whether the filesystem supports growing while being mounted
+      storage_forward :supports_mounted_grow?, to: :supports_mounted_grow
 
       # @!attribute mkfs_options
       #   Options to use when calling mkfs during devicegraph commit (if the
@@ -119,7 +127,7 @@ module Y2Storage
         disks.any?(&:in_network?)
       end
 
-      # Check if this filesystem type supports any kind of resize at all,
+      # Checks if this filesystem type supports any kind of resize at all,
       # either shrinking or growing.
       #
       # @return [Boolean]

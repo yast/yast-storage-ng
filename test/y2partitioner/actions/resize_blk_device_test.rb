@@ -29,13 +29,14 @@ describe Y2Partitioner::Actions::ResizeBlkDevice do
   using Y2Storage::Refinements::SizeCasts
 
   before do
-    allow(Yast::Wizard).to receive(:OpenNextBackDialog)
-    allow(Yast::Wizard).to receive(:CloseDialog)
-
     devicegraph_stub(scenario)
   end
 
+  subject(:action) { described_class.new(device) }
+
   let(:current_graph) { Y2Partitioner::DeviceGraphs.instance.current }
+
+  let(:device) { current_graph.find_by_name(device_name) }
 
   let(:resize_info) do
     instance_double(Y2Storage::ResizeInfo,
@@ -63,7 +64,7 @@ describe Y2Partitioner::Actions::ResizeBlkDevice do
   RSpec.shared_examples "partition_holds_lvm" do
     context "and the partition holds an LVM" do
       let(:scenario) { "lvm-two-vgs.yml" }
-      let(:dev_name) { "/dev/sda7" }
+      let(:device_name) { "/dev/sda7" }
 
       include_examples "resize_error"
     end
@@ -72,28 +73,155 @@ describe Y2Partitioner::Actions::ResizeBlkDevice do
   RSpec.shared_examples "partition_holds_md" do
     context "and the partition holds a MD RAID" do
       let(:scenario) { "md_raid.xml" }
-      let(:dev_name) { "/dev/sda1" }
+      let(:device_name) { "/dev/sda1" }
 
       include_examples "resize_error"
     end
   end
 
-  context "when executed on a partition" do
-    let(:partition) { Y2Storage::Partition.find_by_name(current_graph, dev_name) }
+  def create_partition(disk_name)
+    disk = current_graph.find_by_name(disk_name)
+    slot = disk.partition_table.unused_partition_slots.first
+    part = disk.partition_table.create_partition(
+      slot.name,
+      slot.region,
+      Y2Storage::PartitionType::PRIMARY
+    )
+    part.create_filesystem(Y2Storage::Filesystems::Type::EXT4)
+  end
 
-    before do
-      allow(partition).to receive(:detect_resize_info).and_return(resize_info)
+  describe "#run" do
+    let(:scenario) { "mixed_disks" }
+
+    let(:can_resize) { true }
+
+    shared_examples "do not unmount" do
+      it "does not ask for unmounting the device" do
+        expect(Yast2::Popup).to_not receive(:show).with(/try to unmount/, anything)
+
+        action.run
+      end
     end
 
-    subject(:action) { described_class.new(partition) }
+    context "when the device does not exist in the system" do
+      before do
+        create_partition("/dev/sdc")
 
-    describe "#run" do
+        allow(Y2Partitioner::Dialogs::BlkDeviceResize).to receive(:run).and_return(:abort)
+      end
+
+      let(:device_name) { "/dev/sdc1" }
+
+      include_examples "do not unmount"
+    end
+
+    context "when the device exists in the system" do
+      before do
+        allow(Y2Partitioner::Dialogs::BlkDeviceResize).to receive(:run).and_return(:abort)
+      end
+
+      context "and it is not currently formatted" do
+        let(:device_name) { "/dev/sdb7" }
+
+        include_examples "do not unmount"
+      end
+
+      context "and it is currently formatted" do
+        context "but it is not formatted in the system" do
+          let(:device_name) { "/dev/sdb7" }
+
+          before do
+            device.create_filesystem(Y2Storage::Filesystems::Type::EXT4)
+          end
+
+          include_examples "do not unmount"
+        end
+
+        context "and it is formatted in the system" do
+          let(:device_name) { "/dev/sdb2" }
+
+          context "but the current filesystem does not match to the existing filesystem" do
+            before do
+              device.delete_filesystem
+              device.create_filesystem(Y2Storage::Filesystems::Type::EXT4)
+            end
+
+            include_examples "do not unmount"
+          end
+
+          context "and the current filesystem matches to the existing filesystem" do
+            before do
+              allow(device).to receive(:detect_resize_info).and_return(resize_info)
+            end
+
+            context "but the filesystem type is not NTFS" do
+              let(:device_name) { "/dev/sdb2" }
+
+              include_examples "do not unmount"
+            end
+
+            context "and the filesystem type is NTFS" do
+              let(:device_name) { "/dev/sda1" }
+
+              before do
+                system_devicegraph = Y2Storage::StorageManager.instance.system
+                part = system_devicegraph.find_by_name(device_name)
+                part.filesystem.mount_path = "/foo"
+                part.mount_point.active = mounted
+              end
+
+              context "but it is not mounted in the system" do
+                let(:mounted) { false }
+
+                include_examples "do not unmount"
+              end
+
+              context "and it is mounted in the system" do
+                let(:mounted) { true }
+
+                it "asks for unmounting the device" do
+                  expect(Yast2::Popup).to receive(:show).with(/try to unmount/, anything)
+                    .and_return(:cancel)
+
+                  action.run
+                end
+
+                it "shows a specific note for unmounting NTFS" do
+                  expect(Yast2::Popup).to receive(:show)
+                    .with(/check whether a NTFS/, anything)
+                    .and_return(:cancel)
+
+                  subject.run
+                end
+
+                it "does not allow to continue without unmounting" do
+                  expect(Yast2::Popup).to_not receive(:show)
+                    .with(/continue without unmounting/, anything)
+
+                  expect(Yast2::Popup).to receive(:show).and_return(:cancel)
+
+                  action.run
+                end
+              end
+            end
+          end
+        end
+      end
+    end
+
+    context "when executed on a partition" do
+      let(:partition) { device }
+
+      before do
+        allow(device).to receive(:detect_resize_info).and_return(resize_info)
+      end
+
       context "when the partition cannot be resized" do
         let(:can_resize) { false }
 
         context "and the partition does not hold an LVM neither a MD RAID" do
           let(:scenario) { "mixed_disks.yml" }
-          let(:dev_name) { "/dev/sda1" }
+          let(:device_name) { "/dev/sda1" }
 
           include_examples "resize_error"
         end
@@ -108,7 +236,7 @@ describe Y2Partitioner::Actions::ResizeBlkDevice do
 
         context "and the partition does not hold an LVM neither a MD RAID" do
           let(:scenario) { "mixed_disks.yml" }
-          let(:dev_name) { "/dev/sda1" }
+          let(:device_name) { "/dev/sda1" }
 
           context "and the user goes forward in the dialog" do
             before do
@@ -136,19 +264,18 @@ describe Y2Partitioner::Actions::ResizeBlkDevice do
         include_examples "partition_holds_md"
       end
     end
-  end
 
-  context "when executed on an LVM logical volume" do
-    let(:scenario) { "complex-lvm-encrypt" }
-    let(:lv) { current_graph.find_by_name("/dev/vg1/lv1") }
+    context "when executed on an LVM logical volume" do
+      let(:scenario) { "complex-lvm-encrypt" }
 
-    before do
-      allow(lv).to receive(:detect_resize_info).and_return(resize_info)
-    end
+      let(:device_name) { "/dev/vg1/lv1" }
 
-    subject(:action) { described_class.new(lv) }
+      let(:lv) { device }
 
-    describe "#run" do
+      before do
+        allow(device).to receive(:detect_resize_info).and_return(resize_info)
+      end
+
       context "when the volume cannot be resized" do
         let(:can_resize) { false }
 

@@ -41,18 +41,49 @@ describe Y2Partitioner::Actions::DeletePartition do
       allow(Yast2::Popup).to receive(:show).and_return(accept)
     end
 
-    let(:scenario) { "lvm-two-vgs.yml" }
-
-    let(:device_name) { "/dev/sda2" }
-
     let(:accept) { nil }
 
-    context "when deleting a plain partition" do
-      let(:device_name) { "/dev/sda2" }
-
-      it "shows a confirm message" do
-        expect(Yast2::Popup).to receive(:show)
+    shared_examples "do not remove partition" do
+      it "does not delete the partition" do
         subject.run
+        expect(Y2Storage::BlkDevice.find_by_name(device_graph, device_name)).to_not be_nil
+      end
+
+      it "returns :back" do
+        expect(subject.run).to eq(:back)
+      end
+    end
+
+    shared_examples "confirm" do
+      it "shows a confirm message" do
+        expect(Yast2::Popup).to receive(:show).with(/Really delete/, anything)
+          .and_return(:no)
+
+        subject.run
+      end
+
+      context "when the confirm message is not accepted" do
+        let(:accept) { :no }
+
+        include_examples "do not remove partition"
+      end
+
+      context "when the confirm message is accepted" do
+        let(:accept) { :yes }
+
+        it "deletes the partition" do
+          subject.run
+          expect(Y2Storage::BlkDevice.find_by_name(device_graph, device_name)).to be_nil
+        end
+
+        it "refreshes btrfs subvolumes shadowing" do
+          expect(Y2Storage::Filesystems::Btrfs).to receive(:refresh_subvolumes_shadowing)
+          subject.run
+        end
+
+        it "returns :finish" do
+          expect(subject.run).to eq(:finish)
+        end
       end
     end
 
@@ -62,7 +93,8 @@ describe Y2Partitioner::Actions::DeletePartition do
       let(:device_name) { "/dev/dasda1" }
 
       it "shows an error message" do
-        expect(Yast2::Popup).to receive(:show)
+        expect(Yast2::Popup).to receive(:show).with(/cannot be deleted/, anything)
+
         subject.run
       end
 
@@ -71,7 +103,93 @@ describe Y2Partitioner::Actions::DeletePartition do
       end
     end
 
+    context "when deleting a partition that is not mounted in the system" do
+      let(:scenario) { "mixed_disks.yml" }
+
+      let(:device_name) { "/dev/sda2" }
+
+      it "does not ask for unmounting the partition" do
+        expect(Yast2::Popup).to_not receive(:show).with(/try to unmount/, anything)
+
+        subject.run
+      end
+
+      include_examples "confirm"
+    end
+
+    context "when deleting a partition that is mounted in the system" do
+      let(:scenario) { "mixed_disks.yml" }
+
+      let(:device_name) { "/dev/sdb2" }
+
+      before do
+        allow(Yast2::Popup).to receive(:show).with(/try to unmount/, anything)
+          .and_return(*unmount_answer)
+      end
+
+      let(:unmount_answer) { [:cancel] }
+
+      it "asks for unmounting the partition" do
+        expect(Yast2::Popup).to receive(:show).with(/try to unmount/, anything)
+
+        subject.run
+      end
+
+      it "shows a specific note for deleting" do
+        expect(Yast2::Popup).to receive(:show)
+          .with(/cannot be deleted while mounted/, anything)
+          .and_return(:cancel)
+
+        subject.run
+      end
+
+      context "and the user decides to continue" do
+        let(:unmount_answer) { [:continue] }
+
+        include_examples "confirm"
+      end
+
+      context "and the user decides to cancel" do
+        let(:unmount_answer) { [:cancel] }
+
+        include_examples "do not remove partition"
+      end
+
+      context "and the user decides to unmount" do
+        let(:unmount_answer) { [:unmount, :cancel] }
+
+        context "and the partition can not be unmounted" do
+          before do
+            allow_any_instance_of(Y2Storage::MountPoint).to receive(:immediate_deactivate)
+              .and_raise(Storage::Exception, "fail to unmount")
+          end
+
+          it "shows an error message" do
+            expect(Yast2::Popup).to receive(:show).with(/could not be unmounted/, anything)
+
+            subject.run
+          end
+
+          it "asks for trying to unmount again" do
+            expect(Yast2::Popup).to receive(:show).with(/try to unmount/, anything).twice
+
+            subject.run
+          end
+        end
+
+        context "and the partition can be unmounted" do
+          before do
+            allow_any_instance_of(Y2Storage::MountPoint).to receive(:immediate_deactivate)
+          end
+
+          include_examples "confirm"
+        end
+      end
+    end
+
     context "when deleting a partition used by LVM" do
+      let(:scenario) { "lvm-two-vgs.yml" }
+
       let(:device_name) { "/dev/sda5" }
 
       it "shows a specific confirm message for LVM" do
@@ -94,37 +212,6 @@ describe Y2Partitioner::Actions::DeletePartition do
           .and_call_original
 
         subject.run
-      end
-    end
-
-    context "when the confirm message is not accepted" do
-      let(:accept) { :no }
-
-      it "does not delete the partition" do
-        subject.run
-        expect(Y2Storage::BlkDevice.find_by_name(device_graph, device_name)).to_not be_nil
-      end
-
-      it "returns :back" do
-        expect(subject.run).to eq(:back)
-      end
-    end
-
-    context "when the confirm message is accepted" do
-      let(:accept) { :yes }
-
-      it "deletes the partition" do
-        subject.run
-        expect(Y2Storage::BlkDevice.find_by_name(device_graph, device_name)).to be_nil
-      end
-
-      it "refresh btrfs subvolumes shadowing" do
-        expect(Y2Storage::Filesystems::Btrfs).to receive(:refresh_subvolumes_shadowing)
-        subject.run
-      end
-
-      it "returns :finish" do
-        expect(subject.run).to eq(:finish)
       end
     end
   end

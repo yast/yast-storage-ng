@@ -37,6 +37,12 @@ Yast.import "Stage"
 module Y2Storage
   # Singleton class to provide access to the libstorage Storage object and
   # to store related state information.
+  #
+  # FIXME: This class exceeds the maximum allowed length (250 lines of code), but
+  # there are quite some code that could be extracted to a new place, mainly all
+  # stuff related to testing (e.g., {#probe_from_yaml}).
+  #
+  # rubocop:disable Metrics/ClassLength
   class StorageManager
     include Yast::Logger
     extend Forwardable
@@ -242,6 +248,15 @@ module Y2Storage
     # @param [Devicegraph] devicegraph to copy
     def staging=(devicegraph)
       copy_to_staging(devicegraph)
+    end
+
+    # System devicegraph
+    #
+    # It is used to perform actions beforme the commit phase (e.g., immediate unmount).
+    #
+    # @return [Y2Storage::Devicegraph]
+    def system
+      @system_graph ||= Devicegraph.new(storage.system)
     end
 
     # Stores the proposal, modifying the staging devicegraph and all the related
@@ -663,6 +678,7 @@ module Y2Storage
         callbacks.retry?
       end
     end
+    # rubocop:enable Metrics/ClassLength
 
     # Logger class for libstorage. This is needed to make libstorage log to the
     # y2log.
