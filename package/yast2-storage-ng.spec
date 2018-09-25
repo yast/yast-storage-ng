@@ -22,8 +22,8 @@ Release:	0
 BuildRoot:	%{_tmppath}/%{name}-%{version}-build
 Source:		%{name}-%{version}.tar.bz2
 
-# CWM::Dialog#next_handler
-Requires:	yast2 >= 4.0.87
+# CWM::Dialog#next_handler (4.1 branch) and improved CWM::Dialog
+Requires:	yast2 >= 4.1.11
 # for AbortException and handle direct abort
 Requires:	yast2-ruby-bindings >= 4.0.6
 # Storage::Md#uuid=
@@ -43,8 +43,8 @@ BuildRequires:	yast2-devtools
 # yast2-xml dependency is added by yast2 but ignored in the
 # openSUSE:Factory project config
 BuildRequires:  yast2-xml
-# CWM::Dialog#next_handler
-BuildRequires:	yast2 >= 4.0.87
+# CWM::Dialog#next_handler (4.1 branch) and improved CWM::Dialog
+BuildRequires:	yast2 >= 4.1.11
 # for AbortException and handle direct abort
 BuildRequires:	yast2-ruby-bindings >= 4.0.6
 BuildRequires:	rubygem(yast-rake)
