@@ -25,6 +25,7 @@ require "y2storage/disk"
 require "y2storage/disk_size"
 require "y2storage/proposal/autoinst_size_parser"
 require "y2storage/proposal/autoinst_vg_planner"
+require "y2storage/proposal/autoinst_md_planner"
 
 module Y2Storage
   module Proposal
@@ -206,7 +207,7 @@ module Y2Storage
       # @return [Planned::LvmVg] Planned volume group
       def planned_for_vg(drive)
         planner = Y2Storage::Proposal::AutoinstVgPlanner.new(devicegraph, issues_list)
-        planner.planned_devices(drive)
+        planner.planned_device(drive)
       end
 
       # Returns a MD array according to an AutoYaST specification
@@ -215,25 +216,8 @@ module Y2Storage
       #   the MD RAID
       # @return [Planned::Md] Planned MD RAID
       def planned_for_md(drive)
-        md = Planned::Md.new(name: drive.name_for_md)
-
-        part_section = drive.partitions.first
-        device_config(md, part_section, drive)
-        md.lvm_volume_group_name = part_section.lvm_group
-        add_md_reuse(md, part_section) if part_section.create == false
-
-        raid_options = part_section.raid_options
-        if raid_options
-          md.chunk_size = chunk_size_from_string(raid_options.chunk_size) if raid_options.chunk_size
-          md.md_level = MdLevel.find(raid_options.raid_type) if raid_options.raid_type
-          md.md_parity = MdParity.find(raid_options.parity_algorithm) if raid_options.parity_algorithm
-        end
-
-        md
-      end
-
-      def chunk_size_from_string(string)
-        string =~ /\D/ ? DiskSize.parse(string) : DiskSize.KB(string.to_i)
+        planner = Y2Storage::Proposal::AutoinstMdPlanner.new(devicegraph, issues_list)
+        planner.planned_device(drive)
       end
 
       # Set 'reusing' attributes for a partition
@@ -248,20 +232,6 @@ module Y2Storage
         return unless partition_to_reuse
         partition.filesystem_type ||= partition_to_reuse.filesystem_type
         add_device_reuse(partition, partition_to_reuse.name, section)
-      end
-
-      # Set 'reusing' attributes for a MD RAID
-      #
-      # @param md      [Planned::Md] Planned MD RAID
-      # @param section [AutoinstProfile::PartitionSection] AutoYaST specification
-      def add_md_reuse(md, section)
-        # TODO: fix when not using named raids
-        md_to_reuse = devicegraph.md_raids.find { |m| m.name == md.name }
-        if md_to_reuse.nil?
-          issues_list.add(:missing_reusable_device, section)
-          return
-        end
-        add_device_reuse(md, md_to_reuse.name, section)
       end
 
       # @param partition    [Planned::Partition] Planned partition
