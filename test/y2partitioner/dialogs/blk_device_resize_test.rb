@@ -219,6 +219,11 @@ describe Y2Partitioner::Dialogs::BlkDeviceResize do
           context "but it is not mounted in the system" do
             let(:mounted) { false }
 
+            before do
+              allow(device).to receive(:filesystem).and_return(filesystem)
+              allow(filesystem).to receive(:sid).and_return(-1)
+            end
+
             include_examples "do not unmount"
           end
 
