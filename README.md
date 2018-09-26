@@ -11,7 +11,7 @@ yast2-storage-ng is a reimplementation of the YaST storage module
 (yast2-storage) based on the also reimplemented library for storage manager
 ([libstorage-ng](https://github.com/openSUSE/libstorage-ng)).
 
-When finished, this module will contain essentially three parts:
+This module contains essentially three parts:
 
 * YaST Expert Partitioner: a powerful tool capable of actions such as
   creating partitions and filesystems or configuring LVM and software RAID.
@@ -40,3 +40,6 @@ When finished, this module will contain essentially three parts:
 Check the [status](doc/status.md) of already implemented and still missing
 functionality.
 
+## Developer documentation
+
+To be written: links to the various files at doc/
