@@ -29,12 +29,11 @@ module Y2Storage
       # Returns an array of planned partitions for a given disk or the disk
       # itself if there are no partitions planned
       #
-      # @param disk [Disk,Dasd] Disk to place the partitions on
       # @param drive [AutoinstProfile::DriveSection] drive section describing
       #   the layout for the disk
       # @return [Array<Planned::Partition, Planned::StrayBlkDevice>] List of planned partitions or disks
-      def planned_devices(drive, disk_name)
-        disk = BlkDevice.find_by_name(devicegraph, disk_name)
+      def planned_devices(drive)
+        disk = BlkDevice.find_by_name(devicegraph, drive.device)
         if disk
           planned_for_disk(disk, drive)
         else

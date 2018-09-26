@@ -84,7 +84,8 @@ module Y2Storage
 
       def planned_for_disk_device(drive, disk_name)
         planner = Y2Storage::Proposal::AutoinstDiskDevicePlanner.new(devicegraph, issues_list)
-        planner.planned_devices(drive, disk_name)
+        drive.device = disk_name
+        planner.planned_devices(drive)
       end
 
       # Returns a planned volume group according to an AutoYaST specification
