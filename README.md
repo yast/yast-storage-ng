@@ -11,7 +11,7 @@ yast2-storage-ng is a reimplementation of the YaST storage module
 (yast2-storage) based on the also reimplemented library for storage manager
 ([libstorage-ng](https://github.com/openSUSE/libstorage-ng)).
 
-When finished, this module will contain essentially three parts:
+This module contains essentially three parts:
 
 * YaST Expert Partitioner: a powerful tool capable of actions such as
   creating partitions and filesystems or configuring LVM and software RAID.
@@ -40,3 +40,38 @@ When finished, this module will contain essentially three parts:
 Check the [status](doc/status.md) of already implemented and still missing
 functionality.
 
+## Developer documentation
+
+The `/doc` directory of this repository contains some files with information
+that can be very useful as starting point for those willing to modify or
+configure this YaST module.
+
+* [y2partitioner_namespaces.md](doc/y2partitioner_namespaces.md) High level view
+  on how the code of the Partitioner is organized into classes and namespaces.
+* [old_and_new_proposal.md](doc/old_and_new_proposal.md) Comparison of the new
+  Guided Proposal with the old method. The document also includes a reference
+  about how to configure the Guided Proposal per product/role.
+* [proposal.md](doc/proposal.md) High level view on how the code of the Guided
+  Proposal is organized into classes and namespaces. Slightly outdated but still
+  useful.
+* [autoyast.md](doc/autoyast.md) An outdated but still useful document
+  explaining how the AutoYaST support was implemented based on the
+  infrastructure of the Guided Proposal.
+* [boot-requirements.md](doc/boot-requirements.md) An auto-generated formal
+  document describing the boot requirements honored by the Guided Proposal, so
+  the functionality of the code can be validated by booting experts.
+* [boot-partition.md](doc/boot-partition.md) A raw collection of notes taken
+  during interviews with several booting experts, used as a reference to
+  implement the Guided Proposal.
+* [fake-devicegraphs-yaml-format.md](doc/fake-devicegraphs-yaml-format.md) A
+  high level view of the format used to represent a libstorage-ng devicegraph in
+  the yast-storage-ng test suite.
+* [installer-hacks.md](doc/installer-hacks.md) See the status document (linked
+  above) for details.
+* [designing-proposal-settings-ui.md](doc/designing-proposal-settings-ui.md)
+  The document that was used as a base for discussion when defining the user
+  interface of the Guided Setup. Kept in the repository just for historic
+  reference.
+* [sle15_features_in_partitioner.md](doc/sle15_features_in_partitioner.md) The
+  document that was used as a base for discussion when adding new features to
+  the Partitioner. Kept in the repository just for historic reference.
