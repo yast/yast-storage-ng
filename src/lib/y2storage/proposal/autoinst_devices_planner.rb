@@ -24,7 +24,7 @@
 require "y2storage/disk"
 require "y2storage/disk_size"
 require "y2storage/proposal/autoinst_size_parser"
-require "y2storage/proposal/autoinst_disk_planner"
+require "y2storage/proposal/autoinst_disk_device_planner"
 require "y2storage/proposal/autoinst_vg_planner"
 require "y2storage/proposal/autoinst_md_planner"
 
@@ -83,7 +83,7 @@ module Y2Storage
       attr_reader :issues_list
 
       def planned_for_disk_device(drive, disk_name)
-        planner = Y2Storage::Proposal::AutoinstDiskPlanner.new(devicegraph, issues_list)
+        planner = Y2Storage::Proposal::AutoinstDiskDevicePlanner.new(devicegraph, issues_list)
         planner.planned_devices(drive, disk_name)
       end
 

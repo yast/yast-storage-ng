@@ -25,7 +25,7 @@ module Y2Storage
   module Proposal
     # This class converts an AutoYaST specification into a set of planned block devices
     # ({Y2Storage::Planned::Partition} and {Y2Storage::Planned::StrayBlkDevice}).
-    class AutoinstDiskPlanner < AutoinstDrivePlanner
+    class AutoinstDiskDevicePlanner < AutoinstDrivePlanner
       # Returns an array of planned partitions for a given disk or the disk
       # itself if there are no partitions planned
       #

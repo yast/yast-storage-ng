@@ -21,10 +21,10 @@
 # find current contact information at www.suse.com.
 
 require_relative "../spec_helper"
-require "y2storage/proposal/autoinst_disk_planner"
+require "y2storage/proposal/autoinst_disk_device_planner"
 Yast.import "Arch"
 
-describe Y2Storage::Proposal::AutoinstDiskPlanner do
+describe Y2Storage::Proposal::AutoinstDiskDevicePlanner do
   using Y2Storage::Refinements::SizeCasts
 
   subject(:planner) { described_class.new(fake_devicegraph, issues_list) }
