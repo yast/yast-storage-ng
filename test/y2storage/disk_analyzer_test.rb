@@ -41,10 +41,12 @@ describe Y2Storage::DiskAnalyzer do
         end
       end
 
-      context "for disks with some Windows" do
+      context "for disks with some Windows in a PC system" do
         let(:scenario) { "windows-pc-gpt" }
 
         before do
+          allow(Yast::Arch).to receive(:x86_64).and_return true
+
           # A bit ugly mock, but what we want to achieve is to simulate that one of available
           # windows partitions cannot be properly detected due an Storage exception (bsc#1101979).
           allow_any_instance_of(::Storage::BlkFilesystem).to receive(:detect_content_info) do |fs|
