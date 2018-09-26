@@ -19,30 +19,13 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "y2storage/proposal/autoinst_planner"
+require "y2storage/proposal/autoinst_drive_planner"
 
 module Y2Storage
   module Proposal
     # This class converts an AutoYaST specification into a set of planned block devices
     # ({Y2Storage::Planned::Partition} and {Y2Storage::Planned::StrayBlkDevice}).
-    class AutoinstDiskPlanner
-      include Y2Storage::Proposal::AutoinstPlanner
-
-      # @!attribute [r] devicegraph
-      #   @return [Devicegraph]
-      # @!attribute [r] issues_list
-      #
-      attr_reader :devicegraph, :issues_list
-
-      # Constructor
-      #
-      # @param devicegraph [Devicegraph] Devicegraph to be used as starting point
-      # @param issues_list [AutoinstIssues::List] List of AutoYaST issues to register them
-      def initialize(devicegraph, issues_list)
-        @devicegraph = devicegraph
-        @issues_list = issues_list
-      end
-
+    class AutoinstDiskPlanner < AutoinstDrivePlanner
       # Returns an array of planned partitions for a given disk or the disk
       # itself if there are no partitions planned
       #

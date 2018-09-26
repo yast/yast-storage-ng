@@ -19,36 +19,19 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "y2storage/proposal/autoinst_planner"
+require "y2storage/proposal/autoinst_drive_planner"
 
 module Y2Storage
   module Proposal
     # This class converts an AutoYaST specification into a Planned::Vg in order
     # to set up a LVM volume group.
-    class AutoinstVgPlanner
-      include Y2Storage::Proposal::AutoinstPlanner
-
-      # @!attribute [r] devicegraph
-      #   @return [Devicegraph]
-      # @!attribute [r] issues_list
-      #
-      attr_reader :devicegraph, :issues_list
-
-      # Constructor
-      #
-      # @param devicegraph [Devicegraph] Devicegraph to be used as starting point
-      # @param issues_list [AutoinstIssues::List] List of AutoYaST issues to register them
-      def initialize(devicegraph, issues_list)
-        @devicegraph = devicegraph
-        @issues_list = issues_list
-      end
-
+    class AutoinstVgPlanner < AutoinstDrivePlanner
       # Returns a planned volume group according to an AutoYaST specification
       #
       # @param drive [AutoinstProfile::DriveSection] drive section describing
       #   the volume group
       # @return [Planned::LvmVg] Planned volume group
-      def planned_device(drive)
+      def planned_devices(drive)
         vg = Y2Storage::Planned::LvmVg.new(volume_group_name: File.basename(drive.device))
 
         pools, regular = drive.partitions.partition(&:pool)
@@ -60,7 +43,7 @@ module Y2Storage
 
         vg.thin_pool_lvs.each { |v| add_thin_pool_lv_reuse(v, drive) }
         add_vg_reuse(vg, drive)
-        vg
+        [vg]
       end
 
     private

@@ -19,36 +19,19 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "y2storage/proposal/autoinst_planner"
+require "y2storage/proposal/autoinst_drive_planner"
 
 module Y2Storage
   module Proposal
     # This class converts an AutoYaST specification into a Planned::Md in order
     # to set up a MD RAID.
-    class AutoinstMdPlanner
-      include Y2Storage::Proposal::AutoinstPlanner
-
-      # @!attribute [r] devicegraph
-      #   @return [Devicegraph]
-      # @!attribute [r] issues_list
-      #
-      attr_reader :devicegraph, :issues_list
-
-      # Constructor
-      #
-      # @param devicegraph [Devicegraph] Devicegraph to be used as starting point
-      # @param issues_list [AutoinstIssues::List] List of AutoYaST issues to register them
-      def initialize(devicegraph, issues_list)
-        @devicegraph = devicegraph
-        @issues_list = issues_list
-      end
-
+    class AutoinstMdPlanner < AutoinstDrivePlanner
       # Returns a MD array according to an AutoYaST specification
       #
       # @param drive [AutoinstProfile::DriveSection] drive section describing
       #   the MD RAID
-      # @return [Planned::Md] Planned MD RAID
-      def planned_device(drive)
+      # @return [Array<Planned::Md>] Planned MD RAID devices
+      def planned_devices(drive)
         md = Planned::Md.new(name: drive.name_for_md)
 
         part_section = drive.partitions.first
@@ -63,7 +46,7 @@ module Y2Storage
           md.md_parity = MdParity.find(raid_options.parity_algorithm) if raid_options.parity_algorithm
         end
 
-        md
+        [md]
       end
 
     private

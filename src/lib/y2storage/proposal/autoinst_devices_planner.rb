@@ -40,7 +40,6 @@ module Y2Storage
     #
     class AutoinstDevicesPlanner
       include Yast::Logger
-      include Y2Storage::Proposal::AutoinstPlanner
 
       # Constructor
       #
@@ -59,15 +58,16 @@ module Y2Storage
         result = []
 
         drives_map.each_pair do |disk_name, drive_section|
-          case drive_section.type
-          when :CT_DISK
-            planned_devs = planned_for_disk_device(drive_section, disk_name)
-            result.concat(planned_devs)
-          when :CT_LVM
-            result << planned_for_vg(drive_section)
-          when :CT_MD
-            result << planned_for_md(drive_section)
-          end
+          planned_devs =
+            case drive_section.type
+            when :CT_DISK
+              planned_for_disk_device(drive_section, disk_name)
+            when :CT_LVM
+              planned_for_vg(drive_section)
+            when :CT_MD
+              planned_for_md(drive_section)
+            end
+          result.concat(planned_devs)
         end
 
         remove_shadowed_subvols(result)
@@ -94,7 +94,7 @@ module Y2Storage
       # @return [Planned::LvmVg] Planned volume group
       def planned_for_vg(drive)
         planner = Y2Storage::Proposal::AutoinstVgPlanner.new(devicegraph, issues_list)
-        planner.planned_device(drive)
+        planner.planned_devices(drive)
       end
 
       # Returns a MD array according to an AutoYaST specification
@@ -104,7 +104,7 @@ module Y2Storage
       # @return [Planned::Md] Planned MD RAID
       def planned_for_md(drive)
         planner = Y2Storage::Proposal::AutoinstMdPlanner.new(devicegraph, issues_list)
-        planner.planned_device(drive)
+        planner.planned_devices(drive)
       end
 
       def remove_shadowed_subvols(planned_devices)

@@ -28,7 +28,32 @@ require "y2storage/volume_specification"
 module Y2Storage
   module Proposal
     # This module offers a set of common methods that are used by AutoYaST planners.
-    module AutoinstPlanner
+    class AutoinstDrivePlanner
+      # @!attribute [r] devicegraph
+      #   @return [Devicegraph]
+      # @!attribute [r] issues_list
+      #
+      attr_reader :devicegraph, :issues_list
+
+      # Constructor
+      #
+      # @param devicegraph [Devicegraph] Devicegraph to be used as starting point
+      # @param issues_list [AutoinstIssues::List] List of AutoYaST issues to register them
+      def initialize(devicegraph, issues_list)
+        @devicegraph = devicegraph
+        @issues_list = issues_list
+      end
+
+      # Returns a planned volume group according to an AutoYaST specification
+      #
+      # @param _drive [AutoinstProfile::DriveSection] drive section
+      # @return [Array] Array of planned devices
+      def planned_devices(_drive)
+        raise NotImplementedError
+      end
+
+    private
+
       # Set all the common attributes that are shared by any device defined by
       # a <partition> section of AutoYaST (i.e. a LV, MD or partition).
       #
@@ -159,8 +184,6 @@ module Y2Storage
       def parse_size(section, min, max)
         AutoinstSizeParser.new(proposal_settings).parse(section.size, section.mount, min, max)
       end
-
-    private
 
       # Instance of {ProposalSettings} based on the current product.
       #
