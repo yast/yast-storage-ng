@@ -24,6 +24,7 @@ require "yast/i18n"
 require "yast2/popup"
 require "y2partitioner/dialogs/partition_table_clone"
 require "y2partitioner/actions/controllers/clone_partition_table"
+require "y2partitioner/ui_state"
 
 module Y2Partitioner
   module Actions
@@ -58,6 +59,7 @@ module Y2Partitioner
         return result if result != :ok
 
         clone_partition_table
+        UIState.instance.select_row(controller.device)
         :finish
       end
 

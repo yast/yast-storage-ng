@@ -75,6 +75,7 @@ module Y2Partitioner
 
       def filesystem_commit
         fs_controller.finish
+        UIState.instance.select_row(fs_controller.blk_device)
         :finish
       end
 
