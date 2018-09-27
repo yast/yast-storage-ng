@@ -114,7 +114,7 @@ module Y2Storage
       end
 
       def mbr_gap
-        return false unless boot_disk
+        return 0 unless boot_disk
         boot_disk.mbr_gap
       end
 
