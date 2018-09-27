@@ -66,9 +66,9 @@ module Y2Partitioner
     # It remembers the decision so the same tab is showed in case the user stays
     # in the same node after redrawing.
     #
-    # @param [CWM::Page] page associated to the tab
+    # @param [CWM::Page, String] page associated to the tab (or just its label)
     def switch_to_tab(page)
-      self.tab = page.label
+      self.tab = page.respond_to?(:label) ? page.label : page
     end
 
     # Method to be called when the user operates in a row of a table of devices
