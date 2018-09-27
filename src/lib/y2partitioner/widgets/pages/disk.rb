@@ -86,7 +86,7 @@ module Y2Partitioner
         def tabs
           tabs = [
             DiskTab.new(disk),
-            PartitionsTab.new(disk, @pager, initial: true)
+            PartitionsTab.new(disk, @pager)
           ]
 
           tabs << UsedDevicesTab.new(used_devices, @pager) if used_devices_tab?
