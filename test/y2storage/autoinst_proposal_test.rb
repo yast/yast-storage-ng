@@ -96,7 +96,8 @@ describe Y2Storage::AutoinstProposal do
       context "when grub does not fit into mbr of the existing boot partition" do
         it "registers an -Could Not Create Boot- issue" do
           expect_any_instance_of(Y2Storage::BootRequirementsStrategies::Legacy).to receive(
-            :needed_partitions).and_raise(::Y2Storage::BootRequirementsStrategies::Error)
+            :needed_partitions
+          ).and_raise(::Y2Storage::BootRequirementsStrategies::Error)
           proposal.propose
           issue = proposal.issues_list.find do |i|
             i.is_a?(Y2Storage::AutoinstIssues::CouldNotCreateBoot)
