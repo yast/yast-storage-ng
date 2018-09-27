@@ -49,7 +49,7 @@ module Y2Storage
       # @param disk [Disk,Dasd] Disk to place the partitions on
       # @param drive [AutoinstProfile::DriveSection] drive section describing
       #   the layout for the disk
-      # @return [Array<Planned::Partition, Planned::StrayBlkDevice>] List of planned partitions or disks
+      # @return [Array<Planned::Disk, Planned::StrayBlkDevice>] List of planned partitions or disks
       def planned_for_disk(disk, drive)
         # partition 0: use the entire device
         partition_zero = drive.partitions.find { |p| p.partition_nr == 0 }
@@ -59,7 +59,7 @@ module Y2Storage
           planned_for_partitions(disk, drive)
         end
 
-        result
+        Array(result)
       end
 
       # Returns disk to be used without partitions.
@@ -81,12 +81,12 @@ module Y2Storage
         # FIXME: When a disk device is used as PV (indicated as partition with number 0
         # in the autoyast profile), a Stray Block Device is planned for it. Think about
         # a better solution (maybe by creating a Planned::PV ?).
-        planned = Y2Storage::Planned::StrayBlkDevice.new
-        device_config(planned, part, drive)
-        planned.lvm_volume_group_name = part.lvm_group
-        add_device_reuse(planned, drive.device, part)
+        planned_disk = Y2Storage::Planned::Disk.new
+        device_config(planned_disk, part, drive)
+        planned_disk.lvm_volume_group_name = part.lvm_group
+        add_device_reuse(planned_disk, drive.device, part)
 
-        [planned]
+        [planned_disk]
       end
 
       # Returns an array of planned partitions for a given disk
@@ -94,32 +94,44 @@ module Y2Storage
       # @param disk [Disk,Dasd] Disk to place the partitions on
       # @param drive [AutoinstProfile::DriveSection] drive section describing
       #   the layout for the disk
-      # @return [Array<Planned::Partition>] List of planned partitions
+      # @return [Planned::Disk] List of planned partitions
       def planned_for_partitions(disk, drive)
-        result = []
+        planned_disk = Y2Storage::Planned::Disk.new
 
-        drive.partitions.each_with_index do |section|
-          # TODO: fix Planned::Partition.initialize
-          partition = Y2Storage::Planned::Partition.new(nil, nil)
-
-          next unless assign_size_to_partition(disk, partition, section)
-
-          # TODO: partition.bootable is not in the AutoYaST profile. Check if
-          # there's some logic to set it in the old code.
-
-          partition.disk = disk.name
-          partition.partition_id = section.id_for_partition
-          partition.lvm_volume_group_name = section.lvm_group
-          partition.raid_name = section.raid_name
-          partition.primary = section.partition_type == "primary" if section.partition_type
-
-          device_config(partition, section, drive)
-          add_partition_reuse(partition, section) if section.create == false
-
-          result << partition
+        planned_disk.partitions = drive.partitions.each_with_object([]).each do |section, memo|
+          planned_partition = plan_partition(disk, drive, section)
+          memo << planned_partition if planned_partition
         end
 
-        result
+        planned_disk
+      end
+
+      # @todo The `drive` is needed because we need to check later whether the
+      #   `enable_snapshots` is set or not. That's a consequence of having that
+      #   element in the wrong place.
+      #
+      # @param disk [Disk,Dasd] Disk to place the partitions on
+      # @param drive [AutoinstProfile::DriveSection]
+      # @param section [AutoinstProfile::PartitionSection]
+      # @return [Planned::Partition,nil]
+      def plan_partition(disk, drive, section)
+        # TODO: fix Planned::Partition.initialize
+        partition = Y2Storage::Planned::Partition.new(nil, nil)
+
+        return unless assign_size_to_partition(disk, partition, section)
+
+        # TODO: partition.bootable is not in the AutoYaST profile. Check if
+        # there's some logic to set it in the old code.
+
+        partition.disk = disk.name
+        partition.partition_id = section.id_for_partition
+        partition.lvm_volume_group_name = section.lvm_group
+        partition.raid_name = section.raid_name
+        partition.primary = section.partition_type == "primary" if section.partition_type
+
+        device_config(partition, section, drive)
+        add_partition_reuse(partition, section) if section.create == false
+        partition
       end
 
       # Returns an array of planned Xen partitions according to a <drive>
