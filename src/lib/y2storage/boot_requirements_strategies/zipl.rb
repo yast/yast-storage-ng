@@ -97,7 +97,7 @@ module Y2Storage
       # @return [Planned::Partition]
       def zipl_partition(target)
         planned_partition = create_planned_partition(zipl_volume, target)
-        planned_partition.disk = boot_disk.name
+        planned_partition.disk = boot_disk.name if boot_disk
         planned_partition
       end
 

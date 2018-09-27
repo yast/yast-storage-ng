@@ -81,7 +81,8 @@ module Y2Storage
       def grub_partition_missing?
         # We don't check if the planned partition is in the boot disk,
         # whoever created it is in control of the details
-        current_devices = analyzer.planned_devices + boot_disk.partitions
+        current_devices = analyzer.planned_devices
+        current_devices += boot_disk.partitions if boot_disk
         current_devices.none? { |d| d.match_volume?(grub_volume) }
       end
 
@@ -113,6 +114,7 @@ module Y2Storage
       end
 
       def mbr_gap
+        return false unless boot_disk
         boot_disk.mbr_gap
       end
 
