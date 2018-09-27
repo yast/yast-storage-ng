@@ -165,8 +165,8 @@ module Y2Storage
         result = checker.needed_partitions
       rescue BootRequirementsChecker::Error => error
         issues_list.add(:could_not_create_boot)
-        log.warn ("#{checker.warnings}") unless checker.warnings.empty?
-        log.error ("#{checker.errors}") unless checker.errors.empty?
+        log.warn checker.warnings.to_s unless checker.warnings.empty?
+        log.error checker.errors.to_s unless checker.errors.empty?
         result = []
       end
       result
