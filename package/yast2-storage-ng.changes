@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Thu Sep 27 15:13:31 CEST 2018 - schubi@suse.de
+
+- AutoYaST proposal: Do not crash if existing boot partition
+  cannot be used without formating it. (bsc#1108831)
+- 4.0.213
+
+-------------------------------------------------------------------
 Fri Sep 19 13:19:58 UTC 2018 - jlopez@suse.com
 
 - Partitioner: ask for unmounting when deleting a device.
