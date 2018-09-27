@@ -2,7 +2,7 @@
 Thu Sep 27 15:13:31 CEST 2018 - schubi@suse.de
 
 - AutoYaST proposal: Do not crash if existing boot partition
-  cannot be used without formating it. (bsc#1108831)
+  cannot be used without formatting it. (bsc#1108831)
 - 4.0.213
 
 -------------------------------------------------------------------
