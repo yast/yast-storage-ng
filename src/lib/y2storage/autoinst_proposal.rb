@@ -163,7 +163,7 @@ module Y2Storage
       checker = BootRequirementsChecker.new(devicegraph, planned_devices: mountable_devices)
       begin
         result = checker.needed_partitions
-      rescue BootRequirementsChecker::Error => error
+      rescue BootRequirementsChecker::Error
         issues_list.add(:could_not_create_boot)
         log.warn checker.warnings.to_s unless checker.warnings.empty?
         log.error checker.errors.to_s unless checker.errors.empty?
