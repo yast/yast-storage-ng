@@ -1,6 +1,6 @@
 # encoding: utf-8
 
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2018] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -20,13 +20,15 @@
 # find current contact information at www.suse.com.
 
 require "yast"
-require "y2partitioner/widgets/device_button"
-require "y2partitioner/actions/add_lvm_lv"
+require "y2partitioner/widgets/device_menu_button"
+require "y2partitioner/actions/create_partition_table"
+require "y2partitioner/actions/clone_partition_table"
 
 module Y2Partitioner
   module Widgets
-    # Button for opening the workflow to add a logical volume to a volume group
-    class LvmLvAddButton < DeviceButton
+    # Menu button for grouping the special expert actions that can be performed
+    # on the partition table of a hard disk
+    class PartitionTableButton < DeviceMenuButton
       def initialize(*args)
         super
         textdomain "storage"
@@ -34,19 +36,27 @@ module Y2Partitioner
 
       # @macro seeAbstractWidget
       def label
-        # TRANSLATORS: button label to add a logical volume
-        _("Add Logical Volume...")
+        _("Partition Table")
       end
 
     private
 
-      # Returns the proper Actions class to perform the action for adding a
-      # logical volume
+      # @see DeviceMenuButton#actions
       #
-      # @see DeviceButton#actions
-      # @see Actions::AddLvmLv
-      def actions_class
-        Actions::AddLvmLv
+      # @return [Array<Hash>]
+      def actions
+        [
+          {
+            id:    :new,
+            label: _("Create New Partition Table..."),
+            class: Actions::CreatePartitionTable
+          },
+          {
+            id:    :clone,
+            label: _("Clone Partitions to Other Devices..."),
+            class: Actions::ClonePartitionTable
+          }
+        ]
       end
     end
   end

@@ -26,8 +26,7 @@ require "y2partitioner/widgets/disk_device_description"
 require "y2partitioner/widgets/used_devices_tab"
 require "y2partitioner/widgets/partitions_tab"
 require "y2partitioner/widgets/blk_device_edit_button"
-require "y2partitioner/widgets/partition_table_add_button"
-require "y2partitioner/widgets/partition_table_clone_button"
+require "y2partitioner/widgets/partition_table_button"
 
 module Y2Partitioner
   module Widgets
@@ -139,8 +138,8 @@ module Y2Partitioner
             description,
             Left(
               HBox(
-                PartitionTableAddButton.new(device: @disk),
-                PartitionTableCloneButton.new(device: @disk)
+                BlkDeviceEditButton.new(device: @disk),
+                PartitionTableButton.new(@disk)
               )
             )
           )

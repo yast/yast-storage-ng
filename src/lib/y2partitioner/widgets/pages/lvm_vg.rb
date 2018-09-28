@@ -28,8 +28,7 @@ require "y2partitioner/widgets/lvm_devices_table"
 require "y2partitioner/widgets/lvm_vg_bar_graph"
 require "y2partitioner/widgets/lvm_vg_description"
 require "y2partitioner/widgets/lvm_lv_add_button"
-require "y2partitioner/widgets/lvm_edit_button"
-require "y2partitioner/widgets/device_resize_button"
+require "y2partitioner/widgets/lvm_vg_resize_button"
 require "y2partitioner/widgets/device_delete_button"
 
 module Y2Partitioner
@@ -97,7 +96,11 @@ module Y2Partitioner
         # @macro seeCustomWidget
         def contents
           # Page wants a WidgetTerm, not an AbstractWidget
-          @contents ||= VBox(LvmVgDescription.new(@lvm_vg))
+          @contents ||=
+            VBox(
+              LvmVgDescription.new(@lvm_vg),
+              Left(DeviceDeleteButton.new(device: @lvm_vg))
+            )
         end
       end
 
@@ -119,24 +122,16 @@ module Y2Partitioner
           _("Log&ical Volumes")
         end
 
-        # Selects this tab by default
-        def initial
-          true
-        end
-
         # @macro seeCustomWidget
         def contents
-          @contents ||= VBox(
+          return @contents if @contents
+
+          device_buttons = DeviceButtonsSet.new(@pager)
+          @contents = VBox(
             LvmVgBarGraph.new(@lvm_vg),
-            table,
-            Left(
-              HBox(
-                LvmLvAddButton.new(device: @lvm_vg),
-                LvmEditButton.new(table: table),
-                DeviceResizeButton.new(table: table),
-                DeviceDeleteButton.new(table: table)
-              )
-            )
+            table(device_buttons),
+            Left(device_buttons),
+            Right(LvmLvAddButton.new(device: @lvm_vg))
           )
         end
 
@@ -147,12 +142,12 @@ module Y2Partitioner
         #
         # @see #devices
         #
+        # @param buttons_set [DeviceButtonsSet]
         # @return [LvmDevicesTable]
-        def table
-          return @table unless @table.nil?
-          @table = LvmDevicesTable.new(devices, @pager)
-          @table.remove_columns(:pe_size)
-          @table
+        def table(buttons_set)
+          table = LvmDevicesTable.new(devices, @pager, buttons_set)
+          table.remove_columns(:pe_size)
+          table
         end
 
         # Returns all logical volumes of a volume group, including thin pools
@@ -187,7 +182,10 @@ module Y2Partitioner
         # @macro seeCustomWidget
         def contents
           # Page wants a WidgetTerm, not an AbstractWidget
-          @contents ||= VBox(table)
+          @contents ||= VBox(
+            table,
+            Right(LvmVgResizeButton.new(device: @lvm_vg))
+          )
         end
 
       private

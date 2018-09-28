@@ -1,6 +1,6 @@
 # encoding: utf-8
 
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2018] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -21,12 +21,12 @@
 
 require "yast"
 require "y2partitioner/widgets/device_button"
-require "y2partitioner/actions/add_lvm_lv"
+require "y2partitioner/actions/resize_lvm_vg"
 
 module Y2Partitioner
   module Widgets
-    # Button for opening the workflow to add a logical volume to a volume group
-    class LvmLvAddButton < DeviceButton
+    # Button for editing the list of physical volumes of an LVM VG
+    class LvmVgResizeButton < DeviceButton
       def initialize(*args)
         super
         textdomain "storage"
@@ -34,19 +34,20 @@ module Y2Partitioner
 
       # @macro seeAbstractWidget
       def label
-        # TRANSLATORS: button label to add a logical volume
-        _("Add Logical Volume...")
+        # TRANSLATORS: label for button to change the list of physical
+        # volumes of an LVM VG
+        _("Change...")
       end
 
     private
 
-      # Returns the proper Actions class to perform the action for adding a
-      # logical volume
+      # Returns the proper Actions class to edit the used devices
       #
       # @see DeviceButton#actions
-      # @see Actions::AddLvmLv
       def actions_class
-        Actions::AddLvmLv
+        return nil unless device.is?(:lvm_vg)
+
+        Actions::ResizeLvmVg
       end
     end
   end
