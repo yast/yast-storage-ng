@@ -22,10 +22,8 @@
 require "cwm/tree_pager"
 require "y2partitioner/device_graphs"
 require "y2partitioner/widgets/lvm_devices_table"
-require "y2partitioner/widgets/lvm_add_button"
-require "y2partitioner/widgets/lvm_edit_button"
-require "y2partitioner/widgets/device_resize_button"
-require "y2partitioner/widgets/device_delete_button"
+require "y2partitioner/widgets/device_buttons_set"
+require "y2partitioner/widgets/lvm_vg_add_button"
 
 module Y2Partitioner
   module Widgets
@@ -62,6 +60,8 @@ module Y2Partitioner
         def contents
           return @contents if @contents
 
+          device_buttons = DeviceButtonsSet.new(@pager)
+          table = LvmDevicesTable.new(devices, @pager, device_buttons)
           icon = Icons.small_icon(Icons::LVM)
           @contents = VBox(
             Left(
@@ -72,25 +72,12 @@ module Y2Partitioner
               )
             ),
             table,
-            Left(
-              HBox(
-                LvmAddButton.new(table),
-                LvmEditButton.new(pager: @pager, table: table),
-                DeviceResizeButton.new(pager: @pager, table: table),
-                DeviceDeleteButton.new(pager: @pager, table: table)
-              )
-            )
+            Left(device_buttons),
+            Right(LvmVgAddButton.new)
           )
         end
 
       private
-
-        # Table with all vgs and their lvs
-        #
-        # @return [LvmDevicesTable]
-        def table
-          @table ||= LvmDevicesTable.new(devices, @pager)
-        end
 
         # Returns all volume groups and their logical volumes, including thin pools
         # and thin volumes

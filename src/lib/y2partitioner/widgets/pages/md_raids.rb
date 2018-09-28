@@ -73,12 +73,8 @@ module Y2Partitioner
               )
             ),
             table,
-            Left(
-              HBox(
-                MdAddButton.new,
-                device_buttons
-              )
-            )
+            Left(device_buttons),
+            Right(MdAddButton.new)
           )
         end
 
