@@ -1,0 +1,120 @@
+# encoding: utf-8
+
+# Copyright (c) [2018] SUSE LLC
+#
+# All Rights Reserved.
+#
+# This program is free software; you can redistribute it and/or modify it
+# under the terms of version 2 of the GNU General Public License as published
+# by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+# more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, contact SUSE LLC.
+#
+# To contact SUSE LLC about this file by physical or electronic mail, you may
+# find current contact information at www.suse.com.
+
+require "forwardable"
+
+module Y2Storage
+  module Planned
+    # This class holds a list of planned devices and offers an API to query the collection
+    #
+    # @example Add devices
+    class DevicesCollection
+      extend Forwardable
+      include Enumerable
+
+      # @!attribute [r] devices
+      #   @return [Array<Planned::Device>] List of planned devices
+      attr_reader :devices
+
+      def_delegators :all, :each
+
+      def initialize(devices = [])
+        @devices = devices
+      end
+
+      # Prepends the given devices to the collection
+      #
+      # @note This method returns a new instance.
+      #
+      # @param devices [Array<Y2Storage::Planned::Device>,Y2Storage::Planned::Device]
+      #   Devices to add
+      # @return [DevicesCollection]
+      def prepend(devices)
+        self.class.new(devices + @devices)
+      end
+
+      # Returns a new instance including the devices
+      #
+      # @param devices [Array<Y2Storage::Planned::Device>,Y2Storage::Planned::Device]
+      #   Devices to add
+      # @return [DevicesCollection]
+      def append(devices)
+        self.class.new(@devices + devices)
+      end
+
+      # Returns the list of planned partitions, including nested ones (within a disk)
+      #
+      # @return [Array<Planned::Partition>]
+      def partitions
+        devices.select { |d| d.is_a?(Planned::Partition) } + disks.map(&:partitions).flatten
+      end
+
+      # Returns the list of planned disks
+      #
+      # @return [Array<Planned::Disk>]
+      def disks
+        devices.select { |d| d.is_a?(Planned::Disk) }
+      end
+
+      # Returns the list of planned volume groups
+      #
+      # @return [Array<Planned::LvmVg>]
+      def vgs
+        devices.select { |d| d.is_a?(Planned::LvmVg) }
+      end
+
+      # Returns the list of planned MD RAID devices
+      #
+      # @return [Array<Planned::Md>]
+      def mds
+        devices.select { |d| d.is_a?(Planned::Md) }
+      end
+
+      # Returns the list of planned LVM logical volumes
+      #
+      # @return [Array<Planned::LvmLv>]
+      def lvs
+        vgs.map(&:all_lvs).flatten
+      end
+
+      # Returns the list of planned stray block devices.
+      #
+      # @return [Array<Planned::StrayBlkDevice>]
+      def stray_blk_devices
+        devices.select { |d| d.is_a?(Planned::StrayBlkDevice) }
+      end
+
+      # Returns all devices, including nested ones
+      #
+      # @return [Array<Planned::Device>]
+      def all
+        partitions + disks + stray_blk_devices + vgs + lvs + mds
+      end
+
+      # Returns the list of devices that can be mounted
+      #
+      # @return [Array<Planned::Device>]
+      def mountable
+        all.select { |d| d.respond_to?(:mount_point) }
+      end
+    end
+  end
+end
