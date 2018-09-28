@@ -24,14 +24,10 @@ require_relative "../test_helper"
 
 require "cwm/rspec"
 require "y2partitioner/widgets/device_delete_button"
+require "y2partitioner/device_graphs"
 
 describe Y2Partitioner::Widgets::DeviceDeleteButton do
-  subject { described_class.new(table: table) }
-
-  let(:table) do
-    instance_double(Y2Partitioner::Widgets::ConfigurableBlkDevicesTable,
-      selected_device: device)
-  end
+  subject { described_class.new(device: device) }
 
   let(:device) { nil }
 
@@ -52,9 +48,14 @@ describe Y2Partitioner::Widgets::DeviceDeleteButton do
     end
 
     context "when a device is selected" do
-      let(:device) { instance_double(Y2Storage::Partition) }
+      let(:device) { instance_double(Y2Storage::Partition, sid: 666) }
 
       before do
+        Y2Storage::StorageManager.create_test_instance
+
+        allow(Y2Partitioner::DeviceGraphs.instance.current)
+          .to receive(:find_device).with(666).and_return(device)
+
         allow(device).to receive(:is?).with(anything).and_return(false)
         allow(device).to receive(:is?).with(device_type).and_return(true)
 

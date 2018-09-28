@@ -84,11 +84,6 @@ describe Y2Partitioner::Widgets::Pages::MdRaid do
         button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::PartitionTableAddButton) }
         expect(button).to_not be_nil
       end
-
-      it "shows a button for cloning the partitions" do
-        button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::PartitionTableCloneButton) }
-        expect(button).to_not be_nil
-      end
     end
   end
 

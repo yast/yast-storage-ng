@@ -47,23 +47,8 @@ describe Y2Partitioner::Widgets::Pages::Lvm do
       )
     end
 
-    it "shows a menu button to create a new vg or lv" do
-      button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::LvmAddButton) }
-      expect(button).to_not be_nil
-    end
-
-    it "shows a button to edit a vg or lv" do
-      button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::LvmEditButton) }
-      expect(button).to_not be_nil
-    end
-
-    it "shows a resize button" do
-      button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::DeviceResizeButton) }
-      expect(button).to_not be_nil
-    end
-
-    it "shows a delete button" do
-      button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::DeviceDeleteButton) }
+    it "shows a menu button to create a new VG" do
+      button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::LvmVgAddButton) }
       expect(button).to_not be_nil
     end
   end

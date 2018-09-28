@@ -36,25 +36,6 @@ describe Y2Partitioner::Widgets::PartitionAddButton do
 
   include_examples "CWM::PushButton"
 
-  describe "#label" do
-    context "when instantiated without the :short argument" do
-      subject { described_class.new(device: device, pager: pager) }
-
-      it "returns \"Add Partition\"" do
-        expect(subject.label).to include("Add Partition")
-      end
-    end
-
-    context "when instantiated with a true :short argument" do
-      subject { described_class.new(device: device, pager: pager, short: true) }
-
-      it "returns \"Add\"" do
-        expect(subject.label).to include("Add")
-        expect(subject.label).to_not include("Partition")
-      end
-    end
-  end
-
   describe "#handle" do
     context "when no device is given" do
       let(:device) { nil }
