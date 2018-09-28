@@ -111,8 +111,7 @@ module Y2Storage
       def prep_partition_missing?
         # We don't check if the planned PReP partition is in the boot disk,
         # whoever created it is in control of the details
-        current_devices = analyzer.planned_devices
-        current_devices += boot_disk.partitions if boot_disk
+        current_devices = analyzer.planned_devices + boot_disk.partitions
         current_devices.none? { |d| d.match_volume?(prep_volume) }
       end
 
