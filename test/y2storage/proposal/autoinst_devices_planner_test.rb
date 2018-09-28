@@ -72,8 +72,9 @@ describe Y2Storage::Proposal::AutoinstDevicesPlanner do
       let(:snapshots) { false }
 
       let(:devices) { planner.planned_devices(drives_map) }
-      let(:root) { devices.find { |d| d.mount_point == "/" } }
-      let(:home) { devices.find { |d| d.mount_point == "/home" } }
+      let(:disk) { devices.disks.first }
+      let(:root) { disk.partitions.find { |d| d.mount_point == "/" } }
+      let(:home) { disk.partitions.find { |d| d.mount_point == "/home" } }
 
       let(:subvolumes) { nil }
       let(:root_volume_spec) do
