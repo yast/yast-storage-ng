@@ -29,6 +29,7 @@ require "y2partitioner/widgets/lvm_lv_modify_button"
 require "y2partitioner/widgets/partitions_button"
 require "y2partitioner/widgets/lvm_logical_volumes_button"
 require "y2partitioner/widgets/device_delete_button"
+require "y2partitioner/widgets/blk_device_edit_button"
 
 module Y2Partitioner
   module Widgets
@@ -85,7 +86,7 @@ module Y2Partitioner
       def calculate_buttons
         return [] if device.nil?
 
-        types = [:partition, :software_raid, :lvm_vg, :lvm_lv]
+        types = [:partition, :software_raid, :lvm_vg, :lvm_lv, :stray_blk_device]
 
         types.each do |type|
           return send(:"#{type}_buttons") if device.is?(type)
@@ -122,6 +123,12 @@ module Y2Partitioner
           DiskModifyButton.new(device),
           PartitionsButton.new(device, pager)
         ]
+      end
+
+      # Buttons to display if {#device} is a Xen virtual partition
+      # (StrayBlkDevice)
+      def stray_blk_device_buttons
+        [BlkDeviceEditButton.new(device: device)]
       end
 
       # Buttons to display if {#device} is a volume group
