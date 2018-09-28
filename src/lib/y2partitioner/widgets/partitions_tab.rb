@@ -56,9 +56,11 @@ module Y2Partitioner
 
       # @macro seeCustomWidget
       def contents
+        return @contents if @contents
+
         device_buttons = DeviceButtonsSet.new(@pager)
         table = ConfigurableBlkDevicesTable.new(devices, @pager, device_buttons)
-        @contents ||= VBox(
+        @contents = VBox(
           DiskBarGraph.new(device),
           table,
           Left(device_buttons),
