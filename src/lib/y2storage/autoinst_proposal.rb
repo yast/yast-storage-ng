@@ -161,7 +161,15 @@ module Y2Storage
       mountable_devices = find_mountable_devices(devices)
       return unless root?(mountable_devices)
       checker = BootRequirementsChecker.new(devicegraph, planned_devices: mountable_devices)
-      checker.needed_partitions
+      begin
+        result = checker.needed_partitions
+      rescue BootRequirementsChecker::Error
+        issues_list.add(:could_not_create_boot)
+        log.warn checker.warnings.to_s unless checker.warnings.empty?
+        log.error checker.errors.to_s unless checker.errors.empty?
+        result = []
+      end
+      result
     end
 
     # Return mountable devices from the list of planned ones
