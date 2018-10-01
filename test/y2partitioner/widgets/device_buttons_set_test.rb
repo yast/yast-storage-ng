@@ -98,6 +98,24 @@ describe Y2Partitioner::Widgets::DeviceButtonsSet do
       end
     end
 
+    context "when targeting a Bcache device" do
+      let(:scenario) { "bcache1.xml" }
+      let(:device) { device_graph.bcaches.first }
+
+      it "replaces the content with buttons to modify and to manage partitions" do
+        expect(widget).to receive(:replace) do |content|
+          widgets = Yast::CWM.widgets_in_contents([content])
+          expect(widgets.map(&:class)).to contain_exactly(
+            Y2Partitioner::Widgets::DeviceButtonsSet::ButtonsBox,
+            Y2Partitioner::Widgets::BcacheModifyButton,
+            Y2Partitioner::Widgets::PartitionsButton
+          )
+        end
+
+        widget.device = device
+      end
+    end
+
     context "when targeting a Xen virtual partition (stray block device)" do
       let(:scenario) { "xen-partitions.xml" }
       let(:device) { device_graph.stray_blk_devices.first }
@@ -151,5 +169,19 @@ describe Y2Partitioner::Widgets::DeviceButtonsSet do
         widget.device = device
       end
     end
+
+    context "when an unsupported device is used" do
+      let(:device) { device_graph.filesystems.first }
+
+      it "replaces the content with an empty widget" do
+        expect(widget).to receive(:replace) do |content|
+          widgets = Yast::CWM.widgets_in_contents([content])
+          expect(widgets.map(&:class)).to eq [CWM::Empty]
+        end
+
+        widget.device = device
+      end
+    end
+
   end
 end

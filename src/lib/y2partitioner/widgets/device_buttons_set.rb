@@ -26,6 +26,7 @@ require "y2partitioner/widgets/disk_modify_button"
 require "y2partitioner/widgets/md_modify_button"
 require "y2partitioner/widgets/lvm_vg_modify_button"
 require "y2partitioner/widgets/lvm_lv_modify_button"
+require "y2partitioner/widgets/bcache_modify_button"
 require "y2partitioner/widgets/partitions_button"
 require "y2partitioner/widgets/lvm_logical_volumes_button"
 require "y2partitioner/widgets/device_delete_button"
@@ -46,7 +47,7 @@ module Y2Partitioner
       #
       # @return [Array<Symbol>]
       SUPPORTED_TYPES = [
-        :partition, :software_raid, :lvm_vg, :lvm_lv, :stray_blk_device, :disk_device
+        :partition, :software_raid, :lvm_vg, :lvm_lv, :stray_blk_device, :bcache, :disk_device
       ]
       private_constant :SUPPORTED_TYPES
 
@@ -124,6 +125,14 @@ module Y2Partitioner
           MdModifyButton.new(device),
           PartitionsButton.new(device, pager),
           DeviceDeleteButton.new(pager: pager, device: device)
+        ]
+      end
+
+      # Buttons to display if {#device} is a bcache device
+      def bcache_buttons
+        [
+          BcacheModifyButton.new(device),
+          PartitionsButton.new(device, pager)
         ]
       end
 

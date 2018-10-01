@@ -52,7 +52,8 @@ module Y2Partitioner
         def contents
           return @contents if @contents
 
-          table = ConfigurableBlkDevicesTable.new(devices, @pager)
+          device_buttons = DeviceButtonsSet.new(@pager)
+          table = ConfigurableBlkDevicesTable.new(devices, @pager, device_buttons)
           icon = Icons.small_icon(Icons::BCACHE)
           @contents = VBox(
             Left(
@@ -63,12 +64,8 @@ module Y2Partitioner
               )
             ),
             table,
-            Left(
-              HBox(
-                BcacheAddButton.new
-                # TODO: other buttons
-              )
-            )
+            Left(device_buttons),
+            Right(BcacheAddButton.new)
           )
         end
 
