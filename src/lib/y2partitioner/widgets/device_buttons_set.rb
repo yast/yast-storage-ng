@@ -39,6 +39,17 @@ module Y2Partitioner
     # {#device=}) the content will be replaced by the appropiate set of buttons
     # for that device.
     class DeviceButtonsSet < CWM::ReplacePoint
+      # List of supported device types
+      #
+      # Each entry represents a symbol to be passed to Device#is?, it that call
+      # returns true, the appropiate set of buttons is returned
+      #
+      # @return [Array<Symbol>]
+      SUPPORTED_TYPES = [
+        :partition, :software_raid, :lvm_vg, :lvm_lv, :stray_blk_device, :disk_device
+      ]
+      private_constant :SUPPORTED_TYPES
+
       # @return [Y2Storage::Device] current target for the actions
       attr_reader :device
 
@@ -86,13 +97,12 @@ module Y2Partitioner
       def calculate_buttons
         return [] if device.nil?
 
-        types = [:partition, :software_raid, :lvm_vg, :lvm_lv, :stray_blk_device]
-
-        types.each do |type|
+        SUPPORTED_TYPES.each do |type|
           return send(:"#{type}_buttons") if device.is?(type)
         end
 
-        disk_buttons
+        # Returns no buttons if the device is not supported
+        []
       end
 
       # Just an empty widget to display in case there are no buttons to display
@@ -118,7 +128,7 @@ module Y2Partitioner
       end
 
       # Buttons to display if {#device} is a disk device
-      def disk_buttons
+      def disk_device_buttons
         [
           DiskModifyButton.new(device),
           PartitionsButton.new(device, pager)

@@ -51,7 +51,16 @@ module Y2Partitioner
         action = action_for_widget_id(event["ID"])
         return nil unless action
 
-        execute_action(action) == :finish ? :redraw : nil
+        action_result(action)
+      end
+
+      # @macro seeItemsSelection
+      #
+      # @return [Array<[Symbol, String]>] list of menu options
+      def items
+        actions.map do |action|
+          [widget_id_for_action(action), action[:label]]
+        end
       end
 
     protected
@@ -84,6 +93,14 @@ module Y2Partitioner
         action[:class].new(device).run
       end
 
+      # See {#handle}
+      #
+      # @param action [Hash]
+      # @return [:redraw, nil] :redraw when the action is performed; nil otherwise
+      def action_result(action)
+        execute_action(action) == :finish ? :redraw : nil
+      end
+
       # Current devicegraph
       #
       # @return [Y2Storage::Devicegraph]
@@ -97,13 +114,6 @@ module Y2Partitioner
       def device
         return nil unless device_sid
         working_graph.find_device(device_sid)
-      end
-
-      # @return [Array<[Symbol, String]>] list of menu options
-      def items
-        actions.map do |action|
-          [widget_id_for_action(action), action[:label]]
-        end
       end
 
       # LibYUI id of the menu-button item associated to the given action
