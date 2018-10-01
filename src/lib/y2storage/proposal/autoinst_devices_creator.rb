@@ -72,14 +72,14 @@ module Y2Storage
 
       # Devicegraph including all the specified planned devices
       #
-      # @param planned_devices [Array<Planned::Device>] Devices to create/reuse
+      # @param planned_devices [Planned::DevicesCollection] Devices to create/reuse
       # @param disk_names [Array<String>] Disks to consider
       #
       # @return [AutoinstCreatorResult] Result with new devicegraph in which all the
       #   planned devices have been allocated
       def populated_devicegraph(planned_devices, disk_names)
         # Process planned partitions
-        log.info "planned devices = #{planned_devices.inspect}"
+        log.info "planned devices = #{planned_devices.to_a.inspect}"
         log.info "disk names = #{disk_names.inspect}"
 
         # Process planned partitions
@@ -142,7 +142,7 @@ module Y2Storage
       #
       # @return [Array<Array<Planned::Partition>, Array<Planned::Partition>, CreatorResult>]
       def process_partitions(planned_devices, disk_names)
-        planned_partitions = planned_devices.select { |d| d.is_a?(Planned::Partition) }
+        planned_partitions = planned_devices.partitions
         parts_to_reuse, parts_to_create = planned_partitions.partition(&:reuse?)
         creator_result = create_partitions(parts_to_create, disk_names)
         reuse_devices(parts_to_reuse, creator_result.devicegraph)
@@ -158,9 +158,10 @@ module Y2Storage
       #
       # @return [Array<Array<Planned::Md>, Array<Planned::Md>, CreatorResult>]
       def process_mds(planned_devices, devs_to_reuse, creator_result)
-        planned_mds = planned_devices.select { |d| d.is_a?(Planned::Md) }
-        mds_to_reuse, mds_to_create = planned_mds.partition(&:reuse?)
-        creator_result.merge!(create_mds(mds_to_create, creator_result, devs_to_reuse))
+        mds_to_reuse, mds_to_create = planned_devices.mds.partition(&:reuse?)
+        # TODO: currently it is not possible to use full disks in a RAID
+        devs_to_reuse_in_md = reusable_by_md(devs_to_reuse)
+        creator_result.merge!(create_mds(mds_to_create, creator_result, devs_to_reuse_in_md))
         mds_to_reuse.each { |i| i.reuse!(creator_result.devicegraph) }
 
         [mds_to_create, mds_to_reuse, creator_result]
@@ -174,7 +175,7 @@ module Y2Storage
       #
       # @return [Array<Array<Planned::Md>, Array<Planned::Md>, CreatorResult>]
       def process_vgs(planned_devices, devs_to_reuse, creator_result)
-        planned_vgs = planned_devices.select { |d| d.is_a?(Planned::LvmVg) }
+        planned_vgs = planned_devices.vgs
         creator_result.merge!(set_up_lvm(planned_vgs, creator_result, devs_to_reuse))
         vgs_to_reuse = planned_vgs.select(&:reuse?)
         reuse_vgs(vgs_to_reuse, creator_result.devicegraph)
@@ -298,6 +299,14 @@ module Y2Storage
           new_device.min_size = DiskSize.B(1)
           new_device
         end
+      end
+
+      # Return devices which can be reused by an MD RAID
+      #
+      # @param planned_devices [Planned::DevicesCollection] collection of planned devices
+      # @return [Array<Planned::Device>]
+      def reusable_by_md(planned_devices)
+        planned_devices.select { |d| d.is_a?(Planned::StrayBlkDevice) }
       end
     end
   end
