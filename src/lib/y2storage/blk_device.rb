@@ -234,7 +234,7 @@ module Y2Storage
     #
     #   @raise [Storage::WrongNumberOfChildren] if there is any children
     #   @return [BcacheCset]
-    storage_forward :create_bcache_cset, as: "Bcache", raise_errors: true
+    storage_forward :create_bcache_cset, as: "BcacheCset", raise_errors: true
 
     # @!method create_encryption(dm_name)
     #   Creates a new encryption object on top of the device.
