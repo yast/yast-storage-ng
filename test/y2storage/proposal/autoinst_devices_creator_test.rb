@@ -31,6 +31,9 @@ describe Y2Storage::Proposal::AutoinstDevicesCreator do
   let(:scenario) { "windows-linux-free-pc" }
   let(:filesystem_type) { Y2Storage::Filesystems::Type::EXT4 }
   let(:mount_by_type) { Y2Storage::Filesystems::MountByType::PATH }
+  let(:disk) { Y2Storage::Planned::Disk.new.tap { |d| d.partitions = partitions } }
+  let(:partitions) { [new_part, reusable_part] }
+
   let(:new_part) do
     Y2Storage::Planned::Partition.new("/home", filesystem_type).tap do |part|
       part.fstab_options = ["ro", "acl"]
@@ -233,9 +236,11 @@ describe Y2Storage::Proposal::AutoinstDevicesCreator do
 
         let(:lv_srv) { planned_lv(mount_point: "/srv", logical_volume_name: "lv_srv") }
         let(:vg1) { planned_vg(volume_group_name: "vg1", lvs: [lv_root]) }
+        let(:partitions) { [pv, pv1] }
+        let(:planned_devices) { Y2Storage::Planned::DevicesCollection.new([disk, vg, vg1]) }
 
         it "creates all volume groups" do
-          result = creator.populated_devicegraph([pv, pv1, vg, vg1], ["/dev/sda"])
+          result = creator.populated_devicegraph(planned_devices, ["/dev/sda"])
           lvm_vgs = result.devicegraph.lvm_vgs
           expect(lvm_vgs.size).to eq(2)
         end
@@ -258,8 +263,12 @@ describe Y2Storage::Proposal::AutoinstDevicesCreator do
           planned_md(name: "/dev/md0", mount_point: "/")
         end
 
+        let(:partitions) { [part1, part2] }
+
+        let(:planned_devices) { Y2Storage::Planned::DevicesCollection.new([disk, md0]) }
+
         it "adds the partition as a RAID member" do
-          result = creator.populated_devicegraph([part1, part2, md0], ["/dev/sda", "/dev/sdb"])
+          result = creator.populated_devicegraph(planned_devices, ["/dev/sda", "/dev/sdb"])
           devicegraph = result.devicegraph
           md = devicegraph.md_raids.first
           expect(md.devices.size).to eq(2)

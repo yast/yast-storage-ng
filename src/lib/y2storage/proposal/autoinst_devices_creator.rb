@@ -86,16 +86,12 @@ module Y2Storage
         parts_to_create, parts_to_reuse, creator_result =
           process_partitions(planned_devices, disk_names)
 
-        # Process planned stray block devices (Xen virtual partitions)
-        planned_stray_devs = process_stray_devs(planned_devices, creator_result.devicegraph)
+        # Process planned disk like devices (Xen virtual partitions and full disks)
+        planned_disk_like_devs = process_disk_like_devs(planned_devices, creator_result.devicegraph)
 
-        # Add planned stray block devices to reuse list so they can be considered for lvm
-        # and raids later on.
-        #
-        # FIXME: When a disk device is used as PV (indicated as partition with number 0
-        # in the autoyast profile), a Stray Block Device is planned for it. Think about
-        # a better solution (maybe by creating a Planned::PV ?).
-        devs_to_reuse = parts_to_reuse + planned_stray_devs
+        # Add planned disk like devices to reuse list so they can be considered for lvm and raids
+        # later on.
+        devs_to_reuse = parts_to_reuse + planned_disk_like_devs
 
         # Process planned Mds
         mds_to_create, _mds_to_reuse, creator_result =
@@ -183,18 +179,20 @@ module Y2Storage
         [planned_vgs, creator_result]
       end
 
-      # Formats and/or mounts the stray block devices (Xen virtual partitions)
+      # Formats and/or mounts the disk like block devices (Xen virtual partitions and full disks)
       #
       # @param planned_devices [Array<Planned::Device>] all planned devices
       # @param devicegraph     [Devicegraph] devicegraph containing the Xen
-      #   partitions to be processed. It will be modified.
-      # @return                [Array<Planned::StrayBlkDevice>] all stray block
-      #   devices
-      def process_stray_devs(planned_devices, devicegraph)
-        planned_stray_devs = planned_devices.select { |d| d.is_a?(Planned::StrayBlkDevice) }
-        planned_stray_devs.each { |d| d.reuse!(devicegraph) }
+      #   partitions or full disks. It will be modified.
+      # @return                [Array<Planned::StrayBlkDevice,Planned::Disk>] all disk like
+      #   block devices
+      def process_disk_like_devs(planned_devices, devicegraph)
+        planned_devs = planned_devices.select do |dev|
+          dev.is_a?(Planned::StrayBlkDevice) || dev.is_a?(Planned::Disk)
+        end
+        planned_devs.each { |d| d.reuse!(devicegraph) }
 
-        planned_stray_devs
+        planned_devs
       end
 
       # Creates planned partitions in the given devicegraph
@@ -306,7 +304,9 @@ module Y2Storage
       # @param planned_devices [Planned::DevicesCollection] collection of planned devices
       # @return [Array<Planned::Device>]
       def reusable_by_md(planned_devices)
-        planned_devices.select { |d| d.is_a?(Planned::StrayBlkDevice) }
+        planned_devices.select do |dev|
+          dev.is_a?(Planned::StrayBlkDevice) || dev.is_a?(Planned::Partition)
+        end
       end
     end
   end
