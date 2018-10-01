@@ -252,7 +252,7 @@ module Y2Storage
         # unit (that equals to 8225280 bytes in my experiments).
         # According to the comments there, that was done due to bnc#415005 and
         # bnc#262535.
-        @size = device.size.to_i.to_s if create && !device.is?(:md)
+        @size = device.size.to_i.to_s if create && !(device.is?(:md) || device.is?(:disk))
       end
 
       def to_hashes
@@ -289,6 +289,8 @@ module Y2Storage
           init_lv_fields(device)
         elsif device.is?(:md)
           init_md_fields(device)
+        elsif device.is?(:disk)
+          init_disk_fields(device)
         else
           init_partition_fields(device)
         end
@@ -301,6 +303,12 @@ module Y2Storage
         @partition_id = partition_id_from(partition)
         @lvm_group = lvm_group_name(partition)
         @raid_name = partition.md.name if partition.md
+      end
+
+      def init_disk_fields(disk)
+        @create = false
+        @lvm_group = lvm_group_name(disk)
+        @raid_name = disk.md.name if disk.md
       end
 
       def init_lv_fields(lv)

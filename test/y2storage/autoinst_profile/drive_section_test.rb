@@ -127,6 +127,34 @@ describe Y2Storage::AutoinstProfile::DriveSection do
       expect(section.partitions.size).to eq 2
     end
 
+    context "when the disk is not used" do
+      it "returns nil" do
+        section = described_class.new_from_storage(device("sda"))
+        expect(section).to be_nil
+      end
+    end
+
+    context "when the disk has no partitions but it is used as LVM PV or RAID member" do
+      let(:sda) { device("sda") }
+      let(:pv) { double("pv") }
+
+      before do
+        allow(sda).to receive(:component_of).and_return([pv])
+      end
+
+      it "returns a section with disklabel set to 'none'" do
+        section = described_class.new_from_storage(sda)
+        expect(section.disklabel).to_not be_nil
+      end
+
+      it "includes a partition holding filesystem specification for the disk" do
+        section = described_class.new_from_storage(sda)
+        expect(section.partitions).to contain_exactly(
+          an_object_having_attributes("create" => false)
+        )
+      end
+    end
+
     context "for the extended partition" do
       it "considers the partition to not be exportable" do
         section = described_class.new_from_storage(device("sdd"))

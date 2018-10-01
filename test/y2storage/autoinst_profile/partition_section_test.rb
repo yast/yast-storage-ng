@@ -85,6 +85,46 @@ describe Y2Storage::AutoinstProfile::PartitionSection do
       end
     end
 
+    context "given a disk" do
+      let(:section) { described_class.new_from_storage(dev) }
+      let(:dev) { device("sda") }
+
+      it "initializes #create to false" do
+        expect(section.create).to eq(false)
+      end
+
+      it "initializes #size to nil" do
+        expect(section.size).to be_nil
+      end
+
+      context "when the partition belongs to a LVM volume group" do
+        let(:pv) { instance_double(Y2Storage::LvmPv, lvm_vg: vg) }
+        let(:vg) { instance_double(Y2Storage::LvmVg, basename: "vg0") }
+
+        before do
+          allow(dev).to receive(:lvm_pv).and_return(pv)
+        end
+
+        it "initializes the #lvm_group" do
+          expect(section.lvm_group).to eq("vg0")
+        end
+      end
+
+      context "when the partition belongs to an MD RAID" do
+        let(:dev) { device("sdb1") }
+        let(:md) { instance_double(Y2Storage::Md, name: "/dev/md0") }
+
+        before do
+          allow(dev).to receive(:md).and_return(md)
+        end
+
+        it "initializes #raid_name" do
+          section = described_class.new_from_storage(dev)
+          expect(section.raid_name).to eq(md.name)
+        end
+      end
+    end
+
     context "given a logical volume" do
       let(:vg) { fake_devicegraph.lvm_vgs.first }
 
