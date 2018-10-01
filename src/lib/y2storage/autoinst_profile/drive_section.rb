@@ -190,6 +190,29 @@ module Y2Storage
         "drives"
       end
 
+      # @return [String] disklabel value which indicates that no partition table is wanted.
+      NO_PARTITION_TABLE = "none".freeze
+
+      # Determine whether the drive should have a partition table or not
+      #
+      # @note When the disklabel is set to 'none', a partition table should be created.
+      #   For backward compatibility reasons, setting partition_nr to 0 has the same effect.
+      #
+      # @return [Boolean] Returns true when a partition table is wanted; false otherwise.
+      def partition_table?
+        disklabel != NO_PARTITION_TABLE && partitions.none? { |i| i.partition_nr == 0 }
+      end
+
+      # Returns the partition which contains the configuration for the whole disk
+      #
+      # @return [PartitionSection,nil] Return the partition section which contains
+      #
+      # @see #partition_table?
+      def master_partition
+        return if partition_table?
+        partitions.find { |i| i.partition_nr == 0 } || partitions.first
+      end
+
     protected
 
       # Method used by {.new_from_storage} to populate the attributes when

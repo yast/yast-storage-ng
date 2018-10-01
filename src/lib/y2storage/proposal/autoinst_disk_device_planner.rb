@@ -46,15 +46,19 @@ module Y2Storage
       # Returns an array of planned partitions for a given disk or the disk
       # itself if there are no partitions planned
       #
+      # @note When using a whole disk, the partition marked as '0' (or the first one of no
+      #   partition is explicitly set) contains the configuration values for the whole disk.
+      #
       # @param disk [Disk,Dasd] Disk to place the partitions on
       # @param drive [AutoinstProfile::DriveSection] drive section describing
       #   the layout for the disk
       # @return [Array<Planned::Disk, Planned::StrayBlkDevice>] List of planned partitions or disks
+      #
+      # @see AutoinstProfile::DriveSection#master_partition
       def planned_for_disk(disk, drive)
-        # partition 0: use the entire device
-        partition_zero = drive.partitions.find { |p| p.partition_nr == 0 }
-        result = if partition_zero
-          planned_for_full_disk(drive, partition_zero)
+        master_partition = drive.master_partition
+        result = if master_partition
+          planned_for_full_disk(drive, master_partition)
         else
           planned_for_partitions(disk, drive)
         end

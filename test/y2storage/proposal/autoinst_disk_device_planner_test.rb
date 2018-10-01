@@ -470,5 +470,36 @@ describe Y2Storage::Proposal::AutoinstDiskDevicePlanner do
       end
     end
 
+    context "using the whole disk" do
+      let(:disk_spec) do
+        { "device" => "/dev/sda", "partitions" => [root_spec] }
+      end
+
+      context "when a partition_nr is set to '0'" do
+        let(:root_spec) do
+          { "mount" => "/", "filesystem" => "ext4", "partition_nr" => 0 }
+        end
+
+        it "uses the whole disk" do
+          devices = planner.planned_devices(drive)
+          expect(devices).to contain_exactly(
+            an_object_having_attributes("mount_point" => "/", "partitions" => [])
+          )
+        end
+      end
+
+      context "when disklabel is set to 'none'" do
+        let(:disk_spec) do
+          { "device" => "/dev/sda", "disklabel" => "none", "partitions" => [root_spec] }
+        end
+
+        it "uses the whole disk" do
+          devices = planner.planned_devices(drive)
+          expect(devices).to contain_exactly(
+            an_object_having_attributes("mount_point" => "/", "partitions" => [])
+          )
+        end
+      end
+    end
   end
 end
