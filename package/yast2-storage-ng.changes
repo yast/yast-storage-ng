@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Tue Oct  2 16:10:40 CEST 2018 - schubi@suse.de
+
+- Fixed flickering testcase. Maybe produced by the fix of
+  bsc#1108831.
+- 4.1.21
+
+-------------------------------------------------------------------
 Thu Sep 27 15:13:31 CEST 2018 - schubi@suse.de
 
 - AutoYaST proposal: Do not crash if existing boot partition
