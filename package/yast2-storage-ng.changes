@@ -1,8 +1,19 @@
 -------------------------------------------------------------------
-Tue Oct  2 16:10:40 CEST 2018 - schubi@suse.de
+Tue Oct  2 13:44:40 UTC 2018 - schubi@suse.de
 
 - Fixed flickering testcase. Maybe produced by the fix of
   bsc#1108831.
+- 4.1.22  
+
+-------------------------------------------------------------------
+Tue Oct  2 13:43:16 UTC 2018 - ancor@suse.com
+
+- Partitioner: make it possible to directly format a disk (with
+  no partitions).
+- Partitioner: reorganized the user interface by grouping options
+  to ensure all the new possibilities (like formatting a whole
+  disk or creating partitions on an MD RAID) fit into text mode
+  80x24 (part of fate#318196 and of fate#326573).
 - 4.1.21
 
 -------------------------------------------------------------------

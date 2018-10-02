@@ -28,7 +28,6 @@ require "y2partitioner/widgets/configurable_blk_devices_table"
 require "y2partitioner/widgets/blk_device_edit_button"
 require "y2partitioner/widgets/device_delete_button"
 require "y2partitioner/widgets/partition_table_add_button"
-require "y2partitioner/widgets/partition_table_clone_button"
 require "y2partitioner/widgets/used_devices_tab"
 require "y2partitioner/widgets/used_devices_edit_button"
 require "y2partitioner/widgets/partitions_tab"
@@ -107,8 +106,7 @@ module Y2Partitioner
                 HBox(
                   BlkDeviceEditButton.new(device: @md),
                   DeviceDeleteButton.new(device: @md),
-                  PartitionTableAddButton.new(device: @md),
-                  PartitionTableCloneButton.new(device: @md)
+                  PartitionTableAddButton.new(device: @md)
                 )
               )
             )
@@ -134,11 +132,7 @@ module Y2Partitioner
         def contents
           @contents ||= VBox(
             table,
-            Left(
-              HBox(
-                UsedDevicesEditButton.new(device: @md)
-              )
-            )
+            Right(UsedDevicesEditButton.new(device: @md))
           )
         end
       end

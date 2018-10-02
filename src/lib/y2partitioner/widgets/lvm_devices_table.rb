@@ -31,10 +31,10 @@ module Y2Partitioner
 
       # Constructor
       #
-      # @param devices [Array<Y2Storage::Lvm_vg, Y2Storage::Lvm_lv>] devices to display
-      # @param pager [CWM::Pager] table have feature, that double click change content of pager
-      #   if someone do not need this feature, make it only optional
-      def initialize(devices, pager)
+      # @param devices [Array<Y2Storage::Lvm_vg, Y2Storage::Lvm_lv>] see {#devices}
+      # @param pager [CWM::Pager] see {#pager}
+      # @param buttons_set [DeviceButtonsSet] see {#buttons_set}
+      def initialize(devices, pager, buttons_set = nil)
         textdomain "storage"
 
         super

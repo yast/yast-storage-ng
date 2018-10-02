@@ -1,6 +1,6 @@
 # encoding: utf-8
 
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2018] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -21,12 +21,12 @@
 
 require "yast"
 require "y2partitioner/widgets/device_button"
-require "y2partitioner/actions/add_partition"
+require "y2partitioner/actions/resize_lvm_vg"
 
 module Y2Partitioner
   module Widgets
-    # Button for adding a partition
-    class PartitionAddButton < DeviceButton
+    # Button for editing the list of physical volumes of an LVM VG
+    class LvmVgResizeButton < DeviceButton
       def initialize(*args)
         super
         textdomain "storage"
@@ -34,31 +34,20 @@ module Y2Partitioner
 
       # @macro seeAbstractWidget
       def label
-        # TRANSLATORS: label for button to add a partition
-        _("Add Partition...")
+        # TRANSLATORS: label for button to change the list of physical
+        # volumes of an LVM VG
+        _("Change...")
       end
 
     private
 
-      # When the selected device is a partition, its partitionable (disk, dasd,
-      # multipath or BIOS RAID) is considered as the selected device
-      #
-      # @see DeviceButton#device
-      #
-      # @return [Y2Storage::Device, nil]
-      def device
-        dev = super
-        return dev if dev.nil?
-
-        dev.is?(:partition) ? dev.partitionable : dev
-      end
-
-      # Returns the proper Actions class for adding a partition
+      # Returns the proper Actions class to edit the used devices
       #
       # @see DeviceButton#actions
-      # @see Actions::AddPartition
       def actions_class
-        Actions::AddPartition
+        return nil unless device.is?(:lvm_vg)
+
+        Actions::ResizeLvmVg
       end
     end
   end

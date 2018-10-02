@@ -19,72 +19,48 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "cwm/tree_pager"
 require "y2partitioner/icons"
-require "y2partitioner/device_graphs"
+require "y2partitioner/ui_state"
+require "y2partitioner/widgets/pages/devices_table"
 require "y2partitioner/widgets/md_raids_table"
 require "y2partitioner/widgets/md_add_button"
-require "y2partitioner/widgets/device_buttons_set"
 
 module Y2Partitioner
   module Widgets
     module Pages
       # A Page for Software RAIDs. It contains a {MdRaidsTable}.
-      class MdRaids < CWM::Page
+      class MdRaids < DevicesTable
         include Yast::I18n
-        extend Yast::I18n
 
         # Constructor
-        #
-        # @param pager [CWM::TreePager]
-        def initialize(pager)
+        def initialize(*args)
           textdomain "storage"
-
-          @pager = pager
-        end
-
-        # Label for all the instances
-        #
-        # @see #label
-        #
-        # @return [String]
-        def self.label
-          N_("RAID")
+          super
         end
 
         # @macro seeAbstractWidget
         def label
-          _(self.class.label)
-        end
-
-        # @macro seeCustomWidget
-        def contents
-          return @contents if @contents
-
-          icon = Icons.small_icon(Icons::RAID)
-          device_buttons = DeviceButtonsSet.new(@pager)
-          table = MdRaidsTable.new(devices, @pager, device_buttons)
-          @contents = VBox(
-            Left(
-              HBox(
-                Image(icon, ""),
-                # TRANSLATORS: Heading
-                Heading(_("RAID"))
-              )
-            ),
-            table,
-            Left(
-              HBox(
-                MdAddButton.new,
-                device_buttons
-              )
-            )
-          )
+          UIState.instance.md_raids_label
         end
 
       private
 
-        # Returns all Software RAIDs
+        # @see DevicesTable
+        def icon
+          Icons::RAID
+        end
+
+        # @see DevicesTable
+        def table_buttons
+          MdAddButton.new
+        end
+
+        # @see DevicesTable
+        def table
+          @table ||= MdRaidsTable.new(devices, pager, device_buttons)
+        end
+
+        # Returns all Software RAIDs and its partitions
         #
         # @return [Array<Y2Storage::Md>]
         def devices

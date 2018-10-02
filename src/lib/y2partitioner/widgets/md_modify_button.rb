@@ -1,6 +1,6 @@
 # encoding: utf-8
 
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2018] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -20,15 +20,15 @@
 # find current contact information at www.suse.com.
 
 require "yast"
-require "cwm"
+require "y2partitioner/widgets/device_menu_button"
 require "y2partitioner/actions/edit_blk_device"
-require "y2partitioner/widgets/device_button"
-require "y2partitioner/ui_state"
+require "y2partitioner/actions/edit_md_devices"
+require "y2partitioner/actions/create_partition_table"
 
 module Y2Partitioner
   module Widgets
-    # Button for editing a volume group or logical volume
-    class LvmEditButton < DeviceButton
+    # Menu button for modifying an MD RAID
+    class MdModifyButton < DeviceMenuButton
       def initialize(*args)
         super
         textdomain "storage"
@@ -36,39 +36,36 @@ module Y2Partitioner
 
       # @macro seeAbstractWidget
       def label
-        _("Edit...")
+        _("&Modify")
       end
 
-    protected
+    private
 
-      # When a vg is edited, go directly to that vg entry in the tree view.
-      # When a lv is edited, start the proper wizard.
+      # @see DeviceMenuButton#actions
       #
-      # @see DeviceButton#actions
+      # @see Actions::EditBlkDevice
+      # @see Actions::EditMdDevices
+      # @see Actions::CreatePartitionTable
+      #
+      # @return [Array<Hash>]
       def actions
-        actions_result = case device
-        when Y2Storage::LvmVg
-          edit_vg
-        when Y2Storage::LvmLv
-          edit_lv
-        end
-
-        result(actions_result)
-      end
-
-      # If pager is known, jumps to the vg page
-      def edit_vg
-        return unless pager
-
-        page = pager.device_page(device)
-        UIState.instance.go_to_tree_node(page)
-        :finish
-      end
-
-      # Opens workflow to edit the lv
-      def edit_lv
-        UIState.instance.select_row(device.sid)
-        Actions::EditBlkDevice.new(device).run
+        [
+          {
+            id:    :edit,
+            label: _("Edit RAID..."),
+            class: Actions::EditBlkDevice
+          },
+          {
+            id:    :devices,
+            label: _("Change Used Devices..."),
+            class: Actions::EditMdDevices
+          },
+          {
+            id:    :ptable,
+            label: _("Create New Partition Table..."),
+            class: Actions::CreatePartitionTable
+          }
+        ]
       end
     end
   end

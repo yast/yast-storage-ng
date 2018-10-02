@@ -1,6 +1,6 @@
 # encoding: utf-8
 
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2018] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -21,32 +21,28 @@
 
 require "yast"
 require "cwm"
-require "y2partitioner/actions/edit_blk_device"
-require "y2partitioner/widgets/device_button"
-
-Yast.import "Popup"
+require "y2partitioner/actions/add_lvm_vg"
 
 module Y2Partitioner
   module Widgets
-    # Button for editing a block device
-    class BlkDeviceEditButton < DeviceButton
-      def initialize(*args)
-        super
+    # Button for openng a wizard to add a new LVM volume group
+    class LvmVgAddButton < CWM::PushButton
+      # Constructor
+      def initialize
         textdomain "storage"
       end
 
+      # @macro seeAbstractWidget
       def label
-        # TRANSLATORS: button label for editing a block device
-        _("Edit...")
+        # TRANSLATORS: button label to add a LVM volume group
+        _("Add Volume Group...")
       end
 
-    private
-
-      # Returns the proper Actions class for editing
-      #
-      # @see Actions::EditBlkDevice
-      def actions_class
-        Actions::EditBlkDevice
+      # @macro seeAbstractWidget
+      # @see Actions::AddLvmVg
+      def handle
+        res = Actions::AddLvmVg.new.run
+        res == :finish ? :redraw : nil
       end
     end
   end

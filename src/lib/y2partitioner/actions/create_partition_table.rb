@@ -22,6 +22,7 @@
 require "yast"
 require "y2partitioner/device_graphs"
 require "y2partitioner/dialogs"
+require "y2partitioner/confirm_recursive_delete"
 
 Yast.import "Label"
 
