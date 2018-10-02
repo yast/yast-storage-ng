@@ -21,12 +21,12 @@
 
 require "yast"
 require "y2partitioner/widgets/device_button"
-require "y2partitioner/actions/clone_partition_table"
+require "y2partitioner/actions/delete_lvm_lvs"
 
 module Y2Partitioner
   module Widgets
-    # Button for cloning the partition table
-    class PartitionTableCloneButton < DeviceButton
+    # Button for deleting all logical volumes
+    class LvmLvsDeleteButton < DeviceButton
       def initialize(*args)
         super
         textdomain "storage"
@@ -34,18 +34,17 @@ module Y2Partitioner
 
       # @macro seeAbstractWidget
       def label
-        # TRANSLATORS: label for button to clone a partition table
-        _("Clone Partitions...")
+        # TRANSLATORS: label for button to delete all logical volumes
+        _("Delete All")
       end
 
     private
 
-      # Returns the proper Actions class for cloning a partition table
+      # Returns the proper Actions class to perform the delete action
       #
-      # @see DeviceButton#actions
-      # @see Actions::ClonePartitionTable
+      # @return [Class]
       def actions_class
-        Actions::ClonePartitionTable
+        Actions::DeleteLvmLvs
       end
     end
   end

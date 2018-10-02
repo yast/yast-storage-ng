@@ -1,6 +1,6 @@
 # encoding: utf-8
 
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2018] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -20,13 +20,15 @@
 # find current contact information at www.suse.com.
 
 require "yast"
-require "y2partitioner/widgets/device_button"
-require "y2partitioner/actions/add_partition"
+require "y2partitioner/widgets/device_menu_button"
+require "y2partitioner/actions/edit_blk_device"
+require "y2partitioner/actions/resize_blk_device"
+require "y2partitioner/actions/move_partition"
 
 module Y2Partitioner
   module Widgets
-    # Button for adding a partition
-    class PartitionAddButton < DeviceButton
+    # Menu button for modifying a partition
+    class PartitionModifyButton < DeviceMenuButton
       def initialize(*args)
         super
         textdomain "storage"
@@ -34,31 +36,18 @@ module Y2Partitioner
 
       # @macro seeAbstractWidget
       def label
-        # TRANSLATORS: label for button to add a partition
-        _("Add Partition...")
+        _("&Modify")
       end
 
     private
 
-      # When the selected device is a partition, its partitionable (disk, dasd,
-      # multipath or BIOS RAID) is considered as the selected device
-      #
-      # @see DeviceButton#device
-      #
-      # @return [Y2Storage::Device, nil]
-      def device
-        dev = super
-        return dev if dev.nil?
-
-        dev.is?(:partition) ? dev.partitionable : dev
-      end
-
-      # Returns the proper Actions class for adding a partition
-      #
-      # @see DeviceButton#actions
-      # @see Actions::AddPartition
-      def actions_class
-        Actions::AddPartition
+      # @see DeviceMenuButton#actions
+      def actions
+        [
+          { id: :edit,   label: _("Edit Partition..."),   class: Actions::EditBlkDevice },
+          { id: :resize, label: _("Resize Partition..."), class: Actions::ResizeBlkDevice },
+          { id: :move,   label: _("Move Partition..."),   class: Actions::MovePartition }
+        ]
       end
     end
   end

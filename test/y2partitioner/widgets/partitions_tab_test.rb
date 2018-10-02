@@ -52,29 +52,7 @@ describe Y2Partitioner::Widgets::PartitionsTab do
       expect(button).to_not be_nil
     end
 
-    it "shows a button for editing a device" do
-      button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::BlkDeviceEditButton) }
-      expect(button).to_not be_nil
-    end
-
-    it "shows a button for moving a partition" do
-      button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::PartitionMoveButton) }
-      expect(button).to_not be_nil
-    end
-
-    it "shows a button for resizing a partition" do
-      button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::DeviceResizeButton) }
-      expect(button).to_not be_nil
-    end
-
-    it "shows a button for deleting a partition" do
-      button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::DeviceDeleteButton) }
-      expect(button).to_not be_nil
-    end
-
-    # FIXME: the button was temporarily removed to keep changes low while
-    # we decide on the best way to show all the possible options
-    xit "shows a button for deleting all partitions" do
+    it "shows a button for deleting all partitions" do
       button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::PartitionsDeleteButton) }
       expect(button).to_not be_nil
     end

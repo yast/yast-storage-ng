@@ -56,20 +56,18 @@ module Y2Partitioner
 
       # @macro seeCustomWidget
       def contents
-        table = ConfigurableBlkDevicesTable.new(devices, @pager)
-        @contents ||= VBox(
+        return @contents if @contents
+
+        device_buttons = DeviceButtonsSet.new(@pager)
+        table = ConfigurableBlkDevicesTable.new(devices, @pager, device_buttons)
+        @contents = VBox(
           DiskBarGraph.new(device),
           table,
-          Left(
+          Left(device_buttons),
+          Right(
             HBox(
-              PartitionAddButton.new(device: device, short: true),
-              BlkDeviceEditButton.new(pager: @pager, table: table),
-              PartitionMoveButton.new(pager: @pager, table: table),
-              DeviceResizeButton.new(pager: @pager, table: table),
-              DeviceDeleteButton.new(pager: @pager, table: table)
-              # FIXME: not show the "Delete All" button for the time being,
-              # we still have to decide how to organize all buttons
-              # PartitionsDeleteButton.new(device: device)
+              PartitionAddButton.new(device: device),
+              PartitionsDeleteButton.new(device: device)
             )
           )
         )

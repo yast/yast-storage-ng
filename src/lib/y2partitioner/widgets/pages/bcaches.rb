@@ -19,17 +19,15 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "cwm/tree_pager"
 require "y2partitioner/icons"
-require "y2partitioner/widgets/configurable_blk_devices_table"
+require "y2partitioner/widgets/pages/devices_table"
 require "y2partitioner/widgets/bcache_add_button"
-require "y2partitioner/device_graphs"
 
 module Y2Partitioner
   module Widgets
     module Pages
       # A Page for bcache devices and its partitions. It contains a {ConfigurableBlkDevicesTable}
-      class Bcaches < CWM::Page
+      class Bcaches < DevicesTable
         include Yast::I18n
 
         # Constructor
@@ -39,8 +37,8 @@ module Y2Partitioner
         def initialize(bcaches, pager)
           textdomain "storage"
 
+          super(pager)
           @bcaches = bcaches
-          @pager = pager
         end
 
         # @macro seeAbstractWidget
@@ -48,37 +46,20 @@ module Y2Partitioner
           _("Bcache")
         end
 
-        # @macro seeCustomWidget
-        def contents
-          return @contents if @contents
-
-          table = ConfigurableBlkDevicesTable.new(devices, @pager)
-          icon = Icons.small_icon(Icons::BCACHE)
-          @contents = VBox(
-            Left(
-              HBox(
-                Image(icon, ""),
-                # TRANSLATORS: Heading
-                Heading(_("Bcache"))
-              )
-            ),
-            table,
-            Left(
-              HBox(
-                BcacheAddButton.new
-                # TODO: other buttons
-              )
-            )
-          )
-        end
-
       private
 
         # @return [Array<Y2Storage::BlkDevice>]
         attr_reader :bcaches
 
-        # @return [CWM::TreePager]
-        attr_reader :pager
+        # @see DevicesTable
+        def icon
+          Icons::BCACHE
+        end
+
+        # @see DevicesTable
+        def table_buttons
+          BcacheAddButton.new
+        end
 
         # Returns all bcache devices and their partitions
         #

@@ -31,13 +31,11 @@ module Y2Partitioner
     class DeviceButton < CWM::PushButton
       # Constructor
       # @param pager [CWM::TreePager]
-      # @param table [Y2Partitioner::Widgets::ConfigurableBlkDevicesTable]
       # @param device [Y2Storage::Device]
-      def initialize(pager: nil, table: nil, device: nil)
+      def initialize(pager: nil, device: nil)
         textdomain "storage"
 
         @pager = pager
-        @table = table
         @device_sid = device.sid unless device.nil?
       end
 
@@ -51,9 +49,6 @@ module Y2Partitioner
 
       # @return [CWM::TreePager]
       attr_reader :pager
-
-      # @return [Y2Partitioner::Widgets::ConfigurableBlkDevicesTable]
-      attr_reader :table
 
       # @return [Integer] device sid
       attr_reader :device_sid
@@ -69,11 +64,8 @@ module Y2Partitioner
       #
       # @return [Y2Storage::Device]
       def device
-        if device_sid
-          working_graph.find_device(device_sid)
-        elsif table
-          table.selected_device
-        end
+        return nil unless device_sid
+        working_graph.find_device(device_sid)
       end
 
       # Actions to perform when the button is clicked

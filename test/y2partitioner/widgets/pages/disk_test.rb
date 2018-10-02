@@ -118,20 +118,13 @@ describe Y2Partitioner::Widgets::Pages::Disk do
         expect(description).to_not be_nil
       end
 
-      # FIXME: The button was temporarily removed to keep the changes in the
-      # "hard disks" section low while we refine the RAID one
-      xit "shows a button for editing the device" do
+      it "shows a button for editing the device" do
         button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::BlkDeviceEditButton) }
         expect(button).to_not be_nil
       end
 
-      it "shows a button for creating a new partition table" do
-        button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::PartitionTableAddButton) }
-        expect(button).to_not be_nil
-      end
-
-      it "shows a button for cloning the partitions" do
-        button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::PartitionTableCloneButton) }
+      it "shows a menu-button for expert options on the partition table" do
+        button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::PartitionTableButton) }
         expect(button).to_not be_nil
       end
     end

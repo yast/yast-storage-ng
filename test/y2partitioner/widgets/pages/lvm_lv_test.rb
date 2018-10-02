@@ -44,8 +44,8 @@ describe Y2Partitioner::Widgets::Pages::LvmLv do
       expect(description).to_not be_nil
     end
 
-    it "shows a button to edit a vg or lv" do
-      button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::LvmEditButton) }
+    it "shows a button to edit the lv" do
+      button = widgets.detect { |i| i.is_a?(Y2Partitioner::Widgets::BlkDeviceEditButton) }
       expect(button).to_not be_nil
     end
 
