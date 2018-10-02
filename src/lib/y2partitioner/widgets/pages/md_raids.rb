@@ -40,7 +40,7 @@ module Y2Partitioner
 
         # @macro seeAbstractWidget
         def label
-          _(UIState.md_raids_label)
+          UIState.instance.md_raids_label
         end
 
       private

@@ -40,7 +40,7 @@ module Y2Partitioner
 
         # @macro seeAbstractWidget
         def label
-          _(UIState.lvm_label)
+          UIState.instance.lvm_label
         end
 
       private

@@ -61,6 +61,9 @@ module Y2Partitioner
           )
         end
 
+        # @macro seeAbstractWidget
+        abstract_method :label
+
       private
 
         # @return [CWM::TreePager]
@@ -77,15 +80,16 @@ module Y2Partitioner
         #   {Y2Partitioner::Icons}
         abstract_method :icon
 
-        # @macro seeAbstractWidget
-        abstract_method :label
-
         # Widget representing the fixed buttons (those that do not change
         # every time the user selects a new row) displayed at the bottom of the
         # table.
         #
+        # By default this returns an empty widget (i.e. no buttons).
+        #
         # @return [Yast::UI::Term, CWM::AbstractWidget]
-        abstract_method :table_buttons
+        def table_buttons
+          Empty()
+        end
 
         # Heading of the table
         #

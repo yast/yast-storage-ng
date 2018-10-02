@@ -25,7 +25,6 @@ module Y2Partitioner
   # sense of continuity.
   class UIState
     include Yast::I18n
-    extend Yast::I18n
 
     # Constructor
     #
@@ -43,8 +42,8 @@ module Y2Partitioner
     #   approach in the future.
     #
     # @return [String]
-    def self.md_raids_label
-      N_("RAID")
+    def md_raids_label
+      _("RAID")
     end
 
     # Title of the LVM section
@@ -52,8 +51,8 @@ module Y2Partitioner
     # @note See note on {.md_raids_label} about why this looks misplaced.
     #
     # @return [String]
-    def self.lvm_label
-      N_("Volume Management")
+    def lvm_label
+      _("Volume Management")
     end
 
     # @return [Integer, nil] if a row must be selected in a table with devices,
@@ -152,11 +151,11 @@ module Y2Partitioner
       if device.is?(:partition)
         [device.sid, device.partitionable.sid]
       elsif device.is?(:md)
-        [device.sid, _(UIState.md_raids_label)]
+        [device.sid, md_raids_label]
       elsif device.is?(:lvm_lv)
         [device.sid, device.lvm_vg.sid]
       elsif device.is?(:lvm_vg)
-        [device.sid, _(UIState.lvm_label)]
+        [device.sid, lvm_label]
       else
         [device.sid]
       end

@@ -61,11 +61,6 @@ module Y2Partitioner
         end
 
         # @see DevicesTable
-        def table_buttons
-          Empty()
-        end
-
-        # @see DevicesTable
         def icon
           Icons::HD
         end
