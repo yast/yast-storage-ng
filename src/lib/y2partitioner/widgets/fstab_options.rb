@@ -22,6 +22,7 @@
 require "yast"
 require "cwm"
 require "y2storage"
+require "y2partitioner/dialogs/fstab_options"
 
 Yast.import "Popup"
 

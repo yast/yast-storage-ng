@@ -25,7 +25,6 @@ require_relative "../test_helper"
 require "cwm/rspec"
 require "y2partitioner/widgets/format_and_mount"
 require "y2partitioner/actions/controllers"
-require "y2partitioner/dialogs/fstab_options"
 
 describe Y2Partitioner::Widgets do
   before do
