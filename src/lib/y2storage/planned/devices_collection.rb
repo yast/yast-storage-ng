@@ -85,56 +85,57 @@ module Y2Storage
       #
       # @return [Array<Planned::Partition>]
       def partitions
-        devices.select { |d| d.is_a?(Planned::Partition) } + disks.map(&:partitions).flatten
+        @partitions ||= devices.select { |d| d.is_a?(Planned::Partition) } +
+          disks.map(&:partitions).flatten
       end
 
       # Returns the list of planned disks
       #
       # @return [Array<Planned::Disk>]
       def disks
-        devices.select { |d| d.is_a?(Planned::Disk) }
+        @disks ||= devices.select { |d| d.is_a?(Planned::Disk) }
       end
 
       # Returns the list of planned volume groups
       #
       # @return [Array<Planned::LvmVg>]
       def vgs
-        devices.select { |d| d.is_a?(Planned::LvmVg) }
+        @vgs ||= devices.select { |d| d.is_a?(Planned::LvmVg) }
       end
 
       # Returns the list of planned MD RAID devices
       #
       # @return [Array<Planned::Md>]
       def mds
-        devices.select { |d| d.is_a?(Planned::Md) }
+        @mds ||= devices.select { |d| d.is_a?(Planned::Md) }
       end
 
       # Returns the list of planned LVM logical volumes
       #
       # @return [Array<Planned::LvmLv>]
       def lvs
-        vgs.map(&:all_lvs).flatten
+        @lvs ||= vgs.map(&:all_lvs).flatten
       end
 
       # Returns the list of planned stray block devices.
       #
       # @return [Array<Planned::StrayBlkDevice>]
       def stray_blk_devices
-        devices.select { |d| d.is_a?(Planned::StrayBlkDevice) }
+        @stray_blk_devices ||= devices.select { |d| d.is_a?(Planned::StrayBlkDevice) }
       end
 
       # Returns all devices, including nested ones
       #
       # @return [Array<Planned::Device>]
       def all
-        partitions + disks + stray_blk_devices + vgs + lvs + mds
+        @all ||= partitions + disks + stray_blk_devices + vgs + lvs + mds
       end
 
       # Returns the list of devices that can be mounted
       #
       # @return [Array<Planned::Device>]
       def mountable
-        all.select { |d| d.respond_to?(:mount_point) }
+        @mountable ||= all.select { |d| d.respond_to?(:mount_point) }
       end
     end
   end
