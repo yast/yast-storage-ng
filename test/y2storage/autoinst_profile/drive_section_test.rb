@@ -127,6 +127,34 @@ describe Y2Storage::AutoinstProfile::DriveSection do
       expect(section.partitions.size).to eq 2
     end
 
+    context "when the disk is not used" do
+      it "returns nil" do
+        section = described_class.new_from_storage(device("sda"))
+        expect(section).to be_nil
+      end
+    end
+
+    context "when the disk has no partitions but it is used as LVM PV or RAID member" do
+      let(:sda) { device("sda") }
+      let(:pv) { double("pv") }
+
+      before do
+        allow(sda).to receive(:component_of).and_return([pv])
+      end
+
+      it "returns a section with disklabel set to 'none'" do
+        section = described_class.new_from_storage(sda)
+        expect(section.disklabel).to_not be_nil
+      end
+
+      it "includes a partition holding filesystem specification for the disk" do
+        section = described_class.new_from_storage(sda)
+        expect(section.partitions).to contain_exactly(
+          an_object_having_attributes("create" => false)
+        )
+      end
+    end
+
     context "for the extended partition" do
       it "considers the partition to not be exportable" do
         section = described_class.new_from_storage(device("sdd"))
@@ -542,6 +570,107 @@ describe Y2Storage::AutoinstProfile::DriveSection do
   describe "#section_name" do
     it "returns 'drives'" do
       expect(section.section_name).to eq("drives")
+    end
+  end
+
+  describe "#partition_table?" do
+    context "when diskabel is missing" do
+      it "returns true" do
+        expect(section.partition_table?).to eq(true)
+      end
+    end
+
+    context "when disklabel is not set to 'none'" do
+      before do
+        section.disklabel = "gpt"
+      end
+
+      it "returns true" do
+        expect(section.partition_table?).to eq(true)
+      end
+    end
+
+    context "when disklabel is set to 'none'" do
+      before do
+        section.disklabel = "none"
+      end
+
+      it "returns false" do
+        expect(section.partition_table?).to eq(false)
+      end
+    end
+
+    context "when any partition section has the partition_nr set to '0'" do
+      before do
+        section.disklabel = "gpt"
+        section.partitions = [
+          Y2Storage::AutoinstProfile::PartitionSection.new_from_hashes("partition_nr" => 0)
+        ]
+      end
+
+      it "returns false" do
+        expect(section.partition_table?).to eq(false)
+      end
+    end
+  end
+
+  describe "#master_partition" do
+    let(:part0_spec) do
+      Y2Storage::AutoinstProfile::PartitionSection.new_from_hashes(
+        "mount" => "/", "partition_nr" => 0
+      )
+    end
+
+    let(:home_spec) { Y2Storage::AutoinstProfile::PartitionSection.new }
+
+    before do
+      section.partitions = [home_spec, part0_spec]
+    end
+
+    context "when diskabel is set to 'none'" do
+      before do
+        section.disklabel = "none"
+      end
+
+      it "returns the partition which partition_nr is set to '0'" do
+        expect(section.master_partition).to eq(part0_spec)
+      end
+
+      context "but no partition section has the partition_nr set to '0'" do
+        before do
+          section.partitions = [home_spec]
+        end
+
+        it "returns the first one" do
+          expect(section.master_partition).to eq(home_spec)
+        end
+      end
+
+      context "but no partition section is defined" do
+        before do
+          section.partitions = []
+        end
+
+        it "returns nil" do
+          expect(section.master_partition).to be_nil
+        end
+      end
+    end
+
+    context "when a partition section has the partition_nr set to '0'" do
+      it "returns that partition section" do
+        expect(section.master_partition).to eq(part0_spec)
+      end
+
+      context "and disklabel is set to a value different than '0'" do
+        before do
+          section.disklabel = "gpt"
+        end
+
+        it "still returns the partition section which has the partition_nr set to '0'" do
+          expect(section.master_partition).to eq(part0_spec)
+        end
+      end
     end
   end
 end

@@ -190,6 +190,30 @@ module Y2Storage
         "drives"
       end
 
+      # @return [String] disklabel value which indicates that no partition table is wanted.
+      NO_PARTITION_TABLE = "none".freeze
+
+      # Determine whether the drive should have a partition table or not
+      #
+      # @note When the disklabel is set to 'none', a partition table should be created.
+      #   For backward compatibility reasons, setting partition_nr to 0 has the same effect.
+      #
+      # @return [Boolean] Returns true when a partition table is wanted; false otherwise.
+      def partition_table?
+        disklabel != NO_PARTITION_TABLE && partitions.none? { |i| i.partition_nr == 0 }
+      end
+
+      # Returns the partition which contains the configuration for the whole disk
+      #
+      # @return [PartitionSection,nil] Partition section for the whole disk; it returns
+      #   nil if the device will use a partition table.
+      #
+      # @see #partition_table?
+      def master_partition
+        return if partition_table?
+        partitions.find { |i| i.partition_nr == 0 } || partitions.first
+      end
+
     protected
 
       # Method used by {.new_from_storage} to populate the attributes when
@@ -201,14 +225,14 @@ module Y2Storage
       # @param disk [Y2Storage::Disk, Y2Storage::Dasd] Disk
       # @return [Boolean]
       def init_from_disk(disk)
-        return false if disk.partitions.empty?
+        return false unless used?(disk)
 
         @type = :CT_DISK
         # s390 prefers udev by-path device names (bsc#591603)
         @device = Yast::Arch.s390 ? disk.udev_full_paths.first : disk.name
         # if disk.udev_full_paths.first is nil go for disk.name anyway
         @device ||= disk.name
-        @disklabel = disk.partition_table.type.to_s
+        @disklabel = disklabel_from_disk(disk)
 
         @partitions = partitions_from_disk(disk)
         return false if @partitions.empty?
@@ -266,9 +290,19 @@ module Y2Storage
         hash["partitions"].map { |part| PartitionSection.new_from_hashes(part, self) }
       end
 
+      # Return the partition sections for the given disk
+      #
+      # @note If there is no partition table, an array containing a single section
+      #   (which represents the whole disk) will be returned.
+      #
+      # @return [Array<AutoinstProfile::PartitionSection>] List of partition sections
       def partitions_from_disk(disk)
-        collection = disk.partitions.reject { |p| skip_partition?(p) }
-        partitions_from_collection(collection.sort_by(&:number))
+        if disk.partition_table
+          collection = disk.partitions.reject { |p| skip_partition?(p) }
+          partitions_from_collection(collection.sort_by(&:number))
+        else
+          [PartitionSection.new_from_storage(disk)]
+        end
       end
 
       def partitions_from_collection(collection)
@@ -373,6 +407,24 @@ module Y2Storage
       # @return [Boolean] true if snapshots are enabled
       def enabled_snapshots?(filesystems)
         filesystems.any? { |f| f.respond_to?(:snapshots?) && f.snapshots? }
+      end
+
+      # Determine whether the disk is used or not
+      #
+      # @param disk [Array<Y2Storage::Disk,Y2Storage::Dasd>] Disk to check whether it is used
+      # @return [Boolean] true if the disk is being used
+      def used?(disk)
+        !(disk.partitions.empty? && disk.component_of.empty?)
+      end
+
+      # Return the disklabel value for the given disk
+      #
+      # @note When no partition table is wanted, the value 'none' will be used.
+      #
+      # @param disk [Array<Y2Storage::Disk,Y2Storage::Dasd>] Disk to check get the disklabel from
+      # @return [String] Disklabel value
+      def disklabel_from_disk(disk)
+        disk.partition_table ? disk.partition_table.type.to_s : NO_PARTITION_TABLE
       end
     end
   end

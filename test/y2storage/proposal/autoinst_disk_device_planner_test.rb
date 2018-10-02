@@ -38,9 +38,9 @@ describe Y2Storage::Proposal::AutoinstDiskDevicePlanner do
   end
 
   describe "#planned_devices" do
-    let(:drive) { Y2Storage::AutoinstProfile::DriveSection.new_from_hashes(disk) }
+    let(:drive) { Y2Storage::AutoinstProfile::DriveSection.new_from_hashes(disk_spec) }
 
-    let(:disk) do
+    let(:disk_spec) do
       { "device" => "/dev/sda", "partitions" => [root_spec] }
     end
 
@@ -53,8 +53,8 @@ describe Y2Storage::Proposal::AutoinstDiskDevicePlanner do
         let(:root_spec) { { "mount" => "/", "size" => "max", "partition_type" => "primary" } }
 
         it "sets the planned device as 'primary'" do
-          devices = planner.planned_devices(drive)
-          root = devices.find { |d| d.mount_point == "/" }
+          disk = planner.planned_devices(drive).first
+          root = disk.partitions.find { |d| d.mount_point == "/" }
           expect(root.primary).to eq(true)
         end
       end
@@ -63,8 +63,8 @@ describe Y2Storage::Proposal::AutoinstDiskDevicePlanner do
         let(:root_spec) { { "mount" => "/", "size" => "max", "partition_type" => "logical" } }
 
         it "sets planned device as not 'primary'" do
-          devices = planner.planned_devices(drive)
-          root = devices.find { |d| d.mount_point == "/" }
+          disk = planner.planned_devices(drive).first
+          root = disk.partitions.find { |d| d.mount_point == "/" }
           expect(root.primary).to eq(false)
         end
       end
@@ -73,8 +73,8 @@ describe Y2Storage::Proposal::AutoinstDiskDevicePlanner do
         let(:root_spec) { { "mount" => "/", "size" => "max" } }
 
         it "does not set 'primary'" do
-          devices = planner.planned_devices(drive)
-          root = devices.find { |d| d.mount_point == "/" }
+          disk = planner.planned_devices(drive).first
+          root = disk.partitions.find { |d| d.mount_point == "/" }
           expect(root.primary).to eq(false)
         end
       end
@@ -92,8 +92,8 @@ describe Y2Storage::Proposal::AutoinstDiskDevicePlanner do
         let(:size) { "10" }
 
         it "sets the size according to that number and using unit B" do
-          devices = planner.planned_devices(drive)
-          root = devices.find { |d| d.mount_point == "/" }
+          disk = planner.planned_devices(drive).first
+          root = disk.partitions.find { |d| d.mount_point == "/" }
           expect(root.min_size).to eq(disk_size)
           expect(root.max_size).to eq(disk_size)
         end
@@ -104,8 +104,8 @@ describe Y2Storage::Proposal::AutoinstDiskDevicePlanner do
         let(:size) { "5GB" }
 
         it "sets the size according to that number and using legacy_units" do
-          devices = planner.planned_devices(drive)
-          root = devices.find { |d| d.mount_point == "/" }
+          disk = planner.planned_devices(drive).first
+          root = disk.partitions.find { |d| d.mount_point == "/" }
           expect(root.min_size).to eq(disk_size)
           expect(root.max_size).to eq(disk_size)
         end
@@ -116,8 +116,8 @@ describe Y2Storage::Proposal::AutoinstDiskDevicePlanner do
         let(:size) { "50%" }
 
         it "sets the size according to the percentage" do
-          devices = planner.planned_devices(drive)
-          root = devices.find { |d| d.mount_point == "/" }
+          disk = planner.planned_devices(drive).first
+          root = disk.partitions.find { |d| d.mount_point == "/" }
           expect(root.min_size).to eq(disk_size)
           expect(root.max_size).to eq(disk_size)
         end
@@ -127,15 +127,15 @@ describe Y2Storage::Proposal::AutoinstDiskDevicePlanner do
         let(:size) { "max" }
 
         it "sets the size to 'unlimited'" do
-          devices = planner.planned_devices(drive)
-          root = devices.find { |d| d.mount_point == "/" }
+          disk = planner.planned_devices(drive).first
+          root = disk.partitions.find { |d| d.mount_point == "/" }
           expect(root.min_size).to eq(Y2Storage::DiskSize.B(1))
           expect(root.max_size).to eq(Y2Storage::DiskSize.unlimited)
         end
 
         it "sets the weight to '1'" do
-          devices = planner.planned_devices(drive)
-          root = devices.find { |d| d.mount_point == "/" }
+          disk = planner.planned_devices(drive).first
+          root = disk.partitions.find { |d| d.mount_point == "/" }
           expect(root.weight).to eq(1)
         end
       end
@@ -145,7 +145,7 @@ describe Y2Storage::Proposal::AutoinstDiskDevicePlanner do
 
         it "registers an issue" do
           expect(issues_list).to be_empty
-          planner.planned_devices(drive)
+          planner.planned_devices(drive).first
           issue = issues_list.find { |i| i.is_a?(Y2Storage::AutoinstIssues::InvalidValue) }
           expect(issue.value).to eq("huh?")
           expect(issue.attr).to eq(:size)
@@ -160,7 +160,7 @@ describe Y2Storage::Proposal::AutoinstDiskDevicePlanner do
           { "mount" => "swap", "filesystem" => "swap", "size" => "auto" }
         end
 
-        let(:disk) do
+        let(:disk_spec) do
           { "device" => "/dev/sda", "partitions" => [root_spec, auto_spec] }
         end
 
@@ -185,8 +185,8 @@ describe Y2Storage::Proposal::AutoinstDiskDevicePlanner do
           end
 
           it "sets min and max" do
-            devices = planner.planned_devices(drive)
-            swap = devices.find { |d| d.mount_point == "swap" }
+            disk = planner.planned_devices(drive).first
+            swap = disk.partitions.find { |d| d.mount_point == "swap" }
             expect(swap.min_size).to eq(128.MiB)
             expect(swap.max_size).to eq(1.GiB)
           end
@@ -198,14 +198,14 @@ describe Y2Storage::Proposal::AutoinstDiskDevicePlanner do
           end
 
           it "ignores the device" do
-            devices = planner.planned_devices(drive)
-            home = devices.find { |d| d.mount_point == "/home" }
+            disk = planner.planned_devices(drive).first
+            home = disk.partitions.find { |d| d.mount_point == "/home" }
             expect(home).to be_nil
           end
 
           it "registers an issue" do
             expect(issues_list).to be_empty
-            planner.planned_devices(drive)
+            planner.planned_devices(drive).first
             issue = issues_list.find { |i| i.is_a?(Y2Storage::AutoinstIssues::InvalidValue) }
             expect(issue.value).to eq("auto")
             expect(issue.attr).to eq(:size)
@@ -217,8 +217,8 @@ describe Y2Storage::Proposal::AutoinstDiskDevicePlanner do
             end
 
             it "sets default values" do
-              devices = planner.planned_devices(drive)
-              swap = devices.find { |d| d.mount_point == "swap" }
+              disk = planner.planned_devices(drive).first
+              swap = disk.partitions.find { |d| d.mount_point == "swap" }
               expect(swap.min_size).to eq(512.MiB)
               expect(swap.max_size).to eq(2.GiB)
             end
@@ -230,8 +230,8 @@ describe Y2Storage::Proposal::AutoinstDiskDevicePlanner do
         let(:size) { "" }
 
         it "sets the size to 'unlimited'" do
-          devices = planner.planned_devices(drive)
-          root = devices.find { |d| d.mount_point == "/" }
+          disk = planner.planned_devices(drive).first
+          root = disk.partitions.find { |d| d.mount_point == "/" }
           expect(root.min_size).to eq(Y2Storage::DiskSize.B(1))
           expect(root.max_size).to eq(Y2Storage::DiskSize.unlimited)
         end
@@ -239,7 +239,7 @@ describe Y2Storage::Proposal::AutoinstDiskDevicePlanner do
     end
 
     context "specifying filesystem options" do
-      let(:disk) do
+      let(:disk_spec) do
         { "device" => "/dev/sda", "use" => "all",
            "partitions" => [root_spec, home_spec, swap_spec] }
       end
@@ -253,9 +253,9 @@ describe Y2Storage::Proposal::AutoinstDiskDevicePlanner do
       end
 
       it "sets the filesystem" do
-        devices = planner.planned_devices(drive)
-        root = devices.find { |d| d.mount_point == "/" }
-        home = devices.find { |d| d.mount_point == "/home" }
+        disk = planner.planned_devices(drive).first
+        root = disk.partitions.find { |d| d.mount_point == "/" }
+        home = disk.partitions.find { |d| d.mount_point == "/home" }
         expect(root.filesystem_type).to eq(Y2Storage::Filesystems::Type::EXT4)
         expect(home.filesystem_type).to eq(Y2Storage::Filesystems::Type::XFS)
       end
@@ -274,8 +274,8 @@ describe Y2Storage::Proposal::AutoinstDiskDevicePlanner do
 
         it "sets to the default type for the given mount point" do
           expect(volspec_builder).to receive(:for).with("/srv").and_return(volspec)
-          devices = planner.planned_devices(drive)
-          srv = devices.find { |d| d.mount_point == "/srv" }
+          disk = planner.planned_devices(drive).first
+          srv = disk.partitions.find { |d| d.mount_point == "/srv" }
           expect(srv.filesystem_type).to eq(volspec.fs_type)
         end
 
@@ -283,15 +283,15 @@ describe Y2Storage::Proposal::AutoinstDiskDevicePlanner do
           let(:volspec) { Y2Storage::VolumeSpecification.new({}) }
 
           it "sets filesystem to btrfs" do
-            devices = planner.planned_devices(drive)
-            srv = devices.find { |d| d.mount_point == "/srv" }
+            disk = planner.planned_devices(drive).first
+            srv = disk.partitions.find { |d| d.mount_point == "/srv" }
             expect(srv.filesystem_type).to eq(Y2Storage::Filesystems::Type::BTRFS)
           end
 
           context "and is a swap filesystem" do
             it "sets filesystem to swap" do
-              devices = planner.planned_devices(drive)
-              swap = devices.find { |d| d.mount_point == "swap" }
+              disk = planner.planned_devices(drive).first
+              swap = disk.partitions.find { |d| d.mount_point == "swap" }
               expect(swap.filesystem_type).to eq(Y2Storage::Filesystems::Type::SWAP)
             end
           end
@@ -299,22 +299,22 @@ describe Y2Storage::Proposal::AutoinstDiskDevicePlanner do
       end
 
       it "sets the mountby properties" do
-        devices = planner.planned_devices(drive)
-        root = devices.find { |d| d.mount_point == "/" }
-        home = devices.find { |d| d.mount_point == "/home" }
+        disk = planner.planned_devices(drive).first
+        root = disk.partitions.find { |d| d.mount_point == "/" }
+        home = disk.partitions.find { |d| d.mount_point == "/home" }
         expect(root.mount_by).to be_nil
         expect(home.mount_by).to eq(Y2Storage::Filesystems::MountByType::UUID)
       end
 
       it "sets fstab options" do
-        devices = planner.planned_devices(drive)
-        root = devices.find { |d| d.mount_point == "/" }
+        disk = planner.planned_devices(drive).first
+        root = disk.partitions.find { |d| d.mount_point == "/" }
         expect(root.fstab_options).to eq(["ro", "acl"])
       end
 
       it "sets mkfs options" do
-        devices = planner.planned_devices(drive)
-        root = devices.find { |d| d.mount_point == "/" }
+        disk = planner.planned_devices(drive).first
+        root = disk.partitions.find { |d| d.mount_point == "/" }
         expect(root.mkfs_options).to eq("-b 2048")
       end
     end
@@ -325,8 +325,8 @@ describe Y2Storage::Proposal::AutoinstDiskDevicePlanner do
       end
 
       it "sets the encryption password" do
-        devices = planner.planned_devices(drive)
-        root = devices.find { |d| d.mount_point == "/" }
+        disk = planner.planned_devices(drive).first
+        root = disk.partitions.find { |d| d.mount_point == "/" }
         expect(root.encryption_password).to eq("secret")
       end
     end
@@ -335,7 +335,7 @@ describe Y2Storage::Proposal::AutoinstDiskDevicePlanner do
       context "when a partition number is specified" do
         let(:scenario) { "autoyast_drive_examples" }
 
-        let(:disk) do
+        let(:disk_spec) do
           { "device" => "/dev/sdb", "partitions" => [root_spec] }
         end
 
@@ -344,8 +344,8 @@ describe Y2Storage::Proposal::AutoinstDiskDevicePlanner do
         end
 
         it "reuses the partition with that number" do
-          devices = planner.planned_devices(drive)
-          root = devices.find { |d| d.mount_point == "/" }
+          disk = planner.planned_devices(drive).first
+          root = disk.partitions.find { |d| d.mount_point == "/" }
           expect(root.reuse_name).to eq("/dev/sdb2")
         end
       end
@@ -356,8 +356,8 @@ describe Y2Storage::Proposal::AutoinstDiskDevicePlanner do
         end
 
         it "reuses the partition with that label" do
-          devices = planner.planned_devices(drive)
-          root = devices.find { |d| d.mount_point == "/" }
+          disk = planner.planned_devices(drive).first
+          root = disk.partitions.find { |d| d.mount_point == "/" }
           expect(root.reuse_name).to eq("/dev/sda3")
         end
       end
@@ -368,14 +368,14 @@ describe Y2Storage::Proposal::AutoinstDiskDevicePlanner do
         end
 
         it "adds a new partition" do
-          devices = planner.planned_devices(drive)
-          root = devices.find { |d| d.mount_point == "/" }
+          disk = planner.planned_devices(drive).first
+          root = disk.partitions.find { |d| d.mount_point == "/" }
           expect(root.reuse_name).to be_nil
         end
 
         it "registers an issue" do
           expect(issues_list).to be_empty
-          planner.planned_devices(drive)
+          planner.planned_devices(drive).first
           issue = issues_list.find { |i| i.is_a?(Y2Storage::AutoinstIssues::MissingReusableDevice) }
           expect(issue).to_not be_nil
         end
@@ -387,14 +387,14 @@ describe Y2Storage::Proposal::AutoinstDiskDevicePlanner do
         end
 
         it "adds a new partition" do
-          devices = planner.planned_devices(drive)
-          root = devices.find { |d| d.mount_point == "/" }
+          disk = planner.planned_devices(drive).first
+          root = disk.partitions.find { |d| d.mount_point == "/" }
           expect(root.reuse_name).to be_nil
         end
 
         it "registers an issue" do
           expect(issues_list).to be_empty
-          planner.planned_devices(drive)
+          planner.planned_devices(drive).first
           issue = issues_list.find { |i| i.is_a?(Y2Storage::AutoinstIssues::MissingReuseInfo) }
           expect(issue).to_not be_nil
         end
@@ -408,8 +408,8 @@ describe Y2Storage::Proposal::AutoinstDiskDevicePlanner do
             let(:fs) { "xfs" }
 
             it "plans the specified filesystem type" do
-              devices = planner.planned_devices(drive)
-              planned = devices.find { |d| d.reuse_name == "/dev/sda3" }
+              disk = planner.planned_devices(drive).first
+              planned = disk.partitions.find { |d| d.reuse_name == "/dev/sda3" }
               expect(planned.reformat?).to eq true
               expect(planned.filesystem_type).to eq Y2Storage::Filesystems::Type::XFS
             end
@@ -419,8 +419,8 @@ describe Y2Storage::Proposal::AutoinstDiskDevicePlanner do
             let(:fs) { nil }
 
             it "keeps the previous file system type of the partition" do
-              devices = planner.planned_devices(drive)
-              planned = devices.find { |d| d.reuse_name == "/dev/sda3" }
+              disk = planner.planned_devices(drive).first
+              planned = disk.partitions.find { |d| d.reuse_name == "/dev/sda3" }
               expect(planned.reformat?).to eq true
               expect(planned.filesystem_type).to eq Y2Storage::Filesystems::Type::EXT4
             end
@@ -432,7 +432,7 @@ describe Y2Storage::Proposal::AutoinstDiskDevicePlanner do
     context "when formatting but not mounting a Xen virtual partitions" do
       let(:scenario) { "xen-partitions.xml" }
 
-      let(:disk) do
+      let(:disk_spec) do
         { "device" => "/dev/xvda", "use" => "all", "partitions" => part_section }
       end
 
@@ -470,5 +470,36 @@ describe Y2Storage::Proposal::AutoinstDiskDevicePlanner do
       end
     end
 
+    context "using the whole disk" do
+      let(:disk_spec) do
+        { "device" => "/dev/sda", "partitions" => [root_spec] }
+      end
+
+      context "when a partition_nr is set to '0'" do
+        let(:root_spec) do
+          { "mount" => "/", "filesystem" => "ext4", "partition_nr" => 0 }
+        end
+
+        it "uses the whole disk" do
+          devices = planner.planned_devices(drive)
+          expect(devices).to contain_exactly(
+            an_object_having_attributes("mount_point" => "/", "partitions" => [])
+          )
+        end
+      end
+
+      context "when disklabel is set to 'none'" do
+        let(:disk_spec) do
+          { "device" => "/dev/sda", "disklabel" => "none", "partitions" => [root_spec] }
+        end
+
+        it "uses the whole disk" do
+          devices = planner.planned_devices(drive)
+          expect(devices).to contain_exactly(
+            an_object_having_attributes("mount_point" => "/", "partitions" => [])
+          )
+        end
+      end
+    end
   end
 end

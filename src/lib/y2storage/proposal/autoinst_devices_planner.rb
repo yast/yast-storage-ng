@@ -27,6 +27,7 @@ require "y2storage/proposal/autoinst_size_parser"
 require "y2storage/proposal/autoinst_disk_device_planner"
 require "y2storage/proposal/autoinst_vg_planner"
 require "y2storage/proposal/autoinst_md_planner"
+require "y2storage/planned"
 
 module Y2Storage
   module Proposal
@@ -53,26 +54,24 @@ module Y2Storage
       # Returns an array of planned devices according to the drives map
       #
       # @param drives_map [Proposal::AutoinstDrivesMap] Drives map from AutoYaST
-      # @return [Array<Planned::Device>] List of planned devices
+      # @return [Planned::DevicesCollection] Collection of planned devices
       def planned_devices(drives_map)
-        result = []
-
-        drives_map.each_pair do |disk_name, drive_section|
+        devices = drives_map.each_pair.each_with_object([]) do |(disk_name, drive), memo|
           planned_devs =
-            case drive_section.type
+            case drive.type
             when :CT_DISK
-              planned_for_disk_device(drive_section, disk_name)
+              planned_for_disk_device(drive, disk_name)
             when :CT_LVM
-              planned_for_vg(drive_section)
+              planned_for_vg(drive)
             when :CT_MD
-              planned_for_md(drive_section)
+              planned_for_md(drive)
             end
-          result.concat(planned_devs)
+          memo.concat(planned_devs) if planned_devs
         end
 
-        remove_shadowed_subvols(result)
-
-        result
+        collection = Planned::DevicesCollection.new(devices)
+        remove_shadowed_subvols(collection.partitions)
+        collection
       end
 
     protected

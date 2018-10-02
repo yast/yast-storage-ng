@@ -22,6 +22,7 @@
 require "yast"
 require "y2storage/proposal_settings"
 require "y2storage/exceptions"
+require "y2storage/planned"
 require "y2storage/proposal"
 
 module Y2Storage
@@ -115,6 +116,7 @@ module Y2Storage
     # @param drives      [Proposal::AutoinstDrivesMap] Devices map from an AutoYaST profile
     def add_partition_tables(devicegraph, drives)
       drives.each do |disk_name, drive_spec|
+        next unless drive_spec.partition_table?
         disk = devicegraph.disk_devices.find { |d| d.name == disk_name }
         next if disk.nil? || !disk.partitions.empty?
 
@@ -155,27 +157,11 @@ module Y2Storage
     # The devicegraph which is passed as first argument will be modified.
     #
     # @param devicegraph [Devicegraph]         Starting point
-    # @param devices     [Array<Planned:Device>] List of planned devices
-    # @return [Array<Planned::Device>] List of required planned devices to boot
+    # @return [Array<Planned::DevicesCollection>] List of required planned devices to boot
     def boot_devices(devicegraph, devices)
-      mountable_devices = find_mountable_devices(devices)
-      return unless root?(mountable_devices)
-      checker = BootRequirementsChecker.new(devicegraph, planned_devices: mountable_devices)
+      return unless root?(devices.mountable)
+      checker = BootRequirementsChecker.new(devicegraph, planned_devices: devices.mountable)
       checker.needed_partitions
-    end
-
-    # Return mountable devices from the list of planned ones
-    #
-    # @param devices [Array<Planned::Device>] List of planned devices
-    # @return [Array<Planned::Device>] List of devices that can be mounted
-    def find_mountable_devices(devices)
-      devices.each_with_object([]) do |dev, all|
-        if dev.respond_to?(:mount_point)
-          all << dev
-        elsif dev.is_a?(Planned::LvmVg)
-          all.concat(dev.all_lvs)
-        end
-      end
     end
 
     # Determines whether the list of devices includes a root partition
@@ -213,7 +199,7 @@ module Y2Storage
     #
     # @param devicegraph [Devicegraph]                 Starting point
     # @param drives      [Proposal::AutoinstDrivesMap] Devices map from an AutoYaST profile
-    # @return [Array<Planned::Device>] Devices to add
+    # @return [Planned::DevicesCollection] Devices to add
     def plan_devices(devicegraph, drives)
       planner = Proposal::AutoinstDevicesPlanner.new(devicegraph, issues_list)
       planner.planned_devices(drives)
@@ -223,7 +209,7 @@ module Y2Storage
     #
     # @param devicegraph     [Devicegraph]       Starting point
     # @param drives          [AutoinstDrivesMap] Devices map from an AutoYaST profile
-    # @param planned_devices [<Planned::Device>] Planned devices
+    # @param planned_devices [<Planned::DevicesCollection>] Planned devices
     # @return [Devicegraph] Clean devicegraph
     #
     # @see Y2Storage::Proposal::AutoinstSpaceMaker
@@ -242,7 +228,7 @@ module Y2Storage
     def guided_devicegraph_for_target(devicegraph, drives, target)
       guided_settings = proposal_settings_for_disks(drives)
       guided_planner = Proposal::DevicesPlanner.new(guided_settings, devicegraph)
-      @planned_devices = guided_planner.planned_devices(target)
+      @planned_devices = Planned::DevicesCollection.new(guided_planner.planned_devices(target))
       result = create_devices(devicegraph, @planned_devices, drives.disk_names)
       result.devicegraph
     end
@@ -255,16 +241,17 @@ module Y2Storage
     #
     # As a side effect, it updates the planned devices list if needed.
     #
-    # @param devicegraph     [Devicegraph]            Starting point
-    # @param planned_devices [Array<Planned::Device>] Devices to add
-    # @param disk_names      [Array<String>]          Names of the disks to consider
+    # @param devicegraph     [Devicegraph]                Starting point
+    # @param planned_devices [Planned::DevicesCollection] Devices to add
+    # @param disk_names      [Array<String>]              Names of the disks to consider
     # @return [Devicegraph] Copy of devicegraph containing the planned devices
     def create_devices(devicegraph, planned_devices, disk_names)
       boot_parts = boot_devices(devicegraph, @planned_devices)
       devices_creator = Proposal::AutoinstDevicesCreator.new(devicegraph)
       begin
-        result = devices_creator.populated_devicegraph(boot_parts + planned_devices, disk_names)
-        @planned_devices.unshift(*boot_parts)
+        planned_with_boot = planned_devices.prepend(boot_parts)
+        result = devices_creator.populated_devicegraph(planned_with_boot, disk_names)
+        @planned_devices = planned_with_boot
       rescue Y2Storage::NoDiskSpaceError
         raise if boot_parts.empty?
         result = devices_creator.populated_devicegraph(planned_devices, disk_names)
