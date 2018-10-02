@@ -129,6 +129,7 @@ module Y2Partitioner
       # @param id [Symbol, String]
       # @return [Hash]
       def action_for_widget_id(id)
+        return nil if id.nil?
         actions.find { |action| widget_id_for_action(action) == id.to_sym }
       end
 

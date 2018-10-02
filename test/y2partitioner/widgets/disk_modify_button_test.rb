@@ -32,6 +32,8 @@ describe Y2Partitioner::Widgets::DiskModifyButton do
 
   subject(:button) { described_class.new(device) }
 
+  include_examples "CWM::AbstractWidget"
+
   describe "#items" do
     it "returns a list" do
       expect(button.items).to be_a(Array)
