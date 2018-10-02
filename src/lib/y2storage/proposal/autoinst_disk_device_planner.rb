@@ -182,6 +182,9 @@ module Y2Storage
         return unless partition_to_reuse
         partition.filesystem_type ||= partition_to_reuse.filesystem_type
         add_device_reuse(partition, partition_to_reuse.name, section)
+        if !partition.reformat && partition_to_reuse.filesystem.nil?
+          issues_list.add(:missing_reusable_filesystem, section)
+        end
       end
 
       # @param partition    [Planned::Partition] Planned partition
