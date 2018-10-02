@@ -28,6 +28,7 @@ require "y2partitioner/widgets/lvm_devices_table"
 require "y2partitioner/widgets/lvm_vg_bar_graph"
 require "y2partitioner/widgets/lvm_vg_description"
 require "y2partitioner/widgets/lvm_lv_add_button"
+require "y2partitioner/widgets/lvm_lvs_delete_button"
 require "y2partitioner/widgets/lvm_vg_resize_button"
 require "y2partitioner/widgets/device_delete_button"
 
@@ -131,7 +132,12 @@ module Y2Partitioner
             LvmVgBarGraph.new(@lvm_vg),
             table(device_buttons),
             Left(device_buttons),
-            Right(LvmLvAddButton.new(device: @lvm_vg))
+            Right(
+              HBox(
+                LvmLvAddButton.new(device: @lvm_vg),
+                LvmLvsDeleteButton.new(device: @lvm_vg)
+              )
+            )
           )
         end
 
