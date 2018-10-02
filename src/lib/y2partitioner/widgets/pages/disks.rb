@@ -19,21 +19,14 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "cwm/tree_pager"
 require "y2partitioner/icons"
-require "y2partitioner/widgets/partition_add_button"
-require "y2partitioner/widgets/blk_device_edit_button"
-require "y2partitioner/widgets/partition_move_button"
-require "y2partitioner/widgets/device_resize_button"
-require "y2partitioner/widgets/device_delete_button"
-require "y2partitioner/widgets/configurable_blk_devices_table"
-require "y2partitioner/device_graphs"
+require "y2partitioner/widgets/pages/devices_table"
 
 module Y2Partitioner
   module Widgets
     module Pages
       # A Page for block disks and its partitions. It contains a {ConfigurableBlkDevicesTable}
-      class Disks < CWM::Page
+      class Disks < DevicesTable
         include Yast::I18n
 
         # Constructor
@@ -43,8 +36,8 @@ module Y2Partitioner
         def initialize(disks, pager)
           textdomain "storage"
 
+          super(pager)
           @disks = disks
-          @pager = pager
         end
 
         # @macro seeAbstractWidget
@@ -52,33 +45,10 @@ module Y2Partitioner
           _("Hard Disks")
         end
 
-        # @macro seeCustomWidget
-        def contents
-          return @contents if @contents
-
-          device_buttons = DeviceButtonsSet.new(@pager)
-          table = ConfigurableBlkDevicesTable.new(devices, @pager, device_buttons)
-          icon = Icons.small_icon(Icons::HD)
-          @contents = VBox(
-            Left(
-              HBox(
-                Image(icon, ""),
-                # TRANSLATORS: Heading
-                Heading(_("Hard Disks"))
-              )
-            ),
-            table,
-            Left(device_buttons)
-          )
-        end
-
       private
 
         # @return [Array<Y2Storage::BlkDevice>]
         attr_reader :disks
-
-        # @return [CWM::TreePager]
-        attr_reader :pager
 
         # Returns all disks and their partitions
         #
@@ -88,6 +58,16 @@ module Y2Partitioner
             devices << disk
             devices.concat(disk.partitions) if disk.respond_to?(:partitions)
           end
+        end
+
+        # @see DevicesTable
+        def table_buttons
+          Empty()
+        end
+
+        # @see DevicesTable
+        def icon
+          Icons::HD
         end
       end
     end

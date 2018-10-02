@@ -19,27 +19,23 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "cwm/tree_pager"
-require "y2partitioner/device_graphs"
+require "y2partitioner/icons"
+require "y2partitioner/widgets/pages/devices_table"
 require "y2partitioner/widgets/lvm_devices_table"
-require "y2partitioner/widgets/device_buttons_set"
 require "y2partitioner/widgets/lvm_vg_add_button"
 
 module Y2Partitioner
   module Widgets
     module Pages
       # A Page for LVM devices
-      class Lvm < CWM::Page
+      class Lvm < DevicesTable
         include Yast::I18n
         extend Yast::I18n
 
         # Constructor
-        #
-        # @param pager [CWM::TreePager]
-        def initialize(pager)
+        def initialize(*args)
           textdomain "storage"
-
-          @pager = pager
+          super
         end
 
         # Label for all the instances
@@ -56,28 +52,22 @@ module Y2Partitioner
           _(self.class.label)
         end
 
-        # @macro seeCustomWidget
-        def contents
-          return @contents if @contents
+      private
 
-          device_buttons = DeviceButtonsSet.new(@pager)
-          table = LvmDevicesTable.new(devices, @pager, device_buttons)
-          icon = Icons.small_icon(Icons::LVM)
-          @contents = VBox(
-            Left(
-              HBox(
-                Image(icon, ""),
-                # TRANSLATORS: Heading
-                Heading(_("Volume Management"))
-              )
-            ),
-            table,
-            Left(device_buttons),
-            Right(LvmVgAddButton.new)
-          )
+        # @see DevicesTable
+        def icon
+          Icons::LVM
         end
 
-      private
+        # @see DevicesTable
+        def table_buttons
+          LvmVgAddButton.new
+        end
+
+        # @see DevicesTable
+        def table
+          @table ||= LvmDevicesTable.new(devices, pager, device_buttons)
+        end
 
         # Returns all volume groups and their logical volumes, including thin pools
         # and thin volumes
@@ -90,10 +80,6 @@ module Y2Partitioner
             devices << vg
             devices.concat(vg.all_lvm_lvs)
           end
-        end
-
-        def device_graph
-          DeviceGraphs.instance.current
         end
       end
     end
