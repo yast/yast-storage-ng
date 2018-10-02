@@ -25,7 +25,28 @@ module Y2Storage
   module Planned
     # This class holds a list of planned devices and offers an API to query the collection
     #
-    # @example Add devices
+    # Instances of this classes are immutable, so methods like {#append} or {#prepend} will return
+    # new instances.
+    #
+    # @example Create a collection
+    #   disk = Disk.new
+    #   vg = LvmVg.new
+    #   collection = DevicesCollection.new([disk, vg])
+    #
+    # @example Filter by device type (e.g., disk devices)
+    #   sda = Disk.new
+    #   sdb = Disk.new
+    #   vg = LvmVg.new
+    #   collection = DevicesCollection.new([sda, sdb, vg])
+    #   collection.disks #=> [sda, sdb]
+    #
+    # @example Combining collections
+    #   disk = Disk.new
+    #   vg = LvmVg.new
+    #   collection0 = DevicesCollection.new([disk])
+    #   collection1 = DevicesCollection.new([vg])
+    #   combined = collection0.append(collection1)
+    #   combined.devices #=> [disk, vg]
     class DevicesCollection
       extend Forwardable
       include Enumerable
