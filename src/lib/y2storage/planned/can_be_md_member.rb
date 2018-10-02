@@ -1,6 +1,6 @@
 # encoding: utf-8
 
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2018] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -19,10 +19,23 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "y2storage/planned/can_be_encrypted"
-require "y2storage/planned/can_be_formatted"
-require "y2storage/planned/can_be_mounted"
-require "y2storage/planned/can_be_pv"
-require "y2storage/planned/can_be_md_member"
-require "y2storage/planned/can_be_resized"
-require "y2storage/planned/has_size"
+module Y2Storage
+  module Planned
+    # Mixin for planned devices that can act as MD RAID member
+    # @see Planned::Device
+    module CanBeMdMember
+      # @return [String] name of the MD array to which this partition should
+      #   be added
+      attr_accessor :raid_name
+
+      # Initializations of the mixin, to be called from the class constructor.
+      def initialize_can_be_md_member
+      end
+
+      # Checks whether the device represents an MD RAID member
+      def md_member?
+        !raid_name.nil?
+      end
+    end
+  end
+end
