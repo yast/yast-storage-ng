@@ -85,6 +85,7 @@ module Y2Storage
         planned_disk = Y2Storage::Planned::Disk.new
         device_config(planned_disk, part, drive)
         planned_disk.lvm_volume_group_name = part.lvm_group
+        planned_disk.raid_name = part.raid_name
         add_device_reuse(planned_disk, drive.device, part)
 
         [planned_disk]

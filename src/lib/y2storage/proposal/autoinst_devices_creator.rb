@@ -155,7 +155,6 @@ module Y2Storage
       # @return [Array<Array<Planned::Md>, Array<Planned::Md>, CreatorResult>]
       def process_mds(planned_devices, devs_to_reuse, creator_result)
         mds_to_reuse, mds_to_create = planned_devices.mds.partition(&:reuse?)
-        # TODO: currently it is not possible to use full disks in a RAID
         devs_to_reuse_in_md = reusable_by_md(devs_to_reuse)
         creator_result.merge!(create_mds(mds_to_create, creator_result, devs_to_reuse_in_md))
         mds_to_reuse.each { |i| i.reuse!(creator_result.devicegraph) }
@@ -304,9 +303,7 @@ module Y2Storage
       # @param planned_devices [Planned::DevicesCollection] collection of planned devices
       # @return [Array<Planned::Device>]
       def reusable_by_md(planned_devices)
-        planned_devices.select do |dev|
-          dev.is_a?(Planned::StrayBlkDevice) || dev.is_a?(Planned::Partition)
-        end
+        planned_devices.select { |d| d.respond_to?(:raid_name) }
       end
     end
   end
