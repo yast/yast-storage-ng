@@ -20,6 +20,7 @@
 # find current contact information at www.suse.com.
 
 require "y2partitioner/icons"
+require "y2partitioner/ui_state"
 require "y2partitioner/widgets/pages/devices_table"
 require "y2partitioner/widgets/md_raids_table"
 require "y2partitioner/widgets/md_add_button"
@@ -30,7 +31,6 @@ module Y2Partitioner
       # A Page for Software RAIDs. It contains a {MdRaidsTable}.
       class MdRaids < DevicesTable
         include Yast::I18n
-        extend Yast::I18n
 
         # Constructor
         def initialize(*args)
@@ -38,18 +38,9 @@ module Y2Partitioner
           super
         end
 
-        # Label for all the instances
-        #
-        # @see #label
-        #
-        # @return [String]
-        def self.label
-          N_("RAID")
-        end
-
         # @macro seeAbstractWidget
         def label
-          _(self.class.label)
+          _(UIState.md_raids_label)
         end
 
       private

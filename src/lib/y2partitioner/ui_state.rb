@@ -19,15 +19,13 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "y2partitioner/widgets/pages/md_raids"
-require "y2partitioner/widgets/pages/lvm"
-
 module Y2Partitioner
   # Singleton class to keep the position of the user in the UI and other similar
   # information that needs to be rememberd across UI redraws to give the user a
   # sense of continuity.
   class UIState
     include Yast::I18n
+    extend Yast::I18n
 
     # Constructor
     #
@@ -36,6 +34,26 @@ module Y2Partitioner
     def initialize
       textdomain "storage"
       @candidate_nodes = []
+    end
+
+    # Title of the section listing the MD RAIDs
+    #
+    # @note This is defined in this class as the simplest way to avoid
+    #   dependency cycles in the Ruby requires. We might reconsider a more clean
+    #   approach in the future.
+    #
+    # @return [String]
+    def self.md_raids_label
+      N_("RAID")
+    end
+
+    # Title of the LVM section
+    #
+    # @note See note on {.md_raids_label} about why this looks misplaced.
+    #
+    # @return [String]
+    def self.lvm_label
+      N_("Volume Management")
     end
 
     # @return [Integer, nil] if a row must be selected in a table with devices,
@@ -134,11 +152,11 @@ module Y2Partitioner
       if device.is?(:partition)
         [device.sid, device.partitionable.sid]
       elsif device.is?(:md)
-        [device.sid, _(Widgets::Pages::MdRaids.label)]
+        [device.sid, _(UIState.md_raids_label)]
       elsif device.is?(:lvm_lv)
         [device.sid, device.lvm_vg.sid]
       elsif device.is?(:lvm_vg)
-        [device.sid, _(Widgets::Pages::Lvm.label)]
+        [device.sid, _(UIState.lvm_label)]
       else
         [device.sid]
       end

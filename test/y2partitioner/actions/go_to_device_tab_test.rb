@@ -23,7 +23,6 @@
 require_relative "../test_helper"
 
 require "cwm/rspec"
-require "y2partitioner/ui_state"
 require "y2partitioner/actions/go_to_device_tab"
 
 describe Y2Partitioner::Actions::GoToDeviceTab do

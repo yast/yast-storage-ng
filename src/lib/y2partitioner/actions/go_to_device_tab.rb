@@ -20,6 +20,7 @@
 # find current contact information at www.suse.com.
 
 require "yast"
+require "y2partitioner/ui_state"
 
 module Y2Partitioner
   module Actions
