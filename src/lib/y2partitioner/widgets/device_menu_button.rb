@@ -127,7 +127,8 @@ module Y2Partitioner
       # Entry from {#actions} associated to the given LibYUI id
       #
       # @param id [Symbol, String]
-      # @return [Hash]
+      # @return [Hash, nil] nil if there is no entry in {#actions} associated to
+      #   the given id
       def action_for_widget_id(id)
         return nil if id.nil?
         actions.find { |action| widget_id_for_action(action) == id.to_sym }
