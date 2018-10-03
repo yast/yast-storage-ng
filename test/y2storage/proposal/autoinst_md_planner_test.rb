@@ -80,5 +80,23 @@ describe Y2Storage::Proposal::AutoinstMdPlanner do
         expect(md.name).to eq("/dev/md/data")
       end
     end
+
+    context "when using a partitioned RAID" do
+      let(:raid) do
+        { "device" => "/dev/md2", "partitions" => [home_spec] }
+      end
+
+      it "returns a planned RAID using the specified device as name" do
+        md = planner.planned_devices(drive).first
+        expect(md.name).to eq("/dev/md2")
+      end
+
+      it "returns a planned RAID including partitions" do
+        md = planner.planned_devices(drive).first
+        expect(md.partitions).to contain_exactly(
+          an_object_having_attributes("mount_point" => "/home")
+        )
+      end
+    end
   end
 end
