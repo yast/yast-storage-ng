@@ -61,9 +61,58 @@ module Y2Storage
         devices.map(&:remove_descendants)
         planned_md.add_devices(md, devices)
 
-        planned_md.format!(md)
+        if planned_md.partitions.empty?
+          planned_md.format!(md)
+          CreatorResult.new(new_graph, md.name => planned_md)
+        else
+          create_partitions(new_graph, md, planned_md.partitions)
+        end
 
-        CreatorResult.new(new_graph, md.name => planned_md)
+      end
+
+      # Creates RAID partitions
+      #
+      # @param devicegraph       [Devicegraph]               Devicegraph to operate on
+      # @param md                [Md]                        MD RAID
+      # @param planned_paritions [Array<Planned::Partition>] List of planned partitions to create
+      # @return [CreatorResult] Result of creating the partitions
+      def create_partitions(devicegraph, md, planned_partitions)
+        adjusted_partitions = sized_partitions(planned_partitions, md)
+        dist = best_distribution(md, adjusted_partitions)
+        return CreatorResult.new(devicegraph, {}) if dist.nil?
+        ptable_type = Y2Storage::PartitionTables::Type::GPT
+        md.create_partition_table(ptable_type)
+        part_creator = Proposal::PartitionCreator.new(devicegraph)
+        part_creator.create_partitions(dist)
+      end
+
+      # Finds the best distribution of partitions within a RAID
+      #
+      # @param md                [Md]                        MD RAID
+      # @param planned_paritions [Array<Planned::Partition>] List of planned partitions to create
+      # @return [PartitionsDistribution] Distribution of partitions
+      def best_distribution(md, planned_partitions)
+        spaces = md.free_spaces
+        calculator = Proposal::PartitionsDistributionCalculator.new
+        calculator.best_distribution(planned_partitions, spaces)
+      end
+
+      # Returns a list of planned partitions adjusting the size
+      #
+      # All partitions which sizes are specified as percentage will get their minimal and maximal
+      # sizes adjusted.
+      #
+      # @param planned_partitions [Array<Planned::Partition>] List of planned partitions
+      # @param md                 [Y2Storage::Md]             RAID
+      # @return      [Array<Planned::Partition>] New list of planned partitions with adjusted sizes
+      def sized_partitions(planned_partitions, md)
+        planned_partitions.map do |part|
+          new_part = part.clone
+          next new_part unless new_part.respond_to?(:percent_size)
+          new_size = (md.size * new_part.percent_size / 100).floor(md.chunk_size)
+          new_part.max = new_part.min = new_size
+          new_part
+        end
       end
     end
   end
