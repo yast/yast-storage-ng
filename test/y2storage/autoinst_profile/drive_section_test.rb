@@ -265,6 +265,10 @@ describe Y2Storage::AutoinstProfile::DriveSection do
         expect(described_class.new_from_storage(device("md0")).type).to eq :CT_MD
       end
 
+      it "initializes device name" do
+        expect(described_class.new_from_storage(device("md0")).device).to eq("/dev/md0")
+      end
+
       it "initializes raid options" do
         expect(described_class.new_from_storage(device("md0")).raid_options)
           .to be_a(Y2Storage::AutoinstProfile::RaidOptionsSection)

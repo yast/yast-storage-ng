@@ -287,7 +287,7 @@ module Y2Storage
       # @return [Boolean]
       def init_from_md(md)
         @type = :CT_MD
-        @device = "/dev/md"
+        @device = md.name
         @partitions = partitions_from_collection([md])
         @enable_snapshots = enabled_snapshots?([md.filesystem])
         @raid_options = RaidOptionsSection.new_from_storage(md)
