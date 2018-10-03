@@ -132,7 +132,8 @@ module Y2Partitioner
       def bcache_buttons
         [
           BcacheModifyButton.new(device),
-          PartitionsButton.new(device, pager)
+          PartitionsButton.new(device, pager),
+          DeviceDeleteButton.new(pager: pager, device: device)
         ]
       end
 

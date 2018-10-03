@@ -21,6 +21,7 @@
 
 require "yast"
 require "y2partitioner/widgets/device_button"
+require "y2partitioner/actions/delete_bcache"
 require "y2partitioner/actions/delete_disk_device"
 require "y2partitioner/actions/delete_partition"
 require "y2partitioner/actions/delete_lvm_vg"
@@ -44,8 +45,19 @@ module Y2Partitioner
 
     private
 
+      DEVICE_MAPPING = {
+        disk_device: Actions::DeleteDiskDevice,
+        partition:   Actions::DeletePartition,
+        lvm_vg:      Actions::DeleteLvmVg,
+        lvm_lv:      Actions::DeleteLvmLv,
+        md:          Actions::DeleteMd,
+        bcache:      Actions::DeleteBcache
+      }
+      private_constant :DEVICE_MAPPING
+
       # Returns the proper Actions class to perform the delete action
       #
+      # @see Actions::DeleteBcache
       # @see Actions::DeleteDevice
       # @see Actions::DeleteDiskDevice
       # @see Actions::DeletePartition
@@ -53,19 +65,13 @@ module Y2Partitioner
       # @see Actions::DeleteLvmLv
       # @see Actions::DeleteMd
       #
-      # @return [Actions::DeleteDevice]
+      # @return [Actions::DeleteDevice,nil] returns nil if action is not yet implemented
       def actions_class
-        if device.is?(:disk_device)
-          Actions::DeleteDiskDevice
-        elsif device.is?(:partition)
-          Actions::DeletePartition
-        elsif device.is?(:lvm_vg)
-          Actions::DeleteLvmVg
-        elsif device.is?(:lvm_lv)
-          Actions::DeleteLvmLv
-        elsif device.is?(:md)
-          Actions::DeleteMd
+        DEVICE_MAPPING.each_pair do |type, result|
+          return result if device.is?(type)
         end
+
+        nil
       end
     end
   end
