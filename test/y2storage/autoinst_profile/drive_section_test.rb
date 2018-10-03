@@ -42,14 +42,15 @@ describe Y2Storage::AutoinstProfile::DriveSection do
   describe ".new_from_hashes" do
     context "when type is not specified" do
       let(:root) { { "mount" => "/" } }
-      let(:hash) { { "partitions" => [root] } }
+      let(:hash) { { "partitions" => [root], "raid_options" => raid_options } }
+      let(:raid_options) { { "raid_type" => "raid0" } }
 
       it "initializes it to :CT_DISK" do
         expect(described_class.new_from_hashes(hash).type).to eq(:CT_DISK)
       end
 
-      context "and device is /dev/md" do
-        let(:hash) { { "device" => "/dev/md" } }
+      context "and device name starts by /dev/md" do
+        let(:hash) { { "device" => "/dev/md0" } }
 
         it "initializes it to :CT_MD" do
           expect(described_class.new_from_hashes(hash).type).to eq(:CT_MD)
@@ -59,6 +60,12 @@ describe Y2Storage::AutoinstProfile::DriveSection do
       it "initializes partitions" do
         expect(Y2Storage::AutoinstProfile::PartitionSection).to receive(:new_from_hashes)
           .with(root, Y2Storage::AutoinstProfile::DriveSection)
+        described_class.new_from_hashes(hash)
+      end
+
+      it "initializes raid options" do
+        expect(Y2Storage::AutoinstProfile::RaidOptionsSection).to receive(:new_from_hashes)
+          .with(raid_options, Y2Storage::AutoinstProfile::DriveSection)
         described_class.new_from_hashes(hash)
       end
     end
@@ -257,6 +264,11 @@ describe Y2Storage::AutoinstProfile::DriveSection do
       it "initializes #type to :CT_MD" do
         expect(described_class.new_from_storage(device("md0")).type).to eq :CT_MD
       end
+
+      it "initializes raid options" do
+        expect(described_class.new_from_storage(device("md0")).raid_options)
+          .to be_a(Y2Storage::AutoinstProfile::RaidOptionsSection)
+      end
     end
 
     context "given a volume group" do
@@ -444,7 +456,7 @@ describe Y2Storage::AutoinstProfile::DriveSection do
       expect(hash.keys).to_not include "partitions"
     end
 
-    it "does not export empty collections (#partitions and #skip_list)" do
+    it "does not export empty collections (#partitions, #skip_list)" do
       section.partitions = []
       section.skip_list = []
       hash = section.to_hashes
