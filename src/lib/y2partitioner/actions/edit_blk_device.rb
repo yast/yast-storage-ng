@@ -64,9 +64,12 @@ module Y2Partitioner
           # TRANSLATORS: dialog title. %{lv_name} is an LVM LV name (e.g.'root'),
           # %{vg} is the device name of an LVM VG (e.g. '/dev/system').
           _("Edit Logical Volume %{lv_name} on %{vg}") % msg_args
-        else
+        elsif device.is?(:partition)
           # TRANSLATORS: dialog title. %s is a device name like /dev/sda1
           _("Edit Partition %s") % device.name
+        else
+          # TRANSLATORS: dialog title. %s is a device name like /dev/sda
+          _("Edit Device %s") % device.name
         end
       end
 
