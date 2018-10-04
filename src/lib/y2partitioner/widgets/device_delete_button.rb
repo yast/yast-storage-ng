@@ -22,7 +22,6 @@
 require "yast"
 require "y2partitioner/widgets/device_button"
 require "y2partitioner/actions/delete_bcache"
-require "y2partitioner/actions/delete_disk_device"
 require "y2partitioner/actions/delete_partition"
 require "y2partitioner/actions/delete_lvm_vg"
 require "y2partitioner/actions/delete_lvm_lv"
@@ -46,12 +45,11 @@ module Y2Partitioner
     private
 
       DEVICE_MAPPING = {
-        disk_device: Actions::DeleteDiskDevice,
-        partition:   Actions::DeletePartition,
-        lvm_vg:      Actions::DeleteLvmVg,
-        lvm_lv:      Actions::DeleteLvmLv,
-        md:          Actions::DeleteMd,
-        bcache:      Actions::DeleteBcache
+        partition: Actions::DeletePartition,
+        lvm_vg:    Actions::DeleteLvmVg,
+        lvm_lv:    Actions::DeleteLvmLv,
+        md:        Actions::DeleteMd,
+        bcache:    Actions::DeleteBcache
       }
       private_constant :DEVICE_MAPPING
 
@@ -59,7 +57,6 @@ module Y2Partitioner
       #
       # @see Actions::DeleteBcache
       # @see Actions::DeleteDevice
-      # @see Actions::DeleteDiskDevice
       # @see Actions::DeletePartition
       # @see Actions::DeleteLvmVg
       # @see Actions::DeleteLvmLv
