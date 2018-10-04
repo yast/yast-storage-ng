@@ -108,9 +108,8 @@ module Y2Storage
       def sized_partitions(planned_partitions, md)
         planned_partitions.map do |part|
           new_part = part.clone
-          next new_part unless new_part.respond_to?(:percent_size)
-          new_size = (md.size * new_part.percent_size / 100).floor(md.chunk_size)
-          new_part.max = new_part.min = new_size
+          next new_part unless new_part.percent_size
+          new_part.max = new_part.min = new_part.size_in(md)
           new_part
         end
       end
