@@ -28,9 +28,10 @@ describe Y2Storage::Planned::DevicesCollection do
 
   let(:partition) { planned_partition }
   let(:disk_partition) { planned_partition }
+  let(:md_partition) { planned_partition }
   let(:disk) { planned_disk(partitions: [disk_partition]) }
   let(:stray_blk_device) { planned_stray_blk_device }
-  let(:md) { planned_md }
+  let(:md) { planned_md(partitions: [md_partition]) }
   let(:lv0) { planned_lv(mount_point: "/") }
   let(:lv1) { planned_lv }
   let(:vg) { planned_vg(lvs: [lv0, lv1]) }
@@ -68,14 +69,26 @@ describe Y2Storage::Planned::DevicesCollection do
   describe "#all" do
     it "returns all planned devices" do
       expect(collection.all).to contain_exactly(
-        partition, disk_partition, disk, stray_blk_device, md, lv0, lv1, vg
+        partition, disk_partition, disk, stray_blk_device, md, md_partition, lv0, lv1, vg
       )
     end
   end
 
   describe "#partitions" do
     it "returns planned partitions" do
-      expect(collection.partitions).to eq([partition, disk_partition])
+      expect(collection.partitions).to eq([partition, disk_partition, md_partition])
+    end
+  end
+
+  describe "#disk_partitions" do
+    it "returns planned partitions" do
+      expect(collection.disk_partitions).to eq([partition, disk_partition])
+    end
+  end
+
+  describe "#md_partitions" do
+    it "returns planned partitions" do
+      expect(collection.md_partitions).to eq([md_partition])
     end
   end
 
@@ -106,7 +119,7 @@ describe Y2Storage::Planned::DevicesCollection do
   describe "#mountable_devices" do
     it "returns all devices that can be mounted" do
       expect(collection.mountable).to contain_exactly(
-        partition, disk, disk_partition, stray_blk_device, lv0, lv1, md
+        partition, disk, disk_partition, stray_blk_device, lv0, lv1, md, md_partition
       )
     end
   end

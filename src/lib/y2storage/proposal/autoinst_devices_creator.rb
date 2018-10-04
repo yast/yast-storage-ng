@@ -138,7 +138,7 @@ module Y2Storage
       #
       # @return [Array<Array<Planned::Partition>, Array<Planned::Partition>, CreatorResult>]
       def process_partitions(planned_devices, disk_names)
-        planned_partitions = planned_devices.partitions
+        planned_partitions = planned_devices.disk_partitions
         parts_to_reuse, parts_to_create = planned_partitions.partition(&:reuse?)
         creator_result = create_partitions(parts_to_create, disk_names)
         reuse_devices(parts_to_reuse, creator_result.devicegraph)
