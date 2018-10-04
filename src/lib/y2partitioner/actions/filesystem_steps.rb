@@ -20,6 +20,7 @@
 # find current contact information at www.suse.com.
 
 require "yast"
+require "y2partitioner/ui_state"
 require "y2partitioner/dialogs/partition_role"
 require "y2partitioner/dialogs/format_and_mount"
 require "y2partitioner/dialogs/encrypt_password"

@@ -405,8 +405,9 @@ module Y2Storage
 
     # Bcache caching set device defined on top of the device
     #
-    # @return [BcacheCset, nil] nil if the device is not used as bcache caching set
-    def bcache_cset
+    # @return [BcacheCset, nil] nil if the device is not included in any
+    #   bcache caching set
+    def in_bcache_cset
       descendants.detect do |dev|
         dev.is?(:bcache_cset) && dev.blk_devices.any? { |b| b.plain_device == plain_device }
       end
@@ -432,7 +433,7 @@ module Y2Storage
     #   multipath, bcache and bcache_cset devices
     def component_of
       vg = lvm_pv ? lvm_pv.lvm_vg : nil
-      (dm_raids + [vg] + [md] + [multipath] + [bcache] + [bcache_cset]).compact
+      (dm_raids + [vg] + [md] + [multipath] + [bcache] + [in_bcache_cset]).compact
     end
 
     # Equivalent of {#component_of} in which each device is represented by a

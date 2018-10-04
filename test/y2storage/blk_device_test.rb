@@ -785,7 +785,7 @@ describe Y2Storage::BlkDevice do
       end
     end
 
-    context "for a disk that is used as caching device for  a bcache" do
+    context "for a disk that is used as caching device for a bcache" do
       let(:scenario) { "bcache1.xml" }
       let(:device_name) { "/dev/vdb" }
 
@@ -793,6 +793,18 @@ describe Y2Storage::BlkDevice do
         expect(device.component_of.size).to eq 1
         expect(device.component_of.first).to be_a Y2Storage::BcacheCset
         expect(device.component_of.first.uuid).to eq "acb129b8-b55e-45bb-aa99-41a6f0a0ef07"
+      end
+    end
+
+    context "for a bcache device not used in an LVM or in a RAID" do
+      let(:scenario) { "bcache1.xml" }
+      let(:device_name) { "/dev/bcache0" }
+
+      # Regression test, at some point this used to return the bcache_cset of the
+      # bcache device, which was obviously wrong (all bcaches were somehow
+      # considered to be a component of their own cset!).
+      it "returns an empty array" do
+        expect(device.component_of).to eq []
       end
     end
   end
