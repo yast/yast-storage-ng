@@ -28,8 +28,7 @@ module Y2Storage
     class AutoinstMdPlanner < AutoinstDrivePlanner
       # Returns a MD array according to an AutoYaST specification
       #
-      # @param drive [AutoinstProfile::DriveSection] drive section describing
-      #   the MD RAID
+      # @param drive [AutoinstProfile::DriveSection] drive section describing the MD RAID
       # @return [Array<Planned::Md>] Planned MD RAID devices
       def planned_devices(drive)
         md =
@@ -39,11 +38,15 @@ module Y2Storage
             partitioned_md(drive)
           end
 
-        [md]
+        Array(md)
       end
 
     private
 
+      # Returns a non partitioned MD RAID
+      #
+      # @param drive [AutoinstProfile::DriveSection] drive section describing the MD RAID
+      # @return [Planned::Md]
       def non_partitioned_md(drive)
         md = Planned::Md.new(name: drive.name_for_md)
         part_section = drive.partitions.first
@@ -54,6 +57,10 @@ module Y2Storage
         md
       end
 
+      # Returns a partitioned MD RAID
+      #
+      # @param drive [AutoinstProfile::DriveSection] drive section describing the MD RAID
+      # @return [Planned::Md]
       def partitioned_md(drive)
         md = Planned::Md.new(name: drive.device)
         add_raid_options(md, drive.raid_options)
@@ -63,14 +70,20 @@ module Y2Storage
         md
       end
 
+      # Adds RAID options to a planned RAID
+      #
+      # @param md [Planned::Md] Planned RAID
+      # @param raid_options [AutoinstProfile::RaidOptionsSection] raid options section from
+      #   the profile
       def add_raid_options(md, raid_options)
+        md.md_level = raid_level_from(raid_options)
         return if raid_options.nil?
+        md.name = raid_options.raid_name if raid_options.raid_name
         md.chunk_size = chunk_size_from_string(raid_options.chunk_size) if raid_options.chunk_size
-        md.md_level = MdLevel.find(raid_options.raid_type) if raid_options.raid_type
         md.md_parity = MdParity.find(raid_options.parity_algorithm) if raid_options.parity_algorithm
       end
 
-      # Set 'reusing' attributes for a MD RAID
+      # Sets 'reusing' attributes for a MD RAID
       #
       # @param md      [Planned::Md] Planned MD RAID
       # @param section [AutoinstProfile::PartitionSection] AutoYaST specification
@@ -84,6 +97,10 @@ module Y2Storage
         add_device_reuse(md, md_to_reuse.name, section)
       end
 
+      # Parses the user specified chunk size
+      #
+      # @param string [String] User specified chunk size
+      # @return [DiskSize]
       def chunk_size_from_string(string)
         string =~ /\D/ ? DiskSize.parse(string) : DiskSize.KB(string.to_i)
       end
@@ -98,7 +115,7 @@ module Y2Storage
       # @param disk        [Disk,Dasd]          Disk to put the partitions on
       # @param partition   [Planned::Partition] Partition to assign the size to
       # @param part_section   [AutoinstProfile::PartitionSection] Partition specification from AutoYaST
-      def assign_size_to_partition(disk, partition, part_section)
+      def assign_size_to_md_partition(_md, partition, part_section)
         size_info = parse_size(part_section, PARTITION_MIN_SIZE, DiskSize.unlimited)
 
         if size_info.nil?
@@ -106,11 +123,14 @@ module Y2Storage
           return false
         end
 
-        # FIXME size_info.percentage
-
-        partition.min_size = size_info.min
-        partition.max_size = size_info.max
+        if size_info.percentage
+          partition.percent_size = size_info.percentage
+        else
+          partition.min_size = size_info.min
+          partition.max_size = size_info.max
+        end
         partition.weight = 1 if size_info.unlimited?
+
         true
       end
 
@@ -121,17 +141,31 @@ module Y2Storage
       def plan_partition(disk, drive, section)
         partition = Y2Storage::Planned::Partition.new(nil, nil)
 
-        return unless assign_size_to_partition(disk, partition, section)
+        return unless assign_size_to_md_partition(disk, partition, section)
 
         partition.disk = disk.name
         partition.partition_id = section.id_for_partition
         partition.primary = section.partition_type == "primary" if section.partition_type
+        partition.lvm_volume_group_name = section.lvm_group
 
         device_config(partition, section, drive)
         add_partition_reuse(partition, section) if section.create == false
         partition
       end
 
+      # Given a user specified RAID type, it returns the RAID level
+      #
+      # @note If the raid_type is not specified or is invalid, falls back to RAID1.
+      #
+      # @param raid_type [String,nil] User defined RAID level
+      # @return [Y2Storage::MdLevel] RAID level
+      def raid_level_from(raid_options)
+        return Y2Storage::MdLevel::RAID1 if raid_options.nil? || raid_options.raid_type.nil?
+        MdLevel.find(raid_options.raid_type)
+      rescue NameError
+        issues_list.add(:invalid_value, raid_options.raid_type, :raid_type, "raid1")
+        Y2Storage::MdLevel::RAID1
+      end
     end
   end
 end

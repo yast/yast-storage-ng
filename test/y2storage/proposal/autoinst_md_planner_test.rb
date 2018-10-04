@@ -40,7 +40,7 @@ describe Y2Storage::Proposal::AutoinstMdPlanner do
     let(:drive) { Y2Storage::AutoinstProfile::DriveSection.new_from_hashes(raid) }
 
     let(:raid) do
-      { "device" => "/dev/md", "partitions" => [home_spec] }
+      { "device" => "/dev/md2", "raid_options" => raid_options, "partitions" => [home_spec] }
     end
 
     let(:home_spec) do
@@ -54,20 +54,42 @@ describe Y2Storage::Proposal::AutoinstMdPlanner do
       { "raid_type" => "raid5" }
     end
 
-    it "returns a planned RAID using /dev/md + partition_nr as device name" do
+    it "returns a planned RAID with the given device name" do
       md = planner.planned_devices(drive).first
-      expect(md.name).to eq("/dev/md1")
+      expect(md.name).to eq("/dev/md2")
     end
 
-    it "returns a planned RAID of the wanted type" do
-      md = planner.planned_devices(drive).first
-      expect(md.md_level).to eq(Y2Storage::MdLevel::RAID5)
+    context "when no RAID level is specified" do
+      let(:raid_options) { nil }
+
+      it "assumes a RAID1" do
+        md = planner.planned_devices(drive).first
+        expect(md.md_level).to eq(Y2Storage::MdLevel::RAID1)
+      end
+    end
+
+    context "when an invalid RAID level is specified" do
+      let(:raid_options) do
+        { "raid_type" => "non-valid-type" }
+      end
+
+      it "assumes a RAID1" do
+        md = planner.planned_devices(drive).first
+        expect(md.md_level).to eq(Y2Storage::MdLevel::RAID1)
+      end
+
+      it "registers an issue" do
+        planner.planned_devices(drive).first
+        issue = issues_list.find { |i| i.is_a?(Y2Storage::AutoinstIssues::InvalidValue) }
+        expect(issue).to_not be_nil
+      end
     end
 
     it "returns a planned RAID including filesystem settings" do
       md = planner.planned_devices(drive).first
-      expect(md.mount_point).to eq("/home")
-      expect(md.filesystem_type).to eq(Y2Storage::Filesystems::Type::XFS)
+      home = md.partitions.first
+      expect(home.mount_point).to eq("/home")
+      expect(home.filesystem_type).to eq(Y2Storage::Filesystems::Type::XFS)
     end
 
     context "when using a named RAID" do
@@ -96,6 +118,29 @@ describe Y2Storage::Proposal::AutoinstMdPlanner do
         expect(md.partitions).to contain_exactly(
           an_object_having_attributes("mount_point" => "/home")
         )
+      end
+    end
+
+    context "using the old schema" do
+      let(:raid) do
+        { "device" => "/dev/md", "partitions" => [home_spec] }
+      end
+
+      let(:home_spec) do
+        {
+          "mount" => "/home", "filesystem" => "xfs", "size" => "max", "partition_nr" => 1,
+          "raid_options" => raid_options
+        }
+      end
+
+      it "returns a planned RAID using /dev/md + partition_nr as device name" do
+        md = planner.planned_devices(drive).first
+        expect(md.name).to eq("/dev/md1")
+      end
+
+      it "returns a planned RAID of the wanted type" do
+        md = planner.planned_devices(drive).first
+        expect(md.md_level).to eq(Y2Storage::MdLevel::RAID5)
       end
     end
   end

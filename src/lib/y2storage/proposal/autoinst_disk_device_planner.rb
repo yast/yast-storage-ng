@@ -170,42 +170,6 @@ module Y2Storage
         result
       end
 
-      # Set 'reusing' attributes for a partition
-      #
-      # This method modifies the first argument setting the values related to
-      # reusing a partition (reuse and format).
-      #
-      # @param partition [Planned::Partition] Planned partition
-      # @param section   [AutoinstProfile::PartitionSection] AutoYaST specification
-      def add_partition_reuse(partition, section)
-        partition_to_reuse = find_partition_to_reuse(partition, section)
-        return unless partition_to_reuse
-        partition.filesystem_type ||= partition_to_reuse.filesystem_type
-        add_device_reuse(partition, partition_to_reuse.name, section)
-        if !partition.reformat && partition_to_reuse.filesystem.nil?
-          issues_list.add(:missing_reusable_filesystem, section)
-        end
-      end
-
-      # @param partition    [Planned::Partition] Planned partition
-      # @param part_section [AutoinstProfile::PartitionSection] Partition specification
-      #   from AutoYaST
-      def find_partition_to_reuse(partition, part_section)
-        disk = devicegraph.find_by_name(partition.disk)
-        device =
-          if part_section.partition_nr
-            disk.partitions.find { |i| i.number == part_section.partition_nr }
-          elsif part_section.label
-            disk.partitions.find { |i| i.filesystem_label == part_section.label }
-          else
-            issues_list.add(:missing_reuse_info, part_section)
-            nil
-          end
-
-        issues_list.add(:missing_reusable_device, part_section) unless device
-        device
-      end
-
       # @return [DiskSize] Minimal partition size
       PARTITION_MIN_SIZE = DiskSize.B(1).freeze
 
