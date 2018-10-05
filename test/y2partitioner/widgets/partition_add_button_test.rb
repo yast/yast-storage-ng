@@ -24,6 +24,7 @@ require_relative "../test_helper"
 
 require "cwm/rspec"
 require "y2partitioner/widgets/partition_add_button"
+require "y2partitioner/widgets/overview"
 
 describe Y2Partitioner::Widgets::PartitionAddButton do
   subject { described_class.new(device: device, pager: pager) }

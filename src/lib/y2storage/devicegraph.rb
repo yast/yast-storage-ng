@@ -380,6 +380,22 @@ module Y2Storage
       disk_devices.reduce([]) { |sum, disk| sum + disk.free_spaces }
     end
 
+    # Removes a bcache and all its descendants
+    #
+    # It also removes bcache_cset if it is not used by any other bcache device.
+    #
+    # @see #remove_with_dependants
+    #
+    # @param bcache [Bcache]
+    #
+    # @raise [ArgumentError] if the bcache does not exist in the devicegraph
+    def remove_bcache(bcache)
+      raise(ArgumentError, "Incorrect device #{bcache.inspect}") unless bcache && bcache.is?(:bcache)
+      bcache_cset = bcache.bcache_cset
+      remove_with_dependants(bcache)
+      remove_with_dependants(bcache_cset) if bcache_cset && bcache_cset.bcaches.empty?
+    end
+
     # Removes a Md raid and all its descendants
     #
     # It also removes other devices that may have become useless, like the

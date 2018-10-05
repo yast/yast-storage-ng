@@ -641,6 +641,68 @@ describe Y2Storage::Devicegraph do
     end
   end
 
+  describe "#remove_bcache" do
+    subject(:devicegraph) { Y2Storage::StorageManager.instance.staging }
+
+    before do
+      fake_scenario("bcache1.xml")
+    end
+
+    let(:bcache_name) { "/dev/bcache2" }
+
+    it "removes the given bcache device" do
+      bcache = Y2Storage::Bcache.find_by_name(devicegraph, bcache_name)
+      expect(bcache).to_not be_nil
+
+      devicegraph.remove_bcache(bcache)
+
+      bcache = Y2Storage::Bcache.find_by_name(devicegraph, bcache_name)
+      expect(bcache).to be_nil
+    end
+
+    it "removes all bcache descendants" do
+      bcache = Y2Storage::Bcache.find_by_name(devicegraph, bcache_name)
+      descendants_sid = bcache.descendants.map(&:sid)
+
+      expect(descendants_sid).to_not be_empty
+
+      devicegraph.remove_bcache(bcache)
+
+      existing_descendants = descendants_sid.map { |sid| devicegraph.find_device(sid) }.compact
+      expect(existing_descendants).to be_empty
+    end
+
+    it "removes the no longer used bcache csets" do
+      bcache = Y2Storage::Bcache.find_by_name(devicegraph, bcache_name)
+
+      expect(devicegraph.bcache_csets).to_not be_empty
+      devicegraph.remove_bcache(bcache)
+      # still in use
+      expect(devicegraph.bcache_csets).to_not be_empty
+      devicegraph.bcaches.each do |bcache_device|
+        devicegraph.remove_bcache(bcache_device)
+      end
+      expect(devicegraph.bcache_csets).to be_empty
+    end
+
+    context "when the bcache does not exist in the devicegraph" do
+      before do
+        Y2Storage::Bcache.create(other_devicegraph, bcache1_name)
+      end
+
+      let(:other_devicegraph) { devicegraph.dup }
+
+      let(:bcache1_name) { "/dev/bcache10" }
+
+      it "raises an exception and does not remove the bcache" do
+        bcache1 = Y2Storage::Bcache.find_by_name(other_devicegraph, bcache1_name)
+
+        expect { devicegraph.remove_bcache(bcache1) }.to raise_error(ArgumentError)
+        expect(Y2Storage::Bcache.find_by_name(other_devicegraph, bcache1_name)).to_not be_nil
+      end
+    end
+  end
+
   describe "#remove_md" do
     subject(:devicegraph) { Y2Storage::StorageManager.instance.staging }
 
