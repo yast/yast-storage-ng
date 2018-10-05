@@ -59,7 +59,7 @@ describe Y2Partitioner::Actions::DeleteBcache do
         device_graph.remove_bcache(Y2Storage::BlkDevice.find_by_name(device_graph, "/dev/bcache2"))
         device_graph.remove_bcache(Y2Storage::BlkDevice.find_by_name(device_graph, "/dev/bcache0"))
 
-        expect(Yast2::Popup).to receive(:show).with(/user of the caching set/, anything)
+        expect(Yast2::Popup).to receive(:show).with(/only one using its caching set/, anything)
         subject.run
       end
     end

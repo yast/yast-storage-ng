@@ -108,47 +108,75 @@ module Y2Partitioner
       #
       # @return [Boolean]
       def confirm
-        # TRANSLATORS %s is the name of the device to be deleted (e.g., /dev/sda1)
-        message = format(_("Really delete %s?"), device.name)
+        if device.respond_to?(:partitions) && device.partitions.any?
+          confirm_for_partitions
+        elsif device.respond_to?(:component_of) && device.component_of.any?
+          confirm_for_component
+        else
+          simple_confirm
+        end
+      end
 
-        result = Yast2::Popup.show(message, buttons: :yes_no)
+      # Simple confirmation to display when only the device itself is affected
+      #
+      # @see #confirm
+      #
+      # @return [Boolean]
+      def simple_confirm
+        result = Yast2::Popup.show(simple_confirm_text, buttons: :yes_no)
         result == :yes
       end
 
-      # Checks whether the device is used as physical volume
+      # Confirmation to display when the device is part of another one(s)
       #
-      # @return [Boolean] true if device belongs to a volume group; false otherwise
-      def used_by_lvm?
-        !lvm_vg.nil?
+      # @see #confirm
+      #
+      # @return [Boolean]
+      def confirm_for_component
+        confirm_recursive_delete(
+          device,
+          _("Confirm Deleting of Devices"),
+          _("The selected device is used by other devices in the system.\n" \
+            "To keep the system in a consistent state, the following devices\n" \
+            "will also be deleted:"),
+          recursive_confirm_text_below
+        )
       end
 
-      # Volume group that the device belongs to
+      # Confirmation to display when the device contains partitions
       #
-      # @see Y2Storage::BlkDevice#lvm_pv
+      # @see #confirm
       #
-      # @return [Y2Storage::LvmVg, nil] nil if the device does not belong to
-      #   a volume group
-      def lvm_vg
-        return nil unless device.respond_to?(:lvm_pv)
-
-        lvm_pv = device.lvm_pv
-        lvm_pv ? lvm_pv.lvm_vg : nil
+      # @return [Boolean]
+      def confirm_for_partitions
+        confirm_recursive_delete(
+          device,
+          _("Confirm Deleting Device with Partitions"),
+          _("The selected device contains partitions.\n" \
+            "To keep the system in a consistent state, the following partitions\n" \
+            "and its associated devices will also be deleted:"),
+          recursive_confirm_text_below
+        )
       end
 
-      # Checks whether the device is used by a md raid
+      # Text to display as final question, below the list of devices, when
+      # {#confirm_recursive_delete} is called
       #
-      # @return [Boolean] true if device belongs to a md raid; false otherwise
-      def used_by_md?
-        !md.nil?
+      # @see #confirm_for_partitions
+      # @see #confirm_for_component
+      #
+      # @return [String]
+      def recursive_confirm_text_below
+        # TRANSLATORS %s is a kernel name like /dev/sda1
+        format(_("Really delete %s and all the affected devices?"), device.name)
       end
 
-      # Md Raid that the device belongs to
+      # Text to display in {#simple_confirm}
       #
-      # @see Y2Storage::BlkDevice#md
-      #
-      # @return [Y2Storage::Md, nil] nil if the device does not belong to a md raid
-      def md
-        device.md
+      # @return [String]
+      def simple_confirm_text
+        # TRANSLATORS %s is the kernel name of the device (e.g., /dev/sda1)
+        format(_("Really delete %s?"), device.name)
       end
 
       # Controller for a block device

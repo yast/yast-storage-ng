@@ -64,9 +64,9 @@ describe Y2Partitioner::Actions::DeleteMd do
         vg.create_lvm_lv("lv1", Y2Storage::DiskSize.GiB(1))
       end
 
-      it "shows a specific confirm message for LVM" do
+      it "shows a generic confirmation pop-up with a recursive list of devices" do
         expect(subject).to receive(:confirm_recursive_delete)
-          .with(device, /LVM/, anything, anything)
+          .with(device, anything, anything, /md0/)
           .and_call_original
 
         subject.run
@@ -79,7 +79,7 @@ describe Y2Partitioner::Actions::DeleteMd do
 
       it "shows a specific confirm message for partitions" do
         expect(subject).to receive(:confirm_recursive_delete)
-          .with(device, /partitions/, anything, anything)
+          .with(device, /Partitions/, anything, anything)
           .and_call_original
 
         subject.run
