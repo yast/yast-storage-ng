@@ -147,12 +147,25 @@ describe Y2Partitioner::Actions::EditBlkDevice do
       end
 
       context "and the device is an MD array" do
-        before { Y2Storage::Md.create(current_graph, "/dev/md0") }
+        before do
+          md = Y2Storage::Md.create(current_graph, "/dev/md0")
+          md.create_filesystem(Y2Storage::Filesystems::Type::EXT3)
+        end
 
         let(:dev_name) { "/dev/md0" }
 
         it "includes the RAID device name in the title passed to the controller" do
           expect(controller_class).to receive(:new).with(device, /dev\/md0/)
+          sequence.run
+        end
+      end
+
+      context "and the device is a bcache device" do
+        let(:scenario) { "bcache1.xml" }
+        let(:dev_name) { "/dev/bcache1" }
+
+        it "includes the Bcache device name in the title passed to the controller" do
+          expect(controller_class).to receive(:new).with(device, /dev\/bcache1/)
           sequence.run
         end
       end
@@ -179,6 +192,37 @@ describe Y2Partitioner::Actions::EditBlkDevice do
         it "returns :abort" do
           expect(sequence.run).to eq(:abort)
         end
+      end
+    end
+
+    context "if called on a newly created device" do
+      before { Y2Storage::Md.create(current_graph, "/dev/md0") }
+
+      let(:dev_name) { "/dev/md0" }
+
+      it "displays the device role dialog" do
+        expect(Y2Partitioner::Dialogs::PartitionRole).to receive(:run).and_return :abort
+        sequence.run
+      end
+    end
+
+    context "if called on disk with no filesystem or partitions" do
+      let(:scenario) { "empty_disks" }
+      let(:dev_name) { "/dev/sdb" }
+
+      it "displays the device role dialog" do
+        expect(Y2Partitioner::Dialogs::PartitionRole).to receive(:run).and_return :abort
+        sequence.run
+      end
+    end
+
+    context "if called on a already formatted partition" do
+      let(:dev_name) { "/dev/sda1" }
+
+      it "displays directly the format/mount dialog instead of the device role one" do
+        expect(Y2Partitioner::Dialogs::PartitionRole).to_not receive(:run)
+        expect(Y2Partitioner::Dialogs::FormatAndMount).to receive(:run).and_return :abort
+        sequence.run
       end
     end
   end

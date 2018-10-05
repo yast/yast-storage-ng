@@ -52,7 +52,29 @@ module Y2Partitioner
 
       # @see TransactionWizard
       def sequence_hash
-        { "ws_start" => "format_options" }.merge(filesystem_steps)
+        # If the device is unused from the editing point of view (very likely a
+        # device just created by the Partitioner), it makes sense to offer the
+        # role selection screen to setup some defaults.
+        first_step = first_edit? ? "filesystem_role" : "format_options"
+
+        { "ws_start" => first_step }.merge(filesystem_steps)
+      end
+
+      # Whether the device must be treated like a brand new one from this action
+      # point of view.
+      #
+      # New devices in that regard are those that contain no file-system, no
+      # encryption, etc., like devices just created by the previous Partitioner
+      # action.
+      #
+      # @return [Boolean]
+      def first_edit?
+        desc_count = device.descendants.size
+        return true if desc_count.zero?
+
+        # If the only descendant is an empty partition table, then we can also
+        # consider the device as "empty"
+        desc_count == 1 && device.descendants.first.is?(:partition_table)
       end
 
       def title
@@ -64,9 +86,12 @@ module Y2Partitioner
           # TRANSLATORS: dialog title. %{lv_name} is an LVM LV name (e.g.'root'),
           # %{vg} is the device name of an LVM VG (e.g. '/dev/system').
           _("Edit Logical Volume %{lv_name} on %{vg}") % msg_args
-        else
+        elsif device.is?(:partition)
           # TRANSLATORS: dialog title. %s is a device name like /dev/sda1
           _("Edit Partition %s") % device.name
+        else
+          # TRANSLATORS: dialog title. %s is a device name like /dev/sda
+          _("Edit Device %s") % device.name
         end
       end
 
