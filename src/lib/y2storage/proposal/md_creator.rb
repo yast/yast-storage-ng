@@ -80,8 +80,6 @@ module Y2Storage
         adjusted_partitions = sized_partitions(planned_partitions, md)
         dist = best_distribution(md, adjusted_partitions)
         return CreatorResult.new(devicegraph, {}) if dist.nil?
-        ptable_type = Y2Storage::PartitionTables::Type::GPT
-        md.create_partition_table(ptable_type)
         part_creator = Proposal::PartitionCreator.new(devicegraph)
         part_creator.create_partitions(dist)
       end

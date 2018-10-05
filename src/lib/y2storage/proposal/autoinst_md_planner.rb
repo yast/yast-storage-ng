@@ -32,11 +32,15 @@ module Y2Storage
       # @return [Array<Planned::Md>] Planned MD RAID devices
       def planned_devices(drive)
         md =
-          if drive.device == "/dev/md"
+          if drive.device == "/dev/md" || !drive.partition_table?
             non_partitioned_md(drive)
           else
             partitioned_md(drive)
           end
+
+        if drive.disklabel
+          md.ptable_type = Y2Storage::PartitionTables::Type.find(drive.disklabel)
+        end
 
         Array(md)
       end

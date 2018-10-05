@@ -56,6 +56,9 @@ module Y2Storage
       #   @return [Array<String>] sorted list of device names
       attr_accessor :devices_order
 
+      # @return [Y2Storage::PartitionTables::Type] Partition table type
+      attr_accessor :ptable_type
+
       # @return [Array<Planned::Partition>] List of planned partitions
       attr_accessor :partitions
 
