@@ -35,11 +35,16 @@ describe Y2Storage::Proposal::MdCreator do
   let(:md_level) { Y2Storage::MdLevel::RAID0 }
   let(:btrfs) { Y2Storage::Filesystems::Type::BTRFS }
   let(:scenario) { "windows-linux-free-pc" }
-  let(:planned_md0) { planned_md(name: "/dev/md0", md_level: md_level, partitions: partitions) }
+  let(:ptable_type) { Y2Storage::PartitionTables::Type::GPT }
+  let(:planned_md0) do
+    planned_md(
+      name: "/dev/md0", md_level: md_level, partitions: partitions, ptable_type: ptable_type
+    )
+  end
   let(:devices) { ["/dev/sda1", "/dev/sda2"] }
-  let(:partitions) { [] }
+  let(:partitions) { [root] }
   let(:root) do
-    planned_partition({ mount_point: "/", type: btrfs, min_size: 1.GiB, max_size: 1.GiB })
+    planned_partition(mount_point: "/", type: btrfs, min_size: 1.GiB, max_size: 1.GiB)
   end
 
   describe "#create_md" do
@@ -59,15 +64,123 @@ describe Y2Storage::Proposal::MdCreator do
       expect(device_names.sort).to eq(devices.sort)
     end
 
-    context "when there are planned partitions" do
+    it "adds the partitions" do
+      result = creator.create_md(planned_md0, devices)
+      md = result.devicegraph.md_raids.first
+      part0 = md.partitions.first
+      expect(part0.mount_point.path).to eq("/")
+      expect(part0.size).to eq(1.GiB)
+    end
+
+    context "when no partitions are specified" do
+      let(:partitions) { [] }
+
+      it "does not add any partition" do
+        result = creator.create_md(planned_md0, devices)
+        md = result.devicegraph.md_raids.first
+        expect(md.partitions).to be_empty
+      end
+    end
+
+    it "creates a partition table of the wanted type" do
+      result = creator.create_md(planned_md0, devices)
+      md = result.devicegraph.md_raids.first
+      expect(md.partition_table.type).to eq(ptable_type)
+    end
+
+    context "when no partition type is specified" do
+      let(:ptable_type) { nil }
+
+      it "creates a partition table of the default type" do
+        result = creator.create_md(planned_md0, devices)
+        md = result.devicegraph.md_raids.first
+        expect(md.partition_table.type).to eq(md.preferred_ptable_type)
+      end
+    end
+
+    context "when partitions sizes are specified as percentages" do
       let(:partitions) { [root] }
+      let(:root) do
+        planned_partition(mount_point: "/", type: btrfs, percent_size: 50)
+      end
 
       it "adds the partitions" do
         result = creator.create_md(planned_md0, devices)
         md = result.devicegraph.md_raids.first
         part0 = md.partitions.first
-        expect(part0.mount_point.path).to eq("/")
-        expect(part0.size).to eq(1.GiB)
+        expect(part0.size.to_i).to be_within(0.5.MiB.to_i).of((md.size / 2).to_i)
+      end
+    end
+
+    context "reusing a RAID" do
+      let(:scenario) { "md_raid.xml" }
+      let(:real_md) { fake_devicegraph.md_raids.first }
+      let(:devices) { ["/dev/sda1", "/dev/sda2", "/dev/sda3"] }
+
+      before do
+        planned_md0.reuse_name = real_md.name
+      end
+
+      it "does not create a new RAID" do
+        result = creator.create_md(planned_md0, devices)
+        expect(result.devicegraph.md_raids.size).to eq(1)
+      end
+
+      it "does not add any devices" do
+        result = creator.create_md(planned_md0, devices)
+        updated_md = result.devicegraph.md_raids.first
+        expect(updated_md.devices.map(&:name)).to_not include("/dev/sda3")
+      end
+
+      context "when there are planned partitions" do
+        let(:partitions) { [root] }
+
+        before do
+          real_md.remove_descendants
+        end
+
+        it "adds new partitions to the existing RAID" do
+          result = creator.create_md(planned_md0, devices)
+          md = result.devicegraph.md_raids.first
+          part0 = md.partitions.first
+          expect(part0.mount_point.path).to eq("/")
+          expect(part0.size).to eq(1.GiB)
+        end
+      end
+
+      context "when a partition type is specified" do
+        let(:partitions) { [root] }
+        let(:ptable_type) { Y2Storage::PartitionTables::Type::MSDOS }
+
+        context "and a partition table already exists" do
+          before do
+            real_md.remove_descendants
+            real_md.create_partition_table(Y2Storage::PartitionTables::Type::GPT)
+          end
+
+          it "replaces the partition table for one of the wanted type" do
+            result = creator.create_md(planned_md0, devices)
+            md = result.devicegraph.md_raids.first
+            expect(md.partition_table.type).to eq(ptable_type)
+          end
+        end
+
+        context "and the RAID contains some partitions" do
+          before do
+            real_md.remove_descendants
+            real_md.create_partition_table(Y2Storage::PartitionTables::Type::GPT)
+            ptable = real_md.partition_table
+            free_space = real_md.free_spaces.first
+            slot = ptable.unused_slot_for(free_space.region)
+            ptable.create_partition(slot.name, free_space.region, Y2Storage::PartitionType::PRIMARY)
+          end
+
+          it "does not modify the current partition table" do
+            result = creator.create_md(planned_md0, devices)
+            md = result.devicegraph.md_raids.first
+            expect(md.partition_table.type).to_not eq(planned_md0.ptable_type)
+          end
+        end
       end
     end
   end
