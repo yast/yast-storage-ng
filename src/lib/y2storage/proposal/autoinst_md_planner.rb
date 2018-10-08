@@ -38,10 +38,6 @@ module Y2Storage
             partitioned_md(drive)
           end
 
-        if drive.disklabel
-          md.ptable_type = Y2Storage::PartitionTables::Type.find(drive.disklabel)
-        end
-
         Array(md)
       end
 
@@ -67,10 +63,12 @@ module Y2Storage
       # @return [Planned::Md]
       def partitioned_md(drive)
         md = Planned::Md.new(name: drive.device)
+        md.ptable_type = Y2Storage::PartitionTables::Type.find(drive.disklabel) if drive.disklabel
         add_raid_options(md, drive.raid_options)
         md.partitions = drive.partitions.map do |part_section|
           plan_partition(md, drive, part_section)
         end
+        add_md_reuse(md, drive) if md.partitions.any?(&:reuse?)
         md
       end
 
@@ -90,7 +88,7 @@ module Y2Storage
       # Sets 'reusing' attributes for a MD RAID
       #
       # @param md      [Planned::Md] Planned MD RAID
-      # @param section [AutoinstProfile::PartitionSection] AutoYaST specification
+      # @param section [AutoinstProfile::PartitionSection,AutoinstProfile::Drive] AutoYaST specification
       def add_md_reuse(md, section)
         # TODO: fix when not using named raids
         md_to_reuse = devicegraph.md_raids.find { |m| m.name == md.name }
@@ -98,7 +96,7 @@ module Y2Storage
           issues_list.add(:missing_reusable_device, section)
           return
         end
-        add_device_reuse(md, md_to_reuse.name, section)
+        md.reuse_name = md_to_reuse.name
       end
 
       # Parses the user specified chunk size

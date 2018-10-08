@@ -156,8 +156,8 @@ module Y2Storage
       def process_mds(planned_devices, devs_to_reuse, creator_result)
         mds_to_reuse, mds_to_create = planned_devices.mds.partition(&:reuse?)
         devs_to_reuse_in_md = reusable_by_md(devs_to_reuse)
-        creator_result.merge!(create_mds(mds_to_create, creator_result, devs_to_reuse_in_md))
-        mds_to_reuse.each { |i| i.reuse!(creator_result.devicegraph) }
+        creator_result.merge!(create_mds(planned_devices.mds, creator_result, devs_to_reuse_in_md))
+        reuse_mds(mds_to_reuse, creator_result.devicegraph)
 
         [mds_to_create, mds_to_reuse, creator_result]
       end
@@ -265,6 +265,17 @@ module Y2Storage
         reused_vgs.each do |vg|
           vg.reuse!(devicegraph)
           reuse_devices(vg.all_lvs.select(&:reuse?), devicegraph)
+        end
+      end
+
+      # Reuses MD RAIDs for the given devicegraph
+      #
+      # @param reused_mds  [Array<Planned::Md>] Volume groups to reuse
+      # @param devicegraph [Devicegraph]        Devicegraph to reuse partitions
+      def reuse_mds(reused_mds, devicegraph)
+        reused_mds.each do |md|
+          md.reuse!(devicegraph)
+          reuse_devices(md.partitions.select(&:reuse?), devicegraph)
         end
       end
 

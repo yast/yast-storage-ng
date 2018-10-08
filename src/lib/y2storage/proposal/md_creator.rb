@@ -42,32 +42,56 @@ module Y2Storage
 
       # Creates the MD RAID device
       #
-      # @param planned_md   [Planned::Md]     MD RAID to create
-      # @param device_names [Array<String>]   names of block devices that should
+      # @param planned_md   [Planned::Md]   MD RAID to create
+      # @param device_names [Array<String>] names of block devices that should
       #   be part of the array
       # @return [CreatorResult] Result containing the new MD array
       def create_md(planned_md, device_names)
         new_graph = original_devicegraph.duplicate
-        md = Y2Storage::Md.create(new_graph, planned_md.name)
 
-        md.md_level = planned_md.md_level if planned_md.md_level
-        md.chunk_size = planned_md.chunk_size if planned_md.chunk_size
-        md.md_parity = planned_md.md_parity if planned_md.md_parity
-
-        devices = device_names.map do |dev_name|
-          device = Y2Storage::BlkDevice.find_by_name(new_graph, dev_name)
-          device.encryption || device
-        end
-        devices.map(&:remove_descendants)
-        planned_md.add_devices(md, devices)
+        md =
+          if planned_md.reuse?
+            find_md(new_graph, planned_md.reuse_name)
+          else
+            create_md_device(new_graph, planned_md, device_names)
+          end
 
         if planned_md.partitions.empty?
           planned_md.format!(md)
           CreatorResult.new(new_graph, md.name => planned_md)
         else
+          PartitionTableCreator.new.create_or_update(md, planned_md.ptable_type)
           create_partitions(new_graph, md, planned_md.partitions)
         end
+      end
 
+    private
+
+      # @param devicegraph  [Devicegraph] Devicegraph
+      # @param planned_md   [Planned::Md] MD RAID to create
+      # @param device_names [Array<String>] names of block devices that should
+      #   be part of the array
+      # @return [CreatorResult] Result containing the new MD array
+      def create_md_device(devicegraph, planned_md, device_names)
+        md = Y2Storage::Md.create(devicegraph, planned_md.name)
+        md.md_level = planned_md.md_level if planned_md.md_level
+        md.chunk_size = planned_md.chunk_size if planned_md.chunk_size
+        md.md_parity = planned_md.md_parity if planned_md.md_parity
+
+        devices = device_names.map do |dev_name|
+          device = Y2Storage::BlkDevice.find_by_name(devicegraph, dev_name)
+          device.encryption || device
+        end
+        devices.map(&:remove_descendants)
+        planned_md.add_devices(md, devices)
+        md
+      end
+
+      # @param name        [String] MD RAID name
+      # @param devicegraph [Devicegraph] Devicegraph to search for the MD RAID
+      # @return [Y2Storage::Md,nil]      MD RAID device; nil if it is not found
+      def find_md(devicegraph, name)
+        devicegraph.md_raids.find { |r| r.name == name }
       end
 
       # Creates RAID partitions
@@ -78,7 +102,7 @@ module Y2Storage
       # @return [CreatorResult] Result of creating the partitions
       def create_partitions(devicegraph, md, planned_partitions)
         adjusted_partitions = sized_partitions(planned_partitions, md)
-        dist = best_distribution(md, adjusted_partitions)
+        dist = best_distribution(md, adjusted_partitions.reject(&:reuse?))
         return CreatorResult.new(devicegraph, {}) if dist.nil?
         part_creator = Proposal::PartitionCreator.new(devicegraph)
         part_creator.create_partitions(dist)
