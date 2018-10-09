@@ -288,11 +288,25 @@ module Y2Storage
       # @return                [Proposal::CreatorResult] Result containing the specified MD RAIDs
       def create_mds(mds, previous_result, devs_to_reuse)
         mds.reduce(previous_result) do |result, md|
-          md_creator = Proposal::MdCreator.new(result.devicegraph)
           devices = previous_result.created_names { |d| d.raid_name == md.name }
           devices += devs_to_reuse.select { |d| d.raid_name == md.name }.map(&:reuse_name)
-          result.merge(md_creator.create_md(md, devices))
+          result.merge(create_md(previous_result.devicegraph, md, devices))
         end
+      end
+
+      # Create a MD RAID
+      #
+      # @param devicegraph [Devicegraph]                    Starting devicegraph
+      # @param md          [Planned::Md]        List of planned MD arrays to create
+      # @param devices     [Array<Planned::Device>] List of devices to include in the RAID.
+      def create_md(devicegraph, md, devices)
+        md_creator = Proposal::MdCreator.new(devicegraph)
+        md_creator.create_md(md, devices)
+      rescue NoDiskSpaceError
+        md_creator = Proposal::MdCreator.new(devicegraph)
+        new_md = md.clone
+        new_md.partitions = flexible_devices(md.partitions)
+        md_creator.create_md(new_md, devices)
       end
 
       # Return a new planned devices with flexible limits

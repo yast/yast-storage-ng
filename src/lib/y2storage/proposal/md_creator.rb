@@ -61,7 +61,8 @@ module Y2Storage
           CreatorResult.new(new_graph, md.name => planned_md)
         else
           PartitionTableCreator.new.create_or_update(md, planned_md.ptable_type)
-          create_partitions(new_graph, md, planned_md.partitions)
+          new_partitions = planned_md.partitions.reject(&:reuse?)
+          create_partitions(new_graph, md, sized_partitions(new_partitions, md))
         end
       end
 
@@ -96,14 +97,15 @@ module Y2Storage
 
       # Creates RAID partitions
       #
-      # @param devicegraph       [Devicegraph]               Devicegraph to operate on
-      # @param md                [Md]                        MD RAID
+      # @param devicegraph       [Devicegraph] Devicegraph to operate on
+      # @param md                [Md] MD RAID
       # @param planned_paritions [Array<Planned::Partition>] List of planned partitions to create
       # @return [CreatorResult] Result of creating the partitions
+      #
+      # @raise NoDiskSpaceError
       def create_partitions(devicegraph, md, planned_partitions)
-        adjusted_partitions = sized_partitions(planned_partitions, md)
-        dist = best_distribution(md, adjusted_partitions.reject(&:reuse?))
-        return CreatorResult.new(devicegraph, {}) if dist.nil?
+        dist = best_distribution(md, planned_partitions)
+        raise NoDiskSpaceError, "Partitions cannot be allocated into the RAID" if dist.nil?
         part_creator = Proposal::PartitionCreator.new(devicegraph)
         part_creator.create_partitions(dist)
       end

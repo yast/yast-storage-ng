@@ -112,6 +112,18 @@ describe Y2Storage::Proposal::MdCreator do
       end
     end
 
+    context "when partitions does not fit" do
+      let(:partitions) { [root] }
+      let(:root) do
+        planned_partition(mount_point: "/", type: btrfs, min_size: 1.TiB, max_size: 1.TiB)
+      end
+
+      it "raises a NoDiskSpaceError exception" do
+        expect { creator.create_md(planned_md0, devices) }
+          .to raise_error(Y2Storage::NoDiskSpaceError)
+      end
+    end
+
     context "reusing a RAID" do
       let(:scenario) { "md_raid.xml" }
       let(:real_md) { fake_devicegraph.md_raids.first }
@@ -119,6 +131,7 @@ describe Y2Storage::Proposal::MdCreator do
 
       before do
         planned_md0.reuse_name = real_md.name
+        real_md.remove_descendants
       end
 
       it "does not create a new RAID" do
@@ -135,10 +148,6 @@ describe Y2Storage::Proposal::MdCreator do
       context "when there are planned partitions" do
         let(:partitions) { [root] }
 
-        before do
-          real_md.remove_descendants
-        end
-
         it "adds new partitions to the existing RAID" do
           result = creator.create_md(planned_md0, devices)
           md = result.devicegraph.md_raids.first
@@ -154,7 +163,6 @@ describe Y2Storage::Proposal::MdCreator do
 
         context "and a partition table already exists" do
           before do
-            real_md.remove_descendants
             real_md.create_partition_table(Y2Storage::PartitionTables::Type::GPT)
           end
 
@@ -167,18 +175,19 @@ describe Y2Storage::Proposal::MdCreator do
 
         context "and the RAID contains some partitions" do
           before do
-            real_md.remove_descendants
             real_md.create_partition_table(Y2Storage::PartitionTables::Type::GPT)
+            region = real_md.free_spaces.first.region
+            region.length = region.length / 2
             ptable = real_md.partition_table
-            free_space = real_md.free_spaces.first
-            slot = ptable.unused_slot_for(free_space.region)
-            ptable.create_partition(slot.name, free_space.region, Y2Storage::PartitionType::PRIMARY)
+            slot = ptable.unused_slot_for(region)
+            ptable.create_partition(slot.name, region, Y2Storage::PartitionType::PRIMARY)
           end
 
           it "does not modify the current partition table" do
             result = creator.create_md(planned_md0, devices)
             md = result.devicegraph.md_raids.first
             expect(md.partition_table.type).to_not eq(planned_md0.ptable_type)
+            expect(md.partitions.size).to eq(2)
           end
         end
       end
