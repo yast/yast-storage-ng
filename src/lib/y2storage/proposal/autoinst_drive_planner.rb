@@ -230,6 +230,48 @@ module Y2Storage
         issues_list.add(:missing_reusable_device, part_section) unless device
         device
       end
+
+      # @return [DiskSize] Minimal partition size
+      PARTITION_MIN_SIZE = DiskSize.B(1).freeze
+
+      # @param container [Planned::Disk,Planned::Dasd,Planned::Md] Device to place the partitions on
+      # @param drive [AutoinstProfile::DriveSection]
+      # @param section [AutoinstProfile::PartitionSection]
+      # @return [Planned::Partition,nil]
+      def plan_partition(container, drive, section)
+        partition = Y2Storage::Planned::Partition.new(nil, nil)
+
+        return unless assign_size_to_partition(partition, section)
+
+        partition.disk = container.name
+        partition.partition_id = section.id_for_partition
+        partition.lvm_volume_group_name = section.lvm_group
+        partition.raid_name = section.raid_name unless container.is_a?(Planned::Md)
+        partition.primary = section.partition_type == "primary" if section.partition_type
+
+        device_config(partition, section, drive)
+        add_partition_reuse(partition, section) if section.create == false
+        partition
+      end
+
+      # Assign disk size according to AutoYaSt section
+      #
+      # @param partition   [Planned::Partition] Partition to assign the size to
+      # @param part_section   [AutoinstProfile::PartitionSection] Partition specification from AutoYaST
+      def assign_size_to_partition(partition, part_section)
+        size_info = parse_size(part_section, PARTITION_MIN_SIZE, DiskSize.unlimited)
+
+        if size_info.nil?
+          issues_list.add(:invalid_value, part_section, :size)
+          return false
+        end
+
+        partition.percent_size = size_info.percentage
+        partition.min_size = size_info.min
+        partition.max_size = size_info.max
+        partition.weight = 1 if size_info.unlimited?
+        true
+      end
     end
   end
 end

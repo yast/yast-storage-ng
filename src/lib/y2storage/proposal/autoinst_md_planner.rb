@@ -107,54 +107,6 @@ module Y2Storage
         string =~ /\D/ ? DiskSize.parse(string) : DiskSize.KB(string.to_i)
       end
 
-      # XXX TO REMOVE
-
-      # @return [DiskSize] Minimal partition size
-      PARTITION_MIN_SIZE = DiskSize.B(1).freeze
-
-      # Assign disk size according to AutoYaSt section
-      #
-      # @param disk        [Disk,Dasd]          Disk to put the partitions on
-      # @param partition   [Planned::Partition] Partition to assign the size to
-      # @param part_section   [AutoinstProfile::PartitionSection] Partition specification from AutoYaST
-      def assign_size_to_md_partition(_md, partition, part_section)
-        size_info = parse_size(part_section, PARTITION_MIN_SIZE, DiskSize.unlimited)
-
-        if size_info.nil?
-          issues_list.add(:invalid_value, part_section, :size)
-          return false
-        end
-
-        if size_info.percentage
-          partition.percent_size = size_info.percentage
-        else
-          partition.min_size = size_info.min
-          partition.max_size = size_info.max
-        end
-        partition.weight = 1 if size_info.unlimited?
-
-        true
-      end
-
-      # @param disk [Disk,Dasd] Disk to place the partitions on
-      # @param drive [AutoinstProfile::DriveSection]
-      # @param section [AutoinstProfile::PartitionSection]
-      # @return [Planned::Partition,nil]
-      def plan_partition(disk, drive, section)
-        partition = Y2Storage::Planned::Partition.new(nil, nil)
-
-        return unless assign_size_to_md_partition(disk, partition, section)
-
-        partition.disk = disk.name
-        partition.partition_id = section.id_for_partition
-        partition.primary = section.partition_type == "primary" if section.partition_type
-        partition.lvm_volume_group_name = section.lvm_group
-
-        device_config(partition, section, drive)
-        add_partition_reuse(partition, section) if section.create == false
-        partition
-      end
-
       # Given a user specified RAID type, it returns the RAID level
       #
       # @note If the raid_type is not specified or is invalid, falls back to RAID1.

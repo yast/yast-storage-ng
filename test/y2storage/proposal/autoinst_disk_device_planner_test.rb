@@ -115,11 +115,10 @@ describe Y2Storage::Proposal::AutoinstDiskDevicePlanner do
         let(:disk_size) { 250.GiB }
         let(:size) { "50%" }
 
-        it "sets the size according to the percentage" do
+        it "sets the size as a percentage" do
           disk = planner.planned_devices(drive).first
           root = disk.partitions.find { |d| d.mount_point == "/" }
-          expect(root.min_size).to eq(disk_size)
-          expect(root.max_size).to eq(disk_size)
+          expect(root.percent_size).to eq(50)
         end
       end
 

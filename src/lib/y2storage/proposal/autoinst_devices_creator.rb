@@ -138,7 +138,7 @@ module Y2Storage
       #
       # @return [Array<Array<Planned::Partition>, Array<Planned::Partition>, CreatorResult>]
       def process_partitions(planned_devices, disk_names)
-        planned_partitions = planned_devices.disk_partitions
+        planned_partitions = sized_partitions(planned_devices.disk_partitions)
         parts_to_reuse, parts_to_create = planned_partitions.partition(&:reuse?)
         creator_result = create_partitions(parts_to_create, disk_names)
         reuse_devices(parts_to_reuse, creator_result.devicegraph)
@@ -315,6 +315,23 @@ module Y2Storage
       # @return [Array<Planned::Device>]
       def reusable_by_md(planned_devices)
         planned_devices.select { |d| d.respond_to?(:raid_name) }
+      end
+
+      # Returns a list of planned partitions adjusting the size
+      #
+      # All partitions which sizes are specified as percentage will get their minimal and maximal
+      # sizes adjusted.
+      #
+      # @param planned_partitions [Array<Planned::Partition>] List of planned partitions
+      # @return [Array<Planned::Partition>] New list of planned partitions with adjusted sizes
+      def sized_partitions(planned_partitions)
+        planned_partitions.map do |part|
+          new_part = part.clone
+          next new_part unless new_part.percent_size
+          disk = original_graph.find_by_name(part.disk)
+          new_part.max = new_part.min = new_part.size_in(disk)
+          new_part
+        end
       end
     end
   end

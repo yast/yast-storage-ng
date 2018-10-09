@@ -108,34 +108,6 @@ module Y2Storage
         planned_disk
       end
 
-      # @todo The `drive` is needed because we need to check later whether the
-      #   `enable_snapshots` is set or not. That's a consequence of having that
-      #   element in the wrong place.
-      #
-      # @param disk [Disk,Dasd] Disk to place the partitions on
-      # @param drive [AutoinstProfile::DriveSection]
-      # @param section [AutoinstProfile::PartitionSection]
-      # @return [Planned::Partition,nil]
-      def plan_partition(disk, drive, section)
-        # TODO: fix Planned::Partition.initialize
-        partition = Y2Storage::Planned::Partition.new(nil, nil)
-
-        return unless assign_size_to_partition(disk, partition, section)
-
-        # TODO: partition.bootable is not in the AutoYaST profile. Check if
-        # there's some logic to set it in the old code.
-
-        partition.disk = disk.name
-        partition.partition_id = section.id_for_partition
-        partition.lvm_volume_group_name = section.lvm_group
-        partition.raid_name = section.raid_name
-        partition.primary = section.partition_type == "primary" if section.partition_type
-
-        device_config(partition, section, drive)
-        add_partition_reuse(partition, section) if section.create == false
-        partition
-      end
-
       # Returns an array of planned Xen partitions according to a <drive>
       # section which groups virtual partitions with a similar name (e.g. a
       # "/dev/xvda" section describing "/dev/xvda1" and "/dev/xvda2").
@@ -168,28 +140,6 @@ module Y2Storage
         end
 
         result
-      end
-
-      # @return [DiskSize] Minimal partition size
-      PARTITION_MIN_SIZE = DiskSize.B(1).freeze
-
-      # Assign disk size according to AutoYaSt section
-      #
-      # @param disk        [Disk,Dasd]          Disk to put the partitions on
-      # @param partition   [Planned::Partition] Partition to assign the size to
-      # @param part_section   [AutoinstProfile::PartitionSection] Partition specification from AutoYaST
-      def assign_size_to_partition(disk, partition, part_section)
-        size_info = parse_size(part_section, PARTITION_MIN_SIZE, disk.size)
-
-        if size_info.nil?
-          issues_list.add(:invalid_value, part_section, :size)
-          return false
-        end
-
-        partition.min_size = size_info.min
-        partition.max_size = size_info.max
-        partition.weight = 1 if size_info.unlimited?
-        true
       end
     end
   end
