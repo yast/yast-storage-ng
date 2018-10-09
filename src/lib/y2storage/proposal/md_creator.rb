@@ -42,7 +42,7 @@ module Y2Storage
 
       # Creates the MD RAID device
       #
-      # @param planned_md   [Planned::Md]   MD RAID to create
+      # @param planned_md   [Planned::Md] MD RAID to create
       # @param device_names [Array<String>] names of block devices that should
       #   be part of the array
       # @return [CreatorResult] Result containing the new MD array
@@ -57,19 +57,24 @@ module Y2Storage
           end
 
         if planned_md.partitions.empty?
-          planned_md.format!(md)
-          CreatorResult.new(new_graph, md.name => planned_md)
+          format_md(new_graph, md, planned_md)
         else
-          PartitionTableCreator.new.create_or_update(md, planned_md.ptable_type)
-          new_partitions = planned_md.partitions.reject(&:reuse?)
-          create_partitions(new_graph, md, sized_partitions(new_partitions, md))
+          partition_md(new_graph, md, planned_md)
         end
       end
 
+      # Reuses logical volumes for the devicegraph
+      #
+      # @note This method does not modify the original devicegraph but returns
+      #   a new copy containing the changes.
+      #
+      # @param planned_vg [Planned::Md] MD RAID
+      # @return [CreatorResult] result containing the reused partitions
       def reuse_partitions(planned_md)
         new_graph = original_devicegraph.duplicate
         planned_md.reuse!(new_graph)
-        reused_parts = planned_md.partitions.select(&:reuse?)
+        md = Y2Storage::Md.find_by_name(new_graph, planned_md.reuse_name)
+        reused_parts = sized_partitions(planned_md.partitions.select(&:reuse?), md)
         shrinking, not_shrinking = reused_parts.partition { |v| v.shrink?(new_graph) }
         (shrinking + not_shrinking).each { |v| v.reuse!(new_graph) }
         CreatorResult.new(new_graph, {})
@@ -99,9 +104,29 @@ module Y2Storage
 
       # @param name        [String] MD RAID name
       # @param devicegraph [Devicegraph] Devicegraph to search for the MD RAID
-      # @return [Y2Storage::Md,nil]      MD RAID device; nil if it is not found
+      # @return [Y2Storage::Md,nil] MD RAID device; nil if it is not found
       def find_md(devicegraph, name)
         devicegraph.md_raids.find { |r| r.name == name }
+      end
+
+      # Formats the RAID to be used as a filesystem
+      #
+      # @param planned_md [Planned::Md] Planned MD RAID
+      # @return [Proposal::CreatorResult] Result containing the formatted RAID
+      def format_md(devicegraph, md, planned_md)
+        planned_md.format!(md)
+        CreatorResult.new(devicegraph, md.name => planned_md)
+      end
+
+      # Creates RAID partitions and set up them according to the plan
+      #
+      # @param devicegraph [Devicegraph] Devicegraph to work on
+      # @param planned_md [Planned::Md] Planned MD RAID
+      # @return [Proposal::CreatorResult] Result containing the formatted RAID
+      def partition_md(devicegraph, md, planned_md)
+        PartitionTableCreator.new.create_or_update(md, planned_md.ptable_type)
+        new_partitions = planned_md.partitions.reject(&:reuse?)
+        create_partitions(devicegraph, md, sized_partitions(new_partitions, md))
       end
 
       # Creates RAID partitions
@@ -121,7 +146,7 @@ module Y2Storage
 
       # Finds the best distribution of partitions within a RAID
       #
-      # @param md                [Md]                        MD RAID
+      # @param md                [Md] MD RAID
       # @param planned_paritions [Array<Planned::Partition>] List of planned partitions to create
       # @return [PartitionsDistribution] Distribution of partitions
       def best_distribution(md, planned_partitions)
@@ -136,8 +161,8 @@ module Y2Storage
       # sizes adjusted.
       #
       # @param planned_partitions [Array<Planned::Partition>] List of planned partitions
-      # @param md                 [Y2Storage::Md]             RAID
-      # @return      [Array<Planned::Partition>] New list of planned partitions with adjusted sizes
+      # @param md                 [Y2Storage::Md] RAID
+      # @return [Array<Planned::Partition>] New list of planned partitions with adjusted sizes
       def sized_partitions(planned_partitions, md)
         planned_partitions.map do |part|
           new_part = part.clone

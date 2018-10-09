@@ -81,7 +81,8 @@ module Y2Storage
       def reuse_volumes(planned_vg)
         new_graph = original_devicegraph.duplicate
         planned_vg.reuse!(new_graph)
-        reused_lvs = planned_vg.all_lvs.select(&:reuse?)
+        vg = Y2Storage::LvmVg.find_by_vg_name(new_graph, planned_vg.reuse_name)
+        reused_lvs = planned_lvs_in_vg(planned_vg.all_lvs.select(&:reuse?), vg)
         shrinking, not_shrinking = reused_lvs.partition { |v| v.shrink?(new_graph) }
         (shrinking + not_shrinking).each { |v| v.reuse!(new_graph) }
         CreatorResult.new(new_graph, {})
