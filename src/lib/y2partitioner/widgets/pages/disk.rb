@@ -21,7 +21,6 @@
 
 require "cwm/widget"
 require "y2partitioner/icons"
-require "y2partitioner/widgets/bcache_device_description"
 require "y2partitioner/widgets/disk_device_description"
 require "y2partitioner/widgets/used_devices_tab"
 require "y2partitioner/widgets/partitions_tab"
@@ -135,7 +134,7 @@ module Y2Partitioner
         def contents
           # Page wants a WidgetTerm, not an AbstractWidget
           @contents ||= VBox(
-            description,
+            DiskDeviceDescription.new(@disk),
             Left(
               HBox(
                 BlkDeviceEditButton.new(device: @disk),
@@ -143,17 +142,6 @@ module Y2Partitioner
               )
             )
           )
-        end
-
-      private
-
-        def description
-          case @disk
-          when Y2Storage::Bcache
-            BcacheDeviceDescription.new(@disk)
-          else
-            DiskDeviceDescription.new(@disk)
-          end
         end
       end
     end
