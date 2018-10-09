@@ -166,7 +166,7 @@ module Y2Storage
         !!spec && spec.btrfs_read_only?
       end
 
-      # @param device  [Planned::Partition,Planned::LvmLV] Planned device
+      # @param device  [Planned::Partition,Planned::LvmLV,Planned::Md] Planned device
       # @param name    [String] Name of the device to reuse
       # @param section [AutoinstProfile::PartitionSection] AutoYaST specification
       def add_device_reuse(device, name, section)
