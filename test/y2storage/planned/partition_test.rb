@@ -28,6 +28,7 @@ describe Y2Storage::Planned::Partition do
   using Y2Storage::Refinements::SizeCasts
 
   subject(:partition) { described_class.new(mount_point) }
+  let(:mount_point) { "/" }
 
   # Only basic cases are tested here. More exhaustive tests can be found in tests
   # for Y2Storage::MatchVolumeSpec
@@ -69,6 +70,34 @@ describe Y2Storage::Planned::Partition do
 
       it "returns false" do
         expect(partition.match_volume?(volume)).to eq(false)
+      end
+    end
+  end
+
+  describe "#component?" do
+    context "when it is not used as PV or RAID member" do
+      it "returns false" do
+        expect(partition.component?).to eq(false)
+      end
+    end
+
+    context "when it is planned to be used as a PV" do
+      before do
+        partition.lvm_volume_group_name = "system"
+      end
+
+      it "returns true" do
+        expect(partition.component?).to eq(true)
+      end
+    end
+
+    context "when it is planned to be used as RAID member" do
+      before do
+        partition.raid_name = "system"
+      end
+
+      it "returns true" do
+        expect(partition.component?).to eq(true)
       end
     end
   end

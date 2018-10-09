@@ -78,6 +78,13 @@ module Y2Storage
         @primary = false
       end
 
+      # Determines whether the partition is used as part of a VG or a MD
+      #
+      # @return [Boolean]
+      def component?
+        lvm_pv? || md_member?
+      end
+
       def self.to_string_attrs
         [
           :mount_point, :reuse_name, :reuse_sid, :min_size, :max_size,
