@@ -157,7 +157,7 @@ module Y2Storage
         mds_to_reuse, mds_to_create = planned_devices.mds.partition(&:reuse?)
         devs_to_reuse_in_md = reusable_by_md(devs_to_reuse)
         creator_result.merge!(create_mds(planned_devices.mds, creator_result, devs_to_reuse_in_md))
-        reuse_mds(mds_to_reuse, creator_result.devicegraph)
+        reuse_mds(mds_to_reuse, creator_result)
 
         [mds_to_create, mds_to_reuse, creator_result]
       end
@@ -173,7 +173,7 @@ module Y2Storage
         planned_vgs = planned_devices.vgs
         creator_result.merge!(set_up_lvm(planned_vgs, creator_result, devs_to_reuse))
         vgs_to_reuse = planned_vgs.select(&:reuse?)
-        reuse_vgs(vgs_to_reuse, creator_result.devicegraph)
+        creator_result = reuse_vgs(vgs_to_reuse, creator_result)
 
         [planned_vgs, creator_result]
       end
@@ -245,7 +245,7 @@ module Y2Storage
         lvm_creator.create_volumes(new_vg, pvs)
       end
 
-      # Reuses partitions or logical volumes for the given devicegraph
+      # Reuses partitions for the given devicegraph
       #
       # Shrinking partitions/logical volumes should be processed first in order to free
       # some space for growing ones.
@@ -260,22 +260,28 @@ module Y2Storage
       # Reuses volume groups for the given devicegraph
       #
       # @param reused_vgs  [Array<Planned::LvmVg>] Volume groups to reuse
-      # @param devicegraph [Devicegraph]           Devicegraph to reuse partitions
-      def reuse_vgs(reused_vgs, devicegraph)
-        reused_vgs.each do |vg|
-          vg.reuse!(devicegraph)
-          reuse_devices(vg.all_lvs.select(&:reuse?), devicegraph)
+      # @param previous_result [Proposal::CreatorResult] Result containing the devicegraph
+      #   to work on
+      # @param devicegraph [Proposal::CreatorResult] Result containing the reused volumes
+      def reuse_vgs(reused_vgs, previous_result)
+        reused_vgs.each_with_object(previous_result) do |vg, result|
+          lvm_creator = Proposal::LvmCreator.new(result.devicegraph)
+          result.merge!(lvm_creator.reuse_volumes(vg))
         end
       end
 
       # Reuses MD RAIDs for the given devicegraph
       #
-      # @param reused_mds  [Array<Planned::Md>] Volume groups to reuse
-      # @param devicegraph [Devicegraph]        Devicegraph to reuse partitions
-      def reuse_mds(reused_mds, devicegraph)
-        reused_mds.each do |md|
-          md.reuse!(devicegraph)
-          reuse_devices(md.partitions.select(&:reuse?), devicegraph)
+      # @param reused_mds     [Array<Planned::Md>] Volume groups to reuse
+      # @param creator_result [Proposal::CreatorResult] Starting point
+      #   to work on
+      # @param devicegraph    [Proposal::CreatorResult] Result containing the reused MD RAID devices
+      #   and partitions
+      # @return [Proposal::CreatorResult] Result containing the reused MD RAID devices
+      def reuse_mds(reused_mds, previous_result)
+        reused_mds.each_with_object(previous_result) do |md, result|
+          md_creator = Proposal::MdCreator.new(result.devicegraph)
+          result.merge!(md_creator.reuse_partitions(md))
         end
       end
 
@@ -284,21 +290,24 @@ module Y2Storage
       # @param mds             [Array<Planned::Md>]        List of planned MD arrays to create
       # @param previous_result [Proposal::CreatorResult]   Starting point
       # @param devs_to_reuse   [Array<Planned::Partition, Planned::StrayBlkDevice>] List of devices
-      #   to reuse.
+      #   to reuse
       # @return                [Proposal::CreatorResult] Result containing the specified MD RAIDs
       def create_mds(mds, previous_result, devs_to_reuse)
         mds.reduce(previous_result) do |result, md|
-          devices = previous_result.created_names { |d| d.raid_name == md.name }
+          devices = result.created_names { |d| d.raid_name == md.name }
           devices += devs_to_reuse.select { |d| d.raid_name == md.name }.map(&:reuse_name)
-          result.merge(create_md(previous_result.devicegraph, md, devices))
+          result.merge(create_md(result.devicegraph, md, devices))
         end
       end
 
       # Create a MD RAID
       #
-      # @param devicegraph [Devicegraph]                    Starting devicegraph
-      # @param md          [Planned::Md]        List of planned MD arrays to create
-      # @param devices     [Array<Planned::Device>] List of devices to include in the RAID.
+      # @param devicegraph [Devicegraph] Starting devicegraph
+      # @param md          [Planned::Md] List of planned MD arrays to create
+      # @param devices     [Array<Planned::Device>] List of devices to include in the RAID
+      # @return            [Proposal::CreatorResult] Result containing the specified RAID
+      #
+      # @raise NoDiskSpaceError
       def create_md(devicegraph, md, devices)
         md_creator = Proposal::MdCreator.new(devicegraph)
         md_creator.create_md(md, devices)

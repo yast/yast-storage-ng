@@ -66,6 +66,15 @@ module Y2Storage
         end
       end
 
+      def reuse_partitions(planned_md)
+        new_graph = original_devicegraph.duplicate
+        planned_md.reuse!(new_graph)
+        reused_parts = planned_md.partitions.select(&:reuse?)
+        shrinking, not_shrinking = reused_parts.partition { |v| v.shrink?(new_graph) }
+        (shrinking + not_shrinking).each { |v| v.reuse!(new_graph) }
+        CreatorResult.new(new_graph, {})
+      end
+
     private
 
       # @param devicegraph  [Devicegraph] Devicegraph

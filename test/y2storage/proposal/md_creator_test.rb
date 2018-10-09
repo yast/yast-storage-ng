@@ -193,4 +193,21 @@ describe Y2Storage::Proposal::MdCreator do
       end
     end
   end
+
+  describe "#reuse_partitions" do
+    let(:scenario) { "partitioned_md_raid.xml" }
+    let(:real_md) { fake_devicegraph.md_raids.first }
+
+    before do
+      planned_md0.reuse_name = real_md.name
+      root.reuse_name = "/dev/md/md0p1"
+    end
+
+    it "reuses the partitions" do
+      devicegraph = creator.reuse_partitions(planned_md0).devicegraph
+      reused_md = devicegraph.md_raids.first
+      mount_point = reused_md.partitions.first.mount_point
+      expect(mount_point.path).to eq("/")
+    end
+  end
 end

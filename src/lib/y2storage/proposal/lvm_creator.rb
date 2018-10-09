@@ -71,6 +71,22 @@ module Y2Storage
         CreatorResult.new(new_graph, devices_map)
       end
 
+      # Reuses logical volumes for the devicegraph
+      #
+      # @note This method does not modify the original devicegraph but returns
+      #   a new copy containing the changes.
+      #
+      # @param planned_vg [Planned::LvmVg] Volume group
+      # @return [CreatorResult] result containing the reused volumes
+      def reuse_volumes(planned_vg)
+        new_graph = original_devicegraph.duplicate
+        planned_vg.reuse!(new_graph)
+        reused_lvs = planned_vg.all_lvs.select(&:reuse?)
+        shrinking, not_shrinking = reused_lvs.partition { |v| v.shrink?(new_graph) }
+        (shrinking + not_shrinking).each { |v| v.reuse!(new_graph) }
+        CreatorResult.new(new_graph, {})
+      end
+
     private
 
       # Find a volume group to be reused
