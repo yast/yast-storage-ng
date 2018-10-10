@@ -1163,11 +1163,11 @@ describe Y2Storage::AutoinstProposal do
         # bug#1098594, the partitions are on an Md (not a real disk), so when the code did
         #   partition.disk
         # it returned nil and produced an exception afterwards
-        xit "does not crash" do
+        it "does not crash" do
           expect { proposal.propose }.to_not raise_error
         end
 
-        xit "formats the partitions of the RAID as requested" do
+        it "formats the partitions of the RAID as requested" do
           proposal.propose
           devicegraph = proposal.devices
 
