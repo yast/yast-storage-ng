@@ -111,7 +111,7 @@ module Y2Storage
       #
       # @note If the raid_type is not specified or is invalid, falls back to RAID1.
       #
-      # @param raid_type [String,nil] User defined RAID level
+      # @param raid_options [AutoinstProfile::RaidOptions,nil] User defined RAID level
       # @return [Y2Storage::MdLevel] RAID level
       def raid_level_from(raid_options)
         return Y2Storage::MdLevel::RAID1 if raid_options.nil? || raid_options.raid_type.nil?

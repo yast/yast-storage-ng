@@ -68,7 +68,7 @@ module Y2Storage
       # @note This method does not modify the original devicegraph but returns
       #   a new copy containing the changes.
       #
-      # @param planned_vg [Planned::Md] MD RAID
+      # @param planned_md [Planned::Md] MD RAID
       # @return [CreatorResult] result containing the reused partitions
       def reuse_partitions(planned_md)
         new_graph = original_devicegraph.duplicate
@@ -129,11 +129,11 @@ module Y2Storage
         create_partitions(devicegraph, md, sized_partitions(new_partitions, md))
       end
 
-      # Creates RAID partitions
+      # Creates MD RAID partitions
       #
-      # @param devicegraph       [Devicegraph] Devicegraph to operate on
-      # @param md                [Md] MD RAID
-      # @param planned_paritions [Array<Planned::Partition>] List of planned partitions to create
+      # @param devicegraph        [Devicegraph] Devicegraph to operate on
+      # @param md                 [Md] MD RAID
+      # @param planned_partitions [Array<Planned::Partition>] List of planned partitions to create
       # @return [CreatorResult] Result of creating the partitions
       #
       # @raise NoDiskSpaceError
@@ -146,8 +146,8 @@ module Y2Storage
 
       # Finds the best distribution of partitions within a RAID
       #
-      # @param md                [Md] MD RAID
-      # @param planned_paritions [Array<Planned::Partition>] List of planned partitions to create
+      # @param md                 [Md] MD RAID
+      # @param planned_partitions [Array<Planned::Partition>] List of planned partitions to create
       # @return [PartitionsDistribution] Distribution of partitions
       def best_distribution(md, planned_partitions)
         spaces = md.free_spaces

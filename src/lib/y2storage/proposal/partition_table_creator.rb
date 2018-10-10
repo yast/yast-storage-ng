@@ -49,8 +49,8 @@ module Y2Storage
 
       # Determines which partition table type should be used
       #
-      # @param device      [Y2Storage::Disk] Disk to set the partition table on
-      # @param ptable_type [Y2Storage::PartitionTables::Type,nil] Partition table type
+      # @param device              [Y2Storage::Disk] Disk to set the partition table on
+      # @param planned_ptable_type [Y2Storage::PartitionTables::Type,nil] Wanted partition table type
       # @return [Y2Storage::PartitionTables::Type] Partition table type
       def suitable_ptable_type(device, planned_ptable_type)
         device_ptable_type = device.partition_table ? device.partition_table.type : nil

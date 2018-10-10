@@ -262,7 +262,6 @@ module Y2Storage
       # @param reused_vgs  [Array<Planned::LvmVg>] Volume groups to reuse
       # @param previous_result [Proposal::CreatorResult] Result containing the devicegraph
       #   to work on
-      # @param devicegraph [Proposal::CreatorResult] Result containing the reused volumes
       def reuse_vgs(reused_vgs, previous_result)
         reused_vgs.each_with_object(previous_result) do |vg, result|
           lvm_creator = Proposal::LvmCreator.new(result.devicegraph)
@@ -272,11 +271,9 @@ module Y2Storage
 
       # Reuses MD RAIDs for the given devicegraph
       #
-      # @param reused_mds     [Array<Planned::Md>] Volume groups to reuse
-      # @param creator_result [Proposal::CreatorResult] Starting point
+      # @param reused_mds      [Array<Planned::Md>] Volume groups to reuse
+      # @param previous_result [Proposal::CreatorResult] Starting point
       #   to work on
-      # @param devicegraph    [Proposal::CreatorResult] Result containing the reused MD RAID devices
-      #   and partitions
       # @return [Proposal::CreatorResult] Result containing the reused MD RAID devices
       def reuse_mds(reused_mds, previous_result)
         reused_mds.each_with_object(previous_result) do |md, result|
