@@ -291,7 +291,7 @@ module Y2Storage
       # @return                [Proposal::CreatorResult] Result containing the specified MD RAIDs
       def create_mds(mds, previous_result, devs_to_reuse)
         mds.reduce(previous_result) do |result, md|
-          devices = result.created_names { |d| d.raid_name == md.name }
+          devices = result.created_names { |d| d.respond_to?(:raid_name) && d.raid_name == md.name }
           devices += devs_to_reuse.select { |d| d.raid_name == md.name }.map(&:reuse_name)
           result.merge(create_md(result.devicegraph, md, devices))
         end
