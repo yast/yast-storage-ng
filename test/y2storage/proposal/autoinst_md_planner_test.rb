@@ -40,7 +40,10 @@ describe Y2Storage::Proposal::AutoinstMdPlanner do
     let(:drive) { Y2Storage::AutoinstProfile::DriveSection.new_from_hashes(raid) }
 
     let(:raid) do
-      { "device" => "/dev/md2", "raid_options" => raid_options, "partitions" => [home_spec] }
+      {
+        "device" => "/dev/md2", "raid_options" => raid_options, "disklabel" => disklabel,
+        "partitions" => [home_spec]
+      }
     end
 
     let(:home_spec) do
@@ -54,9 +57,56 @@ describe Y2Storage::Proposal::AutoinstMdPlanner do
       { "raid_type" => "raid5" }
     end
 
+    let(:disklabel) { nil }
+
     it "returns a planned RAID with the given device name" do
       md = planner.planned_devices(drive).first
       expect(md.name).to eq("/dev/md2")
+    end
+
+    context "when a partition table type is specified" do
+      let(:disklabel) { "msdos" }
+
+      it "returns a planned MD RAID with partitions" do
+        md = planner.planned_devices(drive).first
+        expect(md.partitions).to contain_exactly(
+          an_object_having_attributes("mount_point" => "/home")
+        )
+      end
+
+      it "sets the partition table type" do
+        md = planner.planned_devices(drive).first
+        expect(md.ptable_type).to eq(Y2Storage::PartitionTables::Type.find("msdos"))
+      end
+    end
+
+    context "when no partition table type is specified" do
+      it "returns a planned MD RAID with partitions" do
+        md = planner.planned_devices(drive).first
+        expect(md.partitions).to contain_exactly(
+          an_object_having_attributes("mount_point" => "/home")
+        )
+      end
+
+      it "does not set the partition table type" do
+        md = planner.planned_devices(drive).first
+        expect(md.ptable_type).to be_nil
+      end
+    end
+
+    context "when the partition table type is set to 'none'" do
+      let(:disklabel) { "none" }
+
+      it "returns a planned MD RAID with filesystem settings (no partitions)" do
+        md = planner.planned_devices(drive).first
+        expect(md.mount_point).to eq("/home")
+        expect(md.filesystem_type).to eq(Y2Storage::Filesystems::Type::XFS)
+      end
+
+      it "does not set the partition table type" do
+        md = planner.planned_devices(drive).first
+        expect(md.ptable_type).to be_nil
+      end
     end
 
     context "when no RAID level is specified" do
@@ -85,13 +135,6 @@ describe Y2Storage::Proposal::AutoinstMdPlanner do
       end
     end
 
-    it "returns a planned RAID including filesystem settings" do
-      md = planner.planned_devices(drive).first
-      home = md.partitions.first
-      expect(home.mount_point).to eq("/home")
-      expect(home.filesystem_type).to eq(Y2Storage::Filesystems::Type::XFS)
-    end
-
     context "when using a named RAID" do
       let(:raid_options) do
         { "raid_name" => "/dev/md/data", "raid_type" => "raid5" }
@@ -100,24 +143,6 @@ describe Y2Storage::Proposal::AutoinstMdPlanner do
       it "uses the name instead of a number" do
         md = planner.planned_devices(drive).first
         expect(md.name).to eq("/dev/md/data")
-      end
-    end
-
-    context "when using a partitioned RAID" do
-      let(:raid) do
-        { "device" => "/dev/md2", "partitions" => [home_spec] }
-      end
-
-      it "returns a planned RAID using the specified device as name" do
-        md = planner.planned_devices(drive).first
-        expect(md.name).to eq("/dev/md2")
-      end
-
-      it "returns a planned RAID including partitions" do
-        md = planner.planned_devices(drive).first
-        expect(md.partitions).to contain_exactly(
-          an_object_having_attributes("mount_point" => "/home")
-        )
       end
     end
 
