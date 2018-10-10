@@ -66,7 +66,18 @@ describe Y2Storage::AutoinstProfile::DriveSection do
       it "initializes raid options" do
         expect(Y2Storage::AutoinstProfile::RaidOptionsSection).to receive(:new_from_hashes)
           .with(raid_options, Y2Storage::AutoinstProfile::DriveSection)
-        described_class.new_from_hashes(hash)
+          .and_call_original
+        section = described_class.new_from_hashes(hash)
+        expect(section.raid_options.raid_type).to eq("raid0")
+      end
+
+      context "when the raid_name is specified in the raid_options" do
+        let(:raid_options) { { "raid_type" => "raid0" } }
+
+        it "ignores the raid_name element" do
+          section = described_class.new_from_hashes(hash)
+          expect(section.raid_options.raid_name).to be_nil
+        end
       end
     end
 

@@ -126,6 +126,7 @@ module Y2Storage
         @skip_list = SkipListSection.new_from_hashes(hash.fetch("skip_list", []), self)
         if hash["raid_options"]
           @raid_options = RaidOptionsSection.new_from_hashes(hash["raid_options"], self)
+          @raid_options.raid_name = nil # This element is not supported here
         end
       end
 
@@ -289,6 +290,7 @@ module Y2Storage
         @partitions = partitions_from_collection([md])
         @enable_snapshots = enabled_snapshots?([md.filesystem])
         @raid_options = RaidOptionsSection.new_from_storage(md)
+        @raid_options.raid_name = nil if @raid_options # This element is not supported here
         true
       end
 

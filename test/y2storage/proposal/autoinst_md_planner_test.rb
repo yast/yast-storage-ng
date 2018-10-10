@@ -41,7 +41,7 @@ describe Y2Storage::Proposal::AutoinstMdPlanner do
 
     let(:raid) do
       {
-        "device" => "/dev/md2", "raid_options" => raid_options, "disklabel" => disklabel,
+        "device" => device, "raid_options" => raid_options, "disklabel" => disklabel,
         "partitions" => [home_spec]
       }
     end
@@ -55,6 +55,8 @@ describe Y2Storage::Proposal::AutoinstMdPlanner do
     end
 
     let(:disklabel) { nil }
+
+    let(:device) { "/dev/md2" }
 
     it "returns a planned RAID with the given device name" do
       md = planner.planned_devices(drive).first
@@ -148,9 +150,7 @@ describe Y2Storage::Proposal::AutoinstMdPlanner do
     end
 
     context "when using a named RAID" do
-      let(:raid_options) do
-        { "raid_name" => "/dev/md/data", "raid_type" => "raid5" }
-      end
+      let(:device) { "/dev/md/data" }
 
       it "uses the name instead of a number" do
         md = planner.planned_devices(drive).first
