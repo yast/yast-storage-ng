@@ -123,24 +123,37 @@ describe Y2Storage::Proposal::AutoinstMdPlanner do
 
     context "using the old schema" do
       let(:raid) do
-        { "device" => "/dev/md", "partitions" => [home_spec] }
+        { "device" => "/dev/md", "partitions" => [root_raid_spec, home_raid_spec] }
       end
 
-      let(:home_spec) do
+      let(:raid_options) do
+        { "raid_type" => "raid5" }
+      end
+
+      let(:root_raid_spec) do
         {
-          "mount" => "/home", "filesystem" => "xfs", "size" => "max", "partition_nr" => 1,
-          "raid_options" => raid_options
+          "mount" => "/", "filesystem" => "ext4", "size" => "max", "partition_nr" => 1,
+          "raid_options" => { "raid_type" => "raid5" }
+        }
+      end
+
+      let(:home_raid_spec) do
+        {
+          "mount" => "/home", "filesystem" => "xfs", "size" => "max", "partition_nr" => 2,
+          "raid_options" => { "raid_type" => "raid1" }
         }
       end
 
       it "returns a planned RAID using /dev/md + partition_nr as device name" do
-        md = planner.planned_devices(drive).first
-        expect(md.name).to eq("/dev/md1")
-      end
-
-      it "returns a planned RAID of the wanted type" do
-        md = planner.planned_devices(drive).first
-        expect(md.md_level).to eq(Y2Storage::MdLevel::RAID5)
+        mds = planner.planned_devices(drive)
+        expect(mds).to contain_exactly(
+          an_object_having_attributes(
+            "name" => "/dev/md1", "md_level" => Y2Storage::MdLevel::RAID5
+          ),
+          an_object_having_attributes(
+            "name" => "/dev/md2", "md_level" => Y2Storage::MdLevel::RAID1
+          )
+        )
       end
     end
   end

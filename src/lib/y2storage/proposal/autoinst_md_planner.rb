@@ -31,22 +31,42 @@ module Y2Storage
       # @param drive [AutoinstProfile::DriveSection] drive section describing the MD RAID
       # @return [Array<Planned::Md>] Planned MD RAID devices
       def planned_devices(drive)
-        md =
-          if drive.device == "/dev/md" || !drive.partition_table?
+        mds =
+          if drive.device == "/dev/md"
+            non_partitioned_md_old_style(drive)
+          elsif !drive.partition_table?
             non_partitioned_md(drive)
           else
             partitioned_md(drive)
           end
 
-        Array(md)
+        Array(mds)
       end
 
     private
 
+      # Returns a list of non partitioned MD RAID devices from old-style AutoYaST profile
+      #
+      # Using `/dev/md` as device name means that the whole drive section should be treated as an
+      # old-style AutoYaST MD RAID description.
+      #
+      #   * Each partition represents an MD RAID and the `partition_nr` is used to indicate
+      #     the kernel name: `/dev/md0`, `/dev/md1`, etc.
+      #   * Partitioned MD RAID devices are not supported
+      #
+      # @param drive [AutoinstProfile::DriveSection] drive section describing the list of MD RAID
+      #   devices (old-style AutoYaST)
+      # @return [Array<Planned::Md>] List of planned MD RAID devices
+      def non_partitioned_md_old_style(drive)
+        drive.partitions.map do |part_section|
+          md_from_partition_section(drive, part_section)
+        end
+      end
+
       # Returns a non partitioned MD RAID
       #
       # @param drive [AutoinstProfile::DriveSection] drive section describing the MD RAID
-      # @return [Planned::Md]
+      # @return [Planned::Md] Planned MD RAID device
       def non_partitioned_md(drive)
         md = Planned::Md.new(name: drive.name_for_md)
         part_section = drive.partitions.first
@@ -60,7 +80,7 @@ module Y2Storage
       # Returns a partitioned MD RAID
       #
       # @param drive [AutoinstProfile::DriveSection] drive section describing the MD RAID
-      # @return [Planned::Md]
+      # @return [Planned::Md] Planned MD RAID device
       def partitioned_md(drive)
         md = Planned::Md.new(name: drive.device)
         md.ptable_type = Y2Storage::PartitionTables::Type.find(drive.disklabel) if drive.disklabel
@@ -69,6 +89,22 @@ module Y2Storage
           plan_partition(md, drive, part_section)
         end
         add_md_reuse(md, drive) if md.partitions.any?(&:reuse?)
+        md
+      end
+
+      # Returns a non partitioned MD RAID from an AutoYaST partition section
+      #
+      # @param drive        [AutoinstProfile::DriveSection] drive section describing the list of MD
+      #   RAID devices (old-style AutoYaST)
+      # @param part_section [AutoinstProfile::PartitionSection] partition section describing the
+      #   an MD RAID
+      # @return [Array<Planned::Md>] List of planned MD RAID devices
+      def md_from_partition_section(drive, part_section)
+        md = Planned::Md.new(name: part_section.name_for_md)
+        device_config(md, part_section, drive)
+        md.lvm_volume_group_name = part_section.lvm_group
+        add_md_reuse(md, part_section) if part_section.create == false
+        add_raid_options(md, part_section.raid_options)
         md
       end
 
