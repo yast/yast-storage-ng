@@ -47,10 +47,7 @@ describe Y2Storage::Proposal::AutoinstMdPlanner do
     end
 
     let(:home_spec) do
-      {
-        "mount" => "/home", "filesystem" => "xfs", "size" => "max", "partition_nr" => 1,
-        "raid_options" => raid_options
-      }
+      { "mount" => "/home", "filesystem" => "xfs", "size" => "max", "partition_nr" => 1 }
     end
 
     let(:raid_options) do
@@ -106,6 +103,21 @@ describe Y2Storage::Proposal::AutoinstMdPlanner do
       it "does not set the partition table type" do
         md = planner.planned_devices(drive).first
         expect(md.ptable_type).to be_nil
+      end
+
+      context "and RAID options are not specified at drive level" do
+        let(:raid_options) { nil }
+        let(:home_spec) do
+          {
+            "mount" => "/home", "filesystem" => "xfs", "size" => "max", "partition_nr" => 1,
+            "raid_options" => { "raid_type" => "raid5" }
+          }
+        end
+
+        it "reads options from the partition section" do
+          md = planner.planned_devices(drive).first
+          expect(md.md_level).to eq(Y2Storage::MdLevel::RAID5)
+        end
       end
     end
 

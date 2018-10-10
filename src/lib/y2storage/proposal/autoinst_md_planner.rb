@@ -73,7 +73,7 @@ module Y2Storage
         device_config(md, part_section, drive)
         md.lvm_volume_group_name = part_section.lvm_group
         add_md_reuse(md, part_section) if part_section.create == false
-        add_raid_options(md, part_section.raid_options)
+        add_raid_options(md, drive.raid_options || part_section.raid_options)
         md
       end
 
