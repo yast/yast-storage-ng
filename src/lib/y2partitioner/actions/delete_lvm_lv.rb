@@ -49,7 +49,7 @@ module Y2Partitioner
       #
       # @return [Boolean]
       def confirm
-        used_pool? ? confirm_for_used_pool : confirm_for_lv
+        used_pool? ? confirm_for_used_pool : super
       end
 
       # Whether the device is a LVM thin pool and it contains any thin volume
@@ -57,18 +57,6 @@ module Y2Partitioner
       # @return [Boolean] true if it is an used pool; false otherwise.
       def used_pool?
         device.lv_type.is?(:thin_pool) && !device.lvm_lvs.empty?
-      end
-
-      # Confirmation when the device is not a LVM thin pool, or the pool is not used yet
-      #
-      # @return [Boolean]
-      def confirm_for_lv
-        # TRANSLATORS: Confirmation message when a LVM logical volume is going to be deleted,
-        # where %{name} is replaced by the name of the logical volume (e.g., /dev/system/lv1)
-        message = format(_("Remove the logical volume %{name}?"), name: device.name)
-
-        result = Yast2::Popup.show(message, buttons: :yes_no)
-        result == :yes
       end
 
       # Confirmation when the device is a LVM thin pool and there is any thin volume over it

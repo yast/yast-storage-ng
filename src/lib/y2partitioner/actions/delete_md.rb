@@ -40,60 +40,6 @@ module Y2Partitioner
         log.info "deleting md raid #{device}"
         device_graph.remove_md(device)
       end
-
-      # Confirmation before performing the delete action
-      #
-      # @return [Boolean]
-      def confirm
-        if used_by_lvm?
-          confirm_for_used_by_lvm
-        elsif device.partitions.any?
-          confirm_for_partitions
-        else
-          super
-        end
-      end
-
-      # Confirmation when the device belongs to a volume group
-      #
-      # @see ConfirmRecursiveDelete#confirm_recursive_delete
-      # @see DeleteDevice#lvm_vg
-      #
-      # @return [Boolean]
-      def confirm_for_used_by_lvm
-        confirm_recursive_delete(
-          device,
-          _("Confirm Deleting RAID Used by LVM"),
-          # TRANSLATORS: name is the name of the volume group that the md raid
-          #   belongs to (e.g., /dev/system)
-          format(_("The selected RAID is used by volume group \"%{name}\".\n" \
-            "To keep the system in a consistent state, the following volume group\n" \
-            "and its logical volumes will be deleted:"), name: lvm_vg.name),
-          # TRANSLATORS: md is the name of the md raid to be deleted (e.g., /dev/md/md1),
-          #   and vg is the name of the volume group to be deleted (e.g., /dev/system)
-          format(_("Delete RAID \"%{md}\" and volume group \"%{lvm_vg}\"?"),
-            md: device.name, lvm_vg: lvm_vg.name)
-        )
-      end
-
-      # Confirmation when the device contains partitions
-      #
-      # @see ConfirmRecursiveDelete#confirm_recursive_delete
-      #
-      # @return [Boolean]
-      def confirm_for_partitions
-        confirm_recursive_delete(
-          device,
-          _("Confirm Deleting RAID with partitions"),
-          # TRANSLATORS: name is the name of the volume group that the md raid
-          #   belongs to (e.g., /dev/system)
-          format(_("The selected RAID contains partitions.\n" \
-            "To keep the system in a consistent state, the following\n" \
-            "partitions and its associated devices will be deleted:")),
-          # TRANSLATORS: md is the name of the md raid to be deleted (e.g., /dev/md/md1)
-          format(_("Delete RAID \"%{md}\" and the affected devices?"), md: device.name)
-        )
-      end
     end
   end
 end

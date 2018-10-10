@@ -41,58 +41,33 @@ module Y2Partitioner
         device_graph.remove_bcache(device)
       end
 
-      # Confirmation before performing the delete action
-      #
-      # @return [Boolean]
-      def confirm
-        if device.partitions.any?
-          confirm_for_partitions
-        elsif single_bcache_cset?
-          confirm_bcache
-        else
-          super
-        end
+      # @see DeleteDevice
+      def simple_confirm_text
+        bcache_cset_note + super
       end
 
-      # Confirmation when the device contains partitions
-      #
-      # @see ConfirmRecursiveDelete#confirm_recursive_delete
-      #
-      # @return [Boolean]
-      def confirm_for_partitions
-        confirm_recursive_delete(
-          device,
-          _("Confirm Deleting Bcache with its Devices"),
-          bcache_cset_note + format(_("The selected Bcache has associated devices.\n" \
-            "To keep the system in a consistent state, the following\n" \
-            "associated devices will be deleted:")),
-          # TRANSLATORS: bcache is the name of the bcache to be deleted (e.g., /dev/bcache0)
-          format(_("Delete bcache \"%{bcache}\" and the affected devices?"), bcache: device.name)
-        )
+      # @see DeleteDevice
+      def recursive_confirm_text_below
+        bcache_cset_note + super
       end
 
-      # notes that also bcache cset will be deleted
+      # Note explaining that also bcache cset will be deleted
+      #
+      # @return [String] empty string if the bcache cset is not going
+      #   to be deleted
       def bcache_cset_note
         # no note if there is no bcache cset associated or if cset is shared by more devices
         return "" unless single_bcache_cset?
 
-        _("The selected Bcache is only user of the caching set. The caching set will be also deleted.") +
-          "\n"
+        _(
+          "The selected Bcache is the only one using its caching set.\n" \
+          "The caching set will be also deleted.\n\n"
+        )
       end
 
       # Checks if there is only single bcache cset used by this bcache, so it will be delited
       def single_bcache_cset?
         device.bcache_cset && device.bcache_cset.bcaches.size == 1
-      end
-
-      # Confirmation when the device does not contain partitions,
-      # but result in deleting also bcache_cset
-      def confirm_bcache
-        # TRANSLATORS %s is the name of the device to be deleted (e.g., /dev/bcache0)
-        message = format(_("Really delete %s?"), device.name)
-
-        result = Yast2::Popup.show(bcache_cset_note + message, buttons: :yes_no)
-        result == :yes
       end
     end
   end

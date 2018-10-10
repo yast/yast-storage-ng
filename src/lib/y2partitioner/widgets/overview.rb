@@ -203,8 +203,8 @@ module Y2Partitioner
       end
 
       # @return [CWM::PagerTreeItem]
-      def disk_items(disk)
-        page = Pages::Disk.new(disk, self)
+      def disk_items(disk, page_class = Pages::Disk)
+        page = page_class.new(disk, self)
         children = disk.partitions.sort_by(&:number).map { |p| partition_items(p) }
         CWM::PagerTreeItem.new(page, children: children)
       end
@@ -240,7 +240,7 @@ module Y2Partitioner
       def bcache_items
         devices = device_graph.bcaches
         page = Pages::Bcaches.new(devices, self)
-        children = devices.map { |v| disk_items(v) }
+        children = devices.map { |v| disk_items(v, Pages::Bcache) }
         CWM::PagerTreeItem.new(page, children: children, icon: Icons::BCACHE)
       end
 
