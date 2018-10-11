@@ -22,6 +22,8 @@
 require "yast"
 require "yast2/popup"
 require "cwm/common_widgets"
+require "y2storage/cache_mode"
+require "y2storage/disk_size"
 require "y2partitioner/dialogs/base"
 
 module Y2Partitioner
@@ -37,6 +39,9 @@ module Y2Partitioner
         textdomain "storage"
         @caching = CachingDevice.new(device, suitable_caching)
         @backing = BackingDevice.new(device, suitable_backing, @caching)
+        @cache_mode = CacheMode.new(device)
+        @sequential_cutoff = SequentialCutoff.new(device)
+        @writeback_percent = WritebackPercent.new(device)
       end
 
       # @macro seeDialog
@@ -52,7 +57,17 @@ module Y2Partitioner
             HSpacing(1),
             @caching
           ),
-          VSpacing(1)
+          VSpacing(1),
+          HBox(
+            @cache_mode,
+            HSpacing(1),
+            @sequential_cutoff
+          ),
+          HBox(
+            @writeback_percent,
+            HSpacing(1),
+            Empty()
+          )
         )
       end
 
@@ -66,6 +81,16 @@ module Y2Partitioner
       # @return [Y2Storage::BlkDevice]
       def backing_device
         @backing.result
+      end
+
+      # Bcache options
+      # @return [Hash<Symbol, Object>]
+      def options
+        {
+          cache_mode: @cache_mode.result,
+          sequential_cutoff: @sequential_cutoff.result,
+          writeback_percent: @writeback_percent.result
+        }
       end
 
       # Widget to select the backing device
@@ -193,6 +218,138 @@ module Y2Partitioner
         def store
           val = value
           @result = @devices.find { |d| d.sid == val.to_i }
+        end
+
+        # returns device selected in widget. Only when dialog succeed and store is called.
+        # Otherwise undefined
+        attr_reader :result
+      end
+
+      # Widget to select the cache mode
+      class CacheMode < CWM::ComboBox
+        # @param device [Y2Storage::Bcache,nil] existing caching device or nil if it is new bcache
+        def initialize(device)
+          textdomain "storage"
+          @device = device
+        end
+
+        # @macro seeAbstractWidget
+        def label
+          _("Cache Mode")
+        end
+
+        # @macro seeItemsSelection
+        def items
+          Y2Storage::CacheMode.all.map do |mode|
+            [mode.to_sym, mode.to_human_string]
+          end
+        end
+
+        # @macro seeAbstractWidget
+        # @see https://en.wikipedia.org/wiki/Cache_(computing)#Writing_policies
+        def help
+          # TRANSLATORS: %s stands for name of option
+          format(_(
+                   "<b>%s</b> is the operating mode for bcache. " \
+                   "There are currently four supported modes. " \
+                   "<i>Writethrough</i> is default mode which caches reading and do write parallel. " \
+                   "So in case of failure of caching device, no data is lost." \
+                   "<i>Writeback</i> is mode that caches also writes. This result in better " \
+                   "performance of write operations." \
+                   "<i>Writearound</i> is mode that use cache only for reads and writes new " \
+                   "content only to backing device." \
+                   "<i>None</i> is mode that do not use cache for read neither for write. " \
+                   "Useful mainly for temporary disabling cache before big sequential read/write " \
+                   "which otherwise result in intensive overwritting of cache device."
+          ), label)
+        end
+
+        # @macro seeAbstractWidget
+        def init
+          self.value = (@device ? @device.cache_mode : Y2Storage::CacheMode::WRITETHROUGH).to_sym
+        end
+
+        # @macro seeAbstractWidget
+        def store
+          @result = Y2Storage::CacheMode.find(value)
+        end
+
+        # returns device selected in widget. Only when dialog succeed and store is called.
+        # Otherwise undefined
+        attr_reader :result
+      end
+
+      # Widget to set sequential cutoff
+      class SequentialCutoff < CWM::InputField
+        # @param device [Y2Storage::Bcache, nil]
+        def initialize(device)
+          textdomain "storage"
+          @device = device
+        end
+
+        def label
+          _("Sequential Threshold")
+        end
+
+        def help
+          # TRANSLATORS: %s stands for name of option
+          format(_(
+                   "<b>%s</b> is the minimal size of data which is considered as sequential " \
+                   "and caching is skipped for them to avoid multiple overwritting of cache " \
+                   "by big sequential read or write. Common size suffixes are supported."
+          ), label)
+        end
+
+        # @macro seeAbstractWidget
+        def init
+          self.value = (@device ? @device.sequential_cutoff : Y2Storage::DiskSize::MiB(8)).to_s
+        end
+
+        # @macro seeAbstractWidget
+        def store
+          @result = Y2Storage::DiskSize.new(value)
+        end
+
+        # returns device selected in widget. Only when dialog succeed and store is called.
+        # Otherwise undefined
+        attr_reader :result
+      end
+
+      # Widget to set sequential cutoff
+      class WritebackPercent < CWM::IntField
+        # @param device [Y2Storage::Bcache, nil]
+        def initialize(device)
+          textdomain "storage"
+          @device = device
+        end
+
+        def label
+          _("Writeback Dirty Percent")
+        end
+
+        def help
+          # TRANSLATORS: %s stands for name of option
+          format(_(
+                   "<b>%s</b> is percentage value which bcache tries to hold of dirty pages."
+          ), label)
+        end
+
+        # @macro seeAbstractWidget
+        def init
+          self.value = @device ? @device.writeback_percent : 10
+        end
+
+        # @macro seeAbstractWidget
+        def store
+          @result = value
+        end
+
+        def minimum
+          0
+        end
+
+        def maximum
+          100
         end
 
         # returns device selected in widget. Only when dialog succeed and store is called.
