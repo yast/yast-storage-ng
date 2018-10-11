@@ -164,7 +164,7 @@ module Y2Storage
       begin
         result = checker.needed_partitions
       rescue BootRequirementsChecker::Error
-        issues_list.add(:could_not_create_boot)
+        issues_list.add(:could_not_calculate_boot)
         log.warn checker.warnings.to_s unless checker.warnings.empty?
         log.error checker.errors.to_s unless checker.errors.empty?
         result = []
@@ -276,7 +276,7 @@ module Y2Storage
       rescue Y2Storage::NoDiskSpaceError
         raise if boot_parts.empty?
         result = devices_creator.populated_devicegraph(planned_devices, disk_names)
-        issues_list.add(:could_not_create_boot)
+        issues_list.add(:could_not_create_boot, boot_parts)
       end
       result
     end

@@ -21,18 +21,45 @@
 # find current contact information at www.suse.com.
 
 require_relative "../../spec_helper"
-require "y2storage/autoinst_issues/no_disk"
+require "y2storage/autoinst_issues"
 
 describe Y2Storage::AutoinstIssues::CouldNotCreateBoot do
-  subject(:issue) { described_class.new }
+  subject(:issue) { described_class.new(devices) }
 
   describe "#message" do
-    it "returns a description of the issue" do
-      expect(issue.message).to include("Not possible to add a boot partition")
+    context "when one of the missing partitions is the BIOS boot" do
+      let(:devices) { [planned_partition(partition_id: Y2Storage::PartitionId::BIOS_BOOT)] }
+
+      it "returns a specific error message" do
+        expect(issue.message).to include("cannot add a BIOS Boot partition")
+      end
+    end
+
+    context "when none of the missing partitions is BIOS boot" do
+      let(:devices) do
+        [
+          planned_partition(partition_id: Y2Storage::PartitionId::PREP),
+          planned_partition(mount_point: "/boot")
+        ]
+      end
+
+      it "returns a generic description of the issue" do
+        expect(issue.message).to include("Not possible to add the partitions")
+      end
+    end
+
+    context "when no missing partitions are specified" do
+      let(:devices) { [] }
+
+      it "returns a generic description of the issue" do
+        expect(issue.message).to include("Not possible to add the partitions")
+      end
     end
   end
 
   describe "#severity" do
+    let(:devices) { [] }
+
     it "returns :warn" do
       expect(issue.severity).to eq(:warn)
     end
