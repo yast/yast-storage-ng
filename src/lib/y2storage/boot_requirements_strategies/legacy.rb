@@ -148,7 +148,15 @@ module Y2Storage
         errors = []
 
         if grub_part_needed_in_gpt? && missing_partition_for?(grub_volume)
-          errors << SetupError.new(missing_volume: grub_volume)
+          message = _(
+            "There is no partition of type BIOS Boot.\n" \
+            "Although other configurations would eventually make possible\n" \
+            "to boot the system, the usage of a BIOS Boot partition is\n" \
+            "the only encouraged and officially documented method for\n" \
+            "booting Linux from a disk with a GPT partition table in\n" \
+            "BIOS legacy mode (i.e. without EFI)."
+          )
+          errors << SetupError.new(message: message)
         end
 
         errors

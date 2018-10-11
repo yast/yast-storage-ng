@@ -214,7 +214,7 @@ describe Y2Storage::BootRequirementsChecker do
               expect(checker.warnings).to all(be_a(Y2Storage::SetupError))
 
               message = checker.warnings.first.message
-              expect(message).to match(/Missing device.*partition id bios_boot/)
+              expect(message).to match(/There is no partition of type BIOS Boot/)
             end
           end
 
