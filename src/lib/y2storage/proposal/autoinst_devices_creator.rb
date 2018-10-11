@@ -156,8 +156,8 @@ module Y2Storage
       def process_mds(planned_devices, devs_to_reuse, creator_result)
         mds_to_reuse, mds_to_create = planned_devices.mds.partition(&:reuse?)
         devs_to_reuse_in_md = reusable_by_md(devs_to_reuse)
-        creator_result.merge!(create_mds(planned_devices.mds, creator_result, devs_to_reuse_in_md))
         reuse_mds(mds_to_reuse, creator_result)
+        creator_result.merge!(create_mds(planned_devices.mds, creator_result, devs_to_reuse_in_md))
 
         [mds_to_create, mds_to_reuse, creator_result]
       end
@@ -171,9 +171,9 @@ module Y2Storage
       # @return [Array<Array<Planned::Md>, Array<Planned::Md>, CreatorResult>]
       def process_vgs(planned_devices, devs_to_reuse, creator_result)
         planned_vgs = planned_devices.vgs
-        creator_result.merge!(set_up_lvm(planned_vgs, creator_result, devs_to_reuse))
         vgs_to_reuse = planned_vgs.select(&:reuse?)
         creator_result = reuse_vgs(vgs_to_reuse, creator_result)
+        creator_result.merge!(set_up_lvm(planned_vgs, creator_result, devs_to_reuse))
 
         [planned_vgs, creator_result]
       end
@@ -199,14 +199,14 @@ module Y2Storage
       # @param new_partitions [Array<Planned::Partition>] Devices to create
       # @param disk_names     [Array<String>]             Disks to consider
       # @return [PartitionCreatorResult]
-      def create_partitions(new_partitions, disk_names)
+      def create_partitions(devicegraph, new_partitions, disk_names)
         log.info "Partitions to create: #{new_partitions}"
         primary, non_primary = new_partitions.partition(&:primary)
         parts_to_create = primary + non_primary
 
         dist = best_distribution(parts_to_create, disk_names)
         raise NoDiskSpaceError, "Could not find a valid partitioning distribution" if dist.nil?
-        part_creator = Proposal::PartitionCreator.new(original_graph)
+        part_creator = Proposal::PartitionCreator.new(devicegraph)
         part_creator.create_partitions(dist)
       end
 
