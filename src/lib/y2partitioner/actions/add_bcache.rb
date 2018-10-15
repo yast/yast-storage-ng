@@ -70,7 +70,9 @@ module Y2Partitioner
         device_graph.blk_devices.select do |dev|
           dev.component_of.empty? &&
             (dev.filesystem.nil? || dev.filesystem.mount_point.nil?) &&
-            (!dev.respond_to?(:partitions) || dev.partitions.empty?)
+            (!dev.respond_to?(:partitions) || dev.partitions.empty?) &&
+            # do not allow nested bcaches, see doc/bcache.md
+            !dev.ancestors.any? { |a| a.is?(:bcache) }
         end
       end
 
