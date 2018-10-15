@@ -141,7 +141,7 @@ module Y2Storage
         planned_partitions = sized_partitions(planned_devices.disk_partitions)
         parts_to_reuse, parts_to_create = planned_partitions.partition(&:reuse?)
         creator_result = create_partitions(parts_to_create, disk_names)
-        reuse_devices(parts_to_reuse, creator_result.devicegraph)
+        reuse_partitions(parts_to_reuse, creator_result.devicegraph)
 
         [parts_to_create, parts_to_reuse, creator_result]
       end
@@ -250,9 +250,9 @@ module Y2Storage
       # Shrinking partitions/logical volumes should be processed first in order to free
       # some space for growing ones.
       #
-      # @param reused_devices  [Array<Planned::Partition,Planned::LvmLv>] Logical volumes to reuse
+      # @param reused_devices  [Array<Planned::Partition>] Partitions to reuse
       # @param devicegraph     [Devicegraph] Devicegraph to reuse partitions
-      def reuse_devices(reused_devices, devicegraph)
+      def reuse_partitions(reused_devices, devicegraph)
         shrinking, not_shrinking = reused_devices.partition { |d| d.shrink?(devicegraph) }
         (shrinking + not_shrinking).each { |d| d.reuse!(devicegraph) }
       end
