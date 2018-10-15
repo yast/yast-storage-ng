@@ -287,10 +287,8 @@ module Y2Storage
       def init_fields_by_type(device)
         if device.is?(:lvm_lv)
           init_lv_fields(device)
-        elsif device.is?(:md)
-          init_md_fields(device)
         elsif device.is?(:disk_device)
-          init_disk_fields(device)
+          init_disk_device_fields(device)
         else
           init_partition_fields(device)
         end
@@ -305,10 +303,10 @@ module Y2Storage
         @raid_name = partition.md.name if partition.md
       end
 
-      def init_disk_fields(disk)
+      def init_disk_device_fields(disk)
         @create = false
         @lvm_group = lvm_group_name(disk)
-        @raid_name = disk.md.name if disk.md
+        @raid_name = disk.md.name if disk.respond_to?(:md) && disk.md
       end
 
       def init_lv_fields(lv)
@@ -318,12 +316,6 @@ module Y2Storage
         @pool = lv.lv_type == LvType::THIN_POOL
         parent = lv.parents.first
         @used_pool = parent.lv_name if lv.lv_type == LvType::THIN && parent.is?(:lvm_lv)
-      end
-
-      def init_md_fields(md)
-        @partition_nr = md.number if md.numeric?
-        @raid_options = RaidOptionsSection.new_from_storage(md)
-        @lvm_group = lvm_group_name(md)
       end
 
       def init_encryption_fields(partition)

@@ -126,6 +126,7 @@ module Y2Storage
         @skip_list = SkipListSection.new_from_hashes(hash.fetch("skip_list", []), self)
         if hash["raid_options"]
           @raid_options = RaidOptionsSection.new_from_hashes(hash["raid_options"], self)
+          @raid_options.raid_name = nil # This element is not supported here
         end
       end
 
@@ -279,16 +280,21 @@ module Y2Storage
       # Method used by {.new_from_storage} to populate the attributes when
       # cloning a MD RAID.
       #
-      # AutoYaST does not support multiple partitions on a MD RAID.
-      #
       # @param md [Y2Storage::Md] RAID
       # @return [Boolean]
       def init_from_md(md)
         @type = :CT_MD
         @device = md.name
-        @partitions = partitions_from_collection([md])
-        @enable_snapshots = enabled_snapshots?([md.filesystem])
+        collection =
+          if md.filesystem
+            [md]
+          else
+            md.partitions
+          end
+        @partitions = partitions_from_collection(collection)
+        @enable_snapshots = enabled_snapshots?(collection.map(&:filesystem).compact)
         @raid_options = RaidOptionsSection.new_from_storage(md)
+        @raid_options.raid_name = nil if @raid_options # This element is not supported here
         true
       end
 

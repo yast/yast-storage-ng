@@ -196,30 +196,6 @@ describe Y2Storage::AutoinstProfile::PartitionSection do
           .and_return(raid_options)
       end
 
-      it "initializes #raid_options" do
-        expect(Y2Storage::AutoinstProfile::RaidOptionsSection).to receive(:new_from_storage)
-          .with(md).and_return(raid_options)
-        expect(described_class.new_from_storage(md).raid_options).to eq(raid_options)
-      end
-
-      context "when it is not a named RAID" do
-        let(:numeric?) { true }
-
-        it "initializes #partition_nr to the RAID number" do
-          section = described_class.new_from_storage(md)
-          expect(section.partition_nr).to eq(md.number)
-        end
-      end
-
-      context "when it is a named RAID" do
-        let(:numeric?) { false }
-
-        it "does not initialize #partition_nr" do
-          section = described_class.new_from_storage(md)
-          expect(section.partition_nr).to be_nil
-        end
-      end
-
       context "when it is used as an LVM physical volume" do
         let(:lvm_vg) { instance_double(Y2Storage::LvmVg, basename: "vg0") }
         let(:lvm_pv) do
