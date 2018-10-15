@@ -138,10 +138,10 @@ module Y2Storage
       #
       # @return [Array<Array<Planned::Partition>, Array<Planned::Partition>, CreatorResult>]
       def process_partitions(planned_devices, disk_names)
-        planned_partitions = planned_devices.partitions
+        planned_partitions = sized_partitions(planned_devices.disk_partitions)
         parts_to_reuse, parts_to_create = planned_partitions.partition(&:reuse?)
         creator_result = create_partitions(parts_to_create, disk_names)
-        reuse_devices(parts_to_reuse, creator_result.devicegraph)
+        reuse_partitions(parts_to_reuse, creator_result.devicegraph)
 
         [parts_to_create, parts_to_reuse, creator_result]
       end
@@ -156,8 +156,8 @@ module Y2Storage
       def process_mds(planned_devices, devs_to_reuse, creator_result)
         mds_to_reuse, mds_to_create = planned_devices.mds.partition(&:reuse?)
         devs_to_reuse_in_md = reusable_by_md(devs_to_reuse)
-        creator_result.merge!(create_mds(mds_to_create, creator_result, devs_to_reuse_in_md))
-        mds_to_reuse.each { |i| i.reuse!(creator_result.devicegraph) }
+        creator_result.merge!(create_mds(planned_devices.mds, creator_result, devs_to_reuse_in_md))
+        reuse_mds(mds_to_reuse, creator_result)
 
         [mds_to_create, mds_to_reuse, creator_result]
       end
@@ -173,7 +173,7 @@ module Y2Storage
         planned_vgs = planned_devices.vgs
         creator_result.merge!(set_up_lvm(planned_vgs, creator_result, devs_to_reuse))
         vgs_to_reuse = planned_vgs.select(&:reuse?)
-        reuse_vgs(vgs_to_reuse, creator_result.devicegraph)
+        creator_result = reuse_vgs(vgs_to_reuse, creator_result)
 
         [planned_vgs, creator_result]
       end
@@ -245,14 +245,14 @@ module Y2Storage
         lvm_creator.create_volumes(new_vg, pvs)
       end
 
-      # Reuses partitions or logical volumes for the given devicegraph
+      # Reuses partitions for the given devicegraph
       #
       # Shrinking partitions/logical volumes should be processed first in order to free
       # some space for growing ones.
       #
-      # @param reused_devices  [Array<Planned::Partition,Planned::LvmLv>] Logical volumes to reuse
+      # @param reused_devices  [Array<Planned::Partition>] Partitions to reuse
       # @param devicegraph     [Devicegraph] Devicegraph to reuse partitions
-      def reuse_devices(reused_devices, devicegraph)
+      def reuse_partitions(reused_devices, devicegraph)
         shrinking, not_shrinking = reused_devices.partition { |d| d.shrink?(devicegraph) }
         (shrinking + not_shrinking).each { |d| d.reuse!(devicegraph) }
       end
@@ -260,11 +260,25 @@ module Y2Storage
       # Reuses volume groups for the given devicegraph
       #
       # @param reused_vgs  [Array<Planned::LvmVg>] Volume groups to reuse
-      # @param devicegraph [Devicegraph]           Devicegraph to reuse partitions
-      def reuse_vgs(reused_vgs, devicegraph)
-        reused_vgs.each do |vg|
-          vg.reuse!(devicegraph)
-          reuse_devices(vg.all_lvs.select(&:reuse?), devicegraph)
+      # @param previous_result [Proposal::CreatorResult] Result containing the devicegraph
+      #   to work on
+      def reuse_vgs(reused_vgs, previous_result)
+        reused_vgs.each_with_object(previous_result) do |vg, result|
+          lvm_creator = Proposal::LvmCreator.new(result.devicegraph)
+          result.merge!(lvm_creator.reuse_volumes(vg))
+        end
+      end
+
+      # Reuses MD RAIDs for the given devicegraph
+      #
+      # @param reused_mds      [Array<Planned::Md>] Volume groups to reuse
+      # @param previous_result [Proposal::CreatorResult] Starting point
+      #   to work on
+      # @return [Proposal::CreatorResult] Result containing the reused MD RAID devices
+      def reuse_mds(reused_mds, previous_result)
+        reused_mds.each_with_object(previous_result) do |md, result|
+          md_creator = Proposal::MdCreator.new(result.devicegraph)
+          result.merge!(md_creator.reuse_partitions(md))
         end
       end
 
@@ -273,15 +287,32 @@ module Y2Storage
       # @param mds             [Array<Planned::Md>]        List of planned MD arrays to create
       # @param previous_result [Proposal::CreatorResult]   Starting point
       # @param devs_to_reuse   [Array<Planned::Partition, Planned::StrayBlkDevice>] List of devices
-      #   to reuse.
+      #   to reuse
       # @return                [Proposal::CreatorResult] Result containing the specified MD RAIDs
       def create_mds(mds, previous_result, devs_to_reuse)
         mds.reduce(previous_result) do |result, md|
-          md_creator = Proposal::MdCreator.new(result.devicegraph)
-          devices = previous_result.created_names { |d| d.raid_name == md.name }
+          devices = result.created_names { |d| d.respond_to?(:raid_name) && d.raid_name == md.name }
           devices += devs_to_reuse.select { |d| d.raid_name == md.name }.map(&:reuse_name)
-          result.merge(md_creator.create_md(md, devices))
+          result.merge(create_md(result.devicegraph, md, devices))
         end
+      end
+
+      # Create a MD RAID
+      #
+      # @param devicegraph [Devicegraph] Starting devicegraph
+      # @param md          [Planned::Md] List of planned MD arrays to create
+      # @param devices     [Array<Planned::Device>] List of devices to include in the RAID
+      # @return            [Proposal::CreatorResult] Result containing the specified RAID
+      #
+      # @raise NoDiskSpaceError
+      def create_md(devicegraph, md, devices)
+        md_creator = Proposal::MdCreator.new(devicegraph)
+        md_creator.create_md(md, devices)
+      rescue NoDiskSpaceError
+        md_creator = Proposal::MdCreator.new(devicegraph)
+        new_md = md.clone
+        new_md.partitions = flexible_devices(md.partitions)
+        md_creator.create_md(new_md, devices)
       end
 
       # Return a new planned devices with flexible limits
@@ -304,6 +335,23 @@ module Y2Storage
       # @return [Array<Planned::Device>]
       def reusable_by_md(planned_devices)
         planned_devices.select { |d| d.respond_to?(:raid_name) }
+      end
+
+      # Returns a list of planned partitions adjusting the size
+      #
+      # All partitions which sizes are specified as percentage will get their minimal and maximal
+      # sizes adjusted.
+      #
+      # @param planned_partitions [Array<Planned::Partition>] List of planned partitions
+      # @return [Array<Planned::Partition>] New list of planned partitions with adjusted sizes
+      def sized_partitions(planned_partitions)
+        planned_partitions.map do |part|
+          new_part = part.clone
+          next new_part unless new_part.percent_size
+          disk = original_graph.find_by_name(part.disk)
+          new_part.max = new_part.min = new_part.size_in(disk)
+          new_part
+        end
       end
     end
   end

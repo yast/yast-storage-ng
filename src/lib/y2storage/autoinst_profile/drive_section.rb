@@ -49,7 +49,8 @@ module Y2Storage
           { name: :pesize },
           { name: :type },
           { name: :use },
-          { name: :skip_list }
+          { name: :skip_list },
+          { name: :raid_options }
         ]
       end
 
@@ -98,6 +99,10 @@ module Y2Storage
       # @!attribute skip_list
       #   @return [Array<SkipListSection] collection of <skip_list> entries
 
+      # @!attribute raid_options
+      #   @return [RaidOptionsSection] RAID options
+      #   @see RaidOptionsSection
+
       # Constructor
       #
       # @param parent [#parent,#section_name] parent section
@@ -119,10 +124,13 @@ module Y2Storage
         @use = use_value_from_string(hash["use"]) if hash["use"]
         @partitions = partitions_from_hash(hash)
         @skip_list = SkipListSection.new_from_hashes(hash.fetch("skip_list", []), self)
+        if hash["raid_options"]
+          @raid_options = RaidOptionsSection.new_from_hashes(hash["raid_options"], self)
+        end
       end
 
       def default_type_for(hash)
-        return :CT_MD if hash["device"] == "/dev/md"
+        return :CT_MD if hash["device"].to_s.start_with?("/dev/md")
         :CT_DISK
       end
 
@@ -166,10 +174,8 @@ module Y2Storage
       #
       # @return [String] MD RAID device name
       def name_for_md
-        # TODO: a proper profile will always include one partition for each MD
-        # drive, but as soon as we introduce error handling and reporting we
-        # should do something if #partitions is empty (wrong profile).
-        partitions.first.name_for_md
+        return partitions.first.name_for_md if device == "/dev/md"
+        device
       end
 
       # Content of the section in the format used by the AutoYaST modules
@@ -279,9 +285,10 @@ module Y2Storage
       # @return [Boolean]
       def init_from_md(md)
         @type = :CT_MD
-        @device = "/dev/md"
+        @device = md.name
         @partitions = partitions_from_collection([md])
         @enable_snapshots = enabled_snapshots?([md.filesystem])
+        @raid_options = RaidOptionsSection.new_from_storage(md)
         true
       end
 

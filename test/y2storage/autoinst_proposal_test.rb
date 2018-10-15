@@ -1133,6 +1133,7 @@ describe Y2Storage::AutoinstProposal do
           [
             {
               "device" => "/dev/md/Volume0_0", "use" => "3,4,9",
+              "raid_options" => { "raid_type" => "raid1" },
               "partitions" => [efi_spec, root_spec, swap_spec]
             }
           ]

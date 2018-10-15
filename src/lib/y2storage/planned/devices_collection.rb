@@ -85,8 +85,22 @@ module Y2Storage
       #
       # @return [Array<Planned::Partition>]
       def partitions
-        @partitions ||= devices.select { |d| d.is_a?(Planned::Partition) } +
+        @partitions ||= disk_partitions + md_partitions
+      end
+
+      # Returns the list of planned partitions for disks devices
+      #
+      # @return [Array<Planned::Partition>]
+      def disk_partitions
+        @disk_partitions ||= devices.select { |d| d.is_a?(Planned::Partition) } +
           disks.map(&:partitions).flatten
+      end
+
+      # Returns the list of planned partitions for software RAID devices
+      #
+      # @return [Array<Planned::Partition>]
+      def md_partitions
+        @md_partitions ||= mds.map(&:partitions).flatten
       end
 
       # Returns the list of planned disks
