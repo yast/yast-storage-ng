@@ -35,6 +35,28 @@ module Y2Partitioner
 
     private
 
+      # @see DeleteDevice#errors
+      def errors
+        errors = super + [shared_cset]
+
+        errors.compact
+      end
+
+      # Error when the bcache shares cset with any other bcache.
+      #
+      # @see doc/bcache.md
+      # @return [String, nil] nil if there is no error
+      def shared_cset
+        return nil unless device.bcache_cset
+        return nil if single_bcache_cset? || !device.exists_in_probed?
+
+        # TRANSLATORS: Error when trying to existing bcache that shares caches.
+        _(
+          "The bcache shares cache set with other devices which can result in unreachable space " \
+            "if done without detach. But detach can take in some situation very long time."
+        )
+      end
+
       # Deletes the indicated Bcache (see {DeleteDevice#device})
       def delete
         log.info "deleting bcache raid #{device}"

@@ -47,10 +47,30 @@ describe Y2Partitioner::Actions::DeleteBcache do
 
     let(:accept) { nil }
 
+    context "when deleting probed bcache which share cache with other bcache" do
+      let(:device_name) { "/dev/bcache1" }
+
+      it "shows error popup" do
+        expect(Yast2::Popup).to receive(:show).with(anything, headline: :error)
+        subject.run
+      end
+
+      it "does not delete the bcache" do
+        subject.run
+        expect(Y2Storage::BlkDevice.find_by_name(device_graph, device_name)).to_not be_nil
+      end
+
+      it "returns :back" do
+        expect(subject.run).to eq :back
+      end
+    end
+
     context "when deleting a bcache without associated devices" do
       let(:device_name) { "/dev/bcache1" }
 
       it "shows a confirm message" do
+        device_graph.remove_bcache(Y2Storage::BlkDevice.find_by_name(device_graph, "/dev/bcache2"))
+        device_graph.remove_bcache(Y2Storage::BlkDevice.find_by_name(device_graph, "/dev/bcache0"))
         expect(Yast2::Popup).to receive(:show)
         subject.run
       end
@@ -68,6 +88,8 @@ describe Y2Partitioner::Actions::DeleteBcache do
       let(:device_name) { "/dev/bcache2" }
 
       it "shows a specific confirm message for recursive delete" do
+        device_graph.remove_bcache(Y2Storage::BlkDevice.find_by_name(device_graph, "/dev/bcache1"))
+        device_graph.remove_bcache(Y2Storage::BlkDevice.find_by_name(device_graph, "/dev/bcache0"))
         expect(subject).to receive(:confirm_recursive_delete)
           .and_call_original
 
@@ -79,11 +101,15 @@ describe Y2Partitioner::Actions::DeleteBcache do
       let(:accept) { :no }
 
       it "does not delete the bcache" do
+        device_graph.remove_bcache(Y2Storage::BlkDevice.find_by_name(device_graph, "/dev/bcache2"))
+        device_graph.remove_bcache(Y2Storage::BlkDevice.find_by_name(device_graph, "/dev/bcache0"))
         subject.run
         expect(Y2Storage::BlkDevice.find_by_name(device_graph, device_name)).to_not be_nil
       end
 
       it "returns :back" do
+        device_graph.remove_bcache(Y2Storage::BlkDevice.find_by_name(device_graph, "/dev/bcache2"))
+        device_graph.remove_bcache(Y2Storage::BlkDevice.find_by_name(device_graph, "/dev/bcache0"))
         expect(subject.run).to eq(:back)
       end
     end
@@ -92,11 +118,15 @@ describe Y2Partitioner::Actions::DeleteBcache do
       let(:accept) { :yes }
 
       it "deletes the bcache" do
+        device_graph.remove_bcache(Y2Storage::BlkDevice.find_by_name(device_graph, "/dev/bcache2"))
+        device_graph.remove_bcache(Y2Storage::BlkDevice.find_by_name(device_graph, "/dev/bcache0"))
         subject.run
         expect(Y2Storage::BlkDevice.find_by_name(device_graph, device_name)).to be_nil
       end
 
       it "returns :finish" do
+        device_graph.remove_bcache(Y2Storage::BlkDevice.find_by_name(device_graph, "/dev/bcache2"))
+        device_graph.remove_bcache(Y2Storage::BlkDevice.find_by_name(device_graph, "/dev/bcache0"))
         expect(subject.run).to eq(:finish)
       end
     end
