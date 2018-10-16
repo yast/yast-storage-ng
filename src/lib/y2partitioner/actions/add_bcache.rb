@@ -72,7 +72,7 @@ module Y2Partitioner
             (dev.filesystem.nil? || dev.filesystem.mount_point.nil?) &&
             (!dev.respond_to?(:partitions) || dev.partitions.empty?) &&
             # do not allow nested bcaches, see doc/bcache.md
-            ([dev]+dev.ancestors).none? { |a| a.is?(:bcache, :bcache_cset) }
+            ([dev] + dev.ancestors).none? { |a| a.is?(:bcache, :bcache_cset) }
         end
       end
 
