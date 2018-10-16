@@ -249,12 +249,7 @@ module Y2Storage
         @partitions.each { |i| i.create = false } if reuse_partitions?(disk)
 
         # Same logic followed by the old exporter
-        @use =
-          if disk.partitions.any? { |i| windows?(i) }
-            @partitions.map(&:partition_nr)
-          else
-            "all"
-          end
+        @use = use_value_from_storage(disk, @partitions)
 
         true
       end
@@ -439,6 +434,19 @@ module Y2Storage
       # @return [String] Disklabel value
       def disklabel_from_disk(disk)
         disk.partition_table ? disk.partition_table.type.to_s : NO_PARTITION_TABLE
+      end
+
+      # Determines the value of the 'use' element for a disk/dasd device
+      #
+      # @param disk [Y2Storage::Disk, Y2Storage::Dasd] Disk
+      # @param partitions [Y2Storage::AutoinstProposal::PartitionSection] Set of partition sections
+      # @return [String] Value of the 'use' element for a disk.
+      def use_value_from_storage(disk, partitions)
+        if disk.partitions.any? { |i| windows?(i) }
+          partitions.map(&:partition_nr)
+        else
+          "all"
+        end
       end
     end
   end
