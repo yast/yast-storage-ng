@@ -438,6 +438,8 @@ module Y2Storage
 
       # Determines the value of the 'use' element for a disk/dasd device
       #
+      # @note This logic is inherited from the pre-storage-ng times.
+      #
       # @param disk [Y2Storage::Disk, Y2Storage::Dasd] Disk
       # @param partitions [Y2Storage::AutoinstProposal::PartitionSection] Set of partition sections
       # @return [String] Value of the 'use' element for a disk.

@@ -287,7 +287,7 @@ module Y2Storage
       def init_fields_by_type(device)
         if device.is?(:lvm_lv)
           init_lv_fields(device)
-        elsif device.is?(:disk_device) || device.is?(:software_raid)
+        elsif device.is?(:disk_device, :software_raid)
           init_disk_device_fields(device)
         else
           init_partition_fields(device)
@@ -429,7 +429,7 @@ module Y2Storage
       # @param device [Y2Storage::Device] Device
       # @return [Boolean]
       def fixed_size?(device)
-        device.is?(:disk_device) || device.is?(:software_raid)
+        device.is?(:disk_device, :software_raid)
       end
     end
   end
