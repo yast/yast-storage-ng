@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Tue Oct 16 12:58:10 UTC 2018 - jreidinger@suse.com
+
+- Improve filtering of possible backing devices for bcache and
+  limit deletion of bcache to only safe cases (fate#325346)
+- 4.1.25
+
+-------------------------------------------------------------------
 Thu Oct 11 15:03:26 UTC 2018 - ancor@suse.com
 
 - Improved the warning messages about missing BIOS Boot partition,
