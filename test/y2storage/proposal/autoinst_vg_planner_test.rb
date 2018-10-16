@@ -21,6 +21,7 @@
 # find current contact information at www.suse.com.
 
 require_relative "../spec_helper"
+require_relative "../../support/autoinst_devices_planner_btrfs"
 require "y2storage/proposal/autoinst_vg_planner"
 require "y2storage/autoinst_issues/list"
 require "y2storage/autoinst_profile/drive_section"
@@ -46,12 +47,14 @@ describe Y2Storage::Proposal::AutoinstVgPlanner do
 
     let(:root_spec) do
       {
-        "mount" => "/", "filesystem" => "ext4", "lv_name" => "root", "size" => "20G",
+        "mount" => "/", "filesystem" => "btrfs", "lv_name" => "root", "size" => "20G",
         "label" => "rootfs", "stripes" => 2, "stripe_size" => 4
       }
     end
 
     let(:lvm_group) { "vg0" }
+
+    include_examples "handles Btrfs snapshots"
 
     it "returns volume group and logical volumes" do
       vg = planner.planned_devices(drive).first

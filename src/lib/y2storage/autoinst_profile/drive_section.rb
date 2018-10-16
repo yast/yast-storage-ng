@@ -244,16 +244,12 @@ module Y2Storage
         @partitions = partitions_from_disk(disk)
         return false if @partitions.empty?
 
-        @enable_snapshots = enabled_snapshots?(disk.partitions.map(&:filesystem))
+        filesystems = disk.filesystem ? [disk.filesystem] : disk.partitions.map(&:filesystem)
+        @enable_snapshots = enabled_snapshots?(filesystems)
         @partitions.each { |i| i.create = false } if reuse_partitions?(disk)
 
         # Same logic followed by the old exporter
-        @use =
-          if disk.partitions.any? { |i| windows?(i) }
-            @partitions.map(&:partition_nr)
-          else
-            "all"
-          end
+        @use = use_value_from_storage(disk, @partitions)
 
         true
       end
@@ -427,7 +423,7 @@ module Y2Storage
       # @param disk [Array<Y2Storage::Disk,Y2Storage::Dasd>] Disk to check whether it is used
       # @return [Boolean] true if the disk is being used
       def used?(disk)
-        !(disk.partitions.empty? && disk.component_of.empty?)
+        !(disk.filesystem.nil? && disk.partitions.empty? && disk.component_of.empty?)
       end
 
       # Return the disklabel value for the given disk
@@ -438,6 +434,21 @@ module Y2Storage
       # @return [String] Disklabel value
       def disklabel_from_disk(disk)
         disk.partition_table ? disk.partition_table.type.to_s : NO_PARTITION_TABLE
+      end
+
+      # Determines the value of the 'use' element for a disk/dasd device
+      #
+      # @note This logic is inherited from the pre-storage-ng times.
+      #
+      # @param disk [Y2Storage::Disk, Y2Storage::Dasd] Disk
+      # @param partitions [Y2Storage::AutoinstProposal::PartitionSection] Set of partition sections
+      # @return [String] Value of the 'use' element for a disk.
+      def use_value_from_storage(disk, partitions)
+        if disk.partitions.any? { |i| windows?(i) }
+          partitions.map(&:partition_nr)
+        else
+          "all"
+        end
       end
     end
   end

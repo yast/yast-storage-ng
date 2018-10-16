@@ -21,6 +21,7 @@
 # find current contact information at www.suse.com.
 
 require_relative "../spec_helper"
+require_relative "../../support/autoinst_devices_planner_btrfs"
 require "y2storage/proposal/autoinst_disk_device_planner"
 Yast.import "Arch"
 
@@ -45,7 +46,7 @@ describe Y2Storage::Proposal::AutoinstDiskDevicePlanner do
     end
 
     let(:root_spec) do
-      { "mount" => "/", "filesystem" => "ext4", "fstopt" => "ro,acl", "mkfs_options" => "-b 2048" }
+      { "mount" => "/", "filesystem" => "btrfs", "fstopt" => "ro,acl", "mkfs_options" => "-b 2048" }
     end
 
     context "specifying partition type" do
@@ -84,7 +85,7 @@ describe Y2Storage::Proposal::AutoinstDiskDevicePlanner do
       using Y2Storage::Refinements::SizeCasts
 
       let(:root_spec) do
-        { "mount" => "/", "filesystem" => "ext4", "size" => size }
+        { "mount" => "/", "filesystem" => "btrfs", "size" => size }
       end
 
       context "when only a number is given" do
@@ -193,7 +194,7 @@ describe Y2Storage::Proposal::AutoinstDiskDevicePlanner do
 
         context "when no default values are defined in the control file" do
           let(:auto_spec) do
-            { "mount" => "/home", "filesystem" => "ext4", "size" => "auto" }
+            { "mount" => "/home", "filesystem" => "btrfs", "size" => "auto" }
           end
 
           it "ignores the device" do
@@ -240,7 +241,7 @@ describe Y2Storage::Proposal::AutoinstDiskDevicePlanner do
     context "specifying filesystem options" do
       let(:disk_spec) do
         { "device" => "/dev/sda", "use" => "all",
-           "partitions" => [root_spec, home_spec, swap_spec] }
+          "partitions" => [root_spec, home_spec, swap_spec] }
       end
 
       let(:home_spec) do
@@ -255,7 +256,7 @@ describe Y2Storage::Proposal::AutoinstDiskDevicePlanner do
         disk = planner.planned_devices(drive).first
         root = disk.partitions.find { |d| d.mount_point == "/" }
         home = disk.partitions.find { |d| d.mount_point == "/home" }
-        expect(root.filesystem_type).to eq(Y2Storage::Filesystems::Type::EXT4)
+        expect(root.filesystem_type).to eq(Y2Storage::Filesystems::Type::BTRFS)
         expect(home.filesystem_type).to eq(Y2Storage::Filesystems::Type::XFS)
       end
 
@@ -264,7 +265,7 @@ describe Y2Storage::Proposal::AutoinstDiskDevicePlanner do
           instance_double(Y2Storage::VolumeSpecificationBuilder, for: volspec)
         end
         let(:home_spec) { { "mount" => "/srv" } }
-        let(:volspec) { Y2Storage::VolumeSpecification.new("fs_type" => "ext4") }
+        let(:volspec) { Y2Storage::VolumeSpecification.new("fs_type" => "btrfs") }
 
         before do
           allow(Y2Storage::VolumeSpecificationBuilder).to receive(:new)
@@ -320,7 +321,7 @@ describe Y2Storage::Proposal::AutoinstDiskDevicePlanner do
 
     context "specifying crypted partitions" do
       let(:root_spec) do
-        { "mount" => "/", "filesystem" => "ext4", "crypt_fs" => true, "crypt_key" => "secret" }
+        { "mount" => "/", "filesystem" => "btrfs", "crypt_fs" => true, "crypt_key" => "secret" }
       end
 
       it "sets the encryption password" do
@@ -339,7 +340,7 @@ describe Y2Storage::Proposal::AutoinstDiskDevicePlanner do
         end
 
         let(:root_spec) do
-          { "create" => false, "mount" => "/", "filesystem" => "ext4", "partition_nr" => 2 }
+          { "create" => false, "mount" => "/", "filesystem" => "btrfs", "partition_nr" => 2 }
         end
 
         it "reuses the partition with that number" do
@@ -351,7 +352,7 @@ describe Y2Storage::Proposal::AutoinstDiskDevicePlanner do
 
       context "when a partition label is specified" do
         let(:root_spec) do
-          { "create" => false, "mount" => "/", "filesystem" => :ext4, "label" => "root" }
+          { "create" => false, "mount" => "/", "filesystem" => :btrfs, "label" => "root" }
         end
 
         it "reuses the partition with that label" do
@@ -363,7 +364,7 @@ describe Y2Storage::Proposal::AutoinstDiskDevicePlanner do
 
       context "when the partition to reuse does not exist" do
         let(:root_spec) do
-          { "create" => false, "mount" => "/", "filesystem" => :ext4, "partition_nr" => 99 }
+          { "create" => false, "mount" => "/", "filesystem" => :btrfs, "partition_nr" => 99 }
         end
 
         it "adds a new partition" do
@@ -382,7 +383,7 @@ describe Y2Storage::Proposal::AutoinstDiskDevicePlanner do
 
       context "when no partition number or label is specified" do
         let(:root_spec) do
-          { "create" => false, "mount" => "/", "filesystem" => :ext4 }
+          { "create" => false, "mount" => "/", "filesystem" => :btrfs }
         end
 
         it "adds a new partition" do
@@ -493,8 +494,10 @@ describe Y2Storage::Proposal::AutoinstDiskDevicePlanner do
       end
 
       context "when a partition_nr is set to '0'" do
+        include_examples "handles Btrfs snapshots"
+
         let(:root_spec) do
-          { "mount" => "/", "filesystem" => "ext4", "partition_nr" => 0 }
+          { "mount" => "/", "filesystem" => "btrfs", "partition_nr" => 0 }
         end
 
         it "uses the whole disk" do
@@ -506,6 +509,8 @@ describe Y2Storage::Proposal::AutoinstDiskDevicePlanner do
       end
 
       context "when disklabel is set to 'none'" do
+        include_examples "handles Btrfs snapshots"
+
         let(:disk_spec) do
           { "device" => "/dev/sda", "disklabel" => "none", "partitions" => [root_spec] }
         end

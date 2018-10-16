@@ -252,7 +252,7 @@ module Y2Storage
         # unit (that equals to 8225280 bytes in my experiments).
         # According to the comments there, that was done due to bnc#415005 and
         # bnc#262535.
-        @size = device.size.to_i.to_s if create && !device.is?(:disk_device)
+        @size = device.size.to_i.to_s if create && !fixed_size?(device)
       end
 
       def to_hashes
@@ -287,7 +287,7 @@ module Y2Storage
       def init_fields_by_type(device)
         if device.is?(:lvm_lv)
           init_lv_fields(device)
-        elsif device.is?(:disk_device)
+        elsif device.is?(:disk_device, :software_raid)
           init_disk_device_fields(device)
         else
           init_partition_fields(device)
@@ -419,6 +419,17 @@ module Y2Storage
       def lvm_group_name(device)
         return nil if device.lvm_pv.nil? || device.lvm_pv.lvm_vg.nil?
         device.lvm_pv.lvm_vg.basename
+      end
+
+      # Determines whether the device has a fixed size (disk, RAID, etc.)
+      #
+      # It is used to find out whether the size specification should be included
+      # in the profile.
+      #
+      # @param device [Y2Storage::Device] Device
+      # @return [Boolean]
+      def fixed_size?(device)
+        device.is?(:disk_device, :software_raid)
       end
     end
   end

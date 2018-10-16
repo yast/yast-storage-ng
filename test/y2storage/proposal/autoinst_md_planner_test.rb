@@ -21,6 +21,7 @@
 # find current contact information at www.suse.com.
 
 require_relative "../spec_helper"
+require_relative "../../support/autoinst_devices_planner_btrfs"
 require "y2storage/proposal/autoinst_md_planner"
 require "y2storage/autoinst_issues/list"
 require "y2storage/autoinst_profile/drive_section"
@@ -42,12 +43,12 @@ describe Y2Storage::Proposal::AutoinstMdPlanner do
     let(:raid) do
       {
         "device" => device, "raid_options" => raid_options, "disklabel" => disklabel,
-        "partitions" => [home_spec]
+        "partitions" => [root_spec]
       }
     end
 
-    let(:home_spec) do
-      { "mount" => "/home", "filesystem" => "xfs", "size" => "max", "partition_nr" => 1 }
+    let(:root_spec) do
+      { "mount" => "/", "filesystem" => "btrfs", "size" => "max", "partition_nr" => 1 }
     end
 
     let(:raid_options) do
@@ -57,6 +58,8 @@ describe Y2Storage::Proposal::AutoinstMdPlanner do
     let(:disklabel) { nil }
 
     let(:device) { "/dev/md2" }
+
+    include_examples "handles Btrfs snapshots"
 
     it "returns a planned RAID with the given device name" do
       md = planner.planned_devices(drive).first
@@ -69,7 +72,7 @@ describe Y2Storage::Proposal::AutoinstMdPlanner do
       it "returns a planned MD RAID with partitions" do
         md = planner.planned_devices(drive).first
         expect(md.partitions).to contain_exactly(
-          an_object_having_attributes("mount_point" => "/home")
+          an_object_having_attributes("mount_point" => "/")
         )
       end
 
@@ -83,7 +86,7 @@ describe Y2Storage::Proposal::AutoinstMdPlanner do
       it "returns a planned MD RAID with partitions" do
         md = planner.planned_devices(drive).first
         expect(md.partitions).to contain_exactly(
-          an_object_having_attributes("mount_point" => "/home")
+          an_object_having_attributes("mount_point" => "/")
         )
       end
 
@@ -96,10 +99,12 @@ describe Y2Storage::Proposal::AutoinstMdPlanner do
     context "when the partition table type is set to 'none'" do
       let(:disklabel) { "none" }
 
+      include_examples "handles Btrfs snapshots"
+
       it "returns a planned MD RAID with filesystem settings (no partitions)" do
         md = planner.planned_devices(drive).first
-        expect(md.mount_point).to eq("/home")
-        expect(md.filesystem_type).to eq(Y2Storage::Filesystems::Type::XFS)
+        expect(md.mount_point).to eq("/")
+        expect(md.filesystem_type).to eq(Y2Storage::Filesystems::Type::BTRFS)
       end
 
       it "does not set the partition table type" do
@@ -109,9 +114,9 @@ describe Y2Storage::Proposal::AutoinstMdPlanner do
 
       context "and RAID options are not specified at drive level" do
         let(:raid_options) { nil }
-        let(:home_spec) do
+        let(:root_spec) do
           {
-            "mount" => "/home", "filesystem" => "xfs", "size" => "max", "partition_nr" => 1,
+            "mount" => "/", "filesystem" => "btrfs", "size" => "max", "partition_nr" => 1,
             "raid_options" => { "raid_type" => "raid5" }
           }
         end
@@ -191,6 +196,40 @@ describe Y2Storage::Proposal::AutoinstMdPlanner do
             "name" => "/dev/md2", "md_level" => Y2Storage::MdLevel::RAID1
           )
         )
+      end
+    end
+
+    describe "snapshots" do
+      let(:raid) do
+        {
+          "device" => "/dev/md", "partitions" => [root_spec],
+          "enable_snapshots" => enable_snapshots
+        }
+      end
+
+      let(:enable_snapshots) { nil }
+
+      it "plans for snapshots by default" do
+        md = planner.planned_devices(drive).first
+        expect(md.snapshots?).to eq(true)
+      end
+
+      context "when snapshots are disabled" do
+        let(:enable_snapshots) { false }
+
+        it "does not plan for enabling snapshots" do
+          md = planner.planned_devices(drive).first
+          expect(md.snapshots?).to eq(false)
+        end
+      end
+
+      context "when snapshots are enabled" do
+        let(:enable_snapshots) { true }
+
+        it "plans for snapshots" do
+          md = planner.planned_devices(drive).first
+          expect(md.snapshots?).to eq(true)
+        end
       end
     end
   end
