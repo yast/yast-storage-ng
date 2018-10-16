@@ -202,7 +202,7 @@ module Y2Storage
 
       # Determine whether the partition table is explicitly not wanted
       #
-      # @note When the disklabel is set to 'none', a partition table should be created.
+      # @note When the disklabel is set to 'none', a partition table should not be created.
       #   For backward compatibility reasons, setting partition_nr to 0 has the same effect.
       #   When no disklabel is set, this method returns false.
 #

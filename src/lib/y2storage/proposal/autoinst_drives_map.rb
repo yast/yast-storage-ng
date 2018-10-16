@@ -110,13 +110,20 @@ module Y2Storage
 
       # Find the first usable disk for the given <drive> AutoYaST specification
       #
+      # @note Stray block devices and partitions with no parents (like Xen partitions)
+      #   are also considered.
+      #
       # @param drive  [AutoinstProfile::DriveSection] AutoYaST drive specification
       # @param devicegraph [Devicegraph] Devicegraph
       # @return [Disk,nil] Usable disk or nil if none is found
       def first_usable_disk(drive, devicegraph)
         skip_list = drive.skip_list
 
-        devicegraph.disk_devices.each do |disk|
+        devices = devicegraph.blk_devices.select do |dev|
+          dev.is?(:disk_device, :stray_blk_device)
+        end
+
+        devices.each do |disk|
           next if disk_names.include?(disk.name)
           next if skip_list.matches?(disk)
 
@@ -186,7 +193,7 @@ module Y2Storage
       def find_disk(devicegraph, device_name)
         device = devicegraph.find_by_any_name(device_name)
         return nil unless device
-        ([device] + device.ancestors).find { |d| d.is?(:disk_device) }
+        ([device] + device.ancestors).find { |d| d.is?(:disk_device, :stray_blk_device) }
       end
 
       # Whether the given <drive> section represents a set of Xen virtual

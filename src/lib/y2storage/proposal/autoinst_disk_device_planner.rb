@@ -29,15 +29,24 @@ module Y2Storage
       # Returns an array of planned partitions for a given disk or the disk
       # itself if there are no partitions planned
       #
+      # It supports three different kind of specifications:
+      #
+      # * Old Xen partitioning, which relies in a non-existent device to group similar ones
+      #   (for instance, `/dev/xvda` to group `/dev/xvda1`, `/dev/xvda2`, etc.).
+      # * New Xen partitioning, which uses stray block devices.
+      # * Regular disks.
+      #
       # @param drive [AutoinstProfile::DriveSection] drive section describing
       #   the layout for the disk
       # @return [Array<Planned::Partition, Planned::StrayBlkDevice>] List of planned partitions or disks
       def planned_devices(drive)
         disk = BlkDevice.find_by_name(devicegraph, drive.device)
-        if disk
-          planned_for_disk(disk, drive)
-        else
+        if disk.nil?
           planned_for_stray_devices(drive)
+        elsif disk.is?(:stray_blk_device)
+          planned_for_stray_device(drive)
+        else
+          planned_for_disk(disk, drive)
         end
       end
 
@@ -82,6 +91,7 @@ module Y2Storage
       # @note The part argument is used when we emulate the sle12 behavior to
       #   have partition 0 mean the full disk.
       def planned_for_full_disk(disk, drive, part)
+        issues_list.add(:surplus_partitions, drive) if drive.partitions.size > 1
         planned_disk = Y2Storage::Planned::Disk.new
         device_config(planned_disk, part, drive)
         planned_disk.lvm_volume_group_name = part.lvm_group
@@ -106,6 +116,22 @@ module Y2Storage
         end
 
         planned_disk
+      end
+
+      # Returns an array of planned stray block devices
+      #
+      # @param drive [AutoinstProfile::DriveSection] drive section describing
+      #   the stray block device
+      # @return [Planned::Disk] List of planned block devices
+      def planned_for_stray_device(drive)
+        issues_list.add(:no_partitionable, drive) if drive.wanted_partitions?
+        issues_list.add(:surplus_partitions, drive) if drive.partitions.size > 1
+        master_partition = drive.partitions.first
+        planned_stray_device = Y2Storage::Planned::StrayBlkDevice.new
+        device_config(planned_stray_device, master_partition, drive)
+        planned_stray_device.lvm_volume_group_name = master_partition.lvm_group
+        add_device_reuse(planned_stray_device, drive.device, master_partition)
+        [planned_stray_device]
       end
 
       # Returns an array of planned Xen partitions according to a <drive>
