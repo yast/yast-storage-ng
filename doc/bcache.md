@@ -8,10 +8,13 @@ this effectively creates hybrid volumes and provides performance improvements.
 
 ### Limitations in YaST
 
-As name suggest in general it can be used on top of any block device. But YaST limits its usage.
-YaST does not allow recursive bcache devices, even indirect. So bcache on top of bcache is
-prevented. The reason is that it does not make much sense and can cause trouble with metadata.
+As its name suggests, in general it can be used on top of any block device. But YaST limits its usage.
+YaST does not allow the creation of bcache devices on top of other bcache devices, even indirectly.
+Such setup would not make much sense from a practical point of view and it can cause troubles with
+the bcache metadata.
 
-Also due to bcache asynchronous operations that can took significant amount of time, YaST limits
-operation that take so much time. It include e.g. detaching of cache which limits e.g. resize of
-bcache device, edit of existing bcache or remove bcache that shares caching set.
+Several bcache operations are asynchronous and can take a significant amount of time.
+YaST also prevents actions that would trigger such operations. For example, YaST limits
+editing or resizing an existing bcache device and removing a bcache device that shares
+its caching set. All those actions could imply detaching a cache, which is one of those slow
+and asynchronous processes.

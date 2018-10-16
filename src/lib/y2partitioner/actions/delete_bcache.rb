@@ -21,6 +21,7 @@
 
 require "yast"
 require "y2partitioner/actions/delete_device"
+require "y2partitioner/device_graphs"
 
 module Y2Partitioner
   module Actions
@@ -48,12 +49,13 @@ module Y2Partitioner
       # @return [String, nil] nil if there is no error
       def shared_cset
         return nil unless device.bcache_cset
-        return nil if single_bcache_cset? || !device.exists_in_probed?
+        system = Y2Partitioner::DeviceGraphs.instance.system
+        return nil if single_bcache_cset? || !device.exists_in_devicegraph?(system)
 
-        # TRANSLATORS: Error when trying to existing bcache that shares caches.
+        # TRANSLATORS: Error when trying to modify an existing bcache that shares caches.
         _(
-          "The bcache shares cache set with other devices which can result in unreachable space " \
-            "if done without detach. But detach can take in some situation very long time."
+          "The bcache shares its cache set with other devices. This can result in unreachable space " \
+            "if done without detaching. Detaching can take a very long time in some situations."
         )
       end
 
