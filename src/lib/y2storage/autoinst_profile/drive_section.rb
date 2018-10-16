@@ -244,7 +244,8 @@ module Y2Storage
         @partitions = partitions_from_disk(disk)
         return false if @partitions.empty?
 
-        @enable_snapshots = enabled_snapshots?(disk.partitions.map(&:filesystem))
+        filesystems = disk.filesystem ? [disk.filesystem] : disk.partitions.map(&:filesystem)
+        @enable_snapshots = enabled_snapshots?(filesystems)
         @partitions.each { |i| i.create = false } if reuse_partitions?(disk)
 
         # Same logic followed by the old exporter
@@ -427,7 +428,7 @@ module Y2Storage
       # @param disk [Array<Y2Storage::Disk,Y2Storage::Dasd>] Disk to check whether it is used
       # @return [Boolean] true if the disk is being used
       def used?(disk)
-        !(disk.partitions.empty? && disk.component_of.empty?)
+        !(disk.filesystem.nil? && disk.partitions.empty? && disk.component_of.empty?)
       end
 
       # Return the disklabel value for the given disk

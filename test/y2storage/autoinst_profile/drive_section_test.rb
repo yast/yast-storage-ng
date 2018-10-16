@@ -152,6 +152,36 @@ describe Y2Storage::AutoinstProfile::DriveSection do
       end
     end
 
+    context "when the disk has no partitions but is used as a filesystem" do
+      before { fake_scenario("unpartitioned-disk") }
+      let(:dev) { device("sda") }
+
+      it "includes a partition holding filesystem specification for the disk" do
+        section = described_class.new_from_storage(dev)
+        expect(section.partitions).to contain_exactly(
+          an_object_having_attributes("create" => false, "filesystem" => :btrfs)
+        )
+      end
+
+      context "when snapshots are enabled" do
+        it "initializes enable_snapshots as 'true'" do
+          section = described_class.new_from_storage(dev)
+          expect(section.enable_snapshots).to eq(true)
+        end
+      end
+
+      context "when snapshots are not enabled" do
+        before do
+          dev.filesystem.btrfs_subvolumes.first.remove_descendants
+        end
+
+        it "initializes enable_snapshots as 'false'" do
+          section = described_class.new_from_storage(dev)
+          expect(section.enable_snapshots).to eq(false)
+        end
+      end
+    end
+
     context "when the disk has no partitions but it is used as LVM PV or RAID member" do
       let(:sda) { device("sda") }
       let(:pv) { double("pv") }
@@ -163,13 +193,6 @@ describe Y2Storage::AutoinstProfile::DriveSection do
       it "returns a section with disklabel set to 'none'" do
         section = described_class.new_from_storage(sda)
         expect(section.disklabel).to_not be_nil
-      end
-
-      it "includes a partition holding filesystem specification for the disk" do
-        section = described_class.new_from_storage(sda)
-        expect(section.partitions).to contain_exactly(
-          an_object_having_attributes("create" => false)
-        )
       end
     end
 
@@ -283,6 +306,50 @@ describe Y2Storage::AutoinstProfile::DriveSection do
       it "initializes raid options" do
         expect(described_class.new_from_storage(device("md0")).raid_options)
           .to be_a(Y2Storage::AutoinstProfile::RaidOptionsSection)
+      end
+
+      context "when the RAID is partitioned" do
+        before { fake_scenario("partitioned_md_raid.xml") }
+
+        context "and snapshots are enabled for some partition" do
+          it "initializes enable_snapshot setting to true" do
+            expect(described_class.new_from_storage(device("md/md0")).enable_snapshots).to eq(true)
+          end
+        end
+
+        context "and snapshots are not enabled for any partition" do
+          before do
+            md = device("md/md0")
+            btrfs = md.partitions.first.filesystem
+            btrfs.btrfs_subvolumes.first.remove_descendants
+          end
+
+          it "initializes enable_snapshot setting to false" do
+            expect(described_class.new_from_storage(device("md/md0")).enable_snapshots).to eq(false)
+          end
+        end
+      end
+
+      context "when snapshots are enabled" do
+        before { fake_scenario("btrfs_md_raid.xml") }
+
+        it "initializes enable_snapshot setting" do
+          expect(described_class.new_from_storage(device("md/md0")).enable_snapshots).to eq(true)
+        end
+      end
+
+      context "when snapshots are not enabled" do
+        before { fake_scenario("btrfs_md_raid.xml") }
+
+        before do
+          md = device("md/md0")
+          btrfs = md.filesystem
+          btrfs.btrfs_subvolumes.first.remove_descendants
+        end
+
+        it "initializes enable_snapshot setting" do
+          expect(described_class.new_from_storage(device("md/md0")).enable_snapshots).to eq(false)
+        end
       end
     end
 

@@ -191,7 +191,7 @@ describe Y2Storage::AutoinstProfile::PartitionSection do
       let(:lvm_pv) { nil }
 
       before do
-        allow(md).to receive(:is?) { |t| [:md, :disk_device].include?(t) }
+        allow(md).to receive(:is?) { |t| t == :md }
         allow(Y2Storage::AutoinstProfile::RaidOptionsSection).to receive(:new_from_storage)
           .and_return(raid_options)
       end
