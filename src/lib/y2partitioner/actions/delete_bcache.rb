@@ -54,8 +54,8 @@ module Y2Partitioner
 
         # TRANSLATORS: Error when trying to modify an existing bcache that shares caches.
         _(
-          "The bcache shares its cache set with other devices. This can result in unreachable space " \
-            "if done without detaching. Detaching can take a very long time in some situations."
+          "The bcache shares its cache set with other devices.\nThis can result in unreachable space " \
+            "if done without detaching.\nDetaching can take a very long time in some situations."
         )
       end
 
