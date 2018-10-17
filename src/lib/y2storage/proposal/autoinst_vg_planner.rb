@@ -68,7 +68,7 @@ module Y2Storage
         if section.used_pool
           return nil unless add_to_thin_pool(planned_lv, planned_vg, section)
         end
-        add_lv_reuse(planned_lv, planned_vg.volume_group_name, section) if section.create == false
+        add_lv_reuse(planned_lv, planned_vg, section) if section.create == false
         assign_size_to_lv(planned_vg, planned_lv, section) ? planned_lv : nil
       end
 
@@ -77,16 +77,16 @@ module Y2Storage
       # This method modifies the first argument setting the values related to
       # reusing a logical volume (reuse and format).
       #
-      # @param vg_name [String]         Volume group name to search for the logical volume to reuse
+      # @param planned_lv [Planned::LvmLv] Planned logical volume
       # @param planned_vg [Planned::LvmVg] Volume group to search for the logical volume to reuse
       # @param section [AutoinstProfile::PartitionSection] AutoYaST specification
-      def add_lv_reuse(planned_lv, vg_name, section)
-        lv_to_reuse = find_lv_to_reuse(vg_name, section)
+      def add_lv_reuse(planned_lv, planned_vg, section)
+        lv_to_reuse, vg = find_lv_to_reuse(planned_vg.volume_group_name, section)
         return unless lv_to_reuse
         planned_lv.logical_volume_name ||= lv_to_reuse.lv_name
         planned_lv.filesystem_type ||= lv_to_reuse.filesystem_type
         add_device_reuse(planned_lv, lv_to_reuse, section)
-        add_device_reuse(planned_lv.thin_pool, vg_name, section) if planned_lv.thin_pool
+        add_device_reuse(planned_lv.thin_pool, vg, section) if planned_lv.thin_pool
       end
 
       # Set 'reusing' attributes for a volume group
@@ -135,7 +135,7 @@ module Y2Storage
           end
 
         issues_list.add(:missing_reusable_device, part_section) unless device
-        :missing_info == device ? nil : device
+        :missing_info == device ? nil : [device, parent]
       end
 
       # @param vg_name      [String]      Volume group name to search for the logical volume

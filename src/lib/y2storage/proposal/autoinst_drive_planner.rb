@@ -166,13 +166,22 @@ module Y2Storage
         !!spec && spec.btrfs_read_only?
       end
 
-      # @param device  [Planned::Partition,Planned::LvmLV,Planned::Md] Planned device
-      # @param name    [String] Name of the device to reuse
-      # @param section [AutoinstProfile::PartitionSection] AutoYaST specification
-      def add_device_reuse(device, name, section)
-        device.reuse_name = name
-        device.reformat = !!section.format
-        device.resize = !!section.resize if device.respond_to?(:resize=)
+      # @param planned_device [Planned::Partition,Planned::LvmLV,Planned::Md] Planned device
+      # @param device         [Y2Storage::Device] Device to reuse
+      # @param section        [AutoinstProfile::PartitionSection] AutoYaST specification
+      def add_device_reuse(planned_device, device, section)
+        planned_device.reuse_name = device.is_a?(LvmVg) ? device.volume_group_name : device.name
+        planned_device.reformat = !!section.format
+        planned_device.resize = !!section.resize if planned_device.respond_to?(:resize=)
+        check_reusable_filesystem(planned_device, device, section) if device.respond_to?(:filesystem)
+      end
+
+      # @param planned_device [Planned::Partition,Planned::LvmLV,Planned::Md] Planned device
+      # @param device         [Y2Storage::Device] Device to reuse
+      # @param section        [AutoinstProfile::PartitionSection] AutoYaST specification
+      def check_reusable_filesystem(planned_device, device, section)
+        return if planned_device.reformat || device.filesystem || planned_device.component?
+        issues_list.add(:missing_reusable_filesystem, section)
       end
 
       # Parse the 'size' element
@@ -206,7 +215,7 @@ module Y2Storage
         partition_to_reuse = find_partition_to_reuse(partition, section)
         return unless partition_to_reuse
         partition.filesystem_type ||= partition_to_reuse.filesystem_type
-        add_device_reuse(partition, partition_to_reuse.name, section)
+        add_device_reuse(partition, partition_to_reuse, section)
         if !partition.reformat && !partition_to_reuse.filesystem && !partition.component?
           issues_list.add(:missing_reusable_filesystem, section)
         end

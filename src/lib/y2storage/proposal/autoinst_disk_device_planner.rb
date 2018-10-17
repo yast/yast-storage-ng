@@ -58,7 +58,7 @@ module Y2Storage
       def planned_for_disk(disk, drive)
         master_partition = drive.master_partition
         result = if master_partition
-          planned_for_full_disk(drive, master_partition)
+          planned_for_full_disk(disk, drive, master_partition)
         else
           planned_for_partitions(disk, drive)
         end
@@ -81,12 +81,12 @@ module Y2Storage
       #
       # @note The part argument is used when we emulate the sle12 behavior to
       #   have partition 0 mean the full disk.
-      def planned_for_full_disk(drive, part)
+      def planned_for_full_disk(disk, drive, part)
         planned_disk = Y2Storage::Planned::Disk.new
         device_config(planned_disk, part, drive)
         planned_disk.lvm_volume_group_name = part.lvm_group
         planned_disk.raid_name = part.raid_name
-        add_device_reuse(planned_disk, drive.device, part)
+        add_device_reuse(planned_disk, disk, part)
 
         [planned_disk]
       end
@@ -134,7 +134,8 @@ module Y2Storage
             stray.filesystem_type = device_to_use.filesystem_type if device_to_use
           end
 
-          add_device_reuse(stray, name, section)
+          device = devicegraph.find_by_name(name)
+          add_device_reuse(stray, device, section)
 
           result << stray
         end

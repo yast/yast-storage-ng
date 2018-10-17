@@ -190,6 +190,22 @@ describe Y2Storage::Proposal::AutoinstVgPlanner do
             )
           )
         end
+
+        context "when the filesystem does not exist" do
+          before do
+            lv = fake_devicegraph.find_by_name("/dev/vg0/lv1")
+            lv.remove_descendants
+          end
+
+          it "registers an issue" do
+            expect(issues_list).to be_empty
+            planner.planned_devices(drive)
+            issue = issues_list.find do |i|
+              i.is_a?(Y2Storage::AutoinstIssues::MissingReusableFilesystem)
+            end
+            expect(issue).to_not be_nil
+          end
+        end
       end
 
       context "when label is specified" do
