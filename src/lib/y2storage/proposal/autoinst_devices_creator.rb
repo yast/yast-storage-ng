@@ -84,7 +84,7 @@ module Y2Storage
 
         # Process planned partitions
         parts_to_create, parts_to_reuse, creator_result =
-          process_partitions(planned_devices, disk_names)
+          process_partitions(planned_devices, disk_names, original_graph.duplicate)
 
         # Process planned disk like devices (Xen virtual partitions and full disks)
         planned_disk_like_devs = process_disk_like_devs(planned_devices, creator_result.devicegraph)
@@ -113,12 +113,13 @@ module Y2Storage
 
       # Finds the best distribution for the given planned partitions
       #
+      # @param devicegraph        [Devicegraph] Devicegraph to calculate the distribution
       # @param planned_partitions [Array<Planned::Partition>] Partitions to add
       # @param disk_names         [Array<String>]             Names of disks to consider
       #
       # @see Proposal::PartitionsDistributionCalculator#best_distribution
-      def best_distribution(planned_partitions, disk_names)
-        disks = original_graph.disk_devices.select { |d| disk_names.include?(d.name) }
+      def best_distribution(devicegraph, planned_partitions, disk_names)
+        disks = devicegraph.disk_devices.select { |d| disk_names.include?(d.name) }
         spaces = disks.map(&:free_spaces).flatten
 
         calculator = Proposal::PartitionsDistributionCalculator.new
@@ -133,15 +134,18 @@ module Y2Storage
 
       # Process planned partitions
       #
+      # The devicegraph object is modified.
+      #
       # @param planned_devices [Array<Planned::Device>] Devices to create/reuse
       # @param disk_names [Array<String>] Disks to consider
+      # @param devicegraph [Devicegraph] Devicegraph to work on
       #
       # @return [Array<Array<Planned::Partition>, Array<Planned::Partition>, CreatorResult>]
-      def process_partitions(planned_devices, disk_names)
+      def process_partitions(planned_devices, disk_names, devicegraph)
         planned_partitions = sized_partitions(planned_devices.disk_partitions)
         parts_to_reuse, parts_to_create = planned_partitions.partition(&:reuse?)
-        creator_result = create_partitions(parts_to_create, disk_names)
-        reuse_partitions(parts_to_reuse, creator_result.devicegraph)
+        reuse_partitions(parts_to_reuse, devicegraph)
+        creator_result = create_partitions(devicegraph, parts_to_create, disk_names)
 
         [parts_to_create, parts_to_reuse, creator_result]
       end
@@ -156,8 +160,8 @@ module Y2Storage
       def process_mds(planned_devices, devs_to_reuse, creator_result)
         mds_to_reuse, mds_to_create = planned_devices.mds.partition(&:reuse?)
         devs_to_reuse_in_md = reusable_by_md(devs_to_reuse)
-        creator_result.merge!(create_mds(planned_devices.mds, creator_result, devs_to_reuse_in_md))
         reuse_mds(mds_to_reuse, creator_result)
+        creator_result.merge!(create_mds(planned_devices.mds, creator_result, devs_to_reuse_in_md))
 
         [mds_to_create, mds_to_reuse, creator_result]
       end
@@ -171,9 +175,9 @@ module Y2Storage
       # @return [Array<Array<Planned::Md>, Array<Planned::Md>, CreatorResult>]
       def process_vgs(planned_devices, devs_to_reuse, creator_result)
         planned_vgs = planned_devices.vgs
-        creator_result.merge!(set_up_lvm(planned_vgs, creator_result, devs_to_reuse))
         vgs_to_reuse = planned_vgs.select(&:reuse?)
         creator_result = reuse_vgs(vgs_to_reuse, creator_result)
+        creator_result.merge!(set_up_lvm(planned_vgs, creator_result, devs_to_reuse))
 
         [planned_vgs, creator_result]
       end
@@ -199,14 +203,14 @@ module Y2Storage
       # @param new_partitions [Array<Planned::Partition>] Devices to create
       # @param disk_names     [Array<String>]             Disks to consider
       # @return [PartitionCreatorResult]
-      def create_partitions(new_partitions, disk_names)
+      def create_partitions(devicegraph, new_partitions, disk_names)
         log.info "Partitions to create: #{new_partitions}"
         primary, non_primary = new_partitions.partition(&:primary)
         parts_to_create = primary + non_primary
 
-        dist = best_distribution(parts_to_create, disk_names)
+        dist = best_distribution(devicegraph, parts_to_create, disk_names)
         raise NoDiskSpaceError, "Could not find a valid partitioning distribution" if dist.nil?
-        part_creator = Proposal::PartitionCreator.new(original_graph)
+        part_creator = Proposal::PartitionCreator.new(devicegraph)
         part_creator.create_partitions(dist)
       end
 

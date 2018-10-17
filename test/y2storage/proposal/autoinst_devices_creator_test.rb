@@ -285,18 +285,25 @@ describe Y2Storage::Proposal::AutoinstDevicesCreator do
         end
       end
 
-      let(:home) do
-        Y2Storage::Planned::Partition.new("/home", filesystem_type).tap do |part|
-          part.reuse_name = "/dev/sda2"
+      let(:srv) do
+        Y2Storage::Planned::Partition.new("/srv", filesystem_type).tap do |part|
+          part.reuse_name = "/dev/sda3"
           part.resize = true
-          part.size = 52.GiB
+          part.min_size = 5.GiB
+          part.max_size = 5.GiB
         end
+      end
+
+      let(:new_part) do
+        planned_partition(
+          mount_point: "/data", filesystem_type: filesystem_type, min_size: 240.GiB, max_size: 240.GiB
+        )
       end
 
       let(:resize_info) do
         {
           "/dev/sda1" => info_sda1,
-          "/dev/sda2" => info_sda2
+          "/dev/sda3" => info_sda3
         }
       end
 
@@ -307,14 +314,14 @@ describe Y2Storage::Proposal::AutoinstDevicesCreator do
         )
       end
 
-      let(:info_sda2) do
+      let(:info_sda3) do
         instance_double(
-          Y2Storage::ResizeInfo, min_size: 1.GiB, max_size: 52.GiB, resize_ok?: true,
+          Y2Storage::ResizeInfo, min_size: 1.GiB, max_size: 248.GiB, resize_ok?: true,
           reasons: 0, reason_texts: []
         )
       end
 
-      let(:partitions) { [home, root] }
+      let(:partitions) { [root, srv, new_part] }
 
       before do
         allow_any_instance_of(Y2Storage::Partition).to receive(:detect_resize_info) do |part|
@@ -329,8 +336,16 @@ describe Y2Storage::Proposal::AutoinstDevicesCreator do
         root = devicegraph.partitions.find { |p| p.filesystem_mountpoint == "/" }
         expect(root.size).to eq(200.GiB)
 
-        home = devicegraph.partitions.find { |p| p.filesystem_mountpoint == "/home" }
-        expect(home.size).to eq(52.GiB)
+        srv = devicegraph.partitions.find { |p| p.filesystem_mountpoint == "/srv" }
+        expect(srv.size).to eq(5.GiB)
+      end
+
+      it "reuses the space for new partitions" do
+        result = creator.populated_devicegraph(planned_devices, "/dev/sda")
+        devicegraph = result.devicegraph
+
+        data = devicegraph.partitions.find { |p| p.filesystem_mountpoint == "/data" }
+        expect(data.size).to eq(240.GiB)
       end
     end
 
