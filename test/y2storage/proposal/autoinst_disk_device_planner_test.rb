@@ -522,6 +522,27 @@ describe Y2Storage::Proposal::AutoinstDiskDevicePlanner do
           )
         end
       end
+
+      context "when trying to reuse a filesystem which does not exist" do
+        let(:disk_spec) do
+          { "device" => "/dev/sda", "disklabel" => "none", "partitions" => [root_spec] }
+        end
+        let(:root_spec) do
+          { "create" => false, "format" => false, "mount" => "/" }
+        end
+
+        before do
+          sda = Y2Storage::BlkDevice.find_by_name(fake_devicegraph, "/dev/sda")
+          sda.remove_descendants
+        end
+
+        it "registers an issue" do
+          expect(issues_list).to be_empty
+          planner.planned_devices(drive)
+          issue = issues_list.find { |i| i.is_a?(Y2Storage::AutoinstIssues::MissingReusableFilesystem) }
+          expect(issue).to_not be_nil
+        end
+      end
     end
   end
 end
