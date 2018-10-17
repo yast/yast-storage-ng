@@ -163,6 +163,8 @@ module Yast
           hash[key]
         end
         allow(ENV).to receive(:keys).and_return hash.keys
+        # reset the ENV cache
+        Y2Storage::StorageEnv.instance.send(:initialize)
       end
 
       def fstab_entry(*values)
