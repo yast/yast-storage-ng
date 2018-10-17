@@ -34,6 +34,10 @@ module Y2Storage
 
     private_constant :ENV_MULTIPATH, :ENV_BIOS_RAID
 
+    def initialize
+      @casecmp_env_cache = {}
+    end
+
     # Whether the activation of multipath has been forced via the
     # LIBSTORAGE_MULTIPATH_AUTOSTART boot parameter
     #
@@ -75,14 +79,17 @@ module Y2Storage
     # @param variable [String]
     # @return [String, nil]
     def read(variable)
+      return @casecmp_env_cache[variable] if @casecmp_env_cache.key?(variable)
+
       # Sort the keys to have a deterministic behavior and to prefer
       # all-uppercase over the other variants, then do a case insensitive
       # search
       key = ENV.keys.sort.find { |k| k.match(/\A#{variable}\z/i) }
-      return false unless key
-
-      log.debug "Found ENV variable: #{key.inspect}"
-      ENV[key]
+      val = if key
+        log.debug "Found ENV variable: #{key.inspect}"
+        ENV[key]
+      end
+      @casecmp_env_cache[variable] = val
     end
   end
 end
