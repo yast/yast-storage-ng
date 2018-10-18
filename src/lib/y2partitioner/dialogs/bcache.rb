@@ -40,8 +40,6 @@ module Y2Partitioner
         @caching = CachingDevice.new(device, suitable_caching)
         @backing = BackingDevice.new(device, suitable_backing, @caching)
         @cache_mode = CacheMode.new(device)
-        @sequential_cutoff = SequentialCutoff.new(device)
-        @writeback_percent = WritebackPercent.new(device)
       end
 
       # @macro seeDialog
@@ -60,11 +58,6 @@ module Y2Partitioner
           VSpacing(1),
           HBox(
             @cache_mode,
-            HSpacing(1),
-            @sequential_cutoff
-          ),
-          HBox(
-            @writeback_percent,
             HSpacing(1),
             Empty()
           )
@@ -88,8 +81,6 @@ module Y2Partitioner
       def options
         {
           cache_mode: @cache_mode.result,
-          sequential_cutoff: @sequential_cutoff.result,
-          writeback_percent: @writeback_percent.result
         }
       end
 
@@ -272,84 +263,6 @@ module Y2Partitioner
         # @macro seeAbstractWidget
         def store
           @result = Y2Storage::CacheMode.find(value)
-        end
-
-        # returns device selected in widget. Only when dialog succeed and store is called.
-        # Otherwise undefined
-        attr_reader :result
-      end
-
-      # Widget to set sequential cutoff
-      class SequentialCutoff < CWM::InputField
-        # @param device [Y2Storage::Bcache, nil]
-        def initialize(device)
-          textdomain "storage"
-          @device = device
-        end
-
-        def label
-          _("Sequential Threshold")
-        end
-
-        def help
-          # TRANSLATORS: %s stands for name of option
-          format(_(
-                   "<b>%s</b> is the minimal size of data which is considered as sequential " \
-                   "and caching is skipped for them to avoid multiple overwritting of cache " \
-                   "by big sequential read or write. Common size suffixes are supported."
-          ), label)
-        end
-
-        # @macro seeAbstractWidget
-        def init
-          self.value = (@device ? @device.sequential_cutoff : Y2Storage::DiskSize::MiB(8)).to_s
-        end
-
-        # @macro seeAbstractWidget
-        def store
-          @result = Y2Storage::DiskSize.new(value)
-        end
-
-        # returns device selected in widget. Only when dialog succeed and store is called.
-        # Otherwise undefined
-        attr_reader :result
-      end
-
-      # Widget to set sequential cutoff
-      class WritebackPercent < CWM::IntField
-        # @param device [Y2Storage::Bcache, nil]
-        def initialize(device)
-          textdomain "storage"
-          @device = device
-        end
-
-        def label
-          _("Writeback Dirty Percent")
-        end
-
-        def help
-          # TRANSLATORS: %s stands for name of option
-          format(_(
-                   "<b>%s</b> is percentage value which bcache tries to hold of dirty pages."
-          ), label)
-        end
-
-        # @macro seeAbstractWidget
-        def init
-          self.value = @device ? @device.writeback_percent : 10
-        end
-
-        # @macro seeAbstractWidget
-        def store
-          @result = value
-        end
-
-        def minimum
-          0
-        end
-
-        def maximum
-          100
         end
 
         # returns device selected in widget. Only when dialog succeed and store is called.
