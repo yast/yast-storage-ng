@@ -36,6 +36,7 @@ end
 
 require "y2storage/autoinst_issues/list"
 require "y2storage/autoinst_issues/issue"
+require "y2storage/autoinst_issues/could_not_calculate_boot"
 require "y2storage/autoinst_issues/could_not_create_boot"
 require "y2storage/autoinst_issues/exception"
 require "y2storage/autoinst_issues/invalid_value"

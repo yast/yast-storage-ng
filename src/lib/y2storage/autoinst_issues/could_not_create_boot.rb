@@ -23,14 +23,21 @@ require "y2storage/autoinst_issues/issue"
 
 module Y2Storage
   module AutoinstIssues
-    # There is no enough disk space to build the storage proposal
+    # It was not possible to allocate the extra partitions needed for booting
     class CouldNotCreateBoot < Issue
-      def initialize(*args)
-        super
+      # @param devices [Array<Planned::Devices>] see {#devices}
+      def initialize(devices)
         textdomain "storage"
+        @devices = devices
       end
 
-      # Fatal problem
+      # List of extra partitions that where considered as needed for booting,
+      # but that could not be added to the plan
+      #
+      # @return [Array<Planned::Devices>]
+      attr_reader :devices
+
+      # Problem severity
       #
       # @return [Symbol] :warn
       # @see Issue#severity
@@ -38,14 +45,33 @@ module Y2Storage
         :warn
       end
 
-      # Return the error message to be displayed
-      #
-      # FIXME: we could add the list of boot devices that are required.
+      # Error message to be displayed
       #
       # @return [String] Error message
       # @see Issue#message
       def message
-        _("Not possible to add a boot partition. Your system might not boot properly.")
+        if bios_boot?
+          _(
+            "AutoYaST cannot add a BIOS Boot partition to the described system. " \
+            "It is strongly advised to use such a partition for booting from " \
+            "GPT devices. Otherwise your system might not boot properly or " \
+            "might face problems in the future."
+          )
+        else
+          _(
+            "Not possible to add the partitions recommended for booting " \
+            "the described system. Your system might not boot properly."
+          )
+        end
+      end
+
+      # Whether any of the partitions that could not be added is a BIOS Boot one
+      #
+      # @return [Boolean]
+      def bios_boot?
+        devices.any? do |dev|
+          dev.respond_to?(:partition_id) && dev.partition_id && dev.partition_id.is?(:bios_boot)
+        end
       end
     end
   end

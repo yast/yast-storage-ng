@@ -66,16 +66,29 @@ module Y2Storage
         mbr_gap && mbr_gap >= GRUB_SIZE
       end
 
-      # FIXME: Bootloader could work properly without BIOS BOOT when the
-      # partition supports embedding or it is possible to boot from the
-      # partition. For example, for EXT filesystem it is possible to boot
-      # from the partition, and grub2 can be embedded into the partition
-      # when BTRFS is used. For LVM or RAID it is not possible to neither
-      # embed nor boot from the partition.
-      #
-      # (gpt && (lvm || raid || encrypted)) || (gpt  && !ext && !btrfs)
       def grub_partition_needed?
-        boot_ptable_type?(:gpt)
+        boot_ptable_type?(:gpt) && grub_part_needed_in_gpt?
+      end
+
+      # Given the fact we are trying to boot from a GPT disk, whether a BIOS
+      # BOOT partition is needed in the current setup
+      #
+      # This always returns true because the usage of such partition is the only
+      # method encouraged and documented for Grub2 in a legacy boot environment.
+      # https://www.gnu.org/software/grub/manual/grub/grub.html#BIOS-installation
+      #
+      # In theory, the bootloader could work properly without BIOS BOOT if Grub2
+      # is installed in a formatted partition. For that to work, the filesystem
+      # must leave space for Grub at the beginning of the partition (like ExtX
+      # does) or must support embedding Grub in the filesystem (like Btrfs).
+      # But that's a fragile approach that is discouraged by the Grub2
+      # developers. In any case, it will not work with XFS since it leaves
+      # no space at the beginning of the partition. It wouldn't work for LVM,
+      # encryption or RAID either.
+      #
+      # @return [Boolean] always true, rationale in the method documentation
+      def grub_part_needed_in_gpt?
+        true
       end
 
       def grub_partition_missing?
@@ -134,8 +147,14 @@ module Y2Storage
       def errors_on_gpt
         errors = []
 
-        if missing_partition_for?(grub_volume)
-          errors << SetupError.new(missing_volume: grub_volume)
+        if grub_part_needed_in_gpt? && missing_partition_for?(grub_volume)
+          message = _(
+            "There is no partition of type BIOS Boot. " \
+            "For GPT devices it is strongly advised to use a BIOS Boot partition. " \
+            "A setup without such a partition is not supported and may cause " \
+            "problems now or in the future."
+          )
+          errors << SetupError.new(message: message)
         end
 
         errors

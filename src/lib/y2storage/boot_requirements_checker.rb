@@ -50,6 +50,13 @@ module Y2Storage
 
     # Partitions needed in order to be able to boot the system
     #
+    # So far, this method is used by {GuidedProposal} and by {AutoinstProposal},
+    # since both need to know which partitions they should create.
+    #
+    # At the moment of writing, this is not used directly by {SetupChecker}
+    # (the mechanism used by the Partitioner to find and report wrong setups).
+    # See {#errors} and {#warnings} for that.
+    #
     # @raise [BootRequirementsStrategies::Error] if adding partitions is not
     #     enough to make the system bootable
     #
@@ -73,7 +80,10 @@ module Y2Storage
     # All boot warnings detected in the setup, for example, when size of a /boot/efi partition
     # is out of borders.
     #
-    # @see SetupError
+    # So far, this is mainly used by {SetupError} (which is the mechanism used
+    # by the partitioner). The proposals rely on {#needed_partitions} instead.
+    # The proposals only call this method in exceptional cases for reporting
+    # purposes, with no influence in the algorithm or the resulting devicegraph.
     #
     # @return [Array<SetupError>]
     def warnings
@@ -83,7 +93,10 @@ module Y2Storage
     # All fatal boot errors detected in the setup, for example, when a /boot/efi partition
     # is missing in a UEFI system
     #
-    # @see SetupError
+    # So far, this is mainly used by {SetupError} (which is the mechanism used
+    # by the partitioner). The proposals rely on {#needed_partitions} instead.
+    # The proposals only call this method in exceptional cases for reporting
+    # purposes, with no influence in the algorithm or the resulting devicegraph.
     #
     # @return [Array<SetupError>]
     def errors

@@ -1,4 +1,32 @@
 -------------------------------------------------------------------
+Thu Oct 18 14:04:59 UTC 2018 - ancor@suse.com
+
+- Improved UI responsiveness by caching the value of some internal
+  methods (bsc#1112402):
+  * StorageClassWrapper.downcasted_new
+  * StorageEnv#active?
+  * DiskDevice#types_for_is
+- Improved compatibility with RSpec 3.8 by caching the objects
+  used to wrap libstorage-ng enum values.
+- 4.1.26
+
+-------------------------------------------------------------------
+Tue Oct 16 12:58:10 UTC 2018 - jreidinger@suse.com
+
+- Improve filtering of possible backing devices for bcache and
+  limit deletion of bcache to only safe cases (fate#325346)
+- 4.1.25
+
+-------------------------------------------------------------------
+Thu Oct 11 15:03:26 UTC 2018 - ancor@suse.com
+
+- Improved the warning messages about missing BIOS Boot partition,
+  both in the Partitioner and in AutoYaST (bsc#1087275).
+- Improved other AutoYaST warning messages related to the
+  partitions needed for booting.
+- 4.1.24
+
+-------------------------------------------------------------------
 Fri Oct  5 09:43:38 UTC 2018 - jreidinger@suse.com
 
 - Implement creating and deleting bcache devices (fate#325346)
