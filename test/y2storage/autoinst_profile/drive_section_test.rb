@@ -328,6 +328,10 @@ describe Y2Storage::AutoinstProfile::DriveSection do
         expect(described_class.new_from_storage(device("xvda2")).type).to eq :CT_DISK
       end
 
+      it "initializes #disklabel to 'none'" do
+        expect(described_class.new_from_storage(device("xvda2")).disklabel).to eq("none")
+      end
+
       it "initializes #partitions to a partition describing the device options" do
         section = described_class.new_from_storage(device("xvda2"))
         expect(section.partitions).to contain_exactly(
