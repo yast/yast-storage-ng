@@ -388,6 +388,27 @@ describe Y2Storage::AutoinstProfile::DriveSection do
       end
     end
 
+    context "given a stray block device" do
+      before { fake_scenario("xen-partitions.xml") }
+
+      it "initializes #type to :CT_LVM" do
+        expect(described_class.new_from_storage(device("xvda2")).type).to eq :CT_DISK
+      end
+
+      it "initializes #partitions to a partition describing the device options" do
+        section = described_class.new_from_storage(device("xvda2"))
+        expect(section.partitions).to contain_exactly(
+          an_object_having_attributes(filesystem: :xfs)
+        )
+      end
+
+      context "when the device is not used" do
+        it "returns nil" do
+          expect(described_class.new_from_storage(device("xvda1"))).to be_nil
+        end
+      end
+    end
+
     describe "initializing DriveSection#device" do
       let(:dev) { device("sdd") }
 

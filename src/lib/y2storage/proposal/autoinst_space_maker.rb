@@ -95,10 +95,10 @@ module Y2Storage
       # @param drive_spec   [AutoinstProfile::DriveSection]
       # @param reused_parts [Array<String>] Reused partitions names
       def delete_by_use(devicegraph, disk, drive_spec, reused_parts)
-        return if drive_spec.use == "free" || !disk.respond_to?(:partition_table)
+        return if drive_spec.use == "free" || !partition_table?(disk)
         case drive_spec.use
         when "all"
-          delete_partitions(devicegraph, disk.partitions, reused_parts) if disk.partition_table
+          delete_partitions(devicegraph, disk.partitions, reused_parts)
         when "linux"
           delete_linux_partitions(devicegraph, disk, reused_parts)
         when Array
@@ -232,6 +232,14 @@ module Y2Storage
         end
       end
       # rubocop:enable all
+
+      # Determines whether a device has a partition table
+      #
+      # @param device [Device] Device
+      # @return [Boolean] true if the device has a partition table; false otherwise
+      def partition_table?(device)
+        device.respond_to?(:partition_table) && !!device.partition_table
+      end
     end
   end
 end
