@@ -1,4 +1,16 @@
 -------------------------------------------------------------------
+Thu Oct 18 14:04:59 UTC 2018 - ancor@suse.com
+
+- Improved UI responsiveness by caching the value of some internal
+  methods (bsc#1112402):
+  * StorageClassWrapper.downcasted_new
+  * StorageEnv#active?
+  * DiskDevice#types_for_is
+- Improved compatibility with RSpec 3.8 by caching the objects
+  used to wrap libstorage-ng enum values.
+- 4.1.26
+
+-------------------------------------------------------------------
 Tue Oct 16 12:58:10 UTC 2018 - jreidinger@suse.com
 
 - Improve filtering of possible backing devices for bcache and
