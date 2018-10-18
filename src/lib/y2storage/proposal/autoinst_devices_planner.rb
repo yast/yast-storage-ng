@@ -109,8 +109,6 @@ module Y2Storage
 
       def remove_shadowed_subvols(planned_devices)
         planned_devices.each do |device|
-          next unless device.respond_to?(:subvolumes)
-
           device.shadowed_subvolumes(planned_devices).each do |subvol|
             # TODO: this should be reported to the user when the shadowed
             # subvolumes was specified in the profile.
