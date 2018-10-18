@@ -80,7 +80,7 @@ module Y2Partitioner
       # @return [Hash<Symbol, Object>]
       def options
         {
-          cache_mode: @cache_mode.result,
+          cache_mode: @cache_mode.result
         }
       end
 

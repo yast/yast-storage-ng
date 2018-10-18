@@ -34,13 +34,13 @@ module Y2Storage
 
     TRANSLATIONS = {
       # TRANSLATORS: operation mode for cache. If you are not sure how to translate keep it as it is.
-      writethrough:    N_("Writethrough"),
+      writethrough: N_("Writethrough"),
       # TRANSLATORS: operation mode for cache. If you are not sure how to translate keep it as it is.
-      writeback:       N_("Writeback"),
+      writeback:    N_("Writeback"),
       # TRANSLATORS: operation mode for cache. If you are not sure how to translate keep it as it is.
-      writearound:     N_("Writearound"),
+      writearound:  N_("Writearound"),
       # TRANSLATORS: operation mode for cache. If you are not sure how to translate keep it as it is.
-      none:            N_("None")
+      none:         N_("None")
     }
     private_constant :TRANSLATIONS
 
