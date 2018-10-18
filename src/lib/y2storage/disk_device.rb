@@ -60,7 +60,8 @@ module Y2Storage
 
     def types_for_is
       types = super
-      types << :disk_device if disk_device?
+      @disk_device = disk_device? if @disk_device.nil?
+      types << :disk_device if @disk_device
       types
     end
 

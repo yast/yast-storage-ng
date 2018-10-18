@@ -38,4 +38,5 @@ when /.xml$/
 else
   raise "Invalid testing parameter #{arg}, expecting foo.yml or foo.xml."
 end
+
 Y2Partitioner::Clients::Main.new.run(allow_commit: false)
