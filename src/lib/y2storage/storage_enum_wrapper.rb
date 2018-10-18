@@ -48,11 +48,7 @@ module Y2Storage
     # @param value [Integer, #to_s] integer representation or name of the
     #   concrete enum value
     def initialize(value)
-      if value.is_a?(::Integer)
-        @storage_value = value
-      else
-        @storage_value = self.class.name_to_storage_value(value)
-      end
+      @storage_value = value.is_a?(::Integer) ? value : self.class.name_to_storage_value(value)
     end
 
     # Equivalent to this object in the Storage world, i.e. the numeric value
