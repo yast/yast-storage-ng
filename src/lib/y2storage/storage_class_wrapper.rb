@@ -231,15 +231,11 @@ module Y2Storage
       # @param object [Object] storage object to be wrapped
       def downcasted_new(object)
         @downcast_class_names.each do |class_name|
-          klass = StorageClassWrapper.class_for(class_name)
-          storage_class = klass.storage_class
+          map = StorageClassWrapper.downcast_map(class_name)
 
-          underscored = StorageClassWrapper.underscore(storage_class.name.split("::").last)
-          check_method = :"#{underscored}?"
-          cast_method = :"to_#{underscored}"
-          next unless Storage.public_send(check_method, object)
+          next unless Storage.public_send(map[:check_method], object)
 
-          return klass.downcasted_new(Storage.send(cast_method, object))
+          return map[:class].downcasted_new(Storage.send(map[:cast_method], object))
         end
         new(object)
       end
@@ -288,6 +284,26 @@ module Y2Storage
         camel_case_name.gsub(/(.)([A-Z])/, '\1_\2').downcase
       end
 
+      # Internal method to optimize downcasted_new
+      def downcast_map(class_name)
+        @downcast_map ||= {}
+
+        return @downcast_map[class_name] if @downcast_map[class_name]
+
+        klass = StorageClassWrapper.class_for(class_name)
+        storage_class = klass.storage_class
+
+        underscored = StorageClassWrapper.underscore(storage_class.name.split("::").last)
+        check_method = :"#{underscored}?"
+        cast_method = :"to_#{underscored}"
+
+        @downcast_map[class_name] = {
+          class:        klass,
+          check_method: check_method,
+          cast_method:  cast_method
+        }
+      end
+
     private
 
       def processed_storage_args(*args)
@@ -312,6 +328,22 @@ module Y2Storage
           storage_object.force_encoding("UTF-8")
         elsif wrapper_class.nil?
           storage_object
+        else
+          wrapped_object_for(wrapper_class, storage_object)
+        end
+      end
+
+      # Wrapped version of the object received from libstorage-ng
+      #
+      # @param wrapper_class [Class]
+      # @param storage_object [Object]
+      # @return [Object]
+      def wrapped_object_for(wrapper_class, storage_object)
+        # When wrapping a libstorage-ng enum value, we try to always return the
+        # exact same object, so in addition to satisfying the equality checks
+        # (#eql?, #== and #===) we also satisfy the identity ones (#equal?)
+        if wrapper_class.respond_to?(:storage_enum)
+          wrapper_class.find(storage_object) || wrapper_class.new(storage_object)
         elsif wrapper_class.respond_to?(:downcasted_new)
           wrapper_class.downcasted_new(storage_object)
         else

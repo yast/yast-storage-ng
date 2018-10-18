@@ -34,6 +34,10 @@ module Y2Storage
 
     private_constant :ENV_MULTIPATH, :ENV_BIOS_RAID
 
+    def initialize
+      @active_cache = {}
+    end
+
     # Whether the activation of multipath has been forced via the
     # LIBSTORAGE_MULTIPATH_AUTOSTART boot parameter
     #
@@ -62,12 +66,17 @@ module Y2Storage
     # @param variable [String]
     # @return [Boolean]
     def active?(variable)
-      value = read(variable)
-      return false unless value
+      return @active_cache[variable] if @active_cache.key?(variable)
 
-      # Similar to what linuxrc does, also consider the flag activated if the
-      # variable is used with no value or with "1"
-      value.casecmp?("on") || value.empty? || value == "1"
+      value = read(variable)
+      result = if value
+        # Similar to what linuxrc does, also consider the flag activated if the
+        # variable is used with no value or with "1"
+        value.casecmp?("on") || value.empty? || value == "1"
+      else
+        false
+      end
+      @active_cache[variable] = result
     end
 
     # Read an ENV variable
@@ -79,7 +88,7 @@ module Y2Storage
       # all-uppercase over the other variants, then do a case insensitive
       # search
       key = ENV.keys.sort.find { |k| k.match(/\A#{variable}\z/i) }
-      return false unless key
+      return nil unless key
 
       log.debug "Found ENV variable: #{key.inspect}"
       ENV[key]
