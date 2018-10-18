@@ -70,7 +70,7 @@ module Y2Storage
         end
 
         collection = Planned::DevicesCollection.new(devices)
-        remove_shadowed_subvols(collection.partitions)
+        remove_shadowed_subvols(collection.mountable)
         collection
       end
 
