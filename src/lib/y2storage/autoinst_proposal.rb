@@ -116,7 +116,7 @@ module Y2Storage
     # @param drives      [Proposal::AutoinstDrivesMap] Devices map from an AutoYaST profile
     def add_partition_tables(devicegraph, drives)
       drives.each do |disk_name, drive_spec|
-        next unless drive_spec.partition_table?
+        next if drive_spec.unwanted_partitions?
         disk = devicegraph.disk_devices.find { |d| d.name == disk_name }
         next if disk.nil? || !disk.partitions.empty?
 
