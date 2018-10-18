@@ -47,7 +47,8 @@ module Y2Partitioner
         output << Yast::HTML.List([
                                     format(_("Backing Device: %s"), backing_device),
                                     format(_("Caching UUID: %s"), uuid),
-                                    format(_("Caching Device: %s"), caching_device)
+                                    format(_("Caching Device: %s"), caching_device),
+                                    format(_("Cache mode: %s"), device.cache_mode.to_human_string)
                                   ])
       end
 
