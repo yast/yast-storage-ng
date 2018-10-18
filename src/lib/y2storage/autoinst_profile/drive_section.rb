@@ -321,6 +321,7 @@ module Y2Storage
         @device = device.name
         @enabled_snapshots = enabled_snapshots?([device.filesystem]) if device.filesystem
         @use = "all"
+        @disklabel = "none"
         @partitions = [PartitionSection.new_from_storage(device)]
 
         true
