@@ -31,6 +31,7 @@ describe Y2Storage::AutoinstProfile::PartitioningSection do
   let(:dasd_section) { instance_double(Y2Storage::AutoinstProfile::DriveSection) }
   let(:vg_section) { instance_double(Y2Storage::AutoinstProfile::DriveSection) }
   let(:md_section) { instance_double(Y2Storage::AutoinstProfile::DriveSection) }
+  let(:stray_section) { instance_double(Y2Storage::AutoinstProfile::DriveSection) }
   let(:partitioning) { [sda, sdb] }
 
   describe ".new_from_hashes" do
@@ -65,7 +66,8 @@ describe Y2Storage::AutoinstProfile::PartitioningSection do
     describe "using doubles for the devicegraph and the subsections" do
       let(:devicegraph) do
         instance_double(
-          Y2Storage::Devicegraph, disk_devices: disks, lvm_vgs: [vg], software_raids: [md]
+          Y2Storage::Devicegraph, disk_devices: disks, lvm_vgs: [vg], software_raids: [md],
+          stray_blk_devices: [stray]
         )
       end
       let(:disks) { [disk, dasd] }
@@ -73,6 +75,7 @@ describe Y2Storage::AutoinstProfile::PartitioningSection do
       let(:dasd) { instance_double(Y2Storage::Dasd) }
       let(:vg) { instance_double(Y2Storage::LvmVg) }
       let(:md) { instance_double(Y2Storage::Md) }
+      let(:stray) { instance_double(Y2Storage::StrayBlkDevice) }
 
       before do
         allow(Y2Storage::AutoinstProfile::DriveSection).to receive(:new_from_storage)
@@ -83,6 +86,8 @@ describe Y2Storage::AutoinstProfile::PartitioningSection do
           .with(vg).and_return(vg_section)
         allow(Y2Storage::AutoinstProfile::DriveSection).to receive(:new_from_storage)
           .with(md).and_return(md_section)
+        allow(Y2Storage::AutoinstProfile::DriveSection).to receive(:new_from_storage)
+          .with(stray).and_return(stray_section)
       end
 
       it "returns a new PartitioningSection object" do
@@ -91,14 +96,15 @@ describe Y2Storage::AutoinstProfile::PartitioningSection do
 
       it "creates an entry in #drives for every relevant VG, disk and DASD" do
         section = described_class.new_from_storage(devicegraph)
-        expect(section.drives).to eq([md_section, vg_section, disk_section, dasd_section])
+        expect(section.drives)
+          .to eq([md_section, vg_section, disk_section, dasd_section, stray_section])
       end
 
       it "ignores irrelevant drives" do
         allow(Y2Storage::AutoinstProfile::DriveSection).to receive(:new_from_storage)
           .with(disk).and_return(nil)
         section = described_class.new_from_storage(devicegraph)
-        expect(section.drives).to eq([md_section, vg_section, dasd_section])
+        expect(section.drives).to_not include(disk_section)
       end
     end
 

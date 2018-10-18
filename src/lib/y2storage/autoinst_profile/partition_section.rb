@@ -287,7 +287,7 @@ module Y2Storage
       def init_fields_by_type(device)
         if device.is?(:lvm_lv)
           init_lv_fields(device)
-        elsif device.is?(:disk_device)
+        elsif device.is?(:disk_device, :software_raid, :stray_blk_device)
           init_disk_device_fields(device)
         else
           init_partition_fields(device)
