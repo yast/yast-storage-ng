@@ -328,6 +328,22 @@ module Y2Storage
           storage_object.force_encoding("UTF-8")
         elsif wrapper_class.nil?
           storage_object
+        else
+          wrapped_object_for(wrapper_class, storage_object)
+        end
+      end
+
+      # Wrapped version of the object received from libstorage-ng
+      #
+      # @param wrapper_class [Class]
+      # @param storage_object [Object]
+      # @return [Object]
+      def wrapped_object_for(wrapper_class, storage_object)
+        # When wrapping a libstorage-ng enum value, we try to always return the
+        # exact same object, so in addition to satisfying the equality checks
+        # (#eql?, #== and #===) we also satisfy the identity ones (#equal?)
+        if wrapper_class.respond_to?(:storage_enum)
+          wrapper_class.find(storage_object) || wrapper_class.new(storage_object)
         elsif wrapper_class.respond_to?(:downcasted_new)
           wrapper_class.downcasted_new(storage_object)
         else

@@ -51,7 +51,7 @@ module Y2Storage
       if value.is_a?(::Integer)
         @storage_value = value
       else
-        @storage_value = Storage.const_get("#{self.class.storage_enum}_#{value.to_s.upcase}")
+        @storage_value = self.class.name_to_storage_value(value)
       end
     end
 
@@ -131,6 +131,7 @@ module Y2Storage
       def wrap_enum(storage_enum)
         @storage_enum = storage_enum
         @storage_symbols = {}
+        @storage_objects = {}
 
         constants = Storage.constants.select { |c| c.to_s.start_with?("#{storage_enum}_") }
         constants.each do |constant_name|
@@ -138,7 +139,9 @@ module Y2Storage
           name = constant_name.to_s.sub(/#{storage_enum}_/, "")
 
           @storage_symbols[value] = name.downcase.to_sym
-          const_set(name, new(value))
+          obj = new(value)
+          @storage_objects[value] = obj
+          const_set(name, obj)
         end
       end
 
@@ -146,13 +149,14 @@ module Y2Storage
       #
       # @return [Array]
       def all
-        @storage_symbols.keys.sort.map { |storage_value| new(storage_value) }
+        @storage_objects.values.sort_by(&:to_storage_value)
       end
 
       # Returns an object representing the enum, fetched by label or numeric
       # value
       def find(name_or_value)
-        new(name_or_value)
+        value = name_or_value.is_a?(Integer) ? name_or_value : name_to_storage_value(name_or_value)
+        @storage_objects[value]
       end
 
       def storage_enum
@@ -161,6 +165,14 @@ module Y2Storage
 
       def value_to_sym(value)
         @storage_symbols[value]
+      end
+
+      # Value of the storage enum for the given label
+      #
+      # @param name [#to_s]
+      # @return [Integer]
+      def name_to_storage_value(name)
+        Storage.const_get("#{storage_enum}_#{name.to_s.upcase}")
       end
     end
   end
