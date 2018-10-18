@@ -35,6 +35,7 @@ describe Y2Partitioner::Actions::AddBcache do
 
   let(:selected_backing) { fake_devicegraph.blk_devices.find { |d| d.name == "/dev/sda1" } }
   let(:selected_caching) { fake_devicegraph.blk_devices.find { |d| d.name == "/dev/sdc" } }
+  let(:options) { { cache_mode: Y2Storage::CacheMode::WRITEBACK } }
 
   subject { described_class.new }
 
@@ -49,6 +50,7 @@ describe Y2Partitioner::Actions::AddBcache do
       allow(dialog).to receive(:run).and_return :next
       allow(dialog).to receive(:backing_device).and_return(selected_backing)
       allow(dialog).to receive(:caching_device).and_return(selected_caching)
+      allow(dialog).to receive(:options).and_return(options)
     end
 
     it "returns :finish" do
