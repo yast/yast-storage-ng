@@ -232,7 +232,7 @@ module Y2Partitioner
         # @macro seeItemsSelection
         def items
           Y2Storage::CacheMode.all.map do |mode|
-            [mode.to_sym, mode.to_human_string]
+            [mode.to_sym.to_s, mode.to_human_string]
           end
         end
 
@@ -257,12 +257,12 @@ module Y2Partitioner
 
         # @macro seeAbstractWidget
         def init
-          self.value = (@device ? @device.cache_mode : Y2Storage::CacheMode::WRITETHROUGH).to_sym
+          self.value = (@device ? @device.cache_mode : Y2Storage::CacheMode::WRITETHROUGH).to_sym.to_s
         end
 
         # @macro seeAbstractWidget
         def store
-          @result = Y2Storage::CacheMode.find(value)
+          @result = Y2Storage::CacheMode.find(value.to_sym)
         end
 
         # returns device selected in widget. Only when dialog succeed and store is called.
