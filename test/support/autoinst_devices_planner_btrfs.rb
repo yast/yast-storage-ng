@@ -24,7 +24,7 @@ require "y2storage/planned/devices_collection"
 RSpec.shared_examples "handles Btrfs snapshots" do
   def planned_root(devices)
     collection = Y2Storage::Planned::DevicesCollection.new(devices)
-    collection.mountable.find { |d| d.mount_point == "/" }
+    collection.mountable_devices.find { |d| d.mount_point == "/" }
   end
 
   let(:devices) { subject.planned_devices(drive) }

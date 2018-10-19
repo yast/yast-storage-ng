@@ -148,8 +148,8 @@ module Y2Storage
       # Returns the list of devices that can be mounted
       #
       # @return [Array<Planned::Device>]
-      def mountable
-        @mountable ||= all.select { |d| d.respond_to?(:mount_point) }
+      def mountable_devices
+        @mountable_devices ||= all.select { |d| d.respond_to?(:mount_point) }
       end
     end
   end
