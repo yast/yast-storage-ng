@@ -49,7 +49,8 @@ module Y2Storage
           { name: :pesize },
           { name: :type },
           { name: :use },
-          { name: :skip_list }
+          { name: :skip_list },
+          { name: :raid_options }
         ]
       end
 
@@ -98,6 +99,10 @@ module Y2Storage
       # @!attribute skip_list
       #   @return [Array<SkipListSection] collection of <skip_list> entries
 
+      # @!attribute raid_options
+      #   @return [RaidOptionsSection] RAID options
+      #   @see RaidOptionsSection
+
       # Constructor
       #
       # @param parent [#parent,#section_name] parent section
@@ -119,10 +124,14 @@ module Y2Storage
         @use = use_value_from_string(hash["use"]) if hash["use"]
         @partitions = partitions_from_hash(hash)
         @skip_list = SkipListSection.new_from_hashes(hash.fetch("skip_list", []), self)
+        if hash["raid_options"]
+          @raid_options = RaidOptionsSection.new_from_hashes(hash["raid_options"], self)
+          @raid_options.raid_name = nil # This element is not supported here
+        end
       end
 
       def default_type_for(hash)
-        return :CT_MD if hash["device"] == "/dev/md"
+        return :CT_MD if hash["device"].to_s.start_with?("/dev/md")
         :CT_DISK
       end
 
@@ -155,6 +164,8 @@ module Y2Storage
           init_from_md(device)
         elsif device.is?(:lvm_vg)
           init_from_vg(device)
+        elsif device.is?(:stray_blk_device)
+          init_from_stray_blk_device(device)
         else
           init_from_disk(device)
         end
@@ -166,10 +177,8 @@ module Y2Storage
       #
       # @return [String] MD RAID device name
       def name_for_md
-        # TODO: a proper profile will always include one partition for each MD
-        # drive, but as soon as we introduce error handling and reporting we
-        # should do something if #partitions is empty (wrong profile).
-        partitions.first.name_for_md
+        return partitions.first.name_for_md if device == "/dev/md"
+        device
       end
 
       # Content of the section in the format used by the AutoYaST modules
@@ -190,6 +199,43 @@ module Y2Storage
         "drives"
       end
 
+      # @return [String] disklabel value which indicates that no partition table is wanted.
+      NO_PARTITION_TABLE = "none".freeze
+
+      # Determine whether the partition table is explicitly not wanted
+      #
+      # @note When the disklabel is set to 'none', a partition table should not be created.
+      #   For backward compatibility reasons, setting partition_nr to 0 has the same effect.
+      #   When no disklabel is set, this method returns false.
+      #
+      # @return [Boolean] Returns true when a partition table is wanted; false otherwise.
+      def unwanted_partitions?
+        disklabel == NO_PARTITION_TABLE || partitions.any? { |i| i.partition_nr == 0 }
+      end
+
+      # Determines whether a partition table is explicitly wanted
+      #
+      # @note When the disklabel is set to some value which does not disable partitions,
+      #   a partition table is expected. When no disklabel is set, this method returns
+      #   false.
+      #
+      # @see unwanted_partitions?
+      # @return [Boolean] Returns true when a partition table is wanted; false otherwise.
+      def wanted_partitions?
+        !(disklabel.nil? || unwanted_partitions?)
+      end
+
+      # Returns the partition which contains the configuration for the whole disk
+      #
+      # @return [PartitionSection,nil] Partition section for the whole disk; it returns
+      #   nil if the device will use a partition table.
+      #
+      # @see #partition_table?
+      def master_partition
+        return unless unwanted_partitions?
+        partitions.find { |i| i.partition_nr == 0 } || partitions.first
+      end
+
     protected
 
       # Method used by {.new_from_storage} to populate the attributes when
@@ -201,28 +247,24 @@ module Y2Storage
       # @param disk [Y2Storage::Disk, Y2Storage::Dasd] Disk
       # @return [Boolean]
       def init_from_disk(disk)
-        return false if disk.partitions.empty?
+        return false unless used?(disk)
 
         @type = :CT_DISK
         # s390 prefers udev by-path device names (bsc#591603)
         @device = Yast::Arch.s390 ? disk.udev_full_paths.first : disk.name
         # if disk.udev_full_paths.first is nil go for disk.name anyway
         @device ||= disk.name
-        @disklabel = disk.partition_table.type.to_s
+        @disklabel = disklabel_from_disk(disk)
 
         @partitions = partitions_from_disk(disk)
         return false if @partitions.empty?
 
-        @enable_snapshots = enabled_snapshots?(disk.partitions.map(&:filesystem))
+        filesystems = disk.filesystem ? [disk.filesystem] : disk.partitions.map(&:filesystem)
+        @enable_snapshots = enabled_snapshots?(filesystems)
         @partitions.each { |i| i.create = false } if reuse_partitions?(disk)
 
         # Same logic followed by the old exporter
-        @use =
-          if disk.partitions.any? { |i| windows?(i) }
-            @partitions.map(&:partition_nr)
-          else
-            "all"
-          end
+        @use = use_value_from_storage(disk, @partitions)
 
         true
       end
@@ -249,15 +291,39 @@ module Y2Storage
       # Method used by {.new_from_storage} to populate the attributes when
       # cloning a MD RAID.
       #
-      # AutoYaST does not support multiple partitions on a MD RAID.
-      #
       # @param md [Y2Storage::Md] RAID
       # @return [Boolean]
       def init_from_md(md)
         @type = :CT_MD
-        @device = "/dev/md"
-        @partitions = partitions_from_collection([md])
-        @enable_snapshots = enabled_snapshots?([md.filesystem])
+        @device = md.name
+        collection =
+          if md.filesystem
+            [md]
+          else
+            md.partitions
+          end
+        @partitions = partitions_from_collection(collection)
+        @enable_snapshots = enabled_snapshots?(collection.map(&:filesystem).compact)
+        @raid_options = RaidOptionsSection.new_from_storage(md)
+        @raid_options.raid_name = nil if @raid_options # This element is not supported here
+        true
+      end
+
+      # Method used by {.new_from_storage} to populate the attributes when
+      # cloning stray block device.
+      #
+      # @param device [Y2Storage::StrayBlkDevice] Stray block device to clone
+      # @return [Boolean]
+      def init_from_stray_blk_device(device)
+        return false unless used?(device)
+
+        @type = :CT_DISK
+        @device = device.name
+        @enabled_snapshots = enabled_snapshots?([device.filesystem]) if device.filesystem
+        @use = "all"
+        @disklabel = "none"
+        @partitions = [PartitionSection.new_from_storage(device)]
+
         true
       end
 
@@ -266,9 +332,19 @@ module Y2Storage
         hash["partitions"].map { |part| PartitionSection.new_from_hashes(part, self) }
       end
 
+      # Return the partition sections for the given disk
+      #
+      # @note If there is no partition table, an array containing a single section
+      #   (which represents the whole disk) will be returned.
+      #
+      # @return [Array<AutoinstProfile::PartitionSection>] List of partition sections
       def partitions_from_disk(disk)
-        collection = disk.partitions.reject { |p| skip_partition?(p) }
-        partitions_from_collection(collection.sort_by(&:number))
+        if disk.partition_table
+          collection = disk.partitions.reject { |p| skip_partition?(p) }
+          partitions_from_collection(collection.sort_by(&:number))
+        else
+          [PartitionSection.new_from_storage(disk)]
+        end
       end
 
       def partitions_from_collection(collection)
@@ -373,6 +449,43 @@ module Y2Storage
       # @return [Boolean] true if snapshots are enabled
       def enabled_snapshots?(filesystems)
         filesystems.any? { |f| f.respond_to?(:snapshots?) && f.snapshots? }
+      end
+
+      # Determine whether the disk is used or not
+      #
+      # @param disk [Array<Y2Storage::Disk,Y2Storage::Dasd>] Disk to check whether it is used
+      # @return [Boolean] true if the disk is being used
+      def used?(disk)
+        !(disk.filesystem.nil? && !partitions?(disk) && disk.component_of.empty?)
+      end
+
+      def partitions?(device)
+        device.respond_to?(:partitions) && !device.partitions.empty?
+      end
+
+      # Return the disklabel value for the given disk
+      #
+      # @note When no partition table is wanted, the value 'none' will be used.
+      #
+      # @param disk [Array<Y2Storage::Disk,Y2Storage::Dasd>] Disk to check get the disklabel from
+      # @return [String] Disklabel value
+      def disklabel_from_disk(disk)
+        disk.partition_table ? disk.partition_table.type.to_s : NO_PARTITION_TABLE
+      end
+
+      # Determines the value of the 'use' element for a disk/dasd device
+      #
+      # @note This logic is inherited from the pre-storage-ng times.
+      #
+      # @param disk [Y2Storage::Disk, Y2Storage::Dasd] Disk
+      # @param partitions [Y2Storage::AutoinstProposal::PartitionSection] Set of partition sections
+      # @return [String] Value of the 'use' element for a disk.
+      def use_value_from_storage(disk, partitions)
+        if disk.partitions.any? { |i| windows?(i) }
+          partitions.map(&:partition_nr)
+        else
+          "all"
+        end
       end
     end
   end

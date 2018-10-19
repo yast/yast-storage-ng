@@ -127,7 +127,7 @@ module Y2Storage
       # @param initial_free_space [FreeDiskSpace] the original disk chunk, the
       #   returned free space will be within this area
       def free_space_within(initial_free_space)
-        disk = devicegraph.disk_devices.detect { |d| d.name == initial_free_space.disk_name }
+        disk = devicegraph.blk_devices.detect { |d| d.name == initial_free_space.disk_name }
         spaces = disk.as_not_empty { disk.free_spaces }.select do |space|
           space.region.start >= initial_free_space.region.start &&
             space.region.start < initial_free_space.region.end

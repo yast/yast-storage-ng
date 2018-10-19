@@ -1,4 +1,22 @@
 -------------------------------------------------------------------
+Fri Oct 19 11:34:42 UTC 2018 - igonzalezsosa@suse.com
+
+- Fixes and improvements to AutoYaST partitioning:
+  - Improve support to reuse a disk as a PV (bsc#1107298).
+  - Resize and then create new devices (bsc#1112545).
+  - Warn the user when trying to reuse a non-existent filesystem.
+  - Fix support of old format to specify several software RAIDs
+    (bsc#1112546).
+  - Proper support for Xen virtual partitions (bsc#1105350).
+  - Export enable_snapshots element properly (related to
+    bsc#1073544).
+  - Allow to format a whole disk and use it as a filesystem.
+  - Add support for partitioned software RAIDs (fate#326573).
+  - Allow to use a whole disk as a software RAID member (related
+    to fate#326573).
+- 4.1.28
+
+-------------------------------------------------------------------
 Fri Oct 19 11:59:10 UTC 2018 - jreidinger@suse.com
 
 - Add support for selecting cache mode during bcache creation
