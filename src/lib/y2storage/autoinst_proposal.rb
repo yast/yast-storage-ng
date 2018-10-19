@@ -161,7 +161,15 @@ module Y2Storage
     def boot_devices(devicegraph, devices)
       return unless root?(devices.mountable_devices)
       checker = BootRequirementsChecker.new(devicegraph, planned_devices: devices.mountable_devices)
-      checker.needed_partitions
+      begin
+        result = checker.needed_partitions
+      rescue BootRequirementsChecker::Error
+        issues_list.add(:could_not_create_boot)
+        log.warn checker.warnings.to_s unless checker.warnings.empty?
+        log.error checker.errors.to_s unless checker.errors.empty?
+        result = []
+      end
+      result
     end
 
     # Determines whether the list of devices includes a root partition
