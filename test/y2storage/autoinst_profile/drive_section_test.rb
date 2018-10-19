@@ -42,14 +42,15 @@ describe Y2Storage::AutoinstProfile::DriveSection do
   describe ".new_from_hashes" do
     context "when type is not specified" do
       let(:root) { { "mount" => "/" } }
-      let(:hash) { { "partitions" => [root] } }
+      let(:hash) { { "partitions" => [root], "raid_options" => raid_options } }
+      let(:raid_options) { { "raid_type" => "raid0" } }
 
       it "initializes it to :CT_DISK" do
         expect(described_class.new_from_hashes(hash).type).to eq(:CT_DISK)
       end
 
-      context "and device is /dev/md" do
-        let(:hash) { { "device" => "/dev/md" } }
+      context "and device name starts by /dev/md" do
+        let(:hash) { { "device" => "/dev/md0" } }
 
         it "initializes it to :CT_MD" do
           expect(described_class.new_from_hashes(hash).type).to eq(:CT_MD)
@@ -60,6 +61,23 @@ describe Y2Storage::AutoinstProfile::DriveSection do
         expect(Y2Storage::AutoinstProfile::PartitionSection).to receive(:new_from_hashes)
           .with(root, Y2Storage::AutoinstProfile::DriveSection)
         described_class.new_from_hashes(hash)
+      end
+
+      it "initializes raid options" do
+        expect(Y2Storage::AutoinstProfile::RaidOptionsSection).to receive(:new_from_hashes)
+          .with(raid_options, Y2Storage::AutoinstProfile::DriveSection)
+          .and_call_original
+        section = described_class.new_from_hashes(hash)
+        expect(section.raid_options.raid_type).to eq("raid0")
+      end
+
+      context "when the raid_name is specified in the raid_options" do
+        let(:raid_options) { { "raid_type" => "raid0" } }
+
+        it "ignores the raid_name element" do
+          section = described_class.new_from_hashes(hash)
+          expect(section.raid_options.raid_name).to be_nil
+        end
       end
     end
 
@@ -125,6 +143,57 @@ describe Y2Storage::AutoinstProfile::DriveSection do
       section = described_class.new_from_storage(device("sdc"))
       expect(section.partitions).to all(be_a(Y2Storage::AutoinstProfile::PartitionSection))
       expect(section.partitions.size).to eq 2
+    end
+
+    context "when the disk is not used" do
+      it "returns nil" do
+        section = described_class.new_from_storage(device("sda"))
+        expect(section).to be_nil
+      end
+    end
+
+    context "when the disk has no partitions but is used as a filesystem" do
+      before { fake_scenario("unpartitioned-disk") }
+      let(:dev) { device("sda") }
+
+      it "includes a partition holding filesystem specification for the disk" do
+        section = described_class.new_from_storage(dev)
+        expect(section.partitions).to contain_exactly(
+          an_object_having_attributes("create" => false, "filesystem" => :btrfs)
+        )
+      end
+
+      context "when snapshots are enabled" do
+        it "initializes enable_snapshots as 'true'" do
+          section = described_class.new_from_storage(dev)
+          expect(section.enable_snapshots).to eq(true)
+        end
+      end
+
+      context "when snapshots are not enabled" do
+        before do
+          dev.filesystem.btrfs_subvolumes.first.remove_descendants
+        end
+
+        it "initializes enable_snapshots as 'false'" do
+          section = described_class.new_from_storage(dev)
+          expect(section.enable_snapshots).to eq(false)
+        end
+      end
+    end
+
+    context "when the disk has no partitions but it is used as LVM PV or RAID member" do
+      let(:sda) { device("sda") }
+      let(:pv) { double("pv") }
+
+      before do
+        allow(sda).to receive(:component_of).and_return([pv])
+      end
+
+      it "returns a section with disklabel set to 'none'" do
+        section = described_class.new_from_storage(sda)
+        expect(section.disklabel).to_not be_nil
+      end
     end
 
     context "for the extended partition" do
@@ -229,6 +298,59 @@ describe Y2Storage::AutoinstProfile::DriveSection do
       it "initializes #type to :CT_MD" do
         expect(described_class.new_from_storage(device("md0")).type).to eq :CT_MD
       end
+
+      it "initializes device name" do
+        expect(described_class.new_from_storage(device("md0")).device).to eq("/dev/md0")
+      end
+
+      it "initializes raid options" do
+        expect(described_class.new_from_storage(device("md0")).raid_options)
+          .to be_a(Y2Storage::AutoinstProfile::RaidOptionsSection)
+      end
+
+      context "when the RAID is partitioned" do
+        before { fake_scenario("partitioned_md_raid.xml") }
+
+        context "and snapshots are enabled for some partition" do
+          it "initializes enable_snapshot setting to true" do
+            expect(described_class.new_from_storage(device("md/md0")).enable_snapshots).to eq(true)
+          end
+        end
+
+        context "and snapshots are not enabled for any partition" do
+          before do
+            md = device("md/md0")
+            btrfs = md.partitions.first.filesystem
+            btrfs.btrfs_subvolumes.first.remove_descendants
+          end
+
+          it "initializes enable_snapshot setting to false" do
+            expect(described_class.new_from_storage(device("md/md0")).enable_snapshots).to eq(false)
+          end
+        end
+      end
+
+      context "when snapshots are enabled" do
+        before { fake_scenario("btrfs_md_raid.xml") }
+
+        it "initializes enable_snapshot setting" do
+          expect(described_class.new_from_storage(device("md/md0")).enable_snapshots).to eq(true)
+        end
+      end
+
+      context "when snapshots are not enabled" do
+        before { fake_scenario("btrfs_md_raid.xml") }
+
+        before do
+          md = device("md/md0")
+          btrfs = md.filesystem
+          btrfs.btrfs_subvolumes.first.remove_descendants
+        end
+
+        it "initializes enable_snapshot setting" do
+          expect(described_class.new_from_storage(device("md/md0")).enable_snapshots).to eq(false)
+        end
+      end
     end
 
     context "given a volume group" do
@@ -262,6 +384,31 @@ describe Y2Storage::AutoinstProfile::DriveSection do
         it "initializes 'enable_snapshots' to false" do
           section = described_class.new_from_storage(lvm_vg("vg1"))
           expect(section.enable_snapshots).to eq(false)
+        end
+      end
+    end
+
+    context "given a stray block device" do
+      before { fake_scenario("xen-partitions.xml") }
+
+      it "initializes #type to :CT_LVM" do
+        expect(described_class.new_from_storage(device("xvda2")).type).to eq :CT_DISK
+      end
+
+      it "initializes #disklabel to 'none'" do
+        expect(described_class.new_from_storage(device("xvda2")).disklabel).to eq("none")
+      end
+
+      it "initializes #partitions to a partition describing the device options" do
+        section = described_class.new_from_storage(device("xvda2"))
+        expect(section.partitions).to contain_exactly(
+          an_object_having_attributes(filesystem: :xfs)
+        )
+      end
+
+      context "when the device is not used" do
+        it "returns nil" do
+          expect(described_class.new_from_storage(device("xvda1"))).to be_nil
         end
       end
     end
@@ -416,7 +563,7 @@ describe Y2Storage::AutoinstProfile::DriveSection do
       expect(hash.keys).to_not include "partitions"
     end
 
-    it "does not export empty collections (#partitions and #skip_list)" do
+    it "does not export empty collections (#partitions, #skip_list)" do
       section.partitions = []
       section.skip_list = []
       hash = section.to_hashes
@@ -468,80 +615,179 @@ describe Y2Storage::AutoinstProfile::DriveSection do
     end
   end
 
+  describe "#section_name" do
+    it "returns 'drives'" do
+      expect(section.section_name).to eq("drives")
+    end
+  end
+
   describe "#name_for_md" do
-    subject(:section) { Y2Storage::AutoinstProfile::DriveSection.new }
-    let(:partition) { Y2Storage::AutoinstProfile::PartitionSection.new }
+    let(:part1) do
+      instance_double(
+        Y2Storage::AutoinstProfile::PartitionSection, name_for_md: "/dev/md/named", partition_nr: 1
+      )
+    end
+    let(:part2) { instance_double(Y2Storage::AutoinstProfile::PartitionSection) }
 
     before do
-      section.partitions << partition
-      partition.partition_nr = 3
+      section.device = "/dev/md/data"
     end
 
-    # Let's ensure DriveSection#raid_name (which has the same name but
-    # completely different meaning) has no influence in the result
-    context "if #raid_name (attribute directly in the partition) has value" do
-      before { partition.raid_name = "/dev/md25" }
-
-      context "if there is no <raid_options> section" do
-        it "returns a name based on partition_nr" do
-          expect(section.name_for_md).to eq "/dev/md3"
-        end
-      end
-
-      context "if there is a <raid_options> section" do
-        let(:raid_options) { Y2Storage::AutoinstProfile::RaidOptionsSection.new }
-        before { partition.raid_options = raid_options }
-
-        context "if <raid_options> contains an nil raid_name attribute" do
-          it "returns a name based on partition_nr" do
-            expect(section.name_for_md).to eq "/dev/md3"
-          end
-        end
-
-        context "if <raid_options> contains an empty raid_name attribute" do
-          before { raid_options.raid_name = "" }
-
-          it "returns a name based on partition_nr" do
-            expect(section.name_for_md).to eq "/dev/md3"
-          end
-        end
-
-        context "if <raid_options> contains an non-empty raid_name attribute" do
-          before { raid_options.raid_name = "/dev/md6" }
-
-          it "returns the name specified in <raid_options>" do
-            expect(section.name_for_md).to eq "/dev/md6"
-          end
-        end
-      end
+    it "returns the device name" do
+      expect(section.name_for_md).to eq("/dev/md/data")
     end
 
-    context "if #raid_name (attribute directly in the partition) is nil" do
-      context "if there is no <raid_options> section" do
-        it "returns a name based on partition_nr" do
-          expect(section.name_for_md).to eq "/dev/md3"
-        end
+    context "when using the old format" do
+      before do
+        section.device = "/dev/md"
+        section.partitions = [part1, part2]
       end
 
-      # Same logic than above, there is no need to return all the possible
-      # sub-contexts
-      context "if there is a <raid_options> section with a raid name" do
-        let(:raid_options) { Y2Storage::AutoinstProfile::RaidOptionsSection.new }
-        before do
-          partition.raid_options = raid_options
-          raid_options.raid_name = "/dev/md7"
-        end
-
-        it "returns a name based in <raid_options>" do
-          expect(section.name_for_md).to eq "/dev/md7"
-        end
+      it "returns the name for md from the same partition" do
+        expect(section.name_for_md).to eq(part1.name_for_md)
       end
     end
   end
 
-  describe "#section_name" do
-    it "returns 'drives'" do
-      expect(section.section_name).to eq("drives")
+  describe "#wanted_partitions?" do
+    context "when diskabel is missing" do
+      it "returns false" do
+        expect(section.wanted_partitions?).to eq(false)
+      end
+    end
+
+    context "when disklabel is not set to 'none'" do
+      before do
+        section.disklabel = "gpt"
+      end
+
+      it "returns true" do
+        expect(section.wanted_partitions?).to eq(true)
+      end
+    end
+
+    context "when disklabel is set to 'none'" do
+      before do
+        section.disklabel = "none"
+      end
+
+      it "returns false" do
+        expect(section.wanted_partitions?).to eq(false)
+      end
+    end
+
+    context "when any partition section has the partition_nr set to '0'" do
+      before do
+        section.disklabel = "gpt"
+        section.partitions = [
+          Y2Storage::AutoinstProfile::PartitionSection.new_from_hashes("partition_nr" => 0)
+        ]
+      end
+
+      it "returns false" do
+        expect(section.wanted_partitions?).to eq(false)
+      end
+    end
+  end
+
+  describe "#unwanted_partitions?" do
+    context "when diskabel is missing" do
+      it "returns false" do
+        expect(section.unwanted_partitions?).to eq(false)
+      end
+    end
+
+    context "when disklabel is not set to 'none'" do
+      before do
+        section.disklabel = "gpt"
+      end
+
+      it "returns false" do
+        expect(section.unwanted_partitions?).to eq(false)
+      end
+    end
+
+    context "when disklabel is set to 'none'" do
+      before do
+        section.disklabel = "none"
+      end
+
+      it "returns true" do
+        expect(section.unwanted_partitions?).to eq(true)
+      end
+    end
+
+    context "when any partition section has the partition_nr set to '0'" do
+      before do
+        section.disklabel = "gpt"
+        section.partitions = [
+          Y2Storage::AutoinstProfile::PartitionSection.new_from_hashes("partition_nr" => 0)
+        ]
+      end
+
+      it "returns true" do
+        expect(section.unwanted_partitions?).to eq(true)
+      end
+    end
+  end
+
+  describe "#master_partition" do
+    let(:part0_spec) do
+      Y2Storage::AutoinstProfile::PartitionSection.new_from_hashes(
+        "mount" => "/", "partition_nr" => 0
+      )
+    end
+
+    let(:home_spec) { Y2Storage::AutoinstProfile::PartitionSection.new }
+
+    before do
+      section.partitions = [home_spec, part0_spec]
+    end
+
+    context "when diskabel is set to 'none'" do
+      before do
+        section.disklabel = "none"
+      end
+
+      it "returns the partition which partition_nr is set to '0'" do
+        expect(section.master_partition).to eq(part0_spec)
+      end
+
+      context "but no partition section has the partition_nr set to '0'" do
+        before do
+          section.partitions = [home_spec]
+        end
+
+        it "returns the first one" do
+          expect(section.master_partition).to eq(home_spec)
+        end
+      end
+
+      context "but no partition section is defined" do
+        before do
+          section.partitions = []
+        end
+
+        it "returns nil" do
+          expect(section.master_partition).to be_nil
+        end
+      end
+    end
+
+    context "when a partition section has the partition_nr set to '0'" do
+      it "returns that partition section" do
+        expect(section.master_partition).to eq(part0_spec)
+      end
+
+      context "and disklabel is set to a value different than '0'" do
+        before do
+          section.disklabel = "gpt"
+        end
+
+        it "still returns the partition section which has the partition_nr set to '0'" do
+          expect(section.master_partition).to eq(part0_spec)
+        end
+      end
     end
   end
 end

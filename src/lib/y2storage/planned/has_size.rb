@@ -42,6 +42,10 @@ module Y2Storage
       # @return [DiskSize] maximum acceptable size
       attr_accessor :max_size
 
+      # @return [Integer] percentage of the container's size to be used by this volume (used
+      #   when the container's size cannot be determined in advance)
+      attr_accessor :percent_size
+
       # @return [Float] factor used to distribute the extra space
       #   between devices
       attr_accessor :weight
@@ -59,10 +63,20 @@ module Y2Storage
         (respond_to?(:reuse_name) && reuse_name) ? DiskSize.zero : @min_size
       end
 
+      # Determines the size which should take within a container device
+      #
+      # @param container [BlkDevice] Container device
+      # @return [DiskSize]
+      def size_in(container)
+        (container.size * percent_size / 100).floor(container.block_size)
+      end
+
       alias_method :min, :min_size
       alias_method :max, :max_size
+      alias_method :percent, :percent_size
       alias_method :min=, :min_size=
       alias_method :max=, :max_size=
+      alias_method :percent=, :percent_size=
 
       # Class methods for the mixin
       module ClassMethods

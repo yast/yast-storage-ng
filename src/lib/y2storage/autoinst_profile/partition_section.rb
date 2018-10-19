@@ -252,7 +252,7 @@ module Y2Storage
         # unit (that equals to 8225280 bytes in my experiments).
         # According to the comments there, that was done due to bnc#415005 and
         # bnc#262535.
-        @size = device.size.to_i.to_s if create && !device.is?(:md)
+        @size = device.size.to_i.to_s if create && !fixed_size?(device)
       end
 
       def to_hashes
@@ -287,8 +287,8 @@ module Y2Storage
       def init_fields_by_type(device)
         if device.is?(:lvm_lv)
           init_lv_fields(device)
-        elsif device.is?(:md)
-          init_md_fields(device)
+        elsif device.is?(:disk_device, :software_raid, :stray_blk_device)
+          init_disk_device_fields(device)
         else
           init_partition_fields(device)
         end
@@ -303,6 +303,12 @@ module Y2Storage
         @raid_name = partition.md.name if partition.md
       end
 
+      def init_disk_device_fields(disk)
+        @create = false
+        @lvm_group = lvm_group_name(disk)
+        @raid_name = disk.md.name if disk.respond_to?(:md) && disk.md
+      end
+
       def init_lv_fields(lv)
         @lv_name = lv.basename
         @stripes = lv.stripes
@@ -310,12 +316,6 @@ module Y2Storage
         @pool = lv.lv_type == LvType::THIN_POOL
         parent = lv.parents.first
         @used_pool = parent.lv_name if lv.lv_type == LvType::THIN && parent.is?(:lvm_lv)
-      end
-
-      def init_md_fields(md)
-        @partition_nr = md.number if md.numeric?
-        @raid_options = RaidOptionsSection.new_from_storage(md)
-        @lvm_group = lvm_group_name(md)
       end
 
       def init_encryption_fields(partition)
@@ -419,6 +419,17 @@ module Y2Storage
       def lvm_group_name(device)
         return nil if device.lvm_pv.nil? || device.lvm_pv.lvm_vg.nil?
         device.lvm_pv.lvm_vg.basename
+      end
+
+      # Determines whether the device has a fixed size (disk, RAID, etc.)
+      #
+      # It is used to find out whether the size specification should be included
+      # in the profile.
+      #
+      # @param device [Y2Storage::Device] Device
+      # @return [Boolean]
+      def fixed_size?(device)
+        device.is?(:disk_device, :software_raid)
       end
     end
   end

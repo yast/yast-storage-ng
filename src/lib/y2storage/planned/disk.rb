@@ -1,6 +1,6 @@
 # encoding: utf-8
 
-# Copyright (c) [2015-2017] SUSE LLC
+# Copyright (c) [2018] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -22,15 +22,14 @@
 require "yast"
 require "y2storage/planned/device"
 require "y2storage/planned/mixins"
-require "y2storage/match_volume_spec"
 
 module Y2Storage
   module Planned
-    # Specification for a Y2Storage::StrayBlkDevice object to be processed
-    # during the AutoYaST proposals
+    # Specification for a Y2Storage::Disk object to be used suring the storage
+    # or AutoYaST proposals
     #
     # @see Device
-    class StrayBlkDevice < Device
+    class Disk < Device
       include Planned::CanBeFormatted
       include Planned::CanBeMounted
       include Planned::CanBeEncrypted
@@ -38,17 +37,21 @@ module Y2Storage
       include Planned::CanBeMdMember
       include MatchVolumeSpec
 
-      # Constructor.
+      # @return [Array<Planned::Partition>] List of planned partitions
+      attr_accessor :partitions
+
+      # Constructor
       def initialize
-        super
+        super()
         initialize_can_be_formatted
         initialize_can_be_mounted
         initialize_can_be_encrypted
         initialize_can_be_pv
         initialize_can_be_md_member
+
+        @partitions = []
       end
 
-      # @see Device.to_string_attrs
       def self.to_string_attrs
         [
           :mount_point, :reuse_name, :reuse_sid, :subvolumes
@@ -62,8 +65,10 @@ module Y2Storage
       # @see MatchVolumeSpec
       def volume_match_values
         {
-          mount_point: mount_point,
-          fs_type:     filesystem_type
+          mount_point:  mount_point,
+          size:         nil,
+          fs_type:      filesystem_type,
+          partition_id: nil
         }
       end
     end

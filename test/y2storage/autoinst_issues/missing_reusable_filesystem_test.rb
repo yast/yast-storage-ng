@@ -1,3 +1,4 @@
+#!/usr/bin/env rspec
 # encoding: utf-8
 
 # Copyright (c) [2017] SUSE LLC
@@ -19,12 +20,25 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "y2storage/planned/disk"
-require "y2storage/planned/partition"
-require "y2storage/planned/stray_blk_device"
-require "y2storage/planned/lvm_lv"
-require "y2storage/planned/lvm_vg"
-require "y2storage/planned/md"
-require "y2storage/planned/assigned_space"
-require "y2storage/planned/partitions_distribution"
-require "y2storage/planned/devices_collection"
+require_relative "../../spec_helper"
+require "y2storage/autoinst_profile/partition_section"
+
+describe Y2Storage::AutoinstIssues::MissingReusableFilesystem do
+  subject(:issue) { described_class.new(section) }
+
+  let(:section) do
+    instance_double(Y2Storage::AutoinstProfile::PartitionSection)
+  end
+
+  describe "#message" do
+    it "returns a description of the issue" do
+      expect(issue.message).to eq("Could not find a reusable filesystem")
+    end
+  end
+
+  describe "#severity" do
+    it "returns :error" do
+      expect(issue.severity).to eq(:fatal)
+    end
+  end
+end
