@@ -125,7 +125,7 @@ describe Y2Storage::Proposal::MdCreator do
     end
 
     context "reusing a RAID" do
-      let(:scenario) { "md_raid.xml" }
+      let(:scenario) { "md_raid" }
       let(:real_md) { fake_devicegraph.md_raids.first }
       let(:devices) { ["/dev/sda1", "/dev/sda2", "/dev/sda3"] }
 

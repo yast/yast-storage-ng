@@ -30,7 +30,7 @@ describe Y2Storage::Proposal::AutoinstMdPlanner do
   using Y2Storage::Refinements::SizeCasts
 
   subject(:planner) { described_class.new(fake_devicegraph, issues_list) }
-  let(:scenario) { "md_raid.xml" }
+  let(:scenario) { "md_raid" }
   let(:issues_list) { Y2Storage::AutoinstIssues::List.new }
 
   before do
