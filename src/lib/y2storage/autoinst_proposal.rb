@@ -159,8 +159,8 @@ module Y2Storage
     # @param devicegraph [Devicegraph]         Starting point
     # @return [Array<Planned::DevicesCollection>] List of required planned devices to boot
     def boot_devices(devicegraph, devices)
-      return unless root?(devices.mountable)
-      checker = BootRequirementsChecker.new(devicegraph, planned_devices: devices.mountable)
+      return unless root?(devices.mountable_devices)
+      checker = BootRequirementsChecker.new(devicegraph, planned_devices: devices.mountable_devices)
       checker.needed_partitions
     end
 

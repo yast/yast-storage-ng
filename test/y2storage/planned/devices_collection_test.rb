@@ -118,7 +118,7 @@ describe Y2Storage::Planned::DevicesCollection do
 
   describe "#mountable_devices" do
     it "returns all devices that can be mounted" do
-      expect(collection.mountable).to contain_exactly(
+      expect(collection.mountable_devices).to contain_exactly(
         partition, disk, disk_partition, stray_blk_device, lv0, lv1, md, md_partition
       )
     end
