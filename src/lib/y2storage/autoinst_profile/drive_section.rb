@@ -327,7 +327,6 @@ module Y2Storage
         true
       end
 
-
       def partitions_from_hash(hash)
         return [] unless hash["partitions"]
         hash["partitions"].map { |part| PartitionSection.new_from_hashes(part, self) }
