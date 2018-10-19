@@ -34,7 +34,7 @@ module Y2Storage
         mds =
           if drive.device == "/dev/md"
             non_partitioned_md_old_style(drive)
-          elsif !drive.partition_table?
+          elsif drive.unwanted_partitions?
             non_partitioned_md(drive)
           else
             partitioned_md(drive)

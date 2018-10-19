@@ -164,6 +164,8 @@ module Y2Storage
           init_from_md(device)
         elsif device.is?(:lvm_vg)
           init_from_vg(device)
+        elsif device.is?(:stray_blk_device)
+          init_from_stray_blk_device(device)
         else
           init_from_disk(device)
         end
@@ -200,14 +202,27 @@ module Y2Storage
       # @return [String] disklabel value which indicates that no partition table is wanted.
       NO_PARTITION_TABLE = "none".freeze
 
-      # Determine whether the drive should have a partition table or not
+      # Determine whether the partition table is explicitly not wanted
       #
-      # @note When the disklabel is set to 'none', a partition table should be created.
+      # @note When the disklabel is set to 'none', a partition table should not be created.
       #   For backward compatibility reasons, setting partition_nr to 0 has the same effect.
+      #   When no disklabel is set, this method returns false.
       #
       # @return [Boolean] Returns true when a partition table is wanted; false otherwise.
-      def partition_table?
-        disklabel != NO_PARTITION_TABLE && partitions.none? { |i| i.partition_nr == 0 }
+      def unwanted_partitions?
+        disklabel == NO_PARTITION_TABLE || partitions.any? { |i| i.partition_nr == 0 }
+      end
+
+      # Determines whether a partition table is explicitly wanted
+      #
+      # @note When the disklabel is set to some value which does not disable partitions,
+      #   a partition table is expected. When no disklabel is set, this method returns
+      #   false.
+      #
+      # @see unwanted_partitions?
+      # @return [Boolean] Returns true when a partition table is wanted; false otherwise.
+      def wanted_partitions?
+        !(disklabel.nil? || unwanted_partitions?)
       end
 
       # Returns the partition which contains the configuration for the whole disk
@@ -217,7 +232,7 @@ module Y2Storage
       #
       # @see #partition_table?
       def master_partition
-        return if partition_table?
+        return unless unwanted_partitions?
         partitions.find { |i| i.partition_nr == 0 } || partitions.first
       end
 
@@ -291,6 +306,24 @@ module Y2Storage
         @enable_snapshots = enabled_snapshots?(collection.map(&:filesystem).compact)
         @raid_options = RaidOptionsSection.new_from_storage(md)
         @raid_options.raid_name = nil if @raid_options # This element is not supported here
+        true
+      end
+
+      # Method used by {.new_from_storage} to populate the attributes when
+      # cloning stray block device.
+      #
+      # @param device [Y2Storage::StrayBlkDevice] Stray block device to clone
+      # @return [Boolean]
+      def init_from_stray_blk_device(device)
+        return false unless used?(device)
+
+        @type = :CT_DISK
+        @device = device.name
+        @enabled_snapshots = enabled_snapshots?([device.filesystem]) if device.filesystem
+        @use = "all"
+        @disklabel = "none"
+        @partitions = [PartitionSection.new_from_storage(device)]
+
         true
       end
 
@@ -423,7 +456,11 @@ module Y2Storage
       # @param disk [Array<Y2Storage::Disk,Y2Storage::Dasd>] Disk to check whether it is used
       # @return [Boolean] true if the disk is being used
       def used?(disk)
-        !(disk.filesystem.nil? && disk.partitions.empty? && disk.component_of.empty?)
+        !(disk.filesystem.nil? && !partitions?(disk) && disk.component_of.empty?)
+      end
+
+      def partitions?(device)
+        device.respond_to?(:partitions) && !device.partitions.empty?
       end
 
       # Return the disklabel value for the given disk

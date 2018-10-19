@@ -388,6 +388,31 @@ describe Y2Storage::AutoinstProfile::DriveSection do
       end
     end
 
+    context "given a stray block device" do
+      before { fake_scenario("xen-partitions.xml") }
+
+      it "initializes #type to :CT_LVM" do
+        expect(described_class.new_from_storage(device("xvda2")).type).to eq :CT_DISK
+      end
+
+      it "initializes #disklabel to 'none'" do
+        expect(described_class.new_from_storage(device("xvda2")).disklabel).to eq("none")
+      end
+
+      it "initializes #partitions to a partition describing the device options" do
+        section = described_class.new_from_storage(device("xvda2"))
+        expect(section.partitions).to contain_exactly(
+          an_object_having_attributes(filesystem: :xfs)
+        )
+      end
+
+      context "when the device is not used" do
+        it "returns nil" do
+          expect(described_class.new_from_storage(device("xvda1"))).to be_nil
+        end
+      end
+    end
+
     describe "initializing DriveSection#device" do
       let(:dev) { device("sdd") }
 
@@ -624,10 +649,10 @@ describe Y2Storage::AutoinstProfile::DriveSection do
     end
   end
 
-  describe "#partition_table?" do
+  describe "#wanted_partitions?" do
     context "when diskabel is missing" do
-      it "returns true" do
-        expect(section.partition_table?).to eq(true)
+      it "returns false" do
+        expect(section.wanted_partitions?).to eq(false)
       end
     end
 
@@ -637,7 +662,7 @@ describe Y2Storage::AutoinstProfile::DriveSection do
       end
 
       it "returns true" do
-        expect(section.partition_table?).to eq(true)
+        expect(section.wanted_partitions?).to eq(true)
       end
     end
 
@@ -647,7 +672,7 @@ describe Y2Storage::AutoinstProfile::DriveSection do
       end
 
       it "returns false" do
-        expect(section.partition_table?).to eq(false)
+        expect(section.wanted_partitions?).to eq(false)
       end
     end
 
@@ -660,7 +685,48 @@ describe Y2Storage::AutoinstProfile::DriveSection do
       end
 
       it "returns false" do
-        expect(section.partition_table?).to eq(false)
+        expect(section.wanted_partitions?).to eq(false)
+      end
+    end
+  end
+
+  describe "#unwanted_partitions?" do
+    context "when diskabel is missing" do
+      it "returns false" do
+        expect(section.unwanted_partitions?).to eq(false)
+      end
+    end
+
+    context "when disklabel is not set to 'none'" do
+      before do
+        section.disklabel = "gpt"
+      end
+
+      it "returns false" do
+        expect(section.unwanted_partitions?).to eq(false)
+      end
+    end
+
+    context "when disklabel is set to 'none'" do
+      before do
+        section.disklabel = "none"
+      end
+
+      it "returns true" do
+        expect(section.unwanted_partitions?).to eq(true)
+      end
+    end
+
+    context "when any partition section has the partition_nr set to '0'" do
+      before do
+        section.disklabel = "gpt"
+        section.partitions = [
+          Y2Storage::AutoinstProfile::PartitionSection.new_from_hashes("partition_nr" => 0)
+        ]
+      end
+
+      it "returns true" do
+        expect(section.unwanted_partitions?).to eq(true)
       end
     end
   end
