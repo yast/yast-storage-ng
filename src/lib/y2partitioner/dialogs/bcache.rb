@@ -22,6 +22,8 @@
 require "yast"
 require "yast2/popup"
 require "cwm/common_widgets"
+require "y2storage/cache_mode"
+require "y2storage/disk_size"
 require "y2partitioner/dialogs/base"
 
 module Y2Partitioner
@@ -37,6 +39,7 @@ module Y2Partitioner
         textdomain "storage"
         @caching = CachingDevice.new(device, suitable_caching)
         @backing = BackingDevice.new(device, suitable_backing, @caching)
+        @cache_mode = CacheMode.new(device)
       end
 
       # @macro seeDialog
@@ -52,7 +55,12 @@ module Y2Partitioner
             HSpacing(1),
             @caching
           ),
-          VSpacing(1)
+          VSpacing(1),
+          HBox(
+            @cache_mode,
+            HSpacing(1),
+            Empty()
+          )
         )
       end
 
@@ -66,6 +74,14 @@ module Y2Partitioner
       # @return [Y2Storage::BlkDevice]
       def backing_device
         @backing.result
+      end
+
+      # Bcache options
+      # @return [Hash<Symbol, Object>]
+      def options
+        {
+          cache_mode: @cache_mode.result
+        }
       end
 
       # Widget to select the backing device
@@ -96,12 +112,14 @@ module Y2Partitioner
 
         # @macro seeAbstractWidget
         def help
-          # TRANSLATORS: %s stands for name of option
-          format(_(
-                   "<b>%s</b> is the device that will be used as backing device for bcache." \
-                   "It will define the available space of bcache. " \
-                   "The Device will be formatted so any previous content will be wiped out."
-          ), label)
+          "<p>" +
+            # TRANSLATORS: %s stands for name of option
+            format(_(
+                     "%s is the device that will be used as backing device for bcache." \
+                     "It will define the available space of bcache. " \
+                     "The Device will be formatted so any previous content will be wiped out."
+            ), "<b>" + label + "</b>") +
+            "</p>"
         end
 
         # @macro seeAbstractWidget
@@ -173,13 +191,15 @@ module Y2Partitioner
 
         # @macro seeAbstractWidget
         def help
-          # TRANSLATORS: %s stands for name of option
-          format(_(
-                   "<b>%s</b> is the device that will be used as caching device for bcache." \
-                   "It should be faster and usually is smaller than the backing device, " \
-                   "but it is not required. " \
-                   "The device will be formatted so any previous content will be wiped out."
-          ), label)
+          "<p>" +
+            # TRANSLATORS: %s stands for name of option
+            format(_(
+                     "%s is the device that will be used as caching device for bcache." \
+                     "It should be faster and usually is smaller than the backing device, " \
+                     "but it is not required. " \
+                     "The device will be formatted so any previous content will be wiped out."
+            ), "<b>" + label + "</b>") +
+            "</p>"
         end
 
         # @macro seeAbstractWidget
@@ -193,6 +213,64 @@ module Y2Partitioner
         def store
           val = value
           @result = @devices.find { |d| d.sid == val.to_i }
+        end
+
+        # returns device selected in widget. Only when dialog succeed and store is called.
+        # Otherwise undefined
+        attr_reader :result
+      end
+
+      # Widget to select the cache mode
+      class CacheMode < CWM::ComboBox
+        # @param device [Y2Storage::Bcache,nil] existing caching device or nil if it is new bcache
+        def initialize(device)
+          textdomain "storage"
+          @device = device
+        end
+
+        # @macro seeAbstractWidget
+        def label
+          _("Cache Mode")
+        end
+
+        # @macro seeItemsSelection
+        def items
+          Y2Storage::CacheMode.all.map do |mode|
+            [mode.to_sym.to_s, mode.to_human_string]
+          end
+        end
+
+        # @macro seeAbstractWidget
+        # @see https://en.wikipedia.org/wiki/Cache_(computing)#Writing_policies
+        def help
+          "<p>" +
+            # TRANSLATORS: %s stands for name of option
+            format(_(
+                     "%s is the operating mode for bcache. " \
+                     "There are currently four supported modes.<ul> " \
+                     "<li><i>Writethrough</i> reading operations are cached, writing is done " \
+                     "in parallel to both devices. No data is lost in case of failure of " \
+                     "the caching device. This is the default mode.</li>" \
+                     "<li><i>Writeback</i> both reading and writing operations are cached. " \
+                     "This result in better performance when writing.</li>" \
+                     "<li><i>Writearound</i> reading is cached, new content is " \
+                     "written only to the backing device.</li>" \
+                     "<li><i>None</i> means cache is neither used for reading nor for writing. " \
+                     "This is useful mainly for temporarily disabling the cache before any big " \
+                     "sequential read or write, otherwise that would result in intensive " \
+                     "overwriting on the cache device.</li>"
+            ), "<b>" + label + "</b>") +
+            "</p>"
+        end
+
+        # @macro seeAbstractWidget
+        def init
+          self.value = (@device ? @device.cache_mode : Y2Storage::CacheMode::WRITETHROUGH).to_sym.to_s
+        end
+
+        # @macro seeAbstractWidget
+        def store
+          @result = Y2Storage::CacheMode.find(value.to_sym)
         end
 
         # returns device selected in widget. Only when dialog succeed and store is called.

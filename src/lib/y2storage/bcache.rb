@@ -42,6 +42,24 @@ module Y2Storage
     #   @return [BlkDevice] returns a backing device for cache
     storage_forward :blk_device, as: "BlkDevice"
 
+    # @!attribute cache_mode
+    #   Mode in which cache operates.
+    #   @return [CacheMode]
+    storage_forward :cache_mode, as: "CacheMode"
+    storage_forward :cache_mode=
+
+    # @!attribute writeback_percent
+    #   Target percent of dirty pages in writeback mode.
+    #   @return [Integer]
+    storage_forward :writeback_percent
+    storage_forward :writeback_percent=
+
+    # @!attribute sequential_cutoff
+    #   Size for cache consider read as sequential and do not cache it.
+    #   @return [DiskSize]
+    storage_forward :sequential_cutoff, as: "DiskSize"
+    storage_forward :sequential_cutoff=
+
     # @!method self.create(devicegraph, name)
     #   @param devicegraph [Devicegraph]
     #   @param name [String]

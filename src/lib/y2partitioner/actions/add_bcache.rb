@@ -50,12 +50,20 @@ module Y2Partitioner
 
         bcache = backing.create_bcache(Y2Storage::Bcache.find_free_name(device_graph))
 
+        set_options(bcache, dialog.options)
+
         if !caching.is?(:bcache_cset)
           caching.remove_descendants
           caching = caching.create_bcache_cset
         end
 
         bcache.attach_bcache_cset(caching)
+      end
+
+      def set_options(bcache, options)
+        options.each_pair do |key, value|
+          bcache.public_send(:"#{key}=", value)
+        end
       end
 
       # Device graph on which action operates

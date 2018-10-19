@@ -51,6 +51,14 @@ describe Y2Partitioner::Dialogs::Bcache do
       end
       expect(widget).to_not(be_nil, "Widget not found in '#{subject.contents.inspect}'")
     end
+
+    it "contains a widget for entering the cache mode" do
+      widget = subject.contents.nested_find do |i|
+        i.is_a?(Y2Partitioner::Dialogs::Bcache::CacheMode)
+      end
+      expect(widget).to_not(be_nil, "Widget not found in '#{subject.contents.inspect}'")
+    end
+
   end
 
   describe "#caching_device" do
@@ -68,6 +76,15 @@ describe Y2Partitioner::Dialogs::Bcache do
         .and_return(suitable_backing.first)
 
       expect(subject.backing_device).to eq suitable_backing.first
+    end
+  end
+
+  describe "#options" do
+    it "returns hash containing cache_mode" do
+      allow_any_instance_of(Y2Partitioner::Dialogs::Bcache::CacheMode).to receive(:result)
+        .and_return(Y2Storage::CacheMode::WRITEAROUND)
+
+      expect(subject.options[:cache_mode]).to eq Y2Storage::CacheMode::WRITEAROUND
     end
   end
 
@@ -120,4 +137,22 @@ describe Y2Partitioner::Dialogs::Bcache do
       end
     end
   end
+
+  describe Y2Partitioner::Dialogs::Bcache::CacheMode do
+    subject { described_class.new(nil) }
+
+    before do
+      allow(subject).to receive(:value).and_return(:writeback)
+    end
+
+    include_examples "CWM::ComboBox"
+
+    describe "#result" do
+      it "returns CacheMode Symbol" do
+        subject.store
+        expect(subject.result).to eq Y2Storage::CacheMode::WRITEBACK
+      end
+    end
+  end
+
 end
