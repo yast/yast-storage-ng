@@ -112,12 +112,14 @@ module Y2Partitioner
 
         # @macro seeAbstractWidget
         def help
-          # TRANSLATORS: %s stands for name of option
-          format(_(
-                   "<b>%s</b> is the device that will be used as backing device for bcache." \
-                   "It will define the available space of bcache. " \
-                   "The Device will be formatted so any previous content will be wiped out."
-          ), label)
+          "<p>" +
+            # TRANSLATORS: %s stands for name of option
+            format(_(
+                     "%s is the device that will be used as backing device for bcache." \
+                     "It will define the available space of bcache. " \
+                     "The Device will be formatted so any previous content will be wiped out."
+            ), "<b>" + label + "</b>") +
+            "</p>"
         end
 
         # @macro seeAbstractWidget
@@ -189,13 +191,15 @@ module Y2Partitioner
 
         # @macro seeAbstractWidget
         def help
-          # TRANSLATORS: %s stands for name of option
-          format(_(
-                   "<b>%s</b> is the device that will be used as caching device for bcache." \
-                   "It should be faster and usually is smaller than the backing device, " \
-                   "but it is not required. " \
-                   "The device will be formatted so any previous content will be wiped out."
-          ), label)
+          "<p>" +
+            # TRANSLATORS: %s stands for name of option
+            format(_(
+                     "%s is the device that will be used as caching device for bcache." \
+                     "It should be faster and usually is smaller than the backing device, " \
+                     "but it is not required. " \
+                     "The device will be formatted so any previous content will be wiped out."
+            ), "<b>" + label + "</b>") +
+            "</p>"
         end
 
         # @macro seeAbstractWidget
@@ -239,20 +243,24 @@ module Y2Partitioner
         # @macro seeAbstractWidget
         # @see https://en.wikipedia.org/wiki/Cache_(computing)#Writing_policies
         def help
-          # TRANSLATORS: %s stands for name of option
-          format(_(
-                   "<b>%s</b> is the operating mode for bcache. " \
-                   "There are currently four supported modes. " \
-                   "<i>Writethrough</i> is default mode which caches reading and do write parallel. " \
-                   "So in case of failure of caching device, no data is lost." \
-                   "<i>Writeback</i> is mode that caches also writes. This result in better " \
-                   "performance of write operations." \
-                   "<i>Writearound</i> is mode that use cache only for reads and writes new " \
-                   "content only to backing device." \
-                   "<i>None</i> is mode that do not use cache for read neither for write. " \
-                   "Useful mainly for temporary disabling cache before big sequential read/write " \
-                   "which otherwise result in intensive overwritting of cache device."
-          ), label)
+          "<p>" +
+            # TRANSLATORS: %s stands for name of option
+            format(_(
+                     "%s is the operating mode for bcache. " \
+                     "There are currently four supported modes.<ul> " \
+                     "<li><i>Writethrough</i> reading operations are cached, writing is done " \
+                     "in parallel to both devices. No data is lost in case of failure of " \
+                     "the caching device. This is the default mode.</li>" \
+                     "<li><i>Writeback</i> both reading and writing operations are cached. " \
+                     "This result in better performance when writing.</li>" \
+                     "<li><i>Writearound</i> reading is cached, new content is " \
+                     "written only to the backing device.</li>" \
+                     "<li><i>None</i> means cache is neither used for reading nor for writing. " \
+                     "This is useful mainly for temporarily disabling the cache before any big " \
+                     "sequential read or write, otherwise that would result in intensive " \
+                     "overwriting on the cache device.</li>"
+            ), "<b>" + label + "</b>") +
+            "</p>"
         end
 
         # @macro seeAbstractWidget

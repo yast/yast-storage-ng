@@ -26,8 +26,8 @@ Source:		%{name}-%{version}.tar.bz2
 Requires:	yast2 >= 4.1.11
 # for AbortException and handle direct abort
 Requires:	yast2-ruby-bindings >= 4.0.6
-# Storage::Md#uuid=
-Requires:	libstorage-ng-ruby >= 4.1.32
+# Storage::Bcache#cache_mode
+Requires:	libstorage-ng-ruby >= 4.1.45
 # communicate with udisks
 Requires:	rubygem(ruby-dbus)
 # Y2Packager::Repository
@@ -36,8 +36,8 @@ Requires:	yast2-packager >= 3.3.7
 Requires:	findutils
 
 BuildRequires:	update-desktop-files
-# Storage::Md#uuid=
-BuildRequires:	libstorage-ng-ruby >= 4.1.32
+# Storage::Bcache#cache_mode
+BuildRequires:	libstorage-ng-ruby >= 4.1.45
 BuildRequires:	yast2-ruby-bindings
 BuildRequires:	yast2-devtools
 # yast2-xml dependency is added by yast2 but ignored in the
