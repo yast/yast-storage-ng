@@ -890,6 +890,7 @@ describe Y2Storage::StorageManager do
     end
 
     it "returns true if everything goes fine" do
+      expect(manager.storage).to receive(:activate)
       expect(manager.activate).to eq true
     end
 
