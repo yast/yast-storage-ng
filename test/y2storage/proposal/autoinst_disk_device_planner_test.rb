@@ -488,6 +488,43 @@ describe Y2Storage::Proposal::AutoinstDiskDevicePlanner do
       end
     end
 
+    context "using the new format for Xen virtual partitions (one drive section per each)" do
+      let(:scenario) { "xen-partitions.xml" }
+
+      let(:disk_spec) do
+        { "device" => "/dev/xvda1", "use" => "all", "partitions" => part_section }
+      end
+
+      let(:part_section) { [{ "filesystem" => :ext4 }] }
+
+      it "reuses the given virtual partition" do
+        devices = planner.planned_devices(drive)
+        planned = devices.find { |d| d.reuse_name == "/dev/xvda1" }
+        expect(planned.reuse_name).to eq("/dev/xvda1")
+        expect(planned.filesystem_type).to eq(Y2Storage::Filesystems::Type::EXT4)
+      end
+
+      context "when a raid name is specified" do
+        let(:part_section) { [{ "raid_name" => "/dev/md/0" }] }
+
+        it "plans to use the partition as a MD member" do
+          devices = planner.planned_devices(drive)
+          planned = devices.find { |d| d.reuse_name == "/dev/xvda1" }
+          expect(planned.raid_name).to eq "/dev/md/0"
+        end
+      end
+
+      context "when a LVM volume group is specified" do
+        let(:part_section) { [{ "lvm_group" => "system" }] }
+
+        it "plans to use the partition as a LVM PV" do
+          devices = planner.planned_devices(drive)
+          planned = devices.find { |d| d.reuse_name == "/dev/xvda1" }
+          expect(planned.lvm_volume_group_name).to eq "system"
+        end
+      end
+    end
+
     context "using the whole disk" do
       let(:disk_spec) do
         { "device" => "/dev/sda", "partitions" => [root_spec] }

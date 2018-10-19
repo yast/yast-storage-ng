@@ -129,8 +129,9 @@ module Y2Storage
         issues_list.add(:surplus_partitions, drive) if drive.partitions.size > 1
         master_partition = drive.partitions.first
         planned_stray_device = Y2Storage::Planned::StrayBlkDevice.new
-        device_config(planned_stray_device, master_partition, drive)
         planned_stray_device.lvm_volume_group_name = master_partition.lvm_group
+        planned_stray_device.raid_name = master_partition.raid_name
+        device_config(planned_stray_device, master_partition, drive)
         add_device_reuse(planned_stray_device, stray_blk_device, master_partition)
         [planned_stray_device]
       end
