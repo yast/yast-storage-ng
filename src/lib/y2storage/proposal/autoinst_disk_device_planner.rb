@@ -44,7 +44,7 @@ module Y2Storage
         if disk.nil?
           planned_for_stray_devices(drive)
         elsif disk.is?(:stray_blk_device)
-          planned_for_stray_device(drive)
+          planned_for_stray_device(disk, drive)
         else
           planned_for_disk(disk, drive)
         end
@@ -120,17 +120,18 @@ module Y2Storage
 
       # Returns an array of planned stray block devices
       #
+      # @param stray_blk_device [StrayBlkDevice] Stray block device to work on
       # @param drive [AutoinstProfile::DriveSection] drive section describing
       #   the stray block device
       # @return [Planned::Disk] List of planned block devices
-      def planned_for_stray_device(drive)
+      def planned_for_stray_device(stray_blk_device, drive)
         issues_list.add(:no_partitionable, drive) if drive.wanted_partitions?
         issues_list.add(:surplus_partitions, drive) if drive.partitions.size > 1
         master_partition = drive.partitions.first
         planned_stray_device = Y2Storage::Planned::StrayBlkDevice.new
         device_config(planned_stray_device, master_partition, drive)
         planned_stray_device.lvm_volume_group_name = master_partition.lvm_group
-        add_device_reuse(planned_stray_device, drive.device, master_partition)
+        add_device_reuse(planned_stray_device, stray_blk_device, master_partition)
         [planned_stray_device]
       end
 
