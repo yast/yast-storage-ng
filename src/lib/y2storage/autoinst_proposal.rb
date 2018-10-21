@@ -118,9 +118,7 @@ module Y2Storage
       drives.each do |disk_name, drive_spec|
         next if drive_spec.unwanted_partitions?
         disk = devicegraph.disk_devices.find { |d| d.name == disk_name }
-        next if disk.nil? || !disk.partitions.empty?
-
-        update_partition_table(disk, suitable_ptable_type(disk, drive_spec))
+        update_partition_table(disk, suitable_ptable_type(disk, drive_spec)) if disk
       end
     end
 
@@ -147,9 +145,18 @@ module Y2Storage
     # @param disk        [Y2Storage::Disk] Disk to set the partition table on
     # @param ptable_type [Y2Storage::PartitionTables::Type] Partition table type
     def update_partition_table(disk, ptable_type)
-      return if disk.partition_table && disk.partition_table.type == ptable_type
+      return unless update_partition_table?(disk, ptable_type)
       disk.remove_descendants if disk.partition_table
       disk.create_partition_table(ptable_type)
+    end
+
+    # Determines whether the partition table must be updated
+    #
+    # @param disk        [Y2Storage::Disk] Disk to set the partition table on
+    # @param ptable_type [Y2Storage::PartitionTables::Type] Partition table type
+    def update_partition_table?(disk, ptable_type)
+      disk.partitions.empty? &&
+        (disk.partition_table.nil? || disk.partition_table.type != ptable_type)
     end
 
     # Add devices to make the system bootable

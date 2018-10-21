@@ -65,9 +65,7 @@ module Y2Storage
         planned_lv.lv_type = lv_type_for(section)
         add_stripes(planned_lv, section)
         device_config(planned_lv, section, drive)
-        if section.used_pool
-          return nil unless add_to_thin_pool(planned_lv, planned_vg, section)
-        end
+        return if section.used_pool && !add_to_thin_pool(planned_lv, planned_vg, section)
         add_lv_reuse(planned_lv, planned_vg, section) if section.create == false
         assign_size_to_lv(planned_vg, planned_lv, section) ? planned_lv : nil
       end
@@ -123,19 +121,34 @@ module Y2Storage
       def find_lv_to_reuse(vg_name, part_section)
         parent = find_lv_parent(vg_name, part_section)
         return if parent.nil?
+        device = find_lv_in_vg(parent, part_section)
 
-        device =
-          if part_section.lv_name
-            parent.lvm_lvs.find { |v| v.lv_name == part_section.lv_name }
-          elsif part_section.label
-            parent.lvm_lvs.find { |v| v.filesystem_label == part_section.label }
-          else
-            issues_list.add(:missing_reuse_info, part_section)
-            :missing_info
-          end
+        case device
+        when Y2Storage::LvmLv
+          [device, parent]
+        when :missing_reuse_info
+          issues_list.add(:missing_reuse_info, part_section)
+          nil
+        else
+          issues_list.add(:missing_reusable_device, part_section)
+          nil
+        end
+      end
 
-        issues_list.add(:missing_reusable_device, part_section) unless device
-        :missing_info == device ? nil : [device, parent]
+      # Finds a logical volume within a volume group
+      #
+      # @param vg           [LvmVg] Volume group to search for the logical volume
+      # @param part_section [AutoinstProfile::PartitionSection] LV specification from AutoYaST
+      # @return [LvmLv,Symbol Logical volume or nil if it is not found or there is not
+      #   enough information to locate it
+      def find_lv_in_vg(vg, part_section)
+        if part_section.lv_name
+          vg.lvm_lvs.find { |v| v.lv_name == part_section.lv_name }
+        elsif part_section.label
+          vg.lvm_lvs.find { |v| v.filesystem_label == part_section.label }
+        else
+          :missing_reuse_info
+        end
       end
 
       # @param vg_name      [String]      Volume group name to search for the logical volume
