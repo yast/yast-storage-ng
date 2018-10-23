@@ -37,6 +37,7 @@ module Y2Storage
       include Planned::CanBeMounted
       include Planned::CanBeEncrypted
       include Planned::CanBePv
+      include Planned::CanBeMdMember
       include MatchVolumeSpec
 
       # @return [PartitionId] id of the partition. If nil, the final id is
@@ -59,10 +60,6 @@ module Y2Storage
       # @return [Boolean] whether the partition must be primary
       attr_accessor :primary
 
-      # @return [String] name of the MD array to which this partition should
-      #   be added
-      attr_accessor :raid_name
-
       # Constructor.
       #
       # @param mount_point [string] See {#mount_point}
@@ -74,6 +71,7 @@ module Y2Storage
         initialize_can_be_mounted
         initialize_can_be_encrypted
         initialize_can_be_pv
+        initialize_can_be_md_member
 
         @mount_point = mount_point
         @filesystem_type = filesystem_type

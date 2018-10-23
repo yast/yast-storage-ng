@@ -1,6 +1,7 @@
+#!/usr/bin/env rspec
 # encoding: utf-8
 
-# Copyright (c) [2017] SUSE LLC
+# Copyright (c) [2018] SUSE LLC
 #
 # All Rights Reserved.
 #
@@ -19,12 +20,27 @@
 # To contact SUSE LLC about this file by physical or electronic mail, you may
 # find current contact information at www.suse.com.
 
-require "y2storage/planned/disk"
-require "y2storage/planned/partition"
-require "y2storage/planned/stray_blk_device"
-require "y2storage/planned/lvm_lv"
-require "y2storage/planned/lvm_vg"
-require "y2storage/planned/md"
-require "y2storage/planned/assigned_space"
-require "y2storage/planned/partitions_distribution"
-require "y2storage/planned/devices_collection"
+require_relative "../../spec_helper"
+require "y2storage/autoinst_issues/surplus_partitions"
+
+describe Y2Storage::AutoinstIssues::SurplusPartitions do
+  subject(:issue) { described_class.new(section) }
+
+  let(:section) do
+    instance_double(Y2Storage::AutoinstProfile::DriveSection)
+  end
+
+  let(:device_name) { nil }
+
+  describe "#message" do
+    it "returns a message explaining the consequences" do
+      expect(issue.message).to include "only the first will be considered"
+    end
+  end
+
+  describe "#severity" do
+    it "returns :warn" do
+      expect(issue.severity).to eq(:warn)
+    end
+  end
+end

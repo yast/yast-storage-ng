@@ -24,8 +24,13 @@ require_relative "../spec_helper"
 require "y2storage"
 
 describe Y2Storage::Proposal::LvmCreator do
+  using Y2Storage::Refinements::SizeCasts
+
   subject(:creator) { described_class.new(fake_devicegraph) }
+
   let(:reused_vg) { nil }
+  let(:vg) { planned_vg(volume_group_name: "system", lvs: volumes) }
+  let(:volumes) { [] }
 
   before do
     fake_scenario(scenario)
@@ -33,8 +38,6 @@ describe Y2Storage::Proposal::LvmCreator do
   end
 
   describe "#create_volumes" do
-    using Y2Storage::Refinements::SizeCasts
-
     let(:scenario) { "lvm-new-pvs" }
     let(:volumes) do
       [
@@ -347,6 +350,23 @@ describe Y2Storage::Proposal::LvmCreator do
           an_object_having_attributes(lv_name: "root", lv_type: Y2Storage::LvType::THIN)
         )
       end
+    end
+  end
+
+  describe "#reuse_volumes" do
+    let(:scenario) { "lvm-two-vgs" }
+    let(:root_lv) do
+      planned_lv(
+        mount_point: "/", type: :ext4, logical_volume_name: "two", reuse_name: "/dev/vg0/lv1"
+      )
+    end
+    let(:volumes) { [root_lv] }
+    let(:reused_vg) { fake_devicegraph.lvm_vgs.first }
+
+    it "reuses the logical volumes" do
+      devicegraph = creator.reuse_volumes(vg).devicegraph
+      reused_lv = devicegraph.lvm_lvs.find { |v| v.lv_name == "lv1" }
+      expect(reused_lv.mount_point.path).to eq("/")
     end
   end
 end
