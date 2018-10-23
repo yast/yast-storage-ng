@@ -139,8 +139,8 @@ module Y2Storage
       #
       # @param vg           [LvmVg] Volume group to search for the logical volume
       # @param part_section [AutoinstProfile::PartitionSection] LV specification from AutoYaST
-      # @return [LvmLv,Symbol Logical volume or nil if it is not found or there is not
-      #   enough information to locate it
+      # @return [LvmLv,Symbol,nil] Logical volume to reuse; nil if it is not found or
+      #   :missing_reuse_info if there is not enough information to locate it
       def find_lv_in_vg(vg, part_section)
         if part_section.lv_name
           vg.lvm_lvs.find { |v| v.lv_name == part_section.lv_name }
