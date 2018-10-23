@@ -85,6 +85,18 @@ module Yast
         graph
       end
 
+      # Allow to create an empty disk
+      #
+      # @param name [String]
+      # @param size [Y2Storage::DiskSize]
+      # @param devicegraph [Y2Storage::Devicegraph] target devicegraph
+      def create_empty_disk(name, size, devicegraph = nil)
+        devicegraph ||= Y2Storage::StorageManager.instance.probed
+
+        disk = Y2Storage::Disk.create(devicegraph, name)
+        disk.size = size
+      end
+
       def partition_double(name = "", disk_size = Y2Storage::DiskSize.MiB(10))
         instance_double("Y2Storage::Partition", name: name, size: disk_size)
       end

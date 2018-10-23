@@ -120,12 +120,12 @@ module Y2Storage
       exception = nil
       saved_root_device = populated_settings.root_device
 
-      [:desired, :min].each do |target|
-
+      target_sizes.product(candidate_devices).each do |target, devices|
         # reset root_device, else #candidate_roots will just use it
         populated_settings.root_device = saved_root_device
+        populated_settings.candidate_devices = devices
 
-        candidate_roots.each do |disk_name|
+        candidate_roots_for(devices).each do |disk_name|
           log.info "Trying to make a proposal with target #{target} and root #{disk_name}"
 
           populated_settings.root_device = disk_name
@@ -205,17 +205,58 @@ module Y2Storage
       devices.select { |d| d.partition_table && d.partitions.empty? }
     end
 
+    # Returns the target sizes to make the proposal
+    #
+    # @return [Array<Symbol>]
+    def target_sizes
+      [:desired, :min]
+    end
+
     # Copy of the original settings including some calculated and necessary
     # values (mainly candidate_devices), in case they were not present
     #
     # @return [ProposalSettings]
     def populated_settings
-      return @populated_settings if @populated_settings
+      @populated_settings ||= settings.dup
+    end
 
-      populated = settings.dup
-      populated.candidate_devices ||= disk_analyzer.candidate_disks.map(&:name)
+    # List of candidate devices
+    #
+    # If they are not given in the settings, disks found by the analyzer will be used.
+    #
+    # @see #candidate_devices_from_settings
+    # @see #candidate_devices_from_analyzer
+    #
+    # @return [<Array<Array<String>>]
+    def candidate_devices
+      return [settings.candidate_devices] if settings.candidate_devices
+      @candidate_devices ||= candidate_devices_from_settings || candidate_devices_from_analyzer
+    end
 
-      @populated_settings = populated
+    # List of candidate devices given in settings
+    #
+    # @return [<Array<Array<String>>]
+    def candidate_devices_from_settings
+      [settings.candidate_devices] if settings.candidate_devices
+    end
+
+    # List of candidate devices based on disks available in the analyzer
+    #
+    # By now, it consist on a sequence of available disk plus all of them at the end (unless
+    # there is only one, to avoid duplications). E.g, if available disks are
+    #
+    # ["/dev/sda", "/dev/sdb"]
+    #
+    # candidates list will be
+    #
+    # [["/dev/sda"], ["/dev/sdb"], ["/dev/sda", "/dev/sdb"]]
+    #
+    # @return [<Array<Array<String>>]
+    def candidate_devices_from_analyzer
+      disk_names = disk_analyzer.candidate_disks.map(&:name)
+      candidates = disk_names.zip
+      candidates << disk_names unless candidates.include?(disk_names)
+      candidates
     end
 
     # Sorted list of disks to be tried as root_device.
@@ -227,11 +268,11 @@ module Y2Storage
     # to smaller disk size.
     #
     # @return [Array<String>] names of the chosen devices
-    def candidate_roots
-      return [populated_settings.root_device] if populated_settings.root_device
+    def candidate_roots_for(devices)
+      return [settings.root_device] if settings.root_device
+      return devices if devices.size == 1
 
-      disk_names = populated_settings.candidate_devices
-      candidate_disks = initial_devicegraph.disk_devices.select { |d| disk_names.include?(d.name) }
+      candidate_disks = initial_devicegraph.disk_devices.select { |d| devices.include?(d.name) }
       candidate_disks = candidate_disks.sort_by(&:size).reverse
       candidate_disks.map(&:name)
     end

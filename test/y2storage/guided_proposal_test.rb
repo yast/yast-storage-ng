@@ -207,13 +207,11 @@ describe Y2Storage::GuidedProposal do
       it "creates the needed partitions with correct device names" do
         proposal.propose
         # note: potentially order dependent; there are two raids defined
-        raid0, raid1 = proposal.devices.dm_raids
+        raid0 = proposal.devices.dm_raids.first
         expect(raid0.partitions.map(&:name)).to contain_exactly(
           "#{raid0.name}-part1",
-          "#{raid0.name}-part2"
-        )
-        expect(raid1.partitions.map(&:name)).to contain_exactly(
-          "#{raid1.name}-part1"
+          "#{raid0.name}-part2",
+          "#{raid0.name}-part3"
         )
       end
     end
