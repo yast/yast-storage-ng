@@ -21,6 +21,7 @@
 
 require "y2storage/storage_class_wrapper"
 require "y2storage/partition_tables/base"
+require "y2storage/disk_size"
 
 module Y2Storage
   module PartitionTables
@@ -29,6 +30,19 @@ module Y2Storage
     # This is a wrapper for Storage::Msdos
     class Msdos < Base
       wrap_class Storage::Msdos
+
+      # Minimal value that makes sense for {#minimal_mbr_gap}.
+      #
+      # Trying to allocate a partition before the first 512 bytes makes no
+      # sense, since that space is used by the Master Boot Code and the
+      # partition table itself.
+      #
+      # @see #minimal_mbr_gap
+      # @see #mbr_gap
+      #
+      # @return [DiskSize]
+      LOWER_MBR_GAP_LIMIT = DiskSize.B(512)
+      private_constant :LOWER_MBR_GAP_LIMIT
 
       # @!attribute minimal_mbr_gap
       #   Minimal possible size of the so-called MBR gap. In other words, at
@@ -63,6 +77,11 @@ module Y2Storage
 
         region1 = partitions.min { |x, y| x.region.start <=> y.region.start }
         region1.region.block_size * region1.region.start
+      end
+
+      # Sets #{minimal_mbr_gap} to the lower acceptable value
+      def reduce_minimal_mbr_gap
+        self.minimal_mbr_gap = LOWER_MBR_GAP_LIMIT
       end
     end
   end
