@@ -77,7 +77,10 @@ module Y2Partitioner
       # @param type [Y2Storage::PartitionTables::Type]
       def create_partition_table(type)
         disk.remove_descendants
-        disk.create_partition_table(type)
+        ptable = disk.create_partition_table(type)
+        if ptable.type.is?(:msdos)
+          ptable.minimal_mbr_gap = Y2Storage::DiskSize.B(512)
+        end
         Y2Storage::Filesystems::Btrfs.refresh_subvolumes_shadowing(device_graph)
       end
 
