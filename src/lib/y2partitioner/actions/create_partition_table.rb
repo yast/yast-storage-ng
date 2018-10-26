@@ -79,6 +79,11 @@ module Y2Partitioner
         disk.remove_descendants
         ptable = disk.create_partition_table(type)
         if ptable.type.is?(:msdos)
+          # The default value is 1 MiB, preventing the creation of a
+          # partition starting at a lower value.
+          # 0.5 KiB is the space used by the partition table itself, you
+          # cannot go below that.
+          # Note that this does not affect partition alignment.
           ptable.minimal_mbr_gap = Y2Storage::DiskSize.B(512)
         end
         Y2Storage::Filesystems::Btrfs.refresh_subvolumes_shadowing(device_graph)
