@@ -31,7 +31,9 @@ module Y2Storage
       wrap_class Storage::Msdos
 
       # @!attribute minimal_mbr_gap
-      #   Minimal possible size of the so-called MBR gap.
+      #   Minimal possible size of the so-called MBR gap. In other words, at
+      #   which distance from the start of the disk should the first partition
+      #   be allocated.
       #
       #   @see #mbr_gap
       #
@@ -41,13 +43,19 @@ module Y2Storage
 
       # Current MBR gap
       #
-      # The MBR gap is the space between the end of the MBR and the beginning
-      # of the first partition. Often used by the bootloader. There is no
-      # equivalent in GPT partition tables (where BIOS boot partitions are
-      # used to allocate the bootloader).
+      # The MBR gap is the space between the beginning of the disk (i.e.
+      # the beginning of the MBR) and the beginning of the first partition.
+      # This space includes the Master Boot Code, the partition table and
+      # the gap afterwards (often used by the bootloader).
+      #
+      # There is no equivalent in GPT partition tables (where BIOS boot
+      # partitions are used to allocate the bootloader instead of the MBR).
       #
       # If there are no partitions nil is returned, meaning "gap not
       # applicable" which is different from "no gap" (i.e. a 0 bytes gap).
+      # In fact, due to the space needed by the Master Boot Code and the
+      # partition table itself, the gap should never be smaller than
+      # 512 bytes.
       #
       # @return [DiskSize, nil]
       def mbr_gap
