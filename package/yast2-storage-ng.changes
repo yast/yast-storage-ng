@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Fri Oct 26 11:37:48 UTC 2018 - snwint@suse.com
+
+- allow creation of partitions starting before 1 MiB in expert
+  partitioner
+
+-------------------------------------------------------------------
 Sat Oct 20 22:10:48 WEST 2018 - igonzalezsosa@suse.com
 
 - Fixes and improvements to AutoYaST partitioning:
