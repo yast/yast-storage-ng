@@ -21,6 +21,7 @@
 
 require "y2storage/storage_class_wrapper"
 require "y2storage/partition_tables/base"
+require "y2storage/disk_size"
 
 module Y2Storage
   module PartitionTables
@@ -30,8 +31,23 @@ module Y2Storage
     class Msdos < Base
       wrap_class Storage::Msdos
 
+      # Minimal value that makes sense for {#minimal_mbr_gap}.
+      #
+      # Trying to allocate a partition before the first 512 bytes makes no
+      # sense, since that space is used by the Master Boot Code and the
+      # partition table itself.
+      #
+      # @see #minimal_mbr_gap
+      # @see #mbr_gap
+      #
+      # @return [DiskSize]
+      LOWER_MBR_GAP_LIMIT = DiskSize.B(512)
+      private_constant :LOWER_MBR_GAP_LIMIT
+
       # @!attribute minimal_mbr_gap
-      #   Minimal possible size of the so-called MBR gap.
+      #   Minimal possible size of the so-called MBR gap. In other words, at
+      #   which distance from the start of the disk should the first partition
+      #   be allocated.
       #
       #   @see #mbr_gap
       #
@@ -41,13 +57,19 @@ module Y2Storage
 
       # Current MBR gap
       #
-      # The MBR gap is the space between the end of the MBR and the beginning
-      # of the first partition. Often used by the bootloader. There is no
-      # equivalent in GPT partition tables (where BIOS boot partitions are
-      # used to allocate the bootloader).
+      # The MBR gap is the space between the beginning of the disk (i.e.
+      # the beginning of the MBR) and the beginning of the first partition.
+      # This space includes the Master Boot Code, the partition table and
+      # the gap afterwards (often used by the bootloader).
+      #
+      # There is no equivalent in GPT partition tables (where BIOS boot
+      # partitions are used to allocate the bootloader instead of the MBR).
       #
       # If there are no partitions nil is returned, meaning "gap not
       # applicable" which is different from "no gap" (i.e. a 0 bytes gap).
+      # In fact, due to the space needed by the Master Boot Code and the
+      # partition table itself, the gap should never be smaller than
+      # 512 bytes.
       #
       # @return [DiskSize, nil]
       def mbr_gap
@@ -55,6 +77,11 @@ module Y2Storage
 
         region1 = partitions.min { |x, y| x.region.start <=> y.region.start }
         region1.region.block_size * region1.region.start
+      end
+
+      # Sets #{minimal_mbr_gap} to the lower acceptable value
+      def reduce_minimal_mbr_gap
+        self.minimal_mbr_gap = LOWER_MBR_GAP_LIMIT
       end
     end
   end
