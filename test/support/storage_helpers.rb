@@ -85,7 +85,7 @@ module Yast
         graph
       end
 
-      # Allow to create an empty disk
+      # Allows to create an empty disk
       #
       # @param name [String]
       # @param size [Y2Storage::DiskSize]

@@ -65,7 +65,8 @@ The `candidate_devices` could be
   all together if proposal did not fit in any of them separately _(mainly for
   initial proposal)_.
 
-* The set of disks selected by the user.
+* The set of disks selected by the user, without attempting to fit the proposal
+  individually in each of them.
 
 Apart from the two main steps and the classes representing the set of planned
 devices, there is another relevant class in this level of zoom. `DiskAnalyzer`

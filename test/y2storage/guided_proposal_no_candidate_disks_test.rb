@@ -79,223 +79,224 @@ describe Y2Storage::GuidedProposal do
     ]
   end
 
-  context "#propose with no candidate devices" do
+  describe "#propose" do
+    context "with no candidate devices" do
+      let(:needed_space_for_desired_sizes) { 65.GiB }
+      let(:needed_space_for_min_sizes) { 35.GiB }
+      let(:not_enough_size) { 20.GiB }
 
-    let(:needed_space_for_desired_sizes) { 65.GiB }
-    let(:needed_space_for_min_sizes) { 35.GiB }
-    let(:not_enough_size) { 20.GiB }
-
-    context "in a system with a single disk" do
-      before do
-        create_empty_disk("/dev/sdc", disk_size)
-      end
-
-      context "having enough space for desired sizes" do
-        let(:disk_size) { needed_space_for_desired_sizes }
-
-        it "makes the proposal using those sizes" do
-          proposal.propose
-
-          disk = proposal.devices.disks.first
-
-          expect_found_all_partitions_at(disk)
-          expect(select_partition("swap", disk.partitions).size).to eq(1.GiB)
-          expect(select_partition("/", disk.partitions).size).to eq(40.GiB)
-          expect(select_partition("/home", disk.partitions).size).to eq(20.GiB)
+      context "in a system with a single disk" do
+        before do
+          create_empty_disk("/dev/sdc", disk_size)
         end
-      end
 
-      context "having space only for minimum sizes" do
-        let(:disk_size) { needed_space_for_min_sizes }
+        context "having enough space for desired sizes" do
+          let(:disk_size) { needed_space_for_desired_sizes }
 
-        it "makes the proposal using those sizes" do
-          proposal.propose
-
-          disk = proposal.devices.disks.first
-
-          expect_found_all_partitions_at(disk)
-          expect(select_partition("swap", disk.partitions).size).to eq(512.MiB)
-          expect(select_partition("/", disk.partitions).size).to eq(20.GiB)
-          expect(select_partition("/home", disk.partitions).size).to eq(10.GiB)
-        end
-      end
-
-      context "without enough space" do
-        let(:disk_size) { 10.GiB }
-
-        it "raises an Y2Storage::Error" do
-          expect { proposal.propose }.to raise_error(Y2Storage::Error)
-        end
-      end
-    end
-
-    context "in a system with multiple disks" do
-      before do
-        create_empty_disk("/dev/sdc", third_disk_size)
-        create_empty_disk("/dev/sdb", second_disk_size)
-        create_empty_disk("/dev/sda", first_disk_size)
-      end
-
-      context "having enough space for desired sizes" do
-        let(:first_disk_size) { needed_space_for_desired_sizes }
-        let(:second_disk_size) { needed_space_for_desired_sizes }
-        let(:third_disk_size) { needed_space_for_desired_sizes }
-
-        context "in all of them" do
-          it "proposes to use the first one" do
+          it "makes the proposal using desired sizes" do
             proposal.propose
 
-            first_disk, second_disk, third_disk = proposal.devices.disks
-            partitions = first_disk.partitions
+            disk = proposal.devices.disks.first
 
-            expect_found_all_partitions_at(first_disk)
-            expect(second_disk.partitions).to be_empty
-            expect(third_disk.partitions).to be_empty
-
-            expect(select_partition("swap", partitions).size).to eq(1.GiB)
-            expect(select_partition("/", partitions).size).to eq(40.GiB)
-            expect(select_partition("/home", partitions).size).to eq(20.GiB)
+            expect_found_all_partitions_at(disk)
+            expect(select_partition("swap", disk.partitions).size).to eq(1.GiB)
+            expect(select_partition("/", disk.partitions).size).to eq(40.GiB)
+            expect(select_partition("/home", disk.partitions).size).to eq(20.GiB)
           end
         end
 
-        context "only in one of them" do
+        context "having space only for minimum sizes" do
+          let(:disk_size) { needed_space_for_min_sizes }
+
+          it "makes the proposal using minimum sizes" do
+            proposal.propose
+
+            disk = proposal.devices.disks.first
+
+            expect_found_all_partitions_at(disk)
+            expect(select_partition("swap", disk.partitions).size).to eq(512.MiB)
+            expect(select_partition("/", disk.partitions).size).to eq(20.GiB)
+            expect(select_partition("/home", disk.partitions).size).to eq(10.GiB)
+          end
+        end
+
+        context "without enough space" do
+          let(:disk_size) { 10.GiB }
+
+          it "raises an Y2Storage::Error" do
+            expect { proposal.propose }.to raise_error(Y2Storage::Error)
+          end
+        end
+      end
+
+      context "in a system with multiple disks" do
+        before do
+          create_empty_disk("/dev/sdc", third_disk_size)
+          create_empty_disk("/dev/sdb", second_disk_size)
+          create_empty_disk("/dev/sda", first_disk_size)
+        end
+
+        context "having enough space for desired sizes" do
+          let(:first_disk_size) { needed_space_for_desired_sizes }
+          let(:second_disk_size) { needed_space_for_desired_sizes }
+          let(:third_disk_size) { needed_space_for_desired_sizes }
+
+          context "in all of them" do
+            it "proposes to use the first one" do
+              proposal.propose
+
+              first_disk, second_disk, third_disk = proposal.devices.disks
+              partitions = first_disk.partitions
+
+              expect_found_all_partitions_at(first_disk)
+              expect(second_disk.partitions).to be_empty
+              expect(third_disk.partitions).to be_empty
+
+              expect(select_partition("swap", partitions).size).to eq(1.GiB)
+              expect(select_partition("/", partitions).size).to eq(40.GiB)
+              expect(select_partition("/home", partitions).size).to eq(20.GiB)
+            end
+          end
+
+          context "only in one of them" do
+            let(:first_disk_size) { needed_space_for_min_sizes }
+            let(:third_disk_size) { needed_space_for_min_sizes }
+
+            it "proposes to use it" do
+              proposal.propose
+
+              first_disk, second_disk, third_disk = proposal.devices.disks
+              partitions = second_disk.partitions
+
+              expect_found_all_partitions_at(second_disk)
+              expect(first_disk.partitions).to be_empty
+              expect(third_disk.partitions).to be_empty
+
+              expect(select_partition("swap", partitions).size).to eq(1.GiB)
+              expect(select_partition("/", partitions).size).to eq(40.GiB)
+              expect(select_partition("/home", partitions).size).to eq(20.GiB)
+            end
+          end
+
+          context "in none of them individually but all together" do
+            let(:first_disk_size) { 25.GiB }
+            let(:second_disk_size) { 1.GiB }
+            let(:third_disk_size) { 45.GiB }
+
+            it "proposes to use all of them" do
+              proposal.propose
+
+              first_disk, second_disk, third_disk = proposal.devices.disks
+
+              expect(first_disk.partitions).to_not be_empty
+              expect(second_disk.partitions).to_not be_empty # boot partition
+              expect(third_disk.partitions).to_not be_empty
+
+              root_partition = select_partition("/", third_disk.partitions)
+              home_partition = select_partition("/home", first_disk.partitions)
+              swap_partition = select_partition("swap", first_disk.partitions)
+
+              expect(root_partition).to_not be_nil
+              expect(root_partition.size).to eq(40.GiB)
+
+              expect(home_partition).to_not be_nil
+              expect(home_partition.size).to eq(20.GiB)
+
+              expect(swap_partition).to_not be_nil
+              expect(swap_partition.size).to eq(1.GiB)
+            end
+          end
+        end
+
+        context "having space only for minimum sizes" do
           let(:first_disk_size) { needed_space_for_min_sizes }
+          let(:second_disk_size) { needed_space_for_min_sizes }
           let(:third_disk_size) { needed_space_for_min_sizes }
 
-          it "proposes to use it" do
-            proposal.propose
+          context "in all of them" do
+            it "proposes to use the first one" do
+              proposal.propose
 
-            first_disk, second_disk, third_disk = proposal.devices.disks
-            partitions = second_disk.partitions
+              first_disk, second_disk, third_disk = proposal.devices.disks
+              partitions = first_disk.partitions
 
-            expect_found_all_partitions_at(second_disk)
-            expect(first_disk.partitions).to be_empty
-            expect(third_disk.partitions).to be_empty
+              expect_found_all_partitions_at(first_disk)
+              expect(second_disk.partitions).to be_empty
+              expect(third_disk.partitions).to be_empty
 
-            expect(select_partition("swap", partitions).size).to eq(1.GiB)
-            expect(select_partition("/", partitions).size).to eq(40.GiB)
-            expect(select_partition("/home", partitions).size).to eq(20.GiB)
+              expect(select_partition("swap", partitions).size).to eq(512.MiB)
+              expect(select_partition("/", partitions).size).to eq(20.GiB)
+              expect(select_partition("/home", partitions).size).to eq(10.GiB)
+            end
+          end
+
+          context "only in one of them" do
+            let(:first_disk_size) { not_enough_size }
+            let(:third_disk_size) { not_enough_size }
+
+            it "proposes to use it" do
+              proposal.propose
+
+              first_disk, second_disk, third_disk = proposal.devices.disks
+
+              expect(first_disk.partitions).to be_empty
+              expect(third_disk.partitions).to be_empty
+              expect_found_all_partitions_at(second_disk)
+
+              partitions = second_disk.partitions
+              root_partition = select_partition("/", partitions)
+              home_partition = select_partition("/home", partitions)
+              swap_partition = select_partition("swap", partitions)
+
+              expect(root_partition).to_not be_nil
+              expect(root_partition.size).to eq(20.GiB)
+
+              expect(home_partition).to_not be_nil
+              expect(home_partition.size).to eq(10.GiB)
+
+              expect(swap_partition).to_not be_nil
+              expect(swap_partition.size).to eq(512.MiB)
+            end
+          end
+
+          context "in none of them individually but all together" do
+            let(:first_disk_size) { 1.GiB }
+            let(:second_disk_size) { 10.5.GiB }
+            let(:third_disk_size) { 20.5.GiB }
+
+            it "proposes to use all of them" do
+              proposal.propose
+
+              first_disk, second_disk, third_disk = proposal.devices.disks
+
+              expect(first_disk.partitions).to_not be_empty
+              expect(second_disk.partitions).to_not be_empty
+              expect(third_disk.partitions).to_not be_empty
+
+              root_partition = select_partition("/", third_disk.partitions)
+              home_partition = select_partition("/home", second_disk.partitions)
+              swap_partition = select_partition("swap", first_disk.partitions)
+
+              expect(root_partition).to_not be_nil
+              expect(root_partition.size).to eq(20.GiB)
+
+              expect(home_partition).to_not be_nil
+              expect(home_partition.size).to eq(10.GiB)
+
+              expect(swap_partition).to_not be_nil
+              expect(swap_partition.size).to eq(512.MiB)
+            end
           end
         end
 
-        context "only if all devices are used" do
-          let(:first_disk_size) { 25.GiB }
-          let(:second_disk_size) { 1.GiB }
-          let(:third_disk_size) { 45.GiB }
-
-          it "proposes to use all of them" do
-            proposal.propose
-
-            first_disk, second_disk, third_disk = proposal.devices.disks
-
-            expect(first_disk.partitions).to_not be_empty
-            expect(second_disk.partitions).to_not be_empty # boot partition
-            expect(third_disk.partitions).to_not be_empty
-
-            root_partition = select_partition("/", third_disk.partitions)
-            home_partition = select_partition("/home", first_disk.partitions)
-            swap_partition = select_partition("swap", first_disk.partitions)
-
-            expect(root_partition).to_not be_nil
-            expect(root_partition.size).to eq(40.GiB)
-
-            expect(home_partition).to_not be_nil
-            expect(home_partition.size).to eq(20.GiB)
-
-            expect(swap_partition).to_not be_nil
-            expect(swap_partition.size).to eq(1.GiB)
-          end
-        end
-      end
-
-      context "having space only for minimum sizes" do
-        let(:first_disk_size) { needed_space_for_min_sizes }
-        let(:second_disk_size) { needed_space_for_min_sizes }
-        let(:third_disk_size) { needed_space_for_min_sizes }
-
-        context "in all of them" do
-          it "proposes to use the first one" do
-            proposal.propose
-
-            first_disk, second_disk, third_disk = proposal.devices.disks
-            partitions = first_disk.partitions
-
-            expect_found_all_partitions_at(first_disk)
-            expect(second_disk.partitions).to be_empty
-            expect(third_disk.partitions).to be_empty
-
-            expect(select_partition("swap", partitions).size).to eq(512.MiB)
-            expect(select_partition("/", partitions).size).to eq(20.GiB)
-            expect(select_partition("/home", partitions).size).to eq(10.GiB)
-          end
-        end
-
-        context "only in one of them" do
+        context "too small for both (desired, min) proposals" do
           let(:first_disk_size) { not_enough_size }
+          let(:second_disk_size) { not_enough_size }
           let(:third_disk_size) { not_enough_size }
 
-          it "proposes to use it" do
-            proposal.propose
-
-            first_disk, second_disk, third_disk = proposal.devices.disks
-
-            expect(first_disk.partitions).to be_empty
-            expect(third_disk.partitions).to be_empty
-            expect_found_all_partitions_at(second_disk)
-
-            partitions = second_disk.partitions
-            root_partition = select_partition("/", partitions)
-            home_partition = select_partition("/home", partitions)
-            swap_partition = select_partition("swap", partitions)
-
-            expect(root_partition).to_not be_nil
-            expect(root_partition.size).to eq(20.GiB)
-
-            expect(home_partition).to_not be_nil
-            expect(home_partition.size).to eq(10.GiB)
-
-            expect(swap_partition).to_not be_nil
-            expect(swap_partition.size).to eq(512.MiB)
+          it "raises an Y2Storage::Error" do
+            expect { proposal.propose }.to raise_error(Y2Storage::Error)
           end
-        end
-
-        context "using all of them" do
-          let(:first_disk_size) { 1.GiB }
-          let(:second_disk_size) { 10.5.GiB }
-          let(:third_disk_size) { 20.5.GiB }
-
-          it "proposes to use all of them" do
-            proposal.propose
-
-            first_disk, second_disk, third_disk = proposal.devices.disks
-
-            expect(first_disk.partitions).to_not be_empty
-            expect(second_disk.partitions).to_not be_empty
-            expect(third_disk.partitions).to_not be_empty
-
-            root_partition = select_partition("/", third_disk.partitions)
-            home_partition = select_partition("/home", second_disk.partitions)
-            swap_partition = select_partition("swap", first_disk.partitions)
-
-            expect(root_partition).to_not be_nil
-            expect(root_partition.size).to eq(20.GiB)
-
-            expect(home_partition).to_not be_nil
-            expect(home_partition.size).to eq(10.GiB)
-
-            expect(swap_partition).to_not be_nil
-            expect(swap_partition.size).to eq(512.MiB)
-          end
-        end
-      end
-
-      context "too small for both (desired, min) proposals" do
-        let(:first_disk_size) { not_enough_size }
-        let(:second_disk_size) { not_enough_size }
-        let(:third_disk_size) { not_enough_size }
-
-        it "raises an Y2Storage::Error" do
-          expect { proposal.propose }.to raise_error(Y2Storage::Error)
         end
       end
     end
