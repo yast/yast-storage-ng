@@ -49,15 +49,24 @@ That second step is performed by an instance of
 planned devices and a set of proposal settings, it will return a new devicegraph
 containing the final devices.
 
-This whole process is potentially repeated twice. In the first attempt, the
-instance of `Proposal::PlannedDevicesGenerator` is asked for the desired set of
-planned devices, so it will aim for the best possible size for each planned
-device. If the instance of `Proposal::DevicegraphGenerator` is not able to
-accommodate those planned devices, a second attempt will be performed. On that
-second attempt, the device generator will aim for a minimalistic set of planned
-devices, reducing the size expectations as much as possible. If the devicegraph
-generator also fails to allocate that smaller version of the planned devices, an
-exception is raised.
+This whole process is potentially repeated twice per `candidate_devices`. In the
+first attempt, the instance of `Proposal::PlannedDevicesGenerator` is asked for
+the desired set of planned devices, so it will aim for the best possible size
+for each planned device. If the instance of `Proposal::DevicegraphGenerator` is
+not able to accommodate those planned devices, a second attempt will be
+performed. On that second attempt, the device generator will aim for a
+minimalistic set of planned devices, reducing the size expectations as much as
+possible. If the devicegraph generator also fails to allocate that smaller
+version of the planned devices, an exception is raised.
+
+The `candidate_devices` could be
+
+* Available disks in the system, first using each of them singly and then
+  all together if proposal did not fit in any of them separately _(mainly for
+  initial proposal)_.
+
+* The set of disks selected by the user, without attempting to fit the proposal
+  individually in each of them.
 
 Apart from the two main steps and the classes representing the set of planned
 devices, there is another relevant class in this level of zoom. `DiskAnalyzer`

@@ -120,10 +120,11 @@ module Y2Storage
       exception = nil
       saved_root_device = populated_settings.root_device
 
-      [:desired, :min].each do |target|
-
+      groups = group_candidate_devices
+      target_sizes.product(groups).each do |target, devices|
         # reset root_device, else #candidate_roots will just use it
         populated_settings.root_device = saved_root_device
+        populated_settings.candidate_devices = devices
 
         candidate_roots.each do |disk_name|
           log.info "Trying to make a proposal with target #{target} and root #{disk_name}"
@@ -205,17 +206,46 @@ module Y2Storage
       devices.select { |d| d.partition_table && d.partitions.empty? }
     end
 
-    # Copy of the original settings including some calculated and necessary
-    # values (mainly candidate_devices), in case they were not present
+    # Returns the target sizes to make the proposal
+    #
+    # @return [Array<Symbol>]
+    def target_sizes
+      [:desired, :min]
+    end
+
+    # Settings used by each attempt of proposal
+    #
+    # A copy of original settings, which is intended to be populated during the process of making a
+    # proposal. E.g, setting a value that was not given, such as the candidate devices or root
+    # device.
     #
     # @return [ProposalSettings]
     def populated_settings
-      return @populated_settings if @populated_settings
+      @populated_settings ||= settings.dup
+    end
 
-      populated = settings.dup
-      populated.candidate_devices ||= disk_analyzer.candidate_disks.map(&:name)
+    # Candidate devices grouped for different proposal attempts
+    #
+    # When some candidate devices are indicated in the settings, the proposal is tried with all of
+    # them. However, when no candidate devices are given, different attempts should be done using
+    # different sets of candidate devices. First, each available device is used lonely to make the
+    # proposal, and if no proposal was possible with any individual disk, a last attempt is done by
+    # using all available devices as candidate disks.
+    #
+    # @example
+    #
+    #   settings.candidate_devices #=> ["/dev/sda", "/dev/sdb"]
+    #   settings.group_candidate_devices #=> [["/dev/sda", "/dev/sdb"]]
+    #
+    #   settings.candidate_devices #=> nil
+    #   settings.group_candidate_devices #=> [["/dev/sda"], ["/dev/sdb"], ["/dev/sda", "/dev/sdb"]]
+    #
+    # @return [Array<String>]
+    def group_candidate_devices
+      return [settings.candidate_devices] if settings.candidate_devices
 
-      @populated_settings = populated
+      candidates = disk_analyzer.candidate_disks.map(&:name)
+      candidates.zip.append(candidates).uniq
     end
 
     # Sorted list of disks to be tried as root_device.
