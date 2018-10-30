@@ -31,6 +31,7 @@ require "y2partitioner/widgets/lvm_lv_add_button"
 require "y2partitioner/widgets/lvm_lvs_delete_button"
 require "y2partitioner/widgets/lvm_vg_resize_button"
 require "y2partitioner/widgets/device_delete_button"
+require "y2partitioner/widgets/device_buttons_set"
 
 module Y2Partitioner
   module Widgets
