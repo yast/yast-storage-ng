@@ -284,35 +284,14 @@ module Y2Storage
       fs.release_name
     end
 
-    # TODO: there is no reason to initally discard usb devices. The behavior is
-    # kept to avoid big changes in release phase.
-    #
     # Finds disk devices that are suitable for installing Linux.
-    #
-    # @note Usb devices are considered as candidate disk only if there are no
-    #   other candidate disks.
     #
     # @return [Array<BlkDevice>] candidate devices
     def find_candidate_disks
-      candidates = find_non_usb_candidate_disks
-      return candidates if candidates.any?
+      devicegraph.disk_devices.select { |d| candidate_disk?(d) }
 
-      find_usb_candidate_disks
     end
 
-    # Finds non usb devices that are suitable for installing Linux
-    #
-    # @return [Array<BlkDevice>] candidate devices
-    def find_non_usb_candidate_disks
-      devicegraph.disk_devices.select { |d| !d.usb? && candidate_disk?(d) }
-    end
-
-    # Finds usb devices that are suitable for installing Linux
-    #
-    # @return [Array<BlkDevice>] candidate devices
-    def find_usb_candidate_disks
-      devicegraph.disk_devices.select { |d| d.usb? && candidate_disk?(d) }
-    end
 
     # Checks whether a device can be used as candidate disk for installation
     #
