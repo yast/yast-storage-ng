@@ -284,14 +284,36 @@ module Y2Storage
       fs.release_name
     end
 
-    # Finds disk devices that are suitable for installing Linux.
+    # Finds devices (disk devices or software raids) that are suitable for installing Linux
     #
-    # @return [Array<BlkDevice>] candidate devices
+    # From fate#326573 on, software raids with partition table or without children are also
+    # considered as valid candidates.
+    #
+    # @return [Array<DiskDevice,Md>] candidate devices
     def find_candidate_disks
-      devicegraph.disk_devices.select { |d| candidate_disk?(d) }
+      candidates = find_candidate_software_raids + find_candidate_disk_devices
 
+      candidates.select { |d| candidate_disk?(d) }
     end
 
+    # Finds software raids that are considered valid candidates for a Linux installation
+    #
+    # @return [Array<Md>]
+    def find_candidate_software_raids
+      @candidate_sofware_raids ||=
+        devicegraph.software_raids.select { |md| md.partition_table? || md.children.empty? }
+    end
+
+    # Finds disk devices that are considered valid candidates
+    #
+    # Basically, all available disk devices except those that are part of a software raid candidate
+    #
+    # @return [Array<DiskDevice>]
+    def find_candidate_disk_devices
+      rejected_disk_devices = find_candidate_software_raids.map(&:ancestors).flatten
+
+      devicegraph.disk_devices - rejected_disk_devices
+    end
 
     # Checks whether a device can be used as candidate disk for installation
     #

@@ -194,26 +194,6 @@ describe Y2Storage::DiskAnalyzer do
       device.partition_table.create_partition(slot.name, slot.region, Y2Storage::PartitionType::PRIMARY)
     end
 
-    def prepare_partitioned_md_raid(disk_devices, mounted_partition = false)
-      md = Y2Storage::Md.create(devicegraph, "/dev/md0")
-
-      disk_devices.each do |d|
-        d.remove_descendants
-        md.add_device(d)
-      end
-
-      md.ensure_partition_table
-      md.md_level = Y2Storage::MdLevel::RAID0
-
-      partition = create_partition(md)
-      format_device(partition)
-
-      partition.filesystem.mount_path = "/foo"
-      partition.filesystem.mount_point.active = mounted_partition
-
-      md
-    end
-
     let(:scenario) { "empty_disks" }
 
     let(:devicegraph) { Y2Storage::StorageManager.instance.probed }
@@ -309,53 +289,95 @@ describe Y2Storage::DiskAnalyzer do
 
     context "when a disk device is used for a MD RAID" do
       let(:active_mount_point) { false }
+      let(:md) do
+        md0 = Y2Storage::Md.create(devicegraph, "/dev/md0")
+        md0.md_level = Y2Storage::MdLevel::RAID0
+        md0
+      end
 
       # Creates a MD RAID
       before do
-        sda.remove_descendants
+        sda1.remove_descendants
         sdb.remove_descendants
 
-        md = Y2Storage::Md.create(devicegraph, "/dev/md0")
-        md.add_device(sda)
+        md.add_device(sda1)
         md.add_device(sdb)
-
-        format_device(md)
-
-        md.filesystem.mount_path = "/foo"
-        md.filesystem.mount_point.active = active_mount_point
       end
 
-      context "and the MD RAID is not mounted" do
-        it "includes the disk devices used by the MD RAID" do
-          expect(candidate_disks).to include("/dev/sda", "/dev/sdb")
+      context "and the MD RAID is also a valid candidate" do
+        context "because it does not have children" do
+          it "includes the MD RAID" do
+            expect(candidate_disks).to include("/dev/md0")
+          end
+
+          it "does not include the disk devices used by the MD RAID" do
+            expect(candidate_disks).to_not include("/dev/sda", "/dev/sdb")
+          end
+
+          context "but any of its ancestors is mounted" do
+            before do
+              format_device(sda1)
+              sda1.filesystem.mount_path = "/foo"
+              sda1.filesystem.mount_point.active = true
+            end
+
+            it "does not includes the MD RAID" do
+              expect(candidate_disks).to_not include("/dev/md0")
+            end
+          end
+        end
+
+        context "because it has a partition table" do
+          before do
+            md.ensure_partition_table
+
+            partition = create_partition(md)
+            format_device(partition)
+
+            partition.filesystem.mount_path = "/foo"
+            partition.filesystem.mount_point.active = active_mount_point
+          end
+
+          it "includes the MD RAID" do
+            expect(candidate_disks).to include("/dev/md0")
+          end
+
+          it "does not include the disk devices used by the MD RAID" do
+            expect(candidate_disks).to_not include("/dev/sda", "/dev/sdb")
+          end
+
+          context "but any of its descendants is mounted" do
+            let(:active_mount_point) { true }
+
+            it "does not include the MD RAID" do
+              expect(candidate_disks).to_not include("/dev/md0")
+            end
+          end
         end
       end
 
-      context "and the MD RAID is mounted" do
-        let(:active_mount_point) { true }
-
-        it "does not include the disks devices used by the MD RAID" do
-          expect(candidate_disks).to_not include("/dev/sda", "/dev/sdb")
-        end
-      end
-
-      context "and none MD RAID descendant is mounted" do
+      context "but the MD RAID is not a valid candidate" do
         before do
-          prepare_partitioned_md_raid([sda, sdb], false)
+          format_device(md)
+
+          md.filesystem.mount_path = "/foo"
+          md.filesystem.mount_point.active = active_mount_point
         end
 
-        it "includes the disks devices used by the MD RAID" do
-          expect(candidate_disks).to include("/dev/sda", "/dev/sdb")
-        end
-      end
+        context "and is mounted" do
+          let(:active_mount_point) { true }
 
-      context "and any MD RAID descendant is mounted" do
-        before do
-          prepare_partitioned_md_raid([sda, sdb], true)
+          it "does not include the disks devices used by the MD RAID" do
+            expect(candidate_disks).to_not include("/dev/sda", "/dev/sdb")
+          end
         end
 
-        it "does not include the disks devices used by the MD RAID" do
-          expect(candidate_disks).to_not include("/dev/sda", "/dev/sdb")
+        context "and is not mounted" do
+          let(:active_mount_point) { false }
+
+          it "includes the disk devices used by the MD RAID" do
+            expect(candidate_disks).to include("/dev/sda", "/dev/sdb")
+          end
         end
       end
     end
