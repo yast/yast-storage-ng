@@ -1,4 +1,9 @@
 -------------------------------------------------------------------
+Tue Oct 30 13:38:10 UTC 2018 - snwint@suse.com
+
+- do not include 'Partition' in partition type names
+
+-------------------------------------------------------------------
 Fri Oct 26 11:37:48 UTC 2018 - snwint@suse.com
 
 - allow creation of partitions starting before 1 MiB in expert
