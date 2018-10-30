@@ -36,24 +36,25 @@ module Y2Storage
     NOT_ALLOW_FORMAT = [LVM, RAID, ESP, PREP, BIOS_BOOT, UNKNOWN].freeze
     private_constant :NOT_ALLOW_FORMAT
 
+    # Do not include 'Partition' in the name.
     TRANSLATIONS = {
-      BIOS_BOOT.to_i          => N_("BIOS Boot Partition"),
-      DIAG.to_i               => N_("Diagnostics Partition"),
+      BIOS_BOOT.to_i          => N_("BIOS Boot"),
+      DIAG.to_i               => N_("Diagnostics"),
       DOS12.to_i              => N_("DOS12"),
       DOS16.to_i              => N_("DOS16"),
       DOS32.to_i              => N_("DOS32"),
-      ESP.to_i                => N_("EFI System Partition"),
+      ESP.to_i                => N_("EFI System"),
       EXTENDED.to_i           => N_("Extended"),
       IRST.to_i               => N_("Intel Rapid Start"),
       LINUX.to_i              => N_("Linux Native"),
       LVM.to_i                => N_("Linux LVM"),
-      MICROSOFT_RESERVED.to_i => N_("Microsoft Reserved Partition"),
+      MICROSOFT_RESERVED.to_i => N_("Microsoft Reserved"),
       NTFS.to_i               => N_("NTFS"),
-      PREP.to_i               => N_("PReP Boot Partition"),
+      PREP.to_i               => N_("PReP Boot"),
       RAID.to_i               => N_("Linux RAID"),
       SWAP.to_i               => N_("Linux Swap"),
       UNKNOWN.to_i            => N_("Unknown"),
-      WINDOWS_BASIC_DATA.to_i => N_("Windows Data Partition")
+      WINDOWS_BASIC_DATA.to_i => N_("Windows Data")
     }.freeze
     private_constant :TRANSLATIONS
 
