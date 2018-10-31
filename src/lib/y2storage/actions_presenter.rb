@@ -49,7 +49,8 @@ module Y2Storage
     # @return [Yast::Term]
     def to_html
       items = general_actions_items + subvolume_actions_items
-      Yast::HTML.Para(html_list(items))
+      html = Yast::HTML.Para(html_list(items))
+      html.gsub("\n", "<br>")
     end
 
     # Whether the event can be managed by the presenter

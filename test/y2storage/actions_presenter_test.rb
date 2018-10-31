@@ -32,6 +32,7 @@ describe Y2Storage::ActionsPresenter do
   let(:ca_create_device) { instance_double(Y2Storage::CompoundAction) }
   let(:ca_delete_subvol) { instance_double(Y2Storage::CompoundAction) }
   let(:ca_create_subvol) { instance_double(Y2Storage::CompoundAction) }
+  let(:ca_multi_line)    { instance_double(Y2Storage::CompoundAction) }
 
   before do
     allow(ca_delete_device).to receive(:delete?).and_return(true)
@@ -49,6 +50,10 @@ describe Y2Storage::ActionsPresenter do
     allow(ca_create_subvol).to receive(:delete?).and_return(false)
     allow(ca_create_subvol).to receive(:device_is?).with(:btrfs_subvolume).and_return(true)
     allow(ca_create_subvol).to receive(:sentence).and_return("create subvolume action")
+
+    allow(ca_multi_line).to receive(:delete?).and_return(false)
+    allow(ca_multi_line).to receive(:device_is?).with(:btrfs_subvolume).and_return(false)
+    allow(ca_multi_line).to receive(:sentence).and_return("multi\nline\naction")
   end
 
   describe "#update_status" do
@@ -72,9 +77,9 @@ describe Y2Storage::ActionsPresenter do
   end
 
   describe "#to_html" do
-    let(:compound_actions) { [ca_create_device, ca_delete_device] }
+    let(:compound_actions) { [ca_create_device, ca_delete_device, ca_multi_line] }
 
-    context "when there is not an actiongraph" do
+    context "when there is no actiongraph" do
       let(:actiongraph) { nil }
 
       it "returns an empty html list" do
@@ -91,6 +96,11 @@ describe Y2Storage::ActionsPresenter do
       it "presents delete actions first" do
         expect(subject.to_html)
           .to include "<ul><li><b>delete device action</b></li><li>create device action</li>"
+      end
+
+      it "formats newlines in actions correctly" do
+        expect(subject.to_html)
+          .to include "<li>multi<br>line<br>action</li>"
       end
 
       context "when there are no subvolume actions" do
