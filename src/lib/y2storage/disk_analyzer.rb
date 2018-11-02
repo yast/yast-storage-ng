@@ -178,10 +178,14 @@ module Y2Storage
     #   All disk devices by default.
     # @return [Array<Dasd, Disk>]
     def disks_collection(disks)
-      disks = devicegraph.disk_devices if disks.empty?
+      return full_devices_list if disks.empty?
+
       # Using BlkDevice because it is necessary to search in both, Dasd and Disk.
-      disks = disks.map { |d| d.is_a?(String) ? BlkDevice.find_by_name(devicegraph, d) : d }
-      disks.compact
+      disks.map { |d| d.is_a?(String) ? BlkDevice.find_by_name(devicegraph, d) : d }.compact
+    end
+
+    def full_devices_list
+      devicegraph.disk_devices + devicegraph.software_raids + devicegraph.bcaches
     end
 
     # @see #windows_partitions
