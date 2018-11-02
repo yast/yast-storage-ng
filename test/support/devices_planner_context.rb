@@ -50,7 +50,7 @@ RSpec.shared_context "devices planner" do
         Y2Storage::Planned::Partition.new("/other_boot", vfat)
       ]
     )
-    allow(devicegraph).to receive(:disk_devices).and_return [disk]
+    allow(devicegraph).to receive(:blk_devices).and_return [disk]
     allow(disk).to receive(:swap_partitions).and_return(swap_partitions)
 
     allow(Yast::Arch).to receive(:architecture).and_return(arch)

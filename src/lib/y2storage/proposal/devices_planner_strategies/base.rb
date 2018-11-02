@@ -93,10 +93,19 @@ module Y2Storage
         def reusable_swap(required_size)
           return nil if settings.use_lvm || settings.use_encryption
 
-          partitions = devicegraph.disk_devices.map(&:swap_partitions).flatten
+          partitions = available_swap_partitions
           partitions.select! { |part| part.size >= required_size }
           # Use #name in case of #size tie to provide stable sorting
           partitions.sort_by { |part| [part.size, part.name] }.first
+        end
+
+        # Returns all avaiable swap partitions
+        #
+        # @return [Array<Partition>]
+        def available_swap_partitions
+          devices = devicegraph.blk_devices.select { |d| d.respond_to?(:swap_partitions) }
+
+          devices.map(&:swap_partitions).flatten
         end
 
         # Delete shadowed subvolumes from each planned device

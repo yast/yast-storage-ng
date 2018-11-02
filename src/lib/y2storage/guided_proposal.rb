@@ -261,7 +261,7 @@ module Y2Storage
       return [populated_settings.root_device] if populated_settings.root_device
 
       disk_names = populated_settings.candidate_devices
-      candidate_disks = initial_devicegraph.disk_devices.select { |d| disk_names.include?(d.name) }
+      candidate_disks = initial_devicegraph.blk_devices.select { |d| disk_names.include?(d.name) }
       candidate_disks = candidate_disks.sort_by(&:size).reverse
       candidate_disks.map(&:name)
     end

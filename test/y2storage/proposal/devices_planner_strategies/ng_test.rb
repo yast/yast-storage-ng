@@ -552,7 +552,7 @@ describe Y2Storage::Proposal::DevicesPlannerStrategies::Ng do
           let(:max_size) { 10.GiB }
 
           before do
-            allow(devicegraph).to receive(:disk_devices).and_return([disk])
+            allow(devicegraph).to receive(:blk_devices).and_return([disk])
             allow(disk).to receive(:swap_partitions).and_return(swap_partitions)
           end
 
