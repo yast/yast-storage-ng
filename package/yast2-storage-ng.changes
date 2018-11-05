@@ -1,4 +1,13 @@
 -------------------------------------------------------------------
+Wed Nov  7 12:28:40 UTC 2018 - jlopez@suse.com
+
+- Crypttab entry allows to find a crypttab device by its UUID.
+- Devicegraph#find_by_any_name is able to find a LUKS device by
+  using its name at crypttab file.
+- Related to bsc#1094963.
+- 4.1.31
+
+-------------------------------------------------------------------
 Wed Nov  7 10:08:49 UTC 2018 - dgonzalez@suse.com
 
 - Improve the proposal to be able to work with existing MD RAIDs
