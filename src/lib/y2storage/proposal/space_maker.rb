@@ -71,7 +71,6 @@ module Y2Storage
       #
       def provide_space(original_graph, planned_partitions, lvm_helper)
         @original_graph = original_graph
-        @new_graph = original_graph.duplicate
         @dist_calculator = PartitionsDistributionCalculator.new(lvm_helper)
 
         # update storage ids of reused volumes in planned volumes list
@@ -93,36 +92,10 @@ module Y2Storage
         # map device names to storage ids, as names may change during space making
         keep = keep.map { |x| @original_graph.find_by_name(x) }.compact.map(&:sid)
 
-        # To make sure we are not freeing space in useless places first
-        # restrict the operations to disks with particular disk
-        # requirements.
-        #
-        # planned_partitions_by_disk() returns all partitions restricted to
-        # a certain disk. Most times partitions are free to be created
-        # anywhere but sometimes it is known in advance on which disk they
-        # should be created.
-        #
-        # Start by assigning space to them.
-        #
-        # The result (if successful) is kept in @distribution.
-        #
-        planned_partitions_by_disk(partitions).each do |disk, parts|
-          resize_and_delete!(parts, keep, lvm_helper, disk: disk)
-        end
-
-        # Doing something similar for #max_start_offset is more difficult and
-        # doesn't pay off (#max_start_offset is used just in one case)
-
-        # Now repeat the process with the full set of planned partitions and all the candidate
-        # disks.
-        #
-        # Note that the result of the run above is not lost as already
-        # assigned partitions are taken into account.
-        #
-        resize_and_delete!(partitions, keep, lvm_helper)
+        calculate_new_graph(partitions, keep, lvm_helper)
 
         {
-          devicegraph:             @new_graph,
+          devicegraph:             new_graph,
           deleted_partitions:      deleted_partitions,
           partitions_distribution: @distribution
         }
@@ -154,7 +127,11 @@ module Y2Storage
 
     protected
 
-      attr_reader :new_graph, :disk_analyzer, :dist_calculator
+      attr_reader :disk_analyzer, :dist_calculator
+
+      # New devicegraph calculated by {#provide_space}
+      # @return [Devicegraph]
+      attr_reader :new_graph
 
       # Partitions from the original devicegraph that are not present in the
       # result of the last call to #provide_space
@@ -162,6 +139,44 @@ module Y2Storage
       # @return [Array<Partition>]
       def deleted_partitions
         original_graph.partitions.select { |p| @deleted_sids.include?(p.sid) }
+      end
+
+      # @see #provide_space
+      #
+      # @param partitions [Array<Planned::Partition>] partitions to make space for
+      # @param keep [Array<String>] device names of partitions that should not be deleted
+      # @param lvm_helper [Proposal::LvmHelper] contains information about how
+      #     to deal with the existing LVM volume groups
+      def calculate_new_graph(partitions, keep, lvm_helper)
+        @new_graph = original_graph.duplicate
+
+        # To make sure we are not freeing space in useless places first
+        # restrict the operations to disks with particular disk
+        # requirements.
+        #
+        # planned_partitions_by_disk() returns all partitions restricted to
+        # a certain disk. Most times partitions are free to be created
+        # anywhere but sometimes it is known in advance on which disk they
+        # should be created.
+        #
+        # Start by assigning space to them.
+        #
+        # The result (if successful) is kept in @distribution.
+        #
+        planned_partitions_by_disk(partitions).each do |disk, parts|
+          resize_and_delete(parts, keep, lvm_helper, disk: disk)
+        end
+
+        # Doing something similar for #max_start_offset is more difficult and
+        # doesn't pay off (#max_start_offset is used just in one case)
+
+        # Now repeat the process with the full set of planned partitions and all the candidate
+        # disks.
+        #
+        # Note that the result of the run above is not lost as already
+        # assigned partitions are taken into account.
+        #
+        resize_and_delete(partitions, keep, lvm_helper)
       end
 
       # @return [Hash{String => Array<Planned::Partition>}]
@@ -203,7 +218,7 @@ module Y2Storage
       #     to deal with the existing LVM volume groups
       # @param disk [String] optional disk name to restrict operations to
       #
-      def resize_and_delete!(planned_partitions, keep, lvm_helper, disk: nil)
+      def resize_and_delete(planned_partitions, keep, lvm_helper, disk: nil)
         log.info "Resize and delete. disk: #{disk}, planned partitions:"
         planned_partitions.each do |p|
           log.info "  mount: #{p.mount_point}, disk: #{p.disk}, min: #{p.min}, max: #{p.max}"
