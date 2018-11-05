@@ -463,7 +463,7 @@ module Y2Storage
     # full path of the udev by-label link or `nil` if it does not exist.
     # e.g. "/dev/disk/by-label/DATA"
     # @see #udev_paths
-    # @return [String]
+    # @return [String, nil]
     def udev_full_label
       label = filesystem_label
 
@@ -481,7 +481,7 @@ module Y2Storage
     # full path of the udev by-uuid link or `nil` if it does not exist.
     # e.g. "/dev/disk/by-uuid/a1dc747af-6ef7-44b9-b4f8-d200a5f933ec"
     # @see #udev_paths
-    # @return [String]
+    # @return [String, nil]
     def udev_full_uuid
       uuid = filesystem_uuid
 

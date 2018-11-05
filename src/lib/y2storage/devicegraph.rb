@@ -559,7 +559,7 @@ module Y2Storage
     end
 
     # Encryption devices might be probed with a name that does not match the device name
-    # indicated in the fstab file. For example, /etc/fstab could has an entry like:
+    # indicated in the fstab file. For example, /etc/fstab could have an entry like:
     #
     #   /dev/mapper/cr_home   /home   ext4  defaults  0   0
     #
