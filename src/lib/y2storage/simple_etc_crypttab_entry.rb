@@ -34,8 +34,9 @@ module Y2Storage
     storage_forward :name
 
     # @!method device
-    #   @return [String] path to the underlying block device or a
-    #     specification of a block device via "UUID="
+    #   @return [String] path to the underlying block device (e.g. "/dev/sda1") or a
+    #     specification of a block device via "UUID=" (where the given uuid refers to
+    #     the LUKS device)
     storage_forward :device
 
     # @!method password
@@ -49,16 +50,15 @@ module Y2Storage
     # Plain device for the crypttab entry
     #
     # @note It always returns the underlying block device, even when the encryption
-    #   device is indicated by its UUID.
-    #
-    # TODO: Right now the device only is found when it is indicated by any udev
-    #   name, see {Devicegraph#find_by_any_name), but it is not possible to find
-    #   it when the crypttab entry contains an UUID (or label).
+    #   device is indicated by its UUID (which refers to the LUKS device).
     #
     # @param devicegraph [Devicegraph]
     # @return [BlkDevice, nil] nil if the device is not found
     def find_device(devicegraph)
-      devicegraph.find_by_any_name(device)
+      device = devicegraph.encryptions.find { |e| e.match_crypttab_spec?(self.device) }
+      device ||= devicegraph.find_by_any_name(self.device)
+
+      device && device.is?(:encryption) ? device.blk_device : device
     end
   end
 end

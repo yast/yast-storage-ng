@@ -54,7 +54,7 @@
       <udev-id>scsi-0ATA_VBOX_HARDDISK_VB777f5d67-56603f01-cr_part1</udev-id>
       <udev-id>scsi-1ATA_VBOX_HARDDISK_VB777f5d67-56603f01-cr_part1</udev-id>
       <udev-id>scsi-SATA_VBOX_HARDDISK_VB777f5d67-56603f01-cr_part1</udev-id>
-      <uuid></uuid>
+      <uuid>ccd40fe6-48df-491e-b862-02e5941e5d13</uuid>
     </Luks>
     <Partition>
       <sid>47</sid>
