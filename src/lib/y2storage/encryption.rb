@@ -210,39 +210,31 @@ module Y2Storage
         end
       end
 
-      # Updates encryption names according to the values indicated in a crypttab file
+      # Saves encryption names indicated in a crypttab file
       #
       # For each entry in the crypttab file, it finds the corresponding device and updates
-      # its encryption name with the value indicated in its crypttab entry. The device is
+      # its crypttab name with the value indicated in its crypttab entry. The device is
       # not modified at all if it is not encrypted.
       #
       # @param devicegraph [Devicegraph]
       # @param crypttab [Crypttab, String] Crypttab object or path to a crypttab file
-      def use_crypttab_names(devicegraph, crypttab)
+      def save_crypttab_names(devicegraph, crypttab)
         crypttab = Crypttab.new(crypttab) if crypttab.is_a?(String)
 
-        assign_crypttab_names(devicegraph, crypttab)
+        crypttab.entries.each { |e| save_crypttab_name(devicegraph, e) }
       end
 
     private
 
-      # Sets the crypttab names according to the values indicated in a crypttab file
-      #
-      # @param devicegraph [Devicegraph]
-      # @param crypttab [Crypttab]
-      def assign_crypttab_names(devicegraph, crypttab)
-        crypttab.entries.each { |e| assign_crypttab_name(devicegraph, e) }
-      end
-
-      # Sets the crypttab name according to the value indicated in a crypttab entry
+      # Saves the crypttab name according to the value indicated in a crypttab entry
       #
       # @param devicegraph [Devicegraph]
       # @param entry [SimpleEtcCrypttabEntry]
-      def assign_crypttab_name(devicegraph, entry)
+      def save_crypttab_name(devicegraph, entry)
         device = entry.find_device(devicegraph)
         return unless device && device.encrypted?
 
-        device.encryption.dm_table_name = entry.name
+        device.encryption.crypttab_name = entry.name
       end
 
       # Checks whether a given DeviceMapper table name is already in use by some
