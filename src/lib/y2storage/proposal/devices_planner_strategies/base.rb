@@ -103,9 +103,7 @@ module Y2Storage
         #
         # @return [Array<Partition>]
         def available_swap_partitions
-          devices = devicegraph.blk_devices.select { |d| d.respond_to?(:swap_partitions) }
-
-          devices.map(&:swap_partitions).flatten
+          devicegraph.partitions.select(&:swap?)
         end
 
         # Delete shadowed subvolumes from each planned device

@@ -35,6 +35,7 @@ RSpec.shared_context "devices planner" do
   let(:boot_checker) { instance_double("Y2Storage::BootRequirementChecker") }
 
   # Some reasonable defaults
+  let(:partitions) { [] }
   let(:swap_partitions) { [] }
   let(:arch) { :x86_64 }
 
@@ -50,7 +51,8 @@ RSpec.shared_context "devices planner" do
         Y2Storage::Planned::Partition.new("/other_boot", vfat)
       ]
     )
-    allow(devicegraph).to receive(:blk_devices).and_return [disk]
+    allow(devicegraph).to receive(:blk_devices).and_return([disk])
+    allow(devicegraph).to receive(:partitions).and_return(partitions + swap_partitions)
     allow(disk).to receive(:swap_partitions).and_return(swap_partitions)
 
     allow(Yast::Arch).to receive(:architecture).and_return(arch)

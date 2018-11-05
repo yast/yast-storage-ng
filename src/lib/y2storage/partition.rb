@@ -253,6 +253,13 @@ module Y2Storage
       partition_table.type.is?(:implicit)
     end
 
+    # Whether it is a swap partition
+    #
+    # @return [Boolean]
+    def swap?
+      id.is?(:swap) && formatted_as?(:swap)
+    end
+
   protected
 
     # Values for volume specification matching

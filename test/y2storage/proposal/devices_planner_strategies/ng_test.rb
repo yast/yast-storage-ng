@@ -556,12 +556,12 @@ describe Y2Storage::Proposal::DevicesPlannerStrategies::Ng do
             allow(disk).to receive(:swap_partitions).and_return(swap_partitions)
           end
 
-          let(:disk) { instance_double("Y2Storage::Disk", name: "/dev/sda") }
+          let(:disk) { instance_double("Y2Storage::Disk", name: "/dev/sda", partitions: partitions) }
 
           let(:planned_swap) { planned_devices.select { |d| d.mount_point == "swap" } }
 
           context "and there is a swap partition big enough" do
-            let(:swap_partitions) { [partition_double("/dev/sdaX", 3.GiB)] }
+            let(:swap_partitions) { [swap_double("/dev/sdaX", 3.GiB)] }
 
             context "if proposing an LVM setup" do
               let(:lvm) { true }
@@ -624,7 +624,7 @@ describe Y2Storage::Proposal::DevicesPlannerStrategies::Ng do
           end
 
           context "and there is no a swap partition big enough" do
-            let(:swap_partitions) { [partition_double("/dev/sdaX", 1.GiB)] }
+            let(:swap_partitions) { [swap_double("/dev/sdaX", 1.GiB)] }
             let(:lvm) { false }
 
             it "plans a brand new swap volume and no swap reusing" do

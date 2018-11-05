@@ -508,4 +508,39 @@ describe Y2Storage::Partition do
       end
     end
   end
+
+  describe "#swap?" do
+    let(:scenario) { "windows-linux-free-pc" }
+
+    subject(:partition) { fake_devicegraph.find_by_name(device_name) }
+
+    context "when has not a swap id" do
+      let(:device_name) { "/dev/sda3" }
+
+      it "returns false" do
+        expect(subject.swap?).to eq(false)
+      end
+    end
+
+    context "when has a swap id" do
+      let(:device_name) { "/dev/sda2" }
+
+      context "and it is formatted as swap" do
+        it "returns true" do
+          expect(subject.swap?).to eq(true)
+        end
+      end
+
+      context "but it is not formatted as swap" do
+        before do
+          subject.remove_descendants
+          subject.create_filesystem(Y2Storage::Filesystems::Type::VFAT)
+        end
+
+        it "returns false" do
+          expect(subject.swap?).to eq(false)
+        end
+      end
+    end
+  end
 end

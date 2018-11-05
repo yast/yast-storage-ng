@@ -62,7 +62,7 @@ describe Y2Storage::Proposal::DevicesPlannerStrategies::Legacy do
       end
 
       context "if the existing swap partition is not big enough" do
-        let(:swap_partitions) { [partition_double("/dev/sdaX", 1.GiB)] }
+        let(:swap_partitions) { [swap_double("/dev/sdaX", 1.GiB)] }
 
         it "includes a brand new swap volume and no swap reusing" do
           expect(swap_volumes).to contain_exactly(an_object_having_attributes(reuse_name: nil))
@@ -70,7 +70,7 @@ describe Y2Storage::Proposal::DevicesPlannerStrategies::Legacy do
       end
 
       context "if the existing swap partition is big enough" do
-        let(:swap_partitions) { [partition_double("/dev/sdaX", 3.GiB)] }
+        let(:swap_partitions) { [swap_double("/dev/sdaX", 3.GiB)] }
 
         context "if proposing an LVM setup" do
           before { settings.use_lvm = true }
