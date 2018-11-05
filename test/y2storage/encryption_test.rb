@@ -229,4 +229,40 @@ describe Y2Storage::Encryption do
       end
     end
   end
+
+  describe ".match_crypttab_spec?" do
+    subject { devicegraph.find_by_name(dev_name) }
+
+    let(:scenario) { "encrypted_partition.xml" }
+
+    let(:dev_name) { "/dev/mapper/cr_sda1" }
+
+    it "returns true for the kernel name of the underlying device" do
+      expect(subject.match_crypttab_spec?("/dev/sda1")).to eq(true)
+    end
+
+    it "returns true for any udev name of the underlying device" do
+      subject.blk_device.udev_full_all.each do |name|
+        expect(subject.match_crypttab_spec?(name)).to eq(true)
+      end
+    end
+
+    it "returns false for the kernel name of the encryption device" do
+      expect(subject.match_crypttab_spec?("/dev/mapper/cr_sda1")).to eq(false)
+    end
+
+    it "returns false for any udev name of the encryption device" do
+      subject.udev_full_all.each do |name|
+        expect(subject.match_crypttab_spec?(name)).to eq(false)
+      end
+    end
+
+    it "returns false for other kernel name" do
+      expect(subject.match_crypttab_spec?("/dev/sda2")).to eq(false)
+    end
+
+    it "returns false for other udev name" do
+      expect(subject.match_crypttab_spec?("/dev/disks/by-uuid/111-2222-3333")).to eq(false)
+    end
+  end
 end
