@@ -172,7 +172,7 @@ module Y2Storage
       disks.map { |d| @disks_data[data][d.name] }.flatten.compact
     end
 
-    # Obtains a list of disk devices, software RAIDs, and/or Bcaches
+    # Obtains a list of disk devices, software RAIDs, and Bcaches
     #
     # @see #default_disks_collection for default values when disks are not given
     #
@@ -295,18 +295,18 @@ module Y2Storage
       fs.release_name
     end
 
-    # Finds devices (disk devices or software raids) that are suitable for installing Linux
+    # Finds devices (disk devices and software RAIDs) that are suitable for installing Linux
     #
-    # From fate#326573 on, software raids with partition table or without children are also
+    # From fate#326573 on, software RAIDs with partition table or without children are also
     # considered as valid candidates.
     #
-    # @return [Array<BlkDevice>] candidate devices (disk devices and/or software RAIDs matching the
+    # @return [Array<BlkDevice>] candidate devices (disk devices and software RAIDs matching the
     #   conditions explained above)
     def find_candidate_disks
       find_candidate_software_raids + find_candidate_disk_devices
     end
 
-    # Finds software raids that are considered valid candidates for a Linux installation
+    # Finds software RAIDs that are considered valid candidates for a Linux installation
     #
     # Apart from matches conditions of #candidate_disk?, a valid software RAID candidate must
     # either, have a partition table or do not have children.

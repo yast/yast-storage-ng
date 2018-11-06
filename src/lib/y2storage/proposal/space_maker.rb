@@ -284,7 +284,7 @@ module Y2Storage
       #
       # @return [Array<Dasd, Disk>]
       def disks_for(devicegraph, device_name = nil)
-        filter = Array(device_name || candidate_disk_names)
+        filter = device_name ? [device_name] : candidate_disk_names
         devicegraph.blk_devices.select { |d| filter.include?(d.name) }
       end
 
