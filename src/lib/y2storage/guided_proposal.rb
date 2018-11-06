@@ -244,8 +244,21 @@ module Y2Storage
     def group_candidate_devices
       return [settings.candidate_devices] if settings.candidate_devices
 
-      candidates = disk_analyzer.candidate_disks.map(&:name)
+      candidates = reorder_candidate_disks.map(&:name)
       candidates.zip.append(candidates).uniq
+    end
+
+    # Sorts candidate disk based on their type: not USB first
+    #
+    # @return [Array<Disk>]
+    def reorder_candidate_disks
+      # NOTE: sorb_by it is not being used here because "the result is not guaranteed to be stable"
+      # see https://ruby-doc.org/core-2.5.0/Enumerable.html#method-i-sort_by
+      # In addition, a partition makes more sense here since we only are "grouping" available disks
+      # in two groups and moving one of them to the end.
+      disk_analyzer.candidate_disks.partition do |d|
+        d.respond_to?(:usb?) && !d.usb?
+      end.flatten
     end
 
     # Sorted list of disks to be tried as root_device.
