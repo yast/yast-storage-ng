@@ -158,7 +158,7 @@ describe Y2Storage::Proposal::SpaceMaker do
     end
   end
 
-  describe "#make_space" do
+  describe "#provide_space" do
     using Y2Storage::Refinements::SizeCasts
 
     let(:volumes) { [vol1] }
