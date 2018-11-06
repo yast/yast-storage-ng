@@ -184,6 +184,63 @@ describe Y2Storage::GuidedProposal do
       end
     end
 
+    context "when USB devices available" do
+      def proposed_disks
+        proposal_partitions = proposal.devices.partitions
+        fake_partitions_sids = fake_devicegraph.partitions.map(&:sid)
+        proposed_partitions_sids = proposal_partitions.map(&:sid) - fake_partitions_sids
+        new_partitions = proposal_partitions.select { |p| proposed_partitions_sids.include?(p.sid) }
+
+        new_partitions.map(&:disk).uniq
+      end
+
+      let(:scenario) { "empty_disks" }
+      let(:sda) { fake_devicegraph.find_by_name("/dev/sda") }
+      let(:sdb) { fake_devicegraph.find_by_name("/dev/sdb") }
+      let(:sdc) { fake_devicegraph.find_by_name("/dev/sdc") }
+
+      before do
+        allow(sda).to receive(:usb?).and_return(true)
+        allow(disk_analyzer).to receive(:candidate_disks).and_return([sda, sdb, sdc])
+      end
+
+      context "and is possible to use other non USB candidate" do
+        it "do not make the proposal on it" do
+          proposal.propose
+
+          expect(proposed_disks).to_not include(sda)
+        end
+      end
+
+      context "but is not possible to use other non USB candidate" do
+        before do
+          sdb.size = 10.MiB
+          sdc.size = 10.MiB
+        end
+
+        it "makes the proposal on a USB device" do
+          proposal.propose
+
+          expect(proposed_disks).to include(sda)
+        end
+      end
+
+      context "and there are not non USB candidates" do
+        before do
+          allow(sdb).to receive(:usb?).and_return(true)
+          allow(sdc).to receive(:usb?).and_return(true)
+
+          sda.size = 1.GiB
+        end
+
+        it "makes the proposal in the first USB device with enough space" do
+          proposal.propose
+
+          expect(proposed_disks).to eq([sdb])
+        end
+      end
+    end
+
     context "when installing in a DM RAID" do
       let(:scenario) { "empty-dm_raids_no_sda.xml" }
       let(:windows_partitions) { {} }

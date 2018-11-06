@@ -172,16 +172,27 @@ module Y2Storage
       disks.map { |d| @disks_data[data][d.name] }.flatten.compact
     end
 
-    # Obtains a list of disk devices.
+    # Obtains a list of disk devices, software RAIDs, and Bcaches
     #
-    # @param disks [Array<Dasd, Disk, String>] disk device to analyze.
-    #   All disk devices by default.
-    # @return [Array<Dasd, Disk>]
+    # @see #default_disks_collection for default values when disks are not given
+    #
+    # @param disks [Array<BlkDevice, String>] blk device to analyze.
+    # @return [Array<BlkDevice>] a list of blk devices
     def disks_collection(disks)
-      disks = devicegraph.disk_devices if disks.empty?
-      # Using BlkDevice because it is necessary to search in both, Dasd and Disk.
-      disks = disks.map { |d| d.is_a?(String) ? BlkDevice.find_by_name(devicegraph, d) : d }
+      return default_disks_collection if disks.empty?
+
+      disks.map! { |d| d.is_a?(String) ? BlkDevice.find_by_name(devicegraph, d) : d }
       disks.compact
+    end
+
+    # The default disks collection to be analyzed
+    #
+    # @note software RAIDs and Bcache also could be analyzed because it is possible to find a Linux
+    # system installed on them.
+    #
+    # @see #disks_collection
+    def default_disks_collection
+      devicegraph.disk_devices + devicegraph.software_raids + devicegraph.bcaches
     end
 
     # @see #windows_partitions
@@ -284,34 +295,39 @@ module Y2Storage
       fs.release_name
     end
 
-    # TODO: there is no reason to initally discard usb devices. The behavior is
-    # kept to avoid big changes in release phase.
+    # Finds devices (disk devices and software RAIDs) that are suitable for installing Linux
     #
-    # Finds disk devices that are suitable for installing Linux.
+    # From fate#326573 on, software RAIDs with partition table or without children are also
+    # considered as valid candidates.
     #
-    # @note Usb devices are considered as candidate disk only if there are no
-    #   other candidate disks.
-    #
-    # @return [Array<BlkDevice>] candidate devices
+    # @return [Array<BlkDevice>] candidate devices (disk devices and software RAIDs matching the
+    #   conditions explained above)
     def find_candidate_disks
-      candidates = find_non_usb_candidate_disks
-      return candidates if candidates.any?
-
-      find_usb_candidate_disks
+      find_candidate_software_raids + find_candidate_disk_devices
     end
 
-    # Finds non usb devices that are suitable for installing Linux
+    # Finds software RAIDs that are considered valid candidates for a Linux installation
     #
-    # @return [Array<BlkDevice>] candidate devices
-    def find_non_usb_candidate_disks
-      devicegraph.disk_devices.select { |d| !d.usb? && candidate_disk?(d) }
+    # Apart from matches conditions of #candidate_disk?, a valid software RAID candidate must
+    # either, have a partition table or do not have children.
+    #
+    # @return [Array<Md>]
+    def find_candidate_software_raids
+      @candidate_sofware_raids ||= devicegraph.software_raids.select do |md|
+        (md.partition_table? || md.children.empty?) && candidate_disk?(md)
+      end
     end
 
-    # Finds usb devices that are suitable for installing Linux
+    # Finds disk devices that are considered valid candidates
     #
-    # @return [Array<BlkDevice>] candidate devices
-    def find_usb_candidate_disks
-      devicegraph.disk_devices.select { |d| d.usb? && candidate_disk?(d) }
+    # Basically, all available disk devices except those that are part of a candidate software RAID.
+    #
+    # @return [Array<BlkDevice>]
+    def find_candidate_disk_devices
+      rejected_disk_devices = find_candidate_software_raids.map(&:ancestors).flatten
+      candidate_disk_devices = devicegraph.disk_devices.select { |d| candidate_disk?(d) }
+
+      candidate_disk_devices - rejected_disk_devices
     end
 
     # Checks whether a device can be used as candidate disk for installation
