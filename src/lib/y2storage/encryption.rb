@@ -112,10 +112,6 @@ module Y2Storage
     # /dev/disk/by-uuid/7a0c6309-7063-472b-8301-f52b0a92d8e9
     # /dev/disk/by-path/pci-0000:00:17.0-ata-3-part2
     #
-    # But it can also contain a value like UUID=111-222-333. In that case, the
-    # UUID value refers to the LUKS device instead of the underlying device.
-    # See {Luks#match_crypttab_spec?}.
-    #
     # This method checks whether the underlying device of the encryption is the
     # device indicated in the second column of a crypttab entry.
     #

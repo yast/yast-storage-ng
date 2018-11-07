@@ -353,7 +353,7 @@ module Y2Storage
     # In case of LUKSes, the device might be found by using an alternative name,
     # see {#alternative_names}.
     #
-    # @see deep_search
+    # @see #deep_find
     #
     # @param device_name [String] can be a kernel name like "/dev/sda1" or any symbolic
     #   link below the /dev directory
@@ -579,24 +579,14 @@ module Y2Storage
     # @param device_name [String] a kernel name or udev name
     # @return [Array<String>]
     def alternative_names(device_name)
-      devices = encryptions.select { |e| e.crypttab_name? && device_name.match?(e.crypttab_name) }
+      devices = encryptions.select { |e| e.crypttab_name? && device_name.include?(e.crypttab_name) }
 
       devices.map { |d| device_name.sub(d.crypttab_name, d.dm_table_name) }
     end
 
     # Performs the search of a device by any possible name (kernel name or udev name)
     #
-    # This is different from {BlkDevice.find_by_any_name} in several ways:
-    #
-    # * It will find any matching device, not only block devices (e.g. LVM VGs
-    #   also have a name but are not block devices).
-    # * It can be called on any devicegraph, not only probed.
-    # * It uses a system lookup only when necessary (i.e. all the cheaper
-    #   methods for finding the device have been unsuccessful).
-    # * It avoids system lookup in potentially risky scenarios (like an outdated
-    #   {StorageManager#probed}).
-    #
-    # @see find_by_any_name
+    # @see #find_by_any_name
     #
     # @return [Device, nil] the found device, nil if no device matches the name
     def deep_find(name)

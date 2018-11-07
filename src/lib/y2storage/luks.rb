@@ -40,15 +40,11 @@ module Y2Storage
 
     # Whether the LUKS encryption device matches with a given crypttab spec
     #
-    # The second column of /etc/crypttab contains a path to the underlying device
-    # of the encryption device (e.g., /dev/sda2). But it can also contain a value
+    # @see Encryption#match_crypttab_spec?
+    #
+    # In case of a LUKS device, the second column can also be a value
     # like UUID=111-222-333. In that case, the UUID value refers to the LUKS device
     # instead of the underlying device.
-    #
-    # This method checks whether the underlying device of the encryption device is
-    # the device indicated in the second column of a crypttab entry
-    # (see {Encryption#match_crypttab_spec?}), or if the given UUID refers to the
-    # LUKS device (e.g., UUID=112-333-444).
     #
     # @param spec [String] content of the second column of an /etc/crypttab entry
     # @return [Boolean]
