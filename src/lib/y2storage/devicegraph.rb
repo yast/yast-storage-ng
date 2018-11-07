@@ -324,7 +324,7 @@ module Y2Storage
       BlkDevice.sorted_by_name(self)
     end
 
-    # All Encryption devicces in the devicegraph, sorted by name
+    # All Encryption devices in the devicegraph, sorted by name
     #
     # @return [Array<Encryption>]
     def encryptions
@@ -600,14 +600,15 @@ module Y2Storage
     #
     # @return [Device, nil] the found device, nil if no device matches the name
     def deep_find(name)
-      log.info "Trying to find a device by name: #{name}"
-
       # First check using the device name
       device = find_by_name(name)
       # If not found, check udev names directly handled by libstorage-ng
       device ||= blk_devices.find { |dev| dev.udev_full_all.include?(name) }
-      log.info "Device #{device.inspect} found by its libstorage-ng name #{name}"
-      return device if device
+
+      if device
+        log.info "Device #{device.inspect} found by its libstorage-ng name #{name}"
+        return device
+      end
 
       # If no device yet, there is still a chance using the slower
       # BlkDevice.find_by_any_name. Unfortunatelly this only works in the

@@ -117,7 +117,7 @@ module Y2Storage
     # See {Luks#match_crypttab_spec?}.
     #
     # This method checks whether the underlying device of the encryption is the
-    # device indicated in the second column of an crypttab entry.
+    # device indicated in the second column of a crypttab entry.
     #
     # Take into account that libstorage-ng discards during probing all the
     # udev names not considered reliable or stable enough. This method only
@@ -140,7 +140,7 @@ module Y2Storage
     #
     # @note This relies on the userdata mechanism, see {#userdata_value}.
     #
-    # @return [String, nil] nil if rypttab name is not known
+    # @return [String, nil] nil if crypttab name is not known
     def crypttab_name
       userdata_value(:crypttab_name)
     end
