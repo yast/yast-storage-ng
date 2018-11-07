@@ -437,17 +437,27 @@ describe Y2Storage::Devicegraph do
       end
     end
 
-    context "if there is an Encryption with possible alternative name matching the given name" do
+    context "if there is an Encryption with alternative name matching the given name" do
       before do
         encryption = devicegraph.find_by_name("/dev/mapper/cr_sda4")
         encryption.crypttab_name = "cr_home"
       end
 
-      it "returns the correct encryption device" do
-        blk_device = devicegraph.find_by_any_name("/dev/mapper/cr_home")
+      context "and the search is performed by using alternative names" do
+        it "returns the correct encryption device" do
+          blk_device = devicegraph.find_by_any_name("/dev/mapper/cr_home", alternative_names: true)
 
-        expect(blk_device).to_not be_nil
-        expect(blk_device.name).to eq "/dev/mapper/cr_sda4"
+          expect(blk_device).to_not be_nil
+          expect(blk_device.name).to eq "/dev/mapper/cr_sda4"
+        end
+      end
+
+      context "and the search is not performed by using alternative names" do
+        it "returns nil" do
+          blk_device = devicegraph.find_by_any_name("/dev/mapper/cr_home", alternative_names: false)
+
+          expect(blk_device).to be_nil
+        end
       end
     end
 
