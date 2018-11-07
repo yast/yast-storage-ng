@@ -114,12 +114,16 @@ module Y2Storage
       #   partitions
       def delete_unwanted_partitions(original_graph)
         result = original_graph.dup
+        partition_killer = PartitionKiller.new(result, candidate_disk_names)
 
         [:windows, :linux, :other].each do |type|
           next unless settings.delete_forced?(type)
 
           log.info("Forcely deleting #{type} partitions")
-          delete_candidates!(result, type)
+          deletion_candidate_partitions(result, type).each do |part_sid|
+            sids = partition_killer.delete_by_sid(part_sid)
+            @all_deleted_sids.concat(sids)
+          end
         end
 
         result
@@ -133,12 +137,39 @@ module Y2Storage
       # @return [Devicegraph]
       attr_reader :new_graph
 
+      # Auxiliary killer used to calculate {#new_graph}
+      # @return [PartitionKiller]
+      attr_reader :new_graph_part_killer
+
       # Sids of the partitions deleted while calculating {#new_graph}. In other
       # words, partitions that where in the original devicegraph passed to
       # {#provide_space} but that are not longer there in {#new_graph}.
       #
       # @return [Array<Integer>]
       attr_reader :new_graph_deleted_sids
+
+      # Optional disk name to restrict operations to, if nil all disks can be
+      # used.
+      #
+      # The main process (see {#resize_and_delete}) can be executed several
+      # times, depending on the disk restrictions of the planned devices. This
+      # value is used by the auxiliary methods of {#resize_and_delete} to ensure
+      # they operate only in the relevant device for the current execution, if
+      # there is such restriction.
+      #
+      # @return [String, nil]
+      attr_reader :disk_name
+
+      # Sorted lists of sids of the partitions that can be deleted during this
+      # execution of {#resize_and_delete} (i.e. for the current value of
+      # {#disk_name}).
+      #
+      # Includes three separate lists indexed by type (:linux, :other, :windows),
+      # the first partition on every list will be the first of that type to be
+      # deleted (if needed, of course).
+      #
+      # @return [Hash{Symbol => Array<Integer>]
+      attr_reader :sorted_candidates
 
       # Partitions from the original devicegraph that are not present in the
       # result of the last call to #provide_space
@@ -156,6 +187,7 @@ module Y2Storage
       #     to deal with the existing LVM volume groups
       def calculate_new_graph(partitions, keep, lvm_helper)
         @new_graph = original_graph.duplicate
+        @new_graph_part_killer = PartitionKiller.new(@new_graph, candidate_disk_names)
         @new_graph_deleted_sids = []
 
         # To make sure we are not freeing space in useless places first
@@ -237,57 +269,81 @@ module Y2Storage
         # restart evaluation
         @distribution = nil
 
-        # maybe it works already...
-        return if success?(planned_partitions)
+        @disk_name = disk
+        calculate_sorted_candidates(keep)
 
-        # Try various methods to free space. Stop when a valid partition
-        # layout has been found.
-
-        methods_and_args = [
-          # step 1 - resize Windows partitions only if there are no Linux partitions on the disk
-          [:resize_windows!,     [{ force: false }]],
-          # step 2 - # delete Linux partitions
-          [:delete_partitions!,  [:linux, keep]],
-          # step 3 - delete other (non-Windows) partitions
-          [:delete_partitions!,  [:other, keep]],
-          # step 4 - resize Windows partitions
-          #
-          # ** Note **
-          #
-          # There are two steps where we try to resize a Windows partition.
-          # Both should be mutually exclusive. But the 'force' argument
-          # itself doesn't ensure this. However: when we did a resize in
-          # Step 1 we either did a partial resize - in this case we don't
-          # reach this step as it will have freed enough space (else it
-          # would have been a full resize). Or we did a full resize in
-          # Step 1 - then the remaining size in the Windows partition will
-          # be zero and this second resize won't happen.
-          [:resize_windows!,     [{ force: true }]],
-          # step 5 - delete Windows partitions
-          [:delete_partitions!,  [:windows, keep]],
-          # step 6 - if deleting partitions was not enough, maybe there is no
-          # partition table and we have to wipe the disk
-          [:delete_disk_content, [lvm_helper]]
-        ]
-
-        methods_and_args.each_with_index do |method_and_args, idx|
-          method, extra_args = method_and_args
-
-          log.info "Step #{idx + 1} - #{method}"
-          send(method, planned_partitions, disk, *extra_args)
-
-          break if @distribution
+        until success?(planned_partitions)
+          break unless execute_next_action(planned_partitions, lvm_helper)
         end
 
         raise Error unless @distribution
+      end
+
+      # Performs the next action of {#resize_and_delete}
+      #
+      # @return [Boolean] true if some operation was performed. False if nothing
+      #   else could be done to reach the goal.
+      def execute_next_action(planned_partitions, lvm_helper)
+        part = next_partition_to_resize
+        if part
+          target_shrink_size = resizing_size(part, planned_partitions)
+          shrink_partition(part, target_shrink_size)
+        else
+          part_sid = next_partition_to_delete
+          if part_sid
+            # Strictly speaking, this could lead to deletion of a partition
+            # included in the keep array. In practice it doesn't matter because
+            # PVs and extended partitions are never marked to be reused as a
+            # planned partition.
+            sids = new_graph_part_killer.delete_by_sid(part_sid)
+            new_graph_deleted_sids.concat(sids)
+          else
+            wipe = next_disk_to_wipe(lvm_helper)
+            return false unless wipe
+            remove_content(wipe)
+          end
+        end
+
+        true
+      end
+
+      # Fills up {#sorted_candidates} for the current execution of
+      # {#resize_and_delete}
+      def calculate_sorted_candidates(keep)
+        @sorted_candidates = {}
+        [:linux, :other, :windows].each do |type|
+          @sorted_candidates[type] =
+            if settings.delete_forbidden?(type)
+              []
+            else
+              deletion_candidate_partitions(new_graph, type, disk_name) - keep
+            end
+        end
+      end
+
+      # Plain list of all candidates to be deleted
+      #
+      # @return [Array<Integer>]
+      def all_sorted_candidates
+        sorted_candidates[:linux] + sorted_candidates[:other] + sorted_candidates[:windows]
+      end
+
+      # Sid of the next partition to be deleted by {#resize_and_delete}
+      #
+      # @return [Integer]
+      def next_partition_to_delete
+        result = (all_sorted_candidates - new_graph_deleted_sids).first
+
+        log.info "Next partition to delete: #{result}"
+        result
       end
 
       # Additional space that needs to be freed while resizing a partition in
       # order to reach the goal
       #
       # @return [DiskSize]
-      def resizing_size(partition, planned_partitions, disk)
-        spaces = free_spaces(new_graph, disk)
+      def resizing_size(partition, planned_partitions)
+        spaces = free_spaces(new_graph, disk_name)
         dist_calculator.resizing_size(partition, planned_partitions, spaces)
       end
 
@@ -318,39 +374,38 @@ module Y2Storage
         settings.candidate_devices
       end
 
-      # Try to resize the existing windows partitions
+      # Next partition to be deleted by {#resize_and_delete}
       #
-      # @param planned_partitions [Array<Planned::Partition>] list of
-      #   partitions to allocate, used to know how much space is still missing
-      # @param disk [String] optional disk name to restrict operations to
-      # @param force [Boolean] whether to resize Windows even if there are
-      #   Linux partitions in the same disk
-      def resize_windows!(planned_partitions, disk, force: false)
-        return unless settings.resize_windows
-        part_names = windows_part_names(disk)
-        return if part_names.empty?
+      # @return [Partition]
+      def next_partition_to_resize
+        log.info("Looking for Windows partitions to resize")
 
-        log.info("Resizing Windows partitions (force: #{force})")
+        return nil unless settings.resize_windows
+        part_names = windows_part_names(disk_name)
+        return nil if part_names.empty?
+
+        log.info("Evaluating the following Windows partitions: #{part_names}")
+
         parts_by_disk = partitions_by_disk(part_names)
-        remove_linux_disks!(parts_by_disk) unless force
+        remove_linux_disks!(parts_by_disk) unless no_more_linux_or_other?
 
-        success = sorted_resizables(parts_by_disk.values.flatten).any? do |part|
-          target_shrink_size = resizing_size(part, planned_partitions, disk)
-          shrink_partition(part, target_shrink_size)
+        sorted_resizables(parts_by_disk.values.flatten).first
+      end
 
-          success?(planned_partitions)
-        end
-
-        log.info "Didn't manage to free enough space by resizing Windows" unless success
+      # @see #next_partition_to_resize
+      #
+      # @return [Boolean]
+      def no_more_linux_or_other?
+        (sorted_candidates[:linux] + sorted_candidates[:other] - new_graph_deleted_sids).empty?
       end
 
       # @return [Hash{String => Partition}]
       def partitions_by_disk(part_names)
         partitions = new_graph.partitions.select { |p| part_names.include?(p.name) }
         partitions.each_with_object({}) do |partition, hash|
-          disk_name = partition.partitionable.name
-          hash[disk_name] ||= []
-          hash[disk_name] << partition
+          disk = partition.partitionable.name
+          hash[disk] ||= []
+          hash[disk] << partition
         end
       end
 
@@ -363,8 +418,8 @@ module Y2Storage
         end
       end
 
-      def linux_in_disk?(disk_name)
-        linux_part_names(disk_name).any?
+      def linux_in_disk?(name)
+        linux_part_names(name).any?
       end
 
       # Sorted list of partitions that can be resized, partitions with more
@@ -392,46 +447,6 @@ module Y2Storage
         partition.resize(partition.size - shrink_size, align_type: nil)
       end
 
-      # Use force to create space: delete partitions if a given type while
-      # there is no suitable space distribution
-      #
-      # @see #deletion_candidate_partitions for supported types
-      #
-      # @param planned_partitions [Array<Planned::Partition>]
-      # @param disk [String] optional disk name to restrict operations to
-      # @param type [Symbol] type of partition to delete
-      # @param keep [Array<String>] device names of partitions that should not
-      #       be deleted
-      def delete_partitions!(planned_partitions, disk, type, keep)
-        return if settings.delete_forbidden?(type)
-
-        log.info("Deleting partitions to make space")
-        delete_candidates!(new_graph, type, keep, disk) { success?(planned_partitions) }
-      end
-
-      # @see #delete_partitions! and #delete_unwanted_partitions
-      def delete_candidates!(devicegraph, type, keep = [], disk = nil)
-        partition_killer = PartitionKiller.new(devicegraph, candidate_disk_names)
-
-        deletion_candidate_partitions(devicegraph, type, disk).each do |part_sid|
-          if keep.include?(part_sid)
-            log.info "Skipped deletion of sid #{part_sid}"
-            next
-          end
-
-          # Strictly speaking, this could lead to deletion of a partition
-          # included in the keep array. In practice it doesn't matter because
-          # PVs and extended partitions are never marked to be reused as a
-          # planned partition.
-          sids = partition_killer.delete_by_sid(part_sid)
-          next if sids.empty?
-
-          @all_deleted_sids.concat(sids)
-          # Stop deleting if the passed condition is met
-          break if block_given? && yield
-        end
-      end
-
       # Partitions of a given type to be deleted. The type can be:
       #
       #  * :windows Partitions with a Windows installation on it
@@ -439,12 +454,12 @@ module Y2Storage
       #  * :other Any other partition
       #
       # Extended partitions are ignored, they will be deleted by
-      # #delete_partition if needed
+      # PartitionKiller if needed
       #
       # @param devicegraph [Devicegraph]
       # @param type [Symbol]
       # @param disk [String] optional disk name to restrict operations to
-      # @return [Array<String>] partition names sorted by disk and by position
+      # @return [Array<Integer>] sids sorted by disk and by position
       #     inside the disk (partitions at the end are presented first)
       def deletion_candidate_partitions(devicegraph, type, disk = nil)
         sids = []
@@ -476,29 +491,32 @@ module Y2Storage
         end
       end
 
-      # Wipe the content of disk-like devices not containining a partition table,
+      # Finds the next device that can be completely cleaned by {#resize_and_delete}.
+      #
+      # It searchs for disk-like devices not containining a partition table,
       # like disks directly formatted or used as members of an LVM or software RAID.
       #
-      # @param planned_partitions [Array<Planned::Partition>] list of
-      #   partitions to allocate, used to know how much space is still missing
-      # @param disk [String] optional disk name to restrict operations to
       # @param lvm_helper [Proposal::LvmHelper] contains information about how
       #     to deal with the existing LVM volume groups
-      def delete_disk_content(planned_partitions, disk, lvm_helper)
-        log.info "BEGIN delete_disk_content with disk #{disk}"
+      # @return [BlkDevice]
+      def next_disk_to_wipe(lvm_helper)
+        log.info "Searching next disk to wipe (disk_name: #{disk_name})"
 
-        disks_for(new_graph, disk).each do |dsk|
-          log.info "Checking if the disk #{dsk.name} has a partition table"
+        disks_for(new_graph, disk_name).each do |disk|
+          log.info "Checking if the disk #{disk.name} has a partition table"
 
-          next unless dsk.has_children? && dsk.partition_table.nil?
-
+          next unless disk.has_children? && disk.partition_table.nil?
           log.info "Found something that is not a partition table"
-          remove_content(dsk, lvm_helper)
 
-          break if success?(planned_partitions)
+          if disk.descendants.any? { |dev| lvm_helper.vg_to_reuse?(dev) }
+            log.info "Not cleaning up #{disk.name} because its VG must be reused"
+            next
+          end
+
+          return disk
         end
 
-        log.info "END delete_disk_content"
+        nil
       end
 
       # Remove descendants of a disk and also partitions from other disks that
@@ -508,13 +526,7 @@ module Y2Storage
       #
       # @param disk [Partitionable] disk-like device to cleanup. It must not be
       #   part of a multipath device or a BIOS RAID.
-      # @param lvm_helper [Proposal::LvmHelper] contains information about how
-      #     to deal with the existing LVM volume groups
-      def remove_content(disk, lvm_helper)
-        if disk.descendants.any? { |dev| lvm_helper.vg_to_reuse?(dev) }
-          log.info "Not cleaning up #{disk.name} because its VG must be reused"
-          return
-        end
+      def remove_content(disk)
         disk.remove_descendants
       end
 
