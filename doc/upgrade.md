@@ -83,7 +83,7 @@ the device "/dev/sda2" is searched in the devicegraph and the crypttab name "cr_
 
 Once this information is saved in the encryption devices, when an encryption name is searched in the devicegraph, we can check if the searched named is the alternative name of any encryption device. So, for this example, when we search in the devicegraph the device by "/dev/mapper/cr_home", we can return "/dev/mapper/cr-auto-1".
 
-This problem was fixed for SLE-15, see Pull Requests for [libstorage-ng](https://github.com/openSUSE/libstorage-ng/pull/535), [yast2-storage-ng](https://github.com/yast/yast-storage-ng/pull/659) and [yast2-update](https://github.com/yast/yast-update/pull/101) packages. And here the realated bug [bsc#1094963](https://bugzilla.suse.com/show_bug.cgi?id=1094963).
+This problem was fixed for SLE-15, see pull requests for [libstorage-ng](https://github.com/openSUSE/libstorage-ng/pull/535), [yast2-storage-ng](https://github.com/yast/yast-storage-ng/pull/659) and [yast2-update](https://github.com/yast/yast-update/pull/101) packages. And here the related bug [bsc#1094963](https://bugzilla.suse.com/show_bug.cgi?id=1094963).
 
 
 ## Problem 2: device not found in inst-sys
@@ -125,8 +125,6 @@ The solution here is to avoid to use the fstab spec when that device name is not
 mount /dev/disk/by-uuid/111-222-333 /home
 ```
 
-Note that this problem could not appear when upgrading a system generated with old storage. The old storage created the fstab entries with the option "nofail" for some mount points, for example "/" or "/home":
-
 Note that the old storage was creating fstab entries with the option "nofail" for some mount points, for example "/" or "/home". Therefore, a system generated with old storage could silently fail when trying to mount the filesystem, and the upgrade process could finish without that volume being mounted.
 
 ```
@@ -135,4 +133,4 @@ Note that the old storage was creating fstab entries with the option "nofail" fo
 
 This could make the upgrade useless when some important mount point is not properly mounted, for example, when mounting an encrypted /usr silently fails.
 
-Those problems are now fixed for SLE-15-SP1, see Pull Requests for [libstorage-ng](https://github.com/openSUSE/libstorage-ng/pull/589), [yast2-storage-ng](https://github.com/yast/yast-storage-ng/pull/790) and [yast2-update](https://github.com/yast/yast-update/pull/115).
+Those problems are now fixed for SLE-15-SP1, see pull requests for [libstorage-ng](https://github.com/openSUSE/libstorage-ng/pull/589), [yast2-storage-ng](https://github.com/yast/yast-storage-ng/pull/790) and [yast2-update](https://github.com/yast/yast-update/pull/115).
