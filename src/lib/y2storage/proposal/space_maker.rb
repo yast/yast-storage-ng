@@ -48,7 +48,7 @@ module Y2Storage
       def initialize(disk_analyzer, settings)
         @disk_analyzer = disk_analyzer
         @settings = settings
-        @deleted_sids = []
+        @all_deleted_sids = []
       end
 
       # Performs all the operations needed to free enough space to accomodate
@@ -133,12 +133,19 @@ module Y2Storage
       # @return [Devicegraph]
       attr_reader :new_graph
 
+      # Sids of the partitions deleted while calculating {#new_graph}. In other
+      # words, partitions that where in the original devicegraph passed to
+      # {#provide_space} but that are not longer there in {#new_graph}.
+      #
+      # @return [Array<Integer>]
+      attr_reader :new_graph_deleted_sids
+
       # Partitions from the original devicegraph that are not present in the
       # result of the last call to #provide_space
       #
       # @return [Array<Partition>]
       def deleted_partitions
-        original_graph.partitions.select { |p| @deleted_sids.include?(p.sid) }
+        original_graph.partitions.select { |p| @all_deleted_sids.include?(p.sid) }
       end
 
       # @see #provide_space
@@ -149,6 +156,7 @@ module Y2Storage
       #     to deal with the existing LVM volume groups
       def calculate_new_graph(partitions, keep, lvm_helper)
         @new_graph = original_graph.duplicate
+        @new_graph_deleted_sids = []
 
         # To make sure we are not freeing space in useless places first
         # restrict the operations to disks with particular disk
@@ -177,6 +185,8 @@ module Y2Storage
         # assigned partitions are taken into account.
         #
         resize_and_delete(partitions, keep, lvm_helper)
+
+        @all_deleted_sids.concat(new_graph_deleted_sids)
       end
 
       # @return [Hash{String => Array<Planned::Partition>}]
@@ -416,7 +426,7 @@ module Y2Storage
           sids = partition_killer.delete_by_sid(part_sid)
           next if sids.empty?
 
-          @deleted_sids.concat(sids)
+          @all_deleted_sids.concat(sids)
           # Stop deleting if the passed condition is met
           break if block_given? && yield
         end
