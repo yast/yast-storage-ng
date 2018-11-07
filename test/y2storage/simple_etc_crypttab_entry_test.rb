@@ -30,9 +30,7 @@ describe Y2Storage::SimpleEtcCrypttabEntry do
 
   subject { crypttab_entry(name, device, password, crypt_options) }
 
-  let(:name) { "cr_sda4" }
-
-  let(:device) { "/dev/sda4" }
+  let(:name) { "cr_device" }
 
   let(:password) { "P4ssW0rd" }
 
@@ -40,20 +38,36 @@ describe Y2Storage::SimpleEtcCrypttabEntry do
 
   let(:devicegraph) { Y2Storage::StorageManager.instance.staging }
 
-  let(:scenario) { "gpt_encryption" }
+  let(:scenario) { "encrypted_partition.xml" }
 
   describe "#find_device" do
-    let(:sda4) { devicegraph.find_by_name("/dev/sda4") }
+    context "when the crypttab device field contains a LUKS UUID (UUID= format)" do
+      context "and a LUKS exists with such UUID" do
+        let(:device) { "UUID=ccd40fe6-48df-491e-b862-02e5941e5d13" }
 
-    context "when the crypttab device field contains an UUID" do
-      let(:device) { "UUID=123456-789" }
+        it "returns the underlying device" do
+          expect(subject.find_device(devicegraph).name).to eq("/dev/sda1")
+        end
+      end
 
-      it "returns nil (FIXME)" do
-        expect(subject.find_device(devicegraph)).to be_nil
+      context "and a LUKS with such UUID does not exist" do
+        let(:device) { "UUID=does-not-exist" }
+
+        it "returns nil" do
+          expect(subject.find_device(devicegraph)).to be_nil
+        end
       end
     end
 
-    context "when the crypttab device field contains a device path" do
+    context "when the crypttab device field contains a kernel path" do
+      context "and the device exists" do
+        let(:device) { "/dev/sda2" }
+
+        it "returns the device" do
+          expect(subject.find_device(devicegraph).name).to eq("/dev/sda2")
+        end
+      end
+
       context "and the device does not exist" do
         let(:device) { "/dev/sdb1" }
 
@@ -61,12 +75,22 @@ describe Y2Storage::SimpleEtcCrypttabEntry do
           expect(subject.find_device(devicegraph)).to be_nil
         end
       end
+    end
 
+    context "when the crypttab device field contains an udev path" do
       context "and the device exists" do
-        let(:device) { "/dev/sda4" }
+        let(:device) { "/dev/disk/by-id/ata-VBOX_HARDDISK_VB777f5d67-56603f01-part2" }
 
-        it "returns the proper device" do
-          expect(subject.find_device(devicegraph)).to eq(sda4)
+        it "returns the device" do
+          expect(subject.find_device(devicegraph).name).to eq("/dev/sda2")
+        end
+      end
+
+      context "and the device does not exist" do
+        let(:device) { "/dev/disk/by-id/does-not-exist" }
+
+        it "returns nil" do
+          expect(subject.find_device(devicegraph)).to be_nil
         end
       end
     end

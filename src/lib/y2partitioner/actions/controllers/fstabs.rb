@@ -332,11 +332,11 @@ module Y2Partitioner
         #
         # When the device name in the fstab entry corresponds to a encryption device, the device
         # could not be found by that fstab name. In general, the encryptions might be probed with
-        # a different name, so before searching for the device, the devicegraph is modified to
-        # set the encryption names from the crypttab file. That changes are made in a temporary
+        # a different name, so before searching for the device, the encryption names from the crypttab
+        # file are saved into the proper encryption device. That changes are made in a temporary
         # devicegraph, so the original one is never altered.
         #
-        # @see #devicegraph_with_fixed_encryptions
+        # @see #devicegraph_with_crypttab_names
         #
         # @param entry [Y2Storage::SimpleEtcFstabEntry]
         # @param devicegraph [Y2Storage::Devicegraph]
@@ -344,23 +344,22 @@ module Y2Partitioner
         # @return [Y2Storage::BlkDevice, Y2Storage::Filesystems::Nfs, nil] nil if the device is
         #   not found in the devicegraph.
         def entry_device(entry, devicegraph)
-          device = entry.device(devicegraph_with_fixed_encryptions(devicegraph))
+          device = entry.device(devicegraph_with_crypttab_names(devicegraph))
           device ? devicegraph.find_device(device.sid) : nil
         end
 
-        # Duplicates the given devicegraph and modifies it by setting the encryption names
-        # from the crypttab file
+        # Duplicates the given devicegraph and saves the encryption names from the crypttab file
         #
         # @see #crypttab
         #
         # @param devicegraph [Y2Storage::Devicegraph]
         # @return [Y2Storage::Devicegraph]
-        def devicegraph_with_fixed_encryptions(devicegraph)
+        def devicegraph_with_crypttab_names(devicegraph)
           fixed_devicegraph = devicegraph.dup
 
           return fixed_devicegraph unless crypttab
 
-          Y2Storage::Encryption.use_crypttab_names(fixed_devicegraph, crypttab)
+          Y2Storage::Encryption.save_crypttab_names(fixed_devicegraph, crypttab)
           fixed_devicegraph
         end
 

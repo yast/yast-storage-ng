@@ -28,7 +28,7 @@ module Y2Storage
   #
   # This is a wrapper for Storage::Encryption
   class Encryption < BlkDevice
-    wrap_class Storage::Encryption
+    wrap_class Storage::Encryption, downcast_to: ["Luks"]
 
     # @!method blk_device
     #   Block device directly hosting the encryption layer.
@@ -102,6 +102,52 @@ module Y2Storage
       save_userdata(:auto_dm_name, value)
     end
 
+    # Whether the encryption device matches with a given crypttab spec
+    #
+    # The second column of /etc/crypttab contains a path to the underlying
+    # device of the encrypted device. For example:
+    #
+    # /dev/sda2
+    # /dev/disk/by-id/scsi-0ATA_Micron_1100_SATA_1652155452D8-part2
+    # /dev/disk/by-uuid/7a0c6309-7063-472b-8301-f52b0a92d8e9
+    # /dev/disk/by-path/pci-0000:00:17.0-ata-3-part2
+    #
+    # This method checks whether the underlying device of the encryption is the
+    # device indicated in the second column of a crypttab entry.
+    #
+    # Take into account that libstorage-ng discards during probing all the
+    # udev names not considered reliable or stable enough. This method only
+    # checks by the udev names recognized by libstorage-ng (not discarded).
+    #
+    # @param spec [String] content of the second column of an /etc/crypttab entry
+    # @return [Boolean]
+    def match_crypttab_spec?(spec)
+      blk_device.name == spec || blk_device.udev_full_all.include?(spec)
+    end
+
+    # Whether the crypttab name is known for this encryption device
+    #
+    # @return [Boolean]
+    def crypttab_name?
+      !crypttab_name.nil?
+    end
+
+    # Name specified in the crypttab file for this encryption device
+    #
+    # @note This relies on the userdata mechanism, see {#userdata_value}.
+    #
+    # @return [String, nil] nil if crypttab name is not known
+    def crypttab_name
+      userdata_value(:crypttab_name)
+    end
+
+    # Saves how this encryption device is known in the crypttab file
+    #
+    # @note This relies on the userdata mechanism, see {#save_userdata}.
+    def crypttab_name=(value)
+      save_userdata(:crypttab_name, value)
+    end
+
   protected
 
     def types_for_is
@@ -160,39 +206,31 @@ module Y2Storage
         end
       end
 
-      # Updates encryption names according to the values indicated in a crypttab file
+      # Saves encryption names indicated in a crypttab file
       #
       # For each entry in the crypttab file, it finds the corresponding device and updates
-      # its encryption name with the value indicated in its crypttab entry. The device is
+      # its crypttab name with the value indicated in its crypttab entry. The device is
       # not modified at all if it is not encrypted.
       #
       # @param devicegraph [Devicegraph]
       # @param crypttab [Crypttab, String] Crypttab object or path to a crypttab file
-      def use_crypttab_names(devicegraph, crypttab)
+      def save_crypttab_names(devicegraph, crypttab)
         crypttab = Crypttab.new(crypttab) if crypttab.is_a?(String)
 
-        assign_crypttab_names(devicegraph, crypttab)
+        crypttab.entries.each { |e| save_crypttab_name(devicegraph, e) }
       end
 
     private
 
-      # Sets the crypttab names according to the values indicated in a crypttab file
-      #
-      # @param devicegraph [Devicegraph]
-      # @param crypttab [Crypttab]
-      def assign_crypttab_names(devicegraph, crypttab)
-        crypttab.entries.each { |e| assign_crypttab_name(devicegraph, e) }
-      end
-
-      # Sets the crypttab name according to the value indicated in a crypttab entry
+      # Saves the crypttab name according to the value indicated in a crypttab entry
       #
       # @param devicegraph [Devicegraph]
       # @param entry [SimpleEtcCrypttabEntry]
-      def assign_crypttab_name(devicegraph, entry)
+      def save_crypttab_name(devicegraph, entry)
         device = entry.find_device(devicegraph)
         return unless device && device.encrypted?
 
-        device.encryption.dm_table_name = entry.name
+        device.encryption.crypttab_name = entry.name
       end
 
       # Checks whether a given DeviceMapper table name is already in use by some

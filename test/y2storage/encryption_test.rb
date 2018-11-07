@@ -32,7 +32,7 @@ describe Y2Storage::Encryption do
 
   let(:devicegraph) { Y2Storage::StorageManager.instance.staging }
 
-  describe ".use_crypttab_names" do
+  describe ".save_crypttab_names" do
     before do
       allow(Storage).to receive(:read_simple_etc_crypttab).and_return(storage_entries)
     end
@@ -53,7 +53,7 @@ describe Y2Storage::Encryption do
       it "tries to read the crypttab file" do
         expect(Y2Storage::Crypttab).to receive(:new).and_call_original
 
-        described_class.use_crypttab_names(devicegraph, "/etc/crypttab")
+        described_class.save_crypttab_names(devicegraph, "/etc/crypttab")
       end
     end
 
@@ -63,40 +63,36 @@ describe Y2Storage::Encryption do
 
         expect(Y2Storage::Crypttab).to_not receive(:new)
 
-        described_class.use_crypttab_names(devicegraph, crypttab)
+        described_class.save_crypttab_names(devicegraph, crypttab)
       end
     end
 
-    context "when a device indicated in a crypttab entry is an encrypted device" do
+    context "when the device indicated in a crypttab entry is currently encrypted" do
       let(:device_name) { "/dev/sda4" }
 
-      it "updates the encryption name of that device using the crypttab value" do
-        expect(device.encryption.name).to_not eq("/dev/mapper/luks1")
+      it "saves the crypttab name on the encryption device" do
+        expect(device.encryption.crypttab_name).to be_nil
 
-        described_class.use_crypttab_names(devicegraph, "path_to_crypttab")
+        described_class.save_crypttab_names(devicegraph, "path_to_crypttab")
 
-        expect(device.encryption.name).to eq("/dev/mapper/luks1")
-        expect(device.encryption.dm_table_name).to eq("luks1")
+        expect(device.encryption.crypttab_name).to eq("luks1")
       end
     end
 
-    context "when a device indicated in a crypttab entry is not an encrypted device" do
+    context "when the device indicated in a crypttab entry is not currently encrypted" do
       let(:device_name) { "/dev/sda1" }
 
-      it "does not modify the device" do
-        device_before = device.dup
-
-        described_class.use_crypttab_names(devicegraph, "path_to_crypttab")
-
-        expect(device).to eq(device_before)
+      it "does not fail" do
+        expect { described_class.save_crypttab_names(devicegraph, "path_to_crypttab") }
+          .to_not raise_error
       end
     end
 
-    context "when a device indicated in a crypttab entry is not found" do
+    context "when the device indicated in a crypttab entry is not found" do
       let(:device_name) { "/dev/sdb1" }
 
       it "does not fail" do
-        expect { described_class.use_crypttab_names(devicegraph, "path_to_crypttab") }
+        expect { described_class.save_crypttab_names(devicegraph, "path_to_crypttab") }
           .to_not raise_error
       end
     end
@@ -104,13 +100,12 @@ describe Y2Storage::Encryption do
     context "when an encrypted device is not indicated in any crypttab entry" do
       let(:device_name) { "/dev/sda4" }
 
-      it "does not update the encryption name of that device" do
+      it "does not modify the crypttab name of that encryption device" do
         device = devicegraph.find_by_name("/dev/sda5")
-        encryption_before = device.encryption.dup
 
-        described_class.use_crypttab_names(devicegraph, "path_to_crypttab")
+        described_class.save_crypttab_names(devicegraph, "path_to_crypttab")
 
-        expect(device.encryption).to eq(encryption_before)
+        expect(device.encryption.crypttab_name).to be_nil
       end
     end
   end
@@ -227,6 +222,42 @@ describe Y2Storage::Encryption do
           expect(result).to match(/^cr_sda2_3/)
         end
       end
+    end
+  end
+
+  describe ".match_crypttab_spec?" do
+    subject { devicegraph.find_by_name(dev_name) }
+
+    let(:scenario) { "encrypted_partition.xml" }
+
+    let(:dev_name) { "/dev/mapper/cr_sda1" }
+
+    it "returns true for the kernel name of the underlying device" do
+      expect(subject.match_crypttab_spec?("/dev/sda1")).to eq(true)
+    end
+
+    it "returns true for any udev name of the underlying device" do
+      subject.blk_device.udev_full_all.each do |name|
+        expect(subject.match_crypttab_spec?(name)).to eq(true)
+      end
+    end
+
+    it "returns false for the kernel name of the encryption device" do
+      expect(subject.match_crypttab_spec?("/dev/mapper/cr_sda1")).to eq(false)
+    end
+
+    it "returns false for any udev name of the encryption device" do
+      subject.udev_full_all.each do |name|
+        expect(subject.match_crypttab_spec?(name)).to eq(false)
+      end
+    end
+
+    it "returns false for other kernel name" do
+      expect(subject.match_crypttab_spec?("/dev/sda2")).to eq(false)
+    end
+
+    it "returns false for other udev name" do
+      expect(subject.match_crypttab_spec?("/dev/disks/by-uuid/111-2222-3333")).to eq(false)
     end
   end
 end
