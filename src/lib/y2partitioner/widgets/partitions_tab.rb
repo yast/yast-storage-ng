@@ -30,6 +30,7 @@ require "y2partitioner/widgets/partitions_delete_button"
 require "y2partitioner/widgets/configurable_blk_devices_table"
 require "y2partitioner/widgets/disk_bar_graph"
 require "y2partitioner/widgets/disk_device_description"
+require "y2partitioner/widgets/device_buttons_set"
 
 module Y2Partitioner
   module Widgets
