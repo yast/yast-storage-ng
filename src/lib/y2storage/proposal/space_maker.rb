@@ -284,8 +284,9 @@ module Y2Storage
       # @return [Boolean] true if some operation was performed. False if nothing
       #   else could be done to reach the goal.
       def execute_next_action(planned_partitions, lvm_helper)
-        part = next_partition_to_resize
-        if part
+        part_sid = next_partition_to_resize
+        if part_sid
+          part = new_graph.find_device(part_sid)
           target_shrink_size = resizing_size(part, planned_partitions)
           shrink_partition(part, target_shrink_size)
         else
@@ -374,7 +375,7 @@ module Y2Storage
         settings.candidate_devices
       end
 
-      # Next partition to be deleted by {#resize_and_delete}
+      # Sid of the next partition to be resized by {#resize_and_delete}
       #
       # @return [Partition]
       def next_partition_to_resize
@@ -387,16 +388,27 @@ module Y2Storage
         log.info("Evaluating the following Windows partitions: #{part_names}")
 
         parts_by_disk = partitions_by_disk(part_names)
-        remove_linux_disks!(parts_by_disk) unless no_more_linux_or_other?
 
-        sorted_resizables(parts_by_disk.values.flatten).first
+        # Historical behavior: if there are still any Linux or "other" partition
+        # to delete, the Windows systems that are in the same disk than any Linux
+        # partition are not resized.
+        # Rationale: Users having a Windows and a Linux in the same disk have
+        # likely already resized Windows once (when installing that Linux).
+        # So they probably don't want to resize it again. But if there are no
+        # more Linux or "other" partitions to delete, then the next partition to
+        # delete would be a Windows one. In that case, all Windows partitions
+        # are candidates to be resized (it's better to resize than to delete).
+        remove_linux_disks!(parts_by_disk) if any_linux_or_other_left?
+
+        partition = sorted_resizables(parts_by_disk.values.flatten).first
+        partition.nil? ? nil : partition.sid
       end
 
       # @see #next_partition_to_resize
       #
       # @return [Boolean]
-      def no_more_linux_or_other?
-        (sorted_candidates[:linux] + sorted_candidates[:other] - new_graph_deleted_sids).empty?
+      def any_linux_or_other_left?
+        (sorted_candidates[:linux] + sorted_candidates[:other] - new_graph_deleted_sids).any?
       end
 
       # @return [Hash{String => Partition}]
@@ -491,14 +503,15 @@ module Y2Storage
         end
       end
 
-      # Finds the next device that can be completely cleaned by {#resize_and_delete}.
+      # Finds the next device that can be completely cleaned by {#resize_and_delete},
+      # nil if none meets the requirements.
       #
-      # It searchs for disk-like devices not containining a partition table,
+      # It searches for disk-like devices not containining a partition table,
       # like disks directly formatted or used as members of an LVM or software RAID.
       #
       # @param lvm_helper [Proposal::LvmHelper] contains information about how
       #     to deal with the existing LVM volume groups
-      # @return [BlkDevice]
+      # @return [BlkDevice, nil]
       def next_disk_to_wipe(lvm_helper)
         log.info "Searching next disk to wipe (disk_name: #{disk_name})"
 
