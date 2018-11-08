@@ -71,7 +71,29 @@ module Y2Storage
       #
       # @return [Boolean]
       def grub_partition_needed?
-        (boot_ptable_type?(:gpt) || boot_ptable_type?(nil)) && grub_part_needed_in_gpt?
+        future_boot_ptable_type?(:gpt) && grub_part_needed_in_gpt?
+      end
+
+      # Whether the partition table that will finally be created matches the
+      # given type.
+      #
+      # This is the same as the partition table type if one already exists. Else
+      # the check will be against #preferred_ptable_type.
+      #
+      # FIXME
+      #   It seems that a setup with xen virtual partitions (that are in
+      #   fact disks) also ends up here. In that case no partition table will
+      #   be created (below this case is indicated by boot_disk = nil).
+      #   This looks weird.
+      #
+      # @return [Boolean] true if the partition table matches.
+      def future_boot_ptable_type?(type)
+        return false if boot_disk.nil?
+        if boot_ptable_type?(nil)
+          boot_disk.preferred_ptable_type.is?(type)
+        else
+          boot_ptable_type?(type)
+        end
       end
 
       # Given the fact we are trying to boot from a GPT disk, whether a BIOS
