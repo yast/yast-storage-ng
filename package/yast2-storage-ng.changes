@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Thu Nov  8 16:44:24 UTC 2018 - ancor@suse.com
+
+- Internal code reorganization at Proposal::SpaceMaker
+  (preparations for fate#325885 and fate#323484).
+
+-------------------------------------------------------------------
 Wed Nov  7 12:28:40 UTC 2018 - jlopez@suse.com
 
 - Crypttab entry allows to find a crypttab device by its UUID.
