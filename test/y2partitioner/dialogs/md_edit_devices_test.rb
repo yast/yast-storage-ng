@@ -30,7 +30,16 @@ require "y2partitioner/actions/controllers/md"
 
 describe Y2Partitioner::Dialogs::MdEditDevices do
   before do
-    Y2Storage::StorageManager.create_test_instance
+
+    # StorageManager object cannot be initialized here by simply using #create_test_instance.
+    # That initialization would be executed for each individual test, so new devicegraphs are
+    # created each time. The problem is that Controllers::Md uses Y2Storage::DeviceGraphs, and
+    # due to DeviceGraphs is a singleton class, it always points to the devicegraphs belonging
+    # to the first execution of StorageManager#create_test_instance. This could produce segmentation
+    # faults when the garbage collector takes place. devicegraph_stub helper is used instead to
+    # avoid this kind of failures. This helper always regenerates both, the StorageManager and
+    # the DeviceGraphs instances.
+    devicegraph_stub("empty_hard_disk_15GiB")
   end
 
   let(:controller) { Y2Partitioner::Actions::Controllers::Md.new }
