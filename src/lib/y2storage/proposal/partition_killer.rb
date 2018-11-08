@@ -154,7 +154,7 @@ module Y2Storage
         partitions_to_delete.select! { |p| disks.include?(p.partitionable.name) } if disks
         target_partitions = partitions_to_delete.map { |p| find_partition(p.sid) }.compact
         log.info "These LVM partitions will be deleted: #{target_partitions.map(&:name)}"
-        target_partitions.map { |p| delete_partition(p) }
+        target_partitions.map { |p| delete_partition(p) }.flatten
       end
 
       # Checks whether the partition is part of a volume group
