@@ -167,6 +167,9 @@ module Y2Storage
 
       ZIPL_FILESYSTEMS = [:ext2, :ext3, :ext4, :xfs]
 
+      # filesystems that can embed grub
+      GRUB_FILESYSTEMS = [:ext2, :ext3, :ext4, :btrfs]
+
       private_constant :PROPERTIES, :ROOT_FILESYSTEMS, :HOME_FILESYSTEMS,
         :COMMON_FSTAB_OPTIONS, :EXT_FSTAB_OPTIONS, :LEGACY_ROOT_FILESYSTEMS,
         :LEGACY_HOME_FILESYSTEMS, :ZIPL_FILESYSTEMS, :JOURNAL_OPTIONS,
@@ -214,6 +217,13 @@ module Y2Storage
         ZIPL_FILESYSTEMS.map { |f| find(f) }
       end
 
+      # Allowed filesystems to embed grub
+      #
+      # @return [Array<Filesystems::Type>]
+      def self.grub_filesystems
+        GRUB_FILESYSTEMS.map { |f| find(f) }
+      end
+
       # Check if filesystem is usable as root (mountpoint "/") filesystem.
       #
       # return [Boolean]
@@ -259,6 +269,13 @@ module Y2Storage
       # @return [Boolean]
       def zipl_ok?
         Type.zipl_filesystems.include?(self)
+      end
+
+      # Checks whether this type is usable to embed grub.
+      #
+      # @return [Boolean]
+      def grub_ok?
+        Type.grub_filesystems.include?(self)
       end
 
       # Check if filesystem was usable as home (mountpoint "/home") filesystem.
