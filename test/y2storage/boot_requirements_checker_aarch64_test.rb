@@ -37,14 +37,12 @@ describe Y2Storage::BootRequirementsChecker do
     let(:other_efi_partitions) { [] }
     let(:use_lvm) { false }
     let(:sda_part_table) { pt_msdos }
-    let(:mbr_gap_size) { Y2Storage::DiskSize.zero }
 
     # it's always UEFI
     let(:efiboot) { true }
 
     before do
       allow(storage_arch).to receive(:efiboot?).and_return(efiboot)
-      allow(dev_sda).to receive(:mbr_gap).and_return mbr_gap_size
       allow(dev_sda).to receive(:efi_partitions).and_return efi_partitions
       allow(dev_sda).to receive(:partitions).and_return(efi_partitions)
       allow(dev_sdb).to receive(:efi_partitions).and_return other_efi_partitions
