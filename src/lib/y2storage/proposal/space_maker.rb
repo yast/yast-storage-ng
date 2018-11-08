@@ -377,7 +377,7 @@ module Y2Storage
 
       # Sid of the next partition to be resized by {#resize_and_delete}
       #
-      # @return [Partition]
+      # @return [Integer, nil] nil if no partition should be resized
       def next_partition_to_resize
         log.info("Looking for Windows partitions to resize")
 
