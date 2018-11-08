@@ -44,6 +44,13 @@ module Y2Storage
       LOWER_MBR_GAP_LIMIT = DiskSize.B(512)
       private_constant :LOWER_MBR_GAP_LIMIT
 
+      # MBR_GAP_GRUB_LIMIT covers the size needed for embedding the grub image.
+      #
+      # The value is not exact (it depends on the grub modules needed to
+      # access the /boot partition [raid, lvm, encryption, ...]) but is
+      # chosen big enough to be on the safe side.
+      MBR_GAP_GRUB_LIMIT = DiskSize.KiB(256)
+
       # @!attribute minimal_mbr_gap
       #   Minimal possible size of the so-called MBR gap. In other words, at
       #   which distance from the start of the disk should the first partition
@@ -77,6 +84,15 @@ module Y2Storage
 
         region1 = partitions.min { |x, y| x.region.start <=> y.region.start }
         region1.region.block_size * region1.region.start
+      end
+
+      # Whether the MBR gap is big enough for grub
+      #
+      # If the mbr_gap is nil this means there are no partitions. This is also ok.
+      #
+      # @return [Boolean] true if the MBR gap is big enough for grub, else false
+      def mbr_gap_for_grub?
+        !mbr_gap || mbr_gap >= MBR_GAP_GRUB_LIMIT
       end
 
       # Sets #{minimal_mbr_gap} to the lower acceptable value
