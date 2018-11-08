@@ -45,7 +45,9 @@ module Y2Storage
       def_delegators :@analyzer,
         :root_filesystem, :boot_disk, :boot_ptable_type?, :free_mountpoint?,
         :root_in_lvm?, :root_in_software_raid?, :encrypted_root?, :btrfs_root?,
-        :boot_in_lvm?, :boot_in_software_raid?, :encrypted_boot?, :boot_filesystem_type
+        :root_fs_can_embed_grub?,
+        :boot_in_lvm?, :boot_in_software_raid?, :encrypted_boot?,
+        :boot_fs_can_embed_grub?, :boot_filesystem_type, :boot_can_embed_grub?
 
       # Constructor
       #

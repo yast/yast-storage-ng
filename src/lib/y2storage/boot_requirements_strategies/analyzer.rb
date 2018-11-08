@@ -146,6 +146,26 @@ module Y2Storage
         type ? type.is?(:btrfs) : false
       end
 
+      # Whether grub can be embedded into the boot (/boot) filesystem
+      #
+      # @return [Boolean] true if grub can be embedded into the boot filesystem.
+      #   False if the boot filesystem is unknown (not in the planned devices
+      #   or in the devicegraph) or can not embed grub.
+      def boot_fs_can_embed_grub?
+        type = boot_filesystem_type
+        type ? type.grub_ok? : false
+      end
+
+      # Whether grub can be embedded into the root (/) filesystem
+      #
+      # @return [Boolean] true if grub can be embedded into the root filesystem.
+      #   False if the root filesystem is unknown (not in the planned devices
+      #   or in the devicegraph) or can not embed grub.
+      def root_fs_can_embed_grub?
+        type = filesystem_type(device_for_root)
+        type ? type.grub_ok? : false
+      end
+
       # Type of the filesystem (planned or from the devicegraph) containing /boot
       #
       # @return [Filesystems::Type, nil] nil if there is no place for /boot either
@@ -157,14 +177,14 @@ module Y2Storage
       # Whether the partition table of the disk used for booting matches the
       # given type.
       #
-      # If the disk does not have a partition table, a GPT one will be assumed
-      # since it is the default type used in the proposal.
+      # It is possible to check for 'no partition table' by passing type nil.
       #
       # @return [Boolean] true if the partition table matches.
       #
       # @see #boot_disk
       def boot_ptable_type?(type)
-        return false if boot_ptable_type.nil?
+        return type.nil? if boot_ptable_type.nil?
+        return false if type.nil?
         boot_ptable_type.is?(type)
       end
 
@@ -264,12 +284,12 @@ module Y2Storage
         boot_planned_dev || boot_filesystem || root_planned_dev || root_filesystem || nil
       end
 
+      # Partition table type of boot disk
+      #
+      # @return [PartitionTables::Type, nil] partition table type of boot disk or nil
+      #   if it doesn't have a partition table
       def boot_ptable_type
-        return nil unless boot_disk
-        return boot_disk.partition_table.type unless boot_disk.partition_table.nil?
-
-        # If the disk end up being used, there will be a partition table on it
-        boot_disk.preferred_ptable_type
+        boot_disk.partition_table.type if boot_disk && !boot_disk.partition_table.nil?
       end
 
       # TODO: handle planned LV (not needed so far)
