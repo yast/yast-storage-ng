@@ -29,6 +29,14 @@ describe Y2Partitioner::Actions::Controllers::Fstabs do
     Y2Partitioner::DeviceGraphs.instance.system
   end
 
+  def initial_graph
+    Y2Partitioner::DeviceGraphs.instance.initial
+  end
+
+  # Note that current devicegraph can be replaced when importing mount points, so
+  # the tests should not store devices belonging to current devicegraph. The first
+  # version of current devicegraph could disappear, and a segmentation fault could
+  # be produced when we try to use a device of that devicegraph.
   def current_graph
     Y2Partitioner::DeviceGraphs.instance.current
   end
@@ -293,27 +301,26 @@ describe Y2Partitioner::Actions::Controllers::Fstabs do
 
     let(:entry_mount_options) { ["rw"] }
 
-    def device
-      current_graph.find_by_name(entry_device)
+    def device(devicegraph)
+      devicegraph.find_by_name(entry_device)
     end
 
     shared_examples "import data" do
       it "imports mount point and mount options from the fstab entry" do
         subject.import_mount_points
 
-        expect(device.filesystem.mount_path).to eq(entry_mount_point)
-        expect(device.filesystem.mount_options).to eq(entry_mount_options)
+        expect(device(current_graph).filesystem.mount_path).to eq(entry_mount_point)
+        expect(device(current_graph).filesystem.mount_options).to eq(entry_mount_options)
       end
     end
 
     shared_examples "format device" do
       context "and the fstab device is already formatted" do
         it "does not format the device" do
-          filesystem_before = device.filesystem.dup
           subject.import_mount_points
 
-          expect(device.filesystem.type).to_not eq(entry_device)
-          expect(device.filesystem).to eq(filesystem_before)
+          expect(device(current_graph).filesystem.type).to_not eq(entry_device)
+          expect(device(current_graph).filesystem).to eq(device(initial_graph).filesystem)
         end
       end
 
@@ -325,7 +332,7 @@ describe Y2Partitioner::Actions::Controllers::Fstabs do
 
         it "formats the device with the filesystem type indicated in the fstab entry" do
           subject.import_mount_points
-          expect(device.filesystem.type).to eq(entry_fs)
+          expect(device(current_graph).filesystem.type).to eq(entry_fs)
         end
       end
     end
@@ -333,7 +340,7 @@ describe Y2Partitioner::Actions::Controllers::Fstabs do
     it "discards all current changes" do
       allow(selected_fstab).to receive(:entries).and_return([])
 
-      device.filesystem.mount_path = "/foo"
+      device(current_graph).filesystem.mount_path = "/foo"
 
       expect(current_graph).to_not eq(system_graph)
       subject.import_mount_points
@@ -354,8 +361,8 @@ describe Y2Partitioner::Actions::Controllers::Fstabs do
       it "does not import the mount point" do
         subject.import_mount_points
 
-        expect(device.filesystem.mount_path).to_not eq(entry_mount_point)
-        expect(device.filesystem.mount_options).to_not eq(entry_mount_options)
+        expect(device(current_graph).filesystem.mount_path).to_not eq(entry_mount_point)
+        expect(device(current_graph).filesystem.mount_options).to_not eq(entry_mount_options)
       end
     end
 
@@ -367,7 +374,7 @@ describe Y2Partitioner::Actions::Controllers::Fstabs do
       it "does not import the mount point" do
         subject.import_mount_points
 
-        expect(device.filesystem).to be_nil
+        expect(device(current_graph).filesystem).to be_nil
       end
     end
 
@@ -382,7 +389,7 @@ describe Y2Partitioner::Actions::Controllers::Fstabs do
         it "formats the device with the filesystem type indicated in the fstab entry" do
           subject.import_mount_points
 
-          expect(device.filesystem.type).to eq(entry_fs)
+          expect(device(current_graph).filesystem.type).to eq(entry_fs)
         end
       end
 
@@ -427,8 +434,8 @@ describe Y2Partitioner::Actions::Controllers::Fstabs do
       let(:crypttab1) { instance_double(Y2Storage::Crypttab) }
       let(:crypttab2) { instance_double(Y2Storage::Crypttab) }
 
-      let(:fstab1_filesystem) { current_graph.find_by_name("/dev/sdb2").filesystem }
-      let(:fstab2_filesystem) { current_graph.find_by_name("/dev/sdb3").filesystem }
+      let(:fstab1_filesystem) { system_graph.find_by_name("/dev/sdb2").filesystem }
+      let(:fstab2_filesystem) { system_graph.find_by_name("/dev/sdb3").filesystem }
 
       let(:crypttab1_filesystem) { fstab1_filesystem }
       let(:crypttab2_filesystem) { fstab2_filesystem }
