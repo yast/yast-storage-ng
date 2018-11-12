@@ -178,11 +178,7 @@ module Y2Storage
 
         if grub_part_needed_in_gpt? && missing_partition_for?(grub_volume)
           errors << bios_boot_missing_error
-          errors <<= if boot_can_embed_grub?
-            bad_config_warning
-          else
-            bad_config_error
-          end
+          errors << grub_embedding_error
         end
 
         errors
@@ -195,12 +191,8 @@ module Y2Storage
         errors = []
 
         if !mbr_gap_for_grub?
-          errors <<= mbr_gap_error
-          errors <<= if boot_can_embed_grub?
-            bad_config_warning
-          else
-            bad_config_error
-          end
+          errors << mbr_gap_error
+          errors << grub_embedding_error
         end
 
         errors
@@ -213,8 +205,20 @@ module Y2Storage
         errors = []
 
         errors << no_boot_partition_table_error
+        errors << grub_embedding_error
 
         errors
+      end
+
+      # Check if boot disk can embed grub and return appropriate message
+      #
+      # @return [SetupError]
+      def grub_embedding_error
+        if boot_can_embed_grub?
+          bad_config_warning
+        else
+          bad_config_error
+        end
       end
 
       # Specific error when the boot disk has no partition table
@@ -223,8 +227,7 @@ module Y2Storage
       def no_boot_partition_table_error
         # TRANSLATORS: error message
         error_message = _(
-          "Boot disk has no partition table and it is not possible to boot from it. " \
-          "You can fix it by creating a partition table on the boot disk."
+          "Boot disk has no partition table."
         )
         SetupError.new(message: error_message)
       end
@@ -239,7 +242,7 @@ module Y2Storage
             "Not enough space before the first partition to install the bootloader. " \
             "Leave at least %s."
           ),
-          PartitionTables::Msdos::MBR_GAP_GRUB_LIMIT
+          PartitionTables::Msdos::MBR_GAP_GRUB_LIMIT.to_human_string
         )
         SetupError.new(message: error_message)
       end
