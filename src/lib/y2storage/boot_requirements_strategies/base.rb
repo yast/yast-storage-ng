@@ -47,7 +47,8 @@ module Y2Storage
         :root_in_lvm?, :root_in_software_raid?, :encrypted_root?, :btrfs_root?,
         :root_fs_can_embed_grub?,
         :boot_in_lvm?, :boot_in_software_raid?, :encrypted_boot?,
-        :boot_fs_can_embed_grub?, :boot_filesystem_type, :boot_can_embed_grub?
+        :boot_fs_can_embed_grub?, :boot_filesystem_type, :boot_can_embed_grub?,
+        :esp_in_lvm?, :esp_in_software_raid?, :esp_in_software_raid1?, :encrypted_esp?
 
       # Constructor
       #

@@ -150,6 +150,50 @@ module Y2Storage
         encrypted?(device_for_boot)
       end
 
+      # Whether the EFI system partition (/boot/efi) is in a LVM logical volume
+      #
+      # @return [Boolean] true if the filesystem where /boot/efi resides is going to
+      #   be in an LVM logical volume. False if such filesystem is unknown
+      #   or is not placed in an LVM.
+      def esp_in_lvm?
+        in_lvm?(esp_filesystem)
+      end
+
+      # Whether the EFI system partition (/boot/efi) is over a Software RAID
+      #
+      # @return [Boolean] true if the filesystem where /boot/efi resides is going to
+      #   be in a Software RAID. False if such filesystem is unknown or is
+      #   not placed over a Software RAID.
+      def esp_in_software_raid?
+        in_software_raid?(esp_filesystem)
+      end
+
+      # Whether the EFI system partition (/boot/efi) is over a Software RAID1
+      #
+      # This setup can be used to ensure the system can boot from any of the
+      # disks in the RAID, but it's not fully reliable.
+      # See bsc#1081578 and the related FATE#322485 and FATE#314829.
+      #
+      # @return [Boolean] false if there is no /boot/efi or it's not located in
+      #   an MD mirror RAID
+      def esp_in_software_raid1?
+        filesystem = esp_filesystem
+        return false if !filesystem
+        filesystem.ancestors.any? do |dev|
+          # see comment in #in_software_raid?
+          dev != boot_disk && dev.is?(:software_raid) && dev.md_level.is?(:raid1)
+        end
+      end
+
+      # Whether the EFI system partition (/boot/efi) is in an encrypted device
+      #
+      # @return [Boolean] true if the filesystem where /boot/efi resides is going to
+      #   be in an encrypted device. False if such filesystem is unknown or
+      #   is not encrypted.
+      def encrypted_esp?
+        encrypted?(esp_filesystem)
+      end
+
       # Whether the root (/) filesystem is going to be Btrfs
       #
       # @return [Boolean] true if the root filesystem is going to be Btrfs.
@@ -236,25 +280,6 @@ module Y2Storage
       # @return [Float]
       def max_planned_weight
         @max_planned_weight ||= planned_devices.map { |dev| planned_weight(dev) }.compact.max
-      end
-
-      # Method to detect the specific situation in which /boot/efi is located
-      # in a mirror software raid.
-      #
-      # This setup can be used to ensure the system can boot from any of the
-      # disks in the RAID, but it's not fully reliable.
-      # See bsc#1081578 and the related FATE#322485 and FATE#314829.
-      #
-      # @return [Boolean] false if there is no /boot/efi or it's not located in
-      #   an MD mirror RAID
-      def efi_in_md_raid1?
-        filesystem = filesystem_for_mountpoint("/boot/efi")
-        return false unless filesystem
-
-        raid = filesystem.ancestors.find { |dev| dev.is?(:software_raid) }
-        return false unless raid
-
-        return raid.md_level.is?(:raid1)
       end
 
       # Method to return all prep partitions - newly created and also reused from graph.
@@ -378,6 +403,13 @@ module Y2Storage
       # @return [Filesystems::Base, nil] nil if there is no separate filesystem for /boot
       def boot_filesystem
         @boot_filesystem ||= filesystem_for_mountpoint("/boot")
+      end
+
+      # Filesystem mounted at /boot/efi
+      #
+      # @return [Filesystems::Base, nil] nil if there is no separate filesystem for /boot/efi
+      def esp_filesystem
+        @esp_filesystem ||= filesystem_for_mountpoint("/boot/efi")
       end
 
       # Filesystem type used for the device

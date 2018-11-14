@@ -58,7 +58,11 @@ RSpec.shared_context "boot requirements" do
       planned_devices:         planned_grub_partitions + planned_prep_partitions,
       max_planned_weight:      0.0,
       boot_fs_can_embed_grub?: embed_grub,
-      root_fs_can_embed_grub?: embed_grub
+      root_fs_can_embed_grub?: embed_grub,
+      esp_in_lvm?:             false,
+      esp_in_software_raid?:   false,
+      esp_in_software_raid1?:  false,
+      encrypted_esp?:          false
     )
   end
 
