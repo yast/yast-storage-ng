@@ -59,6 +59,8 @@ module Y2Storage
 
         @devicegraph = devicegraph
         @analyzer = Analyzer.new(devicegraph, planned_devices, boot_disk_name)
+
+        log.info "boot disk: #{boot_disk.inspect}"
       end
 
       # Partitions that should be created to boot the system

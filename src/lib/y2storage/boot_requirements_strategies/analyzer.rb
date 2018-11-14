@@ -65,6 +65,19 @@ module Y2Storage
       # If "/" is still not present in the devicegraph or the list of planned
       # devices, the first disk of the system is used as fallback.
       #
+      # FIXME: For RAID and LVM setups a list of disks would strictly be
+      #   correct (the disks that constitute the /boot file system).
+      #   The current approach is not that bad, though, as we don't have to
+      #   actually install the bootloader but just check if it will work.
+      #   Also, the extra partitions proposed are the *minimum* required to boot.
+      #
+      #   But particularly in asymmetric cases (like part of LVM on a GPT
+      #   disk, part on a MS-DOS disk) we have a problem: the requirements
+      #   will differ depending on which boot disk is picked (basically
+      #   random). For this to work properly we'd have to switch to tracking
+      #   all boot disks but this will also mean error messages like "BIOS
+      #   Boot on sda and (or?) MBR-GAP on sdb are missing".
+      #
       # @return [Disk]
       def boot_disk
         return @boot_disk if @boot_disk
@@ -76,6 +89,7 @@ module Y2Storage
         @boot_disk ||= boot_disk_from_planned_dev
         @boot_disk ||= boot_disk_from_devicegraph
         @boot_disk ||= devicegraph.disk_devices.first
+        @boot_disk = boot_disk_raid1(@boot_disk) || @boot_disk
 
         @boot_disk
       end
@@ -423,8 +437,34 @@ module Y2Storage
         if device.is_a?(Planned::Device)
           device.is_a?(Planned::Md)
         else
-          device.ancestors.any? { |dev| dev.is?(:software_raid) }
+          device.ancestors.any? do |dev|
+            # Don't check boot_disk as it might validly be a RAID1 itself
+            # (full disks as RAID case) - we want to treat this as 'no RAID'.
+            dev.is?(:software_raid) && dev != boot_disk
+          end
         end
+      end
+
+      # Check if device is a direct member of a RAID1 (RAID over entire disks).
+      #
+      # FIXME: The check is possibly overly strict: currently it enforces
+      #   that the disk is a member of a single RAID.
+      #   With BIOS RAIDs that might not be necessary. Also the limitation
+      #   to RAID1 can possibly be dropped there - the question would be how
+      #   grub behaves in this case.
+      #
+      # @return [Y2Storage::Md, nil] the RAID device, else nil
+      def boot_disk_raid1(device)
+        return nil if device.nil?
+        raid1_dev = nil
+        device.children.each do |raid|
+          next if !raid.is?(:software_raid)
+          return nil if !raid.md_level.is?(:raid1)
+          return nil if raid1_dev && raid1_dev != raid
+          raid1_dev = raid
+        end
+
+        return raid1_dev
       end
     end
   end
