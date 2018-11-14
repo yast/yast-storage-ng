@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Wed Nov 14 15:15:04 CET 2018 - schubi@suse.de
+
+- SkipListValue.size_k returns the correct value (bsc#1115508).
+- 4.0.214
+
+-------------------------------------------------------------------
 Thu Sep 27 15:13:31 CEST 2018 - schubi@suse.de
 
 - AutoYaST proposal: Do not crash if existing boot partition
