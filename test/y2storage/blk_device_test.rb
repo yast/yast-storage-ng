@@ -678,6 +678,103 @@ describe Y2Storage::BlkDevice do
     end
   end
 
+  describe "#component_of" do
+    context "for a device not used in an LVM or in a RAID or in multipath" do
+      let(:scenario) { "mixed_disks" }
+      let(:device_name) { "/dev/sda1" }
+
+      it "returns an empty array" do
+        expect(device.component_of).to eq []
+      end
+    end
+
+    context "for a device that is part of several DM RAIDs" do
+      let(:scenario) { "empty-dm_raids.xml" }
+      let(:device_name) { "/dev/sdb" }
+
+      it "returns an array with all the corresponding DM RAIDs" do
+        expect(device.component_of.size).to eq 2
+        expect(device.component_of).to all(be_a(Y2Storage::DmRaid))
+        expect(device.component_of.map(&:name)).to contain_exactly(
+          "/dev/mapper/isw_ddgdcbibhd_test1", "/dev/mapper/isw_ddgdcbibhd_test2"
+        )
+      end
+    end
+
+    context "for a device directly used in an LVM" do
+      let(:scenario) { "complex-lvm-encrypt" }
+      let(:device_name) { "/dev/sde2" }
+
+      it "returns an array with the LVM VG" do
+        expect(device.component_of.size).to eq 1
+        expect(device.component_of.first).to be_a Y2Storage::LvmVg
+        expect(device.component_of.first.name).to eq "/dev/vg1"
+      end
+    end
+
+    context "for an encrypted device directly used in an LVM" do
+      let(:scenario) { "complex-lvm-encrypt" }
+      let(:device_name) { "/dev/sde1" }
+
+      it "returns an array with the LVM VG" do
+        expect(device.component_of.size).to eq 1
+        expect(device.component_of.first).to be_a Y2Storage::LvmVg
+        expect(device.component_of.first.name).to eq "/dev/vg0"
+      end
+    end
+
+    context "for a disk used indirectly (through its partitions) in an LVM" do
+      let(:scenario) { "complex-lvm-encrypt" }
+      let(:device_name) { "/dev/sde" }
+
+      it "returns an empty array" do
+        expect(device.component_of).to eq []
+      end
+    end
+
+    context "for a device directly used in an MD RAID" do
+      let(:scenario) { "subvolumes-and-empty-md.xml" }
+      let(:device_name) { "/dev/sda4" }
+
+      it "returns an array with the MD RAID" do
+        expect(device.component_of.size).to eq 1
+        expect(device.component_of.first).to be_a Y2Storage::Md
+        expect(device.component_of.first.name).to eq "/dev/md/strip0"
+      end
+    end
+
+    context "for an encrypted device directly used in an MD RAID" do
+      let(:scenario) { "subvolumes-and-empty-md.xml" }
+      let(:device_name) { "/dev/sda5" }
+
+      it "returns an array with the MD RAID" do
+        expect(device.component_of.size).to eq 1
+        expect(device.component_of.first).to be_a Y2Storage::Md
+        expect(device.component_of.first.name).to eq "/dev/md/strip0"
+      end
+    end
+
+    context "for a disk used indirectly (through its partitions) in an MD RAID" do
+      let(:scenario) { "subvolumes-and-empty-md.xml" }
+      let(:device_name) { "/dev/sda" }
+
+      it "returns an empty array" do
+        expect(device.component_of).to eq []
+      end
+    end
+
+    context "for a disk that is part of a multipath setup" do
+      let(:scenario) { "multipath-formatted.xml" }
+      let(:device_name) { "/dev/sda" }
+
+      it "returns an array with the multipath device" do
+        expect(device.component_of.size).to eq 1
+        expect(device.component_of.first).to be_a Y2Storage::Multipath
+        expect(device.component_of.first.name).to eq "/dev/mapper/0QEMU_QEMU_HARDDISK_mpath1"
+      end
+    end
+  end
+
   describe "#hwinfo" do
     let(:device_name) { "/dev/sda" }
 
