@@ -115,18 +115,11 @@ module Y2Storage
       #   partitions
       def delete_unwanted_partitions(original_graph)
         result = original_graph.dup
-        types = [:windows, :linux, :other].select { |t| settings.delete_forced?(t) }
-        log.info "Types to forcely delete: #{types}"
-
-        return result if types.empty?
-
         partition_killer = PartitionKiller.new(result, candidate_disk_names)
         prospects = SpaceMakerProspects::List.new(settings, disk_analyzer)
-        disks_for(result).each { |disk| prospects.add_delete_partition_entries(disk) }
 
-        types.each do |type|
-          log.info("Forcely deleting #{type} partitions")
-          prospects.delete_partition_entries(type).each do |entry|
+        disks_for(result).each do |disk|
+          prospects.unwanted_partition_entries(disk).each do |entry|
             sids = partition_killer.delete_by_sid(entry.sid)
             @all_deleted_sids.concat(sids)
           end
@@ -297,6 +290,8 @@ module Y2Storage
       # @param planned_partitions [Array<Planned::Partition>] set of partitions to make space for
       # @param disk_name [String, nil] optional disk name to restrict operations to
       def execute_resize(prospect, planned_partitions, disk_name)
+        log.info "SpaceMaker#execute_resize - #{prospect}"
+
         part = new_graph.find_device(prospect.sid)
         target_shrink_size = resizing_size(part, planned_partitions, disk_name)
         shrink_partition(part, target_shrink_size)
@@ -309,6 +304,8 @@ module Y2Storage
       #   to execute
       # @param prospects [SpaceMakerProspects::List] full set of prospect actions
       def execute_delete(prospect, prospects)
+        log.info "SpaceMaker#execute_delete - #{prospect}"
+
         sids = new_graph_part_killer.delete_by_sid(prospect.sid)
         new_graph_deleted_sids.concat(sids)
         prospects.mark_deleted(sids)
@@ -319,6 +316,8 @@ module Y2Storage
       # @param prospect [SpaceMakerProspects::DeletePartition] candidate action
       #   to execute
       def execute_wipe(prospect)
+        log.info "SpaceMaker#execute_wipe - #{prospect}"
+
         disk = new_graph.find_device(prospect.sid)
         remove_content(disk)
         prospect.available = false

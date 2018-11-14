@@ -30,6 +30,13 @@ module Y2Storage
       #
       # @see Base
       class DeletePartition < PartitionProspect
+        # @param partition [Partition] partition to delete
+        # @param disk_analyzer [DiskAnalyzer] see {#analyzer}
+        def initialize(partition, disk_analyzer)
+          super
+          @partition_id = partition.id
+        end
+
         # Type of the partition to be deleted, according to DiskAnalyzer
         #
         # @return [Symbol] :windows, :linux or :other
@@ -48,10 +55,33 @@ module Y2Storage
         #
         # @param settings [ProposalSettings]
         # @param keep [Array<Integer>] list of sids of partitions that should be kept
+        # @param for_delete_all [Boolean] if the permissions are being checked
+        #   as part of the first step which deletes unwanted partitions when the
+        #   corresponding delete_mode is :all
         # @return [Boolean]
-        def allowed?(settings, keep)
+        def allowed?(settings, keep, for_delete_all)
           return false if keep.include?(sid)
-          !settings.delete_forbidden?(partition_type)
+
+          allowed = allowed_type?(settings, partition_type, for_delete_all)
+          if irst? && windows_in_disk? && allowed
+            # Second line of defense for IRST partitions that seem to be used by
+            # a Windows installation
+            allowed_type?(settings, :windows, for_delete_all)
+          else
+            allowed
+          end
+        end
+
+        # Whether the action should be performed just as last resort to make
+        # space, after having tried to delete all the other allowed partitions.
+        #
+        # In other words, DeletePartition prospects returning true for this should
+        # only be considered when there is no available DeletePartition prospect
+        # that returns false.
+        #
+        # @return [Boolean]
+        def last_resort?
+          irst?
         end
 
         # @return [String]
@@ -62,6 +92,27 @@ module Y2Storage
         # @return [Symbol]
         def to_sym
           :delete_partition
+        end
+
+      private
+
+        # @return [PartitionId]
+        attr_reader :partition_id
+
+        # Whether the partition is an Intel Rapid Start Technology partition
+        #
+        # @return [Boolean]
+        def irst?
+          partition_id.is?(:irst)
+        end
+
+        # @see #allowed?
+        def allowed_type?(settings, type, for_delete_all)
+          if for_delete_all
+            settings.delete_forced?(type)
+          else
+            !settings.delete_forbidden?(type)
+          end
         end
       end
     end

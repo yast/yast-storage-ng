@@ -33,7 +33,7 @@ module Y2Storage
         # @return [Integer] number of the first sector of the partition
         attr_reader :region_start
 
-        # @param partition [Partition] partition to delete
+        # @param partition [Partition] partition to act upon
         # @param disk_analyzer [DiskAnalyzer] see {#analyzer}
         def initialize(partition, disk_analyzer)
           super(partition)
@@ -50,6 +50,16 @@ module Y2Storage
           return @linux_in_disk unless @linux_in_disk.nil?
 
           @linux_in_disk = analyzer.linux_partitions(disk_name).any?
+        end
+
+        # Whether there was a Windows system in the same disk of the target
+        # partition (in the original devicegraph).
+        #
+        # @return [Boolean]
+        def windows_in_disk?
+          return @windows_in_disk unless @windows_in_disk.nil?
+
+          @windows_in_disk = analyzer.windows_partitions(disk_name).any?
         end
 
       private

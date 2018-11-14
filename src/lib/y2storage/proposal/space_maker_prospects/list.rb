@@ -29,6 +29,9 @@ module Y2Storage
   module Proposal
     module SpaceMakerProspects
       # A set of prospect actions SpaceMaker can perform to reach its goal
+      #
+      # This class is responsible of selecting which prospect action would be
+      # the next to be performed by SpaceMaker.
       class List
         include Yast::Logger
 
@@ -61,32 +64,6 @@ module Y2Storage
           add_wipe_entries(disk, lvm_helper)
         end
 
-        # Adds to the set all the prospect actions about deleting partitions of
-        # the given disk (i.e. entries of type {SpaceMakerProspects::DeletePartition})
-        #
-        # @param disk [Disk] disk to act upon
-        # @param keep [Array<Integer>] sids of partitions that should not be deleted
-        def add_delete_partition_entries(disk, keep = [])
-          entries = delete_prospects_for_disk(disk, keep)
-          linux, non_linux = entries.partition { |e| e.partition_type == :linux }
-          windows, other = non_linux.partition { |e| e.partition_type == :windows }
-
-          delete_partition_entries(:linux).concat(linux.sort_by(&:region_start).reverse)
-          delete_partition_entries(:windows).concat(windows.sort_by(&:region_start).reverse)
-          delete_partition_entries(:other).concat(other.sort_by(&:region_start).reverse)
-        end
-
-        # Entries of type #{SpaceMakerProspects::DeletePartition}
-        #
-        # @param type [Symbol, nil] optional type to filter the result
-        def delete_partition_entries(type = nil)
-          if type.nil?
-            @all_delete_partition_entries.values.flatten
-          else
-            @all_delete_partition_entries[type]
-          end
-        end
-
         # Next prospect action that should be executed by SpaceMaker
         #
         # @return [SpaceMakerProspects::Base, nil] nil if there are no more
@@ -99,18 +76,19 @@ module Y2Storage
           return resize if resize
 
           delete = next_delete_partition
-          return delete if delete && delete.partition_type != :windows
+          return delete if delete && !after_resizing_everything?(delete)
 
           wipe = next_wipe_disk
           return wipe if wipe
 
-          # The next partition to delete would be a Windows one. In that case,
-          # reconsider resizing any Windows partition (no matter whether there
-          # is a Linux in the disk)
+          # The next partition to delete would be a Windows one (or one marked
+          # as last resort). In that case, reconsider resizing any Windows
+          # partition (no matter whether there is a Linux in the disk)
           resize = next_resize_partition
           return resize if resize
 
-          # Last resort, deleting Windows partitions (if any)
+          # If nothing else can be done, delete Windows partitions or partitions marked
+          # as last resort (if any, 'delete' could also be nil)
           delete
         end
 
@@ -123,6 +101,17 @@ module Y2Storage
           prospects.select { |i| sids.include?(i.sid) }.each do |affected|
             affected.available = false
           end
+        end
+
+        # Prospects actions for deleting the unwanted partitions (i.e. when one
+        # of the delete modes is set to :all) for the given disk
+        #
+        # @see SpaceMaker#delete_unwanted_partitions
+        #
+        # @param disk [Disk] disk to act upon
+        # @return [Array<DeletePartition>]
+        def unwanted_partition_entries(disk)
+          delete_prospects_for_disk(disk, for_delete_all: true)
         end
 
       private
@@ -142,9 +131,18 @@ module Y2Storage
         # @return [DeletePartition, nil] nil if there are no available prospect
         #   actions
         def next_delete_partition
-          delete_partition_entries(:linux).find(&:available?) ||
-            delete_partition_entries(:other).find(&:available?) ||
-            delete_partition_entries(:windows).find(&:available?)
+          types = [:linux, :other, :windows]
+
+          [false, true].each do |last_resort|
+            types.each do |type|
+              entry = delete_partition_entries(type).find do |e|
+                e.available? and e.last_resort? == last_resort
+              end
+              return entry if entry
+            end
+          end
+
+          nil
         end
 
         # Next available prospect of type #{ResizePartition}
@@ -175,6 +173,21 @@ module Y2Storage
         # @return [WipeDisk, nil] nil if there are no available prospect actions
         def next_wipe_disk
           wipe_disk_entries.find(&:available?)
+        end
+
+        # Adds to the set all the prospect actions about deleting partitions of
+        # the given disk (i.e. entries of type {SpaceMakerProspects::DeletePartition})
+        #
+        # @param disk [Disk] disk to act upon
+        # @param keep [Array<Integer>] sids of partitions that should not be deleted
+        def add_delete_partition_entries(disk, keep = [])
+          entries = delete_prospects_for_disk(disk, keep: keep)
+          linux, non_linux = entries.partition { |e| e.partition_type == :linux }
+          windows, other = non_linux.partition { |e| e.partition_type == :windows }
+
+          delete_partition_entries(:linux).concat(sort_delete_part_prospects(linux))
+          delete_partition_entries(:windows).concat(sort_delete_part_prospects(windows))
+          delete_partition_entries(:other).concat(sort_delete_part_prospects(other))
         end
 
         # Adds to the set all the prospect actions about resizing partitions of
@@ -216,18 +229,49 @@ module Y2Storage
           @wipe_disk_entries << SpaceMakerProspects::WipeDisk.new(disk)
         end
 
-        def delete_prospects_for_disk(disk, keep = [])
+        def delete_prospects_for_disk(disk, keep: [], for_delete_all: false)
           partitions = disk.partitions.reject { |part| part.type.is?(:extended) }
 
           prospects = partitions.map do |part|
             SpaceMakerProspects::DeletePartition.new(part, analyzer)
           end
-          prospects.select { |action| action.allowed?(settings, keep) }
+          prospects.select { |action| action.allowed?(settings, keep, for_delete_all) }
         end
 
         def next_useful_resize(entries)
           entries.select { |e| e.available? && !e.recoverable_size.zero? }
                  .sort_by(&:recoverable_size).last
+        end
+
+        # Whether a given DeletePartition prospect should be considered only
+        # at the end, after having tried all possible resize operations.
+        #
+        # @see #next_available_entry
+        #
+        # @param delete_partition [DeletePartition]
+        # @return [Boolean]
+        def after_resizing_everything?(delete_partition)
+          delete_partition.last_resort? || delete_partition.partition_type == :windows
+        end
+
+        # Returns the list of DeletePartition prospects sorted by #last_resort?
+        # and #region_start
+        #
+        # @param list [Array<DeletePartition>]
+        # @return [Array<DeletePartition>]
+        def sort_delete_part_prospects(list)
+          list.sort_by(&:region_start).reverse.partition(&:last_resort?).reverse.flatten
+        end
+
+        # Entries of type #{SpaceMakerProspects::DeletePartition}
+        #
+        # @param type [Symbol, nil] optional type to filter the result
+        def delete_partition_entries(type = nil)
+          if type.nil?
+            @all_delete_partition_entries.values.flatten
+          else
+            @all_delete_partition_entries[type]
+          end
         end
 
         def resize_partition_entries
