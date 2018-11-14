@@ -40,7 +40,7 @@ describe Y2Storage::AutoinstProfile::SkipListValue do
 
   describe "#size_k" do
     it "returns the size in kilobytes" do
-      expect(value.size_k).to eq(disk.size.to_i)
+      expect(value.size_k).to eq(disk.size.to_i / 1024)
     end
   end
 
@@ -194,7 +194,7 @@ describe Y2Storage::AutoinstProfile::SkipListValue do
         max_primary: 4,
         name:        "sda",
         sector_size: 512,
-        size_k:      536870912000,
+        size_k:      524288000,
         transport:   "unknown",
         udev_id:     [],
         udev_path:   []
