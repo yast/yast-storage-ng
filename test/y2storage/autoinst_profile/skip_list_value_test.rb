@@ -40,7 +40,7 @@ describe Y2Storage::AutoinstProfile::SkipListValue do
 
   describe "#size_k" do
     it "returns the size in kilobytes" do
-      expect(value.size_k).to eq(disk.size / DiskSize.KiB(1)).to_i
+      expect(value.size_k).to eq(disk.size.to_i / 1024)
     end
   end
 
