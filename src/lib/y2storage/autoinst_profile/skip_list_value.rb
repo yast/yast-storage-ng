@@ -91,7 +91,7 @@ module Y2Storage
       # @return [Integer] Size
       def size_k
         # to_i returns the size in bytes
-        disk.size.to_i/1024
+        disk.size.to_i / 1024
       end
 
       # Device full name
