@@ -481,9 +481,7 @@ module Y2Storage
       #
       # FIXME: The check is possibly overly strict: currently it enforces
       #   that the disk is a member of a single RAID.
-      #   With BIOS RAIDs that might not be necessary. Also the limitation
-      #   to RAID1 can possibly be dropped there - the question would be how
-      #   grub behaves in this case.
+      #   That might not be necessary.
       #
       # @return [Y2Storage::Md, nil] the RAID device, else nil
       def boot_disk_raid1(device)
