@@ -121,4 +121,10 @@ RSpec.shared_context "proposal" do
     log.info("Expected devicegraph from file\n#{full_path}:\n\n#{devicegraph.to_str}\n")
     devicegraph
   end
+
+  def disk_for(mountpoint)
+    proposal.devices.disks.detect do |disk|
+      disk.partitions.any? { |p| p.filesystem_mountpoint == mountpoint }
+    end
+  end
 end
